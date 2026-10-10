@@ -1,0 +1,101 @@
+"""A4-P5: a mission worker cannot launch a mission (arm launch=True refused at the effect)."""
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+TMP = tempfile.mkdtemp(prefix="arm-worker-guard-")
+os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
+os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
+os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
+os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")
+os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
+# A launch must never reach a real claude. The mutation drill of this file (guard disabled) started two real
+# Sonnet sessions (~195K tokens) because nothing here pinned the executable. Any launch now fails on a missing exe.
+STUB_EXE = str(Path(TMP) / "no-such-claude.exe")
+os.environ["CPP_CLAUDE_EXE"] = STUB_EXE
+sys.path.insert(0, str(Path(os.environ.get("ARM_GUARD_TOOLS") or Path(__file__).resolve().parent)))
+import gsd_mission as gm  # noqa: E402
+
+gm.progress_fingerprint = lambda work_dir: None
+
+PASS = FAIL = 0
+
+
+def check(name, ok, detail=""):
+    global PASS, FAIL
+    if ok:
+        PASS += 1
+    else:
+        FAIL += 1
+    print(("PASS " if ok else "FAIL ") + name + (" " + detail if detail else ""))
+
+
+class Sentinel(Exception):
+    pass
+
+
+def boom(*a, **k):
+    raise Sentinel()
+
+
+S, T = "5e5e5e5e-aaaa-bbbb-cccc-000000000001", "7a7a7a7a-aaaa-bbbb-cccc-000000000002"
+WORK = tempfile.mkdtemp(prefix="arm-guard-work-")
+
+
+def worker_record(sid, state):
+    rec = gm.create(WORK, "echo hi")
+    return gm.transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=gm.PREPARED,
+                         event="test_owner", state=state, owner={"session_id": sid, "kind": "interactive"})
+
+
+def set_env(sid, guard=None):
+    for k in ("CLAUDE_CODE_SESSION_ID", "CPP_ARM_WORKER_GUARD"):
+        os.environ.pop(k, None)
+    if sid:
+        os.environ["CLAUDE_CODE_SESSION_ID"] = sid
+    if guard:
+        os.environ["CPP_ARM_WORKER_GUARD"] = guard
+
+
+def raises(fn):
+    try:
+        fn()
+    except Exception as e:  # noqa: BLE001
+        return e
+    return None
+
+
+def sentinel_reached():
+    real = gm.create
+    gm.create = boom
+    try:
+        return isinstance(raises(lambda: gm.arm(WORK, "echo x", launch=True)), Sentinel)
+    finally:
+        gm.create = real
+
+
+w = worker_record(S, gm.RUNNING)
+n0 = len(gm.all_missions())
+set_env(S)
+e = raises(lambda: gm.arm(WORK, "echo x", launch=True))
+check("V-ARM-WORKER-RED", isinstance(e, gm.MissionError) and w["mission_id"] in str(e)
+      and len(gm.all_missions()) == n0, str(e)[:90])
+r = raises(lambda: gm.arm(WORK, "echo x", launch=False))
+check("V-ARM-WORKER-NO-LAUNCH-GREEN", r is None and len(gm.all_missions()) == n0 + 1)
+set_env(T)
+check("V-ARM-WORKER-OTHER-SID-PASSES", sentinel_reached())
+set_env(None)
+check("V-ARM-WORKER-NO-SID-PASSES", sentinel_reached())
+set_env(S, "off")
+check("V-ARM-WORKER-KILL-SWITCH", sentinel_reached())
+U = "9c9c9c9c-aaaa-bbbb-cccc-000000000003"
+d = worker_record(U, gm.RUNNING)
+d = gm.transition(d["mission_id"], expect_epoch=d["epoch"], expect_state=gm.RUNNING,
+                  event="test_done", state=gm.COMPLETED)
+set_env(U)
+e = raises(lambda: gm.arm(WORK, "echo x", launch=True))
+check("V-ARM-WORKER-TERMINAL-WORKER-RED", isinstance(e, gm.MissionError) and d["mission_id"] in str(e),
+      str(e)[:90])
+print(f"ARM_WORKER_PASS={PASS}/{PASS + FAIL}")
+sys.exit(1 if FAIL else 0)

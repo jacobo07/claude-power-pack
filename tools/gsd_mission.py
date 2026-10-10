@@ -3548,6 +3548,17 @@ def goal_refusal(conflicts: list[dict], unit: str | None = None) -> str | None:
     return None
 
 
+def worker_arm_refusal(sid: str | None) -> str | None:
+    """A mission worker must not launch another mission (A4-P5). Any state: a worker can outlive its done."""
+    if not sid or os.environ.get("CPP_ARM_WORKER_GUARD", "").strip().lower() == "off":
+        return None
+    for r in all_missions():
+        if (r.get("owner") or {}).get("session_id") == sid:
+            return (f"worker_arm_launch_refused: session {sid[:8]} is the worker of "
+                    f"{r.get('mission_id')} ({r.get('state')}); a worker arms only with --no-launch")
+    return None
+
+
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
         authority: str | None = None, parallel_unit: str | None = None, **kw) -> dict:
     ws = kw.get("workstream")
@@ -3571,6 +3582,11 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         if key is not None:
             lr.ledger_append(f"goal-{key[1]}", "goal_arm_refused", workstream=key[1], why=why[:300])
         raise MissionError(why)
+    if launch:
+        why = worker_arm_refusal(os.environ.get("CLAUDE_CODE_SESSION_ID"))
+        if why:
+            lr.ledger_append("arm-guard", "worker_arm_refused", why=why[:300])
+            raise MissionError(why)
     rec = create(cwd, resume_command, **kw)
     extra = {}
     if key is not None:
