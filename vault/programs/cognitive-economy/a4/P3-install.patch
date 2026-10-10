@@ -1,0 +1,141 @@
+diff --git a/tools/cep_gen2.py b/tools/cep_gen2.py
+index b275ddc0..07b6c594 100644
+--- a/tools/cep_gen2.py
++++ b/tools/cep_gen2.py
+@@ -384,6 +384,58 @@ def tranche(name: str, root: Path = REPO) -> int:
+         cl["spend"] = ("FAIL", f"unknown spend (unmeasured is never green) coordinator={coord_mode}")
+     else:
+         cl["spend"] = ("PASS" if sum(nums) <= cap else "FAIL", f"total={sum(nums):,} cap={cap:,} coordinator={coord_mode}")
++    ci = man.get("ci")
++    if isinstance(ci, dict):  # opt-in Cognitive CI clauses (D-22, D-24, D-28); absent keys emit nothing
++        isint = lambda n: isinstance(n, int) and not isinstance(n, bool)
++        if "meta_work_max" in ci:
++            cs, ws = r.get("coordinator_spend"), attempt_spends
++            if not isint(cs) or any(not isint(n) for n in ws):
++                cl["meta_work"] = ("FAIL", "meta-work unmeasured")
++            else:
++                tot = cs + sum(ws)
++                share = cs / tot if tot else 0.0
++                mx = ci["meta_work_max"]
++                cl["meta_work"] = ("PASS" if share <= mx else "FAIL",
++                                   f"share={share:.3f} max={mx} coordinator={cs} workers={sum(ws)}")
++        if "incident_ratio" in ci:
++            ratio, recs = ci["incident_ratio"], ci.get("incidents") or {}
++            unm = [k for k, s in steps.items() if not isint(s.get("spend")) or not isint(s.get("cap"))]
++            outl = [k for k, s in steps.items() if k not in unm and s["spend"] > ratio * s["cap"]]
++            def _rec(k):
++                p = recs.get(k) if isinstance(recs, dict) else None
++                try:
++                    return bool(p) and (root / p).is_file() and (root / p).stat().st_size > 0
++                except (OSError, TypeError):
++                    return False
++            unrec = [k for k in outl if not _rec(k)]
++            if unm:
++                cl["token_incident"] = ("FAIL", "unmeasured: " + ",".join(unm))
++            elif unrec:
++                cl["token_incident"] = ("FAIL", "unrecorded: " + ",".join(unrec))
++            else:
++                cl["token_incident"] = ("PASS", f"{len(outl)} outliers" + (" (all recorded)" if outl else ""))
++        if "hot_base" in ci:
++            import subprocess
++            base_ref, mx = str(ci["hot_base"]), ci.get("hot_delta_max", 0)
++            delta, bad = 0, None
++            for f in ci.get("hot_files") or []:
++                try:
++                    delta += (root / f).stat().st_size
++                    p = subprocess.run(["git", "-C", str(root), "show", f"{base_ref}:{f}"], capture_output=True)
++                    if p.returncode == 0:
++                        delta -= len(p.stdout)
++                    elif b"exists on disk, but not in" in p.stderr or b"does not exist in" in p.stderr:
++                        pass  # missing at base counts 0
++                    else:
++                        bad = f
++                except OSError:
++                    bad = f
++                if bad:
++                    break
++            if bad:
++                cl["hot_token_delta"] = ("FAIL", f"unmeasured: {bad}")
++            else:
++                cl["hot_token_delta"] = ("PASS" if delta <= mx else "FAIL", f"delta={delta} max={mx} base={base_ref[:7]}")
+     for k, c in (r.get("clauses") or {}).items():
+         st, ev = c.get("status"), c.get("evidence") or ""
+         if st not in TRANCHE_STATES or (st in GREEN_STATES and not (ev and (root / ev).is_file())):
+diff --git a/tools/test_cep_gen2_tranche.py b/tools/test_cep_gen2_tranche.py
+index b6fcf1ba..8bd8bf59 100644
+--- a/tools/test_cep_gen2_tranche.py
++++ b/tools/test_cep_gen2_tranche.py
+@@ -128,5 +128,73 @@ with tempfile.TemporaryDirectory() as tmp:
+             sys.modules["tranche_driver"] = saved
+         (d / "t-tranche.json").unlink(missing_ok=True)
+ 
++# ---- V-CEP2-CI-*: opt-in Cognitive CI clauses (manifest `ci`) ----
++import os, shutil, subprocess  # noqa: E402
++if not shutil.which("git"):
++    os.environ["PATH"] += os.pathsep + r"C:\Program Files\Git\cmd"
++
++
++def run_ci(root, results, ci=None, manifest=None):
++    d = root / cg.TRANCHE_DIR
++    mf = d / "t-tranche.json"
++    d.mkdir(parents=True, exist_ok=True)
++    mf.unlink(missing_ok=True)
++    m = manifest if manifest is not None else ({"ci": ci} if ci is not None else None)
++    if m is not None:
++        mf.write_text(json.dumps(m), encoding="utf-8")
++    try:
++        return run(root, results)
++    finally:
++        mf.unlink(missing_ok=True)
++
++
++def red(out, rc, clause):
++    return rc == 1 and f"CLAUSE {clause} FAIL" in out
++
++
++with tempfile.TemporaryDirectory() as tmp:
++    root = Path(tmp)
++    base = cg._fixture(root)
++    (root / "r.md").write_text("receipt\n", encoding="utf-8")
++    good = {"steps": {"S1": {"verdict": "PASS", "receipt": "r.md", "sid": "x", "spend": 100, "cap": 1000}},
++            "coordinator_spend": 100, "cap": 1000, "owned_units": ["A"],
++            "clauses": {"c1": {"status": "PASS", "evidence": "r.md"}}}
++    run(root, good, base)
++    rc0, o0 = run(root, good)
++    rc1, o1 = run_ci(root, good, manifest={})
++    gate("V-CEP2-CI-NO-CI-IDENTICAL", rc0 == rc1 == 0 and o0 == o1 and "meta_work" not in o0, o0 + o1)
++    rc, out = run_ci(root, good, {"meta_work_max": 0.6})
++    gate("V-CEP2-CI-META-GREEN", rc == 0 and "CLAUSE meta_work PASS share=0.500" in out, out)
++    rc, out = run_ci(root, good, {"meta_work_max": 0.3})
++    gate("V-CEP2-CI-META-RED", red(out, rc, "meta_work") and "share=0.500" in out, out)
++    r = copy.deepcopy(good); r["coordinator_spend"] = None
++    rc, out = run_ci(root, r, {"meta_work_max": 0.9})
++    gate("V-CEP2-CI-META-UNMEASURED", red(out, rc, "meta_work") and "meta-work unmeasured" in out, out)
++    rc, out = run_ci(root, good, {"incident_ratio": 2})
++    gate("V-CEP2-CI-INCIDENT-GREEN", rc == 0 and "CLAUSE token_incident PASS 0 outliers" in out, out)
++    r = copy.deepcopy(good); r["steps"]["S1"]["spend"] = 5000; r["cap"] = 10 ** 6
++    rc, out = run_ci(root, r, {"incident_ratio": 2})
++    gate("V-CEP2-CI-INCIDENT-RED", red(out, rc, "token_incident") and "unrecorded: S1" in out, out)
++    (root / "inc.md").write_text("incident\n", encoding="utf-8")
++    rc, out = run_ci(root, r, {"incident_ratio": 2, "incidents": {"S1": "inc.md"}})
++    gate("V-CEP2-CI-INCIDENT-RECORDED-GREEN", rc == 0 and "CLAUSE token_incident PASS 1 outliers" in out, out)
++    r = copy.deepcopy(good); del r["steps"]["S1"]["cap"]
++    rc, out = run_ci(root, r, {"incident_ratio": 2})
++    gate("V-CEP2-CI-INCIDENT-UNMEASURED", red(out, rc, "token_incident") and "unmeasured: S1" in out, out)
++    # hot_token_delta in a temp git repo
++    git = lambda *a: subprocess.run(["git", "-C", str(root), *a], capture_output=True, check=True)
++    git("init", "-q"); git("config", "user.email", "t@t"); git("config", "user.name", "t")
++    (root / "hot.md").write_text("x" * 50, encoding="utf-8")
++    git("add", "hot.md"); git("commit", "-qm", "base")
++    sha = git("rev-parse", "HEAD").stdout.decode().strip()
++    ci = {"hot_base": sha, "hot_files": ["hot.md"]}
++    rc, out = run_ci(root, good, ci)
++    gate("V-CEP2-CI-HOT-GREEN", rc == 0 and f"CLAUSE hot_token_delta PASS delta=0 max=0 base={sha[:7]}" in out, out)
++    (root / "hot.md").write_text("x" * 80, encoding="utf-8")
++    rc, out = run_ci(root, good, ci)
++    gate("V-CEP2-CI-HOT-RED", red(out, rc, "hot_token_delta") and "delta=30" in out, out)
++    rc, out = run_ci(root, good, {**ci, "hot_base": "deadbeef0000"})
++    gate("V-CEP2-CI-HOT-UNMEASURED", red(out, rc, "hot_token_delta") and "unmeasured: hot.md" in out, out)
++
+ print(f"CEP2_TRANCHE_TEST_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
+ sys.exit(0 if fails == 0 else 1)
