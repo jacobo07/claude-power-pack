@@ -91,7 +91,31 @@ P3b-2 RUN 2026-10-09/10 (main pane, Owner "a" = accept; the bundle path re-judge
    PROMOTE DONE 2026-10-10 (free 2528 MB): p3b2_finish.py rc=0. promoted=294 rows=34159 ledger_sha256=0c247d0d...;
    SRC_PROVEN 5 -> 294 (rise 289), PROMOTED_NOT_PROVEN=0, SEALED_LOST=[], PROVEN_VIA_BUNDLE=294/294,
    POST_IMPACT_DRIFTING=0, P3B2_CHECK=PASS. Not yet run: test_levels.py and test_levels_revalidate.py.
-   DGL CONFLICT: Apps\pp-dgl chain.json W7 = this same P3b-2 (waits for W6 + D2-owner.md). It must become verify-only or be
+   POST-PROMOTE GATES 2026-10-10 (Owner "do the 5 items"):
+   - test_levels.py LEVELS_DRILL=45/45 (recon f554a7d: stale literals 5 -> 294; g_src on an empty bundle dir; new
+     V-LVL-SRC-FIVE-BUNDLE-PROVEN). The local compile path re-ran the 5 under the current match.py: PROVEN, MATCH, 100.0.
+   - test_p3b.py P3B_DRILL=10/10 (f554a7d). The IMPACT control now requires drift == [] on all 294; red control on the
+     pre-P3b-2 ledger -> 5 drifting.
+   - test_levels_revalidate.py REVALIDATE_DRILL=10/16, red. ROADMAP Phase 3 is NOT ticked.
+     (1) GENUINE: V-REVAL-CLEAN-REAL drifted 190 = SRC-UNKNOWN rows with STRUCT/SEM records whose producer identity moved.
+         levels.py changed (dcd9178 3a, 4e7d8e7 3b-1) and so did m2c_producer.py; every STRUCT/SEM producer hashes
+         levels.py. Dry run on a scratch copy (scratchpad reval_dry): RECONFIRMED 84, DEMOTED 80, CHANGED 26;
+         STRUCT PROVEN->HYPOTHESIS 80, SEM HYPOTHESIS->UNKNOWN 48. NOT applied. OWNER: apply revalidate (demote 80/48), or
+         re-run the STRUCT/SEM producers at current code first (likely keeps them). V-REVAL-HAND-EDITED fails on the same 190.
+     (2) STALE vs the 3a seam: COMPILER/SPLIT/ORACLE/SOURCE-DRIFT expect the 5 SRC rows to follow LOCAL inputs. A present
+         GEX44 bundle decides alone, so they stay PROVEN. Fix like g_src (empty bundle dir). The ORACLE gate also trips on
+         (3).
+     (3) DEFECT: check_src evidence shape differs by path. levels.py:1256 (bundle) stores match_py = {verdict,
+         reloc_verified}; :1303 (compile) stores match_py = "MATCH" plus a separate reloc_verified. The 294 promoted rows
+         carry the dict. Normalising means a levels.py edit plus a re-promote of 294 (which itself moves producer identity
+         again; see (1)). Decide with (1).
+   - Item 1 C1: bench.py and test_bench.py landed on keosdtk-home as recon 9929c29 (BENCH_DRILL 8/8). The cp50-c1 commit
+     was refused by that tree's .ksr_vault snapshot gate; the files were copied byte-identical. The cp50-c1 branch still
+     holds them staged.
+   - Item 2 dgl W7 VERIFY-ONLY (pp-dgl 11dce048; D2-owner.md original kept, outcome appended).
+   - Item 3 gsdx W3 accepted PARTIAL, superseded by dgl; REC-* retired; PLAN-2 corrected (gsdx 0b05acb7). PLAN-2 then ran
+     (m-5ba76aa8071e) and compiled AG2R + W4 + PLAN-3 (6ebb88f1), with no recon unit.
+   DGL CONFLICT (RESOLVED by item 2): Apps\pp-dgl chain.json W7 = this same P3b-2 (waits for W6 + D2-owner.md). It must become verify-only or be
    removed, otherwise it will re-send and spend the last RF Phase 3 job. Do not create D2-owner.md without that change.
 OLD NEXT: when gen3/P3b1-receipt.md lands, read it, check the drill (V-P3B-* all PASS) and the CAPSULE= and BUILD= lines,
    then run P3b-2 from the main pane (sequence in the 03b-01-SUMMARY).

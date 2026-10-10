@@ -165,6 +165,20 @@ cost, so the remaining forecast is not trustworthy until W4 reforecasts it.
    repatriate -> records). It is absent; bench.py refuses ARM_EXECUTOR_ABSENT (C1-receipt.md:24). C2 needs RF Phase 7
    jobs (cap 4, recon 0d400fd) and RF_CURRENT_PHASE 7 at its first send.
 
+## 7b. Status of the 5 items (Owner "do the 5 items", same day)
+
+| # | Item | Result | Commit |
+|---|---|---|---|
+| 1 | C1 bench into keosdtk-home | DONE (BENCH_DRILL 8/8). The cp50-c1 commit was refused by that tree's `.ksr_vault` snapshot gate, so the files were copied byte-identical into keosdtk-home | recon 9929c29 |
+| 2 | dgl W7 | DONE: verify-only; D2-owner.md original kept, outcome appended | pp-dgl 11dce048 |
+| 3 | gsdx W3 | DONE: PARTIAL accepted, superseded by dgl; REC-* retired; PLAN-2 corrected. PLAN-2 then ran: AG2R + W4 + PLAN-3, no recon unit | gsdx 0b05acb7, 6ebb88f1 |
+| 4 | test_levels + revalidate, then tick Phase 3 | test_levels 45/45; revalidate **10/16 RED** (190-row producer drift + 3a-seam stale gates + an evidence-shape defect). **Phase 3 NOT ticked** | recon f554a7d |
+| 5 | IMPACT gate | DONE: the control requires drift == []; red control shown; P3B_DRILL 10/10 | recon f554a7d |
+
+Owner decision now open: the 190 drifted rows (dry run: STRUCT PROVEN->HYPOTHESIS 80, SEM HYPOTHESIS->UNKNOWN 48).
+Apply revalidate as is, or re-run the STRUCT/SEM producers at current code first. Detail: P3B-RESUMPTION.md
+"POST-PROMOTE GATES".
+
 ## 8. Next 3 actions
 
 1. Commit bench.py and test_bench.py in wt_cp50_c1 (pathspec, `git -C`), then merge cp50-c1 into keosdtk-home (bench
