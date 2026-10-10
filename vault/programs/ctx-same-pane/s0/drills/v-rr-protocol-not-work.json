@@ -1,0 +1,8 @@
+{
+  "file": "C:/Users/User/Apps/pp-ctx-same-pane/tools/rollover_replay.py",
+  "test": "C:/Users/User/Apps/pp-ctx-same-pane/tools/test_rollover_replay.py",
+  "repo_root": "C:/Users/User/Apps/pp-ctx-same-pane",
+  "gate": "V-RR-PROTOCOL-NOT-WORK",
+  "old": "\"protocol_overhead\": sum(tr[\"ctx\"][:cc]) if cc else None})",
+  "new": "\"protocol_overhead\": sum(tr[\"ctx\"][:fm - 1]) if fm else None})"
+}

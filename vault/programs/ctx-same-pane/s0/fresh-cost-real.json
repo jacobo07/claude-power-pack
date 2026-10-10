@@ -1,0 +1,3046 @@
+{
+ "verdict": "MEASURED",
+ "ledger": "C:\\Users\\User\\.claude\\state\\rollover\\rollover-ledger.jsonl",
+ "torn_rows": 6,
+ "certified": 301,
+ "missing_claim": [],
+ "missing_transcript": [
+  "drill-successor-A"
+ ],
+ "no_mutation": 6,
+ "first_ctx": {
+  "n": 300,
+  "p10": 113889,
+  "p50": 123387,
+  "p90": 138260
+ },
+ "calls_to_first_mutation": {
+  "n": 294,
+  "p10": 7,
+  "p50": 14,
+  "p90": 27
+ },
+ "carried_before_first_mutation": {
+  "n": 294,
+  "p10": 784323,
+  "p50": 1801735,
+  "p90": 4172439
+ },
+ "calls_to_certify": {
+  "n": 298,
+  "p10": 3,
+  "p50": 3,
+  "p90": 5
+ },
+ "protocol_overhead": {
+  "n": 298,
+  "p10": 353401,
+  "p50": 387598,
+  "p90": 593098
+ },
+ "no_certify_call": 2,
+ "bound": "calls before the first mutation include real work: an UPPER bound on rehydration",
+ "decide_assumes": "fresh = floor + capsule chars / 4 (rollover.decide), no rehydration term",
+ "samples": [
+  {
+   "predecessor": "b56ffff2-4998-426c-8a6b-ebb803d4ec8b",
+   "successor": "4bb2abf7-25f0-4cba-8ec8-36ef2c721e4d",
+   "first_ctx": 175670,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 197715,
+   "carried_before_first_mutation": 1641138,
+   "calls_to_certify": 3,
+   "protocol_overhead": 534449
+  },
+  {
+   "predecessor": "a25f7143-cbf4-4241-86c3-b30eb2090481",
+   "successor": "c3d8927a-5e8c-4646-8e6c-32f42d7089f6",
+   "first_ctx": 174348,
+   "calls_to_first_mutation": 18,
+   "ctx_at_first_mutation": 217431,
+   "carried_before_first_mutation": 3275416,
+   "calls_to_certify": 3,
+   "protocol_overhead": 526833
+  },
+  {
+   "predecessor": "68553ff0-949f-46d1-8a78-ad08f845202a",
+   "successor": "72012a02-c6c2-4819-abfe-022c111b5e10",
+   "first_ctx": 175175,
+   "calls_to_first_mutation": 25,
+   "ctx_at_first_mutation": 221010,
+   "carried_before_first_mutation": 4528812,
+   "calls_to_certify": 6,
+   "protocol_overhead": 1072718
+  },
+  {
+   "predecessor": "8167513f-254a-45bc-9040-449eb74d4fa2",
+   "successor": "ce6166f9-4fdb-4c1b-89c3-3a4c703bda41",
+   "first_ctx": 175286,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 215111,
+   "carried_before_first_mutation": 2519916,
+   "calls_to_certify": 7,
+   "protocol_overhead": 1274992
+  },
+  {
+   "predecessor": "f8a4fb6d-ee83-4475-89ff-9188232b5304",
+   "successor": "e0e1a7a9-2500-4680-98a4-0c46ef1cea39",
+   "first_ctx": 181898,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 214200,
+   "carried_before_first_mutation": 3879820,
+   "calls_to_certify": 33,
+   "protocol_overhead": 6776092
+  },
+  {
+   "predecessor": "ea725130-68e0-4dde-9eba-b50ac8314c20",
+   "successor": "bb280e67-63ee-4644-9e9b-29076c4246d6",
+   "first_ctx": 184624,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 219501,
+   "carried_before_first_mutation": 4043577,
+   "calls_to_certify": 4,
+   "protocol_overhead": 746525
+  },
+  {
+   "predecessor": "6e1bd0d2-c5af-4f61-8a30-c305813d3f7f",
+   "successor": "bb354a68-8d12-42cd-90cf-82e5cd9a262b",
+   "first_ctx": 174482,
+   "calls_to_first_mutation": 23,
+   "ctx_at_first_mutation": 222622,
+   "carried_before_first_mutation": 4136793,
+   "calls_to_certify": 4,
+   "protocol_overhead": 706150
+  },
+  {
+   "predecessor": "26ff693c-b97b-4dc1-a00e-dda4f56c40c8",
+   "successor": "d9ca4aa6-3d5c-4c12-96ec-43985f7aa485",
+   "first_ctx": 154547,
+   "calls_to_first_mutation": 29,
+   "ctx_at_first_mutation": 193197,
+   "carried_before_first_mutation": 4826155,
+   "calls_to_certify": 3,
+   "protocol_overhead": 467775
+  },
+  {
+   "predecessor": "fe1c49ea-6018-4345-9b57-8fea78d5e4a5",
+   "successor": "e9d6887e-d36d-41a8-8061-dd6267014f8b",
+   "first_ctx": 160496,
+   "calls_to_first_mutation": 49,
+   "ctx_at_first_mutation": 258319,
+   "carried_before_first_mutation": 9716172,
+   "calls_to_certify": 28,
+   "protocol_overhead": 5044205
+  },
+  {
+   "predecessor": "e0ce5f5a-731d-4403-aac5-2a4a98be5fc9",
+   "successor": "75741725-efbe-4629-aa2a-463a1a97ac62",
+   "first_ctx": 136051,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 166096,
+   "carried_before_first_mutation": 1661251,
+   "calls_to_certify": 3,
+   "protocol_overhead": 417319
+  },
+  {
+   "predecessor": "ea5c9025-2aca-4344-b2bb-f970dfb636f3",
+   "successor": "4e7d09bc-9f8f-4e77-9847-ff1754ab3a54",
+   "first_ctx": 147781,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 178677,
+   "carried_before_first_mutation": 2277004,
+   "calls_to_certify": 25,
+   "protocol_overhead": 4316840
+  },
+  {
+   "predecessor": "1a73990c-b9fb-4678-a76a-a72fee873f30",
+   "successor": "e1606438-c711-40f1-b023-3890660d52d5",
+   "first_ctx": 143891,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 162618,
+   "carried_before_first_mutation": 1506855,
+   "calls_to_certify": 3,
+   "protocol_overhead": 435790
+  },
+  {
+   "predecessor": "75741725-efbe-4629-aa2a-463a1a97ac62",
+   "successor": "250f8939-fe28-4c50-bcd4-22f761a34267",
+   "first_ctx": 137057,
+   "calls_to_first_mutation": 64,
+   "ctx_at_first_mutation": 237880,
+   "carried_before_first_mutation": 11746614,
+   "calls_to_certify": 3,
+   "protocol_overhead": 419517
+  },
+  {
+   "predecessor": "357823a8-3254-4a8e-b0f5-29fc137a31ca",
+   "successor": "a15bd244-abd6-48dd-a763-2da3fc52e2e5",
+   "first_ctx": 147648,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 190379,
+   "carried_before_first_mutation": 2559457,
+   "calls_to_certify": 7,
+   "protocol_overhead": 1063085
+  },
+  {
+   "predecessor": "4e7d09bc-9f8f-4e77-9847-ff1754ab3a54",
+   "successor": "cf02a0a5-b15d-48cb-9e88-f6bfc397e68f",
+   "first_ctx": 147972,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 157281,
+   "carried_before_first_mutation": 1530187,
+   "calls_to_certify": 3,
+   "protocol_overhead": 448925
+  },
+  {
+   "predecessor": "f8ea8727-a465-4ddd-aa72-4f39ad0e2f8d",
+   "successor": "0a45234c-feb0-4bef-aa5e-0be123117afc",
+   "first_ctx": 134366,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 154560,
+   "carried_before_first_mutation": 984635,
+   "calls_to_certify": 4,
+   "protocol_overhead": 551134
+  },
+  {
+   "predecessor": "0d70959b-2417-4588-b8a3-dbe6d850ab56",
+   "successor": "22fe40bb-25da-4852-8912-f7ba251b8996",
+   "first_ctx": 143137,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 200096,
+   "carried_before_first_mutation": 4346347,
+   "calls_to_certify": 3,
+   "protocol_overhead": 434802
+  },
+  {
+   "predecessor": "a15bd244-abd6-48dd-a763-2da3fc52e2e5",
+   "successor": "27205d07-12ef-490d-bc91-87e9400ba163",
+   "first_ctx": 148517,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 157387,
+   "carried_before_first_mutation": 1072431,
+   "calls_to_certify": 3,
+   "protocol_overhead": 451670
+  },
+  {
+   "predecessor": "e1606438-c711-40f1-b023-3890660d52d5",
+   "successor": "f1a953f7-4ab9-488b-9722-23d091f31a7d",
+   "first_ctx": 143717,
+   "calls_to_first_mutation": 43,
+   "ctx_at_first_mutation": 229473,
+   "carried_before_first_mutation": 7439387,
+   "calls_to_certify": 3,
+   "protocol_overhead": 436056
+  },
+  {
+   "predecessor": "0fac99fe-4f11-4c53-95b5-d5becaa7ecfd",
+   "successor": "1ac9e12e-2ba8-427e-bc88-d8e80cceaaa5",
+   "first_ctx": 144889,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 165526,
+   "carried_before_first_mutation": 1687954,
+   "calls_to_certify": 3,
+   "protocol_overhead": 440349
+  },
+  {
+   "predecessor": "b55f347b-43d0-4d97-bc69-f8fa49561683",
+   "successor": "ec9aba75-b3d5-445e-918d-52cb910f0c55",
+   "first_ctx": 138079,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 157103,
+   "carried_before_first_mutation": 1925752,
+   "calls_to_certify": 3,
+   "protocol_overhead": 422102
+  },
+  {
+   "predecessor": "3a2bfcf4-8c74-48a6-b1d1-42d72c2d908a",
+   "successor": "b2567fc8-e1b0-4137-9dab-03afbe1968ea",
+   "first_ctx": 144855,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 187908,
+   "carried_before_first_mutation": 4172439,
+   "calls_to_certify": 37,
+   "protocol_overhead": 6492413
+  },
+  {
+   "predecessor": "e9d6887e-d36d-41a8-8061-dd6267014f8b",
+   "successor": "435014d6-d8ed-448d-a7f1-bb4b9d6c0e7f",
+   "first_ctx": 155353,
+   "calls_to_first_mutation": 28,
+   "ctx_at_first_mutation": 190997,
+   "carried_before_first_mutation": 4673836,
+   "calls_to_certify": 67,
+   "protocol_overhead": 13348810
+  },
+  {
+   "predecessor": "0a45234c-feb0-4bef-aa5e-0be123117afc",
+   "successor": "9239b9ae-d045-49bd-85e3-8ebcb925c9b7",
+   "first_ctx": 135068,
+   "calls_to_first_mutation": 30,
+   "ctx_at_first_mutation": 204136,
+   "carried_before_first_mutation": 4986689,
+   "calls_to_certify": 3,
+   "protocol_overhead": 409640
+  },
+  {
+   "predecessor": "ec9aba75-b3d5-445e-918d-52cb910f0c55",
+   "successor": "ae7c975b-f551-43d1-995f-b06e106375ce",
+   "first_ctx": 139743,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 156873,
+   "carried_before_first_mutation": 1777089,
+   "calls_to_certify": 3,
+   "protocol_overhead": 425017
+  },
+  {
+   "predecessor": "22fe40bb-25da-4852-8912-f7ba251b8996",
+   "successor": "70b33212-736e-4257-bb82-580f39e9ce0e",
+   "first_ctx": 144673,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 182267,
+   "carried_before_first_mutation": 2285596,
+   "calls_to_certify": 3,
+   "protocol_overhead": 440712
+  },
+  {
+   "predecessor": "27205d07-12ef-490d-bc91-87e9400ba163",
+   "successor": "c41bb842-16cd-4e3a-b5f9-a455c1b1eac8",
+   "first_ctx": 147286,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 157100,
+   "carried_before_first_mutation": 608233,
+   "calls_to_certify": 3,
+   "protocol_overhead": 451928
+  },
+  {
+   "predecessor": "f1a953f7-4ab9-488b-9722-23d091f31a7d",
+   "successor": "7e9f625a-a628-46b9-9f5e-4bbec0389bc7",
+   "first_ctx": 144092,
+   "calls_to_first_mutation": 43,
+   "ctx_at_first_mutation": 216901,
+   "carried_before_first_mutation": 7482606,
+   "calls_to_certify": 3,
+   "protocol_overhead": 436262
+  },
+  {
+   "predecessor": "b2567fc8-e1b0-4137-9dab-03afbe1968ea",
+   "successor": "f3b5ff1d-bcf0-435b-be67-8ffde55aee14",
+   "first_ctx": 145954,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 160498,
+   "carried_before_first_mutation": 1216642,
+   "calls_to_certify": 3,
+   "protocol_overhead": 443937
+  },
+  {
+   "predecessor": "cf02a0a5-b15d-48cb-9e88-f6bfc397e68f",
+   "successor": "7e953f9d-0bf2-444b-afeb-d2d0944b34d4",
+   "first_ctx": 143939,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 201959,
+   "carried_before_first_mutation": 4272161,
+   "calls_to_certify": 4,
+   "protocol_overhead": 584802
+  },
+  {
+   "predecessor": "9239b9ae-d045-49bd-85e3-8ebcb925c9b7",
+   "successor": "691c6a19-f182-4f72-a5ba-dd196d27c8ef",
+   "first_ctx": 135215,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 157700,
+   "carried_before_first_mutation": 2616616,
+   "calls_to_certify": 3,
+   "protocol_overhead": 410365
+  },
+  {
+   "predecessor": "70b33212-736e-4257-bb82-580f39e9ce0e",
+   "successor": "865fd41e-0baf-40c7-8a5d-72479422aac2",
+   "first_ctx": 142382,
+   "calls_to_first_mutation": 23,
+   "ctx_at_first_mutation": 186002,
+   "carried_before_first_mutation": 3579453,
+   "calls_to_certify": 4,
+   "protocol_overhead": 582683
+  },
+  {
+   "predecessor": "73da976d-d1c7-40dd-9430-8a9d6dfd1a97",
+   "successor": "4938b2ae-72fb-496e-a44c-8108b27bd652",
+   "first_ctx": 124489,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 168039,
+   "carried_before_first_mutation": 1914563,
+   "calls_to_certify": 3,
+   "protocol_overhead": 378743
+  },
+  {
+   "predecessor": "f3b5ff1d-bcf0-435b-be67-8ffde55aee14",
+   "successor": "a4849588-c831-4b88-95d9-bd3a47e2c8c0",
+   "first_ctx": 125115,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 144268,
+   "carried_before_first_mutation": 1072323,
+   "calls_to_certify": 12,
+   "protocol_overhead": 1661055
+  },
+  {
+   "predecessor": "7e9f625a-a628-46b9-9f5e-4bbec0389bc7",
+   "successor": "9a0391b8-70ab-413d-a121-e9c52d349ab0",
+   "first_ctx": 121146,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 141290,
+   "carried_before_first_mutation": 2393052,
+   "calls_to_certify": 3,
+   "protocol_overhead": 369518
+  },
+  {
+   "predecessor": "d9ca4aa6-3d5c-4c12-96ec-43985f7aa485",
+   "successor": "d5579551-a784-419e-9b30-f98b75086b43",
+   "first_ctx": 125494,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 183542,
+   "carried_before_first_mutation": 3959038,
+   "calls_to_certify": 3,
+   "protocol_overhead": 383522
+  },
+  {
+   "predecessor": "c41bb842-16cd-4e3a-b5f9-a455c1b1eac8",
+   "successor": "e56b34b4-285a-421d-bf26-75a75f589044",
+   "first_ctx": 123730,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 145770,
+   "carried_before_first_mutation": 1353342,
+   "calls_to_certify": 3,
+   "protocol_overhead": 382147
+  },
+  {
+   "predecessor": "b0d83764-280c-4ef8-9c0a-109be3c6e7a4",
+   "successor": "5fb53f17-962e-47af-b85e-8cfbcd206f94",
+   "first_ctx": 128991,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 156846,
+   "carried_before_first_mutation": 1681874,
+   "calls_to_certify": 3,
+   "protocol_overhead": 393623
+  },
+  {
+   "predecessor": "ae7c975b-f551-43d1-995f-b06e106375ce",
+   "successor": "f428c5ad-d0b5-4c64-b1b3-5c0af773d103",
+   "first_ctx": 113233,
+   "calls_to_first_mutation": 35,
+   "ctx_at_first_mutation": 181217,
+   "carried_before_first_mutation": 4819271,
+   "calls_to_certify": 3,
+   "protocol_overhead": 349918
+  },
+  {
+   "predecessor": "1ac9e12e-2ba8-427e-bc88-d8e80cceaaa5",
+   "successor": "f43a63cb-076c-4224-ae30-3b3feca7af3a",
+   "first_ctx": 119201,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 128676,
+   "carried_before_first_mutation": 868491,
+   "calls_to_certify": 3,
+   "protocol_overhead": 362367
+  },
+  {
+   "predecessor": "00f111bb-3e85-47ab-aaca-c1d6aee33cb6",
+   "successor": "3990ecbc-f165-40df-bc25-cc06f89c14b3",
+   "first_ctx": 118148,
+   "calls_to_first_mutation": null,
+   "ctx_at_first_mutation": null,
+   "carried_before_first_mutation": null,
+   "calls_to_certify": 3,
+   "protocol_overhead": 358620
+  },
+  {
+   "predecessor": "72fd101d-c806-4836-abc7-f7b67330d56c",
+   "successor": "fd67ef8e-d505-405e-90b2-ac7d058fecd4",
+   "first_ctx": 123684,
+   "calls_to_first_mutation": 31,
+   "ctx_at_first_mutation": 200389,
+   "carried_before_first_mutation": 4591010,
+   "calls_to_certify": 3,
+   "protocol_overhead": 376161
+  },
+  {
+   "predecessor": "865fd41e-0baf-40c7-8a5d-72479422aac2",
+   "successor": "6fa8e4c1-13aa-452f-a59b-da629af893f1",
+   "first_ctx": 119188,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 138406,
+   "carried_before_first_mutation": 1417885,
+   "calls_to_certify": 5,
+   "protocol_overhead": 618402
+  },
+  {
+   "predecessor": "691c6a19-f182-4f72-a5ba-dd196d27c8ef",
+   "successor": "d4919c01-ef3e-424c-ae08-3e1d1625d6b6",
+   "first_ctx": 113340,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 137258,
+   "carried_before_first_mutation": 1492310,
+   "calls_to_certify": 3,
+   "protocol_overhead": 345546
+  },
+  {
+   "predecessor": "e06381e2-d70e-424e-a0ef-61bb9f4443f5",
+   "successor": "624f4750-0025-4c9e-91e5-c102be9d6a8d",
+   "first_ctx": 131306,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 165899,
+   "carried_before_first_mutation": 1451384,
+   "calls_to_certify": 3,
+   "protocol_overhead": 403984
+  },
+  {
+   "predecessor": "e42f9614-d86e-4721-8b31-17348ca516ad",
+   "successor": "0518ccd0-2321-47d8-a8fe-77f1b1665e82",
+   "first_ctx": 130130,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 169304,
+   "carried_before_first_mutation": 3011863,
+   "calls_to_certify": 3,
+   "protocol_overhead": 403183
+  },
+  {
+   "predecessor": "e56b34b4-285a-421d-bf26-75a75f589044",
+   "successor": "a9ae0076-6745-4e6e-8c85-58f122a8e709",
+   "first_ctx": 123557,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 154117,
+   "carried_before_first_mutation": 1903416,
+   "calls_to_certify": 10,
+   "protocol_overhead": 1310773
+  },
+  {
+   "predecessor": "83135faa-d656-4976-ae43-138c957aad33",
+   "successor": "6bb69636-a85b-4d59-84ed-ef52b5381ab5",
+   "first_ctx": 129461,
+   "calls_to_first_mutation": null,
+   "ctx_at_first_mutation": null,
+   "carried_before_first_mutation": null,
+   "calls_to_certify": 3,
+   "protocol_overhead": 392286
+  },
+  {
+   "predecessor": "9a0391b8-70ab-413d-a121-e9c52d349ab0",
+   "successor": "60776431-6839-40fe-9736-baace1a45ad3",
+   "first_ctx": 118171,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 131843,
+   "carried_before_first_mutation": 617414,
+   "calls_to_certify": 14,
+   "protocol_overhead": 1943297
+  },
+  {
+   "predecessor": "f428c5ad-d0b5-4c64-b1b3-5c0af773d103",
+   "successor": "c4f1031c-dd9e-491c-9f25-e82b95b861d8",
+   "first_ctx": 112947,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 131041,
+   "carried_before_first_mutation": 1441559,
+   "calls_to_certify": 3,
+   "protocol_overhead": 344190
+  },
+  {
+   "predecessor": "c32380e9-9380-4a73-b2fa-864bd74d0bf8",
+   "successor": "eb0d301c-071e-47ba-970b-33be06fcdcc8",
+   "first_ctx": 126642,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 137335,
+   "carried_before_first_mutation": 928403,
+   "calls_to_certify": 3,
+   "protocol_overhead": 388113
+  },
+  {
+   "predecessor": "0518ccd0-2321-47d8-a8fe-77f1b1665e82",
+   "successor": "31ab653e-0f6c-49f9-ae0d-c9ede4a21412",
+   "first_ctx": 134109,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 178817,
+   "carried_before_first_mutation": 2454866,
+   "calls_to_certify": 4,
+   "protocol_overhead": 553164
+  },
+  {
+   "predecessor": "2b8a8bfc-1d54-49bf-94d3-fbcb0664f21d",
+   "successor": "61c014d6-7ec7-4f09-8c90-1aedb7535907",
+   "first_ctx": 119358,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 145718,
+   "carried_before_first_mutation": 2763996,
+   "calls_to_certify": 4,
+   "protocol_overhead": 484766
+  },
+  {
+   "predecessor": "a4849588-c831-4b88-95d9-bd3a47e2c8c0",
+   "successor": "7e4bd310-5faa-4369-8424-0e93a46bde2f",
+   "first_ctx": 117522,
+   "calls_to_first_mutation": 38,
+   "ctx_at_first_mutation": 190101,
+   "carried_before_first_mutation": 5731783,
+   "calls_to_certify": 4,
+   "protocol_overhead": 481936
+  },
+  {
+   "predecessor": "f3099e7b-20d5-4a6e-a88d-b8c6af4c915f",
+   "successor": "614697c1-c9f6-428f-9758-119411e4fef1",
+   "first_ctx": 128952,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 169473,
+   "carried_before_first_mutation": 2371828,
+   "calls_to_certify": 44,
+   "protocol_overhead": 7596642
+  },
+  {
+   "predecessor": "b52727c3-214c-48f0-a53a-5585c482bcb2",
+   "successor": "bf89cbb9-1e3a-4b60-815b-9ff6c8464706",
+   "first_ctx": 128904,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 166308,
+   "carried_before_first_mutation": 2309398,
+   "calls_to_certify": 4,
+   "protocol_overhead": 523196
+  },
+  {
+   "predecessor": "5fb53f17-962e-47af-b85e-8cfbcd206f94",
+   "successor": "b4ce165c-1443-47dc-bd5b-0a0ee17c164d",
+   "first_ctx": 131673,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 142402,
+   "carried_before_first_mutation": 1086475,
+   "calls_to_certify": 3,
+   "protocol_overhead": 398467
+  },
+  {
+   "predecessor": "6fa8e4c1-13aa-452f-a59b-da629af893f1",
+   "successor": "837b9994-4c45-46f6-82e8-8f8e31c22c7f",
+   "first_ctx": 121295,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 155388,
+   "carried_before_first_mutation": 1223686,
+   "calls_to_certify": 3,
+   "protocol_overhead": 373660
+  },
+  {
+   "predecessor": "961c981d-973d-47be-affd-d3d93a11025f",
+   "successor": "0871dbe3-345f-4461-b3c8-14d236804b05",
+   "first_ctx": 127554,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 153605,
+   "carried_before_first_mutation": 2274258,
+   "calls_to_certify": 3,
+   "protocol_overhead": 386799
+  },
+  {
+   "predecessor": "61c014d6-7ec7-4f09-8c90-1aedb7535907",
+   "successor": "61a64b8e-a2f7-4c1d-9169-714f1e4d2566",
+   "first_ctx": 119904,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 126544,
+   "carried_before_first_mutation": 487933,
+   "calls_to_certify": 3,
+   "protocol_overhead": 364287
+  },
+  {
+   "predecessor": "5b46e055-e94c-4e11-bceb-49e8e7cc0333",
+   "successor": "d3e92cda-7dd7-4f0b-9835-463a293ac943",
+   "first_ctx": 130595,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 139983,
+   "carried_before_first_mutation": 665387,
+   "calls_to_certify": 4,
+   "protocol_overhead": 530185
+  },
+  {
+   "predecessor": "bf89cbb9-1e3a-4b60-815b-9ff6c8464706",
+   "successor": "66f6a312-e7dc-4a20-b44d-73271ac810e6",
+   "first_ctx": 123432,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 151552,
+   "carried_before_first_mutation": 2186500,
+   "calls_to_certify": 23,
+   "protocol_overhead": 3277531
+  },
+  {
+   "predecessor": "7e4bd310-5faa-4369-8424-0e93a46bde2f",
+   "successor": "b5a94e97-9a87-4658-ba26-3f0cfdadf846",
+   "first_ctx": 117596,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 129720,
+   "carried_before_first_mutation": 1097340,
+   "calls_to_certify": 4,
+   "protocol_overhead": 477072
+  },
+  {
+   "predecessor": "d64d2f98-dc3c-44ae-b2e1-996d312f77c7",
+   "successor": "58421b93-1334-4bd4-9827-4406bcd348f3",
+   "first_ctx": 127817,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 166642,
+   "carried_before_first_mutation": 1627228,
+   "calls_to_certify": 3,
+   "protocol_overhead": 397318
+  },
+  {
+   "predecessor": "31ab653e-0f6c-49f9-ae0d-c9ede4a21412",
+   "successor": "288acbc5-5204-454d-92bd-722f2cb5e784",
+   "first_ctx": 131824,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 142944,
+   "carried_before_first_mutation": 1249408,
+   "calls_to_certify": 3,
+   "protocol_overhead": 403440
+  },
+  {
+   "predecessor": "d8e19505-9021-480a-b67f-771edb7635b5",
+   "successor": "84055149-568e-4fa2-b041-129083f4ac6e",
+   "first_ctx": 122860,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 193953,
+   "carried_before_first_mutation": 2507799,
+   "calls_to_certify": 3,
+   "protocol_overhead": 377152
+  },
+  {
+   "predecessor": "624f4750-0025-4c9e-91e5-c102be9d6a8d",
+   "successor": "62f6a1a7-7d92-4260-a442-f8eb16d45ee7",
+   "first_ctx": 131470,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 155572,
+   "carried_before_first_mutation": 997162,
+   "calls_to_certify": 3,
+   "protocol_overhead": 400209
+  },
+  {
+   "predecessor": "c4f1031c-dd9e-491c-9f25-e82b95b861d8",
+   "successor": "2e06d67e-b6c4-440a-8eb0-2654a73c39bb",
+   "first_ctx": 113889,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 164697,
+   "carried_before_first_mutation": 2851630,
+   "calls_to_certify": 2,
+   "protocol_overhead": 229079
+  },
+  {
+   "predecessor": "697f41a7-8cf9-4808-9ba2-5b8cd66f1c04",
+   "successor": "3281a128-0792-4497-9481-005ad32ee5c2",
+   "first_ctx": 131292,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 177257,
+   "carried_before_first_mutation": 2125369,
+   "calls_to_certify": 4,
+   "protocol_overhead": 539558
+  },
+  {
+   "predecessor": "614697c1-c9f6-428f-9758-119411e4fef1",
+   "successor": "ac98ed90-1ce4-479f-b94e-28e496ed00ed",
+   "first_ctx": 147293,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 181892,
+   "carried_before_first_mutation": 1958938,
+   "calls_to_certify": 3,
+   "protocol_overhead": 447960
+  },
+  {
+   "predecessor": "9143b7cb-1151-4feb-beaa-e57fb92d7ea7",
+   "successor": "81e2baa0-6043-42c1-ad37-251256adb67f",
+   "first_ctx": 124613,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 140326,
+   "carried_before_first_mutation": 1830509,
+   "calls_to_certify": 3,
+   "protocol_overhead": 377908
+  },
+  {
+   "predecessor": "61a64b8e-a2f7-4c1d-9169-714f1e4d2566",
+   "successor": "c76fb99c-bb6b-4878-b331-f4de8314e8b7",
+   "first_ctx": 120210,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 172645,
+   "carried_before_first_mutation": 1282087,
+   "calls_to_certify": 3,
+   "protocol_overhead": 367091
+  },
+  {
+   "predecessor": "84055149-568e-4fa2-b041-129083f4ac6e",
+   "successor": "3990ecbc-f165-40df-bc25-cc06f89c14b3",
+   "first_ctx": 118148,
+   "calls_to_first_mutation": null,
+   "ctx_at_first_mutation": null,
+   "carried_before_first_mutation": null,
+   "calls_to_certify": 3,
+   "protocol_overhead": 358620
+  },
+  {
+   "predecessor": "c76fb99c-bb6b-4878-b331-f4de8314e8b7",
+   "successor": "b9e98a93-3d3d-46a9-919b-207d106b3a4d",
+   "first_ctx": 118182,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 131754,
+   "carried_before_first_mutation": 1263946,
+   "calls_to_certify": 3,
+   "protocol_overhead": 363797
+  },
+  {
+   "predecessor": "288acbc5-5204-454d-92bd-722f2cb5e784",
+   "successor": "e112f6e8-63e0-4fa5-8900-9daa23414a25",
+   "first_ctx": 132072,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 175184,
+   "carried_before_first_mutation": 1994325,
+   "calls_to_certify": 3,
+   "protocol_overhead": 421877
+  },
+  {
+   "predecessor": "02deacef-5feb-4e38-9814-efa1c02e7651",
+   "successor": "bed1071b-330a-41cb-879c-9796b6f26503",
+   "first_ctx": 124532,
+   "calls_to_first_mutation": 34,
+   "ctx_at_first_mutation": 160005,
+   "carried_before_first_mutation": 4669792,
+   "calls_to_certify": 3,
+   "protocol_overhead": 378736
+  },
+  {
+   "predecessor": "8b2c7516-bd6a-4b37-b6c8-1e42a101852b",
+   "successor": "2d5926f8-6ad5-4693-bc58-7bf06e76c7ed",
+   "first_ctx": 129785,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 136602,
+   "carried_before_first_mutation": 661333,
+   "calls_to_certify": 3,
+   "protocol_overhead": 393933
+  },
+  {
+   "predecessor": "fd67ef8e-d505-405e-90b2-ac7d058fecd4",
+   "successor": "2b7fe79e-38b0-44d0-ad13-d40526362d0f",
+   "first_ctx": 125195,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 161661,
+   "carried_before_first_mutation": 2006645,
+   "calls_to_certify": 3,
+   "protocol_overhead": 379751
+  },
+  {
+   "predecessor": "837b9994-4c45-46f6-82e8-8f8e31c22c7f",
+   "successor": "03e05947-c639-4570-b0e0-53a7c0f5189f",
+   "first_ctx": 122573,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 160502,
+   "carried_before_first_mutation": 2565317,
+   "calls_to_certify": 3,
+   "protocol_overhead": 378878
+  },
+  {
+   "predecessor": "4301e00e-71ac-4f71-8bbc-63936f3bad95",
+   "successor": "44a12eff-1b00-48d2-95b6-b9aab76f24ca",
+   "first_ctx": 118744,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 141151,
+   "carried_before_first_mutation": 1170962,
+   "calls_to_certify": 3,
+   "protocol_overhead": 366787
+  },
+  {
+   "predecessor": "62f6a1a7-7d92-4260-a442-f8eb16d45ee7",
+   "successor": "e247fad3-8c7b-4bca-bc04-e98f29c76e4c",
+   "first_ctx": 131319,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 151139,
+   "carried_before_first_mutation": 1271536,
+   "calls_to_certify": 3,
+   "protocol_overhead": 404566
+  },
+  {
+   "predecessor": "26123941-68b0-43f9-995e-938f45aef9e6",
+   "successor": "14d41352-4a69-4c25-9bd9-7779e0d376bb",
+   "first_ctx": 120300,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 146124,
+   "carried_before_first_mutation": 1297466,
+   "calls_to_certify": 4,
+   "protocol_overhead": 487925
+  },
+  {
+   "predecessor": "6e59a805-c95b-4d3a-8d95-17e7b2ca4a2b",
+   "successor": "5d88e639-e92f-4e13-8a49-c70ff919ea50",
+   "first_ctx": 122855,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 176250,
+   "carried_before_first_mutation": 1923652,
+   "calls_to_certify": 3,
+   "protocol_overhead": 379900
+  },
+  {
+   "predecessor": "efb81159-674c-47ca-8df5-ba39761033b3",
+   "successor": "dd28de94-ebf6-48e3-a4d9-b2a36baeea0b",
+   "first_ctx": 127093,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 136572,
+   "carried_before_first_mutation": 660741,
+   "calls_to_certify": 3,
+   "protocol_overhead": 389932
+  },
+  {
+   "predecessor": "14d41352-4a69-4c25-9bd9-7779e0d376bb",
+   "successor": "c802ad2d-fa4f-4674-b33b-ce94a9a06de6",
+   "first_ctx": 120655,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 134867,
+   "carried_before_first_mutation": 1008763,
+   "calls_to_certify": 3,
+   "protocol_overhead": 366364
+  },
+  {
+   "predecessor": "5d88e639-e92f-4e13-8a49-c70ff919ea50",
+   "successor": "a5188e98-b87c-42be-901e-b9fa99e7ed88",
+   "first_ctx": 122922,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 144500,
+   "carried_before_first_mutation": 926520,
+   "calls_to_certify": 3,
+   "protocol_overhead": 380077
+  },
+  {
+   "predecessor": "0e53d349-3d0f-4644-b736-f87c880337f6",
+   "successor": "03870acf-1fa8-49ee-9ecc-2a0a642e9b38",
+   "first_ctx": 130995,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 150361,
+   "carried_before_first_mutation": 2114984,
+   "calls_to_certify": 3,
+   "protocol_overhead": 398719
+  },
+  {
+   "predecessor": "87055109-cdf5-4ec4-90a1-dddae90cb5a9",
+   "successor": "55b00a7f-8759-4153-93a5-4cf0cbc69ef6",
+   "first_ctx": 129116,
+   "calls_to_first_mutation": 31,
+   "ctx_at_first_mutation": 187077,
+   "carried_before_first_mutation": 4534509,
+   "calls_to_certify": 4,
+   "protocol_overhead": 525685
+  },
+  {
+   "predecessor": "1eba5530-aa20-4469-a5c7-48a1a1373f2a",
+   "successor": "d222ce8f-b2b7-4ccd-b630-ce4ef7f0bc13",
+   "first_ctx": 116771,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 154857,
+   "carried_before_first_mutation": 1321441,
+   "calls_to_certify": 3,
+   "protocol_overhead": 358350
+  },
+  {
+   "predecessor": "dd28de94-ebf6-48e3-a4d9-b2a36baeea0b",
+   "successor": "730a979a-ad35-4534-925f-b74884ed02c3",
+   "first_ctx": 126396,
+   "calls_to_first_mutation": 23,
+   "ctx_at_first_mutation": 222338,
+   "carried_before_first_mutation": 3622013,
+   "calls_to_certify": 3,
+   "protocol_overhead": 390529
+  },
+  {
+   "predecessor": "0871dbe3-345f-4461-b3c8-14d236804b05",
+   "successor": "d22e0862-41a4-447d-87a4-d1a4f13a0233",
+   "first_ctx": 129724,
+   "calls_to_first_mutation": 20,
+   "ctx_at_first_mutation": 152759,
+   "carried_before_first_mutation": 2701833,
+   "calls_to_certify": 3,
+   "protocol_overhead": 394178
+  },
+  {
+   "predecessor": "c802ad2d-fa4f-4674-b33b-ce94a9a06de6",
+   "successor": "630941a7-ff13-45b4-988d-1de68408eaf4",
+   "first_ctx": 120722,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 139040,
+   "carried_before_first_mutation": 1413487,
+   "calls_to_certify": 4,
+   "protocol_overhead": 489415
+  },
+  {
+   "predecessor": "44a12eff-1b00-48d2-95b6-b9aab76f24ca",
+   "successor": "37b314a7-f848-4435-85f4-02885c0c088b",
+   "first_ctx": 121231,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 134913,
+   "carried_before_first_mutation": 889720,
+   "calls_to_certify": 3,
+   "protocol_overhead": 370959
+  },
+  {
+   "predecessor": "a5188e98-b87c-42be-901e-b9fa99e7ed88",
+   "successor": "1b3ced56-7cc6-4045-9f08-49cc0a9a7e10",
+   "first_ctx": 135062,
+   "calls_to_first_mutation": 20,
+   "ctx_at_first_mutation": 169958,
+   "carried_before_first_mutation": 2921566,
+   "calls_to_certify": 3,
+   "protocol_overhead": 408634
+  },
+  {
+   "predecessor": "e112f6e8-63e0-4fa5-8900-9daa23414a25",
+   "successor": "ccef2b9b-c54c-486b-b3df-5d49cbb2a418",
+   "first_ctx": 137110,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 152426,
+   "carried_before_first_mutation": 1159417,
+   "calls_to_certify": 3,
+   "protocol_overhead": 419046
+  },
+  {
+   "predecessor": "03870acf-1fa8-49ee-9ecc-2a0a642e9b38",
+   "successor": "3197052e-7752-4bcc-90f7-b2b693b9bd8f",
+   "first_ctx": 129482,
+   "calls_to_first_mutation": 27,
+   "ctx_at_first_mutation": 209508,
+   "carried_before_first_mutation": 4511352,
+   "calls_to_certify": 3,
+   "protocol_overhead": 395893
+  },
+  {
+   "predecessor": "730a979a-ad35-4534-925f-b74884ed02c3",
+   "successor": "9969ae54-5842-4809-8f19-fbb71319d270",
+   "first_ctx": 126634,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 146541,
+   "carried_before_first_mutation": 1386203,
+   "calls_to_certify": 3,
+   "protocol_overhead": 395264
+  },
+  {
+   "predecessor": "298b1bce-cd9f-4afc-b5b3-91a8428b6ffc",
+   "successor": "e6b63e59-aa4e-43f8-951f-3a11e76da159",
+   "first_ctx": 132164,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 150094,
+   "carried_before_first_mutation": 1102360,
+   "calls_to_certify": 3,
+   "protocol_overhead": 400735
+  },
+  {
+   "predecessor": "d222ce8f-b2b7-4ccd-b630-ce4ef7f0bc13",
+   "successor": "90db1541-29b3-4319-a87f-c028c3d2df59",
+   "first_ctx": 115665,
+   "calls_to_first_mutation": 25,
+   "ctx_at_first_mutation": 204082,
+   "carried_before_first_mutation": 3775351,
+   "calls_to_certify": 4,
+   "protocol_overhead": 478436
+  },
+  {
+   "predecessor": "082c54f2-5ad1-4589-9f5e-c56c972588c4",
+   "successor": "c787bb75-e5ae-433b-8ec2-fb93fa5a0b83",
+   "first_ctx": 119849,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 139296,
+   "carried_before_first_mutation": 625874,
+   "calls_to_certify": 3,
+   "protocol_overhead": 364147
+  },
+  {
+   "predecessor": "55b00a7f-8759-4153-93a5-4cf0cbc69ef6",
+   "successor": "c941b169-ce68-46f5-9d20-124a744dfe6c",
+   "first_ctx": 127876,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 147127,
+   "carried_before_first_mutation": 2481387,
+   "calls_to_certify": 3,
+   "protocol_overhead": 388618
+  },
+  {
+   "predecessor": "1031b910-b52e-4eb6-a906-79ed701f575f",
+   "successor": "024ab6ab-1200-456f-994a-7d16c2de608d",
+   "first_ctx": 127128,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 135878,
+   "carried_before_first_mutation": 785036,
+   "calls_to_certify": 3,
+   "protocol_overhead": 386799
+  },
+  {
+   "predecessor": "89dd3c7b-fe1e-4b35-9cc8-fcb72be7580a",
+   "successor": "d6ffa1cc-4750-423f-a27d-8fc96648991a",
+   "first_ctx": 124830,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 144363,
+   "carried_before_first_mutation": 1456234,
+   "calls_to_certify": 3,
+   "protocol_overhead": 381177
+  },
+  {
+   "predecessor": "681ad0fb-930f-4741-a45f-182b6208fe91",
+   "successor": "a4d8b75f-a965-428b-837e-bc258e4baca5",
+   "first_ctx": 125416,
+   "calls_to_first_mutation": 32,
+   "ctx_at_first_mutation": 186286,
+   "carried_before_first_mutation": 4736247,
+   "calls_to_certify": 3,
+   "protocol_overhead": 385665
+  },
+  {
+   "predecessor": "1b3ced56-7cc6-4045-9f08-49cc0a9a7e10",
+   "successor": "6feb3085-fb38-49c9-b9d6-bd5f3518929b",
+   "first_ctx": 122093,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 150493,
+   "carried_before_first_mutation": 1780448,
+   "calls_to_certify": 3,
+   "protocol_overhead": 372847
+  },
+  {
+   "predecessor": "9969ae54-5842-4809-8f19-fbb71319d270",
+   "successor": "2c19391c-ee36-4036-b391-74156d3f8609",
+   "first_ctx": 122856,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 152947,
+   "carried_before_first_mutation": 1500272,
+   "calls_to_certify": 3,
+   "protocol_overhead": 372686
+  },
+  {
+   "predecessor": "87ce43ec-802e-455d-8789-87622209e952",
+   "successor": "32e6c841-54a2-44b5-b3e8-b1bc2310262b",
+   "first_ctx": 126899,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 134980,
+   "carried_before_first_mutation": 513875,
+   "calls_to_certify": 3,
+   "protocol_overhead": 384224
+  },
+  {
+   "predecessor": "630941a7-ff13-45b4-988d-1de68408eaf4",
+   "successor": "a60d4a29-b468-4d05-8600-19c1bebe08a0",
+   "first_ctx": 121151,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 156283,
+   "carried_before_first_mutation": 2099120,
+   "calls_to_certify": 4,
+   "protocol_overhead": 496139
+  },
+  {
+   "predecessor": "019b7445-c39e-4e26-bc3c-a4a0ce624d57",
+   "successor": "b2cf2c91-3da9-41ed-a51d-a5123720214b",
+   "first_ctx": 124907,
+   "calls_to_first_mutation": null,
+   "ctx_at_first_mutation": null,
+   "carried_before_first_mutation": null,
+   "calls_to_certify": 3,
+   "protocol_overhead": 379600
+  },
+  {
+   "predecessor": "e4c2d161-bfee-4d77-88e3-7aa31b00faa9",
+   "successor": "969d8063-9eee-482b-a8af-42d29635a228",
+   "first_ctx": 130098,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 164820,
+   "carried_before_first_mutation": 2936262,
+   "calls_to_certify": 3,
+   "protocol_overhead": 395502
+  },
+  {
+   "predecessor": "f19774a9-71b1-49d9-b7b3-e7b520c93fa4",
+   "successor": "0dc5ef92-6e25-48ad-8163-87fb5547ddb6",
+   "first_ctx": 136285,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 155351,
+   "carried_before_first_mutation": 1143150,
+   "calls_to_certify": 3,
+   "protocol_overhead": 413422
+  },
+  {
+   "predecessor": "5e754601-99eb-4fa4-95bb-d7ff53d1fbde",
+   "successor": "0b1c0707-a4da-4526-ab60-74f332dcf303",
+   "first_ctx": 123887,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 151752,
+   "carried_before_first_mutation": 1478989,
+   "calls_to_certify": 3,
+   "protocol_overhead": 375396
+  },
+  {
+   "predecessor": "c787bb75-e5ae-433b-8ec2-fb93fa5a0b83",
+   "successor": "9340024b-8300-48b4-998c-bd7454b0aab6",
+   "first_ctx": 123834,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 133919,
+   "carried_before_first_mutation": 1021380,
+   "calls_to_certify": 4,
+   "protocol_overhead": 501434
+  },
+  {
+   "predecessor": "342eff35-b2fc-4684-bffc-0f01aa66b970",
+   "successor": "7c084ea8-f0af-432f-b339-afaa14f112eb",
+   "first_ctx": 124005,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 144963,
+   "carried_before_first_mutation": 1333502,
+   "calls_to_certify": 3,
+   "protocol_overhead": 378658
+  },
+  {
+   "predecessor": "6feb3085-fb38-49c9-b9d6-bd5f3518929b",
+   "successor": "7c9d247c-20fc-4162-a32b-84158d08f6fa",
+   "first_ctx": 123081,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 133837,
+   "carried_before_first_mutation": 768556,
+   "calls_to_certify": 3,
+   "protocol_overhead": 375902
+  },
+  {
+   "predecessor": "ccef2b9b-c54c-486b-b3df-5d49cbb2a418",
+   "successor": "02235a49-b52c-46ef-950a-e0430af9af4c",
+   "first_ctx": 136887,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 172280,
+   "carried_before_first_mutation": 2756934,
+   "calls_to_certify": 3,
+   "protocol_overhead": 418597
+  },
+  {
+   "predecessor": "969d8063-9eee-482b-a8af-42d29635a228",
+   "successor": "ab73b303-c4aa-4bfc-bc56-2009a02c53ed",
+   "first_ctx": 133771,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 194454,
+   "carried_before_first_mutation": 3645590,
+   "calls_to_certify": 3,
+   "protocol_overhead": 409150
+  },
+  {
+   "predecessor": "0dc5ef92-6e25-48ad-8163-87fb5547ddb6",
+   "successor": "fa590a33-086f-4bd0-bb6a-d204c3f587c9",
+   "first_ctx": 134295,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 151634,
+   "carried_before_first_mutation": 1557670,
+   "calls_to_certify": 3,
+   "protocol_overhead": 408682
+  },
+  {
+   "predecessor": "0b1c0707-a4da-4526-ab60-74f332dcf303",
+   "successor": "e1e8e700-d01d-46c5-babc-ad581d27a869",
+   "first_ctx": 120232,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 133209,
+   "carried_before_first_mutation": 747348,
+   "calls_to_certify": 3,
+   "protocol_overhead": 365787
+  },
+  {
+   "predecessor": "b3c38ac8-95f1-4487-89cc-884bd3293733",
+   "successor": "db8ae5cd-1ec6-442d-9ce8-86fcd8a4daf8",
+   "first_ctx": 136181,
+   "calls_to_first_mutation": 23,
+   "ctx_at_first_mutation": 194007,
+   "carried_before_first_mutation": 3576066,
+   "calls_to_certify": 3,
+   "protocol_overhead": 414498
+  },
+  {
+   "predecessor": "d22e0862-41a4-447d-87a4-d1a4f13a0233",
+   "successor": "d807e044-c9b9-485a-ae06-8c7b4d6b8918",
+   "first_ctx": 128099,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 172655,
+   "carried_before_first_mutation": 2252806,
+   "calls_to_certify": 3,
+   "protocol_overhead": 389365
+  },
+  {
+   "predecessor": "c941b169-ce68-46f5-9d20-124a744dfe6c",
+   "successor": "df57784b-fdc4-432b-aafe-67b5209c5d7b",
+   "first_ctx": 123333,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 143906,
+   "carried_before_first_mutation": 1856237,
+   "calls_to_certify": 3,
+   "protocol_overhead": 374063
+  },
+  {
+   "predecessor": "37b314a7-f848-4435-85f4-02885c0c088b",
+   "successor": "89c2d689-0f1c-4288-8e42-00192cca7098",
+   "first_ctx": 122184,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 143184,
+   "carried_before_first_mutation": 1606349,
+   "calls_to_certify": 3,
+   "protocol_overhead": 373560
+  },
+  {
+   "predecessor": "fa590a33-086f-4bd0-bb6a-d204c3f587c9",
+   "successor": "fa65b059-ae77-4fcc-956a-8d4914871b4d",
+   "first_ctx": 127753,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 151734,
+   "carried_before_first_mutation": 2089934,
+   "calls_to_certify": 5,
+   "protocol_overhead": 656421
+  },
+  {
+   "predecessor": "02235a49-b52c-46ef-950a-e0430af9af4c",
+   "successor": "79fbd585-c2b9-41f2-8d96-62fcea777bfe",
+   "first_ctx": 137744,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 152978,
+   "carried_before_first_mutation": 1587030,
+   "calls_to_certify": 4,
+   "protocol_overhead": 558303
+  },
+  {
+   "predecessor": "a60d4a29-b468-4d05-8600-19c1bebe08a0",
+   "successor": "85f3a36f-febc-4f29-883c-b18522f2c8a8",
+   "first_ctx": 123187,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 131751,
+   "carried_before_first_mutation": 507912,
+   "calls_to_certify": 3,
+   "protocol_overhead": 377259
+  },
+  {
+   "predecessor": "db8ae5cd-1ec6-442d-9ce8-86fcd8a4daf8",
+   "successor": "223fedf2-67ff-4e83-af8b-8c6fb6673d97",
+   "first_ctx": 136109,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 147462,
+   "carried_before_first_mutation": 705891,
+   "calls_to_certify": 3,
+   "protocol_overhead": 415959
+  },
+  {
+   "predecessor": "e1e8e700-d01d-46c5-babc-ad581d27a869",
+   "successor": "5e84508b-31c0-4561-874e-76da89c87555",
+   "first_ctx": 123679,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 133903,
+   "carried_before_first_mutation": 902571,
+   "calls_to_certify": 3,
+   "protocol_overhead": 378123
+  },
+  {
+   "predecessor": "92d3eede-6eba-4860-b356-3c6409d8f0f5",
+   "successor": "af97ee96-17f5-46be-a3bb-9568dd856277",
+   "first_ctx": 124430,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 146925,
+   "carried_before_first_mutation": 2036994,
+   "calls_to_certify": 3,
+   "protocol_overhead": 380025
+  },
+  {
+   "predecessor": "79fbd585-c2b9-41f2-8d96-62fcea777bfe",
+   "successor": "9ff863f6-00ae-40cf-a4c5-ed4180f88a06",
+   "first_ctx": 160745,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 208611,
+   "carried_before_first_mutation": 3930879,
+   "calls_to_certify": 4,
+   "protocol_overhead": 652749
+  },
+  {
+   "predecessor": "85f3a36f-febc-4f29-883c-b18522f2c8a8",
+   "successor": "18e8c49e-67c0-436c-95f3-b7c376c2ecb9",
+   "first_ctx": 123469,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 166356,
+   "carried_before_first_mutation": 3628194,
+   "calls_to_certify": 4,
+   "protocol_overhead": 511835
+  },
+  {
+   "predecessor": "223fedf2-67ff-4e83-af8b-8c6fb6673d97",
+   "successor": "70d16064-f265-4ad2-8353-98a325964a88",
+   "first_ctx": 149673,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 159040,
+   "carried_before_first_mutation": 917672,
+   "calls_to_certify": 5,
+   "protocol_overhead": 761687
+  },
+  {
+   "predecessor": "fa65b059-ae77-4fcc-956a-8d4914871b4d",
+   "successor": "cf503730-8ad2-4943-ad25-4fb19f7496d5",
+   "first_ctx": 138260,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 166065,
+   "carried_before_first_mutation": 1343865,
+   "calls_to_certify": 3,
+   "protocol_overhead": 420327
+  },
+  {
+   "predecessor": "af97ee96-17f5-46be-a3bb-9568dd856277",
+   "successor": "bcebbb91-515f-4065-852d-e65a59f8e03e",
+   "first_ctx": 124431,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 141840,
+   "carried_before_first_mutation": 1085388,
+   "calls_to_certify": 3,
+   "protocol_overhead": 387129
+  },
+  {
+   "predecessor": "9ff863f6-00ae-40cf-a4c5-ed4180f88a06",
+   "successor": "062966ad-a868-4b04-8fdc-842f10f6f3ab",
+   "first_ctx": 136557,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 147412,
+   "carried_before_first_mutation": 983658,
+   "calls_to_certify": 2,
+   "protocol_overhead": 274380
+  },
+  {
+   "predecessor": "70d16064-f265-4ad2-8353-98a325964a88",
+   "successor": "57ef6707-4f1c-46fb-83da-e1adeaedd11b",
+   "first_ctx": 129942,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 172286,
+   "carried_before_first_mutation": 2175157,
+   "calls_to_certify": 3,
+   "protocol_overhead": 401724
+  },
+  {
+   "predecessor": "18e8c49e-67c0-436c-95f3-b7c376c2ecb9",
+   "successor": "43a1b85e-ee84-43fd-8276-a152e942d011",
+   "first_ctx": 121435,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 151278,
+   "carried_before_first_mutation": 1786307,
+   "calls_to_certify": 3,
+   "protocol_overhead": 373968
+  },
+  {
+   "predecessor": "ab73b303-c4aa-4bfc-bc56-2009a02c53ed",
+   "successor": "6d128db5-0b16-415e-9a38-367d870ee525",
+   "first_ctx": 130969,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 153661,
+   "carried_before_first_mutation": 1838699,
+   "calls_to_certify": 5,
+   "protocol_overhead": 676011
+  },
+  {
+   "predecessor": "bcebbb91-515f-4065-852d-e65a59f8e03e",
+   "successor": "4a8e62b8-585d-47c9-b347-5d35f63595e4",
+   "first_ctx": 118910,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 156189,
+   "carried_before_first_mutation": 2541531,
+   "calls_to_certify": 3,
+   "protocol_overhead": 372796
+  },
+  {
+   "predecessor": "f6dd722e-3186-4721-b1a8-34397b370940",
+   "successor": "20577d47-9050-411d-9123-ac6d934c5d0c",
+   "first_ctx": 133732,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 139639,
+   "carried_before_first_mutation": 681056,
+   "calls_to_certify": 3,
+   "protocol_overhead": 405672
+  },
+  {
+   "predecessor": "43a1b85e-ee84-43fd-8276-a152e942d011",
+   "successor": "89f0d051-6b4c-4a4a-98d9-adedcacdaf75",
+   "first_ctx": 121453,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 165405,
+   "carried_before_first_mutation": 2584564,
+   "calls_to_certify": 3,
+   "protocol_overhead": 377802
+  },
+  {
+   "predecessor": "cf503730-8ad2-4943-ad25-4fb19f7496d5",
+   "successor": "84a5bc3c-0b59-449d-a79a-f261740e7ea4",
+   "first_ctx": 132011,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 146044,
+   "carried_before_first_mutation": 1105040,
+   "calls_to_certify": 4,
+   "protocol_overhead": 537104
+  },
+  {
+   "predecessor": "062966ad-a868-4b04-8fdc-842f10f6f3ab",
+   "successor": "327e452d-a193-46e9-a09c-9bb34738c418",
+   "first_ctx": 134151,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 157079,
+   "carried_before_first_mutation": 1145760,
+   "calls_to_certify": 3,
+   "protocol_overhead": 410151
+  },
+  {
+   "predecessor": "57ef6707-4f1c-46fb-83da-e1adeaedd11b",
+   "successor": "2f6e9166-465c-4a62-8d2b-4b8e50503b54",
+   "first_ctx": 127700,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 150126,
+   "carried_before_first_mutation": 807864,
+   "calls_to_certify": 3,
+   "protocol_overhead": 391886
+  },
+  {
+   "predecessor": "20577d47-9050-411d-9123-ac6d934c5d0c",
+   "successor": "882684ea-3b6c-40d2-9e50-2e011da08e6e",
+   "first_ctx": 134150,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 160467,
+   "carried_before_first_mutation": 1163188,
+   "calls_to_certify": 3,
+   "protocol_overhead": 413933
+  },
+  {
+   "predecessor": "4a8e62b8-585d-47c9-b347-5d35f63595e4",
+   "successor": "40c82043-6c42-4a1d-bbcc-8136a2992bbf",
+   "first_ctx": 123549,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 140505,
+   "carried_before_first_mutation": 784323,
+   "calls_to_certify": 3,
+   "protocol_overhead": 378953
+  },
+  {
+   "predecessor": "6d128db5-0b16-415e-9a38-367d870ee525",
+   "successor": "bfe97833-3312-4e50-a61c-efb6de71e846",
+   "first_ctx": 130865,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 156621,
+   "carried_before_first_mutation": 3616344,
+   "calls_to_certify": 3,
+   "protocol_overhead": 398541
+  },
+  {
+   "predecessor": "f41ea398-c1ee-4691-af4f-285a93afc949",
+   "successor": "ecdebebb-66fc-474d-a757-17ff1e321be0",
+   "first_ctx": 134289,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 172394,
+   "carried_before_first_mutation": 1611801,
+   "calls_to_certify": 3,
+   "protocol_overhead": 406912
+  },
+  {
+   "predecessor": "5e84508b-31c0-4561-874e-76da89c87555",
+   "successor": "3a05f288-aba1-4ec3-a96d-e9cfeed19e78",
+   "first_ctx": 122368,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 134180,
+   "carried_before_first_mutation": 507763,
+   "calls_to_certify": 3,
+   "protocol_overhead": 376683
+  },
+  {
+   "predecessor": "c65ec9c2-bae2-405b-b175-09dd846efba9",
+   "successor": "e190a205-df3e-4b55-9a25-d8f42f0c48fd",
+   "first_ctx": 122896,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 152603,
+   "carried_before_first_mutation": 1833089,
+   "calls_to_certify": 3,
+   "protocol_overhead": 373400
+  },
+  {
+   "predecessor": "89c2d689-0f1c-4288-8e42-00192cca7098",
+   "successor": "c5d797c2-0919-418a-a49b-c68b532497c0",
+   "first_ctx": 124228,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 143221,
+   "carried_before_first_mutation": 917020,
+   "calls_to_certify": 3,
+   "protocol_overhead": 375640
+  },
+  {
+   "predecessor": "2f6e9166-465c-4a62-8d2b-4b8e50503b54",
+   "successor": "e4701f02-7214-4ccd-a2c2-2a9e8bdf80df",
+   "first_ctx": 129118,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 153072,
+   "carried_before_first_mutation": 971201,
+   "calls_to_certify": 3,
+   "protocol_overhead": 394281
+  },
+  {
+   "predecessor": "89f0d051-6b4c-4a4a-98d9-adedcacdaf75",
+   "successor": "5b36b02f-04b6-4865-8de9-98c5202346aa",
+   "first_ctx": 121426,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 164676,
+   "carried_before_first_mutation": 1899625,
+   "calls_to_certify": 4,
+   "protocol_overhead": 516732
+  },
+  {
+   "predecessor": "82961b0b-7bfd-4e6d-8803-e5283258f6d0",
+   "successor": "dc383770-e4b5-4930-bb8c-3a49d7c34ce8",
+   "first_ctx": 129114,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 158387,
+   "carried_before_first_mutation": 1724028,
+   "calls_to_certify": 3,
+   "protocol_overhead": 397464
+  },
+  {
+   "predecessor": "882684ea-3b6c-40d2-9e50-2e011da08e6e",
+   "successor": "2981471b-45d7-4396-9445-58cffe31127f",
+   "first_ctx": 134306,
+   "calls_to_first_mutation": 28,
+   "ctx_at_first_mutation": 184740,
+   "carried_before_first_mutation": 4304586,
+   "calls_to_certify": 4,
+   "protocol_overhead": 558749
+  },
+  {
+   "predecessor": "ecdebebb-66fc-474d-a757-17ff1e321be0",
+   "successor": "f9a3447d-f86b-4282-86f5-4ad22753f1b9",
+   "first_ctx": 133694,
+   "calls_to_first_mutation": 20,
+   "ctx_at_first_mutation": 167585,
+   "carried_before_first_mutation": 2888426,
+   "calls_to_certify": 3,
+   "protocol_overhead": 409070
+  },
+  {
+   "predecessor": "8d57f0bd-dcfe-434d-9831-dc337ac08a6c",
+   "successor": "2e1ed996-ff63-4aa6-9f8f-2337bc304dbd",
+   "first_ctx": 126528,
+   "calls_to_first_mutation": 28,
+   "ctx_at_first_mutation": 195659,
+   "carried_before_first_mutation": 4154868,
+   "calls_to_certify": 3,
+   "protocol_overhead": 384200
+  },
+  {
+   "predecessor": "e190a205-df3e-4b55-9a25-d8f42f0c48fd",
+   "successor": "2bf66eda-44b9-4115-98af-7e58d6bece55",
+   "first_ctx": 123387,
+   "calls_to_first_mutation": 29,
+   "ctx_at_first_mutation": 222922,
+   "carried_before_first_mutation": 4850273,
+   "calls_to_certify": 3,
+   "protocol_overhead": 375960
+  },
+  {
+   "predecessor": "5b36b02f-04b6-4865-8de9-98c5202346aa",
+   "successor": "4615e1d1-fd08-4488-8cce-1b67f34861a1",
+   "first_ctx": 121609,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 144821,
+   "carried_before_first_mutation": 805137,
+   "calls_to_certify": 3,
+   "protocol_overhead": 383095
+  },
+  {
+   "predecessor": "c5d797c2-0919-418a-a49b-c68b532497c0",
+   "successor": "20a98dd4-7ffa-4df6-ba18-3374de7cfaae",
+   "first_ctx": 124258,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 127698,
+   "carried_before_first_mutation": 502634,
+   "calls_to_certify": 3,
+   "protocol_overhead": 375958
+  },
+  {
+   "predecessor": "2981471b-45d7-4396-9445-58cffe31127f",
+   "successor": "8c99bb45-2562-4666-9940-d9cf37cf9f48",
+   "first_ctx": 134641,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 161974,
+   "carried_before_first_mutation": 1603873,
+   "calls_to_certify": 3,
+   "protocol_overhead": 407548
+  },
+  {
+   "predecessor": "bfe97833-3312-4e50-a61c-efb6de71e846",
+   "successor": "c85f3eb9-ad41-4d34-9d5e-6a3d017dcfaa",
+   "first_ctx": 131885,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 166228,
+   "carried_before_first_mutation": 2103799,
+   "calls_to_certify": 3,
+   "protocol_overhead": 400782
+  },
+  {
+   "predecessor": "2bf66eda-44b9-4115-98af-7e58d6bece55",
+   "successor": "242ae047-3621-4110-82ca-63be30ca7493",
+   "first_ctx": 123271,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 175916,
+   "carried_before_first_mutation": 3022751,
+   "calls_to_certify": 3,
+   "protocol_overhead": 376059
+  },
+  {
+   "predecessor": "8ce177ec-01bd-4738-aa5d-15d6e4a9a582",
+   "successor": "c47b1f78-c48f-4b09-bbce-e9424fb8a683",
+   "first_ctx": 132144,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 138669,
+   "carried_before_first_mutation": 673559,
+   "calls_to_certify": 3,
+   "protocol_overhead": 400817
+  },
+  {
+   "predecessor": "327e452d-a193-46e9-a09c-9bb34738c418",
+   "successor": "1a73e320-0e11-473d-a04f-f97d16acee0f",
+   "first_ctx": 134545,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 168656,
+   "carried_before_first_mutation": 851042,
+   "calls_to_certify": 3,
+   "protocol_overhead": 413670
+  },
+  {
+   "predecessor": "4615e1d1-fd08-4488-8cce-1b67f34861a1",
+   "successor": "c0c45afb-75d3-499d-b8c3-37f80353e130",
+   "first_ctx": 120435,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 138283,
+   "carried_before_first_mutation": 1286896,
+   "calls_to_certify": 4,
+   "protocol_overhead": 495471
+  },
+  {
+   "predecessor": "2e1ed996-ff63-4aa6-9f8f-2337bc304dbd",
+   "successor": "bf3e9df2-9b81-4b91-b107-0cd9e63deadc",
+   "first_ctx": 130194,
+   "calls_to_first_mutation": 25,
+   "ctx_at_first_mutation": 177688,
+   "carried_before_first_mutation": 3715776,
+   "calls_to_certify": 3,
+   "protocol_overhead": 395805
+  },
+  {
+   "predecessor": "1a73e320-0e11-473d-a04f-f97d16acee0f",
+   "successor": "a1709634-d676-4f56-a7a6-0e25ebcf7487",
+   "first_ctx": 136466,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 177426,
+   "carried_before_first_mutation": 2289914,
+   "calls_to_certify": 3,
+   "protocol_overhead": 416489
+  },
+  {
+   "predecessor": "c0c45afb-75d3-499d-b8c3-37f80353e130",
+   "successor": "22a06623-7fd0-4b74-846d-84788c2e2433",
+   "first_ctx": 123415,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 177343,
+   "carried_before_first_mutation": 3081248,
+   "calls_to_certify": 3,
+   "protocol_overhead": 377723
+  },
+  {
+   "predecessor": "20a98dd4-7ffa-4df6-ba18-3374de7cfaae",
+   "successor": "c27755dc-bb39-4816-8cc2-59e788e06ff7",
+   "first_ctx": 124181,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 145692,
+   "carried_before_first_mutation": 1077012,
+   "calls_to_certify": 3,
+   "protocol_overhead": 384176
+  },
+  {
+   "predecessor": "c47b1f78-c48f-4b09-bbce-e9424fb8a683",
+   "successor": "7f072421-15a5-4b22-8e59-a076851e85a5",
+   "first_ctx": 132100,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 153397,
+   "carried_before_first_mutation": 2129841,
+   "calls_to_certify": 3,
+   "protocol_overhead": 402027
+  },
+  {
+   "predecessor": "dc383770-e4b5-4930-bb8c-3a49d7c34ce8",
+   "successor": "0f1368ee-6071-4212-b648-34a9cb38b2be",
+   "first_ctx": 132433,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 139988,
+   "carried_before_first_mutation": 810730,
+   "calls_to_certify": 3,
+   "protocol_overhead": 401104
+  },
+  {
+   "predecessor": "0f1368ee-6071-4212-b648-34a9cb38b2be",
+   "successor": "2a407422-ef79-470c-bc27-470de812eda5",
+   "first_ctx": 132935,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 174932,
+   "carried_before_first_mutation": 2449765,
+   "calls_to_certify": 3,
+   "protocol_overhead": 403235
+  },
+  {
+   "predecessor": "7f072421-15a5-4b22-8e59-a076851e85a5",
+   "successor": "7cf90b36-7e0b-4a6c-92fa-dfb5be8651d0",
+   "first_ctx": 130356,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 154168,
+   "carried_before_first_mutation": 2525392,
+   "calls_to_certify": 3,
+   "protocol_overhead": 396220
+  },
+  {
+   "predecessor": "bf3e9df2-9b81-4b91-b107-0cd9e63deadc",
+   "successor": "bd3c4420-2c19-420d-a551-9a46acaf3214",
+   "first_ctx": 127190,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 197075,
+   "carried_before_first_mutation": 2511273,
+   "calls_to_certify": 3,
+   "protocol_overhead": 389546
+  },
+  {
+   "predecessor": "c85f3eb9-ad41-4d34-9d5e-6a3d017dcfaa",
+   "successor": "e1cb7fc6-1d90-4c0b-ac70-2ebfd2e3f97a",
+   "first_ctx": 130571,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 176904,
+   "carried_before_first_mutation": 1628005,
+   "calls_to_certify": 3,
+   "protocol_overhead": 396378
+  },
+  {
+   "predecessor": "bd3c4420-2c19-420d-a551-9a46acaf3214",
+   "successor": "e3839dd3-3caa-4919-835c-7834fc949ee1",
+   "first_ctx": 128169,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 147985,
+   "carried_before_first_mutation": 1523117,
+   "calls_to_certify": 3,
+   "protocol_overhead": 393406
+  },
+  {
+   "predecessor": "c21f9853-1040-4323-ae7d-6e106cacd00b",
+   "successor": "87601e81-fc6a-4199-a22a-3848715634a6",
+   "first_ctx": 132048,
+   "calls_to_first_mutation": 59,
+   "ctx_at_first_mutation": 263265,
+   "carried_before_first_mutation": 10772024,
+   "calls_to_certify": 3,
+   "protocol_overhead": 400937
+  },
+  {
+   "predecessor": "f9a3447d-f86b-4282-86f5-4ad22753f1b9",
+   "successor": "c1093bf3-43c0-4c2f-88c2-5e444e541b30",
+   "first_ctx": 133600,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 162773,
+   "carried_before_first_mutation": 1217662,
+   "calls_to_certify": 3,
+   "protocol_overhead": 423084
+  },
+  {
+   "predecessor": "c27755dc-bb39-4816-8cc2-59e788e06ff7",
+   "successor": "d5944dbc-cc01-4396-8646-214cee11a829",
+   "first_ctx": 125545,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 132409,
+   "carried_before_first_mutation": 515094,
+   "calls_to_certify": 3,
+   "protocol_overhead": 383491
+  },
+  {
+   "predecessor": "db2b68e7-7265-4a8d-9920-ff745a055872",
+   "successor": "a5fafaa2-6f7d-4ce6-a146-a8104c44edf9",
+   "first_ctx": 124464,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 131068,
+   "carried_before_first_mutation": 636393,
+   "calls_to_certify": 3,
+   "protocol_overhead": 378048
+  },
+  {
+   "predecessor": "0a057a26-aacd-4bb1-8898-9d9c8de61e16",
+   "successor": "b9dbdfe2-1e53-4eea-96d6-bccd58c453f6",
+   "first_ctx": 126826,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 133903,
+   "carried_before_first_mutation": 520400,
+   "calls_to_certify": 3,
+   "protocol_overhead": 387598
+  },
+  {
+   "predecessor": "d5944dbc-cc01-4396-8646-214cee11a829",
+   "successor": "d09cc6cb-ee83-4d27-808e-500c62ce53d3",
+   "first_ctx": 113261,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 180260,
+   "carried_before_first_mutation": 2305082,
+   "calls_to_certify": 3,
+   "protocol_overhead": 350347
+  },
+  {
+   "predecessor": "242ae047-3621-4110-82ca-63be30ca7493",
+   "successor": "8d714d99-f9df-4e5f-b66a-7a1c786e3449",
+   "first_ctx": 111840,
+   "calls_to_first_mutation": 54,
+   "ctx_at_first_mutation": 195308,
+   "carried_before_first_mutation": 8230822,
+   "calls_to_certify": 3,
+   "protocol_overhead": 341470
+  },
+  {
+   "predecessor": "ed9262d1-12f0-4199-81f4-915d6a949038",
+   "successor": "7823c669-8f35-4a98-9956-6a59a5c36e8d",
+   "first_ctx": 113169,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 168925,
+   "carried_before_first_mutation": 1824988,
+   "calls_to_certify": 3,
+   "protocol_overhead": 343511
+  },
+  {
+   "predecessor": "b9dbdfe2-1e53-4eea-96d6-bccd58c453f6",
+   "successor": "9ff0e183-05e2-4839-9ab7-4e81977c0e60",
+   "first_ctx": 126861,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 156824,
+   "carried_before_first_mutation": 1231014,
+   "calls_to_certify": 3,
+   "protocol_overhead": 385378
+  },
+  {
+   "predecessor": "bf8eb18a-c9ef-445f-953e-4428734262c5",
+   "successor": "d4f22eaa-9451-4e8e-b367-7dfb2c40626e",
+   "first_ctx": 124283,
+   "calls_to_first_mutation": 52,
+   "ctx_at_first_mutation": 278963,
+   "carried_before_first_mutation": 10848588,
+   "calls_to_certify": 3,
+   "protocol_overhead": 394969
+  },
+  {
+   "predecessor": "7823c669-8f35-4a98-9956-6a59a5c36e8d",
+   "successor": "2fc04d5e-174c-42b5-9667-4e736e7af474",
+   "first_ctx": 115426,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 126319,
+   "carried_before_first_mutation": 1084732,
+   "calls_to_certify": 3,
+   "protocol_overhead": 350677
+  },
+  {
+   "predecessor": "8c99bb45-2562-4666-9940-d9cf37cf9f48",
+   "successor": "9ff1148f-a0f2-4c1c-988f-1274917dd2b4",
+   "first_ctx": 126086,
+   "calls_to_first_mutation": 42,
+   "ctx_at_first_mutation": 217730,
+   "carried_before_first_mutation": 7333791,
+   "calls_to_certify": 5,
+   "protocol_overhead": 681300
+  },
+  {
+   "predecessor": "d09cc6cb-ee83-4d27-808e-500c62ce53d3",
+   "successor": "cb1ac291-e1d3-4fd5-98fb-9f9df1a2fcef",
+   "first_ctx": 117145,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 129683,
+   "carried_before_first_mutation": 977488,
+   "calls_to_certify": 3,
+   "protocol_overhead": 355456
+  },
+  {
+   "predecessor": "3a05f288-aba1-4ec3-a96d-e9cfeed19e78",
+   "successor": "a17314a0-417f-45e9-951a-de2e809d6544",
+   "first_ctx": 115717,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 141322,
+   "carried_before_first_mutation": 1295945,
+   "calls_to_certify": 3,
+   "protocol_overhead": 359484
+  },
+  {
+   "predecessor": "2fc04d5e-174c-42b5-9667-4e736e7af474",
+   "successor": "f03264a3-ede0-41a8-a464-a81172731612",
+   "first_ctx": 111516,
+   "calls_to_first_mutation": 23,
+   "ctx_at_first_mutation": 178736,
+   "carried_before_first_mutation": 3227053,
+   "calls_to_certify": 3,
+   "protocol_overhead": 339991
+  },
+  {
+   "predecessor": "a1709634-d676-4f56-a7a6-0e25ebcf7487",
+   "successor": "f48f4690-53db-4642-bdc7-b51bd65dd11d",
+   "first_ctx": 122807,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 158433,
+   "carried_before_first_mutation": 1485815,
+   "calls_to_certify": 8,
+   "protocol_overhead": 1170215
+  },
+  {
+   "predecessor": "d05476d4-1cd3-4367-86be-869f703c2b24",
+   "successor": "a8221309-34b8-46c9-a99b-c01904f87876",
+   "first_ctx": 113001,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 212188,
+   "carried_before_first_mutation": 2932604,
+   "calls_to_certify": 3,
+   "protocol_overhead": 343495
+  },
+  {
+   "predecessor": "87601e81-fc6a-4199-a22a-3848715634a6",
+   "successor": "2cc507fd-2a61-4dc6-9115-13b19d865f19",
+   "first_ctx": 120734,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 201913,
+   "carried_before_first_mutation": 3289701,
+   "calls_to_certify": 3,
+   "protocol_overhead": 370217
+  },
+  {
+   "predecessor": "7cf90b36-7e0b-4a6c-92fa-dfb5be8651d0",
+   "successor": "c59ad762-c24e-4a2c-895d-adfc88f97077",
+   "first_ctx": 120154,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 128990,
+   "carried_before_first_mutation": 618353,
+   "calls_to_certify": 3,
+   "protocol_overhead": 365724
+  },
+  {
+   "predecessor": "e9110291-5031-4a1c-b9fb-68408c02609c",
+   "successor": "a713b1fc-03c1-4250-8611-040afc314144",
+   "first_ctx": 113246,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 131524,
+   "carried_before_first_mutation": 955833,
+   "calls_to_certify": 3,
+   "protocol_overhead": 344590
+  },
+  {
+   "predecessor": "f03264a3-ede0-41a8-a464-a81172731612",
+   "successor": "53d5cdd7-638e-489e-809d-6b064c28cbfe",
+   "first_ctx": 113738,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 127451,
+   "carried_before_first_mutation": 829100,
+   "calls_to_certify": 4,
+   "protocol_overhead": 463744
+  },
+  {
+   "predecessor": "6a16a4c0-5eaa-4c56-b02b-5ec00a07536e",
+   "successor": "2747fb9a-ad0c-469f-8505-19894303b222",
+   "first_ctx": 112648,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 150032,
+   "carried_before_first_mutation": 1916687,
+   "calls_to_certify": 3,
+   "protocol_overhead": 344624
+  },
+  {
+   "predecessor": "2cc507fd-2a61-4dc6-9115-13b19d865f19",
+   "successor": "d8d8d060-115f-49eb-a1c6-07c8ea8166a3",
+   "first_ctx": 120024,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 174469,
+   "carried_before_first_mutation": 1673173,
+   "calls_to_certify": 3,
+   "protocol_overhead": 410486
+  },
+  {
+   "predecessor": "622d5e75-4f34-4e26-9f4b-b991fb69fcb7",
+   "successor": "bfa7821b-75c5-4168-ae5b-5b91ce987c3c",
+   "first_ctx": 111658,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 129054,
+   "carried_before_first_mutation": 949426,
+   "calls_to_certify": 3,
+   "protocol_overhead": 343071
+  },
+  {
+   "predecessor": "a8221309-34b8-46c9-a99b-c01904f87876",
+   "successor": "70beff67-b39f-40d7-a490-58a5d42a8f42",
+   "first_ctx": 111599,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 147271,
+   "carried_before_first_mutation": 2526188,
+   "calls_to_certify": 5,
+   "protocol_overhead": 570674
+  },
+  {
+   "predecessor": "a713b1fc-03c1-4250-8611-040afc314144",
+   "successor": "3c27795c-1517-4a88-a12d-61920bc6f7eb",
+   "first_ctx": 111679,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 132846,
+   "carried_before_first_mutation": 816960,
+   "calls_to_certify": 5,
+   "protocol_overhead": 578071
+  },
+  {
+   "predecessor": "d8d8d060-115f-49eb-a1c6-07c8ea8166a3",
+   "successor": "d64f90b2-f42e-4a2b-b7b2-2663707cd6cf",
+   "first_ctx": 120323,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 135146,
+   "carried_before_first_mutation": 1650510,
+   "calls_to_certify": 3,
+   "protocol_overhead": 364770
+  },
+  {
+   "predecessor": "bfa7821b-75c5-4168-ae5b-5b91ce987c3c",
+   "successor": "9e8cb7b1-ff71-4885-8ba1-e4b75bc7ce1b",
+   "first_ctx": 112906,
+   "calls_to_first_mutation": 18,
+   "ctx_at_first_mutation": 144631,
+   "carried_before_first_mutation": 2183444,
+   "calls_to_certify": 3,
+   "protocol_overhead": 348562
+  },
+  {
+   "predecessor": "c59ad762-c24e-4a2c-895d-adfc88f97077",
+   "successor": "9196ecb9-d012-4aed-8714-292661eb791b",
+   "first_ctx": 122333,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 149833,
+   "carried_before_first_mutation": 1466211,
+   "calls_to_certify": 3,
+   "protocol_overhead": 372498
+  },
+  {
+   "predecessor": "2dc6c7cf-d70e-4e13-adfe-ee3260625834",
+   "successor": "59d80167-284a-4731-90cb-2abe2e866af3",
+   "first_ctx": 113451,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 133297,
+   "carried_before_first_mutation": 1849547,
+   "calls_to_certify": 3,
+   "protocol_overhead": 345465
+  },
+  {
+   "predecessor": "619fff87-e630-42dd-a4d3-87cbcf1b3c9f",
+   "successor": "89e4f4f2-42d8-4819-a884-6222073bb341",
+   "first_ctx": 112304,
+   "calls_to_first_mutation": 20,
+   "ctx_at_first_mutation": 132219,
+   "carried_before_first_mutation": 2337908,
+   "calls_to_certify": 3,
+   "protocol_overhead": 343451
+  },
+  {
+   "predecessor": "a511af93-d4cf-405f-8234-2c16eb1e89c6",
+   "successor": "f8147c6a-faba-42ba-b538-a069d09d8d50",
+   "first_ctx": 112857,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 133231,
+   "carried_before_first_mutation": 1194040,
+   "calls_to_certify": 5,
+   "protocol_overhead": 576660
+  },
+  {
+   "predecessor": "d64f90b2-f42e-4a2b-b7b2-2663707cd6cf",
+   "successor": "bd2f5752-2b55-4907-8802-58bc21f5c48b",
+   "first_ctx": 120226,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 142399,
+   "carried_before_first_mutation": 1810357,
+   "calls_to_certify": 7,
+   "protocol_overhead": 869308
+  },
+  {
+   "predecessor": "7d1ddcb7-b72c-4c72-80b6-718b7c08912e",
+   "successor": "cb0c6351-bb8a-4b82-ba14-15984159a782",
+   "first_ctx": 112102,
+   "calls_to_first_mutation": 18,
+   "ctx_at_first_mutation": 174928,
+   "carried_before_first_mutation": 2326630,
+   "calls_to_certify": 6,
+   "protocol_overhead": 708192
+  },
+  {
+   "predecessor": "2a407422-ef79-470c-bc27-470de812eda5",
+   "successor": "203e945d-4368-4d09-9343-e35533daa5d2",
+   "first_ctx": 120227,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 241906,
+   "carried_before_first_mutation": 4500580,
+   "calls_to_certify": 3,
+   "protocol_overhead": 369079
+  },
+  {
+   "predecessor": "a5fafaa2-6f7d-4ce6-a146-a8104c44edf9",
+   "successor": "e0a08ce5-9e78-491c-bc4e-e9a0fe7e3a2d",
+   "first_ctx": 120216,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 161520,
+   "carried_before_first_mutation": 1805981,
+   "calls_to_certify": 3,
+   "protocol_overhead": 368630
+  },
+  {
+   "predecessor": "59d80167-284a-4731-90cb-2abe2e866af3",
+   "successor": "2e7601ad-fe03-4a0b-9406-db3b6d4e81e7",
+   "first_ctx": 110949,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 123367,
+   "carried_before_first_mutation": 465287,
+   "calls_to_certify": 3,
+   "protocol_overhead": 344076
+  },
+  {
+   "predecessor": "mission-m-8bbdf725cd52-e2",
+   "successor": "463ffd72-45f1-4801-b23f-fc534e99d863",
+   "first_ctx": 112082,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 139974,
+   "carried_before_first_mutation": 2451001,
+   "calls_to_certify": null,
+   "protocol_overhead": null
+  },
+  {
+   "predecessor": "2fc4dcbc-830f-4e1b-9033-92437197b10e",
+   "successor": "b12e80b1-4d69-44c7-a13d-1ebdebcf0f18",
+   "first_ctx": 117824,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 127709,
+   "carried_before_first_mutation": 736066,
+   "calls_to_certify": 3,
+   "protocol_overhead": 359175
+  },
+  {
+   "predecessor": "e0a08ce5-9e78-491c-bc4e-e9a0fe7e3a2d",
+   "successor": "ef0d3f77-77bb-4c3b-9f20-af937db05f0d",
+   "first_ctx": 119685,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 143807,
+   "carried_before_first_mutation": 1574380,
+   "calls_to_certify": 6,
+   "protocol_overhead": 755403
+  },
+  {
+   "predecessor": "203e945d-4368-4d09-9343-e35533daa5d2",
+   "successor": "e0332e3a-7cba-4d4f-8508-4f3bea0a34ab",
+   "first_ctx": 120779,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 162310,
+   "carried_before_first_mutation": 2172050,
+   "calls_to_certify": 3,
+   "protocol_overhead": 371026
+  },
+  {
+   "predecessor": "89e4f4f2-42d8-4819-a884-6222073bb341",
+   "successor": "eab8a573-bd63-4729-b1af-152321283848",
+   "first_ctx": 113369,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 151566,
+   "carried_before_first_mutation": 1937849,
+   "calls_to_certify": 3,
+   "protocol_overhead": 346668
+  },
+  {
+   "predecessor": "ae158156-2e5d-45dc-b754-4d1506f4f57f",
+   "successor": "7d5bb7be-25b4-4c8c-b2cd-4c41183bab2d",
+   "first_ctx": 114319,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 156193,
+   "carried_before_first_mutation": 1602002,
+   "calls_to_certify": 3,
+   "protocol_overhead": 348258
+  },
+  {
+   "predecessor": "f8147c6a-faba-42ba-b538-a069d09d8d50",
+   "successor": "50c1a2ed-eb89-4be6-88ea-c77601855e6f",
+   "first_ctx": 113027,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 125757,
+   "carried_before_first_mutation": 1439480,
+   "calls_to_certify": 6,
+   "protocol_overhead": 701156
+  },
+  {
+   "predecessor": "cb0c6351-bb8a-4b82-ba14-15984159a782",
+   "successor": "75c203ec-b7b1-4422-aabe-dc8f41643d2a",
+   "first_ctx": 112517,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 132982,
+   "carried_before_first_mutation": 967198,
+   "calls_to_certify": 5,
+   "protocol_overhead": 590548
+  },
+  {
+   "predecessor": "a17314a0-417f-45e9-951a-de2e809d6544",
+   "successor": "9026d810-bcb9-4dd5-875b-29c2a0e010b1",
+   "first_ctx": 111817,
+   "calls_to_first_mutation": 23,
+   "ctx_at_first_mutation": 164860,
+   "carried_before_first_mutation": 3090042,
+   "calls_to_certify": 4,
+   "protocol_overhead": 455620
+  },
+  {
+   "predecessor": "53d5cdd7-638e-489e-809d-6b064c28cbfe",
+   "successor": "1f9f5ba2-36c7-4f5b-8976-9a86f57d2721",
+   "first_ctx": 111887,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 159273,
+   "carried_before_first_mutation": 2033783,
+   "calls_to_certify": 4,
+   "protocol_overhead": 459785
+  },
+  {
+   "predecessor": "f99f5d5e-b441-4441-b98d-806385d9f0f4",
+   "successor": "e5c665bb-6350-4996-b8e2-80827594af4a",
+   "first_ctx": 115645,
+   "calls_to_first_mutation": 24,
+   "ctx_at_first_mutation": 150721,
+   "carried_before_first_mutation": 3021760,
+   "calls_to_certify": 3,
+   "protocol_overhead": 351351
+  },
+  {
+   "predecessor": "e0332e3a-7cba-4d4f-8508-4f3bea0a34ab",
+   "successor": "7f13d6e2-0a73-4464-9a54-0423a9c75757",
+   "first_ctx": 120765,
+   "calls_to_first_mutation": 28,
+   "ctx_at_first_mutation": 179465,
+   "carried_before_first_mutation": 4096673,
+   "calls_to_certify": 3,
+   "protocol_overhead": 372574
+  },
+  {
+   "predecessor": "1bbb5ff6-6ed3-4590-8cd4-b0a483383b01",
+   "successor": "6faafa79-eb10-46cf-ab35-af8604eda7ca",
+   "first_ctx": 114469,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 126241,
+   "carried_before_first_mutation": 1548418,
+   "calls_to_certify": 3,
+   "protocol_overhead": 347780
+  },
+  {
+   "predecessor": "eab8a573-bd63-4729-b1af-152321283848",
+   "successor": "6fc369d6-3715-4fc8-aae6-a3140673c0e7",
+   "first_ctx": 116689,
+   "calls_to_first_mutation": 35,
+   "ctx_at_first_mutation": 186918,
+   "carried_before_first_mutation": 5377576,
+   "calls_to_certify": 3,
+   "protocol_overhead": 358117
+  },
+  {
+   "predecessor": "7f13d6e2-0a73-4464-9a54-0423a9c75757",
+   "successor": "1fd598fe-af43-488a-8a95-36b032ab78f9",
+   "first_ctx": 125541,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 154715,
+   "carried_before_first_mutation": 2041078,
+   "calls_to_certify": 5,
+   "protocol_overhead": 650940
+  },
+  {
+   "predecessor": "b12e80b1-4d69-44c7-a13d-1ebdebcf0f18",
+   "successor": "8ff175c8-05f3-4f2c-a138-78e1b4aef25c",
+   "first_ctx": 123790,
+   "calls_to_first_mutation": 5,
+   "ctx_at_first_mutation": 134310,
+   "carried_before_first_mutation": 514487,
+   "calls_to_certify": 3,
+   "protocol_overhead": 381439
+  },
+  {
+   "predecessor": "9026d810-bcb9-4dd5-875b-29c2a0e010b1",
+   "successor": "61123f26-69e3-44e2-9360-e37f94ca8252",
+   "first_ctx": 118131,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 151207,
+   "carried_before_first_mutation": 605076,
+   "calls_to_certify": 3,
+   "protocol_overhead": 359627
+  },
+  {
+   "predecessor": "e5c665bb-6350-4996-b8e2-80827594af4a",
+   "successor": "87a1af94-386d-4a95-820f-70d24129de09",
+   "first_ctx": 118939,
+   "calls_to_first_mutation": 29,
+   "ctx_at_first_mutation": 165954,
+   "carried_before_first_mutation": 3896754,
+   "calls_to_certify": 3,
+   "protocol_overhead": 361407
+  },
+  {
+   "predecessor": "aa92fe65-10a9-478e-91e2-a5450d2bfe56",
+   "successor": "6abdd856-01e1-43c4-9b0b-ae855862723c",
+   "first_ctx": 116056,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 133838,
+   "carried_before_first_mutation": 1249408,
+   "calls_to_certify": 3,
+   "protocol_overhead": 355334
+  },
+  {
+   "predecessor": "8ff175c8-05f3-4f2c-a138-78e1b4aef25c",
+   "successor": "121934d3-dcd3-47e7-9991-57733a834065",
+   "first_ctx": 122748,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 144739,
+   "carried_before_first_mutation": 1216689,
+   "calls_to_certify": 3,
+   "protocol_overhead": 380104
+  },
+  {
+   "predecessor": "mission-m-8bbdf725cd52-e3",
+   "successor": "0b24f770-9e68-4e34-81e9-bcac311091f2",
+   "first_ctx": 15639,
+   "calls_to_first_mutation": 29,
+   "ctx_at_first_mutation": 51134,
+   "carried_before_first_mutation": 854619,
+   "calls_to_certify": null,
+   "protocol_overhead": null
+  },
+  {
+   "predecessor": "1a9ec524-c923-4b09-8898-0257a12950ec",
+   "successor": "eedde248-351c-41cf-8831-fc5a3b8bd12d",
+   "first_ctx": 106841,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 171925,
+   "carried_before_first_mutation": 2111483,
+   "calls_to_certify": 3,
+   "protocol_overhead": 325637
+  },
+  {
+   "predecessor": "ef0d3f77-77bb-4c3b-9f20-af937db05f0d",
+   "successor": "4fb42b1c-fada-4978-aab1-b3963065b714",
+   "first_ctx": 124166,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 165200,
+   "carried_before_first_mutation": 3744017,
+   "calls_to_certify": 3,
+   "protocol_overhead": 386027
+  },
+  {
+   "predecessor": "b001c9b0-784b-45fd-a25a-8bd38fc6813c",
+   "successor": "81dca003-7812-421a-9880-00ed75636622",
+   "first_ctx": 120739,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 215387,
+   "carried_before_first_mutation": 4076882,
+   "calls_to_certify": 3,
+   "protocol_overhead": 368934
+  },
+  {
+   "predecessor": "750b9d74-25f7-4857-aa41-2c888e730116",
+   "successor": "0101245f-b72b-4a1e-b6df-bcc01907ed76",
+   "first_ctx": 121910,
+   "calls_to_first_mutation": 25,
+   "ctx_at_first_mutation": 142957,
+   "carried_before_first_mutation": 3206091,
+   "calls_to_certify": 4,
+   "protocol_overhead": 498912
+  },
+  {
+   "predecessor": "7d5bb7be-25b4-4c8c-b2cd-4c41183bab2d",
+   "successor": "c66b2df2-5bc0-4ac2-81d5-baf745405d3b",
+   "first_ctx": 117780,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 135397,
+   "carried_before_first_mutation": 1003306,
+   "calls_to_certify": 3,
+   "protocol_overhead": 358668
+  },
+  {
+   "predecessor": "61123f26-69e3-44e2-9360-e37f94ca8252",
+   "successor": "d1dfa06b-dbf8-4b1a-bbe9-86b6d8303c22",
+   "first_ctx": 118181,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 136584,
+   "carried_before_first_mutation": 750727,
+   "calls_to_certify": 3,
+   "protocol_overhead": 361093
+  },
+  {
+   "predecessor": "81dca003-7812-421a-9880-00ed75636622",
+   "successor": "6b747dbd-d9b4-445e-b7da-dd06ae365ad4",
+   "first_ctx": 120328,
+   "calls_to_first_mutation": 18,
+   "ctx_at_first_mutation": 152082,
+   "carried_before_first_mutation": 2343840,
+   "calls_to_certify": 3,
+   "protocol_overhead": 370057
+  },
+  {
+   "predecessor": "08cb0d86-386a-469f-ab87-baecfdda03f3",
+   "successor": "71ccfa86-6902-4449-a345-dacb4b1ba2de",
+   "first_ctx": 123861,
+   "calls_to_first_mutation": 7,
+   "ctx_at_first_mutation": 132465,
+   "carried_before_first_mutation": 766870,
+   "calls_to_certify": 4,
+   "protocol_overhead": 506883
+  },
+  {
+   "predecessor": "36c1a4ef-76dd-4213-aac3-9397a86aae2e",
+   "successor": "f552a163-2ec7-498a-b0a7-5526b372eeb3",
+   "first_ctx": 118471,
+   "calls_to_first_mutation": 41,
+   "ctx_at_first_mutation": 172720,
+   "carried_before_first_mutation": 5784255,
+   "calls_to_certify": 4,
+   "protocol_overhead": 481309
+  },
+  {
+   "predecessor": "71ccfa86-6902-4449-a345-dacb4b1ba2de",
+   "successor": "bc576038-e8ad-44be-8c28-553bcf3b2826",
+   "first_ctx": 123003,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 156682,
+   "carried_before_first_mutation": 1534319,
+   "calls_to_certify": 3,
+   "protocol_overhead": 377673
+  },
+  {
+   "predecessor": "d1dfa06b-dbf8-4b1a-bbe9-86b6d8303c22",
+   "successor": "eb82ef0a-de45-4f8b-b64e-7113c6739c5f",
+   "first_ctx": 118102,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 177038,
+   "carried_before_first_mutation": 3019353,
+   "calls_to_certify": 3,
+   "protocol_overhead": 362057
+  },
+  {
+   "predecessor": "6abdd856-01e1-43c4-9b0b-ae855862723c",
+   "successor": "c14908c3-5e85-4c33-bbb8-d44e931ae327",
+   "first_ctx": 115929,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 133352,
+   "carried_before_first_mutation": 1246700,
+   "calls_to_certify": 5,
+   "protocol_overhead": 604381
+  },
+  {
+   "predecessor": "bc576038-e8ad-44be-8c28-553bcf3b2826",
+   "successor": "8a8e2b25-f272-4baa-95b0-88cf932af056",
+   "first_ctx": 123445,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 150628,
+   "carried_before_first_mutation": 1928591,
+   "calls_to_certify": 3,
+   "protocol_overhead": 379617
+  },
+  {
+   "predecessor": "423e33b0-fb61-4fd9-9145-3e3cfbcbb0f4",
+   "successor": "b9bd9469-0a95-40cf-bdc2-c7ba2b44ffdd",
+   "first_ctx": 122544,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 135444,
+   "carried_before_first_mutation": 1281247,
+   "calls_to_certify": 3,
+   "protocol_overhead": 371182
+  },
+  {
+   "predecessor": "c77978f6-1b2f-4c45-9178-d7d66eb0f2e5",
+   "successor": "0f9b771b-ae75-40df-bb08-e64ff2b1f3d1",
+   "first_ctx": 121931,
+   "calls_to_first_mutation": 18,
+   "ctx_at_first_mutation": 143900,
+   "carried_before_first_mutation": 2241273,
+   "calls_to_certify": 4,
+   "protocol_overhead": 498693
+  },
+  {
+   "predecessor": "8a8e2b25-f272-4baa-95b0-88cf932af056",
+   "successor": "5bbc53d7-79ae-437f-a7c2-0312677e7bf9",
+   "first_ctx": 123093,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 134652,
+   "carried_before_first_mutation": 1282111,
+   "calls_to_certify": 3,
+   "protocol_overhead": 373687
+  },
+  {
+   "predecessor": "6b747dbd-d9b4-445e-b7da-dd06ae365ad4",
+   "successor": "e6066d26-f9f2-4c08-be1a-5e639204490b",
+   "first_ctx": 120542,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 139315,
+   "carried_before_first_mutation": 908236,
+   "calls_to_certify": 3,
+   "protocol_overhead": 371985
+  },
+  {
+   "predecessor": "eb82ef0a-de45-4f8b-b64e-7113c6739c5f",
+   "successor": "e386f46d-8292-4c30-953a-6a82217c3dcf",
+   "first_ctx": 114133,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 152803,
+   "carried_before_first_mutation": 1037269,
+   "calls_to_certify": 3,
+   "protocol_overhead": 350993
+  },
+  {
+   "predecessor": "0101245f-b72b-4a1e-b6df-bcc01907ed76",
+   "successor": "15b22a74-54af-4e4d-b6fe-2924b99faf83",
+   "first_ctx": 122196,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 149151,
+   "carried_before_first_mutation": 1365561,
+   "calls_to_certify": 3,
+   "protocol_overhead": 376649
+  },
+  {
+   "predecessor": "2a90c34a-17e3-4f9c-b317-e6cc993c4469",
+   "successor": "fc518cb1-6d27-41ad-8154-bf144d2403cb",
+   "first_ctx": 120549,
+   "calls_to_first_mutation": 19,
+   "ctx_at_first_mutation": 160284,
+   "carried_before_first_mutation": 2425442,
+   "calls_to_certify": 4,
+   "protocol_overhead": 490798
+  },
+  {
+   "predecessor": "2aa0b0fb-fd18-48c4-8b68-cdbad82a4dae",
+   "successor": "3aaeab7f-a742-4c50-9d01-38c3ab9b36d0",
+   "first_ctx": 122582,
+   "calls_to_first_mutation": 18,
+   "ctx_at_first_mutation": 140176,
+   "carried_before_first_mutation": 2261853,
+   "calls_to_certify": 3,
+   "protocol_overhead": 371953
+  },
+  {
+   "predecessor": "61ad7f03-7235-429b-ac03-a19e82bd8973",
+   "successor": "55264307-67ee-4099-896e-e2a4e7335d21",
+   "first_ctx": 119953,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 137110,
+   "carried_before_first_mutation": 1402368,
+   "calls_to_certify": 3,
+   "protocol_overhead": 363787
+  },
+  {
+   "predecessor": "9de9bf3b-efea-4c79-a1ce-e1b1cacaea49",
+   "successor": "5d6a315c-85d7-46ad-9748-1f36076c0b19",
+   "first_ctx": 122325,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 154134,
+   "carried_before_first_mutation": 2891888,
+   "calls_to_certify": 3,
+   "protocol_overhead": 373070
+  },
+  {
+   "predecessor": "e386f46d-8292-4c30-953a-6a82217c3dcf",
+   "successor": "696678a3-74ec-417e-892d-a159896b1125",
+   "first_ctx": 125765,
+   "calls_to_first_mutation": 27,
+   "ctx_at_first_mutation": 198893,
+   "carried_before_first_mutation": 4399080,
+   "calls_to_certify": 4,
+   "protocol_overhead": 516939
+  },
+  {
+   "predecessor": "15b22a74-54af-4e4d-b6fe-2924b99faf83",
+   "successor": "a895d8c4-0fba-4b51-9d63-f1723b6929f4",
+   "first_ctx": 122495,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 138394,
+   "carried_before_first_mutation": 647352,
+   "calls_to_certify": 3,
+   "protocol_overhead": 377733
+  },
+  {
+   "predecessor": "f552a163-2ec7-498a-b0a7-5526b372eeb3",
+   "successor": "4d0e86d8-7b50-490c-936b-425e85c8360a",
+   "first_ctx": 119159,
+   "calls_to_first_mutation": 12,
+   "ctx_at_first_mutation": 147465,
+   "carried_before_first_mutation": 1396254,
+   "calls_to_certify": 4,
+   "protocol_overhead": 484238
+  },
+  {
+   "predecessor": "886d7bb9-086d-4c66-a2db-a4043e2221de",
+   "successor": "2494f14c-9336-4cb0-99be-8f10ce792363",
+   "first_ctx": 122910,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 145461,
+   "carried_before_first_mutation": 2791197,
+   "calls_to_certify": 3,
+   "protocol_overhead": 373163
+  },
+  {
+   "predecessor": "696678a3-74ec-417e-892d-a159896b1125",
+   "successor": "875e8441-6eb1-4835-a5c5-bf33aeb27902",
+   "first_ctx": 117386,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 156843,
+   "carried_before_first_mutation": 1904731,
+   "calls_to_certify": 3,
+   "protocol_overhead": 362937
+  },
+  {
+   "predecessor": "875e8441-6eb1-4835-a5c5-bf33aeb27902",
+   "successor": "2272a462-737c-475f-8dd3-50236d591ad3",
+   "first_ctx": 117029,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 145275,
+   "carried_before_first_mutation": 1992320,
+   "calls_to_certify": 3,
+   "protocol_overhead": 358663
+  },
+  {
+   "predecessor": "4d0e86d8-7b50-490c-936b-425e85c8360a",
+   "successor": "c33eeb31-5086-46cc-a772-d07e40e15905",
+   "first_ctx": 118813,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 129275,
+   "carried_before_first_mutation": 865916,
+   "calls_to_certify": 3,
+   "protocol_overhead": 362406
+  },
+  {
+   "predecessor": "6fc369d6-3715-4fc8-aae6-a3140673c0e7",
+   "successor": "76920955-0419-4556-a0cf-67e5b633f02d",
+   "first_ctx": 115713,
+   "calls_to_first_mutation": 8,
+   "ctx_at_first_mutation": 139267,
+   "carried_before_first_mutation": 877677,
+   "calls_to_certify": 3,
+   "protocol_overhead": 357358
+  },
+  {
+   "predecessor": "b9bd9469-0a95-40cf-bdc2-c7ba2b44ffdd",
+   "successor": "f538b230-6bbe-49da-bd4e-6ff6919ae9dc",
+   "first_ctx": 125223,
+   "calls_to_first_mutation": null,
+   "ctx_at_first_mutation": null,
+   "carried_before_first_mutation": null,
+   "calls_to_certify": 3,
+   "protocol_overhead": 386388
+  },
+  {
+   "predecessor": "87a1af94-386d-4a95-820f-70d24129de09",
+   "successor": "acb46589-be1a-4eb9-aaf5-fa744ffbfc1d",
+   "first_ctx": 118588,
+   "calls_to_first_mutation": 29,
+   "ctx_at_first_mutation": 183311,
+   "carried_before_first_mutation": 4073055,
+   "calls_to_certify": 3,
+   "protocol_overhead": 362258
+  },
+  {
+   "predecessor": "55264307-67ee-4099-896e-e2a4e7335d21",
+   "successor": "c6dfde93-82e3-46c5-bf83-801fbeea1f53",
+   "first_ctx": 121682,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 167040,
+   "carried_before_first_mutation": 3004025,
+   "calls_to_certify": 3,
+   "protocol_overhead": 369749
+  },
+  {
+   "predecessor": "e6066d26-f9f2-4c08-be1a-5e639204490b",
+   "successor": "bc36dfda-05c3-4531-8d3c-644d97d6c10f",
+   "first_ctx": 119920,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 150337,
+   "carried_before_first_mutation": 2075561,
+   "calls_to_certify": 3,
+   "protocol_overhead": 372545
+  },
+  {
+   "predecessor": "88df3ab3-8ed9-4883-9e95-eec10104b60d",
+   "successor": "24ca0218-9035-4035-b1e8-f31a13ae14bd",
+   "first_ctx": 126490,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 153593,
+   "carried_before_first_mutation": 2924874,
+   "calls_to_certify": 4,
+   "protocol_overhead": 514016
+  },
+  {
+   "predecessor": "acb46589-be1a-4eb9-aaf5-fa744ffbfc1d",
+   "successor": "51f8cc42-6696-467d-ab8f-5fc3228ca03a",
+   "first_ctx": 118314,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 151803,
+   "carried_before_first_mutation": 1570861,
+   "calls_to_certify": 3,
+   "protocol_overhead": 362979
+  },
+  {
+   "predecessor": "c6dfde93-82e3-46c5-bf83-801fbeea1f53",
+   "successor": "53bfaa7e-cfaf-42fc-97e3-2ef1073d5ba7",
+   "first_ctx": 122399,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 148169,
+   "carried_before_first_mutation": 1902476,
+   "calls_to_certify": 3,
+   "protocol_overhead": 372694
+  },
+  {
+   "predecessor": "76920955-0419-4556-a0cf-67e5b633f02d",
+   "successor": "5e2a0a3d-20e2-4f0e-8d95-dcb0d3045070",
+   "first_ctx": 116841,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 144473,
+   "carried_before_first_mutation": 1026905,
+   "calls_to_certify": 3,
+   "protocol_overhead": 359675
+  },
+  {
+   "predecessor": "51f8cc42-6696-467d-ab8f-5fc3228ca03a",
+   "successor": "cdb155fb-28da-4a5e-977b-bd77579753eb",
+   "first_ctx": 116747,
+   "calls_to_first_mutation": 16,
+   "ctx_at_first_mutation": 167492,
+   "carried_before_first_mutation": 2003257,
+   "calls_to_certify": 3,
+   "protocol_overhead": 359063
+  },
+  {
+   "predecessor": "c5177125-524e-4ba5-a77e-8228ca888d4d",
+   "successor": "0685cead-2bc9-456c-922e-f44896c97770",
+   "first_ctx": 121252,
+   "calls_to_first_mutation": 22,
+   "ctx_at_first_mutation": 143025,
+   "carried_before_first_mutation": 2791736,
+   "calls_to_certify": 4,
+   "protocol_overhead": 493496
+  },
+  {
+   "predecessor": "00174cc9-ab85-4828-b79e-940d34127f65",
+   "successor": "98e7ca10-57e9-4f15-9e26-e39c67248a3e",
+   "first_ctx": 118484,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 128346,
+   "carried_before_first_mutation": 610205,
+   "calls_to_certify": 3,
+   "protocol_overhead": 359552
+  },
+  {
+   "predecessor": "5e2a0a3d-20e2-4f0e-8d95-dcb0d3045070",
+   "successor": "5aee8cc6-3dbd-4c8b-a360-0590b0c06301",
+   "first_ctx": 116987,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 154370,
+   "carried_before_first_mutation": 1050746,
+   "calls_to_certify": 3,
+   "protocol_overhead": 361749
+  },
+  {
+   "predecessor": "c33eeb31-5086-46cc-a772-d07e40e15905",
+   "successor": "6171e9f5-8a48-4ad2-9bfd-da4a63a6b10f",
+   "first_ctx": 114897,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 154626,
+   "carried_before_first_mutation": 1307061,
+   "calls_to_certify": 5,
+   "protocol_overhead": 593098
+  },
+  {
+   "predecessor": "e88acad0-9262-4a1f-940c-a55deaaea3e5",
+   "successor": "9ed26888-dfa2-44ea-bce6-6e77054c4a30",
+   "first_ctx": 125196,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 170109,
+   "carried_before_first_mutation": 1709249,
+   "calls_to_certify": 3,
+   "protocol_overhead": 380392
+  },
+  {
+   "predecessor": "5aee8cc6-3dbd-4c8b-a360-0590b0c06301",
+   "successor": "36edea95-1ff0-4a5b-8141-69a2e76553ef",
+   "first_ctx": 115002,
+   "calls_to_first_mutation": 17,
+   "ctx_at_first_mutation": 139694,
+   "carried_before_first_mutation": 2052057,
+   "calls_to_certify": 3,
+   "protocol_overhead": 353401
+  },
+  {
+   "predecessor": "cdb155fb-28da-4a5e-977b-bd77579753eb",
+   "successor": "d0dda031-367b-4e6a-be76-acd5e5ac3579",
+   "first_ctx": 116831,
+   "calls_to_first_mutation": 6,
+   "ctx_at_first_mutation": 129388,
+   "carried_before_first_mutation": 618790,
+   "calls_to_certify": 3,
+   "protocol_overhead": 362228
+  },
+  {
+   "predecessor": "420f4691-524c-44b3-89f6-b4ce245cf957",
+   "successor": "d5bf38bd-c67d-4930-b04a-4ff7249c2f98",
+   "first_ctx": 118392,
+   "calls_to_first_mutation": 23,
+   "ctx_at_first_mutation": 163260,
+   "carried_before_first_mutation": 3098193,
+   "calls_to_certify": 4,
+   "protocol_overhead": 481153
+  },
+  {
+   "predecessor": "9ed26888-dfa2-44ea-bce6-6e77054c4a30",
+   "successor": "cb20aa35-efce-4128-8aa2-ba958b821e15",
+   "first_ctx": 126031,
+   "calls_to_first_mutation": 20,
+   "ctx_at_first_mutation": 151243,
+   "carried_before_first_mutation": 2656271,
+   "calls_to_certify": 3,
+   "protocol_overhead": 385324
+  },
+  {
+   "predecessor": "b60e3a61-b4f0-4985-a769-6dd3c74b5b33",
+   "successor": "98b96d23-8e2a-40b8-9b26-7de811443a96",
+   "first_ctx": 121400,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 145809,
+   "carried_before_first_mutation": 1018087,
+   "calls_to_certify": 3,
+   "protocol_overhead": 368776
+  },
+  {
+   "predecessor": "36edea95-1ff0-4a5b-8141-69a2e76553ef",
+   "successor": "dbc12858-93b4-47d9-905a-c07e0b4a467f",
+   "first_ctx": 114334,
+   "calls_to_first_mutation": null,
+   "ctx_at_first_mutation": null,
+   "carried_before_first_mutation": null,
+   "calls_to_certify": 3,
+   "protocol_overhead": 354877
+  },
+  {
+   "predecessor": "d0dda031-367b-4e6a-be76-acd5e5ac3579",
+   "successor": "a50a5c99-27dd-4041-abd5-e86748bcbf4c",
+   "first_ctx": 116388,
+   "calls_to_first_mutation": 9,
+   "ctx_at_first_mutation": 137582,
+   "carried_before_first_mutation": 1026653,
+   "calls_to_certify": 3,
+   "protocol_overhead": 363357
+  },
+  {
+   "predecessor": "870faba6-44dc-4308-b786-645e8fdd1a11",
+   "successor": "ce1c3a41-6917-4a70-a312-50b894c8700a",
+   "first_ctx": 126291,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 145887,
+   "carried_before_first_mutation": 1899485,
+   "calls_to_certify": 3,
+   "protocol_overhead": 383180
+  },
+  {
+   "predecessor": "98e7ca10-57e9-4f15-9e26-e39c67248a3e",
+   "successor": "4ffab43a-725d-4988-a148-427cb2239d42",
+   "first_ctx": 120042,
+   "calls_to_first_mutation": 11,
+   "ctx_at_first_mutation": 134837,
+   "carried_before_first_mutation": 1266665,
+   "calls_to_certify": 3,
+   "protocol_overhead": 364373
+  },
+  {
+   "predecessor": "d5bf38bd-c67d-4930-b04a-4ff7249c2f98",
+   "successor": "f6cbb2b6-5f14-4137-b7d2-170d8034be35",
+   "first_ctx": 118534,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 130509,
+   "carried_before_first_mutation": 1488626,
+   "calls_to_certify": 3,
+   "protocol_overhead": 360253
+  },
+  {
+   "predecessor": "cd680954-cba8-433c-b521-ef27f0a5cb0c",
+   "successor": "dbbceb56-4f0c-4866-86e7-9323a69a5279",
+   "first_ctx": 114455,
+   "calls_to_first_mutation": 13,
+   "ctx_at_first_mutation": 147507,
+   "carried_before_first_mutation": 1522069,
+   "calls_to_certify": 3,
+   "protocol_overhead": 350988
+  },
+  {
+   "predecessor": "dbbceb56-4f0c-4866-86e7-9323a69a5279",
+   "successor": "6729e9d8-2f7b-451c-9345-e25ee2181497",
+   "first_ctx": 114732,
+   "calls_to_first_mutation": 21,
+   "ctx_at_first_mutation": 185799,
+   "carried_before_first_mutation": 3034609,
+   "calls_to_certify": 3,
+   "protocol_overhead": 348909
+  },
+  {
+   "predecessor": "f6c12b4c-202f-484b-9587-fef886238077",
+   "successor": "16a354ea-0bc8-448e-b565-0605090ec2d1",
+   "first_ctx": 109609,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 133490,
+   "carried_before_first_mutation": 1663584,
+   "calls_to_certify": 4,
+   "protocol_overhead": 445276
+  },
+  {
+   "predecessor": "6cefc4cd-5c5b-4d7c-89d7-0dffddc4dd7d",
+   "successor": "903e259a-3b3b-40b9-8429-2699c292412d",
+   "first_ctx": 119333,
+   "calls_to_first_mutation": 31,
+   "ctx_at_first_mutation": 172763,
+   "carried_before_first_mutation": 4372539,
+   "calls_to_certify": 3,
+   "protocol_overhead": 363763
+  },
+  {
+   "predecessor": "6729e9d8-2f7b-451c-9345-e25ee2181497",
+   "successor": "a2eeba0d-7fe0-494d-9c38-7d0d35123049",
+   "first_ctx": 118811,
+   "calls_to_first_mutation": 43,
+   "ctx_at_first_mutation": 180805,
+   "carried_before_first_mutation": 6176206,
+   "calls_to_certify": 3,
+   "protocol_overhead": 361159
+  },
+  {
+   "predecessor": "5274a86b-bd5e-4424-9e38-1cd7a87bc978",
+   "successor": "cd2c7bd8-1768-437e-98db-795c16c94232",
+   "first_ctx": 115768,
+   "calls_to_first_mutation": 14,
+   "ctx_at_first_mutation": 142311,
+   "carried_before_first_mutation": 1645761,
+   "calls_to_certify": 3,
+   "protocol_overhead": 352704
+  },
+  {
+   "predecessor": "903e259a-3b3b-40b9-8429-2699c292412d",
+   "successor": "937792d8-1516-4d09-94f9-1859b086fd21",
+   "first_ctx": 115294,
+   "calls_to_first_mutation": 15,
+   "ctx_at_first_mutation": 148416,
+   "carried_before_first_mutation": 1801735,
+   "calls_to_certify": 3,
+   "protocol_overhead": 351760
+  },
+  {
+   "predecessor": "a2eeba0d-7fe0-494d-9c38-7d0d35123049",
+   "successor": "c665789d-72f0-4373-9995-ec2d24fb8cd2",
+   "first_ctx": 116583,
+   "calls_to_first_mutation": 25,
+   "ctx_at_first_mutation": 157414,
+   "carried_before_first_mutation": 3256725,
+   "calls_to_certify": 10,
+   "protocol_overhead": 1225510
+  },
+  {
+   "predecessor": "a0821978-8ee6-46fc-af50-8e1e84bf1e2a",
+   "successor": "c871634b-6596-4046-a07f-712a43501e24",
+   "first_ctx": 121891,
+   "calls_to_first_mutation": 26,
+   "ctx_at_first_mutation": 155400,
+   "carried_before_first_mutation": 3371762,
+   "calls_to_certify": 3,
+   "protocol_overhead": 370548
+  },
+  {
+   "predecessor": "1ae57791-4576-4e20-868b-42203ee7bf47",
+   "successor": "9f6174ae-818d-4cc1-92a9-d5258f8cd6c2",
+   "first_ctx": 111865,
+   "calls_to_first_mutation": 10,
+   "ctx_at_first_mutation": 149301,
+   "carried_before_first_mutation": 1119123,
+   "calls_to_certify": 3,
+   "protocol_overhead": 348209
+  }
+ ]
+}

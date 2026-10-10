@@ -1,0 +1,3 @@
+FAIL V-RR-NO-CERTIFY-NOT-ZERO samples=[('XN1', None, 0), ('XN2', None, 0)] no_certify_call=2 prior={'basis': 'UPPER_BOUND_P50', 'tokens': 375000, 'p90': 375000, 'n': 2}
+ROLLOVER_REPLAY_PASS=40/41
+MUTANT KILLED gate=V-RR-NO-CERTIFY-NOT-ZERO

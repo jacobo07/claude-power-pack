@@ -1,0 +1,8 @@
+{
+  "file": "C:/Users/User/Apps/pp-ctx-same-pane/tools/rollover_replay.py",
+  "test": "C:/Users/User/Apps/pp-ctx-same-pane/tools/test_rollover_replay.py",
+  "repo_root": "C:/Users/User/Apps/pp-ctx-same-pane",
+  "gate": "V-RR-CERTIFY-DETECT[refused]",
+  "old": "certs = {mid for tid, mid in cert_uses.items() if tid in certified}",
+  "new": "certs = {mid for tid, mid in cert_uses.items()}"
+}

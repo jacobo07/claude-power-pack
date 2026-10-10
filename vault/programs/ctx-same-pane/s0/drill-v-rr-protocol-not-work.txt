@@ -1,0 +1,4 @@
+FAIL V-RR-PROTOCOL-NOT-WORK XA protocol=515000 carried=515000 prior={'basis': 'PROTOCOL_P90', 'tokens': 595000, 'p50': 555000, 'n': 3, 'upper_bound_p50': 555000, 'rereads': 'UNMEASURED'}
+FAIL V-RR-NO-CERTIFY-NOT-ZERO samples=[('XN1', None, 245000), ('XN2', None, 375000)] no_certify_call=2 prior={'basis': 'UPPER_BOUND_P50', 'tokens': 375000, 'p90': 375000, 'n': 2}
+ROLLOVER_REPLAY_PASS=39/41
+MUTANT KILLED gate=V-RR-PROTOCOL-NOT-WORK

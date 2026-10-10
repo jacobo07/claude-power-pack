@@ -1,0 +1,12 @@
+PASS V-HW-ONE-SPELLING 
+PASS V-HW-MISSING-IS-UNKNOWN {'basis': 'UNKNOWN', 'reason': 'no prior artifact'}
+PASS V-HW-EXPIRED-IS-UNKNOWN {'basis': 'UNKNOWN', 'reason': 'prior expired', 'stale': True}
+PASS V-HW-FOREIGN-SCHEMA-IS-UNKNOWN 
+PASS V-HW-NO-PRIOR-NO-ASK horizon unknown (no prior artifact)
+PASS V-HW-STALE-TRIGGERS-REFRESH [WindowsPath('C:/Users/User/AppData/Local/Temp/hw-ur8niy_z/state')]
+PASS V-HW-EVIDENCE-REACHES-LIVE-DECISION robust: 100% of the prior pays back even at 11.3 calls (rehydration incl.) at a boundary
+PASS V-HW-FRESH-PRIOR-NO-REFRESH [WindowsPath('C:/Users/User/AppData/Local/Temp/hw-ur8niy_z/state')]
+PASS V-HW-ROW-CARRIES-OBLIGATIONS [0, 0]
+PASS V-HW-SHADOW-USES-EVIDENCE {'horizon_basis': 'MEASURED_PRIOR', 'reason': 'robust: 100% of the prior pays back even at 11.3 calls (rehydration incl.) at a boundary'}
+PASS V-HW-REFRESH-ONE-BUILDER 
+HORIZON_WIRING_PASS=11/11

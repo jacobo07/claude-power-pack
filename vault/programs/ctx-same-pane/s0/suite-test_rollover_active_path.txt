@@ -1,0 +1,54 @@
+the destructive step: /clear is dispatched only on SAFE_TO_FORGET
+  PASS V-ROLLACT-GREEN-DISPATCHES-CLEAR: calls=[{'transcript': '', 'cwd': 'C:\\Users\\User\\Apps\\pp-ctx-same-pane', 'used_pct': 75.0, 'cid': 'rollact-2d4af6632a5a:clear:1791644914', 'expect_line': '/clear', 'expect_prefix': '/clear', 'kind': 'clear'}] decision=block
+  PASS V-ROLLACT-GREEN-TEXT-ASKS-FOR-CLEAR: the block names the line to emit and who picks the thread up
+  PASS V-ROLLACT-CLEAR-DISPATCHED-ONCE: second call dispatched=0
+  PASS V-ROLLACT-REFUSED-TYPES-NOTHING: verdict=REFUSED calls=[] out=None
+  PASS V-ROLLACT-NO-CAPSULE-TYPES-NOTHING: verdict=NO_CAPSULE calls=[] out=None
+a capsule that never arrives falls back to /compact, never past the wall
+  PASS V-ROLLACT-FALLBACK-REARMS-COMPACT: after 3 waits the advisory flag is cleared so /compact re-fires
+  PASS V-ROLLACT-FALLBACK-STOPS-RETRYING: the rollover leg is closed for this cycle; it does not compete with the compact leg
+the kill switch, and the ask flag as the entry condition
+  PASS V-ROLLACT-KILLSWITCH-OFF: CPP_ROLLOVER_ACTIVE=0
+  PASS V-ROLLACT-DEFAULT-ON: unset is ON -- the Owner's default, on this host and on GEX44
+  PASS V-ROLLACT-NO-ASK-NO-STEP: a session that never crossed the wall is never asked to clear
+the wall asks the model to seal the capsule itself, and types nothing
+  PASS V-ROLLACT-WALL-BLOCKS: decision=block reason='CONTEXT THRESHOLD CROSSED — 90.0% used (>= 45%). Pre-reset vault checkpoint WRIT'
+  PASS V-ROLLACT-WALL-NO-KCLEAR-KEYSTROKE: dispatched kinds=[]
+  PASS V-ROLLACT-WALL-NAMES-THE-SKILL: the model is told to invoke the skill, and told the trailing line does nothing
+  PASS V-ROLLACT-WALL-NO-TRAILING-ASK: the old ask for a trailing line is gone
+  PASS V-ROLLACT-WALL-SETS-ASK-FLAG: step 2 (the gated /clear) still runs on the next Stop
+a self-sealed capsule crosses on its own, once per seal
+  PASS V-ROLLACT-SELF-CAPSULE-PATH-PINNED: C:\Users\User\AppData\Local\Temp\rollact-0zzwls1w\rollover\capsules\a_b_c.json vs C:\Users\User\AppData\Local\Temp\rollact-0zzwls1w\rollover\capsules\a_b_c.json
+  PASS V-ROLLACT-SELF-MAX-AGE-PINNED: 1800 vs 1800
+  PASS V-ROLLACT-SELF-GREEN-DISPATCHES: calls=['clear'] couriers=1 events=['rollover_self_sealed', 'rollover_clear_dispatched']
+  PASS V-ROLLACT-SELF-ONE-ACT-PER-SEAL: re-dispatched=0 after rearm
+  PASS V-ROLLACT-SELF-RESEAL-ACTS: calls=['clear']
+  PASS V-ROLLACT-SELF-STOP-PATH-CROSSES: calls=['clear'] decision=block
+  PASS V-ROLLACT-SELF-CROSSES-AHEAD-OF-OVERLAY: calls=['clear'] decision=block overlay_ran=0
+  PASS V-ROLLACT-OVERLAY-STILL-SURFACES: overlay_ran=1 calls=[] out={'systemMessage': 'advisory'}
+  PASS V-ROLLACT-SELF-REFUSED-TYPES-NOTHING: calls=[] couriers=[] out=None
+  PASS V-ROLLACT-SELF-REFUSED-NOT-RETRIED: a refused seal is not re-judged on later Stops; a new /kclear is
+  PASS V-ROLLACT-SELF-STALE-TYPES-NOTHING: calls=[] couriers=[] out=None
+  PASS V-ROLLACT-SELF-CERTIFIED-TYPES-NOTHING: calls=[] couriers=[] out=None
+  PASS V-ROLLACT-SELF-NO-CAPSULE-TYPES-NOTHING: calls=[] couriers=[] out=None
+  PASS V-ROLLACT-SELF-MISSION-TYPES-NOTHING: calls=[] couriers=[] out=None
+  PASS V-ROLLACT-SELF-MUTANT-APPLIES: the mutation site is unique
+  PASS V-ROLLACT-SELF-MUTANT-GOES-RED: mutant dispatched 2x for one seal (the real hook: 1x)
+a /clear in flight is not withdrawn by the next Stop (measured 2026-10-06, eab8a573)
+  PASS V-ROLLACT-INFLIGHT-STOP-STAYS-QUIET: first=block dispatches=1 second={}
+  PASS V-ROLLACT-INFLIGHT-EXPIRES: a /clear that never landed cannot silence the wall forever
+  PASS V-ROLLACT-FALLBACK-NOT-INFLIGHT: fallback closes the rollover leg without muting the compact leg
+a withdrawn /clear is over, and a fresh seal after it crosses again
+  PASS V-ROLLACT-INFLIGHT-UNTIL-OUTCOME: no daemon outcome yet: the request is still live (control)
+  PASS V-ROLLACT-WITHDRAWN-NOT-INFLIGHT: the daemon's own `withdrawn` row ends the request; the wall is not muted for 600 s
+  PASS V-ROLLACT-REFUSED-NOT-INFLIGHT: `refused` ends it too
+  PASS V-ROLLACT-OLD-OR-FOREIGN-OUTCOME-STILL-INFLIGHT: only THIS session's outcome, newer than THIS dispatch, ends it
+  PASS V-ROLLACT-WITHDRAWN-SAME-SEAL-NOT-RETRIED: dispatches=1 -- a retry needs a new /kclear, or a busy turn would loop
+  PASS V-ROLLACT-RESEAL-AFTER-WITHDRAW-REDISPATCHES: calls=['clear', 'clear'] decision=block
+  PASS V-ROLLACT-RESEAL-REDISPATCH-IS-INFLIGHT: the re-dispatch is a live request again, and quiets the Stops after it
+  PASS V-ROLLACT-RESEAL-WHILE-INFLIGHT-WAITS: dispatches=1
+  PASS V-ROLLACT-RESEAL-REFUSED-TYPES-NOTHING: dispatches=1
+  PASS V-ROLLACT-INCIDENT-REPLAY-CROSSES: calls=['clear', 'clear'] decision=block
+  PASS V-ROLLACT-RESEAL-MUTANT-APPLIES: the mutation site is unique
+  PASS V-ROLLACT-RESEAL-MUTANT-GOES-RED: mutant dispatched 2x over a live /clear (the real hook: 1x)
+ROLLACT_PASS=46/46  threshold=46/46

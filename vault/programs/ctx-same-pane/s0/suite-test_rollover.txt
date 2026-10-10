@@ -1,0 +1,98 @@
+capsule
+  PASS V-ROLLOVER-GOAL-FROM-WRITES: {'state': 'OK', 'path': 'C:\\Users\\User\\AppData\\Local\\Temp\\rollover_t_ctpqkhc0\\repo\\vault\\plans\\goal.md', 'basis': 'written by this session'}
+  PASS V-ROLLOVER-OBLIGATIONS: ['Wire the shadow observer', 'Write the vault entry']
+  PASS V-ROLLOVER-USAGE-DEDUP: {'state': 'OK', 'calls': 3, 'floor': 190000, 'resident': 520000, 'model': 'claude-opus-5-5'}
+  PASS V-ROLLOVER-REPO: {'state': 'OK', 'root': 'C:\\Users\\User\\AppData\\Local\\Temp\\rollover_t_ctpqkhc0\\repo', 'head': 'c33cbe313e036df7b106cccc343ae9327644ab99', 'branch': 'master', 'dirty': []}
+safe-to-forget: control, then one refusal per missing category
+  PASS V-ROLLOVER-GREEN-CONTROL: {'verdict': 'SAFE_TO_FORGET', 'reasons': []}
+  PASS V-ROLLOVER-RED-GOAL: ['goal: x']
+  PASS V-ROLLOVER-RED-OBLIGATIONS: ['obligations: no open item found in the goal file or handoff']
+  PASS V-ROLLOVER-RED-HEAD-UNKNOWN: ['repo.head: t']
+  PASS V-ROLLOVER-RED-HANDOFF-STALE: ['handoff: 1801s old, older than 1800s -- run /kclear']
+  PASS V-ROLLOVER-RED-CHILD-HOLD: ['children: 1 background task(s) pending']
+  PASS V-ROLLOVER-RED-CHILD-UNKNOWN: ['children: no transcript']
+  PASS V-ROLLOVER-RED-FOREIGN-HANDOFF: ['handoff: written by session bbbbbbbb, not this one -- run /kclear']
+obligations never adopted from a sibling's handoff
+  PASS V-ROLLOVER-FOREIGN-OBLIGATIONS-NOT-ADOPTED: []
+  PASS V-ROLLOVER-OWN-HANDOFF-ADOPTED: ['from handoff of aaaaaaaa-0001']
+a sibling's /kclear overwrites the shared file; the per-session copy survives
+  PASS V-ROLLOVER-PER-SESSION-HANDOFF: C:\Users\User\AppData\Local\Temp\rollover_t_ctpqkhc0\repo\memory\handoffs\aaaaaaaa-0001.md
+  PASS V-ROLLOVER-RED-TAMPER: ['capsule on disk changed since it was sealed']
+policy
+  PASS V-ROLLOVER-BREAKEVEN: (18.2, 18.2, 'break-even 18.2 calls <= 30 at a boundary')
+  PASS V-ROLLOVER-NOT-AT-BOUNDARY: boundary=False
+  PASS V-ROLLOVER-SMALL-GROWTH: growth<150k
+  PASS V-ROLLOVER-PRESSURE: 75%>=70%
+  PASS V-ROLLOVER-UNPRICED-UNKNOWN: break-even unknown (no row)
+successor
+  PASS V-ROLLOVER-ONE-CLAIM: ({'claimed': True, 'holder': 'succ-A', 'generation': 1}, {'claimed': False, 'holder': 'succ-A', 'generation': 1}, {'claimed': True, 'holder': 'succ-A', 'generation': 1})
+  PASS V-ROLLOVER-REFRESH-CONTINUE: unchanged tree
+  PASS V-ROLLOVER-REFRESH-FROM-ELSEWHERE: []
+  PASS V-ROLLOVER-REFRESH-ROOT-GONE: ['root gone: C:\\Users\\User\\AppData\\Local\\Temp\\rollover_t_ctpqkhc0\\no-such-repo']
+  PASS V-ROLLOVER-REFRESH-HEAD-MOVED: ['head: sealed c33cbe313e036df7b106cccc343ae9327644ab99 -> now c3901f254f2e54ab513b5fd28f79607bdaccd691']
+  PASS V-ROLLOVER-EXAM-PASS: {'goal': 'goal.md', 'branch': 'master', 'head': 'c3901f2', 'next': 'wire the shadow observer'}
+  PASS V-ROLLOVER-EXAM-STALE-HEAD-FAILS: [{'key': 'head', 'expected': 'c3901f2', 'given': 'c33cbe3'}]
+  PASS V-ROLLOVER-EXAM-FAIL: [{'key': 'head', 'expected': 'c3901f2', 'given': '0000000'}]
+  PASS V-ROLLOVER-EXAM-EMPTY-FAILS: no answers
+  PASS V-ROLLOVER-NEWEST-BY-CWD: s-tamper
+  PASS V-ROLLOVER-OTHER-CWD-IGNORED: different cwd
+  PASS V-ROLLOVER-SUBDIR-SEAL-FOUND-AT-ROOT: subdir-0001
+  PASS V-ROLLOVER-SUBDIR-SEAL-OTHER-DIR-IGNORED: a directory that is neither the sealed cwd nor the repo root
+  PASS V-ROLLOVER-UNRESUMABLE-NAMED: ['goal was never recorded', 'next was never recorded']
+  PASS V-ROLLOVER-UNRESUMABLE-SKIPPED: ('s-tamper', ['nnnnnnnn-0009'])
+NOT RESUMABLE: capsule nnnnnnnn-0009 cannot be certified -- goal was never recorded; next was never recorded.
+  PASS V-ROLLOVER-UNRESUMABLE-NOT-CLAIMED: rc=4
+  PASS V-ROLLOVER-BOOTSTRAP-SMALL: 513 chars
+shadow observe
+  PASS V-ROLLOVER-SHADOW-LEDGERED: REFUSED
+  PASS V-ROLLOVER-SHADOW-UNKNOWN-CHILD-REFUSES: ['handoff: written by session aaaaaaaa, not this one -- run /kclear', 'children: no transcript']
+  PASS V-ROLLOVER-KILL-SWITCH: 2->2
+certify through the CLI: fencing and shell-safe answers
+REFUSED: no reality refresh is recorded for this claim; run resume first.
+  PASS V-ROLLOVER-CERTIFY-NEEDS-REFRESH: rc=5
+[rollover] Continuing from session aaaaaaaa (sealed 2026-10-10T15:06:11+00:00).
+Goal file: C:\Users\User\AppData\Local\Temp\rollover_t_ctpqkhc0\repo\vault\plans\goal.md -- read it before acting.
+Repo: C:\Users\User\AppData\Local\Temp\rollover_t_ctpqkhc0\repo -- read its branch and HEAD from git yourself (the exam asks).
+Open obligations (first is next):
+  1. Wire the shadow observer
+  2. Write the vault entry
+Handoff: C:\Users\User\AppData\Local\Temp\rollover_t_ctpqkhc0\repo\memory\project_session_handoff.md
+
+Reality refresh: RECOMPILE
+  - head moved since the seal
+RECOMPILE: the tree moved since the seal. Do not continue from the capsule as written: re-derive the next step from the goal file and the tree; the exam is judged against them NOW.
+
+Resume exam -- answer from the tree and the goal file, before any mutation, then run:
+  python C:/Users/User/Apps/pp-ctx-same-pane/tools/rollover.py certify --from aaaaaaaa-0001 --claimant succ-A --goal <file> --branch <b> --head <7> --next "<first obligation>"
+  [goal] Which file is the goal?
+  [branch] Which branch is checked out in the capsule's repo NOW?
+  [head] What is that repo's HEAD NOW (first 7)?
+  [next] What is the next open obligation, from the goal file?
+  PASS V-ROLLOVER-RESUME-RECORDS-REFRESH: rc=0
+REFUSED: capsule is claimed by succ-A, not succ-B; run resume first.
+  PASS V-ROLLOVER-CERTIFY-FENCED: rc=5
+UNREADABLE: --answers is not a JSON object (PowerShell strips its quotes); pass --goal/--branch/--head/--next instead. Nothing judged.
+  PASS V-ROLLOVER-ANSWERS-UNREADABLE: rc=7 (PowerShell-stripped JSON)
+RESUME_CERTIFIED -- the capsule is retired; continue with the first obligation.
+  PASS V-ROLLOVER-CERTIFY-FLAGS: rc=0
+  PASS V-ROLLOVER-CERTIFIED-RETIRED: certified capsule not offered again
+reset gate: may /clear be typed for this session RIGHT NOW?
+  PASS V-ROLLOVER-GATE-GREEN: []
+capsule   C:\Users\User\AppData\Local\Temp\rollover_t_ctpqkhc0\state\capsules\gggggggg-0007.json
+verdict   SAFE_TO_FORGET
+  PASS V-ROLLOVER-GATE-EXIT-0: a good capsule may reset
+  PASS V-ROLLOVER-SHADOW-KEEPS-KCLEAR-CAPSULE: []
+  PASS V-ROLLOVER-SHADOW-SEALS-ELSEWHERE: ['C:\\Users\\User\\AppData\\Local\\Temp\\rollover_t_ctpqkhc0\\state\\shadow-capsules\\gggggggg-0007.json', 'C:\\Users\\User\\AppData\\Local\\Temp\\rollover_t_ctpqkhc0\\state\\shadow-capsules\\gggggggg-0007.json']
+capsule   C:\Users\User\AppData\Local\Temp\rollover_t_ctpqkhc0\state\capsules\zzzzzzzz-9999.json
+verdict   NO_CAPSULE
+  refuse   no capsule_sealed receipt for this session
+  PASS V-ROLLOVER-GATE-NO-CAPSULE: absent != refused, 4 != 3
+  PASS V-ROLLOVER-GATE-TAMPER: ['capsule on disk is not the bytes that were sealed']
+  PASS V-ROLLOVER-GATE-STALE: ['capsule sealed 1860s ago (limit 1800s): seal again before clearing']
+  PASS V-ROLLOVER-GATE-CERTIFIED: ['capsule already certified and retired']
+capsule   C:\Users\User\AppData\Local\Temp\rollover_t_ctpqkhc0\state\capsules\hhhhhhhh-0008.json
+verdict   REFUSED
+  refuse   the seal itself refused: obligations: no open item found in the goal file or handoff
+  PASS V-ROLLOVER-GATE-CARRIES-SEAL-REFUSAL: ['the seal itself refused: obligations: no open item found in the goal file or handoff']
+  PASS V-ROLLOVER-ACTIVE-DEFAULT-ON: unset=True '1'=True '0'=False (the switch only ever disables)
+ROLLOVER_PASS=57/57  threshold=57/57

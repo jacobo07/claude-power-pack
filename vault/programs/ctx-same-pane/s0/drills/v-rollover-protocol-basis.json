@@ -1,0 +1,8 @@
+{
+  "file": "C:/Users/User/Apps/pp-ctx-same-pane/tools/rollover.py",
+  "test": "C:/Users/User/Apps/pp-ctx-same-pane/tools/test_rollover_decide_evidence.py",
+  "repo_root": "C:/Users/User/Apps/pp-ctx-same-pane",
+  "gate": "V-ROLLOVER-PROTOCOL-BASIS",
+  "old": ".startswith((\"UPPER_BOUND\", \"PROTOCOL\")) else None)",
+  "new": ".startswith(\"UPPER_BOUND\") else None)"
+}

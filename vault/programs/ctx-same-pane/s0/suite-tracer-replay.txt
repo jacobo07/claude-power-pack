@@ -1,0 +1,34 @@
+PASS V-RR-TORN-COUNTED torn=1 rows=9
+PASS V-RR-SUCCESSOR-NOT-PREDECESSOR S1 first_ctx=120000 (predecessor floor is 300000)
+PASS V-RR-ONE-CALL-ONCE S1 calls_to_first_mutation=3
+PASS V-RR-COMMIT-IS-MUTATION S2=2
+PASS V-RR-NO-MUTATION-IS-NOT-ZERO S3={'predecessor': 'P3', 'successor': 'S3', 'first_ctx': 110000, 'calls_to_first_mutation': None, 'ctx_at_first_mutation': None, 'carried_before_first_mutation': None, 'calls_to_certify': None, 'protocol_overhead': None} no_mutation=1
+PASS V-RR-FAILED-RESUME-EXCLUDED ['S1', 'S2', 'S3']
+PASS V-RR-CERTIFIED-WITHOUT-CLAIM-REPORTED ['P9']
+PASS V-RR-DISTRIBUTION {'n': 3, 'p10': 110000, 'p50': 120000, 'p90': 140000}
+PASS V-RR-FEW-SAMPLES-INSUFFICIENT INSUFFICIENT_EVIDENCE {'n': 3, 'p10': None, 'p50': None, 'p90': None}
+PASS V-RR-ENOUGH-SAMPLES-MEASURED MEASURED
+PASS V-RR-COMMIT-DETECT[git commit -m x] got True
+PASS V-RR-COMMIT-DETECT[& $g -C $r commit -F m -] got True
+PASS V-RR-COMMIT-DETECT[git status --short] got False
+PASS V-RR-COMMIT-DETECT[echo commitment; git log] got False
+PASS V-RR-COMMIT-DETECT[git -C r log --format=%s] got False
+PASS V-RR-DRY-RUN-NOT-COMMIT 
+PASS V-RR-ONLY-SUCCESSFUL-COMMITS [2]
+PASS V-RR-BOUNDARY-NO-FUTURE full=[{'call': 2, 'ts': 1790856000.0, 'model': 'claude-opus-5-5', 'floor': 100000, 'resident': 200000, 'surface_so_far': 300000}] truncated=[{'call': 2, 'ts': 1790856000.0, 'model': 'claude-opus-5-5', 'floor': 100000, 'resident': 200000, 'surface_so_far': 300000}]
+PASS V-RR-PRIOR-ENDED-BEFORE-T values=[39, 39] sessions=2
+PASS V-RR-PRIOR-CENSORED-COUNTED {'values': [39, 39], 'sessions': 2, 'censored_excluded': 1}
+PASS V-RR-PRICED {'state': 'OK', 'write': 8.0, 'read': 0.2, 'source': 'anthropic_2026-09.json (fetched 2026-09-27T00:00:00Z)'}
+PASS V-RR-POSITIVE-CONTROL-WOULD {'n': 10, 'sessions': 5, 'censored_excluded': 0, 'share': 1.0, 'verdict': 'WOULD_ROLLOVER'}
+PASS V-RR-SHORT-HORIZON-CONTINUE {'n': 10, 'sessions': 5, 'censored_excluded': 0, 'share': 0.0, 'verdict': 'CONTINUE'}
+PASS V-RR-GROWTH-GATE-IS-DECIDES growth 69,000 < 150,000
+PASS V-RR-FEW-PRIOR-INSUFFICIENT {'n': 3, 'sessions': 1, 'censored_excluded': 0, 'verdict': 'INSUFFICIENT_EVIDENCE'}
+PASS V-RR-REHYDRATION-COUNTS {'n': 10, 'sessions': 5, 'censored_excluded': 0, 'share': 1.0, 'verdict': 'WOULD_ROLLOVER'} rehydrated=INSUFFICIENT_EVIDENCE
+PASS V-RR-EXPOSURE-NOT-A-SAVING {'remaining_calls_actual': 150, 'mechanical_exposure_read_eq': [64241000, 65241000], 'label': 'MECHANICAL, hindsight, growth frozen at T (lower bound of avoided reread); NOT a saving'}
+PASS V-RR-EXPOSURE-CARRIES-WRITE-PREMIUM premium=5109000 want=[64241000, 65241000] got=[64241000, 65241000]
+PASS V-RR-PRIOR-ARTIFACT-MEASURED MEASURED_PRIOR values=[39, 39, 39] censored=1
+PASS V-RR-PRIOR-LIVE-GUARD sessions=3 (E1, E2, CHAIN; LATE+LIVE in guard)
+PASS V-RR-PRIOR-REHYDRATION-UPPER-BOUND {'basis': 'UPPER_BOUND_P50', 'tokens': 245000, 'p90': 245000, 'n': 2}
+PASS V-RR-PRIOR-THIN-IS-UNKNOWN prior has 3 values < 5
+PASS V-RR-SEARCH-CANDIDATES {'sessions': 6, 'recent': 6, 'scanned': 6, 'candidates': 1, 'boundaries': 1, 'growth_gated': 0, 'prior': {'INSUFFICIENT_EVIDENCE': 1}, 'rehydrated': {'INSUFFICIENT_EVIDENCE': 1}, 'horizon_driven_continue': []}
+ROLLOVER_REPLAY_PASS=33/33

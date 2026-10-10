@@ -1,0 +1,14 @@
+PASS V-DEV-PRICED {'state': 'OK', 'write': 8.0, 'read': 0.2, 'source': 'anthropic_2026-09.json (fetched 2026-09-27T00:00:00Z)'}
+PASS V-DEV-INT-PATH-UNCHANGED n*=10.9 break-even 10.9 calls <= 30 at a boundary
+PASS V-DEV-ROBUST-ROLLOVER robust: 100% of the prior pays back even at 10.9 calls (rehydration incl.) at a boundary
+PASS V-DEV-ROBUST-CONTINUE continue: only 0% of the prior reaches break-even 10.9 calls
+PASS V-DEV-UNDETERMINED-NO-ASK economics undetermined: 50% at 10.9 .. 50% at 10.9 calls
+PASS V-DEV-REHYDRATION-COUNTS economics undetermined: 0% at 53.5 .. 100% at 10.9 calls
+PASS V-DEV-REHYDRATION-UNKNOWN-NOT-ROBUST economics undetermined: rehydration unknown
+PASS V-DEV-UNKNOWN-STAYS-UNKNOWN horizon unknown (prior expired) (n*=10.9 would pass the old 30)
+PASS V-DEV-BOUNDARY-STILL-REQUIRED robust, but not at a work boundary
+PASS V-DEV-PRESSURE-STILL-WINS pressure: 80.0% >= 70.0%
+PASS V-DEV-RECEIPT-FIELDS ['bootstrap_est', 'boundary', 'breakeven_calls', 'breakeven_calls_hi', 'economics', 'floor', 'growth_above_fresh', 'horizon_basis', 'horizon_calls', 'horizon_computed_at', 'horizon_n', 'reason', 'rehydration_basis', 'rehydration_tokens', 'resident', 'saving_per_call_tokens', 'share_at_breakeven', 'share_at_breakeven_hi', 'used_pct', 'would_rollover']
+PASS V-ROLLOVER-PROTOCOL-BASIS ROBUST_ROLLOVER C=10000 | edge UNDETERMINED C=20000000
+PASS V-ROLLOVER-PROTOCOL-BASIS[unknown-basis] UNDETERMINED C=None
+DECIDE_EVIDENCE_PASS=13/13

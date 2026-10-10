@@ -1,0 +1,6 @@
+FAIL V-RR-CERTIFY-DETECT[refused] refused=3 flagged=3
+FAIL V-RR-CERTIFY-DETECT[echo] echo_command=3 echo_of_success_text=None
+FAIL V-RR-CERTIFY-DETECT[exit5-unflagged] [3, 3, 3]
+FAIL V-RR-NO-CERTIFY-NOT-ZERO samples=[('XN1', None, None), ('XN2', 2, 245000)] no_certify_call=1 prior={'basis': 'UPPER_BOUND_P50', 'tokens': 375000, 'p90': 375000, 'n': 2}
+ROLLOVER_REPLAY_PASS=37/41
+MUTANT KILLED gate=V-RR-CERTIFY-DETECT[refused]
