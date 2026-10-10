@@ -1,0 +1,713 @@
+diff --git a/tools/wros/binary/decomp/arm_a.py b/tools/wros/binary/decomp/arm_a.py
+new file mode 100644
+index 0000000..e531f5f
+--- /dev/null
++++ b/tools/wros/binary/decomp/arm_a.py
+@@ -0,0 +1,392 @@
++"""CP50 arm-A executor (recon-factory Phase 7, plan C2a): the decomp Phase 5 free baseline, deterministic, no model.
++
++    python arm_a.py prepare --draw <G0_FREEZE.json> --first A --last B --out <dir> [--python <factory venv python>] [--presets a,b]
++        -> ARM_A_PREPARED job=<dir> capsule=<id> units=<n> functions=<k> no_unit=<id:status,...>
++        -> ARM_A_REFUSED <CODE> <detail>                                          (exit 3; nothing was transported)
++    python arm_a.py records --job <job dir> --draw <G0_FREEZE.json> --first A --last B --out <arm A jsonl> [--prep <json>]
++        -> ARM_A_RECORDS n=<k> out=<path> sha256=<hex>
++        -> ARM_A_REFUSED JOB_NOT_JUDGED ...                                       (nothing is appended)
++
++`prepare` is LOCAL ONLY: it runs the pinned m2c under the factory venv (plain and --valid-syntax) for the ONE cohort,
++writes a candidate units JSONL, builds a cohort capsule through capsule_build (targets_for) and stages one candidate
++job through stage.build. It makes no transport call and no model call; the transport, the wait and the repatriation are a
++later lease. `records` runs after that lease and after `candidate.py judge <job_id>`: it turns the judged ledger rows
++into bench records through bench.run_cohort with an injected executor (bench.py is not edited).
++
++GAP-3: capsules only through capsule_build / custody, returns only through repatriate / candidate.judge. Anything a
++receipt cannot measure is {"absent": reason}, never 0; the three token costs are 0 only because arm A calls no model.
++"""
++import argparse
++import hashlib
++import json
++import os
++import re
++import subprocess
++import sys
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++GEX = os.path.join(HERE, "gex44")
++for _p in (GEX, HERE):
++    if _p not in sys.path:
++        sys.path.insert(0, _p)
++sys.dont_write_bytecode = True
++
++import bench  # noqa: E402  (stdlib-only instrument; cohort and record contracts)
++
++Refused = bench.Refused
++PREP_SCHEMA = "ksr.recon.arm_a_prep/1"
++ARMS_M2C = (("m2c", "m2c", False), ("m2c.valid_syntax", "m2cvs", True))
++ATTEMPTED = ("COMPILE_FAILED", "DIFFED")
++D_ABSENT = {
++    "fresh_floor": "arm A is a local deterministic pipeline: no model context exists to have a floor",
++    "live_frontier": "no model context in arm A",
++    "ctx_mean": "no model context in arm A",
++    "ctx_p95": "no model context in arm A",
++    "marginal_context_rent": "no model context in arm A",
++    "physical_calls": "model-call counts are metered by the control plane, not by this job",
++    "novelty": "not measured by the arm-A job",
++    "cost_to_verified": "needs the control plane's metered tokens, which this job cannot read",
++    "proof_cost": "the receipt times compile+objdiff together; the second oracle's time is not recorded",
++    "rehydrations": "arm A has no session to rehydrate",
++    "family_reuse": "not measured by the arm-A job",
++    "capital_class": "not assigned by the arm-A job",
++}
++
++
++def _absent(reason):
++    return {"absent": reason}
++
++
++def _sha(b):
++    return hashlib.sha256(b).hexdigest()
++
++
++def _jsonl_bytes(rows):
++    return "".join(json.dumps(r, sort_keys=True, ensure_ascii=True) + "\n" for r in rows).encode("utf-8")
++
++
++# ---------------------------------------------------------------- cohort
++def select_cohort(draw, first, last, anchor=bench.DRAW_ANCHOR_SHA):
++    """Exactly one cohort for positions first..last, or a refusal."""
++    entries = bench.load_draw(draw, anchor=anchor)
++    cs = bench.cohorts(entries, first, last)
++    if len(cs) != 1:
++        raise Refused("COHORT_COUNT positions %d-%d make %d cohorts; arm A runs exactly one per process" % (first, last, len(cs)))
++    return cs[0]
++
++
++# ---------------------------------------------------------------- m2c (local, factory venv)
++def find_venv_python(m2c_mod):
++    """First python.exe under the pinned tools root that the producer's own venv_ok accepts, else None."""
++    tools = m2c_mod.TOOLS
++    cands = [v for v in vars(m2c_mod).values() if isinstance(v, str) and v.lower().endswith("python.exe")]
++    for sub in (("venv", "Scripts"), (".venv", "Scripts"), ("m2c-venv", "Scripts")):
++        cands.append(os.path.join(tools, *sub, "python.exe"))
++    base = tools.rstrip("\\/").count(os.sep)
++    for root, dirs, files in os.walk(tools):
++        if root.count(os.sep) - base >= 4:
++            dirs[:] = []
++        if os.path.basename(root).lower() == "scripts" and "python.exe" in files:
++            cands.append(os.path.join(root, "python.exe"))
++    seen = []
++    for c in cands:
++        if c not in seen and os.path.isfile(c) and m2c_mod.venv_ok(c, tools):
++            return c
++        seen.append(c)
++    return None
++
++
++def run_m2c(ids, work, valid_syntax, python, corpus, asm_root):
++    """{id: {"admit": status, "text": c or ""}} from m2c_producer.py run under the factory venv python."""
++    import m2c_producer
++    py = python or find_venv_python(m2c_producer)
++    if not py:
++        raise Refused("M2C_VENV no python under %s passes m2c_producer.venv_ok" % m2c_producer.TOOLS)
++    out = os.path.join(work, "m2c_vs" if valid_syntax else "m2c_plain")
++    os.makedirs(out, exist_ok=True)
++    idf = os.path.join(out, "ids.txt")
++    with open(idf, "w", encoding="utf-8", newline="\n") as fh:
++        fh.write("\n".join(ids) + "\n")
++    cmd = [py, os.path.join(HERE, "m2c_producer.py"), corpus, asm_root, out, "--ids", idf] + (["--valid-syntax"] if valid_syntax else [])
++    r = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
++    if r.returncode != 0:
++        raise Refused("M2C_REFUSED rc=%d %s" % (r.returncode, (r.stdout + r.stderr).strip()[:400]))
++    res = {}
++    with open(os.path.join(out, "results.tsv"), encoding="utf-8") as fh:
++        for line in fh:
++            parts = line.rstrip("\n").split("\t")
++            if len(parts) < 2:
++                continue
++            cpath = os.path.join(out, "c", parts[0].replace(":", "_") + ".c")
++            text = open(cpath, encoding="utf-8").read() if os.path.isfile(cpath) else ""
++            res[parts[0]] = {"admit": parts[1], "text": text}
++    return res
++
++
++def compose(valid_syntax, text, header):
++    return (header + "\n" + text) if valid_syntax else text
++
++
++# ---------------------------------------------------------------- units
++def _safe(s):
++    return re.sub(r"[^A-Za-z0-9_-]", "_", s)
++
++
++def make_units(cohort, m2c_by_arm, census, presets, header, unit_keys):
++    """(unit rows in candidate.UNIT_KEYS, {id: non-L1 status}). A function whose admit() is not L1 gets no unit."""
++    rows, no_unit = [], {}
++    for _pos, entry in cohort["positions"]:
++        cid = entry["census_id"]
++        c = census[cid]
++        target = "split/obj/" + c["asm_unit"][:-2] + ".o"
++        got_any = False
++        for arm, tag, vs in ARMS_M2C:
++            m = m2c_by_arm[arm].get(cid)
++            status = m["admit"] if m else "NO_M2C_ROW"
++            if status != "L1":
++                no_unit.setdefault(cid, status)
++                continue
++            for pname, flags in sorted(presets.items()):
++                vals = {"unit_id": "A-%s-%s-%s" % (_safe(cid), tag, _safe(pname)), "entity": cid, "symbol": c["name"],
++                        "target_obj": target, "preset": pname, "flags": flags, "flags_delta": None,
++                        "source_text": compose(vs, m["text"], header), "producer": arm, "strategy": "free_baseline",
++                        "family": entry["class"], "variant": pname}
++                miss = [k for k in unit_keys if k not in vals]
++                if miss:
++                    raise Refused("UNIT_KEYS_UNKNOWN candidate.UNIT_KEYS names %s which arm_a does not fill" % miss)
++                rows.append(dict((k, vals[k]) for k in unit_keys))
++                got_any = True
++        if got_any:
++            no_unit.pop(cid, None)
++    return rows, no_unit
++
++
++# ---------------------------------------------------------------- prepare
++def _load_census(ids, path):
++    want, out = set(ids), {}
++    with open(path, "rb") as fh:
++        for raw in fh:
++            if raw.strip():
++                r = json.loads(raw.decode("utf-8"))
++                if r.get("id") in want:
++                    out[r["id"]] = r
++    miss = [i for i in ids if i not in out]
++    if miss:
++        raise Refused("CENSUS_ID_MISSING %s" % miss)
++    return out
++
++
++def _default_capsule(ids):
++    import capsule_build
++    import stage
++    root = stage.RF_GEX44_ROOT
++    lines = []
++    ret = capsule_build.build(out_root=os.path.join(root, "capsules"), trim=("census",), targets_for=list(ids), log=lines.append)
++    cid = None
++    if isinstance(ret, dict):
++        cid = ret.get("capsule_id") or ret.get("id")
++    if not cid:
++        for text in lines + [repr(ret)]:
++            m = re.search(r"CAPSULE=(?:EXISTS\s+)?([0-9A-Za-z][0-9A-Za-z._-]+)", str(text))
++            if m and m.group(1) != "EXISTS":
++                cid = m.group(1)
++                break
++    if not cid:
++        raise Refused("CAPSULE_ID_UNKNOWN capsule_build returned %r and logged %r" % (ret, lines[-3:]))
++    cap = stage.resolve_capsule(cid, root)
++    return {"capsule_id": cap["capsule_id"], "manifest_sha256": cap["manifest_sha256"]}
++
++
++def _default_stage(capsule_id, units_path):
++    import stage
++    return stage.build(mode="candidate", root=stage.RF_GEX44_ROOT, capsule=capsule_id, candidate_units=units_path)
++
++
++def prepare(draw, first, last, out, python=None, presets=None, anchor=bench.DRAW_ANCHOR_SHA, m2c=None, census=None,
++            header=None, capsule_fn=None, stage_fn=None, unit_keys=None):
++    """Everything injectable defaults to the real thing; the drill injects fakes at the same seams."""
++    cohort = select_cohort(draw, first, last, anchor=anchor)
++    ids = [e["census_id"] for _p, e in cohort["positions"]]
++    os.makedirs(out, exist_ok=True)
++    if unit_keys is None:
++        import candidate
++        unit_keys = candidate.UNIT_KEYS
++    if census is None or presets is None or m2c is None or header is None:
++        import capsule_build
++        inp = capsule_build.default_inputs()
++        if census is None:
++            census = _load_census(ids, inp["census"])
++        if presets is None:
++            _base, allp = capsule_build.eval_presets(open(os.path.join(inp["oracle_dir"], "match.py"), "rb").read())
++            presets = dict(allp)
++        if m2c is None:
++            asm_root = os.path.join(inp["split_dir"], "out")
++            m2c = lambda i, vs: run_m2c(i, out, vs, python, inp["l0"], asm_root)  # noqa: E731
++        if header is None:
++            import baseline
++            header = open(baseline.M2C_MACROS, encoding="utf-8").read()
++    by_arm = {arm: m2c(ids, vs) for arm, _tag, vs in ARMS_M2C}
++    rows, no_unit = make_units(cohort, by_arm, census, presets, header, unit_keys)
++    if not rows:
++        raise Refused("NO_UNITS no function of the cohort is L1 in any arm: %s" % no_unit)
++    units_path = os.path.join(out, "arm_a_units.jsonl")
++    blob = _jsonl_bytes(rows)
++    with open(units_path, "wb") as fh:
++        fh.write(blob)
++    cap = (capsule_fn or _default_capsule)(ids)
++    job = (stage_fn or _default_stage)(cap["capsule_id"], units_path)
++    prep = {"schema": PREP_SCHEMA, "first": first, "last": last, "cohort_ids": ids, "job_dir": str(job["dir"]),
++            "capsule_id": cap["capsule_id"], "manifest_sha256": cap.get("manifest_sha256"), "units_sha256": _sha(blob),
++            "units": [{"unit_id": r["unit_id"], "census_id": r["entity"], "arm": r["producer"], "preset": r["preset"]} for r in rows],
++            "no_unit": no_unit}
++    with open(os.path.join(out, "arm_a_prep.json"), "w", encoding="utf-8", newline="\n") as fh:
++        fh.write(json.dumps(prep, sort_keys=True, indent=1) + "\n")
++    return {"job": str(job["dir"]), "capsule": cap["capsule_id"], "manifest_sha256": cap.get("manifest_sha256"),
++            "units": len(rows), "functions": len(set(r["entity"] for r in rows)), "no_unit": no_unit, "units_path": units_path}
++
++
++# ---------------------------------------------------------------- records
++def _find_host(o, depth=0):
++    if isinstance(o, dict):
++        for k in ("host", "hostname", "host_name"):
++            if isinstance(o.get(k), str) and o[k]:
++                return o[k]
++        if depth < 3:
++            for v in o.values():
++                h = _find_host(v, depth + 1)
++                if h:
++                    return h
++    return None
++
++
++def host_plane_of(receipt):
++    h = _find_host(receipt)
++    if not h:
++        return _absent("the receipt names no host")
++    return "GEX44" if "gex44" in h.lower() else h
++
++
++def _rank(row):
++    st = row.get("status")
++    pct = (row.get("objdiff_result") or {}).get("match_percent")
++    return (0 if st == "MATCH_CANDIDATE" else 1 if st == "PARTIAL" else 2, -(pct if isinstance(pct, (int, float)) else -1))
++
++
++def _verdict(best):
++    if best.get("status") == "MATCH_CANDIDATE":
++        return "MATCH"
++    if best.get("status") == "PARTIAL":
++        return "PARTIAL"
++    return best.get("miss_class") or best.get("status") or "UNKNOWN"
++
++
++def _all_numeric(vals):
++    return bool(vals) and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in vals)
++
++
++def executor_from_judged(rows, receipt, no_unit=None):
++    """Executor for bench.run_cohort: one body per function from its judged ledger rows and the receipt's timings."""
++    by_ent = {}
++    for r in rows:
++        by_ent.setdefault(r.get("entity"), []).append(r)
++    rec_units = dict((u.get("unit_id"), u) for u in ((receipt.get("results") or {}).get("units") or []) if isinstance(u, dict))
++    plane = host_plane_of(receipt)
++    no_unit = no_unit or {}
++    d_base = dict((k, _absent(v)) for k, v in D_ABSENT.items())
++    d_base["deterministic_vs_cognitive"] = "deterministic"
++    zero_tokens = {"local_tokens": 0, "paid_tokens": 0, "new_cognition_tokens": 0}  # arm A calls no model
++
++    def executor(arm, entry, pos, cohort_k):
++        if arm != "A":
++            raise Refused("ARM_UNSUPPORTED arm_a.py executes arm A only, not %r" % (arm,))
++        cid = entry["census_id"]
++        rs = by_ent.get(cid)
++        if not rs:
++            if cid not in no_unit:
++                raise Refused("JOB_NOT_JUDGED %s has neither a judged row nor a recorded non-L1 status" % cid)
++            cost = {"wall_s": _absent("no unit of this function was compiled"), "compiles": 0}
++            cost.update(zero_tokens)
++            return {"host_plane": _absent("no unit of this function was compiled"), "verdict": no_unit[cid],
++                    "verified": False, "cost": cost, "amendment_d": dict(d_base)}
++        best = sorted(rs, key=_rank)[0]
++        ru = [rec_units.get(r.get("unit_id")) for r in rs]
++        walls = [u.get("wall_s") if u else None for u in ru]
++        wall = round(sum(walls), 3) if _all_numeric(walls) else _absent("the receipt has no wall_s for %d of %d units" % (sum(1 for w in walls if not _all_numeric([w])), len(rs)))
++        stats = [u.get("runner_status") if u else None for u in ru]
++        compiles = sum(1 for s in stats if s in ATTEMPTED) if all(stats) else _absent("the receipt lacks a row for some unit")
++        verified = (best.get("status") == "MATCH_CANDIDATE" and (best.get("objdiff_result") or {}).get("match_percent") == 100.0
++                    and (best.get("oracle2") or {}).get("verdict") == "MATCH")
++        cost = {"wall_s": wall, "compiles": compiles}
++        cost.update(zero_tokens)
++        return {"host_plane": plane, "verdict": _verdict(best), "verified": bool(verified), "cost": cost,
++                "amendment_d": dict(d_base)}
++
++    return executor
++
++
++def load_judged(job_dir, ledger_path=None, returns_root=None):
++    """(ledger rows of this job, receipt dict). JOB_NOT_JUDGED when the judge has written no row."""
++    rec_path = os.path.join(job_dir, "job_record.json")
++    job_id = json.load(open(rec_path, encoding="utf-8")).get("job_id") if os.path.isfile(rec_path) else None
++    if not job_id:
++        raise Refused("JOB_NOT_JUDGED %s carries no job_id (the job was never queued)" % job_dir)
++    import candidate_ledger
++    import reproduce
++    import stage
++    lp = ledger_path or str(candidate_ledger.default_path())
++    rows = [r for r in (candidate_ledger.stage.chain_rows(lp) if os.path.isfile(lp) else []) if r.get("job_id") == job_id]
++    if not rows:
++        raise Refused("JOB_NOT_JUDGED the candidate ledger has no row for job %s; run candidate.py judge first" % job_id)
++    tree = os.path.join(returns_root or str(stage.gex44_root() / "returns"), job_id)
++    receipt = json.load(open(os.path.join(str(reproduce.out_dir_of(tree)), "receipt.json"), encoding="utf-8"))
++    return rows, receipt
++
++
++def records(job_dir, draw, first, last, out, prep_path=None, ledger_path=None, returns_root=None, anchor=bench.DRAW_ANCHOR_SHA):
++    cohort = select_cohort(draw, first, last, anchor=anchor)
++    rows, receipt = load_judged(job_dir, ledger_path, returns_root)
++    prep_path = prep_path or os.path.join(os.path.dirname(os.path.abspath(out)), "arm_a_prep.json")
++    no_unit = json.load(open(prep_path, encoding="utf-8")).get("no_unit", {}) if os.path.isfile(prep_path) else {}
++    recs = bench.run_cohort("A", cohort, executor=executor_from_judged(rows, receipt, no_unit), out=out)
++    return recs
++
++
++def main(argv=None):
++    ap = argparse.ArgumentParser()
++    sub = ap.add_subparsers(dest="verb", required=True)
++    p = sub.add_parser("prepare")
++    r = sub.add_parser("records")
++    for s in (p, r):
++        s.add_argument("--draw", required=True)
++        s.add_argument("--first", type=int, required=True)
++        s.add_argument("--last", type=int, required=True)
++        s.add_argument("--out", required=True)
++    p.add_argument("--python")
++    p.add_argument("--presets")
++    r.add_argument("--job", required=True)
++    r.add_argument("--prep")
++    a = ap.parse_args(argv)
++    try:
++        if a.verb == "prepare":
++            presets = None
++            if a.presets:
++                import capsule_build
++                inp = capsule_build.default_inputs()
++                _b, allp = capsule_build.eval_presets(open(os.path.join(inp["oracle_dir"], "match.py"), "rb").read())
++                presets = dict((k, allp[k]) for k in a.presets.split(","))
++            res = prepare(a.draw, a.first, a.last, a.out, python=a.python, presets=presets)
++            print("ARM_A_PREPARED job=%s capsule=%s units=%d functions=%d no_unit=%s" % (
++                res["job"], res["capsule"], res["units"], res["functions"],
++                ",".join("%s:%s" % kv for kv in sorted(res["no_unit"].items())) or "none"))
++            print("ARM_A_FACTS manifest_sha256=%s units_path=%s" % (res["manifest_sha256"], res["units_path"]))
++            return 0
++        recs = records(a.job, a.draw, a.first, a.last, a.out, prep_path=a.prep)
++        print("ARM_A_RECORDS n=%d out=%s sha256=%s" % (len(recs), a.out, _sha(open(a.out, "rb").read())))
++        return 0
++    except Exception as e:  # a refusal is a result: print its code verbatim
++        print("ARM_A_REFUSED %s: %s" % (type(e).__name__, e))
++        return 3
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/wros/binary/decomp/gex44/capsule_build.py b/tools/wros/binary/decomp/gex44/capsule_build.py
+index 926bc92..9ed88a3 100644
+--- a/tools/wros/binary/decomp/gex44/capsule_build.py
++++ b/tools/wros/binary/decomp/gex44/capsule_build.py
+@@ -393,8 +393,39 @@ def _project(files, meta):
+     raise CapsuleRefused("PROJECTION_UNSTABLE", "tar_projected_bytes did not settle")
+ 
+ 
++def resolve_targets_for(inp: dict, idx: dict, obj_dir: str, ids) -> list:
++    """The target record of each given census id (a cohort whose targets are not donors), sorted by entity. Same
++    refusals as resolve_targets: TARGET_COUNT (repeated id, or no census row), ASM_UNIT_MISMATCH, TARGET_OBJ_MISSING."""
++    want = list(ids)
++    if not want or len(set(want)) != len(want):
++        raise CapsuleRefused("TARGET_COUNT", "targets_for must be a non-empty list of distinct census ids: %r" % (want[:5],))
++    rows = {}
++    with open(inp["census"], "rb") as f:
++        for raw in f:
++            if raw.strip():
++                r = json.loads(raw.decode("utf-8"))
++                if r.get("id") in want:
++                    rows[r["id"]] = r
++    missing = [i for i in want if i not in rows]
++    if missing:
++        raise CapsuleRefused("TARGET_COUNT", "no census row for %s" % missing[:5])
++    out = []
++    for i in sorted(want):
++        r = rows[i]
++        found = idx.get(r["name"])
++        if not found or found != [r.get("asm_unit")]:
++            raise CapsuleRefused("ASM_UNIT_MISMATCH", "target %s (%s): .fn index %s, census asm_unit %s"
++                                 % (r["id"], r["name"], found, r.get("asm_unit")))
++        obj_name = found[0][:-2] + ".o"
++        if not os.path.isfile(os.path.join(obj_dir, obj_name)):
++            raise CapsuleRefused("TARGET_OBJ_MISSING", "target %s: %s" % (r["id"], os.path.join(obj_dir, obj_name)))
++        out.append({"entity": r["id"], "symbol": r["name"], "asm_unit": found[0], "target_obj": "split/obj/" + obj_name,
++                    "family": r.get("primary"), "shape_id": r.get("shape_id"), "template": "COHORT_TARGET"})
++    return out
++
++
+ def build(out_root=None, ceiling_bytes=custody.CAPSULE_CEILING_BYTES, trim=(), set_current=False, inputs=None,
+-          created_at=None, log=print, targets_from_donors=False):
++          created_at=None, log=print, targets_from_donors=False, targets_for=None):
+     inp = default_inputs()
+     inp.update(inputs or {})
+     trim = list(trim)
+@@ -432,6 +463,10 @@ def build(out_root=None, ceiling_bytes=custody.CAPSULE_CEILING_BYTES, trim=(), s
+         if not os.path.isfile(obj):
+             raise CapsuleRefused("TARGET_OBJ_MISSING", "%s: %s" % (u["entity"], obj))
+     targets = resolve_targets(inp, idx, obj_dir) if targets_from_donors else None
++    if targets_for is not None:
++        have = set(t["entity"] for t in (targets or []))
++        extra = [t for t in resolve_targets_for(inp, idx, obj_dir, targets_for) if t["entity"] not in have]
++        targets = sorted((targets or []) + extra, key=lambda t: t["entity"])
+ 
+     sources = {}
+     for u in units:
+diff --git a/tools/wros/binary/decomp/test_arm_a.py b/tools/wros/binary/decomp/test_arm_a.py
+new file mode 100644
+index 0000000..e58c971
+--- /dev/null
++++ b/tools/wros/binary/decomp/test_arm_a.py
+@@ -0,0 +1,253 @@
++"""Drill for arm_a.py. Every gate has a red control; everything runs in temp dirs (no real ledger, no RF jobs dir).
++The one real-data gate (V-ARMA-CAPSULE-IDENTITY) builds capsules from the read-only factory inputs into a temp root."""
++import json
++import os
++import re
++import sys
++import tempfile
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++for _p in (os.path.join(HERE, "gex44"), HERE):
++    if _p not in sys.path:
++        sys.path.insert(0, _p)
++sys.dont_write_bytecode = True
++
++import arm_a  # noqa: E402
++import bench  # noqa: E402
++
++PASSES, TOTAL = [0], [0]
++REAL_ID = "main:80426354"
++
++
++def gate(name, fn):
++    TOTAL[0] += 1
++    try:
++        ev = fn()
++        PASSES[0] += 1
++        print("PASS %s %s" % (name, ev))
++    except Exception as e:  # noqa: BLE001
++        print("FAIL %s %s: %s" % (name, type(e).__name__, str(e)[:300]))
++
++
++def expect_refused(code, fn):
++    try:
++        fn()
++    except Exception as e:  # noqa: BLE001
++        if code not in str(e) and code != getattr(e, "code", None):
++            raise AssertionError("expected %s, got %s: %s" % (code, type(e).__name__, e))
++        return
++    raise AssertionError("expected refusal %s, nothing raised" % code)
++
++
++def synth_draw(tmp, n=20):
++    ents = [{"census_id": "main:%08X" % (0x80000000 + i * 0x40), "class": "CXX", "size_bucket": "Q1", "bgroup": "NONE"} for i in range(n)]
++    path = os.path.join(tmp, "G0_FREEZE.json")
++    with open(path, "w", encoding="utf-8") as fh:
++        json.dump({"draw": {"ids": ents, "sorted_id_sha256": bench._id_sha([e["census_id"] for e in ents])}}, fh)
++    return path, ents
++
++
++def fixture_prepare(tmp, statuses):
++    """prepare() with every seam faked; returns (result, units rows, census, presets, ents)."""
++    draw, ents = synth_draw(tmp)
++    ids = [e["census_id"] for e in ents[:5]]
++    census = dict((i, {"id": i, "name": "fn_%d" % k, "asm_unit": "u%d.s" % k}) for k, i in enumerate(ids))
++    try:
++        import capsule_build
++        import candidate  # noqa: F401
++        inp = capsule_build.default_inputs()
++        _b, allp = capsule_build.eval_presets(open(os.path.join(inp["oracle_dir"], "match.py"), "rb").read())
++        presets = {sorted(allp)[0]: allp[sorted(allp)[0]]}
++    except Exception:  # noqa: BLE001
++        presets = {"p1": "-O4,p -proc gekko"}
++
++    def m2c(ids_, vs):
++        return dict((i, {"admit": statuses.get(i, "L1"), "text": "int f%d(void) { return %d; }\n" % (k, k + (100 if vs else 0))})
++                    for k, i in enumerate(ids_))
++
++    out = os.path.join(tmp, "out")
++    res = arm_a.prepare(draw, 1, 5, out, anchor=None, m2c=m2c, census=census, presets=presets, header="#define M2C_X 1\n",
++                        capsule_fn=lambda i: {"capsule_id": "cap-test", "manifest_sha256": "0" * 64},
++                        stage_fn=lambda cid, up: {"dir": os.path.join(tmp, "job")})
++    import candidate
++    rows, _sha = candidate.load_units(res["units_path"])
++    return res, rows, census, presets, ents
++
++
++def g_cohort():
++    with tempfile.TemporaryDirectory() as tmp:
++        draw, _e = synth_draw(tmp)
++        c = arm_a.select_cohort(draw, 1, 5, anchor=None)
++        assert c["first"] == 1 and c["last"] == 5 and len(c["positions"]) == 5, c
++        expect_refused("COHORT_COUNT", lambda: arm_a.select_cohort(draw, 1, 15, anchor=None))
++        expect_refused("DRAW_ANCHOR", lambda: arm_a.select_cohort(draw, 1, 5))  # control: the real anchor rejects a synthetic draw
++    return "1-5 -> one cohort of 5; 1-15 -> COHORT_COUNT; synthetic draw vs real anchor -> DRAW_ANCHOR"
++
++
++def g_units():
++    import candidate
++    with tempfile.TemporaryDirectory() as tmp:
++        res, rows, census, presets, _e = fixture_prepare(tmp, {})
++        files = dict(("split/obj/u%d.o" % k, {}) for k in range(5))
++        targets = [{"entity": i, "symbol": c["name"], "target_obj": "split/obj/" + c["asm_unit"][:-2] + ".o"} for i, c in census.items()]
++        manifest = {"files": files, "presets": presets, "targets": targets}
++        built = candidate.build_units(rows, manifest)
++        assert len(built) == len(rows) == 5 * 2 * len(presets), (len(built), len(rows))
++        assert set(r["producer"] for r in rows) == {"m2c", "m2c.valid_syntax"}
++        bad = [dict(rows[0], target_obj="split/obj/nope.o")] + rows[1:]
++        expect_refused("TARGET_NOT_IN_CAPSULE", lambda: candidate.build_units(bad, manifest))
++        short = dict(manifest, targets=targets[1:])
++        expect_refused("TARGET_NOT_IN_CAPSULE", lambda: candidate.build_units(rows, short))
++    return "%d units pass build_units; unknown object and non-target entity -> TARGET_NOT_IN_CAPSULE" % len(built)
++
++
++def g_nonl1():
++    with tempfile.TemporaryDirectory() as tmp:
++        draw, ents = synth_draw(tmp)
++        bad_id = ents[2]["census_id"]
++        res, rows, census, presets, _e = fixture_prepare(tmp, {bad_id: "M2C_FAILED"})
++        assert bad_id not in set(r["entity"] for r in rows), "a non-L1 function got a unit"
++        assert res["no_unit"] == {bad_id: "M2C_FAILED"}, res["no_unit"]
++        assert res["functions"] == 4
++        # control: with every function L1 the same id does get units
++        res2, rows2, *_ = fixture_prepare(os.path.join(tmp, "ctl") if os.makedirs(os.path.join(tmp, "ctl")) is None else tmp, {})
++        assert bad_id in set(r["entity"] for r in rows2) and res2["no_unit"] == {}
++        prep = json.load(open(os.path.join(tmp, "out", "arm_a_prep.json")))
++        ex = arm_a.executor_from_judged([], {"host": "kobicraft-gex44", "results": {"units": []}}, prep["no_unit"])
++        body = ex("A", ents[2], 3, 1)
++        assert body["verdict"] == "M2C_FAILED" and body["verified"] is False
++    return "M2C_FAILED function -> no unit, record verdict M2C_FAILED; control all-L1 -> units present"
++
++
++def g_capsule_identity():
++    import capsule_build
++    from pathlib import Path
++    fixed = "2026-10-10T00:00:00Z"
++    with tempfile.TemporaryDirectory() as tmp:
++        root = os.path.join(tmp, "caps")
++
++        def dirs():
++            return sorted(d for d in os.listdir(root) if not d.startswith(".")) if os.path.isdir(root) else []
++
++        def mbytes(d):
++            return (Path(root) / d / "MANIFEST.json").read_bytes()
++
++        capsule_build.build(out_root=root, trim=("census",), created_at=fixed, log=lambda *_a: None)
++        a = dirs()
++        assert len(a) == 1, a
++        base_bytes = mbytes(a[0])
++        capsule_build.build(out_root=root, trim=("census",), created_at=fixed, log=lambda *_a: None, targets_for=None)
++        assert dirs() == a and mbytes(a[0]) == base_bytes, "targets_for=None changed the capsule"
++        capsule_build.build(out_root=root, trim=("census",), created_at=fixed, log=lambda *_a: None, targets_for=[REAL_ID])
++        b = [d for d in dirs() if d not in a]
++        assert len(b) == 1, "targets_for=[id] produced no new capsule: %s" % dirs()
++        man_b = mbytes(b[0])
++        assert man_b != base_bytes, "control: the comparison cannot tell the two manifests apart"
++        m = json.loads(man_b.decode("utf-8"))
++        assert any(t.get("entity") == REAL_ID for t in (m.get("targets") or [])), "target %s absent from manifest" % REAL_ID
++    return "None == omitted (%d bytes); targets_for=[%s] -> new capsule with that target" % (len(base_bytes), REAL_ID)
++
++
++def judged_fixture(ents):
++    ids = [e["census_id"] for e in ents[:5]]
++
++    def row(k, uid, status, miss, pct, o2):
++        return {"job_id": "ksrmb-x", "unit_id": uid, "entity": ids[k], "status": status, "miss_class": miss,
++                "objdiff_result": {"match_percent": pct}, "oracle2": {"verdict": o2}}
++
++    rows = [row(0, "A-0-p", "PARTIAL", "codegen_diff", 80.0, "NOT_MATCH"), row(0, "A-0-m", "MATCH_CANDIDATE", None, 100.0, "MATCH"),
++            row(1, "A-1-p", "PARTIAL", "codegen_diff", 55.0, "NOT_MATCH"),
++            row(2, "A-2-b", "BLOCKED_COMPILE", "compile_error", None, None),
++            row(4, "A-4-m", "MATCH_CANDIDATE", None, 100.0, "NOT_MATCH")]
++    units = [{"unit_id": u, "wall_s": w, "runner_status": s} for u, w, s in
++             (("A-0-p", 1.5, "DIFFED"), ("A-0-m", 2.0, "DIFFED"), ("A-1-p", 1.0, "DIFFED"), ("A-2-b", 0.5, "COMPILE_FAILED"),
++              ("A-4-m", 1.25, "DIFFED"))]
++    receipt = {"host": "kobicraft-gex44", "results": {"units": units}}
++    return ids, rows, receipt, {ids[3]: "M2C_FAILED"}
++
++
++def g_records():
++    with tempfile.TemporaryDirectory() as tmp:
++        draw, ents = synth_draw(tmp)
++        ids, rows, receipt, nu = judged_fixture(ents)
++        cohort = arm_a.select_cohort(draw, 1, 5, anchor=None)
++        out = os.path.join(tmp, "armA.jsonl")
++        recs = bench.run_cohort("A", cohort, executor=arm_a.executor_from_judged(rows, receipt, nu), out=out)
++        assert len(recs) == 5
++        for r in recs:
++            bench.validate_record(r)
++        by = dict((r["census_id"], r) for r in recs)
++        assert by[ids[0]]["verdict"] == "MATCH" and by[ids[0]]["verified"] is True, by[ids[0]]  # MATCH row listed after PARTIAL
++        assert by[ids[0]]["cost"]["wall_s"] == 3.5 and by[ids[0]]["cost"]["compiles"] == 2
++        assert by[ids[1]]["verdict"] == "PARTIAL" and by[ids[1]]["verified"] is False
++        assert by[ids[2]]["verdict"] == "compile_error"
++        assert by[ids[3]]["verdict"] == "M2C_FAILED"
++        assert by[ids[4]]["verdict"] == "MATCH" and by[ids[4]]["verified"] is False, "one oracle alone must not verify"
++        assert by[ids[0]]["host_plane"] == "GEX44"
++        # control: rank, not row order
++        assert arm_a._rank(rows[1]) < arm_a._rank(rows[0])
++    return "5 records validate; MATCH over PARTIAL regardless of row order; one-oracle MATCH not verified; plane GEX44"
++
++
++def g_unjudged():
++    import candidate_ledger  # noqa: F401
++    with tempfile.TemporaryDirectory() as tmp:
++        draw, ents = synth_draw(tmp)
++        job = os.path.join(tmp, "job")
++        os.makedirs(job)
++        with open(os.path.join(job, "job_record.json"), "w", encoding="utf-8") as fh:
++            json.dump({"job_id": "ksrmb-unjudged"}, fh)
++        out = os.path.join(tmp, "armA.jsonl")
++        expect_refused("JOB_NOT_JUDGED", lambda: arm_a.records(job, draw, 1, 5, out, ledger_path=os.path.join(tmp, "no_ledger.jsonl"),
++                                                                returns_root=tmp, anchor=None))
++        assert not os.path.exists(out), "a refusal appended something"
++        os.remove(os.path.join(job, "job_record.json"))
++        expect_refused("JOB_NOT_JUDGED", lambda: arm_a.load_judged(job))  # control: a never-queued job refuses too
++        ids, rows, receipt, nu = judged_fixture(ents)
++        ex = arm_a.executor_from_judged(rows[:2], receipt, {})  # partial judging: functions 2..5 uncovered
++        expect_refused("JOB_NOT_JUDGED", lambda: ex("A", ents[2], 3, 1))
++    return "no judge rows -> JOB_NOT_JUDGED and no file; never-queued job and uncovered function refuse"
++
++
++def g_nozero():
++    with tempfile.TemporaryDirectory() as tmp:
++        draw, ents = synth_draw(tmp)
++        ids, rows, receipt, nu = judged_fixture(ents)
++        receipt["results"]["units"][2]["wall_s"] = None  # A-1-p lost its timing
++        body = arm_a.executor_from_judged(rows, receipt, nu)("A", ents[1], 2, 1)
++        w = body["cost"]["wall_s"]
++        assert isinstance(w, dict) and bench._is_absent(w) and w["absent"], "unmeasured wall_s became %r" % (w,)
++        ad = body["amendment_d"]
++        for k in bench.AMEND_D_KEYS:
++            if k == "deterministic_vs_cognitive":
++                assert ad[k] == "deterministic"
++            else:
++                assert isinstance(ad[k], dict) and bench._is_absent(ad[k]) and ad[k]["absent"], "%s = %r" % (k, ad[k])
++        assert body["cost"]["local_tokens"] == body["cost"]["paid_tokens"] == body["cost"]["new_cognition_tokens"] == 0
++        nohost = arm_a.executor_from_judged(rows, {"results": receipt["results"]}, nu)("A", ents[0], 1, 1)
++        assert bench._is_absent(nohost["host_plane"]), "a receipt with no host must give absent, got %r" % (nohost["host_plane"],)
++    return "unmeasured wall_s, host and every (d) field are absent-with-reason; only the token costs are 0 (no model call)"
++
++
++FORBIDDEN = re.compile(r"\bstage\s*\.\s*send\b|\bssh\b|\bscp\b", re.I)
++
++
++def g_nosend():
++    src = open(os.path.join(HERE, "arm_a.py"), encoding="utf-8").read()
++    hit = FORBIDDEN.search(src)
++    assert hit is None, "arm_a.py contains a transport call: %r" % hit.group(0)
++    assert FORBIDDEN.search("stage.send(tag)") and FORBIDDEN.search("subprocess.run(['ssh', h])"), "control: detector is blind"
++    return "no stage.send / transport token in arm_a.py (%d bytes); detector fires on both control strings" % len(src)
++
++
++def main():
++    for name, fn in (("V-ARMA-COHORT", g_cohort), ("V-ARMA-UNITS", g_units), ("V-ARMA-NONL1", g_nonl1),
++                     ("V-ARMA-CAPSULE-IDENTITY", g_capsule_identity), ("V-ARMA-RECORDS", g_records),
++                     ("V-ARMA-UNJUDGED", g_unjudged), ("V-ARMA-NOZERO", g_nozero), ("V-ARMA-NOSEND", g_nosend)):
++        gate(name, fn)
++    print("ARM_A_DRILL=%d/%d" % (PASSES[0], TOTAL[0]))
++    return 0 if PASSES[0] == TOTAL[0] else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())

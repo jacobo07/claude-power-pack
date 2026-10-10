@@ -18,7 +18,13 @@ State (2026-10-10 ~08:30):
 - Phase is read at SEND time (stage.py:1136 root_phase_cap), so C2a's local stage.build cannot spend a Phase 3 slot.
   Open point, not C2a's: stage.build cand_selection records "phase": CURRENT_PHASE (match_accel 4), metadata only.
 
-Next 3 actions:
+PARKED 2026-10-10 (Owner "put the rest of the mission in the backlog"): C2a ran and ended PARTIAL (receipt PP
+35165d69, ARM_A_DRILL 7/8, capsule id ignores targets_for, prepare not run, nothing sent). m-e6ea9c26d377 is under its
+cost-breaker owner hold (processed 2,106,279 vs 875k estimate). Its code is STAGED, not committed, in wt_cp50_c2 (the
+.ksr_vault snapshot gate refused). Copy in vault/backlog/2026-10-10_cp50-c2a-partial.patch. The remaining work is in
+vault/backlog/2026-10-10_cp50-c2-remaining.md, which supersedes the actions below.
+
+Next 3 actions (historical):
 1. When gen3/C2a-receipt.md lands: read it, meter the worker transcript (dedupe by message.id) against the 1.75M
    stop, re-run test_arm_a.py + test_bench.py from the coordinator with absolute paths (never Set-Location).
 2. C2b (fresh pane or worker, goal cp50-c2): pre-checks (PINS, slot_ledger, GEX44 idle), set RF_CURRENT_PHASE = 7 in
