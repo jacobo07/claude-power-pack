@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat as stat_mod
 import time
 import datetime as dt
 from pathlib import Path
@@ -206,34 +207,86 @@ def usage_truth(rec: dict, root: Path | None = None, cache: dict | None = None,
     files = []
     for d in dirs:
         for p in d.rglob("*.jsonl"):
-            if _session_of(p, d, ids, prefixes) is not None:
-                files.append(p)
-    files.sort(key=lambda p: (p.parent.name == "subagents", str(p)))
+            nm = _session_of(p, d, ids, prefixes)
+            if nm is not None:
+                files.append((p, nm))
+    files.sort(key=lambda p: (p[0].parent.name == "subagents", str(p[0])))
     merged: dict = {}
-    for p in files:
-        st = p.stat()
-        for key, t in _read_file(p, st, cache)["calls"].items():
+    read_n = unreadable = 0
+    mtime_max = None
+    sess_b: dict = {}
+    sub_b: dict = {}
+    for p, name in files:
+        is_sub = p.parent.name == "subagents"
+        (sub_b if is_sub else sess_b).setdefault(name, None)
+        try:
+            st = p.stat()
+            if not stat_mod.S_ISREG(st.st_mode):
+                raise OSError("not a regular file")
+            calls = _read_file(p, st, cache)["calls"]
+        except OSError:
+            unreadable += 1   # skipped, never zero: the truth is then a lower bound
+            continue
+        read_n += 1
+        mtime_max = st.st_mtime if mtime_max is None else max(mtime_max, st.st_mtime)
+        for key, t in calls.items():
             m = merged.get(key)
             if m is None:
-                merged[key] = list(t)
+                merged[key] = [list(t), is_sub, name]
                 continue
+            m = m[0]
             for i in range(6):
                 m[i] = max(m[i], t[i])
             a, b = _ts_epoch(m[6]), _ts_epoch(t[6])
             if (a is None and t[6]) or (a is not None and b is not None and b > a):
                 m[6] = t[6]
-    tree = {"input": 0, "cache_write": 0, "cache_read": 0, "output": 0, "processed": 0, "calls": 0}
-    for m in merged.values():
+
+    def _new() -> dict:
+        return {"input": 0, "cache_write": 0, "cache_read": 0, "output": 0, "processed": 0, "calls": 0,
+                "_last": None}
+
+    def _add(b: dict, m: list) -> None:
+        b["input"] += m[0]
+        b["cache_write"] += m[1]
+        b["cache_read"] += m[2]
+        b["output"] += m[3]
+        b["calls"] += 1
+        e = _ts_epoch(m[6])
+        if e is not None and (b["_last"] is None or e > b["_last"]):
+            b["_last"] = e
+
+    tree = _new()
+    sessions_out = {n: _new() for n in sess_b}
+    subs_out = {n: _new() for n in sub_b}
+    by_model: dict = {}
+    for (m, is_sub, name) in merged.values():
         if since and (m[6] or "") < since:
             continue
-        tree["input"] += m[0]
-        tree["cache_write"] += m[1]
-        tree["cache_read"] += m[2]
-        tree["output"] += m[3]
-        tree["calls"] += 1
-    tree["processed"] = tree["input"] + tree["cache_write"] + tree["cache_read"] + tree["output"]
+        _add(tree, m)
+        _add((subs_out if is_sub else sessions_out)[name], m)
+        bm = by_model.setdefault(m[7], {"calls": 0, "input": 0, "cache_write": 0, "cache_read": 0,
+                                        "output": 0, "cw5": 0, "cw1": 0})
+        bm["calls"] += 1
+        for i, c in enumerate(("input", "cache_write", "cache_read", "output", "cw5", "cw1")):
+            bm[c] += m[i]
+    last_epoch = tree["_last"]
+    for b in [tree, *sessions_out.values(), *subs_out.values()]:
+        b["processed"] = b["input"] + b["cache_write"] + b["cache_read"] + b["output"]
+        b["last_call_ts"] = None if b["_last"] is None else _epoch_ts(b["_last"])
+        del b["_last"]
+    tree["last_call_epoch"] = last_epoch
     return {"measured_at": time.time() if now is None else now, "since": since,
-            "files": len(files), "tree": tree}
+            "files": read_n, "unreadable": unreadable, "files_mtime_max": mtime_max, "tree": tree,
+            "sessions": sessions_out, "subagents": subs_out, "by_model": by_model}
+
+
+def truth_age(truth: dict, now: float) -> dict:
+    """Three separate ages (seconds) of a usage_truth result; each None when its source is None. Pure."""
+    def _age(v):
+        return None if v is None else now - v
+    return {"measured_age_s": _age(truth.get("measured_at")),
+            "last_call_age_s": _age((truth.get("tree") or {}).get("last_call_epoch")),
+            "files_age_s": _age(truth.get("files_mtime_max"))}
 
 
 def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = None,
