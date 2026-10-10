@@ -138,8 +138,11 @@ def main() -> int:
         one = (10 + 100 + 1000 + 5)
         check("V-AUTOPSY-FORK-EXCLUDED", fk["total"]["processed_unique"] == 3 * one and fk["total"]["fork_calls"] == 2,
               f"unique={fk['total']['processed_unique']} fork_calls={fk['total']['fork_calls']}")
-        check("V-AUTOPSY-FORK-METER-PARITY", fk["total"]["processed"] == ms.processed_tokens(fkrec, tmp / "fkproj", sessions=({"P", "F"}, set())),
-              "per-file meter still counts both copies; the fork is reported, not hidden")
+        # EVC 01-01 (dedup by message id, ROADMAP operating constraint): the meter now counts a forked copy ONCE, so it
+        # agrees with the autopsy's unique total, not its per-file total. A meter that double-counts again fails here.
+        meter = ms.processed_tokens(fkrec, tmp / "fkproj", sessions=({"P", "F"}, set()))
+        check("V-AUTOPSY-FORK-METER-PARITY", meter == fk["total"]["processed_unique"] and meter < fk["total"]["processed"],
+              f"meter={meter} unique={fk['total']['processed_unique']} per_file={fk['total']['processed']}")
         nofork = ms.autopsy(rec, root, sessions=ses)
         check("V-AUTOPSY-NO-FORK-NO-EXCLUSION", nofork["total"]["fork_calls"] == 0 and
               nofork["total"]["processed_unique"] == nofork["total"]["processed"])
