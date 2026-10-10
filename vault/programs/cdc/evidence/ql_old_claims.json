@@ -1,0 +1,61 @@
+{
+  "claims": [
+    {"id": "p1-verify-work", "class": "known_transform", "status": "open"},
+    {"id": "p1-push-pr524", "class": "deterministic", "status": "open"},
+    {"id": "p1-cendoj-620-human-search", "class": "owner_reality", "status": "open"},
+
+    {"id": "p2-merge-origin-main-vs-466-435", "class": "known_transform", "status": "open"},
+    {"id": "p2-lang-en", "class": "known_transform", "status": "open"},
+    {"id": "p2-entity-graph-reverify-d3", "class": "known_transform", "status": "open"},
+    {"id": "p2-og-image", "class": "bounded_coding", "status": "open"},
+    {"id": "p2-real-lastmod", "class": "bounded_coding", "status": "open"},
+    {"id": "p2-reviewer-person-byline", "class": "bounded_coding", "status": "open"},
+    {"id": "p2-attribution-landing-to-ql-case", "class": "bounded_coding", "status": "open"},
+    {"id": "p2-gsc-read-router", "class": "bounded_coding", "status": "open"},
+    {"id": "p2-pr-merge-cd-prod-smoke", "class": "bounded_coding", "status": "open"},
+
+    {"id": "p3-services-home-check-intent", "class": "bounded_coding", "status": "open"},
+    {"id": "p3-methodology", "class": "bounded_coding", "status": "open"},
+    {"id": "p3-what-we-cannot-guarantee", "class": "known_transform", "status": "open"},
+    {"id": "p3-cta-audit", "class": "bounded_coding", "status": "open"},
+    {"id": "p3-pr-merge-cd-prod-smoke", "class": "bounded_coding", "status": "open"},
+
+    {"id": "p4-research-plan-check", "class": "novel", "status": "open"},
+    {"id": "p4-guides-collection", "class": "bounded_coding", "status": "open"},
+    {"id": "p4-asset-registry-after-ruling", "class": "bounded_coding", "status": "open"},
+    {"id": "p4-asset-community-ban-17-12", "class": "bounded_coding", "status": "open"},
+    {"id": "p4-asset-licence-transfer", "class": "bounded_coding", "status": "open"},
+    {"id": "p4-asset-licence-check-andalucia", "class": "bounded_coding", "status": "open"},
+    {"id": "p4-asset-buyer-laws-2026", "class": "bounded_coding", "status": "open"},
+    {"id": "p4-asset-6", "class": "bounded_coding", "status": "open"},
+    {"id": "p4-lawyer-review-recorded", "class": "owner_reality", "status": "open"},
+    {"id": "p4-links-sitemap-schema", "class": "bounded_coding", "status": "open"},
+    {"id": "p4-pr-merge-cd-prod-smoke", "class": "bounded_coding", "status": "open"},
+
+    {"id": "p5-faro-panel-30-prompts", "class": "bounded_coding", "status": "open"},
+    {"id": "p5-ql-ledger", "class": "known_transform", "status": "open"},
+    {"id": "p5-gex44-run-provenance", "class": "bounded_coding", "status": "open"},
+    {"id": "p5-serp-baseline-dataforseo", "class": "bounded_coding", "status": "open"},
+    {"id": "p5-mention-citation-recommendation-wilson", "class": "bounded_coding", "status": "open"},
+    {"id": "p5-report", "class": "known_transform", "status": "open"},
+
+    {"id": "p6-andalucia-by-evidence", "class": "novel", "status": "open"},
+    {"id": "p6-cvalenciana-by-evidence", "class": "novel", "status": "open"},
+    {"id": "p6-valencian-decree-identify", "class": "owner_reality", "status": "open"},
+
+    {"id": "p7-buyer-screener", "class": "novel", "status": "open"},
+    {"id": "p7-costaluz-backup", "class": "deterministic", "status": "open"},
+    {"id": "p7-costaluz-corrections-lc001-lc002", "class": "bounded_coding", "status": "open"},
+    {"id": "p7-costaluz-tracked-links", "class": "bounded_coding", "status": "open"},
+    {"id": "p7-earned-distribution-queue", "class": "bounded_coding", "status": "open"},
+    {"id": "p7-pr-merge-cd-prod-smoke", "class": "bounded_coding", "status": "open"},
+
+    {"id": "p8-ql-organic-gate-script", "class": "novel", "status": "open"},
+    {"id": "p8-gate-run-prod", "class": "deterministic", "status": "open"},
+    {"id": "p8-scale-improve-pause", "class": "bounded_coding", "status": "open"},
+    {"id": "p8-freshness-by-source", "class": "bounded_coding", "status": "open"},
+    {"id": "p8-kv-ukdl-ratchet", "class": "known_transform", "status": "open"},
+    {"id": "p8-fresh-agent-test", "class": "bounded_coding", "status": "open"},
+    {"id": "p8-two-layer-handoff", "class": "known_transform", "status": "open"}
+  ]
+}

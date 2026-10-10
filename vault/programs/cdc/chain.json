@@ -1,0 +1,94 @@
+{
+  "goal": "cdc",
+  "root": "C:\\Users\\User\\Apps\\pp-cdc",
+  "envelope": 80000000,
+  "units": [
+    {
+      "id": "C1",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C1.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C1-receipt.md",
+      "after": null,
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S9-receipt.md"
+      ]
+    },
+    {
+      "id": "C2",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C2.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C2-receipt.md",
+      "after": "C1"
+    },
+    {
+      "id": "C3",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C3.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C3-receipt.md",
+      "after": "C2"
+    },
+    {
+      "id": "C4",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C4.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C4-receipt.md",
+      "after": "C3"
+    },
+    {
+      "id": "C5",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C5.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C5-receipt.md",
+      "after": "C4"
+    },
+    {
+      "id": "C6",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C6.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C6-receipt.md",
+      "after": "C5"
+    },
+    {
+      "id": "C7",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C7.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C7-receipt.md",
+      "after": "C6"
+    },
+    {
+      "id": "C8",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C8.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C8-receipt.md",
+      "after": "C7"
+    },
+    {
+      "id": "C9",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C9.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C9-receipt.md",
+      "after": "C8"
+    },
+    {
+      "id": "C10",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C10.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C10-receipt.md",
+      "after": "C9"
+    },
+    {
+      "id": "C11",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C11.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C11-receipt.md",
+      "after": "C10"
+    },
+    {
+      "id": "C12",
+      "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C12.md",
+      "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C12-receipt.md",
+      "after": "C11"
+    }
+  ]
+}
