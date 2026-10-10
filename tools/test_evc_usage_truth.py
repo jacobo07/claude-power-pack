@@ -37,6 +37,8 @@ if os.environ.get("GSD_MISSION_DRILL_DIR"):
 import tis_observed  # noqa: E402,F401
 import usage_index  # noqa: E402,F401
 import mission_spend as ms  # noqa: E402
+import mission_surface  # noqa: E402,F401
+import gsd_mission as gm  # noqa: E402
 
 passes = fails = notobs_n = 0
 SEEN: list[str] = []
@@ -332,11 +334,58 @@ def section_index_guard():
 
 REQUIRED.extend(["V-EVC-EQ-INDEX", "V-EVC-GUARD-DIVERGENCE", "V-EVC-PROJECTION"])
 
+NOW = CREATED
+gone = lambda pid: False   # noqa: E731
+
+
+def _held_mission(mid: str) -> dict:
+    """A RUNNING mission with a background owner "<mid>-w", estimate 100_000 and a long clock."""
+    gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
+    owner = {"session_id": f"{mid}-w", "pid": 4242, "proc_start": None, "heartbeat_at": NOW,
+             "epoch": 1, "kind": "background"}
+    return gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t_setup", now=NOW,
+                         state=gm.RUNNING, epoch=1, max_hours=1000.0, token_estimate=100_000, owner=owner)
+
+
+def _host_rows(mid: str, state: str) -> list:
+    return [{"sessionId": f"{mid}-w", "id": f"{mid}-w"[:8], "kind": "background", "state": state}]
+
+
+def section_statement():
+    empty = Path(TMP) / "projects_empty_t1"
+    empty.mkdir(parents=True, exist_ok=True)
+    real_root = ms.projects_root
+    ms.projects_root = lambda: empty
+    try:
+        mid = "m-evcalive"
+        rec = _held_mission(mid)
+        held = gm._cost_breaker(rec, NOW + 60, measure=lambda r: 10_000_000, fingerprint=lambda w: None)
+        meas = (held.get("owner_hold") or {}).get("measured") or {}
+        p = gm.plan_next(held, NOW + 3660, _host_rows(mid, "running"), pid_alive=gone)
+        tail = ("measured 10,000,000 as of 2027-01-15T08:01:00Z (age 1h00m); "
+                "worker LIVE -> total current UNKNOWN, >= 10,000,000")
+        check("V-EVC-STATEMENT-ALIVE",
+              meas.get("processed") == 10_000_000 and meas.get("measured_at") == NOW + 60
+              and p["action"] == "none" and p["reason"].endswith(tail)
+              and "recorded at 2027-01-15T08:01:00Z (age 1h00m)" in p["reason"],
+              f"measured={meas} action={p['action']} reason={p['reason']!r}")
+        pd = gm.plan_next(held, NOW + 3660, _host_rows(mid, "done"), pid_alive=gone)
+        check("V-EVC-STATEMENT-ALIVE-CONTROL",
+              pd["action"] == "settle" and "host lists session done" in pd["reason"]
+              and "worker LIVE" not in pd["reason"],
+              f"action={pd['action']} reason={pd['reason']!r}")
+    finally:
+        ms.projects_root = real_root
+
+
+REQUIRED.extend(["V-EVC-STATEMENT-ALIVE", "V-EVC-STATEMENT-ALIVE-CONTROL"])
+
 
 def main() -> int:
     section_reader()
     section_truth()
     section_index_guard()
+    section_statement()
     missing = [g for g in REQUIRED if g not in SEEN]
     check("V-EVC-ALL-GATES-RAN", not missing, f"missing={missing}")
     print(f"EVC_USAGE_TRUTH_PASS={passes}/{passes + fails} threshold={len(REQUIRED) + 1}/{len(REQUIRED) + 1} "

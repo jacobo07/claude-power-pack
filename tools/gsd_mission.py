@@ -526,8 +526,12 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # (EDD m-4bb8952b2903, m-79f84cdd34dc): a cost-breaker hold set on a worker that then finished
         # left the record RUNNING with its owner gone, and goal singleflight refused every later unit
         # until the Owner closed it by hand. Only positive DEAD evidence settles; UNKNOWN stays parked.
+        import mission_spend as _ms
+        verdicts: list = []
+        lrow = None
         if state in (RUNNING, BLOCKED) and rec.get("owner"):
             verdict, evidence = liveness(rec.get("owner"), sessions, pid_alive)
+            verdicts = [(verdict, evidence)]
             if verdict == DEAD:
                 return {"action": "settle",
                         "reason": f"owner hold, owner DEAD ({evidence}): settled terminal, hold kept "
@@ -537,11 +541,14 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             # worker ran 7 calls and finished; the hold froze the record at LAUNCHING with no owner). The host
             # row for THIS launch's id, listed finished, is the same positive evidence liveness() accepts.
             lrow = launched_row(rec.get("pending"), sessions)
+            if lrow is not None:
+                verdicts = [(DEAD if lrow.get("state") in ("stopped", "done", "exited", "failed") else LIVE,
+                             lrow.get("state"))]
             if lrow is not None and lrow.get("state") in ("stopped", "done", "exited", "failed"):
                 return {"action": "settle", "launched": lrow,
                         "reason": f"owner hold, launched worker {lrow.get('id')} host lists {lrow.get('state')}: "
                                   f"settled terminal, hold kept (hold: {str(hold.get('reason'))[:200]})"}
-        return {"action": "none", "reason": f"owner hold: {hold.get('reason')}"}
+        return {"action": "none", "reason": "owner hold: " + _ms.hold_text(hold, verdicts, now)}
     spent = budget_exhausted(rec, now)
     if spent and state in (PREPARED, LAUNCHING, HANDOFF):
         return {"action": "halt", "reason": f"budget: {spent}"}
@@ -1271,7 +1278,8 @@ def add_directive(mission_id: str, text: str, now: float | None = None) -> dict:
                       directives=[*(rec.get("directives") or []), text[:1000]])
 
 
-def set_owner_hold(mission_id: str, reason: str, now: float | None = None) -> dict:
+def set_owner_hold(mission_id: str, reason: str, now: float | None = None,
+                   measured: dict | None = None) -> dict:
     """Park a live mission (spec mission-owner-hold): plan_next answers none and renewal is refused
     until release_owner_hold. The record keeps its identity, epoch and state."""
     reason = (reason or "").strip()
@@ -1283,9 +1291,12 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None) -> di
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; there is nothing to hold")
     now = time.time() if now is None else now
+    hold = {"reason": reason[:1000], "set_at": now}
+    if isinstance(measured, dict):
+        hold["measured"] = measured
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
-                      owner_hold={"reason": reason[:1000], "set_at": now})
+                      owner_hold=hold)
 
 
 def set_rollover_protocol(mission_id: str, protocol: str, now: float | None = None,
@@ -1404,7 +1415,13 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
     if verdict["trip"]:
         lr.ledger_append(mid, "cost_breaker_tripped", mission_id=mid, spent=spent,
                          estimate=rec.get("token_estimate"), reason=verdict["trip"])
-        return set_owner_hold(mid, verdict["trip"], now=now)
+        try:
+            measured = ms.snapshot_of(ms.usage_truth(rec), spent, now)
+        except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+            measured = ms.snapshot_of(None, spent, now)
+            lr.ledger_append(mid, "cost_breaker_snapshot_failed", mission_id=mid,
+                             error=f"{type(exc).__name__}: {exc}"[:300])
+        return set_owner_hold(mid, verdict["trip"], now=now, measured=measured)
     if verdict["mark"]:
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                           event="cost_mark", now=now, cost_mark=verdict["mark"],

@@ -394,6 +394,91 @@ def judge(rec: dict, spent: int | None, fp: str | None) -> dict:
     return {"trip": None, "mark": None}
 
 
+# Liveness verdicts as plan_next computes them. They mirror gsd_mission.py LIVE/WAITING_HUMAN/DEAD/UNKNOWN;
+# this module must not import gsd_mission at import time (a gate pins the equality).
+V_LIVE = "ALIVE"
+V_BLOCKED = "BLOCKED"
+V_DEAD = "DEAD"
+V_UNKNOWN = "UNKNOWN"
+
+
+def format_age(seconds) -> str:
+    """Closed age format: 45s, 1m, 2h02m, 3d1h; None is 'unknown'; negative clamps to zero."""
+    if not isinstance(seconds, (int, float)) or isinstance(seconds, bool):
+        return "unknown"
+    s = int(max(0, seconds))
+    if s < 60:
+        return f"{s}s"
+    if s < 3600:
+        return f"{s // 60}m"
+    if s < 86400:
+        return f"{s // 3600}h{(s % 3600) // 60:02d}m"
+    return f"{s // 86400}d{(s % 86400) // 3600}h"
+
+
+def snapshot_of(truth, spent=None, now=None):
+    """JSON-safe measured snapshot (numbers and strings only). The truth wins over `spent`."""
+    if isinstance(truth, dict):
+        tr = truth.get("tree") or {}
+        return {"processed": tr.get("processed"), "input": tr.get("input"),
+                "cache_write": tr.get("cache_write"), "cache_read": tr.get("cache_read"),
+                "output": tr.get("output"), "calls": tr.get("calls"),
+                "measured_at": truth.get("measured_at"), "last_call_ts": tr.get("last_call_ts"),
+                "files_mtime_max": truth.get("files_mtime_max"), "files": truth.get("files"),
+                "unreadable": truth.get("unreadable")}
+    if spent is None:
+        return None
+    return {"processed": spent, "input": None, "cache_write": None, "cache_read": None, "output": None,
+            "calls": None, "measured_at": now, "last_call_ts": None, "files_mtime_max": None,
+            "files": None, "unreadable": None}
+
+
+def _num(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def spend_statement(snap, verdicts, now, fresh=False) -> str:
+    """One sentence from a closed set; pure. 'final' is printed only for a fresh measurement: a stored
+    snapshot was not re-measured, so it says calls after T are not counted."""
+    nm = "spend UNKNOWN (not measurable)"
+    if not isinstance(snap, dict) or snap.get("files") == 0:
+        return nm
+    x = snap.get("processed")
+    if not isinstance(x, int) or isinstance(x, bool) or x < 0:
+        return nm
+    mat = snap.get("measured_at")
+    t = _epoch_ts(mat) if _num(mat) else "an unknown time"
+    age = format_age(now - mat) if _num(mat) and _num(now) else "unknown"
+    head = f"measured {x:,} as of {t} (age {age}); "
+    unread = snap.get("unreadable")
+    if _num(unread) and unread > 0:
+        return head + f"{int(unread)} transcript(s) unreadable -> total UNKNOWN, >= {x:,}"
+    vs = [v[0] if isinstance(v, (tuple, list)) and v else v for v in (verdicts or [])]
+    if V_LIVE in vs:
+        return head + f"worker LIVE -> total current UNKNOWN, >= {x:,}"
+    if not vs or any(v != V_DEAD for v in vs):
+        return head + f"worker liveness UNKNOWN -> total current UNKNOWN, >= {x:,}"
+    last = snap.get("last_call_ts") or "unknown"
+    if fresh:
+        return head + f"no live worker -> {x:,} is final as of last call {last}"
+    return head + (f"no live worker -> {x:,} was the total as of last call {last}; "
+                   f"calls after {t} not counted (not re-measured)")
+
+
+def hold_text(hold, verdicts, now, limit=None) -> str:
+    """Body of an owner-hold sentence (callers keep their own 'owner hold: ' prefix); pure."""
+    h = hold if isinstance(hold, dict) else {}
+    prose = str(h.get("reason"))
+    if limit is not None:
+        prose = prose[:limit]
+    sa = h.get("set_at")
+    t = _epoch_ts(sa) if _num(sa) else "an unknown time"
+    age = format_age(now - sa) if _num(sa) and _num(now) else "unknown"
+    meas = h.get("measured")
+    tail = spend_statement(meas, verdicts, now) if isinstance(meas, dict) else "not re-measured"
+    return f"recorded at {t} (age {age}): {prose}; {tail}"
+
+
 # --- Session scope (W1, 2026-10-05) -------------------------------------------------------------
 # A mission is not the only thing that burns: an ordinary interactive session ran 131 calls to
 # 35.45M processed with nothing measuring it (skyparty-spawn closeout, transcript b9dbdfe2).
