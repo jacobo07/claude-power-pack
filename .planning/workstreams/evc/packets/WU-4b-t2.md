@@ -19,7 +19,8 @@ Commit by pathspec of that task's `<files>` only: `git commit -m "feat(evc-01-02
 No planning documents. If the verify commands do not all exit 0 after 3 fix attempts, stop with BLOCKED and do not commit.
 
 ## Never
-No edits outside the task's `<files>`. No reset, clean, restore, stash, amend, rebase, push or force. No subagents.
+Never send two Edit calls to the same file in one message: one Edit per message (parallel same-file edits are refused
+on this host and stalled WU-4b-t1). No edits outside the task's `<files>`. No reset, clean, restore, stash, amend, rebase, push or force. No subagents.
 No EnterWorktree. No questions.
 
 ## Report (your final message, nothing else)
