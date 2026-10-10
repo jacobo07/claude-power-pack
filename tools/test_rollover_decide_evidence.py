@@ -65,6 +65,20 @@ def main() -> int:
     ok("V-DEV-RECEIPT-FIELDS", all(k in d for k in ("share_at_breakeven", "share_at_breakeven_hi",
                                                     "rehydration_basis", "horizon_n", "horizon_computed_at")),
        str(sorted(d)))
+    # ---- ctx-rent S2: the PROTOCOL rehydration basis (rollover_replay.build_prior) is priced like the
+    # upper bound it replaced. Before 2026-10-10 _economics read only UPPER_BOUND*, so a PROTOCOL_P90
+    # figure was dropped to C=None and the economics stayed UNDETERMINED on a measured number.
+    proto = {"basis": "PROTOCOL_P90", "tokens": 10_000}
+    d = ask(prior([200] * 10), proto)
+    d_edge = ask(edge, {"basis": "PROTOCOL_P90", "tokens": 20_000_000})
+    ok("V-ROLLOVER-PROTOCOL-BASIS", d["would_rollover"] and d["economics"] == "ROBUST_ROLLOVER"
+       and d["rehydration_tokens"] == 10_000 and d["rehydration_basis"] == "PROTOCOL_P90"
+       and not d_edge["would_rollover"] and d_edge["economics"] == "UNDETERMINED"
+       and d_edge["rehydration_tokens"] == 20_000_000,
+       f"{d['economics']} C={d['rehydration_tokens']} | edge {d_edge['economics']} C={d_edge['rehydration_tokens']}")
+    d = ask(prior([200] * 10), {"basis": "FOO_P90", "tokens": 10_000})   # control: an unrecognised basis is no C
+    ok("V-ROLLOVER-PROTOCOL-BASIS[unknown-basis]", d["rehydration_tokens"] is None and not d["would_rollover"]
+       and d["economics"] == "UNDETERMINED", f"{d['economics']} C={d['rehydration_tokens']}")
     print(f"DECIDE_EVIDENCE_PASS={PASS}/{PASS + FAIL}")
     return 0 if FAIL == 0 else 1
 

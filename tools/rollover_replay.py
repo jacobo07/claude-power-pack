@@ -75,6 +75,38 @@ def is_commit_command(command: str) -> bool:
     return bool(m) and "--dry-run" not in m.group("rest")
 
 
+_CERTIFY_RE = re.compile(r"rollover\.py['\"]?\s+certify\b(?P<rest>[^;|&\n]*)", re.I)
+
+
+def is_certify_command(command: str) -> bool:
+    """The successor's `rollover.py certify`: the last step of the /kresume protocol (ctx-rent S2).
+    Only the command shape; a certify counts in the trace only when its result says it certified."""
+    m = _CERTIFY_RE.search(command or "")
+    return bool(m) and not re.search(r"(?:^|\s)(?:-h|--help)\b", m.group("rest"))
+
+
+def _result_text(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return " ".join(str(c.get("text") or "") for c in content if isinstance(c, dict))
+    return ""
+
+
+# What `rollover.py certify` prints on the paths where authority is restored (rollover.py cmd_certify:
+# `RESUME_CERTIFIED -- the capsule is retired...` and `RESUME_CERTIFIED (already) -- authority restored.`).
+# It ALSO prints RESUME_CERTIFIED on two exit-5 paths (`..., but mutation authority was NOT restored`,
+# `(already) -- <why>`); a tool that does not flag a native exit code as an error would otherwise count
+# them. The bare token is therefore never the decision (pinned by V-RR-CERTIFY-TOKENS-PINNED).
+_CERTIFIED_OK = ("RESUME_CERTIFIED -- ", "RESUME_CERTIFIED (already) -- authority restored")
+_CERTIFIED_NO = "NOT restored"
+
+
+def _is_certified_result(content) -> bool:
+    text = _result_text(content)
+    return any(t in text for t in _CERTIFIED_OK) and _CERTIFIED_NO not in text
+
+
 def read_ledger(path: Path) -> tuple[list[dict], int]:
     """(rows, torn): a line that is not a JSON object is torn, counted, never repaired."""
     rows, torn = [], 0
@@ -105,9 +137,12 @@ def _epoch(ts) -> Optional[float]:
     return (d if d.tzinfo else d.replace(tzinfo=timezone.utc)).timestamp()   # one UTC clock
 
 
-def _tool_message_ids(transcript: Path) -> tuple[set, set]:
-    """(ids of messages that mutated, ids of messages whose `git commit` came back without error)."""
-    muts, commit_uses, failed, answered = set(), {}, set(), set()
+def _tool_message_ids(transcript: Path) -> tuple[set, set, set]:
+    """(ids of messages that mutated, ids of messages whose `git commit` came back without error,
+    ids of messages whose `rollover.py certify` came back without error AND printed RESUME_CERTIFIED).
+    A refused certify (exit 5, `certify_refused`), a failed exam (exit 6) or an echo of the text is
+    not the end of the protocol: counting it would cut C short (ctx-rent S2 H1)."""
+    muts, commit_uses, failed, answered, cert_uses, certified = set(), {}, set(), set(), {}, set()
     for row in rollover._rows(transcript):
         msg = row.get("message")
         if not isinstance(msg, dict) or not isinstance(msg.get("content"), list):
@@ -119,15 +154,21 @@ def _tool_message_ids(transcript: Path) -> tuple[set, set]:
                 answered.add(b.get("tool_use_id"))
                 if b.get("is_error"):
                     failed.add(b.get("tool_use_id"))
+                elif _is_certified_result(b.get("content")):
+                    certified.add(b.get("tool_use_id"))
             if b.get("type") != "tool_use":
                 continue
-            commit = is_commit_command(str((b.get("input") or {}).get("command") or ""))
+            command = str((b.get("input") or {}).get("command") or "")
+            commit = is_commit_command(command)
             if b.get("name") in MUTATING_TOOLS or commit:
                 muts.add(msg.get("id"))
             if commit:
                 commit_uses[b.get("id")] = msg.get("id")
+            if is_certify_command(command):
+                cert_uses[b.get("id")] = msg.get("id")
     commits = {mid for tid, mid in commit_uses.items() if tid in answered and tid not in failed}
-    return muts, commits
+    certs = {mid for tid, mid in cert_uses.items() if tid in certified}
+    return muts, commits, certs
 
 
 _TRACES: dict = {}
@@ -145,10 +186,11 @@ def session_trace(transcript: Path) -> dict:
 
 def _trace(transcript: Path) -> dict:
     calls, *_ = tis._calls_in(Path(transcript))
-    muts, commits = _tool_message_ids(transcript)
+    muts, commits, certs = _tool_message_ids(transcript)
     return {"calls": len(calls), "ctx": [tis._context_of(c["usage"]) for c in calls],
             "ts": [_epoch(c.get("ts")) for c in calls], "model": [c["model"] for c in calls],
             "first_mutation": next((i + 1 for i, c in enumerate(calls) if c["key"][0] in muts), None),
+            "certify_call": next((i + 1 for i, c in enumerate(calls) if c["key"][0] in certs), None),
             "commit_calls": [i + 1 for i, c in enumerate(calls) if c["key"][0] in commits]}
 
 
@@ -191,13 +233,18 @@ def fresh_cost(ledger_path: Optional[Path] = None, find: Optional[Callable] = No
         if not tr["ctx"]:
             missing_transcript.append(succ)
             continue
-        fm = tr["first_mutation"]
+        fm, cc = tr["first_mutation"], tr["certify_call"]
         no_mutation += fm is None
         samples.append({"predecessor": pred, "successor": succ, "first_ctx": tr["ctx"][0],
                         "calls_to_first_mutation": fm,
                         "ctx_at_first_mutation": tr["ctx"][fm - 1] if fm else None,
-                        "carried_before_first_mutation": sum(tr["ctx"][:fm - 1]) if fm else None})
+                        "carried_before_first_mutation": sum(tr["ctx"][:fm - 1]) if fm else None,
+                        # ctx-rent S2: the /kresume protocol itself (resume .. certify inclusive) is the
+                        # part a continuing predecessor would never pay; the calls after it are work.
+                        "calls_to_certify": cc,
+                        "protocol_overhead": sum(tr["ctx"][:cc]) if cc else None})
     measured = [s for s in samples if s["calls_to_first_mutation"]]
+    certified_proto = [s for s in samples if s["calls_to_certify"]]
     first = _dist([s["first_ctx"] for s in samples], min_samples)
     return {
         "verdict": "MEASURED" if first["p50"] is not None else "INSUFFICIENT_EVIDENCE",
@@ -207,6 +254,9 @@ def fresh_cost(ledger_path: Optional[Path] = None, find: Optional[Callable] = No
         "calls_to_first_mutation": _dist([s["calls_to_first_mutation"] for s in measured], min_samples),
         "carried_before_first_mutation": _dist([s["carried_before_first_mutation"] for s in measured],
                                                min_samples),
+        "calls_to_certify": _dist([s["calls_to_certify"] for s in certified_proto], min_samples),
+        "protocol_overhead": _dist([s["protocol_overhead"] for s in certified_proto], min_samples),
+        "no_certify_call": len(samples) - len(certified_proto),
         "bound": "calls before the first mutation include real work: an UPPER bound on rehydration",
         "decide_assumes": "fresh = floor + capsule chars / 4 (rollover.decide), no rehydration term",
         "samples": samples,
@@ -398,7 +448,17 @@ def build_prior(now: Optional[float] = None, sessions: Optional[list] = None, le
     t = now - LIVE_GUARD_S
     pr = Prior(sessions, set(), rolled).at(t)
     fc = fresh_cost(ledger_path, find, min_samples, before=now)
-    c = fc["carried_before_first_mutation"]
+    c, p = fc["carried_before_first_mutation"], fc["protocol_overhead"]
+    # ctx-rent S2: rehydration is the /kresume protocol (resume .. certify), p90 so variance and part of
+    # the re-read premium are inside it. The old pre-first-mutation sum counted the successor's real
+    # work as rehydration (p50 1.79M vs protocol p50 386k, 2026-10-08) and kept rotation at the wall.
+    if p["p90"] is not None:
+        reh = {"basis": "PROTOCOL_P90", "tokens": p["p90"], "p50": p["p50"], "n": p["n"],
+               "upper_bound_p50": c["p50"], "rereads": "UNMEASURED"}
+    elif c["p50"] is not None:
+        reh = {"basis": "UPPER_BOUND_P50", "tokens": c["p50"], "p90": c["p90"], "n": c["n"]}
+    else:
+        reh = {"basis": "UNKNOWN", "reason": "too few certified resumes"}
     enough = len(pr["values"]) >= min_samples
     return {
         "schema": PRIOR_SCHEMA, "basis": "MEASURED_PRIOR" if enough else "UNKNOWN",
@@ -408,8 +468,7 @@ def build_prior(now: Optional[float] = None, sessions: Optional[list] = None, le
         "window": {"ended_after": t - PRIOR_DAYS * 86400, "ended_before": t},
         "index_newest_ts": max((last for _, _, last in sessions), default=None),
         "computed_at": now, "expires_at": now + PRIOR_TTL_S,
-        "rehydration": ({"basis": "UPPER_BOUND_P50", "tokens": c["p50"], "p90": c["p90"], "n": c["n"]}
-                        if c["p50"] is not None else {"basis": "UNKNOWN", "reason": "too few certified resumes"}),
+        "rehydration": reh,
         "conditioned_on": None, "source": "tools/rollover_replay.py build_prior",
     }
 
@@ -512,9 +571,11 @@ def main(argv=None) -> int:
     print(f"fresh-cost: {res['verdict']}  certified {res['certified']}, measured {len(res['samples'])}, "
           f"no claim {len(res['missing_claim'])}, no transcript {len(res['missing_transcript'])}, "
           f"never mutated {res['no_mutation']}, torn ledger rows {res['torn_rows']}")
-    for k in ("first_ctx", "calls_to_first_mutation", "carried_before_first_mutation"):
+    for k in ("first_ctx", "calls_to_first_mutation", "carried_before_first_mutation",
+              "calls_to_certify", "protocol_overhead"):
         d = res[k]
         print(f"  {k}: n={d['n']} p10={d['p10']} p50={d['p50']} p90={d['p90']}")
+    print(f"  no_certify_call: {res['no_certify_call']} (certified in the ledger, no counted certify call)")
     print(f"  {res['bound']}\n  decide assumes: {res['decide_assumes']}")
     return 0
 

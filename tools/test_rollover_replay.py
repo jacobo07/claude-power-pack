@@ -188,6 +188,104 @@ def main() -> int:
     thin = rr.build_prior(now=now, sessions=live, ledger_path=led2, find=paths.get, min_samples=5)
     ok("V-RR-PRIOR-THIN-IS-UNKNOWN", thin["basis"] == "UNKNOWN" and thin["reason"], str(thin["reason"]))
 
+    # ---- ctx-rent S2: the /kresume protocol (resume .. certify) is rehydration; work after it is not.
+    # A certify counts only when its tool_result is not an error AND carries a success RESUME_CERTIFIED
+    # line: rollover.py also prints RESUME_CERTIFIED on two exit-5 paths and a refusal on the others.
+    def cres(tid, text, err=False, as_str=False):
+        return json.dumps({"type": "user", "message": {"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": tid, "is_error": err,
+             "content": text if as_str else [{"type": "text", "text": text}]}]}})
+
+    CERT = "& $py tools\\rollover.py certify --from P --claimant S --goal g --branch b --head h --next n"
+    OK1 = "RESUME_CERTIFIED -- the capsule is retired; continue with the first obligation."
+
+    def succ(tag, ctxs, certify_at=None, text=OK1, err=False, cmd=CERT, edit_at=None, as_str=False):
+        out = []
+        for k, ctx in enumerate(ctxs, 1):
+            if k == certify_at:
+                out += [use(f"{tag}{k}", f"{tag}-t{k}", ctx, cmd), cres(f"{tag}-t{k}", text, err, as_str)]
+            elif k == edit_at:
+                out.append(call(f"{tag}{k}", ctx, [("Edit", {"file_path": "x"})]))
+            else:
+                out.append(call(f"{tag}{k}", ctx))
+        return out
+
+    def cert_call(tag, **kw):
+        lines = succ(tag, [120_000, 125_000, 130_000, 140_000, 150_000], **kw)
+        return rr.session_trace(transcript(d, tag, lines))["certify_call"]
+
+    fresh_ok = cert_call("CD1", certify_at=3)
+    already_ok = cert_call("CD2", certify_at=3, text="RESUME_CERTIFIED (already) -- authority restored.", as_str=True)
+    ok("V-RR-CERTIFY-DETECT", fresh_ok == 3 and already_ok == 3, f"fresh={fresh_ok} already={already_ok}")
+    refused = cert_call("CD3", certify_at=3, err=True,
+                        text="REFUSED: capsule is claimed by nobody, not S; run resume first.")
+    flagged = cert_call("CD4", certify_at=3, err=True, text=OK1)          # the error flag wins over the text
+    ok("V-RR-CERTIFY-DETECT[refused]", refused is None and flagged is None, f"refused={refused} flagged={flagged}")
+    helps = [rr.is_certify_command(f"python tools/rollover.py certify {f}") for f in ("--help", "-h")]
+    helped = cert_call("CD5", certify_at=3, cmd="python tools/rollover.py certify --help", text=OK1)
+    ok("V-RR-CERTIFY-DETECT[help]", not any(helps) and helped is None
+       and rr.is_certify_command("python tools/rollover.py certify --from a --claimant b"),
+       f"help_detected={helps} help_trace={helped}")
+    echoed = cert_call("CD6", certify_at=3, cmd="echo python tools/rollover.py certify",
+                       text="python tools/rollover.py certify")
+    echoed_text = cert_call("CD7", certify_at=3, cmd=f"echo '{OK1}'", text=OK1)
+    ok("V-RR-CERTIFY-DETECT[echo]", echoed is None and echoed_text is None,
+       f"echo_command={echoed} echo_of_success_text={echoed_text}")
+    exit5 = [cert_call("CD8", certify_at=3, text="RESUME_CERTIFIED, but mutation authority was NOT restored: x."),
+             cert_call("CD9", certify_at=3, text="RESUME_CERTIFIED (already) -- the marker names capsule a, not b."),
+             cert_call("CDA", certify_at=3, text=OK1 + " ... mutation authority was NOT restored")]
+    ok("V-RR-CERTIFY-DETECT[exit5-unflagged]", exit5 == [None, None, None], f"{exit5}")
+
+    src = Path(rr.rollover.__file__).read_text(encoding="utf-8")
+    pinned = ("RESUME_CERTIFIED -- the capsule is retired", "RESUME_CERTIFIED (already) -- ",
+              "authority restored", "NOT restored")
+    gone = [t for t in pinned if t not in src]
+    tied = [t for t in (*rr._CERTIFIED_OK[:1], "RESUME_CERTIFIED (already) -- ", "authority restored",
+                        rr._CERTIFIED_NO) if t not in src]
+    ok("V-RR-CERTIFY-TOKENS-PINNED", not gone and not tied, f"missing from rollover.py: {gone + tied}")
+
+    T2 = 1_790_000_000.0
+    proto_ctx = {"XA": [120_000, 125_000, 130_000, 140_000, 150_000],
+                 "XB": [130_000, 135_000, 140_000, 150_000, 160_000],
+                 "XC": [140_000, 145_000, 150_000, 160_000, 170_000]}
+    proto_paths = {t: transcript(d, t, succ(t, c, certify_at=3, edit_at=5)) for t, c in proto_ctx.items()}
+    led_p = d / "ledger-proto.jsonl"
+    led_p.write_text("\n".join(json.dumps(r) for t in proto_ctx for r in (
+        {"event": "successor_claimed", "session_id": f"Q{t}", "claimant": t, "ts": T2 - 1000},
+        {"event": "resume_certified", "session_id": f"Q{t}", "wrong": [], "ts": T2 - 1000})) + "\n",
+        encoding="utf-8")
+    find_p = proto_paths.get                      # fresh_cost looks up the SUCCESSOR (claimant), never the predecessor
+    fcp = rr.fresh_cost(led_p, find=find_p, min_samples=3)
+    xa = next(s for s in fcp["samples"] if s["successor"] == "XA")
+    bpp = rr.build_prior(now=T2 + rr.LIVE_GUARD_S, sessions=[], ledger_path=led_p, find=find_p, min_samples=3)
+    reh = bpp["rehydration"]
+    ok("V-RR-PROTOCOL-NOT-WORK", xa["protocol_overhead"] == 375_000 and xa["carried_before_first_mutation"] == 515_000
+       and xa["calls_to_certify"] == 3 and xa["calls_to_first_mutation"] == 5
+       and reh.get("basis") == "PROTOCOL_P90" and reh.get("tokens") == fcp["protocol_overhead"]["p90"] == 435_000
+       and reh.get("p50") == 405_000 and reh.get("upper_bound_p50") == fcp["carried_before_first_mutation"]["p50"] == 555_000,
+       f"XA protocol={xa['protocol_overhead']} carried={xa['carried_before_first_mutation']} prior={reh}")
+
+    nc_ctx = [120_000, 125_000, 130_000, 140_000, 150_000]
+    nc_paths = {"XN1": transcript(d, "XN1", succ("XN1", nc_ctx, edit_at=3)),            # never ran certify
+                "XN2": transcript(d, "XN2", succ("XN2", nc_ctx, certify_at=2, err=True, edit_at=4,
+                                                 text="REFUSED: no reality refresh is recorded; run resume first."))}
+    led_n = d / "ledger-nocert.jsonl"
+    led_n.write_text("\n".join(json.dumps(r) for t in nc_paths for r in (
+        {"event": "successor_claimed", "session_id": f"Q{t}", "claimant": t, "ts": T2 - 1000},
+        {"event": "resume_certified", "session_id": f"Q{t}", "wrong": [], "ts": T2 - 1000})) + "\n",
+        encoding="utf-8")
+    find_n = nc_paths.get
+    fcn = rr.fresh_cost(led_n, find=find_n, min_samples=2)
+    bpn = rr.build_prior(now=T2 + rr.LIVE_GUARD_S, sessions=[], ledger_path=led_n, find=find_n, min_samples=2)
+    rn = bpn["rehydration"]
+    ok("V-RR-NO-CERTIFY-NOT-ZERO", len(fcn["samples"]) == 2
+       and all(s["calls_to_certify"] is None and s["protocol_overhead"] is None for s in fcn["samples"])
+       and fcn["no_certify_call"] == 2 and fcn["protocol_overhead"]["n"] == 0
+       and rn.get("basis") == "UPPER_BOUND_P50" and isinstance(rn.get("tokens"), int) and rn["tokens"] > 0
+       and rn["tokens"] == fcn["carried_before_first_mutation"]["p50"],
+       f"samples={[(s['successor'], s['calls_to_certify'], s['protocol_overhead']) for s in fcn['samples']]} "
+       f"no_certify_call={fcn['no_certify_call']} prior={rn}")
+
     # ---- R2 re-runnable: a grown, committing session is a candidate; a flat one is not.
     grow = [call(f"G{k}", 100_000 + k * 20_000) if k != 30 else use(f"G{k}", "Gt30", 100_000 + k * 20_000,
             "git commit -m g") for k in range(40)] + [result("Gt30")]

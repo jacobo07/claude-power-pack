@@ -615,7 +615,8 @@ def _economics(n_star: float, growth: int, ev: dict, reh: Optional[dict]) -> dic
     vals = ev.get("values") if ev.get("basis") == "MEASURED_PRIOR" else None
     if not vals:
         return {"economics": UNKNOWN, "reason": f"horizon unknown ({ev.get('reason') or ev.get('basis')})"}
-    c = reh.get("tokens") if isinstance(reh, dict) and str(reh.get("basis", "")).startswith("UPPER_BOUND") else None
+    c = (reh.get("tokens") if isinstance(reh, dict)
+         and str(reh.get("basis", "")).startswith(("UPPER_BOUND", "PROTOCOL")) else None)
     n_hi = round(n_star + c / growth, 1) if isinstance(c, (int, float)) else None
     s_lo = round(_share(vals, n_star), 3)
     s_hi = round(_share(vals, n_hi), 3) if n_hi is not None else None
