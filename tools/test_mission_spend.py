@@ -136,6 +136,15 @@ def main() -> int:
           "half the estimate since the mark does not trip")
     check("V-MSPEND-STALL-TRIPS", ms.judge(marked, 5 * M + 8_500_001, "fp1")["trip"] is not None)
     check("V-MSPEND-PROGRESS-RESETS-STALL", ms.judge(marked, 20 * M, "fp2")["trip"] is None)
+    # U1: freshness watermark + stale-snapshot guard (red branch: stale/missing watermark never trips)
+    T0 = 1_800_000_000.0
+    fresh = ms.judge(e1, 141 * M, None, as_of=T0 - 60, now=T0)
+    check("V-MSPEND-U1-FRESH-TRIPS-WITH-WATERMARK", bool(fresh["trip"]) and "as of 20" in fresh["trip"], str(fresh))
+    old = ms.judge(e1, 141 * M, None, as_of=T0 - 5000, now=T0)
+    check("V-MSPEND-U1-STALE-NEVER-TRIPS", old["trip"] is None and old["stale"].startswith("STALE"), str(old))
+    nowm = ms.judge(e1, 141 * M, None, as_of=None, now=T0)
+    check("V-MSPEND-U1-NO-WATERMARK-IS-STALE", nowm["trip"] is None and "no as_of" in nowm["stale"], str(nowm))
+    check("V-MSPEND-U1-FUTURE-IS-STALE", ms.stale_usage_guard(T0 + 500, T0) is not None)
 
     # --- supervisor wiring: a trip parks with the Owner hold; a control does not ---------------
     _mission("m-trip", token_estimate=17 * M, max_hours=1000.0)

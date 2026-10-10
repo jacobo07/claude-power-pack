@@ -216,15 +216,41 @@ def lineage_remaining(rec: dict, all_missions=None, root: Path | None = None, ca
     return out
 
 
-def judge(rec: dict, spent: int | None, fp: str | None) -> dict:
-    """{trip: reason|None, mark: new cost_mark|None}. Pure."""
+MAX_SNAPSHOT_AGE_S = 900
+
+
+def stale_usage_guard(snapshot_at: float | None, now: float, max_age: float = MAX_SNAPSHOT_AGE_S) -> str | None:
+    """U1: a usage number is only as good as its measurement time. Returns the STALE text, or None
+    when fresh. A missing watermark is stale too (unknown age is not fresh). Pure."""
+    if snapshot_at is None:
+        return "STALE: usage snapshot has no as_of watermark; re-measure before acting on it"
+    age = now - float(snapshot_at)
+    if age > max_age or age < 0:
+        return (f"STALE: usage snapshot as_of {_iso(snapshot_at)} is {age:,.0f}s old "
+                f"(limit {max_age:,.0f}s); re-measure before acting on it")
+    return None
+
+
+def _iso(ts: float) -> str:
+    import datetime as _dt
+    return _dt.datetime.fromtimestamp(float(ts), _dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def judge(rec: dict, spent: int | None, fp: str | None, as_of: float | None = None,
+          now: float | None = None) -> dict:
+    """{trip: reason|None, mark: new cost_mark|None}. Pure. When `as_of` (measurement time) is given
+    with `now`, a stale snapshot never trips (it returns `stale`) and a trip names its watermark."""
     est = rec.get("token_estimate")
     if not est or spent is None:
         return {"trip": None, "mark": None}
+    stale = stale_usage_guard(as_of, now) if now is not None else None
+    if stale:
+        return {"trip": None, "mark": None, "stale": stale}
     est = int(est)
     ratio = float(rec.get("token_trip_ratio") or DEFAULT_TRIP_RATIO)
     if spent > ratio * est:
-        return {"trip": (f"cost breaker: processed {spent:,} > {ratio:g} x estimate {est:,}; "
+        wm = f" (as of {_iso(as_of)})" if as_of is not None else ""
+        return {"trip": (f"cost breaker: processed {spent:,}{wm} > {ratio:g} x estimate {est:,}; "
                          "explain the variance and recompute the remaining work before release"),
                 "mark": None}
     mark = rec.get("cost_mark") or {}

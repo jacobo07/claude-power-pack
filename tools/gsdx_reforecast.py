@@ -50,6 +50,10 @@ def main():
         "safety": tgt + sum(v[2] for v in PLAN_LINES.values()) * M * s,
     }
     tot = {k: used + v for k, v in rem.items()}
+    # U4: P50 = expected, P95 = safety, P80 interpolated at a CHOSEN 0.6 weight (not measured)
+    tot["P50"], tot["P95"] = tot["expected"], tot["safety"]
+    tot["P80"] = tot["expected"] + 0.6 * (tot["safety"] - tot["expected"])
+    tot["P80_basis"] = "CHOSEN: expected + 0.6*(safety-expected); not measured"
     prev = None
     if a.previous and os.path.exists(a.previous):
         prev = load(a.previous).get("total", {}).get("expected")

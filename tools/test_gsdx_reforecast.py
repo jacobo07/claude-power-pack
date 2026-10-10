@@ -39,6 +39,9 @@ check("only pending unit counted", f and f["chain"]["pending"] == ["B"])
 check("chain expected = 0.35 x target", f and abs(f["remaining"]["expected"] - 12_700_000) < 1)
 check("total = used + remaining", f and abs(f["total"]["expected"] - 19_700_000) < 1)
 check("ordering lower<expected<safety", f and f["total"]["lower"] < f["total"]["expected"] < f["total"]["safety"])
+t = f["total"] if f else {}
+check("P50<=P80<=P95 and P80 labelled chosen", f and t["P50"] == t["expected"] and t["P50"] <= t["P80"] <= t["P95"]
+      and t["P95"] == t["safety"] and "CHOSEN" in t["P80_basis"])
 check("change <= 25% -> iterate false", f and f["iterate"] is False)
 check("under 40M -> owner_needed false", f and f["owner_needed"] is False)
 # change > 25%
