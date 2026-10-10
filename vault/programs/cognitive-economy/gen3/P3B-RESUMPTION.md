@@ -88,6 +88,9 @@ P3b-2 RUN 2026-10-09/10 (main pane, Owner "a" = accept; the bundle path re-judge
    `python vault/programs/cognitive-economy/gen3/recon-reforecast/p3b2_finish.py`. It needs P3B2_CHECK=PASS:
    SRC_PROVEN_AFTER=294 rise=289, PROMOTED_NOT_PROVEN=0, SEALED_LOST=[], PROVEN_VIA_BUNDLE=294/294. Exit 3 = still under the
    floor, nothing written. Do NOT re-send: job 2 of 2 is the only one left.
+   PROMOTE DONE 2026-10-10 (free 2528 MB): p3b2_finish.py rc=0. promoted=294 rows=34159 ledger_sha256=0c247d0d...;
+   SRC_PROVEN 5 -> 294 (rise 289), PROMOTED_NOT_PROVEN=0, SEALED_LOST=[], PROVEN_VIA_BUNDLE=294/294,
+   POST_IMPACT_DRIFTING=0, P3B2_CHECK=PASS. Not yet run: test_levels.py and test_levels_revalidate.py.
    DGL CONFLICT: Apps\pp-dgl chain.json W7 = this same P3b-2 (waits for W6 + D2-owner.md). It must become verify-only or be
    removed, otherwise it will re-send and spend the last RF Phase 3 job. Do not create D2-owner.md without that change.
 OLD NEXT: when gen3/P3b1-receipt.md lands, read it, check the drill (V-P3B-* all PASS) and the CAPSULE= and BUILD= lines,
