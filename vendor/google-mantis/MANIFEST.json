@@ -1,0 +1,135 @@
+{
+    "upstream":  "https://github.com/google/mantis",
+    "commit":  "2b3bbdcbb8d259d1777b89dcfa3c8e87615ccc80",
+    "commit_date":  "2026-10-06T22:30:50Z",
+    "license":  "Apache-2.0",
+    "vendored":  "2026-10-10",
+    "scope":  "mantis-* SKILL.md prompt files and their references only; reference/ ADK harness NOT vendored",
+    "files":  [
+                  {
+                      "path":  "LICENSE",
+                      "sha256":  "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+                      "bytes":  11560
+                  },
+                  {
+                      "path":  "mantis-advise/SKILL.md",
+                      "sha256":  "4098cd5e45ea1243ee400bbab94dfa75fdf77abac06662c76f55f3f00314ec0e",
+                      "bytes":  8865
+                  },
+                  {
+                      "path":  "mantis-architecture/SKILL.md",
+                      "sha256":  "098761f3fc8ec7824fc12dbf19ce3a19d0087e8b4a4b80e6ac65726ef52d10fe",
+                      "bytes":  21522
+                  },
+                  {
+                      "path":  "mantis-calibrate/references/calibration_rules.md",
+                      "sha256":  "18766a113129b7a73832c432bf3df829cc50f37f0ccad3ab759d0f66b0353e27",
+                      "bytes":  14806
+                  },
+                  {
+                      "path":  "mantis-calibrate/SKILL.md",
+                      "sha256":  "62d8a14495425dbc4ee031e62b07d98e574df50ceed154448e901bf3215d4aba",
+                      "bytes":  42068
+                  },
+                  {
+                      "path":  "mantis-chain/SKILL.md",
+                      "sha256":  "ff94a2179195a2c78b9d2aea5736f95748983ba2cbeea1700094fcbda497039b",
+                      "bytes":  24796
+                  },
+                  {
+                      "path":  "mantis-critic/SKILL.md",
+                      "sha256":  "0bf41a88aeac7df04b59a4e2978e02ddca1de1dd8c104a5c2e983131ff2c6942",
+                      "bytes":  18383
+                  },
+                  {
+                      "path":  "mantis-dedupe/SKILL.md",
+                      "sha256":  "90ce74f649f02fedbd31825149c84aa9bc3fddf0558dff092cf7e99875bb249c",
+                      "bytes":  22089
+                  },
+                  {
+                      "path":  "mantis-history/SKILL.md",
+                      "sha256":  "6aeaa17d6d0ece4dca75bdeb93e7cf399fed0b7f78785fec67456970f82e0960",
+                      "bytes":  13041
+                  },
+                  {
+                      "path":  "mantis-meta-agent/SKILL.md",
+                      "sha256":  "42aa3463b82cdf862c969710348026bfc627e61141d63ebaf3c0861273eebaac",
+                      "bytes":  39111
+                  },
+                  {
+                      "path":  "mantis-patch/references/patch_rebasing.md",
+                      "sha256":  "41facc3e57dd265be23aba72316aabc16001bd22573119bc6ce99816228e50e3",
+                      "bytes":  2879
+                  },
+                  {
+                      "path":  "mantis-patch/SKILL.md",
+                      "sha256":  "2396ee092b97ea67aa967940f788cef8c0e2caf56e9092a9876959b1fbf8ae49",
+                      "bytes":  47515
+                  },
+                  {
+                      "path":  "mantis-pipeline-adapter/references/mantis-kb-query.md",
+                      "sha256":  "acf6dd4d27f592ba9d966c28b375cb7ec082bd354879633d90c583e6d00821cd",
+                      "bytes":  9055
+                  },
+                  {
+                      "path":  "mantis-pipeline-adapter/references/mantis-sast-seed.md",
+                      "sha256":  "0ddaae964127e18c0f1ca38e99da1ecbded3cf4f97a2914fb210aa348ef88f44",
+                      "bytes":  19836
+                  },
+                  {
+                      "path":  "mantis-pipeline-adapter/references/mantis-structural-index.md",
+                      "sha256":  "f2044efc9e3e11d2a4477dcb8c760913be0a26faf86fb8dfdb907db243443a65",
+                      "bytes":  1571
+                  },
+                  {
+                      "path":  "mantis-pipeline-adapter/SKILL.md",
+                      "sha256":  "5396b722faa0c8a27a5379702bbd6265bae5fdd6d10b2101d83d34ba897ad644",
+                      "bytes":  68175
+                  },
+                  {
+                      "path":  "mantis-plan/SKILL.md",
+                      "sha256":  "1a11a1e3ef24f514f7d21bb477be6ef8416ee150505d1ead0088ee835e479430",
+                      "bytes":  32541
+                  },
+                  {
+                      "path":  "mantis-reflect/SKILL.md",
+                      "sha256":  "43534e2c5288a20f34d2a2f3a551e8827010c0baf89c5c13db2534b4d12abf86",
+                      "bytes":  10949
+                  },
+                  {
+                      "path":  "mantis-report/SKILL.md",
+                      "sha256":  "847231f2ff47baeb2acd2e2db255dbc066232e408e51819158ce03fc5e1df8bd",
+                      "bytes":  26482
+                  },
+                  {
+                      "path":  "mantis-reproduce/SKILL.md",
+                      "sha256":  "00440f0601da92645093946bc22abf9342a5fe3f1299c49e39e7268ac3183228",
+                      "bytes":  46775
+                  },
+                  {
+                      "path":  "mantis-researcher/SKILL.md",
+                      "sha256":  "8d3e7fd413419c6288b62ff3cbb3d57da2fef0d230b409ecdae6c0cfb5f671c7",
+                      "bytes":  26059
+                  },
+                  {
+                      "path":  "mantis-review/SKILL.md",
+                      "sha256":  "cc38fff95f4805f244da8b05e6967bd09e7ee507c2cc15c408d58edd5d0e1344",
+                      "bytes":  26531
+                  },
+                  {
+                      "path":  "mantis-structural-index/SKILL.md",
+                      "sha256":  "1b9585a6186e83d35337a3c9bbb2878127e4a435ac9ade7d737f599218eb29ff",
+                      "bytes":  38512
+                  },
+                  {
+                      "path":  "mantis-summarize/SKILL.md",
+                      "sha256":  "62f7460731e004e3b2e05d2b953177edc55492b457f08b79e8856d723315e87d",
+                      "bytes":  9573
+                  },
+                  {
+                      "path":  "mantis-threat-model/SKILL.md",
+                      "sha256":  "b449e61c7a586b10a04b8f3c07557236ae24eadb3699ccb629a08971a0a7fece",
+                      "bytes":  13562
+                  }
+              ]
+}
