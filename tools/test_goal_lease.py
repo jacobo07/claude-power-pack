@@ -106,6 +106,9 @@ def _():
     assert len(_rows(led, "authority_required")) == 1, _rows(led, "authority_required")
     assert len(_rows(led, "lease_open")) == 0
     assert led.lineage()["status"] == "AUTHORITY_REQUIRED"
+    # the reserves are part of the need: cap alone (600k) fits the 1M left, cap + reserves (1.4M) does not
+    out = led.lease_open("s2", 600_000, prev_lease="L1", reserves={"proof": 400_000, "closeout": 200_000, "recovery": 200_000})
+    assert not out["ok"] and out["need"] == 1_400_000, out
 
 
 @_gate("V-LEASE-IDEMPOTENT")
