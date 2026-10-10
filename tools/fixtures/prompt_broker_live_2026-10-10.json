@@ -1,0 +1,77 @@
+{
+ "captured": "2026-10-10, live ~/.claude/jobs state of every host-blocked mission (needs/detail only)",
+ "rows": [
+  {
+   "mission_id": "m-0fdcdcadd6f5",
+   "needs": "Declare a new goal id with a fresh cap (e.g. caa-wake-b at ~1.5M) bound to this worktree, then resume with: Read memory/handoffs/caa-wake-W1.md and finish W1",
+   "detail": "W1 halted: caa-wake hit 5.0M cap; work uncommitted",
+   "class": "CAPITAL"
+  },
+  {
+   "mission_id": "m-2f45a4047992",
+   "needs": "Open a new budget goal (any id other than ukai) bound to C:\\Users\\User\\Apps\\pp-ukai with about 1.2M tokens, then run /gsd-plan-phase 1 --skip-research --ws ukai",
+   "detail": "ukai budget exhausted (5.21M of 5M cap); needs new goal",
+   "class": "CAPITAL"
+  },
+  {
+   "mission_id": "m-4d1b851262ff",
+   "needs": "Supply a new goal id for ctx-same-pane (goal is over its 16M cap); then the agent commits the S0 tool files and evidence.",
+   "detail": "ctx-same-pane over 16M cap; S0 work uncommitted, new goal id needed",
+   "class": "CAPITAL"
+  },
+  {
+   "mission_id": "m-5709490db84c",
+   "needs": "Record Meta Dataset HA-07-A/C, supply ad account and payment method, write sealed spend grant; confirm plan-vs-code bucket map (10-VERIFY hand-off 1)",
+   "detail": "Phase 10 executed; first spend blocked on founder grant",
+   "class": "GENUINE_HUMAN_BOUNDARY"
+  },
+  {
+   "mission_id": "m-608c8d8d761f",
+   "needs": "run `node ~/.claude/gsd-core/bin/gsd-tools.cjs query workstream.set odr-device-trust --raw --cwd .`",
+   "detail": "awaiting gsd-tools query result to resume phase 4 step 5.5",
+   "class": "MECHANICAL"
+  },
+  {
+   "mission_id": "m-6f7451aefe40",
+   "needs": "start a new session in C:\\Users\\User\\Apps\\_wt-creative-addc to resume phase 2 close (handoff note has next steps)",
+   "detail": "context wall hit; phase 2 close handed to next session",
+   "class": "MECHANICAL"
+  },
+  {
+   "mission_id": "m-80016a4bb9f2",
+   "needs": "rate limited — wait and retry · You've hit your weekly limit · resets Oct 13, 4am (Europe/Madrid)",
+   "detail": "You've hit your weekly limit · resets Oct 13, 4am (Europe/Madrid)",
+   "class": "EVENT_WAIT"
+  },
+  {
+   "mission_id": "m-906ce1fae68c",
+   "needs": "Reply \"All good — continue\" to accept the merge gates, or tell me what to change",
+   "detail": "Phase 2 verification human_needed; awaiting gate sign-off",
+   "class": "GENUINE_HUMAN_BOUNDARY"
+  },
+  {
+   "mission_id": "m-9bee7894f20f",
+   "needs": "run `python tools/mission_spend.py session-declare ...` or start a fresh session to continue",
+   "detail": "verification & docs pending; awaiting owner spend declaration or fresh session",
+   "class": "MECHANICAL"
+  },
+  {
+   "mission_id": "m-c74a2125495b",
+   "needs": "open this session to continue setup",
+   "detail": "stuck on a startup dialog",
+   "class": "MECHANICAL"
+  },
+  {
+   "mission_id": "m-cd548e5d2ada",
+   "needs": "rate limited — wait and retry · You've hit your weekly limit · resets Oct 13, 4am (Europe/Madrid)",
+   "detail": "You've hit your weekly limit · resets Oct 13, 4am (Europe/Madrid)",
+   "class": "EVENT_WAIT"
+  },
+  {
+   "mission_id": "m-d84de9dd1edb",
+   "needs": "reply with the new goal id to run this milestone under, or say \"write resumption\" to write RESUMPTION_FILE.md with the scope",
+   "detail": "milestone can't start; budget hook blocks goal ce-a3b-r",
+   "class": "CAPITAL"
+  }
+ ]
+}
