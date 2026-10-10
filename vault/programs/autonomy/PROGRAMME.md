@@ -31,3 +31,8 @@ sections 1-4 once; your unit packet names the section that is yours. No orchestr
 - No GEX44 deploy, no Hermes install, no credential work, no push. Those are Owner-only.
 - Missing state is not success; UNKNOWN spend is not zero; never write PASS for an unobserved claim.
 - Every new guard ships with a test that drives its red branch (mutation drill).
+
+## Reserve rule, measured (2026-10-10, S5 halted twice)
+The session breaker stops a worker at 1.5 x the route's 30 calls (45) and then refuses writes outside `vault/plans/*.md`,
+so a receipt or a chain edit after that point is impossible. Count your calls: at call 22 stop starting new work, at
+call 25 at the latest insert the continuation unit and write the receipt. Investigation counts as calls.
