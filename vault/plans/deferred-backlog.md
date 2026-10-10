@@ -316,3 +316,56 @@ Optional step 4: one level of argument propagation, then subtract the Resort-sha
 
 **Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
 per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
+
+---
+
+## D12 — EDD full-convergence mission: everything after P2-B-R (Owner, 2026-10-10)
+
+**Owner:** "put the rest of the mission in the backlog of claude power pack". Parked, not cancelled.
+
+**Where it runs:** GEX44, worktree `/home/kobii/missions/edd/.claude/worktrees/edd-run` (branch `mission/edd-run`),
+workstream `.planning/workstreams/edd`. The resume prompt there is `RESUMPTION_FILE.md`, and the plan with decisions
+D-01..D-05 is `ROADMAP.md`. The execution log of record is `vault/specs/edd-compiled-execution-canary.md`.
+
+**Sealed as of 2026-10-10:**
+- **Heads:** edd-run `594a36c1`, GEX44 live PP `30fdbf0f`, laptop `72f4dcdf`.
+- **Phase 1:** done, except criterion 4.
+- **Phase 2, P2-B v1:** FREEZE because the H01/H02 keys were incomplete.
+- **Phase 2, P2-B-R (gold repair):**
+  - Holdouts v2 sealed at `95a47e80`.
+  - The independent re-audit found H01, H02 and H07 all correct, with 0 leaks.
+  - The judge returned FREEZE on cost only: the re-auditor's tokens were 38.4 % under forecast (5 calls against 7 forecast); the author was −17.6 %.
+- **Built and live:**
+  - The breaker meter attributes per session on GEX44.
+  - Contamination scan: `edd_p2b.py scan`.
+  - Gold lineage/reseal: `edd_p2b.py reseal`.
+  - The arming guard refuses learnings marked "not built" without a disposition, which is the UC-19 effect path.
+
+**Remaining, in order:**
+1. **Estimator residual for P2-B-R-AUDIT.** Find which two steps the 5-call audit skipped, then correct the audit cost
+   model. The ±30 % rule requires this before the next unit is armed.
+2. **Phase 1 criterion 4.** Write D-01..D-05 as DRK DecisionRecords (`modules/decision_review/decision_record.py`).
+3. **P2-C, V-EDD-BENCH runner and BEFORE baseline:**
+   - B0 is the deterministic pipeline (structural zero).
+   - B1 is a model baseline, one isolated call per case.
+   - Matches come from a blind scorer unit, and metrics are computed deterministically from them.
+   - Packet, done-check and a frozen forecast are committed before arming. Arming goes only through `tools/edd_p2_chain.py`.
+4. **Close Phase 2** (ceiling 16M), then re-forecast Phases 3–7 against what is left of the ~65M envelope (D-05).
+5. **Phases 3–7 to Goal convergence.** Phase 3 includes the answer-leak transcript detector, which reuses `scan`. Close with the full handoff from the mission prompt.
+
+**Open debt carried with it:**
+- No push alert when the sweep is FAILING.
+- UC-13: the generic `gsd_mission` arm is unbounded (PARTIAL, deferred to its owner).
+- The iteration standard `Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-universal.txt` has not been read.
+- Known reds stay explicit:
+  - Laptop: V-MC-SUP-HOST-UNANSWERED-NOT-BLOCKED (`_auto_budget` refreshes `updated_at`).
+  - GEX44: V-MC-PLAN-FACTS-REFUSES-OVERLAP (pre-existing).
+- `m-e3ed7e14a5e2` stays untouched.
+
+**Cost rule (D-05, binding):**
+- Pane 24ca0218 coordinated 25.36M / 109 calls against a 2.0M forecast. Never coordinate from a long-context laptop pane.
+- Use a fresh pane per phase. Measure its per-call cost (`mission_spend.session_tokens` on its own transcript) before
+  budgeting, and hard-cap the coordinator per phase (1.0M for the rest of Phase 2).
+- About 26M of the ~65M envelope is spent.
+
+**Activation criterion:** the Owner says to resume EDD. Then, in a fresh pane, read the RESUMPTION_FILE on GEX44 and start at item 1. Never run `/gsd-autonomous --ws edd`.
