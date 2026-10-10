@@ -24,6 +24,13 @@ cost-breaker owner hold (processed 2,106,279 vs 875k estimate). Its code is STAG
 .ksr_vault snapshot gate refused). Copy in vault/backlog/2026-10-10_cp50-c2a-partial.patch. The remaining work is in
 vault/backlog/2026-10-10_cp50-c2-remaining.md, which supersedes the actions below.
 
+RE-ARMED 2026-10-10 (Owner "go ahead ... rearma la misión"): variance explained (C2a-receipt.md § Variance; 875k =
+stop/2, the overrun = 2 commit retries + closing turn). Dead worker settled at measured 2,106,279: goal cp50-c2 used
+2,106,279, open 0, remaining 1,893,721 (the "1.0M phantom" was real spend, not a phantom). C2a-fix mission
+m-f5d386e909a5 PREPARED (supersedes m-e6ea9c26d377, HALTED), packet packets/C2a-fix.md, route-C2a-fix.json ADMISSIBLE
+need 841,212 target 1.05M stop 1.2M. It makes no commit in wt_cp50_c2. C2b (~1.5M class) will NOT fit what is left
+after C2a-fix: the Owner raises the cap with `goal-declare --owner` (TTY) sized from C2a-fix's measured spend.
+
 Next 3 actions (historical):
 1. When gen3/C2a-receipt.md lands: read it, meter the worker transcript (dedupe by message.id) against the 1.75M
    stop, re-run test_arm_a.py + test_bench.py from the coordinator with absolute paths (never Set-Location).
