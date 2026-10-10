@@ -45,6 +45,11 @@
    "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-W3.json",
    "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-W3.json",
    "after": "DOCTRINE",
+   "accept": [
+    "DONE",
+    "PARTIAL"
+   ],
+   "accept_note": "PP main pane a5308810 2026-10-10 (Owner 'do the 5 items'): PARTIAL accepted, residual SUPERSEDED by programme dgl (R4/phantom/successor -> dgl W3-W4; g/r -> ce-lifecycle-v3). Map in WU-PLAN-2.md section 0c. No W3 residual is armed here.",
    "wait": [
     "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-INST2-receipt.md",
     "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S5d-receipt.md"
@@ -60,6 +65,7 @@
   }
  ],
  "deferred": {
+  "retired": "2026-10-10 PP main pane a5308810: REC-P2C and REC-P3 RETIRED, never to be armed. Recon P2 is done (fa66cbc) and P3 is done (P3b-2 PROVEN 5 -> 294, P3B2_CHECK=PASS) on the gen3/CP50 track. See WU-PLAN-2.md section 0c.",
   "note": "coordinator 2026-10-09 17:35: recon-factory phases are run by the Owner's CP50 track (PP vault/plans/cp50-run-plan-2026-10-09.md, goal cp50-c1, mission m-4c2ceda008e1 C1); Phase 2 closed there (recon fa66cbc). gsdx does not put a second writer in wt_keosdtk_home: REC-* units are MERGE into that track until the Owner hands it back. W3 also waits for ce-lifecycle-v3 WU-S5d (same files).",
   "units": [
    {

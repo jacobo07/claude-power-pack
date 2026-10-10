@@ -22,6 +22,24 @@ never push, never Set-Location / cd. Work class: COMPILATION (read structured in
 - Measured references: L1 itself = 1,804,651 + a 98,070 no-op renewal (route target 1.3M: +46%); S1 = 2,708,995 at 40
   model calls; gen3 recon phase leases 1.0-2.4M each (TRANCHE-CP50.md).
 
+## 0c. Facts as of 2026-10-10 (PP main pane a5308810, Owner "do the 5 items"; these OVERRIDE 0b and the plan)
+- **Recon P2 and P3 are DONE** on the Owner's gen3/CP50 track: P2 recon fa66cbc (AA_GATE PASS); P3b-2 promoted 294,
+  SRC PROVEN 5 -> 294, P3B2_CHECK=PASS (PP gen3/P3B-RESUMPTION.md, RECON-FACTORY-HANDOFF-2026-10-10.md). CP50 C1 is
+  built (bench.py, recon 9929c29). **Compile NO recon unit** (no P2 close, no P3, no CP50/P8/P9). Recon phases stay on
+  the gen3 track until the Owner hands them back. The deferred REC-P2C/REC-P3 units are RETIRED (chain.json `deferred`).
+  RF Phase 3 GEX44 job 2 of 2 is a reserve: no gsdx unit may send it.
+- **W3 residual is SUPERSEDED by programme dgl**, accepted PARTIAL. Map from W3 `remaining` to its owner:
+  R4 reconciliation / phantom-reservation prevention -> dgl W3 (terminal reconciliation, UNKNOWN_RESERVED TTL);
+  successor arming within the envelope -> dgl W3 (atomic succession) + W4 (predictive DRAIN);
+  per-class g/r and closeout tail -> ce-lifecycle-v3 (growth estimator); S1 replay pricing >= 2.1M and the
+  `--calls-unit` CLI end to end -> verify inside dgl W4's crash matrix. Do not schedule any of these here.
+- **Owned files, updated:** dgl (Apps\pp-dgl, W1b live) also edits modules/provider_routing/ledger.py and
+  tools/mission_spend.py; ce-lifecycle-v3 still owns gsd_mission.py and hooks/session_budget_guard.js. Any unit that must
+  touch these waits on dgl `W5-receipt.md` (C:\Users\User\Apps\pp-dgl\vault\programs\dgl\W5-receipt.md) in addition
+  to the INST2 receipt.
+- So the next block is Part A (A-G2..A-G5 per L1 dispositions) and W4 reforecast only. If nothing in GRAPH.md is
+  runnable under these rules, write `"owner_needed"` naming that and append nothing.
+
 ## 1. Rules for every packet you write
 - Header: `done_gate:` (a command that exits 0 only when the unit is proven), `work_tree:`, `receipt:`.
 - Section 0 facts must be checked by you now (a path exists, a commit is an ancestor); write nothing you did not verify.
