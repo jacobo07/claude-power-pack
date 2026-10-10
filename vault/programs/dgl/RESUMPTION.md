@@ -4,7 +4,7 @@ Identity: worktree C:\Users\User\Apps\pp-dgl, branch dgl/durable-goal-lease (als
 unprompted). Goal `dgl` cap 17,000,000, chain envelope 16.0M. Plan: vault/plans/durable-goal-lease-2026-10-09.md
 (Owner "y" 2026-10-09). Thesis: a goal is durable, a lease is disposable; cwd is location, never economic authority.
 
-State (2026-10-10 11:40 local): PARKED in the PP backlog, entry D15 of vault/plans/deferred-backlog.md
+State (2026-10-10 11:40 local): PARKED in the PP backlog, entry D13 of vault/plans/deferred-backlog.md
 (Owner: "put the rest of the mission in the backlog of claude power pack").
 - W1 PARTIAL (design only). W1b DONE (lease epochs + succession CAS, test_goal_lease 10/10). W2 DONE eaadf11f
   (workspace_registry.py, binding precedence, fenced hooks, test_workspace_lease 10/10). Receipts: Wn-receipt.md.
@@ -21,4 +21,4 @@ Next (only after the Owner raises the dgl cap; ~20-25M more for W3-W8, `--owner`
 2. Enable-ScheduledTask PP-DglChain-Tick; the next tick arms W3.
 3. Act only on chain rows `stopped_without_done`, `arm_refused`, `refuse_envelope`, or AUTHORITY_REQUIRED.
 
-Start: read this file and backlog D15, then `gsd_mission.py status` and the last 5 lines of ~/.claude/state/dgl-chain-tick.log.
+Start: read this file and backlog D13, then `gsd_mission.py status` and the last 5 lines of ~/.claude/state/dgl-chain-tick.log.
