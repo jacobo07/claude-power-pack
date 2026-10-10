@@ -178,6 +178,69 @@ def _():
     assert b and b["goal"] == "g-reg", b                                   # registry holder beats the root match
 
 
+_RUN_BIND = "const b=require(process.argv[1]); let r='';process.stdin.on('data',d=>r+=d).on('end',()=>{" \
+            "const e=JSON.parse(r); process.stdout.write(JSON.stringify(b.goalBinding(e,'sid-js-1')));});"
+_RUN_GUARD = "const g=require(process.argv[1]); let r='';process.stdin.on('data',d=>r+=d).on('end',()=>{" \
+             "process.stdout.write(JSON.stringify({out:g.decide(JSON.parse(r))}));});"
+
+
+def _node(code: str, mod: str, event: dict, st: Path):
+    env = dict(os.environ, GSD_LONG_RUN_STATE_DIR=str(st))
+    for k in ("CPP_GOAL", "CPP_SESSION_BUDGET"):
+        env.pop(k, None)
+    p = subprocess.run(["node", "-e", code, str(REPO / mod)], input=json.dumps(event), capture_output=True,
+                       text=True, env=env, timeout=60)
+    assert p.returncode == 0, p.stderr
+    return json.loads(p.stdout)
+
+
+def _hook_world(close: bool):
+    st = _state()
+    root = st / "wt"
+    root.mkdir()
+    (st / "goal-budget").mkdir(exist_ok=True)
+    (st / "goal-budget" / "index.json").write_text(json.dumps({"g-root": {"roots": [str(root)]}, "g-reg": {"roots": []}}))
+    led = _ledger(st, "g-reg")
+    assert _reg(st).claim(str(root), "g-reg", "L1", 0, holder_sid="s1")["ok"]
+    if close:
+        led.lease_close("L1", "done")
+    return st, root
+
+
+@_gate("V-WS-HOOK-BINDING")
+def _():
+    st, root = _hook_world(close=False)
+    mut = {"session_id": "sid-js-1", "cwd": str(root), "tool_name": "Bash", "tool_input": {"command": "echo hi"}}
+    b = _node(_RUN_BIND, "hooks/lib/goal_binding.js", mut, st)
+    assert b["goal"] == "g-reg" and b["lease"] == "L1" and b["gen"] == 1, b           # registry beats the root match
+    assert (st / "goal-binding" / "sid-js-1.json").exists()
+    # a registry that holds a DIFFERENT workspace: entering the goal root only observes
+    st2 = _state()
+    (st2 / "goal-budget").mkdir()
+    root2 = st2 / "wt"
+    root2.mkdir()
+    (st2 / "goal-budget" / "index.json").write_text(json.dumps({"g-root": {"roots": [str(root2)]}}))
+    _reg(st2).claim("C:/w/elsewhere", "g-root", "L1", 0)
+    before = (st2 / "goal-budget" / "workspace.journal.jsonl").read_bytes()
+    ev = {"session_id": "sid-js-1", "cwd": str(root2), "tool_name": "Bash", "tool_input": {"command": "echo hi"}}
+    b2 = _node(_RUN_BIND, "hooks/lib/goal_binding.js", ev, st2)
+    assert b2 and b2.get("provisional") and not (st2 / "goal-binding" / "sid-js-1.json").exists(), b2
+    assert (st2 / "goal-budget" / "workspace.journal.jsonl").read_bytes() == before
+
+
+@_gate("V-WS-HOOK-CLOSED-LEASE-FENCED")
+def _():
+    ev = lambda root: {"session_id": "sid-js-2", "cwd": str(root), "tool_name": "Bash",   # noqa: E731
+                       "tool_input": {"command": "echo hi"}, "transcript_path": str(root / "none.jsonl")}
+    st, root = _hook_world(close=True)
+    out = _node(_RUN_GUARD, "hooks/session_budget_guard.js", ev(root), st)["out"]
+    d = (out or {}).get("hookSpecificOutput") or {}
+    assert d.get("permissionDecision") == "deny" and "FENCED" in d.get("permissionDecisionReason", ""), out
+    st, root = _hook_world(close=False)                                                   # control: open lease is not fenced
+    out = _node(_RUN_GUARD, "hooks/session_budget_guard.js", ev(root), st)["out"]
+    assert "FENCED" not in json.dumps(out), out
+
+
 def main() -> int:
     _run_gates()
     ok = sum(1 for _n, p, _d in RESULTS if p)

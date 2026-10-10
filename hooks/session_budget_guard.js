@@ -332,6 +332,12 @@ function decideGoal(event, sid, bind) {
   if (cmd && goalExempt(cmd)) return null;
   if (!entry) return goalDeny(goal, `UNKNOWN: goal ${goal} is not declared on this host; unknown is never admitted.`);
   if (touchesGoalState(event)) return goalDeny(goal, 'a call that touches goal-budget state is not admitted from a bound session.');
+  if (bind.lease) {                           // (W2) a registry holder on a closed lease is FENCED, not unknown-free
+    const lin = callGoal(['goal-lineage', '--goal', goal]);
+    if (lin.failed) return goalDeny(goal, `UNKNOWN: ${lin.failed}; a registry holder fails closed.`);
+    const ls = (Array.isArray(lin.leases) ? lin.leases : []).find(x => x.id === bind.lease);
+    if (!ls || ls.closed) return goalDeny(goal, `FENCED: workspace holder lease ${bind.lease} is ${ls ? 'closed' : 'unknown'}; its authority is revoked.`);
+  }
   const gPath = path.join(stateDir(), `session-budget-${sid}.goal.json`);
   let gs = readJson(gPath);
   const goalSince = entry.since ? String(entry.since) : null;
