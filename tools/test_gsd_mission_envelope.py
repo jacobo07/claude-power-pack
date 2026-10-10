@@ -212,6 +212,13 @@ def main() -> int:
         h, how = gm.auto_headroom(*args, cfg)
         check(f"V-AUTO-CEILING-{name}", h == 15_000_000 and how.startswith("ceiling"), how)
 
+    big = {"candidate": {"with_margin": 40_000_000}, "confidence": "PROVISIONAL"}
+    h, how = gm.auto_headroom(3_000_000, 1, 3, cfg, big)
+    check("V-AUTO-CLAIM-PRIMARY-UNCLAMPED", h == 40_000_000 and "unclamped" in how, how)
+    tiny = {"candidate": {"with_margin": 200_000}, "confidence": "UNKNOWN"}
+    h, how = gm.auto_headroom(3_000_000, 1, 3, cfg, tiny)
+    check("V-AUTO-CLAIM-NO-FLOOR-CLAMP", h == 200_000, how)
+
     _running("m-auto")
     gm.transition("m-auto", expect_epoch=1, expect_state=gm.RUNNING, event="t_cap", now=NOW, max_cycles=3)
     r = gm._auto_budget(gm.load("m-auto"), NOW, measure=lambda rec: 3_000_000)

@@ -1363,7 +1363,18 @@ def _budget_defaults() -> tuple[dict, str]:
         return dict(_BUILTIN_BUDGET), "built-in defaults (file missing or unreadable)"
 
 
-def auto_headroom(spent: int | None, epoch: int, max_cycles: int | None, cfg: dict) -> tuple[int, str]:
+def auto_headroom(spent: int | None, epoch: int, max_cycles: int | None, cfg: dict,
+                  claim_cost: dict | None = None) -> tuple[int, str]:
+    """When `claim_cost` (a cost_to_completion.compile_cost result) is given it is PRIMARY and
+    UNCLAMPED: headroom = its with_margin tokens. The [min, max] clamp below is only the fallback
+    for a mission with no claim graph (and loses its upper bound only in the claim path)."""
+    if claim_cost:
+        wm = int(claim_cost["candidate"]["with_margin"])
+        return wm, f"cost_to_completion {wm:,} ({claim_cost.get('confidence', 'UNKNOWN')}, unclamped)"
+    return _rate_headroom(spent, epoch, max_cycles, cfg)
+
+
+def _rate_headroom(spent: int | None, epoch: int, max_cycles: int | None, cfg: dict) -> tuple[int, str]:
     """Headroom from the mission's OWN measured rate when it has one: (spent / epochs started) x
     epochs it may still run (the current one included), clamped to [min_headroom, headroom]. A flat
     15M gave a 300k-per-epoch unit and a 10M-per-epoch unit the same allowance (cep-gen3 T1c).
@@ -1396,7 +1407,8 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
         except Exception:  # noqa: BLE001 -- unmeasured is a named state, not zero
             spent = None
         cfg, src = _budget_defaults()
-        headroom, how = auto_headroom(spent, int(rec.get("epoch") or 0), rec.get("max_cycles"), cfg)
+        headroom, how = auto_headroom(spent, int(rec.get("epoch") or 0), rec.get("max_cycles"), cfg,
+                                      rec.get("claim_cost"))
         ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
         est = math.ceil(((spent or 0) + headroom) / ratio)
         spent_txt = "spend unmeasured" if spent is None else f"spent {spent:,}"

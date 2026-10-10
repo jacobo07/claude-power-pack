@@ -116,7 +116,21 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
         cand += cost
         ceil += math.ceil(cost * deopt) if cls == "novel" else cost
     floor_calls = min(min_calls, calls)
+    with_margin = ra._with_margin(cand, margin)
+    used = {c["class"] for c in claims if c.get("class") in MODEL_CLASSES
+            and c.get("status") not in ("satisfied", "done", "sleeping")}
+    observed = doc.get("observed")
+    if isinstance(observed, (int, float)) and not isinstance(observed, bool) and observed > max(ceil, with_margin):
+        confidence = "INVALIDATED"   # reality exceeded the top of the band: an order-of-magnitude miss
+    elif used and all(source[k] == "actual" for k in used):
+        confidence = "CALIBRATED"
+    elif any(v in ("profile", "actual") for v in source.values()):
+        confidence = "PROVISIONAL"
+    else:
+        confidence = "UNKNOWN"
     return {
+        "confidence": confidence,
+        "percentiles": {"P50": cand, "P80": with_margin, "P95": max(ceil, with_margin)},
         "verdict": "COMPILED",
         "floor": {"calls": floor_calls, "tokens": floor_calls * worker_floor},
         "candidate": {"calls": calls, "tokens": cand, "with_margin": ra._with_margin(cand, margin)},

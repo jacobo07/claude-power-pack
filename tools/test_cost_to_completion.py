@@ -87,6 +87,22 @@ def main() -> int:
                             "actuals": {"novel": {"calls": 1, "ctx_tokens": 1}}}, FLOORS)
     check("V-CTC-CTX-CLAMPED-TO-WORKER-FLOOR", low["candidate"]["tokens"] == WF, str(low["candidate"]))
 
+    # U3/U4: confidence states and percentiles
+    nov = [{"id": "n", "class": "novel"}]
+    check("V-CTC-CONF-UNKNOWN", out["confidence"] == "UNKNOWN", out["confidence"])
+    prov = ctc.compile_cost({"claims": nov, "profiles": {"novel": {"calls": 4, "ctx_tokens": 200_000}}}, FLOORS)
+    check("V-CTC-CONF-PROVISIONAL", prov["confidence"] == "PROVISIONAL", prov["confidence"])
+    check("V-CTC-CONF-CALIBRATED", act["confidence"] == "CALIBRATED", act["confidence"])
+    big = ctc.compile_cost({"claims": nov, "actuals": {"novel": {"calls": 5, "ctx_tokens": 200_000}},
+                            "observed": 50_000_000}, FLOORS)
+    check("V-CTC-CONF-INVALIDATED", big["confidence"] == "INVALIDATED", big["confidence"])
+    inside = ctc.compile_cost({"claims": nov, "actuals": {"novel": {"calls": 5, "ctx_tokens": 200_000}},
+                               "observed": 1_000_000}, FLOORS)
+    check("V-CTC-CONF-OBSERVED-INSIDE-NOT-INVALIDATED", inside["confidence"] == "CALIBRATED", inside["confidence"])
+    pc = out["percentiles"]
+    check("V-CTC-PERCENTILES-ORDERED", pc["P50"] == out["candidate"]["tokens"] and pc["P50"] <= pc["P80"] <= pc["P95"]
+          and pc["P95"] >= out["ceiling"]["tokens"], str(pc))
+
     # malformed claims refused
     for gate, bad in (("UNKNOWN-CLASS", [{"id": "a", "class": "magic"}]),
                       ("NO-ID", [{"class": "novel"}]),
