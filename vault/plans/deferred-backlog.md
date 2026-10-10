@@ -364,6 +364,18 @@ Packets: `vault/specs/packets/` in the work tree (WU-E3C1 is still to be written
 Budget: goal `cost-collapse` cap 69,774,423 declared 2026-10-08. What the E-units spent against it is not summed here; read
 it from the goal ledger, do not estimate.
 
+**Update 2026-10-10 (pane 5d6a315c, measured):**
+- The live-tree E4a edits are no longer loose. They landed as `16ac3a2d` "WU-E4a (live port)", with tag `cc-e4a-pre` kept.
+  `tools/test_verdict_contract.py` is still untracked on live, and no canonical RECEIPT-E4a exists on the laptop (only `.partial.json`).
+- GEX44 clone head is `c6bbad94` (receipt plus resumption note). `m-16bde3ea1101` is BLOCKED.
+- All 8 laptop cost-collapse missions are HALTED (CC1, CC2, E1, E2, E3, E3R, E3G, E4a).
+- Goal ledger: used 61,770,653 of 69,774,423, remaining 8,003,770
+  (`mission_spend.py goal-status --goal cost-collapse`). T3-T7 at the old economics was about 43M, so D-C is certain.
+- Option (a) now starts at closing E4a: commit the test, run the live gates and drill, write the receipt, then arm E3C1 without launching it.
+  That launch is the WATCHED production canary.
+- Debt: on 2026-10-08 the live sweep's adopt raised `MarkerError: resume command must start with '/'` (`m-302d70eabd59`).
+- Cost rule: coordinator panes were 27.97M of 57.2M (49%). Resume from a fresh pane that arms and ends.
+
 ---
 
 ## D12 — EDD full-convergence mission: everything after P2-B-R (Owner, 2026-10-10)
