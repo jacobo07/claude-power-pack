@@ -1,0 +1,17 @@
+{
+    "envelope":  {
+                     "target":  900000,
+                     "warn":  1170000,
+                     "stop":  1530000,
+                     "calls":  19
+                 },
+    "workers":  [
+                    {
+                        "name":  "gsdx-factory-W4",
+                        "profile":  "slim-t2",
+                        "calls":  8,
+                        "packet":  5000
+                    }
+                ],
+    "note":  "n=8 model calls (one tool + one test + run + receipt); C(n)=206000 x1.3=268k expected real; target = live L3 need for 8 declared steps"
+}

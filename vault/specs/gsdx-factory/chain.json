@@ -1,91 +1,133 @@
 {
- "goal": "gsdx-factory-2",
- "root": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
- "envelope": 40000000,
- "hard": 55000000,
- "pricing_note": "PLANNER READ THIS (overrides WU-PLAN section 1 'Route per unit'). Live admission (ce-lifecycle-v3 L3, live 37a5f3c0) prices slim-t2 as cp = ceil(calls * 2.4); cost = cp*(13507 + packet) + 1725*cp*(cp-1)/2; need = cost*1.2 <= envelope target, else RECOMPILE and the arm fails. So route worker `calls` = DECLARED STEPS (about tool calls / 2.4), and target must be >= need. Envelope `calls` = expected tool calls. The live formula over-prices our measured units ~2.8x (KNOWLEDGE K7); state the expected real cost (model-call formula) in a route `note`. Check every route with: python C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\route_admission.py (or gsd_mission.py admit on a held record) before adding it to the chain.",
- "units": [
-  {
-   "id": "L1",
-   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-L1.md",
-   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-L1.json",
-   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-L1.json",
-   "after": null,
-   "wait": [],
-   "accept": [
-    "DONE",
-    "DONE_WITH_LIMITS"
-   ],
-   "accept_note": "coordinator 2026-10-09: L1's purpose (every row disposed, gate rc 0, unknown 0) is met; its GRAPH costs are NOT a forecast (n = rows/6), PLAN-1 re-prices"
-  },
-  {
-   "id": "PLAN-1",
-   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-PLAN.md",
-   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-PLAN.json",
-   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-PLAN.json",
-   "after": "L1",
-   "wait": []
-  },
-  {
-   "id": "DOCTRINE",
-   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-DOCTRINE.md",
-   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-DOCTRINE.json",
-   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-DOCTRINE.json",
-   "after": "PLAN-1",
-   "wait": [],
-   "accept": [
-    "DONE",
-    "DONE_WITH_LIMITS"
-   ],
-   "accept_note": "coordinator 2026-10-09: gate test_wu_doctrine.py re-run rc 0 (41 rows); limits are scope notes (cluster-level probes), not unfinished work"
-  },
-  {
-   "id": "W3",
-   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-W3.md",
-   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-W3.json",
-   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-W3.json",
-   "after": "DOCTRINE",
-   "accept": [
-    "DONE",
-    "PARTIAL"
-   ],
-   "accept_note": "PP main pane a5308810 2026-10-10 (Owner 'do the 5 items'): PARTIAL accepted, residual SUPERSEDED by programme dgl (R4/phantom/successor -> dgl W3-W4; g/r -> ce-lifecycle-v3). Map in WU-PLAN-2.md section 0c. No W3 residual is armed here.",
-   "wait": [
-    "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-INST2-receipt.md",
-    "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S5d-receipt.md"
-   ]
-  },
-  {
-   "id": "PLAN-2",
-   "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-PLAN-2.md",
-   "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-PLAN-2.json",
-   "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-PLAN-2.json",
-   "after": "W3",
-   "wait": []
-  }
- ],
- "deferred": {
-  "retired": "2026-10-10 PP main pane a5308810: REC-P2C and REC-P3 RETIRED, never to be armed. Recon P2 is done (fa66cbc) and P3 is done (P3b-2 PROVEN 5 -> 294, P3B2_CHECK=PASS) on the gen3/CP50 track. See WU-PLAN-2.md section 0c.",
-  "note": "coordinator 2026-10-09 17:35: recon-factory phases are run by the Owner's CP50 track (PP vault/plans/cp50-run-plan-2026-10-09.md, goal cp50-c1, mission m-4c2ceda008e1 C1); Phase 2 closed there (recon fa66cbc). gsdx does not put a second writer in wt_keosdtk_home: REC-* units are MERGE into that track until the Owner hands it back. W3 also waits for ce-lifecycle-v3 WU-S5d (same files).",
-  "units": [
-   {
-    "id": "REC-P2C",
-    "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-REC-P2C.md",
-    "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-REC-P2C.json",
-    "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-REC-P2C.json",
-    "after": "PLAN-1",
-    "wait": [],
-    "cwd": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home"
-   },
-   {
-    "id": "REC-P3",
-    "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-REC-P3.md",
-    "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-REC-P3.json",
-    "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-REC-P3.json",
-    "after": "DOCTRINE",
-    "wait": [],
-    "cwd": "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home"
-   }
-  ]
- }
+    "goal":  "gsdx-factory-2",
+    "root":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2",
+    "envelope":  40000000,
+    "hard":  55000000,
+    "pricing_note":  "PLANNER READ THIS (overrides WU-PLAN section 1 \u0027Route per unit\u0027). Live admission (ce-lifecycle-v3 L3, live 37a5f3c0) prices slim-t2 as cp = ceil(calls * 2.4); cost = cp*(13507 + packet) + 1725*cp*(cp-1)/2; need = cost*1.2 \u003c= envelope target, else RECOMPILE and the arm fails. So route worker `calls` = DECLARED STEPS (about tool calls / 2.4), and target must be \u003e= need. Envelope `calls` = expected tool calls. The live formula over-prices our measured units ~2.8x (KNOWLEDGE K7); state the expected real cost (model-call formula) in a route `note`. Check every route with: python C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\route_admission.py (or gsd_mission.py admit on a held record) before adding it to the chain.",
+    "units":  [
+                  {
+                      "id":  "L1",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-L1.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-L1.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-L1.json",
+                      "after":  null,
+                      "wait":  [
+
+                               ],
+                      "accept":  [
+                                     "DONE",
+                                     "DONE_WITH_LIMITS"
+                                 ],
+                      "accept_note":  "coordinator 2026-10-09: L1\u0027s purpose (every row disposed, gate rc 0, unknown 0) is met; its GRAPH costs are NOT a forecast (n = rows/6), PLAN-1 re-prices"
+                  },
+                  {
+                      "id":  "PLAN-1",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-PLAN.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-PLAN.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-PLAN.json",
+                      "after":  "L1",
+                      "wait":  [
+
+                               ]
+                  },
+                  {
+                      "id":  "DOCTRINE",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-DOCTRINE.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-DOCTRINE.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-DOCTRINE.json",
+                      "after":  "PLAN-1",
+                      "wait":  [
+
+                               ],
+                      "accept":  [
+                                     "DONE",
+                                     "DONE_WITH_LIMITS"
+                                 ],
+                      "accept_note":  "coordinator 2026-10-09: gate test_wu_doctrine.py re-run rc 0 (41 rows); limits are scope notes (cluster-level probes), not unfinished work"
+                  },
+                  {
+                      "id":  "W3",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-W3.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-W3.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-W3.json",
+                      "after":  "DOCTRINE",
+                      "accept":  [
+                                     "DONE",
+                                     "PARTIAL"
+                                 ],
+                      "accept_note":  "PP main pane a5308810 2026-10-10 (Owner \u0027do the 5 items\u0027): PARTIAL accepted, residual SUPERSEDED by programme dgl (R4/phantom/successor -\u003e dgl W3-W4; g/r -\u003e ce-lifecycle-v3). Map in WU-PLAN-2.md section 0c. No W3 residual is armed here.",
+                      "wait":  [
+                                   "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-INST2-receipt.md",
+                                   "C:\\Users\\User\\Apps\\pp-ce-lifecycle-v3\\vault\\programs\\cognitive-economy\\lifecycle\\WU-S5d-receipt.md"
+                               ]
+                  },
+                  {
+                      "id":  "PLAN-2",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-PLAN-2.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-PLAN-2.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-PLAN-2.json",
+                      "after":  "W3",
+                      "wait":  [
+
+                               ]
+                  },
+                  {
+                      "id":  "AG2R",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-AG2R.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-AG2R.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-AG2R.json",
+                      "after":  "PLAN-2",
+                      "wait":  [
+
+                               ]
+                  },
+                  {
+                      "id":  "W4",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-W4.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-W4.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-W4.json",
+                      "after":  "AG2R",
+                      "wait":  [
+
+                               ]
+                  },
+                  {
+                      "id":  "PLAN-3",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-PLAN-3.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-PLAN-3.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-PLAN-3.json",
+                      "after":  "W4",
+                      "wait":  [
+
+                               ]
+                  }
+              ],
+    "deferred":  {
+                     "retired":  "2026-10-10 PP main pane a5308810: REC-P2C and REC-P3 RETIRED, never to be armed. Recon P2 is done (fa66cbc) and P3 is done (P3b-2 PROVEN 5 -\u003e 294, P3B2_CHECK=PASS) on the gen3/CP50 track. See WU-PLAN-2.md section 0c.",
+                     "note":  "coordinator 2026-10-09 17:35: recon-factory phases are run by the Owner\u0027s CP50 track (PP vault/plans/cp50-run-plan-2026-10-09.md, goal cp50-c1, mission m-4c2ceda008e1 C1); Phase 2 closed there (recon fa66cbc). gsdx does not put a second writer in wt_keosdtk_home: REC-* units are MERGE into that track until the Owner hands it back. W3 also waits for ce-lifecycle-v3 WU-S5d (same files).",
+                     "units":  [
+                                   {
+                                       "id":  "REC-P2C",
+                                       "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-REC-P2C.md",
+                                       "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-REC-P2C.json",
+                                       "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-REC-P2C.json",
+                                       "after":  "PLAN-1",
+                                       "wait":  [
+
+                                                ],
+                                       "cwd":  "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home"
+                                   },
+                                   {
+                                       "id":  "REC-P3",
+                                       "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\WU-REC-P3.md",
+                                       "route":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\packets\\route-REC-P3.json",
+                                       "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\specs\\gsdx-factory.RECEIPT-REC-P3.json",
+                                       "after":  "DOCTRINE",
+                                       "wait":  [
+
+                                                ],
+                                       "cwd":  "C:\\Users\\User\\Apps\\recon_work\\wt_keosdtk_home"
+                                   }
+                               ]
+                 }
 }

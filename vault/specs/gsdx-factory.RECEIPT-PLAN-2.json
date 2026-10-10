@@ -1,0 +1,41 @@
+{
+    "dry_run_row":  "{\"action\": \"running\", \"unit\": \"PLAN-2\", \"goal\": \"gsdx-factory-2\", \"used\": 7601452, \"dry_run\": true}",
+    "verified":  [
+                     "tools/gsd_dossier.py, test_gsd_dispose.py, GRAPH.md, RECEIPT-W3.json exist",
+                     "382beec0 (W3) is an ancestor of HEAD",
+                     "11 Part A rows in obligations.json are WAIT_DEPENDENCY on W3 (accepted PARTIAL)",
+                     "dgl W5-receipt.md absent; INST2 receipt present"
+                 ],
+    "units_compiled":  [
+                           "AG2R (W6 Part A recompile of A-G2..A-G5, 11 rows, target 1.15M)",
+                           "W4 (deterministic reforecast tool, target 0.9M)",
+                           "PLAN-3 (next planner epoch, target 1.15M)"
+                       ],
+    "forecast_remaining_here_M":  {
+                                      "expected":  11,
+                                      "basis":  "Master Plan sec 3 lines still funded here: block 3.2 targets (expected real ~1.0), Part A residual 2.5/1.2/4.5, GEX44 port 1.0/0.5/2.0, unmapped 2.0/0.5/3.0, reserves+control 6.5/2.5/10.5; GRAPH.md n/cost are placeholders and not used. My estimate, W4 recomputes.",
+                                      "lower":  4,
+                                      "safety":  18
+                                  },
+    "forecast_total_M":  {
+                             "expected":  18.6,
+                             "lower":  11.6,
+                             "safety":  25.6,
+                             "note":  "used 7.6M + remaining; all \u003c= 40M, so no owner_needed"
+                         },
+    "not_compiled":  "No recon unit (P2/P3/CP50/P8/P9 on gen3 track), no W3 residual (dgl/ce-lifecycle-v3), no W5/W7 (W5 needs GEX44 prerequisites + dgl; W7 waits W5). Part A work units beyond recompile are compiled by PLAN-3 after AG2R UNITS.md. AG2R accept is default DONE only (PARTIAL would stall the chain at stopped_without_done: coordinator may widen).",
+    "budget":  {
+                   "ok":  true,
+                   "envelope":  40000000,
+                   "block_targets":  3200000,
+                   "goal_used":  7601452,
+                   "sum":  10801452
+               },
+    "chain_rows_added":  [
+                             "AG2R after PLAN-2",
+                             "W4 after AG2R",
+                             "PLAN-3 after W4"
+                         ],
+    "status":  "DONE",
+    "unit":  "WU-PLAN-2"
+}

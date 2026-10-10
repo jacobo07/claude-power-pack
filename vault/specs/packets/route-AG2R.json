@@ -1,0 +1,17 @@
+{
+    "envelope":  {
+                     "target":  1150000,
+                     "warn":  1500000,
+                     "stop":  1950000,
+                     "calls":  24
+                 },
+    "workers":  [
+                    {
+                        "name":  "gsdx-factory-AG2R",
+                        "profile":  "slim-t2",
+                        "calls":  10,
+                        "packet":  5000
+                    }
+                ],
+    "note":  "n=10 model calls (11 rows, ~1 call per 2 rows + gate + receipt); C(n)=266500 x1.3=346k expected real; target = live L3 need for 10 declared steps (K7 over-prices ~2.8x)"
+}
