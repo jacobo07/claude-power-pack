@@ -259,9 +259,84 @@ T2_GATES = ["V-EVC-SUBAGENT-IN-TREE", "V-EVC-SYNTHETIC-EXCLUDED", "V-EVC-CROSSFI
 REQUIRED.extend(T2_GATES)
 
 
+T3_PRICES = {"claude-sonnet-5": {"input": 3, "cache_write_5m": 3.75, "cache_write_1h": 6,
+                                 "cache_read": 0.3, "output": 15},
+             "claude-opus-5": {"input": 5, "cache_write_5m": 6.25, "cache_write_1h": 10,
+                               "cache_read": 0.5, "output": 25}}
+
+
+def section_index_guard():
+    import shutil
+    sess = ({"s1"}, set())
+    rec = mission_rec()
+    root = Path(TMP) / "projects_t3"
+    build_fix1(root)
+    t = ms.usage_truth(rec, root, None, sess, 1_800_000_500.0) or {}
+    tr = t.get("tree", {})
+    sub = t.get("subagents", {}).get("s1", {})
+    far = 4_000_000_000.0
+
+    def indexed(r, name):
+        con = usage_index.connect(Path(TMP) / name)
+        try:
+            usage_index.refresh(con, r, deadline_s=30)
+            return usage_index.window(con, CREATED, far, T3_PRICES)
+        finally:
+            con.close()
+    w = indexed(root, "t3_full.sqlite")
+    cols = (("input", "input"), ("cache_write", "cache_write"), ("cache_read", "cache_read"),
+            ("output", "output"), ("calls", "calls"))
+    eq = all(w.get(a) == tr.get(b) for a, b in cols) and w.get("subagent_calls") == sub.get("calls") == 1
+    r2 = Path(TMP) / "projects_t3_nosub"
+    shutil.copytree(root, r2, ignore=shutil.ignore_patterns("subagents"))
+    w2 = indexed(r2, "t3_nosub.sqlite")
+    ctl = w2.get("output", 1 << 60) < w.get("output") and w2.get("calls") == w.get("calls") - 1
+    check("V-EVC-EQ-INDEX", eq and ctl,
+          f"reader={[tr.get(b) for _, b in cols]} sub_calls={sub.get('calls')} "
+          f"index={[w.get(a) for a, _ in cols]} sub_calls={w.get('subagent_calls')}; "
+          f"control no-subagents output={w2.get('output')} calls={w2.get('calls')}")
+
+    # guard divergence: byte-identical duplicates -> no divergence; streamed growth -> exactly 45
+    ident = Path(TMP) / "projects_t3_ident"
+    line = aline("m1", "r1", ts(0, 10), inp=1, cr=100, out=5)
+    fi = write(ident / ms.encode_cwd(WORK_DIR) / "s1.jsonl", line + line)
+    ti = ms.usage_truth(rec, ident, None, sess) or {}
+    fixs = Path(TMP) / "projects_t3_fixs"
+    fs = build_fixs(fixs)
+    ts_ = ms.usage_truth(rec, fixs, None, sess) or {}
+    fti, fts = ms._file_tokens(fi, None), ms._file_tokens(fs, None)
+    try:
+        st_i = ms.session_tokens(fi, None)
+        st_s = ms.session_tokens(fs, None)
+        st_ok = (st_i or {}).get("tokens") == fti and (st_s or {}).get("tokens") == fts
+        st_ev = f"session_tokens={(st_i or {}).get('tokens')}/{(st_s or {}).get('tokens')}"
+    except Exception as e:  # noqa: BLE001
+        st_ok, st_ev = False, f"session_tokens raised {type(e).__name__}: {e}"
+    check("V-EVC-GUARD-DIVERGENCE",
+          fti == ti.get("tree", {}).get("processed") and fts == 106 and ts_.get("tree", {}).get("processed") == 151
+          and 151 - fts == 45 and st_ok,
+          f"identical dup: _file_tokens={fti} reader={ti.get('tree', {}).get('processed')}; streamed: "
+          f"_file_tokens={fts} reader={ts_.get('tree', {}).get('processed')} diff={151 - fts}; {st_ev}; "
+          f"named debt: guard undercount, Phase 5")
+
+    root1 = Path(TMP) / "projects_t3_proj"
+    build_fix1(root1)
+    pt = ms.processed_tokens(rec, root1, None, sess)
+    ut = ms.usage_truth(rec, root1, None, sess) or {}
+    none_pt = ms.processed_tokens({"mission_id": "m-g", "work_dir": "/no/such/dir", "created_at": CREATED},
+                                  root1, None, sess)
+    check("V-EVC-PROJECTION",
+          isinstance(pt, int) and pt == ut.get("tree", {}).get("processed") == 1903 and none_pt is None,
+          f"processed_tokens={pt} tree.processed={ut.get('tree', {}).get('processed')} no-directory={none_pt}")
+
+
+REQUIRED.extend(["V-EVC-EQ-INDEX", "V-EVC-GUARD-DIVERGENCE", "V-EVC-PROJECTION"])
+
+
 def main() -> int:
     section_reader()
     section_truth()
+    section_index_guard()
     missing = [g for g in REQUIRED if g not in SEEN]
     check("V-EVC-ALL-GATES-RAN", not missing, f"missing={missing}")
     print(f"EVC_USAGE_TRUTH_PASS={passes}/{passes + fails} threshold={len(REQUIRED) + 1}/{len(REQUIRED) + 1} "

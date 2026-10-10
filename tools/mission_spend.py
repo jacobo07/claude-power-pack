@@ -5,8 +5,14 @@ E1 (m-f011d7fdebc9) was estimated at 17M processed tokens and ran to 141M, 93 % 
 stopped it. This module gives a mission an optional token envelope, measured deterministically from
 its own transcripts. No model reads anything here.
 
-Unit: processed tokens = input + cache_write + cache_read + output, deduplicated by message id within
-a transcript, synthetic rows excluded, counted from the mission's `created_at`.
+Unit: processed tokens = input + cache_write + cache_read + output under the canonical rule: the last
+copy of each (message.id, requestId) per transcript, per-column maximum across transcripts, synthetic
+rows excluded, subagent transcripts included, counted from the mission's `created_at`.
+
+NAMED DEBT (Phase 5): hooks/session_budget_guard.js, _file_tokens and session_tokens still keep the first
+copy of each message id and read the main transcript only, so they undercount by 0.8 - 1.0 % (streaming)
+plus all subagent tokens; they are pinned by V-SBG-REAL-PARITY (tools/test_session_budget_guard.py:242)
+and are NOT changed in Phase 1.
 
 `judge` trips on either of two conditions, and the caller parks the mission with the existing
 owner_hold (held, not halted, not renewed):
