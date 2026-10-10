@@ -138,6 +138,10 @@ holds while the leftover room absorbs that; no pad was added (Owner chose done o
 The verdict line at the top of this file describes canary #1 and is kept as history.
 Open debt carried from the capsule: renewal churn on parallel calls (obligation 4);
 test_hook_registration_integrity StopIteration (obligation 5).
+Both closed 2026-10-10: churn in b15a1792 (the guard adopts the sid's open lease from the journal;
+an idempotent renew writes nothing; GOAL_PASS=58/58, drills KILLED), StopIteration in 182fc46b
+(a registration that routes by its own --event keeps it; HOOKREG_PASS=16/16 --live, drill KILLED).
+No live canary was rerun for the churn fix: it changes when a renew is spawned, not what is admitted.
 
 ## Relevance to A1
 A1 crossed a 20M cap by 22.3M (111.5%) with no pre-call refusal at all. Here the refusal reached
