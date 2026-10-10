@@ -32,7 +32,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FLOORS_PATH = REPO_ROOT / "vault" / "config" / "route-floors.json"
 DEFAULT_GROWTH_MARGIN = 0.20
 TOP_LEVEL = "top-level-worker"
-ADMISSIBLE, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "DEFER", "RECOMPILE", "ESCALATE"
+ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "WATCHED", "DEFER", "RECOMPILE", "ESCALATE"
+LAUNCHABLE_VERDICTS = (ADMISSIBLE, WATCHED)       # the ONE definition of "may start a worker"; gsd_mission imports it
+KNOWN_VERDICTS = (ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE)   # every verdict this module can emit
 
 
 def load_floors(path: Path | str | None = None) -> dict:
