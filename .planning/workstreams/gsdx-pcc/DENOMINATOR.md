@@ -49,7 +49,7 @@ disposition. Phase = the roadmap phase expected to close it.
 | D40 | Phase-6 recompilation replay (§39) | io-ucg history (Reality 15) | REPLAY | 9 | OPEN | |
 | D41 | Elixir pilot (§40) | none | BUILD adapter in SHADOW on io-chatgpt-plugin copy | 7 | OPEN | |
 | D42 | Owner map (§41) | spec | per rows | -- | OPEN | |
-| D43 | Backward compat decide()/done_gate (§42) | reconcile/convergence | EXTEND + legacy replay test | 2 | OPEN | |
+| D43 | Backward compat decide()/done_gate (§42) | reconcile/convergence | EXTEND + legacy replay test | 2 | OPEN | instrument 98609c4f/15e8e2f1 (golden pre-seam, RED 21/23); closes at 02-03 green |
 | D44 | Event log, not second DB (§43) | GoalLog | invariant test | 2 | OPEN | |
 | D45 | Explicit INHERITED events (§44) | none | BUILD event | 4 | OPEN | |
 | D46 | Work classes (§45) | none | BUILD ledger + evidence-gated promotion | 9 | OPEN | |
