@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import subprocess
 import sys
 import time
@@ -30,18 +29,8 @@ PY = sys.executable
 TERMINAL = {"COMPLETED", "HALTED", "ORPHANED"}
 
 
-def receipt_status(path: Path) -> str | None:
-    """DONE / PARTIAL / FAILED / ... from a JSON `status` or a Markdown `Status:` line; None when absent."""
-    if not path.exists():
-        return None
-    text = path.read_text(encoding="utf-8-sig", errors="replace")
-    try:
-        s = str(json.loads(text).get("status", ""))
-    except (ValueError, AttributeError):
-        m = re.search(r"^\s*Status:\s*\**\s*([A-Z_]+)", text, re.M)
-        s = m.group(1) if m else ""
-    m = re.match(r"\s*([A-Z_]+)", s)
-    return m.group(1) if m else "UNREADABLE"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from receipt_judge import receipt_status  # noqa: E402,F401 -- the one reading every layer shares (APR-1, EWC K5)
 
 
 def limits_accepted(path: Path) -> bool:

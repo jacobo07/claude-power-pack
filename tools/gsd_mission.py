@@ -38,6 +38,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_long_run as lr  # noqa: E402  (state_dir, ledger, _pid_alive, sessions_dir)
+import receipt_judge as rj  # noqa: E402  (one receipt reading for mission, chain and steward)
 from route_admission import KNOWN_VERDICTS, LAUNCHABLE_VERDICTS  # noqa: E402  (one verdict contract)
 
 SCHEMA_VERSION = 1
@@ -2468,21 +2469,14 @@ def _receipt_present(rec: dict) -> bool:
     if not pkt:
         return True   # no packet = nothing to continue
     p = Path(pkt)
-    r = p.with_name(p.stem + "-receipt.md")
-    try:
-        body = r.read_text(encoding="utf-8")
-    except OSError:
-        return False
-    return _receipt_body_ok(body)
+    return _receipt_body_ok(p.with_name(p.stem + "-receipt.md"))
 
 
-def _receipt_body_ok(body: str) -> bool:
-    """Not a stub, partial or in-progress receipt. A checkpoint stub is not a receipt, whatever its case (WU-ADV's
-    said "checkpoint stub" and read as done). Judged on Status: lines and the title block only: a DONE receipt may
-    describe stubs or PARTIAL states in its prose, and WU-S5d's own receipt does."""
-    head = "\n".join(body.splitlines()[:3])
-    return not (re.search(r"\bstub\b", head, re.I)
-                or re.search(r"Status:\s*(IN PROGRESS|PARTIAL|stub)\b", body, re.I))
+def _receipt_body_ok(path) -> bool:
+    """The worker closed the unit with an explicit verdict. A stub, PARTIAL, IN PROGRESS -- or a receipt with NO
+    status at all -- is not a close: before APR-1 a Status-less receipt counted as present here while the chain read
+    it UNREADABLE, so the mission COMPLETED, halt-continue was skipped and the chain halted (EWC K5)."""
+    return rj.is_closed(path)
 
 
 _TREE_RE = re.compile(r"^work_tree:[ \t]*(\S.*?)[ \t]*$", re.MULTILINE)
@@ -3274,7 +3268,11 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 stopped = s.get("tripped") or ("worker reported is_error" if s["is_error"] else None)
                 if not stopped and halt_continue_on() and (rec.get("wu_packet") or {}).get("path") \
                         and not _receipt_present(rec):
-                    stopped = "no receipt"   # F1: a clean finish without its receipt is a fault, not done
+                    # F1: a clean finish without its receipt is a fault, not done. Name WHY (APR-1): a receipt that
+                    # exists but carries no closing Status is the K5 case, and the renewed worker must be told so.
+                    _p = Path(rec["wu_packet"]["path"])
+                    _st = rj.receipt_status(_p.with_name(_p.stem + "-receipt.md"))
+                    stopped = "no receipt" if _st is None else f"receipt not closed (status {_st})"
                 fin = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                  event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
                                  pending=None, slim_result=s, worker=s.get("session_id"),
@@ -3763,11 +3761,7 @@ def parse_plan(path) -> dict:
 
 def receipt_complete(path) -> bool:
     """Status: DONE and not a stub/partial/in-progress receipt (the same rule as _receipt_present)."""
-    try:
-        body = Path(path).read_text(encoding="utf-8-sig")
-    except OSError:
-        return False
-    return _receipt_body_ok(body) and bool(re.search(r"Status:\s*DONE\b", body, re.I))
+    return rj.is_done(path)
 
 
 def goal_headroom(goal) -> int | None:
