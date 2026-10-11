@@ -1,4 +1,4 @@
-# PP Deferred Backlog — activation criteria
+﻿# PP Deferred Backlog â€” activation criteria
 
 > Items that could NOT honestly close in the 2026-06-08 session-close
 > sprint, each with an explicit activation criterion so a future session
@@ -7,29 +7,29 @@
 
 ---
 
-## D1 — apex-completion-standard.md bidirectional drift (verify_spp: `mirror-parity` + `drift-report`)
+## D1 â€” apex-completion-standard.md bidirectional drift (verify_spp: `mirror-parity` + `drift-report`)
 
 **State:** global `~/.claude/knowledge_vault/core/apex-completion-standard.md`
-(174 350 B, LF-SHA `e553bcc`) ≠ repo copy (158 278 B, LF-SHA `03d9775`).
+(174 350 B, LF-SHA `e553bcc`) â‰  repo copy (158 278 B, LF-SHA `03d9775`).
 Both STRICT-FAIL rows share this single root cause.
 
-**Why deferred (not a mechanical loose→PP sync):** the divergence is
+**Why deferred (not a mechanical looseâ†’PP sync):** the divergence is
 **bidirectional and cross-project**, so a blind copy in either direction
 destroys content (HR-006: "sync direction propagates corruption
 byte-perfectly"):
-- **global-only (+195 substantive lines):** *other projects'* axes —
-  KobiiCraft "NL→DNA Axis" (Sesión 15), KobiMapEngine Sesiones 16-20,
+- **global-only (+195 substantive lines):** *other projects'* axes â€”
+  KobiiCraft "NLâ†’DNA Axis" (SesiÃ³n 15), KobiMapEngine Sesiones 16-20,
   "Database Migration Doctrine". The global vault is a **shared
   multi-project accumulator**.
-- **repo-only (+178 substantive lines):** PP-only clauses — C20
+- **repo-only (+178 substantive lines):** PP-only clauses â€” C20
   MCP-Resilience, C21 Slash-Recovery, PP Dataset Baseline (v15),
   Security-First (v16), and now C26/C27 (this session).
 
 **Activation criterion:** Owner decides the canonical model. Two options:
-1. **Union-merge** — append the PP-only axes into global AND the
+1. **Union-merge** â€” append the PP-only axes into global AND the
    cross-project axes into repo until LF-SHAs match. Tedious, must
    de-dup, must preserve both projects' content.
-2. **De-scope the file from mirror-parity** — if the apex doc is
+2. **De-scope the file from mirror-parity** â€” if the apex doc is
    *intentionally* a shared cross-project accumulator that cannot be
    kept in byte-parity, remove it from `verify_global_mirrors.py`'s
    PAIRS list and track PP clauses in a PP-exclusive ledger instead.
@@ -40,7 +40,7 @@ the model is chosen.
 
 ---
 
-## D2 — hooks-registration 6/7 (verify_spp: `hooks-registration`)
+## D2 â€” hooks-registration 6/7 (verify_spp: `hooks-registration`)
 
 **State:** `verify_hooks_registration.py` reports `HOOKS_REG_PROBE=6/7`.
 Sub-check `idempotency-mod` fails: 6 hook markers are built on disk but
@@ -48,7 +48,7 @@ absent from `~/.claude/settings.json`:
 `restart_resume`, `output_contract_stop`, `budget_monitor`, `jit_warm`,
 `cascade_check_bash`, `secret_firewall_gate`.
 
-**Why deferred:** writing `~/.claude/settings.json` is **Owner-side** —
+**Why deferred:** writing `~/.claude/settings.json` is **Owner-side** â€”
 the classifier hard-denies agent edits to it (HR-001,
 `feedback_automode_denies_self_modification`). The PP-internal half
 (hook scripts) is shipped; only the registration step remains.
@@ -63,15 +63,15 @@ commands), the marker set reaches 11/11 and the row passes.
 
 ---
 
-## D3 — paths+secrets residual: doc-class (35) + secret-class (9) (verify_spp: `paths+secrets`)
+## D3 â€” paths+secrets residual: doc-class (35) + secret-class (9) (verify_spp: `paths+secrets`)
 
 **State after this session's CODE-class fix:**
-- `path-leak (code)`: **0** ✅ (3 benchmark JSONs allowlisted —
+- `path-leak (code)`: **0** âœ… (3 benchmark JSONs allowlisted â€”
   machine-generated host-pinned records).
-- `path-leak (doc)`: 35 in 26 files — narrative/command/setup docs that
+- `path-leak (doc)`: 35 in 26 files â€” narrative/command/setup docs that
   reference `C:\Users\User\...` (e.g. `commands/*.md`, `docs/HOOKS_SETUP.md`,
   `vault/knowledge_base/ukdl-universal.md`, dataset + audit `.md`).
-- `secret hits`: 9 in 3 files — canonical **fake** AWS doc example
+- `secret hits`: 9 in 3 files â€” canonical **fake** AWS doc example
   access-key IDs in `tools/secret_rotation_advisor.py`, VPS-IP narrative
   in `vault/audits/manual_tools_audit_*.md`, ssh-alias narrative in
   `vault/knowledge_base/pp_dataset/pp_dataset_01_identity.md`.
@@ -81,11 +81,11 @@ secret hit, so the row stays RED until both classes reach 0.
 
 **Why deferred:** all 35+9 are non-leaks (narrative / canonical fixtures),
 but clearing them correctly means **surgical per-file allowlist entries**
-(26 doc + 3 secret), not a broad glob — the allowlist is intentionally
+(26 doc + 3 secret), not a broad glob â€” the allowlist is intentionally
 file-specific so it never masks a *future* real leak. Doing 29 reviewed
 entries exceeds the 30-min defer threshold. NOTE: the secret-class
 allowlist edit also trips the HR-SECRET PreToolUse firewall when the
-comment names the example-key literal — author comments without the
+comment names the example-key literal â€” author comments without the
 literal token.
 
 **Activation criterion:** add 29 surgical allowlist entries to
@@ -96,9 +96,9 @@ justification matching the existing host-pinned/fixture precedent. Then
 
 ---
 
-# Added 2026-09-30 (session 5fb53f17) — Owner: "leave everything remaining in the backlog"
+# Added 2026-09-30 (session 5fb53f17) â€” Owner: "leave everything remaining in the backlog"
 
-## D4 — PP Self-Eval: observe the first night (acceptance §4.4)
+## D4 â€” PP Self-Eval: observe the first night (acceptance Â§4.4)
 
 **State:** scheduled task `PP-SelfEval` installed (daily 03:30), code at `e079c57`, gate
 `tools/test_pp_eval.py` 38/38. No night has run yet.
@@ -110,7 +110,7 @@ Pass = one row with a harvest block or a named skip reason (RAM < 6 GB, owner ac
 at all = the task did not fire: check `schtasks /Query /TN PP-SelfEval /V` LastTaskResult.
 Resumption: `vault/specs/pp-self-eval.RESUMPTION.md`.
 
-**2026-10-01 — PASS on the criterion, and a defect it exposed, FIXED.** The task fired:
+**2026-10-01 â€” PASS on the criterion, and a defect it exposed, FIXED.** The task fired:
 row `started 2026-10-01T01:30:01Z`, `SKIPPED: a session transcript changed in the last 15 min
 (2639597a-....jsonl)`. That transcript is the worker of mission `m-20f1013db18c` (RUNNING), and
 7 missions were RUNNING, so "owner active" would have skipped every night a mission was in
@@ -121,10 +121,10 @@ fails closed. Gates V-EVAL-MISSION-WORKER-NOT-OWNER, -ENDED-MISSION-IS-OWNER (co
 future drills: the harness must also copy `tools/gsd_mission.py` + `tools/gsd_long_run.py`, or
 the control goes red. Next observable: tomorrow's row should not skip on a mission worker.
 
-## D5 — PP Self-Eval: 5 mutation drills never ran
+## D5 â€” PP Self-Eval: 5 mutation drills never ran
 
-**State:** S1 4/4 and S2–S4 7/12 killed, 0 survived. Not run: quota mid-night stop, quota
-ceiling, lock, owner-active skip, proposal gating (`drills_s2s4.json` entries 9–13; harness
+**State:** S1 4/4 and S2â€“S4 7/12 killed, 0 survived. Not run: quota mid-night stop, quota
+ceiling, lock, owner-active skip, proposal gating (`drills_s2s4.json` entries 9â€“13; harness
 `eval_drill.py` with a clean-copy control). Both lived in session scratchpad 5fb53f17; if it is
 gone, rebuild from the drill list in commit `0ba8565`'s message and this entry.
 
@@ -134,7 +134,7 @@ and asked that it not be restarted unprompted.
 **Activation criterion:** free RAM >= 6 GB. Run the 5 drills on isolated copies; each must
 print KILLED and the live files must hash unchanged. ~20 min.
 
-**2026-10-01 — 4 of 5 RUN on GEX44, all KILLED.** The handoff of 5fb53f17 listed 4 unrun
+**2026-10-01 â€” 4 of 5 RUN on GEX44, all KILLED.** The handoff of 5fb53f17 listed 4 unrun
 (`d5_b.json` + `d5_c.json`); `d5_a.json` (quota ceiling) is not re-verified here and its
 earlier result is not on record in this entry. Method: `git archive` of HEAD `8a7cfaa`
 (subject paths last changed `caeec1a`) for `modules/pp_eval`, `modules/owner_queue`,
@@ -147,7 +147,7 @@ V-EVAL-PROPOSAL-QUEUED-ONLY-WHEN-ACTIONABLE; exported tree hash unchanged. Lapto
 touched. Remaining: re-run V-EVAL-QUOTA-CEILING-SKIPS (`d5_a.json`) if its first result
 cannot be found.
 
-## D6 — PP Self-Eval: bank has 0 validated tasks (need >= 8)
+## D6 â€” PP Self-Eval: bank has 0 validated tasks (need >= 8)
 
 **State:** first real harvest reaped after 2 legitimate rejections (an environment-dependent
 mirror test; a 200-check suite red at its own fix). Nights harvest 5 per night on their own.
@@ -162,39 +162,39 @@ whose tests read their own tree to `~/.claude/state/pp-eval/config.json` `"repos
 (the only night skipped on a mission worker, fixed in D4). Not harvested on GEX44 instead: the
 bank validates tasks in the environment that ran them, and the nights run on Windows.
 
-## D7 — Capability gaps 2–6 (audit `vault/audits/se-capability-gaps-2026-09-30.md`)
+## D7 â€” Capability gaps 2â€“6 (audit `vault/audits/se-capability-gaps-2026-09-30.md`)
 
-**State:** gap 1 (self-eval) built. Open, in the audit's order: (2) post-edit diagnostics —
+**State:** gap 1 (self-eval) built. Open, in the audit's order: (2) post-edit diagnostics â€”
 `quality-gate.js` only reminds, nothing runs ruff/tsc on an edited file; (3) testing aimed at
-user code — hypothesis and coverage installed, unused; mutation machinery points at PP only;
-(4) SAST + dependency CVE scanning — semgrep, osv-scanner/pip-audit not installed; (5) symbol-
-level code intelligence — no language server installed; (6) CI for PP's own 600+ gates.
+user code â€” hypothesis and coverage installed, unused; mutation machinery points at PP only;
+(4) SAST + dependency CVE scanning â€” semgrep, osv-scanner/pip-audit not installed; (5) symbol-
+level code intelligence â€” no language server installed; (6) CI for PP's own 600+ gates.
 Cheap alongside: wire `refcheck` and `done_gate` (built, no caller).
 
 **Why deferred:** Owner chose gap 1 first; each is its own T2 spec.
 
 **Activation criterion:** Owner picks the next gap. Gap 2 is the cheapest (ruff is installed).
-Once D4–D6 give verdicts, re-rank using the self-eval's own data.
+Once D4â€“D6 give verdicts, re-rank using the self-eval's own data.
 
-**2026-10-01: gap 2 DONE** — `hooks/post_edit_diagnostics.js`, spec
+**2026-10-01: gap 2 DONE** â€” `hooks/post_edit_diagnostics.js`, spec
 `vault/specs/post-edit-diagnostics.md` (LIVE rows + evidence), 88e8c91 / cfa3275, registered
-and proven live. Open: gaps 3–6 (each its own T2 spec) and the cheap `refcheck` / `done_gate`
+and proven live. Open: gaps 3â€“6 (each its own T2 spec) and the cheap `refcheck` / `done_gate`
 wiring; still waiting for the Owner to pick.
 
-**2026-10-01: gap 3 v1 BUILT** (Owner: "3") — `tools/test_gaps.py` + `/test-gaps`, spec
+**2026-10-01: gap 3 v1 BUILT** (Owner: "3") â€” `tools/test_gaps.py` + `/test-gaps`, spec
 `vault/specs/test-gaps.md`, dc7f781. Uncovered changed lines + surviving mutants on covered
 changed lines, in an isolated copy; subprocess-driven tests measured. 14/14 gates; GEX44 drill
 6/6 KILLED. Not in v1: hypothesis, fuzzing, flaky tests, non-Python. `/test-gaps` copied live
 2026-10-01 (Owner "y"). Real project verified on GEX44 (75b0fd7).
 
-**2026-10-01: gap 4 v1 BUILT** (Owner: "gap 4") — `tools/security_scan.py` + `/security-scan`
+**2026-10-01: gap 4 v1 BUILT** (Owner: "gap 4") â€” `tools/security_scan.py` + `/security-scan`
 (live), spec `vault/specs/security-scan.md`. semgrep 1.178.0 (own venv `Apps\semgrep-venv`)
 on changed lines + osv-scanner v2.6.0 (official release, SHA-256 verified, `Apps\osv-scanner`)
 over lockfiles, `introduced` vs `existing`. UNCHECKED never reads as CLEAN. 12/12 gates (452 s,
 needs network). Not in v1: done-gate wiring (blocking Stop hook + network scan = the starvation
-shape), SBOM, licences. Open: gaps 5–6.
+shape), SBOM, licences. Open: gaps 5â€“6.
 
-## D8 — Mission continuity: merge the UKDL candidates
+## D8 â€” Mission continuity: merge the UKDL candidates
 
 **State:** `vault/knowledge_base/mission_continuity/UKDL_CANDIDATES_DURABLE_SUBSTRATE.md` not yet
 merged into `ukdl-universal.md`. On 2026-09-30 another pane held 884 uncommitted lines there.
@@ -207,7 +207,7 @@ merge by pathspec and check the hunk headers before committing.
 **2026-10-01 check:** still blocked. `ukdl-universal.md` now carries 1248 uncommitted lines
 (was 884) and was written 10:45, seven minutes before the check: a live writer.
 
-## D9 — Delete the `gsd-long-smoke` worktree and branch `gsd-autonomous-run`
+## D9 â€” Delete the `gsd-long-smoke` worktree and branch `gsd-autonomous-run`
 
 **State:** leftover from the M6 canary; obligation 3 of the 2026-09-30 rollover capsule.
 
@@ -217,7 +217,7 @@ was not taken as one).
 **Activation criterion:** Owner says delete. Then read both first (worktree status, unpushed
 commits on the branch) and delete only if nothing unique would be lost.
 
-**2026-10-01 — Owner said delete; NOT deleted, unique work found.** Repo
+**2026-10-01 â€” Owner said delete; NOT deleted, unique work found.** Repo
 `Desktop\Cursor Projects\gsd-long-smoke` (no remote), worktree
 `.claude\worktrees\gsd-autonomous-run`, branch head `806f202`. The branch carries **78 commits on
 no other ref** (`rev-list --count master..gsd-autonomous-run`; a first query with `--exclude`
@@ -234,7 +234,7 @@ head 806f202) + `worktree/` (190/190 files, uncommitted files hash-identical). T
 (deletes only at the expected head). Restore drill: cloning the bundle gives head 806f202, 91
 commits, 78 not on master. Restore with `git fetch <bundle> gsd-autonomous-run:gsd-autonomous-run`.
 
-## D10 — `test_hook_mirror_identity` red 3/5 (other panes' files)
+## D10 â€” `test_hook_mirror_identity` red 3/5 (other panes' files)
 
 **State:** new live/repo drift in `hook-dispatcher.js`, `zero-issue-gate.js`; stale
 KNOWN_DIVERGENCES entries `closer-guard.js`, `learning-sentinel.js`,
@@ -245,7 +245,7 @@ KNOWN_DIVERGENCES entries `closer-guard.js`, `learning-sentinel.js`,
 **Activation criterion:** when those panes commit, decide per file which side wins (the gate's
 own instruction), sync, and drop the stale entries so the ratchet turns.
 
-**2026-10-01 — now 4/5.** Stale entries dropped (the three files are identical on both sides).
+**2026-10-01 â€” now 4/5.** Stale entries dropped (the three files are identical on both sides).
 Decisions on the two drifts, neither applied:
 - `zero-issue-gate.js`: **repo wins.** Committed (6f897bf 09-28, 745cc3b 09-27) and a behavioural
   superset of live (live is the 09-16 build; its 42 "unique" lines are the pre-refactor shapes,
@@ -262,9 +262,9 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-# Added 2026-10-10 — GSD X Reconstruction Fabric deferred program
+# Added 2026-10-10 â€” GSD X Reconstruction Fabric deferred program
 
-## D11 — REA as Reconstruction Evidence Fabric / Static Oracle substrate
+## D11 â€” REA as Reconstruction Evidence Fabric / Static Oracle substrate
 
 **State:** architectural program defined in session; not yet implemented or benchmarked against the live Reconstruction Factory. REA is treated as a donor/provider layer, not as a new reconstruction owner.
 
@@ -280,7 +280,7 @@ Decisions on the two drifts, neither applied:
 - Introduce typed reconstruction unknowns such as TYPE, COMPILER_BEHAVIOR, SEMANTIC_ROLE, RUNTIME_EFFECT, HOMOLOGY, SOURCE_SHAPE, OWNERSHIP, INTERFACE and PROOF_AUTHORITY, with repo-derived extension rather than a permanently closed enum.
 - Wii/PPC admission gate: verify DOL/REL, Broadway PPC big-endian, section/load/BSS truth, entrypoint, relocations/import/module relations, functions, assembly, xrefs, callers/callees, pseudocode and reproducibility before trusting the substrate.
 - If the canary passes, create a Wii/Broadway PPC evidence-backed profile/overlay for DOL/REL, ABI/compiler/runtime facts. Do not encode folklore as fact; only evidence-backed RVL SDK/RFL/NW4R/EGG/CodeWarrior knowledge enters.
-- Build Cross-Binary Entity Alignment / Cross-Title Homology over Reconstruction IR for WSR ↔ Wii Sports and later titles/builds. Classify EXACT, RELOCATED, NEAR, STRUCTURAL, FAMILY and NOVEL across functions plus types/vtables/globals/TUs/strings/call neighborhoods.
+- Build Cross-Binary Entity Alignment / Cross-Title Homology over Reconstruction IR for WSR â†” Wii Sports and later titles/builds. Classify EXACT, RELOCATED, NEAR, STRUCTURAL, FAMILY and NOVEL across functions plus types/vtables/globals/TUs/strings/call neighborhoods.
 - Add Differential Evidence / Differential Dossiers so homologous entities materialize only the delta, retained/common facts and compatible source transformations rather than two full dossiers.
 - Adopt retained Evidence as the durable object and reconstruction-specific projections as the model-facing unit: triage, type, compiler, homology, runtime and proof projections. Full-read admission gate prefers facet/range/symbol/projection/query before whole evidence materialization.
 - Evolve REA-style Reconstruction Obligation Ledger into a live Proof Graph/runtime state: claims, owners, dependencies, proof requirements, evidence, unknowns, contradictions, dispositions and completion level. New evidence may close, weaken, invalidate or unlock obligations.
@@ -289,7 +289,7 @@ Decisions on the two drifts, neither applied:
 - Make Negative Evidence first-class and persist reconstruction search trees: non-compiling candidates, mismatch classes, falsified hypotheses, non-applicable families, discarded branches, distances, diagnoses and remaining frontier. Hard rule: do not retry an equivalent disproven branch under the same dependency state.
 - Every solved/matched entity checks for siblings/family opportunity. Family candidate path: detector -> template/candidate generation -> historical replay -> holdout/adversarial benchmark -> certification -> corpus scan -> exceptions only to reasoning.
 - Add Reconstruction Obligation Economics: expected cognition/context/compile/runtime/hardware cost, probability of success, unlock count, product relevance, reuse/institutional value and proof criticality. KEOS buys information by Expected Total Verified Cost + Information Gain + downstream unlock rather than task order.
-- Close static↔runtime loop with Active Runtime Questions and an Experiment Compiler. Static ambiguity should generate the cheapest discriminating experiment; GEX44/Dolphin returns structured evidence into the same graph.
+- Close staticâ†”runtime loop with Active Runtime Questions and an Experiment Compiler. Static ambiguity should generate the cheapest discriminating experiment; GEX44/Dolphin returns structured evidence into the same graph.
 - Add Dolphin Runtime Evidence Adapter and retain Real Wii as higher authority where required. Never infer Wii PASS from Dolphin PASS.
 - Make Behavioral Evidence first-class beside assembly: input traces, state transitions, racket/ball response, timing and observable effects. Build toward causal evidence rather than correlations only.
 - Add Semantic ABI Mining / Interface Archaeology: discover and prove boundaries by inputs, outputs, state, ownership, timing, side effects, failure semantics and calling/memory contracts. Proven boundaries may allow internals to remain opaque.
@@ -300,7 +300,7 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D12 — ADCR-Reconstruction → Procedural Intelligence / Self-Compiling Reconstruction Institution
+## D12 â€” ADCR-Reconstruction â†’ Procedural Intelligence / Self-Compiling Reconstruction Institution
 
 **State:** conceptual design captured; no claim that these layers are connected or production-proven today.
 
@@ -359,7 +359,7 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D13 — Universal Modder X as Intervention + Experimental Reality Plane
+## D13 â€” Universal Modder X as Intervention + Experimental Reality Plane
 
 **State:** Universal Modder audited as a useful donor corpus/runtime concept. Current repo remains external; no decision to install it globally or place `um` in the active WSR critical path.
 
@@ -399,9 +399,9 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D14 — Unified Reconstruction compounding program: sequencing and non-duplication guard
+## D14 â€” Unified Reconstruction compounding program: sequencing and non-duplication guard
 
-**State:** D11–D13 are intentionally deferred as one coherent program, not three independent mega-systems.
+**State:** D11â€“D13 are intentionally deferred as one coherent program, not three independent mega-systems.
 
 **Why deferred:** implementing all concepts simultaneously would violate the same economics they are intended to enforce.
 
@@ -422,9 +422,9 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-# Added 2026-10-10 — KME Recon, Visual Reconstruction, Time-to-Ready and Derived Development
+# Added 2026-10-10 â€” KME Recon, Visual Reconstruction, Time-to-Ready and Derived Development
 
-## D15 — KME Recon as Software Reality / Construction Reality Laboratory
+## D15 â€” KME Recon as Software Reality / Construction Reality Laboratory
 
 **State:** design expanded from the KME/KSR optimization corpus. KME is treated as the digital-heavy reference workload for Reasoning Locality, Proof Locality, Invalidation Locality, source-navigation economics and repeated software construction. No claim that the full model below exists in production.
 
@@ -509,7 +509,7 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D16 — Visual Reconstruction Fabric / Image-to-System Reconstruction
+## D16 â€” Visual Reconstruction Fabric / Image-to-System Reconstruction
 
 **State:** conceptual extension of typed VisualEvidence, Experience Genome and Reconstruction/Intervention loops. Not implemented as an authoritative visual spec generator.
 
@@ -569,7 +569,7 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D17 — Universal Time-to-Ready Compression / Readiness Compiler
+## D17 â€” Universal Time-to-Ready Compression / Readiness Compiler
 
 **State:** conceptual extension over Mission Compiler, Cognitive Economy, Readiness/Production Reality, hardware batching and cold-birth work. No separate Ready OS should be created.
 
@@ -656,7 +656,7 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D18 — Universal Derived Development Fabric: image-, dataset-, reconstruction-, idea- and expectation-driven development
+## D18 â€” Universal Derived Development Fabric: image-, dataset-, reconstruction-, idea- and expectation-driven development
 
 **State:** conceptual generative layer built on Feature IR, Reconstruction/Construction/Proof/Readiness and CBR/ADCR. No separate per-source runtime should be created.
 
@@ -808,13 +808,13 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D19 — Extreme Nuclear Endpoint: Generative Reconstruction Civilization / Feature Evolution Kernel
+## D19 â€” Extreme Nuclear Endpoint: Generative Reconstruction Civilization / Feature Evolution Kernel
 
-**State:** long-horizon constitutional direction combining D11–D18. This is not authorization to build a new monolithic subsystem.
+**State:** long-horizon constitutional direction combining D11â€“D18. This is not authorization to build a new monolithic subsystem.
 
 **Why deferred:** the endpoint only becomes economically real after lower layers have produced proven Feature Genomes, Procedure Families, typed evidence, quality vectors, readiness telemetry and transfer benchmarks. Building the "civilization" before those specimens exist would be premature abstraction.
 
-**Activation criterion:** D15–D18 have at least one successful canary each or equivalent evidence that the core abstractions are real. Then evaluate whether a thin universal Feature Evolution Kernel can replace repeated local implementations.
+**Activation criterion:** D15â€“D18 have at least one successful canary each or equivalent evidence that the core abstractions are real. Then evaluate whether a thin universal Feature Evolution Kernel can replace repeated local implementations.
 
 **Extreme target:**
 - Reconstruction, development and quality improvement become one continuous compounding loop rather than separate disciplines.
@@ -902,9 +902,9 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D20 — Sequencing guard for D15–D19
+## D20 â€” Sequencing guard for D15â€“D19
 
-**State:** D15–D19 extend the existing D11–D14 reconstruction program. They are not five independent permission slips for new mega-systems.
+**State:** D15â€“D19 extend the existing D11â€“D14 reconstruction program. They are not five independent permission slips for new mega-systems.
 
 **Why deferred:** building the endpoint before the measured primitives exist would create exactly the architectural/context/meta-work tax the programme is designed to eliminate.
 
@@ -927,7 +927,7 @@ Decisions on the two drifts, neither applied:
 
 ---
 
-## D21 — Wii Sports Tennis reconstruction with Wii Motion OS integrated (Owner, 2026-10-08) (was D11 on feature/knowledge-acquisition)
+## D21 â€” Wii Sports Tennis reconstruction with Wii Motion OS integrated (Owner, 2026-10-08) (was D11 on feature/knowledge-acquisition)
 
 **Goal:** reconstruct the Tennis of Wii Sports from `E:\wbfs\Wii Sports + Wii Sports Resort [SP2P01]\SP2P01.wbfs`
 (present, 1,549,795,328 bytes; the brackets in the folder name need `-LiteralPath` in PowerShell) into
@@ -982,9 +982,11 @@ Optional step 4: one level of argument propagation, then subtract the Resort-sha
 **Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
 per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
 
+**TRF reforecast (2026-10-12, W8/W9):** the measured budget is `vault/plans/d21-tennis-token-budget-2026-10-11.md` (Scope A P50 103-122M tokens, hard authority ~380M in 25-function tranches, confidence LOW; Scope B P50 1,739-1,949M, confidence VERY LOW; every figure tagged M/D/H/U). **Scope-B admission: NOT YET** (curve slope UNKNOWN, 90.7 % model-needed, 0 verified Tennis functions, compiler flags unknown). Scope definition above is unchanged. Admit when a Tennis A/A passes, >=20 verified functions carry measured tokens, a >=3-member family curve falls, and a >=20-insn discriminator confirms the compiler. Programme handoff: `vault/programs/tennis-rf/HANDOFF.md` (written W9, 2026-10-12).
+
 ---
 
-## D22 — cost-collapse / expected-completion admission: the rest of the mission (Owner, 2026-10-10) (was D12 on feature/knowledge-acquisition)
+## D22 â€” cost-collapse / expected-completion admission: the rest of the mission (Owner, 2026-10-10) (was D12 on feature/knowledge-acquisition)
 
 **Goal:** finish the expected-completion admission program (`vault/specs/expected-completion-admission.md`, APPROVED)
 and continue cost-collapse T2 reconciliation -> T3-T7 (`vault/specs/cost-collapse.md`). Work tree
@@ -1043,7 +1045,7 @@ it from the goal ledger, do not estimate.
 
 ---
 
-## D23 — EDD full-convergence mission: everything after P2-B-R (Owner, 2026-10-10) (was D12 on feature/knowledge-acquisition)
+## D23 â€” EDD full-convergence mission: everything after P2-B-R (Owner, 2026-10-10) (was D12 on feature/knowledge-acquisition)
 
 **Owner:** "put the rest of the mission in the backlog of claude power pack". Parked, not cancelled.
 
@@ -1058,7 +1060,7 @@ D-01..D-05 is `ROADMAP.md`. The execution log of record is `vault/specs/edd-comp
 - **Phase 2, P2-B-R (gold repair):**
   - Holdouts v2 sealed at `95a47e80`.
   - The independent re-audit found H01, H02 and H07 all correct, with 0 leaks.
-  - The judge returned FREEZE on cost only: the re-auditor's tokens were 38.4 % under forecast (5 calls against 7 forecast); the author was −17.6 %.
+  - The judge returned FREEZE on cost only: the re-auditor's tokens were 38.4 % under forecast (5 calls against 7 forecast); the author was âˆ’17.6 %.
 - **Built and live:**
   - The breaker meter attributes per session on GEX44.
   - Contamination scan: `edd_p2b.py scan`.
@@ -1067,15 +1069,15 @@ D-01..D-05 is `ROADMAP.md`. The execution log of record is `vault/specs/edd-comp
 
 **Remaining, in order:**
 1. **Estimator residual for P2-B-R-AUDIT.** Find which two steps the 5-call audit skipped, then correct the audit cost
-   model. The ±30 % rule requires this before the next unit is armed.
+   model. The Â±30 % rule requires this before the next unit is armed.
 2. **Phase 1 criterion 4.** Write D-01..D-05 as DRK DecisionRecords (`modules/decision_review/decision_record.py`).
 3. **P2-C, V-EDD-BENCH runner and BEFORE baseline:**
    - B0 is the deterministic pipeline (structural zero).
    - B1 is a model baseline, one isolated call per case.
    - Matches come from a blind scorer unit, and metrics are computed deterministically from them.
    - Packet, done-check and a frozen forecast are committed before arming. Arming goes only through `tools/edd_p2_chain.py`.
-4. **Close Phase 2** (ceiling 16M), then re-forecast Phases 3–7 against what is left of the ~65M envelope (D-05).
-5. **Phases 3–7 to Goal convergence.** Phase 3 includes the answer-leak transcript detector, which reuses `scan`. Close with the full handoff from the mission prompt.
+4. **Close Phase 2** (ceiling 16M), then re-forecast Phases 3â€“7 against what is left of the ~65M envelope (D-05).
+5. **Phases 3â€“7 to Goal convergence.** Phase 3 includes the answer-leak transcript detector, which reuses `scan`. Close with the full handoff from the mission prompt.
 
 **Open debt carried with it:**
 - No push alert when the sweep is FAILING.
@@ -1096,7 +1098,7 @@ D-01..D-05 is `ROADMAP.md`. The execution log of record is `vault/specs/edd-comp
 
 ---
 
-## D24 — dgl durable goal / disposable lease: W3-W8 (Owner, 2026-10-10) (was D13 on feature/knowledge-acquisition)
+## D24 â€” dgl durable goal / disposable lease: W3-W8 (Owner, 2026-10-10) (was D13 on feature/knowledge-acquisition)
 
 **Owner:** "put the rest of the mission in the backlog of claude power pack" (pane 42ce1ae6). Parked, not cancelled.
 (Was D13: two panes had both written a D12 the same day. Renumbered with the rest after merging main's D11-D20.)
@@ -1117,12 +1119,12 @@ worker, unprompted). Plan: `vault/plans/durable-goal-lease-2026-10-09.md` (d0c20
 `~/.claude/state/dgl-chain-tick.log`). Task `PP-DglChain-Tick` is **Disabled**. W3 packet + route are written and committed.
 
 **Remaining, in order** (rows in CHAIN.md):
-1. W3 — terminal reconciliation (TERMINAL_PROVEN vs UNKNOWN_RESERVED) + atomic succession `tools/goal_succession.py`.
-2. W4 — predictive drain, SessionEnd wake, autopsy against binding records, crash matrix.
-3. W5 — install to the live tree (DEPLOY class; never touch `tools/gsd_mission.py` / `tools/mission_steward.py` while
+1. W3 â€” terminal reconciliation (TERMINAL_PROVEN vs UNKNOWN_RESERVED) + atomic succession `tools/goal_succession.py`.
+2. W4 â€” predictive drain, SessionEnd wake, autopsy against binding records, crash matrix.
+3. W5 â€” install to the live tree (DEPLOY class; never touch `tools/gsd_mission.py` / `tools/mission_steward.py` while
    ce-lifecycle-v3 has them dirty); re-point the tick to the live `tools/goal_chain.py`.
-4. W6 — P3b self-host: lineage rf-p3b (L1, immutable) -> rf-p3b2 (L2); reconcile c2ae4b5c's hold by measured transcript.
-5. W7 — VERIFY-ONLY of P3b-2 + lineage. 6. W8 — fresh-project canary, UKDL/CBR, retire the manual succession instructions.
+4. W6 â€” P3b self-host: lineage rf-p3b (L1, immutable) -> rf-p3b2 (L2); reconcile c2ae4b5c's hold by measured transcript.
+5. W7 â€” VERIFY-ONLY of P3b-2 + lineage. 6. W8 â€” fresh-project canary, UKDL/CBR, retire the manual succession instructions.
 
 **Gaps found live, owned by W3-W5:** a held/parked mission reads as "running" to the chain for ever; packet missions
 without `done_check` stall on GSD NO_PHASES (bootstrap: `vault/programs/dgl/unit_done.py`, attached by the tick wrapper);
@@ -1134,7 +1136,7 @@ PP-DglChain-Tick`; the next tick arms W3. Read `vault/programs/dgl/RESUMPTION.md
 
 ---
 
-## D25 — goal budget admission (A1 containment): the rest of the mission (Owner, 2026-10-10) (was D14 on feature/knowledge-acquisition)
+## D25 â€” goal budget admission (A1 containment): the rest of the mission (Owner, 2026-10-10) (was D14 on feature/knowledge-acquisition)
 
 **Goal:** the pre-call goal reservation that A1 lacked (`vault/specs/goal-budget-admission.md`, status done).
 Evidence and every number below: `vault/programs/cognitive-economy/gen2/evidence/goal-admission/CANARY.md`.
@@ -1172,7 +1174,7 @@ Owner declares the next goal for A1 or AO. Read CANARY.md's closing verdict firs
 
 ---
 
-## D26 — GSD X Reconstruction Factory (gsdx-factory-2): the rest of the programme (Owner, 2026-10-10) (was D15 on feature/knowledge-acquisition)
+## D26 â€” GSD X Reconstruction Factory (gsdx-factory-2): the rest of the programme (Owner, 2026-10-10) (was D15 on feature/knowledge-acquisition)
 
 **Goal:** finish the Master Plan v1 (`vault/plans/gsdx-factory-master-plan.md` in the work tree, Owner "y" 2026-10-09:
 Part A + recon-factory through Phase 9, Full WSR excluded, envelope 40M / hard 55M inside the 100M ledger cap). Work
@@ -1184,7 +1186,7 @@ because dgl took over what it left (0b05acb7); PLAN-2; AG2R (Part A rows 11/11, 
 (610808c5, forecast.json 239120ec); PLAN-3 (6cf33a0a). Deterministic chain tick `tools/gsdx_chain.py`, CHAIN_PASS=13/13,
 scheduled task PP-GsdxChain-Tick (every 15 min). Spent 8,817,916 measured, open 0 (goal-status 2026-10-10).
 
-**Parked (unarmed, `chain.json` → `parked`):** AGMIN → AGCAN → AGECON → AGDONE → PLAN-4 (Part A G2..G5 + next planner).
+**Parked (unarmed, `chain.json` â†’ `parked`):** AGMIN â†’ AGCAN â†’ AGECON â†’ AGDONE â†’ PLAN-4 (Part A G2..G5 + next planner).
 Each also waits on `C:\Users\User\Apps\pp-dgl\vault\programs\dgl\W5-receipt.md` and ce-lifecycle-v3 WU-INST2.
 
 **Not in the chain yet:** W5 GEX44 control-plane port (DEPLOY class: read the hard rules first; also resolves
@@ -1208,7 +1210,7 @@ Before W5, run `hardrule_compile.py --class DEPLOY`.
 
 ---
 
-## D27 — REA Wii/PPC Enablement Program: REA as Evidence Plane under the Recon Factory (Owner, 2026-10-11)
+## D27 â€” REA Wii/PPC Enablement Program: REA as Evidence Plane under the Recon Factory (Owner, 2026-10-11)
 
 **Origin:** TRF W4 (`vault/programs/tennis-rf/REA-DISPOSITION.md`) returned REJECT for native PPC on rea-agents 6.3.0
 (`rea --help` hangs > 45 s importing `dist/cli.js` on Win11/Node 24.15; no DOL / ELF32-PPC lane in `dist/`). Owner

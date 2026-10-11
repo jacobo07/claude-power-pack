@@ -53,3 +53,6 @@ Escala de `/what-now`: prioridad 0-3 (0 = P0), esfuerzo S/M/L/XL, impacto Critic
 2. `python tools/mission_spend.py goal-status --goal cp50-c2` y `gsd_mission.py status` de `m-e6ea9c26d377`.
 3. Fila 1, luego fila 2, luego fila 3 como lease nueva (dossier + paquete + ruta + admit), nunca en el panel
    coordinador.
+
+## C2b causa raiz (TRF W1/W9, 2026-10-12)
+Un solo job leido como 50 fallos: no existia CURRENT_CAPSULE (el judge falla cerrado, STALE_INPUT) y las 50 fuentes eran m2c crudo (tipos `?`, CXX compilado con `-lang c`); candidate.py copiaba el veredicto a cada unidad como miss_class "environment". Arreglo: guard CAPSULE_NOT_CURRENT + lint + certificado de readiness en stage.send (29/29, SEND_CERT_DRILL 10/10). Detalle: vault/programs/tennis-rf/ROOT-CAUSE-C2B.md.
