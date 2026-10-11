@@ -1,0 +1,1 @@
+{"envelope":{"target":1500000,"warn":1600000,"stop":1750000,"calls":8},"workers":[{"name":"recon-C2b-retry","profile":"top-level-worker","calls":7,"packet":7500}]}
