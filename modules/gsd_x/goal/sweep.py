@@ -306,9 +306,9 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
         """Observe every running epoch of `at`, then decide on it: the same step the first
         decision takes, repeated on a fresh projection for each further frontier dispatch."""
         seen = {}
-        for run in ep.project_epochs(at).values():
-            if run.state == "running" and run.provider in provs and run.handle:
-                seen[run.epoch_id] = provs[run.provider].observe(run.handle)
+        for e in ep.project_epochs(at).values():
+            if e.state == "running" and e.provider in provs and e.handle:
+                seen[e.epoch_id] = provs[e.provider].observe(e.handle)
         ctx = rc.Context(state=at, tree_hash=tree, scope_hash=scope_hash,
                          observations=seen, now=time.time(),
                          budget=at.budget, providers=tuple(providers),
