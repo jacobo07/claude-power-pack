@@ -16,14 +16,21 @@ Canonical plan: `vault/plans/ccr-v2-enforcement-2026-10-11.md` + addendum `ccr-v
   advisory hook ctx +1,328 · engine rows +1,022 · ~3K tok = deferral cost (host has no tool removal). System
   prompt is only ~4.3K chars on Opus lean; compose-time tool narrowing measured useless and withdrawn.
 
-**Active decisions.** First-call work is near its floor; the money is intra-epoch carry (~69 % of a Madzia epoch:
-tool results, repeated hook context). Do not polish deferred_tools_delta (~800 tok, cache-read priced) before carry.
+**Carry, measured (2026-10-12, `evidence/carry_decompose.py` on worker d6343597, 26 calls, 1,192,066 tok).**
+Model-facing carry: Read **images 55 %** (13 images; ~3K tok each makes the total reconcile with 1.19M, inferred) ·
+assistant tool_use 18 % · Read text 8 % · hook_additional_context 6 % · PowerShell 5 %. `prompt_snapshot`,
+`hook_success`, `hook_cancelled` rows are transcript-only (absent from the CCR attachment receipt) — exclude them.
+`session.append` contract (d.ts L4366, L10564-10701): a rewrite of `content` is what is stored AND sent; the
+structured tool record stays raw in the transcript (Law 15 holds by host); `hook-context` is a door.
+
+**Active decisions.** v2 §4.1 (text tool-result projection) addresses ≤14 % of carry → demoted. The lever is
+image carry: an image is re-read by every later call. Do not polish deferred_tools_delta (~800 tok) first.
 
 **Next 3 actions.**
-1. P5 probe: does `session.append` rewrite a tool-result row before it is stored AND sent (incl. images)? Read the
-   d.ts contract, then one bounded headless probe.
-2. If P5 holds: ingestion projection for large tool results (raw to a sha page store, projection + handle in the
-   row), unit sessions first, with a page-fault path and a multi-call benchmark (8–15 calls) before/after.
-3. Madzia R4 only at a driver boundary (worker pid 17144 was live at 22:19); KSR files only when clean.
+1. Intra-epoch governor, measurement leg (mod only, observe): per-row receipt at `session.append` (door, bytes,
+   image count) + per-call usage → carry curve live, no transcript parsing.
+2. Image-carry policy, decide by EVC: rotate the epoch after an image verdict is written (driver cadence fed by a
+   CCR `rotate` advice file) vs inspect images in a subagent that returns words. Quality = Madzia reviewer parity.
+3. Madzia R4 only at a driver boundary; KSR `boundary.py`/`ctx_ablation.py` only when clean and the driver stopped.
 
 **Start.** `python tools/mission_spend.py goal-status --goal ccr`, `python tools/ccr_release.py status`, then action 1.
