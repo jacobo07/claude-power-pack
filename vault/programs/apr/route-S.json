@@ -1,0 +1,17 @@
+{
+    "unit":  "apr-S",
+    "envelope":  {
+                     "target":  1600000,
+                     "warn":  1839999,
+                     "stop":  2160000,
+                     "calls":  12
+                 },
+    "workers":  [
+                    {
+                        "name":  "apr-unit",
+                        "profile":  "slim-t2",
+                        "calls":  12,
+                        "packet":  6000
+                    }
+                ]
+}

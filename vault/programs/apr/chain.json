@@ -1,0 +1,51 @@
+{
+    "goal": "apr",
+    "root": "C:\\Users\\User\\Apps\\wt_apr",
+    "envelope": 20000000,
+    "max_residuals": 2,
+    "route_ladder": [
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-S.json",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-M.json",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-L.json"
+    ],
+    "units": [
+        {
+            "id": "APR2",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR2.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR2-receipt.md",
+            "after": null
+        },
+        {
+            "id": "APR3",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR3.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-L.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR3-receipt.md",
+            "after": "APR2"
+        },
+        {
+            "id": "APR4",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR4.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR4-receipt.md",
+            "after": "APR3"
+        },
+        {
+            "id": "APR5",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR5.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR5-receipt.md",
+            "after": "APR4"
+        },
+        {
+            "id": "APR6",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR6.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR6-receipt.md",
+            "after": "APR5",
+            "wait": [
+                "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr-canary\\WU-C3-receipt.md"
+            ]
+        }
+    ]
+}
