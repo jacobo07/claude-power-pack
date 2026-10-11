@@ -106,13 +106,37 @@ def main() -> int:
              tr("t5", "z" * 40),                                             # duplicated line
              tr("t9", "s" * 999, side=True),                                  # subagent sidechain
              json.dumps({"type": "assistant", "message": {"id": "m9", "content": [
-                 {"type": "text", "text": "t" * 7}, {"type": "thinking", "thinking": "k" * 3}]}})]
+                 {"type": "text", "text": "t" * 7}, {"type": "thinking", "thinking": "k" * 3}]}}),
+             json.dumps({"type": "attachment", "uuid": "h1", "attachment": {
+                 "type": "hook_additional_context", "content": ["a" * 20, "b" * 5]}}),
+             json.dumps({"type": "attachment", "uuid": "h1", "attachment": {      # duplicated line
+                 "type": "hook_additional_context", "content": ["a" * 20, "b" * 5]}}),
+             json.dumps({"type": "attachment", "uuid": "h2", "attachment": {
+                 "type": "hook_system_message", "content": "s" * 4}}),
+             json.dumps({"type": "attachment", "uuid": "h3", "attachment": {      # not injected context
+                 "type": "hook_success", "content": "q" * 50}})]
         fp3 = Path(td) / "g.jsonl"
         fp3.write_text("\n".join(G) + "\n", encoding="utf-8")
         g = sa.growth_sources(fp3)
         check("V-AUTOPSY-GROWTH-KINDS",
-              g["by_kind"] == {"tool_result": 347, "user_text": 10, "assistant_text": 7, "thinking": 3},
+              g["by_kind"] == {"tool_result": 347, "user_text": 10, "assistant_text": 7, "thinking": 3, "injected": 29},
               f"{g['by_kind']}")
+
+        # subagents of a session: counted per agentType from the sibling .meta.json (UNTYPED when absent)
+        sd = Path(td) / "s" / "subagents"
+        sd.mkdir(parents=True)
+        (sd / "agent-q.jsonl").write_text("\n".join(
+            call(1, "2026-09-27T10:00:00Z", 50_000, 0, 10) + call(2, "2026-09-27T10:01:00Z", 10_000, 50_000, 10)) + "\n",
+            encoding="utf-8")
+        (sd / "agent-q.meta.json").write_text(json.dumps({"agentType": "Explore"}), encoding="utf-8")
+        (sd / "agent-r.jsonl").write_text("\n".join(call(1, "2026-09-27T10:00:00Z", 7_000, 0, 10)) + "\n", encoding="utf-8")
+        sb = sa.subagents(fp)
+        check("V-AUTOPSY-SUBAGENTS-BY-TYPE",
+              sb.get("Explore", {}).get("calls") == 2 and sb["Explore"]["resident_total"] == 110_000
+              and sb["Explore"]["floor_total"] == 100_000 and sb["Explore"]["growth_above_floor"] == 10_000
+              and sb.get("UNTYPED", {}).get("calls") == 1 and sa.subagents(fp3) == {},
+              f"{sb}")
+        check("V-AUTOPSY-FLOOR-TOTAL", r["floor_total_tokens"] == 400_000, f"floor_total={r['floor_total_tokens']:,}")
         check("V-AUTOPSY-GROWTH-BY-TOOL",
               g["by_tool"] == {"Read": 305, "PowerShell": 40, "Edit": 2}, f"{g['by_tool']}")
         rd = g["read"]

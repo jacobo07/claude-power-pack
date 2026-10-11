@@ -122,7 +122,7 @@ def autopsy(path: Path, prices: Optional[dict] = None, ttl_s: int = DEFAULT_TTL_
         "synthetic_skipped": synthetic, "bad_lines": bad,
         "span": [times[0].isoformat() if times and times[0] else None,
                  times[-1].isoformat() if times and times[-1] else None],
-        "floor_tokens": floor,
+        "floor_tokens": floor, "floor_total_tokens": floor * n,
         "resident_total": sum(resident), "resident_max": max(resident, default=0),
         "resident_mean": (sum(resident) / n) if n else None,
         "growth_above_floor_tokens": growth,
@@ -143,6 +143,28 @@ def autopsy(path: Path, prices: Optional[dict] = None, ttl_s: int = DEFAULT_TTL_
 
 
 _EDITS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
+_INJECTED = ("hook_additional_context", "hook_system_message")
+
+
+def subagents(path: Path) -> dict:
+    """Subagent transcripts of a session (`<sid>/subagents/agent-*.jsonl`) by agentType from the sibling
+    `.meta.json` (UNTYPED when absent): agents, calls, re-read volume, floor and growth above floor."""
+    d = Path(path).parent / Path(path).stem / "subagents"
+    out: dict[str, dict] = {}
+    for p in sorted(d.glob("agent-*.jsonl")) if d.is_dir() else []:
+        typ = "UNTYPED"
+        try:
+            typ = str(json.loads(p.with_suffix(".meta.json").read_text(encoding="utf-8-sig")).get("agentType") or typ)
+        except (OSError, ValueError, AttributeError):
+            pass
+        a = autopsy(p, prices={})
+        t = out.setdefault(typ, {"agents": 0, "calls": 0, "resident_total": 0, "floor_total": 0, "growth_above_floor": 0})
+        t["agents"] += 1
+        t["calls"] += a["calls"]
+        t["resident_total"] += a["resident_total"]
+        t["floor_total"] += a["floor_tokens"] * a["calls"]
+        t["growth_above_floor"] += a["growth_above_floor_tokens"]
+    return out
 
 
 def _result_chars(content) -> int:
@@ -161,7 +183,7 @@ def growth_sources(path: Path) -> dict:
     A Read counts as an unchanged re-read only for the same path AND page (offset/limit) with no
     Edit/Write of that path in between; a re-read after an edit is counted apart, it is legitimate.
     """
-    kinds = {"tool_result": 0, "user_text": 0, "assistant_text": 0, "thinking": 0}
+    kinds = {"tool_result": 0, "user_text": 0, "assistant_text": 0, "thinking": 0, "injected": 0}
     by_tool: dict[str, int] = {}
     uses: dict[str, tuple] = {}
     seen_blocks: set = set()
@@ -175,6 +197,17 @@ def growth_sources(path: Path) -> dict:
             except ValueError:
                 continue
             if not isinstance(row, dict) or row.get("isSidechain"):
+                continue
+            if row.get("type") == "attachment":      # hook additionalContext / systemMessage: injected, not typed
+                att = row.get("attachment") if isinstance(row.get("attachment"), dict) else {}
+                if att.get("type") in _INJECTED:
+                    body = att.get("content")
+                    body = "".join(x for x in body if isinstance(x, str)) if isinstance(body, list) else (
+                        body if isinstance(body, str) else "")
+                    key = ("i", row.get("uuid") or body)
+                    if body and key not in seen_blocks:
+                        seen_blocks.add(key)
+                        kinds["injected"] += len(body)
                 continue
             msg = row.get("message") if isinstance(row.get("message"), dict) else {}
             content = msg.get("content")
@@ -269,6 +302,7 @@ def main(argv=None) -> int:
     path = _resolve(a.session)
     r = autopsy(path, ttl_s=a.ttl)
     r["growth_sources"] = growth_sources(path)
+    r["subagents"] = subagents(path)
     if a.json:
         print(json.dumps(r, indent=2, default=str))
     else:
