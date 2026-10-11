@@ -7,16 +7,16 @@ disposition. Phase = the roadmap phase expected to close it.
 
 | id | concept (dataset §) | owner found (Reality) | disposition | phase | status | evidence |
 |---|---|---|---|---|---|---|
-| D01 | FRESH/INHERITED/SUPERSEDED/UNKNOWN->full (intro) | none | EXTEND convergence projection | 2,4 | OPEN | |
+| D01 | FRESH/INHERITED/SUPERSEDED/UNKNOWN->full (intro) | none | EXTEND convergence projection | 2,4 | OPEN | Phase 2 part landed (V-PCC-STATE-TRUTH-TABLE 2916 cells, V-PCC-FINGERPRINT-*, drills d01-*; 02-EVIDENCE.md); closed by Phase 4 |
 | D02 | TTPD first-class (§1) | none | BUILD projection over GoalLog | 9 | OPEN | |
-| D03 | Five laws executable (§2) | UCR-CIF doc only | CONNECT as invariants + V-gates + baseline entries | 2,10 | OPEN | |
+| D03 | Five laws executable (§2) | UCR-CIF doc only | CONNECT as invariants + V-gates + baseline entries | 2,10 | OPEN | Phase 2 part landed (V-PCC-LAW-*, drill d03-ledger-blind; 02-EVIDENCE.md); closed by Phase 10, R09 |
 | D04 | Four frontiers (§3) | reconcile scalar | EXTEND compile_frontier | 3 | OPEN | |
 | D05 | Convergence graph (§4) | none | BUILD minimal edges in frontier | 3 | OPEN | |
 | D06 | No global WAIT (§5) | reconcile.py:148 | EXTEND | 3 | OPEN | |
 | D07 | Execution unit properties (§6) | epoch spec | EXTEND (derived, not model-filled) | 3 | OPEN | |
 | D08 | Critical-path scheduler (§7) | none | BUILD, measured priors, UNKNOWN allowed | 3 | OPEN | |
 | D09 | Wall-clock vs compute postures (§8) | goal budget | EXTEND budget owner | 3 | OPEN | |
-| D10 | Typed proof contract (§9) | done_gate + gate_class | EXTEND, legacy = 1-element contract | 2,4 | OPEN | |
+| D10 | Typed proof contract (§9) | done_gate + gate_class | EXTEND, legacy = 1-element contract | 2,4 | OPEN | Phase 2 part landed (V-PCC-GATE-CLASSES-PINNED, V-PCC-CONTRACT-WEAKENING-IGNORED, V-PCC-FRESHNESS-SCAN-ESCALATES-ONLY, drills d10-*; 02-EVIDENCE.md); closed by Phase 4 |
 | D11 | Proof algebra AND/OR/SEQ/QUORUM (§10) | none | BUILD minimal | 4 | OPEN | |
 | D12 | Causal proof binding (§11) | tree_id whole-repo (Reality 4) | EXTEND, unknown -> legacy binding | 4 | OPEN | |
 | D13 | Proof certificate (§12) | evidence_bundle (no certificate) | EXTEND producer | 4 | OPEN | |
@@ -49,8 +49,8 @@ disposition. Phase = the roadmap phase expected to close it.
 | D40 | Phase-6 recompilation replay (§39) | io-ucg history (Reality 15) | REPLAY | 9 | OPEN | |
 | D41 | Elixir pilot (§40) | none | BUILD adapter in SHADOW on io-chatgpt-plugin copy | 7 | OPEN | |
 | D42 | Owner map (§41) | spec | per rows | -- | OPEN | |
-| D43 | Backward compat decide()/done_gate (§42) | reconcile/convergence | EXTEND + legacy replay test | 2 | OPEN | instrument 98609c4f/15e8e2f1 (golden pre-seam, RED 21/23); closes at 02-03 green |
-| D44 | Event log, not second DB (§43) | GoalLog | invariant test | 2 | DONE | a353fb7b: V-PCC-NO-SECOND-STORE (seeded control 3 findings, proof.py 0), V-PCC-PROJECTION-PURE (static + on-disk file set unchanged, writer control changes it), V-PCC-ADDITIVE-ONLY legacy=22 new=4; GSDX_PCC_SEMANTICS_PASS=48/48 |
+| D43 | Backward compat decide()/done_gate (§42) | reconcile/convergence | EXTEND + legacy replay test | 2 | DONE | 02-EVIDENCE.md; replay suite GSDX_PCC_REPLAY_PASS=28/28; golden 98609c4f before proof.py 735170c0; V-PCC-NO-LEGACY-EDIT |
+| D44 | Event log, not second DB (§43) | GoalLog | invariant test | 2 | DONE | a353fb7b; 02-EVIDENCE.md; V-PCC-NO-SECOND-STORE, V-PCC-PROJECTION-PURE, V-PCC-WRITER-CAS, drill d44-cache-write |
 | D45 | Explicit INHERITED events (§44) | none | BUILD event | 4 | OPEN | |
 | D46 | Work classes (§45) | none | BUILD ledger + evidence-gated promotion | 9 | OPEN | |
 | D47 | GSD X root function wording (§46) | spec | EXTEND module docs + baseline | 10 | OPEN | |

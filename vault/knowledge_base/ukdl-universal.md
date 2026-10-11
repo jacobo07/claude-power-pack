@@ -15324,3 +15324,21 @@ continue. A turn never ends on a question when nobody is reading. The mechanical
 skill's routing, is an Owner step, because missions do not edit `~/.claude`. Evidence:
 `.planning/workstreams/gsdx-pcc/phases/01-w0-reality-baseline-and-incumbent-measurement/01-EVIDENCE.md`
 (Incident section). #CROSS-PROJECT
+
+## GSD X proof-conserving convergence, W1 (2026-10-07)
+
+Source: `vault/specs/gsdx-proof-conserving-convergence.md` S14, DENOMINATOR row R12, and the phase evidence in
+`.planning/workstreams/gsdx-pcc/phases/02-w1-convergence-semantics-ultra-plan-the-only-one/`.
+Status: observed on the Windows host at `735170c0`; fix scheduled red-first in Phase 4 (R12).
+
+### Traps
+
+### T-FAILURE-SENTINEL-COMPARES-EQUAL-TO-ITSELF-001
+
+`git_state.tree_id` returns the constant `unknown:not-a-git-tree` on any git failure while its docstring
+promises it cannot match another unknown. Closure and the reconciler compare tree strings, so evidence taken
+during one git outage satisfies closure during another (lens CLASE 2: a premise about state the code did not
+enforce). Found by reading 02-RESEARCH G2; asserted as a deliberate divergence by `V-PCC-STATE-UNKNOWN-TREE`;
+the fix lands red-first in Phase 4 (R12).
+PR: a failure sentinel must be incomparable -- never equal to itself; compare through a function that returns
+UNKNOWN, never through string equality. #CROSS-PROJECT
