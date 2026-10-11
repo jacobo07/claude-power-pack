@@ -18,11 +18,16 @@ Plan: `vault/plans/ccr-mods-backend-2026-10-11.md` (read "M1 results" and "S1 re
 **Active decisions.** Release root `~/.claude/ccr` (`active/`, `active.prev/`, `state/OFF`, folder marketplace
 `cpp-local`). Subagent tier enforces; main tier shadows until a quality canary proves main linking.
 
+- INSTALLED GLOBALLY 2026-10-11 at the Owner's request ("install the plugin globally for me"): release
+  `0.1.0-feaae8b0` active at `~/.claude/ccr/active`, marketplace `cpp-local`, `cpp-cognitive-runtime@cpp-local`
+  user scope, enabled. Backups: `~/.claude/backups/ccr-install-<ts>/`. Verified in a fresh headless session with
+  no `--plugin-dir` (e8f30359): receipts in `~/.claude/ccr/state/receipts/`, subagent instructions 53,103 -> 4,455,
+  answer correct. The 33 sessions open at install keep stock behaviour until they restart.
+
 **Next 3 actions.**
-1. OWNER: `python tools/ccr_release.py release`, then the two commands from `python tools/ccr_release.py install-commands`.
-   New sessions load it; open sessions keep stock behaviour until restart.
-2. After install: in a NEW session, confirm the status line `CCR 0.1.0 sub:enforce main:shadow` and receipts under
-   `~/.claude/ccr/state/receipts/`. Rollback: `python tools/ccr_release.py off` (instant) or `rollback` / `claude plugin disable`.
+1. Rollback if needed: `python tools/ccr_release.py off` (next session start), `rollback`, or
+   `claude plugin disable cpp-cognitive-runtime@cpp-local`.
+2. Watch receipts across real sessions for page faults or quality complaints in subagents.
 3. Then: main-session linking canary (skills/agents listing via the `page` tool), interactive compaction probe,
    R4 Madzia canary under KSR's own goal, then UKDL/CBR after proof.
 
