@@ -23,7 +23,10 @@ context wall", and on this estate that means a fresh session: the relay IS the a
 - The worker's native `--autocompact 600k` stays on as a safety net only.
 - **A pane opened before a change to this file may still hold the old text.** If a run in an
   older window wrote a `gsd-autorun-<sid>.json` marker and no `gsd-mission-*.json` record, it
-  was armed the retired way: arm it again from a fresh window.
+  was armed the retired way: that run is not supervised. Do not hand-arm a replacement; a packet
+  programme chains through `vault/programs/chains.json` (a `chain.json` under `vault/programs/<x>/`
+  is picked up by the registry tick by default, no prompt opt-in), and a stopped unit is re-armed by
+  the chain's bounded residual re-arm.
 
 Specs: `vault/specs/mission-continuity.md` (v3, the only live path). Historical:
 `vault/specs/gsd-autonomous-autocompact.md` (v1), `vault/specs/gsd-long-run-v2.md` (v2).

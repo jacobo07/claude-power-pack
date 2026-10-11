@@ -39,7 +39,7 @@ U10 KV / UKDL / CBR ratchet + retirements; global defaults with no opt-in.
 U11 recompile Clock A + intent/order residual bottom-up; final plan + budget; STOP (boundary 2).
 
 ## Token budget (processed tokens; monetary after U1)
-Engine lower 55M · P50 85M · P80 110M · P95 140M · hard stop 160M. Coordinator share cap 20 %. Confidence EXPLORATORY.
+SUPERSEDED: the 160M hard stop was prose no code enforced; the enforced ceiling is 65M (evc-self-deflation-MASTER-PLAN-2026-10-10.md, P50 41M).
 Includes: backtest 4-8M, canary 4-8M, proof reserve 10M, migration reserve 8M, final recompilation 4-8M.
 Not authorized: any product execution of Clock A or intent/order beyond containment.
 Supersedes the D12 cost-collapse goal cap (69.8M declared, 8.0M left): approval = the pending D-C cap decision.

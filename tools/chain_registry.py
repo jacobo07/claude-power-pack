@@ -20,10 +20,28 @@ import gsdx_chain as gc  # noqa: E402
 DEFAULT_REGISTRY = Path(__file__).resolve().parents[1] / "vault" / "programs" / "chains.json"
 
 
-def tick_all(registry_path: Path, dry_run: bool = False, **kw) -> list[dict]:
+def discover(registry_path: Path, listed: list) -> list[dict]:
+    """Default-on: a programmes/<x>/chain.json the registry does not list is ticked with no opt-in step.
+    Opt OUT only by a registry entry (enabled=false) or `"enabled": false` / `"parked": true` in the chain file."""
+    known = {str(Path(e["chain"]).resolve()).lower() for e in listed if e.get("chain")}
+    found = []
+    for p in sorted(registry_path.parent.glob("*/chain.json")):
+        if str(p.resolve()).lower() in known:
+            continue
+        try:
+            c = json.loads(p.read_text(encoding="utf-8-sig"))
+        except Exception:  # noqa: BLE001 -- unreadable chain file: tick reports it as an error row
+            c = {}
+        off = c.get("enabled") is False or c.get("parked") is True
+        found.append({"name": p.parent.name, "chain": str(p), "enabled": not off, "discovered": True})
+    return found
+
+
+def tick_all(registry_path: Path, dry_run: bool = False, discover_default: bool = True, **kw) -> list[dict]:
     reg = json.loads(registry_path.read_text(encoding="utf-8-sig"))
     rows = []
-    for e in reg["chains"]:
+    entries = list(reg["chains"]) + (discover(registry_path, reg["chains"]) if discover_default else [])
+    for e in entries:
         name = e.get("name", e.get("chain"))
         if e.get("enabled") is False:
             rows.append({"name": name, "action": "parked", "why": "registry enabled=false"})

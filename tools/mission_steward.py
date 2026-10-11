@@ -208,7 +208,7 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         dirty = _git_dirty(tree)
         add = ("\n\n## Residual\n"
                f"Written by the steward for stopped mission {mid}. The programme chain may arm it (bounded "
-               "residual re-arm); otherwise the Owner/coordinator does.\n"
+               "residual re-arm) with no manual step; do not re-arm it by hand.\n"
                "Continue from the work below; do not redo steps it already covers. Commit early.\n"
                f"- Partial receipt: {partial}\n"
                f"- RESUMPTION_FILE: {rf_line}\n"

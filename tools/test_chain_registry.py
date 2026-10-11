@@ -48,7 +48,7 @@ def reg(entries):
 
 armed = []
 arm = lambda chain, u: armed.append((chain["goal"], u["id"])) or {"ok": True, "mission_id": "m-new"}  # noqa: E731
-kw = dict(state=lambda: ([], 0), armer=arm)
+kw = dict(state=lambda: ([], 0), armer=arm, discover_default=False)
 
 # two-unit chain relays with zero model: A armed, A done -> B armed, via the registry
 d, p = setup("relay")
@@ -118,10 +118,23 @@ rows = cr.tick_all(reg([{"name": "k", "chain": str(p1)}]), **kw)
 os.environ.pop("CPP_GSDX_CHAIN")
 check("V-REG-KILL-SWITCH", rows[0]["action"] == "off" and not armed, rows[0]["action"])
 
-# the shipped registry parses and the live autonomy entry is the only enabled one
+# the shipped registry parses and the live entries are the only enabled ones
 shipped = json.loads((Path(__file__).resolve().parents[1] / "vault" / "programs" / "chains.json").read_text(encoding="utf-8"))
 en = [e["name"] for e in shipped["chains"] if e.get("enabled", True)]
-check("V-REG-SHIPPED-REGISTRY", en == ["autonomy-convergence"], str(en))
+check("V-REG-SHIPPED-REGISTRY", en == ["autonomy-convergence", "xdomain-canary"], str(en))
+
+# default-on: an unlisted programmes/<x>/chain.json is ticked with no registry entry; only an explicit off parks it
+dd = TMP / "disc"
+(dd / "p_on").mkdir(parents=True); (dd / "p_off").mkdir(); (dd / "p_park").mkdir()
+for n, extra in (("p_on", {}), ("p_off", {"enabled": False}), ("p_park", {"parked": True})):
+    (dd / n / "chain.json").write_text(json.dumps({"goal": n, **extra}), encoding="utf-8")
+(dd / "chains.json").write_text(json.dumps({"chains": []}), encoding="utf-8")
+found = {e["name"]: e["enabled"] for e in cr.discover(dd / "chains.json", [])}
+if MUTANT == "no-default-on":
+    found = {}
+check("V-REG-DEFAULT-ON", found == {"p_on": True, "p_off": False, "p_park": False}, str(found))
+listed = [{"name": "x", "chain": str(dd / "p_on" / "chain.json"), "enabled": False}]
+check("V-REG-DEFAULT-ON-NO-DUP", "p_on" not in {e["name"] for e in cr.discover(dd / "chains.json", listed)}, "listed entry wins")
 
 print(f"REG_PASS={passes}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)

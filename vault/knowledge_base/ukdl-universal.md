@@ -15450,3 +15450,44 @@ one case no auditor has seen, so the repair cannot only confirm itself. An edit 
 seal check, not by discipline. Origin: EDD P2-B (2026-10-09), H01/H02 judged `minor` with incomplete keys; Owner
 decision D-03 "repair, never carry known-incomplete gold forward". Mechanism: `edd_p2b.py reseal` (LINEAGE.json),
 `sealed()` refuses a sums file the lineage does not describe. Related: the evaluation-corpus-governance skill.
+
+## PR-PLUMBING-IS-NOT-AN-INTELLIGENCE-PROBLEM-001 -- supervision, status, accounting, chaining and known integration are compiled, not reasoned
+
+Anything whose correct answer is already known (is the worker alive, what is the state, what was spent, which unit
+is next, how two known tools connect) is code on a timer with a test, not a model turn. A model on that path costs
+tokens per repetition and fails differently each time. Test: if a table of inputs to outputs can be written, write it.
+Evidence: autonomy-convergence S8, registry tick armed and sealed a two-unit programme with zero model calls on the
+control path. Mechanism: `tools/chain_registry.py`, `tools/gsdx_chain.py`.
+
+## PR-STATUS-COST-MUST-NOT-SCALE-WITH-HISTORY-001 -- a status read is O(1) in the age of the programme
+
+A status or progress read that re-reads the whole ledger gets dearer every day and is eventually the largest line item.
+Status reads a bounded summary (counters plus last-N) that the writer maintains; full history is for audit only.
+Recognizer: status cost measured at day 1 and day 30 of one programme; a ratio above ~1.5 is the defect.
+
+## PR-PROGRAMME-AUTHORITY-SURVIVES-ROTATION-001 -- the goal, cap and next unit live in files, not in a session
+
+A worker session is disposable (context wall, clear, crash). The programme's authority (goal id, envelope, unit order,
+receipts) must be on disk and re-derivable from `git log` plus the chain file, so a successor needs no briefing.
+Anti-pattern: a coordinator pane holding the plan. Mechanism: `chain.json` + per-unit receipts; the chain tick, not a pane, arms the next unit.
+
+## T-UNATTRIBUTED-SPEND-IS-A-TELEMETRY-FAILURE-001 -- spend with no goal is a broken instrument, not a cheap run
+
+Tokens that cannot be assigned to a goal, role or pane are not "small": UNKNOWN is not zero. A programme reports
+settled, reserved, unknown and interactive separately, and `unknown > 0` is a failing gate, not a footnote.
+Fix the attribution at the source (declare the goal before work, bind by cwd) rather than reconciling afterwards.
+
+## PR-EXPERIMENT-NEEDS-POSITIVE-VOI-001 -- no run without an expected decision change worth more than its cost
+
+Before an experiment or extra optimisation pass: name the decision it can change, the probability it does, and the
+saving if so; run only when expected saving exceeds the run's cost (including reviewing it). If every outcome leaves
+the decision unchanged, the VOI is zero and the run is waste however interesting. Record the estimate beside the run.
+
+## PR-CHAIN-DEFAULT-ON-001 -- a packet programme chains through the registry with no prompt opt-in
+
+A `chain.json` under `vault/programs/<x>/` is ticked by the ONE registry task by default. A programme leaves the chain
+only by an explicit off (registry `enabled:false`, or `"enabled":false` / `"parked":true` in the chain file), never
+by forgetting to ask. Retired with it: the manual "arm it again" instruction in cpp-gsd-long, the steward residual
+text that handed re-arm to the Owner, the per-programme tick `tools/gsdx_chain_tick.ps1` (superseded by
+`tools/chain_registry_tick.ps1`), and the unenforced "hard stop 160M" prose. Gate: V-REG-DEFAULT-ON in `tools/test_chain_registry.py`
+(mutant `REG_MUTANT=no-default-on` turns it red).
