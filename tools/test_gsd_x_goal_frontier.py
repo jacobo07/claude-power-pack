@@ -518,7 +518,7 @@ def switch(value):
             os.environ[pf.FRONTIER_SWITCH] = old
 
 
-def raw_epoch(log, oid, with_unit=True, running=True, gate_class="unit"):
+def raw_epoch(log, oid, with_unit=True, running=True, gate_class="unit", unit=None):
     """An open gate epoch for `oid` whose spec carries the stored unit, written as begin would."""
     fr = load_frontier()
     st = gc.project(log)
@@ -526,7 +526,7 @@ def raw_epoch(log, oid, with_unit=True, running=True, gate_class="unit"):
     spec = {"obligation": oid, "tree_hash": TREE, "plane": o.plane,
             "gate": {"id": oid, "command": [], "class": gate_class, "files": []}}
     if with_unit:
-        spec["unit"] = fr.stored_unit(fr.gate_unit(o, st))
+        spec["unit"] = unit if unit is not None else fr.stored_unit(fr.gate_unit(o, st))
     eid = f"ep-{uuid.uuid4().hex[:12]}"
     fence = max((e.fence for e in ep.project_epochs(st).values()), default=0) + 1
     log.append(st.last_seq + 1, ep.DISPATCHING,
@@ -737,6 +737,275 @@ def gate_wait_only_empty():
         shutil.rmtree(ebase, ignore_errors=True)
 
 
+# ---------------------------------------------------------------- 03-04 gates
+# The write authority (epoch.begin) and the real sweep. Every gate here is a real subprocess that
+# the test awaits: nothing started is left running when the suite returns.
+
+import subprocess  # noqa: E402
+import time  # noqa: E402
+
+GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
+GIT_ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t", "PYTHONIOENCODING": "utf-8"}
+SWEEP_REPO = "7d" * 20
+
+
+def make_repo() -> Path:
+    d = Path(tempfile.mkdtemp(prefix="frontier-repo-"))
+    subprocess.run([GIT, "init", "-q", str(d)], check=True, env=GIT_ENV)
+    # Slow enough that the whole dispatch pass finishes while every gate is still running: a gate that
+    # ends first would be harvested instead of letting the pass start the next one, by design.
+    (d / "gate.py").write_text("import sys, time\ntime.sleep(6)\nprint('1 passed')\nsys.exit(0)\n",
+                               encoding="utf-8")
+    subprocess.run([GIT, "-C", str(d), "add", "."], check=True, env=GIT_ENV)
+    subprocess.run([GIT, "-C", str(d), "commit", "-qm", "seed"], check=True, env=GIT_ENV)
+    return d
+
+
+def sweep_goal_for(name, n, posture_name, repo, **budget):
+    """A goal with `n` independent trivial gates (`python gate.py`) and the given posture."""
+    from modules.gsd_x.goal import git_state as gs  # noqa: PLC0415
+    base = Path(tempfile.mkdtemp(prefix="frontier-sweep-"))
+    log = gl.GoalLog(SWEEP_REPO, name, base=base)
+    gc.declare(log, f"sweep {name}", ["it works"], [], {"paths": ["."]})
+    for plane in cv.PLANES:
+        cv.set_plane(log, gc.project(log), plane, plane in cv.ALWAYS or plane == cv.REALITY,
+                     "" if plane in cv.ALWAYS or plane == cv.REALITY else "not claimed", "t")
+    pin = gs.file_pin(repo, ["gate.py"])
+    planes = [cv.OUTCOME, cv.EVIDENCE, cv.REGRESSION, cv.UCR_CIF_LEARNING, cv.REALITY]
+    for i in range(n):
+        gate_class = "in_game" if planes[i] == cv.REALITY else "unit"
+        cv.accept_obligation(log, gc.project(log), f"ob-{i}", planes[i], "do it",
+                             f'"{sys.executable}" gate.py', pin, "t", gate_class=gate_class)
+    set_posture(log, posture_name, **budget)
+    return log, base
+
+
+def open_count(log) -> int:
+    return len([e for e in ep.project_epochs(gc.project(log)).values() if e.state != "ended"])
+
+
+def drain(log, repo, run_dir, limit_s=120.0) -> list:
+    """Sweep until nothing is open and nothing is left to run, or the bound passes. Awaits every gate."""
+    seen = []
+    deadline = time.time() + limit_s
+    while time.time() < deadline:
+        acted = sw.sweep_goal(log, repo, providers=("gate",), run_dir=run_dir)
+        seen.extend(acted)
+        if open_count(log) == 0 and not any("dispatched" in a or "harvested" in a for a in acted):
+            return seen
+        time.sleep(0.4)
+    seen.append("DRAIN TIMEOUT")
+    return seen
+
+
+def three_obligation_log(name):
+    return build(name, [("ob-a", cv.OUTCOME, "unit"), ("ob-b", cv.EVIDENCE, "unit"),
+                        ("ob-c", cv.REGRESSION, "unit")])
+
+
+def try_begin(log, oid, unit=None, key=None):
+    st = gc.project(log)
+    o = cv.project_convergence(st).obligations[oid]
+    spec = {"obligation": oid, "tree_hash": TREE, "gate": {"id": oid, "command": [], "class": "unit",
+                                                           "files": []}}
+    try:
+        e = ep.begin(log, st, "gate", spec, key or f"k-{oid}-{uuid.uuid4().hex[:6]}", "initial", "t",
+                     unit=unit)
+        return e, ""
+    except ep.EpochError as exc:
+        return None, str(exc)
+
+
+def derived_unit(log, oid):
+    fr = load_frontier()
+    st = gc.project(log)
+    return fr.stored_unit(fr.gate_unit(cv.project_convergence(st).obligations[oid], st))
+
+
+def gate_begin_refuses():
+    fr = need("stored_unit")
+    if fr is None:
+        return False, ABSENT
+    log, base = three_obligation_log("brefuse")
+    try:
+        raw_epoch(log, "ob-a")
+        before = (len(gc.project(log).events), max(e.fence for e in ep.project_epochs(gc.project(log)).values()))
+        with switch("on"):
+            no_unit = try_begin(log, "ob-b")
+            with_unit_off = None
+            with switch("off"):
+                with_unit_off = try_begin(log, "ob-b", unit=derived_unit(log, "ob-b"))
+        raw_epoch(log, "ob-c", with_unit=False, running=False)       # an open epoch with no stored unit
+        with switch("on"):
+            unitless_open = try_begin(log, "ob-b", unit=derived_unit(log, "ob-b"))
+        after = (len(gc.project(log).events) - 1,           # minus the ob-c epoch appended above
+                 max(e.fence for e in ep.project_epochs(gc.project(log)).values()) - 1)
+        refused = [no_unit[0], with_unit_off[0], unitless_open[0]]
+        ok = all(r is None for r in refused) and after == before
+        return ok, f"no_unit='{no_unit[1][:40]}' switch_off='{with_unit_off[1][:40]}' open_without_unit='{unitless_open[1][:40]}' log_and_fence_unchanged={after == before}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_unsafe_writes():
+    """RED 2: the authority refuses an unsafe pair whatever the reconciler said."""
+    fr = need("stored_unit")
+    if fr is None:
+        return False, ABSENT
+    cases = {}
+    for label, held in (
+            ("overlapping-writes", {"id": "gate:ob-a", "kind": "gate", "obligation": "ob-a",
+                                    "gate_class": "unit", "reads": ["x"], "writes": ["run:ob-b"],
+                                    "resources": []}),
+            ("read-after-write", {"id": "gate:ob-a", "kind": "gate", "obligation": "ob-a",
+                                  "gate_class": "unit", "reads": ["x"], "writes": ["tools/gate.py"],
+                                  "resources": []}),
+            ("undeclared-sets", {"id": "gate:ob-a", "kind": "gate", "obligation": "ob-a",
+                                 "gate_class": "unit", "reads": None, "writes": None,
+                                 "resources": None})):
+        log, base = three_obligation_log(f"unsafe-{label}")
+        try:
+            raw_epoch(log, "ob-a", unit=held)
+            with switch("on"):
+                e, msg = try_begin(log, "ob-b", unit=derived_unit(log, "ob-b"))
+            cases[label] = (e is None, "not independent" in msg)
+        finally:
+            shutil.rmtree(base, ignore_errors=True)
+    ok = all(refused and named for refused, named in cases.values())
+    return ok, f"cases={cases}"
+
+
+def gate_begin_derives():
+    """A forged disjoint unit for a conflicting obligation is refused: the authority derives, not trusts."""
+    fr = need("stored_unit")
+    if fr is None:
+        return False, ABSENT
+    log, base = build("bderive", [("ob-a", cv.OUTCOME, "integration"), ("ob-b", cv.EVIDENCE, "integration")])
+    try:
+        raw_epoch(log, "ob-a")
+        forged = {"id": "gate:ob-b", "kind": "gate", "obligation": "ob-b", "gate_class": "unit",
+                  "reads": ["elsewhere"], "writes": ["run:elsewhere"], "resources": []}
+        with switch("on"):
+            e1, m1 = try_begin(log, "ob-b", unit=forged)
+            e2, m2 = try_begin(log, "ob-b", unit=derived_unit(log, "ob-b"))
+        ok = e1 is None and "does not match derived" in m1 and e2 is None and "not independent" in m2
+        return ok, f"forged='{m1[:48]}' honest_but_conflicting='{m2[:40]}'"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_begin_admits():
+    """The control: disjoint declared units are admitted and the fences strictly increase."""
+    fr = need("stored_unit")
+    if fr is None:
+        return False, ABSENT
+    log, base = three_obligation_log("badmit")
+    try:
+        got = []
+        with switch("on"):
+            for oid in ("ob-a", "ob-b", "ob-c"):
+                e, msg = try_begin(log, oid, unit=derived_unit(log, oid))
+                got.append((e.fence if e else None, msg))
+        stored = [e.spec.get("unit") for e in ep.project_epochs(gc.project(log)).values()]
+        ok = [g[0] for g in got] == [1, 2, 3] and all(u and u["obligation"] for u in stored)
+        return ok, f"fences={[g[0] for g in got]} refusals={[g[1][:30] for g in got if g[1]]} stored_units={len(stored)}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def _sweep_case(name, n, posture_name, **budget):
+    repo = make_repo()
+    log, base = sweep_goal_for(name, n, posture_name, repo, **budget)
+    run_dir = Path(tempfile.mkdtemp(prefix="frontier-run-"))
+    try:
+        with switch("on"):
+            first = sw.sweep_goal(log, repo, providers=("gate",), run_dir=run_dir)
+            dispatched = sum(1 for a in first if "dispatched" in a)
+            opened = open_count(log)
+            rest = drain(log, repo, run_dir)
+        satisfied = sum(1 for o in cv.project_convergence(gc.project(log)).obligations.values()
+                        if o.disposition == cv.SATISFIED)
+        return dispatched, opened, satisfied, "DRAIN TIMEOUT" in rest, first
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+        shutil.rmtree(repo, ignore_errors=True)
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
+def gate_sweep_n():
+    if need("stored_unit") is None:
+        return False, ABSENT
+    wall = _sweep_case("sweep-wall", 3, "WALL_CLOCK")
+    eco = _sweep_case("sweep-eco", 3, "ECONOMY")
+    ok = (wall[0] == 3 and wall[1] == 3 and wall[2] == 3 and not wall[3]
+          and eco[0] == 1 and eco[1] == 1 and eco[2] == 3 and not eco[3])
+    return ok, f"WALL_CLOCK dispatched={wall[0]} open={wall[1]} satisfied_after_drain={wall[2]}; ECONOMY dispatched={eco[0]} open={eco[1]} satisfied_after_drain={eco[2]}"
+
+
+def gate_sweep_bound():
+    if need("stored_unit") is None:
+        return False, ABSENT
+    capped = _sweep_case("sweep-cap", 4, "WALL_CLOCK", max_parallel=2)
+    five = _sweep_case("sweep-five", 5, "WALL_CLOCK")
+    bal = _sweep_case("sweep-bal", 4, "BALANCED")
+    ok = capped[0] == 2 and capped[1] == 2 and five[0] == 4 and five[1] == 4 and bal[0] == 2 \
+        and not (capped[3] or five[3] or bal[3])
+    return ok, f"max_parallel=2 -> {capped[0]}; WALL_CLOCK over 5 ready -> {five[0]} open={five[1]}; BALANCED -> {bal[0]}"
+
+
+def gate_lostrace():
+    """Two dispatchers decided from one stale state: exactly one begin wins, no duplicate fence."""
+    if need("stored_unit") is None:
+        return False, ABSENT
+    log, base = three_obligation_log("race")
+    try:
+        stale = gc.project(log)
+        spec = lambda oid: {"obligation": oid, "tree_hash": TREE,   # noqa: E731
+                            "gate": {"id": oid, "command": [], "class": "unit", "files": []}}
+        outcomes = []
+        with switch("on"):
+            for oid in ("ob-a", "ob-b"):
+                try:
+                    unit = derived_unit(log, oid)
+                    ep.begin(log, stale, "gate", spec(oid), f"race-{oid}", "initial", "t", unit=unit)
+                    outcomes.append("won")
+                except (gl.LostRace, ep.EpochError) as exc:
+                    outcomes.append(type(exc).__name__)
+        fences = [e.fence for e in ep.project_epochs(gc.project(log)).values()]
+        ok = outcomes.count("won") == 1 and len(fences) == len(set(fences)) == 1
+        return ok, f"outcomes={outcomes} fences={fences}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_fence():
+    """Each concurrent epoch ingests only with its own fence and run_token."""
+    if need("stored_unit") is None:
+        return False, ABSENT
+    log, base = three_obligation_log("fence")
+    try:
+        a = raw_epoch(log, "ob-a")
+        b = raw_epoch(log, "ob-b")
+        eps = ep.project_epochs(gc.project(log))
+        ea, eb = eps[a], eps[b]
+        def receipt(own, other):
+            return ep.Receipt(epoch_id=own.epoch_id, provider="gate", revision=own.revision,
+                              fence=other.fence, goal_id=other.identity["goal_id"],
+                              run_token=other.identity["run_token"])
+        refused = False
+        try:
+            ep.ingest_receipt(log, gc.project(log), receipt(ea, eb), "t")
+        except ep.ReceiptRefused:
+            refused = True
+        own_ok = bool(ep.ingest_receipt(log, gc.project(log), receipt(ea, ea), "t"))
+        own_b = bool(ep.ingest_receipt(log, gc.project(log), receipt(eb, eb), "t"))
+        ok = ea.fence != eb.fence and refused and own_ok and own_b
+        return ok, f"fences={ea.fence},{eb.fence} sibling_fence_refused={refused} own_receipts_ingested={own_ok and own_b}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
 GATES = [
     ("V-FRONTIER-HERMETIC", gate_hermetic),
     ("V-FRONTIER-SWITCH", gate_switch),
@@ -764,6 +1033,14 @@ GATES = [
     ("V-FRONTIER-CLOSURE-HOLDS", gate_closure_holds),
     ("V-FRONTIER-BLOCKED-ON-HOLDS", gate_blocked_on_holds),
     ("V-FRONTIER-WAIT-ONLY-EMPTY", gate_wait_only_empty),
+    ("V-FRONTIER-BEGIN-REFUSES", gate_begin_refuses),
+    ("V-FRONTIER-UNSAFE-WRITES", gate_unsafe_writes),
+    ("V-FRONTIER-BEGIN-DERIVES", gate_begin_derives),
+    ("V-FRONTIER-BEGIN-ADMITS", gate_begin_admits),
+    ("V-FRONTIER-SWEEP-N", gate_sweep_n),
+    ("V-FRONTIER-SWEEP-BOUND", gate_sweep_bound),
+    ("V-FRONTIER-LOSTRACE", gate_lostrace),
+    ("V-FRONTIER-FENCE", gate_fence),
 ]
 
 

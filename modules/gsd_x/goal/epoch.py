@@ -265,9 +265,28 @@ def open_epochs(state: GoalState) -> list[str]:
 
 # --- writes --------------------------------------------------------------------
 
+def _checked_unit(state: GoalState, spec: dict, unit: dict) -> dict:
+    """The unit this epoch will carry. The caller's claim is never trusted: it must equal what the
+    authority derives for the epoch's own obligation, or the begin is refused (Phase 3, spec S8)."""
+    from . import convergence as cv  # noqa: PLC0415 -- lazy: frontier imports this module
+    from . import frontier  # noqa: PLC0415
+    obligation = cv.project_convergence(state).obligations.get(spec.get("obligation"))
+    if obligation is None:
+        raise EpochError("a unit is only admitted for an epoch that names a known obligation")
+    derived = frontier.stored_unit(frontier.gate_unit(obligation, state))
+    if frontier.stored_unit(unit) != derived:
+        raise EpochError(f"unit does not match derived for {obligation.identifier}: the authority "
+                         "derives what a gate reads and writes, the caller does not declare it")
+    return derived
+
+
 def begin(log: GoalLog, state: GoalState, provider: str, spec: dict, key: str,
-          hypothesis: str, actor: str) -> EpochRecord:
-    """Record the intent to dispatch, with an identity minted BEFORE the effect."""
+          hypothesis: str, actor: str, unit: dict | None = None) -> EpochRecord:
+    """Record the intent to dispatch, with an identity minted BEFORE the effect.
+
+    `unit` (Phase 3) is the only way a second epoch may be open at once: it is re-derived here, stored
+    in the spec, and admitted only if every open epoch also stored one and each pair is independent.
+    Without it, or with the frontier switch off, the one-open-epoch rule below is exactly as it was."""
     if hypothesis not in HYPOTHESES:
         raise EpochError(f"hypothesis {hypothesis!r} is not one of {sorted(HYPOTHESES)}")
     for e in project_epochs(state).values():
@@ -280,10 +299,24 @@ def begin(log: GoalLog, state: GoalState, provider: str, spec: dict, key: str,
     # UWCP S1-8b (A1): one epoch at a time per goal, enforced at the write
     # authority -- not only by the reconciler, which is one caller among several.
     # Two open epochs are two writers on one lineage, and the fence only orders them.
-    still_open = [e.epoch_id for e in project_epochs(state).values() if e.state != "ended"]
-    if still_open:
-        raise EpochError(f"epoch {still_open[0]} is still open; a goal runs one epoch at a "
-                         "time -- harvest or end it before beginning another")
+    open_epochs = [e for e in project_epochs(state).values() if e.state != "ended"]
+    spec = dict(spec)
+    if unit is not None:
+        from . import frontier  # noqa: PLC0415 -- lazy: frontier imports this module
+        if frontier.frontier_enabled():
+            spec["unit"] = _checked_unit(state, spec, unit)
+    if open_epochs:
+        stored = [e.spec.get("unit") for e in open_epochs]
+        if "unit" not in spec or any(u is None for u in stored):
+            raise EpochError(f"epoch {open_epochs[0].epoch_id} is still open; a goal runs one epoch "
+                             "at a time -- harvest or end it before beginning another")
+        from . import frontier  # noqa: PLC0415
+        clash = next((e.epoch_id for e, u in zip(open_epochs, stored)
+                      if not frontier.independent_units(spec["unit"], u)), None)
+        if clash:
+            raise EpochError(f"epoch {clash} is still open and this unit is not independent of it "
+                             "(overlapping writes, a read of what it writes, a shared exclusive "
+                             "resource, or an undeclared set)")
     epoch_id = f"ep-{uuid.uuid4().hex[:12]}"
     # The fence is minted with the intent, from the log, so two dispatchers racing
     # on one stale state cannot both hold fence N: the loser's append is a LostRace.

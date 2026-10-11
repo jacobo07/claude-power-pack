@@ -293,11 +293,6 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
     provs = {"gate": prov,
              LongRunProvider.name: LongRunProvider(Path(run_dir or (log.dir / "runs")))}
 
-    observations = {}
-    for e in eps.values():
-        if e.state == "running" and e.provider in provs and e.handle:
-            observations[e.epoch_id] = provs[e.provider].observe(e.handle)
-
     # The engine's own identity is part of the retry key: when the orchestrator
     # is what failed an attempt, retrying against fixed code is new information
     # rather than the same attempt again.
@@ -305,15 +300,26 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
     # engine term silently dropped out of the key (audit gap 2, UWCP S1-10).
     # engine_identity first: repo HEAD moves for unrelated commits (retry_engine_term).
     engine = retry_engine_term(Path(__file__).resolve().parents[3])
-    d = rc.decide(rc.Context(state=state, tree_hash=tree,
-                             scope_hash=ep.scope_hash(root, paths),
-                             observations=observations, now=time.time(),
-                             budget=state.budget, providers=tuple(providers),
-                             # The receipt the judge banked, about THIS tree.
-                             # Unread, the sweep reports READY_FOR_JUDGE forever
-                             # at a goal an independent judge has already passed.
-                             judge=jd.current(state, tree, state.revision),
-                             engine=engine))
+    scope_hash = ep.scope_hash(root, paths)
+
+    def decide_now(at):
+        """Observe every running epoch of `at`, then decide on it: the same step the first
+        decision takes, repeated on a fresh projection for each further frontier dispatch."""
+        seen = {}
+        for run in ep.project_epochs(at).values():
+            if run.state == "running" and run.provider in provs and run.handle:
+                seen[run.epoch_id] = provs[run.provider].observe(run.handle)
+        ctx = rc.Context(state=at, tree_hash=tree, scope_hash=scope_hash,
+                         observations=seen, now=time.time(),
+                         budget=at.budget, providers=tuple(providers),
+                         # The receipt the judge banked, about THIS tree.
+                         # Unread, the sweep reports READY_FOR_JUDGE forever
+                         # at a goal an independent judge has already passed.
+                         judge=jd.current(at, tree, at.revision),
+                         engine=engine)
+        return rc.decide(ctx), ctx, seen
+
+    d, ctx, observations = decide_now(state)
     if d.kind == rc.RECOVER:
         if not dry_run:
             out = ep.recover(log, state, provs.get(eps[d.epoch_id].provider, prov),
@@ -346,49 +352,82 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
         else:
             acted.append(f"{log.goal_id}: would harvest {d.epoch_id}")
     elif d.kind == rc.NEXT_EPOCH and d.provider == "gate":
-        o = cv.project_convergence(state).obligations[d.spec["obligation"]]
         if dry_run:
-            acted.append(f"{log.goal_id}: would run {o.identifier}'s gate")
-        elif o.plane in cv.REALITY_PLANES and o.gate_class not in cv.RUNTIME_GATE_CLASSES:
-            # Refuse rather than guess. This branch used to read
-            # `"in_game" if o.plane == cv.REALITY else "unit"`, which derived the
-            # class from the very plane `goal_closure` then checked it against --
-            # so the reality check could not fail, and a unit test named as a
-            # REALITY obligation's done gate would have satisfied a production
-            # claim. An obligation accepted before that was fixed carries no
-            # class; it needs re-accepting with one declared, not a guess here.
-            acted.append(f"{log.goal_id}: {o.identifier} declares no runtime gate class "
-                         f"({o.gate_class or 'nothing'}); a {o.plane} obligation is not "
-                         "dispatched on an inferred one")
+            acted.append(f"{log.goal_id}: would run {d.spec['obligation']}'s gate")
         else:
-            gate = {"id": o.identifier, "command": jd._argv(o.done_gate),
-                    "class": o.gate_class or "unit",
-                    "files": [rel for rel, _ in o.gate_pin],
-                    # the verdict is pinned in its obligation's scheme, or the
-                    # exact pin comparison in convergence refuses it (UWCP S1-9)
-                    "pin_scheme": gs.pin_scheme(o.gate_pin)}
-            # The gate spec is STORED on the epoch, never rebuilt at harvest.
-            # Measured 2026-09-22 on the first real goal: harvest rebuilt it from
-            # an epoch record that never carried it, so every gate RAN, produced
-            # an exit status nobody read, and its epoch ended `lost`. The work
-            # happened and the evidence was dropped -- after which the goal
-            # honestly reported that no justified action remained, which was the
-            # right answer to a question the sweep had made unanswerable.
-            e = ep.begin(log, state, "gate",
-                         {"obligation": o.identifier, "tree_hash": tree, "gate": gate},
-                         d.info_key, d.hypothesis, actor)
-            spec = {"epoch_id": e.epoch_id, "revision": state.revision, "root": str(root),
-                    "identity": e.identity, "scope_paths": paths, "gate": gate}
-            # Non-blocking: a five-minute schedule starts the gate and returns.
-            handle = prov.dispatch(spec)
-            ep.mark_running(log, gc.project(log), e.epoch_id, handle, actor)
-            acted.append(f"{log.goal_id}: dispatched {e.epoch_id} for {o.identifier}")
+            from . import frontier  # noqa: PLC0415 -- lazy: frontier imports reconcile
+            started, note = _start_gate(log, root, prov, d, state, tree, paths, actor, ctx)
+            acted.append(note)
+            # Phase 3: with a bound above 1 the same pass dispatches further gates that are
+            # independent of everything already running. Each is decided afresh on the log as
+            # it now stands; the write authority (epoch.begin) re-checks independence, so a
+            # lost race or a refusal ends the pass instead of being retried or swallowed.
+            more = frontier.bound(ctx) - 1 if started and frontier.frontier_enabled() else 0
+            for _ in range(max(0, more)):
+                state = gc.project(log)
+                d2, ctx2, _seen = decide_now(state)
+                if not (d2.kind == rc.NEXT_EPOCH and d2.provider == "gate" and d2.spec.get("unit")):
+                    break
+                try:
+                    started, note = _start_gate(log, root, prov, d2, state, tree, paths, actor, ctx2)
+                except (gl.LostRace, ep.EpochError) as exc:
+                    acted.append(f"{log.goal_id}: further dispatch refused: {exc}")
+                    break
+                acted.append(note)
+                if not started:
+                    break
     elif d.kind in (rc.NEXT_EPOCH, rc.ESCALATE, rc.READY_FOR_JUDGE, rc.BLOCKED):
         # Everything that spends an account, needs a person, or certifies a goal
         # is REPORTED and left alone. The sweep is not an authority.
         via = f" (needs provider {d.provider})" if d.provider else ""
         acted.append(f"{log.goal_id}: {d.kind}{via} -- {d.reason[:160]}")
     return acted
+
+
+def _start_gate(log, root, prov, d, at, tree, paths, actor, ctx):
+    """Begin, dispatch and mark running one gate epoch decided on projection `at`.
+    Returns (started, what happened)."""
+    from ..goal import judge as jd       # local: keeps the import graph shallow
+    from . import frontier  # noqa: PLC0415
+    o = cv.project_convergence(at).obligations[d.spec["obligation"]]
+    if o.plane in cv.REALITY_PLANES and o.gate_class not in cv.RUNTIME_GATE_CLASSES:
+        # Refuse rather than guess. This branch used to read
+        # `"in_game" if o.plane == cv.REALITY else "unit"`, which derived the
+        # class from the very plane `goal_closure` then checked it against --
+        # so the reality check could not fail, and a unit test named as a
+        # REALITY obligation's done gate would have satisfied a production
+        # claim. An obligation accepted before that was fixed carries no
+        # class; it needs re-accepting with one declared, not a guess here.
+        return False, (f"{log.goal_id}: {o.identifier} declares no runtime gate class "
+                       f"({o.gate_class or 'nothing'}); a {o.plane} obligation is not "
+                       "dispatched on an inferred one")
+    gate = {"id": o.identifier, "command": jd._argv(o.done_gate),
+            "class": o.gate_class or "unit",
+            "files": [rel for rel, _ in o.gate_pin],
+            # the verdict is pinned in its obligation's scheme, or the
+            # exact pin comparison in convergence refuses it (UWCP S1-9)
+            "pin_scheme": gs.pin_scheme(o.gate_pin)}
+    # The unit is only attached when a bound above 1 makes a second epoch possible: at the
+    # default posture the stored spec is byte-identical to what it always was.
+    unit = d.spec.get("unit")
+    if unit is None and frontier.frontier_enabled() and frontier.bound(ctx) > 1:
+        unit = frontier.stored_unit(frontier.gate_unit(o, at))
+    # The gate spec is STORED on the epoch, never rebuilt at harvest.
+    # Measured 2026-09-22 on the first real goal: harvest rebuilt it from
+    # an epoch record that never carried it, so every gate RAN, produced
+    # an exit status nobody read, and its epoch ended `lost`. The work
+    # happened and the evidence was dropped -- after which the goal
+    # honestly reported that no justified action remained, which was the
+    # right answer to a question the sweep had made unanswerable.
+    e = ep.begin(log, at, "gate",
+                 {"obligation": o.identifier, "tree_hash": tree, "gate": gate},
+                 d.info_key, d.hypothesis, actor, unit=unit)
+    spec = {"epoch_id": e.epoch_id, "revision": at.revision, "root": str(root),
+            "identity": e.identity, "scope_paths": paths, "gate": gate}
+    # Non-blocking: a five-minute schedule starts the gate and returns.
+    handle = prov.dispatch(spec)
+    ep.mark_running(log, gc.project(log), e.epoch_id, handle, actor)
+    return True, f"{log.goal_id}: dispatched {e.epoch_id} for {o.identifier}"
 
 
 def sweep(pp_root: Path, goals: list[tuple[gl.GoalLog, Path]], dry_run: bool = False,
