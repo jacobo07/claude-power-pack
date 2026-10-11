@@ -394,6 +394,22 @@ def judge(rec: dict, spent: int | None, fp: str | None) -> dict:
     return {"trip": None, "mark": None}
 
 
+def judge_predictive(rec: dict, spent: int | None, p95_remaining: float | None, tail: float = 0) -> dict:
+    """{drain: reason|None}. Pure. Fires when spent + P95 remaining + tail > authority; missing data never drains."""
+    est = rec.get("token_estimate")
+    if not est or spent is None or p95_remaining is None:
+        return {"drain": None}
+    est = int(est)
+    ratio = float(rec.get("token_trip_ratio") or DEFAULT_TRIP_RATIO)
+    authority = est * ratio
+    tail = tail or 0
+    if spent + p95_remaining + tail > authority:
+        return {"drain": (f"predictive drain: spent {spent:,} + P95 remaining {int(p95_remaining):,} + tail {int(tail):,} "
+                          f"> authority {int(authority):,}; spend may continue until the hard breaker; "
+                          "new work is not started")}
+    return {"drain": None}
+
+
 # Liveness verdicts as plan_next computes them. They mirror gsd_mission.py LIVE/WAITING_HUMAN/DEAD/UNKNOWN;
 # this module must not import gsd_mission at import time (a gate pins the equality).
 V_LIVE = "ALIVE"
