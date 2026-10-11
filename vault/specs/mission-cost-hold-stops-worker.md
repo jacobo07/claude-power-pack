@@ -41,6 +41,13 @@ parent: vault/specs/mission-owner-hold.md, vault/specs/mission-envelope-and-comp
 * **Parked, not settled.** Under a hold carrying `worker_stopped_at`, a DEAD owner answers `none` (parked),
   not `settle`. Release then follows normal supervision: a DEAD owner is replaced by a fresh worker with the
   rehydration card, or halted if the budget is spent.
+* **Every worker is reachable by the hook.** `mission_wall.js` named a mission worker only through its v2
+  marker `gsd-autorun-<sid>.json`, and `_arm_worker_marker` refuses any resume command over 200 characters
+  (the marker's typing limit). Measured 2026-10-11: both TUA-X missions (commands of 400+ and 213 chars) had
+  NO marker, so neither the context wall nor the cost notice ever reached them, and the refusal was recorded
+  nowhere. `session_start` now writes `mission-worker-<sid>.json` (identity, epoch, wall; no command, so
+  nothing can type it) on every worker start, and the hook falls back to it. A refused marker is ledgered as
+  `worker_marker_refused`.
 * **Estimate calibration.** `set_envelope(token_estimate=...)` walks the `supersedes` chain (at most 6
   predecessors) and measures each one's processed tokens and lifetime hours. With at least one measurable
   predecessor, `expected = lineage tokens/hour x max_hours`. An estimate below `0.5 x expected` is refused

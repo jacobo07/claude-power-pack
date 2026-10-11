@@ -62,9 +62,16 @@ function costHoldNotice(sid, marker) {
 function decide(event) {
   const sid = event && event.session_id;
   if (!sid || !SID_RE.test(sid)) return null;
+  // A mission worker is named by its v2 marker OR by the worker index the supervisor writes at
+  // SessionStart (tools/gsd_mission.py write_worker_index). Measured 2026-10-11: the marker is refused
+  // for a resume command over 200 chars, and the hook then never judged that worker at all.
   const markerPath = path.join(STATE, `gsd-autorun-${sid}.json`);
-  if (!fs.existsSync(markerPath)) return null;            // the ordinary path: one stat, done
-  const marker = readJson(markerPath);
+  const indexPath = path.join(STATE, `mission-worker-${sid}.json`);
+  let marker = fs.existsSync(markerPath) ? readJson(markerPath) : null;
+  if (!marker || !marker.mission_id) {
+    if (!fs.existsSync(indexPath)) return null;           // the ordinary path: two stats, done
+    marker = readJson(indexPath);
+  }
   if (!marker || !marker.mission_id) return null;          // legacy v2 run: the watchdog owns it
   const cost = costHoldNotice(sid, marker);
   if (cost) return cost;

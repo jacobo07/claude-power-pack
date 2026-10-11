@@ -102,6 +102,18 @@ def main() -> int:
     check("V-CH-CONTROL-HOOK-OWNER-HOLD-SILENT", _hook("m-hk-owner-w") is None)
     check("V-CH-CONTROL-HOOK-UNHELD-SILENT", _hook("m-hk-none-w") is None)
 
+    # 1b. a worker with NO v2 marker (resume command over the 200-char typing limit, m-560939805e63) is
+    # still reached through the worker index; the index carries no command. Control: neither file -> silent.
+    _running("m-hk-idx")
+    gm.set_owner_hold("m-hk-idx", TRIP, now=NOW, kind="cost")
+    idx = gm.write_worker_index(gm.load("m-hk-idx"), "m-hk-idx-w")
+    body = json.loads(idx.read_text(encoding="utf-8")) if idx else {}
+    check("V-CH-INDEX-WRITTEN-NO-COMMAND", body.get("mission_id") == "m-hk-idx" and "resume_command" not in body
+          and "command" not in body, str(body))
+    d = _hook("m-hk-idx-w")
+    check("V-CH-HOOK-REACHES-WORKER-VIA-INDEX", bool(d) and "COST HOLD" in (d or {}).get("reason", ""), str(d)[:120])
+    check("V-CH-CONTROL-HOOK-NO-MARKER-NO-INDEX-SILENT", _hook("m-nobody-w") is None)
+
     # 2. cost_hold_overdue: past grace -> dict; within grace / no flag -> None.
     r = gm.load("m-hk-cost")
     _flag("m-hk-cost", NOW - 700)

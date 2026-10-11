@@ -3995,8 +3995,17 @@ def session_start(session_id: str, source: str = "") -> str:
     pid, proc_start = _registry_proc(session_id)
     first = rec["state"] == LAUNCHING
     rec = ack_session(session_id, pid=pid, proc_start=proc_start) or rec
+    write_worker_index(rec, session_id)
     if first:
-        _arm_worker_marker(rec, session_id)
+        try:
+            _arm_worker_marker(rec, session_id)
+        except Exception as exc:  # noqa: BLE001 -- recorded; the worker index still reaches the hooks
+            # Measured 2026-10-11 (m-560939805e63, m-4a0f39b59a60): a resume command over the marker's
+            # 200-char typing limit raised MarkerError here, no marker was written, and mission_wall.js --
+            # keyed on the marker -- never judged that worker: no wall, no cost-hold notice, 191M spent
+            # after the breaker tripped. Nothing recorded the refusal.
+            lr.ledger_append(session_id, "worker_marker_refused", mission_id=rec["mission_id"],
+                             epoch=rec["epoch"], error=f"{type(exc).__name__}: {exc}"[:300])
     try:
         # G3: an observed compaction is ledgered against the epoch; S7: the first start of a launch
         # or continuation checks it is where the mission is. A mismatch is the one line returned.
@@ -4016,6 +4025,29 @@ def session_start(session_id: str, source: str = "") -> str:
     if rec.get("card"):
         return ""  # already delivered through --append-system-prompt at launch; never twice
     return render_card(rec, None)
+
+
+WORKER_INDEX_TEMPLATE = "mission-worker-{session_id}.json"
+
+
+def write_worker_index(rec: dict, session_id: str) -> Path | None:
+    """spec mission-cost-hold-stops-worker: name this session's mission for the mid-turn hooks
+    (mission_wall.js) independently of the v2 typing marker, which refuses a resume command it could
+    not type. Carries only identity and wall -- no command, so nothing can ever type it. Fail-open:
+    a write failure is a ledger row, never a broken SessionStart."""
+    try:
+        d = lr.state_dir() if not os.environ.get("GSD_AUTORUN_MARKER_DIR") else Path(os.environ["GSD_AUTORUN_MARKER_DIR"])
+        p = d / WORKER_INDEX_TEMPLATE.format(session_id=session_id)
+        tmp = p.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps({"session_id": session_id, "mission_id": rec["mission_id"],
+                                   "epoch": rec["epoch"], "wall": rec.get("wall") or dict(DEFAULT_WALL)}),
+                       encoding="utf-8")
+        tmp.replace(p)
+        return p
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(session_id, "worker_index_unwritten", mission_id=rec.get("mission_id"),
+                         error=f"{type(exc).__name__}: {exc}"[:300])
+        return None
 
 
 def _arm_worker_marker(rec: dict, session_id: str) -> None:
