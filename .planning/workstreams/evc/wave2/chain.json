@@ -1,7 +1,7 @@
 {
   "goal": "evc",
   "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc",
-  "envelope": 6000000,
+  "envelope": 10500000,
   "units": [
     {
       "id": "P03",
