@@ -545,9 +545,11 @@ def forecast(chain: dict, measured: dict, route_target) -> dict:
             den += route_target(u["route"])
     overrun = max(1.0, num / den) if den else 1.0
     remaining = [u for u in chain["units"] if u["id"] not in done]
-    total = int(sum(route_target(u["route"]) for u in remaining) * overrun)
+    # a successor's route is authored by its predecessor: not yet on disk is named, never a crash of the whole tick
+    unrouted = [u["id"] for u in remaining if not Path(u["route"]).exists()]
+    total = int(sum(route_target(u["route"]) for u in remaining if u["id"] not in unrouted) * overrun)
     return {"forecast": total, "overrun": round(overrun, 3), "basis": "measured" if den else "unmeasured",
-            "units_left": [u["id"] for u in remaining]}
+            "units_left": [u["id"] for u in remaining], "unrouted": unrouted}
 
 
 def _live_measured(goal: str) -> dict:
@@ -616,6 +618,8 @@ def _tick_locked(chain: dict, dry_run, state, armer, settler, ledger, gate_runne
             meas = _live_measured(chain["goal"]) if state is None else {}
         fc = forecast(chain, meas, _route_target)
         row["forecast"], row["overrun"], row["forecast_basis"] = fc["forecast"], fc["overrun"], fc["basis"]
+        if fc["unrouted"]:
+            row["forecast_unrouted"] = fc["unrouted"]
         if used + fc["forecast"] > int(chain["envelope"]):
             row = {"action": "pause_budget", "unit": row["unit"], "used": used, "forecast": fc["forecast"],
                    "overrun": fc["overrun"], "basis": fc["basis"], "envelope": chain["envelope"],

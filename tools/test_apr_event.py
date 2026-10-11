@@ -240,6 +240,16 @@ check("V-APR3-CHEAP-FIRST-ARMS", r["action"] == "arm" and r["overrun"] == 1.0 an
       and r["forecast_basis"] == "measured" and len(calls) == 1, json.dumps(r)[:200])
 r = gc.tick(p, state=lambda: ([], 0), armer=good_arm, measured={})
 check("V-APR3-UNMEASURED-IS-SAID", r["forecast_basis"] == "unmeasured" and r["overrun"] == 1.0, r.get("forecast_basis"))
+# a later unit's route is authored by its predecessor: absent is not a crash, and it is named, not counted as 0 silently
+d, p, c = setup("fc-unrouted", n=3)
+(d / "route-C.json").unlink()
+store, calls = [], []
+try:
+    r = gc.tick(p, state=lambda: ([], 0), armer=good_arm, measured={})
+except FileNotFoundError as e:
+    r = {"action": "raised", "why": str(e)}
+check("V-APR3-UNROUTED-UNIT-NOT-A-CRASH", r["action"] == "arm" and r["forecast"] == 2_000_000
+      and r.get("forecast_unrouted") == ["C"] and len(calls) == 1, json.dumps(r)[:200])
 
 # ---- status ---------------------------------------------------------------------------------------------------------
 d, p, c = setup("stat")
