@@ -18,6 +18,7 @@
                   },
                   {
                       "id":  "R6",
+                      "max_residuals":  1,
                       "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R6.md",
                       "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
                       "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R6-receipt.md",
