@@ -1690,6 +1690,14 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
     prof = ({"worker_profile": slim, "worker_profile_src": "admission"} if slim
             else {"worker_profile": None, "worker_profile_src": None} if rec.get("worker_profile_src") == "admission"
             else {})
+    try:   # CDC C3: the worker-launch edge leaves the same capability row as the Agent spawn edge
+        import cognitive_admission as _ca
+        import cognitive_effects as _ce
+        _ca.record(None, mission_id, res.get("effect") or _ce.normalize(route.get("effect")) or _ce.BOUNDED_COGNITION,
+                   f"route {res['verdict']}", decision="allow" if res["verdict"] in ("ADMISSIBLE", "WATCHED") else "refuse",
+                   edge="launch")
+    except Exception:  # noqa: BLE001 -- the capability log never stops an admission
+        pass
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="route_admission", now=now, admission=admission, **prof,
                       reason=f"route {res['verdict']}: " + ("; ".join(res["reasons"]) or "fits")[:280])

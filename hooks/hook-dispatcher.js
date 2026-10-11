@@ -117,7 +117,7 @@ const EVENT_MAP = {
   // spend reserved from the goal BEFORE launch (A1: 42.3M against a 20M cap, nothing checked first).
   // Registered directly as --event=PreToolUse-Agent-default on matcher Task|Agent (Owner step, HR-001:
   // vault/OWNER_QUEUE.md). Inert for sessions bound to no goal and with no session budget.
-  'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js'],
+  'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js', '../skills/claude-power-pack/hooks/cognitive_admission.js'],
   // In-process (require-based) bundles only. The Stop event is handled by
   // CHAIN_MAP below instead: those hooks are heterogeneous (one is Python)
   // and not all export run(), so they run as sequential CHILD processes
