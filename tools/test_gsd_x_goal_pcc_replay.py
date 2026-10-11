@@ -1130,7 +1130,10 @@ def gates_states() -> None:
                   and el[0].get("command") == o.done_gate
                   and el[0].get("gate_pin") == [list(p) for p in o.gate_pin]
                   and el[0].get("inheritability") == "never" and el[0].get("causal_paths") == []
-                  and proof.binding(tree).get("scheme") == "tree")
+                  and proof.binding(tree).get("scheme") == "tree"
+                  and set(el[0]) >= {"oracle", "command", "gate_pin", "causal_paths", "env_deps",
+                                     "freshness_class", "risk_tags", "nondeterministic", "inheritability"}
+                  and el[0].get("freshness_class") == proof.freshness_class(o, o.verdict, None))
             n += 1
             if not ok and len(bad) < 3:
                 bad.append(f"{name}:{o.identifier}")

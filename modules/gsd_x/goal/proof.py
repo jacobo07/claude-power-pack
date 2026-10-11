@@ -166,8 +166,9 @@ def legacy_contract(obligation) -> dict:
             "combine": "AND",
             "elements": [{"oracle": obligation.gate_class, "command": obligation.done_gate,
                           "gate_pin": [list(p) for p in obligation.gate_pin],
-                          "causal_paths": [], "env_deps": [], "risk_tags": [],
-                          "nondeterministic": False, "inheritability": "never"}]}
+                          "causal_paths": [], "env_deps": [],
+                          "freshness_class": freshness_class(obligation, obligation.verdict, None),
+                          "risk_tags": [], "nondeterministic": False, "inheritability": "never"}]}
 
 
 def binding(tree_hash: str, fingerprint: str | None = None) -> dict:
@@ -323,6 +324,102 @@ def _via_events(state, ledger: ProofLedger, cid: str, candidate: str, observed, 
                            now if now is not None else 0.0)
     has_event = any(e["data"].get("candidate") == candidate for e in inherited)
     return state_from_premises(obs, has_event, inheritance_enabled())
+
+
+# --- freshness classes and the typed contract (S5, S6) -----------------------------------
+# Freshness is a SECOND axis. convergence.GATE_CLASSES stays pinned: extending it would
+# change which inputs acceptance takes.
+
+DETERMINISTIC, COMPOSITIONAL, TEMPORAL = "DETERMINISTIC", "COMPOSITIONAL", "TEMPORAL"
+FRESH_REQUIRED, FR_UNKNOWN = "FRESH_REQUIRED", "UNKNOWN"
+FRESHNESS_CLASSES = (DETERMINISTIC, COMPOSITIONAL, ENVIRONMENT_SENSITIVE, TEMPORAL, FRESH_REQUIRED)
+# UNKNOWN routes to a full run exactly like FRESH_REQUIRED, so it ranks at least as strict.
+FRESHNESS_RANK = {c: i for i, c in enumerate(FRESHNESS_CLASSES)} | {FR_UNKNOWN: len(FRESHNESS_CLASSES)}
+_GATE_TO_FRESHNESS = {"unit": DETERMINISTIC, "integration": ENVIRONMENT_SENSITIVE,
+                      "in_game": FRESH_REQUIRED, "live": FRESH_REQUIRED}
+RISK_TAGS = frozenset({"security", "authorization", "tenant", "destructive", "migration",
+                       "upload", "reality", "authority"})
+# Stems whose presence in an obligation's text may only ADD FRESH_REQUIRED.
+RISK_KEYWORDS = ("auth", "permission", "tenant", "delete", "drop", "migrat", "upload",
+                 "secret", "credential", "destroy", "wipe", "payment")
+_REALITY_PLANE = "REALITY"
+
+
+def _strictest(*classes: str) -> str:
+    return max(classes, key=lambda c: FRESHNESS_RANK[c])
+
+
+def _class_from_word(word) -> str:
+    """A contract may name a freshness class directly or by the legacy gate-class vocabulary."""
+    if word in FRESHNESS_RANK:
+        return word
+    return _GATE_TO_FRESHNESS.get(word, FR_UNKNOWN)
+
+
+def _element_class(el: dict) -> str:
+    tags = el.get("risk_tags")
+    if not isinstance(tags, list) or any(t not in RISK_TAGS for t in tags):
+        return FR_UNKNOWN
+    own = _class_from_word(el.get("freshness_class"))
+    return _strictest(own, FRESH_REQUIRED) if tags else own
+
+
+def freshness_class(obligation, verdict, contract) -> str:
+    """The freshness class of one claim; never lower than what its gate class implies.
+
+    Legacy map: the verdict's gate class (falling back to the obligation's) gives the base;
+    a REALITY-plane obligation is FRESH_REQUIRED whatever its class. A typed contract can
+    raise the class (its elements, risk tags) or make it UNKNOWN (combine other than AND,
+    a missing or unknown risk tag list). The keyword scan only ever escalates.
+    """
+    gate = (verdict or {}).get("gate_class") or obligation.gate_class
+    cls = _GATE_TO_FRESHNESS.get(gate, FR_UNKNOWN)
+    if obligation.plane == _REALITY_PLANE:
+        cls = _strictest(cls, FRESH_REQUIRED)
+    if contract:
+        if contract.get("combine") != "AND":
+            return FR_UNKNOWN
+        els = contract.get("elements")
+        if not isinstance(els, list) or not els or not all(isinstance(e, dict) for e in els):
+            return FR_UNKNOWN
+        cls = _strictest(cls, *(_element_class(e) for e in els))
+    text = (obligation.text or "").lower()
+    if cls != FR_UNKNOWN and any(k in text for k in RISK_KEYWORDS):
+        cls = _strictest(cls, FRESH_REQUIRED)
+    return cls
+
+
+def _facets(contract: dict) -> dict:
+    els = [e for e in contract.get("elements", []) if isinstance(e, dict)]
+    return {"risk": {t for e in els for t in (e.get("risk_tags") or [])},
+            "paths": {p for e in els for p in (e.get("causal_paths") or [])},
+            "env": {p for e in els for p in (e.get("env_deps") or [])},
+            "rank": max((FRESHNESS_RANK[_class_from_word(e.get("freshness_class"))] for e in els), default=0),
+            "never": any(e.get("inheritability") == "never" for e in els)}
+
+
+def _not_weaker(new: dict, old: dict) -> bool:
+    a, b = _facets(new), _facets(old)
+    return (a["risk"] >= b["risk"] and a["paths"] >= b["paths"] and a["env"] >= b["env"]
+            and a["rank"] >= b["rank"] and (a["never"] or not b["never"]))
+
+
+def effective_contract(ledger: ProofLedger, obligation) -> tuple:
+    """(contract data, refused seqs). Later contracts for the claim may only strengthen.
+
+    A weaker contract is ignored and its seq reported, mirroring the weakening refusal of
+    `contract.revise`. With no contract at all the obligation is its legacy one-element form.
+    """
+    cid = claim_id(obligation)
+    eff, refused = None, []
+    for c in ledger.contracts:
+        if c["data"].get("claim_id") != cid:
+            continue
+        if eff is None or _not_weaker(c["data"], eff["data"]):
+            eff = c
+        else:
+            refused.append(c["seq"])
+    return (dict(eff["data"]) if eff else legacy_contract(obligation)), refused
 
 
 def proof_states(state: GoalState, candidate: str, observed: dict | None = None,

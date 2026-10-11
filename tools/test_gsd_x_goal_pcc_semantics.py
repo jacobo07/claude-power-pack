@@ -718,6 +718,114 @@ def gate_old_revision_unknown():
         shutil.rmtree(base, ignore_errors=True)
 
 
+def _ob(cls: str = "unit", plane: str = "OUTCOME", text: str = "render the page header"):
+    return cv.GoalObligation("ob-one", plane, text, "python tools/gate.py", GATE_PIN, "r", gate_class=cls)
+
+
+def _el(**over):
+    el = {"oracle": "unit", "command": "python tools/gate.py", "gate_pin": [list(p) for p in GATE_PIN],
+          "causal_paths": ["src"], "env_deps": [], "freshness_class": "DETERMINISTIC",
+          "risk_tags": [], "nondeterministic": False, "inheritability": "inheritable"}
+    el.update(over)
+    return el
+
+
+def _con(*els, combine="AND"):
+    return {"v": 1, "combine": combine, "elements": list(els) or [_el()]}
+
+
+def gate_freshness_map():
+    proof = _need("freshness_class", "FRESH_REQUIRED")
+    if proof is None:
+        return False, _NEEDS
+    fc = proof.freshness_class
+    got = {"unit": fc(_ob("unit"), None, None), "integration": fc(_ob("integration"), None, None),
+           "in_game": fc(_ob("in_game"), None, None), "live": fc(_ob("live"), None, None),
+           "verdict_wins": fc(_ob("unit"), {"gate_class": "live"}, None),
+           "reality_any_class": fc(_ob("unit", plane=cv.REALITY), None, None),
+           "empty": fc(_ob(""), None, None),
+           "temporal_by_contract": fc(_ob("unit"), None, _con(_el(freshness_class="TEMPORAL"))),
+           "compositional_by_contract": fc(_ob("unit"), None, _con(_el(freshness_class="COMPOSITIONAL")))}
+    want = {"unit": proof.DETERMINISTIC, "integration": proof.ENVIRONMENT_SENSITIVE, "in_game": proof.FRESH_REQUIRED,
+            "live": proof.FRESH_REQUIRED, "verdict_wins": proof.FRESH_REQUIRED, "reality_any_class": proof.FRESH_REQUIRED,
+            "empty": proof.FR_UNKNOWN, "temporal_by_contract": proof.TEMPORAL,
+            "compositional_by_contract": proof.COMPOSITIONAL}
+    legacy_only = {fc(_ob(c), None, None) for c in ("unit", "integration", "in_game", "live", "")}
+    never = not ({proof.TEMPORAL, proof.COMPOSITIONAL} & legacy_only)
+    return got == want and never, f"{got} legacy_never_temporal_or_compositional={never}"
+
+
+def gate_freshness_risk():
+    proof = _need("freshness_class", "RISK_TAGS")
+    if proof is None:
+        return False, _NEEDS
+    fc = proof.freshness_class
+    tags = {t: fc(_ob("unit"), None, _con(_el(risk_tags=[t]))) for t in sorted(proof.RISK_TAGS)}
+    missing = _el()
+    del missing["risk_tags"]
+    got = {"missing": fc(_ob("unit"), None, _con(missing)),
+           "unknown_tag": fc(_ob("unit"), None, _con(_el(risk_tags=["bogus"]))),
+           "control_empty": fc(_ob("unit"), None, _con(_el(risk_tags=[])))}
+    ok = (set(tags.values()) == {proof.FRESH_REQUIRED} and len(tags) == 8 and got["missing"] == proof.FR_UNKNOWN
+          and got["unknown_tag"] == proof.FR_UNKNOWN and got["control_empty"] == proof.DETERMINISTIC)
+    return ok, f"tags={len(tags)} all FRESH_REQUIRED={set(tags.values()) == {proof.FRESH_REQUIRED}} {got}"
+
+
+def gate_freshness_scan():
+    proof = _need("freshness_class", "RISK_KEYWORDS")
+    if proof is None:
+        return False, _NEEDS
+    fc = proof.freshness_class
+    risky = fc(_ob("unit", text="delete the user table"), None, None)
+    plain_text = "render the page header"
+    stable = all(fc(_ob(c, text=plain_text), None, None) == fc(_ob(c, text=""), None, None)
+                 for c in ("unit", "integration", "in_game", "live", ""))
+    never_lowers = all(proof.FRESHNESS_RANK[fc(_ob(c, text="drop the credential"), None, None)]
+                       >= proof.FRESHNESS_RANK[fc(_ob(c, text=""), None, None)]
+                       for c in ("unit", "integration", "in_game", "live", ""))
+    return risky == proof.FRESH_REQUIRED and stable and never_lowers and len(proof.RISK_KEYWORDS) > 0, f"keyword_text={risky} keyword_free_unchanged={stable} never_lowers={never_lowers}"
+
+
+def gate_contract_weakening():
+    proof = _need("effective_contract", "claim_id")
+    if proof is None:
+        return False, _NEEDS
+    log, state, base = sat_goal()
+    try:
+        o = cv.project_convergence(state).obligations["ob-one"]
+        cid = proof.claim_id(o)
+
+        def put(con):
+            st = gc.project(log)
+            proof.append_pcc(log, st, proof.CONTRACT, {**con, "claim_id": cid, "obligation": "ob-one"}, "founder")
+            return gc.project(log).last_seq
+        a = put(_con(_el(risk_tags=["migration"])))
+        b = put(_con(_el(risk_tags=[])))
+        eff, refused = proof.effective_contract(proof.project_proofs(gc.project(log)), o)
+        kept = eff["elements"][0]["risk_tags"] == ["migration"] and refused == [b]
+        c = put(_con(_el(risk_tags=["migration"], causal_paths=["src", "lib"])))
+        eff2, refused2 = proof.effective_contract(proof.project_proofs(gc.project(log)), o)
+        adopted = eff2["elements"][0]["causal_paths"] == ["src", "lib"] and refused2 == [b]
+        none_eff, none_ref = proof.effective_contract(proof.ProofLedger(), o)
+        return kept and adopted and none_ref == [] and len(none_eff["elements"]) == 1, f"weaker_seq={b} refused={refused} stronger_adopted={adopted} seqs={a},{b},{c}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_contract_combine():
+    proof = _need("freshness_class", "requires_full")
+    if proof is None:
+        return False, _NEEDS
+    got = proof.freshness_class(_ob("unit"), None, _con(_el(), combine="OR"))
+    ctl = proof.freshness_class(_ob("unit"), None, _con(_el(), combine="AND"))
+    return got == proof.FR_UNKNOWN and ctl == proof.DETERMINISTIC and proof.requires_full(got) is True, f"OR={got} AND_control={ctl}"
+
+
+def gate_gate_classes_pinned():
+    return (cv.GATE_CLASSES == ("unit", "integration", "in_game", "live")
+            and set(cv.RUNTIME_GATE_CLASSES) == {"in_game", "live"}), f"GATE_CLASSES={cv.GATE_CLASSES} runtime={sorted(cv.RUNTIME_GATE_CLASSES)}"
+
+
 def main() -> int:
     run_gate("V-PCC-HERMETIC-HOME", gate_hermetic)
     run_gate("V-PCC-ENVELOPE", gate_envelope)
@@ -749,7 +857,13 @@ def main() -> int:
                      ("V-PCC-STATE-NOT-IN-DISPOSITION", gate_not_in_disposition),
                      ("V-PCC-STATE-PRODUCED-UNKNOWN-BINDING", gate_produced_unknown_binding),
                      ("V-PCC-STATE-PRODUCED-WITHOUT-SATISFIED", gate_produced_without_satisfied),
-                     ("V-PCC-STATE-OLD-REVISION-UNKNOWN", gate_old_revision_unknown)):
+                     ("V-PCC-STATE-OLD-REVISION-UNKNOWN", gate_old_revision_unknown),
+                     ("V-PCC-FRESHNESS-MAP", gate_freshness_map),
+                     ("V-PCC-FRESHNESS-RISK-TAGS", gate_freshness_risk),
+                     ("V-PCC-FRESHNESS-SCAN-ESCALATES-ONLY", gate_freshness_scan),
+                     ("V-PCC-CONTRACT-WEAKENING-IGNORED", gate_contract_weakening),
+                     ("V-PCC-CONTRACT-COMBINE-UNKNOWN", gate_contract_combine),
+                     ("V-PCC-GATE-CLASSES-PINNED", gate_gate_classes_pinned)):
         run_gate(name, fn)
     total = passes + fails
     print(f"\nGSDX_PCC_SEMANTICS_PASS={passes}/{total}  threshold={total}/{total}")

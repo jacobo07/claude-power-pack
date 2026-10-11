@@ -68,3 +68,78 @@ PASS V-PCC-STATE-OLD-REVISION-UNKNOWN older_obligation_revision={'ob-old': 'UNKN
 GSDX_PCC_SEMANTICS_PASS=16/31  threshold=31/31
 
 EXIT=1
+
+=== Task 3 RED ===
+PASS V-PCC-HERMETIC-HOME home=pcc-sem-home-ga0f61qp goals_root_under_temp=True
+PASS V-PCC-ENVELOPE keys=True digest=True ledger=True seq=2
+PASS V-PCC-CONTRACT-MALFORMED-RAISES four types raise GoalLogCorrupt naming seq and type
+PASS V-PCC-LEGACY-READERS-DO-NOT-RAISE projection,convergence,epochs,operator,hypotheses,closure ok=[True, True, True, True, True]
+PASS V-PCC-CONTRACT-HIGHER-V-UNKNOWN unsupported=[2, 3, 4, 5] expected=[2, 3, 4, 5]
+PASS V-PCC-WRITER-REFUSES refused=4/4 control_appended=True []
+PASS V-PCC-WRITER-CAS lost_race_raised=True files_unchanged=True fresh_retry_ok=True
+exported 5 events to C:\Users\User\AppData\Local\Temp\pcc-sem-xr-yhpzdls0\export.json
+restored 5 event(s); the store now holds 5
+PASS V-PCC-EXPORT-RESTORE-ROUNDTRIP events=5 digests_equal=True ledgers_equal=True
+PASS V-PCC-SWITCH-PARSE 16 values x 2 switches []
+PASS V-PCC-SWITCH-CALL-TIME answers=[False, True, False, True]
+PASS V-PCC-STATE-TRUTH-TABLE cells=2916 INHERITED=1 disagreements=0
+PASS V-PCC-STATE-NO-EVENT-NOT-INHERITED no_event=UNKNOWN control=INHERITED empty_premise_set=UNKNOWN
+PASS V-PCC-SWITCH-OFF-IS-LEGACY legacy={'ob-one': 'FRESH'} switch_off_with_events={'ob-one': 'FRESH'}
+PASS V-PCC-STATE-UNKNOWN-TREE legacy_reason='' unknown_vs_unknown={'ob-one': 'UNKNOWN'} unknown_vs_known={'ob-one': 'UNKNOWN'} control_known_tree={'ob-one': 'FRESH'}
+PASS V-PCC-STATE-SUPERSEDED-STRENGTH {'integration>unit': True, 'unit!>integration': True, 'equal-strength-same-binding': True, 'empty-class': True, 'other-claim': True, 'unknown-bindings': True}
+PASS V-PCC-STATE-ORDER-STABLE order=['ob-one', 'ob-two']
+PASS V-PCC-STATE-EMPTY no_verdict={'ob-one': 'NOT_APPLICABLE'} empty_paths=unknown:empty premise set
+PASS V-PCC-CERT-CLAIM-REACCEPT reaccept=STALE control=INHERITED
+PASS V-PCC-CERT-GATE-PIN-SCHEME blob_vs_raw=UNKNOWN mixed=UNKNOWN
+PASS V-PCC-CERT-REVISION revision_changed=STALE
+PASS V-PCC-CERT-POLICY-BUMP policy_bump=STALE
+PASS V-PCC-CERT-ENV-UNDECLARED undeclared=UNKNOWN declared_control=INHERITED
+PASS V-PCC-CERT-FUTURE-DATED future=UNKNOWN at_skew_edge=INHERITED
+PASS V-PCC-FINGERPRINT-ABSENT present=cf1:a587e14d absent=cf1:7630c8bd
+PASS V-PCC-FINGERPRINT-OUTSIDE-ROOT refused=['absolute', 'dotdot', 'nested_dotdot'] control=cf1:
+PASS V-PCC-FINGERPRINT-EMPTY env=env1:38672
+PASS V-PCC-FINGERPRINT-EOL crlf_equals_lf=True content_change_detected=True
+PASS V-PCC-STATE-NOT-IN-DISPOSITION proof.py offences=[] control_flags=2
+PASS V-PCC-STATE-PRODUCED-UNKNOWN-BINDING unknown_binding={'ob-one': 'UNKNOWN'} control={'ob-one': 'FRESH'}
+PASS V-PCC-STATE-PRODUCED-WITHOUT-SATISFIED produced_for_unsatisfied={'ob-one': 'NOT_APPLICABLE'}
+PASS V-PCC-STATE-OLD-REVISION-UNKNOWN older_obligation_revision={'ob-old': 'UNKNOWN'}
+FAIL V-PCC-FRESHNESS-MAP RED-first: proof state API absent
+FAIL V-PCC-FRESHNESS-RISK-TAGS RED-first: proof state API absent
+FAIL V-PCC-FRESHNESS-SCAN-ESCALATES-ONLY RED-first: proof state API absent
+FAIL V-PCC-CONTRACT-WEAKENING-IGNORED RED-first: proof state API absent
+FAIL V-PCC-CONTRACT-COMBINE-UNKNOWN RED-first: proof state API absent
+PASS V-PCC-GATE-CLASSES-PINNED GATE_CLASSES=('unit', 'integration', 'in_game', 'live') runtime=['in_game', 'live']
+
+GSDX_PCC_SEMANTICS_PASS=32/37  threshold=37/37
+
+EXIT=1
+PASS V-PCC-HERMETIC-HOME home=pcc-home-pj625u_k
+PASS V-PCC-HERMETIC-ROOT-REFUSAL live-refused=True hermetic-allowed=True
+PASS V-PCC-FIXTURE-MANIFEST g-002-router-surface: 50 files verified; g-001-smoke-runner: 123 files verified
+PASS V-PCC-FIXTURE-TAMPER-REFUSED tampered copy refused: sha256 mismatch 000001.json
+PASS V-PCC-REPLAY-CHAIN-g-002-router-surface events=50 tip=ac414ec58bcd
+PASS V-PCC-REPLAY-CHAIN-g-001-smoke-runner events=123 tip=10dab37eac17
+PASS V-PCC-GOLDEN-PRE-CHANGE head=13a0ee2c2ef0 legacy_files=20
+PASS V-PCC-GOLDEN-RECORDED-NOT-VOLATILE volatile recorded=[]
+PASS V-PCC-REPLAY-G002 g002: 50 prefixes equal
+PASS V-PCC-REPLAY-G001 g001: 123 prefixes equal
+PASS V-PCC-REPLAY-SYNTHETIC syn_contract: 4 prefixes equal; syn_carry: 16 prefixes equal; syn_operator: 5 prefixes equal; syn_evidence: 5 prefixes equal
+PASS V-PCC-REPLAY-POPULATION corpus=22 discovered=22 golden=22 missing=[]
+PASS V-PCC-DECIDE-SIG params=['ctx'] decision=8 context=10 frozen=True
+PASS V-PCC-GATE-RAISE-SURVIVES FAIL V-PCC-SELFTEST-RAISES raised RuntimeError: boom
+PASS V-PCC-REPLAY-IGNORE-NEW-TYPES-FUTURE all six scenarios equal
+PASS V-PCC-REPLAY-IGNORE-NEW-TYPES-PCC all six scenarios equal; project_proofs records=4 appended=4
+PASS V-PCC-REPLAY-INTERLEAVED four synthetic scenarios equal at every writer step
+PASS V-PCC-MUTANT-M1 M1: holders=4 hits=['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']
+PASS V-PCC-MUTANT-M2 M2: holders=4 hits=['fixed/closure/blocking', 'fixed/convergence/failures/pcc-phantom', 'last/closure/blocking']
+PASS V-PCC-MUTANT-M3 M3: holders=1 hits=['fixed/decide/hypothesis', 'fixed/decide/info_key', 'fixed/decide/kind']
+PASS V-PCC-MUTANT-M4 M4: holders=4 hits=['fixed/closure/blocking/3', 'fixed/closure/blocking/4', 'fixed/closure/blocking/5']
+PASS V-PCC-CLEAN-AFTER-MUTANTS g002: 50 prefixes equal; syn_carry: 16 prefixes equal
+PASS V-PCC-SWITCH-FRONTIER-INERT switch_on=[False, True] scenario_runs_equal=10/10
+PASS V-PCC-STATE-LEGACY-MAP checks=1632 excluded_unknown_prefixes=0 older_revision_unknown=0 states={'FRESH': 368, 'NOT_APPLICABLE': 752, 'STALE': 512} disagreements=0 []
+FAIL V-PCC-CONTRACT-LEGACY-ONE-ELEMENT obligations=16 bad=['g002:ob-surface', 'g002:ob-help', 'g002:ob-drill']
+PASS V-PCC-LIVE-STORE-UNTOUCHED verdict=SAME changed=[]
+
+GSDX_PCC_REPLAY_PASS=25/26  threshold=26/26
+
+EXIT=1
