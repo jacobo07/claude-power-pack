@@ -1375,16 +1375,30 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
             spent = (measure or ms.processed_tokens)(rec)
         except Exception:  # noqa: BLE001 -- unmeasured is a named state, not zero
             spent = None
+        ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
+        if isinstance(rec.get("claims"), dict):   # evc-03 T3: the claim-graph estimator comes first
+            try:
+                import cost_to_completion as ctc
+                import route_admission as ra
+                out = ctc.compile_cost(rec["claims"], ra.load_floors())
+                if out.get("verdict") == "COMPILED" and out.get("admit_large"):
+                    cand = out["candidate"]["with_margin"]
+                    est = math.ceil(cand / ratio)
+                    basis = f"CTC claim-graph estimate: candidate with margin {cand:,} / trip ratio {ratio:g} = {est:,}"
+                    return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                      event="envelope_auto_assigned", now=now, token_estimate=est,
+                                      token_estimate_src="ctc", token_estimate_basis=basis, reason=basis)
+            except Exception:  # noqa: BLE001 -- Refused or any CTC failure falls through to the labelled fallback
+                pass
         cfg, src = _budget_defaults()
         headroom, how = auto_headroom(spent, int(rec.get("epoch") or 0), rec.get("max_cycles"), cfg)
-        ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
         est = math.ceil(((spent or 0) + headroom) / ratio)
         spent_txt = "spend unmeasured" if spent is None else f"spent {spent:,}"
-        basis = (f"auto envelope: ({spent_txt} + headroom {headroom:,} [{how}; {src}]) / trip ratio"
-                 f" {ratio:g} = {est:,}")
+        basis = (f"EMERGENCY FALLBACK ([1M,15M]/2 clamp, no claim graph): ({spent_txt} + headroom {headroom:,}"
+                 f" [{how}; {src}]) / trip ratio {ratio:g} = {est:,}")
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                           event="envelope_auto_assigned", now=now, token_estimate=est,
-                          token_estimate_src="auto", token_estimate_basis=basis, reason=basis)
+                          token_estimate_src="auto-fallback", token_estimate_basis=basis, reason=basis)
     except Exception as exc:  # noqa: BLE001 -- recorded, never silent
         lr.ledger_append(mid, "envelope_auto_unassigned", mission_id=mid,
                          error=f"{type(exc).__name__}: {exc}"[:300])

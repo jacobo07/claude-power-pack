@@ -215,8 +215,10 @@ def main() -> int:
     _running("m-auto")
     gm.transition("m-auto", expect_epoch=1, expect_state=gm.RUNNING, event="t_cap", now=NOW, max_cycles=3)
     r = gm._auto_budget(gm.load("m-auto"), NOW, measure=lambda rec: 3_000_000)
-    check("V-AUTO-ASSIGNED", r.get("token_estimate") == 6_000_000 and r.get("token_estimate_src") == "auto"
+    check("V-AUTO-ASSIGNED", r.get("token_estimate") == 6_000_000 and r.get("token_estimate_src") == "auto-fallback"
           and "rate" in (r.get("token_estimate_basis") or ""), str(r.get("token_estimate_basis")))
+    check("V-EVC-ENV-LABEL", r.get("token_estimate_src") == "auto-fallback"
+          and (r.get("token_estimate_basis") or "").startswith("EMERGENCY FALLBACK"), str(r.get("token_estimate_basis")))
 
     def boom(rec):
         raise OSError("meter down")
@@ -255,11 +257,38 @@ def main() -> int:
     finally:
         gm.plan_next, ms.processed_tokens, gm._cost_breaker = real
     free, op, held = (gm.load(m) for m in ("m-sv-free", "m-sv-op", "m-sv-held"))
-    check("V-AUTO-SUPERVISE-ASSIGNS", free.get("token_estimate_src") == "auto" and free.get("token_estimate"),
+    check("V-AUTO-SUPERVISE-ASSIGNS", free.get("token_estimate_src") == "auto-fallback" and free.get("token_estimate"),
           str(free.get("token_estimate")))
     check("V-AUTO-OPERATOR-PRESERVED", op.get("token_estimate") == 1_500_000 and not op.get("token_estimate_src"),
           str(op.get("token_estimate")))
     check("V-AUTO-HELD-UNTOUCHED", held.get("token_estimate") is None)
+
+    # 9. evc-03 T3: CTC first, the clamp is a labelled emergency fallback.
+    import math
+    import cost_to_completion as ctc
+    import route_admission as ra_
+    # control: an operator-set estimate is never rewritten by the sweep (src stays empty)
+    check("V-EVC-ENV-LABEL-OPERATOR-CONTROL", op.get("token_estimate_src") in (None, "", "operator"),
+          str(op.get("token_estimate_src")))
+    doc = {"claims": [{"id": "c1", "class": "novel"}],
+           "profiles": {"novel": {"calls": 5, "ctx_tokens": 120000, "n": 6}}}
+    want = ctc.compile_cost(doc, ra_.load_floors())
+    _running("m-ctc")
+    base = gm.load("m-ctc")
+    r = gm._auto_budget({**base, "claims": doc}, NOW, measure=lambda rec: 3_000_000)
+    ratio = float(base.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
+    exp = math.ceil(want["candidate"]["with_margin"] / ratio)
+    check("V-EVC-ENV-CTC-FIRST", want["admit_large"] and r.get("token_estimate") == exp
+          and r.get("token_estimate_src") == "ctc" and "CTC" in (r.get("token_estimate_basis") or ""),
+          f"{r.get('token_estimate')} vs {exp} {r.get('token_estimate_src')}")
+    _running("m-ctc-nc")
+    r = gm._auto_budget(gm.load("m-ctc-nc"), NOW, measure=lambda rec: 3_000_000)
+    check("V-EVC-ENV-CTC-FIRST-NO-CLAIMS", r.get("token_estimate_src") == "auto-fallback", str(r.get("token_estimate_src")))
+    _running("m-ctc-ref")
+    r = gm._auto_budget({**gm.load("m-ctc-ref"), "claims": {"phases": 3, "claims": []}}, NOW,
+                        measure=lambda rec: 3_000_000)
+    check("V-EVC-ENV-CTC-REFUSED-FALLS-THROUGH", r.get("token_estimate_src") == "auto-fallback"
+          and r.get("token_estimate"), str(r.get("token_estimate_src")))
 
     print(f"ENVELOPE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
