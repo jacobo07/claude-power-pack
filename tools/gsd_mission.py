@@ -1735,6 +1735,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
           if rec.get("workstream") else []),
         # G22: before the GSD facts and the note, so the byte cap cuts those and never this.
         *_capsule_card_lines(rec),
+        *_ledger_obligation_lines(rec),
         "",
         # Owner decision 2026-09-25 (settings.json autoMode.allow entry): four workers sat for
         # hours on an AskUserQuestion / permission prompt nobody watching could answer.
@@ -2564,6 +2565,19 @@ def _halt_continue_body(rec: dict, wd: str, result_text: str, slim: dict | None,
 # (tools/mission_capsule.py) owns compile/seal/gate/arm/bind; rollover.py owns the format, the
 # marker and "certified". What lives here is WHEN each is asked, and what the mission does with
 # the answer (spec sections 8 and 9).
+def _ledger_obligation_lines(rec: dict) -> list[str]:
+    """EWC M8: the predecessor's open obligations (<= 10 lines) so a fresh context sees them."""
+    root = str(Path(__file__).resolve().parent.parent)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    try:
+        from modules.gsd_x.goal import session_scope as ss
+        lines = ss.open_lines(rec.get("work_dir") or rec.get("cwd") or "", (rec.get("owner") or {}).get("session_id") or "")
+    except Exception as exc:  # the card is the relay's lifeline: an unreadable ledger is UNKNOWN, never a dead card
+        return ["", f"OPEN OBLIGATIONS: UNKNOWN (session ledger unreadable: {type(exc).__name__}); reconcile before claiming done."]
+    return ["", "OPEN OBLIGATIONS (session ledger; do the AGENT ones first):"] + lines if lines else []
+
+
 def _capsule_card_lines(rec: dict) -> list[str]:
     """G22: the successor's first duty. Only when a predecessor sealed a capsule for it
     (`capsule_key`): the first worker of a mission has nothing to certify."""

@@ -119,3 +119,25 @@ def list_obligations(repo: str, sid: str) -> list[dict]:
                     "next_action": o.next_action, "state": "closed" if closed else "open",
                     "verdict": (o.verdict or {}).get("raw", "")})
     return out
+
+
+def open_lines(cwd: str, sid: str, limit: int = 10) -> list[str]:
+    """M8: open obligations of a session ledger as <= `limit` lines (id, severity, next_action), for
+    the successor card and the /kclear capsule. Never raises: no ledger, no repo or an unreadable
+    log is simply no lines (the Stop gate reads the ledger itself)."""
+    try:
+        from pathlib import Path
+        from modules.gsd_x.goal.log import repo_id
+        if not cwd or not sid:
+            return []
+        obs = [o for o in list_obligations(repo_id(Path(cwd)), sid)
+               if o["state"] == "open" and o["actionability"] not in ("INFO", "WAIVED")]
+        rank = {"RED": 0, "AMBER": 1, "INFO": 2}
+        obs.sort(key=lambda o: rank.get(o["severity"], 3))
+        out = [f"  - {o['id']} [{o['severity']}] {' '.join(str(o['next_action']).split())[:160]}"
+               for o in obs[:limit]]
+        if len(obs) > limit:
+            out[-1] = f"  - (+{len(obs) - limit + 1} more open obligations; run the obligations CLI)"
+        return out
+    except Exception:  # noqa: BLE001 -- additive context, never a reason to fail a card or a seal
+        return []

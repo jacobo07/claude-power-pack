@@ -589,6 +589,14 @@ def bootstrap(capsule: dict) -> str:
     if obl:
         lines.append("Open obligations (first is next):")
         lines += [f"  {i}. {o}" for i, o in enumerate(obl, 1)]
+    try:
+        from modules.gsd_x.goal import session_scope as _ss
+        led = _ss.open_lines(capsule.get("cwd") or "", capsule.get("session_id") or "")
+    except Exception:  # noqa: BLE001 -- additive
+        led = []
+    if led:
+        lines.append("Open obligations in the session ledger (EWC):")
+        lines += led
     dirty = repo.get("dirty") if isinstance(repo.get("dirty"), list) else []
     if dirty:
         lines.append(f"Dirty at seal ({len(dirty)}; some may be other panes'): " + ", ".join(dirty[:8]))

@@ -211,6 +211,9 @@ function evaluate(data, opts) {
     } catch (e) { unknown = true; }
   } else if (!readSomething) unknown = true;
 
+  // (b3) caller-supplied obligations (e.g. UNCONSUMED_CHILD from the task-output scan); ledger wins
+  for (const o of (opts.extra || [])) if (o && o.id && !all.has(o.id)) all.set(o.id, o);
+
   const open = Array.from(all.values()).filter((o) => o.open && o.actionability !== 'WAIVED'
     && o.actionability !== 'INFO' && !(o.severity === 'INFO' && o.owner_class === 'AGENT'));
   out.open = open;

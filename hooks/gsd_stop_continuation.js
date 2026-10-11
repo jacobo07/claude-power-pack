@@ -227,7 +227,7 @@ function fingerprint(marker, cwd, tasksDir) {
  * second planner, so the strongest thing it may do is name the artifact the
  * mission has not consumed yet and point at GSD's own state for the rest.
  */
-function nextAction(marker, cwd, tasksDir) {
+function newestUnreadOutput(tasksDir) {
   let newest = null;
   for (const f of listDir(tasksDir)) {
     if (!f.endsWith('.output')) continue;
@@ -241,6 +241,11 @@ function nextAction(marker, cwd, tasksDir) {
       continue;    // a task file that vanished mid-scan is simply not newest
     }
   }
+  return newest;
+}
+
+function nextAction(marker, cwd, tasksDir) {
+  const newest = newestUnreadOutput(tasksDir);
   if (newest) {
     return 'A background task finished and its result has not been read: '
       + `${newest.name} (${newest.size} bytes). Read it now with the Read tool `
@@ -273,13 +278,27 @@ function safeFingerprint(data, sid, marker) {
   } catch (err) { return ''; }
 }
 
+/** M8: an unread background-task output is an obligation (NOW, UNCONSUMED_CHILD) for every session. */
+function unconsumedChildObligations(data, sid) {
+  try {
+    const tasksDir = path.join(os.tmpdir(), 'claude',
+      path.basename(path.dirname(String(data.transcript_path || ''))) || '_', sid, 'tasks');
+    const n = newestUnreadOutput(tasksDir);
+    if (!n) return [];
+    return [{ id: 'UNCONSUMED_CHILD:' + n.name, kind: 'UNCONSUMED_CHILD', text: n.name,
+      source: 'task_output_scan', severity: 'AMBER', actionability: 'NOW', owner_class: 'AGENT', open: true,
+      next_action: `Read the unread background task output ${n.full} (${n.size} bytes) and act on it.` }];
+  } catch (err) { return []; }
+}
+
 function ewcGate(data, sid, marker) {
   let gate;
   try { gate = require('./lib/ewc_gate.js'); } catch (err) { return null; }
   const mode = ewcMode(marker);
   if (mode === 'off') return null;
   let g;
-  try { g = gate.evaluate(data, {}); } catch (err) { return null; }   // fail-open: legacy path decides
+  const extra = unconsumedChildObligations(data, sid);
+  try { g = gate.evaluate(data, { extra }); } catch (err) { return null; }   // fail-open: legacy path decides
   const base = { mode, would_block: false, open: g.open.length, digest: g.digest };
 
   if (!g.verdict.startsWith('CONTINUE_')) {

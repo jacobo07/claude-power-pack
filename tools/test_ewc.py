@@ -237,5 +237,47 @@ h2 = Home()
 out, rec = h2.stop("complete", CPP_EWC_GATE="enforce")
 check("V-EWC-11c no binding, no ledger (control): COMPLETE", out.get("decision") != "block" and last(rec).get("category") == "STOP_COMPLETE")
 
+# ---- E4 (M8): unread child output is an obligation; ledger obligations reach the successor card + capsule ----
+h = Home()
+tmpd = h.home / "tmp"
+(tmpd / "claude" / "ewc" / "t1" / "tasks").mkdir(parents=True)
+(tmpd / "claude" / "ewc" / "t1" / "tasks" / "bx1.output").write_text("result: 3 failures", encoding="utf8")
+out, rec = h.stop("complete", CPP_EWC_GATE="enforce", TEMP=str(tmpd), TMP=str(tmpd), TMPDIR=str(tmpd))
+check("V-EWC-12a unread task output (interactive, no marker, empty ledger) drives CONTINUE",
+      out.get("decision") == "block" and "UNCONSUMED_CHILD" in out.get("reason", ""), str(out) + str(rec))
+h = Home()
+(h.home / "tmp").mkdir()
+out, rec = h.stop("complete", CPP_EWC_GATE="enforce", TEMP=str(h.home / "tmp"), TMP=str(h.home / "tmp"))
+check("V-EWC-12b no task output (control): COMPLETE", out.get("decision") != "block"
+      and last(rec).get("category") == "STOP_COMPLETE", str(rec))
+
+from modules.gsd_x.goal import session_scope as _ss
+from modules.gsd_x.goal.log import repo_id as _rid
+h = Home()
+os.environ["GSDX_GOALS_ROOT"] = str(h.goals)
+_rep = _rid(ROOT)
+for i in range(12):
+    _ss.add(_rep, "t1", text=f"Fix failure number {i}", source="test", severity="RED", actionability="NOW",
+            owner_class="AGENT", next_action=f"Do the work {i}")
+_lines = _ss.open_lines(str(ROOT), "t1")
+check("V-EWC-13a open_lines: <= 10 lines, id + severity + next_action", 0 < len(_lines) <= 10
+      and "RED" in _lines[0] and "Do the work" in _lines[0], str(_lines))
+check("V-EWC-13b open_lines: other session / no repo => no lines (control)",
+      _ss.open_lines(str(ROOT), "other") == [] and _ss.open_lines(str(h.home), "t1") == [])
+sys.path.insert(0, str(ROOT / "tools"))
+import gsd_mission as _gm, rollover as _ro
+_card = _gm.render_card({"epoch": 2, "mission_id": "m-x", "cwd": str(ROOT), "owner": {"session_id": "t1"},
+                         "resume_command": "x", "directives": []})
+check("V-EWC-13c successor card carries the open obligations", "OPEN OBLIGATIONS" in _card and "Do the work" in _card, _card[:400])
+_boot = _ro.bootstrap({"session_id": "t1", "cwd": str(ROOT), "repo": {}, "obligations": [], "handoff": {}})
+check("V-EWC-13d /kclear capsule bootstrap carries the open obligations", "Do the work" in _boot, _boot[:400])
+_card0 = _gm.render_card({"epoch": 2, "mission_id": "m-x", "cwd": str(ROOT), "owner": {"session_id": "none"},
+                          "resume_command": "x", "directives": []})
+check("V-EWC-13e no ledger (control): no OPEN OBLIGATIONS block", "OPEN OBLIGATIONS" not in _card0)
+# fresh epoch: new context, next action exists only in the ledger => CONTINUE at Stop
+out, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+check("V-EWC-13f fresh-epoch fixture: ledger-only obligation still yields CONTINUE",
+      out.get("decision") == "block" and "CONTINUE_" in json.dumps(rec), str(out) + str(rec))
+
 print("EWC_PASS=%d/%d" % (sum(results), len(results)))
 sys.exit(0 if all(results) else 1)
