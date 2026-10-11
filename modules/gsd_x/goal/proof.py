@@ -24,6 +24,7 @@ not authorship.
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 
 from .contract import GoalState, project
@@ -36,6 +37,24 @@ INVALIDATED = "proof.invalidated"
 NEW_TYPES = (CONTRACT, PRODUCED, INHERITED_EV, INVALIDATED)
 
 SUPPORTED_V = 1
+
+# Rollback switches (spec S10). Env only, read at CALL time, never cached. ON iff the
+# variable is unset/empty or one of on|1|true|yes (after strip + lower); every other
+# value -- off, 0, false, a typo -- is OFF, so a typo falls back to the legacy path.
+FRONTIER_SWITCH = "GSDX_FRONTIER"
+INHERITANCE_SWITCH = "GSDX_PROOF_INHERITANCE"
+_ON_VALUES = frozenset({"", "on", "1", "true", "yes"})
+
+
+def switch_on(name: str) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return True
+    return raw.strip().lower() in _ON_VALUES
+
+
+def inheritance_enabled() -> bool:
+    return switch_on(INHERITANCE_SWITCH)
 
 REQUIRED_FIELDS = {
     CONTRACT: ("v", "claim_id", "obligation", "elements", "combine"),

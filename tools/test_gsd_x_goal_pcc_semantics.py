@@ -287,6 +287,52 @@ def gate_export_restore():
         shutil.rmtree(work, ignore_errors=True)
 
 
+ON_VALUES = (None, "", "on", "ON", " on ", "1", "true", "yes")
+OFF_VALUES = ("off", "OFF", " off ", "0", "false", "of", "banana", "disabled")
+
+
+def _with_env(name: str, value, fn):
+    saved = os.environ.get(name)
+    try:
+        if value is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = value
+        return fn()
+    finally:
+        if saved is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = saved
+
+
+def gate_switch_parse():
+    proof = load_proof()
+    if proof is None or not hasattr(proof, "switch_on"):
+        return False, "RED-first: proof.switch_on absent"
+    bad = []
+    for name in (proof.FRONTIER_SWITCH, proof.INHERITANCE_SWITCH):
+        for v in ON_VALUES:
+            if _with_env(name, v, lambda: proof.switch_on(name)) is not True:
+                bad.append(f"{name}={v!r} should be ON")
+        for v in OFF_VALUES:
+            if _with_env(name, v, lambda: proof.switch_on(name)) is not False:
+                bad.append(f"{name}={v!r} should be OFF")
+    inh = [_with_env(proof.INHERITANCE_SWITCH, v, proof.inheritance_enabled) for v in ("off", "on")]
+    if inh != [False, True]:
+        bad.append(f"inheritance_enabled follows the switch: {inh}")
+    return not bad, f"{len(ON_VALUES) + len(OFF_VALUES)} values x 2 switches {bad}"
+
+
+def gate_switch_call_time():
+    proof = load_proof()
+    if proof is None or not hasattr(proof, "switch_on"):
+        return False, "RED-first: proof.switch_on absent"
+    name = proof.FRONTIER_SWITCH
+    seq = [_with_env(name, v, lambda: proof.switch_on(name)) for v in ("off", "on", "0", "yes")]
+    return seq == [False, True, False, True], f"answers={seq}"
+
+
 def main() -> int:
     run_gate("V-PCC-HERMETIC-HOME", gate_hermetic)
     run_gate("V-PCC-ENVELOPE", gate_envelope)
@@ -296,6 +342,8 @@ def main() -> int:
     run_gate("V-PCC-WRITER-REFUSES", gate_writer_refuses)
     run_gate("V-PCC-WRITER-CAS", gate_writer_cas)
     run_gate("V-PCC-EXPORT-RESTORE-ROUNDTRIP", gate_export_restore)
+    run_gate("V-PCC-SWITCH-PARSE", gate_switch_parse)
+    run_gate("V-PCC-SWITCH-CALL-TIME", gate_switch_call_time)
     total = passes + fails
     print(f"\nGSDX_PCC_SEMANTICS_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1

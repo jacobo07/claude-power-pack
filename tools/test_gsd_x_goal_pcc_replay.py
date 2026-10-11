@@ -1007,6 +1007,29 @@ def gates_seam() -> None:
         return all(r[0] for r in res), "; ".join(r[1] for r in res)
     run_gate("V-PCC-CLEAN-AFTER-MUTANTS", clean)
 
+    def frontier_inert():
+        proof = load_proof()
+        if proof is None or not hasattr(proof, "switch_on"):
+            return False, "RED-first: proof.switch_on absent"
+        golden = load_golden()
+        if golden is None:
+            return False, "golden absent"
+        saved = os.environ.get(proof.FRONTIER_SWITCH)
+        seen, results = [], []
+        try:
+            for value in ("off", "on"):
+                os.environ[proof.FRONTIER_SWITCH] = value
+                seen.append(proof.switch_on(proof.FRONTIER_SWITCH))
+                for n in ("g002", "syn_contract", "syn_carry", "syn_operator", "syn_evidence"):
+                    results.append(compare_scenario(n, scenario_raw(n), golden)[0])
+        finally:
+            if saved is None:
+                os.environ.pop(proof.FRONTIER_SWITCH, None)
+            else:
+                os.environ[proof.FRONTIER_SWITCH] = saved
+        return seen == [False, True] and all(results), f"switch_on={seen} scenario_runs_equal={sum(results)}/{len(results)}"
+    run_gate("V-PCC-SWITCH-FRONTIER-INERT", frontier_inert)
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
