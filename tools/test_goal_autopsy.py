@@ -166,6 +166,19 @@ def g_autopsy():
               f"git {out.get('git')}")
         # deterministic: two runs, identical text
         check("V-GOAL-AUTOPSY-DETERMINISTIC", _table(_autopsy("g", projects=projects)) == tbl and tbl != "", "second run identical")
+        # a subagent's spend is the goal's spend: main + subagent, typed by its sibling .meta.json
+        sub = projects / "p" / "116de5ca" / "subagents"
+        sub.mkdir(parents=True)
+        (sub / "agent-x.jsonl").write_text(
+            "".join(_row(f"x-{i}", 100_000, e.goalroot, f"2099-01-01T02:{i:02d}:00.000Z") for i in range(2)), encoding="utf-8")
+        (sub / "agent-x.meta.json").write_text(json.dumps({"agentType": "Explore"}), encoding="utf-8")
+        row = next((r for r in _autopsy("g", projects=projects).get("sessions", []) if r["sid"] == "116de5ca"), {})
+        check("V-GOAL-AUTOPSY-SUBAGENT",
+              row.get("main_processed") == 1_160_335 and row.get("subagent_processed") == 200_000
+              and row.get("processed") == 1_360_335 and row.get("calls") == 12
+              and row.get("subagents", {}).get("Explore", {}).get("calls") == 2,
+              f"main {row.get('main_processed')} sub {row.get('subagent_processed')} total {row.get('processed')} "
+              f"calls {row.get('calls')} types {sorted(row.get('subagents', {}))}")
     finally:
         os.chdir(PP)
         e.close()
