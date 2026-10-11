@@ -119,6 +119,19 @@ export const register: Register = on => {
     return applied ? { ...r, isDeferred: true } : r
   })
 
+  // Materialization receipt for the system prompt (observe only): the first render's sections and sizes.
+  // Measured 2026-10-12: on a lean-trait render it holds no per-tool guidance, so narrowing `tools` here cuts nothing.
+  let composeSeen = false
+  on('prompt.compose', async ($, e, next) => {
+    const r = await next(e)
+    if (!composeSeen && effective('main') !== 'off') {
+      composeSeen = true
+      receipt({ ev: 'compose', traits: e.traits, offered: e.tools.length,
+        sections: r.sections.map(s => ({ id: s.id, scope: s.scope, bytes: s.text.length })) })
+    }
+    return r
+  })
+
   // Memory Linker (work units only): the auto-memory section is left out; its files stay on disk.
   on('prompt.section', async ($, e, next) => {
     const r = await next(e)
