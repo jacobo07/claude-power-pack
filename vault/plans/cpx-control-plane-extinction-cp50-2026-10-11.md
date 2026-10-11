@@ -153,3 +153,10 @@ Historical baseline (not a forecast input): coordinator 37.5M / 207 calls / abou
 "y" authorizes: declare goal cpx hard 9M; raise cp50-c2 cap 14M -> 16M; two chains + tick tasks; the TRF W2 packet amendment; pathspec commits on feature/knowledge-acquisition (no push); Phase-7 job 3 (already authorized by run plan D4); job 4 only under the rule in section 5.
 Excluded: full CP50 run (C3 ends at "Owner funds CP50"), Tennis Scope A/B execution, `~/.claude/hooks` edits (HR-001), GEX44 live install, D24 W3, push.
 Returns to Owner only for: funding CP50 after C3; any goal cap crossing; a TRF/CP50 shared-capsule conflict that cannot be serialized; HR-001.
+
+## 9. Amendment A2 (Owner, 2026-10-11): REA enablement = deferred row D27
+
+- D27 in `vault/plans/deferred-backlog.md` holds the REA Wii/PPC Enablement Program (P0-P7, EVC gate vs the R6 dossier).
+- R5's packet MUST include D27 in its admission table and may arm P0 (revalidate the current upstream release + the W4
+  hang probe) as a small zero-model unit. R6's packet states its dossier contract as the D27 P7 baseline.
+- TRF REA-DISPOSITION.md reading: REJECT = capability gap with a certification path, not REA discarded.

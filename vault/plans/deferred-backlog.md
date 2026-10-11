@@ -1205,3 +1205,51 @@ the Owner's CP50 track (C1 re-armed as m-4e2364edc538, goal cp50-c1b, in wt_cp50
 `parked` units back into `units` in order, read RESUMPTION_FILE.md in the work tree, and let the chain tick arm them.
 Before W5, run `hardrule_compile.py --class DEPLOY`.
 
+
+---
+
+## D27 — REA Wii/PPC Enablement Program: REA as Evidence Plane under the Recon Factory (Owner, 2026-10-11)
+
+**Origin:** TRF W4 (`vault/programs/tennis-rf/REA-DISPOSITION.md`) returned REJECT for native PPC on rea-agents 6.3.0
+(`rea --help` hangs > 45 s importing `dist/cli.js` on Win11/Node 24.15; no DOL / ELF32-PPC lane in `dist/`). Owner
+direction: the REJECT is a **capability gap with a certification path**, not "REA discarded", and not "patch REA for
+50M before Tennis". HR-NOVELTY-001 class: EXTEND_EXISTING_OWNER (cpx R6 evidence dossier + TRF W4 disposition).
+
+**Boundary.** Upstream in REA: CLI bootstrap reliability, provider lifecycle and process ownership, DOL + PPC BE target
+support, generic Ghidra target admission, deterministic native evidence, bounded function dossiers, snapshots/cache,
+target readiness, bounded agent projections, diagnostics. Stays in CPP: Binary Semantic Genome, family clustering,
+semantic novelty, cross-game theorem transfer, compiler inversion, Function Family Compiler, Proof of Model Necessity,
+information-gain scheduler, Cognitive P&L, learning curves, model routing, CBR, Tennis economics.
+
+**Units (each a bounded packet; stop at the first conclusive answer):**
+- P0 Revalidation: pin the CURRENT upstream release (claimed 6.4.0 on main 2026-10-11, UNVERIFIED here: read
+  `server.json` and the release tag first). Re-run the W4 hang probe. Hang gone -> P1 shrinks to a regression gate.
+- P1 CLI cold-start contract: a non-analysis command (help/version/capabilities) must not load an analysis provider;
+  startup budget per OS/Node as a permanent verification lane (upstream PR candidate).
+- P2 Target Readiness Certificate (generic; also CPP-side for every tool): REA version -> CLI bootstrap -> provider
+  health -> format -> architecture -> endianness -> loader -> profile -> required operations -> fixture check. Verdicts
+  SUPPORTED / PARTIAL / UNSUPPORTED / BROKEN_ENVIRONMENT / BROKEN_REA. Host capability (OS, JDK, Ghidra, process
+  ownership) separate from target capability (format, arch, endian, loader, operations). An unsupported target fails in
+  milliseconds with UNSUPPORTED_TARGET + format/arch/provider/missing capability/remediation, never a hang.
+  Rule: TOOL INSTALLED != CAPABILITY AVAILABLE FOR THE CURRENT WORK CLASS.
+- P3 DOL + PPC BE Ghidra lane, controlled fixture first, then SportsPackEP.dol. Proves DOL identity/hash, sections and
+  offsets, load addresses, BSS, entry point, PowerPC:BE:32 (Gekko) language/profile, file-offset <-> memory mapping,
+  function/address identity, headless reproducibility. Rule: PROVIDER READY != TARGET CORRECTLY LOADED.
+- P4 Evidence conformance vs DTK + m2c + Ghidra (instrumental truth): calls/branches, register/data refs, SDA (r2/r13),
+  globals, constants, xrefs, call graph, load addresses. Surface decided against our corpus, not a prompt.
+- P5 Bounded function dossier, same contract as cpx R6 (upstream-compatible). Rule: every native evidence producer has
+  a bounded agent-facing projection.
+- P6 Bulk + cache: analyse once -> compact global index -> dossiers projected on demand; content-addressed key = binary
+  hash + provider version + loader/profile + operation + params + evidence version; same inputs -> zero analysis, zero
+  model. Performance contract in CI: cold start, provider discovery, cached and uncached dossier, snapshot hit, provider
+  startup, evidence bytes, projection size.
+- P7 Tennis canary on draw 1-5: REA dossier vs CPP R6 dossier, same outputs/evidence, measured EVC.
+
+**Gate (Technical Capital Allocator):** USE_REA for Tennis only if P7 shows lower Expected Verified Cost than the R6
+evidence plane; until then KEEP_CPP + EXTEND_UPSTREAM. D21 never waits on this programme. Price P0-P7 CAPEX against
+savings over Tennis and future Wii games once R6 and C3 measure what the dossier already buys; if R6 gives ~95% of the
+value, REA improves upstream without blocking anything. File the upstream PPC/DOL issue (draft in REA-DISPOSITION.md)
+once P0 confirms the gap on the current release; keep the adapter/patch clean enough to contribute.
+
+**Activation criterion:** cpx R6 receipt DONE plus the C3 two-arm result; P0 may run earlier (zero-model, small).
+Decision owner: cpx R5 admission table (plan `cpx-control-plane-extinction-cp50-2026-10-11.md` section 9).

@@ -35,3 +35,6 @@ task names. Pathspec commits only, message ends with the Co-Authored-By line fro
    current+dossier) and records the per-function metrics listed in 7c; C3's packet reports both arms and the
    model-needed fraction. R5's packet adds the D11-D19 evidence-gated admission table (D14/D20 guards). REA is
    REJECT for PPC (tennis-rf/REA-DISPOSITION.md): do not reinstall it.
+9. Amendment A2 (plan section 9): R5's packet includes D27 (REA Wii/PPC Enablement, `vault/plans/deferred-backlog.md`)
+   in its admission table and may arm P0 as a small zero-model unit; R6's packet states its dossier contract as the
+   baseline for D27 P7.
