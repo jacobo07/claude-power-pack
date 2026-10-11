@@ -425,11 +425,138 @@ def _live_settle(goal: str, missions: list[dict], chain: dict) -> list[dict]:
     return done
 
 
+SILENT = {"stopped_without_done", "residual_exhausted", "arm_refused", "refuse_envelope", "human_gate",
+          "pause_budget", "wait_steward"}
+DEFAULT_SILENCE_S, DEFAULT_WAIT_TIMEOUT_S, LOCK_S = 1800, 21600, 5.0
+
+
+def _state_dir() -> Path:
+    return Path(os.environ.get("CPP_GSDX_CHAIN_STATE") or (Path.home() / ".claude" / "state"))
+
+
+def _log_path() -> Path:
+    return _state_dir() / "gsdx-chain.jsonl"
+
+
+def _history(goal: str, limit: int = 400) -> list:
+    out = []
+    try:
+        for ln in _log_path().read_text(encoding="utf-8", errors="replace").splitlines()[-limit * 4:]:
+            try:
+                r = json.loads(ln)
+            except ValueError:
+                continue
+            if isinstance(r, dict) and r.get("goal") == goal:
+                out.append(r)
+    except OSError:
+        pass
+    return out[-limit:]
+
+
+def _alert(row: dict) -> None:
+    """The existing steward sink. Keyed `chain_goal`, not `goal`: R2 reads `goal` as a forgotten-goal incident."""
+    p = _state_dir() / "steward-incidents.jsonl"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    detail = {k: row[k] for k in ("why", "reason", "missing", "need", "forecast") if k in row}
+    with p.open("a", encoding="utf-8") as f:
+        f.write(json.dumps({"kind": "chain_alert", "chain_goal": row["goal"], "action": row["action"],
+                            "unit": row.get("unit"), "at": row["at"], "detail": detail}) + "\n")
+
+
+def silence_check(chain: dict, row: dict, history: list, now: float) -> bool:
+    """True when this row has been the chain's standing answer for longer than its window and no alert was raised
+    for (goal, action, unit) yet. A running mission is never silent; wait_event is, past wait_timeout_s."""
+    act = row.get("action")
+    if act == "wait_event":
+        limit = float(chain.get("wait_timeout_s", DEFAULT_WAIT_TIMEOUT_S))
+    elif act in SILENT:
+        limit = float(chain.get("silence_s", DEFAULT_SILENCE_S))
+    else:
+        return False
+    key = (act, row.get("unit"))
+    since = now
+    for h in reversed(history):
+        if (h.get("action"), h.get("unit")) != key:
+            break
+        since = float(h.get("at") or since)
+    if now - since <= limit:
+        return False
+    return not any(h.get("alerted") and (h.get("action"), h.get("unit")) == key for h in history)
+
+
+def _done_ids(chain: dict) -> set:
+    done = set()
+    for u in chain["units"]:
+        refused = bool(u.get("acceptance")) and _current(u, REFUSAL) is not None
+        st = receipt_status(Path(u["receipt"]))
+        if (st in set(u.get("accept") or ["DONE"]) and not refused) or \
+                (u.get("acceptance") and _current(u, SEAL) is not None) or \
+                (limits_accepted(Path(u["receipt"])) and not refused):
+            done.add(u["id"])
+    return done
+
+
+def forecast(chain: dict, measured: dict, route_target) -> dict:
+    """forecast = sum over not-done units of route target x overrun; overrun = measured spend of done units /
+    their route targets (floor 1.0); no measurement -> overrun 1.0, basis 'unmeasured'."""
+    done = _done_ids(chain)
+    num = den = 0
+    for u in chain["units"]:
+        if u["id"] in done and measured.get(u["id"]):
+            num += int(measured[u["id"]])
+            den += route_target(u["route"])
+    overrun = max(1.0, num / den) if den else 1.0
+    remaining = [u for u in chain["units"] if u["id"] not in done]
+    total = int(sum(route_target(u["route"]) for u in remaining) * overrun)
+    return {"forecast": total, "overrun": round(overrun, 3), "basis": "measured" if den else "unmeasured",
+            "units_left": [u["id"] for u in remaining]}
+
+
+def _live_measured(goal: str) -> dict:
+    """Per-unit measured spend from the goal ledger: lease succession_id `<goal>:<unit>[:rN]` -> settled tokens."""
+    led = _live_ledger(goal)
+    out = {}
+    for ls in led._gfold(led._read())["leases"]:
+        sid = ls.get("succession_id") or ""
+        if sid.startswith(goal + ":"):
+            uid = sid.split(":")[1]
+            out[uid] = out.get(uid, 0) + int(ls.get("settled", 0)) + int(ls.get("rsettled", 0))
+    return out
+
+
+def _armed_for(missions: list, packet: str) -> list:
+    bp = _by_packet(missions)
+    return [m for m in bp.get(_norm(packet), []) + bp.get(_norm(packet + RESIDUAL), []) if m.get("state") not in TERMINAL]
+
+
 def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settler=None, ledger=None,
-         gate_runner=None, git=None) -> dict:
+         gate_runner=None, git=None, trigger: str = "watchdog", lock_s: float = LOCK_S, measured=None, history=None,
+         alerter=None, now=None) -> dict:
+    """One decision, under ONE exclusive per-goal lock (watchdog, event and manual ticks all queue on it)."""
     if os.environ.get("CPP_GSDX_CHAIN", "").lower() == "off":
         return {"action": "off"}
     chain = json.loads(chain_path.read_text(encoding="utf-8-sig"))
+    kw = dict(dry_run=dry_run, state=state, armer=armer, settler=settler, ledger=ledger, gate_runner=gate_runner, git=git,
+              trigger=trigger, measured=measured, history=history, alerter=alerter, now=now)
+    if dry_run:
+        return _tick_locked(chain, **kw)
+    sys.path.insert(0, str(ROOT))
+    from modules.lease.store import Exclusive  # noqa: E402
+    lockdir = _state_dir()
+    lockdir.mkdir(parents=True, exist_ok=True)
+    try:
+        with Exclusive(lockdir / f"gsdx-chain-{chain['goal']}.lock", lock_s):
+            return _tick_locked(chain, **kw)
+    except TimeoutError:
+        row = {"action": "skipped_locked", "at": time.time(), "goal": chain["goal"], "trigger": trigger, "dry_run": False}
+        if state is None:
+            with _log_path().open("a", encoding="utf-8") as f:
+                f.write(json.dumps(row) + "\n")
+        return row
+
+
+def _tick_locked(chain: dict, dry_run, state, armer, settler, ledger, gate_runner, git, trigger, measured, history,
+                 alerter, now) -> dict:
     missions, used = state() if state else _live_state(chain["goal"])
     settled = []
     if not dry_run:
@@ -440,25 +567,182 @@ def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settle
         row["finalized"] = finalized
     if settled:
         row["settled"] = settled
+    if row["action"] == "arm":
+        if callable(measured):
+            meas = measured()
+        elif measured is not None:
+            meas = measured
+        else:
+            meas = _live_measured(chain["goal"]) if state is None else {}
+        fc = forecast(chain, meas, _route_target)
+        row["forecast"], row["overrun"], row["forecast_basis"] = fc["forecast"], fc["overrun"], fc["basis"]
+        if used + fc["forecast"] > int(chain["envelope"]):
+            row = {"action": "pause_budget", "unit": row["unit"], "used": used, "forecast": fc["forecast"],
+                   "overrun": fc["overrun"], "basis": fc["basis"], "envelope": chain["envelope"],
+                   "units_left": fc["units_left"], **({"finalized": finalized} if finalized else {})}
     if row["action"] == "arm" and not dry_run:
         unit = next(u for u in chain["units"] if u["id"] == row["unit"])
         if row.get("residual"):   # same unit, the steward's residual packet, one rung up, its own lease
             unit = dict(unit, packet=row["packet"], route=row["route"], succession=f"{unit['id']}:r{row['residual']}")
-        led = ledger if ledger is not None else (_live_ledger(chain["goal"]) if state is None else None)
-        refusal = _open_lease(led, chain["goal"], unit) if led is not None else None
-        if refusal:
-            row = refusal
+        fresh = (state() if state else _live_state(chain["goal"]))[0]    # re-read under the lock, right before the arm
+        dup = _armed_for(fresh, unit["packet"]) or _armed_for(fresh, unit["packet"] + RESIDUAL)
+        if dup:
+            row = {"action": "running", "unit": row["unit"], "note": "already armed (re-read under lock)",
+                   "mission_id": dup[0]["mission_id"]}
         else:
-            row["armed"] = (armer or _arm)(chain, unit)
-    row.update({"at": time.time(), "goal": chain["goal"], "used": used, "dry_run": dry_run})
-    log = Path.home() / ".claude" / "state" / "gsdx-chain.jsonl"
+            led = ledger if ledger is not None else (_live_ledger(chain["goal"]) if state is None else None)
+            refusal = _open_lease(led, chain["goal"], unit) if led is not None else None
+            if refusal:
+                row = refusal
+            else:
+                try:
+                    row["armed"] = (armer or _arm)(chain, unit)
+                except Exception as e:  # noqa: BLE001 -- the next tick re-reads missions and sees what the armer made
+                    row["armed"] = {"ok": False, "raised": f"{type(e).__name__}: {e}"[:200]}
+    t = time.time() if now is None else now
+    row.update({"at": t, "goal": chain["goal"], "used": used, "dry_run": dry_run, "trigger": trigger})
+    if not dry_run:
+        hist = history if history is not None else (_history(chain["goal"]) if state is None else [])
+        if silence_check(chain, row, hist, t):
+            sink = alerter or (_alert if state is None else None)
+            if sink:
+                sink(row)
+            row["alerted"] = True
     if not dry_run and state is None:
+        log = _log_path()
+        log.parent.mkdir(parents=True, exist_ok=True)
         with log.open("a", encoding="utf-8") as f:
             f.write(json.dumps(row) + "\n")
     return row
 
 
+# ---- APR-3: event path --------------------------------------------------------------------------------------------
+def discover_chains(packet, programs_dir=None) -> list:
+    """chain.json files (under <live checkout>/vault/programs/*/) that own `packet` or its .residual.md.
+    An unreadable chain.json is returned as (path, error) so the caller records a row."""
+    pk = str(packet)
+    pk = pk[:-len(RESIDUAL)] if pk.endswith(RESIDUAL) else pk
+    base = Path(programs_dir) if programs_dir else LIVE.parent / "vault" / "programs"
+    found = []
+    for cp in sorted(base.glob("*/chain.json")):
+        try:
+            c = json.loads(cp.read_text(encoding="utf-8-sig"))
+            if any(_norm(u.get("packet", "")) == _norm(pk) for u in c.get("units", [])):
+                found.append(cp)
+        except (OSError, ValueError, AttributeError) as e:
+            found.append((cp, f"{type(e).__name__}: {e}"[:160]))
+    return found
+
+
+def tick_for_packet(packet, programs_dir=None, budget_s: float = 540.0, ticker=None, **kw) -> list:
+    """Event-driven advance: tick every chain that owns `packet`. Never raises (an exception is a row); bounded by
+    `budget_s` (the sweep stage has 600 s); off with CPP_GSDX_CHAIN_EVENT=off."""
+    if os.environ.get("CPP_GSDX_CHAIN_EVENT", "").lower() == "off":
+        return []
+    t0 = time.monotonic()
+    rows = []
+    try:
+        found = discover_chains(packet, programs_dir)
+    except Exception as e:  # noqa: BLE001
+        return [{"action": "event_error", "trigger": "event", "error": f"{type(e).__name__}: {e}"[:200]}]
+    for cp in found:
+        if isinstance(cp, tuple):
+            rows.append({"action": "event_error", "trigger": "event", "chain": str(cp[0]), "error": cp[1]})
+            continue
+        if time.monotonic() - t0 > budget_s:
+            rows.append({"action": "event_skipped_budget", "trigger": "event", "chain": str(cp)})
+            continue
+        try:
+            rows.append({**(ticker or tick)(cp, trigger="event", **kw), "chain": str(cp)})
+        except Exception as e:  # noqa: BLE001
+            rows.append({"action": "event_error", "trigger": "event", "chain": str(cp), "error": f"{type(e).__name__}: {e}"[:200]})
+    return rows
+
+
+# ---- APR-3: health ------------------------------------------------------------------------------------------------
+def foreign_bindings(chain: dict, missions: list, open_sids: dict) -> list:
+    """Sessions holding open reservations on the goal that own none of the chain's missions (read-only)."""
+    packets = {_norm(u["packet"]) for u in chain["units"]} | {_norm(u["packet"] + RESIDUAL) for u in chain["units"]}
+    own = set()
+    for m in missions:
+        if _norm((m.get("wu_packet") or {}).get("path", "")) in packets:
+            own |= {(m.get("owner") or {}).get("session_id"), m.get("worker")}
+            own |= {p.get("session_id") for p in m.get("previous_owners") or [] if isinstance(p, dict)}
+    return [{"sid": s[:8], "hold": h} for s, h in sorted(open_sids.items()) if s not in own]
+
+
+def status(chain_path: Path, state=None, history=None, measured=None, open_sids=None, git=None, now=None) -> dict:
+    """Plain-JSON health of one programme; no model."""
+    chain = json.loads(Path(chain_path).read_text(encoding="utf-8-sig"))
+    now = time.time() if now is None else now
+    missions, used = state() if state else _live_state(chain["goal"])
+    row = decide(chain, missions, used, _route_target)
+    hist = history if history is not None else _history(chain["goal"])
+    bp = _by_packet(missions)
+    done = _done_ids(chain)
+    units = []
+    for u in chain["units"]:
+        ms = _unit_ms(u, bp)
+        latest = max(ms, key=lambda m: float(m.get("created_at") or 0)) if ms else None
+        units.append({"id": u["id"], "done": u["id"] in done, "mission": latest and latest["mission_id"],
+                      "state": latest and latest.get("state")})
+    marks = []
+    for u in chain["units"]:
+        for k in ("", SEAL):
+            try:
+                marks.append(Path(u["receipt"] + k).stat().st_mtime)
+            except OSError:
+                pass
+    marks += [float(h["at"]) for h in hist if h.get("action") == "arm" and h.get("at")]
+    gitf = git or (lambda *a: _git(chain["root"], *a))
+    ct = gitf("log", "-1", "--format=%ct")
+    if ct.strip().isdigit():
+        marks.append(float(ct))
+    last = hist[-1] if hist else None
+    since = now
+    for h in reversed(hist):
+        if (h.get("action"), h.get("unit")) != (last.get("action"), last.get("unit")):
+            break
+        since = float(h.get("at") or since)
+    meas = (measured() if callable(measured) else measured) if measured is not None else _live_measured(chain["goal"])
+    fc = forecast(chain, meas or {}, _route_target)
+    nxt = {"running": "terminal transition of the running mission (event tick)",
+           "wait_event": f"files: {row.get('missing')}", "wait_predecessor": f"receipt of {row.get('after')}",
+           "wait_steward": "steward residual packet", "wait_finalizer": "finalizer residual packet",
+           "wait_writer": f"mission(s) {row.get('held_by')} to end", "arm": "this tick arms",
+           "complete": None}.get(row["action"], "owner action")
+    if open_sids is None:
+        try:
+            led = _live_ledger(chain["goal"])
+            open_sids = {r["sid"]: r["hold"] for r in led._gfold(led._read())["res"].values() if r.get("hold")}
+        except Exception:  # noqa: BLE001
+            open_sids = {}
+    return {"goal": chain["goal"], "current_unit": row.get("unit"), "decision": row["action"], "units": units,
+            "last_progress_at": max(marks) if marks else None,
+            "last_action": last and {"action": last.get("action"), "unit": last.get("unit"), "trigger": last.get("trigger"),
+                                     "since": since, "age_s": round(now - since)},
+            "recovery": {k: row[k] for k in ("class", "residuals", "max_residuals", "attempts") if k in row} or None,
+            "human_gate": row if row["action"] == "human_gate" else None,
+            "envelope": {"total": int(chain["envelope"]), "used": used, "forecast": fc["forecast"],
+                         "overrun": fc["overrun"], "basis": fc["basis"], "remaining": int(chain["envelope"]) - used},
+            "next_expected_event": nxt,
+            "foreign_bindings": foreign_bindings(chain, missions, open_sids)}
+
+
 def main(argv: list[str]) -> int:
+    if argv and argv[0] == "status":
+        if "--all" in argv:
+            paths = sorted((LIVE.parent / "vault" / "programs").glob("*/chain.json"))
+        else:
+            paths = [Path(argv[argv.index("--chain") + 1]) if "--chain" in argv else DEFAULT_CHAIN]
+        out = []
+        for p in paths:
+            try:
+                out.append({"chain": str(p), **status(p)})
+            except Exception as e:  # noqa: BLE001
+                out.append({"chain": str(p), "error": f"{type(e).__name__}: {e}"[:200]})
+        print(json.dumps(out if "--all" in argv else out[0], indent=1))
+        return 0
     if not argv or argv[0] != "tick":
         print(__doc__)
         return 2

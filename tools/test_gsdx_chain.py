@@ -188,7 +188,7 @@ check("V-CHAIN-WAITS-EVENT", r1["action"] == "wait_event" and r2["action"] == "a
 d, p, _ = setup("envelope", envelope=5_000_000)
 armed.clear()
 r1 = gc.tick(p, state=lambda: ([], 4_000_001), armer=arm)
-r2 = gc.tick(p, state=lambda: ([], 4_000_000), armer=arm)
+r2 = gc.tick(p, state=lambda: ([], 3_000_000), armer=arm)
 check("V-CHAIN-ENVELOPE", r1["action"] == "refuse_envelope" and r2["action"] == "arm" and armed == ["A"],
       f"{r1['action']} / {r2['action']}")
 
