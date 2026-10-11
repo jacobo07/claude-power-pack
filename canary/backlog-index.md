@@ -1,0 +1,27 @@
+- D1: apex-completion-standard.md bidirectional drift (verify_spp: `mirror-parity` + `drift-report`)
+- D2: hooks-registration 6/7 (verify_spp: `hooks-registration`)
+- D3: paths+secrets residual: doc-class (35) + secret-class (9) (verify_spp: `paths+secrets`)
+- D4: PP Self-Eval: observe the first night (acceptance §4.4)
+- D5: PP Self-Eval: 5 mutation drills never ran
+- D6: PP Self-Eval: bank has 0 validated tasks (need >= 8)
+- D7: Capability gaps 2–6 (audit `vault/audits/se-capability-gaps-2026-09-30.md`)
+- D8: Mission continuity: merge the UKDL candidates
+- D9: Delete the `gsd-long-smoke` worktree and branch `gsd-autonomous-run`
+- D10: `test_hook_mirror_identity` red 3/5 (other panes' files)
+- D11: REA as Reconstruction Evidence Fabric / Static Oracle substrate
+- D12: ADCR-Reconstruction → Procedural Intelligence / Self-Compiling Reconstruction Institution
+- D13: Universal Modder X as Intervention + Experimental Reality Plane
+- D14: Unified Reconstruction compounding program: sequencing and non-duplication guard
+- D15: KME Recon as Software Reality / Construction Reality Laboratory
+- D16: Visual Reconstruction Fabric / Image-to-System Reconstruction
+- D17: Universal Time-to-Ready Compression / Readiness Compiler
+- D18: Universal Derived Development Fabric: image-, dataset-, reconstruction-, idea- and expectation-driven development
+- D19: Extreme Nuclear Endpoint: Generative Reconstruction Civilization / Feature Evolution Kernel
+- D20: Sequencing guard for D15–D19
+- D21: Wii Sports Tennis reconstruction with Wii Motion OS integrated (Owner, 2026-10-08) (was D11 on feature/knowledge-acquisition)
+- D22: cost-collapse / expected-completion admission: the rest of the mission (Owner, 2026-10-10) (was D12 on feature/knowledge-acquisition)
+- D23: EDD full-convergence mission: everything after P2-B-R (Owner, 2026-10-10) (was D12 on feature/knowledge-acquisition)
+- D24: dgl durable goal / disposable lease: W3-W8 (Owner, 2026-10-10) (was D13 on feature/knowledge-acquisition)
+- D25: goal budget admission (A1 containment): the rest of the mission (Owner, 2026-10-10) (was D14 on feature/knowledge-acquisition)
+- D26: GSD X Reconstruction Factory (gsdx-factory-2): the rest of the programme (Owner, 2026-10-10) (was D15 on feature/knowledge-acquisition)
+- D27: REA Wii/PPC Enablement Program: REA as Evidence Plane under the Recon Factory (Owner, 2026-10-11)
