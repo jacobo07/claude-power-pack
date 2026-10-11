@@ -1405,7 +1405,12 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
         return rec
 
 
-def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict:
+def _p95_remaining(rec: dict):
+    """P95 remaining spend as last written by the reforecast tool; None when absent (no subprocess here)."""
+    return rec.get("forecast_p95_remaining")
+
+
+def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None, forecast=None) -> dict:
     """TOK-18 gen 2 D1: judge a mission that carries `token_estimate` against its measured spend
     (tools/mission_spend.py). A trip parks it with the Owner hold -- held, never halted or renewed --
     so the Owner sees estimate, actual and the cause before more is spent. Fail-open on a measuring
@@ -1436,6 +1441,20 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
             lr.ledger_append(mid, "cost_breaker_snapshot_failed", mission_id=mid,
                              error=f"{type(exc).__name__}: {exc}"[:300])
         return set_owner_hold(mid, verdict["trip"], now=now, measured=measured)
+    try:
+        p95 = (forecast or _p95_remaining)(rec)
+        pred = ms.judge_predictive(rec, spent, p95)
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent (fail-open)
+        lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid,
+                         error=f"forecast: {type(exc).__name__}: {exc}"[:300])
+        return rec
+    if pred["drain"] and rec.get("lease_state") != "DRAINING":
+        authority = int(rec["token_estimate"]) * float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
+        drain = {"spent": spent, "p95_remaining": p95, "authority": authority, "reason": pred["drain"]}
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                          event="lease_draining", now=now, lease_state="DRAINING", drain=drain,
+                          ledger_extra={"spent": spent, "p95_remaining": p95, "authority": authority},
+                          reason=pred["drain"])
     if verdict["mark"]:
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                           event="cost_mark", now=now, cost_mark=verdict["mark"],
