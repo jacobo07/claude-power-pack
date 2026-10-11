@@ -228,6 +228,240 @@ def growth_sources(path: Path) -> dict:
             "by_tool": dict(sorted(by_tool.items(), key=lambda kv: -kv[1])), "read": rd}
 
 
+# ---------------------------------------------------------------- economic roles (CDC C1)
+ROLES = ("READ", "REREAD", "RESEARCH", "PLAN", "IMPLEMENT", "PROOF", "CONTROL", "STATUS",
+         "RECOVERY", "REPAIR", "CONTEXT_FAULT", "NOVELTY")
+_GIT = r"(?:\bgit(?:\.exe)?|\$\{?g(?:it)?\}?)['\"]?\s+(?:-\S+\s+)*"
+_PROOF = re.compile(r"pytest|unittest|\btest_\w+\.(?:py|js)|\w+_test\.(?:py|js)|npm (?:run )?test|"
+                    r"land_worktree|\bgate\b|--selftest|\bnpx (?:jest|vitest)", re.I)
+_STATUS = re.compile(r"handoff|status_card|render_status|--status\b|\bstatus --render")
+_CONTROL = re.compile(_GIT + r"(?:status|log|diff|branch|rev-parse|show|worktree|fetch)\b|"
+                      r"\b(?:mission|chain|capital|goal)[-_ ]?\w*(?:\.py|\.js)?\s+(?:status|show|list|tick)|"
+                      r"\bmission_|chain_status|capital-status", re.I)
+_COMMIT = re.compile(_GIT + r"commit\b", re.I)
+_FAIL = re.compile(r"\bFAILED?\b|Traceback \(most recent|\b[1-9]\d* (?:failed|failures?)\b|\bRED\b|AssertionError")
+_PLAN_PATH = re.compile(r"(?:^|[\\/])\.planning[\\/]|vault[\\/]plans[\\/]")
+_CLAIM = re.compile(r"Status: DONE|\bPROVEN\b")
+PLAN_TEXT_CHARS = 600
+
+
+def _norm(p) -> str:
+    return str(p or "").replace("\\", "/")
+
+
+def _processed(u: dict) -> int:
+    return tis._context_of(u) + tis._int(u.get("output_tokens"))
+
+
+def _flat(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(b.get("text", "") for b in content if isinstance(b, dict))
+    return ""
+
+
+def _is_fail(res: Optional[dict]) -> bool:
+    if res is None:
+        return False
+    if res.get("is_error"):
+        return True
+    txt = res.get("text", "")
+    return bool(_FAIL.search(txt)) and not re.search(r"\b0 failed\b", txt)
+
+
+def _scan(path: Path, tag: str) -> list[dict]:
+    """Ordered unique calls with tool uses, tool results and text; epoch markers inline."""
+    calls: dict = {}
+    order: list = []
+    results: dict = {}
+    first_user = ""
+    seq = 0
+    with open(path, encoding="utf-8-sig", errors="replace") as fh:
+        for raw in fh:
+            try:
+                row = json.loads(raw)
+            except ValueError:
+                continue
+            if not isinstance(row, dict):
+                continue
+            msg = row.get("message") if isinstance(row.get("message"), dict) else {}
+            content = msg.get("content")
+            seq += 1
+            if row.get("isCompactSummary") or row.get("subtype") == "compact_boundary":
+                order.append(("EPOCH", seq))
+                continue
+            if row.get("type") == "user":
+                if isinstance(content, str):
+                    if not first_user:
+                        first_user = content
+                    if content.lstrip().startswith(("/clear", "<command-name>/clear")):
+                        order.append(("EPOCH", seq))
+                elif isinstance(content, list):
+                    for b in content:
+                        if not isinstance(b, dict):
+                            continue
+                        if b.get("type") == "tool_result":
+                            results[b.get("tool_use_id")] = {
+                                "is_error": bool(b.get("is_error")), "text": _flat(b.get("content"))}
+                        elif b.get("type") == "text" and not first_user:
+                            first_user = b.get("text", "")
+                continue
+            if row.get("type") != "assistant" or not isinstance(msg.get("usage"), dict):
+                continue
+            if msg.get("model") == tis.SYNTHETIC_MODEL:
+                continue
+            key = (msg.get("id"), row.get("requestId"))
+            if key == (None, None):
+                key = ("line", seq)
+            if key not in calls:
+                calls[key] = {"tokens": 0, "uses": [], "text": "", "src": tag}
+                order.append(key)
+            c = calls[key]
+            c["tokens"] = _processed(msg["usage"])
+            if isinstance(content, list):
+                for b in content:
+                    if not isinstance(b, dict):
+                        continue
+                    if b.get("type") == "tool_use":
+                        c["uses"].append((b.get("id"), b.get("name") or "?",
+                                          b.get("input") if isinstance(b.get("input"), dict) else {}))
+                    elif b.get("type") == "text":
+                        c["text"] += b.get("text", "")
+    out = []
+    for k in order:
+        if k[0] == "EPOCH":
+            out.append({"epoch": True})
+            continue
+        c = calls[k]
+        c["results"] = {i: results.get(i) for i, _, _ in c["uses"]}
+        c["first_user"] = first_user
+        out.append(c)
+    return out
+
+
+def classify_calls(items: list[dict]) -> list[dict]:
+    """Deterministic role per call. Returns [{role, tokens, src, trans}]."""
+    read_since: set = set()    # paths read in this epoch and not edited since
+    ever_read: set = set()
+    failed: set = set()
+    red = False                # last proof run was red
+    edit_seen = False
+    out = []
+    for c in items:
+        if c.get("epoch"):
+            read_since.clear()
+            continue
+        capsule = _norm(c.get("first_user"))
+        found = set()
+        trans = {"commit": 0, "new_file": 0, "claim": 0, "red_green": 0}
+        for uid, name, inp in c["uses"]:
+            res = c["results"].get(uid)
+            fp = _norm(inp.get("file_path") or inp.get("path"))
+            cmd = inp.get("command", "") if isinstance(inp.get("command"), str) else ""
+            sig = (name, json.dumps(inp, sort_keys=True, default=str))
+            if sig in failed:
+                found.add("RECOVERY")
+            if _is_fail(res):
+                failed.add(sig)
+            if name == "Read" and fp:
+                if fp in read_since:
+                    found.add("REREAD")
+                elif capsule and (fp in capsule or Path(fp).name in capsule):
+                    found.add("CONTEXT_FAULT")
+                else:
+                    found.add("READ")
+                read_since.add(fp)
+                ever_read.add(fp)
+            elif name in ("Grep", "Glob", "LS"):
+                found.add("READ")
+            elif name in ("WebSearch", "WebFetch"):
+                found.add("RESEARCH")
+            elif name in _EDITS and fp:
+                body = str(inp.get("content") or inp.get("new_string") or "")
+                if _CLAIM.search(body):
+                    trans["claim"] += 1
+                if _PLAN_PATH.search(fp):
+                    found.add("PLAN")
+                elif red:
+                    found.add("REPAIR")
+                elif name == "Write" and fp not in ever_read:
+                    found.add("NOVELTY")
+                    trans["new_file"] += 1
+                else:
+                    found.add("IMPLEMENT")
+                read_since.discard(fp)
+                edit_seen = True
+            elif name in ("Bash", "PowerShell"):
+                if _COMMIT.search(cmd) and res is not None and not _is_fail(res):
+                    trans["commit"] += 1
+                if _STATUS.search(cmd):
+                    found.add("STATUS")
+                elif _PROOF.search(cmd):
+                    found.add("PROOF")
+                    if res is not None:
+                        bad = _is_fail(res)
+                        if red and not bad:
+                            trans["red_green"] += 1
+                        red = bad
+                elif _CONTROL.search(cmd):
+                    found.add("CONTROL")
+        if _CLAIM.search(c["text"]):
+            trans["claim"] += 1
+        if not c["uses"] and len(c["text"]) >= PLAN_TEXT_CHARS and not edit_seen:
+            found.add("PLAN")
+        role = next((r for r in ("RECOVERY", "REPAIR", "CONTEXT_FAULT", "REREAD", "PLAN", "NOVELTY",
+                                 "IMPLEMENT", "PROOF", "STATUS", "CONTROL", "RESEARCH", "READ")
+                     if r in found), "unattributed")
+        out.append({"role": role, "tokens": c["tokens"], "src": c["src"], "trans": trans})
+    return out
+
+
+def roles(path: Path) -> dict:
+    """Economic role table for a session transcript plus its <sid>/subagents/*.jsonl."""
+    path = Path(path)
+    files = [(path, "main")]
+    sub = path.with_suffix("") / "subagents"
+    if sub.is_dir():
+        files += [(f, "sub:" + f.stem) for f in sorted(sub.glob("*.jsonl"))]
+    rows = []
+    for f, tag in files:
+        rows += classify_calls(_scan(f, tag))
+    total = sum(r["tokens"] for r in rows)
+    table = {k: {"calls": 0, "tokens": 0, "main_tokens": 0, "subagent_tokens": 0}
+             for k in (*ROLES, "unattributed")}
+    tr = {"commit": 0, "new_file": 0, "claim": 0, "red_green": 0}
+    for r in rows:
+        t = table[r["role"]]
+        t["calls"] += 1
+        t["tokens"] += r["tokens"]
+        t["main_tokens" if r["src"] == "main" else "subagent_tokens"] += r["tokens"]
+        for k, v in r["trans"].items():
+            tr[k] += v
+    for t in table.values():
+        t["share"] = (t["tokens"] / total) if total else None
+    n_tr = sum(tr.values())
+    return {"path": str(path), "files": [t for _, t in files], "calls": len(rows),
+            "processed_tokens": total, "roles": table,
+            "unattributed_share": table["unattributed"]["share"],
+            "transitions": {**tr, "total": n_tr,
+                            "tokens_per_transition": (total / n_tr) if n_tr else None,
+                            "tokens_per": {k: (total / v if v else None) for k, v in tr.items()}}}
+
+
+def _fmt_roles(r: dict) -> str:
+    L = [f"roles    {r['calls']} calls, {r['processed_tokens']:,} processed tokens over {len(r['files'])} file(s)",
+         f"{'role':14}{'calls':>7}{'tokens':>16}{'share':>8}{'sub tokens':>16}"]
+    for k, v in sorted(r["roles"].items(), key=lambda kv: -kv[1]["tokens"]):
+        L.append(f"{k:14}{v['calls']:>7}{v['tokens']:>16,}{(v['share'] or 0):>8.1%}{v['subagent_tokens']:>16,}")
+    L.append(f"UNATTRIBUTED share {(r['unattributed_share'] or 0):.1%}")
+    t = r["transitions"]
+    L.append("transitions " + "  ".join(f"{k} {t[k]}" for k in ("commit", "new_file", "claim", "red_green"))
+             + f"  total {t['total']}  tokens/transition "
+             + ("n/a" if t["tokens_per_transition"] is None else f"{t['tokens_per_transition']:,.0f}"))
+    return "\n".join(L)
+
+
 def _resolve(arg: str) -> Path:
     p = Path(arg)
     if p.is_file():
@@ -265,8 +499,13 @@ def main(argv=None) -> int:
     ap.add_argument("session", help="transcript path or session id (prefix ok)")
     ap.add_argument("--ttl", type=int, default=DEFAULT_TTL_S)
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--roles", action="store_true", help="economic role per call (+ subagents)")
     a = ap.parse_args(argv)
     path = _resolve(a.session)
+    if a.roles:
+        rr = roles(path)
+        print(json.dumps(rr, indent=2) if a.json else _fmt_roles(rr))
+        return 0
     r = autopsy(path, ttl_s=a.ttl)
     r["growth_sources"] = growth_sources(path)
     if a.json:

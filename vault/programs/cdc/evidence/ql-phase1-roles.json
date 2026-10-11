@@ -1,0 +1,123 @@
+{
+  "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\6ddc58ea-530c-49bb-9e21-053747dc1d47.jsonl",
+  "files": [
+    "main",
+    "sub:agent-a1061ba8fca32846b",
+    "sub:agent-a4aaab1007e0c5e1b",
+    "sub:agent-a77c801c8a76ca25f",
+    "sub:agent-a7f4ac9a6d464f913",
+    "sub:agent-a933ee2fc7afe0bed",
+    "sub:agent-ad92d7c6e06155d8e",
+    "sub:agent-afe55626d7a2719e8"
+  ],
+  "calls": 807,
+  "processed_tokens": 126255827,
+  "roles": {
+    "READ": {
+      "calls": 260,
+      "tokens": 40146225,
+      "main_tokens": 849329,
+      "subagent_tokens": 39296896,
+      "share": 0.3179752250167432
+    },
+    "REREAD": {
+      "calls": 19,
+      "tokens": 3068106,
+      "main_tokens": 0,
+      "subagent_tokens": 3068106,
+      "share": 0.024300708117020214
+    },
+    "RESEARCH": {
+      "calls": 4,
+      "tokens": 766809,
+      "main_tokens": 169774,
+      "subagent_tokens": 597035,
+      "share": 0.006073454336487772
+    },
+    "PLAN": {
+      "calls": 20,
+      "tokens": 3230574,
+      "main_tokens": 150738,
+      "subagent_tokens": 3079836,
+      "share": 0.02558752397225991
+    },
+    "IMPLEMENT": {
+      "calls": 82,
+      "tokens": 13963812,
+      "main_tokens": 941523,
+      "subagent_tokens": 13022289,
+      "share": 0.11059934683252283
+    },
+    "PROOF": {
+      "calls": 0,
+      "tokens": 0,
+      "main_tokens": 0,
+      "subagent_tokens": 0,
+      "share": 0.0
+    },
+    "CONTROL": {
+      "calls": 40,
+      "tokens": 6251499,
+      "main_tokens": 2589610,
+      "subagent_tokens": 3661889,
+      "share": 0.04951453844581764
+    },
+    "STATUS": {
+      "calls": 0,
+      "tokens": 0,
+      "main_tokens": 0,
+      "subagent_tokens": 0,
+      "share": 0.0
+    },
+    "RECOVERY": {
+      "calls": 22,
+      "tokens": 3292671,
+      "main_tokens": 0,
+      "subagent_tokens": 3292671,
+      "share": 0.026079358697638565
+    },
+    "REPAIR": {
+      "calls": 0,
+      "tokens": 0,
+      "main_tokens": 0,
+      "subagent_tokens": 0,
+      "share": 0.0
+    },
+    "CONTEXT_FAULT": {
+      "calls": 47,
+      "tokens": 5461276,
+      "main_tokens": 114958,
+      "subagent_tokens": 5346318,
+      "share": 0.04325563524287873
+    },
+    "NOVELTY": {
+      "calls": 75,
+      "tokens": 12021515,
+      "main_tokens": 0,
+      "subagent_tokens": 12021515,
+      "share": 0.09521552617131882
+    },
+    "unattributed": {
+      "calls": 238,
+      "tokens": 38053340,
+      "main_tokens": 5647903,
+      "subagent_tokens": 32405437,
+      "share": 0.30139868316731233
+    }
+  },
+  "unattributed_share": 0.30139868316731233,
+  "transitions": {
+    "commit": 12,
+    "new_file": 77,
+    "claim": 8,
+    "red_green": 0,
+    "total": 97,
+    "tokens_per_transition": 1301606.4639175257,
+    "tokens_per": {
+      "commit": 10521318.916666666,
+      "new_file": 1639686.0649350649,
+      "claim": 15781978.375,
+      "red_green": null
+    }
+  }
+}
