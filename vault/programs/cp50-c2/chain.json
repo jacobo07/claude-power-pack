@@ -24,11 +24,18 @@
                       "after":  "R3"
                   },
                   {
+                      "id":  "R3b",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R3b.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R3b-receipt.md",
+                      "after":  "R6"
+                  },
+                  {
                       "id":  "J3",
                       "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-J3.md",
                       "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
                       "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-J3-receipt.md",
-                      "after":  "R6"
+                      "after":  "R3b"
                   },
                   {
                       "id":  "C3",
