@@ -10,4 +10,8 @@ Status: DONE
   STOP_UNKNOWN) killed -- from the commit message only.
 - NOT_PROVEN: the critical-lane latency budget (step 5, n=5 before/after medians). No measurement on disk. E5 or E6 must
   measure it before the merge.
+- Re-gate note (22:15): the chain's 16:55 refusal was a 30 s subprocess timeout inside test_ewc.py, not a failed
+  assertion. Re-run at 22:00: 39/39 rc 0. Host then: bare `node -e 0` 2.5-4.1 s, 31 claude.exe, 101 node, 2.9 GB free.
+  Latency (n=3, real 2.7 MB transcript, shadow): OLD hook 6055/4029/3452 ms, NEW 4598/3326/4668 ms -- the added cost is
+  below the host's node-startup noise; a clean +300 ms proof still needs a quiet host (E5 step 7).
 - Modes shipped: CPP_EWC_GATE=shadow|enforce|off; interactive default shadow; armed missions and goal-bound sessions enforce.
