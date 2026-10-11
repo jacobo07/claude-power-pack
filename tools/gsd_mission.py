@@ -1415,6 +1415,24 @@ def _rate_headroom(spent: int | None, epoch: int, max_cycles: int | None, cfg: d
     return h, f"rate {round(rate):,}/epoch x {left} epoch(s) left = {raw:,}{clamp}"
 
 
+def claim_cost_for(rec: dict) -> dict | None:
+    """The record's claim_cost: an explicit `claim_cost` wins; else compile the claim graph named by
+    `claim_graph` (a JSON path). No graph, unreadable or refused = None (the rate fallback), never 0."""
+    if rec.get("claim_cost"):
+        return rec["claim_cost"]
+    path = rec.get("claim_graph")
+    if not path:
+        return None
+    try:
+        import json as _json
+        import cost_to_completion as ctc
+        import route_admission as ra
+        doc = _json.loads(Path(path).read_text(encoding="utf-8-sig"))
+        return ctc.compile_cost(doc, ra.load_floors(None))
+    except Exception:  # noqa: BLE001 -- no basis is a named fallback, not a zero
+        return None
+
+
 def _auto_budget(rec: dict, now: float, measure=None) -> dict:
     """cep-gen3 T1c: a live mission with no operator envelope gets an estimate so the cost breaker
     has something to judge: ceil((spent + headroom) / ratio), headroom from auto_headroom. An
@@ -1431,7 +1449,7 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
             spent = None
         cfg, src = _budget_defaults()
         headroom, how = auto_headroom(spent, int(rec.get("epoch") or 0), rec.get("max_cycles"), cfg,
-                                      rec.get("claim_cost"))
+                                      claim_cost_for(rec))
         ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
         est = math.ceil(((spent or 0) + headroom) / ratio)
         spent_txt = "spend unmeasured" if spent is None else f"spent {spent:,}"
