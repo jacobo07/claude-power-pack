@@ -30,3 +30,12 @@ Date: 2026-10-11. Halted at the request of the coordinator pane (claude-power-pa
 - S4 (zero-model status probe): not started. No claim of zero-model status.
 - Phase 2 GSD artifacts under `.planning/.../02-s1-rent-attribution/` are non-authoritative (packet says ignore);
   committed only because the coordinator asked for the path to be included.
+
+## WU-S1-REST
+Status: BLOCKED (lease L4 exhausted; worker f6a396a1 tombstoned before writing this section; written by the coordinator).
+- Commits: aa82d3ac (V-GOAL-AUTOPSY-SUBAGENT fixture, drill KILLED: validates a65b5c5e), 68b26a9d (session_autopsy
+  injected bucket, per-type subagents, floor_total; drill KILLED). Remaining items 1-3 above are DONE.
+- Re-run by the coordinator after the block: test_goal_autopsy 11/11, test_session_autopsy 17/17, test_mission_spend 30/30.
+- Cost: L4 used 2,662,235 of 2,700,000 (goal-status). Programme settled 23,949,483 + open 209,251 of 26,572,474.
+- Remaining: items 4 (static floor census), 5 (s1/attribution.json), 6 (controllable-floor figure). Owner option 1
+  (2026-10-11): S1 finish capped at 1.0M (lease L5), then S4 capped at 1.3M (lease L6), inside the P80 ceiling.
