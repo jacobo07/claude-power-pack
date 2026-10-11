@@ -1,5 +1,7 @@
 # APR5 receipt
-Status: BLOCKED_HUMAN
+Status: DONE
+
+- COORDINATOR CLOSE 2026-10-11 (Owner chose option 1): the only gap below was the scheduled task. The Owner authorised it and the coordinator registered PP-AprCanary-Tick (Ready; action cloned from PP-AprChain-Tick). The canary then ran: C1/C2/C3 receipts + gate.json passed, C1 seal.json; canary chain `complete` (apr-canary-tick.log 19:03-19:33). The worker's original text is kept below; it said BLOCKED_HUMAN.
 
 - FILES (committed, live checkout): vault/programs/apr-canary/{chain.json, WU-C1/C2/C3.md, route-XS.json, route-S.json, chain_tick.ps1, EXPECTED.md}. Dry-run tick: wait_writer C1 (held by my mission; expected).
 - PRICES: XS calls 6 need 406230 / margin 487476 -> envelope 500000/575000/675000 ADMISSIBLE. S calls 12 need 1266053 / margin 1519264 -> envelope 1.6M/1.84M/2.16M ADMISSIBLE.
