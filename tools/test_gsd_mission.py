@@ -446,6 +446,20 @@ def main() -> int:
     check("V-MC-WS-INFERRED-FROM-COMMAND", rec["workstream"] == "ub", rec["workstream"])
     rec = gm.create(TMP, "/mc-task --ws ub", mission_id="m-ws-non-gsd", now=NOW)
     check("V-MC-WS-NOT-INFERRED-NON-GSD", rec["workstream"] is None, rec["workstream"])
+    # 2026-10-11 m-cec849fc02b2: armed with `--workstream madzia` (the long form /gsd-* accepts);
+    # only `--ws` was parsed, so the record again kept no workstream.
+    rec = gm.create(TMP, "/gsd-autonomous --workstream ub", mission_id="m-ws-long", now=NOW)
+    check("V-MC-WS-LONG-FLAG-INFERRED", rec["workstream"] == "ub"
+          and rec["resume_command"] == "/gsd-autonomous --workstream ub",
+          (rec["workstream"], rec["resume_command"]))
+    rec = gm.create(TMP, "/gsd-autonomous --workstream=ub", mission_id="m-ws-long-eq", now=NOW)
+    check("V-MC-WS-LONG-FLAG-EQ-INFERRED", rec["workstream"] == "ub", rec["workstream"])
+    try:
+        gm.create(TMP, "/gsd-autonomous --workstream other", mission_id="m-ws-long-bad",
+                  workstream="ub", now=NOW)
+        _fail("V-MC-WS-LONG-CONFLICT-REFUSED", "a --workstream naming another workstream was accepted")
+    except gm.MissionError:
+        _ok("V-MC-WS-LONG-CONFLICT-REFUSED")
     # A record armed BEFORE the fix holds the bare command: the launch itself must bind it.
     legacy = gm.create(TMP, "/gsd-autonomous", mission_id="m-ws-legacy", now=NOW)
     legacy["workstream"] = "lobby-ws"

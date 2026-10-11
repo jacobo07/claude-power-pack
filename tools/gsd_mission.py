@@ -209,7 +209,9 @@ class _Lock:
             os.close(fd)   # closing releases the lock on every platform regardless
 
 
-_WS_FLAG = re.compile(r"(?:^|\s)--ws(?:=|\s+)(\S+)")
+# Both spellings /gsd-* accepts. Only `--ws` was matched until 2026-10-11, so a mission armed with
+# `--workstream X` (m-cec849fc02b2) kept no workstream and the supervisor asked the ROOT roadmap.
+_WS_FLAG = re.compile(r"(?:^|\s)--(?:ws|workstream)(?:=|\s+)(\S+)")
 
 
 def bind_workstream(command: str, workstream: str | None) -> str:
