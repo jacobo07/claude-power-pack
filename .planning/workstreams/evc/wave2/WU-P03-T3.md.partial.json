@@ -1,0 +1,15 @@
+{
+ "canonical": false,
+ "commits": [
+  "3e5df28a feat(evc-03): task 3 -- Demote the auto envelope to a labelled emergency fallback"
+ ],
+ "goal": "evc",
+ "mission_id": "m-74802b42fa9e",
+ "model_calls": 18,
+ "refused_calls": 0,
+ "salvage": [],
+ "session": "61830e03-f8dc-447e-88c8-92fb181e07e3",
+ "status": "PARTIAL",
+ "tokens": 648479,
+ "tool_calls": 23
+}

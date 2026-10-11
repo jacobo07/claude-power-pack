@@ -1,0 +1,15 @@
+{
+ "canonical": false,
+ "commits": [
+  "1584efa7 docs(evc-04): compact plan heading level"
+ ],
+ "goal": "evc",
+ "mission_id": "m-ffa17244be6b",
+ "model_calls": 10,
+ "refused_calls": 0,
+ "salvage": [],
+ "session": "a74ea3cb-6ddb-4be6-a09d-95b40452eb50",
+ "status": "PARTIAL",
+ "tokens": 238628,
+ "tool_calls": 9
+}

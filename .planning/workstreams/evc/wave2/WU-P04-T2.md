@@ -15,8 +15,9 @@ If the verify commands are not all exit 0 after 3 fix attempts: do not commit co
 exact remaining step, and commit only the receipt.
 
 ## Receipt (mandatory, even when blocked) — the chain reads it
-Write `C:\Users\User\.claude\skills\claude-power-pack\.claude\worktrees\evc\.planning\workstreams\evc\wave2\receipts\WU-P04-T2-receipt.md` with the Write tool. First line exactly `Status: DONE` or `Status: BLOCKED: <reason>`, then the
-report lines below. Then commit it together with your work (or alone when blocked):
+Write `C:\Users\User\.claude\skills\claude-power-pack\.claude\worktrees\evc\.planning\workstreams\evc\wave2\receipts\WU-P04-T2-receipt.md` with the Write tool. Lines 1-3 are a fixed title block and nothing else: `Status: DONE` (or `Status: BLOCKED: <reason>`),
+`Unit: <unit id>`, `HEAD: <git rev-parse --short=8 HEAD>`. Line 4 blank. Report lines from line 5 on
+(the receipt judge reads lines 1-3; evidence words there, e.g. 'stub', misjudge the receipt). Then commit it together with your work (or alone when blocked):
 `git commit -m "<message>" -- <your files> ".planning/workstreams/evc/wave2/receipts/WU-P04-T2-receipt.md"`.
 
 Commit message: `feat(evc-04): task 2 -- <task name>`. Files: only the task's files.

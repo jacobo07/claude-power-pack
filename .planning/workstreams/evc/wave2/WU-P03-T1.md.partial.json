@@ -1,0 +1,13 @@
+{
+ "canonical": false,
+ "commits": [],
+ "goal": "evc",
+ "mission_id": "m-62128cd7da7a",
+ "model_calls": 3,
+ "refused_calls": 0,
+ "salvage": [],
+ "session": "14eeceb2-d86c-40a5-bdf9-df62bd80d4d9",
+ "status": "PARTIAL",
+ "tokens": 62691,
+ "tool_calls": 3
+}

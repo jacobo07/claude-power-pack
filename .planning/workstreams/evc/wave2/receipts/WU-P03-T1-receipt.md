@@ -1,5 +1,7 @@
 Status: DONE
-HEAD: (see commit containing this receipt)
+Unit: P03-T1 (evc wave 2)
+HEAD: 68a53bcb
+
 RED-FIRST: test run before code -> ModuleNotFoundError evc_confidence; then against a stub returning UNKNOWN/empty, 16 of 21 checks FAILED (states n=1,2 / 3,4 / >=5 / 1.1x control, degraded x2, inval3 x2, oom x3, taxonomy x3, admit x2); only the UNKNOWN/INVALIDATED-false controls passed.
 VERIFY:
 - python tools\test_evc_confidence.py -> exit 0, 21 passed, 0 failed
