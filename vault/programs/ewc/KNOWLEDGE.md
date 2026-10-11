@@ -45,3 +45,6 @@
 - E3's latency step was skipped silently (NOT_PROVEN). The receipt is written last, so the breaker's closeout calls
   eat exactly it. Prevention for E6/UKDL: write the receipt skeleton FIRST (Status: IN_PROGRESS) and flip it at the end;
   this is the programme-level form of "evaluation without closure".
+
+
+Pointer (APR-6): K5 root cause, fix and production proof -> vault/programs/apr/KNOWLEDGE.md A1 and PRODUCTION-REALITY.md.

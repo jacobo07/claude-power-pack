@@ -1,27 +1,11 @@
 
-## Durable External Knowledge Acquisition (SPEC-KACQ-001, sealed 2026-08-26)
-
-Distilled while building `modules/knowledge_acquisition`. Every rule below was
-paid for by a real failure in that session, not anticipated in advance.
-
-### Hard Rules
-
-**`HR-ACQ-RAW-BEFORE-RECORD-001`** -- When acquiring from a source that will not
-reproduce its output on demand (a paid expert interface, a human interview, a
-live market snapshot, a model that is not seeded), the RAW artifact is persisted
-BEFORE the record that describes it, atomically and content-addressed. Ordering
-is the durability contract: if the process dies between the two writes the
-answer is still on disk and the retry's write is a no-op that finds the same
-digest. The inverse ordering loses the artifact permanently on every crash.
-ORIGEN: `deep_research.fetch_page()` pulls raw HTML and `html_to_markdown()`
-derives text, and neither is persisted -- only the final synthesis. Merely
-wasteful for a repeatable web search; unrecoverable for a 30-70 hour
-acquisition against a paid account.
-
-**`HR-ACQ-NO-AUTOPROMOTION-001`** -- An answer from an external expert or vendor
-interface enters as source-derived CANDIDATE knowledge and stops at a validation
-queue. It is never written directly into institutional truth, however
-authoritative the source sounds. The estate already owns the gates for this
+## UKDL CANDIDATES -- APR programme (2026-10-11; NOT promoted). UCR-CIF stage reached: OBSERVED + LOCAL SUCCESS + REGRESSION + PRODUCTION REALITY in one repo (power-pack). Cross-project: NOT earned.
+- TRAP candidate: receipt syntax as truth. A receipt with every step PROVEN and no `Status:` line made the chain halt while work was committed. Evidence: EWC K5; vault/programs/apr/KNOWLEDGE.md A1; canary C1 sealed from a Status-less receipt (apr-canary/WU-C1-receipt.md.seal.json).
+- PROCESS RULE candidate: one parser per fact. Three readers of one file gave three answers; tools/receipt_judge.py is the single reading. Evidence: A1, V-APR-K5-UNCLOSED-RECEIPT-RENEWS; counter-evidence A8 (mission layer still disagrees with chain on a residual receipt).
+- HARD-RULE candidate: machine-critical lifecycle state must not rest on model-authored text alone; a zero-model finalizer runs declared acceptance. Evidence: test_apr_seal 17/17 (18/0 after fix), canary C2 FALSE_DONE refusal row 927.
+- HARD-RULE candidate: an active programme needs progress, an explicit wait, recovery, or a terminal state. Evidence: APR-3 status/silence alerts, test_apr_event 25/25, canary chain `complete`.
+- TRAP candidate: human-as-watchdog. The chain sat until a human edited a file; canary ran 58 min with no human gate. Evidence: PRODUCTION-REALITY.md.
+ owns the gates for this
 (`fable_distillation/epistemic_ladder.py` No-Autopromotion Invariant,
 `dataset_first/manifest.py` 8-stage) -- an acquisition pipeline that bypasses
 them has not saved work, it has laundered provenance.
@@ -15353,6 +15337,156 @@ $js=@: fatal: path. Confirm the tool actually ran and returned the expected outp
 
 - [tooling/powershell:python.exe] `ceps_5cccbbfbe30354db` -- Tool failure in powershell:python.exe: Exception: a Spanish resident who is also a Spanish national. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
+- [regression/powershell:lines] `ceps_91bd58c83335b24d` -- Before touching powershell:lines, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:node] `ceps_91bd58c83335b24d` -- Before touching powershell:node, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_91bd58c83335b24d` -- Before touching powershell:Get-Content, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_2c101bee55b52700` -- Tool failure in powershell:python.exe: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:ConvertFrom-Json] `ceps_9d19b67d64abfc1f` -- Tool failure in powershell:ConvertFrom-Json: IndexError: list. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_95ed57fc2a11efcf` -- Tool failure in powershell:g: Error","message":"HTTP 404. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/bash:mkdir] `ceps_eef18ded747f217e` -- Tool failure in bash:mkdir: RuntimeError: Could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_338b1701619d555d` -- Tool failure in powershell:s: Error Context: ../int-gate-run-5c95abd98/results/reload-fre.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:for] `ceps_eef18ded747f217e` -- Tool failure in bash:for: RuntimeError: Could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_3db6c2c59e042352` -- Tool failure in bash:#: Error: Argumento u opci�n no v�lido - "C:/Program Files/Git.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_80e2439890d48a35` -- Tool failure in powershell:s: TypeError: Cannot. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:#] `ceps_904434f799a130f1` -- Environment mismatch on bash:#: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [env/powershell:Test-Path] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:Test-Path: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:powershell] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:powershell: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:s] `ceps_0ea8be058adc1908` -- Tool failure in powershell:s: Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_35cd581164459564` -- Tool failure in powershell:s: Error: expect(received).toBe(expected) // Object.is equality. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:$G] `ceps_bd31f4acff62bb26` -- Tool failure in bash:$G: Exception:                                  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_27fb0ad8ebea8068` -- Tool failure in powershell:python.exe: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:p] `ceps_2c101bee55b52700` -- Tool failure in powershell:p: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:U] `ceps_27fb0ad8ebea8068` -- Tool failure in powershell:U: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_68c070f63ffad575` -- Tool failure in powershell:s: Error: No tests found. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach($f] `ceps_27fb0ad8ebea8068` -- Tool failure in powershell:foreach($f: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_0ea8be058adc1908` -- Tool failure in powershell:s: Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_0ea8be058adc1908` -- Tool failure in powershell:s: Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/bash:#] `ceps_cbcb41ec76fcf266` -- Tool failure in bash:#: fatal: Not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:m] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:m: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:g: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:g] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:g: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:cmd.exe] `ceps_91bd58c83335b24d` -- Before touching bash:cmd.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:New-Item] `ceps_4a62d8bd44c09fc9` -- Tool failure in powershell:New-Item: fatal: remote. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:osha] `ceps_d9e27cb3f58f3053` -- Tool failure in powershell:osha: fatal: git. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_2c101bee55b52700` -- Tool failure in powershell:g: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:cmd.exe] `ceps_91bd58c83335b24d` -- Before touching bash:cmd.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:cmd.exe] `ceps_91bd58c83335b24d` -- Before touching bash:cmd.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:powershell.exe] `ceps_91bd58c83335b24d` -- Before touching bash:powershell.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:py] `ceps_d47d40fe40071e32` -- Tool failure in powershell:py: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:powershell.exe] `ceps_b18a393e073ee9c0` -- Tool failure in bash:powershell.exe: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:node] `ceps_ea6a47f788d79dc9` -- Tool failure in powershell:node: Error: No config.json found at C:\Users\User\Apps\orca-clos.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:head] `ceps_91bd58c83335b24d` -- Before touching powershell:head, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [env/powershell:s] `ceps_904434f799a130f1` -- Environment mismatch on powershell:s: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Start-Sleep] `ceps_27fb0ad8ebea8068` -- Tool failure in powershell:Start-Sleep: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:alive: $([bool](Get-Proc] `ceps_27fb0ad8ebea8068` -- Tool failure in powershell:alive: $([bool](Get-Proc: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:done: $(Test-Path ] `ceps_27fb0ad8ebea8068` -- Tool failure in powershell:done: $(Test-Path : Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_348470a9911b0f27` -- Tool failure in powershell:python.exe: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python3] `ceps_d47d40fe40071e32` -- Tool failure in powershell:python3: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_27fb0ad8ebea8068` -- Tool failure in powershell:python.exe: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_27fb0ad8ebea8068` -- Tool failure in powershell:python.exe: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_1d129a7719bb7e93` -- Tool failure in powershell:Get-Content: Error: client timed out after 30000 milliseconds. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_2c101bee55b52700` -- Tool failure in powershell:python.exe: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:grep] `ceps_dddb1241048f5779` -- Tool failure in powershell:grep: FATAL:  role. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:node] `ceps_5d28a90f4498a814` -- Before touching powershell:node, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:c] `ceps_5d28a90f4498a814` -- Before touching powershell:c, verify the regression scenario (FAILED) is still covered by a passing test.
+
 ## Capsule-v2 mission rollover, T5 adapter (2026-10-03)
 
 Source: `vault/specs/mission-capsule-rollover.md` T5. Status of every entry below: OBSERVED once,
@@ -15406,6 +15540,146 @@ characterization witness before replacing a supported durable protocol; no silen
 tests never fall back to live state; an adapter keeps the canonical identity domain. They stay
 candidates until T6 and the T8 Production Reality run add evidence.
 
+- [tooling/powershell:python.exe] `ceps_eea27d91f2db81fd` -- Tool failure in powershell:python.exe: Error loading plugin: java.lang.IllegalArgumentException: D.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:grep] `ceps_a3b11db62f9b9a83` -- Environment mismatch on powershell:grep: access denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:Select-String] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-String, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:py] `ceps_2f62a7b8104b424c` -- Tool failure in powershell:py: Error loading plugin: java.lang.IllegalArgumentException: D.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_348470a9911b0f27` -- Tool failure in powershell:python.exe: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:i] `ceps_ea6a47f788d79dc9` -- Tool failure in powershell:i: Error: No config.json found at C:\Users\User\.claude\skills.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_348470a9911b0f27` -- Tool failure in powershell:python.exe: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_348470a9911b0f27` -- Tool failure in powershell:python.exe: Error preparing plugin context: Directory 'plugins/kobi-err.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:node] `ceps_91bd58c83335b24d` -- Before touching powershell:node, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:ssh] `ceps_24651e48ae29766a` -- Tool failure in powershell:ssh: Error: D6 C1 [MAIN_STATE]: opening a second window withdrew.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:s] `ceps_91bd58c83335b24d` -- Before touching powershell:s, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [env/bash:powershell.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:powershell.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:powershell.exe] `ceps_66e57c2007036f11` -- Tool failure in bash:powershell.exe: fatal: pathspec. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:powershell.exe] `ceps_b18a393e073ee9c0` -- Tool failure in bash:powershell.exe: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:ssh] `ceps_5ee413c0d90a1085` -- Before touching bash:ssh, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:ssh] `ceps_5d28a90f4498a814` -- Before touching bash:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:ssh] `ceps_5ee413c0d90a1085` -- Before touching bash:ssh, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:foreach($c] `ceps_6559d94a6609904d` -- Tool failure in powershell:foreach($c: Exception:  # noqa: BLE001 -- an unreadable projects dir is.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:ssh] `ceps_5ee413c0d90a1085` -- Before touching bash:ssh, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/bash:powershell.exe] `ceps_b18a393e073ee9c0` -- Tool failure in bash:powershell.exe: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:cmd] `ceps_904434f799a130f1` -- Environment mismatch on powershell:cmd: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:echo] `ceps_5d28a90f4498a814` -- Before touching bash:echo, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:echo] `ceps_5d28a90f4498a814` -- Before touching bash:echo, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:py] `ceps_e0228e66b08e125e` -- Tool failure in powershell:py: SyntaxError: invalid. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:tmp] `ceps_6fb0964bebb0cc90` -- Tool failure in powershell:tmp: Error: ' + message + '\n. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:powershell.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:powershell.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:g] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:g: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:foreach($t] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:foreach($t: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Move-Item] `ceps_a5042e11e06deb3d` -- Tool failure in powershell:Move-Item: TypeError: require(...).resolvePyExe. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_2c101bee55b52700` -- Tool failure in powershell:py: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:powershell.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:powershell.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Get-Content] `ceps_f0d33c975d0ced5d` -- Tool failure in powershell:Get-Content: Error 500: Internal Server Error. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_f4bfa3dcafd886b3` -- Tool failure in powershell:py: Error 500: Internal Server Error); parent listing has 26 en.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_2c101bee55b52700` -- Tool failure in powershell:python.exe: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_91bd58c83335b24d` -- Before touching powershell:g, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/bash:#] `ceps_d1e2d5c26a2b2881` -- Tool failure in bash:#: Error while looking up import map: next/font/google queries.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:proposals total=$($cp.Co] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:proposals total=$($cp.Co: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Where-Object] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Where-Object: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:cmd] `ceps_91bd58c83335b24d` -- Before touching powershell:cmd, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:cmd] `ceps_91bd58c83335b24d` -- Before touching powershell:cmd, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:py] `ceps_9c15c22da9f8803c` -- Tool failure in powershell:py: Error al ejecutar el programa 'python.exe': El nombre del a.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_8773547184c2e75a` -- Tool failure in powershell:Get-Content: Error: EISDIR: illegal operation on a directory, read. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Get-Content: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_2c101bee55b52700` -- Tool failure in powershell:python.exe: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_d47d40fe40071e32` -- Tool failure in powershell:python.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_d47d40fe40071e32` -- Tool failure in powershell:python.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Get-Content: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:ConvertFrom-Json] `ceps_6a846405afddfc27` -- Before touching powershell:ConvertFrom-Json, verify the regression scenario (6 failed) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:Copy-Item] `ceps_91bd58c83335b24d` -- Before touching powershell:Copy-Item, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:Select-String] `ceps_e8754c77d4446eda` -- Tool failure in powershell:Select-String: Error: cmd.exe reports its prompt through PROMPT. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:function] `ceps_4202bd2bfe2b6320` -- Tool failure in powershell:function: Error: "La cadena de entrada no tiene el formato correcto. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_bd31f4acff62bb26` -- Tool failure in powershell:g: Exception:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:^def] `ceps_5d28a90f4498a814` -- Before touching powershell:^def, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:patch] `ceps_5d28a90f4498a814` -- Before touching powershell:patch, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:foreach($p] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach($p, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Select-String] `ceps_e9e33f2d793f5595` -- Tool failure in powershell:Select-String: FATAL: execute_waves. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:g: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_aca402726381eccd` -- Tool failure in powershell:g: fatal: path.. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
 ## Cognitive Economy Program, pillar R promotion (2026-10-04)
 
 Source: `vault/programs/cognitive-economy/ukdl-candidates.md` UC-04 (audit G5, verified in source).
@@ -15431,6 +15705,1241 @@ writes while the worker stalls, and require the halt to fire. Evidence: `tools/g
 `vault/programs/cognitive-economy/evidence/H-J-turn-advancement.md`. Sibling of
 T-AN-MTIME-SENTINEL-OVER-STATE-OTHER-WRITERS-OWN-001: a test sentinel has the same blindness.
 
+- [tooling/powershell:g] `ceps_79e216f9ba0184b7` -- Tool failure in powershell:g: fatal: 
+ @@. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_4585b058c19d04ec` -- Tool failure in powershell:g: fatal: ambiguous. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:body] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:body: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:Select-String] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-String, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:deps exist: $(Test-Path ] `ceps_a4eddc7f34330ed7` -- Tool failure in powershell:deps exist: $(Test-Path : Error) could not read file "c:/Users/User/Desktop/Cursor Pr.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Where-Object] `ceps_cfe92dd0fab0552c` -- Before touching powershell:Where-Object, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [tooling/powershell:Out-String] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:Out-String: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_7ec2ebf54666134f` -- Tool failure in powershell:cmd: SyntaxError: unterminated. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:err,(e] `ceps_d47d40fe40071e32` -- Tool failure in powershell:err,(e: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_eef18ded747f217e` -- Tool failure in powershell:py: RuntimeError: Could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_4c31d4c0c7949f7a` -- Tool failure in powershell:g: Exception as exc:  # noqa: BLE001 -- a malformed record is .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_cbcb41ec76fcf266` -- Tool failure in powershell:cmd: fatal: not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:exit] `ceps_bd31f4acff62bb26` -- Tool failure in powershell:exit: Exception:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:foreach($s] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:foreach($s: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Get-Content] `ceps_f0d33c975d0ced5d` -- Tool failure in powershell:Get-Content: Error 500: Internal Server Error. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_f0d33c975d0ced5d` -- Tool failure in powershell:python.exe: Error 500: Internal Server Error. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:node] `ceps_91bd58c83335b24d` -- Before touching powershell:node, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_66e57c2007036f11` -- Tool failure in powershell:g: fatal: Pathspec. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_df52a8f829e634c9` -- Tool failure in powershell:g: Exception: pass. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_cfe92dd0fab0552c` -- Before touching powershell:python.exe, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:exit] `ceps_cbcb41ec76fcf266` -- Tool failure in powershell:exit: fatal: Not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:print(TOPKEYS,[k] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:print(TOPKEYS,[k: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:py] `ceps_5acedc0686af3cc6` -- Tool failure in powershell:py: ValueError: Search. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_5ee413c0d90a1085` -- Before touching powershell:Get-Content, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_91bd58c83335b24d` -- Before touching powershell:Get-Content, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_db4d079b4635b60d` -- Tool failure in powershell:Get-Content: Exception in thread "main" java.lang.NoClassDefFoundError: .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:[IO.File]::WriteAllText(] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:[IO.File]::WriteAllText(: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:cmd] `ceps_5d28a90f4498a814` -- Before touching powershell:cmd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_2c101bee55b52700` -- Tool failure in powershell:python.exe: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5ee413c0d90a1085` -- Before touching powershell:Get-Content, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:claude-power-pack] `ceps_66e57c2007036f11` -- Tool failure in powershell:claude-power-pack: fatal: pathspec. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Get-Content: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Select] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Select: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Out-String).Trim()] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Out-String).Trim(): Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:f] `ceps_5d28a90f4498a814` -- Before touching powershell:f, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Select-String] `ceps_8d5c7801e0487e16` -- Tool failure in powershell:Select-String: Exception as exc:  # noqa: BLE001 -- one mission's failure .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:[IO.File]::WriteAllText(] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:[IO.File]::WriteAllText(: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:Select-String] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:Select-String: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:if(-not] `ceps_cbcb41ec76fcf266` -- Tool failure in powershell:if(-not: fatal: not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:sed] `ceps_b2258691c9c884c6` -- Tool failure in powershell:sed: Exception as exc:  # noqa: BLE001 -- the reason is printed,.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:NOT] `ceps_8b4a0b94853e28ac` -- Before touching powershell:NOT, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:== socket] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:== socket: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:ssh] `ceps_5d28a90f4498a814` -- Before touching powershell:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:if(-not] `ceps_cbcb41ec76fcf266` -- Tool failure in powershell:if(-not: fatal: not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:do] `ceps_5d28a90f4498a814` -- Before touching powershell:do, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:tmp] `ceps_b2258691c9c884c6` -- Tool failure in powershell:tmp: Exception as exc:  # noqa: BLE001 -- the reason is printed,.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:ssh] `ceps_5d28a90f4498a814` -- Before touching powershell:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Cursor] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Cursor: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:AssertionError] `ceps_91bd58c83335b24d` -- Before touching powershell:AssertionError, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_2c101bee55b52700` -- Tool failure in powershell:python.exe: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:echo] `ceps_cbcb41ec76fcf266` -- Tool failure in powershell:echo: fatal: Not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:player_damage] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:player_damage: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Get-Content: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_d47d40fe40071e32` -- Tool failure in powershell:python.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:cut] `ceps_5d28a90f4498a814` -- Before touching powershell:cut, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:head] `ceps_904434f799a130f1` -- Environment mismatch on powershell:head: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:python.exe] `ceps_5ee413c0d90a1085` -- Before touching powershell:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/powershell:cmd] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:cmd: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5ee413c0d90a1085` -- Before touching powershell:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:Select-Object] `ceps_10a954d5b2b5c4c6` -- Tool failure in powershell:Select-Object: Error: still running: ../skills/claude-power-pack/tools/jit.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_5923fc41ccd5cde4` -- Tool failure in powershell:python.exe: Error: ETIMEDOUT after 8000ms. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:tmp] `ceps_5d28a90f4498a814` -- Before touching powershell:tmp, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:py] `ceps_3a8b7d39d45f3c5d` -- Tool failure in powershell:py: Error 403: Forbidden. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:== LIVE (old hook)] `ceps_91bd58c83335b24d` -- Before touching powershell:== LIVE (old hook), verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [env/powershell:tmp] `ceps_a3b11db62f9b9a83` -- Environment mismatch on powershell:tmp: Access denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:tmp] `ceps_a3b11db62f9b9a83` -- Environment mismatch on powershell:tmp: Access denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:python.exe] `ceps_5923fc41ccd5cde4` -- Tool failure in powershell:python.exe: Error: ETIMEDOUT after 8000ms. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:== against LIVE (unchang] `ceps_8b4a0b94853e28ac` -- Before touching powershell:== against LIVE (unchang, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:b] `ceps_dddb1241048f5779` -- Tool failure in powershell:b: FATAL:  role. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:body] `ceps_5d28a90f4498a814` -- Before touching powershell:body, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:free_MB={0} total_MB={1}] `ceps_33922323f4bb0b9a` -- Tool failure in powershell:free_MB={0} total_MB={1}: Error: still running: ../skills/claude-power-pack/hooks/ses.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:t] `ceps_834a50d509fe617b` -- Tool failure in powershell:t: Error: Section sections--32509417849163__header_section not.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:l] `ceps_5ee413c0d90a1085` -- Before touching powershell:l, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_cfe92dd0fab0552c` -- Before touching powershell:g, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:body] `ceps_d47d40fe40071e32` -- Tool failure in powershell:body: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:body] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:body: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:g] `ceps_6a846405afddfc27` -- Before touching powershell:g, verify the regression scenario (6 failed) is still covered by a passing test.
+
+- [tooling/powershell:body] `ceps_d47d40fe40071e32` -- Tool failure in powershell:body: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:body] `ceps_d47d40fe40071e32` -- Tool failure in powershell:body: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:[IO.File]::WriteAllText(] `ceps_5d28a90f4498a814` -- Before touching powershell:[IO.File]::WriteAllText(, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:[IO.File]::WriteAllText(] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:[IO.File]::WriteAllText(: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:python.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:python.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:[IO.File]::WriteAllText(] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:[IO.File]::WriteAllText(: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:stops] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:stops: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:print(installed,c.__file] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:print(installed,c.__file: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:echo] `ceps_5d28a90f4498a814` -- Before touching powershell:echo, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:ssh] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:ssh: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:p] `ceps_5d28a90f4498a814` -- Before touching powershell:p, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:f] `ceps_e7776658c2ca8272` -- Tool failure in powershell:f: Error: still running: ../skills/claude-power-pack/hooks/ses.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5ee413c0d90a1085` -- Before touching powershell:g, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_5ee413c0d90a1085` -- Before touching powershell:g, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:[IO.File]::WriteAllText(] `ceps_91bd58c83335b24d` -- Before touching powershell:[IO.File]::WriteAllText(, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:grep] `ceps_5ee413c0d90a1085` -- Before touching powershell:grep, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:sed] `ceps_5ee413c0d90a1085` -- Before touching powershell:sed, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:Get-ChildItem] `ceps_91bd58c83335b24d` -- Before touching powershell:Get-ChildItem, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_e0228e66b08e125e` -- Tool failure in powershell:python.exe: SyntaxError: invalid. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:python3] `ceps_a3b11db62f9b9a83` -- Environment mismatch on powershell:python3: access denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:g] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:g: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:ls] `ceps_d47d40fe40071e32` -- Tool failure in powershell:ls: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Out-String)] `ceps_5d28a90f4498a814` -- Before touching powershell:Out-String), verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:[IO.File]::WriteAllText(] `ceps_5d28a90f4498a814` -- Before touching powershell:[IO.File]::WriteAllText(, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_b2bace02a9ec1ca0` -- Before touching powershell:python.exe, verify the regression scenario (5 failed) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_91bd58c83335b24d` -- Before touching powershell:Get-Content, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:env:PATH] `ceps_5ee413c0d90a1085` -- Before touching powershell:env:PATH, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:Out-String] `ceps_5ee413c0d90a1085` -- Before touching powershell:Out-String, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:exit] `ceps_5d28a90f4498a814` -- Before touching powershell:exit, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:hub] `ceps_02ecff8bf7fd3024` -- Tool failure in powershell:hub: Error: still running: ../skills/claude-power-pack/hooks/ses.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:Select-String] `ceps_64e88dce4c724294` -- Tool failure in powershell:Select-String: Error: still running: ../skills/claude-power-pack/hooks/ses.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_5ee413c0d90a1085` -- Before touching powershell:Select-String, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_2c101bee55b52700` -- Tool failure in powershell:g: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Where-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Where-Object, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_cb99c936afd3c395` -- Tool failure in powershell:Get-Content: PermissionError: [WinError. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:bytes=$($i.Length)] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:bytes=$($i.Length): Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:awk] `ceps_d47d40fe40071e32` -- Tool failure in powershell:awk: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:null] `ceps_cb99c936afd3c395` -- Tool failure in powershell:null: PermissionError: [WinError. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:host)] `ceps_dddb1241048f5779` -- Tool failure in powershell:host): FATAL:  role. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:body] `ceps_cbcb41ec76fcf266` -- Tool failure in powershell:body: fatal: not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:env:PATH] `ceps_231a6547463eabb5` -- Tool failure in powershell:env:PATH: Error: listen EADDRINUSE: address already in use :::3111. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:env:PATH] `ceps_231a6547463eabb5` -- Tool failure in powershell:env:PATH: Error: listen EADDRINUSE: address already in use :::3111. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_9298a1f2863c441d` -- Tool failure in powershell:py: FileNotFoundError: [WinError. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:+$env:PATH] `ceps_43d4f2b16ae43e3b` -- Before touching powershell:+$env:PATH, verify the regression scenario (15 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_353c64d46d9d68df` -- Tool failure in powershell:g: Error(`legacy case could not be recorded: ${minted.error. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:lines] `ceps_632a53321f2386dd` -- Before touching powershell:lines, verify the regression scenario (13 FAILED) is still covered by a passing test.
+
+- [tooling/powershell:foreach($p] `ceps_94343375ef5ede4f` -- Tool failure in powershell:foreach($p: Error en el servidor remoto: (308) Permanent Redirect. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_e935f50b0a87781a` -- Tool failure in powershell:Get-Content: AttributeError: module. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_d47d40fe40071e32` -- Tool failure in powershell:g: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_d47d40fe40071e32` -- Tool failure in powershell:g: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:l] `ceps_64ca982c75a2af5f` -- Tool failure in powershell:l: Error: write EPROTO C01C2FF5757C0000:error:0A00010B:SSL rou.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_d75459724c03994e` -- Tool failure in powershell:Get-Content: Error: Turbopack build failed with 28 errors. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach] `ceps_496e0f30ab84c32f` -- Tool failure in powershell:foreach: Error en el servidor remoto: (404) No se encontr. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:l] `ceps_e5040360a7bc4d86` -- Tool failure in powershell:l: Error: canonical @ / / 320px. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5ee413c0d90a1085` -- Before touching powershell:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:l] `ceps_1dc62076e4156ea5` -- Tool failure in powershell:l: Error: / horizontally overflows by 17px at 768px. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:add] `ceps_b2729e49bd21f5e3` -- Tool failure in powershell:add: Exception|ECONN|EPROTO|relation|secret|jwks|missing|undefin.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:cmd] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:cmd: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:cmd] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:cmd: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:cmd] `ceps_904434f799a130f1` -- Environment mismatch on powershell:cmd: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:sed] `ceps_8b4a0b94853e28ac` -- Before touching powershell:sed, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:cmd] `ceps_ccfd8b86a88d9221` -- Before touching powershell:cmd, verify the regression scenario (4 failed) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-String, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_bbf7c41280f67a4b` -- Tool failure in powershell:Get-Content: Error: Project(s) "tests/smoke/story.quicklease.spec.ts" no.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_1ef7c76fdffb7382` -- Tool failure in powershell:Get-Content: Exception as exc:  # noqa: BLE001 -- a bug must read UNMEAS.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:[System.IO.File]::WriteA] `ceps_5d28a90f4498a814` -- Before touching powershell:[System.IO.File]::WriteA, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:l] `ceps_5d28a90f4498a814` -- Before touching powershell:l, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:g] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:g: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:Select-String] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:Select-String: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:l] `ceps_5d28a90f4498a814` -- Before touching powershell:l, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:foreach] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:echo] `ceps_d8f689198472ecf7` -- Before touching powershell:echo, verify the regression scenario (02 failed) is still covered by a passing test.
+
+- [regression/powershell:cat] `ceps_d8f689198472ecf7` -- Before touching powershell:cat, verify the regression scenario (02 failed) is still covered by a passing test.
+
+- [tooling/powershell:ConvertFrom-Json] `ceps_d65191d7a735cadb` -- Tool failure in powershell:ConvertFrom-Json: Error: No ROADMAP.md found. Run /gsd-new-milestone first. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_2a986caf8642377b` -- Tool failure in powershell:py: Error: No ROADMAP.md found. Run /gsd-new-milestone first.\n. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:for($i=0] `ceps_5d28a90f4498a814` -- Before touching powershell:for($i=0, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:add] `ceps_e08c898cb72acc11` -- Tool failure in powershell:add: Error: at least one covered file required for verification..... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:if(Test-Path] `ceps_5d28a90f4498a814` -- Before touching powershell:if(Test-Path, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:node] `ceps_91bd58c83335b24d` -- Before touching powershell:node, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:ssh] `ceps_5d28a90f4498a814` -- Before touching powershell:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:node] `ceps_5d28a90f4498a814` -- Before touching powershell:node, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:l.Substring(0,[Math]::Mi] `ceps_5d28a90f4498a814` -- Before touching powershell:l.Substring(0,[Math]::Mi, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:foreach($t] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:foreach($t: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_c773f25b4c2973b3` -- Tool failure in powershell:g: Error ? err.message : String(err. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_9aaa858b025d9b17` -- Tool failure in powershell:Get-Content: notifyError: text("notify_error"),. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:head] `ceps_fcec282fb6c70ae0` -- Tool failure in powershell:head: Error: Usage: gsd-tools <command> [args] [--raw] [--cwd <pa.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:python.exe] `ceps_5ee413c0d90a1085` -- Before touching bash:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:python.exe] `ceps_5ee413c0d90a1085` -- Before touching bash:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:python.exe] `ceps_5ee413c0d90a1085` -- Before touching bash:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:python.exe] `ceps_5ee413c0d90a1085` -- Before touching bash:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:python.exe] `ceps_5ee413c0d90a1085` -- Before touching bash:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_672215b640a136c8` -- Tool failure in powershell:g: Error handling: storage / URL parse failures DO happen in r.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:python.exe] `ceps_5ee413c0d90a1085` -- Before touching bash:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_78c68b90bcd95c4e` -- Tool failure in powershell:g: Error ? err.message : err. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:import] `ceps_d47d40fe40071e32` -- Tool failure in powershell:import: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:}] `ceps_05ec612f8d30751f` -- Tool failure in bash:}: Error: duration: Input should be less than or equal to 30. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:}] `ceps_702d5d993ebb9594` -- Tool failure in bash:}: Error: duration: Input should be greater than or equal to 4. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:}] `ceps_d47d40fe40071e32` -- Tool failure in bash:}: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:]*m,] `ceps_91bd58c83335b24d` -- Before touching powershell:]*m,, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:t.Length] `ceps_47b539065b76b061` -- Tool failure in powershell:t.Length: Error: write EPROTO 547B0000:error:0A00010B:SSL. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:]*m,] `ceps_91bd58c83335b24d` -- Before touching powershell:]*m,, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:]*m,] `ceps_91bd58c83335b24d` -- Before touching powershell:]*m,, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:]*m,] `ceps_5ee413c0d90a1085` -- Before touching powershell:]*m,, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:lines=$c] `ceps_5d28a90f4498a814` -- Before touching powershell:lines=$c, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:+$env:PATH] `ceps_5ee413c0d90a1085` -- Before touching powershell:+$env:PATH, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:]*m,] `ceps_91bd58c83335b24d` -- Before touching powershell:]*m,, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:Select-Object] `ceps_71b4915d1e2fbadc` -- Tool failure in powershell:Select-Object: Error: expect(locator).toHaveAttribute(expected) failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:t.Length] `ceps_85760b3c2a2ef698` -- Tool failure in powershell:t.Length: Error [BetterAuthError]: Failed to decrypt private key. Mak.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:cmd] `ceps_d47d40fe40071e32` -- Tool failure in powershell:cmd: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[System.IO.File]::WriteA] `ceps_d47d40fe40071e32` -- Tool failure in powershell:[System.IO.File]::WriteA: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:refus] `ceps_c1e4fe2eaf312e2f` -- Tool failure in powershell:refus: MissionError: singleflight:. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:ConvertFrom-Json] `ceps_911bd3d498cd2bf8` -- Before touching powershell:ConvertFrom-Json, verify the regression scenario (12 failed) is still covered by a passing test.
+
+- [regression/powershell:if(-not] `ceps_5d28a90f4498a814` -- Before touching powershell:if(-not, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Program] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Program: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:env:PATH] `ceps_1f6bd6c15930c230` -- Tool failure in powershell:env:PATH: Error: Turbopack build failed with 9 errors. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Test-Path] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Test-Path: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:g: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:ssh] `ceps_904434f799a130f1` -- Environment mismatch on powershell:ssh: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:env:PATH] `ceps_d66c0aaca60066ad` -- Tool failure in powershell:env:PATH: Error: Turbopack build failed with 12 errors. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[System.IO.File]::WriteA] `ceps_58fa54e724cea73b` -- Tool failure in powershell:[System.IO.File]::WriteA: Exception as exc:  # noqa: BLE001 -- a timeout or an unrunn.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:env:PATH] `ceps_5d28a90f4498a814` -- Before touching powershell:env:PATH, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach] `ceps_d0f8f53d29143c50` -- Tool failure in powershell:foreach: Error en el servidor remoto: (404) No se encontrÃ³. in 164 .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Write-Output] `ceps_5d28a90f4498a814` -- Before touching powershell:Write-Output, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Select-Object] `ceps_c3a85a2882640175` -- Tool failure in powershell:Select-Object: fatal: cherry-pick. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cp rc=$LASTEXITCODE] `ceps_c3a85a2882640175` -- Tool failure in powershell:cp rc=$LASTEXITCODE: fatal: cherry-pick. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:ssh] `ceps_0cede58e1bd9bfc9` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- recorded on every ACTI.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:ssh] `ceps_548915be328b815e` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- fail closed, never bub.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:ssh] `ceps_7de3a52eb0165720` -- Tool failure in bash:ssh: Exception as exc:  # network, DNS, timeout, a malformed host. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:ssh] `ceps_a3b11db62f9b9a83` -- Environment mismatch on bash:ssh: Access denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:env:PATH] `ceps_58ebd7a146886dbb` -- Tool failure in powershell:env:PATH: Error: No config.json found at C:\Users\User\Desktop\Cursor.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:cd] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:cd: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:cd] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:cd: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:cd] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:cd: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:ssh] `ceps_5ee413c0d90a1085` -- Before touching bash:ssh, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/bash:ssh] `ceps_548915be328b815e` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- fail closed, never bub.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:ssh] `ceps_5d28a90f4498a814` -- Before touching bash:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:ssh] `ceps_8fe3b32d76c17d9b` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- reported as a code, ne.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:ssh] `ceps_0cede58e1bd9bfc9` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- recorded on every ACTI.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:ssh] `ceps_5d28a90f4498a814` -- Before touching bash:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/bash:rtk.exe] `ceps_904434f799a130f1` -- Environment mismatch on bash:rtk.exe: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Get-Content] `ceps_dee451d5ee49056a` -- Tool failure in powershell:Get-Content: Error, DBConnection.ConnectionError] -> {:error, :unavailab.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:python.exe] `ceps_5d28a90f4498a814` -- Before touching bash:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:bash] `ceps_5d28a90f4498a814` -- Before touching bash:bash, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:body] `ceps_5d28a90f4498a814` -- Before touching powershell:body, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:g: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_b17cedbdb942b7fd` -- Tool failure in powershell:cmd: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:git] `ceps_c4f98a99f2edcf43` -- Tool failure in powershell:git: Exception:  # noqa: BLE001 -- keep the recorded dir; never .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_c4f98a99f2edcf43` -- Tool failure in powershell:[IO.File]::WriteAllText(: Exception:  # noqa: BLE001 -- keep the recorded dir; never .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Select-String] `ceps_cfe92dd0fab0552c` -- Before touching powershell:Select-String, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_db07972defb0397a` -- Tool failure in powershell:python.exe: Error 404: Not Found. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:foreach] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Get-Content: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach] `ceps_3b0b7afcbcb97278` -- Tool failure in powershell:foreach: MissionError: route. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:t] `ceps_91bd58c83335b24d` -- Before touching powershell:t, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:t] `ceps_91bd58c83335b24d` -- Before touching powershell:t, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [env/powershell:foreach($f] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:foreach($f: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:rf4.py,$py,(New-Object] `ceps_cbcb41ec76fcf266` -- Tool failure in powershell:rf4.py,$py,(New-Object: fatal: not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:rc=$LASTEXITCODE] `ceps_5d28a90f4498a814` -- Before touching powershell:rc=$LASTEXITCODE, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:Select-String] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:Select-String: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:foreach($l] `ceps_3de984fc6033bee2` -- Tool failure in powershell:foreach($l: Error code=:undefined_table. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:sed] `ceps_0083ed33b0ed2f04` -- Tool failure in powershell:sed: fatal: your. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_d9951ee6affb71e1` -- Tool failure in powershell:py: SyntaxError: '('. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:S,E=<!--] `ceps_e0228e66b08e125e` -- Tool failure in powershell:S,E=<!--: SyntaxError: invalid. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach($x] `ceps_3de984fc6033bee2` -- Tool failure in powershell:foreach($x: Error code=:undefined_table. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_e0228e66b08e125e` -- Tool failure in powershell:py: SyntaxError: invalid. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:env:PYTHONIOENCODING=utf] `ceps_5d28a90f4498a814` -- Before touching powershell:env:PYTHONIOENCODING=utf, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_5ee413c0d90a1085` -- Before touching powershell:Select-String, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:Select-String] `ceps_afffed81a4862b1d` -- Tool failure in powershell:Select-String: Error: Cannot find module '@asamuzakjp/css-color. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:code] `ceps_f8ad9bdd3448758f` -- Tool failure in powershell:code: FileNotFoundError: [Errno. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:184,252p] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:184,252p: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:g] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:g: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:env:PATH] `ceps_ea6a47f788d79dc9` -- Tool failure in powershell:env:PATH: Error: No config.json found at C:\Users\User\Apps\pp-gsdx-p.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:anchor=] `ceps_91bd58c83335b24d` -- Before touching powershell:anchor=, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:if] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:if: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:hit] `ceps_7e7b772beb080e78` -- Tool failure in powershell:hit: Exception as exc:                      # noqa: BLE001 -- fa.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:if(Test-Path] `ceps_10d8a184a8bb0a06` -- Tool failure in powershell:if(Test-Path: Exception:  # noqa: BLE001 -- unmeasured is a named state, .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:HOLD rc=$LASTEXITCODE] `ceps_e0228e66b08e125e` -- Tool failure in powershell:HOLD rc=$LASTEXITCODE: SyntaxError: invalid. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:cut] `ceps_5d28a90f4498a814` -- Before touching powershell:cut, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_1c8c459f20926edc` -- Tool failure in powershell:Get-Content: Exception (T2-QL-AUTH-SAME-ORIGIN): in a browser on the Qui.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python3] `ceps_5d28a90f4498a814` -- Before touching powershell:python3, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_40de29cc7458a3bd` -- Tool failure in powershell:Get-Content: Error: DATABASE_URL is not set â€” Better Auth cannot initi.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_91bd58c83335b24d` -- Before touching powershell:g, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:env:PATH] `ceps_5d28a90f4498a814` -- Before touching powershell:env:PATH, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:head] `ceps_5d28a90f4498a814` -- Before touching powershell:head, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:`(python3] `ceps_6ed49659e758181c` -- Before touching powershell:`(python3, verify the regression scenario (4015 failed) is still covered by a passing test.
+
+- [regression/powershell:continue] `ceps_6ed49659e758181c` -- Before touching powershell:continue, verify the regression scenario (4015 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:powershell.exe] `ceps_05ec612f8d30751f` -- Tool failure in bash:powershell.exe: Error: duration: Input should be less than or equal to 30. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:New-Item] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:New-Item: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:Get-NetTCPConnection] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-NetTCPConnection, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:env:PATH] `ceps_3de984fc6033bee2` -- Tool failure in powershell:env:PATH: Error code=:undefined_table. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:script] `ceps_904434f799a130f1` -- Environment mismatch on powershell:script: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:python.exe] `ceps_4ac8b94941856771` -- Tool failure in powershell:python.exe: Exception as exc:  # noqa: BLE001 -- recorded, never silent. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:total $($l.Count)] `ceps_a0bac0df9ce683b9` -- Tool failure in powershell:total $($l.Count): Exception as e: print('no json:', e)\n\"\n'@\n$tmp = Join-P.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:python.exe] `ceps_904434f799a130f1` -- Environment mismatch on powershell:python.exe: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_4585b058c19d04ec` -- Tool failure in powershell:g: fatal: ambiguous. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:script] `ceps_82834babda5a0532` -- Tool failure in powershell:script: Error: --input-format=stream-json requires output-format=st.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:+$env:PATH] `ceps_5d28a90f4498a814` -- Before touching powershell:+$env:PATH, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Set-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Set-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_80aa5d83c79f0d63` -- Tool failure in powershell:g: Exception:  # noqa: BLE001 -- unreadable policy answers wit.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b10a063d55fdfbad` -- Tool failure in powershell:g: Exception.format(:error, e, stacktrace. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:py] `ceps_5ee413c0d90a1085` -- Before touching powershell:py, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_8b4a0b94853e28ac` -- Before touching powershell:python.exe, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [tooling/powershell:configured branch: ] `ceps_496e0f30ab84c32f` -- Tool failure in powershell:configured branch: : Error en el servidor remoto: (404) No se encontr. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_348467de9fe5b06e` -- Tool failure in powershell:g: fatal: a. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_c1e4fe2eaf312e2f` -- Tool failure in powershell:Get-Content: MissionError: singleflight:. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:ssh] `ceps_5d28a90f4498a814` -- Before touching powershell:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:foreach($f] `ceps_91bd58c83335b24d` -- Before touching powershell:foreach($f, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Select-String] `ceps_0ea8be058adc1908` -- Tool failure in powershell:Select-String: Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:+$env:PATH] `ceps_84e0145c0fb48d9f` -- Tool failure in powershell:+$env:PATH: Error: expect(received).not.toMatch(expected) |  | Expected.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:cmd] `ceps_5d28a90f4498a814` -- Before touching powershell:cmd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:+$env:PATH] `ceps_a95962d3f0fc3911` -- Tool failure in powershell:+$env:PATH: Error: /example-reports |  | expect(received).toBe(expected.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:+$env:PATH] `ceps_b67992a80b2ec9cf` -- Tool failure in powershell:+$env:PATH: Error: expect(received).toContain(expected) // indexOf |  |.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:head] `ceps_5d28a90f4498a814` -- Before touching powershell:head, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:New-Item] `ceps_5d28a90f4498a814` -- Before touching powershell:New-Item, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_4ac8b94941856771` -- Tool failure in powershell:Get-Content: Exception as exc:  # noqa: BLE001 -- recorded, never silent. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:adb] `ceps_b270ad435b5688d9` -- Tool failure in powershell:adb: Error: Cannot reach the model server. Check your internet c.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Out-Null] `ceps_4e87c34dde9822b1` -- Tool failure in powershell:Out-Null: Error: Download interrupted (Software caused connection abo.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:psql.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:psql.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Out-Null] `ceps_4e87c34dde9822b1` -- Tool failure in powershell:Out-Null: Error: Download interrupted (Software caused connection abo.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[System.IO.File]::WriteA] `ceps_d47d40fe40071e32` -- Tool failure in powershell:[System.IO.File]::WriteA: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Out-Null] `ceps_ca93669c09bd648e` -- Tool failure in powershell:Out-Null: Error: This video has no audio track." |  text="Pick video".... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:+$env:PATH] `ceps_d69215df48872c8f` -- Tool failure in powershell:+$env:PATH: Error: shortcut text width at 768px |  | expect(received).t.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach] `ceps_d47d40fe40071e32` -- Tool failure in powershell:foreach: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-ChildItem] `ceps_041e29469a785c28` -- Before touching powershell:Get-ChildItem, verify the regression scenario (89 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_9d04033530f28781` -- Tool failure in powershell:g: Exception as exc:                        # the owner's proj.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:body] `ceps_e7518da121c29a10` -- Tool failure in powershell:body: MissionError: goal. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:+$env:PATH] `ceps_08abfa7f79554cfe` -- Tool failure in powershell:+$env:PATH: Error: expect(received).toBe(expected) // Object.is equalit.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:ssh] `ceps_904434f799a130f1` -- Environment mismatch on powershell:ssh: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Win64] `ceps_04b53e74e139b83d` -- Tool failure in powershell:Win64: Error en el servidor remoto: (403) Prohibido. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_c47f3a35ccbb25a8` -- Tool failure in powershell:Get-Content: isLocalModelMissingError: (). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Select-String] `ceps_190fcf9c0de4ff4c` -- Tool failure in powershell:Select-String: SyntaxError: Cannot. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:log] `ceps_91bd58c83335b24d` -- Before touching powershell:log, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:ECONNREFUSED] `ceps_717b5593738c0adb` -- Tool failure in powershell:ECONNREFUSED: Error: write EPROTO C41F0000:error:0A00010B:SSL routines:ss.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:]*m,] `ceps_f967a70a0b6eac48` -- Tool failure in powershell:]*m,: Error: react-stack-top-frame], "_debugTask": null, "actualD.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:log] `ceps_91bd58c83335b24d` -- Before touching powershell:log, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_a9527bd41451f728` -- Tool failure in powershell:Get-Content: fatal: 'main'. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:body] `ceps_5d28a90f4498a814` -- Before touching powershell:body, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_061223bbb36ff0bc` -- Tool failure in powershell:python.exe: Error: No ROADMAP.md found. Run /gsd-new-milestone first.\n.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_d47d40fe40071e32` -- Tool failure in powershell:cmd: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:+$env:PATH] `ceps_834e59022e47feaa` -- Tool failure in powershell:+$env:PATH: Error: file and schema required. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_91bd58c83335b24d` -- Before touching powershell:Get-Content, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:py] `ceps_91bd58c83335b24d` -- Before touching powershell:py, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:]*m,)] `ceps_e437d50c07ff4d3e` -- Tool failure in powershell:]*m,): Error: the page still has QuickLease's own graph. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:port 3000 listening: ] `ceps_ccfd8b86a88d9221` -- Before touching powershell:port 3000 listening: , verify the regression scenario (4 failed) is still covered by a passing test.
+
+- [env/powershell:Get-Content] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:Get-Content: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:g] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:g: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:env:PATH] `ceps_3ae04213568322fe` -- Tool failure in powershell:env:PATH: Error","message":"Dynamic server usage: Route /dashboard/cme. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:foreach($p] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:foreach($p: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:py] `ceps_a6ba772b02a7fb5a` -- Tool failure in powershell:py: Error: No. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:env:PATH] `ceps_91bd58c83335b24d` -- Before touching powershell:env:PATH, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:env:PATH] `ceps_91bd58c83335b24d` -- Before touching powershell:env:PATH, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:env:PATH] `ceps_91bd58c83335b24d` -- Before touching powershell:env:PATH, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_3a193dab776de097` -- Tool failure in powershell:g: Error(`withAndroidLocalBuild: splash asset not found at ${s.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5ee413c0d90a1085` -- Before touching powershell:Get-Content, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:if($c){Stop-Process] `ceps_3ae04213568322fe` -- Tool failure in powershell:if($c){Stop-Process: Error","message":"Dynamic server usage: Route /dashboard/cme. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:lines] `ceps_5ee413c0d90a1085` -- Before touching powershell:lines, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:cmd] `ceps_d47d40fe40071e32` -- Tool failure in powershell:cmd: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:ssh] `ceps_904434f799a130f1` -- Environment mismatch on powershell:ssh: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:ssh] `ceps_5d28a90f4498a814` -- Before touching powershell:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:scp] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:scp: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:env:PATH] `ceps_91bd58c83335b24d` -- Before touching powershell:env:PATH, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:Select-String] `ceps_927f14aef9bcd2e1` -- Tool failure in powershell:Select-String: TypeError: _ExpoSQLite.default.NativeDatabase. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:+$env:PATH] `ceps_91bd58c83335b24d` -- Before touching powershell:+$env:PATH, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:ssh] `ceps_5d28a90f4498a814` -- Before touching powershell:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:foreach($gl] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:foreach($gl: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:ssh] `ceps_5e7156777e6d3d07` -- Tool failure in powershell:ssh: fatal: couldn't. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:the] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:the: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:body] `ceps_e935f50b0a87781a` -- Tool failure in powershell:body: AttributeError: module. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach($o] `ceps_aca402726381eccd` -- Tool failure in powershell:foreach($o: fatal: path. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:body] `ceps_d47d40fe40071e32` -- Tool failure in powershell:body: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:powershell.exe] `ceps_904434f799a130f1` -- Environment mismatch on bash:powershell.exe: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:powershell.exe] `ceps_d47d40fe40071e32` -- Tool failure in bash:powershell.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_f8ad9bdd3448758f` -- Tool failure in powershell:Get-Content: FileNotFoundError: [Errno. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:$m $u -> $([int]$r.Statu] `ceps_94343375ef5ede4f` -- Tool failure in powershell:$m $u -> $([int]$r.Statu: Error en el servidor remoto: (308) Permanent Redirect. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:body] `ceps_d47d40fe40071e32` -- Tool failure in powershell:body: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:body] `ceps_d47d40fe40071e32` -- Tool failure in powershell:body: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash::] `ceps_d47d40fe40071e32` -- Tool failure in bash::: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:body] `ceps_5d28a90f4498a814` -- Before touching powershell:body, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:powershell.exe] `ceps_4585b058c19d04ec` -- Tool failure in bash:powershell.exe: fatal: ambiguous. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:powershell.exe] `ceps_4585b058c19d04ec` -- Tool failure in bash:powershell.exe: fatal: ambiguous. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:l] `ceps_5d28a90f4498a814` -- Before touching powershell:l, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:corepack] `ceps_b17cedbdb942b7fd` -- Tool failure in bash:corepack: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:t] `ceps_5ee413c0d90a1085` -- Before touching powershell:t, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:Get-ChildItem] `ceps_9088a31bb4692804` -- Tool failure in powershell:Get-ChildItem: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisi.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_3b56505f233598cc` -- Tool failure in powershell:Get-Content: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAt.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:]*m,] `ceps_5ee413c0d90a1085` -- Before touching powershell:]*m,, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:body] `ceps_5d28a90f4498a814` -- Before touching powershell:body, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:env:PATH] `ceps_88512e43e8dea79a` -- Tool failure in powershell:env:PATH: Error: locator.click: Error: strict mode violation: getByRo.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_8b4a0b94853e28ac` -- Before touching powershell:python.exe, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_8b4a0b94853e28ac` -- Before touching powershell:python.exe, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:body] `ceps_5d28a90f4498a814` -- Before touching powershell:body, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_e03986f230a43487` -- Tool failure in powershell:python.exe: MissionError: m-iso-bad. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_8b4a0b94853e28ac` -- Before touching powershell:python.exe, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:py] `ceps_8b4a0b94853e28ac` -- Before touching powershell:py, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/bash:$PY] `ceps_5d28a90f4498a814` -- Before touching bash:$PY, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:py] `ceps_8b4a0b94853e28ac` -- Before touching powershell:py, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [tooling/powershell:cmd] `ceps_d47d40fe40071e32` -- Tool failure in powershell:cmd: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:$PY] `ceps_b2c0cde34b847d90` -- Tool failure in bash:$PY: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_d47d40fe40071e32` -- Tool failure in bash:#: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_d47d40fe40071e32` -- Tool failure in bash:#: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:body] `ceps_6ed49659e758181c` -- Before touching powershell:body, verify the regression scenario (5432 failed) is still covered by a passing test.
+
+- [tooling/bash:#] `ceps_d47d40fe40071e32` -- Tool failure in bash:#: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:hostname] `ceps_904434f799a130f1` -- Environment mismatch on powershell:hostname: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_d47d40fe40071e32` -- Tool failure in powershell:[IO.File]::WriteAllText(: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Select-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-Object, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:Get-Content] `ceps_904434f799a130f1` -- Environment mismatch on powershell:Get-Content: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_aca402726381eccd` -- Tool failure in powershell:g: fatal: path.. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_e03986f230a43487` -- Tool failure in powershell:python.exe: MissionError: m-iso-bad. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_5e7156777e6d3d07` -- Tool failure in powershell:g: fatal: couldn't. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-ChildItem] `ceps_f8ad9bdd3448758f` -- Tool failure in powershell:Get-ChildItem: FileNotFoundError: [Errno. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:git.exe] `ceps_5ee413c0d90a1085` -- Before touching powershell:git.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:o] `ceps_d47d40fe40071e32` -- Tool failure in powershell:o: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:f] `ceps_96b4ebb715ba5d7a` -- Tool failure in powershell:f: Error: No such tool available: Monitor. Monitor is disabled.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:foreach($f] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach($f, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:foreach($f] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach($f, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:=== c13 tail] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:=== c13 tail: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:vitest.cmd] `ceps_91bd58c83335b24d` -- Before touching powershell:vitest.cmd, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:vitest.cmd] `ceps_91bd58c83335b24d` -- Before touching powershell:vitest.cmd, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_61d3005d232a5276` -- Tool failure in powershell:g: Exception:  # noqa: BLE001 -- a capsule never fails for a m.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b18a393e073ee9c0` -- Tool failure in powershell:g: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_d47d40fe40071e32` -- Tool failure in powershell:cmd: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:g] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:g: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:ssh] `ceps_5d28a90f4498a814` -- Before touching bash:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:ssh] `ceps_b2258691c9c884c6` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- the reason is printed,.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:ssh] `ceps_5d28a90f4498a814` -- Before touching bash:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:ssh] `ceps_8fe3b32d76c17d9b` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- reported as a code, ne.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:c] `ceps_5d28a90f4498a814` -- Before touching powershell:c, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_91bd58c83335b24d` -- Before touching powershell:Select-String, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/bash:ssh] `ceps_b2258691c9c884c6` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- the reason is printed,.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:ssh] `ceps_93ae4b60e2bb4464` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- the reason is recorded.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:fetch TIMEOUT] `ceps_8b4a0b94853e28ac` -- Before touching powershell:fetch TIMEOUT, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/bash:ssh] `ceps_5d28a90f4498a814` -- Before touching bash:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:fetch TIMEOUT] `ceps_91bd58c83335b24d` -- Before touching powershell:fetch TIMEOUT, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_bd31f4acff62bb26` -- Tool failure in powershell:g: Exception:                                   # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:New-Item] `ceps_5d28a90f4498a814` -- Before touching powershell:New-Item, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:ssh] `ceps_5d28a90f4498a814` -- Before touching powershell:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:ForEach-Object] `ceps_91bd58c83335b24d` -- Before touching powershell:ForEach-Object, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:do] `ceps_b2bace02a9ec1ca0` -- Before touching powershell:do, verify the regression scenario (5 failed) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_bd31f4acff62bb26` -- Tool failure in powershell:python.exe: Exception:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:try] `ceps_63f9f03c3cc4d9ac` -- Tool failure in powershell:try: Error: write EPROTO 90B20000:error:0A00010B:SSL routines:ss.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:l] `ceps_f1d52f0256321edb` -- Tool failure in powershell:l: Error: write EPROTO 90B20000:error:0A00010B:SSL. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:sp] `ceps_cca1d4df01e45b5b` -- Tool failure in powershell:sp: Error: expect(locator).not.toHaveAttribute(expected) failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:{] `ceps_8b4a0b94853e28ac` -- Before touching powershell:{, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [env/powershell:python.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:python.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:foreach] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:body] `ceps_5d28a90f4498a814` -- Before touching powershell:body, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:body] `ceps_5d28a90f4498a814` -- Before touching powershell:body, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:body] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:body: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:powershell.exe] `ceps_7ec2ebf54666134f` -- Tool failure in bash:powershell.exe: SyntaxError: unterminated. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:node] `ceps_ec7fef00a1c80e4e` -- Tool failure in powershell:node: Error: No config.json found at C:\Users\User\Desktop\Cursor.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_91bd58c83335b24d` -- Before touching powershell:Get-Content, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:Get-ChildItem] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-ChildItem, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:node] `ceps_5ee413c0d90a1085` -- Before touching powershell:node, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_bd31f4acff62bb26` -- Tool failure in powershell:Get-Content: Exception:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:exit] `ceps_5e7156777e6d3d07` -- Tool failure in powershell:exit: fatal: couldn't. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:env:PATH] `ceps_91bd58c83335b24d` -- Before touching powershell:env:PATH, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_91bd58c83335b24d` -- Before touching powershell:g, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [env/powershell:l] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:l: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_d47d40fe40071e32` -- Tool failure in bash:#: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_91bd58c83335b24d` -- Before touching bash:#, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/bash:#] `ceps_66e57c2007036f11` -- Tool failure in bash:#: fatal: pathspec. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:#] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:#: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:#] `ceps_f6ef43259d8344bc` -- Before touching bash:#, verify the regression scenario (10 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:ConvertFrom-Json] `ceps_91bd58c83335b24d` -- Before touching powershell:ConvertFrom-Json, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:âœ“] `ceps_70e29ddf67c04bdb` -- Tool failure in powershell:âœ“: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveTe.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:sed] `ceps_91bd58c83335b24d` -- Before touching powershell:sed, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:tail] `ceps_ee7a7239f962e78d` -- Before touching bash:tail, verify the regression scenario (23 failed) is still covered by a passing test.
+
+- [regression/bash:tail] `ceps_8b4a0b94853e28ac` -- Before touching bash:tail, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/bash:tail] `ceps_8b4a0b94853e28ac` -- Before touching bash:tail, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:cmd] `ceps_5d28a90f4498a814` -- Before touching powershell:cmd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:PYTAIL=60] `ceps_5d28a90f4498a814` -- Before touching bash:PYTAIL=60, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:PYTAIL=10] `ceps_5ee413c0d90a1085` -- Before touching bash:PYTAIL=10, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/bash:#] `ceps_50d14084d53ac150` -- Tool failure in bash:#: Error: unexpected positional argument "plan. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/bash:bash] `ceps_4b9501def27fe7fb` -- Tool failure in bash:bash: Error: Cannot find module 'C:\msys64\home\User\.claude\gsd-.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:#] `ceps_ccfd8b86a88d9221` -- Before touching bash:#, verify the regression scenario (4 failed) is still covered by a passing test.
+
+- [tooling/bash:bash] `ceps_548915be328b815e` -- Tool failure in bash:bash: Exception as exc:  # noqa: BLE001 -- fail closed, never bub.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:for] `ceps_d47d40fe40071e32` -- Tool failure in bash:for: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_ccfd8b86a88d9221` -- Before touching bash:#, verify the regression scenario (4 failed) is still covered by a passing test.
+
+- [tooling/bash:bash] `ceps_d47d40fe40071e32` -- Tool failure in bash:bash: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_43d4f2b16ae43e3b` -- Before touching bash:#, verify the regression scenario (15 failed) is still covered by a passing test.
+
+- [tooling/bash:powershell.exe] `ceps_d47d40fe40071e32` -- Tool failure in bash:powershell.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:#] `ceps_cfe92dd0fab0552c` -- Before touching bash:#, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:[IO.File]::WriteAllText(] `ceps_904434f799a130f1` -- Environment mismatch on powershell:[IO.File]::WriteAllText(: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:git.exe] `ceps_4585b058c19d04ec` -- Tool failure in powershell:git.exe: fatal: ambiguous. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_b575456381344291` -- Before touching bash:#, verify the regression scenario (8 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_8b4a0b94853e28ac` -- Before touching bash:#, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_8b4a0b94853e28ac` -- Before touching bash:#, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_91bd58c83335b24d` -- Before touching bash:#, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:gh] `ceps_5ee413c0d90a1085` -- Before touching powershell:gh, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:exit] `ceps_91bd58c83335b24d` -- Before touching powershell:exit, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:foreach($t] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach($t, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:exit] `ceps_5d28a90f4498a814` -- Before touching powershell:exit, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_8b4a0b94853e28ac` -- Before touching bash:#, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:[IO.File]::WriteAllText(] `ceps_5d28a90f4498a814` -- Before touching powershell:[IO.File]::WriteAllText(, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:bash] `ceps_5ee413c0d90a1085` -- Before touching bash:bash, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:bash] `ceps_5d28a90f4498a814` -- Before touching bash:bash, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_8b4a0b94853e28ac` -- Before touching bash:#, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:#] `ceps_d47d40fe40071e32` -- Tool failure in bash:#: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_ccfd8b86a88d9221` -- Before touching bash:#, verify the regression scenario (4 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:powershell.exe] `ceps_aca402726381eccd` -- Tool failure in bash:powershell.exe: fatal: path. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_cfe92dd0fab0552c` -- Before touching bash:#, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:+$env:Path] `ceps_a3ec976fcb59e54c` -- Tool failure in powershell:+$env:Path: Error: Phase 2 verification is incomplete: Human verificati.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:mkdir] `ceps_5d28a90f4498a814` -- Before touching powershell:mkdir, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_182d3d0f8f156047` -- Tool failure in powershell:[IO.File]::WriteAllText(: TypeError: processed_tokens(). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:#] `ceps_904434f799a130f1` -- Environment mismatch on bash:#: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:t] `ceps_5ee413c0d90a1085` -- Before touching powershell:t, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:t] `ceps_8b4a0b94853e28ac` -- Before touching powershell:t, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [tooling/powershell:python.exe] `ceps_d47d40fe40071e32` -- Tool failure in powershell:python.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_8b4a0b94853e28ac` -- Before touching bash:#, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:Get-Item] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Item, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
 ## T-TRANSFER-SOURCE-FORGES-CONTAMINATION-001 -- answers derived from a corpus share its text
 
 A contamination scan that flags answer-only text in a worker's transcript must first remove everything the worker
@@ -15450,3 +16959,335 @@ one case no auditor has seen, so the repair cannot only confirm itself. An edit 
 seal check, not by discipline. Origin: EDD P2-B (2026-10-09), H01/H02 judged `minor` with incomplete keys; Owner
 decision D-03 "repair, never carry known-incomplete gold forward". Mechanism: `edd_p2b.py reseal` (LINEAGE.json),
 `sealed()` refuses a sums file the lineage does not describe. Related: the evaluation-corpus-governance skill.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:foreach] `ceps_91bd58c83335b24d` -- Before touching powershell:foreach, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:foreach] `ceps_cfe92dd0fab0552c` -- Before touching powershell:foreach, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_8b4a0b94853e28ac` -- Before touching bash:#, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [env/bash:MSYS_NO_PATHCONV=1] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:MSYS_NO_PATHCONV=1: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:MSYS_NO_PATHCONV=1] `ceps_5ee413c0d90a1085` -- Before touching bash:MSYS_NO_PATHCONV=1, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:echo] `ceps_904434f799a130f1` -- Environment mismatch on bash:echo: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/bash:#] `ceps_b18a393e073ee9c0` -- Tool failure in bash:#: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:powershell.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:powershell.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:exit] `ceps_91bd58c83335b24d` -- Before touching powershell:exit, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:laptop] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:laptop: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:lines=] `ceps_5d28a90f4498a814` -- Before touching powershell:lines=, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:foreach($i] `ceps_5ee413c0d90a1085` -- Before touching powershell:foreach($i, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_d9951ee6affb71e1` -- Tool failure in powershell:Get-Content: SyntaxError: '('. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:powershell.exe] `ceps_5ee413c0d90a1085` -- Before touching bash:powershell.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/powershell:$t rc=$LASTEXITCODE] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:$t rc=$LASTEXITCODE: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_d55d19d792da4542` -- Tool failure in powershell:s: Exception as exc:  # noqa: BLE001 -- a gate that cannot run.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_7d95aa11953303f6` -- Tool failure in powershell:s: Exception as exc:  # noqa: BLE001 -- an unanswered goal che.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_27a5cb887534c112` -- Tool failure in powershell:s: Exception as exc:  # noqa: BLE001 -- hold with the reason, .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:python.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:python.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:s] `ceps_d47d40fe40071e32` -- Tool failure in powershell:s: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:ssh] `ceps_8c736186ad9c3167` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- genuine machinery fail.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:ssh] `ceps_37f4644086b8e3e6` -- Tool failure in bash:ssh: Exception:  # noqa: BLE001 — any read failure must deny, no.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:ssh] `ceps_d90b92779efc18c7` -- Tool failure in bash:ssh: Exception as exc:  # noqa: BLE001 -- the owner read failed:.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:ssh] `ceps_5d28a90f4498a814` -- Before touching bash:ssh, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_70d7df967842f288` -- Tool failure in powershell:g: fatal: 'C:\Users\User\Apps\pp-ce-a5-base'. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_91bd58c83335b24d` -- Before touching powershell:python.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_6ed49659e758181c` -- Before touching bash:#, verify the regression scenario (163 failed) is still covered by a passing test.
+
+- [regression/powershell:Out-String)] `ceps_5ee413c0d90a1085` -- Before touching powershell:Out-String), verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:Program] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Program: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:bash] `ceps_37f4644086b8e3e6` -- Tool failure in bash:bash: Exception:  # noqa: BLE001 — any read failure must deny, no.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_d90b92779efc18c7` -- Tool failure in bash:#: Exception as exc:  # noqa: BLE001 -- the owner read failed:.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_d735ab086ba9eff6` -- Tool failure in bash:#: Exception:  # noqa: BLE001 — unknown halt state is a halt. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:cmd] `ceps_5d28a90f4498a814` -- Before touching powershell:cmd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_2c101bee55b52700` -- Tool failure in powershell:g: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:head] `ceps_5d28a90f4498a814` -- Before touching powershell:head, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:cmd] `ceps_4cf3fc6591237450` -- Tool failure in powershell:cmd: Exception as exc:  # noqa: BLE001 -- an instrument that rai.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_2c569658d57359f9` -- Tool failure in powershell:[IO.File]::WriteAllText(: Exception:  # noqa: BLE001 -- an unreadable record is unmea.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_e6d2df3840343203` -- Tool failure in powershell:cmd: Exception as exc:  # noqa: BLE001 -- recorded, the supervis.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_d55d19d792da4542` -- Tool failure in powershell:cmd: Exception as exc:  # noqa: BLE001 -- a gate that cannot run.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:calls+=1] `ceps_5d28a90f4498a814` -- Before touching powershell:calls+=1, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5ee413c0d90a1085` -- Before touching powershell:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:Get-ChildItem] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Get-ChildItem: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:[IO.File]::WriteAllText(] `ceps_5d28a90f4498a814` -- Before touching powershell:[IO.File]::WriteAllText(, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:weak] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:weak: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:env:PATH] `ceps_91bd58c83335b24d` -- Before touching powershell:env:PATH, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/powershell:env:PATH] `ceps_5d28a90f4498a814` -- Before touching powershell:env:PATH, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Item] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Item, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_b2bace02a9ec1ca0` -- Before touching powershell:Get-Content, verify the regression scenario (5 FAILED) is still covered by a passing test.
+
+- [regression/powershell:env:PATH] `ceps_5d28a90f4498a814` -- Before touching powershell:env:PATH, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:$PY] `ceps_5d28a90f4498a814` -- Before touching bash:$PY, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:]*m,] `ceps_cfe92dd0fab0552c` -- Before touching powershell:]*m,, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Select-String] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-String, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:python.exe] `ceps_5d28a90f4498a814` -- Before touching powershell:python.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:== ucda wt HEAD] `ceps_47b2beb6929da92e` -- Tool failure in powershell:== ucda wt HEAD: Error integral | DEFER: receipts (A5) are the first step; t.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:foreach($n] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach($n, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:[IO.File]::WriteAllText(] `ceps_5d28a90f4498a814` -- Before touching powershell:[IO.File]::WriteAllText(, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:foreach($m] `ceps_5ee413c0d90a1085` -- Before touching powershell:foreach($m, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:[IO.File]::WriteAllText(] `ceps_5ee413c0d90a1085` -- Before touching powershell:[IO.File]::WriteAllText(, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:l] `ceps_8b4a0b94853e28ac` -- Before touching powershell:l, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:foreach($t] `ceps_5ee413c0d90a1085` -- Before touching powershell:foreach($t, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:true] `ceps_5ee413c0d90a1085` -- Before touching powershell:true, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:echo] `ceps_d47d40fe40071e32` -- Tool failure in powershell:echo: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:foreach($n] `ceps_5ee413c0d90a1085` -- Before touching powershell:foreach($n, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Select-String] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Select-String: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:foreach] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:foreach: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:foreach($t] `ceps_5ee413c0d90a1085` -- Before touching powershell:foreach($t, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:node] `ceps_4b9501def27fe7fb` -- Tool failure in powershell:node: Error: Cannot find module 'C:\Users\User\Apps\io-ql-secops\.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:tombstone UTC: ] `ceps_904434f799a130f1` -- Environment mismatch on powershell:tombstone UTC: : command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:Get-ChildItem] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-ChildItem, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Item] `ceps_a338cd25d81cb0f4` -- Tool failure in powershell:Get-Item: Error: in-process lane (floor 0ms, cards 0ms) + critical la.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Copy-Item] `ceps_cfe92dd0fab0552c` -- Before touching powershell:Copy-Item, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_47661e487f1097c2` -- Tool failure in powershell:g: Exception:  # noqa: BLE001 - the lead and the alert already.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:rc=$LASTEXITCODE] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:rc=$LASTEXITCODE: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:[IO.File]::WriteAllText(] `ceps_5ee413c0d90a1085` -- Before touching powershell:[IO.File]::WriteAllText(, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/powershell:foreach($t] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:foreach($t: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:foreach($t] `ceps_5ee413c0d90a1085` -- Before touching powershell:foreach($t, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:timeout] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:timeout: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:while(((Get-Date)-$t0).T] `ceps_91bd58c83335b24d` -- Before touching powershell:while(((Get-Date)-$t0).T, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [env/bash:powershell.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:powershell.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:t] `ceps_666e1a82ce571f76` -- Tool failure in powershell:t: Error -> Immunity: expensive failures should attempt to cry.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:#] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:#: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:#] `ceps_b18a393e073ee9c0` -- Tool failure in bash:#: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:#] `ceps_911bd3d498cd2bf8` -- Before touching bash:#, verify the regression scenario (12 failed) is still covered by a passing test.
+
+- [tooling/powershell:Select-Object] `ceps_58692a1a1896e683` -- Tool failure in powershell:Select-Object: Error: ^^^\r\n#   (10140) undefined identifier \u0027s32\u0.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_d47d40fe40071e32` -- Tool failure in powershell:python.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:env:PATH] `ceps_5d28a90f4498a814` -- Before touching powershell:env:PATH, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:a] `ceps_d47d40fe40071e32` -- Tool failure in powershell:a: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:ConvertFrom-Json).local_] `ceps_91bd58c83335b24d` -- Before touching powershell:ConvertFrom-Json).local_, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [regression/bash:timeout] `ceps_6a846405afddfc27` -- Before touching bash:timeout, verify the regression scenario (6 failed) is still covered by a passing test.
+
+- [regression/bash:node] `ceps_ccfd8b86a88d9221` -- Before touching bash:node, verify the regression scenario (4 failed) is still covered by a passing test.
+
+- [tooling/bash:rm] `ceps_cbdbcfb51b602dc3` -- Tool failure in bash:rm: Error: ERR_FAILED (-2) loading 'data:text/html,%3Cbody%3Ex%.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:printf] `ceps_b1678e1f2d417fc6` -- Tool failure in bash:printf: Error: ERR_FAILED (-2) loading 'file:///C:\Users\User\Apps\.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:sed] `ceps_fa49205f2d081822` -- Tool failure in bash:sed: Error: ERR_FAILED (-2) loading 'about:blank. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:git] `ceps_0aa838729f37fbf9` -- Tool failure in bash:git: fatal: too. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:ConvertFrom-Json).local_] `ceps_6a846405afddfc27` -- Before touching powershell:ConvertFrom-Json).local_, verify the regression scenario (6 failed) is still covered by a passing test.
+
+- [regression/bash:.EXE] `ceps_6a846405afddfc27` -- Before touching bash:.EXE, verify the regression scenario (6 failed) is still covered by a passing test.
+
+- [regression/bash:#] `ceps_5d28a90f4498a814` -- Before touching bash:#, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:#] `ceps_dac1fcdb32886d23` -- Tool failure in bash:#: Error: Cannot find module. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_b18a393e073ee9c0` -- Tool failure in bash:#: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:len=$($t.Length) first_m] `ceps_971820a9059a1e49` -- Tool failure in powershell:len=$($t.Length) first_m: Error:         ^^^\r\n#   (10140) undefined identifier 's32.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:rtk.exe] `ceps_25720528b6c28097` -- Tool failure in bash:rtk.exe: Exception:  # noqa: BLE001 -- no transcript is its own answ.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:sed] `ceps_6426db10e7c2af5c` -- Tool failure in bash:sed: Exception as exc:  # noqa: BLE001 -- isolated per mission, .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:foreach] `ceps_5ee413c0d90a1085` -- Before touching powershell:foreach, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:py] `ceps_5ee413c0d90a1085` -- Before touching powershell:py, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/powershell:Get-ChildItem] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:Get-ChildItem: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:m$i exit=$LASTEXITCODE] `ceps_5ee413c0d90a1085` -- Before touching powershell:m$i exit=$LASTEXITCODE, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:node] `ceps_8b4a0b94853e28ac` -- Before touching powershell:node, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [tooling/powershell:Select-Object] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Select-Object: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Program] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Program: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Out-File] `ceps_5ee413c0d90a1085` -- Before touching powershell:Out-File, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:prg] `ceps_31de8d464e1fb205` -- Tool failure in powershell:prg: Exception:  # noqa: BLE001 - any owner failure is "not read.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:sys.exit(2)] `ceps_5ee413c0d90a1085` -- Before touching powershell:sys.exit(2), verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:e] `ceps_5ee413c0d90a1085` -- Before touching powershell:e, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:+r[:900]) if i[] `ceps_d47d40fe40071e32` -- Tool failure in powershell:+r[:900]) if i[: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:g] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:g: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:foreach($f] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:foreach($f: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:foreach] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:foreach: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:foreach] `ceps_cbcb41ec76fcf266` -- Tool failure in powershell:foreach: fatal: not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:node] `ceps_4b9501def27fe7fb` -- Tool failure in powershell:node: Error: Cannot find module 'C:\Users\User\Apps\pp-gsdx-pcc\~.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:page.tsx =====] `ceps_78c68b90bcd95c4e` -- Tool failure in powershell:page.tsx =====: Error ? err.message : err. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_f8ad9bdd3448758f` -- Tool failure in powershell:[IO.File]::WriteAllText(: FileNotFoundError: [Errno. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_d47d40fe40071e32` -- Tool failure in powershell:[IO.File]::WriteAllText(: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:python.exe: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:env:PATH] `ceps_b17cedbdb942b7fd` -- Tool failure in powershell:env:PATH: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:if] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:if: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach($u] `ceps_94343375ef5ede4f` -- Tool failure in powershell:foreach($u: Error en el servidor remoto: (308) Permanent Redirect. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:[IO.File]::WriteAllText(] `ceps_904434f799a130f1` -- Environment mismatch on powershell:[IO.File]::WriteAllText(: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/bash:#] `ceps_5ee413c0d90a1085` -- Before touching bash:#, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/bash:#] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:#: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:1..3] `ceps_5d28a90f4498a814` -- Before touching powershell:1..3, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:py] `ceps_27a5cb887534c112` -- Tool failure in powershell:py: Exception as exc:  # noqa: BLE001 -- hold with the reason, .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:replay] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:replay: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:neither] `ceps_ca10af2d30e6f597` -- Tool failure in powershell:neither: SyntaxError: unexpected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:test_claude_cli.py,-q,-p] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:test_claude_cli.py,-q,-p: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.

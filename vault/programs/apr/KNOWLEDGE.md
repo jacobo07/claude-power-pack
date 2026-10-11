@@ -1,15 +1,19 @@
-# APR knowledge log (APR-6 promotes candidates; append one entry per bug/failure)
 
-## A1 -- Three receipt parsers, one file, three answers: the root cause of EWC K5 (coordinator, 2026-10-11)
-- Symptom: EWC E2 halted `stopped_without_done receipt=UNREADABLE` with its work committed (25f83975, 56/56).
-- Trigger: E2's renewal m-4d2ca58231cd (renewed_from m-5b373f3a9b72, which had HALTED "no receipt") wrote a receipt
-  with every step PROVEN and no `Status:` line.
-- Root cause: `gsd_mission._receipt_present` -> present (not stub/partial) -> mission COMPLETED, halt-continue skipped;
-  `gsdx_chain.receipt_status` -> UNREADABLE -> unit not done; `gsd_mission.receipt_complete` -> not done. With every
-  mission terminal and `max_residuals 0`, `_residual` returned `stopped_without_done` each tick. The steward also
-  skipped the mission (`mission_steward.py:138` returned on "receipt file exists").
-- Failed defenses: halt-continue (the recovery that DID work for the first E2 stop) was switched off by the permissive
-  parser; the chain had no evidence but model text; no alert on a repeated `stopped_without_done`.
+## A6 -- canary: only the Status-less unit gets a seal.json (APR-6, OBSERVED, cause unverified)
+- C2/C3 closed by the worker + gate passed have `.gate.json` only. Evidence: PRODUCTION-REALITY.md F1.
+
+## A7 -- refusal.json cited by the row disappears (APR-6, OBSERVED, cause unverified): F2.
+
+## A8 -- mission layer says "no receipt" about a closed receipt; second worker renewed (APR-6, OBSERVED)
+- m-2e61e0a0aa10 and renewal m-7a5265092233 both HALTED "no receipt" while WU-C2-receipt.md (Status: DONE, 17:30:05)
+  was on disk and the chain advanced. ~77k tokens of a duplicate worker. Likely the residual path of the receipt check
+  (receipt older than mission start / residual packet) -- not verified. Open: next task. Status: OBSERVED, unfixed.
+
+## A9 -- `gsdx_chain.py status` under Git Bash: "Could not determine home directory" (APR-6)
+- Python Path.home() needs USERPROFILE/HOME; the harness bash lacked them. Works under PowerShell. Workaround, not a code fault.
+
+## A10 -- APR4 self-review was not independent (APR-4 receipt): 1 HIGH (empty acceptance sealed vacuously) fixed 9da3e13f.
+opped_without_done`.
 - Fix (APR-1, 6932f9b9 in wt_apr, 741479f3 live): `tools/receipt_judge.py` is the only reading; an unclosed receipt
   halts the mission with the reason and gets the bounded renewal; the steward acts on it, never rewriting the file.
 - Proof: `V-APR-K5-UNCLOSED-RECEIPT-RENEWS` FAIL against HEAD's gsd_mission (state COMPLETED = the incident), PASS
