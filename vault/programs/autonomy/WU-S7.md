@@ -14,3 +14,7 @@ Receipt: `vault/programs/autonomy/WU-S7-receipt.md`.
   handoff deterministically, or the breaker reserves its last N calls for closeout writes (receipt, chain.json). Test it.
 - Bug: `programme_status.py` prints spend UNKNOWN for goal autonomy-convergence while `mission_spend goal-status` reports
   settled 5,996,557. Fix the projection's spend source; add a gate that compares both.
+
+## Added 2026-10-11 (bootstrap pane)
+- Reflex: `gsd_mission release` of a held mission drops its admission, so the sweep logs `work unit not admitted (verdict none)` on every pass and never launches it (L1 sat 2.7 h). On release, re-admit from the recorded route when packet + route sha are intact (same rule as A3 readmit_for_relay). Test it.
+- Attribution: an interactive pane whose cwd enters a goal root is charged to that goal (pane b3fb1dd2: 6.0M into autonomy-convergence). Charge it with role=control/interactive and show it apart in programme-spend and programme_status.
