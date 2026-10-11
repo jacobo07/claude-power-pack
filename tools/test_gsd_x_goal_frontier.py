@@ -323,13 +323,15 @@ def syn_state(runs: list):
     from types import SimpleNamespace as NS  # noqa: PLC0415
     events = []
     seq = 0
-    for n, (oid, cls, outcome, start, dur) in enumerate(runs):
+    for n, run in enumerate(runs):
+        oid, cls, outcome, start, dur = run[:5]
+        extra = run[5] if len(run) > 5 else {}          # e.g. {"mode": "speculative"}
         eid = f"ep-{n}"
         seq += 1
         events.append(NS(seq=seq, type=ep.DISPATCHING, ts=_iso(start), data={
             "epoch_id": eid, "revision": "r", "provider": "gate", "identity": {}, "info_key": f"k{n}",
             "hypothesis": "initial", "fence": n + 1,
-            "spec": {"obligation": oid, "tree_hash": TREE, "gate": {"id": oid, "class": cls}}}))
+            "spec": {"obligation": oid, "tree_hash": TREE, "gate": {"id": oid, "class": cls}, **extra}}))
         seq += 1
         events.append(NS(seq=seq, type=ep.RUNNING, ts=_iso(start), data={"epoch_id": eid, "handle": {}}))
         seq += 1
@@ -1006,6 +1008,117 @@ def gate_fence():
         shutil.rmtree(base, ignore_errors=True)
 
 
+# ---------------------------------------------------------------- 03-05 gates
+
+def _spec_ctx(runs):
+    from types import SimpleNamespace as NS  # noqa: PLC0415
+    return NS(state=syn_state(runs), budget={})
+
+
+GOOD_RUNS = [("ob-a", "unit", "completed", 0, 10), ("ob-a", "unit", "completed", 100, 10),
+             ("ob-a", "unit", "failed", 200, 10)]       # 2 of 3 pass: saving 13.3 s > cost 6.7 s
+
+
+def gate_spec_admit():
+    fr = need("admit_speculative")
+    if fr is None:
+        return False, ABSENT
+    ok, why = fr.admit_speculative(unit_of("ob-a"), _spec_ctx(GOOD_RUNS))
+    return ok is True and "saving" in why, f"admitted={ok} why='{why}'"
+
+
+def gate_spec_refuse():
+    fr = need("admit_speculative")
+    if fr is None:
+        return False, ABSENT
+    ctx = _spec_ctx(GOOD_RUNS)
+    writes_out = dict(unit_of("ob-a"), writes=["src/app.py"])
+    shared = unit_of("ob-a", resources=["integration-env"])
+    non_unit = dict(unit_of("ob-a"), gate_class="integration")
+    undeclared = dict(unit_of("ob-a"), reads=None, writes=None, resources=None)
+    unknown_cost = unit_of("ob-z")
+    losing = _spec_ctx([("ob-a", "unit", "failed", 0, 10), ("ob-a", "unit", "failed", 100, 10),
+                        ("ob-a", "unit", "completed", 200, 10)])
+    cases = {"writes_outside": fr.admit_speculative(writes_out, ctx),
+             "shared_resource": fr.admit_speculative(shared, ctx),
+             "non_unit_class": fr.admit_speculative(non_unit, ctx),
+             "undeclared": fr.admit_speculative(undeclared, ctx),
+             "unknown_cost": fr.admit_speculative(unknown_cost, ctx),
+             "saving_not_above_cost": fr.admit_speculative(unit_of("ob-a"), losing)}
+    codes = {k: v[1].split()[0] for k, v in cases.items()}
+    ok = all(v[0] is False for v in cases.values()) and len(set(codes.values())) == len(codes)
+    return ok, f"reasons={codes}"
+
+
+def gate_race_admit():
+    fr = need("admit_race")
+    if fr is None:
+        return False, ABSENT
+    a = {"id": "c1", "root": "/w/a", "contract": "sha:1", "writes": ["/w/a/out.txt"]}
+    b = {"id": "c2", "root": "/w/b", "contract": "sha:1", "writes": ["/w/b/out.txt"]}
+    same_root = dict(b, root="/w/a", writes=["/w/a/out2.txt"])
+    other_contract = dict(b, contract="sha:2")
+    escaping = dict(b, writes=["/w/a/out.txt"])           # writes into the other candidate's root
+    cases = {"two_distinct_same_contract": fr.admit_race([a, b]),
+             "single": fr.admit_race([a]),
+             "same_root": fr.admit_race([a, same_root]),
+             "contract_mismatch": fr.admit_race([a, other_contract]),
+             "not_reversible": fr.admit_race([a, escaping])}
+    codes = {k: v[1].split()[0] for k, v in cases.items() if not v[0]}
+    ok = (cases["two_distinct_same_contract"][0] is True
+          and all(not v[0] for k, v in cases.items() if k != "two_distinct_same_contract")
+          and len(set(codes.values())) == len(codes))
+    return ok, f"admitted={cases['two_distinct_same_contract'][0]} refusals={codes}"
+
+
+def gate_yield():
+    fr = need("yield_ledger")
+    if fr is None:
+        return False, ABSENT
+    spec = {"mode": "speculative"}
+    race = {"mode": "race"}
+    st = syn_state([("ob-a", "unit", "completed", 0, 5, spec), ("ob-a", "unit", "completed", 10, 5, spec),
+                    ("ob-a", "unit", "cancelled", 20, 5, spec), ("ob-a", "unit", "failed", 30, 5, spec),
+                    ("ob-b", "unit", "cancelled", 40, 5, race), ("ob-b", "unit", "cancelled", 50, 5, race),
+                    ("ob-b", "unit", "completed", 60, 5, race), ("ob-c", "unit", "completed", 70, 5)])
+    got = fr.yield_ledger(st)
+    empty = fr.yield_ledger(syn_state([("ob-c", "unit", "completed", 0, 5)]))
+    ok = (got["speculative"]["completed"] == 2 and got["speculative"]["cancelled"] == 1
+          and got["speculative"]["failed"] == 1 and got["speculative"]["total"] == 4
+          and got["race"]["cancelled"] == 2 and got["race"]["completed"] == 1 and got["race"]["total"] == 3
+          and empty["speculative"]["total"] == 0 and empty["race"]["total"] == 0
+          and empty["speculative"]["completed"] == 0)
+    return ok, f"speculative={got['speculative']} race={got['race']} empty_total={empty['speculative']['total']}"
+
+
+def gate_reported_not_executed():
+    """A sweep over a goal with admissible speculation reports it and dispatches nothing speculative."""
+    if need("admit_speculative") is None:
+        return False, ABSENT
+    repo = make_repo()
+    log, base = sweep_goal_for("sweep-spec", 3, "BALANCED", repo)
+    run_dir = Path(tempfile.mkdtemp(prefix="frontier-run-"))
+    try:
+        # measured history for every obligation: three real completed gate epochs of ~1.2 s
+        seeded = [raw_epoch(log, f"ob-{i}") for i in range(3)]
+        time.sleep(1.2)
+        for eid in seeded:
+            ep.end(log, gc.project(log), eid, ep.COMPLETED, "seeded measurement", "t")
+        with switch("on"):
+            acted = sw.sweep_goal(log, repo, providers=("gate",), run_dir=run_dir)
+            rest = drain(log, repo, run_dir)
+        eps_now = list(ep.project_epochs(gc.project(log)).values())
+        dispatched = sum(1 for a in acted if "dispatched" in a)
+        reported = [a for a in acted if "speculative" in a and "admitted" in a]
+        none_speculative = not any((e.spec or {}).get("mode") in ("speculative", "race") for e in eps_now)
+        ok = dispatched == 2 and len(reported) == 1 and none_speculative and "DRAIN TIMEOUT" not in rest
+        return ok, f"dispatched={dispatched} (bound 2, 3 ready) report='{reported[0][:90] if reported else None}' no_speculative_epoch={none_speculative}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+        shutil.rmtree(repo, ignore_errors=True)
+        shutil.rmtree(run_dir, ignore_errors=True)
+
+
 GATES = [
     ("V-FRONTIER-HERMETIC", gate_hermetic),
     ("V-FRONTIER-SWITCH", gate_switch),
@@ -1041,6 +1154,11 @@ GATES = [
     ("V-FRONTIER-SWEEP-BOUND", gate_sweep_bound),
     ("V-FRONTIER-LOSTRACE", gate_lostrace),
     ("V-FRONTIER-FENCE", gate_fence),
+    ("V-FRONTIER-SPEC-ADMIT", gate_spec_admit),
+    ("V-FRONTIER-SPEC-REFUSE", gate_spec_refuse),
+    ("V-FRONTIER-RACE-ADMIT", gate_race_admit),
+    ("V-FRONTIER-YIELD", gate_yield),
+    ("V-FRONTIER-REPORTED-NOT-EXECUTED", gate_reported_not_executed),
 ]
 
 

@@ -334,6 +334,78 @@ def decide_frontier(ctx, legacy):
     return base
 
 
+# --- speculation admission and yield (D25, D26): decisions and counts, nothing is executed here --
+
+RUN_PREFIX = "run:"
+
+
+def admit_speculative(unit: dict, ctx) -> tuple:
+    """May a gate run ahead of its turn on spare capacity? (admitted, reason). The first token of a
+    refusal is a stable code. A speculative run must touch only its own run directory, hold no shared
+    resource, be a unit-class gate and have a measured cost; it is worth running only when the time
+    saved by a pass exceeds the time wasted by a fail, both from this goal's own runs."""
+    if unit.get("reads") is None or unit.get("writes") is None or unit.get("resources") is None:
+        return False, "UNDECLARED the unit does not declare what it reads, writes and holds"
+    outside = [w for w in unit["writes"] if not str(w).startswith(RUN_PREFIX)]
+    if outside:
+        return False, f"WRITES_OUTSIDE_RUN_DIR writes {sorted(outside)}"
+    if unit["resources"]:
+        return False, f"SHARED_RESOURCE holds {sorted(unit['resources'])}"
+    if unit.get("gate_class") != "unit":
+        return False, f"NOT_UNIT_CLASS gate class is {unit.get('gate_class')!r}"
+    oid = unit.get("obligation")
+    seconds = duration_prior(ctx.state, oid, unit.get("gate_class"))
+    fail = _fail_fraction(ctx.state, oid)
+    if seconds is None or fail is None:
+        return False, "UNKNOWN_COST no measured duration or pass fraction for this obligation"
+    saving, cost = seconds * (1 - fail), seconds * fail
+    if saving > cost:
+        return True, f"ADMITTED saving {saving:.1f}s exceeds cost {cost:.1f}s"
+    return False, f"NOT_WORTH_IT saving {saving:.1f}s does not exceed cost {cost:.1f}s"
+
+
+def _inside(path: str, root: str) -> bool:
+    p, r = path.replace("\\", "/").rstrip("/"), root.replace("\\", "/").rstrip("/")
+    return p == r or p.startswith(r + "/")
+
+
+def admit_race(candidates: list) -> tuple:
+    """May these candidates race for one result (the first verified win cancels the others)? Each is
+    {"id","root","contract","writes"}. They need distinct roots, one shared contract and writes that stay
+    inside the candidate's own root, so cancelling a loser leaves nothing behind."""
+    if len(candidates) < 2:
+        return False, "TOO_FEW a race needs at least two candidates"
+    for c in candidates:
+        if not c.get("root") or not c.get("contract") or c.get("writes") is None:
+            return False, f"UNDECLARED candidate {c.get('id')!r} lacks root, contract or writes"
+    roots = [c["root"].replace("\\", "/").rstrip("/") for c in candidates]
+    if len(set(roots)) != len(roots):
+        return False, "SAME_ROOT candidates share a root and would overwrite each other"
+    if len({c["contract"] for c in candidates}) != 1:
+        return False, "CONTRACT_MISMATCH candidates do not answer the same contract"
+    for c in candidates:
+        stray = [w for w in c["writes"] if not _inside(str(w), c["root"])]
+        if stray:
+            return False, f"NOT_REVERSIBLE candidate {c.get('id')!r} writes outside its root {sorted(stray)}"
+    return True, f"ADMITTED {len(candidates)} candidates, distinct roots, one contract"
+
+
+def yield_ledger(state) -> dict:
+    """What speculation and racing returned in this goal: epochs whose spec says which mode they ran in,
+    split by how they ended. A cancelled loser is the price of a race, so it is counted, not hidden."""
+    ledger = {m: {"completed": 0, "cancelled": 0, "failed": 0, "other": 0, "total": 0}
+              for m in ("speculative", "race")}
+    for e in ep.project_epochs(state).values():
+        mode = (e.spec or {}).get("mode")
+        if mode not in ledger:
+            continue
+        bucket = {ep.COMPLETED: "completed", ep.CANCELLED: "cancelled", ep.FAILED: "failed"}.get(
+            e.outcome, "other")
+        ledger[mode][bucket] += 1
+        ledger[mode]["total"] += 1
+    return ledger
+
+
 def compile_frontier(ctx) -> Frontier:
     st = ctx.state
     convergence = cv.project_convergence(st)

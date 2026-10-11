@@ -376,12 +376,31 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
                 acted.append(note)
                 if not started:
                     break
+            if frontier.bound(ctx) > 1 and frontier.frontier_enabled():
+                acted.extend(_speculation_report(log, frontier, decide_now))
     elif d.kind in (rc.NEXT_EPOCH, rc.ESCALATE, rc.READY_FOR_JUDGE, rc.BLOCKED):
         # Everything that spends an account, needs a person, or certifies a goal
         # is REPORTED and left alone. The sweep is not an authority.
         via = f" (needs provider {d.provider})" if d.provider else ""
         acted.append(f"{log.goal_id}: {d.kind}{via} -- {d.reason[:160]}")
     return acted
+
+
+def _speculation_report(log, frontier, decide_now) -> list[str]:
+    """One line per gate still waiting after the dispatch pass: would speculation admit it, and why.
+    The sweep only REPORTS here. Nothing speculative is started, so a later phase that does start
+    it has a measured admission record to compare against."""
+    _d, ctx, _seen = decide_now(gc.project(log))
+    lines = []
+    for unit in frontier.compile_frontier(ctx).execution:
+        ok, why = frontier.admit_speculative(unit, ctx)
+        verdict = "admitted" if ok else "refused"
+        lines.append(f"{log.goal_id}: speculative {unit['obligation']}: {verdict} -- {why}")
+    ledger = frontier.yield_ledger(ctx.state)
+    lines.append(f"{log.goal_id}: yield speculative {ledger['speculative']['completed']}/"
+                 f"{ledger['speculative']['total']} race {ledger['race']['completed']}/"
+                 f"{ledger['race']['total']} completed")
+    return lines
 
 
 def _start_gate(log, root, prov, d, at, tree, paths, actor, ctx):

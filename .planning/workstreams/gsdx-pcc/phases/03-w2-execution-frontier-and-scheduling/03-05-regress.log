@@ -1,0 +1,5 @@
+﻿reconcile :: GSDX_RECONCILE_PASS=22/22  threshold=22/22
+sweep :: GSDX_GOAL_SWEEP_PASS=14/14  threshold=14/14
+sweep_all :: GSDX_SWEEP_ALL_PASS=11/11  threshold=11/11
+epoch :: GSDX_GOAL_EPOCH_PASS=19/19  threshold=19/19
+engine_identity :: GSDX_ENGINE_ID_PASS=14/14  threshold=14/14
