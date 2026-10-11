@@ -69,7 +69,8 @@ RESIDUAL = ".residual.md"
 def _residual(chain: dict, u: dict, ms: list[dict], by_packet: dict) -> dict:
     """All of the unit's missions are terminal without a DONE: a bounded residual arm, or the reason there is none."""
     res = Path(u["packet"] + RESIDUAL)
-    n = len(by_packet.get(_norm(res), []))
+    # a lineage renewal (renewed_from) continues the same residual on its own budget; only fresh arms count
+    n = len([m for m in by_packet.get(_norm(res), []) if not m.get("renewed_from")])
     cap = int(u.get("max_residuals", chain.get("max_residuals", 0)))
     base = {"unit": u["id"], "attempts": len(ms), "residuals": n, "max_residuals": cap}
     if cap <= 0:
