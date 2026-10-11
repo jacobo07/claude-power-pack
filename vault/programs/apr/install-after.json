@@ -1,0 +1,8 @@
+{
+    "apr":  "{\"action\": \"running\", \"unit\": \"APR4\", \"at\": 1791722082.6886532, \"goal\": \"apr\", \"used\": 4307640, \"dry_run\": true, \"trigger\": \"watchdog\"}",
+    "autonomy":  "{\"action\": \"wait_writer\", \"unit\": \"S6\", \"held_by\": [\"m-e85bbe12f33e\"], \"at\": 1791722083.4406393, \"goal\": \"autonomy-convergence\", \"used\": 12357147, \"dry_run\": true, \"trigger\": \"watchdog\"}",
+    "cp50-c2":  "{\"action\": \"refuse_envelope\", \"unit\": \"R3\", \"used\": 10462272, \"need\": 6400000, \"envelope\": 4300000, \"at\": 1791722083.8519187, \"goal\": \"cp50-c2\", \"dry_run\": true, \"trigger\": \"watchdog\"}",
+    "cpx":  "{\"action\": \"running\", \"unit\": \"R2\", \"at\": 1791722084.3817525, \"goal\": \"cpx\", \"used\": 898706, \"dry_run\": true, \"trigger\": \"watchdog\"}",
+    "ewc":  "{\"action\": \"stopped_without_done\", \"unit\": \"E3\", \"attempts\": 2, \"residuals\": 0, \"max_residuals\": 0, \"class\": \"WORKER_STOPPED\", \"reason\": \"max_residuals 0: the Owner arms a residual\", \"receipt\": null, \"at\": 1791722084.7948816, \"goal\": \"ewc\", \"used\": 7239379, \"dry_run\": true, \"trigger\": \"watchdog\"}",
+    "tennis-rf":  "{\"action\": \"residual_exhausted\", \"unit\": \"W4\", \"attempts\": 6, \"residuals\": 2, \"max_residuals\": 2, \"class\": \"WORKER_STOPPED\", \"reason\": \"bounded residual re-arm used up; Owner decides\", \"receipt\": null, \"at\": 1791722085.5277295, \"goal\": \"tennis-rf\", \"used\": 10070939, \"dry_run\": true, \"trigger\": \"watchdog\"}"
+}
