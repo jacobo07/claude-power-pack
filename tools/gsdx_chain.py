@@ -15,6 +15,7 @@ Every decision is one JSON row in ~/.claude/state/gsdx-chain.jsonl. Kill switch:
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -30,7 +31,7 @@ TERMINAL = {"COMPLETED", "HALTED", "ORPHANED"}
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from receipt_judge import receipt_status  # noqa: E402,F401 -- the one reading every layer shares (APR-1, EWC K5)
+from receipt_judge import NOT_CLOSED, receipt_status  # noqa: E402,F401 -- the one reading every layer shares (APR-1, EWC K5)
 
 
 def limits_accepted(path: Path) -> bool:
@@ -55,28 +56,239 @@ def _norm(p) -> str:
 RESIDUAL = ".residual.md"
 
 
-def _residual(chain: dict, u: dict, ms: list[dict], by_packet: dict) -> dict:
+def _klass(ms: list, status, ref) -> str:
+    if ref is not None:
+        return "FALSE_DONE"
+    if status in NOT_CLOSED and status is not None:
+        return "UNCLOSED_RECEIPT"
+    latest = max(ms, key=lambda m: float(m.get("created_at") or 0))
+    if status is None and latest.get("state") == "COMPLETED":
+        return "NO_RECEIPT"
+    return "WORKER_STOPPED"
+
+
+def _residual(chain: dict, u: dict, ms: list[dict], by_packet: dict, status=None, ref=None) -> dict:
     """All of the unit's missions are terminal without a DONE: a bounded residual arm, or the reason there is none."""
     res = Path(u["packet"] + RESIDUAL)
     # a lineage renewal (renewed_from) continues the same residual on its own budget; only fresh arms count
     n = len([m for m in by_packet.get(_norm(res), []) if not m.get("renewed_from")])
     cap = int(u.get("max_residuals", chain.get("max_residuals", 0)))
-    base = {"unit": u["id"], "attempts": len(ms), "residuals": n, "max_residuals": cap}
+    klass = _klass(ms, status, ref)
+    base = {"unit": u["id"], "attempts": len(ms), "residuals": n, "max_residuals": cap, "class": klass}
+    if ref is not None:
+        base["evidence"] = u["receipt"] + REFUSAL
+    elif _current(u, SEAL) is not None:
+        base["evidence"] = u["receipt"] + SEAL
     if cap <= 0:
         return {"action": "stopped_without_done", **base, "reason": "max_residuals 0: the Owner arms a residual"}
     if n >= cap:
         return {"action": "residual_exhausted", **base, "reason": "bounded residual re-arm used up; Owner decides"}
     latest = max(ms, key=lambda m: float(m.get("created_at") or 0))
     text = res.read_text(encoding="utf-8-sig", errors="replace") if res.exists() else ""
-    if not (latest.get("steward") or {}).get("done") or latest["mission_id"] not in text:
-        return {"action": "wait_steward", **base, "latest": latest["mission_id"]}
     ladder = list(chain.get("route_ladder") or [])
     norm = [_norm(r) for r in ladder]
     route = u["route"]
-    if _norm(route) in norm:
-        route = ladder[min(norm.index(_norm(route)) + 1 + n, len(ladder) - 1)]
+    fps = (ref or {}).get("fingerprints") or []
+    repeated = len(fps) >= 2 and fps[-1] == fps[-2]
+    idx = norm.index(_norm(route)) if _norm(route) in norm else None
+    if repeated and (idx is None or idx + n >= len(ladder) - 1):   # same failure on the top rung (or no ladder)
+        return {"action": "human_gate", **base, "why": "same failure on every rung",
+                "evidence": [u["receipt"] + REFUSAL, str(res)]}
+    if klass == "FALSE_DONE":     # no steward exists for a COMPLETED mission: the finalizer wrote the residual
+        if latest["mission_id"] not in text:
+            return {"action": "wait_finalizer", **base, "latest": latest["mission_id"]}
+    elif not (latest.get("steward") or {}).get("done") or latest["mission_id"] not in text:
+        return {"action": "wait_steward", **base, "latest": latest["mission_id"]}
+    if idx is not None:
+        route = ladder[min(idx + 1 + n + (1 if repeated else 0), len(ladder) - 1)]
     return {"action": "arm", **base, "residual": n + 1, "packet": str(res), "route": route,
             "after_mission": latest["mission_id"]}
+
+
+# ---- APR-2: machine seal, false-DONE refusal, residual classes -------------------------------------------------
+SEAL, REFUSAL, GATE = ".seal.json", ".refusal.json", ".gate.json"
+
+
+def _sha(path) -> str | None:
+    try:
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def _jload(path) -> dict | None:
+    try:
+        o = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+        return o if isinstance(o, dict) else None
+    except (OSError, ValueError):
+        return None
+
+
+def _wr(path, obj) -> None:
+    Path(path).write_text(json.dumps(obj, indent=1), encoding="utf-8")
+
+
+def _current(u: dict, kind: str) -> dict | None:
+    """The seal/refusal that belongs to the receipt as it is NOW (same sha256; None == absent receipt)."""
+    o = _jload(u["receipt"] + kind)
+    return o if o is not None and o.get("receipt_sha256") == _sha(u["receipt"]) else None
+
+
+def _run_gate(argv, cwd, timeout) -> tuple:
+    try:
+        p = subprocess.run(list(argv), cwd=cwd, capture_output=True, text=True, errors="replace", timeout=timeout,
+                           stdin=subprocess.DEVNULL)
+        return p.returncode, (p.stdout + p.stderr)[-400:]
+    except subprocess.TimeoutExpired:
+        return -1, "gate timeout"
+    except OSError as e:
+        return -1, f"gate could not start: {e}"[:400]
+
+
+def _git(cwd, *args) -> str:
+    try:
+        p = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, errors="replace", timeout=60,
+                           stdin=subprocess.DEVNULL)
+        return p.stdout.strip() if p.returncode == 0 else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def _fingerprint(gates: list, reason: str) -> str:
+    bad = [(g["argv"], g["rc"], g["tail"]) for g in gates if g["rc"] != 0] or [reason]
+    return hashlib.sha256(json.dumps(bad, sort_keys=True).encode()).hexdigest()
+
+
+def _by_packet(missions: list) -> dict:
+    out = {}
+    for m in missions:
+        p = (m.get("wu_packet") or {}).get("path")
+        if p:
+            out.setdefault(_norm(p), []).append(m)
+    return out
+
+
+def _unit_ms(u: dict, by_packet: dict) -> list:
+    return by_packet.get(_norm(u["packet"]), []) + by_packet.get(_norm(u["packet"] + RESIDUAL), [])
+
+
+def _write_residual(u: dict, ms: list, ref: dict) -> None:
+    """FALSE_DONE has no steward (its mission COMPLETED with a closed receipt): the finalizer writes the residual."""
+    latest = max(ms, key=lambda m: float(m.get("created_at") or 0))
+    res = Path(u["packet"] + RESIDUAL)
+    if res.exists() and latest["mission_id"] in res.read_text(encoding="utf-8-sig", errors="replace"):
+        return
+    pk = Path(u["packet"])
+    base = pk.read_text(encoding="utf-8-sig", errors="replace") if pk.exists() else ""
+    tails = "\n".join(f"- `{' '.join(map(str, g['argv']))}` rc={g['rc']}: {g['tail'].strip()[-300:]}"
+                      for g in ref.get("gates", []) if g["rc"] != 0) or f"- {ref.get('reason', '')}"
+    res.write_text(f"{base}\n\n## Residual\n\nThe previous worker (mission {latest['mission_id']}) wrote Status: DONE but "
+                   f"the unit's declared acceptance FAILED, so the receipt is refused (FALSE_DONE).\n"
+                   f"Refusal: {u['receipt'] + REFUSAL}\nFailing gates:\n{tails}\n"
+                   f"Fix the cause, make the gates pass, then close the receipt.\n", encoding="utf-8")
+
+
+def finalize_unit(chain: dict, u: dict, ms: list, runner=None, git=None, force: bool = False) -> dict | None:
+    """Zero-model finalizer for ONE unit with `acceptance`. Returns a row when it did something, else None."""
+    acc = u.get("acceptance")
+    if not acc:
+        return None
+    receipt = u["receipt"]
+    status = receipt_status(Path(receipt))
+    if not force:
+        if ms and any(m.get("state") not in TERMINAL for m in ms):
+            return None
+        if not ms and status is None:
+            return None
+    done_claim = status in set(u.get("accept") or ["DONE"])
+    if not (status in NOT_CLOSED or done_claim):
+        return None           # an explicit BLOCKED_HUMAN / FAILED is the worker's verdict; nothing to seal or refuse
+    cwd = acc.get("cwd") or u.get("cwd") or chain["root"]
+    gitf = git or (lambda *a: _git(cwd, *a))
+    head = gitf("rev-parse", "HEAD") or "nogit"
+    sha = _sha(receipt)
+    cache = _jload(receipt + GATE)
+    ran = not (cache and cache.get("sha") == sha and cache.get("head") == head)
+    if not ran:
+        passed, gates, commits, reason = cache["passed"], cache["gates"], cache["commits"], cache.get("reason", "")
+    else:
+        gates, reason = [], ""
+        for argv in acc.get("gates") or []:
+            rc, tail = (runner or _run_gate)(argv, cwd, int(acc.get("timeout_s", 600)))
+            gates.append({"argv": list(argv), "rc": rc, "tail": tail})
+        t0 = min((float(m.get("created_at") or 0) for m in ms), default=0)
+        since = [f"--since={time.strftime('%Y-%m-%dT%H:%M:%S+00:00', time.gmtime(t0))}"] if t0 else []
+        commits = [c for c in gitf("log", *since, "--format=%H", "-n", "50").splitlines() if c]
+        missing = [f for f in acc.get("files") or [] if not (Path(cwd) / f).exists()]
+        bad = [g for g in gates if g["rc"] != 0]
+        if any(g["tail"] == "gate timeout" for g in bad):
+            reason = "gate timeout"
+        elif bad:
+            reason = "gate failed"
+        elif missing:
+            reason = f"missing files: {missing}"
+        elif acc.get("require_commit") and not commits:
+            reason = "no commit since the unit started"
+        passed = not reason
+        _wr(receipt + GATE, {"sha": sha, "head": head, "passed": passed, "gates": gates, "commits": commits,
+                             "reason": reason})
+    rec = {"unit": u["id"], "sealed_by": "gsdx_chain.finalize", "receipt_status": status, "receipt_sha256": sha,
+           "gates": gates, "commits": commits, "head": head, "at": time.time()}
+    if passed and status in NOT_CLOSED:
+        if _current(u, SEAL) is None:
+            _wr(receipt + SEAL, {**rec, "verdict": "DONE"})
+            return {"unit": u["id"], "finalized": "sealed"}
+        return None
+    if passed:      # done claim with passing evidence: any older refusal is superseded
+        Path(receipt + REFUSAL).unlink(missing_ok=True)
+        return None
+    if done_claim:
+        old = _jload(receipt + REFUSAL)
+        fp = _fingerprint(gates, reason)
+        fps = list((old or {}).get("fingerprints") or [])
+        if old is None or old.get("receipt_sha256") != sha or old.get("head") != head:
+            fps.append(fp)
+        ref = {**rec, "verdict": "FALSE_DONE", "reason": reason, "fingerprint": fp, "fingerprints": fps}
+        if ran or old is None:
+            _wr(receipt + REFUSAL, ref)
+        Path(receipt + SEAL).unlink(missing_ok=True)
+        if ms:
+            _write_residual(u, ms, ref)
+        return {"unit": u["id"], "finalized": "refused", "reason": reason}
+    return None
+
+
+def finalize(chain: dict, missions: list, runner=None, git=None) -> list:
+    bp = _by_packet(missions)
+    out = []
+    for u in chain["units"]:
+        try:
+            r = finalize_unit(chain, u, _unit_ms(u, bp), runner, git)
+        except Exception as e:  # noqa: BLE001 -- one unit's evidence must not stop the tick
+            r = {"unit": u["id"], "finalized": "error", "reason": f"{type(e).__name__}: {e}"[:200]}
+        if r:
+            out.append(r)
+    return out
+
+
+def try_seal(packet, missions=None, runner=None, git=None) -> dict:
+    """For APR-3: finalize the one unit that owns `packet` (found via chain*.json beside it) before a halt-continue."""
+    pk = str(packet)
+    pk = pk[:-len(RESIDUAL)] if pk.endswith(RESIDUAL) else pk
+    for cp in sorted(Path(pk).resolve().parent.glob("chain*.json")):
+        chain = _jload(cp)
+        u = next((x for x in (chain or {}).get("units", []) if _norm(x.get("packet", "")) == _norm(pk)), None)
+        if u is None:
+            continue
+        if not u.get("acceptance"):
+            return {"sealed": False, "unit": u["id"], "reason": "no acceptance block"}
+        if missions is None:
+            missions = _live_state(chain["goal"])[0]
+        r = finalize_unit(chain, u, _unit_ms(u, _by_packet(missions)), runner, git, force=True)
+        seal = _current(u, SEAL)
+        return {"sealed": seal is not None, "unit": u["id"], "seal": u["receipt"] + SEAL if seal else None,
+                "result": (r or {}).get("finalized")}
+    return {"sealed": False, "reason": "packet not found in any chain.json beside it"}
 
 
 def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> dict:
@@ -91,8 +303,10 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
             by_packet.setdefault(_norm(p), []).append(m)
     status = {u["id"]: receipt_status(Path(u["receipt"])) for u in units}
     accept = {u["id"]: set(u.get("accept") or ["DONE"]) for u in units}   # a unit may accept more than DONE, by name
-    done = {uid for uid, s in status.items() if s in accept[uid]}
-    done |= {u["id"] for u in units if limits_accepted(Path(u["receipt"]))}   # K6: proven gate + named limits
+    refusal = {u["id"]: _current(u, REFUSAL) for u in units if u.get("acceptance")}
+    sealed = {u["id"] for u in units if u.get("acceptance") and _current(u, SEAL) is not None}
+    done = {uid for uid, s in status.items() if s in accept[uid] and refusal.get(uid) is None} | sealed
+    done |= {u["id"] for u in units if limits_accepted(Path(u["receipt"])) and refusal.get(u["id"]) is None}   # K6: proven gate + named limits
     for u in units:
         if u["id"] in done:
             continue
@@ -105,16 +319,16 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
         if any(m.get("state") not in TERMINAL for m in ms):
             return {"action": "running", "unit": u["id"]}
         if ms:
-            row = _residual(chain, u, ms, by_packet)
+            row = _residual(chain, u, ms, by_packet, status[u["id"]], refusal.get(u["id"]))
             if row["action"] != "arm":
-                return {**row, "receipt": status[u["id"]]}
+                return {**row, "receipt": "FALSE_DONE" if refusal.get(u["id"]) else status[u["id"]]}
             if held:
                 return {"action": "wait_writer", "unit": u["id"], "held_by": [m["mission_id"] for m in held]}
             need = route_target(row["route"])
             if goal_used + need > int(chain["envelope"]):
                 return {"action": "refuse_envelope", "unit": u["id"], "used": goal_used, "need": need,
                         "envelope": chain["envelope"], "residual": row["residual"]}
-            return {**row, "need": need}
+            return {**row, "need": need, **({"receipt": "FALSE_DONE"} if row.get("class") == "FALSE_DONE" else {})}
         if u.get("after") and u["after"] not in done:
             return {"action": "wait_predecessor", "unit": u["id"], "after": u["after"], "receipt": status.get(u["after"])}
         missing = [w for w in u.get("wait", []) if not Path(w).exists()]
@@ -211,7 +425,8 @@ def _live_settle(goal: str, missions: list[dict], chain: dict) -> list[dict]:
     return done
 
 
-def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settler=None, ledger=None) -> dict:
+def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settler=None, ledger=None,
+         gate_runner=None, git=None) -> dict:
     if os.environ.get("CPP_GSDX_CHAIN", "").lower() == "off":
         return {"action": "off"}
     chain = json.loads(chain_path.read_text(encoding="utf-8-sig"))
@@ -219,7 +434,10 @@ def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settle
     settled = []
     if not dry_run:
         settled = (settler or (lambda: _live_settle(chain["goal"], missions, chain)))() if (settler or state is None) else []
+    finalized = [] if dry_run else finalize(chain, missions, gate_runner, git)
     row = decide(chain, missions, used, _route_target)
+    if finalized:
+        row["finalized"] = finalized
     if settled:
         row["settled"] = settled
     if row["action"] == "arm" and not dry_run:
