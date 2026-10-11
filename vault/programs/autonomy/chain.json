@@ -101,5 +101,6 @@
       "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S10-receipt.md",
       "after": "S9"
     }
-  ]
+  ],
+  "max_residuals": 2
 }

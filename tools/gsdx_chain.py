@@ -104,7 +104,8 @@ def _residual(chain: dict, u: dict, ms: list[dict], by_packet: dict, status=None
         route = ladder[min(idx + 1 + n + (1 if repeated else 0), len(ladder) - 1)]
     return {"action": "arm", **base, "residual": n + 1, "packet": str(res), "route": route,
             "after_mission": latest["mission_id"]}
-n
+
+
 def is_parked(m: dict) -> bool:
     """A non-terminal mission that is held/parked by its owner (PREPARED + owner_hold, or state PARKED/HELD) is not running:
     it holds the programme root but does no work, so reading it as 'running' hides a stuck chain (dgl gap)."""
