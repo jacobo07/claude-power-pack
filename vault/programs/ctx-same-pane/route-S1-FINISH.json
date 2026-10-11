@@ -1,0 +1,17 @@
+{
+    "unit":  "S1-FINISH",
+    "envelope":  {
+                     "target":  780000,
+                     "warn":  780000,
+                     "stop":  790000,
+                     "calls":  5
+                 },
+    "workers":  [
+                    {
+                        "name":  "s1-finish",
+                        "profile":  "top-level-worker",
+                        "calls":  5,
+                        "packet":  6000
+                    }
+                ]
+}
