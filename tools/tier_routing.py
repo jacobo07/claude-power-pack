@@ -24,8 +24,14 @@ CLASS_TIER = {
 PASSED, FAILED = "PASSED", "FAILED"
 
 
+EFFECT_TIER = {"ZERO_COGNITION": ZERO_MODEL, "DETERMINISTIC": ZERO_MODEL, "BOUNDED_COGNITION": SLIM,
+               "NOVEL_COGNITION": DEFAULT, "OWNER_COGNITION": DEFAULT}   # CDC C2 enum names
+
+
 def tier_for(work_class) -> str:
-    return CLASS_TIER.get(work_class, DEFAULT)
+    if work_class in CLASS_TIER:
+        return CLASS_TIER[work_class]
+    return EFFECT_TIER.get(work_class, DEFAULT)
 
 
 def escalate(tier: str, verification) -> dict:

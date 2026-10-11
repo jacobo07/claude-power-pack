@@ -33,9 +33,10 @@ FLOORS_PATH = REPO_ROOT / "vault" / "config" / "route-floors.json"
 DEFAULT_GROWTH_MARGIN = 0.20
 TOP_LEVEL = "top-level-worker"
 ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE = "ADMISSIBLE", "WATCHED", "DEFER", "RECOMPILE", "ESCALATE"
+REFUSED_EFFECT = "REFUSED_EFFECT"                 # CDC C2: ZERO/DETERMINISTIC route asked for workers without deopt
 NO_WORK = "NO_WORK"                               # A6: claim PROVEN at an unchanged dependency fingerprint
 LAUNCHABLE_VERDICTS = (ADMISSIBLE, WATCHED)       # the ONE definition of "may start a worker"; gsd_mission imports it
-KNOWN_VERDICTS = (ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE, NO_WORK)   # every verdict this module can emit
+KNOWN_VERDICTS = (ADMISSIBLE, WATCHED, DEFER, RECOMPILE, ESCALATE, NO_WORK, REFUSED_EFFECT)   # every verdict this module can emit
 
 
 def load_floors(path: Path | str | None = None) -> dict:
@@ -113,6 +114,15 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
         raise ValueError("route needs at least one worker")
     if margin < 0:
         raise ValueError("margin must be >= 0")
+    try:
+        import cognitive_effects as ce
+        if ce.gate_enabled():
+            ev = ce.validate_route(route)
+            if not ev["ok"]:
+                return {"verdict": REFUSED_EFFECT, "reasons": ev["reasons"], "effect": ev["effect"], "workers": [],
+                        "envelope": route.get("envelope"), "route_sha256": route_digest(route)}
+    except ImportError:
+        pass   # fails OPEN: no effects module, no effect gate
     profiles = floors["profiles"]
     rows, unknown, degraded = [], [], []
     for i, w in enumerate(workers):
