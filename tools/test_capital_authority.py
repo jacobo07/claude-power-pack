@@ -326,6 +326,41 @@ def _():
     assert len(rows) == 1 and json.loads(rows[0])["transcript_path"] == "t.jsonl", rows
 
 
+@gate("V-OCA-HOOK-SWEEP")
+def _():
+    # An approval typed before the capture hook was live is swept on the Owner's next message, through the
+    # REGISTERED hook (econ_admission.js), only while its (sha, goal) pair has no capsule row.
+    import hashlib
+    import os
+    import subprocess
+    hook = REPO / "hooks" / "econ_admission.js"
+    root = Path(tempfile.mkdtemp(prefix="oca-sweep-"))
+    pk = root / "p.json"
+    pk.write_text('{"programmes": []}', encoding="utf-8")
+    sha = hashlib.sha256(pk.read_bytes()).hexdigest()
+    (root / "pending.json").write_text(json.dumps([{"packet": str(pk), "goals": ["g1"]}]), encoding="utf-8")
+
+    def fire(prompt, transcript="t.jsonl", sw=""):
+        env = {**os.environ, "CPP_CAPITAL_ROOT": str(root), "CPP_OCA_NO_SPAWN": "1", "CPP_ECON_ADMISSION": "off",
+               "CPP_OCA_CAPTURE": sw}
+        ev = {"session_id": "s", "prompt": prompt, **({"transcript_path": transcript} if transcript else {})}
+        p = subprocess.run(["node", str(hook)], input=json.dumps(ev), capture_output=True, text=True, env=env,
+                           timeout=30)
+        assert p.returncode == 0 and p.stdout == "{}", (p.returncode, p.stdout, p.stderr[:200])
+        f = root / "approvals.jsonl"
+        return [json.loads(x) for x in f.read_text(encoding="utf-8").splitlines()] if f.exists() else []
+
+    assert fire("2", transcript=None) == []                              # no transcript: nothing to sweep
+    assert fire("2", sw="off") == []                                     # kill switch
+    rows = fire("2")                                                     # outstanding pair: swept
+    assert len(rows) == 1 and rows[0]["kind"] == "pending-sweep" and rows[0]["prompt"] is None, rows
+    (root / "capsules.jsonl").write_text(json.dumps({"sha": sha, "goal": "g1", "state": "APPLIED"}) + "\n",
+                                         encoding="utf-8")
+    assert len(fire("2")) == 1                                           # pair settled: no new row
+    rows = fire("approve")                                               # control: an approval still captures
+    assert len(rows) == 2 and rows[1]["kind"] == "approval", rows
+
+
 def main() -> int:
     for name, fn in GATES:
         try:

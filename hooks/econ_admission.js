@@ -141,6 +141,11 @@ function decide(event) {
 if (require.main === module) {
   let raw = '';
   process.stdin.on('data', d => { raw += d; }).on('end', () => {
+    // Owner capital capture rides this registered UserPromptSubmit hook (no settings.json edit): it runs
+    // first, so a prompt this hook then blocks is still captured. Spawns detached; never touches stdout.
+    if (process.env.CPP_OCA_CAPTURE !== 'off') {
+      try { require('./owner_capital_capture').run(raw.replace(/^﻿/, '')); } catch (e) { /* fail-open */ }
+    }
     let reason = null;
     try { reason = decide(JSON.parse(raw.replace(/^﻿/, ''))); } catch (e) { reason = null; }
     if (reason) block(reason);
