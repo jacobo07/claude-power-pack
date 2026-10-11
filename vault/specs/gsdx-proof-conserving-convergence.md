@@ -47,10 +47,24 @@ the goal budget, never authorising spend the existing policy forbids).
 - D-O4 Adapter authority ceiling: PROBATION. TRUSTED needs an explicit Owner go with the shadow report attached; the mission records PENDING_OWNER and continues.
 - Budget: 12 cycles / 24 h per marker; re-arming the SAME mission after an honest budget halt is pre-authorised.
 
-## Semantics (W1 ULTRA-PLAN resolves and amends this section; nothing below is final until the W1 audit)
+## Semantics (resolved by W1 on 2026-10-07; audit record: .planning/workstreams/gsdx-pcc/phases/02-w1-convergence-semantics-ultra-plan-the-only-one/02-AUDIT.md)
 
-### Proof states (on every obligation at a candidate)
-FRESH (produced at this candidate) | INHERITED (certificate validated: claim, revision, gate pin, causal fingerprint, environment, policy all unchanged) | SUPERSEDED (a stronger proof explicitly replaced it) | STALE (a premise changed) | UNKNOWN (premises could not be established) -> FULL re-run. Only FRESH and INHERITED count toward closure; INHERITED always as an explicit `proof.inherited` event naming the certificate.
+### S2 Proof states and precedence
+Proof state is a projection on a NEW axis, computed per `(claim_id, candidate_id)` by a pure function in `modules/gsd_x/goal/proof.py`. It never assigns `o.disposition`, and `goal_closure` is untouched in Phase 2 (the STALE disposition name in `mission/obligation.py:40` is a different axis). Only FRESH and INHERITED could ever count toward closure, and in Phase 2 nothing consumes the projection.
+
+States: FRESH | INHERITED | SUPERSEDED | STALE | UNKNOWN. Each of the six premises (claim, revision, gate_pin, fingerprint, environment, policy) is observed `equal | changed | unknown`.
+
+- Precedence: any `changed` -> STALE; else any `unknown`, an `unknown:` candidate, an empty premise set, or `GSDX_PROOF_INHERITANCE` off -> UNKNOWN; else (all six equal) -> INHERITED only when a `proof.inherited` event names the certificate, otherwise UNKNOWN. STALE and UNKNOWN both route to FULL re-run and differ only in the recorded reason.
+- FRESH = a `proof.produced` (or a legacy `obligation.satisfied`) whose binding equals the candidate and whose revision equals the goal revision.
+- Legacy mapping with no PCC events: SATISFIED with `verdict.tree_hash == candidate`, `verdict.revision == revision` and `o.revision == revision` -> FRESH; SATISFIED with a different tree -> STALE; ACCEPTED never satisfied, or a STALE/CANDIDATE disposition -> no proof (not applicable, not UNKNOWN). This reproduces `reconcile._needs_a_gate_here` (reconcile.py:101-121) except for `unknown:` trees (S14, R12). The `o.revision == revision` clause is a no-op over logs written through the public writers (`satisfy` refuses a stale `ob.revision`, convergence.py:264); a raw log where `o.revision` differs maps to UNKNOWN, never FRESH.
+- SUPERSEDED is derived, never evented: a certificate is SUPERSEDED iff a later FRESH certificate for the same `claim_id` at an equal-or-later binding has strength >= its own under `unit < integration < in_game < live`. An empty or unknown class is incomparable and never supersedes. Supersession never lowers strength.
+- Adjacency: two certificates for one `claim_id` at an identical binding and equal strength -> the later supersedes the earlier, so exactly one is live. Two `unknown:` bindings never compare equal.
+- Empty: no verdict -> no proof. A log with no PCC events -> legacy mapping only.
+- Ordering: proof records in log seq order, obligations in `cv.obligations` insertion order. Two projections of one log are byte-identical in canonical JSON (`log._canonical` parameters).
+
+Resolved: proof state is a pure per-(claim, candidate) projection with changed > unknown > all-equal-with-event precedence, derived SUPERSEDED, and a legacy mapping equal to `_needs_a_gate_here`.
+Gates: V-PCC-STATE-TRUTH-TABLE, V-PCC-STATE-LEGACY-MAP, V-PCC-STATE-NO-EVENT-NOT-INHERITED, V-PCC-STATE-UNKNOWN-TREE, V-PCC-STATE-NOT-IN-DISPOSITION, V-PCC-STATE-SUPERSEDED-STRENGTH, V-PCC-STATE-ORDER-STABLE
+Sources: 02-RESEARCH G3 G4 G5; DENOMINATOR D01
 
 ### Causal fingerprint
 A certificate binds the content ids (git blob oids, eol-normalised as `git_state.blob_oid`) of its premise set: gate pin files + the obligation's declared/derived causal paths + adapter-derived dependency closure + toolchain/env fingerprint + proof-policy version. Premise set unknown -> the legacy whole-tree binding applies (no regression vs today). An adapter at SHADOW contributes nothing to inheritance.

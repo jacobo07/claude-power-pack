@@ -55,6 +55,7 @@ fresh worker finds 02-RESEARCH.md present and no 02-*-PLAN.md, resume with `/gsd
   - (3) The `unknown:` tree-equality defect (G2) is NOT fixed in the zero-change seam. It becomes DENOMINATOR R12 with a Phase 4 RED fix.
   - (4) Kill switches are env-only in Phase 2. Any value other than unset/on/1/true/yes means OFF, so a typo falls back to legacy. Flag files are decided with Phase 3's first consumer.
   - (5) `test_gsd_x_goal_mutation.py` stays out of the Phase 2 gates (R11).
+- 2026-10-07 (worker, W1 ULTRA phase 1-3): spec S2 proof states resolved -- precedence changed > unknown > all-equal-with-event; SUPERSEDED derived by strength; legacy mapping = _needs_a_gate_here. Reason: 02-RESEARCH G3-G5; internal and reversible by git.
 
 ## Owner steps
 
