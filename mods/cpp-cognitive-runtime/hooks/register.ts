@@ -40,9 +40,9 @@ export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const r = await next(e)
     const root = $.plugin.root.replace(/\\/g, '/')
-    // A release lives at <home>/.claude/ccr/releases/<v>; its state sits beside the releases.
-    // A development load (--plugin-dir on the repo) keeps its state inside the mod, gitignored.
-    stateDir = /\/ccr\/releases\/[^/]+$/.test(root) ? root.replace(/\/releases\/[^/]+$/, '/state') : `${root}/.state-dev`
+    // The active release lives at <home>/.claude/ccr/active (tools/ccr_release.py); its state sits
+    // beside it. A development load (--plugin-dir on the repo) keeps its state inside the mod, gitignored.
+    stateDir = /\/ccr\/active$/.test(root) ? root.replace(/\/active$/, '/state') : `${root}/.state-dev`
     sid = await $.session.id()
     const repo = await $.session.repo()
     rkey = repoKey(repo?.root ?? null)

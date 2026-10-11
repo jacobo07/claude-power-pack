@@ -44,6 +44,18 @@ Provider-measured (`usage` = input + cache_creation + cache_read) unless noted:
 - Re-ranked levers: subagent attachment linking (proven) > main instructions/skill/agent listing linking (~27K of 68K)
   > hook advisory context (per prompt and per tool, it also accumulates as carry) > tool deferral.
 
+## S1 results (runtime v0.1, 369593ab; `--plugin-dir`, haiku, OFF kill switch vs enforce, same prompt)
+Per-agent provider usage comes from the runtime's own `turn.complete` receipts (`.state-dev/receipts/<repoKey>/<sid>.jsonl`).
+| Ring | Subagent | OFF | enforce | Δ | Answer | Faults |
+|---|---|---|---|---|---|---|
+| R1 no repo | Explore | 49,872 | 29,814 | −40 % | correct both | 0 |
+| R2 PP repo | general-purpose | 144,684 | 72,748 | −50 % | correct both | 0 |
+- Explore never receives `instructions`, so its gain is the skill listing alone. general-purpose: `instructions`
+  went from 92,850 to 4,698 chars (kernel + index).
+- Main shadow, R2: 6 rule files (20.6K chars) would be unlinked for a "read a file" prompt. Main is not enforced in v0.1.
+- Owner chose option 2 (2026-10-11): `Edit(mods/cpp-cognitive-runtime/**)` + autoMode note in the PP repo's
+  `.claude/settings.local.json`. Global install/enable stays Owner-gated.
+
 ## A. Mods capability matrix (types-verified; RUNTIME-VERIFY in M1)
 | Surface | Arrives | Authority | CCR use |
 |---|---|---|---|
