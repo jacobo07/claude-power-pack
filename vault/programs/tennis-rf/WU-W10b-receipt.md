@@ -1,4 +1,4 @@
-﻿# W10b receipt
+# W10b receipt
 Status: DONE
 
 Commit (wt_tennis_rf): f720ee8 feat(gex44): W10b Tennis judge + own Tennis F root. Zero GEX44 jobs, zero local compiles, no GEX44 live-install change, no push.
