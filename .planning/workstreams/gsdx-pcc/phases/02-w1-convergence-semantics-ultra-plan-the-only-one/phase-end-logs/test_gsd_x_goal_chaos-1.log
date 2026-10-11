@@ -1,0 +1,17 @@
+  PASS V-CHAOS-1-DECISION-REDERIVED: a decision lost before it was appended is simply re-derived
+  PASS V-CHAOS-2-CAS: the second coordinator loses the sequence and must re-derive
+  PASS V-CHAOS-3-WALL-BOUND: an epoch past its bound is visible as such and ends EXPIRED
+  PASS V-CHAOS-4-OPEN-UNTIL-RESOLVED: an epoch whose dispatch never happened stays open and blocks closure
+  PASS V-CHAOS-4-RECOVERS-LOST: with no run behind it the epoch resolves LOST and stops blocking
+  PASS V-CHAOS-5-REVISION-MOVED: an epoch aimed at the old revision cannot bank work against the new one
+  PASS V-CHAOS-6-DUPLICATE-RECEIPT: a duplicate receipt is refused
+  PASS V-CHAOS-7-REPLAY: replaying a receipt after the epoch ended is refused
+  PASS V-CHAOS-8-BUDGET: a spent budget escalates with the gaps attached, and does not converge
+  PASS V-CHAOS-9-EMPTY-QUEUE: an empty queue with open gaps escalates; there is no path to CONVERGED
+  PASS V-CHAOS-10-DONE-IS-NOT-CONVERGED: an epoch reporting COMPLETED leaves the goal blocked on its obligations
+  PASS V-CHAOS-11-HARVEST-OPEN: implementation complete with the learning plane open does not close
+  PASS V-CHAOS-12-DESTROYED-IS-NOT-EMPTY: a destroyed store refuses rather than reporting a goal with no history
+  PASS V-CHAOS-12-COLD-BIRTH: the goal is reconstructed from its checkpoint with the same revision and gaps
+  PASS V-CHAOS-13-RESTART-SAME-DECISION: a new process re-reads the store and decides the same thing (NEXT_EPOCH: ob-1 (OUTCOME) has never been judged at this tre)
+
+GSDX_GOAL_CHAOS_PASS=15/15  threshold=15/15

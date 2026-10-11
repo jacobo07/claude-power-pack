@@ -1,0 +1,733 @@
+{
+ "source": "fixture",
+ "engine_commit": "c8c58d91bd8de12e55624ffeb083c3d50b683a38",
+ "python": "3.12.10",
+ "pass_interval_s": 0.2,
+ "steps": [
+  {
+   "name": "declare",
+   "args": [
+    "declare",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--intent",
+    "Reach CONVERGED from the CLI (W0 fixture).",
+    "--acceptance",
+    "the gate passes",
+    "--scope-path",
+    "."
+   ],
+   "rc": 0,
+   "wall_s": 18.706,
+   "stdout_tail": [
+    "declared g-w0-fixture @ revision 76c4fb15292c00cc",
+    "store: C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\goals\\88b595f7f477c34011577502f5672fbfd29d22de\\g-w0-fixture"
+   ]
+  },
+  {
+   "name": "plane OUTCOME",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "OUTCOME"
+   ],
+   "rc": 0,
+   "wall_s": 3.715,
+   "stdout_tail": [
+    "OUTCOME: applies"
+   ]
+  },
+  {
+   "name": "plane EVIDENCE",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "EVIDENCE"
+   ],
+   "rc": 0,
+   "wall_s": 17.01,
+   "stdout_tail": [
+    "EVIDENCE: applies"
+   ]
+  },
+  {
+   "name": "plane FAILURE",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "FAILURE"
+   ],
+   "rc": 0,
+   "wall_s": 3.263,
+   "stdout_tail": [
+    "FAILURE: applies"
+   ]
+  },
+  {
+   "name": "plane REGRESSION",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "REGRESSION"
+   ],
+   "rc": 0,
+   "wall_s": 22.663,
+   "stdout_tail": [
+    "REGRESSION: applies"
+   ]
+  },
+  {
+   "name": "plane UCR_CIF_LEARNING",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "UCR_CIF_LEARNING"
+   ],
+   "rc": 0,
+   "wall_s": 9.998,
+   "stdout_tail": [
+    "UCR_CIF_LEARNING: applies"
+   ]
+  },
+  {
+   "name": "plane REALITY n/a",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "REALITY",
+    "--not-applicable",
+    "--reason",
+    "this fixture makes no such claim"
+   ],
+   "rc": 0,
+   "wall_s": 7.412,
+   "stdout_tail": [
+    "REALITY: NOT APPLICABLE -- this fixture makes no such claim"
+   ]
+  },
+  {
+   "name": "plane SETUP_LEARNING n/a",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "SETUP_LEARNING",
+    "--not-applicable",
+    "--reason",
+    "this fixture makes no such claim"
+   ],
+   "rc": 0,
+   "wall_s": 2.391,
+   "stdout_tail": [
+    "SETUP_LEARNING: NOT APPLICABLE -- this fixture makes no such claim"
+   ]
+  },
+  {
+   "name": "plane TRANSFER n/a",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "TRANSFER",
+    "--not-applicable",
+    "--reason",
+    "this fixture makes no such claim"
+   ],
+   "rc": 0,
+   "wall_s": 3.213,
+   "stdout_tail": [
+    "TRANSFER: NOT APPLICABLE -- this fixture makes no such claim"
+   ]
+  },
+  {
+   "name": "plane RECOVERY n/a",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "RECOVERY",
+    "--not-applicable",
+    "--reason",
+    "this fixture makes no such claim"
+   ],
+   "rc": 0,
+   "wall_s": 2.537,
+   "stdout_tail": [
+    "RECOVERY: NOT APPLICABLE -- this fixture makes no such claim"
+   ]
+  },
+  {
+   "name": "plane OPERATIONAL n/a",
+   "args": [
+    "plane",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--plane",
+    "OPERATIONAL",
+    "--not-applicable",
+    "--reason",
+    "this fixture makes no such claim"
+   ],
+   "rc": 0,
+   "wall_s": 3.907,
+   "stdout_tail": [
+    "OPERATIONAL: NOT APPLICABLE -- this fixture makes no such claim"
+   ]
+  },
+  {
+   "name": "oblige ob-outcome",
+   "args": [
+    "oblige",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--id",
+    "ob-outcome",
+    "--plane",
+    "OUTCOME",
+    "--text",
+    "prove it",
+    "--gate",
+    "\"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" gate.py",
+    "--gate-file",
+    "gate.py"
+   ],
+   "rc": 0,
+   "wall_s": 1.66,
+   "stdout_tail": [
+    "accepted ob-outcome (OUTCOME); proven by '\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" gate.py' (unstated gate)",
+    "  pinned gate.py blob:7ebdf640578..."
+   ]
+  },
+  {
+   "name": "oblige ob-evidence",
+   "args": [
+    "oblige",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--id",
+    "ob-evidence",
+    "--plane",
+    "EVIDENCE",
+    "--text",
+    "prove it",
+    "--gate",
+    "\"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" gate.py",
+    "--gate-file",
+    "gate.py"
+   ],
+   "rc": 0,
+   "wall_s": 1.182,
+   "stdout_tail": [
+    "accepted ob-evidence (EVIDENCE); proven by '\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" gate.py' (unstated gate)",
+    "  pinned gate.py blob:7ebdf640578..."
+   ]
+  },
+  {
+   "name": "oblige ob-regression",
+   "args": [
+    "oblige",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--id",
+    "ob-regression",
+    "--plane",
+    "REGRESSION",
+    "--text",
+    "prove it",
+    "--gate",
+    "\"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" gate.py",
+    "--gate-file",
+    "gate.py"
+   ],
+   "rc": 0,
+   "wall_s": 4.403,
+   "stdout_tail": [
+    "accepted ob-regression (REGRESSION); proven by '\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" gate.py' (unstated gate)",
+    "  pinned gate.py blob:7ebdf640578..."
+   ]
+  },
+  {
+   "name": "oblige ob-ucr_cif_learning",
+   "args": [
+    "oblige",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--id",
+    "ob-ucr_cif_learning",
+    "--plane",
+    "UCR_CIF_LEARNING",
+    "--text",
+    "prove it",
+    "--gate",
+    "\"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" gate.py",
+    "--gate-file",
+    "gate.py"
+   ],
+   "rc": 0,
+   "wall_s": 6.815,
+   "stdout_tail": [
+    "accepted ob-ucr_cif_learning (UCR_CIF_LEARNING); proven by '\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" gate.py' (unstated gate)",
+    "  pinned gate.py blob:7ebdf640578..."
+   ]
+  },
+  {
+   "name": "judge --record",
+   "args": [
+    "judge",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo",
+    "--record"
+   ],
+   "rc": 0,
+   "wall_s": 37.826,
+   "stdout_tail": [
+    "  \"ts\": \"2026-10-11T17:50:49.645839+00:00\"",
+    "}",
+    "recorded the judge receipt (PASS) on the goal log"
+   ]
+  },
+  {
+   "name": "reconcile",
+   "args": [
+    "reconcile",
+    "--goal",
+    "g-w0-fixture",
+    "--root",
+    "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\repo"
+   ],
+   "rc": 0,
+   "wall_s": 26.035,
+   "stdout_tail": [
+    "CONVERGED: closure is clear and an independent judge re-ran the pinned gates at this tree",
+    "(decision only; pass --apply to act on it)"
+   ]
+  }
+ ],
+ "passes": [
+  {
+   "pass": 1,
+   "rc": 0,
+   "wall_s": 30.219,
+   "actions": [
+    "NEXT_EPOCH: ob-outcome (OUTCOME) has never been judged at this tree",
+    "  provider : gate (hypothesis initial)",
+    "  spec     : {'obligation': 'ob-outcome', 'gate': '\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" gate.py', 'tree_hash': 'git:f4267752ce91ff33b171a968cfed048da37ac65e', 'plane': 'OUTCOME'}",
+    "g-w0-fixture: dispatched ep-999e5b73ffe1 for ob-outcome"
+   ],
+   "status_rc": 1,
+   "status_wall_s": 9.14
+  },
+  {
+   "pass": 2,
+   "rc": 0,
+   "wall_s": 15.243,
+   "actions": [
+    "HARVEST: ep-999e5b73ffe1 ended completed: exit 0",
+    "  epoch    : ep-999e5b73ffe1",
+    "g-w0-fixture: ob-outcome -> SATISFIED: ob-outcome: ob-outcome observed '2 passed'",
+    "g-w0-fixture: harvested ep-999e5b73ffe1 (completed)"
+   ],
+   "status_rc": 1,
+   "status_wall_s": 1.393
+  },
+  {
+   "pass": 3,
+   "rc": 0,
+   "wall_s": 14.483,
+   "actions": [
+    "NEXT_EPOCH: ob-evidence (EVIDENCE) has never been judged at this tree",
+    "  provider : gate (hypothesis initial)",
+    "  spec     : {'obligation': 'ob-evidence', 'gate': '\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" gate.py', 'tree_hash': 'git:f4267752ce91ff33b171a968cfed048da37ac65e', 'plane': 'EVIDENCE'}",
+    "g-w0-fixture: dispatched ep-13cd2f3d2781 for ob-evidence"
+   ],
+   "status_rc": 1,
+   "status_wall_s": 2.226
+  },
+  {
+   "pass": 4,
+   "rc": 0,
+   "wall_s": 15.264,
+   "actions": [
+    "HARVEST: ep-13cd2f3d2781 ended completed: exit 0",
+    "  epoch    : ep-13cd2f3d2781",
+    "g-w0-fixture: ob-evidence -> SATISFIED: ob-evidence: ob-evidence observed '2 passed'",
+    "g-w0-fixture: harvested ep-13cd2f3d2781 (completed)"
+   ],
+   "status_rc": 1,
+   "status_wall_s": 4.358
+  },
+  {
+   "pass": 5,
+   "rc": 0,
+   "wall_s": 35.525,
+   "actions": [
+    "NEXT_EPOCH: ob-regression (REGRESSION) has never been judged at this tree",
+    "  provider : gate (hypothesis initial)",
+    "  spec     : {'obligation': 'ob-regression', 'gate': '\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" gate.py', 'tree_hash': 'git:f4267752ce91ff33b171a968cfed048da37ac65e', 'plane': 'REGRESSION'}",
+    "g-w0-fixture: dispatched ep-370ca5ede00a for ob-regression"
+   ],
+   "status_rc": 1,
+   "status_wall_s": 5.982
+  },
+  {
+   "pass": 6,
+   "rc": 0,
+   "wall_s": 31.176,
+   "actions": [
+    "HARVEST: ep-370ca5ede00a ended completed: exit 0",
+    "  epoch    : ep-370ca5ede00a",
+    "g-w0-fixture: ob-regression -> SATISFIED: ob-regression: ob-regression observed '2 passed'",
+    "g-w0-fixture: harvested ep-370ca5ede00a (completed)"
+   ],
+   "status_rc": 1,
+   "status_wall_s": 28.769
+  },
+  {
+   "pass": 7,
+   "rc": 0,
+   "wall_s": 32.924,
+   "actions": [
+    "NEXT_EPOCH: ob-ucr_cif_learning (UCR_CIF_LEARNING) has never been judged at this tree",
+    "  provider : gate (hypothesis initial)",
+    "  spec     : {'obligation': 'ob-ucr_cif_learning', 'gate': '\"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\python.exe\" gate.py', 'tree_hash': 'git:f4267752ce91ff33b171a968cfed048da37ac65e', 'plane': 'UCR_CIF_LEARNING'}",
+    "g-w0-fixture: dispatched ep-8b9c82fcb23c for ob-ucr_cif_learning"
+   ],
+   "status_rc": 1,
+   "status_wall_s": 5.628
+  },
+  {
+   "pass": 8,
+   "rc": 0,
+   "wall_s": 54.089,
+   "actions": [
+    "HARVEST: ep-8b9c82fcb23c ended completed: exit 0",
+    "  epoch    : ep-8b9c82fcb23c",
+    "g-w0-fixture: ob-ucr_cif_learning -> SATISFIED: ob-ucr_cif_learning: ob-ucr_cif_learning observed '2 passed'",
+    "g-w0-fixture: harvested ep-8b9c82fcb23c (completed)"
+   ],
+   "status_rc": 0,
+   "status_wall_s": 15.292
+  }
+ ],
+ "judge_cli_wall_s": 37.826,
+ "converged": true,
+ "hermetic": {
+  "goals_root": "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\goals",
+  "home": "C:\\Users\\User\\AppData\\Local\\Temp\\gsdx_tl_fixture_s7agh9ii\\home"
+ },
+ "timeline": {
+  "events": [
+   {
+    "seq": 1,
+    "type": "goal.declared",
+    "t_s": 0.0
+   },
+   {
+    "seq": 2,
+    "type": "plane.applicability",
+    "t_s": 5.072
+   },
+   {
+    "seq": 3,
+    "type": "plane.applicability",
+    "t_s": 21.734
+   },
+   {
+    "seq": 4,
+    "type": "plane.applicability",
+    "t_s": 24.707
+   },
+   {
+    "seq": 5,
+    "type": "plane.applicability",
+    "t_s": 47.867
+   },
+   {
+    "seq": 6,
+    "type": "plane.applicability",
+    "t_s": 57.921
+   },
+   {
+    "seq": 7,
+    "type": "plane.applicability",
+    "t_s": 65.416
+   },
+   {
+    "seq": 8,
+    "type": "plane.applicability",
+    "t_s": 67.821
+   },
+   {
+    "seq": 9,
+    "type": "plane.applicability",
+    "t_s": 71.024
+   },
+   {
+    "seq": 10,
+    "type": "plane.applicability",
+    "t_s": 73.564
+   },
+   {
+    "seq": 11,
+    "type": "plane.applicability",
+    "t_s": 77.469
+   },
+   {
+    "seq": 12,
+    "type": "obligation.accepted",
+    "t_s": 79.123
+   },
+   {
+    "seq": 13,
+    "type": "obligation.accepted",
+    "t_s": 80.302
+   },
+   {
+    "seq": 14,
+    "type": "obligation.accepted",
+    "t_s": 84.712
+   },
+   {
+    "seq": 15,
+    "type": "obligation.accepted",
+    "t_s": 91.52
+   },
+   {
+    "seq": 16,
+    "type": "epoch.dispatching",
+    "t_s": 115.755,
+    "epoch_id": "ep-999e5b73ffe1"
+   },
+   {
+    "seq": 17,
+    "type": "epoch.running",
+    "t_s": 121.741,
+    "epoch_id": "ep-999e5b73ffe1"
+   },
+   {
+    "seq": 18,
+    "type": "epoch.receipt",
+    "t_s": 146.294,
+    "epoch_id": "ep-999e5b73ffe1"
+   },
+   {
+    "seq": 19,
+    "type": "obligation.satisfied",
+    "t_s": 146.322
+   },
+   {
+    "seq": 20,
+    "type": "epoch.ended",
+    "t_s": 146.347,
+    "epoch_id": "ep-999e5b73ffe1"
+   },
+   {
+    "seq": 21,
+    "type": "epoch.dispatching",
+    "t_s": 158.013,
+    "epoch_id": "ep-13cd2f3d2781"
+   },
+   {
+    "seq": 22,
+    "type": "epoch.running",
+    "t_s": 162.433,
+    "epoch_id": "ep-13cd2f3d2781"
+   },
+   {
+    "seq": 23,
+    "type": "epoch.receipt",
+    "t_s": 179.99,
+    "epoch_id": "ep-13cd2f3d2781"
+   },
+   {
+    "seq": 24,
+    "type": "obligation.satisfied",
+    "t_s": 180.02
+   },
+   {
+    "seq": 25,
+    "type": "epoch.ended",
+    "t_s": 180.052,
+    "epoch_id": "ep-13cd2f3d2781"
+   },
+   {
+    "seq": 26,
+    "type": "epoch.dispatching",
+    "t_s": 211.695,
+    "epoch_id": "ep-370ca5ede00a"
+   },
+   {
+    "seq": 27,
+    "type": "epoch.running",
+    "t_s": 220.261,
+    "epoch_id": "ep-370ca5ede00a"
+   },
+   {
+    "seq": 28,
+    "type": "epoch.receipt",
+    "t_s": 257.557,
+    "epoch_id": "ep-370ca5ede00a"
+   },
+   {
+    "seq": 29,
+    "type": "obligation.satisfied",
+    "t_s": 257.596
+   },
+   {
+    "seq": 30,
+    "type": "epoch.ended",
+    "t_s": 257.634,
+    "epoch_id": "ep-370ca5ede00a"
+   },
+   {
+    "seq": 31,
+    "type": "epoch.dispatching",
+    "t_s": 310.967,
+    "epoch_id": "ep-8b9c82fcb23c"
+   },
+   {
+    "seq": 32,
+    "type": "epoch.running",
+    "t_s": 319.525,
+    "epoch_id": "ep-8b9c82fcb23c"
+   },
+   {
+    "seq": 33,
+    "type": "epoch.receipt",
+    "t_s": 378.186,
+    "epoch_id": "ep-8b9c82fcb23c"
+   },
+   {
+    "seq": 34,
+    "type": "obligation.satisfied",
+    "t_s": 378.237
+   },
+   {
+    "seq": 35,
+    "type": "epoch.ended",
+    "t_s": 378.279,
+    "epoch_id": "ep-8b9c82fcb23c"
+   },
+   {
+    "seq": 36,
+    "type": "goal.judged",
+    "t_s": 431.991
+   }
+  ],
+  "epochs": {
+   "ep-999e5b73ffe1": {
+    "provider": "gate",
+    "dispatching_s": 115.755,
+    "running_s": 121.741,
+    "ended_s": 146.347,
+    "receipt_s": 146.294,
+    "outcome": "completed",
+    "cost_seconds": 30.5,
+    "observed": [
+     "2 passed"
+    ]
+   },
+   "ep-13cd2f3d2781": {
+    "provider": "gate",
+    "dispatching_s": 158.013,
+    "running_s": 162.433,
+    "ended_s": 180.052,
+    "receipt_s": 179.99,
+    "outcome": "completed",
+    "cost_seconds": 21.9,
+    "observed": [
+     "2 passed"
+    ]
+   },
+   "ep-370ca5ede00a": {
+    "provider": "gate",
+    "dispatching_s": 211.695,
+    "running_s": 220.261,
+    "ended_s": 257.634,
+    "receipt_s": 257.557,
+    "outcome": "completed",
+    "cost_seconds": 45.5,
+    "observed": [
+     "2 passed"
+    ]
+   },
+   "ep-8b9c82fcb23c": {
+    "provider": "gate",
+    "dispatching_s": 310.967,
+    "running_s": 319.525,
+    "ended_s": 378.279,
+    "receipt_s": 378.186,
+    "outcome": "completed",
+    "cost_seconds": 65.5,
+    "observed": [
+     "2 passed"
+    ]
+   }
+  },
+  "first_dispatch_s": 115.755,
+  "judged": [
+   {
+    "seq": 36,
+    "t_s": 431.991,
+    "verdict": "PASS",
+    "gate_count": 4,
+    "gate_seconds": [
+     2.4,
+     1.1,
+     2.0,
+     6.8
+    ],
+    "replay_s": 12.3
+   }
+  ],
+  "judge_replay_s": 12.3,
+  "declared_to_last_judged_s": 431.991
+ }
+}

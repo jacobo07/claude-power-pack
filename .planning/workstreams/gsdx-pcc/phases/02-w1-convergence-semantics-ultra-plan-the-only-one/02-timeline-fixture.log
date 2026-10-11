@@ -1,0 +1,11 @@
+engine c8c58d91bd8d python 3.12.10 passes 8 closure_clear True converged True
+declare -> first dispatch : 76.866 s
+epoch ep-5a28e8d28975: cost 23.5 s observed ['2 passed']
+epoch ep-3a9cc5763ca1: cost 21.0 s observed ['2 passed']
+epoch ep-7866807e477f: cost 22.9 s observed ['2 passed']
+epoch ep-0b4ddedcd2e8: cost 24.5 s observed ['2 passed']
+declare -> judged         : 235.577 s
+judge replay              : 4.8 s
+judge CLI wall            : 14.591 s
+written: .planning\workstreams\gsdx-pcc\phases\02-w1-convergence-semantics-ultra-plan-the-only-one\02-timeline-fixture.json (fixture root C:\Users\User\AppData\Local\Temp\gsdx_tl_fixture_qwlqfgx6)
+EXIT=0

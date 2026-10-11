@@ -1,0 +1,16 @@
+  PASS V-SWEEP-REFUSES-WITHOUT-RECORD: with no recorded green the sweep refuses to act at all
+  PASS V-SWEEP-REFUSES-RED-RECORD: a record that is not green is not permission
+  PASS V-SWEEP-REFUSES-STALE-RECORD: a green recorded for ANOTHER commit is stale, not a licence
+  PASS V-SWEEP-REFUSES-UNREADABLE: an unreadable record is refused, never read as permission
+  PASS V-SWEEP-ACTS-WHEN-GREEN: with the record green it plans work (["g-auto: would run ob-outcome's gate"])
+  PASS V-SWEEP-SKIPS-MANUAL-GOALS: a goal nobody marked autonomous is skipped
+  PASS V-SWEEP-DRY-RUN-CHANGES-NOTHING: a dry run dispatches nothing
+  PASS V-SWEEP-DISPATCHES-GATE: the gate epoch is dispatched and recorded running (['g-auto: dispatched ep-a1df46678ed1 for ob-outcome'])
+  PASS V-SWEEP-NON-BLOCKING: the sweep recorded a RUNNING epoch and returned: it did not wait for the gate to finish, which a five-minute schedule cannot afford
+  PASS V-SWEEP-BANKS-THE-VERDICT: the sweep ran the gate, harvested its verdict and satisfied the obligation (1 passed)
+  PASS V-SWEEP-FAILED-GATE-IS-EVIDENCE: a gate that exits non-zero ends its epoch FAILED
+  PASS V-SWEEP-REPORTS-WORK-NEVER-SPENDS: work that spends an account is REPORTED, naming the provider it needs, and is not dispatched (['g-failing: NEXT_EPOCH (needs provider codex) -- ob-outcome has a gate that ran and failed; that is new information and needs work'])
+  PASS V-SWEEP-NO-CODEX-EPOCH: no codex epoch was created by the sweep
+  PASS V-SWEEP-SILENT-WHEN-IDLE: a sweep that did nothing prints nothing
+
+GSDX_GOAL_SWEEP_PASS=14/14  threshold=14/14

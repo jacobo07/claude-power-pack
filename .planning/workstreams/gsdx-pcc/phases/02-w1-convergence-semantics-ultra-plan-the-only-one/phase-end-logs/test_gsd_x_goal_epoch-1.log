@@ -1,0 +1,21 @@
+  PASS V-EP-PROVIDER-CONTRACT: a provider implementing the protocol is accepted
+  PASS V-EP-PROVIDER-BOUND: a provider declaring no wall bound refused
+  PASS V-EP-PROVIDER-SHAPE: an object that is not a provider refused
+  PASS V-EP-SCOPE-IGNORES-OUTSIDE: a change outside the declared scope does not move the scope hash
+  PASS V-EP-SCOPE-SEES-INSIDE: a change inside the scope moves it
+  PASS V-EP-HYPOTHESIS-CLOSED: a free-text hypothesis refused; the vocabulary is closed
+  PASS V-EP-INTENT-FIRST: the intent is recorded with an identity before any dispatch
+  PASS V-EP-OPEN-BLOCKS: an epoch not yet ended is open
+  PASS V-EP-ENDS-ONCE: an epoch ends exactly once
+  PASS V-EP-OUTCOME-NAMED: an outcome outside the named set refused
+  PASS V-EP-NO-BLIND-RETRY: an attempt whose information key already failed refused
+  PASS V-EP-RETRY-WITH-NEW-INFO: changing the provider is new information and is allowed (control)
+  PASS V-EP-RECEIPT-INGESTED: receipt cd44c00d148006e3df3fb6ea stored once
+  PASS V-EP-RECEIPT-DUPLICATE: a duplicate receipt refused (content-addressed)
+  PASS V-EP-RECEIPT-STALE-REVISION: a receipt about another revision refused
+  PASS V-EP-RECEIPT-UNKNOWN-EPOCH: a receipt for an unknown epoch refused
+  PASS V-EP-RECOVER-ADOPTS: a run found by its pre-minted identity is adopted, not re-dispatched
+  PASS V-EP-RECOVER-LOST: no run found -> LOST, and nothing was dispatched a second time
+  PASS V-EP-RECOVER-CLOSES-OPEN: a lost epoch stops blocking closure
+
+GSDX_GOAL_EPOCH_PASS=19/19  threshold=19/19

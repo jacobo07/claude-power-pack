@@ -1,0 +1,12 @@
+  PASS V-BIND-REFUSES-MISSING: absent mission refused, 0 events appended
+  PASS V-BIND-REFUSES-TERMINAL: COMPLETED mission refused, 0 events appended
+  PASS V-BIND-REFUSES-FOREIGN-REPO: other repo mission refused, 0 events appended
+  PASS V-BIND-OPENS-RUNNING-EPOCH: ep-96d14d2f9e1e running, observe-only handle
+  PASS V-BIND-NEVER-WRITES-MISSION: the mission record's bytes are unchanged by binding
+  PASS V-BIND-CANCEL-REFUSED: cancel on an observed mission is refused; it stays RUNNING
+  PASS V-BIND-PROBE-ADOPTS: a crash between intent and handle adopts the binding
+  PASS V-BIND-SWEEP-WAITS-WHILE-RUNNING: while the mission runs the sweep starts nothing ([])
+  PASS V-BIND-SWEEP-HARVESTS-ENDED: the ended mission is harvested (['g-bind: harvested ep-96d14d2f9e1e (completed)'])
+  PASS V-BIND-ENDING-PROVES-NOTHING: a mission ending satisfies no obligation
+
+GSDX_BIND_MISSION_PASS=10/10  threshold=10/10

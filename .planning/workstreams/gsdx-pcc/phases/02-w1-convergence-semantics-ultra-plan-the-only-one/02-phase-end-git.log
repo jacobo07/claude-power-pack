@@ -1,0 +1,33 @@
+PLAN_BASE=854dee0d
+## (a) V-PCC-NO-LEGACY-EDIT: git diff --name-status 854dee0d..HEAD -- modules/gsd_x
+A	modules/gsd_x/goal/proof.py
+## (b) golden ancestry
+G=98609c4f1c60f96d2471ad5b181daacb9af31474
+P=735170c066d2a64fa6cf63dcb6e59112083b217a
+G_differs_from_P=True
+is-ancestor exit 0
+## (c) git log --oneline 854dee0d..HEAD
+c8c58d91 test(gsdx-pcc-02): mutation drills of the PCC seam -- every mutant class with a control
+a051673e test(gsdx-pcc-02): close drill blind spot d01-disposition-write, d01-fingerprint-dotdot
+f234ad16 docs(gsdx-pcc-02): 02-05 summary; DENOMINATOR D44 done
+a353fb7b test(gsdx-pcc-02): D44 invariants -- no second store, pure projections, declared additive vocabulary, spec resolved
+66f71a1d feat(gsdx-pcc-02): Proof Conservation ledger, Concurrency-by-Proof definition, Unknown Escalates (D03)
+dfc87abc feat(gsdx-pcc-02): Work and Semantic Conservation laws measured on the recorded corpus (D03)
+340c792d docs(gsdx-pcc-02): 02-04 summary
+e85345a0 feat(gsdx-pcc-02): typed proof contract and freshness classes as a second axis (D10)
+ecdc8d1b feat(gsdx-pcc-02): certificate validity, causal fingerprint and the exhaustive proof-state table (D01)
+ec1c1b82 feat(gsdx-pcc-02): proof states -- legacy mapping equals _needs_a_gate_here on the recorded corpus (D01, D10)
+63db7439 docs(gsdx-pcc-02): 02-03 summary
+56e3f3f8 feat(gsdx-pcc-02): kill switches GSDX_FRONTIER / GSDX_PROOF_INHERITANCE -- call-time parser, typo means OFF
+62bdec3c test(gsdx-pcc-02): PCC payloads -- malformed raises only in proof.py, newer v UNKNOWN, CAS, export/restore
+735170c0 feat(gsdx-pcc-02): PCC event seam -- proof.py ledger projection and CAS writer (D44, liveness declared)
+bafb0fad docs(gsdx-pcc-02): 02-02 summary
+15e8e2f1 test(gsdx-pcc-02): RED -- replay suite gates for the PCC seam (proof module absent)
+98609c4f test(gsdx-pcc-02): legacy replay golden captured from the unmodified engine (D43)
+13a0ee2c test(gsdx-pcc-02): legacy goal fixture -- byte copy of g-002/g-001 with manifests (verified, scanned)
+142eafea docs(gsdx-pcc-02): 02-01 summary
+f14420a0 docs(gsdx-pcc-02): W1 audit persisted; every gap injected or dispositioned
+86c3e628 docs(gsdx-pcc-02): spec Semantics S1-S16 resolved, ULTRA Q&A recorded, premises verified
+a223b337 docs(gsdx-pcc-02): spec Semantics S1-S8 resolved (checkpoint)
+fabe7c88 docs(gsdx-pcc-02): spec S2 proof states resolved (W1 tracer)
+7a3223a1 docs(gsdx-pcc-02): plan check iteration 1 persisted; 2 warnings + 3 info fixed

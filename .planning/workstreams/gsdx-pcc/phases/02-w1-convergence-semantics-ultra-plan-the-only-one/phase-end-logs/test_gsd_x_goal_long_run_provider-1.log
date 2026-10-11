@@ -1,0 +1,18 @@
+  PASS V-LR-PROVIDER-CONTRACT: the provider satisfies the contract with a wall bound
+  PASS V-LR-CANNOT-START: starting a run is refused, and the reason names the pane that owns it
+  PASS V-LR-BIND-UNKNOWN: binding a session that does not exist refused
+  PASS V-LR-BIND: an armed session is bound as an epoch handle
+  PASS V-LR-NO-ROWS-UNKNOWN: no ledger rows is UNKNOWN, never LOST -- we could not ask
+  PASS V-LR-RUNNING: an armed run with no terminal row is running
+  PASS V-LR-FINISHED: finished -> completed
+  PASS V-LR-HALTED-BUDGET: a spent budget -> expired
+  PASS V-LR-HALTED-MISSION: a mission that no longer matches -> stale_revision, not expired
+  PASS V-LR-REAPED: reaped -> lost
+  PASS V-LR-HARVEST-NO-VERDICT: a long run yields NO verdict: it is work, not proof
+  PASS V-LR-HARVEST-COUNTS: the receipt carries the run's own crossings and confirmed resumes
+  PASS V-LR-HARVEST-FAILURES: a stall is harvested as a failure with a signature
+  PASS V-LR-CANCEL-REFUSED: stopping a run owned by another pane is refused
+  PASS V-LR-PROBE: a binding made before a crash is found by its pre-minted token
+  PASS V-LR-PROBE-NONE: an unbound token probes to None
+
+GSDX_LONGRUN_PROVIDER_PASS=16/16  threshold=16/16

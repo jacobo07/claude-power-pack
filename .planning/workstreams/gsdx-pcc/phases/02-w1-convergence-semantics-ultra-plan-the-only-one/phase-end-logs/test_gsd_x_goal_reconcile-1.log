@@ -1,0 +1,24 @@
+  PASS V-RC-NEXT-GATE: an unjudged obligation dispatches its gate (ob-outcome)
+  PASS V-RC-RECOVER-FIRST: an epoch with intent and no handle is resolved first
+  PASS V-RC-WAIT: a running epoch is waited on
+  PASS V-RC-UNKNOWN-IS-NOT-AN-ENDING: an observation we could not make does not end an epoch
+  PASS V-RC-HARVEST: an ended epoch is harvested before anything new starts
+  PASS V-RC-DONE-IS-NOT-CONVERGED: a provider reporting COMPLETED does not converge the goal
+  PASS V-RC-FAILED-GATE-NEEDS-WORK: a gate that ran and failed dispatches work with a named hypothesis
+  PASS V-RC-PREFERS-UNATTENDED: the unattended provider is preferred over the one needing a person
+  PASS V-RC-FALLS-BACK-TO-HUMAN: with no unattended provider, the human path is chosen rather than nothing
+  PASS V-RC-EMPTY-QUEUE-IS-NOT-SUCCESS: nothing runnable and gaps open escalates; there is no path to CONVERGED
+  PASS V-RC-CLOSURE-NEEDS-JUDGE: nothing blocking is not convergence: an independent judge must run
+  PASS V-RC-CONVERGED-WITH-JUDGE: a judge receipt at this tree and revision converges the goal (control)
+  PASS V-RC-JUDGE-MUST-MATCH-TREE: a judge receipt about another tree does not converge this one
+  PASS V-RC-JUDGE-REFUSAL-ESCALATES: a judge that refused escalates rather than retrying itself
+  PASS V-RC-BLOCKED-NAMES-CONDITION: BLOCKED names the external condition
+  PASS V-RC-BUDGET-ESCALATES: a spent budget escalates with the open gaps attached
+  PASS V-RC-TIME-BUDGET: a spent time budget escalates
+  PASS V-RC-DETERMINISTIC: the same context always produces the same decision
+  PASS V-RC-REGATE-AFTER-TREE-MOVES: evidence from another tree re-runs its gate here: ob-outcome (OUTCOME) was proven at tree git:ffffffffffffffffffffffffffffffffffffffff, and 
+  PASS V-RC-REGATE-IS-NOT-AN-ESCALATION: saving your work does not strand the goal
+  PASS V-RC-REGATE-AFTER-REVISION: proof about an older revision is open work too
+  PASS V-RC-REGATE-IS-NOT-CODE-WORK: a satisfied-elsewhere obligation is not sent to a work provider
+
+GSDX_RECONCILE_PASS=22/22  threshold=22/22
