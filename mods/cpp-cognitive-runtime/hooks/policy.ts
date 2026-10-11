@@ -8,8 +8,9 @@ export const RUNTIME_VERSION = '0.1.0'
 export const COMPAT = ['2.1.296']
 
 export type Mode = 'enforce' | 'shadow' | 'off'
-export type Modes = { subagent: Mode; main: Mode }
-export const DEFAULT_MODES: Modes = { subagent: 'enforce', main: 'shadow' }
+// main: interactive and undeclared sessions. unit: main sessions that declared a Work Unit.
+export type Modes = { subagent: Mode; main: Mode; unit: Mode }
+export const DEFAULT_MODES: Modes = { subagent: 'enforce', main: 'shadow', unit: 'enforce' }
 
 // Subagent types that keep the skill listing: they can run skills (Skill tool in their set).
 export const SKILL_CAPABLE_AGENTS = new Set(['general-purpose', 'claude', 'fork'])
@@ -87,6 +88,57 @@ export function decideSubagentAttachment(
     return { action: 'drop', reason: 'agent-not-skill-capable' }
   }
   return { action: 'keep', reason: 'not-linked' }
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Work units: a main session whose launcher declared a bounded Work Unit (env CCR_WORK_UNIT = path of a
+// JSON file {"class": "...", "id": "..."}). The launcher names the class only; the closure of each class
+// (which tools stay in front, what instruction text, which listings) is the runtime's knowledge, not the
+// launcher's. An interactive session never carries the variable and keeps the main tier's behaviour.
+export type WorkUnit = { cls: string; id: string }
+export type WorkClass = { tools: readonly string[] }
+
+// Tools a class keeps in front. Every other tool is deferred behind ToolSearch, never removed: a tool the
+// task turns out to need is one ToolSearch away, and that search is a recorded page fault.
+export const WORK_CLASSES: Record<string, WorkClass> = {
+  'bounded-code-worker': { tools: ['Read', 'Edit', 'Write', 'Grep', 'Glob', 'PowerShell', 'ToolSearch'] },
+  'read-only-reviewer': { tools: ['Read', 'ToolSearch'] },
+}
+
+// Main-session attachments a work unit does not carry: the listings a bounded unit cannot act on (it has
+// no Skill or Agent tool in front) and MCP servers' prose. Instructions are replaced, not dropped.
+export const UNIT_DROPPED_ATTACHMENTS = new Set(['skill_listing', 'agent_listing_delta', 'mcp_instructions_delta'])
+// Prompt sections a work unit does not carry: auto-memory (the unit's ContextImage replaces it).
+export const UNIT_DROPPED_SECTIONS = new Set(['memory'])
+
+export function parseWorkUnit(text: string | null): WorkUnit | null {
+  if (!text) return null
+  try {
+    const o = JSON.parse(text)
+    // An unknown class fails toward materialization: no unit, stock context.
+    if (typeof o?.class !== 'string' || !(o.class in WORK_CLASSES)) return null
+    return { cls: o.class, id: typeof o.id === 'string' ? o.id.slice(0, 120) : '' }
+  } catch {
+    return null // unreadable declaration: no unit
+  }
+}
+
+export function decideUnitTool(tool: string, unit: WorkUnit): 'keep' | 'defer' {
+  // The runtime's own page tool is how a withheld listing or file comes back: never deferred.
+  if (/cpp-cognitive-runtime__page$/.test(tool) || tool === 'page') return 'keep'
+  return WORK_CLASSES[unit.cls].tools.includes(tool) ? 'keep' : 'defer'
+}
+
+export function decideUnitAttachment(
+  type: string, kernel: string | null, files: readonly InstructionFileInfo[] | null,
+): AttachmentDecision {
+  if (type === 'instructions') return decideSubagentAttachment(type, undefined, kernel, files)
+  if (UNIT_DROPPED_ATTACHMENTS.has(type)) return { action: 'drop', reason: 'not-in-unit-closure' }
+  return { action: 'keep', reason: 'not-linked' }
+}
+
+export function decideUnitSection(name: string): AttachmentDecision {
+  return UNIT_DROPPED_SECTIONS.has(name) ? { action: 'drop', reason: 'not-in-unit-closure' } : { action: 'keep', reason: 'not-linked' }
 }
 
 // Hook-context paragraphs that declare themselves advisory are candidates for the materialization

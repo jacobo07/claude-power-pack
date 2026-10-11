@@ -1,5 +1,8 @@
 import { expect, test } from 'claude-code/testing'
-import { advisoryBytes, decideSubagentAttachment, linkInstructionFiles, pageLines, repoKey, subagentInstructions } from './policy'
+import {
+  advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
+  pageLines, parseWorkUnit, repoKey, subagentInstructions,
+} from './policy'
 
 const file = (path: string, kind = 'user', content = '# Title\nbody') => ({ path, kind, content })
 
@@ -73,4 +76,45 @@ test('page lines return matching listing entries and say so when nothing matches
   expect(pageLines(listing, 'word')).toBe('- docx: word files')
   expect(pageLines(listing, 'zzz')).toBe('(no matching entries)')
   expect(subagentInstructions('k', []).length).toBeGreaterThan(0)
+})
+
+test('a work unit is accepted only for a known class; anything else means no unit (stock context)', () => {
+  // Arrange / Act / Assert
+  expect(parseWorkUnit('{"class":"bounded-code-worker","id":"p4p2a1"}')).toEqual({ cls: 'bounded-code-worker', id: 'p4p2a1' })
+  expect(parseWorkUnit('{"class":"root-shell"}')).toBe(null)
+  expect(parseWorkUnit('not json')).toBe(null)
+  expect(parseWorkUnit(null)).toBe(null)
+  expect(parseWorkUnit('{"id":"x"}')).toBe(null)
+})
+
+test('a unit defers tools outside its class closure and keeps those inside, and the page tool always', () => {
+  const worker = { cls: 'bounded-code-worker', id: '' }
+  const reviewer = { cls: 'read-only-reviewer', id: '' }
+  expect(decideUnitTool('Agent', worker)).toBe('defer')
+  expect(decideUnitTool('WebFetch', worker)).toBe('defer')
+  expect(decideUnitTool('Edit', worker)).toBe('keep')
+  expect(decideUnitTool('ToolSearch', worker)).toBe('keep')
+  expect(decideUnitTool('Edit', reviewer)).toBe('defer')
+  expect(decideUnitTool('Read', reviewer)).toBe('keep')
+  expect(decideUnitTool('mcp__cpp-cognitive-runtime__page', reviewer)).toBe('keep')
+})
+
+test('a unit drops listings it cannot act on, replaces instructions with kernel + index, keeps the rest', () => {
+  const files = [file('C:/u/.claude/CLAUDE.md', 'user', '# Global\nx')]
+  expect(decideUnitAttachment('skill_listing', 'k', files).action).toBe('drop')
+  expect(decideUnitAttachment('agent_listing_delta', 'k', files).action).toBe('drop')
+  expect(decideUnitAttachment('mcp_instructions_delta', 'k', files).action).toBe('drop')
+  const ins = decideUnitAttachment('instructions', '# HARD-RULES DIGEST', files)
+  expect(ins.action).toBe('replace')
+  expect(ins.text).toContain('C:/u/.claude/CLAUDE.md')
+  // controls: no kernel or a managed file keeps the instructions; unlisted attachments are untouched
+  expect(decideUnitAttachment('instructions', null, files).action).toBe('keep')
+  expect(decideUnitAttachment('instructions', 'k', [...files, file('C:/org/p.md', 'managed')]).action).toBe('keep')
+  expect(decideUnitAttachment('deferred_tools_delta', 'k', files).action).toBe('keep')
+  expect(decideUnitAttachment('hook_additional_context', 'k', files).action).toBe('keep')
+})
+
+test('a unit leaves the memory section out and keeps every other section', () => {
+  expect(decideUnitSection('memory').action).toBe('drop')
+  expect(decideUnitSection('env_info_simple').action).toBe('keep')
 })

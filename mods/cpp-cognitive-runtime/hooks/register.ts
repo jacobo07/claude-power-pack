@@ -1,7 +1,7 @@
 import type { Register } from 'claude-code'
 import {
-  COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, linkInstructionFiles,
-  pageLines, repoKey, type InstructionFileInfo, type Modes,
+  COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
+  decideUnitTool, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, type InstructionFileInfo, type Modes, type WorkUnit,
 } from './policy'
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
@@ -20,6 +20,7 @@ let files: InstructionFileInfo[] | null = null
 let firstPrompt = ''
 let skillListing = ''
 let agentListing = ''
+let unitP: Promise<WorkUnit | null> | null = null
 const agentTypes = new Map<string, string>()
 const receipts: Receipt[] = []
 
@@ -36,6 +37,25 @@ const flush = async ($: any) => {
 
 const effective = (m: keyof Modes) => (compatible ? modes[m] : modes[m] === 'off' ? 'off' : 'shadow')
 
+// The Work Unit a launcher declared for this main session, read once whichever hook asks first (tool
+// descriptions can be computed before session.start resolves). No variable, an unreadable file or an
+// unknown class all mean "no unit": the session keeps the main tier's behaviour.
+const loadUnit = ($: any): Promise<WorkUnit | null> => {
+  if (!unitP) {
+    unitP = (async () => {
+      let path: string | undefined
+      try { path = await $.env.get('CCR_WORK_UNIT') } catch { path = undefined } // no env access: no unit
+      if (!path) return null
+      let text: string | null = null
+      try { text = await $.fs.read(path) } catch { text = null } // missing declaration file: no unit
+      const u = parseWorkUnit(text)
+      receipt({ ev: 'unit', declared: path, cls: u?.cls ?? null, id: u?.id ?? null, accepted: !!u })
+      return u
+    })()
+  }
+  return unitP
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const r = await next(e)
@@ -48,15 +68,17 @@ export const register: Register = on => {
     rkey = repoKey(repo?.root ?? null)
     const version = (await $.session.version()).version
     compatible = COMPAT.includes(version)
-    if (await $.fs.exists(`${stateDir}/OFF`)) modes = { subagent: 'off', main: 'off' }
+    if (await $.fs.exists(`${stateDir}/OFF`)) modes = { subagent: 'off', main: 'off', unit: 'off' }
     else {
       try { modes = { ...DEFAULT_MODES, ...JSON.parse(await $.fs.read(`${stateDir}/modes.json`)) } }
       catch { modes = { ...DEFAULT_MODES } } // no override file: release defaults
     }
     try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, 8000) }
-    catch { kernel = null } // missing kernel: the subagent linker keeps the full instructions
-    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0 })
-    $.ui.status(modes.main === 'off' ? 'CCR off' : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}`)
+    catch { kernel = null } // missing kernel: the linkers keep the full instructions
+    const unit = await loadUnit($)
+    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null })
+    $.ui.status(modes.main === 'off' ? 'CCR off'
+      : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}${unit ? ` unit:${unit.cls}:${effective('unit')}` : ''}`)
     await $.tool.register({
       name: 'page',
       description: 'CPP Cognitive Runtime page fault: fetch context the runtime did not preload. kind "skills" or "agents" returns listing lines matching query; kind "file" returns an instruction file by absolute path.',
@@ -78,12 +100,37 @@ export const register: Register = on => {
   on('prompt.context', async ($, e, next) => {
     const r = await next(e)
     files = e.instructionFiles ? e.instructionFiles.map(f => ({ path: f.path, kind: f.kind, content: f.content })) : null
-    if (files && effective('main') !== 'off') {
+    if (files && effective('main') !== 'off' && !(await loadUnit($))) {
       for (const d of linkInstructionFiles(files, firstPrompt)) {
         receipt({ ev: 'link', agent: null, surface: 'instruction-file', path: d.path, bytes: d.bytes, keep: d.keep, reason: d.reason, mode: effective('main') })
       }
     }
     return r
+  })
+
+  // Tool Linker (work units only): every tool outside the class closure moves behind ToolSearch.
+  on('tool.describe', async ($, e, next) => {
+    const r: any = await next(e)
+    const unit = await loadUnit($)
+    const mode = effective('unit')
+    if (!unit || mode === 'off' || r.isDeferred || decideUnitTool(e.tool, unit) === 'keep') return r
+    const applied = mode === 'enforce'
+    receipt({ ev: 'link', agent: null, surface: 'tool', tool: e.tool, bytes: r.description?.length ?? 0, keep: false, reason: 'deferred-outside-unit', applied })
+    return applied ? { ...r, isDeferred: true } : r
+  })
+
+  // Memory Linker (work units only): the auto-memory section is left out; its files stay on disk.
+  on('prompt.section', async ($, e, next) => {
+    const r = await next(e)
+    if (r.text === null) return r
+    const unit = await loadUnit($)
+    const mode = effective('unit')
+    if (!unit || mode === 'off') return r
+    const d = decideUnitSection(e.name)
+    if (d.action === 'keep') return r
+    const applied = mode === 'enforce'
+    receipt({ ev: 'link', agent: null, surface: 'section', name: e.name, bytes: r.text.length, keep: false, reason: d.reason, applied })
+    return applied ? { text: null } : r
   })
 
   on('agent.spawn', async ($, e, next) => {
@@ -113,7 +160,17 @@ export const register: Register = on => {
       return applied ? { text: out } : r
     }
 
-    // Main session: shadow receipts only in this release.
+    // Main session that declared a Work Unit: the unit's closure is enforced.
+    const unit = await loadUnit($)
+    if (unit && effective('unit') !== 'off') {
+      const d = decideUnitAttachment(a.type, kernel, files)
+      const out = d.action === 'keep' ? text : d.action === 'drop' ? null : d.text ?? text
+      const applied = effective('unit') === 'enforce' && d.action !== 'keep'
+      receipt({ ev: 'attach', agent: null, unit: unit.cls, type: a.type, origin: a.origin?.kind, bytes: text.length, out: applied ? (out?.length ?? 0) : text.length, action: d.action, applied, reason: d.reason })
+      return applied ? { text: out } : r
+    }
+
+    // Interactive or undeclared main session: shadow receipts only in this release.
     if (effective('main') === 'off') return r
     const adv = a.origin?.kind === 'hook' ? advisoryBytes(text) : 0
     receipt({ ev: 'attach', agent: null, type: a.type, origin: a.origin?.kind, hookEvent: a.origin?.event ?? null, bytes: text.length, advisory: adv, applied: false })
