@@ -1503,9 +1503,15 @@ def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
         raise MissionError(f"no mission {mission_id}")
     if not rec.get("owner_hold"):
         raise MissionError(f"{mission_id} has no owner hold")
-    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                      event="owner_hold_released", now=now, owner_hold=None,
-                      reason="owner hold released")
+    out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                     event="owner_hold_released", now=now, owner_hold=None,
+                     reason="owner hold released")
+    # WU-S7b: a released packet mission whose admission was consumed is re-admitted from the recorded
+    # route when packet + route sha are intact (same rule as readmit_for_relay); else the refusal stands.
+    try:
+        return readmit_for_relay(out, now=now)["rec"]
+    except Exception:  # noqa: BLE001 -- the release itself stands
+        return out
 
 
 _COUNT_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([kKmM]?)\s*$")

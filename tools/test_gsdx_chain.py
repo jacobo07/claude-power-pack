@@ -163,6 +163,8 @@ res.write_text("# WU\n## Residual\nWritten by the steward for stopped mission m-
 r_cap = gc.tick(p, state=lambda: ([m1, m2, m3, m4], 0), armer=arm_u)
 check("V-CHAIN-RESIDUAL-BOUNDED", r2["action"] == "arm" and r2["residual"] == 2 and r2["route"] == rungs[2]
       and r_cap["action"] == "residual_exhausted" and len(got_units) == 2, f"{r2['action']} -> {r_cap['action']}")
+check("V-S7B-HALTED-WITH-RESIDUAL-NOT-STOPPED", r2["action"] != "stopped_without_done" and r2["action"] == "arm",
+      r2["action"])   # WU-S7b item 3: R1 covers a breaker-halted unit with a handoff
 # TRF W1 2026-10-11: m-a2577 renewed m-5d84 inside its lineage and was counted as residual 2 -> exhausted after one arm
 m3r = dict(stopped("m-3r", 3.5, str(res)), renewed_from="m-3")
 res.write_text("# WU\n## Residual\nWritten by the steward for stopped mission m-3r.\n", encoding="utf-8")

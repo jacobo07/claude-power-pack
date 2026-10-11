@@ -181,7 +181,8 @@ DEFAULT_GOAL_LEAK_S = 6 * 3600
 # draws on the current lease's `recovery` reserve (pre-funded by lease_open) and is never part of a lease's
 # productive `used`, so recovering a spent lease cannot overdraw it again.
 PRODUCTIVE, RECOVERY = "productive", "recovery"
-ROLES = (PRODUCTIVE, RECOVERY)
+INTERACTIVE = "interactive"   # WU-S7b: Owner chat in a goal root; counts toward the cap, shown apart
+ROLES = (PRODUCTIVE, RECOVERY, INTERACTIVE)
 
 
 class GoalLedger(SpendLedger):

@@ -86,6 +86,22 @@ v4 = ms.programme_spend(GOAL, projects=PROJ, mission_sids={W})
 check("ledger charge without transcript is UNKNOWN", v4["unknown"] == 523_000, v4["unknown"])
 check("undeclared goal is UNKNOWN, not empty", ms.programme_spend("nope-g", projects=PROJ)["ok"] is False)
 
+# WU-S7b: an interactive pane's charge path -- role=interactive in the LEDGER, apart from productive spend
+IA = "a" * 8 + "-0000"
+transcript(IA, ROOT, 150_000, True)
+ms.write_binding(IA, GOAL, "test", role="interactive")
+rn = ms.goal_renew(GOAL, IA, 150_000, 1000, "h")
+v5 = ms.programme_spend(GOAL, projects=PROJ, mission_sids={W})
+r5 = {r["sid"]: r for r in v5["sessions"]}
+check("S7b interactive renew charged role=interactive in ledger", rn.get("ok", True) and
+      ms._goal_ledger(GOAL)._gfold(ms._goal_ledger(GOAL)._read())["roles"].get(IA) == "interactive", rn)
+check("S7b interactive apart from productive", r5[IA]["role"] == "interactive" and v5["interactive_settled"] == 150_000
+      and v5["productive"] == {"worker": 500_000, "control": 300_000 + 123_000}, (v5["productive"], v5.get("interactive_settled")))
+check("S7b interactive still counts toward the cap", v5["settled"] == v4["settled"] + 150_000, v5["settled"])
+ms.write_binding(("b" * 8) + "-0000", GOAL, "test")
+rp = ms.goal_renew(GOAL, ("b" * 8) + "-0000", 1000, 1000, "h")
+check("S7b RED: unmarked pane stays productive", ms._goal_ledger(GOAL)._gfold(ms._goal_ledger(GOAL)._read())["roles"].get(("b" * 8) + "-0000") != "interactive", rp)
+
 # mutation drill: root binding disabled -> the binding gate must go red
 real = ms.goal_for_cwd
 ms.goal_for_cwd = lambda cwd: None

@@ -132,6 +132,19 @@ def main() -> int:
     check("V-CHAIN-SUPERVISE-RELAYS-WITHOUT-ADMIT", row.get("readmitted") is True
           and (row.get("launch") or {}).get("ok") is True and len(calls) == n + 1, str(row)[:400])
 
+    # 7. WU-S7b: release of a held packet mission re-admits from the recorded route (red: sha changed)
+    consumed_mission("m-rel")
+    gm.set_owner_hold("m-rel", "t", now=NOW + 30)
+    rr = gm.release_owner_hold("m-rel", now=NOW + 40)
+    check("V-S7B-RELEASE-READMITS", not rr.get("owner_hold") and rr["admission"]["verdict"] == "ADMISSIBLE"
+          and rr["admission"].get("consumed_epoch") is None and gm.admission_refusal(rr) is None, str(rr["admission"])[:300])
+    consumed_mission("m-rel-red")
+    gm.set_owner_hold("m-rel-red", "t", now=NOW + 30)
+    write("m-rel-red-WU.md", "# EDITED\n")
+    rr2 = gm.release_owner_hold("m-rel-red", now=NOW + 40)
+    check("V-S7B-RELEASE-SHA-CHANGED-NO-READMIT", not rr2.get("owner_hold") and rr2["admission"].get("consumed_epoch") is not None
+          and gm.admission_refusal(rr2) is not None)
+
     print(f"{passes} passed, {fails} failed")
     return 1 if fails else 0
 

@@ -131,7 +131,54 @@ def reflex_coverage(tools_dir: Path | None = None, tests_dir: Path | None = None
     return {"covered": len(covered), "total": len(REFLEXES), "missing": sorted(set(REFLEXES) - set(covered))}
 
 
+def _ledger_spend(goal: str):
+    """The ledger's own settled view (the goal-status source), independent of programme_status."""
+    try:
+        import mission_spend as ms
+        led = ms._goal_ledger(goal)
+        with led._lock:
+            g = led._gfold(led._read())
+        return {"settled": int(sum(g["marks"].values())), "reserved": int(g["open"])}
+    except Exception as ex:  # noqa: BLE001 -- unreadable ledger is a missing source (INCONCLUSIVE), never zero
+        return {"settled": "UNKNOWN", "reserved": "UNKNOWN", "why": f"{type(ex).__name__}: {ex}"[:120]}
+
+
+def live_state(chain_path, *, status=None, ledger=None, now=None, max_age_s=3600) -> dict:
+    """Build the run_all state dict from LIVE state: programme_status.project + the ledger goal view.
+    status/ledger are injectable for tests; None means load. Whatever cannot be read stays absent
+    (INCONCLUSIVE), never defaulted to a passing value."""
+    import json
+    import time
+    sys.path.insert(0, str(TOOLS))
+    import programme_status as ps
+    chain_path = Path(chain_path)
+    st = status if status is not None else ps.project(chain_path)
+    chain = json.loads(chain_path.read_text(encoding="utf-8-sig"))
+    goal = chain.get("goal")
+    led = ledger if ledger is not None else (_ledger_spend(goal) if goal else None)
+    sp = st.get("spend") or {}
+    units = [{"id": u["id"], "packet": u.get("packet", ""), "route": u.get("route", ""), "receipt": u.get("receipt")}
+             for u in chain.get("units", []) if u["id"] in (st.get("debt") or {}).get("pending_ids", [])]
+    state = {"now": now if now is not None else time.time(), "max_age_s": max_age_s, "units": units,
+             "spend": {k: sp.get(k) for k in ("settled", "reserved", "unknown", "telemetry_ok")} if sp else None,
+             "status_spend": sp or None, "ledger_spend": led,
+             "action": st.get("action") if st.get("action") != "unknown" else None,
+             "guard_modules": ["autonomy_gates", "programme_status", "gsdx_chain"], "tools_dir": str(TOOLS)}
+    if chain.get("envelope") is not None and isinstance(chain["envelope"], (int, float)):
+        state["cap"] = chain["envelope"]
+    if st.get("state") == "waiting":
+        state["wait_event"] = st.get("next_eligible_transition")
+    return state
+
+
 if __name__ == "__main__":
+    import json as _json
+    if "--live" in sys.argv:
+        cp = Path(sys.argv[sys.argv.index("--live") + 1]) if len(sys.argv) > sys.argv.index("--live") + 1 \
+            else TOOLS.parent / "vault" / "programs" / "autonomy" / "chain.json"
+        out = run_all(live_state(cp))
+        print(_json.dumps(out, indent=1))
+        sys.exit(0 if out["green"] else 1)
     c = reflex_coverage()
     print(f"REFLEX_COVERAGE={c['covered']}/{c['total']} missing={c['missing']}")
     sys.exit(0)

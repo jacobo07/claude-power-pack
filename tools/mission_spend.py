@@ -631,7 +631,8 @@ def goal_renew(goal: str, sid: str, measured: int, per_call: int, host: str) -> 
     # Accounting role (econ-contain WS-F): carried by the session's binding record, never by a CLI flag the
     # caller could set; any other value, or a binding to another goal, is productive spend.
     rec = read_binding(sid) or {}
-    role = "recovery" if rec.get("goal") == goal and rec.get("role") == "recovery" else "productive"
+    role = (rec["role"] if rec.get("goal") == goal and rec.get("role") in ("recovery", "interactive")
+            else "productive")   # WU-S7b: an interactive pane is charged role=interactive
     return _goal_ledger(goal).renew(sid, measured, int(e.get("lease_calls") or GOAL_LEASE_CALLS) * pc,
                                     per_call=pc, role=role)
 
@@ -721,9 +722,11 @@ def goal_exhausted(goal: str) -> bool:
         return False
 
 
-def write_binding(sid: str, goal: str, source: str) -> dict:
-    """Immutable: exclusive create; if the record exists, the existing one wins."""
-    rec = {"goal": goal, "since_ts": _now_ts(), "source": source, "pid": os.getpid()}
+def write_binding(sid: str, goal: str, source: str, role: str | None = None) -> dict:
+    """Immutable: exclusive create; if the record exists, the existing one wins. role="interactive"
+    (WU-S7b) marks an Owner pane that entered a goal root: goal_renew charges it as interactive."""
+    rec = {"goal": goal, "since_ts": _now_ts(), "source": source, "pid": os.getpid(),
+           **({"role": role} if role else {})}
     p = binding_path(sid)
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -1026,6 +1029,8 @@ def programme_spend(goal: str, *, projects: Path | None = None, mission_sids: se
         mark = int(g["marks"].get(sid, 0))
         if sid in mission_sids:
             role = "worker"
+        elif g["roles"].get(sid) == "interactive":
+            role = "interactive"      # charged as interactive in the ledger itself, not only inferred
         elif sid in in_ledger:
             role = "control"
         elif a and a["human_prompts"] > 0:
@@ -1055,6 +1060,7 @@ def programme_spend(goal: str, *, projects: Path | None = None, mission_sids: se
             "unknown": unknown, "available": avail, "available_certain": unknown == 0,
             "productive": {"worker": prod("worker"), "control": prod("control")},
             "interactive_processed": sum(r["processed"] or 0 for r in rows if r["role"] == "interactive"),
+            "interactive_settled": prod("interactive"),
             "telemetry_ok": not failures, "telemetry_failures": failures, "sessions": rows}
 
 
