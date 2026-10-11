@@ -44,3 +44,10 @@ Symptom: FileNotFoundError .../out/asm/asm. Trigger: passing split out/asm as as
 
 ## W7: W3 receipt donor count
 Symptom: "179 of 408 exact have proven donor". Root cause: 179 = 167 exact + 12 loose-only. Fix: W7 counts 167. Proof: tennis_fns.json grouped by match.
+
+## W10b: CURRENT_CAPSULE is a local pointer; one shared F root made Tennis and Resort collide
+- Symptom: Tennis send could only satisfy the W1 guard by moving the pointer Resort/cp50-c2 jobs use.
+- Root cause: custody keyed the guard on one F root; the GEX44 runner never reads it (checks params sha vs payload MANIFEST).
+- Impact: avoided a time-slice lock and a shared cap; Tennis jobs would otherwise burn cp50-c2's RF cap.
+- Fix/prevention: own F root registered as a live root with cap 4; profile may set CURRENT only in its own root. Proof: test_tennis_judge.py e1-e4, d1-d3, m2, m3.
+- Also: match.py/candidate judged Tennis against the Resort DOL (K.DOL); a Resort DOL silently gives DIFF, not an error. Proof: m1.
