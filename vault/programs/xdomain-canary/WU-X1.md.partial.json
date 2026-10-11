@@ -1,0 +1,15 @@
+{
+ "canonical": false,
+ "commits": [
+  "b9614627 canary x1"
+ ],
+ "goal": "xdomain-canary",
+ "mission_id": "m-3bdc40e7c41c",
+ "model_calls": 6,
+ "refused_calls": 0,
+ "salvage": [],
+ "session": "926e906d-aeb9-4cdc-985a-15dba1548ead",
+ "status": "PARTIAL",
+ "tokens": 121584,
+ "tool_calls": 6
+}
