@@ -1,0 +1,122 @@
+[
+ {
+  "fn": "fn_8022F90C",
+  "unresolved_before": 0,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 1,
+  "resolved_from_signatures": [
+   "fn_8022F90C"
+  ]
+ },
+ {
+  "fn": "fn_80203FEC",
+  "unresolved_before": 0,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 0,
+  "resolved_from_signatures": [
+   "fn_80203FEC"
+  ]
+ },
+ {
+  "fn": "fn_8020711C",
+  "unresolved_before": 0,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 1,
+  "resolved_from_signatures": [
+   "fn_8020711C"
+  ]
+ },
+ {
+  "fn": "fn_8021EAA8",
+  "unresolved_before": 0,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 1,
+  "resolved_from_signatures": [
+   "fn_8021EAA8"
+  ]
+ },
+ {
+  "fn": "fn_8020CC14",
+  "unresolved_before": 0,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 3,
+  "resolved_from_signatures": [
+   "fn_8020CC14"
+  ]
+ },
+ {
+  "fn": "fn_80241018",
+  "unresolved_before": 0,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 3,
+  "resolved_from_signatures": [
+   "fn_80241018"
+  ]
+ },
+ {
+  "fn": "fn_801BD194",
+  "unresolved_before": 3,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 0,
+  "resolved_from_signatures": [
+   "fn_801BD194"
+  ]
+ },
+ {
+  "fn": "fn_80257978",
+  "unresolved_before": 1,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 0,
+  "resolved_from_signatures": [
+   "fn_80257978"
+  ]
+ },
+ {
+  "fn": "fn_8025C600",
+  "unresolved_before": 3,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 0,
+  "resolved_from_signatures": [
+   "fn_8025C600"
+  ]
+ },
+ {
+  "fn": "fn_8022621C",
+  "unresolved_before": 3,
+  "unresolved_after": 0,
+  "abstained": [],
+  "unk_fields": 0,
+  "resolved_from_signatures": [
+   "fn_8022621C"
+  ]
+ },
+ {
+  "fn": "fn_80254440",
+  "unresolved_before": 1,
+  "unresolved_after": 1,
+  "abstained": [
+   "fn_80259A8C"
+  ],
+  "unk_fields": 7,
+  "resolved_from_signatures": [
+   "fn_80254440"
+  ]
+ },
+ {
+  "fn": "fn_80252F34",
+  "unresolved_before": 2,
+  "unresolved_after": 2,
+  "abstained": [],
+  "unk_fields": 5,
+  "resolved_from_signatures": []
+ }
+]

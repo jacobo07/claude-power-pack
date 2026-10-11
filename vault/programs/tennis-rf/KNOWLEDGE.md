@@ -30,3 +30,11 @@
   script (scratch `rearm_w1.py`; old m-ea05f64a68b3, new m-3b3632860a22 RUNNING, worker 29a0ae3e read WU-W1).
 - Prevention candidate (not this programme's scope): gsdx_chain re-arms a unit whose only record is a never-launched
   `arm-chain failed` hold once its route admits, retiring the old record itself.
+
+## W5a: cohort 1 job step has no oracle (2026-10-11)
+- Symptom: packet step 3 (one certified GEX44 job judging 12 candidates) cannot run.
+- Trigger: W3b NAMED REFUSAL; capsule_build/candidate/match are Resort-hardwired, CURRENT_CAPSULE is one shared pointer.
+- Root cause: oracle was built for one game; no --profile threading.
+- Economic impact: every Tennis verdict is UNJUDGED; per-function token cost per VERIFIED function is UNKNOWN, not zero.
+- Fix: tennis capsule unit (--profile) ~600 lines, or cost A/B oracle-less. Prevention: a packet needing an oracle should list the oracle as a prerequisite unit.
+- Proof: evidence/w5a/measure/records.jsonl (12 rows, verdict UNJUDGED_NO_ORACLE).
