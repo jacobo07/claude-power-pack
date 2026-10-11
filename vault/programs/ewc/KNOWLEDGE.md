@@ -18,3 +18,15 @@
   tennis-rf K2, which was already on disk).
 - Fix: Owner re-decided the cap (22M) before any unit launched. Prevention: run the estimator BEFORE writing a plan's
   TOKEN BUDGET section; E5's plan-template change should say so.
+
+## K0 addendum (E1) -- seed incident NOT_FOUND
+- 2 bounded transcript searches returned nothing; the report stays OWNER REPORT. Generic fixture used instead.
+
+## K2 -- WU-E1 step 1b conflated two Obligation nouns (E1)
+- Symptom: brief pointed at mission/obligation.py for the Goal Spine obligation. Root cause: same noun, two models; Goal Spine one is modules/gsd_x/goal/convergence.py GoalObligation. Prevention: name file:class in briefs.
+
+## K3 -- WU-E1 priced at 12 calls, needed >20 (E1)
+- Symptom: breaker tripped at 21 calls; first attempt left nothing committed. Fix: continue from fault capsule. Prevention: S-route for premises+fixtures+test is underestimated.
+
+## K4 -- RED proof (E1)
+- tools/test_ewc.py today: V-EWC-1 FAIL (incident neither blocked nor CONTINUE_* receipt), 2b/3b FAIL (no receipts exist); 2a/3a PASS. Root cause confirmed: no Stop member evaluates unresolved work interactively.
