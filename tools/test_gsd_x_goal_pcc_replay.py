@@ -834,8 +834,8 @@ def gate_ignore_pcc() -> tuple[bool, str]:
     try:
         for t, d in extra:
             append_event(log, t, d)
-        recs = proof.project_proofs(gc.project(log))
-        n = len(recs)
+        led = proof.project_proofs(gc.project(log))
+        n = len(led.contracts) + len(led.produced) + len(led.inherited) + len(led.invalidated)
     finally:
         shutil.rmtree(base, ignore_errors=True)
     return n == len(extra), f"{ev}; project_proofs records={n} appended={len(extra)}"

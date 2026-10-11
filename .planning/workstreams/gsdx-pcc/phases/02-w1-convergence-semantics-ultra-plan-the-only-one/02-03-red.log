@@ -1,0 +1,5 @@
+PASS V-PCC-HERMETIC-HOME home=pcc-sem-home-ep92marf goals_root_under_temp=True
+FAIL V-PCC-ENVELOPE RED-first: modules.gsd_x.goal.proof absent
+
+GSDX_PCC_SEMANTICS_PASS=1/2  threshold=2/2
+EXIT=1

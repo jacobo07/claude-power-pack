@@ -447,6 +447,10 @@
       "class": "PLANNED",
       "note": "UWCP S1-7. Imported by gsd_x/goal/reconcile.py -- see gsd_x/goal/evidence note; wired with the engine in UWCP S6"
     },
+    "gsd_x/goal/proof": {
+      "class": "PLANNED",
+      "note": "gsdx-pcc Phase 2 compatibility seam (spec S2-S13), driven today only by tools/test_gsd_x_goal_pcc_semantics.py and tools/test_gsd_x_goal_pcc_replay.py; no legacy caller consumes it by design (zero behaviour change). OWNER_QUEUE: gsdx-pcc Phase 3 (decide wrapper behind GSDX_FRONTIER) and Phase 4 (closure clause behind GSDX_PROOF_INHERITANCE) wire it; re-classify then"
+    },
     "gsd_x/goal/workspace": {
       "class": "PLANNED",
       "note": "UWCP S2 Workspace Capsule (A6 object model). Driven today only by tools/test_uwcp_workspace.py; OWNER_QUEUE: UWCP S5 (queue provider captures at dispatch, runner hydrates on the node) and S6 wire it; re-classify then"
