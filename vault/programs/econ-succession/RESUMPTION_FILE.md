@@ -21,12 +21,16 @@ successor lease and launches the next work unit. No Owner plumbing.
   it into a durable receipt. Packet expiry 2026-10-14T00:00:00Z (approval came before it).
 - econ-contain-2 untouched: L1 used 22,756,864, reserved 1,379,100 (a9647f12 1,239,905 real, measured
   +1,263,445; b1876f55 139,195, measured +138,594, 601 stale). fd25efd1 still to be recorded INVALIDATED.
-- STOPPED by the packet stop-loss: the planning pane ran at ~227K context per call (> 150K for 3+
-  calls). Spend on econ-succession at stop: about 1.6M (7 calls). The scan before approval cost 4.9M,
-  unbound.
+- The packet's 150K per-call stop-loss fired in the planning pane (~227K context per call; the fresh
+  floor here is 139K, so it can never hold). Spend on econ-succession then: about 1.6M. The scan
+  before approval cost 4.9M, unbound.
+- OWNER RULE 2026-10-11 ("continue but with context rent"): CONTINUE. The per-call stop-loss is
+  replaced by context rent: rotate in place (/kclear -> /clear -> /kresume) when the saving per call
+  reaches 150K, or at any sealed workstream boundary. Stop-loss is now: a workstream exceeds 3x its
+  P50 row, or the 20M ceiling would be crossed.
 
 **Active decisions.**
-- Work in a FRESH session per workstream; rotate before context passes ~150K per call.
+- Keep going in this pane lineage; rotate through /kclear at each sealed workstream.
 - No settings.json edits: the approval verb goes into `hooks/econ_admission.js` (already registered).
 - S1 decides whether hook-attested provenance ships; if no field separates interactive from headless,
   it does not ship.
