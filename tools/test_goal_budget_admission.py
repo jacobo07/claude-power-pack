@@ -382,7 +382,8 @@ def g_guard():
         check("V-GOAL-GUARD-SUBAGENT-SPEND", dec is None and gs["tokens"] == 850,
               f"main 250 + subagent 600 measured = {gs['tokens']}")
 
-        dec, why = run_guard(e, "bound-1", tx, work, tool="Agent", tool_input={"prompt": "x"})
+        dec, why = run_guard(e, "bound-1", tx, work, tool="Agent", tool_input={"prompt": "x"},
+                           CPP_DRAIN="off")   # DRAIN (W4) denies first in this state; this gate pins the goal-spawn refusal
         check("V-GOAL-GUARD-AGENT-REFUSED", dec == "deny" and "child refused" in why,
               f"Agent with remaining < one lease: {why[:90]}")
 
