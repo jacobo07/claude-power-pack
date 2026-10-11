@@ -20,5 +20,3 @@ Authority: `ROADMAP.md` + `REQUIREMENTS.md` in this directory.
 Token budget for the whole campaign: ~180k model tokens (Phase Zero spent ~45k).
 Stop only on: done-gate pass, budget spent, or an action that needs Owner authorization (name it).
 Update this file and `RESUMPTION_FILE.md` (workstream dir) after every sealed phase.
-</content>
-</invoke>

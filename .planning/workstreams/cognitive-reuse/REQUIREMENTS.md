@@ -51,5 +51,3 @@ Owner answers at approval (2026-10-11):
 - Work in worktree `C:\Users\User\Apps\_wt-cognitive-reuse` (branch `sprint/cognitive-reuse`);
   other panes commit in the live checkout. Pathspec-scoped micro-commits; verify `git log -1`.
 - Never mutate TUA-X or the corpus except writing receipts/memory corrections that the plan names.
-</content>
-</invoke>
