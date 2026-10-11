@@ -4454,6 +4454,7 @@ def _cli(argv=None) -> int:
     v.add_argument("--actions-only", action="store_true",
                    help="print only rows where the pass acted (the sweep logs nothing otherwise)")
     st = sub.add_parser("status")
+    st.add_argument("--mission", default=None, help="only this mission (id or unambiguous prefix)")
     st.add_argument("--surface", action="store_true",
                     help="exception surface: non-terminal attempts as HOT/WARM/COLD + KPIs (GGMC C6)")
     args = ap.parse_args(argv)
@@ -4549,6 +4550,8 @@ def _cli(argv=None) -> int:
                      "iterations": m.get("iterations"), "owner": (m.get("owner") or {}).get("session_id"),
                      "liveness": v_, "evidence": why, "pending": m.get("pending"),
                      "plan": plan_next(m, time.time(), sessions)})
+    if getattr(args, "mission", None):
+        rows = [r for r in rows if str(r.get("mission_id", "")).startswith(args.mission)]
     if getattr(args, "surface", False):
         print(json.dumps(status_surface(rows, missions, time.time()), indent=2))
         return 0
