@@ -5,7 +5,7 @@ Remaining: percentile output with confidence, the predictive DRAINING edge, the 
 Python: `& 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe'`, `$env:PYTHONIOENCODING='utf-8'`.
 One Edit per file per message. Do not touch `mission_spend.py` `judge()` semantics (only add a sibling function).
 
-## Task 1: repo-relative spend path + percentile distribution with confidence
+### Task 1: repo-relative spend path + percentile distribution with confidence
 Files: `tools/gsdx_reforecast.py`, `tools/test_evc_distribution.py` (new).
 
 Gates first (write `test_evc_distribution.py` with the `check()` pattern of `test_gsdx_reforecast.py` lines 1-12, run it, see RED):
@@ -28,7 +28,7 @@ python tools\test_evc_distribution.py
 python tools\test_gsdx_reforecast.py
 ```
 
-## Task 2: predictive DRAINING edge as a pure function with its gate
+### Task 2: predictive DRAINING edge as a pure function with its gate
 Files: `tools/mission_spend.py`, `tools/test_evc_draining.py` (new).
 
 Gates first:
@@ -48,7 +48,7 @@ python tools\test_evc_draining.py
 python tools\test_mission_spend.py
 ```
 
-## Task 3: drive DRAINING from the supervisor and record it (mission record + ledger)
+### Task 3: drive DRAINING from the supervisor and record it (mission record + ledger)
 Files: `tools/gsd_mission.py`, `tools/test_evc_draining_wire.py` (new).
 
 Decision (within authority): DRAINING is NOT added to `STATES` (line 71; Phase 5 owns the state set). It is an additive record field `lease_state = "DRAINING"` written by `transition(..., event="lease_draining", lease_state=..., drain=...)`, state and epoch unchanged, plus ledger event `lease_draining`. Check at implementation that `transition` (line 286) accepts extra record fields the way `cost_mark=` is passed at line 1440; if it whitelists keys, add `lease_state` and `drain` to that whitelist.
