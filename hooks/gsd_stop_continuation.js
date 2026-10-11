@@ -128,14 +128,14 @@ function loadRubric() {
 
 // Why work continued, or why it was let stop: one compact line per judgement that reached a
 // decision. Best effort -- accounting must never break the turn.
-function receipt(sid, classification, why) {
+function receipt(sid, classification, why, extra) {
   try {
     fs.mkdirSync(STATE_DIR, { recursive: true });
-    fs.appendFileSync(RECEIPTS, JSON.stringify({
+    fs.appendFileSync(RECEIPTS, JSON.stringify(Object.assign({
       ts: new Date().toISOString(), source: 'gsd_stop_continuation', session: sid || null,
-      owner: classification === 'CONTINUE' ? 'AGENT' : 'TURN_END',
+      owner: String(classification).startsWith('CONTINUE') ? 'AGENT' : 'TURN_END',
       category: classification, why: String(why || '').slice(0, 200),
-    }) + '\n', 'utf8');
+    }, extra || {})) + '\n', 'utf8');
   } catch (err) {
     // same contract as writeJsonBestEffort
   }
@@ -252,6 +252,110 @@ function nextAction(marker, cwd, tasksDir) {
     + 'read them rather than re-planning.';
 }
 
+// ---------------------------------------------------------------------------
+// EWC gate. mode: CPP_EWC_GATE=shadow|enforce|off. Default: enforce for an armed mission (marker
+// present, which includes a goal-bound session with a marker); shadow otherwise (interactive and
+// goal-bound without marker: receipt only, never block).
+const NO_PROGRESS_LIMIT = 3;
+
+function ewcMode(marker) {
+  const e = String(process.env.CPP_EWC_GATE || '').trim().toLowerCase();
+  if (e === 'shadow' || e === 'enforce' || e === 'off') return e;
+  return marker ? 'enforce' : 'shadow';
+}
+
+function safeFingerprint(data, sid, marker) {
+  try {
+    const cwd = (typeof marker.cwd === 'string' && marker.cwd) ? marker.cwd : (data.cwd || process.cwd());
+    const tasksDir = path.join(os.tmpdir(), 'claude',
+      path.basename(path.dirname(String(data.transcript_path || ''))) || '_', sid, 'tasks');
+    return fingerprint(marker, cwd, tasksDir);
+  } catch (err) { return ''; }
+}
+
+function ewcGate(data, sid, marker) {
+  let gate;
+  try { gate = require('./lib/ewc_gate.js'); } catch (err) { return null; }
+  const mode = ewcMode(marker);
+  if (mode === 'off') return null;
+  let g;
+  try { g = gate.evaluate(data, {}); } catch (err) { return null; }   // fail-open: legacy path decides
+  const base = { mode, would_block: false, open: g.open.length, digest: g.digest };
+
+  if (!g.verdict.startsWith('CONTINUE_')) {
+    const pk = g.package.length ? { decision_package: g.package.slice(0, 6) } : {};
+    receipt(sid, g.verdict, g.why, Object.assign({}, base, pk));
+    return null;                                     // marker path (if any) continues below
+  }
+
+  // Allow-conditions on a would-be block. Same bounds as the legacy path, unchanged.
+  let skip = null;
+  if (marker) {
+    const maxCycles = Number.isFinite(marker.max_cycles) && marker.max_cycles > 0 ? marker.max_cycles : DEFAULT_MAX_CYCLES;
+    const maxHours = Number.isFinite(marker.max_hours) && marker.max_hours > 0 ? marker.max_hours : DEFAULT_MAX_HOURS;
+    const armedAt = Date.parse(marker.armed_at || marker.ts || '');
+    if ((Number(marker.cycles) || 0) >= maxCycles
+        || (Number.isFinite(armedAt) && (Date.now() - armedAt) > maxHours * 3600 * 1000)) {
+      skip = ['BUDGET', 'cycle or hour budget exhausted'];
+    }
+  }
+  if (!skip) {
+    let freeMB = Infinity;
+    try { freeMB = Math.round(os.freemem() / 1048576); } catch (err) { freeMB = Infinity; }
+    if (freeMB < FLOOR_MB) skip = ['STOP_RESOURCE_BLOCKED', `RAM floor: ${freeMB} MB free`];
+  }
+  if (!skip) {
+    const closer = readJson(CLOSER_STATE);
+    if (closer && closer[sid] && closer[sid].blocked === true) skip = ['DEFER_CLOSER', 'closer-guard blocked this session'];
+  }
+  const state = readJson(STATE_FILE) || {};
+  const prev = state[sid];
+  const hadGate = !!(prev && typeof prev.obDigest === 'string');
+  const mfp = marker ? safeFingerprint(data, sid, marker) : '';
+  const streak = (prev && prev.streak) ? prev.streak : 0;
+  let noProgress = 0;
+  if (!skip && mode === 'enforce') {
+    if (hadGate && prev.obDigest === g.digest && (prev.mfp || '') === mfp) {
+      skip = ['NO_DELTA', 'open-obligation set and mission facts unchanged since the last continuation'];
+    } else if (streak >= MAX_STREAK) {
+      skip = ['STREAK_CEILING', `${MAX_STREAK} consecutive continuations`];
+    } else if (hadGate && prev.blocked === true) {
+      const progress = g.nowCount < (prev.nowCount || 0) || g.maxSev < (prev.maxSev || 0);
+      noProgress = progress ? 0 : (prev.noProgress || 0) + 1;
+      if (noProgress >= NO_PROGRESS_LIMIT) {
+        skip = ['STALLED', `${noProgress} consecutive continuations without fewer NOW obligations or lower severity`];
+        gate.recordDiagnosis(sid,
+          `Stalled: ${noProgress} continuations made no progress on ${g.ob.id}; the current approach is not working.`,
+          `Change strategy: stop repeating the same fix, diagnose why ${g.ob.id} is not closing, and try a different approach.`);
+      }
+    }
+  }
+  const rec = (blocked, cls, streakN, np) => {
+    state[sid] = { blocked, fingerprint: (prev && prev.fingerprint) || '', streak: streakN, classification: cls,
+      ts: Date.now(), obDigest: g.digest, mfp, nowCount: g.nowCount, maxSev: g.maxSev, noProgress: np };
+    writeJsonBestEffort(STATE_FILE, state);
+  };
+  if (skip) {
+    if (mode === 'enforce') rec(false, skip[0], 0, skip[0] === 'STALLED' ? 0 : noProgress);
+    receipt(sid, skip[0], skip[1], Object.assign({}, base, { suppressed_verdict: g.verdict }));
+    return { continue: true };
+  }
+  if (mode === 'shadow') {
+    receipt(sid, g.verdict, g.why, Object.assign({}, base, { would_block: true, obligation: g.ob.id }));
+    return { continue: true };
+  }
+  rec(true, g.verdict, streak + 1, noProgress);
+  receipt(sid, g.verdict, `${g.why} (streak ${streak + 1})`, Object.assign({}, base, { would_block: true, obligation: g.ob.id }));
+  return {
+    decision: 'block',
+    reason: 'UNRESOLVED AGENT-OWNED OBLIGATION -- this turn ended with work you can do now still open '
+      + `(${g.open.length} open).\n\nNext: ${g.ob.id} [${g.ob.severity}] ${String(g.ob.text).slice(0, 200)}\n`
+      + `Action: ${String(g.ob.next_action).slice(0, 300)}\n\n`
+      + 'Do it now, run its gate, then close it with `python -m modules.autonomy_gate obligations close --session <sid> '
+      + '<id> "<gate>: <result>"`. Saying the mission is done does not close it; a passing gate does.',
+  };
+}
+
 function run(data) {
   const sid = data && data.session_id;
   if (!sid) return { continue: true };
@@ -267,10 +371,14 @@ function run(data) {
   if (typeof ev === 'string' && ev && ev !== 'Stop') return { continue: true };
 
   const marker = readJson(path.join(STATE_DIR, `gsd-autorun-${sid}.json`));
-  if (!marker) return { continue: true };          // not an autonomous mission
-  if (marker.status === 'complete' || marker.terminal === true) {
+  if (marker && (marker.status === 'complete' || marker.terminal === true)) {
     return { continue: true };                      // mission terminal predicate
   }
+
+  // --- EWC Pre-Stop Unresolved Obligation Gate (before the marker check) ---
+  const gated = ewcGate(data, sid, marker);
+  if (gated) return gated;
+  if (!marker) return { continue: true };          // not an autonomous mission
 
   // --- OPT-IN, and deliberately so (plan §23/§69) -------------------------
   // NATIVE_CONTINUITY is the new path; LEGACY_EXPLICIT remains the default
