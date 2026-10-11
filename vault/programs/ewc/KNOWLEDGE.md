@@ -30,3 +30,11 @@
 
 ## K4 -- RED proof (E1)
 - tools/test_ewc.py today: V-EWC-1 FAIL (incident neither blocked nor CONTINUE_* receipt), 2b/3b FAIL (no receipts exist); 2a/3a PASS. Root cause confirmed: no Stop member evaluates unresolved work interactively.
+
+## K5 -- E2 finished its work but its receipt had no `Status:` line; the chain halted (coordinator, 2026-10-11)
+- Symptom: tick 11:14 `stopped_without_done receipt=UNREADABLE` (max_residuals 0) although every E2 step was PROVEN and
+  committed (25f83975). The worker evaluated, wrote the evidence, then stopped without the one line that closes the unit:
+  a live instance of EWC itself, at the programme level.
+- Fix: coordinator re-ran test_ewc_obligations.py 56/56 + test_ewc.py 2/5, added `Status: DONE`, ticked; E3 armed
+  m-6e6382f12f90. Prevention: the receipt's line 2 is `Status: DONE` -- E3+ check it before ending; E6 may wire the
+  receipt status as an obligation the EWC gate sees.
