@@ -38,3 +38,9 @@
 - Economic impact: every Tennis verdict is UNJUDGED; per-function token cost per VERIFIED function is UNKNOWN, not zero.
 - Fix: tennis capsule unit (--profile) ~600 lines, or cost A/B oracle-less. Prevention: a packet needing an oracle should list the oracle as a prerequisite unit.
 - Proof: evidence/w5a/measure/records.jsonl (12 rows, verdict UNJUDGED_NO_ORACLE).
+
+## W7: m2c_producer asm_root appends "asm"
+Symptom: FileNotFoundError .../out/asm/asm. Trigger: passing split out/asm as asm_root. Root cause: producer joins "asm" itself. Impact: one wasted launch (background start hid the error until read). Fix: pass .../out. Prevention: run first producer launches in the foreground. Proof: M2C_DONE rows=1797.
+
+## W7: W3 receipt donor count
+Symptom: "179 of 408 exact have proven donor". Root cause: 179 = 167 exact + 12 loose-only. Fix: W7 counts 167. Proof: tennis_fns.json grouped by match.
