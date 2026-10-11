@@ -1,0 +1,10 @@
+error: Analysis failed
+code: target_unavailable
+category: unavailable
+message: "Cannot open artifact: unsupported ELF architecture. Check that the path exists, is readable, and points to a supported file."
+retryable: false
+remediation:
+  action: "Cannot open artifact: unsupported ELF architecture. Check that the path exists, is readable, and points to a supported file."
+details:
+  path: "C:\\Users\\User\\Apps\\recon_work\\certify_855e4ffe\\split_run1\\out\\obj\\auto_03_800071C0_text.o"
+  reason: unsupported ELF architecture

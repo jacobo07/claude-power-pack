@@ -1,0 +1,31 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.12.1
+2 info using node@v24.15.0
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\User\Apps\rea-6.3.0\.npmrc
+5 silly config load:file:C:\Users\User\.npmrc
+6 silly config load:file:C:\Users\User\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install rea-agents@6.3.0
+8 verbose argv "install" "rea-agents@6.3.0" "--ignore-scripts"
+9 verbose logfile logs-max:10 dir:C:\Users\User\AppData\Local\npm-cache\_logs\2026-10-11T10_03_45_388Z-
+10 verbose logfile C:\Users\User\AppData\Local\npm-cache\_logs\2026-10-11T10_03_45_388Z-debug-0.log
+11 silly logfile start cleaning logs, removing 338 files
+12 verbose stack TypeError: Class extends value undefined is not a constructor or null
+12 verbose stack     at Object.<anonymous> (C:\Program Files\nodejs\node_modules\npm\node_modules\minipass-sized\dist\commonjs\index.js:21:40)
+12 verbose stack     at Module._compile (node:internal/modules/cjs/loader:1830:14)
+12 verbose stack     at Object..js (node:internal/modules/cjs/loader:1961:10)
+12 verbose stack     at Module.load (node:internal/modules/cjs/loader:1553:32)
+12 verbose stack     at Module._load (node:internal/modules/cjs/loader:1355:12)
+12 verbose stack     at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+12 verbose stack     at Module.require (node:internal/modules/cjs/loader:1576:12)
+12 verbose stack     at require (node:internal/modules/helpers:153:16)
+12 verbose stack     at Object.<anonymous> (C:\Program Files\nodejs\node_modules\npm\node_modules\minipass-fetch\lib\body.js:3:27)
+12 verbose stack     at Module._compile (node:internal/modules/cjs/loader:1830:14)
+13 error Class extends value undefined is not a constructor or null
+14 verbose cwd C:\Users\User\Apps\rea-6.3.0
+15 verbose os Windows_NT 10.0.26200
+16 verbose node v24.15.0
+17 verbose npm  v11.12.1
+18 verbose exit 1
+19 verbose code 1
+20 error A complete log of this run can be found in: C:\Users\User\AppData\Local\npm-cache\_logs\2026-10-11T10_03_45_388Z-debug-0.log
