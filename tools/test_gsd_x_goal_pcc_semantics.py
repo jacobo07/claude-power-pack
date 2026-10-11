@@ -980,6 +980,231 @@ def gate_one_open_epoch():
         shutil.rmtree(base, ignore_errors=True)
 
 
+# --- D44 invariants (02-05): no second store, pure projections, declared additive vocabulary -------------
+
+import hashlib  # noqa: E402
+import re  # noqa: E402
+
+GOAL_PKG = ROOT / "modules" / "gsd_x" / "goal"
+PROOF_SRC = GOAL_PKG / "proof.py"
+GOLDEN_PATH = ROOT / "tools" / "fixtures" / "gsdx_legacy_replay_golden.json"
+SPEC_PATH = ROOT / "vault" / "specs" / "gsdx-proof-conserving-convergence.md"
+_WRITE_ATTRS = {"write_text", "write_bytes", "mkdir", "touch", "unlink", "rmdir", "symlink_to", "hardlink_to"}
+_OS_WRITES = {"replace", "rename", "remove", "unlink", "makedirs", "mkdir"}
+_STORE_MODULES = {"sqlite3", "shelve", "pickle", "dbm", "tempfile"}
+_TYPE_RE = re.compile(r"^[a-z][a-z_]*\.[a-z][a-z_]*$")
+_FILE_SUFFIXES = {"json", "py", "lock", "sum", "yaml", "yml", "bundle", "tar", "log", "md", "txt", "toml"}
+PURE_FUNCTIONS = {"project_proofs", "proof_states", "state_from_premises", "effective_contract", "observe_premises",
+                  "supersedes", "claim_id", "freshness_class", "legacy_contract", "binding", "requires_full",
+                  "law_semantic_conservation", "law_work_conservation", "law_proof_conservation", "independent",
+                  "law_unknown_escalates"}
+
+
+def scan_writes(source: str) -> list:
+    """(line, pattern) for every filesystem or store write the source can perform."""
+    out = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            out += [(node.lineno, f"import {a.name}") for a in node.names if a.name.split(".")[0] in _STORE_MODULES]
+        elif isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] in _STORE_MODULES:
+            out.append((node.lineno, f"import {node.module}"))
+        elif isinstance(node, ast.Call):
+            f = node.func
+            if isinstance(f, ast.Name) and f.id == "open":
+                mode = node.args[1] if len(node.args) > 1 else next((k.value for k in node.keywords if k.arg == "mode"), None)
+                if isinstance(mode, ast.Constant) and isinstance(mode.value, str) and set(mode.value) & set("wax+"):
+                    out.append((node.lineno, "open(write)"))
+            elif isinstance(f, ast.Attribute):
+                base = f.value.id if isinstance(f.value, ast.Name) else ""
+                if base == "shutil":
+                    out.append((node.lineno, f"shutil.{f.attr}"))
+                elif base == "os" and f.attr in _OS_WRITES:
+                    out.append((node.lineno, f"os.{f.attr}"))
+                elif f.attr in _WRITE_ATTRS:
+                    out.append((node.lineno, f".{f.attr}"))
+    return out
+
+
+def scan_pure_appends(source: str) -> list:
+    """(line, function) for a log.append inside a function that must stay a pure projection."""
+    out = []
+    for fn in ast.walk(ast.parse(source)):
+        if isinstance(fn, ast.FunctionDef) and fn.name in PURE_FUNCTIONS:
+            for node in ast.walk(fn):
+                if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "append"
+                        and isinstance(node.func.value, ast.Name) and node.func.value.id == "log"):
+                    out.append((node.lineno, fn.name))
+    return out
+
+
+def discover_types(pkg_dir: Path, only=None) -> set:
+    found = set()
+    for p in sorted(Path(pkg_dir).rglob("*.py")):
+        if only is not None and p.name not in only:
+            continue
+        for node in ast.parse(p.read_text(encoding="utf-8")).body:
+            if not isinstance(node, ast.Assign):
+                continue
+            v = node.value
+            vals = [v] if isinstance(v, ast.Constant) else (list(v.elts) if isinstance(v, ast.Tuple) else [])
+            for c in vals:
+                if (isinstance(c, ast.Constant) and isinstance(c.value, str) and _TYPE_RE.match(c.value)
+                        and c.value.split(".")[1] not in _FILE_SUFFIXES):
+                    found.add(c.value)
+    return found
+
+
+def _golden_legacy() -> dict:
+    return json.loads(GOLDEN_PATH.read_text(encoding="utf-8"))["meta"]["legacy_goal_sha256"]
+
+
+def new_modules() -> list:
+    legacy = {Path(k).name for k in _golden_legacy()}
+    return sorted(p.name for p in GOAL_PKG.glob("*.py") if p.name not in legacy)
+
+
+def _table_names(text: str) -> list:
+    return [m.group(1) for m in re.finditer(r"^\| ([a-z_]+\.[a-z_]+) \|", text, re.M)]
+
+
+def frozen_events(spec_text: str) -> list:
+    m = re.search(r"<!-- pcc-frozen-events:begin -->(.*?)<!-- pcc-frozen-events:end -->", spec_text, re.S)
+    return _table_names(m.group(1)) if m else []
+
+
+def landed_events(spec_text: str) -> list:
+    m = re.search(r"### S7 .*?(?=<!-- pcc-frozen-events:begin -->)", spec_text, re.S)
+    return _table_names(m.group(0)) if m else []
+
+
+def spec_unresolved(spec_text: str) -> list:
+    """Section ids S1..S16 that do not have exactly one `Resolved:` line."""
+    bad = []
+    for n in range(1, 17):
+        m = re.search(rf"^### S{n} .*?(?=^### S|\Z)", spec_text, re.S | re.M)
+        if not m or len(re.findall(r"^Resolved:", m.group(0), re.M)) != 1:
+            bad.append(f"S{n}")
+    return bad
+
+
+# Spec gates that are phase-scoped EVIDENCE commands (a git diff over the phase), not suite gates.
+# Each must be named by the plan that runs it, so the exemption cannot outlive the plan.
+PHASE_SCOPED_EVIDENCE = {"V-PCC-NO-LEGACY-EDIT": "02-06-PLAN.md"}
+
+
+def spec_gate_tokens(spec_text: str) -> set:
+    """Gate tokens in the spec; `V-PCC-X-*` keeps its `-*` and means a prefix family."""
+    return set(re.findall(r"V-PCC-[A-Z0-9]+(?:-[A-Z0-9]+)*(?:-\*)?", spec_text))
+
+
+def unbacked_tokens(tokens: set, names: set, phase_plans: dict) -> list:
+    out = []
+    for t in sorted(tokens):
+        if t.endswith("-*"):
+            ok = any(n.startswith(t[:-1]) for n in names)
+        elif t in PHASE_SCOPED_EVIDENCE:
+            ok = t in phase_plans.get(PHASE_SCOPED_EVIDENCE[t], "")
+        else:
+            ok = t in names
+        if not ok:
+            out.append(t)
+    return out
+
+
+def suite_gate_names() -> set:
+    names = set()
+    for fname in ("test_gsd_x_goal_pcc_replay.py", "test_gsd_x_goal_pcc_semantics.py"):
+        names |= set(re.findall(r'"(V-PCC-[A-Z0-9]+(?:-[A-Z0-9]+)*)"', (ROOT / "tools" / fname).read_text(encoding="utf-8")))
+    return names
+
+
+def _snap(d: Path) -> dict:
+    return {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(d.rglob("*")) if p.is_file()}
+
+
+def gate_no_second_store():
+    seeded = scan_writes("import sqlite3\nopen('x', 'w')\nfrom pathlib import Path\nPath('a').write_text('')\n")
+    src = PROOF_SRC.read_text(encoding="utf-8")
+    real = scan_writes(src)
+    return len(seeded) == 3 and real == [], f"seeded_control_findings={len(seeded)} proof.py_findings={real[:3]}"
+
+
+def gate_projection_pure():
+    proof = _need("proof_states", "project_proofs", "law_unknown_escalates")
+    if proof is None:
+        return False, _NEEDS
+    seeded = scan_pure_appends("def proof_states(log):\n    log.append(1, 'x', {}, 'a')\n")
+    static = scan_pure_appends(PROOF_SRC.read_text(encoding="utf-8"))
+    log, state, base = sat_goal()
+    try:
+        before = _snap(log.dir)
+        proof.proof_states(state, TREE_A)
+        proof.project_proofs(state)
+        proof.law_proof_conservation(proof.project_proofs(state))
+        proof.law_semantic_conservation(state)
+        proof.law_work_conservation(state)
+        after = _snap(log.dir)
+        ctl_before = _snap(log.dir)
+        proof.append_pcc(log, state, proof.INVALIDATED, {"v": 1, "claim_id": "c", "certificate": "x", "reason": "r"}, "founder")
+        ctl_changed = _snap(log.dir) != ctl_before
+        return len(seeded) == 1 and static == [] and before == after and ctl_changed, (
+            f"seeded={len(seeded)} static_log_appends={static[:3]} files_before={len(before)} unchanged={before == after} writer_control_changes_files={ctl_changed}")
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_additive_only():
+    golden = _golden_legacy()
+    moved = [k for k, v in golden.items() if not (ROOT / k).is_file() or hashlib.sha256((ROOT / k).read_bytes()).hexdigest() != v]
+    news = new_modules()
+    legacy_types = discover_types(GOAL_PKG, only={Path(k).name for k in golden})
+    proof = _need("NEW_TYPES")
+    new_types = set(proof.NEW_TYPES) if proof else set()
+    collide = sorted(legacy_types & new_types)
+    ok = proof is not None and not moved and news == ["proof.py"] and not collide and len(new_types) == 4
+    return ok, f"legacy={len(legacy_types)} new={len(new_types)} legacy_files_changed={moved[:3]} new_modules={news} collisions={collide}"
+
+
+def gate_vocab_declared():
+    proof = _need("NEW_TYPES")
+    if proof is None:
+        return False, _NEEDS
+    text = SPEC_PATH.read_text(encoding="utf-8")
+    frozen, landed = frozen_events(text), landed_events(text)
+    legacy_types = discover_types(GOAL_PKG, only={Path(k).name for k in _golden_legacy()})
+    declared = legacy_types | set(landed) | set(frozen)
+    in_code = discover_types(GOAL_PKG)
+    undeclared = sorted(in_code - declared)
+    frozen_in_code = sorted(set(frozen) & in_code)
+    tmp = Path(tempfile.mkdtemp(prefix="pcc-vocab-"))
+    try:
+        (tmp / "x.py").write_text('SNEAKY = "sneaky.event"\n', encoding="utf-8")
+        seeded = sorted(discover_types(tmp) - declared)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    want_frozen = ["candidate.promoted", "review.received", "adapter.maturity", "continuation.sealed"]
+    ok = (frozen == want_frozen and set(landed) == set(proof.NEW_TYPES) and not undeclared and not frozen_in_code
+          and seeded == ["sneaky.event"])
+    return ok, f"frozen={frozen} landed={sorted(landed)} undeclared_in_code={undeclared} frozen_in_code={frozen_in_code} seeded_control={seeded}"
+
+
+def gate_spec_resolved():
+    text = SPEC_PATH.read_text(encoding="utf-8")
+    bad = spec_unresolved(text)
+    ctl = spec_unresolved(text.replace("Resolved:", "Pending:", 1))
+    tokens = spec_gate_tokens(text)
+    names = suite_gate_names()
+    plans = {p.name: p.read_text(encoding="utf-8") for p in (ROOT / ".planning").rglob("02-0*-PLAN.md")}
+    missing = unbacked_tokens(tokens, names, plans)
+    fake = ["V-PCC-" + "NOT-A-GATE", "V-PCC-" + "NO-SUCH-FAMILY-*"]   # built, so the suite scan cannot count them
+    ctl_missing = unbacked_tokens(tokens | set(fake), names, plans)
+    evidence_off = unbacked_tokens({"V-PCC-NO-LEGACY-EDIT"}, names, {})
+    ok = (not bad and len(ctl) == 1 and not missing and ctl_missing == sorted(fake)
+          and evidence_off == ["V-PCC-NO-LEGACY-EDIT"])
+    return ok, (f"sections=16 unresolved={bad} control_unresolved={ctl} spec_gate_tokens={len(tokens)} "
+                f"unbacked={missing[:6]} phase_scoped={sorted(PHASE_SCOPED_EVIDENCE)} controls_flagged={len(ctl_missing)}")
+
+
 def main() -> int:
     run_gate("V-PCC-HERMETIC-HOME", gate_hermetic)
     run_gate("V-PCC-ENVELOPE", gate_envelope)
@@ -1023,7 +1248,12 @@ def main() -> int:
                      ("V-PCC-LAW-PROOF-CONSERVATION-LEDGER", gate_law_proof_ledger),
                      ("V-PCC-LAW-CONCURRENCY-DEF", gate_law_concurrency_def),
                      ("V-PCC-LAW-UNKNOWN-ESCALATES", gate_law_unknown_escalates),
-                     ("V-PCC-ONE-OPEN-EPOCH-PINNED", gate_one_open_epoch)):
+                     ("V-PCC-ONE-OPEN-EPOCH-PINNED", gate_one_open_epoch),
+                     ("V-PCC-NO-SECOND-STORE", gate_no_second_store),
+                     ("V-PCC-PROJECTION-PURE", gate_projection_pure),
+                     ("V-PCC-ADDITIVE-ONLY", gate_additive_only),
+                     ("V-PCC-VOCAB-DECLARED", gate_vocab_declared),
+                     ("V-PCC-SPEC-RESOLVED", gate_spec_resolved)):
         run_gate(name, fn)
     total = passes + fails
     print(f"\nGSDX_PCC_SEMANTICS_PASS={passes}/{total}  threshold={total}/{total}")
