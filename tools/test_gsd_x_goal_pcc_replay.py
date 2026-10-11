@@ -1031,6 +1031,113 @@ def gates_seam() -> None:
     run_gate("V-PCC-SWITCH-FRONTIER-INERT", frontier_inert)
 
 
+# --- proof states against the legacy judgment (02-04) -------------------------------
+
+def _scenario_files(name: str):
+    """(event files, repo, goal, base dir to remove or None)."""
+    if name in RECORDED:
+        repo, goal, _n = RECORDED[name]
+        return _event_files(FIXTURE_ROOT / repo / goal), repo, goal, None
+    files, base = build_synthetic(name)
+    return files, SYN_REPO, name.replace("_", "-"), base
+
+
+def corpus_obligations():
+    """Yield (scenario, prefix k, state, tree, ctx, obligation) over every recorded and synthetic prefix.
+
+    A prefix whose tree starts `unknown:` yields (..., ctx=None, obligation=None) so the caller counts it.
+    """
+    for name in SCENARIOS:
+        files, repo, goal, keep = _scenario_files(name)
+        work = Path(tempfile.mkdtemp(prefix="pcc-states-"))
+        try:
+            log = GoalLog(repo, goal, base=work)
+            log.dir.mkdir(parents=True)
+            for k, src in enumerate(files, 1):
+                shutil.copyfile(src, log.dir / Path(src).name)
+                events = log.read()
+                state = gc.project(log)
+                for tree in (T_FIXED, _t_last(events)):
+                    if tree.startswith("unknown:"):
+                        yield name, k, state, tree, None, None
+                        continue
+                    ctx = _context(state, tree)
+                    for o in cv.project_convergence(state).obligations.values():
+                        yield name, k, state, tree, ctx, o
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
+            if keep is not None:
+                shutil.rmtree(keep, ignore_errors=True)
+
+
+def gates_states() -> None:
+    def legacy_map():
+        proof = load_proof()
+        if proof is None:
+            return False, PROOF_ABSENT
+        checks = excluded = older_rev = bad_n = 0
+        bad: list[str] = []
+        by_state: dict[str, int] = {}
+        cache: dict = {}
+        for name, k, state, tree, ctx, o in corpus_obligations():
+            if o is None:
+                excluded += 1
+                continue
+            key = (name, k, tree)
+            if key not in cache:
+                cache.clear()
+                cache[key] = proof.proof_states(state, tree)
+            got = cache[key][o.identifier]["state"]
+            by_state[got] = by_state.get(got, 0) + 1
+            checks += 1
+            satisfied = o.disposition == cv.SATISFIED
+            legacy_fresh = satisfied and rc._needs_a_gate_here(o, ctx) == ""
+            if legacy_fresh and o.revision != state.revision:
+                older_rev += 1
+                want_ok = got == proof.PS_UNKNOWN
+            else:
+                want_ok = (got == proof.PS_FRESH) == legacy_fresh
+            if satisfied and not legacy_fresh and got != proof.PS_STALE:
+                want_ok = False
+            if not satisfied and got != proof.NOT_APPLICABLE:
+                want_ok = False
+            if not want_ok:
+                bad_n += 1
+                if len(bad) < 3:
+                    bad.append(f"{name}#{k}:{o.identifier}:{got}")
+        ev = (f"checks={checks} excluded_unknown_prefixes={excluded} older_revision_unknown={older_rev} "
+              f"states={dict(sorted(by_state.items()))} disagreements={bad_n} {bad}")
+        return checks > 0 and bad_n == 0, ev
+    run_gate("V-PCC-STATE-LEGACY-MAP", legacy_map)
+
+    def one_element():
+        proof = load_proof()
+        if proof is None:
+            return False, PROOF_ABSENT
+        seen: set = set()
+        n = 0
+        bad: list[str] = []
+        for name, _k, _state, tree, _ctx, o in corpus_obligations():
+            if o is None:
+                continue
+            key = (name, o.identifier, o.done_gate, tuple(o.gate_pin))
+            if key in seen:
+                continue
+            seen.add(key)
+            c = proof.legacy_contract(o)
+            el = c.get("elements") or []
+            ok = (c.get("v") == 1 and c.get("combine") == "AND" and len(el) == 1
+                  and el[0].get("command") == o.done_gate
+                  and el[0].get("gate_pin") == [list(p) for p in o.gate_pin]
+                  and el[0].get("inheritability") == "never" and el[0].get("causal_paths") == []
+                  and proof.binding(tree).get("scheme") == "tree")
+            n += 1
+            if not ok and len(bad) < 3:
+                bad.append(f"{name}:{o.identifier}")
+        return n > 0 and not bad, f"obligations={n} bad={bad}"
+    run_gate("V-PCC-CONTRACT-LEGACY-ONE-ELEMENT", one_element)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--capture", action="store_true")
@@ -1055,6 +1162,7 @@ def main() -> int:
     gates_fixture()
     gates_replay()
     gates_seam()
+    gates_states()
 
     def live_untouched():
         after = grb.fingerprint(LIVE_STATE)

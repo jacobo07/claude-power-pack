@@ -24,11 +24,14 @@ not authorship.
 """
 from __future__ import annotations
 
+import hashlib
 import os
 from dataclasses import dataclass, field
 
 from .contract import GoalState, project
+from .convergence import SATISFIED, project_convergence
 from .log import GoalLog, GoalLogCorrupt, GoalLogError
+from .log import _canonical
 
 CONTRACT = "obligation.contract"
 PRODUCED = "proof.produced"
@@ -131,3 +134,74 @@ def append_pcc(log: GoalLog, state: GoalState, type_: str, data: dict, actor: st
                            "a writer never writes a version it cannot read")
     log.append(state.last_seq + 1, type_, data, actor)
     return project_proofs(project(log))
+
+
+# --- proof states (spec S1, S2, S6) ---------------------------------------------------
+# A state is DERIVED from observed premises and never stored on an obligation; the
+# disposition machinery of convergence.py is not touched.
+
+PS_FRESH, PS_INHERITED, PS_SUPERSEDED = "FRESH", "INHERITED", "SUPERSEDED"
+PS_STALE, PS_UNKNOWN = "STALE", "UNKNOWN"
+PROOF_STATES = (PS_FRESH, PS_INHERITED, PS_SUPERSEDED, PS_STALE, PS_UNKNOWN)
+NOT_APPLICABLE = "NOT_APPLICABLE"          # the obligation is not an open or proven claim
+UNKNOWN_PREFIX = "unknown:"
+
+
+def claim_id(obligation) -> str:
+    """Identity of WHAT is claimed: id, plane, text, gate command, gate pin and class."""
+    body = {"id": obligation.identifier, "plane": obligation.plane, "text": obligation.text,
+            "done_gate": obligation.done_gate, "gate_pin": [list(p) for p in obligation.gate_pin],
+            "gate_class": obligation.gate_class}
+    return hashlib.sha256(_canonical(body)).hexdigest()[:24]
+
+
+def legacy_contract(obligation) -> dict:
+    """The contract every pre-PCC obligation already is: one gate command, never inherited."""
+    return {"v": 1, "claim_id": claim_id(obligation), "obligation": obligation.identifier,
+            "combine": "AND",
+            "elements": [{"oracle": obligation.gate_class, "command": obligation.done_gate,
+                          "gate_pin": [list(p) for p in obligation.gate_pin],
+                          "causal_paths": [], "env_deps": [], "risk_tags": [],
+                          "nondeterministic": False, "inheritability": "never"}]}
+
+
+def binding(tree_hash: str, fingerprint: str | None = None) -> dict:
+    """A scheme-tagged candidate binding: the whole tree today, a causal fingerprint in Phase 4."""
+    if fingerprint is not None:
+        return {"scheme": "causal", "value": fingerprint}
+    return {"scheme": "tree", "value": tree_hash}
+
+
+def _is_unknown(value) -> bool:
+    return not isinstance(value, str) or not value or value.startswith(UNKNOWN_PREFIX)
+
+
+def proof_states(state: GoalState, candidate: str, observed: dict | None = None,
+                 now: float | None = None) -> dict:
+    """{obligation id: {"state", "reason", "claim_id"}} in projection order.
+
+    Legacy mapping (S2): a SATISFIED verdict about this candidate and this revision is
+    FRESH, SATISFIED about anything else is STALE, any other disposition is not a claim.
+    An unknown candidate or an unattributable revision is UNKNOWN, never FRESH.
+    """
+    out: dict = {}
+    for oid, o in project_convergence(state).obligations.items():
+        cid = claim_id(o)
+        if o.disposition != SATISFIED:
+            out[oid] = {"state": NOT_APPLICABLE, "reason": f"disposition {o.disposition}",
+                        "claim_id": cid}
+            continue
+        v = o.verdict or {}
+        tree = v.get("tree_hash")
+        if _is_unknown(candidate) or _is_unknown(tree):
+            st, why = PS_UNKNOWN, "unknown candidate (R12)"
+        elif tree != candidate:
+            st, why = PS_STALE, f"proven at tree {tree}, candidate is {candidate}"
+        elif v.get("revision") != state.revision:
+            st, why = PS_STALE, f"proven under revision {v.get('revision')}, goal is {state.revision}"
+        elif o.revision != state.revision:
+            st, why = PS_UNKNOWN, f"obligation revision {o.revision} differs from goal {state.revision}"
+        else:
+            st, why = PS_FRESH, "verdict binds this candidate and revision"
+        out[oid] = {"state": st, "reason": why, "claim_id": cid}
+    return out
