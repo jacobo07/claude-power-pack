@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 milestone_name: cognitive-reuse
-current_phase: 0
-current_phase_name: W0 Forensic quantification
+current_phase: 2
+current_phase_name: W1 Spec (SDD-OS T2)
 status: ready
 workstream: cognitive-reuse
 created: 2026-10-11
 last_updated: "2026-10-11T00:00:00.000Z"
-last_activity_desc: Phase Zero reality scan done in the arming pane; plan Owner-approved; mission armed
+last_activity_desc: Phase 1 sealed - ads agent = session 5a1df852 subagent a46882db (41 paths, 2 seen earlier); audit in vault/audits/01datasets-remining-forensics-2026-10.md
 progress:
   total_phases: 9
-  completed_phases: 0
+  completed_phases: 1
 ---
 
 # Project State
