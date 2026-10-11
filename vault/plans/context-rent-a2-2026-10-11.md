@@ -1,6 +1,6 @@
 # Amendment A2: boundary-proportional context, self-hosted on econ-succession (PROPOSED)
 
-Written 2026-10-11 by session 47f3da08. Status: **AWAITING OWNER APPROVAL** (approval surface = chat; this file is the durable copy).
+Written 2026-10-11 by session 47f3da08. Status: **APPROVED at P95** (Owner "y go p95", 2026-10-11; goal `ctx-rent-a2` declared, hard cap 14,000,000; was proposed at 12M).
 Supersedes the execution shape of `context-rent-same-pane-2026-10-10.md` + `-A1.md` (mission m-4d1b851262ff, goal
 `ctx-same-pane`, over cap 16.77M/16M, on hold). Same architecture, new goal, new topology. Not a new Context OS (HR-NOVELTY-001).
 Mode: EXECUTION. The architecture was settled by A1 section 2; nothing below needs ULTRA-PLAN.
