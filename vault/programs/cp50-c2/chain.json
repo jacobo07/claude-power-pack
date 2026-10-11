@@ -1,7 +1,7 @@
 {
     "goal":  "cp50-c2",
     "root":  "C:\\Users\\User\\Apps\\recon_work\\wt_cp50_c2",
-    "envelope":  4300000,
+    "envelope":  27062272,
     "max_residuals":  0,
     "route_ladder":  [
                          "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
