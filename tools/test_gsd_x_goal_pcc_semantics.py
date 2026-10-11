@@ -596,6 +596,7 @@ def gate_fp_outside():
         (outside / "o.txt").write_bytes(b"y\n")
         got = {"dotdot": proof.causal_fingerprint(root, ["../x"]),
                "nested_dotdot": proof.causal_fingerprint(root, ["a.txt", "sub/../../x"]),
+               "inside_dotdot": proof.causal_fingerprint(root, ["sub/../a.txt"]),
                "absolute": proof.causal_fingerprint(root, [str(outside / "o.txt")])}
         ctl = proof.causal_fingerprint(root, ["a.txt"])
         return all(v.startswith("unknown:") for v in got.values()) and ctl.startswith("cf1:"), f"refused={sorted(got)} control={ctl[:4]}"
@@ -650,6 +651,9 @@ def scan_disposition(source: str) -> list:
             name = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
             if name == "disposition_obligation":
                 hits.append(f"call {name} L{node.lineno}")
+            if name == "setattr" and len(node.args) > 1 and isinstance(node.args[1], ast.Constant) \
+                    and node.args[1].value == "disposition":
+                hits.append(f"setattr disposition L{node.lineno}")
     return hits
 
 
@@ -659,8 +663,9 @@ def gate_not_in_disposition():
         return False, _NEEDS
     src = Path(proof.__file__).read_text(encoding="utf-8")
     real = scan_disposition(src)
-    ctl = scan_disposition('def f(o):\n    o.disposition = "STALE"\n    cv.disposition_obligation(o)\n')
-    return real == [] and len(ctl) == 2, f"proof.py offences={real} control_flags={len(ctl)}"
+    ctl = scan_disposition('def f(o):\n    o.disposition = "STALE"\n    cv.disposition_obligation(o)\n'
+                           '    setattr(o, "disposition", "STALE")\n')
+    return real == [] and len(ctl) == 3, f"proof.py offences={real} control_flags={len(ctl)}"
 
 
 def gate_produced_unknown_binding():
