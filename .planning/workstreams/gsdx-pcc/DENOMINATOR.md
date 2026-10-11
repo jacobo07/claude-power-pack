@@ -50,7 +50,7 @@ disposition. Phase = the roadmap phase expected to close it.
 | D41 | Elixir pilot (§40) | none | BUILD adapter in SHADOW on io-chatgpt-plugin copy | 7 | OPEN | |
 | D42 | Owner map (§41) | spec | per rows | -- | OPEN | |
 | D43 | Backward compat decide()/done_gate (§42) | reconcile/convergence | EXTEND + legacy replay test | 2 | OPEN | instrument 98609c4f/15e8e2f1 (golden pre-seam, RED 21/23); closes at 02-03 green |
-| D44 | Event log, not second DB (§43) | GoalLog | invariant test | 2 | OPEN | |
+| D44 | Event log, not second DB (§43) | GoalLog | invariant test | 2 | DONE | a353fb7b: V-PCC-NO-SECOND-STORE (seeded control 3 findings, proof.py 0), V-PCC-PROJECTION-PURE (static + on-disk file set unchanged, writer control changes it), V-PCC-ADDITIVE-ONLY legacy=22 new=4; GSDX_PCC_SEMANTICS_PASS=48/48 |
 | D45 | Explicit INHERITED events (§44) | none | BUILD event | 4 | OPEN | |
 | D46 | Work classes (§45) | none | BUILD ledger + evidence-gated promotion | 9 | OPEN | |
 | D47 | GSD X root function wording (§46) | spec | EXTEND module docs + baseline | 10 | OPEN | |
