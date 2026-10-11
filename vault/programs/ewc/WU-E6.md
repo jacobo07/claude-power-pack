@@ -1,6 +1,7 @@
 # WU-E6 -- Integrate live, Production Reality, knowledge promotion, handoff (M13, M14)
 
 Common brief: `PROGRAMME.md`. Read ALL earlier receipts first. Route M (20 calls).
+Write this receipt FIRST with `Status: IN_PROGRESS` and flip it to DONE last (KNOWLEDGE K6).
 cwd `C:\Users\User\Apps\wt_ewc`; this unit alone writes code into the live checkout.
 
 Steps:
