@@ -46,6 +46,13 @@
             "wait": [
                 "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr-canary\\WU-C3-receipt.md"
             ]
+        },
+        {
+            "id": "APR7",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR7.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\route-L.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\apr\\WU-APR7-receipt.md",
+            "after": "APR6"
         }
     ]
 }
