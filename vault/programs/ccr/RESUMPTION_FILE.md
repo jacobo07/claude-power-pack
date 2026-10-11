@@ -31,4 +31,8 @@ Plan: `vault/plans/ccr-mods-backend-2026-10-11.md` (read "M1 results" and "S1 re
 3. Then: main-session linking canary (skills/agents listing via the `page` tool), interactive compaction probe,
    R4 Madzia canary under KSR's own goal, then UKDL/CBR after proof.
 
+**Read first (2026-10-11 22:56, Owner-authorized note from session 8f164910).** `vault/plans/ccr-v2-addendum-2026-10-11.md`
+§1–2: (a) 2.1.296 has no `tool.list` event, so tools can be deferred but never removed; (b) `WORK_CLASSES` in 781c4809 copies
+boundary.py's `--tools` list verbatim (the "hardcoded tool list" trap) unless labelled a seed that PGO/fault receipts widen.
+
 **Start.** Bind your session to goal `ccr`, check `python tools/ccr_release.py status`, then continue at the first undone action.
