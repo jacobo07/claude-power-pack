@@ -16,4 +16,4 @@ Common brief: `PROGRAMME.md`. Plan sections 5 (W9), 9. Needs W8 DONE. Iterate be
 5. Handoff: `vault/programs/tennis-rf/HANDOFF.md` with the Owner's final contract fields (plan section 9 and the
    brief's FINAL HANDOFF CONTRACT), every figure sourced, UNKNOWN where not measured. Programme spend from
    `mission_spend.py goal-status --goal tennis-rf`.
-Receipt: Status DONE, links to HANDOFF.md and the budget file.
+Receipt (write it to vault/programs/tennis-rf/WU-W9-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): Status DONE, links to HANDOFF.md and the budget file.

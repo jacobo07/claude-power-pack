@@ -18,4 +18,4 @@ the old hypothesis file PP `vault/plans/d21-tennis-token-budget-2026-10-10.md` (
    automation, context duplication). NOT YET is a valid answer; the scope stays.
 5. Compare with the old hypothesis: what changed, why, what is measured vs inferred vs unproven savings.
 Write `vault/plans/d21-tennis-token-budget-2026-10-11.md` (new file; keep the old one) with every figure tagged
-M / D / H and its source. Receipt: the two scope tables and the admission line.
+M / D / H and its source. Receipt (write it to vault/programs/tennis-rf/WU-W8-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): the two scope tables and the admission line.

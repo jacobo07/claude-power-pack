@@ -14,7 +14,7 @@ discovers a shared failure after the effect.
    fails lint -> refuse whole job with that unit named; all good -> send proceeds (use the test host double, no SSH).
 4. Kill switch env var; fail CLOSED on its own error for send (this is a pre-effect gate on a scarce resource).
 5. Replay the C2b job dir through it: must refuse, naming CURRENT_CAPSULE and the lint.
-Receipt: tests, drill, replay output, commits.
+Receipt (write it to vault/programs/tennis-rf/WU-W2-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): tests, drill, replay output, commits.
 
 ## CPX amendment (B0, 2026-10-11)
 - Step: port trim: runner_lib.py:1472 shutil.copyfile -> trim_objdiff_report (PP patch 147115b0).

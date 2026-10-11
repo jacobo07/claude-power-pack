@@ -17,4 +17,4 @@ This is the redesigned C2b. It must contain the cognition it measures.
    class), compiles, model calls attributed, processed tokens attributed (dedupe by message.id; attribute by the
    span of calls you spent on that function -- note the method), proof cost, unresolved-type count, family hint.
 5. Also record this session's fixed costs: first-call floor, mean context per call, calls spent on control/status.
-Receipt: table summary (closed per layer, tokens per verified function by layer, floor), job id, commits.
+Receipt (write it to vault/programs/tennis-rf/WU-W5a-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): table summary (closed per layer, tokens per verified function by layer, floor), job id, commits.

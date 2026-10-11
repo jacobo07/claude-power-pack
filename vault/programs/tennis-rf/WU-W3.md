@@ -15,4 +15,4 @@ Goal: the factory can compile and judge Tennis functions with the same oracle it
    (levels.jsonl), transfer that source, build one certified job (W2 certificate), send it as Tennis job 1
    (record in JOBS.md first), judge it. PASS = the oracle reproduces at least one Tennis object byte-exact, or a named
    refusal that W5 must route around (e.g. compiler mismatch).
-Receipt: toolchain note, the 60-row sample table path, A/A job id and verdict, commits.
+Receipt (write it to vault/programs/tennis-rf/WU-W3-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): toolchain note, the 60-row sample table path, A/A job id and verdict, commits.

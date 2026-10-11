@@ -15,4 +15,4 @@ inference from architecture tax.
    share stated; tokens per verified function split into semantic vs tax.
 4. Derived metrics (UNKNOWN where not measured): LLM invocation density, context duplication factor, startup tax,
    raw-binary page-fault rate (re-reads of disassembly for already-recorded functions), model displacement rate.
-Receipt: the category table, unattributed share (>= 95 % attributed or the gap named), commits.
+Receipt (write it to vault/programs/tennis-rf/WU-W6-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): the category table, unattributed share (>= 95 % attributed or the gap named), commits.

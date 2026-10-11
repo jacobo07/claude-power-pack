@@ -16,4 +16,4 @@ stop, write the residual, receipt DONE with that finding.
 5. Claims learned (types, struct layouts, transform rules): write them as rows in `measure/claims.jsonl`
    (claim, evidence, confidence, invalidators, consumers) and make the transform READ that file, so the knowledge is
    machine-reachable, not prose.
-Receipt: sequence curve (member -> new-cognition tokens), holdout deltas, job id, commits.
+Receipt (write it to vault/programs/tennis-rf/WU-W5b-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): sequence curve (member -> new-cognition tokens), holdout deltas, job id, commits.

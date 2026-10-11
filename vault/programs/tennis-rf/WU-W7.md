@@ -13,4 +13,4 @@ Common brief: `PROGRAMME.md`. Plan section 5 (W7). Needs W3 DONE (runs after W6 
    validate or contradict the clustering.
 4. Scope A closure: using step3's 50 getter callers + one level of argument propagation (D21 step 4), list the motion
    closure functions and how many families they span. State the closure definition used.
-Receipt: the summary numbers with method, the Scope A closure count, commits.
+Receipt (write it to vault/programs/tennis-rf/WU-W7-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): the summary numbers with method, the Scope A closure count, commits.
