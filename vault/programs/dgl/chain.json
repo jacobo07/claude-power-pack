@@ -2,6 +2,8 @@
  "goal": "dgl",
  "root": "C:\\Users\\User\\Apps\\pp-dgl",
  "envelope": 36000000,
+ "route_ladder": ["C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\route-W4.json",
+                  "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\route-W4-r1.json"],
  "note": "37.0M programme (Owner capital capsule 4419ce11d0ba, 2026-10-10) minus 1.0M protected proof reserve. Unit table and authoring rule: vault/programs/dgl/CHAIN.md",
  "units": [
   {"id": "W1", "after": null, "accept": ["DONE", "PARTIAL"],
@@ -23,7 +25,8 @@
    "route": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\route-W3.json",
    "receipt": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W3-receipt.md",
    "wait": ["C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\W3.md", "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\route-W3.json"]},
-  {"id": "W4", "after": "W3",
+  {"id": "W4", "after": "W3", "max_residuals": 1,
+   "note": "residual 1 enabled 2026-10-11 (Owner 'go ahead'): W4 stopped at lease L3 cap 6.4M with GOALDRAIN 5/6; residual route-W4-r1 sized 15 calls x ~200K measured (5.18M / 26 calls)",
    "packet": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\W4.md",
    "route": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\route-W4.json",
    "receipt": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\W4-receipt.md",
