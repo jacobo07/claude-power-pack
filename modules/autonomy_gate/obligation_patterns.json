@@ -1,0 +1,29 @@
+{
+ "schema": "cpp-obligation-patterns/1",
+ "note": "ONE source of trigger patterns for the evaluation->obligation compiler. Read by modules/daif/turn_obligations.py (Python) and by the E3 Stop hook (Node). Regexes use only syntax common to Python re and JS RegExp; flags are the letters i/u only. scope=table_row applies to lines starting with '|'; scope=sentence applies to the other lines split on sentence ends. The first matching pattern in list order wins per line/sentence. A sentence also refused by the extractor's wish clause, or lacking a commitment frame when frame=true, is dropped. 'exclude' vetoes a match (zero counts are not failures).",
+ "sentence_split": "(?<=[.!?])\\s+",
+ "patterns": [
+  {"id": "table_fail", "source": "eval_table_fail", "scope": "table_row", "flags": "",
+   "regex": "\\b(?:FAIL(?:ED|S)?|Fail(?:ed)?|RED)\\b", "exclude": "\\b0\\s*(?:FAIL|WARN|RED|AMBER)\\b",
+   "severity": "RED", "frame": false, "next_action": "Fix the failing check and re-run its gate: {text}"},
+  {"id": "table_warn", "source": "eval_table_warn", "scope": "table_row", "flags": "",
+   "regex": "\\b(?:WARN(?:ING|S)?|Warn(?:ing)?|AMBER)\\b", "exclude": "\\b0\\s*(?:FAIL|WARN|RED|AMBER)\\b",
+   "severity": "AMBER", "frame": false, "next_action": "Resolve the warning and re-run its gate: {text}"},
+  {"id": "missing_evidence", "source": "missing_evidence", "scope": "sentence", "flags": "i",
+   "regex": "\\b(?:not\\s+(?:yet\\s+|been\\s+)?(?:written|saved|produced|generated)|never\\s+(?:written|saved|produced)|missing\\s+(?:the\\s+)?evidence|no\\s+evidence\\s+(?:file|was|exists))\\b",
+   "exclude": "\\bnot\\s+(?:be\\s+)?required\\b", "severity": "RED", "frame": false,
+   "next_action": "Write the missing evidence file and run its gate: {text}"},
+  {"id": "uncommitted", "source": "uncommitted", "scope": "sentence", "flags": "i",
+   "regex": "\\b(?:uncommitted|not\\s+(?:yet\\s+|been\\s+)?committed|nothing\\s+(?:was\\s+)?committed)\\b",
+   "exclude": "", "severity": "AMBER", "frame": false,
+   "next_action": "Commit the changes in the working tree: {text}"},
+  {"id": "owner_decision", "source": "owner_decision", "scope": "sentence", "flags": "i",
+   "regex": "\\b(?:(?:is|are)\\s+the\\s+Owner'?s|Owner'?s\\s+(?:decision|call|approval)|owner-gated|awaiting\\s+(?:the\\s+)?Owner)\\b",
+   "exclude": "", "severity": "INFO", "frame": false, "declared_actionability": "HUMAN_PREF",
+   "next_action": "{text}"},
+  {"id": "next_step", "source": "next_step", "scope": "sentence", "flags": "i",
+   "regex": "\\b(?:next\\s+(?:iteration|step)\\b|recommend(?:ed)?\\b[^.\\n]{0,80}\\bnext\\b)",
+   "exclude": "", "severity": "AMBER", "frame": true,
+   "next_action": "Do the stated next step now: {text}"}
+ ]
+}

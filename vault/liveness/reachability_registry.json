@@ -51,6 +51,18 @@
       "class": "PLANNED",
       "note": "ACV C5 R2: resolver CLI, an entrypoint (python -m) that no command or agent body names yet. Reopen when C6 dispatch names it. Owner queue: vault/OWNER_QUEUE.md 'ACV resolver CLI'. Proven by V-RES-CLI-DELEGATES."
     },
+    "autonomy_gate/obligations": {
+      "class": "LIBRARY",
+      "note": "EWC WU-E2 M3. Reached by python -m modules.autonomy_gate obligations (add|close|list|compile) and by daif/turn_obligations; the Stop-hook caller lands in WU-E3. Proven by tools/test_ewc_obligations.py."
+    },
+    "daif/turn_obligations": {
+      "class": "LIBRARY",
+      "note": "EWC WU-E2 M4. Imported by the autonomy_gate obligations CLI (compile); patterns shared with the E3 Node hook via autonomy_gate/obligation_patterns.json. Proven by tools/test_ewc_obligations.py."
+    },
+    "gsd_x/goal/session_scope": {
+      "class": "LIBRARY",
+      "note": "EWC WU-E2 M1. SESSION scope of the Goal Spine, imported by the autonomy_gate obligations CLI; E3 hook reads its NNNNNN.json files. Proven by tools/test_ewc_obligations.py."
+    },
     "autonomy_gate/__main__": {
       "class": "LIBRARY",
       "note": "Manual CLI (python -m modules.autonomy_gate classify). Production reads modules/autonomy_gate/rubric.json directly (gsd_mission successor card, Stop hook); proven by tools/test_autonomy_gate.py."

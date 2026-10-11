@@ -90,6 +90,18 @@ class GoalObligation:
     # Task Ledger attribution (genesis-task-ledger -> MERGE here): which epoch and provider
     # produced the verdict that satisfied this obligation. Absent on events that predate it.
     verdict_source: dict | None = None
+    # EWC (WU-E2): where the obligation came from and who must act. All optional;
+    # events that predate them project with these empty.
+    source: str = ""
+    severity: str = ""                 # RED | AMBER | INFO
+    actionability: str = ""            # NOW | AFTER_DEP | HUMAN_PREF | APPROVAL | RESOURCE | INFO | WAIVED
+    owner_class: str = ""              # AGENT | OWNER
+    next_action: str = ""
+
+
+SEVERITIES = ("RED", "AMBER", "INFO")
+ACTIONABILITIES = ("NOW", "AFTER_DEP", "HUMAN_PREF", "APPROVAL", "RESOURCE", "INFO", "WAIVED")
+OWNER_CLASSES = ("AGENT", "OWNER")
 
 
 @dataclass
@@ -116,7 +128,11 @@ def project_convergence(state: GoalState) -> Convergence:
             elif ev.type == OB_ACCEPTED:
                 cv.obligations[d["id"]] = GoalObligation(
                     d["id"], d["plane"], d["text"], d["done_gate"], _pin(d.get("gate_pin")),
-                    d["revision"], gate_class=d.get("gate_class", ""))
+                    d["revision"], gate_class=d.get("gate_class", ""),
+                    source=str(d.get("source", "") or ""), severity=str(d.get("severity", "") or ""),
+                    actionability=str(d.get("actionability", "") or ""),
+                    owner_class=str(d.get("owner_class", "") or ""),
+                    next_action=str(d.get("next_action", "") or ""))
             elif ev.type == OB_SATISFIED:
                 o = cv.obligations[d["id"]]
                 o.disposition, o.verdict = SATISFIED, dict(d["verdict"])
@@ -158,7 +174,13 @@ def set_plane(log: GoalLog, state: GoalState, plane: str, applicable: bool,
 
 
 def accept_obligation(log: GoalLog, state: GoalState, ob_id: str, plane: str, text: str,
-                      done_gate: str, gate_pin, actor: str, gate_class: str = "") -> None:
+                      done_gate: str, gate_pin, actor: str, gate_class: str = "",
+                      extra: dict | None = None) -> None:
+    extra = {k: v for k, v in (extra or {}).items() if v}
+    if extra.get("severity", "RED") not in SEVERITIES:
+        raise GoalLogError(f"{ob_id}: severity must be one of {SEVERITIES}")
+    if extra.get("actionability", "NOW") not in ACTIONABILITIES:
+        raise GoalLogError(f"{ob_id}: actionability must be one of {ACTIONABILITIES}")
     if plane not in PLANES or plane in EVENT_CARRIED:
         raise GoalLogError(f"{plane!r} does not take obligations")
     if not (done_gate or "").strip():
@@ -180,7 +202,7 @@ def accept_obligation(log: GoalLog, state: GoalState, ob_id: str, plane: str, te
     log.append(state.last_seq + 1, OB_ACCEPTED,
                {"id": ob_id, "plane": plane, "text": text, "done_gate": done_gate,
                 "gate_pin": [list(p) for p in gate_pin], "revision": state.revision,
-                "gate_class": gate_class},
+                "gate_class": gate_class, **extra},
                actor)
 
 
