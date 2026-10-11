@@ -63,28 +63,28 @@
       "id": "P05",
       "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05.md",
       "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05.route.json",
-      "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\receipts\\WU-P05-receipt.md",
+      "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-receipt.md",
       "after": "P04-T3"
     },
     {
       "id": "P05-T1",
       "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T1.md",
       "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T1.route.json",
-      "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\receipts\\WU-P05-T1-receipt.md",
+      "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T1-receipt.md",
       "after": "P05"
     },
     {
       "id": "P05-T2",
       "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T2.md",
       "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T2.route.json",
-      "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\receipts\\WU-P05-T2-receipt.md",
+      "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T2-receipt.md",
       "after": "P05-T1"
     },
     {
       "id": "P05-T3",
       "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T3.md",
       "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T3.route.json",
-      "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\receipts\\WU-P05-T3-receipt.md",
+      "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-T3-receipt.md",
       "after": "P05-T2"
     }
   ]
