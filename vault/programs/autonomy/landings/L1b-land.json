@@ -1,0 +1,106 @@
+{
+  "worktree": "C:\\Users\\User\\Apps\\pp-ucda-wt",
+  "live": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+  "tests": [
+    "python tools/test_gsdx_chain.py",
+    "python tools/test_chain_registry.py",
+    "python tools/test_gsd_mission_owner_hold.py",
+    "python tools/test_hold_guard_budget.py"
+  ],
+  "ts": 1791725246,
+  "status": "LANDED",
+  "reason": "",
+  "landed": true,
+  "branch": "feat/ucda",
+  "branch_before": "4b5bf5b9994b3b41fa80b4854abb439c662e5647",
+  "live_head_before": "6b5c9131139e8547cd27d88301fa69708dfbf482",
+  "files": [
+    "tools/chain_registry.py",
+    "tools/chain_registry_tick.ps1",
+    "tools/cost_to_completion.py",
+    "tools/gsd_mission.py",
+    "tools/gsdx_chain.py",
+    "tools/gsdx_reforecast.py",
+    "tools/mission_spend.py",
+    "tools/programme_status.py",
+    "tools/test_chain_registry.py",
+    "tools/test_claim_cost_for.py",
+    "tools/test_cost_to_completion.py",
+    "tools/test_gsd_mission_envelope.py",
+    "tools/test_gsdx_reforecast.py",
+    "tools/test_hold_guard_budget.py",
+    "tools/test_mission_spend.py",
+    "tools/test_programme_spend.py",
+    "tools/test_programme_status.py",
+    "vault/plans/WU-S5-progress.md",
+    "vault/plans/evc-u7-fresh-floor-OWNER-PROPOSAL.md",
+    "vault/plans/evc-u8-backtest.md",
+    "vault/programs/autonomy/PROGRAMME.md",
+    "vault/programs/autonomy/WU-L1-receipt.md",
+    "vault/programs/autonomy/WU-L1.md",
+    "vault/programs/autonomy/WU-R1-land.json",
+    "vault/programs/autonomy/WU-R1-receipt.md",
+    "vault/programs/autonomy/WU-R1.md",
+    "vault/programs/autonomy/WU-S1-receipt.md",
+    "vault/programs/autonomy/WU-S2-receipt.md",
+    "vault/programs/autonomy/WU-S3-receipt.md",
+    "vault/programs/autonomy/WU-S4-receipt.md",
+    "vault/programs/autonomy/WU-S5-receipt.md",
+    "vault/programs/autonomy/WU-S5b-receipt.md",
+    "vault/programs/autonomy/WU-S5b.md",
+    "vault/programs/autonomy/WU-S7.md",
+    "vault/programs/autonomy/chain.json",
+    "vault/programs/autonomy/chain_tick.ps1",
+    "vault/programs/autonomy/landings/L1-land.json",
+    "vault/programs/autonomy/landings/d-reforecast.json",
+    "vault/programs/autonomy/landings/e-dgl.json",
+    "vault/programs/chains.json",
+    "vault/programs/sidecar-liveqa/chain.json"
+  ],
+  "tests_before": [
+    {
+      "cmd": "python tools/test_gsdx_chain.py",
+      "rc": 0,
+      "tail": "N-RESIDUAL-RUNNING running\nPASS V-CHAIN-RESIDUAL-BOUNDED arm -> residual_exhausted\nPASS V-CHAIN-RESIDUAL-RENEWAL-NOT-COUNTED {\"action\": \"arm\", \"residual\": 2, \"residuals\": 1}\nPASS V-CHAIN-RESIDUAL-ENVELOPE refuse_envelope\nPASS V-CHAIN-WAITS-EVENT wait_event -> arm\nPASS V-CHAIN-ENVELOPE refuse_envelope / arm\nPASS V-CHAIN-COMPLETE-AND-KILL complete/off\nPASS V-CHAIN-RECEIPT-PARSE DONE\nCHAIN_PASS=19/19"
+    },
+    {
+      "cmd": "python tools/test_chain_registry.py",
+      "rc": 0,
+      "tail": "c', 'action': 'parked', 'goal': 'parkedchain', 'why': 'enabled=false'}, {'name': 'de', 'action': 'parked', 'why': 'registry enabled=false'}]\nPASS V-REG-SIDECAR-PARKED parked\nPASS V-REG-HELD-NOT-RUNNING held/running/held\nPASS V-REG-CONTINUATION-INSERT [('A', None), ('Ab', 'A'), ('B', 'Ab'), ('C', 'B')] Ab B\nPASS V-REG-KILL-SWITCH off\nPASS V-REG-SHIPPED-REGISTRY ['autonomy-convergence']\nREG_PASS=8/8"
+    },
+    {
+      "cmd": "python tools/test_gsd_mission_owner_hold.py",
+      "rc": 0,
+      "tail": "n': 'owner dead: host lists session done', 'unit_done': 'UNANSWERED', 'gsd': 'OK', 'progress': {'fp': None, 'stalls': 0, 'measured': False}, 'stop': 'stopped; no pid to wait on', 'cwd_align': 'same', 'note_chars': 0, 'launch': {'ok': False, 'epoch': 2, 'bg_id': None, 'why': 'launch refused', 'detail': \"AttributeError: 'str' object has no attribute 'stdout'\"}}\nOWNER_HOLD_PASS=32/32  threshold=32/32"
+    },
+    {
+      "cmd": "python tools/test_hold_guard_budget.py",
+      "rc": 0,
+      "tail": "alls_estimate': None, 'call_ratio': 1.5, 'context_ceiling': None, 'noprogress_calls': 25, 'since': None, 'declared_at': '2026-10-11T13:28:32', 'hold': True, 'hold_mission': 'm-hold-canary', 'hold_reason': 'canary'}\nPASS V-HOLDGUARD-REAL-GUARD-DENIES-NEXT-CALL: deny\nPASS V-HOLDGUARD-UNNAMED-SESSION-ALLOWED\nPASS V-HOLDGUARD-BAD-SID-REPORTED-NOT-RAISED: ['FAIL:bad sid!:ValueError']\nHOLDGUARD_PASS=6/6"
+    }
+  ],
+  "branch_rebased": "eddabb0fcbb9d1a435df38414d7d7d273a219223",
+  "live_head_after": "eddabb0fcbb9d1a435df38414d7d7d273a219223",
+  "tests_after": [
+    {
+      "cmd": "python tools/test_gsdx_chain.py",
+      "rc": 0,
+      "tail": "N-RESIDUAL-RUNNING running\nPASS V-CHAIN-RESIDUAL-BOUNDED arm -> residual_exhausted\nPASS V-CHAIN-RESIDUAL-RENEWAL-NOT-COUNTED {\"action\": \"arm\", \"residual\": 2, \"residuals\": 1}\nPASS V-CHAIN-RESIDUAL-ENVELOPE refuse_envelope\nPASS V-CHAIN-WAITS-EVENT wait_event -> arm\nPASS V-CHAIN-ENVELOPE refuse_envelope / arm\nPASS V-CHAIN-COMPLETE-AND-KILL complete/off\nPASS V-CHAIN-RECEIPT-PARSE DONE\nCHAIN_PASS=19/19"
+    },
+    {
+      "cmd": "python tools/test_chain_registry.py",
+      "rc": 0,
+      "tail": "c', 'action': 'parked', 'goal': 'parkedchain', 'why': 'enabled=false'}, {'name': 'de', 'action': 'parked', 'why': 'registry enabled=false'}]\nPASS V-REG-SIDECAR-PARKED parked\nPASS V-REG-HELD-NOT-RUNNING held/running/held\nPASS V-REG-CONTINUATION-INSERT [('A', None), ('Ab', 'A'), ('B', 'Ab'), ('C', 'B')] Ab B\nPASS V-REG-KILL-SWITCH off\nPASS V-REG-SHIPPED-REGISTRY ['autonomy-convergence']\nREG_PASS=8/8"
+    },
+    {
+      "cmd": "python tools/test_gsd_mission_owner_hold.py",
+      "rc": 0,
+      "tail": "n': 'owner dead: host lists session done', 'unit_done': 'UNANSWERED', 'gsd': 'OK', 'progress': {'fp': None, 'stalls': 0, 'measured': False}, 'stop': 'stopped; no pid to wait on', 'cwd_align': 'same', 'note_chars': 0, 'launch': {'ok': False, 'epoch': 2, 'bg_id': None, 'why': 'launch refused', 'detail': \"AttributeError: 'str' object has no attribute 'stdout'\"}}\nOWNER_HOLD_PASS=32/32  threshold=32/32"
+    },
+    {
+      "cmd": "python tools/test_hold_guard_budget.py",
+      "rc": 0,
+      "tail": "alls_estimate': None, 'call_ratio': 1.5, 'context_ceiling': None, 'noprogress_calls': 25, 'since': None, 'declared_at': '2026-10-11T13:29:58', 'hold': True, 'hold_mission': 'm-hold-canary', 'hold_reason': 'canary'}\nPASS V-HOLDGUARD-REAL-GUARD-DENIES-NEXT-CALL: deny\nPASS V-HOLDGUARD-UNNAMED-SESSION-ALLOWED\nPASS V-HOLDGUARD-BAD-SID-REPORTED-NOT-RAISED: ['FAIL:bad sid!:ValueError']\nHOLDGUARD_PASS=6/6"
+    }
+  ]
+}
