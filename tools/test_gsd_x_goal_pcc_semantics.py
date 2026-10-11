@@ -882,6 +882,104 @@ def gate_law_semantic_synthetic():
         shutil.rmtree(base2, ignore_errors=True)
 
 
+def _produced(proof, cid: str, binding: dict, rev: str) -> dict:
+    return {"v": 1, "claim_id": cid, "candidate": binding["value"], "binding": binding,
+            "revision": rev, "strength": "unit", "source": {"provider": "gate"}}
+
+
+def gate_law_proof_ledger():
+    proof = _need("law_proof_conservation", "project_proofs")
+    if proof is None:
+        return False, _NEEDS
+    log, state, base = sat_goal()
+    try:
+        cid = next(iter(proof.proof_states(state, TREE_A).values()))["claim_id"]
+        b_a, b_b = {"scheme": "tree", "value": TREE_A}, {"scheme": "tree", "value": TREE_B}
+
+        def ledger(*events):
+            for typ, data in events:
+                proof.append_pcc(log, gc.project(log), typ, data, "founder")
+            return proof.project_proofs(gc.project(log))
+        one = ledger((proof.PRODUCED, _produced(proof, cid, b_a, state.revision)))
+        base_n = len(proof.law_proof_conservation(one))
+        other = ledger((proof.PRODUCED, _produced(proof, cid, b_b, state.revision)))
+        diff_n = len(proof.law_proof_conservation(other))
+        dup = ledger((proof.PRODUCED, _produced(proof, cid, b_a, state.revision)))
+        viol = proof.law_proof_conservation(dup)
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+    log2, state2, base2 = sat_goal()
+    try:
+        cid2 = next(iter(proof.proof_states(state2, TREE_A).values()))["claim_id"]
+        for typ, data in ((proof.PRODUCED, _produced(proof, cid2, b_a, state2.revision)),
+                          (proof.INVALIDATED, {"v": 1, "claim_id": cid2, "certificate": "c", "reason": "tree moved"}),
+                          (proof.PRODUCED, _produced(proof, cid2, b_a, state2.revision))):
+            proof.append_pcc(log2, gc.project(log2), typ, data, "founder")
+        ctl_n = len(proof.law_proof_conservation(proof.project_proofs(gc.project(log2))))
+    finally:
+        shutil.rmtree(base2, ignore_errors=True)
+    ok = (base_n == 0 and diff_n == 0 and len(viol) == 1 and viol[0].get("law") == "proof"
+          and viol[0]["first_seq"] < viol[0]["second_seq"] and ctl_n == 0)
+    return ok, f"single={base_n} other_binding={diff_n} duplicate={len(viol)} invalidated_between_control={ctl_n}"
+
+
+def gate_law_concurrency_def():
+    proof = _need("independent")
+    if proof is None:
+        return False, _NEEDS
+    ind = proof.independent
+    a = {"reads": ["a"], "writes": ["x"], "resources": ["r1"]}
+    got = {"disjoint": ind(a, {"reads": ["b"], "writes": ["y"], "resources": ["r2"]}),
+           "read_read_shared": ind({"reads": ["s"], "writes": [], "resources": []},
+                                   {"reads": ["s"], "writes": [], "resources": []}),
+           "write_read": ind(a, {"reads": ["x"], "writes": [], "resources": []}),
+           "write_write": ind(a, {"reads": [], "writes": ["x"], "resources": []}),
+           "resource": ind(a, {"reads": [], "writes": [], "resources": ["r1"]}),
+           "none_field": ind(a, {"reads": None, "writes": [], "resources": []}),
+           "missing_key": ind(a, {"reads": [], "writes": []})}
+    want = {"disjoint": True, "read_read_shared": True, "write_read": False, "write_write": False,
+            "resource": False, "none_field": False, "missing_key": False}
+    return got == want, f"{got}"
+
+
+def gate_law_unknown_escalates():
+    proof = _need("law_unknown_escalates", "binding")
+    if proof is None:
+        return False, _NEEDS
+    cells, viol = proof.law_unknown_escalates()
+    real = proof.state_from_premises
+
+    def mutant(obs, has_ev, on):
+        return real({p: (proof.EQUAL if v == proof.UNKNOWN_OBS else v) for p, v in obs.items()}, has_ev, on)
+    proof.state_from_premises = mutant
+    try:
+        _mc, mviol = proof.law_unknown_escalates()
+    finally:
+        proof.state_from_premises = real
+    collapse = proof.binding("t", "unknown:x").get("scheme") == "tree" and proof.binding("t", "cf1:" + "a" * 64).get("scheme") == "causal"
+    pub = gate_produced_unknown_binding()
+    old = gate_old_revision_unknown()
+    ok = cells == 2916 and not viol and len(mviol) > 0 and collapse and pub[0] and old[0]
+    return ok, f"cells={cells} violations={len(viol)} mutant_violations={len(mviol)} unknown_fp_collapses_to_tree={collapse} produced_unknown={pub[0]} old_revision={old[0]}"
+
+
+def gate_one_open_epoch():
+    from modules.gsd_x.goal import epoch as ep  # noqa: PLC0415
+    log, state, base = new_goal("sem-one-open")
+    try:
+        first = ep.begin(log, state, "gate", {"scope": "a"}, "a" * 24, "initial", "founder")
+        raised = False
+        try:
+            ep.begin(log, gc.project(log), "gate", {"scope": "b"}, "b" * 24, "initial", "founder")
+        except ep.EpochError:
+            raised = True
+        ep.end(log, gc.project(log), first.epoch_id, ep.COMPLETED, "done", "founder")
+        second = ep.begin(log, gc.project(log), "gate", {"scope": "b"}, "b" * 24, "initial", "founder")
+        return raised and bool(second.epoch_id), f"second_begin_while_open_raises={raised} begin_after_end={bool(second.epoch_id)}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
 def main() -> int:
     run_gate("V-PCC-HERMETIC-HOME", gate_hermetic)
     run_gate("V-PCC-ENVELOPE", gate_envelope)
@@ -921,7 +1019,11 @@ def main() -> int:
                      ("V-PCC-CONTRACT-COMBINE-UNKNOWN", gate_contract_combine),
                      ("V-PCC-GATE-CLASSES-PINNED", gate_gate_classes_pinned),
                      ("V-PCC-LAW-WORK-CONSERVATION-SYNTHETIC", gate_law_work_synthetic),
-                     ("V-PCC-LAW-SEMANTIC", gate_law_semantic_synthetic)):
+                     ("V-PCC-LAW-SEMANTIC", gate_law_semantic_synthetic),
+                     ("V-PCC-LAW-PROOF-CONSERVATION-LEDGER", gate_law_proof_ledger),
+                     ("V-PCC-LAW-CONCURRENCY-DEF", gate_law_concurrency_def),
+                     ("V-PCC-LAW-UNKNOWN-ESCALATES", gate_law_unknown_escalates),
+                     ("V-PCC-ONE-OPEN-EPOCH-PINNED", gate_one_open_epoch)):
         run_gate(name, fn)
     total = passes + fails
     print(f"\nGSDX_PCC_SEMANTICS_PASS={passes}/{total}  threshold={total}/{total}")

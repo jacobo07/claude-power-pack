@@ -173,7 +173,7 @@ def legacy_contract(obligation) -> dict:
 
 def binding(tree_hash: str, fingerprint: str | None = None) -> dict:
     """A scheme-tagged candidate binding: the whole tree today, a causal fingerprint in Phase 4."""
-    if fingerprint is not None:
+    if fingerprint is not None and not _is_unknown(fingerprint):
         return {"scheme": "causal", "value": fingerprint}
     return {"scheme": "tree", "value": tree_hash}
 
@@ -504,3 +504,55 @@ def law_work_conservation(state: GoalState) -> list:
             if key is not None:
                 failed.setdefault(key, d.get("epoch_id"))
     return out
+
+
+def law_proof_conservation(ledger: ProofLedger) -> list:
+    """A second proof.produced for one (claim, binding) with no proof.invalidated between them."""
+    out: list = []
+    live: dict = {}
+    for ev in sorted(ledger.produced + ledger.invalidated, key=lambda e: e["seq"]):
+        d = ev["data"]
+        if "binding" not in d:
+            for k in [k for k in live if k[0] == d["claim_id"]]:
+                del live[k]
+            continue
+        key = (d["claim_id"], _canonical(d["binding"]))
+        if key in live:
+            out.append({"claim_id": d["claim_id"], "first_seq": live[key], "second_seq": ev["seq"],
+                        "law": "proof"})
+        else:
+            live[key] = ev["seq"]
+    return out
+
+
+def independent(a: dict, b: dict) -> bool:
+    """Two units of work may run concurrently only when both declare reads, writes and resources
+    and neither writes what the other reads or writes, nor shares a resource. Undeclared is not independent."""
+    sets = []
+    for unit in (a, b):
+        parts = []
+        for k in ("reads", "writes", "resources"):
+            v = unit.get(k) if isinstance(unit, dict) else None
+            if not isinstance(v, (list, tuple, set, frozenset)):
+                return False
+            parts.append(set(v))
+        sets.append(parts)
+    (ra, wa, xa), (rb, wb, xb) = sets
+    return not (wa & (rb | wb) or wb & ra or xa & xb)
+
+
+def law_unknown_escalates() -> tuple:
+    """(cells, violations) over every premise combination x event x switch: unknown never skips a gate."""
+    import itertools  # noqa: PLC0415
+    out: list = []
+    cells = 0
+    for combo in itertools.product((EQUAL, CHANGED, UNKNOWN_OBS), repeat=len(PREMISES)):
+        obs = dict(zip(PREMISES, combo))
+        for has_ev, on in itertools.product((True, False), repeat=2):
+            cells += 1
+            got = state_from_premises(obs, has_ev, on)[0]
+            doubt = CHANGED not in combo and (UNKNOWN_OBS in combo or not has_ev or not on)
+            if doubt and got in (PS_FRESH, PS_INHERITED):
+                out.append({"premises": combo, "event": has_ev, "switch": on, "got": got,
+                            "law": "unknown"})
+    return cells, out
