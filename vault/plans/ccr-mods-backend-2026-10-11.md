@@ -26,6 +26,24 @@ Backup of the inline Master Plan. The chat message is the approval surface.
   mod is the **execution backend of ctx-rent-a2**, not a new programme.
 - Madzia = the KobiiMii character work in the KSR repo. Its goal will be resolved at slice Z, not before.
 
+## M1 results (runtime, 2026-10-11; probe `mods/ccr-probe`, headless `-p --plugin-dir`, haiku, cwd outside any repo)
+Provider-measured (`usage` = input + cache_creation + cache_read) unless noted:
+- Main fresh floor, trivial prompt, no repo: **68,025** (`5230622b`). The prompt.compose system sections total about 9.4K
+  chars. The big blocks are all `prompt.attachment` (engine origin): `instructions` 53,103 chars (CLAUDE.md + 8 rules
+  files + ~/CLAUDE.md), `skill_listing` 30,067, `agent_listing_delta` 26,242 (main only), `deferred_tools_delta` 4,507,
+  `mcp_instructions_delta` 2,016. Hook context: `hook_additional_context` SessionStart 3.4–4.3K + UserPromptSubmit 2.1K.
+- **Subagents inherit the same `instructions` and `skill_listing` attachments, and the hook sees `agentId`.** Trivial
+  subagent: **47,591** observe (`4a7738ba`) → **15,571** with both dropped (`8c17e398`), **−67 %**. Answer intact.
+  `prompt.compose` and `prompt.context` fired only for the main loop.
+- Tool deferral: the engine already defers 69 of 89 tools. Deferring the remaining non-core tools: 68,025 → 63,421
+  (−6.8 %). That makes the Tool Linker a SMALL lever.
+- `session.start` gives the version (2.1.296, built 2026-10-09), repo (null outside git), root. `policy` settings:
+  **empty** (no managed policy on this machine).
+- `session.compact` from a hook under `-p`: never returned before exit. Compaction without the summariser stays
+  **UNKNOWN**; it is tested in R1 interactive.
+- Re-ranked levers: subagent attachment linking (proven) > main instructions/skill/agent listing linking (~27K of 68K)
+  > hook advisory context (per prompt and per tool, it also accumulates as carry) > tool deferral.
+
 ## A. Mods capability matrix (types-verified; RUNTIME-VERIFY in M1)
 | Surface | Arrives | Authority | CCR use |
 |---|---|---|---|

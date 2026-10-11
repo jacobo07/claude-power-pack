@@ -1,0 +1,1 @@
+{ "name": "ccr-probe", "version": "0.1.0", "description": "CCR M1 probe: observe-only record of prompt/tool/session hook shapes and sizes" }
