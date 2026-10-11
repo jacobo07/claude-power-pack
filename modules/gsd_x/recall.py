@@ -41,6 +41,8 @@ SNIPPET = 260
 MAX_TERMS = 12
 COMMON_DF = 0.15           # a term in more than 15% of chunks carries no signal
 MIN_MATCHED = 3            # distinct query terms a hit must contain
+MIN_SCORE = 0.0            # a hit scoring below this abstains (F4: calibrated, see receipt)
+BRIDGE_FILE = Path(__file__).with_name("recall_bridge.json")
 SHOWN_KEEP_S = 7 * 86400
 # The 2,000-answer SEO/GEO corpus every project must consult (rule seo-geo-corpus-methodology).
 SEO_CORPUS = HOME / "Desktop" / "Cursor Projects" / "GEO-audit" / "docs" / "corpus"
@@ -318,15 +320,50 @@ def prompt_terms(prompt: str) -> list:
     return out[:60]
 
 
-def select_terms(con, terms: list) -> list:
-    """Keep terms the index knows and that are not common; rarest first."""
+_BRIDGE = None
+
+
+def bridge() -> dict:
+    """term -> terms that name the same concept (ES/EN and paraphrase aliases), from the
+    explicit table beside this module. Never a model call; a missing/bad table is no bridge."""
+    global _BRIDGE
+    if _BRIDGE is None:
+        rel = {}
+        try:
+            data = json.loads(BRIDGE_FILE.read_text(encoding="utf-8-sig"))
+            for g in data.get("groups", []):
+                terms = [fold(t) for t in g.get("terms", [])]
+                for t in terms:
+                    rel.setdefault(t, set()).update(x for x in terms if x != t)
+        except (OSError, ValueError, AttributeError):
+            rel = {}
+        _BRIDGE = rel
+    return _BRIDGE
+
+
+def _known(con, terms: list) -> dict:
+    """{prompt term: (df, [searchable variants])}: the term and its bridged variants the index
+    knows and that are not common. df is the rarest variant's, so a rare alias still ranks."""
     total = con.execute("SELECT count(*) FROM chunks").fetchone()[0] or 1
-    df = {}
+    cap = max(3, COMMON_DF * total)
+    rel, out = bridge(), {}
     for t in terms:
-        row = con.execute("SELECT doc FROM recall_vocab WHERE term=?", (t,)).fetchone()
-        if row and 0 < row[0] <= max(3, COMMON_DF * total):
-            df[t] = row[0]
-    return sorted(df, key=lambda t: df[t])[:MAX_TERMS]
+        variants, dfs = [], []
+        for c in [t] + sorted(rel.get(t, ())):
+            row = con.execute("SELECT doc FROM recall_vocab WHERE term=?", (c,)).fetchone()
+            if row and 0 < row[0] <= cap:
+                variants.append(c)
+                dfs.append(row[0])
+        if variants:
+            out[t] = (min(dfs), variants)
+    return out
+
+
+def select_terms(con, terms: list) -> list:
+    """Keep terms the index knows (directly or through the bridge) that are not common;
+    rarest first."""
+    known = _known(con, terms)
+    return sorted(known, key=lambda t: known[t][0])[:MAX_TERMS]
 
 
 def query(prompt: str, cwd: str = "", db=None, exclude=(), k: int = TOP_K) -> list:
@@ -336,13 +373,15 @@ def query(prompt: str, cwd: str = "", db=None, exclude=(), k: int = TOP_K) -> li
         return []
     con = _reader(path)
     try:
-        terms = select_terms(con, prompt_terms(prompt))
+        known = _known(con, prompt_terms(prompt))
+        terms = sorted(known, key=lambda t: known[t][0])[:MAX_TERMS]
         if len(terms) < 2:
             return []
+        variants = {t: set(known[t][1]) for t in terms}
         # Two shared words is how "weather in madrid today" matched a marketing memory, so a
         # hit needs three, or every term of a two-term prompt.
         need = min(len(terms), max(MIN_MATCHED, math.ceil(0.3 * len(terms))))
-        match = " OR ".join('"%s"' % t for t in terms)
+        match = " OR ".join('"%s"' % v for v in sorted({v for s in variants.values() for v in s}))
         # Two row windows: one jsonl file holds 2,000 seo-geo chunks, so a single window could
         # fill with rows that collapse to one capped hit and push every validated rule out of
         # reach before Python ever scores it (review 2026-10-09, MEDIUM).
@@ -362,15 +401,17 @@ def query(prompt: str, cwd: str = "", db=None, exclude=(), k: int = TOP_K) -> li
         if cid in exclude:
             continue
         hay = set(_WORD.findall(fold(title + " " + body)))
-        matched = [t for t in terms if t in hay]
+        matched = [t for t in terms if hay & variants[t]]
         if len(matched) < need:
             continue
         boost = 1.5 if (kind == "memory" and scope == here) else 1.0
-        scored.append((-rank * boost * (len(matched) / len(terms)) ** 0.5,
-                       cid, p, title, body, kind, matched))
+        score = -rank * boost * (len(matched) / len(terms)) ** 0.5
+        if score < MIN_SCORE:                           # weak evidence is silence, not a hit
+            continue
+        scored.append((score, cid, p, title, body, kind, matched))
     scored.sort(key=lambda s: s[0], reverse=True)
     hits, files, unvalidated = [], set(), 0
-    for _, cid, p, title, body, kind, matched in scored:
+    for score, cid, p, title, body, kind, matched in scored:
         if p in files:
             continue
         if kind in UNVALIDATED:
@@ -379,7 +420,8 @@ def query(prompt: str, cwd: str = "", db=None, exclude=(), k: int = TOP_K) -> li
             unvalidated += 1
         files.add(p)
         hits.append({"id": cid, "path": p, "kind": kind, "title": title,
-                     "snippet": " ".join(body.split())[:SNIPPET], "matched": matched})
+                     "snippet": " ".join(body.split())[:SNIPPET], "matched": matched,
+                     "score": round(score, 4)})
         if len(hits) >= k:
             break
     return hits
