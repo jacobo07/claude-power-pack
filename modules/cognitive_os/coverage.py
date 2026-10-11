@@ -188,9 +188,6 @@ def record(manifest: Manifest, *, corpus_id: str, scope, transform: str, config_
     `depth_by_rel` maps rel path -> depth; a rel absent from it is recorded SKIPPED only if it
     is in the manifest (the receipt states what was NOT read as well)."""
     rid = run_id or uuid.uuid4().hex[:12]
-    _append(ledger or DEFAULT_LEDGER, {"type": "BEGIN", "run_id": rid, "corpus_id": corpus_id,
-                                       "scope": list(scope), "transform": transform,
-                                       "config_digest": config_digest, "ts": _now()})
     best: dict = {}
     for rel, meta in manifest.files.items():
         d = depth_by_rel.get(rel, "SKIPPED")
@@ -199,11 +196,18 @@ def record(manifest: Manifest, *, corpus_id: str, scope, transform: str, config_
         sha = meta["sha"]
         if DEPTH_RANK[d] >= DEPTH_RANK.get(best.get(sha, "SKIPPED"), 0):
             best[sha] = d
-    for sha, d in best.items():
-        _append(ledger or DEFAULT_LEDGER, {"type": "FILE", "run_id": rid, "sha": sha, "depth": d})
-    _append(ledger or DEFAULT_LEDGER, {"type": "COMMIT", "run_id": rid, "file_count": len(best),
-                                       "artifacts": list(artifacts or []), "evidence": evidence,
-                                       "ts": _now()})
+    recs = [{"type": "BEGIN", "run_id": rid, "corpus_id": corpus_id, "scope": list(scope),
+             "transform": transform, "config_digest": config_digest, "ts": _now()}]
+    recs += [{"type": "FILE", "run_id": rid, "sha": sha, "depth": d} for sha, d in best.items()]
+    recs.append({"type": "COMMIT", "run_id": rid, "file_count": len(best),
+                 "artifacts": list(artifacts or []), "evidence": evidence, "ts": _now()})
+    # One write for the whole run: its lines stay contiguous and a crash can only truncate the tail,
+    # which leaves no COMMIT and so never reads as complete.
+    p = Path(ledger or DEFAULT_LEDGER)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    blob = "".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in recs)
+    with p.open("ab") as fh:
+        fh.write(blob.encode("utf-8"))
     return rid
 
 
@@ -364,9 +368,9 @@ def verify_ledger(ledger=None) -> dict:
 
 
 # ----------------------------------------------------------------- orchestration
-def ensure(manifest: Manifest, *, corpus_id: str, requester: str, transform: str,
-           config_digest: str, extractor, need: str = "STRUCTURAL", ledger=None,
-           on_unknown: str = "refuse", unknown_reason: str = "") -> dict:
+def _ensure_unlocked(manifest: Manifest, *, corpus_id: str, requester: str, transform: str,
+                     config_digest: str, extractor, need: str = "STRUCTURAL", ledger=None,
+                     on_unknown: str = "refuse", unknown_reason: str = "") -> dict:
     """The only path that may spend extraction. `extractor(delta_rel_paths)` is the costly call
     and returns {"depth": ..., "artifacts": [{path, sha256}], "evidence": str}. It is invoked
     only for the delta, never for covered files, never for UNAUTHORIZED, and for UNKNOWN only
@@ -393,6 +397,72 @@ def ensure(manifest: Manifest, *, corpus_id: str, requester: str, transform: str
     return out
 
 
+def _lock_profile(ledger, corpus_id: str) -> Path:
+    """runlock keys on profile_dir.parent / runner.lock, so one directory per corpus gives one lock per corpus."""
+    safe = hashlib.sha256(corpus_id.encode("utf-8")).hexdigest()[:16]
+    return Path(ledger or DEFAULT_LEDGER).parent / ".locks" / safe / "corpus"
+
+
+def ensure(manifest: Manifest, *, corpus_id: str, requester: str, transform: str,
+           config_digest: str, extractor, need: str = "STRUCTURAL", ledger=None,
+           on_unknown: str = "refuse", unknown_reason: str = "",
+           lock_wait_seconds: float = 60.0, lock_ttl_seconds: int = 900) -> dict:
+    """Single-flight per corpus. The second writer waits, then re-judges against the ledger the
+    first one wrote and adopts it (EXACT_REUSE, zero extraction) instead of repeating the work."""
+    import time
+    from modules.knowledge_acquisition.runlock import LockBusy, ProfileLock
+    lock = ProfileLock(_lock_profile(ledger, corpus_id), ttl_seconds=lock_ttl_seconds)
+    deadline = time.monotonic() + lock_wait_seconds
+    while True:
+        try:
+            lock.acquire()
+            break
+        except LockBusy:
+            if time.monotonic() >= deadline:
+                v = Verdict("UNKNOWN", "corpus lock busy past deadline; not extracting")
+                return {"verdict": v, "extracted": [], "run_id": None}
+            time.sleep(0.05)
+    try:
+        return _ensure_unlocked(manifest, corpus_id=corpus_id, requester=requester,
+                                transform=transform, config_digest=config_digest,
+                                extractor=extractor, need=need, ledger=ledger,
+                                on_unknown=on_unknown, unknown_reason=unknown_reason)
+    finally:
+        lock.release()
+
+
+def repair_ledger(ledger=None) -> dict:
+    """Quarantine corrupt lines and incomplete runs into <ledger>.quarantine, then atomically swap
+    in a clean ledger. Nothing is deleted: the quarantine file keeps every removed line verbatim.
+    Sources are never touched; receipts of complete runs are byte-preserved."""
+    p = Path(ledger) if ledger else DEFAULT_LEDGER
+    if not p.is_file():
+        return {"repaired": False, "reason": "no ledger"}
+    runs, _c, _corrupt, readable = read_ledger(p)
+    if not readable:
+        return {"repaired": False, "reason": "unreadable"}
+    keep, drop = [], []
+    for line in p.read_text(encoding="utf-8", errors="replace").split("\n"):
+        s = line.strip()
+        if not s:
+            continue
+        try:
+            d = json.loads(s)
+            rid = d["run_id"] if d["type"] != "CONFLICT" else None
+        except (json.JSONDecodeError, KeyError, TypeError):
+            drop.append(s)
+            continue
+        if rid is not None and (rid not in runs or not runs[rid].complete):
+            drop.append(s)
+        else:
+            keep.append(s)
+    if drop:
+        with Path(str(p) + ".quarantine").open("a", encoding="utf-8") as fh:
+            fh.write("\n".join(drop) + "\n")
+        atomic_write_text(p, "\n".join(keep) + ("\n" if keep else ""))
+    return {"repaired": bool(drop), "quarantined": len(drop), "kept": len(keep)}
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="CO-05 coverage receipt (spec: cognitive-work-reuse)")
@@ -417,9 +487,15 @@ def main(argv=None) -> int:
     r.add_argument("--ledger", default=None)
     vv = sub.add_parser("verify")
     vv.add_argument("--ledger", default=None)
+    vv.add_argument("--repair", action="store_true", help="quarantine corrupt lines / incomplete runs")
     a = ap.parse_args(argv)
     if a.cmd == "verify":
         res = verify_ledger(a.ledger)
+        if a.repair:
+            res["repair"] = repair_ledger(a.ledger)
+            res["after"] = verify_ledger(a.ledger)
+            print(json.dumps(res, indent=2))
+            return 0 if res["after"]["ok"] else 1
         print(json.dumps(res, indent=2))
         return 0 if res["ok"] else 1
     m = build_manifest(a.root)

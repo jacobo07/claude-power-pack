@@ -125,7 +125,40 @@ def main():
         with led.open("a", encoding="utf-8") as fh:
             fh.write("{not json\n")
         check("V-CORPUS-N-CORRUPT-DETECTED", cv.verify_ledger(led)["corrupt_lines"] == 1)
-        check("V-CORPUS-UNKNOWN-EMPTY", cv.verdict(None, transform=T, config_digest=C, requester="p1").state == "UNKNOWN")
+        # N repair: corrupt line + orphan BEGIN quarantined, complete runs kept, verify ok after
+        cv.begin(corpus_id="orphan", scope=["p1"], transform=T, config_digest=C, ledger=led)
+        before = cv.verdict(m3, transform=T, config_digest=C, requester="p1", ledger=led).state
+        rep_r = cv.repair_ledger(led)
+        after = cv.verdict(m3, transform=T, config_digest=C, requester="p1", ledger=led).state
+        check("V-CORPUS-N-REPAIR", rep_r["quarantined"] == 2 and cv.verify_ledger(led)["ok"]
+              and before == after and Path(str(led) + ".quarantine").is_file(), str(rep_r))
+        # M concurrency across real processes: one extracts, the other adopts
+        led5 = Path(tmp) / "led5.jsonl"
+        count = Path(tmp) / "count.txt"
+        child = (
+            "import sys,time;sys.path.insert(0,sys.argv[1]);from pathlib import Path\n"
+            "from modules.cognitive_os import coverage as cv\n"
+            "m=cv.build_manifest(sys.argv[2],cache_path=sys.argv[5])\n"
+            "def ex(d):\n"
+            "    time.sleep(1.0);open(sys.argv[4],'a').write('x');return {'depth':'FULL_READ'}\n"
+            "r=cv.ensure(m,corpus_id='cm',requester='p1',transform='t@1',config_digest='c',extractor=ex,ledger=sys.argv[3])\n"
+            "print(r['verdict'].state)\n")
+        import subprocess
+        procs = [subprocess.Popen([sys.executable, "-c", child, str(ROOT), str(root), str(led5), str(count),
+                                   str(Path(tmp) / f"cc{i}.json")], stdout=subprocess.PIPE, text=True)
+                 for i in range(2)]
+        outs = sorted(p.communicate(timeout=60)[0].strip() for p in procs)
+        check("V-CORPUS-M-ONE-EXTRACTS-ONE-ADOPTS",
+              count.read_text() == "x" and outs == ["EXACT_REUSE", "NONE"] and cv.verify_ledger(led5)["ok"],
+              f"{outs} calls={len(count.read_text()) if count.exists() else 0}")
+        # H resume: after an interrupted BEGIN, ensure still extracts the full missing set once
+        led6 = Path(tmp) / "led6.jsonl"
+        cv.begin(corpus_id="ch", scope=["p1"], transform=T, config_digest=C, ledger=led6)
+        c = Counter()
+        cv.ensure(m3, corpus_id="ch", requester="p1", transform=T, config_digest=C, extractor=c, ledger=led6)
+        check("V-CORPUS-H-RESUME", c.calls == 1 and cv.verdict(
+            m3, transform=T, config_digest=C, requester="p1", ledger=led6).state == "EXACT_REUSE")
+        check("V-CORPUS-UNKNOWN-EMPTY",cv.verdict(None, transform=T, config_digest=C, requester="p1").state == "UNKNOWN")
         os.environ["PP_CORPUS_REUSE"] = "off"
         v = cv.verdict(m3, transform=T, config_digest=C, requester="p1", ledger=led)
         os.environ.pop("PP_CORPUS_REUSE")
