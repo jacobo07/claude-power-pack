@@ -120,9 +120,182 @@ def gate_envelope():
         shutil.rmtree(base, ignore_errors=True)
 
 
+def raw_append(log, type_: str, data: dict):
+    return log.append(gc.project(log).last_seq + 1, type_, data, "pcc-sem")
+
+
+def gate_malformed_raises():
+    proof = load_proof()
+    if proof is None:
+        return False, PROOF_ABSENT
+    samples = sample_payloads()
+    bad = []
+    for t in proof.NEW_TYPES:
+        log, _state, base = new_goal("sem-malformed")
+        try:
+            data = dict(samples[t])
+            drop = next(k for k in proof.REQUIRED_FIELDS[t] if k != "v")
+            del data[drop]
+            ev = raw_append(log, t, data)
+            try:
+                proof.project_proofs(gc.project(log))
+                bad.append(f"{t}: did not raise")
+            except gl.GoalLogCorrupt as exc:
+                if f"seq {ev.seq}: malformed {t}" not in str(exc):
+                    bad.append(f"{t}: message {exc}")
+        finally:
+            shutil.rmtree(base, ignore_errors=True)
+    return not bad, "four types raise GoalLogCorrupt naming seq and type" if not bad else "; ".join(bad)
+
+
+def gate_legacy_readers():
+    proof = load_proof()
+    if proof is None:
+        return False, PROOF_ABSENT
+    from modules.gsd_x.goal import convergence as cv, epoch as ep, evidence as evd, intervention as iv  # noqa: PLC0415
+    samples = sample_payloads()
+    log, _state, base = new_goal("sem-legacy")
+    try:
+        for t in proof.NEW_TYPES:
+            data = dict(samples[t])
+            del data[next(k for k in proof.REQUIRED_FIELDS[t] if k != "v")]
+            raw_append(log, t, data)
+        state = gc.project(log)
+        ran = [
+            cv.project_convergence(state) is not None,
+            ep.project_epochs(state) is not None,
+            iv.project_operator(state) is not None,
+            evd.project_hypotheses(state) is not None,
+            cv.goal_closure(state, "git:" + "a" * 40, ep.open_epochs(state)) is not None,
+        ]
+        return all(ran), f"projection,convergence,epochs,operator,hypotheses,closure ok={ran}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_higher_v():
+    proof = load_proof()
+    if proof is None:
+        return False, PROOF_ABSENT
+    samples = sample_payloads()
+    log, _state, base = new_goal("sem-higher-v")
+    try:
+        seqs = []
+        for t in proof.NEW_TYPES:
+            data = dict(samples[t])
+            data["v"] = 2
+            data["from_the_future"] = {"anything": [1, 2]}
+            seqs.append(raw_append(log, t, data).seq)
+        ledger = proof.project_proofs(gc.project(log))
+        empty = not (ledger.contracts or ledger.produced or ledger.inherited or ledger.invalidated)
+        return ledger.unsupported == seqs and empty, f"unsupported={ledger.unsupported} expected={seqs}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_writer_refuses():
+    proof = load_proof()
+    if proof is None:
+        return False, PROOF_ABSENT
+    samples = sample_payloads()
+    log, state, base = new_goal("sem-refuses")
+    try:
+        before = len(log.read())
+        v2 = dict(samples[proof.PRODUCED])
+        v2["v"] = 2
+        broken = dict(samples[proof.PRODUCED])
+        del broken["candidate"]
+        cases = (("zz.other", {"v": 1}), (proof.PRODUCED, broken), (proof.PRODUCED, v2),
+                 (proof.PRODUCED, "not-an-object"))
+        seen = []
+        for t, d in cases:
+            try:
+                proof.append_pcc(log, state, t, d, "pcc-sem")
+                seen.append(f"{t}: accepted")
+            except proof.ProofRefused:
+                if len(log.read()) != before:
+                    seen.append(f"{t}: event written despite refusal")
+        control = proof.append_pcc(log, state, proof.PRODUCED, samples[proof.PRODUCED], "pcc-sem")
+        ok = not seen and len(control.produced) == 1 and len(log.read()) == before + 1
+        return ok, f"refused={len(cases) - len(seen)}/{len(cases)} control_appended={len(control.produced) == 1} {seen}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_writer_cas():
+    proof = load_proof()
+    if proof is None:
+        return False, PROOF_ABSENT
+    samples = sample_payloads()
+    log, stale, base = new_goal("sem-cas")
+    try:
+        proof.append_pcc(log, stale, proof.CONTRACT, samples[proof.CONTRACT], "pcc-sem")   # control: fresh state appends
+        files = sorted(p.name for p in log.dir.iterdir())
+        try:
+            proof.append_pcc(log, stale, proof.PRODUCED, samples[proof.PRODUCED], "pcc-sem")
+            return False, "stale state appended"
+        except gl.LostRace:
+            pass
+        same = files == sorted(p.name for p in log.dir.iterdir())
+        again = proof.append_pcc(log, gc.project(log), proof.PRODUCED, samples[proof.PRODUCED], "pcc-sem")
+        return same and len(again.produced) == 1, f"lost_race_raised=True files_unchanged={same} fresh_retry_ok={len(again.produced) == 1}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_export_restore():
+    proof = load_proof()
+    if proof is None:
+        return False, PROOF_ABSENT
+    import argparse  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415
+    import gsd_x_goal as cli  # noqa: PLC0415
+    from modules.gsd_x.goal import git_state  # noqa: PLC0415
+    samples = sample_payloads()
+    work = Path(tempfile.mkdtemp(prefix="pcc-sem-xr-"))
+    repo = work / "repo"
+    repo.mkdir()
+    git = git_state.GIT_CANDIDATES[0]
+    for args in (["init", "-q"], ["-c", "user.name=pcc", "-c", "user.email=noreply@anthropic.com",
+                                  "commit", "-q", "--allow-empty", "-m", "root"]):
+        subprocess.run([git, *args], cwd=repo, check=True, capture_output=True)
+    root_a, root_b = work / "a" / "goals", work / "b" / "goals"
+    saved = os.environ["GSDX_GOALS_ROOT"]
+    try:
+        os.environ["GSDX_GOALS_ROOT"] = str(root_a)
+        rid = gl.repo_id(repo)
+        log = GoalLog(rid, "g-xr")
+        gc.declare(log, "Export and restore", ["it works"], [], {"paths": ["src"]}, actor="founder")
+        for t in proof.NEW_TYPES:
+            proof.append_pcc(log, gc.project(log), t, samples[t], "pcc-sem")
+        digests_a = [e.digest for e in log.read()]
+        ledger_a = proof.project_proofs(gc.project(log))
+        out = work / "export.json"
+        ns = argparse.Namespace(goal="g-xr", root=str(repo), actor="founder", to=str(out))
+        rc_export = cli.cmd_export(ns)
+        os.environ["GSDX_GOALS_ROOT"] = str(root_b)
+        rc_restore = cli.cmd_restore(argparse.Namespace(**{"goal": "g-xr", "root": str(repo),
+                                                           "actor": "founder", "from": str(out)}))
+        log_b = GoalLog(rid, "g-xr")
+        digests_b = [e.digest for e in log_b.read()]
+        ledger_b = proof.project_proofs(gc.project(log_b))
+        ok = (rc_export == 0 and rc_restore == 0 and digests_a == digests_b
+              and ledger_a == ledger_b and len(digests_a) == 5)
+        return ok, f"events={len(digests_a)} digests_equal={digests_a == digests_b} ledgers_equal={ledger_a == ledger_b}"
+    finally:
+        os.environ["GSDX_GOALS_ROOT"] = saved
+        shutil.rmtree(work, ignore_errors=True)
+
+
 def main() -> int:
     run_gate("V-PCC-HERMETIC-HOME", gate_hermetic)
     run_gate("V-PCC-ENVELOPE", gate_envelope)
+    run_gate("V-PCC-CONTRACT-MALFORMED-RAISES", gate_malformed_raises)
+    run_gate("V-PCC-LEGACY-READERS-DO-NOT-RAISE", gate_legacy_readers)
+    run_gate("V-PCC-CONTRACT-HIGHER-V-UNKNOWN", gate_higher_v)
+    run_gate("V-PCC-WRITER-REFUSES", gate_writer_refuses)
+    run_gate("V-PCC-WRITER-CAS", gate_writer_cas)
+    run_gate("V-PCC-EXPORT-RESTORE-ROUNDTRIP", gate_export_restore)
     total = passes + fails
     print(f"\nGSDX_PCC_SEMANTICS_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1
