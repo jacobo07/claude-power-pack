@@ -38,3 +38,10 @@
 - Fix: coordinator re-ran test_ewc_obligations.py 56/56 + test_ewc.py 2/5, added `Status: DONE`, ticked; E3 armed
   m-6e6382f12f90. Prevention: the receipt's line 2 is `Status: DONE` -- E3+ check it before ending; E6 may wire the
   receipt status as an obligation the EWC gate sees.
+
+## K6 -- receiptless endings are the pattern, not an accident (coordinator, 2026-10-11 16:40)
+- E2 1st attempt, E3 x2 and E4 1st attempt all ended `slim worker finished ... no receipt`; E1 1st attempt tripped the
+  breaker. 5 of 8 worker runs closed without the line that closes the unit -- after evaluating and often committing.
+- E3's latency step was skipped silently (NOT_PROVEN). The receipt is written last, so the breaker's closeout calls
+  eat exactly it. Prevention for E6/UKDL: write the receipt skeleton FIRST (Status: IN_PROGRESS) and flip it at the end;
+  this is the programme-level form of "evaluation without closure".

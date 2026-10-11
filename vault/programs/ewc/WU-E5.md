@@ -27,4 +27,7 @@ Steps:
    compiled, human-gate overuse, infinite loops, budget escapes, child-result loss, rotation loss, false COMPLETE.
    Fix every HIGH/CRITICAL; record MEDIUM/LOW dispositions. A reviewer that ran no checks cannot approve.
 6. Re-run the full touched set + `python tools/test_hook_boundary.py` + `node hooks/tests/run-all.js`.
+7. E3 skipped its latency step (WU-E3-receipt NOT_PROVEN): measure it here -- n=5 Stop-chain runs on a large real
+   transcript copy, before (696ce37a) / after medians in ms; > +300 ms median = cut work until it is not.
+Write this receipt FIRST with `Status: IN_PROGRESS` and flip it to DONE last (KNOWLEDGE K6).
 Receipt: matrix pass count N/N, review verdicts + each finding's disposition, plan-template commit.
