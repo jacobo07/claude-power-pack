@@ -1,0 +1,20 @@
+{
+    "goal":  "cpx",
+    "root":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\cpx",
+    "envelope":  7500000,
+    "max_residuals":  1,
+    "route_ladder":  [
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json"
+                     ],
+    "units":  [
+                  {
+                      "id":  "B0",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-B0.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-B0-receipt.md",
+                      "after":  null
+                  }
+              ]
+}

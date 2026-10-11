@@ -117,6 +117,37 @@ SEMANTIC LOWER BOUND 3.5M · LOWER 7M · P50 9.5M (11.5M with reserve) · P80 13
 Goals: cpx = R1, R2, R5, R9 (hard 9M). cp50-c2 = R3, J3, C3 (remaining about 4.34M, +2M reserve raise -> cap 16M).
 Historical baseline (not a forecast input): coordinator 37.5M / 207 calls / about 180K per call vs workers 8.6M; 2 Phase-7 slots spent, 0 records.
 
+## 7b. Execution state after Owner "y" (2026-10-11, pane 3b4f4757)
+
+- DONE: goal cpx declared (cap 9,000,000, root .claude/worktrees/cpx, branch cpx/main @ c68383ba); pane self-cap
+  session-declare stop 1.5M.
+- The self-cap TRIPPED at 4,943,171 processed (the scan alone, about 60 calls at about 80K context): the scan estimate
+  of 0.6M was wrong by about 8x. First live measurement for R2: a fresh coordinator's scan costs about 5M, not 0.6M.
+- On disk, NOT committed: vault/programs/cpx/{WU-B0.md, chain.json, chain_tick.ps1} (B0 = bootstrap unit that arms
+  everything else; see its packet).
+- NOT done: task PP-CpxChain-Tick (first registration failed: TRF task action has an empty WorkingDirectory; the
+  retry was blocked by the session budget breaker). Without it B0 never arms.
+- NOT done: settle 3cf66819 (799,548), cp50-c2 cap raise, TRF W2 amendment: all are B0 steps.
+- Next exact action: register the task without -WorkingDirectory (clone PP-TrfChain-Tick's action with
+  Arguments -replace 'tennis-rf','cpx'), commit vault/programs/cpx (pathspec). The next tick then arms B0.
+
+## 7c. Amendment A1 (Owner, 2026-10-11): REA-assisted arm + recon-factory rows through D26
+
+- REA premise checked against facts in hand: TRF W4 already ran the REA-Tennis canary today -> REJECT for native PPC
+  (`vault/programs/tennis-rf/REA-DISPOSITION.md`: rea 6.3.0 CLI hangs importing dist/cli.js on Win11/Node 24; no DOL or
+  ELF32-PPC lane in dist/). Upstream issue drafted, not filed. Sovereignty gate result: evidence plane = KEEP_CPP/WRAP
+  (DTK + m2c + Ghidra 12.1.2 headless PowerPC:BE:32), REA = EXTEND_UPSTREAM. Revisit when upstream ships a PPC lane.
+- New unit R6 (chain cp50-c2, before J3): deterministic per-function evidence dossier (instructions, m2c pseudocode,
+  callers/callees, xrefs, SDA/data refs, Resort-shape donor) with a content-addressed cache keyed by binary sha256 +
+  function address (minimal Binary Semantic Genome / Semantic Build Cache). No model calls. Done = dossier for draw 1-5
+  plus a size per dossier and a cache-hit drill.
+- J3 becomes two arms on the SAME Phase-7 slot (no extra job): arm A current pipeline vs arm A+dossier, per function:
+  tokens, provider context, model calls, discovery calls, evidence retrieved without a model, proof, wall time, verdict,
+  reusable knowledge written. C3 reports both arms separately and the model-needed fraction.
+- D11-D19: NOT executed wholesale (D14/D20 sequencing guards are binding). Each gets one evidence-gated slice only when
+  C3 + TRF W6/W7 show falling marginal verified cost; R5 writes that admission table. D26 resumes only on Owner activation
+  after C3. Tennis Scope A/B unchanged; D21 reforecast stays TRF W8, fed by C3 (both arms).
+
 ## 8. Approval
 
 "y" authorizes: declare goal cpx hard 9M; raise cp50-c2 cap 14M -> 16M; two chains + tick tasks; the TRF W2 packet amendment; pathspec commits on feature/knowledge-acquisition (no push); Phase-7 job 3 (already authorized by run plan D4); job 4 only under the rule in section 5.
