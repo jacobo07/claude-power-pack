@@ -87,7 +87,8 @@ def case(state=gm.HALTED, hold=False, receipt=False, refused_input=None, with_go
     pkt.write_text(f"work_tree: {tree}\nreceipt: out/r.json\n\n# WU\n", encoding="utf-8")
     if receipt:
         (tree / "out").mkdir()
-        (tree / "out" / "r.json").write_text("{}", encoding="utf-8")
+        (tree / "out" / "r.json").write_text(receipt if isinstance(receipt, str) else '{"status": "DONE"}',
+                                             encoding="utf-8")
     if with_goal:
         r = ms.goal_declare(goal, cap, "test", [str(tree)])
         assert r["ok"], r
@@ -187,8 +188,14 @@ check("V-STEWARD-LIVE-OWNER-UNTOUCHED", not rl and not ops(cl["goal"], "settle")
 # --- canonical receipt untouched
 cr = case(receipt=True)
 rr = mine(run(cr), cr)
-check("V-STEWARD-CANONICAL-RECEIPT-UNTOUCHED", not rr and (cr["tree"] / "out" / "r.json").read_text() == "{}"
+check("V-STEWARD-CANONICAL-RECEIPT-UNTOUCHED", not rr
+      and (cr["tree"] / "out" / "r.json").read_text() == '{"status": "DONE"}'
       and not Path(str(cr["tree"] / "out" / "r.json") + ".partial.json").exists() and not ops(cr["goal"], "settle"))
+# --- APR-1 / K5: a receipt that exists but closes nothing is stewarded; the worker's bytes are never rewritten
+ck = case(receipt='{"gate_rc": 0}')
+rk = mine(run(ck), ck)
+check("V-APR-K5-STEWARD-UNCLOSED-RECEIPT", bool(rk) and (ck["tree"] / "out" / "r.json").read_text() == '{"gate_rc": 0}'
+      and Path(str(ck["tree"] / "out" / "r.json") + ".partial.json").exists(), str(rk)[:160])
 # --- restart midway: ledger settled, steward field empty (crash after the settle) -> completes once
 cm = case()
 cm["led"].settle_stopped(cm["sid"], cm["measured"], "pre")

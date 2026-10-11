@@ -24,6 +24,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import receipt_judge as rj  # noqa: E402  (one receipt reading for mission, chain and steward)
 
 FORGOTTEN_AFTER_S = 30 * 60
 INCIDENT_EVERY_S = 24 * 3600
@@ -135,8 +136,9 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         return None
     sid = (rec.get("owner") or {}).get("session_id")
     receipt = gm.packet_receipt_path(rec)
-    if receipt and Path(receipt).exists():
+    if receipt and rj.is_closed(receipt):
         return None                       # the canonical receipt is the worker's own close: untouched
+    # a receipt that exists but closes nothing (no Status, PARTIAL, stub) is not a close: steward it (APR-1, K5)
     g0 = rec.get("goal")
     goal = (g0 if isinstance(g0, str) and g0 else None) or spend_goal_for(rec.get("cwd"), index)
     if not goal:

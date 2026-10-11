@@ -77,7 +77,7 @@ def successors(mid):
 
 
 def run(mid, *, state=None, write_result=True, receipt=False, text="PASS V-X\nstopped",
-        receipt_text="# receipt\nDONE\n"):
+        receipt_text="# receipt\nStatus: DONE\n"):
     repo = make_repo(mid)
     gm.create(repo, "/gsd-autonomous --ws wsx", mission_id=mid, now=NOW)
     gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t_setup", now=NOW,
@@ -198,6 +198,26 @@ def main() -> int:
     rec, rows, _ = run("m-hc7", state=TRIP, receipt=True)
     check("V-LIFE-HALT-RECEIPT-PRESENT", rec["state"] == gm.HALTED and capsule("m-hc7") is None
           and not successors("m-hc7"), str(rows))
+    # APR-1 / EWC K5: the E2 worker's real receipt -- every step PROVEN, no Status line. Before APR-1 the mission
+    # COMPLETED (receipt "present") while the chain read UNREADABLE and halted for the Owner. Now: not closed ->
+    # HALTED with the reason named -> one bounded renewal whose worker is told why.
+    e2 = ("# WU-E2 receipt (commit 25f83975, wt_ewc)\n\n- M1 fields + SESSION scope: PROVEN (56/56).\n"
+          "- M3 classify_obligation: PROVEN.\n- tools/test_ewc.py: 2/5 (Stop-level assertions red until E3).\n")
+    rec, rows, _ = run("m-k5", state=OKSTATE, text="done", receipt=True, receipt_text=e2)
+    check("V-APR-K5-UNCLOSED-RECEIPT-RENEWS",
+          rec["state"] == gm.HALTED and "receipt not closed (status UNREADABLE)" in str(rec.get("reason"))
+          and capsule("m-k5") is not None and len(successors("m-k5")) == 1, f"{rec['state']} {rec.get('reason')}")
+    rec, rows, _ = run("m-k5p", state=OKSTATE, text="done", receipt=True, receipt_text="# r\nStatus: PARTIAL\n")
+    check("V-APR-K5-PARTIAL-RENEWS", rec["state"] == gm.HALTED and len(successors("m-k5p")) == 1,
+          f"{rec['state']} {rec.get('reason')}")
+    # controls: a closing verdict (DONE, or a human gate) is the worker's own close -- never renewed
+    rec, rows, _ = run("m-k5d", state=OKSTATE, text="done", receipt=True)
+    check("V-APR-K5-CLOSED-COMPLETES", rec["state"] == gm.COMPLETED and not successors("m-k5d"),
+          f"{rec['state']} {rec.get('reason')}")
+    rec, rows, _ = run("m-k5h", state=OKSTATE, text="done", receipt=True,
+                       receipt_text="# r\nMission: m-x. Status: BLOCKED_HUMAN -- needs the Owner's key\n")
+    check("V-APR-K5-HUMAN-GATE-NOT-RENEWED", rec["state"] == gm.COMPLETED and not successors("m-k5h"),
+          f"{rec['state']} {rec.get('reason')}")
     rec, rows, _ = run("m-hc8", state=OKSTATE, receipt=True, text="done")
     check("V-LIFE-SUCCESS-WITH-RECEIPT-COMPLETES", rec["state"] == gm.COMPLETED and capsule("m-hc8") is None
           and not successors("m-hc8"), str(rows))
