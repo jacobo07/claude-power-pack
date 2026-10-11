@@ -20,6 +20,22 @@ TRIGGERS = ("stopped_without_done", "refuse_envelope")
 PLAN_KEYS = ("goal", "succession_id", "prev_lease", "cap", "reserves", "workspace", "expect_gen", "new_sid")
 
 
+def dead_evidence(root, goal: str, sid: str | None, *, measured) -> bool:
+    """A SessionEnd wake row (hooks/goal_session_end.js) is `dead` evidence ONLY together with a measured spend."""
+    if not sid or not isinstance(measured, int) or isinstance(measured, bool) or measured < 0:
+        return False
+    p = Path(root) / goal / "ended.jsonl"
+    if not p.exists():
+        return False
+    for line in p.read_bytes().split(b"\n"):
+        try:
+            if line.strip() and json.loads(line).get("sid") == sid:
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def react(row: dict, plan_path, *, root=None) -> dict:
     action = (row or {}).get("action")
     if action not in TRIGGERS:
@@ -31,8 +47,11 @@ def react(row: dict, plan_path, *, root=None) -> dict:
     missing = [k for k in PLAN_KEYS if k not in plan]
     if missing:
         return {"acted": False, "reason": f"succession plan lacks {missing}"}
+    base = Path(root) if root else gs._goal_root()
+    dead = bool(plan.get("dead", False)) or dead_evidence(base, plan["goal"], plan.get("old_sid"),
+                                                          measured=plan.get("measured"))
     out = gs.succeed(**{k: plan[k] for k in PLAN_KEYS}, root=root, old_sid=plan.get("old_sid"),
-                     dead=bool(plan.get("dead", False)), measured=plan.get("measured"))
+                     dead=dead, measured=plan.get("measured"))
     return {"acted": True, "trigger": action, "succession": out}
 
 

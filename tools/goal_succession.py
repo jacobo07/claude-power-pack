@@ -129,6 +129,8 @@ def _lease_status(res: dict) -> str:
     reason = res.get("reason", "")
     if "AUTHORITY_REQUIRED" in reason:
         return "AUTHORITY_REQUIRED"
+    if reason.startswith("UNKNOWN"):
+        return "UNKNOWN"                      # no programme envelope: headroom is not invented
     return "CAS_LOST" if reason.startswith("CAS") else "REFUSED"
 
 
@@ -143,6 +145,7 @@ def _step_settle(c: dict) -> dict | None:
     if rec["state"] == UNKNOWN:
         return _refuse(UNKNOWN, rec["reason"], reconcile=rec)
     c["jr"].note("step", f"{c['succession_id']}:settled", state=rec["state"])
+    _fault("after_settle")
     return None
 
 
@@ -188,6 +191,7 @@ def _step_claim(c: dict) -> dict | None:
     res = c["reg"].claim(c["workspace"], c["goal"], lease, c["expect_gen"], holder_sid=c["new_sid"])
     if not res["ok"]:
         return _refuse("CLAIM_LOST", res["reason"], lease=lease, winner=res.get("winner"))
+    _fault("after_claim")                     # registry moved, journal not yet told
     c["gen"], c["applied"] = res["gen"], c["applied"] or res["applied"]
     c["jr"].note("step", f"{c['succession_id']}:claimed", lease=lease, gen=res["gen"], holder_sid=c["new_sid"])
     return None
@@ -210,10 +214,12 @@ def succeed(goal: str, succession_id: str, prev_lease: str, cap: int, reserves: 
          "ttl": ttl, "led": led, "reg": WorkspaceRegistry(root), "jr": _Journal(root / goal), "done": done,
          "lease": done["id"] if done else None, "predicted": f"L{len(leases) + 1}", "applied": False,
          "gen": None, "reconcile": None}
+    _fault("before_settle")
     for step in STEPS:
         refusal = HANDLERS[step](c)
         if refusal:
             return refusal
+    _fault("before_done")
     c["jr"].note("done", succession_id, lease=c["lease"], gen=c["gen"])
     return {"ok": True, "status": "SUCCEEDED", "applied": c["applied"], "lease": c["lease"], "gen": c["gen"],
             "reconcile": c["reconcile"], "reason": ""}
