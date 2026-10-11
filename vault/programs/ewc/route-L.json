@@ -1,0 +1,17 @@
+{
+    "unit":  "ewc-L",
+    "envelope":  {
+                     "target":  6400000,
+                     "warn":  7359999,
+                     "stop":  8640000,
+                     "calls":  28
+                 },
+    "workers":  [
+                    {
+                        "name":  "ewc-unit",
+                        "profile":  "slim-t2",
+                        "calls":  28,
+                        "packet":  6000
+                    }
+                ]
+}

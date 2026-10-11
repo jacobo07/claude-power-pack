@@ -1,0 +1,55 @@
+{
+    "goal":  "ewc",
+    "root":  "C:\\Users\\User\\Apps\\wt_ewc",
+    "envelope":  22000000,
+    "max_residuals":  0,
+    "route_ladder":  [
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-S.json",
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-M.json",
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-L.json"
+                     ],
+    "units":  [
+                  {
+                      "id":  "E1",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E1.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-S.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E1-receipt.md",
+                      "after":  null
+                  },
+                  {
+                      "id":  "E2",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E2.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E2-receipt.md",
+                      "after":  "E1"
+                  },
+                  {
+                      "id":  "E3",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E3.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-L.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E3-receipt.md",
+                      "after":  "E2"
+                  },
+                  {
+                      "id":  "E4",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E4.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E4-receipt.md",
+                      "after":  "E3"
+                  },
+                  {
+                      "id":  "E5",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E5.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E5-receipt.md",
+                      "after":  "E4"
+                  },
+                  {
+                      "id":  "E6",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E6.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\WU-E6-receipt.md",
+                      "after":  "E5"
+                  }
+              ]
+}
