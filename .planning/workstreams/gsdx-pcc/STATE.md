@@ -62,6 +62,7 @@ fresh worker finds 02-RESEARCH.md present and no 02-*-PLAN.md, resume with `/gsd
 - 2026-10-07 (worker, ULTRA Q&A Q4 edge cases): empty premise set = UNKNOWN, adjacent equal certificates = later supersedes, unknown: bindings never equal, ordering by log seq (S2, S4, S13), plus `v` greater than 1 = UNKNOWN not raise, re-accept changes claim_id, interleaved seq-valued fields, CRLF fixtures. Reason: 02-RESEARCH pitfalls 3-4, G6, G12.
 - 2026-10-07 (worker, ULTRA Q&A Q5 success criteria): ROADMAP Phase 2 criteria 1-3 plus the S-item gates named in the spec. Reason: ROADMAP Phase 2.
 - 2026-10-07 (worker, ULTRA Q&A Q6 scope): Phase 3-8 event types are frozen in the S7 table only, no legacy file is edited, R12 (unknown: tree equality) is deferred to Phase 4. Reason: STATE decisions 1 and 3.
+- 2026-10-11 (worker, W1 ULTRA phase 4-5): audit 6 gaps -- 6 injected, 0 deferred, 0 rejected (02-AUDIT.md).
 
 ## Owner steps
 
