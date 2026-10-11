@@ -1,4 +1,4 @@
-﻿# W9 receipt
+# W9 receipt
 Status: DONE
 
 Links: [HANDOFF.md](HANDOFF.md); budget file vault/plans/d21-tennis-token-budget-2026-10-11.md.

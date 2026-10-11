@@ -1,4 +1,4 @@
-﻿# Tennis RF programme -- final Owner handoff (W9, 2026-10-12)
+# Tennis RF programme -- final Owner handoff (W9, 2026-10-12)
 
 Sources: `vault/plans/tennis-rf-optimization-MASTER-PLAN-2026-10-11.md` s9; the programme brief's FINAL HANDOFF CONTRACT text was not available to W9 (the capsule only names it), so the fields below follow plan s9 and the W9 packet. UNKNOWN = not measured.
 
