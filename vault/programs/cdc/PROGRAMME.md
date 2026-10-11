@@ -18,7 +18,14 @@ says DONE. Goal `cdc`, hard stop 80M processed tokens for the whole programme.
    continuation unit into `chain.json` right after your entry (id `<id>b`, `after` = your id, packet `WU-<id>b.md`
    with the exact remaining steps, same route), then receipt `Status: DONE` (slice done); commit all three together.
    Never leave uncommitted work. Never write PARTIAL: the chain does not re-arm a unit that ended without DONE.
-5. Blocked on something only the Owner can do: receipt `Status: BLOCKED_HUMAN` with the exact action (stops the chain).
+5. `BLOCKED_HUMAN` (stops the chain) ONLY for an act no tool can perform: credentials/secrets, money, legal or
+   product approval, a production deploy go, or a permission prompt the host shows only to the Owner. Everything
+   else is yours (Owner 2026-10-11: "esto se deberia haber hecho y decidido de forma 100% autonoma"):
+   - land_worktree REFUSED (REBASE_CONFLICT, stale live, failing test after rebase) -> insert a reconcile unit
+     `<id>L` (rebase onto live HEAD, keep BOTH semantics, run every touched tool's tests, land), receipt DONE.
+   - overlap with another writer's uncommitted live file -> receipt DONE with `LANDING_PENDING_OVERLAP: <files>`;
+     never edit, stash or commit their file.
+   - a choice code + tests cannot settle -> write the question precisely, take the conservative side (live wins).
 
 ## Owners to reuse (never rebuild)
 work_proof.py (NO_WORK, receipts) · tier_routing.py · route_admission.py · cost_to_completion.py · mission_spend.py +
