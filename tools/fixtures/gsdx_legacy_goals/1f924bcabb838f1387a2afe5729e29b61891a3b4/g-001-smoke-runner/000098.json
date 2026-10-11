@@ -1,0 +1,39 @@
+{
+  "seq": 98,
+  "type": "epoch.dispatching",
+  "ts": "2026-10-02T19:20:51.613290+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-37d87d5a72cf",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "9e72cb30cc28492aba9ece8a8459b187",
+      "epoch_id": "ep-37d87d5a72cf",
+      "fence": 2,
+      "goal_id": "g-001-smoke-runner"
+    },
+    "info_key": "7abf1146a278ff2a09425b71",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-regression",
+      "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "gate": {
+        "id": "ob-regression",
+        "command": [
+          "node",
+          "tools/smoke-test/test-hotbar-has-item.selftest.js"
+        ],
+        "class": "unit",
+        "files": [
+          "tools/smoke-test/assertions.js",
+          "tools/smoke-test/test-hotbar-has-item.selftest.js"
+        ],
+        "pin_scheme": "sha256"
+      }
+    },
+    "fence": 2
+  },
+  "prev_digest": "3b244286e117721a439fe42b2f546d25699205e16889a3eb8bd3f97566afcedb",
+  "digest": "3e8caf6ca6673c14635131b92593785553ef1733f42f66e73647b8ed9bee1d9b"
+}

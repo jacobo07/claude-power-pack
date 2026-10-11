@@ -1,0 +1,13 @@
+{
+  "seq": 9,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T20:39:20.270637+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "SETUP_LEARNING",
+    "applicable": false,
+    "reason": "this repository is a tool, not a setup: there is no runtime estate, no world and no player for a setup lesson to be about. What it taught about ITSELF is on the UCR_CIF plane."
+  },
+  "prev_digest": "29ff2cc5e08792f1c92c1ee203a3938e9bed74a8ebb10681540340a1993487e4",
+  "digest": "4f3b5a09a434f45ef142fa868fa6ba0c4e1d11a683ace40ed21f5369445a302d"
+}

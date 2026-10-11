@@ -1,0 +1,21 @@
+{
+  "seq": 35,
+  "type": "epoch.running",
+  "ts": "2026-09-22T19:09:22.744763+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-9e778f3ad9aa",
+    "handle": {
+      "pid": 20756,
+      "token": "ff44bcb8ddba4a79b3db7af78e6ad109",
+      "log": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\g-001-smoke-runner\\runs\\gate-ff44bcb8ddba4a79b3db7af78e6ad109.log",
+      "marker": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\g-001-smoke-runner\\runs\\gate-ff44bcb8ddba4a79b3db7af78e6ad109.json",
+      "result": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\g-001-smoke-runner\\runs\\gate-ff44bcb8ddba4a79b3db7af78e6ad109.result.json",
+      "started_at": 1790104162.419786,
+      "tree_before": "work:e53bc6240a3621d1d7cc806c",
+      "head_before": "164ad7fe701f12f667be3b4ce45353175c746a8a"
+    }
+  },
+  "prev_digest": "160150bf1fb7cafc3baa2417971e084cdd5ae3c368497baa4d0e5c44f0274baa",
+  "digest": "d4f335376c4def4f0f593f3c06c72d9751d5fc836bc4a81044afad57899b336b"
+}

@@ -1,0 +1,12 @@
+{
+  "seq": 48,
+  "type": "failure.recorded",
+  "ts": "2026-09-22T20:41:15.838250+00:00",
+  "actor": "reconciler",
+  "data": {
+    "id": "f-set-autonomous-has-no-entrance",
+    "summary": "The fifth instance of the family G-001 found four of: modules/gsd_x/goal/sweep.py defines set_autonomous(), and no command an operator can type reaches it. A goal therefore cannot be marked autonomous except from Python, so the unattended sweep -- which refuses any goal that is not marked -- can never be given one through the product. G-002 drove its gates through reconcile --apply instead, which calls the same driver and does not consult the flag. DELIBERATELY NOT FIXED: this goal measures whether the engine needed changing, and quietly adding a command would have destroyed the measurement it exists to take."
+  },
+  "prev_digest": "c5ba257a4573127aef5e12da27b57f03c1516013796ea89f70bbabe3a626e7b3",
+  "digest": "183bb5f0ac01c2abc244b5394da229914c2190051069e9a4a55b4655cf0b7c81"
+}

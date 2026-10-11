@@ -1,0 +1,43 @@
+{
+  "seq": 58,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:01:51.704779+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-ff1f9b5fff47",
+    "receipt_id": "0e6429fbf8d80e31a530bf3c",
+    "receipt": {
+      "epoch_id": "ep-ff1f9b5fff47",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "head_after": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "tree_before": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "tree_after": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-evidence",
+          "exit_status": 0,
+          "observed": "GOALRCPT_PASS=4/4  threshold=4/4",
+          "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+          "revision": "250078669463c481",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_lobby_hotbar_receipt.py",
+              "0049484d9b5f0dfa90fabcf23f69704759dfe3b6eda476a2585d4b1790116979"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 1.8
+      },
+      "narrative": "GOALRCPT_PASS=4/4  threshold=4/4"
+    }
+  },
+  "prev_digest": "658c75969d59c2dee1b173752ad020acf23411dd2cb74ffe3855c4cc5ad97601",
+  "digest": "ec48dd2bdc40689dc4fb557158542d3580030a8969d165a15901ff5df33c3149"
+}

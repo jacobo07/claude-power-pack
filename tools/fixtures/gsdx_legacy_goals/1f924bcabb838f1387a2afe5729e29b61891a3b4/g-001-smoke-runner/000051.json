@@ -1,0 +1,13 @@
+{
+  "seq": 51,
+  "type": "obligation.dispositioned",
+  "ts": "2026-09-22T19:57:53.894064+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-outcome",
+    "disposition": "REJECTED",
+    "reason": "its gate pin names tools/smoke-test/jobs/pending/, and committing the job moved it to jobs/examples/ because the repo's own .gitignore excludes pending/*.job.json. A pin is fixed at acceptance, so this obligation can never be proven again. Superseded by ob-outcome-2, pinned to the path the repo will actually keep."
+  },
+  "prev_digest": "2e2a4e6db51cc936ac486499eca36bf49523a73c25ff1326b06456305b650d58",
+  "digest": "6bc450efdb1cdd084b79b9860c41a2a51f7e8af371c3d270e595aabb7b304790"
+}

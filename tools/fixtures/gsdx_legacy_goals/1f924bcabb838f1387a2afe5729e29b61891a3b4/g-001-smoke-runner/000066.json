@@ -1,0 +1,35 @@
+{
+  "seq": 66,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T20:01:56.153833+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-002809fe2a28",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "23ef0dc7163247159ec3ad728a88e048",
+      "epoch_id": "ep-002809fe2a28"
+    },
+    "info_key": "6a9585a63917302e8959a739",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-outcome-2",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "gate": {
+        "id": "ob-outcome-2",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "scripts/goal/gate_lobby_hotbar_job.py"
+        ],
+        "class": "unit",
+        "files": [
+          "scripts/goal/gate_lobby_hotbar_job.py",
+          "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json"
+        ]
+      }
+    }
+  },
+  "prev_digest": "6145ae5eb1ba3cc9d11ff924d053563c126051e65ba931fa95670553b4eee4dc",
+  "digest": "885ebd3fa8ca68cb8bf1d52805bce8a0fbe54b732d230ab1fdf719722bf598f9"
+}

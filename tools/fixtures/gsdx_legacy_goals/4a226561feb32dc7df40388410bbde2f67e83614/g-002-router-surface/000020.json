@@ -1,0 +1,43 @@
+{
+  "seq": 20,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:40:08.640477+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-e141e8dbd990",
+    "receipt_id": "067adccd1cdb61ecf6c6e2b9",
+    "receipt": {
+      "epoch_id": "ep-e141e8dbd990",
+      "provider": "gate",
+      "revision": "b5da0ad2cad63d4d",
+      "head_before": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "head_after": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "tree_before": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "tree_after": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-surface",
+          "exit_status": 0,
+          "observed": "ROUTERSURF_PASS=4/4  threshold=4/4",
+          "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+          "revision": "b5da0ad2cad63d4d",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "gates/gate_documented_surface.py",
+              "cae5b73c6d978f25a64c1bdc26e6d215fb248c041c3c63ac7cde57493a80fbee"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 4.7
+      },
+      "narrative": "ROUTERSURF_PASS=4/4  threshold=4/4"
+    }
+  },
+  "prev_digest": "090646724bb91d5c89e5b52676fcbbf3d94983dc8c6df7fb00cccea303c6a754",
+  "digest": "584c006c04dfda1bdf92e09544a03654ce76621678195cb0ab44caf21abe88b9"
+}

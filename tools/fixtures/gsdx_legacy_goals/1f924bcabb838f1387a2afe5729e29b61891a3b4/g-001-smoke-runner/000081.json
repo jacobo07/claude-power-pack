@@ -1,0 +1,34 @@
+{
+  "seq": 81,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T20:03:40.850978+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-e68c00f7fa53",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "ba94aedfab434ac0b1063bce92ea31cf",
+      "epoch_id": "ep-e68c00f7fa53"
+    },
+    "info_key": "3fdfd2ccf53c250e97ebbecf",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-ucr",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "gate": {
+        "id": "ob-ucr",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "scripts/goal/gate_goal_learning.py"
+        ],
+        "class": "unit",
+        "files": [
+          "scripts/goal/gate_goal_learning.py"
+        ]
+      }
+    }
+  },
+  "prev_digest": "1994563d8da9749bc6111bdadf324d732dd254563ae997a83ce52469e82c0bd3",
+  "digest": "640f64453a9d3f7e2a44b482fe1c5334a4bd0aea17eccebdbf1455b0091004da"
+}

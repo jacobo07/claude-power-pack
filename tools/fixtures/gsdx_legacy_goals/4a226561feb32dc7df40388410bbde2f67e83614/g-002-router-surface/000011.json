@@ -1,0 +1,13 @@
+{
+  "seq": 11,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T20:39:20.961770+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "OPERATIONAL",
+    "applicable": false,
+    "reason": "no operator routine changes. The gates are runnable by hand and nothing schedules them; wiring them into a scheduled check would be a separate decision with its own goal."
+  },
+  "prev_digest": "c097a54ab3d4106d1b02c51920b3240bf11d2629ce9d64dbaaf981006119969e",
+  "digest": "dc5ffd5503782607812c6215fefa5c4a172054ede577df321fe23ddf288f53de"
+}

@@ -1,0 +1,48 @@
+{
+  "seq": 41,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T19:09:43.016914+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-8411c78ee50d",
+    "receipt_id": "15b5598b8dcd9e2824b302ce",
+    "receipt": {
+      "epoch_id": "ep-8411c78ee50d",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "head_after": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "tree_before": "work:e53bc6240a3621d1d7cc806c",
+      "tree_after": "work:e53bc6240a3621d1d7cc806c",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-evidence",
+          "exit_status": 3,
+          "observed": "UNREADABLE_INPUT: no receipt at C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\kc-goal-spine-wt\\tools\\smoke-test\\jobs\\done\\lobby-hotbar-census.report.json -- the run has",
+          "tree_hash": "work:e53bc6240a3621d1d7cc806c",
+          "revision": "250078669463c481",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_lobby_hotbar_receipt.py",
+              "0049484d9b5f0dfa90fabcf23f69704759dfe3b6eda476a2585d4b1790116979"
+            ]
+          ]
+        }
+      ],
+      "failures": [
+        {
+          "summary": "gate ob-evidence exited 3: UNREADABLE_INPUT: no receipt at C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\kc-goal-spine-wt\\tools\\smoke-test\\jobs\\done\\lobby-hotbar-census.report.json -- the run has",
+          "signature": "gate-exit:ob-evidence:3"
+        }
+      ],
+      "cost": {
+        "seconds": 7.0
+      },
+      "narrative": "UNREADABLE_INPUT: no receipt at C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\kc-goal-spine-wt\\tools\\smoke-test\\jobs\\done\\lobby-hotbar-census.report.json -- the run has"
+    }
+  },
+  "prev_digest": "2f1f2db20d5b94c7bc8a7459a86c9d6e8628f7d99e25d27eefa5cb0f57468f22",
+  "digest": "38abc2dc831518ea32d3c680d90797a26ac478f6ce07753aaef426934c8ccc46"
+}

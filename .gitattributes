@@ -33,3 +33,7 @@ modules/keos_qwen/goals/*.py       text eol=lf
 modules/keos_qwen/goals/*.exs      text eol=lf
 modules/keos_qwen/ledger/*.py      text eol=lf
 modules/keos_qwen/install/*.sh     text eol=lf
+
+# 2026-10-07: recorded legacy goal logs are byte-pinned (MANIFEST.json sha256 per file); this clone runs core.autocrlf=true.
+tools/fixtures/gsdx_legacy_goals/** -text
+tools/fixtures/gsdx_legacy_replay_golden.json -text

@@ -1,0 +1,47 @@
+{
+  "seq": 73,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:02:58.464773+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-0365595b5480",
+    "receipt_id": "0376d72fa7f90c0a029fc113",
+    "receipt": {
+      "epoch_id": "ep-0365595b5480",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "head_after": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "tree_before": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "tree_after": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-reality",
+          "exit_status": 0,
+          "observed": "GOALLIVE_PASS=4/4  threshold=4/4",
+          "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+          "revision": "250078669463c481",
+          "gate_class": "in_game",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_lobby_hotbar_live.py",
+              "94f1b40de7764989bc98e9c098c2edf73ab87168ec6eac974bb06223c41a52ab"
+            ],
+            [
+              "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+              "c49582c92b2f683ad0d2e3db8b883076b13afa75ba118e0b01388337a2953ed2"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 41.1
+      },
+      "narrative": "GOALLIVE_PASS=4/4  threshold=4/4"
+    }
+  },
+  "prev_digest": "dce557fd19b82ab6069850689835060a241fcbddae2ea04340b053651da7590f",
+  "digest": "95b032c5e7b1ad1a974020fc6812b3d00a5f6b225fde9e19e8824da3ce9fade7"
+}

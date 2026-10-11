@@ -1,0 +1,66 @@
+{
+  "seq": 50,
+  "type": "goal.judged",
+  "ts": "2026-09-22T20:41:39.028391+00:00",
+  "actor": "owner",
+  "data": {
+    "verdict": "PASS",
+    "reason": "6 pinned gate(s) re-run and passed at git:2758e50beb91df2021278d75c51835329dec1448",
+    "goal_id": "g-002-router-surface",
+    "revision": "b5da0ad2cad63d4d",
+    "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+    "gates": [
+      {
+        "obligation": "ob-surface",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_documented_surface.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "ROUTERSURF_PASS=4/4  threshold=4/4",
+        "seconds": 0.7
+      },
+      {
+        "obligation": "ob-help",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_help_is_the_surface.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "ROUTERHELP_PASS=3/3  threshold=3/3",
+        "seconds": 0.8
+      },
+      {
+        "obligation": "ob-drill",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_surface_drill.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "ROUTERDRILL_PASS=3/3  threshold=3/3",
+        "seconds": 0.5
+      },
+      {
+        "obligation": "ob-ucr",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_learnings.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "ROUTERLEARN_PASS=5/5  threshold=5/5",
+        "seconds": 0.1
+      },
+      {
+        "obligation": "ob-transfer",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_zero_engine_changes.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "ROUTERXFER_PASS=2/2  threshold=2/2",
+        "seconds": 0.4
+      },
+      {
+        "obligation": "ob-hr6",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_hr6_enforced.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "ROUTERHR6_PASS=6/6  threshold=6/6",
+        "seconds": 0.4
+      }
+    ],
+    "ts": "2026-09-22T20:41:38.937218+00:00"
+  },
+  "prev_digest": "c56baeda6d22897e00e85914845d70273aeb0c2806f05a8970f6d442b44b0cd6",
+  "digest": "ac414ec58bcd0149774b837629356083855c225d87929d60716b4be0660bf71d"
+}

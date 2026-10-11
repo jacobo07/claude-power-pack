@@ -1,0 +1,26 @@
+{
+  "seq": 59,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:01:51.770660+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-evidence",
+    "reason": "ob-evidence: ob-evidence observed 'GOALRCPT_PASS=4/4  threshold=4/4'",
+    "verdict": {
+      "gate": "ob-evidence",
+      "exit_status": 0,
+      "observed": "GOALRCPT_PASS=4/4  threshold=4/4",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_lobby_hotbar_receipt.py",
+          "0049484d9b5f0dfa90fabcf23f69704759dfe3b6eda476a2585d4b1790116979"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "ec48dd2bdc40689dc4fb557158542d3580030a8969d165a15901ff5df33c3149",
+  "digest": "361f549ef864efc3e78d1b470c6e7eaf2fc17ec3231c175bce7b68d03dab1314"
+}

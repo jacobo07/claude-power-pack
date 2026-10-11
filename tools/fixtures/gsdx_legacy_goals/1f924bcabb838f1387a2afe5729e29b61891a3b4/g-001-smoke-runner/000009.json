@@ -1,0 +1,13 @@
+{
+  "seq": 9,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T18:43:05.645915+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "TRANSFER",
+    "applicable": false,
+    "reason": "este goal no reclama nada universal todavia: la transferencia se mide en G-002, en otro repo"
+  },
+  "prev_digest": "830579e97e46fa80937e8f55ba770029f62efc14bdd9366981b5d203a38fef48",
+  "digest": "d3ecb9a0d1a9504b57b6ede2c0479921038115efeafa311a27d705b9b863f8ea"
+}

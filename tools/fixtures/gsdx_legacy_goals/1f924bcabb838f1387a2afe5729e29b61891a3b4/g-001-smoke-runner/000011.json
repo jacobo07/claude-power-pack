@@ -1,0 +1,13 @@
+{
+  "seq": 11,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T18:43:06.606345+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "OPERATIONAL",
+    "applicable": false,
+    "reason": "no cambia ninguna rutina de operador; el runner ya tiene su CLI"
+  },
+  "prev_digest": "5261b7d2bc5db91307dc24cd6e499c4fd52799761d1682f584f0a7ca16e8b365",
+  "digest": "9d776fff8b8fcb032f892759c8b2e843778495daa16113169e4e7f2a126bc894"
+}

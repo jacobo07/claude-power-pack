@@ -1,0 +1,30 @@
+{
+  "seq": 69,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:01:57.853213+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-outcome-2",
+    "reason": "ob-outcome-2: ob-outcome-2 observed 'GOALJOB_PASS=6/6  threshold=6/6'",
+    "verdict": {
+      "gate": "ob-outcome-2",
+      "exit_status": 0,
+      "observed": "GOALJOB_PASS=6/6  threshold=6/6",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_lobby_hotbar_job.py",
+          "a966cb322728b42749e71121bd14ed9162ccdc8b950ff725f1daaf4a8679918d"
+        ],
+        [
+          "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+          "c49582c92b2f683ad0d2e3db8b883076b13afa75ba118e0b01388337a2953ed2"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "b172e31a943db4749eb34e12cdfc17a5176765f99e9007e7e56eda9ac194bb72",
+  "digest": "b0efa8f1ca9ecfe07f7d8c60b992d6e072f720eb3dc67e0ea4c61ab06822e7fd"
+}

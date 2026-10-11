@@ -1,0 +1,13 @@
+{
+  "seq": 15,
+  "type": "epoch.ended",
+  "ts": "2026-09-22T18:44:51.579051+00:00",
+  "actor": "reconciler",
+  "data": {
+    "epoch_id": "ep-9e40a91d49dc",
+    "outcome": "failed",
+    "detail": "exit 1"
+  },
+  "prev_digest": "9d4ed7eaa3420b7e97651b895e7aa6c281e42d3c1abb489cb37093661c88016b",
+  "digest": "d2bce1293b9e135a4c2386bf3711c2547517cb55b390a9eb94fe3cf025710035"
+}

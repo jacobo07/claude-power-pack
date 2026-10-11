@@ -1,0 +1,13 @@
+{
+  "seq": 4,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T18:43:03.452307+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "FAILURE",
+    "applicable": true,
+    "reason": ""
+  },
+  "prev_digest": "8f77e24de9cc983dc8f189300f8ce2fedd5d8270ccf82ec500e779a74d9c557c",
+  "digest": "857927f3691189262ba64e99f57718703455262f06fa9b5265925c7a6d933eb8"
+}

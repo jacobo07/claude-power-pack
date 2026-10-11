@@ -1,0 +1,13 @@
+{
+  "seq": 8,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T18:43:05.215231+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "SETUP_LEARNING",
+    "applicable": true,
+    "reason": ""
+  },
+  "prev_digest": "a94b1bc5e639b814696d5d4c63dfb7e1fbad974d56c5f4d802c7ea2298a12a73",
+  "digest": "830579e97e46fa80937e8f55ba770029f62efc14bdd9366981b5d203a38fef48"
+}

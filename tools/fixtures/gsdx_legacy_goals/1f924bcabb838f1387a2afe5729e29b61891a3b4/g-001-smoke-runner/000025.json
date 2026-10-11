@@ -1,0 +1,23 @@
+{
+  "seq": 25,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T18:49:48.455899+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-fa58f6044552",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "eced97422de04758a0e1f1856edf3fb9",
+      "epoch_id": "ep-fa58f6044552"
+    },
+    "info_key": "6856173f208e0e3cd88cbae1",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-outcome",
+      "tree_hash": "work:e53bc6240a3621d1d7cc806c"
+    }
+  },
+  "prev_digest": "d18f00fbde7617463d7ac057216253e17b8f5c60c08328750446b88f225a1e32",
+  "digest": "9e5b7f90db18b2a300487e62439bede7245df9d79a89529fb19c79bf018e50e8"
+}

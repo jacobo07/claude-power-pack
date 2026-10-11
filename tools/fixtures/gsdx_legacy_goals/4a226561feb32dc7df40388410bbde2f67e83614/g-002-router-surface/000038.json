@@ -1,0 +1,35 @@
+{
+  "seq": 38,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T20:40:41.236224+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-bc5b4eef1a63",
+    "revision": "b5da0ad2cad63d4d",
+    "provider": "gate",
+    "identity": {
+      "run_token": "699247a291634885978bc2708c126bea",
+      "epoch_id": "ep-bc5b4eef1a63"
+    },
+    "info_key": "4a2dc41da80cff15bfc7619c",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-transfer",
+      "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "gate": {
+        "id": "ob-transfer",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "gates/gate_zero_engine_changes.py"
+        ],
+        "class": "unit",
+        "files": [
+          "gates/engine_pin.json",
+          "gates/gate_zero_engine_changes.py"
+        ]
+      }
+    }
+  },
+  "prev_digest": "5f30572f1ddba05e21981bcb0ec7b516ea41fa2e3d2afb0af9196b9f9bac0fe0",
+  "digest": "9e07547badbba3eb15d5d4cf242129f0da7a9649b56534e6c56f9dcca94ad3c4"
+}

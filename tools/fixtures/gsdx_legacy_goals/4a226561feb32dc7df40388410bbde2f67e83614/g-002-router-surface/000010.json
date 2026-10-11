@@ -1,0 +1,13 @@
+{
+  "seq": 10,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T20:39:20.608557+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "RECOVERY",
+    "applicable": false,
+    "reason": "nothing here holds state that could need recovering: the gates read, judge and exit, and the one that touches credentials only lists them."
+  },
+  "prev_digest": "4f3b5a09a434f45ef142fa868fa6ba0c4e1d11a683ace40ed21f5369445a302d",
+  "digest": "c097a54ab3d4106d1b02c51920b3240bf11d2629ce9d64dbaaf981006119969e"
+}

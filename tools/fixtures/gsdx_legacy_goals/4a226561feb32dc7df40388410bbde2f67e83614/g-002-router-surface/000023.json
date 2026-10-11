@@ -1,0 +1,34 @@
+{
+  "seq": 23,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T20:40:12.839307+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-8b07e4810c67",
+    "revision": "b5da0ad2cad63d4d",
+    "provider": "gate",
+    "identity": {
+      "run_token": "12c488da290249b8b1fcca0257c6f448",
+      "epoch_id": "ep-8b07e4810c67"
+    },
+    "info_key": "3a0061aef03d47ec16d2cec8",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-help",
+      "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "gate": {
+        "id": "ob-help",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "gates/gate_help_is_the_surface.py"
+        ],
+        "class": "unit",
+        "files": [
+          "gates/gate_help_is_the_surface.py"
+        ]
+      }
+    }
+  },
+  "prev_digest": "8b1a49fdb3c8ebba39d3d6f2fe7b45514b1da5fbd2de2caa79b38dca9c737df4",
+  "digest": "57af276ce9b1e67287ada7552a5532bc9070c9f6311e3e0d43f62ca3689e8814"
+}

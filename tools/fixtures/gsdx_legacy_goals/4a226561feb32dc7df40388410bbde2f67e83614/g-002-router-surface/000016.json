@@ -1,0 +1,25 @@
+{
+  "seq": 16,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T20:39:35.509416+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-transfer",
+    "plane": "TRANSFER",
+    "text": "The Goal Spine drove a real goal in a repository it was not built in, and the engine is still at the commit recorded before this goal was declared",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_zero_engine_changes.py",
+    "gate_pin": [
+      [
+        "gates/engine_pin.json",
+        "98d065da46894f31ac56143d53c8347e3204a958a6bf8edcdb8d17cd49f8e9da"
+      ],
+      [
+        "gates/gate_zero_engine_changes.py",
+        "bda63061ad2acd97fa9164f5d89436d0f2b7772961ae1b3d9af979b8c9ed9b54"
+      ]
+    ],
+    "revision": "b5da0ad2cad63d4d"
+  },
+  "prev_digest": "7f207851fc184c845c98c28b9ea4dbef545de873fecfd0f194ae25169d9a6ffa",
+  "digest": "6f785d30c3c7eee288c6c0e0db9c67c003480247fdb6cc4dcdc78995fb294eee"
+}

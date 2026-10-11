@@ -1,0 +1,26 @@
+{
+  "seq": 21,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:40:08.676326+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-surface",
+    "reason": "ob-surface: ob-surface observed 'ROUTERSURF_PASS=4/4  threshold=4/4'",
+    "verdict": {
+      "gate": "ob-surface",
+      "exit_status": 0,
+      "observed": "ROUTERSURF_PASS=4/4  threshold=4/4",
+      "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "revision": "b5da0ad2cad63d4d",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "gates/gate_documented_surface.py",
+          "cae5b73c6d978f25a64c1bdc26e6d215fb248c041c3c63ac7cde57493a80fbee"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "584c006c04dfda1bdf92e09544a03654ce76621678195cb0ab44caf21abe88b9",
+  "digest": "a422a7735b3ace0cb04a9184b507067aa97365cb1ec397db776fe10386f05077"
+}

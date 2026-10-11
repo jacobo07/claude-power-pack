@@ -1,0 +1,34 @@
+{
+  "seq": 39,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T19:09:35.970147+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-8411c78ee50d",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "172445c10cfc4015bafb8a0178072827",
+      "epoch_id": "ep-8411c78ee50d"
+    },
+    "info_key": "011ab22cbaa47f352de6d34c",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-evidence",
+      "tree_hash": "work:e53bc6240a3621d1d7cc806c",
+      "gate": {
+        "id": "ob-evidence",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "scripts/goal/gate_lobby_hotbar_receipt.py"
+        ],
+        "class": "unit",
+        "files": [
+          "scripts/goal/gate_lobby_hotbar_receipt.py"
+        ]
+      }
+    }
+  },
+  "prev_digest": "1200cf5ea25cf1149f0c1af675be162a55ed3ac78c147b141734b810c7fdfd86",
+  "digest": "ef355f70ef699095451066d920beee1a1e828742690d836e3ab69e1947f5e746"
+}

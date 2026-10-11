@@ -1,0 +1,66 @@
+{
+  "seq": 123,
+  "type": "goal.judged",
+  "ts": "2026-10-02T20:44:47.687687+00:00",
+  "actor": "judge",
+  "data": {
+    "verdict": "PASS",
+    "reason": "6 pinned gate(s) re-run and passed at git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+    "goal_id": "g-001-smoke-runner",
+    "revision": "250078669463c481",
+    "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+    "gates": [
+      {
+        "obligation": "ob-evidence",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_lobby_hotbar_receipt.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "GOALRCPT_PASS=4/4  threshold=4/4",
+        "seconds": 0.2
+      },
+      {
+        "obligation": "ob-regression",
+        "gate": "node tools/smoke-test/test-hotbar-has-item.selftest.js",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED.",
+        "seconds": 0.3
+      },
+      {
+        "obligation": "ob-outcome-2",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_lobby_hotbar_job.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "GOALJOB_PASS=6/6  threshold=6/6",
+        "seconds": 0.2
+      },
+      {
+        "obligation": "ob-reality",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_lobby_hotbar_live.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "GOALLIVE_PASS=4/4  threshold=4/4",
+        "seconds": 31.1
+      },
+      {
+        "obligation": "ob-setup",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_setup_disposition.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "GOALSETUP_PASS=5/5  threshold=5/5",
+        "seconds": 0.3
+      },
+      {
+        "obligation": "ob-ucr",
+        "gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_goal_learning.py",
+        "verdict": "PASS",
+        "exit_status": 0,
+        "observed": "GOALUCR_PASS=6/6  threshold=6/6",
+        "seconds": 0.2
+      }
+    ],
+    "ts": "2026-10-02T20:44:47.450160+00:00"
+  },
+  "prev_digest": "bb6d2ff5a75643b602325d09c9d7f9e3f46f91ae0ab287cfee3d312a38de4f55",
+  "digest": "10dab37eac174cbbddddaa89d13877194f4bd8d45364a7d60694754cf86c227d"
+}

@@ -1,0 +1,31 @@
+{
+  "seq": 1,
+  "type": "goal.declared",
+  "ts": "2026-09-22T20:39:03.273427+00:00",
+  "actor": "owner",
+  "data": {
+    "semantic": {
+      "intent": "router.py's module docstring is this tool's only documentation AND its --help description, so it is output rather than a comment. It listed five subcommands while the parser registered eleven commands, and it prescribed the token fingerprint format that fingerprint() deliberately abandoned on 2026-09-14 for leaking -- instructing the next maintainer to undo a safety fix. Make the documented surface match the executable surface in both directions, make the HR-6 wording describe what is actually enforced, and gate both so neither can rot again. This goal is also the Goal Spine's TRANSFER measurement: it must converge with zero changes to the engine.",
+      "acceptance": [
+        "every command the parser registers is named in the docstring, and every command the docstring names is registered",
+        "the HR-6 section describes the redaction the code performs, proven by calling fingerprint() rather than by reading prose",
+        "HR-6 is measured, not asserted: no real secret appears in the real tool's output",
+        "the Goal Spine engine is at the commit recorded before this goal was declared"
+      ],
+      "constraints": [
+        "read-only against the Owner's credentials: list-accounts only, no API call that spends quota or sends mail",
+        "no change to the engine; an engine change is a finding about v1's generality, not a chore"
+      ],
+      "scope": {
+        "paths": [
+          "LEARNINGS.md",
+          "gates",
+          "router.py"
+        ]
+      }
+    },
+    "revision": "b5da0ad2cad63d4d"
+  },
+  "prev_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "digest": "77b5718b28bb28efc9b1e940f7294b57ef4bd646e05fae571b31d057c40a79b4"
+}

@@ -1,0 +1,21 @@
+{
+  "seq": 54,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T19:58:08.406120+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-setup",
+    "plane": "SETUP_LEARNING",
+    "text": "What this goal learned about the SETUP is written where the estate reads it, and the false absence it was dispatched on is repaired in the registry itself",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_setup_disposition.py",
+    "gate_pin": [
+      [
+        "scripts/goal/gate_setup_disposition.py",
+        "8dcb82b8177a2e8c338de57aa39f85adc9ac34f9d18d34b1d06f37f21a60fbf0"
+      ]
+    ],
+    "revision": "250078669463c481"
+  },
+  "prev_digest": "ff5cd6a7026028a81a173dbb5e78639677f41582b0e551287b9c26d2cf88e507",
+  "digest": "67682d197747b0a0927d3bd4336a8323e53cf085f9c3c14d1d9f19b6c224c4a8"
+}

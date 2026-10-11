@@ -1,0 +1,28 @@
+{
+  "seq": 19,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T18:48:23.227300+00:00",
+  "actor": "operator",
+  "data": {
+    "epoch_id": "ep-a72779d9d196",
+    "receipt_id": "22c1584f5be94a7af6268531",
+    "receipt": {
+      "epoch_id": "ep-a72779d9d196",
+      "provider": "claude-interactive",
+      "revision": "250078669463c481",
+      "head_before": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "head_after": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "tree_before": "git:c7106ebae6237b97ec7b9d64faeb528ba6f7c5fb",
+      "tree_after": "work:e53bc6240a3621d1d7cc806c",
+      "commits": [],
+      "verdicts": [],
+      "failures": [],
+      "cost": {
+        "seconds": 130.1
+      },
+      "narrative": "Wrote the job file and the two gates. The job joins the Lobby through the production proxy 65.109.80.35:25565, settles 8s, asserts hotbar_has_item(material=compass) and spawn_walkable, bounded at 120s, read-only. gate_lobby_hotbar_job.py judges the job file without connecting: 6/6 green, and 5/6 with a driven red branch when the port is moved to a backend hop. gate_lobby_hotbar_receipt.py judges a live receipt and returns UNREADABLE_INPUT (exit 3) while no run exists, which is distinct from FAIL. The live run has NOT happened yet."
+    }
+  },
+  "prev_digest": "e5a5cfc36aab4e3cc256a23d9507bf2938babe71a2f8566b2d12953cd35de768",
+  "digest": "8e3c64fe93c46de74e2cf415b3ee366e7f1f382d2cbf72db9f1c907cce69f5bb"
+}

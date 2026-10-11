@@ -1,0 +1,26 @@
+{
+  "seq": 36,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:40:36.703899+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-ucr",
+    "reason": "ob-ucr: ob-ucr observed 'ROUTERLEARN_PASS=5/5  threshold=5/5'",
+    "verdict": {
+      "gate": "ob-ucr",
+      "exit_status": 0,
+      "observed": "ROUTERLEARN_PASS=5/5  threshold=5/5",
+      "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "revision": "b5da0ad2cad63d4d",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "gates/gate_learnings.py",
+          "4403cae8cfd759e54d705da228dee1c86bd6d0d65291f7f37e41d8b43db500cc"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "9915f8533394710da8cf4cf359896f18036f695690c86dd531b7af95b4ff1972",
+  "digest": "95b3a160b3cb975f227576b9d6f2b9ad6bcb03c565631792b266975df6def3a3"
+}

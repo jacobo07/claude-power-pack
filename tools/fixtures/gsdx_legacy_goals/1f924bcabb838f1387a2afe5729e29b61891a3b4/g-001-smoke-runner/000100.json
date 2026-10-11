@@ -1,0 +1,50 @@
+{
+  "seq": 100,
+  "type": "epoch.receipt",
+  "ts": "2026-10-02T19:25:51.706287+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-37d87d5a72cf",
+    "receipt_id": "9c7b385c1b013bcc974b933e",
+    "receipt": {
+      "epoch_id": "ep-37d87d5a72cf",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "5717d55a841f44b00b126faebe1916564cd4c1bf",
+      "head_after": "5717d55a841f44b00b126faebe1916564cd4c1bf",
+      "tree_before": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "tree_after": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-regression",
+          "exit_status": 0,
+          "observed": "desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED.",
+          "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+          "revision": "250078669463c481",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "tools/smoke-test/assertions.js",
+              "9fe33d9c995f31e7264174a5bfd2802234852b97c6011cd56516ec725a767517"
+            ],
+            [
+              "tools/smoke-test/test-hotbar-has-item.selftest.js",
+              "dcf5344c554b2283a46a8162c313307795f1d3b5065ac1c68c62a892992c2b75"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 300.0
+      },
+      "narrative": "desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED.",
+      "fence": 2,
+      "goal_id": "g-001-smoke-runner",
+      "run_token": "9e72cb30cc28492aba9ece8a8459b187"
+    }
+  },
+  "prev_digest": "9f4b28ba9cac72414d60fe18b389416521b7dbdea1bc4cde87d57e8856cfb230",
+  "digest": "d3993c26059cd31bce09b6f446bbb490587200ab6dc84f822998cd510eeaca8f"
+}

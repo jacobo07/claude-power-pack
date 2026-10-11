@@ -1,0 +1,39 @@
+{
+  "seq": 103,
+  "type": "epoch.dispatching",
+  "ts": "2026-10-02T19:30:51.317139+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-ae4d94763a40",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "f93599f3ed594169b86740f2f5e9dab3",
+      "epoch_id": "ep-ae4d94763a40",
+      "fence": 3,
+      "goal_id": "g-001-smoke-runner"
+    },
+    "info_key": "3d428286c1f4e01307334b1c",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-outcome-2",
+      "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "gate": {
+        "id": "ob-outcome-2",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "scripts/goal/gate_lobby_hotbar_job.py"
+        ],
+        "class": "unit",
+        "files": [
+          "scripts/goal/gate_lobby_hotbar_job.py",
+          "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json"
+        ],
+        "pin_scheme": "sha256"
+      }
+    },
+    "fence": 3
+  },
+  "prev_digest": "8c3eeedf8d59eced97ac10ed78bda58a6fa558423c78be5a949fc37fa98c74e4",
+  "digest": "52e52ea90ab875b5dc355de0c4284845c87d0bbe192934cee454b087b4abaf24"
+}

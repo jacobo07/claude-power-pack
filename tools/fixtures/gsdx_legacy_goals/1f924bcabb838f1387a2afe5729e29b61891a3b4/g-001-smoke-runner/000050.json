@@ -1,0 +1,12 @@
+{
+  "seq": 50,
+  "type": "failure.recorded",
+  "ts": "2026-09-22T19:15:44.768508+00:00",
+  "actor": "reconciler",
+  "data": {
+    "id": "f-registry-describes-a-past",
+    "summary": "verification_registry.json:4918 states that nothing proves the control reaches a player's hotbar because 'falta un evaluador hotbar_has_item'. That evaluator has existed since 2026-09-20 (assertions.js:612,718) and this goal has now measured the answer in production. The registry sentence describes a past, like the RESUMPTION entry that sent this goal after work already done."
+  },
+  "prev_digest": "5698f46ac961ec86a15b7fa53f3a3d27c84c920799d62db3b39cd33631ed2270",
+  "digest": "2e2a4e6db51cc936ac486499eca36bf49523a73c25ff1326b06456305b650d58"
+}

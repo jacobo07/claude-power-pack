@@ -1,0 +1,35 @@
+{
+  "seq": 71,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T20:02:17.253203+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-0365595b5480",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "11cf25cf7a4b47469607f19f2e0331f1",
+      "epoch_id": "ep-0365595b5480"
+    },
+    "info_key": "f271235c1ba2644c7d69bf81",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-reality",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "gate": {
+        "id": "ob-reality",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "scripts/goal/gate_lobby_hotbar_live.py"
+        ],
+        "class": "in_game",
+        "files": [
+          "scripts/goal/gate_lobby_hotbar_live.py",
+          "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json"
+        ]
+      }
+    }
+  },
+  "prev_digest": "55b67b2812a34ccb0331102fe8031541218666d0f99217492bf5f710a0666387",
+  "digest": "d5f38a4e81500f1bc1cf73c9223257bbe9337b31c418fcbe10865d37854d4a18"
+}

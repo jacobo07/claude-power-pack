@@ -1,0 +1,21 @@
+{
+  "seq": 19,
+  "type": "epoch.running",
+  "ts": "2026-09-22T20:40:04.296893+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-e141e8dbd990",
+    "handle": {
+      "pid": 45272,
+      "token": "9e391d1c93ab455795d864f1c05eb562",
+      "log": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\4a226561feb32dc7df40388410bbde2f67e83614\\g-002-router-surface\\runs\\gate-9e391d1c93ab455795d864f1c05eb562.log",
+      "marker": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\4a226561feb32dc7df40388410bbde2f67e83614\\g-002-router-surface\\runs\\gate-9e391d1c93ab455795d864f1c05eb562.json",
+      "result": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\4a226561feb32dc7df40388410bbde2f67e83614\\g-002-router-surface\\runs\\gate-9e391d1c93ab455795d864f1c05eb562.result.json",
+      "started_at": 1790109603.889013,
+      "tree_before": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "head_before": "e1ba9f870829803be04dc3026b1d030d4f13fcbb"
+    }
+  },
+  "prev_digest": "dba7f9764e6c6dce32ea6220f7323b488d4824b6e9fdf8f34b4e8fff1bf5868d",
+  "digest": "090646724bb91d5c89e5b52676fcbbf3d94983dc8c6df7fb00cccea303c6a754"
+}

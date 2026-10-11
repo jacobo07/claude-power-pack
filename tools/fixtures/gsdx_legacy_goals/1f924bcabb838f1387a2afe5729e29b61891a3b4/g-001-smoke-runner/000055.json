@@ -1,0 +1,21 @@
+{
+  "seq": 55,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T19:58:08.831524+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-ucr",
+    "plane": "UCR_CIF_LEARNING",
+    "text": "What this goal cost the FACTORY is in the UKDL draft, every rule carrying the scope it was measured at",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_goal_learning.py",
+    "gate_pin": [
+      [
+        "scripts/goal/gate_goal_learning.py",
+        "bc984a94699e2da83a8f9eab2d06ff762eb5cd60e7e4faddfc6916a3e0deff41"
+      ]
+    ],
+    "revision": "250078669463c481"
+  },
+  "prev_digest": "67682d197747b0a0927d3bd4336a8323e53cf085f9c3c14d1d9f19b6c224c4a8",
+  "digest": "2874182cdb4e818a903bc3172a56d4fdac8b8fc578431015bbdfebc0eea722fd"
+}

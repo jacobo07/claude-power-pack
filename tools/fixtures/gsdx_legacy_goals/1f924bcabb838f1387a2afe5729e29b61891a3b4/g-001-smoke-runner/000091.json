@@ -1,0 +1,13 @@
+{
+  "seq": 91,
+  "type": "goal.autonomous",
+  "ts": "2026-10-02T19:13:37.443315+00:00",
+  "actor": "owner",
+  "data": {
+    "enabled": true,
+    "reason": "Owner b 2026-10-02: unattended re-gating incl. read-only production bot gate (state-centric S2)",
+    "root": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\kc-goal-spine-wt"
+  },
+  "prev_digest": "8f16f3a4aecd3023ba5fddbeeebd5086d70e0697dbc0b78c91099596147ed064",
+  "digest": "6ceae993ca558c53b85f18bdded062b31673f8211955fbd935c0c7937c006e2d"
+}

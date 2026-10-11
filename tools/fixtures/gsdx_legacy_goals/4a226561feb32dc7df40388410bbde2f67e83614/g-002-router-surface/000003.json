@@ -1,0 +1,13 @@
+{
+  "seq": 3,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T20:39:17.907245+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "EVIDENCE",
+    "applicable": true,
+    "reason": ""
+  },
+  "prev_digest": "251b1b93ac88157db5160da4ccfe3e05681a3e77d63f31b91b0c66c9fbc58cc7",
+  "digest": "39024f41b76eb498e1a3b09844057418bc4dafe31e6e4c74ce98e8115945a02f"
+}

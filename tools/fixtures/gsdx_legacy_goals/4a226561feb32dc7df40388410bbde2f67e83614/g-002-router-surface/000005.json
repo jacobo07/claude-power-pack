@@ -1,0 +1,13 @@
+{
+  "seq": 5,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T20:39:18.619780+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "REGRESSION",
+    "applicable": true,
+    "reason": ""
+  },
+  "prev_digest": "508c0731f5a1b1085db08fbba61483f7aad0e8672dd404b255dad30fd0e5021b",
+  "digest": "266d57a1c23b7229f1d32eb31111ebf54cd7065e13210ed7fce036c5624d0118"
+}

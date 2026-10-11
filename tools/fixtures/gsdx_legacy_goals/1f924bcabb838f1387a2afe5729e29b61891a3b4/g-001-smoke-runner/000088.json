@@ -1,0 +1,13 @@
+{
+  "seq": 88,
+  "type": "failure.dispositioned",
+  "ts": "2026-09-22T20:05:07.615226+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "f-codex-401",
+    "disposition": "accepted_risk",
+    "reason": "External and Owner-resolvable, not a defect of this goal. The epoch dispatched and the binary ran; every request returned 401 because this host holds no stored credential (~/.codex/auth.json and ~/.hermes/auth.json absent, orca/codex-runtime-home/system-default-auth.json holds authJson null). The host app brokers auth per session, so an unattended process cannot authenticate. The work routed around it through the interactive provider, so this goal is unaffected -- what stays unproven is that the CODEX leg can ever run unattended on this machine. Closed by the Owner running codex login, and named in GOAL_SPINE_RESUMPTION.md."
+  },
+  "prev_digest": "98416330f223e61d3e936b587e0da3d141987a7364f25acab9a0ccde0612a46d",
+  "digest": "d2dcfd137e503699388d0b8cba207e872c01b498157298a528f1a60b65fa851b"
+}

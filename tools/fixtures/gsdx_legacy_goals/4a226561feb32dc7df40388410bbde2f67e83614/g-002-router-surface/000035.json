@@ -1,0 +1,43 @@
+{
+  "seq": 35,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:40:36.666141+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-68a14c7b78b3",
+    "receipt_id": "3c5f5b63bc3cd200e045d5aa",
+    "receipt": {
+      "epoch_id": "ep-68a14c7b78b3",
+      "provider": "gate",
+      "revision": "b5da0ad2cad63d4d",
+      "head_before": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "head_after": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "tree_before": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "tree_after": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-ucr",
+          "exit_status": 0,
+          "observed": "ROUTERLEARN_PASS=5/5  threshold=5/5",
+          "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+          "revision": "b5da0ad2cad63d4d",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "gates/gate_learnings.py",
+              "4403cae8cfd759e54d705da228dee1c86bd6d0d65291f7f37e41d8b43db500cc"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 4.7
+      },
+      "narrative": "ROUTERLEARN_PASS=5/5  threshold=5/5"
+    }
+  },
+  "prev_digest": "6f8cc41ebc50d5a97e3769524c42d549e7ae45fc039ba8d351baa62e79af7479",
+  "digest": "9915f8533394710da8cf4cf359896f18036f695690c86dd531b7af95b4ff1972"
+}

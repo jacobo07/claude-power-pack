@@ -1,0 +1,43 @@
+{
+  "seq": 83,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:03:57.000334+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-e68c00f7fa53",
+    "receipt_id": "e75ceb1daabce5c71087239d",
+    "receipt": {
+      "epoch_id": "ep-e68c00f7fa53",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "head_after": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "tree_before": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "tree_after": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-ucr",
+          "exit_status": 0,
+          "observed": "GOALUCR_PASS=6/6  threshold=6/6",
+          "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+          "revision": "250078669463c481",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_goal_learning.py",
+              "bc984a94699e2da83a8f9eab2d06ff762eb5cd60e7e4faddfc6916a3e0deff41"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 16.1
+      },
+      "narrative": "GOALUCR_PASS=6/6  threshold=6/6"
+    }
+  },
+  "prev_digest": "975d62a2a3bb2932590c7b70040a894657ab8a0714c7a781acdbeabadc167c79",
+  "digest": "b8f59ab9640f532f850c3b841f17021521f1eadc1c7460fc9a30e39de7c32c28"
+}

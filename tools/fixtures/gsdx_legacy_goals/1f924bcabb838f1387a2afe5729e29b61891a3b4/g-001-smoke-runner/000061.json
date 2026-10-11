@@ -1,0 +1,35 @@
+{
+  "seq": 61,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T20:01:52.945830+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-d6eb00480dc1",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "21510376288d4c1f983682af81abf0ba",
+      "epoch_id": "ep-d6eb00480dc1"
+    },
+    "info_key": "47e4df6a8512579fcd499c35",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-regression",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "gate": {
+        "id": "ob-regression",
+        "command": [
+          "node",
+          "tools/smoke-test/test-hotbar-has-item.selftest.js"
+        ],
+        "class": "unit",
+        "files": [
+          "tools/smoke-test/assertions.js",
+          "tools/smoke-test/test-hotbar-has-item.selftest.js"
+        ]
+      }
+    }
+  },
+  "prev_digest": "bffc5c7e319d6d6ad1af3748860dd6ed44714e2d4afce2dbf98e99823ae1e5e5",
+  "digest": "951ef39e0eb81d8c1f309852288280cda64d684a0082ab17d8660d8af0c7557f"
+}

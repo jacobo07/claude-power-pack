@@ -1,0 +1,12 @@
+{
+  "seq": 16,
+  "type": "failure.recorded",
+  "ts": "2026-09-22T18:46:12.961658+00:00",
+  "actor": "reconciler",
+  "data": {
+    "id": "f-codex-401",
+    "summary": "The codex epoch ep-9e40a91d49dc dispatched and the binary ran, but every request returned 401 Unauthorized. Measured cause: this host has no stored codex credential -- ~/.codex/auth.json and ~/.hermes/auth.json do not exist, and orca/codex-runtime-home/system-default-auth.json holds authJson: null beside a runtime-logout marker. The host application brokers auth per session, so an unattended process cannot authenticate. External condition, Owner-resolvable: `codex login`."
+  },
+  "prev_digest": "d2bce1293b9e135a4c2386bf3711c2547517cb55b390a9eb94fe3cf025710035",
+  "digest": "d57df34168fae17ab788c545034d1d4ec8c8df050a41d432c7dc58c0038fe1cb"
+}

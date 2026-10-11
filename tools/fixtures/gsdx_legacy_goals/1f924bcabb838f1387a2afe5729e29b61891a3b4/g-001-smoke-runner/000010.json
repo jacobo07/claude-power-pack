@@ -1,0 +1,13 @@
+{
+  "seq": 10,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T18:43:06.060223+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "RECOVERY",
+    "applicable": false,
+    "reason": "no hay estado que recuperar: el bot entra, mira y sale; nada persiste"
+  },
+  "prev_digest": "d3ecb9a0d1a9504b57b6ede2c0479921038115efeafa311a27d705b9b863f8ea",
+  "digest": "5261b7d2bc5db91307dc24cd6e499c4fd52799761d1682f584f0a7ca16e8b365"
+}

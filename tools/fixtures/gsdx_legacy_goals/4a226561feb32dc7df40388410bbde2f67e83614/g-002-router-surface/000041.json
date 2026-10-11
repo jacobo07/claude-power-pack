@@ -1,0 +1,30 @@
+{
+  "seq": 41,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:40:46.150134+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-transfer",
+    "reason": "ob-transfer: ob-transfer observed 'ROUTERXFER_PASS=2/2  threshold=2/2'",
+    "verdict": {
+      "gate": "ob-transfer",
+      "exit_status": 0,
+      "observed": "ROUTERXFER_PASS=2/2  threshold=2/2",
+      "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "revision": "b5da0ad2cad63d4d",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "gates/engine_pin.json",
+          "98d065da46894f31ac56143d53c8347e3204a958a6bf8edcdb8d17cd49f8e9da"
+        ],
+        [
+          "gates/gate_zero_engine_changes.py",
+          "bda63061ad2acd97fa9164f5d89436d0f2b7772961ae1b3d9af979b8c9ed9b54"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "fb483849d272b3422229eec46dc89c07f31a608881d640a670302e4f1781a600",
+  "digest": "b5c1a0a7f43a68a9201f3847630ecc8e8615c5f3d3457da75f52fd2f44655273"
+}

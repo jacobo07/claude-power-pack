@@ -1,0 +1,43 @@
+{
+  "seq": 25,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:40:17.462345+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-8b07e4810c67",
+    "receipt_id": "757632adb79c499d013265f9",
+    "receipt": {
+      "epoch_id": "ep-8b07e4810c67",
+      "provider": "gate",
+      "revision": "b5da0ad2cad63d4d",
+      "head_before": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "head_after": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "tree_before": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "tree_after": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-help",
+          "exit_status": 0,
+          "observed": "ROUTERHELP_PASS=3/3  threshold=3/3",
+          "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+          "revision": "b5da0ad2cad63d4d",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "gates/gate_help_is_the_surface.py",
+              "6db4923ae6be3ba121ff21a240766074cbff3e3abae100d1fe4191b8babfc82e"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 4.6
+      },
+      "narrative": "ROUTERHELP_PASS=3/3  threshold=3/3"
+    }
+  },
+  "prev_digest": "f957b3cc9c277a0e89a4f26b4494180c142016ee21987d7f707a5258e8c260e5",
+  "digest": "52fa1c7c72c5cacd935b45e6bf2a7592d572c1b74698b56ddb2f003721d7a0c6"
+}

@@ -1,0 +1,26 @@
+{
+  "seq": 79,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:03:27.033211+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-setup",
+    "reason": "ob-setup: ob-setup observed 'GOALSETUP_PASS=5/5  threshold=5/5'",
+    "verdict": {
+      "gate": "ob-setup",
+      "exit_status": 0,
+      "observed": "GOALSETUP_PASS=5/5  threshold=5/5",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_setup_disposition.py",
+          "8dcb82b8177a2e8c338de57aa39f85adc9ac34f9d18d34b1d06f37f21a60fbf0"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "eaacd72cd487ac5f4c5f88ea7ed66b5a8192a5a335b773151ed9d71bde84ad22",
+  "digest": "57a37aa883488639d99e85eb77d5a98b5baac1364f18fcb1092d9622a93e7367"
+}

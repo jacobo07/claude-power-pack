@@ -1,0 +1,21 @@
+{
+  "seq": 18,
+  "type": "epoch.running",
+  "ts": "2026-09-22T18:46:13.373778+00:00",
+  "actor": "reconciler",
+  "data": {
+    "epoch_id": "ep-a72779d9d196",
+    "handle": {
+      "token": "253fb3bebc7f4fb8865431d74191d248",
+      "brief": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\g-001-smoke-runner\\runs\\brief-253fb3bebc7f4fb8865431d74191d248.md",
+      "receipt": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\g-001-smoke-runner\\runs\\receipt-253fb3bebc7f4fb8865431d74191d248.json",
+      "epoch_id": "ep-a72779d9d196",
+      "root": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\kc-goal-spine-wt",
+      "started_at": 1790102773.0991971,
+      "head_before": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "tree_before": "git:c7106ebae6237b97ec7b9d64faeb528ba6f7c5fb"
+    }
+  },
+  "prev_digest": "df0a5902d5db3198a4cf276fa6f5b952d8ef6ce86784b8d61e41fdb7243cbfb8",
+  "digest": "e5a5cfc36aab4e3cc256a23d9507bf2938babe71a2f8566b2d12953cd35de768"
+}

@@ -1,0 +1,47 @@
+{
+  "seq": 36,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T19:09:29.507882+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-9e778f3ad9aa",
+    "receipt_id": "fc17f2c18d86582648975a02",
+    "receipt": {
+      "epoch_id": "ep-9e778f3ad9aa",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "head_after": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "tree_before": "work:e53bc6240a3621d1d7cc806c",
+      "tree_after": "work:e53bc6240a3621d1d7cc806c",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-outcome",
+          "exit_status": 0,
+          "observed": "GOALJOB_PASS=6/6  threshold=6/6",
+          "tree_hash": "work:e53bc6240a3621d1d7cc806c",
+          "revision": "250078669463c481",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_lobby_hotbar_job.py",
+              "3b675985aec723d806f69164a4f0cc7d7c7689c40b94e0031754160a921b2858"
+            ],
+            [
+              "tools/smoke-test/jobs/pending/lobby-hotbar-census.job.json",
+              "c49582c92b2f683ad0d2e3db8b883076b13afa75ba118e0b01388337a2953ed2"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 7.1
+      },
+      "narrative": "GOALJOB_PASS=6/6  threshold=6/6"
+    }
+  },
+  "prev_digest": "d4f335376c4def4f0f593f3c06c72d9751d5fc836bc4a81044afad57899b336b",
+  "digest": "35ae839de400840774e1d2b6be65072b7355e4baf387493d6a65a140ef74ebdc"
+}

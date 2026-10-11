@@ -1,0 +1,31 @@
+{
+  "seq": 95,
+  "type": "obligation.satisfied",
+  "ts": "2026-10-02T19:15:51.103829+00:00",
+  "actor": "sweep",
+  "data": {
+    "id": "ob-evidence",
+    "reason": "ob-evidence: ob-evidence observed 'GOALRCPT_PASS=4/4  threshold=4/4'",
+    "verdict": {
+      "gate": "ob-evidence",
+      "exit_status": 0,
+      "observed": "GOALRCPT_PASS=4/4  threshold=4/4",
+      "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_lobby_hotbar_receipt.py",
+          "0049484d9b5f0dfa90fabcf23f69704759dfe3b6eda476a2585d4b1790116979"
+        ]
+      ]
+    },
+    "source": {
+      "epoch": "ep-0954eedea9fe",
+      "provider": "gate",
+      "handle": "{'pid': 40524, 'token': 'e9dbe9e39eef4bb0802d3957c779260b', 'log': 'C:\\\\Users\\\\User\\\\.claude\\\\state\\\\gsd-x\\\\goals\\\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\\\g-001-smoke-runner\\\\runs\\\\gate-e9dbe9e39eef"
+    }
+  },
+  "prev_digest": "efc03ec3d8d893c191c8090a80337ddf5f776c4206094649f24344f4ce14c1b4",
+  "digest": "4d60086ce9b200db1fa7d471c0a2b317619649459e8925f86964649fb1e402b8"
+}

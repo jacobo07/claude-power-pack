@@ -1,0 +1,13 @@
+{
+  "seq": 8,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T20:39:19.893644+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "TRANSFER",
+    "applicable": true,
+    "reason": ""
+  },
+  "prev_digest": "927e73b049785b8f2b57c9b31df66d8e545c94b9ac5295c0b26fa7e8c1552c09",
+  "digest": "29ff2cc5e08792f1c92c1ee203a3938e9bed74a8ebb10681540340a1993487e4"
+}

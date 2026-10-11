@@ -1,0 +1,13 @@
+{
+  "seq": 6,
+  "type": "plane.applicability",
+  "ts": "2026-09-22T18:43:04.322312+00:00",
+  "actor": "owner",
+  "data": {
+    "plane": "UCR_CIF_LEARNING",
+    "applicable": true,
+    "reason": ""
+  },
+  "prev_digest": "f78bc985176a8a70ed0b7a3426ddfbaac0debf94c998bb75430166d9e7c4fd3a",
+  "digest": "ea3526c1ee6260c102f60110125e41937ff6685d0b7fa4bd06dbeb45a2628eb2"
+}

@@ -1,0 +1,13 @@
+{
+  "seq": 30,
+  "type": "epoch.ended",
+  "ts": "2026-09-22T18:50:09.250701+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-0a6d8cd273a0",
+    "outcome": "lost",
+    "detail": "no child handle in this process"
+  },
+  "prev_digest": "13d3c4718dbd8c338cb4356f6adb51657f1d23205fa2245d9d9591237d22e49f",
+  "digest": "c4dbd60080df9df2e2206b30cab268471c932ddfa2d5294a9371ec154332f5dd"
+}

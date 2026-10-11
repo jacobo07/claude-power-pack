@@ -1,0 +1,13 @@
+{
+  "seq": 117,
+  "type": "epoch.ended",
+  "ts": "2026-10-02T20:10:52.303005+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-f89214c2f7e0",
+    "outcome": "completed",
+    "detail": "exit 0"
+  },
+  "prev_digest": "8c5acfd07e78dda9d3e64eeedd7db8586b2f9dbf897f10ef53d048c646e287e7",
+  "digest": "f7e1b816e37f5393f42300f47695d06b5e9cd1169e124ed61a88205937e86cb7"
+}

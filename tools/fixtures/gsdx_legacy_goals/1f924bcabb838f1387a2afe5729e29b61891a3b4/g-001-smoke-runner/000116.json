@@ -1,0 +1,31 @@
+{
+  "seq": 116,
+  "type": "obligation.satisfied",
+  "ts": "2026-10-02T20:10:52.231165+00:00",
+  "actor": "sweep",
+  "data": {
+    "id": "ob-setup",
+    "reason": "ob-setup: ob-setup observed 'GOALSETUP_PASS=5/5  threshold=5/5'",
+    "verdict": {
+      "gate": "ob-setup",
+      "exit_status": 0,
+      "observed": "GOALSETUP_PASS=5/5  threshold=5/5",
+      "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_setup_disposition.py",
+          "8dcb82b8177a2e8c338de57aa39f85adc9ac34f9d18d34b1d06f37f21a60fbf0"
+        ]
+      ]
+    },
+    "source": {
+      "epoch": "ep-f89214c2f7e0",
+      "provider": "gate",
+      "handle": "{'pid': 27404, 'token': '8328cbb1adbd48118c7ef8464bb14840', 'log': 'C:\\\\Users\\\\User\\\\.claude\\\\state\\\\gsd-x\\\\goals\\\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\\\g-001-smoke-runner\\\\runs\\\\gate-8328cbb1adbd"
+    }
+  },
+  "prev_digest": "284980e7d99e001079c1163b5db3b9bc48023eebe70d57caadd21fb17cef27f7",
+  "digest": "8c5acfd07e78dda9d3e64eeedd7db8586b2f9dbf897f10ef53d048c646e287e7"
+}

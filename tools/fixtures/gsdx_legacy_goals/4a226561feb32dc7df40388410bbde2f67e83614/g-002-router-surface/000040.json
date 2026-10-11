@@ -1,0 +1,47 @@
+{
+  "seq": 40,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:40:46.108639+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-bc5b4eef1a63",
+    "receipt_id": "3ba43785cce563026c31f2b2",
+    "receipt": {
+      "epoch_id": "ep-bc5b4eef1a63",
+      "provider": "gate",
+      "revision": "b5da0ad2cad63d4d",
+      "head_before": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "head_after": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "tree_before": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "tree_after": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-transfer",
+          "exit_status": 0,
+          "observed": "ROUTERXFER_PASS=2/2  threshold=2/2",
+          "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+          "revision": "b5da0ad2cad63d4d",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "gates/engine_pin.json",
+              "98d065da46894f31ac56143d53c8347e3204a958a6bf8edcdb8d17cd49f8e9da"
+            ],
+            [
+              "gates/gate_zero_engine_changes.py",
+              "bda63061ad2acd97fa9164f5d89436d0f2b7772961ae1b3d9af979b8c9ed9b54"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 4.8
+      },
+      "narrative": "ROUTERXFER_PASS=2/2  threshold=2/2"
+    }
+  },
+  "prev_digest": "ef62be15cff381412a95234645df223a00ca278583ddffff0ae91442b8153dc2",
+  "digest": "fb483849d272b3422229eec46dc89c07f31a608881d640a670302e4f1781a600"
+}

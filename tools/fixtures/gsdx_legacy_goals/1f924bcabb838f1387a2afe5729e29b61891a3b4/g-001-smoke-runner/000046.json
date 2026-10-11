@@ -1,0 +1,30 @@
+{
+  "seq": 46,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T19:09:57.128124+00:00",
+  "actor": "sweep",
+  "data": {
+    "id": "ob-regression",
+    "reason": "ob-regression: ob-regression observed 'desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED.'",
+    "verdict": {
+      "gate": "ob-regression",
+      "exit_status": 0,
+      "observed": "desde este fichero, asi que no autoriza ningun PLAYER_VERIFIED.",
+      "tree_hash": "work:e53bc6240a3621d1d7cc806c",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "tools/smoke-test/assertions.js",
+          "9fe33d9c995f31e7264174a5bfd2802234852b97c6011cd56516ec725a767517"
+        ],
+        [
+          "tools/smoke-test/test-hotbar-has-item.selftest.js",
+          "dcf5344c554b2283a46a8162c313307795f1d3b5065ac1c68c62a892992c2b75"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "c8aac6dc0707f9aab7606f39f95a0909f18c5314010421482711e7f8fc4f0643",
+  "digest": "2fcb807ba63156e7a0469df97100d52c8be626624709b7e98cb51de1ab46b60d"
+}

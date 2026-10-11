@@ -1,0 +1,46 @@
+{
+  "seq": 94,
+  "type": "epoch.receipt",
+  "ts": "2026-10-02T19:15:51.047023+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-0954eedea9fe",
+    "receipt_id": "bca467c7b8f0179d04fd0f54",
+    "receipt": {
+      "epoch_id": "ep-0954eedea9fe",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "5717d55a841f44b00b126faebe1916564cd4c1bf",
+      "head_after": "5717d55a841f44b00b126faebe1916564cd4c1bf",
+      "tree_before": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "tree_after": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-evidence",
+          "exit_status": 0,
+          "observed": "GOALRCPT_PASS=4/4  threshold=4/4",
+          "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+          "revision": "250078669463c481",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_lobby_hotbar_receipt.py",
+              "0049484d9b5f0dfa90fabcf23f69704759dfe3b6eda476a2585d4b1790116979"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 73.8
+      },
+      "narrative": "GOALRCPT_PASS=4/4  threshold=4/4",
+      "fence": 1,
+      "goal_id": "g-001-smoke-runner",
+      "run_token": "e9dbe9e39eef4bb0802d3957c779260b"
+    }
+  },
+  "prev_digest": "0fcb35a891bf986a017c492826653716d515a333bc1060b7f10d25d9742ec4c5",
+  "digest": "efc03ec3d8d893c191c8090a80337ddf5f776c4206094649f24344f4ce14c1b4"
+}

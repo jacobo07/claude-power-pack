@@ -1,0 +1,29 @@
+{
+  "seq": 1,
+  "type": "goal.declared",
+  "ts": "2026-09-22T18:42:43.992226+00:00",
+  "actor": "owner",
+  "data": {
+    "semantic": {
+      "intent": "Despertar el runner dormido: tools/smoke-test/jobs/done/ tiene 216 recibos y el mas nuevo es del 2026-06-18 -- tres meses sin correr el unico instrumento de rung 1 del estate. Un trabajo registrado debe llevar un bot por el proxy real hasta el Lobby y evaluar hotbar_has_item sobre una superficie alcanzable alli.",
+      "acceptance": [
+        "el runner ejecuta un job nuevo contra el Lobby de produccion por el proxy y escribe un recibo",
+        "el recibo registra lo que el bot vio en su barra, no solo un PASS",
+        "un verificador cubre el job nuevo para que no vuelva a dormirse"
+      ],
+      "constraints": [
+        "solo lectura: el bot entra por el proxy, no escribe en produccion, no despliega nada",
+        "si el hop a un backend no es fiable para un bot offline, eso se declara BLOQUEADO con su condicion externa"
+      ],
+      "scope": {
+        "paths": [
+          "scripts/goal",
+          "tools/smoke-test"
+        ]
+      }
+    },
+    "revision": "250078669463c481"
+  },
+  "prev_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "digest": "7ea0a3258a923b320d763efbeb993b1ae4e9b4a2874f804da7a989a9c242d355"
+}

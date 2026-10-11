@@ -1,0 +1,26 @@
+{
+  "seq": 84,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:03:57.071250+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-ucr",
+    "reason": "ob-ucr: ob-ucr observed 'GOALUCR_PASS=6/6  threshold=6/6'",
+    "verdict": {
+      "gate": "ob-ucr",
+      "exit_status": 0,
+      "observed": "GOALUCR_PASS=6/6  threshold=6/6",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_goal_learning.py",
+          "bc984a94699e2da83a8f9eab2d06ff762eb5cd60e7e4faddfc6916a3e0deff41"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "b8f59ab9640f532f850c3b841f17021521f1eadc1c7460fc9a30e39de7c32c28",
+  "digest": "0b1d53303db04e8a0f074ea96caf70f1a60ca92924bb7d181a6b0d47893ce05e"
+}

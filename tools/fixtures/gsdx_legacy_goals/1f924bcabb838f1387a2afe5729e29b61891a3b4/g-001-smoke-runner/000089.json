@@ -1,0 +1,13 @@
+{
+  "seq": 89,
+  "type": "failure.dispositioned",
+  "ts": "2026-09-22T20:05:08.089174+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "f-spawn-walkable",
+    "disposition": "accepted_risk",
+    "reason": "Measured twice (floor=air feet=air head=air) and deliberately not folded into this goal's verdict: a different surface and a different claim. Two readings still fit -- chunks not loaded when the blocks were read, or an unsupported arrival point -- and separating them needs a job that settles longer. That job file is PINNED by both ob-outcome-2 and ob-reality, so changing it would invalidate two proofs taken at this tree. It therefore belongs to a follow-up goal with its own job, not to this one. Carried as residual risk with the readings recorded in vault/kseip/W24_LOBBY_HOTBAR_REALITY.md."
+  },
+  "prev_digest": "d2dcfd137e503699388d0b8cba207e872c01b498157298a528f1a60b65fa851b",
+  "digest": "073646905ba1937b3693316b8724ccb541d728c9f7b26075f7dac2c601c23144"
+}

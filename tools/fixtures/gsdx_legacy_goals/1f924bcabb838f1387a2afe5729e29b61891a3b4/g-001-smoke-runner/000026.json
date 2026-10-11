@@ -1,0 +1,20 @@
+{
+  "seq": 26,
+  "type": "epoch.running",
+  "ts": "2026-09-22T18:49:48.960462+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-fa58f6044552",
+    "handle": {
+      "pid": 15388,
+      "token": "eced97422de04758a0e1f1856edf3fb9",
+      "log": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\g-001-smoke-runner\\runs\\gate-eced97422de04758a0e1f1856edf3fb9.log",
+      "marker": "C:\\Users\\User\\.claude\\state\\gsd-x\\goals\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\g-001-smoke-runner\\runs\\gate-eced97422de04758a0e1f1856edf3fb9.json",
+      "started_at": 1790102988.5223174,
+      "tree_before": "work:e53bc6240a3621d1d7cc806c",
+      "head_before": "164ad7fe701f12f667be3b4ce45353175c746a8a"
+    }
+  },
+  "prev_digest": "9e5b7f90db18b2a300487e62439bede7245df9d79a89529fb19c79bf018e50e8",
+  "digest": "26b9f8259e7639c5b6001a947d6a789e787ef403a5ae3429d9af1759a034526c"
+}

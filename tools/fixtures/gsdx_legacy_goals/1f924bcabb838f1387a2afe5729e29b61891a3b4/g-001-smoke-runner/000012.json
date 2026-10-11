@@ -1,0 +1,22 @@
+{
+  "seq": 12,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T18:44:30.411962+00:00",
+  "actor": "reconciler",
+  "data": {
+    "epoch_id": "ep-9e40a91d49dc",
+    "revision": "250078669463c481",
+    "provider": "codex",
+    "identity": {
+      "run_token": "9f4a1d57525a4501951ff19238060d20",
+      "epoch_id": "ep-9e40a91d49dc"
+    },
+    "info_key": "0eb708f7cb5f8a2e1593d7db",
+    "hypothesis": "initial",
+    "spec": {
+      "task": "Create four files in this worktree. Write them, then stop. Do not run the bot, do not\nconnect to any server, do not deploy anything, and do not commit.\n\nContext you need (already measured, do not re-d"
+    }
+  },
+  "prev_digest": "9d776fff8b8fcb032f892759c8b2e843778495daa16113169e4e7f2a126bc894",
+  "digest": "a9bc562d99f3dc3189ffcb1bf9f159f737c5391d7fbe98d51ddd8b2d6d781bba"
+}

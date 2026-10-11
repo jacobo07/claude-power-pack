@@ -1,0 +1,31 @@
+{
+  "seq": 121,
+  "type": "obligation.satisfied",
+  "ts": "2026-10-02T20:20:53.774094+00:00",
+  "actor": "sweep",
+  "data": {
+    "id": "ob-ucr",
+    "reason": "ob-ucr: ob-ucr observed 'GOALUCR_PASS=6/6  threshold=6/6'",
+    "verdict": {
+      "gate": "ob-ucr",
+      "exit_status": 0,
+      "observed": "GOALUCR_PASS=6/6  threshold=6/6",
+      "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_goal_learning.py",
+          "bc984a94699e2da83a8f9eab2d06ff762eb5cd60e7e4faddfc6916a3e0deff41"
+        ]
+      ]
+    },
+    "source": {
+      "epoch": "ep-07456db4e2e3",
+      "provider": "gate",
+      "handle": "{'pid': 42488, 'token': '9880353a261e47b09b61ae0c3840925f', 'log': 'C:\\\\Users\\\\User\\\\.claude\\\\state\\\\gsd-x\\\\goals\\\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\\\g-001-smoke-runner\\\\runs\\\\gate-9880353a261e"
+    }
+  },
+  "prev_digest": "c595395f8888a5d2a6222fe42d98cc15d5a8372608580df7d399f522b7607d62",
+  "digest": "aeddc6fa11ad2d7740c09328be6bafe322ac27735f26bfed5aca54044526345c"
+}

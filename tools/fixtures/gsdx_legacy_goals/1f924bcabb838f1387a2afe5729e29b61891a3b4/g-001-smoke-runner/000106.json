@@ -1,0 +1,35 @@
+{
+  "seq": 106,
+  "type": "obligation.satisfied",
+  "ts": "2026-10-02T19:35:51.729907+00:00",
+  "actor": "sweep",
+  "data": {
+    "id": "ob-outcome-2",
+    "reason": "ob-outcome-2: ob-outcome-2 observed 'GOALJOB_PASS=6/6  threshold=6/6'",
+    "verdict": {
+      "gate": "ob-outcome-2",
+      "exit_status": 0,
+      "observed": "GOALJOB_PASS=6/6  threshold=6/6",
+      "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "revision": "250078669463c481",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_lobby_hotbar_job.py",
+          "a966cb322728b42749e71121bd14ed9162ccdc8b950ff725f1daaf4a8679918d"
+        ],
+        [
+          "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+          "c49582c92b2f683ad0d2e3db8b883076b13afa75ba118e0b01388337a2953ed2"
+        ]
+      ]
+    },
+    "source": {
+      "epoch": "ep-ae4d94763a40",
+      "provider": "gate",
+      "handle": "{'pid': 45980, 'token': 'f93599f3ed594169b86740f2f5e9dab3', 'log': 'C:\\\\Users\\\\User\\\\.claude\\\\state\\\\gsd-x\\\\goals\\\\1f924bcabb838f1387a2afe5729e29b61891a3b4\\\\g-001-smoke-runner\\\\runs\\\\gate-f93599f3ed59"
+    }
+  },
+  "prev_digest": "bf20344478512ccbfdc9fb1ec9670b006b3f898b97785848b729bc7f1d5c7ef7",
+  "digest": "2a4130e1753238d4b4a41dc41c765c7f43f5bc1c727607bbf7c6c314943ba2ec"
+}

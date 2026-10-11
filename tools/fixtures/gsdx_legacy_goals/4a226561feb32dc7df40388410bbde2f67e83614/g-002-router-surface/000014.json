@@ -1,0 +1,25 @@
+{
+  "seq": 14,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T20:39:34.767612+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-drill",
+    "plane": "REGRESSION",
+    "text": "The parity gate can still go red: a synthetic subject with one undocumented command fails it, and a clean one passes",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_surface_drill.py",
+    "gate_pin": [
+      [
+        "gates/gate_documented_surface.py",
+        "cae5b73c6d978f25a64c1bdc26e6d215fb248c041c3c63ac7cde57493a80fbee"
+      ],
+      [
+        "gates/gate_surface_drill.py",
+        "14cf5a0b04a21cf8080c53e640eabac9c5f62dec649c1a53345c8d27fc4b3b3b"
+      ]
+    ],
+    "revision": "b5da0ad2cad63d4d"
+  },
+  "prev_digest": "78413d210cee58788d6be947b3a635ad2a1daa4d3acec88272a95e559ef112e5",
+  "digest": "ea382efdbc410bc2d7cac1cb59c024788e634b3d4655157a0f6021f2f0d550c6"
+}

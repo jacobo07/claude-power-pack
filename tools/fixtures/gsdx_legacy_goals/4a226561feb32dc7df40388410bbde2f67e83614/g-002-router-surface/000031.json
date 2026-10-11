@@ -1,0 +1,30 @@
+{
+  "seq": 31,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:40:27.391912+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-drill",
+    "reason": "ob-drill: ob-drill observed 'ROUTERDRILL_PASS=3/3  threshold=3/3'",
+    "verdict": {
+      "gate": "ob-drill",
+      "exit_status": 0,
+      "observed": "ROUTERDRILL_PASS=3/3  threshold=3/3",
+      "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "revision": "b5da0ad2cad63d4d",
+      "gate_class": "unit",
+      "gate_pin": [
+        [
+          "gates/gate_documented_surface.py",
+          "cae5b73c6d978f25a64c1bdc26e6d215fb248c041c3c63ac7cde57493a80fbee"
+        ],
+        [
+          "gates/gate_surface_drill.py",
+          "14cf5a0b04a21cf8080c53e640eabac9c5f62dec649c1a53345c8d27fc4b3b3b"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "fd7256d619501f2c97044201e31b6b5180789072213fb4678b3255857ddfaf6f",
+  "digest": "b6a61841e7840e5533da39b920b78624775a2e619c22828b03e8bfec263ea4ea"
+}

@@ -1,0 +1,21 @@
+{
+  "seq": 12,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T20:39:34.110769+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-surface",
+    "plane": "OUTCOME",
+    "text": "The docstring names every command the parser registers, and the parser registers every command the docstring names",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_documented_surface.py",
+    "gate_pin": [
+      [
+        "gates/gate_documented_surface.py",
+        "cae5b73c6d978f25a64c1bdc26e6d215fb248c041c3c63ac7cde57493a80fbee"
+      ]
+    ],
+    "revision": "b5da0ad2cad63d4d"
+  },
+  "prev_digest": "dc5ffd5503782607812c6215fefa5c4a172054ede577df321fe23ddf288f53de",
+  "digest": "6f1fb32424d1cf5bba42f8bbf7c5b29fe1406fc639eb37fed785fdc1bb6979ba"
+}

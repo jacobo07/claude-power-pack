@@ -1,0 +1,47 @@
+{
+  "seq": 30,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:40:27.355301+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-cc6d54668881",
+    "receipt_id": "c28da47268d058ac8ba830e7",
+    "receipt": {
+      "epoch_id": "ep-cc6d54668881",
+      "provider": "gate",
+      "revision": "b5da0ad2cad63d4d",
+      "head_before": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "head_after": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "tree_before": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "tree_after": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-drill",
+          "exit_status": 0,
+          "observed": "ROUTERDRILL_PASS=3/3  threshold=3/3",
+          "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+          "revision": "b5da0ad2cad63d4d",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "gates/gate_documented_surface.py",
+              "cae5b73c6d978f25a64c1bdc26e6d215fb248c041c3c63ac7cde57493a80fbee"
+            ],
+            [
+              "gates/gate_surface_drill.py",
+              "14cf5a0b04a21cf8080c53e640eabac9c5f62dec649c1a53345c8d27fc4b3b3b"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 5.8
+      },
+      "narrative": "ROUTERDRILL_PASS=3/3  threshold=3/3"
+    }
+  },
+  "prev_digest": "c5952ccaa951ab7bb18dfd3e2c72cacb7b0cb0fe39703356f20c14359caf126a",
+  "digest": "fd7256d619501f2c97044201e31b6b5180789072213fb4678b3255857ddfaf6f"
+}

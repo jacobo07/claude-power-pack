@@ -1,0 +1,38 @@
+{
+  "seq": 118,
+  "type": "epoch.dispatching",
+  "ts": "2026-10-02T20:15:55.632566+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-07456db4e2e3",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "9880353a261e47b09b61ae0c3840925f",
+      "epoch_id": "ep-07456db4e2e3",
+      "fence": 6,
+      "goal_id": "g-001-smoke-runner"
+    },
+    "info_key": "65480dc409ab8c0e82880ced",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-ucr",
+      "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "gate": {
+        "id": "ob-ucr",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "scripts/goal/gate_goal_learning.py"
+        ],
+        "class": "unit",
+        "files": [
+          "scripts/goal/gate_goal_learning.py"
+        ],
+        "pin_scheme": "sha256"
+      }
+    },
+    "fence": 6
+  },
+  "prev_digest": "f7e1b816e37f5393f42300f47695d06b5e9cd1169e124ed61a88205937e86cb7",
+  "digest": "2235c97ae8f0eb3f129c40e502c1f8387e77c82466543f3b194c02deef89dcb3"
+}

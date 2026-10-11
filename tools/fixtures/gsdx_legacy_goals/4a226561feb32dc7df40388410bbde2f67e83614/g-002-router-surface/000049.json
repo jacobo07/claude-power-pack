@@ -1,0 +1,13 @@
+{
+  "seq": 49,
+  "type": "failure.dispositioned",
+  "ts": "2026-09-22T20:41:33.386665+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "f-set-autonomous-has-no-entrance",
+    "disposition": "accepted_risk",
+    "reason": "Carried, not fixed, on purpose. Fixing it inside G-002 would have moved the engine and destroyed the only measurement this goal exists to take. It costs nothing here because reconcile --apply reaches the same driver; it costs the UNATTENDED path, which cannot be given a goal through the product at all. Owner-visible, named in the resumption file, and the natural first slice of the next engine commit -- after G-002 has been judged."
+  },
+  "prev_digest": "183bb5f0ac01c2abc244b5394da229914c2190051069e9a4a55b4655cf0b7c81",
+  "digest": "c56baeda6d22897e00e85914845d70273aeb0c2806f05a8970f6d442b44b0cd6"
+}

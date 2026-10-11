@@ -1,0 +1,13 @@
+{
+  "seq": 87,
+  "type": "failure.dispositioned",
+  "ts": "2026-09-22T20:04:52.069529+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "f-pin-moved-with-the-job",
+    "disposition": "fixed",
+    "reason": "The instance is repaired: ob-outcome was retired as REJECTED and ob-outcome-2 is pinned to tools/smoke-test/jobs/examples/, the path the repo's own .gitignore keeps. The CLASS is NOT prevented -- nothing refuses an obligation pinned to an ignored path at acceptance time, so the next person can repeat it. Recorded as T-GOALSPINE-04 and owed as a gate."
+  },
+  "prev_digest": "7795bfcd0f7b49d830205f074f0c755336cfb1c7fb17e102735ff365087b000f",
+  "digest": "98416330f223e61d3e936b587e0da3d141987a7364f25acab9a0ccde0612a46d"
+}

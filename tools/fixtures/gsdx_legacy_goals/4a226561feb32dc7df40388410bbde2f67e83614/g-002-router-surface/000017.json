@@ -1,0 +1,21 @@
+{
+  "seq": 17,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T20:39:46.443310+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-hr6",
+    "plane": "REALITY",
+    "text": "HR-6 is measured against the Owner's real credential store: the real tool runs, lists real accounts, and no secret on disk appears in its output",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_hr6_enforced.py",
+    "gate_pin": [
+      [
+        "gates/gate_hr6_enforced.py",
+        "8346d0574d2ab59ca9e83a230375501ad72e067920212e3bc729fae71c3c5f1b"
+      ]
+    ],
+    "revision": "b5da0ad2cad63d4d"
+  },
+  "prev_digest": "6f785d30c3c7eee288c6c0e0db9c67c003480247fdb6cc4dcdc78995fb294eee",
+  "digest": "f2aaae6bc506b934ee5cd9d5b578f309475934aa40aa3d3e595f7c6abd770b14"
+}

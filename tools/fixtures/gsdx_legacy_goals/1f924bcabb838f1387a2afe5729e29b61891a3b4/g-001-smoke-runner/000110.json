@@ -1,0 +1,50 @@
+{
+  "seq": 110,
+  "type": "epoch.receipt",
+  "ts": "2026-10-02T20:00:55.550138+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-9284ed933f2d",
+    "receipt_id": "0457213b8e85a6dbbca0c3ef",
+    "receipt": {
+      "epoch_id": "ep-9284ed933f2d",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "5717d55a841f44b00b126faebe1916564cd4c1bf",
+      "head_after": "5717d55a841f44b00b126faebe1916564cd4c1bf",
+      "tree_before": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "tree_after": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-reality",
+          "exit_status": 0,
+          "observed": "GOALLIVE_PASS=4/4  threshold=4/4",
+          "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+          "revision": "250078669463c481",
+          "gate_class": "in_game",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_lobby_hotbar_live.py",
+              "blob:b05867ea4b9b363a77730e37c22afac323110e23"
+            ],
+            [
+              "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+              "blob:0be77e25e19af47a577fe62c1e1ef1ab960633de"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 1203.7
+      },
+      "narrative": "GOALLIVE_PASS=4/4  threshold=4/4",
+      "fence": 4,
+      "goal_id": "g-001-smoke-runner",
+      "run_token": "2f82c9be10c34a6283789d316e8063eb"
+    }
+  },
+  "prev_digest": "e5e60268e2820fc0dc3e1bfb26a71d47f85595d79b9723827cfabb7bc2ab1e96",
+  "digest": "25832d759bb2499ac6321f8fa9582adbf1722034842fdee220dc6ee85da9c54c"
+}

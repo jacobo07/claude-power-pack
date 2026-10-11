@@ -1,0 +1,13 @@
+{
+  "seq": 20,
+  "type": "epoch.ended",
+  "ts": "2026-09-22T18:48:23.255816+00:00",
+  "actor": "operator",
+  "data": {
+    "epoch_id": "ep-a72779d9d196",
+    "outcome": "completed",
+    "detail": "the operator returned a receipt"
+  },
+  "prev_digest": "8e3c64fe93c46de74e2cf415b3ee366e7f1f382d2cbf72db9f1c907cce69f5bb",
+  "digest": "d8d54eb08ca8460e578696d19ea832eae1fd0270a3cbea926e191cbb3e46c2e6"
+}

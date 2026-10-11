@@ -1,0 +1,13 @@
+{
+  "seq": 37,
+  "type": "epoch.ended",
+  "ts": "2026-09-22T20:40:36.744216+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-68a14c7b78b3",
+    "outcome": "completed",
+    "detail": "exit 0"
+  },
+  "prev_digest": "95b3a160b3cb975f227576b9d6f2b9ad6bcb03c565631792b266975df6def3a3",
+  "digest": "5f30572f1ddba05e21981bcb0ec7b516ea41fa2e3d2afb0af9196b9f9bac0fe0"
+}

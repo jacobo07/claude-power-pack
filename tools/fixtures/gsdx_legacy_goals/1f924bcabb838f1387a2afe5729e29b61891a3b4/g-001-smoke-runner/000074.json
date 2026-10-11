@@ -1,0 +1,30 @@
+{
+  "seq": 74,
+  "type": "obligation.satisfied",
+  "ts": "2026-09-22T20:02:58.525412+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-reality",
+    "reason": "ob-reality: ob-reality observed 'GOALLIVE_PASS=4/4  threshold=4/4'",
+    "verdict": {
+      "gate": "ob-reality",
+      "exit_status": 0,
+      "observed": "GOALLIVE_PASS=4/4  threshold=4/4",
+      "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "revision": "250078669463c481",
+      "gate_class": "in_game",
+      "gate_pin": [
+        [
+          "scripts/goal/gate_lobby_hotbar_live.py",
+          "94f1b40de7764989bc98e9c098c2edf73ab87168ec6eac974bb06223c41a52ab"
+        ],
+        [
+          "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+          "c49582c92b2f683ad0d2e3db8b883076b13afa75ba118e0b01388337a2953ed2"
+        ]
+      ]
+    }
+  },
+  "prev_digest": "95b032c5e7b1ad1a974020fc6812b3d00a5f6b225fde9e19e8824da3ce9fade7",
+  "digest": "99fc5e8480d0f0b8e27ed043af87c483090c114016c2eaef5176e1e96fe61519"
+}

@@ -1,0 +1,12 @@
+{
+  "seq": 48,
+  "type": "failure.recorded",
+  "ts": "2026-09-22T19:15:44.681997+00:00",
+  "actor": "reconciler",
+  "data": {
+    "id": "f-spawn-walkable",
+    "summary": "The live Lobby run (2026-09-22T19:11:35Z, repeated 19:12:56Z) reported spawn_walkable floor=air feet=air head=air while hotbar_has_item PASSED with 'compass at slot(s) 0'. Two readings fit: the bot read blocks before its chunks loaded, or the arrival point really is unsupported. Not folded into the reality verdict -- different surface, different claim. Undispositioned on purpose: it needs one more run that settles longer before anyone says which."
+  },
+  "prev_digest": "1eacf4f4b23669b0136cedc7e18768f16663717739f06eb18382423763bbc0dd",
+  "digest": "932b485dee3639c83ea7fdc026ea13892813fcb9c2fa29c2744140e0622dcb2c"
+}

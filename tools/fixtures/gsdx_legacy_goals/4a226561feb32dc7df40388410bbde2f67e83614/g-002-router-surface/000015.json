@@ -1,0 +1,21 @@
+{
+  "seq": 15,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T20:39:35.084528+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-ucr",
+    "plane": "UCR_CIF_LEARNING",
+    "text": "What this goal cost is written down in LEARNINGS.md, every lesson carrying the scope it was measured at",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_learnings.py",
+    "gate_pin": [
+      [
+        "gates/gate_learnings.py",
+        "4403cae8cfd759e54d705da228dee1c86bd6d0d65291f7f37e41d8b43db500cc"
+      ]
+    ],
+    "revision": "b5da0ad2cad63d4d"
+  },
+  "prev_digest": "ea382efdbc410bc2d7cac1cb59c024788e634b3d4655157a0f6021f2f0d550c6",
+  "digest": "7f207851fc184c845c98c28b9ea4dbef545de873fecfd0f194ae25169d9a6ffa"
+}

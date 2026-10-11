@@ -1,0 +1,47 @@
+{
+  "seq": 68,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:01:57.809136+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-002809fe2a28",
+    "receipt_id": "ff48ddc1468fffc069b0926d",
+    "receipt": {
+      "epoch_id": "ep-002809fe2a28",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "head_after": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "tree_before": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "tree_after": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-outcome-2",
+          "exit_status": 0,
+          "observed": "GOALJOB_PASS=6/6  threshold=6/6",
+          "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+          "revision": "250078669463c481",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_lobby_hotbar_job.py",
+              "a966cb322728b42749e71121bd14ed9162ccdc8b950ff725f1daaf4a8679918d"
+            ],
+            [
+              "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+              "c49582c92b2f683ad0d2e3db8b883076b13afa75ba118e0b01388337a2953ed2"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 1.6
+      },
+      "narrative": "GOALJOB_PASS=6/6  threshold=6/6"
+    }
+  },
+  "prev_digest": "6a8a71427be3c525a59f53edca532a55cf916a9587760d8d4e8e5a89084c93e0",
+  "digest": "b172e31a943db4749eb34e12cdfc17a5176765f99e9007e7e56eda9ac194bb72"
+}

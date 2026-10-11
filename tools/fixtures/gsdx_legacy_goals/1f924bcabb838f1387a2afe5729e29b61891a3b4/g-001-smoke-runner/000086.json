@@ -1,0 +1,13 @@
+{
+  "seq": 86,
+  "type": "failure.dispositioned",
+  "ts": "2026-09-22T20:04:51.546342+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "f-registry-describes-a-past",
+    "disposition": "regression_added",
+    "reason": "Fixed and pinned. The false clause is gone from verification_registry.json, and V-SETUP-REGISTRY-REPAIRED in scripts/goal/gate_setup_disposition.py goes red if it ever returns -- so this particular recorded absence can no longer rot silently. The class is not closed: no sweep checks the registry's OTHER absence claims, and that is named as owed in T-GOALSPINE-03."
+  },
+  "prev_digest": "f6f66aa6de5e9de093aba5b0c397699616df98ada18baac1191e8f348449d6c2",
+  "digest": "7795bfcd0f7b49d830205f074f0c755336cfb1c7fb17e102735ff365087b000f"
+}

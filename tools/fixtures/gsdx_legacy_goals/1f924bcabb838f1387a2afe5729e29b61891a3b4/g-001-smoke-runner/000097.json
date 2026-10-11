@@ -1,0 +1,26 @@
+{
+  "seq": 97,
+  "type": "obligation.accepted",
+  "ts": "2026-10-02T19:16:37.885818+00:00",
+  "actor": "claude",
+  "data": {
+    "id": "ob-reality",
+    "plane": "REALITY",
+    "text": "A real bot, through the production proxy, reads the Lobby's selector in an arriving player's own hotbar -- the only evidence that speaks about a player",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_lobby_hotbar_live.py",
+    "gate_pin": [
+      [
+        "scripts/goal/gate_lobby_hotbar_live.py",
+        "blob:b05867ea4b9b363a77730e37c22afac323110e23"
+      ],
+      [
+        "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+        "blob:0be77e25e19af47a577fe62c1e1ef1ab960633de"
+      ]
+    ],
+    "revision": "250078669463c481",
+    "gate_class": "in_game"
+  },
+  "prev_digest": "942c939b636c519ca21e4e6e6af84284a6f0360d25566500d3856d0011af0749",
+  "digest": "3b244286e117721a439fe42b2f546d25699205e16889a3eb8bd3f97566afcedb"
+}

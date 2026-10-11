@@ -1,0 +1,21 @@
+{
+  "seq": 13,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T20:39:34.437515+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-help",
+    "plane": "EVIDENCE",
+    "text": "What a user is actually shown by --help agrees with the tool that exists, proven by running it rather than by reading it",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe gates/gate_help_is_the_surface.py",
+    "gate_pin": [
+      [
+        "gates/gate_help_is_the_surface.py",
+        "6db4923ae6be3ba121ff21a240766074cbff3e3abae100d1fe4191b8babfc82e"
+      ]
+    ],
+    "revision": "b5da0ad2cad63d4d"
+  },
+  "prev_digest": "6f1fb32424d1cf5bba42f8bbf7c5b29fe1406fc639eb37fed785fdc1bb6979ba",
+  "digest": "78413d210cee58788d6be947b3a635ad2a1daa4d3acec88272a95e559ef112e5"
+}

@@ -1,0 +1,25 @@
+{
+  "seq": 23,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T18:48:36.943134+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-regression",
+    "plane": "REGRESSION",
+    "text": "el evaluador hotbar_has_item sigue probado en los dos sentidos",
+    "done_gate": "node tools/smoke-test/test-hotbar-has-item.selftest.js",
+    "gate_pin": [
+      [
+        "tools/smoke-test/assertions.js",
+        "9fe33d9c995f31e7264174a5bfd2802234852b97c6011cd56516ec725a767517"
+      ],
+      [
+        "tools/smoke-test/test-hotbar-has-item.selftest.js",
+        "dcf5344c554b2283a46a8162c313307795f1d3b5065ac1c68c62a892992c2b75"
+      ]
+    ],
+    "revision": "250078669463c481"
+  },
+  "prev_digest": "be86a0ddb115848ad5de1cd019fb49065c3377b832ddcb472f01dd0d76e2b1dd",
+  "digest": "0f0eb4cd0457a7f25f956f937ded017d83e12fda0167abf68d4aeb79aa1ad5b4"
+}

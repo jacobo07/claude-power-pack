@@ -1,0 +1,35 @@
+{
+  "seq": 28,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T20:40:21.540210+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-cc6d54668881",
+    "revision": "b5da0ad2cad63d4d",
+    "provider": "gate",
+    "identity": {
+      "run_token": "d552feb7d3f74e5f8634afb32c276b92",
+      "epoch_id": "ep-cc6d54668881"
+    },
+    "info_key": "4e9084f887950eeaae899e5a",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-drill",
+      "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "gate": {
+        "id": "ob-drill",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "gates/gate_surface_drill.py"
+        ],
+        "class": "unit",
+        "files": [
+          "gates/gate_documented_surface.py",
+          "gates/gate_surface_drill.py"
+        ]
+      }
+    }
+  },
+  "prev_digest": "ab3987617232c16b220cc808df789cabbda49f5e396e862e168bc51f58b5fed8",
+  "digest": "28cb0152294d19da875d401fba9978b06dd9e2bda7e8503e5fafabb88ffa5fbe"
+}

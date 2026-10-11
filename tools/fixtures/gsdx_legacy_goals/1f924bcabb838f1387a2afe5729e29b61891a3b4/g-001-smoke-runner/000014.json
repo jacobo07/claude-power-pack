@@ -1,0 +1,34 @@
+{
+  "seq": 14,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T18:44:51.493782+00:00",
+  "actor": "reconciler",
+  "data": {
+    "epoch_id": "ep-9e40a91d49dc",
+    "receipt_id": "f8ef39015a7d81be3ea6b41b",
+    "receipt": {
+      "epoch_id": "ep-9e40a91d49dc",
+      "provider": "codex",
+      "revision": "250078669463c481",
+      "head_before": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "head_after": "164ad7fe701f12f667be3b4ce45353175c746a8a",
+      "tree_before": "git:c7106ebae6237b97ec7b9d64faeb528ba6f7c5fb",
+      "tree_after": "git:c7106ebae6237b97ec7b9d64faeb528ba6f7c5fb",
+      "commits": [],
+      "verdicts": [],
+      "failures": [
+        {
+          "summary": "codex exited 1: cted status 401 Unauthorized: Missing bearer or basic authentication in header, url: https://api.openai.com/v1/responses, cf-ray: a3f3767dc9f3cc4b-MAD, request id: req_10c10158c3fd42a0906479b0f119cdda",
+          "signature": "codex-exit:1"
+        }
+      ],
+      "cost": {
+        "seconds": 20.7,
+        "endpoint": "goal-epoch"
+      },
+      "narrative": "et: HTTP error: 401 Unauthorized, url: wss://api.openai.com/v1/responses\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 2/5\n\u001b[2m2026-09-22T18:44:32.597617Z\u001b[0m \u001b[31mERROR\u001b[0m \u001b[2mcodex_api::endpoint::responses_websocket\u001b[0m\u001b[2m:\u001b[0m failed to connect to websocket: HTTP error: 401 Unauthorized, url: wss://api.openai.com/v1/responses\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 3/5\n\u001b[2m2026-09-22T18:44:33.589475Z\u001b[0m \u001b[31mERROR\u001b[0m \u001b[2mcodex_api::endpoint::responses_websocket\u001b[0m\u001b[2m:\u001b[0m failed to connect to websocket: HTTP error: 401 Unauthorized, url: wss://api.openai.com/v1/responses\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 4/5\n\u001b[2m2026-09-22T18:44:35.268746Z\u001b[0m \u001b[31mERROR\u001b[0m \u001b[2mcodex_api::endpoint::responses_websocket\u001b[0m\u001b[2m:\u001b[0m failed to connect to websocket: HTTP error: 401 Unauthorized, url: wss://api.openai.com/v1/responses\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 5/5\n\u001b[2m2026-09-22T18:44:38.370293Z\u001b[0m \u001b[31mERROR\u001b[0m \u001b[2mcodex_api::endpoint::responses_websocket\u001b[0m\u001b[2m:\u001b[0m failed to connect to websocket: HTTP error: 401 Unauthorized, url: wss://api.openai.com/v1/responses\n\u001b[1m\u001b[33mwarning:\u001b[0m\u001b[0m Falling back from WebSockets to HTTPS transport. unexpected status 401 Unauthorized: Missing bearer or basic authentication in header, url: wss://api.openai.com/v1/responses, cf-ray: a3f3764c5dde783f-MAD\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 1/5\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 2/5\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 3/5\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 4/5\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m Reconnecting... 5/5\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m unexpected status 401 Unauthorized: Missing bearer or basic authentication in header, url: https://api.openai.com/v1/responses, cf-ray: a3f3767dc9f3cc4b-MAD, request id: req_10c10158c3fd42a0906479b0f119cdda\n\u001b[1m\u001b[31mERROR:\u001b[0m\u001b[0m unexpected status 401 Unauthorized: Missing bearer or basic authentication in header, url: https://api.openai.com/v1/responses, cf-ray: a3f3767dc9f3cc4b-MAD, request id: req_10c10158c3fd42a0906479b0f119cdda"
+    }
+  },
+  "prev_digest": "89f9f5b9bb9ae38409eaee01f4d52183a113871006b72d02de59fa5150fc9c51",
+  "digest": "9d4ed7eaa3420b7e97651b895e7aa6c281e42d3c1abb489cb37093661c88016b"
+}

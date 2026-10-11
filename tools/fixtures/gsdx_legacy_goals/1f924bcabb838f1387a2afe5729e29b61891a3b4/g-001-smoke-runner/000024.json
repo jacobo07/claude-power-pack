@@ -1,0 +1,12 @@
+{
+  "seq": 24,
+  "type": "goal.autonomous",
+  "ts": "2026-09-22T18:49:47.967553+00:00",
+  "actor": "owner",
+  "data": {
+    "enabled": true,
+    "reason": "G-001 drives its own gate epochs"
+  },
+  "prev_digest": "0f0eb4cd0457a7f25f956f937ded017d83e12fda0167abf68d4aeb79aa1ad5b4",
+  "digest": "d18f00fbde7617463d7ac057216253e17b8f5c60c08328750446b88f225a1e32"
+}

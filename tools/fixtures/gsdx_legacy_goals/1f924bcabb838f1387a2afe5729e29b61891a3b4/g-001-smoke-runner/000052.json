@@ -1,0 +1,25 @@
+{
+  "seq": 52,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T19:57:55.676508+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-outcome-2",
+    "plane": "OUTCOME",
+    "text": "The dormant runner has a registered, well-formed job that the repo will keep: tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_lobby_hotbar_job.py",
+    "gate_pin": [
+      [
+        "scripts/goal/gate_lobby_hotbar_job.py",
+        "a966cb322728b42749e71121bd14ed9162ccdc8b950ff725f1daaf4a8679918d"
+      ],
+      [
+        "tools/smoke-test/jobs/examples/lobby-hotbar-census.job.json",
+        "c49582c92b2f683ad0d2e3db8b883076b13afa75ba118e0b01388337a2953ed2"
+      ]
+    ],
+    "revision": "250078669463c481"
+  },
+  "prev_digest": "6bc450efdb1cdd084b79b9860c41a2a51f7e8af371c3d270e595aabb7b304790",
+  "digest": "ca6809af4cc2f55228e291b1ded3aace26b8005df890b622e49f38fc93499908"
+}

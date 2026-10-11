@@ -1,0 +1,25 @@
+{
+  "seq": 21,
+  "type": "obligation.accepted",
+  "ts": "2026-09-22T18:48:36.146371+00:00",
+  "actor": "owner",
+  "data": {
+    "id": "ob-outcome",
+    "plane": "OUTCOME",
+    "text": "existe un job registrado que lleva un bot por el proxy real hasta el Lobby y evalua hotbar_has_item",
+    "done_gate": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe scripts/goal/gate_lobby_hotbar_job.py",
+    "gate_pin": [
+      [
+        "scripts/goal/gate_lobby_hotbar_job.py",
+        "3b675985aec723d806f69164a4f0cc7d7c7689c40b94e0031754160a921b2858"
+      ],
+      [
+        "tools/smoke-test/jobs/pending/lobby-hotbar-census.job.json",
+        "c49582c92b2f683ad0d2e3db8b883076b13afa75ba118e0b01388337a2953ed2"
+      ]
+    ],
+    "revision": "250078669463c481"
+  },
+  "prev_digest": "d8d54eb08ca8460e578696d19ea832eae1fd0270a3cbea926e191cbb3e46c2e6",
+  "digest": "93f88206ee505bd5bc6fd17627d55cb42732000b3f07df7adf44359a12891fd1"
+}

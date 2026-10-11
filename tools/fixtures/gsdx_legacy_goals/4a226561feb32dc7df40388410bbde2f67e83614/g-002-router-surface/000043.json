@@ -1,0 +1,34 @@
+{
+  "seq": 43,
+  "type": "epoch.dispatching",
+  "ts": "2026-09-22T20:40:50.252725+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-9abb04b6c1a5",
+    "revision": "b5da0ad2cad63d4d",
+    "provider": "gate",
+    "identity": {
+      "run_token": "cbba5b5344b3449bbd3adcb629e0698d",
+      "epoch_id": "ep-9abb04b6c1a5"
+    },
+    "info_key": "959ea1d2c17b7ef65379dce5",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-hr6",
+      "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "gate": {
+        "id": "ob-hr6",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "gates/gate_hr6_enforced.py"
+        ],
+        "class": "in_game",
+        "files": [
+          "gates/gate_hr6_enforced.py"
+        ]
+      }
+    }
+  },
+  "prev_digest": "eb78a4a0a83330f1f7d7fd70adf3457e240f71ae74e0d2805d42a9744175cba2",
+  "digest": "197ca8e708e7803e1e527e8f52d02e2210e50e7b7e2e93bb568fb20310e39dbb"
+}

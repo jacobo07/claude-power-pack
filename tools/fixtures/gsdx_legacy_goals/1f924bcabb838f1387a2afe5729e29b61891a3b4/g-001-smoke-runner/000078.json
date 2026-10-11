@@ -1,0 +1,43 @@
+{
+  "seq": 78,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:03:26.966016+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-1bd4e103cecc",
+    "receipt_id": "aa6579260674a446ed66f4fc",
+    "receipt": {
+      "epoch_id": "ep-1bd4e103cecc",
+      "provider": "gate",
+      "revision": "250078669463c481",
+      "head_before": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "head_after": "5a5566bcdf00398c8229b84c67465f46b693751a",
+      "tree_before": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "tree_after": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-setup",
+          "exit_status": 0,
+          "observed": "GOALSETUP_PASS=5/5  threshold=5/5",
+          "tree_hash": "git:b0dd193767428c13de3a97772c3065d466dfd9cf",
+          "revision": "250078669463c481",
+          "gate_class": "unit",
+          "gate_pin": [
+            [
+              "scripts/goal/gate_setup_disposition.py",
+              "8dcb82b8177a2e8c338de57aa39f85adc9ac34f9d18d34b1d06f37f21a60fbf0"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 14.3
+      },
+      "narrative": "GOALSETUP_PASS=5/5  threshold=5/5"
+    }
+  },
+  "prev_digest": "d30095341b0480b949d437d836e49728d2235a526df148feead28d1c54e09ae4",
+  "digest": "eaacd72cd487ac5f4c5f88ea7ed66b5a8192a5a335b773151ed9d71bde84ad22"
+}

@@ -1,0 +1,38 @@
+{
+  "seq": 92,
+  "type": "epoch.dispatching",
+  "ts": "2026-10-02T19:14:37.174581+00:00",
+  "actor": "sweep",
+  "data": {
+    "epoch_id": "ep-0954eedea9fe",
+    "revision": "250078669463c481",
+    "provider": "gate",
+    "identity": {
+      "run_token": "e9dbe9e39eef4bb0802d3957c779260b",
+      "epoch_id": "ep-0954eedea9fe",
+      "fence": 1,
+      "goal_id": "g-001-smoke-runner"
+    },
+    "info_key": "3df96ed58677e1ba6da3cdb3",
+    "hypothesis": "initial",
+    "spec": {
+      "obligation": "ob-evidence",
+      "tree_hash": "git:af3816112658776bd85ca7bb96209b8f966c9e5a",
+      "gate": {
+        "id": "ob-evidence",
+        "command": [
+          "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+          "scripts/goal/gate_lobby_hotbar_receipt.py"
+        ],
+        "class": "unit",
+        "files": [
+          "scripts/goal/gate_lobby_hotbar_receipt.py"
+        ],
+        "pin_scheme": "sha256"
+      }
+    },
+    "fence": 1
+  },
+  "prev_digest": "6ceae993ca558c53b85f18bdded062b31673f8211955fbd935c0c7937c006e2d",
+  "digest": "d9a15997c052c444a46420c48e2ed222a419d5dcb6a916c8582ebc03fe2a47b2"
+}

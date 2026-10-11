@@ -1,0 +1,43 @@
+{
+  "seq": 45,
+  "type": "epoch.receipt",
+  "ts": "2026-09-22T20:40:55.089226+00:00",
+  "actor": "owner",
+  "data": {
+    "epoch_id": "ep-9abb04b6c1a5",
+    "receipt_id": "32fcb698bae5ebc7eea17cd1",
+    "receipt": {
+      "epoch_id": "ep-9abb04b6c1a5",
+      "provider": "gate",
+      "revision": "b5da0ad2cad63d4d",
+      "head_before": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "head_after": "e1ba9f870829803be04dc3026b1d030d4f13fcbb",
+      "tree_before": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "tree_after": "git:2758e50beb91df2021278d75c51835329dec1448",
+      "commits": [],
+      "verdicts": [
+        {
+          "gate": "ob-hr6",
+          "exit_status": 0,
+          "observed": "ROUTERHR6_PASS=6/6  threshold=6/6",
+          "tree_hash": "git:2758e50beb91df2021278d75c51835329dec1448",
+          "revision": "b5da0ad2cad63d4d",
+          "gate_class": "in_game",
+          "gate_pin": [
+            [
+              "gates/gate_hr6_enforced.py",
+              "8346d0574d2ab59ca9e83a230375501ad72e067920212e3bc729fae71c3c5f1b"
+            ]
+          ]
+        }
+      ],
+      "failures": [],
+      "cost": {
+        "seconds": 4.8
+      },
+      "narrative": "ROUTERHR6_PASS=6/6  threshold=6/6"
+    }
+  },
+  "prev_digest": "d9a18b749b9a687a7da6974cb4b7887383e2f3bfeb695834eef8cf1938045af3",
+  "digest": "d116de5623633e338eeaf3a3b684c61e08b641e3191b79867914579984f899bf"
+}

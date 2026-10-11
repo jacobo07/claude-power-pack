@@ -1,0 +1,12 @@
+{
+  "seq": 49,
+  "type": "failure.recorded",
+  "ts": "2026-09-22T19:15:44.725468+00:00",
+  "actor": "reconciler",
+  "data": {
+    "id": "f-pin-moved-with-the-job",
+    "summary": "Committing the job moved it from jobs/pending/ (gitignored: 'pending/*.job.json') to jobs/examples/, which the repo's own .gitignore says is where curated jobs belong. ob-outcome was pinned to the old path, so its pin no longer resolves and the judge will refuse it. A registered job that cannot be committed would rot exactly as the runner did, so the move is right and the pin has to follow: re-accept ob-outcome against the examples/ path before judging."
+  },
+  "prev_digest": "932b485dee3639c83ea7fdc026ea13892813fcb9c2fa29c2744140e0622dcb2c",
+  "digest": "5698f46ac961ec86a15b7fa53f3a3d27c84c920799d62db3b39cd33631ed2270"
+}
