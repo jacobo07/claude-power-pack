@@ -36,6 +36,9 @@
  *   5. NULL_ACK     — the whole turn dismisses a system event as needing no
  *                     reply ("No response requested."). A task-notification is
  *                     a WORK TRIGGER, not a message with a politeness slot.
+ *   6. RECOMMENDATION_STOP (EWC E4) — the closer recommends/defers work the agent
+ *                     can do itself. Patterns: obligation_patterns.json
+ *                     (recommendation_stop). Drill: test-closer-guard-recommendation.js.
  * Self-test: hooks/tests/test-closer-guard-nullack.js — two-way, 17/17. Half of
  * its cases MUST NOT fire, and that half is the half that matters: a gate
  * exercised only where it should trip would pass with every clause deleted.
@@ -682,6 +685,53 @@ function classify(text, opts) {
       }
     }
   }
+
+  // SIXTH CLASS, RECOMMENDATION_STOP (EWC E4). The closer recommends or defers an
+  // action the agent could do itself. Last in order so no earlier class changes.
+  // Reached on a tool turn only behind `endsOnText` (a tool call that followed the
+  // text is the work, not a deferral) and never when the turn closes on a question.
+  const rec = recommendationStop(tail);
+  if (rec) return { cls: 'RECOMMENDATION_STOP', snippet: rec };
+  return null;
+}
+
+// Patterns live in modules/autonomy_gate/obligation_patterns.json (the E2 file, the
+// single source; this hook keeps no copy of them). Missing/unreadable => class is
+// off, never an error (fail-open).
+let RECO_SPEC;
+function recoSpec() {
+  if (RECO_SPEC !== undefined) return RECO_SPEC;
+  RECO_SPEC = null;
+  try {
+    const f = path.join(__dirname, '..', 'modules', 'autonomy_gate', 'obligation_patterns.json');
+    const j = JSON.parse(fs.readFileSync(f, 'utf8').replace(/^﻿/, ''));
+    const r = j.recommendation_stop;
+    if (!r || !Array.isArray(r.triggers)) return RECO_SPEC;
+    const fl = (r.flags || '').includes('i') ? 'i' : '';
+    const ns = (j.patterns || []).find((p) => p.id === 'next_step');
+    RECO_SPEC = {
+      triggers: r.triggers.map((x) => new RegExp(x, fl)),
+      nextStep: ns ? new RegExp(ns.regex, ns.flags && ns.flags.includes('i') ? 'i' : '') : null,
+      nextVerb: r.next_step_verb ? new RegExp(r.next_step_verb, fl) : null,
+      owner: new RegExp(r.owner_exclude, fl),
+      handoff: new RegExp(r.handoff_exclude, fl),
+    };
+  } catch (_) { RECO_SPEC = null; }
+  return RECO_SPEC;
+}
+
+/** Snippet when one of the last two sentences recommends/defers self-doable work. */
+function recommendationStop(tail) {
+  const spec = recoSpec();
+  if (!spec) return null;
+  // Owner category / Owner-directed ask / HANDOFF BLOCK anywhere in the closing tail vetoes.
+  if (spec.owner.test(tail) || spec.handoff.test(tail)) return null;
+  for (const s of lastSentences(tail, 2)) {
+    if (spec.triggers.some((re) => re.test(s.text))) return s.text;
+    if (spec.nextStep && spec.nextVerb && spec.nextStep.test(s.text) && spec.nextVerb.test(s.text)) {
+      return s.text;
+    }
+  }
   return null;
 }
 
@@ -1001,6 +1051,12 @@ const GUIDANCE = {
     'Owner is looking at an executed action with no sentence attached — they ' +
     'cannot tell whether you finished, crashed, or are still thinking. A tool ' +
     'call is work, not a report. Say what landed and what comes next.',
+  RECOMMENDATION_STOP:
+    'This turn is about to end by RECOMMENDING or DEFERRING work you can carry out ' +
+    'yourself ("next iteration should...", "I suggest you run...", "left for a ' +
+    'follow-up"). A recommendation you can execute is not a stop reason: do it, or ' +
+    'record it as an obligation and do it. Stop only on a named Owner gate ' +
+    '(credential, irreversible, outward-facing, preference) or a HANDOFF BLOCK.',
   NULL_ACK:
     'This turn is about to end on a NULL ACKNOWLEDGEMENT: the whole message ' +
     'dismisses a system event as needing no reply. A background task-notification ' +

@@ -25,5 +25,19 @@
    "regex": "\\b(?:next\\s+(?:iteration|step)\\b|recommend(?:ed)?\\b[^.\\n]{0,80}\\bnext\\b)",
    "exclude": "", "severity": "AMBER", "frame": true,
    "next_action": "Do the stated next step now: {text}"}
- ]
+  ],
+ "recommendation_stop": {
+  "note": "closer-guard RECOMMENDATION_STOP (E4). A closing sentence matching 'triggers' (or the next_step pattern above AND 'next_step_verb') recommends or defers work the agent could do itself. Vetoed when the closing tail matches 'owner_exclude' (a named Owner category or Owner-directed ask) or 'handoff_exclude' (the HANDOFF BLOCK contract). Read by hooks/closer-guard.js; not a compiler pattern.",
+  "flags": "i",
+  "triggers": [
+   "\\bnext\\s+iteration\\s+should\\b",
+   "\\bI\\s+(?:would\\s+|'d\\s+)?(?:recommend|suggest)\\s+(?:you\\s+)?(?:to\\s+)?(?:do|doing|run|running|fix|fixing|add|adding|re-?run|wire|wiring|tackl\\w+|start\\w*|us\\w+|that|we)\\b",
+   "\\brecommend(?:ed)?\\s+(?:doing|running|fixing|adding|re-?running|wiring)\\b",
+   "\\bleft\\s+(?:for|to)\\s+(?:a\\s+)?(?:follow-?up|later|the\\s+next\\s+(?:iteration|pass|round))\\b",
+   "\\b(?:defer(?:red)?|deferring)\\s+(?:this|that|it|the\\s+rest)\\s+to\\s+(?:a\\s+)?(?:follow-?up|later|the\\s+next)\\b"
+  ],
+  "next_step_verb": "\\b(?:should|recommend\\w*|suggest\\w*|propose\\w*|worth|better\\s+to)\\b",
+  "owner_exclude": "\\bOwner\\b|\\b(?:your|the\\s+user'?s?)\\s+(?:decision|call|approval|preference)\\b|\\byou\\s+(?:decide|approve|confirm|choose|authori[sz]e)\\b|\\b(?:credentials?|irreversible|outward-facing|human-gate|decision\\s+needed|owner-gated)\\b",
+  "handoff_exclude": "\\bHANDOFF\\s+BLOCK\\b|\\b(?:another|other|fresh|new|next)\\s+(?:pane|session)\\b"
+ }
 }
