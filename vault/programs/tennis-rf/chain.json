@@ -1,90 +1,111 @@
 {
-    "goal":  "tennis-rf",
-    "root":  "C:\\Users\\User\\Apps\\recon_work\\wt_tennis_rf",
-    "envelope":  53000000,
-    "max_residuals":  2,
-    "route_ladder":  [
-                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
-                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
-                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json"
-                     ],
-    "units":  [
-                  {
-                      "id":  "W1",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W1.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W1-receipt.md",
-                      "after":  null
-                  },
-                  {
-                      "id":  "W4",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W4.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W4-receipt.md",
-                      "after":  "W1"
-                  },
-                  {
-                      "id":  "W2",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W2.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W2-receipt.md",
-                      "after":  "W4"
-                  },
-                  {
-                      "id":  "W3",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W3.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W3-receipt.md",
-                      "after":  "W2"
-                  },
-                  {
-                      "id":  "W3b",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W3b.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W3b-receipt.md",
-                      "after":  "W3"
-                  },
-                  {
-                      "id":  "W5a",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W5a.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W5a-receipt.md",
-                      "after":  "W3b"
-                  },
-                  {
-                      "id":  "W5b",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W5b.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W5b-receipt.md",
-                      "after":  "W5a"
-                  },
-                  {
-                      "id":  "W6",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W6.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W6-receipt.md",
-                      "after":  "W5b"
-                  },
-                  {
-                      "id":  "W7",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W7.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W7-receipt.md",
-                      "after":  "W6"
-                  },
-                  {
-                      "id":  "W8",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W8.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W8-receipt.md",
-                      "after":  "W7"
-                  },
-                  {
-                      "id":  "W9",
-                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W9.md",
-                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
-                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W9-receipt.md",
-                      "after":  "W8"
-                  }
-              ]
+    "goal": "tennis-rf",
+    "root": "C:\\Users\\User\\Apps\\recon_work\\wt_tennis_rf",
+    "envelope": 53000000,
+    "max_residuals": 2,
+    "route_ladder": [
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json"
+    ],
+    "units": [
+        {
+            "id": "W1",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W1.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W1-receipt.md",
+            "after": null
+        },
+        {
+            "id": "W4",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W4.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W4-receipt.md",
+            "after": "W1"
+        },
+        {
+            "id": "W2",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W2.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W2-receipt.md",
+            "after": "W4"
+        },
+        {
+            "id": "W3",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W3.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W3-receipt.md",
+            "after": "W2"
+        },
+        {
+            "id": "W3b",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W3b.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W3b-receipt.md",
+            "after": "W3"
+        },
+        {
+            "id": "W5a",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W5a.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W5a-receipt.md",
+            "after": "W3b"
+        },
+        {
+            "id": "W5b",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W5b.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W5b-receipt.md",
+            "after": "W5a"
+        },
+        {
+            "id": "W6",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W6.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W6-receipt.md",
+            "after": "W5b"
+        },
+        {
+            "id": "W7",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W7.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W7-receipt.md",
+            "after": "W6"
+        },
+        {
+            "id": "W10a",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W10a.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W10a-receipt.md",
+            "after": "W7"
+        },
+        {
+            "id": "W10b",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W10b.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W10b-receipt.md",
+            "after": "W10a"
+        },
+        {
+            "id": "W10c",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W10c.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W10c-receipt.md",
+            "after": "W10b"
+        },
+        {
+            "id": "W8",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W8.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W8-receipt.md",
+            "after": "W10c"
+        },
+        {
+            "id": "W9",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W9.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-W9-receipt.md",
+            "after": "W8"
+        }
+    ]
 }

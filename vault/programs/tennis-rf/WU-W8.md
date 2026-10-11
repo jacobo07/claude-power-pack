@@ -19,3 +19,5 @@ the old hypothesis file PP `vault/plans/d21-tennis-token-budget-2026-10-10.md` (
 5. Compare with the old hypothesis: what changed, why, what is measured vs inferred vs unproven savings.
 Write `vault/plans/d21-tennis-token-budget-2026-10-11.md` (new file; keep the old one) with every figure tagged
 M / D / H and its source. Receipt (write it to vault/programs/tennis-rf/WU-W8-receipt.md, Status line per PROGRAMME.md step 3; the chain reads only that file): the two scope tables and the admission line.
+
+Oracle (Owner 2026-10-11, W10a-c): take compile-verified rates from WU-W10c-receipt.md and MEASURE.md with their n. If W10c recorded a FAIL, report FAIL; use UNKNOWN only for a layer it did not measure.
