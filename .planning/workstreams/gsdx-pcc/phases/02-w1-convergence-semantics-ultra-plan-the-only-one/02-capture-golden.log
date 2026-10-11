@@ -1,0 +1,4 @@
+CAPTURED golden scenarios=6 legacy_types=22 volatile=0 (taken on head 13a0ee2c, proof.py absent)
+EXIT=0
+REFUSED: golden exists; use --amend <scenario> --why <text>
+EXIT=2 (re-capture REFUSED)

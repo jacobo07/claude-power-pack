@@ -1,0 +1,16 @@
+PASS V-PCC-HERMETIC-HOME home=pcc-home-8oj7lmdp
+PASS V-PCC-HERMETIC-ROOT-REFUSAL live-refused=True hermetic-allowed=True
+PASS V-PCC-FIXTURE-MANIFEST g-002-router-surface: 50 files verified; g-001-smoke-runner: 123 files verified
+PASS V-PCC-FIXTURE-TAMPER-REFUSED tampered copy refused: sha256 mismatch 000001.json
+PASS V-PCC-REPLAY-CHAIN-g-002-router-surface events=50 tip=ac414ec58bcd
+PASS V-PCC-REPLAY-CHAIN-g-001-smoke-runner events=123 tip=10dab37eac17
+PASS V-PCC-GOLDEN-PRE-CHANGE head=13a0ee2c2ef0 legacy_files=20
+PASS V-PCC-GOLDEN-RECORDED-NOT-VOLATILE volatile recorded=[]
+PASS V-PCC-REPLAY-G002 g002: 50 prefixes equal
+PASS V-PCC-REPLAY-G001 g001: 123 prefixes equal
+PASS V-PCC-REPLAY-SYNTHETIC syn_contract: 4 prefixes equal; syn_carry: 16 prefixes equal; syn_operator: 5 prefixes equal; syn_evidence: 5 prefixes equal
+PASS V-PCC-REPLAY-POPULATION corpus=22 discovered=22 golden=22 missing=[]
+PASS V-PCC-LIVE-STORE-UNTOUCHED verdict=SAME changed=[]
+
+GSDX_PCC_REPLAY_PASS=13/13  threshold=13/13
+EXIT=0
