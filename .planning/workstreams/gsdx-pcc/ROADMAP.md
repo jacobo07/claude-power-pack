@@ -50,7 +50,7 @@ discriminating evidence, or less reconstruction -- never from removing a check.
   red-first, mutation-drilled, UKDL T-entry. Measure the incumbent: per-suite wall time of the GSD X goal suites,
   judge replay time, a real goal's sweep->judge timeline; record UNKNOWN where unmeasurable. Done: gate_provider
   18/18; `EVIDENCE.md` with the incumbent table.
-- [ ] **Phase 2: W1 Convergence semantics (ULTRA-PLAN, the only one)**
+- [x] **Phase 2: W1 Convergence semantics (ULTRA-PLAN, the only one)** (completed 2026-10-11)
   Resolve proof states, certificate validity, causal fingerprint, freshness classes, frontier semantics, event
   types, kill switches, legacy-log replay. Dispatch `oneshot-architect-auditor` on the amended spec; inject every
   gap. Then land the compatibility seam: new event types + projections with ZERO behaviour change; every
