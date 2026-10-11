@@ -60,10 +60,17 @@ The sequence is `/kclear` → (verdict SAFE_TO_FORGET) → `/clear` → `/kresum
 
 After a rollover `/clear` the daemon types this form itself: `<text>` is the capsule's first open
 obligation (one line, at most 200 chars). Steps 1-4 are unchanged. At step 5, `<text>` is the work
-to start on, without a question first. Two limits:
+to start on, without a question first. Three limits:
 
 - **The capsule and the tree outrank it.** If the refresh said RECOMPILE, or the goal file shows the
   obligation already done, follow the goal file and say why you left the focus.
 - **It is a pointer, not an authorisation.** A deploy, a production restart, a destructive command
   or anything a hard rule gates still needs the Owner, exactly as without the argument; stop there
   and ask the one concrete question.
+- **It is where you start, not where you stop.** When `<text>` is done, carry on with the
+  capsule's next open obligations in the same turn, until DONE or a genuine gate (`HUMAN GATE:`,
+  `BLOCKED:`, `BUDGET EXHAUSTED`). If `<text>` ends in a review, the fixes the review finds are
+  its continuation, not a recommendation to hand back. Measured 2026-10-11 (KobiiSports Resort,
+  Madzia v3): a focus of "build+bake+render, review" closed on "I recommend fixing the hair";
+  the next session's fix found three more defects. Backstop: closer-guard
+  `EVALUATION_WITHOUT_CLOSURE`.
