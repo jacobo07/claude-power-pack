@@ -122,6 +122,15 @@ def _needs_a_gate_here(o, ctx: Context) -> str:
 
 
 def decide(ctx: Context) -> Decision:
+    """The first action of the compiled frontier; exactly `_decide_legacy` when the frontier switch
+    is off, and whenever there is nothing to run beside what is already in flight."""
+    from . import frontier  # noqa: PLC0415 -- lazy: frontier imports this module
+    if not frontier.frontier_enabled():
+        return _decide_legacy(ctx)
+    return frontier.decide_frontier(ctx, _decide_legacy)
+
+
+def _decide_legacy(ctx: Context) -> Decision:
     st = ctx.state
     eps = project_epochs(st)
     cv = project_convergence(st)

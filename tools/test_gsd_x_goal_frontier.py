@@ -493,6 +493,250 @@ def gate_compile_orders():
         shutil.rmtree(base, ignore_errors=True)
 
 
+# ---------------------------------------------------------------- 03-03 gates
+# `ep.begin` refuses a second open epoch until 03-04, so these fixtures append the DISPATCHING and
+# RUNNING events directly, exactly the shape begin / mark_running write, with the unit in the spec.
+
+import contextlib  # noqa: E402
+import inspect  # noqa: E402
+import uuid  # noqa: E402
+
+
+@contextlib.contextmanager
+def switch(value):
+    old = os.environ.get(pf.FRONTIER_SWITCH)
+    if value is None:
+        os.environ.pop(pf.FRONTIER_SWITCH, None)
+    else:
+        os.environ[pf.FRONTIER_SWITCH] = value
+    try:
+        yield
+    finally:
+        if old is None:
+            os.environ.pop(pf.FRONTIER_SWITCH, None)
+        else:
+            os.environ[pf.FRONTIER_SWITCH] = old
+
+
+def raw_epoch(log, oid, with_unit=True, running=True, gate_class="unit"):
+    """An open gate epoch for `oid` whose spec carries the stored unit, written as begin would."""
+    fr = load_frontier()
+    st = gc.project(log)
+    o = cv.project_convergence(st).obligations[oid]
+    spec = {"obligation": oid, "tree_hash": TREE, "plane": o.plane,
+            "gate": {"id": oid, "command": [], "class": gate_class, "files": []}}
+    if with_unit:
+        spec["unit"] = fr.stored_unit(fr.gate_unit(o, st))
+    eid = f"ep-{uuid.uuid4().hex[:12]}"
+    fence = max((e.fence for e in ep.project_epochs(st).values()), default=0) + 1
+    log.append(st.last_seq + 1, ep.DISPATCHING,
+               {"epoch_id": eid, "revision": st.revision, "provider": "gate",
+                "identity": {"run_token": uuid.uuid4().hex, "epoch_id": eid, "fence": fence,
+                             "goal_id": st.goal_id},
+                "info_key": f"key-{oid}", "hypothesis": "initial", "spec": spec, "fence": fence}, "t")
+    if running:
+        ep.mark_running(log, gc.project(log), eid, {"pid": 1}, "t")
+    return eid
+
+
+def set_posture(log, posture_name, **extra):
+    st = gc.project(log)
+    gc.set_budget(log, st.last_seq + 1, {"posture": posture_name, **extra}, "founder")
+
+
+def obs(**by_epoch):
+    return {eid: ep.Observation(state) for eid, state in by_epoch.items()}
+
+
+def wait_scenario(name, specs, running_class="unit", posture_name="WALL_CLOCK", **budget):
+    """One running epoch for the first obligation; the rest are ungated and wait their turn."""
+    log, base = build(name, specs)
+    set_posture(log, posture_name, **budget)
+    eid = raw_epoch(log, specs[0][0], gate_class=running_class)
+    return log, base, eid
+
+
+def gate_global_wait():
+    """RED 1: legacy idles on a running sibling while an independent gate waits."""
+    log, base, eid = wait_scenario("gwait", [("ob-a", cv.OUTCOME, "unit"), ("ob-b", cv.EVIDENCE, "unit")])
+    clog, cbase, ceid = wait_scenario("gwait-c", [("ob-a", cv.OUTCOME, "integration"),
+                                                  ("ob-b", cv.EVIDENCE, "integration")],
+                                      running_class="integration")
+    try:
+        with switch("off"):
+            legacy = rc.decide(ctx_for(log, observations=obs(**{eid: "running"})))
+        with switch("on"):
+            d = rc.decide(ctx_for(log, observations=obs(**{eid: "running"})))
+            control = rc.decide(ctx_for(clog, observations=obs(**{ceid: "running"})))
+        ok = (legacy.kind == rc.WAIT and d.kind == rc.NEXT_EPOCH
+              and d.spec.get("obligation") == "ob-b" and bool(d.spec.get("unit"))
+              and d.provider == "gate" and d.info_key and control.kind == rc.WAIT)
+        return ok, f"legacy={legacy.kind} frontier={d.kind}:{d.spec.get('obligation')} control_conflict={control.kind}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+        shutil.rmtree(cbase, ignore_errors=True)
+
+
+def gate_legacy_equal():
+    """Switch off, and switch on with the default posture: field-equal to the legacy decision."""
+    if not hasattr(rc, "_decide_legacy"):
+        return False, ABSENT
+    seen = {"off": 0, "on": 0, "bad": []}
+
+    def compare(ctx, label):
+        for mode in ("off", "on"):
+            with switch(mode):
+                got, want = rc.decide(ctx), rc._decide_legacy(ctx)
+            seen[mode] += 1
+            if got != want:
+                seen["bad"].append(f"{label}:{mode}")
+
+    log, base = build("leq", [("ob-a", cv.OUTCOME, "unit"), ("ob-b", cv.EVIDENCE, "unit")])
+    try:
+        compare(ctx_for(log), "fresh")
+        eid = raw_epoch(log, "ob-a")
+        compare(ctx_for(log, observations=obs(**{eid: "running"})), "running")
+        compare(ctx_for(log, observations=obs(**{eid: "ended"})), "ended")
+        compare(ctx_for(log), "unobserved")
+        rows = []
+        for repo, goal, n in ((  # the committed Phase 2 corpus, every log prefix
+                "4a226561feb32dc7df40388410bbde2f67e83614", "g-002-router-surface", 50),
+                ("1f924bcabb838f1387a2afe5729e29b61891a3b4", "g-001-smoke-runner", 123)):
+            src = ROOT / "tools" / "fixtures" / "gsdx_legacy_goals" / repo / goal
+            files = sorted(p for p in src.iterdir() if gl.EVENT_RE.match(p.name))
+            for k in range(1, len(files) + 1):
+                dst = _TMP_GOALS / repo / f"{goal}-p{k}"
+                dst.mkdir(parents=True, exist_ok=True)
+                for p in files[:k]:
+                    shutil.copyfile(p, dst / p.name)
+                st = gc.project(gl.GoalLog(repo, f"{goal}-p{k}"))
+                compare(rc.Context(state=st, tree_hash=TREE, scope_hash="scope1",
+                                   providers=("gate", "codex"), now=1000.0, budget=st.budget),
+                        f"{goal}@{k}")
+            rows.append(f"{goal}={len(files)}")
+        ok = not seen["bad"] and seen["off"] == seen["on"] and seen["off"] > 170
+        return ok, f"compared_off={seen['off']} compared_on={seen['on']} prefixes={rows} diffs={seen['bad'][:3]}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_signature():
+    sig = inspect.signature(rc.decide)
+    ok = (list(sig.parameters) == ["ctx"] and sig.parameters["ctx"].annotation in ("Context", rc.Context)
+          and sig.return_annotation in ("Decision", rc.Decision))
+    return ok, f"signature={sig}"
+
+
+def gate_harvest_not_hidden():
+    log, base, a = wait_scenario("harv", [("ob-a", cv.OUTCOME, "unit"), ("ob-b", cv.EVIDENCE, "unit"),
+                                          ("ob-c", cv.REGRESSION, "unit")])
+    try:
+        b = raw_epoch(log, "ob-b")
+        o = obs(**{a: "running", b: "ended"})
+        with switch("off"):
+            legacy = rc.decide(ctx_for(log, observations=o))
+        with switch("on"):
+            d = rc.decide(ctx_for(log, observations=o))
+        ok = legacy.kind == rc.WAIT and d.kind == rc.HARVEST and d.epoch_id == b
+        return ok, f"legacy={legacy.kind} frontier={d.kind}:{d.epoch_id == b}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_no_starve():
+    """Research P5: an obligation with an open epoch is never re-selected."""
+    log, base, a = wait_scenario("starve", [("ob-a", cv.OUTCOME, "unit"), ("ob-b", cv.EVIDENCE, "unit")])
+    try:
+        with switch("on"):
+            first = rc.decide(ctx_for(log, observations=obs(**{a: "running"})))
+            b = raw_epoch(log, "ob-b")
+            second = rc.decide(ctx_for(log, observations=obs(**{a: "running", b: "running"}),
+                                       budget={"posture": "WALL_CLOCK"}))
+        ok = first.spec.get("obligation") == "ob-b" and second.kind == rc.WAIT
+        return ok, f"first={first.spec.get('obligation')} second={second.kind}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def _holds(name, mutate, expect_kind):
+    """GLOBAL-WAIT scenario plus one stop condition: still the legacy decision, never NEXT_EPOCH."""
+    log, base, a = wait_scenario(name, [("ob-a", cv.OUTCOME, "unit"), ("ob-b", cv.EVIDENCE, "unit")])
+    try:
+        extra = mutate(log) or {}
+        o = obs(**{a: "running"})
+        with switch("off"):
+            legacy = rc.decide(ctx_for(log, observations=o, **extra))
+        with switch("on"):
+            d = rc.decide(ctx_for(log, observations=o, **extra))
+        return legacy, d
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def _control_next():
+    log, base, a = wait_scenario("holds-ctl", [("ob-a", cv.OUTCOME, "unit"), ("ob-b", cv.EVIDENCE, "unit")])
+    try:
+        with switch("on"):
+            return rc.decide(ctx_for(log, observations=obs(**{a: "running"}))).kind
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_stop_holds():
+    from modules.gsd_x.goal import intervention as iv  # noqa: PLC0415
+    def pause(log):
+        iv.intervene(log, gc.project(log), iv.PAUSE, "operator", reason="hold everything")
+    legacy, d = _holds("stop", pause, rc.WAIT)
+    control = _control_next()
+    return legacy.kind == d.kind and d.kind != rc.NEXT_EPOCH and control == rc.NEXT_EPOCH, \
+        f"legacy={legacy.kind} frontier={d.kind} control={control}"
+
+
+def gate_budget_holds():
+    legacy, d = _holds("budget", lambda log: {"budget": {"posture": "WALL_CLOCK", "max_epochs": 1}}, rc.WAIT)
+    control = _control_next()
+    return legacy.kind == d.kind and d.kind != rc.NEXT_EPOCH and control == rc.NEXT_EPOCH, \
+        f"legacy={legacy.kind} frontier={d.kind} control={control}"
+
+
+def gate_blocked_on_holds():
+    legacy, d = _holds("blockedon", lambda log: {"blocked_on": "waiting for a person"}, rc.WAIT)
+    control = _control_next()
+    return legacy.kind == d.kind and d.kind != rc.NEXT_EPOCH and control == rc.NEXT_EPOCH, \
+        f"legacy={legacy.kind} frontier={d.kind} control={control}"
+
+
+def gate_closure_holds():
+    """Clear closure: every obligation proven at this tree. Legacy leaves WAIT while a sibling runs."""
+    log, base, a = wait_scenario("closure", [("ob-a", cv.OUTCOME, "unit")])
+    try:
+        st = gc.project(log)
+        v = mcl.Verdict("tools/gate.py", 0, "ok", TREE, st.revision, "unit", PIN)
+        cv.satisfy(log, st, "ob-a", v, "t")
+        raw_b = raw_epoch(log, "ob-a")      # a second open epoch beside the first
+        o = obs(**{a: "running", raw_b: "running"})
+        with switch("off"):
+            legacy = rc.decide(ctx_for(log, observations=o))
+        with switch("on"):
+            d = rc.decide(ctx_for(log, observations=o))
+        return legacy.kind == d.kind == rc.WAIT, f"legacy={legacy.kind} frontier={d.kind}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_wait_only_empty():
+    log, base, a = wait_scenario("wempty", [("ob-a", cv.OUTCOME, "unit"), ("ob-b", cv.EVIDENCE, "unit")])
+    elog, ebase, ea = wait_scenario("wempty2", [("ob-a", cv.OUTCOME, "unit")])
+    try:
+        with switch("on"):
+            nonempty = rc.decide(ctx_for(log, observations=obs(**{a: "running"})))
+            empty = rc.decide(ctx_for(elog, observations=obs(**{ea: "running"})))
+        return nonempty.kind != rc.WAIT and empty.kind == rc.WAIT, f"nonempty={nonempty.kind} empty={empty.kind}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+        shutil.rmtree(ebase, ignore_errors=True)
+
+
 GATES = [
     ("V-FRONTIER-HERMETIC", gate_hermetic),
     ("V-FRONTIER-SWITCH", gate_switch),
@@ -510,6 +754,16 @@ GATES = [
     ("V-FRONTIER-POSTURE", gate_posture),
     ("V-FRONTIER-CLASSES", gate_classes),
     ("V-FRONTIER-COMPILE-ORDERS", gate_compile_orders),
+    ("V-FRONTIER-GLOBAL-WAIT", gate_global_wait),
+    ("V-FRONTIER-LEGACY-EQUAL", gate_legacy_equal),
+    ("V-FRONTIER-SIGNATURE", gate_signature),
+    ("V-FRONTIER-HARVEST-NOT-HIDDEN", gate_harvest_not_hidden),
+    ("V-FRONTIER-NO-STARVE", gate_no_starve),
+    ("V-FRONTIER-STOP-HOLDS", gate_stop_holds),
+    ("V-FRONTIER-BUDGET-HOLDS", gate_budget_holds),
+    ("V-FRONTIER-CLOSURE-HOLDS", gate_closure_holds),
+    ("V-FRONTIER-BLOCKED-ON-HOLDS", gate_blocked_on_holds),
+    ("V-FRONTIER-WAIT-ONLY-EMPTY", gate_wait_only_empty),
 ]
 
 

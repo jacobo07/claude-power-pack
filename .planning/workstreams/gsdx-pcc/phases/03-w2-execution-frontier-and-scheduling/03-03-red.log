@@ -1,0 +1,27 @@
+﻿PASS V-FRONTIER-HERMETIC goals_root_under_temp=True
+PASS V-FRONTIER-SWITCH table_rows=12 mismatches=[] file_forces_off=True back_on=True
+PASS V-FRONTIER-UNIT-DERIVE unit=[] integ=['integration-env'] reality=['reality-env'] empty_class=[] causal_reads=['src/a', 'tools/gate.py']
+PASS V-FRONTIER-UNDECLARED declared_pair_independent=True undeclared_refused=True
+PASS V-FRONTIER-INDEP cases=5 wrong=[] asymmetric=[]
+PASS V-FRONTIER-RESOURCE integration_pair_refused=True reality_pair_refused=True cross_class_control_admitted=True
+PASS V-FRONTIER-FRONTIERS exec_before=['ob-a', 'ob-b', 'ob-c', 'ob-d'] exec_after_open=['ob-b', 'ob-c', 'ob-d'] invalidation=['ob-d'] proof_items=6
+PASS V-FRONTIER-GRAPH edges=5 resource_edges=[('gate:i1', 'gate:i2', 'resource:integration-env')] gate_gate_edges=1
+PASS V-FRONTIER-PRIOR own=20.0 class_fallback=25.0 unknown=None
+PASS V-FRONTIER-ORDER order=['a', 'b', 'd', 'c'] unknown_duration_first=['b', 'a']
+PASS V-FRONTIER-FAILURE-FIRST failing=0.6666666666666666 passing=0.0 no_history=None shared_read_multiplier=1.3333333333333333
+PASS V-FRONTIER-INFOGAIN p=.5,10s=0.1 certain=0.0 p=.5,5s=0.2 no_history=None zero_duration=None
+PASS V-FRONTIER-CRITICAL-PATH full=35.0 ('gate:a', 'gate:b', 'gate:c') partial_lower_bound=30.0 unknown=('gate:c',)
+PASS V-FRONTIER-POSTURE cases=13 wrong=[] state_fallback=True log_round_trip=True
+PASS V-FRONTIER-CLASSES bounds={'cognitive': 1, 'deterministic': 4, 'environment': 1, 'reviewer': 1, 'speculative': 1} unknown_class_refused=True
+PASS V-FRONTIER-COMPILE-ORDERS order=['ob-1', 'ob-2'] posture=BALANCED bound=2 unknown_durations=('gate:ob-1', 'gate:ob-2')
+FAIL V-FRONTIER-GLOBAL-WAIT legacy=WAIT frontier=WAIT:None control_conflict=WAIT
+FAIL V-FRONTIER-LEGACY-EQUAL RED-first: modules.gsd_x.goal.frontier absent
+PASS V-FRONTIER-SIGNATURE signature=(ctx: 'Context') -> 'Decision'
+FAIL V-FRONTIER-HARVEST-NOT-HIDDEN legacy=WAIT frontier=WAIT:False
+FAIL V-FRONTIER-NO-STARVE first=None second=WAIT
+FAIL V-FRONTIER-STOP-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+FAIL V-FRONTIER-BUDGET-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+PASS V-FRONTIER-CLOSURE-HOLDS legacy=WAIT frontier=WAIT
+FAIL V-FRONTIER-BLOCKED-ON-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+FAIL V-FRONTIER-WAIT-ONLY-EMPTY nonempty=WAIT empty=WAIT
+GSDX_FRONTIER_PASS=18/26  threshold=26/26

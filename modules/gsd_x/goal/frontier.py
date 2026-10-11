@@ -279,6 +279,61 @@ def _runnable_gate_obligations(ctx) -> list:
     return out
 
 
+def _open_epochs(state: GoalState) -> list:
+    return [e for e in ep.project_epochs(state).values() if e.state != "ended"]
+
+
+def _ended_sibling(ctx):
+    """The first running epoch whose observation says it ended or was lost: legacy WAITs on an
+    earlier running sibling and never reaches it."""
+    from . import reconcile as rc  # noqa: PLC0415 -- lazy, see frontier_enabled
+    for e in _open_epochs(ctx.state):
+        obs = ctx.observations.get(e.epoch_id)
+        if e.state == "running" and obs is not None and obs.state in (ep.OBS_ENDED, ep.OBS_LOST):
+            return rc.Decision(rc.HARVEST, f"{e.epoch_id} ended {obs.outcome or obs.state}: "
+                                           f"{obs.detail}", epoch_id=e.epoch_id)
+    return None
+
+
+def _may_start_new(ctx) -> bool:
+    """Every condition under which legacy stops before step 5 (spec S8): a paused or cancelled goal,
+    clear closure, an external block or a spent budget starts NOTHING while a sibling runs."""
+    from . import reconcile as rc  # noqa: PLC0415 -- lazy, see frontier_enabled
+    from .intervention import blocking_reason  # noqa: PLC0415
+    st = ctx.state
+    return not (blocking_reason(st) or cv.goal_closure(st, ctx.tree_hash).may_close
+                or ctx.blocked_on or rc._budget_verdict(ctx))
+
+
+def decide_frontier(ctx, legacy):
+    """`legacy(ctx)` unless it said WAIT with epochs in flight: then harvest an ended sibling, or start
+    a gate that is independent of everything open. Only WAIT is ever replaced."""
+    from . import reconcile as rc  # noqa: PLC0415 -- lazy, see frontier_enabled
+    base = legacy(ctx)
+    open_eps = _open_epochs(ctx.state)
+    if base.kind != rc.WAIT or (bound(ctx) == 1 and len(open_eps) < 2):
+        return base
+    harvest = _ended_sibling(ctx)
+    if harvest is not None:
+        return harvest
+    if len(open_eps) >= bound(ctx) or not _may_start_new(ctx):
+        return base
+    stored = [e.spec.get("unit") for e in open_eps]
+    if any(u is None for u in stored):
+        return base                    # an open epoch with no declared unit conflicts with everything
+    fr = compile_frontier(ctx)
+    for u in fr.execution:
+        if all(independent_units(u, other) for other in stored):
+            o = cv.project_convergence(ctx.state).obligations[u["obligation"]]
+            return rc.Decision(rc.NEXT_EPOCH,
+                               f"{o.identifier} ({o.plane}) {rc._needs_a_gate_here(o, ctx)}",
+                               provider="gate", hypothesis="initial", info_key=u["info_key"],
+                               spec={"obligation": o.identifier, "gate": o.done_gate,
+                                     "tree_hash": ctx.tree_hash, "plane": o.plane,
+                                     "unit": stored_unit(u)})
+    return base
+
+
 def compile_frontier(ctx) -> Frontier:
     st = ctx.state
     convergence = cv.project_convergence(st)
