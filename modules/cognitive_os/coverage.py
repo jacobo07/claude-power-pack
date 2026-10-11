@@ -24,8 +24,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 _PP_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_LEDGER = _PP_ROOT / "vault" / "cognitive_os" / "coverage_ledger.jsonl"
-DEFAULT_MANIFEST_CACHE = _PP_ROOT / "vault" / "cognitive_os" / "manifest_cache.json"
+# PP_CORPUS_STATE_DIR relocates all corpus-reuse state (hermetic tests, per-host overrides).
+_STATE = Path(os.environ.get("PP_CORPUS_STATE_DIR") or (_PP_ROOT / "vault" / "cognitive_os"))
+DEFAULT_LEDGER = _STATE / "coverage_ledger.jsonl"
+DEFAULT_MANIFEST_CACHE = _STATE / "manifest_cache.json"
 
 DEPTH_RANK = {"SKIPPED": 0, "STRUCTURAL": 1, "FULL_READ": 2}
 STATES = ("EXACT_REUSE", "PARTIAL", "TRANSFORM_CHANGED", "INSUFFICIENT", "INVALIDATED",
@@ -410,14 +412,23 @@ def ensure(manifest: Manifest, *, corpus_id: str, requester: str, transform: str
     """Single-flight per corpus. The second writer waits, then re-judges against the ledger the
     first one wrote and adopts it (EXACT_REUSE, zero extraction) instead of repeating the work."""
     import time
-    from modules.knowledge_acquisition.runlock import LockBusy, ProfileLock
-    lock = ProfileLock(_lock_profile(ledger, corpus_id), ttl_seconds=lock_ttl_seconds)
+    lockdir = _lock_profile(ledger, corpus_id).parent / "held"
+    lockdir.parent.mkdir(parents=True, exist_ok=True)
     deadline = time.monotonic() + lock_wait_seconds
+    # mkdir is atomic and the directory is its own content, so there is no created-but-empty
+    # window. (modules/knowledge_acquisition/runlock.py was measured to steal a lock whose file
+    # exists but is not yet written; its owner is not modified here.)
     while True:
         try:
-            lock.acquire()
+            lockdir.mkdir()
             break
-        except LockBusy:
+        except FileExistsError:
+            try:
+                if time.time() - lockdir.stat().st_mtime > lock_ttl_seconds:
+                    lockdir.rmdir()          # stale: the holder died without releasing
+                    continue
+            except OSError:
+                pass
             if time.monotonic() >= deadline:
                 v = Verdict("UNKNOWN", "corpus lock busy past deadline; not extracting")
                 return {"verdict": v, "extracted": [], "run_id": None}
@@ -428,7 +439,10 @@ def ensure(manifest: Manifest, *, corpus_id: str, requester: str, transform: str
                                 extractor=extractor, need=need, ledger=ledger,
                                 on_unknown=on_unknown, unknown_reason=unknown_reason)
     finally:
-        lock.release()
+        try:
+            lockdir.rmdir()
+        except OSError:
+            pass
 
 
 def repair_ledger(ledger=None) -> dict:

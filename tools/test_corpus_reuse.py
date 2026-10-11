@@ -8,7 +8,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+_STATE = tempfile.mkdtemp(prefix="corpus_state_")
+os.environ["PP_CORPUS_STATE_DIR"] = _STATE   # hermetic: no test writes into the live vault
 from modules.cognitive_os import coverage as cv  # noqa: E402
+from modules.cognitive_os import corpus_delivery as cd  # noqa: E402
+from modules.fable_distillation import fd_00_gate  # noqa: E402
 
 passes = fails = 0
 
@@ -164,8 +168,80 @@ def main():
         os.environ.pop("PP_CORPUS_REUSE")
         check("V-CORPUS-KILL-SWITCH", v.state == "UNKNOWN" and "disabled" in v.reason)
         check("V-CORPUS-SOURCE-UNTOUCHED", (root / "a.txt").read_bytes() == b"alpha")
+    delivery_gates()
     print(f"CORPUS_REUSE_PASS={passes}/{passes + fails}  threshold=N/N")
     return 0 if fails == 0 else 1
+
+
+def run_hook(payload, *, env_extra=None):
+    """Drive the REAL hook: node -> python -> stdout, exactly as the harness does."""
+    import json
+    import shutil
+    import subprocess
+    node = shutil.which("node")
+    env = dict(os.environ, **(env_extra or {}))
+    r = subprocess.run([node, str(ROOT / "hooks" / "corpus-reuse-sentinel.js")], input=json.dumps(payload),
+                       capture_output=True, text=True, timeout=60, env=env)
+    return r.returncode, r.stdout.strip()
+
+
+def delivery_gates():
+    import json
+    st = Path(_STATE)
+    with tempfile.TemporaryDirectory() as tmp:
+        part = mk(tmp, {"p/a.txt": b"A", "p/b.txt": b"B", "p/c.txt": b"C"})
+        full = mk(Path(tmp) / "f", {"x.txt": b"X"})
+        art = Path(tmp) / "brief.md"
+        art.write_text("prior summary", encoding="utf-8")
+        ptr = {"path": str(art), "sha256": cv.sha256_file(art)}
+        mp = cv.build_manifest(part)
+        mf = cv.build_manifest(full)
+        cd.register("partial-corp", str(part))
+        cd.register("full-corp", str(full))
+        cv.record(mp, corpus_id="partial-corp", scope=["p1"], transform="t@1", config_digest="c",
+                  depth_by_rel={"p/a.txt": "FULL_READ", "p/b.txt": "STRUCTURAL"}, artifacts=[ptr])
+        cv.record(mf, corpus_id="full-corp", scope=["p1"], transform="t@1", config_digest="c",
+                  depth_by_rel={"x.txt": "FULL_READ"}, artifacts=[ptr])
+        base = {"hook_event_name": "UserPromptSubmit", "cwd": str(Path(tmp) / "p1")}
+        env = {"PP_CORPUS_STATE_DIR": str(st), "PYTHONIOENCODING": "utf-8"}
+        pr = f"please mine {str(part).replace(chr(92), '/')}/a.txt again for the ads"
+        rc, out = run_hook(dict(base, prompt=pr), env_extra=env)
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"] if out else ""
+        check("V-CORPUS-DELIVERY-HOOK-E2E", rc == 0 and "partial-corp" in ctx and "uncovered" in ctx
+              and "data from a ledger" in ctx, ctx[:90])
+        rc, out = run_hook({"hook_event_name": "PreToolUse", "tool_name": "Agent", "cwd": base["cwd"],
+                            "tool_input": {"prompt": f"read everything under {part}"}}, env_extra=env)
+        check("V-CORPUS-DELIVERY-SUBAGENT-SPAWN", rc == 0 and "partial-corp" in out)
+        rc, out = run_hook({"hook_event_name": "PreToolUse", "tool_name": "Read", "cwd": base["cwd"],
+                            "tool_input": {"prompt": f"{part}"}}, env_extra=env)
+        check("V-CORPUS-DELIVERY-OTHER-TOOL-SILENT", rc == 0 and out == "")
+        rc, out = run_hook(dict(base, prompt="nothing about any corpus here"), env_extra=env)
+        check("V-CORPUS-DELIVERY-UNREGISTERED-SILENT", rc == 0 and out == "")
+        rc, out = run_hook(dict(base, cwd=str(Path(tmp) / "intruder"), prompt=pr), env_extra=env)
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"] if out else ""
+        check("V-CORPUS-K-HOOK-SCOPE-NO-LEAK", "FULL_READ 0, STRUCTURAL 0" in ctx and brief_name(art) not in ctx, ctx[:120])
+        rc, out = run_hook(dict(base, prompt=pr), env_extra=dict(env, PP_CORPUS_REUSE="off"))
+        check("V-CORPUS-KILL-SWITCH-HOOK", rc == 0 and out == "")
+        before = cd.delivery_status(log=st / "delivery.jsonl")
+        rc, out = run_hook(dict(base, prompt=pr), env_extra=dict(env, PP_PYTHON=str(Path(tmp) / "no-python.exe")))
+        after = cd.delivery_status(log=st / "delivery.jsonl")
+        check("V-CORPUS-L-FAILURE-COUNTED-NOT-SILENT", rc == 0 and out == ""
+              and after["FAILED"] == before["FAILED"] + 1 and before["DELIVERED"] >= 2, f"{before} -> {after}")
+        # FD-00: the real consumer
+        d = fd_00_gate.check_admission(f"mine {full} thoroughly", corpus_requester="p1")
+        check("V-CORPUS-FD00-FULL-ANSWER-FROM-ASSET", d.verdict == "ANSWER_FROM_ASSET"
+              and d.signals.get("corpus_artifacts") == [str(art)], d.verdict)
+        d = fd_00_gate.check_admission(f"mine {part} thoroughly", corpus_requester="p1")
+        check("V-CORPUS-FD00-PARTIAL-NOT-ANSWERED", d.verdict != "ANSWER_FROM_ASSET"
+              and d.signals.get("corpus_coverage", {}).get("uncovered") == 1, d.verdict)
+        d = fd_00_gate.check_admission(f"mine {full} thoroughly", corpus_requester="intruder")
+        check("V-CORPUS-FD00-SCOPE", d.verdict != "ANSWER_FROM_ASSET")
+        d = fd_00_gate.check_admission("write a regex to rename files")
+        check("V-CORPUS-FD00-UNCHANGED-WITHOUT-CORPUS", "corpus_id" not in d.signals)
+
+
+def brief_name(p):
+    return p.name
 
 
 if __name__ == "__main__":
