@@ -2568,6 +2568,32 @@ def halt_authority(rec: dict) -> int | None:
         return None
 
 
+def _chain_try_seal(packet: str) -> dict:
+    import gsdx_chain  # noqa: E402 -- APR-2's zero-model finalizer, same tools dir
+    return gsdx_chain.try_seal(packet)
+
+
+def _seal_instead_of_renew(rec: dict, row: dict) -> bool:
+    """APR-3: an unclosed receipt (not a missing one) is first offered to the zero-model finalizer. A seal costs no
+    model call; a worker relaunch costs ~100k+ tokens. Fail-isolated: any error -> renew as before."""
+    pkt = (rec.get("wu_packet") or {}).get("path")
+    if not pkt:
+        return False
+    p = Path(pkt)
+    if rj.receipt_status(p.with_name(p.stem + "-receipt.md")) is None:
+        return False
+    try:
+        res = _chain_try_seal(pkt)
+    except Exception as exc:  # noqa: BLE001
+        row["seal_attempt"] = f"{type(exc).__name__}: {exc}"[:200]
+        return False
+    row["seal_attempt"] = res.get("result") or res.get("reason") or ("sealed" if res.get("sealed") else "not sealed")
+    if res.get("sealed"):
+        row["renewal"] = "not renewed: sealed by finalizer"
+        return True
+    return False
+
+
 def halt_continue(rec: dict, wd: str, result_text: str, slim: dict | None, row: dict, now: float) -> None:
     """rec = the mission as it stands after the stop. Fills row['capsule'] / row['renewed_as'] / row['renewal']."""
     if not halt_continue_on():
@@ -2578,6 +2604,8 @@ def halt_continue(rec: dict, wd: str, result_text: str, slim: dict | None, row: 
         return
     if _receipt_present(rec):
         row.setdefault("renewal", "not renewed: receipt present")
+        return
+    if _seal_instead_of_renew(rec, row):
         return
     try:
         _halt_continue_body(rec, wd, result_text, slim, row, now)
@@ -3879,15 +3907,52 @@ def advance_pass(*, arm_fn=None, headroom=None, ledger_for=None) -> list[dict]:
     return rows
 
 
+def _packet_states() -> dict:
+    return {m["mission_id"]: (m["state"], (m["wu_packet"] or {}).get("path")) for m in _scan()[0] if m.get("wu_packet")}
+
+
+def event_chain_ticks(before: dict, after: dict, ticker=None) -> list[dict]:
+    """APR-3: a packet mission that became COMPLETED/HALTED in this pass ticks its owning chain(s) at once.
+    Fail-isolated (an exception is a row), once per packet, off with CPP_GSDX_CHAIN_EVENT=off."""
+    if os.environ.get("CPP_GSDX_CHAIN_EVENT", "").lower() == "off":
+        return []
+    rows, seen = [], set()
+    for mid, (st, pkt) in after.items():
+        if st not in (COMPLETED, HALTED) or not pkt or pkt in seen or (before.get(mid) or (None,))[0] == st:
+            continue
+        seen.add(pkt)
+        try:
+            if ticker is None:
+                import gsdx_chain  # noqa: E402
+                ticker = gsdx_chain.tick_for_packet
+            for r in ticker(pkt):
+                rows.append({"mission_id": mid, "action": "chain_event", "status": r.get("action"), **{
+                    k: r[k] for k in ("unit", "trigger", "chain", "error") if k in r}})
+        except Exception as exc:  # noqa: BLE001
+            rows.append({"mission_id": mid, "action": "chain_event", "status": "ERROR",
+                         "error": f"{type(exc).__name__}: {exc}"[:300]})
+    return rows
+
+
 def supervise(*args, **kw) -> list[dict]:
-    rows = _supervise_core(*args, **kw)
     dry = kw.get("dry_run", args[1] if len(args) > 1 else False)
+    try:
+        before = {} if dry else _packet_states()
+    except Exception:  # noqa: BLE001
+        before = None
+    rows = _supervise_core(*args, **kw)
     if not dry:
         try:
             rows = rows + advance_pass()
         except Exception as exc:  # noqa: BLE001
             rows = rows + [{"mission_id": "advance", "action": "advance", "status": "ERROR",
                             "error": f"{type(exc).__name__}: {exc}"[:300]}]
+        if before is not None:
+            try:
+                rows = rows + event_chain_ticks(before, _packet_states())
+            except Exception as exc:  # noqa: BLE001
+                rows = rows + [{"mission_id": "chain_event", "action": "chain_event", "status": "ERROR",
+                                "error": f"{type(exc).__name__}: {exc}"[:300]}]
     return rows
 
 
