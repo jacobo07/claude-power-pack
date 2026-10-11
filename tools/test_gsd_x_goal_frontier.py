@@ -306,6 +306,193 @@ def gate_graph():
         shutil.rmtree(base, ignore_errors=True)
 
 
+# ---------------------------------------------------------------- 03-02 gates
+
+T0 = 1_700_000_000.0
+
+
+def _iso(offset_s: float) -> str:
+    import datetime as dt  # noqa: PLC0415
+    return dt.datetime.fromtimestamp(T0 + offset_s, dt.timezone.utc).isoformat()
+
+
+def syn_state(runs: list):
+    """A projection stand-in with real epoch events at controlled timestamps.
+
+    runs: (obligation, gate class, outcome, start s, duration s)."""
+    from types import SimpleNamespace as NS  # noqa: PLC0415
+    events = []
+    seq = 0
+    for n, (oid, cls, outcome, start, dur) in enumerate(runs):
+        eid = f"ep-{n}"
+        seq += 1
+        events.append(NS(seq=seq, type=ep.DISPATCHING, ts=_iso(start), data={
+            "epoch_id": eid, "revision": "r", "provider": "gate", "identity": {}, "info_key": f"k{n}",
+            "hypothesis": "initial", "fence": n + 1,
+            "spec": {"obligation": oid, "tree_hash": TREE, "gate": {"id": oid, "class": cls}}}))
+        seq += 1
+        events.append(NS(seq=seq, type=ep.RUNNING, ts=_iso(start), data={"epoch_id": eid, "handle": {}}))
+        seq += 1
+        events.append(NS(seq=seq, type=ep.ENDED, ts=_iso(start + dur), data={"epoch_id": eid, "outcome": outcome}))
+    return NS(goal_id="syn", events=events, budget={})
+
+
+def unit_of(oid: str, reads=("tools/gate.py",), resources=()):
+    return {"id": f"gate:{oid}", "kind": "gate", "obligation": oid, "gate_class": "unit",
+            "reads": list(reads), "writes": [f"run:{oid}"], "resources": list(resources)}
+
+
+def gate_prior():
+    fr = need("duration_prior")
+    if fr is None:
+        return False, ABSENT
+    st = syn_state([("ob-a", "unit", "completed", 0, 10), ("ob-a", "unit", "failed", 100, 20),
+                    ("ob-a", "unit", "completed", 200, 30), ("ob-a", "unit", "lost", 300, 999),
+                    ("ob-a", "unit", "cancelled", 400, 777), ("ob-d", "unit", "completed", 500, 100)])
+    own = fr.duration_prior(st, "ob-a", "unit")                # median 10,20,30; lost/cancelled are no measurement
+    cls = fr.duration_prior(st, "ob-b", "unit")                # no history: class median of 10,20,30,100
+    none = fr.duration_prior(st, "ob-c", "integration")        # nothing measured anywhere
+    ok = own == 20.0 and cls == 25.0 and none is None
+    return ok, f"own={own} class_fallback={cls} unknown={none}"
+
+
+def gate_order():
+    fr = need("order_units")
+    if fr is None:
+        return False, ABSENT
+    u = {k: unit_of(k) for k in "abcd"}
+
+    def sig(duration, contrib, risk, gain):
+        return {"duration": duration, "contrib": contrib, "risk": risk, "gain": gain}
+
+    sigs = {"gate:a": sig(5.0, 10.0, 0.1, 0.9),      # longest path, low risk
+            "gate:b": sig(5.0, 3.0, 0.9, 0.9),       # short path, high risk
+            "gate:c": sig(5.0, 3.0, 0.9, 0.1),       # ties b on risk, loses on gain
+            "gate:d": sig(5.0, 3.0, 0.9, 0.1)}       # ties c exactly: legacy order decides
+    got = [x["obligation"] for x in fr.order_units([u["d"], u["c"], u["b"], u["a"]], sigs)]
+    # contribution beats risk (a first); risk ties fall to gain (b before c,d); exact tie keeps input order (d before c)
+    ok = got == ["a", "b", "d", "c"]
+    unknown_first = [x["obligation"] for x in fr.order_units(
+        [u["a"], u["b"]], {"gate:a": sig(5.0, 10.0, 0.1, 0.9), "gate:b": sig(None, 0.0, None, None)})]
+    return ok and unknown_first == ["b", "a"], f"order={got} unknown_duration_first={unknown_first}"
+
+
+def gate_failure_first():
+    fr = need("failure_risk")
+    if fr is None:
+        return False, ABSENT
+    st = syn_state([("ob-f", "unit", "failed", 0, 5), ("ob-f", "unit", "completed", 10, 5),
+                    ("ob-f", "unit", "failed", 20, 5), ("ob-p", "unit", "completed", 30, 5),
+                    ("ob-p", "unit", "completed", 40, 5)])
+    solo = [unit_of("ob-f", reads=("a",)), unit_of("ob-p", reads=("b",)), unit_of("ob-n", reads=("c",))]
+    rf = fr.failure_risk(st, "ob-f", solo)
+    rp = fr.failure_risk(st, "ob-p", solo)
+    rn = fr.failure_risk(st, "ob-n", solo)
+    shared = [unit_of("ob-f", reads=("a", "tree:*")), unit_of("ob-p", reads=("a", "tree:*")),
+              unit_of("ob-n", reads=("tree:*",))]
+    rf_shared = fr.failure_risk(st, "ob-f", shared)           # one other unit shares read "a"; tree:* alone is no sharing
+    ok = (abs(rf - 2 / 3) < 1e-9 and rp == 0.0 and rn is None and abs(rf_shared - 2 * (2 / 3)) < 1e-9)
+    return ok, f"failing={rf} passing={rp} no_history={rn} shared_read_multiplier={rf_shared}"
+
+
+def gate_infogain():
+    fr = need("info_gain")
+    if fr is None:
+        return False, ABSENT
+    half = syn_state([("h", "unit", "completed", 0, 10), ("h", "unit", "failed", 20, 10)])
+    sure = syn_state([("s", "unit", "completed", 0, 10), ("s", "unit", "completed", 20, 10)])
+    quick = syn_state([("q", "unit", "completed", 0, 5), ("q", "unit", "failed", 20, 5)])
+    zero = syn_state([("z", "unit", "completed", 0, 0), ("z", "unit", "failed", 20, 0)])
+    g_half, g_sure, g_quick = fr.info_gain(half, "h", "unit"), fr.info_gain(sure, "s", "unit"), fr.info_gain(quick, "q", "unit")
+    none_hist = fr.info_gain(half, "other", "integration")
+    none_zero = fr.info_gain(zero, "z", "unit")
+    ok = (abs(g_half - 0.1) < 1e-9 and g_sure == 0.0 and abs(g_quick - 0.2) < 1e-9
+          and none_hist is None and none_zero is None)
+    return ok, f"p=.5,10s={g_half} certain={g_sure} p=.5,5s={g_quick} no_history={none_hist} zero_duration={none_zero}"
+
+
+def gate_critical_path():
+    fr = need("critical_path")
+    if fr is None:
+        return False, ABSENT
+    units = [unit_of("a"), unit_of("b"), unit_of("c")]
+    edges = (("gate:a", "gate:b", "resource:x"), ("gate:b", "gate:c", "resource:x"))
+    full = fr.critical_path(units, edges, {"gate:a": 10.0, "gate:b": 20.0, "gate:c": 5.0})
+    part = fr.critical_path(units, edges, {"gate:a": 10.0, "gate:b": 20.0, "gate:c": None})
+    ok = (full["length"] == 35.0 and full["nodes"] == ("gate:a", "gate:b", "gate:c")
+          and full["contrib"] == {"gate:a": 35.0, "gate:b": 25.0, "gate:c": 5.0} and full["unknown"] == ()
+          and part["length"] == 30.0 and part["unknown"] == ("gate:c",))
+    return ok, f"full={full['length']} {full['nodes']} partial_lower_bound={part['length']} unknown={part['unknown']}"
+
+
+def gate_posture():
+    fr = need("posture", "bound")
+    if fr is None:
+        return False, ABSENT
+    from types import SimpleNamespace as NS  # noqa: PLC0415
+
+    def c(b, sb=None):
+        return NS(budget=b, state=NS(budget=sb if sb is not None else {}))
+
+    cases = [({}, "ECONOMY", 1), ({"posture": "ECONOMY"}, "ECONOMY", 1), ({"posture": "BALANCED"}, "BALANCED", 2),
+             ({"posture": "WALL_CLOCK"}, "WALL_CLOCK", 4), ({"posture": "wall_clock"}, "WALL_CLOCK", 4),
+             ({"posture": "TURBO"}, "ECONOMY", 1), ({"posture": 7}, "ECONOMY", 1),
+             ({"posture": "WALL_CLOCK", "max_parallel": 2}, "WALL_CLOCK", 2),
+             ({"posture": "BALANCED", "max_parallel": 9}, "BALANCED", 2),
+             ({"posture": "WALL_CLOCK", "max_parallel": 0}, "WALL_CLOCK", 4),
+             ({"posture": "WALL_CLOCK", "max_parallel": -3}, "WALL_CLOCK", 4),
+             ({"posture": "WALL_CLOCK", "max_parallel": True}, "WALL_CLOCK", 4),
+             ({"posture": "WALL_CLOCK", "max_parallel": "x"}, "WALL_CLOCK", 4)]
+    bad = [(b, fr.posture(c(b)), fr.bound(c(b))) for b, p, n in cases if (fr.posture(c(b)), fr.bound(c(b))) != (p, n)]
+    from_state = (fr.posture(c({}, {"posture": "BALANCED"})), fr.bound(c({}, {"posture": "BALANCED"}))) == ("BALANCED", 2)
+    # round trip: the posture survives the real log, so a goal can declare it
+    log, base = build("posture", [("ob-1", cv.OUTCOME, "unit")])
+    try:
+        st = gc.project(log)
+        gc.set_budget(log, st.last_seq + 1, {"posture": "WALL_CLOCK", "max_parallel": 3}, "founder")
+        ctx = ctx_for(log)
+        trip = (fr.posture(ctx), fr.bound(ctx)) == ("WALL_CLOCK", 3)
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+    return not bad and from_state and trip, f"cases={len(cases)} wrong={bad} state_fallback={from_state} log_round_trip={trip}"
+
+
+def gate_classes():
+    fr = need("class_bound", "WORKER_CLASSES")
+    if fr is None:
+        return False, ABSENT
+    from types import SimpleNamespace as NS  # noqa: PLC0415
+    ctx = NS(budget={"posture": "WALL_CLOCK"}, state=NS(budget={}))
+    got = {k: fr.class_bound(k, ctx) for k in fr.WORKER_CLASSES}
+    try:
+        fr.class_bound("wizard", ctx)
+        refused = False
+    except ValueError:
+        refused = True
+    ok = (set(got) == {"cognitive", "deterministic", "environment", "reviewer", "speculative"}
+          and got["deterministic"] == 4 and all(got[k] == 1 for k in got if k != "deterministic") and refused)
+    return ok, f"bounds={got} unknown_class_refused={refused}"
+
+
+def gate_compile_orders():
+    """compile_frontier applies the measured order and exposes the signals and the bound."""
+    fr = need("compile_frontier")
+    if fr is None:
+        return False, ABSENT
+    log, base = build("orders", [("ob-1", cv.OUTCOME, "unit"), ("ob-2", cv.EVIDENCE, "unit")],)
+    try:
+        st = gc.project(log)
+        gc.set_budget(log, st.last_seq + 1, {"posture": "BALANCED"}, "founder")
+        f = fr.compile_frontier(ctx_for(log))
+        legacy_order = ids(f.execution) == ["ob-1", "ob-2"]      # no history: legacy insertion order is kept
+        ok = (legacy_order and f.posture == "BALANCED" and f.bound == 2
+              and set(f.signals) == {"gate:ob-1", "gate:ob-2"} and f.critical_path["length"] == 0.0
+              and f.critical_path["unknown"] == ("gate:ob-1", "gate:ob-2"))
+        return ok, f"order={ids(f.execution)} posture={f.posture} bound={f.bound} unknown_durations={f.critical_path['unknown']}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
 GATES = [
     ("V-FRONTIER-HERMETIC", gate_hermetic),
     ("V-FRONTIER-SWITCH", gate_switch),
@@ -315,6 +502,14 @@ GATES = [
     ("V-FRONTIER-RESOURCE", gate_resource),
     ("V-FRONTIER-FRONTIERS", gate_frontiers),
     ("V-FRONTIER-GRAPH", gate_graph),
+    ("V-FRONTIER-PRIOR", gate_prior),
+    ("V-FRONTIER-ORDER", gate_order),
+    ("V-FRONTIER-FAILURE-FIRST", gate_failure_first),
+    ("V-FRONTIER-INFOGAIN", gate_infogain),
+    ("V-FRONTIER-CRITICAL-PATH", gate_critical_path),
+    ("V-FRONTIER-POSTURE", gate_posture),
+    ("V-FRONTIER-CLASSES", gate_classes),
+    ("V-FRONTIER-COMPILE-ORDERS", gate_compile_orders),
 ]
 
 

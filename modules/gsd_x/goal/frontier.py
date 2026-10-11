@@ -15,6 +15,9 @@ Undeclared is never independent (Law 4): a unit whose sets cannot be derived car
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
+from math import log2
+from statistics import median
 
 from . import convergence as cv
 from . import epoch as ep
@@ -94,15 +97,159 @@ def stored_unit(unit: dict) -> dict:
                                      "resources")}
 
 
+# --- postures, bounds, worker classes (D09, D27) -----------------------------------
+
+POSTURES = ("ECONOMY", "BALANCED", "WALL_CLOCK")
+POSTURE_BOUND = {"ECONOMY": 1, "BALANCED": 2, "WALL_CLOCK": 4}
+DEFAULT_POSTURE = "ECONOMY"      # bound 1: a goal that never declares a posture runs as it always did
+WORKER_CLASSES = ("cognitive", "deterministic", "environment", "reviewer", "speculative")
+
+
+def _budget_value(ctx, key: str):
+    """The goal budget's `key`: the Context's own budget first, then the projected goal budget."""
+    for source in (getattr(ctx, "budget", None), getattr(getattr(ctx, "state", None), "budget", None)):
+        if isinstance(source, dict) and key in source:
+            return source[key]
+    return None
+
+
+def posture(ctx) -> str:
+    raw = _budget_value(ctx, "posture")
+    word = raw.strip().upper() if isinstance(raw, str) else ""
+    return word if word in POSTURE_BOUND else DEFAULT_POSTURE
+
+
+def bound(ctx) -> int:
+    """How many deterministic gate epochs may be open at once. `max_parallel` only lowers it, and a
+    value that is not a positive int is ignored rather than trusted (a bool is not a count)."""
+    n = POSTURE_BOUND[posture(ctx)]
+    cap = _budget_value(ctx, "max_parallel")
+    if isinstance(cap, int) and not isinstance(cap, bool) and cap >= 1:
+        n = min(n, cap)
+    return n
+
+
+def class_bound(worker_class: str, ctx) -> int:
+    """Concurrency of agents is not concurrency of verification: only deterministic workers scale with
+    the posture; environment workers are bounded by their one exclusive resource, the rest run alone."""
+    if worker_class not in WORKER_CLASSES:
+        raise ValueError(f"{worker_class!r} is not a worker class {WORKER_CLASSES}")
+    return bound(ctx) if worker_class == "deterministic" else 1
+
+
+# --- measured signals (D08, D28, D33, D34): from this goal's own log, nothing estimated -------
+
+def _gate_runs(state) -> list:
+    """(obligation, gate class, outcome, seconds) for every gate epoch that RAN to a verdict."""
+    stamps: dict = {}
+    for ev in state.events:
+        eid = ev.data.get("epoch_id") if isinstance(ev.data, dict) else None
+        if eid and ev.type in (ep.RUNNING, ep.ENDED):
+            stamps.setdefault(eid, {})[ev.type] = ev.ts
+    runs = []
+    for e in ep.project_epochs(state).values():
+        if e.provider != "gate" or e.outcome not in (ep.COMPLETED, ep.FAILED):
+            continue       # lost, expired and cancelled epochs measured nothing
+        st = stamps.get(e.epoch_id, {})
+        if ep.RUNNING not in st or ep.ENDED not in st:
+            continue
+        seconds = (datetime.fromisoformat(st[ep.ENDED]) - datetime.fromisoformat(st[ep.RUNNING])).total_seconds()
+        gate = e.spec.get("gate") or {}
+        runs.append((e.spec.get("obligation"), gate.get("class") or "unit", e.outcome, seconds))
+    return runs
+
+
+def duration_prior(state, obligation_id: str, gate_class: str):
+    """Median measured seconds: this obligation's own gate runs, else its gate class in this goal, else None."""
+    runs = _gate_runs(state)
+    own = [s for o, _c, _x, s in runs if o == obligation_id]
+    if own:
+        return float(median(own))
+    same = [s for _o, c, _x, s in runs if c == gate_class]
+    return float(median(same)) if same else None
+
+
+def _fail_fraction(state, obligation_id: str):
+    own = [x for o, _c, x, _s in _gate_runs(state) if o == obligation_id]
+    return None if not own else sum(1 for x in own if x == ep.FAILED) / len(own)
+
+
+def failure_risk(state, obligation_id: str, units: list):
+    """Measured fail fraction x (1 + other units sharing a read). None with no history, never 0."""
+    frac = _fail_fraction(state, obligation_id)
+    if frac is None:
+        return None
+    mine = next((u for u in units if u["obligation"] == obligation_id), None)
+    reads = set(mine["reads"] or ()) - {WHOLE_TREE} if mine else set()
+    sharing = sum(1 for u in units if u["obligation"] != obligation_id
+                  and reads & (set(u["reads"] or ()) - {WHOLE_TREE}))
+    return frac * (1 + sharing)
+
+
+def info_gain(state, obligation_id: str, gate_class: str):
+    """Binary entropy of the measured pass fraction per second of measured duration. None unless both
+    are measured; a measured duration of zero is a clock artefact, not an infinitely cheap gate."""
+    frac = _fail_fraction(state, obligation_id)
+    prior = duration_prior(state, obligation_id, gate_class)
+    if frac is None or prior is None or prior <= 0:
+        return None
+    entropy = 0.0 if frac in (0.0, 1.0) else -(frac * log2(frac) + (1 - frac) * log2(1 - frac))
+    return entropy / prior
+
+
+def critical_path(units: list, edges: tuple, durations: dict) -> dict:
+    """Longest chain through the units, following the resource edges (which are directed in frontier
+    order). A unit with an unmeasured duration counts 0 toward the length and is listed in `unknown`,
+    so `length` is then a lower bound and never a claim."""
+    ids = [u["id"] for u in units]
+    nxt: dict = {i: [] for i in ids}
+    for a, b, kind in edges:
+        if a in nxt and b in nxt and kind.startswith("resource:"):
+            nxt[a].append(b)
+    best: dict = {}
+
+    def walk(i: str) -> tuple:
+        if i not in best:
+            own = durations.get(i) or 0.0
+            tails = [walk(j) for j in nxt[i]]
+            tail = max(tails, key=lambda t: t[0], default=(0.0, ()))
+            best[i] = (own + tail[0], (i,) + tail[1])
+        return best[i]
+
+    for i in ids:
+        walk(i)
+    top = max((best[i] for i in ids), key=lambda t: t[0], default=(0.0, ()))
+    return {"length": top[0], "nodes": top[1], "contrib": {i: best[i][0] for i in ids},
+            "unknown": tuple(i for i in ids if durations.get(i) is None)}
+
+
+def order_units(units: list, signals: dict) -> tuple:
+    """The documented lexicographic order, never a blended score: unmeasured duration first (running it
+    makes the prior), then critical-path contribution, failure risk, information gain, all descending
+    with measured before unmeasured, then the position the units arrived in."""
+    def key(pair):
+        index, u = pair
+        s = signals[u["id"]]
+        risk, gain = s["risk"], s["gain"]
+        return (0 if s["duration"] is None else 1, -s["contrib"],
+                0 if risk is not None else 1, -(risk or 0.0),
+                0 if gain is not None else 1, -(gain or 0.0), index)
+    return tuple(u for _i, u in sorted(enumerate(units), key=key))
+
+
 # --- the frontier ----------------------------------------------------------------
 
 @dataclass(frozen=True)
 class Frontier:
     expectation: tuple = ()       # obligation ids still part of what the goal expects
-    execution: tuple = ()         # units that can be started now, in legacy order
+    execution: tuple = ()         # units that can be started now, in measured order
     proof: tuple = ()             # what blocks closure, and claims that are not fresh
     invalidation: tuple = ()      # claims proven earlier whose proof no longer holds here
     edges: tuple = field(default_factory=tuple)   # (src, dst, kind), derived only
+    critical_path: dict = field(default_factory=dict)
+    posture: str = DEFAULT_POSTURE
+    bound: int = 1
+    signals: dict = field(default_factory=dict)   # unit id -> {duration, contrib, risk, gain}
 
 
 def open_obligations(state: GoalState) -> set:
@@ -171,5 +318,12 @@ def compile_frontier(ctx) -> Frontier:
         for b in execution[i + 1:]:
             for name in sorted(set(a["resources"] or ()) & set(b["resources"] or ())):
                 edges.append((a["id"], b["id"], f"resource:{name}"))
-    return Frontier(expectation=expectation, execution=tuple(execution), proof=tuple(proof_items),
-                    invalidation=invalidation, edges=tuple(edges))
+    durations = {u["id"]: duration_prior(st, u["obligation"], u["gate_class"]) for u in execution}
+    path = critical_path(execution, tuple(edges), durations)
+    signals = {u["id"]: {"duration": durations[u["id"]], "contrib": path["contrib"][u["id"]],
+                         "risk": failure_risk(st, u["obligation"], execution),
+                         "gain": info_gain(st, u["obligation"], u["gate_class"])} for u in execution}
+    ordered = order_units(execution, signals)
+    return Frontier(expectation=expectation, execution=ordered, proof=tuple(proof_items),
+                    invalidation=invalidation, edges=tuple(edges), critical_path=path,
+                    posture=posture(ctx), bound=bound(ctx), signals=signals)
