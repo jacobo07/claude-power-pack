@@ -182,5 +182,13 @@ rc0, _t = gc._run_gate([sys.executable, "-c", "exit(0)"], str(TMP), 30)
 rct, tt = gc._run_gate([sys.executable, "-c", "import time; time.sleep(30)"], str(TMP), 1)
 check("V-APR2-REAL-RUNNER", rc0 == 0 and rct == -1 and tt == "gate timeout", f"{rc0},{rct},{tt}")
 
+# REVIEW-APR: an acceptance block with no gates/files/require_commit must not seal (empty contract proves nothing)
+d, p, ch = setup("empty")
+ch["units"][0]["acceptance"] = {"cwd": str(d)}
+p.write_text(json.dumps(ch), encoding="utf-8")
+(d / "R-A.md").write_text("# A\nall done, no status line\n", encoding="utf-8")
+r = tick(p, [mission(d, "A")], Runner(0))
+check("V-APR2-EMPTYACC", r["action"] != "arm" and not (d / "R-A.md.seal.json").exists(), r["action"])
+
 print(f"{passes} pass / {fails} fail")
 sys.exit(1 if fails else 0)

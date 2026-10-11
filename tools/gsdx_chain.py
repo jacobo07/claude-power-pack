@@ -18,6 +18,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -145,9 +146,13 @@ def _run_gate(argv, cwd, timeout) -> tuple:
         return -1, f"gate could not start: {e}"[:400]
 
 
+_WIN_GIT = r"C:\Program Files\Git\cmd\git.exe"
+_GIT = "git" if shutil.which("git") or not os.path.exists(_WIN_GIT) else _WIN_GIT    # bare git is off PATH under the task
+
+
 def _git(cwd, *args) -> str:
     try:
-        p = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, errors="replace", timeout=60,
+        p = subprocess.run([_GIT, "-C", str(cwd), *args], capture_output=True, text=True, errors="replace", timeout=60,
                            stdin=subprocess.DEVNULL)
         return p.stdout.strip() if p.returncode == 0 else ""
     except (OSError, subprocess.SubprocessError):
@@ -229,6 +234,8 @@ def finalize_unit(chain: dict, u: dict, ms: list, runner=None, git=None, force: 
             reason = f"missing files: {missing}"
         elif acc.get("require_commit") and not commits:
             reason = "no commit since the unit started"
+        elif not (acc.get("gates") or acc.get("files") or acc.get("require_commit")):
+            reason = "acceptance declares no check"      # an empty contract proves nothing: never seal on it
         passed = not reason
         _wr(receipt + GATE, {"sha": sha, "head": head, "passed": passed, "gates": gates, "commits": commits,
                              "reason": reason})
