@@ -1,0 +1,12 @@
+# WU-OC2 -- econ-succession-a1 D9, D4, D3, D10, D2, D1, D6, D7 (goal econ-succession-a1, programme 10M P80, Owner-approved).
+Master plan: vault/plans/owner-capital-ctx-rent-2026-10-11.md sections 2, 3, 6. Delta spec: vault/plans/econ-succession-2026-10-11-A1-same-pane-capital.md section 3.
+Read vault/programs/owner-capital/WU-OC1-receipt.md first; if it is not 'Status: DONE', stop with Status: BLOCKED.
+0. Bind ~/.claude/state/goal-binding/<sid>.json to econ-succession-a1 (source explicit). The goal has a programme and no lease: open its lease through the S4 successor transaction built in WU-OC1 (cap per lease_policy: ws P80 + 500K, max 3M). If the runtime refuses, receipt BLOCKED with the exact refusal -- never goal-declare.
+1. D9: apply_pending resolves each approval row against its OWN transcript (approval rows before sweep rows), never approvals.jsonl[-1]; sweep spawns bounded once per (transcript, packet sha), pairs past expiry drop out.
+2. D4: apply on a goal whose programme was null opens L(n+1) inside the programme; L1 immutable. D3: authority_release.py -- an APPLIED capsule = AuthorityChanged; release missions whose hold reason is CAPITAL for that goal after re-admission; untyped holds never woken.
+3. D10: while a packet is outstanding for goal G, econ_admission refuses non-capital model work bound to G (capital freeze). D2: closed ES/EN one-word lexicon, approval only when exactly one unexpired packet was displayed after the Owner's previous message; ambiguity/negation refuse.
+4. D1 guard effect semantics; D6 pre-dispatch subagent admission (PLAN 2 calls first).
+5. D7 Autonomy CI: every adversarial case listed in the master prompt (model-written approval, replay, amount/goal/plan tamper, expiry vs approved-before-expiry, revoke, duplicate apply, rotation/restart between approval and apply, goal at cap, unapproved control-plane mutation, ambiguous packets, self-inflation, freeze), each refusal paired with an admitted control. Mutation drill via tools/mutation_drill.py, never on a live-loaded file.
+Common rules, stop-losses and commit rules as WU-OC1. Done-check: test_econ_succession.py, test_capital_authority.py exit 0.
+Then arm WU-OC3 in ONE call: arm-chain --wu-packet vault/programs/owner-capital/WU-OC3.md --token-estimate 17M --route vault/programs/owner-capital/route-OC3.json (same other flags as WU-OC1's arm).
+Receipt: vault/programs/owner-capital/WU-OC2-receipt.md.

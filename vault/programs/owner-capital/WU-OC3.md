@@ -1,0 +1,12 @@
+# WU-OC3 -- ctx-rent-a2 self-host + original mission residual (goal ctx-rent-a2, programme 30M P80, Owner-approved).
+Master plan: vault/plans/owner-capital-ctx-rent-2026-10-11.md. Original plan: vault/plans/context-rent-a2-2026-10-11.md sections 1, 4, 5.
+Read vault/programs/owner-capital/WU-OC2-receipt.md first; if not 'Status: DONE', stop with Status: BLOCKED.
+0. Bind ~/.claude/state/goal-binding/<sid>.json to ctx-rent-a2 (source explicit). Read vault/programs/ctx-rent-a2/RESUMPTION_FILE.md.
+1. R1 self-host canary: ctx-rent-a2 L1 (cap 14M) must be succeeded by L2 through the D4/D3 path from the APPLIED capsule of packet 9e7616c2 -- no Owner action, no goal-declare, no manual lease edit. Record: lease ids, caps, AuthorityChanged row, release row, model calls between approval and apply (expected 0). If it does not happen mechanically, that is a defect: fix it in the owner code (econ-succession-a1 scope) and re-run; never open the lease by hand.
+2. B' closeout: verify ~/.claude edits (rules index, ~/.claude/CLAUDE.md, MEMORY.md) against ~/.claude/backups/rules-20261011-114632; independent review (pp-code-reviewer) of modules/hard_rules/writer.py, tools/test_hard_rules.py, tools/test_hard_rules_mirror.py, CLAUDE.md against their CURRENT diffs; run test_hard_rules.py, test_hard_rules_mirror.py (12/12), test_egcc_c1.py (classify or fix the 2 stale checks with evidence, never greenwash); path-scoped micro-commits; fix the goal-autopsy vs ledger disagreement (bound_processed 0 vs settled 10.1M) or record it as a named defect.
+3. M: rotate to a fresh epoch, then tools/context_floor_census.py <your own new sid> vs baseline 122,093; record before/after/absolute/% and remaining components in plan section 1.1 and the RESUMPTION_FILE.
+4. H: the plan's slice H as written there (read it; do not infer). Stop-loss: <10% per-call drop vs 28a5bd61 -> receipt BLOCKED with numbers, do not start C.
+5. C+F -> I -> D+E+G -> J/K overhead -> L (plus D8 of econ-succession-a1: vault, FIOS, UKDL hard rules only after proof, CBR, retire the terminal capital doctrine from the normal hot path; goal-declare stays break-glass). Reforecast after each slice; leases per packet lease_policy.
+Common rules, stop-losses and commit rules as WU-OC1; ceiling 30M is a maximum, not a target.
+Done-check: every original-plan slice A-L sealed or receipted with evidence; final handoff block per the master prompt fields.
+Receipt: vault/programs/owner-capital/WU-OC3-receipt.md.

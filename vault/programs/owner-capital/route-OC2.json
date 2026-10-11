@@ -1,0 +1,17 @@
+{
+    "unit":  "OC2",
+    "envelope":  {
+                     "target":  9000000,
+                     "warn":  10350000,
+                     "stop":  12150000,
+                     "calls":  55
+                 },
+    "workers":  [
+                    {
+                        "name":  "oc-unit",
+                        "profile":  "top-level-worker",
+                        "calls":  55,
+                        "packet":  6000
+                    }
+                ]
+}
