@@ -56,6 +56,12 @@ fresh worker finds 02-RESEARCH.md present and no 02-*-PLAN.md, resume with `/gsd
   - (4) Kill switches are env-only in Phase 2. Any value other than unset/on/1/true/yes means OFF, so a typo falls back to legacy. Flag files are decided with Phase 3's first consumer.
   - (5) `test_gsd_x_goal_mutation.py` stays out of the Phase 2 gates (R11).
 - 2026-10-07 (worker, W1 ULTRA phase 1-3): spec S2 proof states resolved -- precedence changed > unknown > all-equal-with-event; SUPERSEDED derived by strength; legacy mapping = _needs_a_gate_here. Reason: 02-RESEARCH G3-G5; internal and reversible by git.
+- 2026-10-07 (worker, ULTRA Q&A Q1 auth): none. No credentials are involved; authority is the producer code path (S3: proof.produced only from the gate receipt, proof.inherited only by the reconciler). Reason: spec S3, 02-RESEARCH G16.
+- 2026-10-07 (worker, ULTRA Q&A Q2 env vars): `GSDX_FRONTIER` and `GSDX_PROOF_INHERITANCE`, read at call time, off for any value but unset/on/1/true/yes (S10); tests redirect `GSDX_GOALS_ROOT`, HOME and USERPROFILE. Reason: spec S10, 02-RESEARCH section 5.
+- 2026-10-07 (worker, ULTRA Q&A Q3 file paths): the paths in 02-01-PLAN.md Artifacts (`modules/gsd_x/goal/proof.py`, the two `tools/test_gsd_x_goal_pcc_*.py` suites, `tools/fixtures/gsdx_legacy_goals/**`, the golden). Reason: 02-01 plan, spec S7 and S11.
+- 2026-10-07 (worker, ULTRA Q&A Q4 edge cases): empty premise set = UNKNOWN, adjacent equal certificates = later supersedes, unknown: bindings never equal, ordering by log seq (S2, S4, S13), plus `v` greater than 1 = UNKNOWN not raise, re-accept changes claim_id, interleaved seq-valued fields, CRLF fixtures. Reason: 02-RESEARCH pitfalls 3-4, G6, G12.
+- 2026-10-07 (worker, ULTRA Q&A Q5 success criteria): ROADMAP Phase 2 criteria 1-3 plus the S-item gates named in the spec. Reason: ROADMAP Phase 2.
+- 2026-10-07 (worker, ULTRA Q&A Q6 scope): Phase 3-8 event types are frozen in the S7 table only, no legacy file is edited, R12 (unknown: tree equality) is deferred to Phase 4. Reason: STATE decisions 1 and 3.
 
 ## Owner steps
 

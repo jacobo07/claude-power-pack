@@ -1,0 +1,142 @@
+[
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.git_state",
+        "function":  "blob_oid"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.git_state",
+        "function":  "tree_id"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.git_state",
+        "function":  "pin_scheme"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.git_state",
+        "function":  "file_pin"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.git_state",
+        "function":  "head"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.convergence",
+        "function":  "_pin"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.convergence",
+        "function":  "project_convergence"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.convergence",
+        "function":  "goal_closure"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.convergence",
+        "function":  "accept_obligation"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.convergence",
+        "function":  "satisfy"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.convergence",
+        "function":  "carry_obligation"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.reconcile",
+        "function":  "decide"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.reconcile",
+        "function":  "_needs_a_gate_here"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.epoch",
+        "function":  "_debris"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.epoch",
+        "function":  "begin"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.epoch",
+        "function":  "info_key"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.epoch",
+        "function":  "project_epochs"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.contract",
+        "function":  "project"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.contract",
+        "function":  "revise"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.contract",
+        "function":  "set_budget"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.contract",
+        "function":  "set_authority"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.intervention",
+        "function":  "intervene"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.intervention",
+        "function":  "project_operator"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.evidence",
+        "function":  "record"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.evidence",
+        "function":  "project_hypotheses"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.judge",
+        "function":  "current"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.engine_identity",
+        "function":  "engine_identity"
+    },
+    {
+        "type":  "function_exists",
+        "module":  "modules.secret_firewall.detector",
+        "function":  "scan_file"
+    }
+]

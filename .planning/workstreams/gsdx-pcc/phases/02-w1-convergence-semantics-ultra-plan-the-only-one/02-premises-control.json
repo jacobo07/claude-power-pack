@@ -1,0 +1,7 @@
+[
+    {
+        "type":  "function_exists",
+        "module":  "modules.gsd_x.goal.git_state",
+        "function":  "causal_fingerprint"
+    }
+]

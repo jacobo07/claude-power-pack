@@ -1,0 +1,5 @@
+PREMISE VERIFICATION FAILED:
+  [FAIL] causal_fingerprint in modules.gsd_x.goal.git_state
+         evidence: absent; public names: ['BLOB', 'BLOB_PREFIX', 'GIT_CANDIDATES', 'Path', 'SHA256', 'annotations', 'blob_oid', 'commits_between', 'digest_matches', 'file_digest', 'file_pin', 'hashlib', 'head', 'pin_scheme', 'subprocess', 'tree_id']
+         fix: real API of modules.gsd_x.goal.git_state: ['BLOB', 'BLOB_PREFIX', 'GIT_CANDIDATES', 'Path', 'SHA256', 'annotations', 'blob_oid', 'commits_between', 'digest_matches', 'file_digest', 'file_pin', 'hashlib', 'head', 'pin_scheme', 'subprocess', 'tree_id']
+EXIT=1

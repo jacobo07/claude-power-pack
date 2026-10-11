@@ -160,16 +160,76 @@ Resolved: decide() keeps its exact signature and legacy equality, and the one-op
 Gates: V-PCC-DECIDE-SIG, V-PCC-ONE-OPEN-EPOCH-PINNED, V-PCC-LAW-CONCURRENCY-DEF
 Sources: 02-RESEARCH G13 G14 G15; DENOMINATOR D43
 
-### Judge
-VALIDATE an inherited certificate independently (re-derive the fingerprint at the judged tree, re-verify pins, policy, freshness class) or REPLAY. Independent REPLAYs run concurrently under a resource bound. Builder-cannot-judge, pin re-verification, worktree==tree and PASS/REFUSED/UNJUDGEABLE all stay.
+### S9 Judge
+VALIDATE an inherited certificate independently (re-derive the fingerprint at the judged tree, re-verify pins, policy, freshness class) or REPLAY. Independent REPLAYs run concurrently under a resource bound. Builder-cannot-judge, pin re-verification, worktree==tree and PASS/REFUSED/UNJUDGEABLE all stay. Phase 2 changes nothing in `judge.py`; the VALIDATE path is Phase 5.
 
-### Shadow law
+Resolved: the judge paragraph is kept verbatim and Phase 2 touches no judge code.
+Gates: V-PCC-NO-LEGACY-EDIT
+Sources: 02-RESEARCH section 2; DENOMINATOR D43
+
+### S10 Kill switches
+Env-only in Phase 2 (STATE decision 4). `GSDX_FRONTIER` and `GSDX_PROOF_INHERITANCE` are read at CALL time (never import time; tests flip `os.environ` in-process) by one shared parser `switch_on(name)`: strip, lower-case; ON iff unset/empty or one of `on, 1, true, yes`; any other value, including `off`, `0`, `false` and a typo such as `of`, is OFF, because OFF is the legacy, stronger path and Unknown Escalates (the opposite of `CPP_FAMILY_BASELINES`, whose typo leaves the feature on).
+
+The switch decides at the consumer boundary: with `GSDX_PROOF_INHERITANCE` off the proof-state projection returns UNKNOWN for every certificate (whole-tree binding, FULL re-run). Events already in the log stay readable and replayable whatever the switch; off ignores `proof.inherited`, never deletes or rewrites it. In Phase 2 `GSDX_FRONTIER` has no consumer, so `on` and `off` are observably identical, which the replay suite proves. Flag files (the codex.py:52-53 pattern) are decided with Phase 3's first consumer, because the scheduled `PP-GoalSweep` cannot easily inherit an interactive env var.
+
+Resolved: one call-time parser where anything but an explicit on-value is off, so a typo falls toward the legacy path.
+Gates: V-PCC-SWITCH-PARSE, V-PCC-SWITCH-OFF-IS-LEGACY, V-PCC-SWITCH-FRONTIER-INERT
+Sources: 02-RESEARCH section 5; STATE decision 4
+
+### S11 Legacy-log replay
+A byte copy of g-002-router-surface (50 events) and g-001-smoke-runner (123 events), `NNNNNN.json` files only, under `tools/fixtures/gsdx_legacy_goals/<repo-id>/<goal-id>/`, each with a `MANIFEST.json` (sha256 per file, chain tip digest, source store path, capture HEAD); `-text` in `.gitattributes` because the clone runs `core.autocrlf=true`. A golden `tools/fixtures/gsdx_legacy_replay_golden.json` is captured from the UNMODIFIED engine and committed before `proof.py` exists (capture refuses when the golden exists). The test copies the fixture into a temp `GSDX_GOALS_ROOT` and reads the copy, never the committed tree in place and never the live store. Every prefix is replayed (a prefix of a valid chain is a valid chain). A synthetic generator through the public writers covers the 9 legacy types the corpus lacks (`goal.revised`, `goal.budget_set`, `goal.authority_set`, `obligation.carried`, four `operator.*`, `evidence.hypothesis`). The union of corpus and synthetic types must equal the legacy type set DISCOVERED by scanning `modules/gsd_x/goal/*.py`, not hand-listed. Appending new-type events leaves every legacy output equal except `last_seq`, and the events survive an export/restore round trip.
+
+Resolved: old logs replay unchanged, proven by a committed byte-copy corpus, a pre-change golden, a synthetic generator and a discovered-population floor.
+Gates: V-PCC-REPLAY-G002, V-PCC-REPLAY-G001, V-PCC-REPLAY-SYNTHETIC, V-PCC-REPLAY-POPULATION, V-PCC-REPLAY-IGNORE-NEW-TYPES-FUTURE, V-PCC-REPLAY-IGNORE-NEW-TYPES-PCC, V-PCC-GOLDEN-PRE-CHANGE, V-PCC-FIXTURE-MANIFEST
+Sources: 02-RESEARCH section 4; STATE decision 2
+
+### S12 The five laws as executable invariants
+- Semantic Conservation: a read-side re-check that every `goal.revised` which drops an acceptance or constraint item carries `weakened` + `weakening_reason` (writer rule at contract.py:141-151). Vacuous on the recorded logs, driven red on a synthetic log.
+- Proof Conservation: a pure detector `duplicate_payment(ledger)` over the new proof events (a second `proof.produced` for the same claim and fingerprint with no `proof.invalidated` between). Vacuous on legacy logs. The behavioural half (not re-running a gate) is Phase 4 and the gate name says ledger.
+- Work Conservation: no two epochs share an `info_key` where the first ended UNSUCCESSFUL (`epoch.begin` refuses it, epoch.py:273-279). Measured on the corpus as a NAMED SET of legacy exceptions, never an assumed pass.
+- Concurrency by Proof: only the definition lands. `independent(a, b)` is true only when both declare disjoint write sets and non-colliding resource classes; any undeclared set is not independent. The scheduler is Phase 3.
+- Unknown Escalates: certificate validity is a pure function of six premises each in {equal, changed, unknown}; all 3^6 = 729 combinations are enumerated, INHERITED iff all six equal and a `proof.inherited` event names it, and both switches off give FULL for every combination.
+
+Each law has a synthetic violating input that turns its gate red. Baseline entries are Phase 10 (R09).
+
+Resolved: every law is a pure checkable invariant with a driven red case, and the parts that need later behaviour say so in their gate names.
+Gates: V-PCC-LAW-SEMANTIC, V-PCC-LAW-PROOF-CONSERVATION-LEDGER, V-PCC-LAW-WORK-CONSERVATION, V-PCC-LAW-CONCURRENCY-DEF, V-PCC-LAW-UNKNOWN-ESCALATES
+Sources: 02-RESEARCH 3.1; DENOMINATOR D03
+
+### S13 Event log, not a second DB
+Proof state is written only through `GoalLog.append` (CAS). Projections are pure. No file, cache, sqlite, shelve or pickle store exists for proof state. Concurrency: a concurrent writer gets `LostRace` and the log is unchanged; an interrupted append leaves the whole event or none (`publish`). Idempotency: a projection run twice returns equal results and changes no file; a writer called twice appends two events, and the Proof Conservation ledger flags the duplicate.
+
+Resolved: the GoalLog is the only store, written by CAS append and read by pure projections.
+Gates: V-PCC-NO-SECOND-STORE, V-PCC-PROJECTION-PURE, V-PCC-WRITER-CAS, V-PCC-EXPORT-RESTORE-ROUNDTRIP
+Sources: 02-RESEARCH section 1; DENOMINATOR D44
+
+### S14 Known legacy defects and side effects
+- G2: two `unknown:not-a-git-tree` trees compare equal in `goal_closure` (convergence.py:350) and `_needs_a_gate_here` (reconcile.py:115). It is DENOMINATOR R12, fixed red-first in Phase 4; fixing it in the zero-change seam would change a legacy output. The new projection already treats any `unknown:` tree as UNKNOWN.
+- G17: landing any `.py` under `modules/gsd_x/goal/` changes `engine_identity` (engine_identity.py:34-39), which stales the recorded autonomy record and enters `info_key`. `record-gates` is re-run after merge and never against the live store from this worktree.
+- A7: the live `PP-GoalSweep` task is assumed to run the main checkout; verify before merge.
+
+Resolved: three known legacy effects are named, owned by a later phase or by the merge step, and none is fixed inside the seam.
+Gates: V-PCC-STATE-UNKNOWN-TREE, V-PCC-NO-LEGACY-EDIT
+Sources: 02-RESEARCH G2 G17; DENOMINATOR R12
+
+### S15 Shadow law
 If the incumbent full path detects a failure the optimized path would have declared covered, the optimization path failed: regression fixture, adapter -> DEGRADED, certificate invalidation, UKDL candidate. Selective omission is never authorised above the adapter's maturity (ceiling PROBATION, D-O4).
+
+Resolved: the shadow law is kept verbatim.
+Gates: V-PCC-LAW-UNKNOWN-ESCALATES
+Sources: Owner decision D-O4
+
+### S16 Suite list
+Phase 2 adds `tools/test_gsd_x_goal_pcc_semantics.py` (summary `GSDX_PCC_SEMANTICS_PASS`) and `tools/test_gsd_x_goal_pcc_replay.py` (summary `GSDX_PCC_REPLAY_PASS`). The later suites keep the ROADMAP names (`test_gsd_x_goal_frontier`, `_certificate`, `_invalidation`, `_judge_validate`, `_mutant_farm`, `test_gsd_x_impact_adapters`, `test_gsd_x_goal_latency`, `_shadow`, `test_gsd_x_baseline_inheritance_pcc`). All match the done-gate glob `tools/test_gsd_x_goal_*.py` except the two named otherwise there. `test_gsd_x_goal_mutation.py` stays out of Phase 2 gates (R11).
+
+Resolved: the suite names for the done-gate are final and the mutation suite stays out of Phase 2.
+Gates: V-PCC-NO-LEGACY-EDIT
+Sources: ROADMAP Final done-gate item 2; DENOMINATOR R11
 
 ## Done-gate (final)
 `python tools/gsdx_pcc_done.py` exit 0 -- aggregates the named gates in ROADMAP "Final done-gate", requires every DENOMINATOR row dispositioned with evidence, and a clean worktree. Never weakened to finish.
 
 ## Rollback / kill switches
-`GSDX_FRONTIER=off` -> decide() uses the legacy scalar path; `GSDX_PROOF_INHERITANCE=off` -> every proof re-runs (whole-tree binding); adapter state DISABLED by event. All new events are additive; old goal logs replay unchanged (W1 proves this).
+`GSDX_FRONTIER=off` -> decide() uses the legacy scalar path; `GSDX_PROOF_INHERITANCE=off` -> every proof re-runs (whole-tree binding); adapter state DISABLED by event. The parse rule is S10: only unset, empty, `on`, `1`, `true` or `yes` leaves a switch on, and any other value is off. All new events are additive; old goal logs replay unchanged, proven by V-PCC-REPLAY-* (S11).
 </content>
 </invoke>
