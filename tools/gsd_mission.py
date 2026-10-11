@@ -533,6 +533,11 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # until the Owner closed it by hand. Only positive DEAD evidence settles; UNKNOWN stays parked.
         if state in (RUNNING, BLOCKED) and rec.get("owner"):
             verdict, evidence = liveness(rec.get("owner"), sessions, pid_alive)
+            if verdict == DEAD and hold.get("worker_stopped_at"):
+                # spec mission-cost-hold-stops-worker: the supervisor stopped this worker for the cost
+                # hold, so its death is ours, not the end of the work. Parked; release replaces it.
+                return {"action": "none",
+                        "reason": f"cost hold, worker stopped ({hold.get('stop')}): parked until release"}
             if verdict == DEAD:
                 return {"action": "settle",
                         "reason": f"owner hold, owner DEAD ({evidence}): settled terminal, hold kept "
@@ -1280,9 +1285,23 @@ def add_directive(mission_id: str, text: str, now: float | None = None) -> dict:
                       directives=[*(rec.get("directives") or []), text[:1000]])
 
 
-def set_owner_hold(mission_id: str, reason: str, now: float | None = None) -> dict:
+def is_cost_hold(hold: dict | None) -> bool:
+    """spec mission-cost-hold-stops-worker: a hold the cost breaker set. Records written before `kind`
+    existed are recognised by the breaker's own reason prefix."""
+    if not hold:
+        return False
+    return hold.get("kind") == "cost" or str(hold.get("reason") or "").startswith("cost breaker")
+
+
+def cost_hold_stop_enabled() -> bool:
+    """Kill switch CPP_COST_HOLD_STOP=off: the worker is still told, but never stopped."""
+    return str(os.environ.get("CPP_COST_HOLD_STOP") or "").strip().lower() not in ("0", "off", "false")
+
+
+def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind: str | None = None) -> dict:
     """Park a live mission (spec mission-owner-hold): plan_next answers none and renewal is refused
-    until release_owner_hold. The record keeps its identity, epoch and state."""
+    until release_owner_hold. The record keeps its identity, epoch and state. kind="cost" (the breaker)
+    additionally stops the running worker (spec mission-cost-hold-stops-worker)."""
     reason = (reason or "").strip()
     if not reason:
         raise MissionError("an owner hold needs a reason")
@@ -1294,7 +1313,7 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None) -> di
     now = time.time() if now is None else now
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
-                      owner_hold={"reason": reason[:1000], "set_at": now})
+                      owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {})})
 
 
 def set_rollover_protocol(mission_id: str, protocol: str, now: float | None = None,
@@ -1404,7 +1423,7 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         return rec
     try:
         spent = (measure or ms.processed_tokens)(rec)
-        fp = (fingerprint or progress_fingerprint)(rec.get("work_dir") or rec["cwd"])
+        fp = mission_fingerprint(rec, rec.get("work_dir") or rec["cwd"], fingerprint or progress_fingerprint)
         verdict = ms.judge(rec, spent, fp)
     except Exception as exc:  # noqa: BLE001 -- recorded, never silent
         lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid,
@@ -1413,7 +1432,7 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
     if verdict["trip"]:
         lr.ledger_append(mid, "cost_breaker_tripped", mission_id=mid, spent=spent,
                          estimate=rec.get("token_estimate"), reason=verdict["trip"])
-        return set_owner_hold(mid, verdict["trip"], now=now)
+        return set_owner_hold(mid, verdict["trip"], now=now, kind="cost")
     if verdict["mark"]:
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                           event="cost_mark", now=now, cost_mark=verdict["mark"],
@@ -1447,9 +1466,51 @@ def _token_count(field: str, value) -> int:
     return n
 
 
+CALIBRATION_FLOOR = 0.5   # an estimate under this share of the lineage's measured cost needs a basis
+CALIBRATION_LINEAGE_MAX = 6
+
+
+def estimate_calibration(rec: dict, estimate: int, measure=None) -> dict:
+    """spec mission-cost-hold-stops-worker: compare a hand-set estimate with what this mission's
+    `supersedes` chain measurably cost. Measured 2026-10-10: m-560939805e63 was armed at 36M while its
+    lineage had spent ~243M over ~24 h; it reached 265.5M. A predecessor whose spend or lifetime cannot
+    be measured contributes nothing (never a zero rate); none measurable -> verdict no_history."""
+    import mission_spend as ms
+    measure = measure or ms.processed_tokens
+    tokens, hours, used, seen = 0, 0.0, [], set()
+    pid = rec.get("supersedes")
+    while pid and pid not in seen and len(seen) < CALIBRATION_LINEAGE_MAX:
+        seen.add(pid)
+        try:
+            p = load(pid)
+        except (MissionError, ValueError, OSError):   # a corrupt predecessor is unmeasurable, not fatal
+            p = None
+        if p is None:
+            break
+        try:
+            spent = measure(p)
+        except Exception:  # noqa: BLE001 -- unmeasurable is skipped and named, never zero
+            spent = None
+        life = float(p.get("updated_at") or 0) - float(p.get("created_at") or 0)
+        if spent and life > 0:
+            tokens += int(spent)
+            hours += life / 3600.0
+            used.append(pid)
+        pid = p.get("supersedes")
+    if not used:
+        return {"verdict": "no_history", "line": "no lineage history (nothing measurable to compare)"}
+    max_h = float(rec.get("max_hours") or 24)
+    rate = tokens / hours
+    expected = int(rate * max_h)
+    line = (f"lineage {','.join(used)}: {tokens:,} processed over {hours:.1f} h = {int(rate):,}/h "
+            f"x {max_h:g} h budget = {expected:,} expected")
+    return {"verdict": "low" if estimate < CALIBRATION_FLOOR * expected else "ok", "line": line,
+            "expected": expected}
+
+
 def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
                  wu_packet: str | None = None, continue_max_tokens=None, worker_mcp: str | None = None,
-                 now: float | None = None) -> dict:
+                 now: float | None = None, estimate_basis: str | None = None, measure=None) -> dict:
     """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
     estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
     work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
@@ -1491,7 +1552,19 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         raise MissionError(f"no mission {mission_id}")
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; its envelope cannot change")
-    shown = {k: (v["path"] if k == "wu_packet" else v) for k, v in changes.items()}
+    if "token_estimate" in changes:
+        cal = estimate_calibration(rec, changes["token_estimate"], measure=measure)
+        basis = (estimate_basis or "").strip()
+        if cal["verdict"] == "low" and not basis:
+            raise MissionError(f"token_estimate {changes['token_estimate']:,} is below {CALIBRATION_FLOOR:g} x what "
+                               f"this lineage measurably costs ({cal['line']}); raise it, or give "
+                               f"--estimate-basis saying why this run is cheaper")
+        changes["token_estimate_calibration"] = cal["line"]
+        changes["token_estimate_src"] = None   # operator-set = no src (an earlier "auto" no longer applies)
+        if basis:
+            changes["token_estimate_basis"] = basis[:500]
+    shown = {k: (v["path"] if k == "wu_packet" else v) for k, v in changes.items()
+             if k not in ("token_estimate_calibration", "token_estimate_src", "token_estimate_basis")}
     old = {k: ((rec.get(k) or {}).get("path") if k == "wu_packet" else rec.get(k)) for k in changes}
     # C23b: a CHANGED packet is a new work unit. Record the epoch it was set at, so decide_turn_end can
     # tell an owner that predates it (owner epoch <= this) and start a fresh worker instead of resuming.
@@ -2217,7 +2290,7 @@ def _renewal_why_not(rec: dict, halt_reason: str, st: dict, halt_wd: str, finger
         # T5: all 18 renewals of the 6 capped lineages produced 0 commits. A
         # mission whose tree never moved does not earn a fresh budget. A tree
         # that cannot be measured is not "unchanged": it still renews.
-        fp_now = (fingerprint or progress_fingerprint)(halt_wd)
+        fp_now = mission_fingerprint(rec, halt_wd, fingerprint or progress_fingerprint)
         if fp_now is not None and fp_now == origin:
             why_not = "no progress in this mission (work tree unchanged since its first launch)"
     if not why_not and (rec.get("token_estimate") or rec.get("lineage_token_budget")):
@@ -3083,6 +3156,25 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                  event="budget_spent_noted", now=now, budget_spent_at=now,
                                  reason=f"budget spent ({budget_exhausted(rec, now)}) under a busy owner")
+            if (plan["action"] == "none" and rec["state"] == RUNNING and is_cost_hold(rec.get("owner_hold"))
+                    and not rec["owner_hold"].get("worker_stopped_at") and cost_hold_stop_enabled()):
+                # spec mission-cost-hold-stops-worker. Measured 2026-10-11 (m-560939805e63): held at 74.5M,
+                # the busy worker autocompacted on in one turn to 265.5M. The hook asks it to stop; past
+                # the grace a LIVE owner is stopped here. Only a LIVE one: UNKNOWN may be anything.
+                import gsd_epoch as ge
+                over = ge.cost_hold_overdue(rec, now)
+                if over and liveness(rec.get("owner"), sessions, pid_alive)[0] == LIVE:
+                    ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
+                    lr.ledger_append(mid, "cost_hold_worker_stopped" if ok else "cost_hold_stop_failed",
+                                     mission_id=mid, ok=ok, how=how, overdue_s=over["overdue_s"])
+                    row.update({"action": "cost_hold_stop", "reason": f"cost hold enforced: {how}",
+                                "cost_hold_enforced": over})
+                    if ok:
+                        transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                   event="cost_hold_worker_stopped", now=now,
+                                   reason=f"cost hold: worker stopped ({how})",
+                                   owner_hold={**rec["owner_hold"], "worker_stopped_at": now, "stop": how})
+                    continue
             if plan["action"] == "none" and rec["state"] == RUNNING:
                 # The wall is enforced, not requested. Measured 2026-09-28 (m-916e905e23d4): a worker
                 # asked once at 31 % worked on in the same turn for 3.5 h to 49 %. Past the grace after
@@ -3375,7 +3467,8 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         row["held"] = turn_end["reason"]
                         continue
                 fp_fn = fingerprint or progress_fingerprint
-                progress = next_progress(rec, fp_fn(work_dir or rec.get("work_dir") or rec["cwd"]),
+                progress = next_progress(rec, mission_fingerprint(rec, work_dir or rec.get("work_dir") or rec["cwd"],
+                                                                  fp_fn),
                                          ran=rec["state"] != LAUNCHING)
                 row["progress"] = progress
                 if act in ("relay", "replace") and progress["stalls"] >= NO_PROGRESS_EPOCHS:
@@ -3619,7 +3712,7 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
     # The origin is the tree BEFORE epoch 1 works (review F6): measured here, at arm, it makes
     # "unchanged since its first launch" true and credits epoch 1's own progress.
     res = launch_worker(rec["mission_id"], expect_epoch=0, expect_state=PREPARED,
-                        reason="armed", progress=next_progress(rec, progress_fingerprint(rec["cwd"])))
+                        reason="armed", progress=next_progress(rec, mission_fingerprint(rec, rec["cwd"])))
     if res.get("ok"):
         import gsd_epoch as ge
         ge.record_cause(rec["mission_id"], {"epoch": res["epoch"]},
@@ -3828,6 +3921,23 @@ def progress_fingerprint(work_dir: str) -> str | None:
     except Exception:  # noqa: BLE001 -- unmeasured is its own answer
         return None
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def mission_fingerprint(rec: dict, base_dir: str, fp_fn=None) -> str | None:
+    """progress_fingerprint over every tree the worker may write: base_dir plus the mission's
+    `add_dirs`. Measured 2026-10-11 (m-4a0f39b59a60, cwd InfinityOps, --add-dir io-sidecar-fbig):
+    22 commits landed in the add-dir while the cwd fingerprint never moved, so the stall breaker
+    read "151M processed since the work tree last changed". No add_dirs -> the base fingerprint,
+    unchanged. Every tree unmeasured -> None (unmeasured, never "no change")."""
+    fp_fn = fp_fn or progress_fingerprint
+    extra = [d for d in (rec.get("add_dirs") or []) if d and d != base_dir]
+    if not extra:
+        return fp_fn(base_dir)
+    import hashlib
+    fps = [fp_fn(base_dir)] + [fp_fn(d) for d in extra]
+    if all(f is None for f in fps):
+        return None
+    return hashlib.sha256("|".join(f or "?" for f in fps).encode("utf-8")).hexdigest()[:16]
 
 
 def next_progress(rec: dict, fp: str | None, ran: bool = True) -> dict:
@@ -4299,6 +4409,8 @@ def _cli(argv=None) -> int:
                                          "packet on a live mission (spec mission-envelope-and-compiled-wu)")
     en.add_argument("--mission", required=True)
     en.add_argument("--token-estimate", help="processed tokens the cost breaker judges, e.g. 16M")
+    en.add_argument("--estimate-basis", help="why an estimate below half the lineage's measured cost is right "
+                                             "(spec mission-cost-hold-stops-worker)")
     en.add_argument("--model", help="worker model: sonnet, opus, haiku, fable or a claude- model id")
     en.add_argument("--autocompact", help="worker autocompact window, e.g. 300k")
     en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
@@ -4374,7 +4486,8 @@ def _cli(argv=None) -> int:
     if args.cmd == "envelope":
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
                            autocompact=args.autocompact, wu_packet=args.wu_packet,
-                           continue_max_tokens=args.continue_max_tokens, worker_mcp=args.worker_mcp)
+                           continue_max_tokens=args.continue_max_tokens, worker_mcp=args.worker_mcp,
+                           estimate_basis=args.estimate_basis)
         pkt = (rec.get("wu_packet") or {}).get("path")
         print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
               f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "

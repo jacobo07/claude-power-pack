@@ -228,6 +228,33 @@ def wall_overdue(rec: dict, now: float | None = None) -> dict | None:
             "notices": data.get("n", 1) if isinstance(data, dict) else 1}
 
 
+COST_HOLD_GRACE_S = 600   # first COST HOLD notice -> the supervisor stops a worker still in its turn
+                          # (per mission: wall.cost_hold_grace_s; flag written by hooks/mission_wall.js)
+
+
+def cost_hold_overdue(rec: dict, now: float | None = None) -> dict | None:
+    """spec mission-cost-hold-stops-worker: the worker was told about the cost hold and is still in
+    its turn past the grace. The clock is the FIRST notice's `asked_at` (ms) in
+    `mission-costhold-<sid>.flag`; None with no notice, an unreadable one, or within grace."""
+    now = time.time() if now is None else now
+    sid = (rec.get("owner") or {}).get("session_id")
+    if not sid or rec.get("state") != "RUNNING":
+        return None
+    try:
+        data = json.loads((_marker_dir() / f"mission-costhold-{sid}.flag").read_text(encoding="utf-8"))
+        asked = float(data["asked_at"]) / 1000.0
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    if data.get("hold_set_at") != (rec.get("owner_hold") or {}).get("set_at"):
+        return None   # a notice for an earlier hold: this hold's grace has not started
+
+    grace = float((rec.get("wall") or {}).get("cost_hold_grace_s") or COST_HOLD_GRACE_S)
+    if now - asked < grace:
+        return None
+    return {"asked_at": asked, "overdue_s": int(now - asked - grace), "grace_s": int(grace),
+            "notices": int(data.get("n", 1))}
+
+
 # ------------------------------------------------------------------------ G6 child work
 _NOTE_RE = re.compile(r"<tool-use-id>(toolu_[A-Za-z0-9_]+)</tool-use-id>.*?<status>([a-z_]+)</status>", re.S)
 _BG_RESULT_RE = re.compile(r"running in (?:the )?background|async agent|launched in the background|"
