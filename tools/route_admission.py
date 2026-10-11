@@ -69,7 +69,8 @@ def max_ratio(prof: dict) -> float:
     return max(x["actual"] / x["need"] for x in prof["misses"][-3:])
 
 
-def record_actual(profile: str, need: int, actual: int, path: Path | str | None = None) -> dict:
+def record_actual(profile: str, need: int, actual: int, path: Path | str | None = None,
+                  kind: str | None = None) -> dict:
     """Append a miss (actual > 1.25 x need) to the profile's list; a hit clears it."""
     path = Path(path or FLOORS_PATH)
     data = load_floors(path)
@@ -77,7 +78,10 @@ def record_actual(profile: str, need: int, actual: int, path: Path | str | None 
     if need <= 0:
         raise ValueError("need must be positive")
     if actual > MISS_FACTOR * need:
-        prof.setdefault("misses", []).append({"need": need, "actual": actual})
+        miss = {"need": need, "actual": actual}
+        if kind:
+            miss["kind"] = kind
+        prof.setdefault("misses", []).append(miss)
     else:
         prof["misses"] = []
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")

@@ -37,6 +37,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import route_admission as ra  # noqa: E402
+import evc_confidence  # noqa: E402
 
 CLASSES = ("satisfied", "deterministic", "known_transform", "bounded_coding", "novel",
            "owner_reality", "sleeping")
@@ -77,18 +78,21 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
     deopt = float(doc.get("deopt_factor") or DEFAULT_DEOPT_FACTOR)
     if deopt < 1:
         raise Refused("BAD_CLAIM", "deopt_factor must be >= 1")
-    prof, source = {}, {}
+    prof, source, confidence = {}, {}, {}
     for cls in MODEL_CLASSES:
         p, src = dict(PRIORS[cls]), "prior"
+        confidence[cls] = evc_confidence.state(0, [])
         for layer, name in ((doc.get("profiles"), "profile"), (doc.get("actuals"), "actual")):
             o = (layer or {}).get(cls)
             if o:
+                if name == "profile":
+                    confidence[cls] = evc_confidence.state(int(o.get("n") or 0), list(o.get("misses") or []))
                 p = {"calls": _pos(f"{name}.{cls}.calls", o.get("calls", p["calls"])),
                      "ctx_tokens": _pos(f"{name}.{cls}.ctx_tokens", o.get("ctx_tokens", p["ctx_tokens"]))}
                 src = name
         prof[cls], source[cls] = p, src
     counts = {c: 0 for c in CLASSES}
-    sleeping, owner, seen = [], [], set()
+    sleeping, owner, seen, used = [], [], set(), set()
     calls = cand = ceil = 0
     for i, c in enumerate(claims):
         if not isinstance(c, dict) or not c.get("id") or c.get("class") not in CLASSES:
@@ -108,6 +112,7 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
             owner.append(c["id"])
         if cls in ZERO_CLASSES:
             continue
+        used.add(cls)
         n = int(_pos(f"{c['id']}.est_calls", c["est_calls"])) if c.get("est_calls") is not None \
             else int(prof[cls]["calls"])
         ctx = max(int(prof[cls]["ctx_tokens"]), worker_floor)
@@ -116,7 +121,13 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
         cand += cost
         ceil += math.ceil(cost * deopt) if cls == "novel" else cost
     floor_calls = min(min_calls, calls)
+    blocked = any(confidence[k] in ("UNKNOWN", "INVALIDATED") for k in used if k in confidence)
+    conservative = blocked and cand > evc_confidence.LARGE_TOKENS
     return {
+        "confidence": confidence,
+        "admit_large": not conservative,
+        "fallback": "conservative" if conservative else None,
+        "effective_tokens": ceil if conservative else cand,
         "verdict": "COMPILED",
         "floor": {"calls": floor_calls, "tokens": floor_calls * worker_floor},
         "candidate": {"calls": calls, "tokens": cand, "with_margin": ra._with_margin(cand, margin)},

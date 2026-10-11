@@ -69,5 +69,53 @@ check("admit: DEGRADED only with tranche",
       not ec.may_admit_large("DEGRADED") and ec.may_admit_large("DEGRADED", tranche=True))
 check("admit: control INVALIDATED+tranche False", not ec.may_admit_large("INVALIDATED", tranche=True))
 
+# --- Task 2: CTC as primary estimator ---------------------------------------------------------------
+import json  # noqa: E402
+import shutil  # noqa: E402
+import tempfile  # noqa: E402
+
+import cost_to_completion as ctc  # noqa: E402
+import route_admission as ra  # noqa: E402
+
+FLOORS = ra.load_floors()
+CLAIMS = [
+    {"id": "c1", "class": "satisfied", "status": "satisfied"},
+    {"id": "c2", "class": "deterministic", "status": "open"},
+    {"id": "c3", "class": "known_transform", "status": "open"},
+    {"id": "c4", "class": "bounded_coding", "status": "open", "est_calls": 4},
+    {"id": "c5", "class": "novel", "status": "open"},
+]
+NOVEL = [{"id": "n1", "class": "novel", "status": "open"}]
+
+# V-EVC-CTC-CONFIDENCE
+base = ctc.compile_cost({"claims": CLAIMS}, FLOORS)
+conf = base.get("confidence")
+check("ctc-conf: key present, every model class UNKNOWN",
+      isinstance(conf, dict) and set(conf) == set(ctc.MODEL_CLASSES) and set(conf.values()) == {"UNKNOWN"}, str(conf))
+prof = ctc.compile_cost({"claims": CLAIMS, "profiles": {"novel": {"calls": 5, "ctx_tokens": 120000, "n": 6}}}, FLOORS)
+check("ctc-conf: novel CALIBRATED with n=6", (prof.get("confidence") or {}).get("novel") == "CALIBRATED",
+      str(prof.get("confidence")))
+check("ctc-conf: control existing numbers unchanged",
+      base["candidate"]["calls"] == 2 + 4 + 15 and base["profile_source"]["novel"] == "prior")
+
+# V-EVC-CTC-INVALIDATED-CANNOT-ADMIT
+bad = ctc.compile_cost({"claims": NOVEL, "profiles": {"novel": {
+    "calls": 15, "ctx_tokens": 140000, "n": 6,
+    "misses": [{"need": 100, "actual": 300, "kind": "CALL_COUNT"}] * 3}}}, FLOORS)
+check("ctc-inval: admit_large false + conservative",
+      bad.get("admit_large") is False and bad.get("fallback") == "conservative", str((bad.get("admit_large"), bad.get("fallback"))))
+good = ctc.compile_cost({"claims": NOVEL, "profiles": {"novel": {"calls": 15, "ctx_tokens": 140000, "n": 6}}}, FLOORS)
+check("ctc-inval: control CALIBRATED admits", good.get("admit_large") is True and good.get("fallback") in (None, ""),
+      str((good.get("admit_large"), good.get("fallback"))))
+
+# V-EVC-MISS-KIND
+tmp = Path(tempfile.mkdtemp(prefix="evc-miss-")) / "route-floors.json"
+shutil.copyfile(ra.FLOORS_PATH, tmp)
+r1 = ra.record_actual("top-level-worker", 100, 300, path=tmp, kind="PROOF_TAIL")
+check("miss-kind: kind stored", r1["misses"][-1].get("kind") == "PROOF_TAIL", str(r1["misses"]))
+r2 = ra.record_actual("top-level-worker", 100, 300, path=tmp)
+check("miss-kind: control no kind -> none stored", "kind" not in r2["misses"][-1], str(r2["misses"]))
+shutil.rmtree(tmp.parent, ignore_errors=True)
+
 print(f"{passes} passed, {fails} failed")
 sys.exit(1 if fails else 0)
