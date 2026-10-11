@@ -1,0 +1,759 @@
+{
+  "generated_by": "evidence/w6/ledger.py (deterministic)",
+  "units": {
+    "W4": {
+      "sessions": 6,
+      "processed_tokens": 1710977,
+      "calls": 71,
+      "mission_tokens": 1710977,
+      "categories": {
+        "STARTUP": {
+          "calls": 6,
+          "tokens": 101818,
+          "share": 0.0595
+        },
+        "READ": {
+          "calls": 29,
+          "tokens": 713963,
+          "share": 0.4173
+        },
+        "REREAD": {
+          "calls": 2,
+          "tokens": 49202,
+          "share": 0.0288
+        },
+        "SEARCH": {
+          "calls": 6,
+          "tokens": 152683,
+          "share": 0.0892
+        },
+        "SEMANTIC": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "IMPLEMENT": {
+          "calls": 1,
+          "tokens": 29054,
+          "share": 0.017
+        },
+        "PROOF": {
+          "calls": 4,
+          "tokens": 101991,
+          "share": 0.0596
+        },
+        "REPAIR": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "CONTROL": {
+          "calls": 14,
+          "tokens": 299027,
+          "share": 0.1748
+        },
+        "RECOVERY": {
+          "calls": 2,
+          "tokens": 63513,
+          "share": 0.0371
+        },
+        "RECEIPT": {
+          "calls": 6,
+          "tokens": 174045,
+          "share": 0.1017
+        },
+        "UNATTRIBUTED": {
+          "calls": 1,
+          "tokens": 25681,
+          "share": 0.015
+        }
+      }
+    },
+    "W2": {
+      "sessions": 4,
+      "processed_tokens": 3039060,
+      "calls": 69,
+      "mission_tokens": 3039060,
+      "categories": {
+        "STARTUP": {
+          "calls": 4,
+          "tokens": 69604,
+          "share": 0.0229
+        },
+        "READ": {
+          "calls": 13,
+          "tokens": 577099,
+          "share": 0.1899
+        },
+        "REREAD": {
+          "calls": 1,
+          "tokens": 49799,
+          "share": 0.0164
+        },
+        "SEARCH": {
+          "calls": 25,
+          "tokens": 1098037,
+          "share": 0.3613
+        },
+        "SEMANTIC": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "IMPLEMENT": {
+          "calls": 6,
+          "tokens": 390208,
+          "share": 0.1284
+        },
+        "PROOF": {
+          "calls": 2,
+          "tokens": 116994,
+          "share": 0.0385
+        },
+        "REPAIR": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "CONTROL": {
+          "calls": 14,
+          "tokens": 479428,
+          "share": 0.1578
+        },
+        "RECOVERY": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "RECEIPT": {
+          "calls": 4,
+          "tokens": 257891,
+          "share": 0.0849
+        },
+        "UNATTRIBUTED": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "W1": {
+      "sessions": 4,
+      "processed_tokens": 5754147,
+      "calls": 120,
+      "mission_tokens": 5754147,
+      "categories": {
+        "STARTUP": {
+          "calls": 4,
+          "tokens": 67720,
+          "share": 0.0118
+        },
+        "READ": {
+          "calls": 15,
+          "tokens": 712217,
+          "share": 0.1238
+        },
+        "REREAD": {
+          "calls": 2,
+          "tokens": 127949,
+          "share": 0.0222
+        },
+        "SEARCH": {
+          "calls": 47,
+          "tokens": 2114040,
+          "share": 0.3674
+        },
+        "SEMANTIC": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "IMPLEMENT": {
+          "calls": 7,
+          "tokens": 449359,
+          "share": 0.0781
+        },
+        "PROOF": {
+          "calls": 7,
+          "tokens": 336680,
+          "share": 0.0585
+        },
+        "REPAIR": {
+          "calls": 1,
+          "tokens": 55264,
+          "share": 0.0096
+        },
+        "CONTROL": {
+          "calls": 32,
+          "tokens": 1556867,
+          "share": 0.2706
+        },
+        "RECOVERY": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "RECEIPT": {
+          "calls": 4,
+          "tokens": 273746,
+          "share": 0.0476
+        },
+        "UNATTRIBUTED": {
+          "calls": 1,
+          "tokens": 60305,
+          "share": 0.0105
+        }
+      }
+    },
+    "W5b": {
+      "sessions": 1,
+      "processed_tokens": 242207,
+      "calls": 9,
+      "mission_tokens": 242207,
+      "categories": {
+        "STARTUP": {
+          "calls": 1,
+          "tokens": 17277,
+          "share": 0.0713
+        },
+        "READ": {
+          "calls": 3,
+          "tokens": 70635,
+          "share": 0.2916
+        },
+        "REREAD": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "SEARCH": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "SEMANTIC": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "IMPLEMENT": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "PROOF": {
+          "calls": 2,
+          "tokens": 65454,
+          "share": 0.2702
+        },
+        "REPAIR": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "CONTROL": {
+          "calls": 2,
+          "tokens": 53029,
+          "share": 0.2189
+        },
+        "RECOVERY": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "RECEIPT": {
+          "calls": 1,
+          "tokens": 35812,
+          "share": 0.1479
+        },
+        "UNATTRIBUTED": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "W3": {
+      "sessions": 1,
+      "processed_tokens": 1427139,
+      "calls": 26,
+      "mission_tokens": 1427139,
+      "categories": {
+        "STARTUP": {
+          "calls": 1,
+          "tokens": 17340,
+          "share": 0.0122
+        },
+        "READ": {
+          "calls": 9,
+          "tokens": 390872,
+          "share": 0.2739
+        },
+        "REREAD": {
+          "calls": 1,
+          "tokens": 42238,
+          "share": 0.0296
+        },
+        "SEARCH": {
+          "calls": 3,
+          "tokens": 180615,
+          "share": 0.1266
+        },
+        "SEMANTIC": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "IMPLEMENT": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "PROOF": {
+          "calls": 6,
+          "tokens": 381394,
+          "share": 0.2672
+        },
+        "REPAIR": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "CONTROL": {
+          "calls": 5,
+          "tokens": 329643,
+          "share": 0.231
+        },
+        "RECOVERY": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "RECEIPT": {
+          "calls": 1,
+          "tokens": 85037,
+          "share": 0.0596
+        },
+        "UNATTRIBUTED": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "W5a": {
+      "sessions": 1,
+      "processed_tokens": 598173,
+      "calls": 16,
+      "mission_tokens": 598173,
+      "categories": {
+        "STARTUP": {
+          "calls": 1,
+          "tokens": 17277,
+          "share": 0.0289
+        },
+        "READ": {
+          "calls": 7,
+          "tokens": 278805,
+          "share": 0.4661
+        },
+        "REREAD": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "SEARCH": {
+          "calls": 2,
+          "tokens": 91260,
+          "share": 0.1526
+        },
+        "SEMANTIC": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "IMPLEMENT": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "PROOF": {
+          "calls": 2,
+          "tokens": 86453,
+          "share": 0.1445
+        },
+        "REPAIR": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "CONTROL": {
+          "calls": 3,
+          "tokens": 71306,
+          "share": 0.1192
+        },
+        "RECOVERY": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "RECEIPT": {
+          "calls": 1,
+          "tokens": 53072,
+          "share": 0.0887
+        },
+        "UNATTRIBUTED": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "W3b": {
+      "sessions": 1,
+      "processed_tokens": 314440,
+      "calls": 10,
+      "mission_tokens": 314440,
+      "categories": {
+        "STARTUP": {
+          "calls": 1,
+          "tokens": 17278,
+          "share": 0.0549
+        },
+        "READ": {
+          "calls": 3,
+          "tokens": 76569,
+          "share": 0.2435
+        },
+        "REREAD": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "SEARCH": {
+          "calls": 2,
+          "tokens": 70491,
+          "share": 0.2242
+        },
+        "SEMANTIC": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "IMPLEMENT": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "PROOF": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "REPAIR": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "CONTROL": {
+          "calls": 3,
+          "tokens": 105218,
+          "share": 0.3346
+        },
+        "RECOVERY": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        },
+        "RECEIPT": {
+          "calls": 1,
+          "tokens": 44884,
+          "share": 0.1427
+        },
+        "UNATTRIBUTED": {
+          "calls": 0,
+          "tokens": 0,
+          "share": 0.0
+        }
+      }
+    }
+  },
+  "total": {
+    "processed_tokens": 13086143,
+    "calls": 321,
+    "categories": {
+      "STARTUP": {
+        "calls": 18,
+        "tokens": 308314,
+        "share": 0.0236
+      },
+      "READ": {
+        "calls": 79,
+        "tokens": 2820160,
+        "share": 0.2155
+      },
+      "REREAD": {
+        "calls": 6,
+        "tokens": 269188,
+        "share": 0.0206
+      },
+      "SEARCH": {
+        "calls": 85,
+        "tokens": 3707126,
+        "share": 0.2833
+      },
+      "SEMANTIC": {
+        "calls": 0,
+        "tokens": 0,
+        "share": 0.0
+      },
+      "IMPLEMENT": {
+        "calls": 14,
+        "tokens": 868621,
+        "share": 0.0664
+      },
+      "PROOF": {
+        "calls": 23,
+        "tokens": 1088966,
+        "share": 0.0832
+      },
+      "REPAIR": {
+        "calls": 1,
+        "tokens": 55264,
+        "share": 0.0042
+      },
+      "CONTROL": {
+        "calls": 73,
+        "tokens": 2894518,
+        "share": 0.2212
+      },
+      "RECOVERY": {
+        "calls": 2,
+        "tokens": 63513,
+        "share": 0.0049
+      },
+      "RECEIPT": {
+        "calls": 18,
+        "tokens": 924487,
+        "share": 0.0706
+      },
+      "UNATTRIBUTED": {
+        "calls": 2,
+        "tokens": 85986,
+        "share": 0.0066
+      }
+    },
+    "buckets": {
+      "tax": {
+        "tokens": 3535533,
+        "share": 0.2702
+      },
+      "exploration": {
+        "tokens": 6527286,
+        "share": 0.4988
+      },
+      "semantic": {
+        "tokens": 0,
+        "share": 0.0
+      },
+      "work": {
+        "tokens": 2937338,
+        "share": 0.2245
+      },
+      "unattributed": {
+        "tokens": 85986,
+        "share": 0.0066
+      }
+    }
+  },
+  "attribution": {
+    "attributed_share": 0.9934,
+    "unattributed_share": 0.0066,
+    "transcript_processed_total": 13086143,
+    "mission_record_tokens_total": 13086143,
+    "mission_vs_transcript_note": "mission slim_result.tokens is the harness's own counter; compare, do not mix"
+  },
+  "derived": {
+    "llm_invocation_density": {
+      "calls_total": 321,
+      "calls_per_session": 17.83,
+      "semantic_calls": 0,
+      "per_verified_function": "UNKNOWN (verified functions = 0 across W1-W5b)"
+    },
+    "context_duplication_factor": 14.06,
+    "context_duplication_def": "processed (input+cache_creation+cache_read+output) / new (input+cache_creation+output)",
+    "startup_tax": {
+      "first_call_tokens": 308314,
+      "first_call_share": 0.0236,
+      "floor_rent_tokens": 5446054,
+      "floor_rent_share": 0.4162,
+      "floor_rent_def": "sum over calls of min(first-call context of session, call context): the part re-read on every call that a fresh epoch pays anyway"
+    },
+    "raw_binary_page_fault_rate": {
+      "disasm_reads": 2,
+      "disasm_rereads": 1,
+      "rate": 0.3333,
+      "note": "re-reads of disassembly-like paths by Read/gc/cat only; per-function recorded-ness is UNKNOWN"
+    },
+    "model_displacement_rate": "UNKNOWN (0 verified functions and 0 model-free closures in W5a/W5b; no layer-closed denominator)",
+    "failed_tool_calls": 70
+  },
+  "tokens_per_verified_function": {
+    "verified_functions": 0,
+    "value": "UNKNOWN",
+    "semantic_tokens": 0,
+    "tax_tokens": 3535533,
+    "work_tokens": 2937338,
+    "exploration_tokens": 6527286,
+    "semantic_share": 0.0,
+    "tax_share": 0.2702
+  },
+  "sessions": [
+    {
+      "session": "c2aa9574-b1ac-4730-bb05-b06351f7d56b",
+      "unit": "W4",
+      "calls": 19,
+      "processed": 476499,
+      "mission_tokens": 476499
+    },
+    {
+      "session": "02938cb5-cf0e-4c15-9b16-0b895197219a",
+      "unit": "W2",
+      "calls": 9,
+      "processed": 289974,
+      "mission_tokens": 289974
+    },
+    {
+      "session": "2fce6414-7a36-4e8f-aa9d-892b1396bebc",
+      "unit": "W2",
+      "calls": 16,
+      "processed": 646467,
+      "mission_tokens": 646467
+    },
+    {
+      "session": "29a0ae3e-be3f-450d-b426-c4a870470588",
+      "unit": "W1",
+      "calls": 29,
+      "processed": 1481050,
+      "mission_tokens": 1481050
+    },
+    {
+      "session": "2d91b1ae-0b1c-447a-b26c-bf5250dea8a5",
+      "unit": "W5b",
+      "calls": 9,
+      "processed": 242207,
+      "mission_tokens": 242207
+    },
+    {
+      "session": "d6114900-f87d-4a12-ab81-a8f32a032089",
+      "unit": "W1",
+      "calls": 26,
+      "processed": 1003723,
+      "mission_tokens": 1003723
+    },
+    {
+      "session": "e351ceb3-3726-45c9-8cbd-ecd3575e76fe",
+      "unit": "W3",
+      "calls": 26,
+      "processed": 1427139,
+      "mission_tokens": 1427139
+    },
+    {
+      "session": "7cb14bba-b845-40a1-8c5f-7f008f4d85e3",
+      "unit": "W5a",
+      "calls": 16,
+      "processed": 598173,
+      "mission_tokens": 598173
+    },
+    {
+      "session": "9a4ac5a7-307e-4135-9235-845666ccd4f1",
+      "unit": "W1",
+      "calls": 41,
+      "processed": 1995930,
+      "mission_tokens": 1995930
+    },
+    {
+      "session": "ea797057-a4b2-48fb-8cab-0162a4d7c05d",
+      "unit": "W4",
+      "calls": 3,
+      "processed": 53628,
+      "mission_tokens": 53628
+    },
+    {
+      "session": "ed4e9eb3-be67-4473-a2fc-29e339780b22",
+      "unit": "W4",
+      "calls": 15,
+      "processed": 372730,
+      "mission_tokens": 372730
+    },
+    {
+      "session": "cdd99979-7afe-4b3f-b489-73a8e13b7a51",
+      "unit": "W1",
+      "calls": 24,
+      "processed": 1273444,
+      "mission_tokens": 1273444
+    },
+    {
+      "session": "10f51831-81e0-471e-af5f-2f97926b348d",
+      "unit": "W2",
+      "calls": 26,
+      "processed": 1197275,
+      "mission_tokens": 1197275
+    },
+    {
+      "session": "d066e451-ae1b-4248-8379-0564885f6cb7",
+      "unit": "W4",
+      "calls": 6,
+      "processed": 120435,
+      "mission_tokens": 120435
+    },
+    {
+      "session": "6b1955b4-8e72-44eb-a5ef-a32f37443882",
+      "unit": "W2",
+      "calls": 18,
+      "processed": 905344,
+      "mission_tokens": 905344
+    },
+    {
+      "session": "f118a90a-7b7e-4c4c-91c5-839332fe7fbe",
+      "unit": "W3b",
+      "calls": 10,
+      "processed": 314440,
+      "mission_tokens": 314440
+    },
+    {
+      "session": "3078999c-3ccc-42bd-b772-09cdd00e5d10",
+      "unit": "W4",
+      "calls": 9,
+      "processed": 211185,
+      "mission_tokens": 211185
+    },
+    {
+      "session": "2094817f-0152-42c4-a251-e21544de66cb",
+      "unit": "W4",
+      "calls": 19,
+      "processed": 476500,
+      "mission_tokens": 476500
+    }
+  ],
+  "skipped": [
+    {
+      "mission": "m-36f296f3babc",
+      "unit": "W6",
+      "packet": "WU-W6.md",
+      "session": "e6e9e4b9-0e88-4534-9293-bb7c60cad28b",
+      "mission_tokens": null,
+      "state": "RUNNING",
+      "why": "this unit (RUNNING, cannot attribute itself)"
+    },
+    {
+      "mission": "m-ea05f64a68b3",
+      "unit": "W1",
+      "packet": "WU-W1.md",
+      "session": null,
+      "mission_tokens": null,
+      "state": "HALTED",
+      "why": "no session/transcript"
+    }
+  ]
+}
