@@ -11,11 +11,36 @@ PLAN_LINES = {
     "rows not mapped to a phase": (2.0, 0.5, 3.0),
     "reserves+control (PLAN-2 basis)": (6.5, 2.5, 10.5),
 }
-SPEND = r"C:\Users\User\.claude\skills\claude-power-pack\tools\mission_spend.py"
+SPEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mission_spend.py")
 
 def load(p):
     with open(p, encoding="utf-8-sig") as f:
         return json.load(f)
+
+def _pct(s, q):
+    k = (len(s) - 1) * q
+    lo = int(k)
+    hi = min(lo + 1, len(s) - 1)
+    return s[lo] + (s[hi] - s[lo]) * (k - lo)
+
+def distribution(samples, spent=0):
+    """Remaining-spend percentiles (caller adds used). n==0 UNKNOWN; n<5 WIDE (stated widening); else NORMAL."""
+    s = sorted(float(x) for x in samples)
+    keys = ("lower", "p50", "p80", "p95", "ceiling")
+    n = len(s)
+    if n == 0:
+        d = {k: None for k in keys}
+        d["confidence"], d["n"] = "UNKNOWN", 0
+        return d
+    if n == 1:
+        p50, p80, p95 = s[0], s[0] * 1.25, s[0] * 1.5
+    else:
+        p50, p80, p95 = _pct(s, 0.5), _pct(s, 0.8), _pct(s, 0.95)
+    if n < 5:
+        return {"lower": s[0] * 0.5, "p50": p50, "p80": p80, "p95": p95, "ceiling": 2 * p95,
+                "confidence": "WIDE", "n": n}
+    return {"lower": s[0], "p50": p50, "p80": p80, "p95": p95, "ceiling": s[-1],
+            "confidence": "NORMAL", "n": n}
 
 def main():
     a = argparse.ArgumentParser()
@@ -32,7 +57,7 @@ def main():
     else:
         r = subprocess.run([sys.executable, SPEND, "goal-status", "--goal", a.goal], capture_output=True, text=True, timeout=60)
         used = json.loads(r.stdout.strip().splitlines()[-1])["used"]
-    pending, tgt = [], 0
+    pending, tgt, unit_samples = [], 0, []
     for u in chain["units"]:
         if u.get("deferred"):
             continue
@@ -42,7 +67,9 @@ def main():
         if ok:
             continue
         pending.append(u["id"])
-        tgt += load(u["route"])["envelope"]["target"]
+        t = load(u["route"])["envelope"]["target"]
+        tgt += t
+        unit_samples.append(t * FACTOR)
     s = a.plan_scale
     rem = {
         "expected": tgt * FACTOR + sum(v[0] for v in PLAN_LINES.values()) * M * s,
@@ -50,6 +77,9 @@ def main():
         "safety": tgt + sum(v[2] for v in PLAN_LINES.values()) * M * s,
     }
     tot = {k: used + v for k, v in rem.items()}
+    samples = unit_samples + [v[0] * M * s for v in PLAN_LINES.values()]
+    dist = distribution(samples)
+    tdist = {k: (used + v if isinstance(v, (int, float)) and k not in ("n",) else v) for k, v in dist.items()}
     prev = None
     if a.previous and os.path.exists(a.previous):
         prev = load(a.previous).get("total", {}).get("expected")
@@ -65,6 +95,7 @@ def main():
         "owner_needed": tot["expected"] > env,
         "safety_over_envelope": tot["safety"] > env,
         "envelope": env,
+        "distribution": dist, "total_distribution": tdist,
     }
     print(json.dumps(f, indent=1))
     if a.out:
@@ -72,4 +103,5 @@ def main():
         with open(a.out, "w", encoding="utf-8") as fh:
             json.dump(f, fh, indent=1)
 
-main()
+if __name__ == "__main__":
+    main()
