@@ -1,38 +1,29 @@
 # RESUMPTION_FILE: ccr (CPP Cognitive Runtime as a Claude Code mod)
 
 **Identity.** Claude Power Pack, `C:\Users\User\.claude\skills\claude-power-pack`, branch `feature/knowledge-acquisition`
-(another writer may be active: pathspec-scoped commits only). Goal `ccr`, cap 36,880,000 (Owner "y go p95").
-Plan: `vault/plans/ccr-mods-backend-2026-10-11.md` (read "M1 results" and "S1 results"). Owner chose **option 2**:
-`Edit(mods/cpp-cognitive-runtime/**)` is allowed in `.claude/settings.local.json`. Global install/enable is the Owner's.
+(shared tree, 1000+ foreign dirty files: pathspec-scoped commits only). Goal `ccr`, cap 36,880,000 (Owner approved
+p95 = 66.2M at 22:02 on 2026-10-11; the cap raise was never applied — apply only when the remaining runs short).
+Canonical plan: `vault/plans/ccr-v2-enforcement-2026-10-11.md` + addendum `ccr-v2-addendum-2026-10-11.md`.
+**Owner: session 8f164910** (took over from 93bd1001 on 2026-10-12 by Owner choice; do not run both).
 
-**State (coherence anchor: HEAD contains 1a0a62da "feat(ccr S2)").**
-- SEALED: plan 5fe4c1cf; M1 probe ade57445; runtime v0.1 369593ab; release tooling 1a0a62da
-  (`tools/test_ccr_release.py` 13/13, `claude plugin test mods/cpp-cognitive-runtime` 8/8).
-- Rings (n=1 each, per-agent provider usage from runtime receipts, answers correct both arms, 0 page faults):
-  R1 no-repo Explore 49,872 -> 29,814; R2 PP repo general-purpose 144,684 -> 72,748; R3 fresh non-CPP repo
-  general-purpose 164,203 -> 111,792.
-- Main session: shadow only (receipts say which rule files would be unlinked). Not enforced.
-- UNKNOWN: compaction without the summariser (headless exits first).
-- Liveness gate exits 1 on 54 PRE-EXISTING `modules/` offenders; it does not scan `tools/` or `mods/`.
+**State (coherence anchor: HEAD contains 51bbfc3b "feat(ccr S4)").**
+- SEALED: S1 369593ab (subagent linker), S2 1a0a62da (release tooling), S3 781c4809 (Work Unit tier: `CCR_WORK_UNIT`
+  → class closure enforced on a main session), S4 51bbfc3b (system-prompt materialization receipt, observe only).
+- Installed release is still 0.1.0-feaae8b0 (S3/S4 are dev-only; ablation arm U loads the dev copy via --plugin-dir).
+- First call, KSR harness `CursorProjects/tools/kobiimii/ctx_ablation.py`, Opus: default 73,400 · lean E 10,407 ·
+  U (stock flags + unit) 16,290 / 17,233 / 15,973 / 16,606 (MCP connect count drives a ~1.3K spread).
+- U−E decomposed (receipts): kernel+index +4,817 chars (mandatory; E is underlinked) · deferred_tools_delta 4,307 ·
+  advisory hook ctx +1,328 · engine rows +1,022 · ~3K tok = deferral cost (host has no tool removal). System
+  prompt is only ~4.3K chars on Opus lean; compose-time tool narrowing measured useless and withdrawn.
 
-**Active decisions.** Release root `~/.claude/ccr` (`active/`, `active.prev/`, `state/OFF`, folder marketplace
-`cpp-local`). Subagent tier enforces; main tier shadows until a quality canary proves main linking.
-
-- INSTALLED GLOBALLY 2026-10-11 at the Owner's request ("install the plugin globally for me"): release
-  `0.1.0-feaae8b0` active at `~/.claude/ccr/active`, marketplace `cpp-local`, `cpp-cognitive-runtime@cpp-local`
-  user scope, enabled. Backups: `~/.claude/backups/ccr-install-<ts>/`. Verified in a fresh headless session with
-  no `--plugin-dir` (e8f30359): receipts in `~/.claude/ccr/state/receipts/`, subagent instructions 53,103 -> 4,455,
-  answer correct. The 33 sessions open at install keep stock behaviour until they restart.
+**Active decisions.** First-call work is near its floor; the money is intra-epoch carry (~69 % of a Madzia epoch:
+tool results, repeated hook context). Do not polish deferred_tools_delta (~800 tok, cache-read priced) before carry.
 
 **Next 3 actions.**
-1. Rollback if needed: `python tools/ccr_release.py off` (next session start), `rollback`, or
-   `claude plugin disable cpp-cognitive-runtime@cpp-local`.
-2. Watch receipts across real sessions for page faults or quality complaints in subagents.
-3. Then: main-session linking canary (skills/agents listing via the `page` tool), interactive compaction probe,
-   R4 Madzia canary under KSR's own goal, then UKDL/CBR after proof.
+1. P5 probe: does `session.append` rewrite a tool-result row before it is stored AND sent (incl. images)? Read the
+   d.ts contract, then one bounded headless probe.
+2. If P5 holds: ingestion projection for large tool results (raw to a sha page store, projection + handle in the
+   row), unit sessions first, with a page-fault path and a multi-call benchmark (8–15 calls) before/after.
+3. Madzia R4 only at a driver boundary (worker pid 17144 was live at 22:19); KSR files only when clean.
 
-**Read first (2026-10-11 22:56, Owner-authorized note from session 8f164910).** `vault/plans/ccr-v2-addendum-2026-10-11.md`
-§1–2: (a) 2.1.296 has no `tool.list` event, so tools can be deferred but never removed; (b) `WORK_CLASSES` in 781c4809 copies
-boundary.py's `--tools` list verbatim (the "hardcoded tool list" trap) unless labelled a seed that PGO/fault receipts widen.
-
-**Start.** Bind your session to goal `ccr`, check `python tools/ccr_release.py status`, then continue at the first undone action.
+**Start.** `python tools/mission_spend.py goal-status --goal ccr`, `python tools/ccr_release.py status`, then action 1.
