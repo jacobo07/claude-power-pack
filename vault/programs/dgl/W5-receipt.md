@@ -1,0 +1,9 @@
+# W5 receipt
+Status: PARTIAL -- merge built and 10/11 gates green, NOT deployed; cost-breaker hold stopped the turn before the fix.
+COMMITS: dgl/durable-goal-lease ef6bd810 (source, all 11 gates green there); merge branch dgl/live-merge 829b8ac5 (scratch worktree C:\Users\User\.claude\jobs\20af2491\tmp\mwt, parent live 829b8ac5).
+Live checkout = C:\Users\User\.claude\skills\claude-power-pack on feature/knowledge-acquisition 829b8ac5 (no worktree holds main; main=908b543 is an ancestor). Untouched: no copy, no schtasks change, no hook copy.
+Premise broken: the packet assumed W1-W4 files can be checked out over live. Live already holds W1b/W2 ported under other hashes (d55f33c9, 95030b22, 3dd05871) plus OCA/econ-contain (a30db705, 9c88ebad, 999984d1) in the same files. Fork base d0c2077b, live is 192 commits ahead, 36 dgl commits.
+Merge: 4 conflicted files (hooks/lib/goal_binding.js, modules/provider_routing/ledger.py, tools/mission_spend.py, tools/test_goal_lease.py); in every hunk live was a strict superset (quarantine, recovery/role accounting, OCA first-programme check) so resolved with --ours. No dirty live path overlaps the dgl file list.
+Gates in merged tree: goal_lease 10/10, workspace_lease 10/10, succession 9/9, GOALCRASH 11/11, GOALDRAIN 6/6, GOALAUTOPSY 5/5, AUTOPSY 10/10, session_budget_admission 12/12, tranche_driver 27/27, hook_boundary 7/7; test_goal_budget_admission 58/59 (FAIL V-GOAL-AGENT-LANE: dispatcher carries the Agent lane and its no-event route). Not diagnosed: live's gate has 59 checks vs 54 on the branch.
+Remaining: fix that gate in the merge tree, then fast-forward live to the merge (live dirty files do not overlap), copy session_budget_guard.js to ~/.claude/hooks, re-point PP-DglChain-Tick, run the step 5 smoke, then schtasks /run.
+Calls: about 18.
