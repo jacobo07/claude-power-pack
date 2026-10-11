@@ -1,106 +1,113 @@
-{
-  "goal": "autonomy-convergence",
-  "root": "C:\\Users\\User\\Apps\\pp-ucda-wt",
-  "envelope": 90000000,
-  "units": [
-    {
-      "id": "S0",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S0.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S0-receipt.md",
-      "after": null
-    },
-    {
-      "id": "S1",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S1.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S1-receipt.md",
-      "after": "S0"
-    },
-    {
-      "id": "S2",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S2.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S2-receipt.md",
-      "after": "S1"
-    },
-    {
-      "id": "S3",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S3.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S3-receipt.md",
-      "after": "S2"
-    },
-    {
-      "id": "S4",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S4.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S4-receipt.md",
-      "after": "S3"
-    },
-    {
-      "id": "S5",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S5.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S5-receipt.md",
-      "after": "S4"
-    },
-    {
-      "id": "R1",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-R1.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-R1-receipt.md",
-      "after": "S5"
-    },
-    {
-      "id": "L1",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-L1.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-L1-receipt.md",
-      "after": "R1"
-    },
-    {
-      "id": "S5b",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S5b.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S5b-receipt.md",
-      "after": "L1"
-    },
-    {
-      "id": "S6",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S6.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S6-receipt.md",
-      "after": "S5b"
-    },
-    {
-      "id": "S7",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S7.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S7-receipt.md",
-      "after": "S6"
-    },
-    {
-      "id": "S8",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S8.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S8-receipt.md",
-      "after": "S7"
-    },
-    {
-      "id": "S9",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S9.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S9-receipt.md",
-      "after": "S8"
-    },
-    {
-      "id": "S10",
-      "packet": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S10.md",
-      "route": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
-      "receipt": "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S10-receipt.md",
-      "after": "S9"
-    }
-  ],
-  "max_residuals": 2
+﻿{
+    "goal":  "autonomy-convergence",
+    "root":  "C:\\Users\\User\\Apps\\pp-ucda-wt",
+    "envelope":  90000000,
+    "units":  [
+                  {
+                      "id":  "S0",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S0.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S0-receipt.md",
+                      "after":  null
+                  },
+                  {
+                      "id":  "S1",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S1.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S1-receipt.md",
+                      "after":  "S0"
+                  },
+                  {
+                      "id":  "S2",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S2.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S2-receipt.md",
+                      "after":  "S1"
+                  },
+                  {
+                      "id":  "S3",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S3.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S3-receipt.md",
+                      "after":  "S2"
+                  },
+                  {
+                      "id":  "S4",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S4.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S4-receipt.md",
+                      "after":  "S3"
+                  },
+                  {
+                      "id":  "S5",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S5.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S5-receipt.md",
+                      "after":  "S4"
+                  },
+                  {
+                      "id":  "R1",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-R1.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-R1-receipt.md",
+                      "after":  "S5"
+                  },
+                  {
+                      "id":  "L1",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-L1.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-L1-receipt.md",
+                      "after":  "R1"
+                  },
+                  {
+                      "id":  "S5b",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S5b.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S5b-receipt.md",
+                      "after":  "L1"
+                  },
+                  {
+                      "id":  "S6",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S6.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S6-receipt.md",
+                      "after":  "S5b"
+                  },
+                  {
+                      "id":  "S7",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S7.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S7-receipt.md",
+                      "after":  "S6"
+                  },
+                  {
+                      "id":  "S7b",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S7b.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S7b-receipt.md",
+                      "after":  "S7"
+                  },
+                  {
+                      "id":  "S8",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S8.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S8-receipt.md",
+                      "after":  "S7b"
+                  },
+                  {
+                      "id":  "S9",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S9.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S9-receipt.md",
+                      "after":  "S8"
+                  },
+                  {
+                      "id":  "S10",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S10.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\route.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-ucda-wt\\vault\\programs\\autonomy\\WU-S10-receipt.md",
+                      "after":  "S9"
+                  }
+              ],
+    "max_residuals":  2
 }

@@ -57,7 +57,7 @@ def _spend(goal: str):
     if not s.get("ok"):
         return {"settled": UNKNOWN, "reserved": UNKNOWN, "unknown": UNKNOWN, "available": UNKNOWN,
                 "telemetry_ok": False, "why": _clip(s.get("reason", "not ok"), 120)}
-    return {k: s[k] for k in ("settled", "reserved", "unknown", "available", "available_certain", "telemetry_ok")}
+    return {k: s.get(k) for k in ("settled", "reserved", "unknown", "available", "available_certain", "telemetry_ok", "interactive_processed")}
 
 
 def _target(path) -> object:
@@ -156,7 +156,7 @@ def render_handoff(st: dict) -> str:
         f"unit: {st['current_unit']} | worker: {st['worker']} | next: {st['next_eligible_transition']}",
         f"last verified: {lv['unit'] + ' ' + lv['receipt'] + ' @ ' + lv['at'] if lv else 'none'}",
         f"spend settled={sp.get('settled')} reserved={sp.get('reserved')} unknown={sp.get('unknown')} "
-        f"available={sp.get('available')} (envelope {st['envelope']}) forecast_next={st['forecast_next_unit']}",
+        f"available={sp.get('available')} interactive={sp.get('interactive_processed', UNKNOWN)} (envelope {st['envelope']}) forecast_next={st['forecast_next_unit']}",
         f"blocker: {st['blocker'] or 'none'}",
         f"debt: {st['debt']['units_pending']} units pending {','.join(st['debt']['pending_ids'])}; "
         f"residuals {st['debt']['residuals']}",
