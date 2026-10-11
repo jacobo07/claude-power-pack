@@ -29,3 +29,42 @@ PASS V-PCC-LIVE-STORE-UNTOUCHED verdict=SAME changed=[]
 GSDX_PCC_REPLAY_PASS=24/26  threshold=26/26
 
 EXIT=1
+
+=== Task 2 RED ===
+PASS V-PCC-HERMETIC-HOME home=pcc-sem-home-8loouzy7 goals_root_under_temp=True
+PASS V-PCC-ENVELOPE keys=True digest=True ledger=True seq=2
+PASS V-PCC-CONTRACT-MALFORMED-RAISES four types raise GoalLogCorrupt naming seq and type
+PASS V-PCC-LEGACY-READERS-DO-NOT-RAISE projection,convergence,epochs,operator,hypotheses,closure ok=[True, True, True, True, True]
+PASS V-PCC-CONTRACT-HIGHER-V-UNKNOWN unsupported=[2, 3, 4, 5] expected=[2, 3, 4, 5]
+PASS V-PCC-WRITER-REFUSES refused=4/4 control_appended=True []
+PASS V-PCC-WRITER-CAS lost_race_raised=True files_unchanged=True fresh_retry_ok=True
+exported 5 events to C:\Users\User\AppData\Local\Temp\pcc-sem-xr-_l_4d427\export.json
+restored 5 event(s); the store now holds 5
+PASS V-PCC-EXPORT-RESTORE-ROUNDTRIP events=5 digests_equal=True ledgers_equal=True
+PASS V-PCC-SWITCH-PARSE 16 values x 2 switches []
+PASS V-PCC-SWITCH-CALL-TIME answers=[False, True, False, True]
+FAIL V-PCC-STATE-TRUTH-TABLE RED-first: proof state API absent
+FAIL V-PCC-STATE-NO-EVENT-NOT-INHERITED RED-first: proof state API absent
+PASS V-PCC-SWITCH-OFF-IS-LEGACY legacy={'ob-one': 'FRESH'} switch_off_with_events={'ob-one': 'FRESH'}
+FAIL V-PCC-STATE-UNKNOWN-TREE legacy_reason='' unknown={'ob-one': 'UNKNOWN'} control_known_other_tree={'ob-one': 'UNKNOWN'}
+FAIL V-PCC-STATE-SUPERSEDED-STRENGTH RED-first: proof state API absent
+PASS V-PCC-STATE-ORDER-STABLE order=['ob-one', 'ob-two']
+FAIL V-PCC-STATE-EMPTY RED-first: proof state API absent
+FAIL V-PCC-CERT-CLAIM-REACCEPT RED-first: proof state API absent
+FAIL V-PCC-CERT-GATE-PIN-SCHEME RED-first: proof state API absent
+FAIL V-PCC-CERT-REVISION RED-first: proof state API absent
+FAIL V-PCC-CERT-POLICY-BUMP RED-first: proof state API absent
+FAIL V-PCC-CERT-ENV-UNDECLARED RED-first: proof state API absent
+FAIL V-PCC-CERT-FUTURE-DATED RED-first: proof state API absent
+FAIL V-PCC-FINGERPRINT-ABSENT RED-first: proof state API absent
+FAIL V-PCC-FINGERPRINT-OUTSIDE-ROOT RED-first: proof state API absent
+FAIL V-PCC-FINGERPRINT-EMPTY RED-first: proof state API absent
+FAIL V-PCC-FINGERPRINT-EOL RED-first: proof state API absent
+PASS V-PCC-STATE-NOT-IN-DISPOSITION proof.py offences=[] control_flags=2
+PASS V-PCC-STATE-PRODUCED-UNKNOWN-BINDING unknown_binding={'ob-one': 'UNKNOWN'} control={'ob-one': 'FRESH'}
+PASS V-PCC-STATE-PRODUCED-WITHOUT-SATISFIED produced_for_unsatisfied={'ob-one': 'NOT_APPLICABLE'}
+PASS V-PCC-STATE-OLD-REVISION-UNKNOWN older_obligation_revision={'ob-old': 'UNKNOWN'}
+
+GSDX_PCC_SEMANTICS_PASS=16/31  threshold=31/31
+
+EXIT=1
