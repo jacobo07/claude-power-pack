@@ -1,0 +1,733 @@
+[
+{
+"fn": "fn_80203E40",
+"unit": "auto_03_80202950_text.s",
+"insns": 3,
+"match": "exact",
+"donors": [
+"fn_80524DE4"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 0
+},
+{
+"fn": "fn_80203E4C",
+"unit": "auto_03_80202950_text.s",
+"insns": 4,
+"match": "exact",
+"donors": [
+"fn_803466F4"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_80230BF8",
+"unit": "auto_03_80202950_text.s",
+"insns": 14,
+"match": "exact",
+"donors": [
+"fn_803EEF94",
+"fn_80576F9C",
+"fn_80577314"
+],
+"donor_proven": [],
+"fanin": 2,
+"fanout": 2
+},
+{
+"fn": "fn_801BD47C",
+"unit": "auto_03_801BC5B8_text.s",
+"insns": 16,
+"match": "exact",
+"donors": [
+"fn_800A5590",
+"fn_800A62F0",
+"fn_800A6330",
+"fn_800B23D0",
+"fn_800B3350"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 1
+},
+{
+"fn": "fn_8022E61C",
+"unit": "auto_03_80202950_text.s",
+"insns": 16,
+"match": "exact",
+"donors": [
+"fn_800A5590",
+"fn_800A62F0",
+"fn_800A6330",
+"fn_800B23D0",
+"fn_800B3350"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 1
+},
+{
+"fn": "fn_80257978",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 16,
+"match": "exact",
+"donors": [
+"fn_800A5590",
+"fn_800A62F0",
+"fn_800A6330",
+"fn_800B23D0",
+"fn_800B3350"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 1
+},
+{
+"fn": "fn_803315A0",
+"unit": "auto_03_8032BC4C_text.s",
+"insns": 16,
+"match": "exact",
+"donors": [
+"fn_800A5590",
+"fn_800A62F0",
+"fn_800A6330",
+"fn_800B23D0",
+"fn_800B3350"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 1
+},
+{
+"fn": "fn_80230FE4",
+"unit": "auto_03_80202950_text.s",
+"insns": 17,
+"match": "exact",
+"donors": [
+"fn_801FF69C",
+"fn_802003C8",
+"fn_80201EB0",
+"fn_80216250",
+"fn_80219700"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_801BC6B4",
+"unit": "auto_03_801BC5B8_text.s",
+"insns": 22,
+"match": "exact",
+"donors": [
+"fn_800B2300",
+"fn_800BE6B0",
+"fn_800BFAE0",
+"fn_800C24A0",
+"fn_8010D310"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 2
+},
+{
+"fn": "fn_8024B7C8",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 22,
+"match": "exact",
+"donors": [
+"fn_800B2300",
+"fn_800BE6B0",
+"fn_800BFAE0",
+"fn_800C24A0",
+"fn_8010D310"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 2
+},
+{
+"fn": "fn_8025C600",
+"unit": "auto_03_80257B08_text.s",
+"insns": 22,
+"match": "exact",
+"donors": [
+"fn_800B2300",
+"fn_800BE6B0",
+"fn_800BFAE0",
+"fn_800C24A0",
+"fn_8010D310"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 2
+},
+{
+"fn": "fn_8022621C",
+"unit": "auto_03_80202950_text.s",
+"insns": 23,
+"match": "exact",
+"donors": [
+"fn_80147C50",
+"fn_801A492C"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 2
+},
+{
+"fn": "fn_80278FEC",
+"unit": "auto_03_80278300_text.s",
+"insns": 23,
+"match": "exact",
+"donors": [
+"fn_80147C50",
+"fn_801A492C"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 2
+},
+{
+"fn": "fn_8027DBA8",
+"unit": "auto_03_80278300_text.s",
+"insns": 23,
+"match": "exact",
+"donors": [
+"fn_80147C50",
+"fn_801A492C"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 2
+},
+{
+"fn": "fn_8024C0F0",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 30,
+"match": "exact",
+"donors": [
+"fn_801C9300"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 3
+},
+{
+"fn": "fn_801BD194",
+"unit": "auto_03_801BC5B8_text.s",
+"insns": 3,
+"match": "loose",
+"donors": [
+"fn_80054080",
+"fn_80054100",
+"fn_80054270",
+"fn_80054280",
+"fn_80054290"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8022F90C",
+"unit": "auto_03_80202950_text.s",
+"insns": 3,
+"match": "loose",
+"donors": [
+"fn_800A5A70",
+"fn_80261BF0",
+"fn_80261CFC",
+"fn_8026A21C",
+"fn_802926A8"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8032CF78",
+"unit": "auto_03_8032BC4C_text.s",
+"insns": 3,
+"match": "loose",
+"donors": [
+"fn_802704A8",
+"fn_802BBE88",
+"fn_803493E8",
+"fn_80518664",
+"fn_8051BA94"
+],
+"donor_proven": [],
+"fanin": 3,
+"fanout": 0
+},
+{
+"fn": "fn_802047D8",
+"unit": "auto_03_80202950_text.s",
+"insns": 4,
+"match": "loose",
+"donors": [
+"fn_80230AE0",
+"fn_80248A60",
+"fn_8027B2A8",
+"fn_80465410",
+"fn_804D4600"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 0
+},
+{
+"fn": "fn_80230ABC",
+"unit": "auto_03_80202950_text.s",
+"insns": 4,
+"match": "loose",
+"donors": [
+"fn_80235B70"
+],
+"donor_proven": [],
+"fanin": 5,
+"fanout": 0
+},
+{
+"fn": "fn_8020711C",
+"unit": "auto_03_80202950_text.s",
+"insns": 5,
+"match": "loose",
+"donors": [
+"fn_80230AB8",
+"fn_80230ACC",
+"fn_8026450C",
+"fn_803BE9F0",
+"fn_8041E95C"
+],
+"donor_proven": [],
+"fanin": 4,
+"fanout": 0
+},
+{
+"fn": "fn_80220A54",
+"unit": "auto_03_80202950_text.s",
+"insns": 5,
+"match": "loose",
+"donors": [
+"fn_80345AD8"
+],
+"donor_proven": [],
+"fanin": 5,
+"fanout": 0
+},
+{
+"fn": "fn_80230F90",
+"unit": "auto_03_80202950_text.s",
+"insns": 5,
+"match": "loose",
+"donors": [
+"fn_80154D50",
+"fn_801C3434",
+"fn_801CD5FC",
+"fn_801CD610",
+"fn_801CD634"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8027A154",
+"unit": "auto_03_80278300_text.s",
+"insns": 5,
+"match": "loose",
+"donors": [
+"fn_802D2C28",
+"fn_802D2C3C"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_80233A68",
+"unit": "auto_03_80202950_text.s",
+"insns": 6,
+"match": "loose",
+"donors": [
+"fn_803131D4"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8020CC14",
+"unit": "auto_03_80202950_text.s",
+"insns": 13,
+"match": "loose",
+"donors": [
+"fn_80345A38"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_80252AD8",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 14,
+"match": "loose",
+"donors": [
+"fn_805F16BC",
+"fn_8064F4A8"
+],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 1
+},
+{
+"fn": "fn_80279E44",
+"unit": "auto_03_80278300_text.s",
+"insns": 17,
+"match": "loose",
+"donors": [
+"fn_802181C4",
+"fn_80218A18",
+"fn_802193FC",
+"fn_8022595C",
+"fn_8022CB28"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 1
+},
+{
+"fn": "fn_8021F3E4",
+"unit": "auto_03_80202950_text.s",
+"insns": 24,
+"match": "loose",
+"donors": [
+"fn_801ED770",
+"fn_801ED7D0",
+"fn_801ED830",
+"fn_801F6150",
+"fn_801F61B0"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 2
+},
+{
+"fn": "fn_80254440",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 27,
+"match": "loose",
+"donors": [
+"fn_805B6608"
+],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 1
+},
+{
+"fn": "fn_80203FEC",
+"unit": "auto_03_80202950_text.s",
+"insns": 3,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8021EAA8",
+"unit": "auto_03_80202950_text.s",
+"insns": 6,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_802128D4",
+"unit": "auto_03_80202950_text.s",
+"insns": 8,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 2,
+"fanout": 0
+},
+{
+"fn": "fn_80253E30",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 9,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8020A354",
+"unit": "auto_03_80202950_text.s",
+"insns": 12,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 0
+},
+{
+"fn": "fn_8020380C",
+"unit": "auto_03_80202950_text.s",
+"insns": 15,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 0
+},
+{
+"fn": "fn_80241018",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 17,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8022FFA8",
+"unit": "auto_03_80202950_text.s",
+"insns": 21,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 4,
+"fanout": 1
+},
+{
+"fn": "fn_8022E7A0",
+"unit": "auto_03_80202950_text.s",
+"insns": 24,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 3
+},
+{
+"fn": "fn_80252F34",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 27,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8024FB7C",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 30,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 1
+},
+{
+"fn": "fn_8021F8BC",
+"unit": "auto_03_80202950_text.s",
+"insns": 34,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 2
+},
+{
+"fn": "fn_801BCBCC",
+"unit": "auto_03_801BC5B8_text.s",
+"insns": 39,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_802500E0",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 43,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 0
+},
+{
+"fn": "fn_8021FEE0",
+"unit": "auto_03_80202950_text.s",
+"insns": 48,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 2
+},
+{
+"fn": "fn_80216640",
+"unit": "auto_03_80202950_text.s",
+"insns": 53,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 2
+},
+{
+"fn": "fn_80253348",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 57,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 1
+},
+{
+"fn": "fn_8020384C",
+"unit": "auto_03_80202950_text.s",
+"insns": 63,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 5
+},
+{
+"fn": "fn_8021F080",
+"unit": "auto_03_80202950_text.s",
+"insns": 69,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 4
+},
+{
+"fn": "fn_802797E4",
+"unit": "auto_03_80278300_text.s",
+"insns": 74,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 7
+},
+{
+"fn": "fn_8032EB78",
+"unit": "auto_03_8032BC4C_text.s",
+"insns": 80,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 1
+},
+{
+"fn": "fn_8025C6D0",
+"unit": "auto_03_80257B08_text.s",
+"insns": 91,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 7
+},
+{
+"fn": "fn_8027D360",
+"unit": "auto_03_80278300_text.s",
+"insns": 104,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 8
+},
+{
+"fn": "fn_8022C2A0",
+"unit": "auto_03_80202950_text.s",
+"insns": 119,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 4
+},
+{
+"fn": "fn_80257424",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 130,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 0,
+"fanout": 3
+},
+{
+"fn": "fn_8025B6D4",
+"unit": "auto_03_80257B08_text.s",
+"insns": 149,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 6
+},
+{
+"fn": "fn_8025342C",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 171,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 5
+},
+{
+"fn": "fn_80251A60",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 213,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 5
+},
+{
+"fn": "fn_8022D46C",
+"unit": "auto_03_80202950_text.s",
+"insns": 305,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 12
+},
+{
+"fn": "fn_80247530",
+"unit": "auto_03_8023FE44_text.s",
+"insns": 1310,
+"match": "none",
+"donors": [],
+"donor_proven": [],
+"fanin": 1,
+"fanout": 32
+}
+]

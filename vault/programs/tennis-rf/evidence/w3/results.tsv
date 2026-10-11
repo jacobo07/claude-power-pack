@@ -1,0 +1,60 @@
+main:80203E40	L1	0.039	0	737f45d4eb6b01b6fe076e912a72df7f4af2d1bedc1f87113ab6411ca1bb12df	
+main:80203E4C	M2C_FAILED	0.016	0	cb9c8a0dd1e212e983eac5707cde1b98ad3d38f061e7acaf428342747e935f6e	Decompilation failure in function fn_80203E4C: Unable to determine jump table for bctr instruction at fn.s line 5. There must be a read of a variable before the instruction which has a name starting with with "jtbl"/"jpt_"/"lbl_"/"jumptable_".
+main:80230BF8	L1	0.035	0	ceabc2f7c4e2eda498924311720bccbb79b2f48f45bb049a6df8f3bfb04cfcee	
+main:801BD47C	L1	0.038	0	1ca7b0ab3f53540f934d281ab5596ad865faf935e7b887c7d5d0fbcc55267793	
+main:8022E61C	L1	0.041	0	8426765fd9e07c1d0609e2c7eeb4aca50970661cd0bb79542b1db31b714bc73c	
+main:80257978	L1	0.034	0	57766c1ad506d1ed43623abc2d78fbd51a820efa4a776394d3d9601f1d0b42bf	
+main:803315A0	L1	0.034	0	1961314eb717153abdde59827e51b1a7e1263af3ddb47fc7d602623bdb26014e	
+main:80230FE4	L1	0.038	0	f79d18b0ecd1bca975352ba3ccbbf92693ef4d59c513e10ee957cba182c2e183	
+main:801BC6B4	L1	0.059	0	cc584da5fd3da3f28734d8408c152b738efac41f883fd15c013b08a2b181ea2c	
+main:8024B7C8	L1	0.047	0	53794982e6f32a452555b207147698181e96dcdb917fc17b2cd8e1070acfe87c	
+main:8025C600	L1	0.042	0	2c6bb732bf335122cd4d88617526f2718d71a67d86933f649c55adbf8a012811	
+main:8022621C	L1	0.051	0	551a08bcf2d98b685f2a298a21b98493abc34b8346803a8faa70f39a7133d723	
+main:80278FEC	L1	0.048	0	4a1ac631dec64b4a5e229afbf69100dc8995c637929c892671d77dc7f89da981	
+main:8027DBA8	L1	0.052	0	bb7673a1657a9f0ec1e693a80be766e3658964302ce7d53de6bd4ec8c579ff2e	
+main:8024C0F0	L1	0.047	0	c6618532aa727328baf3aba424988ddda9fb025a68230f4a7bb854aefbbdafba	
+main:801BD194	L1	0.032	0	47575e9de3bbf78f71b37a8a178fa2cdd35a0951286d73e72fbb2153d4b1fcca	
+main:8022F90C	L1	0.023	0	48b86774ea6dfd1eaf66adb4a72f08ba5cb4227feacf978ed2d9c7da136508fb	
+main:8032CF78	L1	0.025	0	1cf7d7305046e7ef334f714eb1c42dd04cb14bbc5a27b1eb0579c5f87380b357	
+main:802047D8	L1	0.034	0	534dc93a274c2073c23f285d4b03eb84075eccac40762d88d413f93dfb72533f	
+main:80230ABC	L1	0.036	0	b8b5ed3f41e36da33dde1fa94d12b873384b6a5dd5c8db7503cc66a67f2dd667	
+main:8020711C	L1	0.094	0	acdec163ffd3ababeab1be610ff17457a082c54bc63d385096fc0b3cfa2c9a72	
+main:80220A54	L1	0.057	0	6f8df6da8d1da96423dda3684797c9e4815b5d46ef969a4b275fbba6c2c83f0d	
+main:80230F90	M2C_FAILED	0.013	0	ca7549d8c2a1068037c5cbbe035d6e480c6a8865b441f71cc3234245c4cbd200	Decompilation failure in function fn_80230F90: Unable to determine jump table for bctr instruction at fn.s line 6. There must be a read of a variable before the instruction which has a name starting with with "jtbl"/"jpt_"/"lbl_"/"jumptable_".
+main:8027A154	L1	0.033	0	13b61dbddfead3bacecb59d107304370280a060e987429987ff3fa0cedb28ff2	
+main:80233A68	M2C_FAILED	0.013	0	3b0397c1a5255d17ae5995d31fd88e7c9310a8a54a1c2530f7951ee8cd72cca5	Decompilation failure in function fn_80233A68: Cannot find branch target fn_801CCE10
+main:8020CC14	L1	0.050	0	f381f4a22eec5d72a83dc4997f13f92784cace216751398e98d2efdbcbb582cb	
+main:80252AD8	L1	0.035	0	15eefd844904720eb45c54aaba73339933b8ed2a11c266b5d5a5546d7d29181f	
+main:80279E44	L1	0.038	0	dad4f098af0d0a9c8284f4442fd62b4eb605cdb9e6334ae4de645bc6e2d29173	
+main:8021F3E4	L1	0.047	0	7d4f3325f616abcbbb7fadf2c668f2d4ba7e41af1befcbc7a76cee8104c4ca02	
+main:80254440	L1	0.050	0	e85a2f44a641a73495ee306bb2e4f4873e299dc8432db8a9d323fc4cbe869d1d	
+main:80203FEC	L1	0.026	0	500264b3e16552ee914c67d590d787983e884c81874c708d44f2fe9b527f6d23	
+main:8021EAA8	L1	0.025	0	f9636c3be73a55fee9d780b3cb7ff5f8a949d4809d5d72ba8ef818cdc8b76334	
+main:802128D4	L1	0.030	0	07f0c328626556fa001fa7e0c4cc2b8a4d4db46eaf46ebd4820f0a9b24a335fa	
+main:80253E30	M2C_FAILED	0.013	0	9dae745b3decbbbd19629b666e02ce6b7d46bc3a5600a976f9fe30ca1bb17c91	Decompilation failure in function fn_80253E30: Unable to determine jump table for bctr instruction at fn.s line 9. There must be a read of a variable before the instruction which has a name starting with with "jtbl"/"jpt_"/"lbl_"/"jumptable_".
+main:8020A354	M2C_FAILED	0.013	0	46ffd261ebdb538809d689ffe4c83a3f65e9b4af60246214ea09b29bdd976ee7	Decompilation failure in function fn_8020A354: Cannot find branch target fn_801EECEC
+main:8020380C	M2C_FAILED	0.015	0	3447c6f3090a554da067641ab716c9d067cd9a46fb0a31dea3be785e1208bd2c	Decompilation failure in function fn_8020380C: Unable to determine jump table for bctr instruction at fn.s line 13. There must be a read of a variable before the instruction which has a name starting with with "jtbl"/"jpt_"/"lbl_"/"jumptable_".
+main:80241018	L1	0.034	0	3b0c0f427a0641ebb1f8e6c09f8d645ebfd02997ee50f19fd14b5181b78b450e	
+main:8022FFA8	M2C_ERROR	0.092	2	8f012d2d08977a74374ec66e14efa51a233ec62f3017ffc11748286334abfb80	
+main:8022E7A0	L1	0.093	0	bb17c719674880a13b7f902d881d530d0b8e600ff8c8c54b6f97421eab59c4bf	
+main:80252F34	L1	0.050	0	79ea381e7d2d57256d03a5bee9d74cb61615dba730bcf0754c55dde0441f9796	
+main:8024FB7C	M2C_ERROR	0.050	2	e93cea24fc940c20877e0d1c4db34325ca567e8593881e82f4dec1c18bb35d52	
+main:8021F8BC	L1	0.049	0	998434f260eacfb56d6797ed752a4cf6084f362259bf1c52e187643a66985a42	
+main:801BCBCC	L1	0.079	0	bc1bdc44b55b6eeca35337c9c782c4157482fe46ff76d49fafbc6f67c637ebac	
+main:802500E0	M2C_FAILED	0.020	0	b24dcc99ab460a9aa7b9b8dff9c4f4639a0b74e0119c22775cae6b95be0cdb30	Decompilation failure in function fn_802500E0: Unable to determine jump table for bctr instruction at fn.s line 44. Found multiple candidates: lbl_804F97B8, lbl_804F97F4 You can help m2c's analysis by putting a copy of the jump table setup instructions within the same block as the jump instruction.
+main:8021FEE0	L1	0.059	0	0392376d6110def5f5709d89b9af571e96c0e193f2c81eaf0715e59ef0338601	
+main:80216640	L1	0.055	0	9931e1bf4d4c5d8947ceb02cce72420a990123c28f28ad23b8071b1c2859f576	
+main:80253348	L1	0.060	0	079cd49c198a47fbf62fa7f368d3cf1830427495fb19f1b830769a0c16232e30	
+main:8020384C	L1	0.090	0	a9992f1f9061782718b82f3f43d65b389b2dbc4a3939a3d9b43b8e47123ee416	
+main:8021F080	L1	0.081	0	5b043ba86945ae478164e6d559687a9fd445550a2ed0f5a9bdcac79bc0884111	
+main:802797E4	L1	0.157	0	5b5cdbb334eb5bbec616e2620c07f80bcc39fcb6e228f22a3e5f14a004584e5d	
+main:8032EB78	M2C_ERROR	0.062	6	1459f80dc945df8087f35c381956295a5c4f39f765dbdab195fc301fa849800c	
+main:8025C6D0	M2C_ERROR	0.118	1	39027387d40523f9eac8672ad2cf84d2d17a09c2fd70343b07b1950fd7400b8f	
+main:8027D360	L1	0.114	0	14846e46754938ec874e7ef3f17b2f12d316cfd06ca9ace210cc5d6f76d2ffaa	
+main:8022C2A0	L1	0.148	0	ba194b2a4a14fdf3ee92ca507c04f223a50e0e0f6b113031356ef2beb081bcfd	
+main:80257424	L1	0.160	0	f44302dc45245d5e9d0c80c5d4b695c2acd28f6d5dbe1930a635d6c4e84f8612	
+main:8025B6D4	L1	0.182	0	a4882caa648eb947448c00a3cc3870de26457e9a8ae34038b70075a776fbed56	
+main:8025342C	L1	0.148	0	19d2654c9722ab8dc55e37bc0a8427418f878d2bc068da458ef42ae83aa659f4	
+main:80251A60	M2C_ERROR	0.183	3	6cc7541b7ff390742db65bc28f89ab189b473af970c67348ff8fe01ddc57baa3	
+main:8022D46C	L1	0.404	0	888506136bfe11ec4857bf4e1e9645ebb4fa71b89160c11561b5de92163c2b82	
+main:80247530	L1	1.803	0	dcaafdc605c9de5baf45081275a79b2708a66913738787088f998b259059636c	
