@@ -62,7 +62,7 @@ def _world(cap: int):
 def _rows(path: Path, n: int, start: int = 0) -> None:
     with open(path, "a", encoding="utf-8") as fh:
         for i in range(start, start + n):
-            fh.write(json.dumps({"type": "assistant", "uuid": f"u{i}", "message": {
+            fh.write(json.dumps({"type": "assistant", "uuid": f"u{i}", "timestamp": "2999-01-01T00:00:00.000Z", "message": {
                 "id": f"m{i}", "model": "x", "content": [], "usage": {"input_tokens": PER}}}) + "\n")
 
 

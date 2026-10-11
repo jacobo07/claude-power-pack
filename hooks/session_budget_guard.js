@@ -326,6 +326,24 @@ function callGoal(args) {
   } catch (e) { return { failed: `${args[0]} answered unparseable output` }; }
 }
 
+// Predictive DRAIN (dgl W4). A lease should end by choice, not at the cap: when the lease in hand holds fewer than
+// `drain_calls` (goal entry, default 3) calls of this sid's measured per-call cost AND the goal holds no more than
+// that beyond it (so renewal cannot extend it), a new Agent or background spawn is denied. Only spawns: the
+// closeout / settle path is never denied here. Unmeasurable cost or room -> no drain (fail-open). CPP_DRAIN=off.
+const DEFAULT_DRAIN_CALLS = 3;
+function isSpawn(event) {
+  const tool = String(event.tool_name || '');
+  return tool === 'Agent' || tool === 'Task' || !!(event.tool_input && event.tool_input.run_in_background === true);
+}
+function drainEdge(entry, gs, measured, next) {
+  if (String(process.env.CPP_DRAIN || '').trim().toLowerCase() === 'off') return null;
+  if (!gs.lease || !(next > 0) || !Number.isFinite(gs.tail) || !Number.isFinite(Number(gs.lease.amount))) return null;
+  const calls = Number(entry && entry.drain_calls) || DEFAULT_DRAIN_CALLS;
+  const leaseRoom = Number(gs.lease.amount) - (measured - Number(gs.lease.base || 0));
+  if (leaseRoom < calls * next && gs.tail < calls * next) return { leaseRoom: Math.max(leaseRoom, 0), tail: Math.max(gs.tail, 0), calls };
+  return null;
+}
+
 function decideGoal(event, sid, bind) {
   const { goal, entry } = bind;
   const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
@@ -379,9 +397,20 @@ function decideGoal(event, sid, bind) {
     else if (!r.ok) {
       gs.lease = null;
       verdict = closeout(entry, gs, event, goalDeny(goal, `refused: ${r.reason}.`), true);
-    } else gs.lease = r.lease;
+    } else {
+      gs.lease = r.lease;
+      gs.tail = typeof r.remaining === 'number' ? r.remaining : null;   // goal room beyond this lease, for DRAIN
+    }
   }
   const tool = String(event.tool_name || '');
+  if (!verdict && isSpawn(event)) {
+    const edge = drainEdge(entry, gs, measured, next);
+    if (edge) {
+      verdict = goalDeny(goal, `DRAIN: the lease holds ${fmt(edge.leaseRoom)} (< ${edge.calls} calls of ${fmt(next)}) and the goal ` +
+        `holds ${fmt(edge.tail)} beyond it, so this lease ends here by choice. No new Agent or background spawn; ` +
+        'commit what is green, write the receipt and end with HANDOFF NOTE (the closeout path stays open).');
+    }
+  }
   if (!verdict && (tool === 'Agent' || tool === 'Task')) {
     const r = callGoal(['goal-spawn', ...base]);
     if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}; no child starts on an unmeasured goal.`);
