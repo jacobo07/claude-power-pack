@@ -141,6 +141,7 @@ def _():
     (st / "goal-binding" / "sid-free.json").write_text(json.dumps({"goal": "none", "since_ts": "x", "source": "cwd"}))
     spend = st / "goal-budget" / "g" / "spend.journal.jsonl"
     before = spend.read_bytes()
+    files_before = {p.name: p.read_bytes() for p in spend.parent.iterdir() if p.is_file()}
     _node(_RUN_HOOK, "hooks/goal_session_end.js", _end_event("sid-free", root), st)           # unbound: no row
     assert not (st / "goal-budget" / "g" / "ended.jsonl").exists()
     _node(_RUN_HOOK, "hooks/goal_session_end.js", _end_event("sid-end-1", root), st)
@@ -149,6 +150,9 @@ def _():
     assert len(rows) == 1 and rows[0]["sid"] == "sid-end-1" and rows[0]["goal"] == "g" and rows[0]["ended_at"], rows
     assert "lease" in rows[0], rows
     assert spend.read_bytes() == before, "SessionEnd settled / wrote the ledger"                # a wake row, never a settle
+    gdir = st / "goal-budget" / "g"
+    extra = sorted(p.name for p in gdir.iterdir() if p.is_file() and p.name not in files_before and p.name != "ended.jsonl")
+    assert extra == [] and all(p.read_bytes() == files_before[p.name] for p in gdir.iterdir() if p.name in files_before), extra
     assert not (st / "goal-budget" / "g" / "succession.journal.jsonl").exists()
 
 
