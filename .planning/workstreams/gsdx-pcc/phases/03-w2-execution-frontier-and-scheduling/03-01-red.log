@@ -1,0 +1,9 @@
+﻿PASS V-FRONTIER-HERMETIC goals_root_under_temp=True
+FAIL V-FRONTIER-SWITCH RED-first: modules.gsd_x.goal.frontier absent
+FAIL V-FRONTIER-UNIT-DERIVE RED-first: modules.gsd_x.goal.frontier absent
+FAIL V-FRONTIER-UNDECLARED RED-first: modules.gsd_x.goal.frontier absent
+FAIL V-FRONTIER-INDEP RED-first: modules.gsd_x.goal.frontier absent
+FAIL V-FRONTIER-RESOURCE RED-first: modules.gsd_x.goal.frontier absent
+FAIL V-FRONTIER-FRONTIERS RED-first: modules.gsd_x.goal.frontier absent
+FAIL V-FRONTIER-GRAPH RED-first: modules.gsd_x.goal.frontier absent
+GSDX_FRONTIER_PASS=1/8  threshold=8/8

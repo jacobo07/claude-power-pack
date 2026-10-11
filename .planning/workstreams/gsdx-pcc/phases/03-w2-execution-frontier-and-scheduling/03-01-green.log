@@ -1,0 +1,9 @@
+﻿PASS V-FRONTIER-HERMETIC goals_root_under_temp=True
+PASS V-FRONTIER-SWITCH table_rows=12 mismatches=[] file_forces_off=True back_on=True
+PASS V-FRONTIER-UNIT-DERIVE unit=[] integ=['integration-env'] reality=['reality-env'] empty_class=[] causal_reads=['src/a', 'tools/gate.py']
+PASS V-FRONTIER-UNDECLARED declared_pair_independent=True undeclared_refused=True
+PASS V-FRONTIER-INDEP cases=5 wrong=[] asymmetric=[]
+PASS V-FRONTIER-RESOURCE integration_pair_refused=True reality_pair_refused=True cross_class_control_admitted=True
+PASS V-FRONTIER-FRONTIERS exec_before=['ob-a', 'ob-b', 'ob-c', 'ob-d'] exec_after_open=['ob-b', 'ob-c', 'ob-d'] invalidation=['ob-d'] proof_items=6
+PASS V-FRONTIER-GRAPH edges=5 resource_edges=[('gate:i1', 'gate:i2', 'resource:integration-env')] gate_gate_edges=1
+GSDX_FRONTIER_PASS=8/8  threshold=8/8
