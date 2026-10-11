@@ -1,0 +1,142 @@
+{
+ "seed": 20261012,
+ "picks": [
+  {
+   "fn": "fn_8024C0F0",
+   "insns": 30,
+   "shape": "exact",
+   "status": "L1",
+   "ut": 12,
+   "unk": 0
+  },
+  {
+   "fn": "fn_80216640",
+   "insns": 53,
+   "shape": "none",
+   "status": "L1",
+   "ut": 3,
+   "unk": 4
+  },
+  {
+   "fn": "fn_802797E4",
+   "insns": 74,
+   "shape": "none",
+   "status": "L1",
+   "ut": 6,
+   "unk": 14
+  },
+  {
+   "fn": "fn_8022C2A0",
+   "insns": 119,
+   "shape": "none",
+   "status": "L1",
+   "ut": 4,
+   "unk": 25
+  },
+  {
+   "fn": "fn_8025B6D4",
+   "insns": 149,
+   "shape": "none",
+   "status": "L1",
+   "ut": 3,
+   "unk": 31
+  },
+  {
+   "fn": "fn_8022D46C",
+   "insns": 305,
+   "shape": "none",
+   "status": "L1",
+   "ut": 14,
+   "unk": 67
+  }
+ ],
+ "records": [
+  {
+   "fn": "fn_8024C0F0",
+   "insns": 30,
+   "unresolved_before": 13,
+   "unresolved_after": 8,
+   "abstained": [
+    "fn_800076F0"
+   ],
+   "unk_fields": 0,
+   "claims_learned": [],
+   "model_tokens": "UNKNOWN",
+   "verdict": "NOT_RUN_NO_ORACLE"
+  },
+  {
+   "fn": "fn_80216640",
+   "insns": 53,
+   "unresolved_before": 6,
+   "unresolved_after": 1,
+   "abstained": [],
+   "unk_fields": 4,
+   "claims_learned": [],
+   "model_tokens": "UNKNOWN",
+   "verdict": "NOT_RUN_NO_ORACLE"
+  },
+  {
+   "fn": "fn_802797E4",
+   "insns": 74,
+   "unresolved_before": 8,
+   "unresolved_after": 6,
+   "abstained": [
+    "fn_800B4524",
+    "fn_8027990C"
+   ],
+   "unk_fields": 14,
+   "claims_learned": [],
+   "model_tokens": "UNKNOWN",
+   "verdict": "NOT_RUN_NO_ORACLE"
+  },
+  {
+   "fn": "fn_8022C2A0",
+   "insns": 119,
+   "unresolved_before": 12,
+   "unresolved_after": 12,
+   "abstained": [
+    "fn_801BFF60",
+    "fn_801E1944",
+    "fn_801E60BC"
+   ],
+   "unk_fields": 25,
+   "claims_learned": [],
+   "model_tokens": "UNKNOWN",
+   "verdict": "NOT_RUN_NO_ORACLE"
+  },
+  {
+   "fn": "fn_8025B6D4",
+   "insns": 149,
+   "unresolved_before": 5,
+   "unresolved_after": 5,
+   "abstained": [
+    "fn_8024DF0C",
+    "fn_8025A758",
+    "fn_802636E0"
+   ],
+   "unk_fields": 31,
+   "claims_learned": [],
+   "model_tokens": "UNKNOWN",
+   "verdict": "NOT_RUN_NO_ORACLE"
+  },
+  {
+   "fn": "fn_8022D46C",
+   "insns": 305,
+   "unresolved_before": 20,
+   "unresolved_after": 15,
+   "abstained": [
+    "fn_80097048",
+    "fn_8009746C",
+    "fn_80097FE4",
+    "fn_8009BCC0",
+    "fn_800AAFE4",
+    "fn_800AB0C4",
+    "fn_80108080"
+   ],
+   "unk_fields": 67,
+   "claims_learned": [],
+   "model_tokens": "UNKNOWN",
+   "verdict": "NOT_RUN_NO_ORACLE"
+  }
+ ]
+}
