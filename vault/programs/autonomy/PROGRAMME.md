@@ -36,3 +36,7 @@ sections 1-4 once; your unit packet names the section that is yours. No orchestr
 The session breaker stops a worker at 1.5 x the route's 30 calls (45) and then refuses writes outside `vault/plans/*.md`,
 so a receipt or a chain edit after that point is impossible. Count your calls: at call 22 stop starting new work, at
 call 25 at the latest insert the continuation unit and write the receipt. Investigation counts as calls.
+
+## BLOCKED_HUMAN is only for Owner-only actions
+A merge/rebase conflict, a red test or a refused landing is NOT BLOCKED_HUMAN: resolve it in scope, or write DONE
+with the exact residual and insert a continuation/reconcile unit. BLOCKED_HUMAN stops the whole programme.

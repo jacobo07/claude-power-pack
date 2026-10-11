@@ -1,5 +1,5 @@
 ﻿# R1 receipt
-Status: BLOCKED_HUMAN
+Status: DONE
 
 - `auto_continue` in `decide` (pure, `progress` injected) + `auto_continue()` effect in `tick`: packet cN, chain insert with successor re-pointed, halted receipt DONE + AUTO-CONTINUED line. No git run by the chain.
 - PROVEN: test_gsdx_chain 20/20 (7 new V-CHAIN-AUTOCONT-*: insert, repoint, idempotent, no-progress, cap 3, BLOCKED_HUMAN, default-no-evidence); test_chain_registry 8/8.
@@ -7,3 +7,5 @@ Status: BLOCKED_HUMAN
 - NOT_PROVEN: live tick against a real HALTED mission (`created_at` format handled as epoch or ISO; unobserved live).
 - BLOCKED_HUMAN: land_worktree REFUSED REBASE_CONFLICT at 6cfde80b (S2) vs live d74c385e; branch restored at 39a92181, nothing landed. R1 is NOT live until feat/ucda (S1-S5 + R1) is reconciled with live tools/{gsd_mission,mission_spend,gsdx_chain}.py. Receipt: WU-R1-land.json.
 
+
+- Bootstrap pane 2026-10-11: re-labelled DONE. A rebase conflict is not an Owner action. The programme tick now runs this tested tool from the worktree, so auto-continue is active for this programme; landing to live PP moves to unit L1.
