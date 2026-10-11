@@ -99,6 +99,14 @@ def default_sources() -> list:
                     (kb / "clae" / "CLAE_TRAPS.md", "clae")):
         if f.is_file():
             out.append((f, kind, "global"))
+    # F3-lite: the PP repo's own lessons and sealed hard rules (misses q18/q19/q48 were
+    # source-not-indexed, not ranking failures).
+    lessons = PP_ROOT / "vault" / "lessons"
+    if lessons.is_dir():
+        out.extend((f, "lesson", "global") for f in sorted(lessons.glob("*.md")))
+    pp_hr = PP_ROOT / "vault" / "hard_rules" / "HARD_RULES.md"
+    if pp_hr.is_file():
+        out.append((pp_hr, "hard-rules-pp", "global"))
     # Plans carry sealed ids that never reached UKDL (F6: 23 plans), so they are a source too.
     plans = PP_ROOT / "vault" / "plans"
     if plans.is_dir():
