@@ -7,7 +7,7 @@ Each phase ends with: tests run (foreground), pathspec-scoped micro-commit(s) in
 ## Phases
 
 - [x] **Phase 1: W0 Forensic quantification**
-- [ ] **Phase 2: W1 Spec (SDD-OS T2)**
+- [x] **Phase 2: W1 Spec (SDD-OS T2)**
 - [ ] **Phase 3: W2 Coverage receipt in CO-05**
 - [ ] **Phase 4: W3 Persistence**
 - [ ] **Phase 5: W4 Delivery (reachability)**
