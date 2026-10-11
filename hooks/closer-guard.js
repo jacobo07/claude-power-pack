@@ -456,6 +456,60 @@ const RATIONALE_CLAUSE =
 //   - PASSIVE_WAIT is NEVER legitimate as a final message, tool call or not.
 //     "Standing by" after a tool call is the same dead screen as "standing by"
 //     alone — arguably worse, because the tool call makes it look alive.
+// EVALUATION_WITHOUT_CLOSURE — MEASURED 2026-10-11 (Jacobo, KobiiSports Resort).
+// A turn built, baked, rendered and reviewed an asset, listed five concrete
+// defects, named the fix, and ENDED on "**Next:** I recommend fixing the hair
+// before writing the P2 evidence file ... After that I'll write <file>." The fix
+// was internal, reversible and authorised; the Owner had to come back and order
+// it. Replayed on the transcript's own bytes: null as a text-only turn and as
+// {toolTurn, endsOnText}, beside a PASSIVE_WAIT control that fired. Not a dead
+// screen — the turn carried a fine report — so none of the classes above could
+// see it. The defect is a different one: a report that names five defects is
+// five OPEN defects, and handing them to the Owner as a recommendation is a stop.
+//
+// DEFERRAL finds the agent scheduling or recommending work instead of doing it.
+// CLOSURE_GATE is the exemption, and it is deliberately explicit: a genuine stop
+// names its reason (an Owner decision, an authorisation, a deploy/spend, a budget,
+// a block) or carries a marker the block reason teaches. A false positive costs
+// one extra turn (the anti-loop releases after MAX_STREAK); a miss costs the
+// Owner a round-trip, which is the measured failure.
+// Kill switch for this class alone: CLAUDE_CLOSER_GUARD_DEFERRED=off.
+// Red branch: hooks/tests/test-closer-guard-evaluation-without-closure.js.
+const DEFERRAL = [
+  /\bI(?:'d|\s+would)?\s+(?:strongly\s+)?(?:recommend|suggest|propose)\s+(?:that\s+)?(?:we\s+|I\s+)?[a-z]+/i,
+  // Case-SENSITIVE on purpose: the mandatory HANDOFF BLOCK carries an uppercase
+  // `NEXT:` field. Measured on 782 real closers: a case-insensitive `next:` put
+  // 10.6 % of them in this class, and the bulk were handoff blocks.
+  /(?:^|[\n.!;]|\*\*)\s*(?:N|n)ext(?:\s+steps?)?\s*(?:\*\*)?\s*[:—–]/,
+  /\b(?:the\s+)?(?:next|remaining)\s+(?:step|fix|task|action)\s+(?:is|would\s+be)\b/i,
+  /\b(?:after\s+that|then|next|afterwards)\s*,?\s+I(?:'ll|\s+will)\s+[a-z]+/i,
+  /\b(?:te\s+)?(?:recomiendo|sugiero|propongo)\s+[a-záéíóúñ]+/i,
+  /\b(?:siguiente|pr[óo]ximo)\s+paso\b/i,
+  /\b(?:despu[ée]s|luego|a\s+continuaci[óo]n)\s*,?\s+[a-záéíóúñ]+r[ée](?=[\s.,;:!]|$)/i,
+];
+const CLOSURE_GATE = [
+  // explicit markers, case-sensitive; `_` too, because \b fails inside
+  // HANDOFF_STATUS / BLOCKED_HUMAN (measured: both escaped a plain \b)
+  /\b(?:HUMAN GATE|BLOCKED|BUDGET EXHAUSTED|DONE|HANDOFF)(?:\b|_)/,
+  /\b(?:if|once|when)\s+(?:you|the\s+Owner)\s+(?:[^\s.]+\s+){0,3}?(?:say|confirm|approve|agree|choose|decide|reply|want|prefer)\b/i,
+  /\b(?:her|his|their|the\s+client'?s)\s+(?:reply|answer|response|decision|choice)\b|\bwhichever\s+way\b/i,
+  /\b(?:agotad[oa]|bloquead[oa]|presupuesto|cuando\s+(?:termine|responda|vuelva))\b/i,
+  /\bScope:\s*assessment\b/i,
+  /\b(?:needs?|requires?|requiring|awaits?|awaiting|pending)\s+(?:your|the\s+Owner|Owner|human|a\s+human|manual|an?\s+(?:approval|authori[sz]ation))\b/i,
+  /\byour\s+(?:call|decision|approval|choice|go-ahead|sign-off|authori[sz]ation)\b/i,
+  /\bOwner[- ]gated\b|\bOwner\s+(?:approval|decision|review)\b/i,
+  /\b(?:approval|authori[sz]ation)\b/i,
+  /\b(?:requiere|necesita)\s+(?:tu|la\s+aprobaci[óo]n|autorizaci[óo]n|del\s+Owner)\b/i,
+  /\btu\s+(?:decisi[óo]n|aprobaci[óo]n|autorizaci[óo]n|llamada)\b/i,
+  // Work deferred on an IN-FLIGHT async job ("when the planner reports, I'll check
+  // ...") is a wait on a running agent, governed by the async-wait rules, not an
+  // abandoned evaluation. Measured: the second-largest share of the 10.6 %.
+  /\b(?:when|once|after)\s+[^.]{0,80}?\b(?:reports?|returns?|hands?\s+back|finish(?:es)?|completes?|lands?|notif(?:ies|ication))\b/i,
+  /\b(?:is|are)\s+still\s+(?:working|running)\b|\bin\s+flight\b/i,
+  // The mandatory HANDOFF BLOCK (STATUS / NEXT / DEBT) is a sealed session end.
+  /STATUS\b[^\n]{0,60}\b(?:COMPLETE|BLOCKED|STANDBY|PARTIAL|DONE)\b/,
+];
+
 function classify(text, opts) {
   const toolTurn = !!(opts && opts.toolTurn);
   // D6. Absent => false, so a caller that cannot supply the order bit keeps the
@@ -681,6 +735,15 @@ function classify(text, opts) {
         return { cls: 'INTENT_NARRATION', snippet: s.text };
       }
     }
+  }
+
+  // Last, so every older class keeps its verdict on shapes it already owned.
+  // Whole tail, like PASSIVE_WAIT: a recommendation is a paragraph-level act and
+  // the measured one sat four sentences before the end.
+  if (String(process.env.CLAUDE_CLOSER_GUARD_DEFERRED || '').toLowerCase() !== 'off'
+      && DEFERRAL.some((re) => re.test(tail))
+      && !CLOSURE_GATE.some((re) => re.test(tail))) {
+    return { cls: 'EVALUATION_WITHOUT_CLOSURE', snippet: tail.slice(-200) };
   }
   return null;
 }
@@ -1001,6 +1064,16 @@ const GUIDANCE = {
     'Owner is looking at an executed action with no sentence attached — they ' +
     'cannot tell whether you finished, crashed, or are still thinking. A tool ' +
     'call is work, not a report. Say what landed and what comes next.',
+  EVALUATION_WITHOUT_CLOSURE:
+    'This turn is about to end on EVALUATION WITHOUT CLOSURE: your closer ' +
+    'recommends or schedules work ("I recommend fixing...", "Next: ...", "after ' +
+    'that I\'ll ...") and the turn ends without doing it. A report that names five ' +
+    'defects is five OPEN defects, not a finished task. If the named action is ' +
+    'internal, reversible and within what you were asked to do, DO IT NOW. If it ' +
+    'genuinely needs the Owner (a deploy, a spend, a push, an authorisation, or a ' +
+    'judgement only they can make), end with a line starting "HUMAN GATE:" or ' +
+    '"BLOCKED:" that names the reason. If the request was only for an assessment, ' +
+    'end with "Scope: assessment only."',
   NULL_ACK:
     'This turn is about to end on a NULL ACKNOWLEDGEMENT: the whole message ' +
     'dismisses a system event as needing no reply. A background task-notification ' +
