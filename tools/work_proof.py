@@ -15,7 +15,9 @@ import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LEDGER_PATH = REPO_ROOT / "vault" / "config" / "claim-proofs.json"
+import os  # noqa: E402
+LEDGER_PATH = Path(os.environ.get("CPP_CLAIM_LEDGER") or REPO_ROOT / "vault" / "config" / "claim-proofs.json")
+RECEIPTS_PATH = Path(os.environ.get("CPP_UNIT_RECEIPTS") or REPO_ROOT / "vault" / "config" / "unit-receipts.jsonl")
 PROVEN = "PROVEN"
 
 
@@ -67,6 +69,30 @@ def check(proof: dict | None, *, root=None, ledger_path=None) -> dict:
     if rec.get("fingerprint") != fp:
         return {"no_work": False, "reason": f"claim {proof['claim']} proven at a different fingerprint"}
     return {"no_work": True, "reason": f"claim {proof['claim']} PROVEN at unchanged fingerprint {fp[:12]}"}
+
+
+def unit_claim(packet_path) -> dict:
+    """The default proof of a compiled work unit: claim 'unit:<packet stem>' over the packet file."""
+    p = Path(packet_path).expanduser().resolve()
+    return {"claim": f"unit:{p.stem}", "deps": [str(p)]}
+
+
+def populate_from_receipts(receipt_dir, *, ledger_path=None) -> list:
+    """Deterministic ledger fill: every `<id>-receipt.md` whose line 2 is exactly `Status: DONE`, with
+    its packet `<id>.md` beside it, becomes PROVEN over that packet. Anything else is skipped."""
+    done = []
+    for rc in sorted(Path(receipt_dir).glob("*-receipt.md")):
+        try:
+            lines = rc.read_text(encoding="utf-8-sig").splitlines()
+        except OSError:
+            continue
+        pkt = rc.with_name(rc.name[: -len("-receipt.md")] + ".md")
+        if len(lines) < 2 or lines[1].strip() != "Status: DONE" or not pkt.is_file():
+            continue
+        c = unit_claim(pkt)
+        record_proof(c["claim"], c["deps"], ledger_path=ledger_path)
+        done.append(c["claim"])
+    return done
 
 
 def unit_receipt(unit: str, *, calls: int, processed: int, tier: str, boundaries: int,

@@ -1674,12 +1674,18 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
     goal_rem = halt_authority(rec)
     if goal_rem is not None:
         remaining = goal_rem if remaining is None else min(remaining, goal_rem)
+    # S6: every packet mission inherits A6 + A4 without the route or prompt naming them.
+    import tier_routing as tr
+    import work_proof as wp
+    if not route.get("proof"):
+        route = dict(route, proof=wp.unit_claim(pkt["path"]))
+    tier = tr.tier_for(route.get("work_class"))
     try:
         res = ra.admit(route, ra.load_floors(floors_path), remaining=remaining)
     except ValueError as exc:
         raise MissionError(f"route {str(p)!r}: {exc}") from exc
     admission = {"verdict": res["verdict"], "route_path": str(p), "route_file_sha256": _packet_digest(str(p)),
-                 "packet_sha256": pkt_digest, "envelope": res["envelope"],
+                 "packet_sha256": pkt_digest, "envelope": res["envelope"], "tier": tier,
                  "need_with_margin": res.get("need_with_margin"), "remaining": remaining,
                  "reasons": res["reasons"][:6], "at": now,
                  "workers": [{k: w.get(k) for k in ("name", "profile", "calls", "floor")}
@@ -3122,6 +3128,41 @@ def _capsule_arm(rec: dict, row: dict) -> bool:
         return False
 
 
+def emit_unit_receipt(rec: dict, *, now: float | None = None, measure=None, receipts_path=None,
+                      ledger_path=None) -> str:
+    """S6: at a unit's end write the A5 receipt and record the claim PROVEN over its packet (A6), so the
+    same unchanged unit is later admitted NO_WORK. Never raises (a bookkeeping fault must not stop the
+    supervisor); unknown spend is recorded as skipped, never as zero. Returns a short outcome string."""
+    try:
+        import mission_spend as ms
+        import tier_routing as tr
+        import work_proof as wp
+        pkt = rec.get("wu_packet")
+        if not pkt:
+            return "skipped: no packet"
+        spent = (measure or ms.processed_tokens)(rec)
+        if spent is None:
+            return "skipped: spend unmeasurable"
+        adm = rec.get("admission") or {}
+        calls = rec.get("calls")
+        calls = calls if isinstance(calls, int) and not isinstance(calls, bool) and calls >= 0 else 0
+        env = adm.get("envelope") or {}
+        r = wp.unit_receipt(Path(pkt["path"]).stem, calls=calls, processed=int(spent),
+                            tier=adm.get("tier") or tr.DEFAULT, boundaries=int(rec.get("epoch") or 0),
+                            lower_bound=env.get("target") if isinstance(env.get("target"), int) else None)
+        r["mission_id"] = rec["mission_id"]
+        r["at"] = time.time() if now is None else now
+        rp = Path(receipts_path or wp.RECEIPTS_PATH)
+        rp.parent.mkdir(parents=True, exist_ok=True)
+        with rp.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(r, sort_keys=True) + "\n")
+        c = wp.unit_claim(pkt["path"])
+        wp.record_proof(c["claim"], c["deps"], ledger_path=ledger_path)
+        return f"emitted {c['claim']}"
+    except Exception as exc:  # noqa: BLE001
+        return f"skipped: {type(exc).__name__}: {exc}"[:200]
+
+
 def _unit_done(rec: dict) -> dict:
     """Run the unit's own done-check: an argv list the arming tool stored on the record (never a shell string).
     rc 0 = DONE, rc 1 = NOT_DONE, anything else (or no answer within 60 s) = UNANSWERED."""
@@ -3462,6 +3503,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                                event="unit_completed", now=now, state=COMPLETED, pending=None,
                                                reason=f"unit done-check passed: {done['detail']}")
                         reap(completed, row)
+                        row["unit_receipt"] = emit_unit_receipt(rec, now=now)
                         row["action"] = "completed"
                         continue
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
@@ -3818,6 +3860,11 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
     try:
         set_envelope(mid, wu_packet=wu_packet, token_estimate=token_estimate)
         adm = admit_route(mid, route, floors_path=floors_path)["admission"]
+        if adm["verdict"] == "NO_WORK":   # A6: PROVEN at an unchanged fingerprint -> no worker, unit complete
+            cur = load(mid)
+            transition(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], event="unit_completed",
+                       state=COMPLETED, pending=None, reason=f"NO_WORK: {'; '.join(adm.get('reasons') or [])}"[:280])
+            return {"ok": True, "mission_id": mid, "no_work": True, "mission": load(mid)}
         if adm["verdict"] != "ADMISSIBLE":
             raise MissionError(f"route {adm['verdict']}: {'; '.join(adm.get('reasons') or [])}"[:600])
     except Exception as exc:  # noqa: BLE001 -- hold with the reason, then report
