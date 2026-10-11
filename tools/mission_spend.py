@@ -783,6 +783,31 @@ def _session_autopsy(path: Path, roots: list[str]) -> dict:
             "refusals": refusals, "role": "worker" if _under(first_cwd, roots) else "pane"}
 
 
+def _subagent_autopsy(tx: Path, roots: list[str]) -> dict:
+    """Spend of a session's subagents: `<sid>/subagents/agent-*.jsonl`, typed by the sibling
+    `.meta.json` agentType (UNTYPED when absent). A subagent is real spend of the goal; a walk that
+    stops at the main transcript reads 5.6M for a goal whose ledger says 16.6M (S0, 2026-10-10)."""
+    d = tx.parent / tx.stem / "subagents"
+    by_type: dict[str, dict] = {}
+    if not d.is_dir():
+        return by_type
+    for p in sorted(d.glob("agent-*.jsonl")):
+        try:
+            a = _session_autopsy(p, roots)
+        except OSError:
+            continue
+        typ = "UNTYPED"
+        try:
+            typ = str(json.loads(p.with_suffix(".meta.json").read_text(encoding="utf-8-sig")).get("agentType") or typ)
+        except (OSError, ValueError, AttributeError):
+            pass
+        t = by_type.setdefault(typ, {"agents": 0, "calls": 0, "processed": 0, "bound": 0})
+        t["agents"] += 1
+        for k in ("calls", "processed", "bound"):
+            t[k] += a[k]
+    return by_type
+
+
 def _git_facts(root: str | None) -> dict:
     import shutil
     import subprocess
@@ -819,10 +844,17 @@ def goal_autopsy(goal: str, *, projects: Path | None = None) -> dict:
         try:
             tx = find_transcript(sid, projects)
             a = _session_autopsy(tx, roots) if tx else None
+            subs = _subagent_autopsy(tx, roots) if tx and a else {}
         except OSError:
-            a = None
+            a, subs = None, {}
         row = {"sid": sid, "transcript": a is not None, "open_holds": holds,
                **(a or {"calls": 0, "processed": 0, "bound": 0, "pre_bind": 0, "refusals": 0, "role": "unknown"})}
+        row["main_processed"], row["main_calls"] = row["processed"], row["calls"]
+        row["subagents"] = subs
+        for k in ("calls", "processed", "bound"):          # the session's spend INCLUDES its subagents
+            row[k] += sum(t[k] for t in subs.values())
+        row["pre_bind"] = row["processed"] - row["bound"]
+        row["subagent_processed"] = row["processed"] - row["main_processed"]
         rows.append(row)
     tot = lambda k, role=None: sum(r[k] for r in rows if role is None or r["role"] == role)
     return {"ok": True, "goal": goal, "cap": g["cap"], "used": g["used"], "sessions": rows,
