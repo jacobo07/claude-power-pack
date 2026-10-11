@@ -111,6 +111,15 @@ def _git_log(tree: str, since: float) -> list[str]:
         return []
 
 
+def _git_dirty(tree: str) -> list[str]:
+    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+    try:
+        p = subprocess.run([g, "-C", tree, "status", "--short"], capture_output=True, text=True, timeout=30)
+        return [x.strip() for x in p.stdout.splitlines() if x.strip()] if p.returncode == 0 else []
+    except Exception:  # noqa: BLE001 -- evidence for the successor, not a precondition
+        return []
+
+
 # --------------------------------------------------------------------------- R1
 def _step(gm, mid: str, rec: dict, name: str, value, steward: dict) -> dict:
     new = {**steward, name: value}
@@ -160,7 +169,8 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         row["settled"] = int(tok["tokens"])
     fresh = gm.load(mid) or fresh
     st = dict(fresh.get("steward") or {})
-    partial = Path(receipt + ".partial.json") if receipt else Path(str(pkt) + ".partial.json")
+    base = Path(re.sub(r"(\.residual\.md)+$", "", str(pkt)))
+    partial = Path(receipt + ".partial.json") if receipt else Path(str(base) + ".partial.json")
     if not st.get("partial"):
         adm_at = float((rec.get("admission") or {}).get("at") or rec.get("created_at") or 0)
         body = {"mission_id": mid, "session": sid, "goal": goal, "status": "PARTIAL", "canonical": False,
@@ -183,15 +193,25 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         row["salvaged"] = len(files)
     fresh = gm.load(mid) or fresh
     st = dict(fresh.get("steward") or {})
-    residual = Path(str(pkt) + ".residual.md")
+    # A residual mission's packet is itself a residual: write next to the BASE packet and rebuild from the base
+    # text, or residuals stack (`x.residual.md.residual.md`) and each attempt re-reads every earlier proposal.
+    residual = Path(str(base) + ".residual.md")
     if not st.get("residual"):
-        text = pkt.read_text(encoding="utf-8-sig", errors="replace") if pkt.exists() else ""
+        text = base.read_text(encoding="utf-8-sig", errors="replace") if base.exists() else ""
+        text = text.split("\n\n## Residual\n")[0]
+        adm_at = float((rec.get("admission") or {}).get("at") or rec.get("created_at") or 0)
+        rf = Path(tree) / "RESUMPTION_FILE.md"
+        # cite it only when THIS mission wrote it: a tree can carry another programme's resume file
+        rf_line = str(rf) if rf.exists() and rf.stat().st_mtime >= adm_at else "none written by this mission"
+        dirty = _git_dirty(tree)
         add = ("\n\n## Residual\n"
-               f"Proposed by the steward for stopped mission {mid} (PROPOSAL ONLY: arming it needs the "
-               "Owner/coordinator).\n"
+               f"Written by the steward for stopped mission {mid}. The programme chain may arm it (bounded "
+               "residual re-arm); otherwise the Owner/coordinator does.\n"
+               "Continue from the work below; do not redo steps it already covers. Commit early.\n"
                f"- Partial receipt: {partial}\n"
-               f"- RESUMPTION_FILE: {Path(tree) / 'RESUMPTION_FILE.md'}\n"
-               f"- Salvage: {sdir}\n")
+               f"- RESUMPTION_FILE: {rf_line}\n"
+               f"- Salvage: {sdir}\n"
+               f"- Uncommitted in the tree ({len(dirty)}): " + ("; ".join(dirty[:40]) or "none") + "\n")
         _atomic(residual, (text + add).encode("utf-8"))
         fresh = _step(gm, mid, fresh, "residual", str(residual), st)
         row["residual"] = str(residual)

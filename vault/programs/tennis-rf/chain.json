@@ -2,6 +2,12 @@
   "goal": "tennis-rf",
   "root": "C:\\Users\\User\\Apps\\recon_work\\wt_tennis_rf",
   "envelope": 53000000,
+  "max_residuals": 2,
+  "route_ladder": [
+    "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+    "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+    "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json"
+  ],
   "units": [
     {
       "id": "W1",

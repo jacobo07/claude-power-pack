@@ -152,6 +152,27 @@ pj = json.loads(part.read_text(encoding="utf-8")) if part.exists() else {}
 check("V-STEWARD-PARTIAL-RECEIPT", pj.get("model_calls") == 2 and pj.get("tool_calls") == 1
       and pj.get("tokens") == 4000 and not (cs["tree"] / "out" / "r.json").exists()
       and "## Residual" in Path(str(cs["pkt"]) + ".residual.md").read_text(encoding="utf-8"), str(pj)[:120])
+# --- a residual mission's residual: written next to the BASE packet, one Residual section, no foreign resume file
+cz = case()
+base_res = Path(str(cz["pkt"]) + ".residual.md")
+base_res.write_text(cz["pkt"].read_text(encoding="utf-8") + "\n\n## Residual\nold proposal m-old\n", encoding="utf-8")
+rz = gm.load(cz["mid"])
+gm.transition(cz["mid"], expect_epoch=rz["epoch"], expect_state=rz["state"], event="test_setup", now=NOW - 400,
+              wu_packet={"path": str(base_res), "sha256": "x"})
+rf = cz["tree"] / "RESUMPTION_FILE.md"
+rf.write_text("another programme's resume file\n", encoding="utf-8")
+os.utime(rf, (NOW - 5000, NOW - 5000))           # older than the mission's admission (NOW - 1000)
+run(cz)
+txt = base_res.read_text(encoding="utf-8") if base_res.exists() else ""
+check("V-STEWARD-RESIDUAL-NO-STACK", txt.count("## Residual") == 1 and cz["mid"] in txt and "m-old" not in txt
+      and not Path(str(base_res) + ".residual.md").exists()
+      and "RESUMPTION_FILE: none written by this mission" in txt, txt[-300:].replace("\n", " | "))
+cy = case()                                      # control: a resume file written after admission IS cited
+(cy["tree"] / "RESUMPTION_FILE.md").write_text("mine\n", encoding="utf-8")
+os.utime(cy["tree"] / "RESUMPTION_FILE.md", (NOW - 100, NOW - 100))
+run(cy)
+ty = Path(str(cy["pkt"]) + ".residual.md").read_text(encoding="utf-8")
+check("V-STEWARD-RESIDUAL-CITES-OWN-RESUME", f"RESUMPTION_FILE: {cy['tree'] / 'RESUMPTION_FILE.md'}" in ty, ty[-200:])
 # --- no transcript -> UNKNOWN, nothing settled
 cn = case()
 cn["tp"].unlink()

@@ -110,11 +110,62 @@ armed.clear()
 r = gc.tick(p, state=lambda: ([mission(d, "A", "RUNNING")], 0), armer=arm)
 check("V-CHAIN-ONE-WRITER", r["action"] == "running" and not armed, r["action"])
 
-# HALTED without receipt -> never re-armed
+# HALTED without receipt, no max_residuals -> never re-armed (the default keeps the old behaviour)
 d, p, _ = setup("halted")
 armed.clear()
 r = gc.tick(p, state=lambda: ([mission(d, "A", "HALTED")], 0), armer=arm)
 check("V-CHAIN-HALTED-NOT-REARMED", r["action"] == "stopped_without_done" and not armed, r["action"])
+
+# bounded residual re-arm: steward residual for the LATEST stopped mission -> arm it one rung up; cap -> Owner
+d, p, chain = setup("residual")
+rungs = []
+for name, tgt in (("S", 1_000_000), ("M", 2_000_000), ("L", 3_000_000)):
+    rp = d / f"route-{name}.json"
+    rp.write_text(json.dumps({"envelope": {"target": tgt}}), encoding="utf-8")
+    rungs.append(str(rp))
+chain["route_ladder"] = rungs
+chain["units"][0]["route"] = rungs[1]
+chain["max_residuals"] = 2
+p.write_text(json.dumps(chain), encoding="utf-8")
+res = Path(chain["units"][0]["packet"] + ".residual.md")
+got_units = []
+arm_u = lambda chain, u: got_units.append(u) or {"ok": True}  # noqa: E731
+
+
+def stopped(mid, created, packet=None, steward=True):
+    m = dict(mission(d, "A", "HALTED"), mission_id=mid, created_at=created)
+    if packet:
+        m["wu_packet"] = {"path": packet}
+    if steward:
+        m["steward"] = {"done": True}
+    return m
+
+
+m1, m2 = stopped("m-1", 1), stopped("m-2", 2)
+r_none = gc.tick(p, state=lambda: ([m1, m2], 0), armer=arm_u)                    # no residual written yet
+res.write_text("# WU\n## Residual\nWritten by the steward for stopped mission m-1.\n", encoding="utf-8")
+r_stale = gc.tick(p, state=lambda: ([m1, m2], 0), armer=arm_u)                   # residual is for m-1, not m-2
+r_unsettled = gc.tick(p, state=lambda: ([m1, stopped("m-2", 2, steward=False)], 0), armer=arm_u)
+check("V-CHAIN-RESIDUAL-WAITS-STEWARD", [r_none["action"], r_stale["action"], r_unsettled["action"]] == ["wait_steward"] * 3
+      and not got_units, f"{r_none['action']}/{r_stale['action']}/{r_unsettled['action']}")
+res.write_text("# WU\n## Residual\nWritten by the steward for stopped mission m-2.\n", encoding="utf-8")
+r1 = gc.tick(p, state=lambda: ([m1, m2], 0), armer=arm_u)
+u1 = got_units[0] if got_units else {}
+check("V-CHAIN-RESIDUAL-ARMS-ONE-RUNG-UP", r1["action"] == "arm" and r1["residual"] == 1 and r1["need"] == 3_000_000
+      and u1.get("packet") == str(res) and u1.get("route") == rungs[2] and u1.get("succession") == "A:r1",
+      json.dumps({k: r1.get(k) for k in ("action", "residual", "need")}))
+r_run = gc.tick(p, state=lambda: ([m1, m2, dict(stopped("m-3", 3, str(res)), state="RUNNING")], 0), armer=arm_u)
+check("V-CHAIN-RESIDUAL-RUNNING", r_run["action"] == "running" and len(got_units) == 1, r_run["action"])
+m3, m4 = stopped("m-3", 3, str(res)), stopped("m-4", 4, str(res))
+res.write_text("# WU\n## Residual\nWritten by the steward for stopped mission m-3.\n", encoding="utf-8")
+r2 = gc.tick(p, state=lambda: ([m1, m2, m3], 0), armer=arm_u)
+res.write_text("# WU\n## Residual\nWritten by the steward for stopped mission m-4.\n", encoding="utf-8")
+r_cap = gc.tick(p, state=lambda: ([m1, m2, m3, m4], 0), armer=arm_u)
+check("V-CHAIN-RESIDUAL-BOUNDED", r2["action"] == "arm" and r2["residual"] == 2 and r2["route"] == rungs[2]
+      and r_cap["action"] == "residual_exhausted" and len(got_units) == 2, f"{r2['action']} -> {r_cap['action']}")
+res.write_text("# WU\n## Residual\nWritten by the steward for stopped mission m-3.\n", encoding="utf-8")
+r_env = gc.tick(p, state=lambda: ([m1, m2, m3], 39_000_001), armer=arm_u)
+check("V-CHAIN-RESIDUAL-ENVELOPE", r_env["action"] == "refuse_envelope" and len(got_units) == 2, r_env["action"])
 
 # wait event missing -> waits; created -> arms
 d, p, chain = setup("event")

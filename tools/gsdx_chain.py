@@ -7,7 +7,10 @@ chain.json: {"goal", "root", "envelope", "units": [{"id", "packet", "route", "re
   names more statuses; DONE_WITH_LIMITS is accepted everywhere when the JSON receipt has gate_rc 0 and named `limits`.
 - `wait` paths must all exist (an event another programme produces, e.g. its install receipt).
 One tick arms at most ONE unit, and none while any non-terminal mission holds the programme root (one writer).
-A unit whose mission ended without a DONE receipt is never re-armed here: the steward and a residual own that.
+A unit whose missions ended without a DONE receipt is re-armed ONLY as a bounded residual: the chain (or the unit)
+sets `max_residuals` (default 0 = never, the old behaviour), the steward must have written `<packet>.residual.md`
+for the LATEST stopped mission, and each residual climbs one rung of `route_ladder` (a stop that cut the worker
+short is not cured by the same route). Past the bound the unit is `residual_exhausted`: the Owner decides.
 Every decision is one JSON row in ~/.claude/state/gsdx-chain.jsonl. Kill switch: CPP_GSDX_CHAIN=off.
 """
 from __future__ import annotations
@@ -60,6 +63,32 @@ def _norm(p) -> str:
     return str(p).replace("/", "\\").rstrip("\\").lower()
 
 
+RESIDUAL = ".residual.md"
+
+
+def _residual(chain: dict, u: dict, ms: list[dict], by_packet: dict) -> dict:
+    """All of the unit's missions are terminal without a DONE: a bounded residual arm, or the reason there is none."""
+    res = Path(u["packet"] + RESIDUAL)
+    n = len(by_packet.get(_norm(res), []))
+    cap = int(u.get("max_residuals", chain.get("max_residuals", 0)))
+    base = {"unit": u["id"], "attempts": len(ms), "residuals": n, "max_residuals": cap}
+    if cap <= 0:
+        return {"action": "stopped_without_done", **base, "reason": "max_residuals 0: the Owner arms a residual"}
+    if n >= cap:
+        return {"action": "residual_exhausted", **base, "reason": "bounded residual re-arm used up; Owner decides"}
+    latest = max(ms, key=lambda m: float(m.get("created_at") or 0))
+    text = res.read_text(encoding="utf-8-sig", errors="replace") if res.exists() else ""
+    if not (latest.get("steward") or {}).get("done") or latest["mission_id"] not in text:
+        return {"action": "wait_steward", **base, "latest": latest["mission_id"]}
+    ladder = list(chain.get("route_ladder") or [])
+    norm = [_norm(r) for r in ladder]
+    route = u["route"]
+    if _norm(route) in norm:
+        route = ladder[min(norm.index(_norm(route)) + 1 + n, len(ladder) - 1)]
+    return {"action": "arm", **base, "residual": n + 1, "packet": str(res), "route": route,
+            "after_mission": latest["mission_id"]}
+
+
 def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> dict:
     """Pure decision: what this tick should do. route_target(path) -> int."""
     units = chain["units"]
@@ -77,7 +106,7 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
     for u in units:
         if u["id"] in done:
             continue
-        ms = by_packet.get(_norm(u["packet"]), [])
+        ms = by_packet.get(_norm(u["packet"]), []) + by_packet.get(_norm(u["packet"] + RESIDUAL), [])
         refused = [m for m in ms if m.get("state") == "PREPARED"
                    and str((m.get("owner_hold") or {}).get("reason", "")).startswith("arm-chain failed")]
         if refused:   # a failed arm leaves a held record: surface it, never read it as "running"
@@ -86,8 +115,16 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> d
         if any(m.get("state") not in TERMINAL for m in ms):
             return {"action": "running", "unit": u["id"]}
         if ms:
-            return {"action": "stopped_without_done", "unit": u["id"], "receipt": status[u["id"]],
-                    "reason": "steward / residual owns it; never re-armed by the chain"}
+            row = _residual(chain, u, ms, by_packet)
+            if row["action"] != "arm":
+                return {**row, "receipt": status[u["id"]]}
+            if held:
+                return {"action": "wait_writer", "unit": u["id"], "held_by": [m["mission_id"] for m in held]}
+            need = route_target(row["route"])
+            if goal_used + need > int(chain["envelope"]):
+                return {"action": "refuse_envelope", "unit": u["id"], "used": goal_used, "need": need,
+                        "envelope": chain["envelope"], "residual": row["residual"]}
+            return {**row, "need": need}
         if u.get("after") and u["after"] not in done:
             return {"action": "wait_predecessor", "unit": u["id"], "after": u["after"], "receipt": status.get(u["after"])}
         missing = [w for w in u.get("wait", []) if not Path(w).exists()]
@@ -133,7 +170,7 @@ def _open_lease(led, goal: str, unit: dict) -> dict | None:
     g = led._gfold(led._read())
     if g["programme"] is None:
         return None
-    out = led.lease_open(succession_id=f"{goal}:{unit['id']}", cap=_route_stop(unit["route"]),
+    out = led.lease_open(succession_id=f"{goal}:{unit.get('succession') or unit['id']}", cap=_route_stop(unit["route"]),
                          prev_lease=g["leases"][-1]["id"])
     if out.get("ok"):
         return None
@@ -197,6 +234,8 @@ def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settle
         row["settled"] = settled
     if row["action"] == "arm" and not dry_run:
         unit = next(u for u in chain["units"] if u["id"] == row["unit"])
+        if row.get("residual"):   # same unit, the steward's residual packet, one rung up, its own lease
+            unit = dict(unit, packet=row["packet"], route=row["route"], succession=f"{unit['id']}:r{row['residual']}")
         led = ledger if ledger is not None else (_live_ledger(chain["goal"]) if state is None else None)
         refusal = _open_lease(led, chain["goal"], unit) if led is not None else None
         if refusal:
