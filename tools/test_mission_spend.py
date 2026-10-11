@@ -183,6 +183,65 @@ def main() -> int:
     check("V-MSPEND-MODEL-PASSED", "--model" in argv and argv[argv.index("--model") + 1] == "sonnet")
     check("V-MSPEND-NO-MODEL-CONTROL", "--model" not in gm.worker_argv(base, "go"))
 
+    # --- goal-settle of a pane the guard already booked (ctx-same-pane 2026-10-11 shape) --------
+    tr = Path(TMP) / "tr" / "p"
+    tr.mkdir(parents=True)
+    coord, worker = "d5063bac-0000-4000-8000-000000000001", "e4347e5e-0000-4000-8000-000000000002"
+    (tr / f"{coord}.jsonl").write_text(_row("c1", "2027-01-15T08:00:00Z", cr=19_879_802) + "\n", encoding="utf-8")
+    (tr / f"{worker}.jsonl").write_text(_row("w1", "2027-01-15T08:00:00Z", cr=917_218) + "\n", encoding="utf-8")
+    led = ms._goal_ledger("g-fix")
+    led._append(led._read(), {"op": "settle", "sid": coord, "measured": 1_089_380, "closes": []})
+    led._append(led._read(), {"op": "reserve", "id": f"g-fix:{coord}:1", "sid": coord, "kind": "final",
+                              "provider": "g-fix", "amount": 209_251, "window": "goal", "base": 1_089_380})
+    out = ms.goal_settle("g-fix", coord, transcripts_root=Path(TMP) / "tr")
+    mark = led._gfold(led._read())["marks"][coord]
+    check("V-MSPEND-SETTLE-CAPPED-TO-BOOKED", mark == 1_298_631 and out.get("capped_from_transcript") == 19_879_802,
+          f"mark={mark:,}")
+    ms.goal_settle("g-fix", worker, transcripts_root=Path(TMP) / "tr")
+    wmark = led._gfold(led._read())["marks"][worker]
+    check("V-MSPEND-SETTLE-UNBOOKED-CONTROL", wmark == 917_218, f"mark={wmark:,}")
+
+    # --- same-pane Owner correction of a misbooked mark ----------------------------------------
+    led._append(led._read(), {"op": "settle", "sid": coord, "measured": 19_879_802, "closes": []})
+    from modules.provider_routing import capital_authority as ca
+    croot = Path(TMP) / "capital"
+    croot.mkdir()
+    pk = croot / "fix.json"
+    pk.write_text(json.dumps({"goal": "g-fix", "session": coord, "expected_mark": 19_879_802,
+                              "measured": 1_298_631, "reason": "test", "expires": "2030-01-01T00:00:00+00:00"}),
+                  encoding="utf-8")
+    sha = ca.packet_sha(pk)
+    tpath = Path(TMP) / "owner.jsonl"
+
+    def owner_says(text, source="typed"):
+        tpath.write_text("\n".join([
+            json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": f"packet {sha}"}]}}),
+            json.dumps({"type": "user", "uuid": "u1", "timestamp": "t", "origin": {"kind": "human"},
+                        "promptSource": source, "message": {"content": text}})]) + "\n", encoding="utf-8")
+
+    (croot / "corrections.json").write_text(json.dumps([str(pk)]), encoding="utf-8")
+    (croot / "approvals.jsonl").write_text(json.dumps({"transcript_path": str(tpath), "kind": "approval"}) + "\n",
+                                           encoding="utf-8")
+    run = lambda: ms.correction_apply_pending(root=croot, timeout=0, sleep=lambda s: None, now=NOW)  # noqa: E731
+    marks = lambda: led._gfold(led._read())["marks"][coord]  # noqa: E731
+    owner_says("approve", source=None)                  # not Owner-typed
+    r0 = run()
+    check("V-MSPEND-CORRECT-NEEDS-OWNER-TYPED", not r0[0]["applied"] and marks() == 19_879_802)
+    owner_says("approve")
+    r1 = run()
+    check("V-MSPEND-CORRECT-APPLIED", r1[0]["applied"] and marks() == 1_298_631, f"mark={marks():,}")
+    check("V-MSPEND-CORRECT-IDEMPOTENT", not run()[0]["applied"] and marks() == 1_298_631)
+    for name, body, why in (("cas", {"expected_mark": 5}, "mark moved"),
+                            ("raise", {"expected_mark": 1_298_631, "measured": 9 * M}, "only lowers")):
+        p2 = croot / f"{name}.json"
+        p2.write_text(json.dumps({**json.loads(pk.read_text(encoding="utf-8")), **body}), encoding="utf-8")
+        sha = ca.packet_sha(p2)
+        (croot / "corrections.json").write_text(json.dumps([str(p2)]), encoding="utf-8")
+        owner_says("approve")
+        r = run()
+        check(f"V-MSPEND-CORRECT-REFUSES-{name.upper()}", not r[0]["applied"] and why in r[0]["reason"]
+              and marks() == 1_298_631, r[0]["reason"])
+
     print(f"MSPEND_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from pathlib import Path
 
 DEFAULT_TRIP_RATIO = 2.0
@@ -515,13 +516,97 @@ def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = 
     """Settle a STOPPED session and close all of its holds (never reserves). Blind -> refused."""
     if not _SID_RE.match(sid or ""):
         raise ValueError(f"invalid session id: {sid!r}")
+    led = _goal_ledger(goal)
+    capped = None
     if measured is None:
         tp = find_transcript(sid, transcripts_root)
         if tp is None:
             return {"ok": False, "goal": goal, "reason": "no transcript for the session and no --measured: "
                     "refusing to settle blind"}
         measured = int(session_tokens(tp)["tokens"])
-    return _goal_ledger(goal).settle_stopped(sid, int(measured), reason)
+        # A pane the guard already booked is charged only for what it booked plus its open holds: the
+        # transcript total also holds its pre-binding and off-goal calls (a coordinator that left the
+        # worktree was overcharged 18.6M this way, ctx-same-pane 2026-10-11).
+        g = led._gfold(led._read())
+        mark = g["marks"].get(sid, 0)
+        if mark:
+            ceiling = mark + sum(r["hold"] for r in g["res"].values() if r["sid"] == sid)
+            if measured > ceiling:
+                capped, measured = measured, ceiling
+    out = led.settle_stopped(sid, int(measured), reason)
+    if capped is not None:
+        out["capped_from_transcript"] = capped
+    return out
+
+
+def correction_apply_pending(ledger_factory=None, root=None, timeout: float = 60.0, sleep=time.sleep,
+                             now: float | None = None) -> list[dict]:
+    """Same-pane Owner correction of a misbooked mark. A packet in corrections.json names one goal, one
+    session, the mark it expects to find and a LOWER value; it applies only after an Owner-typed `approve`
+    that follows an assistant entry showing the packet hash (the OCA rule). Never raises a mark."""
+    from modules.provider_routing import capital_authority as ca
+    ledger_factory = ledger_factory or _goal_ledger
+    base = ca.capital_root(root)
+    try:
+        pend = json.loads((base / "corrections.json").read_text(encoding="utf-8-sig"))
+        ap = [json.loads(x) for x in (base / "approvals.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
+    except (OSError, ValueError):
+        return []
+    if not ap or not isinstance(pend, list):
+        return []
+    log = base / "corrections.jsonl"
+    done = set()
+    if log.exists():
+        for ln in log.read_text(encoding="utf-8").splitlines():
+            try:
+                r = json.loads(ln)
+            except ValueError:
+                continue
+            if r.get("state") == "APPLIED":
+                done.add(r.get("sha"))
+    transcript = ap[-1]["transcript_path"]
+    if ap[-1].get("kind") != "approval":
+        timeout = 0                                      # a sweep row is not an Owner approval: do not wait
+    deadline, results = time.time() + timeout, []
+    for path in pend:
+        sha = ca.packet_sha(path)
+        if sha in done:
+            results.append({"sha": sha[:12], "ok": True, "applied": False, "reason": "already applied"})
+            continue
+        pk = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+        goal, sid = pk["goal"], pk["session"]
+        while True:
+            appr = next((d for d in ca.find_owner_decisions(transcript, sha)
+                         if d["decision"]["action"] == "approve" and d["decision"].get("goal") in (None, goal)), None)
+            if appr is not None or time.time() >= deadline:
+                break
+            sleep(1.0)
+        row = {"ts": time.time() if now is None else now, "sha": sha, "goal": goal, "session": sid}
+        if appr is None:
+            results.append({"sha": sha[:12], "ok": False, "applied": False,
+                            "reason": "no Owner-typed approval for this packet hash"})
+            continue
+        led = ledger_factory(goal)
+        mark = led._gfold(led._read())["marks"].get(sid, 0)
+        if ca._expired(pk, row["ts"]):
+            reason = "packet expired"
+        elif mark != int(pk["expected_mark"]):
+            reason = f"mark moved: {mark:,} != expected {int(pk['expected_mark']):,}"
+        elif not 0 <= int(pk["measured"]) < mark:
+            reason = f"a correction only lowers a mark: {int(pk['measured']):,} vs {mark:,}"
+        else:
+            reason = ""
+        if reason:
+            with log.open("a", encoding="utf-8") as f:
+                f.write(json.dumps({**row, "state": "REJECTED", "reason": reason, "approval": appr["uuid"]}) + "\n")
+            results.append({"sha": sha[:12], "ok": False, "applied": False, "reason": reason})
+            continue
+        out = led.correct(sid, int(pk["measured"]), pk["reason"], f"owner-same-pane:{sha[:12]}:{appr['uuid']}")
+        with log.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({**row, "state": "APPLIED", "previous": mark, "measured": int(pk["measured"]),
+                                "approval": appr["uuid"]}) + "\n")
+        results.append({"sha": sha[:12], "ok": bool(out.get("ok")), "applied": True, "reason": ""})
+    return results
 
 
 def _real_console_stdin() -> bool:
@@ -1153,7 +1238,8 @@ def _main(argv: list[str]) -> int:
                 out = ca.status()
             elif a.cmd == "capital-apply-pending":
                 res = ca.apply_pending(_goal_ledger)
-                out = {"ok": all(r["ok"] for r in res), "results": res}
+                cor = correction_apply_pending(_goal_ledger)
+                out = {"ok": all(r["ok"] for r in res + cor), "results": res, "corrections": cor}
             else:
                 fn = ca.apply if a.cmd == "capital-apply" else ca.revoke
                 r = fn(a.packet, a.transcript, a.goal, _goal_ledger)
