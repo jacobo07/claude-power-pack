@@ -15,3 +15,8 @@ discovers a shared failure after the effect.
 4. Kill switch env var; fail CLOSED on its own error for send (this is a pre-effect gate on a scarce resource).
 5. Replay the C2b job dir through it: must refuse, naming CURRENT_CAPSULE and the lint.
 Receipt: tests, drill, replay output, commits.
+
+## CPX amendment (B0, 2026-10-11)
+- Step: port trim: runner_lib.py:1472 shutil.copyfile -> trim_objdiff_report (PP patch 147115b0).
+- Certificate check: output budget: sum(.o + trimmed diff) + log ceiling <= 20,971,520 else NOT_READY:OUT_BUDGET.
+

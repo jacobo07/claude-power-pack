@@ -1,0 +1,48 @@
+{
+    "goal":  "cp50-c2",
+    "root":  "C:\\Users\\User\\Apps\\recon_work\\wt_cp50_c2",
+    "envelope":  4300000,
+    "max_residuals":  0,
+    "route_ladder":  [
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json"
+                     ],
+    "units":  [
+                  {
+                      "id":  "R3",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R3.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-L.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R3-receipt.md",
+                      "after":  null
+                  },
+                  {
+                      "id":  "R6",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R6.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R6-receipt.md",
+                      "after":  "R3"
+                  },
+                  {
+                      "id":  "J3",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-J3.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-J3-receipt.md",
+                      "after":  "R6"
+                  },
+                  {
+                      "id":  "C3",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-C3.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-C3-receipt.md",
+                      "after":  "J3"
+                  },
+                  {
+                      "id":  "D21F",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-D21F.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-D21F-receipt.md",
+                      "after":  "C3"
+                  }
+              ]
+}

@@ -15,6 +15,37 @@
                       "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
                       "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-B0-receipt.md",
                       "after":  null
+                  },
+                  {
+                      "id":  "R1",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-R1.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-R1-receipt.md",
+                      "after":  "B0"
+                  },
+                  {
+                      "id":  "R2",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-R2.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-R2-receipt.md",
+                      "after":  "R1"
+                  },
+                  {
+                      "id":  "R5",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-R5.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-R5-receipt.md",
+                      "after":  "R2"
+                  },
+                  {
+                      "id":  "R9",
+                      "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-R9.md",
+                      "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+                      "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cpx\\WU-R9-receipt.md",
+                      "after":  "R5",
+                      "wait":  [
+                                   "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\C3-receipt.md"
+                               ]
                   }
               ]
 }
