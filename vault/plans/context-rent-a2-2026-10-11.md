@@ -23,6 +23,44 @@ Mode: EXECUTION. The architecture was settled by A1 section 2; nothing below nee
 + ~107K CPP-authored session floor + ~87K accumulated epoch history (S0 scan tool results and outputs). About 61 % floor,
 39 % history. Exact per-class split inside the floor is slice A; no provider-side breakdown exists (EXTERNAL_LIMITATION).
 
+### 1.1 Floor census (slice A, `tools/context_floor_census.py 47f3da08 28a5bd61`, gate `tools/test_context_floor_census.py` 23/23)
+
+Read-only, from the transcript alone. Chars are exact; tokens are estimates at 3.6 chars/token (prose bound) and at
+the history-calibrated ~2.36 (dense bound, from tool output). The ranking is by chars, so it does not depend on the ratio.
+
+| call-1 floor item (47f3da08) | chars | est. tokens 3.6 / 2.37 | lever |
+|---|---:|---:|---|
+| ~/.claude/CLAUDE.md | 39,809 | 11.1K / 16.8K | B: Windows bridge + closer-guard prose is hook-enforced |
+| PP CLAUDE.md | 38,951 | 10.8K / 16.4K | B: inline HARD RULES mirror of vault/hard_rules |
+| ~/.claude/rules/*.md (26 files) | 38,046 | 10.6K / 16.1K | B: 18 are moved-to-skill stubs (16,196 chars) that still load |
+| skill listing (278 skills) | 30,103 | 8.4K / 12.7K | host; only plugin/skill enablement (Owner, settings) |
+| agent listing (71 types) | 27,352 | 7.6K / 11.5K | host; same |
+| MEMORY.md | 17,059 | 4.7K / 7.2K | B: index compaction |
+| host system prompt | 7,470 | 2.1K / 3.2K | host |
+| ~/CLAUDE.md | 5,956 | 1.7K / 2.5K | B: duplicates PP doctrine |
+| instructions wrapper, deferred-tool list, MCP instructions, SessionStart superpowers, env/session/date, prompt | 22,578 | 6.3K / 9.5K | mostly host |
+| **attributed** | 227,324 | 63.1K / 95.9K | |
+| **measured call 1** | | **122,093** = 32,664 cross-session prefix + 89,429 session-specific | |
+
+Session-specific 89,429: the items above explain 61.1K at 3.6 and all of it at 2.37 (remainder +28.4K / -3.3K), so the
+true remainder is inside that bracket. The 32,664 prefix is identical in both sessions (tool schemas + static system
+prompt; not in any transcript). 28a5bd61 differs only by its 68,616-char pasted prompt (+17,234 tokens = 3.4 chars/token).
+**CPP-authored files are 139.8K chars, 61 % of the attributed floor; the host listings are 25 %.**
+Hooks timed out before call 1 in both sessions (SessionStart chain 15 s, UserPromptSubmit 10-15 s), so PP's own hook
+injections contributed nothing to these floors; only the superpowers SessionStart text (3,480 chars) arrived.
+
+| growth over the epoch (measured deltas) | 47f3da08 (24 calls) | 28a5bd61 (47 calls) |
+|---|---:|---:|
+| total growth, call 1 -> last | 66,488 | 107,695 |
+| assistant output carried forward | 24,735 | 53,943 |
+| tool_result:PowerShell | 8,447 | 21,845 |
+| tool_result:Read | 6,625 | 14,682 |
+| pasted / queued prompts | 21,588 + 2,185 | 6,108 |
+| everything else (reminders, hook notes, deltas) | ~3K | ~11K |
+
+Conservation holds (charges + output = growth, V-CENSUS-REAL-CONSERVATION). In 28a5bd61 half the growth was the
+model's own output carried forward, not tool results: carrier/rotation (C, D) cut that; trimming tool output alone cannot.
+
 **Why the 150K stop-loss fired:** the floor alone is 122-139K, so any call carrying more than ~11-28K of work crosses it.
 It was structurally unsatisfiable, a canary that measured the floor, not waste. It is not raised; it is replaced by a
 per-boundary budget = measured floor of the channel + packet size.
