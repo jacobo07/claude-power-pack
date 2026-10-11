@@ -32,8 +32,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import git_state
-from .contract import GoalState, project
-from .epoch import _debris
+from .contract import DECLARED, REVISED, GoalState, project
+from .epoch import DISPATCHING, ENDED, UNSUCCESSFUL, _debris
 from .convergence import SATISFIED, project_convergence
 from .log import GoalLog, GoalLogCorrupt, GoalLogError
 from .log import _canonical
@@ -461,4 +461,46 @@ def proof_states(state: GoalState, candidate: str, observed: dict | None = None,
         else:
             st, why = PS_FRESH, "verdict binds this candidate and revision"
         out[oid] = {"state": st, "reason": why, "claim_id": cid}
+    return out
+
+
+# --- conservation laws (02-05) -------------------------------------------------------
+# Pure checks over a projected state. A violation is a dict; an empty list is a pass.
+
+def law_semantic_conservation(state: GoalState) -> list:
+    """Revisions that drop an acceptance criterion or constraint without a stated reason."""
+    out: list = []
+    prev = None
+    for ev in state.events:
+        if ev.type not in (DECLARED, REVISED):
+            continue
+        sem = ev.data.get("semantic") or {}
+        if prev is not None and ev.type == REVISED:
+            dropped = {k: [x for x in prev.get(k, []) if x not in sem.get(k, [])]
+                       for k in ("acceptance", "constraints")}
+            dropped = {k: v for k, v in dropped.items() if v}
+            reason = str(ev.data.get("weakening_reason") or "").strip()
+            if dropped and not (ev.data.get("weakened") and reason):
+                out.append({"seq": ev.seq, "dropped": dropped, "law": "semantic"})
+        prev = sem
+    return out
+
+
+def law_work_conservation(state: GoalState) -> list:
+    """A later epoch that re-attempts an info_key an earlier epoch already ended unsuccessfully."""
+    out: list = []
+    key_of: dict = {}
+    failed: dict = {}
+    for ev in state.events:
+        d = ev.data
+        if ev.type == DISPATCHING:
+            key = d.get("info_key")
+            key_of[d.get("epoch_id")] = key
+            if key in failed:
+                out.append({"earlier": failed[key], "later": d.get("epoch_id"),
+                            "info_key": key, "law": "work"})
+        elif ev.type == ENDED and d.get("outcome") in UNSUCCESSFUL:
+            key = key_of.get(d.get("epoch_id"))
+            if key is not None:
+                failed.setdefault(key, d.get("epoch_id"))
     return out

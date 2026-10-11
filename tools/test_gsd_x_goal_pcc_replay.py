@@ -1141,6 +1141,65 @@ def gates_states() -> None:
     run_gate("V-PCC-CONTRACT-LEGACY-ONE-ELEMENT", one_element)
 
 
+# --- conservation laws measured on the recorded corpus (02-05) -------------------------
+
+# Violations the legacy corpus already contains, copied in only after measuring them.
+# (scenario, key) -> why it is a legacy fact and not a defect of the law.
+WORK_CONSERVATION_LEGACY_EXCEPTIONS: dict = {}
+SEMANTIC_CONSERVATION_LEGACY_EXCEPTIONS: dict = {}
+
+
+def final_states():
+    """Yield (scenario, full-log state) for every recorded and synthetic scenario."""
+    for name in SCENARIOS:
+        files, repo, goal, keep = _scenario_files(name)
+        work = Path(tempfile.mkdtemp(prefix="pcc-laws-"))
+        try:
+            log = GoalLog(repo, goal, base=work)
+            log.dir.mkdir(parents=True)
+            for src in files:
+                shutil.copyfile(src, log.dir / Path(src).name)
+            yield name, gc.project(log)
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
+            if keep is not None:
+                shutil.rmtree(keep, ignore_errors=True)
+
+
+def gates_laws() -> None:
+    def work_law():
+        proof = load_proof()
+        if proof is None or not hasattr(proof, "law_work_conservation"):
+            return False, PROOF_ABSENT
+        n_epochs = 0
+        found: list = []
+        for name, state in final_states():
+            n_epochs += len(ep.project_epochs(state))
+            for v in proof.law_work_conservation(state):
+                found.append((name, v["info_key"]))
+        new = [f for f in found if f not in WORK_CONSERVATION_LEGACY_EXCEPTIONS]
+        stale = [k for k in WORK_CONSERVATION_LEGACY_EXCEPTIONS if k not in found]
+        return not new and not stale, (f"epochs={n_epochs} violations={len(found)} "
+                                       f"excepted={len(found) - len(new)} new={new[:3]} stale_exceptions={stale[:3]}")
+    run_gate("V-PCC-LAW-WORK-CONSERVATION", work_law)
+
+    def semantic_law():
+        proof = load_proof()
+        if proof is None or not hasattr(proof, "law_semantic_conservation"):
+            return False, PROOF_ABSENT
+        revised = 0
+        found: list = []
+        for name, state in final_states():
+            revised += sum(1 for e in state.events if e.type == gc.REVISED)
+            for v in proof.law_semantic_conservation(state):
+                found.append((name, v["seq"]))
+        new = [f for f in found if f not in SEMANTIC_CONSERVATION_LEGACY_EXCEPTIONS]
+        stale = [k for k in SEMANTIC_CONSERVATION_LEGACY_EXCEPTIONS if k not in found]
+        return not new and not stale and revised > 0, (f"goal.revised_examined={revised} violations={len(found)} "
+                                                       f"excepted={len(found) - len(new)} new={new[:3]} stale_exceptions={stale[:3]}")
+    run_gate("V-PCC-LAW-SEMANTIC-CORPUS", semantic_law)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--capture", action="store_true")
@@ -1166,6 +1225,7 @@ def main() -> int:
     gates_replay()
     gates_seam()
     gates_states()
+    gates_laws()
 
     def live_untouched():
         after = grb.fingerprint(LIVE_STATE)

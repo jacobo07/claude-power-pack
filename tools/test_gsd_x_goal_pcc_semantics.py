@@ -826,6 +826,62 @@ def gate_gate_classes_pinned():
             and set(cv.RUNTIME_GATE_CLASSES) == {"in_game", "live"}), f"GATE_CLASSES={cv.GATE_CLASSES} runtime={sorted(cv.RUNTIME_GATE_CLASSES)}"
 
 
+def _raw_epoch(log, key: str, outcome: str | None, tag: str):
+    st = gc.project(log)
+    eid = f"ep-{tag}"
+    log.append(st.last_seq + 1, "epoch.dispatching",
+               {"epoch_id": eid, "revision": st.revision, "provider": "gate", "identity": {"epoch_id": eid},
+                "info_key": key, "hypothesis": "initial", "spec": {}, "fence": 0}, "founder")
+    if outcome:
+        st = gc.project(log)
+        log.append(st.last_seq + 1, "epoch.ended", {"epoch_id": eid, "outcome": outcome}, "founder")
+
+
+def gate_law_work_synthetic():
+    proof = _need("law_work_conservation")
+    if proof is None:
+        return False, _NEEDS
+    out = {}
+    for label, outcome in (("failed", "failed"), ("completed", "completed")):
+        log, _s, base = new_goal(f"sem-work-{label}")
+        try:
+            _raw_epoch(log, "k" * 24, outcome, f"a-{label}")
+            _raw_epoch(log, "k" * 24, None, f"b-{label}")
+            out[label] = proof.law_work_conservation(gc.project(log))
+        finally:
+            shutil.rmtree(base, ignore_errors=True)
+    ok = (len(out["failed"]) == 1 and out["failed"][0].get("law") == "work"
+          and out["failed"][0].get("info_key") == "k" * 24 and out["completed"] == [])
+    return ok, f"failed_then_same_key={len(out['failed'])} completed_control={len(out['completed'])}"
+
+
+def _raw_revise(log, acceptance, extra=None):
+    st = gc.project(log)
+    sem = {"intent": st.intent, "acceptance": acceptance, "constraints": st.constraints, "scope": st.scope}
+    data = {"semantic": sem, "revision": gc.revision_of(sem), "supersedes": st.revision}
+    data.update(extra or {})
+    log.append(st.last_seq + 1, "goal.revised", data, "founder")
+
+
+def gate_law_semantic_synthetic():
+    proof = _need("law_semantic_conservation")
+    if proof is None:
+        return False, _NEEDS
+    log, _s, base = new_goal("sem-law-raw")
+    log2, _s2, base2 = new_goal("sem-law-ctl")
+    try:
+        _raw_revise(log, ["something else"])
+        raw = proof.law_semantic_conservation(gc.project(log))
+        gc.revise(log2, gc.project(log2).last_seq + 1, "Exercise the PCC seam", ["something else"], [],
+                  {"paths": ["src"]}, weakening_reason="superseded by a narrower criterion")
+        ctl = proof.law_semantic_conservation(gc.project(log2))
+        ok = len(raw) == 1 and raw[0].get("law") == "semantic" and bool(raw[0].get("dropped")) and ctl == []
+        return ok, f"raw_drop={len(raw)} weakened_with_reason_control={len(ctl)}"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+        shutil.rmtree(base2, ignore_errors=True)
+
+
 def main() -> int:
     run_gate("V-PCC-HERMETIC-HOME", gate_hermetic)
     run_gate("V-PCC-ENVELOPE", gate_envelope)
@@ -863,7 +919,9 @@ def main() -> int:
                      ("V-PCC-FRESHNESS-SCAN-ESCALATES-ONLY", gate_freshness_scan),
                      ("V-PCC-CONTRACT-WEAKENING-IGNORED", gate_contract_weakening),
                      ("V-PCC-CONTRACT-COMBINE-UNKNOWN", gate_contract_combine),
-                     ("V-PCC-GATE-CLASSES-PINNED", gate_gate_classes_pinned)):
+                     ("V-PCC-GATE-CLASSES-PINNED", gate_gate_classes_pinned),
+                     ("V-PCC-LAW-WORK-CONSERVATION-SYNTHETIC", gate_law_work_synthetic),
+                     ("V-PCC-LAW-SEMANTIC", gate_law_semantic_synthetic)):
         run_gate(name, fn)
     total = passes + fails
     print(f"\nGSDX_PCC_SEMANTICS_PASS={passes}/{total}  threshold={total}/{total}")
