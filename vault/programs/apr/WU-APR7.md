@@ -19,6 +19,10 @@ Fix, smallest change each, no new engine:
 8. One owner rule (woz F4): try_seal finds its chain through discover_chains. 9. wait_finalizer into SILENT (pp LOW-1);
    rewrite a refusal whose sha is stale (pp LOW-3); decide uses _done_ids/_by_packet (woz F7). Skip F5/F6/F8 if budget is
    short and say so in the receipt.
+9b. APR-6 findings (`REPORT.md` UNPROVEN 3-4, `PRODUCTION-REALITY.md`, KNOWLEDGE A8): A8 -- the mission layer said "no
+   receipt" for the closed C2 receipt and a duplicate worker (m-7a5265092233) ran: on the residual path the mission must
+   locate the receipt through the chain unit and judge it with receipt_judge; RED then green. Then explain from code why
+   C2/C3 have no seal.json and C2 no refusal.json after the canary (expected or defect); fix if a defect.
 10. Suites green from wt_apr (receipt_judge, halt_continues, mission_steward, gsdx_chain, apr_seal, apr_event, gsd_mission,
     gsd_epoch, gsd_sweep_pass); cherry-pick the commits into the live checkout (feature/knowledge-acquisition) by pathspec,
     re-run the suites there, and dry-run every live chain before/after (no action change except the fixed classes).
