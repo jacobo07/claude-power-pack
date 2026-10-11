@@ -1,0 +1,6 @@
+PASS V-PCC-GATE-RAISE-SURVIVES FAIL V-PCC-SELFTEST-RAISES raised RuntimeError: boom
+FAIL V-PCC-REPLAY-IGNORE-NEW-TYPES-PCC g002:['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']; g001:['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']; syn_contract:['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']; syn_carry:['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']; syn_operator:['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']; syn_evidence:['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']
+FAIL V-PCC-REPLAY-INTERLEAVED raised GoalLogCorrupt: syn-carry seq 4: malformed proof.produced ('id')
+GSDX_PCC_REPLAY_PASS=26/28  threshold=28/28
+MUTANT KILLED gate=V-PCC-REPLAY-IGNORE-NEW-TYPES-PCC
+EXIT=0

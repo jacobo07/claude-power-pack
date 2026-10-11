@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/proof.py","test":"tools/test_gsd_x_goal_pcc_semantics.py","gate":"V-PCC-CONTRACT-WEAKENING-IGNORED","old":"if eff is None or _not_weaker(c[\"data\"], eff[\"data\"]):","new":"if True:","copy_dirs":["vault/specs",".planning/workstreams/gsdx-pcc/phases/02-w1-convergence-semantics-ultra-plan-the-only-one"]}

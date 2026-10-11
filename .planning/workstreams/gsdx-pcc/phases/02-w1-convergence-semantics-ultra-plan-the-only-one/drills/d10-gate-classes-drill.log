@@ -1,0 +1,5 @@
+FAIL V-PCC-GATE-CLASSES-PINNED GATE_CLASSES=('unit', 'integration', 'in_game', 'live', 'extra') runtime=['in_game', 'live']
+FAIL V-PCC-ADDITIVE-ONLY legacy=22 new=4 legacy_files_changed=['modules/gsd_x/goal/convergence.py'] new_modules=['proof.py'] collisions=[]
+GSDX_PCC_SEMANTICS_PASS=46/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-GATE-CLASSES-PINNED
+EXIT=0

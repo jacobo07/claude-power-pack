@@ -1,0 +1,6 @@
+FAIL V-PCC-STATE-EMPTY no_verdict={'ob-one': 'UNKNOWN'} empty_paths=unknown:empty premise set
+FAIL V-PCC-STATE-NOT-IN-DISPOSITION proof.py offences=['setattr disposition L442'] control_flags=3
+FAIL V-PCC-STATE-PRODUCED-WITHOUT-SATISFIED produced_for_unsatisfied={'ob-one': 'FRESH'}
+GSDX_PCC_SEMANTICS_PASS=45/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-STATE-NOT-IN-DISPOSITION
+EXIT=0

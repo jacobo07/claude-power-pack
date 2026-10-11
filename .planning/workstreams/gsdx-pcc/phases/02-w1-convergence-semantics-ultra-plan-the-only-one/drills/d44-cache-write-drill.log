@@ -1,0 +1,4 @@
+FAIL V-PCC-NO-SECOND-STORE seeded_control_findings=3 proof.py_findings=[(111, '.write_text')]
+GSDX_PCC_SEMANTICS_PASS=47/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-NO-SECOND-STORE
+EXIT=0

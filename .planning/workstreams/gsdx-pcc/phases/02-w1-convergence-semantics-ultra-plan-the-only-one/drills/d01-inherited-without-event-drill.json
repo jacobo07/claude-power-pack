@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/proof.py","test":"tools/test_gsd_x_goal_pcc_semantics.py","gate":"V-PCC-STATE-NO-EVENT-NOT-INHERITED","old":"if not has_inherited_event:","new":"if False:","copy_dirs":["vault/specs",".planning/workstreams/gsdx-pcc/phases/02-w1-convergence-semantics-ultra-plan-the-only-one"]}

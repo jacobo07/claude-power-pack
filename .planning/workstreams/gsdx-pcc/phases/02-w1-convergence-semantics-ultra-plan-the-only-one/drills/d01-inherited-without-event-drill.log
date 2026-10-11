@@ -1,0 +1,6 @@
+FAIL V-PCC-STATE-TRUTH-TABLE cells=2916 INHERITED=2 disagreements=1
+FAIL V-PCC-STATE-NO-EVENT-NOT-INHERITED no_event=INHERITED control=INHERITED empty_premise_set=UNKNOWN
+FAIL V-PCC-LAW-UNKNOWN-ESCALATES cells=2916 violations=1 mutant_violations=127 unknown_fp_collapses_to_tree=True produced_unknown=True old_revision=True
+GSDX_PCC_SEMANTICS_PASS=45/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-STATE-NO-EVENT-NOT-INHERITED
+EXIT=0

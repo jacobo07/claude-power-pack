@@ -1,0 +1,4 @@
+FAIL V-PCC-FINGERPRINT-OUTSIDE-ROOT refused=['absolute', 'dotdot', 'inside_dotdot', 'nested_dotdot'] control=cf1:
+GSDX_PCC_SEMANTICS_PASS=47/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-FINGERPRINT-OUTSIDE-ROOT
+EXIT=0

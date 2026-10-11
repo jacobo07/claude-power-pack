@@ -1,0 +1,5 @@
+FAIL V-PCC-SWITCH-PARSE 16 values x 2 switches ["GSDX_FRONTIER='off' should be OFF", "GSDX_FRONTIER='OFF' should be OFF", "GSDX_FRONTIER=' off ' should be OFF", "GSDX_FRONTIER='0' should be OFF", "GSDX_FRONTIER='false' should be OFF", "GSDX_FRONTIER='of' should be OFF", "GSDX_FRONTIER='banana' should be OFF", "GSDX_FRONTIER='disabled' should be OFF", "GSDX_PROOF_INHERITANCE='off' should be OFF", "GSDX_PROOF_INHERITANCE='OFF' should be OFF", "GSDX_PROOF_INHERITANCE=' off ' should be OFF", "GSDX_PROOF_INHERITANCE='0' should be OFF", "GSDX_PROOF_INHERITANCE='false' should be OFF", "GSDX_PROOF_INHERITANCE='of' should be OFF", "GSDX_PROOF_INHERITANCE='banana' should be OFF", "GSDX_PROOF_INHERITANCE='disabled' should be OFF", 'inheritance_enabled follows the switch: [True, True]']
+FAIL V-PCC-SWITCH-CALL-TIME answers=[True, True, True, True]
+GSDX_PCC_SEMANTICS_PASS=46/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-SWITCH-PARSE
+EXIT=0

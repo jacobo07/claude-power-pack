@@ -1,0 +1,6 @@
+FAIL V-PCC-FRESHNESS-MAP {'unit': 'DETERMINISTIC', 'integration': 'DETERMINISTIC', 'in_game': 'DETERMINISTIC', 'live': 'DETERMINISTIC', 'verdict_wins': 'DETERMINISTIC', 'reality_any_class': 'DETERMINISTIC', 'empty': 'UNKNOWN', 'temporal_by_contract': 'DETERMINISTIC', 'compositional_by_contract': 'DETERMINISTIC'} legacy_never_temporal_or_compositional=True
+FAIL V-PCC-FRESHNESS-RISK-TAGS tags=8 all FRESH_REQUIRED=False {'missing': 'UNKNOWN', 'unknown_tag': 'UNKNOWN', 'control_empty': 'DETERMINISTIC'}
+FAIL V-PCC-FRESHNESS-SCAN-ESCALATES-ONLY keyword_text=DETERMINISTIC keyword_free_unchanged=True never_lowers=True
+GSDX_PCC_SEMANTICS_PASS=45/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-FRESHNESS-SCAN-ESCALATES-ONLY
+EXIT=0

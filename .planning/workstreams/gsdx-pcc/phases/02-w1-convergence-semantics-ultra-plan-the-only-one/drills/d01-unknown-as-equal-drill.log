@@ -1,0 +1,8 @@
+FAIL V-PCC-STATE-TRUTH-TABLE cells=2916 INHERITED=64 disagreements=63
+FAIL V-PCC-CERT-GATE-PIN-SCHEME blob_vs_raw=INHERITED mixed=INHERITED
+FAIL V-PCC-CERT-ENV-UNDECLARED undeclared=INHERITED declared_control=INHERITED
+FAIL V-PCC-CERT-FUTURE-DATED future=INHERITED at_skew_edge=INHERITED
+FAIL V-PCC-LAW-UNKNOWN-ESCALATES cells=2916 violations=63 mutant_violations=63 unknown_fp_collapses_to_tree=True produced_unknown=True old_revision=True
+GSDX_PCC_SEMANTICS_PASS=43/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-STATE-TRUTH-TABLE
+EXIT=0

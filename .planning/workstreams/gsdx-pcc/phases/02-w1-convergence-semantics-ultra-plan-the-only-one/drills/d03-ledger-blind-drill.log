@@ -1,0 +1,4 @@
+FAIL V-PCC-LAW-PROOF-CONSERVATION-LEDGER single=0 other_binding=0 duplicate=0 invalidated_between_control=0
+GSDX_PCC_SEMANTICS_PASS=47/48  threshold=48/48
+MUTANT KILLED gate=V-PCC-LAW-PROOF-CONSERVATION-LEDGER
+EXIT=0
