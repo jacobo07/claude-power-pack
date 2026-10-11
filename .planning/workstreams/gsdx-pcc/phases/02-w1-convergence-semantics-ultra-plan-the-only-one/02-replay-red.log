@@ -1,0 +1,26 @@
+PASS V-PCC-HERMETIC-HOME home=pcc-home-lv4akmk6
+PASS V-PCC-HERMETIC-ROOT-REFUSAL live-refused=True hermetic-allowed=True
+PASS V-PCC-FIXTURE-MANIFEST g-002-router-surface: 50 files verified; g-001-smoke-runner: 123 files verified
+PASS V-PCC-FIXTURE-TAMPER-REFUSED tampered copy refused: sha256 mismatch 000001.json
+PASS V-PCC-REPLAY-CHAIN-g-002-router-surface events=50 tip=ac414ec58bcd
+PASS V-PCC-REPLAY-CHAIN-g-001-smoke-runner events=123 tip=10dab37eac17
+PASS V-PCC-GOLDEN-PRE-CHANGE head=13a0ee2c2ef0 legacy_files=20
+PASS V-PCC-GOLDEN-RECORDED-NOT-VOLATILE volatile recorded=[]
+PASS V-PCC-REPLAY-G002 g002: 50 prefixes equal
+PASS V-PCC-REPLAY-G001 g001: 123 prefixes equal
+PASS V-PCC-REPLAY-SYNTHETIC syn_contract: 4 prefixes equal; syn_carry: 16 prefixes equal; syn_operator: 5 prefixes equal; syn_evidence: 5 prefixes equal
+PASS V-PCC-REPLAY-POPULATION corpus=22 discovered=22 golden=22 missing=[]
+PASS V-PCC-DECIDE-SIG params=['ctx'] decision=8 context=10 frozen=True
+PASS V-PCC-GATE-RAISE-SURVIVES FAIL V-PCC-SELFTEST-RAISES raised RuntimeError: boom
+PASS V-PCC-REPLAY-IGNORE-NEW-TYPES-FUTURE all six scenarios equal
+FAIL V-PCC-REPLAY-IGNORE-NEW-TYPES-PCC RED-first: modules.gsd_x.goal.proof absent
+FAIL V-PCC-REPLAY-INTERLEAVED RED-first: modules.gsd_x.goal.proof absent
+PASS V-PCC-MUTANT-M1 M1: holders=3 hits=['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']
+PASS V-PCC-MUTANT-M2 M2: holders=3 hits=['fixed/closure/blocking', 'fixed/convergence/failures/pcc-phantom', 'last/closure/blocking']
+PASS V-PCC-MUTANT-M3 M3: holders=1 hits=['fixed/decide/hypothesis', 'fixed/decide/info_key', 'fixed/decide/kind']
+PASS V-PCC-MUTANT-M4 M4: holders=3 hits=['fixed/closure/blocking/3', 'fixed/closure/blocking/4', 'fixed/closure/blocking/5']
+PASS V-PCC-CLEAN-AFTER-MUTANTS g002: 50 prefixes equal; syn_carry: 16 prefixes equal
+PASS V-PCC-LIVE-STORE-UNTOUCHED verdict=SAME changed=[]
+
+GSDX_PCC_REPLAY_PASS=21/23  threshold=23/23
+EXIT=1

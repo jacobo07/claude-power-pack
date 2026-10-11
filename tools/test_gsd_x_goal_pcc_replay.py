@@ -20,10 +20,12 @@ from __future__ import annotations
 
 import argparse
 import ast
+import contextlib
 import copy
 import dataclasses
 import hashlib
 import inspect
+import io
 import json
 import os
 import re
@@ -682,6 +684,330 @@ def gates_replay() -> None:
     run_gate("V-PCC-REPLAY-POPULATION", population)
 
 
+# --- ignore-new-types, interleaving, mutants --------------------------------------
+
+def load_proof():
+    try:
+        from modules.gsd_x.goal import proof  # noqa: PLC0415
+        return proof
+    except ImportError:
+        return None
+
+
+PROOF_ABSENT = "RED-first: modules.gsd_x.goal.proof absent"
+_PIN_LIST = [["tools/gate.py", "9" * 64]]
+_CAND = "cf1:" + "c" * 64
+
+
+def pcc_sample_payloads() -> dict:
+    """One well-formed v1 payload per PCC type, from spec S6/S7 field lists."""
+    return {
+        "obligation.contract": {
+            "v": 1, "claim_id": "claim-1", "obligation": "ob-one", "combine": "AND",
+            "elements": [{"oracle": "unit", "command": "python tools/gate.py", "gate_pin": _PIN_LIST,
+                          "causal_paths": ["src"], "env_deps": [], "freshness_class": "unit",
+                          "risk_tags": [], "nondeterministic": False, "inheritability": "inheritable"}]},
+        "proof.produced": {
+            "v": 1, "claim_id": "claim-1", "candidate": _CAND, "binding": {"tree_hash": SYN_TREE},
+            "revision": 1, "strength": "exact", "source": {"epoch": "ep-syn", "provider": "gate"}},
+        "proof.inherited": {
+            "v": 1, "claim_id": "claim-1", "certificate": "cert-1", "candidate": _CAND,
+            "premises": {"claim": "equal", "oracle": "equal", "inputs": "equal", "env": "equal",
+                         "gate_pin": "equal", "revision": "equal"}},
+        "proof.invalidated": {
+            "v": 1, "claim_id": "claim-1", "certificate": "cert-1", "reason": "premise changed"},
+    }
+
+
+def scenario_log(name: str):
+    """(GoalLog on a hermetic copy, base dir to remove)."""
+    if name in RECORDED:
+        repo, goal, _n = RECORDED[name]
+        base = Path(tempfile.mkdtemp(prefix="pcc-probe-"))
+        log = GoalLog(repo, goal, base=base)
+        log.dir.mkdir(parents=True)
+        for src in _event_files(FIXTURE_ROOT / repo / goal):
+            shutil.copyfile(src, log.dir / src.name)
+        return log, base
+    _files, base = build_synthetic(name)
+    return GoalLog(SYN_REPO, name.replace("_", "-"), base=base), base
+
+
+def append_event(log, type_: str, data: dict) -> None:
+    log.append(log.read()[-1].seq + 1, type_, data, "pcc-replay")
+
+
+def final_pair(log) -> dict:
+    tl = _t_last(log.read())
+    return {"tree_last": tl, "fixed": snapshot(log, T_FIXED), "last": snapshot(log, tl)}
+
+
+def _get(node, path):
+    for k in path:
+        node = node[k]
+    return node
+
+
+def _set(node, path, value) -> bool:
+    try:
+        parent = _get(node, path[:-1])
+        parent[path[-1]] = value
+        return True
+    except (KeyError, IndexError, TypeError):
+        return False
+
+
+def seq_mask_view(view: dict) -> dict:
+    """Mask exactly the seq-valued fields (RESEARCH Pitfall 3) in one snapshot view."""
+    v = copy.deepcopy(view)
+    _set(v, ["state", "last_seq"], "<seq>")
+    try:
+        for i in range(len(v["state"]["revisions"])):
+            _set(v, ["state", "revisions", i, 0], "<seq>")
+    except (KeyError, TypeError):
+        pass
+    op_masked = _set(v, ["operator", "last_seq"], "<seq>")
+    try:
+        for i in range(len(v["operator"]["notes"])):
+            _set(v, ["operator", "notes", i, 0], "<seq>")
+    except (KeyError, TypeError):
+        pass
+    try:
+        for fid in v["convergence"]["failures"]:
+            _set(v, ["convergence", "failures", fid, "seq"], "<seq>")
+    except (KeyError, TypeError):
+        pass
+    try:
+        for hid, h in v["hypotheses"].items():
+            for i in range(len(h["history"])):
+                _set(v, ["hypotheses", hid, "history", i, 0], "<seq>")
+    except (KeyError, TypeError, AttributeError):
+        pass
+    if op_masked:       # audit G1: the operator seq is also spelled inside decide.reason
+        try:
+            v["decide"]["reason"] = re.sub(r"at seq \d+", "at seq <seq>", v["decide"]["reason"])
+        except (KeyError, TypeError):
+            pass
+    return v
+
+
+def seq_mask(pair: dict) -> dict:
+    return {"tree_last": pair["tree_last"], "fixed": seq_mask_view(pair["fixed"]),
+            "last": seq_mask_view(pair["last"])}
+
+
+def _golden_final(golden: dict, name: str) -> dict:
+    g = golden["scenarios"][name]
+    return g["full"][str(g["n"])]
+
+
+def gate_ignore_new(extra) -> tuple[bool, str]:
+    """Append `extra` [(type, data)] to every corpus log; legacy views equal the golden final prefix."""
+    golden = load_golden()
+    if golden is None:
+        return False, "golden absent"
+    bad = []
+    for name in SCENARIOS:
+        log, base = scenario_log(name)
+        try:
+            for t, d in extra:
+                append_event(log, t, d)
+            have = seq_mask(final_pair(log))
+        finally:
+            shutil.rmtree(base, ignore_errors=True)
+        want = seq_mask(_golden_final(golden, name))
+        if have != want:
+            bad.append(f"{name}:{['/'.join(map(str, p)) for p in diff_paths(have, want)[:3]]}")
+    return not bad, "all six scenarios equal" if not bad else "; ".join(bad)
+
+
+def gate_ignore_pcc() -> tuple[bool, str]:
+    proof = load_proof()
+    if proof is None:
+        return False, PROOF_ABSENT
+    samples = pcc_sample_payloads()
+    extra = [(t, samples[t]) for t in proof.NEW_TYPES]
+    ok, ev = gate_ignore_new(extra)
+    if not ok:
+        return ok, ev
+    log, base = scenario_log("syn_carry")
+    try:
+        for t, d in extra:
+            append_event(log, t, d)
+        recs = proof.project_proofs(gc.project(log))
+        n = len(recs)
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+    return n == len(extra), f"{ev}; project_proofs records={n} appended={len(extra)}"
+
+
+def gate_interleaved() -> tuple[bool, str]:
+    proof = load_proof()
+    if proof is None:
+        return False, PROOF_ABSENT
+    samples = pcc_sample_payloads()
+    types = list(proof.NEW_TYPES)
+    bad = []
+    for name in SYNTHETIC:
+        plain_snaps: list = []
+        files, base = build_synthetic(name, lambda log: plain_snaps.append(
+            seq_mask(final_pair(log))))
+        shutil.rmtree(base, ignore_errors=True)
+        inter: list = []
+        counter = [0]
+
+        def after(log, inter=inter, counter=counter):
+            inter.append(seq_mask(final_pair(log)))
+            t = types[counter[0] % len(types)]
+            counter[0] += 1
+            append_event(log, t, samples[t])
+        _f, base2 = build_synthetic(name, after)
+        shutil.rmtree(base2, ignore_errors=True)
+        if len(plain_snaps) != len(inter):
+            bad.append(f"{name}: {len(plain_snaps)} vs {len(inter)} steps")
+            continue
+        for k, (a, b) in enumerate(zip(plain_snaps, inter), start=1):
+            if a != b:
+                bad.append(f"{name} step {k}: {['/'.join(map(str, p)) for p in diff_paths(a, b)[:3]]}")
+                break
+    return not bad, "four synthetic scenarios equal at every writer step" if not bad else "; ".join(bad)
+
+
+def gate_decide_sig() -> tuple[bool, str]:
+    params = list(inspect.signature(rc.decide).parameters)
+    dfields = [f.name for f in dataclasses.fields(rc.Decision)]
+    cfields = [f.name for f in dataclasses.fields(rc.Context)]
+    want_d = ["kind", "reason", "epoch_id", "spec", "provider", "hypothesis", "info_key", "packet"]
+    want_c = ["state", "tree_hash", "scope_hash", "observations", "judge", "now", "budget",
+              "providers", "blocked_on", "engine"]
+    frozen = rc.Decision.__dataclass_params__.frozen is True
+    return (params == ["ctx"] and dfields == want_d and cfields == want_c and frozen,
+            f"params={params} decision={len(dfields)} context={len(cfields)} frozen={frozen}")
+
+
+@contextlib.contextmanager
+def patched(orig, factory):
+    """Replace `orig` on EVERY module object holding it (Pitfall 5); always restore."""
+    holders = []
+    for mod in list(sys.modules.values()):
+        try:
+            for attr in (orig.__name__,):
+                if getattr(mod, attr, None) is orig:
+                    holders.append((mod, attr))
+        except Exception:  # noqa: BLE001 -- lazy or exotic modules
+            continue
+    repl = factory(orig)
+    try:
+        for mod, attr in holders:
+            setattr(mod, attr, repl)
+        yield len(holders)
+    finally:
+        for mod, attr in holders:
+            setattr(mod, attr, orig)
+
+
+def _legacy_set() -> set:
+    return set(legacy_event_types())
+
+
+def _has_foreign(state) -> bool:
+    return any(e.type not in _legacy_set() for e in state.events)
+
+
+def mut_m1(orig):
+    def fn(state):
+        if _has_foreign(state):
+            raise gl.GoalLogCorrupt("mutant M1: foreign event type")
+        return orig(state)
+    return fn
+
+
+def mut_m2(orig):
+    def fn(state):
+        cvx = orig(state)
+        for e in state.events:
+            if e.type not in _legacy_set():
+                cvx.failures["pcc-phantom"] = {"summary": "phantom", "disposition": None,
+                                               "reason": "", "seq": e.seq}
+        return cvx
+    return fn
+
+
+def mut_m3(orig):
+    def fn(ctx):
+        if _has_foreign(ctx.state):
+            return rc.Decision("WAIT", "pcc")
+        return orig(ctx)
+    return fn
+
+
+def mut_m4(orig):
+    def fn(state):
+        cvx = orig(state)
+        cvx.obligations = dict(reversed(list(cvx.obligations.items())))
+        return cvx
+    return fn
+
+
+def _probe(name: str, extra) -> dict:
+    log, base = scenario_log(name)
+    try:
+        for t, d in extra:
+            append_event(log, t, d)
+        return final_pair(log)
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def gate_mutant(label: str, orig, factory, scenario: str, extra, expect) -> tuple[bool, str]:
+    clean = _probe(scenario, extra)
+    with patched(orig, factory) as held:
+        mutated = _probe(scenario, extra)
+    hits = ["/".join(map(str, p)) for p in diff_paths(clean, mutated)]
+    ok = held > 0 and any(expect(h) for h in hits)
+    return ok, f"{label}: holders={held} hits={hits[:3]}"
+
+
+def gate_gate_raise_survives() -> tuple[bool, str]:
+    global passes, fails
+    saved = (passes, fails)
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            run_gate("V-PCC-SELFTEST-RAISES", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+        line = buf.getvalue().strip()
+        counted = fails == saved[1] + 1
+    finally:
+        passes, fails = saved
+    return counted and line.startswith("FAIL V-PCC-SELFTEST-RAISES raised RuntimeError: boom"), line
+
+
+def gates_seam() -> None:
+    run_gate("V-PCC-DECIDE-SIG", gate_decide_sig)
+    run_gate("V-PCC-GATE-RAISE-SURVIVES", gate_gate_raise_survives)
+    fut = [("zz.future_event", {"v": 1})]
+    run_gate("V-PCC-REPLAY-IGNORE-NEW-TYPES-FUTURE", lambda: gate_ignore_new(fut))
+    run_gate("V-PCC-REPLAY-IGNORE-NEW-TYPES-PCC", gate_ignore_pcc)
+    run_gate("V-PCC-REPLAY-INTERLEAVED", gate_interleaved)
+    run_gate("V-PCC-MUTANT-M1", lambda: gate_mutant(
+        "M1", cv.project_convergence, mut_m1, "g002", fut, lambda h: "__raised__" in h))
+    run_gate("V-PCC-MUTANT-M2", lambda: gate_mutant(
+        "M2", cv.project_convergence, mut_m2, "g002", fut, lambda h: "failures" in h))
+    run_gate("V-PCC-MUTANT-M3", lambda: gate_mutant(
+        "M3", rc.decide, mut_m3, "g002", fut, lambda h: h.split("/")[1:2] == ["decide"] or "decide" in h))
+    run_gate("V-PCC-MUTANT-M4", lambda: gate_mutant(
+        "M4", cv.project_convergence, mut_m4, "syn_carry", [],
+        lambda h: "decide" in h or "obligations" in h))
+
+    def clean():
+        golden = load_golden()
+        if golden is None:
+            return False, "golden absent"
+        res = [compare_scenario(n, scenario_raw(n), golden) for n in ("g002", "syn_carry")]
+        return all(r[0] for r in res), "; ".join(r[1] for r in res)
+    run_gate("V-PCC-CLEAN-AFTER-MUTANTS", clean)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--capture", action="store_true")
@@ -705,6 +1031,7 @@ def main() -> int:
     live_before = grb.fingerprint(LIVE_STATE)
     gates_fixture()
     gates_replay()
+    gates_seam()
 
     def live_untouched():
         after = grb.fingerprint(LIVE_STATE)
