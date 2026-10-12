@@ -144,7 +144,7 @@ def main(argv=None) -> int:
     os.makedirs(args.workdir, exist_ok=True)
     cps = {int(x) for x in args.checkpoints.split(",") if x}
     sess = Session(args, None)
-    epoch, pts = 1, []
+    epoch, pts, starts = 1, [], []
     t0 = time.time()
     with open(args.out, "a") as out:
         for k in range(1, args.turns + 1):
@@ -174,12 +174,20 @@ def main(argv=None) -> int:
                     sess = Session(args, sid)
                     sess.turn("resume check", args.timeout)
                     epoch += 1
+                    s = sample(sess.p.pid)
+                    starts.append((epoch, s["main"].get("RssAnon", 0)))
                     out.write(json.dumps({"mode": "recycle", "event": "epoch", "epoch": epoch, "sid_in": sid,
                                           "sid_out": sess.sid, "resume_s": round(time.time() - r0, 3),
-                                          **sample(sess.p.pid)}) + "\n")
-        out.write(json.dumps({"fit": fit(pts), "mode": args.mode, "turns": args.turns, "epochs": epoch}) + "\n")
+                                          **s}) + "\n")
+        # Generation-over-generation drift: RssAnon right after each resume vs epoch index.
+        # The in-epoch fit mixes mid-epoch and end-of-epoch points; this one does not.
+        drift = fit(starts)
+        drift = {"n": drift["n"], "mb_per_epoch": None if drift["slope_mb_per_100_turns"] is None
+                 else round(drift["slope_mb_per_100_turns"] / 100, 2)}
+        out.write(json.dumps({"fit": fit(pts), "epoch_start_drift": drift, "mode": args.mode,
+                              "turns": args.turns, "epochs": epoch}) + "\n")
     sess.end()
-    print(json.dumps({"fit": fit(pts), "epochs": epoch}), flush=True)
+    print(json.dumps({"fit": fit(pts), "epoch_start_drift": drift, "epochs": epoch}), flush=True)
     return 0
 
 
