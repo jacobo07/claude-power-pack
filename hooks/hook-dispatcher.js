@@ -86,6 +86,8 @@ const EVENT_MAP = {
     // siguientes -- cambia un error ruidoso por una pantalla muerta nueva.
     // El aviso de contexto lleva muerto desde que se registro aqui. Si se quiere
     // de vuelta, va en un carril SPAWN (CHAIN_MAP), que es su contrato real.
+    // CDC C4: semantic breaker (counts progress-free calls of BOUND sessions; unbound = one failed read).
+    '../skills/claude-power-pack/hooks/semantic_breaker.js',
     './session-logger.js',
     './dna-flywheel.js',
     './trace-emitter.js',
@@ -110,14 +112,14 @@ const EVENT_MAP = {
   // tools/mission_spend.py. Opt-in: one failed read unless a session-budget-<sid>.json
   // exists. In-process for the reason above -- a new spawn per tool call is the hang.
   // Pinned: tools/test_session_budget_guard.py.
-  'PreToolUse-Bash-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
-  'PreToolUse-Edit-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
-  'PreToolUse-Read-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js'],
+  'PreToolUse-Bash-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js', '../skills/claude-power-pack/hooks/semantic_breaker.js'],
+  'PreToolUse-Edit-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js', '../skills/claude-power-pack/hooks/semantic_breaker.js'],
+  'PreToolUse-Read-default': ['./turn-boundary-breadcrumb.js', '../skills/claude-power-pack/hooks/session_budget_guard.js', '../skills/claude-power-pack/hooks/semantic_breaker.js'],
   // Agent lane (2026-10-07, vault/specs/goal-budget-admission.md): in GOAL mode an Agent is a child
   // spend reserved from the goal BEFORE launch (A1: 42.3M against a 20M cap, nothing checked first).
   // Registered directly as --event=PreToolUse-Agent-default on matcher Task|Agent (Owner step, HR-001:
   // vault/OWNER_QUEUE.md). Inert for sessions bound to no goal and with no session budget.
-  'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js', '../skills/claude-power-pack/hooks/cognitive_admission.js'],
+  'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js', '../skills/claude-power-pack/hooks/cognitive_admission.js', '../skills/claude-power-pack/hooks/semantic_breaker.js'],
   // In-process (require-based) bundles only. The Stop event is handled by
   // CHAIN_MAP below instead: those hooks are heterogeneous (one is Python)
   // and not all export run(), so they run as sequential CHILD processes
