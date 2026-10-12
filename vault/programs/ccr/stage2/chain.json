@@ -27,7 +27,11 @@
                       "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\WU-W1.md",
                       "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\route-M.json",
                       "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\WU-W1-receipt.md",
-                      "after":  "M1"
+                      "after":  "M1",
+                      "accept":  [
+                                     "DONE",
+                                     "DONE_WITH_LIMITS"
+                                 ]
                   },
                   {
                       "id":  "V1",
