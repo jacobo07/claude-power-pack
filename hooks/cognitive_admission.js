@@ -129,4 +129,17 @@ if (require.main === module) {
   });
 }
 
-module.exports = { decide, phash, normEffect, noWork };
+// Dispatcher contract (PreToolUse-Agent-default chain calls mod.run(data)); same verdict as the CLI path.
+function run(ev) {
+  try {
+    const sw = String(process.env.CPP_COG_ADMISSION || '').trim().toLowerCase();
+    if (sw === '0' || sw === 'off' || sw === 'false') return null;
+    const r = decide(ev || {}, Date.now());
+    log(ev && ev.session_id, r.unit, r.effect, r.deny ? 'deny' : 'allow', r.reason, r.h);
+    if (r.deny) return { hookSpecificOutput: { hookEventName: 'PreToolUse',
+      permissionDecision: 'deny', permissionDecisionReason: `COGNITIVE ADMISSION -- ${r.deny}` } };
+  } catch (e) { /* fail open */ }
+  return null;
+}
+
+module.exports = { run, decide, phash, normEffect, noWork };
