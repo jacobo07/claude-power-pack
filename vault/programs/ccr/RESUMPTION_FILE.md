@@ -18,11 +18,14 @@
 - SPEND: this pane measured 27.9M processed over 144 calls (avg ctx ~194K) and was settled to goal ccr. The interactive
   coordinator pane runs CCR main=shadow, so it got none of the savings it built: self-hosting failed for the coordinator.
 
-**Active decisions.** No Stage 2 spend without a re-forecast and capital: remaining authority after the settle is ~3-4M.
-Stage 2 must not run in an interactive pane; run it as a declared Work Unit (projection enforce, lean floor).
+**Active decisions.** CAPITAL APPLIED 2026-10-12 (Owner `approve`, packet sha 15748a91, approval 7703dccb): programme
+76,880,000; lease L1 closed at 34,022,521; **lease L2 open, cap 40,000,000, succession ccr:D:r2**. Scope = Stage 2 items
+(1)-(7) of the packet only. Stop-losses: coordinator-pane spend on ccr > 3M after apply -> Owner; a unit > 1.5x its P50
+twice -> Owner; no release mid-Madzia-attempt. Stage 2 must not run in an interactive pane; run it as declared Work
+Unit workers (projection enforce, lean floor).
 
 **Next 3 actions.**
-1. Owner decides capital for Stage 2 (E1 epoch economics with cw, M1 tiny continuation, V1 canary, X1 certify).
+1. Compile Stage 2 Work Units (one per scope item, P50 row each) and launch them via gsd_mission, bound to goal ccr / L2.
 2. Release (`tools/ccr_release.py`) M1-M3 + v4 B5/B6 at a Madzia driver boundary, not mid-attempt. Units get
    projection enforce by default, so check whether the Madzia worker declares `CCR_WORK_UNIT` first.
 3. Wire the pre-launch contract (`tools/ccr_pgo.py contract`) into `gsd_mission` launch admission (Economic bridge).
