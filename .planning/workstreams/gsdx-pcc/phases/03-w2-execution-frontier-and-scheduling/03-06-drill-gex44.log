@@ -125,3 +125,9 @@ FAIL V-FRONTIER-HARVEST-NOT-HIDDEN legacy=WAIT frontier=NEXT_EPOCH:False
 GSDX_FRONTIER_PASS=38/39  threshold=39/39
 MUTANT KILLED gate=V-FRONTIER-HARVEST-NOT-HIDDEN
 rc=0
+
+--- Linux plane (GEX44), reported by the coordinator, HEAD 298ba2c6 ---
+9 runs of tools/test_gsd_x_goal_frontier.py (3 sequential, 6 in parallel under load): all rc=0, every run GSDX_FRONTIER_PASS=40/40  threshold=40/40
+V-FRONTIER-SWEEP-BOUND: WALL_CLOCK over 5 ready -> 4 open=4 in all 9 runs
+V-FRONTIER-SWEEP-EARLY-FINISH: old fixture under a slow pass dispatched=1, blocking fixture dispatched=3 (confirms the HARVEST timing hypothesis)
+Not run on the laptop (RAM about 2.5 GB free; two local runs were killed for low memory).
