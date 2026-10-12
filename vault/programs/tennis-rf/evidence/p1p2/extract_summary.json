@@ -1,0 +1,52 @@
+{
+ "n_rows": 1797,
+ "program_functions": 18820,
+ "size_mismatch": [],
+ "roles": {
+  "UNKNOWN": 1615,
+  "LEAF_ACCESSOR": 65,
+  "TAILCALL_THUNK": 111,
+  "UNREACHABLE": 6
+ },
+ "role_all": {
+  "LEAF_ACCESSOR": 65,
+  "TAILCALL_THUNK": 111,
+  "UNREACHABLE": 6
+ },
+ "roles_not_emitted": {
+  "CTOR_SHAPE": "no rule proven: the corpus has 0 __ct__ symbols to validate a shape rule against (A1)",
+  "DTOR_SHAPE": "no rule proven: the corpus has 0 __dt__ symbols to validate a shape rule against (A1)"
+ },
+ "role_rules": {
+  "TAILCALL_THUNK": "size_insns <= 2 AND last insn is `b <symbol>` to a non-local target",
+  "LEAF_ACCESSOR": "size_insns <= 4 AND last insn blr AND no other branch/call AND exactly one D-form load/store AND its base register is r3",
+  "UNREACHABLE": "no bl/b from any of the 18,820 program functions AND 0 `.4byte` words naming it in any data/rodata/sdata/sdata2/init object AND 0 @ha/@l/@sda21 code operands naming it AND 0 jump-table words naming it from another function's table"
+ },
+ "idiom_functions": {
+  "switch_jump_table": 12,
+  "bool_from_compare": 53,
+  "float_to_int": 53,
+  "struct_copy": 47,
+  "vtable_call": 191,
+  "ptmf_call": 17,
+  "stack_guard_prolog": 1032
+ },
+ "idiom_hits_total": {
+  "switch_jump_table": 12,
+  "bool_from_compare": 70,
+  "float_to_int": 109,
+  "struct_copy": 71,
+  "vtable_call": 410,
+  "ptmf_call": 17,
+  "stack_guard_prolog": 1032
+ },
+ "idiom_program_functions": {
+  "switch_jump_table": 172,
+  "bool_from_compare": 414,
+  "float_to_int": 327,
+  "struct_copy": 363,
+  "vtable_call": 1236,
+  "ptmf_call": 66,
+  "stack_guard_prolog": 8949
+ }
+}

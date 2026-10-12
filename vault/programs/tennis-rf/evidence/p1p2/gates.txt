@@ -1,0 +1,10 @@
+PASS V-P1P2-FACTS-ROWS rows=1797
+PASS V-P1P2-ROLE-RULES labelled=['LEAF_ACCESSOR', 'TAILCALL_THUNK', 'UNREACHABLE'] missing_rule=[]
+FAIL V-P1P2-IDIOM-EXAMPLES idioms_test.txt ABSENT (needs >=1 positive and >=1 negative asm example per idiom: switch_jump_table,bool_from_compare,float_to_int,struct_copy,vtable_call,ptmf_call,stack_guard_prolog)
+PASS V-P1P2-RED-DATA_FAMILY verdict=PROVEN
+FAIL V-P1P2-RED-STRUCTURAL_FAMILY verdict=INCONCLUSIVE
+PASS V-P1P2-RED-MOTIFS verdict=PROVEN
+PASS V-P1P2-SHOCK-REPRODUCE {"ctx_clean_sets_equal": true, "ctx_sha_equal": true, "noctx_clean_sets_equal": true, "noctx_sha_equal": true}
+PASS V-P1P2-CLEAN-FIELD-LIVE facts clean=True count 276 == knowledge_shock clean_after 276 (the predicate can say yes)
+PASS V-P1P2-W12-NO-REGRESSION ids=22 not_clean=[]
+P1P2_GATES=7/9

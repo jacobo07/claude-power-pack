@@ -1,0 +1,276 @@
+{
+ "note": "data only; no hypothesis is resolved",
+ "hypotheses": [
+  {
+   "rank": 1,
+   "key": "HELPER:fn_800B4508",
+   "n_functions": 89,
+   "hypotheses": {
+    "arity_at_call_sites": {
+     "gpr_args_set=1 fpr_args_set=0": 78,
+     "gpr_args_set=3 fpr_args_set=0": 14,
+     "gpr_args_set=4 fpr_args_set=0": 5,
+     "gpr_args_set=2 fpr_args_set=0": 26,
+     "gpr_args_set=5 fpr_args_set=0": 3,
+     "gpr_args_set=6 fpr_args_set=0": 3,
+     "gpr_args_set=7 fpr_args_set=0": 3,
+     "gpr_args_set=8 fpr_args_set=0": 1,
+     "gpr_args_set=5 fpr_args_set=8": 1
+    },
+    "return_use_at_call_sites": {
+     "r3_read_after_call": 134
+    }
+   },
+   "callee_body_evidence": {
+    "callee_size": 3,
+    "callee_args_read_before_write": [],
+    "callee_writes_before_blr": []
+   },
+   "discriminator": {
+    "fn": "fn_800B4508",
+    "size": 3,
+    "why": "the callee's own body fixes its parameter reads and return register"
+   }
+  },
+  {
+   "rank": 2,
+   "key": "M2C:unknown instruction cror",
+   "n_functions": 67,
+   "hypotheses": {
+    "note": "tool-side or per-function blocker: no type hypothesis is admitted by the asm"
+   },
+   "discriminator": {
+    "fn": "fn_8022F618",
+    "size": 16,
+    "why": "smallest dependent"
+   }
+  },
+  {
+   "rank": 3,
+   "key": "HELPER:fn_801CD7D0",
+   "n_functions": 64,
+   "hypotheses": {
+    "arity_at_call_sites": {
+     "gpr_args_set=3 fpr_args_set=0": 64,
+     "gpr_args_set=3 fpr_args_set=1": 1,
+     "gpr_args_set=5 fpr_args_set=0": 1
+    },
+    "return_use_at_call_sites": {
+     "no_return_use_seen": 66
+    }
+   },
+   "callee_body_evidence": {
+    "callee_size": 8,
+    "callee_args_read_before_write": [
+     "r3",
+     "r4"
+    ],
+    "callee_writes_before_blr": []
+   },
+   "discriminator": {
+    "fn": "fn_801CD7D0",
+    "size": 8,
+    "why": "the callee's own body fixes its parameter reads and return register"
+   }
+  },
+  {
+   "rank": 4,
+   "key": "HELPER:fn_801CD868",
+   "n_functions": 56,
+   "hypotheses": {
+    "arity_at_call_sites": {
+     "gpr_args_set=1 fpr_args_set=0": 39,
+     "gpr_args_set=3 fpr_args_set=1": 3,
+     "gpr_args_set=3 fpr_args_set=0": 5,
+     "gpr_args_set=2 fpr_args_set=0": 10,
+     "gpr_args_set=2 fpr_args_set=2": 4,
+     "gpr_args_set=7 fpr_args_set=3": 1,
+     "gpr_args_set=3 fpr_args_set=2": 1,
+     "gpr_args_set=4 fpr_args_set=1": 3
+    },
+    "return_use_at_call_sites": {
+     "no_return_use_seen": 66
+    }
+   },
+   "callee_body_evidence": {
+    "callee_size": 5,
+    "callee_args_read_before_write": [
+     "r3"
+    ],
+    "callee_writes_before_blr": []
+   },
+   "discriminator": {
+    "fn": "fn_801CD868",
+    "size": 5,
+    "why": "the callee's own body fixes its parameter reads and return register"
+   }
+  },
+  {
+   "rank": 5,
+   "key": "M2C_FAILED:Cannot find branch target #",
+   "n_functions": 52,
+   "hypotheses": {
+    "note": "tool-side or per-function blocker: no type hypothesis is admitted by the asm"
+   },
+   "discriminator": {
+    "fn": "fn_80216480",
+    "size": 4,
+    "why": "smallest dependent"
+   }
+  },
+  {
+   "rank": 6,
+   "key": "HELPER:fn_800B32F8",
+   "n_functions": 45,
+   "hypotheses": {
+    "arity_at_call_sites": {
+     "gpr_args_set=4 fpr_args_set=0": 28,
+     "gpr_args_set=3 fpr_args_set=0": 19,
+     "gpr_args_set=8 fpr_args_set=2": 1
+    },
+    "return_use_at_call_sites": {
+     "no_return_use_seen": 48
+    }
+   },
+   "callee_body_evidence": {
+    "callee_size": 80,
+    "callee_args_read_before_write": [
+     "f1",
+     "f2",
+     "f3",
+     "f4",
+     "f5",
+     "f6",
+     "f7",
+     "f8",
+     "r3",
+     "r4",
+     "r5",
+     "r6",
+     "r7",
+     "r8",
+     "r9",
+     "r10"
+    ],
+    "callee_writes_before_blr": []
+   },
+   "discriminator": {
+    "fn": "fn_800B32F8",
+    "size": 80,
+    "why": "the callee's own body fixes its parameter reads and return register"
+   }
+  },
+  {
+   "rank": 7,
+   "key": "HELPER:fn_801D022C",
+   "n_functions": 43,
+   "hypotheses": {
+    "arity_at_call_sites": {
+     "gpr_args_set=7 fpr_args_set=0": 4,
+     "gpr_args_set=5 fpr_args_set=0": 33,
+     "gpr_args_set=6 fpr_args_set=0": 6,
+     "gpr_args_set=5 fpr_args_set=1": 1,
+     "gpr_args_set=8 fpr_args_set=0": 2
+    },
+    "return_use_at_call_sites": {
+     "no_return_use_seen": 46
+    }
+   },
+   "callee_body_evidence": {
+    "callee_size": 114,
+    "callee_args_read_before_write": [],
+    "callee_writes_before_blr": []
+   },
+   "discriminator": {
+    "fn": "fn_801D022C",
+    "size": 114,
+    "why": "the callee's own body fixes its parameter reads and return register"
+   }
+  },
+  {
+   "rank": 8,
+   "key": "HELPER:fn_801CCE78",
+   "n_functions": 40,
+   "hypotheses": {
+    "arity_at_call_sites": {
+     "gpr_args_set=1 fpr_args_set=0": 33,
+     "gpr_args_set=4 fpr_args_set=1": 2,
+     "gpr_args_set=4 fpr_args_set=2": 1,
+     "gpr_args_set=3 fpr_args_set=2": 1,
+     "gpr_args_set=1 fpr_args_set=2": 1,
+     "gpr_args_set=2 fpr_args_set=0": 2,
+     "gpr_args_set=5 fpr_args_set=0": 1,
+     "gpr_args_set=3 fpr_args_set=1": 1
+    },
+    "return_use_at_call_sites": {
+     "no_return_use_seen": 42
+    }
+   },
+   "callee_body_evidence": {
+    "callee_size": 79,
+    "callee_args_read_before_write": [
+     "r3"
+    ],
+    "callee_writes_before_blr": []
+   },
+   "discriminator": {
+    "fn": "fn_801CCE78",
+    "size": 79,
+    "why": "the callee's own body fixes its parameter reads and return register"
+   }
+  },
+  {
+   "rank": 9,
+   "key": "HELPER:fn_801BFF60",
+   "n_functions": 39,
+   "hypotheses": {
+    "arity_at_call_sites": {
+     "gpr_args_set=3 fpr_args_set=0": 36,
+     "gpr_args_set=5 fpr_args_set=0": 2,
+     "gpr_args_set=6 fpr_args_set=0": 1,
+     "gpr_args_set=4 fpr_args_set=0": 1
+    },
+    "return_use_at_call_sites": {
+     "r3_read_after_call": 39,
+     "no_return_use_seen": 1
+    }
+   },
+   "callee_body_evidence": {
+    "callee_size": 19,
+    "callee_args_read_before_write": [
+     "r5"
+    ],
+    "callee_writes_before_blr": []
+   },
+   "discriminator": {
+    "fn": "fn_801BFF60",
+    "size": 19,
+    "why": "the callee's own body fixes its parameter reads and return register"
+   }
+  },
+  {
+   "rank": 10,
+   "key": "HELPER:fn_801CDA9C",
+   "n_functions": 39,
+   "hypotheses": {
+    "arity_at_call_sites": {
+     "gpr_args_set=4 fpr_args_set=0": 2,
+     "gpr_args_set=3 fpr_args_set=0": 38
+    },
+    "return_use_at_call_sites": {
+     "r3_read_after_call": 40
+    }
+   },
+   "callee_body_evidence": {
+    "callee_size": 142,
+    "callee_args_read_before_write": [],
+    "callee_writes_before_blr": []
+   },
+   "discriminator": {
+    "fn": "fn_801CDA9C",
+    "size": 142,
+    "why": "the callee's own body fixes its parameter reads and return register"
+   }
+  }
+ ]
+}

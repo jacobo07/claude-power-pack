@@ -13,3 +13,16 @@ Seed 20261012, W5a method (evidence/w12/draw.py, draw.json). Pool = W3 sample60 
 Clean: fn_80203E40 fn_8032CF78 fn_80230ABC fn_8027A154 fn_802128D4 fn_8021F8BC
 Few: fn_80230BF8 fn_803315A0 fn_80279E44 fn_80278FEC fn_8021F3E4 fn_80253348
 W12 set = these 12 + the 12 W5a functions (W11: 10 lint-clean, 2 excluded UNK_FIELD).
+## W12 compile-verified rates (job 3 ksrmb-20261012-171117, judged 2026-10-12 17:24Z; closed by TRF-C from the ledger)
+Source: `wst_tennis\w10\F\candidate_ledger.jsonl`, 42 rows naming job 3; `python evidence/w12/records.py <ledger>` ->
+`evidence/w12/measure/records.jsonl` (24 rows). Layer M2C_TENNIS_CONTEXT = m2c output + W12 Tennis context header +
+presets O4p/O2, NO model step (model_calls 0 per function). Oracle: 3/3 donor controls MATCH.
+| group | n drawn | sent | MATCH | PARTIAL | FAIL | excluded |
+|---|---|---|---|---|---|---|
+| clean (ut=0) | 12 | 10 | 6 | 4 | 0 | 2 (lint UNK_FIELD) |
+| few (ut 1-2) | 12 | 12 | 6 | 5 | 1 (BLOCKED_CONTEXT fn_80252F34) | 0 |
+| all | 24 | 22 | 12 | 9 | 1 | 2 |
+Verified rate: 12/22 sent (n=22), 12/24 drawn (n=24). Exact-match units by preset: O4p 12, O2 5 (every O2 match also
+matched at O4p). Versus W10c (no Tennis context): 0/12 -> the context header is the lever. Tokens per function: UNKNOWN
+(one shared worker session, 3,453,372 processed, 52 model calls, for prep + build + send + judge of the whole set).
+Correction: the W12 worker's final message said 14 MATCH; the ledger has 12.
