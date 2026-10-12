@@ -1,0 +1,1 @@
+{"envelope":{"target":5200000,"warn":5350000,"stop":5500000,"calls":45},"workers":[{"name":"dgl-W3","profile":"top-level-worker","calls":36,"packet":7500}]}
