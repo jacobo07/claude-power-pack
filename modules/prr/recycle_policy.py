@@ -145,6 +145,14 @@ def _claude_ancestor():
     return None, None
 
 
+def mem_fields(mem) -> dict:
+    """Private bytes exist only on Windows. Elsewhere private_mb is None, never vms: on GEX44 the
+    old fallback reported 5.4 GB of virtual size as "private" for a 128 MB process."""
+    private = getattr(mem, "private", None)
+    return {"private_mb": None if private is None else round(private / 2**20, 1),
+            "wset_mb": round(getattr(mem, "wset", mem.rss) / 2**20, 1)}
+
+
 def _receipt(rec: dict) -> None:
     RECEIPTS.parent.mkdir(parents=True, exist_ok=True)
     with open(RECEIPTS, "a", encoding="utf-8") as fh:
@@ -163,10 +171,8 @@ def run_hook(payload: dict, mode: str) -> dict:
         if payload.get("source") == "clear":
             rec["marker"] = str(mark_clear(proc.pid, proc.create_time(), payload.get("session_id")))
         return rec
-    mem = proc.memory_info()
     rec.update(pid=proc.pid, proc_age_h=round((time.time() - proc.create_time()) / 3600, 3),
-               private_mb=round(getattr(mem, "private", getattr(mem, "vms", 0)) / 2**20, 1),
-               wset_mb=round(getattr(mem, "wset", mem.rss) / 2**20, 1), wrapper=has_wrapper)
+               **mem_fields(proc.memory_info()), wrapper=has_wrapper)
     tp = Path(payload.get("transcript_path") or "")
     d = decide(proc_start=proc.create_time(),
                boundary_ts=last_boundary_ts(tp) if tp.is_file() else None,

@@ -924,3 +924,28 @@ Decisions on the two drifts, neither applied:
 
 **Final programme metric:** not number of frameworks, playbooks, genomes or datasets. The proof is whether a fresh future feature/reconstruction/change begins closer to READY, requires less raw evidence/context/general cognition, reaches equal-or-better quality faster, and leaves more reusable institutional capital than its predecessor.
 
+## D28 — prr Physical Runtime Working Set: the rest of the programme (Owner, 2026-10-12)
+
+**Origin:** goal `prr`, worktree `C:\Users\User\Apps\pp-prr`, branch `prr/main`. Plan
+`vault/plans/prr-physical-working-set-2026-10-12.md`; state `vault/programs/prr/RESUMPTION_FILE.md`. Capital: packet
+`prr-l2-successor-20m-2026-10-12` (ceiling 38M, lease L2 20M, expires 2026-10-14). Proven on GEX44 only: compaction
+then process recycle (`--resume <sid>`) bounds resident memory; the real `recycle_policy` hook decides once per boundary
+with no loop (evidence A1, B, C, D under `vault/programs/prr/evidence/`).
+
+**Units, in order:**
+1. **Windows act-path canary.** Gate: laptop Available >= 4 GB (`python -m modules.prr.census`; 3.33 GB free at
+   2026-10-12 evening, so not run). One kclaude pane in the worktree with `CPP_PRR_RECYCLE=act`; ~10 tool turns,
+   `/compact`; expect a receipt RECYCLE with `acted: true`, the pane relaunching `--resume` with the same sid, private
+   bytes near the fresh floor. Repeat with `/clear`. First run of `restart-claude.ps1` under the policy.
+2. **Epoch-start drift.** D measured +4.5 MB/epoch for compact (n=3) against C's +0.27 (n=8). Report it from the
+   Windows canary, and rerun the GEX44 compact policy canary for >= 10 epochs before calling it zero or real.
+3. **Fleet observe ring** (plan rows S/T): receipts only, through the PP dispatcher, no action. Then the act ring, by
+   Owner word only.
+4. **Resource PGO** (plan row R): append-only profile ledger.
+5. **Knowledge** (plan row U): UKDL/CBR candidates: compact != RAM reclaim; recycle needs a boundary inside the
+   process; completed subagents stay resident; the memory note naming V8 is the wrong engine (Bun/JSC).
+
+**Never:** merge `prr/main` into main without the Owner's decision; act on panes this programme did not start; raise any
+other goal from this programme. Destructive recycling only after a boundary crossed inside the process.
+
+**Activation criterion:** unit 1 when the census shows >= 4 GB Available; units 2-5 any time inside lease L2.
