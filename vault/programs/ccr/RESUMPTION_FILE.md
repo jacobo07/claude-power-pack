@@ -24,11 +24,18 @@ image figure; re-rank it on measured shares). Rotation (B) vs in-place rebuild (
 in-place text projection has no safe liveness signal (NO_WORK). ~0.73M of a3's text carry is invisible in the
 stream (likely carried thinking); row receipts now count `thinking`/`sealed`. The lever is epoch length (arm B).
 
+**M4 (a4/a5, 2026-10-12).** Owner ruled phase 2 head-only; driver relaunched ON THE LAPTOP (pid 13924), a4
+accepted (2.22M), a5 1.90M, a6 running. Shell results 32-38 %; one call-2 recursive listing of the runs tree is
+up to 0.30-0.34M tok per attempt (14-18 %), more than all image carry. Owner says Madzia moves to GEX44: dev mod
+staged and proven there (`/home/kobii/ccr-dev/cpp-cognitive-runtime`, smoke d670c760 ctx == usage).
+
 **Next 3 actions.**
-1. Arm B at the next Madzia driver run (after the Owner's phase-2 strategy decision; driver stopped at
-   `OWNER_STRATEGY`): driver reads `<ccr state>/advice/<sid>.json` and rotates with a successor ContextImage;
-   compare tokens per accepted transition + reviewer verdict vs a2/a3 (A baseline, no re-run).
-2. With the dev mod loaded on that run, read the live `thinking`/`sealed` row receipts to close the 0.73M gap.
+1. Driver owner (not this pane while the driver is live): ContextImage lists prior-attempt evidence paths, no
+   runs-tree listing. Gate: a7+ call-2 shell result < 2K chars; processed/attempt vs a4/a5 at reviewer parity.
+2. On the GEX44 driver: worker gets `--plugin-dir /home/kobii/ccr-dev/cpp-cognitive-runtime`; arm B = driver
+   reads `.state-dev/advice/<sid>.json` and rotates with a successor ContextImage. Read live `thinking`/`sealed`
+   receipts there to close the 0.73M gap. Linux worker needs `Bash`, not `PowerShell`, in `--tools`.
 3. Release M1-M3 (`tools/ccr_release.py`) only after that canary.
 
-**Start.** `python tools/mission_spend.py goal-status --goal ccr`, then action 1.
+**Start.** `python tools/mission_spend.py goal-status --goal ccr`; check where the Madzia driver runs
+(laptop `boundary.py` process vs GEX44), then action 1 or 2.

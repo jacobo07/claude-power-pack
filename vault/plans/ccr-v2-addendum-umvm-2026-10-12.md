@@ -61,6 +61,21 @@ the dominant rent (negative knowledge, do not reopen without new evidence).
   calls 1-5) ride the whole epoch and are plausibly live. NO_WORK for text projection on this evidence.
 - So the lever on the dominant rent is epoch length (arm B: driver-owned rotation fed by the CCR advice), not GC.
 
+## Phase 2 after the Owner's head-only ruling (a4, a5; measured 2026-10-12 while a6 runs)
+- Driver relaunched on the laptop (boundary.py pid 13924, 11:57), not on GEX44. a4 ACCEPTED (reviewer
+  improved_vs_best true): 33 calls, 2,222,310 tok. a5: 32 calls, 1,902,729 tok. Image 7.5 % / 8.3 %.
+- New top kind: shell results 37.8 % / 32.2 % (`carry_by_kind.py`). `evidence/shell_results.py` ranks them: one
+  orientation command at call 2, `Get-ChildItem runs/madzia_p2r4_20261011 -Recurse | Format-Table`, is 18,149 /
+  22,506 chars riding 31 / 30 calls = 49 % / 66 % of shell carry, and it grows each attempt. ctx jump c2->c3 is
+  10,525 / 11,213 tok (upper bound for the listing), so up to ~0.30-0.34M tok per attempt (14-18 %): more than all
+  image carry (166,550 / 158,517). a2/a3 never ran it; it started with the head-only brief (KSR 6c0d0f8), which
+  points at evidence under runs/<attempt>/ without listing it.
+- Lever (driver-owned, ContextImage compiler in KSR boundary.py; not mutated while the driver is live): list the
+  exact prior-attempt evidence paths in the image and say the runs tree need not be listed. Zero runtime code.
+  Measured gate: a7+ call-2 shell result < 2K chars and processed per attempt vs a4/a5 at reviewer parity.
+- Dev mod staged on GEX44 at /home/kobii/ccr-dev/cpp-cognitive-runtime (2.1.296, validate rc 0). Smoke sid
+  d670c760: mod ctx sum 111,094 == provider usage 111,094; 512x512 image 350 tok, re-read counted again.
+
 ## Liveness model (maps to UCVM AVAILABLE -> LINKED -> RESIDENT -> MATERIALIZED)
 | State | Meaning | Where it lives |
 |---|---|---|
