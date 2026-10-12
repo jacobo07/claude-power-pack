@@ -19,6 +19,10 @@
       "class": "LIBRARY",
       "note": "goal prr B: long-lived session memory curve driver (plain/compact/recycle), Linux /proc plane. Proven by tests/test_prr_bench.py."
     },
+    "prr/recycle_policy": {
+      "class": "LIBRARY",
+      "note": "goal prr O: Stop/SessionStart hook entry deciding physical epoch recycling (observe by default, act via CPP_PRR_RECYCLE=act -> scripts/restart-claude.ps1). Hook registration is canary-ring scoped (pp-prr project settings) until the Windows canary passes. Proven by tests/test_prr_recycle_policy.py."
+    },
     "prr/census": {
       "class": "LIBRARY",
       "note": "goal prr A0 (2026-10-12): read-only memory census, CLI `python -m modules.prr.census`. Consumer wiring (ram_guard / pressure controller) is workstream L of vault/plans/prr-physical-working-set-2026-10-12.md. Proven by tests/test_prr_census.py."
