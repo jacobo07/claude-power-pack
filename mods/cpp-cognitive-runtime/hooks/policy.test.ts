@@ -71,6 +71,13 @@ test('a tool_result row is split into text bytes and hashed images; the same byt
   expect(rowFacts([{ type: 'text', text: 'hello' }]).images).toEqual([])
 })
 
+test('thinking is counted apart from text, and its sealed signature bytes are counted, not dropped', () => {
+  const f = rowFacts([{ type: 'thinking', thinking: 'abc', signature: 'x'.repeat(40) }, { type: 'redacted_thinking', data: 'y'.repeat(7) }, { type: 'text', text: 'hi' }])
+  expect(f.thinking).toBe(3)
+  expect(f.sealed).toBe(47)
+  expect(f.text).toBe(2)
+})
+
 const file = (path: string, kind = 'user', content = '# Title\nbody') => ({ path, kind, content })
 
 test('a rule file with no Work-Class match is unlinked; the same file is linked when the prompt matches', () => {

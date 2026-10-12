@@ -217,10 +217,12 @@ export function imageTokens(w: number, h: number): number {
 }
 
 export type ImageFact = { hash: string; media: string | null; w: number | null; h: number | null; b64: number; tok: number | null }
-export type RowFacts = { text: number; images: ImageFact[] }
+// `thinking` counts visible thinking text; `sealed` counts signature / redacted bytes, the part of a carried
+// thinking block no text field shows (Madzia p4p2a3: 1.7K visible vs 129K signature chars over 38 blocks).
+export type RowFacts = { text: number; thinking: number; sealed: number; images: ImageFact[] }
 
 export function rowFacts(blocks: readonly unknown[]): RowFacts {
-  const f: RowFacts = { text: 0, images: [] }
+  const f: RowFacts = { text: 0, thinking: 0, sealed: 0, images: [] }
   const walk = (x: unknown) => {
     if (typeof x === 'string') { f.text += x.length; return }
     if (Array.isArray(x)) { x.forEach(walk); return }
@@ -229,6 +231,11 @@ export function rowFacts(blocks: readonly unknown[]): RowFacts {
     if (o.type === 'image' && typeof o.source?.data === 'string') {
       const d = imageDims(o.source.data)
       f.images.push({ hash: fnv(o.source.data), media: o.source.media_type ?? null, w: d?.w ?? null, h: d?.h ?? null, b64: o.source.data.length, tok: d ? imageTokens(d.w, d.h) : null })
+      return
+    }
+    if (o.type === 'thinking' || o.type === 'redacted_thinking') {
+      f.thinking += typeof o.thinking === 'string' ? o.thinking.length : 0
+      f.sealed += (typeof o.signature === 'string' ? o.signature.length : 0) + (typeof o.data === 'string' ? o.data.length : 0)
       return
     }
     if (typeof o.text === 'string') f.text += o.text.length

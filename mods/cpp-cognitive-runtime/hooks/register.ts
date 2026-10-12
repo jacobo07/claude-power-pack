@@ -214,7 +214,7 @@ export const register: Register = on => {
       }
       if (!e.agentId && f.images.length) for (const [use, imgs] of imagesByUse(m.content ?? [])) imageUses.set(use, imgs)
       receipt({ ev: 'row', agent: e.agentId ? agentTypes.get(e.agentId) ?? 'unknown' : null, door: e.door, role: m.role,
-        origin: (e.origin as any)?.kind ?? null, tool: (e.origin as any)?.tool ?? null, name: m.name ?? null, text: f.text, images: f.images })
+        origin: (e.origin as any)?.kind ?? null, tool: (e.origin as any)?.tool ?? null, name: m.name ?? null, text: f.text, thinking: f.thinking, sealed: f.sealed, images: f.images })
     } catch (err) {
       receipt({ ev: 'row.error', door: e.door, error: String(err).slice(0, 200) }) // the row is already stored; only the receipt is lost
     }

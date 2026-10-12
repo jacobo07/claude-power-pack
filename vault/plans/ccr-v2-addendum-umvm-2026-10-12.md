@@ -50,6 +50,17 @@ the dominant rent (negative knowledge, do not reopen without new evidence).
   Reviewers 45-52 % image but 43-60K total (correct pixel consumers). Text carry is the dominant rent.
 - Madzia driver stopped at `OWNER_STRATEGY` (phase 2: 3 hypotheses rejected): no canary until the Owner decides.
 
+## Text carry measured 2026-10-12 (`evidence/carry_by_kind.py`, `superseded_reads.py`)
+- Share of processed tokens, a3 / a2 / d6343597: floor 26.9/34.9/31.4 %, image 10.5/9.3/16.8 %, tool-result text
+  44.9/40.8/23.3 % (Read alone 32.7/26.9/12.6 %), tool_use input 15.7/13.0/27.7 %. Kind split is apportioned by
+  chars x rides and is an UPPER bound per kind: in a3 visible JSON explains ~1.78M of 2.52M text carry; ~0.73M is
+  not visible in the stream, most likely carried thinking (38 blocks: 1.7K visible chars, 129K signature chars).
+  The mod's row receipt now counts `thinking` and `sealed` bytes so live runs can attribute it.
+- Superseded Reads (same file and range read again later): **0 tokens** in a3 and a2. In-place text projection has
+  no safe liveness signal here; the orientation reads (build_kobiimii.py ranges, pipe.ps1, madzia.json, review.json,
+  calls 1-5) ride the whole epoch and are plausibly live. NO_WORK for text projection on this evidence.
+- So the lever on the dominant rent is epoch length (arm B: driver-owned rotation fed by the CCR advice), not GC.
+
 ## Liveness model (maps to UCVM AVAILABLE -> LINKED -> RESIDENT -> MATERIALIZED)
 | State | Meaning | Where it lives |
 |---|---|---|
