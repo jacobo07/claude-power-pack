@@ -346,6 +346,34 @@ export function projectToolOutput(text: string, fullPath: string, budget = PROJE
   return { action: 'project', kind: listing ? 'listing' : 'text', bytes: text.length, lines: lines.length, out: `${note}\n${body}` }
 }
 
+// Cognitive PGO (v4 B6): a Work-Class model built by tools/ccr_pgo.py from real transcripts. Only the fields the
+// hot path reads are typed; anything missing makes the model unusable, never a zero.
+export type ClassModel = { cls: string; n: number; floor: { p50: number; p80: number }; calls: { p50: number; p80: number }
+  slope: { p50: number; p80: number }; step: { p50: number; p95: number } }
+
+export function parseClassModel(text: string | null, cls: string): ClassModel | null {
+  if (!text) return null
+  try {
+    const m = JSON.parse(text)
+    const ok = m?.cls === cls && m.n > 0 && [m.floor?.p50, m.floor?.p80, m.calls?.p50, m.calls?.p80, m.slope?.p50, m.slope?.p80, m.step?.p95]
+      .every((v: unknown) => typeof v === 'number' && Number.isFinite(v))
+    return ok ? m as ClassModel : null
+  } catch { return null } // unparseable model file: no model, the boundary is unforecast
+}
+
+// processed(n) = n*floor + g*n*(n-1)/2: floor rent plus the carry the class's per-call growth implies.
+export function boundaryForecast(m: ClassModel): { p50: number; p80: number; calls: number } {
+  const proc = (g: number, n: number) => n * m.floor.p50 + g * n * (n - 1) / 2
+  return { p50: Math.round(proc(m.slope.p50, m.calls.p50)), p80: Math.round(proc(m.slope.p80, m.calls.p80)), calls: m.calls.p50 }
+}
+
+// A step (ctx growth between two calls) above the class P95 is an anomaly; its cost is the step times the calls it
+// is expected to ride. M4 measured: step 11,213 after call 2 against a P95 of 3,621, riding 30 calls = 336,390 tok.
+export function stepAnomaly(step: number, call: number, m: ClassModel): { anomaly: boolean; ratio: number; ridesLeft: number; costIfRides: number } {
+  const ridesLeft = Math.max(0, Math.round(m.calls.p80) - call)
+  return { anomaly: m.step.p95 > 0 && step > m.step.p95, ratio: m.step.p95 > 0 ? +(step / m.step.p95).toFixed(2) : 0, ridesLeft, costIfRides: step * ridesLeft }
+}
+
 export function pageLines(listing: string, query: string, limit = 40): string {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)
   const hits = listing.split('\n').filter(l => words.length === 0 || words.some(w => l.toLowerCase().includes(w)))

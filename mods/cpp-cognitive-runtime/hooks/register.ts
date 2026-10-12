@@ -2,8 +2,8 @@ import type { Register } from 'claude-code'
 import {
   COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
   carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
-  PROJECT_BUDGET_CHARS, PROJECT_TOOLS, projectToolOutput,
-  type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
+  PROJECT_BUDGET_CHARS, PROJECT_TOOLS, boundaryForecast, parseClassModel, projectToolOutput, stepAnomaly,
+  type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
 } from './policy'
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
@@ -31,6 +31,9 @@ const hotImages = new Map<string, { tok: number; since: number; n: number }>()
 let calls = 0
 let floor = 0
 let advised = false
+// Cognitive PGO (v4 B6): the declared unit's Work-Class model, if tools/ccr_pgo.py built one; the last call's ctx.
+let classModel: ClassModel | null = null
+let prevCtx = 0
 // Image results of the main loop by tool_use_id: what a pixel GC compaction can evict and name.
 const imageUses = new Map<string, ImageFact[]>()
 
@@ -114,6 +117,16 @@ export const register: Register = on => {
     catch { kernel = null } // missing kernel: the linkers keep the full instructions
     const unit = await loadUnit($)
     receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null })
+    // Semantic Cost Contract (v4 B4) for a declared unit: obligation, class, forecast. No model -> ADMIT_UNFORECAST:
+    // the cost is unknown, and the receipt says so instead of reporting a number nobody measured.
+    if (unit) {
+      let text: string | null = null
+      try { text = await $.fs.read(`${stateDir}/pgo/${unit.cls}.json`) } catch { text = null } // no model built for this class yet
+      classModel = parseClassModel(text, unit.cls)
+      const fc = classModel ? boundaryForecast(classModel) : null
+      receipt({ ev: 'contract', cls: unit.cls, obligation: unit.id, model_n: classModel?.n ?? 0, forecast: fc,
+        step_p95: classModel?.step.p95 ?? null, verdict: classModel ? 'ADMIT' : 'ADMIT_UNFORECAST' })
+    }
     $.ui.status(modes.main === 'off' ? 'CCR off'
       : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}${unit ? ` unit:${unit.cls}:${effective('unit')}` : ''}`)
     await $.tool.register({
@@ -300,7 +313,21 @@ export const register: Register = on => {
     let imageTok = 0
     for (const v of hotImages.values()) imageTok += v.tok
     const a = carryAdvice(floor, ctx, imageTok)
-    receipt({ ev: 'call', agent: null, call: calls, msgs: e.messageCount, ctx, out: u.output_tokens ?? 0, carry: a.carry, imageTok, rotate: a.rotate })
+    const step = prevCtx > 0 ? ctx - prevCtx : 0
+    prevCtx = ctx
+    receipt({ ev: 'call', agent: null, call: calls, msgs: e.messageCount, ctx, step, out: u.output_tokens ?? 0, carry: a.carry, imageTok, rotate: a.rotate })
+    // Intra-epoch governor (v4 B6): a step above the class P95 is named at the call that pays for it first, with the
+    // cost it will carry if it rides to the class's P80 length. Advice only: the driver that owns the epoch decides.
+    if (classModel && step > 0) {
+      const s = stepAnomaly(step, calls, classModel)
+      if (s.anomaly) {
+        receipt({ ev: 'anomaly', call: calls, step, p95: classModel.step.p95, ratio: s.ratio, ridesLeft: s.ridesLeft, costIfRides: s.costIfRides })
+        if (stateDir) {
+          try { await $.fs.write(`${stateDir}/advice/${sid}.anomaly.json`, JSON.stringify({ ts: Date.now(), sid, call: calls, step, ...s, verdict: 'INCIDENT' }, null, 1)) }
+          catch (err) { receipt({ ev: 'advice.error', error: String(err).slice(0, 200) }) }
+        }
+      }
+    }
     if (a.rotate && !advised && stateDir) {
       advised = true
       const images = [...hotImages.entries()].map(([hash, v]) => ({ hash, tok: v.tok, n: v.n, rides: calls - v.since }))
