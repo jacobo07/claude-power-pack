@@ -132,7 +132,7 @@ def main(argv=None) -> int:
     ap.add_argument("--model", default="claude-haiku-4-5")
     ap.add_argument("--turns", type=int, default=100)
     ap.add_argument("--checkpoints", default="1,10,25,50,100,150,200,250,300,400,500")
-    ap.add_argument("--mode", choices=["plain", "compact", "recycle", "compact_recycle"], default="plain")
+    ap.add_argument("--mode", choices=["plain", "compact", "recycle", "compact_recycle", "clear"], default="plain")
     ap.add_argument("--every", type=int, default=50)
     ap.add_argument("--warmup", type=int, default=25)
     ap.add_argument("--config-dir", required=True)
@@ -165,6 +165,8 @@ def main(argv=None) -> int:
             if args.every and k % args.every == 0 and k < args.turns:
                 if args.mode in ("compact", "compact_recycle"):
                     sess.turn("/compact", args.timeout)
+                if args.mode == "clear":
+                    sess.turn("/clear", args.timeout)
                 if args.mode in ("recycle", "compact_recycle"):
                     sid = sess.sid
                     sess.end()
