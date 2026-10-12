@@ -1,0 +1,57 @@
+{
+ "sid": "15ce3cbd-9dac-4a8e-9c5c-f06824ef08e4",
+ "t1": {
+  "rc": 0,
+  "calls": [
+   {
+    "ctx": 84957,
+    "cw": 28188,
+    "cr": 56767
+   },
+   {
+    "ctx": 89132,
+    "cw": 4175,
+    "cr": 84955
+   },
+   {
+    "ctx": 101672,
+    "cw": 12540,
+    "cr": 89130
+   }
+  ],
+  "answer": "OK"
+ },
+ "tc": {
+  "rc": 0,
+  "calls": [],
+  "answer": ""
+ },
+ "t2": {
+  "rc": 0,
+  "calls": [
+   {
+    "ctx": 97955,
+    "cw": 80256,
+    "cr": 17697
+   }
+  ],
+  "answer": "1. `# Cognitive Control Plane \u2014 ULTRA-PLAN (2026-10-02)`\n2. I can't say. The image read returned only a note that the image had left the context (2000x1278), so I never saw its pixels or its colours.\n3. No."
+ },
+ "gc": [
+  {
+   "ts": 1791800917836,
+   "sid": "15ce3cbd-9dac-4a8e-9c5c-f06824ef08e4",
+   "ev": "gc",
+   "trigger": "manual",
+   "before": 6,
+   "keptWhole": 0,
+   "evicted": [
+    {
+     "hash": "eadf59d7",
+     "tok": 3408
+    }
+   ],
+   "applied": true
+  }
+ ]
+}

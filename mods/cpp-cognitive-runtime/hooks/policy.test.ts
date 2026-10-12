@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
-  carryAdvice, imageDims, imageTokens, pageLines, parseWorkUnit, repoKey, rowFacts, subagentInstructions,
+  carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, repoKey, rowFacts, subagentInstructions,
 } from './policy'
 
 const B = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
@@ -36,6 +36,29 @@ test('rotate advice fires once carry above the floor reaches the floor, and spli
   expect(a.carry).toBe(14400)
   expect(a.textCarry).toBe(11400)
   expect(carryAdvice(0, 50000, 0).rotate).toBe(false) // no floor measured yet: no advice
+})
+
+test('pixel GC rebuilds messages before the window with a tombstone and keeps the window whole', () => {
+  // Arrange: an image read early, then a later read still in the live window
+  const img = { type: 'image', source: { type: 'base64', media_type: 'image/png', data: png(1500, 1000) } }
+  const images = imagesByUse([{ type: 'tool_result', tool_use_id: 'u1', content: [img] }])
+  const use = (id: string) => ({ role: 'assistant' as const, text: '', toolUses: [{ tool_use_id: id, tool: 'Read', input: {} }], handle: `a-${id}` })
+  const res = (id: string) => ({ role: 'user' as const, text: '', toolUses: [], toolResults: [{ tool_use_id: id, text: '', isError: false }], handle: `r-${id}` })
+  const msgs = [{ role: 'user' as const, text: 'go', toolUses: [], handle: 'p' }, use('u1'), res('u1'), use('u2'), res('u2')]
+  // Act
+  const plan = gcKeptSet(msgs, images, 2)
+  // Assert: the window moved back off the tool result, so u2's call and result stay whole together
+  expect(plan.keptWhole).toBe(2)
+  expect(plan.evicted.map(i => i.tok)).toEqual([2000])
+  expect(plan.messages![2].handle).toBeUndefined()
+  expect(plan.messages![2].toolResults![0].text).toContain('the read succeeded')
+  expect(plan.messages![3].handle).toBe('a-u2')
+  expect(plan.messages![4].handle).toBe('r-u2')
+})
+
+test('pixel GC has no plan when nothing before the window carries an image', () => {
+  const msgs = [{ role: 'user' as const, text: 'go', toolUses: [], handle: 'p' }]
+  expect(gcKeptSet(msgs, new Map(), 2).messages).toBe(null)
 })
 
 test('a tool_result row is split into text bytes and hashed images; the same bytes hash the same', () => {

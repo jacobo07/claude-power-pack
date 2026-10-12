@@ -1,0 +1,26 @@
+{
+ "gc": {
+  "sid": "e8238452-1691-45cb-a155-1b0a6177303f",
+  "t1": {
+   "rc": 0,
+   "calls": [
+    84929,
+    101653
+   ],
+   "answer": "OK"
+  },
+  "tc": {
+   "rc": 0,
+   "calls": [],
+   "answer": ""
+  },
+  "t2": {
+   "rc": 0,
+   "calls": [
+    96716
+   ],
+   "answer": "1. `# Cognitive Control Plane \u2014 ULTRA-PLAN (2026-10-02)`\n2. I don't know. The image read failed with an internal error, so I never saw its colours.\n3. No."
+  },
+  "probe": "{\"ts\":1791798593760,\"ev\":\"compact.hook\",\"before\":6,\"kept\":6,\"withHandle\":6}\n"
+ }
+}

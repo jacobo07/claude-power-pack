@@ -1,0 +1,57 @@
+{
+ "sid": "074e2398-013a-4453-8b11-760409966252",
+ "t1": {
+  "rc": 0,
+  "calls": [
+   {
+    "ctx": 86334,
+    "cw": 68635,
+    "cr": 17697
+   },
+   {
+    "ctx": 90509,
+    "cw": 4175,
+    "cr": 86332
+   },
+   {
+    "ctx": 103049,
+    "cw": 12540,
+    "cr": 90507
+   }
+  ],
+  "answer": "OK"
+ },
+ "tc": {
+  "rc": 0,
+  "calls": [],
+  "answer": ""
+ },
+ "t2": {
+  "rc": 0,
+  "calls": [
+   {
+    "ctx": 105321,
+    "cw": 2272,
+    "cr": 103047
+   }
+  ],
+  "answer": "(1) `# Cognitive Control Plane \u2014 ULTRA-PLAN (2026-10-02)`\n(2) A white background, with light sky-blue and blonde/beige making up most of the panels.\n(3) Yes. The image is still in my context after the compact."
+ },
+ "gc": [
+  {
+   "ts": 1791800329137,
+   "sid": "074e2398-013a-4453-8b11-760409966252",
+   "ev": "gc",
+   "trigger": "manual",
+   "before": 6,
+   "keptWhole": 3,
+   "evicted": [
+    {
+     "hash": "eadf59d7",
+     "tok": 3408
+    }
+   ],
+   "applied": true
+  }
+ ]
+}

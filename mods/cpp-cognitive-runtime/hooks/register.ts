@@ -1,7 +1,8 @@
 import type { Register } from 'claude-code'
 import {
   COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
-  carryAdvice, decideUnitTool, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts, type InstructionFileInfo, type Modes, type WorkUnit,
+  carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
+  type ImageFact, type InstructionFileInfo, type Modes, type WorkUnit,
 } from './policy'
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
@@ -28,6 +29,8 @@ const hotImages = new Map<string, { tok: number; since: number; n: number }>()
 let calls = 0
 let floor = 0
 let advised = false
+// Image results of the main loop by tool_use_id: what a pixel GC compaction can evict and name.
+const imageUses = new Map<string, ImageFact[]>()
 
 const receipt = (r: Receipt) => { receipts.push({ ts: Date.now(), sid, ...r }) }
 
@@ -209,12 +212,47 @@ export const register: Register = on => {
         const v = hotImages.get(i.hash)
         if (v) { v.tok += i.tok ?? 0; v.n++ } else hotImages.set(i.hash, { tok: i.tok ?? 0, since: calls, n: 1 })
       }
+      if (!e.agentId && f.images.length) for (const [use, imgs] of imagesByUse(m.content ?? [])) imageUses.set(use, imgs)
       receipt({ ev: 'row', agent: e.agentId ? agentTypes.get(e.agentId) ?? 'unknown' : null, door: e.door, role: m.role,
         origin: (e.origin as any)?.kind ?? null, tool: (e.origin as any)?.tool ?? null, name: m.name ?? null, text: f.text, images: f.images })
     } catch (err) {
       receipt({ ev: 'row.error', door: e.door, error: String(err).slice(0, 200) }) // the row is already stored; only the receipt is lost
     }
     return r
+  })
+
+  // Pixel GC (UMVM arm D), opt-in per launch: CCR_PIXEL_GC=0. A headless session refuses $.session.compact(), so
+  // the driver sends a `/compact` turn; this hook answers it with no summarizer call. Every message is rebuilt:
+  // on 2.1.296 a kept-set mixing handled and rebuilt messages was installed as a no-op (sid 074e2398, the next
+  // call read the old prefix byte for byte), so a value above 0 is receipted and run as 0.
+  // Unset, unreadable, or nothing to evict: the stock compaction runs (or the turn is skipped with a reason).
+  on('session.compact', async ($, e, next) => {
+    if (e.agentId || effective('main') === 'off' || (e.trigger !== 'manual' && e.trigger !== 'plugin')) return next(e)
+    let raw: string | undefined
+    try { raw = await $.env.get('CCR_PIXEL_GC') } catch { raw = undefined } // no env access: GC off
+    const asked = raw === undefined ? Number.NaN : Number.parseInt(raw, 10)
+    if (!(asked >= 0)) return next(e) // unset or not a count: stock compaction
+    if (asked > 0) receipt({ ev: 'gc.window-unsupported', asked })
+    const keep = 0
+    // A /compact turn of a headless driver is a fresh process (--resume), so the append-time map is empty there:
+    // the images are read back from the transcript's API form, which still carries the blocks.
+    const images = new Map(imageUses)
+    try {
+      const api: any[] = await $.session.messages({ as: 'api' })
+      for (const [use, imgs] of imagesByUse(api.flatMap(m => (Array.isArray(m.content) ? m.content : [])))) images.set(use, imgs)
+    } catch (err) {
+      receipt({ ev: 'gc.error', error: String(err).slice(0, 200) }) // only the append-time map is used
+    }
+    const plan = gcKeptSet(e.messages as any, images, keep)
+    receipt({ ev: 'gc', trigger: e.trigger, before: e.messages.length, keptWhole: plan.keptWhole,
+      evicted: plan.evicted.map(i => ({ hash: i.hash, tok: i.tok })), applied: !!plan.messages })
+    await flush($)
+    if (!plan.messages) return { skip: 'CCR pixel GC: no image outside the live window' }
+    for (const i of plan.evicted) {
+      const v = hotImages.get(i.hash)
+      if (v) { v.tok -= i.tok ?? 0; if (--v.n <= 0) hotImages.delete(i.hash) }
+    }
+    return { messages: plan.messages as any }
   })
 
   // Per-call carry receipt and epoch deopt advice (observe only). The advice file is for the driver that owns

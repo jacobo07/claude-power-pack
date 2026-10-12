@@ -252,6 +252,47 @@ export function carryAdvice(floor: number, ctx: number, imageTok: number): Carry
   return { rotate: floor > 0 && carry >= ROTATE_CARRY_RATIO * floor, floor, ctx, carry, imageTok, textCarry: Math.max(0, carry - imageTok) }
 }
 
+// Image results by the call they answer, so a compaction can name what it evicts.
+export function imagesByUse(blocks: readonly unknown[]): Map<string, ImageFact[]> {
+  const out = new Map<string, ImageFact[]>()
+  for (const b of blocks as any[]) {
+    if (b?.type !== 'tool_result' || typeof b.tool_use_id !== 'string') continue
+    const imgs = rowFacts([b]).images
+    if (imgs.length) out.set(b.tool_use_id, imgs)
+  }
+  return out
+}
+
+export function tombstone(imgs: readonly ImageFact[]): string {
+  return imgs.map(i => `[CCR: image ${i.hash} (${i.w ?? '?'}x${i.h ?? '?'}, ~${i.tok ?? '?'} tok) left the context; the read succeeded `
+    + `and the file is unchanged on disk. Read it again only if a later step needs the pixels.]`).join('\n')
+}
+
+type GcMessage = { role: 'user' | 'assistant'; text: string; toolUses: any[]; toolResults?: any[]; handle?: string }
+export type GcPlan = { messages: GcMessage[] | null; evicted: ImageFact[]; keptWhole: number }
+
+// Pixel GC kept-set (UMVM arm D). Messages before the live window are rebuilt without their handle, which the
+// engine reads as built: text, tool uses and tool-result text stay, media blocks leave. An image result gets a
+// tombstone, or the model reads the empty result as a failed read (measured 2026-10-12, sid e8238452). The last
+// `keepLast` messages stay whole, and the window never starts on a tool result split from its tool use.
+// No image to evict: no plan (the caller skips, the conversation stays as it is).
+export function gcKeptSet(messages: readonly GcMessage[], images: ReadonlyMap<string, ImageFact[]>, keepLast: number): GcPlan {
+  let cut = Math.max(0, messages.length - keepLast)
+  while (cut > 0 && messages[cut]?.toolResults?.length) cut--
+  const evicted: ImageFact[] = []
+  const rebuilt = messages.map((m, i) => {
+    if (i >= cut) return m
+    const toolResults = m.toolResults?.map(r => {
+      const imgs = images.get(r.tool_use_id)
+      if (!imgs) return r
+      evicted.push(...imgs)
+      return { ...r, text: [r.text, tombstone(imgs)].filter(Boolean).join('\n') }
+    })
+    return { role: m.role, text: m.text, toolUses: m.toolUses, ...(toolResults ? { toolResults } : {}) }
+  })
+  return { messages: evicted.length ? rebuilt : null, evicted, keptWhole: messages.length - cut }
+}
+
 export function pageLines(listing: string, query: string, limit = 40): string {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)
   const hits = listing.split('\n').filter(l => words.length === 0 || words.some(w => l.toLowerCase().includes(w)))

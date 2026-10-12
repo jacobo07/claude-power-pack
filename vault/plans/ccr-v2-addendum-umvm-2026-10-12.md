@@ -34,6 +34,22 @@ the dominant rent (negative knowledge, do not reopen without new evidence).
   (B) sheds text and pixels together, model-predicted 36-45 % for 2-3 epochs of a 26-call boundary. B leads; C
   fails Proof of Agent Necessity on these numbers (subagent floor >= the carry of a late image pair).
 
+## Arm D measured 2026-10-12 (fixture, `evidence/umvm_armD/`)
+- `$.session.compact()` is refused headless: "not available in a headless (-p / SDK) session yet: compaction here
+  runs inside a turn (a /compact prompt)" (HOST_LIMITATION). A driver sends a `/compact` turn instead; the mod's
+  `session.compact` hook answers trigger `manual` with a rebuilt kept-set: **zero model calls**.
+- Full rebuild (no handles): next call 97,955 vs ~102.8K expected (image 3,408 + attachment rows gone); text recall
+  intact. Without a tombstone the model read the empty result as "the image read failed" (false belief); with the
+  CCR tombstone it says the image left the context and does not invent colours.
+- Mixed kept-set (last messages kept by handle): installed as a NO-OP (next call cache-read the old prefix byte
+  for byte). So the hybrid "keep the current pair resident" arm is not expressible in place on 2.1.296.
+- Price: GC rewrites the prefix (cw 80,256 on the next call). Ledger tokens: saves ~4.8K per later call. Price
+  weighted (cache read = 0.1): the rewrite costs ~92K read-equivalents, repaid only after ~190 calls. Same shape
+  for epoch rotation. Ledger-token wins can be price losses: decide per metric, report both.
+- Madzia workers p4p2a2/a3: image share 9.3 % / 10.5 %; a3 ran 53 calls, 4,015,727 tok, ctx 20.4K -> 113K.
+  Reviewers 45-52 % image but 43-60K total (correct pixel consumers). Text carry is the dominant rent.
+- Madzia driver stopped at `OWNER_STRATEGY` (phase 2: 3 hypotheses rejected): no canary until the Owner decides.
+
 ## Liveness model (maps to UCVM AVAILABLE -> LINKED -> RESIDENT -> MATERIALIZED)
 | State | Meaning | Where it lives |
 |---|---|---|
