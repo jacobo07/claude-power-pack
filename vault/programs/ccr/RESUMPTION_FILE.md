@@ -37,3 +37,12 @@ is settled to ccr.
 3. Wire the pre-launch contract (`tools/ccr_pgo.py contract`) into `gsd_mission` launch admission (Economic bridge).
 
 **Start.** `python tools/mission_spend.py goal-status --goal ccr`; then action 1.
+
+## X1 close (2026-10-13)
+**State.** Stage 2 merged into feature/knowledge-acquisition (merge 1daee36b, `--no-ff ccr/v4`). Post-merge `tools/test_gsd_mission.py` MC_PASS=230/230, no revert. No change under mods/, so no plugin test or release was needed (live release 0.1.0-0d60014c unchanged).
+**Certificate.** `vault/programs/ccr/CERTIFICATE-v4.md` = EFFECTIVENESS_PARTIAL. BOUNDARY_COST abstained: Madzia -0.2 %, V1 FAIL:runaway (saving UNKNOWN), class-only forecast error 93 %, admission only synthetic. Negative knowledge in `NEGATIVE_KNOWLEDGE.md`.
+**Remaining authority.** goal-status ccr: cap 4,725,000, remaining 4,725,000, used 0 (lease L9), settled 47,214,915.
+**Next actions.**
+1. Owner decision: rerun V1 with a per-run guard ~1.5M or a lighter harness (needs raise), else close CCR at PARTIAL.
+2. Run a Lobby R1 provider-measured rotation (k=40) to turn the +21.1 % model into a number.
+3. Flip CPP_CCR_ADMISSION to enforce only after one live refusal is observed.

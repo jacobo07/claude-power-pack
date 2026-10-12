@@ -17291,3 +17291,209 @@ decision D-03 "repair, never carry known-incomplete gold forward". Mechanism: `e
 - [tooling/powershell:neither] `ceps_ca10af2d30e6f597` -- Tool failure in powershell:neither: SyntaxError: unexpected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [env/bash:test_claude_cli.py,-q,-p] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:test_claude_cli.py,-q,-p: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_91f6428a42b71c49` -- Tool failure in powershell:[IO.File]::WriteAllText(: fatal: cannot. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:py] `ceps_5ee413c0d90a1085` -- Before touching powershell:py, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:ssh.ps1] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:ssh.ps1: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:python.exe] `ceps_2c101bee55b52700` -- Tool failure in powershell:python.exe: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Select-Object] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Select-Object: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_d47d40fe40071e32` -- Tool failure in powershell:python.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_d47d40fe40071e32` -- Tool failure in powershell:Get-Content: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_2c101bee55b52700` -- Tool failure in powershell:g: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:gsd_mission.py] `ceps_81d26e962b4e3fa0` -- Tool failure in powershell:gsd_mission.py: Exception as e:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_cfe92dd0fab0552c` -- Before touching powershell:python.exe, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [tooling/powershell:node] `ceps_4b9501def27fe7fb` -- Tool failure in powershell:node: Error: Cannot find module 'C:\Users\User\Apps\_wt-creative-.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach($p] `ceps_2b505cb26332e932` -- Tool failure in powershell:foreach($p: Exception:  # noqa: BLE001 -- no mission store: roles degra.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:wt] `ceps_2c101bee55b52700` -- Tool failure in powershell:wt: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cost-breaker] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:cost-breaker: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:python.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:python.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:for] `ceps_cbcb41ec76fcf266` -- Tool failure in bash:for: fatal: Not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python.exe] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in bash:python.exe: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:$G] `ceps_4585b058c19d04ec` -- Tool failure in bash:$G: fatal: ambiguous. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:$G] `ceps_aca402726381eccd` -- Tool failure in bash:$G: fatal: path. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:$G] `ceps_ff9b719350ac5be6` -- Tool failure in bash:$G: Exception as exc:  # noqa: BLE001 - any unreadable term set.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:echo] `ceps_aca402726381eccd` -- Tool failure in bash:echo: fatal: path. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:$G] `ceps_24c749882620b743` -- Tool failure in bash:$G: Exception:  # noqa: BLE001 -- fail-open: an ECE bug never b.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:$G] `ceps_b429d612f68d6fe9` -- Tool failure in bash:$G: Exception:  # noqa: BLE001 — brief gen never blocks the kil.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:$G] `ceps_bd31f4acff62bb26` -- Tool failure in bash:$G: Exception:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:echo] `ceps_aca402726381eccd` -- Tool failure in bash:echo: fatal: path. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:for] `ceps_aca402726381eccd` -- Tool failure in bash:for: fatal: path. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python] `ceps_7ec2ebf54666134f` -- Tool failure in bash:python: SyntaxError: unterminated. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:echo] `ceps_bd31f4acff62bb26` -- Tool failure in bash:echo: Exception:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python] `ceps_7ec2ebf54666134f` -- Tool failure in bash:python: SyntaxError: unterminated. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:powershell.exe] `ceps_5d28a90f4498a814` -- Before touching bash:powershell.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:cat] `ceps_aca402726381eccd` -- Tool failure in bash:cat: fatal: path. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:powershell.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:powershell.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:rtk.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:rtk.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:powershell.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:powershell.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:freeGB=$f] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:freeGB=$f: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:freeGB=$f] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:freeGB=$f: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_ca10af2d30e6f597` -- Tool failure in powershell:cmd: SyntaxError: Unexpected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:body] `ceps_9656c1951feee29a` -- Tool failure in powershell:body: Error: Cannot find module 'minecraft-data. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Select-String] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-String, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/powershell:body] `ceps_904434f799a130f1` -- Environment mismatch on powershell:body: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:freeMB ] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:freeMB : Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:s] `ceps_5d28a90f4498a814` -- Before touching powershell:s, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-ChildItem] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-ChildItem, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:w1-01-t3-tests.sh,] `ceps_5ee413c0d90a1085` -- Before touching powershell:w1-01-t3-tests.sh,, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:g: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:l[141..330]] `ceps_31de8d464e1fb205` -- Tool failure in powershell:l[141..330]: Exception:  # noqa: BLE001 - any owner failure is "not read.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:ls] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:ls: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:Select-Object] `ceps_5ee413c0d90a1085` -- Before touching powershell:Select-Object, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:l[234..251]] `ceps_5d28a90f4498a814` -- Before touching powershell:l[234..251], verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:foreach($f] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach($f, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:const] `ceps_ca10af2d30e6f597` -- Tool failure in powershell:const: SyntaxError: Unexpected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:python.exe] `ceps_2c101bee55b52700` -- Tool failure in powershell:python.exe: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:cmd] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:cmd: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:git.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:git.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:Get-Content] `ceps_c19b0843db18fca0` -- Before touching powershell:Get-Content, verify the regression scenario (70 failed) is still covered by a passing test.
+
+- [regression/powershell:Select-Object] `ceps_5ee413c0d90a1085` -- Before touching powershell:Select-Object, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:FreeMB ] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:FreeMB : Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:foreach($f] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach($f, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:do] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:do: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_d47d40fe40071e32` -- Tool failure in powershell:py: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_ca10af2d30e6f597` -- Tool failure in powershell:[IO.File]::WriteAllText(: SyntaxError: unexpected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:sha256sum] `ceps_d47d40fe40071e32` -- Tool failure in powershell:sha256sum: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[] `ceps_d47d40fe40071e32` -- Tool failure in powershell:[: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_ca10af2d30e6f597` -- Tool failure in powershell:[IO.File]::WriteAllText(: SyntaxError: unexpected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Rename-Item] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:Rename-Item: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Rename-Item] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:Rename-Item: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:node] `ceps_4b9501def27fe7fb` -- Tool failure in powershell:node: Error: Cannot find module 'C:\Users\User\Apps\pp-gsdx-pcc\~.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:while] `ceps_a473d5a57d8a2ee0` -- Tool failure in powershell:while: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Test-Path] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:Test-Path: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:l] `ceps_a3b11db62f9b9a83` -- Environment mismatch on powershell:l: access denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:powershell] `ceps_a473d5a57d8a2ee0` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_3490b60a25ed8ae7` -- Tool failure in powershell:powershell: Error: No deferred tool marker found in the resumed session.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:foreach] `ceps_5ee413c0d90a1085` -- Before touching powershell:foreach, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [env/powershell:Select-String] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:Select-String: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:py] `ceps_d47d40fe40071e32` -- Tool failure in powershell:py: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:Push-Location] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:Push-Location: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:lines] `ceps_76a6216aa447c5c1` -- Tool failure in powershell:lines: Error: still running: ../skills/claude-power-pack/hooks/gsd.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_2c101bee55b52700` -- Tool failure in bash:#: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:#] `ceps_2c101bee55b52700` -- Tool failure in bash:#: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [ccr/cache-write-vs-carry] `ccr_x1_epoch_rotation` -- Removing carried context by rotation is not saving when the cache-write bill for the new prefix exceeds it: Madzia held-out -0.2 % although rotation removed 79-85 % of thinking carry, while Lobby (long sessions) saved +21.1 % (modelled). Weight reads 0.1, writes 1.25 and test per work class; evidence vault/programs/ccr/evidence-v4-stage2-E1.md.
