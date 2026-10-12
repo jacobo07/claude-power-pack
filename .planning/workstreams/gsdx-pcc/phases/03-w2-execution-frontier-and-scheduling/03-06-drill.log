@@ -1,0 +1,22 @@
+== m1
+FAIL V-FRONTIER-GLOBAL-WAIT legacy=WAIT frontier=WAIT:None control_conflict=WAIT
+FAIL V-FRONTIER-HARVEST-NOT-HIDDEN legacy=WAIT frontier=WAIT:False
+FAIL V-FRONTIER-NO-STARVE first=None second=WAIT
+FAIL V-FRONTIER-STOP-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+FAIL V-FRONTIER-BUDGET-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+FAIL V-FRONTIER-BLOCKED-ON-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+FAIL V-FRONTIER-WAIT-ONLY-EMPTY nonempty=WAIT empty=WAIT
+FAIL V-FRONTIER-SWEEP-N WALL_CLOCK dispatched=1 open=1 satisfied_after_drain=3; ECONOMY dispatched=1 open=1 satisfied_after_drain=3
+FAIL V-FRONTIER-SWEEP-BOUND max_parallel=2 -> 1; WALL_CLOCK over 5 ready -> 1 open=1; BALANCED -> 1
+FAIL V-FRONTIER-REPORTED-NOT-EXECUTED dispatched=1 (bound 2, 3 ready) report='sweep-spec: speculative ob-1: admitted -- ADMITTED saving 1.3s exceeds cost 0.0s' no_speculative_epoch=True
+GSDX_FRONTIER_PASS=29/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-GLOBAL-WAIT
+
+== m2
+FAIL V-FRONTIER-UNSAFE-WRITES cases={'overlapping-writes': (False, False), 'read-after-write': (False, False), 'undeclared-sets': (False, False)}
+FAIL V-FRONTIER-BEGIN-DERIVES forged='unit does not match derived for ob-b: the author' honest_but_conflicting=''
+GSDX_FRONTIER_PASS=37/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-UNSAFE-WRITES
+
+== m3..m8 UNRUN
+m2 finished KILLED (V-FRONTIER-UNSAFE-WRITES, above). m3 (V-FRONTIER-UNDECLARED) was running when the harness killed the command for low system memory, so it has no verdict; m4..m8 were not started. UNRUN is not PASS. Not restarted: the harness note says do not restart on my own.

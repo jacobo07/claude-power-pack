@@ -443,6 +443,10 @@
       "class": "PLANNED",
       "note": "UWCP S1-5 (vault/specs/uwcp.md). Imported by gsd_x/goal/brief.py; the whole goal engine is ORPHAN because its only entrance is tools/gsd_x_goal.py (outside this scanner's aperture) and no command/hook reaches it yet. OWNER_QUEUE: UWCP S6 wires it (placement rule in /cpp-gsd-long + VPS sweep cron); re-classify then"
     },
+    "gsd_x/goal/frontier": {
+      "class": "PLANNED",
+      "note": "gsdx-pcc Phase 3 (W2). Imported by gsd_x/goal/reconcile.py, epoch.py and sweep.py; same entrance as the rest of the goal engine (tools/gsd_x_goal.py, outside this scanner's aperture). OWNER_QUEUE: wired with the engine in UWCP S6; re-classify then"
+    },
     "gsd_x/goal/intervention": {
       "class": "PLANNED",
       "note": "UWCP S1-7. Imported by gsd_x/goal/reconcile.py -- see gsd_x/goal/evidence note; wired with the engine in UWCP S6"
