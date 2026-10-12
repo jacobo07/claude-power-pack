@@ -9,7 +9,8 @@ export const COMPAT = ['2.1.296']
 
 export type Mode = 'enforce' | 'shadow' | 'off'
 // main: interactive and undeclared sessions. unit: main sessions that declared a Work Unit.
-export type Modes = { subagent: Mode; main: Mode; unit: Mode }
+// project: Tool Output Projection; unset means enforce in Work Unit sessions and shadow elsewhere.
+export type Modes = { subagent: Mode; main: Mode; unit: Mode; project?: Mode }
 export const DEFAULT_MODES: Modes = { subagent: 'enforce', main: 'shadow', unit: 'enforce' }
 
 // Subagent types that keep the skill listing: they can run skills (Skill tool in their set).
@@ -298,6 +299,79 @@ export function gcKeptSet(messages: readonly GcMessage[], images: ReadonlyMap<st
     return { role: m.role, text: m.text, toolUses: m.toolUses, ...(toolResults ? { toolResults } : {}) }
   })
   return { messages: evicted.length ? rebuilt : null, evicted, keptWhole: messages.length - cut }
+}
+
+// Tool Output Projection (v4 B5). A shell result rides every later call of its epoch, so its cost is its size times
+// its rides: M4 measured one call-2 recursive listing of a runs tree at 0.30-0.34M tok per attempt, more than all
+// image carry. Over the budget, the model gets a projection plus the path of the full output, which stays on disk,
+// so an under-projection is one Read or Grep away and never a loss. A listing (most lines are paths) projects to
+// per-directory counts, which is what a listing is usually asked for; any other text keeps its head and tail.
+export const PROJECT_BUDGET_CHARS = 8000
+export const PROJECT_TOOLS = new Set(['Bash', 'PowerShell'])
+const PATH_LINE = /^\s*(?:[A-Za-z]:)?[\w.~\-@+ ]*[\\/][^\t<>|"]*$/
+
+export type Projection = { action: 'pass' | 'project'; kind: 'listing' | 'text' | null; bytes: number; lines: number; out: string }
+
+export function projectToolOutput(text: string, fullPath: string, budget = PROJECT_BUDGET_CHARS): Projection {
+  const lines = text.split('\n')
+  if (text.length <= budget) return { action: 'pass', kind: null, bytes: text.length, lines: lines.length, out: text }
+  const nonEmpty = lines.filter(l => l.trim())
+  const pathish = nonEmpty.filter(l => PATH_LINE.test(l)).length
+  const listing = nonEmpty.length >= 20 && pathish >= 0.8 * nonEmpty.length
+  const note = `[CCR projected this output: ${text.length} chars, ${lines.length} lines over the ${budget}-char budget. `
+    + `The full output is at ${fullPath}; Grep or Read that file for the exact lines you need.]`
+  const room = Math.max(1000, budget - note.length - 200)
+  let body: string
+  if (listing) {
+    const dirs = new Map<string, number>()
+    for (const l of nonEmpty) {
+      const p = l.trim().replace(/\\/g, '/')
+      const d = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '.'
+      dirs.set(d, (dirs.get(d) ?? 0) + 1)
+    }
+    const rows = [...dirs.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    body = `${nonEmpty.length} paths in ${dirs.size} directories (entries per directory, largest first):\n`
+    let shown = 0
+    for (const [d, n] of rows) {
+      const row = `${n}\t${d}\n`
+      if (body.length + row.length > room) { body += `... ${rows.length - shown} more directories in the full output\n`; break }
+      body += row
+      shown++
+    }
+  } else {
+    const half = Math.floor(room / 2)
+    const omitted = text.length - 2 * half
+    body = `${text.slice(0, half)}\n... [${omitted} chars omitted] ...\n${text.slice(text.length - half)}`
+  }
+  return { action: 'project', kind: listing ? 'listing' : 'text', bytes: text.length, lines: lines.length, out: `${note}\n${body}` }
+}
+
+// Cognitive PGO (v4 B6): a Work-Class model built by tools/ccr_pgo.py from real transcripts. Only the fields the
+// hot path reads are typed; anything missing makes the model unusable, never a zero.
+export type ClassModel = { cls: string; n: number; floor: { p50: number; p80: number }; calls: { p50: number; p80: number }
+  slope: { p50: number; p80: number }; step: { p50: number; p95: number } }
+
+export function parseClassModel(text: string | null, cls: string): ClassModel | null {
+  if (!text) return null
+  try {
+    const m = JSON.parse(text)
+    const ok = m?.cls === cls && m.n > 0 && [m.floor?.p50, m.floor?.p80, m.calls?.p50, m.calls?.p80, m.slope?.p50, m.slope?.p80, m.step?.p95]
+      .every((v: unknown) => typeof v === 'number' && Number.isFinite(v))
+    return ok ? m as ClassModel : null
+  } catch { return null } // unparseable model file: no model, the boundary is unforecast
+}
+
+// processed(n) = n*floor + g*n*(n-1)/2: floor rent plus the carry the class's per-call growth implies.
+export function boundaryForecast(m: ClassModel): { p50: number; p80: number; calls: number } {
+  const proc = (g: number, n: number) => n * m.floor.p50 + g * n * (n - 1) / 2
+  return { p50: Math.round(proc(m.slope.p50, m.calls.p50)), p80: Math.round(proc(m.slope.p80, m.calls.p80)), calls: m.calls.p50 }
+}
+
+// A step (ctx growth between two calls) above the class P95 is an anomaly; its cost is the step times the calls it
+// is expected to ride. M4 measured: step 11,213 after call 2 against a P95 of 3,621, riding 30 calls = 336,390 tok.
+export function stepAnomaly(step: number, call: number, m: ClassModel): { anomaly: boolean; ratio: number; ridesLeft: number; costIfRides: number } {
+  const ridesLeft = Math.max(0, Math.round(m.calls.p80) - call)
+  return { anomaly: m.step.p95 > 0 && step > m.step.p95, ratio: m.step.p95 > 0 ? +(step / m.step.p95).toFixed(2) : 0, ridesLeft, costIfRides: step * ridesLeft }
 }
 
 export function pageLines(listing: string, query: string, limit = 40): string {

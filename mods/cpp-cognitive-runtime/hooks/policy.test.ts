@@ -1,8 +1,77 @@
 import { expect, test } from 'claude-code/testing'
 import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
-  carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, repoKey, rowFacts, subagentInstructions,
+  carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
+  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly,
 } from './policy'
+
+// The madzia-worker model tools/ccr_pgo.py built from post-fix attempts a6-a8 (2026-10-12).
+const MADZIA = JSON.stringify({ cls: 'madzia-worker', n: 3, floor: { p50: 18938, p80: 19049.6 }, calls: { p50: 25, p80: 28.6 },
+  slope: { p50: 1304.9, p80: 1453.9 }, step: { p50: 998, p95: 3621.3 } })
+
+test('a class model is accepted only for its own class and with every field; otherwise there is no model', () => {
+  expect(parseClassModel(MADZIA, 'madzia-worker')?.n).toBe(3)
+  expect(parseClassModel(MADZIA, 'lobby')).toBe(null)
+  expect(parseClassModel('{"cls":"madzia-worker","n":3}', 'madzia-worker')).toBe(null)
+  expect(parseClassModel('not json', 'madzia-worker')).toBe(null)
+  expect(parseClassModel(null, 'madzia-worker')).toBe(null)
+})
+
+test('the boundary forecast is floor rent plus implied carry, and P80 is above P50', () => {
+  const f = boundaryForecast(parseClassModel(MADZIA, 'madzia-worker')!)
+  expect(f.p50).toBe(Math.round(25 * 18938 + 1304.9 * 25 * 24 / 2))
+  expect(f.p80 > f.p50).toBe(true)
+})
+
+test('M4: the call-2 runs-tree step is an anomaly costing ~0.3M if it rides; a normal step is not', () => {
+  const m = parseClassModel(MADZIA, 'madzia-worker')!
+  const dump = stepAnomaly(11213, 2, m)
+  expect(dump.anomaly).toBe(true)
+  expect(dump.costIfRides > 290000).toBe(true)
+  expect(stepAnomaly(998, 5, m).anomaly).toBe(false)
+})
+
+// M4 shape: a recursive runs-tree listing (call 2 of a Madzia attempt), held fixed while the estate grows.
+const runsTree = (attempts: number) => {
+  const out: string[] = []
+  for (let a = 1; a <= attempts; a++) for (const f of ['receipt.json', 'review.md', 'shot-01.png', 'shot-02.png', 'stdout.log'])
+    out.push(`C:\\Users\\User\\Desktop\\KSR\\runs\\phase2\\a${a}\\${f}`)
+  return out.join('\n')
+}
+
+test('a small shell result passes untouched (no projection below the budget)', () => {
+  const p = projectToolOutput('ok\n3 files changed', '/s/t.txt')
+  expect(p.action).toBe('pass')
+  expect(p.out).toBe('ok\n3 files changed')
+})
+
+test('a large listing projects to per-directory counts plus the full-output path, inside the budget', () => {
+  const text = runsTree(400)
+  const p = projectToolOutput(text, '/s/full.txt', 8000)
+  expect(p.action).toBe('project')
+  expect(p.kind).toBe('listing')
+  expect(p.out.length <= 8000).toBe(true)
+  expect(p.out.includes('/s/full.txt')).toBe(true)
+  expect(p.out.includes('5\tC:/Users/User/Desktop/KSR/runs/phase2/a1')).toBe(true)
+})
+
+test('M4 elasticity: model-facing size stays bounded while the runs estate grows 10 -> 10,000 attempts', () => {
+  const sizes = [10, 100, 1000, 10000].map(n => projectToolOutput(runsTree(n), '/s/full.txt', 8000).out.length)
+  for (const s of sizes) expect(s <= 8000).toBe(true)
+  // 1,000x more estate, the projection grows by less than the budget itself (raw grows ~1000x)
+  expect(sizes[3] - sizes[1] <= 8000).toBe(true)
+  expect(runsTree(10000).length > 100 * 8000).toBe(true)
+})
+
+test('non-listing text keeps head and tail and names how much was omitted', () => {
+  const text = 'HEAD-MARK\n' + 'x'.repeat(50000) + '\nTAIL-MARK'
+  const p = projectToolOutput(text, '/s/full.txt', 8000)
+  expect(p.kind).toBe('text')
+  expect(p.out.includes('HEAD-MARK')).toBe(true)
+  expect(p.out.includes('TAIL-MARK')).toBe(true)
+  expect(p.out.includes('chars omitted')).toBe(true)
+  expect(p.out.length <= 8000).toBe(true)
+})
 
 const B = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 const b64 = (bytes: number[]) => {
