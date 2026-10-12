@@ -6,6 +6,8 @@ stub_api.py, sampling the process tree's memory at checkpoints. Modes:
   compact  : one process, `/compact` every --every turns (does compaction return RAM?)
   recycle  : end the process every --every turns and continue with --resume <sid>
              (physical epoch recycling under one logical session)
+  compact_recycle : `/compact`, then end + --resume <sid> every --every turns
+             (the successor should load only the post-boundary live set)
 
 Memory per sample (from /proc): VmRSS, RssAnon (closest to Windows private bytes while
 nothing is swapped), RssFile, VmSwap, VmHWM, summed over the claude process tree.
@@ -130,7 +132,7 @@ def main(argv=None) -> int:
     ap.add_argument("--model", default="claude-haiku-4-5")
     ap.add_argument("--turns", type=int, default=100)
     ap.add_argument("--checkpoints", default="1,10,25,50,100,150,200,250,300,400,500")
-    ap.add_argument("--mode", choices=["plain", "compact", "recycle"], default="plain")
+    ap.add_argument("--mode", choices=["plain", "compact", "recycle", "compact_recycle"], default="plain")
     ap.add_argument("--every", type=int, default=50)
     ap.add_argument("--warmup", type=int, default=25)
     ap.add_argument("--config-dir", required=True)
@@ -161,9 +163,9 @@ def main(argv=None) -> int:
                 print(json.dumps({"turn": k, "epoch": epoch, "RssAnon": s["main"].get("RssAnon"),
                                   "VmRSS": s["main"].get("VmRSS"), "tree_n": s["tree_n"]}), flush=True)
             if args.every and k % args.every == 0 and k < args.turns:
-                if args.mode == "compact":
+                if args.mode in ("compact", "compact_recycle"):
                     sess.turn("/compact", args.timeout)
-                elif args.mode == "recycle":
+                if args.mode in ("recycle", "compact_recycle"):
                     sid = sess.sid
                     sess.end()
                     r0 = time.time()
