@@ -80,3 +80,13 @@ def test_write_policy_hooks_registers_sessionstart_and_stop(tmp_path):
     assert cfg["model"] == "x"
     assert cfg["hooks"]["Stop"][0]["hooks"][0]["command"] == "hookcmd"
     assert "SessionStart" in cfg["hooks"]
+
+
+def test_default_hook_cmd_refuses_an_empty_interpreter():
+    # Under `exec -a kclaude-bench` sys.executable is "": the hook became "... observe  -m ..." and never ran.
+    import pytest
+    from modules.prr.bench.longrun import default_hook_cmd
+    with pytest.raises(ValueError):
+        default_hook_cmd("/repo", "")
+    assert default_hook_cmd("/repo", "/v/python") == \
+        "cd /repo && CPP_PRR_RECYCLE=observe /v/python -m modules.prr.recycle_policy"

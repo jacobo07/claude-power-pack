@@ -115,6 +115,14 @@ def write_policy_hooks(config_dir: str, hook_cmd: str) -> None:
         json.dump(cfg, fh, indent=2)
 
 
+def default_hook_cmd(repo: str, exe: str) -> str:
+    """Hook command for policy mode. Under `exec -a kclaude-bench` sys.executable is "", which made
+    "... observe  -m ..." -- a hook that never runs. Refuse instead; pass --hook-cmd there."""
+    if not exe:
+        raise ValueError("sys.executable is empty (argv0 renamed?): pass --hook-cmd with an absolute python")
+    return f"cd {repo} && CPP_PRR_RECYCLE=observe {exe} -m modules.prr.recycle_policy"
+
+
 class Session:
     def __init__(self, args, resume: str | None):
         cmd = [args.claude, "-p", "--input-format", "stream-json", "--output-format", "stream-json",
@@ -185,8 +193,11 @@ def main(argv=None) -> int:
     os.makedirs(args.workdir, exist_ok=True)
     if args.mode == "policy":
         repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-        write_policy_hooks(args.config_dir, args.hook_cmd or
-                           f"cd {repo} && CPP_PRR_RECYCLE=observe {sys.executable} -m modules.prr.recycle_policy")
+        try:
+            hook = args.hook_cmd or default_hook_cmd(repo, sys.executable)
+        except ValueError as exc:
+            ap.error(str(exc))
+        write_policy_hooks(args.config_dir, hook)
     cps = {int(x) for x in args.checkpoints.split(",") if x}
     sess = Session(args, args.resume_sid)
     epoch, pts, starts = 1, [], []

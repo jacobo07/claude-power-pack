@@ -1269,8 +1269,9 @@ with no loop (evidence A1, B, C, D under `vault/programs/prr/evidence/`).
    2026-10-12 evening, so not run). One kclaude pane in the worktree with `CPP_PRR_RECYCLE=act`; ~10 tool turns,
    `/compact`; expect a receipt RECYCLE with `acted: true`, the pane relaunching `--resume` with the same sid, private
    bytes near the fresh floor. Repeat with `/clear`. First run of `restart-claude.ps1` under the policy.
-2. **Epoch-start drift.** D measured +4.5 MB/epoch for compact (n=3) against C's +0.27 (n=8). Report it from the
-   Windows canary, and rerun the GEX44 compact policy canary for >= 10 epochs before calling it zero or real.
+2. **Epoch-start drift.** SETTLED for the rollover path (Owner: rollover, not compact): evidence E, /clear + policy
+   recycle, 14 resumes, +0.04 MB/epoch. Compact drift (+4.5 MB/epoch, D, n=3) stays unmeasured and off the Owner's
+   path. Report the rollover epoch-start series from the Windows canary too.
 3. **Fleet observe ring** (plan rows S/T): receipts only, through the PP dispatcher, no action. Then the act ring, by
    Owner word only.
 4. **Resource PGO** (plan row R): append-only profile ledger.
