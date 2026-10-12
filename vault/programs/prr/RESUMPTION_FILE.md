@@ -18,16 +18,21 @@ in this worktree: `.claude/settings.local.json` (untracked; SessionStart + Stop)
 SEALED 2026-10-12 (fresh pane): D policy canary on GEX44: the real hook drives recycle after /compact and /clear, no
 loop, same sid (`evidence/D-policy-canary-gex44.md`, `longrun.py --mode policy`; the hook ran in observe mode, so the
 act path is not exercised). Receipt private_mb is null off Windows instead of vms (`mem_fields`, tested).
+SEALED 2026-10-12: E long rollover canary on GEX44 (`evidence/E-rollover-long-gex44.md`): /clear + policy recycle,
+15 epochs, epoch start 123-124 MB flat (+0.04 MB/epoch); control without recycle +53 MB/100 turns. Owner: the
+rollover (/clear) path is the one that matters, not compact. Policy runs need `exec -a kclaude-bench` AND an explicit
+`--hook-cmd` (the driver now refuses an empty interpreter).
 PENDING, all filed as backlog D28 (`vault/plans/deferred-backlog.md`): Windows act-path canary (3.33 GB free at
-2026-10-12 evening), compact epoch-start drift (+4.5 MB/epoch in D, n=3), fleet observe ring, PGO, knowledge/UKDL/CBR.
+2026-10-12 evening), fleet observe ring, PGO, knowledge/UKDL/CBR.
 
 **Active decisions.** Laptop = read-only until Available >= 4 GB (`python -m modules.prr.census`; 2,041 MB at 17:00).
 Destructive actions only on panes this programme starts. Recycle only after a boundary crossed inside the process.
 
 **Next 3 actions.**
 1. Windows canary (needs >= 4 GB Available): open ONE kclaude pane in this worktree with `CPP_PRR_RECYCLE=act`; run
-   ~10 tool turns, `/compact`; expect a receipt RECYCLE + acted, the pane relaunching `--resume` with the same sid, and
-   the successor's private bytes near the fresh floor. Repeat with `/clear`. Measure private bytes before and after.
+   ~10 tool turns, `/clear` (rollover, the Owner's path); expect a receipt RECYCLE + acted, the pane relaunching
+   `--resume` with the same sid, and the successor's private bytes near the fresh floor. Repeat for several epochs and
+   compare the epoch-start series with E. Measure private bytes before and after.
 2. If green: observe ring (fleet, receipts only) through the PP dispatcher, then act ring by Owner word.
 3. Knowledge: UKDL hard rule/trap candidates from A1/B/C (compact != RAM reclaim; recycle needs a boundary;
    memory note "V8" is wrong engine).
