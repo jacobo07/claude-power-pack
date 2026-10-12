@@ -1,0 +1,148 @@
+diff --git a/tools/wros/binary/decomp/gex44/source_lint.py b/tools/wros/binary/decomp/gex44/source_lint.py
+index 93a9115..4ba70ea 100644
+--- a/tools/wros/binary/decomp/gex44/source_lint.py
++++ b/tools/wros/binary/decomp/gex44/source_lint.py
+@@ -11,6 +11,19 @@ import re
+ UNRESOLVED_TYPE = "UNRESOLVED_TYPE"
+ UNK_FIELD = "UNK_FIELD"
+ LANG_C_ON_CXX = "LANG_C_ON_CXX"
++# C1 (TRF-C): a GLOBAL prerequisite missing from the unit text. Job 2 sent 26 units that used `s32` and Tennis
++# struct names with no declaration anywhere in the unit: 0/26 compiled and nothing was measured.
++MISSING_PRELUDE = "MISSING_PRELUDE"
++UNDECLARED_TYPE = "UNDECLARED_TYPE"
++
++_PRELUDE_TYPES = ("s8", "s16", "s32", "s64", "u8", "u16", "u32", "u64", "f32", "f64")
++_PRELUDE_USE = re.compile(r"\b(%s)\b" % "|".join(_PRELUDE_TYPES))
++# A capitalised name used as a pointer type where a declaration starts (statement/parameter start, or a qualifier).
++# `return A * b;` and `x = A * b` follow an operator or keyword other than these, so they never match.
++_TYPE_USE = re.compile(r"(?:^|[(,;{}]|\b(?:const|static|extern|volatile)\b)\s*([A-Z]\w*)\s*\*+\s*[\w(]", re.M)
++_TYPEDEF_NAME = re.compile(r"\btypedef\b[^;{]*?\b(\w+)\s*;")
++_TAG_DEF = re.compile(r"\b(?:struct|union|enum)\s+(\w+)\s*\{")
++_CLOSE_NAME = re.compile(r"\}\s*(\w+)\s*;")
+ 
+ _TOKEN = re.compile(r"/\*.*?\*/|//[^\n]*|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", re.S)
+ # m2c prints a type it could not recover as a bare `?` where a type belongs: statement start, after ( , ; { } or a
+@@ -35,4 +48,13 @@ def lint_unit(source_text, family, flags):
+         out.append("%s: access to unresolved field %s" % (UNK_FIELD, m.group(0).replace(" ", "")))
+     if family == "CXX" and re.search(r"(?:^|\s)-lang\s+c(?:\s|$)", flags or ""):
+         out.append("%s: family CXX compiled with `-lang c`" % LANG_C_ON_CXX)
++    declared = set(_TYPEDEF_NAME.findall(code)) | set(_TAG_DEF.findall(code)) | set(_CLOSE_NAME.findall(code))
++    missing = sorted({t for t in _PRELUDE_USE.findall(code) if t not in declared})
++    if missing:
++        out.append("%s: base type(s) %s used with no typedef in the unit (prepend the prelude)"
++                   % (MISSING_PRELUDE, ", ".join(missing)))
++    undeclared = sorted({t for t in _TYPE_USE.findall(code) if t not in declared})
++    if undeclared:
++        out.append("%s: type(s) %s used with no declaration in the unit (compose with the program context)"
++                   % (UNDECLARED_TYPE, ", ".join(undeclared[:5])))
+     return out
+diff --git a/tools/wros/binary/decomp/gex44/test_source_lint_prereq.py b/tools/wros/binary/decomp/gex44/test_source_lint_prereq.py
+new file mode 100644
+index 0000000..53c41bf
+--- /dev/null
++++ b/tools/wros/binary/decomp/gex44/test_source_lint_prereq.py
+@@ -0,0 +1,104 @@
++"""C1 drill: a unit missing a GLOBAL prerequisite (type prelude, struct context) is refused before a GEX44 job.
++
++Job 2 (ksrmb-20261011-233503) sent 26 units that used `s32` and Tennis struct names with no declarations: 0/26
++compiled, so the job measured no reconstruction at all (W11 KNOWLEDGE step 1). This drill replays those 26 units
++and requires every one to be refused by source_lint, and requires the 22 lint-clean W12 units, composed with the
++certified Tennis header, to pass (no false refusal).
++
++    <venv>/python test_source_lint_prereq.py   -> SOURCE_LINT_PREREQ_DRILL=<pass>/<total>  (exit 0 only if all pass)
++
++Inputs (laptop defaults, override by env): TRF_JOB2_TASK = job 2 task.json; TRF_W12_M2C = W12 m2c dir with lint.json.
++A missing input is a FAIL, never a pass.
++"""
++import json
++import os
++import sys
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, HERE)
++import source_lint  # noqa: E402
++import tennis_context  # noqa: E402
++
++JOB2 = os.environ.get("TRF_JOB2_TASK", r"C:\Users\User\Apps\recon_work\wst_tennis\w10\F\jobs\candidate-20261011T233329Z\task.json")
++W12 = os.environ.get("TRF_W12_M2C", r"C:\Users\User\Apps\recon_work\wst_tennis\w12\m2c")
++EXCLUDED = {"fn_8021EAA8", "fn_8022F90C"}  # UNK_FIELD, excluded by W11 and W12-prep
++
++results = []
++
++
++def gate(name, ok, evidence):
++    results.append(ok)
++    print("%s %s  %s" % ("PASS" if ok else "FAIL", name, evidence))
++
++
++def codes(findings):
++    return sorted({f.split(":", 1)[0] for f in findings})
++
++
++def main():
++    # Arrange / Act / Assert per gate.
++    # 1. Job 2 replay: every unit refused, and the new prerequisite codes are what refuses the ones old lint passed.
++    try:
++        with open(JOB2, encoding="utf-8") as fh:
++            units = json.load(fh)["units"]
++    except (OSError, ValueError, KeyError) as exc:
++        gate("V-PREREQ-JOB2-REPLAY", False, "job 2 task unreadable: %s" % exc)
++        units = []
++    if units:
++        refused, new_only = 0, 0
++        for u in units:
++            f = source_lint.lint_unit(u.get("source_text"), u.get("family"), u.get("flags"))
++            refused += bool(f)
++            old = [x for x in f if x.split(":", 1)[0] not in (source_lint.MISSING_PRELUDE, source_lint.UNDECLARED_TYPE)]
++            new_only += bool(f) and not old
++        gate("V-PREREQ-JOB2-REPLAY", refused == len(units), "%d/%d job-2 units refused" % (refused, len(units)))
++        gate("V-PREREQ-JOB2-NEW-CODES-BITE", new_only > 0,
++             "%d units refused ONLY by the prerequisite codes (old lint let them through)" % new_only)
++
++    # 2. No false refusal: the lint-clean W12 m2c outputs, composed with the certified header, pass.
++    try:
++        with open(os.path.join(W12, "lint.json"), encoding="utf-8") as fh:
++            lint = json.load(fh)
++    except (OSError, ValueError) as exc:
++        gate("V-PREREQ-W12-COMPOSED-CLEAN", False, "W12 lint.json unreadable: %s" % exc)
++        lint = None
++    if lint is not None:
++        ctx = tennis_context.read_context()
++        bad, n = [], 0
++        cdir = os.path.join(W12, "c") if os.path.isdir(os.path.join(W12, "c")) else W12  # producer writes m2c/c/
++        for name in sorted(os.listdir(cdir)):
++            if not (name.startswith("main_") and name.endswith(".c")):
++                continue
++            fn = "fn_" + name[5:-2]
++            if fn in EXCLUDED:
++                continue
++            with open(os.path.join(cdir, name), encoding="utf-8") as fh:
++                text = fh.read()
++            n += 1
++            f = source_lint.lint_unit(tennis_context.compose(text, ctx), "C", "")
++            if f:
++                bad.append((fn, codes(f)))
++        gate("V-PREREQ-W12-COMPOSED-CLEAN", n == 22 and not bad, "%d composed units, refused: %s" % (n, bad))
++
++    # 3. Red/green controls for each new code.
++    raw = "void g(s32 a) {\n    s32 b = a;\n}\n"
++    gate("V-PREREQ-RED-NO-PRELUDE", source_lint.MISSING_PRELUDE in codes(source_lint.lint_unit(raw, "C", "")),
++         "s32 used, no typedef")
++    gate("V-PREREQ-GREEN-PRELUDE", not source_lint.lint_unit("typedef signed long s32;\n" + raw, "C", ""),
++         "same text with the typedef")
++    obj = "void g(Obj1234 *p) {\n    p->f_0 = 0;\n}\n"
++    gate("V-PREREQ-RED-UNDECLARED", source_lint.UNDECLARED_TYPE in codes(source_lint.lint_unit(obj, "C", "")),
++         "Obj1234 used as a type, not declared")
++    decl = "typedef struct Obj1234 {\n    int f_0; /* +0x00 */\n} Obj1234;\n"
++    gate("V-PREREQ-GREEN-DECLARED", not source_lint.lint_unit(decl + obj, "C", ""), "same text with the typedef")
++    mul = "int g(int A, int b) {\n    return A * b;\n}\n"
++    gate("V-PREREQ-GREEN-MULTIPLY", not source_lint.lint_unit(mul, "C", ""), "capitalised operand times a variable")
++    cmt = "/* s32 Obj1234 *p */\nvoid g(void) {\n}\n"
++    gate("V-PREREQ-GREEN-COMMENT", not source_lint.lint_unit(cmt, "C", ""), "names inside a comment")
++
++    print("SOURCE_LINT_PREREQ_DRILL=%d/%d" % (sum(results), len(results)))
++    return 0 if results and all(results) else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
