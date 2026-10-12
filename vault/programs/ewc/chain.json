@@ -1,7 +1,7 @@
 {
     "goal": "ewc",
     "root": "C:\\Users\\User\\Apps\\wt_ewc",
-    "envelope": 22000000,
+    "envelope": 23000000,
     "max_residuals": 2,
     "route_ladder": [
         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ewc\\route-S.json",
@@ -37,7 +37,7 @@
                     ]
                 ],
                 "cwd": "C:\\Users\\User\\Apps\\wt_ewc",
-                "timeout_s": 300
+                "timeout_s": 3600
             }
         },
         {
@@ -62,7 +62,7 @@
                     ]
                 ],
                 "cwd": "C:\\Users\\User\\Apps\\wt_ewc",
-                "timeout_s": 300
+                "timeout_s": 3600
             }
         },
         {
@@ -83,7 +83,7 @@
                     ]
                 ],
                 "cwd": "C:\\Users\\User\\Apps\\wt_ewc",
-                "timeout_s": 300
+                "timeout_s": 3600
             }
         },
         {

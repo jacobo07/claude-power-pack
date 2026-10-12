@@ -240,7 +240,11 @@ def finalize_unit(chain: dict, u: dict, ms: list, runner=None, git=None, force: 
     head = gitf("rev-parse", "HEAD") or "nogit"
     sha = _sha(receipt)
     cache = _jload(receipt + GATE)
-    ran = not (cache and cache.get("sha") == sha and cache.get("head") == head)
+    # An accepted DONE claim keeps its evidence until the receipt changes: a later unit's commit moving HEAD must not
+    # re-judge it (ewc: E3/E4 refused as "gate timeout" on E5's commit after passing at their own). A failed cache
+    # still re-runs on a new HEAD, so a fix commit can clear it.
+    accepted = bool(cache and cache.get("sha") == sha and cache.get("passed") and done_claim)
+    ran = not (accepted or (cache and cache.get("sha") == sha and cache.get("head") == head))
     if not ran:
         passed, gates, commits, reason = cache["passed"], cache["gates"], cache["commits"], cache.get("reason", "")
     else:
