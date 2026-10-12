@@ -1,37 +1,23 @@
-# WU-W12 -- Tennis deterministic-layer measurement: 24 drawn functions, ONE GEX44 job (job 3 of 6)
+# WU-W12 -- Tennis measurement: ~24 functions, ONE GEX44 job (job 3 of 4)
 
-Common brief: `PROGRAMME.md`. Binding plan: `vault/plans/tennis-rf-compounding-MASTER-PLAN-2026-10-12.md` rev 2
-(Owner capital packet 9ff2a9f9, programme 90M). Read `WU-W11-receipt.md`, `MEASURE.md`, `JOBS.md`, `evidence/w12/W12-prep-receipt.md`.
-
-Executor: the TRF-C coordinator pane, inline (laptop at ~2.1 GB free, 36 claude.exe: no new laptop worker; plan s9).
-What this job measures: the m2c + certified Tennis context layer with NO model step, i.e. the deterministic-zone
-baseline (autonomous reconstruction rate at generation 1). Model cost per function is W12-R, not this unit.
+Common brief: `PROGRAMME.md`. Needs W11 DONE. Read `WU-W11-receipt.md`, `MEASURE.md`, `JOBS.md`.
+Purpose (W9 HANDOFF section 2): Scope-B admission needs >= 20 verified functions with measured tokens. This unit
+produces the measured rates W8b needs.
 
 Steps:
-1. Draw: DONE (MEASURE.md "W12 draw", seed 20261012). Do not redraw.
-2. Prep: DONE on GEX44 (2ab62e70); laptop wt_tennis_rf already holds the post-prep header (content-identical, LF-normalised
-   sha a97610866c653a65); laptop TENNIS_CONTEXT_DRILL 9/9. Outputs in `wst_tennis\w12\m2c\c\`, patch `patches/W12-prep-1.patch`.
-3. C1 gate: DONE. source_lint MISSING_PRELUDE + UNDECLARED_TYPE (patch `patches/C1-1.patch`); SOURCE_LINT_PREREQ_DRILL 9/9
-   (job-2 replay 26/26 refused, 22 composed W12 units clean); FANOUT_PRECONDITIONS 29/29. stage.py build calls lint_unit,
-   so a prerequisite-less unit can no longer reach a send.
-4. Units: compose the 22 included m2c outputs with `tennis_context.compose` and the presets W10c used. `stage.py build`
-   -> `stage.py certify` -> JOBS.md row 3 BEFORE send -> send by the W10b custody route -> `stage wait` -> repatriate -> judge.
-   Exactly ONE send. Job 4 stays recovery reserve.
-5. Records: append one row per drawn function to `measure/records.jsonl` (schema below). Missing = UNKNOWN, never 0.
-6. Restore and read back the custody state as W10b specified, even if the job failed.
-
-Record schema (TRF-C plan s2, s5): fn, set (W5a|W12), lint, excluded_reason, closing_layer (m2c+context | excluded),
-verdict (MATCH | PARTIAL % | FAIL class), compiles, model_calls (0 by construction), tokens (coordinator tokens for the
-batch / n, labelled BATCH_SHARE), wall_s {prep, build, certify, queue, run, judge}, family_w7 {id, size},
-pair_ordinal (fam 8: fn_803315A0/fn_80257978; fam 755: fn_80278FEC/fn_8025C600), structs_used [tags from the header],
-structs_new_in_prep (bool), hazards (W12-prep: fn_8021F8BC ptr stride, fn_8021F3E4 ptmf r12), failure_capital
-(counterexample | hypothesis | idiom | missing knowledge | NONE -> unproductive).
-
-Done-check: JOBS.md row 3 judged; 24 records; MEASURE.md table: deterministic-layer MATCH rate with n, by W7 family size
-(singleton vs family >=2) and by struct source (W11 vs prep); custody read back.
-Receipt: `WU-W12-receipt.md`, then write `W12-PREP-READY.md` LAST (it is the chain gate; writing it earlier would arm a
-laptop worker for this unit).
-
-Next unit (W12-R, GEX44): one headless `claude -p` per non-MATCH function (stream-json usage = exact per-function tokens),
-family-pair members in ordinal order with the first member's result in the second's context; candidates go into the
-W13 job (job 5), not a separate job.
+1. Draw: DONE by the coordinator (MEASURE.md "W12 draw", `evidence/w12/draw.json`, seed 20261012). Do not redraw.
+2. Cascade: DONE on GEX44 (Owner option a, 2026-10-12; laptop below the RAM floor). Read `W12-PREP-READY.md`: it
+   names the patch to apply in wt_tennis_rf (`patches/W12-prep-1.patch`, `git apply --ignore-whitespace`, never
+   commit .ksr_vault or CRLF churn), the m2c+lint outputs for all 24 functions (`wst_tennis\w12\m2c\`), the
+   per-function prep records and which functions are EXCLUDED. Re-run `test_tennis_context.py` with the laptop
+   factory venv (`C:\Users\User\Apps\decomp_tools\venv\Scripts\python.exe`) after applying. Do not redo the cascade.
+3. Units: compose the job units from the included m2c outputs with the context header and the presets the W10c
+   build used (the build path W10c used for job 2, now with the prelude and context). Then one certified job: `stage.py build` -> `stage.py certify` -> JOBS.md row 3 BEFORE send -> send by the W10b custody
+   route -> wait -> judge. Exactly ONE send. Job 4 stays in reserve; use it only if job 3 fails for an
+   infrastructure cause that has since got a local regression gate.
+4. Records: append to `measure/records.jsonl` per function: closing layer, verdict (MATCH / PARTIAL % / FAIL class),
+   compiles, model calls, processed tokens deduplicated by message.id (missing = UNKNOWN). Update MEASURE.md with the
+   compile-verified rate per layer and its n.
+5. Restore and read back the custody state as W10b specified, even if the job failed.
+Done-check: JOBS.md row 3 judged, records for every drawn function, MEASURE.md rate table with n, custody read back.
+Receipt: `vault/programs/tennis-rf/WU-W12-receipt.md`. K7 row as in W11.
