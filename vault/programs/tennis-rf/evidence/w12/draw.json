@@ -1,0 +1,132 @@
+{
+ "seed": 20261012,
+ "method": "w5a/draw.py strata by insns",
+ "pool_clean": 10,
+ "pool_few": 14,
+ "excluded_w5a": [
+  "fn_801BD194",
+  "fn_80203FEC",
+  "fn_8020711C",
+  "fn_8020CC14",
+  "fn_8021EAA8",
+  "fn_8022621C",
+  "fn_8022F90C",
+  "fn_80241018",
+  "fn_80252F34",
+  "fn_80254440",
+  "fn_80257978",
+  "fn_8025C600"
+ ],
+ "clean": [
+  {
+   "fn": "fn_80203E40",
+   "unit": "80202950",
+   "insns": 3,
+   "shape": "exact",
+   "status": "L1",
+   "ut": 0,
+   "unk": 1
+  },
+  {
+   "fn": "fn_8032CF78",
+   "unit": "8032BC4C",
+   "insns": 3,
+   "shape": "loose",
+   "status": "L1",
+   "ut": 0,
+   "unk": 1
+  },
+  {
+   "fn": "fn_80230ABC",
+   "unit": "80202950",
+   "insns": 4,
+   "shape": "loose",
+   "status": "L1",
+   "ut": 0,
+   "unk": 1
+  },
+  {
+   "fn": "fn_8027A154",
+   "unit": "80278300",
+   "insns": 5,
+   "shape": "loose",
+   "status": "L1",
+   "ut": 0,
+   "unk": 2
+  },
+  {
+   "fn": "fn_802128D4",
+   "unit": "80202950",
+   "insns": 8,
+   "shape": "none",
+   "status": "L1",
+   "ut": 0,
+   "unk": 2
+  },
+  {
+   "fn": "fn_8021F8BC",
+   "unit": "80202950",
+   "insns": 34,
+   "shape": "none",
+   "status": "L1",
+   "ut": 0,
+   "unk": 2
+  }
+ ],
+ "few": [
+  {
+   "fn": "fn_80230BF8",
+   "unit": "80202950",
+   "insns": 14,
+   "shape": "exact",
+   "status": "L1",
+   "ut": 2,
+   "unk": 2
+  },
+  {
+   "fn": "fn_803315A0",
+   "unit": "8032BC4C",
+   "insns": 16,
+   "shape": "exact",
+   "status": "L1",
+   "ut": 1,
+   "unk": 0
+  },
+  {
+   "fn": "fn_80279E44",
+   "unit": "80278300",
+   "insns": 17,
+   "shape": "loose",
+   "status": "L1",
+   "ut": 2,
+   "unk": 2
+  },
+  {
+   "fn": "fn_80278FEC",
+   "unit": "80278300",
+   "insns": 23,
+   "shape": "exact",
+   "status": "L1",
+   "ut": 2,
+   "unk": 0
+  },
+  {
+   "fn": "fn_8021F3E4",
+   "unit": "80202950",
+   "insns": 24,
+   "shape": "loose",
+   "status": "L1",
+   "ut": 1,
+   "unk": 4
+  },
+  {
+   "fn": "fn_80253348",
+   "unit": "8023FE44",
+   "insns": 57,
+   "shape": "none",
+   "status": "L1",
+   "ut": 1,
+   "unk": 17
+  }
+ ]
+}

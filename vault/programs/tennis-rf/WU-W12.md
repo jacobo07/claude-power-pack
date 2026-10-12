@@ -5,12 +5,14 @@ Purpose (W9 HANDOFF section 2): Scope-B admission needs >= 20 verified functions
 produces the measured rates W8b needs.
 
 Steps:
-1. Draw: the 12 W5a functions plus 12 new ones, drawn BEFORE any candidate exists with seed 20261012 by the
-   W5a method (pool = W3 sample60 m2c L1 rows not already drawn, strata by insns). Record the draw in MEASURE.md
-   and `evidence/w12/draw.json` first.
-2. Cascade per function (PROGRAMME.md economic rules): NO_WORK -> prior result -> Resort donor -> det type repair with
-   W11 context -> model. Each model step carries its one-line Proof of Model Necessity.
-3. One certified job: `stage.py build` -> `stage.py certify` -> JOBS.md row 3 BEFORE send -> send by the W10b custody
+1. Draw: DONE by the coordinator (MEASURE.md "W12 draw", `evidence/w12/draw.json`, seed 20261012). Do not redraw.
+2. Cascade: DONE on GEX44 (Owner option a, 2026-10-12; laptop below the RAM floor). Read `W12-PREP-READY.md`: it
+   names the patch to apply in wt_tennis_rf (`patches/W12-prep-1.patch`, `git apply --ignore-whitespace`, never
+   commit .ksr_vault or CRLF churn), the m2c+lint outputs for all 24 functions (`wst_tennis\w12\m2c\`), the
+   per-function prep records and which functions are EXCLUDED. Re-run `test_tennis_context.py` with the laptop
+   factory venv (`C:\Users\User\Apps\decomp_tools\venv\Scripts\python.exe`) after applying. Do not redo the cascade.
+3. Units: compose the job units from the included m2c outputs with the context header and the presets the W10c
+   build used (the build path W10c used for job 2, now with the prelude and context). Then one certified job: `stage.py build` -> `stage.py certify` -> JOBS.md row 3 BEFORE send -> send by the W10b custody
    route -> wait -> judge. Exactly ONE send. Job 4 stays in reserve; use it only if job 3 fails for an
    infrastructure cause that has since got a local regression gate.
 4. Records: append to `measure/records.jsonl` per function: closing layer, verdict (MATCH / PARTIAL % / FAIL class),
