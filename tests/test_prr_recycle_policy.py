@@ -81,3 +81,12 @@ def test_last_boundary_found_backwards_across_chunks(tmp_path, monkeypatch):
 def test_no_boundary_returns_none(tmp_path):
     p = _write(tmp_path, [{"type": "user", "timestamp": "2026-10-12T10:00:00Z"}])
     assert rp.last_boundary_ts(p) is None
+
+
+def test_mem_fields_never_reports_virtual_size_as_private():
+    from types import SimpleNamespace
+    from modules.prr.recycle_policy import mem_fields
+    linux = mem_fields(SimpleNamespace(rss=128 * 2**20, vms=5484 * 2**20))
+    assert linux == {"private_mb": None, "wset_mb": 128.0}
+    win = mem_fields(SimpleNamespace(rss=1, vms=9 * 2**30, private=300 * 2**20, wset=200 * 2**20))
+    assert win == {"private_mb": 300.0, "wset_mb": 200.0}
