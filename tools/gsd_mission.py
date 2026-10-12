@@ -1566,7 +1566,7 @@ def estimate_calibration(rec: dict, estimate: int, measure=None) -> dict:
 
 def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
                  wu_packet: str | None = None, continue_max_tokens=None, worker_mcp: str | None = None,
-                 now: float | None = None, estimate_basis: str | None = None, measure=None) -> dict:
+                 ccr_class: str | None = None, now: float | None = None, estimate_basis: str | None = None, measure=None) -> dict:
     """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
     estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
     work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
@@ -1600,9 +1600,14 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         if worker_mcp not in WORKER_MCP_MODES:
             raise MissionError(f"worker_mcp must be one of {', '.join(WORKER_MCP_MODES)}, not {worker_mcp!r}")
         changes["worker_mcp"] = worker_mcp
+    if ccr_class is not None:
+        ccr_class = str(ccr_class).strip()
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}", ccr_class):
+            raise MissionError(f"ccr_class must be a plain class name, not {ccr_class!r}")
+        changes["ccr_class"] = ccr_class
     if not changes:
         raise MissionError("nothing to set: give --token-estimate, --model, --autocompact, --wu-packet, "
-                           "--continue-max-tokens or --worker-mcp")
+                           "--continue-max-tokens, --worker-mcp or --ccr-class")
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
@@ -1632,6 +1637,27 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
                       event="envelope_set", now=now,
                       reason="envelope: " + "; ".join(f"{k} {old[k]} -> {shown[k]}" for k in shown),
                       **changes)
+
+
+def _ccr_contract(rec: dict, pkt_path: str, cap) -> dict:
+    """WU-W1: the pre-launch cost contract (tools/ccr_pgo.py) for the mission's CCR work class. No class,
+    no PGO file or any failure -> UNFORECAST; this never raises."""
+    cls = rec.get("ccr_class")
+    if not cls:
+        return {"verdict": "UNFORECAST"}
+    try:
+        import ccr_pgo
+        d = os.environ.get("CPP_CCR_PGO_DIR") or str(Path.home() / ".claude" / "ccr" / "state" / "pgo")
+        f = Path(d) / f"{cls}.json"
+        if not f.is_file():
+            return {"verdict": "UNFORECAST", "work_class": cls}
+        pgo = json.loads(f.read_text(encoding="utf-8-sig"))
+        image = Path(pkt_path)
+        first = next((ln.strip() for ln in image.read_text(encoding="utf-8", errors="replace").splitlines()
+                      if ln.strip()), "")
+        return ccr_pgo.contract(pgo, first, image, cap)
+    except Exception as exc:  # noqa: BLE001 -- the forecast never stops an admission
+        return {"verdict": "UNFORECAST", "work_class": cls, "error": f"{type(exc).__name__}: {exc}"[:200]}
 
 
 def _admission_switch_off() -> bool:
@@ -1684,6 +1710,14 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
                  "reasons": res["reasons"][:6], "at": now,
                  "workers": [{k: w.get(k) for k in ("name", "profile", "calls", "floor")}
                              for w in res.get("workers") or []]}
+    # WU-W1: CCR pre-launch cost contract. Observe records; CPP_CCR_ADMISSION=enforce refuses SPLIT/DEFLATE.
+    contract = _ccr_contract(rec, pkt["path"], (res.get("envelope") or {}).get("stop"))
+    admission["ccr_contract"] = contract
+    if (str(os.environ.get("CPP_CCR_ADMISSION") or "").strip().lower() == "enforce"
+            and contract.get("verdict") in ("SPLIT", "DEFLATE")):
+        admission["verdict"] = "RECOMPILE"   # known and not launchable
+        admission["reasons"] = ([f"ccr_contract:{contract['verdict']}"] + admission["reasons"])[:6]
+        res = {**res, "verdict": "RECOMPILE", "reasons": admission["reasons"]}
     # The route's worker profile is recorded on the mission, so launch reads one field. Only an
     # admission-set value is ever replaced; a profile an operator set by hand stays.
     slim = next((w["profile"] for w in admission["workers"] if w["profile"] in SLIM_PROFILES), None)
@@ -4577,6 +4611,8 @@ def _cli(argv=None) -> int:
     en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
     en.add_argument("--continue-max-tokens",
                     help="per-mission context ceiling for continuing the same session, e.g. 200k")
+    en.add_argument("--ccr-class", help="CCR work class; admit then records the PGO cost contract "
+                                        "(CPP_CCR_ADMISSION=enforce makes SPLIT/DEFLATE refuse)")
     en.add_argument("--worker-mcp", choices=WORKER_MCP_MODES,
                     help="none = launch this mission's worker with --strict-mcp-config and no servers")
     ad = sub.add_parser("admit", help="judge the compiled work unit's route against its envelope "
@@ -4648,7 +4684,7 @@ def _cli(argv=None) -> int:
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
                            autocompact=args.autocompact, wu_packet=args.wu_packet,
                            continue_max_tokens=args.continue_max_tokens, worker_mcp=args.worker_mcp,
-                           estimate_basis=args.estimate_basis)
+                           ccr_class=args.ccr_class, estimate_basis=args.estimate_basis)
         pkt = (rec.get("wu_packet") or {}).get("path")
         print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
               f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "
