@@ -1,0 +1,38 @@
+{
+  "packet": "capital-packet-cp50-c2-v3",
+  "plan": "vault/plans/cpx-control-plane-extinction-cp50-2026-10-11.md sections 5, 7c + vault/programs/cp50-c2/ chain (R3b residual, then J3, C3, D21F)",
+  "kind": "programme_ceiling_max",
+  "expires": "2026-10-19T23:59:59+02:00",
+  "default_tier": "P80",
+  "programmes": [
+    {
+      "goal": "cp50-c2",
+      "lineage": [
+        "capital-packet sha 2f4abf1acb11 (programme 27,062,272)",
+        "capital-packet sha fd6ac959edac (programme 29,443,967; stop-loss 'coordinator-pane spend bound to cp50-c2' tripped by pane d886a4b2, bound 205,807)"
+      ],
+      "measured_at_packet": {"cap": 4725000, "settled": 19606834, "open": 0},
+      "ceilings": {"P50": 34600000, "P80": 37600000, "P95": 40000000},
+      "sizing": "measured: goal-status cp50-c2 2026-10-12 total_used 19,606,834 (leases L1 10,462,272; L2 R3 2,693,510; L3 R6 688,185; L4 R6:r1 971,168; L5 R3b 4,791,699, exhausted, R3b PARTIAL at 31 calls). A residual climbs one rung of route_ladder (gsdx_chain.py:104), so R3b:r1 runs on route-L. Remaining units at route targets: R3b:r1 route-L 6.4M + J3 route-M 3.5M + C3 route-M 3.5M + D21F route-S 1.6M = 15.0M -> P50 34.6M; P80 = 19.6M + 1.2 x 15.0M = 37.6M; P95 = 19.6M + route stops (8.64M + 2 x 4.725M + 2.16M) = 39.9M -> 40.0M",
+      "scope": "cp50-c2 chain: ONE R3b residual (R3b max_residuals 1, route-L by the ladder) finishing exactly the 4 open steps of WU-R3b-receipt.md (arm_a.py context plumbing via Edit, line-ending churn excluded from commits, re-prepare draw 1-5, budget admission + R3b-certificate.md); then J3 (one Phase-7 job 3 send, max_residuals 0), C3, D21F, as the WU-*.md packets in vault/programs/cp50-c2/ at this packet",
+      "workspace": "goal cp50-c2, binding root C:/Users/User/Apps/recon_work/wt_cp50_c2 (unchanged); the coordinator never Set-Locations into it",
+      "lease_policy": "close L5 (settled 4,791,699); the chain opens one lease per remaining unit at its route stop; no residual on J3, C3 or D21F without a new packet",
+      "proof_reserve": 500000,
+      "stop_loss": [
+        "a unit settles above 1.5x its route target",
+        "J3 sends more than one job",
+        "a second R3b residual",
+        "any new coordinator-pane spend bound to cp50-c2 above 300,000",
+        "CP50 itself is started (C3 ends at 'Owner funds CP50')"
+      ],
+      "excluded": ["CP50 run", "Phase-7 job 4 beyond plan section 5", "residual re-arms on J3, C3, D21F", "any unit not in chain.json", "committing .ksr_vault paths or CRLF/LF churn", "raising goal cpx"]
+    }
+  ],
+  "invalidators": [
+    "this file's sha256 differs from the hash shown in the approval message",
+    "goal cp50-c2 settled+open at apply time exceeds measured_at_packet by more than 500,000",
+    "the cp50-c2 chain units or their routes change after the packet (other than R3b max_residuals 0 -> 1)",
+    "expiry passed",
+    "the Owner revokes (revoke cp50-c2)"
+  ]
+}
