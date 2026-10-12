@@ -16,7 +16,12 @@ If $ARGUMENTS is empty, print this protocol's summary (the 7 phases) and exit.
 
 1. **Ultra Plan** — restate the target in your own words. Identify scope, surface area, files involved, env/config dependencies. Estimate file count. **KARIMO pre-pass (BL-0068, advisory):** if the TARGET SPEC contains a raw PRD (a `PRD:` header or a `<prd>…</prd>` block), first run `python ~/.claude/skills/claude-power-pack/modules/karimo-harness/prd_parser.py --in <prd|->` to emit `PRD_BASELINE.json` + `BLUEPRINT.md`, then treat the blueprint seed tasks + the `<prd-constraints>` block as pre-extracted hard scope (do NOT re-derive). This step is purely additive and does NOT alter the Phase 2 mandatory stop.
 2. **Q&A Pass** — emit EXACTLY 6 critical clarifying questions. Number them. Cover: auth/credentials, env vars, file paths, edge cases, success criteria, scope boundaries. STOP and wait for Owner's answers. Do NOT proceed without them.
-3. **Revised Plan** — fold answers into a numbered task list. Each task has: file path, action (create/edit/delete), 1-line purpose, verification step.
+3. **Revised Plan** — fold answers into a numbered task list. Each task has: file path, action (create/edit/delete), 1-line purpose, verification step. The plan MUST end with a mandatory **TOKEN BUDGET** section (a plan without it is incomplete, return to this phase):
+   - First line: "Price units with `tools/route_admission.py admit` before writing this table."
+   - Label every figure `measured`, `estimated` or `unknown` (never an unlabeled number).
+   - Rows: context used so far; planning; implementation; review; Production Reality; rotation; Agent Teams (if any); total.
+   - Model routing: which model runs which row, and why.
+   - Triggers: the token level that forces rotation, the one that forces a model downgrade, and the one that forces a pause for the Owner.
 4. **Audit Pass** — invoke the `oneshot-architect-auditor` sub-agent (via Agent tool, `subagent_type: oneshot-architect-auditor`). Pass the revised plan. The sub-agent returns a numbered list of GAPS (auth, env vars, file paths, edge cases). Do NOT rewrite the plan from sub-agent output — the sub-agent reports gaps, you fix them.
 5. **Fix Injection** — for each gap, amend the plan with a concrete fix line. Re-emit the corrected plan. If no gaps, state "Audit clean" and proceed.
 6. **Execution** — Auto Mode. Execute every task. No partial commits. No scaffold-illusion. Reality Contract applies (zero TODO/FIXME/PLACEHOLDER).

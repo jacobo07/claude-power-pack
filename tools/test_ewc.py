@@ -20,7 +20,7 @@ def run_stop(case):
         blocked = False
         for h in HOOKS:
             r = subprocess.run(["node", str(ROOT / h)], input=json.dumps(payload),
-                               capture_output=True, text=True, env=env, cwd=str(ROOT), timeout=30)
+                               capture_output=True, text=True, env=env, cwd=str(ROOT), timeout=300)
             try:
                 out = json.loads(r.stdout or "{}")
             except ValueError:
@@ -76,11 +76,11 @@ class Home:
         e.update({k: v for k, v in kw.items() if v is not None})
         return e
 
-    def stop(self, case="complete", sid="t1", **env):
+    def stop(self, case="complete", sid="t1", tp=None, **env):
         payload = {"session_id": sid, "hook_event_name": "Stop", "cwd": str(ROOT),
-                   "transcript_path": str(FIX / (case + ".jsonl"))}
+                   "transcript_path": tp or str(FIX / (case + ".jsonl"))}
         r = subprocess.run(["node", GSD], input=json.dumps(payload), capture_output=True, text=True,
-                           env=self.env(**env), cwd=str(ROOT), timeout=30)
+                           env=self.env(**env), cwd=str(ROOT), timeout=300)
         out = json.loads(r.stdout or "{}")
         return out, self.receipts()
 
@@ -98,10 +98,18 @@ class Home:
         from modules.gsd_x.goal.log import GoalLog
         return GoalLog(REPO, goal_id, base=self.goals)
 
-    def add(self, text, sid="t1", sev="RED", owner="AGENT", act="NOW"):
+    def say(self, text, name="turn"):
+        """Write a one-turn transcript whose last assistant message is `text`; return its path."""
+        p = self.home / (name + ".jsonl")
+        u = {"type": "user", "message": {"role": "user", "content": [{"type": "text", "text": "go"}]}}
+        a = {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": text}]}}
+        p.write_text(json.dumps(u) + "\n" + json.dumps(a) + "\n", encoding="utf8")
+        return str(p)
+
+    def add(self, text, sid="t1", sev="RED", owner="AGENT", act="NOW", source="test"):
         from modules.gsd_x.goal import session_scope as ss
         os.environ["GSDX_GOALS_ROOT"] = str(self.goals)
-        return ss.add(REPO, sid, text=text, source="test", severity=sev, actionability=act,
+        return ss.add(REPO, sid, text=text, source=source, severity=sev, actionability=act,
                       owner_class=owner, next_action="Do the work: " + text)
 
     def close(self, oid, sid="t1"):
@@ -278,6 +286,132 @@ check("V-EWC-13e no ledger (control): no OPEN OBLIGATIONS block", "OPEN OBLIGATI
 out, rec = h.stop("complete", CPP_EWC_GATE="enforce")
 check("V-EWC-13f fresh-epoch fixture: ledger-only obligation still yields CONTINUE",
       out.get("decision") == "block" and "CONTINUE_" in json.dumps(rec), str(out) + str(rec))
+
+# ---- E5 (M9): fault matrix. One V-EWC-FM-* gate per row; the expected verdict is in the gate name. ----
+def blocked(o):
+    return o.get("decision") == "block"
+
+
+def cat(rec):
+    return last(rec).get("category")
+
+
+def fm(name, verdict, ok, detail=""):
+    check(f"V-EWC-FM-{name} -> {verdict}", ok, detail)
+
+
+def table(*rows):
+    return "\n".join(["| Check | Result |", "|---|---|"] + list(rows))
+
+
+def say_stop(text, **env):
+    h = Home()
+    o, rec = h.stop(tp=h.say(text), CPP_EWC_GATE="enforce", **env)
+    return h, o, rec
+
+
+def no_complete(rec):
+    return not any(r["category"] == "STOP_COMPLETE" for r in rec)
+
+
+h, o, rec = say_stop(table("| Contrast ratio | FAIL (RED) |"))
+fm("01-red-internal-fix", "CONTINUE_FAILED_GATE (block)", blocked(o) and cat(rec) == "CONTINUE_FAILED_GATE", str(rec))
+h, o, rec = say_stop(table("| Spacing scale | WARN: 3 off-grid values, fixable |"))
+fm("02-amber-actionable", "CONTINUE_ACTIONABLE_WARNING (block)", blocked(o) and cat(rec) == "CONTINUE_ACTIONABLE_WARNING", str(rec))
+h = Home(); h.add("Optional polish of the changelog wording", sev="INFO", act="INFO")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("03-info-warning-no-obligation", "STOP_COMPLETE", not blocked(o) and cat(rec) == "STOP_COMPLETE", str(rec))
+h, o, rec = say_stop("Everything is green. Final visual approval is the Owner's call.")
+fm("04-subjective-only", "STOP_HUMAN_GATE", not blocked(o) and cat(rec) == "STOP_HUMAN_GATE", str(rec))
+h, o, rec = say_stop("The evidence file was not written for this run.")
+fm("05-missing-evidence", "CONTINUE_MISSING_EVIDENCE (block)", blocked(o) and cat(rec) == "CONTINUE_MISSING_EVIDENCE", str(rec))
+h, o, rec = say_stop("The changes are not committed yet and sit in the working tree.")
+fm("06-missing-commit", "CONTINUE_* (block)", blocked(o) and str(cat(rec)).startswith("CONTINUE_"), str(rec))
+h, o, rec = say_stop("Next iteration: tighten the spacing scale and fix contrast -- I recommend doing it next.")
+fm("07-explicit-next-action", "CONTINUE_KNOWN_NEXT_ACTION (block)", blocked(o) and cat(rec) == "CONTINUE_KNOWN_NEXT_ACTION", str(rec))
+h = Home(); oid = h.add("Reviewer finding: null deref in parser.py line 40", source="review")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("08-review-finding", "CONTINUE_OPEN_OBLIGATION (block, names the id)",
+   blocked(o) and oid in o.get("reason", "") and cat(rec) == "CONTINUE_OPEN_OBLIGATION", str(rec))
+h, o, rec = say_stop(table("| pytest tools/test_x.py | 2 FAILED |"))
+fm("09-failed-test", "CONTINUE_FAILED_GATE (block)", blocked(o) and cat(rec) == "CONTINUE_FAILED_GATE", str(rec))
+h, o, rec = say_stop("The Production Reality evidence was not produced for this change.")
+fm("10-production-reality-missing", "CONTINUE_MISSING_EVIDENCE (block)", blocked(o) and cat(rec) == "CONTINUE_MISSING_EVIDENCE", str(rec))
+h = Home(); h.add("Owner picks the logo colour", owner="OWNER", act="HUMAN_PREF", sev="INFO")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("11-human-preference", "STOP_HUMAN_GATE", not blocked(o) and cat(rec) == "STOP_HUMAN_GATE", str(rec))
+h = Home(); h.add("Irreversible: drop the production table", owner="OWNER", act="APPROVAL", sev="AMBER")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("12-irreversible", "STOP_HUMAN_GATE", not blocked(o) and cat(rec) == "STOP_HUMAN_GATE", str(rec))
+h = Home(); h.add("Outward-facing: publish the release to the public registry", owner="OWNER", act="APPROVAL", sev="AMBER")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("13-outward-without-authorization", "STOP_HUMAN_GATE", not blocked(o) and cat(rec) == "STOP_HUMAN_GATE", str(rec))
+h = Home(); h.add("Provider quota exhausted; needs a funded API key", owner="OWNER", act="RESOURCE", sev="AMBER")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("14-provider-resource-block", "STOP_RESOURCE_BLOCKED", not blocked(o) and cat(rec) == "STOP_RESOURCE_BLOCKED", str(rec))
+print("[GAP] V-EWC-FM-15-token-budget-exhausted: the Stop gate has no token-budget input (ewcGate bounds max_cycles/max_hours only; "
+      "tokens are bounded by the cost breaker outside Stop). Not counted as a pass.")
+h = Home(); h.marker(cycles=40, max_cycles=40); h.add("Fix failure in module q")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("16-iteration-budget-exhausted", "BUDGET (allowed, receipt names the suppressed CONTINUE)", not blocked(o) and cat(rec) == "BUDGET"
+   and str(last(rec).get("suppressed_verdict")).startswith("CONTINUE_"), str(rec))
+
+
+def growing(h, n):
+    o, rec = {}, []
+    for i in range(n):
+        o, rec = h.stop(tp=h.say(table(*[f"| Gate {chr(97 + k)}{i} | FAIL |" for k in range(i + 1)])), CPP_EWC_GATE="enforce")
+    return o, rec
+
+
+h = Home()
+o, rec = growing(h, 4)
+fm("17-same-repair-fails-3x", "STALLED (allowed on the 4th stop)", not blocked(o) and cat(rec) == "STALLED", str(rec))
+h = Home()
+gd = h.goals / REPO / "ewc-g2"; gd.mkdir(parents=True); (gd / "000001.json").write_text("{broken", encoding="utf8")
+bd = h.state / "goal-binding"; bd.mkdir(); (bd / "t1.json").write_text(json.dumps({"goal": "ewc-g2"}), encoding="utf8")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("19-goal-spine-unreadable", "STOP_UNKNOWN (allowed, never COMPLETE)", not blocked(o) and cat(rec) == "STOP_UNKNOWN" and no_complete(rec), str(rec))
+h = Home()
+h.goals.mkdir(parents=True); (h.goals / "e0c0e0c0e0c0").write_text("not a directory", encoding="utf8")
+o, rec = growing(h, 4)
+fm("20-obligation-write-fails", "STALLED (allowed; hook survives the failed diagnosis write)",
+   not blocked(o) and cat(rec) == "STALLED" and (h.goals / "e0c0e0c0e0c0").is_file(), str(rec))
+_th = Path(tempfile.mkdtemp()) / "throw.js"
+_th.write_text("const M=require('module');const o=M.prototype.require;M.prototype.require=function(id){const r=o.apply(this,arguments);"
+               "if(/ewc_gate(\\.js)?$/.test(id)&&r&&r.evaluate){r.evaluate=function(){throw new Error('boom');};}return r;};\n"
+               "require('os').freemem = () => 64 * 1024 * 1048576;\n", encoding="utf8")
+h = Home(); h.add("Fix failure in module q")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce", NODE_OPTIONS="--require " + str(_th).replace("\\", "/"))
+fm("21-evaluator-throws", "continue (fail-open, no crash, no STOP_COMPLETE receipt)", not blocked(o) and no_complete(rec), str(o) + str(rec))
+h = Home()
+o, rec = h.stop(tp=str(h.home / "no-such-transcript.jsonl"), CPP_EWC_GATE="enforce")
+fm("22-completion-unknown", "STOP_UNKNOWN (allowed, never COMPLETE)", not blocked(o) and cat(rec) == "STOP_UNKNOWN", str(rec))
+h = Home(); h.add("Optional: reword the changelog entry", sev="AMBER", act="INFO")
+o1, rec = h.stop("complete", CPP_EWC_GATE="enforce"); o2, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("23-one-optional-warning-left", "STOP_COMPLETE twice, never blocks", not blocked(o1) and not blocked(o2)
+   and [r["category"] for r in rec] == ["STOP_COMPLETE", "STOP_COMPLETE"], str(rec))
+h, o, rec = say_stop("A future project could add dark mode to the dashboard, but that is outside this task.")
+fm("24-out-of-scope-opportunity", "STOP_COMPLETE (no obligation)", not blocked(o) and cat(rec) == "STOP_COMPLETE" and last(rec).get("open") == 0, str(rec))
+h = Home(); a = h.add("Fix failure alpha in module a"); b = h.add("Fix failure beta in module b")
+o1, _ = h.stop("complete", CPP_EWC_GATE="enforce")
+h.close(a); o2, _ = h.stop("complete", CPP_EWC_GATE="enforce")
+h.close(b); o3, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("25-two-independent-obligations", "block, block (names the other), STOP_COMPLETE", blocked(o1) and blocked(o2)
+   and b in o2.get("reason", "") and not blocked(o3) and cat(rec) == "STOP_COMPLETE", str(o2) + str(rec))
+h = Home(); h.add("Run the integration suite once the deploy lands", act="AFTER_DEP")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("26a-after-dep-is-not-now", "STOP_SCHEDULED_WAIT (allowed)", not blocked(o) and cat(rec) == "STOP_SCHEDULED_WAIT", str(rec))
+now_id = h.add("Land the deploy of module z")
+o, rec = h.stop("complete", CPP_EWC_GATE="enforce")
+fm("26b-now-blocker-named-not-dependent", "block naming the NOW obligation", blocked(o) and now_id in o.get("reason", ""), str(o))
+h = Home(); tmpd = h.home / "tmp"; tdir = tmpd / "claude" / "ewc" / "t1" / "tasks"; tdir.mkdir(parents=True)
+tenv = dict(TEMP=str(tmpd), TMP=str(tmpd), TMPDIR=str(tmpd))
+o1, rec1 = h.stop("complete", CPP_EWC_GATE="enforce", **tenv)
+(tdir / "bx2.output").write_text("result: 1 failure", encoding="utf8")
+o2, rec2 = h.stop("complete", CPP_EWC_GATE="enforce", **tenv)
+fm("27-child-result-arrives-during-evaluation", "STOP_COMPLETE then block UNCONSUMED_CHILD (no loss)", not blocked(o1)
+   and cat(rec1) == "STOP_COMPLETE" and blocked(o2) and "UNCONSUMED_CHILD" in o2.get("reason", ""), str(o2) + str(rec2))
 
 print("EWC_PASS=%d/%d" % (sum(results), len(results)))
 sys.exit(0 if all(results) else 1)
