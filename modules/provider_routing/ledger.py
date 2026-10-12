@@ -199,6 +199,7 @@ class GoalLedger(SpendLedger):
                    "reserves": {}, "settled": 0, "rsettled": 0}]
         roles, refused_billed = {}, 0
         programme, programme_source, authority, opened = None, None, [], set()
+        succession = None                                 # D28 Ph1b: automatic successor policy, opt-in per goal
         # Economic containment (econ-contain WS-C). A tombstone is per sid and outlives lease epochs: a
         # pane that hit the wall stays fenced even after a successor lease opens (the successor is a new
         # session). `exhausted` is per lease: it is what a cwd bind and the pre-model admission read.
@@ -221,6 +222,9 @@ class GoalLedger(SpendLedger):
                 cur["cap"] = cap
             elif op == "programme":
                 programme, programme_source = int(r["value"]), r.get("source")
+            elif op == "succession":
+                succession = {"tranche": int(r["tranche"]), "keep": int(r.get("keep") or 0),
+                              "source": r.get("source")} if int(r["tranche"]) > 0 else None
             elif op == "lease_open":
                 if r["succession_id"] in opened:
                     continue
@@ -235,7 +239,7 @@ class GoalLedger(SpendLedger):
                     if ls["id"] == r["lease"] and not ls["closed"]:
                         ls["closed"], ls["reason"], ls["receipt"] = True, r.get("reason"), r.get("receipt")
             elif op == "authority_required":
-                authority.append({k: r.get(k) for k in ("succession_id", "need", "executable")})
+                authority.append({k: r[k] for k in ("succession_id", "need", "executable", "lease") if k in r})
             elif op == "reserve":
                 res[r["id"]] = {**r, "state": RESERVED, "lease": cur["id"]}
                 seqs[r["sid"]] = seqs.get(r["sid"], 0) + 1
@@ -278,10 +282,15 @@ class GoalLedger(SpendLedger):
                 "seqs": seqs, "open": open_, "used": used, "total_used": total,
                 "prebind": pre, "PRE_BINDING_PROGRAM_CAPEX": sum(pre.values()),
                 "leases": leases, "programme": programme, "programme_source": programme_source,
-                "authority": authority, "opened": opened, "tombs": tombs, "roles": roles,
+                "authority": authority, "opened": opened, "tombs": tombs, "roles": roles, "succession": succession,
                 "refused_billed": refused_billed,
                 "exhausted_now": leases[-1]["id"] in exhausted,
-                "status": "AUTHORITY_REQUIRED" if any(a["succession_id"] not in opened for a in authority) else "OK"}
+                # An automatic row names the lease it tried to succeed; once that lease is closed (the Owner
+                # opened a successor under another id) it is answered (review 2026-10-12, LOW).
+                "status": "AUTHORITY_REQUIRED" if any(
+                    a["succession_id"] not in opened
+                    and not any(ls["id"] == a.get("lease") and ls["closed"] for ls in leases)
+                    for a in authority) else "OK"}
 
     @staticmethod
     def _committed_reserves(ls: dict) -> int:
@@ -386,7 +395,7 @@ class GoalLedger(SpendLedger):
         return {"goal": g["goal"], "ok": True, "cap": g["cap"], "used": g["used"], "total_used": g["total_used"],
                 "settled": sum(g["marks"].values()), "open": g["open"], "programme": g["programme"],
                 "programme_source": g["programme_source"], "status": g["status"], "leases": leases,
-                "authority_required": g["authority"]}
+                "authority_required": g["authority"], "succession": g["succession"]}
 
     def lineage(self) -> dict:
         """Read-only: folds the journal and appends nothing (status() sweeps leaks, this never does)."""
@@ -437,35 +446,93 @@ class GoalLedger(SpendLedger):
                               f"{self.RESERVE_KEYS} >= 0")
         with self._lock:
             recs = self._read()
-            g = self._sweep_leaks(recs)
-            done = next((ls for ls in g["leases"] if ls["succession_id"] == succession_id), None)
-            if done:
-                return {**self._lineage_view(g), "ok": True, "applied": False, "lease": done["id"], "reason": ""}
-            latest = g["leases"][-1]
-            if prev_lease is not None and prev_lease != latest["id"]:
-                return {**self._lineage_view(g), "ok": False, "lease": latest["id"],
-                        "reason": f"CAS: {prev_lease} is not the latest lease; {latest['id']} "
-                                  f"(succession {latest['succession_id']}) won"}
-            if g["programme"] is None:
-                return {**self._lineage_view(g), "ok": False,
-                        "reason": "UNKNOWN: no programme envelope declared; unknown headroom is not free"}
-            need = cap + sum(reserves.values())
-            other = sum(self._committed_reserves(ls) for ls in g["leases"]
-                        if not ls["closed"] and ls is not latest)
-            executable = g["programme"] - sum(g["marks"].values()) - g["open"] - other
-            if need > executable:
-                if succession_id not in {a["succession_id"] for a in g["authority"]}:
-                    self._append(recs, {"op": "authority_required", "succession_id": succession_id,
-                                        "need": need, "executable": executable})
-                g = self._gfold(recs)
-                return {**self._lineage_view(g), "ok": False, "need": need, "executable": executable,
-                        "reason": f"AUTHORITY_REQUIRED: need {need:,} > executable {executable:,}"}
-            self._append(recs, {"op": "lease_open", "lease": f"L{len(g['leases']) + 1}", "cap": cap,
-                                "succession_id": succession_id, "prev_lease": latest["id"],
-                                "reserves": reserves})
+            return self._open_locked(recs, self._sweep_leaks(recs), succession_id, cap, prev_lease, reserves)[0]
+
+    def _executable(self, g: dict) -> int:
+        """Programme left for a successor of the latest lease (its own reserves are not held back)."""
+        latest = g["leases"][-1]
+        other = sum(self._committed_reserves(ls) for ls in g["leases"] if not ls["closed"] and ls is not latest)
+        return g["programme"] - sum(g["marks"].values()) - g["open"] - other
+
+    def _open_locked(self, recs, g, succession_id, cap, prev_lease, reserves) -> tuple[dict, dict]:
+        """lease_open's body. The caller holds the lock (renew's automatic succession opens through here
+        too, so both paths share one CAS, one idempotency key and one envelope check)."""
+        done = next((ls for ls in g["leases"] if ls["succession_id"] == succession_id), None)
+        if done:
+            return {**self._lineage_view(g), "ok": True, "applied": False, "lease": done["id"], "reason": ""}, g
+        latest = g["leases"][-1]
+        if prev_lease is not None and prev_lease != latest["id"]:
+            return {**self._lineage_view(g), "ok": False, "lease": latest["id"],
+                    "reason": f"CAS: {prev_lease} is not the latest lease; {latest['id']} "
+                              f"(succession {latest['succession_id']}) won"}, g
+        if g["programme"] is None:
+            return {**self._lineage_view(g), "ok": False,
+                    "reason": "UNKNOWN: no programme envelope declared; unknown headroom is not free"}, g
+        need = cap + sum(reserves.values())
+        executable = self._executable(g)
+        if need > executable:
+            if succession_id not in {a["succession_id"] for a in g["authority"]}:
+                self._append(recs, {"op": "authority_required", "succession_id": succession_id,
+                                    "need": need, "executable": executable})
             g = self._gfold(recs)
-            return {**self._lineage_view(g), "ok": True, "applied": True, "lease": g["leases"][-1]["id"],
-                    "need": need, "executable": executable, "reason": ""}
+            return {**self._lineage_view(g), "ok": False, "need": need, "executable": executable,
+                    "reason": f"AUTHORITY_REQUIRED: need {need:,} > executable {executable:,}"}, g
+        self._append(recs, {"op": "lease_open", "lease": f"L{len(g['leases']) + 1}", "cap": cap,
+                            "succession_id": succession_id, "prev_lease": latest["id"],
+                            "reserves": reserves})
+        g = self._gfold(recs)
+        return {**self._lineage_view(g), "ok": True, "applied": True, "lease": g["leases"][-1]["id"],
+                "need": need, "executable": executable, "reason": ""}, g
+
+    def set_succession(self, tranche: int, keep: int, source: str, *, inside_agent: bool = False) -> dict:
+        """Opt a goal into automatic succession: when a lease runs out, renew opens the next one at
+        min(tranche, executable - keep) inside the programme. Enabling it, a bigger tranche or a smaller
+        keep is authority (the Owner, `inside_agent=False`); tightening or turning it off (tranche 0) is
+        always admitted, as with declare_cap."""
+        if not isinstance(tranche, int) or tranche < 0 or not isinstance(keep, int) or keep < 0:
+            raise LedgerError("tranche and keep must be ints >= 0")
+        with self._lock:
+            recs = self._read()
+            cur = self._gfold(recs)["succession"]
+            looser = tranche > 0 and (cur is None or tranche > cur["tranche"] or keep < cur["keep"])
+            if looser and inside_agent:
+                return {"ok": False, "goal": self.goal, "succession": cur,
+                        "reason": "automatic succession (or a looser policy) needs the Owner's interactive "
+                                  "confirmation (goal-succession --owner)"}
+            want = {"tranche": tranche, "keep": keep} if tranche else None
+            if (cur and {"tranche": cur["tranche"], "keep": cur["keep"]}) != want:
+                self._append(recs, {"op": "succession", "tranche": tranche, "keep": keep, "source": source})
+            return {"ok": True, "goal": self.goal, "succession": self._gfold(self._read())["succession"],
+                    "reason": ""}
+
+    def _auto_succeed(self, recs, g, sid: str, per_call: int) -> dict:
+        """Called by renew, under the lock, when the current lease cannot fit one more call. One automatic
+        successor per lease (succession id `<goal>:auto:<lease>`); a programme too short for one call
+        journals one authority_required row instead, which is the only Owner boundary left."""
+        pol, latest = g["succession"], g["leases"][-1]
+        if pol is None or g["programme"] is None:
+            return g
+        sid_s = f"{self.goal}:auto:{latest['id']}"
+        # The successor inherits what the latest lease still funds (recovery net of its settled spend, proof
+        # and closeout whole): opening with {} let the tranche spend them and fenced a funded recovery
+        # session at the next renew (review 2026-10-12, MEDIUM).
+        rv = latest["reserves"]
+        carry = {k: int(v) for k, v in rv.items() if k != RECOVERY and int(v) > 0}
+        rec_left = int(rv.get(RECOVERY, 0)) - latest.get("rsettled", 0)
+        if rec_left > 0:
+            carry[RECOVERY] = rec_left
+        avail = self._executable(g) - pol["keep"] - sum(carry.values())
+        cap = min(pol["tranche"], avail)
+        # A successor must admit the call that asked for it: one call AND every live pane's final reply,
+        # this one's too (renew's own room rule). Smaller is a lease refused at birth, and it hid the
+        # shortfall from the Owner (smoke 2026-10-12: an 80k lease for a 50k call + 50k reply).
+        if cap < max(per_call, 1) + per_call + self._headroom(g, exclude=sid):
+            if sid_s not in {a["succession_id"] for a in g["authority"]}:
+                self._append(recs, {"op": "authority_required", "succession_id": sid_s,
+                                    "need": pol["tranche"], "executable": avail, "lease": latest["id"]})
+                g = self._gfold(recs)
+            return g
+        return self._open_locked(recs, g, sid_s, cap, latest["id"], carry)[1]
 
     def lease_close(self, lease: str, reason: str, receipt: str = "") -> dict:
         with self._lock:
@@ -493,7 +560,9 @@ class GoalLedger(SpendLedger):
         With `per_call` > 0, what remains is net of every live pane's final reply, this one's too:
         refused unless one more call AND its reply fit, and a refusal books this pane's reply as a
         `final` hold so no other pane can spend it. A RECOVERY session's room is the current lease's
-        recovery reserve instead of its cap; running out fences that session, never the lease."""
+        recovery reserve instead of its cap; running out fences that session, never the lease. On a
+        goal with a succession policy (set_succession), a productive pane that runs out opens the next
+        lease first (_auto_succeed) and is refused only if the programme cannot fund one more call."""
         if not isinstance(measured, int) or measured < 0 or not isinstance(lease, int) or lease <= 0 \
                 or not isinstance(per_call, int) or per_call < 0 or role not in ROLES:
             raise LedgerError("measured must be an int >= 0, lease a positive int, per_call an int >= 0, "
@@ -549,6 +618,10 @@ class GoalLedger(SpendLedger):
                 room = rv["reserve"] - rv["used"] - per_call
             else:
                 room = g["cap"] - g["used"] - self._headroom(g, exclude=sid) - per_call
+                if room < max(per_call, 1) and g["succession"]:
+                    # D28 Ph1b: a spent lease inside a programme with room is a succession, not a wall.
+                    g = self._auto_succeed(recs, g, sid, per_call)
+                    room = g["cap"] - g["used"] - self._headroom(g, exclude=sid) - per_call
             if room < max(per_call, 1):
                 if per_call and not any(r["hold"] and r["sid"] == sid and r.get("kind") == "final"
                                         for r in g["res"].values()):
