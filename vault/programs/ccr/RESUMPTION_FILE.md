@@ -24,8 +24,14 @@
 twice -> Owner; no release mid-Madzia-attempt. Stage 2 must not run in an interactive pane; run it as declared Work
 Unit workers (projection enforce, lean floor).
 
+**Stage 2 RUNNING (2026-10-12 22:30).** Release 0.1.0-0d60014c active (rollback: `tools/ccr_release.py rollback`).
+Chain `vault/programs/ccr/stage2/chain.json` (E1 -> M1 -> W1 -> V1 -> X1, max_residuals 1), task PP-CcrChain-Tick every
+10 min, log `~/.claude/state/ccr-chain-tick.log`. E1 = mission m-8630677b026a. Coordinator pane e10a9f08 measured
+39,060,983 / 202 calls; ~10.2M since the 28.85M settle is UNSETTLED and over the 3M stop-loss: Owner decides whether it
+is settled to ccr.
+
 **Next 3 actions.**
-1. Compile Stage 2 Work Units (one per scope item, P50 row each) and launch them via gsd_mission, bound to goal ccr / L2.
+1. Watch the chain (`python tools/gsdx_chain.py status --chain vault/programs/ccr/stage2/chain.json`); act only on a chain_alert.
 2. Release (`tools/ccr_release.py`) M1-M3 + v4 B5/B6 at a Madzia driver boundary, not mid-attempt. Units get
    projection enforce by default, so check whether the Madzia worker declares `CCR_WORK_UNIT` first.
 3. Wire the pre-launch contract (`tools/ccr_pgo.py contract`) into `gsd_mission` launch admission (Economic bridge).
