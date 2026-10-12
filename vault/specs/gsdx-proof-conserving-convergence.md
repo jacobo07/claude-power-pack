@@ -131,13 +131,13 @@ Landed as code in Phase 2, all owned by `modules/gsd_x/goal/proof.py`, all with 
 | proof.produced | claim_id, candidate, binding, revision, strength, source | gate receipt path |
 | proof.inherited | claim_id, certificate, candidate, premises | reconciler/validator |
 | proof.invalidated | claim_id, certificate, reason | reconciler/validator |
+| candidate.promoted | candidate, tree, fingerprint | reconciler (landed in Phase 4, moved from the frozen table) |
 
 Frozen (spec table only, no code in Phase 2; a bare constant with no projection is vapor under the Reality Contract):
 
 <!-- pcc-frozen-events:begin -->
 | name | owner phase | required fields | v |
 |---|---|---|---|
-| candidate.promoted | 4 | candidate, tree, fingerprint | 1 |
 | review.received | 5 | claim_id, candidate, ticket | 1 |
 | adapter.maturity | 7 | adapter, maturity, reason | 1 |
 | continuation.sealed | 8 | goal, epoch, frontier | 1 |

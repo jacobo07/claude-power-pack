@@ -1,0 +1,11 @@
+﻿PASS V-INV-HERMETIC-HOME home=inv-home-3fukab9g
+FAIL V-INV-R12-CLOSURE may_close=False blocking=['plane EVIDENCE applies and has no obligation']
+FAIL V-INV-R12-NEEDS-GATE reason=''
+PASS V-INV-R12-CONTROL real_equal_closes=True needs_gate='' other_tree_blocks=True
+FAIL V-CAND-SNAPSHOT-OID RED-first: modules.gsd_x.goal.candidate absent
+FAIL V-CAND-NO-SIDE-EFFECT RED-first: modules.gsd_x.goal.candidate absent
+FAIL V-CAND-UNKNOWN-ON-DOUBT RED-first: modules.gsd_x.goal.candidate absent
+FAIL V-CAND-STABLE RED-first: modules.gsd_x.goal.candidate absent
+FAIL V-CAND-DRIFT RED-first: modules.gsd_x.goal.candidate absent
+FAIL V-INV-PROMOTED-PROJECTION RED-first: proof.PROMOTED absent
+GSDX_INVALIDATION_PASS=2/10  threshold=10/10

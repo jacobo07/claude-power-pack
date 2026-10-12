@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from .contract import GoalState
 from .intervention import blocking_reason
 from .convergence import (ACCEPTED, REALITY, SATISFIED, goal_closure,
-                          project_convergence)
+                          project_convergence, tree_equal)
 from .epoch import (COMPLETED, FAILED, HYPOTHESES, OBS_ENDED, OBS_LOST, OBS_RUNNING,
                     OBS_UNKNOWN, UNSUCCESSFUL, info_key, project_epochs)
 
@@ -112,7 +112,7 @@ def _needs_a_gate_here(o, ctx: Context) -> str:
     if o.disposition != SATISFIED:
         return ""                       # retired, or not work at all
     v = o.verdict or {}
-    if v.get("tree_hash") != ctx.tree_hash:
+    if not tree_equal(v.get("tree_hash"), ctx.tree_hash):
         return (f"was proven at tree {v.get('tree_hash')}, and the tree being closed is "
                 f"{ctx.tree_hash}: its gate has to run here")
     if v.get("revision") != ctx.state.revision:

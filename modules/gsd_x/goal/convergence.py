@@ -320,6 +320,16 @@ class GoalClosure:
     residual_risk: list = field(default_factory=list)
 
 
+def tree_equal(a, b) -> bool:
+    """Two tree ids name the same state. An `unknown:` id names nothing, so it equals nothing,
+    itself included (R12: two unreadable trees must not read as one unchanged tree)."""
+    if not a or not b:
+        return False
+    if str(a).startswith("unknown:") or str(b).startswith("unknown:"):
+        return False
+    return a == b
+
+
 def goal_closure(state: GoalState, tree_hash: str, open_epochs: list | None = None) -> GoalClosure:
     """Every reason this goal may not close at `tree_hash`, or none.
 
@@ -347,7 +357,7 @@ def goal_closure(state: GoalState, tree_hash: str, open_epochs: list | None = No
     for o in cv.obligations.values():
         if o.disposition == SATISFIED:
             v = o.verdict or {}
-            if v.get("tree_hash") != tree_hash:
+            if not tree_equal(v.get("tree_hash"), tree_hash):
                 blocking.append(f"{o.identifier} was proven at tree {v.get('tree_hash')}, "
                                 f"not at the tree being closed ({tree_hash})")
             if v.get("revision") != state.revision:

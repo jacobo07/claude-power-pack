@@ -716,6 +716,8 @@ def pcc_sample_payloads() -> dict:
                          "gate_pin": "equal", "revision": "equal"}},
         "proof.invalidated": {
             "v": 1, "claim_id": "claim-1", "certificate": "cert-1", "reason": "premise changed"},
+        "candidate.promoted": {
+            "v": 1, "candidate": "snap:" + "1" * 40, "tree": "1" * 40, "fingerprint": "cf1:" + "c" * 64},
     }
 
 
@@ -835,7 +837,8 @@ def gate_ignore_pcc() -> tuple[bool, str]:
         for t, d in extra:
             append_event(log, t, d)
         led = proof.project_proofs(gc.project(log))
-        n = len(led.contracts) + len(led.produced) + len(led.inherited) + len(led.invalidated)
+        n = len(led.contracts) + len(led.produced) + len(led.inherited) + len(led.invalidated) \
+            + len(led.promoted)
     finally:
         shutil.rmtree(base, ignore_errors=True)
     return n == len(extra), f"{ev}; project_proofs records={n} appended={len(extra)}"

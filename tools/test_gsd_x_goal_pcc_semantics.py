@@ -85,6 +85,8 @@ def sample_payloads() -> dict:
                          "gate_pin": "equal", "revision": "equal"}},
         "proof.invalidated": {
             "v": 1, "claim_id": "claim-1", "certificate": "cert-1", "reason": "premise changed"},
+        "candidate.promoted": {
+            "v": 1, "candidate": "snap:" + "1" * 40, "tree": "1" * 40, "fingerprint": cand},
     }
 
 
@@ -282,7 +284,7 @@ def gate_export_restore():
         digests_b = [e.digest for e in log_b.read()]
         ledger_b = proof.project_proofs(gc.project(log_b))
         ok = (rc_export == 0 and rc_restore == 0 and digests_a == digests_b
-              and ledger_a == ledger_b and len(digests_a) == 5)
+              and ledger_a == ledger_b and len(digests_a) == 1 + len(proof.NEW_TYPES))
         return ok, f"events={len(digests_a)} digests_equal={digests_a == digests_b} ledgers_equal={ledger_a == ledger_b}"
     finally:
         os.environ["GSDX_GOALS_ROOT"] = saved
@@ -437,7 +439,9 @@ def gate_unknown_tree():
         known = _states(proof, state2, TREE_A)
     finally:
         shutil.rmtree(base2, ignore_errors=True)
-    ok = (legacy == "" and set(got.values()) == {proof.PS_UNKNOWN} and set(other.values()) == {proof.PS_UNKNOWN}
+    # Phase 4 fixed R12: an unknown tree equals nothing, so the legacy reader now asks for a gate
+    # where Phase 2 recorded the defect (legacy == "").
+    ok = (legacy != "" and set(got.values()) == {proof.PS_UNKNOWN} and set(other.values()) == {proof.PS_UNKNOWN}
           and set(known.values()) == {proof.PS_FRESH})
     return ok, f"legacy_reason={legacy!r} unknown_vs_unknown={got} unknown_vs_known={other} control_known_tree={known}"
 
@@ -1194,7 +1198,7 @@ def gate_additive_only():
     new_types = set(proof.NEW_TYPES) if proof else set()
     collide = sorted(legacy_types & new_types)
     ok = (proof is not None and not seam_moved and seam_added == ["proof.py"] and not collide
-          and len(new_types) == 4 and control_ok and not sentinel)
+          and len(new_types) == 5 and control_ok and not sentinel)
     return ok, (f"legacy={len(legacy_types)} new={len(new_types)} seam_legacy_files_changed={seam_moved[:3]} "
                 f"seam_new_modules={seam_added} collisions={collide} control_range_changed={len(control)} "
                 f"empty_range_changed={len(sentinel)}")
@@ -1217,7 +1221,7 @@ def gate_vocab_declared():
         seeded = sorted(discover_types(tmp) - declared)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    want_frozen = ["candidate.promoted", "review.received", "adapter.maturity", "continuation.sealed"]
+    want_frozen = ["review.received", "adapter.maturity", "continuation.sealed"]
     ok = (frozen == want_frozen and set(landed) == set(proof.NEW_TYPES) and not undeclared and not frozen_in_code
           and seeded == ["sneaky.event"])
     return ok, f"frozen={frozen} landed={sorted(landed)} undeclared_in_code={undeclared} frozen_in_code={frozen_in_code} seeded_control={seeded}"

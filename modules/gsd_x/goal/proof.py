@@ -42,7 +42,8 @@ CONTRACT = "obligation.contract"
 PRODUCED = "proof.produced"
 INHERITED_EV = "proof.inherited"
 INVALIDATED = "proof.invalidated"
-NEW_TYPES = (CONTRACT, PRODUCED, INHERITED_EV, INVALIDATED)
+PROMOTED = "candidate.promoted"       # Phase 4 (spec S7: moved from the frozen table)
+NEW_TYPES = (CONTRACT, PRODUCED, INHERITED_EV, INVALIDATED, PROMOTED)
 
 SUPPORTED_V = 1
 
@@ -69,6 +70,7 @@ REQUIRED_FIELDS = {
     PRODUCED: ("v", "claim_id", "candidate", "binding", "revision", "strength", "source"),
     INHERITED_EV: ("v", "claim_id", "certificate", "candidate", "premises"),
     INVALIDATED: ("v", "claim_id", "certificate", "reason"),
+    PROMOTED: ("v", "candidate", "tree", "fingerprint"),
 }
 
 
@@ -103,13 +105,15 @@ class ProofLedger:
     produced: list = field(default_factory=list)
     inherited: list = field(default_factory=list)
     invalidated: list = field(default_factory=list)
+    promoted: list = field(default_factory=list)
     unsupported: list = field(default_factory=list)       # seqs of events with a newer v
 
 
 def project_proofs(state: GoalState) -> ProofLedger:
     ledger = ProofLedger()
     slots = {CONTRACT: ledger.contracts, PRODUCED: ledger.produced,
-             INHERITED_EV: ledger.inherited, INVALIDATED: ledger.invalidated}
+             INHERITED_EV: ledger.inherited, INVALIDATED: ledger.invalidated,
+             PROMOTED: ledger.promoted}
     for ev in state.events:
         if ev.type not in NEW_TYPES:
             continue
