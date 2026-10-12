@@ -139,11 +139,12 @@ def main(argv=None) -> int:
     ap.add_argument("--workdir", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--timeout", type=float, default=120)
+    ap.add_argument("--resume-sid", default=None, help="start by resuming this session (history elasticity)")
     args = ap.parse_args(argv)
     os.makedirs(args.config_dir, exist_ok=True)
     os.makedirs(args.workdir, exist_ok=True)
     cps = {int(x) for x in args.checkpoints.split(",") if x}
-    sess = Session(args, None)
+    sess = Session(args, args.resume_sid)
     epoch, pts, starts = 1, [], []
     t0 = time.time()
     with open(args.out, "a") as out:
