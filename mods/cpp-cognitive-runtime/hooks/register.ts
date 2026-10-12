@@ -2,7 +2,8 @@ import type { Register } from 'claude-code'
 import {
   COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
   carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
-  type ImageFact, type InstructionFileInfo, type Modes, type WorkUnit,
+  PROJECT_BUDGET_CHARS, PROJECT_TOOLS, projectToolOutput,
+  type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
 } from './policy'
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
@@ -15,6 +16,7 @@ let stateDir = ''
 let sid = 'unknown'
 let rkey = 'no-repo'
 let modes: Modes = { ...DEFAULT_MODES }
+let projectBudget = PROJECT_BUDGET_CHARS
 let compatible = false
 let kernel: string | null = null
 let files: InstructionFileInfo[] | null = null
@@ -64,6 +66,29 @@ const loadUnit = ($: any): Promise<WorkUnit | null> => {
   return unitP
 }
 
+// Tool Output Projection (v4 B5): a shell result over the budget reaches the model as a projection plus the path
+// of the full output. Fails open: anything unexpected, or a failed write of the full output, sends the stock result.
+// Mode: modes.project, else enforce in a Work Unit session (as `unit`) and shadow elsewhere.
+const projectShell = async ($: any, e: any, next: any) => {
+  const r: any = await next(e)
+  const res = r?.result
+  if (r?.deny !== undefined || !res || typeof res.stdout !== 'string' || res.isImage || res.backgroundTaskId || res.persistedOutputPath) return r
+  const unit = await loadUnit($)
+  const asked: Mode = modes.project ?? (unit ? modes.unit : 'shadow')
+  const mode: Mode = modes.main === 'off' || asked === 'off' ? 'off' : compatible ? asked : 'shadow'
+  if (mode === 'off' || !stateDir) return r
+  const full = `${stateDir}/tool-results/${sid}/${e.tool_use_id ?? `t${Date.now()}`}.txt`
+  const p = projectToolOutput(res.stdout, full, projectBudget)
+  if (p.action === 'pass') return r
+  const base = { ev: 'project', tool: e.tool, use: e.tool_use_id ?? null, agent: e.agentId ? agentTypes.get(e.agentId) ?? 'unknown' : null,
+    kind: p.kind, bytes: p.bytes, lines: p.lines, out: p.out.length, budget: projectBudget }
+  if (mode !== 'enforce') { receipt({ ...base, applied: false }); return r }
+  try { await $.fs.write(full, res.stdout) }
+  catch (err) { receipt({ ...base, applied: false, error: String(err).slice(0, 200) }); return r } // full output not kept: send it whole
+  receipt({ ...base, applied: true, path: full })
+  return { result: { ...res, stdout: p.out }, ...(r.context ? { context: r.context } : {}) }
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const r = await next(e)
@@ -78,7 +103,11 @@ export const register: Register = on => {
     compatible = COMPAT.includes(version)
     if (await $.fs.exists(`${stateDir}/OFF`)) modes = { subagent: 'off', main: 'off', unit: 'off' }
     else {
-      try { modes = { ...DEFAULT_MODES, ...JSON.parse(await $.fs.read(`${stateDir}/modes.json`)) } }
+      try {
+        const o = JSON.parse(await $.fs.read(`${stateDir}/modes.json`))
+        modes = { ...DEFAULT_MODES, ...o }
+        if (Number.isFinite(o.projectBudget) && o.projectBudget >= 1000) projectBudget = o.projectBudget
+      }
       catch { modes = { ...DEFAULT_MODES } } // no override file: release defaults
     }
     try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, 8000) }
@@ -295,6 +324,11 @@ export const register: Register = on => {
     await flush($)
     return r
   })
+
+  // Tool Output Projection (v4 B5); the hook is projectShell above. It runs the tool through next(e), so the handler
+  // fails open by replay: next(e) after a throw resolves to what the call settled to, and the command never runs twice.
+  on('tool.call', { tool: 'Bash' }, projectShell).catch(($, e, next) => next(e))
+  on('tool.call', { tool: 'PowerShell' }, projectShell).catch(($, e, next) => next(e))
 
   // Context page faults: what a linker withheld stays one call away, and every call is a receipt.
   on('tool.call', { tool: 'mcp__cpp-cognitive-runtime__page' }, async ($, e) => {
