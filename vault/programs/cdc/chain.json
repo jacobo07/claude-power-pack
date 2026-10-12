@@ -32,7 +32,8 @@
       "packet": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C4.md",
       "route": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
       "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C4-receipt.md",
-      "after": "C3"
+      "after": "C3",
+      "max_residuals": 1
     },
     {
       "id": "C5",
@@ -90,5 +91,9 @@
       "receipt": "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\WU-C12-receipt.md",
       "after": "C11"
     }
+  ],
+  "route_ladder": [
+    "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route.json",
+    "C:\\Users\\User\\Apps\\pp-cdc\\vault\\programs\\cdc\\route-r1.json"
   ]
 }
