@@ -23,7 +23,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 _ids = itertools.count(1)
-CFG = {"tool_bytes": 0, "log": None, "summary_bytes": 400}
+CFG = {"tool_bytes": 0, "log": None, "summary_bytes": 400, "script": "bash", "image": None}
 
 
 def _has_tool_result(msg: dict) -> bool:
@@ -49,7 +49,16 @@ def plan_reply(body: dict) -> dict:
     if last.get("role") == "user" and _has_tool_result(last):
         return {"kind": "text", "text": "ok"}
     tools = {t.get("name") for t in (body.get("tools") or []) if isinstance(t, dict)}
-    if CFG["tool_bytes"] > 0 and "Bash" in tools and last.get("role") == "user":
+    fresh = last.get("role") == "user"
+    if fresh and CFG["script"] == "agent":
+        agent_tool = "Agent" if "Agent" in tools else ("Task" if "Task" in tools else None)
+        if agent_tool:
+            return {"kind": "tool", "name": agent_tool,
+                    "input": {"description": "prr fixture agent", "prompt": "prr subagent turn",
+                              "subagent_type": "general-purpose"}}
+    if fresh and CFG["script"] == "image" and CFG["image"] and "Read" in tools:
+        return {"kind": "tool", "name": "Read", "input": {"file_path": CFG["image"]}}
+    if CFG["tool_bytes"] > 0 and "Bash" in tools and fresh:
         n = int(CFG["tool_bytes"])
         return {"kind": "tool", "name": "Bash",
                 "input": {"command": f"python3 -c \"print('x'*{n})\"", "description": "prr fixture output"}}
@@ -153,8 +162,10 @@ def main(argv=None) -> int:
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--tool-bytes", type=int, default=0)
     ap.add_argument("--log", default=None)
+    ap.add_argument("--script", choices=["bash", "agent", "image"], default="bash")
+    ap.add_argument("--image", default=None, help="image file the image script Reads each turn")
     args = ap.parse_args(argv)
-    CFG.update(tool_bytes=args.tool_bytes, log=args.log)
+    CFG.update(tool_bytes=args.tool_bytes, log=args.log, script=args.script, image=args.image)
     srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     print(f"stub_api listening 127.0.0.1:{args.port} tool_bytes={args.tool_bytes}", flush=True)
     srv.serve_forever()

@@ -83,7 +83,7 @@ def fit(points: list) -> dict:
 class Session:
     def __init__(self, args, resume: str | None):
         cmd = [args.claude, "-p", "--input-format", "stream-json", "--output-format", "stream-json",
-               "--verbose", "--model", args.model, "--allowedTools", "Bash"]
+               "--verbose", "--model", args.model, "--allowedTools", "Bash,Read,Agent,Task"]
         if resume:
             cmd += ["--resume", resume]
         env = dict(os.environ,
