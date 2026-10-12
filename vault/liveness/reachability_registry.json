@@ -11,6 +11,14 @@
     "session_resilience/ui_state"
   ],
   "modules": {
+    "prr/bench/stub_api": {
+      "class": "LIBRARY",
+      "note": "goal prr B: zero-token local Messages API stand-in for host memory benchmarks; run by hand on GEX44 next to prr/bench/longrun. Proven by tests/test_prr_bench.py."
+    },
+    "prr/bench/longrun": {
+      "class": "LIBRARY",
+      "note": "goal prr B: long-lived session memory curve driver (plain/compact/recycle), Linux /proc plane. Proven by tests/test_prr_bench.py."
+    },
     "prr/census": {
       "class": "LIBRARY",
       "note": "goal prr A0 (2026-10-12): read-only memory census, CLI `python -m modules.prr.census`. Consumer wiring (ram_guard / pressure controller) is workstream L of vault/plans/prr-physical-working-set-2026-10-12.md. Proven by tests/test_prr_census.py."
