@@ -20,10 +20,15 @@ Plans: `vault/plans/ccr-v2-enforcement-2026-10-11.md` + `ccr-v2-addendum-2026-10
 text carry: the same full-rebuild path can project dead tool-result TEXT (v2 §4.1 was demoted on the inflated 55 %
 image figure; re-rank it on measured shares). Rotation (B) vs in-place rebuild (D+text) is decided per metric.
 
+**M3 (11444399), text carry measured.** Tool-result text 44.9 % of a3, but superseded Reads reclaim 0 tokens:
+in-place text projection has no safe liveness signal (NO_WORK). ~0.73M of a3's text carry is invisible in the
+stream (likely carried thinking); row receipts now count `thinking`/`sealed`. The lever is epoch length (arm B).
+
 **Next 3 actions.**
-1. Measure tool-result text share of carry in p4p2a3 (`worker.stream.jsonl`) with the M1 row receipts / a
-   transcript pass; if >= 30 %, extend `gcKeptSet` to project dead text results (tombstone + page-back), fixture-test.
-2. Madzia: driver stopped at `OWNER_STRATEGY` (phase 2, 3 hypotheses rejected). Canary waits for the Owner.
-3. Release M1+M2 (`tools/ccr_release.py`) only after one canary on a real driver.
+1. Arm B at the next Madzia driver run (after the Owner's phase-2 strategy decision; driver stopped at
+   `OWNER_STRATEGY`): driver reads `<ccr state>/advice/<sid>.json` and rotates with a successor ContextImage;
+   compare tokens per accepted transition + reviewer verdict vs a2/a3 (A baseline, no re-run).
+2. With the dev mod loaded on that run, read the live `thinking`/`sealed` row receipts to close the 0.73M gap.
+3. Release M1-M3 (`tools/ccr_release.py`) only after that canary.
 
 **Start.** `python tools/mission_spend.py goal-status --goal ccr`, then action 1.
