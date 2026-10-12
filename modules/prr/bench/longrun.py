@@ -80,6 +80,41 @@ def fit(points: list) -> dict:
             "mean_mb": round(my, 1), "max_abs_resid_mb": round(max(abs(r) for r in resid), 1)}
 
 
+def last_receipt(path: str, sid: str | None, since: float, wait_s: float = 5.0) -> dict | None:
+    """Newest recycle_policy Stop receipt for `sid` written after `since` (the hook may lag the result)."""
+    deadline = time.time() + wait_s
+    while True:
+        best = None
+        try:
+            with open(path, encoding="utf-8") as fh:
+                for line in fh:
+                    try:
+                        r = json.loads(line)
+                    except ValueError:
+                        continue
+                    if r.get("event") == "Stop" and r.get("sid") == sid and r.get("ts", 0) >= since:
+                        best = r
+        except OSError:
+            pass
+        if best is not None or time.time() >= deadline:
+            return best
+        time.sleep(0.25)
+
+
+def write_policy_hooks(config_dir: str, hook_cmd: str) -> None:
+    """Register the real recycle_policy hook (SessionStart marks /clear, Stop decides) in the bench config."""
+    entry = [{"hooks": [{"type": "command", "command": hook_cmd}]}]
+    path = os.path.join(config_dir, "settings.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            cfg = json.load(fh)
+    except (OSError, ValueError):
+        cfg = {}
+    cfg["hooks"] = {"SessionStart": entry, "Stop": entry}
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(cfg, fh, indent=2)
+
+
 class Session:
     def __init__(self, args, resume: str | None):
         cmd = [args.claude, "-p", "--input-format", "stream-json", "--output-format", "stream-json",
@@ -132,7 +167,12 @@ def main(argv=None) -> int:
     ap.add_argument("--model", default="claude-haiku-4-5")
     ap.add_argument("--turns", type=int, default=100)
     ap.add_argument("--checkpoints", default="1,10,25,50,100,150,200,250,300,400,500")
-    ap.add_argument("--mode", choices=["plain", "compact", "recycle", "compact_recycle", "clear"], default="plain")
+    ap.add_argument("--mode", choices=["plain", "compact", "recycle", "compact_recycle", "clear", "policy"],
+                    default="plain")
+    ap.add_argument("--boundary", choices=["compact", "clear"], default="compact",
+                    help="policy mode: boundary command issued every --every turns")
+    ap.add_argument("--receipts", default=os.path.expanduser("~/.claude/state/prr/receipts.jsonl"))
+    ap.add_argument("--hook-cmd", default=None, help="policy mode: hook command (default: this repo's module)")
     ap.add_argument("--every", type=int, default=50)
     ap.add_argument("--warmup", type=int, default=25)
     ap.add_argument("--config-dir", required=True)
@@ -143,6 +183,10 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     os.makedirs(args.config_dir, exist_ok=True)
     os.makedirs(args.workdir, exist_ok=True)
+    if args.mode == "policy":
+        repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        write_policy_hooks(args.config_dir, args.hook_cmd or
+                           f"cd {repo} && CPP_PRR_RECYCLE=observe {sys.executable} -m modules.prr.recycle_policy")
     cps = {int(x) for x in args.checkpoints.split(",") if x}
     sess = Session(args, args.resume_sid)
     epoch, pts, starts = 1, [], []
@@ -163,6 +207,26 @@ def main(argv=None) -> int:
                     pts.append((k, s["main"].get("RssAnon", 0)))
                 print(json.dumps({"turn": k, "epoch": epoch, "RssAnon": s["main"].get("RssAnon"),
                                   "VmRSS": s["main"].get("VmRSS"), "tree_n": s["tree_n"]}), flush=True)
+            if args.mode == "policy":
+                # The real recycle_policy Stop hook decides; the driver only obeys its receipt.
+                rcpt = last_receipt(args.receipts, sess.sid, t1)
+                out.write(json.dumps({"mode": "policy", "event": "receipt", "turn": k, "epoch": epoch,
+                                      "pid": sess.p.pid, "receipt": rcpt}) + "\n")
+                if rcpt and rcpt.get("action") == "RECYCLE" and k < args.turns:
+                    sid = sess.sid
+                    sess.end()
+                    r0 = time.time()
+                    sess = Session(args, sid)
+                    sess.turn("resume check", args.timeout)
+                    epoch += 1
+                    s = sample(sess.p.pid)
+                    starts.append((epoch, s["main"].get("RssAnon", 0)))
+                    out.write(json.dumps({"mode": "policy", "event": "epoch", "epoch": epoch, "sid_in": sid,
+                                          "sid_out": sess.sid, "resume_s": round(time.time() - r0, 3),
+                                          **s}) + "\n")
+                if args.every and k % args.every == 0 and k < args.turns:
+                    sess.turn(f"/{args.boundary}", args.timeout)
+                continue
             if args.every and k % args.every == 0 and k < args.turns:
                 if args.mode in ("compact", "compact_recycle"):
                     sess.turn("/compact", args.timeout)

@@ -56,3 +56,27 @@ def test_fit_detects_growth_and_flat():
 
 def test_fit_abstains_below_three_points():
     assert fit([(1, 1), (2, 2)])["slope_mb_per_100_turns"] is None
+
+
+def test_last_receipt_picks_newest_stop_for_sid_after_since(tmp_path):
+    from modules.prr.bench.longrun import last_receipt
+    import json
+    p = tmp_path / "r.jsonl"
+    rows = [{"event": "Stop", "sid": "a", "ts": 5, "action": "KEEP"},
+            {"event": "SessionStart", "sid": "a", "ts": 20, "action": "MARK"},
+            {"event": "Stop", "sid": "b", "ts": 30, "action": "RECYCLE"},
+            {"event": "Stop", "sid": "a", "ts": 15, "action": "RECYCLE"}]
+    p.write_text("\n".join(json.dumps(r) for r in rows) + "\nnot json\n", encoding="utf-8")
+    assert last_receipt(str(p), "a", 10, wait_s=0)["action"] == "RECYCLE"
+    assert last_receipt(str(p), "a", 16, wait_s=0) is None  # stale receipts never drive a recycle
+
+
+def test_write_policy_hooks_registers_sessionstart_and_stop(tmp_path):
+    from modules.prr.bench.longrun import write_policy_hooks
+    import json
+    (tmp_path / "settings.json").write_text('{"model": "x"}', encoding="utf-8")
+    write_policy_hooks(str(tmp_path), "hookcmd")
+    cfg = json.loads((tmp_path / "settings.json").read_text(encoding="utf-8"))
+    assert cfg["model"] == "x"
+    assert cfg["hooks"]["Stop"][0]["hooks"][0]["command"] == "hookcmd"
+    assert "SessionStart" in cfg["hooks"]
