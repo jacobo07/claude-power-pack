@@ -38,6 +38,7 @@ from . import convergence as cv
 from . import epoch as ep
 from . import git_state as gs
 from . import log as gl
+from . import proof
 from . import reconcile as rc
 from .engine_identity import engine_identity
 from .providers.gate import GateProvider
@@ -245,7 +246,42 @@ class SweepReport:
         return "\n".join(self.acted)
 
 
-def _apply_verdicts(log: gl.GoalLog, receipt, record, actor: str) -> list[str]:
+def _moved_under_verification(receipt) -> bool:
+    """True unless the candidate provably held still across the gate run (neither tree unknown)."""
+    return not cv.tree_equal(getattr(receipt, "tree_before", ""), getattr(receipt, "tree_after", ""))
+
+
+def _certify(log: gl.GoalLog, ob_id: str, verdict: dict, source: dict, root, moved: bool,
+             actor: str) -> list[str]:
+    """Write `proof.produced` for a satisfied claim, or invalidate its live certificates when the
+    candidate moved while the gate ran. Never raises into the legacy satisfy path."""
+    if not proof.inheritance_enabled():
+        return []
+    state = gc.project(log)
+    ob = cv.project_convergence(state).obligations.get(ob_id)
+    if ob is None:
+        return []
+    cid = proof.claim_id(ob)
+    ledger = proof.project_proofs(state)
+    if moved:
+        out = []
+        for cert in proof.live_certificates(ledger, cid):
+            proof.append_pcc(log, gc.project(log), proof.INVALIDATED, {
+                "v": 1, "claim_id": cid, "certificate": cert,
+                "reason": "candidate moved under verification"}, actor)
+            out.append(f"{log.goal_id}: {ob_id} certificate {cert} invalidated: candidate moved under verification")
+        return out
+    contract, _refused = proof.effective_contract(ledger, ob)
+    payload = proof.certificate_payload(ob, verdict, contract, root, source)
+    live = set(proof.live_certificates(ledger, cid))
+    if any(proof.certificate_id(cid, p["seq"]) in live and p["data"].get("binding") == payload["binding"]
+           for p in ledger.produced if p["data"].get("claim_id") == cid):
+        return []
+    proof.append_pcc(log, state, proof.PRODUCED, payload, actor)
+    return [f"{log.goal_id}: {ob_id} certificate produced ({payload['binding']['scheme']} binding)"]
+
+
+def _apply_verdicts(log: gl.GoalLog, receipt, record, actor: str, root=None) -> list[str]:
     """Move an obligation on the verdict its gate produced -- or say why not.
 
     Ingesting a receipt banks WHAT HAPPENED; it does not decide what that means.
@@ -266,12 +302,15 @@ def _apply_verdicts(log: gl.GoalLog, receipt, record, actor: str) -> list[str]:
                               v.get("observed", ""), v.get("tree_hash", ""),
                               v.get("revision", ""), v.get("gate_class", ""),
                               tuple(tuple(p) for p in (v.get("gate_pin") or ())))
-        res = cv.satisfy(log, gc.project(log), ob_id, verdict, actor,
-                         source={"epoch": getattr(record, "epoch_id", None),
-                                 "provider": getattr(record, "provider", None),
-                                 "handle": getattr(record, "handle", None)})
+        source = {"epoch": getattr(record, "epoch_id", None),
+                  "provider": getattr(record, "provider", None),
+                  "handle": getattr(record, "handle", None)}
+        res = cv.satisfy(log, gc.project(log), ob_id, verdict, actor, source=source)
         out.append(f"{log.goal_id}: {ob_id} -> "
                    f"{'SATISFIED' if res.allowed else res.outcome}: {res.reason[:140]}")
+        moved = _moved_under_verification(receipt)
+        if res.allowed or moved:
+            out.extend(_certify(log, ob_id, v, source, root, moved, actor))
     return out
 
 
@@ -341,7 +380,7 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
             try:
                 receipt = provs.get(e.provider, prov).harvest(e.handle or {}, spec)
                 ep.ingest_receipt(log, gc.project(log), receipt, actor)
-                acted.extend(_apply_verdicts(log, receipt, e, actor))
+                acted.extend(_apply_verdicts(log, receipt, e, actor, root=root))
             except (ep.EpochError, KeyError) as exc:
                 acted.append(f"{log.goal_id}: {e.epoch_id} harvest refused: {exc}")
             ep.end(log, gc.project(log), e.epoch_id,

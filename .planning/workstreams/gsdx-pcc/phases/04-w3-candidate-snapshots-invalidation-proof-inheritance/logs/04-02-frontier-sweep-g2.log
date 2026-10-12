@@ -1,0 +1,13 @@
+PASS V-FRONTIER-FENCE fences=1,2 sibling_fence_refused=True own_receipts_ingested=True
+  secs 0.7
+PASS V-FRONTIER-SPEC-ADMIT admitted=True why='ADMITTED saving 6.7s exceeds cost 3.3s'
+  secs 0.0
+PASS V-FRONTIER-SPEC-REFUSE reasons={'writes_outside': 'WRITES_OUTSIDE_RUN_DIR', 'shared_resource': 'SHARED_RESOURCE', 'non_unit_class': 'NOT_UNIT_CLASS', 'undeclared': 'UNDECLARED', 'unknown_cost': 'UNKNOWN_COST', 'saving_not_above_cost': 'NOT_WORTH_IT'}
+  secs 0.0
+PASS V-FRONTIER-RACE-ADMIT admitted=True refusals={'single': 'TOO_FEW', 'same_root': 'SAME_ROOT', 'contract_mismatch': 'CONTRACT_MISMATCH', 'not_reversible': 'NOT_REVERSIBLE'}
+  secs 0.0
+PASS V-FRONTIER-YIELD speculative={'completed': 2, 'cancelled': 1, 'failed': 1, 'other': 0, 'total': 4} race={'completed': 1, 'cancelled': 2, 'failed': 0, 'other': 0, 'total': 3} empty_total=0
+  secs 0.0
+PASS V-FRONTIER-REPORTED-NOT-EXECUTED dispatched=2 (bound 2, 3 ready) report='sweep-spec: speculative ob-2: admitted -- ADMITTED saving 1.3s exceeds cost 0.0s' no_speculative_epoch=True
+  secs 50.5
+passes 6 fails 0

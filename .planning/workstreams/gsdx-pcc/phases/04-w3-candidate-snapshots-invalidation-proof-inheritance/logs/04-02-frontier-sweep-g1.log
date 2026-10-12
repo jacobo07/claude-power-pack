@@ -1,0 +1,7 @@
+PASS V-FRONTIER-SWEEP-BOUND max_parallel=2 -> 2; WALL_CLOCK over 5 ready -> 4 open=4; BALANCED -> 2
+  secs 325.7
+PASS V-FRONTIER-SWEEP-EARLY-FINISH old fixture under a slow pass dispatched=1; blocking fixture dispatched=3
+  secs 123.2
+PASS V-FRONTIER-LOSTRACE outcomes=['won', 'LostRace'] fences=[1]
+  secs 0.3
+passes 3 fails 0

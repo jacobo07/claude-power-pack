@@ -1,0 +1,8 @@
+﻿PASS V-CERT-HERMETIC-HOME home=cert-home-mz38guxf
+FAIL V-CERT-PRODUCED-ON-SATISFY raised TypeError: _apply_verdicts() got an unexpected keyword argument 'root'
+FAIL V-CERT-ONLY-AFTER-SATISFY raised TypeError: _apply_verdicts() got an unexpected keyword argument 'root'
+FAIL V-CERT-MOVED-UNDER-VERIFICATION raised TypeError: _apply_verdicts() got an unexpected keyword argument 'root'
+FAIL V-CERT-BINDING-SCHEME raised TypeError: _apply_verdicts() got an unexpected keyword argument 'root'
+FAIL V-CERT-SWITCH-OFF raised TypeError: _apply_verdicts() got an unexpected keyword argument 'root'
+FAIL V-CERT-LAW-CONSERVATION raised TypeError: _apply_verdicts() got an unexpected keyword argument 'root'
+GSDX_CERTIFICATE_PASS=1/7  threshold=7/7

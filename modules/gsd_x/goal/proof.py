@@ -510,6 +510,37 @@ def law_work_conservation(state: GoalState) -> list:
     return out
 
 
+def certificate_id(cid: str, seq) -> str:
+    """Identity of one `proof.produced` event: the claim and the seq it landed at."""
+    return f"cert:{cid}:{seq}"
+
+
+def live_certificates(ledger: ProofLedger, cid: str) -> list:
+    """The certificate ids of claim `cid` not yet named by a later `proof.invalidated`."""
+    dead = {i["data"].get("certificate") for i in ledger.invalidated if i["data"].get("claim_id") == cid}
+    return [certificate_id(cid, p["seq"]) for p in ledger.produced
+            if p["data"].get("claim_id") == cid and certificate_id(cid, p["seq"]) not in dead]
+
+
+def certificate_payload(obligation, verdict: dict, contract: dict, root, source: dict) -> dict:
+    """The `proof.produced` payload for one satisfied claim: a causal binding when the contract
+    declares causal paths and they fingerprint cleanly, the whole-tree binding otherwise."""
+    els = [e for e in contract.get("elements", []) if isinstance(e, dict)]
+    paths = sorted({p for e in els for p in (e.get("causal_paths") or [])})
+    env_deps = sorted({d for e in els for d in (e.get("env_deps") or [])})
+    fp = causal_fingerprint(root, paths) if (paths and root is not None) else _unknown_fp("no causal paths")
+    pin = [list(p) for p in (verdict.get("gate_pin") or obligation.gate_pin)]
+    cid = claim_id(obligation)
+    return {"v": 1, "claim_id": cid, "candidate": verdict.get("tree_hash", ""),
+            "binding": binding(verdict.get("tree_hash", ""), fp), "revision": verdict.get("revision", ""),
+            "strength": verdict.get("gate_class") or obligation.gate_class, "source": source,
+            "premises": {"claim": cid, "revision": verdict.get("revision", ""), "gate_pin": pin,
+                         "fingerprint": fp, "environment": environment_fingerprint(env_deps),
+                         "policy": POLICY_VERSION},
+            "freshness_class": freshness_class(obligation, verdict, contract), "env_deps": env_deps,
+            "contract_hash": hashlib.sha256(_canonical(contract)).hexdigest()}
+
+
 def law_proof_conservation(ledger: ProofLedger) -> list:
     """A second proof.produced for one (claim, binding) with no proof.invalidated between them."""
     out: list = []
