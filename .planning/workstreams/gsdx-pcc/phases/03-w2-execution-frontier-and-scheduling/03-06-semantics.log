@@ -1,0 +1,3 @@
+laptop (Windows plane), HEAD edc5f0c8
+PASS V-PCC-ADDITIVE-ONLY legacy=22 new=4 seam_legacy_files_changed=[] seam_new_modules=['proof.py'] collisions=[] control_range_changed=3 empty_range_changed=0
+GSDX_PCC_SEMANTICS_PASS=48/48  threshold=48/48
