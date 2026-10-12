@@ -1,20 +1,15 @@
-# 03-06 SUMMARY -- PARTIAL
+﻿# 03-06 SUMMARY -- PARTIAL
 
-Status: partial. Phase 3 is NOT verified; `03-VERIFICATION.md` was not written.
+Status: partial. Phase 3 is NOT verified; `03-VERIFICATION.md` was not written. DENOMINATOR rows not moved.
 
 ## Done
-- Liveness: `frontier` declared PLANNED in `vault/liveness/reachability_registry.json` (same entrance as the rest of the
-  goal engine). `python modules/liveness/reachability.py` exit 0, gate offenders 0.
-- Engine identity (G17): new `frontier.py` changes the engine term; now `engine:b650bc5355d1...`. engine_identity 14/14 and
-  every suite that pins keys passed (`03-06-regress.log`). The before-value was not captured.
-- Mutation drills: m1 (`decide_frontier` always base) KILLED by V-FRONTIER-GLOBAL-WAIT; m2 (`epoch.begin` skips independence)
-  KILLED by V-FRONTIER-UNSAFE-WRITES. `03-06-drill.log`.
-- Regression: 19 pre-existing goal suites, all at baseline except one (below). Replay 28/28. Mutation suite 58/58.
+- Liveness: `frontier` declared PLANNED; `reachability.py` exit 0.
+- Engine identity (G17): term now `engine:b650bc5355d1...`; before-value not captured. engine_identity 14/14.
+- Owner option (b) applied (51eb4ad0): `V-PCC-ADDITIVE-ONLY` scoped to the Phase 2 git range 98609c4f..0fca7111, no hash re-pinned, control and empty-range sentinel. `GSDX_PCC_SEMANTICS_PASS=48/48`. STATE.md Decisions updated, blocker cleared.
+- Drills m1, m2 KILLED.
+- Regression of 03-06-regress.log was taken before option (b); semantics read 47/48 there and 48/48 afterwards (not re-captured in a committed log).
 
 ## Not done
-- Drills m3-m8: UNRUN. The harness killed the m2/m3 command for low system memory; m3 had no verdict, m4-m8 never started.
-  Not restarted (the kill note forbids restarting on my own). UNRUN is not PASS.
-- `test_gsd_x_goal_pcc_semantics.py` reads 47/48: `V-PCC-ADDITIVE-ONLY` pins the legacy goal files' hashes and allows
-  only `proof.py` as a new module. Phase 3 edits `epoch.py`, `reconcile.py`, `sweep.py` and adds `frontier.py`.
-  The plans did not foresee it. Not touched; recorded as OWNER DECISION NEEDED in STATE.md with options and my pick.
-- DENOMINATOR rows not moved: the drill and Phase 2 regression gates are not satisfied.
+- m3: CONTROL_INVALID. The clean copy read 38/39 (`V-FRONTIER-SWEEP-BOUND` failed). The in-place rerun to diagnose was killed by the harness for low memory and not restarted. Cause unknown.
+- m4-m8: UNRUN.
+- 03-EVIDENCE.md, 03-VERIFICATION.md, DENOMINATOR rows, STATE current_phase 4, ROADMAP tick: not done (drill gate unmet and a gate is red under load).

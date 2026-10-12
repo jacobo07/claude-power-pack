@@ -20,3 +20,8 @@ MUTANT KILLED gate=V-FRONTIER-UNSAFE-WRITES
 
 == m3..m8 UNRUN
 m2 finished KILLED (V-FRONTIER-UNSAFE-WRITES, above). m3 (V-FRONTIER-UNDECLARED) was running when the harness killed the command for low system memory, so it has no verdict; m4..m8 were not started. UNRUN is not PASS. Not restarted: the harness note says do not restart on my own.
+
+--- 2026-10-12 after Owner option (b), HEAD 51eb4ad0 ---
+m3 (frontier.py independent_units -> True, gate V-FRONTIER-UNDECLARED): CONTROL_INVALID. The clean-copy control read GSDX_FRONTIER_PASS=38/39; V-FRONTIER-SWEEP-BOUND failed ("max_parallel=2 -> 2; WALL_CLOCK over 5 ready -> 1 open=1; BALANCED -> 2"). No mutant verdict: m3 is UNJUDGED, not KILLED.
+Re-run of the unmodified suite in place to tell flake from real defect: killed by the harness for low system memory before any output. Not restarted (kill note forbids it). Cause of the SWEEP-BOUND red is UNKNOWN. It passed 39/39 earlier at 8e2f6ce8 and in 03-06-regress; suspect a time-dependent fixture under load, unconfirmed.
+m4-m8: UNRUN (m4 not started: a drill on a suite whose control is red cannot judge).
