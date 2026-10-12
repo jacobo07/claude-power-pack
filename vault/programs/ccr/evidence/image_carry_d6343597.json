@@ -1,0 +1,132 @@
+﻿{
+ "calls": 26,
+ "processed": 1192066,
+ "images": 13,
+ "unique_images": 13,
+ "image_tok_once": 15985,
+ "image_carry": 200546,
+ "image_share": 0.1682,
+ "first_call": 14401,
+ "last_call": 75186,
+ "floor_share": 0.3141,
+ "unknown_dims": 0,
+ "per_image": [
+  {
+   "after_call": 2,
+   "hash": "35e4d06fe0b0",
+   "w": 1033,
+   "h": 917,
+   "tok": 1264,
+   "rides": 24,
+   "carry": 30336
+  },
+  {
+   "after_call": 2,
+   "hash": "c9f4de16d1f2",
+   "w": 1448,
+   "h": 1086,
+   "tok": 2097,
+   "rides": 24,
+   "carry": 50328
+  },
+  {
+   "after_call": 7,
+   "hash": "d28884c61eb6",
+   "w": 445,
+   "h": 967,
+   "tok": 574,
+   "rides": 19,
+   "carry": 10906
+  },
+  {
+   "after_call": 7,
+   "hash": "b9190a0497ed",
+   "w": 445,
+   "h": 967,
+   "tok": 574,
+   "rides": 19,
+   "carry": 10906
+  },
+  {
+   "after_call": 9,
+   "hash": "782bcbdc463c",
+   "w": 485,
+   "h": 967,
+   "tok": 626,
+   "rides": 17,
+   "carry": 10642
+  },
+  {
+   "after_call": 9,
+   "hash": "e609634756c2",
+   "w": 485,
+   "h": 967,
+   "tok": 626,
+   "rides": 17,
+   "carry": 10642
+  },
+  {
+   "after_call": 11,
+   "hash": "313000ad775d",
+   "w": 485,
+   "h": 967,
+   "tok": 626,
+   "rides": 15,
+   "carry": 9390
+  },
+  {
+   "after_call": 13,
+   "hash": "d50607c794a1",
+   "w": 485,
+   "h": 967,
+   "tok": 626,
+   "rides": 13,
+   "carry": 8138
+  },
+  {
+   "after_call": 13,
+   "hash": "89d5753bb07a",
+   "w": 485,
+   "h": 967,
+   "tok": 626,
+   "rides": 13,
+   "carry": 8138
+  },
+  {
+   "after_call": 16,
+   "hash": "5616ffc817d3",
+   "w": 485,
+   "h": 967,
+   "tok": 626,
+   "rides": 10,
+   "carry": 6260
+  },
+  {
+   "after_call": 16,
+   "hash": "cc103643284f",
+   "w": 485,
+   "h": 967,
+   "tok": 626,
+   "rides": 10,
+   "carry": 6260
+  },
+  {
+   "after_call": 19,
+   "hash": "eb01c37f8ecf",
+   "w": 2000,
+   "h": 1278,
+   "tok": 3408,
+   "rides": 7,
+   "carry": 23856
+  },
+  {
+   "after_call": 22,
+   "hash": "4b01a18c9f84",
+   "w": 1382,
+   "h": 2000,
+   "tok": 3686,
+   "rides": 4,
+   "carry": 14744
+  }
+ ]
+}

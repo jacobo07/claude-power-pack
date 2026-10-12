@@ -163,6 +163,95 @@ export function repoKey(root: string | null): string {
   return h.toString(16).padStart(8, '0')
 }
 
+// Multimodal carry receipt (UMVM M1, observe only). An image block crosses the provider boundary on every
+// call after it is appended, so each one is receipted by identity (hash of its bytes), size and an
+// estimated token cost. The estimate is the documented w*h/750 after downscale; M2 calibrates it against usage.
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+export function b64Prefix(b64: string, n: number): Uint8Array {
+  const out: number[] = []
+  let acc = 0
+  let bits = 0
+  for (let i = 0; i < b64.length && out.length < n; i++) {
+    const v = B64.indexOf(b64[i])
+    if (v < 0) continue // padding or whitespace
+    acc = (acc << 6) | v
+    bits += 6
+    if (bits >= 8) { bits -= 8; out.push((acc >> bits) & 0xff) }
+  }
+  return Uint8Array.from(out)
+}
+
+export function fnv(s: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0 }
+  return h.toString(16).padStart(8, '0')
+}
+
+export function imageDims(b64: string): { w: number; h: number } | null {
+  const b = b64Prefix(b64, 24)
+  if (b.length >= 24 && b[0] === 0x89 && b[1] === 0x50) { // PNG: IHDR width/height, big endian
+    return { w: ((b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19]) >>> 0, h: ((b[20] << 24) | (b[21] << 16) | (b[22] << 8) | b[23]) >>> 0 }
+  }
+  if (b.length >= 10 && b[0] === 0x47 && b[1] === 0x49) return { w: b[6] | (b[7] << 8), h: b[8] | (b[9] << 8) } // GIF
+  if (b.length >= 2 && b[0] === 0xff && b[1] === 0xd8) { // JPEG: walk segments to the first SOF
+    const j = b64Prefix(b64, 262144)
+    let i = 2
+    while (i + 9 < j.length) {
+      if (j[i] !== 0xff) { i++; continue }
+      const m = j[i + 1]
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return { w: (j[i + 7] << 8) | j[i + 8], h: (j[i + 5] << 8) | j[i + 6] }
+      i += 2 + ((j[i + 2] << 8) | j[i + 3])
+    }
+  }
+  return null
+}
+
+// Calibrated 2026-10-12 on Opus 5.5 against next-call usage (known text rows subtracted): 1033x917 est 1,264 /
+// measured ~1,318; 2000x1278 est 3,408 / measured ~3,420. No 1.15 MP cap applies: the Read tool already sends
+// at most 2000 px on the long edge, and the provider bills the block as sent.
+export const PIXELS_PER_TOKEN = 750
+
+export function imageTokens(w: number, h: number): number {
+  return Math.ceil((w * h) / PIXELS_PER_TOKEN)
+}
+
+export type ImageFact = { hash: string; media: string | null; w: number | null; h: number | null; b64: number; tok: number | null }
+export type RowFacts = { text: number; images: ImageFact[] }
+
+export function rowFacts(blocks: readonly unknown[]): RowFacts {
+  const f: RowFacts = { text: 0, images: [] }
+  const walk = (x: unknown) => {
+    if (typeof x === 'string') { f.text += x.length; return }
+    if (Array.isArray(x)) { x.forEach(walk); return }
+    if (!x || typeof x !== 'object') return
+    const o = x as Record<string, any>
+    if (o.type === 'image' && typeof o.source?.data === 'string') {
+      const d = imageDims(o.source.data)
+      f.images.push({ hash: fnv(o.source.data), media: o.source.media_type ?? null, w: d?.w ?? null, h: d?.h ?? null, b64: o.source.data.length, tok: d ? imageTokens(d.w, d.h) : null })
+      return
+    }
+    if (typeof o.text === 'string') f.text += o.text.length
+    if (o.type === 'tool_use') f.text += JSON.stringify(o.input ?? {}).length
+    if (o.content !== undefined) walk(o.content)
+  }
+  walk(blocks)
+  return f
+}
+
+// Epoch deopt advice (observe only; the driver owns rotation). A call costs floor + carry; a fresh epoch costs
+// floor + rehydration. Measured on Madzia d6343597: floor 14.4K, carry grew ~2.4K/call to 60.8K, images 16.8 %
+// of processed tokens and text carry ~52 %. Advice fires once the carry above the floor reaches the floor itself:
+// from then on every call pays at least twice what a fresh epoch's call pays.
+export const ROTATE_CARRY_RATIO = 1
+
+export type CarryAdvice = { rotate: boolean; floor: number; ctx: number; carry: number; imageTok: number; textCarry: number }
+
+export function carryAdvice(floor: number, ctx: number, imageTok: number): CarryAdvice {
+  const carry = Math.max(0, ctx - floor)
+  return { rotate: floor > 0 && carry >= ROTATE_CARRY_RATIO * floor, floor, ctx, carry, imageTok, textCarry: Math.max(0, carry - imageTok) }
+}
+
 export function pageLines(listing: string, query: string, limit = 40): string {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)
   const hits = listing.split('\n').filter(l => words.length === 0 || words.some(w => l.toLowerCase().includes(w)))

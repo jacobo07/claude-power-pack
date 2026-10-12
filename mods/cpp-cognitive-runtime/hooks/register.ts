@@ -1,7 +1,7 @@
 import type { Register } from 'claude-code'
 import {
   COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
-  decideUnitTool, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, type InstructionFileInfo, type Modes, type WorkUnit,
+  carryAdvice, decideUnitTool, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts, type InstructionFileInfo, type Modes, type WorkUnit,
 } from './policy'
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
@@ -23,6 +23,11 @@ let agentListing = ''
 let unitP: Promise<WorkUnit | null> | null = null
 const agentTypes = new Map<string, string>()
 const receipts: Receipt[] = []
+// Main-loop carry state for the epoch deopt advice: images that entered the transcript, the call count, the floor.
+const hotImages = new Map<string, { tok: number; since: number; n: number }>()
+let calls = 0
+let floor = 0
+let advised = false
 
 const receipt = (r: Receipt) => { receipts.push({ ts: Date.now(), sid, ...r }) }
 
@@ -187,6 +192,54 @@ export const register: Register = on => {
     if (effective('main') === 'off') return r
     const adv = a.origin?.kind === 'hook' ? advisoryBytes(text) : 0
     receipt({ ev: 'attach', agent: null, type: a.type, origin: a.origin?.kind, hookEvent: a.origin?.event ?? null, bytes: text.length, advisory: adv, applied: false })
+    return r
+  })
+
+  // Carry receipt (UMVM M1, observe only): every row that will ride later calls, by door and modality.
+  // Images are receipted by content hash so a re-read of the same bytes under another path is visible.
+  on('session.append', async ($, e, next) => {
+    const r = await next(e)
+    if (effective('main') === 'off') return r
+    const m = (r as any).message ?? e.message
+    if (!m?.role) return r // a notice or a record with no bytes on the wire carries nothing
+    try {
+      const f = rowFacts(m.content ?? [])
+      // a re-read of the same bytes appends another block, so a repeat adds its cost again (n counts repeats)
+      if (!e.agentId) for (const i of f.images) {
+        const v = hotImages.get(i.hash)
+        if (v) { v.tok += i.tok ?? 0; v.n++ } else hotImages.set(i.hash, { tok: i.tok ?? 0, since: calls, n: 1 })
+      }
+      receipt({ ev: 'row', agent: e.agentId ? agentTypes.get(e.agentId) ?? 'unknown' : null, door: e.door, role: m.role,
+        origin: (e.origin as any)?.kind ?? null, tool: (e.origin as any)?.tool ?? null, name: m.name ?? null, text: f.text, images: f.images })
+    } catch (err) {
+      receipt({ ev: 'row.error', door: e.door, error: String(err).slice(0, 200) }) // the row is already stored; only the receipt is lost
+    }
+    return r
+  })
+
+  // Per-call carry receipt and epoch deopt advice (observe only). The advice file is for the driver that owns
+  // the epoch; this hook never rotates, compacts or drops anything.
+  on('turn.step', async function* ($, e, next) {
+    const r: any = yield* next(e) // chunks pass through untouched; only the result is read
+    if (effective('main') === 'off' || !r?.usage) return r
+    const u = r.usage
+    const ctx = (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0)
+    if (e.agentId) {
+      receipt({ ev: 'call', agent: agentTypes.get(e.agentId) ?? 'unknown', index: e.index, msgs: e.messageCount, ctx, out: u.output_tokens ?? 0 })
+      return r
+    }
+    calls++
+    if (floor === 0) floor = ctx
+    let imageTok = 0
+    for (const v of hotImages.values()) imageTok += v.tok
+    const a = carryAdvice(floor, ctx, imageTok)
+    receipt({ ev: 'call', agent: null, call: calls, msgs: e.messageCount, ctx, out: u.output_tokens ?? 0, carry: a.carry, imageTok, rotate: a.rotate })
+    if (a.rotate && !advised && stateDir) {
+      advised = true
+      const images = [...hotImages.entries()].map(([hash, v]) => ({ hash, tok: v.tok, n: v.n, rides: calls - v.since }))
+      try { await $.fs.write(`${stateDir}/advice/${sid}.json`, JSON.stringify({ ts: Date.now(), sid, call: calls, ...a, images }, null, 1)) }
+      catch (err) { receipt({ ev: 'advice.error', error: String(err).slice(0, 200) }) }
+    }
     return r
   })
 

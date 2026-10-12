@@ -1,8 +1,52 @@
 import { expect, test } from 'claude-code/testing'
 import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
-  pageLines, parseWorkUnit, repoKey, subagentInstructions,
+  carryAdvice, imageDims, imageTokens, pageLines, parseWorkUnit, repoKey, rowFacts, subagentInstructions,
 } from './policy'
+
+const B = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+const b64 = (bytes: number[]) => {
+  let s = ''
+  for (let i = 0; i < bytes.length; i += 3) {
+    const n = (bytes[i] << 16) | ((bytes[i + 1] ?? 0) << 8) | (bytes[i + 2] ?? 0)
+    s += B[(n >> 18) & 63] + B[(n >> 12) & 63] + (i + 1 < bytes.length ? B[(n >> 6) & 63] : '=') + (i + 2 < bytes.length ? B[n & 63] : '=')
+  }
+  return s
+}
+const be32 = (v: number) => [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]
+const png = (w: number, h: number) => b64([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, ...be32(w), ...be32(h), 8, 6, 0, 0, 0])
+// JPEG with an APP0 segment before SOF0, so the walker must skip a segment to reach the size
+const jpeg = (w: number, h: number) => b64([0xff, 0xd8, 0xff, 0xe0, 0, 4, 0, 0, 0xff, 0xc0, 0, 11, 8, h >> 8, h & 255, w >> 8, w & 255, 3, 0, 0, 0])
+
+test('image dimensions are read from PNG and JPEG headers; anything else is unknown, not zero', () => {
+  expect(imageDims(png(1920, 1080))).toEqual({ w: 1920, h: 1080 })
+  expect(imageDims(jpeg(640, 480))).toEqual({ w: 640, h: 480 })
+  expect(imageDims(b64([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))).toBe(null)
+})
+
+test('image tokens are w*h/750 of the block as sent, with no megapixel cap (calibrated on Opus 5.5)', () => {
+  expect(imageTokens(750, 100)).toBe(100)
+  expect(imageTokens(2000, 1278)).toBe(3408) // measured ~3,420 from next-call usage
+})
+
+test('rotate advice fires once carry above the floor reaches the floor, and splits image from text carry', () => {
+  expect(carryAdvice(14400, 28000, 3000).rotate).toBe(false)
+  const a = carryAdvice(14400, 28800, 3000)
+  expect(a.rotate).toBe(true)
+  expect(a.carry).toBe(14400)
+  expect(a.textCarry).toBe(11400)
+  expect(carryAdvice(0, 50000, 0).rotate).toBe(false) // no floor measured yet: no advice
+})
+
+test('a tool_result row is split into text bytes and hashed images; the same bytes hash the same', () => {
+  const img = { type: 'image', source: { type: 'base64', media_type: 'image/png', data: png(800, 600) } }
+  const f = rowFacts([{ type: 'tool_result', tool_use_id: 't1', content: [{ type: 'text', text: 'abcd' }, img, img] }])
+  expect(f.text).toBe(4)
+  expect(f.images.length).toBe(2)
+  expect(f.images[0].hash).toBe(f.images[1].hash)
+  expect(f.images[0].tok).toBe(640)
+  expect(rowFacts([{ type: 'text', text: 'hello' }]).images).toEqual([])
+})
 
 const file = (path: string, kind = 'user', content = '# Title\nbody') => ({ path, kind, content })
 
