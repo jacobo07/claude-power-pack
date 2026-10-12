@@ -63,6 +63,7 @@ fresh worker finds 02-RESEARCH.md present and no 02-*-PLAN.md, resume with `/gsd
 - 2026-10-07 (worker, ULTRA Q&A Q5 success criteria): ROADMAP Phase 2 criteria 1-3 plus the S-item gates named in the spec. Reason: ROADMAP Phase 2.
 - 2026-10-07 (worker, ULTRA Q&A Q6 scope): Phase 3-8 event types are frozen in the S7 table only, no legacy file is edited, R12 (unknown: tree equality) is deferred to Phase 4. Reason: STATE decisions 1 and 3.
 - 2026-10-11 (worker, W1 ULTRA phase 4-5): audit 6 gaps -- 6 injected, 0 deferred, 0 rejected (02-AUDIT.md).
+- 2026-10-12 (Owner, option b on OWNER DECISION NEEDED): `V-PCC-ADDITIVE-ONLY` is scoped to the Phase 2 commit range by git history (`98609c4f..0fca7111`: no legacy goal file changed, `proof.py` the only added module), with a control over a range that did edit them. No hash is re-pinned. Phase 3 edits `epoch.py`, `reconcile.py`, `sweep.py` and adds `frontier.py` on purpose. Suite 48/48. Reason: the gate proves the Phase 2 seam was additive; later phases are judged by their own gates.
 
 ## Owner steps
 
@@ -70,9 +71,7 @@ fresh worker finds 02-RESEARCH.md present and no 02-*-PLAN.md, resume with `/gsd
 
 ## Blockers
 
-OWNER DECISION NEEDED (2026-10-12, WU-P3): Phase 2 gate `V-PCC-ADDITIVE-ONLY` (`tools/test_gsd_x_goal_pcc_semantics.py:1161`) pins the SHA-256 of every legacy goal file in `tools/fixtures/gsdx_legacy_replay_golden.json` and requires `proof.py` to be the only new module. Phase 3 plans 03-03/03-04 edit `epoch.py`, `reconcile.py`, `sweep.py` and add `frontier.py`, so the suite reads 47/48. Not touched: moving a pin is a gate change.
-Options: (a) re-pin the three hashes and allow `frontier.py` as a second new module, recorded as the Phase 3 baseline (my pick: keeps the gate detecting any later unreviewed edit); (b) narrow the gate to Phase 2's own commit range via git; (c) revert the Phase 3 edits to the legacy files (loses D04-D09).
-Also open in 03-06: mutation drills m3-m8 UNRUN (harness killed the command for low memory; m1, m2 KILLED). Rerun them one per call when memory allows.
+Open in 03-06: mutation drills m3-m8 UNRUN (harness killed the command for low memory; m1, m2 KILLED). Rerun one per call.
 
 Open measurement gap carried to Phase 6 as R11: incumbent `test_gsd_x_goal_mutation.py` is UNKNOWN (memory-pressure reaper; see 01-05-SUMMARY.md).
 </content>

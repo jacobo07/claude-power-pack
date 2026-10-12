@@ -1158,16 +1158,46 @@ def gate_projection_pure():
         shutil.rmtree(base, ignore_errors=True)
 
 
+# The Phase 2 seam is the commit range from the golden capture to the Phase 2 close. Scoped by git history
+# (Owner decision, 2026-10-12): later phases edit the legacy files on purpose, and a pinned hash would
+# have to be re-pinned every time. No hash is pinned here.
+PHASE2_FIRST = "98609c4f1c60f96d2471ad5b181daacb9af31474"      # legacy replay golden captured from the unmodified engine
+PHASE2_LAST = "0fca7111a25cd1fa683610004c8de62b83529f81"       # Phase 2 closed
+
+
+def _git_names(*args) -> list:
+    import subprocess  # noqa: PLC0415
+    from modules.gsd_x.goal import git_state  # noqa: PLC0415
+    r = subprocess.run([git_state.GIT_CANDIDATES[0], "-C", str(ROOT), *args], capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    if r.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed: {r.stderr.strip()[:200]}")
+    return [ln for ln in r.stdout.splitlines() if ln]
+
+
 def gate_additive_only():
     golden = _golden_legacy()
-    moved = [k for k, v in golden.items() if not (ROOT / k).is_file() or hashlib.sha256((ROOT / k).read_bytes()).hexdigest() != v]
-    news = new_modules()
+    legacy = sorted(golden)
+    try:
+        seam_moved = _git_names("diff", "--name-only", PHASE2_FIRST, PHASE2_LAST, "--", *legacy)
+        seam_added = [Path(p).name for p in _git_names("diff", "--name-only", "--diff-filter=A", PHASE2_FIRST,
+                                                       PHASE2_LAST, "--", "modules/gsd_x/goal")]
+        # Control: the same question over a range that really did edit legacy files must answer non-empty,
+        # or this instrument could not have said "moved" at all.
+        control = _git_names("diff", "--name-only", PHASE2_FIRST, "HEAD", "--", *legacy)
+        sentinel = _git_names("diff", "--name-only", PHASE2_FIRST, PHASE2_FIRST, "--", *legacy)
+    except RuntimeError as exc:
+        return False, str(exc)
+    control_ok = bool(control) or _git_names("rev-list", "--count", f"{PHASE2_LAST}..HEAD") == ["0"]
     legacy_types = discover_types(GOAL_PKG, only={Path(k).name for k in golden})
     proof = _need("NEW_TYPES")
     new_types = set(proof.NEW_TYPES) if proof else set()
     collide = sorted(legacy_types & new_types)
-    ok = proof is not None and not moved and news == ["proof.py"] and not collide and len(new_types) == 4
-    return ok, f"legacy={len(legacy_types)} new={len(new_types)} legacy_files_changed={moved[:3]} new_modules={news} collisions={collide}"
+    ok = (proof is not None and not seam_moved and seam_added == ["proof.py"] and not collide
+          and len(new_types) == 4 and control_ok and not sentinel)
+    return ok, (f"legacy={len(legacy_types)} new={len(new_types)} seam_legacy_files_changed={seam_moved[:3]} "
+                f"seam_new_modules={seam_added} collisions={collide} control_range_changed={len(control)} "
+                f"empty_range_changed={len(sentinel)}")
 
 
 def gate_vocab_declared():
