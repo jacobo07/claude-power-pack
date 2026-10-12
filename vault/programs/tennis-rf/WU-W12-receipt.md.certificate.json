@@ -1,0 +1,17 @@
+{
+ "at": "2026-10-12T20:33:55Z",
+ "command": [
+  "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\evidence\\w12\\records.py",
+  "C:\\Users\\User\\Apps\\recon_work\\wst_tennis\\w10\\F\\candidate_ledger.jsonl"
+ ],
+ "rc": 0,
+ "values": {
+  "donor_match": 3,
+  "drawn": 24,
+  "fail": 1,
+  "match": 12,
+  "partial": 9,
+  "sent": 22
+ }
+}

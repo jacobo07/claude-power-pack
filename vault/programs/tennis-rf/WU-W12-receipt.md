@@ -1,4 +1,5 @@
 # WU-W12 receipt
+Claims: match=12, sent=22, drawn=24, partial=9, fail=1, donor_match=3
 Status: DONE (closed by TRF-C; the worker, mission m-0acd380966c2, was fenced by the goal cap after judging, before records)
 
 - Job 3 ksrmb-20261012-171117 (build candidate-20261012T170916Z, capsule cap1-5bf8cc7d7aac): certified READY, JOBS.md

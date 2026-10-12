@@ -67,6 +67,11 @@ def main(led):
     sent = [r for r in out if r["verdict"] != "EXCLUDED_LINT_UNK_FIELD"]
     m = sum(1 for r in out if r["verdict"] == "MATCH")
     print("RATE sent=%d/%d drawn=%d/%d" % (m, len(sent), m, len(out)))
+    # last line: the certificate tools/claim_evidence.py reads (D28 Ph1a)
+    print(json.dumps({"match": m, "sent": len(sent), "drawn": len(out),
+                      "partial": sum(1 for r in out if r["verdict"].startswith("PARTIAL")),
+                      "fail": sum(1 for r in out if r["verdict"].startswith("FAIL")),
+                      "donor_match": sum(1 for f in donors if all(r.get("exact_match") for r in by[f]))}, sort_keys=True))
 
 if __name__ == "__main__":
     main(sys.argv[1])
