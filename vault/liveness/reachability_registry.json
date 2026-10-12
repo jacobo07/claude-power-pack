@@ -11,6 +11,10 @@
     "session_resilience/ui_state"
   ],
   "modules": {
+    "prr/census": {
+      "class": "LIBRARY",
+      "note": "goal prr A0 (2026-10-12): read-only memory census, CLI `python -m modules.prr.census`. Consumer wiring (ram_guard / pressure controller) is workstream L of vault/plans/prr-physical-working-set-2026-10-12.md. Proven by tests/test_prr_census.py."
+    },
     "external_assimilation/__init__": {
       "class": "LIBRARY",
       "note": "Package marker for the one vendored-code bridge. Reached in production through tools/gsd_mission.py -> tools/plan_graph_check.py -> node_bridge, a tool->tool hop this scanner does not follow (red team R2)."
