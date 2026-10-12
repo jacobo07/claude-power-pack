@@ -55,7 +55,7 @@ discriminating evidence, or less reconstruction -- never from removing a check.
   types, kill switches, legacy-log replay. Dispatch `oneshot-architect-auditor` on the amended spec; inject every
   gap. Then land the compatibility seam: new event types + projections with ZERO behaviour change; every
   existing suite unchanged and green; a replay test over a recorded legacy goal log. Return to EXECUTION.
-- [ ] **Phase 3: W2 Execution frontier and scheduling**
+- [x] **Phase 3: W2 Execution frontier and scheduling** (completed 2026-10-12)
   `compile_frontier` projection (four frontiers, convergence graph edges that matter, read/write/resource sets
   derived mechanically), `decide()` = first frontier action (legacy callers unchanged), WAIT only when the
   execution frontier is empty, sweep dispatches N independent gate epochs under a resource bound, critical path
