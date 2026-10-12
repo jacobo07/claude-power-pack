@@ -70,6 +70,10 @@ fresh worker finds 02-RESEARCH.md present and no 02-*-PLAN.md, resume with `/gsd
 
 ## Blockers
 
-None. Open measurement gap carried to Phase 6 as R11: incumbent `test_gsd_x_goal_mutation.py` is UNKNOWN (memory-pressure reaper; see 01-05-SUMMARY.md).
+OWNER DECISION NEEDED (2026-10-12, WU-P3): Phase 2 gate `V-PCC-ADDITIVE-ONLY` (`tools/test_gsd_x_goal_pcc_semantics.py:1161`) pins the SHA-256 of every legacy goal file in `tools/fixtures/gsdx_legacy_replay_golden.json` and requires `proof.py` to be the only new module. Phase 3 plans 03-03/03-04 edit `epoch.py`, `reconcile.py`, `sweep.py` and add `frontier.py`, so the suite reads 47/48. Not touched: moving a pin is a gate change.
+Options: (a) re-pin the three hashes and allow `frontier.py` as a second new module, recorded as the Phase 3 baseline (my pick: keeps the gate detecting any later unreviewed edit); (b) narrow the gate to Phase 2's own commit range via git; (c) revert the Phase 3 edits to the legacy files (loses D04-D09).
+Also open in 03-06: mutation drills m3-m8 UNRUN (harness killed the command for low memory; m1, m2 KILLED). Rerun them one per call when memory allows.
+
+Open measurement gap carried to Phase 6 as R11: incumbent `test_gsd_x_goal_mutation.py` is UNKNOWN (memory-pressure reaper; see 01-05-SUMMARY.md).
 </content>
 </invoke>
