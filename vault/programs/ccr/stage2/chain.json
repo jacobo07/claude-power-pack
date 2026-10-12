@@ -9,7 +9,7 @@
                      ],
     "units":  [
                   {
-                      "id":  "E1",
+                      "id":  "E1x",
                       "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\WU-E1.md",
                       "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\route-M.json",
                       "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\WU-E1-receipt.md",
@@ -20,7 +20,7 @@
                       "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\WU-M1.md",
                       "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\route-M.json",
                       "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\WU-M1-receipt.md",
-                      "after":  "E1"
+                      "after":  "E1x"
                   },
                   {
                       "id":  "W1",
