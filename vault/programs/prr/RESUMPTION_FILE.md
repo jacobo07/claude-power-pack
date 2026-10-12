@@ -2,24 +2,30 @@
 
 **Identity.** Claude Power Pack worktree `C:\Users\User\Apps\pp-prr`, branch `prr/main` (off 983cca18). Goal `prr`,
 cap 18,000,000. Plan + Owner decision: `vault/plans/prr-physical-working-set-2026-10-12.md`. Coordinator pane ce64704d.
-Sibling programme `ccr` is owned by pane c13cda65: read its files, never write them.
+Sibling programme `ccr` is owned by pane c13cda65: read its files, never write them. GEX44 clone: `~/missions/prr`,
+bench data `~/prr-bench/runs/`.
 
-**Thesis.** The laptop's RAM pressure comes from how many claude.exe are alive (33 main sessions x ~0.85 GB private),
-not from session age (fleet r = 0.18). Within one session, growth follows context. The target architecture is a
-logical session recycled across disposable physical processes (seal -> stop -> `--resume <sid>`), built on the
-existing FASE A (`modules/cognitive_os/process_governor.py` + `hibernate_runner.py` + kclaude park/resume).
+**Thesis (proven on GEX44, not yet on Windows).** claude 2.1.296 is Bun 1.4.3/JSC. A process keeps every history it
+loaded: /compact and /clear cut tokens, not RAM (+12 MB/100 turns). Resume alone reloads all history. **Compaction
+then process recycle (`--resume <sid>`) is bounded**: +0.27 MB/100 turns, epoch-start flat, resume 0.3 s, same sid;
+resume RAM independent of a 10x larger pre-boundary history. Agents (+64 MB/100 turns, in-process) and images (peak
+1.2 GB) follow the same rule. Evidence: `vault/programs/prr/evidence/{A1,B,C}-*.md`.
 
-**State (coherence anchor: the commit that adds this file).** SEALED: reality scan, plan, Owner approval.
-PENDING: everything from A0.
+**State (coherence anchor: the commit that adds evidence C).** SEALED: A0 census (`modules/prr/census.py`), A1 matrix,
+B/C benchmarks (`modules/prr/bench/`), O recycle policy (`modules/prr/recycle_policy.py`, observe default, act via
+`CPP_PRR_RECYCLE=act` -> existing `~/.claude/scripts/restart-claude.ps1`). Canary-ring hook registration exists only
+in this worktree: `.claude/settings.local.json` (untracked; SessionStart + Stop).
+PENDING: Windows canary, fleet observe ring, PGO, knowledge/UKDL/CBR.
 
-**Active decisions.** Laptop = read-only census, no new claude.exe, no trimmer. Canaries and benchmarks on GEX44.
-Destructive actions only on processes this programme started. Every number names its plane.
+**Active decisions.** Laptop = read-only until Available >= 4 GB (`python -m modules.prr.census`; 2,041 MB at 17:00).
+Destructive actions only on panes this programme starts. Recycle only after a boundary crossed inside the process.
 
 **Next 3 actions.**
-1. A0: read-only Windows census tool (per process tree: private, working set, parent, role, age) with a test
-   that drives both a known-orphan and a known-live classification.
-2. A1 on GEX44: identify the JS engine inside claude 2.1.296 (V8 vs JSC) and probe the Mods surface for any
-   heap, process or MCP lifecycle API.
-3. B on GEX44: hard resident floor for a fresh `claude -p` session plus a long-run synthetic fixture.
+1. Windows canary (needs >= 4 GB Available): open ONE kclaude pane in this worktree with `CPP_PRR_RECYCLE=act`; run
+   ~10 tool turns, `/compact`; expect a receipt RECYCLE + acted, the pane relaunching `--resume` with the same sid, and
+   the successor's private bytes near the fresh floor. Repeat with `/clear`. Measure private bytes before and after.
+2. If green: observe ring (fleet, receipts only) through the PP dispatcher, then act ring by Owner word.
+3. Knowledge: UKDL hard rule/trap candidates from A1/B/C (compact != RAM reclaim; recycle needs a boundary;
+   memory note "V8" is wrong engine).
 
-**Start.** `python tools/mission_spend.py goal-status --goal prr`, then action 1.
+**Start.** `python tools/mission_spend.py goal-status --goal prr`, then `python -m modules.prr.census`, then action 1.
