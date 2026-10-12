@@ -105,6 +105,33 @@ def analyze(root: Path, changed: list[str]) -> dict:
     return r.value
 
 
+def affected_closure(paths: list[str], root: Path | None = None, analyzer=None) -> dict:
+    """Per-path proof closure. {"tests": [cmd], "per_path": {p: [cmd]}, "unmapped": [p], "unjudged": bool, "gaps": []}.
+    A path is unmapped when no test is reached from it (a test file reaches itself). Unjudged = no answer, never green."""
+    root = Path(root) if root else ROOT
+    analyzer = analyzer or analyze
+    per_path: dict[str, list[str]] = {}
+    gaps: list = []
+    for p in paths:
+        p = p.replace("\\", "/")
+        res = analyzer(root, [p])
+        if res.get("unjudged"):
+            return {"tests": [], "per_path": per_path, "unmapped": [], "unjudged": True, "gaps": res.get("gaps", [])}
+        ts = sorted(set(res["affected"]["test"]))
+        if Path(p).name.startswith("test_") and p.endswith(".py") and p not in ts:
+            ts.append(p)
+        per_path[p] = [f"python {t}" for t in ts]
+        gaps += res.get("gaps", [])
+    tests = sorted({c for v in per_path.values() for c in v})
+    return {"tests": tests, "per_path": per_path, "unmapped": [p for p, v in per_path.items() if not v],
+            "unjudged": False, "gaps": gaps}
+
+
+def affected_tests(paths: list[str], root: Path | None = None) -> list[str]:
+    """Declared-test commands (`python tools/test_x.py`) for the changed paths; [] when unjudged."""
+    return affected_closure(paths, root)["tests"]
+
+
 def main(argv=None) -> int:
     for s in (sys.stdout, sys.stderr):
         try:

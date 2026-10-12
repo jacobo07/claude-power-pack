@@ -17,6 +17,7 @@ Never pushes. Usage:
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import shlex
@@ -88,10 +89,16 @@ def run_tests(cwd, tests):
     return results, all(r["rc"] == 0 for r in results)
 
 
-def land(worktree, live, branch=None, tests=(), now=time.time):
+def _closure(paths, worktree):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import change_impact
+    return change_impact.affected_closure(paths, worktree)
+
+
+def land(worktree, live, branch=None, tests=(), now=time.time, affected=False, exempt=(), closure_fn=None):
     r = {"worktree": worktree, "live": live, "tests": list(tests), "ts": int(now()),
-         "status": "REFUSED", "reason": "", "landed": False}
-    if not tests:
+         "status": "REFUSED", "reason": "", "landed": False, "affected": bool(affected)}
+    if not tests and not affected:
         r["reason"] = "NO_TESTS_DECLARED"
         return r
     branch = branch or git(worktree, "branch", "--show-current").stdout.strip()
@@ -118,11 +125,30 @@ def land(worktree, live, branch=None, tests=(), now=time.time):
     if not files:
         r["reason"] = "NOTHING_TO_LAND"
         return r
+    if affected:
+        try:
+            cl = (closure_fn or _closure)(sorted(files), worktree)
+        except Exception as e:  # no answer is never green
+            cl = {"unjudged": True, "gaps": [repr(e)]}
+        if cl.get("unjudged"):
+            r["reason"], r["detail"] = "AFFECTED_UNJUDGED", str(cl.get("gaps"))[-400:]
+            return r
+        unmapped = [p for p in cl["unmapped"] if not any(fnmatch.fnmatch(p, g) for g in exempt)]
+        if unmapped:
+            r["reason"], r["unmapped"] = "AFFECTED_NO_MAPPED_TEST", unmapped
+            return r
+        tests = list(dict.fromkeys([*tests, *cl["tests"]]))
+        r["tests"] = tests
+        r["affected_closure"] = {"per_path": cl["per_path"], "exempt": list(exempt),
+                                 "exempted": [p for p in cl["unmapped"] if p not in unmapped]}
+        if not tests:
+            r["reason"] = "NO_TESTS_DECLARED"
+            return r
     ov = overlap(files, live_dirty_paths(live))
     if ov:
         r["reason"], r["overlap"] = "OVERLAP_LIVE_DIRTY", ov
         return r
-    rb = git(worktree, "rebase", live_head)
+    rb =git(worktree, "rebase", live_head)
     if rb.returncode != 0:
         git(worktree, "rebase", "--abort")
         git(worktree, "reset", "--hard", orig)
@@ -171,8 +197,12 @@ def main(argv=None):
     ap.add_argument("--branch")
     ap.add_argument("--test", action="append", default=[])
     ap.add_argument("--receipt")
+    ap.add_argument("--affected", action="store_true",
+                    help="tests = explicit --test + change_impact closure of the changed paths; unmapped path -> refuse")
+    ap.add_argument("--exempt", action="append", default=[],
+                    help="glob of changed paths allowed to have no mapped test (listed in the receipt)")
     a = ap.parse_args(argv)
-    r = land(a.worktree, a.live, a.branch, a.test)
+    r = land(a.worktree, a.live, a.branch, a.test, affected=a.affected, exempt=a.exempt)
     txt = json.dumps(r, indent=2)
     if a.receipt:
         with open(a.receipt, "w", encoding="utf-8", newline="\n") as f:
