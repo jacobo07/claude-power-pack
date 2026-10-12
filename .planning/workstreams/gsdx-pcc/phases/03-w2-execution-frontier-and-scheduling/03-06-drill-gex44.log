@@ -1,0 +1,127 @@
+# 03-06 drills on GEX44 (Linux plane), coordinator-run 2026-10-12
+# host kobicraft-gex44, python 3.12.3, clone of gsdx/pcc at 20c0f56f, specs = worker job tmp m1..m8.json unchanged
+# frontier suite on this plane: 5 sequential + 8 parallel runs, all GSDX_FRONTIER_PASS=39/39, V-FRONTIER-SWEEP-BOUND 'WALL_CLOCK over 5 ready -> 4 open=4'
+
+== m1
+{
+    "file":  "modules/gsd_x/goal/frontier.py",
+    "test":  "tools/test_gsd_x_goal_frontier.py",
+    "gate":  "V-FRONTIER-GLOBAL-WAIT",
+    "old":  "    if base.kind != rc.WAIT or (bound(ctx) == 1 and len(open_eps) \u003c 2):",
+    "new":  "    if True:"
+}
+FAIL V-FRONTIER-GLOBAL-WAIT legacy=WAIT frontier=WAIT:None control_conflict=WAIT
+FAIL V-FRONTIER-HARVEST-NOT-HIDDEN legacy=WAIT frontier=WAIT:False
+FAIL V-FRONTIER-NO-STARVE first=None second=WAIT
+FAIL V-FRONTIER-STOP-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+FAIL V-FRONTIER-BUDGET-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+FAIL V-FRONTIER-BLOCKED-ON-HOLDS legacy=WAIT frontier=WAIT control=WAIT
+FAIL V-FRONTIER-WAIT-ONLY-EMPTY nonempty=WAIT empty=WAIT
+FAIL V-FRONTIER-SWEEP-N WALL_CLOCK dispatched=1 open=1 satisfied_after_drain=3; ECONOMY dispatched=1 open=1 satisfied_after_drain=3
+FAIL V-FRONTIER-SWEEP-BOUND max_parallel=2 -> 1; WALL_CLOCK over 5 ready -> 1 open=1; BALANCED -> 1
+FAIL V-FRONTIER-REPORTED-NOT-EXECUTED dispatched=1 (bound 2, 3 ready) report='sweep-spec: speculative ob-1: admitted -- ADMITTED saving 1.2s exceeds cost 0.0s' no_speculative_epoch=True
+GSDX_FRONTIER_PASS=29/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-GLOBAL-WAIT
+rc=0
+
+== m2
+{
+    "file":  "modules/gsd_x/goal/epoch.py",
+    "test":  "tools/test_gsd_x_goal_frontier.py",
+    "gate":  "V-FRONTIER-UNSAFE-WRITES",
+    "old":  "if not frontier.independent_units(spec[\"unit\"], u)), None)",
+    "new":  "if False), None)"
+}
+FAIL V-FRONTIER-UNSAFE-WRITES cases={'overlapping-writes': (False, False), 'read-after-write': (False, False), 'undeclared-sets': (False, False)}
+FAIL V-FRONTIER-BEGIN-DERIVES forged='unit does not match derived for ob-b: the author' honest_but_conflicting=''
+GSDX_FRONTIER_PASS=37/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-UNSAFE-WRITES
+rc=0
+
+== m3
+{
+    "file":  "modules/gsd_x/goal/frontier.py",
+    "test":  "tools/test_gsd_x_goal_frontier.py",
+    "gate":  "V-FRONTIER-UNDECLARED",
+    "old":  "    return pf.independent(a, b)",
+    "new":  "    return True"
+}
+FAIL V-FRONTIER-UNDECLARED declared_pair_independent=True undeclared_refused=False
+FAIL V-FRONTIER-INDEP cases=5 wrong=['shared-write', 'write-read', 'read-write'] asymmetric=['shared-write', 'write-read', 'read-write']
+FAIL V-FRONTIER-RESOURCE integration_pair_refused=False reality_pair_refused=False cross_class_control_admitted=True
+FAIL V-FRONTIER-GLOBAL-WAIT legacy=WAIT frontier=NEXT_EPOCH:ob-b control_conflict=NEXT_EPOCH
+FAIL V-FRONTIER-UNSAFE-WRITES cases={'overlapping-writes': (False, False), 'read-after-write': (False, False), 'undeclared-sets': (False, False)}
+FAIL V-FRONTIER-BEGIN-DERIVES forged='unit does not match derived for ob-b: the author' honest_but_conflicting=''
+GSDX_FRONTIER_PASS=33/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-UNDECLARED
+rc=0
+
+== m4
+{
+    "file":  "modules/gsd_x/goal/frontier.py",
+    "test":  "tools/test_gsd_x_goal_frontier.py",
+    "gate":  "V-FRONTIER-RESOURCE",
+    "old":  "        resources.add(INTEGRATION_ENV)",
+    "new":  "        pass"
+}
+FAIL V-FRONTIER-UNIT-DERIVE unit=[] integ=[] reality=['reality-env'] empty_class=[] causal_reads=['src/a', 'tools/gate.py']
+FAIL V-FRONTIER-RESOURCE integration_pair_refused=False reality_pair_refused=True cross_class_control_admitted=True
+FAIL V-FRONTIER-GRAPH edges=4 resource_edges=[] gate_gate_edges=0
+FAIL V-FRONTIER-GLOBAL-WAIT legacy=WAIT frontier=NEXT_EPOCH:ob-b control_conflict=NEXT_EPOCH
+FAIL V-FRONTIER-BEGIN-DERIVES forged='unit does not match derived for ob-b: the author' honest_but_conflicting=''
+GSDX_FRONTIER_PASS=34/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-RESOURCE
+rc=0
+
+== m5
+{
+    "file":  "modules/gsd_x/goal/frontier.py",
+    "test":  "tools/test_gsd_x_goal_frontier.py",
+    "gate":  "V-FRONTIER-POSTURE",
+    "old":  "        n = min(n, cap)",
+    "new":  "        n = n"
+}
+FAIL V-FRONTIER-POSTURE cases=13 wrong=[({'posture': 'WALL_CLOCK', 'max_parallel': 2}, 'WALL_CLOCK', 4)] state_fallback=True log_round_trip=False
+FAIL V-FRONTIER-SWEEP-BOUND max_parallel=2 -> 4; WALL_CLOCK over 5 ready -> 4 open=4; BALANCED -> 2
+GSDX_FRONTIER_PASS=37/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-POSTURE
+rc=0
+
+== m6
+{
+    "file":  "modules/gsd_x/goal/frontier.py",
+    "test":  "tools/test_gsd_x_goal_frontier.py",
+    "gate":  "V-FRONTIER-ORDER",
+    "old":  "        return (0 if s[\"duration\"] is None else 1, -s[\"contrib\"],",
+    "new":  "        return (1, -s[\"contrib\"],"
+}
+FAIL V-FRONTIER-ORDER order=['a', 'b', 'd', 'c'] unknown_duration_first=['a', 'b']
+GSDX_FRONTIER_PASS=38/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-ORDER
+rc=0
+
+== m7
+{
+    "file":  "modules/gsd_x/goal/frontier.py",
+    "test":  "tools/test_gsd_x_goal_frontier.py",
+    "gate":  "V-FRONTIER-SWITCH",
+    "old":  "    return not (sweep.state_dir() / OFF_FILE).exists()",
+    "new":  "    return True"
+}
+FAIL V-FRONTIER-SWITCH table_rows=12 mismatches=[] file_forces_off=False back_on=True
+GSDX_FRONTIER_PASS=38/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-SWITCH
+rc=0
+
+== m8
+{
+    "file":  "modules/gsd_x/goal/frontier.py",
+    "test":  "tools/test_gsd_x_goal_frontier.py",
+    "gate":  "V-FRONTIER-HARVEST-NOT-HIDDEN",
+    "old":  "    if harvest is not None:\n        return harvest",
+    "new":  "    if False:\n        return harvest"
+}
+FAIL V-FRONTIER-HARVEST-NOT-HIDDEN legacy=WAIT frontier=NEXT_EPOCH:False
+GSDX_FRONTIER_PASS=38/39  threshold=39/39
+MUTANT KILLED gate=V-FRONTIER-HARVEST-NOT-HIDDEN
+rc=0
