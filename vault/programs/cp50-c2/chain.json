@@ -1,7 +1,7 @@
 {
     "goal":  "cp50-c2",
     "root":  "C:\\Users\\User\\Apps\\recon_work\\wt_cp50_c2",
-    "envelope":  29443967,
+    "envelope":  37600000,
     "max_residuals":  0,
     "route_ladder":  [
                          "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
@@ -26,6 +26,7 @@
                   },
                   {
                       "id":  "R3b",
+                      "max_residuals":  1,
                       "packet":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R3b.md",
                       "route":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
                       "receipt":  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\cp50-c2\\WU-R3b-receipt.md",
