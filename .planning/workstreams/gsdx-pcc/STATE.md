@@ -1,20 +1,20 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 3
+current_phase: 4
 status: planning
-last_updated: "2026-10-11T00:00:00.000Z"
-last_activity: 2026-10-11
+last_updated: "2026-10-12T00:00:00.000Z"
+last_activity: 2026-10-12
 progress:
   total_phases: 10
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
   completed_plans: 12
-  percent: 20
+  percent: 30
 workstream: gsdx-pcc
 created: 2026-10-07
-current_phase_name: W2 Execution frontier and scheduling
+current_phase_name: W3 Candidate snapshots
 current_plan: Not started
-stopped_at: Phase 2 complete (verification passed, 02-VERIFICATION.md); ready to plan Phase 3 (W2 execution frontier)
+stopped_at: Phase 3 complete (verification passed, 03-VERIFICATION.md); ready to plan Phase 4 (W3 candidate snapshots)
 ---
 
 # Project State
@@ -22,8 +22,8 @@ stopped_at: Phase 2 complete (verification passed, 02-VERIFICATION.md); ready to
 ## Current Position
 
 **Status:** Ready to plan
-**Current Phase:** 3 — W2 Execution frontier and scheduling (Phase 2 complete 2026-10-11, see `phases/02-.../02-VERIFICATION.md`)
-**Last Activity:** 2026-10-11
+**Current Phase:** 4 -- W3 Candidate snapshots (Phase 3 complete 2026-10-12, see `phases/03-w2-execution-frontier-and-scheduling/03-VERIFICATION.md`)
+**Last Activity:** 2026-10-12
 
 ## Session Continuity
 
@@ -71,7 +71,7 @@ fresh worker finds 02-RESEARCH.md present and no 02-*-PLAN.md, resume with `/gsd
 
 ## Blockers
 
-Open in 03-06: mutation drills m3-m8 UNRUN (harness killed the command for low memory; m1, m2 KILLED). Rerun one per call.
+None open for Phase 3. Carry to Phase 4: executed speculation and racing (D25/D26 report-only today); the frontier suite at 298ba2c6 was verified on the Linux plane only (laptop runs were killed for low memory).
 
 Open measurement gap carried to Phase 6 as R11: incumbent `test_gsd_x_goal_mutation.py` is UNKNOWN (memory-pressure reaper; see 01-05-SUMMARY.md).
 </content>
