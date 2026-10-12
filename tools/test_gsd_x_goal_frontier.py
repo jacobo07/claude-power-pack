@@ -752,13 +752,29 @@ GIT_ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
 SWEEP_REPO = "7d" * 20
 
 
-def make_repo() -> Path:
+def release_path(repo: Path) -> Path:
+    return repo.parent / (repo.name + ".release")
+
+
+def release(repo: Path) -> None:
+    """Let the repo's fixture gates finish. Before this call a blocking gate cannot end."""
+    release_path(repo).write_text("go", encoding="utf-8")
+
+
+def make_repo(blocking: bool = True) -> Path:
     d = Path(tempfile.mkdtemp(prefix="frontier-repo-"))
     subprocess.run([GIT, "init", "-q", str(d)], check=True, env=GIT_ENV)
-    # Slow enough that the whole dispatch pass finishes while every gate is still running: a gate that
-    # ends first would be harvested instead of letting the pass start the next one, by design.
-    (d / "gate.py").write_text("import sys, time\ntime.sleep(6)\nprint('1 passed')\nsys.exit(0)\n",
-                               encoding="utf-8")
+    # A blocking gate cannot finish until the test calls release(): a gate that ends first would be
+    # harvested instead of letting the pass start the next one, by design, so a wall-clock sleep only
+    # held while the machine was fast. The wait carries a hard bound so a crashed test strands nothing.
+    # blocking=False is the old shape (ends at once), kept to show how the old fixture read 1.
+    if blocking:
+        body = (f"import os, sys, time\nr = {str(release_path(d))!r}\nend = time.time() + 120\n"
+                "while not os.path.exists(r) and time.time() < end:\n    time.sleep(0.05)\n"
+                "print('1 passed')\nsys.exit(0)\n")
+    else:
+        body = "import sys\nprint('1 passed')\nsys.exit(0)\n"
+    (d / "gate.py").write_text(body, encoding="utf-8")
     subprocess.run([GIT, "-C", str(d), "add", "."], check=True, env=GIT_ENV)
     subprocess.run([GIT, "-C", str(d), "commit", "-qm", "seed"], check=True, env=GIT_ENV)
     return d
@@ -925,6 +941,7 @@ def _sweep_case(name, n, posture_name, **budget):
             first = sw.sweep_goal(log, repo, providers=("gate",), run_dir=run_dir)
             dispatched = sum(1 for a in first if "dispatched" in a)
             opened = open_count(log)
+            release(repo)
             rest = drain(log, repo, run_dir)
         satisfied = sum(1 for o in cv.project_convergence(gc.project(log)).obligations.values()
                         if o.disposition == cv.SATISFIED)
@@ -933,6 +950,7 @@ def _sweep_case(name, n, posture_name, **budget):
         shutil.rmtree(base, ignore_errors=True)
         shutil.rmtree(repo, ignore_errors=True)
         shutil.rmtree(run_dir, ignore_errors=True)
+        release_path(repo).unlink(missing_ok=True)
 
 
 def gate_sweep_n():
@@ -1106,6 +1124,7 @@ def gate_reported_not_executed():
             ep.end(log, gc.project(log), eid, ep.COMPLETED, "seeded measurement", "t")
         with switch("on"):
             acted = sw.sweep_goal(log, repo, providers=("gate",), run_dir=run_dir)
+            release(repo)
             rest = drain(log, repo, run_dir)
         eps_now = list(ep.project_epochs(gc.project(log)).values())
         dispatched = sum(1 for a in acted if "dispatched" in a)
@@ -1117,6 +1136,48 @@ def gate_reported_not_executed():
         shutil.rmtree(base, ignore_errors=True)
         shutil.rmtree(repo, ignore_errors=True)
         shutil.rmtree(run_dir, ignore_errors=True)
+        release_path(repo).unlink(missing_ok=True)
+
+
+def gate_sweep_early_finish():
+    """RED for the old fixture: when the first gate ends before the pass decides again, the pass
+    harvests and stops at 1. The slow pass is simulated (a pause after the first start), which is
+    what a loaded machine does. The blocking fixture reads 3 under the same pause."""
+    if need("stored_unit") is None:
+        return False, ABSENT
+    real = sw._start_gate
+    calls = []
+
+    def slow_start(*a, **k):
+        out = real(*a, **k)
+        if not calls:
+            time.sleep(2.5)
+        calls.append(1)
+        return out
+
+    got = {}
+    sw._start_gate = slow_start
+    try:
+        for label, blocking in (("old", False), ("blocking", True)):
+            calls.clear()
+            repo = make_repo(blocking=blocking)
+            log, base = sweep_goal_for(f"sweep-early-{label}", 3, "WALL_CLOCK", repo)
+            run_dir = Path(tempfile.mkdtemp(prefix="frontier-run-"))
+            try:
+                with switch("on"):
+                    first = sw.sweep_goal(log, repo, providers=("gate",), run_dir=run_dir)
+                    got[label] = sum(1 for a in first if "dispatched" in a)
+                    release(repo)
+                    drain(log, repo, run_dir)
+            finally:
+                shutil.rmtree(base, ignore_errors=True)
+                shutil.rmtree(repo, ignore_errors=True)
+                shutil.rmtree(run_dir, ignore_errors=True)
+                release_path(repo).unlink(missing_ok=True)
+    finally:
+        sw._start_gate = real
+    return got.get("old", 3) < 3 and got.get("blocking") == 3, \
+        f"old fixture under a slow pass dispatched={got.get('old')}; blocking fixture dispatched={got.get('blocking')}"
 
 
 GATES = [
@@ -1152,6 +1213,7 @@ GATES = [
     ("V-FRONTIER-BEGIN-ADMITS", gate_begin_admits),
     ("V-FRONTIER-SWEEP-N", gate_sweep_n),
     ("V-FRONTIER-SWEEP-BOUND", gate_sweep_bound),
+    ("V-FRONTIER-SWEEP-EARLY-FINISH", gate_sweep_early_finish),
     ("V-FRONTIER-LOSTRACE", gate_lostrace),
     ("V-FRONTIER-FENCE", gate_fence),
     ("V-FRONTIER-SPEC-ADMIT", gate_spec_admit),
