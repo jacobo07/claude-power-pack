@@ -10,12 +10,12 @@ disposition. Phase = the roadmap phase expected to close it.
 | D01 | FRESH/INHERITED/SUPERSEDED/UNKNOWN->full (intro) | none | EXTEND convergence projection | 2,4 | OPEN | Phase 2 part landed (V-PCC-STATE-TRUTH-TABLE 2916 cells, V-PCC-FINGERPRINT-*, drills d01-*; 02-EVIDENCE.md); closed by Phase 4 |
 | D02 | TTPD first-class (§1) | none | BUILD projection over GoalLog | 9 | OPEN | |
 | D03 | Five laws executable (§2) | UCR-CIF doc only | CONNECT as invariants + V-gates + baseline entries | 2,10 | OPEN | Phase 2 part landed (V-PCC-LAW-*, drill d03-ledger-blind; 02-EVIDENCE.md); closed by Phase 10, R09 |
-| D04 | Four frontiers (§3) | reconcile scalar | EXTEND compile_frontier | 3 | OPEN | |
-| D05 | Convergence graph (§4) | none | BUILD minimal edges in frontier | 3 | OPEN | |
-| D06 | No global WAIT (§5) | reconcile.py:148 | EXTEND | 3 | OPEN | |
-| D07 | Execution unit properties (§6) | epoch spec | EXTEND (derived, not model-filled) | 3 | OPEN | |
-| D08 | Critical-path scheduler (§7) | none | BUILD, measured priors, UNKNOWN allowed | 3 | OPEN | |
-| D09 | Wall-clock vs compute postures (§8) | goal budget | EXTEND budget owner | 3 | OPEN | |
+| D04 | Four frontiers (§3) | reconcile scalar | EXTEND compile_frontier | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-FRONTIERS, -GLOBAL-WAIT, -WAIT-ONLY-EMPTY; m1 |
+| D05 | Convergence graph (§4) | none | BUILD minimal edges in frontier | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-GRAPH |
+| D06 | No global WAIT (§5) | reconcile.py:148 | EXTEND | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-LEGACY-EQUAL, -SWEEP-N, -BEGIN-REFUSES |
+| D07 | Execution unit properties (§6) | epoch spec | EXTEND (derived, not model-filled) | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-UNIT-DERIVE, -UNDECLARED, -INDEP, -RESOURCE, -UNSAFE-WRITES; m2 m3 m4 |
+| D08 | Critical-path scheduler (§7) | none | BUILD, measured priors, UNKNOWN allowed | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-PRIOR, -CRITICAL-PATH |
+| D09 | Wall-clock vs compute postures (§8) | goal budget | EXTEND budget owner | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-POSTURE, -SWEEP-BOUND; m5 |
 | D10 | Typed proof contract (§9) | done_gate + gate_class | EXTEND, legacy = 1-element contract | 2,4 | OPEN | Phase 2 part landed (V-PCC-GATE-CLASSES-PINNED, V-PCC-CONTRACT-WEAKENING-IGNORED, V-PCC-FRESHNESS-SCAN-ESCALATES-ONLY, drills d10-*; 02-EVIDENCE.md); closed by Phase 4 |
 | D11 | Proof algebra AND/OR/SEQ/QUORUM (§10) | none | BUILD minimal | 4 | OPEN | |
 | D12 | Causal proof binding (§11) | tree_id whole-repo (Reality 4) | EXTEND, unknown -> legacy binding | 4 | OPEN | |
@@ -31,16 +31,16 @@ disposition. Phase = the roadmap phase expected to close it.
 | D22 | Semantic (non-import) impact edges (§20) | GK-13 doc only, no code | BUILD in adapter contract (GK-13 vocabulary) | 7 | OPEN | |
 | D23 | Candidate snapshots (§21) | tree_id only | BUILD on git objects | 4 | OPEN | |
 | D24 | Continuous verification (§22-23) | none | follows D12+D23, measured in 9 | 4,9 | OPEN | |
-| D25 | Speculative execution (§24) | none | BUILD bounded/isolated/cancellable, yield tracked | 3 | OPEN | |
-| D26 | Racing candidates (§25) | none | BUILD on worktrees, same proof contract | 3 | OPEN | |
-| D27 | Resource-aware scheduling (§26) | parallel_mesh advisory | EXTEND (pure fns, synthetic ids) | 3 | OPEN | |
-| D28 | Worker classes (§27) | cognitive scheduler (panes only) | EXTEND | 3 | OPEN | |
+| D25 | Speculative execution (§24) | none | BUILD bounded/isolated/cancellable, yield tracked | 3 | OPEN | Phase 3 part landed: admit_speculative policy + report (V-FRONTIER-SPEC-ADMIT, -SPEC-REFUSE, -REPORTED-NOT-EXECUTED); nothing speculative executes; executed speculation closed by Phase 4; 03-VERIFICATION.md |
+| D26 | Racing candidates (§25) | none | BUILD on worktrees, same proof contract | 3 | OPEN | Phase 3 part landed: admit_race policy + yield ledger (V-FRONTIER-RACE-ADMIT, -YIELD); nothing races; executed racing closed by Phase 4; 03-VERIFICATION.md |
+| D27 | Resource-aware scheduling (§26) | parallel_mesh advisory | EXTEND (pure fns, synthetic ids) | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-CLASSES |
+| D28 | Worker classes (§27) | cognitive scheduler (panes only) | EXTEND | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-ORDER, -CRITICAL-PATH; m6 |
 | D29 | Boundary ContextImages (§28) | brief.py | EXTEND per-job briefs | 8 | OPEN | |
 | D30 | Continuation object (§29) | mission card + brief | EXTEND | 8 | OPEN | |
 | D31 | Semantic epoch rotation alignment (§30) | gsd_mission rotation | CONNECT | 8 | OPEN | |
 | D32 | Convergence monotonicity / no-progress (§31) | mission no_progress (commits only) | EXTEND to frontier delta | 8 | OPEN | |
-| D33 | Information-gain scheduling (§32) | none | BUILD separate signal | 3 | OPEN | |
-| D34 | Failure-first scheduling (§33) | none | BUILD, measured priors only | 3 | OPEN | |
+| D33 | Information-gain scheduling (§32) | none | BUILD separate signal | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-INFOGAIN |
+| D34 | Failure-first scheduling (§33) | none | BUILD, measured priors only | 3 | DONE | 03-VERIFICATION.md (Linux plane GSDX_FRONTIER_PASS=40/40 x9 at 298ba2c6; drills m1-m8 KILLED); V-FRONTIER-FAILURE-FIRST |
 | D35 | Latency observatory (§34) | none | BUILD projection | 9 | OPEN | |
 | D36 | Metric set, not collapsed (§35) | none | BUILD | 9 | OPEN | |
 | D37 | Shadow mode + escape law (§36) | none | BUILD | 7,9 | OPEN | |
