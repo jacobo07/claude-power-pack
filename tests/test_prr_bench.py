@@ -30,6 +30,23 @@ def test_summary_request_gets_summary_text():
     assert r["kind"] == "text" and r["text"].startswith("<summary>")
 
 
+def test_agent_script_spawns_agent_when_offered():
+    stub_api.CFG.update(tool_bytes=1000, script="agent")
+    r = stub_api.plan_reply(_body({"role": "user", "content": "turn 1"}, tools=("Bash", "Agent")))
+    assert r["kind"] == "tool" and r["name"] == "Agent"
+    # inside the subagent (no Agent tool offered) it falls back to the Bash fixture
+    r2 = stub_api.plan_reply(_body({"role": "user", "content": "prr subagent turn"}, tools=("Bash",)))
+    assert r2["name"] == "Bash"
+    stub_api.CFG.update(script="bash")
+
+
+def test_image_script_reads_image():
+    stub_api.CFG.update(script="image", image="/tmp/x.png")
+    r = stub_api.plan_reply(_body({"role": "user", "content": "turn 1"}, tools=("Bash", "Read")))
+    assert r["name"] == "Read" and r["input"]["file_path"] == "/tmp/x.png"
+    stub_api.CFG.update(script="bash", image=None)
+
+
 def test_fit_detects_growth_and_flat():
     grow = fit([(k, 100 + 2 * k) for k in range(25, 125, 25)])
     flat = fit([(k, 300 + (k % 2)) for k in range(25, 525, 25)])
