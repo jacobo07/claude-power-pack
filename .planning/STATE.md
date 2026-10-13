@@ -1,17 +1,24 @@
 ---
 gsd_state_version: "1.0"
-milestone: v1
-status: Awaiting next milestone
-last_updated: "2026-09-21T21:37:41.432Z"
-last_activity: 2026-09-21
-last_activity_desc: Milestone v1 completed and archived
+milestone: v2
+status: In progress
+last_updated: "2026-10-13T00:00:00.000Z"
+last_activity: 2026-10-13
+last_activity_desc: Milestone v2 econ-safex opened (Owner-approved, programme 32M)
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 2
-  completed_plans: 2
-current_phase: 05
-current_phase_name: Close the continuation debts
+  total_phases: 12
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+current_phase: 06
+current_phase_name: Incident reconstruction
+---
+
+# ACTIVE: v2 econ-safex (supersedes the v1 text below, kept as history)
+
+Branch `econ/safe-exhaustion` in worktree `C:\Users\User\Apps\pp-econ-safex`.
+Goal `econ-safex` (programme 32M, L1 4M). Plan: `vault/plans/econ-safe-exhaustion-2026-10-13.md`.
+Next: Phase 6 (W0) incident reconstruction. See ROADMAP.md "v2 econ-safex" for invariants.
 ---
 
 # STATE — claude-power-pack
