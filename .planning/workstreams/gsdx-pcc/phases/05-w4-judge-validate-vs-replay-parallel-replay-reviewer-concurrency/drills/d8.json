@@ -1,0 +1,2 @@
+{"copy_dirs": ["vendor/genesis-suite"], "file": "modules/gsd_x/goal/review.py", "test": "tools/test_gsd_x_goal_review.py", "gate": "V-REV-STALE-REFUSED",
+ "old": "    if why:\n        return _refuse(f\"stale review: {why}\")", "new": "    if False:\n        return _refuse(f\"stale review: {why}\")"}

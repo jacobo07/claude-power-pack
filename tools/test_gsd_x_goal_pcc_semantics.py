@@ -87,6 +87,8 @@ def sample_payloads() -> dict:
             "v": 1, "claim_id": "claim-1", "certificate": "cert-1", "reason": "premise changed"},
         "candidate.promoted": {
             "v": 1, "candidate": "snap:" + "1" * 40, "tree": "1" * 40, "fingerprint": cand},
+        "review.received": {
+            "v": 1, "claim_id": "claim-1", "candidate": "snap:" + "1" * 40, "ticket": "t" * 24},
     }
 
 
@@ -1198,7 +1200,7 @@ def gate_additive_only():
     new_types = set(proof.NEW_TYPES) if proof else set()
     collide = sorted(legacy_types & new_types)
     ok = (proof is not None and not seam_moved and seam_added == ["proof.py"] and not collide
-          and len(new_types) == 5 and control_ok and not sentinel)
+          and len(new_types) == 6 and control_ok and not sentinel)
     return ok, (f"legacy={len(legacy_types)} new={len(new_types)} seam_legacy_files_changed={seam_moved[:3]} "
                 f"seam_new_modules={seam_added} collisions={collide} control_range_changed={len(control)} "
                 f"empty_range_changed={len(sentinel)}")
@@ -1221,7 +1223,7 @@ def gate_vocab_declared():
         seeded = sorted(discover_types(tmp) - declared)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    want_frozen = ["review.received", "adapter.maturity", "continuation.sealed"]
+    want_frozen = ["adapter.maturity", "continuation.sealed"]
     ok = (frozen == want_frozen and set(landed) == set(proof.NEW_TYPES) and not undeclared and not frozen_in_code
           and seeded == ["sneaky.event"])
     return ok, f"frozen={frozen} landed={sorted(landed)} undeclared_in_code={undeclared} frozen_in_code={frozen_in_code} seeded_control={seeded}"

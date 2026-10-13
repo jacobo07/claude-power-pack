@@ -45,6 +45,7 @@ from modules.gsd_x.goal import git_state as gs          # noqa: E402
 from modules.gsd_x.goal import judge as jd              # noqa: E402
 from modules.gsd_x.goal import log as gl                # noqa: E402
 from modules.gsd_x.goal import reconcile as rc          # noqa: E402
+from modules.gsd_x.goal import review as rv             # noqa: E402
 from modules.gsd_x.goal.providers.gate import GateProvider        # noqa: E402
 from modules.gsd_x.mission import store as st           # noqa: E402
 
@@ -333,6 +334,14 @@ def cmd_judge(args) -> int:
     return 0 if receipt.verdict == jd.PASS else 1
 
 
+def cmd_review(args) -> int:
+    """Record an independent review receipt as a `review.received` event (spec S7)."""
+    out = rv.receive(_log(args), Path(args.root), args.receipt, args.ticket, args.claim_id,
+                     args.candidate, args.worker, args.actor)
+    print(json.dumps(out, indent=2))
+    return 0 if out["status"] in (rv.RECORDED, rv.DUPLICATE) else 1
+
+
 def cmd_export(args) -> int:
     """A checkpoint for cold birth: the events, as they are, labelled derived."""
     lg = _log(args)
@@ -469,6 +478,14 @@ def main(argv: list[str] | None = None) -> int:
     j.add_argument("--worktree")
     j.add_argument("--record", action="store_true")
     j.set_defaults(fn=cmd_judge)
+
+    rw = common(sub.add_parser("review"))
+    rw.add_argument("--receipt", required=True, help="root-relative review.json from evidence_bundle")
+    rw.add_argument("--ticket", required=True, help="the review ticket nonce this receipt answers")
+    rw.add_argument("--claim-id", required=True, dest="claim_id")
+    rw.add_argument("--candidate", required=True)
+    rw.add_argument("--worker", required=True, help="agent that built the reviewed work")
+    rw.set_defaults(fn=cmd_review)
 
     x = common(sub.add_parser("export"))
     x.add_argument("--to", required=True)

@@ -1,0 +1,30 @@
+﻿PASS V-PCC-HERMETIC-HOME home=pcc-home-bjhbb07s
+PASS V-PCC-HERMETIC-ROOT-REFUSAL live-refused=True hermetic-allowed=True
+PASS V-PCC-FIXTURE-MANIFEST g-002-router-surface: 50 files verified; g-001-smoke-runner: 123 files verified
+PASS V-PCC-FIXTURE-TAMPER-REFUSED tampered copy refused: sha256 mismatch 000001.json
+PASS V-PCC-REPLAY-CHAIN-g-002-router-surface events=50 tip=ac414ec58bcd
+PASS V-PCC-REPLAY-CHAIN-g-001-smoke-runner events=123 tip=10dab37eac17
+PASS V-PCC-GOLDEN-PRE-CHANGE head=13a0ee2c2ef0 legacy_files=20
+PASS V-PCC-GOLDEN-RECORDED-NOT-VOLATILE volatile recorded=[]
+PASS V-PCC-REPLAY-G002 g002: 50 prefixes equal
+PASS V-PCC-REPLAY-G001 g001: 123 prefixes equal
+PASS V-PCC-REPLAY-SYNTHETIC syn_contract: 4 prefixes equal; syn_carry: 16 prefixes equal; syn_operator: 5 prefixes equal; syn_evidence: 5 prefixes equal
+PASS V-PCC-REPLAY-POPULATION corpus=22 discovered=22 golden=22 missing=[]
+PASS V-PCC-DECIDE-SIG params=['ctx'] decision=8 context=10 frozen=True
+PASS V-PCC-GATE-RAISE-SURVIVES FAIL V-PCC-SELFTEST-RAISES raised RuntimeError: boom
+PASS V-PCC-REPLAY-IGNORE-NEW-TYPES-FUTURE all six scenarios equal
+PASS V-PCC-REPLAY-IGNORE-NEW-TYPES-PCC all six scenarios equal; project_proofs records=6 appended=6
+PASS V-PCC-REPLAY-INTERLEAVED four synthetic scenarios equal at every writer step
+PASS V-PCC-MUTANT-M1 M1: holders=4 hits=['fixed/closure/__raised__', 'fixed/closure/blocking', 'fixed/closure/may_close']
+PASS V-PCC-MUTANT-M2 M2: holders=4 hits=['fixed/closure/blocking', 'fixed/convergence/failures/pcc-phantom', 'last/closure/blocking']
+PASS V-PCC-MUTANT-M3 M3: holders=1 hits=['fixed/decide/hypothesis', 'fixed/decide/info_key', 'fixed/decide/kind']
+PASS V-PCC-MUTANT-M4 M4: holders=4 hits=['fixed/closure/blocking/3', 'fixed/closure/blocking/4', 'fixed/closure/blocking/5']
+PASS V-PCC-CLEAN-AFTER-MUTANTS g002: 50 prefixes equal; syn_carry: 16 prefixes equal
+PASS V-PCC-SWITCH-FRONTIER-INERT switch_on=[False, True] scenario_runs_equal=10/10
+PASS V-PCC-STATE-LEGACY-MAP checks=1632 excluded_unknown_prefixes=0 older_revision_unknown=0 states={'FRESH': 368, 'NOT_APPLICABLE': 752, 'STALE': 512} disagreements=0 []
+PASS V-PCC-CONTRACT-LEGACY-ONE-ELEMENT obligations=16 bad=[]
+PASS V-PCC-LAW-WORK-CONSERVATION epochs=26 violations=0 excepted=0 new=[] stale_exceptions=[]
+PASS V-PCC-LAW-SEMANTIC-CORPUS goal.revised_examined=2 violations=0 excepted=0 new=[] stale_exceptions=[]
+PASS V-PCC-LIVE-STORE-UNTOUCHED verdict=SAME changed=[]
+
+GSDX_PCC_REPLAY_PASS=28/28  threshold=28/28

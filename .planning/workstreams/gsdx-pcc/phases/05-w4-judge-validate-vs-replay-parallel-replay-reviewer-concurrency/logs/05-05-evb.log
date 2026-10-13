@@ -1,0 +1,27 @@
+﻿  PASS V-EVB-GREEN: []
+a gate that judged nothing is not a green gate
+  PASS V-EVB-EMPTY-GATE: ['Failed, empty or stale check: _logs/evidence/plan-1/t-v-evb-empty-gate/checks/gate-green.json']
+  PASS V-EVB-NO-SUMMARY: ['Failed, empty or stale check: _logs/evidence/plan-1/t-v-evb-no-summary/checks/gate-green.json']
+  PASS V-EVB-PARTIAL-GATE: ['Failed, empty or stale check: _logs/evidence/plan-1/t-v-evb-partial-gate/checks/gate-green.json']
+  PASS V-EVB-EXIT-NONZERO: ['Failed, empty or stale check: _logs/evidence/plan-1/t-v-evb-exit-nonzero/checks/gate-green.json']
+independent review
+  PASS V-EVB-REVIEWER-IS-WORKER: ['Independent review missing, stale or unbound']
+  PASS V-EVB-NO-REVIEW: ['Independent review required']
+  PASS V-EVB-PROSE-REVIEW-FAILS: ['Independent review missing, stale or unbound']
+  PASS V-EVB-HIGH-FINDING-FAILS: ['Independent review missing, stale or unbound']
+bytes bind
+  PASS V-EVB-ARTIFACT-MOVED: ['Failed, empty or stale check: _logs/evidence/plan-1/t-moved/checks/gate-green.json', 'Independent review missing, stale or unbound']
+an approval binds what the reviewer SAW (real review, 2026-09-28: it bound disk-now)
+  PASS V-EVB-REVIEWED-THEN-EDITED: ['Independent review missing, stale or unbound']
+  PASS V-EVB-NO-TICKET-NO-PASS: ['Independent review missing, stale or unbound']
+  PASS V-EVB-GREEN-AFTER-RESTORE: []
+  PASS V-EVB-OLD-REPLY-RETICKETED-FAILS: ['Independent review missing, stale or unbound']
+  PASS V-EVB-NO-NONCE-ECHO-FAILS: ['Independent review missing, stale or unbound']
+  PASS V-EVB-PROTECTED-PATH-NAMED: ['the collector refuses protected proof paths by design: secret_rotation.py; this bundle cannot be judged by it']
+  PASS V-EVB-PROTECTED-RECEIPT-PATH-NAMED: ['the collector refuses protected proof paths by design: _logs/evidence/secret-firewall-v2/t/checks/gate-green.json; this bundle cannot be judged by it']
+a gate binds the bytes it ran against
+  PASS V-EVB-MOVED-DURING-RUN-FAILS: ('failed', True)
+  PASS V-EVB-BACKSLASH-COMMAND-RUNS: (0, 1)
+  PASS V-EVB-BRIDGE-DOWN-UNJUDGED: ['bridge BRIDGE_FAILED: node executable not found (set CPP_NODE_EXE)']
+  PASS V-EVB-RECEIPTS-UNDER-LOGS: receipt path
+EVB_PASS=21/21  threshold=21/21

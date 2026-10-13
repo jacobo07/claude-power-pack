@@ -1,0 +1,13 @@
+﻿PASS V-REV-HERMETIC-HOME home=rev-home-s4ruk_x8
+PASS V-REV-RECORDED {'status': 'RECORDED', 'reason': 'review recorded', 'attempts': 1} events=1
+PASS V-REV-STALE-REFUSED stale review: art.py is not the reviewed bytes any more
+PASS V-REV-REVIEWER-IS-WORKER-REFUSED the reviewer is the worker (or the worker is unnamed): a builder cannot certify its own work
+PASS V-REV-UNBOUND-REFUSED the review did not pass: the reply does not echo this ticket's nonce: it was not written for this dispatch
+PASS V-REV-LOG-READABLE ['goal.declared', 'review.received']
+PASS V-REV-CLI-ROUND-TRIP rc=0 {'status': 'RECORDED', 'reason': 'review recorded', 'attempts': 1}
+PASS V-REV-CONCURRENT-ALL-LAND statuses=['RECORDED', 'RECORDED', 'RECORDED'] attempts=[1, 1, 2] seqs=[2, 3, 4]
+PASS V-REV-DUP-TICKET-IDEMPOTENT first=RECORDED second=DUPLICATE later=['DUPLICATE', 'DUPLICATE', 'DUPLICATE'] events=1
+PASS V-REV-RETRY-BOUNDED CONTENDED append_calls=3
+PASS V-REV-CROSS-CLIENT statuses=['RECORDED', 'RECORDED'] cli_rc=[0] events=2
+PASS V-REV-DISTINCT-NONCES 6/6 distinct
+GSDX_REVIEW_PASS=12/12  threshold=12/12

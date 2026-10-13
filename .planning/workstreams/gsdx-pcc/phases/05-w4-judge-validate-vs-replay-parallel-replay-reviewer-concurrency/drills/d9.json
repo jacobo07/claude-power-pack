@@ -1,0 +1,2 @@
+{"copy_dirs": ["vendor/genesis-suite"], "file": "modules/gsd_x/goal/review.py", "test": "tools/test_gsd_x_goal_review.py", "gate": "V-REV-REVIEWER-IS-WORKER-REFUSED",
+ "old": "    if not worker or reviewer.get(\"agent\") == worker:", "new": "    if not worker:"}

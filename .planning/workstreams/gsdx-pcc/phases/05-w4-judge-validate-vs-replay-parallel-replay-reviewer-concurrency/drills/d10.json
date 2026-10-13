@@ -1,0 +1,2 @@
+{"copy_dirs": ["vendor/genesis-suite"], "file": "modules/gsd_x/goal/review.py", "test": "tools/test_gsd_x_goal_review.py", "gate": "V-REV-DUP-TICKET-IDEMPOTENT",
+ "old": "        if any(e[\"data\"].get(\"ticket\") == ticket for e in", "new": "        if False and any(e[\"data\"].get(\"ticket\") == ticket for e in"}
