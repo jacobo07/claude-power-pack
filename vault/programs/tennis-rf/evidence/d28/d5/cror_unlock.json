@@ -1,0 +1,496 @@
+{
+ "baseline_clean_before": 276,
+ "dependents_sole": 51,
+ "dependents_total": 67,
+ "intervention": "asm-preprocessing rewrite of `cror eq,[crN]{gt|lt},[crN]eq ; bne|beq T` into the equivalent strict/inclusive branch on the same bit: gt+bne->blt, gt+beq->bge, lt+bne->bgt, lt+beq->ble (crN operand kept). The cror becomes a nop. Exact for every total-order compare (integer cmp, and fcmp on ordered operands). Residual difference: float UNORDERED (NaN) sets only the UN bit, so the original takes the `bne` and the rewrite does not; C has no UN, m2c already ignores it. Not applied when cr0.eq is read again on the fall-through path or the branch is not the very next instruction.",
+ "rewrite_stats": {
+  "bailed": {
+   "EQ_LIVE_ON_FALLTHROUGH": 7,
+   "NEXT_NOT_BNE_BEQ": 8
+  },
+  "n_cror": 186,
+  "n_rewritten": 171
+ },
+ "total_unlock": 0,
+ "wave1": {
+  "n_newly_clean": 0,
+  "n_sole_unlocked": 0,
+  "new_errors": [],
+  "newly_clean": [],
+  "not_unlocked": {
+   "fn_802032B8": [
+    "FIELD_UNTYPED:fn_802032B8",
+    "HELPER:fn_801F49E4"
+   ],
+   "fn_80210E38": [
+    "FIELD:lbl_803D86F0+0x0",
+    "FIELD:lbl_803D86F0+0x10",
+    "FIELD:lbl_803D86F0+0x14",
+    "FIELD:lbl_803D86F0+0x18",
+    "FIELD:lbl_803D86F0+0x1C",
+    "FIELD:lbl_803D86F0+0x20",
+    "FIELD:lbl_803D86F0+0x24",
+    "FIELD:lbl_803D86F0+0x4",
+    "FIELD:lbl_803D86F0+0x8",
+    "FIELD:lbl_803D86F0+0xC",
+    "FIELD_UNTYPED:fn_80210E38",
+    "HELPER:fn_800B32F8",
+    "QTYPE_LOCAL:fn_80210E38"
+   ],
+   "fn_8021BE04": [
+    "FIELD_UNTYPED:fn_8021BE04",
+    "HELPER:fn_80080AD0",
+    "HELPER:fn_800B35A0",
+    "HELPER:fn_801E0E04",
+    "HELPER:fn_801E0E30",
+    "HELPER:fn_801E0E98",
+    "QTYPE_LOCAL:fn_8021BE04"
+   ],
+   "fn_80227110": [
+    "FIELD_UNTYPED:fn_80227110",
+    "HELPER:fn_80099D24",
+    "HELPER:fn_8009BCC0",
+    "HELPER:fn_80107910",
+    "QTYPE_LOCAL:fn_80227110"
+   ],
+   "fn_802279DC": [
+    "FIELD_UNTYPED:fn_802279DC",
+    "HELPER:fn_80099BE8",
+    "HELPER:fn_8009A498",
+    "HELPER:fn_801CC9A4",
+    "HELPER:fn_801CCE10",
+    "HELPER:fn_801E6750",
+    "HELPER:fn_80227110",
+    "HELPER:fn_802272B8",
+    "HELPER:fn_802297C4",
+    "HELPER:fn_8022FEEC",
+    "HELPER:fn_80230EF0"
+   ],
+   "fn_80229C28": [
+    "FIELD_UNTYPED:fn_80229C28",
+    "HELPER:fn_80080AD0",
+    "HELPER:fn_80107FF0",
+    "HELPER:fn_801CB330",
+    "HELPER:fn_801CB64C",
+    "HELPER:fn_801CC5D0",
+    "HELPER:fn_801CC6A4",
+    "HELPER:fn_801CC6E4",
+    "HELPER:fn_801E0E04",
+    "HELPER:fn_801E0E30",
+    "HELPER:fn_801E0E98",
+    "HELPER:fn_801E8130",
+    "QTYPE_LOCAL:fn_80229C28"
+   ],
+   "fn_8022BEE8": [
+    "M2C:unknown instruction cror",
+    "M2C:unknown instruction mfcr"
+   ],
+   "fn_8022DE24": [
+    "FIELD_UNTYPED:fn_8022DE24",
+    "HELPER:fn_800B32F8",
+    "HELPER:fn_801DFF30",
+    "QTYPE_LOCAL:fn_8022DE24"
+   ],
+   "fn_8022F618": [
+    "M2C:unknown instruction cror",
+    "M2C:unknown instruction mfcr"
+   ],
+   "fn_8022FFA8": [
+    "M2C:unknown instruction cror",
+    "M2C:unknown instruction mfcr"
+   ],
+   "fn_8023004C": [
+    "FIELD:lbl_80513F60+0x60",
+    "FIELD_UNTYPED:fn_8023004C",
+    "HELPER:fn_801C7DB4",
+    "QTYPE_LOCAL:fn_8023004C",
+    "SELF_SIG:fn_8023004C"
+   ],
+   "fn_80233A80": [
+    "FIELD:lbl_80513F60+0x60",
+    "FIELD:lbl_80513F60+0x7C",
+    "FIELD:lbl_80513F60+0x98",
+    "FIELD_UNTYPED:fn_80233A80",
+    "HELPER:fn_801CCE78",
+    "HELPER:fn_801CD21C",
+    "HELPER:fn_801CD2D0",
+    "HELPER:fn_801CD868",
+    "HELPER:fn_801CD894",
+    "HELPER:fn_801D022C",
+    "HELPER:fn_801D17C4",
+    "HELPER:fn_80208E14",
+    "HELPER:fn_802262F0",
+    "HELPER:fn_80226440",
+    "HELPER:fn_80230EF0",
+    "HELPER:fn_80233630",
+    "HELPER:fn_8023376C",
+    "HELPER:fn_80233840",
+    "HELPER:fn_802375B0",
+    "HELPER:fn_802375BC",
+    "HELPER:fn_802375EC",
+    "HELPER:fn_80237634",
+    "HELPER:fn_802378D4",
+    "QTYPE_LOCAL:fn_80233A80",
+    "SELF_SIG:fn_80233A80"
+   ],
+   "fn_802411E0": [
+    "M2C:unknown instruction cror"
+   ],
+   "fn_80241370": [
+    "FIELD_UNTYPED:fn_80241370",
+    "HELPER:fn_801F5330",
+    "HELPER:fn_801F5338"
+   ],
+   "fn_80243CA8": [
+    "FIELD_UNTYPED:fn_80243CA8",
+    "HELPER:fn_80208854",
+    "HELPER:fn_80208860",
+    "SELF_SIG:fn_80243CA8"
+   ],
+   "fn_8024B248": [
+    "FIELD:Obj8022F90C+0x39",
+    "FIELD:Obj8022F90C+0x3A",
+    "FIELD_UNTYPED:fn_8024B248",
+    "HELPER:fn_8022FEEC",
+    "SELF_SIG:fn_8024B248"
+   ],
+   "fn_8024E590": [
+    "FIELD:Obj80252F34+0x14",
+    "FIELD:lbl_804F97B8+0x0",
+    "FIELD:lbl_804F97B8+0x4",
+    "FIELD:lbl_804F97B8+0x8",
+    "FIELD_UNTYPED:fn_8024E590",
+    "HELPER:fn_802544AC",
+    "HELPER:fn_8025A594"
+   ],
+   "fn_8024E9B0": [
+    "FIELD_UNTYPED:fn_8024E9B0"
+   ],
+   "fn_8024F434": [
+    "FIELD:lbl_804F97B8+0x0",
+    "FIELD:lbl_804F97B8+0x4",
+    "FIELD:lbl_804F97B8+0x8",
+    "FIELD:lbl_80513FA0+0x8",
+    "FIELD_UNTYPED:fn_8024F434",
+    "HELPER:fn_8024E9B0",
+    "HELPER:fn_8024EDF0",
+    "HELPER:fn_80253CF0"
+   ],
+   "fn_8024F8C4": [
+    "FIELD_UNTYPED:fn_8024F8C4",
+    "HELPER:fn_8024E284"
+   ],
+   "fn_8024FB7C": [
+    "FIELD_UNTYPED:fn_8024FB7C"
+   ],
+   "fn_8025136C": [
+    "FIELD:lbl_80513FA0+0x10",
+    "FIELD_UNTYPED:fn_8025136C",
+    "HELPER:fn_80253C10",
+    "HELPER:fn_802544AC",
+    "HELPER:fn_802590EC",
+    "HELPER:fn_8025A594"
+   ],
+   "fn_80251618": [
+    "FIELD:lbl_80513F98+0x2C",
+    "FIELD_UNTYPED:fn_80251618",
+    "HELPER:fn_80265600",
+    "HELPER:fn_80282C8C"
+   ],
+   "fn_80251A60": [
+    "M2C:unknown instruction cror"
+   ],
+   "fn_80251DB4": [
+    "FIELD_UNTYPED:fn_80251DB4",
+    "HELPER:fn_8025033C",
+    "QTYPE_LOCAL:fn_80251DB4"
+   ],
+   "fn_80251F94": [
+    "M2C:unknown instruction cror"
+   ],
+   "fn_80252698": [
+    "M2C:unknown instruction cror"
+   ],
+   "fn_80252D74": [
+    "FIELD_UNTYPED:fn_80252D74",
+    "QTYPE_LOCAL:fn_80252D74"
+   ],
+   "fn_80258AD4": [
+    "FIELD_UNTYPED:fn_80258AD4",
+    "HELPER:fn_80108920",
+    "HELPER:fn_802544AC"
+   ],
+   "fn_80258D60": [
+    "FIELD_UNTYPED:fn_80258D60"
+   ],
+   "fn_8025927C": [
+    "M2C:unknown instruction cror"
+   ],
+   "fn_802594AC": [
+    "FIELD_UNTYPED:fn_802594AC"
+   ],
+   "fn_80259A8C": [
+    "FIELD_UNTYPED:fn_80259A8C"
+   ],
+   "fn_8025A050": [
+    "FIELD:lbl_804F97D0+0x0",
+    "FIELD:lbl_804F97D0+0x4",
+    "FIELD:lbl_804F97D0+0x8",
+    "FIELD_UNTYPED:fn_8025A050",
+    "HELPER:fn_8025ABE4",
+    "QTYPE_LOCAL:fn_8025A050"
+   ],
+   "fn_8025A674": [
+    "FIELD_UNTYPED:fn_8025A674"
+   ],
+   "fn_8025A758": [
+    "FIELD:lbl_804F97B8+0x0",
+    "FIELD:lbl_804F97B8+0x4",
+    "FIELD:lbl_804F97B8+0x8",
+    "FIELD:lbl_80513F98+0x28",
+    "FIELD:lbl_80513F98+0x4",
+    "FIELD_UNTYPED:fn_8025A758",
+    "HELPER:fn_80108920",
+    "HELPER:fn_8026A030"
+   ],
+   "fn_8025ABE4": [
+    "FIELD:lbl_804F97B8+0x0",
+    "FIELD:lbl_804F97B8+0x4",
+    "FIELD:lbl_804F97B8+0x8",
+    "FIELD_UNTYPED:fn_8025ABE4",
+    "HELPER:fn_80108920"
+   ],
+   "fn_8025BEAC": [
+    "FIELD_UNTYPED:fn_8025BEAC"
+   ],
+   "fn_8025C030": [
+    "M2C:unknown instruction cror",
+    "M2C:unknown instruction mfcr"
+   ],
+   "fn_8025C6D0": [
+    "FIELD:lbl_80513F98+0x2C",
+    "FIELD_UNTYPED:fn_8025C6D0",
+    "HELPER:fn_80108580",
+    "HELPER:fn_801CB330",
+    "HELPER:fn_801CB6E4",
+    "HELPER:fn_801CC5D0",
+    "HELPER:fn_801CC6A4",
+    "HELPER:fn_801CC6E4",
+    "HELPER:fn_801FF01C",
+    "QTYPE_LOCAL:fn_8025C6D0"
+   ],
+   "fn_8025C83C": [
+    "FIELD_UNTYPED:fn_8025C83C"
+   ],
+   "fn_8025D098": [
+    "FIELD:lbl_80513F98+0x28",
+    "FIELD_UNTYPED:fn_8025D098",
+    "HELPER:fn_8025CB88",
+    "HELPER:fn_8025CE9C",
+    "HELPER:fn_8026132C",
+    "HELPER:fn_80263240",
+    "QTYPE_LOCAL:fn_8025D098"
+   ],
+   "fn_8025D75C": [
+    "FIELD:Slot80253348+0x44",
+    "FIELD:Slot80253348+0x48",
+    "FIELD:Slot80253348+0x4C",
+    "FIELD:lbl_804F97B8+0x0",
+    "FIELD:lbl_804F97B8+0x4",
+    "FIELD:lbl_804F97B8+0x8",
+    "FIELD:lbl_804F97C4+0x0",
+    "FIELD:lbl_804F97C4+0x4",
+    "FIELD:lbl_804F97C4+0x8",
+    "FIELD:lbl_804F97DC+0x0",
+    "FIELD:lbl_804F97DC+0x4",
+    "FIELD:lbl_804F97DC+0x8",
+    "FIELD:lbl_80513F98+0x14",
+    "FIELD_UNTYPED:fn_8025D75C",
+    "HELPER:fn_80037E10",
+    "HELPER:fn_80108920",
+    "HELPER:fn_801F4DD0",
+    "QTYPE_LOCAL:fn_8025D75C"
+   ],
+   "fn_8025DF40": [
+    "FIELD:lbl_80513F98+0x2C",
+    "FIELD_UNTYPED:fn_8025DF40",
+    "HELPER:fn_801C8B68",
+    "HELPER:fn_801F48B0",
+    "HELPER:fn_801F5338",
+    "HELPER:fn_801FF01C",
+    "HELPER:fn_80237958",
+    "HELPER:fn_80237960",
+    "HELPER:fn_80237AEC",
+    "HELPER:fn_8025C6D0",
+    "HELPER:fn_8025D098",
+    "HELPER:fn_8025D57C",
+    "HELPER:fn_8025D75C",
+    "HELPER:fn_8027FFF0"
+   ],
+   "fn_80279B30": [
+    "FIELD:lbl_80513F98+0x14",
+    "FIELD_UNTYPED:fn_80279B30",
+    "HELPER:fn_801CCE78",
+    "HELPER:fn_80268E54",
+    "QTYPE_LOCAL:fn_80279B30"
+   ],
+   "fn_8027BA00": [
+    "FIELD_UNTYPED:fn_8027BA00",
+    "HELPER:fn_801EDA74",
+    "HELPER:fn_80257DA8",
+    "HELPER:fn_80257DD4",
+    "HELPER:fn_80276268",
+    "HELPER:fn_8027B8BC"
+   ],
+   "fn_8032C01C": [
+    "FIELD:lbl_80513EE8+0x4",
+    "FIELD:lbl_80514188+0xA0",
+    "FIELD:lbl_80514188+0xA4",
+    "FIELD:lbl_80514188+0xAC",
+    "FIELD:lbl_80514188+0xB4",
+    "FIELD_UNTYPED:fn_8032C01C",
+    "HELPER:fn_801E0E30",
+    "HELPER:fn_801E0E98",
+    "HELPER:fn_803245F4",
+    "HELPER:fn_803246B0"
+   ],
+   "fn_8032D348": [
+    "M2C:psq_l unimplemented",
+    "M2C:unknown instruction ps_add",
+    "M2C:unknown instruction ps_muls0",
+    "M2C:unknown instruction ps_sub"
+   ],
+   "fn_8032D5B4": [
+    "M2C:unknown instruction ps_madd",
+    "M2C:unknown instruction ps_mul",
+    "M2C:unknown instruction ps_sum0"
+   ],
+   "fn_8032E528": [
+    "FIELD:lbl_80514188+0x9C",
+    "FIELD_UNTYPED:fn_8032E528",
+    "HELPER:fn_80312264",
+    "HELPER:fn_8031226C",
+    "HELPER:fn_80317A7C",
+    "HELPER:fn_80317B5C"
+   ],
+   "fn_8032E698": [
+    "M2C:unknown instruction cror"
+   ],
+   "fn_8032E9B8": [
+    "M2C:unknown instruction ps_add",
+    "M2C:unknown instruction ps_muls0"
+   ],
+   "fn_8032ECB8": [
+    "FIELD_UNTYPED:fn_8032ECB8",
+    "HELPER:fn_801F144C",
+    "QTYPE_LOCAL:fn_8032ECB8"
+   ],
+   "fn_8032F490": [
+    "M2C:psq_l unimplemented",
+    "M2C:unknown instruction ps_add",
+    "M2C:unknown instruction ps_madd",
+    "M2C:unknown instruction ps_mr",
+    "M2C:unknown instruction ps_mul",
+    "M2C:unknown instruction ps_muls0",
+    "M2C:unknown instruction ps_sub",
+    "M2C:unknown instruction ps_sum0"
+   ],
+   "fn_80330050": [
+    "FIELD:lbl_80514188+0xA4",
+    "FIELD_UNTYPED:fn_80330050",
+    "HELPER:fn_80325180"
+   ],
+   "fn_80330D5C": [
+    "FIELD:lbl_80514188+0x9C",
+    "FIELD:lbl_80514188+0xC0",
+    "FIELD_UNTYPED:fn_80330D5C",
+    "HELPER:fn_803118A0",
+    "HELPER:fn_8032EFCC",
+    "HELPER:fn_80330050",
+    "HELPER:fn_803492B0",
+    "HELPER:fn_80349B80",
+    "HELPER:fn_80349C58",
+    "QTYPE_LOCAL:fn_80330D5C"
+   ],
+   "fn_803317A4": [
+    "M2C:psq_l unimplemented",
+    "M2C:unknown instruction ps_add",
+    "M2C:unknown instruction ps_madd",
+    "M2C:unknown instruction ps_mul",
+    "M2C:unknown instruction ps_muls0",
+    "M2C:unknown instruction ps_sum0"
+   ],
+   "fn_80331FE0": [
+    "M2C:unknown instruction cror",
+    "M2C:unknown instruction mfcr"
+   ],
+   "fn_80332684": [
+    "FIELD_UNTYPED:fn_80332684",
+    "QTYPE_LOCAL:fn_80332684"
+   ],
+   "fn_80333550": [
+    "M2C:psq_l unimplemented",
+    "M2C:unknown instruction ps_muls0"
+   ],
+   "fn_80334058": [
+    "FIELD_UNTYPED:fn_80334058",
+    "HELPER:fn_801078D0",
+    "HELPER:fn_80108110",
+    "HELPER:fn_80108B30",
+    "HELPER:fn_80108D00",
+    "HELPER:fn_801F0B20",
+    "QTYPE_LOCAL:fn_80334058"
+   ],
+   "fn_803342D8": [
+    "M2C:psq_l unimplemented",
+    "M2C:unknown instruction ps_madd",
+    "M2C:unknown instruction ps_mul",
+    "M2C:unknown instruction ps_sum0"
+   ],
+   "fn_80334700": [
+    "M2C:unknown instruction ps_madd",
+    "M2C:unknown instruction ps_mul",
+    "M2C:unknown instruction ps_muls0",
+    "M2C:unknown instruction ps_sub",
+    "M2C:unknown instruction ps_sum0"
+   ],
+   "fn_80334B78": [
+    "M2C:unknown instruction ps_muls0"
+   ],
+   "fn_80334E08": [
+    "M2C:psq_l unimplemented",
+    "M2C:unknown instruction ps_muls0"
+   ],
+   "fn_80335424": [
+    "M2C:psq_l unimplemented",
+    "M2C:unknown instruction ps_muls0",
+    "M2C:unknown instruction ps_sub"
+   ],
+   "fn_803358E8": [
+    "FIELD_UNTYPED:fn_803358E8",
+    "QTYPE_LOCAL:fn_803358E8"
+   ]
+  },
+  "sole_dependents_unlocked": [],
+  "still_blocked_by_cror": [
+   "fn_8022BEE8",
+   "fn_8022F618",
+   "fn_8022FFA8",
+   "fn_802411E0",
+   "fn_80251A60",
+   "fn_80251F94",
+   "fn_80252698",
+   "fn_8025927C",
+   "fn_8025C030",
+   "fn_8032E698",
+   "fn_80331FE0"
+  ]
+ },
+ "wave2": {
+  "dependents": [],
+  "new_errors": [],
+  "newly_clean": [],
+  "note": "no function has a HELPER blocker set contained in the newly clean callees",
+  "prototypes_from_now_clean_callees": {}
+ }
+}

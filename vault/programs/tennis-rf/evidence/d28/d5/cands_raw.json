@@ -1,0 +1,1453 @@
+[
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   43
+  ],
+  "d4_rank": 6,
+  "d4_rank_source": "dominators.json",
+  "d4_score": [
+   0.0,
+   43.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 0,
+    "ret_regs": []
+   },
+   "gpr_arity_counts": {
+    "5": 34,
+    "6": 6,
+    "7": 4,
+    "8": 2
+   },
+   "n_callsites": 46,
+   "r3_read_after_call": false
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 5,
+    "measured": {
+     "dependents": 43,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80204070",
+      "fn_802047F0",
+      "fn_80205DF8",
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_80208EF8",
+      "fn_8020962C",
+      "fn_8020DD6C",
+      "fn_8020F450",
+      "fn_802130B4",
+      "fn_80216640",
+      "fn_80216714",
+      "fn_8021A40C",
+      "fn_8021B8F8",
+      "fn_8021CCEC",
+      "fn_8021EF5C",
+      "fn_8021F944",
+      "fn_802204F4",
+      "fn_80222288",
+      "fn_80227E70",
+      "fn_80228CE8",
+      "fn_802302BC",
+      "fn_802303FC",
+      "fn_80230548",
+      "fn_802317E0",
+      "fn_80232298",
+      "fn_80233840",
+      "fn_80242534",
+      "fn_80242AC8",
+      "fn_80242AF0",
+      "fn_80242CAC",
+      "fn_80242CD4",
+      "fn_80242E24",
+      "fn_80242E64",
+      "fn_80278364",
+      "fn_802790A4",
+      "fn_802792E8",
+      "fn_8027AD10",
+      "fn_8027C774",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027E770"
+     ],
+     "sha": "7e3c5cf63dc41eabe80942697e1f635e433371300849505a6c7c88c0818e7a76"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801D022C(s32, s32, s32, s32, s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 6,
+    "measured": {
+     "dependents": 43,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80204070",
+      "fn_802047F0",
+      "fn_80205DF8",
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_80208EF8",
+      "fn_8020962C",
+      "fn_8020DD6C",
+      "fn_8020F450",
+      "fn_802130B4",
+      "fn_80216640",
+      "fn_80216714",
+      "fn_8021A40C",
+      "fn_8021B8F8",
+      "fn_8021CCEC",
+      "fn_8021EF5C",
+      "fn_8021F944",
+      "fn_802204F4",
+      "fn_80222288",
+      "fn_80227E70",
+      "fn_80228CE8",
+      "fn_802302BC",
+      "fn_802303FC",
+      "fn_80230548",
+      "fn_802317E0",
+      "fn_80232298",
+      "fn_80233840",
+      "fn_80242534",
+      "fn_80242AC8",
+      "fn_80242AF0",
+      "fn_80242CAC",
+      "fn_80242CD4",
+      "fn_80242E24",
+      "fn_80242E64",
+      "fn_80278364",
+      "fn_802790A4",
+      "fn_802792E8",
+      "fn_8027AD10",
+      "fn_8027C774",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027E770"
+     ],
+     "sha": "7ba040adba740d7560f6f71e1f2d5c31bd930d63e39f787bbb75b08141fe273f"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801D022C(s32, s32, s32, s32, s32, s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 7,
+    "measured": {
+     "dependents": 43,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80204070",
+      "fn_802047F0",
+      "fn_80205DF8",
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_80208EF8",
+      "fn_8020962C",
+      "fn_8020DD6C",
+      "fn_8020F450",
+      "fn_802130B4",
+      "fn_80216640",
+      "fn_80216714",
+      "fn_8021A40C",
+      "fn_8021B8F8",
+      "fn_8021CCEC",
+      "fn_8021EF5C",
+      "fn_8021F944",
+      "fn_802204F4",
+      "fn_80222288",
+      "fn_80227E70",
+      "fn_80228CE8",
+      "fn_802302BC",
+      "fn_802303FC",
+      "fn_80230548",
+      "fn_802317E0",
+      "fn_80232298",
+      "fn_80233840",
+      "fn_80242534",
+      "fn_80242AC8",
+      "fn_80242AF0",
+      "fn_80242CAC",
+      "fn_80242CD4",
+      "fn_80242E24",
+      "fn_80242E64",
+      "fn_80278364",
+      "fn_802790A4",
+      "fn_802792E8",
+      "fn_8027AD10",
+      "fn_8027C774",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027E770"
+     ],
+     "sha": "b6050cd1ba925a96e1ac92a6a3ab82998b47af61f440a58618c47a773d0d68e9"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801D022C(s32, s32, s32, s32, s32, s32, s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 0,
+    "measured": {
+     "dependents": 43,
+     "n_unlock": 3,
+     "new_errors": [],
+     "newly_clean": [
+      "fn_80242AC8",
+      "fn_80242CAC",
+      "fn_80242E24"
+     ],
+     "resolved_key_in": [
+      "fn_80204070",
+      "fn_802047F0",
+      "fn_80205DF8",
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_80208EF8",
+      "fn_8020962C",
+      "fn_8020DD6C",
+      "fn_8020F450",
+      "fn_802130B4",
+      "fn_80216640",
+      "fn_80216714",
+      "fn_8021A40C",
+      "fn_8021B8F8",
+      "fn_8021CCEC",
+      "fn_8021EF5C",
+      "fn_8021F944",
+      "fn_802204F4",
+      "fn_80222288",
+      "fn_80227E70",
+      "fn_80228CE8",
+      "fn_802302BC",
+      "fn_802303FC",
+      "fn_80230548",
+      "fn_802317E0",
+      "fn_80232298",
+      "fn_80233840",
+      "fn_80242534",
+      "fn_80242AC8",
+      "fn_80242AF0",
+      "fn_80242CAC",
+      "fn_80242CD4",
+      "fn_80242E24",
+      "fn_80242E64",
+      "fn_80278364",
+      "fn_802790A4",
+      "fn_802792E8",
+      "fn_8027AD10",
+      "fn_8027C774",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027E770"
+     ],
+     "sha": "5b23bcf55d47e59d7ddd1869837186d3a61dd445c7acaf77756663337ac5080c"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801D022C(void);",
+    "ret": "void",
+    "verdict": "SUPPORT"
+   }
+  ],
+  "measured_unlock_max": 3,
+  "measured_unlock_min_surviving": 3,
+  "n_fns": 43,
+  "note": "",
+  "resolved_key_max": 43,
+  "stratum": "top30:Q1",
+  "var": "HELPER:fn_801D022C",
+  "verdict": "SUPPORT"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   29
+  ],
+  "d4_rank": 13,
+  "d4_rank_source": "dominators.json",
+  "d4_score": [
+   0.0,
+   29.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 1,
+    "ret_regs": [
+     "r3"
+    ]
+   },
+   "gpr_arity_counts": {
+    "1": 14,
+    "2": 2,
+    "3": 2,
+    "4": 1,
+    "5": 1
+   },
+   "n_callsites": 20,
+   "r3_read_after_call": false
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 1,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80204068",
+      "fn_802047E8",
+      "fn_80205C58",
+      "fn_802062D0",
+      "fn_80208280",
+      "fn_80209ED4",
+      "fn_8020BAC0",
+      "fn_80213284",
+      "fn_80216878",
+      "fn_802168BC",
+      "fn_8021B694",
+      "fn_8021E24C",
+      "fn_8021FB40",
+      "fn_80224368",
+      "fn_80224B98",
+      "fn_80225200",
+      "fn_80225778",
+      "fn_8022E7A0",
+      "fn_80232178",
+      "fn_802428A8",
+      "fn_80246C14",
+      "fn_80246C1C",
+      "fn_80278ADC",
+      "fn_80279B28",
+      "fn_8027A36C",
+      "fn_8027AC8C",
+      "fn_8027B4B4",
+      "fn_8027B4BC",
+      "fn_8027B4C4"
+     ],
+     "sha": "55bbb6deb65d1645b88c58fcedaf3927629fadfbd8d037109723456d888824d8"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801CCE10(s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 2,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80204068",
+      "fn_802047E8",
+      "fn_80205C58",
+      "fn_802062D0",
+      "fn_80208280",
+      "fn_80209ED4",
+      "fn_8020BAC0",
+      "fn_80213284",
+      "fn_80216878",
+      "fn_802168BC",
+      "fn_8021B694",
+      "fn_8021E24C",
+      "fn_8021FB40",
+      "fn_80224368",
+      "fn_80224B98",
+      "fn_80225200",
+      "fn_80225778",
+      "fn_8022E7A0",
+      "fn_80232178",
+      "fn_802428A8",
+      "fn_80246C14",
+      "fn_80246C1C",
+      "fn_80278ADC",
+      "fn_80279B28",
+      "fn_8027A36C",
+      "fn_8027AC8C",
+      "fn_8027B4B4",
+      "fn_8027B4BC",
+      "fn_8027B4C4"
+     ],
+     "sha": "983465589d0e8e2584c0ae4738d304d92f2d5890d663172946a5b762cc093e81"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801CCE10(s32, s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 3,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80204068",
+      "fn_802047E8",
+      "fn_80205C58",
+      "fn_802062D0",
+      "fn_80208280",
+      "fn_80209ED4",
+      "fn_8020BAC0",
+      "fn_80213284",
+      "fn_80216878",
+      "fn_802168BC",
+      "fn_8021B694",
+      "fn_8021E24C",
+      "fn_8021FB40",
+      "fn_80224368",
+      "fn_80224B98",
+      "fn_80225200",
+      "fn_80225778",
+      "fn_8022E7A0",
+      "fn_80232178",
+      "fn_802428A8",
+      "fn_80246C14",
+      "fn_80246C1C",
+      "fn_80278ADC",
+      "fn_80279B28",
+      "fn_8027A36C",
+      "fn_8027AC8C",
+      "fn_8027B4B4",
+      "fn_8027B4BC",
+      "fn_8027B4C4"
+     ],
+     "sha": "df7d76e9f5261b658790f9b7536b6443396c402eb4297dd9a2ba3e0fb08140c0"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801CCE10(s32, s32, s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 29,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 29,
+  "stratum": "top30:Q2",
+  "var": "HELPER:fn_801CCE10",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   18
+  ],
+  "d4_rank": 27,
+  "d4_rank_source": "dominators.json",
+  "d4_score": [
+   0.0,
+   18.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 3,
+    "ret_regs": []
+   },
+   "gpr_arity_counts": {
+    "3": 18
+   },
+   "n_callsites": 18,
+   "r3_read_after_call": false
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 3,
+    "measured": {
+     "dependents": 18,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_802029E0",
+      "fn_80202E60",
+      "fn_80208EF8",
+      "fn_80212158",
+      "fn_80212610",
+      "fn_80212A1C",
+      "fn_80212DA4",
+      "fn_80215378",
+      "fn_802156F8",
+      "fn_80215D34",
+      "fn_802168FC",
+      "fn_8021A54C",
+      "fn_8021B108",
+      "fn_8021EB24",
+      "fn_8021FBF0",
+      "fn_8021FEE0",
+      "fn_8021FFD4",
+      "fn_802293D0"
+     ],
+     "sha": "c7d5a4415511184219ddbf128cd511aac74d5e2811499239d12800afe7abe855"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801CD4DC(s32, s32, s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 18,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 18,
+  "stratum": "top30:Q3",
+  "var": "HELPER:fn_801CD4DC",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   4
+  ],
+  "d4_rank": 23,
+  "d4_rank_source": "dominators.json",
+  "d4_score": [
+   0.0,
+   21.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 2,
+    "ret_regs": [
+     "r3"
+    ]
+   },
+   "gpr_arity_counts": {
+    "2": 4
+   },
+   "n_callsites": 4,
+   "r3_read_after_call": true
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 2,
+    "measured": {
+     "dependents": 4,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8020E530",
+      "fn_8020E5B4",
+      "fn_8020E678",
+      "fn_8020EE38"
+     ],
+     "sha": "584e40a204a804044a11f7b1fbef01e9bad59bec78f203b1ae04742cfdf36ffb"
+    },
+    "nfpr": 0,
+    "proto": "s32 fn_802100EC(s32, s32);",
+    "ret": "s32",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 2,
+    "measured": {
+     "dependents": 4,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8020E530",
+      "fn_8020E5B4",
+      "fn_8020E678",
+      "fn_8020EE38"
+     ],
+     "sha": "48ea2dfc756bcdae5bdd497a7420654978e07e1dbc804a24bbd59bf689f1621e"
+    },
+    "nfpr": 0,
+    "proto": "void * fn_802100EC(s32, s32);",
+    "ret": "void *",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 4,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 4,
+  "stratum": "top30:Q4",
+  "var": "HELPER:fn_802100EC",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   23
+  ],
+  "d4_rank": 19,
+  "d4_rank_source": "dominators.json",
+  "d4_score": [
+   0.0,
+   23.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 2,
+    "ret_regs": []
+   },
+   "gpr_arity_counts": {
+    "2": 24,
+    "3": 3
+   },
+   "n_callsites": 27,
+   "r3_read_after_call": false
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 2,
+    "measured": {
+     "dependents": 23,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8021391C",
+      "fn_80213BB0",
+      "fn_802144FC",
+      "fn_80214838",
+      "fn_80214998",
+      "fn_80214BC4",
+      "fn_80218794",
+      "fn_80218B48",
+      "fn_80218F48",
+      "fn_8021940C",
+      "fn_80219968",
+      "fn_8021D500",
+      "fn_8021D7D0",
+      "fn_8021DFB4",
+      "fn_80220FCC",
+      "fn_80221094",
+      "fn_802211B0",
+      "fn_80221238",
+      "fn_80221620",
+      "fn_802297D8",
+      "fn_802319BC",
+      "fn_80231E18",
+      "fn_80247530"
+     ],
+     "sha": "d7db1b2664fa058f2a1e7ffd1a7b80dccd2871279c22f18ffe7f7c2efa59afec"
+    },
+    "nfpr": 0,
+    "proto": "void fn_80200A78(s32, s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 3,
+    "measured": {
+     "dependents": 23,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8021391C",
+      "fn_80213BB0",
+      "fn_802144FC",
+      "fn_80214838",
+      "fn_80214998",
+      "fn_80214BC4",
+      "fn_80218794",
+      "fn_80218B48",
+      "fn_80218F48",
+      "fn_8021940C",
+      "fn_80219968",
+      "fn_8021D500",
+      "fn_8021D7D0",
+      "fn_8021DFB4",
+      "fn_80220FCC",
+      "fn_80221094",
+      "fn_802211B0",
+      "fn_80221238",
+      "fn_80221620",
+      "fn_802297D8",
+      "fn_802319BC",
+      "fn_80231E18",
+      "fn_80247530"
+     ],
+     "sha": "591f6fb3c7d5871536bdd248f28dc5dd3eadb8765ddd3dd683d863dd76ad1c61"
+    },
+    "nfpr": 0,
+    "proto": "void fn_80200A78(s32, s32, s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 23,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 23,
+  "stratum": "top30:Q3(extra)",
+  "var": "HELPER:fn_80200A78",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   29
+  ],
+  "d4_rank": 14,
+  "d4_rank_source": "dominators.json",
+  "d4_score": [
+   0.0,
+   29.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 0,
+    "ret_regs": []
+   },
+   "gpr_arity_counts": {
+    "4": 34,
+    "5": 3,
+    "7": 1,
+    "8": 2
+   },
+   "n_callsites": 40,
+   "r3_read_after_call": true
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 4,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_8020962C",
+      "fn_8020A384",
+      "fn_8020F914",
+      "fn_8021353C",
+      "fn_80216B4C",
+      "fn_8021A40C",
+      "fn_8021D154",
+      "fn_8021E4E0",
+      "fn_8021EF5C",
+      "fn_802204F4",
+      "fn_802228F0",
+      "fn_80228BA8",
+      "fn_802296AC",
+      "fn_802307C8",
+      "fn_8023256C",
+      "fn_80242534",
+      "fn_80242690",
+      "fn_80246F54",
+      "fn_80248C70",
+      "fn_8027A57C",
+      "fn_8027B24C",
+      "fn_8027D26C",
+      "fn_8027D360",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027EBE4"
+     ],
+     "sha": "7591518260b974d3c571d15ed5cf16dac475b811e4ae77e8c04ae887a7e0b66e"
+    },
+    "nfpr": 0,
+    "proto": "s32 fn_801CD8AC(s32, s32, s32, s32);",
+    "ret": "s32",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 4,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_8020962C",
+      "fn_8020A384",
+      "fn_8020F914",
+      "fn_8021353C",
+      "fn_80216B4C",
+      "fn_8021A40C",
+      "fn_8021D154",
+      "fn_8021E4E0",
+      "fn_8021EF5C",
+      "fn_802204F4",
+      "fn_802228F0",
+      "fn_80228BA8",
+      "fn_802296AC",
+      "fn_802307C8",
+      "fn_8023256C",
+      "fn_80242534",
+      "fn_80242690",
+      "fn_80246F54",
+      "fn_80248C70",
+      "fn_8027A57C",
+      "fn_8027B24C",
+      "fn_8027D26C",
+      "fn_8027D360",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027EBE4"
+     ],
+     "sha": "208fe9e6ee748b2250afcc3949c672223f16a6ea77ac069cf016d9cee83248a4"
+    },
+    "nfpr": 0,
+    "proto": "void * fn_801CD8AC(s32, s32, s32, s32);",
+    "ret": "void *",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 5,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_8020962C",
+      "fn_8020A384",
+      "fn_8020F914",
+      "fn_8021353C",
+      "fn_80216B4C",
+      "fn_8021A40C",
+      "fn_8021D154",
+      "fn_8021E4E0",
+      "fn_8021EF5C",
+      "fn_802204F4",
+      "fn_802228F0",
+      "fn_80228BA8",
+      "fn_802296AC",
+      "fn_802307C8",
+      "fn_8023256C",
+      "fn_80242534",
+      "fn_80242690",
+      "fn_80246F54",
+      "fn_80248C70",
+      "fn_8027A57C",
+      "fn_8027B24C",
+      "fn_8027D26C",
+      "fn_8027D360",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027EBE4"
+     ],
+     "sha": "724f56ecb52911759ac76fac36bfb06362add3951abd21b21f1faf05be837267"
+    },
+    "nfpr": 0,
+    "proto": "s32 fn_801CD8AC(s32, s32, s32, s32, s32);",
+    "ret": "s32",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 5,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_8020962C",
+      "fn_8020A384",
+      "fn_8020F914",
+      "fn_8021353C",
+      "fn_80216B4C",
+      "fn_8021A40C",
+      "fn_8021D154",
+      "fn_8021E4E0",
+      "fn_8021EF5C",
+      "fn_802204F4",
+      "fn_802228F0",
+      "fn_80228BA8",
+      "fn_802296AC",
+      "fn_802307C8",
+      "fn_8023256C",
+      "fn_80242534",
+      "fn_80242690",
+      "fn_80246F54",
+      "fn_80248C70",
+      "fn_8027A57C",
+      "fn_8027B24C",
+      "fn_8027D26C",
+      "fn_8027D360",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027EBE4"
+     ],
+     "sha": "5ec555e763b31e71422aae45af068437ec6cfd3ae8be96d074b0aee9403be6f6"
+    },
+    "nfpr": 0,
+    "proto": "void * fn_801CD8AC(s32, s32, s32, s32, s32);",
+    "ret": "void *",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 8,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_8020962C",
+      "fn_8020A384",
+      "fn_8020F914",
+      "fn_8021353C",
+      "fn_80216B4C",
+      "fn_8021A40C",
+      "fn_8021D154",
+      "fn_8021E4E0",
+      "fn_8021EF5C",
+      "fn_802204F4",
+      "fn_802228F0",
+      "fn_80228BA8",
+      "fn_802296AC",
+      "fn_802307C8",
+      "fn_8023256C",
+      "fn_80242534",
+      "fn_80242690",
+      "fn_80246F54",
+      "fn_80248C70",
+      "fn_8027A57C",
+      "fn_8027B24C",
+      "fn_8027D26C",
+      "fn_8027D360",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027EBE4"
+     ],
+     "sha": "d86410e8fa6fd0f5f9ab3f91d0d083900ff15cc26404348198e3657a81e0452e"
+    },
+    "nfpr": 0,
+    "proto": "s32 fn_801CD8AC(s32, s32, s32, s32, s32, s32, s32, s32);",
+    "ret": "s32",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 8,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_8020962C",
+      "fn_8020A384",
+      "fn_8020F914",
+      "fn_8021353C",
+      "fn_80216B4C",
+      "fn_8021A40C",
+      "fn_8021D154",
+      "fn_8021E4E0",
+      "fn_8021EF5C",
+      "fn_802204F4",
+      "fn_802228F0",
+      "fn_80228BA8",
+      "fn_802296AC",
+      "fn_802307C8",
+      "fn_8023256C",
+      "fn_80242534",
+      "fn_80242690",
+      "fn_80246F54",
+      "fn_80248C70",
+      "fn_8027A57C",
+      "fn_8027B24C",
+      "fn_8027D26C",
+      "fn_8027D360",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027EBE4"
+     ],
+     "sha": "6cf94fab033181bcc6f90eba8413882ea1f8ded9450469628d12bf652163c100"
+    },
+    "nfpr": 0,
+    "proto": "void * fn_801CD8AC(s32, s32, s32, s32, s32, s32, s32, s32);",
+    "ret": "void *",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 0,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_8020962C",
+      "fn_8020A384",
+      "fn_8020F914",
+      "fn_8021353C",
+      "fn_80216B4C",
+      "fn_8021A40C",
+      "fn_8021D154",
+      "fn_8021E4E0",
+      "fn_8021EF5C",
+      "fn_802204F4",
+      "fn_802228F0",
+      "fn_80228BA8",
+      "fn_802296AC",
+      "fn_802307C8",
+      "fn_8023256C",
+      "fn_80242534",
+      "fn_80242690",
+      "fn_80246F54",
+      "fn_80248C70",
+      "fn_8027A57C",
+      "fn_8027B24C",
+      "fn_8027D26C",
+      "fn_8027D360",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027EBE4"
+     ],
+     "sha": "144dd8533c5a6a468670ed09f44d2199826da837103bb8d259207dd59d14594c"
+    },
+    "nfpr": 0,
+    "proto": "s32 fn_801CD8AC(void);",
+    "ret": "s32",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 0,
+    "measured": {
+     "dependents": 29,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80206C50",
+      "fn_802086B0",
+      "fn_8020962C",
+      "fn_8020A384",
+      "fn_8020F914",
+      "fn_8021353C",
+      "fn_80216B4C",
+      "fn_8021A40C",
+      "fn_8021D154",
+      "fn_8021E4E0",
+      "fn_8021EF5C",
+      "fn_802204F4",
+      "fn_802228F0",
+      "fn_80228BA8",
+      "fn_802296AC",
+      "fn_802307C8",
+      "fn_8023256C",
+      "fn_80242534",
+      "fn_80242690",
+      "fn_80246F54",
+      "fn_80248C70",
+      "fn_8027A57C",
+      "fn_8027B24C",
+      "fn_8027D26C",
+      "fn_8027D360",
+      "fn_8027D500",
+      "fn_8027DF80",
+      "fn_8027E4B4",
+      "fn_8027EBE4"
+     ],
+     "sha": "988647e4e866f550c139db71f71269d0186fb4f8bcf5a36e46ce79b3ce1c77d2"
+    },
+    "nfpr": 0,
+    "proto": "void * fn_801CD8AC(void);",
+    "ret": "void *",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 29,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 29,
+  "stratum": "top30:Q2(extra)",
+  "var": "HELPER:fn_801CD8AC",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   9
+  ],
+  "d4_rank": 89,
+  "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+  "d4_score": [
+   0.0,
+   9.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 5,
+    "ret_regs": []
+   },
+   "gpr_arity_counts": {
+    "5": 9
+   },
+   "n_callsites": 9,
+   "r3_read_after_call": true
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 5,
+    "measured": {
+     "dependents": 9,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8021C2D8",
+      "fn_8022A308",
+      "fn_8022A674",
+      "fn_8022AE48",
+      "fn_8022BB80",
+      "fn_8022C2A0",
+      "fn_8032C8E8",
+      "fn_803302A4",
+      "fn_80333C0C"
+     ],
+     "sha": "22755eab31b62604182e230b35c90869bc814fc4c877f11c644d02d0ad2147e2"
+    },
+    "nfpr": 0,
+    "proto": "s32 fn_801E11E0(s32, s32, s32, s32, s32);",
+    "ret": "s32",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 5,
+    "measured": {
+     "dependents": 9,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8021C2D8",
+      "fn_8022A308",
+      "fn_8022A674",
+      "fn_8022AE48",
+      "fn_8022BB80",
+      "fn_8022C2A0",
+      "fn_8032C8E8",
+      "fn_803302A4",
+      "fn_80333C0C"
+     ],
+     "sha": "ed3c5c54cf2939497d0ad97b845be9b8c2960c88390ba6ec57e152d093f8f8d4"
+    },
+    "nfpr": 0,
+    "proto": "void * fn_801E11E0(s32, s32, s32, s32, s32);",
+    "ret": "void *",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 9,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 9,
+  "stratum": "below30:Q1",
+  "var": "HELPER:fn_801E11E0",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   1
+  ],
+  "d4_rank": 908,
+  "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+  "d4_score": [
+   0.0,
+   1.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 1,
+    "ret_regs": []
+   },
+   "gpr_arity_counts": {
+    "1": 1
+   },
+   "n_callsites": 1,
+   "r3_read_after_call": false
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 1,
+    "measured": {
+     "dependents": 1,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_801BD940"
+     ],
+     "sha": "6d3f57d52d0f4fba601db4735e336f87c5afc9e06e70c339b121dd46f26e90b5"
+    },
+    "nfpr": 0,
+    "proto": "void fn_801BF164(s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 1,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 1,
+  "stratum": "below30:Q2",
+  "var": "HELPER:fn_801BF164",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   1
+  ],
+  "d4_rank": 1096,
+  "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+  "d4_score": [
+   0.0,
+   1.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 2,
+    "ret_regs": []
+   },
+   "gpr_arity_counts": {
+    "2": 1
+   },
+   "n_callsites": 1,
+   "r3_read_after_call": true
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 2,
+    "measured": {
+     "dependents": 1,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8021BAE8"
+     ],
+     "sha": "42050c63a678f35310f9e50dd800eda3561f57d35c517598c88d77fb8f32f55c"
+    },
+    "nfpr": 0,
+    "proto": "s32 fn_802087F4(s32, s32);",
+    "ret": "s32",
+    "verdict": "CONTRADICTION"
+   },
+   {
+    "admitted": true,
+    "arity_gpr": 2,
+    "measured": {
+     "dependents": 1,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8021BAE8"
+     ],
+     "sha": "42050c63a678f35310f9e50dd800eda3561f57d35c517598c88d77fb8f32f55c"
+    },
+    "nfpr": 0,
+    "proto": "void * fn_802087F4(s32, s32);",
+    "ret": "void *",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 1,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 1,
+  "stratum": "below30:Q3",
+  "var": "HELPER:fn_802087F4",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   1
+  ],
+  "d4_rank": 1175,
+  "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+  "d4_score": [
+   0.0,
+   1.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 1,
+    "ret_regs": []
+   },
+   "gpr_arity_counts": {
+    "1": 1
+   },
+   "n_callsites": 1,
+   "r3_read_after_call": false
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 1,
+    "measured": {
+     "dependents": 1,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_80226874"
+     ],
+     "sha": "1b2f491a5be1e26609ab057d4acf2fa62cca67afe124841935cd28e646e2d8a3"
+    },
+    "nfpr": 0,
+    "proto": "void fn_80234970(s32);",
+    "ret": "void",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 1,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 1,
+  "stratum": "below30:Q4",
+  "var": "HELPER:fn_80234970",
+  "verdict": "CONTRADICTION"
+ },
+ {
+  "conflict": false,
+  "d4_degree_blocked_direct": [
+   0,
+   1
+  ],
+  "d4_rank": 1067,
+  "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+  "d4_score": [
+   0.0,
+   1.0
+  ],
+  "evidence": {
+   "callee": {
+    "min_fpr": 0,
+    "min_gpr": 3,
+    "ret_regs": [
+     "f1"
+    ]
+   },
+   "gpr_arity_counts": {
+    "3": 1
+   },
+   "n_callsites": 1,
+   "r3_read_after_call": false
+  },
+  "hypotheses": [
+   {
+    "admitted": true,
+    "arity_gpr": 3,
+    "measured": {
+     "dependents": 1,
+     "n_unlock": 0,
+     "new_errors": [],
+     "newly_clean": [],
+     "resolved_key_in": [
+      "fn_8025B518"
+     ],
+     "sha": "ced51263f668721d993602c93b8cf6066814e7ff649885c5b9a1bac44dcb1954"
+    },
+    "nfpr": 0,
+    "proto": "f32 fn_801F4980(s32, s32, s32);",
+    "ret": "f32",
+    "verdict": "CONTRADICTION"
+   }
+  ],
+  "measured_unlock_max": 0,
+  "measured_unlock_min_surviving": null,
+  "n_fns": 1,
+  "note": "best admitted hypothesis unlocks 0 (no new error counted as unlock)",
+  "resolved_key_max": 1,
+  "stratum": "below30:Q2(extra)",
+  "var": "HELPER:fn_801F4980",
+  "verdict": "CONTRADICTION"
+ }
+]
