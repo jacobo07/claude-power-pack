@@ -253,6 +253,42 @@ def requires_full(state_name: str) -> bool:
     return state_name not in (PS_FRESH, PS_INHERITED)
 
 
+_SATISFIED = (PS_FRESH, PS_INHERITED)
+
+
+def combine_states(op: str, states, k=None) -> str:
+    """Fold per-element proof states into one claim state under AND / OR / SEQ / QUORUM(k).
+
+    Only FRESH and INHERITED satisfy. STALE and SUPERSEDED are a changed premise (STALE);
+    anything unreadable is UNKNOWN and never satisfies. Changed outranks unknown, as it does
+    for premises. An empty list, an unknown operator or a bad k is UNKNOWN."""
+    s = [PS_STALE if x == PS_SUPERSEDED else (x if x in PROOF_STATES else PS_UNKNOWN) for x in states]
+    if not s:
+        return PS_UNKNOWN
+    sat = [x for x in s if x in _SATISFIED]
+    best = PS_INHERITED if PS_INHERITED in sat else PS_FRESH
+    if op == "AND":
+        if PS_STALE in s:
+            return PS_STALE
+        return PS_UNKNOWN if PS_UNKNOWN in s else best
+    if op == "OR":
+        if sat:
+            return PS_FRESH if PS_FRESH in sat else PS_INHERITED
+        return PS_UNKNOWN if PS_UNKNOWN in s else PS_STALE
+    if op == "SEQ":
+        for x in s:
+            if x not in _SATISFIED:
+                return x
+        return best
+    if op == "QUORUM":
+        if isinstance(k, bool) or not isinstance(k, int) or not 1 <= k <= len(s):
+            return PS_UNKNOWN
+        if len(sat) >= k:
+            return PS_FRESH if s.count(PS_FRESH) >= k else PS_INHERITED
+        return PS_UNKNOWN if len(sat) + s.count(PS_UNKNOWN) >= k else PS_STALE
+    return PS_UNKNOWN
+
+
 def supersedes(newer: dict, older: dict) -> bool:
     """Does the later certificate make the earlier one redundant? Never lowers strength.
 

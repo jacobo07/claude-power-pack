@@ -346,8 +346,14 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
     # carry to this tree (or whose certificate a changed premise just killed) BEFORE the decision, so
     # the decision reads them as ordinary log. A dry run records nothing.
     if not dry_run and proof.inheritance_enabled():
-        acted.extend(inherit.apply(log, inherit.plan(state, root, tree, time.time()), tree, actor))
+        recorded = inherit.apply(log, inherit.plan(state, root, tree, time.time()), tree, actor)
+        acted.extend(recorded)
         state = gc.project(log)
+        if recorded:    # reported only when this sweep recorded something, so a quiet sweep stays quiet
+            vs = inherit.verification_set(state, root, tree, time.time())
+            acted.append(f"{log.goal_id}: verification set run={vs['run']} inherit={vs['inherit']} "
+                         f"fresh={vs['fresh']} islands={[i['obligation'] for i in vs['islands']]} "
+                         f"full={vs['full']}")
 
     def decide_now(at):
         """Observe every running epoch of `at`, then decide on it: the same step the first

@@ -322,8 +322,9 @@ class Inh:
               "causal_paths": ["src"], "env_deps": [], "freshness_class": "DETERMINISTIC",
               "risk_tags": [], "nondeterministic": False, "inheritability": "inheritable"}
         el.update(element or {})
+        combine = el.pop("combine", "AND")
         pf.append_pcc(self.log, _st(self.log), pf.CONTRACT,
-                      {"v": 1, "claim_id": self.cid, "obligation": "ob-one", "combine": "AND",
+                      {"v": 1, "claim_id": self.cid, "obligation": "ob-one", "combine": combine,
                        "elements": [el]}, "founder")
         self.t1 = self.tree()
         v = {"gate": "gate.py", "exit_status": 0, "observed": "ok", "tree_hash": self.t1,
@@ -573,7 +574,8 @@ def gate_inh_sweep_e2e():
         first_a = sw.sweep_goal(a.log, a.repo, providers=("gate",), run_dir=a.base / "runs")
         la = a.ledger()
         skipped = (len(la.inherited) == 1 and la.inherited[0]["data"]["candidate"] == a.tree()
-                   and not any("dispatched" in x for x in first_a))
+                   and not any("dispatched" in x for x in first_a)
+                and any("verification set run=[] inherit=['ob-one']" in x for x in first_a))
         acted_b = _drain(b)
         lb = b.ledger()
         _, cert_b = b.cert()
@@ -585,6 +587,189 @@ def gate_inh_sweep_e2e():
     finally:
         a.close()
         b.close()
+
+
+# --- algebra, minimal verification set, fresh islands, drift substrate (plan 04-04) -----------
+
+def gate_inv_algebra():
+    if not hasattr(pf, "combine_states"):
+        return False, "RED-first: proof.combine_states absent"
+    F, I, S, U = pf.PS_FRESH, pf.PS_INHERITED, pf.PS_STALE, pf.PS_UNKNOWN
+    cs = pf.combine_states
+    table = [
+        (("AND", [F, F]), F), (("AND", [F, I]), I), (("AND", [F, S]), S), (("AND", [F, U]), U),
+        (("AND", [U, S]), S), (("AND", [pf.PS_SUPERSEDED, F]), S), (("AND", []), U),
+        (("OR", [S, F]), F), (("OR", [I, S]), I), (("OR", [U, U]), U), (("OR", [S, U]), U),
+        (("OR", [S, S]), S), (("OR", []), U),
+        (("SEQ", [F, I, F]), I), (("SEQ", [F, U, S]), U), (("SEQ", [S, F]), S), (("SEQ", [F, F]), F),
+        (("XOR", [F, F]), U),
+    ]
+    bad = [(k, want, cs(k[0], k[1])) for k, want in table if cs(k[0], k[1]) != want]
+    quorum = [((2, [F, I, S]), I), ((2, [F, F, S]), F), ((2, [F, U, S]), U), ((2, [F, S, S]), S),
+              ((2, [U, U, S]), U), ((0, [F]), U), ((3, [F, F]), U), ((True, [F]), U)]
+    bad += [(("QUORUM",) + k, want, cs("QUORUM", k[1], k[0]))
+            for k, want in quorum if cs("QUORUM", k[1], k[0]) != want]
+    never = all(cs(op, [x]) not in (F, I) for op in ("AND", "OR", "SEQ") for x in (S, U))
+    return not bad and never, f"mismatches={bad[:3]} unknown_or_stale_never_satisfy={never}"
+
+
+def gate_inv_nonand_runs():
+    if (r := red_if_absent()):
+        return r
+    if not hasattr(load_inherit(), "verification_set"):
+        return False, "RED-first: inherit.verification_set absent"
+    res = {}
+    for combine in ("OR", "SEQ", "QUORUM"):
+        w = Inh("inv-nonand-" + combine.lower(), element={"combine": combine})
+        try:
+            w.edit("docs/n.txt", "changed notes\n")
+            w.step()
+            vs = load_inherit().verification_set(_st(w.log), w.repo, w.tree(), time.time())
+            res[combine] = ("ob-one" in vs["run"] and "ob-one" not in vs["inherit"])
+        finally:
+            w.close()
+    w = Inh("inv-nonand-control")
+    try:
+        w.edit("docs/n.txt", "changed notes\n")
+        w.step()
+        vs = load_inherit().verification_set(_st(w.log), w.repo, w.tree(), time.time())
+        control = "ob-one" in vs["inherit"] and "ob-one" not in vs["run"]
+    finally:
+        w.close()
+    return all(res.values()) and control, f"non_and_in_run={res} and_control_inherits={control}"
+
+
+def gate_inv_vset_evidence():
+    if (r := red_if_absent()):
+        return r
+    if not hasattr(load_inherit(), "verification_set"):
+        return False, "RED-first: inherit.verification_set absent"
+    inh = load_inherit()
+    w = Inh("inv-evidence")
+    try:
+        at_verdict = inh.verification_set(_st(w.log), w.repo, w.tree(), time.time())
+        w.edit("docs/n.txt", "changed notes\n")
+        w.step(apply=False)
+        planned = inh.verification_set(_st(w.log), w.repo, w.tree(), time.time())
+        w.step()
+        applied = inh.verification_set(_st(w.log), w.repo, w.tree(), time.time())
+        ok = (at_verdict["fresh"] == ["ob-one"] and "ob-one" not in at_verdict["run"]
+              and planned["run"] == ["ob-one"] and not planned["inherit"]
+              and applied["inherit"] == ["ob-one"] and not applied["run"])
+        return ok, f"fresh={at_verdict['fresh']} planned_run={planned['run']} applied_inherit={applied['inherit']}"
+    finally:
+        w.close()
+
+
+def gate_inv_vset_unknown_full():
+    if (r := red_if_absent()):
+        return r
+    if not hasattr(load_inherit(), "verification_set"):
+        return False, "RED-first: inherit.verification_set absent"
+    inh = load_inherit()
+    res = {}
+    for label, element in (("no-causal-paths", {"causal_paths": []}),
+                           ("unknown-fingerprint", {"causal_paths": ["../escape"]})):
+        w = Inh("inv-full-" + label, element=element)
+        try:
+            w.edit("docs/n.txt", "changed notes\n")
+            w.step()
+            vs = inh.verification_set(_st(w.log), w.repo, w.tree(), time.time())
+            res[label] = bool(vs["full"]) and "ob-one" in vs["run"]
+        finally:
+            w.close()
+    w = Inh("inv-full-control")
+    try:
+        w.edit("docs/n.txt", "changed notes\n")
+        w.step()
+        control = not inh.verification_set(_st(w.log), w.repo, w.tree(), time.time())["full"]
+    finally:
+        w.close()
+    return all(res.values()) and control, f"unknown_is_full={res} known_is_not_full={control}"
+
+
+def gate_inv_fresh_islands():
+    if (r := red_if_absent()):
+        return r
+    inh = load_inherit()
+    if not hasattr(inh, "fresh_islands") or not hasattr(inh, "verification_set"):
+        return False, "RED-first: inherit.fresh_islands / verification_set absent"
+    cases = (("fresh-required", {"element": {"freshness_class": "FRESH_REQUIRED"}}),
+             ("risk-tag", {"element": {"risk_tags": ["security"]}}),
+             ("reality-plane", {"plane": cv.REALITY, "gate_class": "in_game"}))
+    res = {}
+    for label, kw in cases:
+        w = Inh("inv-island-" + label, **kw)
+        try:
+            w.edit("docs/n.txt", "changed notes\n")
+            w.step()
+            w.forge()
+            vs = inh.verification_set(_st(w.log), w.repo, w.tree(), time.time())
+            names = [i["obligation"] for i in inh.fresh_islands(_st(w.log))]
+            res[label] = names == ["ob-one"] and "ob-one" not in vs["inherit"] \
+                and [i["obligation"] for i in vs["islands"]] == ["ob-one"]
+        finally:
+            w.close()
+    w = Inh("inv-island-control")
+    try:
+        control = inh.fresh_islands(_st(w.log)) == []
+    finally:
+        w.close()
+    return all(res.values()) and control, f"islands={res} ordinary_claim_not_listed={control}"
+
+
+def gate_inv_vset_no_overlap():
+    if (r := red_if_absent()):
+        return r
+    if not hasattr(load_inherit(), "verification_set"):
+        return False, "RED-first: inherit.verification_set absent"
+    inh = load_inherit()
+    w = Inh("inv-overlap")
+    try:
+        cv.accept_obligation(w.log, _st(w.log), "ob-two", cv.OUTCOME, "second", GATE_CMD, w.pin, "founder",
+                             gate_class="unit")
+        w.edit("docs/n.txt", "changed notes\n")
+        w.step()
+        rows = {}
+        for label, state in (("with-event", _st(w.log)),):
+            vs = inh.verification_set(state, w.repo, w.tree(), time.time())
+            groups = [set(vs["run"]), set(vs["inherit"]), set(vs["fresh"])]
+            disjoint = sum(len(g) for g in groups) == len(set().union(*groups))
+            rows[label] = (disjoint, set().union(*groups) == {"ob-one", "ob-two"}, vs["run"], vs["inherit"])
+        ok = all(a and b for a, b, _, _ in rows.values()) and rows["with-event"][2] == ["ob-two"] \
+            and rows["with-event"][3] == ["ob-one"]
+        return ok, f"rows={rows}"
+    finally:
+        w.close()
+
+
+def gate_inv_drift_substrate():
+    if (r := red_if_absent()):
+        return r
+    inh = load_inherit()
+    if not hasattr(inh, "promoted_drift"):
+        return False, "RED-first: inherit.promoted_drift absent"
+    base = Path(tempfile.mkdtemp(prefix="inv-"))
+    try:
+        log = GoalLog(REPO_ID, "inv-drift", base=base)
+        gc.declare(log, "Drift", ["it works"], [], {"paths": ["src"]}, actor="founder")
+        none_yet = inh.promoted_drift(_st(log), "1" * 40)
+        pf.append_pcc(log, _st(log), pf.PROMOTED, {"v": 1, "candidate": "snap:" + "1" * 40, "tree": "1" * 40,
+                                                   "fingerprint": "cf1:" + "f" * 64}, "reconciler")
+        same = inh.promoted_drift(_st(log), "1" * 40)
+        moved = inh.promoted_drift(_st(log), "2" * 40)
+        unknown = inh.promoted_drift(_st(log), "unknown:scope")
+        pf.append_pcc(log, _st(log), pf.PROMOTED, {"v": 1, "candidate": "snap:" + "2" * 40, "tree": "2" * 40,
+                                                   "fingerprint": "cf1:" + "e" * 64}, "reconciler")
+        newest = inh.promoted_drift(_st(log), "2" * 40)
+        rule = (sw._moved_under_verification(SimpleNamespace(tree_before="1" * 40, tree_after="2" * 40))
+                and not sw._moved_under_verification(SimpleNamespace(tree_before="1" * 40, tree_after="1" * 40))
+                and sw._moved_under_verification(SimpleNamespace(tree_before="unknown:x", tree_after="unknown:x")))
+        ok = none_yet is None and same is False and moved is True and unknown is None and newest is False and rule
+        return ok, (f"no_event={none_yet} same={same} moved={moved} unknown={unknown} "
+                    f"newest_promotion_wins={newest} moved_under_verification_rule={rule}")
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
 
 
 def gate_hermetic():
@@ -613,6 +798,13 @@ GATES = [
     ("V-INV-SWITCH-OFF", gate_inh_switch_off),
     ("V-INV-FRONTIER-CONSUMES-INHERITED", gate_inh_frontier_consumes),
     ("V-INV-SWEEP-E2E", gate_inh_sweep_e2e),
+    ("V-INV-ALGEBRA-TRUTH", gate_inv_algebra),
+    ("V-INV-NONAND-RUNS-FULL", gate_inv_nonand_runs),
+    ("V-INV-VSET-SKIPS-ONLY-WITH-EVIDENCE", gate_inv_vset_evidence),
+    ("V-INV-VSET-UNKNOWN-FULL", gate_inv_vset_unknown_full),
+    ("V-INV-FRESH-ISLANDS", gate_inv_fresh_islands),
+    ("V-INV-VSET-NO-OVERLAP", gate_inv_vset_no_overlap),
+    ("V-INV-DRIFT-SUBSTRATE", gate_inv_drift_substrate),
 ]
 
 

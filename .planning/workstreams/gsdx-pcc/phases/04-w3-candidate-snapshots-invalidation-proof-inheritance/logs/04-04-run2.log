@@ -1,0 +1,27 @@
+PASS V-INV-HERMETIC-HOME home=inv-home-p5dh9rzq
+PASS V-INV-R12-CLOSURE may_close=False blocking=['plane EVIDENCE applies and has no obligation']
+PASS V-INV-R12-NEEDS-GATE reason='was proven at tree unknown:not-a-git-tree, and the tree bein'
+PASS V-INV-R12-CONTROL real_equal_closes=True needs_gate='' other_tree_blocks=True
+PASS V-CAND-SNAPSHOT-OID clean_equals_HEAD_tree=True dirty_differs=True len=40
+PASS V-CAND-NO-SIDE-EFFECT index_same=True refs_same=True status_same=True leftovers=[]
+PASS V-CAND-UNKNOWN-ON-DOUBT all_unknown=True bad={}
+PASS V-CAND-STABLE same_content_same_oid=True one_byte_differs=True
+PASS V-CAND-DRIFT same=False moved=True current_unknown=None promoted_unknown=None
+PASS V-INV-PROMOTED-PROJECTION projected=1 newer_v_refused=True unsupported=[3]
+PASS V-INV-INHERIT-OK action=INHERIT inherited=['ob-one'] closes=True closes_without_set=False
+PASS V-INV-FALSE-REUSE action=INVALIDATE inherited=[] invalidated=1
+PASS V-INV-UNKNOWN-NOT-CLEAN cases={'unknown-fingerprint': (True, 'RUN'), 'unknown-environment': (True, 'RUN')}
+PASS V-INV-FRESH-REQUIRED-NEVER cases={'fresh-required': (True, 'RUN'), 'risk-tag': (True, 'RUN'), 'legacy-never': (True, 'RUN'), 'unknown-class': (True, 'RUN'), 'reality-plane': (True, 'RUN')}
+PASS V-INV-OMITTED-WITHOUT-EVENT planned=INHERIT inherited=[] events=0
+PASS V-INV-EVENT-DISAGREES forged_ignored=[True, True, True] truthful_event_control=True
+PASS V-INV-SWITCH-OFF on=['ob-one'] off=[] off_action=RUN
+PASS V-INV-FRONTIER-CONSUMES-INHERITED with_event runnable=[] exec=[]; without runnable=['ob-one'] exec=['ob-one']
+PASS V-INV-SWEEP-E2E A inherited=1 dispatched=False; B invalidated=1 produced=2 dispatched=True
+PASS V-INV-ALGEBRA-TRUTH mismatches=[] unknown_or_stale_never_satisfy=True
+PASS V-INV-NONAND-RUNS-FULL non_and_in_run={'OR': True, 'SEQ': True, 'QUORUM': True} and_control_inherits=True
+PASS V-INV-VSET-SKIPS-ONLY-WITH-EVIDENCE fresh=['ob-one'] planned_run=['ob-one'] applied_inherit=['ob-one']
+PASS V-INV-VSET-UNKNOWN-FULL unknown_is_full={'no-causal-paths': True, 'unknown-fingerprint': True} known_is_not_full=True
+PASS V-INV-FRESH-ISLANDS islands={'fresh-required': True, 'risk-tag': True, 'reality-plane': True} ordinary_claim_not_listed=True
+PASS V-INV-VSET-NO-OVERLAP rows={'with-event': (True, True, ['ob-two'], ['ob-one'])}
+PASS V-INV-DRIFT-SUBSTRATE no_event=None same=False moved=True unknown=None newest_promotion_wins=False moved_under_verification_rule=True
+GSDX_INVALIDATION_PASS=26/26  threshold=26/26

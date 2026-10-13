@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from . import candidate as cand
 from . import contract as gc
 from . import convergence as cv
 from . import git_state as gs
@@ -187,3 +188,57 @@ def inherited_ids(state, candidate: str) -> frozenset:
                 out.add(oid)
                 break
     return frozenset(out)
+
+
+def fresh_islands(state) -> list:
+    """Claims that are never inherited whatever the premises say: FRESH_REQUIRED (which includes every
+    risk-tagged claim) and everything on the REALITY plane. [{obligation, claim_id, reason}]."""
+    ledger = pf.project_proofs(state)
+    out = []
+    for oid, ob in cv.project_convergence(state).obligations.items():
+        contract, _refused = pf.effective_contract(ledger, ob)
+        if ob.plane == cv.REALITY:
+            why = "REALITY plane evidence is always re-run"
+        elif pf.freshness_class(ob, ob.verdict, contract) == pf.FRESH_REQUIRED:
+            why = "freshness class FRESH_REQUIRED"
+        else:
+            continue
+        out.append({"obligation": oid, "claim_id": pf.claim_id(ob), "reason": why})
+    return out
+
+
+def verification_set(state, root, candidate: str, now: float) -> dict:
+    """What must run at `candidate`, derived from the same evidence `inherited_ids` reads.
+
+    run      claims with no FRESH verdict here and no agreeing proof.inherited event
+    inherit  claims whose proof is inherited here (event present and agreeing)
+    fresh    claims whose verdict already binds this candidate
+    islands  claims that can never be skipped (see fresh_islands)
+    full     true when some claim could not be narrowed because a premise or the candidate is unknown
+    A skip needs evidence, so a planned-but-unrecorded inheritance is still in `run`."""
+    items = {it["obligation"]: it for it in plan(state, root, candidate, now)}
+    inherited = inherited_ids(state, candidate)
+    out = {"run": [], "inherit": [], "fresh": [], "islands": fresh_islands(state),
+           "full": pf._is_unknown(candidate), "reasons": {}}
+    for oid in sorted(cv.project_convergence(state).obligations):
+        it = items.get(oid)
+        if it is not None and it["action"] == FRESH:
+            out["fresh"].append(oid)
+        elif oid in inherited:
+            out["inherit"].append(oid)
+        else:
+            out["run"].append(oid)
+            why = it["reason"] if it else "not yet proven"
+            out["reasons"][oid] = why
+            if why.startswith(("premise unknown", "unknown candidate")):
+                out["full"] = True
+    return out
+
+
+def promoted_drift(state, current_oid: str):
+    """Has the working tree moved since the newest `candidate.promoted` event? True / False, or None
+    when there is no such event or either side is unknown (never read as unchanged)."""
+    promoted = pf.project_proofs(state).promoted
+    if not promoted:
+        return None
+    return cand.drift(promoted[-1]["data"], current_oid)

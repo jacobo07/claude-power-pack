@@ -1,0 +1,9 @@
+PASS V-FRONTIER-SWEEP-N WALL_CLOCK dispatched=3 open=3 satisfied_after_drain=3; ECONOMY dispatched=1 open=1 satisfied_after_drain=3
+  secs 36.7
+PASS V-FRONTIER-SWEEP-BOUND max_parallel=2 -> 2; WALL_CLOCK over 5 ready -> 4 open=4; BALANCED -> 2
+  secs 75.5
+PASS V-FRONTIER-SWEEP-EARLY-FINISH old fixture under a slow pass dispatched=1; blocking fixture dispatched=3
+  secs 41.4
+PASS V-FRONTIER-REPORTED-NOT-EXECUTED dispatched=2 (bound 2, 3 ready) report='sweep-spec: speculative ob-2: admitted -- ADMITTED saving 1.3s exceeds cost 0.0s' no_speculative_epoch=True
+  secs 20.2
+passes 4 fails 0
