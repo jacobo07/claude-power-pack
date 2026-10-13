@@ -11,6 +11,10 @@
     "session_resilience/ui_state"
   ],
   "modules": {
+    "prr/regions": {
+      "class": "LIBRARY",
+      "note": "goal prr priority 3 (2026-10-13): read-only Windows region attribution (image/mapped/private x commit/reserve + private working set), CLI python -m modules.prr.regions. Evidence vault/programs/prr/evidence/F-windows-linux-attribution.md. Proven by tests/test_prr_regions.py."
+    },
     "prr/__init__": {
       "class": "LIBRARY",
       "note": "Package marker for goal prr, added 2026-10-12 so this scanner walks modules/prr at all: without it every prr entry above was declared against a module the gate never discovered (494 -> 501 modules once added)."
