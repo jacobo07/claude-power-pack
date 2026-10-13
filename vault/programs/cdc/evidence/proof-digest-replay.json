@@ -1,0 +1,17 @@
+{
+ "transcript": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\43d7834b-415b-4c65-b8c0-a23d6cd367ea.jsonl",
+ "call_index": 31,
+ "command": "$env:PYTHONIOENCODING='utf-8'; & 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe' -m pytest scripts/skyparty/tests/test_loot_deploy_parity.py -q -p no:cacheprovider > \"$env:TEMP\\ldp_",
+ "before": {
+  "calls": 3,
+  "result_chars": 4948,
+  "tokens_est": 1237
+ },
+ "after": {
+  "calls": 1,
+  "result_chars": 374,
+  "tokens_est": 93
+ },
+ "refetch_calls_observed": 2,
+ "fail_lines_kept": 0
+}

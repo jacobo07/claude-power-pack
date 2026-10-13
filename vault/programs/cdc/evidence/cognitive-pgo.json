@@ -1,0 +1,802 @@
+{
+    "generated":  "2026-10-13T07:38:41",
+    "days":  14,
+    "coverage":  {
+                     "found":  2993,
+                     "read":  2993,
+                     "complete":  true,
+                     "elapsed_s":  344.5
+                 },
+    "processed_tokens":  43727349487,
+    "by_role":  {
+                    "unattributed":  {
+                                         "tokens":  14126956933,
+                                         "calls":  52649,
+                                         "share":  0.3230691340484723
+                                     },
+                    "READ":  {
+                                 "tokens":  11214960727,
+                                 "calls":  46769,
+                                 "share":  0.25647474312007346
+                             },
+                    "IMPLEMENT":  {
+                                      "tokens":  4983901064,
+                                      "calls":  16738,
+                                      "share":  0.11397674733250635
+                                  },
+                    "NOVELTY":  {
+                                    "tokens":  3610560667,
+                                    "calls":  12576,
+                                    "share":  0.08256984951885565
+                                },
+                    "CONTROL":  {
+                                    "tokens":  2163074113,
+                                    "calls":  9046,
+                                    "share":  0.04946730452169471
+                                },
+                    "PROOF":  {
+                                  "tokens":  2065437307,
+                                  "calls":  7889,
+                                  "share":  0.04723445009201959
+                              },
+                    "PLAN":  {
+                                 "tokens":  1701671231,
+                                 "calls":  6999,
+                                 "share":  0.03891548998426949
+                             },
+                    "REREAD":  {
+                                   "tokens":  1259166231,
+                                   "calls":  5209,
+                                   "share":  0.02879585078382915
+                               },
+                    "CONTEXT_FAULT":  {
+                                          "tokens":  891131957,
+                                          "calls":  5792,
+                                          "share":  0.02037928132975292
+                                      },
+                    "REPAIR":  {
+                                   "tokens":  873563413,
+                                   "calls":  2920,
+                                   "share":  0.019977506600524865
+                               },
+                    "RECOVERY":  {
+                                     "tokens":  551142874,
+                                     "calls":  2045,
+                                     "share":  0.012604076864156905
+                                 },
+                    "RESEARCH":  {
+                                     "tokens":  161735429,
+                                     "calls":  749,
+                                     "share":  0.00369872473171701
+                                 },
+                    "STATUS":  {
+                                   "tokens":  124047541,
+                                   "calls":  461,
+                                   "share":  0.002836841072127615
+                               }
+                },
+    "by_project":  {
+                       "C--Users-User--claude-skills-claude-power-pack":  7500045762,
+                       "C--Users-User-Desktop-Cursor-Projects-TUA-X":  5263588653,
+                       "C--Users-User-Desktop-Cursor-Projects-InfinityOps":  4562724299,
+                       "C--Users-User-Desktop-Cursor-Projects-GEO-audit":  4252350767,
+                       "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files":  3334901017,
+                       "C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X":  2437990769,
+                       "C--Users-User-Apps-orca-dws-wt":  1804198266,
+                       "C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects":  1795042731,
+                       "C--Users-User-Desktop-Cursor-Projects-InfinityOps-17-Businesses-QuickLease":  1666921936,
+                       "C--Users-User-Apps-recon-work-wt-keosdtk-home":  1633747447,
+                       "C--Users-User-Desktop-Cursor-Projects-Jacobo":  1036543049,
+                       "C--Users-User-Apps-orca-backlog-wt":  1008856930,
+                       "C--Users-User-Desktop-Cursor-Projects-TUA-X--claude-worktrees-brand001-clock-a":  841813695,
+                       "C--Users-User-Desktop-Cursor-Projects-CostaLuz-Lawyers":  771941495,
+                       "C--Users-User-Apps-io-ucg":  717766495
+                   },
+    "by_work_class":  {
+                          "BUILD":  43031177164,
+                          "INVESTIGATE":  696172323
+                      },
+    "motifs":  [
+                   {
+                       "motif":  "PowerShell:other \u003e PowerShell:other",
+                       "n":  2,
+                       "occurrences":  16459,
+                       "sessions":  1194,
+                       "tokens":  8657181856,
+                       "rank_score":  10336675136064
+                   },
+                   {
+                       "motif":  "Read \u003e Read",
+                       "n":  2,
+                       "occurrences":  16915,
+                       "sessions":  2049,
+                       "tokens":  3450062744,
+                       "rank_score":  7069178562456
+                   },
+                   {
+                       "motif":  "Read \u003e Edit",
+                       "n":  2,
+                       "occurrences":  9913,
+                       "sessions":  1199,
+                       "tokens":  5236085265,
+                       "rank_score":  6278066232735
+                   },
+                   {
+                       "motif":  "Grep \u003e Read",
+                       "n":  2,
+                       "occurrences":  10308,
+                       "sessions":  1678,
+                       "tokens":  3732465666,
+                       "rank_score":  6263077387548
+                   },
+                   {
+                       "motif":  "PowerShell:other \u003e PowerShell:other \u003e PowerShell:other",
+                       "n":  3,
+                       "occurrences":  8060,
+                       "sessions":  911,
+                       "tokens":  6377613870,
+                       "rank_score":  5810006235570
+                   },
+                   {
+                       "motif":  "Edit \u003e Edit",
+                       "n":  2,
+                       "occurrences":  10369,
+                       "sessions":  1150,
+                       "tokens":  4154430923,
+                       "rank_score":  4777595561450
+                   },
+                   {
+                       "motif":  "Read \u003e Grep",
+                       "n":  2,
+                       "occurrences":  8725,
+                       "sessions":  1738,
+                       "tokens":  2603995533,
+                       "rank_score":  4525744236354
+                   },
+                   {
+                       "motif":  "Grep \u003e Grep",
+                       "n":  2,
+                       "occurrences":  9937,
+                       "sessions":  1500,
+                       "tokens":  2994652164,
+                       "rank_score":  4491978246000
+                   },
+                   {
+                       "motif":  "Edit \u003e Read \u003e Edit",
+                       "n":  3,
+                       "occurrences":  4812,
+                       "sessions":  931,
+                       "tokens":  3678632091,
+                       "rank_score":  3424806476721
+                   },
+                   {
+                       "motif":  "Read \u003e Read \u003e Read",
+                       "n":  3,
+                       "occurrences":  8133,
+                       "sessions":  1622,
+                       "tokens":  1945924837,
+                       "rank_score":  3156290085614
+                   },
+                   {
+                       "motif":  "PowerShell:other \u003e PowerShell:other \u003e PowerShell:other \u003e PowerShell:other",
+                       "n":  4,
+                       "occurrences":  4367,
+                       "sessions":  669,
+                       "tokens":  4551377215,
+                       "rank_score":  3044871356835
+                   },
+                   {
+                       "motif":  "Edit \u003e Read",
+                       "n":  2,
+                       "occurrences":  6007,
+                       "sessions":  1025,
+                       "tokens":  2965607519,
+                       "rank_score":  3039747706975
+                   },
+                   {
+                       "motif":  "PowerShell:other \u003e Read",
+                       "n":  2,
+                       "occurrences":  6076,
+                       "sessions":  1085,
+                       "tokens":  2771656267,
+                       "rank_score":  3007247049695
+                   },
+                   {
+                       "motif":  "Write \u003e PowerShell:other",
+                       "n":  2,
+                       "occurrences":  5816,
+                       "sessions":  898,
+                       "tokens":  3114344793,
+                       "rank_score":  2796681624114
+                   },
+                   {
+                       "motif":  "Read \u003e Edit \u003e Edit",
+                       "n":  3,
+                       "occurrences":  3711,
+                       "sessions":  883,
+                       "tokens":  2638903714,
+                       "rank_score":  2330151979462
+                   },
+                   {
+                       "motif":  "PowerShell:other \u003e Write",
+                       "n":  2,
+                       "occurrences":  4359,
+                       "sessions":  849,
+                       "tokens":  2410292624,
+                       "rank_score":  2046338437776
+                   },
+                   {
+                       "motif":  "Edit \u003e Edit \u003e Read \u003e Edit",
+                       "n":  4,
+                       "occurrences":  2665,
+                       "sessions":  786,
+                       "tokens":  2521216384,
+                       "rank_score":  1981676077824
+                   },
+                   {
+                       "motif":  "Edit \u003e PowerShell:other",
+                       "n":  2,
+                       "occurrences":  4285,
+                       "sessions":  875,
+                       "tokens":  2247703219,
+                       "rank_score":  1966740316625
+                   },
+                   {
+                       "motif":  "Read \u003e PowerShell:other",
+                       "n":  2,
+                       "occurrences":  4374,
+                       "sessions":  1052,
+                       "tokens":  1854252707,
+                       "rank_score":  1950673847764
+                   },
+                   {
+                       "motif":  "Read \u003e Grep \u003e Read",
+                       "n":  3,
+                       "occurrences":  3406,
+                       "sessions":  1245,
+                       "tokens":  1534484483,
+                       "rank_score":  1910433181335
+                   },
+                   {
+                       "motif":  "Grep \u003e Read \u003e Read",
+                       "n":  3,
+                       "occurrences":  3608,
+                       "sessions":  1283,
+                       "tokens":  1449229236,
+                       "rank_score":  1859361109788
+                   },
+                   {
+                       "motif":  "Grep \u003e Grep \u003e Grep",
+                       "n":  3,
+                       "occurrences":  4214,
+                       "sessions":  1021,
+                       "tokens":  1789124526,
+                       "rank_score":  1826696141046
+                   },
+                   {
+                       "motif":  "Read \u003e Read \u003e Grep",
+                       "n":  3,
+                       "occurrences":  3694,
+                       "sessions":  1415,
+                       "tokens":  1288160189,
+                       "rank_score":  1822746667435
+                   },
+                   {
+                       "motif":  "Edit \u003e Edit \u003e Read",
+                       "n":  3,
+                       "occurrences":  3101,
+                       "sessions":  843,
+                       "tokens":  2114428662,
+                       "rank_score":  1782463362066
+                   },
+                   {
+                       "motif":  "Grep \u003e Grep \u003e Read",
+                       "n":  3,
+                       "occurrences":  3224,
+                       "sessions":  1166,
+                       "tokens":  1481663671,
+                       "rank_score":  1727619840386
+                   },
+                   {
+                       "motif":  "PowerShell:other \u003e Grep",
+                       "n":  2,
+                       "occurrences":  3908,
+                       "sessions":  932,
+                       "tokens":  1825904638,
+                       "rank_score":  1701743122616
+                   },
+                   {
+                       "motif":  "Edit \u003e Edit \u003e Edit",
+                       "n":  3,
+                       "occurrences":  3843,
+                       "sessions":  806,
+                       "tokens":  2084350074,
+                       "rank_score":  1679986159644
+                   },
+                   {
+                       "motif":  "Read \u003e Grep \u003e Grep",
+                       "n":  3,
+                       "occurrences":  3165,
+                       "sessions":  1209,
+                       "tokens":  1323929042,
+                       "rank_score":  1600630211778
+                   },
+                   {
+                       "motif":  "Read \u003e Write",
+                       "n":  2,
+                       "occurrences":  3157,
+                       "sessions":  1101,
+                       "tokens":  1428846418,
+                       "rank_score":  1573159906218
+                   },
+                   {
+                       "motif":  "Grep \u003e Read \u003e Grep",
+                       "n":  3,
+                       "occurrences":  2930,
+                       "sessions":  1086,
+                       "tokens":  1433053224,
+                       "rank_score":  1556295801264
+                   },
+                   {
+                       "motif":  "Read \u003e Read \u003e Read \u003e Read",
+                       "n":  4,
+                       "occurrences":  4531,
+                       "sessions":  1051,
+                       "tokens":  1279225422,
+                       "rank_score":  1344465918522
+                   },
+                   {
+                       "motif":  "Write \u003e Write",
+                       "n":  2,
+                       "occurrences":  3752,
+                       "sessions":  867,
+                       "tokens":  1476418237,
+                       "rank_score":  1280054611479
+                   },
+                   {
+                       "motif":  "PowerShell:other \u003e PowerShell:other \u003e Read",
+                       "n":  3,
+                       "occurrences":  2170,
+                       "sessions":  772,
+                       "tokens":  1592471084,
+                       "rank_score":  1229387676848
+                   },
+                   {
+                       "motif":  "PowerShell:other \u003e Write \u003e PowerShell:other",
+                       "n":  3,
+                       "occurrences":  2430,
+                       "sessions":  583,
+                       "tokens":  2022668836,
+                       "rank_score":  1179215931388
+                   },
+                   {
+                       "motif":  "PowerShell:other \u003e Edit",
+                       "n":  2,
+                       "occurrences":  2817,
+                       "sessions":  764,
+                       "tokens":  1513971755,
+                       "rank_score":  1156674420820
+                   },
+                   {
+                       "motif":  "Write \u003e PowerShell:other \u003e PowerShell:other",
+                       "n":  3,
+                       "occurrences":  1856,
+                       "sessions":  633,
+                       "tokens":  1527062984,
+                       "rank_score":  966630868872
+                   },
+                   {
+                       "motif":  "Grep \u003e PowerShell:other",
+                       "n":  2,
+                       "occurrences":  2520,
+                       "sessions":  862,
+                       "tokens":  1103922847,
+                       "rank_score":  951581494114
+                   },
+                   {
+                       "motif":  "Edit \u003e Read \u003e Edit \u003e Edit",
+                       "n":  4,
+                       "occurrences":  1715,
+                       "sessions":  568,
+                       "tokens":  1643457278,
+                       "rank_score":  933483733904
+                   },
+                   {
+                       "motif":  "Read \u003e PowerShell:other \u003e PowerShell:other",
+                       "n":  3,
+                       "occurrences":  1794,
+                       "sessions":  729,
+                       "tokens":  1166741146,
+                       "rank_score":  850554295434
+                   },
+                   {
+                       "motif":  "Grep \u003e Read \u003e Edit",
+                       "n":  3,
+                       "occurrences":  1533,
+                       "sessions":  654,
+                       "tokens":  1266305823,
+                       "rank_score":  828164008242
+                   }
+               ],
+    "proof_motifs":  [
+                         {
+                             "motif":  "PowerShell:proof \u003e PowerShell:other",
+                             "n":  2,
+                             "occurrences":  1558,
+                             "sessions":  565,
+                             "tokens":  890469079,
+                             "rank_score":  503115029635
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e PowerShell:proof",
+                             "n":  2,
+                             "occurrences":  1774,
+                             "sessions":  504,
+                             "tokens":  917470615,
+                             "rank_score":  462405189960
+                         },
+                         {
+                             "motif":  "Edit \u003e PowerShell:proof",
+                             "n":  2,
+                             "occurrences":  1648,
+                             "sessions":  484,
+                             "tokens":  847769107,
+                             "rank_score":  410320247788
+                         },
+                         {
+                             "motif":  "PowerShell:other \u003e PowerShell:proof",
+                             "n":  2,
+                             "occurrences":  1274,
+                             "sessions":  551,
+                             "tokens":  688049393,
+                             "rank_score":  379115215543
+                         },
+                         {
+                             "motif":  "Write \u003e PowerShell:proof",
+                             "n":  2,
+                             "occurrences":  1282,
+                             "sessions":  456,
+                             "tokens":  678621464,
+                             "rank_score":  309451387584
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e Write",
+                             "n":  2,
+                             "occurrences":  875,
+                             "sessions":  363,
+                             "tokens":  480926728,
+                             "rank_score":  174576402264
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e PowerShell:other \u003e PowerShell:other",
+                             "n":  3,
+                             "occurrences":  563,
+                             "sessions":  334,
+                             "tokens":  493047212,
+                             "rank_score":  164677768808
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e Read",
+                             "n":  2,
+                             "occurrences":  794,
+                             "sessions":  375,
+                             "tokens":  409384553,
+                             "rank_score":  153519207375
+                         },
+                         {
+                             "motif":  "Read \u003e Edit \u003e PowerShell:proof",
+                             "n":  3,
+                             "occurrences":  568,
+                             "sessions":  279,
+                             "tokens":  495611696,
+                             "rank_score":  138275663184
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e Edit",
+                             "n":  2,
+                             "occurrences":  698,
+                             "sessions":  344,
+                             "tokens":  359917411,
+                             "rank_score":  123811589384
+                         },
+                         {
+                             "motif":  "Edit \u003e Edit \u003e PowerShell:proof",
+                             "n":  3,
+                             "occurrences":  604,
+                             "sessions":  300,
+                             "tokens":  406626898,
+                             "rank_score":  121988069400
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e Grep",
+                             "n":  2,
+                             "occurrences":  636,
+                             "sessions":  338,
+                             "tokens":  320904381,
+                             "rank_score":  108465680778
+                         },
+                         {
+                             "motif":  "PowerShell:other \u003e PowerShell:other \u003e PowerShell:proof",
+                             "n":  3,
+                             "occurrences":  428,
+                             "sessions":  288,
+                             "tokens":  335008717,
+                             "rank_score":  96482510496
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e PowerShell:proof \u003e PowerShell:proof",
+                             "n":  3,
+                             "occurrences":  531,
+                             "sessions":  224,
+                             "tokens":  378111362,
+                             "rank_score":  84696945088
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e PowerShell:proof \u003e PowerShell:other",
+                             "n":  3,
+                             "occurrences":  371,
+                             "sessions":  236,
+                             "tokens":  313856965,
+                             "rank_score":  74070243740
+                         },
+                         {
+                             "motif":  "Edit \u003e PowerShell:proof \u003e PowerShell:proof",
+                             "n":  3,
+                             "occurrences":  380,
+                             "sessions":  220,
+                             "tokens":  305979878,
+                             "rank_score":  67315573160
+                         },
+                         {
+                             "motif":  "PowerShell:other \u003e PowerShell:proof \u003e PowerShell:other",
+                             "n":  3,
+                             "occurrences":  344,
+                             "sessions":  232,
+                             "tokens":  287861669,
+                             "rank_score":  66783907208
+                         },
+                         {
+                             "motif":  "Read \u003e PowerShell:proof",
+                             "n":  2,
+                             "occurrences":  433,
+                             "sessions":  311,
+                             "tokens":  192946955,
+                             "rank_score":  60006503005
+                         },
+                         {
+                             "motif":  "Edit \u003e Read \u003e Edit \u003e PowerShell:proof",
+                             "n":  4,
+                             "occurrences":  288,
+                             "sessions":  171,
+                             "tokens":  326249414,
+                             "rank_score":  55788649794
+                         },
+                         {
+                             "motif":  "PowerShell:proof \u003e PowerShell:other \u003e PowerShell:other \u003e PowerShell:other",
+                             "n":  4,
+                             "occurrences":  253,
+                             "sessions":  176,
+                             "tokens":  304027719,
+                             "rank_score":  53508878544
+                         }
+                     ],
+    "debt_register":  [
+                          {
+                              "debt":  "Context",
+                              "cost_tokens":  2150298188,
+                              "avoidable_tokens":  1720238550,
+                              "recurrence":  2160,
+                              "interest":  3715715268000,
+                              "fix_calls_estimate":  25,
+                              "roic":  148628610720.0,
+                              "status":  "MEASURED"
+                          },
+                          {
+                              "debt":  "Coordination",
+                              "cost_tokens":  2287121654,
+                              "avoidable_tokens":  1600985157,
+                              "recurrence":  1328,
+                              "interest":  2126108288496,
+                              "fix_calls_estimate":  15,
+                              "roic":  141740552566.4,
+                              "status":  "MEASURED"
+                          },
+                          {
+                              "debt":  "Proof",
+                              "cost_tokens":  2065437307,
+                              "avoidable_tokens":  619631192,
+                              "recurrence":  1101,
+                              "interest":  682213942392,
+                              "fix_calls_estimate":  30,
+                              "roic":  22740464746.4,
+                              "status":  "MEASURED"
+                          },
+                          {
+                              "debt":  "Recovery",
+                              "cost_tokens":  1424706287,
+                              "avoidable_tokens":  712353143,
+                              "recurrence":  1025,
+                              "interest":  730161971575,
+                              "fix_calls_estimate":  35,
+                              "roic":  20861770616.42857,
+                              "status":  "MEASURED"
+                          },
+                          {
+                              "debt":  "Token",
+                              "cost_tokens":  1216866688,
+                              "avoidable_tokens":  1216866688,
+                              "recurrence":  398,
+                              "interest":  484312941824,
+                              "fix_calls_estimate":  40,
+                              "roic":  12107823545.6,
+                              "status":  "MEASURED"
+                          },
+                          {
+                              "debt":  "Decision",
+                              "cost_tokens":  1701671231,
+                              "avoidable_tokens":  170167123,
+                              "recurrence":  1733,
+                              "interest":  294899624159,
+                              "fix_calls_estimate":  60,
+                              "roic":  4914993735.983334,
+                              "status":  "MEASURED"
+                          },
+                          {
+                              "debt":  "Research",
+                              "cost_tokens":  161735429,
+                              "avoidable_tokens":  48520628,
+                              "recurrence":  113,
+                              "interest":  5482830964,
+                              "fix_calls_estimate":  30,
+                              "roic":  182761032.13333333,
+                              "status":  "MEASURED"
+                          },
+                          {
+                              "debt":  "Owner",
+                              "cost_tokens":  null,
+                              "recurrence":  null,
+                              "interest":  null,
+                              "roic":  null,
+                              "status":  "UNKNOWN"
+                          },
+                          {
+                              "debt":  "Constitutional",
+                              "cost_tokens":  null,
+                              "recurrence":  null,
+                              "interest":  null,
+                              "roic":  null,
+                              "status":  "UNKNOWN"
+                          }
+                      ],
+    "roic_ranking":  [
+                         "Context",
+                         "Coordination",
+                         "Proof",
+                         "Recovery",
+                         "Token",
+                         "Decision",
+                         "Research",
+                         "Owner",
+                         "Constitutional"
+                     ],
+    "frontier":  [
+                     {
+                         "item":  "NOVELTY",
+                         "tokens":  3610560667,
+                         "reopen":  "reopen when a generator/template covers \u003e=30 % of new files in a programme"
+                     },
+                     {
+                         "item":  "IMPLEMENT",
+                         "tokens":  4983901064,
+                         "reopen":  "irreducible: the edit is the product; reopen only if edits repeat verbatim across sessions"
+                     },
+                     {
+                         "item":  "PLAN",
+                         "tokens":  1701671231,
+                         "reopen":  "reopen when plan text repeats across sessions (cache as compiled unit)"
+                     },
+                     {
+                         "item":  "READ",
+                         "tokens":  11214960727,
+                         "reopen":  "reopen when the same path set is read in \u003e=3 sessions of one programme (precompute digest)"
+                     },
+                     {
+                         "item":  "Owner",
+                         "tokens":  null,
+                         "reopen":  "UNKNOWN: transcripts do not carry Owner waits; reopen with a pane-wait ledger"
+                     },
+                     {
+                         "item":  "Constitutional",
+                         "tokens":  null,
+                         "reopen":  "UNKNOWN: reopen when rule-citation events are logged per call"
+                     }
+                 ],
+    "exit_to_determinism":  [
+                                {
+                                    "motif":  "PowerShell:other \u003e PowerShell:other",
+                                    "note":  "candidate: check for a pure function of the previous result"
+                                },
+                                {
+                                    "motif":  "Read \u003e Read",
+                                    "note":  "deterministic: batch the reads / return a digest"
+                                },
+                                {
+                                    "motif":  "Read \u003e Edit",
+                                    "note":  "deterministic: batch the reads / return a digest"
+                                },
+                                {
+                                    "motif":  "Grep \u003e Read",
+                                    "note":  "candidate: check for a pure function of the previous result"
+                                },
+                                {
+                                    "motif":  "PowerShell:other \u003e PowerShell:other \u003e PowerShell:other",
+                                    "note":  "candidate: check for a pure function of the previous result"
+                                },
+                                {
+                                    "motif":  "Edit \u003e Edit",
+                                    "note":  "candidate: check for a pure function of the previous result"
+                                },
+                                {
+                                    "motif":  "Read \u003e Grep",
+                                    "note":  "deterministic: batch the reads / return a digest"
+                                },
+                                {
+                                    "motif":  "Grep \u003e Grep",
+                                    "note":  "candidate: check for a pure function of the previous result"
+                                },
+                                {
+                                    "motif":  "Edit \u003e Read \u003e Edit",
+                                    "note":  "candidate: check for a pure function of the previous result"
+                                },
+                                {
+                                    "motif":  "Read \u003e Read \u003e Read",
+                                    "note":  "deterministic: batch the reads / return a digest"
+                                }
+                            ],
+    "unproductive":  {
+                         "calls":  18115,
+                         "tokens":  3918307750,
+                         "by_cause":  {
+                                          "CONTEXT_FAULT":  {
+                                                                "calls":  5792,
+                                                                "tokens":  891131957
+                                                            },
+                                          "REREAD":  {
+                                                         "calls":  5209,
+                                                         "tokens":  1259166231
+                                                     },
+                                          "RECOVERY":  {
+                                                           "calls":  2045,
+                                                           "tokens":  551142874
+                                                       },
+                                          "NO_PROGRESS_RUN:READ":  {
+                                                                       "calls":  2705,
+                                                                       "tokens":  619092226
+                                                                   },
+                                          "NO_PROGRESS_RUN:PROOF":  {
+                                                                        "calls":  88,
+                                                                        "tokens":  20949233
+                                                                    },
+                                          "NO_PROGRESS_RUN:unattributed":  {
+                                                                               "calls":  1948,
+                                                                               "tokens":  500405133
+                                                                           },
+                                          "NO_PROGRESS_RUN:CONTROL":  {
+                                                                          "calls":  184,
+                                                                          "tokens":  47201912
+                                                                      },
+                                          "NO_PROGRESS_RUN:PLAN":  {
+                                                                       "calls":  67,
+                                                                       "tokens":  13461807
+                                                                   },
+                                          "NO_PROGRESS_RUN:STATUS":  {
+                                                                         "calls":  24,
+                                                                         "tokens":  5480827
+                                                                     },
+                                          "NO_PROGRESS_RUN:RESEARCH":  {
+                                                                           "calls":  53,
+                                                                           "tokens":  10275550
+                                                                       }
+                                      }
+                     }
+}
