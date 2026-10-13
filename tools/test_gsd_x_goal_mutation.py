@@ -115,7 +115,8 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "an old-revision obligation must be carried before it is re-proven",
         "V-CONV-REVISION-NEEDS-CARRY"),
     "closure-tree-ignored": (
-        CONV, '            if v.get("tree_hash") != tree_hash:', "            if False:",
+        CONV, '            if o.identifier not in inherited and not tree_equal(v.get("tree_hash"), tree_hash):',
+        "            if False:",
         "evidence about another tree must not close this one", "V-CONV-CLOSE-AT-OTHER-TREE"),
     "open-epoch-ignored": (
         CONV, "    for ep in open_epochs or []:", "    for ep in []:",
@@ -311,7 +312,7 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "retiring an obligation without a reason must be refused",
         "V-CONV-OB-DISPOSITION-NEEDS-REASON"),
     "proof-elsewhere-is-not-open-work": (
-        RECON, "    open_obs = [o for o in cv.obligations.values() if _needs_a_gate_here(o, ctx)]",
+        RECON, "    open_obs = [o for o in cv.obligations.values() if _needs_a_gate_here(o, ctx, inh)]",
         "    open_obs = list(accepted)",
         "an obligation proven at another tree must have its gate re-run here",
         "V-RC-REGATE-AFTER-TREE-MOVES"),

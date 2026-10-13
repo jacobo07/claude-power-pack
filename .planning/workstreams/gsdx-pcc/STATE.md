@@ -25,7 +25,10 @@ stopped_at: Phase 4 complete (verification passed, 04-VERIFICATION.md); ready to
 **Current Phase:** 5 -- W4 Judge VALIDATE vs REPLAY (Phase 4 complete 2026-10-13, see `phases/04-w3-candidate-snapshots-invalidation-proof-inheritance/04-VERIFICATION.md`)
 **Last Activity:** 2026-10-13
 
-## OWNER DECISION NEEDED (WU-P4, unattended; the worker continued)
+## RESOLVED 2026-10-13 (coordinator, option a): WU-P4 mutation-suite decision
+
+- **Result (Linux plane, GEX44, dc590090):** first run `GSDX_GOAL_MUTATIONS_CAUGHT=56/58`. Two drills were INVALID (`ANCHOR NOT FOUND`), not survivors: `closure-tree-ignored` and `proof-elsewhere-is-not-open-work`. Their anchors no longer matched, because Phase 4 edited `convergence.py:363` and `reconcile.py:210` for inheritance. Both were re-anchored to the current predicate, with the same mutant. Re-run `58/58`, rc=0, 68 s; the two drills were CAUGHT by `V-CONV-CLOSE-AT-OTHER-TREE` and `V-RC-REGATE-AFTER-TREE-MOVES`. Log: `phases/04-*/logs/04-mutation-gex44.log`.
+- Original entry, kept for the record:
 
 - **Question:** where and when is `tools/test_gsd_x_goal_mutation.py` run for Phase 4? It mutates LIVE files, hit a 270 s timeout on the laptop, and its kill left `judge.py` mutated (restored by `git checkout`, diff empty).
   **Options:** (a) coordinator runs it on the Linux plane (GEX44) at the Phase 4 head and labels the result "Linux plane"; (b) defer it to Phase 6's entry obligation (R11, isolated-copy incumbent measurement); (c) run it on the laptop in an isolated copy with a longer timeout.

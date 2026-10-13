@@ -1,0 +1,129 @@
+# tools/test_gsd_x_goal_mutation.py -- Linux plane (GEX44, python3), clone at dc590090
+# run 1: dc590090 as committed
+restored (sha256, 15 file(s)): True
+
+  CAUGHT  link-becomes-overwrite by V-GOAL-CAS-PUBLISH-ONCE
+  CAUGHT  digest-unchecked by V-GOAL-LOG-CHAIN
+  CAUGHT  permission-is-a-win by V-GOAL-CAS-PERMISSION
+  CAUGHT  budget-moves-revision by V-GOAL-REV-BUDGET-NEUTRAL
+  CAUGHT  store-ignores-binding by V-GOAL-SINGLE-OWNER
+  CAUGHT  unknown-plane-passes by V-CONV-UNKNOWN-BLOCKS
+  CAUGHT  reality-accepts-unit-test by V-CONV-REALITY-NEEDS-RUNTIME
+  CAUGHT  verdict-revision-ignored by V-CONV-VERDICT-REVISION
+  CAUGHT  gate-pin-ignored by V-CONV-GATE-PIN
+  CAUGHT  obligation-revision-ignored by V-CONV-REVISION-NEEDS-CARRY
+  INVALID   closure-tree-ignored: ANCHOR NOT FOUND -- drill invalid, not a verdict
+  CAUGHT  open-epoch-ignored by V-CONV-OPEN-EPOCH
+  CAUGHT  failure-ignored by V-CONV-FAILURE-BLOCKS
+  CAUGHT  carry-keeps-old-proof by V-CONV-REVISION-CARRIED
+  CAUGHT  retry-key-ignored by V-EP-NO-BLIND-RETRY
+  CAUGHT  recover-redispatches by V-EP-RECOVER-LOST
+  CAUGHT  receipt-duplicate-allowed by V-EP-RECEIPT-DUPLICATE
+  CAUGHT  receipt-revision-ignored by V-EP-RECEIPT-STALE-REVISION
+  CAUGHT  scope-hash-whole-tree by V-EP-SCOPE-IGNORES-OUTSIDE
+  CAUGHT  provider-bound-unchecked by V-EP-PROVIDER-BOUND
+  CAUGHT  cancelled-gate-gets-a-verdict by V-GATE-CANCELLED-NO-VERDICT
+  CAUGHT  gate-class-inferred by V-GATE-CLASS-DECLARED
+  CAUGHT  dirty-tree-reads-as-commit by V-GATE-TREE-DIRTY
+  CAUGHT  halted-kind-collapsed by V-LR-HALTED-MISSION
+  CAUGHT  no-rows-is-lost by V-LR-NO-ROWS-UNKNOWN
+  CAUGHT  longrun-emits-verdict by V-LR-HARVEST-NO-VERDICT
+  CAUGHT  codex-ignores-kill-switch by V-CX-KILL-FLAG
+  CAUGHT  codex-ignores-daily-cap by V-CX-BUDGET-STOPS
+  CAUGHT  codex-ignores-lock by V-CX-LOCK
+  CAUGHT  codex-ignores-rate-limit by V-CX-RATELIMIT-TRIPS-COOLDOWN
+  CAUGHT  codex-emits-verdict by V-CX-NO-VERDICT
+  CAUGHT  headless-cap-ignored by V-CLH-CAP
+  CAUGHT  headless-runs-anywhere by V-CLH-WORKTREE-ONLY
+  CAUGHT  interactive-expiry-is-lost by V-CLI-EXPIRES
+  CAUGHT  brief-drops-boundaries by V-BRIEF-BOUNDARIES
+  CAUGHT  converges-without-judge by V-RC-CLOSURE-NEEDS-JUDGE
+  CAUGHT  empty-queue-converges by V-RC-EMPTY-QUEUE-IS-NOT-SUCCESS
+  CAUGHT  unknown-observation-ends-epoch by V-RC-UNKNOWN-IS-NOT-AN-ENDING
+  CAUGHT  budget-start-truthiness by V-RC-TIME-BUDGET
+  CAUGHT  judge-ignores-pins by V-JUDGE-REFUSES-RIGGED-GATE
+  CAUGHT  judge-runs-inside-epoch by V-JUDGE-REFUSES-INSIDE-EPOCH
+  CAUGHT  judge-ignores-tree by V-JUDGE-WRONG-TREE
+  CAUGHT  judge-nothing-is-pass by V-JUDGE-NOTHING-IS-NOT-PASS
+  CAUGHT  sweep-acts-without-record by V-SWEEP-REFUSES-WITHOUT-RECORD
+  CAUGHT  sweep-accepts-stale-record by V-SWEEP-REFUSES-STALE-RECORD
+  CAUGHT  sweep-accepts-other-engine by V-ENGINE-VERDICT-REFUSES-OTHER-ENGINE
+  CAUGHT  sweep-ignores-engine by V-ENGINE-VERDICT-SURVIVES-UNRELATED-COMMIT
+  CAUGHT  observed-mission-can-be-cancelled by V-BIND-CANCEL-REFUSED
+  CAUGHT  sweep-observes-gates-only by V-BIND-SWEEP-HARVESTS-ENDED
+  CAUGHT  sweep-runs-every-goal by V-SWEEP-SKIPS-MANUAL-GOALS
+  CAUGHT  retired-obligation-covers-its-plane by V-CONV-RETIRED-IS-NOT-COVERAGE
+  CAUGHT  obligation-may-be-declared-satisfied by V-CONV-OB-DISPOSITION-NOT-SATISFIED
+  CAUGHT  retire-needs-no-reason by V-CONV-OB-DISPOSITION-NEEDS-REASON
+  INVALID   proof-elsewhere-is-not-open-work: ANCHOR NOT FOUND -- drill invalid, not a verdict
+  CAUGHT  converged-is-unreachable by V-CLI-CONVERGED-IS-REACHABLE
+  CAUGHT  receipt-from-any-tree-certifies by V-JUDGE-RECEIPT-IS-NOT-READ-AT-ANOTHER-TREE
+  CAUGHT  cli-cannot-observe-its-own-gates by V-CLI-CLOSURE-CLEARS
+  CAUGHT  regate-becomes-code-work by V-RC-REGATE-IS-NOT-CODE-WORK
+
+GSDX_GOAL_MUTATIONS_CAUGHT=56/58  threshold=58/58
+rc=2 secs=67
+
+# run 2: dc590090 + re-anchored closure-tree-ignored / proof-elsewhere-is-not-open-work (this commit)
+restored (sha256, 15 file(s)): True
+
+  CAUGHT  link-becomes-overwrite by V-GOAL-CAS-PUBLISH-ONCE
+  CAUGHT  digest-unchecked by V-GOAL-LOG-CHAIN
+  CAUGHT  permission-is-a-win by V-GOAL-CAS-PERMISSION
+  CAUGHT  budget-moves-revision by V-GOAL-REV-BUDGET-NEUTRAL
+  CAUGHT  store-ignores-binding by V-GOAL-SINGLE-OWNER
+  CAUGHT  unknown-plane-passes by V-CONV-UNKNOWN-BLOCKS
+  CAUGHT  reality-accepts-unit-test by V-CONV-REALITY-NEEDS-RUNTIME
+  CAUGHT  verdict-revision-ignored by V-CONV-VERDICT-REVISION
+  CAUGHT  gate-pin-ignored by V-CONV-GATE-PIN
+  CAUGHT  obligation-revision-ignored by V-CONV-REVISION-NEEDS-CARRY
+  CAUGHT  closure-tree-ignored by V-CONV-CLOSE-AT-OTHER-TREE
+  CAUGHT  open-epoch-ignored by V-CONV-OPEN-EPOCH
+  CAUGHT  failure-ignored by V-CONV-FAILURE-BLOCKS
+  CAUGHT  carry-keeps-old-proof by V-CONV-REVISION-CARRIED
+  CAUGHT  retry-key-ignored by V-EP-NO-BLIND-RETRY
+  CAUGHT  recover-redispatches by V-EP-RECOVER-LOST
+  CAUGHT  receipt-duplicate-allowed by V-EP-RECEIPT-DUPLICATE
+  CAUGHT  receipt-revision-ignored by V-EP-RECEIPT-STALE-REVISION
+  CAUGHT  scope-hash-whole-tree by V-EP-SCOPE-IGNORES-OUTSIDE
+  CAUGHT  provider-bound-unchecked by V-EP-PROVIDER-BOUND
+  CAUGHT  cancelled-gate-gets-a-verdict by V-GATE-CANCELLED-NO-VERDICT
+  CAUGHT  gate-class-inferred by V-GATE-CLASS-DECLARED
+  CAUGHT  dirty-tree-reads-as-commit by V-GATE-TREE-DIRTY
+  CAUGHT  halted-kind-collapsed by V-LR-HALTED-MISSION
+  CAUGHT  no-rows-is-lost by V-LR-NO-ROWS-UNKNOWN
+  CAUGHT  longrun-emits-verdict by V-LR-HARVEST-NO-VERDICT
+  CAUGHT  codex-ignores-kill-switch by V-CX-KILL-FLAG
+  CAUGHT  codex-ignores-daily-cap by V-CX-BUDGET-STOPS
+  CAUGHT  codex-ignores-lock by V-CX-LOCK
+  CAUGHT  codex-ignores-rate-limit by V-CX-RATELIMIT-TRIPS-COOLDOWN
+  CAUGHT  codex-emits-verdict by V-CX-NO-VERDICT
+  CAUGHT  headless-cap-ignored by V-CLH-CAP
+  CAUGHT  headless-runs-anywhere by V-CLH-WORKTREE-ONLY
+  CAUGHT  interactive-expiry-is-lost by V-CLI-EXPIRES
+  CAUGHT  brief-drops-boundaries by V-BRIEF-BOUNDARIES
+  CAUGHT  converges-without-judge by V-RC-CLOSURE-NEEDS-JUDGE
+  CAUGHT  empty-queue-converges by V-RC-EMPTY-QUEUE-IS-NOT-SUCCESS
+  CAUGHT  unknown-observation-ends-epoch by V-RC-UNKNOWN-IS-NOT-AN-ENDING
+  CAUGHT  budget-start-truthiness by V-RC-TIME-BUDGET
+  CAUGHT  judge-ignores-pins by V-JUDGE-REFUSES-RIGGED-GATE
+  CAUGHT  judge-runs-inside-epoch by V-JUDGE-REFUSES-INSIDE-EPOCH
+  CAUGHT  judge-ignores-tree by V-JUDGE-WRONG-TREE
+  CAUGHT  judge-nothing-is-pass by V-JUDGE-NOTHING-IS-NOT-PASS
+  CAUGHT  sweep-acts-without-record by V-SWEEP-REFUSES-WITHOUT-RECORD
+  CAUGHT  sweep-accepts-stale-record by V-SWEEP-REFUSES-STALE-RECORD
+  CAUGHT  sweep-accepts-other-engine by V-ENGINE-VERDICT-REFUSES-OTHER-ENGINE
+  CAUGHT  sweep-ignores-engine by V-ENGINE-VERDICT-SURVIVES-UNRELATED-COMMIT
+  CAUGHT  observed-mission-can-be-cancelled by V-BIND-CANCEL-REFUSED
+  CAUGHT  sweep-observes-gates-only by V-BIND-SWEEP-HARVESTS-ENDED
+  CAUGHT  sweep-runs-every-goal by V-SWEEP-SKIPS-MANUAL-GOALS
+  CAUGHT  retired-obligation-covers-its-plane by V-CONV-RETIRED-IS-NOT-COVERAGE
+  CAUGHT  obligation-may-be-declared-satisfied by V-CONV-OB-DISPOSITION-NOT-SATISFIED
+  CAUGHT  retire-needs-no-reason by V-CONV-OB-DISPOSITION-NEEDS-REASON
+  CAUGHT  proof-elsewhere-is-not-open-work by V-RC-REGATE-AFTER-TREE-MOVES
+  CAUGHT  converged-is-unreachable by V-CLI-CONVERGED-IS-REACHABLE
+  CAUGHT  receipt-from-any-tree-certifies by V-JUDGE-RECEIPT-IS-NOT-READ-AT-ANOTHER-TREE
+  CAUGHT  cli-cannot-observe-its-own-gates by V-CLI-CLOSURE-CLEARS
+  CAUGHT  regate-becomes-code-work by V-RC-REGATE-IS-NOT-CODE-WORK
+
+GSDX_GOAL_MUTATIONS_CAUGHT=58/58  threshold=58/58
