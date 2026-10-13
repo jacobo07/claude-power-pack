@@ -354,6 +354,26 @@ def _():
     assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
 
 
+@_gate("V-LEASE-CORRECT-UNWINDS-BOOKING-LEASE")
+def _():
+    led, _s = _ledger()
+    led.declare_cap(4 * M, "t")
+    led.set_programme(20 * M, "t", inside_agent=False)
+    led.settle_stopped("a", 3 * M, "t")                          # booked into L1
+    assert _rows(led, "settle")[-1]["lease"] == "L1"
+    assert led.lease_open("s1", 4 * M, prev_lease="L1")["ok"]
+    led.settle_stopped("b", M, "t")                              # booked into L2
+    led.correct("a", 2 * M, "misbooked", "t")
+    g = led._gfold(led._read())
+    a, b = g["leases"]
+    assert (a["settled"], b["settled"]) == (2 * M, M), (a["settled"], b["settled"])
+    assert g["marks"]["a"] == 2 * M and g["total_used"] == 3 * M and g["used"] == M, g
+    # an old settle row without "lease" folds into the lease current when it was written
+    for r in (rows := led._read()):
+        r.pop("lease", None)
+    assert [x["settled"] for x in led._gfold(rows)["leases"]] == [2 * M, M]
+
+
 if __name__ == "__main__":
     mp.freeze_support()
     _run_gates()
