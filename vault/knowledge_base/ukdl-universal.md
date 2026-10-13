@@ -492,6 +492,16 @@ QUESTION, then judge the answer against that. The identical text is an
 excellent methodology answer and a failed case-data answer. A single quality
 score cannot express the difference and will systematically mis-rank both.
 
+### PR-CONTROL-PERTURBS-THE-SIGNAL-001
+
+A negative control must perturb the causal signal the claim depends on. A control that preserves the scoring
+function's sufficient statistic cannot falsify the claim built on it: a degree-preserving shuffle cannot validate
+a degree-derived ranking (D28 D4, `V-D4-RED-FALLS`: real 6.67 inside the shuffled range). Before trusting a
+randomisation control, name the score's statistic and the control's invariants; if they overlap, test the claim's
+consequence by intervention instead, and record the red as an instrument limit, never a pass. Refines
+PR-CONTROL-REACTIVE-001. Trap: T-DEGREE-PRESERVING-SHUFFLE-001. Detail:
+`~/.claude/knowledge_vault/core/BL-2026-10-13-a-control-that-preserves-the-score-cannot-falsify-it.md`.
+
 ### PR-GAP-AND-CONTENT-ARE-ORTHOGONAL-001
 
 Whether a source can satisfy a question is a fact about the QUESTION. Whether
