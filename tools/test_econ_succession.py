@@ -333,6 +333,104 @@ def _():
     assert out.get("decision") == "block" and len(h.receipts()) == 1, out
 
 
+# --- S4: the receipt-gated succession transaction ---------------------------------------------------------
+class Crash(Exception):
+    pass
+
+
+class Tx:
+    """An approved packet plus an injectable launcher that records every launch."""
+
+    def __init__(self):
+        self.e = Env()
+        self.e.show_packet()
+        self.e.owner("approve everything")
+        assert self.e.receipt()["issued"]
+        self.launches: list = []
+
+    def launcher(self, goal, lease, continuation, key):
+        self.launches.append((goal, lease, key))
+        return {"ok": True, "key": key}
+
+    def run(self, after=None, **kw):
+        from modules.provider_routing import succession as sx
+        return sx.run(self.e.packet, "ga", self.e.factory(), self.launcher, "pred-sid", root=self.e.root,
+                      after_step=after, **kw)
+
+    def crash_at(self, step):
+        def hook(s):
+            if s == step:
+                raise Crash(s)
+        return hook
+
+    def leases(self):
+        return self.e.ledger("ga")._gfold(self.e.ledger("ga")._read())["leases"]
+
+
+@gate("V-SUCC-TX-FULL")
+def _():
+    t = Tx()
+    r = t.run()
+    ls = t.leases()
+    assert r["ok"] and r["state"] == "RELEASED", r
+    assert [x["id"] for x in ls] == ["L1", "L2"] and ls[0]["closed"] and not ls[1]["closed"], ls
+    assert ls[1]["succession_id"] == t.e.receipts()[0]["id"], ls
+    assert len(t.launches) == 1 and t.launches[0][1] == "L2", t.launches
+    assert "pred-sid" in t.e.ledger("ga")._gfold(t.e.ledger("ga")._read())["tombs"]
+    cont = json.loads((t.e.root / "succession" / t.e.receipts()[0]["id"] / "continuation.json").read_text("utf-8"))
+    assert cont["goal"] == "ga" and cont["lease"] == "L2", cont
+
+
+@gate("V-SUCC-TX-CRASH-REPLAY")
+def _():
+    from modules.provider_routing import succession as sx
+    for step in sx.STEPS[:-1]:
+        t = Tx()
+        try:
+            t.run(after=t.crash_at(step))
+            raise AssertionError(f"crash hook did not fire at {step}")
+        except Crash:
+            pass
+        r = t.run()                                                     # rerun replays from the journal
+        ls = t.leases()
+        assert r["ok"] and r["state"] == "RELEASED", (step, r)
+        assert [x["id"] for x in ls] == ["L1", "L2"] and ls[0]["closed"] and not ls[1]["closed"], (step, ls)
+        assert len(t.launches) == 1, (step, t.launches)                 # one L2, one successor, whatever the crash
+
+
+@gate("V-SUCC-TX-DUPLICATE")
+def _():
+    t = Tx()
+    a, b = t.run(), t.run()
+    assert a["state"] == b["state"] == "RELEASED" and len(t.leases()) == 2 and len(t.launches) == 1, (a, b)
+
+
+@gate("V-SUCC-TX-REFUSES-WITHOUT-RECEIPT-OR-AFTER-REVOKE")
+def _():
+    from modules.provider_routing import succession as sx
+    e = Env()
+    e.show_packet()                                                     # displayed, never approved: no receipt
+    launches: list = []
+    r = sx.run(e.packet, "ga", e.factory(), lambda *a: launches.append(a), "pred-sid", root=e.root)
+    assert not r["ok"] and r["state"] == "REJECTED" and launches == [] and len(e.ledger("ga")._gfold(
+        e.ledger("ga")._read())["leases"]) == 1, r
+    t = Tx()
+    assert ca.invalidate(t.e.packet, "ga", "stale", root=t.e.root)["ok"]
+    r = t.run()
+    assert not r["ok"] and t.launches == [] and len(t.leases()) == 1, r  # control above: the approved packet ran
+
+
+@gate("V-SUCC-TX-LAUNCH-FAILURE-IS-FAILED-SAFE")
+def _():
+    t = Tx()
+    t.launcher = lambda goal, lease, continuation, key: {"ok": False, "reason": "no slot"}
+    r = t.run()
+    assert not r["ok"] and r["state"] == "FAILED_SAFE" and "no slot" in r["reason"], r
+    t.launcher = Tx.launcher.__get__(t)                                 # control: a later rerun launches once
+    r = t.run()
+    assert r["ok"] and r["state"] == "RELEASED" and len(t.launches) == 1 and len(t.leases()) == 2, r
+
+
 def main() -> int:
     for name, fn in GATES:
         try:

@@ -126,6 +126,9 @@ interactive = `entrypoint=='cli'` AND `sessionKind` absent, read from the approv
 UserPromptSubmit event itself carries only session_id/transcript_path/prompt/cwd/permission_mode, so the discriminator is read from
 the transcript, never from the event). Absent field on every entry of the session = unknown = not interactive. Gate: V-SUCC-HEADLESS-FORGERY.
 
+### 5.2 S4 vs 3c98097b (decided WU-OC1b, 2026-10-13)
+S4 EXTENDS 3c98097b: succession.py opens L2 only through GoalLedger.lease_open (shared _open_locked: one CAS, one idempotency key = receipt id, one envelope check) and never duplicates _auto_succeed; the auto path is policy-only, S4 is receipt-gated and raises the programme first.
+
 ## 6. Workstreams and mode
 
 | ws | content | mode |
