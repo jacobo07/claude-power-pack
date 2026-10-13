@@ -170,11 +170,11 @@ check("V-APR2-CLASSES", (rc(c1), rc(c2), rc(c3)) == ("UNCLOSED_RECEIPT", "NO_REC
 # 11. try_seal for APR-3
 d, p, _ = setup("tryseal")
 (d / "R-A.md").write_text("# A\nno status\n", encoding="utf-8")
-r = gc.try_seal(d / "WU-A.md", missions=[mission(d, "A", "HALTED")], runner=Runner(), git=git())
+r = gc.try_seal(d / "WU-A.md", missions=[mission(d, "A", "HALTED")], programs_dir=TMP, runner=Runner(), git=git())
 check("V-APR2-TRY-SEAL", r["sealed"] is True and Path(r["seal"]).exists(), json.dumps(r)[:120])
 d, p, _ = setup("tryseal-fail")
 (d / "R-A.md").write_text("# A\nno status\n", encoding="utf-8")
-r = gc.try_seal(d / "WU-A.md", missions=[mission(d, "A", "HALTED")], runner=Runner(1, "no"), git=git())
+r = gc.try_seal(d / "WU-A.md", missions=[mission(d, "A", "HALTED")], programs_dir=TMP, runner=Runner(1, "no"), git=git())
 check("V-APR2-TRY-SEAL-FAILS-CLOSED", r["sealed"] is False, json.dumps(r)[:120])
 
 # 12. real subprocess runner: timeout is awaited (no leak) and a real passing gate passes

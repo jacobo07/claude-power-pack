@@ -60,6 +60,8 @@ RESIDUAL = ".residual.md"
 def _klass(ms: list, status, ref) -> str:
     if ref is not None:
         return "FALSE_DONE"
+    if status and HUMAN_MARK in str(status):
+        return "HUMAN_GATE"
     if status in NOT_CLOSED and status is not None:
         return "UNCLOSED_RECEIPT"
     latest = max(ms, key=lambda m: float(m.get("created_at") or 0))
@@ -80,6 +82,8 @@ def _residual(chain: dict, u: dict, ms: list[dict], by_packet: dict, status=None
         base["evidence"] = u["receipt"] + REFUSAL
     elif _current(u, SEAL) is not None:
         base["evidence"] = u["receipt"] + SEAL
+    if klass == "HUMAN_GATE":     # the worker asked a human: never re-armed as a stopped worker; re-judged every tick
+        return {"action": "human_gate", **base, "why": f"receipt {status}: a human decides", "evidence": [u["receipt"]]}
     if cap <= 0:
         return {"action": "stopped_without_done", **base, "reason": "max_residuals 0: the Owner arms a residual"}
     if n >= cap:
@@ -108,6 +112,9 @@ def _residual(chain: dict, u: dict, ms: list[dict], by_packet: dict, status=None
 
 # ---- APR-2: machine seal, false-DONE refusal, residual classes -------------------------------------------------
 SEAL, REFUSAL, GATE = ".seal.json", ".refusal.json", ".gate.json"
+INFRA = "gate could not start: "          # a gate that cannot start is the machine's fault, never the worker's verdict
+SEALABLE = {None, "UNREADABLE", "STUB"}   # PARTIAL / IN_PROGRESS are the worker's explicit "not done"
+HUMAN_MARK = "HUMAN"                      # BLOCKED_HUMAN and any other human-gate status
 
 
 def _sha(path) -> str | None:
@@ -126,7 +133,9 @@ def _jload(path) -> dict | None:
 
 
 def _wr(path, obj) -> None:
-    Path(path).write_text(json.dumps(obj, indent=1), encoding="utf-8")
+    """Seal / refusal / gate facts: tmp + fsync + os.replace through the one atomic writer (gsd_mission._write)."""
+    import gsd_mission as _gm  # noqa: E402 -- same tools dir; lazy because gsd_mission imports this module lazily too
+    _gm._write(Path(path), obj)
 
 
 def _current(u: dict, kind: str) -> dict | None:
@@ -143,7 +152,7 @@ def _run_gate(argv, cwd, timeout) -> tuple:
     except subprocess.TimeoutExpired:
         return -1, "gate timeout"
     except OSError as e:
-        return -1, f"gate could not start: {e}"[:400]
+        return -1, f"{INFRA}{e}"[:400]
 
 
 _WIN_GIT = r"C:\Program Files\Git\cmd\git.exe"
@@ -206,7 +215,7 @@ def finalize_unit(chain: dict, u: dict, ms: list, runner=None, git=None, force: 
         if not ms and status is None:
             return None
     done_claim = status in set(u.get("accept") or ["DONE"])
-    if not (status in NOT_CLOSED or done_claim):
+    if not (status in SEALABLE or done_claim):
         return None           # an explicit BLOCKED_HUMAN / FAILED is the worker's verdict; nothing to seal or refuse
     cwd = acc.get("cwd") or u.get("cwd") or chain["root"]
     gitf = git or (lambda *a: _git(cwd, *a))
@@ -236,12 +245,14 @@ def finalize_unit(chain: dict, u: dict, ms: list, runner=None, git=None, force: 
             reason = "no commit since the unit started"
         elif not (acc.get("gates") or acc.get("files") or acc.get("require_commit")):
             reason = "acceptance declares no check"      # an empty contract proves nothing: never seal on it
+        if any(str(g["tail"]).startswith(INFRA) for g in gates):    # no verdict, nothing cached: retried next tick
+            return {"unit": u["id"], "finalized": "infra", "reason": next(g["tail"] for g in gates if g["tail"].startswith(INFRA))[:200]}
         passed = not reason
         _wr(receipt + GATE, {"sha": sha, "head": head, "passed": passed, "gates": gates, "commits": commits,
                              "reason": reason})
     rec = {"unit": u["id"], "sealed_by": "gsdx_chain.finalize", "receipt_status": status, "receipt_sha256": sha,
            "gates": gates, "commits": commits, "head": head, "at": time.time()}
-    if passed and status in NOT_CLOSED:
+    if passed and status in SEALABLE:
         if _current(u, SEAL) is None:
             _wr(receipt + SEAL, {**rec, "verdict": "DONE"})
             return {"unit": u["id"], "finalized": "sealed"}
@@ -253,10 +264,10 @@ def finalize_unit(chain: dict, u: dict, ms: list, runner=None, git=None, force: 
         old = _jload(receipt + REFUSAL)
         fp = _fingerprint(gates, reason)
         fps = list((old or {}).get("fingerprints") or [])
-        if old is None or old.get("receipt_sha256") != sha or old.get("head") != head:
+        if old is None or old.get("receipt_sha256") != sha:      # one fingerprint per attempt (receipt), not per HEAD
             fps.append(fp)
         ref = {**rec, "verdict": "FALSE_DONE", "reason": reason, "fingerprint": fp, "fingerprints": fps}
-        if ran or old is None:
+        if ran or old is None or old.get("receipt_sha256") != sha:
             _wr(receipt + REFUSAL, ref)
         Path(receipt + SEAL).unlink(missing_ok=True)
         if ms:
@@ -265,7 +276,16 @@ def finalize_unit(chain: dict, u: dict, ms: list, runner=None, git=None, force: 
     return None
 
 
-def finalize(chain: dict, missions: list, runner=None, git=None) -> list:
+def _goal_lock(chain: dict, lock_s: float):
+    """The ONE per-goal lock: tick, finalize and try_seal all queue on it (woz F3)."""
+    sys.path.insert(0, str(ROOT))
+    from modules.lease.store import Exclusive  # noqa: E402
+    lockdir = _state_dir()
+    lockdir.mkdir(parents=True, exist_ok=True)
+    return Exclusive(lockdir / f"gsdx-chain-{chain['goal']}.lock", lock_s)
+
+
+def _finalize_all(chain: dict, missions: list, runner=None, git=None) -> list:
     bp = _by_packet(missions)
     out = []
     for u in chain["units"]:
@@ -278,46 +298,55 @@ def finalize(chain: dict, missions: list, runner=None, git=None) -> list:
     return out
 
 
-def try_seal(packet, missions=None, runner=None, git=None) -> dict:
-    """For APR-3: finalize the one unit that owns `packet` (found via chain*.json beside it) before a halt-continue."""
+def finalize(chain: dict, missions: list, runner=None, git=None, held: bool = False, lock_s: float = 5.0) -> list:
+    """Finalize every unit with acceptance. `held=True` when the caller (tick) already owns the per-goal lock."""
+    if held:
+        return _finalize_all(chain, missions, runner, git)
+    with _goal_lock(chain, lock_s):
+        return _finalize_all(chain, missions, runner, git)
+
+
+def try_seal(packet, missions=None, runner=None, git=None, programs_dir=None, lock_s: float = 30.0) -> dict:
+    """For APR-3: finalize the one unit that owns `packet` before a halt-continue. The chain is found by the one owner
+    rule (discover_chains) and the unit is finalized under the same per-goal lock as tick."""
     pk = str(packet)
     pk = pk[:-len(RESIDUAL)] if pk.endswith(RESIDUAL) else pk
-    for cp in sorted(Path(pk).resolve().parent.glob("chain*.json")):
+    for cp in discover_chains(pk, programs_dir):
+        if isinstance(cp, tuple):
+            continue
         chain = _jload(cp)
         u = next((x for x in (chain or {}).get("units", []) if _norm(x.get("packet", "")) == _norm(pk)), None)
         if u is None:
             continue
         if not u.get("acceptance"):
             return {"sealed": False, "unit": u["id"], "reason": "no acceptance block"}
-        if missions is None:
-            missions = _live_state(chain["goal"])[0]
-        r = finalize_unit(chain, u, _unit_ms(u, _by_packet(missions)), runner, git, force=True)
+        try:
+            with _goal_lock(chain, lock_s):
+                ms = missions if missions is not None else _live_state(chain["goal"])[0]
+                r = finalize_unit(chain, u, _unit_ms(u, _by_packet(ms)), runner, git, force=True)
+        except TimeoutError:
+            return {"sealed": False, "unit": u["id"], "reason": "chain locked by another finalizer"}
         seal = _current(u, SEAL)
         return {"sealed": seal is not None, "unit": u["id"], "seal": u["receipt"] + SEAL if seal else None,
                 "result": (r or {}).get("finalized")}
-    return {"sealed": False, "reason": "packet not found in any chain.json beside it"}
+    return {"sealed": False, "reason": "packet not found in any discoverable chain.json"}
 
 
-def decide(chain: dict, missions: list[dict], goal_used: int, route_target) -> dict:
+def decide(chain: dict, missions: list[dict], goal_used: int, route_target, infra=()) -> dict:
     """Pure decision: what this tick should do. route_target(path) -> int."""
     units = chain["units"]
     roots = {_norm(chain["root"])} | {_norm(u["cwd"]) for u in units if u.get("cwd")}
     held = [m for m in missions if _norm(m.get("cwd", "")) in roots and m.get("state") not in TERMINAL]
-    by_packet = {}
-    for m in missions:
-        p = (m.get("wu_packet") or {}).get("path")
-        if p:
-            by_packet.setdefault(_norm(p), []).append(m)
+    by_packet = _by_packet(missions)
     status = {u["id"]: receipt_status(Path(u["receipt"])) for u in units}
-    accept = {u["id"]: set(u.get("accept") or ["DONE"]) for u in units}   # a unit may accept more than DONE, by name
     refusal = {u["id"]: _current(u, REFUSAL) for u in units if u.get("acceptance")}
-    sealed = {u["id"] for u in units if u.get("acceptance") and _current(u, SEAL) is not None}
-    done = {uid for uid, s in status.items() if s in accept[uid] and refusal.get(uid) is None} | sealed
-    done |= {u["id"] for u in units if limits_accepted(Path(u["receipt"])) and refusal.get(u["id"]) is None}   # K6: proven gate + named limits
+    done = _done_ids(chain) - set(infra)      # the one authority for "unit done"; an unjudged unit is not done
     for u in units:
         if u["id"] in done:
             continue
-        ms = by_packet.get(_norm(u["packet"]), []) + by_packet.get(_norm(u["packet"] + RESIDUAL), [])
+        if u["id"] in infra:
+            return {"action": "gate_infra", "unit": u["id"], "why": "acceptance gate could not start; no verdict"}
+        ms = _unit_ms(u, by_packet)
         refused = [m for m in ms if m.get("state") == "PREPARED"
                    and str((m.get("owner_hold") or {}).get("reason", "")).startswith("arm-chain failed")]
         if refused:   # a failed arm leaves a held record: surface it, never read it as "running"
@@ -433,7 +462,7 @@ def _live_settle(goal: str, missions: list[dict], chain: dict) -> list[dict]:
 
 
 SILENT = {"stopped_without_done", "residual_exhausted", "arm_refused", "refuse_envelope", "human_gate",
-          "pause_budget", "wait_steward"}
+          "pause_budget", "wait_steward", "wait_finalizer", "gate_infra"}
 DEFAULT_SILENCE_S, DEFAULT_WAIT_TIMEOUT_S, LOCK_S = 1800, 21600, 5.0
 
 
@@ -547,12 +576,8 @@ def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settle
               trigger=trigger, measured=measured, history=history, alerter=alerter, now=now)
     if dry_run:
         return _tick_locked(chain, **kw)
-    sys.path.insert(0, str(ROOT))
-    from modules.lease.store import Exclusive  # noqa: E402
-    lockdir = _state_dir()
-    lockdir.mkdir(parents=True, exist_ok=True)
     try:
-        with Exclusive(lockdir / f"gsdx-chain-{chain['goal']}.lock", lock_s):
+        with _goal_lock(chain, lock_s):
             return _tick_locked(chain, **kw)
     except TimeoutError:
         row = {"action": "skipped_locked", "at": time.time(), "goal": chain["goal"], "trigger": trigger, "dry_run": False}
@@ -568,8 +593,9 @@ def _tick_locked(chain: dict, dry_run, state, armer, settler, ledger, gate_runne
     settled = []
     if not dry_run:
         settled = (settler or (lambda: _live_settle(chain["goal"], missions, chain)))() if (settler or state is None) else []
-    finalized = [] if dry_run else finalize(chain, missions, gate_runner, git)
-    row = decide(chain, missions, used, _route_target)
+    finalized = [] if dry_run else finalize(chain, missions, gate_runner, git, held=True)
+    infra = [f["unit"] for f in finalized if f.get("finalized") == "infra"]
+    row = decide(chain, missions, used, _route_target, infra=infra)
     if finalized:
         row["finalized"] = finalized
     if settled:
@@ -589,10 +615,11 @@ def _tick_locked(chain: dict, dry_run, state, armer, settler, ledger, gate_runne
                    "units_left": fc["units_left"], **({"finalized": finalized} if finalized else {})}
     if row["action"] == "arm" and not dry_run:
         unit = next(u for u in chain["units"] if u["id"] == row["unit"])
+        orig_packet = unit["packet"]
         if row.get("residual"):   # same unit, the steward's residual packet, one rung up, its own lease
             unit = dict(unit, packet=row["packet"], route=row["route"], succession=f"{unit['id']}:r{row['residual']}")
         fresh = (state() if state else _live_state(chain["goal"]))[0]    # re-read under the lock, right before the arm
-        dup = _armed_for(fresh, unit["packet"]) or _armed_for(fresh, unit["packet"] + RESIDUAL)
+        dup = _armed_for(fresh, orig_packet) or _armed_for(fresh, unit["packet"])   # the unit's ORIGINAL packet, residual or not
         if dup:
             row = {"action": "running", "unit": row["unit"], "note": "already armed (re-read under lock)",
                    "mission_id": dup[0]["mission_id"]}
@@ -610,6 +637,12 @@ def _tick_locked(chain: dict, dry_run, state, armer, settler, ledger, gate_runne
     row.update({"at": t, "goal": chain["goal"], "used": used, "dry_run": dry_run, "trigger": trigger})
     if not dry_run:
         hist = history if history is not None else (_history(chain["goal"]) if state is None else [])
+        for f in finalized:
+            if f.get("finalized") == "infra" and not any(h.get("action") == "gate_infra" and h.get("unit") == f["unit"]
+                                                         for h in hist[-1:]):
+                sink = alerter or (_alert if state is None else None)
+                if sink:
+                    sink({"goal": chain["goal"], "action": "gate_infra", "unit": f["unit"], "at": t, "reason": f["reason"]})
         if silence_check(chain, row, hist, t):
             sink = alerter or (_alert if state is None else None)
             if sink:
@@ -631,7 +664,10 @@ def discover_chains(packet, programs_dir=None) -> list:
     pk = pk[:-len(RESIDUAL)] if pk.endswith(RESIDUAL) else pk
     base = Path(programs_dir) if programs_dir else LIVE.parent / "vault" / "programs"
     found = []
-    for cp in sorted(base.glob("*/chain.json")):
+    cands = sorted(base.glob("*/chain.json"))
+    if not programs_dir and DEFAULT_CHAIN.exists() and DEFAULT_CHAIN not in cands:
+        cands.append(DEFAULT_CHAIN)       # one owner rule: the default chain lives outside programs/* but owns packets too
+    for cp in cands:
         try:
             c = json.loads(cp.read_text(encoding="utf-8-sig"))
             if any(_norm(u.get("packet", "")) == _norm(pk) for u in c.get("units", [])):

@@ -2464,12 +2464,32 @@ def write_fault_capsule(rec: dict, wd: str, result_text: str, slim: dict | None)
     return str(path)
 
 
-def _receipt_present(rec: dict) -> bool:
+def _receipt_path(pkt, programs_dir=None) -> Path:
+    """Where the receipt of the unit that owns `pkt` is. A residual packet (X.md.residual.md) belongs to the unit of X.md:
+    the receipt is the chain unit's own (APR-7 A8: the stem rule read 'X.md.residual-receipt.md' and said 'no receipt'
+    for a closed receipt, so a duplicate worker ran). No chain unit -> the stem convention on the base packet."""
+    pk = str(pkt)
+    base = pk[:-len(".residual.md")] if pk.endswith(".residual.md") else pk
+    try:
+        import gsdx_chain  # noqa: E402 -- same tools dir
+        for cp in gsdx_chain.discover_chains(base, programs_dir):
+            if isinstance(cp, tuple):
+                continue
+            u = next((x for x in (gsdx_chain._jload(cp) or {}).get("units", [])
+                      if gsdx_chain._norm(x.get("packet", "")) == gsdx_chain._norm(base)), None)
+            if u and u.get("receipt"):
+                return Path(u["receipt"])
+    except Exception:  # noqa: BLE001 -- a chain read must never hide the stem fallback
+        pass
+    p = Path(base)
+    return p.with_name(p.stem + "-receipt.md")
+
+
+def _receipt_present(rec: dict, programs_dir=None) -> bool:
     pkt = (rec.get("wu_packet") or {}).get("path")
     if not pkt:
         return True   # no packet = nothing to continue
-    p = Path(pkt)
-    return _receipt_body_ok(p.with_name(p.stem + "-receipt.md"))
+    return _receipt_body_ok(_receipt_path(pkt, programs_dir))
 
 
 def _receipt_body_ok(path) -> bool:
@@ -2577,8 +2597,7 @@ def _seal_instead_of_renew(rec: dict, row: dict) -> bool:
     pkt = (rec.get("wu_packet") or {}).get("path")
     if not pkt:
         return False
-    p = Path(pkt)
-    if rj.receipt_status(p.with_name(p.stem + "-receipt.md")) is None:
+    if rj.receipt_status(_receipt_path(pkt)) is None:
         return False
     try:
         res = _chain_try_seal(pkt)
@@ -3298,8 +3317,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         and not _receipt_present(rec):
                     # F1: a clean finish without its receipt is a fault, not done. Name WHY (APR-1): a receipt that
                     # exists but carries no closing Status is the K5 case, and the renewed worker must be told so.
-                    _p = Path(rec["wu_packet"]["path"])
-                    _st = rj.receipt_status(_p.with_name(_p.stem + "-receipt.md"))
+                    _st = rj.receipt_status(_receipt_path(rec["wu_packet"]["path"]))
                     stopped = "no receipt" if _st is None else f"receipt not closed (status {_st})"
                 fin = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                  event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
