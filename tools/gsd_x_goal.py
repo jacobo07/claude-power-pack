@@ -322,6 +322,9 @@ def cmd_judge(args) -> int:
     receipt = jd.judge(s, _tree(s, Path(args.root)), worktree,
                        s.scope.get("paths") or ["."])
     print(json.dumps(receipt.to_dict(), indent=2))
+    n_val = sum(1 for g in receipt.gates if g.get("mode") == jd.VALIDATE)
+    print(f"judge: {n_val} validated from an inherited certificate, {len(receipt.gates) - n_val} "
+          "replayed or refused", file=sys.stderr)
     if args.record:
         # Every verdict, not only PASS: a refusal is a fact about the goal, and
         # the reconciler has a branch for it that nothing could otherwise reach.

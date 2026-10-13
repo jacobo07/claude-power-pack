@@ -1,0 +1,2 @@
+{"file": "modules/gsd_x/goal/judge.py", "test": "tools/test_gsd_x_goal_judge_validate.py", "gate": "V-JV-FORGED-EVENT-REPLAYS",
+ "old": "        if it[\"action\"] != inherit.INHERIT or ob is None:", "new": "        if ob is None:"}

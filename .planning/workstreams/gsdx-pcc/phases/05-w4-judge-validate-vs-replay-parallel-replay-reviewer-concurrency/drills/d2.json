@@ -1,0 +1,2 @@
+{"file": "modules/gsd_x/goal/inherit.py", "test": "tools/test_gsd_x_goal_judge_validate.py", "gate": "V-JV-DOUBT-REPLAYS",
+ "old": "blocked = ineligible(ob, contract, data)", "new": "blocked = ''"}

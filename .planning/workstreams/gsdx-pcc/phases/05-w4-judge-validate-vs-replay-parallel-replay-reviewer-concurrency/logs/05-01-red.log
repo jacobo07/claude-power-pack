@@ -1,0 +1,12 @@
+﻿PASS V-JV-HERMETIC-HOME home=jv-home-4qm7p59c
+FAIL V-JV-CONTROL-VALIDATES verdict=PASS modes=[None] gate_runs=1 row=['exit_status', 'gate', 'obligation', 'observed', 'seconds', 'verdict']
+FAIL V-JV-FORGED-EVENT-REPLAYS forged: verdict=REFUSED runs=0 modes=[None]; control: verdict=PASS runs=2 modes=[None]
+PASS V-JV-WEAKENED-GATE-REFUSED verdict=REFUSED runs=0 detail="pinned gate files differ at this tree: ['gate.py']"
+PASS V-JV-CAUSAL-MOVE-REPLAYS verdict=PASS runs=1 modes=[None]
+PASS V-JV-DOUBT-REPLAYS cases={'unknown-fingerprint': (True, 1), 'fresh-required': (True, 1), 'risk-tag': (True, 1), 'never-opted-in': (True, 1), 'reality-plane': (True, 1)}
+PASS V-JV-SAME-CANDIDATE-REPLAYS verdict=PASS runs=1 modes=[None]
+PASS V-JV-SWITCH-OFF-IS-LEGACY verdict=PASS runs=1 modes=[None]
+PASS V-JV-EPOCH-STILL-REFUSES verdict=UNJUDGEABLE gates=0 runs=0
+FAIL V-JV-MIXED-ORDER ids=['ob-one', 'ob-two'] modes=[None, None] runs=2 reason='2 pinned gate(s) re-run and passed at git:51c935bd3124c65adb9aca5195e50667c6c9e10d'
+PASS V-JV-LEGACY-RECEIPT-EQUAL verdict=PASS keys=['exit_status', 'gate', 'obligation', 'observed', 'seconds', 'verdict'] reason='1 pinned gate(s) re-run and passed at git:b9259da0601cb0709215469c6308'
+GSDX_JUDGE_VALIDATE_PASS=8/11  threshold=11/11

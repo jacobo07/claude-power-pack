@@ -34,11 +34,14 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import inherit
+from . import proof as pf
 from .contract import GoalState
 from .convergence import SATISFIED, project_convergence
 from .git_state import digest_matches, tree_id
 
 PASS, REFUSED, UNJUDGEABLE = "PASS", "REFUSED", "UNJUDGEABLE"
+VALIDATE = "VALIDATE"
 EPOCH_ENV = "GSDX_GOAL_EPOCH"
 DEFAULT_GATE_TIMEOUT_S = 900.0
 JUDGED = "goal.judged"
@@ -117,6 +120,33 @@ def _refuse(kind: str, reason: str, st: GoalState, tree_hash: str,
                         datetime.now(timezone.utc).isoformat())
 
 
+def _validate(state: GoalState, obligations: dict, worktree: Path, tree_hash: str) -> dict:
+    """obligation id -> receipt row, for each claim whose inherited proof the judge re-derives itself.
+
+    A `proof.inherited` event is a claim (spec S3) and is never read here: `inherit.plan` recomputes the six
+    premises from THIS worktree against the live certificate, and `ineligible` re-checks the contract. Any
+    doubt -- changed, unknown, ineligible, switch off, the verdict already binding this tree -- leaves the
+    obligation out, and the caller replays its gate. VALIDATE can only turn a replay into a skip.
+    """
+    if not pf.inheritance_enabled():
+        return {}
+    try:
+        items = inherit.plan(state, worktree, tree_hash, time.time())
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}                # the premises could not be derived: unknown replays
+    out = {}
+    for it in items:
+        ob = obligations.get(it["obligation"])
+        if it["action"] != inherit.INHERIT or ob is None:
+            continue
+        if (ob.verdict or {}).get("revision") != state.revision:
+            continue
+        out[it["obligation"]] = {"obligation": ob.identifier, "gate": ob.done_gate, "verdict": PASS,
+                                 "mode": VALIDATE, "certificate": it["certificate"],
+                                 "observed": "inherited proof re-derived: six premises equal at this tree"}
+    return out
+
+
 def judge(state: GoalState, tree_hash: str, worktree: Path,
           scope_paths: list | None = None, timeout_s: float = DEFAULT_GATE_TIMEOUT_S,
           env: dict | None = None) -> JudgeReceipt:
@@ -143,6 +173,7 @@ def judge(state: GoalState, tree_hash: str, worktree: Path,
         return _refuse(UNJUDGEABLE, "no satisfied obligation to re-run; nothing was judged",
                        state, tree_hash)
 
+    validated = _validate(state, cv.obligations, worktree, tree_hash)
     results = []
     for o in satisfied:
         # 1. the gate that would run must BE the gate that was accepted
@@ -158,7 +189,11 @@ def judge(state: GoalState, tree_hash: str, worktree: Path,
                             "verdict": REFUSED,
                             "detail": f"pinned gate files differ at this tree: {moved}"})
             continue
-        # 2. re-run it, here, now
+        # 2. the pin held; an inherited proof the judge re-derived itself needs no re-run
+        if o.identifier in validated:
+            results.append(validated[o.identifier])
+            continue
+        # 3. otherwise re-run it, here, now
         try:
             argv = _argv(o.done_gate)
             started = time.time()
@@ -186,6 +221,11 @@ def judge(state: GoalState, tree_hash: str, worktree: Path,
         return _refuse(REFUSED, "; ".join(f"{r['obligation']}: "
                                           f"{r.get('detail') or 'exit ' + str(r.get('exit_status'))}"
                                           for r in bad), state, tree_hash, results)
-    return JudgeReceipt(PASS, f"{len(results)} pinned gate(s) re-run and passed at {tree_hash}",
-                        state.goal_id, state.revision, tree_hash, results,
+    n_val = sum(1 for r in results if r.get("mode") == VALIDATE)
+    if n_val:
+        reason = (f"{len(results) - n_val} pinned gate(s) re-run and passed, {n_val} validated "
+                  f"from an inherited certificate, at {tree_hash}")
+    else:
+        reason = f"{len(results)} pinned gate(s) re-run and passed at {tree_hash}"
+    return JudgeReceipt(PASS, reason, state.goal_id, state.revision, tree_hash, results,
                         datetime.now(timezone.utc).isoformat())
