@@ -53,3 +53,9 @@ is settled to ccr.
 1. Fit a class model for bounded lookups (its floor of ~21K already matches), so `ccr_pgo contract` forecasts within 25 %.
 2. Lobby R1 provider-measured rotation (k=40) -- the second work class BOUNDARY_COST needs.
 3. Book the unbooked worker spend (~3M: E1/M1/W1/V1/X1 + V1b haiku) into a coord lease, after fixing `ledger._gfold` once ledger.py is no longer dirty.
+
+## Stage 3 ARMED (2026-10-13, Owner "approve stage 3 + main canary"; supersedes the V1 attempt 2 next actions)
+**Plan.** `vault/plans/ccr-v4-stage3-2026-10-13.md` (31d2867b). Chain `vault/programs/ccr/stage3/chain.json` (9c6ca0a8): A0 accounting+_gfold -> A1 version receipt -> A2 21K anatomy/hard floor -> A3 Work-Class PGO held-out -> A4 epoch economics/elasticity -> A5 Lobby R1 -> A6 real admission -> A7 main canary -> X2 recertify. Routes S3M 1.5M / S3L 3.0M (from Stage 2 measured worker spend); forecast 18M of 28,631,510 remaining; no new capital.
+**Tick.** Task PP-CcrChain-Tick now runs stage3/chain_tick.ps1 every 10 min; it holds (log `ram_hold free_gb=N` in `~/.claude/state/ccr-chain-tick.log`) while free RAM < 4 GB. At arming time the host had 0.7-2.5 GB free with 32 claude.exe, so A0 starts only when RAM frees.
+**Coordinator.** e10a9f08, cap 2M from here; acts only on chain_alert or a stuck state. Unbooked spend (~4-6M) is A0's first job.
+**Next 3 actions.** 1. `python tools/gsdx_chain.py status --chain vault/programs/ccr/stage3/chain.json`. 2. If `ram_hold` persists for hours, the Owner frees RAM (close idle panes); never kill another session. 3. On chain_alert, read the unit receipt first.
