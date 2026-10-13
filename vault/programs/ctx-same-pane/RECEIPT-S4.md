@@ -41,3 +41,13 @@ goal-settle --measured 7,902,658 = S4 span 6,607,222 + correction step 1,295,436
 2026-10-13T08:21:55Z, scratchpad since_ts.py). Ledger after: settled 34,292,454, L7 used 7,902,658 of 2,500,000.
 The correction step breached its own stop-loss (6 calls / 0.6M), so the goal is now ~0.7M over the approved
 programme. Halted: L7 was not closed and nothing was raised. The calls for this receipt and its commit are not booked.
+
+## GEX44: measured and ACTIVATED (2026-10-13, packet 4735ec4f, Owner approve 12:35:50Z)
+Packet c695efbc was INVALIDATED (the 9,251,821 settle landed before it applied); 4735ec4f APPLIED, programme ->
+37,641,617. Branch pushed as mission/ctx-same-pane-s4 (827711e5), cloned to GEX44 ~/missions/ctx-same-pane-s4.
+Linux plane (load 1.1, 55 GB available): V-SFP 10/10 (CPP_NODE=/opt/node-v24.14.0/bin/node, CPP_PYTHON=python3,
+CPP_STATUS_GIT=git). Shim end to end on 'estado': 296/205/51/55/47 ms, 5/5 block; mixed prompt passes (0 bytes).
+Activation gate met: GEX44 ~/.claude/settings.json backed up (settings.json.bak-status-fastpath-20261013144607),
+one UserPromptSubmit command hook added (node shim at the clone path, timeout 8 s). Live drive `claude -p estado`
+from /tmp/sfp-live: num_turns 0, cost 0, the projection shown. ACTIVE on GEX44 only; the laptop stays unregistered.
+Rollback: copy the backup over GEX44 ~/.claude/settings.json, or CPP_STATUS_FASTPATH=off.
