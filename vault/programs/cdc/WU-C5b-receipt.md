@@ -20,3 +20,4 @@ Note: 459/433/419 suites at the older commits (suite count grows with history); 
 - Hub: change_impact.hub_report; a path whose closure > 25 % of tools/test_*.py is HUB, flagged in receipt (`hub`); without explicit --test -> REFUSED AFFECTED_HUB_NEEDS_EXPLICIT_TEST; with explicit --test only those run (V-LAND-16..19).
 - hooks/<name>.js -> tools/test_<name>.py by name when it exists (V-LAND-20/21); other js/vault stay unmapped and need explicit --exempt.
 Open: a baseline-red suite hides a genuine regression in that same suite (accepted, listed in receipt for the reviewer). Baseline file for the live estate: vault/programs/cdc/evidence/C5b-baseline.json (stale as commits move; regenerate with tools/c5b_baseline.py).
+LANDING: live be27af74 (land_worktree --affected, explicit --test of the 2 hub suites, --exempt c5b_baseline.py + vault/*, --baseline-red C5b-baseline.json). Calls used: ~45.
