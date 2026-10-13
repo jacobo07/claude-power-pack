@@ -1,0 +1,702 @@
+{
+ "k": 40,
+ "n_train": 36,
+ "n_held": 15,
+ "train_model": {
+  "cls": "lobby",
+  "n": 36,
+  "capsule": 225.5,
+  "r": 3,
+  "floor": 206186.0,
+  "R": 10388.0,
+  "g": 2264.0,
+  "rehyd_cost": 85852.6,
+  "first_overhead": 1904.5,
+  "lengths": [
+   8,
+   8,
+   11,
+   20,
+   43,
+   48,
+   49,
+   50,
+   69,
+   89,
+   92,
+   99,
+   103,
+   116,
+   119,
+   128,
+   134,
+   137,
+   138,
+   148,
+   159,
+   159,
+   163,
+   177,
+   185,
+   201,
+   205,
+   212,
+   219,
+   250,
+   309,
+   411,
+   450,
+   466,
+   503,
+   514
+  ]
+ },
+ "capsules": {
+  "n": 22,
+  "p50": 222.5,
+  "p80": 256,
+  "max": 342,
+  "min": 183
+ },
+ "totals": {
+  "A": {
+   "cost": 48132600,
+   "processed": 367847860,
+   "rotations": 0,
+   "saving_pct": -0.0
+  },
+  "E1-D-8k": {
+   "cost": 45009685,
+   "processed": 285437582,
+   "rotations": 22,
+   "saving_pct": 6.49
+  },
+  "E1-D-measured": {
+   "cost": 44305394,
+   "processed": 280360386,
+   "rotations": 22,
+   "saving_pct": 7.95
+  },
+  "A4-D-measured": {
+   "cost": 47394474,
+   "processed": 287154138,
+   "rotations": 22,
+   "saving_pct": 1.53
+  }
+ },
+ "median_session_saving_pct_rotating_only": {
+  "E1-D-8k": 4.74,
+  "E1-D-measured": 6.25,
+  "A4-D-measured": -1.09
+ },
+ "sessions": [
+  {
+   "sid": "cb70bd86-e909-470f-b1df-f4f14a9e5706",
+   "t": "2026-09-25T12:34:43.676Z",
+   "calls": 88,
+   "floor": 194267,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 437,
+     "chars": 437,
+     "est_tokens": 256
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 369,
+     "chars": 369,
+     "est_tokens": 216
+    }
+   },
+   "A": {
+    "cost": 3638767.25,
+    "processed": 28181967,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 3466471.5,
+    "processed": 21843423,
+    "rotations": 2,
+    "saving_pct": 4.74
+   },
+   "E1-D-measured": {
+    "cost": 3411411.1000000015,
+    "processed": 21471391,
+    "rotations": 2,
+    "saving_pct": 6.25
+   },
+   "A4-D-measured": {
+    "cost": 3679485.349999999,
+    "processed": 21970015,
+    "rotations": 2,
+    "saving_pct": -1.12
+   }
+  },
+  {
+   "sid": "aa2d2ac7-ea72-4268-bdb5-705d121d6233",
+   "t": "2026-09-25T13:42:25.030Z",
+   "calls": 150,
+   "floor": 214805,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 589,
+     "chars": 585,
+     "est_tokens": 342
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 466,
+     "chars": 464,
+     "est_tokens": 271
+    },
+    "120": {
+     "note": "inline",
+     "bytes": 374,
+     "chars": 374,
+     "est_tokens": 219
+    }
+   },
+   "A": {
+    "cost": 7472370.800000001,
+    "processed": 57964633,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 6330308.199999999,
+    "processed": 38949263,
+    "rotations": 3,
+    "saving_pct": 15.28
+   },
+   "E1-D-measured": {
+    "cost": 6218774.000000002,
+    "processed": 38100353,
+    "rotations": 3,
+    "saving_pct": 16.78
+   },
+   "A4-D-measured": {
+    "cost": 6670290.45,
+    "processed": 39243033,
+    "rotations": 3,
+    "saving_pct": 10.73
+   }
+  },
+  {
+   "sid": "47dae564-e853-4e4a-8fb0-cf617f1fe081",
+   "t": "2026-09-25T14:30:52.996Z",
+   "calls": 5,
+   "floor": 195355,
+   "capsules": {},
+   "A": {
+    "cost": 327073.7,
+    "processed": 1027164,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 327073.7,
+    "processed": 1027164,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-measured": {
+    "cost": 327073.7,
+    "processed": 1027164,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "A4-D-measured": {
+    "cost": 327073.7,
+    "processed": 1027164,
+    "rotations": 0,
+    "saving_pct": 0.0
+   }
+  },
+  {
+   "sid": "c888cdfd-03a4-4759-a6cb-835674f59381",
+   "t": "2026-09-25T15:05:50.661Z",
+   "calls": 103,
+   "floor": 196056,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 443,
+     "chars": 443,
+     "est_tokens": 259
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 368,
+     "chars": 368,
+     "est_tokens": 215
+    }
+   },
+   "A": {
+    "cost": 4132002.7,
+    "processed": 32790269,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 3813627.9999999995,
+    "processed": 24936368,
+    "rotations": 2,
+    "saving_pct": 7.71
+   },
+   "E1-D-measured": {
+    "cost": 3746903.5999999996,
+    "processed": 24447673,
+    "rotations": 2,
+    "saving_pct": 9.32
+   },
+   "A4-D-measured": {
+    "cost": 4029576.4000000013,
+    "processed": 25102117,
+    "rotations": 2,
+    "saving_pct": 2.48
+   }
+  },
+  {
+   "sid": "aa376e3f-6a3f-4b5d-82c7-f528bc5b3163",
+   "t": "2026-09-25T15:45:50.769Z",
+   "calls": 39,
+   "floor": 187222,
+   "capsules": {},
+   "A": {
+    "cost": 1448471.55,
+    "processed": 9696489,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 1448471.5500000003,
+    "processed": 9696489,
+    "rotations": 0,
+    "saving_pct": -0.0
+   },
+   "E1-D-measured": {
+    "cost": 1448471.5500000003,
+    "processed": 9696489,
+    "rotations": 0,
+    "saving_pct": -0.0
+   },
+   "A4-D-measured": {
+    "cost": 1448471.5500000003,
+    "processed": 9696489,
+    "rotations": 0,
+    "saving_pct": -0.0
+   }
+  },
+  {
+   "sid": "a05c2e9d-f336-42b3-a097-cecf4b11199f",
+   "t": "2026-09-25T15:56:55.554Z",
+   "calls": 17,
+   "floor": 196037,
+   "capsules": {},
+   "A": {
+    "cost": 630515.6,
+    "processed": 3683468,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 630515.5999999999,
+    "processed": 3683468,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-measured": {
+    "cost": 630515.5999999999,
+    "processed": 3683468,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "A4-D-measured": {
+    "cost": 630515.5999999999,
+    "processed": 3683468,
+    "rotations": 0,
+    "saving_pct": 0.0
+   }
+  },
+  {
+   "sid": "d668852f-d03e-42a0-8755-5a2323db0087",
+   "t": "2026-09-25T17:31:54.724Z",
+   "calls": 54,
+   "floor": 164287,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 315,
+     "chars": 313,
+     "est_tokens": 183
+    }
+   },
+   "A": {
+    "cost": 2914204.8,
+    "processed": 16670958,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 2845188.7999999993,
+    "processed": 14018574,
+    "rotations": 1,
+    "saving_pct": 2.37
+   },
+   "E1-D-measured": {
+    "cost": 2825255.4499999993,
+    "processed": 13909136,
+    "rotations": 1,
+    "saving_pct": 3.05
+   },
+   "A4-D-measured": {
+    "cost": 2945965.2999999993,
+    "processed": 14054568,
+    "rotations": 1,
+    "saving_pct": -1.09
+   }
+  },
+  {
+   "sid": "39b97ff3-a735-49ee-bbf9-5fbaa60091bd",
+   "t": "2026-09-25T17:36:21.207Z",
+   "calls": 110,
+   "floor": 196342,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 366,
+     "chars": 365,
+     "est_tokens": 214
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 354,
+     "chars": 352,
+     "est_tokens": 206
+    }
+   },
+   "A": {
+    "cost": 3830515.8000000003,
+    "processed": 31514352,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 3703931.3,
+    "processed": 25568532,
+    "rotations": 2,
+    "saving_pct": 3.3
+   },
+   "E1-D-measured": {
+    "cost": 3631488.3,
+    "processed": 25023272,
+    "rotations": 2,
+    "saving_pct": 5.2
+   },
+   "A4-D-measured": {
+    "cost": 3921144.000000001,
+    "processed": 25750432,
+    "rotations": 2,
+    "saving_pct": -2.37
+   }
+  },
+  {
+   "sid": "8b4f4d70-730b-40c7-b77b-3d6dd8847003",
+   "t": "2026-09-25T19:09:30.051Z",
+   "calls": 92,
+   "floor": 195843,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 426,
+     "chars": 425,
+     "est_tokens": 249
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 388,
+     "chars": 388,
+     "est_tokens": 227
+    }
+   },
+   "A": {
+    "cost": 3707878.45,
+    "processed": 28491713,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 3565575.0500000007,
+    "processed": 22454277,
+    "rotations": 2,
+    "saving_pct": 3.84
+   },
+   "E1-D-measured": {
+    "cost": 3507390.850000001,
+    "processed": 22050961,
+    "rotations": 2,
+    "saving_pct": 5.41
+   },
+   "A4-D-measured": {
+    "cost": 3783680.35,
+    "processed": 22591137,
+    "rotations": 2,
+    "saving_pct": -2.04
+   }
+  },
+  {
+   "sid": "ef5e5bbc-fb2a-4e2b-bca5-61af1dfc561c",
+   "t": "2026-09-25T19:21:45.699Z",
+   "calls": 88,
+   "floor": 194800,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 367,
+     "chars": 367,
+     "est_tokens": 215
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 356,
+     "chars": 356,
+     "est_tokens": 208
+    }
+   },
+   "A": {
+    "cost": 3582678.9000000004,
+    "processed": 27669183,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 3453114.1499999994,
+    "processed": 21751279,
+    "rotations": 2,
+    "saving_pct": 3.62
+   },
+   "E1-D-measured": {
+    "cost": 3397826.9999999986,
+    "processed": 21377543,
+    "rotations": 2,
+    "saving_pct": 5.16
+   },
+   "A4-D-measured": {
+    "cost": 3666547.1500000022,
+    "processed": 21876167,
+    "rotations": 2,
+    "saving_pct": -2.34
+   }
+  },
+  {
+   "sid": "d8215b25-a2dc-433a-becb-c2eb94dc382b",
+   "t": "2026-09-25T20:16:03.312Z",
+   "calls": 90,
+   "floor": 196049,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 400,
+     "chars": 400,
+     "est_tokens": 234
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 327,
+     "chars": 327,
+     "est_tokens": 191
+    }
+   },
+   "A": {
+    "cost": 3577208.15,
+    "processed": 27992564,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 3452946.150000001,
+    "processed": 22122754,
+    "rotations": 2,
+    "saving_pct": 3.47
+   },
+   "E1-D-measured": {
+    "cost": 3396161.900000001,
+    "processed": 21734024,
+    "rotations": 2,
+    "saving_pct": 5.06
+   },
+   "A4-D-measured": {
+    "cost": 3669589.6,
+    "processed": 22253424,
+    "rotations": 2,
+    "saving_pct": -2.58
+   }
+  },
+  {
+   "sid": "0aa09660-7f6b-4550-9229-58532e8a8312",
+   "t": "2026-09-25T21:07:25.136Z",
+   "calls": 106,
+   "floor": 189543,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 372,
+     "chars": 372,
+     "est_tokens": 218
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 393,
+     "chars": 393,
+     "est_tokens": 230
+    }
+   },
+   "A": {
+    "cost": 3955570.6,
+    "processed": 31984067,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 3669549.650000001,
+    "processed": 24615957,
+    "rotations": 2,
+    "saving_pct": 7.23
+   },
+   "E1-D-measured": {
+    "cost": 3600334.8500000024,
+    "processed": 24102657,
+    "rotations": 2,
+    "saving_pct": 8.98
+   },
+   "A4-D-measured": {
+    "cost": 3886056.499999999,
+    "processed": 24788265,
+    "rotations": 2,
+    "saving_pct": 1.76
+   }
+  },
+  {
+   "sid": "50f29c32-a239-4d5f-892f-a21f0b47b908",
+   "t": "2026-09-25T22:23:35.063Z",
+   "calls": 112,
+   "floor": 195175,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 386,
+     "chars": 386,
+     "est_tokens": 226
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 320,
+     "chars": 320,
+     "est_tokens": 187
+    }
+   },
+   "A": {
+    "cost": 4382102.5,
+    "processed": 35107959,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 4003794.9999999995,
+    "processed": 26670071,
+    "rotations": 2,
+    "saving_pct": 8.63
+   },
+   "E1-D-measured": {
+    "cost": 3929772.3499999996,
+    "processed": 26109095,
+    "rotations": 2,
+    "saving_pct": 10.32
+   },
+   "A4-D-measured": {
+    "cost": 4221101.550000002,
+    "processed": 26857031,
+    "rotations": 2,
+    "saving_pct": 3.67
+   }
+  },
+  {
+   "sid": "4acc76b4-0284-4273-b48a-0825e1fbc482",
+   "t": "2026-09-25T23:04:15.233Z",
+   "calls": 101,
+   "floor": 194668,
+   "capsules": {
+    "40": {
+     "note": "inline",
+     "bytes": 421,
+     "chars": 419,
+     "est_tokens": 245
+    },
+    "80": {
+     "note": "inline",
+     "bytes": 439,
+     "chars": 439,
+     "est_tokens": 257
+    }
+   },
+   "A": {
+    "cost": 3923537.0,
+    "processed": 31629552,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 3669944.0000000014,
+    "processed": 24461740,
+    "rotations": 2,
+    "saving_pct": 6.46
+   },
+   "E1-D-measured": {
+    "cost": 3604841.0000000005,
+    "processed": 23988937,
+    "rotations": 2,
+    "saving_pct": 8.12
+   },
+   "A4-D-measured": {
+    "cost": 3885804.6000000006,
+    "processed": 24622605,
+    "rotations": 2,
+    "saving_pct": 0.96
+   }
+  },
+  {
+   "sid": "0685baf6-6ace-4ed0-bfaf-010c14ea669d",
+   "t": "2026-09-26T00:07:11.673Z",
+   "calls": 17,
+   "floor": 194701,
+   "capsules": {},
+   "A": {
+    "cost": 609702.15,
+    "processed": 3443522,
+    "rotations": 0,
+    "saving_pct": 0.0
+   },
+   "E1-D-8k": {
+    "cost": 629172.25,
+    "processed": 3638223,
+    "rotations": 0,
+    "saving_pct": -3.19
+   },
+   "E1-D-measured": {
+    "cost": 629172.25,
+    "processed": 3638223,
+    "rotations": 0,
+    "saving_pct": -3.19
+   },
+   "A4-D-measured": {
+    "cost": 629172.25,
+    "processed": 3638223,
+    "rotations": 0,
+    "saving_pct": -3.19
+   }
+  }
+ ]
+}
