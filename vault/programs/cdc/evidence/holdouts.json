@@ -1,0 +1,952 @@
+{
+ "LiveQA": {
+  "06599613": {
+   "calls": 28,
+   "tokens": 1201515,
+   "roles": {
+    "unattributed": 0.474,
+    "CONTROL": 0.2448,
+    "READ": 0.1912,
+    "PLAN": 0.0503,
+    "PROOF": 0.0243,
+    "CONTEXT_FAULT": 0.0155
+   },
+   "avoidable_tokens": 18597,
+   "avoidable_share": 0.01547795907666571,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18597
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 2,
+   "transitions": 2,
+   "tokens_per_progress": 600757.5,
+   "proof_then_other_pairs": 1,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "0b24f770": {
+   "calls": 31,
+   "tokens": 1021263,
+   "roles": {
+    "unattributed": 0.4784,
+    "CONTROL": 0.3197,
+    "READ": 0.0984,
+    "PLAN": 0.0523,
+    "NOVELTY": 0.0512
+   },
+   "avoidable_tokens": 149889,
+   "avoidable_share": 0.1467682663525458,
+   "avoidable_by_cause": {
+    "NO_PROGRESS_RUN": 149889
+   },
+   "breaker_trip_calls_after_25": 3,
+   "breaker_trip_tokens": 149889,
+   "progress_events": 2,
+   "transitions": 1,
+   "tokens_per_progress": 510631.5,
+   "proof_then_other_pairs": 0,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "13fee1ae": {
+   "calls": 19,
+   "tokens": 1012785,
+   "roles": {
+    "READ": 0.2928,
+    "unattributed": 0.2908,
+    "PROOF": 0.1001,
+    "CONTROL": 0.0843,
+    "RECOVERY": 0.0737,
+    "REPAIR": 0.0709,
+    "REREAD": 0.069,
+    "CONTEXT_FAULT": 0.0184
+   },
+   "avoidable_tokens": 163135,
+   "avoidable_share": 0.16107564784233575,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18597,
+    "REREAD": 69907,
+    "RECOVERY": 74631
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 2,
+   "transitions": 3,
+   "tokens_per_progress": 506392.5,
+   "proof_then_other_pairs": 1,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "1730051d": {
+   "calls": 17,
+   "tokens": 615909,
+   "roles": {
+    "PROOF": 0.3818,
+    "unattributed": 0.2934,
+    "REPAIR": 0.2191,
+    "CONTROL": 0.0753,
+    "CONTEXT_FAULT": 0.0304
+   },
+   "avoidable_tokens": 18696,
+   "avoidable_share": 0.03035513363175404,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18696
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 6,
+   "transitions": 4,
+   "tokens_per_progress": 102651.5,
+   "proof_then_other_pairs": 4,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "2022edbd": {
+   "calls": 19,
+   "tokens": 712992,
+   "roles": {
+    "PROOF": 0.2437,
+    "READ": 0.2155,
+    "unattributed": 0.1683,
+    "REPAIR": 0.1188,
+    "CONTROL": 0.0974,
+    "IMPLEMENT": 0.067,
+    "RECOVERY": 0.0633,
+    "CONTEXT_FAULT": 0.0261
+   },
+   "avoidable_tokens": 63740,
+   "avoidable_share": 0.08939791750819083,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18597,
+    "RECOVERY": 45143
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 6,
+   "transitions": 8,
+   "tokens_per_progress": 118832.0,
+   "proof_then_other_pairs": 2,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "692b6fad": {
+   "calls": 15,
+   "tokens": 542461,
+   "roles": {
+    "unattributed": 0.3751,
+    "CONTROL": 0.1765,
+    "NOVELTY": 0.1665,
+    "READ": 0.1625,
+    "IMPLEMENT": 0.0852,
+    "CONTEXT_FAULT": 0.0343
+   },
+   "avoidable_tokens": 18600,
+   "avoidable_share": 0.034288179242378716,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18600
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 3,
+   "transitions": 4,
+   "tokens_per_progress": 180820.33333333334,
+   "proof_then_other_pairs": 1,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "6bcbddc1": {
+   "calls": 21,
+   "tokens": 990626,
+   "roles": {
+    "READ": 0.2671,
+    "CONTROL": 0.2507,
+    "unattributed": 0.2249,
+    "NOVELTY": 0.1673,
+    "PROOF": 0.0716,
+    "CONTEXT_FAULT": 0.0184
+   },
+   "avoidable_tokens": 18218,
+   "avoidable_share": 0.018390391530204133,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18218
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 4,
+   "transitions": 14,
+   "tokens_per_progress": 247656.5,
+   "proof_then_other_pairs": 1,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "96d1ccbe": {
+   "calls": 29,
+   "tokens": 1559609,
+   "roles": {
+    "CONTROL": 0.3074,
+    "PROOF": 0.1962,
+    "IMPLEMENT": 0.1403,
+    "unattributed": 0.0766,
+    "READ": 0.0746,
+    "REPAIR": 0.0667,
+    "NOVELTY": 0.0502,
+    "STATUS": 0.0401,
+    "RECOVERY": 0.0361,
+    "CONTEXT_FAULT": 0.0118
+   },
+   "avoidable_tokens": 74583,
+   "avoidable_share": 0.047821601439848066,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18344,
+    "RECOVERY": 56239
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 10,
+   "transitions": 7,
+   "tokens_per_progress": 155960.9,
+   "proof_then_other_pairs": 3,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "b16201a7": {
+   "calls": 26,
+   "tokens": 1076044,
+   "roles": {
+    "unattributed": 0.6183,
+    "READ": 0.1058,
+    "PROOF": 0.0815,
+    "CONTROL": 0.0732,
+    "IMPLEMENT": 0.0527,
+    "REPAIR": 0.0513,
+    "CONTEXT_FAULT": 0.0172
+   },
+   "avoidable_tokens": 18473,
+   "avoidable_share": 0.0171675135960983,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18473
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 3,
+   "transitions": 4,
+   "tokens_per_progress": 358681.3333333333,
+   "proof_then_other_pairs": 3,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "c2c87f29": {
+   "calls": 27,
+   "tokens": 1388270,
+   "roles": {
+    "PROOF": 0.331,
+    "READ": 0.2889,
+    "IMPLEMENT": 0.0833,
+    "unattributed": 0.0676,
+    "RECOVERY": 0.0495,
+    "REREAD": 0.0475,
+    "REPAIR": 0.0469,
+    "NOVELTY": 0.04,
+    "CONTROL": 0.0319,
+    "CONTEXT_FAULT": 0.0132
+   },
+   "avoidable_tokens": 153112,
+   "avoidable_share": 0.11028978512825315,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18369,
+    "REREAD": 66006,
+    "RECOVERY": 68737
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 8,
+   "transitions": 5,
+   "tokens_per_progress": 173533.75,
+   "proof_then_other_pairs": 4,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "d193e6fa": {
+   "calls": 19,
+   "tokens": 754596,
+   "roles": {
+    "unattributed": 0.4191,
+    "READ": 0.205,
+    "CONTROL": 0.1616,
+    "RECOVERY": 0.069,
+    "REPAIR": 0.0638,
+    "PROOF": 0.0567,
+    "CONTEXT_FAULT": 0.0248
+   },
+   "avoidable_tokens": 70726,
+   "avoidable_share": 0.09372697443400177,
+   "avoidable_by_cause": {
+    "CONTEXT_FAULT": 18696,
+    "RECOVERY": 52030
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 3,
+   "transitions": 2,
+   "tokens_per_progress": 251532.0,
+   "proof_then_other_pairs": 1,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  }
+ },
+ "ClockA": {
+  "be97307b": {
+   "calls": 1547,
+   "tokens": 245821099,
+   "roles": {
+    "unattributed": 0.2724,
+    "READ": 0.2536,
+    "NOVELTY": 0.1254,
+    "CONTEXT_FAULT": 0.0961,
+    "PLAN": 0.0929,
+    "IMPLEMENT": 0.0546,
+    "REREAD": 0.0306,
+    "PROOF": 0.0277,
+    "RECOVERY": 0.0259,
+    "CONTROL": 0.0157,
+    "RESEARCH": 0.0049
+   },
+   "avoidable_tokens": 39097478,
+   "avoidable_share": 0.15904850380642063,
+   "avoidable_by_cause": {
+    "NO_PROGRESS_RUN": 1562675,
+    "REREAD": 7522437,
+    "RECOVERY": 6378205,
+    "CONTEXT_FAULT": 23634161
+   },
+   "breaker_trip_calls_after_25": 10,
+   "breaker_trip_tokens": 1562675,
+   "progress_events": 415,
+   "transitions": 246,
+   "tokens_per_progress": 592339.9975903614,
+   "proof_then_other_pairs": 43,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 37,
+   "skipped": 0
+  },
+  "e0cd1dbb": {
+   "calls": 387,
+   "tokens": 58401057,
+   "roles": {
+    "unattributed": 0.3245,
+    "NOVELTY": 0.1691,
+    "READ": 0.1673,
+    "PLAN": 0.1047,
+    "CONTEXT_FAULT": 0.093,
+    "REPAIR": 0.0578,
+    "IMPLEMENT": 0.0296,
+    "PROOF": 0.0201,
+    "REREAD": 0.0193,
+    "CONTROL": 0.008,
+    "RECOVERY": 0.0067
+   },
+   "avoidable_tokens": 6946852,
+   "avoidable_share": 0.11895079227761238,
+   "avoidable_by_cause": {
+    "REREAD": 1125774,
+    "CONTEXT_FAULT": 5429648,
+    "RECOVERY": 391430
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 137,
+   "transitions": 84,
+   "tokens_per_progress": 426285.0875912409,
+   "proof_then_other_pairs": 8,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 10,
+   "skipped": 0
+  }
+ },
+ "IntentOrder": {
+  "ec66dcff": {
+   "calls": 2292,
+   "tokens": 371042313,
+   "roles": {
+    "READ": 0.3183,
+    "unattributed": 0.2116,
+    "PLAN": 0.1494,
+    "NOVELTY": 0.0944,
+    "CONTEXT_FAULT": 0.0894,
+    "REREAD": 0.0589,
+    "CONTROL": 0.0334,
+    "IMPLEMENT": 0.0232,
+    "RECOVERY": 0.0121,
+    "PROOF": 0.0094
+   },
+   "avoidable_tokens": 63031715,
+   "avoidable_share": 0.16987743120283966,
+   "avoidable_by_cause": {
+    "REREAD": 21860412,
+    "NO_PROGRESS_RUN": 3520211,
+    "CONTEXT_FAULT": 33176243,
+    "RECOVERY": 4474849
+   },
+   "breaker_trip_calls_after_25": 21,
+   "breaker_trip_tokens": 3520211,
+   "progress_events": 624,
+   "transitions": 280,
+   "tokens_per_progress": 594619.0913461539,
+   "proof_then_other_pairs": 22,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 28,
+   "skipped": 0
+  }
+ },
+ "DWS": {
+  "3f89b577": {
+   "calls": 1,
+   "tokens": 159098,
+   "roles": {
+    "PLAN": 1.0
+   },
+   "avoidable_tokens": 0,
+   "avoidable_share": 0.0,
+   "avoidable_by_cause": {},
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 0,
+   "transitions": 0,
+   "tokens_per_progress": null,
+   "proof_then_other_pairs": 0,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "7ce2529d": {
+   "calls": 1,
+   "tokens": 159466,
+   "roles": {
+    "unattributed": 1.0
+   },
+   "avoidable_tokens": 0,
+   "avoidable_share": 0.0,
+   "avoidable_by_cause": {},
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 0,
+   "transitions": 0,
+   "tokens_per_progress": null,
+   "proof_then_other_pairs": 0,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "abff9761": {
+   "calls": 1,
+   "tokens": 159680,
+   "roles": {
+    "unattributed": 1.0
+   },
+   "avoidable_tokens": 0,
+   "avoidable_share": 0.0,
+   "avoidable_by_cause": {},
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 0,
+   "transitions": 0,
+   "tokens_per_progress": null,
+   "proof_then_other_pairs": 0,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "edd55d4d": {
+   "calls": 1,
+   "tokens": 159209,
+   "roles": {
+    "unattributed": 1.0
+   },
+   "avoidable_tokens": 0,
+   "avoidable_share": 0.0,
+   "avoidable_by_cause": {},
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 0,
+   "transitions": 0,
+   "tokens_per_progress": null,
+   "proof_then_other_pairs": 0,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 0,
+   "skipped": 0
+  },
+  "0ad7757a": {
+   "calls": 854,
+   "tokens": 200637688,
+   "roles": {
+    "READ": 0.2674,
+    "unattributed": 0.2403,
+    "IMPLEMENT": 0.1478,
+    "CONTROL": 0.1078,
+    "PLAN": 0.068,
+    "CONTEXT_FAULT": 0.0663,
+    "REREAD": 0.0501,
+    "NOVELTY": 0.0322,
+    "RECOVERY": 0.0153,
+    "PROOF": 0.003,
+    "STATUS": 0.0017
+   },
+   "avoidable_tokens": 26437165,
+   "avoidable_share": 0.13176569797793922,
+   "avoidable_by_cause": {
+    "RECOVERY": 3073306,
+    "CONTEXT_FAULT": 13303391,
+    "REREAD": 10060468
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 258,
+   "transitions": 61,
+   "tokens_per_progress": 777665.4573643411,
+   "proof_then_other_pairs": 2,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 16,
+   "skipped": 0
+  },
+  "158938d7": {
+   "calls": 358,
+   "tokens": 80382180,
+   "roles": {
+    "unattributed": 0.3778,
+    "READ": 0.1598,
+    "IMPLEMENT": 0.1442,
+    "CONTROL": 0.1193,
+    "CONTEXT_FAULT": 0.0488,
+    "PLAN": 0.0446,
+    "NOVELTY": 0.0329,
+    "PROOF": 0.023,
+    "REREAD": 0.0221,
+    "RECOVERY": 0.0207,
+    "REPAIR": 0.0069
+   },
+   "avoidable_tokens": 7609366,
+   "avoidable_share": 0.09466483740550455,
+   "avoidable_by_cause": {
+    "REREAD": 1774458,
+    "CONTEXT_FAULT": 3924808,
+    "RECOVERY": 1661781,
+    "NO_PROGRESS_RUN": 248319
+   },
+   "breaker_trip_calls_after_25": 1,
+   "breaker_trip_tokens": 248319,
+   "progress_events": 112,
+   "transitions": 29,
+   "tokens_per_progress": 717698.0357142857,
+   "proof_then_other_pairs": 7,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 7,
+   "skipped": 0
+  },
+  "2639597a": {
+   "calls": 1507,
+   "tokens": 423121376,
+   "roles": {
+    "unattributed": 0.322,
+    "READ": 0.2904,
+    "IMPLEMENT": 0.0987,
+    "CONTROL": 0.0703,
+    "PLAN": 0.0611,
+    "CONTEXT_FAULT": 0.0453,
+    "REREAD": 0.0397,
+    "NOVELTY": 0.0378,
+    "PROOF": 0.0172,
+    "RECOVERY": 0.0171,
+    "REPAIR": 0.0005
+   },
+   "avoidable_tokens": 74010287,
+   "avoidable_share": 0.17491502721904553,
+   "avoidable_by_cause": {
+    "REREAD": 16783607,
+    "CONTEXT_FAULT": 19173029,
+    "RECOVERY": 7227363,
+    "NO_PROGRESS_RUN": 30826288
+   },
+   "breaker_trip_calls_after_25": 103,
+   "breaker_trip_tokens": 30826288,
+   "progress_events": 340,
+   "transitions": 102,
+   "tokens_per_progress": 1244474.6352941177,
+   "proof_then_other_pairs": 19,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 14,
+   "skipped": 0
+  },
+  "4aa2e2d3": {
+   "calls": 1105,
+   "tokens": 385373416,
+   "roles": {
+    "unattributed": 0.394,
+    "READ": 0.1696,
+    "NOVELTY": 0.1154,
+    "RECOVERY": 0.1032,
+    "PLAN": 0.0581,
+    "CONTEXT_FAULT": 0.05,
+    "REREAD": 0.047,
+    "CONTROL": 0.0299,
+    "IMPLEMENT": 0.0294,
+    "PROOF": 0.0033
+   },
+   "avoidable_tokens": 100539016,
+   "avoidable_share": 0.26088726369231446,
+   "avoidable_by_cause": {
+    "REREAD": 18106443,
+    "RECOVERY": 39787417,
+    "CONTEXT_FAULT": 19286670,
+    "NO_PROGRESS_RUN": 23358486
+   },
+   "breaker_trip_calls_after_25": 61,
+   "breaker_trip_tokens": 23358486,
+   "progress_events": 221,
+   "transitions": 125,
+   "tokens_per_progress": 1743771.113122172,
+   "proof_then_other_pairs": 4,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 7,
+   "skipped": 0
+  },
+  "56524375": {
+   "calls": 570,
+   "tokens": 121011052,
+   "roles": {
+    "READ": 0.2698,
+    "unattributed": 0.2152,
+    "PLAN": 0.1204,
+    "CONTROL": 0.1171,
+    "IMPLEMENT": 0.103,
+    "CONTEXT_FAULT": 0.088,
+    "NOVELTY": 0.026,
+    "REREAD": 0.0235,
+    "RECOVERY": 0.0212,
+    "PROOF": 0.013,
+    "STATUS": 0.0028
+   },
+   "avoidable_tokens": 16700873,
+   "avoidable_share": 0.1380111380239881,
+   "avoidable_by_cause": {
+    "REREAD": 2849309,
+    "RECOVERY": 2563874,
+    "CONTEXT_FAULT": 10646638,
+    "NO_PROGRESS_RUN": 641052
+   },
+   "breaker_trip_calls_after_25": 3,
+   "breaker_trip_tokens": 641052,
+   "progress_events": 185,
+   "transitions": 62,
+   "tokens_per_progress": 654113.7945945946,
+   "proof_then_other_pairs": 6,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 13,
+   "skipped": 0
+  },
+  "5f69b14e": {
+   "calls": 238,
+   "tokens": 69181502,
+   "roles": {
+    "READ": 0.4047,
+    "PLAN": 0.2167,
+    "unattributed": 0.1842,
+    "CONTEXT_FAULT": 0.0937,
+    "REREAD": 0.0615,
+    "CONTROL": 0.0187,
+    "IMPLEMENT": 0.0054,
+    "NOVELTY": 0.0054,
+    "PROOF": 0.0049,
+    "RECOVERY": 0.0047
+   },
+   "avoidable_tokens": 14498861,
+   "avoidable_share": 0.20957713522900961,
+   "avoidable_by_cause": {
+    "REREAD": 4255147,
+    "CONTEXT_FAULT": 6484867,
+    "RECOVERY": 324728,
+    "NO_PROGRESS_RUN": 3434119
+   },
+   "breaker_trip_calls_after_25": 11,
+   "breaker_trip_tokens": 3434119,
+   "progress_events": 45,
+   "transitions": 1,
+   "tokens_per_progress": 1537366.711111111,
+   "proof_then_other_pairs": 1,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 4,
+   "skipped": 0
+  },
+  "65129fef": {
+   "calls": 846,
+   "tokens": 201891013,
+   "roles": {
+    "READ": 0.5282,
+    "unattributed": 0.1777,
+    "PLAN": 0.0972,
+    "CONTEXT_FAULT": 0.0652,
+    "CONTROL": 0.0438,
+    "REREAD": 0.0405,
+    "IMPLEMENT": 0.031,
+    "NOVELTY": 0.0072,
+    "RECOVERY": 0.0067,
+    "PROOF": 0.0025
+   },
+   "avoidable_tokens": 73587433,
+   "avoidable_share": 0.36449088003733976,
+   "avoidable_by_cause": {
+    "REREAD": 8167388,
+    "RECOVERY": 1352624,
+    "CONTEXT_FAULT": 13162729,
+    "NO_PROGRESS_RUN": 50904692
+   },
+   "breaker_trip_calls_after_25": 190,
+   "breaker_trip_tokens": 50904692,
+   "progress_events": 112,
+   "transitions": 13,
+   "tokens_per_progress": 1802598.330357143,
+   "proof_then_other_pairs": 2,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 12,
+   "skipped": 0
+  },
+  "7480f14f": {
+   "calls": 1933,
+   "tokens": 725372667,
+   "roles": {
+    "unattributed": 0.3037,
+    "READ": 0.2036,
+    "REREAD": 0.1427,
+    "IMPLEMENT": 0.0877,
+    "NOVELTY": 0.0718,
+    "CONTROL": 0.0698,
+    "PLAN": 0.0659,
+    "CONTEXT_FAULT": 0.0363,
+    "RECOVERY": 0.0162,
+    "PROOF": 0.002,
+    "STATUS": 0.0003
+   },
+   "avoidable_tokens": 171500560,
+   "avoidable_share": 0.23643096549156298,
+   "avoidable_by_cause": {
+    "REREAD": 103496600,
+    "NO_PROGRESS_RUN": 29908082,
+    "CONTEXT_FAULT": 26366923,
+    "RECOVERY": 11728955
+   },
+   "breaker_trip_calls_after_25": 75,
+   "breaker_trip_tokens": 29908082,
+   "progress_events": 457,
+   "transitions": 158,
+   "tokens_per_progress": 1587248.7242888403,
+   "proof_then_other_pairs": 4,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 6,
+   "skipped": 0
+  },
+  "874a309e": {
+   "calls": 471,
+   "tokens": 101242474,
+   "roles": {
+    "READ": 0.3419,
+    "unattributed": 0.2448,
+    "PLAN": 0.0996,
+    "CONTROL": 0.0991,
+    "CONTEXT_FAULT": 0.0783,
+    "IMPLEMENT": 0.0452,
+    "REREAD": 0.0311,
+    "REPAIR": 0.0174,
+    "NOVELTY": 0.0153,
+    "RECOVERY": 0.0141,
+    "PROOF": 0.013
+   },
+   "avoidable_tokens": 14204163,
+   "avoidable_share": 0.1402984581352684,
+   "avoidable_by_cause": {
+    "REREAD": 3150974,
+    "RECOVERY": 1429733,
+    "CONTEXT_FAULT": 7927934,
+    "NO_PROGRESS_RUN": 1695522
+   },
+   "breaker_trip_calls_after_25": 7,
+   "breaker_trip_tokens": 1695522,
+   "progress_events": 99,
+   "transitions": 25,
+   "tokens_per_progress": 1022651.2525252525,
+   "proof_then_other_pairs": 4,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 8,
+   "skipped": 0
+  },
+  "997a0f04": {
+   "calls": 1447,
+   "tokens": 411053760,
+   "roles": {
+    "unattributed": 0.2986,
+    "READ": 0.2846,
+    "IMPLEMENT": 0.1086,
+    "CONTROL": 0.0923,
+    "NOVELTY": 0.0594,
+    "PLAN": 0.0515,
+    "CONTEXT_FAULT": 0.0399,
+    "REREAD": 0.0371,
+    "PROOF": 0.0147,
+    "RECOVERY": 0.0114,
+    "REPAIR": 0.0018
+   },
+   "avoidable_tokens": 46791968,
+   "avoidable_share": 0.11383418071641042,
+   "avoidable_by_cause": {
+    "RECOVERY": 4686175,
+    "REREAD": 15245261,
+    "CONTEXT_FAULT": 16409444,
+    "NO_PROGRESS_RUN": 10451088
+   },
+   "breaker_trip_calls_after_25": 39,
+   "breaker_trip_tokens": 10451088,
+   "progress_events": 363,
+   "transitions": 132,
+   "tokens_per_progress": 1132379.5041322315,
+   "proof_then_other_pairs": 16,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 13,
+   "skipped": 0
+  },
+  "9983ff03": {
+   "calls": 545,
+   "tokens": 143857614,
+   "roles": {
+    "READ": 0.4681,
+    "unattributed": 0.1497,
+    "PLAN": 0.1475,
+    "REREAD": 0.0741,
+    "CONTEXT_FAULT": 0.0657,
+    "IMPLEMENT": 0.0527,
+    "CONTROL": 0.0225,
+    "RECOVERY": 0.0133,
+    "PROOF": 0.0041,
+    "STATUS": 0.0024
+   },
+   "avoidable_tokens": 40354113,
+   "avoidable_share": 0.2805142660019372,
+   "avoidable_by_cause": {
+    "REREAD": 10657245,
+    "CONTEXT_FAULT": 9450406,
+    "NO_PROGRESS_RUN": 18334412,
+    "RECOVERY": 1912050
+   },
+   "breaker_trip_calls_after_25": 62,
+   "breaker_trip_tokens": 18334412,
+   "progress_events": 121,
+   "transitions": 11,
+   "tokens_per_progress": 1188905.9008264462,
+   "proof_then_other_pairs": 2,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 9,
+   "skipped": 0
+  },
+  "b14d678c": {
+   "calls": 164,
+   "tokens": 44282682,
+   "roles": {
+    "READ": 0.4975,
+    "unattributed": 0.2594,
+    "PLAN": 0.1171,
+    "CONTEXT_FAULT": 0.0855,
+    "REREAD": 0.0405
+   },
+   "avoidable_tokens": 13568704,
+   "avoidable_share": 0.30641107058511047,
+   "avoidable_by_cause": {
+    "REREAD": 1792203,
+    "CONTEXT_FAULT": 3788348,
+    "NO_PROGRESS_RUN": 7988153
+   },
+   "breaker_trip_calls_after_25": 30,
+   "breaker_trip_tokens": 7988153,
+   "progress_events": 15,
+   "transitions": 0,
+   "tokens_per_progress": 2952178.8,
+   "proof_then_other_pairs": 0,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 4,
+   "skipped": 0
+  },
+  "d059600e": {
+   "calls": 472,
+   "tokens": 109301397,
+   "roles": {
+    "READ": 0.3098,
+    "unattributed": 0.2288,
+    "PLAN": 0.1424,
+    "IMPLEMENT": 0.103,
+    "CONTROL": 0.0851,
+    "CONTEXT_FAULT": 0.0624,
+    "REREAD": 0.0322,
+    "NOVELTY": 0.0136,
+    "RECOVERY": 0.0127,
+    "STATUS": 0.0051,
+    "PROOF": 0.0048
+   },
+   "avoidable_tokens": 11732822,
+   "avoidable_share": 0.10734375151673496,
+   "avoidable_by_cause": {
+    "REREAD": 3523007,
+    "CONTEXT_FAULT": 6817994,
+    "RECOVERY": 1391821
+   },
+   "breaker_trip_calls_after_25": 0,
+   "breaker_trip_tokens": 0,
+   "progress_events": 145,
+   "transitions": 28,
+   "tokens_per_progress": 753802.7379310345,
+   "proof_then_other_pairs": 3,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 8,
+   "skipped": 0
+  },
+  "ffd49867": {
+   "calls": 209,
+   "tokens": 52755609,
+   "roles": {
+    "READ": 0.3073,
+    "unattributed": 0.2232,
+    "IMPLEMENT": 0.1544,
+    "CONTEXT_FAULT": 0.0905,
+    "PLAN": 0.0795,
+    "CONTROL": 0.0751,
+    "REREAD": 0.026,
+    "RECOVERY": 0.0256,
+    "NOVELTY": 0.0183
+   },
+   "avoidable_tokens": 9478379,
+   "avoidable_share": 0.17966580577242508,
+   "avoidable_by_cause": {
+    "NO_PROGRESS_RUN": 1978320,
+    "CONTEXT_FAULT": 4776043,
+    "REREAD": 1371132,
+    "RECOVERY": 1352884
+   },
+   "breaker_trip_calls_after_25": 7,
+   "breaker_trip_tokens": 1978320,
+   "progress_events": 60,
+   "transitions": 10,
+   "tokens_per_progress": 879260.15,
+   "proof_then_other_pairs": 0,
+   "admission_denials": "UNKNOWN (not recorded in historical transcripts)",
+   "subagent_files": 3,
+   "skipped": 0
+  }
+ }
+}

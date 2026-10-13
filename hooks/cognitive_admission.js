@@ -87,6 +87,11 @@ function decide(event, now) {
   const sid = event && event.session_id;
   const input = (event && event.tool_input) || {};
   const h = phash(input.prompt || input.description || '');
+  // C10 canary defect: wired on '*' every Read/Grep hashed the empty prompt and was denied as DUPLICATE.
+  // Only spawn tools carry a prompt; any other tool, or an empty prompt, is not admission's business.
+  const tn = event && event.tool_name;
+  if (tn && !/^(Agent|Task)$/.test(tn)) return { deny: null, unit: 'unbound', effect: 'UNKNOWN', reason: 'not a spawn tool', h };
+  if (!(input.prompt || input.description)) return { deny: null, unit: 'unbound', effect: 'UNKNOWN', reason: 'empty prompt', h };
   if (!sid || !SID_RE.test(sid)) return { deny: null, unit: 'unbound', effect: 'UNKNOWN', reason: 'no session id', h };
   const bu = unitFor(sid);
   let unit = bu ? bu.unit || 'bound' : 'unbound', effect = 'UNKNOWN';

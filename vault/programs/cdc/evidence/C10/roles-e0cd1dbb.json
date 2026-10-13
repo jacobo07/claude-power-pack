@@ -1,0 +1,126 @@
+﻿{
+  "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X--claude-worktrees-brand001-clock-a\\e0cd1dbb-0d8d-4be1-9025-9614dddfd3e3.jsonl",
+  "files": [
+    "main",
+    "sub:agent-a098f56ccff76eee5",
+    "sub:agent-a25868d35eb10047a",
+    "sub:agent-a358d77e4babe1dd2",
+    "sub:agent-a5f0f6e4fe68191ed",
+    "sub:agent-a64508f6807654286",
+    "sub:agent-a755e4eb98f752d48",
+    "sub:agent-a76e169db82f0402b",
+    "sub:agent-aaba7caf38f327e87",
+    "sub:agent-aac6e1e40fa1fa7ae",
+    "sub:agent-ae4f70b1cc98f3064"
+  ],
+  "calls": 387,
+  "processed_tokens": 58401057,
+  "roles": {
+    "READ": {
+      "calls": 69,
+      "tokens": 9771146,
+      "main_tokens": 2759317,
+      "subagent_tokens": 7011829,
+      "share": 0.1673111156190204
+    },
+    "REREAD": {
+      "calls": 7,
+      "tokens": 1125774,
+      "main_tokens": 203349,
+      "subagent_tokens": 922425,
+      "share": 0.01927660316148045
+    },
+    "RESEARCH": {
+      "calls": 0,
+      "tokens": 0,
+      "main_tokens": 0,
+      "subagent_tokens": 0,
+      "share": 0.0
+    },
+    "PLAN": {
+      "calls": 39,
+      "tokens": 6115550,
+      "main_tokens": 351796,
+      "subagent_tokens": 5763754,
+      "share": 0.10471642662220994
+    },
+    "IMPLEMENT": {
+      "calls": 9,
+      "tokens": 1727039,
+      "main_tokens": 0,
+      "subagent_tokens": 1727039,
+      "share": 0.02957205038258126
+    },
+    "PROOF": {
+      "calls": 7,
+      "tokens": 1176571,
+      "main_tokens": 300829,
+      "subagent_tokens": 875742,
+      "share": 0.020146399062606006
+    },
+    "CONTROL": {
+      "calls": 3,
+      "tokens": 464305,
+      "main_tokens": 464305,
+      "subagent_tokens": 0,
+      "share": 0.007950284187493387
+    },
+    "STATUS": {
+      "calls": 0,
+      "tokens": 0,
+      "main_tokens": 0,
+      "subagent_tokens": 0,
+      "share": 0.0
+    },
+    "RECOVERY": {
+      "calls": 2,
+      "tokens": 391430,
+      "main_tokens": 0,
+      "subagent_tokens": 391430,
+      "share": 0.006702447183447382
+    },
+    "REPAIR": {
+      "calls": 22,
+      "tokens": 3373237,
+      "main_tokens": 0,
+      "subagent_tokens": 3373237,
+      "share": 0.05775986212030375
+    },
+    "CONTEXT_FAULT": {
+      "calls": 44,
+      "tokens": 5429648,
+      "main_tokens": 0,
+      "subagent_tokens": 5429648,
+      "share": 0.09297174193268454
+    },
+    "NOVELTY": {
+      "calls": 62,
+      "tokens": 9874534,
+      "main_tokens": 590966,
+      "subagent_tokens": 9283568,
+      "share": 0.16908142604336768
+    },
+    "unattributed": {
+      "calls": 123,
+      "tokens": 18951823,
+      "main_tokens": 8311355,
+      "subagent_tokens": 10640468,
+      "share": 0.32451164368480523
+    }
+  },
+  "unattributed_share": 0.32451164368480523,
+  "transitions": {
+    "commit": 0,
+    "new_file": 82,
+    "claim": 0,
+    "red_green": 2,
+    "total": 84,
+    "tokens_per_transition": 695250.6785714285,
+    "tokens_per": {
+      "commit": null,
+      "new_file": 712208.012195122,
+      "claim": null,
+      "red_green": 29200528.5
+    }
+  }
+}

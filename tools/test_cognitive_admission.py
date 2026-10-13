@@ -35,12 +35,12 @@ def check(gate, cond, ev):
         print(f"FAIL {gate}: {ev}")
 
 
-def run(state, sid, prompt, hook=HOOK, extra_env=None, cwd=None):
+def run(state, sid, prompt, hook=HOOK, extra_env=None, cwd=None, tool="Agent"):
     env = dict(os.environ, GSD_LONG_RUN_STATE_DIR=str(state))
     for k in ("CPP_COG_ADMISSION", "CPP_COG_ROUTE", "CPP_COG_UNIT", "CPP_GOAL"):
         env.pop(k, None)
     env.update(extra_env or {})
-    ev = {"session_id": sid, "hook_event_name": "PreToolUse", "tool_name": "Agent", "cwd": str(cwd or state),
+    ev = {"session_id": sid, "hook_event_name": "PreToolUse", "tool_name": tool, "cwd": str(cwd or state),
           "tool_input": {"prompt": prompt, "subagent_type": "general-purpose"}}
     p = subprocess.run([NODE, str(hook)], input=json.dumps(ev), capture_output=True, text=True, env=env, timeout=60)
     try:
@@ -124,6 +124,7 @@ def scenarios(hook, tag):
         # DUPLICATE
         a = run(st, "s-dup", "Do   the thing", hook)[0]
         res["DUPLICATE"] = (not a) and run(st, "s-dup", "do the THING", hook)[0]
+        res["NONSPAWN"] = not any(run(st, "s-ns", "same text", hook, tool="Read")[0] for _ in range(2))
         res["DUPLICATE_ctl"] = not run(st, "s-dup", "another prompt", hook)[0]
         res["DUPLICATE_other_session"] = not run(st, "s-dup2", "do the thing", hook)[0]
         # unbound interactive: allow
@@ -169,12 +170,18 @@ def main():
         ms = float(subprocess.run([NODE, "-e", code], capture_output=True, text=True, env=env, timeout=60).stdout.strip() or 9e9)
         check("C3-FAST", ms < 50, f"decide() {ms:.2f} ms/call (< 50)")
 
+    # C10 regression: a non-spawn tool wired on '*' must never be denied as DUPLICATE (empty-prompt hash)
+    with tempfile.TemporaryDirectory() as t:
+        st = Path(t)
+        r = [run(st, "c10aaaaa-0000-4000-8000-000000000001", "", tool="Read")[0] for _ in range(3)]
+        check("C10-NONSPAWN", not any(r), f"3 identical Read calls all admitted ({r})")
     # mutation drill: disable each predicate in a throwaway copy; its test must turn RED
     muts = {
         "NO_WORK": ("if (w) return", "if (false) return"),
         "EFFECT": ("NO_MODEL.has(effect) &&", "false &&"),
         "LEASE": ("bind.quarantine || gb.goalExhausted(bind.goal) || gb.sidTombstoned(bind.goal, sid)", "false"),
         "DUPLICATE": ("if (dupSeen(sid, h, now))", "if (false)"),
+        "NONSPAWN": ("if (tn && !/^(Agent|Task)$/.test(tn)) return", "if (false) return"),
     }
     src = HOOK.read_text(encoding="utf-8")
     for branch, (a, b) in muts.items():

@@ -1,0 +1,153 @@
+﻿{
+  "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X--claude-worktrees-brand001-clock-a\\be97307b-4266-46ba-a436-88c3febc1765.jsonl",
+  "files": [
+    "main",
+    "sub:agent-a01a9d0bde8230646",
+    "sub:agent-a0209bf68819a1699",
+    "sub:agent-a12d3bc9a3d77c1e6",
+    "sub:agent-a240572f1060a82e7",
+    "sub:agent-a241e8fc68261b0a9",
+    "sub:agent-a27aad6e16cbde524",
+    "sub:agent-a2a491a2df34e5196",
+    "sub:agent-a2d8cd6b87e173d86",
+    "sub:agent-a2f3c4fe8ec0e1d68",
+    "sub:agent-a324796daab480e66",
+    "sub:agent-a3792967f04bd9e15",
+    "sub:agent-a3ea6ea2646cdbdf9",
+    "sub:agent-a40f0f169c501d410",
+    "sub:agent-a446cf8ca164565ec",
+    "sub:agent-a475610e95af2fea3",
+    "sub:agent-a59c3d6900fa93e1f",
+    "sub:agent-a65782dd5bc322584",
+    "sub:agent-a667f84297dd684fd",
+    "sub:agent-a69d5d40922f10f58",
+    "sub:agent-a6e7f06d3b5802d72",
+    "sub:agent-a70685581e0ee515a",
+    "sub:agent-a71b32ae4fd196f6e",
+    "sub:agent-a723b8473217a431a",
+    "sub:agent-a85032eb43f3bf536",
+    "sub:agent-a8cd3e42ab4ce3ea3",
+    "sub:agent-ab4ff4b1acc7bbd6b",
+    "sub:agent-abbd69c5bdfa6b068",
+    "sub:agent-abc2ae5378624aeb9",
+    "sub:agent-ac09c3455619cc778",
+    "sub:agent-ac2ddd395c8c6502d",
+    "sub:agent-acb1468fca4e4b60f",
+    "sub:agent-acc0f48f64d0c13c5",
+    "sub:agent-acc25a54a26c4fc92",
+    "sub:agent-acef1b917606fceec",
+    "sub:agent-ad425f1425f088bae",
+    "sub:agent-ae6372bb8caa33f5e",
+    "sub:agent-af4b119b96af58e28"
+  ],
+  "calls": 1547,
+  "processed_tokens": 245821099,
+  "roles": {
+    "READ": {
+      "calls": 407,
+      "tokens": 62340465,
+      "main_tokens": 8045519,
+      "subagent_tokens": 54294946,
+      "share": 0.2536009531061449
+    },
+    "REREAD": {
+      "calls": 48,
+      "tokens": 7522437,
+      "main_tokens": 332489,
+      "subagent_tokens": 7189948,
+      "share": 0.030601266655308542
+    },
+    "RESEARCH": {
+      "calls": 6,
+      "tokens": 1192897,
+      "main_tokens": 0,
+      "subagent_tokens": 1192897,
+      "share": 0.004852703876325929
+    },
+    "PLAN": {
+      "calls": 129,
+      "tokens": 22838364,
+      "main_tokens": 3677485,
+      "subagent_tokens": 19160879,
+      "share": 0.09290644331551053
+    },
+    "IMPLEMENT": {
+      "calls": 79,
+      "tokens": 13422612,
+      "main_tokens": 0,
+      "subagent_tokens": 13422612,
+      "share": 0.05460317301730069
+    },
+    "PROOF": {
+      "calls": 42,
+      "tokens": 6817246,
+      "main_tokens": 404662,
+      "subagent_tokens": 6412584,
+      "share": 0.027732550329213197
+    },
+    "CONTROL": {
+      "calls": 23,
+      "tokens": 3862876,
+      "main_tokens": 2506824,
+      "subagent_tokens": 1356052,
+      "share": 0.015714175942236758
+    },
+    "STATUS": {
+      "calls": 0,
+      "tokens": 0,
+      "main_tokens": 0,
+      "subagent_tokens": 0,
+      "share": 0.0
+    },
+    "RECOVERY": {
+      "calls": 40,
+      "tokens": 6378205,
+      "main_tokens": 766811,
+      "subagent_tokens": 5611394,
+      "share": 0.025946531953304788
+    },
+    "REPAIR": {
+      "calls": 0,
+      "tokens": 0,
+      "main_tokens": 0,
+      "subagent_tokens": 0,
+      "share": 0.0
+    },
+    "CONTEXT_FAULT": {
+      "calls": 178,
+      "tokens": 23634161,
+      "main_tokens": 0,
+      "subagent_tokens": 23634161,
+      "share": 0.09614374476456149
+    },
+    "NOVELTY": {
+      "calls": 187,
+      "tokens": 30838035,
+      "main_tokens": 1132810,
+      "subagent_tokens": 29705225,
+      "share": 0.12544909743487884
+    },
+    "unattributed": {
+      "calls": 408,
+      "tokens": 66973801,
+      "main_tokens": 25894995,
+      "subagent_tokens": 41078806,
+      "share": 0.2724493596052144
+    }
+  },
+  "unattributed_share": 0.2724493596052144,
+  "transitions": {
+    "commit": 1,
+    "new_file": 243,
+    "claim": 1,
+    "red_green": 1,
+    "total": 246,
+    "tokens_per_transition": 999272.7601626016,
+    "tokens_per": {
+      "commit": 245821099.0,
+      "new_file": 1011609.4609053498,
+      "claim": 245821099.0,
+      "red_green": 245821099.0
+    }
+  }
+}
