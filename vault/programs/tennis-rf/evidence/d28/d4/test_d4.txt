@@ -1,0 +1,9 @@
+PASS V-D4-TRACE untraced=[]
+PASS V-D4-DIRECT-COUNT 3429
+PASS V-D4-RANGE 
+PASS V-D4-TOP30 
+FAIL V-D4-RED-FALLS {"method": "permute subject identity only (direct sets fixed); stat = mean transitive-high over each run's own top-30", "real": 6.6667, "shuffled_mean": 6.185, "shuffled_max": 8.6333, "falls": false}
+INFO score-level control (reported, direct part degree-invariant): {"mean_low": false, "mean_high": false, "mean_mid": false}
+PASS V-D4-CAUSAL 
+PASS V-D4-REPRO 
+TEST_D4 FAIL V-D4-RED-FALLS

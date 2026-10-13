@@ -1,0 +1,33 @@
+{
+ "method": "pool all (fn,var) pairs; reassign var column at random (var degrees and fn degrees preserved, co-occurrence destroyed) and permute call-subject identity of HELPER/SELF_SIG vars; recompute top-30",
+ "n_perm": 20,
+ "seed": 28,
+ "real": {
+  "mean_low": 0.2125,
+  "mean_high": 31.6917,
+  "mean_mid": 15.9521
+ },
+ "shuffled_mean": {
+  "mean_low": 1.3394,
+  "mean_high": 30.44,
+  "mean_mid": 15.8897
+ },
+ "shuffled_max": {
+  "mean_low": 1.6125,
+  "mean_high": 32.5583,
+  "mean_mid": 16.9042
+ },
+ "falls": {
+  "mean_low": false,
+  "mean_high": false,
+  "mean_mid": false
+ },
+ "transitive_control": {
+  "method": "permute subject identity only (direct sets fixed); stat = mean transitive-high over each run's own top-30",
+  "real": 6.6667,
+  "shuffled_mean": 6.185,
+  "shuffled_max": 8.6333,
+  "falls": false
+ },
+ "note": "Direct blocked counts are degree counts: any var-degree-preserving shuffle leaves them unchanged, so the score-level control (falls{}) is INCONCLUSIVE for the direct part by construction and is reported, not gated. The call-graph contribution is what a shuffle can falsify: transitive_control."
+}
