@@ -270,7 +270,70 @@ function Test-IsAbandonedHookOrphan {
   return ($AgeSeconds -ge $MinAgeSeconds)
 }
 
+# ---------------------------------------------------------------------------
+# OWNERSHIP OF INLINE PROBES (goal prr, 2026-10-13).
+# A hook script that runs `node -e "<body>"` spawns a child whose command line
+# carries the BODY, never the script's path. Ownership by `\.claude[\\/]` was
+# therefore blind to it: the census found 66 such children of
+# gsd-session-state.sh / gsd-phase-boundary.sh, created suspended, parent dead,
+# 0.00 s CPU, alive 12-144 h -- exactly the never-resumed class this file exists
+# to reap, skipped by the ownership test alone.
+# Ownership proof here is textual identity with a literal OUR hooks author: the
+# signatures are DISCOVERED from the installed hook files on every run, never a
+# hand-kept list. A body shorter than $inlineSigMinChars is too generic to prove
+# anything and is not a signature.
+# ---------------------------------------------------------------------------
+$inlineSigMinChars = 40
+
+function Get-InlineHookSignatures {
+  param([string[]]$Paths)
+  $sigs = New-Object System.Collections.Generic.List[string]
+  foreach ($p in $Paths) {
+    $txt = $null
+    try { $txt = [IO.File]::ReadAllText($p) } catch { continue }
+    foreach ($m in [regex]::Matches($txt, 'node(?:\.exe)?"?\s+-e\s+"([^"]+)"')) {
+      $body = ($m.Groups[1].Value -replace '\s+', ' ').Trim()
+      if ($body.Length -lt $inlineSigMinChars) { continue }
+      $sig = $body.Substring(0, [Math]::Min(80, $body.Length))
+      if (-not $sigs.Contains($sig)) { $sigs.Add($sig) }
+    }
+  }
+  return ,$sigs.ToArray()
+}
+
+function Test-IsOursCommand {
+  param([string]$CommandLine, [string[]]$Signatures)
+  if ([string]::IsNullOrWhiteSpace($CommandLine)) { return $false }
+  if ($CommandLine -match '\.claude[\\/]') { return $true }
+  $flat = ($CommandLine -replace '\s+', ' ')
+  foreach ($s in $Signatures) {
+    if ($s -and $flat.Contains($s)) { return $true }
+  }
+  return $false
+}
+
 if ($args -contains '-GhostSelfTest') {
+  # Ownership cases first: the inline probe must be ours ONLY through a signature
+  # discovered from a hook file; an unrelated inline body must not be.
+  $probeBody = "try{const c=require('./.planning/config.json');process.stdout.write(c.hooks?.community===true?'1':'0')}catch{process.stdout.write('0')}"
+  $tmpHook = Join-Path ([IO.Path]::GetTempPath()) ("reaper-sig-" + [guid]::NewGuid().ToString('N') + '.sh')
+  [IO.File]::WriteAllText($tmpHook, "ENABLED=`$(node -e `"$probeBody`" 2>/dev/null)`n")
+  try { $tsigs = Get-InlineHookSignatures -Paths @($tmpHook) } finally { Remove-Item -LiteralPath $tmpHook -Force -ErrorAction SilentlyContinue }
+  $probeCmd = '"C:\Program Files\nodejs\node.exe" -e "' + $probeBody + '"'
+  $ocases = @(
+    @{ n = 'inline probe authored by our hook: ours';      c = $probeCmd; s = $tsigs; want = $true  },
+    @{ n = 'same probe, no signature discovered: refuse';  c = $probeCmd; s = @();    want = $false },
+    @{ n = 'unrelated inline node -e: not ours';           c = 'node.exe -e "require(''http'').createServer().listen(3000) // some user server process"'; s = $tsigs; want = $false },
+    @{ n = 'path under .claude: ours as before';           c = 'node.exe C:/Users/User/.claude/hooks/x.js'; s = @(); want = $true },
+    @{ n = 'empty command line: refuse';                   c = '';        s = $tsigs; want = $false }
+  )
+  $ofails = 0
+  foreach ($c in $ocases) {
+    $got = Test-IsOursCommand -CommandLine $c.c -Signatures $c.s
+    if ($got -ne $c.want) { $ofails++; "FAIL own: $($c.n): got=$got want=$($c.want)" } else { "ok   own: $($c.n)" }
+  }
+  if ($tsigs.Count -ne 1) { $ofails++; "FAIL own: signature discovery found $($tsigs.Count) (want 1)" }
+
   $gcases = @(
     @{ n = 'ghost: ours, parent dead, never ran, old';     o = $true;  p = $false; k = $true;  c = 0;    a = 3600;  want = $true  },
     @{ n = 'healthy long task: has burned CPU';            o = $true;  p = $false; k = $true;  c = 5587; a = 84000; want = $false },
@@ -312,7 +375,8 @@ if ($args -contains '-GhostSelfTest') {
   $ovHook = Test-IsAbandonedHookOrphan -IsOurs $true -ParentAlive $false -CommandLine $hookCmd -AgeSeconds 4000 -MinAgeSeconds $hookOrphanMinAgeSeconds
   if ($ovCpu -or -not $ovHook) { $gfails++; "FAIL disjointness: cpu=$ovCpu hook=$ovHook (want cpu=False hook=True)" }
   else { "ok   disjointness: CPU rule spares burned-CPU work; this rule owns it" }
-  $gcases = $gcases + $hcases + @(@{ n = 'disjointness' })
+  $gfails += $ofails
+  $gcases = $gcases + $hcases + $ocases + @(@{ n = 'disjointness' }, @{ n = 'signature discovery' })
   "GHOST_SELFTEST=$($gcases.Count - $gfails)/$($gcases.Count)"
   exit ($(if ($gfails -eq 0) { 0 } else { 1 }))
 }
@@ -348,11 +412,15 @@ try {
   $gByPid = @{}
   foreach ($pr in (Get-Process node, python, python3.12 -ErrorAction SilentlyContinue)) { $gByPid[[int]$pr.Id] = $pr }
 
+  # Inline-probe ownership: signatures discovered from the hooks actually installed.
+  $gHookFiles = @(Get-ChildItem -Path (Join-Path $env:USERPROFILE '.claude\hooks') -File -Include *.sh, *.ps1, *.js -Recurse -Depth 1 -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+  $gInlineSigs = Get-InlineHookSignatures -Paths $gHookFiles
+
   foreach ($gp in ($gAllProcs | Where-Object { $_.Name -eq 'node.exe' -or $_.Name -like 'python*.exe' })) {
     $ghostSeen++
 
     $gcmd = if ($gp.CommandLine) { $gp.CommandLine } else { '' }
-    $gIsOurs = $gcmd -match '\.claude[\\/]'
+    $gIsOurs = Test-IsOursCommand -CommandLine $gcmd -Signatures $gInlineSigs
     if (-not $gIsOurs) { continue }
 
     $gParentAlive = [bool]$gLive[[int]$gp.ParentProcessId]
