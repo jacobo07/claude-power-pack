@@ -1,0 +1,169 @@
+{
+ "rule": "0=lint-clean+W12 MATCH; 1=lint-clean; 2=only fact-gap blockers (FIELD_UNTYPED,FIELD,SELF_SIG,QTYPE_LOCAL,HELPER) or clean+measured compile failure; 3=an M2C:* blocker; 4=an M2C_FAILED:* blocker; 5=not clean and unexplained",
+ "histogram": {
+  "0": 12,
+  "1": 263,
+  "2": 1307,
+  "3": 92,
+  "4": 92,
+  "5": 31
+ },
+ "n": 1797,
+ "w12_check": {
+  "fn_801BD194": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_80203E40": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_80203FEC": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_8020711C": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_8020CC14": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_802128D4": {
+   "verdict": "PARTIAL 16.9% (codegen_diff, SIZE 6 vs 8)",
+   "distance": 1
+  },
+  "fn_8021EAA8": {
+   "verdict": "EXCLUDED_LINT_UNK_FIELD",
+   "distance": 5
+  },
+  "fn_8021F3E4": {
+   "verdict": "PARTIAL 83.1% (codegen_diff, SIZE 20 vs 24)",
+   "distance": 1
+  },
+  "fn_8021F8BC": {
+   "verdict": "PARTIAL 100.0% (codegen_diff, DIFF 1/34)",
+   "distance": 1
+  },
+  "fn_8022621C": {
+   "verdict": "PARTIAL 95.7% (codegen_diff, SIZE 22 vs 23)",
+   "distance": 1
+  },
+  "fn_8022F90C": {
+   "verdict": "EXCLUDED_LINT_UNK_FIELD",
+   "distance": 2
+  },
+  "fn_80230ABC": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_80230BF8": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_80241018": {
+   "verdict": "PARTIAL 60.9% (codegen_diff, SIZE 15 vs 17)",
+   "distance": 1
+  },
+  "fn_80252F34": {
+   "verdict": "FAIL BLOCKED_CONTEXT",
+   "distance": 2
+  },
+  "fn_80253348": {
+   "verdict": "PARTIAL 87.1% (codegen_diff, SIZE 59 vs 57)",
+   "distance": 1
+  },
+  "fn_80254440": {
+   "verdict": "PARTIAL 98.4% (codegen_diff, DIFF 8/27)",
+   "distance": 1
+  },
+  "fn_80257978": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_8025C600": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_80278FEC": {
+   "verdict": "PARTIAL 95.7% (codegen_diff, SIZE 22 vs 23)",
+   "distance": 1
+  },
+  "fn_80279E44": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_8027A154": {
+   "verdict": "MATCH",
+   "distance": 0
+  },
+  "fn_8032CF78": {
+   "verdict": "PARTIAL 46.7% (codegen_diff, SIZE 4 vs 3)",
+   "distance": 1
+  },
+  "fn_803315A0": {
+   "verdict": "MATCH",
+   "distance": 0
+  }
+ },
+ "cost": {
+  "basis": "MEASURED only: W12 compile-verified rate 12/22 with model_calls 0 per function; D2 near-match compression 5 classes / 9 PARTIAL; D2 shock: 101 functions flipped lint-clean by header with 0 model calls. W12 tokens: 3,453,372 processed / 52 calls for the WHOLE W12 session (prep+build+send+judge of 22 fns) = a ceiling, NOT a per-function rate.",
+  "class0": {
+   "n": 12,
+   "work": 0
+  },
+  "class1": {
+   "n": 263,
+   "match_rate": "12/22",
+   "wilson95": [
+    0.347,
+    0.731
+   ],
+   "expected_match_range": [
+    91.2,
+    192.2
+   ],
+   "expected_match_point": 143.5,
+   "needs_followup_expected_point": 119.5,
+   "followup_tokens_per_fn": "UNKNOWN (no measured model-assisted near-match rate)",
+   "near_match_compression_measured": "5 classes / 9 PARTIAL"
+  },
+  "class2": {
+   "n": 1307,
+   "rate": "UNKNOWN (only the 101 shock flips are measured, on a different population)",
+   "tokens_per_fn": "UNKNOWN",
+   "model_calls_per_fn_in_shock": 0
+  },
+  "class3": {
+   "n": 92,
+   "rate": "UNKNOWN",
+   "tokens_range": [
+    0,
+    "UNKNOWN"
+   ]
+  },
+  "class4": {
+   "n": 92,
+   "rate": "UNKNOWN",
+   "tokens_range": [
+    0,
+    "UNKNOWN"
+   ]
+  },
+  "class5": {
+   "n": 31,
+   "rate": "UNKNOWN",
+   "tokens_range": [
+    0,
+    "UNKNOWN"
+   ]
+  },
+  "ceiling_tokens_per_fn_not_a_rate": 156971,
+  "ceiling_total_if_every_nonzero_fn_cost_the_W12_aggregate": 280194046,
+  "priced_total_tokens_lower_bound": 0,
+  "priced_total_tokens_upper_bound": "UNKNOWN (classes 2-5 have no measured per-function token rate)",
+  "functions_priced": 275,
+  "functions_unpriced": 1522
+ }
+}
