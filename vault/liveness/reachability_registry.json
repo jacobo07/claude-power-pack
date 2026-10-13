@@ -11,6 +11,18 @@
     "session_resilience/ui_state"
   ],
   "modules": {
+    "prr/__init__": {
+      "class": "LIBRARY",
+      "note": "Package marker for goal prr, added 2026-10-12 so this scanner walks modules/prr at all: without it every prr entry above was declared against a module the gate never discovered (494 -> 501 modules once added)."
+    },
+    "prr/bench/__init__": {
+      "class": "LIBRARY",
+      "note": "Package marker for the prr GEX44 bench (stub_api + longrun), added with prr/__init__ for the same reason."
+    },
+    "prr/pgo": {
+      "class": "LIBRARY",
+      "note": "goal prr R (2026-10-12): resource profile ledger, CLI `python -m modules.prr.pgo ingest|recommend`; ledger vault/programs/prr/pgo/profiles.jsonl (append-only, GEX44 profiles only). Consumer: the recycle cadence once the Windows canary yields a windows-plane profile (D28). Proven by tests/test_prr_pgo.py."
+    },
     "prr/bench/stub_api": {
       "class": "LIBRARY",
       "note": "goal prr B: zero-token local Messages API stand-in for host memory benchmarks; run by hand on GEX44 next to prr/bench/longrun. Proven by tests/test_prr_bench.py."

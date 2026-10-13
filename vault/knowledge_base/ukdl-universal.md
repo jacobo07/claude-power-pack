@@ -13137,3 +13137,51 @@ written at. A prediction about which commits deserve a claim cannot grade a pred
 which commits are material; the pre-registration was honest and still measured the wrong
 thing. Extends `T-CLAE-WRONG-INSTRUMENT-KIND` to predictions.
 ORIGEN: `vault/lessons/knowledge-stale-by-omission.md:59,108`. SCOPE: universal.
+## Physical Runtime Working Set (goal prr, 2026-10-12)
+
+Plane for every number below: GEX44 (Linux, claude 2.1.296, isolated config, stub API). Not yet a Windows
+result. Evidence: `vault/programs/prr/evidence/{A1,B,C,D,E}-*.md`.
+
+### T-CLAUDE-ENGINE-IS-BUN-JSC-NOT-V8-001
+
+claude 2.1.296 is a Bun 1.4.3 binary on JavaScriptCore, not Node/V8. Advice keyed to V8 (heap flags,
+`--max-old-space-size`, V8 GC behaviour) does not apply to it. Older notes that say "V8 heap" name the wrong
+engine; the resident-growth findings still hold, the mechanism words do not. Evidence: A1.
+
+### T-CLEAR-AND-COMPACT-CUT-TOKENS-NOT-RAM-001
+
+`/clear` and `/compact` shrink what is SENT, not what the process HOLDS. A process keeps every history it
+loaded: 150 turns with `/clear` every 10 in one process grew RssAnon 113 -> 224 MB (+53 MB/100 turns);
+`/compact` also grows in one process (B: +12 MB/100 turns, different cadence). Never present either as a memory fix. The lever is a process recycle
+(`--resume <sid>` in a fresh process), which reloads only the post-boundary live set. Evidence: B, E.
+
+### PR-RECYCLE-ONLY-AFTER-A-BOUNDARY-IN-THIS-PROCESS-001
+
+Recycle a claude process only when a boundary (`/compact` or `/clear`) was crossed inside THAT process, and only
+when a resume loop exists to relaunch into; otherwise KEEP. A resumed process must not recycle again until its
+own boundary, or the policy loops. Measured with the real hook deciding: 14 RECYCLE for 14 `/clear`, zero
+loops, one sid across 15 processes, epoch start flat at 123-124 MB (+0.04 MB/epoch), resume ~0.36 s.
+Without a resume loop the same hook returned KEEP 140 times. Owner: the rollover (`/clear`) path is the one
+that matters. Code: `modules/prr/recycle_policy.py`. Evidence: D, E.
+
+### T-COMPLETED-SUBAGENT-STAYS-RESIDENT-001
+
+Subagents run in-process and stay resident after they complete: about 1 MB per completed agent with no live
+consumer (+64 MB/100 turns at one agent per turn). Mods cannot stop an agent; a recycle releases them. Image
+reads drive the PEAK (HWM 1.2 GB, largest request 67.5 MB) because every request re-serialises every live
+image; epoch length is the lever on the peak. Evidence: C.
+
+### T-TOTAL-RECALL-IS-NOT-TOTAL-RESIDENCY-001
+
+After a boundary, a resumed process's resident set does not depend on pre-boundary history size: 26.9 MB ->
+267.1 MB of transcript (10x) left resume RssAnon at 119-121 MB and first-turn latency at 0.33-0.42 s. Keeping
+the whole history on disk under one session id costs no RAM after a recycle. Evidence: C.
+
+### T-EXEC-A-EMPTIES-SYS-EXECUTABLE-001
+
+`exec -a <name> python script.py` (used to make a process look like a wrapper by argv0) leaves Python's
+`sys.executable` as `""`. Any command built from it silently loses its interpreter: a hook command became
+`... observe  -m modules.prr.recycle_policy` and never ran (109/109 null receipts). Build such commands from an
+absolute interpreter path, or refuse when `sys.executable` is empty. Also: `bash -c "exec -a ...; trailer"`
+never runs the trailer, because exec replaces the shell. Evidence: E; `longrun.default_hook_cmd`.
+
