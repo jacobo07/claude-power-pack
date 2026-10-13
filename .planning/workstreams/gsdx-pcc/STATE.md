@@ -1,20 +1,20 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 5
+current_phase: 6
 status: planning
 last_updated: "2026-10-13T00:00:00.000Z"
 last_activity: 2026-10-13
 progress:
   total_phases: 10
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 17
   completed_plans: 17
-  percent: 40
+  percent: 50
 workstream: gsdx-pcc
 created: 2026-10-07
-current_phase_name: W4 Judge VALIDATE vs REPLAY
+current_phase_name: W5 Mutant farm
 current_plan: Not started
-stopped_at: Phase 4 complete (verification passed, 04-VERIFICATION.md); ready to plan Phase 5 (W4 judge VALIDATE vs REPLAY)
+stopped_at: Phase 5 complete (verification passed, 05-VERIFICATION.md); ready to plan Phase 6 (W5 mutant farm)
 ---
 
 # Project State
@@ -22,7 +22,9 @@ stopped_at: Phase 4 complete (verification passed, 04-VERIFICATION.md); ready to
 ## Current Position
 
 **Status:** Ready to plan
-**Current Phase:** 5 -- W4 Judge VALIDATE vs REPLAY (Phase 4 complete 2026-10-13, see `phases/04-w3-candidate-snapshots-invalidation-proof-inheritance/04-VERIFICATION.md`)
+**Current Phase:** 6 -- W5 Mutant farm (Phase 5 complete 2026-10-13, see `phases/05-*/05-VERIFICATION.md`)
+
+**Old position line:** 5 -- W4 Judge VALIDATE vs REPLAY (Phase 4 complete 2026-10-13, see `phases/04-w3-candidate-snapshots-invalidation-proof-inheritance/04-VERIFICATION.md`)
 **Last Activity:** 2026-10-13
 
 ## RESOLVED 2026-10-13 (coordinator, option a): WU-P4 mutation-suite decision
@@ -33,6 +35,12 @@ stopped_at: Phase 4 complete (verification passed, 04-VERIFICATION.md); ready to
 - **Question:** where and when is `tools/test_gsd_x_goal_mutation.py` run for Phase 4? It mutates LIVE files, hit a 270 s timeout on the laptop, and its kill left `judge.py` mutated (restored by `git checkout`, diff empty).
   **Options:** (a) coordinator runs it on the Linux plane (GEX44) at the Phase 4 head and labels the result "Linux plane"; (b) defer it to Phase 6's entry obligation (R11, isolated-copy incumbent measurement); (c) run it on the laptop in an isolated copy with a longer timeout.
   **Pick:** (a). Phase 4 added no judge or mutation-suite change, so the risk is low; the gate stays honest as UNRUN until then.
+
+## OWNER DECISION NEEDED 2026-10-13 (WU-P5): Linux-plane runs
+
+- **Question:** who runs d3 and `tools/test_gsd_x_goal_mutation.py` for Phase 5, and when? Both were UNRUN on the laptop (d3 reaped for memory; the suite mutates live files).
+  **Options:** (a) coordinator runs both on GEX44 at the Phase 5 head and labels them "Linux plane"; (b) defer to Phase 6's entry obligation (isolated-copy incumbent measurement).
+  **Pick:** (a). Phase 5 kept every anchor line intact, so the risk is low, but a changed judge.py may move an anchor; re-anchor and record if so.
 
 ## Session Continuity
 

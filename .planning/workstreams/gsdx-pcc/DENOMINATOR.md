@@ -21,9 +21,9 @@ disposition. Phase = the roadmap phase expected to close it.
 | D12 | Causal proof binding (§11) | tree_id whole-repo (Reality 4) | EXTEND, unknown -> legacy binding | 4 | DONE | 04-VERIFICATION.md (Windows laptop plane; GSDX_INVALIDATION_PASS=26/26, frontier 40/40, replay 28/28); V-CERT-BINDING-SCHEME, V-INV-FALSE-REUSE; drill d6 KILLED |
 | D13 | Proof certificate (§12) | evidence_bundle (no certificate) | EXTEND producer | 4 | DONE | 04-VERIFICATION.md (Windows laptop plane; GSDX_INVALIDATION_PASS=26/26, frontier 40/40, replay 28/28); V-CERT-PRODUCED-ON-SATISFY, V-CERT-ONLY-AFTER-SATISFY, V-CERT-LAW-CONSERVATION |
 | D14 | Freshness classes (§13) | gate_class | EXTEND | 4 | DONE | 04-VERIFICATION.md (Windows laptop plane; GSDX_INVALIDATION_PASS=26/26, frontier 40/40, replay 28/28); V-INV-FRESH-REQUIRED-NEVER, V-INV-FRESH-ISLANDS |
-| D15 | Judge VALIDATE vs REPLAY (§14) | judge.py | EXTEND | 5 | OPEN | |
-| D16 | Parallel judge replay (§14) | judge.py serial | EXTEND bounded | 5 | OPEN | |
-| D17 | Reviewer concurrency (§15) | evidence_bundle ticket/nonce | CONNECT + close A->B->A hole | 5 | OPEN | |
+| D15 | Judge VALIDATE vs REPLAY (§14) | judge.py | EXTEND | 5 | DONE | DONE 970ea212 (laptop): judge _validate re-derives via inherit.plan; GSDX_JUDGE_VALIDATE_PASS=11/11; d1,d2 KILLED; d3 UNRUN->Linux |
+| D16 | Parallel judge replay (§14) | judge.py serial | EXTEND bounded | 5 | DONE | DONE 0f1b2aba (laptop): replay.run_bounded; GSDX_REPLAY_PARALLEL_PASS=14/14; d4,d5 KILLED |
+| D17 | Reviewer concurrency (§15) | evidence_bundle ticket/nonce | CONNECT + close A->B->A hole | 5 | DONE | DONE 73179700 (laptop): review.received + review.receive; GSDX_REVIEW_PASS=12/12; d8-d10 KILLED |
 | D18 | Isolated parallel mutant farm (§16) | mutation_drill isolated; probe live | EXTEND drill discipline | 6 | OPEN | |
 | D19 | Mutation contract by failure class (§17) | ratchet tiers | EXTEND | 6 | OPEN | |
 | D20 | Minimal sufficient verification set (§18) | none | BUILD solver, UNKNOWN -> FULL | 4 | DONE | 04-VERIFICATION.md (Windows laptop plane; GSDX_INVALIDATION_PASS=26/26, frontier 40/40, replay 28/28); V-INV-VSET-SKIPS-ONLY-WITH-EVIDENCE, V-INV-VSET-UNKNOWN-FULL, V-INV-VSET-NO-OVERLAP, V-INV-NONAND-RUNS-FULL; drill d7 KILLED |
@@ -58,7 +58,7 @@ disposition. Phase = the roadmap phase expected to close it.
 | R02 | Whole-repo tree binding | git_state.py:129 | covered by D12 | 4 | DONE | 04-VERIFICATION.md (Windows laptop plane; GSDX_INVALIDATION_PASS=26/26, frontier 40/40, replay 28/28); V-CERT-BINDING-SCHEME, V-INV-FALSE-REUSE |
 | R03 | Goal workers get no family baseline (`claude -p`) | providers/claude.py | FIX via brief injection | 10 | OPEN | |
 | R04 | mutation_probe live-tree mutation (8/10 pairs) | mutation_probe | farm never uses live mode; record as debt | 6 | OPEN | |
-| R05 | evidence_bundle A->B->A hole | evidence_bundle.py:140 | close in D17 | 5 | OPEN | |
+| R05 | evidence_bundle A->B->A hole | evidence_bundle.py:140 | close in D17 | 5 | DONE | CLOSED 8e62abdb (laptop): stat journal + snapshot; EVB_ABA_PASS=10/10; d6,d7 KILLED |
 | R06 | auto-testing detectors lack mix.exs | auto-testing/detectors.py | EXTEND or prove FULL fallback | 7 | OPEN | |
 | R07 | Ecosystems: Python, Elixir, Rust, Go, Java, Kotlin, Node, PHP, Ruby | sdd_os/scaffold + hook-runtime | each: trusted adapter OR proven FULL fallback | 7 | OPEN | |
 | R08 | Pilot identity: Owner chose io-chatgpt-plugin; scout found Phase 6 in io-ucg | Reality 15 | pilot io-chatgpt-plugin, replay io-ucg; record discrepancy | 7,9 | OPEN | |

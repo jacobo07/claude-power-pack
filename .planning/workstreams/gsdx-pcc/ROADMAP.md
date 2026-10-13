@@ -67,7 +67,7 @@ discriminating evidence, or less reconstruction -- never from removing a check.
   freshness classes, minimal sufficient verification (UNKNOWN -> FULL). RED: false reuse after a relevant change;
   UNKNOWN treated as clean; fresh-required proof inherited; omitted proof without an INHERITED event; candidate
   changes under verification.
-- [ ] **Phase 5: W4 Judge VALIDATE vs REPLAY, parallel replay, reviewer concurrency**
+- [x] **Phase 5: W4 Judge VALIDATE vs REPLAY, parallel replay, reviewer concurrency**
   Judge validates certificates independently or replays; independent replays concurrent (bounded); reviewer bound
   to a candidate via evidence_bundle tickets, staled exactly where bytes moved (close the A->B->A hole). RED:
   builder self-certification; gate weakening accepted; stale review surviving mutation.
