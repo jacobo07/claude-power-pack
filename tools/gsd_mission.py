@@ -519,11 +519,12 @@ def budget_exhausted(rec: dict, now: float) -> str | None:
 
 
 def plan_next(rec: dict, now: float, sessions: list[dict] | None,
-              pid_alive=lr._pid_alive, v2: bool | None = None) -> dict:
+              pid_alive=lr._pid_alive, v2: bool | None = None, blocked_probe=None) -> dict:
     """What the out-of-band supervisor should do for this mission, and why.
 
     Actions: none · launch · replace · halt · surface_blocked · await.
-    Pure: no I/O beyond the injected ``pid_alive``. ``v2`` is capsule_v2(rec) as the caller read it
+    Pure except the injected ``pid_alive`` and, for a bare host-`blocked` owner only, ``blocked_probe``
+    (default blocked_recovery: reads the job file and the repo's .planning/config.json, may ask git once). ``v2`` is capsule_v2(rec) as the caller read it
     (the kill switch is a file); None reads the record's field alone.
     """
     if v2 is None:
@@ -615,6 +616,28 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # stays BLOCKED forever. Only a LIVE, busy owner is let finish its turn first.
         return {"action": "halt", "reason": f"owner {verdict} and budget: {spent}"}
     if verdict == WAITING_HUMAN:
+        # AMR-X (m-5cd1a041bc0f, 21 h 43 min parked): a bare host `blocked` is also a model that ENDED ITS
+        # TURN ON A QUESTION. The Owner Escalation Gate types it from the job's `needs`; a question the
+        # repo policy or the recommended option answers is not a human's, so the worker is replaced by a
+        # successor that carries the answer. Permission prompts, host gates and Owner-class questions
+        # stay surfaced exactly as before; an unjudgeable one (None/UNKNOWN) too.
+        # Only a BARE blocked is judged: a host row carrying `waitingFor` is a live permission prompt, whatever the
+        # job file says (review F3).
+        hrow = _host_row((rec.get("owner") or {}).get("session_id"), sessions)
+        b = ((blocked_probe or blocked_recovery)(rec)
+             if state in (RUNNING, BLOCKED) and hrow is not None and not hrow.get("waitingFor") else None)
+        cls = (b or {}).get("class")
+        if cls == "QUESTION_RESOLVABLE":
+            if int(rec.get("decision_recoveries") or 0) >= MAX_DECISION_RECOVERIES:
+                return {"action": "surface_blocked",
+                        "reason": f"OWNER_BOUNDARY: {MAX_DECISION_RECOVERIES} decision recoveries already spent; "
+                                  f"worker asks again: {b['why'][:160]}"}
+            return {"action": "replace", "decision": b,
+                    "reason": f"decision recovery ({b['gate']['result']}): the worker ended on a question the "
+                              f"runtime answers: {b['why'][:160]}"}
+        if cls == "QUESTION_OWNER":
+            return {"action": "surface_blocked",
+                    "reason": f"OWNER_BOUNDARY ({b['gate'].get('owner_class')}): {b['why'][:200]}"}
         return {"action": "surface_blocked", "reason": why}
     if verdict == UNKNOWN and state == RUNNING:
         owner = rec.get("owner") or {}
@@ -784,6 +807,43 @@ def slim_argv(rec: dict, prompt: str, exe: str, profile: str, session_id: str | 
     return argv + [prompt]
 
 
+MAX_DECISION_RECOVERIES = 2   # successors per mission launched to answer a worker's own question
+
+
+def _decision_recovery_off() -> bool:
+    return os.environ.get("CPP_MISSION_DECISION_RECOVERY", "").strip().lower() == "off"
+
+
+def worker_topology(rec: dict) -> dict:
+    """tools/mission_policy.compile_topology for the mission's repo. A policy that cannot be read keeps
+    today's topology (worktrees allowed): this gate may only narrow a launch, never break one."""
+    if _decision_recovery_off():
+        return {"worktrees": True, "disallowed_tools": [], "why": "CPP_MISSION_DECISION_RECOVERY=off"}
+    try:
+        import mission_policy as mpol
+        return mpol.topology_for(rec["cwd"])
+    except Exception as exc:  # noqa: BLE001 -- recorded, the launch proceeds as before
+        lr.ledger_append(rec.get("mission_id") or "-", "topology_policy_unavailable",
+                         mission_id=rec.get("mission_id"), error=f"{type(exc).__name__}: {exc}"[:200])
+        return {"worktrees": True, "disallowed_tools": [], "why": "policy unavailable"}
+
+
+def blocked_recovery(rec: dict) -> dict | None:
+    """Type a host-`blocked` BACKGROUND owner from its job's `needs` (tools/mission_policy.classify_blocked).
+
+    None = not judged (kill switch, no background owner, probe failed): the caller keeps today's
+    surface_blocked. Only QUESTION_RESOLVABLE ever leads to recovery."""
+    owner = rec.get("owner") or {}
+    if _decision_recovery_off() or owner.get("kind") != "background" or not owner.get("session_id"):
+        return None
+    try:
+        import mission_policy as mpol
+        return mpol.classify_blocked(mpol.job_state(owner["session_id"]),
+                                     mpol.repo_policy(rec["cwd"])["values"])
+    except Exception:  # noqa: BLE001 -- unknown is never recovered on
+        return None
+
+
 def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[str]:
     """The launch command. `--bg` manages the session id (W0 E4) and does not inherit the
     launcher's environment (E3), so identity comes back on stdout (E5), nowhere else.
@@ -806,14 +866,21 @@ def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[s
     # at "Do you want to create 02-VERIFICATION.md?" for 45+ min in auto mode, BLOCKED with the
     # phase's whole verdict computed and unwritten. GSD's own planning files are the mission's
     # bookkeeping, so edits under `.planning/` (relative to the worker's cwd) are pre-approved too.
-    tools = list(dict.fromkeys([*(rec.get("allowed_tools") or []), "EnterWorktree", "ExitWorktree",
-                                "Edit(.planning/**)"]))
+    # AMR-X 2026-10-13 (m-5cd1a041bc0f): the repo's own policy decides the topology BEFORE the worker runs.
+    # `.planning/config.json` said use_worktrees=false and the two pre-approvals above put the worker in a
+    # worktree anyway. A forbidding policy (or an unhealthy EnterWorktree) now drops them and disallows both.
+    topo = worker_topology(rec)
+    wt_tools = [] if not topo.get("worktrees", True) else ["EnterWorktree", "ExitWorktree"]
+    tools = list(dict.fromkeys([*(t for t in (rec.get("allowed_tools") or [])
+                                  if t not in topo.get("disallowed_tools", [])), *wt_tools, "Edit(.planning/**)"]))
     for tool in tools:
         argv += ["--allowedTools", tool]
     for d in rec.get("add_dirs") or []:
         argv += ["--add-dir", d]
     # A worker nobody watches must not be able to park on a question (Owner 2026-09-25).
     argv += ["--disallowedTools", "AskUserQuestion"]
+    for tool in topo.get("disallowed_tools", []):
+        argv += ["--disallowedTools", tool]
     if capsule_v2(rec) or rec.get("worker_mcp") == "none" or worker_mcp_verdict() == "APPLY":
         # Measured, not assumed: only a fresh APPLY from tools/worker_mcp_probe.sh strips MCP.
         # capsule-v2 always strips it (G9): the mutation guard sits on the Bash and Edit chains, so
@@ -945,7 +1012,7 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     owner = {"session_id": sid, "pid": pid, "proc_start": None, "heartbeat_at": now, "epoch": epoch,
              "kind": "slim", "profile": slim_profile(rec), "out_path": str(out_path), "err_path": str(err_path)}
     transition(mid, expect_epoch=epoch, expect_state=LAUNCHING, event="worker_acked", now=now, state=RUNNING,
-               pending=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid, owner=owner)
+               pending=None, pending_decision=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid, owner=owner)
     return {"ok": True, "epoch": epoch, "bg_id": sid, "pid": pid, "slim": True}
 
 
@@ -1061,6 +1128,10 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
+    pd = rec.get("pending_decision")
+    if pd and pd not in (note or ""):
+        # AMR-X: a runtime answer not yet delivered to an adopted worker rides every launch until one is adopted.
+        note = f"{pd}\n\n{note or ''}"
     try:
         # Asked BEFORE the claim: an unreadable work-unit packet spends no epoch and starts nothing.
         prompt = launch_prompt(rec)
@@ -1199,7 +1270,7 @@ def ack_session(session_id: str, *, pid: int | None = None, proc_start: str | No
             v2 = bool(rec.get("capsule_key")) and capsule_v2(rec)
             new = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
                              event="worker_acked", now=now, state=RUNNING, pending=None,
-                             failed_launches=0, iterations=rec.get("iterations", 0) + 1,
+                             pending_decision=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1,
                              worker=session_id,
                              owner={"session_id": session_id, "pid": pid,
                                     "proc_start": proc_start, "heartbeat_at": now,
@@ -2505,7 +2576,7 @@ def adopt_launched(rec: dict, row: dict, now: float | None = None) -> dict:
     v2 = bool(rec.get("capsule_key")) and capsule_v2(rec)
     new = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
                      event="worker_adopted", now=now, state=RUNNING, pending=None,
-                     failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid,
+                     pending_decision=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid,
                      reason="host witness; worker's own ack absent (no card this epoch)",
                      owner={"session_id": sid, "pid": row.get("pid"), "proc_start": None,
                             "heartbeat_at": now or time.time(), "epoch": rec["epoch"],
@@ -3864,6 +3935,14 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     # run lived in a git worktree while the mission's cwd kept a reset roadmap,
                     # so asking GSD there would read 1/8 for ever and never complete.
                     ew = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream"))
+                    # Only an explicit policy refuses to follow: following uses Set-Location, not EnterWorktree,
+                    # so an unhealthy EnterWorktree (git off PATH) is no reason to strand a worktree's work.
+                    if ew and ew != rec["cwd"] and worker_topology(rec).get("policy_forbids"):
+                        # AMR-X: a predecessor that wandered into a worktree its repo forbids is not followed;
+                        # the successor works where the policy says (the mission's own cwd).
+                        lr.ledger_append(mid, "worktree_not_followed", mission_id=mid, epoch=rec["epoch"],
+                                         work_dir=ew, why="use_worktrees=false")
+                        ew = None
                     work_dir = ew or rec.get("work_dir")
                     # A worktree effective_workdir followed is PROVEN (the predecessor acted on this
                     # workstream there and it carries the roadmap): align_cwd may follow a diverged
@@ -4074,6 +4153,24 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     explicit = rec.get("note") if rec["state"] == HANDOFF else ""
                     packet = rec.get("packet") if rec["state"] == HANDOFF else None
                     note = explicit or handoff_note_from_transcript(rec["owner"]["session_id"]) or ""
+                    if plan.get("decision"):
+                        # AMR-X: the predecessor's open question is answered here, by the runtime, with the
+                        # gate's provenance -- the successor must not ask it again.
+                        d = plan["decision"]
+                        answer = (f"RUNTIME ANSWER to the predecessor's question ({d['gate']['result']}): "
+                                  f"{d['gate']['resolution']}\nThe question was: {d['why']}\n"
+                                  f"Do not end a turn on a question the repo policy or your own recommended option "
+                                  f"answers; Owner-only classes: deploy/push/live write, credentials, external "
+                                  f"properties, irreversible actions, product scope, authority.")
+                        note = f"{answer}\n\n{note}"
+                        # Persisted with the counter (review F2): the predecessor's job file is overwritten by its
+                        # stop, so a launch that fails after this point would otherwise lose the answer for good.
+                        # launch_worker re-injects it on every retry; adoption clears it.
+                        rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                         event="decision_recovered", now=now, pending_decision=answer,
+                                         decision_recoveries=int(rec.get("decision_recoveries") or 0) + 1,
+                                         ledger_extra={"gate": d["gate"]["result"], "question": d["why"][:200]})
+                        row["decision_recovery"] = d["gate"]["result"]
                     row["note_chars"] = len(note)
                 if (v2 and rec.get("capsule_key") and act in ("relay", "replace", "launch")
                         and not _capsule_arm(rec, row)):

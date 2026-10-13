@@ -119,6 +119,10 @@ def main() -> int:
           "external property reaches the Owner")
     check("V-MPOL-GATE-DEFAULT", mp.gate_question("Should I write the SERP notes before the intent map?", pv)["result"]
           == "RESOLVE_BY_DEFAULT", "ordering question resolved by the recommended option")
+    mixed = "I'm on the main checkout -- should I push to main and deploy to production?"
+    check("V-MPOL-GATE-OWNER-BEATS-POLICY",
+          all(mp.gate_question(mixed, {"use_worktrees": v})["result"] == "OWNER_REQUIRED" for v in (True, False)),
+          "worktree/main-checkout question that also asks to deploy reaches the Owner under both policies (review F1)")
     check("V-MPOL-GATE-NO-POLICY", mp.gate_question(INCIDENT_JOB["needs"], {})["result"] == "RESOLVE_BY_DEFAULT",
           "worktree question with no stated policy: not an Owner class either")
 

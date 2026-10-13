@@ -137,7 +137,8 @@ def compile_topology(policy: dict, health: dict | None = None) -> dict:
     allowed = True if allowed is None else bool(allowed)
     ent = (health or {}).get("EnterWorktree", {}).get("health")
     if not allowed:
-        return {"kind": "main_tree", "worktrees": False, "why": f"use_worktrees=false ({policy.get('source')})",
+        return {"kind": "main_tree", "worktrees": False, "policy_forbids": True,
+                "why": f"use_worktrees=false ({policy.get('source')})",
                 "allowed_tools": [], "disallowed_tools": ["EnterWorktree", "ExitWorktree"]}
     if ent not in (None, "HEALTHY"):
         return {"kind": "main_tree", "worktrees": False, "fallback": True,
@@ -147,13 +148,15 @@ def compile_topology(policy: dict, health: dict | None = None) -> dict:
             "allowed_tools": ["EnterWorktree", "ExitWorktree"], "disallowed_tools": []}
 
 
-def topology_for(cwd: str, health_probe=probe_capabilities) -> dict:
+def topology_for(cwd: str, health_probe=None) -> dict:
     """Repo policy -> resolved value -> topology, with provenance. Never raises: a probe failure keeps
-    the main tree (the safe topology), recorded."""
+    the main tree (the safe topology), recorded. The probe is looked up at call time, so it stays
+    injectable."""
     try:
         rp = repo_policy(cwd)
         pol = resolve("use_worktrees", {"repo": {"values": rp["values"], "source": rp["source"]}})
-        health = health_probe(["git", "EnterWorktree"]) if pol["value"] is not False else {}
+        probe = health_probe or probe_capabilities
+        health = probe(["git", "EnterWorktree"]) if pol["value"] is not False else {}
         topo = compile_topology(pol, health)
         topo.update({"policy": pol, "fingerprint": rp.get("fingerprint"), "health": health})
         if rp.get("error"):
@@ -195,12 +198,17 @@ POLICY_RESOLVABLE = (
 def gate_question(text: str, policy_values: dict | None = None) -> dict:
     """Classify a worker's question. {"result", "owner_class"?, "resolution"}.
 
-    result ∈ OWNER_REQUIRED · RESOLVE_BY_POLICY · RESOLVE_BY_DEFAULT. A policy-resolvable question whose key
-    the policy states never reaches the Owner even if it also mentions a sensitive word in passing; an
-    Owner class is otherwise decisive. With no class at all the Owner is not necessary: proof of necessity
-    is a match, not the presence of a question mark."""
+    result ∈ OWNER_REQUIRED · RESOLVE_BY_POLICY · RESOLVE_BY_DEFAULT. An Owner class is checked FIRST and is
+    decisive: a question that mentions a worktree AND a deploy is still the Owner's (review F1, 2026-10-13 --
+    policy-first answered "push to main and deploy?" with "use_worktrees decides it"). With no class at all the
+    Owner is not necessary: proof of necessity is a match, not the presence of a question mark."""
     t = text or ""
     pv = policy_values or {}
+    for cls, rx in OWNER_CLASSES:
+        if rx.search(t):
+            return {"result": "OWNER_REQUIRED", "owner_class": cls,
+                    "resolution": "Record an `OWNER DECISION NEEDED:` line in the mission STATE and continue every "
+                                  "obligation that does not depend on it."}
     for key, rx in POLICY_RESOLVABLE:
         if rx.search(t) and key in pv and pv[key] is not None:
             if key == "use_worktrees" and pv[key] is False:
@@ -209,11 +217,6 @@ def gate_question(text: str, policy_values: dict | None = None) -> dict:
                                       "a worktree. Work in the main checkout (the mission cwd), call git by its "
                                       "absolute path, commit locally, do not push."}
             return {"result": "RESOLVE_BY_POLICY", "key": key, "resolution": f"Policy {key}={pv[key]!r} decides it."}
-    for cls, rx in OWNER_CLASSES:
-        if rx.search(t):
-            return {"result": "OWNER_REQUIRED", "owner_class": cls,
-                    "resolution": "Record an `OWNER DECISION NEEDED:` line in the mission STATE and continue every "
-                                  "obligation that does not depend on it."}
     return {"result": "RESOLVE_BY_DEFAULT",
             "resolution": "No Owner class applies. Take the option you recommended (the evidence-backed one); if you "
                           "named none, take the most reversible option inside the approved scope, record the choice "
@@ -223,7 +226,7 @@ def gate_question(text: str, policy_values: dict | None = None) -> dict:
 # ------------------------------------------------------------------------------ blocked validity
 def job_state(session_id: str, jobs_dir: Path | None = None) -> dict | None:
     """The host's own record of a background job: ~/.claude/jobs/<sid[:8]>/state.json."""
-    jobs_dir = jobs_dir or Path.home() / ".claude" / "jobs"
+    jobs_dir = jobs_dir or Path(os.environ.get("CPP_CLAUDE_JOBS_DIR") or Path.home() / ".claude" / "jobs")
     for name in (session_id[:8], session_id):
         p = jobs_dir / name / "state.json"
         if p.is_file():
