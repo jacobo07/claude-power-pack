@@ -1,1 +1,1 @@
-{"envelope": {"target": 2500000, "warn": 2750000, "stop": 3000000, "calls": 30}, "workers": [{"name": "P05", "profile": "slim-t2", "calls": 30, "packet": 1500}]}
+{"envelope": {"target": 2800000, "warn": 3000000, "stop": 3300000, "calls": 18}, "workers": [{"name": "P05", "profile": "slim-t2", "calls": 18, "packet": 1500}]}
