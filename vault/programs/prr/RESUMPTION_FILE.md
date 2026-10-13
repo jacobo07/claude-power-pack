@@ -1,37 +1,43 @@
 # RESUMPTION_FILE: prr (Physical Runtime Working Set)
 
-**Identity.** Claude Power Pack. PRR now lives on **main** (fast-forward `b8a98796..5a48019a`, 2026-10-13: the 16
-PRR-owned commits ported with `-x` onto clean main; `prr/main` is history only, never merge it). Work worktree:
-`C:\Users\User\Apps\pp-prr-int`, branch `prr/integrate-2026-10-13` (tracks origin). The goal-bound root is still
-`Apps/pp-prr`: never `Set-Location` into it (see memory feedback-coordinator-set-location-binds-goal). Goal `prr`:
-programme 88,000,000 (OCA packet `prr-l3-successor-50m-2026-10-13`, sha 9c14194a...), lease **L3** `prr:D:r3`, cap
-46,000,000 productive + 2,000,000 closeout + 2,000,000 recovery (protected: not for productive work). Plans:
-`vault/plans/prr-physical-working-set-2026-10-12.md` and `vault/plans/prr-same-pid-continuation-2026-10-13.md`.
-GEX44: clones `~/missions/prr-int/{prr-int,prr-int-base}`, bench data `~/prr-bench/runs/`.
+**Identity.** Claude Power Pack. PRR lives on **main** (16 PRR-owned commits ported with `-x` onto clean main,
+2026-10-13; `prr/main` is history only, never merge it). Work tree = the goal-bound root `C:\Users\User\Apps\pp-prr`,
+branch `prr/integrate-2026-10-13` (tracks origin; fast-forward main from it after green gates). Never `Set-Location`
+into it from a coordinator pane (memory feedback-coordinator-set-location-binds-goal); workers launched IN it bind to
+`prr`. Goal `prr`: programme 88,000,000 (OCA `prr-l3-successor-50m-2026-10-13`), lease **L3** `prr:D:r3` cap
+46,000,000 + closeout 2,000,000 + recovery 2,000,000 (protected, never productive). A coordinator outside the root is
+NOT billed: settle it with `goal-settle --goal prr --session <sid> --measured <session-status tokens>`.
+GEX44: `~/missions/prr-int/{prr-int,prr-int-base}`, bench data `~/prr-bench/runs/`.
 
-**Owner direction 2026-10-13 (binding).** Scope is NOT narrowed. A: CPP-owned processes/state/inputs, directly.
-B: what CPP feeds the host, indirectly. C: host frontier - claude.exe same-PID reclaim is HOST_LIMITATION /
-CURRENTLY UNREACHABLE (evidence A1), never "impossible"; keep falsifiable invalidators. Restart is fallback only.
-Priority order: 1 integration, 2 economic truth/successor/reserve, 3 Windows-vs-Linux attribution, 4 orphan census,
-5 floor decomposition, 6 CPP-owned same-PID reclaim, 7 tool/artifact/image/agent residency, 8 MCP deflation,
-9 PGO+forecast, 10 pressure/admission, 11 same-PID marathons (CPP-owned), 12 host frontier + restart fallback,
-13 UKDL/FIOS/Vault/CBR. Do not return to the Owner for lease/session/pane mechanics.
+**Owner direction 2026-10-13 (binding).** Scope NOT narrowed. A: CPP-owned processes/state/inputs. B: what CPP feeds
+the host. C: host frontier; claude.exe same-PID reclaim = HOST_LIMITATION / CURRENTLY UNREACHABLE (evidence A1), never
+"impossible". Restart = fallback only. Priorities: 1 integration, 2 economic truth/successor/reserve, 3 Win-vs-Linux
+attribution, 4 orphan census, 5 floor decomposition, 6 CPP-owned same-PID reclaim, 7 tool/artifact/image/agent
+residency, 8 MCP deflation, 9 PGO+forecast, 10 pressure/admission, 11 same-PID marathons (CPP-owned), 12 host
+frontier + restart fallback, 13 UKDL/FIOS/Vault/CBR. Never return to the Owner for lease/session/pane mechanics.
+Done criteria: the Owner's 2026-10-13 list (causal gap explanation, measured opaque floor, CPP same-PID reclaim
+proven, bounded drift, deep-idle deflation, aggregate Goal RAM, peak admission, PGO, orphan governance, retirement as
+evidence-backed fallback, host limits + frontier, Vault/FIOS/UKDL/CBR, Production Reality Gate).
 
-**State (coherence anchor: main @ 5a48019a).** SEALED: A0 census, A1 matrix, B/C/D/E GEX44 evidence, recycle policy,
-PGO ledger, UKDL block, D28 backlog. SEALED 2026-10-13: priority 1. Gates: PRR suites 37/37 (laptop); 11 shared-file
-consumer tests identical failing-gate sets on main vs integration (GEX44); reachability 70 offenders on both, none PRR.
-Pre-existing reds on main (not PRR): V-BASELINE-INTACT, V-RESTART-FLOW-COMPLETE, V-D2A-BASELINE,
-V-CEPS-ADMIT-HERMETIC, V-CEPS-BRIDGE-SUBSYSTEM-IS-THE-TOOL; V-UKDL-NO-COLLISION reads the GLOBAL vault UKDL.
+**State (coherence anchor: main @ c1513b35).**
+SEALED 1: integration (gates: PRR suites green; 11 consumer tests identical on main vs branch on GEX44; reachability
+70 offenders both, none PRR).
+SEALED 3 (first cut): evidence F + `modules/prr/regions.py`. The 887-vs-107 gap is commit vs anon RSS: Windows median
+commit 897 MB = 253 resident private + 608 committed-not-resident (allocator commit-ahead + trimming); image 273 MB
+shared; reserve 9.9 GB virtual. Linux anon 64-227 MB. OPEN: matched-workload run; untouched vs paged-out split.
+SEALED 4 (first cut): 92 orphan candidates = 322 MB only. 66 were suspended-at-birth `node -e` probes from
+gsd-session-state.sh / gsd-phase-boundary.sh, missed by the reaper's ownership test; fixed c1513b35 and deployed live
+(self-test 21/21, mutant red, dry run +66). The reaper (SessionEnd) reaps them; no manual kill.
+PARTIAL 2: this coordinator's 12,609,706 settled by hand; bound root restored. OPEN: automatic successor via
+`goal-succession` needs a tranche structure in the next capital packet (executable after L3 is ~0.35M).
 
-**Active decisions.** Laptop = light control plane while Available < 4 GB (2026-10-13: free 2.5-3.5 GB, census
-"available" 388 MB - the two instruments disagree, resolve in priority 3). Heavy runs only on GEX44, one at a time.
-No kill without ownership + liveness proof.
+**Active decisions.** Laptop = light control plane while Available < 4 GB. Heavy runs on GEX44, one at a time.
+No kill without ownership + liveness proof; route kills through the reaper authority.
 
 **Next 3 actions.**
-1. Priority 3: per-process region attribution of one live claude.exe (private commit vs private working set vs image
-   vs mapped, read-only) and the same split on a GEX44 claude (smaps_rollup). Test the hypothesis that ~887 MB
-   "private" (commit) is not comparable with Linux anon RSS 107-160 MB.
-2. Priority 4: classify the census's orphan candidates by ownership/liveness proof (read-only).
-3. Priority 2: wire lease exhaustion -> settlement + successor inside programme authority (goal-succession).
+1. Priority 5/3: matched-workload floor on Windows vs Linux (B stub bench) when the laptop has >= 4 GB, else
+   per-region QueryWorkingSetEx sampling of one idle claude.exe over 30 min (read-only).
+2. Priority 6/8: census of CPP-owned long-lived processes (MCP servers 19 x ~40 MB, js_other) with drift slope.
+3. Upstream GSD hook defect: bash killed mid-spawn leaves suspended children; propose a timeout-safe probe.
 
 **Start.** `python tools/mission_spend.py goal-status --goal prr` from the PP repo, then action 1.
