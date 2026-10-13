@@ -22,7 +22,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import status_fastpath as sfp  # noqa: E402
 
 GIT = sfp.GIT
-NODE = os.environ.get("CPP_NODE") or r"C:\Program Files\nodejs\node.exe"
+NODE = os.environ.get("CPP_NODE") or (r"C:\Program Files\nodejs\node.exe" if os.name == "nt" else "node")
 passes = fails = 0
 
 

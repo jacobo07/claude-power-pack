@@ -6,7 +6,8 @@ const { spawnSync } = require('child_process');
 const path = require('path');
 
 if ((process.env.CPP_STATUS_FASTPATH || '').toLowerCase() === 'off') process.exit(0);
-const PY = process.env.CPP_PYTHON || 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+const PY = process.env.CPP_PYTHON || (process.platform === 'win32'
+  ? 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe' : 'python3');
 const SCRIPT = path.join(__dirname, '..', 'tools', 'status_fastpath.py');
 
 let input = '';

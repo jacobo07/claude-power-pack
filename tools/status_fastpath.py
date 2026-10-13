@@ -25,7 +25,7 @@ from pathlib import Path
 
 DEADLINE_S = 3.0
 STATE = Path(os.environ.get("CPP_STATUS_STATE_DIR") or Path.home() / ".claude" / "state")
-GIT = os.environ.get("CPP_STATUS_GIT") or r"C:\Program Files\Git\cmd\git.exe"
+GIT = os.environ.get("CPP_STATUS_GIT") or (r"C:\Program Files\Git\cmd\git.exe" if os.name == "nt" else "git")
 LIVE_TOOLS = Path.home() / ".claude" / "skills" / "claude-power-pack" / "tools"
 
 # Exact phrases after normalisation. A prompt with anything beyond one of these passes through.
