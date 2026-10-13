@@ -1,0 +1,920 @@
+[
+ {
+  "sid": "03ffe2b1-46ce-4d4f-bac6-d6b50dc3f15c",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 398,
+  "chars": 398,
+  "est_tokens": 233
+ },
+ {
+  "sid": "03ffe2b1-46ce-4d4f-bac6-d6b50dc3f15c",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 334,
+  "chars": 334,
+  "est_tokens": 195
+ },
+ {
+  "sid": "03ffe2b1-46ce-4d4f-bac6-d6b50dc3f15c",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 318,
+  "chars": 318,
+  "est_tokens": 186
+ },
+ {
+  "sid": "0aa09660-7f6b-4550-9229-58532e8a8312",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 372,
+  "chars": 372,
+  "est_tokens": 218
+ },
+ {
+  "sid": "0aa09660-7f6b-4550-9229-58532e8a8312",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 393,
+  "chars": 393,
+  "est_tokens": 230
+ },
+ {
+  "sid": "0eb84241-a238-4e73-a7fd-15d838cf13f9",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "ref",
+  "bytes": 419,
+  "chars": 419,
+  "est_tokens": 245
+ },
+ {
+  "sid": "0eb84241-a238-4e73-a7fd-15d838cf13f9",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 336,
+  "chars": 336,
+  "est_tokens": 197
+ },
+ {
+  "sid": "0eb84241-a238-4e73-a7fd-15d838cf13f9",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 332,
+  "chars": 332,
+  "est_tokens": 194
+ },
+ {
+  "sid": "15062c8b-3df2-40de-a0fe-4247613ef8be",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 418,
+  "chars": 418,
+  "est_tokens": 245
+ },
+ {
+  "sid": "15062c8b-3df2-40de-a0fe-4247613ef8be",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 423,
+  "chars": 423,
+  "est_tokens": 247
+ },
+ {
+  "sid": "15062c8b-3df2-40de-a0fe-4247613ef8be",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 428,
+  "chars": 428,
+  "est_tokens": 250
+ },
+ {
+  "sid": "17029d40-8c97-4113-b282-fe546993a6e7",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 395,
+  "chars": 393,
+  "est_tokens": 230
+ },
+ {
+  "sid": "17029d40-8c97-4113-b282-fe546993a6e7",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 508,
+  "chars": 506,
+  "est_tokens": 296
+ },
+ {
+  "sid": "2225b73e-28f8-460a-8cc1-f0ce2e75db7f",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 391,
+  "chars": 391,
+  "est_tokens": 229
+ },
+ {
+  "sid": "2225b73e-28f8-460a-8cc1-f0ce2e75db7f",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 395,
+  "chars": 395,
+  "est_tokens": 231
+ },
+ {
+  "sid": "331ab988-0ec6-45d2-9bae-439014e76d70",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 623,
+  "chars": 619,
+  "est_tokens": 362
+ },
+ {
+  "sid": "39b97ff3-a735-49ee-bbf9-5fbaa60091bd",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 366,
+  "chars": 365,
+  "est_tokens": 214
+ },
+ {
+  "sid": "39b97ff3-a735-49ee-bbf9-5fbaa60091bd",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 354,
+  "chars": 352,
+  "est_tokens": 206
+ },
+ {
+  "sid": "485d1b23-cc47-4180-b8ae-2b4a7fd324df",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 404,
+  "chars": 404,
+  "est_tokens": 236
+ },
+ {
+  "sid": "485d1b23-cc47-4180-b8ae-2b4a7fd324df",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 387,
+  "chars": 387,
+  "est_tokens": 226
+ },
+ {
+  "sid": "485d1b23-cc47-4180-b8ae-2b4a7fd324df",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 382,
+  "chars": 382,
+  "est_tokens": 223
+ },
+ {
+  "sid": "48974f97-2563-4b38-a85e-d8da52fbb13f",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 424,
+  "chars": 424,
+  "est_tokens": 248
+ },
+ {
+  "sid": "48974f97-2563-4b38-a85e-d8da52fbb13f",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 414,
+  "chars": 414,
+  "est_tokens": 242
+ },
+ {
+  "sid": "48974f97-2563-4b38-a85e-d8da52fbb13f",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 363,
+  "chars": 363,
+  "est_tokens": 212
+ },
+ {
+  "sid": "4acc76b4-0284-4273-b48a-0825e1fbc482",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 421,
+  "chars": 419,
+  "est_tokens": 245
+ },
+ {
+  "sid": "4acc76b4-0284-4273-b48a-0825e1fbc482",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 439,
+  "chars": 439,
+  "est_tokens": 257
+ },
+ {
+  "sid": "50c1e19d-1842-4e9a-a3e0-ee422d9a3e46",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 699,
+  "chars": 693,
+  "est_tokens": 405
+ },
+ {
+  "sid": "50f29c32-a239-4d5f-892f-a21f0b47b908",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 386,
+  "chars": 386,
+  "est_tokens": 226
+ },
+ {
+  "sid": "50f29c32-a239-4d5f-892f-a21f0b47b908",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 320,
+  "chars": 320,
+  "est_tokens": 187
+ },
+ {
+  "sid": "5736038d-c328-4d66-82f9-11dd26742a9a",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 486,
+  "chars": 484,
+  "est_tokens": 283
+ },
+ {
+  "sid": "5736038d-c328-4d66-82f9-11dd26742a9a",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 337,
+  "chars": 335,
+  "est_tokens": 196
+ },
+ {
+  "sid": "5736038d-c328-4d66-82f9-11dd26742a9a",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 527,
+  "chars": 525,
+  "est_tokens": 307
+ },
+ {
+  "sid": "5a889b69-743c-4322-a88f-45fd9768bfcc",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 383,
+  "chars": 383,
+  "est_tokens": 224
+ },
+ {
+  "sid": "5a889b69-743c-4322-a88f-45fd9768bfcc",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 427,
+  "chars": 427,
+  "est_tokens": 250
+ },
+ {
+  "sid": "5a889b69-743c-4322-a88f-45fd9768bfcc",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 397,
+  "chars": 397,
+  "est_tokens": 232
+ },
+ {
+  "sid": "5ed7e473-5019-40dd-aa2a-e05d459db475",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 326,
+  "chars": 326,
+  "est_tokens": 191
+ },
+ {
+  "sid": "5ed7e473-5019-40dd-aa2a-e05d459db475",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 389,
+  "chars": 389,
+  "est_tokens": 228
+ },
+ {
+  "sid": "5ed7e473-5019-40dd-aa2a-e05d459db475",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 371,
+  "chars": 371,
+  "est_tokens": 217
+ },
+ {
+  "sid": "6307f4bc-c7e8-47ad-bb11-18a2aa643e0a",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "ref",
+  "bytes": 419,
+  "chars": 419,
+  "est_tokens": 245
+ },
+ {
+  "sid": "6307f4bc-c7e8-47ad-bb11-18a2aa643e0a",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 425,
+  "chars": 425,
+  "est_tokens": 249
+ },
+ {
+  "sid": "6307f4bc-c7e8-47ad-bb11-18a2aa643e0a",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 389,
+  "chars": 389,
+  "est_tokens": 228
+ },
+ {
+  "sid": "67be223d-1c39-44b6-9433-b56b5391a9b6",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 385,
+  "chars": 385,
+  "est_tokens": 225
+ },
+ {
+  "sid": "67be223d-1c39-44b6-9433-b56b5391a9b6",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 418,
+  "chars": 418,
+  "est_tokens": 245
+ },
+ {
+  "sid": "67be223d-1c39-44b6-9433-b56b5391a9b6",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 411,
+  "chars": 411,
+  "est_tokens": 240
+ },
+ {
+  "sid": "7313430a-16eb-4317-8c57-c0f187db7ca9",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 399,
+  "chars": 399,
+  "est_tokens": 233
+ },
+ {
+  "sid": "7313430a-16eb-4317-8c57-c0f187db7ca9",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 306,
+  "chars": 306,
+  "est_tokens": 179
+ },
+ {
+  "sid": "85bdba15-3823-4464-b860-28d307b8e34f",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 371,
+  "chars": 371,
+  "est_tokens": 217
+ },
+ {
+  "sid": "8b4f4d70-730b-40c7-b77b-3d6dd8847003",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 426,
+  "chars": 425,
+  "est_tokens": 249
+ },
+ {
+  "sid": "8b4f4d70-730b-40c7-b77b-3d6dd8847003",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 388,
+  "chars": 388,
+  "est_tokens": 227
+ },
+ {
+  "sid": "9545758a-23fb-402a-a646-717ebdc94b3d",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 367,
+  "chars": 367,
+  "est_tokens": 215
+ },
+ {
+  "sid": "9545758a-23fb-402a-a646-717ebdc94b3d",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 386,
+  "chars": 386,
+  "est_tokens": 226
+ },
+ {
+  "sid": "9c056c10-9e81-44a5-8ca4-8e80e5251ad4",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 336,
+  "chars": 335,
+  "est_tokens": 196
+ },
+ {
+  "sid": "a59dd607-c5d0-4fd5-a8ef-2a968ad97b42",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 346,
+  "chars": 346,
+  "est_tokens": 202
+ },
+ {
+  "sid": "a59dd607-c5d0-4fd5-a8ef-2a968ad97b42",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 425,
+  "chars": 425,
+  "est_tokens": 249
+ },
+ {
+  "sid": "a59dd607-c5d0-4fd5-a8ef-2a968ad97b42",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 326,
+  "chars": 326,
+  "est_tokens": 191
+ },
+ {
+  "sid": "aa2d2ac7-ea72-4268-bdb5-705d121d6233",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 589,
+  "chars": 585,
+  "est_tokens": 342
+ },
+ {
+  "sid": "aa2d2ac7-ea72-4268-bdb5-705d121d6233",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 466,
+  "chars": 464,
+  "est_tokens": 271
+ },
+ {
+  "sid": "aa2d2ac7-ea72-4268-bdb5-705d121d6233",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 374,
+  "chars": 374,
+  "est_tokens": 219
+ },
+ {
+  "sid": "ae719429-0747-4dc9-9faa-5c7a067dcc54",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 315,
+  "chars": 315,
+  "est_tokens": 184
+ },
+ {
+  "sid": "ae719429-0747-4dc9-9faa-5c7a067dcc54",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 402,
+  "chars": 402,
+  "est_tokens": 235
+ },
+ {
+  "sid": "ae719429-0747-4dc9-9faa-5c7a067dcc54",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 381,
+  "chars": 381,
+  "est_tokens": 223
+ },
+ {
+  "sid": "ba3ff50a-c49f-4ec3-9d88-4d44b90cc133",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 297,
+  "chars": 297,
+  "est_tokens": 174
+ },
+ {
+  "sid": "ba3ff50a-c49f-4ec3-9d88-4d44b90cc133",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 370,
+  "chars": 370,
+  "est_tokens": 216
+ },
+ {
+  "sid": "ba3ff50a-c49f-4ec3-9d88-4d44b90cc133",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 357,
+  "chars": 357,
+  "est_tokens": 209
+ },
+ {
+  "sid": "c3194553-d7bd-47f1-85bd-207434f4d975",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 324,
+  "chars": 324,
+  "est_tokens": 190
+ },
+ {
+  "sid": "c3194553-d7bd-47f1-85bd-207434f4d975",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 331,
+  "chars": 331,
+  "est_tokens": 194
+ },
+ {
+  "sid": "c3194553-d7bd-47f1-85bd-207434f4d975",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 364,
+  "chars": 364,
+  "est_tokens": 213
+ },
+ {
+  "sid": "c888cdfd-03a4-4759-a6cb-835674f59381",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 443,
+  "chars": 443,
+  "est_tokens": 259
+ },
+ {
+  "sid": "c888cdfd-03a4-4759-a6cb-835674f59381",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 368,
+  "chars": 368,
+  "est_tokens": 215
+ },
+ {
+  "sid": "cb70bd86-e909-470f-b1df-f4f14a9e5706",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 437,
+  "chars": 437,
+  "est_tokens": 256
+ },
+ {
+  "sid": "cb70bd86-e909-470f-b1df-f4f14a9e5706",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 369,
+  "chars": 369,
+  "est_tokens": 216
+ },
+ {
+  "sid": "cf420a6d-36e7-4e4a-b71f-e7bf2f21b4fb",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 304,
+  "chars": 304,
+  "est_tokens": 178
+ },
+ {
+  "sid": "cf420a6d-36e7-4e4a-b71f-e7bf2f21b4fb",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 394,
+  "chars": 394,
+  "est_tokens": 230
+ },
+ {
+  "sid": "cf420a6d-36e7-4e4a-b71f-e7bf2f21b4fb",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 422,
+  "chars": 420,
+  "est_tokens": 246
+ },
+ {
+  "sid": "cf711134-1982-4f34-8a29-3d1f01b71adb",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 332,
+  "chars": 332,
+  "est_tokens": 194
+ },
+ {
+  "sid": "cf711134-1982-4f34-8a29-3d1f01b71adb",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 340,
+  "chars": 340,
+  "est_tokens": 199
+ },
+ {
+  "sid": "d0225705-ae36-416c-813f-815d78762021",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 443,
+  "chars": 443,
+  "est_tokens": 259
+ },
+ {
+  "sid": "d142a208-a759-4856-82e2-c9a23e671299",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 342,
+  "chars": 342,
+  "est_tokens": 200
+ },
+ {
+  "sid": "d142a208-a759-4856-82e2-c9a23e671299",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 340,
+  "chars": 340,
+  "est_tokens": 199
+ },
+ {
+  "sid": "d142a208-a759-4856-82e2-c9a23e671299",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 325,
+  "chars": 325,
+  "est_tokens": 190
+ },
+ {
+  "sid": "d4daa2e8-9aac-45d3-a859-450878a95c22",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 406,
+  "chars": 406,
+  "est_tokens": 238
+ },
+ {
+  "sid": "d4daa2e8-9aac-45d3-a859-450878a95c22",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 391,
+  "chars": 391,
+  "est_tokens": 229
+ },
+ {
+  "sid": "d4daa2e8-9aac-45d3-a859-450878a95c22",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 394,
+  "chars": 394,
+  "est_tokens": 230
+ },
+ {
+  "sid": "d668852f-d03e-42a0-8755-5a2323db0087",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 315,
+  "chars": 313,
+  "est_tokens": 183
+ },
+ {
+  "sid": "d8215b25-a2dc-433a-becb-c2eb94dc382b",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 400,
+  "chars": 400,
+  "est_tokens": 234
+ },
+ {
+  "sid": "d8215b25-a2dc-433a-becb-c2eb94dc382b",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 327,
+  "chars": 327,
+  "est_tokens": 191
+ },
+ {
+  "sid": "dae84b81-126d-448c-aaff-3146904c30b0",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 309,
+  "chars": 309,
+  "est_tokens": 181
+ },
+ {
+  "sid": "dae84b81-126d-448c-aaff-3146904c30b0",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 370,
+  "chars": 370,
+  "est_tokens": 216
+ },
+ {
+  "sid": "dae84b81-126d-448c-aaff-3146904c30b0",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 323,
+  "chars": 323,
+  "est_tokens": 189
+ },
+ {
+  "sid": "e297571a-38d9-4c2d-bc20-90558bc8467c",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 360,
+  "chars": 358,
+  "est_tokens": 209
+ },
+ {
+  "sid": "e297571a-38d9-4c2d-bc20-90558bc8467c",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 295,
+  "chars": 293,
+  "est_tokens": 171
+ },
+ {
+  "sid": "e297571a-38d9-4c2d-bc20-90558bc8467c",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 439,
+  "chars": 437,
+  "est_tokens": 256
+ },
+ {
+  "sid": "e5a4cff1-f547-423a-a944-9401fa7f7d3b",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 381,
+  "chars": 381,
+  "est_tokens": 223
+ },
+ {
+  "sid": "e5a4cff1-f547-423a-a944-9401fa7f7d3b",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 284,
+  "chars": 284,
+  "est_tokens": 166
+ },
+ {
+  "sid": "e5a4cff1-f547-423a-a944-9401fa7f7d3b",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 406,
+  "chars": 406,
+  "est_tokens": 238
+ },
+ {
+  "sid": "ec8180f8-c5bd-43fc-8ba4-e941356479b1",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 331,
+  "chars": 331,
+  "est_tokens": 194
+ },
+ {
+  "sid": "ec8180f8-c5bd-43fc-8ba4-e941356479b1",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 314,
+  "chars": 314,
+  "est_tokens": 184
+ },
+ {
+  "sid": "ecae5df0-41b1-4eb1-90cf-5eab3ca0e773",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 482,
+  "chars": 480,
+  "est_tokens": 281
+ },
+ {
+  "sid": "ecae5df0-41b1-4eb1-90cf-5eab3ca0e773",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 501,
+  "chars": 501,
+  "est_tokens": 293
+ },
+ {
+  "sid": "ecae5df0-41b1-4eb1-90cf-5eab3ca0e773",
+  "at_call": 120,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 410,
+  "chars": 408,
+  "est_tokens": 239
+ },
+ {
+  "sid": "ef5e5bbc-fb2a-4e2b-bca5-61af1dfc561c",
+  "at_call": 40,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 367,
+  "chars": 367,
+  "est_tokens": 215
+ },
+ {
+  "sid": "ef5e5bbc-fb2a-4e2b-bca5-61af1dfc561c",
+  "at_call": 80,
+  "cls": "lobby",
+  "note": "inline",
+  "bytes": 356,
+  "chars": 356,
+  "est_tokens": 208
+ }
+]

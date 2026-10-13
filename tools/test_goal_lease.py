@@ -217,6 +217,143 @@ def _():
     assert rc == 3 and out["status"] == "AUTHORITY_REQUIRED", (rc, out)
 
 
+# --- Automatic succession (D28 Ph1b). Regression: tennis-rf L1 cap 55M ran to 64.1M with 25.9M of programme
+# executable and no successor; the pane was fenced and a successor had to be opened by hand from another pane.
+
+def _walled(tranche=None, keep=0, programme=20 * M, cap=4 * M):
+    led, _s = _ledger()
+    led.declare_cap(cap, "t")
+    led.set_programme(programme, "t", inside_agent=False)
+    if tranche is not None:
+        assert led.set_succession(tranche, keep, "t", inside_agent=False)["ok"]
+    led.renew("a", cap - 50_000, 100_000)                        # 50k left: less than one call + reply
+    return led
+
+
+@_gate("V-SUCCESSION-OFF-BY-DEFAULT")
+def _():
+    led = _walled()
+    out = led.renew("a", 4 * M - 40_000, 100_000, per_call=60_000)
+    assert not out["ok"] and "budget_spent" in out["reason"], out
+    assert len(_rows(led, "lease_open")) == 0 and len(_rows(led, "tombstone")) == 1
+
+
+@_gate("V-SUCCESSION-AUTO-OPEN")
+def _():
+    led = _walled(tranche=3 * M)
+    out = led.renew("a", 4 * M - 40_000, 100_000, per_call=60_000)
+    assert out["ok"] and out["lease"]["amount"] == 100_000, out
+    v = led.lineage()
+    assert [(x["id"], x["cap"], x["succession_id"]) for x in v["leases"]] == \
+        [("L1", 4 * M, None), ("L2", 3 * M, "g:auto:L1")], v["leases"]
+    assert v["leases"][0]["closed"] and not _rows(led, "tombstone") and not _rows(led, "exhausted")
+    assert led.renew("a", 4 * M, 100_000, per_call=60_000)["ok"]    # the pane keeps working inside L2
+    assert len(_rows(led, "lease_open")) == 1
+
+
+@_gate("V-SUCCESSION-ONE-PER-LEASE")
+def _():
+    led = _walled(tranche=3 * M)
+    assert led.renew("b", 10_000, 100_000, per_call=60_000)["ok"]   # a second pane hits the same wall first
+    assert led.renew("a", 4 * M - 40_000, 100_000, per_call=60_000)["ok"]   # a fits the successor b opened
+    assert led.renew("b", 20_000, 100_000, per_call=60_000)["ok"]
+    assert [r["succession_id"] for r in _rows(led, "lease_open")] == ["g:auto:L1"]
+    assert not _rows(led, "tombstone")
+
+
+@_gate("V-SUCCESSION-TRANCHE-BOUNDED")
+def _():
+    led = _walled(tranche=8 * M, keep=M, programme=7 * M)        # 3.95M settled; executable 3.05M; keep 1M
+    assert led.renew("a", 4 * M - 40_000, 100_000, per_call=60_000)["ok"]
+    assert led.lineage()["leases"][-1]["cap"] == 7 * M - (4 * M - 40_000) - M     # never the tranche, never the keep
+
+
+@_gate("V-SUCCESSION-SHORT-PROGRAMME")
+def _():
+    led = _walled(tranche=3 * M, keep=M, programme=5 * M)        # executable 1.05M - keep 1M < one call
+    outs = [led.renew("a", 4 * M - 40_000 + i, 100_000, per_call=60_000) for i in range(3)]
+    assert all(not o["ok"] for o in outs), outs
+    assert not _rows(led, "lease_open") and len(_rows(led, "authority_required")) == 1, _rows(led)
+    assert led.lineage()["status"] == "AUTHORITY_REQUIRED" and len(_rows(led, "tombstone")) == 1
+
+
+@_gate("V-SUCCESSION-NO-USELESS-LEASE")
+def _():
+    # smoke 2026-10-12: a successor of 80k opened for a 50k call + 50k final reply, was refused at once, and the
+    # programme shortfall never reached the Owner (status OK, no authority_required row).
+    led = _walled(tranche=3 * M, programme=4 * M - 40_000 + 80_000)
+    out = led.renew("a", 4 * M - 40_000, 100_000, per_call=50_000)
+    assert not out["ok"] and not _rows(led, "lease_open"), (out, _rows(led, "lease_open"))
+    assert len(_rows(led, "authority_required")) == 1 and led.lineage()["status"] == "AUTHORITY_REQUIRED"
+    # review LOW: the Owner resolves it with a manual lease under another id -> the auto row stops counting
+    led.set_programme(20 * M, "t", inside_agent=False)
+    assert led.lease_open("owner-fix", 2 * M, prev_lease="L1")["ok"]
+    assert led.lineage()["status"] == "OK", led.lineage()
+
+
+@_gate("V-SUCCESSION-CARRIES-RESERVES")
+def _():
+    # review MEDIUM: an auto successor opened with {} reserves; a recovery session with 80k still funded on L2
+    # was fenced RECOVERY_RESERVE_SPENT on its next renew.
+    led, _s = _ledger()
+    led.declare_cap(4 * M, "t")
+    led.set_programme(20 * M, "t", inside_agent=False)
+    led.set_succession(3 * M, 0, "t", inside_agent=False)
+    led.lease_open("s1", M, prev_lease="L1", reserves={"recovery": 100_000, "closeout": 50_000})
+    led.renew("a", 950_000, 100_000)
+    assert led.renew("r", 20_000, 10_000, role="recovery")["ok"]
+    assert led.renew("a", 960_000, 100_000, per_call=60_000)["ok"]          # L2 wall -> L3
+    v = led.lineage()
+    assert v["leases"][-1]["reserves"] == {"recovery": 80_000, "closeout": 50_000}, v["leases"][-1]
+    assert v["leases"][-1]["cap"] == 3 * M
+    out = led.renew("r", 25_000, 10_000, per_call=10_000, role="recovery")
+    assert out["ok"], out
+
+
+@_gate("V-SUCCESSION-UNKNOWN-PROGRAMME")
+def _():
+    led, _s = _ledger()
+    led.declare_cap(4 * M, "t")
+    led._append(led._read(), {"op": "succession", "tranche": 3 * M, "keep": 0, "source": "forged"})
+    led.renew("a", 4 * M - 50_000, 100_000)
+    assert not led.renew("a", 4 * M - 40_000, 100_000, per_call=60_000)["ok"]
+    assert not _rows(led, "lease_open")                           # no programme: unknown headroom is not free
+
+
+@_gate("V-SUCCESSION-RECOVERY-UNTOUCHED")
+def _():
+    led, _s = _ledger()
+    led.declare_cap(4 * M, "t")
+    led.set_programme(20 * M, "t", inside_agent=False)
+    led.set_succession(3 * M, 0, "t", inside_agent=False)
+    led.lease_open("s1", 4 * M, prev_lease="L1", reserves={"recovery": 100_000})
+    led.renew("r", 90_000, 10_000, role="recovery")
+    assert not led.renew("r", 95_000, 10_000, per_call=10_000, role="recovery")["ok"]
+    assert [r["succession_id"] for r in _rows(led, "lease_open")] == ["s1"]
+
+
+@_gate("V-SUCCESSION-OWNER-ONLY")
+def _():
+    led, state = _ledger()
+    led.declare_cap(4 * M, "t")
+    led.set_programme(20 * M, "t", inside_agent=False)
+    assert not led.set_succession(3 * M, 0, "t", inside_agent=True)["ok"]       # enabling is authority
+    assert led.set_succession(3 * M, M, "t", inside_agent=False)["ok"]
+    assert not led.set_succession(5 * M, M, "t", inside_agent=True)["ok"]       # bigger tranche: Owner
+    assert not led.set_succession(3 * M, 0, "t", inside_agent=True)["ok"]       # smaller keep: Owner
+    assert led.set_succession(2 * M, 2 * M, "t", inside_agent=True)["ok"]       # tighter: admitted
+    assert led.set_succession(0, 0, "t", inside_agent=True)["ok"]               # off: admitted
+    assert led.lineage()["succession"] is None
+    env = {**os.environ, "GSD_LONG_RUN_STATE_DIR": str(state)}
+    env.pop("CLAUDECODE", None)
+    p = subprocess.run([sys.executable, "-I", str(SPEND), "goal-succession", "--goal", "g", "--tranche", str(3 * M),
+                        "--source", "t", "--owner"], capture_output=True, text=True, env=env, stdin=subprocess.DEVNULL)
+    assert p.returncode == 3 and led.lineage()["succession"] is None, (p.returncode, p.stdout, p.stderr)
+    p = subprocess.run([sys.executable, "-I", str(SPEND), "goal-succession", "--goal", "g", "--tranche", "0",
+                        "--source", "t"], capture_output=True, text=True, env=env, stdin=subprocess.DEVNULL)
+    assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
+
+
 if __name__ == "__main__":
     mp.freeze_support()
     _run_gates()

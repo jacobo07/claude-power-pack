@@ -154,8 +154,8 @@ def build(repo, obligation: str, receipts=(), transcript=None, budget_tokens: in
         facts = receipt_facts(r)
         ref = _ref("receipt", r)
         if facts:
-            # whole receipt's facts or its ref -- atomic per receipt
-            blk = "\n".join([f"[{Path(r).name}]"] + facts)
+            # whole receipt's facts or its ref -- atomic per receipt; the header fingerprints the source (One-Read)
+            blk = "\n".join([f"[{Path(r).name}] path={Path(r).as_posix()} sha256={sha256_file(r)}"] + facts)
             if used + len(blk) + 1 + 600 <= cap:   # keep 600 chars slack for note/refs
                 lines.append(blk)
                 used += len(blk) + 1
@@ -174,6 +174,30 @@ def build(repo, obligation: str, receipts=(), transcript=None, budget_tokens: in
     if len(out) > cap:
         raise ValueError(f"capsule {len(out)} chars exceeds budget {cap}")
     return out
+
+
+# One-Read (A4): every certified fact and every ref in a capsule names its source by path and sha256. A
+# successor reuses the fact without re-reading the source while the source still hashes the same; once the
+# source changes, the fact is invalid and a raw read of the source is the valid way back.
+FP_RE = re.compile(r"(?:^\[[^\]]+\] path=|^REF [^:]+: )(?P<path>\S+) sha256=(?P<sha>[0-9a-f]{64})\s*$", re.M)
+
+
+def fingerprints(text: str) -> dict[str, str]:
+    """{source path: sha256} for every fingerprinted fact block and ref in a capsule."""
+    return {m["path"]: m["sha"] for m in FP_RE.finditer(text)}
+
+
+def reuse(text: str, path) -> dict:
+    """May the capsule's fact about `path` be used without re-reading `path`?"""
+    want = fingerprints(text).get(Path(path).as_posix())
+    if want is None:
+        return {"reuse": False, "reason": "not-in-capsule"}
+    try:
+        now = sha256_file(path)
+    except OSError:
+        return {"reuse": False, "reason": "source-missing"}
+    return {"reuse": now == want, "reason": "fingerprint-match" if now == want else "source-changed: raw read required",
+            "sha256": now}
 
 
 def rent(text: str) -> dict:

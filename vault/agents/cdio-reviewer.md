@@ -29,6 +29,12 @@ yourself picking a number, stop — you record verdicts, the code scores them.
 2. **Above the fold** — value proposition, primary CTA, one trust signal present?
 3. **Visual hierarchy** — one dominant element, ≤3 type levels, systematic
    spacing, contrast clears the floor? (Run the scorer for the mechanical checks.)
+   If the surface contains a component copied from componentry.dev, open its
+   `visual-patterns/componentry-<slug>.md` entry and apply the CDIO-11 §8
+   criteria (reported under `ux` / `visual` / `trust`; reduced-motion
+   equivalence is critical). The entry's signals describe the vendored file, not
+   the rendered surface: judge the copy in the product, and mark behaviour not
+   assessed unless you drove it. `cmp-contract-cleared` goes with Lens 7.
 4. **Trust signals** — present, specific, honest, well-placed; no trust leaks?
    For any public website or web app, also apply CDIO-10 §3 (legal surface): run
    `python -m modules.cdio.legal_surface check <site_root> --jurisdiction us|eu|es`

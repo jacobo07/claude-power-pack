@@ -1,0 +1,157 @@
+{
+ "schema": 1,
+ "runs": 3,
+ "ts": 1791868619,
+ "metrics": {
+  "floor.claude_md_bytes": {
+   "value": 40832,
+   "noise": 0,
+   "class": "size",
+   "blast": "ALWAYS_ON"
+  },
+  "floor.rules_bytes": {
+   "value": 298510,
+   "noise": 0,
+   "class": "size",
+   "blast": "ALWAYS_ON"
+  },
+  "floor.hook_context_bytes": {
+   "value": 5286,
+   "noise": 0,
+   "class": "size",
+   "blast": "ALWAYS_ON"
+  },
+  "floor.skill_listing_bytes": {
+   "value": 15454,
+   "noise": 0,
+   "class": "size",
+   "blast": "ALWAYS_ON"
+  },
+  "floor.agent_listing_bytes": {
+   "value": 5318,
+   "noise": 0,
+   "class": "size",
+   "blast": "ALWAYS_ON"
+  },
+  "admission.floor.Explore": {
+   "value": 24428,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.general-purpose": {
+   "value": 85040,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.gsd-code-reviewer": {
+   "value": 82911,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.gsd-executor": {
+   "value": 85084,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.gsd-phase-researcher": {
+   "value": 95908,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.gsd-plan-checker": {
+   "value": 95807,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.gsd-planner": {
+   "value": 85569,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.gsd-verifier": {
+   "value": 97231,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.oneshot-architect-auditor": {
+   "value": 77486,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.pp-code-reviewer": {
+   "value": 62682,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.slim-t1": {
+   "value": 8848,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.slim-t2": {
+   "value": 13507,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "admission.floor.top-level-worker": {
+   "value": 110835,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "ctc.candidate_tokens": {
+   "value": 3080000,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "ctc.p95_tokens": {
+   "value": 7280000,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_SPAWN"
+  },
+  "capsule.bytes": {
+   "value": 853,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_ROTATION"
+  },
+  "capsule.bootstrap_bytes": {
+   "value": 269,
+   "noise": 0,
+   "class": "size",
+   "blast": "PER_ROTATION"
+  },
+  "status.model_call_sites": {
+   "value": 0,
+   "noise": 0,
+   "class": "count",
+   "blast": "ZERO"
+  },
+  "wait.resident_sites": {
+   "value": 0,
+   "noise": 0,
+   "class": "count",
+   "blast": "ZERO"
+  },
+  "admission.latency_ms": {
+   "value": 0.026,
+   "noise": 0.009,
+   "class": "latency",
+   "blast": "PER_SPAWN"
+  }
+ }
+}

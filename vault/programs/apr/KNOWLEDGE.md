@@ -43,3 +43,12 @@ opped_without_done`.
 - The growth estimator priced S at 1,266,053 (12 calls, 29 physical). E1 (premises + fixtures + RED test) tripped at
   21. One data point: the global estimator is not changed; APR-3 makes the CURRENT programme reforecast from measured
   unit spend. Epistemic status: MEASURED (one programme).
+
+## A11 -- an edited packet froze APR7 for 28 h with no alert (coordinator, 2026-10-13)
+- Cause: the coordinator amended WU-APR7.md (3e3df8ab) 2 min after the chain admitted it; every sweep pass refused the
+  launch ("the packet changed since it was admitted: admit it again"), the mission halted at 24 h with 0 spend and no
+  session, the steward cannot settle a session-less mission, so the chain sat at wait_steward (SILENT) from 10-12 20:31.
+- No alert reached the Owner: neither the repeated launch refusal nor the wait_steward silence surfaced.
+- Recovery: residual packet written by the coordinator + manual arm-chain (m-8fda4d378172), identical to the chain's _arm.
+- Lessons: never edit a packet after it is armed (append a new unit or a residual instead); a never-launched mission must
+  not wait on a steward; a launch refused on consecutive passes must alert. Folded into WU-APR7.md.residual.md item 7.

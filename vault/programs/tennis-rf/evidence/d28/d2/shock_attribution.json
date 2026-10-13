@@ -1,0 +1,742 @@
+{
+ "critical_sets": {
+  "fn_801BC674": [],
+  "fn_801BC6B4": [],
+  "fn_801BCA38": [],
+  "fn_801BD194": [],
+  "fn_801BD47C": [],
+  "fn_80203E40": [
+   "Obj80203E40"
+  ],
+  "fn_8020711C": [
+   "Obj8020711C"
+  ],
+  "fn_802087B4": [],
+  "fn_80209A6C": [],
+  "fn_80209D70": [],
+  "fn_8020A690": [],
+  "fn_8020CBB8": [],
+  "fn_8020CC14": [
+   "Obj8020CC14"
+  ],
+  "fn_802128D4": [
+   "Obj802128D4",
+   "Sub802128D4"
+  ],
+  "fn_8021E65C": [],
+  "fn_8021E8B8": [],
+  "fn_8021F3E4": [
+   "Obj8021F3E4",
+   "Ptmf8021F3E4"
+  ],
+  "fn_8021F8BC": [
+   "Obj8021F8BC"
+  ],
+  "fn_80223804": [],
+  "fn_80223F68": [],
+  "fn_80224B28": [],
+  "fn_80225180": [],
+  "fn_802256F8": [],
+  "fn_8022621C": [],
+  "fn_80226280": [],
+  "fn_8022A5B0": [],
+  "fn_8022A5F0": [],
+  "fn_8022E5D8": [],
+  "fn_8022E61C": [],
+  "fn_8022E660": [],
+  "fn_8022E6A8": [],
+  "fn_8022E6E8": [],
+  "fn_8022E728": [],
+  "fn_8022EB7C": [],
+  "fn_8022ED38": [],
+  "fn_802301F0": [],
+  "fn_80230ABC": [
+   "Elem80230ABC",
+   "Obj80230ABC"
+  ],
+  "fn_80230BF8": [
+   "Obj80230BF8"
+  ],
+  "fn_80230FA4": [],
+  "fn_802326E0": [],
+  "fn_80241018": [
+   "Obj80241018"
+  ],
+  "fn_802418C4": [],
+  "fn_80241D18": [],
+  "fn_80242A70": [],
+  "fn_8024B9FC": [],
+  "fn_8024DAE8": [],
+  "fn_8024E150": [],
+  "fn_80250010": [],
+  "fn_80250068": [],
+  "fn_802502C4": [],
+  "fn_80250790": [],
+  "fn_80250F80": [],
+  "fn_802518B0": [],
+  "fn_80252AD8": [
+   "Ptmf8021F3E4"
+  ],
+  "fn_80252C20": [],
+  "fn_80252F34": [
+   "Item80252F34",
+   "Obj80252F34",
+   "Vec80252F34"
+  ],
+  "fn_80253348": [
+   "Arg80253348",
+   "Flags80253348",
+   "Glob80253348",
+   "Mid80253348",
+   "Obj80253348",
+   "Slot80253348",
+   "Sub80253348",
+   "Tab80253348",
+   "Vt80253348"
+  ],
+  "fn_80254440": [
+   "Obj80254440",
+   "Sub80254440",
+   "Vt80254440"
+  ],
+  "fn_8025549C": [],
+  "fn_80257978": [],
+  "fn_80258A70": [],
+  "fn_80259C64": [],
+  "fn_8025BD58": [],
+  "fn_8025BD98": [],
+  "fn_8025BDF4": [],
+  "fn_8025C600": [],
+  "fn_8025C658": [],
+  "fn_8025EA0C": [],
+  "fn_80278F94": [],
+  "fn_80278FEC": [],
+  "fn_80279048": [],
+  "fn_80279E44": [
+   "Obj80279E44"
+  ],
+  "fn_80279E88": [],
+  "fn_80279EE0": [],
+  "fn_80279F3C": [],
+  "fn_8027A154": [
+   "Obj8027A154",
+   "Sub8027A154"
+  ],
+  "fn_8027A708": [],
+  "fn_8027A764": [],
+  "fn_8027AA7C": [],
+  "fn_8027B428": [],
+  "fn_8027DB4C": [],
+  "fn_8027DBA8": [],
+  "fn_8027DC04": [],
+  "fn_8027E168": [],
+  "fn_8027E6E4": [],
+  "fn_8027ED64": [],
+  "fn_8027F164": [],
+  "fn_8032CE30": [],
+  "fn_8032CF78": [
+   "Obj8032CF78"
+  ],
+  "fn_8032CF9C": [],
+  "fn_8032E3FC": [],
+  "fn_8032E978": [],
+  "fn_803306F4": [],
+  "fn_80331560": [],
+  "fn_803315A0": [],
+  "fn_803316D4": [],
+  "fn_80331714": [],
+  "fn_80332444": [],
+  "fn_80333DE4": [],
+  "fn_80333FE0": [],
+  "fn_80334AD8": []
+ },
+ "method": "leave-one-fact-out: a fact = one header struct tag; its variant header drops the struct, its forward decl and (fixed point) every struct/prototype/extern naming a removed tag; m2c --context + source_lint only, NO compile; evaluated on the 101 newly-clean functions (the 175 clean-without-header are not re-tested; knowledge_shock newly_dirty=[])",
+ "n_tags": 35,
+ "per_fact": [
+  {
+   "alone": [
+    "fn_80252AD8"
+   ],
+   "also_removed_by_cascade": [
+    "Obj8021F3E4"
+   ],
+   "credit": 1.5,
+   "n_alone": 1,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_8021F3E4"
+   ],
+   "rank": 1,
+   "tag": "Ptmf8021F3E4"
+  },
+  {
+   "alone": [
+    "fn_80203E40"
+   ],
+   "also_removed_by_cascade": [],
+   "credit": 1.0,
+   "n_alone": 1,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 2,
+   "tag": "Obj80203E40"
+  },
+  {
+   "alone": [
+    "fn_8020711C"
+   ],
+   "also_removed_by_cascade": [],
+   "credit": 1.0,
+   "n_alone": 1,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 3,
+   "tag": "Obj8020711C"
+  },
+  {
+   "alone": [
+    "fn_8020CC14"
+   ],
+   "also_removed_by_cascade": [],
+   "credit": 1.0,
+   "n_alone": 1,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 4,
+   "tag": "Obj8020CC14"
+  },
+  {
+   "alone": [
+    "fn_8021F8BC"
+   ],
+   "also_removed_by_cascade": [],
+   "credit": 1.0,
+   "n_alone": 1,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 5,
+   "tag": "Obj8021F8BC"
+  },
+  {
+   "alone": [
+    "fn_80230BF8"
+   ],
+   "also_removed_by_cascade": [],
+   "credit": 1.0,
+   "n_alone": 1,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 6,
+   "tag": "Obj80230BF8"
+  },
+  {
+   "alone": [
+    "fn_80241018"
+   ],
+   "also_removed_by_cascade": [],
+   "credit": 1.0,
+   "n_alone": 1,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 7,
+   "tag": "Obj80241018"
+  },
+  {
+   "alone": [
+    "fn_80279E44"
+   ],
+   "also_removed_by_cascade": [],
+   "credit": 1.0,
+   "n_alone": 1,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 8,
+   "tag": "Obj80279E44"
+  },
+  {
+   "alone": [
+    "fn_8032CF78"
+   ],
+   "also_removed_by_cascade": [],
+   "credit": 1.0,
+   "n_alone": 1,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 9,
+   "tag": "Obj8032CF78"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Obj80230ABC"
+   ],
+   "credit": 0.5,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80230ABC"
+   ],
+   "rank": 10,
+   "tag": "Elem80230ABC"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.5,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_802128D4"
+   ],
+   "rank": 11,
+   "tag": "Obj802128D4"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.5,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_8021F3E4"
+   ],
+   "rank": 12,
+   "tag": "Obj8021F3E4"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.5,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80230ABC"
+   ],
+   "rank": 13,
+   "tag": "Obj80230ABC"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.5,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_8027A154"
+   ],
+   "rank": 14,
+   "tag": "Obj8027A154"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Obj802128D4"
+   ],
+   "credit": 0.5,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_802128D4"
+   ],
+   "rank": 15,
+   "tag": "Sub802128D4"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Obj8027A154"
+   ],
+   "credit": 0.5,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_8027A154"
+   ],
+   "rank": 16,
+   "tag": "Sub8027A154"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Obj80252F34",
+    "Vec80252F34"
+   ],
+   "credit": 0.3333,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80252F34"
+   ],
+   "rank": 17,
+   "tag": "Item80252F34"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.3333,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80252F34"
+   ],
+   "rank": 18,
+   "tag": "Obj80252F34"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.3333,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80254440"
+   ],
+   "rank": 19,
+   "tag": "Obj80254440"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Obj80254440",
+    "Vt80254440"
+   ],
+   "credit": 0.3333,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80254440"
+   ],
+   "rank": 20,
+   "tag": "Sub80254440"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Obj80252F34"
+   ],
+   "credit": 0.3333,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80252F34"
+   ],
+   "rank": 21,
+   "tag": "Vec80252F34"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Obj80254440",
+    "Sub80254440"
+   ],
+   "credit": 0.3333,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80254440"
+   ],
+   "rank": 22,
+   "tag": "Vt80254440"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 23,
+   "tag": "Arg80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Glob80253348",
+    "Mid80253348"
+   ],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 24,
+   "tag": "Flags80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 25,
+   "tag": "Glob80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Glob80253348"
+   ],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 26,
+   "tag": "Mid80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 27,
+   "tag": "Obj80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Glob80253348",
+    "Tab80253348"
+   ],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 28,
+   "tag": "Slot80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Glob80253348",
+    "Obj80253348",
+    "Slot80253348",
+    "Tab80253348",
+    "Vt80253348"
+   ],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 29,
+   "tag": "Sub80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Glob80253348"
+   ],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 30,
+   "tag": "Tab80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Glob80253348",
+    "Obj80253348",
+    "Slot80253348",
+    "Sub80253348",
+    "Tab80253348"
+   ],
+   "credit": 0.1111,
+   "n_alone": 0,
+   "n_needs_with_others": 1,
+   "needs_with_others": [
+    "fn_80253348"
+   ],
+   "rank": 31,
+   "tag": "Vt80253348"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.0,
+   "n_alone": 0,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 32,
+   "tag": "Elem80203FEC"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.0,
+   "n_alone": 0,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 33,
+   "tag": "Obj8021EAA8"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [],
+   "credit": 0.0,
+   "n_alone": 0,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 34,
+   "tag": "Obj8022F90C"
+  },
+  {
+   "alone": [],
+   "also_removed_by_cascade": [
+    "Obj8021EAA8"
+   ],
+   "credit": 0.0,
+   "n_alone": 0,
+   "n_needs_with_others": 0,
+   "needs_with_others": [],
+   "rank": 35,
+   "tag": "Row8021EAA8"
+  }
+ ],
+ "reconcile": {
+  "alone_sum": 9,
+  "clean_with_prelude_only": 0,
+  "credit_total": 16.0,
+  "newly_clean": 101,
+  "not_reproduced_with_full_header": 0,
+  "redundant_no_single_tag": 85,
+  "shared_functions": 7,
+  "sum_check": true
+ },
+ "red_control": {
+  "fake_names": [
+   "Zz9c3ebbb0",
+   "Zz7506e90a",
+   "Zz3180881f",
+   "Zz932bb586",
+   "Zze10bed17"
+  ],
+  "functions_changed_vs_full": {
+   "red:Zz3180881f": 0,
+   "red:Zz7506e90a": 0,
+   "red:Zz932bb586": 0,
+   "red:Zz9c3ebbb0": 0,
+   "red:Zze10bed17": 0
+  },
+  "passed": true
+ },
+ "residual": {
+  "clean_with_prelude_only": [],
+  "not_reproduced": [],
+  "note": "redundant = clean with the header and still clean after every single-tag drop (disjunctive support or the facts it uses are in more than one tag); not_reproduced = m2c rerun disagrees with the p1p2 run",
+  "redundant_no_single_tag": [
+   "fn_801BC674",
+   "fn_801BC6B4",
+   "fn_801BCA38",
+   "fn_801BD194",
+   "fn_801BD47C",
+   "fn_802087B4",
+   "fn_80209A6C",
+   "fn_80209D70",
+   "fn_8020A690",
+   "fn_8020CBB8",
+   "fn_8021E65C",
+   "fn_8021E8B8",
+   "fn_80223804",
+   "fn_80223F68",
+   "fn_80224B28",
+   "fn_80225180",
+   "fn_802256F8",
+   "fn_8022621C",
+   "fn_80226280",
+   "fn_8022A5B0",
+   "fn_8022A5F0",
+   "fn_8022E5D8",
+   "fn_8022E61C",
+   "fn_8022E660",
+   "fn_8022E6A8",
+   "fn_8022E6E8",
+   "fn_8022E728",
+   "fn_8022EB7C",
+   "fn_8022ED38",
+   "fn_802301F0",
+   "fn_80230FA4",
+   "fn_802326E0",
+   "fn_802418C4",
+   "fn_80241D18",
+   "fn_80242A70",
+   "fn_8024B9FC",
+   "fn_8024DAE8",
+   "fn_8024E150",
+   "fn_80250010",
+   "fn_80250068",
+   "fn_802502C4",
+   "fn_80250790",
+   "fn_80250F80",
+   "fn_802518B0",
+   "fn_80252C20",
+   "fn_8025549C",
+   "fn_80257978",
+   "fn_80258A70",
+   "fn_80259C64",
+   "fn_8025BD58",
+   "fn_8025BD98",
+   "fn_8025BDF4",
+   "fn_8025C600",
+   "fn_8025C658",
+   "fn_8025EA0C",
+   "fn_80278F94",
+   "fn_80278FEC",
+   "fn_80279048",
+   "fn_80279E88",
+   "fn_80279EE0",
+   "fn_80279F3C",
+   "fn_8027A708",
+   "fn_8027A764",
+   "fn_8027AA7C",
+   "fn_8027B428",
+   "fn_8027DB4C",
+   "fn_8027DBA8",
+   "fn_8027DC04",
+   "fn_8027E168",
+   "fn_8027E6E4",
+   "fn_8027ED64",
+   "fn_8027F164",
+   "fn_8032CE30",
+   "fn_8032CF9C",
+   "fn_8032E3FC",
+   "fn_8032E978",
+   "fn_803306F4",
+   "fn_80331560",
+   "fn_803315A0",
+   "fn_803316D4",
+   "fn_80331714",
+   "fn_80332444",
+   "fn_80333DE4",
+   "fn_80333FE0",
+   "fn_80334AD8"
+  ]
+ },
+ "shock": {
+  "clean_after": 276,
+  "clean_before": 175,
+  "newly_clean": 101,
+  "sources": [
+   "noctx_run2",
+   "ctx_run2"
+  ]
+ }
+}

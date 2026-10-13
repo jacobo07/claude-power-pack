@@ -1,0 +1,228 @@
+--- a/mods/cpp-cognitive-runtime/hooks/policy.ts
++++ b/mods/cpp-cognitive-runtime/hooks/policy.ts
+@@ -57,22 +57,45 @@
+   return line ? line.replace(/^#\s+/, '').trim().slice(0, 90) : ''
+ }
+ 
++// The kernel size the runtime reads (register.ts slices the digest to it). The whole replacement text stays within
++// it whatever the size of the estate (v4 A4 estate gate: 10x the files must not mean 10x the bytes).
++export const KERNEL_CHARS = 8000
++
++const dirOf = (p: string) => { const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\')); return i > 0 ? p.slice(0, i) : p }
++
++// One line per file while the lines fit the budget. Past it, files are named by directory (count and size), and the
++// directories by their parents until the index fits: every file stays one Glob + Read away, none is named twice.
++export function fileIndex(files: readonly InstructionFileInfo[], budget: number): string {
++  const full = files
++    .map(f => `- ${f.path} (${f.kind}, ${f.content.length} chars)${firstHeading(f.content) ? ` -- ${firstHeading(f.content)}` : ''}`)
++    .join('\n')
++  if (full.length <= budget) return full
++  let dirs = files.map(f => ({ dir: dirOf(f.path), chars: f.content.length }))
++  let text = ''
++  for (let depth = 0; depth < 64; depth++) {
++    const by = new Map<string, { n: number; chars: number }>()
++    for (const d of dirs) { const v = by.get(d.dir) ?? { n: 0, chars: 0 }; v.n++; v.chars += d.chars; by.set(d.dir, v) }
++    text = [...by].map(([d, v]) => `- ${d}/ (${v.n} files, ${v.chars} chars; Glob it for the names)`).join('\n')
++    const up = dirs.map(d => ({ ...d, dir: dirOf(d.dir) }))
++    if (text.length <= budget || up.every((d, i) => d.dir === dirs[i].dir)) break
++    dirs = up
++  }
++  return text.length <= budget ? text : `- ${files.length} instruction files (${files.reduce((s, f) => s + f.content.length, 0)} chars) are on disk; Glob for them`
++}
++
+ // The text a subagent reads in place of the full instruction files: the compiled HARD-RULES
+-// digest (the constitutional kernel, maintained by rule_compiler) plus one line per file it did
++// digest (the constitutional kernel, maintained by rule_compiler) plus an index of the files it did
+ // not receive, so a file the task turns out to need is one Read away.
+ export function subagentInstructions(kernel: string, files: readonly InstructionFileInfo[]): string {
+-  const index = files
+-    .map(f => `- ${f.path} (${f.kind}, ${f.content.length} chars)${firstHeading(f.content) ? ` -- ${firstHeading(f.content)}` : ''}`)
+-    .join('\n')
+-  return [
++  const head = [
+     'Instruction files for this subagent were linked by the CPP Cognitive Runtime: the constitutional kernel is below, and',
+     'the full files are not loaded. If your task touches one of them, Read it before acting. Hooks and guards still apply in full.',
+     '',
+     kernel.trim(),
+     '',
+     'Instruction files available on disk:',
+-    index,
+   ].join('\n')
++  return `${head}\n${fileIndex(files, KERNEL_CHARS - head.length - 1)}`
+ }
+ 
+ export function decideSubagentAttachment(
+@@ -253,11 +276,54 @@
+ // from then on every call pays at least twice what a fresh epoch's call pays.
+ export const ROTATE_CARRY_RATIO = 1
+ 
+-export type CarryAdvice = { rotate: boolean; floor: number; ctx: number; carry: number; imageTok: number; textCarry: number }
++export type CarryAdvice = { rotate: boolean; floor: number; ctx: number; carry: number; imageTok: number; textCarry: number
++  rotateAdvice?: RotateAdvice }
+ 
+-export function carryAdvice(floor: number, ctx: number, imageTok: number): CarryAdvice {
++export function carryAdvice(floor: number, ctx: number, imageTok: number, be?: { model: BreakevenModel; call: number } | null): CarryAdvice {
+   const carry = Math.max(0, ctx - floor)
+-  return { rotate: floor > 0 && carry >= ROTATE_CARRY_RATIO * floor, floor, ctx, carry, imageTok, textCarry: Math.max(0, carry - imageTok) }
++  const a: CarryAdvice = { rotate: floor > 0 && carry >= ROTATE_CARRY_RATIO * floor, floor, ctx, carry, imageTok, textCarry: Math.max(0, carry - imageTok) }
++  if (be && floor > 0) a.rotateAdvice = rotateAdvice(be.model, floor, ctx, be.call)
++  return a
++}
++
++// Weighted rotation break-even (v4 A4, tools/ccr_breakeven.py; observe only, nothing here rotates). A rotation pays
++// once: write floor + capsule, the rehydration calls, the first call's overhead. It then saves W_READ on every token
++// of carry above floor + capsule + R on each later call. With carry growing g per call the cheapest cycle rotates at
++// carry X* = sqrt(2 * once * g / W_READ); it is advised only when the calls still expected exceed the payback k*.
++// Measured (Linux plane GEX44, host 2.1.296): capsules of 164-564 tokens, not the 8k E1 assumed.
++export const W_READ = 0.1
++export const W_WRITE = 1.25
++export type BreakevenModel = { cls: string; capsule: number; R: number; rehyd_cost: number; first_overhead: number
++  r: number; g: number; lengths: number[] }
++export type RotateAdvice = { rotate: boolean; kStar: number | null; xStar: number | null; carry: number; remaining: number }
++
++export function parseBreakevenModel(text: string | null, cls: string): BreakevenModel | null {
++  if (!text) return null
++  try {
++    const m = JSON.parse(text)
++    const ok = m?.cls === cls && [m.capsule, m.R, m.rehyd_cost, m.first_overhead, m.r, m.g]
++      .every((v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= 0)
++      && Array.isArray(m.lengths) && m.lengths.length > 0 && m.lengths.every((v: unknown) => typeof v === 'number')
++    return ok ? m as BreakevenModel : null
++  } catch { return null } // unparseable model: no break-even advice, the carry receipt stands alone
++}
++
++// Median calls still to come for a session at `call`, over the class sessions that lasted longer.
++export function expectedRemaining(call: number, lengths: readonly number[]): number {
++  const rest = lengths.filter(n => n > call).map(n => n - call).sort((x, y) => x - y)
++  if (!rest.length) return 0
++  const h = rest.length >> 1
++  return rest.length % 2 ? rest[h] : (rest[h - 1] + rest[h]) / 2
++}
++
++export function rotateAdvice(m: BreakevenModel, floor: number, ctx: number, call: number): RotateAdvice {
++  const once = W_WRITE * (floor + m.capsule) + m.rehyd_cost + m.r * W_READ * m.capsule + m.first_overhead
++  const carry = ctx - floor - m.capsule - m.R
++  const kStar = carry > 0 ? once / (W_READ * carry) : null
++  const xStar = m.g > 0 ? Math.sqrt(2 * once * m.g / W_READ) : null
++  const remaining = expectedRemaining(call, m.lengths)
++  return { rotate: kStar !== null && xStar !== null && carry >= xStar && remaining > kStar,
++    kStar: kStar === null ? null : +kStar.toFixed(1), xStar: xStar === null ? null : Math.round(xStar), carry: Math.round(carry), remaining }
+ }
+ 
+ // Image results by the call they answer, so a compaction can name what it evicts.
+--- a/mods/cpp-cognitive-runtime/hooks/register.ts
++++ b/mods/cpp-cognitive-runtime/hooks/register.ts
+@@ -3,7 +3,7 @@
+   COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
+   carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
+   PROJECT_BUDGET_CHARS, PROJECT_TOOLS, boundaryForecast, parseClassModel, projectToolOutput, stepAnomaly,
+-  type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
++  KERNEL_CHARS, parseBreakevenModel, type BreakevenModel, type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
+ } from './policy'
+ 
+ // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
+@@ -33,6 +33,8 @@
+ let advised = false
+ // Cognitive PGO (v4 B6): the declared unit's Work-Class model, if tools/ccr_pgo.py built one; the last call's ctx.
+ let classModel: ClassModel | null = null
++let beModel: BreakevenModel | null = null
++let beLast: boolean | null = null
+ let prevCtx = 0
+ // Image results of the main loop by tool_use_id: what a pixel GC compaction can evict and name.
+ const imageUses = new Map<string, ImageFact[]>()
+@@ -113,7 +115,7 @@
+       }
+       catch { modes = { ...DEFAULT_MODES } } // no override file: release defaults
+     }
+-    try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, 8000) }
++    try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, KERNEL_CHARS) }
+     catch { kernel = null } // missing kernel: the linkers keep the full instructions
+     const unit = await loadUnit($)
+     receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null })
+@@ -123,6 +125,9 @@
+       let text: string | null = null
+       try { text = await $.fs.read(`${stateDir}/pgo/${unit.cls}.json`) } catch { text = null } // no model built for this class yet
+       classModel = parseClassModel(text, unit.cls)
++      let beText: string | null = null
++      try { beText = await $.fs.read(`${stateDir}/pgo/${unit.cls}.breakeven.json`) } catch { beText = null } // no break-even model for this class yet
++      beModel = parseBreakevenModel(beText, unit.cls)
+       const fc = classModel ? boundaryForecast(classModel) : null
+       receipt({ ev: 'contract', cls: unit.cls, obligation: unit.id, model_n: classModel?.n ?? 0, forecast: fc,
+         step_p95: classModel?.step.p95 ?? null, verdict: classModel ? 'ADMIT' : 'ADMIT_UNFORECAST' })
+@@ -312,10 +317,16 @@
+     if (floor === 0) floor = ctx
+     let imageTok = 0
+     for (const v of hotImages.values()) imageTok += v.tok
+-    const a = carryAdvice(floor, ctx, imageTok)
++    const a = carryAdvice(floor, ctx, imageTok, beModel ? { model: beModel, call: calls } : null)
+     const step = prevCtx > 0 ? ctx - prevCtx : 0
+     prevCtx = ctx
+     receipt({ ev: 'call', agent: null, call: calls, msgs: e.messageCount, ctx, step, out: u.output_tokens ?? 0, carry: a.carry, imageTok, rotate: a.rotate })
++    // Weighted break-even (v4 A4), observe only: a receipt at the first call and whenever the verdict flips; the
++    // driver that owns the epoch decides, this hook never rotates.
++    if (a.rotateAdvice && a.rotateAdvice.rotate !== beLast) {
++      beLast = a.rotateAdvice.rotate
++      receipt({ ev: 'rotate_advice', call: calls, ctx, floor, ...a.rotateAdvice, rule: 'breakeven', ratioRule: a.rotate, applied: false })
++    }
+     // Intra-epoch governor (v4 B6): a step above the class P95 is named at the call that pays for it first, with the
+     // cost it will carry if it rides to the class's P80 length. Advice only: the driver that owns the epoch decides.
+     if (classModel && step > 0) {
+--- a/mods/cpp-cognitive-runtime/hooks/policy.test.ts
++++ b/mods/cpp-cognitive-runtime/hooks/policy.test.ts
+@@ -3,6 +3,7 @@
+   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
+   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
+   subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly,
++  KERNEL_CHARS, expectedRemaining, fileIndex, parseBreakevenModel, rotateAdvice,
+ } from './policy'
+ 
+ // The madzia-worker model tools/ccr_pgo.py built from post-fix attempts a6-a8 (2026-10-12).
+@@ -261,3 +262,48 @@
+   expect(decideUnitSection('memory').action).toBe('drop')
+   expect(decideUnitSection('env_info_simple').action).toBe('keep')
+ })
++
++// v4 A4: weighted break-even (tools/ccr_breakeven.py). The same numbers as tools/test_gsd_epoch_breakeven_shadow.py.
++const BE = JSON.stringify({ cls: 'bounded-code-worker', capsule: 1000, R: 5000, rehyd_cost: 10000, first_overhead: 500, r: 3, g: 2000,
++  lengths: Array(10).fill(200) })
++
++test('a break-even model is accepted only for its own class and with every field', () => {
++  expect(parseBreakevenModel(BE, 'bounded-code-worker')?.g).toBe(2000)
++  expect(parseBreakevenModel(BE, 'read-only-reviewer')).toBe(null)
++  expect(parseBreakevenModel('{"cls":"bounded-code-worker","capsule":1}', 'bounded-code-worker')).toBe(null)
++  expect(parseBreakevenModel('nope', 'bounded-code-worker')).toBe(null)
++})
++
++test('rotate advice: below X* continue, above X* with calls to spare rotate, near the end continue', () => {
++  const m = parseBreakevenModel(BE, 'bounded-code-worker')!
++  const lo = rotateAdvice(m, 20000, 40000, 20)
++  expect(lo.rotate).toBe(false)
++  expect(lo.xStar).toBe(38497)
++  const hi = rotateAdvice(m, 20000, 150000, 20)
++  expect(hi.rotate).toBe(true)
++  expect(hi.kStar).toBe(3)
++  expect(rotateAdvice(m, 20000, 150000, 199).rotate).toBe(false)   // 1 call left < k*
++  expect(rotateAdvice(m, 20000, 22000, 20).kStar).toBe(null)       // no carry above the rotated prefix
++  expect(expectedRemaining(10, [5, 20, 30])).toBe(15)
++  expect(expectedRemaining(40, [5, 20, 30])).toBe(0)
++})
++
++test('carry advice carries the break-even verdict only when a model is given; the ratio rule is unchanged', () => {
++  const m = parseBreakevenModel(BE, 'bounded-code-worker')!
++  expect(carryAdvice(20000, 150000, 0).rotateAdvice).toBe(undefined)
++  const a = carryAdvice(20000, 150000, 0, { model: m, call: 20 })
++  expect(a.rotate).toBe(true)
++  expect(a.rotateAdvice?.rotate).toBe(true)
++  expect(carryAdvice(20000, 30000, 0, { model: m, call: 20 }).rotate).toBe(false)
++})
++
++test('estate elasticity: the instruction index stays one line per file while it fits, and bounded past it', () => {
++  const files = Array.from({ length: 25 }, (_, i) => ({ path: `/h/.claude/rules/r${i}.md`, kind: 'user', content: `# Rule ${i}\n` + 'x'.repeat(500) }))
++  const small = subagentInstructions('KERNEL', files)
++  for (const f of files) expect(small.includes(f.path)).toBe(true)
++  const ten = Array.from({ length: 10 }, (_, k) => files.map(f => ({ ...f, path: f.path.replace('.md', `.x${k}.md`) }))).flat()
++  const big = subagentInstructions('K'.repeat(3000), ten)
++  expect(big.length).toBeLessThanOrEqual(KERNEL_CHARS)
++  expect(big.includes('/h/.claude/rules/ (250 files')).toBe(true)
++  expect(fileIndex(ten, 10).startsWith('- 250 instruction files')).toBe(true)  // nothing fits: one count line
++})

@@ -382,7 +382,8 @@ def g_guard():
         check("V-GOAL-GUARD-SUBAGENT-SPEND", dec is None and gs["tokens"] == 850,
               f"main 250 + subagent 600 measured = {gs['tokens']}")
 
-        dec, why = run_guard(e, "bound-1", tx, work, tool="Agent", tool_input={"prompt": "x"})
+        dec, why = run_guard(e, "bound-1", tx, work, tool="Agent", tool_input={"prompt": "x"},
+                           CPP_DRAIN="off")   # DRAIN (W4) denies first in this state; this gate pins the goal-spawn refusal
         check("V-GOAL-GUARD-AGENT-REFUSED", dec == "deny" and "child refused" in why,
               f"Agent with remaining < one lease: {why[:90]}")
 
@@ -531,11 +532,15 @@ def g_churn():
 
 
 def g_dispatch_wiring():
+    import re
     text = DISPATCHER.read_text(encoding="utf-8")
+    # Membership, not an exact array: other hooks (cognitive_admission.js) share this lane.
+    lane = re.search(r"'PreToolUse-Agent-default':\s*\[([^\]]*)\]", text)
+    members = re.findall(r"'([^']+)'", lane.group(1)) if lane else []
     check("V-GOAL-AGENT-LANE",
-          "'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js']" in text
+          "../skills/claude-power-pack/hooks/session_budget_guard.js" in members
           and "tools: ['Agent', 'Task'], chain: 'PreToolUse-Agent-default'" in text,
-          "dispatcher carries the Agent lane and its no-event route")
+          f"dispatcher carries the Agent lane with the guard and its no-event route: {members}")
 
 
 def main():

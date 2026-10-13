@@ -147,10 +147,15 @@ def g_autopsy():
         projects = build_incident(e)
         jr = ms._goal_ledger("g").journal
         before = jr.read_bytes()
+        gdir = jr.parent
+
+        def snap():
+            return {p.name: p.read_bytes() for p in gdir.iterdir() if p.is_file()}
+        files_before = snap()
         # (a) inspectable from an UNBOUND session (cwd outside every root), zero rows added
         os.chdir(e.outside)
         out = _autopsy("g", projects=projects)
-        check("V-GOAL-AUTOPSY-READONLY", jr.read_bytes() == before and out.get("ok", False),
+        check("V-GOAL-AUTOPSY-READONLY", jr.read_bytes() == before and snap() == files_before and out.get("ok", False),
               f"autopsy ok={out.get('ok')} journal bytes unchanged ({len(before)})")
         # control: the same call on an undeclared goal is refused (not an empty success)
         bad = _autopsy("nope", projects=projects)

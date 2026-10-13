@@ -1,0 +1,325 @@
+{
+ "knowledge_shock": {
+  "clean_before": 175,
+  "clean_after": 276,
+  "newly_clean": 101,
+  "outside_draws": 80,
+  "newly_dirty": 0,
+  "reproduce": {
+   "ctx_clean_sets_equal": true,
+   "noctx_clean_sets_equal": true,
+   "ctx_sha_equal": true,
+   "noctx_sha_equal": true
+  }
+ },
+ "verdict": {
+  "structural_family": "INCONCLUSIVE",
+  "data_family": "PROVEN",
+  "data_family_anchored": "PROVEN",
+  "idiom_family": "INCONCLUSIVE",
+  "motifs": "PROVEN"
+ },
+ "summary": {
+  "w7_singletons": 1114,
+  "w7_singletons_in_nonsingleton_group": {
+   "structural_family": 365,
+   "data_family": 297,
+   "data_family_anchored": 84,
+   "idiom_family": 689,
+   "motifs": 719,
+   "union_all_resolutions": 1046,
+   "union_red_control_proven_resolutions": 772
+  },
+  "residual_structural_deciles": {
+   "p0": 0.0,
+   "p10": 0.1528,
+   "p20": 0.28,
+   "p30": 0.4091,
+   "p40": 0.5824,
+   "p50": 0.7089,
+   "p60": 0.8648,
+   "p70": 1.0,
+   "p80": 1.0,
+   "p90": 1.0,
+   "p100": 1.0
+  },
+  "roles": {
+   "UNKNOWN": 1615,
+   "LEAF_ACCESSOR": 65,
+   "TAILCALL_THUNK": 111,
+   "UNREACHABLE": 6
+  },
+  "known_struct_coverage_fns": 14
+ },
+ "motifs": {
+  "real": {
+   "motifs": 2023,
+   "fns_with_motif": 1092,
+   "covered_insns": 39397,
+   "covered_fraction": 0.3902741042329143
+  },
+  "red": {
+   "motifs": 18,
+   "fns_with_motif": 57,
+   "covered_insns": 534,
+   "covered_fraction": 0.005289904603405748
+  }
+ },
+ "structural": {
+  "real": {
+   "groups": 994,
+   "members_in_groups_ge2": 926,
+   "groups_ge2": 123,
+   "largest": [
+    156,
+    140,
+    52,
+    43,
+    41
+   ],
+   "singletons": 871,
+   "n_total": 1797
+  },
+  "redA": {
+   "groups": 1256,
+   "members_in_groups_ge2": 588,
+   "groups_ge2": 47,
+   "largest": [
+    130,
+    81,
+    77,
+    38,
+    36
+   ],
+   "singletons": 1209,
+   "n_total": 1797
+  },
+  "redB": {
+   "groups": 1379,
+   "members_in_groups_ge2": 524,
+   "groups_ge2": 106,
+   "largest": [
+    61,
+    53,
+    27,
+    17,
+    16
+   ],
+   "singletons": 1273,
+   "n_total": 1797
+  }
+ },
+ "data": {
+  "real": {
+   "groups": 429,
+   "members_in_groups_ge2": 490,
+   "groups_ge2": 72,
+   "largest": [
+    193,
+    25,
+    25,
+    21,
+    15
+   ],
+   "singletons": 357,
+   "n_total": 1797
+  },
+  "red": {
+   "groups": 824,
+   "members_in_groups_ge2": 35,
+   "groups_ge2": 14,
+   "largest": [
+    8,
+    3,
+    2,
+    2,
+    2
+   ],
+   "singletons": 810,
+   "n_total": 1797
+  }
+ },
+ "data_anch": {
+  "real": {
+   "groups": 76,
+   "members_in_groups_ge2": 112,
+   "groups_ge2": 14,
+   "largest": [
+    45,
+    19,
+    9,
+    6,
+    6
+   ],
+   "singletons": 62,
+   "n_total": 1797
+  },
+  "red": {
+   "groups": 164,
+   "members_in_groups_ge2": 18,
+   "groups_ge2": 8,
+   "largest": [
+    3,
+    3,
+    2,
+    2,
+    2
+   ],
+   "singletons": 156,
+   "n_total": 1797
+  }
+ },
+ "idiom": {
+  "real": {
+   "groups": 58,
+   "members_in_groups_ge2": 1039,
+   "groups_ge2": 28,
+   "largest": [
+    728,
+    93,
+    39,
+    21,
+    21
+   ],
+   "singletons": 30,
+   "n_total": 1797
+  },
+  "red": {
+   "groups": 91,
+   "members_in_groups_ge2": 1023,
+   "groups_ge2": 45,
+   "largest": [
+    468,
+    175,
+    62,
+    50,
+    47
+   ],
+   "singletons": 46,
+   "n_total": 1797
+  }
+ },
+ "blockers_top20": [
+  [
+   1,
+   "HELPER:fn_800B4508",
+   89,
+   0
+  ],
+  [
+   2,
+   "M2C:unknown instruction cror",
+   67,
+   51
+  ],
+  [
+   3,
+   "HELPER:fn_801CD7D0",
+   64,
+   0
+  ],
+  [
+   4,
+   "HELPER:fn_801CD868",
+   56,
+   0
+  ],
+  [
+   5,
+   "M2C_FAILED:Cannot find branch target #",
+   52,
+   52
+  ],
+  [
+   6,
+   "HELPER:fn_800B32F8",
+   45,
+   0
+  ],
+  [
+   7,
+   "HELPER:fn_801D022C",
+   43,
+   0
+  ],
+  [
+   8,
+   "HELPER:fn_801CCE78",
+   40,
+   0
+  ],
+  [
+   9,
+   "HELPER:fn_801BFF60",
+   39,
+   0
+  ],
+  [
+   10,
+   "HELPER:fn_801CDA9C",
+   39,
+   0
+  ],
+  [
+   11,
+   "M2C_FAILED:Unable to determine jump table for bctr instruction at fn.s ",
+   37,
+   37
+  ],
+  [
+   12,
+   "HELPER:fn_801CFCE8",
+   31,
+   0
+  ],
+  [
+   13,
+   "HELPER:fn_8003ED00",
+   29,
+   0
+  ],
+  [
+   14,
+   "HELPER:fn_801CCE10",
+   29,
+   0
+  ],
+  [
+   15,
+   "HELPER:fn_801CD8AC",
+   29,
+   0
+  ],
+  [
+   16,
+   "HELPER:fn_801CFC9C",
+   29,
+   0
+  ],
+  [
+   17,
+   "HELPER:fn_801CFB90",
+   23,
+   0
+  ],
+  [
+   18,
+   "HELPER:fn_80200A78",
+   23,
+   0
+  ],
+  [
+   19,
+   "HELPER:fn_801EDA74",
+   22,
+   0
+  ],
+  [
+   20,
+   "HELPER:fn_801CD4C0",
+   21,
+   0
+  ]
+ ],
+ "unexplained": 31
+}

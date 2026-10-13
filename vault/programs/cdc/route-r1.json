@@ -1,0 +1,17 @@
+{
+  "unit": "cdc",
+  "envelope": {
+    "target": 15000000,
+    "warn": 17000000,
+    "stop": 19000000,
+    "calls": 45
+  },
+  "workers": [
+    {
+      "name": "cdc-unit",
+      "profile": "slim-t2",
+      "calls": 45,
+      "packet": 6000
+    }
+  ]
+}

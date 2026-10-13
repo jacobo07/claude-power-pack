@@ -1219,6 +1219,13 @@ def _main(argv: list[str]) -> int:
     gg.add_argument("--source", required=True)
     gg.add_argument("--owner", action="store_true",
                     help="raise the programme: asks you to type the goal id on an interactive terminal")
+    gs = sub.add_parser("goal-succession")                   # D28 Ph1b: automatic successor leases
+    gs.add_argument("--goal", required=True)
+    gs.add_argument("--tranche", type=int, required=True, help="cap of each automatic lease; 0 turns it off")
+    gs.add_argument("--keep", type=int, default=0, help="programme held back, never opened automatically")
+    gs.add_argument("--source", required=True)
+    gs.add_argument("--owner", action="store_true",
+                    help="enable or loosen: asks you to type the goal id on an interactive terminal")
     for name in ("capital-apply", "capital-revoke"):         # OCA: Owner Capital Authority
         cp = sub.add_parser(name)
         cp.add_argument("--packet", required=True)
@@ -1260,7 +1267,7 @@ def _main(argv: list[str]) -> int:
         out = programme_spend(a.goal, projects=Path(a.projects) if a.projects else None, mission_sids=sids)
         print(json.dumps(out, sort_keys=True))
         return 0 if out.get("ok") and out.get("telemetry_ok") else 3
-    if a.cmd in ("goal-lineage", "programme-status", "goal-lease-open", "goal-programme"):
+    if a.cmd in ("goal-lineage", "programme-status", "goal-lease-open", "goal-programme", "goal-succession"):
         led = _goal_ledger(a.goal)
         if a.cmd == "goal-lineage":
             out = led.lineage()          # read-only: never status(), which appends leak rows
@@ -1276,8 +1283,13 @@ def _main(argv: list[str]) -> int:
                     print(json.dumps({"ok": False, "goal": a.goal,
                                       "reason": "--owner needs an interactive terminal (stdin is not a TTY)"}))
                     return 3
-                owner = input(f"Owner change to programme of {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
-            out = led.set_programme(a.value, a.source, inside_agent=not (owner and not inside_agent()))
+                what = "succession policy" if a.cmd == "goal-succession" else "programme"
+                owner = input(f"Owner change to {what} of {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
+            unprivileged = not (owner and not inside_agent())
+            if a.cmd == "goal-succession":
+                out = led.set_succession(a.tranche, a.keep, a.source, inside_agent=unprivileged)
+            else:
+                out = led.set_programme(a.value, a.source, inside_agent=unprivileged)
         print(json.dumps(out, sort_keys=True))
         return 0 if out.get("ok") else 3
     if a.cmd.startswith("goal-"):

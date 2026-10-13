@@ -1,0 +1,64 @@
+{
+ "mod": "/home/kobii/missions/ccr-s3-data/a4-work/mod-patched",
+ "policy_sha256": "74895721fcb5777694f1f7c986fd1a538b27022d092430e89f3ab972f6f38087",
+ "exit": 0,
+ "verdict": "PASS",
+ "facts": {
+  "kernel": 2970,
+  "bound": 8000,
+  "files1x": 25,
+  "in1x": 160848,
+  "out1x": {
+   "instructions": 6452,
+   "skills": 0,
+   "agents": 0,
+   "memory": 0
+  },
+  "sum1x": 6452,
+  "files10x": 250,
+  "in10x": 1608480,
+  "out10x": {
+   "instructions": 3646,
+   "skills": 0,
+   "agents": 0,
+   "memory": 0
+  },
+  "sum10x": 3646,
+  "slope": -0.001938
+ },
+ "files": [
+  "/home/kobii/.claude/CLAUDE.md",
+  "/home/kobii/.claude/rules/capability-preserving-compaction.md",
+  "/home/kobii/.claude/rules/common/code-review.md",
+  "/home/kobii/.claude/rules/concurrent-writers-shared-tree.md",
+  "/home/kobii/.claude/rules/destructive-state-authorization.md",
+  "/home/kobii/.claude/rules/develop-here-prove-there.md",
+  "/home/kobii/.claude/rules/documented-capability-must-be-executable.md",
+  "/home/kobii/.claude/rules/durable-exit-transaction.md",
+  "/home/kobii/.claude/rules/effect-authority-across-transports.md",
+  "/home/kobii/.claude/rules/evaluation-corpus-governance.md",
+  "/home/kobii/.claude/rules/generated-content-needs-an-evidence-gate.md",
+  "/home/kobii/.claude/rules/guard-event-reachability.md",
+  "/home/kobii/.claude/rules/human-facing-external-effects.md",
+  "/home/kobii/.claude/rules/instrument-before-claim.md",
+  "/home/kobii/.claude/rules/monetary-quantity-integrity.md",
+  "/home/kobii/.claude/rules/post-effect-resource-truth.md",
+  "/home/kobii/.claude/rules/presence-is-not-residency.md",
+  "/home/kobii/.claude/rules/python/testing.md",
+  "/home/kobii/.claude/rules/real-context-reachability.md",
+  "/home/kobii/.claude/rules/recurring-work-cardinality.md",
+  "/home/kobii/.claude/rules/scoped-side-effect-authority.md",
+  "/home/kobii/.claude/rules/state-lifetime-and-incarnation.md",
+  "/home/kobii/.claude/rules/technical-failure-to-product-state.md",
+  "/home/kobii/.claude/rules/validation-planes-do-not-transfer.md",
+  "/home/kobii/missions/ccr-s3/CLAUDE.md"
+ ],
+ "tail": [
+  "(pass) estate elasticity: unit out-bytes stay within the kernel size at 1x and 10x estate [3.08ms]",
+  "",
+  " 1 pass",
+  " 0 fail",
+  "Ran 1 test across 1 file. [0.13s]",
+  "ESTATE_GATE {\"kernel\":2970,\"bound\":8000,\"files1x\":25,\"in1x\":160848,\"out1x\":{\"instructions\":6452,\"skills\":0,\"agents\":0,\"memory\":0},\"sum1x\":6452,\"files10x\":250,\"in10x\":1608480,\"out10x\":{\"instructions\":3646,\"skills\":0,\"agents\":0,\"memory\":0},\"sum10x\":3646,\"slope\":-0.001938}"
+ ]
+}

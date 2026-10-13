@@ -1,0 +1,446 @@
+{
+ "method": "word/member grep of out/w12/m2c/c/main_<addr>.c (m2c --context output) against the header model; fields attributed to tags that also appear in the same source",
+ "n_header_tags": 35,
+ "n_rows": 22,
+ "rows": [
+  {
+   "called_prototypes": [
+    "fn_801BD1A0"
+   ],
+   "externs": [],
+   "fn": "fn_801BD194",
+   "n_header_facts_used": 3,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_801BD194.c",
+   "used_fields": [],
+   "used_tags": [],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [],
+   "fn": "fn_80203E40",
+   "n_header_facts_used": 3,
+   "own_prototype": true,
+   "prelude_types": [],
+   "source_sha": "main_80203E40.c",
+   "used_fields": [
+    "Obj80203E40.f_44"
+   ],
+   "used_tags": [
+    "Obj80203E40"
+   ],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [],
+   "fn": "fn_80203FEC",
+   "n_header_facts_used": 5,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32",
+    "u8"
+   ],
+   "source_sha": "main_80203FEC.c",
+   "used_fields": [
+    "Elem80203FEC.f_00"
+   ],
+   "used_tags": [
+    "Elem80203FEC"
+   ],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [],
+   "fn": "fn_8020711C",
+   "n_header_facts_used": 4,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_8020711C.c",
+   "used_fields": [
+    "Obj8020711C.f_1C"
+   ],
+   "used_tags": [
+    "Obj8020711C"
+   ],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [],
+   "fn": "fn_8020CC14",
+   "n_header_facts_used": 6,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_8020CC14.c",
+   "used_fields": [
+    "Obj8020CC14.f_00",
+    "Obj8020CC14.f_08",
+    "Obj8020CC14.f_10"
+   ],
+   "used_tags": [
+    "Obj8020CC14"
+   ],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [],
+   "fn": "fn_802128D4",
+   "n_header_facts_used": 5,
+   "own_prototype": true,
+   "prelude_types": [
+    "s16",
+    "s32"
+   ],
+   "source_sha": "main_802128D4.c",
+   "used_fields": [
+    "Obj802128D4.f_A0"
+   ],
+   "used_tags": [
+    "Obj802128D4"
+   ],
+   "verdict": "PARTIAL 16.9% (codegen_diff, SIZE 6 vs 8)"
+  },
+  {
+   "called_prototypes": [
+    "fn_800C2890",
+    "fn_800C28C0"
+   ],
+   "externs": [],
+   "fn": "fn_8021F3E4",
+   "n_header_facts_used": 7,
+   "own_prototype": true,
+   "prelude_types": [],
+   "source_sha": "main_8021F3E4.c",
+   "used_fields": [
+    "Obj8021F3E4.f_00",
+    "Obj8021F3E4.f_14",
+    "Obj8021F3E4.f_1C"
+   ],
+   "used_tags": [
+    "Obj8021F3E4"
+   ],
+   "verdict": "PARTIAL 83.1% (codegen_diff, SIZE 20 vs 24)"
+  },
+  {
+   "called_prototypes": [
+    "fn_801CCBB4",
+    "fn_801CD3A0"
+   ],
+   "externs": [],
+   "fn": "fn_8021F8BC",
+   "n_header_facts_used": 7,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_8021F8BC.c",
+   "used_fields": [
+    "Obj8021F8BC.f_20",
+    "Obj8021F8BC.f_44"
+   ],
+   "used_tags": [
+    "Obj8021F8BC"
+   ],
+   "verdict": "PARTIAL 100.0% (codegen_diff, DIFF 1/34)"
+  },
+  {
+   "called_prototypes": [
+    "fn_800B4548",
+    "fn_800BC298"
+   ],
+   "externs": [],
+   "fn": "fn_8022621C",
+   "n_header_facts_used": 4,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_8022621C.c",
+   "used_fields": [],
+   "used_tags": [],
+   "verdict": "PARTIAL 95.7% (codegen_diff, SIZE 22 vs 23)"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [],
+   "fn": "fn_80230ABC",
+   "n_header_facts_used": 5,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_80230ABC.c",
+   "used_fields": [
+    "Obj80230ABC.f_04"
+   ],
+   "used_tags": [
+    "Elem80230ABC",
+    "Obj80230ABC"
+   ],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [
+    "fn_8022EBF0",
+    "fn_8022EBF8"
+   ],
+   "externs": [],
+   "fn": "fn_80230BF8",
+   "n_header_facts_used": 5,
+   "own_prototype": true,
+   "prelude_types": [],
+   "source_sha": "main_80230BF8.c",
+   "used_fields": [
+    "Obj80230BF8.f_04"
+   ],
+   "used_tags": [
+    "Obj80230BF8"
+   ],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [],
+   "fn": "fn_80241018",
+   "n_header_facts_used": 6,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_80241018.c",
+   "used_fields": [
+    "Obj80241018.f_00",
+    "Obj80241018.f_04",
+    "Obj80241018.f_08"
+   ],
+   "used_tags": [
+    "Obj80241018"
+   ],
+   "verdict": "PARTIAL 60.9% (codegen_diff, SIZE 15 vs 17)"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [
+    "lbl_804F97B8"
+   ],
+   "fn": "fn_80252F34",
+   "n_header_facts_used": 12,
+   "own_prototype": true,
+   "prelude_types": [
+    "u8"
+   ],
+   "source_sha": "main_80252F34.c",
+   "used_fields": [
+    "Item80252F34.f_08",
+    "Obj80252F34.f_C4",
+    "Obj80252F34.f_C8",
+    "Obj80252F34.f_CC",
+    "Vec80252F34.f_08",
+    "Vec80252F34.f_0C"
+   ],
+   "used_tags": [
+    "Item80252F34",
+    "Obj80252F34",
+    "Vec80252F34"
+   ],
+   "verdict": "FAIL BLOCKED_CONTEXT"
+  },
+  {
+   "called_prototypes": [
+    "fn_8025043C"
+   ],
+   "externs": [
+    "lbl_80513F98"
+   ],
+   "fn": "fn_80253348",
+   "n_header_facts_used": 10,
+   "own_prototype": true,
+   "prelude_types": [],
+   "source_sha": "main_80253348.c",
+   "used_fields": [
+    "Arg80253348.f_1E0",
+    "Obj80253348.f_0C",
+    "Obj80253348.f_40",
+    "Sub80253348.vt"
+   ],
+   "used_tags": [
+    "Arg80253348",
+    "Obj80253348",
+    "Sub80253348"
+   ],
+   "verdict": "PARTIAL 87.1% (codegen_diff, SIZE 59 vs 57)"
+  },
+  {
+   "called_prototypes": [
+    "fn_80259A8C"
+   ],
+   "externs": [],
+   "fn": "fn_80254440",
+   "n_header_facts_used": 9,
+   "own_prototype": true,
+   "prelude_types": [],
+   "source_sha": "main_80254440.c",
+   "used_fields": [
+    "Obj80254440.f_08",
+    "Obj80254440.f_0C",
+    "Obj80254440.f_10",
+    "Obj80254440.f_14",
+    "Sub80254440.vt"
+   ],
+   "used_tags": [
+    "Obj80254440",
+    "Sub80254440"
+   ],
+   "verdict": "PARTIAL 98.4% (codegen_diff, DIFF 8/27)"
+  },
+  {
+   "called_prototypes": [
+    "fn_800B4548"
+   ],
+   "externs": [],
+   "fn": "fn_80257978",
+   "n_header_facts_used": 3,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_80257978.c",
+   "used_fields": [],
+   "used_tags": [],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [
+    "fn_800B4548",
+    "fn_801F331C"
+   ],
+   "externs": [],
+   "fn": "fn_8025C600",
+   "n_header_facts_used": 4,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_8025C600.c",
+   "used_fields": [],
+   "used_tags": [],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [
+    "fn_800B4548",
+    "fn_801F331C"
+   ],
+   "externs": [],
+   "fn": "fn_80278FEC",
+   "n_header_facts_used": 4,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_80278FEC.c",
+   "used_fields": [],
+   "used_tags": [],
+   "verdict": "PARTIAL 95.7% (codegen_diff, SIZE 22 vs 23)"
+  },
+  {
+   "called_prototypes": [
+    "fn_802773E4"
+   ],
+   "externs": [
+    "lbl_80419D20"
+   ],
+   "fn": "fn_80279E44",
+   "n_header_facts_used": 6,
+   "own_prototype": true,
+   "prelude_types": [],
+   "source_sha": "main_80279E44.c",
+   "used_fields": [
+    "Obj80279E44.f_00",
+    "Obj80279E44.f_28"
+   ],
+   "used_tags": [
+    "Obj80279E44"
+   ],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [],
+   "fn": "fn_8027A154",
+   "n_header_facts_used": 4,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_8027A154.c",
+   "used_fields": [
+    "Obj8027A154.f_08"
+   ],
+   "used_tags": [
+    "Obj8027A154"
+   ],
+   "verdict": "MATCH"
+  },
+  {
+   "called_prototypes": [],
+   "externs": [
+    "lbl_80519F74"
+   ],
+   "fn": "fn_8032CF78",
+   "n_header_facts_used": 4,
+   "own_prototype": true,
+   "prelude_types": [],
+   "source_sha": "main_8032CF78.c",
+   "used_fields": [
+    "Obj8032CF78.f_04"
+   ],
+   "used_tags": [
+    "Obj8032CF78"
+   ],
+   "verdict": "PARTIAL 46.7% (codegen_diff, SIZE 4 vs 3)"
+  },
+  {
+   "called_prototypes": [
+    "fn_800B4548"
+   ],
+   "externs": [],
+   "fn": "fn_803315A0",
+   "n_header_facts_used": 3,
+   "own_prototype": true,
+   "prelude_types": [
+    "s32"
+   ],
+   "source_sha": "main_803315A0.c",
+   "used_fields": [],
+   "used_tags": [],
+   "verdict": "MATCH"
+  }
+ ],
+ "tags_never_used_by_judged": [
+  "Flags80253348",
+  "Glob80253348",
+  "Mid80253348",
+  "Obj8021EAA8",
+  "Obj8022F90C",
+  "Ptmf8021F3E4",
+  "Row8021EAA8",
+  "Slot80253348",
+  "Sub802128D4",
+  "Sub8027A154",
+  "Tab80253348",
+  "Vt80253348",
+  "Vt80254440"
+ ]
+}

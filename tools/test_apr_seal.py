@@ -170,11 +170,11 @@ check("V-APR2-CLASSES", (rc(c1), rc(c2), rc(c3)) == ("UNCLOSED_RECEIPT", "NO_REC
 # 11. try_seal for APR-3
 d, p, _ = setup("tryseal")
 (d / "R-A.md").write_text("# A\nno status\n", encoding="utf-8")
-r = gc.try_seal(d / "WU-A.md", missions=[mission(d, "A", "HALTED")], runner=Runner(), git=git())
+r = gc.try_seal(d / "WU-A.md", missions=[mission(d, "A", "HALTED")], programs_dir=TMP, runner=Runner(), git=git())
 check("V-APR2-TRY-SEAL", r["sealed"] is True and Path(r["seal"]).exists(), json.dumps(r)[:120])
 d, p, _ = setup("tryseal-fail")
 (d / "R-A.md").write_text("# A\nno status\n", encoding="utf-8")
-r = gc.try_seal(d / "WU-A.md", missions=[mission(d, "A", "HALTED")], runner=Runner(1, "no"), git=git())
+r = gc.try_seal(d / "WU-A.md", missions=[mission(d, "A", "HALTED")], programs_dir=TMP, runner=Runner(1, "no"), git=git())
 check("V-APR2-TRY-SEAL-FAILS-CLOSED", r["sealed"] is False, json.dumps(r)[:120])
 
 # 12. real subprocess runner: timeout is awaited (no leak) and a real passing gate passes
@@ -189,6 +189,28 @@ p.write_text(json.dumps(ch), encoding="utf-8")
 (d / "R-A.md").write_text("# A\nall done, no status line\n", encoding="utf-8")
 r = tick(p, [mission(d, "A")], Runner(0))
 check("V-APR2-EMPTYACC", r["action"] != "arm" and not (d / "R-A.md.seal.json").exists(), r["action"])
+
+# 15. accepted DONE is sticky across HEAD moves: a later unit's commit must not re-judge it (ewc E3/E4 timeout refusal)
+d, p, _ = setup("sticky")
+(d / "R-A.md").write_text("# A\nStatus: DONE\n", encoding="utf-8")
+run = Runner()
+tick(p, [mission(d, "A")], run)
+late = Runner(timeout=True)
+r = tick(p, [mission(d, "A")], late, git(head="H2"))
+check("V-APR2-ACCEPTED-DONE-STICKY", late.calls == 0 and r["action"] == "arm" and r["unit"] == "B"
+      and not Path(str(d / "R-A.md") + ".refusal.json").exists(), f"calls={late.calls} {r['action']}")
+# control: the receipt changes -> the evidence no longer belongs to it, so the gates run again
+(d / "R-A.md").write_text("# A\nStatus: DONE\nedited\n", encoding="utf-8")
+tick(p, [mission(d, "A")], late, git(head="H2"))
+check("V-APR2-ACCEPTED-DONE-RECEIPT-EDIT-RERUNS", late.calls == 1
+      and (gc._jload(str(d / "R-A.md") + ".refusal.json") or {}).get("reason") == "gate timeout", f"calls={late.calls}")
+# control: a FAILED done claim still re-runs on a new HEAD (a fix commit must be able to clear it)
+d, p, _ = setup("sticky-fail")
+(d / "R-A.md").write_text("# A\nStatus: DONE\n", encoding="utf-8")
+run = Runner(1, "x")
+tick(p, [mission(d, "A")], run)
+tick(p, [mission(d, "A")], run, git(head="H2"))
+check("V-APR2-FAILED-DONE-NEW-HEAD-RERUNS", run.calls == 2, f"calls={run.calls}")
 
 print(f"{passes} pass / {fails} fail")
 sys.exit(1 if fails else 0)

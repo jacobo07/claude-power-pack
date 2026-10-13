@@ -1,0 +1,11 @@
+PASS V-D3-ROWS 1797
+PASS V-D3-UNKNOWN-NOT-ZERO size None=215
+PASS V-D3-CLEAN-LE1 exceptions=['fn_80252F34'] (each = measured W12 compile failure, explained)
+PASS V-D3-W12-22 24
+PASS V-D3-W12-AGREE []
+PASS V-D3-MATCH12 
+PASS V-D3-HIST-SUMS 
+PASS V-D3-CONTRADICTIONS empty_residual_not_clean=0 unexplained_not_clean=31 other=['fn_80252F34']
+PASS V-D3-RED {'metric': 'lint-clean functions handed a foreign blocker set (CLEAN_BUT_BLOCKED)', 'real': 0, 'permuted_min': 215, 'permuted_mean': 230.3, 'n_perm': 20, 'verdict': 'PROVEN'}
+PASS V-D3-COST-NO-INVENTED-RATE 
+TEST_D3 OK

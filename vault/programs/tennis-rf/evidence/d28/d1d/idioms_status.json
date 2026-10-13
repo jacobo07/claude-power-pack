@@ -1,0 +1,72 @@
+{
+ "switch_jump_table": {
+  "status": "VALID",
+  "why": "1 pos hit, 1 neg clean",
+  "pos": [
+   "PlayRecordCallback_80119530@8011958C"
+  ],
+  "neg": [
+   "MEMIntrruptHandler@80114CC8"
+  ]
+ },
+ "bool_from_compare": {
+  "status": "VALID",
+  "why": "1 pos hit, 1 neg clean",
+  "pos": [
+   "EXIGetID@800F869C"
+  ],
+  "neg": [
+   "ClearArena@8010D1D4"
+  ]
+ },
+ "float_to_int": {
+  "status": "VALID",
+  "why": "1 pos hit, 1 neg clean",
+  "pos": [
+   "fn_80007B70@80007C30"
+  ],
+  "neg": [
+   "fn_800144A0@800146E8"
+  ]
+ },
+ "struct_copy": {
+  "status": "VALID",
+  "why": "1 pos hit, 1 neg clean",
+  "pos": [
+   "AddReqInfo@80105D54"
+  ],
+  "neg": [
+   "AddReqInfo@80105CF0"
+  ]
+ },
+ "vtable_call": {
+  "status": "VALID",
+  "why": "1 pos hit, 1 neg clean",
+  "pos": [
+   "fn_800088E0@80008914"
+  ],
+  "neg": [
+   "DecrementerExceptionCallback@8010E964"
+  ]
+ },
+ "ptmf_call": {
+  "status": "VALID",
+  "why": "1 pos hit, 1 neg clean",
+  "pos": [
+   "fn_8000DB50@8000E09C"
+  ],
+  "neg": [
+   "AddReqInfo@80105CF0"
+  ]
+ },
+ "stack_guard_prolog": {
+  "status": "VALID",
+  "why": "1 pos hit, 1 neg clean",
+  "pos": [
+   "AddReqInfo@80105CF0"
+  ],
+  "neg": [
+   "DecrementerExceptionHandler@8010EA04"
+  ]
+ }
+}

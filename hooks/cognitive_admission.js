@@ -87,6 +87,11 @@ function decide(event, now) {
   const sid = event && event.session_id;
   const input = (event && event.tool_input) || {};
   const h = phash(input.prompt || input.description || '');
+  // C10 canary defect: wired on '*' every Read/Grep hashed the empty prompt and was denied as DUPLICATE.
+  // Only spawn tools carry a prompt; any other tool, or an empty prompt, is not admission's business.
+  const tn = event && event.tool_name;
+  if (tn && !/^(Agent|Task)$/.test(tn)) return { deny: null, unit: 'unbound', effect: 'UNKNOWN', reason: 'not a spawn tool', h };
+  if (!(input.prompt || input.description)) return { deny: null, unit: 'unbound', effect: 'UNKNOWN', reason: 'empty prompt', h };
   if (!sid || !SID_RE.test(sid)) return { deny: null, unit: 'unbound', effect: 'UNKNOWN', reason: 'no session id', h };
   const bu = unitFor(sid);
   let unit = bu ? bu.unit || 'bound' : 'unbound', effect = 'UNKNOWN';
@@ -129,4 +134,17 @@ if (require.main === module) {
   });
 }
 
-module.exports = { decide, phash, normEffect, noWork };
+// Dispatcher contract (PreToolUse-Agent-default chain calls mod.run(data)); same verdict as the CLI path.
+function run(ev) {
+  try {
+    const sw = String(process.env.CPP_COG_ADMISSION || '').trim().toLowerCase();
+    if (sw === '0' || sw === 'off' || sw === 'false') return null;
+    const r = decide(ev || {}, Date.now());
+    log(ev && ev.session_id, r.unit, r.effect, r.deny ? 'deny' : 'allow', r.reason, r.h);
+    if (r.deny) return { hookSpecificOutput: { hookEventName: 'PreToolUse',
+      permissionDecision: 'deny', permissionDecisionReason: `COGNITIVE ADMISSION -- ${r.deny}` } };
+  } catch (e) { /* fail open */ }
+  return null;
+}
+
+module.exports = { run, decide, phash, normEffect, noWork };

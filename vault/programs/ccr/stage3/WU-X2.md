@@ -1,0 +1,10 @@
+# WU-X2 -- Recertify, merge, knowledge (goal ccr, root .claude/worktrees/ccr, branch ccr/v4; plan vault/plans/ccr-v4-stage3-2026-10-13.md, Owner-approved 2026-10-13 'approve stage 3 + main canary')
+Read the receipts and evidence-v4-stage3-*.md of A0-A7 and CERTIFICATE-v4.md; nothing else.
+1. Certificate: update the ladder in CERTIFICATE-v4.md per plan vault/plans/ccr-v4-stage3-2026-10-13.md "Effectiveness ladder"; each unmet condition stays ABSTAIN:<condition>:<number or UNKNOWN>; never round up.
+2. Merge from the main tree (`git merge --no-ff ccr/v4`), abort on dirty merged paths (record DONE_WITH_LIMITS, never stash/reset), run tools/test_gsd_mission.py and tools/test_goal_lease.py after; revert on failure.
+3. Release if mods/ changed since the active release (A1 rule).
+4. Knowledge: RESUMPTION_FILE (state, level, `goal-status --goal ccr`, next actions); UKDL entries in vault/knowledge_base/ukdl-universal.md for measured lessons only (dedupe against existing ids); NEGATIVE_KNOWLEDGE.md lines per ABSTAIN.
+Done-check: certificate level stated, RESUMPTION updated, commits verified.
+Route: route-S3M.json.
+Common: no Monitor, no waiting call, no Agent spawns, no GSD commands, no model calls unless this packet names them. Never edit Madzia driver files or anything in the KSR repo. No push. Pathspec commits only (`git commit -- <paths>`, then verify `git log -1 --format=%s`); messages end with "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>". Never tick a chain by hand. Physical admission: before any model-calling canary or probe, require >= 4 GB free RAM (Win32_OperatingSystem FreePhysicalMemory); if not, skip it and record RAM_HOLD with the number. Receipt K7 row: estimate vs actual processed tokens counting EVERY session of this unit (worker sessions + any canary/probe sessions). Receipt line 1 '# X2 receipt', line 2 'Status: DONE' (DONE_WITH_LIMITS only for a limit you name with its number).
+Receipt path: C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ccr\stage3\WU-X2-receipt.md

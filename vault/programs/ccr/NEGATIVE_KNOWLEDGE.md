@@ -1,0 +1,11 @@
+# CCR v4 negative knowledge (CBR lines, one per ABSTAIN; source CERTIFICATE-v4.md)
+- CBR madzia_real_driver_saving: epoch rotation on the Madzia worker saves -0.2 % held-out (cache-write bill exceeds the thinking-carry removed); do not retry rotation there (evidence-v4-stage2-E1.md).
+- CBR real_boundary_saving: the V1 canary cannot pass under `claude -p` with global settings: the OFF floor is ~76K/call, so a 6-call task is 457K > 400K guard; a rerun needs a ~1.5M guard or a lighter harness (evidence-v4-stage2-V1.md).
+- CBR reviewer_parity_boundary: UNKNOWN, no CCR arm ran (V1).
+- CBR lobby_provider_measurement: the +21.1 % Lobby saving is a simulation (capsule 8k assumed); never quote it as measured (E1).
+- CBR forecast_error_class_only: 93 % worker error before launch, straddling the M4 regime change; retrain per regime (Stage 1 B4/B6).
+- CBR forecast_vs_actual_ccr_run: UNKNOWN, no CCR run recorded a contract (V1).
+- CBR admission_live: enforce only proven by 5 synthetic tests, default observe (W1).
+- CBR capsule_successor: capsule size is flat (+0.2 % H->8H) but successor usefulness is untested, no model call (M1).
+- CBR reasoning_rent: carried thinking novelty vs reconstruction is unreadable, content not stored (B3).
+- CBR one_read: unchanged re-reads 2.40 % / 2.21 % < 3 % bar, NO_GO (D1).

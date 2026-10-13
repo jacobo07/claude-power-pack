@@ -1255,3 +1255,17 @@ once P0 confirms the gap on the current release; keep the adapter/patch clean en
 
 **Activation criterion:** cpx R6 receipt DONE plus the C3 two-arm result; P0 may run earlier (zero-model, small).
 Decision owner: cpx R5 admission table (plan `cpx-control-plane-extinction-cp50-2026-10-11.md` section 9).
+## D28 -- Tennis Frontier Collapse + global corrections (Owner, 2026-10-12) (QUEUED, awaiting one-click approval)
+
+**Owner:** "before continuing add this to the queue and implement it as a global optimization (for CCR too)" + the
+`/cpp-gsd-long` Frontier Collapse prompt (pane TRF-C). Supersedes the narrow W12a -> W12R -> W13 sequence.
+
+**Plan (approval surface):** `vault/plans/tennis-frontier-collapse-2026-10-12.md` (Reality Delta Scan, root-cause matrix,
+owner map, Ph0-Ph11, 27 master done-gates, budget P50 25.5M / P80 31M / P95 38M, GEX44 job 4 + 5-6).
+
+**Global pieces (all goals, CCR included):** (1) authoritative result = ledger, worker prose = claim, typed
+CLAIM_EVIDENCE_DIVERGENCE; (2) automatic successor lease inside Programme Authority (connects `ledger.lease_open`;
+overlaps D24 dgl W3 -- implement once, D24 W3 consumes it); (3) deterministic-first gate (WU class + launcher-run `pre`
+steps before model admission; connects CCR Work-Class/PoCN); (4) frontier-collapse-before-leaf-execution as CBR after proof.
+
+**Activation:** Owner approves the plan's section 8 in one reply. TRF-C then opens tennis-rf L2 (8M tranche) and starts Ph0.

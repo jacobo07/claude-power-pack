@@ -395,8 +395,59 @@ def budget_evidence(sid: str | None, n: int | None, ceiling: int, kids: dict | N
         return {"state": "UNMEASURED", "pressure": None, "reason": f"{exc.__class__.__name__}: {exc}"[:200]}
 
 
+BREAKEVEN_MODEL = Path(__file__).resolve().parent.parent / "vault/programs/ccr/stage3/a4/breakeven.json"
+
+
+def call_count(session_id: str) -> int | None:
+    """Distinct model calls in the worker's transcript (message ids), None when unreadable."""
+    path = _transcript(session_id)
+    if not path:
+        return None
+    seen = set()
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if '"assistant"' in line:
+                    m = re.search(r'"id":\s*"(msg_[^"]+)"', line)
+                    if m:
+                        seen.add(m.group(1))
+    except OSError:
+        return None
+    return len(seen)
+
+
+def breakeven_shadow(rec: dict, sid: str | None, n: int | None, calls=call_count,
+                     model_path: Path | None = None) -> dict:
+    """SHADOW ONLY (CCR A4): what the weighted break-even rule (tools/ccr_breakeven.py) would do at this turn end,
+    recorded next to what the continuation ceiling did. It never decides and never raises."""
+    try:
+        if n is None:
+            return {"would": None, "reason": "context unmeasured"}
+        import ccr_breakeven as be
+        import ccr_pgo
+        path = Path(os.environ.get("CPP_CCR_BREAKEVEN") or model_path or BREAKEVEN_MODEL)
+        classes = json.loads(path.read_text(encoding="utf-8"))["classes"]
+        text = ""
+        if rec.get("wu_packet"):
+            try:
+                text = Path(rec["wu_packet"]).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                text = str(rec["wu_packet"])
+        cls = ccr_pgo.classify(text)[0] if text else "generic"
+        if cls not in classes:
+            cls = "generic"
+        m = classes[cls]["model"]
+        i = calls(sid) if sid else None
+        d = be.decide(n, i or 0, m)
+        return {"would": ROTATE if d["rotate"] else CONTINUE, "cls": cls, "calls": i, "k_star": d["k_star"],
+                "x_star": d["x_star"], "carry": d["carry"], "remaining": d["remaining"], "rule": d["rule"]}
+    except Exception as exc:  # noqa: BLE001 -- a shadow that cannot be computed is recorded, never raised
+        return {"would": None, "reason": f"{exc.__class__.__name__}: {exc}"[:200]}
+
+
 def decide_turn_end(rec: dict, now: float | None = None, *, events: list[dict] | None = None,
-                    tokens=context_tokens, children=child_work, last_turn_at=last_assistant_at) -> dict:
+                    tokens=context_tokens, children=child_work, last_turn_at=last_assistant_at,
+                    shadow=breakeven_shadow) -> dict:
     """The owner's turn ended and GSD says work remains. What starts the next turn?
 
     Returns {"decision": continue|rotate|hold, "cause", "mechanism", "reason", "evidence"}.
@@ -459,6 +510,8 @@ def decide_turn_end(rec: dict, now: float | None = None, *, events: list[dict] |
     # Context Budget (modules/context_budget) is EVIDENCE for this decision, never the decider:
     # the policy below is unchanged until a preregistered comparison justifies moving it.
     ev["context_budget"] = budget_evidence(sid, n, ceiling, kids)
+    # CCR A4 shadow: the break-even rule's verdict beside the ceiling's. Evidence only, like the budget above.
+    ev["shadow_breakeven"] = shadow(rec, sid, n)
     if n is None:
         return {"decision": ROTATE, "cause": TURN_CONTINUATION, "mechanism": FRESH,
                 "reason": "context size unmeasured: a fresh worker is the bounded choice",
@@ -494,6 +547,11 @@ def record_cause(mission_id: str, rec: dict, decision: dict, mechanism: str,
         # Compact projection only: state + pressure + band + coverage. UNMEASURED is recorded as such.
         fields["context_budget"] = {k: cb.get(k) for k in ("state", "pressure", "band", "coverage", "reason")
                                     if cb.get(k) is not None}
+    sb = ev.get("shadow_breakeven")
+    if isinstance(sb, dict):
+        # CCR A4 shadow beside the decision this row records (the ceiling's): compact, never a decider.
+        fields["shadow_breakeven"] = {k: sb.get(k) for k in ("would", "cls", "calls", "k_star", "x_star", "carry",
+                                                             "remaining", "reason") if sb.get(k) is not None}
     return lr.ledger_append(mission_id, "launch_cause", **{k: v for k, v in fields.items() if v is not None})
 
 

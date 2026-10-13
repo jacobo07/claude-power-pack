@@ -86,6 +86,29 @@ class T(unittest.TestCase):
     def test_V_CCRCONT_06_rent_calibration(self):
         self.assertEqual(cc.est_tokens(1000), 585)
 
+    def test_V_CCRCONT_07_one_read_invalidation(self):
+        # A4 benchmark: a certified fact keyed by its source fingerprint is reused without a re-read; changing the
+        # source invalidates it; a raw read (a rebuilt capsule) makes the fact valid again.
+        big = self.d / "big.md"
+        big.write_text("# B\n" + "".join(f"Status: fact {i} " + "x" * 200 + "\n" for i in range(200)))
+        cap = cc.build(self.repo, "next", [self.rc, big])
+        fp = cc.fingerprints(cap)
+        self.assertEqual(fp[self.rc.as_posix()], cc.sha256_file(self.rc))   # inlined fact block is fingerprinted
+        self.assertEqual(fp[big.as_posix()], cc.sha256_file(big))           # and so is a ref
+        self.assertTrue(cc.reuse(cap, self.rc)["reuse"])
+        self.assertTrue(cc.reuse(cap, big)["reuse"])
+        self.rc.write_text("# R\nStatus: FAILED\nVerdicts: regressed\n")
+        r = cc.reuse(cap, self.rc)
+        self.assertFalse(r["reuse"])
+        self.assertIn("raw read required", r["reason"])
+        self.assertTrue(cc.reuse(cap, big)["reuse"])                        # an untouched source stays valid
+        cap2 = cc.build(self.repo, "next", [self.rc, big])
+        self.assertTrue(cc.reuse(cap2, self.rc)["reuse"])
+        self.assertIn("Status: FAILED", cap2)
+        self.assertEqual(cc.reuse(cap2, self.d / "nope.md")["reason"], "not-in-capsule")
+        self.rc.unlink()
+        self.assertEqual(cc.reuse(cap2, self.rc)["reason"], "source-missing")
+
 
 if __name__ == "__main__":
     unittest.main()

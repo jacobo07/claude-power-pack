@@ -1,0 +1,121 @@
+{
+ "rule": "VALID iff every permutation's red members_in_groups_ge2 <= 0.5 x real",
+ "seeds": [
+  20261013,
+  20261014,
+  20261015,
+  20261016,
+  20261017,
+  20261018,
+  20261019,
+  20261020,
+  20261021,
+  20261022,
+  20261023,
+  20261024,
+  20261025,
+  20261026,
+  20261027,
+  20261028,
+  20261029,
+  20261030,
+  20261031,
+  20261032
+ ],
+ "n_permutations": 20,
+ "groupings": {
+  "structural_family": {
+   "real": 926,
+   "threshold": 463.0,
+   "red_pooled_block_sizes": {
+    "min": 582,
+    "max": 611,
+    "mean": 598.6,
+    "values": [
+     594,
+     607,
+     597,
+     604,
+     611,
+     600,
+     582,
+     598,
+     596,
+     603,
+     593,
+     601,
+     597,
+     603,
+     596,
+     602,
+     598,
+     601,
+     596,
+     593
+    ],
+    "n_le_threshold": 0
+   },
+   "red_permuted_arity": {
+    "min": 485,
+    "max": 536,
+    "mean": 521.35,
+    "values": [
+     505,
+     536,
+     485,
+     533,
+     533,
+     511,
+     532,
+     518,
+     515,
+     532,
+     532,
+     509,
+     525,
+     531,
+     515,
+     524,
+     514,
+     520,
+     524,
+     533
+    ],
+    "n_le_threshold": 0
+   },
+   "status": "INCONCLUSIVE",
+   "p1p2_single_red": [
+    588,
+    524,
+    926
+   ]
+  },
+  "data_family": {
+   "real": 490,
+   "red_single_seed": 35,
+   "threshold": 245.0,
+   "status": "VALID",
+   "note": "single P1P2 red (seed 20261012); 20-permutation rerun applied to the failing grouping only"
+  },
+  "data_family_anchored": {
+   "real": 112,
+   "red_single_seed": 18,
+   "threshold": 56.0,
+   "status": "VALID",
+   "note": "single P1P2 red (seed 20261012); 20-permutation rerun applied to the failing grouping only"
+  },
+  "idiom_family": {
+   "real": 1039,
+   "red_single_seed": 1023,
+   "threshold": 519.5,
+   "status": "INCONCLUSIVE",
+   "note": "single P1P2 red (seed 20261012); 20-permutation rerun applied to the failing grouping only"
+  },
+  "motifs": {
+   "real": 0.3902741042329143,
+   "red_single_seed": 0.005289904603405748,
+   "threshold": 0.19513705211645715,
+   "status": "VALID"
+  }
+ }
+}

@@ -5,6 +5,11 @@ knowledge_vault/** -text
 # (scripts/verify-release.cjs) on every fresh checkout. Checked by tools/vendor_provenance.py.
 vendor/genesis-suite/** -text
 vendor/context-budget/** -text
+# 2026-10-13: same reason for the componentry absorption (CDIO-11). catalog.json pins each
+# source by sha256 and the 54 generated entries are compared byte-for-byte by
+# `componentry_catalog check`; CRLF on checkout would fail both with no code change.
+vault/knowledge_base/cdio/componentry/** -text
+vault/knowledge_base/visual-patterns/componentry-*.md text eol=lf
 
 # 2026-05-23: union merge driver for append-only ledgers.
 # Both sides legitimately appended different rows -- standard recursive

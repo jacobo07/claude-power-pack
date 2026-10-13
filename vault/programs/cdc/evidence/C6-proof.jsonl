@@ -1,0 +1,3 @@
+{"session": "sess-A", "phase": "ask", "deny": false, "msg": ""}
+{"session": "sess-A", "phase": "stored"}
+{"session": "sess-B", "phase": "ask", "deny": true, "msg": "RESEARCH REUSE -- an equivalent derivation is already stored (8dff5b373548): read C:\\Users\\User\\AppData\\Local\\Temp\\tmptz0g5gtt\\proof\\derivation-store\\answers\\8dff5b373548fe2137a4c7def920469628ae73048605661d2f25a054bc6c1a0f.txt (provenance: WebSearch by sess-A). Duplicate research denied for a bound session.", "served_answer": "{\"results\":[\"rss is not returned to the OS\"]}"}

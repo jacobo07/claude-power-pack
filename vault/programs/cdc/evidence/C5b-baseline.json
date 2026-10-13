@@ -1,0 +1,2852 @@
+{
+ "root": "C:\\Users\\User\\Apps\\pp-cdc-base",
+ "cap": 300,
+ "suites": {
+  "tools/test_adapter_conformance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.33,
+   "checks": 11
+  },
+  "tools/test_ads.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 9.29,
+   "checks": 20
+  },
+  "tools/test_ads_root.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.34,
+   "checks": 0
+  },
+  "tools/test_advance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.19,
+   "checks": 13
+  },
+  "tools/test_agent_bench.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.42,
+   "checks": 16
+  },
+  "tools/test_agent_bundle.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.71,
+   "checks": 14
+  },
+  "tools/test_agent_carrier_run.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.64,
+   "checks": 19
+  },
+  "tools/test_agent_estate_audit.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.7,
+   "checks": 10
+  },
+  "tools/test_agent_patch_apply.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.03,
+   "checks": 9
+  },
+  "tools/test_agent_resolver.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 25.87,
+   "checks": 33
+  },
+  "tools/test_agent_run_accounting.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 16.24,
+   "checks": 19
+  },
+  "tools/test_agent_s4.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.74,
+   "checks": 44
+  },
+  "tools/test_agent_spec.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 4.53,
+   "checks": 28
+  },
+  "tools/test_agent_telemetry.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.85,
+   "checks": 20
+  },
+  "tools/test_akos_integration.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 6.15,
+   "checks": 11
+  },
+  "tools/test_alert_escalation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.17,
+   "checks": 0
+  },
+  "tools/test_android_re.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 83.31,
+   "checks": 0
+  },
+  "tools/test_apr_event.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 8.04,
+   "checks": 27
+  },
+  "tools/test_apr_seal.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.33,
+   "checks": 18
+  },
+  "tools/test_architectural_truth.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.42,
+   "checks": 0
+  },
+  "tools/test_architecture_horizon.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 21.0,
+   "checks": 10
+  },
+  "tools/test_arm_worker_guard.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.5,
+   "checks": 6
+  },
+  "tools/test_assimilation_manifest.py": {
+   "status": "timeout",
+   "rc": null,
+   "secs": 300.21,
+   "checks": 0
+  },
+  "tools/test_async_spawns.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.68,
+   "checks": 12
+  },
+  "tools/test_atomic_branding.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.79,
+   "checks": 6
+  },
+  "tools/test_auto_reset.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 78.88,
+   "checks": 0
+  },
+  "tools/test_autocompact_ledger_symmetry.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.16,
+   "checks": 4
+  },
+  "tools/test_autocompact_per_session.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 119.43,
+   "checks": 38
+  },
+  "tools/test_autonomy_gate.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.62,
+   "checks": 23
+  },
+  "tools/test_autoresearch_vps.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.28,
+   "checks": 15
+  },
+  "tools/test_baseline_generations.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.77,
+   "checks": 16
+  },
+  "tools/test_baseline_inheritance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.68,
+   "checks": 0
+  },
+  "tools/test_batch_drafts.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.53,
+   "checks": 16
+  },
+  "tools/test_bench_gate.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.15,
+   "checks": 13
+  },
+  "tools/test_budget_monitor_observed.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.25,
+   "checks": 7
+  },
+  "tools/test_build_everything.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.29,
+   "checks": 9
+  },
+  "tools/test_callable_reach.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 16.18,
+   "checks": 6
+  },
+  "tools/test_capability_consumption.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.72,
+   "checks": 0
+  },
+  "tools/test_capability_directory.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 3
+  },
+  "tools/test_capability_invocation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 0
+  },
+  "tools/test_capability_runtime.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.38,
+   "checks": 33
+  },
+  "tools/test_capital_authority.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.63,
+   "checks": 16
+  },
+  "tools/test_capture_coverage.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.45,
+   "checks": 23
+  },
+  "tools/test_capture_liveness.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.11,
+   "checks": 14
+  },
+  "tools/test_capture_surface_migration.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.36,
+   "checks": 15
+  },
+  "tools/test_cascade_input_wiring.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.34,
+   "checks": 7
+  },
+  "tools/test_cascade_predictive.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.19,
+   "checks": 9
+  },
+  "tools/test_ccr_carry_fit.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.36,
+   "checks": 6
+  },
+  "tools/test_ccr_pgo.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.61,
+   "checks": 7
+  },
+  "tools/test_ccr_release.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.34,
+   "checks": 13
+  },
+  "tools/test_ccr_reread_audit.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.19,
+   "checks": 4
+  },
+  "tools/test_cdicf_graph.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.18,
+   "checks": 8
+  },
+  "tools/test_cdicf_index.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.33,
+   "checks": 15
+  },
+  "tools/test_cdicf_scope.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.9,
+   "checks": 10
+  },
+  "tools/test_cdio.py": {
+   "status": "timeout",
+   "rc": null,
+   "secs": 300.06,
+   "checks": 0
+  },
+  "tools/test_cdio_edge_states.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.2,
+   "checks": 6
+  },
+  "tools/test_cdio_f10.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.15,
+   "checks": 0
+  },
+  "tools/test_cdio_focus.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.19,
+   "checks": 6
+  },
+  "tools/test_cdio_legal.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.67,
+   "checks": 14
+  },
+  "tools/test_cdio_mobile.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.19,
+   "checks": 6
+  },
+  "tools/test_cep_gen2_cli.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.85,
+   "checks": 1
+  },
+  "tools/test_cep_gen2_obligations.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.18,
+   "checks": 1
+  },
+  "tools/test_cep_gen2_tranche.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.17,
+   "checks": 1
+  },
+  "tools/test_ceps_admission.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 110.89,
+   "checks": 21
+  },
+  "tools/test_ceps_closed_loop.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.69,
+   "checks": 10
+  },
+  "tools/test_ceps_corrections.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.26,
+   "checks": 9
+  },
+  "tools/test_ceps_edge_cases.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.6,
+   "checks": 6
+  },
+  "tools/test_ceps_full_cycle.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 33.41,
+   "checks": 9
+  },
+  "tools/test_chain_registry.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.45,
+   "checks": 8
+  },
+  "tools/test_change_impact.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 16.72,
+   "checks": 9
+  },
+  "tools/test_claim_cost_for.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.24,
+   "checks": 6
+  },
+  "tools/test_claim_evidence.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.41,
+   "checks": 10
+  },
+  "tools/test_claude_md_router.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 74.28,
+   "checks": 1
+  },
+  "tools/test_co12_readiness_telemetry.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.69,
+   "checks": 8
+  },
+  "tools/test_co12_signal_race.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.45,
+   "checks": 5
+  },
+  "tools/test_co12_telemetry.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 22.02,
+   "checks": 8
+  },
+  "tools/test_cognitive_admission.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 56.93,
+   "checks": 22
+  },
+  "tools/test_cognitive_admission_dispatch.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 6.27,
+   "checks": 4
+  },
+  "tools/test_cognitive_economy_program.py": {
+   "status": "red",
+   "rc": 2,
+   "secs": 0.18,
+   "checks": 0
+  },
+  "tools/test_cognitive_effects.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.15,
+   "checks": 10
+  },
+  "tools/test_cognitive_leak_taxonomy.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.47,
+   "checks": 21
+  },
+  "tools/test_cognitive_load.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.05,
+   "checks": 8
+  },
+  "tools/test_cognitive_os_build.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 36.49,
+   "checks": 68
+  },
+  "tools/test_commit_scope.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 13.25,
+   "checks": 0
+  },
+  "tools/test_compact_intent_durability.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.66,
+   "checks": 9
+  },
+  "tools/test_compact_rescue.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 78.2,
+   "checks": 12
+  },
+  "tools/test_compaction_truth.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.65,
+   "checks": 15
+  },
+  "tools/test_completion_authority.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.18,
+   "checks": 0
+  },
+  "tools/test_compound_audit.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.17,
+   "checks": 1
+  },
+  "tools/test_conhost_hook_leak.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.29,
+   "checks": 0
+  },
+  "tools/test_context_budget.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.3,
+   "checks": 8
+  },
+  "tools/test_context_floor_census.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.31,
+   "checks": 23
+  },
+  "tools/test_context_watchdog_heartbeat.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.12,
+   "checks": 1
+  },
+  "tools/test_context_watchdog_overlay_guard.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.3,
+   "checks": 4
+  },
+  "tools/test_continuation_transport.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 8.66,
+   "checks": 28
+  },
+  "tools/test_continuation_wiring.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.61,
+   "checks": 14
+  },
+  "tools/test_convergence_bounds.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.65,
+   "checks": 0
+  },
+  "tools/test_conversation_quality_audit.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.81,
+   "checks": 6
+  },
+  "tools/test_correctness_traps.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.31,
+   "checks": 11
+  },
+  "tools/test_cost_contracts.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 28.5,
+   "checks": 8
+  },
+  "tools/test_cost_to_completion.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.92,
+   "checks": 24
+  },
+  "tools/test_cpc_snapshot.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.07,
+   "checks": 0
+  },
+  "tools/test_cpp_gsd_long_routing.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.23,
+   "checks": 9
+  },
+  "tools/test_craif.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.73,
+   "checks": 15
+  },
+  "tools/test_crawl_os.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.61,
+   "checks": 23
+  },
+  "tools/test_cross_project_baseline.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.42,
+   "checks": 9
+  },
+  "tools/test_d2a_provenance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 12.24,
+   "checks": 6
+  },
+  "tools/test_daif.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.7,
+   "checks": 0
+  },
+  "tools/test_daif_session_compiler.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 8.75,
+   "checks": 3
+  },
+  "tools/test_daif_two_arm_trial.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.37,
+   "checks": 1
+  },
+  "tools/test_dataset_build.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 55.04,
+   "checks": 52
+  },
+  "tools/test_dataset_enricher_escalation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.38,
+   "checks": 0
+  },
+  "tools/test_dataset_first_protocol.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 270.88,
+   "checks": 18
+  },
+  "tools/test_decision_recurrence.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.22,
+   "checks": 8
+  },
+  "tools/test_decision_review.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 71.75,
+   "checks": 21
+  },
+  "tools/test_dependency_sovereignty.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 8.0,
+   "checks": 11
+  },
+  "tools/test_design_gate.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.47,
+   "checks": 16
+  },
+  "tools/test_dispatch_liveness.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.88,
+   "checks": 6
+  },
+  "tools/test_displacement.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.27,
+   "checks": 16
+  },
+  "tools/test_done_strength_ladder.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.17,
+   "checks": 3
+  },
+  "tools/test_drift_consumer.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.1,
+   "checks": 5
+  },
+  "tools/test_duplicate_to_advantage.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 197.99,
+   "checks": 40
+  },
+  "tools/test_econ_containment.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 11.79,
+   "checks": 37
+  },
+  "tools/test_eed_delta.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 5
+  },
+  "tools/test_efaif_residues.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.35,
+   "checks": 11
+  },
+  "tools/test_effective_precondition.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.64,
+   "checks": 25
+  },
+  "tools/test_effective_state.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 39.68,
+   "checks": 24
+  },
+  "tools/test_egcc_c1.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 7.71,
+   "checks": 12
+  },
+  "tools/test_egcc_residue.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.37,
+   "checks": 18
+  },
+  "tools/test_enforcement_systems.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.46,
+   "checks": 20
+  },
+  "tools/test_epistemic_algebra.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.18,
+   "checks": 14
+  },
+  "tools/test_estate_shadow.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.59,
+   "checks": 11
+  },
+  "tools/test_evidence_bundle.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 12.57,
+   "checks": 22
+  },
+  "tools/test_evidence_class.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.19,
+   "checks": 9
+  },
+  "tools/test_evidence_independence.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.22,
+   "checks": 7
+  },
+  "tools/test_execution_shape.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.57,
+   "checks": 14
+  },
+  "tools/test_executionos_lite.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.16,
+   "checks": 4
+  },
+  "tools/test_experience_contract.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.36,
+   "checks": 22
+  },
+  "tools/test_external_failure_corpus.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.79,
+   "checks": 7
+  },
+  "tools/test_fable_distillation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 178.79,
+   "checks": 13
+  },
+  "tools/test_faitp_contrast.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.3,
+   "checks": 7
+  },
+  "tools/test_faitp_debts.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.38,
+   "checks": 15
+  },
+  "tools/test_family_baselines.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 14.87,
+   "checks": 20
+  },
+  "tools/test_family_injection.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.65,
+   "checks": 23
+  },
+  "tools/test_fanout_ledger.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.65,
+   "checks": 17
+  },
+  "tools/test_fd04_acceleration.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.26,
+   "checks": 8
+  },
+  "tools/test_floor_probe.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.26,
+   "checks": 9
+  },
+  "tools/test_floor_regression_gate.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 36.02,
+   "checks": 61
+  },
+  "tools/test_foreign_hunk_guard.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 12.48,
+   "checks": 0
+  },
+  "tools/test_fresh_context_tax.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.22,
+   "checks": 5
+  },
+  "tools/test_fresh_session_inheritance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.26,
+   "checks": 0
+  },
+  "tools/test_frontier_intelligence_corpus_roi_escalation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.29,
+   "checks": 0
+  },
+  "tools/test_frontier_intelligence_os.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 3.51,
+   "checks": 50
+  },
+  "tools/test_gaps.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.24,
+   "checks": 0
+  },
+  "tools/test_genesis_bridge.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.2,
+   "checks": 9
+  },
+  "tools/test_gex44_env_preflight.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 4.84,
+   "checks": 24
+  },
+  "tools/test_git_invocation.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 9.43,
+   "checks": 1
+  },
+  "tools/test_goal_autopsy.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.99,
+   "checks": 10
+  },
+  "tools/test_goal_budget_admission.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 24.65,
+   "checks": 60
+  },
+  "tools/test_goal_journey.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.55,
+   "checks": 7
+  },
+  "tools/test_goal_lease.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.93,
+   "checks": 10
+  },
+  "tools/test_governance_minimality.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.22,
+   "checks": 8
+  },
+  "tools/test_governance_overlay.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 2.96,
+   "checks": 5
+  },
+  "tools/test_governance_propagation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.55,
+   "checks": 0
+  },
+  "tools/test_graphify_deferred.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.26,
+   "checks": 10
+  },
+  "tools/test_gsd_archived_milestone.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.23,
+   "checks": 8
+  },
+  "tools/test_gsd_arming_announces_start.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.25,
+   "checks": 0
+  },
+  "tools/test_gsd_autocompact.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.75,
+   "checks": 0
+  },
+  "tools/test_gsd_epoch.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 18.4,
+   "checks": 92
+  },
+  "tools/test_gsd_epoch_context_budget.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.19,
+   "checks": 6
+  },
+  "tools/test_gsd_long_run.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 17.79,
+   "checks": 100
+  },
+  "tools/test_gsd_mission.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 52.12,
+   "checks": 232
+  },
+  "tools/test_gsd_mission_admission.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.6,
+   "checks": 43
+  },
+  "tools/test_gsd_mission_baseline.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.98,
+   "checks": 22
+  },
+  "tools/test_gsd_mission_capsule_v2.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 72.48,
+   "checks": 74
+  },
+  "tools/test_gsd_mission_chain.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 6.62,
+   "checks": 11
+  },
+  "tools/test_gsd_mission_cost_hold.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.46,
+   "checks": 23
+  },
+  "tools/test_gsd_mission_cwd_align.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 56.88,
+   "checks": 16
+  },
+  "tools/test_gsd_mission_envelope.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.88,
+   "checks": 67
+  },
+  "tools/test_gsd_mission_freshness.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.38,
+   "checks": 18
+  },
+  "tools/test_gsd_mission_goal_control.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 9.08,
+   "checks": 27
+  },
+  "tools/test_gsd_mission_legacy_characterization.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 36.1,
+   "checks": 33
+  },
+  "tools/test_gsd_mission_owner_hold.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.28,
+   "checks": 32
+  },
+  "tools/test_gsd_mission_protocol.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.5,
+   "checks": 11
+  },
+  "tools/test_gsd_mission_quota_relogin.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.43,
+   "checks": 7
+  },
+  "tools/test_gsd_mission_sleep.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.95,
+   "checks": 6
+  },
+  "tools/test_gsd_mission_surface.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.03,
+   "checks": 6
+  },
+  "tools/test_gsd_sweep_pass.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 41.93,
+   "checks": 14
+  },
+  "tools/test_gsd_sweep_pass_py.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 27.93,
+   "checks": 21
+  },
+  "tools/test_gsd_x.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.4,
+   "checks": 17
+  },
+  "tools/test_gsd_x_dataset.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 257.29,
+   "checks": 11
+  },
+  "tools/test_gsd_x_fact_producer.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.43,
+   "checks": 15
+  },
+  "tools/test_gsd_x_facts_v2.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 9.99,
+   "checks": 30
+  },
+  "tools/test_gsd_x_facts_v2_mutation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 137.8,
+   "checks": 0
+  },
+  "tools/test_gsd_x_goal.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.96,
+   "checks": 26
+  },
+  "tools/test_gsd_x_goal_bind_mission.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 16.21,
+   "checks": 10
+  },
+  "tools/test_gsd_x_goal_chaos.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 24.66,
+   "checks": 15
+  },
+  "tools/test_gsd_x_goal_claude_providers.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 13.46,
+   "checks": 20
+  },
+  "tools/test_gsd_x_goal_cli.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 99.03,
+   "checks": 25
+  },
+  "tools/test_gsd_x_goal_codex_provider.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.16,
+   "checks": 18
+  },
+  "tools/test_gsd_x_goal_convergence.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.27,
+   "checks": 29
+  },
+  "tools/test_gsd_x_goal_engine_identity.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 8.82,
+   "checks": 14
+  },
+  "tools/test_gsd_x_goal_epoch.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.52,
+   "checks": 19
+  },
+  "tools/test_gsd_x_goal_gate_class.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.17,
+   "checks": 11
+  },
+  "tools/test_gsd_x_goal_gate_provider.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 9.37,
+   "checks": 19
+  },
+  "tools/test_gsd_x_goal_judge.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 14.91,
+   "checks": 15
+  },
+  "tools/test_gsd_x_goal_long_run_provider.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.36,
+   "checks": 16
+  },
+  "tools/test_gsd_x_goal_mutation.py": {
+   "status": "timeout",
+   "rc": null,
+   "secs": 300.07,
+   "checks": 0
+  },
+  "tools/test_gsd_x_goal_mutation_safety.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.47,
+   "checks": 8
+  },
+  "tools/test_gsd_x_goal_reconcile.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.31,
+   "checks": 22
+  },
+  "tools/test_gsd_x_goal_sweep.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 23.09,
+   "checks": 14
+  },
+  "tools/test_gsd_x_goal_sweep_all.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 14.81,
+   "checks": 11
+  },
+  "tools/test_gsd_x_manifest_reachability.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.05,
+   "checks": 9
+  },
+  "tools/test_gsd_x_manifest_reachability_mutation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.57,
+   "checks": 0
+  },
+  "tools/test_gsd_x_mission.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.4,
+   "checks": 17
+  },
+  "tools/test_gsd_x_mission_mutation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 8.44,
+   "checks": 6
+  },
+  "tools/test_gsd_x_mutation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.08,
+   "checks": 3
+  },
+  "tools/test_gsd_x_parity_obligation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.22,
+   "checks": 0
+  },
+  "tools/test_gsd_x_reconstruction.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.26,
+   "checks": 0
+  },
+  "tools/test_gsd_x_reconstruction_mutation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.79,
+   "checks": 0
+  },
+  "tools/test_gsd_x_structured_facts.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.96,
+   "checks": 15
+  },
+  "tools/test_gsd_x_structured_facts_mutation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 14.46,
+   "checks": 0
+  },
+  "tools/test_gsdx_chain.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.69,
+   "checks": 19
+  },
+  "tools/test_gsdx_reforecast.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.03,
+   "checks": 12
+  },
+  "tools/test_halt_continues.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 44.85,
+   "checks": 35
+  },
+  "tools/test_handoff_packet.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.69,
+   "checks": 15
+  },
+  "tools/test_hard_rules.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 76.36,
+   "checks": 14
+  },
+  "tools/test_hard_rules_mirror.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.47,
+   "checks": 11
+  },
+  "tools/test_hibernation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.51,
+   "checks": 28
+  },
+  "tools/test_history_check.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.45,
+   "checks": 24
+  },
+  "tools/test_hold_guard_budget.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.35,
+   "checks": 7
+  },
+  "tools/test_hook_boundary.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.93,
+   "checks": 7
+  },
+  "tools/test_hook_hubs.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 19.25,
+   "checks": 0
+  },
+  "tools/test_hook_injection_diet.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 46.89,
+   "checks": 14
+  },
+  "tools/test_hook_mirror_identity.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.27,
+   "checks": 1
+  },
+  "tools/test_hook_registration_integrity.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.98,
+   "checks": 15
+  },
+  "tools/test_hook_replay_isolation.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 38.6,
+   "checks": 0
+  },
+  "tools/test_hook_stdin_liveness.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.48,
+   "checks": 1
+  },
+  "tools/test_ias.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.67,
+   "checks": 0
+  },
+  "tools/test_ias_c2_opportunity_cost.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.32,
+   "checks": 20
+  },
+  "tools/test_inbox_delivery_enter.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.71,
+   "checks": 1
+  },
+  "tools/test_incremental_cognition_program.py": {
+   "status": "red",
+   "rc": 2,
+   "secs": 0.45,
+   "checks": 0
+  },
+  "tools/test_inference_bench.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.83,
+   "checks": 13
+  },
+  "tools/test_install_population.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.66,
+   "checks": 9
+  },
+  "tools/test_install_reviewer_contract.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.68,
+   "checks": 13
+  },
+  "tools/test_intent_verified.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.14,
+   "checks": 27
+  },
+  "tools/test_jit_performance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.41,
+   "checks": 1
+  },
+  "tools/test_jit_triggers.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.16,
+   "checks": 0
+  },
+  "tools/test_karimo.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.11,
+   "checks": 6
+  },
+  "tools/test_kclaude_conhost_repair.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.94,
+   "checks": 0
+  },
+  "tools/test_kclaude_paste_window.py": {
+   "status": "red",
+   "rc": 2,
+   "secs": 10.02,
+   "checks": 7
+  },
+  "tools/test_keos_qwen_fire.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.91,
+   "checks": 27
+  },
+  "tools/test_keos_qwen_ledger.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.51,
+   "checks": 19
+  },
+  "tools/test_keos_qwen_outcome.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.3,
+   "checks": 20
+  },
+  "tools/test_kme_pillars.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 6.75,
+   "checks": 83
+  },
+  "tools/test_kme_replay.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.31,
+   "checks": 44
+  },
+  "tools/test_kresume_autotype.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 254.81,
+   "checks": 35
+  },
+  "tools/test_kresume_courier.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 19.64,
+   "checks": 22
+  },
+  "tools/test_kresume_courier_mutation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 281.32,
+   "checks": 0
+  },
+  "tools/test_lateral_thinking.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 14.99,
+   "checks": 12
+  },
+  "tools/test_lease.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.27,
+   "checks": 21
+  },
+  "tools/test_ledger_discovery.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 38.36,
+   "checks": 12
+  },
+  "tools/test_listing_floor_probe.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.45,
+   "checks": 13
+  },
+  "tools/test_manual_tools_automation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 11.77,
+   "checks": 0
+  },
+  "tools/test_marker_admission.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.44,
+   "checks": 7
+  },
+  "tools/test_meta_systems_runtime.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.57,
+   "checks": 7
+  },
+  "tools/test_mirror_discovery.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 19.54,
+   "checks": 0
+  },
+  "tools/test_mirror_parity.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 4.96,
+   "checks": 3
+  },
+  "tools/test_mirror_unpaired.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 6.28,
+   "checks": 16
+  },
+  "tools/test_mission_capsule.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 59.44,
+   "checks": 49
+  },
+  "tools/test_mission_capsule_faults.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 31.34,
+   "checks": 19
+  },
+  "tools/test_mission_launch_gate.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 14.73,
+   "checks": 20
+  },
+  "tools/test_mission_lineage.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.76,
+   "checks": 11
+  },
+  "tools/test_mission_spend.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.64,
+   "checks": 41
+  },
+  "tools/test_mission_steward.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 31.53,
+   "checks": 26
+  },
+  "tools/test_mission_watchdog.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.6,
+   "checks": 15
+  },
+  "tools/test_mobile_game_wii_port.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 9.84,
+   "checks": 0
+  },
+  "tools/test_monitoring.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.38,
+   "checks": 17
+  },
+  "tools/test_motion_grammar.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 37.54,
+   "checks": 46
+  },
+  "tools/test_mutation_drill.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.99,
+   "checks": 21
+  },
+  "tools/test_mutation_harness_validity.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.82,
+   "checks": 7
+  },
+  "tools/test_mutation_probe.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.75,
+   "checks": 6
+  },
+  "tools/test_mutation_ratchet.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.53,
+   "checks": 10
+  },
+  "tools/test_night_research.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 27.11,
+   "checks": 14
+  },
+  "tools/test_o0_probes.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.72,
+   "checks": 6
+  },
+  "tools/test_osa.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 99.9,
+   "checks": 15
+  },
+  "tools/test_osr.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.36,
+   "checks": 30
+  },
+  "tools/test_outcome_admission.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 6.64,
+   "checks": 0
+  },
+  "tools/test_outcome_propagation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.98,
+   "checks": 3
+  },
+  "tools/test_output_contract_stop.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.96,
+   "checks": 5
+  },
+  "tools/test_paired_experiment.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 31.69,
+   "checks": 7
+  },
+  "tools/test_pane_map.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.23,
+   "checks": 1
+  },
+  "tools/test_pane_map_snapshot.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.4,
+   "checks": 6
+  },
+  "tools/test_parallel_mesh.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.78,
+   "checks": 34
+  },
+  "tools/test_path_exemptions.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.19,
+   "checks": 15
+  },
+  "tools/test_persistent_failure_park.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.36,
+   "checks": 28
+  },
+  "tools/test_phase_boundary_advance.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.36,
+   "checks": 0
+  },
+  "tools/test_plan_graph_check.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 37.21,
+   "checks": 34
+  },
+  "tools/test_playwright_resilience.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 13.62,
+   "checks": 15
+  },
+  "tools/test_post_edit_diagnostics.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 6.95,
+   "checks": 17
+  },
+  "tools/test_pp_activation.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 7.1,
+   "checks": 2
+  },
+  "tools/test_pp_eval.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 24.92,
+   "checks": 41
+  },
+  "tools/test_pp_eval_floor.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.15,
+   "checks": 20
+  },
+  "tools/test_predictive_governance_gate.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.49,
+   "checks": 29
+  },
+  "tools/test_prefix_inventory.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.27,
+   "checks": 9
+  },
+  "tools/test_pricing_source.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 5
+  },
+  "tools/test_proactive_agents.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 95.06,
+   "checks": 16
+  },
+  "tools/test_process_lifecycle.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.55,
+   "checks": 6
+  },
+  "tools/test_product_demo.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 265.49,
+   "checks": 25
+  },
+  "tools/test_programme_spend.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.6,
+   "checks": 13
+  },
+  "tools/test_programme_status.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.52,
+   "checks": 18
+  },
+  "tools/test_prompt_minimalism.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.37,
+   "checks": 5
+  },
+  "tools/test_prompt_recall.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.96,
+   "checks": 34
+  },
+  "tools/test_proven_window.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.18,
+   "checks": 10
+  },
+  "tools/test_provider_breaker.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.62,
+   "checks": 18
+  },
+  "tools/test_provider_routing.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.61,
+   "checks": 33
+  },
+  "tools/test_question_ref_wiring.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.27,
+   "checks": 5
+  },
+  "tools/test_ram_optimization.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.2,
+   "checks": 0
+  },
+  "tools/test_reachability.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.36,
+   "checks": 0
+  },
+  "tools/test_rearm_reachability.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 8
+  },
+  "tools/test_reasoning_route.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.28,
+   "checks": 11
+  },
+  "tools/test_receipt_judge.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.39,
+   "checks": 5
+  },
+  "tools/test_recovery_control_plane.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.3,
+   "checks": 0
+  },
+  "tools/test_recovery_epoch.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.77,
+   "checks": 0
+  },
+  "tools/test_recovery_fastpath.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.04,
+   "checks": 18
+  },
+  "tools/test_recovery_verdict.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.2,
+   "checks": 0
+  },
+  "tools/test_regression_memory.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.86,
+   "checks": 13
+  },
+  "tools/test_rename_sessions.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.95,
+   "checks": 10
+  },
+  "tools/test_repo_identity.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.22,
+   "checks": 15
+  },
+  "tools/test_research_activation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.87,
+   "checks": 11
+  },
+  "tools/test_restart_and_lag.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 18.74,
+   "checks": 2
+  },
+  "tools/test_restart_kclear.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 15.43,
+   "checks": 1
+  },
+  "tools/test_restart_speed.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.19,
+   "checks": 10
+  },
+  "tools/test_restore_all_panes.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 10.25,
+   "checks": 0
+  },
+  "tools/test_review_intake.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 8.04,
+   "checks": 24
+  },
+  "tools/test_risk_facts.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.28,
+   "checks": 62
+  },
+  "tools/test_rollover.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 26.75,
+   "checks": 59
+  },
+  "tools/test_rollover_active_path.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.98,
+   "checks": 46
+  },
+  "tools/test_rollover_budget.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.54,
+   "checks": 4
+  },
+  "tools/test_rollover_capsule_v2.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 24.21,
+   "checks": 36
+  },
+  "tools/test_rollover_custody.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.08,
+   "checks": 8
+  },
+  "tools/test_rollover_decide_evidence.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.24,
+   "checks": 11
+  },
+  "tools/test_rollover_economic.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.63,
+   "checks": 19
+  },
+  "tools/test_rollover_horizon_wiring.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.9,
+   "checks": 11
+  },
+  "tools/test_rollover_host_affinity.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.92,
+   "checks": 10
+  },
+  "tools/test_rollover_ledger_race.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.88,
+   "checks": 6
+  },
+  "tools/test_rollover_replay.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.47,
+   "checks": 33
+  },
+  "tools/test_rollover_session_cwd.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 27.12,
+   "checks": 13
+  },
+  "tools/test_rollover_wall.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 10.25,
+   "checks": 18
+  },
+  "tools/test_root_progress.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.47,
+   "checks": 11
+  },
+  "tools/test_route_admission.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 0.72,
+   "checks": 21
+  },
+  "tools/test_route_estimator.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.29,
+   "checks": 9
+  },
+  "tools/test_router_freshness_gate.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 72.82,
+   "checks": 50
+  },
+  "tools/test_routing_metrics.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 114.79,
+   "checks": 12
+  },
+  "tools/test_rtk_rewrite_scope.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.87,
+   "checks": 4
+  },
+  "tools/test_rule_domain_coverage.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 1.44,
+   "checks": 1
+  },
+  "tools/test_rule_effects.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 4.46,
+   "checks": 0
+  },
+  "tools/test_scope_a_activation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.25,
+   "checks": 7
+  },
+  "tools/test_sdd_os.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.52,
+   "checks": 15
+  },
+  "tools/test_sdd_os_activation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.98,
+   "checks": 9
+  },
+  "tools/test_sdd_os_evolution.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.16,
+   "checks": 19
+  },
+  "tools/test_search_reuse.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.54,
+   "checks": 6
+  },
+  "tools/test_security_scan.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 50.78,
+   "checks": 12
+  },
+  "tools/test_semantic_breaker.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 9.23,
+   "checks": 30
+  },
+  "tools/test_session_autopsy.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.64,
+   "checks": 15
+  },
+  "tools/test_session_autopsy_roles.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.75,
+   "checks": 21
+  },
+  "tools/test_session_budget_admission.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.29,
+   "checks": 12
+  },
+  "tools/test_session_budget_guard.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 18.8,
+   "checks": 22
+  },
+  "tools/test_session_delta.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.03,
+   "checks": 0
+  },
+  "tools/test_session_resilience.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.28,
+   "checks": 0
+  },
+  "tools/test_session_resilience_build.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.87,
+   "checks": 0
+  },
+  "tools/test_session_revival.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.61,
+   "checks": 1
+  },
+  "tools/test_session_snapshot.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.65,
+   "checks": 7
+  },
+  "tools/test_session_start_cost.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.13,
+   "checks": 9
+  },
+  "tools/test_session_titles_sweep.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.17,
+   "checks": 7
+  },
+  "tools/test_settings_writer_argv.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.39,
+   "checks": 5
+  },
+  "tools/test_setup_os.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.29,
+   "checks": 8
+  },
+  "tools/test_side_effect_ledger.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.18,
+   "checks": 0
+  },
+  "tools/test_skill_capability_program.py": {
+   "status": "red",
+   "rc": 2,
+   "secs": 0.19,
+   "checks": 0
+  },
+  "tools/test_skill_invocations.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.4,
+   "checks": 11
+  },
+  "tools/test_skill_opportunity_signals.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.32,
+   "checks": 8
+  },
+  "tools/test_sleepy_skills.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.23,
+   "checks": 9
+  },
+  "tools/test_source_packet.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.16,
+   "checks": 9
+  },
+  "tools/test_sovereign.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.26,
+   "checks": 5
+  },
+  "tools/test_spawn_outcomes.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.33,
+   "checks": 24
+  },
+  "tools/test_spawn_policy_v2.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.6,
+   "checks": 26
+  },
+  "tools/test_spec_department.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.84,
+   "checks": 13
+  },
+  "tools/test_spec_driven.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.48,
+   "checks": 15
+  },
+  "tools/test_speckit.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.99,
+   "checks": 7
+  },
+  "tools/test_sqi.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 117.58,
+   "checks": 1
+  },
+  "tools/test_sqi_ratchet.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.82,
+   "checks": 16
+  },
+  "tools/test_state_isolation.py": {
+   "status": "timeout",
+   "rc": null,
+   "secs": 300.06,
+   "checks": 0
+  },
+  "tools/test_statusline_raw_pct.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.34,
+   "checks": 6
+  },
+  "tools/test_stop_ledger.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 25.59,
+   "checks": 10
+  },
+  "tools/test_store_identity_consumers.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.01,
+   "checks": 12
+  },
+  "tools/test_strategic_gaps.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.44,
+   "checks": 21
+  },
+  "tools/test_surface_architecture.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 1.27,
+   "checks": 1
+  },
+  "tools/test_sweep_ralph_markers.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.33,
+   "checks": 10
+  },
+  "tools/test_tab_order.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 1.25,
+   "checks": 0
+  },
+  "tools/test_task_adaptation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.5,
+   "checks": 7
+  },
+  "tools/test_task_contract.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 2.73,
+   "checks": 14
+  },
+  "tools/test_task_ledger_seam.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.72,
+   "checks": 10
+  },
+  "tools/test_tco.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 91.01,
+   "checks": 14
+  },
+  "tools/test_tco_tracking.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.34,
+   "checks": 0
+  },
+  "tools/test_terminal_inbox.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.61,
+   "checks": 1
+  },
+  "tools/test_terminal_registry.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 4.55,
+   "checks": 2
+  },
+  "tools/test_test_gaps.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 54.7,
+   "checks": 14
+  },
+  "tools/test_tier_routing.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.16,
+   "checks": 15
+  },
+  "tools/test_tis_core.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.22,
+   "checks": 6
+  },
+  "tools/test_tis_e2e.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.61,
+   "checks": 4
+  },
+  "tools/test_tis_observed.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.31,
+   "checks": 25
+  },
+  "tools/test_tmux_transport.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.22,
+   "checks": 15
+  },
+  "tools/test_token_autopsy.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.25,
+   "checks": 8
+  },
+  "tools/test_token_corpus_audit.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 6
+  },
+  "tools/test_token_ground_truth_junction.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.34,
+   "checks": 7
+  },
+  "tools/test_topology_reconcile.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.52,
+   "checks": 0
+  },
+  "tools/test_tower_capsule.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 16
+  },
+  "tools/test_tower_checks.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.31,
+   "checks": 44
+  },
+  "tools/test_tower_donegate.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.62,
+   "checks": 13
+  },
+  "tools/test_tower_inheritance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.18,
+   "checks": 16
+  },
+  "tools/test_tower_o4.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.24,
+   "checks": 8
+  },
+  "tools/test_tower_ratchet.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.7,
+   "checks": 22
+  },
+  "tools/test_tower_select.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.17,
+   "checks": 15
+  },
+  "tools/test_trace_context.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.36,
+   "checks": 11
+  },
+  "tools/test_tranche_driver.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 3.38,
+   "checks": 4
+  },
+  "tools/test_transduction.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.23,
+   "checks": 11
+  },
+  "tools/test_transport_cold_start.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.15,
+   "checks": 11
+  },
+  "tools/test_two_pane_exactness.py": {
+   "status": "red",
+   "rc": 2,
+   "secs": 0.51,
+   "checks": 6
+  },
+  "tools/test_two_pane_gate_drills.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.24,
+   "checks": 20
+  },
+  "tools/test_uceimr_residues.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 5.59,
+   "checks": 43
+  },
+  "tools/test_umbrella_contention.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.23,
+   "checks": 10
+  },
+  "tools/test_unattended_onboarding.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.17,
+   "checks": 8
+  },
+  "tools/test_unknown_unknown_generator.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 10
+  },
+  "tools/test_uqf.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 61.66,
+   "checks": 17
+  },
+  "tools/test_usage_dedup.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.3,
+   "checks": 15
+  },
+  "tools/test_usage_index.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.52,
+   "checks": 22
+  },
+  "tools/test_usage_index_identity.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.47,
+   "checks": 11
+  },
+  "tools/test_usea_cross_domain_benchmark.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.25,
+   "checks": 0
+  },
+  "tools/test_usea_identity.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 32.16,
+   "checks": 1
+  },
+  "tools/test_uwcp_characterization.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 5.88,
+   "checks": 39
+  },
+  "tools/test_uwcp_foundation.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.46,
+   "checks": 22
+  },
+  "tools/test_uwcp_tla.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 11.66,
+   "checks": 15
+  },
+  "tools/test_uwcp_workspace.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 115.5,
+   "checks": 38
+  },
+  "tools/test_vague_lint.py": {
+   "status": "red",
+   "rc": 1,
+   "secs": 6.25,
+   "checks": 7
+  },
+  "tools/test_vendor_provenance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.33,
+   "checks": 5
+  },
+  "tools/test_verification_provenance.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.59,
+   "checks": 9
+  },
+  "tools/test_verified_reuse.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 27.57,
+   "checks": 15
+  },
+  "tools/test_verify_spp_preflight.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 11.32,
+   "checks": 0
+  },
+  "tools/test_verify_spp_unmeasured.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.41,
+   "checks": 0
+  },
+  "tools/test_visual_patterns_kitchen.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.24,
+   "checks": 7
+  },
+  "tools/test_vscode_autorun.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.28,
+   "checks": 0
+  },
+  "tools/test_wake_check.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 1.64,
+   "checks": 5
+  },
+  "tools/test_wake_flag_consumer.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.93,
+   "checks": 8
+  },
+  "tools/test_watchdog_overlay_precedence.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.32,
+   "checks": 0
+  },
+  "tools/test_wave_stagger.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 8
+  },
+  "tools/test_weekly_burn_tracking.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.35,
+   "checks": 11
+  },
+  "tools/test_work_proof.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.21,
+   "checks": 13
+  },
+  "tools/test_workspace_lease.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 12.17,
+   "checks": 10
+  },
+  "tools/test_wrapper.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 10.27,
+   "checks": 2
+  },
+  "tools/test_writeback_budget.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 0.62,
+   "checks": 14
+  },
+  "tools/test_wu3_packets.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 7.18,
+   "checks": 12
+  },
+  "tools/test_zero_command.py": {
+   "status": "green",
+   "rc": 0,
+   "secs": 3.29,
+   "checks": 2
+  }
+ },
+ "red": [
+  "tools/test_agent_spec.py",
+  "tools/test_akos_integration.py",
+  "tools/test_baseline_generations.py",
+  "tools/test_capture_coverage.py",
+  "tools/test_cdio_focus.py",
+  "tools/test_cdio_legal.py",
+  "tools/test_cdio_mobile.py",
+  "tools/test_ceps_admission.py",
+  "tools/test_ceps_full_cycle.py",
+  "tools/test_claude_md_router.py",
+  "tools/test_cognitive_economy_program.py",
+  "tools/test_compact_rescue.py",
+  "tools/test_correctness_traps.py",
+  "tools/test_cost_contracts.py",
+  "tools/test_cpp_gsd_long_routing.py",
+  "tools/test_daif_session_compiler.py",
+  "tools/test_daif_two_arm_trial.py",
+  "tools/test_dataset_first_protocol.py",
+  "tools/test_decision_recurrence.py",
+  "tools/test_duplicate_to_advantage.py",
+  "tools/test_egcc_c1.py",
+  "tools/test_enforcement_systems.py",
+  "tools/test_faitp_contrast.py",
+  "tools/test_faitp_debts.py",
+  "tools/test_frontier_intelligence_os.py",
+  "tools/test_gex44_env_preflight.py",
+  "tools/test_git_invocation.py",
+  "tools/test_goal_budget_admission.py",
+  "tools/test_governance_overlay.py",
+  "tools/test_gsd_mission_cwd_align.py",
+  "tools/test_gsd_mission_sleep.py",
+  "tools/test_gsd_x_dataset.py",
+  "tools/test_gsd_x_goal_sweep_all.py",
+  "tools/test_hook_injection_diet.py",
+  "tools/test_hook_mirror_identity.py",
+  "tools/test_hook_replay_isolation.py",
+  "tools/test_hook_stdin_liveness.py",
+  "tools/test_inbox_delivery_enter.py",
+  "tools/test_incremental_cognition_program.py",
+  "tools/test_install_population.py",
+  "tools/test_kclaude_paste_window.py",
+  "tools/test_kme_pillars.py",
+  "tools/test_kresume_autotype.py",
+  "tools/test_ledger_discovery.py",
+  "tools/test_mirror_parity.py",
+  "tools/test_mutation_harness_validity.py",
+  "tools/test_o0_probes.py",
+  "tools/test_pane_map.py",
+  "tools/test_phase_boundary_advance.py",
+  "tools/test_pp_activation.py",
+  "tools/test_restart_and_lag.py",
+  "tools/test_restart_kclear.py",
+  "tools/test_route_admission.py",
+  "tools/test_router_freshness_gate.py",
+  "tools/test_routing_metrics.py",
+  "tools/test_rule_domain_coverage.py",
+  "tools/test_rule_effects.py",
+  "tools/test_skill_capability_program.py",
+  "tools/test_stop_ledger.py",
+  "tools/test_surface_architecture.py",
+  "tools/test_tab_order.py",
+  "tools/test_tranche_driver.py",
+  "tools/test_two_pane_exactness.py",
+  "tools/test_uceimr_residues.py",
+  "tools/test_usea_identity.py",
+  "tools/test_vague_lint.py"
+ ],
+ "timeout": [
+  "tools/test_assimilation_manifest.py",
+  "tools/test_cdio.py",
+  "tools/test_gsd_x_goal_mutation.py",
+  "tools/test_state_isolation.py"
+ ]
+}

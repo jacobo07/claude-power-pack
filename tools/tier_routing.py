@@ -50,6 +50,18 @@ def escalate(tier: str, verification) -> dict:
             "reason": f"verification {verification!r} is not an observed result: tier held, claim unproven"}
 
 
+def review_policy(work_class, affected_green, unit_green=True) -> dict:
+    """C5: a deterministic unit whose every affected test is observed green needs no reviewer.
+    Red, unobserved (None/UNKNOWN) or non-deterministic -> escalate (existing behaviour)."""
+    det = tier_for(work_class) == ZERO_MODEL
+    green = affected_green is True and unit_green is True
+    if det and green:
+        return {"reviewer": False, "reason": "deterministic unit + all affected tests green"}
+    why = ("affected tests red" if affected_green is False or unit_green is False
+           else "affected tests unobserved" if not green else "not a deterministic unit")
+    return {"reviewer": True, "reason": why}
+
+
 def worker_for(work_class, name: str, calls: int, packet: int = 0):
     """Route worker row for the class's tier; None for ZERO_MODEL (no worker is spawned)."""
     t = tier_for(work_class)

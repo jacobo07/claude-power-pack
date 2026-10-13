@@ -1,0 +1,76 @@
+{
+ "goal": "ccr",
+ "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\ccr",
+ "envelope": 76880000,
+ "max_residuals": 1,
+ "route_ladder": [
+  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
+  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3L.json",
+  "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage2\\route-L.json"
+ ],
+ "units": [
+  {
+   "id": "A0",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A0.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A0-receipt.md",
+   "after": null
+  },
+  {
+   "id": "A1",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A1.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A1-receipt.md",
+   "after": "A0"
+  },
+  {
+   "id": "A2",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A2.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A2-receipt.md",
+   "after": "A1"
+  },
+  {
+   "id": "A3",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A3.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3L.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A3-receipt.md",
+   "after": "A2"
+  },
+  {
+   "id": "A4",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A4.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3L.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A4-receipt.md",
+   "after": "A3"
+  },
+  {
+   "id": "A5",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A5.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3L.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A5-receipt.md",
+   "after": "A4"
+  },
+  {
+   "id": "A6",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A6.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A6-receipt.md",
+   "after": "A5"
+  },
+  {
+   "id": "A7",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A7.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A7-receipt.md",
+   "after": "A6"
+  },
+  {
+   "id": "X2",
+   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-X2.md",
+   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
+   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-X2-receipt.md",
+   "after": "A7"
+  }
+ ]
+}

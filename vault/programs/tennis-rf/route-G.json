@@ -1,0 +1,17 @@
+{
+  "unit": "tennis-rf-gate",
+  "envelope": {
+    "target": 400000,
+    "warn": 459999,
+    "stop": 540000,
+    "calls": 4
+  },
+  "workers": [
+    {
+      "name": "trf-unit",
+      "profile": "slim-t2",
+      "calls": 4,
+      "packet": 6000
+    }
+  ]
+}

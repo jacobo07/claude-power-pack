@@ -1,0 +1,73 @@
+{
+ "d37bc362": {
+  "closure_suites": 1,
+  "closure_secs": 0.2,
+  "closure_checks": 4,
+  "closure_new_red": [],
+  "full_suites": 459,
+  "full_secs": 6861.0,
+  "full_checks": 6388,
+  "full_new_red": [
+   "tools/test_proactive_agents.py",
+   "tools/test_session_start_cost.py",
+   "tools/test_terminal_registry.py"
+  ],
+  "full_timeouts": [
+   "tools/test_assimilation_manifest.py",
+   "tools/test_cdio.py",
+   "tools/test_fable_distillation.py",
+   "tools/test_gsd_x_dataset.py",
+   "tools/test_gsd_x_goal_mutation.py",
+   "tools/test_state_isolation.py"
+  ],
+  "agree": false
+ },
+ "107a6971": {
+  "closure_suites": 8,
+  "closure_secs": 13.3,
+  "closure_checks": 130,
+  "closure_new_red": [],
+  "full_suites": 433,
+  "full_secs": 6565.0,
+  "full_checks": 5981,
+  "full_new_red": [
+   "tools/test_gsd_mission.py",
+   "tools/test_gsd_mission_capsule_v2.py",
+   "tools/test_gsd_mission_legacy_characterization.py",
+   "tools/test_hook_registration_integrity.py",
+   "tools/test_proactive_agents.py",
+   "tools/test_prompt_recall.py",
+   "tools/test_terminal_registry.py"
+  ],
+  "full_timeouts": [
+   "tools/test_assimilation_manifest.py",
+   "tools/test_cdio.py",
+   "tools/test_gsd_x_goal_mutation.py",
+   "tools/test_state_isolation.py"
+  ],
+  "agree": false
+ },
+ "f35feba1": {
+  "closure_suites": 9,
+  "closure_secs": 16.8,
+  "closure_checks": 134,
+  "closure_new_red": [],
+  "full_suites": 419,
+  "full_secs": 6545.3,
+  "full_checks": 5675,
+  "full_new_red": [
+   "tools/test_gsd_mission_capsule_v2.py",
+   "tools/test_hook_registration_integrity.py",
+   "tools/test_motion_grammar.py",
+   "tools/test_terminal_registry.py",
+   "tools/test_tower_ratchet.py"
+  ],
+  "full_timeouts": [
+   "tools/test_assimilation_manifest.py",
+   "tools/test_cdio.py",
+   "tools/test_gsd_x_goal_mutation.py",
+   "tools/test_state_isolation.py"
+  ],
+  "agree": false
+ }
+}

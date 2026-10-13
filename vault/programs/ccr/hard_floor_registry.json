@@ -1,0 +1,251 @@
+{
+ "schema": "ccr.hard_floor_registry/v1",
+ "generated": "2026-10-13",
+ "unit": "WU-A2",
+ "label": "Linux plane GEX44, host 2.1.296",
+ "method": "one-call `claude -p --model haiku` probes from /home/kobii/missions/ccr-s3 with --plugin-dir mods/cpp-cognitive-runtime and CCR_WORK_UNIT={\"class\":\"bounded-code-worker\",\"id\":\"a2-probe\"}; prompt via stdin \"Reply with exactly the word OK...\"; buckets from CCR receipts (mods/cpp-cognitive-runtime/.state-dev/receipts/667e1ff2) by tools/ccr_anatomy.py; calibration 2.999 B/token (call-1, pooled within-group slope, 35 sessions, 11 groups)",
+ "deltas_tokens": {
+  "builtin_tools_in_front (P1-P2)": 908,
+  "mcp_tools+deferred_list+skills+remote (P2-P3)": 3206,
+  "settings: hooks+CLAUDE.md (P3-P4)": 7036
+ },
+ "hard_floor_tokens": null,
+ "hard_floor_status": "NOT_ISOLATED: no measured config leaves a bucket the host forces; upper bound 3,119 (P4)",
+ "rows": [
+  {
+   "key": {
+    "plane": "linux-gex44",
+    "host": "2.1.296",
+    "model": "claude-haiku-5-5",
+    "session_class": "bounded-code-worker (unit declared, a2-probe)",
+    "config": "--plugin-dir <ccr> + CCR_WORK_UNIT bounded-code-worker (defaults otherwise)"
+   },
+   "probe": "P1",
+   "session": "99d97182-1e6d-4a62-aeda-cc6321da9c54",
+   "tools_in_init": 35,
+   "ctx_call1": 14269,
+   "usage": {
+    "input": 2,
+    "cache_creation": 14267,
+    "cache_read": 0,
+    "output": 4,
+    "processed": 14273
+   },
+   "buckets_tokens": {
+    "section:lean_body": 535,
+    "section:communication": 31,
+    "section:pronouns": 119,
+    "section:action_caution": 173,
+    "section:session_guidance": 221,
+    "section:env_info_simple": 193,
+    "section:context_management": 93,
+    "section:act_dont_rederive": 92,
+    "section:heron_brook": 930,
+    "section:total_tokens": 16,
+    "attach:hook_additional_context": 3524,
+    "attach:environment": 234,
+    "attach:model": 42,
+    "attach:deferred_tools_delta": 650,
+    "attach:agent_listing_delta": 0,
+    "attach:mcp_instructions_delta": 0,
+    "attach:skill_listing": 0,
+    "attach:total_tokens_reminder": 16,
+    "attach:instructions": 2151,
+    "attach:session_context": 441,
+    "attach:date": 9,
+    "attach:remote_session_change": 181,
+    "prompt": 23,
+    "tool_schemas+framing": 4591
+   },
+   "by_class": {
+    "IRREDUCIBLE": 2222,
+    "REDUCIBLE": 11196,
+    "PAGEABLE": 650,
+    "ELIMINABLE": 197
+   },
+   "floor": {
+    "status": "NOT_A_FLOOR",
+    "note": "every sized bucket here is controllable (flags, --system-prompt, CCR attach hook); controllable context is never a floor"
+   }
+  },
+  {
+   "key": {
+    "plane": "linux-gex44",
+    "host": "2.1.296",
+    "model": "claude-haiku-5-5",
+    "session_class": "bounded-code-worker (unit declared, a2-probe)",
+    "config": "P1 + --tools \"\""
+   },
+   "probe": "P2",
+   "session": "95ab3d08-26bd-47dd-988e-d3a8ca131c91",
+   "tools_in_init": 8,
+   "ctx_call1": 13361,
+   "usage": {
+    "input": 2,
+    "cache_creation": 10211,
+    "cache_read": 3148,
+    "output": 4,
+    "processed": 13365
+   },
+   "buckets_tokens": {
+    "section:lean_body": 535,
+    "section:communication": 31,
+    "section:pronouns": 119,
+    "section:action_caution": 173,
+    "section:session_guidance": 175,
+    "section:env_info_simple": 193,
+    "section:context_management": 93,
+    "section:act_dont_rederive": 92,
+    "section:heron_brook": 930,
+    "section:total_tokens": 16,
+    "attach:hook_additional_context": 3526,
+    "attach:environment": 234,
+    "attach:model": 42,
+    "attach:deferred_tools_delta": 492,
+    "attach:mcp_instructions_delta": 0,
+    "attach:total_tokens_reminder": 16,
+    "attach:instructions": 2151,
+    "attach:session_context": 441,
+    "attach:date": 9,
+    "prompt": 23,
+    "tool_schemas+framing": 4067
+   },
+   "by_class": {
+    "IRREDUCIBLE": 2176,
+    "REDUCIBLE": 10674,
+    "PAGEABLE": 492,
+    "ELIMINABLE": 16
+   },
+   "floor": {
+    "status": "NOT_A_FLOOR",
+    "note": "every sized bucket here is controllable (flags, --system-prompt, CCR attach hook); controllable context is never a floor"
+   }
+  },
+  {
+   "key": {
+    "plane": "linux-gex44",
+    "host": "2.1.296",
+    "model": "claude-haiku-5-5",
+    "session_class": "bounded-code-worker (unit declared, a2-probe)",
+    "config": "P2 + --strict-mcp-config --disable-slash-commands"
+   },
+   "probe": "P3",
+   "session": "228f7133-03c4-4504-8509-eb19e760272c",
+   "tools_in_init": 0,
+   "ctx_call1": 10155,
+   "usage": {
+    "input": 2,
+    "cache_creation": 9618,
+    "cache_read": 535,
+    "output": 4,
+    "processed": 10159
+   },
+   "buckets_tokens": {
+    "section:lean_body": 535,
+    "section:communication": 31,
+    "section:pronouns": 119,
+    "section:action_caution": 173,
+    "section:session_guidance": 175,
+    "section:env_info_simple": 193,
+    "section:context_management": 93,
+    "section:act_dont_rederive": 92,
+    "section:heron_brook": 930,
+    "section:total_tokens": 16,
+    "attach:hook_additional_context": 3524,
+    "attach:environment": 234,
+    "attach:model": 42,
+    "attach:total_tokens_reminder": 16,
+    "attach:instructions": 2151,
+    "attach:session_context": 441,
+    "attach:date": 9,
+    "prompt": 23,
+    "tool_schemas+framing": 1354
+   },
+   "by_class": {
+    "IRREDUCIBLE": 2176,
+    "REDUCIBLE": 6605,
+    "ELIMINABLE": 16,
+    "UNKNOWN": 1354
+   },
+   "floor": {
+    "status": "NOT_A_FLOOR",
+    "note": "every sized bucket here is controllable (flags, --system-prompt, CCR attach hook); controllable context is never a floor"
+   }
+  },
+  {
+   "key": {
+    "plane": "linux-gex44",
+    "host": "2.1.296",
+    "model": "claude-haiku-5-5",
+    "session_class": "bounded-code-worker (unit declared, a2-probe)",
+    "config": "P3 + --setting-sources \"\""
+   },
+   "probe": "P4",
+   "session": "2ee1f371-b2f2-430f-a34a-62f2c8a54c4b",
+   "tools_in_init": 0,
+   "ctx_call1": 3119,
+   "usage": {
+    "input": 2,
+    "cache_creation": 883,
+    "cache_read": 2234,
+    "output": 4,
+    "processed": 3123
+   },
+   "buckets_tokens": {
+    "section:lean_body": 535,
+    "section:communication": 31,
+    "section:pronouns": 119,
+    "section:action_caution": 173,
+    "section:session_guidance": 175,
+    "section:env_info_simple": 193,
+    "section:context_management": 93,
+    "section:act_dont_rederive": 92,
+    "section:heron_brook": 930,
+    "section:total_tokens": 16,
+    "attach:environment": 234,
+    "attach:model": 42,
+    "attach:total_tokens_reminder": 16,
+    "attach:session_context": 441,
+    "attach:date": 9,
+    "prompt": 23,
+    "tool_schemas+framing": -6
+   },
+   "by_class": {
+    "IRREDUCIBLE": 2176,
+    "REDUCIBLE": 930,
+    "ELIMINABLE": 16,
+    "UNKNOWN": -6
+   },
+   "floor": {
+    "status": "UPPER_BOUND_ONLY",
+    "note": "smallest measured config: 3,119 tokens is an UPPER BOUND on any host-imposed floor; all of it is sized and controllable (sections via --system-prompt, attachments via the CCR attach hook); unexplained residual -6 tokens at 2.999 B/token, i.e. host framing is within calibration error of 0"
+   }
+  },
+  {
+   "key": {
+    "plane": "laptop-windows",
+    "host": "2.1.296",
+    "model": "claude-haiku-5-5",
+    "session_class": "bounded-code-worker",
+    "config": "V1 canary CCR arm"
+   },
+   "floor": {
+    "status": "UNKNOWN",
+    "note": "laptop plane not reachable from GEX44; no probe run there. Observed (not a floor): V1 r2/r4 call-1 ctx 18,308 / 18,077 with tool_schemas+framing residual 9,865 / 9,799 tokens"
+   }
+  },
+  {
+   "key": {
+    "plane": "laptop-windows",
+    "host": "2.1.296",
+    "model": "claude-haiku-5-5",
+    "session_class": "madzia lean print worker",
+    "config": "lean+print, 7 tools"
+   },
+   "floor": {
+    "status": "UNKNOWN",
+    "note": "not probed; observed call-1 ctx 17,235-19,100 of which tool_schemas+framing residual 14,333-15,812 tokens (controllable via --tools)"
+   }
+  }
+ ]
+}

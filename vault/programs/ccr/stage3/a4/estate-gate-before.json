@@ -1,0 +1,64 @@
+{
+ "mod": "/home/kobii/missions/ccr-s3/mods/cpp-cognitive-runtime",
+ "policy_sha256": "cd640ac46f8dc4e750a2f41ab398b792071fcda9164e91413bcbe86ff95dc0c7",
+ "exit": 1,
+ "verdict": "FAIL",
+ "facts": {
+  "kernel": 2970,
+  "bound": 8000,
+  "files1x": 25,
+  "in1x": 160848,
+  "out1x": {
+   "instructions": 6452,
+   "skills": 0,
+   "agents": 0,
+   "memory": 0
+  },
+  "sum1x": 6452,
+  "files10x": 250,
+  "in10x": 1608480,
+  "out10x": {
+   "instructions": 35927,
+   "skills": 0,
+   "agents": 0,
+   "memory": 0
+  },
+  "sum10x": 35927,
+  "slope": 0.020361
+ },
+ "files": [
+  "/home/kobii/.claude/CLAUDE.md",
+  "/home/kobii/.claude/rules/capability-preserving-compaction.md",
+  "/home/kobii/.claude/rules/common/code-review.md",
+  "/home/kobii/.claude/rules/concurrent-writers-shared-tree.md",
+  "/home/kobii/.claude/rules/destructive-state-authorization.md",
+  "/home/kobii/.claude/rules/develop-here-prove-there.md",
+  "/home/kobii/.claude/rules/documented-capability-must-be-executable.md",
+  "/home/kobii/.claude/rules/durable-exit-transaction.md",
+  "/home/kobii/.claude/rules/effect-authority-across-transports.md",
+  "/home/kobii/.claude/rules/evaluation-corpus-governance.md",
+  "/home/kobii/.claude/rules/generated-content-needs-an-evidence-gate.md",
+  "/home/kobii/.claude/rules/guard-event-reachability.md",
+  "/home/kobii/.claude/rules/human-facing-external-effects.md",
+  "/home/kobii/.claude/rules/instrument-before-claim.md",
+  "/home/kobii/.claude/rules/monetary-quantity-integrity.md",
+  "/home/kobii/.claude/rules/post-effect-resource-truth.md",
+  "/home/kobii/.claude/rules/presence-is-not-residency.md",
+  "/home/kobii/.claude/rules/python/testing.md",
+  "/home/kobii/.claude/rules/real-context-reachability.md",
+  "/home/kobii/.claude/rules/recurring-work-cardinality.md",
+  "/home/kobii/.claude/rules/scoped-side-effect-authority.md",
+  "/home/kobii/.claude/rules/state-lifetime-and-incarnation.md",
+  "/home/kobii/.claude/rules/technical-failure-to-product-state.md",
+  "/home/kobii/.claude/rules/validation-planes-do-not-transfer.md",
+  "/home/kobii/missions/ccr-s3/CLAUDE.md"
+ ],
+ "tail": [
+  "  Received: 35927",
+  "",
+  " 0 pass",
+  " 1 fail",
+  "Ran 1 test across 1 file. [0.13s]",
+  "ESTATE_GATE {\"kernel\":2970,\"bound\":8000,\"files1x\":25,\"in1x\":160848,\"out1x\":{\"instructions\":6452,\"skills\":0,\"agents\":0,\"memory\":0},\"sum1x\":6452,\"files10x\":250,\"in10x\":1608480,\"out10x\":{\"instructions\":35927,\"skills\":0,\"agents\":0,\"memory\":0},\"sum10x\":35927,\"slope\":0.020361}"
+ ]
+}
