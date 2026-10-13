@@ -5,7 +5,9 @@ Phase-7 jobs and goal cp50-c2 are not this programme's.
 
 Owner approved jobs 5-6 for D28 Ph8 (D8, one batch per pair of arms) and job 7 for D28 Ph9 (D9, only if D9's
 step-0 gate admits). Owner, 2026-10-13, in the D28 coordinator pane: "D8/D9 do go to GEX44".
-Job 4 stays D6's.
+Job 4 was D6's; D6 did not send it. Owner, 2026-10-13, approved the post-D28 pricing unit ("I approve that"):
+job 4 is reassigned to D12 (one batch, 20 class 2-5 fns + 3 donors). D12 rewrites row 4 before sending. The
+budget stays 7; jobs 8+ (W13) are NOT approved.
 
 | # | Unit | Purpose | Job id | Certificate sha | Sent at | Verdict |
 |---|---|---|---|---|---|---|
