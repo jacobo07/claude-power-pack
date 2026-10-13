@@ -1,0 +1,13 @@
+CAUSALITY rows=22 tags=35 never_used=13
+ATTRIBUTION newly=101 alone=9 shared=7 redundant=85 not_repro=0 red={'red:Zz9c3ebbb0': 0, 'red:Zz7506e90a': 0, 'red:Zz3180881f': 0, 'red:Zz932bb586': 0, 'red:Zze10bed17': 0}
+1 Ptmf8021F3E4 1 1 1.5
+2 Obj80203E40 1 0 1.0
+3 Obj8020711C 1 0 1.0
+4 Obj8020CC14 1 0 1.0
+5 Obj8021F8BC 1 0 1.0
+6 Obj80230BF8 1 0 1.0
+7 Obj80241018 1 0 1.0
+8 Obj80279E44 1 0 1.0
+9 Obj8032CF78 1 0 1.0
+10 Elem80230ABC 0 1 0.5
+D2_RUN_DONE
