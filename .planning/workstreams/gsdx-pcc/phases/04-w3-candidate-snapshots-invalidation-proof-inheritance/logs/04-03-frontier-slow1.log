@@ -1,0 +1,5 @@
+PASS V-FRONTIER-SWEEP-N WALL_CLOCK dispatched=3 open=3 satisfied_after_drain=3; ECONOMY dispatched=1 open=1 satisfied_after_drain=3
+  secs 38.8
+PASS V-FRONTIER-SWEEP-EARLY-FINISH old fixture under a slow pass dispatched=1; blocking fixture dispatched=3
+  secs 45.0
+passes 2 fails 0

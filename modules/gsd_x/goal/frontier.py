@@ -267,9 +267,10 @@ def _runnable_gate_obligations(ctx) -> list:
               if e.provider == "gate" and e.spec.get("tree_hash") == ctx.tree_hash
               and e.outcome in (ep.COMPLETED, ep.FAILED)}
     open_now = open_obligations(st)
+    inh = rc.inherited_for(ctx)
     out = []
     for o in cv.project_convergence(st).obligations.values():
-        if not rc._needs_a_gate_here(o, ctx) or o.identifier in judged or o.identifier in open_now:
+        if not rc._needs_a_gate_here(o, ctx, inh) or o.identifier in judged or o.identifier in open_now:
             continue
         key = ep.info_key(st.revision, [o.identifier], "gate", "initial", ctx.scope_hash,
                           engine=ctx.engine)
@@ -301,7 +302,8 @@ def _may_start_new(ctx) -> bool:
     from . import reconcile as rc  # noqa: PLC0415 -- lazy, see frontier_enabled
     from .intervention import blocking_reason  # noqa: PLC0415
     st = ctx.state
-    return not (blocking_reason(st) or cv.goal_closure(st, ctx.tree_hash).may_close
+    return not (blocking_reason(st)
+                or cv.goal_closure(st, ctx.tree_hash, inherited=rc.inherited_for(ctx)).may_close
                 or ctx.blocked_on or rc._budget_verdict(ctx))
 
 
@@ -326,7 +328,7 @@ def decide_frontier(ctx, legacy):
         if all(independent_units(u, other) for other in stored):
             o = cv.project_convergence(ctx.state).obligations[u["obligation"]]
             return rc.Decision(rc.NEXT_EPOCH,
-                               f"{o.identifier} ({o.plane}) {rc._needs_a_gate_here(o, ctx)}",
+                               f"{o.identifier} ({o.plane}) {rc._needs_a_gate_here(o, ctx, rc.inherited_for(ctx))}",
                                provider="gate", hypothesis="initial", info_key=u["info_key"],
                                spec={"obligation": o.identifier, "gate": o.done_gate,
                                      "tree_hash": ctx.tree_hash, "plane": o.plane,
@@ -410,7 +412,8 @@ def compile_frontier(ctx) -> Frontier:
     st = ctx.state
     convergence = cv.project_convergence(st)
     eps = ep.project_epochs(st)
-    closure = cv.goal_closure(st, ctx.tree_hash)
+    from . import reconcile as rc  # noqa: PLC0415 -- lazy, see frontier_enabled
+    closure = cv.goal_closure(st, ctx.tree_hash, inherited=rc.inherited_for(ctx))
     states = pf.proof_states(st, ctx.tree_hash)
 
     expectation = tuple(oid for oid, o in convergence.obligations.items()

@@ -330,11 +330,14 @@ def tree_equal(a, b) -> bool:
     return a == b
 
 
-def goal_closure(state: GoalState, tree_hash: str, open_epochs: list | None = None) -> GoalClosure:
+def goal_closure(state: GoalState, tree_hash: str, open_epochs: list | None = None,
+                 inherited: frozenset = frozenset()) -> GoalClosure:
     """Every reason this goal may not close at `tree_hash`, or none.
 
     A projection: it stores nothing, and it is necessary for CONVERGED, never
-    sufficient -- the independent judge re-runs the pinned gates.
+    sufficient -- the independent judge re-runs the pinned gates. `inherited` names
+    the claims whose proof carries to this tree (`inherit.inherited_ids`); their
+    tree check is the one thing it waives, never the revision check.
     """
     cv = project_convergence(state)
     blocking: list[str] = []
@@ -357,7 +360,7 @@ def goal_closure(state: GoalState, tree_hash: str, open_epochs: list | None = No
     for o in cv.obligations.values():
         if o.disposition == SATISFIED:
             v = o.verdict or {}
-            if not tree_equal(v.get("tree_hash"), tree_hash):
+            if o.identifier not in inherited and not tree_equal(v.get("tree_hash"), tree_hash):
                 blocking.append(f"{o.identifier} was proven at tree {v.get('tree_hash')}, "
                                 f"not at the tree being closed ({tree_hash})")
             if v.get("revision") != state.revision:

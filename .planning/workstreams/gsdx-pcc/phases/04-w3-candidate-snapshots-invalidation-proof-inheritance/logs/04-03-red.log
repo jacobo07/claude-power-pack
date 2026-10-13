@@ -1,0 +1,20 @@
+PASS V-INV-HERMETIC-HOME home=inv-home-gkkvs_4s
+PASS V-INV-R12-CLOSURE may_close=False blocking=['plane EVIDENCE applies and has no obligation']
+PASS V-INV-R12-NEEDS-GATE reason='was proven at tree unknown:not-a-git-tree, and the tree bein'
+PASS V-INV-R12-CONTROL real_equal_closes=True needs_gate='' other_tree_blocks=True
+PASS V-CAND-SNAPSHOT-OID clean_equals_HEAD_tree=True dirty_differs=True len=40
+PASS V-CAND-NO-SIDE-EFFECT index_same=True refs_same=True status_same=True leftovers=[]
+PASS V-CAND-UNKNOWN-ON-DOUBT all_unknown=True bad={}
+PASS V-CAND-STABLE same_content_same_oid=True one_byte_differs=True
+PASS V-CAND-DRIFT same=False moved=True current_unknown=None promoted_unknown=None
+PASS V-INV-PROMOTED-PROJECTION projected=1 newer_v_refused=True unsupported=[3]
+FAIL V-INV-INHERIT-OK RED-first: modules.gsd_x.goal.inherit absent
+FAIL V-INV-FALSE-REUSE RED-first: modules.gsd_x.goal.inherit absent
+FAIL V-INV-UNKNOWN-NOT-CLEAN RED-first: modules.gsd_x.goal.inherit absent
+FAIL V-INV-FRESH-REQUIRED-NEVER RED-first: modules.gsd_x.goal.inherit absent
+FAIL V-INV-OMITTED-WITHOUT-EVENT RED-first: modules.gsd_x.goal.inherit absent
+FAIL V-INV-EVENT-DISAGREES RED-first: modules.gsd_x.goal.inherit absent
+FAIL V-INV-SWITCH-OFF RED-first: modules.gsd_x.goal.inherit absent
+FAIL V-INV-FRONTIER-CONSUMES-INHERITED RED-first: modules.gsd_x.goal.inherit absent
+FAIL V-INV-SWEEP-E2E RED-first: modules.gsd_x.goal.inherit absent
+GSDX_INVALIDATION_PASS=10/19  threshold=19/19

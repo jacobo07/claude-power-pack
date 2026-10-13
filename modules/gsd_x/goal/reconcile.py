@@ -98,7 +98,13 @@ def _work_provider(ctx: Context) -> str:
     return ""
 
 
-def _needs_a_gate_here(o, ctx: Context) -> str:
+def inherited_for(ctx: Context) -> frozenset:
+    """The claims whose proof carries to this tree. Derived from the log alone, so `Context` gains no field."""
+    from . import inherit  # noqa: PLC0415 -- lazy: inherit imports convergence and proof, not this module
+    return inherit.inherited_ids(ctx.state, ctx.tree_hash)
+
+
+def _needs_a_gate_here(o, ctx: Context, inherited: frozenset = frozenset()) -> str:
     """Why this obligation's gate should run against THIS tree -- or ''.
 
     An obligation is open work when it has never been proven, and equally when
@@ -112,7 +118,7 @@ def _needs_a_gate_here(o, ctx: Context) -> str:
     if o.disposition != SATISFIED:
         return ""                       # retired, or not work at all
     v = o.verdict or {}
-    if not tree_equal(v.get("tree_hash"), ctx.tree_hash):
+    if o.identifier not in inherited and not tree_equal(v.get("tree_hash"), ctx.tree_hash):
         return (f"was proven at tree {v.get('tree_hash')}, and the tree being closed is "
                 f"{ctx.tree_hash}: its gate has to run here")
     if v.get("revision") != ctx.state.revision:
@@ -167,7 +173,8 @@ def _decide_legacy(ctx: Context) -> Decision:
         return Decision(BLOCKED, stop)
 
     # 3. Closure. Nothing blocking does NOT mean converged: the judge decides.
-    closure = goal_closure(st, ctx.tree_hash)
+    inh = inherited_for(ctx)
+    closure = goal_closure(st, ctx.tree_hash, inherited=inh)
     if closure.may_close:
         if ctx.judge and ctx.judge.get("tree_hash") == ctx.tree_hash \
                 and ctx.judge.get("revision") == st.revision and ctx.judge.get("verdict") == "PASS":
@@ -200,7 +207,7 @@ def _decide_legacy(ctx: Context) -> Decision:
     # correctly refused evidence taken at the old tree, and nothing would ever
     # re-run those gates because they were SATISFIED rather than ACCEPTED. The
     # goal could only ESCALATE, forever, for having saved its work.
-    open_obs = [o for o in cv.obligations.values() if _needs_a_gate_here(o, ctx)]
+    open_obs = [o for o in cv.obligations.values() if _needs_a_gate_here(o, ctx, inh)]
     # "Judged at this tree" means a VERDICT exists -- not that an epoch happened.
     # Only COMPLETED and FAILED produce one; LOST, EXPIRED and CANCELLED leave the
     # obligation exactly as unjudged as before. Measured 2026-09-22: counting any
@@ -216,7 +223,7 @@ def _decide_legacy(ctx: Context) -> Decision:
                        engine=ctx.engine)
         if not any(e.info_key == key and e.outcome in UNSUCCESSFUL for e in eps.values()):
             return Decision(NEXT_EPOCH,
-                            f"{o.identifier} ({o.plane}) {_needs_a_gate_here(o, ctx)}",
+                            f"{o.identifier} ({o.plane}) {_needs_a_gate_here(o, ctx, inh)}",
                             provider="gate", hypothesis="initial", info_key=key,
                             spec={"obligation": o.identifier, "gate": o.done_gate,
                                   "tree_hash": ctx.tree_hash, "plane": o.plane})

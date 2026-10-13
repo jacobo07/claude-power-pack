@@ -277,6 +277,316 @@ def gate_promoted_projection():
         shutil.rmtree(base, ignore_errors=True)
 
 
+# --- inheritance: observe -> plan -> apply, and the pure consumer (plan 04-03) ----------------
+
+import time  # noqa: E402
+
+from modules.gsd_x.goal import frontier as fr           # noqa: E402
+from modules.gsd_x.goal import proof as pf              # noqa: E402
+from modules.gsd_x.goal import sweep as sw              # noqa: E402
+
+SWITCH = pf.INHERITANCE_SWITCH
+GATE_CMD = f'"{sys.executable}" gate.py'
+
+
+def load_inherit():
+    try:
+        from modules.gsd_x.goal import inherit  # noqa: PLC0415
+        return inherit
+    except ImportError:
+        return None
+
+
+class Inh:
+    """A real tmp git repo and one SATISFIED claim holding a certificate at the first tree."""
+
+    def __init__(self, name, element=None, plane=None, gate_class="unit"):
+        self.repo = make_repo()
+        (self.repo / "docs").mkdir()
+        (self.repo / "docs" / "n.txt").write_text("notes\n", encoding="utf-8", newline="\n")
+        (self.repo / "gate.py").write_text("print('1 passed')\n", encoding="utf-8", newline="\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "fixture")
+        self.base = Path(tempfile.mkdtemp(prefix="inv-"))
+        self.log = GoalLog(REPO_ID, name, base=self.base)
+        gc.declare(self.log, "Inherit", ["it works"], [], {"paths": ["."]}, actor="founder")
+        on = {plane} if plane else set()
+        for p in cv.PLANES:
+            claimed = p in cv.ALWAYS or p in on
+            cv.set_plane(self.log, _st(self.log), p, claimed, "" if claimed else "not claimed", "founder")
+        self.pin = gs.file_pin(self.repo, ["gate.py"])
+        cv.accept_obligation(self.log, _st(self.log), "ob-one", plane or cv.OUTCOME, "do it", GATE_CMD,
+                             self.pin, "founder", gate_class=gate_class)
+        self.cid = pf.claim_id(cv.project_convergence(_st(self.log)).obligations["ob-one"])
+        el = {"oracle": gate_class, "command": GATE_CMD, "gate_pin": [list(p) for p in self.pin],
+              "causal_paths": ["src"], "env_deps": [], "freshness_class": "DETERMINISTIC",
+              "risk_tags": [], "nondeterministic": False, "inheritability": "inheritable"}
+        el.update(element or {})
+        pf.append_pcc(self.log, _st(self.log), pf.CONTRACT,
+                      {"v": 1, "claim_id": self.cid, "obligation": "ob-one", "combine": "AND",
+                       "elements": [el]}, "founder")
+        self.t1 = self.tree()
+        v = {"gate": "gate.py", "exit_status": 0, "observed": "ok", "tree_hash": self.t1,
+             "revision": _st(self.log).revision, "gate_class": gate_class,
+             "gate_pin": [list(p) for p in self.pin]}
+        sw._apply_verdicts(self.log, SimpleNamespace(verdicts=[v], tree_before=self.t1, tree_after=self.t1),
+                           SimpleNamespace(spec={"obligation": "ob-one"}, epoch_id="ep-0", provider="gate",
+                                           handle={}), "sweep", root=self.repo)
+        if not pf.project_proofs(_st(self.log)).produced:
+            raise RuntimeError("fixture: the claim produced no certificate")
+
+    def git(self, *args):
+        rc_, out = gs._git(self.repo, *args)
+        if rc_ != 0:
+            raise RuntimeError(f"git {args[0]} failed: {out}")
+
+    def tree(self):
+        return gs.tree_id(self.repo, ["."])
+
+    def edit(self, rel, text):
+        (self.repo / rel).write_text(text, encoding="utf-8", newline="\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "edit " + rel)
+
+    def step(self, apply=True):
+        inh = load_inherit()
+        tree = self.tree()
+        plan = inh.plan(_st(self.log), self.repo, tree, time.time())
+        if apply:
+            inh.apply(self.log, plan, tree, "sweep")
+        return [p for p in plan if p["obligation"] == "ob-one"][0]["action"]
+
+    def inherited(self):
+        return load_inherit().inherited_ids(_st(self.log), self.tree())
+
+    def ledger(self):
+        return pf.project_proofs(_st(self.log))
+
+    def cert(self):
+        led = self.ledger()
+        return led.produced[0]["data"], pf.certificate_id(self.cid, led.produced[0]["seq"])
+
+    def forge(self, premises=None):
+        d, cert = self.cert()
+        pf.append_pcc(self.log, _st(self.log), pf.INHERITED_EV,
+                      {"v": 1, "claim_id": self.cid, "certificate": cert, "candidate": self.tree(),
+                       "premises": premises or dict(d["premises"])}, "hand")
+
+    def close(self):
+        shutil.rmtree(self.base, ignore_errors=True)
+        shutil.rmtree(self.repo, ignore_errors=True)
+
+
+def with_switch(value, fn):
+    old = os.environ.get(SWITCH)
+    try:
+        if value is None:
+            os.environ.pop(SWITCH, None)
+        else:
+            os.environ[SWITCH] = value
+        return fn()
+    finally:
+        if old is None:
+            os.environ.pop(SWITCH, None)
+        else:
+            os.environ[SWITCH] = old
+
+
+def red_if_absent():
+    return None if load_inherit() is not None else (False, "RED-first: modules.gsd_x.goal.inherit absent")
+
+
+def gate_inh_ok():
+    if (r := red_if_absent()):
+        return r
+    w = Inh("inh-ok")
+    try:
+        w.edit("docs/n.txt", "changed notes\n")
+        t2 = w.tree()
+        act = w.step()
+        got = w.inherited()
+        st = _st(w.log)
+        o = cv.project_convergence(st).obligations["ob-one"]
+        ctx = SimpleNamespace(tree_hash=t2, state=st)
+        closes = not any("ob-one" in b for b in cv.goal_closure(st, t2, inherited=got).blocking)
+        closes_plain = not any("ob-one" in b for b in cv.goal_closure(st, t2).blocking)
+        with_set = rc._needs_a_gate_here(o, ctx, got)
+        plain = rc._needs_a_gate_here(o, ctx)
+        ok = (act == "INHERIT" and got == frozenset({"ob-one"}) and closes and not closes_plain
+              and with_set == "" and bool(plain) and t2 != w.t1)
+        return ok, f"action={act} inherited={sorted(got)} closes={closes} closes_without_set={closes_plain}"
+    finally:
+        w.close()
+
+
+def gate_inh_false_reuse():
+    if (r := red_if_absent()):
+        return r
+    w = Inh("inh-false")
+    try:
+        w.edit("src/a.txt", "altered\n")
+        act = w.step()
+        _, cert = w.cert()
+        led = w.ledger()
+        dead = [i for i in led.invalidated if i["data"].get("certificate") == cert]
+        ok = act == "INVALIDATE" and not w.inherited() and len(dead) == 1 and not led.inherited
+        return ok, f"action={act} inherited={sorted(w.inherited())} invalidated={len(dead)}"
+    finally:
+        w.close()
+
+
+def gate_inh_unknown_not_clean():
+    if (r := red_if_absent()):
+        return r
+    res = {}
+    for label, element in (("unknown-fingerprint", {"causal_paths": ["../escape"]}),
+                           ("unknown-environment", {"freshness_class": "ENVIRONMENT_SENSITIVE"})):
+        w = Inh("inh-unk-" + label, element=element)
+        try:
+            w.edit("docs/n.txt", "changed notes\n")
+            act = w.step()
+            res[label] = (act == "RUN" and not w.inherited() and not w.ledger().inherited, act)
+        finally:
+            w.close()
+    return all(v[0] for v in res.values()), f"cases={res}"
+
+
+def gate_inh_fresh_required_never():
+    if (r := red_if_absent()):
+        return r
+    cases = (("fresh-required", {"element": {"freshness_class": "FRESH_REQUIRED"}}),
+             ("risk-tag", {"element": {"risk_tags": ["security"]}}),
+             ("legacy-never", {"element": {"inheritability": "never"}}),
+             ("unknown-class", {"element": {"freshness_class": "BOGUS"}}),
+             ("reality-plane", {"plane": cv.REALITY, "gate_class": "in_game"}))
+    res = {}
+    for label, kw in cases:
+        w = Inh("inh-fr-" + label, **kw)
+        try:
+            w.edit("docs/n.txt", "changed notes\n")
+            act = w.step()
+            w.forge()
+            res[label] = (act == "RUN" and not w.inherited(), act)
+        finally:
+            w.close()
+    return all(v[0] for v in res.values()), f"cases={res}"
+
+
+def gate_inh_omitted_without_event():
+    if (r := red_if_absent()):
+        return r
+    w = Inh("inh-omit")
+    try:
+        w.edit("docs/n.txt", "changed notes\n")
+        act = w.step(apply=False)
+        ok = act == "INHERIT" and not w.inherited() and not w.ledger().inherited
+        return ok, f"planned={act} inherited={sorted(w.inherited())} events={len(w.ledger().inherited)}"
+    finally:
+        w.close()
+
+
+def gate_inh_event_disagrees():
+    if (r := red_if_absent()):
+        return r
+    w = Inh("inh-disagree")
+    try:
+        w.edit("docs/n.txt", "changed notes\n")
+        d, _ = w.cert()
+        fp = dict(d["premises"], fingerprint="cf1:" + "0" * 64)
+        env = dict(d["premises"], environment="env1:" + "0" * 64)
+        rev = dict(d["premises"], revision="r-not-this-one")
+        refused = []
+        for label, prem in (("fingerprint", fp), ("environment", env), ("revision", rev)):
+            w.forge(prem)
+            refused.append(not w.inherited())
+        w.step()
+        control = w.inherited() == frozenset({"ob-one"})
+        return all(refused) and control, f"forged_ignored={refused} truthful_event_control={control}"
+    finally:
+        w.close()
+
+
+def gate_inh_switch_off():
+    if (r := red_if_absent()):
+        return r
+    w = Inh("inh-off")
+    try:
+        w.edit("docs/n.txt", "changed notes\n")
+        w.step()
+        on = w.inherited()
+        off_set = with_switch("off", w.inherited)
+        off_act = with_switch("off", lambda: w.step(apply=False))
+        events_before = len(w.ledger().inherited)
+        with_switch("off", lambda: w.step())
+        ok = (on == frozenset({"ob-one"}) and not off_set and off_act == "RUN"
+              and len(w.ledger().inherited) == events_before)
+        return ok, f"on={sorted(on)} off={sorted(off_set)} off_action={off_act}"
+    finally:
+        w.close()
+
+
+def _ctx(w):
+    return rc.Context(state=_st(w.log), tree_hash=w.tree(), scope_hash="s", observations={},
+                      now=time.time(), budget={}, providers=("gate",), engine="e")
+
+
+def gate_inh_frontier_consumes():
+    if (r := red_if_absent()):
+        return r
+    a, b = Inh("inh-fr-a"), Inh("inh-fr-b")
+    try:
+        for w in (a, b):
+            w.edit("docs/n.txt", "changed notes\n")
+        a.step()                                   # a carries the event, b does not
+        ra = [o.identifier for o, _k in fr._runnable_gate_obligations(_ctx(a))]
+        rb = [o.identifier for o, _k in fr._runnable_gate_obligations(_ctx(b))]
+        ea = [u["obligation"] for u in fr.compile_frontier(_ctx(a)).execution]
+        eb = [u["obligation"] for u in fr.compile_frontier(_ctx(b)).execution]
+        ok = ra == [] and ea == [] and rb == ["ob-one"] and eb == ["ob-one"]
+        return ok, f"with_event runnable={ra} exec={ea}; without runnable={rb} exec={eb}"
+    finally:
+        a.close()
+        b.close()
+
+
+def _drain(w, limit_s=90.0):
+    acted = []
+    end = time.time() + limit_s
+    while time.time() < end:
+        got = sw.sweep_goal(w.log, w.repo, providers=("gate",), run_dir=w.base / "runs")
+        acted.extend(got)
+        open_ = [e for e in sw.ep.project_epochs(_st(w.log)).values() if e.state != "ended"]
+        if not open_ and not any("dispatched" in a or "harvested" in a for a in got):
+            return acted
+        time.sleep(0.4)
+    acted.append("DRAIN TIMEOUT")
+    return acted
+
+
+def gate_inh_sweep_e2e():
+    if (r := red_if_absent()):
+        return r
+    a, b = Inh("inh-e2e-a"), Inh("inh-e2e-b")
+    try:
+        a.edit("docs/n.txt", "changed notes\n")          # outside the causal set
+        b.edit("src/a.txt", "altered\n")                  # inside it
+        first_a = sw.sweep_goal(a.log, a.repo, providers=("gate",), run_dir=a.base / "runs")
+        la = a.ledger()
+        skipped = (len(la.inherited) == 1 and la.inherited[0]["data"]["candidate"] == a.tree()
+                   and not any("dispatched" in x for x in first_a))
+        acted_b = _drain(b)
+        lb = b.ledger()
+        _, cert_b = b.cert()
+        reran = (any("dispatched" in x for x in acted_b) and "DRAIN TIMEOUT" not in acted_b
+                 and any(i["data"].get("certificate") == cert_b for i in lb.invalidated)
+                 and not lb.inherited and len(lb.produced) == 2)
+        return skipped and reran, (f"A inherited={len(la.inherited)} dispatched={any('dispatched' in x for x in first_a)}; "
+                                   f"B invalidated={len(lb.invalidated)} produced={len(lb.produced)} dispatched={any('dispatched' in x for x in acted_b)}")
+    finally:
+        a.close()
+        b.close()
+
+
 def gate_hermetic():
     home = Path.home()
     ok = home.resolve() == _TMP_HOME.resolve() and home.resolve() != REAL_HOME.resolve()
@@ -294,6 +604,15 @@ GATES = [
     ("V-CAND-STABLE", gate_cand_stable),
     ("V-CAND-DRIFT", gate_cand_drift),
     ("V-INV-PROMOTED-PROJECTION", gate_promoted_projection),
+    ("V-INV-INHERIT-OK", gate_inh_ok),
+    ("V-INV-FALSE-REUSE", gate_inh_false_reuse),
+    ("V-INV-UNKNOWN-NOT-CLEAN", gate_inh_unknown_not_clean),
+    ("V-INV-FRESH-REQUIRED-NEVER", gate_inh_fresh_required_never),
+    ("V-INV-OMITTED-WITHOUT-EVENT", gate_inh_omitted_without_event),
+    ("V-INV-EVENT-DISAGREES", gate_inh_event_disagrees),
+    ("V-INV-SWITCH-OFF", gate_inh_switch_off),
+    ("V-INV-FRONTIER-CONSUMES-INHERITED", gate_inh_frontier_consumes),
+    ("V-INV-SWEEP-E2E", gate_inh_sweep_e2e),
 ]
 
 

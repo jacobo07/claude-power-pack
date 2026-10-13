@@ -37,6 +37,7 @@ from . import contract as gc
 from . import convergence as cv
 from . import epoch as ep
 from . import git_state as gs
+from . import inherit
 from . import log as gl
 from . import proof
 from . import reconcile as rc
@@ -340,6 +341,13 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
     # engine_identity first: repo HEAD moves for unrelated commits (retry_engine_term).
     engine = retry_engine_term(Path(__file__).resolve().parents[3])
     scope_hash = ep.scope_hash(root, paths)
+
+    # Proof inheritance: observe the premises of each live certificate, then record the claims that
+    # carry to this tree (or whose certificate a changed premise just killed) BEFORE the decision, so
+    # the decision reads them as ordinary log. A dry run records nothing.
+    if not dry_run and proof.inheritance_enabled():
+        acted.extend(inherit.apply(log, inherit.plan(state, root, tree, time.time()), tree, actor))
+        state = gc.project(log)
 
     def decide_now(at):
         """Observe every running epoch of `at`, then decide on it: the same step the first

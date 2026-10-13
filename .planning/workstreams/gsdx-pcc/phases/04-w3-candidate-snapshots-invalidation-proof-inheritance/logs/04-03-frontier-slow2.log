@@ -1,0 +1,5 @@
+PASS V-FRONTIER-SWEEP-BOUND max_parallel=2 -> 2; WALL_CLOCK over 5 ready -> 4 open=4; BALANCED -> 2
+  secs 92.3
+PASS V-FRONTIER-REPORTED-NOT-EXECUTED dispatched=2 (bound 2, 3 ready) report='sweep-spec: speculative ob-2: admitted -- ADMITTED saving 1.3s exceeds cost 0.0s' no_speculative_epoch=True
+  secs 21.4
+passes 2 fails 0
