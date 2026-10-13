@@ -1,0 +1,3 @@
+﻿FAIL V-JV-DOUBT-REPLAYS cases={'unknown-fingerprint': (True, 1), 'fresh-required': (False, 0), 'risk-tag': (False, 0), 'never-opted-in': (False, 0), 'reality-plane': (False, 0)}
+GSDX_JUDGE_VALIDATE_PASS=10/11  threshold=11/11
+MUTANT KILLED gate=V-JV-DOUBT-REPLAYS

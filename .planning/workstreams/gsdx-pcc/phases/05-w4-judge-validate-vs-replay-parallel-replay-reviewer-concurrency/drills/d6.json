@@ -1,0 +1,2 @@
+{"copy_dirs": ["vendor/genesis-suite"], "file": "tools/evidence_bundle.py", "test": "tools/test_evidence_bundle_aba.py", "gate": "V-ABA-LIVE-REWRITE-STALE",
+ "old": "        if any(now.get(k) != row.get(k) for k in (\"mtime_ns\", \"size\", \"ino\", \"ctime_ns\") if k in now or k in row):", "new": "        if False:"}

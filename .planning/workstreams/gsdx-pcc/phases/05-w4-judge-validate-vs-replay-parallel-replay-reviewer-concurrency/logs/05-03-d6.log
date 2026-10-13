@@ -1,0 +1,4 @@
+﻿  FAIL V-ABA-LIVE-REWRITE-STALE: {'verdict': 'APPROVE', 'reason': 'explicit empty findings list'}
+  FAIL V-ABA-REPLACE-NEW-INODE: {'inode_moved': True, 'verdict': 'pass'}
+EVB_ABA_PASS=8/10  threshold=10/10
+MUTANT KILLED gate=V-ABA-LIVE-REWRITE-STALE

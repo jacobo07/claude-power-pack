@@ -1,0 +1,8 @@
+﻿FAIL V-JV-FORGED-EVENT-REPLAYS forged: verdict=PASS runs=0 modes=['VALIDATE']; control: verdict=PASS runs=0 modes=['VALIDATE']
+FAIL V-JV-CAUSAL-MOVE-REPLAYS verdict=PASS runs=0 modes=['VALIDATE']
+FAIL V-JV-DOUBT-REPLAYS cases={'unknown-fingerprint': (False, 0), 'fresh-required': (False, 0), 'risk-tag': (False, 0), 'never-opted-in': (False, 0), 'reality-plane': (False, 0)}
+FAIL V-JV-SAME-CANDIDATE-REPLAYS verdict=PASS runs=0 modes=['VALIDATE']
+FAIL V-JV-MIXED-ORDER ids=['ob-one', 'ob-two'] modes=['VALIDATE', 'VALIDATE'] runs=0 reason='0 pinned gate(s) re-run and passed, 2 validated from an inherited certificate, at git:51c9'
+FAIL V-JV-LEGACY-RECEIPT-EQUAL verdict=PASS keys=['certificate', 'gate', 'mode', 'obligation', 'observed', 'verdict'] reason='0 pinned gate(s) re-run and passed, 1 validated from an inherited cert'
+GSDX_JUDGE_VALIDATE_PASS=5/11  threshold=11/11
+MUTANT KILLED gate=V-JV-FORGED-EVENT-REPLAYS

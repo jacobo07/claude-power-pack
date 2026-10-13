@@ -29,6 +29,8 @@ import json
 import os
 import re
 import shlex
+import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -103,9 +105,60 @@ def ticket(root: Path, plan: str, task: str, artifacts: list[str]) -> tuple[str,
     nonce = secrets.token_hex(12)
     p = _ticket_path(root, plan, task)
     p.parent.mkdir(parents=True, exist_ok=True)
+    snap = _snapshot_dir(root, plan, task)
+    _drop_tree(snap)
+    for a in artifacts:
+        dst = snap / a
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_bytes((root / a).read_bytes())
+        os.chmod(dst, stat.S_IREAD)
     p.write_text(json.dumps({"planId": plan, "taskId": task, "nonce": nonce,
-                             "artifacts": _proofs(root, artifacts)}, indent=1), encoding="utf-8")
+                             "artifacts": _proofs(root, artifacts),
+                             "journal": [_stat_row(root, a) for a in artifacts]}, indent=1), encoding="utf-8")
     return p.relative_to(root).as_posix(), nonce
+
+
+def snapshot_line(nonce: str) -> str:
+    """The line that tells a reviewer to read the frozen copy; echoing it asserts the snapshot was the source."""
+    return f"REVIEW-SNAPSHOT: {nonce}"
+
+
+def snapshot_root(root: Path, plan: str, task: str) -> str:
+    """Root-relative directory of the read-only copy of the ticketed artifacts, laid out as the artifacts are."""
+    return _snapshot_dir(root, plan, task).relative_to(root).as_posix()
+
+
+def _snapshot_dir(root: Path, plan: str, task: str) -> Path:
+    return _ticket_path(root, plan, task).parent / "snapshot"
+
+
+def _drop_tree(d: Path) -> None:
+    if d.exists():
+        for f in d.rglob("*"):
+            if f.is_file():
+                os.chmod(f, stat.S_IWRITE)
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _stat_row(root: Path, rel: str) -> dict:
+    """What a rewrite cannot hide: a same-bytes rewrite still moves mtime, a replace still moves the inode."""
+    st = (root / rel).stat()
+    row = {"path": rel, "mtime_ns": st.st_mtime_ns, "size": st.st_size, "ino": st.st_ino}
+    if os.name != "nt":
+        row["ctime_ns"] = st.st_ctime_ns   # ctime on Windows is creation time: it would not move on a rewrite
+    return row
+
+
+def _journal_moved(root: Path, journal: list) -> str:
+    """'' when every ticketed file still has the stat it had at ticket time, else the first path that moved."""
+    for row in journal:
+        try:
+            now = _stat_row(root, row["path"])
+        except (OSError, KeyError):
+            return str(row.get("path", "?")) if isinstance(row, dict) else "?"
+        if any(now.get(k) != row.get(k) for k in ("mtime_ns", "size", "ino", "ctime_ns") if k in now or k in row):
+            return row["path"]
+    return ""
 
 
 def write_review(root: Path, plan: str, task: str, reply: str, reviewer: dict, artifacts: list[str],
@@ -119,6 +172,21 @@ def write_review(root: Path, plan: str, task: str, reply: str, reviewer: dict, a
         seen, unbound = t["artifacts"], ""
         if not t.get("nonce") or ticket_line(t["nonce"]) not in (reply or ""):
             unbound = "the reply does not echo this ticket's nonce: it was not written for this dispatch"
+        elif snapshot_line(t["nonce"]) in (reply or ""):
+            # Read from the frozen copy: what matters is that the copy is still the ticketed bytes.
+            snap = _snapshot_dir(root, plan, task)
+            for a in seen:
+                f = snap / a["path"]
+                if not f.is_file() or hashlib.sha256(f.read_bytes()).hexdigest() != a["sha256"]:
+                    unbound = f"the review snapshot of {a['path']} is not the ticketed bytes"
+                    break
+        elif not isinstance(t.get("journal"), list):
+            unbound = "this ticket predates the stat journal: a live read cannot be shown unmoved"
+        else:
+            moved = _journal_moved(root, t["journal"])
+            if moved:
+                unbound = (f"{moved} was rewritten or replaced after the ticket (stat moved); "
+                           "a live read cannot be shown to have seen the ticketed bytes")
     except (OSError, ValueError, KeyError):
         seen, unbound = [], "no review ticket: nothing records which bytes the reviewer read"
     receipt = {"schema": "genesis-review-v1", "planId": plan, "taskId": task,
@@ -137,8 +205,10 @@ def collect(root: Path, plan: str, task: str, worker: str, criteria: list[str], 
     # Say so by name instead of surfacing its bare throw as an unexplained UNJUDGED (second review).
     # Receipt paths are built from the plan/task/criterion slugs, so a plan named for the secret
     # firewall trips it too (third review): every path the collector will read is screened.
-    # Known limit, recorded not hidden: the ticket binds bytes at ISSUE time. An edit A->B->A by a
-    # concurrent writer between the ticket and the reviewer's read passes as a review of A.
+    # A->B->A between the ticket and the reviewer's read: a live read is refused by the ticket's stat
+    # journal (mtime/size/inode move even when the bytes return), and a reviewer who read the frozen
+    # snapshot copy is immune. Residual limit: a writer that restores mtime and inode on Windows defeats
+    # the journal; only the snapshot read proves that case.
     every = [*artifacts, *check_paths, *([review_path] if review_path else [])]
     protected = [a for a in every if re.search(r"(^|/)(\.env(\.|$)|\.git$)|secret|credential", a, re.I)]
     if protected:

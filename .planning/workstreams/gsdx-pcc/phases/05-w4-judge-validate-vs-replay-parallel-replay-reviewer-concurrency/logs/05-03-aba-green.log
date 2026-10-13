@@ -1,0 +1,11 @@
+﻿  PASS V-ABA-CONTROL-LIVE-READ: {'verdict': 'APPROVE', 'reason': 'explicit empty findings list'}
+  PASS V-ABA-LIVE-REWRITE-STALE: {'verdict': 'APPROVE', 'reason': 'art.py was rewritten or replaced after the ticket (stat moved); a live read cannot be shown to have seen the ticketed bytes'}
+  PASS V-ABA-REPLACE-NEW-INODE: {'inode_moved': True, 'verdict': 'fail'}
+  PASS V-ABA-SNAPSHOT-READ-SURVIVES: {'verdict': 'APPROVE', 'reason': 'explicit empty findings list'}
+  PASS V-ABA-SNAPSHOT-STAYS-A: {'snapshot': 'x = 1\n'}
+  PASS V-ABA-SNAPSHOT-TAMPERED: {'verdict': 'APPROVE', 'reason': 'the review snapshot of art.py is not the ticketed bytes'}
+  PASS V-ABA-FINAL-B-STALE: the receipt keeps A's hash, so the collector compares it to B and fails the review as stale
+  PASS V-ABA-UNREVIEWED-FILE-IRRELEVANT: {'verdict': 'APPROVE', 'reason': 'explicit empty findings list'}
+  PASS V-ABA-OLD-TICKET-FAILS-CLOSED: {'verdict': 'APPROVE', 'reason': 'this ticket predates the stat journal: a live read cannot be shown unmoved'}
+  PASS V-ABA-TICKET-API-STABLE: _logs/evidence/p/t/review-ticket.json
+EVB_ABA_PASS=10/10  threshold=10/10

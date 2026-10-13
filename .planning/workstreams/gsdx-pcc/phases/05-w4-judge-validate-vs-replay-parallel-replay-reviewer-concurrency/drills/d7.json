@@ -1,0 +1,2 @@
+{"copy_dirs": ["vendor/genesis-suite"], "file": "tools/evidence_bundle.py", "test": "tools/test_evidence_bundle_aba.py", "gate": "V-ABA-SNAPSHOT-TAMPERED",
+ "old": "hashlib.sha256(f.read_bytes()).hexdigest() != a[\"sha256\"]", "new": "False"}

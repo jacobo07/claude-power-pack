@@ -1,0 +1,3 @@
+﻿  FAIL V-ABA-SNAPSHOT-TAMPERED: {'verdict': 'APPROVE', 'reason': 'explicit empty findings list'}
+EVB_ABA_PASS=9/10  threshold=10/10
+MUTANT KILLED gate=V-ABA-SNAPSHOT-TAMPERED
