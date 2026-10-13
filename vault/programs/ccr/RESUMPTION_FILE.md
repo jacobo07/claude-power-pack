@@ -46,3 +46,10 @@ is settled to ccr.
 1. Owner decision: rerun V1 with a per-run guard ~1.5M or a lighter harness (needs raise), else close CCR at PARTIAL.
 2. Run a Lobby R1 provider-measured rotation (k=40) to turn the +21.1 % model into a number.
 3. Flip CPP_CCR_ADMISSION to enforce only after one live refusal is observed.
+
+## V1 attempt 2 (2026-10-13, Owner "go ahead"; supersedes X1 next action 1)
+**State.** Merge a4f02e04 (ccr/v4 b25fbae1). The real canary on haiku, with the guard at 1.5M: weighted saving **>= 54.2 %** (MET). Over the two measured CCR runs it is -65.5 %; processed -81.7 %; parity 5/5. r6-CCR was killed by the host memory reaper, so the CCR arm is n=2 and that parity line stays ABSTAIN. The saving is the per-call floor (78K -> 21K). The contract forecast is 13.8x high (Madzia class model). Certificate rechecked: still **PARTIAL**. Chain task PP-CcrChain-Tick DISABLED (chain complete). This run was made from the coordinator pane, not by a worker.
+**Next actions.**
+1. Fit a class model for bounded lookups (its floor of ~21K already matches), so `ccr_pgo contract` forecasts within 25 %.
+2. Lobby R1 provider-measured rotation (k=40) -- the second work class BOUNDARY_COST needs.
+3. Book the unbooked worker spend (~3M: E1/M1/W1/V1/X1 + V1b haiku) into a coord lease, after fixing `ledger._gfold` once ledger.py is no longer dirty.
