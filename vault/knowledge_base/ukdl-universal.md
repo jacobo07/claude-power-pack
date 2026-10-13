@@ -1,4 +1,19 @@
 
+## UKDL PROMOTIONS -- Tennis D28 (WU-D11, 2026-10-13). One line each; source entry cited.
+- HARD-RULE: never close a unit from a worker's closing prose; derive status from the ledger by script. (KNOWLEDGE-TRFC K-TRFC-03: W12 said 14 MATCH, ledger 12.)
+- HARD-RULE: a guard over a field must carry a liveness twin (count of the positive case equals an independent figure). (K-TRFC-05: `status` vs `clean` gave 22/22 false regressions.)
+- HARD-RULE: a named-prototype fact must pass an independent asm check before it unlocks anything; a callee behind `_savegpr_*` reads its args after the prologue call. (KNOWLEDGE D6: entry_evidence prologue blindness; D5's one SUPPORT retracted.)
+- PROCESS RULE: size routes with `route_admission.py admit` before writing a plan's budget table. (KNOWLEDGE K2.)
+- PROCESS RULE: a packet needing an oracle lists the oracle as a prerequisite unit. (KNOWLEDGE W5a: every Tennis verdict UNJUDGED.)
+- PROCESS RULE: a headless packet with a turn limit runs the analysis code before its last-turn writes. (K-TRFC-04.)
+- PROCESS RULE: read the goal's cap, not the programme total, before arming a worker. (K-TRFC-02.)
+- PROCESS RULE: a sole-blocker claim counts only visible keys; verify by applying the delta (m2c emits no C for untranslatable fns, hiding co-blockers). (WU-D5: cror "51 sole" unlocked 0.)
+- TRAP: `$!` from `nohup ... &` inside `ssh bash -s` is the wrapper subshell; liveness = `pgrep -af 'claude -p'` plus a growing log. (K-TRFC-01.)
+- TRAP: one shared pointer (CURRENT_CAPSULE / one F root) across two profiles lets a second game silently collide or judge against the wrong DOL (DIFF, no error). (KNOWLEDGE W10b.)
+- TRAP: the custody guard refuses the word "asm" in unit sources, comments included. (K-TRFC-06.)
+- TRAP: an incremental dirty closure must ignore parameter-name ids (argN, var_*) or it inflates to 1489 of 1797. (WU-D7 defect.)
+- TRAP: a degree-driven ranking passes any degree-preserving permutation; its red control must permute something degree does not fix. (WU-D4 V-D4-RED-FALLS; PR-CONTROL-PERTURBS-THE-SIGNAL-001.)
+
 ## UKDL PROMOTIONS -- CDC C11 (2026-10-13). Only items proven end to end; the rest of the C9 candidates stay candidates (deployed dispatcher lacks the guards, cdc_gate gate 16 FAIL).
 - HARD-RULE (promoted from candidate): a landing that regresses the cognitive baseline (always-on growth > 0.5 %, min 64 B) is refused COGNITIVE_REGRESSION unless a cognitive-budget-changes.json entry (reason, owner, allowed_max) justifies it. Proof: planted +8K CLAUDE.md refused with live untouched (C7), and the gate has since judged every CDC landing (C8-C10 receipts: cognitive_ci GREEN). Kill switch CPP_COG_CI=off.
 - PROCESS RULE (promoted): retire a prose rule only when its mechanical guard has a live test; back up first and keep a revert command. Proof: C9 R1 (-213 chars, guard test 31/31).
@@ -17508,3 +17523,93 @@ decision D-03 "repair, never carry known-incomplete gold forward". Mechanism: `e
 - HARD-RULE candidate: a landing that regresses the cognitive baseline is refused (COGNITIVE_REGRESSION). Evidence: C7 receipt.
 - PROCESS RULE candidate: retire a prose rule only when its guard has a live test; back up first, keep a revert command. Evidence: C9-retirements.md (R1, 213 chars, guard test 31/31).
 - TRAP candidate: a guard in the repo dispatcher is not a guard in the deployed dispatcher (mirror lacks cognitive_admission, semantic_breaker). Evidence: C3/C4 receipts. Prior art: feedback_hook_dispatcher_split_brain_mirror.
+
+- [env/powershell:git] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:git: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:wt] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:wt: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:if] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:if: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_66e57c2007036f11` -- Tool failure in powershell:g: fatal: pathspec. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach] `ceps_be46a1a3d63e3c48` -- Tool failure in powershell:foreach: NameError: name. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:g] `ceps_904434f799a130f1` -- Environment mismatch on powershell:g: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/powershell:py] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:py: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:g: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:l] `ceps_40de29cc7458a3bd` -- Tool failure in powershell:l: Error: DATABASE_URL is not set â€” Better Auth cannot initi.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:Get-ChildItem] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:Get-ChildItem: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:g] `ceps_b18a393e073ee9c0` -- Tool failure in powershell:g: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:git] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:git: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:Get-ChildItem] `ceps_2c101bee55b52700` -- Tool failure in powershell:Get-ChildItem: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:g] `ceps_5d28a90f4498a814` -- Before touching powershell:g, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:git] `ceps_fedfd4a135c3367f` -- Tool failure in bash:git: Exception as exc:  # noqa: BLE001 -- recorded, the launch p.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:commits] `ceps_79e216f9ba0184b7` -- Tool failure in powershell:commits: fatal: /:. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_d47d40fe40071e32` -- Tool failure in powershell:py: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:git] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:git: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:g] `ceps_5ee413c0d90a1085` -- Before touching powershell:g, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:Out-Null] `ceps_91f6428a42b71c49` -- Tool failure in powershell:Out-Null: fatal: cannot. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python] `ceps_5ee413c0d90a1085` -- Before touching powershell:python, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:echo] `ceps_5e7156777e6d3d07` -- Tool failure in powershell:echo: fatal: couldn't. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:env:PATH] `ceps_534563c403e952ca` -- Tool failure in powershell:env:PATH: Error: expect(locator).toHaveAttribute(expected) failed%0A%.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_de87b52fde3fbdd8` -- Before touching powershell:Get-Content, verify the regression scenario (19 failed) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_3b56505f233598cc` -- Tool failure in powershell:Get-Content: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAt.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_68c070f63ffad575` -- Tool failure in powershell:Get-Content: Error: No tests found. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:python.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on powershell:python.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [regression/powershell:python] `ceps_5d28a90f4498a814` -- Before touching powershell:python, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:p] `ceps_a3bab9ce888b5c58` -- Tool failure in powershell:p: Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: Package subpath './p.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_3ae04213568322fe` -- Tool failure in powershell:Get-Content: Error","message":"Dynamic server usage: Route /dashboard/cme. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:t] `ceps_5ee413c0d90a1085` -- Before touching powershell:t, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_91bd58c83335b24d` -- Before touching powershell:Get-Content, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/powershell:[IO.File]::WriteAllText(] `ceps_35b6cacb07c6b6ec` -- Tool failure in powershell:[IO.File]::WriteAllText(: KeyError: 'ventanas'. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:+$env:PATH] `ceps_5ee413c0d90a1085` -- Before touching powershell:+$env:PATH, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [tooling/powershell:g] `ceps_7f1dc5f0bd6cb71a` -- Tool failure in powershell:g: fatal: Needed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_9787c9841e31e6a3` -- Tool failure in powershell:Get-Content: Exception as _exc:  # Pillow is never installed by this tool. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/powershell:git] `ceps_5a66d208aabd03a9` -- Environment mismatch on powershell:git: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/powershell:cmd] `ceps_831e790321887140` -- Tool failure in powershell:cmd: RuntimeError: CUDA. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_d47d40fe40071e32` -- Tool failure in powershell:py: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:cmd] `ceps_831e790321887140` -- Tool failure in powershell:cmd: RuntimeError: CUDA. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:H0=$h0] `ceps_0318e0d28b302a0c` -- Tool failure in powershell:H0=$h0: fatal: Exiting. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:git.exe] `ceps_70d7df967842f288` -- Tool failure in powershell:git.exe: fatal: 'C:\Users\User\Apps\pp-integrate-cdc'. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
