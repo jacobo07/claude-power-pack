@@ -58,4 +58,11 @@ is settled to ccr.
 **Plan.** `vault/plans/ccr-v4-stage3-2026-10-13.md` (31d2867b). Chain `vault/programs/ccr/stage3/chain.json` (9c6ca0a8): A0 accounting+_gfold -> A1 version receipt -> A2 21K anatomy/hard floor -> A3 Work-Class PGO held-out -> A4 epoch economics/elasticity -> A5 Lobby R1 -> A6 real admission -> A7 main canary -> X2 recertify. Routes S3M 1.5M / S3L 3.0M (from Stage 2 measured worker spend); forecast 18M of 28,631,510 remaining; no new capital.
 **Tick.** Task PP-CcrChain-Tick now runs stage3/chain_tick.ps1 every 10 min; it holds (log `ram_hold free_gb=N` in `~/.claude/state/ccr-chain-tick.log`) while free RAM < 4 GB. At arming time the host had 0.7-2.5 GB free with 32 claude.exe, so A0 starts only when RAM frees.
 **Coordinator.** e10a9f08, cap 2M from here; acts only on chain_alert or a stuck state. Unbooked spend (~4-6M) is A0's first job.
-**Next 3 actions.** 1. `python tools/gsdx_chain.py status --chain vault/programs/ccr/stage3/chain.json`. 2. If `ram_hold` persists for hours, the Owner frees RAM (close idle panes); never kill another session. 3. On chain_alert, read the unit receipt first.
+**Split to GEX44 (2026-10-13 16:03, Owner "ship the pack + lobby"; the Owner ran scratchpad ship_ccr_s3.ps1 because auto mode refused the transfer from the pane).** A2-A5 run on GEX44: clone `~/missions/ccr-s3` (branch mission/ccr-s3 = e16e8036), data `~/missions/ccr-s3-data`, which holds:
+- the content-free pack: 433 missions, 516 sessions, 44 logs missing;
+- the Lobby repo archive and 315 Lobby logs;
+- `drive.sh`, which runs one unit at a time as `claude -p` with `--max-turns` 30/40. Log `drive.log`; kill with `touch STOP`. A2 started as sid 0c9c8dbd.
+
+The laptop chain is now A0 -> A1 -> A6 -> A7 -> X2 (forecast 7.5M). A6 `wait`s on WU-A3/A5 receipts in the main tree.
+**Coordinator duty:** fetch `ssh://gex44/home/kobii/missions/ccr-s3 mission/ccr-s3`, merge it into ccr/v4, copy the DONE receipts to stage3/, run each receipt's LAPTOP_APPLY, and book the GEX44 sessions' measured spend into goal ccr.
+**Next 3 actions.** 1. `python tools/gsdx_chain.py status --chain vault/programs/ccr/stage3/chain.json`; GEX44: `tail ~/missions/ccr-s3-data/drive.log`. 2. If `ram_hold` persists for hours, the Owner frees RAM (close idle panes); never kill another session. 3. On chain_alert, read the unit receipt first.
