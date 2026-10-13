@@ -19,7 +19,7 @@ Every check below was run by the worker. Plane is stated per line. **Windows pla
 | `GSDX_PCC_SEMANTICS_PASS=48/48  threshold=48/48` | PASS | Windows | logs/04-verify-pcc_semantics.log |
 | `GSDX_FRONTIER_PASS=40/40  threshold=40/40` (full suite, one run) | PASS | Windows | logs/04-verify-frontier.log |
 | `python modules/liveness/reachability.py` | exit 0 | Windows | logs/04-verify-liveness.log |
-| 20 other goal suites (convergence 29, reconcile 22, certificate 7, mutation_safety 8, cli 25, sweep 14, sweep_all 11, chaos 15, engine_identity 14, epoch 19, gate_class 11, gate_provider 18, judge 11, long_run_provider 16, claude_providers 20, codex_provider 18, bind_mission 10, test_gsd_x_goal 26) | PASS | Windows | logs/04-05-suite-*.log |
+| 18 other goal suites (convergence 29, reconcile 22, certificate 7, mutation_safety 8, cli 25, sweep 14, sweep_all 11, chaos 15, engine_identity 14, epoch 19, gate_class 11, gate_provider 18, judge 11, long_run_provider 16, claude_providers 20, codex_provider 18, bind_mission 10, test_gsd_x_goal 26) | PASS | Windows | logs/04-05-suite-*.log |
 | `test_gsd_x_goal_mutation.py` | **UNRUN** (270 s timeout; kill left `judge.py` mutated, restored by `git checkout`, diff empty) | -- | 04-05-SUMMARY.md |
 
 ## Mutation drills (`tools/mutation_drill.py`; KILLED only after a valid clean-copy control)
