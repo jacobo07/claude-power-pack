@@ -1286,3 +1286,8 @@ steps before model admission; connects CCR Work-Class/PoCN); (4) frontier-collap
   Halted before launch.
 - D28-DEBT-4, D1c limits 1-2 (carried to D11): DETERMINISTIC_USED_MODEL not fed the ledger's per-unit model-call
   count; the `.pre.json` path is not put in the worker's card.
+- D28-DEBT-5, a unit whose route is not in `route_ladder` never climbs (`tools/gsdx_chain.py:99`, idx None keeps
+  the route): D8 on gate-only route-G (4 calls) stopped twice on the same call breaker, 0.41M for nothing; the
+  third attempt would have been identical. Workaround: D8v2 on route-M, D9 on route-S. Proposed gate: a residual
+  whose route is off the ladder goes to `human_gate` on the FIRST repeat, and a chain lint refuses a unit whose
+  packet has post-gate work on a gate route.
