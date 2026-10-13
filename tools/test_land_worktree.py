@@ -93,5 +93,58 @@ for wc, gr in (("deterministic", False), ("deterministic", None), ("novel", True
     check(f"V-LAND-10 reviewer kept for {wc}/{gr}", tr.review_policy(wc, gr)["reviewer"])
 check("V-LAND-11 unit red keeps reviewer", tr.review_policy("deterministic", True, unit_green=False)["reviewer"])
 
+# --- C5b: baseline-red, hub, js name mapping ---
+with tempfile.TemporaryDirectory() as t:
+    live, wt = mk(t)
+    (wt / "bl_red.py").write_text("import sys; sys.exit(1)\n")
+    r = lw.land(str(wt), str(live), tests=["python bl_red.py"], affected=False)
+    check("V-LAND-12 red suite blocks without baseline", r["reason"] == "TESTS_RED_BEFORE")
+    r = lw.land(str(wt), str(live), tests=["python bl_red.py"], baseline_red={"bl_red.py"})
+    check("V-LAND-13 baseline-red suite reported, not blocking",
+          r["status"] == "LANDED" and r["baseline_red_before"] == ["python bl_red.py"], r.get("reason"))
+
+with tempfile.TemporaryDirectory() as t:
+    live, wt = mk(t)
+    (wt / "bl_red.py").write_text("import sys; sys.exit(1)\n")
+    (wt / "bl_new.py").write_text("import sys; sys.exit(1)\n")
+    r = lw.land(str(wt), str(live), tests=["python bl_red.py", "python bl_new.py"], baseline_red={"bl_red.py"})
+    check("V-LAND-14 a red suite NOT in the baseline still blocks", r["reason"] == "TESTS_RED_BEFORE", r.get("reason"))
+
+bl = Path(tempfile.mkdtemp()) / "b.json"
+bl.write_text('{"red": ["tools/test_a.py"], "timeout": ["tools/test_b.py"]}', encoding="utf-8")
+check("V-LAND-15 load_baseline_red reads red only (timeout is not red)",
+      lw.load_baseline_red(str(bl)) == {"tools/test_a.py"})
+
+hubcl = lambda paths, wt: {"unjudged": False, "gaps": [], "unmapped": [], "tests": ["python tools/test_big.py"],
+                           "per_path": {p: ["python tools/test_big.py"] for p in paths}}
+hubfn = lambda c, w: {"total": 4, "fraction": 0.25, "hubs": {p: 3 for p in c["per_path"]}, "leaf": []}
+with tempfile.TemporaryDirectory() as t:
+    live, wt = mk(t)
+    r = lw.land(str(wt), str(live), affected=True, closure_fn=hubcl, hub_fn=hubfn)
+    check("V-LAND-16 hub path without explicit --test refuses", r["reason"] == "AFFECTED_HUB_NEEDS_EXPLICIT_TEST"
+          and "x.py" in r["hub"]["hubs"] and not r["landed"], r["reason"])
+    r = lw.land(str(wt), str(live), tests=['python -c "pass"'], affected=True, closure_fn=hubcl, hub_fn=hubfn)
+    check("V-LAND-17 hub with explicit --test runs only the explicit tests, hub flagged",
+          r["status"] == "LANDED" and r["tests"] == ['python -c "pass"'] and r["hub"]["hubs"], r.get("reason"))
+
+hc = ci.hub_report({"per_path": {"h": [f"python tools/test_{i}.py" for i in range(5)], "l": ["python tools/test_0.py"]}},
+                   Path(tempfile.mkdtemp()))
+check("V-LAND-18 hub_report on empty tools has no hubs (total 0)", hc["hubs"] == {} and hc["total"] == 0)
+with tempfile.TemporaryDirectory() as t:
+    (Path(t) / "tools").mkdir()
+    for i in range(8):
+        (Path(t) / "tools" / f"test_{i}.py").write_text("")
+    hc = ci.hub_report({"per_path": {"h": [f"python tools/test_{i}.py" for i in range(3)],
+                                     "l": ["python tools/test_0.py"]}}, Path(t))
+    check("V-LAND-19 >25% of suites = HUB, leaf stays leaf", list(hc["hubs"]) == ["h"] and hc["leaf"] == ["l"], hc)
+    (Path(t) / "tools" / "test_gate.py").write_text("")
+    check("V-LAND-20 hooks/*.js maps to tools/test_<name>.py by name",
+          ci.js_named_test("hooks/gate.js", Path(t)) == "tools/test_gate.py"
+          and ci.js_named_test("hooks/nope.js", Path(t)) is None)
+    c = ci.affected_closure(["hooks/gate.js", "hooks/nope.js"], Path(t),
+                            analyzer=lambda r_, ch: {"affected": {"test": []}, "gaps": [{"type": "unmatched-change"}]})
+    check("V-LAND-21 closure uses the name map; unnamed js stays unmapped",
+          c["per_path"]["hooks/gate.js"] == ["python tools/test_gate.py"] and c["unmapped"] == ["hooks/nope.js"], c)
+
 print(f"{passes} passed, {fails} failed")
 sys.exit(1 if fails else 0)

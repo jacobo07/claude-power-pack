@@ -105,6 +105,25 @@ def analyze(root: Path, changed: list[str]) -> dict:
     return r.value
 
 
+def js_named_test(rel: str, root: Path) -> str | None:
+    """hooks/<name>.js -> tools/test_<name>.py by name (hyphens as underscores) when that suite exists."""
+    stem = Path(rel).stem.replace("-", "_")
+    cand = f"tools/test_{stem}.py"
+    return cand if (root / cand).is_file() else None
+
+
+HUB_FRACTION = 0.25  # a path whose closure exceeds this share of all suites is a HUB, not local
+
+
+def hub_report(closure: dict, root: Path | None = None, fraction: float = HUB_FRACTION) -> dict:
+    """{"total": n, "hubs": {path: n_suites}, "leaf": [paths]} -- hub = per-path suites > fraction of all suites."""
+    root = Path(root) if root else ROOT
+    total = len(list((root / "tools").glob("test_*.py")))
+    hubs = {p: len(v) for p, v in closure["per_path"].items() if total and len(v) > fraction * total}
+    return {"total": total, "fraction": fraction, "hubs": hubs,
+            "leaf": [p for p in closure["per_path"] if p not in hubs]}
+
+
 def affected_closure(paths: list[str], root: Path | None = None, analyzer=None) -> dict:
     """Per-path proof closure. {"tests": [cmd], "per_path": {p: [cmd]}, "unmapped": [p], "unjudged": bool, "gaps": []}.
     A path is unmapped when no test is reached from it (a test file reaches itself). Unjudged = no answer, never green."""
@@ -114,6 +133,11 @@ def affected_closure(paths: list[str], root: Path | None = None, analyzer=None) 
     gaps: list = []
     for p in paths:
         p = p.replace("\\", "/")
+        if p.endswith(".js") and p.startswith("hooks/"):
+            named = js_named_test(p, root)
+            if named:
+                per_path[p] = [f"python {named}"]
+                continue
         res = analyzer(root, [p])
         if res.get("unjudged"):
             return {"tests": [], "per_path": per_path, "unmapped": [], "unjudged": True, "gaps": res.get("gaps", [])}

@@ -89,13 +89,43 @@ def run_tests(cwd, tests):
     return results, all(r["rc"] == 0 for r in results)
 
 
+def _suite_of(cmd):
+    parts = cmd.replace("\\", "/").split()
+    return parts[-1] if parts else cmd
+
+
+def load_baseline_red(path):
+    """Suites known red (or timed out is NOT red) before the change: JSON {"red": [...]} or one path per line."""
+    txt = open(path, encoding="utf-8-sig").read()
+    try:
+        d = json.loads(txt)
+        return set(d["red"] if isinstance(d, dict) else d)
+    except ValueError:
+        return {x.strip().replace("\\", "/") for x in txt.splitlines() if x.strip()}
+
+
+def split_baseline(results, baseline_red):
+    """Red results whose suite is in the baseline are reported (non-blocking); the rest block."""
+    base = set(baseline_red or ())
+    blocking = [x for x in results if x["rc"] != 0 and _suite_of(x["cmd"]) not in base]
+    known = [x for x in results if x["rc"] != 0 and _suite_of(x["cmd"]) in base]
+    return blocking, known
+
+
 def _closure(paths, worktree):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import change_impact
     return change_impact.affected_closure(paths, worktree)
 
 
-def land(worktree, live, branch=None, tests=(), now=time.time, affected=False, exempt=(), closure_fn=None):
+def _hub(cl, worktree):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import change_impact
+    return change_impact.hub_report(cl, worktree)
+
+
+def land(worktree, live, branch=None, tests=(), now=time.time, affected=False, exempt=(), closure_fn=None,
+         baseline_red=(), hub_fn=None):
     r = {"worktree": worktree, "live": live, "tests": list(tests), "ts": int(now()),
          "status": "REFUSED", "reason": "", "landed": False, "affected": bool(affected)}
     if not tests and not affected:
@@ -137,6 +167,14 @@ def land(worktree, live, branch=None, tests=(), now=time.time, affected=False, e
         if unmapped:
             r["reason"], r["unmapped"] = "AFFECTED_NO_MAPPED_TEST", unmapped
             return r
+        hub = (hub_fn or _hub)(cl, worktree)
+        if hub["hubs"]:
+            r["hub"] = hub
+            if not tests:
+                r["reason"] = "AFFECTED_HUB_NEEDS_EXPLICIT_TEST"
+                return r
+            hub_cmds = {c for p in hub["hubs"] for c in cl["per_path"][p]}
+            cl = dict(cl, tests=[c for c in cl["tests"] if c not in hub_cmds])
         tests = list(dict.fromkeys([*tests, *cl["tests"]]))
         r["tests"] = tests
         r["affected_closure"] = {"per_path": cl["per_path"], "exempt": list(exempt),
@@ -161,6 +199,10 @@ def land(worktree, live, branch=None, tests=(), now=time.time, affected=False, e
 
     pre, ok = run_tests(worktree, tests)
     r["tests_before"] = pre
+    if not ok and baseline_red:
+        blocking, known = split_baseline(pre, baseline_red)
+        r["baseline_red_before"] = [x["cmd"] for x in known]
+        ok = not blocking
     if not ok:
         restore()
         r["reason"] = "TESTS_RED_BEFORE"
@@ -185,6 +227,10 @@ def land(worktree, live, branch=None, tests=(), now=time.time, affected=False, e
     r["landed"], r["live_head_after"] = True, rev(live)
     post, ok = run_tests(live, tests)
     r["tests_after"] = post
+    if not ok and baseline_red:
+        blocking, known = split_baseline(post, baseline_red)
+        r["baseline_red_after"] = [x["cmd"] for x in known]
+        ok = not blocking
     r["status"] = "LANDED" if ok else "LANDED_POST_RED"
     r["reason"] = "" if ok else "TESTS_RED_AFTER_LANDING (landed; revert is an Owner/steward decision)"
     return r
@@ -201,8 +247,10 @@ def main(argv=None):
                     help="tests = explicit --test + change_impact closure of the changed paths; unmapped path -> refuse")
     ap.add_argument("--exempt", action="append", default=[],
                     help="glob of changed paths allowed to have no mapped test (listed in the receipt)")
+    ap.add_argument("--baseline-red", help="file of suites red before the change (reported in the receipt, not blocking)")
     a = ap.parse_args(argv)
-    r = land(a.worktree, a.live, a.branch, a.test, affected=a.affected, exempt=a.exempt)
+    base = load_baseline_red(a.baseline_red) if a.baseline_red else ()
+    r = land(a.worktree, a.live, a.branch, a.test, affected=a.affected, exempt=a.exempt, baseline_red=base)
     txt = json.dumps(r, indent=2)
     if a.receipt:
         with open(a.receipt, "w", encoding="utf-8", newline="\n") as f:
