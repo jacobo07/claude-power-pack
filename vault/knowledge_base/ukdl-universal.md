@@ -17497,3 +17497,11 @@ decision D-03 "repair, never carry known-incomplete gold forward". Mechanism: `e
 - [tooling/bash:#] `ceps_2c101bee55b52700` -- Tool failure in bash:#: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [ccr/cache-write-vs-carry] `ccr_x1_epoch_rotation` -- Removing carried context by rotation is not saving when the cache-write bill for the new prefix exceeds it: Madzia held-out -0.2 % although rotation removed 79-85 % of thinking carry, while Lobby (long sessions) saved +21.1 % (modelled). Weight reads 0.1, writes 1.25 and test per work class; evidence vault/programs/ccr/evidence-v4-stage2-E1.md.
+
+## UKDL CANDIDATES -- CDC programme (2026-10-13; NOT promoted). Stage: OBSERVED + LOCAL SUCCESS + REGRESSION in power-pack repo. Deployed-dispatcher inheritance: see vault/programs/cdc/evidence/C9-inheritance.md.
+- HARD-RULE candidate (enforced in repo, tests green): a spawn with no verifiable prior work (NO_WORK), a duplicate, or an unleased spawn is denied at the Agent edge. Evidence: C3 test_cognitive_admission 22/22, test_cognitive_admission_dispatch 4/4. Promotion blocked until the deployed dispatcher is shown to run it.
+- HARD-RULE candidate: a bound session with 25 consecutive no-progress calls trips a TOKEN_INCIDENT and gets a deny budget. Evidence: C4 test_semantic_breaker 30/30, threshold from 127 historical gaps (p95 10, max 20).
+- PROCESS RULE candidate: repeated web research is served from a derivation store, with negative knowledge kept. Evidence: C6 receipt.
+- HARD-RULE candidate: a landing that regresses the cognitive baseline is refused (COGNITIVE_REGRESSION). Evidence: C7 receipt.
+- PROCESS RULE candidate: retire a prose rule only when its guard has a live test; back up first, keep a revert command. Evidence: C9-retirements.md (R1, 213 chars, guard test 31/31).
+- TRAP candidate: a guard in the repo dispatcher is not a guard in the deployed dispatcher (mirror lacks cognitive_admission, semantic_breaker). Evidence: C3/C4 receipts. Prior art: feedback_hook_dispatcher_split_brain_mirror.
