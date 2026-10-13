@@ -34,3 +34,10 @@ not yet fast. Faster on a quiet host is NOT measured.
 Coordinator pane after the approval: 37 calls, 6,607,222 processed (context+output summed per call) against a
 packet sizing of 16 calls / 2.2M. Stop-loss breached on calls; nothing was booked to L7 because the coordinator
 pane is not goal-bound. Booking is an Owner decision.
+
+## Booking (2026-10-13, Owner option 1)
+Correction packet 12e74c71 (approve 2026-10-13T10:19:24Z) APPLIED: programme 28,889,796 -> 33,597,018.
+goal-settle --measured 7,902,658 = S4 span 6,607,222 + correction step 1,295,436 (12 calls since
+2026-10-13T08:21:55Z, scratchpad since_ts.py). Ledger after: settled 34,292,454, L7 used 7,902,658 of 2,500,000.
+The correction step breached its own stop-loss (6 calls / 0.6M), so the goal is now ~0.7M over the approved
+programme. Halted: L7 was not closed and nothing was raised. The calls for this receipt and its commit are not booked.
