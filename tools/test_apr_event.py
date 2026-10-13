@@ -178,7 +178,7 @@ def seal_setup(name, rc):
     chain["units"][0]["acceptance"] = {"gates": [["x"]], "require_commit": True}
     p.write_text(json.dumps(chain), encoding="utf-8")
     (d / "R-A.md").write_text("# A\nall done, no status line\n", encoding="utf-8")
-    gm._chain_try_seal = lambda pkt: gc.try_seal(pkt, missions=[], runner=Runner(rc), git=gitf)
+    gm._chain_try_seal = lambda pkt: gc.try_seal(pkt, programs_dir=TMP, missions=[], runner=Runner(rc), git=gitf)
     return d, {"mission_id": "m", "wu_packet": {"path": chain["units"][0]["packet"]}}
 
 
@@ -189,7 +189,7 @@ chain["units"][0]["acceptance"] = {"gates": [["x"]], "require_commit": True}
 p.write_text(json.dumps(chain), encoding="utf-8")
 (d / "WU-A-receipt.md").write_text("# A\nall done, no status line\n", encoding="utf-8")
 rec = {"mission_id": "m", "wu_packet": {"path": chain["units"][0]["packet"]}}
-gm._chain_try_seal = lambda pkt: gc.try_seal(pkt, missions=[], runner=Runner(0), git=gitf)
+gm._chain_try_seal = lambda pkt: gc.try_seal(pkt, programs_dir=TMP, missions=[], runner=Runner(0), git=gitf)
 row = {}
 gm.halt_continue(rec, str(d), "", None, row, time.time())
 check("V-APR3-SEAL-BEFORE-RENEW-EVIDENCE-PASSES", row.get("renewal") == "not renewed: sealed by finalizer"
@@ -200,7 +200,7 @@ chain["units"][0]["acceptance"] = {"gates": [["x"]], "require_commit": True}
 p.write_text(json.dumps(chain), encoding="utf-8")
 (d / "WU-A-receipt.md").write_text("# A\nall done, no status line\n", encoding="utf-8")
 rec = {"mission_id": "m", "wu_packet": {"path": chain["units"][0]["packet"]}}
-gm._chain_try_seal = lambda pkt: gc.try_seal(pkt, missions=[], runner=Runner(1), git=gitf)
+gm._chain_try_seal = lambda pkt: gc.try_seal(pkt, programs_dir=TMP, missions=[], runner=Runner(1), git=gitf)
 row = {}
 went_on = not gm._seal_instead_of_renew(rec, row)
 check("V-APR3-SEAL-BEFORE-RENEW-EVIDENCE-FAILS-RENEWS", went_on and not (d / "WU-A-receipt.md.seal.json").exists(),
@@ -224,7 +224,7 @@ check("V-APR3-WAIT-EVENT-TIMES-OUT", gc.silence_check(chain, {"action": "wait_ev
 d, p, c = setup("silent", silence_s=10)
 alerts = []
 (d / "R-A.md").write_text("Status: BLOCKED_HUMAN\n", encoding="utf-8")
-r = gc.tick(p, state=lambda: ([mission(d, "A", "HALTED")], 0), history=[{"action": "stopped_without_done", "unit": "A", "at": 1}],
+r = gc.tick(p, state=lambda: ([mission(d, "A", "HALTED")], 0), history=[{"action": "human_gate", "unit": "A", "at": 1}],
             alerter=alerts.append, now=1000)
 check("V-APR3-TICK-WRITES-ALERT-AND-MARKS-ROW", r["action"] in gc.SILENT and r.get("alerted") and len(alerts) == 1, r["action"])
 
