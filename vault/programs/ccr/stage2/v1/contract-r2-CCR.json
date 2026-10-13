@@ -1,0 +1,16 @@
+{
+ "obligation": "v1 canary: predecessor lookup",
+ "image": "C:\\Users\\User\\Apps\\ccr_v1\\prompt.txt",
+ "image_chars": 470,
+ "image_tok_est": 141,
+ "work_class": "bounded-code-worker",
+ "necessity": "NOVEL",
+ "reasons": [],
+ "forecast": {
+  "calls": 28,
+  "floor": 21031,
+  "p50": 1179457,
+  "p80": 2164496
+ },
+ "verdict": "ADMIT"
+}

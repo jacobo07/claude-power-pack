@@ -1,0 +1,31 @@
+{
+ "run": "r5-OFF",
+ "arm": "OFF",
+ "rc": 0,
+ "seconds": 290,
+ "usage": {
+  "input": 12,
+  "cache_read": 462697,
+  "cache_creation": 7862,
+  "output": 36,
+  "calls": 6,
+  "processed": 470607,
+  "weighted": 56289.200000000004
+ },
+ "answer": "p4p2a12;PASS;NOT_IMPROVED",
+ "match": true,
+ "ccr_receipts": {
+  "row": 83,
+  "start": 1,
+  "link": 12,
+  "compose": 1,
+  "attach": 19,
+  "call": 6,
+  "usage": 1,
+  "end": 1
+ },
+ "receipt_files": [
+  "4f0ecc00-536e-4d3d-952e-18e5ae42f35b.jsonl"
+ ],
+ "stderr": "SessionEnd hook [C:/Program Files/nodejs/node.exe C:/Users/User/.claude/hooks/lazarus-index-aggregator.js] failed: Hook cancelled\nSessionEnd hook [C:/Program Files/nodejs/node.exe C:/Users/User/.claude/skills/claude-power-pack/hooks/mark-live-session.js] failed: Hook cancelled\n"
+}

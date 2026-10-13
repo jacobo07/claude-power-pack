@@ -1,41 +1,85 @@
 {
+ "attempt": 2,
+ "guard": 1500000,
  "truth": "p4p2a12;PASS;NOT_IMPROVED",
  "modes_orig_sha": "ABSENT",
- "modes_off_sha": "a9dcb4565dcfea32f2158e15577eb2cf36212c34c9297d3c42adb798e9bfcdcc",
- "claude": "C:\\Users\\User\\.local\\bin\\claude.EXE",
+ "modes_after_sha": "ABSENT",
+ "abort": "killed by Claude Code host memory reaper during r6-CCR (no summary, contract-r6 recorded); finally block did not run, meta written by coordinator from summaries",
  "runs": [
   {
    "run": "r1-OFF",
    "arm": "OFF",
-   "rc": 0,
-   "seconds": 472,
    "usage": {
-    "input": 12,
-    "cache_read": 394835,
-    "cache_creation": 62497,
-    "output": 60,
-    "calls": 6,
-    "processed": 457404,
-    "weighted": 117916.75
+    "input": 8,
+    "cache_read": 247996,
+    "cache_creation": 64346,
+    "output": 15,
+    "calls": 4,
+    "processed": 312365,
+    "weighted": 105315.1
    },
    "answer": "p4p2a12;PASS;NOT_IMPROVED",
-   "match": true,
-   "ccr_receipts": {
-    "link": 12,
-    "row": 83,
-    "start": 2,
-    "compose": 1,
-    "attach": 18,
-    "call": 6,
-    "usage": 1
+   "match": true
+  },
+  {
+   "run": "r2-CCR",
+   "arm": "CCR",
+   "usage": {
+    "input": 8,
+    "cache_read": 64873,
+    "cache_creation": 24571,
+    "output": 23,
+    "calls": 4,
+    "processed": 89475,
+    "weighted": 37324.05
    },
-   "receipt_files": [
-    "8dd034fb-1bf9-4eb8-ae74-f6f51e47edbe.jsonl",
-    "b54a0638-f249-4e32-91fe-806badd524e7.jsonl"
-   ],
-   "stderr": ""
+   "answer": "p4p2a12;PASS;NOT_IMPROVED",
+   "match": true
+  },
+  {
+   "run": "r3-OFF",
+   "arm": "OFF",
+   "usage": {
+    "input": 12,
+    "cache_read": 438698,
+    "cache_creation": 29976,
+    "output": 40,
+    "calls": 6,
+    "processed": 468726,
+    "weighted": 81551.8
+   },
+   "answer": "p4p2a12;PASS;NOT_IMPROVED",
+   "match": true
+  },
+  {
+   "run": "r4-CCR",
+   "arm": "CCR",
+   "usage": {
+    "input": 8,
+    "cache_read": 72351,
+    "cache_creation": 9292,
+    "output": 23,
+    "calls": 4,
+    "processed": 81674,
+    "weighted": 18973.1
+   },
+   "answer": "p4p2a12;PASS;NOT_IMPROVED",
+   "match": true
+  },
+  {
+   "run": "r5-OFF",
+   "arm": "OFF",
+   "usage": {
+    "input": 12,
+    "cache_read": 462697,
+    "cache_creation": 7862,
+    "output": 36,
+    "calls": 6,
+    "processed": 470607,
+    "weighted": 56289.200000000004
+   },
+   "answer": "p4p2a12;PASS;NOT_IMPROVED",
+   "match": true
   }
- ],
- "abort": "FAIL:runaway r1-OFF",
- "modes_restored_sha": "ABSENT"
+ ]
 }
