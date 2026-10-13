@@ -5,6 +5,7 @@ Lands a worktree branch onto the LIVE checkout in one command:
   1. worktree tracked-clean, live HEAD recorded
   2. overlap check: files the branch changes vs live dirty/untracked paths -> refuse
   3. rebase branch onto live HEAD (conflict -> abort, branch restored, refuse)
+  3b. cognitive_ci --check on the rebased worktree (unjustified regression -> refuse; CPP_COG_CI=off skips)
   4. declared tests in the worktree (red -> branch restored, refuse)
   5. live HEAD unchanged + `merge --ff-only` in live (nothing else touches live)
   6. declared tests again in live (red is RECORDED as LANDED_POST_RED, never hidden)
@@ -124,8 +125,14 @@ def _hub(cl, worktree):
     return change_impact.hub_report(cl, worktree)
 
 
+def _cog(worktree):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import cognitive_ci
+    return cognitive_ci.check(worktree)
+
+
 def land(worktree, live, branch=None, tests=(), now=time.time, affected=False, exempt=(), closure_fn=None,
-         baseline_red=(), hub_fn=None):
+         baseline_red=(), hub_fn=None, cog_fn=None):
     r = {"worktree": worktree, "live": live, "tests": list(tests), "ts": int(now()),
          "status": "REFUSED", "reason": "", "landed": False, "affected": bool(affected)}
     if not tests and not affected:
@@ -197,6 +204,15 @@ def land(worktree, live, branch=None, tests=(), now=time.time, affected=False, e
     def restore():
         git(worktree, "reset", "--hard", orig)
 
+    try:  # CDC C7: cognitive regression gate; its own failure fails OPEN, CPP_COG_CI=off skips
+        cog = (cog_fn or _cog)(worktree)
+    except Exception as e:
+        cog = {"status": "OPEN", "reason": "INSTRUMENT_ERROR", "detail": repr(e)[:300]}
+    r["cognitive_ci"] = cog
+    if cog.get("status") == "RED":
+        restore()
+        r["reason"] = "COGNITIVE_REGRESSION"
+        return r
     pre, ok = run_tests(worktree, tests)
     r["tests_before"] = pre
     if not ok and baseline_red:
