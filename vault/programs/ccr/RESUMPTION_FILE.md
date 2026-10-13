@@ -65,4 +65,22 @@ is settled to ccr.
 
 The laptop chain is now A0 -> A1 -> A6 -> A7 -> X2 (forecast 7.5M). A6 `wait`s on WU-A3/A5 receipts in the main tree.
 **Coordinator duty:** fetch `ssh://gex44/home/kobii/missions/ccr-s3 mission/ccr-s3`, merge it into ccr/v4, copy the DONE receipts to stage3/, run each receipt's LAPTOP_APPLY, and book the GEX44 sessions' measured spend into goal ccr.
-**Next 3 actions.** 1. `python tools/gsdx_chain.py status --chain vault/programs/ccr/stage3/chain.json`; GEX44: `tail ~/missions/ccr-s3-data/drive.log`. 2. If `ram_hold` persists for hours, the Owner frees RAM (close idle panes); never kill another session. 3. On chain_alert, read the unit receipt first.
+**GEX44 A2-A5 DONE_WITH_LIMITS (2026-10-13 17:24), merged into ccr/v4 as 72b82fbe (fetch of mission/ccr-s3 72274ac4).**
+Measured processed tokens per unit (GEX44 run files):
+
+| unit | processed | calls | route |
+|---|---|---|---|
+| A2 | 4,302,121 | 51 | 1.5M |
+| A3 | 1,678,774 | 32 | 3M |
+| A4 | 6,352,270 | 66 | 3M |
+| A5 | 2,012,075 | 29 | 3M |
+| total | 14,345,240 | | |
+
+Results:
+- A2: tool schemas are most of the "21K floor" (REDUCIBLE).
+- A3: no class meets the gate (bounded-code APE 46.4 %, n=24).
+- A4: the mod edit was refused, so it ships as `stage3/a4/ccr-mod-a4.patch`. Estate gate: real mod FAIL, patch PASS.
+- A5: ROT -93.1 % weighted, parity, n=1 per arm.
+
+**STOP-LOSS HIT (A2 2.9x and A4 2.1x their routes).** The drive.sh breaker failed open on a string `message` line. PP-CcrChain-Tick is DISABLED, so A0, A1, A6, A7 and X2 do not run until the Owner decides. The A2-A5 receipts are NOT yet copied to the main-tree stage3/. GEX44 spend is unbooked.
+**Next 3 actions.** 1. Owner: resume the laptop chain (re-enable PP-CcrChain-Tick) or close Stage 3 at the GEX44 results. 2. On resume: copy the WU-A2..A5 receipts to the main-tree stage3/ (releases A6) and include the 14.35M in A0's census. 3. Apply ccr-mod-a4.patch in a unit (A6/X2), not by hand. 2. If `ram_hold` persists for hours, the Owner frees RAM (close idle panes); never kill another session. 3. On chain_alert, read the unit receipt first.
