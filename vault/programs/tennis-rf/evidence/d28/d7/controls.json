@@ -1,0 +1,49 @@
+{
+ "d6_changed_in_closure": {
+  "closure": 44,
+  "d6_saw_change": [
+   "fn_80242AC8",
+   "fn_80242CAC",
+   "fn_80242E24"
+  ],
+  "missing": []
+ },
+ "unused_fact": {
+  "closure": [],
+  "info": {
+   "changed_lines": 1,
+   "ids": [
+    "zz_d7_unused_fact"
+   ],
+   "per_fact": {
+    "zz_d7_unused_fact": 0
+   },
+   "typedelta": false
+  },
+  "size": 0
+ },
+ "wide_struct": {
+  "clean_equal": true,
+  "closure_size": 7,
+  "edit": [
+   "s32 f_00;",
+   "u32 f_00;"
+  ],
+  "full_changed": 0,
+  "full_changed_outside_closure": [],
+  "info": {
+   "changed_lines": 2,
+   "ids": [
+    "f_00"
+   ],
+   "per_fact": {
+    "f_00": 7
+   },
+   "typedelta": false
+  },
+  "mentions": 2,
+  "sha_equal": true,
+  "tag": "Ptmf8021F3E4",
+  "typedef": "Ptmf8021F3E4"
+ }
+}
