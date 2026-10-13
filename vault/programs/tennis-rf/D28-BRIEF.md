@@ -28,7 +28,7 @@ ledger: `tools/receipt_judge.py`, `tools/claim_evidence.py`), Ph1b 3c98097b.
   function needs a Proof of Model Necessity line. Abstain (`UNKNOWN` / `INCONCLUSIVE`) over guessing.
 - Every grouping/index carries a red control (permutation must collapse it) or is INCONCLUSIVE.
 - Never edit `M/out/p1p2/` or W7/W12 originals: copy, then change the copy.
-- GEX44 compute jobs: JOBS.md. Approved 7, used 3. Job 4 (unused by D6) is D12's; jobs 5-6 are D8's and job 7 is
+- GEX44 compute jobs: JOBS.md. Approved 7, used 3. Job 4 (unused by D6) is D12b's; jobs 5-6 are D8's and job 7 is
   D9's (Owner, 2026-10-13). Any other unit that needs a job writes `Status: BLOCKED_HUMAN` naming the exact approval.
 - Write outputs as they exist; stop new work at 85 % of your calls and split per PROGRAMME.md step 4.
 - Receipt also gets a `## Plan delta` line: which plan MDG numbers this unit settled and their values.

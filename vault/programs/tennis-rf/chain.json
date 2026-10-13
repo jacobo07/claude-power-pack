@@ -224,11 +224,19 @@
             "after": "D8"
         },
         {
-            "id": "D12",
-            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12.md",
-            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-G.json",
-            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12-receipt.md",
+            "id": "D12a",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12a.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12a-receipt.md",
             "after": "D9"
+        },
+        {
+            "id": "D12b",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12b.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12b-receipt.md",
+            "after": "D12a",
+            "accept": ["DONE", "DONE_WITH_LIMITS"]
         }
     ]
 }
