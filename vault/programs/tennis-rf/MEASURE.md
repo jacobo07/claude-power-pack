@@ -26,3 +26,5 @@ Verified rate: 12/22 sent (n=22), 12/24 drawn (n=24). Exact-match units by prese
 matched at O4p). Versus W10c (no Tennis context): 0/12 -> the context header is the lever. Tokens per function: UNKNOWN
 (one shared worker session, 3,453,372 processed, 52 model calls, for prep + build + send + judge of the whole set).
 Correction: the W12 worker's final message said 14 MATCH; the ledger has 12.
+## D6 first frontier collapse (2026-10-13)
+Layer KNOWLEDGE_SHOCK, n=1 surviving D5 fact (fn_801D022C `void(void)`). Certified 0, retracted 1. D5's SUPPORT (3 fns) reproduces only for `void(void)`, which the callee asm contradicts (reads r3..r7 at entry, variadic); 4 asm-consistent prototypes unlock 0. Full corpus (m2c+lint, 1,797 fns, header + variadic5 prototype): lint-clean 276 -> 276, newly clean [], regressions []. Compile-verified rate: not measured (job 4 unused, empty batch). Commands: `evidence/d28/d6/tools/d6.py variants|full 3` on GEX44.

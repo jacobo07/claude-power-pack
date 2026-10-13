@@ -1,0 +1,56 @@
+[
+ {
+  "n": 43,
+  "n_clean_after": 3,
+  "n_unlock": 3,
+  "new_errors": [],
+  "newly_clean": [
+   "fn_80242AC8",
+   "fn_80242CAC",
+   "fn_80242E24"
+  ],
+  "proto": "void fn_801D022C(void);",
+  "sha": "5b23bcf55d47e59d7ddd1869837186d3a61dd445c7acaf77756663337ac5080c",
+  "tag": "D5_void_void"
+ },
+ {
+  "n": 43,
+  "n_clean_after": 0,
+  "n_unlock": 0,
+  "new_errors": [],
+  "newly_clean": [],
+  "proto": "void fn_801D022C(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4);",
+  "sha": "7e3c5cf63dc41eabe80942697e1f635e433371300849505a6c7c88c0818e7a76",
+  "tag": "fixed5_void"
+ },
+ {
+  "n": 43,
+  "n_clean_after": 0,
+  "n_unlock": 0,
+  "new_errors": [],
+  "newly_clean": [],
+  "proto": "void fn_801D022C(void *arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4);",
+  "sha": "1e00bb844f6c43e1cfba35ec1f80ee171001a44a30b94d9a2d14a44804ef67e0",
+  "tag": "fixed5_ptr_void"
+ },
+ {
+  "n": 43,
+  "n_clean_after": 0,
+  "n_unlock": 0,
+  "new_errors": [],
+  "newly_clean": [],
+  "proto": "void fn_801D022C(void *arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4, ...);",
+  "sha": "4eaf971b63e1bc1d6fb549812e961946321b06149394c8450dbe6f364e4da17e",
+  "tag": "var5_ptr_void"
+ },
+ {
+  "n": 43,
+  "n_clean_after": 0,
+  "n_unlock": 0,
+  "new_errors": [],
+  "newly_clean": [],
+  "proto": "void fn_801D022C(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4, ...);",
+  "sha": "fe12e1f6c3f3e1178f99c36a60653ca7ef52e969d6b9291d3e6c1112e2016813",
+  "tag": "var5_s32_void"
+ }
+]

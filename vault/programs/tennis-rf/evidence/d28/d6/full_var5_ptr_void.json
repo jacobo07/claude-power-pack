@@ -1,0 +1,11 @@
+{
+ "n": 1797,
+ "n_clean_after": 276,
+ "n_clean_before": 276,
+ "n_unlock": 0,
+ "new_errors": [],
+ "newly_clean": [],
+ "proto": "void fn_801D022C(void *arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4, ...);",
+ "sha": "33a9ca26151bbd087aaeafcf0b681efee42ee00e0b4c84b8090896b7cb2e5d1a",
+ "tag": "var5_ptr_void"
+}
