@@ -1,5 +1,5 @@
 # W5 receipt
-Status: PARTIAL -- deploy DONE (steps 1-6); step 7 (author packets/W6.md + route-W6.json) not done: W6-W8 excluded by capital packet b9b456dd.
+Status: PARTIAL -- steps 1-7 DONE (W6.md + route-W6.json authored, Owner 'approve' 2026-10-13); held PARTIAL on purpose: DONE arms W6 via the tick, and W6 has no capital yet (Owner flips it).
 COMMITS: source dgl/durable-goal-lease ef6bd810; merge bd5af362 on dgl/live-merge (W5-r1/r2, 4 conflicts resolved --ours, live a strict superset);
 live merge 187629ad = d05a39f6 + bd5af362 on feature/knowledge-acquisition (session 159949c6, lease L13 dgl:W5:r6, packet b9b456dd).
 Live HEAD at deploy: 187629ad. Pre-merge: 0 staged, no MERGE_HEAD, overlap of the 39 dgl files with 401 committed + 1133 dirty live paths: 0/0.
