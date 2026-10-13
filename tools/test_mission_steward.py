@@ -20,6 +20,7 @@ os.environ["CLAUDE_CONFIG_DIR"] = str(Path(TMP) / "claude")
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
 os.environ.pop("CLAUDECODE", None)
 os.environ.pop("CPP_MISSION_STEWARD", None)
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"  # RAM floor reads host memory; covered by test_a5_u6
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 sys.path.insert(0, str(HERE))

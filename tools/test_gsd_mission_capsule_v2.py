@@ -27,6 +27,7 @@ os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(TMP / "missions" / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = str(TMP / "missions")
 os.environ["CPP_CLAUDE_JOBS_DIR"] = str(TMP / "jobs")
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(TMP / "projects")
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"  # RAM floor reads host memory; covered by test_a5_u6
 os.environ.pop("CPP_CAPSULE_ROLLOVER", None)
 (TMP / "missions" / "sessions").mkdir(parents=True)
 sys.path.insert(0, str(Path(__file__).resolve().parent))

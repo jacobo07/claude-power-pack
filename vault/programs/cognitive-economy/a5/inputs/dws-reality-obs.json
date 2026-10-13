@@ -1,0 +1,282 @@
+{
+ "epoch": "E0",
+ "observations": [
+  {
+   "obs_id": "pair-sobremesa",
+   "host": "sobremesa",
+   "surface": "orca pairing",
+   "preconditions": [
+    "orca-installed"
+   ],
+   "est_minutes": 5,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "pair-portatil",
+   "host": "portatil",
+   "surface": "orca pairing",
+   "preconditions": [
+    "orca-installed"
+   ],
+   "est_minutes": 5,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "login-gex44",
+   "host": "gex44",
+   "surface": "provider login (Claude/Codex)",
+   "preconditions": [
+    "ssh-gex44"
+   ],
+   "est_minutes": 5,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "login-sobremesa",
+   "host": "sobremesa",
+   "surface": "provider login",
+   "preconditions": [
+    "pair-sobremesa"
+   ],
+   "est_minutes": 3,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "login-portatil",
+   "host": "portatil",
+   "surface": "provider login",
+   "preconditions": [
+    "pair-portatil"
+   ],
+   "est_minutes": 3,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "phone-sees-hosts",
+   "host": "phone",
+   "surface": "fleet inventory screen",
+   "preconditions": [
+    "pair-sobremesa",
+    "pair-portatil",
+    "login-gex44"
+   ],
+   "est_minutes": 3,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "phone-terminal-open-resume",
+   "host": "phone",
+   "surface": "terminal create/open/resume",
+   "preconditions": [
+    "phone-sees-hosts"
+   ],
+   "est_minutes": 5,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "prompt-sobremesa",
+   "host": "phone",
+   "surface": "prompt->sobremesa agent",
+   "preconditions": [
+    "phone-terminal-open-resume",
+    "login-sobremesa"
+   ],
+   "est_minutes": 3,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "prompt-portatil",
+   "host": "phone",
+   "surface": "prompt->portatil agent",
+   "preconditions": [
+    "phone-terminal-open-resume",
+    "login-portatil"
+   ],
+   "est_minutes": 3,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "prompt-gex44",
+   "host": "phone",
+   "surface": "prompt->gex44 agent",
+   "preconditions": [
+    "phone-terminal-open-resume",
+    "login-gex44"
+   ],
+   "est_minutes": 3,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "host-events-files",
+   "host": "gex44",
+   "surface": "events/files on owning host",
+   "preconditions": [
+    "prompt-gex44"
+   ],
+   "est_minutes": 2,
+   "owner_needed": false
+  },
+  {
+   "obs_id": "shot-desktop-workstation",
+   "host": "sobremesa",
+   "surface": "screenshot Workstation vs ref-4",
+   "preconditions": [
+    "pair-sobremesa"
+   ],
+   "est_minutes": 2,
+   "owner_needed": false
+  },
+  {
+   "obs_id": "shot-mobile-terminal",
+   "host": "phone",
+   "surface": "screenshot host terminal vs ref-3",
+   "preconditions": [
+    "phone-terminal-open-resume"
+   ],
+   "est_minutes": 2,
+   "owner_needed": true
+  },
+  {
+   "obs_id": "gex44-heavy-exec",
+   "host": "gex44",
+   "surface": "heavy execution run",
+   "preconditions": [
+    "login-gex44"
+   ],
+   "est_minutes": 4,
+   "owner_needed": false
+  }
+ ],
+ "claims": [
+  {
+   "id": "p25-sc4-physical-pcs",
+   "observations": [
+    "pair-sobremesa",
+    "pair-portatil",
+    "login-gex44",
+    "login-sobremesa",
+    "login-portatil",
+    "phone-sees-hosts",
+    "prompt-sobremesa",
+    "prompt-portatil",
+    "prompt-gex44",
+    "host-events-files"
+   ]
+  },
+  {
+   "id": "p25-sc1-terminal-inventory",
+   "observations": [
+    "phone-sees-hosts",
+    "pair-sobremesa",
+    "pair-portatil",
+    "login-gex44"
+   ]
+  },
+  {
+   "id": "p25-sc2-mobile-create-open-resume",
+   "observations": [
+    "phone-terminal-open-resume"
+   ]
+  },
+  {
+   "id": "p25-sc3-prompt-to-right-host",
+   "observations": [
+    "prompt-sobremesa",
+    "prompt-portatil",
+    "prompt-gex44",
+    "host-events-files"
+   ]
+  },
+  {
+   "id": "vis-1-desktop-workstation-calco",
+   "observations": [
+    "shot-desktop-workstation"
+   ]
+  },
+  {
+   "id": "vis-2-mobile-terminal-calco",
+   "observations": [
+    "shot-mobile-terminal"
+   ]
+  },
+  {
+   "id": "vis-pixel-gate",
+   "observations": [
+    "shot-desktop-workstation",
+    "shot-mobile-terminal"
+   ]
+  },
+  {
+   "id": "row-46",
+   "observations": [
+    "gex44-heavy-exec",
+    "login-gex44"
+   ]
+  },
+  {
+   "id": "row-51",
+   "observations": [
+    "phone-sees-hosts",
+    "prompt-sobremesa",
+    "prompt-portatil",
+    "prompt-gex44"
+   ]
+  },
+  {
+   "id": "row-75",
+   "observations": [
+    "pair-sobremesa",
+    "pair-portatil",
+    "prompt-sobremesa",
+    "prompt-portatil"
+   ]
+  },
+  {
+   "id": "row-12",
+   "observations": [
+    "phone-sees-hosts",
+    "phone-terminal-open-resume"
+   ]
+  }
+ ],
+ "sessions": [
+  {
+   "id": "S-sobremesa",
+   "hosts": [
+    "sobremesa"
+   ],
+   "setup_minutes": 10
+  },
+  {
+   "id": "S-portatil",
+   "hosts": [
+    "portatil"
+   ],
+   "setup_minutes": 10
+  },
+  {
+   "id": "S-gex44",
+   "hosts": [
+    "gex44"
+   ],
+   "setup_minutes": 10
+  },
+  {
+   "id": "S-phone",
+   "hosts": [
+    "phone"
+   ],
+   "setup_minutes": 10
+  },
+  {
+   "id": "S-all",
+   "hosts": [
+    "sobremesa",
+    "portatil",
+    "gex44",
+    "phone"
+   ],
+   "setup_minutes": 15
+  }
+ ]
+}

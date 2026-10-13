@@ -1,0 +1,3648 @@
+{
+ "schema": "dws-claims-semantic/1",
+ "dws_head": "466b62d82f9b8892753b66e5d274a0d9f0e812a7",
+ "compiled_at": "2026-10-09T22:05:44+00:00",
+ "worker_floor": 13507,
+ "label": "new architecture",
+ "claims": [
+  {
+   "id": "row-1",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Global Workspace: ABSENT",
+   "phases": [
+    4
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-2",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Account-scoped discovery: ABSENT",
+   "phases": [
+    4
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-4",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Workstream-scoped authorization: ABSENT",
+   "phases": [
+    4,
+    12
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-5",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Workstream identity: PARTIAL",
+   "phases": [
+    4
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-6",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Mission integration: PARTIAL",
+   "phases": [
+    4
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-7",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Execution identity: PARTIAL",
+   "phases": [
+    4
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-8",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Session virtualization: PARTIAL",
+   "phases": [
+    12
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-12",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Mobile projection: PARTIAL",
+   "phases": [
+    4
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-13",
+   "class": "sleeping",
+   "status": "open",
+   "why": "UWCP continuity: PARTIAL",
+   "phases": [
+    4
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-14",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Active frontier: PARTIAL",
+   "phases": [
+    4
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-15",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Evidence preservation: PARTIAL",
+   "phases": [
+    4
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-16",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Workspace Capsule: PARTIAL",
+   "phases": [],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-17",
+   "class": "known_transform",
+   "status": "open",
+   "why": "GEX44 Node Manifest: PARTIAL",
+   "phases": [
+    5
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p5",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-19",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Placement Engine integration: PARTIAL",
+   "phases": [
+    6
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-20",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Resource Governor: ABSENT",
+   "phases": [
+    6
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-21",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Resource leases: ABSENT",
+   "phases": [
+    6
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-22",
+   "class": "sleeping",
+   "status": "open",
+   "why": "RAM-aware scheduling: ABSENT",
+   "phases": [
+    6
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-23",
+   "class": "sleeping",
+   "status": "open",
+   "why": "GPU-aware scheduling: ABSENT",
+   "phases": [
+    6
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-24",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Workspace locality: ABSENT",
+   "phases": [
+    9
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-25",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Model availability: PARTIAL",
+   "phases": [
+    8
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-26",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Model residency: ABSENT",
+   "phases": [
+    8
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-27",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Local inference: UNKNOWN",
+   "phases": [
+    8
+   ],
+   "matrix_state": "UNKNOWN"
+  },
+  {
+   "id": "row-28",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "Cognitive Routing: PARTIAL",
+   "phases": [],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "claim-row-28",
+     "proof": "gate-row-28",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-row-28",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-30",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Provider quota: PARTIAL",
+   "phases": [
+    9
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-31",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "Agent identity portability: PARTIAL",
+   "phases": [],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "claim-row-31",
+     "proof": "gate-row-31",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-row-31",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-32",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Model switching: PARTIAL",
+   "phases": [
+    8
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-33",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Host switching: PARTIAL",
+   "phases": [
+    12
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-34",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Automatic distribution: ABSENT",
+   "phases": [
+    9
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-35",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Mission decomposition: PARTIAL",
+   "phases": [
+    9
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-36",
+   "class": "known_transform",
+   "status": "open",
+   "why": "Independent review: PARTIAL",
+   "phases": [
+    7
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p7",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-37",
+   "class": "known_transform",
+   "status": "open",
+   "why": "Verification policy: PARTIAL",
+   "phases": [
+    7
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p7",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-38",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Operator Events: PARTIAL",
+   "phases": [
+    4
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-39",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Multi-client consistency: ABSENT",
+   "phases": [
+    4,
+    12
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-40",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Observability: ABSENT",
+   "phases": [
+    9
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-41",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Execution correlation: ABSENT",
+   "phases": [
+    9
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-43",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Economics telemetry: ABSENT",
+   "phases": [
+    10
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-44",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Adaptive-prior dataset: ABSENT",
+   "phases": [
+    10
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-45",
+   "class": "known_transform",
+   "status": "open",
+   "why": "Local RAM reduction: PARTIAL",
+   "phases": [
+    2
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p2",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-46",
+   "class": "owner_reality",
+   "status": "open",
+   "why": "GEX44 heavy execution: PARTIAL",
+   "phases": [
+    2
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "obs-gex44-heavy-exec",
+     "satisfier": "OBSERVATION",
+     "observation": "gex44-heavy-exec",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-login-gex44",
+     "satisfier": "OBSERVATION",
+     "observation": "login-gex44",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "owner-physical",
+     "satisfier": "OWNER",
+     "cat": "owner",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-47",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Failure recovery: PARTIAL",
+   "phases": [
+    12
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-48",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Protocol versioning: PARTIAL",
+   "phases": [
+    12
+   ],
+   "matrix_state": "PARTIAL"
+  },
+  {
+   "id": "row-49",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Security: ABSENT",
+   "phases": [
+    12
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-50",
+   "class": "novel",
+   "status": "open",
+   "why": "Performance: PARTIAL",
+   "phases": [
+    2,
+    12
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p2",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-51",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Product Reality: ABSENT",
+   "phases": [
+    12
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-52",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Knowledge Vault: ABSENT",
+   "phases": [
+    13
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-53",
+   "class": "sleeping",
+   "status": "open",
+   "why": "UKDL: ABSENT",
+   "phases": [
+    13
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-54",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Constitutive Baseline Ratchet: ABSENT",
+   "phases": [
+    13
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-55",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Inheritance verification: ABSENT",
+   "phases": [
+    13
+   ],
+   "matrix_state": "ABSENT"
+  },
+  {
+   "id": "row-56",
+   "class": "known_transform",
+   "status": "open",
+   "why": "HF Host identity for SSH targets: PARTIAL",
+   "phases": [
+    14
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p14",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-59",
+   "class": "known_transform",
+   "status": "open",
+   "why": "HF Remote-first continuity: PARTIAL",
+   "phases": [
+    15
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p15",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-60",
+   "class": "known_transform",
+   "status": "open",
+   "why": "HF Logical workspace identity without a remote: PARTIAL",
+   "phases": [
+    16
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p16",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-61",
+   "class": "known_transform",
+   "status": "open",
+   "why": "HF Replica topology surface: PARTIAL",
+   "phases": [
+    16
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p16",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-62",
+   "class": "novel",
+   "status": "open",
+   "why": "HF Replica state model: ABSENT",
+   "phases": [
+    17
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p17",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-63",
+   "class": "novel",
+   "status": "open",
+   "why": "HF Cross-host comparison transport: ABSENT",
+   "phases": [
+    17
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p17",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-64",
+   "class": "novel",
+   "status": "open",
+   "why": "HF Dirty-state capsule: ABSENT",
+   "phases": [
+    17
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p17",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-65",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "HF One-way safe sync: ABSENT",
+   "phases": [
+    18
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-18",
+     "proof": "gate-p18",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p18",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-66",
+   "class": "novel",
+   "status": "open",
+   "why": "HF Divergence and conflict workflow: ABSENT",
+   "phases": [
+    19
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p19",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-67",
+   "class": "novel",
+   "status": "open",
+   "why": "HF Dirty-both reconciliation: ABSENT",
+   "phases": [
+    19
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p19",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-70",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "HF Continue here across hosts: ABSENT",
+   "phases": [
+    21
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-21",
+     "proof": "gate-p21",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p21",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-71",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "HF SSH targets in fleet observation: ABSENT",
+   "phases": [
+    22
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-22",
+     "proof": "gate-p22",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p22",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-72",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "HF Jobs placed across hosts: ABSENT",
+   "phases": [
+    22
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-22",
+     "proof": "gate-p22",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p22",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-73",
+   "class": "novel",
+   "status": "open",
+   "why": "HF Host loss and reconnect: PARTIAL",
+   "phases": [
+    23
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p23",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-74",
+   "class": "novel",
+   "status": "open",
+   "why": "HF Mixed relay versions fail closed: PARTIAL",
+   "phases": [
+    23
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p23",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-75",
+   "class": "known_transform",
+   "status": "open",
+   "why": "HF Real two-host Production Reality: PARTIAL",
+   "phases": [
+    15
+   ],
+   "matrix_state": "PARTIAL",
+   "obligations": [
+    {
+     "id": "obs-pair-sobremesa",
+     "satisfier": "OBSERVATION",
+     "observation": "pair-sobremesa",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-pair-portatil",
+     "satisfier": "OBSERVATION",
+     "observation": "pair-portatil",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-prompt-sobremesa",
+     "satisfier": "OBSERVATION",
+     "observation": "prompt-sobremesa",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-prompt-portatil",
+     "satisfier": "OBSERVATION",
+     "observation": "prompt-portatil",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p15",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "row-76",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "HF Multi-host baseline family: ABSENT",
+   "phases": [
+    24
+   ],
+   "matrix_state": "ABSENT",
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-24",
+     "proof": "gate-p24",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "gate-p24",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p20-goal-verify",
+   "class": "known_transform",
+   "status": "open",
+   "why": "phase-20 verifier (stub on disk)",
+   "phases": [
+    20
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p20-goal-verify",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-restamp",
+   "class": "known_transform",
+   "status": "open",
+   "why": "re-run two-host spec on fresh p15 root",
+   "phases": [
+    15
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "exec",
+     "satisfier": "MODEL",
+     "model_class": "known_transform",
+     "cat": "known_transform",
+     "alternatives": [
+      "TRANSFORM"
+     ],
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p15-restamp",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p25-sc1-terminal-inventory",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "per-host canonical terminal inventory",
+   "phases": [
+    25
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "obs-phone-sees-hosts",
+     "satisfier": "OBSERVATION",
+     "observation": "phone-sees-hosts",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-pair-sobremesa",
+     "satisfier": "OBSERVATION",
+     "observation": "pair-sobremesa",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-pair-portatil",
+     "satisfier": "OBSERVATION",
+     "observation": "pair-portatil",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-login-gex44",
+     "satisfier": "OBSERVATION",
+     "observation": "login-gex44",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-25",
+     "proof": "p25-sc1-terminal-inventory",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p25-sc1-terminal-inventory",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p25-sc2-mobile-create-open-resume",
+   "class": "novel",
+   "status": "open",
+   "why": "mobile/ is pure upstream: new surface",
+   "phases": [
+    25
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "obs-phone-terminal-open-resume",
+     "satisfier": "OBSERVATION",
+     "observation": "phone-terminal-open-resume",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p25-sc2-mobile-create-open-resume",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p25-sc3-prompt-to-right-host",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "prompt reaches the chosen host only",
+   "phases": [
+    25
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "obs-prompt-sobremesa",
+     "satisfier": "OBSERVATION",
+     "observation": "prompt-sobremesa",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-prompt-portatil",
+     "satisfier": "OBSERVATION",
+     "observation": "prompt-portatil",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-prompt-gex44",
+     "satisfier": "OBSERVATION",
+     "observation": "prompt-gex44",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-host-events-files",
+     "satisfier": "OBSERVATION",
+     "observation": "host-events-files",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-25",
+     "proof": "p25-sc3-prompt-to-right-host",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p25-sc3-prompt-to-right-host",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p25-sc4-drive-physical-rung",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "harness for 2-3 PCs + phone",
+   "phases": [
+    25
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-25",
+     "proof": "p25-sc4-drive-physical-rung",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p25-sc4-drive-physical-rung",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p25-sc4-physical-pcs",
+   "class": "owner_reality",
+   "status": "open",
+   "why": "Owner's physical PCs + phone + provider logins",
+   "phases": [
+    25
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "obs-pair-sobremesa",
+     "satisfier": "OBSERVATION",
+     "observation": "pair-sobremesa",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-pair-portatil",
+     "satisfier": "OBSERVATION",
+     "observation": "pair-portatil",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-login-gex44",
+     "satisfier": "OBSERVATION",
+     "observation": "login-gex44",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-login-sobremesa",
+     "satisfier": "OBSERVATION",
+     "observation": "login-sobremesa",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-login-portatil",
+     "satisfier": "OBSERVATION",
+     "observation": "login-portatil",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-phone-sees-hosts",
+     "satisfier": "OBSERVATION",
+     "observation": "phone-sees-hosts",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-prompt-sobremesa",
+     "satisfier": "OBSERVATION",
+     "observation": "prompt-sobremesa",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-prompt-portatil",
+     "satisfier": "OBSERVATION",
+     "observation": "prompt-portatil",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-prompt-gex44",
+     "satisfier": "OBSERVATION",
+     "observation": "prompt-gex44",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "obs-host-events-files",
+     "satisfier": "OBSERVATION",
+     "observation": "host-events-files",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "owner-physical",
+     "satisfier": "OWNER",
+     "cat": "owner",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p26-sc1-manifest-baseline",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "CPP baseline+fingerprint in node manifest",
+   "phases": [
+    26
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-26",
+     "proof": "p26-sc1-manifest-baseline",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p26-sc1-manifest-baseline",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p26-sc2-required-baseline",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "project-required baseline in env contract",
+   "phases": [
+    26
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-26",
+     "proof": "p26-sc2-required-baseline",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p26-sc2-required-baseline",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p26-sc3-authorized-materialize",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "materialize via phase-20 runner only",
+   "phases": [
+    26
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-26",
+     "proof": "p26-sc3-authorized-materialize",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p26-sc3-authorized-materialize",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p26-sc4-rule-scope-split",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "project rules travel, institutional do not",
+   "phases": [
+    26
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-26",
+     "proof": "p26-sc4-rule-scope-split",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p26-sc4-rule-scope-split",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p27-sc1-3-5-ab-slice",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "A+B pair, prompt on A, continue on B, divergence kept",
+   "phases": [
+    27
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-27",
+     "proof": "p27-sc1-3-5-ab-slice",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p27-sc1-3-5-ab-slice",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p27-sc4-same-workstream",
+   "class": "sleeping",
+   "status": "open",
+   "why": "needs phase 4 / uwcp.control/1",
+   "phases": [
+    27
+   ],
+   "matrix_state": null
+  },
+  {
+   "id": "p28-objective-c",
+   "class": "sleeping",
+   "status": "open",
+   "why": "needs phases 4,6,8-11,22",
+   "phases": [
+    28
+   ],
+   "matrix_state": null
+  },
+  {
+   "id": "p4-sc5-intake",
+   "class": "sleeping",
+   "status": "open",
+   "why": "Workstream visibility/scope/lineage",
+   "phases": [
+    4
+   ],
+   "matrix_state": null
+  },
+  {
+   "id": "p6-sc4-intake",
+   "class": "sleeping",
+   "status": "open",
+   "why": "one rule set, RAM/VRAM-aware, forged leases",
+   "phases": [
+    6
+   ],
+   "matrix_state": null
+  },
+  {
+   "id": "p9-sc4-intake",
+   "class": "sleeping",
+   "status": "open",
+   "why": "2 jobs on 2 hosts, stale-client refusal, e2e trace",
+   "phases": [
+    9
+   ],
+   "matrix_state": null
+  },
+  {
+   "id": "p21-sc3-safe-continue",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "sync only when proven + conformance first",
+   "phases": [
+    21
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-21",
+     "proof": "p21-sc3-safe-continue",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p21-sc3-safe-continue",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p21-sc4-workstream",
+   "class": "sleeping",
+   "status": "open",
+   "why": "same Workstream across hosts",
+   "phases": [
+    21
+   ],
+   "matrix_state": null
+  },
+  {
+   "id": "p22-sc3-observe-not-authorize",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "observed != authorized",
+   "phases": [
+    22
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-22",
+     "proof": "p22-sc3-observe-not-authorize",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p22-sc3-observe-not-authorize",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p23-sc3-backfill-event-loss",
+   "class": "novel",
+   "status": "open",
+   "why": "secondary-client backfill + event loss",
+   "phases": [
+    23
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "novel",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p23-sc3-backfill-event-loss",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p24-sc5-cumulative-two-host",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "one cumulative 16-23 rung",
+   "phases": [
+    24
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-24",
+     "proof": "p24-sc5-cumulative-two-host",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p24-sc5-cumulative-two-host",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p24-sc6-fork-case",
+   "class": "bounded_coding",
+   "status": "open",
+   "why": "fork stays two Projects",
+   "phases": [
+    24
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "family-code",
+     "satisfier": "TRANSFORM",
+     "family": "phase-24",
+     "proof": "p24-sc6-fork-case",
+     "cat": "family",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "p24-sc6-fork-case",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "vis-1-desktop-workstation-calco",
+   "class": "novel",
+   "status": "open",
+   "why": "Image #4: Workstation fleet page pixel-identical",
+   "phases": [
+    25
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "obs-shot-desktop-workstation",
+     "satisfier": "OBSERVATION",
+     "observation": "shot-desktop-workstation",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "visual",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "vis-1-desktop-workstation-calco",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "vis-2-mobile-terminal-calco",
+   "class": "novel",
+   "status": "open",
+   "why": "Image #3: mobile host terminal pixel-identical",
+   "phases": [
+    25
+   ],
+   "matrix_state": null,
+   "obligations": [
+    {
+     "id": "obs-shot-mobile-terminal",
+     "satisfier": "OBSERVATION",
+     "observation": "shot-mobile-terminal",
+     "cat": "reality",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      },
+      {
+       "id": "reality-epoch",
+       "kind": "epoch != E0"
+      }
+     ]
+    },
+    {
+     "id": "decision",
+     "satisfier": "MODEL",
+     "model_class": "novel",
+     "cat": "visual",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "proof",
+     "satisfier": "PROOF",
+     "proof": "vis-2-mobile-terminal-calco",
+     "cat": "proof",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    },
+    {
+     "id": "evidence-stamp",
+     "satisfier": "TOOL",
+     "cat": "tool",
+     "invalidators": [
+      {
+       "id": "matrix-row-state-change",
+       "kind": "matrix row state differs from compile time"
+      },
+      {
+       "id": "dws-head-moved",
+       "kind": "DWS HEAD != 466b62d82"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "vis-pixel-gate",
+   "class": "deterministic",
+   "status": "open",
+   "why": "screenshot diff vs reference PNG (script, no model)",
+   "phases": [
+    25
+   ],
+   "matrix_state": null
+  }
+ ],
+ "judgments": [
+  "row-28: matrix row lists no phase; family and proof are claim-own (no sharing assumed).",
+  "row-31: matrix row lists no phase; family and proof are claim-own (no sharing assumed).",
+  "row-50: phases [2, 12]; proof/family keyed to the first phase 2 only (second not priced separately).",
+  "Class->obligation mapping is fixed by rule: known_transform=MODEL(known_transform)+PROOF+TOOL; bounded_coding=TRANSFORM family(by phase)+PROOF+TOOL; novel=MODEL(novel)+PROOF+TOOL; owner_reality=OWNER+OBSERVATION. The budget's class labels are inherited, not re-judged.",
+  "Family key = phase (code surface shared inside a phase); success-criterion claims (p*/vis*) carry their own proof id, matrix rows share one proof per phase.",
+  "known_transform is modelled as a MODEL obligation (one transform pass per claim): the budget JSON gives no transform family for these rows; each could collapse into a family if the Owner confirms (UNKNOWN, not assumed).",
+  "Observations come from inputs/dws-reality-obs.json (U4, hand-derived from ROADMAP phase 25); no other claim has an observation obligation (UNKNOWN whether rows 17..76 need Owner-visible evidence).",
+  "owner_reality claims are zero-token in cost_to_completion; their automated captures are priced separately as 'uncovered observations' (see budget).",
+  "TOOL obligation 'evidence-stamp' (matrix/evidence record by script) is assumed NO_COMPUTE for every open claim; no tool exists yet for it in DWS (UNKNOWN).",
+  "No obligation is reused as NO_WORK: no proof in the DWS tree is valid with a measured invalidator at compile time, so NO_WORK = 0.",
+  "46 sleeping claims (parked by the budget compile, phases not unblocked) carry no obligations and are NOT priced (UNKNOWN cost)."
+ ],
+ "profiles": {
+  "lower": {
+   "known_transform": {
+    "calls": 2
+   },
+   "bounded_coding": {
+    "calls": 6
+   },
+   "novel": {
+    "calls": 15
+   }
+  },
+  "expected": {
+   "known_transform": {
+    "calls": 19
+   },
+   "bounded_coding": {
+    "calls": 64
+   },
+   "novel": {
+    "calls": 100
+   }
+  },
+  "p90": {
+   "known_transform": {
+    "calls": 189
+   },
+   "bounded_coding": {
+    "calls": 676
+   },
+   "novel": {
+    "calls": 661
+   }
+  }
+ }
+}
