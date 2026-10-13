@@ -1,0 +1,1 @@
+{"unit":"gsdx-pcc-P5","envelope":{"target":70000000,"warn":75000000,"stop":80000000,"calls":500},"workers":[{"name":"gsdx-pcc-p5","profile":"top-level-worker","calls":500,"packet":7500}]}
