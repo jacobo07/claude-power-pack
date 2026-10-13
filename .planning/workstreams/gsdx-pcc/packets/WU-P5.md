@@ -56,7 +56,7 @@ After the last plan: `05-VERIFICATION.md` (run every human_verification check yo
 plane), STATE.md to Phase 5 complete (`current_phase: 6`, status planning), tick ROADMAP Phase 5, commit.
 
 ## Budget
-Envelope `route-P5.json`: target 70M, warn 75M, stop 80M, 500 calls (breaker: 750 tool calls). Phases 3 and 4
+Envelope `route-P5.json`: target 70M, warn 75M, stop 80M, 480 calls (breaker: 720 tool calls). Phases 3 and 4
 measured about 37M each over about 300 calls. At SESSION BUDGET warn: finish and commit the current plan, then go
 STRAIGHT to the receipt. Read burn only from `~/.claude/state/session-budget-<your sid>.state.json` (`tokens`,
 `calls`). Never `run_in_background` for a check you need this turn; pass `timeout: 600000` on long PowerShell calls;
