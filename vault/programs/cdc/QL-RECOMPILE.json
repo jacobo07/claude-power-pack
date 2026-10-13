@@ -1,0 +1,782 @@
+{
+  "unit": "C12",
+  "generated_for": "2026-10-13",
+  "read_only": true,
+  "reality": {
+    "branch": "feat/ql-organic-acquisition",
+    "head": "0d88a1ae (2026-10-08 23:10), origin == local",
+    "behind_origin_main": 42,
+    "dirty_paths": [
+      "_audit_cache/source_map.json",
+      "vault/handoffs/ESCALATED.md",
+      "vault/handoffs/escalations.json",
+      "vault/handoffs/mirror-drift-*.md"
+    ],
+    "pr_524": "OPEN draft, mergeState UNSTABLE; last CI run 2026-10-08: UI typecheck+build FAILURE, rest SUCCESS/SKIPPED",
+    "pr_466": "OPEN",
+    "pr_435": "OPEN (conflicts main on faq/page.tsx per RESUMPTION)",
+    "pr_517": "MERGED 2026-10-08",
+    "mission": "m-23568bbcd2f9 HALTED, owner DEAD (master plan 2026-10-10); nothing burning",
+    "phases_sealed": "W1 plans 01-01..01-05 sealed; Phase 1 verify/close not run; Phases 2-8 not started; workstream STATE stale (stopped_at 01-02)",
+    "lawyer": "P-001 SENT 2026-10-08 21:08Z, Gmail 1a11d58817cf06fa; no reply recorded in repo (UNKNOWN whether one exists); never resend",
+    "cendoj_620_2026": "UNKNOWN (METHOD_BLIND, CENDOJ 403); BOE-A-2026-13893 gives num. 629/2026 for 21 May sentencia",
+    "valencian_decree": "UNKNOWN_UNREACHABLE (DOGV TLS)",
+    "head_defects_seen_by_grep": "sitemap lastModified: now (L45-L113); og image = InfinityOps cortex-compass.png; lang={locale} (QL-host value unproven)"
+  },
+  "autopsy_P1": {
+    "tokens": 126255827,
+    "calls": 807,
+    "tokens_per_call": 156449,
+    "roles_share": {
+      "READ": 0.318,
+      "unattributed": 0.301,
+      "IMPLEMENT": 0.111,
+      "NOVELTY": 0.095,
+      "CONTROL": 0.05,
+      "CONTEXT_FAULT": 0.043,
+      "RECOVERY": 0.026,
+      "PLAN": 0.026,
+      "REREAD": 0.024,
+      "RESEARCH": 0.006,
+      "PROOF": 0,
+      "STATUS": 0,
+      "REPAIR": 0
+    },
+    "avoidable_under_cdc_rules_share_lower_bound": 0.093,
+    "avoidable_note": "CONTEXT_FAULT+RECOVERY+REREAD = 9.3% by role only; breaker-trip tokens not computed on this trace; NOT_PROVEN as saving",
+    "necessary": "IMPLEMENT 11.1% + NOVELTY 9.5% (legal-text pipeline new files) + READ that feeds them; 'READ 31.8%' mostly subagent re-priming (39.3M of 40.1M in subagents)",
+    "topology_amplification": "7 subagents carry 118.7M of 126.3M tokens (~94%); main thread only 9.2M; topology, not work, is the cost",
+    "transitions": {
+      "commit": 12,
+      "new_file": 77,
+      "claim": 8,
+      "red_green": 0,
+      "tokens_per_transition": 1301606
+    },
+    "capital_created": "W1 sealed: ownership checker (39/39 mutants red), sources tool (43/43), registry+validator (16 debt claims), lawyer packet P-001 sent; prod unchanged",
+    "survival_under_cdc_rules": "UNKNOWN as replay of the 807 calls was not re-run under C3/C4; C10 families show 7-20% avoidable (replay estimate)"
+  },
+  "taxonomy_counts": {
+    "PROOF_ONLY": 1,
+    "NO_WORK": 1,
+    "OWNER_ONLY": 1,
+    "EXTERNAL_WAIT": 4,
+    "CERTIFIED_TRANSFORM": 12,
+    "REUSE_EXISTING": 3,
+    "DERIVED": 3,
+    "SUPERSEDED": 1,
+    "BOUNDED_CODING": 17,
+    "DETERMINISTIC": 7,
+    "UNKNOWN": 1,
+    "NOVEL_COGNITION": 2
+  },
+  "claims": [
+    {
+      "id": "p1-verify-work",
+      "family": "F1",
+      "cdc_class": "PROOF_ONLY",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": "Phase-1 verifier over sealed 01-01..01-05"
+    },
+    {
+      "id": "p1-push-pr524",
+      "family": "F1",
+      "cdc_class": "NO_WORK",
+      "tool_class": "satisfied",
+      "est_calls": 0,
+      "note": "origin/feat == HEAD 0d88a1ae; PR #524 OPEN draft"
+    },
+    {
+      "id": "p1-cendoj-620-human-search",
+      "family": "F1",
+      "cdc_class": "OWNER_ONLY",
+      "tool_class": "owner_reality",
+      "est_calls": 0,
+      "note": "CENDOJ 403 to automation; human browser search (P-001-19)"
+    },
+    {
+      "id": "p1-lawyer-reply-ingest",
+      "family": "F1",
+      "cdc_class": "EXTERNAL_WAIT",
+      "tool_class": "owner_reality",
+      "est_calls": 0,
+      "note": "reply in Gmail thread 1a11d58817cf06fa; untrusted until attributable per-item reading"
+    },
+    {
+      "id": "p1-lawyer-reply-record",
+      "family": "F1",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": "record readings into registry once a reply exists"
+    },
+    {
+      "id": "p6-valencian-decree-identify",
+      "family": "F1",
+      "cdc_class": "EXTERNAL_WAIT",
+      "tool_class": "owner_reality",
+      "est_calls": 0,
+      "note": "DOGV TLS failure not bypassed; UNKNOWN_UNREACHABLE"
+    },
+    {
+      "id": "p2-merge-origin-main",
+      "family": "F2",
+      "cdc_class": "REUSE_EXISTING",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": "branch is 42 commits behind origin/main"
+    },
+    {
+      "id": "p2-lang-en",
+      "family": "F2",
+      "cdc_class": "DERIVED",
+      "tool_class": "bounded_coding",
+      "est_calls": 2,
+      "note": "layout reads locale; QL-host value unproven at HEAD; crawl decides"
+    },
+    {
+      "id": "p2-entity-graph-reverify-d3",
+      "family": "F2",
+      "cdc_class": "SUPERSEDED",
+      "tool_class": "satisfied",
+      "est_calls": 0,
+      "note": "#517 MERGED 2026-10-08; checked by the deterministic crawl, not a claim"
+    },
+    {
+      "id": "p2-og-image",
+      "family": "F2",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 3,
+      "note": "HEAD og image is InfinityOps cortex-compass.png"
+    },
+    {
+      "id": "p2-real-lastmod",
+      "family": "F2",
+      "cdc_class": "REUSE_EXISTING",
+      "tool_class": "known_transform",
+      "est_calls": 2,
+      "note": "PR #466 (open) already drops fabricated lastmod; HEAD sitemap still lastModified: now"
+    },
+    {
+      "id": "p2-reviewer-person-byline",
+      "family": "F2",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 4,
+      "note": "schema must equal visible byline; no invented credentials"
+    },
+    {
+      "id": "p2-attribution-landing-to-ql-case",
+      "family": "F2",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 6,
+      "note": "migration + capture + prod DB observation"
+    },
+    {
+      "id": "p2-gsc-read-router",
+      "family": "F2",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 4,
+      "note": "google-account-router read-only"
+    },
+    {
+      "id": "p2-pr-merge-cd-prod-smoke",
+      "family": "F2",
+      "cdc_class": "DETERMINISTIC",
+      "tool_class": "deterministic",
+      "est_calls": 0,
+      "note": "one parameterised ship+smoke script, reused by every family"
+    },
+    {
+      "id": "p3-services-home-check-intent",
+      "family": "F3",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 5,
+      "note": ""
+    },
+    {
+      "id": "p3-methodology",
+      "family": "F3",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 4,
+      "note": "rendered from claims registry"
+    },
+    {
+      "id": "p3-what-we-cannot-guarantee",
+      "family": "F3",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 2,
+      "note": "derived from registry not-checked list"
+    },
+    {
+      "id": "p3-cta-audit",
+      "family": "F3",
+      "cdc_class": "DETERMINISTIC",
+      "tool_class": "deterministic",
+      "est_calls": 0,
+      "note": "crawl script; fixes below"
+    },
+    {
+      "id": "p3-cta-fixes",
+      "family": "F3",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 2,
+      "note": "only what the crawl flags (count UNKNOWN)"
+    },
+    {
+      "id": "p3-pr-merge-cd-prod-smoke",
+      "family": "F3",
+      "cdc_class": "DETERMINISTIC",
+      "tool_class": "deterministic",
+      "est_calls": 0,
+      "note": ""
+    },
+    {
+      "id": "p4-research-plan-check",
+      "family": "F4",
+      "cdc_class": "DERIVED",
+      "tool_class": "novel",
+      "est_calls": 6,
+      "note": "OWNERSHIP_MAP (49 families) already decides ownership; only SERP differentiation is new"
+    },
+    {
+      "id": "p4-guides-collection",
+      "family": "F4",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 5,
+      "note": "route + template + first asset"
+    },
+    {
+      "id": "p4-asset-registry-after-ruling",
+      "family": "F4",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 3,
+      "note": "first asset on the template"
+    },
+    {
+      "id": "p4-asset-community-ban-17-12",
+      "family": "F4",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": "LC-006/LC-008 sealed"
+    },
+    {
+      "id": "p4-asset-licence-transfer",
+      "family": "F4",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": ""
+    },
+    {
+      "id": "p4-asset-licence-check-andalucia",
+      "family": "F4",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": "Decreto 28/2016 stored"
+    },
+    {
+      "id": "p4-asset-buyer-laws-2026",
+      "family": "F4",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": ""
+    },
+    {
+      "id": "p4-asset-6",
+      "family": "F4",
+      "cdc_class": "UNKNOWN",
+      "tool_class": "sleeping",
+      "est_calls": 0,
+      "note": "cap is <=6; demand UNKNOWN (15/17 seeds null); decided by scale/improve/pause"
+    },
+    {
+      "id": "p4-lawyer-review-recorded",
+      "family": "F4",
+      "cdc_class": "EXTERNAL_WAIT",
+      "tool_class": "owner_reality",
+      "est_calls": 0,
+      "note": "legal wording publishes only after recorded review"
+    },
+    {
+      "id": "p4-links-sitemap-schema",
+      "family": "F4",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 2,
+      "note": ""
+    },
+    {
+      "id": "p4-pr-merge-cd-prod-smoke",
+      "family": "F4",
+      "cdc_class": "DETERMINISTIC",
+      "tool_class": "deterministic",
+      "est_calls": 0,
+      "note": ""
+    },
+    {
+      "id": "p5-faro-panel-30-prompts",
+      "family": "F5",
+      "cdc_class": "DERIVED",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": "prompts derive from ownership map families"
+    },
+    {
+      "id": "p5-ql-ledger",
+      "family": "F5",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 2,
+      "note": "separate ledger dir, cap $10/mo"
+    },
+    {
+      "id": "p5-gex44-run-provenance",
+      "family": "F5",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 4,
+      "note": "deploy on existing FARO install"
+    },
+    {
+      "id": "p5-serp-baseline-dataforseo",
+      "family": "F5",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 3,
+      "note": "inside the $10 cap"
+    },
+    {
+      "id": "p5-mention-citation-recommendation-wilson",
+      "family": "F5",
+      "cdc_class": "REUSE_EXISTING",
+      "tool_class": "known_transform",
+      "est_calls": 2,
+      "note": "reuse FARO Wilson if present; UNKNOWN until read"
+    },
+    {
+      "id": "p5-report",
+      "family": "F5",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 2,
+      "note": ""
+    },
+    {
+      "id": "p6-andalucia-by-evidence",
+      "family": "F6",
+      "cdc_class": "NOVEL_COGNITION",
+      "tool_class": "novel",
+      "est_calls": 8,
+      "note": "real local sources only"
+    },
+    {
+      "id": "p6-cvalenciana-by-evidence",
+      "family": "F6",
+      "cdc_class": "EXTERNAL_WAIT",
+      "tool_class": "sleeping",
+      "est_calls": 0,
+      "note": "blocked by the unidentified decree"
+    },
+    {
+      "id": "p7-buyer-screener",
+      "family": "F7",
+      "cdc_class": "NOVEL_COGNITION",
+      "tool_class": "novel",
+      "est_calls": 10,
+      "note": "no legal verdicts"
+    },
+    {
+      "id": "p7-costaluz-backup",
+      "family": "F7",
+      "cdc_class": "DETERMINISTIC",
+      "tool_class": "deterministic",
+      "est_calls": 0,
+      "note": "REST GET to disk before any write"
+    },
+    {
+      "id": "p7-costaluz-corrections-lc001-lc002",
+      "family": "F7",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 3,
+      "note": "verbatim BOE restore needs no review; other wording waits"
+    },
+    {
+      "id": "p7-costaluz-tracked-links",
+      "family": "F7",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 3,
+      "note": ""
+    },
+    {
+      "id": "p7-earned-distribution-queue",
+      "family": "F7",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 3,
+      "note": "drafts only; no outreach beyond spec s0"
+    },
+    {
+      "id": "p7-pr-merge-cd-prod-smoke",
+      "family": "F7",
+      "cdc_class": "DETERMINISTIC",
+      "tool_class": "deterministic",
+      "est_calls": 0,
+      "note": ""
+    },
+    {
+      "id": "p8-ql-organic-gate-script",
+      "family": "F8",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "novel",
+      "est_calls": 6,
+      "note": "reuses the F2/F3 crawl; only claim/attribution/GEO checks are new"
+    },
+    {
+      "id": "p8-gate-run-prod",
+      "family": "F8",
+      "cdc_class": "DETERMINISTIC",
+      "tool_class": "deterministic",
+      "est_calls": 0,
+      "note": ""
+    },
+    {
+      "id": "p8-scale-improve-pause",
+      "family": "F8",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 4,
+      "note": ""
+    },
+    {
+      "id": "p8-freshness-by-source",
+      "family": "F8",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 3,
+      "note": ""
+    },
+    {
+      "id": "p8-kv-ukdl-ratchet",
+      "family": "F8",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 2,
+      "note": ""
+    },
+    {
+      "id": "p8-fresh-agent-test",
+      "family": "F8",
+      "cdc_class": "BOUNDED_CODING",
+      "tool_class": "bounded_coding",
+      "est_calls": 6,
+      "note": "cold agent; counts as one extra worker"
+    },
+    {
+      "id": "p8-two-layer-handoff",
+      "family": "F8",
+      "cdc_class": "CERTIFIED_TRANSFORM",
+      "tool_class": "known_transform",
+      "est_calls": 2,
+      "note": ""
+    }
+  ],
+  "families": {
+    "F1": {
+      "name": "truth + legal closure",
+      "model_claims": 2,
+      "calls": 6,
+      "cws_locality_set": {
+        "files": 6,
+        "tokens_est": 29250
+      },
+      "worker_lifetime": "one worker per family, dies at the family proof; locality packet = declared set + registry ids, no spec re-read",
+      "shared": "invariant: claim has primary source + recorded review",
+      "proof_closure": "claims validator + packet items"
+    },
+    "F2": {
+      "name": "technical surface",
+      "model_claims": 7,
+      "calls": 24,
+      "cws_locality_set": {
+        "files": 4,
+        "tokens_est": 6479
+      },
+      "worker_lifetime": "one worker per family, dies at the family proof; locality packet = declared set + registry ids, no spec re-read",
+      "shared": "locality: layout/sitemap/metadata; one crawl proves lang, graph, canonical, lastmod, og",
+      "proof_closure": "prod crawl + attribution DB row"
+    },
+    "F3": {
+      "name": "commercial core",
+      "model_claims": 4,
+      "calls": 13,
+      "cws_locality_set": {
+        "files": 3,
+        "tokens_est": 3307
+      },
+      "worker_lifetime": "one worker per family, dies at the family proof; locality packet = declared set + registry ids, no spec re-read",
+      "shared": "evidence: registry ids; one CTA/crawl proof",
+      "proof_closure": "prod crawl + search->CTA->new-case smoke"
+    },
+    "F4": {
+      "name": "guides cluster",
+      "model_claims": 8,
+      "calls": 28,
+      "cws_locality_set": {
+        "files": 4,
+        "tokens_est": 20695
+      },
+      "worker_lifetime": "one worker per family, dies at the family proof; locality packet = declared set + registry ids, no spec re-read",
+      "shared": "decision: ownership map; invariant: validator; template",
+      "proof_closure": "validator + link graph + sitemap/schema"
+    },
+    "F5": {
+      "name": "GEO observability",
+      "model_claims": 6,
+      "calls": 16,
+      "cws_locality_set": {
+        "files": 1,
+        "tokens_est": 2288
+      },
+      "worker_lifetime": "one worker per family, dies at the family proof; locality packet = declared set + registry ids, no spec re-read",
+      "shared": "locality: GEO-audit FARO; ledger",
+      "proof_closure": "GEO run with provenance + ledger <= cap"
+    },
+    "F6": {
+      "name": "regions",
+      "model_claims": 1,
+      "calls": 8,
+      "cws_locality_set": {
+        "files": 1,
+        "tokens_est": 4886
+      },
+      "worker_lifetime": "one worker per family, dies at the family proof; locality packet = declared set + registry ids, no spec re-read",
+      "shared": "evidence: real local sources",
+      "proof_closure": "source check per city"
+    },
+    "F7": {
+      "name": "distribution",
+      "model_claims": 4,
+      "calls": 19,
+      "cws_locality_set": {
+        "files": 1,
+        "tokens_est": 4886
+      },
+      "worker_lifetime": "one worker per family, dies at the family proof; locality packet = declared set + registry ids, no spec re-read",
+      "shared": "decision: screener rules; invariant: backup before write",
+      "proof_closure": "backup hash + link smoke"
+    },
+    "F8": {
+      "name": "compounding",
+      "model_claims": 6,
+      "calls": 23,
+      "cws_locality_set": {
+        "files": 2,
+        "tokens_est": 3938
+      },
+      "worker_lifetime": "one worker per family, dies at the family proof; locality packet = declared set + registry ids, no spec re-read",
+      "shared": "proof closure: gate reuses F2/F3 crawl",
+      "proof_closure": "ql_organic_gate.py on prod"
+    }
+  },
+  "budget": {
+    "worker_floor": 110835,
+    "slim_ctx_used": 110835,
+    "model_claims_open": 38,
+    "open_model_calls": 137,
+    "families_with_model_work": 8,
+    "reserves_tokens": {
+      "packet_open_control": 1773360,
+      "proof_digest": 886680,
+      "fresh_agent_extra_worker": 1330020
+    },
+    "LOWER": 5098410,
+    "P50": 20535841,
+    "P80": 36366000,
+    "P95": 85905996,
+    "HARD_AUTHORITY": 96000000,
+    "tool_output": {
+      "confidence": "CALIBRATED",
+      "percentiles": {
+        "P50": 15184395,
+        "P80": 18221274,
+        "P95": 21834495
+      },
+      "floor": {
+        "calls": 3,
+        "tokens": 332505
+      },
+      "profile_source": {
+        "known_transform": "actual",
+        "bounded_coding": "actual",
+        "novel": "actual"
+      }
+    },
+    "tool_based": {
+      "P50": 20535841,
+      "P80": 25987260,
+      "P95": 31041115
+    },
+    "cross_check_tokens_per_progress_event": {
+      "model_claims": 38,
+      "events_assumed": 66,
+      "events_per_claim_ASSUMPTION": 1.75,
+      "rates": {
+        "liveqa_222k": 222000,
+        "clockA_551k": 551000,
+        "intent_595k": 595000,
+        "dws_1.21M": 1210000,
+        "ql_phase1_1.30M": 1301606
+      },
+      "totals": {
+        "liveqa_222k": 14652000,
+        "clockA_551k": 36366000,
+        "intent_595k": 39270000,
+        "dws_1.21M": 79860000,
+        "ql_phase1_1.30M": 85905996
+      },
+      "reading": "tool-based P50 sits at the Live QA rate (best measured, slim packet workers). P80 is lifted to the Clock A rate and P95 to the QL Phase-1 rate (no improvement) because the tool's call counts are uncalibrated estimates. Reserves are inside the per-event rates, not added again."
+    },
+    "how": "LOWER = 1 call per open model claim + 1 per family at the floor; P50 = tool candidate + reserves, +7.1% (Live QA replay) repair; P80 = max(tool 20% margin + reserves +17.0%, events x Clock A 551k); P95 = max(tool ceiling novel x3 + reserves +20.2%, events x QL Phase-1 1.30M); HARD = P95 x1.10 + 650k (guard overrun lesson: stop + ~650k), rounded up to 1M",
+    "confidence": "PROVISIONAL-LOW: per-class calls are my estimates (PRIOR-like), ctx is measured (Live QA 43k) but clamped to the floor; profile calls are not calibrated on QL",
+    "per_class_priors": {
+      "known_transform": {
+        "calls": 2,
+        "ctx_tokens": 115000
+      },
+      "bounded_coding": {
+        "calls": 6,
+        "ctx_tokens": 125000
+      },
+      "novel": {
+        "calls": 15,
+        "ctx_tokens": 140000
+      }
+    }
+  },
+  "old_vs_new": {
+    "historical": {
+      "central_tokens": 354000000,
+      "p_hi_tokens": 424800000,
+      "p_max_tokens": 548300000,
+      "phase1_tokens": 126255827,
+      "phase1_usd": 42.3,
+      "label": "HISTORICAL (dataset lines 1-1160); not reproduced by this engine"
+    },
+    "waterfall_engine_reproduced": [
+      {
+        "step": "W0 old claim list (50 claims, all open, P1 per-call context 155k, tool priors for calls)",
+        "tokens": 42315000
+      },
+      {
+        "step": "W1 minus claims now DONE/NO_WORK/SUPERSEDED/DETERMINISTIC/EXTERNAL/OWNER/SLEEPING (same engine, same ctx)",
+        "tokens": 34100000
+      },
+      {
+        "step": "W2 recompiled claim set with CDC est_calls (families, DERIVED, REUSE, CERTIFIED_TRANSFORM) at P1 context",
+        "tokens": 21235000
+      },
+      {
+        "step": "W3 slim locality-packet context (Live QA measured 43k, clamped to worker floor)",
+        "tokens": 15184395
+      },
+      {
+        "step": "W4 explicit reserves (control, proof, fresh agent) -- ADDED, not saved",
+        "tokens": 19174455
+      },
+      {
+        "step": "W5 repair/recovery reserve at the C10 liveqa share (7.1%)",
+        "tokens": 20535841
+      }
+    ],
+    "savings_attribution_note": "steps W0->W3 are cumulative on one engine, so each delta is disjoint; reserves in W4/W5 are costs, not savings. The gap between HISTORICAL 354M and engine W0 is NOT attributed (the old x8 factor / Phase-1 topology cannot be reproduced here).",
+    "deltas": {
+      "claims_removed_done_det_owner": 8215000,
+      "family_structure_and_derivation": 12865000,
+      "slim_context": 6050605,
+      "total_engine_vs_P50": 21779159
+    }
+  },
+  "cash": {
+    "table": "tools/usage_index.load_prices() at run time",
+    "mix": {
+      "cache_read": 0.8887,
+      "cache_write_5m": 0.1097,
+      "output": 0.0022
+    },
+    "mix_source": "only measured mix on hand: C10 canary run 2; ESTIMATE",
+    "usd": {
+      "LOWER": {
+        "claude-sonnet-5": 2.42,
+        "claude-opus-5-5": 3.93
+      },
+      "P50": {
+        "claude-sonnet-5": 9.74,
+        "claude-opus-5-5": 15.83
+      },
+      "P80": {
+        "claude-sonnet-5": 17.25,
+        "claude-opus-5-5": 28.04
+      },
+      "P95": {
+        "claude-sonnet-5": 40.75,
+        "claude-opus-5-5": 66.23
+      },
+      "HARD": {
+        "claude-sonnet-5": 45.54,
+        "claude-opus-5-5": 74.01
+      }
+    },
+    "historical_cross_check": "Phase 1 actual 42.3 USD / 126.26M = 0.335 USD/M; table-mix cost is higher, so cash is a ceiling-ish ESTIMATE, not an invoice"
+  },
+  "opex": {
+    "separation": "CAPEX = everything in budget above (build + ship). OPEX = GEO monitoring after build.",
+    "geo_monitoring_per_month": {
+      "dataforseo_cap_usd": 10,
+      "serpapi_usd": 0,
+      "note": "spec s0 cap; actual per-run cost UNKNOWN until F5 measures it",
+      "model_tokens_est": "report/ingest ~ 2-4 calls/month -> about 0.2-0.6M tokens/month (ESTIMATE); the panel runs on GEX44 without Claude"
+    },
+    "freshness_cron_tokens": "deterministic; 0 model tokens unless a source changed"
+  },
+  "wall_clock": {
+    "model_hours": 1.2,
+    "basis": "Phase 1: 5.7 h / 807 calls = 25 s per call",
+    "ci_and_deploy": "5 ship events x ~15 min CI (observed 2026-10-08 12-16 min) = ~1.3 h",
+    "external_waits": "lawyer reply, CENDOJ, Valencian decree: UNBOUNDED (not in any token figure)",
+    "note": "families F2/F3/F5 are independent localities and could overlap, but each ship merges to main: serialise merges"
+  },
+  "owner_only_and_waits": [
+    {
+      "id": "p1-cendoj-620-human-search",
+      "what": "Owner browser search of recurso 1/143/2025 at CENDOJ"
+    },
+    {
+      "id": "lawyer reply (P-001)",
+      "what": "Maria Luisa answers in thread 1a11d58817cf06fa; untrusted until per-item reading; gates F4 publish and F7 non-verbatim corrections"
+    },
+    {
+      "id": "p6-valencian-decree-identify",
+      "what": "DOGV TLS failure; Owner/human or later fix"
+    },
+    {
+      "id": "PR #466 / #435",
+      "what": "other sessions' PRs; coordinate, never edit same files"
+    }
+  ]
+}

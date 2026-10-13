@@ -28,6 +28,7 @@ os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ.pop("CPP_MISSION_RENEW", None)
 os.environ.pop("CPP_ROUTE_ADMISSION", None)
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"  # RAM floor reads host memory; covered by test_a5_u6
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 if os.environ.get("GSD_MISSION_DRILL_DIR"):
     sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])

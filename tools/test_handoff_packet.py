@@ -23,6 +23,7 @@ TMP = Path(tempfile.mkdtemp(prefix="hpkt-"))
 os.environ["GSD_LONG_RUN_STATE_DIR"] = str(TMP / "state")
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(TMP / "sessions")
 os.environ["CPP_SOURCE_PACKET_DIR"] = str(TMP / "packets")
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"  # RAM floor reads host memory; covered by test_a5_u6
 for d in ("state", "sessions", "packets", "proj/src"):
     (TMP / d).mkdir(parents=True, exist_ok=True)
 ROOT = Path(__file__).resolve().parents[1]
