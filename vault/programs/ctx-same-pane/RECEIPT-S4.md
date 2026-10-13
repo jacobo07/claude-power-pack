@@ -51,3 +51,20 @@ Activation gate met: GEX44 ~/.claude/settings.json backed up (settings.json.bak-
 one UserPromptSubmit command hook added (node shim at the clone path, timeout 8 s). Live drive `claude -p estado`
 from /tmp/sfp-live: num_turns 0, cost 0, the projection shown. ACTIVE on GEX44 only; the laptop stays unregistered.
 Rollback: copy the backup over GEX44 ~/.claude/settings.json, or CPP_STATUS_FASTPATH=off.
+Booked: goal-settle --measured 11,669,425 (session 5847a1a4 cumulative) -> settled 38,059,221, 417,604 over P80.
+
+## Installed properly + PROGRAMME CLOSED (2026-10-13, Owner: "cierra el programa, e instalalo bien")
+- f54dceef: portable defaults (python3 / git / node off Windows), so the hook needs no env prefix.
+- GEX44 install moved off the mission clone to ~/.claude/opt/status-fastpath, a clone of the GEX44 bare repo checked
+  out at f54dceef. V-SFP 10/10 there with no env overrides (PATH node v18.19.1). settings.json backed up
+  (settings.json.bak-status-fastpath-install-20261013153604); the old entry was replaced, one entry remains:
+  `/opt/node-v24.14.0/bin/node /home/kobii/.claude/opt/status-fastpath/hooks/status-fastpath.js` (timeout 8 s).
+  Live: `claude -p estado` num_turns 0, cost 0; control `claude -p "estado? responde solo OK"` num_turns 1.
+- Laptop: NOT installed, on purpose. Measured node start 9.5 s here and the laptop V-SFP boundary leg timed out at
+  20 s on 2026-10-13: the hook would delay every status prompt and then pass it to the model anyway.
+- ~/missions/ctx-same-pane-s4 on GEX44 is no longer referenced; left in place (no deletion authorised).
+- Programme ctx-same-pane is CLOSED: no further leases or packets. Ledger final: settled 38,059,221 against
+  programme 37,641,617 (packet 4735ec4f). This pane's spend after that settle (install + close) is not booked; its
+  measured figure is in the commit message that adds this section.
+- Remaining, outside this programme: S1 items 4-5, S2, S3, S5-S7, A1; D9 (apply() ignores approval times); L5
+  counter carries the old over-charge; mission_spend has no lease-close command (L7 stays open in the ledger).
