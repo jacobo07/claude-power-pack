@@ -3603,6 +3603,10 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         turn_end["evidence"] = {**(turn_end.get("evidence") or {}), "trigger": "wall_enforced"}
                         turn_end["reason"] = f"{plan['reason']} -- {turn_end['reason']}"
                     row["turn_end"] = {k: turn_end.get(k) for k in ("decision", "cause", "reason")}
+                    # CCR A4: the break-even rule's shadow verdict beside the ceiling's decision (observe only).
+                    sb = (turn_end.get("evidence") or {}).get("shadow_breakeven")
+                    if sb:
+                        row["turn_end"]["shadow_breakeven"] = sb
                     if turn_end["decision"] == ge.HOLD:
                         lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"],
                                          reason=turn_end["reason"])

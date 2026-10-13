@@ -1,0 +1,710 @@
+{
+ "weights": {
+  "read": 0.1,
+  "write": 1.25,
+  "input": 1.0,
+  "output": 5.0
+ },
+ "rehyd_calls": 3,
+ "ceiling": 300000,
+ "note_slot_tokens": 901,
+ "classes": {
+  "bounded-code": {
+   "model": {
+    "cls": "bounded-code",
+    "n": 55,
+    "capsule": 1162.0,
+    "r": 3,
+    "floor": 17783,
+    "R": 6824,
+    "g": 2141.0,
+    "rehyd_cost": 19801.4,
+    "first_overhead": 497.0,
+    "lengths": [
+     8,
+     8,
+     8,
+     9,
+     10,
+     11,
+     11,
+     11,
+     12,
+     12,
+     12,
+     13,
+     13,
+     14,
+     14,
+     14,
+     15,
+     15,
+     15,
+     16,
+     16,
+     16,
+     17,
+     17,
+     17,
+     18,
+     18,
+     18,
+     20,
+     21,
+     21,
+     22,
+     23,
+     23,
+     24,
+     24,
+     25,
+     25,
+     25,
+     26,
+     26,
+     26,
+     26,
+     27,
+     28,
+     29,
+     29,
+     29,
+     31,
+     31,
+     32,
+     38,
+     39,
+     43,
+     54
+    ]
+   },
+   "n_train": 55,
+   "n_held": 24,
+   "k_star": {
+    "ctx_100k": 6.0,
+    "ctx_200k": 2.5,
+    "ctx_300k": 1.6
+   },
+   "rotate_once": 44328.2,
+   "x_star": 43568,
+   "ctx_star": 69337,
+   "k_star_at_ctx_star": 10.2,
+   "breakeven_ctx_at_mid": {
+    "call": 9,
+    "remaining": 12,
+    "ctx": 62709
+   },
+   "held_replay": {
+    "A": {
+     "cost": 7594962,
+     "processed": 36258965,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 7594962,
+     "processed": 36258965,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "K40": {
+     "cost": 7565774,
+     "processed": 34639114,
+     "rotations": 3,
+     "saving_pct": 0.38
+    },
+    "BE": {
+     "cost": 7291605,
+     "processed": 29682081,
+     "rotations": 8,
+     "saving_pct": 3.99
+    }
+   },
+   "held_replay_e1_assumptions": {
+    "A": {
+     "cost": 7594962,
+     "processed": 36258965,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 7594962,
+     "processed": 36258965,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "K40": {
+     "cost": 7529514,
+     "processed": 34639492,
+     "rotations": 3,
+     "saving_pct": 0.86
+    },
+    "BE": {
+     "cost": 7220209,
+     "processed": 28334182,
+     "rotations": 13,
+     "saving_pct": 4.93
+    }
+   }
+  },
+  "generic": {
+   "model": {
+    "cls": "generic",
+    "n": 7,
+    "capsule": 1162,
+    "r": 3,
+    "floor": 17188,
+    "R": 7164,
+    "g": 2221.6,
+    "rehyd_cost": 17412.5,
+    "first_overhead": 852.0,
+    "lengths": [
+     6,
+     7,
+     9,
+     12,
+     24,
+     29,
+     29
+    ]
+   },
+   "n_train": 7,
+   "n_held": 3,
+   "k_star": {
+    "ctx_100k": 5.6,
+    "ctx_200k": 2.4,
+    "ctx_300k": 1.5
+   },
+   "rotate_once": 41550.6,
+   "x_star": 42967,
+   "ctx_star": 68481,
+   "k_star_at_ctx_star": 9.7,
+   "breakeven_ctx_at_mid": {
+    "call": 6,
+    "remaining": 12.0,
+    "ctx": 60139
+   },
+   "held_replay": {
+    "A": {
+     "cost": 804957,
+     "processed": 4303351,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 804957,
+     "processed": 4303351,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "K40": {
+     "cost": 804957,
+     "processed": 4303351,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "BE": {
+     "cost": 804957,
+     "processed": 4303351,
+     "rotations": 0,
+     "saving_pct": 0.0
+    }
+   },
+   "held_replay_e1_assumptions": {
+    "A": {
+     "cost": 804957,
+     "processed": 4303351,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 804957,
+     "processed": 4303351,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "K40": {
+     "cost": 804957,
+     "processed": 4303351,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "BE": {
+     "cost": 783795,
+     "processed": 3766269,
+     "rotations": 1,
+     "saving_pct": 2.63
+    }
+   }
+  },
+  "long-textual": {
+   "model": {
+    "cls": "long-textual",
+    "n": 18,
+    "capsule": 1163,
+    "r": 3,
+    "floor": 17401.5,
+    "R": 6641.0,
+    "g": 2324.2,
+    "rehyd_cost": 19877.8,
+    "first_overhead": 492.0,
+    "lengths": [
+     6,
+     9,
+     9,
+     10,
+     11,
+     11,
+     11,
+     13,
+     13,
+     16,
+     18,
+     19,
+     21,
+     21,
+     26,
+     29,
+     31,
+     39
+    ]
+   },
+   "n_train": 18,
+   "n_held": 7,
+   "k_star": {
+    "ctx_100k": 5.9,
+    "ctx_200k": 2.5,
+    "ctx_300k": 1.6
+   },
+   "rotate_once": 43924.3,
+   "x_star": 45186,
+   "ctx_star": 70392,
+   "k_star_at_ctx_star": 9.7,
+   "breakeven_ctx_at_mid": {
+    "call": 7,
+    "remaining": 9,
+    "ctx": 74010
+   },
+   "held_replay": {
+    "A": {
+     "cost": 2233458,
+     "processed": 8242009,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 2233458,
+     "processed": 8242009,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "K40": {
+     "cost": 2233458,
+     "processed": 8242009,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "BE": {
+     "cost": 2247770,
+     "processed": 7499917,
+     "rotations": 2,
+     "saving_pct": -0.64
+    }
+   },
+   "held_replay_e1_assumptions": {
+    "A": {
+     "cost": 2233458,
+     "processed": 8242009,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 2233458,
+     "processed": 8242009,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "K40": {
+     "cost": 2233458,
+     "processed": 8242009,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "BE": {
+     "cost": 2199629,
+     "processed": 6621392,
+     "rotations": 4,
+     "saving_pct": 1.51
+    }
+   }
+  },
+  "lookup": {
+   "model": {
+    "cls": "lookup",
+    "n": 1,
+    "capsule": 1067,
+    "r": 3,
+    "floor": 17591,
+    "R": 2114,
+    "g": 530.9,
+    "rehyd_cost": 11752.9,
+    "first_overhead": 447.0,
+    "lengths": [
+     8
+    ]
+   },
+   "n_train": 1,
+   "n_held": 1,
+   "k_star": {
+    "ctx_100k": 4.5,
+    "ctx_200k": 2.0,
+    "ctx_300k": 1.3
+   },
+   "rotate_once": 35842.5,
+   "x_star": 19508,
+   "ctx_star": 40280,
+   "k_star_at_ctx_star": 18.4,
+   "breakeven_ctx_at_mid": {
+    "call": 4,
+    "remaining": 4,
+    "ctx": 110378
+   },
+   "held_replay": {
+    "A": {
+     "cost": 25419,
+     "processed": 92816,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 25419,
+     "processed": 92816,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "K40": {
+     "cost": 25419,
+     "processed": 92816,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "BE": {
+     "cost": 25419,
+     "processed": 92816,
+     "rotations": 0,
+     "saving_pct": 0.0
+    }
+   },
+   "held_replay_e1_assumptions": {
+    "A": {
+     "cost": 25419,
+     "processed": 92816,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 25419,
+     "processed": 92816,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "K40": {
+     "cost": 25419,
+     "processed": 92816,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "BE": {
+     "cost": 25419,
+     "processed": 92816,
+     "rotations": 0,
+     "saving_pct": 0.0
+    }
+   }
+  },
+  "lobby": {
+   "model": {
+    "cls": "lobby",
+    "n": 36,
+    "capsule": 225.5,
+    "r": 3,
+    "floor": 206186.0,
+    "R": 10388.0,
+    "g": 2264.0,
+    "rehyd_cost": 85852.6,
+    "first_overhead": 1904.5,
+    "lengths": [
+     8,
+     8,
+     11,
+     20,
+     43,
+     48,
+     49,
+     50,
+     69,
+     89,
+     92,
+     99,
+     103,
+     116,
+     119,
+     128,
+     134,
+     137,
+     138,
+     148,
+     159,
+     159,
+     163,
+     177,
+     185,
+     201,
+     205,
+     212,
+     219,
+     250,
+     309,
+     411,
+     450,
+     466,
+     503,
+     514
+    ]
+   },
+   "n_train": 36,
+   "n_held": 15,
+   "k_star": {
+    "ctx_100k": null,
+    "ctx_200k": null,
+    "ctx_300k": 41.6
+   },
+   "rotate_once": 345839.1,
+   "x_star": 125138,
+   "ctx_star": 341938,
+   "k_star_at_ctx_star": 27.6,
+   "breakeven_ctx_at_mid": {
+    "call": 68,
+    "remaining": 93.0,
+    "ctx": 253987
+   },
+   "held_replay": {
+    "A": {
+     "cost": 48132600,
+     "processed": 367847860,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 47035043,
+     "processed": 291242599,
+     "rotations": 20,
+     "saving_pct": 2.28
+    },
+    "K40": {
+     "cost": 47393576,
+     "processed": 287146810,
+     "rotations": 22,
+     "saving_pct": 1.54
+    },
+    "BE": {
+     "cost": 45499913,
+     "processed": 302648277,
+     "rotations": 12,
+     "saving_pct": 5.47
+    }
+   },
+   "held_replay_e1_assumptions": {
+    "A": {
+     "cost": 48132600,
+     "processed": 367847860,
+     "rotations": 0,
+     "saving_pct": 0.0
+    },
+    "C300": {
+     "cost": 45375467,
+     "processed": 290298223,
+     "rotations": 20,
+     "saving_pct": 5.73
+    },
+    "K40": {
+     "cost": 45504307,
+     "processed": 285437582,
+     "rotations": 22,
+     "saving_pct": 5.46
+    },
+    "BE": {
+     "cost": 44334472,
+     "processed": 295546807,
+     "rotations": 14,
+     "saving_pct": 7.89
+    }
+   },
+   "history": {
+    "step": 120,
+    "n": 22,
+    "median_floor": 212019.5,
+    "carry_ctx_p50": 503775.5,
+    "capsule_ctx_p50": 264393.5,
+    "carry_slope_per_call": 2431.3,
+    "capsule_slope_per_call": 436.4,
+    "ratio_capsule_over_carry": 0.525,
+    "rows": [
+     {
+      "sid": "aa2d2ac7-ea72-4268-bdb5-705d121d6233",
+      "carry": 488988,
+      "capsule": 229799.5
+     },
+     {
+      "sid": "5a889b69-743c-4322-a88f-45fd9768bfcc",
+      "carry": 510531,
+      "capsule": 249182.5
+     },
+     {
+      "sid": "e297571a-38d9-4c2d-bc20-90558bc8467c",
+      "carry": 376515,
+      "capsule": 250588.5
+     },
+     {
+      "sid": "a59dd607-c5d0-4fd5-a8ef-2a968ad97b42",
+      "carry": 579788,
+      "capsule": 322952.5
+     },
+     {
+      "sid": "485d1b23-cc47-4180-b8ae-2b4a7fd324df",
+      "carry": 561921,
+      "capsule": 303112.5
+     },
+     {
+      "sid": "0eb84241-a238-4e73-a7fd-15d838cf13f9",
+      "carry": 592139,
+      "capsule": 322811.5
+     },
+     {
+      "sid": "6307f4bc-c7e8-47ad-bb11-18a2aa643e0a",
+      "carry": 478933,
+      "capsule": 347830.5
+     },
+     {
+      "sid": "c3194553-d7bd-47f1-85bd-207434f4d975",
+      "carry": 508969,
+      "capsule": 247750.5
+     },
+     {
+      "sid": "d4daa2e8-9aac-45d3-a859-450878a95c22",
+      "carry": 479254,
+      "capsule": 218911.5
+     },
+     {
+      "sid": "5ed7e473-5019-40dd-aa2a-e05d459db475",
+      "carry": 479774,
+      "capsule": 228657.5
+     },
+     {
+      "sid": "67be223d-1c39-44b6-9433-b56b5391a9b6",
+      "carry": 478014,
+      "capsule": 226388.5
+     },
+     {
+      "sid": "d142a208-a759-4856-82e2-c9a23e671299",
+      "carry": 566751,
+      "capsule": 311849.5
+     },
+     {
+      "sid": "ecae5df0-41b1-4eb1-90cf-5eab3ca0e773",
+      "carry": 533729,
+      "capsule": 277172.5
+     },
+     {
+      "sid": "cf420a6d-36e7-4e4a-b71f-e7bf2f21b4fb",
+      "carry": 495525,
+      "capsule": 248406.5
+     },
+     {
+      "sid": "e5a4cff1-f547-423a-a944-9401fa7f7d3b",
+      "carry": 524942,
+      "capsule": 269076.5
+     },
+     {
+      "sid": "ba3ff50a-c49f-4ec3-9d88-4d44b90cc133",
+      "carry": 432036,
+      "capsule": 303296.5
+     },
+     {
+      "sid": "dae84b81-126d-448c-aaff-3146904c30b0",
+      "carry": 501587,
+      "capsule": 240950.5
+     },
+     {
+      "sid": "03ffe2b1-46ce-4d4f-bac6-d6b50dc3f15c",
+      "carry": 505964,
+      "capsule": 246772.5
+     },
+     {
+      "sid": "48974f97-2563-4b38-a85e-d8da52fbb13f",
+      "carry": 472813,
+      "capsule": 343411.5
+     },
+     {
+      "sid": "5736038d-c328-4d66-82f9-11dd26742a9a",
+      "carry": 534392,
+      "capsule": 278512.5
+     },
+     {
+      "sid": "15062c8b-3df2-40de-a0fe-4247613ef8be",
+      "carry": 513944,
+      "capsule": 259710.5
+     },
+     {
+      "sid": "ae719429-0747-4dc9-9faa-5c7a067dcc54",
+      "carry": 414243,
+      "capsule": 281087.5
+     }
+    ]
+   }
+  }
+ },
+ "capsules": {
+  "bounded-code": {
+   "n": 80,
+   "p50": 261.0,
+   "p80": 283,
+   "max": 564,
+   "used": 1162.0,
+   "used_is": "p50 + note slot (PP projections carry no note text)"
+  },
+  "generic": {
+   "n": 11,
+   "p50": 261,
+   "p80": 290,
+   "max": 302,
+   "used": 1162,
+   "used_is": "p50 + note slot (PP projections carry no note text)"
+  },
+  "long-textual": {
+   "n": 25,
+   "p50": 262,
+   "p80": 286,
+   "max": 348,
+   "used": 1163,
+   "used_is": "p50 + note slot (PP projections carry no note text)"
+  },
+  "lookup": {
+   "n": 3,
+   "p50": 166,
+   "p80": 169,
+   "max": 169,
+   "used": 1067,
+   "used_is": "p50 + note slot (PP projections carry no note text)"
+  },
+  "lobby": {
+   "n": 102,
+   "p50": 225.5,
+   "p80": 247,
+   "max": 405,
+   "used": 225.5,
+   "used_is": "p50 (note measured at each point)",
+   "note_inline": 100
+  }
+ }
+}
