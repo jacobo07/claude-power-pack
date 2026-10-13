@@ -1,0 +1,15 @@
+﻿PASS V-RP-HERMETIC-HOME home=rp-home-271ncj8y
+PASS V-RP-SERIAL-IS-DEFAULT bound=1 disjoint=True verdict=REFUSED
+PASS V-RP-OVERLAPS-UNDER-BOUND verdict=PASS rows=[('a', 'PASS', 0), ('b', 'PASS', 0)]
+PASS V-RP-RECEIPT-EQUALS-SERIAL serial=('REFUSED', [('a', 'PASS', 0), ('b', 'REFUSED', 2), ('c', 'PASS', 0), ('d', 'PASS', 0)]) parallel=('REFUSED', [('a', 'PASS', 0), ('b', 'REFUSED', 2), ('c', 'PASS', 0), ('d', 'PASS', 0)])
+PASS V-RP-BOUND-NEVER-EXCEEDED bound=2 seen=[2, 1, 2, 2, 1, 2] verdict=PASS
+PASS V-RP-RESOURCE-SERIALISES disjoint=True verdict=PASS
+PASS V-RP-UNDECLARED-SERIALISES declared_max=4 undeclared_max=1
+PASS V-RP-MEMORY-LOWERS bounds={8192: 4, 3072: 4, 2048: 2, 1536: 2, 1024: 1, 0: 1, None: 1} env_cap=2 bad_env=[4, 4, 4]
+PASS V-RP-KILL-SWITCH off=1 on=4
+PASS V-RP-BOOL-CAP-IGNORED bool_cap=4 int_cap=2
+PASS V-RP-ALL-JOINED raised=True finished_before_return=[1, 2]
+PASS V-RP-ALL-JOINED-JUDGE verdict=UNJUDGEABLE ended=[True, True] ids=['a', 'b', 'c']
+PASS V-RP-ORDER-KEPT results=[0, 10, 20]
+PASS V-RP-PIN-REFUSAL-IN-ORDER rows=[('a', 'PASS'), ('b', 'REFUSED'), ('c', 'PASS')]
+GSDX_REPLAY_PARALLEL_PASS=14/14  threshold=14/14

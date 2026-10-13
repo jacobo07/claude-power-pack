@@ -34,8 +34,10 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import frontier as fr
 from . import inherit
 from . import proof as pf
+from . import replay
 from .contract import GoalState
 from .convergence import SATISFIED, project_convergence
 from .git_state import digest_matches, tree_id
@@ -174,8 +176,9 @@ def judge(state: GoalState, tree_hash: str, worktree: Path,
                        state, tree_hash)
 
     validated = _validate(state, cv.obligations, worktree, tree_hash)
-    results = []
-    for o in satisfied:
+    results: list = [None] * len(satisfied)
+    pending: list = []
+    for pos, o in enumerate(satisfied):
         # 1. the gate that would run must BE the gate that was accepted
         moved = []
         for rel, digest in o.gate_pin:
@@ -185,15 +188,19 @@ def judge(state: GoalState, tree_hash: str, worktree: Path,
             elif not digest_matches(p, digest):     # in the scheme it was pinned in
                 moved.append(rel)
         if moved:
-            results.append({"obligation": o.identifier, "gate": o.done_gate,
+            results[pos] = {"obligation": o.identifier, "gate": o.done_gate,
                             "verdict": REFUSED,
-                            "detail": f"pinned gate files differ at this tree: {moved}"})
+                            "detail": f"pinned gate files differ at this tree: {moved}"}
             continue
         # 2. the pin held; an inherited proof the judge re-derived itself needs no re-run
         if o.identifier in validated:
-            results.append(validated[o.identifier])
+            results[pos] = validated[o.identifier]
             continue
-        # 3. otherwise re-run it, here, now
+        # 3. otherwise re-run it, here, now (see below: independent gates may overlap, under a bound)
+        pending.append((pos, o))
+
+    def _replay_one(item):
+        _pos, o = item
         try:
             argv = _argv(o.done_gate)
             started = time.time()
@@ -201,17 +208,23 @@ def judge(state: GoalState, tree_hash: str, worktree: Path,
                                   timeout=timeout_s,
                                   env={**environ, "PYTHONIOENCODING": "utf-8"})
             tail = (proc.stdout or "").strip().splitlines()
-            results.append({"obligation": o.identifier, "gate": o.done_gate,
-                            "verdict": PASS if proc.returncode == 0 else REFUSED,
-                            "exit_status": proc.returncode,
-                            "observed": tail[-1][:200] if tail else "",
-                            "seconds": round(time.time() - started, 1)})
+            return {"obligation": o.identifier, "gate": o.done_gate,
+                    "verdict": PASS if proc.returncode == 0 else REFUSED,
+                    "exit_status": proc.returncode,
+                    "observed": tail[-1][:200] if tail else "",
+                    "seconds": round(time.time() - started, 1)}
         except (OSError, ValueError, subprocess.SubprocessError) as exc:
             # The judge could not run this gate. That is about the judge, not
             # about the obligation, and it outranks any subject failure.
-            results.append({"obligation": o.identifier, "gate": o.done_gate,
-                            "verdict": UNJUDGEABLE,
-                            "detail": f"{exc.__class__.__name__}: {exc}"})
+            return {"obligation": o.identifier, "gate": o.done_gate,
+                    "verdict": UNJUDGEABLE,
+                    "detail": f"{exc.__class__.__name__}: {exc}"}
+
+    if pending:
+        ran = replay.run_bounded(pending, _replay_one, replay.replay_bound(state),
+                                 [fr.gate_unit(o, state) for _, o in pending])
+        for (pos, _o), r in zip(pending, ran):
+            results[pos] = r
 
     if any(r["verdict"] == UNJUDGEABLE for r in results):
         return _refuse(UNJUDGEABLE, "at least one gate could not be run; this run proves "

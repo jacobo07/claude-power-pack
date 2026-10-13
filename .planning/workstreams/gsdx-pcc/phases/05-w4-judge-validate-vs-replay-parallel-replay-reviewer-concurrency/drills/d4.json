@@ -1,0 +1,2 @@
+{"file": "modules/gsd_x/goal/replay.py", "test": "tools/test_gsd_x_goal_replay_parallel.py", "gate": "V-RP-RESOURCE-SERIALISES",
+ "old": "                    if all(pf.independent(units[i], units[j]) for j in running.values()):", "new": "                    if True:"}
