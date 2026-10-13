@@ -27,6 +27,18 @@
       "class": "LIBRARY",
       "note": "goal prr A0 (2026-10-12): read-only memory census, CLI `python -m modules.prr.census`. Consumer wiring (ram_guard / pressure controller) is workstream L of vault/plans/prr-physical-working-set-2026-10-12.md. Proven by tests/test_prr_census.py."
     },
+    "prr/__init__": {
+      "class": "LIBRARY",
+      "note": "Package marker for goal prr, added 2026-10-12 so this scanner walks modules/prr at all: without it every prr entry above was declared against a module the gate never discovered (494 -> 501 modules once added)."
+    },
+    "prr/bench/__init__": {
+      "class": "LIBRARY",
+      "note": "Package marker for the prr GEX44 bench (stub_api + longrun), added with prr/__init__ for the same reason."
+    },
+    "prr/pgo": {
+      "class": "LIBRARY",
+      "note": "goal prr R (2026-10-12): resource profile ledger, CLI `python -m modules.prr.pgo ingest|recommend`; ledger vault/programs/prr/pgo/profiles.jsonl (append-only, GEX44 profiles only). Consumer: the recycle cadence once the Windows canary yields a windows-plane profile (D28). Proven by tests/test_prr_pgo.py."
+    },
     "craif/oier": {
       "class": "DORMANT",
       "note": "DORMANT by Owner decision 4 (2026-10-04, cognitive-economy pillar T): kept on purpose, no live caller. Proven by tools/test_efaif_residues.py."
