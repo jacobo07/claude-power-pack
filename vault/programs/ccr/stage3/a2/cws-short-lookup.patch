@@ -1,0 +1,47 @@
+--- a/mods/cpp-cognitive-runtime/hooks/policy.ts
++++ b/mods/cpp-cognitive-runtime/hooks/policy.ts
+@@ -104,6 +104,8 @@
+ export const WORK_CLASSES: Record<string, WorkClass> = {
+   'bounded-code-worker': { tools: ['Read', 'Edit', 'Write', 'Grep', 'Glob', 'PowerShell', 'ToolSearch'] },
+   'read-only-reviewer': { tools: ['Read', 'ToolSearch'] },
++  // Short lookup (A2 proposal): reads a few files and answers, never writes.
++  'short-lookup': { tools: ['Read', 'Grep', 'Glob', 'ToolSearch'] },
+ }
+ 
+ // Main-session attachments a work unit does not carry: the listings a bounded unit cannot act on (it has
+@@ -111,6 +113,10 @@
+ export const UNIT_DROPPED_ATTACHMENTS = new Set(['skill_listing', 'agent_listing_delta', 'mcp_instructions_delta'])
+ // Prompt sections a work unit does not carry: auto-memory (the unit's ContextImage replaces it).
+ export const UNIT_DROPPED_SECTIONS = new Set(['memory'])
++// Per-class extra drops (A2 proposal). deferred_tools_delta is never dropped: it is the page-fault index.
++export const CLASS_DROPPED_ATTACHMENTS: Record<string, ReadonlySet<string>> = {
++  'short-lookup': new Set(['hook_additional_context', 'remote_session_change']),
++}
+ 
+ export function parseWorkUnit(text: string | null): WorkUnit | null {
+   if (!text) return null
+@@ -131,10 +137,11 @@
+ }
+ 
+ export function decideUnitAttachment(
+-  type: string, kernel: string | null, files: readonly InstructionFileInfo[] | null,
++  type: string, kernel: string | null, files: readonly InstructionFileInfo[] | null, cls?: string,
+ ): AttachmentDecision {
+   if (type === 'instructions') return decideSubagentAttachment(type, undefined, kernel, files)
+   if (UNIT_DROPPED_ATTACHMENTS.has(type)) return { action: 'drop', reason: 'not-in-unit-closure' }
++  if (cls && CLASS_DROPPED_ATTACHMENTS[cls]?.has(type)) return { action: 'drop', reason: 'not-in-class-closure' }
+   return { action: 'keep', reason: 'not-linked' }
+ }
+ 
+# Proposed tests for policy.test.ts (land with the patch, not before):
+# test('short-lookup drops hook prose and remote_session_change but keeps the page index', () => {
+#   expect(decideUnitAttachment('hook_additional_context', null, null, 'short-lookup').action).toBe('drop')
+#   expect(decideUnitAttachment('remote_session_change', null, null, 'short-lookup').action).toBe('drop')
+#   expect(decideUnitAttachment('deferred_tools_delta', null, null, 'short-lookup').action).toBe('keep')
+#   expect(decideUnitAttachment('hook_additional_context', null, null, 'bounded-code-worker').action).toBe('keep')
+# })
+# test('short-lookup keeps only read tools and ToolSearch in front', () => {
+#   expect(decideUnitTool('Edit', { cls: 'short-lookup', id: '' })).toBe('defer')
+#   expect(decideUnitTool('Grep', { cls: 'short-lookup', id: '' })).toBe('keep')
+# })
+# Caller change (register.ts): pass unit.cls as the 4th argument of decideUnitAttachment.

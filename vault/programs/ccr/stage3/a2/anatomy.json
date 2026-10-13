@@ -1,0 +1,2313 @@
+{
+ "calibration": {
+  "call1": {
+   "bpt": 2.999,
+   "groups": [
+    {
+     "offered": 141,
+     "n": 3
+    },
+    {
+     "offered": 119,
+     "n": 6
+    },
+    {
+     "offered": 124,
+     "n": 5
+    },
+    {
+     "offered": 63,
+     "n": 2
+    },
+    {
+     "offered": 7,
+     "n": 3
+    },
+    {
+     "offered": 86,
+     "n": 4
+    },
+    {
+     "offered": 79,
+     "n": 3
+    },
+    {
+     "offered": 86,
+     "n": 2
+    },
+    {
+     "offered": 2,
+     "n": 3
+    },
+    {
+     "offered": 99,
+     "n": 2
+    },
+    {
+     "offered": 0,
+     "n": 2
+    }
+   ],
+   "n": 35
+  },
+  "carry": {
+   "bpt": 2.491,
+   "n": 1031
+  }
+ },
+ "sessions": [
+  {
+   "sid": "0bdd6fe2-1f2f-4d73-a7de-b6b6dc751793",
+   "ctx1": 18137,
+   "ctx_last": 65566,
+   "n_calls": 23,
+   "offered": 7,
+   "unit": null,
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 175,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 41,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 75,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 827,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 15113,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 12786,
+     "class": "PAGEABLE",
+     "evidence": "tool-output projection and paging exist (project events)"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 31116,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 433,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:hook_additional_context",
+     "tokens": 938,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:silent_turn_reminder",
+     "tokens": 77,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "carry:attach:date",
+     "tokens": 48,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "carry:attach:queued_command",
+     "tokens": 381,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 5328,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": -3677,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2103,
+    "ELIMINABLE": 91,
+    "REDUCIBLE": 15940
+   }
+  },
+  {
+   "sid": "403d2d16-d72b-411a-b4f2-902f50521e90",
+   "ctx1": 74594,
+   "ctx_last": 80375,
+   "n_calls": 4,
+   "offered": 86,
+   "unit": null,
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 221,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:memory",
+     "tokens": 714,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 1853,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:deferred_tools_delta",
+     "tokens": 1436,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "attach:agent_listing_delta",
+     "tokens": 8750,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 707,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:skill_listing",
+     "tokens": 5022,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:instructions",
+     "tokens": 26142,
+     "class": "REDUCIBLE",
+     "evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "attach:remote_session_change",
+     "tokens": 181,
+     "class": "ELIMINABLE",
+     "evidence": "absent in probe P3; no role in a -p task; candidate, no parity run"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 156,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 26576,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 3409,
+     "class": "EMBODIABLE",
+     "evidence": "answer is script-computable (V1 truth.py): DETERMINISTIC_PATH embodies the reads"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 1376,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 59,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:hook_additional_context",
+     "tokens": 316,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 0,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": 621,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2264,
+    "ELIMINABLE": 15390,
+    "REDUCIBLE": 55501,
+    "PAGEABLE": 1436
+   }
+  },
+  {
+   "sid": "4f0ecc00-536e-4d3d-952e-18e5ae42f35b",
+   "ctx1": 74594,
+   "ctx_last": 82456,
+   "n_calls": 6,
+   "offered": 86,
+   "unit": null,
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 221,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:memory",
+     "tokens": 714,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 1853,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:deferred_tools_delta",
+     "tokens": 1436,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "attach:agent_listing_delta",
+     "tokens": 8750,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 707,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:skill_listing",
+     "tokens": 5022,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:instructions",
+     "tokens": 26142,
+     "class": "REDUCIBLE",
+     "evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "attach:remote_session_change",
+     "tokens": 181,
+     "class": "ELIMINABLE",
+     "evidence": "absent in probe P3; no role in a -p task; candidate, no parity run"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 156,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 26576,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 4500,
+     "class": "EMBODIABLE",
+     "evidence": "answer is script-computable (V1 truth.py): DETERMINISTIC_PATH embodies the reads"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 1918,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:hook_additional_context",
+     "tokens": 292,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 98,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 0,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": 1054,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2264,
+    "ELIMINABLE": 15390,
+    "REDUCIBLE": 55501,
+    "PAGEABLE": 1436
+   }
+  },
+  {
+   "sid": "8c3d8a8e-1f56-44ce-b10a-dfd87dfade6e",
+   "ctx1": 18308,
+   "ctx_last": 24573,
+   "n_calls": 4,
+   "offered": 86,
+   "unit": "bounded-code-worker",
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 221,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_success",
+     "tokens": 154,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 1853,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:deferred_tools_delta",
+     "tokens": 1436,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "attach:agent_listing_delta",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:skill_listing",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:instructions",
+     "tokens": 1606,
+     "class": "REDUCIBLE",
+     "evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "attach:remote_session_change",
+     "tokens": 181,
+     "class": "ELIMINABLE",
+     "evidence": "absent in probe P3; no role in a -p task; candidate, no parity run"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 156,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 9865,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 3148,
+     "class": "EMBODIABLE",
+     "evidence": "answer is script-computable (V1 truth.py): DETERMINISTIC_PATH embodies the reads"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 1694,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:deferred_tools_delta",
+     "tokens": 884,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 59,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 0,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": 481,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2264,
+    "REDUCIBLE": 14254,
+    "UNKNOWN": 154,
+    "PAGEABLE": 1436,
+    "ELIMINABLE": 197
+   }
+  },
+  {
+   "sid": "b0de7339-a61b-4ce4-94e8-954e966e7477",
+   "ctx1": 6458,
+   "ctx_last": 18709,
+   "n_calls": 3,
+   "offered": 2,
+   "unit": null,
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 175,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_success",
+     "tokens": 154,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 41,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 75,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 705,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 27,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 3417,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 0,
+     "class": "PAGEABLE",
+     "evidence": "tool-output projection and paging exist (project events)"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 1595,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 39,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 10483,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": 133,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2088,
+    "UNKNOWN": 154,
+    "ELIMINABLE": 91,
+    "REDUCIBLE": 4122
+   }
+  },
+  {
+   "sid": "bf6d4b07-2597-4ee2-9c3e-a9f458e101c0",
+   "ctx1": 17235,
+   "ctx_last": 99443,
+   "n_calls": 26,
+   "offered": 7,
+   "unit": null,
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 175,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 41,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 75,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 705,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 14333,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 18631,
+     "class": "PAGEABLE",
+     "evidence": "tool-output projection and paging exist (project events)"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 61784,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 492,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:hook_additional_context",
+     "tokens": 1263,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:silent_turn_reminder",
+     "tokens": 39,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "carry:attach:queued_command",
+     "tokens": 385,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 7869,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": -8254,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2103,
+    "ELIMINABLE": 91,
+    "REDUCIBLE": 15038
+   }
+  },
+  {
+   "sid": "f03c1c84-4267-4d77-be09-182335101ab1",
+   "ctx1": 19100,
+   "ctx_last": 83561,
+   "n_calls": 31,
+   "offered": 7,
+   "unit": null,
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 175,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 1091,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 41,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 75,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 15812,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 15635,
+     "class": "PAGEABLE",
+     "evidence": "tool-output projection and paging exist (project events)"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 48057,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 570,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:hook_additional_context",
+     "tokens": 314,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:silent_turn_reminder",
+     "tokens": 116,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "carry:attach:queued_command",
+     "tokens": 759,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "carry:attach:edited_text_file",
+     "tokens": 170,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "carry:attach:hook_blocking_error",
+     "tokens": 354,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 7292,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": -8807,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2103,
+    "REDUCIBLE": 16903,
+    "ELIMINABLE": 91
+   }
+  },
+  {
+   "sid": "f898280c-6891-4632-b5d7-06fef5a9ca90",
+   "ctx1": 74809,
+   "ctx_last": 81672,
+   "n_calls": 6,
+   "offered": 86,
+   "unit": null,
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 221,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:memory",
+     "tokens": 714,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_success",
+     "tokens": 154,
+     "class": "UNKNOWN",
+     "evidence": "no measurement for this bucket"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 1853,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:deferred_tools_delta",
+     "tokens": 1436,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "attach:agent_listing_delta",
+     "tokens": 8750,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 707,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:skill_listing",
+     "tokens": 5022,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:instructions",
+     "tokens": 26142,
+     "class": "REDUCIBLE",
+     "evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "attach:remote_session_change",
+     "tokens": 181,
+     "class": "ELIMINABLE",
+     "evidence": "absent in probe P3; no role in a -p task; candidate, no parity run"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 156,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 26637,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 4027,
+     "class": "EMBODIABLE",
+     "evidence": "answer is script-computable (V1 truth.py): DETERMINISTIC_PATH embodies the reads"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 1986,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 98,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:attach:hook_additional_context",
+     "tokens": 155,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 0,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": 597,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2264,
+    "ELIMINABLE": 15390,
+    "REDUCIBLE": 55562,
+    "UNKNOWN": 154,
+    "PAGEABLE": 1436
+   }
+  },
+  {
+   "sid": "fa1e65cd-d6e9-45ac-b9ff-2429a13617a3",
+   "ctx1": 18077,
+   "ctx_last": 22049,
+   "n_calls": 4,
+   "offered": 86,
+   "unit": "bounded-code-worker",
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 221,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 1853,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 315,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:deferred_tools_delta",
+     "tokens": 1424,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "attach:agent_listing_delta",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:skill_listing",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:instructions",
+     "tokens": 1606,
+     "class": "REDUCIBLE",
+     "evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 269,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "attach:remote_session_change",
+     "tokens": 181,
+     "class": "ELIMINABLE",
+     "evidence": "absent in probe P3; no role in a -p task; candidate, no parity run"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 156,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 9799,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    },
+    {
+     "bucket": "carry:tool_result",
+     "tokens": 1801,
+     "class": "EMBODIABLE",
+     "evidence": "answer is script-computable (V1 truth.py): DETERMINISTIC_PATH embodies the reads"
+    },
+    {
+     "bucket": "carry:response",
+     "tokens": 1585,
+     "class": "HOST_LIMITED",
+     "evidence": "host replays the assistant's own prior turns; no flag removes them"
+    },
+    {
+     "bucket": "carry:attach:deferred_tools_delta",
+     "tokens": 870,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "carry:attach:total_tokens_reminder",
+     "tokens": 59,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "carry:images",
+     "tokens": 0,
+     "class": "PAGEABLE",
+     "evidence": "pixel GC tombstones images outside the window"
+    },
+    {
+     "bucket": "carry:residual",
+     "tokens": -343,
+     "class": "UNKNOWN",
+     "evidence": "carry not explained by sized buckets"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2264,
+    "REDUCIBLE": 14188,
+    "PAGEABLE": 1424,
+    "ELIMINABLE": 197
+   }
+  },
+  {
+   "sid": "228f7133-03c4-4504-8509-eb19e760272c",
+   "ctx1": 10155,
+   "ctx_last": 10155,
+   "n_calls": 1,
+   "offered": 0,
+   "unit": "bounded-code-worker",
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 175,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 3524,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 234,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:instructions",
+     "tokens": 2151,
+     "class": "REDUCIBLE",
+     "evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 441,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 23,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 1354,
+     "class": "UNKNOWN",
+     "evidence": "no tools offered: residual is host framing plus calibration error, unsplit"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2176,
+    "REDUCIBLE": 6605,
+    "ELIMINABLE": 16,
+    "UNKNOWN": 1354
+   }
+  },
+  {
+   "sid": "2ee1f371-b2f2-430f-a34a-62f2c8a54c4b",
+   "ctx1": 3119,
+   "ctx_last": 3119,
+   "n_calls": 1,
+   "offered": 0,
+   "unit": "bounded-code-worker",
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 175,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 234,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 441,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 23,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": -6,
+     "class": "UNKNOWN",
+     "evidence": "no tools offered: residual is host framing plus calibration error, unsplit"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2176,
+    "REDUCIBLE": 930,
+    "ELIMINABLE": 16,
+    "UNKNOWN": -6
+   }
+  },
+  {
+   "sid": "95ab3d08-26bd-47dd-988e-d3a8ca131c91",
+   "ctx1": 13361,
+   "ctx_last": 13361,
+   "n_calls": 1,
+   "offered": 8,
+   "unit": "bounded-code-worker",
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 175,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 3526,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 234,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:deferred_tools_delta",
+     "tokens": 492,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:instructions",
+     "tokens": 2151,
+     "class": "REDUCIBLE",
+     "evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 441,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 23,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 4067,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2176,
+    "REDUCIBLE": 10674,
+    "PAGEABLE": 492,
+    "ELIMINABLE": 16
+   }
+  },
+  {
+   "sid": "99d97182-1e6d-4a62-aeda-cc6321da9c54",
+   "ctx1": 14269,
+   "ctx_last": 14269,
+   "n_calls": 1,
+   "offered": 35,
+   "unit": "bounded-code-worker",
+   "buckets": [
+    {
+     "bucket": "section:lean_body",
+     "tokens": 535,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:communication",
+     "tokens": 31,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:pronouns",
+     "tokens": 119,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:action_caution",
+     "tokens": 173,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:session_guidance",
+     "tokens": 221,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:env_info_simple",
+     "tokens": 193,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:context_management",
+     "tokens": 93,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:act_dont_rederive",
+     "tokens": 92,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "section:heron_brook",
+     "tokens": 930,
+     "class": "REDUCIBLE",
+     "evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+    },
+    {
+     "bucket": "section:total_tokens",
+     "tokens": 16,
+     "class": "IRREDUCIBLE",
+     "evidence": "CCR lean core, kept in probe P4; controllable by --system-prompt, so not a floor"
+    },
+    {
+     "bucket": "attach:hook_additional_context",
+     "tokens": 3524,
+     "class": "REDUCIBLE",
+     "evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:environment",
+     "tokens": 234,
+     "class": "IRREDUCIBLE",
+     "evidence": "cwd/platform; kept in probe P4 (every switch off)"
+    },
+    {
+     "bucket": "attach:model",
+     "tokens": 42,
+     "class": "IRREDUCIBLE",
+     "evidence": "model identity; kept in probe P4"
+    },
+    {
+     "bucket": "attach:deferred_tools_delta",
+     "tokens": 650,
+     "class": "PAGEABLE",
+     "evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+    },
+    {
+     "bucket": "attach:agent_listing_delta",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:mcp_instructions_delta",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:skill_listing",
+     "tokens": 0,
+     "class": "ELIMINABLE",
+     "evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+    },
+    {
+     "bucket": "attach:total_tokens_reminder",
+     "tokens": 16,
+     "class": "ELIMINABLE",
+     "evidence": "49 B per call, kept in every probe; candidate, no parity run"
+    },
+    {
+     "bucket": "attach:instructions",
+     "tokens": 2151,
+     "class": "REDUCIBLE",
+     "evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+    },
+    {
+     "bucket": "attach:session_context",
+     "tokens": 441,
+     "class": "IRREDUCIBLE",
+     "evidence": "kept in probe P4"
+    },
+    {
+     "bucket": "attach:date",
+     "tokens": 9,
+     "class": "IRREDUCIBLE",
+     "evidence": "date; kept in probe P4"
+    },
+    {
+     "bucket": "attach:remote_session_change",
+     "tokens": 181,
+     "class": "ELIMINABLE",
+     "evidence": "absent in probe P3; no role in a -p task; candidate, no parity run"
+    },
+    {
+     "bucket": "prompt",
+     "tokens": 23,
+     "class": "IRREDUCIBLE",
+     "evidence": "the task itself"
+    },
+    {
+     "bucket": "tool_schemas+framing",
+     "tokens": 4591,
+     "class": "REDUCIBLE",
+     "evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+    }
+   ],
+   "call1_by_class": {
+    "IRREDUCIBLE": 2222,
+    "REDUCIBLE": 11196,
+    "PAGEABLE": 650,
+    "ELIMINABLE": 197
+   }
+  }
+ ]
+}
