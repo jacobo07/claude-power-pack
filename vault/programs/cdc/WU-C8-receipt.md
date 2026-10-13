@@ -1,7 +1,7 @@
-﻿# C8 receipt
+# C8 receipt
 Status: DONE
 
-Commits: worktree "cdc C8: cognitive PGO, proof_digest primitive" (feat/cdc); live landing sha in the line below.
+Commits: worktree "cdc C8: cognitive PGO, proof_digest primitive" (feat/cdc); live landing e6558ba5 (land_worktree rc=0, cognitive_ci GREEN, tests_after rc=0).
 
 - PROVEN: tools/cognitive_pgo.py ran over 2993/2993 transcripts of the last 14 d (all projects, 43.7 G processed tokens, complete, newest first, junction duplicates counted once). Outputs in vault/programs/cdc/evidence/: cognitive-pgo.json, cognitive-pgo.md, unproductive-corpus.jsonl (18,115 calls, 1.22 G tokens in NO_PROGRESS_RUN beyond C4 trip 25; plus REREAD/RECOVERY/CONTEXT_FAULT, each with a causal class).
 - Ranking by ROIC (fix cost and avoidable share are declared ESTIMATES): Context, Coordination, Proof, Recovery, Token, Decision, Research. Owner and Constitutional are UNKNOWN (not 0): transcripts do not carry them.
