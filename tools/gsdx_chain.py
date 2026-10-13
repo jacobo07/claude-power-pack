@@ -29,6 +29,7 @@ DEFAULT_CHAIN = ROOT / "vault" / "specs" / "gsdx-factory" / "chain.json"
 LIVE = Path.home() / ".claude" / "skills" / "claude-power-pack" / "tools"
 PY = sys.executable
 TERMINAL = {"COMPLETED", "HALTED", "ORPHANED"}
+PRE_RUNNER = None   # test seam for chain_pre.run_pre
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -609,6 +610,9 @@ def _tick_locked(chain: dict, dry_run, state, armer, settler, ledger, gate_runne
         settled = (settler or (lambda: _live_settle(chain["goal"], missions, chain)))() if (settler or state is None) else []
     finalized = [] if dry_run else finalize(chain, missions, gate_runner, git)
     row = decide(chain, missions, used, _route_target)
+    if row["action"] == "arm" and not dry_run and not row.get("residual") and os.environ.get("CPP_CHAIN_PRE", "").lower() != "off":
+        import chain_pre  # D1c: pre commands once per packet sha, before any arm
+        row = chain_pre.apply(chain, row, lambda u: receipt_status(Path(u["receipt"])) == "DONE", **({"runner": PRE_RUNNER} if PRE_RUNNER else {}))
     if finalized:
         row["finalized"] = finalized
     if settled:

@@ -208,5 +208,118 @@ check("V-CHAIN-COMPLETE-AND-KILL", r["action"] == "complete" and r_off["action"]
 check("V-CHAIN-RECEIPT-PARSE", gc.receipt_status(TMP / "r.md") == "DONE"
       and gc.receipt_status(TMP / "absent.json") is None, gc.receipt_status(TMP / "r.md"))
 
+# ---- D1c: deterministic-first gate (chain_pre) -------------------------------------------------------------------
+import chain_pre as cp  # noqa: E402
+import os  # noqa: E402
+import time  # noqa: E402
+PYQ = '"' + sys.executable + '"'
+
+
+def packet(d, uid, front):
+    (d / f"WU-{uid}.md").write_text(front + "\n# WU\nbody\n", encoding="utf-8")
+
+
+def fm(cls, cmds, extra=""):
+    return "---\nclass: " + cls + "\n" + extra + "pre:\n" + "".join(f"  - {c}\n" for c in cmds) + "---"
+
+
+def pyc(code):
+    return f'{PYQ} -c "{code}"'
+
+
+def own_receipt(d, p, name):
+    chain = json.loads(p.read_text(encoding="utf-8"))
+    chain["units"][0]["receipt"] = str(d / name)
+    p.write_text(json.dumps(chain), encoding="utf-8")
+
+
+# control: no front matter -> unchanged decision, no .pre.json
+d, p, _ = setup("pre-none")
+packet(d, "A", "# plain")
+armed.clear()
+r = gc.tick(p, state=lambda: ([], 0), armer=arm)
+check("V-PRE-ABSENT-UNCHANGED", r["action"] == "arm" and armed == ["A"] and not cp.pre_path(d / "WU-A.md").exists(), r["action"])
+
+# pre rc 0 -> arm, results recorded; rc 3 -> pre_failed, no arm
+d, p, _ = setup("pre-ok")
+packet(d, "A", fm("MODEL", [pyc("print(7)")]))
+armed.clear()
+r = gc.tick(p, state=lambda: ([], 0), armer=arm)
+pj = cp.pre_path(d / "WU-A.md")
+rec = json.loads(pj.read_text(encoding="utf-8")) if pj.exists() else {}
+check("V-PRE-OK-THEN-ARM", r["action"] == "arm" and armed == ["A"] and rec.get("rc") == 0 and "7" in rec.get("tail", "")
+      and r.get("pre_json") == str(pj), r["action"])
+d, p, _ = setup("pre-fail")
+packet(d, "A", fm("MODEL", [pyc("import sys; sys.exit(3)")]))
+armed.clear()
+r = gc.tick(p, state=lambda: ([], 0), armer=arm)
+check("V-PRE-FAIL-NO-ARM", r["action"] == "pre_failed" and r.get("rc") == 3 and not armed, r["action"])
+
+# DETERMINISTIC: pre writes a DONE receipt -> closed without arm; control: MODEL class with the same pre arms
+d, p, _ = setup("pre-det")
+own_receipt(d, p, "R-A.md")
+rcp = (d / "R-A.md").as_posix()
+packet(d, "A", fm("DETERMINISTIC", [pyc(f"open('{rcp}','w').write('Status: DONE')")]))
+armed.clear()
+r = gc.tick(p, state=lambda: ([], 0), armer=arm)
+check("V-PRE-DETERMINISTIC-CLOSES", r["action"] == "closed_deterministic" and not armed, r["action"])
+d, p, _ = setup("pre-model")
+own_receipt(d, p, "R-A.md")
+rcp = (d / "R-A.md").as_posix()
+packet(d, "A", fm("MODEL", [pyc(f"open('{rcp}','w').write('Status: DONE')")]))
+armed.clear()
+r = gc.tick(p, state=lambda: ([], 0), armer=arm)
+check("V-PRE-MODEL-STILL-ARMS", r["action"] == "arm" and armed == ["A"], r["action"])
+
+# once per sha: the second tick does not rerun; an edited packet reruns
+d, p, _ = setup("pre-once")
+cnt = (d / "count.txt").as_posix()
+cmd = pyc(f"open('{cnt}','a').write('x')")
+packet(d, "A", fm("MODEL", [cmd]))
+gc.tick(p, state=lambda: ([], 0), armer=arm)
+gc.tick(p, state=lambda: ([], 0), armer=arm)
+cf = d / "count.txt"
+n1 = len(cf.read_text()) if cf.exists() else 0
+packet(d, "A", fm("MODEL", [cmd], "note: edited\n"))
+gc.tick(p, state=lambda: ([], 0), armer=arm)
+n2 = len(cf.read_text()) if cf.exists() else 0
+check("V-PRE-ONCE-PER-SHA", n1 == 1 and n2 == 2, f"{n1}/{n2}")
+
+# timeout honoured (rc 124 -> pre_failed) and capped at 900
+d, p, _ = setup("pre-timeout")
+packet(d, "A", fm("MODEL", [pyc("import time; time.sleep(30)")], "pre_timeout_s: 1\n"))
+armed.clear()
+t0 = time.time()
+r = gc.tick(p, state=lambda: ([], 0), armer=arm)
+check("V-PRE-TIMEOUT", r["action"] == "pre_failed" and r.get("rc") == 124 and not armed and time.time() - t0 < 20, r["action"])
+check("V-PRE-TIMEOUT-CAPPED", cp.timeout_s({"pre_timeout_s": "5000"}) == 900 and cp.timeout_s({}) == 600, "")
+
+# kill switch: the pre never runs, the unit arms as before
+d, p, _ = setup("pre-kill")
+packet(d, "A", fm("MODEL", [pyc("import sys; sys.exit(3)")]))
+os.environ["CPP_CHAIN_PRE"] = "off"
+armed.clear()
+r = gc.tick(p, state=lambda: ([], 0), armer=arm)
+os.environ.pop("CPP_CHAIN_PRE")
+check("V-PRE-KILL-SWITCH", r["action"] == "arm" and armed == ["A"] and not cp.pre_path(d / "WU-A.md").exists(), r["action"])
+
+# DETERMINISTIC_USED_MODEL typed failure (and its three controls)
+check("V-PRE-USED-MODEL", cp.used_model("Status: DONE\n", "DETERMINISTIC", 3) == "DETERMINISTIC_USED_MODEL"
+      and cp.used_model("Status: DONE\nUNKNOWN: x\n", "DETERMINISTIC", 3) is None
+      and cp.used_model("Status: DONE\n", "DETERMINISTIC", 0) is None
+      and cp.used_model("Status: DONE\n", "MODEL", 3) is None, "")
+
+# P1P2-shaped regression: DETERMINISTIC unit, pre writes the receipt, no worker; the successor then arms
+d, p, _ = setup("p1p2")
+own_receipt(d, p, "R-A.md")
+rcp = (d / "R-A.md").as_posix()
+packet(d, "A", fm("DETERMINISTIC", [pyc(f"open('{rcp}','w').write('Status: DONE factor ran')")]))
+armed.clear()
+r1 = gc.tick(p, state=lambda: ([], 0), armer=arm)
+r2 = gc.tick(p, state=lambda: ([], 0), armer=arm)
+check("V-PRE-P1P2-NO-WORKER", r1["action"] == "closed_deterministic" and r2["action"] == "arm" and r2["unit"] == "B"
+      and armed == ["B"], f"{r1['action']} -> {r2['action']}")
+
+
 print(f"CHAIN_PASS={passes}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)
