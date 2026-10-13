@@ -1,20 +1,20 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 4
+current_phase: 5
 status: planning
-last_updated: "2026-10-12T00:00:00.000Z"
-last_activity: 2026-10-12
+last_updated: "2026-10-13T00:00:00.000Z"
+last_activity: 2026-10-13
 progress:
   total_phases: 10
-  completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
-  percent: 30
+  completed_phases: 4
+  total_plans: 17
+  completed_plans: 17
+  percent: 40
 workstream: gsdx-pcc
 created: 2026-10-07
-current_phase_name: W3 Candidate snapshots
+current_phase_name: W4 Judge VALIDATE vs REPLAY
 current_plan: Not started
-stopped_at: Phase 3 complete (verification passed, 03-VERIFICATION.md); ready to plan Phase 4 (W3 candidate snapshots)
+stopped_at: Phase 4 complete (verification passed, 04-VERIFICATION.md); ready to plan Phase 5 (W4 judge VALIDATE vs REPLAY)
 ---
 
 # Project State
@@ -22,8 +22,14 @@ stopped_at: Phase 3 complete (verification passed, 03-VERIFICATION.md); ready to
 ## Current Position
 
 **Status:** Ready to plan
-**Current Phase:** 4 -- W3 Candidate snapshots (Phase 3 complete 2026-10-12, see `phases/03-w2-execution-frontier-and-scheduling/03-VERIFICATION.md`)
-**Last Activity:** 2026-10-12
+**Current Phase:** 5 -- W4 Judge VALIDATE vs REPLAY (Phase 4 complete 2026-10-13, see `phases/04-w3-candidate-snapshots-invalidation-proof-inheritance/04-VERIFICATION.md`)
+**Last Activity:** 2026-10-13
+
+## OWNER DECISION NEEDED (WU-P4, unattended; the worker continued)
+
+- **Question:** where and when is `tools/test_gsd_x_goal_mutation.py` run for Phase 4? It mutates LIVE files, hit a 270 s timeout on the laptop, and its kill left `judge.py` mutated (restored by `git checkout`, diff empty).
+  **Options:** (a) coordinator runs it on the Linux plane (GEX44) at the Phase 4 head and labels the result "Linux plane"; (b) defer it to Phase 6's entry obligation (R11, isolated-copy incumbent measurement); (c) run it on the laptop in an isolated copy with a longer timeout.
+  **Pick:** (a). Phase 4 added no judge or mutation-suite change, so the risk is low; the gate stays honest as UNRUN until then.
 
 ## Session Continuity
 

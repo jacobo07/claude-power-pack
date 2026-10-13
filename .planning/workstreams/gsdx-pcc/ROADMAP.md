@@ -62,7 +62,7 @@ discriminating evidence, or less reconstruction -- never from removing a check.
   from measured priors (UNKNOWN allowed), information-gain and failure-first as separate signals, posture
   ECONOMY/BALANCED/WALL_CLOCK on the goal budget. RED: global WAIT with independent work; unsafe parallel writes;
   resource collision admitted as independent.
-- [ ] **Phase 4: W3 Candidate snapshots, invalidation, proof inheritance**
+- [x] **Phase 4: W3 Candidate snapshots, invalidation, proof inheritance** (completed 2026-10-13)
   Candidate snapshot (git objects), causal fingerprint, `proof.produced/inherited/invalidated` events,
   freshness classes, minimal sufficient verification (UNKNOWN -> FULL). RED: false reuse after a relevant change;
   UNKNOWN treated as clean; fresh-required proof inherited; omitted proof without an INHERITED event; candidate
