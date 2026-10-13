@@ -69,6 +69,12 @@ SURFACE_TOKENS = {
     "docs": {"docs", "documentation", "guide", "guides"},
 }
 
+# id prefix -> index document. Entries of a catalogue family are listed by count in
+# the advisory line; `resolve()` still returns every one of them individually.
+CATALOG_FAMILIES = {
+    "VP-CMP-": "vault/knowledge_base/cdio/CDIO-11-componentry-catalog.md",
+}
+
 REQUIRED_FIELDS = ("applies_to", "excluded_from", "min_expressiveness",
                    "min_motion_budget", "requires_reduced_motion", "evidence_level",
                    "provenance", "purpose")
@@ -233,8 +239,18 @@ def advisory_line(guidance: dict) -> str:
     the injection stays proportional to the decision, never a corpus dump."""
     state = (guidance or {}).get("state")
     if state == "applicable":
+        # Catalogue families (54 componentry entries, CDIO-11) are summarised as one
+        # count and one index pointer, so a landing page with a high contract gets a
+        # line proportional to the decision rather than the whole catalogue.
+        own = [p for p in guidance["patterns"]
+               if not any(p["id"].startswith(f) for f in CATALOG_FAMILIES)]
         items = "; ".join(f"{p['id']} {p['name']} [{p['evidence_level']}] -> {p['file']}"
-                          for p in guidance["patterns"])
+                          for p in own)
+        for prefix, index_doc in CATALOG_FAMILIES.items():
+            n = sum(1 for p in guidance["patterns"] if p["id"].startswith(prefix))
+            if n:
+                items = (items + "; " if items else "") + (
+                    f"{n} {prefix}* catalogue components also clear it -> {index_doc}")
         return (f"CDIO motion ({', '.join(guidance['surface_kinds'])}): patterns that "
                 f"clear this surface's CDIO-07 contract: {items}. Read an entry before "
                 "animating; each defines its purpose, 'Cuando NO usar' and the "

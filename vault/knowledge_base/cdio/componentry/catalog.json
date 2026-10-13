@@ -1,0 +1,2946 @@
+{
+  "commit": "b602c2872fea85c9f2464016ce3bbe0af17b51b4",
+  "components": [
+    {
+      "category": "Hero Backgrounds",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 333) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "A beautiful, animated, and customizable WebGL gradient with noise capabilities.",
+      "sha256": "33ee70f83c8740c224cb578ea8ec40295c5cb8120cfe2df30fe2d2d61f80569e",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": 333,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 209,
+        "webgl_fallback": 5
+      },
+      "slug": "animated-gradient",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/animated-gradient.tsx",
+      "title": "Animated Gradient"
+    },
+    {
+      "category": "Components",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 450). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "svg",
+        "role": "componente de escaparate"
+      },
+      "description": "Hand-drawn marks — circles, highlights, underlines, cross-outs — sketched around inline text.",
+      "sha256": "5d11e6ff7e7088217738b9c9e154df48719f97b8982b7da04675090cacc43b9f",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 530,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": 493,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": 450,
+        "scroll": null,
+        "svg": 535,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "annotated-text",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/annotated-text.tsx",
+      "title": "Annotated Text"
+    },
+    {
+      "category": "ASCII Effects",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 131). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Responde al puntero (linea 103) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 304) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre canvas2d sin pausa fuera de pantalla"
+        ],
+        "render": "canvas2d",
+        "role": "efecto ASCII de escaparate"
+      },
+      "description": "Render images as responsive ASCII artwork with image, flow, and glitch variations.",
+      "sha256": "83490a16f5081aafed5f6373c69ce0a43f9313eba9c558a2fb0526dc94bd2abc",
+      "signals": {
+        "accessible_name": 356,
+        "aria_hidden": null,
+        "canvas2d": 116,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 103,
+        "raf": 304,
+        "reduced_motion": 131,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": 119
+      },
+      "slug": "ascii-effect",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/ascii-effect.tsx",
+      "title": "ASCII Effect"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 245). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Responde al puntero (linea 514) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "medium",
+        "raised": [],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "Procedural atmospheric hero background with layered flowing color, diffused aurora light, and subtle interaction.",
+      "sha256": "44b4fd9ab1c2637499c2ae0ad54b700a75e7e196f8617d6d6170e00f35644922",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 663,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": 600,
+        "pointer": 514,
+        "raf": 586,
+        "reduced_motion": 245,
+        "scroll": 518,
+        "svg": null,
+        "touch": null,
+        "webgl": 384,
+        "webgl_fallback": 5
+      },
+      "slug": "aurora-flow",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/aurora-flow.tsx",
+      "title": "Aurora Flow"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 207). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Trabajo continuo (linea 230) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "medium",
+        "raised": [
+          "motion_budget->medium: animacion infinita (linea 230)"
+        ],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "Editorial case study cards that fold upward on scroll to reveal the next story.",
+      "sha256": "83cfb917080b6b6eba51db3f41d306716edfe2055f2374c731016e0baf5f10af",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 228,
+        "canvas2d": null,
+        "infinite": 230,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": 207,
+        "scroll": 209,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "case-study-flip-stack",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/case-study-flip-stack.tsx",
+      "title": "Case Study Flip Stack"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 531) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 267) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "medium",
+        "raised": [
+          "motion_budget->medium: animacion infinita (linea 267)"
+        ],
+        "render": "svg",
+        "role": "componente de escaparate"
+      },
+      "description": "Animated circuit board visualization with nodes and connections.",
+      "sha256": "66abc9025cc6bb1b23d2634b0d3b379481ac3e24d5ecb8c669369f1737e57ace",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 267,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 531,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": 179,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "circuit-board",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/circuit-board.tsx",
+      "title": "Circuit Board"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 249) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 400) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "Plasma field tailored for footer and CTA sections with premium atmospheric motion.",
+      "sha256": "d6266529c20393f91129cd30dde5701aba2e6b4cd898071d86dae1ba28db12c9",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 426,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 249,
+        "raf": 400,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 252,
+        "webgl_fallback": 253
+      },
+      "slug": "closing-plasma",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/closing-plasma.tsx",
+      "title": "Closing Plasma"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 81) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "Smooth surfing interaction for browsing collections.",
+      "sha256": "ba283286983babe04c9ebcfa2961020fef758ddd4ea84025f83a07190781988e",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 81,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": 31,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "collection-surfer",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/collection-surfer.tsx",
+      "title": "Collection Surfer"
+    },
+    {
+      "category": "Text Animations",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 247) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 206) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "expressiveness->high: renderiza por frame sobre canvas2d (linea 206)",
+          "motion_budget->high: renderiza por frame sobre canvas2d sin pausa fuera de pantalla"
+        ],
+        "render": "canvas2d",
+        "role": "animacion de titular"
+      },
+      "description": "Renders dynamic typography constructed entirely from particles that elegantly disperse and reassemble upon cursor interaction using spring physics.",
+      "sha256": "c771fae987b327a09f8c43a0e6235580f82f6e1fa8fa7e56ec03261d0fdeb66d",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": 127,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 247,
+        "raf": 206,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": 249,
+        "webgl": null,
+        "webgl_fallback": 128
+      },
+      "slug": "cursor-driven-particle-typography",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/cursor-driven-particle-typography.tsx",
+      "title": "Particle Typography"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 112) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre canvas2d sin pausa fuera de pantalla"
+        ],
+        "render": "canvas2d",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "Gradient background with dithering noise.",
+      "sha256": "27cedddb5e02a28cc521cf44d6660697fa46060cf9184b7a653cbacc6481efe6",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": 32,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": 112,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": 33
+      },
+      "slug": "dither-gradient",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/dither-gradient.tsx",
+      "title": "Dither Gradient"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [
+        "@react-three/fiber",
+        "framer-motion",
+        "three"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 400) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "Stunning WebGL hero with advanced dithering, prismatic refraction, holographic iridescence, and center-focused energy.",
+      "sha256": "c0eb93a016c6a47a10b17b929102159c56eada8724c0a7948c597ad53358a11e",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 400,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 5,
+        "webgl_fallback": 10
+      },
+      "slug": "dither-prism-hero",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/dither-prism-hero.tsx",
+      "title": "Dither Prism Hero"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 645) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 494) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre canvas2d sin pausa fuera de pantalla"
+        ],
+        "render": "canvas2d",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "An interactive particle logo that turns image assets into a dithered canvas field with cursor ripples.",
+      "sha256": "8f002941a9f39e2a903dde7069f005b5534056a5d4924bb33548e6531f424d83",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": 82,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 645,
+        "raf": 494,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": 107
+      },
+      "slug": "dithered-logo",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/dithered-logo.tsx",
+      "title": "Dithered Logo"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 457) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 102) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "medium",
+        "raised": [
+          "motion_budget->medium: animacion infinita (linea 102)"
+        ],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "Hyper-realistic eyes that follow your cursor with smooth spring physics, reactive pupils, blinking, and multiple stunning variants.",
+      "sha256": "620716bb5ebc9ad4ad29f21b3b9ccfc64fc358a3c96199b1122fd7136901a72f",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 102,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 457,
+        "raf": 119,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "eye-tracking",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/eye-tracking.tsx",
+      "title": "Eye Tracking"
+    },
+    {
+      "category": "Components",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 470). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Trabajo continuo (linea 535) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "expressiveness->high: renderiza por frame sobre webgl (linea 535)",
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "componente de escaparate"
+      },
+      "description": "A dense draggable image wall warped as one continuous fisheye surface with weighted momentum.",
+      "sha256": "485700c746b600b70243e5b3bfcc0ae7adac2bc9f2320562d0315419d861a520",
+      "signals": {
+        "accessible_name": 252,
+        "aria_hidden": 801,
+        "canvas2d": 358,
+        "infinite": null,
+        "keyboard": 689,
+        "pauses_offscreen": null,
+        "pointer": 590,
+        "raf": 535,
+        "reduced_motion": 470,
+        "scroll": 706,
+        "svg": null,
+        "touch": 41,
+        "webgl": 313,
+        "webgl_fallback": 184
+      },
+      "slug": "fisheye-infinite-grid",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/fisheye-infinite-grid.tsx",
+      "title": "Fisheye Infinite Grid"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 359) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "medium",
+        "raised": [
+          "motion_budget->medium: animacion infinita (linea 359)"
+        ],
+        "render": "svg",
+        "role": "componente de escaparate"
+      },
+      "description": "A detailed card showing flight information with animations.",
+      "sha256": "1e0f90e0b57c2b892a53f112a2ddcc32947eb68e9fbb95212a59db484ca92e16",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 359,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": 408,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "flight-status-card",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/flight-status-card.tsx",
+      "title": "Flight Status Card"
+    },
+    {
+      "category": "Text Animations",
+      "deps": [
+        "gsap"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 54). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Responde al puntero (linea 147) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "animacion de titular"
+      },
+      "description": "A clean character-by-character flip between two words on interaction.",
+      "sha256": "837a67a181768c1bb210da2f76bfe4c2009daffd5fcbc01db6ba6a846668f442",
+      "signals": {
+        "accessible_name": 144,
+        "aria_hidden": 160,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 147,
+        "raf": null,
+        "reduced_motion": 54,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "flipping-word-swap",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/flipping-word-swap.tsx",
+      "title": "Flipping Word Swap"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 217) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "svg",
+        "role": "componente de escaparate"
+      },
+      "description": "GitHub-style contribution calendar heatmap.",
+      "sha256": "06cf351274bbeec4be3b7bbbd8eb7095258c8aa8c80687996d0defd0e1ee0ef6",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 160,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 217,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": 160,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "github-calendar",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/github-calendar.tsx",
+      "title": "Github Calendar"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 240). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "medium",
+        "raised": [],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "A breathing color field with flowing shadows, customizable film grain, and soft atmospheric light.",
+      "sha256": "45c4862f75b4fd3569c54465006d214baa09b816dfa3e02a4fd9a319e788b40e",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 326,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": 272,
+        "pointer": null,
+        "raf": 273,
+        "reduced_motion": 240,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 169,
+        "webgl_fallback": 174
+      },
+      "slug": "grain-gradient",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/grain-gradient.tsx",
+      "title": "Grain Gradient"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [
+        "@react-three/fiber",
+        "framer-motion",
+        "three"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 163) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "WebGL sin ruta de fallo detectada: sin contexto WebGL el hueco queda vacio. Envolver en el `webgl-error-boundary` vendorizado o dar un fondo estatico.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "Geometric shapes and patterns for hero sections.",
+      "sha256": "1085fa2cb6258e88bb581d696ad91472c7056e3ba84ca39add8e7f026af3349a",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 163,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 5,
+        "webgl_fallback": null
+      },
+      "slug": "hero-geometric",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/hero-geometric.tsx",
+      "title": "Hero Geometric"
+    },
+    {
+      "category": "Components",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 99). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "Eight polished hover transitions with per-card animation, direction, color, and content controls.",
+      "sha256": "86ae8596e60f08b5ef9c8153e73da71d684489d99c3fa7b12bcb714a5b592893",
+      "signals": {
+        "accessible_name": 497,
+        "aria_hidden": 144,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": 168,
+        "pauses_offscreen": null,
+        "pointer": 162,
+        "raf": null,
+        "reduced_motion": 99,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "hover-transition",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/hover-transition.tsx",
+      "title": "Hover Transition"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [
+        "@react-three/drei",
+        "@react-three/fiber",
+        "three"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 426) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 320) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "WebGL-powered cursor ripples that displace layered image cards in real time.",
+      "sha256": "f5c38a644d5988884844d9696bad26ed614bbba77f4979774fee6f65896c8948",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 320,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 426,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": 43,
+        "touch": null,
+        "webgl": 6,
+        "webgl_fallback": 10
+      },
+      "slug": "image-ripple-effect",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/image-ripple-effect.tsx",
+      "title": "Image Ripple Effect"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [
+        "gsap"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 50) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Programa trabajo por frame (linea 53); si es un bucle continuo o un frame puntual no es decidible por lectura estatica. Medirlo en navegador antes de fijar el `motion_budget` del contrato."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "medium",
+        "raised": [],
+        "render": "dom",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "Leaves a trail of images behind the cursor with a premium delay fade.",
+      "sha256": "63d43c8f553d5002007f67842309df8bf012686c57a64012112225134e64bd96",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 50,
+        "raf": 53,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "image-trail",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/image-trail.tsx",
+      "title": "Image Trail"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 200) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 94) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre canvas2d sin pausa fuera de pantalla"
+        ],
+        "render": "canvas2d",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "An endless, cursor-driven photo canvas that tiles images infinitely and pans fluidly toward wherever you move your cursor.",
+      "sha256": "f603ae87aabc11a3af3aa56f089e979886e3213569157f85de6788fc1bc3b679",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": 89,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 200,
+        "raf": 94,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": 90
+      },
+      "slug": "infinite-image-field",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/infinite-image-field.tsx",
+      "title": "Infinite Image Field"
+    },
+    {
+      "category": "Text Animations",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 178). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Programa trabajo por frame (linea 188); si es un bucle continuo o un frame puntual no es decidible por lectura estatica. Medirlo en navegador antes de fijar el `motion_budget` del contrato."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "animacion de titular"
+      },
+      "description": "Directional text reveal with soft blur and configurable word, character, or line stagger timing.",
+      "sha256": "7bd71e0b0c8e6da5ca5ab9ab0f3c34b1a43d40a17083b8b7c34808bb6e58de1b",
+      "signals": {
+        "accessible_name": 241,
+        "aria_hidden": 248,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": 188,
+        "reduced_motion": 178,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "kinetic-text-reveal",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/kinetic-text-reveal.tsx",
+      "title": "Kinetic Text Reveal"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "gsap"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 119) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A stack of layered cards that interact with mouse hover.",
+      "sha256": "0acae94a4d25df7a07fd760615d0139dd1ad3158ca0eba0973ec09e40a898627",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 119,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "layered-stack",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/layered-stack.tsx",
+      "title": "Layered Stack"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 113). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Trabajo continuo (linea 94) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "medium",
+        "raised": [
+          "motion_budget->medium: animacion infinita (linea 94)"
+        ],
+        "render": "svg",
+        "role": "componente de escaparate"
+      },
+      "description": "A clock widget that pans across a large dial to follow the hour hand, with soft focus at the edges.",
+      "sha256": "da251f978d8124fa00b9bb3b39947ca177330201020e19e0ca1c1652d7d86c31",
+      "signals": {
+        "accessible_name": 344,
+        "aria_hidden": 358,
+        "canvas2d": null,
+        "infinite": 94,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": 174,
+        "reduced_motion": 113,
+        "scroll": null,
+        "svg": 355,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "lens-clock",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/lens-clock.tsx",
+      "title": "Lens Clock"
+    },
+    {
+      "category": "Text Animations",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 125) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "animacion de titular"
+      },
+      "description": "Kinetic text animation where letters scatter outward with spring physics and blur, then elegantly reassemble.",
+      "sha256": "a4e878f18aa6e191e3ea3f04aa51eab43162dc4ec938fcce0b30b5ffaa8c4c0f",
+      "signals": {
+        "accessible_name": 126,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 125,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "letter-cascade",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/letter-cascade.tsx",
+      "title": "Letter Cascade"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 209) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 222) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "Premium fluid liquid metal shader background effect.",
+      "sha256": "b96bff377bbefa6077a70c4930f62604faf042e55dc8603863171af2cd3148e2",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 209,
+        "raf": 222,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 138,
+        "webgl_fallback": 139
+      },
+      "slug": "liquid-chrome",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/liquid-chrome.tsx",
+      "title": "Liquid Chrome"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "gsap",
+        "three"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 336). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "medium",
+        "raised": [
+          "expressiveness->high: renderiza por frame sobre webgl (linea 1266)",
+          "motion_budget->medium: renderiza por frame sobre webgl"
+        ],
+        "render": "webgl",
+        "role": "componente de escaparate"
+      },
+      "description": "An infinite image carousel seen through a WebGL liquid-glass lens — chromatic rim, snap scroll, and a focus expand.",
+      "sha256": "b3e75d20f3e1605745b5b6f3b2b0fd57c723bd46e96604232d6ba2b410014e5a",
+      "signals": {
+        "accessible_name": 1488,
+        "aria_hidden": 406,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": 1467,
+        "pauses_offscreen": 1201,
+        "pointer": 885,
+        "raf": 1266,
+        "reduced_motion": 336,
+        "scroll": 847,
+        "svg": null,
+        "touch": 857,
+        "webgl": 12,
+        "webgl_fallback": 15
+      },
+      "slug": "liquid-glass-carousel",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/liquid-glass-carousel.tsx",
+      "title": "Liquid Glass Carousel"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "lucide-react"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A realistic Mac keyboard component with interactive keys and detailed styling.",
+      "sha256": "f96bbb88c02eb67d9d1420581c00f503f95a0dd81b58a1d3bb3ddd6c20bceebc",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": 115,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": 73
+      },
+      "slug": "mac-keyboard",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/mac-keyboard.tsx",
+      "title": "Mac Keyboard"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 96) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "medium",
+        "raised": [],
+        "render": "dom",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "Lines that react to cursor movement like a magnetic field.",
+      "sha256": "f557c366accc851db096c90b53d331aefce943dd111d719cb24f44eaecc8cfe3",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 96,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "magnet-lines",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/magnet-lines.tsx",
+      "title": "Magnet Lines"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 249). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "svg",
+        "role": "componente de escaparate"
+      },
+      "description": "MacOS style dock that scales items based on mouse proximity.",
+      "sha256": "1464f97eeeb1872c9b2038330c8fec7277f8f2aaa1ec035df71f168ce6e049a7",
+      "signals": {
+        "accessible_name": 96,
+        "aria_hidden": 136,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": 95,
+        "pauses_offscreen": null,
+        "pointer": 101,
+        "raf": null,
+        "reduced_motion": 249,
+        "scroll": null,
+        "svg": 322,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "magnetic-dock",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/magnetic-dock.tsx",
+      "title": "Magnetic Dock"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 135) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre canvas2d sin pausa fuera de pantalla"
+        ],
+        "render": "canvas2d",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "Classic Matrix digital rain effect.",
+      "sha256": "7cb437c5e938d88c4ebe2369a754fc63afe57c07cfab87685a2a92c18293fef8",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": 33,
+        "infinite": 135,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": 34
+      },
+      "slug": "matrix-rain",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/matrix-rain.tsx",
+      "title": "Matrix Rain"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A fun interactive vinyl record music player with swinging tonearm.",
+      "sha256": "0deb392df067ad0de0c4d7aa65b9b405fb9a1ec2223758599161da84fcd0e465",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "music-player",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/music-player.tsx",
+      "title": "Music Player"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "@react-three/fiber",
+        "three",
+        "three/addons/geometries/RoundedBoxGeometry.js"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 948). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Trabajo continuo (linea 624) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "expressiveness->high: renderiza por frame sobre webgl (linea 624)",
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "componente de escaparate"
+      },
+      "description": "A tactile 3D newsletter archive with hover lift, camera browsing, centered covers, and automatic drag-adjustable orbiting.",
+      "sha256": "e2360c56f216f296f1d4ea6d5ca0b6efdd2029170d792bf5cd24f9ee5255df55",
+      "signals": {
+        "accessible_name": 1116,
+        "aria_hidden": 1181,
+        "canvas2d": 359,
+        "infinite": 624,
+        "keyboard": 1115,
+        "pauses_offscreen": null,
+        "pointer": 750,
+        "raf": 1097,
+        "reduced_motion": 948,
+        "scroll": 1131,
+        "svg": null,
+        "touch": 918,
+        "webgl": 6,
+        "webgl_fallback": 360
+      },
+      "slug": "newsletter-bookshelf",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/newsletter-bookshelf.tsx",
+      "title": "Newsletter Bookshelf"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion",
+        "lucide-react"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 155). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "Premium hover card deck that fans outward and lifts the active card without changing its color or angle.",
+      "sha256": "652a48ea42129a925e2cb9e7546468a487ad749b9f5e8cf25928a7b4c1a724ce",
+      "signals": {
+        "accessible_name": 210,
+        "aria_hidden": 265,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": 228,
+        "pauses_offscreen": null,
+        "pointer": 236,
+        "raf": null,
+        "reduced_motion": 155,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "orbit-card-stack",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/orbit-card-stack.tsx",
+      "title": "Orbit Card Stack"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 222) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 219) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria.",
+          "Canvas sin `aria-hidden` ni nombre accesible. Si es decorativo, ocultarlo al arbol de accesibilidad; si comunica algo, darle texto equivalente."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre canvas2d sin pausa fuera de pantalla"
+        ],
+        "render": "canvas2d",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "Canvas where pixels react to interaction.",
+      "sha256": "95c1a54b6424c2c7fb2c7cd5d678abc0def3a4c4528717cb8ad1fddc3844cd8e",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": 92,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 222,
+        "raf": 219,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": 93
+      },
+      "slug": "pixel-canvas",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/pixel-canvas.tsx",
+      "title": "Pixel Canvas"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 57). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Responde al puntero (linea 294) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 100) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre canvas2d sin pausa fuera de pantalla"
+        ],
+        "render": "canvas2d",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "An image reveal made from cursor-painted squares that expire into a bounded pixel trail.",
+      "sha256": "68c03458e6e8c0eb02c9b22c2fba3a6400cdcec17a5f4c63c5e7239833f842d1",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 367,
+        "canvas2d": 50,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 294,
+        "raf": 100,
+        "reduced_motion": 57,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "pixel-image-trail",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/pixel-image-trail.tsx",
+      "title": "Pixel Image Trail"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [
+        "next-themes"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 178). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Trabajo continuo (linea 205) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "A theme-aware WebGL prism field with liquid checkered motion, electric-blue refraction, and tactile grain.",
+      "sha256": "3daf0b80e918f93341bf88c719e621a7467b1a3e2c1065ef40bd004735d4c393",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 225,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": 205,
+        "reduced_motion": 178,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 79,
+        "webgl_fallback": 84
+      },
+      "slug": "prism-gradient",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/prism-gradient.tsx",
+      "title": "Prism Gradient"
+    },
+    {
+      "category": "Visual Effects",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 473) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "efecto visual de escaparate"
+      },
+      "description": "WebGL image transitions with noisy refractive waves, chromatic edges, glow, and click-triggered ripple origins.",
+      "sha256": "b99f6ae425fddbc050fb1d073cc358c6b950639e856177849f59ba67c5f0ce7f",
+      "signals": {
+        "accessible_name": 494,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 473,
+        "keyboard": 495,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 210,
+        "webgl_fallback": 4
+      },
+      "slug": "ripple-transition",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/ripple-transition.tsx",
+      "title": "Ripple Transition"
+    },
+    {
+      "category": "Text Animations",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 11) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "medium",
+        "raised": [
+          "motion_budget->medium: animacion infinita (linea 11)"
+        ],
+        "render": "dom",
+        "role": "animacion de titular"
+      },
+      "description": "Text that moves horizontally based on scroll speed.",
+      "sha256": "4fccb1db6aa62eb11083417424698efc4d9727cbc53f21b68a173ee14e19a98e",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 11,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": 32,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "scroll-based-velocity",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/scroll-based-velocity.tsx",
+      "title": "Velocity Scroll"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A smooth, scroll-driven image choreography component using Framer Motion.",
+      "sha256": "d492e6a77718c9a142f1119e09cc0c0cbe6e889cd9ae91ec9813a8261c4aaa2d",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": 23,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "scroll-choreography",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/scroll-choreography.tsx",
+      "title": "Scroll Choreography"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A scroll-driven interactive card that splits into three panels and flips.",
+      "sha256": "2695b4afcf1354e5203cf3aa30ca31f25cff8582139b2976024de624078a75c1",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": 30,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "scroll-split-card",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/scroll-split-card.tsx",
+      "title": "Scroll Split Card"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion",
+        "lenis/react"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 169). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Programa trabajo por frame (linea 97); si es un bucle continuo o un frame puntual no es decidible por lectura estatica. Medirlo en navegador antes de fijar el `motion_budget` del contrato."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A cinematic image grid that tilts and resolves into focus as each frame crosses the viewport.",
+      "sha256": "6d82d640c31086fb72e4c8b9abf1180df4d816d59da7e9386b86db0e524ccc63",
+      "signals": {
+        "accessible_name": 202,
+        "aria_hidden": 223,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": 179,
+        "pointer": null,
+        "raf": 97,
+        "reduced_motion": 169,
+        "scroll": 5,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "scroll-tilted-grid",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/scroll-tilted-grid.tsx",
+      "title": "Scroll Tilted Grid"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion",
+        "opentype.js"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "An animated SVG signature effect that draws out text as if hand-written.",
+      "sha256": "8b65586652c44cd0c0984de3a5089f251d9fce4ec883901f75cb635288deede7",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": 111,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "signature",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/signature.tsx",
+      "title": "Signature"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 221). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Responde al puntero (linea 240) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Trabajo continuo (linea 392) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "Premium WebGL hero background with satin-dark aurora ribbons, pearlescent highlights, fine grain, and cursor depth.",
+      "sha256": "848de6e0ead7ac5ac36c7573881b4a46abdeb668d757506cb453e2bc7356dd4a",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 464,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 240,
+        "raf": 392,
+        "reduced_motion": 221,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 244,
+        "webgl_fallback": 6
+      },
+      "slug": "silk-aurora",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/silk-aurora.tsx",
+      "title": "Silk Aurora"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 239). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "medium",
+        "raised": [],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "A soft spectral light ribbon on pure black — slow liquid motion and rainbow fringe.",
+      "sha256": "2dd73d9124c90fc6d8e634eb6ca642e8e8f7717b5a7309854191c4321e929b88",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 337,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": 268,
+        "pointer": null,
+        "raf": 269,
+        "reduced_motion": 239,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 177,
+        "webgl_fallback": 182
+      },
+      "slug": "spectral-ribbon",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/spectral-ribbon.tsx",
+      "title": "Spectral Ribbon"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "@react-three/fiber",
+        "three"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 313). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "medium",
+        "raised": [
+          "expressiveness->high: renderiza por frame sobre webgl (linea 210)",
+          "motion_budget->medium: renderiza por frame sobre webgl"
+        ],
+        "render": "webgl",
+        "role": "componente de escaparate"
+      },
+      "description": "A compact, autoplaying image gallery that responds to scroll along a smooth 3D spiral.",
+      "sha256": "917b8c9fedd60a2471f594f7d064925d16019c042659a8a281af3c39dce08eb1",
+      "signals": {
+        "accessible_name": 360,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 210,
+        "keyboard": null,
+        "pauses_offscreen": 320,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": 313,
+        "scroll": 338,
+        "svg": null,
+        "touch": null,
+        "webgl": 5,
+        "webgl_fallback": 7
+      },
+      "slug": "spiral-3d-slider",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/spiral-3d-slider.tsx",
+      "title": "Spiral 3D Slider"
+    },
+    {
+      "category": "Components",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 84) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "medium",
+        "raised": [
+          "motion_budget->medium: animacion infinita (linea 84)"
+        ],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A premium split-flap display component inspired by vintage departure boards.",
+      "sha256": "a4cc2ed4fdfdab49339ae3e267cb608678d8576875e6f4b3aca238c604be1324",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": 84,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "split-flap-display",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/split-flap-display.tsx",
+      "title": "Split Flap Display"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion",
+        "lenis/react"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 112). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A scroll-driven card stack where images pin and scale as you scroll, creating a layered depth effect.",
+      "sha256": "305e18b30c821d71847c4fc4d066160f8de195a968f69c2d9acae288f6e08841",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": null,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": null,
+        "reduced_motion": 112,
+        "scroll": 10,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "sticky-scroll-cards",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/sticky-scroll-cards.tsx",
+      "title": "Sticky Scroll Cards"
+    },
+    {
+      "category": "Text Animations",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 33). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Programa trabajo por frame (linea 198); si es un bucle continuo o un frame puntual no es decidible por lectura estatica. Medirlo en navegador antes de fijar el `motion_budget` del contrato."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "svg",
+        "role": "animacion de titular"
+      },
+      "description": "Centered fluid text transitions that inherit the surrounding typography and theme.",
+      "sha256": "186b75d8340cb64539cc762983acf3dbf399b39857d71e4f6d81232bb8570352",
+      "signals": {
+        "accessible_name": 257,
+        "aria_hidden": 261,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": 198,
+        "reduced_motion": 33,
+        "scroll": null,
+        "svg": 260,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "text-morph",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/text-morph.tsx",
+      "title": "Text Morph"
+    },
+    {
+      "category": "Text Animations",
+      "deps": [
+        "framer-motion"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Responde al puntero (linea 161) sin camino de teclado. Nada que solo se revela con hover puede ser el unico canal de una informacion.",
+          "Programa trabajo por frame (linea 81); si es un bucle continuo o un frame puntual no es decidible por lectura estatica. Medirlo en navegador antes de fijar el `motion_budget` del contrato."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "animacion de titular"
+      },
+      "description": "Physics-based text where each letter reacts to cursor proximity with spring dynamics, creating an interactive magnetic force-field effect.",
+      "sha256": "dd76fa8119a27f2b0fc130357d8afb601ec1211ee6d9b1e7c186d2ed690ddcf0",
+      "signals": {
+        "accessible_name": 171,
+        "aria_hidden": 131,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": 161,
+        "raf": 81,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "text-repel",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/text-repel.tsx",
+      "title": "Text Repel"
+    },
+    {
+      "category": "Hero Backgrounds",
+      "deps": [],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "hero"
+        ],
+        "before_use": [
+          "Upstream NO lee `prefers-reduced-motion`. Anadir la variante reducida equivalente antes de usarlo; sin ella rompe el suelo de CDIO-07 sec.5.",
+          "Trabajo continuo (linea 341) sin pausa fuera de pantalla: no se detecta IntersectionObserver, useInView ni visibilitychange. Anadir la pausa o aceptar coste constante de CPU y bateria."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "high",
+        "min_motion_budget": "high",
+        "raised": [
+          "motion_budget->high: renderiza por frame sobre webgl sin pausa fuera de pantalla"
+        ],
+        "render": "webgl",
+        "role": "fondo ambiental de hero"
+      },
+      "description": "Cinematic liquid shader hero with premium gradients, configurable reveal timing, and advanced flow controls.",
+      "sha256": "9bd54b536ab5ff5a9bb0ecd5efe1738de4a0ecafda69a28fd240d8433a341d8e",
+      "signals": {
+        "accessible_name": null,
+        "aria_hidden": 408,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": null,
+        "pauses_offscreen": null,
+        "pointer": null,
+        "raf": 341,
+        "reduced_motion": null,
+        "scroll": null,
+        "svg": null,
+        "touch": null,
+        "webgl": 208,
+        "webgl_fallback": 5
+      },
+      "slug": "webgl-liquid",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/webgl-liquid.tsx",
+      "title": "WebGL Liquid"
+    },
+    {
+      "category": "Components",
+      "deps": [
+        "framer-motion",
+        "next-themes"
+      ],
+      "derived": {
+        "applies_to": [
+          "landing",
+          "product-tour"
+        ],
+        "before_use": [
+          "Upstream lee la preferencia de movimiento reducido (linea 146). Que la variante reducida sea EQUIVALENTE (la informacion y el cambio de estado llegan sin movimiento) no esta verificado: comprobarlo en navegador con `prefers-reduced-motion: reduce` antes de declarar el suelo cumplido.",
+          "Programa trabajo por frame (linea 262); si es un bucle continuo o un frame puntual no es decidible por lectura estatica. Medirlo en navegador antes de fijar el `motion_budget` del contrato."
+        ],
+        "excluded_from": [
+          "checkout",
+          "auth",
+          "admin",
+          "settings",
+          "form",
+          "dashboard",
+          "destructive",
+          "docs",
+          "list-detail"
+        ],
+        "min_expressiveness": "moderate",
+        "min_motion_budget": "low",
+        "raised": [],
+        "render": "dom",
+        "role": "componente de escaparate"
+      },
+      "description": "A cinematic rotating-wheel picker with inertial drag, curved fading labels, and crossfading project imagery.",
+      "sha256": "84f1768462a0004181704187b415f9c81b766a077460c59e8611343c16c8bd8d",
+      "signals": {
+        "accessible_name": 385,
+        "aria_hidden": 446,
+        "canvas2d": null,
+        "infinite": null,
+        "keyboard": 393,
+        "pauses_offscreen": null,
+        "pointer": 401,
+        "raf": 262,
+        "reduced_motion": 146,
+        "scroll": 289,
+        "svg": null,
+        "touch": 400,
+        "webgl": null,
+        "webgl_fallback": null
+      },
+      "slug": "wheel-carousel",
+      "source": "vault/knowledge_base/cdio/componentry/packages/ui/src/components/wheel-carousel.tsx",
+      "title": "Wheel Carousel"
+    }
+  ],
+  "license": "MIT",
+  "support_files": [
+    "autocomplete",
+    "command",
+    "coss-badge",
+    "coss-button",
+    "input",
+    "kbd",
+    "scroll-area",
+    "spinner",
+    "tabs",
+    "webgl-error-boundary"
+  ],
+  "upstream": "https://github.com/harshjdhv/componentry"
+}
