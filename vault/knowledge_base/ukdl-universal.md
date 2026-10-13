@@ -1,18 +1,11 @@
 
-## UKDL CANDIDATES -- APR programme (2026-10-11; NOT promoted). UCR-CIF stage reached: OBSERVED + LOCAL SUCCESS + REGRESSION + PRODUCTION REALITY in one repo (power-pack). Cross-project: NOT earned.
-- TRAP candidate: receipt syntax as truth. A receipt with every step PROVEN and no `Status:` line made the chain halt while work was committed. Evidence: EWC K5; vault/programs/apr/KNOWLEDGE.md A1; canary C1 sealed from a Status-less receipt (apr-canary/WU-C1-receipt.md.seal.json).
-- PROCESS RULE candidate: one parser per fact. Three readers of one file gave three answers; tools/receipt_judge.py is the single reading. Evidence: A1, V-APR-K5-UNCLOSED-RECEIPT-RENEWS; counter-evidence A8 (mission layer still disagrees with chain on a residual receipt).
-- HARD-RULE candidate: machine-critical lifecycle state must not rest on model-authored text alone; a zero-model finalizer runs declared acceptance. Evidence: test_apr_seal 17/17 (18/0 after fix), canary C2 FALSE_DONE refusal row 927.
-- HARD-RULE candidate: an active programme needs progress, an explicit wait, recovery, or a terminal state. Evidence: APR-3 status/silence alerts, test_apr_event 25/25, canary chain `complete`.
-- TRAP candidate: human-as-watchdog. The chain sat until a human edited a file; canary ran 58 min with no human gate. Evidence: PRODUCTION-REALITY.md.
- owns the gates for this
-(`fable_distillation/epistemic_ladder.py` No-Autopromotion Invariant,
-`dataset_first/manifest.py` 8-stage) -- an acquisition pipeline that bypasses
-them has not saved work, it has laundered provenance.
-
-### Process Rules
-
-**`PR-PARSE-DECLARE-CARDINALITY-001`** -- Any parse of a corpus whose size is
+## UKDL PROMOTIONS -- CDC C11 (2026-10-13). Only items proven end to end; the rest of the C9 candidates stay candidates (deployed dispatcher lacks the guards, cdc_gate gate 16 FAIL).
+- HARD-RULE (promoted from candidate): a landing that regresses the cognitive baseline (always-on growth > 0.5 %, min 64 B) is refused COGNITIVE_REGRESSION unless a cognitive-budget-changes.json entry (reason, owner, allowed_max) justifies it. Proof: planted +8K CLAUDE.md refused with live untouched (C7), and the gate has since judged every CDC landing (C8-C10 receipts: cognitive_ci GREEN). Kill switch CPP_COG_CI=off.
+- PROCESS RULE (promoted): retire a prose rule only when its mechanical guard has a live test; back up first and keep a revert command. Proof: C9 R1 (-213 chars, guard test 31/31).
+- PROCESS RULE (new, proven C5/C5b): a proof verdict is "caused by the change" only if the suite is green at the parent commit and red after, on a serial awaited rerun; a timeout is not a red. Proof: evidence/C5b-step2.json, vault/lessons/cdc-parallel-proof-false-reds.md.
+- TRAP (new, proven C3/C4/C9): a guard chained in the repo dispatcher is not active until the deployed ~/.claude dispatcher runs it; cite a row written through the deployed path. Proof: evidence/C9-inheritance.md; vault/lessons/cdc-repo-dispatcher-not-deployed-dispatcher.md. Prior art feedback_hook_dispatcher_split_brain_mirror (not a duplicate: adds the gate that reads the deployed file).
+- TRAP (new, proven C4): a hook proven only by calling its module function is unproven; drive the dispatcher CLI. Proof: vault/lessons/cdc-admission-hook-missing-run.md.
+ALITY-001`** -- Any parse of a corpus whose size is
 known in advance declares that size to the parser, and the parser REFUSES to
 return a result that does not match it. Not a warning, not a log line -- a
 raised exception. A parser that silently returns fewer items than the source

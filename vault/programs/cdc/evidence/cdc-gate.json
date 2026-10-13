@@ -1,0 +1,274 @@
+{
+ "programme": "cdc",
+ "gates": [
+  {
+   "gate": 1,
+   "name": "Role ledger classifies every call",
+   "status": "PASS",
+   "reason": "12 roles + unattributed, goldens and mutants green (C1)",
+   "evidence": [
+    "vault/programs/cdc/evidence/ql-phase1-roles.json"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 2,
+   "name": "Model-call firewall (interceptable edges only)",
+   "status": "EXTERNAL_LIMITATION",
+   "reason": "host exposes no pre-call hook for the main model turn; enforced at Agent/launch/tool edges only (C3 tests 22/22 + dispatch 4/4); real denied spawn from a deployed session NOT_PROVEN",
+   "evidence": [
+    "vault/programs/cdc/WU-C3-receipt.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 3,
+   "name": "Effect enum + ABI refuses deopt-less zero route",
+   "status": "PASS",
+   "reason": "REFUSED_EFFECT drill green (C2)",
+   "evidence": [
+    "tools/cognitive_effects.py",
+    "vault/programs/cdc/C2-decision.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 4,
+   "name": "In-epoch context selection / paging",
+   "status": "EXTERNAL_LIMITATION",
+   "reason": "host owns the transcript; met at epoch boundary (rotation + capsule), not in-epoch",
+   "evidence": [
+    "vault/programs/cdc/PROGRAMME.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 5,
+   "name": "In-epoch tool/skill selection",
+   "status": "EXTERNAL_LIMITATION",
+   "reason": "met through MCP/skill exposure settings (C7 floor metrics), not per-turn selection",
+   "evidence": [
+    "vault/programs/cdc/WU-C7-receipt.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 6,
+   "name": "Semantic breaker trips on no-progress loop",
+   "status": "PASS",
+   "reason": "synthetic loop tripped at call 25, deny budget written (C4 canary)",
+   "evidence": [
+    "hooks/semantic_breaker.js",
+    "tools/test_semantic_breaker.py",
+    "vault/config/semantic-breaker.json"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 7,
+   "name": "Proof locality: closure agrees with full suite",
+   "status": "PASS",
+   "reason": "AGREE on 3 landings after serial rerun + parent control; raw 'full minus baseline' was non-empty (3/7/5): baseline non-deterministic, agreement needed control runs",
+   "evidence": [
+    "vault/programs/cdc/evidence/C5b-step2.json",
+    "vault/programs/cdc/evidence/C5b-baseline.json",
+    "tools/change_impact.py"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 8,
+   "name": "Derivation store serves repeat query",
+   "status": "PASS",
+   "reason": "sess-A stored, sess-B denied with stored answer path (jsonl rows)",
+   "evidence": [
+    "vault/programs/cdc/evidence/C6-proof.jsonl"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 9,
+   "name": "Research gate observed on a live WebSearch/WebFetch",
+   "status": "UNKNOWN",
+   "reason": "no live call observed; settings.json registration of the Web events is an Owner step (C6 NOT_PROVEN)",
+   "evidence": [
+    "vault/programs/cdc/WU-C6-receipt.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 10,
+   "name": "Cognitive CI blocks a planted regression",
+   "status": "PASS",
+   "reason": "planted +8K CLAUDE.md RED, landing refused, live untouched (C7)",
+   "evidence": [
+    "tools/cognitive_ci.py",
+    "vault/programs/cdc/cognitive-baseline.json",
+    "vault/programs/cdc/cognitive-budget-changes.json"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 11,
+   "name": "Metamorphic gates (fixed-work metrics invariant)",
+   "status": "PASS",
+   "reason": "+skills/history/goals/tests leave fixed-work metrics unchanged",
+   "evidence": [
+    "tools/test_cognitive_ci.py"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 12,
+   "name": "PGO report over the full window",
+   "status": "PASS",
+   "reason": "coverage complete: {\"found\": 2993, \"read\": 2993, \"complete\": true, \"elapsed_s\": 344.5}",
+   "evidence": [
+    "vault/programs/cdc/evidence/cognitive-pgo.json"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 13,
+   "name": "UNKNOWN kept distinct from zero in PGO",
+   "status": "PASS",
+   "reason": "Owner/Constitutional reported as UNKNOWN",
+   "evidence": [
+    "vault/programs/cdc/evidence/cognitive-pgo.json"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 14,
+   "name": "Holdout replay (not used for design)",
+   "status": "PASS",
+   "reason": "28 holdout traces replayed; avoidable shares are replay estimates, realised saving NOT_PROVEN",
+   "evidence": [
+    "vault/programs/cdc/evidence/holdouts.json",
+    "vault/programs/cdc/evidence/holdouts.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 15,
+   "name": "Live cross-domain canary in a non-PP repo",
+   "status": "PASS",
+   "reason": "TUA-X read-only claude -p, 4 turns, 0 denials; guards wired by --settings",
+   "evidence": [
+    "vault/programs/cdc/evidence/holdouts.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 16,
+   "name": "Fresh-repo inheritance (deployed dispatcher runs the guards)",
+   "status": "FAIL",
+   "reason": "deployed ~/.claude/hooks/hook-dispatcher.js lacks cognitive_admission, semantic_breaker; Copy-Item of the repo dispatcher is an Owner act (hooks-dir deploy denied to workers)",
+   "evidence": [
+    "vault/programs/cdc/evidence/C9-inheritance.md"
+   ],
+   "in_scope": false
+  },
+  {
+   "gate": 17,
+   "name": "Admission denial observed from a real deployed session",
+   "status": "UNKNOWN",
+   "reason": "dispatcher not deployed (gate 16) -> no real-session denial row; hook-level and CLI-level proofs only",
+   "evidence": [
+    "vault/programs/cdc/WU-C3-receipt.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 18,
+   "name": "Compiled primitive replaces a motif on a replayed trace",
+   "status": "PASS",
+   "reason": "proof_digest replay 3 calls -> 1 (estimates); adoption NOT_PROVEN",
+   "evidence": [
+    "tools/proof_digest.py",
+    "vault/programs/cdc/evidence/proof-digest-replay.json"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 19,
+   "name": "At least one retirement with backup + revert path",
+   "status": "PASS",
+   "reason": "R1 retired (-213 chars), guard test 31/31, backup + revert command recorded",
+   "evidence": [
+    "vault/programs/cdc/evidence/C9-retirements.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 20,
+   "name": "CDC guards registered / matcher liveness green",
+   "status": "PASS",
+   "reason": "registration test + mutants; matcher liveness 3/3, hookreg 15/15",
+   "evidence": [
+    "tools/test_cdc_registration.py"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 21,
+   "name": "Every guard has an env kill switch",
+   "status": "PASS",
+   "reason": "all 5 switches present in their guard source",
+   "evidence": [
+    "hooks/cognitive_admission.js",
+    "hooks/semantic_breaker.js",
+    "tools/cognitive_ci.py",
+    "hooks/research_reuse.js",
+    "tools/cognitive_effects.py"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 22,
+   "name": "Self-hosting: C1 ledger measures C0-C12; C5-C12 vs C0-C4",
+   "status": "UNKNOWN",
+   "reason": "no per-unit ledger of the CDC worker transcripts is stored; C12 not yet run",
+   "evidence": [
+    "vault/programs/cdc/evidence/ql-phase1-roles.json"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 23,
+   "name": "Every bug met in C0-C10 has a Knowledge Vault entry",
+   "status": "PASS",
+   "reason": "6 lessons present",
+   "evidence": [
+    "vault/lessons/cognitive-admission-empty-prompt-duplicate.md",
+    "vault/lessons/cdc-admission-hook-missing-run.md",
+    "vault/lessons/cdc-parallel-proof-false-reds.md",
+    "vault/lessons/cdc-hub-closure-not-local.md",
+    "vault/lessons/cdc-repo-dispatcher-not-deployed-dispatcher.md",
+    "vault/lessons/cdc-research-lock-window-mismatch.md"
+   ],
+   "in_scope": true
+  },
+  {
+   "gate": 24,
+   "name": "Handoff rendered from state by script",
+   "status": "PASS",
+   "reason": "carries render stamp",
+   "evidence": [
+    "vault/programs/cdc/HANDOFF.md"
+   ],
+   "in_scope": true
+  }
+ ],
+ "summary": {
+  "PASS": 17,
+  "FAIL": 1,
+  "UNKNOWN": 3,
+  "EXTERNAL_LIMITATION": 3,
+  "fail_in_scope": [],
+  "fail_out_of_scope": [
+   16
+  ]
+ },
+ "all_pass": false
+}
