@@ -62,9 +62,10 @@
     {
       "id": "P05",
       "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05.md",
-      "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05.route.json",
+      "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-r1.route.json",
       "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\evc\\.planning\\workstreams\\evc\\wave2\\WU-P05-receipt.md",
-      "after": "P04-T3"
+      "after": "P04-T3",
+      "max_residuals": 1
     },
     {
       "id": "P05-T1",
