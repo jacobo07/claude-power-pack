@@ -2,30 +2,31 @@
  "run": "r1-OFF",
  "arm": "OFF",
  "rc": 0,
- "seconds": 472,
+ "seconds": 242,
  "usage": {
-  "input": 12,
-  "cache_read": 394835,
-  "cache_creation": 62497,
-  "output": 60,
-  "calls": 6,
-  "processed": 457404,
-  "weighted": 117916.75
+  "input": 8,
+  "cache_read": 247996,
+  "cache_creation": 64346,
+  "output": 15,
+  "calls": 4,
+  "processed": 312365,
+  "weighted": 105315.1
  },
  "answer": "p4p2a12;PASS;NOT_IMPROVED",
  "match": true,
  "ccr_receipts": {
-  "link": 12,
-  "row": 83,
+  "link": 24,
   "start": 2,
+  "row": 57,
   "compose": 1,
-  "attach": 18,
-  "call": 6,
-  "usage": 1
+  "attach": 17,
+  "call": 4,
+  "usage": 1,
+  "end": 1
  },
  "receipt_files": [
-  "8dd034fb-1bf9-4eb8-ae74-f6f51e47edbe.jsonl",
-  "b54a0638-f249-4e32-91fe-806badd524e7.jsonl"
+  "22c07abd-0c4e-418d-929c-fb86b5f7445d.jsonl",
+  "403d2d16-d72b-411a-b4f2-902f50521e90.jsonl"
  ],
- "stderr": ""
+ "stderr": "SessionEnd hook [C:/Program Files/nodejs/node.exe C:/Users/User/.claude/hooks/lazarus-index-aggregator.js] failed: Hook cancelled\nSessionEnd hook [C:/Program Files/nodejs/node.exe C:/Users/User/.claude/skills/claude-power-pack/hooks/mark-live-session.js] failed: Hook cancelled\n"
 }

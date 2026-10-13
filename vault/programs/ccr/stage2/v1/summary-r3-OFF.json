@@ -1,0 +1,31 @@
+{
+ "run": "r3-OFF",
+ "arm": "OFF",
+ "rc": 0,
+ "seconds": 329,
+ "usage": {
+  "input": 12,
+  "cache_read": 438698,
+  "cache_creation": 29976,
+  "output": 40,
+  "calls": 6,
+  "processed": 468726,
+  "weighted": 81551.8
+ },
+ "answer": "p4p2a12;PASS;NOT_IMPROVED",
+ "match": true,
+ "ccr_receipts": {
+  "link": 12,
+  "row": 83,
+  "start": 1,
+  "compose": 1,
+  "attach": 20,
+  "call": 6,
+  "usage": 1,
+  "end": 1
+ },
+ "receipt_files": [
+  "f898280c-6891-4632-b5d7-06fef5a9ca90.jsonl"
+ ],
+ "stderr": "/node.exe C:/Users/User/.claude/skills/claude-power-pack/hooks/mark-live-session.js] failed: Hook cancelled\nSessionEnd hook [powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:/Users/User/.claude/hooks/orphan-dev-server-reaper.ps1\"] failed: Hook cancelled\n"
+}

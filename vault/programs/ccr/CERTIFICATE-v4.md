@@ -2,6 +2,8 @@
 
 Level: EFFECTIVENESS_PARTIAL
 
+Rechecked 2026-10-13 after V1 attempt 2: still PARTIAL. The real-boundary saving is now MET. BOUNDARY_COST is still blocked by the Madzia driver class (-0.2 %), forecast error (+1,278 % on V1, 93 % class-only) and admission not proven live.
+
 Basis (contract: plan ccr-v4-boundary-cost-2026-10-12.md, "Effectiveness contract"):
 - PARTIAL requires B1+B2+B5+B6 gates green on real provider usage. Evidence: evidence-v4-stage1.md
   - B5: carried tool output 12,136 -> 2,733 tok (-77 %) at answer parity (haiku provider canary).
@@ -13,11 +15,11 @@ Basis (contract: plan ccr-v4-boundary-cost-2026-10-12.md, "Effectiveness contrac
 
 ## ABSTAIN list
 - ABSTAIN:madzia_real_driver_saving:-0.2 % (evidence-v4-stage2-E1.md; best train arm F, held-out, no arm positive; bar >= 15 %)
-- ABSTAIN:real_boundary_weighted_saving_ge_15pct:UNKNOWN (evidence-v4-stage2-V1.md; FAIL:runaway, OFF run 457,404 > 400,000 guard, 1 of 6 runs, no CCR run)
-- ABSTAIN:reviewer_parity_on_real_boundary:UNKNOWN (V1 parity 1/1 OFF only; no CCR arm)
+- MET (2026-10-13 V1 attempt 2): real_boundary_weighted_saving_ge_15pct: >= 54.2 % (upper bound of the CCR median over 3 runs: 37,324 vs OFF median 81,552); -65.5 % over the 2 measured CCR runs; processed -81.7 %. Bounded lookup task, haiku. The saving comes from the per-call floor (78K -> 21K). evidence-v4-stage2-V1.md
+- ABSTAIN:reviewer_parity_on_real_boundary:5/5 measured, CCR arm n=2 (r6 killed by the host memory reaper; the protocol requires 3/3 per arm)
 - ABSTAIN:lobby_real_provider_measurement:UNKNOWN (Lobby +21.1 % held-out, D k=40, is a model: capsule 8k assumed, post-rotation work assumed unchanged; not provider-measured)
 - ABSTAIN:forecast_error_class_only_worker:93 % (Stage 1 B4/B6; with floor and length known 15 %, reviewer 6.6 %; gate < 25 %)
-- ABSTAIN:forecast_vs_actual_on_ccr_run:UNKNOWN (V1 recorded no CCR contract)
+- ABSTAIN:forecast_vs_actual_on_ccr_run:+1,278 % (V1 contract P50 1,179,457 vs actual 89,475 / 81,674; the class model came from Madzia driver workers and does not fit a bounded lookup; gate < 25 %)
 - ABSTAIN:admission_proven_live:UNKNOWN (W1 enforce proven only by 5 synthetic tests; no live refusal observed, default is observe)
 - ABSTAIN:successor_from_capsule_works:UNKNOWN (M1 capsule 1,430 tok vs 58,770 ctx; no model call tested the successor)
 - ABSTAIN:reasoning_rent_novelty_vs_reconstruction:UNKNOWN (B3; content not stored)

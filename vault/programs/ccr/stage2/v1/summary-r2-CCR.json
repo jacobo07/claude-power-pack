@@ -1,0 +1,33 @@
+{
+ "run": "r2-CCR",
+ "arm": "CCR",
+ "rc": 0,
+ "seconds": 371,
+ "usage": {
+  "input": 8,
+  "cache_read": 64873,
+  "cache_creation": 24571,
+  "output": 23,
+  "calls": 4,
+  "processed": 89475,
+  "weighted": 37324.05
+ },
+ "answer": "p4p2a12;PASS;NOT_IMPROVED",
+ "match": true,
+ "ccr_receipts": {
+  "row": 78,
+  "start": 2,
+  "unit": 1,
+  "contract": 1,
+  "link": 14,
+  "compose": 1,
+  "attach": 18,
+  "call": 4,
+  "usage": 1
+ },
+ "receipt_files": [
+  "6c123d9b-0374-484d-aa71-d81b60d107c2.jsonl",
+  "8c3d8a8e-1f56-44ce-b10a-dfd87dfade6e.jsonl"
+ ],
+ "stderr": ""
+}
