@@ -31,4 +31,23 @@ release holds; they also advance marks, and the advance counts against the open 
 1. DONE: L11 dgl:W5:r4 (3,000,000) on capital packet 380bbee5.
 2. DONE: 9/10 gates rc=0; tranche_driver failure is cwd-dependent (27/27 from pp-dgl). Goal gate 59/59 on 4 of 5 runs; flaky check still unnamed.
 3. DONE: merge bd5af362; receipt updated (vault/programs/dgl/W5-receipt.md); overlap 0/0 against live e36b7506.
-4. OPEN (Owner OK required): deploy per W5-receipt.md "Remaining". Live moved 22 commits, so it is a merge, not a fast-forward.
+4. OPEN: Owner said "deploy" (2026-10-12), but session c2be1789 was fenced when L11 hit 3,264,152 of 3,000,000, after the DEPLOY
+   hard rules were read (HR-2: smoke from the same commit; HR-CASCADE-001) and before anything touched live. NOTHING DEPLOYED.
+   Next session: read packets/W5.md step 5 (smoke); check `git -C <live> diff --cached` is empty (other writers share live);
+   merge bd5af362 into live e36b7506; copy session_budget_guard.js to ~/.claude/hooks; re-point PP-DglChain-Tick; run the
+   smoke on the merged commit; schtasks /run. Needs a successor lease L12 (~1.5M); this pane's coordinator spend overran L11.
+5. 2026-10-13 session 17dc8019: Owner approved packet 54a2b2eb (programme 42,948,823 -> 44,750,000); L12 dgl:W5:r5 cap 1.5M
+   opened, then exhausted by this pane (1,597,880) before anything touched live. NOTHING DEPLOYED.
+   - Live moved to ea877bdc (53 commits past merge base 829b8ac5, 1198 dirty). Overlap with the 39 incoming files: 0 committed,
+     0 dirty. Live has nothing staged, no merge in progress.
+   - Gates at bd5af362 (mwt, tranche from pp-dgl cwd): 10/11 green, GOAL_PASS 59/59. test_hook_boundary 6/7: V-HOOK-BLOCK-DENIES
+     got decision='' with additionalContext "CDIO design gate N..." (cdio_visual_advisory.js -> python returned no deny on the
+     SLOP fixture). Was 7/7 on the same commit 2026-10-12, so it is environment, not the dgl diff. Diagnose before the merge
+     (HR-CASCADE-001): run tools/test_hook_boundary.py in mwt and read the full raw output.
+   - Gate runner: scratchpad run_gates.py (copy: args <root> <tranche_cwd>). Ran in the background ~10 min.
+   Next: start a session from the PP repo (not pp-dgl) so the coordinator is not billed to dgl; L13 must be sized for
+   ~15 calls at this pane's measured ~100-170K/call (>= 2.5M), or the deploy runs as a compiled worker unit.
+6. 2026-10-13 session 159949c6 (PP repo cwd): packet b9b456dd approved ('approve dgl only'), programme -> 47,500,000, L13 dgl:W5:r6
+   cap 2.5M. DEPLOYED: live merge 187629ad (d05a39f6 + bd5af362), smoke 4/4, gates green (2 reds in a loaded batch, green alone),
+   PP-DglChain-Tick re-pointed to live, schtasks /run rc=0 acted on nothing. Hook copy unnecessary (dispatcher loads it from live).
+   Receipt PARTIAL: only step 7 (W6 packet + route) remains, excluded from b9b456dd. Next: Owner decides W6.

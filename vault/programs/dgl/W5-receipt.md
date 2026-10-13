@@ -1,23 +1,19 @@
 # W5 receipt
-Status: PARTIAL -- merge DONE (bd5af362), 11/11 gates green in the merged tree, NOT deployed (no Owner OK).
-COMMITS: dgl/durable-goal-lease ef6bd810 (source, all 11 gates green there); merge bd5af362 on dgl/live-merge (parents 829b8ac5 + ef6bd810, scratch worktree C:\Users\User\.claude\jobs\20af2491\tmp\mwt).
-Live checkout = C:\Users\User\.claude\skills\claude-power-pack on feature/knowledge-acquisition 829b8ac5 (no worktree holds main; main=908b543 is an ancestor). Untouched: no copy, no schtasks change, no hook copy.
-Premise broken: the packet assumed W1-W4 files can be checked out over live. Live already holds W1b/W2 ported under other hashes (d55f33c9, 95030b22, 3dd05871) plus OCA/econ-contain (a30db705, 9c88ebad, 999984d1) in the same files. Fork base d0c2077b, live is 192 commits ahead, 36 dgl commits.
-Merge: 4 conflicted files (hooks/lib/goal_binding.js, modules/provider_routing/ledger.py, tools/mission_spend.py, tools/test_goal_lease.py); in every hunk live was a strict superset (quarantine, recovery/role accounting, OCA first-programme check) so resolved with --ours. No dirty live path overlaps the dgl file list.
-Gates in merged tree: goal_lease 10/10, workspace_lease 10/10, succession 9/9, GOALCRASH 11/11, GOALDRAIN 6/6, GOALAUTOPSY 5/5, AUTOPSY 10/10, session_budget_admission 12/12, tranche_driver 27/27, hook_boundary 7/7; test_goal_budget_admission 58/59 (FAIL V-GOAL-AGENT-LANE: dispatcher carries the Agent lane and its no-event route). Not diagnosed: live's gate has 59 checks vs 54 on the branch.
-
-## W5-r3 (2026-10-12, sessions 3ae2a3cb then c2be1789, lease L11 dgl:W5:r4)
-- Gate fix: V-GOAL-AGENT-LANE now checks lane MEMBERSHIP (live's lane also carries cognitive_admission.js). Committed in bd5af362.
-- test_goal_budget_admission 59/59 on 4 of 5 runs; one run 58/59 with the failing check unnamed (output truncated). Intermittent, open.
-- test_tranche_driver: 26/27 with cwd=mwt, 27/27 with cwd=pp-dgl. V-DRIVER-REAL-GUARD-ADMITS-N-REFUSES-N+1 prices calls from the
-  live session-floor of the CWD's project folder, empty for mwt (per_call=None). Environment-dependent, not a merge defect.
-- Overlap (scratchpad overlap.py): live now feature/knowledge-acquisition e36b7506, 22 commits past 829b8ac5, 1188 dirty entries.
-  dgl's 39 files intersect neither the dirty set nor the 40 files those 22 commits touch: 0 and 0.
-- Side effect: settling 20af2491 / 4b246bb6 / 20f0feeb booked 4.5M into L10 and overdrew the 37M programme. Owner raised it to
-  42,948,823 (capital packet 380bbee5, 'approve dgl only' 2026-10-12T13:59:31Z); L11 = 3,000,000.
-- m-afd50917585a HALTED (hold_settled seq 17), owner_hold kept.
-
-Remaining (needs Owner OK to deploy): live is no longer at 829b8ac5, so it cannot fast-forward to bd5af362; merge bd5af362 into
-live e36b7506 (zero file overlap, expected clean), copy session_budget_guard.js to ~/.claude/hooks, re-point PP-DglChain-Tick,
-run the step 5 smoke, then schtasks /run.
-Calls: about 18 (W5-r2) + W5-r3.
+Status: PARTIAL -- deploy DONE (steps 1-6); step 7 (author packets/W6.md + route-W6.json) not done: W6-W8 excluded by capital packet b9b456dd.
+COMMITS: source dgl/durable-goal-lease ef6bd810; merge bd5af362 on dgl/live-merge (W5-r1/r2, 4 conflicts resolved --ours, live a strict superset);
+live merge 187629ad = d05a39f6 + bd5af362 on feature/knowledge-acquisition (session 159949c6, lease L13 dgl:W5:r6, packet b9b456dd).
+Live HEAD at deploy: 187629ad. Pre-merge: 0 staged, no MERGE_HEAD, overlap of the 39 dgl files with 401 committed + 1133 dirty live paths: 0/0.
+Gates at bd5af362 (mwt, this session): 11/11 rc=0 (GOAL_PASS 59/59, HOOK_PASS 7/7, DRIVER 27/27 from pp-dgl cwd).
+Gates in live 187629ad: 9/11 in one batch run concurrently with the e2e smoke; workspace_lease 9/10 (V-WS-HOOK-CLOSED-LEASE-FENCED got
+  UNKNOWN deny) and goal_budget_admission TIMEOUT at 300 s. Each re-run alone: WS_LEASE 10/10, GOAL_PASS 59/59 (170 s). Both read as
+  load-dependent (guard's python call slow -> fail-closed UNKNOWN), cause NOT proven. goal_lease is 20/20 in live (d28 3c98097b added 10).
+Smoke e2e (scratchpad dgl_smoke.py, mkdtemp state, live code): SMOKE_PASS=4/4 -- goal_succession succeed CLI (L1 closed, L2 open,
+  workspace gen 2, total_used 700,000); goal_autopsy CLI state OK; node session_budget_guard.js DRAIN deny on Agent; closeout Write allowed.
+Hook: NOT copied. hook-dispatcher.js loads ../skills/claude-power-pack/hooks/session_budget_guard.js from the live checkout (Bash/Edit/Read/
+  Agent lanes), so the merge itself deployed it; a copy in ~/.claude/hooks would be a dead twin. goal_session_end.js unregistered (Owner-side).
+Task PP-DglChain-Tick: before wscript hidden_launch.vbs "C:\Users\User\Apps\pp-dgl\vault\programs\dgl\dgl_chain_tick.ps1";
+  after same wrapper, "C:\Users\User\.claude\skills\claude-power-pack\vault\programs\dgl\dgl_chain_tick.ps1"; trigger PT15M unchanged.
+schtasks /run 15:19:43 -> LastTaskResult 0, log 15:22:40 rc=0 stopped_without_done W5 (acted on nothing). chain.json units still point
+  receipts/packets at Apps\pp-dgl (live copy is content-identical; paths unchanged on purpose).
+Decisions that differ: no hook copy (above); receipt PARTIAL not DONE (step 7 excluded); the two live-batch reds accepted on solo re-runs.
+Calls: W5-r1..r3 ~40; this session (159949c6) ~35.
