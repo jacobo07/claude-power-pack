@@ -3,6 +3,8 @@ import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
   subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly,
+  KERNEL_CHARS, expectedRemaining, fileIndex, parseBreakevenModel, rotateAdvice,
+  DEFAULT_MODES, effectiveModes, parseReleaseId, policyGen,
 } from './policy'
 
 // The madzia-worker model tools/ccr_pgo.py built from post-fix attempts a6-a8 (2026-10-12).
@@ -260,4 +262,77 @@ test('a unit drops listings it cannot act on, replaces instructions with kernel 
 test('a unit leaves the memory section out and keeps every other section', () => {
   expect(decideUnitSection('memory').action).toBe('drop')
   expect(decideUnitSection('env_info_simple').action).toBe('keep')
+})
+
+// v4 A4: weighted break-even (tools/ccr_breakeven.py). The same numbers as tools/test_gsd_epoch_breakeven_shadow.py.
+const BE = JSON.stringify({ cls: 'bounded-code-worker', capsule: 1000, R: 5000, rehyd_cost: 10000, first_overhead: 500, r: 3, g: 2000,
+  lengths: Array(10).fill(200) })
+
+test('a break-even model is accepted only for its own class and with every field', () => {
+  expect(parseBreakevenModel(BE, 'bounded-code-worker')?.g).toBe(2000)
+  expect(parseBreakevenModel(BE, 'read-only-reviewer')).toBe(null)
+  expect(parseBreakevenModel('{"cls":"bounded-code-worker","capsule":1}', 'bounded-code-worker')).toBe(null)
+  expect(parseBreakevenModel('nope', 'bounded-code-worker')).toBe(null)
+})
+
+test('rotate advice: below X* continue, above X* with calls to spare rotate, near the end continue', () => {
+  const m = parseBreakevenModel(BE, 'bounded-code-worker')!
+  const lo = rotateAdvice(m, 20000, 40000, 20)
+  expect(lo.rotate).toBe(false)
+  expect(lo.xStar).toBe(38497)
+  const hi = rotateAdvice(m, 20000, 150000, 20)
+  expect(hi.rotate).toBe(true)
+  expect(hi.kStar).toBe(3)
+  expect(rotateAdvice(m, 20000, 150000, 199).rotate).toBe(false)   // 1 call left < k*
+  expect(rotateAdvice(m, 20000, 22000, 20).kStar).toBe(null)       // no carry above the rotated prefix
+  expect(expectedRemaining(10, [5, 20, 30])).toBe(15)
+  expect(expectedRemaining(40, [5, 20, 30])).toBe(0)
+})
+
+test('carry advice carries the break-even verdict only when a model is given; the ratio rule is unchanged', () => {
+  const m = parseBreakevenModel(BE, 'bounded-code-worker')!
+  expect(carryAdvice(20000, 150000, 0).rotateAdvice).toBe(undefined)
+  const a = carryAdvice(20000, 150000, 0, { model: m, call: 20 })
+  expect(a.rotate).toBe(true)
+  expect(a.rotateAdvice?.rotate).toBe(true)
+  expect(carryAdvice(20000, 30000, 0, { model: m, call: 20 }).rotate).toBe(false)
+})
+
+test('estate elasticity: the instruction index stays one line per file while it fits, and bounded past it', () => {
+  const files = Array.from({ length: 25 }, (_, i) => ({ path: `/h/.claude/rules/r${i}.md`, kind: 'user', content: `# Rule ${i}\n` + 'x'.repeat(500) }))
+  const small = subagentInstructions('KERNEL', files)
+  for (const f of files) expect(small.includes(f.path)).toBe(true)
+  const ten = Array.from({ length: 10 }, (_, k) => files.map(f => ({ ...f, path: f.path.replace('.md', `.x${k}.md`) }))).flat()
+  const big = subagentInstructions('K'.repeat(3000), ten)
+  expect(big.length).toBeLessThanOrEqual(KERNEL_CHARS)
+  expect(big.includes('/h/.claude/rules/ (250 files')).toBe(true)
+  expect(fileIndex(ten, 10).startsWith('- 250 instruction files')).toBe(true)  // nothing fits: one count line
+})
+
+test('version truth: effective modes per surface, downgraded off COMPAT, project follows the unit and main', () => {
+  expect(effectiveModes(DEFAULT_MODES, true, false)).toEqual({ main: 'shadow', subagent: 'enforce', unit: 'enforce', project: 'shadow' })
+  expect(effectiveModes(DEFAULT_MODES, true, true).project).toBe('enforce')
+  expect(effectiveModes(DEFAULT_MODES, false, true)).toEqual({ main: 'shadow', subagent: 'shadow', unit: 'shadow', project: 'shadow' })
+  expect(effectiveModes({ subagent: 'off', main: 'off', unit: 'off' }, true, true)).toEqual({ main: 'off', subagent: 'off', unit: 'off', project: 'off' })
+  expect(effectiveModes({ ...DEFAULT_MODES, project: 'enforce', main: 'off' }, true, false).project).toBe('off')
+})
+
+test('version truth: policyGen is a 12-hex sha of effective modes + kernel, and moves with either', async () => {
+  const eff = effectiveModes(DEFAULT_MODES, true, false)
+  const a = await policyGen(eff, 'kernel v1')
+  expect(/^[0-9a-f]{12}$/.test(a)).toBe(true)
+  expect(await policyGen(eff, 'kernel v1')).toBe(a)
+  expect(await policyGen(eff, 'kernel v2') === a).toBe(false)
+  expect(await policyGen(effectiveModes(DEFAULT_MODES, false, false), 'kernel v1') === a).toBe(false)
+  expect(await policyGen(eff, null) === a).toBe(false)
+  // sha256("[\"shadow\",\"enforce\",\"enforce\",\"shadow\"]\n") first 6 bytes, computed outside the runtime
+  expect(await policyGen(eff, null)).toBe('acce69838866')
+})
+
+test('version truth: the release id comes only from RELEASE.json; a dev load or a bad file has none', () => {
+  expect(parseReleaseId('{"release":"0.1.0-1a2b3c4d","version":"0.1.0"}')).toBe('0.1.0-1a2b3c4d')
+  expect(parseReleaseId(null)).toBe(null)
+  expect(parseReleaseId('not json')).toBe(null)
+  expect(parseReleaseId('{"release":"../etc"}')).toBe(null)
+  expect(parseReleaseId('{"release":7}')).toBe(null)
 })

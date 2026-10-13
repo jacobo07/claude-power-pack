@@ -3,7 +3,7 @@ import {
   COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
   carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
   PROJECT_BUDGET_CHARS, PROJECT_TOOLS, boundaryForecast, parseClassModel, projectToolOutput, stepAnomaly,
-  type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
+  KERNEL_CHARS, parseBreakevenModel, effectiveModes, parseReleaseId, policyGen, type BreakevenModel, type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
 } from './policy'
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
@@ -33,6 +33,8 @@ let floor = 0
 let advised = false
 // Cognitive PGO (v4 B6): the declared unit's Work-Class model, if tools/ccr_pgo.py built one; the last call's ctx.
 let classModel: ClassModel | null = null
+let beModel: BreakevenModel | null = null
+let beLast: boolean | null = null
 let prevCtx = 0
 // Image results of the main loop by tool_use_id: what a pixel GC compaction can evict and name.
 const imageUses = new Map<string, ImageFact[]>()
@@ -77,8 +79,7 @@ const projectShell = async ($: any, e: any, next: any) => {
   const res = r?.result
   if (r?.deny !== undefined || !res || typeof res.stdout !== 'string' || res.isImage || res.backgroundTaskId || res.persistedOutputPath) return r
   const unit = await loadUnit($)
-  const asked: Mode = modes.project ?? (unit ? modes.unit : 'shadow')
-  const mode: Mode = modes.main === 'off' || asked === 'off' ? 'off' : compatible ? asked : 'shadow'
+  const mode: Mode = effectiveModes(modes, compatible, !!unit).project
   if (mode === 'off' || !stateDir) return r
   const full = `${stateDir}/tool-results/${sid}/${e.tool_use_id ?? `t${Date.now()}`}.txt`
   const p = projectToolOutput(res.stdout, full, projectBudget)
@@ -113,16 +114,27 @@ export const register: Register = on => {
       }
       catch { modes = { ...DEFAULT_MODES } } // no override file: release defaults
     }
-    try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, 8000) }
+    try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, KERNEL_CHARS) }
     catch { kernel = null } // missing kernel: the linkers keep the full instructions
     const unit = await loadUnit($)
-    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null })
+    // Version truth (v4 A1): the directory this process loaded and its release id, not ACTIVE.json (that is only
+    // what is current now), plus the policy generation it runs and the effective mode of every surface.
+    let releaseText: string | null = null
+    try { releaseText = await $.fs.read(`${$.plugin.root}/RELEASE.json`) } catch { releaseText = null } // dev load: no release id
+    const eff = effectiveModes(modes, compatible, !!unit)
+    let gen: string | null = null
+    try { gen = await policyGen(eff, kernel) } catch { gen = null } // no digest available: the receipt says so
+    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null,
+      release: root, releaseId: parseReleaseId(releaseText), policyGen: gen, effective: eff, workClass: unit?.cls ?? null })
     // Semantic Cost Contract (v4 B4) for a declared unit: obligation, class, forecast. No model -> ADMIT_UNFORECAST:
     // the cost is unknown, and the receipt says so instead of reporting a number nobody measured.
     if (unit) {
       let text: string | null = null
       try { text = await $.fs.read(`${stateDir}/pgo/${unit.cls}.json`) } catch { text = null } // no model built for this class yet
       classModel = parseClassModel(text, unit.cls)
+      let beText: string | null = null
+      try { beText = await $.fs.read(`${stateDir}/pgo/${unit.cls}.breakeven.json`) } catch { beText = null } // no break-even model for this class yet
+      beModel = parseBreakevenModel(beText, unit.cls)
       const fc = classModel ? boundaryForecast(classModel) : null
       receipt({ ev: 'contract', cls: unit.cls, obligation: unit.id, model_n: classModel?.n ?? 0, forecast: fc,
         step_p95: classModel?.step.p95 ?? null, verdict: classModel ? 'ADMIT' : 'ADMIT_UNFORECAST' })
@@ -312,10 +324,16 @@ export const register: Register = on => {
     if (floor === 0) floor = ctx
     let imageTok = 0
     for (const v of hotImages.values()) imageTok += v.tok
-    const a = carryAdvice(floor, ctx, imageTok)
+    const a = carryAdvice(floor, ctx, imageTok, beModel ? { model: beModel, call: calls } : null)
     const step = prevCtx > 0 ? ctx - prevCtx : 0
     prevCtx = ctx
     receipt({ ev: 'call', agent: null, call: calls, msgs: e.messageCount, ctx, step, out: u.output_tokens ?? 0, carry: a.carry, imageTok, rotate: a.rotate })
+    // Weighted break-even (v4 A4), observe only: a receipt at the first call and whenever the verdict flips; the
+    // driver that owns the epoch decides, this hook never rotates.
+    if (a.rotateAdvice && a.rotateAdvice.rotate !== beLast) {
+      beLast = a.rotateAdvice.rotate
+      receipt({ ev: 'rotate_advice', call: calls, ctx, floor, ...a.rotateAdvice, rule: 'breakeven', ratioRule: a.rotate, applied: false })
+    }
     // Intra-epoch governor (v4 B6): a step above the class P95 is named at the call that pays for it first, with the
     // cost it will carry if it rides to the class's P80 length. Advice only: the driver that owns the epoch decides.
     if (classModel && step > 0) {

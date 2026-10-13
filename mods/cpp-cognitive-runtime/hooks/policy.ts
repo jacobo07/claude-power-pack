@@ -13,6 +13,34 @@ export type Mode = 'enforce' | 'shadow' | 'off'
 export type Modes = { subagent: Mode; main: Mode; unit: Mode; project?: Mode }
 export const DEFAULT_MODES: Modes = { subagent: 'enforce', main: 'shadow', unit: 'enforce' }
 
+// The mode each surface actually runs at. A build outside COMPAT downgrades enforce to shadow; `off` stays off.
+// project: modes.project, else `unit` in a Work Unit session and shadow elsewhere; off whenever main is off.
+export type Surface = 'main' | 'subagent' | 'unit' | 'project'
+export function effectiveModes(modes: Modes, compatible: boolean, hasUnit: boolean): Record<Surface, Mode> {
+  const eff = (m: Mode): Mode => (compatible ? m : m === 'off' ? 'off' : 'shadow')
+  const asked: Mode = modes.project ?? (hasUnit ? modes.unit : 'shadow')
+  return { main: eff(modes.main), subagent: eff(modes.subagent), unit: eff(modes.unit),
+    project: modes.main === 'off' || asked === 'off' ? 'off' : eff(asked) }
+}
+
+// Policy generation (A1 version truth): a short sha256 of the effective modes and the kernel text this process read.
+// Two sessions with the same policyGen made the same decisions from the same inputs, whatever release they came from.
+export async function policyGen(eff: Record<Surface, Mode>, kernel: string | null): Promise<string> {
+  const text = JSON.stringify([eff.main, eff.subagent, eff.unit, eff.project]) + '\n' + (kernel ?? '')
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return [...new Uint8Array(d)].slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+// The release id of the directory this process loaded: RELEASE.json, which tools/ccr_release.py writes into every
+// release it builds. A development load (--plugin-dir on the repo) or an unreadable file has no id: null, never a guess.
+export function parseReleaseId(text: string | null): string | null {
+  if (!text) return null
+  try {
+    const o = JSON.parse(text)
+    return typeof o?.release === 'string' && /^[\w.+-]+$/.test(o.release) ? o.release : null
+  } catch { return null } // not JSON: no id
+}
+
 // Subagent types that keep the skill listing: they can run skills (Skill tool in their set).
 export const SKILL_CAPABLE_AGENTS = new Set(['general-purpose', 'claude', 'fork'])
 
@@ -57,22 +85,45 @@ export function firstHeading(content: string): string {
   return line ? line.replace(/^#\s+/, '').trim().slice(0, 90) : ''
 }
 
-// The text a subagent reads in place of the full instruction files: the compiled HARD-RULES
-// digest (the constitutional kernel, maintained by rule_compiler) plus one line per file it did
-// not receive, so a file the task turns out to need is one Read away.
-export function subagentInstructions(kernel: string, files: readonly InstructionFileInfo[]): string {
-  const index = files
+// The kernel size the runtime reads (register.ts slices the digest to it). The whole replacement text stays within
+// it whatever the size of the estate (v4 A4 estate gate: 10x the files must not mean 10x the bytes).
+export const KERNEL_CHARS = 8000
+
+const dirOf = (p: string) => { const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\')); return i > 0 ? p.slice(0, i) : p }
+
+// One line per file while the lines fit the budget. Past it, files are named by directory (count and size), and the
+// directories by their parents until the index fits: every file stays one Glob + Read away, none is named twice.
+export function fileIndex(files: readonly InstructionFileInfo[], budget: number): string {
+  const full = files
     .map(f => `- ${f.path} (${f.kind}, ${f.content.length} chars)${firstHeading(f.content) ? ` -- ${firstHeading(f.content)}` : ''}`)
     .join('\n')
-  return [
+  if (full.length <= budget) return full
+  let dirs = files.map(f => ({ dir: dirOf(f.path), chars: f.content.length }))
+  let text = ''
+  for (let depth = 0; depth < 64; depth++) {
+    const by = new Map<string, { n: number; chars: number }>()
+    for (const d of dirs) { const v = by.get(d.dir) ?? { n: 0, chars: 0 }; v.n++; v.chars += d.chars; by.set(d.dir, v) }
+    text = [...by].map(([d, v]) => `- ${d}/ (${v.n} files, ${v.chars} chars; Glob it for the names)`).join('\n')
+    const up = dirs.map(d => ({ ...d, dir: dirOf(d.dir) }))
+    if (text.length <= budget || up.every((d, i) => d.dir === dirs[i].dir)) break
+    dirs = up
+  }
+  return text.length <= budget ? text : `- ${files.length} instruction files (${files.reduce((s, f) => s + f.content.length, 0)} chars) are on disk; Glob for them`
+}
+
+// The text a subagent reads in place of the full instruction files: the compiled HARD-RULES
+// digest (the constitutional kernel, maintained by rule_compiler) plus an index of the files it did
+// not receive, so a file the task turns out to need is one Read away.
+export function subagentInstructions(kernel: string, files: readonly InstructionFileInfo[]): string {
+  const head = [
     'Instruction files for this subagent were linked by the CPP Cognitive Runtime: the constitutional kernel is below, and',
     'the full files are not loaded. If your task touches one of them, Read it before acting. Hooks and guards still apply in full.',
     '',
     kernel.trim(),
     '',
     'Instruction files available on disk:',
-    index,
   ].join('\n')
+  return `${head}\n${fileIndex(files, KERNEL_CHARS - head.length - 1)}`
 }
 
 export function decideSubagentAttachment(
@@ -253,11 +304,54 @@ export function rowFacts(blocks: readonly unknown[]): RowFacts {
 // from then on every call pays at least twice what a fresh epoch's call pays.
 export const ROTATE_CARRY_RATIO = 1
 
-export type CarryAdvice = { rotate: boolean; floor: number; ctx: number; carry: number; imageTok: number; textCarry: number }
+export type CarryAdvice = { rotate: boolean; floor: number; ctx: number; carry: number; imageTok: number; textCarry: number
+  rotateAdvice?: RotateAdvice }
 
-export function carryAdvice(floor: number, ctx: number, imageTok: number): CarryAdvice {
+export function carryAdvice(floor: number, ctx: number, imageTok: number, be?: { model: BreakevenModel; call: number } | null): CarryAdvice {
   const carry = Math.max(0, ctx - floor)
-  return { rotate: floor > 0 && carry >= ROTATE_CARRY_RATIO * floor, floor, ctx, carry, imageTok, textCarry: Math.max(0, carry - imageTok) }
+  const a: CarryAdvice = { rotate: floor > 0 && carry >= ROTATE_CARRY_RATIO * floor, floor, ctx, carry, imageTok, textCarry: Math.max(0, carry - imageTok) }
+  if (be && floor > 0) a.rotateAdvice = rotateAdvice(be.model, floor, ctx, be.call)
+  return a
+}
+
+// Weighted rotation break-even (v4 A4, tools/ccr_breakeven.py; observe only, nothing here rotates). A rotation pays
+// once: write floor + capsule, the rehydration calls, the first call's overhead. It then saves W_READ on every token
+// of carry above floor + capsule + R on each later call. With carry growing g per call the cheapest cycle rotates at
+// carry X* = sqrt(2 * once * g / W_READ); it is advised only when the calls still expected exceed the payback k*.
+// Measured (Linux plane GEX44, host 2.1.296): capsules of 164-564 tokens, not the 8k E1 assumed.
+export const W_READ = 0.1
+export const W_WRITE = 1.25
+export type BreakevenModel = { cls: string; capsule: number; R: number; rehyd_cost: number; first_overhead: number
+  r: number; g: number; lengths: number[] }
+export type RotateAdvice = { rotate: boolean; kStar: number | null; xStar: number | null; carry: number; remaining: number }
+
+export function parseBreakevenModel(text: string | null, cls: string): BreakevenModel | null {
+  if (!text) return null
+  try {
+    const m = JSON.parse(text)
+    const ok = m?.cls === cls && [m.capsule, m.R, m.rehyd_cost, m.first_overhead, m.r, m.g]
+      .every((v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= 0)
+      && Array.isArray(m.lengths) && m.lengths.length > 0 && m.lengths.every((v: unknown) => typeof v === 'number')
+    return ok ? m as BreakevenModel : null
+  } catch { return null } // unparseable model: no break-even advice, the carry receipt stands alone
+}
+
+// Median calls still to come for a session at `call`, over the class sessions that lasted longer.
+export function expectedRemaining(call: number, lengths: readonly number[]): number {
+  const rest = lengths.filter(n => n > call).map(n => n - call).sort((x, y) => x - y)
+  if (!rest.length) return 0
+  const h = rest.length >> 1
+  return rest.length % 2 ? rest[h] : (rest[h - 1] + rest[h]) / 2
+}
+
+export function rotateAdvice(m: BreakevenModel, floor: number, ctx: number, call: number): RotateAdvice {
+  const once = W_WRITE * (floor + m.capsule) + m.rehyd_cost + m.r * W_READ * m.capsule + m.first_overhead
+  const carry = ctx - floor - m.capsule - m.R
+  const kStar = carry > 0 ? once / (W_READ * carry) : null
+  const xStar = m.g > 0 ? Math.sqrt(2 * once * m.g / W_READ) : null
+  const remaining = expectedRemaining(call, m.lengths)
+  return { rotate: kStar !== null && xStar !== null && carry >= xStar && remaining > kStar,
+    kStar: kStar === null ? null : +kStar.toFixed(1), xStar: xStar === null ? null : Math.round(xStar), carry: Math.round(carry), remaining }
 }
 
 // Image results by the call they answer, so a compaction can name what it evicts.
