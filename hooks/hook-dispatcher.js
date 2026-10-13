@@ -120,6 +120,11 @@ const EVENT_MAP = {
   // Registered directly as --event=PreToolUse-Agent-default on matcher Task|Agent (Owner step, HR-001:
   // vault/OWNER_QUEUE.md). Inert for sessions bound to no goal and with no session budget.
   'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js', '../skills/claude-power-pack/hooks/cognitive_admission.js', '../skills/claude-power-pack/hooks/semantic_breaker.js'],
+  // Research lane (CDC C6): WebSearch|WebFetch reuse + singleflight + negative knowledge. Registered as
+  // --event=PreToolUse-Web-default / PostToolUse-Web-default on matcher WebSearch|WebFetch (Owner step,
+  // like the Agent lane). Kill switch CPP_RESEARCH_GATE=off. Pinned: tools/test_derivation_store.py.
+  'PreToolUse-Web-default': ['../skills/claude-power-pack/hooks/research_reuse.js'],
+  'PostToolUse-Web-default': ['../skills/claude-power-pack/hooks/research_reuse.js'],
   // In-process (require-based) bundles only. The Stop event is handled by
   // CHAIN_MAP below instead: those hooks are heterogeneous (one is Python)
   // and not all export run(), so they run as sequential CHILD processes
