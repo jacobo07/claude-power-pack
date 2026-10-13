@@ -1,5 +1,6 @@
 # W5 receipt
-Status: PARTIAL -- steps 1-7 DONE (W6.md + route-W6.json authored, Owner 'approve' 2026-10-13); held PARTIAL on purpose: DONE arms W6 via the tick, and W6 has no capital yet (Owner flips it).
+Status: DONE
+Steps 1-7 DONE (W6.md + route-W6.json at 4651a6ab). Flipped from PARTIAL after W6 capital packet bc01a911 APPLIED (Owner 'approve dgl only' 2026-10-13; programme 47.5M -> 48.5M, executable 3,686,595 >= route-W6 stop 3,400,000).
 COMMITS: source dgl/durable-goal-lease ef6bd810; merge bd5af362 on dgl/live-merge (W5-r1/r2, 4 conflicts resolved --ours, live a strict superset);
 live merge 187629ad = d05a39f6 + bd5af362 on feature/knowledge-acquisition (session 159949c6, lease L13 dgl:W5:r6, packet b9b456dd).
 Live HEAD at deploy: 187629ad. Pre-merge: 0 staged, no MERGE_HEAD, overlap of the 39 dgl files with 401 committed + 1133 dirty live paths: 0/0.
