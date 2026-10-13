@@ -20,7 +20,116 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const crypto = require('crypto');
+const os = require('os');
+const { spawn } = require('child_process');
 const gb = require('./lib/goal_binding');
+
+// --- Owner capital capture + approval receipt (merged from owner_capital_capture.js, econ-succession S2) ----
+// Capture: an Owner capital approval ("approve", "approve p80", "modify dgl to 37M", "revoke dgl") is recorded
+// {session_id, transcript_path, prompt, ts} and `mission_spend.py capital-apply-pending` starts detached. The apply
+// leg re-verifies the Owner entry itself; the capture row is a trigger, not an authority. Kill switch
+// CPP_OCA_CAPTURE=off. Test seam: CPP_OCA_NO_SPAWN=1 skips the spawn, CPP_CAPITAL_ROOT moves the store.
+// Receipt: the same message, in an interactive pane that displayed exactly one pending packet for the bound
+// goal, becomes an immutable OWNER_APPROVED receipt BEFORE the model (the python leg decides; this hook only
+// relays) and the message is answered with 0 model tokens. Kill switch CPP_ECON_APPROVE=off.
+const GOAL = '[a-z0-9][a-z0-9._-]*';
+const NEG = /(?:\b(?:don't|dont|do not|not|never|can't|cannot|no)\b|n't\b)/;
+const GRAMMAR = [
+  /^(?:yes[, ]+)?approve(?:d)?(?: everything| all)?$/,
+  /^approve (?:all )?p(?:50|80|95)$/,
+  new RegExp(`^approve ${GOAL} only$`),
+  new RegExp(`^modify ${GOAL} to [0-9][0-9,_.]*[mk]?$`),
+  new RegExp(`^revoke ${GOAL}$`),
+];
+const APPROVE_GRAMMAR = GRAMMAR.slice(0, 4);   // approve forms + modify; never revoke
+const MISSION_SPEND = path.join(__dirname, '..', 'tools', 'mission_spend.py');
+
+function normIntent(text) {
+  return String(text).trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.!]+$/, '');
+}
+function isCapitalIntent(text) {
+  if (typeof text !== 'string') return false;
+  const t = normIntent(text);
+  if (!t || NEG.test(t)) return false;
+  return GRAMMAR.some((g) => g.test(t));
+}
+function isApproveIntent(text) {
+  if (typeof text !== 'string') return false;
+  const t = normIntent(text);
+  return !!t && !NEG.test(t) && APPROVE_GRAMMAR.some((g) => g.test(t));
+}
+
+function capitalRoot() {
+  return process.env.CPP_CAPITAL_ROOT || path.join(os.homedir(), '.claude', 'state', 'capital-authority');
+}
+
+// (sha, goal) pairs in pending.json with no capsule row yet. A capsule row of any state is final for the sweep.
+function outstanding(root) {
+  let pend;
+  try { pend = JSON.parse(fs.readFileSync(path.join(root, 'pending.json'), 'utf8').replace(/^﻿/, '')); } catch { return []; }
+  const done = new Set();
+  try {
+    for (const ln of fs.readFileSync(path.join(root, 'capsules.jsonl'), 'utf8').split('\n')) {
+      try { const r = JSON.parse(ln); done.add(`${r.sha}|${r.goal}`); } catch { /* partial line */ }
+    }
+  } catch { /* no capsules yet */ }
+  const out = [];
+  for (const ent of Array.isArray(pend) ? pend : [pend]) {
+    let sha;
+    try { sha = crypto.createHash('sha256').update(fs.readFileSync(ent.packet)).digest('hex'); } catch { continue; }
+    for (const g of ent.goals || []) if (!done.has(`${sha}|${g}`)) out.push(`${sha}|${g}`);
+  }
+  return out;
+}
+
+// Two triggers, one authority. An approval typed now is captured; an approval typed BEFORE this hook could see
+// it (or whose transcript flush the apply leg missed) is swept on the Owner's next message while its pair is
+// still outstanding. Neither row is authority.
+function capture(ev) {
+  if (!ev || typeof ev.prompt !== 'string') return;
+  const root = capitalRoot();
+  const intent = isCapitalIntent(ev.prompt);
+  if (!intent && (!ev.transcript_path || outstanding(root).length === 0)) return;
+  fs.mkdirSync(root, { recursive: true });
+  fs.appendFileSync(path.join(root, 'approvals.jsonl'), JSON.stringify({
+    session_id: ev.session_id || null, transcript_path: ev.transcript_path || null,
+    prompt: intent ? ev.prompt : null, kind: intent ? 'approval' : 'pending-sweep', ts: new Date().toISOString(),
+  }) + '\n');
+  if (process.env.CPP_OCA_NO_SPAWN === '1') return;
+  const py = process.env.CLAUDE_PY_EXE || 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+  const child = spawn(py, ['-I', MISSION_SPEND, 'capital-apply-pending'], {
+    detached: true, stdio: 'ignore', windowsHide: true, env: process.env,
+  });
+  child.on('error', () => {});
+  child.unref();
+}
+
+// The receipt leg. Returns the block text, or null to let the message through to the model (every refusal:
+// not an approval, no binding, not an interactive pane, zero or several displayed packets, packet invalid).
+function approveReceipt(event, rec) {
+  const sw = String(process.env.CPP_ECON_APPROVE || '').trim().toLowerCase();
+  if (sw === '0' || sw === 'off' || sw === 'false') return null;
+  if (!event.transcript_path || !rec || !rec.goal || rec.goal === 'none' || !isApproveIntent(event.prompt)) return null;
+  const r = spawnSync(PY, ['-I', MISSION_SPEND, 'capital-receipt', '--session', event.session_id,
+    '--transcript', event.transcript_path, '--goal', rec.goal, '--prompt', event.prompt],
+  { encoding: 'utf8', timeout: 15000, windowsHide: true, env: process.env });
+  let out = null;
+  try { out = JSON.parse(String(r.stdout || '').trim().split('\n').pop()); } catch (e) { out = null; }
+  if (!out || !out.ok || !out.receipt) return null;
+  const x = out.receipt;
+  if (!process.env.CPP_OCA_NO_SPAWN) {
+    try {
+      const child = spawn(PY, ['-I', MISSION_SPEND, 'capital-apply-pending'],
+        { detached: true, stdio: 'ignore', windowsHide: true, env: process.env });
+      child.on('error', () => {}); child.unref();
+    } catch (e) { /* the sweep on the next message applies it */ }
+  }
+  return `OWNER APPROVAL RECORDED -- receipt ${x.id}: state OWNER_APPROVED (answered by the control plane; 0 model tokens)\n` +
+    `goal ${x.goal}: programme ceiling ${fmt(x.ceiling)} (${x.tier}) for packet ${String(x.sha).slice(0, 12)}; ` +
+    `provenance ${x.provenance}; ${out.issued ? 'issued now' : 'already issued (idempotent)'}.\n` +
+    'It applies below the model next; `econ status` shows the result. Nothing else is needed from you.';
+}
 
 const SID_RE = /^[A-Za-z0-9._-]{1,128}$/;
 const PY = process.env.PYTHON_BIN || (process.platform === 'win32'
@@ -97,6 +206,9 @@ function decide(event) {
   const verb = (prompt.match(VERB) || [])[1];
   const rec = gb.readBinding(sid);
 
+  const receipt = approveReceipt(event, rec);
+  if (receipt) return receipt;
+
   if (verb && verb.toLowerCase() === 'detach') {
     const r = spawnSync(PY, [ECON_PLANE, 'detach', '--session', sid, '--reason', 'owner-econ-detach'],
       { encoding: 'utf8', timeout: 9000, windowsHide: true });
@@ -141,16 +253,17 @@ function decide(event) {
 if (require.main === module) {
   let raw = '';
   process.stdin.on('data', d => { raw += d; }).on('end', () => {
-    // Owner capital capture rides this registered UserPromptSubmit hook (no settings.json edit): it runs
-    // first, so a prompt this hook then blocks is still captured. Spawns detached; never touches stdout.
+    // The receipt (inside decide) is written before the capture spawn, so the detached apply leg finds it.
+    // A prompt this hook blocks is still captured. Capture never touches stdout; every leg is fail-open.
+    let ev = null, reason = null;
+    try { ev = JSON.parse(raw.replace(/^﻿/, '')); } catch (e) { ev = null; }
+    try { reason = decide(ev); } catch (e) { reason = null; }
     if (process.env.CPP_OCA_CAPTURE !== 'off') {
-      try { require('./owner_capital_capture').run(raw.replace(/^﻿/, '')); } catch (e) { /* fail-open */ }
+      try { capture(ev); } catch (e) { /* fail-open: a capture failure must never cost the prompt */ }
     }
-    let reason = null;
-    try { reason = decide(JSON.parse(raw.replace(/^﻿/, ''))); } catch (e) { reason = null; }
     if (reason) block(reason);
     else process.stdout.write('{}');
   });
 }
 
-module.exports = { decide, ledgerView, render };
+module.exports = { decide, ledgerView, render, isCapitalIntent, isApproveIntent, outstanding, capture };

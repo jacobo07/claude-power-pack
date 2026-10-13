@@ -1141,6 +1141,9 @@ def _main(argv: list[str]) -> int:
         cp.add_argument("--goal", required=True)
     sub.add_parser("capital-status")
     sub.add_parser("capital-apply-pending")
+    cr = sub.add_parser("capital-receipt")                  # econ-succession S2: the pre-model hook's receipt leg
+    for k in ("session", "transcript", "goal", "prompt"):
+        cr.add_argument(f"--{k}", required=True)
     a = ap.parse_args(argv)
     if a.cmd.startswith("capital-"):
         import sys as _sys
@@ -1154,6 +1157,8 @@ def _main(argv: list[str]) -> int:
             elif a.cmd == "capital-apply-pending":
                 res = ca.apply_pending(_goal_ledger)
                 out = {"ok": all(r["ok"] for r in res), "results": res}
+            elif a.cmd == "capital-receipt":
+                out = ca.record_receipt_from_prompt(a.prompt, a.transcript, a.session, a.goal, _goal_ledger)
             else:
                 fn = ca.apply if a.cmd == "capital-apply" else ca.revoke
                 r = fn(a.packet, a.transcript, a.goal, _goal_ledger)

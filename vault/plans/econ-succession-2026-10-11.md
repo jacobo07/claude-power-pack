@@ -114,6 +114,18 @@ Open item: a9647f12's whole transcript is 16,799,247 tokens; before its last set
 - Residual risk: anything that can type into the Owner's terminal (the keystroke inbox) could
   forge (b). Mitigation in S2: the inbox refuses lines matching the approval grammar.
 
+### 5.1 S1 provenance verdict (measured 2026-10-11, WU-OC1, 4 calls, 150 newest transcripts of this project)
+
+Transcript user entries carry fields the model cannot author: `entrypoint` (`cli` interactive/bg, `sdk-cli` for -p/sdk), `sessionKind`
+(`bg` on --bg workers, ABSENT on interactive panes), `origin.kind`, `promptSource`.
+Counts of string-content human entries: interactive = 700 typed + 25 queued + 63 slash, all `sessionKind` absent, `entrypoint=cli`;
+bg workers = 7 typed + 2 slash, all `sessionKind=bg`; sdk/-p = `entrypoint=sdk-cli`, `promptSource=sdk`, no origin.
+FINDING: a --bg worker's launch prompt is stamped `origin.kind=human, promptSource=typed`, so the unchanged OCA rule (a) accepts
+"approve" text delivered to a bg worker. VERDICT: ship (b) HOOK_ATTESTED_INTERACTIVE and tighten (a):
+interactive = `entrypoint=='cli'` AND `sessionKind` absent, read from the approving session's own transcript entries (the
+UserPromptSubmit event itself carries only session_id/transcript_path/prompt/cwd/permission_mode, so the discriminator is read from
+the transcript, never from the event). Absent field on every entry of the session = unknown = not interactive. Gate: V-SUCC-HEADLESS-FORGERY.
+
 ## 6. Workstreams and mode
 
 | ws | content | mode |

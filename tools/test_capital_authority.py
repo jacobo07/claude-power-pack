@@ -308,14 +308,16 @@ def _():
 def _():
     import os
     import subprocess
-    hook = REPO / "hooks" / "owner_capital_capture.js"
+    # The capture leg lives in the registered hook (econ_admission.js) since econ-succession S2; admission
+    # itself is switched off here so only the capture is observed.
+    hook = REPO / "hooks" / "econ_admission.js"
     node = "node"
 
     def fire(prompt, root):
-        env = {**os.environ, "CPP_CAPITAL_ROOT": str(root), "CPP_OCA_NO_SPAWN": "1"}
+        env = {**os.environ, "CPP_CAPITAL_ROOT": str(root), "CPP_OCA_NO_SPAWN": "1", "CPP_ECON_ADMISSION": "off"}
         p = subprocess.run([node, str(hook)], input=json.dumps({"session_id": "s", "transcript_path": "t.jsonl",
                            "prompt": prompt}), capture_output=True, text=True, env=env, timeout=30)
-        assert p.returncode == 0 and p.stdout == "", (p.returncode, p.stdout, p.stderr[:200])
+        assert p.returncode == 0 and p.stdout == "{}", (p.returncode, p.stdout, p.stderr[:200])
         f = Path(root) / "approvals.jsonl"
         return f.read_text(encoding="utf-8").splitlines() if f.exists() else []
 
