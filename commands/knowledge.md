@@ -7,6 +7,21 @@ Queries the AKOS Knowledge Store (30,000+ canonical units from Skool courses, Yo
 
 ## Commands
 
+### Search (primary, since 2026-10-13): citable ids, 30k AKOS units + 01_Datasets, ~2 s
+```
+python "C:/Users/User/Desktop/Cursor Projects/AKOS/run_akos.py" search "$ARGUMENTS" --k 20
+```
+
+### Evidence pack for creative work (cite its ids; the VLCE brief_evidence gate checks them)
+```
+python "C:/Users/User/Desktop/Cursor Projects/AKOS/run_akos.py" evidence --task "$ARGUMENTS" --out <file.json>
+```
+Then fill `used`: one `{"choice": "<what you decided>", "ids": ["akos:...", "01ds:..."]}` per creative choice.
+Creative prompts get the top hits injected automatically (hook `creative_grounding.js`; off: `AKOS_GROUNDING=0`).
+The index refreshes nightly (`akos index build`, scheduled task `AKOS-IndexBuild`).
+
+### Legacy engine (domain briefs and project inject only; slow, uncitable)
+
 ### Auto-inject into current project
 ```
 python "C:/Users/User/Desktop/Cursor Projects/TUA-X/CW_UGC_SYSTEM/tools/skool-scraper/knowledge_engine.py" inject "<project_path>"
