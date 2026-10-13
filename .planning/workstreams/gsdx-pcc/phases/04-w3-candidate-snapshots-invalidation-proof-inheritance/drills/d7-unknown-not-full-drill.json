@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/inherit.py","test":"tools/test_gsd_x_goal_invalidation.py","gate":"V-INV-VSET-UNKNOWN-FULL","old":"if why.startswith((\"premise unknown\", \"unknown candidate\")):","new":"if False:"}

@@ -1,0 +1,4 @@
+FAIL V-INV-FALSE-REUSE action=INHERIT inherited=[] invalidated=0
+FAIL V-INV-SWEEP-E2E A inherited=1 dispatched=False; B invalidated=0 produced=2 dispatched=True
+GSDX_INVALIDATION_PASS=24/26  threshold=26/26
+MUTANT KILLED gate=V-INV-FALSE-REUSE

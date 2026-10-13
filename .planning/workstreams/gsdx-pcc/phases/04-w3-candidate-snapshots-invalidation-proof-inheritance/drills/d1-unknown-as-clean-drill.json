@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/proof.py","test":"tools/test_gsd_x_goal_invalidation.py","gate":"V-INV-UNKNOWN-NOT-CLEAN","old":"if not obs or UNKNOWN_OBS in values:","new":"if not obs:"}

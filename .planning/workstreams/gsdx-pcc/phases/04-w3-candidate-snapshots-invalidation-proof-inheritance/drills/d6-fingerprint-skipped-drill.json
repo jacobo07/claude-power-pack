@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/proof.py","test":"tools/test_gsd_x_goal_invalidation.py","gate":"V-INV-FALSE-REUSE","old":"    return EQUAL if recorded == current else CHANGED","new":"    return EQUAL if (recorded == current or name == \"fingerprint\") else CHANGED"}

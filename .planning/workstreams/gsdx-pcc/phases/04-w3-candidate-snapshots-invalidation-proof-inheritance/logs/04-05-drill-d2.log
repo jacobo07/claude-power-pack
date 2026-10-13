@@ -1,0 +1,4 @@
+FAIL V-INV-FRESH-REQUIRED-NEVER cases={'fresh-required': (False, 'INHERIT'), 'risk-tag': (False, 'INHERIT'), 'legacy-never': (True, 'RUN'), 'unknown-class': (True, 'RUN'), 'reality-plane': (True, 'RUN')}
+FAIL V-INV-FRESH-ISLANDS islands={'fresh-required': False, 'risk-tag': False, 'reality-plane': True} ordinary_claim_not_listed=True
+GSDX_INVALIDATION_PASS=24/26  threshold=26/26
+MUTANT KILLED gate=V-INV-FRESH-REQUIRED-NEVER

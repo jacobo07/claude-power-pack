@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/inherit.py","test":"tools/test_gsd_x_goal_invalidation.py","gate":"V-INV-OMITTED-WITHOUT-EVENT","old":"for e in ledger.inherited:","new":"for e in (ledger.inherited or [{\"seq\": seq + 1, \"data\": {\"claim_id\": cid, \"certificate\": cert, \"candidate\": candidate, \"premises\": data.get(\"premises\")}}]):"}

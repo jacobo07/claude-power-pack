@@ -1,0 +1,5 @@
+FAIL V-INV-R12-CLOSURE may_close=False blocking=['plane EVIDENCE applies and has no obligation']
+FAIL V-INV-R12-NEEDS-GATE reason=''
+FAIL V-INV-DRIFT-SUBSTRATE no_event=None same=False moved=True unknown=None newest_promotion_wins=False moved_under_verification_rule=False
+GSDX_INVALIDATION_PASS=23/26  threshold=26/26
+MUTANT KILLED gate=V-INV-R12-CLOSURE

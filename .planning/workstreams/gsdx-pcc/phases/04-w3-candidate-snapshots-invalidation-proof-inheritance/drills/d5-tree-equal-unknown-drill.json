@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/convergence.py","test":"tools/test_gsd_x_goal_invalidation.py","gate":"V-INV-R12-CLOSURE","old":"if str(a).startswith(\"unknown:\") or str(b).startswith(\"unknown:\"):","new":"if False:"}

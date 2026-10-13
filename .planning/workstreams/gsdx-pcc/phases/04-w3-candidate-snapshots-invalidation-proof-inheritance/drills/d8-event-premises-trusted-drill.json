@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/inherit.py","test":"tools/test_gsd_x_goal_invalidation.py","gate":"V-INV-EVENT-DISAGREES","old":"if event_premises.get(name) != cert_premises.get(name):","new":"if False:"}

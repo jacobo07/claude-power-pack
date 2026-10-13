@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/sweep.py","test":"tools/test_gsd_x_goal_certificate.py","gate":"V-CERT-MOVED-UNDER-VERIFICATION","old":"return not cv.tree_equal(getattr(receipt, \"tree_before\", \"\"), getattr(receipt, \"tree_after\", \"\"))","new":"return False"}

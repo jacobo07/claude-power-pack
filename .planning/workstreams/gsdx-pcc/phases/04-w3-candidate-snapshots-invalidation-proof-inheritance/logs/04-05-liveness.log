@@ -1,0 +1,76 @@
+﻿# Reachability Ledger (module granularity)
+
+modules: 494  |  REACHABLE: 312  |  ORPHAN: 182  |  UNKNOWN: 0  |  gate offenders: 0
+
+APERTURE: packages under `modules/` only. `tools/` is NOT scanned, so nothing below is evidence about the verification runner, the benchmarks, the commit wrapper or the hunk guard. Silence here about a tool is absence from the denominator, never health.
+
+## Unreachable and undeclared
+
+| module | status | via |
+|---|---|---|
+| arch-decision/test_closed_loop | ORPHAN | - |
+| arch-decision/test_v_block | ORPHAN | - |
+| capability_runtime/agent_bundle | ORPHAN | - |
+| ccf/test_ccf | ORPHAN | - |
+| deployment/test_v_block | ORPHAN | - |
+| gsd_x/goal/__init__ | ORPHAN | - |
+| gsd_x/goal/bind_mission | ORPHAN | - |
+| gsd_x/goal/brief | ORPHAN | - |
+| gsd_x/goal/contract | ORPHAN | - |
+| gsd_x/goal/convergence | ORPHAN | - |
+| gsd_x/goal/engine_identity | ORPHAN | - |
+| gsd_x/goal/epoch | ORPHAN | - |
+| gsd_x/goal/git_state | ORPHAN | - |
+| gsd_x/goal/judge | ORPHAN | - |
+| gsd_x/goal/log | ORPHAN | - |
+| gsd_x/goal/providers/__init__ | ORPHAN | - |
+| gsd_x/goal/providers/claude | ORPHAN | - |
+| gsd_x/goal/providers/codex | ORPHAN | - |
+| gsd_x/goal/providers/gate | ORPHAN | - |
+| gsd_x/goal/providers/long_run | ORPHAN | - |
+| gsd_x/goal/reconcile | ORPHAN | - |
+| gsd_x/goal/sweep | ORPHAN | - |
+| gsd_x/mission/__init__ | ORPHAN | - |
+| gsd_x/mission/closure | ORPHAN | - |
+| gsd_x/mission/contract | ORPHAN | - |
+| gsd_x/mission/coverage | ORPHAN | - |
+| gsd_x/mission/obligation | ORPHAN | - |
+| gsd_x/mission/store | ORPHAN | - |
+| gsd_x/mission/structured_facts | ORPHAN | - |
+| keos_qwen/__init__ | ORPHAN | - |
+| keos_qwen/goals/__init__ | ORPHAN | - |
+| keos_qwen/goals/fire | ORPHAN | - |
+| keos_qwen/goals/seed_goals | ORPHAN | - |
+| keos_qwen/ledger/__init__ | ORPHAN | - |
+| keos_qwen/ledger/ledger | ORPHAN | - |
+| keos_qwen/outcome | ORPHAN | - |
+| keos_qwen/probe/__init__ | ORPHAN | - |
+| keos_qwen/probe/agentic_loop | ORPHAN | - |
+| keos_qwen/score/score_corpus | ORPHAN | - |
+| knowledge_acquisition/__init__ | ORPHAN | - |
+| knowledge_acquisition/boundary | ORPHAN | - |
+| knowledge_acquisition/classifier | ORPHAN | - |
+| knowledge_acquisition/cli | ORPHAN | - |
+| knowledge_acquisition/corpus_parser | ORPHAN | - |
+| knowledge_acquisition/engine3 | ORPHAN | - |
+| knowledge_acquisition/eva_adapter | ORPHAN | - |
+| knowledge_acquisition/expectation | ORPHAN | - |
+| knowledge_acquisition/models | ORPHAN | - |
+| knowledge_acquisition/provenance | ORPHAN | - |
+| knowledge_acquisition/queues | ORPHAN | - |
+| knowledge_acquisition/raw_vault | ORPHAN | - |
+| knowledge_acquisition/routing | ORPHAN | - |
+| knowledge_acquisition/runlock | ORPHAN | - |
+| knowledge_acquisition/runner | ORPHAN | - |
+| knowledge_acquisition/session | ORPHAN | - |
+| knowledge_acquisition/store | ORPHAN | - |
+| session_resilience/integration | ORPHAN | - |
+| session_resilience/multi_window | ORPHAN | - |
+| session_resilience/resume_identity | ORPHAN | - |
+| session_resilience/ui_state | ORPHAN | - |
+| surface_architecture/verticals/design_md_adapter | ORPHAN | - |
+| surface_architecture/verticals/prd_adapter | ORPHAN | - |
+| surface_architecture/verticals/surface_phrases | ORPHAN | - |
+| tower/donegate | ORPHAN | - |
+| tower/ratchet | ORPHAN | - |
+

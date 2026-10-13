@@ -1,0 +1,4 @@
+FAIL V-INV-UNKNOWN-NOT-CLEAN cases={'unknown-fingerprint': (False, 'INHERIT'), 'unknown-environment': (False, 'INHERIT')}
+FAIL V-INV-VSET-UNKNOWN-FULL unknown_is_full={'no-causal-paths': False, 'unknown-fingerprint': False} known_is_not_full=True
+GSDX_INVALIDATION_PASS=24/26  threshold=26/26
+MUTANT KILLED gate=V-INV-UNKNOWN-NOT-CLEAN

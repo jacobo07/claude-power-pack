@@ -1,0 +1,27 @@
+  PASS V-CLI-DECLARE: a goal is declared from the command line (declared g-cli @ revision 9dfdd46a50bb9733)
+  PASS V-CLI-NA-NEEDS-REASON: declaring a plane N/A with no reason is refused, exit 2
+  PASS V-CLI-STATUS-BLOCKED: a goal with open planes reports BLOCKED and exits 1
+  PASS V-CLI-OBLIGE: obligations are accepted with their gate files pinned
+  PASS V-CLI-RECONCILE-DECIDES: reconcile prints a decision and changes nothing without --apply
+  PASS V-CLI-RECONCILE-APPLIES: with --apply the gate epoch is dispatched
+  PASS V-CLI-EXPLAIN: explain compiles the epoch brief from durable state
+  PASS V-CLI-BIND: a root is bound to its goal
+  PASS V-CLI-BOUND-GATE-ASKS-THE-GOAL: on a bound root the mission gate answers from the GOAL, blocking on its open obligations rather than failing closed
+  PASS V-CLI-BOUND-GATE-NOT-AN-ERROR: the bound answer is a verdict, not a breakage
+  PASS V-CLI-BOUND-STORE-REFUSES: the per-root mission store refuses to write under a bound goal
+  PASS V-CLI-SWEEP-REFUSES-WITHOUT-RECORD: the sweep entrance refuses to act with no recorded green, and says so
+  PASS V-CLI-RETIRE-CANNOT-DECLARE-SATISFIED: the CLI will not let an operator declare an obligation satisfied
+  PASS V-CLI-RETIRE: an obligation is retired with a stated reason
+  PASS V-CLI-RETIRE-REOPENS-ITS-PLANE: retiring the only obligation on a plane reports that plane as blocking again
+  PASS V-CLI-RETIRED-PLANE-BLOCKS: status names the reopened plane
+  PASS V-CLI-DISPOSITION-UNKNOWN-FAILURE: dispositioning a failure nobody recorded is refused
+  PASS V-CLI-JUDGE-REFUSES-UNPROVEN: with nothing proven the judge does not certify
+  PASS V-CLI-CLOSURE-CLEARS: the gates ran through the CLI and closure cleared
+  PASS V-CLI-CLEAR-IS-NOT-CONVERGED: closure clear is not convergence: the judge has not run yet
+  PASS V-CLI-JUDGE-RECORDS: the judge certifies and banks its receipt
+  PASS V-CLI-CONVERGED-IS-REACHABLE: the recorded receipt is read back and the goal converges
+  PASS V-CLI-EXPORT: the goal exports a checkpoint (goal.json)
+  PASS V-CLI-RESTORE-IDEMPOTENT: restoring the same export is a no-op, not a replay
+  PASS V-CLI-RESTORE-REFUSES-REGRESSION: an export older than the store is refused rather than replayed
+
+GSDX_GOAL_CLI_PASS=25/25  threshold=25/25

@@ -1,0 +1,8 @@
+PASS V-CERT-HERMETIC-HOME home=cert-home-psbapbcm
+PASS V-CERT-PRODUCED-ON-SATISFY produced=1 binding=causal premises=['claim', 'environment', 'fingerprint', 'gate_pin', 'policy', 'revision']
+PASS V-CERT-ONLY-AFTER-SATISFY types=[]
+PASS V-CERT-MOVED-UNDER-VERIFICATION cases={'tree-moved': True, 'before-unknown': True, 'after-unknown': True} legacy_satisfied_unchanged=True
+PASS V-CERT-BINDING-SCHEME typed=causal legacy_no_causal_paths=tree
+PASS V-CERT-SWITCH-OFF off_has_produced=False on_adds=['proof.produced']
+PASS V-CERT-LAW-CONSERVATION re-harvest_writes_one=True duplicate_trips_law=True
+GSDX_CERTIFICATE_PASS=7/7  threshold=7/7

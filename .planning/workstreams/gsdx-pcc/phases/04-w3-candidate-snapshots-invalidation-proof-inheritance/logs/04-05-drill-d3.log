@@ -1,0 +1,7 @@
+FAIL V-INV-UNKNOWN-NOT-CLEAN cases={'unknown-fingerprint': (True, 'RUN'), 'unknown-environment': (False, 'RUN')}
+FAIL V-INV-OMITTED-WITHOUT-EVENT planned=INHERIT inherited=['ob-one'] events=0
+FAIL V-INV-FRONTIER-CONSUMES-INHERITED with_event runnable=[] exec=[]; without runnable=[] exec=[]
+FAIL V-INV-SWEEP-E2E A inherited=0 dispatched=False; B invalidated=1 produced=2 dispatched=True
+FAIL V-INV-VSET-SKIPS-ONLY-WITH-EVIDENCE fresh=['ob-one'] planned_run=[] applied_inherit=['ob-one']
+GSDX_INVALIDATION_PASS=21/26  threshold=26/26
+MUTANT KILLED gate=V-INV-OMITTED-WITHOUT-EVENT

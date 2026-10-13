@@ -1,0 +1,1 @@
+{"file":"modules/gsd_x/goal/inherit.py","test":"tools/test_gsd_x_goal_invalidation.py","gate":"V-INV-FRESH-REQUIRED-NEVER","old":"ELIGIBLE = frozenset({pf.DETERMINISTIC, pf.COMPOSITIONAL, pf.ENVIRONMENT_SENSITIVE})","new":"ELIGIBLE = frozenset({pf.DETERMINISTIC, pf.COMPOSITIONAL, pf.ENVIRONMENT_SENSITIVE, pf.FRESH_REQUIRED})"}

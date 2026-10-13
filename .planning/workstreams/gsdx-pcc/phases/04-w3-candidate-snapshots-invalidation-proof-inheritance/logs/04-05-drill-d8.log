@@ -1,0 +1,3 @@
+FAIL V-INV-EVENT-DISAGREES forged_ignored=[False, False, False] truthful_event_control=True
+GSDX_INVALIDATION_PASS=25/26  threshold=26/26
+MUTANT KILLED gate=V-INV-EVENT-DISAGREES

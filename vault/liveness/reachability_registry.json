@@ -439,6 +439,10 @@
       "class": "PLANNED",
       "note": "Future/Opportunity Discovery module (OWNERSHIP_OVERLAP_AUDIT.md Group I); built, not yet wired"
     },
+    "gsd_x/goal/candidate": {
+      "class": "PLANNED",
+      "note": "gsdx-pcc Phase 4 (W3) candidate snapshot + drift. Imported by gsd_x/goal/inherit.py, which sweep.py imports; same entrance as the rest of the goal engine (tools/gsd_x_goal.py, outside this scanner's aperture). OWNER_QUEUE: wired with the engine in UWCP S6; re-classify then"
+    },
     "gsd_x/goal/evidence": {
       "class": "PLANNED",
       "note": "UWCP S1-5 (vault/specs/uwcp.md). Imported by gsd_x/goal/brief.py; the whole goal engine is ORPHAN because its only entrance is tools/gsd_x_goal.py (outside this scanner's aperture) and no command/hook reaches it yet. OWNER_QUEUE: UWCP S6 wires it (placement rule in /cpp-gsd-long + VPS sweep cron); re-classify then"
@@ -446,6 +450,10 @@
     "gsd_x/goal/frontier": {
       "class": "PLANNED",
       "note": "gsdx-pcc Phase 3 (W2). Imported by gsd_x/goal/reconcile.py, epoch.py and sweep.py; same entrance as the rest of the goal engine (tools/gsd_x_goal.py, outside this scanner's aperture). OWNER_QUEUE: wired with the engine in UWCP S6; re-classify then"
+    },
+    "gsd_x/goal/inherit": {
+      "class": "PLANNED",
+      "note": "gsdx-pcc Phase 4 (W3) proof inheritance. Imported by gsd_x/goal/sweep.py and reconcile.py; same entrance as the rest of the goal engine (tools/gsd_x_goal.py, outside this scanner's aperture), behind GSDX_PROOF_INHERITANCE. OWNER_QUEUE: wired with the engine in UWCP S6; re-classify then"
     },
     "gsd_x/goal/intervention": {
       "class": "PLANNED",
