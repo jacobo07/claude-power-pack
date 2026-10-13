@@ -22,6 +22,7 @@ os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ.pop("CPP_MISSION_RENEW", None)
+os.environ["CPP_MISSION_RECOVERY"] = "off"  # pins the legacy park/settle path AMR falls back to; AMR gates: test_mission_recovery.py
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 if os.environ.get("GSD_MISSION_DRILL_DIR"):
     sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])
