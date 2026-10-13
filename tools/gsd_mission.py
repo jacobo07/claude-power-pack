@@ -2671,14 +2671,15 @@ def spend_goal(rec: dict) -> str | None:
 
 
 def halt_authority(rec: dict) -> int | None:
-    """remaining - open of the mission's CE goal, None when unmeasurable (never renews)."""
+    """`remaining` of the mission's CE goal, None when unmeasurable (never renews). The current lease's open holds
+    are already inside its `used`; a closed lease's leaked holds are the programme's (executable), not this lease's.
+    Subtracting `open` again counted every hold twice (D28 D1d DEFER, V-LIFE-HALT-OPEN-COUNTED-ONCE)."""
     goal = spend_goal(rec)
     if not goal:
         return None
     try:
         import mission_spend as ms
-        st = ms._goal_ledger(goal).status()
-        return int(st["remaining"]) - int(st.get("open") or 0)
+        return int(ms._goal_ledger(goal).status()["remaining"])
     except Exception:  # noqa: BLE001
         return None
 

@@ -247,6 +247,10 @@ def main() -> int:
     check("V-LIFE-HALT-GOAL-BY-CWD", gm.spend_goal(rb) == "g-halt-test" and gm.halt_authority(rb) == 900_000
           and gm.spend_goal(ru) is None and gm.halt_authority(ru) is None,
           f"{gm.spend_goal(rb)} {gm.halt_authority(rb)} | {gm.spend_goal(ru)}")
+    # 7e. an open hold is already inside the lease's `used`: authority counts it ONCE (D28: a 1.13M leak in a
+    # closed lease was subtracted again from every new lease and DEFERred D1d's 1.5M route on a 2.16M lease)
+    ms._goal_ledger("g-halt-test").renew("s-hold", 0, 200_000)
+    check("V-LIFE-HALT-OPEN-COUNTED-ONCE", gm.halt_authority(rb) == 700_000, f"{gm.halt_authority(rb)}")
     gm.halt_authority = real
     # 8. atomic arm
     pkt = Path(TMP) / "ac-WU.md"
