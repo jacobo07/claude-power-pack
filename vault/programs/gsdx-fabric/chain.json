@@ -46,7 +46,7 @@
       "wait": [
         "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3b-receipt.md"
       ],
-      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3b); installs only under ~/fabric-tools behind supply-chain.json (2e65c565); the laptop tick must not arm it"
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3b); installs only under ~/fabric-tools behind supply-chain.json (2e65c565); the laptop tick must not arm it. DONE c888ecd0 after residuals F3br, F3br2 (L6-L8); F3c not compiled: functions PARTIAL (79.52% exact vs DTK, bar 90%)"
     }
   ]
 }
