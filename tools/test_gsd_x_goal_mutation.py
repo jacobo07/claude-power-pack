@@ -470,7 +470,60 @@ def _restore(path: Path, data: bytes, attempts: int = 10) -> None:
             time.sleep(0.5 * (i + 1))
 
 
+COPY_MARKER = ".gsdx-disposable-copy"
+
+
+def _force_remove(func, path, _exc):
+    os.chmod(path, 0o700)
+    func(path)
+
+
+def run_in_copy() -> int:
+    """Run this suite against a disposable copy of the candidate, never the live tree.
+
+    The in-place path below edits live modules and restores them from a journal; a
+    hard kill between the edit and the restore ships a mutant (Phase 4 left
+    `judge.py` mutated). Mutating a throwaway one-commit checkout (the copy
+    mechanism `gsdx_reality_baseline` already owns) removes the exposure: a kill
+    strands a temp directory, not a mutated module. The copy is made from the
+    working tree, so uncommitted candidate edits are what gets judged. The live
+    targets are fingerprinted either side and a change is reported, not assumed away.
+    """
+    sys.path.insert(0, str(ROOT / "tools"))
+    import gsdx_reality_baseline as rb
+    targets = sorted({m[0] for m in MUTATIONS.values()})
+    before = {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in targets}
+    copy = rb._make_copy(ROOT)
+    child = None
+    try:
+        (copy / COPY_MARKER).write_text("disposable copy of " + str(ROOT) + "\n", encoding="utf-8")
+        child = subprocess.Popen(
+            [sys.executable, "-B", str(copy / "tools" / Path(__file__).name)], cwd=str(copy),
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+            errors="replace", start_new_session=(os.name != "nt"),
+            env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONDONTWRITEBYTECODE": "1"})
+        # Relayed, not inherited: measured 2026-10-14, a child left on the parent's std
+        # handles under a PowerShell pipe printed nothing, so the verdict list vanished.
+        for line in child.stdout:
+            print(line, end="", flush=True)
+        rc = child.wait()
+    finally:
+        if child is not None and child.poll() is None:
+            _kill_tree(child.pid)
+        shutil.rmtree(copy, onerror=_force_remove)   # git objects are read-only on Windows
+    after = {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in targets}
+    unchanged = after == before
+    print(f"live tree unchanged (sha256, {len(targets)} file(s)): {unchanged}  "
+          f"(mutated disposable copy, removed: {not copy.exists()})")
+    if not unchanged:
+        print("INSTRUMENT_FAILED: a live mutation target moved during an in-copy run")
+        return 2
+    return rc
+
+
 def main() -> int:
+    if not (ROOT / COPY_MARKER).is_file():
+        return run_in_copy()
     for name in ("SIGTERM", "SIGINT", "SIGBREAK", "SIGHUP"):
         if hasattr(signal, name):
             signal.signal(getattr(signal, name), _interrupted)

@@ -15342,3 +15342,14 @@ enforce). Found by reading 02-RESEARCH G2; asserted as a deliberate divergence b
 the fix lands red-first in Phase 4 (R12).
 PR: a failure sentinel must be incomparable -- never equal to itself; compare through a function that returns
 UNKNOWN, never through string equality. #CROSS-PROJECT
+### T-MUTATION-SUITE-EDITS-THE-LIVE-TREE-001
+
+A mutation suite that edits the tree it runs from and restores it afterwards is one hard kill away from
+shipping a mutant: no in-process handler (`finally`, signal) runs on TerminateProcess/SIGKILL/a memory
+guard. Phase 4 left `judge.py` mutated; the journal+sha256 restore only repaired it on the NEXT run.
+Measured 2026-10-14 (RED, hard kill at ~21 s): the old suite left `log.py` mutated and a journal on disk.
+PR: mutate a disposable copy of the candidate and fingerprint the live targets either side; a kill then
+strands a temp directory, not a module. Drive the kill in the gate (`V-HERM-KILL-UNMOVED`) and require the
+entry tree to be clean with no journal (`V-HERM-KILL-NO-JOURNAL`). A child left on inherited std handles
+under a pipe printed nothing on Windows: relay its output. Evidence: `tools/test_gsd_x_goal_mutation_hermetic.py`,
+GSDX_MUTATION_HERMETIC_PASS=5/5. #CROSS-PROJECT

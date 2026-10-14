@@ -74,6 +74,11 @@ def journal_for(tree: Path) -> Path:
     return Path(tempfile.gettempdir()) / f"gsdx-goal-mutation-{hashlib.sha256(str(tree).encode()).hexdigest()[:12]}.json"
 
 
+def _force_remove(func, path, _exc):
+    os.chmod(path, 0o700)
+    func(path)
+
+
 def kill_tree(proc: subprocess.Popen) -> None:
     if os.name == "nt":
         subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, timeout=60)
@@ -90,7 +95,8 @@ def start(tree: Path, log: Path) -> subprocess.Popen:
 
 
 def main() -> int:
-    sandbox = rb._make_copy(ROOT).resolve()          # stands in for "the tree the suite is started from"
+    preexisting = set(Path(tempfile.gettempdir()).glob("gsdx_rb_copy_*"))
+    sandbox = rb._make_copy(ROOT).resolve()         # stands in for "the tree the suite is started from"
     real_paths = target_paths(ROOT)
     real_before = fingerprint(real_paths)
     try:
@@ -160,7 +166,11 @@ def main() -> int:
             _fail("V-HERM-FULL-UNMOVED",
                   f"rc={rc} caught={m.groups() if m else None} entry_unchanged={same}; tail: {text[-300:]!r}")
     finally:
-        shutil.rmtree(sandbox, ignore_errors=True)
+        # The sandbox plus the in-copy dirs a hard-killed run stranded (exactly those
+        # created since this test began; a killed process cannot clean up after itself).
+        for stray in {p for p in set(Path(tempfile.gettempdir()).glob("gsdx_rb_copy_*")) - preexisting
+                      if p.is_dir()} | {sandbox}:
+            shutil.rmtree(stray, onerror=_force_remove)
         for suffix in (".kill.log", ".full.log"):
             Path(str(sandbox) + suffix).unlink(missing_ok=True)
 
