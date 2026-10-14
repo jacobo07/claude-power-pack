@@ -1,0 +1,8 @@
+﻿FAIL V-TRUST-REVOKED-INVALID-BYTES-UNCHANGED raised AttributeError: module 'modules.gsd_x.goal.proof' has no attribute 'AUTHORITY_REVOKED'
+FAIL V-TRUST-REVOKED-CASCADES-LINEAGE raised KeyError: 'authority'
+FAIL V-TRUST-LINEAGE-FIELD lineage=None
+FAIL V-TRUST-AUTHORITY-FIELD authority=None
+FAIL V-TRUST-MONOTONIC-REFUSED raised KeyError: 'authority'
+FAIL V-TRUST-LEGACY-CERT-UNTRUSTED stamped=False projected=True action=INHERIT inherited=['ob-one']
+FAIL V-TRUST-LEDGER-SEED raised AttributeError: 'ProofLedger' object has no attribute 'revoked'
+GSDX_TRUST_PASS=0/7  threshold=7/7
