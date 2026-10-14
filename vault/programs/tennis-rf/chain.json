@@ -240,6 +240,8 @@
         },
         {
             "id": "D12a",
+            "max_residuals": 3,
+            "note": "max_residuals 3 (Owner 2026-10-14 21:00, option 1): third residual scoped to steps 4-6 + receipt rewrite; steps 1-3 landed in 33d2a605/7a5a770e",
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12a.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12a-receipt.md",
