@@ -1,0 +1,37 @@
+{
+ "admission": "ADMISSIBLE",
+ "result": {
+  "ok": true,
+  "deterministic": true,
+  "rc": 0,
+  "model_calls": 0,
+  "argv": [
+   "/home/kobii/missions/ccr-s3/vault/programs/ccr/stage3/a6/remeasure.py",
+   "/home/kobii/missions/ccr-s3-data",
+   "A2",
+   "A3",
+   "A4",
+   "A5"
+  ],
+  "stdout_sha256": "f6c3f228d428ef407ab9b7ce4bc31e6426cd831a85f6f15cef929e7218aa30df",
+  "out_path": "/home/kobii/missions/ccr-s3-data/a6-det-state-r3/deterministic/m-a6-remeasure/e1.out"
+ },
+ "stdout": "{\"A2\": 4302121, \"A3\": 1678774, \"A4\": 6352270, \"A5\": 2012075}",
+ "state": "COMPLETED",
+ "epoch": 1,
+ "record_deterministic": {
+  "argv": [
+   "/home/kobii/missions/ccr-s3/vault/programs/ccr/stage3/a6/remeasure.py",
+   "/home/kobii/missions/ccr-s3-data",
+   "A2",
+   "A3",
+   "A4",
+   "A5"
+  ],
+  "rc": 0,
+  "model_calls": 0,
+  "out_path": "/home/kobii/missions/ccr-s3-data/a6-det-state-r3/deterministic/m-a6-remeasure/e1.out",
+  "stdout_sha256": "f6c3f228d428ef407ab9b7ce4bc31e6426cd831a85f6f15cef929e7218aa30df",
+  "at": 1791996871.812397
+ }
+}

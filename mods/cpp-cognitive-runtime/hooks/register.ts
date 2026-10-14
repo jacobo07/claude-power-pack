@@ -3,7 +3,7 @@ import {
   COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
   carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
   PROJECT_BUDGET_CHARS, PROJECT_TOOLS, boundaryForecast, parseClassModel, projectToolOutput, stepAnomaly,
-  type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
+  KERNEL_CHARS, parseBreakevenModel, effectiveModes, parseReleaseId, policyGen, mainCanaryMode, decideMainLeanAttachment, pageBlocks, type BreakevenModel, type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
 } from './policy'
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
@@ -23,6 +23,9 @@ let files: InstructionFileInfo[] | null = null
 let firstPrompt = ''
 let skillListing = ''
 let agentListing = ''
+let mcpListing = ''
+// Main-lean canary (v4 A7): set once at session start from CCR_MAIN_CANARY; 'off' until then, so stock text.
+let canary: Mode = 'off'
 let unitP: Promise<WorkUnit | null> | null = null
 const agentTypes = new Map<string, string>()
 const receipts: Receipt[] = []
@@ -33,6 +36,8 @@ let floor = 0
 let advised = false
 // Cognitive PGO (v4 B6): the declared unit's Work-Class model, if tools/ccr_pgo.py built one; the last call's ctx.
 let classModel: ClassModel | null = null
+let beModel: BreakevenModel | null = null
+let beLast: boolean | null = null
 let prevCtx = 0
 // Image results of the main loop by tool_use_id: what a pixel GC compaction can evict and name.
 const imageUses = new Map<string, ImageFact[]>()
@@ -77,8 +82,7 @@ const projectShell = async ($: any, e: any, next: any) => {
   const res = r?.result
   if (r?.deny !== undefined || !res || typeof res.stdout !== 'string' || res.isImage || res.backgroundTaskId || res.persistedOutputPath) return r
   const unit = await loadUnit($)
-  const asked: Mode = modes.project ?? (unit ? modes.unit : 'shadow')
-  const mode: Mode = modes.main === 'off' || asked === 'off' ? 'off' : compatible ? asked : 'shadow'
+  const mode: Mode = effectiveModes(modes, compatible, !!unit).project
   if (mode === 'off' || !stateDir) return r
   const full = `${stateDir}/tool-results/${sid}/${e.tool_use_id ?? `t${Date.now()}`}.txt`
   const p = projectToolOutput(res.stdout, full, projectBudget)
@@ -113,28 +117,42 @@ export const register: Register = on => {
       }
       catch { modes = { ...DEFAULT_MODES } } // no override file: release defaults
     }
-    try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, 8000) }
+    try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, KERNEL_CHARS) }
     catch { kernel = null } // missing kernel: the linkers keep the full instructions
     const unit = await loadUnit($)
-    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null })
+    // Version truth (v4 A1): the directory this process loaded and its release id, not ACTIVE.json (that is only
+    // what is current now), plus the policy generation it runs and the effective mode of every surface.
+    let releaseText: string | null = null
+    try { releaseText = await $.fs.read(`${$.plugin.root}/RELEASE.json`) } catch { releaseText = null } // dev load: no release id
+    const eff = effectiveModes(modes, compatible, !!unit)
+    let canaryEnv: string | undefined
+    try { canaryEnv = await $.env.get('CCR_MAIN_CANARY') } catch { canaryEnv = undefined } // no env access: no canary
+    canary = mainCanaryMode(canaryEnv, e.isInteractive === true, !!unit, modes, compatible)
+    let gen: string | null = null
+    try { gen = await policyGen(eff, kernel, canary) } catch { gen = null } // no digest available: the receipt says so
+    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null,
+      release: root, releaseId: parseReleaseId(releaseText), policyGen: gen, effective: eff, workClass: unit?.cls ?? null, canary })
     // Semantic Cost Contract (v4 B4) for a declared unit: obligation, class, forecast. No model -> ADMIT_UNFORECAST:
     // the cost is unknown, and the receipt says so instead of reporting a number nobody measured.
     if (unit) {
       let text: string | null = null
       try { text = await $.fs.read(`${stateDir}/pgo/${unit.cls}.json`) } catch { text = null } // no model built for this class yet
       classModel = parseClassModel(text, unit.cls)
+      let beText: string | null = null
+      try { beText = await $.fs.read(`${stateDir}/pgo/${unit.cls}.breakeven.json`) } catch { beText = null } // no break-even model for this class yet
+      beModel = parseBreakevenModel(beText, unit.cls)
       const fc = classModel ? boundaryForecast(classModel) : null
       receipt({ ev: 'contract', cls: unit.cls, obligation: unit.id, model_n: classModel?.n ?? 0, forecast: fc,
         step_p95: classModel?.step.p95 ?? null, verdict: classModel ? 'ADMIT' : 'ADMIT_UNFORECAST' })
     }
     $.ui.status(modes.main === 'off' ? 'CCR off'
-      : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}${unit ? ` unit:${unit.cls}:${effective('unit')}` : ''}`)
+      : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}${unit ? ` unit:${unit.cls}:${effective('unit')}` : ''}${canary !== 'off' ? ` canary:${canary}` : ''}`)
     await $.tool.register({
       name: 'page',
-      description: 'CPP Cognitive Runtime page fault: fetch context the runtime did not preload. kind "skills" or "agents" returns listing lines matching query; kind "file" returns an instruction file by absolute path.',
+      description: 'CPP Cognitive Runtime page fault: fetch context the runtime did not preload. kind "skills" or "agents" returns listing lines matching query; kind "mcp" returns the instructions of the MCP servers whose name matches query; kind "file" returns an instruction file by absolute path.',
       inputSchema: {
         type: 'object',
-        properties: { kind: { type: 'string', enum: ['skills', 'agents', 'file'] }, query: { type: 'string' }, path: { type: 'string' } },
+        properties: { kind: { type: 'string', enum: ['skills', 'agents', 'mcp', 'file'] }, query: { type: 'string' }, path: { type: 'string' } },
         required: ['kind'],
       },
     })
@@ -210,7 +228,9 @@ export const register: Register = on => {
     const text = r.text
     if (text === null) return r
     if (!agentId && a.type === 'skill_listing') skillListing = text
-    if (!agentId && a.type === 'agent_listing_delta') agentListing = text
+    // Deltas add to what came before: the page fault answers from every delta of the session, not only the last one.
+    if (!agentId && a.type === 'agent_listing_delta') agentListing = agentListing ? `${agentListing}\n${text}` : text
+    if (!agentId && a.type === 'mcp_instructions_delta') mcpListing = mcpListing ? `${mcpListing}\n${text}` : text
 
     if (agentId) {
       const mode = effective('subagent')
@@ -233,8 +253,18 @@ export const register: Register = on => {
       return applied ? { text: out } : r
     }
 
-    // Interactive or undeclared main session: shadow receipts only in this release.
+    // Interactive or undeclared main session: shadow receipts only, unless the launch opted into the main-lean canary.
     if (effective('main') === 'off') return r
+    if (canary !== 'off') {
+      const d = decideMainLeanAttachment(a.type, text)
+      if (d.action !== 'keep') {
+        const applied = canary === 'enforce'
+        const out = d.text ?? text
+        receipt({ ev: 'attach', agent: null, canary, type: a.type, origin: a.origin?.kind, hookEvent: a.origin?.event ?? null, bytes: text.length,
+          out: applied ? out.length : text.length, lean: out.length, action: d.action, applied, reason: d.reason })
+        return applied ? { text: out } : r
+      }
+    }
     const adv = a.origin?.kind === 'hook' ? advisoryBytes(text) : 0
     receipt({ ev: 'attach', agent: null, type: a.type, origin: a.origin?.kind, hookEvent: a.origin?.event ?? null, bytes: text.length, advisory: adv, applied: false })
     return r
@@ -312,10 +342,16 @@ export const register: Register = on => {
     if (floor === 0) floor = ctx
     let imageTok = 0
     for (const v of hotImages.values()) imageTok += v.tok
-    const a = carryAdvice(floor, ctx, imageTok)
+    const a = carryAdvice(floor, ctx, imageTok, beModel ? { model: beModel, call: calls } : null)
     const step = prevCtx > 0 ? ctx - prevCtx : 0
     prevCtx = ctx
     receipt({ ev: 'call', agent: null, call: calls, msgs: e.messageCount, ctx, step, out: u.output_tokens ?? 0, carry: a.carry, imageTok, rotate: a.rotate })
+    // Weighted break-even (v4 A4), observe only: a receipt at the first call and whenever the verdict flips; the
+    // driver that owns the epoch decides, this hook never rotates.
+    if (a.rotateAdvice && a.rotateAdvice.rotate !== beLast) {
+      beLast = a.rotateAdvice.rotate
+      receipt({ ev: 'rotate_advice', call: calls, ctx, floor, ...a.rotateAdvice, rule: 'breakeven', ratioRule: a.rotate, applied: false })
+    }
     // Intra-epoch governor (v4 B6): a step above the class P95 is named at the call that pays for it first, with the
     // cost it will carry if it rides to the class's P80 length. Advice only: the driver that owns the epoch decides.
     if (classModel && step > 0) {
@@ -363,6 +399,7 @@ export const register: Register = on => {
     let result: string
     if (a.kind === 'skills') result = pageLines(skillListing, a.query ?? '')
     else if (a.kind === 'agents') result = pageLines(agentListing, a.query ?? '')
+    else if (a.kind === 'mcp') result = pageBlocks(mcpListing, a.query ?? '')
     else {
       const f = files?.find(x => x.path.toLowerCase() === String(a.path ?? '').toLowerCase())
       result = f ? f.content : `(not an instruction file of this session: ${a.path ?? ''})`

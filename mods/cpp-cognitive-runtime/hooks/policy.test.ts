@@ -3,6 +3,9 @@ import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
   subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly,
+  KERNEL_CHARS, expectedRemaining, fileIndex, parseBreakevenModel, rotateAdvice,
+  DEFAULT_MODES, effectiveModes, parseReleaseId, policyGen,
+  mainCanaryMode, nameOnlyListing, mcpHeadings, decideMainLeanAttachment, pageBlocks,
 } from './policy'
 
 // The madzia-worker model tools/ccr_pgo.py built from post-fix attempts a6-a8 (2026-10-12).
@@ -260,4 +263,136 @@ test('a unit drops listings it cannot act on, replaces instructions with kernel 
 test('a unit leaves the memory section out and keeps every other section', () => {
   expect(decideUnitSection('memory').action).toBe('drop')
   expect(decideUnitSection('env_info_simple').action).toBe('keep')
+})
+
+// v4 A4: weighted break-even (tools/ccr_breakeven.py). The same numbers as tools/test_gsd_epoch_breakeven_shadow.py.
+const BE = JSON.stringify({ cls: 'bounded-code-worker', capsule: 1000, R: 5000, rehyd_cost: 10000, first_overhead: 500, r: 3, g: 2000,
+  lengths: Array(10).fill(200) })
+
+test('a break-even model is accepted only for its own class and with every field', () => {
+  expect(parseBreakevenModel(BE, 'bounded-code-worker')?.g).toBe(2000)
+  expect(parseBreakevenModel(BE, 'read-only-reviewer')).toBe(null)
+  expect(parseBreakevenModel('{"cls":"bounded-code-worker","capsule":1}', 'bounded-code-worker')).toBe(null)
+  expect(parseBreakevenModel('nope', 'bounded-code-worker')).toBe(null)
+})
+
+test('rotate advice: below X* continue, above X* with calls to spare rotate, near the end continue', () => {
+  const m = parseBreakevenModel(BE, 'bounded-code-worker')!
+  const lo = rotateAdvice(m, 20000, 40000, 20)
+  expect(lo.rotate).toBe(false)
+  expect(lo.xStar).toBe(38497)
+  const hi = rotateAdvice(m, 20000, 150000, 20)
+  expect(hi.rotate).toBe(true)
+  expect(hi.kStar).toBe(3)
+  expect(rotateAdvice(m, 20000, 150000, 199).rotate).toBe(false)   // 1 call left < k*
+  expect(rotateAdvice(m, 20000, 22000, 20).kStar).toBe(null)       // no carry above the rotated prefix
+  expect(expectedRemaining(10, [5, 20, 30])).toBe(15)
+  expect(expectedRemaining(40, [5, 20, 30])).toBe(0)
+})
+
+test('carry advice carries the break-even verdict only when a model is given; the ratio rule is unchanged', () => {
+  const m = parseBreakevenModel(BE, 'bounded-code-worker')!
+  expect(carryAdvice(20000, 150000, 0).rotateAdvice).toBe(undefined)
+  const a = carryAdvice(20000, 150000, 0, { model: m, call: 20 })
+  expect(a.rotate).toBe(true)
+  expect(a.rotateAdvice?.rotate).toBe(true)
+  expect(carryAdvice(20000, 30000, 0, { model: m, call: 20 }).rotate).toBe(false)
+})
+
+test('estate elasticity: the instruction index stays one line per file while it fits, and bounded past it', () => {
+  const files = Array.from({ length: 25 }, (_, i) => ({ path: `/h/.claude/rules/r${i}.md`, kind: 'user', content: `# Rule ${i}\n` + 'x'.repeat(500) }))
+  const small = subagentInstructions('KERNEL', files)
+  for (const f of files) expect(small.includes(f.path)).toBe(true)
+  const ten = Array.from({ length: 10 }, (_, k) => files.map(f => ({ ...f, path: f.path.replace('.md', `.x${k}.md`) }))).flat()
+  const big = subagentInstructions('K'.repeat(3000), ten)
+  expect(big.length).toBeLessThanOrEqual(KERNEL_CHARS)
+  expect(big.includes('/h/.claude/rules/ (250 files')).toBe(true)
+  expect(fileIndex(ten, 10).startsWith('- 250 instruction files')).toBe(true)  // nothing fits: one count line
+})
+
+test('version truth: effective modes per surface, downgraded off COMPAT, project follows the unit and main', () => {
+  expect(effectiveModes(DEFAULT_MODES, true, false)).toEqual({ main: 'shadow', subagent: 'enforce', unit: 'enforce', project: 'shadow' })
+  expect(effectiveModes(DEFAULT_MODES, true, true).project).toBe('enforce')
+  expect(effectiveModes(DEFAULT_MODES, false, true)).toEqual({ main: 'shadow', subagent: 'shadow', unit: 'shadow', project: 'shadow' })
+  expect(effectiveModes({ subagent: 'off', main: 'off', unit: 'off' }, true, true)).toEqual({ main: 'off', subagent: 'off', unit: 'off', project: 'off' })
+  expect(effectiveModes({ ...DEFAULT_MODES, project: 'enforce', main: 'off' }, true, false).project).toBe('off')
+})
+
+test('version truth: policyGen is a 12-hex sha of effective modes + kernel, and moves with either', async () => {
+  const eff = effectiveModes(DEFAULT_MODES, true, false)
+  const a = await policyGen(eff, 'kernel v1')
+  expect(/^[0-9a-f]{12}$/.test(a)).toBe(true)
+  expect(await policyGen(eff, 'kernel v1')).toBe(a)
+  expect(await policyGen(eff, 'kernel v2') === a).toBe(false)
+  expect(await policyGen(effectiveModes(DEFAULT_MODES, false, false), 'kernel v1') === a).toBe(false)
+  expect(await policyGen(eff, null) === a).toBe(false)
+  // sha256("[\"shadow\",\"enforce\",\"enforce\",\"shadow\"]\n") first 6 bytes, computed outside the runtime
+  expect(await policyGen(eff, null)).toBe('acce69838866')
+})
+
+test('version truth: the release id comes only from RELEASE.json; a dev load or a bad file has none', () => {
+  expect(parseReleaseId('{"release":"0.1.0-1a2b3c4d","version":"0.1.0"}')).toBe('0.1.0-1a2b3c4d')
+  expect(parseReleaseId(null)).toBe(null)
+  expect(parseReleaseId('not json')).toBe(null)
+  expect(parseReleaseId('{"release":"../etc"}')).toBe(null)
+  expect(parseReleaseId('{"release":7}')).toBe(null)
+})
+
+test('main canary: on only for CCR_MAIN_CANARY=1 on an interactive session with no unit; main off turns it off', () => {
+  expect(mainCanaryMode('1', true, false, DEFAULT_MODES, true)).toBe('enforce')
+  expect(mainCanaryMode('1', true, false, DEFAULT_MODES, false)).toBe('shadow')  // build outside COMPAT: receipts only
+  expect(mainCanaryMode(undefined, true, false, DEFAULT_MODES, true)).toBe('off')
+  expect(mainCanaryMode('0', true, false, DEFAULT_MODES, true)).toBe('off')
+  expect(mainCanaryMode('true', true, false, DEFAULT_MODES, true)).toBe('off')
+  expect(mainCanaryMode('1', false, false, DEFAULT_MODES, true)).toBe('off')      // headless worker
+  expect(mainCanaryMode('1', true, true, DEFAULT_MODES, true)).toBe('off')        // Work Unit session keeps its closure
+  expect(mainCanaryMode('1', true, false, { subagent: 'off', main: 'off', unit: 'off' }, true)).toBe('off')  // OFF file
+})
+
+test('main canary: policyGen is unchanged with the canary off and moves when it runs', async () => {
+  const eff = effectiveModes(DEFAULT_MODES, true, false)
+  expect(await policyGen(eff, null, 'off')).toBe('acce69838866')
+  expect(await policyGen(eff, null, 'enforce') === 'acce69838866').toBe(false)
+  expect(await policyGen(eff, null, 'enforce') === await policyGen(eff, null, 'shadow')).toBe(false)
+})
+
+// Shapes of 2.1.296 listings (GEX44 transcript d5e49ddf): skills "- name: desc" or bare "- name", plugin-scoped names
+// with a colon; agents "- type: desc (Tools: ...)"; MCP "## server\nprose".
+// Descriptions are padded to a real listing's scale: the page hint must cost less than the descriptions it replaces.
+const PAD = ' Use when the task needs it.'.repeat(8)
+const SKILLS = `The following skills are available:\n\n- agent-reach\n- android-reverse-engineering: Decompile Android APK files with jadx.${PAD}\n- anthropic-skills:xlsx\n- plugin-dev:hook-development: This skill should be used when the user asks to "create a hook": PreToolUse.${PAD}`
+const AGENTS = `- gsd-executor: Executes GSD plans with atomic commits.${PAD} (Tools: Read, Write, Bash)\n- general-purpose: General agent for research.${PAD} (Tools: *)`
+
+test('main lean: a listing keeps every name, loses the descriptions, and says how to page them back', () => {
+  const s = nameOnlyListing(SKILLS, 'skills')!
+  for (const n of ['- agent-reach', '- android-reverse-engineering', '- anthropic-skills:xlsx', '- plugin-dev:hook-development'])
+    expect(s.split('\n').includes(n)).toBe(true)
+  expect(s.includes('Decompile')).toBe(false)
+  expect(s.includes('The following skills are available:')).toBe(true)
+  expect(s.includes('kind "skills"')).toBe(true)
+  expect(s.length < SKILLS.length).toBe(true)
+  const a = nameOnlyListing(AGENTS, 'agents')!
+  expect(a.split('\n').slice(0, 2)).toEqual(['- gsd-executor', '- general-purpose'])
+  expect(a.includes('kind "agents"')).toBe(true)
+})
+
+test('main lean: nothing parsed or nothing saved keeps the stock text', () => {
+  expect(nameOnlyListing('- a\n- b', 'skills')).toBe(null)           // already names only
+  expect(nameOnlyListing('free prose, no bullets', 'agents')).toBe(null)
+  expect(mcpHeadings('prose with no heading')).toBe(null)
+  expect(decideMainLeanAttachment('skill_listing', '- a\n- b').action).toBe('keep')
+  expect(decideMainLeanAttachment('instructions', SKILLS).action).toBe('keep')       // instructions are not in the canary
+  expect(decideMainLeanAttachment('hook_additional_context', SKILLS).action).toBe('keep')
+  expect(decideMainLeanAttachment('agent_listing_delta', AGENTS).action).toBe('replace')
+})
+
+test('main lean: MCP instructions become server headings, and page kind mcp returns the matching server block', () => {
+  const m = `## claude.ai Claude Docs\nMake a doc only when asked.\nUse guide first.${PAD}\n\n## context7\nResolve library ids first.`
+  const h = mcpHeadings(m)!
+  expect(h.startsWith('## claude.ai Claude Docs\n## context7\n')).toBe(true)
+  expect(h.includes('Resolve library')).toBe(false)
+  expect(decideMainLeanAttachment('mcp_instructions_delta', m).text).toBe(h)
+  expect(pageBlocks(m, 'context7')).toBe('## context7\nResolve library ids first.')
+  expect(pageBlocks(m, 'docs').includes('Use guide first.')).toBe(true)
+  expect(pageBlocks(m, 'nope')).toBe('(no matching entries)')
 })

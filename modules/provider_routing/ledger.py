@@ -204,6 +204,7 @@ class GoalLedger(SpendLedger):
         # pane that hit the wall stays fenced even after a successor lease opens (the successor is a new
         # session). `exhausted` is per lease: it is what a cwd bind and the pre-model admission read.
         tombs, exhausted = {}, set()
+        booked: dict[str, list] = {}                      # sid -> [[lease id, amount]] in booking order
         for r in recs:
             op = r["op"]
             cur = leases[-1]
@@ -248,12 +249,36 @@ class GoalLedger(SpendLedger):
                 if res.get(r["id"], {}).get("state") == RESERVED:
                     res[r["id"]]["state"] = LEAKED
             elif op == "correct":
-                marks[r["sid"]] = int(r["measured"])       # may LOWER; later settles watermark from here
+                # May LOWER; later settles watermark from here. The delta comes off the leases that booked
+                # the sid, newest booking first, so a lease opened after the settle is untouched (A0). A
+                # raise is new spend acknowledged now: it lands in the current lease.
+                delta = int(r["measured"]) - marks.get(r["sid"], 0)
+                key = "rsettled" if roles.get(r["sid"]) == RECOVERY else "settled"
+                if delta >= 0:
+                    cur[key] += delta
+                    booked.setdefault(r["sid"], []).append([cur["id"], delta])
+                else:
+                    take, rows = -delta, booked.get(r["sid"], [])
+                    while take and rows:
+                        lid, amt = rows[-1]
+                        cut = min(take, amt)
+                        next(ls for ls in leases if ls["id"] == lid)[key] -= cut
+                        take -= cut
+                        if cut == amt:
+                            rows.pop()
+                        else:
+                            rows[-1][1] -= cut
+                marks[r["sid"]] = int(r["measured"])
             elif op == "settle":
                 new = max(marks.get(r["sid"], 0), int(r["measured"]))
                 delta = new - marks.get(r["sid"], 0)
                 role = roles.setdefault(r["sid"], r.get("role") or PRODUCTIVE)
-                cur["rsettled" if role == RECOVERY else "settled"] += delta
+                # The booking lease: recorded on the row since A0; an older row was booked into the lease
+                # that was current when it was written, which is `cur` at this point of the replay.
+                lid = r.get("lease") if any(ls["id"] == r.get("lease") for ls in leases) else cur["id"]
+                next(ls for ls in leases if ls["id"] == lid)["rsettled" if role == RECOVERY else "settled"] += delta
+                if delta:
+                    booked.setdefault(r["sid"], []).append([lid, delta])
                 if r.get("billed") == "refused":
                     refused_billed += delta                # real provider cost of a refused boundary
                 marks[r["sid"]] = new
@@ -582,7 +607,8 @@ class GoalLedger(SpendLedger):
                                 and r.get("kind") in ("lease", "final") and measured > int(r.get("base", 0)))
                 if closes or measured > g["marks"].get(sid, 0):
                     self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
-                                        "role": g["roles"].get(sid, role), "billed": "refused"})
+                                        "role": g["roles"].get(sid, role), "billed": "refused",
+                                        "lease": g["leases"][-1]["id"]})
                     g = self._gfold(recs)
                 return self._summary(g, ok=False, tombstoned_sid=True, reason=(
                     f"TOMBSTONED: this session hit the wall at used {g['tombs'][sid].get('used') or 0:,} "
@@ -611,7 +637,7 @@ class GoalLedger(SpendLedger):
                                  or r.get("kind") == "final" and mark > int(r.get("base", 0))))
             if closes or measured > g["marks"].get(sid, 0):
                 self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
-                                    "role": role})
+                                    "role": role, "lease": g["leases"][-1]["id"]})
                 g = self._gfold(recs)
             rv = self._recovery_view(g)
             if role == RECOVERY:
@@ -668,7 +694,7 @@ class GoalLedger(SpendLedger):
                             if r["sid"] == sid and r["state"] in (RESERVED, LEAKED))
             if closes or measured > g["marks"].get(sid, 0):
                 self._append(recs, {"op": "settle", "sid": sid, "measured": measured, "closes": closes,
-                                    "stopped": True, "reason": reason})
+                                    "stopped": True, "reason": reason, "lease": g["leases"][-1]["id"]})
                 g = self._gfold(recs)
             return self._summary(g, ok=True, reason="", closed=closes)
 
