@@ -5,6 +5,7 @@ import {
   subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly,
   KERNEL_CHARS, expectedRemaining, fileIndex, parseBreakevenModel, rotateAdvice,
   DEFAULT_MODES, effectiveModes, parseReleaseId, policyGen,
+  mainCanaryMode, nameOnlyListing, mcpHeadings, decideMainLeanAttachment, pageBlocks,
 } from './policy'
 
 // The madzia-worker model tools/ccr_pgo.py built from post-fix attempts a6-a8 (2026-10-12).
@@ -335,4 +336,63 @@ test('version truth: the release id comes only from RELEASE.json; a dev load or 
   expect(parseReleaseId('not json')).toBe(null)
   expect(parseReleaseId('{"release":"../etc"}')).toBe(null)
   expect(parseReleaseId('{"release":7}')).toBe(null)
+})
+
+test('main canary: on only for CCR_MAIN_CANARY=1 on an interactive session with no unit; main off turns it off', () => {
+  expect(mainCanaryMode('1', true, false, DEFAULT_MODES, true)).toBe('enforce')
+  expect(mainCanaryMode('1', true, false, DEFAULT_MODES, false)).toBe('shadow')  // build outside COMPAT: receipts only
+  expect(mainCanaryMode(undefined, true, false, DEFAULT_MODES, true)).toBe('off')
+  expect(mainCanaryMode('0', true, false, DEFAULT_MODES, true)).toBe('off')
+  expect(mainCanaryMode('true', true, false, DEFAULT_MODES, true)).toBe('off')
+  expect(mainCanaryMode('1', false, false, DEFAULT_MODES, true)).toBe('off')      // headless worker
+  expect(mainCanaryMode('1', true, true, DEFAULT_MODES, true)).toBe('off')        // Work Unit session keeps its closure
+  expect(mainCanaryMode('1', true, false, { subagent: 'off', main: 'off', unit: 'off' }, true)).toBe('off')  // OFF file
+})
+
+test('main canary: policyGen is unchanged with the canary off and moves when it runs', async () => {
+  const eff = effectiveModes(DEFAULT_MODES, true, false)
+  expect(await policyGen(eff, null, 'off')).toBe('acce69838866')
+  expect(await policyGen(eff, null, 'enforce') === 'acce69838866').toBe(false)
+  expect(await policyGen(eff, null, 'enforce') === await policyGen(eff, null, 'shadow')).toBe(false)
+})
+
+// Shapes of 2.1.296 listings (GEX44 transcript d5e49ddf): skills "- name: desc" or bare "- name", plugin-scoped names
+// with a colon; agents "- type: desc (Tools: ...)"; MCP "## server\nprose".
+// Descriptions are padded to a real listing's scale: the page hint must cost less than the descriptions it replaces.
+const PAD = ' Use when the task needs it.'.repeat(8)
+const SKILLS = `The following skills are available:\n\n- agent-reach\n- android-reverse-engineering: Decompile Android APK files with jadx.${PAD}\n- anthropic-skills:xlsx\n- plugin-dev:hook-development: This skill should be used when the user asks to "create a hook": PreToolUse.${PAD}`
+const AGENTS = `- gsd-executor: Executes GSD plans with atomic commits.${PAD} (Tools: Read, Write, Bash)\n- general-purpose: General agent for research.${PAD} (Tools: *)`
+
+test('main lean: a listing keeps every name, loses the descriptions, and says how to page them back', () => {
+  const s = nameOnlyListing(SKILLS, 'skills')!
+  for (const n of ['- agent-reach', '- android-reverse-engineering', '- anthropic-skills:xlsx', '- plugin-dev:hook-development'])
+    expect(s.split('\n').includes(n)).toBe(true)
+  expect(s.includes('Decompile')).toBe(false)
+  expect(s.includes('The following skills are available:')).toBe(true)
+  expect(s.includes('kind "skills"')).toBe(true)
+  expect(s.length < SKILLS.length).toBe(true)
+  const a = nameOnlyListing(AGENTS, 'agents')!
+  expect(a.split('\n').slice(0, 2)).toEqual(['- gsd-executor', '- general-purpose'])
+  expect(a.includes('kind "agents"')).toBe(true)
+})
+
+test('main lean: nothing parsed or nothing saved keeps the stock text', () => {
+  expect(nameOnlyListing('- a\n- b', 'skills')).toBe(null)           // already names only
+  expect(nameOnlyListing('free prose, no bullets', 'agents')).toBe(null)
+  expect(mcpHeadings('prose with no heading')).toBe(null)
+  expect(decideMainLeanAttachment('skill_listing', '- a\n- b').action).toBe('keep')
+  expect(decideMainLeanAttachment('instructions', SKILLS).action).toBe('keep')       // instructions are not in the canary
+  expect(decideMainLeanAttachment('hook_additional_context', SKILLS).action).toBe('keep')
+  expect(decideMainLeanAttachment('agent_listing_delta', AGENTS).action).toBe('replace')
+})
+
+test('main lean: MCP instructions become server headings, and page kind mcp returns the matching server block', () => {
+  const m = `## claude.ai Claude Docs\nMake a doc only when asked.\nUse guide first.${PAD}\n\n## context7\nResolve library ids first.`
+  const h = mcpHeadings(m)!
+  expect(h.startsWith('## claude.ai Claude Docs\n## context7\n')).toBe(true)
+  expect(h.includes('Resolve library')).toBe(false)
+  expect(decideMainLeanAttachment('mcp_instructions_delta', m).text).toBe(h)
+  expect(pageBlocks(m, 'context7')).toBe('## context7\nResolve library ids first.')
+  expect(pageBlocks(m, 'docs').includes('Use guide first.')).toBe(true)
+  expect(pageBlocks(m, 'nope')).toBe('(no matching entries)')
 })

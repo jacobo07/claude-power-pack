@@ -25,8 +25,10 @@ export function effectiveModes(modes: Modes, compatible: boolean, hasUnit: boole
 
 // Policy generation (A1 version truth): a short sha256 of the effective modes and the kernel text this process read.
 // Two sessions with the same policyGen made the same decisions from the same inputs, whatever release they came from.
-export async function policyGen(eff: Record<Surface, Mode>, kernel: string | null): Promise<string> {
-  const text = JSON.stringify([eff.main, eff.subagent, eff.unit, eff.project]) + '\n' + (kernel ?? '')
+// The main-lean canary (v4 A7) moves the generation only when it runs, so every pre-A7 session keeps its id.
+export async function policyGen(eff: Record<Surface, Mode>, kernel: string | null, canary: Mode = 'off'): Promise<string> {
+  const surfaces = [eff.main, eff.subagent, eff.unit, eff.project, ...(canary === 'off' ? [] : [`canary:${canary}`])]
+  const text = JSON.stringify(surfaces) + '\n' + (kernel ?? '')
   const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
   return [...new Uint8Array(d)].slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join('')
 }
@@ -472,4 +474,58 @@ export function pageLines(listing: string, query: string, limit = 40): string {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)
   const hits = listing.split('\n').filter(l => words.length === 0 || words.some(w => l.toLowerCase().includes(w)))
   return hits.slice(0, limit).join('\n') || '(no matching entries)'
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Main-lean canary (v4 A7). Opt-in per launch: CCR_MAIN_CANARY=1, read once at session start, on an interactive
+// session with no Work Unit. The A7 shadow (tools/ccr_main_shadow.py) found that dropping the listings, as unit closure
+// does, would have removed a capability 19 of 50 interactive sessions later used (14 Skill, 43 Agent calls), so the
+// main session keeps every name and loses only the descriptions; the full text is one page call away.
+// Rollback: unset the variable, `ccr_release.py rollback`, or the OFF file (main off turns the canary off too).
+export const MAIN_LEAN_ATTACHMENTS = new Set(['skill_listing', 'agent_listing_delta', 'mcp_instructions_delta'])
+
+export function mainCanaryMode(env: string | undefined, interactive: boolean, hasUnit: boolean, modes: Modes, compatible: boolean): Mode {
+  if (env !== '1' || !interactive || hasUnit || modes.main === 'off') return 'off'
+  return compatible ? 'enforce' : 'shadow'
+}
+
+const PAGE_HINT = (kind: string) =>
+  `(CPP Cognitive Runtime main canary: names only. For a description, load mcp__cpp-cognitive-runtime__page with ToolSearch and call it with kind "${kind}" and the name as query.)`
+
+// "- name: description" becomes "- name". A name ends at the first colon followed by whitespace, so a plugin-scoped
+// name (plugin:skill) stays whole. Every other line is kept. No compacted line, or no saving: keep the stock text.
+export function nameOnlyListing(text: string, kind: 'skills' | 'agents'): string | null {
+  let n = 0
+  const out = text.split('\n').map(l => {
+    const m = /^- (\S+?):\s/.exec(l)
+    if (!m) return l
+    n++
+    return `- ${m[1]}`
+  }).join('\n')
+  if (n === 0) return null
+  const res = `${out.trimEnd()}\n${PAGE_HINT(kind)}`
+  return res.length < text.length ? res : null
+}
+
+// MCP server instructions become their headings (one per server); the servers' tools are not touched.
+export function mcpHeadings(text: string): string | null {
+  const heads = text.split('\n').filter(l => /^#{1,3}\s/.test(l))
+  if (heads.length === 0) return null
+  const res = `${heads.join('\n')}\n${PAGE_HINT('mcp')}`
+  return res.length < text.length ? res : null
+}
+
+export function decideMainLeanAttachment(type: string, text: string): AttachmentDecision {
+  if (!MAIN_LEAN_ATTACHMENTS.has(type)) return { action: 'keep', reason: 'not-linked' }
+  const out = type === 'skill_listing' ? nameOnlyListing(text, 'skills')
+    : type === 'agent_listing_delta' ? nameOnlyListing(text, 'agents') : mcpHeadings(text)
+  return out === null ? { action: 'keep', reason: 'no-names-parsed' } : { action: 'replace', reason: 'main-lean', text: out }
+}
+
+// The page fault for MCP instructions: the block under each heading that matches the query (all blocks if none given).
+export function pageBlocks(text: string, query: string): string {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  const blocks = text.split(/\n(?=#{1,3}\s)/)
+  const hits = blocks.filter(b => words.length === 0 || words.some(w => (b.split('\n')[0] ?? '').toLowerCase().includes(w)))
+  return hits.join('\n') || '(no matching entries)'
 }

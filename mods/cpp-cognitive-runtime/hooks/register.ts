@@ -3,7 +3,7 @@ import {
   COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
   carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
   PROJECT_BUDGET_CHARS, PROJECT_TOOLS, boundaryForecast, parseClassModel, projectToolOutput, stepAnomaly,
-  KERNEL_CHARS, parseBreakevenModel, effectiveModes, parseReleaseId, policyGen, type BreakevenModel, type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
+  KERNEL_CHARS, parseBreakevenModel, effectiveModes, parseReleaseId, policyGen, mainCanaryMode, decideMainLeanAttachment, pageBlocks, type BreakevenModel, type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
 } from './policy'
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
@@ -23,6 +23,9 @@ let files: InstructionFileInfo[] | null = null
 let firstPrompt = ''
 let skillListing = ''
 let agentListing = ''
+let mcpListing = ''
+// Main-lean canary (v4 A7): set once at session start from CCR_MAIN_CANARY; 'off' until then, so stock text.
+let canary: Mode = 'off'
 let unitP: Promise<WorkUnit | null> | null = null
 const agentTypes = new Map<string, string>()
 const receipts: Receipt[] = []
@@ -122,10 +125,13 @@ export const register: Register = on => {
     let releaseText: string | null = null
     try { releaseText = await $.fs.read(`${$.plugin.root}/RELEASE.json`) } catch { releaseText = null } // dev load: no release id
     const eff = effectiveModes(modes, compatible, !!unit)
+    let canaryEnv: string | undefined
+    try { canaryEnv = await $.env.get('CCR_MAIN_CANARY') } catch { canaryEnv = undefined } // no env access: no canary
+    canary = mainCanaryMode(canaryEnv, e.isInteractive === true, !!unit, modes, compatible)
     let gen: string | null = null
-    try { gen = await policyGen(eff, kernel) } catch { gen = null } // no digest available: the receipt says so
+    try { gen = await policyGen(eff, kernel, canary) } catch { gen = null } // no digest available: the receipt says so
     receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null,
-      release: root, releaseId: parseReleaseId(releaseText), policyGen: gen, effective: eff, workClass: unit?.cls ?? null })
+      release: root, releaseId: parseReleaseId(releaseText), policyGen: gen, effective: eff, workClass: unit?.cls ?? null, canary })
     // Semantic Cost Contract (v4 B4) for a declared unit: obligation, class, forecast. No model -> ADMIT_UNFORECAST:
     // the cost is unknown, and the receipt says so instead of reporting a number nobody measured.
     if (unit) {
@@ -140,13 +146,13 @@ export const register: Register = on => {
         step_p95: classModel?.step.p95 ?? null, verdict: classModel ? 'ADMIT' : 'ADMIT_UNFORECAST' })
     }
     $.ui.status(modes.main === 'off' ? 'CCR off'
-      : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}${unit ? ` unit:${unit.cls}:${effective('unit')}` : ''}`)
+      : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}${unit ? ` unit:${unit.cls}:${effective('unit')}` : ''}${canary !== 'off' ? ` canary:${canary}` : ''}`)
     await $.tool.register({
       name: 'page',
-      description: 'CPP Cognitive Runtime page fault: fetch context the runtime did not preload. kind "skills" or "agents" returns listing lines matching query; kind "file" returns an instruction file by absolute path.',
+      description: 'CPP Cognitive Runtime page fault: fetch context the runtime did not preload. kind "skills" or "agents" returns listing lines matching query; kind "mcp" returns the instructions of the MCP servers whose name matches query; kind "file" returns an instruction file by absolute path.',
       inputSchema: {
         type: 'object',
-        properties: { kind: { type: 'string', enum: ['skills', 'agents', 'file'] }, query: { type: 'string' }, path: { type: 'string' } },
+        properties: { kind: { type: 'string', enum: ['skills', 'agents', 'mcp', 'file'] }, query: { type: 'string' }, path: { type: 'string' } },
         required: ['kind'],
       },
     })
@@ -222,7 +228,9 @@ export const register: Register = on => {
     const text = r.text
     if (text === null) return r
     if (!agentId && a.type === 'skill_listing') skillListing = text
-    if (!agentId && a.type === 'agent_listing_delta') agentListing = text
+    // Deltas add to what came before: the page fault answers from every delta of the session, not only the last one.
+    if (!agentId && a.type === 'agent_listing_delta') agentListing = agentListing ? `${agentListing}\n${text}` : text
+    if (!agentId && a.type === 'mcp_instructions_delta') mcpListing = mcpListing ? `${mcpListing}\n${text}` : text
 
     if (agentId) {
       const mode = effective('subagent')
@@ -245,8 +253,18 @@ export const register: Register = on => {
       return applied ? { text: out } : r
     }
 
-    // Interactive or undeclared main session: shadow receipts only in this release.
+    // Interactive or undeclared main session: shadow receipts only, unless the launch opted into the main-lean canary.
     if (effective('main') === 'off') return r
+    if (canary !== 'off') {
+      const d = decideMainLeanAttachment(a.type, text)
+      if (d.action !== 'keep') {
+        const applied = canary === 'enforce'
+        const out = d.text ?? text
+        receipt({ ev: 'attach', agent: null, canary, type: a.type, origin: a.origin?.kind, hookEvent: a.origin?.event ?? null, bytes: text.length,
+          out: applied ? out.length : text.length, lean: out.length, action: d.action, applied, reason: d.reason })
+        return applied ? { text: out } : r
+      }
+    }
     const adv = a.origin?.kind === 'hook' ? advisoryBytes(text) : 0
     receipt({ ev: 'attach', agent: null, type: a.type, origin: a.origin?.kind, hookEvent: a.origin?.event ?? null, bytes: text.length, advisory: adv, applied: false })
     return r
@@ -381,6 +399,7 @@ export const register: Register = on => {
     let result: string
     if (a.kind === 'skills') result = pageLines(skillListing, a.query ?? '')
     else if (a.kind === 'agents') result = pageLines(agentListing, a.query ?? '')
+    else if (a.kind === 'mcp') result = pageBlocks(mcpListing, a.query ?? '')
     else {
       const f = files?.find(x => x.path.toLowerCase() === String(a.path ?? '').toLowerCase())
       result = f ? f.content : `(not an instruction file of this session: ${a.path ?? ''})`
