@@ -1,1 +1,1 @@
-{"unit":"gsdx-pcc-P52","envelope":{"target":18000000,"warn":21000000,"stop":24000000,"calls":127},"workers":[{"name":"gsdx-pcc-p52","profile":"top-level-worker","calls":127,"packet":7500}]}
+{"unit":"gsdx-pcc-P52","envelope":{"target":18500000,"warn":21000000,"stop":24000000,"calls":127},"workers":[{"name":"gsdx-pcc-p52","profile":"top-level-worker","calls":127,"packet":7500}]}
