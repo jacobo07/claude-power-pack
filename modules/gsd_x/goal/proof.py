@@ -575,6 +575,7 @@ def live_certificates(ledger: ProofLedger, cid: str) -> list:
 def certificate_payload(obligation, verdict: dict, contract: dict, root, source: dict) -> dict:
     """The `proof.produced` payload for one satisfied claim: a causal binding when the contract
     declares causal paths and they fingerprint cleanly, the whole-tree binding otherwise."""
+    from . import trust
     els = [e for e in contract.get("elements", []) if isinstance(e, dict)]
     paths = sorted({p for e in els for p in (e.get("causal_paths") or [])})
     env_deps = sorted({d for e in els for d in (e.get("env_deps") or [])})
@@ -585,7 +586,7 @@ def certificate_payload(obligation, verdict: dict, contract: dict, root, source:
             "binding": binding(verdict.get("tree_hash", ""), fp), "revision": verdict.get("revision", ""),
             "strength": verdict.get("gate_class") or obligation.gate_class, "source": source,
             "premises": {"claim": cid, "revision": verdict.get("revision", ""), "gate_pin": pin,
-                         "fingerprint": fp, "environment": environment_fingerprint(env_deps),
+                         "fingerprint": fp, "environment": trust.environment_canonical(env_deps),
                          "policy": POLICY_VERSION},
             "freshness_class": freshness_class(obligation, verdict, contract), "env_deps": env_deps,
             "contract_hash": hashlib.sha256(_canonical(contract)).hexdigest()}

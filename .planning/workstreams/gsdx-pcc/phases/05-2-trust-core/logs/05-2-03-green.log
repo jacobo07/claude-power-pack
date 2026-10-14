@@ -1,0 +1,15 @@
+﻿PASS V-TRUST-ENV-HERMETIC-HOME tmp home
+PASS V-TRUST-ENV-DRIFT-INVALIDATES drift -> INVALIDATE (premise changed: environment); control -> INHERIT (all six premises equal and inherited)
+PASS V-TRUST-ENV-VERSIONS-COUNT v1.0=env2:852400459 v2.0=env2:b49147590 (legacy names-only hash is version-blind: True)
+PASS V-TRUST-ENV-LOCK-STATE bytes change -> True, restore -> True, missing file -> unknown True
+PASS V-TRUST-ENV-RUNTIME runtime=CPython 3.12.10; implementation change alters the hash: True
+PASS V-TRUST-ENV-BARE-NAME-UNKNOWN bare name -> unknown:environment: unr; premise unknown
+PASS V-TRUST-ENV-CANONICAL-STABLE order/duplicates stable=True; fixed vector env2:deb9e36819ad6047cd86920fdabf0933558cf049da9dd470c51c2a91452c149f
+PASS V-TRUST-ENV-NO-LEGACY-CALLER callers of the legacy fingerprint under modules/: none
+PASS V-TRUST-ENV-MIGRATION-ONCE env1 vs env2 -> changed; env2 vs env2 -> equal
+PASS V-TRUST-PLANE-FIELD plane={'claim': 'PLATFORM', 'planes': ['windows'], 'modules_tree': 'git:b9259da0601cb0709215469c6308807e4700b6c5'}
+PASS V-TRUST-PORTABILITY-NEEDS-TWO-PLANES one plane -> None; two same tree -> {'claim': 'PORTABILITY', 'planes': ['linux', 'windows'], 'modules_tree': {'windows': 't1', 'linux': 't1'}}
+PASS V-TRUST-PORTABILITY-SAME-TREE different trees -> None; hand-forced stamp ok=False; control -> True
+PASS V-TRUST-PORTABILITY-UNKNOWN-TREE unknown -> None; dirty -> None; control ok
+PASS V-TRUST-PLATFORM-NOT-PORTABILITY stamped PLATFORM; relabelled to PORTABILITY ok=False
+GSDX_TRUST_ENV_PASS=14/14  threshold=14/14

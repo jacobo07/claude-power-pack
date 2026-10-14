@@ -12,6 +12,11 @@ Pure: nothing here writes, except `revoke`, which goes through the proof writer 
 from __future__ import annotations
 
 import hashlib
+import platform
+import shutil
+import subprocess
+from importlib import metadata
+from pathlib import Path
 
 from . import proof as pf
 
@@ -41,7 +46,96 @@ def stamp(payload: dict, claim_id: str, seq: int, authority_id: str = DEFAULT_AU
                         "version": current_version(authority_id) if version is None else version,
                         "strength": payload.get("strength")}
     out["lineage"] = {"root": own, "parent": None, "depth": 0, "via": "produced"}
+    out.setdefault("plane", platform_plane(payload.get("candidate")))
     return out
+
+
+# --- canonical environment (N17): what is INSTALLED, never what is named ----------------------------
+# The four resolvers below are the boundary: the drift gate swaps them, nothing else is mocked.
+
+def runtime_info() -> dict:
+    return {"impl": platform.python_implementation(), "version": platform.python_version()}
+
+
+def platform_info() -> dict:
+    return {"system": platform.system(), "machine": platform.machine()}
+
+
+def resolve_pkg(name: str):
+    try:
+        return metadata.version(name)
+    except metadata.PackageNotFoundError:
+        return None
+
+
+def resolve_tool(name: str):
+    exe = shutil.which(name)
+    if exe is None:
+        return None
+    try:
+        out = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=10, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    line = ((out.stdout or "") + (out.stderr or "")).strip().splitlines()
+    return line[0].strip() if out.returncode == 0 and line else None
+
+
+def resolve_lock(path: str):
+    try:
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def _resolve_dep(dep: str) -> str:
+    kind, _, rest = dep.partition(":")
+    if dep == "runtime:python":
+        got = "{impl} {version}".format(**runtime_info())
+    elif kind == "pkg" and rest:
+        got = resolve_pkg(rest)
+    elif kind == "tool" and rest:
+        got = resolve_tool(rest)
+    elif kind == "lock" and rest:
+        got = resolve_lock(rest)
+    else:
+        return f"{pf.UNKNOWN_PREFIX}{dep!r} names no resolvable kind (pkg: tool: lock: runtime:)"
+    return got if got else f"{pf.UNKNOWN_PREFIX}{dep!r} resolves to nothing on this plane"
+
+
+def canonical_env_body(env_deps) -> dict:
+    """Runtime, platform and every declared dependency resolved to its installed state. Order and duplicates
+    of `env_deps` cannot change it."""
+    return {"v": 2, "runtime": runtime_info(), "platform": platform_info(),
+            "deps": {d: _resolve_dep(d) for d in sorted({str(d) for d in (env_deps or [])})}}
+
+
+def environment_canonical(env_deps) -> str:
+    """`env2:<sha256>` of the canonical body, or an unknown marker when any dependency could not be resolved
+    (an unresolvable premise must be unknown, never equal)."""
+    body = canonical_env_body(env_deps)
+    bad = sorted(d for d, v in body["deps"].items() if v.startswith(pf.UNKNOWN_PREFIX))
+    if bad:
+        return pf._unknown_fp(f"environment: unresolved {bad}")
+    return "env2:" + hashlib.sha256(pf._canonical(body)).hexdigest()
+
+
+# --- platform vs portability (N19) ----------------------------------------------------------------
+
+def plane_id() -> str:
+    return platform.system().lower() or "unknown"
+
+
+def platform_plane(modules_tree) -> dict:
+    """The stamp every certificate carries: a PLATFORM claim about the one plane it ran on."""
+    return {"claim": "PLATFORM", "planes": [plane_id()], "modules_tree": modules_tree or ""}
+
+
+def portability_plane(trees: dict):
+    """A PORTABILITY stamp from {plane id: modules tree it ran}, or None when that evidence cannot carry one
+    (fewer than two planes, an unknown or dirty tree, or trees that differ). A single-plane run never
+    reaches this claim."""
+    plane = {"claim": "PORTABILITY", "planes": sorted(trees), "modules_tree": dict(trees)}
+    return plane if plane_ok(plane)[0] else None
 
 
 def is_trusted(cert_data: dict) -> bool:

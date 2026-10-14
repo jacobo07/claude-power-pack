@@ -82,7 +82,7 @@ def observe_current(state, ob, contract: dict, root) -> dict:
         pin = None
     return {"claim": pf.claim_id(ob), "revision": state.revision, "gate_pin": pin,
             "fingerprint": pf.causal_fingerprint(root, paths) if paths else pf._unknown_fp("no causal paths"),
-            "environment": pf.environment_fingerprint(env_deps), "policy": pf.POLICY_VERSION}
+            "environment": trust.environment_canonical(env_deps), "policy": pf.POLICY_VERSION}
 
 
 def plan(state, root, candidate: str, now: float) -> list:
