@@ -459,6 +459,9 @@ def _arm(chain: dict, u: dict) -> dict:
     cmd = [PY, str(LIVE / "gsd_mission.py"), "arm-chain", "--cwd", u.get("cwd") or chain["root"], "--command", "/gsd-autonomous",
            "--wu-packet", u["packet"], "--token-estimate", str(_route_target(u["route"])), "--route", u["route"],
            "--max-cycles", "2", "--permission-mode", "auto", "--rollover-protocol", "capsule-v2"]
+    model = u.get("model") or chain.get("model")   # absent = host default (unchanged behaviour)
+    if model:
+        cmd += ["--model", str(model)]
     p = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=300, stdin=subprocess.DEVNULL)
     out = p.stdout.strip()
     try:

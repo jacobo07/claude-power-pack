@@ -4356,10 +4356,13 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
     """Atomic arm (WU-1H addendum C): arm --no-launch, envelope, admit. Any failure holds the armed
     mission with the reason; a mission is never launched here, and never without a packet."""
     kw.pop("launch", None)
+    # The worker model rides the same atomic step: without it the launch inherits the host default (Opus
+    # here), and a chain armed unattended has no later moment to set it before the sweep launches.
+    model = kw.pop("model", None)
     rec = arm(cwd, resume_command, launch=False, **kw)["mission"]
     mid = rec["mission_id"]
     try:
-        set_envelope(mid, wu_packet=wu_packet, token_estimate=token_estimate)
+        set_envelope(mid, wu_packet=wu_packet, token_estimate=token_estimate, model=model)
         adm = admit_route(mid, route, floors_path=floors_path)["admission"]
         if adm["verdict"] != "ADMISSIBLE":
             raise MissionError(f"route {adm['verdict']}: {'; '.join(adm.get('reasons') or [])}"[:600])
@@ -5079,6 +5082,7 @@ def _cli(argv=None) -> int:
     ac.add_argument("--permission-mode", default="auto")
     ac.add_argument("--rollover-protocol", choices=(CAPSULE_V2,), default=None)
     ac.add_argument("--parallel-unit")
+    ac.add_argument("--model", help="worker model set in the atomic envelope step (else the host default)")
     s = sub.add_parser("session-start")
     s.add_argument("--session", required=True)
     s.add_argument("--source", default="")
@@ -5151,7 +5155,8 @@ def _cli(argv=None) -> int:
         res = arm_chain(args.cwd, args.command, wu_packet=args.wu_packet, token_estimate=args.token_estimate,
                         route=args.route, floors_path=args.floors, workstream=args.workstream,
                         max_cycles=args.max_cycles, permission_mode=args.permission_mode,
-                        rollover_protocol=args.rollover_protocol, parallel_unit=args.parallel_unit)
+                        rollover_protocol=args.rollover_protocol, parallel_unit=args.parallel_unit,
+                        model=args.model)
         print(json.dumps({k: v for k, v in res.items() if k != "mission"}, indent=2))
         return 0 if res["ok"] else 1
     if args.cmd == "session-start":
