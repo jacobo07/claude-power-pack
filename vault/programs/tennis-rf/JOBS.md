@@ -17,7 +17,7 @@ budget stays 7; jobs 8+ (W13) are NOT approved.
 | 2 | W10c | W5a step 3 batch: 5 fns x presets + proto (26 units; 7 fns lint-refused UNK_FIELD) (build candidate-20261011T233329Z) | ksrmb-20261011-233503 | cb1552bad43192b3a7ed06ba00e46aed04d441f4e45c17c237bef0111450c1ff (inputs_hash) | 2026-10-11 23:35Z | JUDGED: 0/26 MATCH (1 fn compile_error, 4 fns BLOCKED_CONTEXT; 7 fns lint-refused pre-send) |
 | 3 | W12 | 22 lint-clean composed m2c fns (O4p all + O2 for 17 within OUT budget; 42 units incl 3 donor controls) (build candidate-20261012T170916Z, cap1-5bf8cc7d7aac) | ksrmb-20261012-171117 | af8227f27f8b46d4ee5588d7e0200265e51ca331d12f06cca3f56e7e02772280 (inputs_hash) | 2026-10-12 17:11Z | JUDGED 17:24Z: 12/22 fns MATCH (O4p), 9 PARTIAL, 1 BLOCKED_CONTEXT; 3/3 donor controls MATCH; 42 rows |
 | 4 | D6 | UNUSED: no certified fact, newly-clean batch empty (clean 276->276); not sent | - | - | - | NOT SENT, job 4 kept (WU-D6-receipt.md) |
-| 5 | | | | | | |
-| 6 | | | | | | |
+| 5 | D8v2 | Ph8 tournament arm B: 14 lint-clean held-out fns (draw.json, seed 20261013) x O4p+O2 + 3 W3b donor controls = 31 units; arm D EMPTY (no motif->C emitter), E EMPTY, F=B (build candidate-20261014T114813Z, cap1-fee7b09f053d) | ksrmb-20261014-114911 | e33fd892a26150895bbc047606f3eb41eb94d00ff9581743a286a3b3c3545edd (inputs_hash) | 2026-10-14 11:49Z | JUDGED: donors 3/3 MATCH; arm B 12/14 fns MATCH at O4p (rejudge with batch L0; ledger rows read ORACLE_REFUSED, profile L0 lacked the held-out rows, see WU-D8v2-receipt.md) |
+| 6 | D8v2 | UNUSED by D8v2: one batch carries arm B + donors (31 units, 16.7 MB est. under the 20 MB batch budget); D has no candidates | - | - | - | NOT SENT |
 | 7 | | | | | | |
 
