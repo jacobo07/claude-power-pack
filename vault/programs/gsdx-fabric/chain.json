@@ -36,6 +36,17 @@
         "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F4-receipt.md"
       ],
       "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F4); the laptop tick must not arm it: it waits for this receipt"
+    },
+    {
+      "id": "F3b",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3b.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3b-receipt.md",
+      "after": "F4",
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3b-receipt.md"
+      ],
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3b); installs only under ~/fabric-tools behind supply-chain.json (2e65c565); the laptop tick must not arm it"
     }
   ]
 }
