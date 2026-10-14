@@ -1,0 +1,27 @@
+{
+ "undeclared": "9cdf4fbb",
+ "calls": 13,
+ "floor_undeclared": 75550,
+ "declared_floors": [
+  18137,
+  17235,
+  19100
+ ],
+ "floor_declared_median": 18137,
+ "D_per_call": 57413,
+ "call1_mix": {
+  "input_tokens": 2,
+  "cache_read_input_tokens": 16027,
+  "cache_creation_input_tokens": 59521,
+  "output_tokens": 90
+ },
+ "call1_price_per_ctx_tok": 1.006,
+ "processed_before": 1233784,
+ "processed_after": 487415,
+ "processed_saved": 746369,
+ "processed_saved_pct": 60.5,
+ "weighted_before": 255548.2,
+ "weighted_after": 128893.1,
+ "weighted_saved": 126655.1,
+ "weighted_saved_pct": 49.6
+}

@@ -1,0 +1,1974 @@
+[
+ {
+  "sid": "f7392465-efcc-41a3-81ba-7786bfdd1116",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "ff70e8fc-7ce2-4da3-b07b-0dc82aef2c68",
+  "ts": null,
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "2b70d421-cdd2-4bea-a3a0-ec2c2dd59bcd",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "97547751-755d-4c48-8685-b51fa070ae4c",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "edb22088-5fd7-4852-aaf7-2e86ae31c8ed",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "26045a11-d2a6-4aa1-8a00-6ec6c101592d",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "9eccc1a2-5ae4-4777-93ff-ab7fb94a2be0",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "d7ac284f-6e22-4853-98c6-5e18a75b1c74",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "6acf7aa5-17e5-459f-878e-bd035bd56904",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "7665ed6c-ffc3-4bda-94be-5b65f8d5d6f3",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "be359719-ee5c-43b6-870c-12e5ee553b02",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "d19f7dc4-f2f2-4541-8dbc-fc32d7593079",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "285080f1-c436-4f65-b516-d19b24609f55",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "e3ca4fe2-b461-4a54-81dc-7a5e4c41938b",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "36fe5dcc-b489-427b-9e9d-022f1b4645fe",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "11c48397-2e16-4531-9d2f-76743bb18bd5",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "fbbfed3c-cd38-4b1d-bb53-6daad75fe778",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "af00b488-250c-4fe7-8d36-60db235150d8",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "2ad20ced-086c-48fa-9f79-3ca9c5d7a22e",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "d5cc3594-f80c-44a4-b14b-fb28e1180a95",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "d3d3956e-0861-4927-a0ec-5190f6c50728",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "6c123d9b-0374-484d-aa71-d81b60d107c2",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "59b20433-523e-4daf-be46-4d1731d5f730",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "20b29836-4f67-4273-895d-21ec997a0bc2",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "4c4c5a85-db55-41f3-9c8e-ac810b8b61bc",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "bdf654ea-1374-461f-a0ba-613988f1310c",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "087d2383-e2d1-41f8-a680-aa6c6452a1ca",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "3f6bf248-ce29-447b-9e04-63fc06f56747",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "bffd2623-bf2d-4ed1-a87f-ced552bfdf39",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "2377470d-dd74-465d-a3be-027d06e838ac",
+  "ts": null,
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "cdeb3514-bcb0-4bb6-a008-373a7952943b",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "166b09c5-7f34-41b0-904b-118dd112ea76",
+  "ts": null,
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "bd2aab9a-a55d-495d-9f1c-1335619d53dd",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "10f777ad-9430-4059-860c-cde88621df86",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "10003316-851d-4a3d-aa90-de043a51d537",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "a561ef0a-67bf-4a4f-bf5c-e4ff9b341ff9",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "a10c48d8-1130-4091-954a-5d476b482cd9",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "00d6af44-1e04-42c2-9b23-a2e739f82b59",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "5e4f0000-0000-4000-8000-00000000f4a1",
+  "ts": null,
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": null,
+  "model": null
+ },
+ {
+  "sid": "477535e2-2b35-42df-aedb-4f88e816bbe1",
+  "ts": "2026-09-06T14:19:43.815Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 118861,
+  "model": "claude-opus-5"
+ },
+ {
+  "sid": "154524f9-03af-4043-8e46-864ec0596eaf",
+  "ts": "2026-09-10T16:12:28.160Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 126103,
+  "model": "claude-opus-5"
+ },
+ {
+  "sid": "142fdf8c-b90e-40fc-ac26-14b1881fa57d",
+  "ts": "2026-09-11T01:34:36.547Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 100633,
+  "model": "claude-opus-5"
+ },
+ {
+  "sid": "752d2c0a-9c68-4e82-a44b-5eaf3ba65f90",
+  "ts": "2026-09-12T13:27:32.081Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 143207,
+  "model": "claude-opus-5"
+ },
+ {
+  "sid": "6eb1fcfc-4c96-4034-8a38-8c749eb9c331",
+  "ts": "2026-10-10T16:33:02.568Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 126104,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "6eb1fcfc-4c96-4034-8a38-8c749eb9c331",
+  "ts": "2026-10-10T16:33:02.568Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 126104,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "224fd452-1bfc-4aa8-aa31-91a3aa7ba519",
+  "ts": "2026-10-10T17:26:36.518Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 118428,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "a94725f8-3ab3-41ec-b565-036109dda61d",
+  "ts": "2026-10-11T01:37:33.024Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 96132,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "24a38de0-9f3e-4c79-98ad-88f5df408867",
+  "ts": "2026-10-11T12:48:03.857Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 105045,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "817910c3-79d4-4114-afab-e47bc7f67ef4",
+  "ts": "2026-10-11T18:01:51.772Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 106134,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-77ecef4d7c1c",
+  "epoch_ix": 0,
+  "packet": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\W4.md.residual.md",
+  "state": "HALTED",
+  "created": 1791741304.143208,
+  "token_estimate": 2400000
+ },
+ {
+  "sid": "e8f30359-ddf7-4245-8c72-c412ce609e80",
+  "ts": "2026-10-11T18:35:09.111Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 67163,
+  "model": "claude-haiku-5-5"
+ },
+ {
+  "sid": "e4347e5e-b685-4afc-ae40-86be3e005d64",
+  "ts": "2026-10-11T18:45:12.728Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 108499,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "d6343597-3016-45ca-b6e9-205267a9f8d7",
+  "ts": "2026-10-11T19:05:38.799Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 14401,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "640159d2-3f76-44da-b155-a3dda506a583",
+  "ts": "2026-10-11T19:25:04.382Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 108905,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "2d3dfbdc-1557-41b8-b1ac-9fbb673867c9",
+  "ts": "2026-10-11T19:26:12.939Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 7330,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "972a3193-347e-4675-ab91-d6cad2977b62",
+  "ts": "2026-10-11T19:30:41.414Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 14622,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "55ed4004-750d-4d57-86f8-848caeafc4ff",
+  "ts": "2026-10-11T19:46:31.621Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 7025,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "2cd3f320-8690-49b4-b655-776b3d584802",
+  "ts": "2026-10-11T19:55:43.333Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 13475,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "8f164910-b2cd-4bdf-ac27-c8139295cd44",
+  "ts": "2026-10-11T20:11:18.696Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 120105,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "4b246bb6-d54c-42d7-9162-feb55ec24b9d",
+  "ts": "2026-10-11T20:13:59.961Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 110136,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "0448d195-165c-4e0b-840c-25fab7a5c954",
+  "ts": "2026-10-11T20:31:12.992Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 107281,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "0448d195-165c-4e0b-840c-25fab7a5c954",
+  "ts": "2026-10-11T20:31:12.992Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 107281,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "0448d195-165c-4e0b-840c-25fab7a5c954",
+  "ts": "2026-10-11T20:31:12.992Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 107281,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "0448d195-165c-4e0b-840c-25fab7a5c954",
+  "ts": "2026-10-11T20:31:12.992Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 107281,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "0448d195-165c-4e0b-840c-25fab7a5c954",
+  "ts": "2026-10-11T20:31:12.992Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 107281,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "20af2491-6732-40e4-95e8-60e6293eb708",
+  "ts": "2026-10-11T20:59:52.199Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 106322,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-afd50917585a",
+  "epoch_ix": 0,
+  "packet": "C:\\Users\\User\\Apps\\pp-dgl\\vault\\programs\\dgl\\packets\\W5.md",
+  "state": "HALTED",
+  "created": 1791750301.1180987,
+  "token_estimate": 3000000
+ },
+ {
+  "sid": "d7e19931-63e4-4a95-9c86-11d8376afd06",
+  "ts": "2026-10-11T21:02:19.924Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 98665,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "ab81470e-53bf-44a2-aaef-44ac0e362275",
+  "ts": "2026-10-11T21:06:04.291Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 4643,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "0f0558b6-a509-4787-a52e-3c8bce5cbfa0",
+  "ts": "2026-10-11T21:26:36.021Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 13894,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "6ca2ee20-59b8-4eff-b7ca-67d12d4b006d",
+  "ts": "2026-10-11T21:48:48.482Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 17159,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "5f7b72b1-6c45-4256-b118-4bfc8b977f59",
+  "ts": "2026-10-12T01:30:24.703Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 89112,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "a884b231-8e95-4f8e-85d3-d3299b055b3d",
+  "ts": "2026-10-12T01:33:31.616Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 94852,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "9cdf4fbb-0d5e-4fb7-8de2-ae0404773202",
+  "ts": "2026-10-12T01:39:26.980Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 75550,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "bd5fb08c-8861-446f-996a-6a14930952fa",
+  "ts": "2026-10-12T08:06:14.286Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 17160,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "c13cda65-8388-4e89-b84a-2e71e4b0c2cf",
+  "ts": "2026-10-12T08:08:34.840Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 120913,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "01442cf7-4a7a-4f9e-a37a-187eeb6b3543",
+  "ts": "2026-10-12T08:11:46.871Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 111635,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-4d1b851262ff",
+  "epoch_ix": 0,
+  "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ctx-same-pane\\WU-S1-FINISH.md",
+  "state": "HALTED",
+  "created": 1791637544.6275356,
+  "token_estimate": 14400000
+ },
+ {
+  "sid": "71c37882-d0e6-4ddc-8c83-35aa6c683138",
+  "ts": "2026-10-12T08:26:33.062Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 6707,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "a02627a5-c379-4428-9972-46e975a5301e",
+  "ts": "2026-10-12T08:34:49.329Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 20362,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "77311f0d-8762-4e8e-b6e7-a10420341394",
+  "ts": "2026-10-12T08:59:32.833Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 6393,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "bfb36661-d6b3-4686-a79a-c5230ab2ef61",
+  "ts": "2026-10-12T09:38:24.124Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 87200,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "bfb36661-d6b3-4686-a79a-c5230ab2ef61",
+  "ts": "2026-10-12T09:38:24.124Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 87200,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "76fe03c5-8f9e-4c34-b385-fcc7105527d4",
+  "ts": "2026-10-12T09:40:09.780Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 87236,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "76fe03c5-8f9e-4c34-b385-fcc7105527d4",
+  "ts": "2026-10-12T09:40:09.780Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 87236,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "e8238452-1691-45cb-a155-1b0a6177303f",
+  "ts": "2026-10-12T09:46:12.674Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 84929,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "e8238452-1691-45cb-a155-1b0a6177303f",
+  "ts": "2026-10-12T09:46:12.674Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 84929,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "e8238452-1691-45cb-a155-1b0a6177303f",
+  "ts": "2026-10-12T09:46:12.674Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 84929,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "276d8528-e33b-40f7-b628-08a2671f0ad8",
+  "ts": "2026-10-12T09:59:43.301Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 18790,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "4c641713-ea75-4c75-8482-b37b8a087f69",
+  "ts": "2026-10-12T10:10:27.977Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 107385,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "d86aa01a-b1a7-484c-9521-22128e2b56c9",
+  "ts": "2026-10-12T10:16:28.701Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 100673,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-e3f162ac8314",
+  "epoch_ix": 0,
+  "packet": null,
+  "state": "HALTED",
+  "created": 1791732794.4064205,
+  "token_estimate": 130000000
+ },
+ {
+  "sid": "3a07d7a4-9d37-4c7c-96d2-61bb629465d8",
+  "ts": "2026-10-12T10:39:15.054Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 131241,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "56954c91-ef37-46d2-92da-ca9100c64ab6",
+  "ts": "2026-10-12T10:45:55.932Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 96750,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-940f4a4a418f",
+  "epoch_ix": 0,
+  "packet": null,
+  "state": "HALTED",
+  "created": 1791801836.7026267,
+  "token_estimate": 3100000
+ },
+ {
+  "sid": "8f56107e-0f45-4a26-8591-365166bab1b0",
+  "ts": "2026-10-12T10:50:57.732Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 5315,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "c0937540-d533-4755-bd09-1dca0f58c4e5",
+  "ts": "2026-10-12T10:59:30.955Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 17870,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "5033b795-43b4-4ddc-935a-dd409f990a65",
+  "ts": "2026-10-12T11:40:04.753Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 6514,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "1207969c-06f2-4c71-9951-3a8a2f2a3f80",
+  "ts": "2026-10-12T11:45:18.096Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 18375,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "1659fc31-aed0-4ccf-9837-727e5cd44b3a",
+  "ts": "2026-10-12T12:07:22.668Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 87897,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-5cd1a041bc0f",
+  "epoch_ix": 0,
+  "packet": null,
+  "state": "BLOCKED",
+  "created": 1791806596.7223709,
+  "token_estimate": 1278999
+ },
+ {
+  "sid": "ce64704d-9f79-4a00-a11c-ea73e60b76e6",
+  "ts": "2026-10-12T12:19:09.237Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 121405,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "1ae9cc67-08bf-44f5-bdf3-d699058c4dde",
+  "ts": "2026-10-12T12:45:51.329Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 5213,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "3fc8f05c-0cb6-4638-b2b4-bbac214f8710",
+  "ts": "2026-10-12T13:12:43.864Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 18938,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "d124ce03-2566-43ed-957e-73d445141e58",
+  "ts": "2026-10-12T13:38:10.605Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 105823,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "4cf88977-7116-4f18-bb10-f06fab2380e7",
+  "ts": "2026-10-12T14:07:34.551Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 95159,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "4cf88977-7116-4f18-bb10-f06fab2380e7",
+  "ts": "2026-10-12T14:07:34.551Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 95159,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "b2d1afde-5206-4840-bcfc-84aa625049b6",
+  "ts": "2026-10-12T14:16:07.183Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 6289,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "7ba6dd6d-3364-4a9c-abcc-a4c2b5a8eb96",
+  "ts": "2026-10-12T14:20:41.793Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 123319,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "a1da7181-dc83-4f56-9d46-f7727955d534",
+  "ts": "2026-10-12T14:27:40.646Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 19124,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "54f403ab-1f97-4bd9-8d1e-ffdce84e1a84",
+  "ts": "2026-10-12T14:40:01.643Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 96424,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-19fa5f6e61a8",
+  "epoch_ix": 0,
+  "packet": null,
+  "state": "HALTED",
+  "created": 1791813869.8836136,
+  "token_estimate": 2000000
+ },
+ {
+  "sid": "8700ace9-2094-4961-9c71-67e10fe0c8d3",
+  "ts": "2026-10-12T15:14:25.990Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 5565,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "66cd2238-b9ed-4162-bdb1-276c3d7d7934",
+  "ts": "2026-10-12T15:25:43.786Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 18863,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "9a6265bf-50e1-44c8-aae5-8fe7d8420c7c",
+  "ts": "2026-10-12T15:29:22.726Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 130930,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "93b4e5a8-e764-4c36-ac61-bdaacfa093ea",
+  "ts": "2026-10-12T16:17:42.187Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 5797,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "2cc47957-5b6f-46dd-aeca-01584e9015ef",
+  "ts": "2026-10-12T16:52:20.959Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 20563,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "0917a65c-47af-47e5-987a-1773315b6945",
+  "ts": "2026-10-12T16:58:30.787Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 111792,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "4674b70a-e693-41dd-ba34-5b6de6a6263f",
+  "ts": "2026-10-12T17:35:31.116Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 7696,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "afbf655a-2ae3-44d6-ae5a-67d108ba94b8",
+  "ts": "2026-10-12T17:38:25.508Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 21031,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "21229a10-7d68-4140-ab9d-6e83c0427e83",
+  "ts": "2026-10-12T18:19:40.226Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 7432,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "e4daeab2-e180-4e1a-a5cd-22c4decf2660",
+  "ts": "2026-10-12T18:22:20.423Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 22229,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "535f30ca-17b9-4087-9832-9bfe9655bd65",
+  "ts": "2026-10-12T18:57:08.692Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 108398,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "1390e3c1-ba01-49db-a3b9-829eabcc7918",
+  "ts": "2026-10-12T18:59:15.876Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 7578,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "db7b3f33-4348-4eb1-8b60-5691c7a394bd",
+  "ts": "2026-10-12T19:02:20.397Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 110052,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "824c5e0f-29ee-4824-a30e-01eea167de59",
+  "ts": "2026-10-12T19:02:20.796Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow"
+  },
+  "unit": null,
+  "first_ctx": 22138,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "bf6d4b07-2597-4ee2-9c3e-a9f458e101c0",
+  "ts": "2026-10-12T20:34:14.867Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 17235,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "86ce4483-4eb6-4c7d-a465-d660f51036d5",
+  "ts": "2026-10-12T21:07:17.711Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 104474,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "b0de7339-a61b-4ce4-94e8-954e966e7477",
+  "ts": "2026-10-12T21:37:42.361Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 6458,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "0bdd6fe2-1f2f-4d73-a7de-b6b6dc751793",
+  "ts": "2026-10-12T21:42:27.270Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 18137,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "ed42fb60-db02-40e5-8172-276b3a9b6300",
+  "ts": "2026-10-12T22:11:13.871Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 6618,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "f03c1c84-4267-4d77-be09-182335101ab1",
+  "ts": "2026-10-12T22:15:15.340Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 19100,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "42372faf-0490-48a8-ae0d-0d05ef1f052c",
+  "ts": "2026-10-12T22:22:48.732Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 120183,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "7182c66c-6f6d-410d-8b0d-fe1a8129ae9c",
+  "ts": "2026-10-12T23:09:04.419Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 121197,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-342bc71ba415",
+  "epoch_ix": 0,
+  "packet": null,
+  "state": "HALTED",
+  "created": 1791845184.133957,
+  "token_estimate": 7500000
+ },
+ {
+  "sid": "8dd034fb-1bf9-4eb8-ae74-f6f51e47edbe",
+  "ts": "2026-10-12T23:17:19.605Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce",
+   "project": "off"
+  },
+  "unit": null,
+  "first_ctx": 74115,
+  "model": "claude-haiku-5-5"
+ },
+ {
+  "sid": "b54a0638-f249-4e32-91fe-806badd524e7",
+  "ts": "2026-10-12T23:20:20.678Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce",
+   "project": "off"
+  },
+  "unit": null,
+  "first_ctx": 5406,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "c60d1c8b-e032-450c-9516-432bef294d9f",
+  "ts": "2026-10-13T01:30:28.699Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 87021,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "3c3e1930-594d-4407-8fff-d2eabbcba9cc",
+  "ts": "2026-10-13T01:33:12.746Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 94876,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "f864fb74-5bdb-424f-8c37-972b3f682cb2",
+  "ts": "2026-10-13T01:37:08.207Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 82298,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "865a27fc-7f38-410f-89fb-dea1b433de39",
+  "ts": "2026-10-13T02:06:40.910Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 112587,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "f26cfb63-1694-41ab-ad35-ec070582ac29",
+  "ts": "2026-10-13T02:16:41.891Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 112591,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "354504f1-05de-450d-bbe2-6e90ff2de9d7",
+  "ts": "2026-10-13T02:26:42.145Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 113523,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-3964348fe5e4",
+  "epoch_ix": 0,
+  "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P4.md",
+  "state": "HALTED",
+  "created": 1791839069.2761106,
+  "token_estimate": 75000000
+ },
+ {
+  "sid": "769bc64e-fe36-485e-94bf-a87e78de82cc",
+  "ts": "2026-10-13T05:51:13.250Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 67799,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "6b53bf87-6047-4748-91cb-051a98ff3f11",
+  "ts": "2026-10-13T06:06:23.194Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 80523,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "6480f6d5-c950-41f6-a79e-fe7c9c3ece73",
+  "ts": "2026-10-13T06:10:46.468Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 80906,
+  "model": "claude-sonnet-5-5"
+ },
+ {
+  "sid": "403d2d16-d72b-411a-b4f2-902f50521e90",
+  "ts": "2026-10-13T08:30:15.394Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce",
+   "project": "off"
+  },
+  "unit": null,
+  "first_ctx": 74594,
+  "model": "claude-haiku-5-5"
+ },
+ {
+  "sid": "22c07abd-0c4e-418d-929c-fb86b5f7445d",
+  "ts": "2026-10-13T08:30:33.637Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce",
+   "project": "off"
+  },
+  "unit": null,
+  "first_ctx": 101422,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "8c3d8a8e-1f56-44ce-b10a-dfd87dfade6e",
+  "ts": "2026-10-13T08:34:16.774Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": "bounded-code-worker",
+  "first_ctx": 18308,
+  "model": "claude-haiku-5-5"
+ },
+ {
+  "sid": "f898280c-6891-4632-b5d7-06fef5a9ca90",
+  "ts": "2026-10-13T08:40:27.335Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce",
+   "project": "off"
+  },
+  "unit": null,
+  "first_ctx": 74809,
+  "model": "claude-haiku-5-5"
+ },
+ {
+  "sid": "fa1e65cd-d6e9-45ac-b9ff-2429a13617a3",
+  "ts": "2026-10-13T08:46:02.117Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": "bounded-code-worker",
+  "first_ctx": 18077,
+  "model": "claude-haiku-5-5"
+ },
+ {
+  "sid": "4f0ecc00-536e-4d3d-952e-18e5ae42f35b",
+  "ts": "2026-10-13T08:50:14.489Z",
+  "interactive": false,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce",
+   "project": "off"
+  },
+  "unit": null,
+  "first_ctx": 74594,
+  "model": "claude-haiku-5-5"
+ },
+ {
+  "sid": "a8b0aa5e-eb64-46bf-8b8d-a6f5b5d7885a",
+  "ts": "2026-10-13T09:55:19.668Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 122602,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "eefc7708-65e5-4163-ab05-6306b31510e3",
+  "ts": "2026-10-13T10:03:11.424Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 125268,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "383fd3dd-742c-4f0c-8d27-e70d253d5d9a",
+  "ts": "2026-10-13T10:39:09.809Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 103419,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "89511476-e7b6-4037-a01a-79968c58f131",
+  "ts": "2026-10-13T10:43:56.641Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 110003,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-c6bf34baea81",
+  "epoch_ix": 0,
+  "packet": null,
+  "state": "BLOCKED",
+  "created": 1791888091.6181028,
+  "token_estimate": 1434225
+ },
+ {
+  "sid": "159949c6-4772-4504-bdf1-42ca40f47478",
+  "ts": "2026-10-13T10:49:18.729Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 104236,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "3b121f4e-cbb2-49cf-88a1-aac32aed033a",
+  "ts": "2026-10-13T11:17:47.202Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 137219,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "58c87c3d-772b-4e09-b54c-4eb140ed415a",
+  "ts": "2026-10-13T11:28:16.869Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 123552,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "dcff3a5b-834e-4ec3-8e5b-557672213264",
+  "ts": "2026-10-13T11:42:36.051Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 111974,
+  "model": "claude-opus-5-5"
+ },
+ {
+  "sid": "ad28f464-4b43-4eed-96ba-5279d564c838",
+  "ts": "2026-10-13T12:24:48.083Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 108289,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-ee676522b2fd",
+  "epoch_ix": 0,
+  "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P5.md",
+  "state": "RUNNING",
+  "created": 1791893394.6487696,
+  "token_estimate": 80000000
+ },
+ {
+  "sid": "b77adfaf-d22d-497e-84d2-3f095b2b03f0",
+  "ts": "2026-10-13T12:58:47.737Z",
+  "interactive": true,
+  "modes": {
+   "subagent": "enforce",
+   "main": "shadow",
+   "unit": "enforce"
+  },
+  "unit": null,
+  "first_ctx": 99138,
+  "model": "claude-sonnet-5-5",
+  "mission": "m-b4e0f3b25be3",
+  "epoch_ix": 0,
+  "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\owner-capital\\WU-OC1b.md",
+  "state": "RUNNING",
+  "created": 1791895565.725023,
+  "token_estimate": 5000000
+ }
+]

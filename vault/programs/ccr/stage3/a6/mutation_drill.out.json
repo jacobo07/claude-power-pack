@@ -1,0 +1,66 @@
+[
+ {
+  "mutation": "control-unmutated",
+  "rc": 0,
+  "killed": null,
+  "summary": "13 passed, 0 failed",
+  "failing_gates": []
+ },
+ {
+  "mutation": "enforce-LOW",
+  "rc": 1,
+  "killed": true,
+  "summary": "12 passed, 1 failed",
+  "failing_gates": [
+   "V-CCRA6-ENFORCE-LOW-OBSERVES"
+  ]
+ },
+ {
+  "mutation": "deflate-LOW-declares",
+  "rc": 1,
+  "killed": true,
+  "summary": "11 passed, 2 failed",
+  "failing_gates": [
+   "V-CCRA6-DEFLATE-LOW-OBSERVES",
+   "V-CCRA6-A3-MODELS-LOOKUP-LOW"
+  ]
+ },
+ {
+  "mutation": "det-path-skipped",
+  "rc": 1,
+  "killed": true,
+  "summary": "11 passed, 2 failed",
+  "failing_gates": [
+   "V-CCRA6-DET-RUNS-NO-MODEL",
+   "V-CCRA6-DET-FAIL-NO-FALLBACK"
+  ]
+ },
+ {
+  "mutation": "det-outside-tree-allowed",
+  "rc": 1,
+  "killed": true,
+  "summary": "12 passed, 1 failed",
+  "failing_gates": [
+   "V-CCRA6-DET-OUTSIDE-TREE-REFUSED"
+  ]
+ },
+ {
+  "mutation": "det-fail-completes",
+  "rc": 1,
+  "killed": true,
+  "summary": "12 passed, 1 failed",
+  "failing_gates": [
+   "V-CCRA6-DET-FAIL-NO-FALLBACK"
+  ]
+ },
+ {
+  "mutation": "deflate-env-not-delivered",
+  "rc": 1,
+  "killed": true,
+  "summary": "11 passed, 2 failed",
+  "failing_gates": [
+   "V-CCRA6-DEFLATE-DECLARES-UNIT",
+   "V-CCRA6-A3-MODELS-BOUNDED-CODE-MEDIUM"
+  ]
+ }
+]

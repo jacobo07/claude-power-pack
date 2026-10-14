@@ -825,9 +825,9 @@ def slim_job_paths(mission_id: str, sid: str) -> tuple[Path, Path]:
     return d / f"{sid}.out.json", d / f"{sid}.err.txt"
 
 
-def _spawn_detached(argv: list[str], cwd: str, out_path: Path, err_path: Path) -> int:
+def _spawn_detached(argv: list[str], cwd: str, out_path: Path, err_path: Path, env: dict | None = None) -> int:
     """Start `claude -p` DETACHED (it is synchronous: the supervisor must not block on it) with its
-    stdout/stderr going to files. Returns the pid."""
+    stdout/stderr going to files. Returns the pid. ``env`` None inherits the supervisor's environment."""
     import subprocess
     out_path.parent.mkdir(parents=True, exist_ok=True)
     kw: dict = {}
@@ -836,7 +836,7 @@ def _spawn_detached(argv: list[str], cwd: str, out_path: Path, err_path: Path) -
     else:
         kw["start_new_session"] = True
     with open(out_path, "wb") as so, open(err_path, "wb") as se:
-        proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=so, stderr=se, **kw)
+        proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=so, stderr=se, env=env, **kw)
     return proc.pid
 
 
@@ -913,8 +913,13 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     # checkout on another branch, one `git commit` away from landing there.
     wd = rec.get("work_dir")
     run_dir = wd if wd and Path(wd).is_dir() else rec["cwd"]
+    unit_env, drow = deflate_unit(rec)
+    if drow:
+        lr.ledger_append(mid, "deflate_" + ("applied" if unit_env else "observed"), mission_id=mid, epoch=epoch,
+                         **drow, delivered=bool(unit_env))
     try:
-        pid = (spawner or _spawn_detached)(argv, run_dir, out_path, err_path)
+        pid = (spawner or _spawn_detached)(argv, run_dir, out_path, err_path,
+                                           **({"env": {**os.environ, **unit_env}} if unit_env else {}))
     except Exception as exc:  # the launch itself could not happen
         why = f"{type(exc).__name__}: {exc}"
         lr.ledger_append(mid, "launch_failed", mission_id=mid, epoch=epoch, rc=None, bg_id=sid,
@@ -1026,7 +1031,8 @@ def baseline_legacy_verdict(rec: dict) -> str | None:
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
-                  progress: dict | None = None, packet: dict | None = None, spawner=None) -> dict:
+                  progress: dict | None = None, packet: dict | None = None, spawner=None,
+                  det_runner=None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
@@ -1060,6 +1066,16 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
+    # WU-A6 DETERMINISTIC_PATH: a packet that names its script is run, not given to a model. Before the
+    # claim: it spends no epoch and launches no worker.
+    try:
+        det = deterministic_script(rec)
+    except MissionError as exc:
+        lr.ledger_append(mission_id, "launch_refused_packet", mission_id=mission_id,
+                         epoch=rec.get("epoch"), why=str(exc)[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": str(exc), "detail": ""}
+    if det:
+        return _run_deterministic(rec, det, now, run=det_runner)   # never `runner`: that one starts claude
     resolved = resolve_baseline(rec)
     baseline_on = resolved is not rec
     legacy_why = baseline_legacy_verdict(resolved) if baseline_mode() != "off" else None
@@ -1111,6 +1127,11 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
             lr.ledger_append(mission_id, "would_refuse_legacy", mission_id=mission_id, epoch=epoch, why=legacy_why[:300])
     if slim_profile(rec):
         return _launch_slim(rec, prompt, epoch, now, spawner=spawner)
+    _, drow = deflate_unit(rec, declare=False)
+    if drow:
+        # `--bg` does not inherit the launcher's environment (W0 E3): a declaration cannot ride this launch.
+        lr.ledger_append(mission_id, "deflate_observed", mission_id=mission_id, epoch=epoch, **drow,
+                         delivered=False, why="--bg launch does not inherit env (W0 E3)")
     # `prompt` was bound above (launch_prompt -> bind_workstream), not only at create: a record armed
     # before bind_workstream existed still carries the bare command, and its relay would put the
     # successor on the root milestone.
@@ -1641,14 +1662,17 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
 
 def _ccr_contract(rec: dict, pkt_path: str, cap) -> dict:
     """WU-W1: the pre-launch cost contract (tools/ccr_pgo.py) for the mission's CCR work class. No class,
-    no PGO file or any failure -> UNFORECAST; this never raises."""
+    no PGO file or any failure -> UNFORECAST; this never raises. WU-A6: a `pgo-classes.json` (WU-A3 class
+    models) in the PGO dir wins; it classifies the packet itself and carries the class confidence."""
     cls = rec.get("ccr_class")
-    if not cls:
+    d = os.environ.get("CPP_CCR_PGO_DIR") or str(Path.home() / ".claude" / "ccr" / "state" / "pgo")
+    if not cls and not (Path(d) / "pgo-classes.json").is_file():
         return {"verdict": "UNFORECAST"}
     try:
         import ccr_pgo
-        d = os.environ.get("CPP_CCR_PGO_DIR") or str(Path.home() / ".claude" / "ccr" / "state" / "pgo")
-        f = Path(d) / f"{cls}.json"
+        f = Path(d) / "pgo-classes.json"
+        if not f.is_file():
+            f = Path(d) / f"{cls}.json"
         if not f.is_file():
             return {"verdict": "UNFORECAST", "work_class": cls}
         pgo = json.loads(f.read_text(encoding="utf-8-sig"))
@@ -1662,6 +1686,98 @@ def _ccr_contract(rec: dict, pkt_path: str, cap) -> dict:
 
 def _admission_switch_off() -> bool:
     return str(os.environ.get("CPP_ROUTE_ADMISSION") or "").strip().lower() in ("0", "off", "false")
+
+
+# WU-A6: a CCR contract acts only where its class model earned it. A3 confidence: MEDIUM/HIGH act, LOW observes.
+# A W1 single-class file carries no confidence and keeps the W1 behaviour.
+def _ccr_enforceable(contract: dict) -> bool:
+    return contract.get("confidence") in (None, "MEDIUM", "HIGH")
+
+
+# WU-A6 DEFLATE: the CCR mod's unit class (mods/cpp-cognitive-runtime/hooks/policy.ts WORK_CLASSES) for each
+# A3 work class. generic and multimodal have no closure the mod knows, so they are never declared.
+UNIT_FOR_CLASS = {"bounded-code": "bounded-code-worker", "long-textual": "bounded-code-worker",
+                  "lookup": "read-only-reviewer"}
+
+
+def deflate_unit(rec: dict, environ=None, declare: bool = True) -> tuple[dict, dict]:
+    """(env to add, ledger row) for a Work Unit launch. A launch that already declares CCR_WORK_UNIT, or is no
+    Work Unit, is left alone. A class the mod knows, at confidence MEDIUM or better, gets the unit declared
+    (a declaration file in the mission store, its path in CCR_WORK_UNIT); LOW only records would_deflate.
+    CPP_CCR_DEFLATE=off records and declares nothing. ``declare`` False (a launch that cannot carry the env)
+    records would_deflate and writes no file."""
+    environ = os.environ if environ is None else environ
+    if not rec.get("wu_packet") or environ.get("CCR_WORK_UNIT"):
+        return {}, {}
+    if str(environ.get("CPP_CCR_DEFLATE") or "").strip().lower() in ("0", "off", "false"):
+        return {}, {}
+    contract = (rec.get("admission") or {}).get("ccr_contract") or {}
+    cls, conf = contract.get("work_class"), contract.get("confidence")
+    unit = UNIT_FOR_CLASS.get(cls)
+    row = {"work_class": cls, "confidence": conf, "unit": unit}
+    if not unit:
+        return {}, {**row, "action": "no_unit_class"}
+    if conf not in ("MEDIUM", "HIGH") or not declare:
+        return {}, {**row, "action": "would_deflate"}
+    path = lr.state_dir() / "units" / f"{rec['mission_id']}-e{rec.get('epoch')}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"class": unit, "id": rec["mission_id"]}), encoding="utf-8")
+    return {"CCR_WORK_UNIT": str(path)}, {**row, "action": "deflated", "declared": str(path)}
+
+
+_DETERMINISTIC_RE = re.compile(r"^\s*deterministic:\s*(\S.*?)\s*$", re.MULTILINE)
+
+
+def deterministic_script(rec: dict) -> list[str] | None:
+    """The argv a packet's `deterministic: <script> [args]` line names, or None. The script must be a .py or
+    .sh file inside the mission's work tree; a line naming anything else raises MissionError."""
+    import shlex
+    pkt = rec.get("wu_packet")
+    if not pkt:
+        return None
+    try:
+        text = Path(pkt["path"]).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    m = _DETERMINISTIC_RE.search(text)
+    if not m:
+        return None
+    args = shlex.split(m.group(1))
+    root = Path(rec.get("work_dir") or rec["cwd"]).resolve()
+    script = (root / args[0]).resolve()
+    if not script.is_relative_to(root) or not script.is_file() or script.suffix not in (".py", ".sh"):
+        raise MissionError(f"deterministic: {args[0]!r} is not a .py/.sh file inside {root}")
+    return [sys.executable if script.suffix == ".py" else "bash", str(script), *args[1:]]
+
+
+def _run_deterministic(rec: dict, argv: list[str], now: float, run=None) -> dict:
+    """DETERMINISTIC_PATH: run the packet's script instead of a worker. No epoch is claimed and no model is
+    called. Exit 0 completes the mission with the output's sha256 on the record; anything else leaves the
+    mission where it was, ledgered, and never falls back to a model."""
+    import hashlib
+    import subprocess
+    mid = rec["mission_id"]
+    cwd = rec.get("work_dir") or rec["cwd"]
+    try:
+        r = (run or (lambda a, c: subprocess.run(a, cwd=c, capture_output=True, text=True, encoding="utf-8",
+                                                  errors="replace", timeout=600)))(argv, cwd)
+        rc, out, err = r.returncode, r.stdout or "", r.stderr or ""
+    except Exception as exc:  # noqa: BLE001 -- the script could not run: recorded, never retried by a model
+        rc, out, err = None, "", f"{type(exc).__name__}: {exc}"
+    out_path = lr.state_dir() / "deterministic" / mid / f"e{rec.get('epoch')}.out"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(out, encoding="utf-8")
+    res = {"argv": argv[1:], "rc": rc, "model_calls": 0, "out_path": str(out_path),
+           "stdout_sha256": hashlib.sha256(out.encode("utf-8")).hexdigest(), "at": now}
+    if rc != 0:
+        lr.ledger_append(mid, "deterministic_failed", mission_id=mid, epoch=rec.get("epoch"),
+                         **res, stderr=err[-300:])
+        return {"ok": False, "deterministic": True, "epoch": rec.get("epoch"), "bg_id": None,
+                "why": f"deterministic script exited {rc}", "detail": err[-300:], **res}
+    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="deterministic_completed",
+               now=now, state=COMPLETED, pending=None, deterministic=res,
+               reason=f"deterministic path: {Path(argv[1]).name} exit 0, 0 model calls")
+    return {"ok": True, "deterministic": True, "epoch": rec.get("epoch"), "bg_id": None, "stdout": out[-4000:], **res}
 
 
 def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = None,
@@ -1714,7 +1830,7 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
     contract = _ccr_contract(rec, pkt["path"], (res.get("envelope") or {}).get("stop"))
     admission["ccr_contract"] = contract
     if (str(os.environ.get("CPP_CCR_ADMISSION") or "").strip().lower() == "enforce"
-            and contract.get("verdict") in ("SPLIT", "DEFLATE")):
+            and contract.get("verdict") in ("SPLIT", "DEFLATE") and _ccr_enforceable(contract)):
         admission["verdict"] = "RECOMPILE"   # known and not launchable
         admission["reasons"] = ([f"ccr_contract:{contract['verdict']}"] + admission["reasons"])[:6]
         res = {**res, "verdict": "RECOMPILE", "reasons": admission["reasons"]}

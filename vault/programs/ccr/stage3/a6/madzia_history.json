@@ -1,0 +1,56 @@
+{
+ "9cdf4fbb": {
+  "calls": 13,
+  "floor": 75550,
+  "last_ctx": 104415,
+  "processed": 1233784,
+  "weighted": 255548.2,
+  "first_ts": "2026-10-12T01:39:26.980Z",
+  "model": "claude-opus-5-5"
+ },
+ "8dd034fb": {
+  "calls": 6,
+  "floor": 74115,
+  "last_ctx": 78526,
+  "processed": 458365,
+  "weighted": 122721.8,
+  "first_ts": "2026-10-12T23:17:19.605Z",
+  "model": "claude-haiku-5-5"
+ },
+ "0bdd6fe2": {
+  "calls": 23,
+  "floor": 18137,
+  "last_ctx": 65566,
+  "processed": 1125248,
+  "weighted": 301566.1,
+  "first_ts": "2026-10-12T21:42:27.270Z",
+  "model": "claude-opus-5-5"
+ },
+ "bf6d4b07": {
+  "calls": 26,
+  "floor": 17235,
+  "last_ctx": 99443,
+  "processed": 1874771,
+  "weighted": 545004.3,
+  "first_ts": "2026-10-12T20:34:14.867Z",
+  "model": "claude-opus-5-5"
+ },
+ "f03c1c84": {
+  "calls": 31,
+  "floor": 19100,
+  "last_ctx": 83561,
+  "processed": 1924326,
+  "weighted": 462428.1,
+  "first_ts": "2026-10-12T22:15:15.340Z",
+  "model": "claude-opus-5-5"
+ },
+ "b0de7339": {
+  "calls": 3,
+  "floor": 6458,
+  "last_ctx": 18709,
+  "processed": 40423,
+  "weighted": 39393.4,
+  "first_ts": "2026-10-12T21:37:42.361Z",
+  "model": "claude-opus-5-5"
+ }
+}
