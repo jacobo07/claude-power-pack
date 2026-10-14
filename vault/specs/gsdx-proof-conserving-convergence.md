@@ -133,6 +133,7 @@ Landed as code in Phase 2, all owned by `modules/gsd_x/goal/proof.py`, all with 
 | proof.invalidated | claim_id, certificate, reason | reconciler/validator |
 | candidate.promoted | candidate, tree, fingerprint | reconciler (landed in Phase 4, moved from the frozen table) |
 | review.received | claim_id, candidate, ticket | review intake, `modules/gsd_x/goal/review.py` (landed in Phase 5, moved from the frozen table) |
+| authority.revoked | authority, version, reason | trust substrate, `modules/gsd_x/goal/trust.py` (landed in Phase 5.2; no inverse event exists) |
 
 Frozen (spec table only, no code in Phase 2; a bare constant with no projection is vapor under the Reality Contract):
 

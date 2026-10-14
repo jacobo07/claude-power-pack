@@ -22,6 +22,7 @@ from . import contract as gc
 from . import convergence as cv
 from . import git_state as gs
 from . import proof as pf
+from . import trust
 
 INHERIT, INVALIDATE, RUN, FRESH = "INHERIT", "INVALIDATE", "RUN", "FRESH"
 # Freshness classes a claim may be inherited under. TEMPORAL, FRESH_REQUIRED and UNKNOWN never are.
@@ -37,11 +38,13 @@ def _seconds(ts):
 
 
 def _latest_live(ledger: pf.ProofLedger, cid: str):
-    """(certificate id, payload, seq, ts) of the newest certificate of claim `cid` not invalidated."""
+    """(certificate id, payload, seq, ts) of the newest certificate of claim `cid` that is live (not
+    invalidated, not revoked) and trusted. A pre-5.2 certificate has no authority or lineage: it is
+    never inherited from (05-2-01), though readers still project it."""
     live = set(pf.live_certificates(ledger, cid))
     for p in reversed(ledger.produced):
         cert = pf.certificate_id(cid, p["seq"])
-        if p["data"].get("claim_id") == cid and cert in live:
+        if p["data"].get("claim_id") == cid and cert in live and trust.is_trusted(p["data"]):
             return cert, p["data"], p["seq"], p["ts"]
     return None
 
@@ -131,9 +134,13 @@ def apply(log, items: list, candidate: str, actor: str) -> list:
         if it["action"] == INHERIT:
             if it["obligation"] in inherited_ids(state, candidate):
                 continue
-            pf.append_pcc(log, state, pf.INHERITED_EV,
-                          {"v": 1, "claim_id": it["claim_id"], "certificate": it["certificate"],
-                           "candidate": candidate, "premises": it["premises"]}, actor)
+            body = {"v": 1, "claim_id": it["claim_id"], "certificate": it["certificate"],
+                    "candidate": candidate, "premises": it["premises"]}
+            cert_auth = next((p["data"].get("authority") for p in pf.project_proofs(state).produced
+                              if pf.certificate_id(p["data"].get("claim_id"), p["seq"]) == it["certificate"]), None)
+            if isinstance(cert_auth, dict):
+                body["authority"] = dict(cert_auth)     # inherits exactly the original's authority, never more
+            pf.append_pcc(log, state, pf.INHERITED_EV, body, actor)
             out.append(f"{log.goal_id}: {it['obligation']} inherits its proof at {candidate}")
         elif it["action"] == INVALIDATE:
             pf.append_pcc(log, state, pf.INVALIDATED,
@@ -184,7 +191,8 @@ def inherited_ids(state, candidate: str) -> frozenset:
         for e in ledger.inherited:
             d = e["data"]
             if (d.get("claim_id") == cid and d.get("certificate") == cert and d.get("candidate") == candidate
-                    and e["seq"] > seq and _agrees(d.get("premises"), data.get("premises") or {}, ob, state)):
+                    and e["seq"] > seq and trust.inherited_event_ok(ledger, d)
+                    and _agrees(d.get("premises"), data.get("premises") or {}, ob, state)):
                 out.add(oid)
                 break
     return frozenset(out)

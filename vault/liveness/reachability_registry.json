@@ -471,6 +471,10 @@
       "class": "PLANNED",
       "note": "gsdx-pcc Phase 2 compatibility seam (spec S2-S13), driven today only by tools/test_gsd_x_goal_pcc_semantics.py and tools/test_gsd_x_goal_pcc_replay.py; no legacy caller consumes it by design (zero behaviour change). OWNER_QUEUE: gsdx-pcc Phase 3 (decide wrapper behind GSDX_FRONTIER) and Phase 4 (closure clause behind GSDX_PROOF_INHERITANCE) wire it; re-classify then"
     },
+    "gsd_x/goal/trust": {
+      "class": "PLANNED",
+      "note": "gsdx-pcc Phase 5.2 (05-2-01) trust substrate: authority, lineage, revocation, monotonicity. Imported by gsd_x/goal/proof.py (live_certificates, append_pcc), inherit.py and sweep.py (_certify); same entrance as the rest of the goal engine (tools/gsd_x_goal.py, outside this scanner's aperture). OWNER_QUEUE: wired with the engine in UWCP S6; re-classify then"
+    },
     "gsd_x/goal/workspace": {
       "class": "PLANNED",
       "note": "UWCP S2 Workspace Capsule (A6 object model). Driven today only by tools/test_uwcp_workspace.py; OWNER_QUEUE: UWCP S5 (queue provider captures at dispatch, runner hydrates on the node) and S6 wire it; re-classify then"

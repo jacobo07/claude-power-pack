@@ -44,7 +44,8 @@ INHERITED_EV = "proof.inherited"
 INVALIDATED = "proof.invalidated"
 PROMOTED = "candidate.promoted"       # Phase 4 (spec S7: moved from the frozen table)
 RECEIVED = "review.received"          # Phase 5 (spec S7: moved from the frozen table)
-NEW_TYPES = (CONTRACT, PRODUCED, INHERITED_EV, INVALIDATED, PROMOTED, RECEIVED)
+AUTHORITY_REVOKED = "authority.revoked"   # Phase 5.2 (05-2-01): no inverse event exists
+NEW_TYPES = (CONTRACT, PRODUCED, INHERITED_EV, INVALIDATED, PROMOTED, RECEIVED, AUTHORITY_REVOKED)
 
 SUPPORTED_V = 1
 
@@ -73,6 +74,7 @@ REQUIRED_FIELDS = {
     INVALIDATED: ("v", "claim_id", "certificate", "reason"),
     PROMOTED: ("v", "candidate", "tree", "fingerprint"),
     RECEIVED: ("v", "claim_id", "candidate", "ticket"),
+    AUTHORITY_REVOKED: ("v", "authority", "version", "reason"),
 }
 
 
@@ -109,6 +111,7 @@ class ProofLedger:
     invalidated: list = field(default_factory=list)
     promoted: list = field(default_factory=list)
     received: list = field(default_factory=list)
+    revoked: list = field(default_factory=list)
     unsupported: list = field(default_factory=list)       # seqs of events with a newer v
 
 
@@ -116,7 +119,8 @@ def project_proofs(state: GoalState) -> ProofLedger:
     ledger = ProofLedger()
     slots = {CONTRACT: ledger.contracts, PRODUCED: ledger.produced,
              INHERITED_EV: ledger.inherited, INVALIDATED: ledger.invalidated,
-             PROMOTED: ledger.promoted, RECEIVED: ledger.received}
+             PROMOTED: ledger.promoted, RECEIVED: ledger.received,
+             AUTHORITY_REVOKED: ledger.revoked}
     for ev in state.events:
         if ev.type not in NEW_TYPES:
             continue
@@ -144,6 +148,10 @@ def append_pcc(log: GoalLog, state: GoalState, type_: str, data: dict, actor: st
     if not readable:
         raise ProofRefused(f"{type_}: v {data.get('v')} is newer than SUPPORTED_V={SUPPORTED_V}; "
                            "a writer never writes a version it cannot read")
+    if type_ == INHERITED_EV:
+        from . import trust
+        if not trust.inherited_event_ok(project_proofs(state), data):
+            raise ProofRefused(f"{type_}: authority strength above the certificate it inherits (N05)")
     log.append(state.last_seq + 1, type_, data, actor)
     return project_proofs(project(log))
 
@@ -555,8 +563,11 @@ def certificate_id(cid: str, seq) -> str:
 
 
 def live_certificates(ledger: ProofLedger, cid: str) -> list:
-    """The certificate ids of claim `cid` not yet named by a later `proof.invalidated`."""
+    """The certificate ids of claim `cid` not named by a later `proof.invalidated`, and not killed by a
+    revoked authority or a dead lineage root (trust.dead_certificates). Nothing is rewritten."""
+    from . import trust
     dead = {i["data"].get("certificate") for i in ledger.invalidated if i["data"].get("claim_id") == cid}
+    dead |= trust.dead_certificates(ledger)
     return [certificate_id(cid, p["seq"]) for p in ledger.produced
             if p["data"].get("claim_id") == cid and certificate_id(cid, p["seq"]) not in dead]
 

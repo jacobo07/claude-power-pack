@@ -273,7 +273,9 @@ def _certify(log: gl.GoalLog, ob_id: str, verdict: dict, source: dict, root, mov
             out.append(f"{log.goal_id}: {ob_id} certificate {cert} invalidated: candidate moved under verification")
         return out
     contract, _refused = proof.effective_contract(ledger, ob)
-    payload = proof.certificate_payload(ob, verdict, contract, root, source)
+    from . import trust
+    payload = trust.stamp(proof.certificate_payload(ob, verdict, contract, root, source), cid,
+                          state.last_seq + 1)
     live = set(proof.live_certificates(ledger, cid))
     if any(proof.certificate_id(cid, p["seq"]) in live and p["data"].get("binding") == payload["binding"]
            for p in ledger.produced if p["data"].get("claim_id") == cid):
