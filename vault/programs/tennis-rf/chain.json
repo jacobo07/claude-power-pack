@@ -130,7 +130,10 @@
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D1c.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D1c-receipt.md",
-            "accept": ["DONE", "DONE_WITH_LIMITS"],
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ],
             "after": "W12"
         },
         {
@@ -159,7 +162,10 @@
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D4.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D4-receipt.md",
-            "accept": ["DONE", "PARTIAL"],
+            "accept": [
+                "DONE",
+                "PARTIAL"
+            ],
             "disposition": "PARTIAL/INCONCLUSIVE accepted with certified limitation (Owner 2026-10-13): evidence/d28/d4/DISPOSITION.md; V-D4-RED-FALLS stays red",
             "after": "D3"
         },
@@ -190,7 +196,10 @@
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D10-receipt.md",
             "after": "D7",
-            "accept": ["DONE", "DONE_WITH_LIMITS"]
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
         },
         {
             "id": "W8b",
@@ -215,7 +224,11 @@
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D8v2.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D8v2-receipt.md",
-            "after": "D11"
+            "after": "D11",
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
         },
         {
             "id": "D9",
@@ -237,7 +250,10 @@
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12b-receipt.md",
             "after": "D12a",
-            "accept": ["DONE", "DONE_WITH_LIMITS"]
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
         }
     ]
 }
