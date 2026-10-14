@@ -15,6 +15,16 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _usable_git(candidates) -> str:
+    """First candidate that exists on this host: the Windows path, else PATH `git`.
+    Indexing candidates[0] was Windows-only and raised FileNotFoundError on Linux."""
+    for exe in candidates:
+        if Path(exe).is_file() or shutil.which(exe):
+            return exe
+    raise RuntimeError("no usable git among " + repr(tuple(candidates)))
+
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
@@ -261,7 +271,7 @@ def gate_export_restore():
     work = Path(tempfile.mkdtemp(prefix="pcc-sem-xr-"))
     repo = work / "repo"
     repo.mkdir()
-    git = git_state.GIT_CANDIDATES[0]
+    git = _usable_git(git_state.GIT_CANDIDATES)
     for args in (["init", "-q"], ["-c", "user.name=pcc", "-c", "user.email=noreply@anthropic.com",
                                   "commit", "-q", "--allow-empty", "-m", "root"]):
         subprocess.run([git, *args], cwd=repo, check=True, capture_output=True)
@@ -1174,7 +1184,7 @@ PHASE2_LAST = "0fca7111a25cd1fa683610004c8de62b83529f81"       # Phase 2 closed
 def _git_names(*args) -> list:
     import subprocess  # noqa: PLC0415
     from modules.gsd_x.goal import git_state  # noqa: PLC0415
-    r = subprocess.run([git_state.GIT_CANDIDATES[0], "-C", str(ROOT), *args], capture_output=True, text=True,
+    r = subprocess.run([_usable_git(git_state.GIT_CANDIDATES), "-C", str(ROOT), *args], capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
     if r.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)} failed: {r.stderr.strip()[:200]}")
