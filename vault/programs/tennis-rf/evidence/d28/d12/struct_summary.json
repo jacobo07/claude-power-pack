@@ -1,0 +1,57 @@
+{
+ "rows": 1797,
+ "target_fns": 1522,
+ "hub_limit": 50,
+ "offset_vars_before": 8274,
+ "traced_offset_vars": 8273,
+ "all_unk_base_offset_vars": 1665,
+ "untraced_offset_vars": 1,
+ "distinct_vars_after_collapse_tierA_incl_untraced": 13829,
+ "distinct_struct_ids_traced_tierA": 8145,
+ "distinct_struct_ids_traced_tierB": 6379,
+ "clusters_A": 5134,
+ "clusters_B": 4128,
+ "conflict_clusters_A": 4,
+ "conflict_clusters_B": 7,
+ "red_control_shuffled_edges": {
+  "clusters": 3881,
+  "conflicts": 3,
+  "hubs": 296,
+  "rate": {
+   "pairs": 1607,
+   "conflicting": 55,
+   "rate": 0.0342
+  },
+  "real_A": {
+   "pairs": 2149,
+   "conflicting": 7,
+   "rate": 0.0033
+  },
+  "real_B": {
+   "pairs": 1988,
+   "conflicting": 36,
+   "rate": 0.0181
+  }
+ },
+ "hubs": 166,
+ "largest_A": [
+  275,
+  266,
+  233,
+  229,
+  202,
+  188,
+  185,
+  177
+ ],
+ "largest_B": [
+  3505,
+  275,
+  255,
+  233,
+  229,
+  202,
+  188,
+  185
+ ]
+}

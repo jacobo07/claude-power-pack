@@ -47,7 +47,7 @@ def analyse(fn, ins):
                 if rd is not None and rd[0] is not None:
                     acc.append((i.addr, i.m, w, kind, off, rd[0], rd[1] + off))
                 else:
-                    acc.append((i.addr, i.m, w, kind, off, ("UNK", fn, i.addr), off))
+                    acc.append((i.addr, i.m, w, kind, off, ("UNK", fn), off))
             if kind == "l" and m not in ("lmw",):
                 d = i.ops[0]
                 if sym is not None:
@@ -191,6 +191,8 @@ def conflicts(members):
     wd = collections.defaultdict(set)
     for fn, addr, op, w, kind, raw, eff, root in members:
         wd[eff].add(w)
+    if members and members[0][7][0] == 'UNK':
+        return {}  # per-fn untraced bucket: distinct unknown bases, widths not comparable
     return {eff: sorted(ws) for eff, ws in wd.items() if len(ws) > 1}
 
 
@@ -253,7 +255,7 @@ def main():
             if k[0] == "UNK":
                 continue
             for m_ in mem:
-                bf[(m_[0], m_[5])].add((k, m_[6])); bf[(m_[0], m_[6])].add((k, m_[6]))
+                bf[(m_[0], m_[5])].add((k, m_[6]))
         out = set()
         for r in tgt:
             for v in r.get("unresolved_vars") or []:
@@ -282,7 +284,7 @@ def main():
             members=[dict(fn=m_[0], addr="%08X" % m_[1], op=m_[2], width=m_[3], offset=m_[6], root=name(m_[7])) for m_ in mem],
             conflict={hex(o): ws for o, ws in cf.items()} or None,
             status="CONFLICT" if cf else "OK",
-            tierA_cluster_count_merged=len({ufa.find(m_[7]) for m_ in mem})))
+            tierB_clusters_spanned=len({uf_b.find(m_[7]) for m_ in mem})))
     out_clusters.sort(key=lambda c: c["cluster"])
     json.dump(dict(hub_limit=HUB, hubs=sorted("%s#%d" % h for h in hubs), clusters=out_clusters), open(OUT + "/struct_clusters.json", "w"), indent=0)
 
