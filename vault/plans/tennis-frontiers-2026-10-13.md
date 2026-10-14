@@ -10,7 +10,7 @@ Corpus: 1,797 functions (M, D3).
 | verification rate (compile-verified MATCH on lint-clean) | 12/22 | 12/22 = 0.545, Wilson95 0.347-0.731; donors 3/3 | M MEASURE.md, job 3 |
 | distance classes 0/1/2/3/4/5 | -- | 12 / 263 / 1,307 / 92 / 92 / 31 | M D3 |
 | deterministic-fixable share | "<= ~25% model-needed" | class 0-1 = 275 (15.3%) are compile-verifiable by script today; class 2 (72.7%) is "fact-gap" but UNLOCK PER FACT MEASURED ~0 (D5: 11/12 single prototypes unlock 0; cror 0/67; the one SUPPORT retracted by D6, 276 -> 276) | M D3, D5, D6 |
-| model-needed fraction | <= ~25% | **UNKNOWN**. Bound: functions with no script-reachable path now = 1,522/1,797 = 84.7% (D); how many of them need a model rather than a joint fact delta is not measured | D3 / UNKNOWN |
+| model-needed fraction | ~~<= ~25%~~ | **UNKNOWN** (D12b 2026-10-14: still UNPRICED after one shared layout). Bound: functions with no script-reachable path now = 1,522/1,797 = 84.7% (D); how many of them need a model rather than a joint fact delta is not measured | D3 / UNKNOWN |
 | autonomous (0 model calls) MATCH today | >= ~200 fns/day | 12 MATCH now; W13 predicts +88..186 (D, from 0.347-0.731 on 254) -> 100-198 of 1,797 = 5.6-11.0% | M+D |
 | verification throughput | >= ~400 fns/day | job 3: 42 units judged 13 min after send (n=1 job, M). Serial extrapolation ~4,600 units/day is H; real limit is job approvals (7 approved, 3 used, 4 reserved to D6/D8/D9) and capsule batch size (UNKNOWN) | M n=1 / H |
 | exception queue | < 150 | class-1 non-MATCH expected 68-166 (D); +1,522 unresolved classes 2-5. PARTIAL root-cause compression 5/9 = 0.556 (n=9) | D / M D2 |
@@ -45,3 +45,8 @@ Corpus: 1,797 functions (M, D3).
 3. Joint-delta experiment (>= 100 newly lint-clean) -> reopens 72h.
 4. D8 tournament (arms B/D/E/F) when it exists: if arm F > arm B at held-out, the motif/dominator layers have value; D4/D1d say prior probability is low (H).
 5. D8 and D9 have no receipt at the time of writing (see W8B-READY).
+## D12b update (2026-10-14)
+- One shared struct layout (global `lbl_80513E74`, 91 dependents, half-pack/half-held-out, seed 20261014): held-out newly lint-clean 0/46, vars 1285 -> 1221 (5.0%), 23/46 fns touched (M, D12b). The ~~7-day / 72-hour~~ verdicts above stand: NOT REACHABLE on measured inputs.
+- Naive upper baseline (1,522 fns x 50-200K) remains an unmeasured upper bound; D12b did not run the naive arm (capsule fixes its 14 targets). W8b Scope A 88M P50 stays a topology forecast: ~~cited as Tennis forecast~~ UNPRICED until a compounding measurement exists.
+- Research Frontier: 13,811 vars after identity collapse (96% private) vs 1,522 raw fns; Effective Remaining Work UNPRICED.
+- Next falsifier: a joint prototype+field bundle (D12a top bundles unlock 11-12) composed with a layout fact must give >= 100 newly lint-clean on held-out or the fact-gap premise is closed.

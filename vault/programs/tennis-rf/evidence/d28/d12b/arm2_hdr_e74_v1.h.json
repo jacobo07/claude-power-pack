@@ -1,0 +1,30 @@
+{
+ "header": "hdr_e74_v1.h",
+ "n": 91,
+ "in_sample": {
+  "n": 45,
+  "newly_clean": [],
+  "errors": [
+   [
+    "fn_8024DE84",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ],
+  "base_clean": 0,
+  "now_clean": 0,
+  "changed": 43
+ },
+ "held_out": {
+  "n": 46,
+  "newly_clean": [],
+  "errors": [
+   [
+    "fn_80279FCC",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ],
+  "base_clean": 0,
+  "now_clean": 0,
+  "changed": 44
+ }
+}
