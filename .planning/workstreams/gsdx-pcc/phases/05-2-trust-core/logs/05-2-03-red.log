@@ -1,0 +1,15 @@
+﻿PASS V-TRUST-ENV-HERMETIC-HOME tmp home
+FAIL V-TRUST-ENV-DRIFT-INVALIDATES raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'runtime_info'
+FAIL V-TRUST-ENV-VERSIONS-COUNT raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'resolve_pkg'
+FAIL V-TRUST-ENV-LOCK-STATE raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'environment_canonical'
+FAIL V-TRUST-ENV-RUNTIME raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'canonical_env_body'
+FAIL V-TRUST-ENV-BARE-NAME-UNKNOWN raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'environment_canonical'
+FAIL V-TRUST-ENV-CANONICAL-STABLE raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'resolve_pkg'
+FAIL V-TRUST-ENV-NO-LEGACY-CALLER callers of the legacy fingerprint under modules/: ['modules/gsd_x/goal/inherit.py:85', 'modules/gsd_x/goal/proof.py:588']
+FAIL V-TRUST-ENV-MIGRATION-ONCE raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'environment_canonical'
+FAIL V-TRUST-PLANE-FIELD plane={}
+FAIL V-TRUST-PORTABILITY-NEEDS-TWO-PLANES raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'portability_plane'
+FAIL V-TRUST-PORTABILITY-SAME-TREE raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'portability_plane'
+FAIL V-TRUST-PORTABILITY-UNKNOWN-TREE raised AttributeError: module 'modules.gsd_x.goal.trust' has no attribute 'portability_plane'
+FAIL V-TRUST-PLATFORM-NOT-PORTABILITY raised KeyError: 'plane'
+GSDX_TRUST_ENV_PASS=1/14  threshold=14/14
