@@ -3980,6 +3980,27 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         reap(completed, row)
                         row["action"] = "completed"
                         continue
+                unit_rst = None
+                pkt = (rec.get("wu_packet") or {}).get("path")
+                if act in ("relay", "replace") and pkt and not rec.get("done_check"):
+                    # A packet unit armed without a done_check (every chain-armed unit) is closed by its own receipt,
+                    # written after the mission began. Measured 2026-10-14, gsdx-pcc P52a: receipt DONE, worker done, GSD
+                    # NO_PHASES on that roadmap, so the record sat BLOCKED 2.5 h and the chain waited on it (wait_writer).
+                    rp = _receipt_path(pkt)
+                    rst = rj.receipt_status(rp)
+                    try:
+                        if rst is not None and rp.stat().st_mtime >= float(rec.get("created_at") or 0):
+                            unit_rst = rst
+                    except OSError:
+                        unit_rst = None
+                    if unit_rst == "DONE":
+                        completed = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                               event="unit_completed", now=now, state=COMPLETED, pending=None,
+                                               reason=f"unit receipt DONE: {rp}")
+                        reap(completed, row)
+                        row["action"] = "completed"
+                        row["unit_done"] = "RECEIPT_DONE"
+                        continue
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
                     st = (gsd_status or _supervise_gsd_status)(work_dir or rec.get("work_dir") or rec["cwd"],
                                                        workstream=rec.get("workstream"))
@@ -3993,6 +4014,16 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         # Positive test: only "work remains" licenses a relay. UNAVAILABLE is
                         # an unanswered question and NO_PHASES a roadmap nobody can run.
                         outcome = st.get("outcome")
+                        if outcome == "NO_PHASES" and unit_rst not in (None, "DONE", "UNREADABLE"):
+                            # No relay can ever run this roadmap, and the unit's own receipt says it stopped short
+                            # (gsdx-pcc P52b, 2026-10-14: PARTIAL, held 2.5 h). Halt it so the owner of the
+                            # continuation (the chain's residual, or a person) sees a terminal record.
+                            halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                                event="unit_receipt_open", now=now, state=HALTED, pending=None,
+                                                reason=f"unit receipt {unit_rst}; gsd NO_PHASES: no relay can run it")
+                            reap(halted, row)
+                            row["action"] = "halted"
+                            continue
                         row["held"] = f"gsd {outcome}: {st.get('reason')}"
                         prev = rec.get("gsd_hold") or {}
                         same = prev.get("outcome") == outcome
