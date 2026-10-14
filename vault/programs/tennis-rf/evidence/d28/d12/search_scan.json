@@ -1,0 +1,3 @@
+﻿{"step":4,"checked":"2026-10-14","host":"gex44 (ssh, read-only find/ls, no job)","commands":["find / -maxdepth 5 -iname '*permuter*' -not -path '/proc/*'","ls /opt/ksr-decomp","pip list | grep -i permut"],
+"found":[],"opt_ksr_decomp":["dl","ghidra_12.1.2_PUBLIC","jdk","m2c","venv"],"status":"ABSENT","runs":"none (no tool); W12 PARTIAL fns and D2 near_match not searched",
+"install_cmd":"git clone https://github.com/simonlindholm/decomp-permuter && pip install -r decomp-permuter/requirements.txt  (not run: out of scope for this unit)"}

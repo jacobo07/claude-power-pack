@@ -1,0 +1,100 @@
+{
+ "all_2_5": {
+  "fns": 1522,
+  "fns_with_valid_idiom": 975,
+  "idiom_insns": 6009,
+  "insns": 98706,
+  "motif_fraction": 0.38515389135412237,
+  "motif_insns": 38017,
+  "valid_idiom_fraction": 0.06087775819099143
+ },
+ "classes": {
+  "2": {
+   "fns": 1307,
+   "fns_not_in_asm": 0,
+   "fns_with_valid_idiom": 879,
+   "idiom_insns_by": {
+    "bool_from_compare": 122,
+    "float_to_int": 314,
+    "ptmf_call": 30,
+    "stack_guard_prolog": 2544,
+    "struct_copy": 873,
+    "switch_jump_table": 30,
+    "vtable_call": 1448
+   },
+   "insns": 79246,
+   "motif_fraction": 0.41709360724831535,
+   "motif_insns": 33053,
+   "proof_family": {
+    "UNKNOWN": 1307
+   },
+   "valid_idiom_fraction": 0.06723367740958534,
+   "valid_idiom_insns": 5328
+  },
+  "3": {
+   "fns": 92,
+   "fns_not_in_asm": 0,
+   "fns_with_valid_idiom": 86,
+   "idiom_insns_by": {
+    "bool_from_compare": 12,
+    "float_to_int": 60,
+    "stack_guard_prolog": 249,
+    "struct_copy": 148,
+    "switch_jump_table": 6,
+    "vtable_call": 136
+   },
+   "insns": 17724,
+   "motif_fraction": 0.2638230647709321,
+   "motif_insns": 4676,
+   "proof_family": {
+    "UNKNOWN": 92
+   },
+   "valid_idiom_fraction": 0.03424734822839088,
+   "valid_idiom_insns": 607
+  },
+  "4": {
+   "fns": 92,
+   "fns_not_in_asm": 0,
+   "fns_with_valid_idiom": 2,
+   "idiom_insns_by": {
+    "bool_from_compare": 2,
+    "struct_copy": 16
+   },
+   "insns": 1489,
+   "motif_fraction": 0.12894560107454667,
+   "motif_insns": 192,
+   "proof_family": {
+    "UNKNOWN": 92
+   },
+   "valid_idiom_fraction": 0.01208865010073875,
+   "valid_idiom_insns": 18
+  },
+  "5": {
+   "fns": 31,
+   "fns_not_in_asm": 0,
+   "fns_with_valid_idiom": 8,
+   "idiom_insns_by": {
+    "stack_guard_prolog": 24,
+    "vtable_call": 32
+   },
+   "insns": 247,
+   "motif_fraction": 0.38866396761133604,
+   "motif_insns": 96,
+   "proof_family": {
+    "UNKNOWN": 31
+   },
+   "valid_idiom_fraction": 0.22672064777327935,
+   "valid_idiom_insns": 56
+  }
+ },
+ "label": "STRUCTURE, not cost",
+ "valid_idioms": [
+  "bool_from_compare",
+  "float_to_int",
+  "ptmf_call",
+  "stack_guard_prolog",
+  "struct_copy",
+  "switch_jump_table",
+  "vtable_call"
+ ]
+}
