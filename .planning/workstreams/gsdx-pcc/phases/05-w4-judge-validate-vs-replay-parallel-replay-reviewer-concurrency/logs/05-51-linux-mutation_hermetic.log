@@ -1,0 +1,6 @@
+  PASS V-HERM-CONTROL: 1-byte change on brief.py seen, then restored
+  PASS V-HERM-KILL-UNMOVED: entry tree byte-identical after a hard kill at 21.1s
+  PASS V-HERM-KILL-NO-JOURNAL: no restore journal for the entry tree
+  PASS V-HERM-FULL-UNMOVED: CAUGHT=58/58, entry tree byte-identical
+  PASS V-HERM-REAL-TREE-UNMOVED: 27 real target(s) byte-identical
+GSDX_MUTATION_HERMETIC_PASS=5/5  threshold=5/5

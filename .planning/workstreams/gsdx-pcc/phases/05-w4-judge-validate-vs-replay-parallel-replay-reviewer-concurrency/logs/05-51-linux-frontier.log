@@ -1,0 +1,41 @@
+PASS V-FRONTIER-HERMETIC goals_root_under_temp=True
+PASS V-FRONTIER-SWITCH table_rows=12 mismatches=[] file_forces_off=True back_on=True
+PASS V-FRONTIER-UNIT-DERIVE unit=[] integ=['integration-env'] reality=['reality-env'] empty_class=[] causal_reads=['src/a', 'tools/gate.py']
+PASS V-FRONTIER-UNDECLARED declared_pair_independent=True undeclared_refused=True
+PASS V-FRONTIER-INDEP cases=5 wrong=[] asymmetric=[]
+PASS V-FRONTIER-RESOURCE integration_pair_refused=True reality_pair_refused=True cross_class_control_admitted=True
+PASS V-FRONTIER-FRONTIERS exec_before=['ob-a', 'ob-b', 'ob-c', 'ob-d'] exec_after_open=['ob-b', 'ob-c', 'ob-d'] invalidation=['ob-d'] proof_items=6
+PASS V-FRONTIER-GRAPH edges=5 resource_edges=[('gate:i1', 'gate:i2', 'resource:integration-env')] gate_gate_edges=1
+PASS V-FRONTIER-PRIOR own=20.0 class_fallback=25.0 unknown=None
+PASS V-FRONTIER-ORDER order=['a', 'b', 'd', 'c'] unknown_duration_first=['b', 'a']
+PASS V-FRONTIER-FAILURE-FIRST failing=0.6666666666666666 passing=0.0 no_history=None shared_read_multiplier=1.3333333333333333
+PASS V-FRONTIER-INFOGAIN p=.5,10s=0.1 certain=0.0 p=.5,5s=0.2 no_history=None zero_duration=None
+PASS V-FRONTIER-CRITICAL-PATH full=35.0 ('gate:a', 'gate:b', 'gate:c') partial_lower_bound=30.0 unknown=('gate:c',)
+PASS V-FRONTIER-POSTURE cases=13 wrong=[] state_fallback=True log_round_trip=True
+PASS V-FRONTIER-CLASSES bounds={'cognitive': 1, 'deterministic': 4, 'environment': 1, 'reviewer': 1, 'speculative': 1} unknown_class_refused=True
+PASS V-FRONTIER-COMPILE-ORDERS order=['ob-1', 'ob-2'] posture=BALANCED bound=2 unknown_durations=('gate:ob-1', 'gate:ob-2')
+PASS V-FRONTIER-GLOBAL-WAIT legacy=WAIT frontier=NEXT_EPOCH:ob-b control_conflict=WAIT
+PASS V-FRONTIER-LEGACY-EQUAL compared_off=177 compared_on=177 prefixes=['g-002-router-surface=50', 'g-001-smoke-runner=123'] diffs=[]
+PASS V-FRONTIER-SIGNATURE signature=(ctx: 'Context') -> 'Decision'
+PASS V-FRONTIER-HARVEST-NOT-HIDDEN legacy=WAIT frontier=HARVEST:True
+PASS V-FRONTIER-NO-STARVE first=ob-b second=WAIT
+PASS V-FRONTIER-STOP-HOLDS legacy=WAIT frontier=WAIT control=NEXT_EPOCH
+PASS V-FRONTIER-BUDGET-HOLDS legacy=WAIT frontier=WAIT control=NEXT_EPOCH
+PASS V-FRONTIER-CLOSURE-HOLDS legacy=WAIT frontier=WAIT
+PASS V-FRONTIER-BLOCKED-ON-HOLDS legacy=WAIT frontier=WAIT control=NEXT_EPOCH
+PASS V-FRONTIER-WAIT-ONLY-EMPTY nonempty=NEXT_EPOCH empty=WAIT
+PASS V-FRONTIER-BEGIN-REFUSES no_unit='epoch ep-2d61e12e5516 is still open; a g' switch_off='epoch ep-2d61e12e5516 is still open; a g' open_without_unit='epoch ep-2d61e12e5516 is still open; a g' log_and_fence_unchanged=True
+PASS V-FRONTIER-UNSAFE-WRITES cases={'overlapping-writes': (True, True), 'read-after-write': (True, True), 'undeclared-sets': (True, True)}
+PASS V-FRONTIER-BEGIN-DERIVES forged='unit does not match derived for ob-b: the author' honest_but_conflicting='epoch ep-5c99ade3c33a is still open and '
+PASS V-FRONTIER-BEGIN-ADMITS fences=[1, 2, 3] refusals=[] stored_units=3
+PASS V-FRONTIER-SWEEP-N WALL_CLOCK dispatched=3 open=3 satisfied_after_drain=3; ECONOMY dispatched=1 open=1 satisfied_after_drain=3
+PASS V-FRONTIER-SWEEP-BOUND max_parallel=2 -> 2; WALL_CLOCK over 5 ready -> 4 open=4; BALANCED -> 2
+PASS V-FRONTIER-SWEEP-EARLY-FINISH old fixture under a slow pass dispatched=1; blocking fixture dispatched=3
+PASS V-FRONTIER-LOSTRACE outcomes=['won', 'LostRace'] fences=[1]
+PASS V-FRONTIER-FENCE fences=1,2 sibling_fence_refused=True own_receipts_ingested=True
+PASS V-FRONTIER-SPEC-ADMIT admitted=True why='ADMITTED saving 6.7s exceeds cost 3.3s'
+PASS V-FRONTIER-SPEC-REFUSE reasons={'writes_outside': 'WRITES_OUTSIDE_RUN_DIR', 'shared_resource': 'SHARED_RESOURCE', 'non_unit_class': 'NOT_UNIT_CLASS', 'undeclared': 'UNDECLARED', 'unknown_cost': 'UNKNOWN_COST', 'saving_not_above_cost': 'NOT_WORTH_IT'}
+PASS V-FRONTIER-RACE-ADMIT admitted=True refusals={'single': 'TOO_FEW', 'same_root': 'SAME_ROOT', 'contract_mismatch': 'CONTRACT_MISMATCH', 'not_reversible': 'NOT_REVERSIBLE'}
+PASS V-FRONTIER-YIELD speculative={'completed': 2, 'cancelled': 1, 'failed': 1, 'other': 0, 'total': 4} race={'completed': 1, 'cancelled': 2, 'failed': 0, 'other': 0, 'total': 3} empty_total=0
+PASS V-FRONTIER-REPORTED-NOT-EXECUTED dispatched=2 (bound 2, 3 ready) report='sweep-spec: speculative ob-2: admitted -- ADMITTED saving 1.2s exceeds cost 0.0s' no_speculative_epoch=True
+GSDX_FRONTIER_PASS=40/40  threshold=40/40

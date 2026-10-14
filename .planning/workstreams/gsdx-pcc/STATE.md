@@ -14,15 +14,15 @@ workstream: gsdx-pcc
 created: 2026-10-07
 current_phase_name: W5 Mutant farm
 current_plan: Not started
-stopped_at: Phase 5 complete (verification passed, 05-VERIFICATION.md); ready to plan Phase 6 (W5 mutant farm)
+stopped_at: Phase 5 CLOSED (Windows + Linux planes, 05-CROSS-PLATFORM.md); wave 5.2 (trust core) packet WU-P52 is the next compile (WU-P51 Part C)
 ---
 
 # Project State
 
 ## Current Position
 
-**Status:** Ready to plan
-**Current Phase:** 6 -- W5 Mutant farm (Phase 5 complete 2026-10-13, see `phases/05-*/05-VERIFICATION.md`)
+**Status:** Phase 5 CLOSED 2026-10-14 (planes: Windows laptop py3.12.10 for all claims; Linux GEX44 py3.12.3 for d3 + the 58-mutant verdicts; PORTABILITY only for those two, see `phases/05-*/05-CROSS-PLATFORM.md`). Next: wave 5.2 trust core (`packets/WU-P52.md`, compiled by WU-P51 Part C), then Phase 6.
+**Current Phase:** 5.2 -- trust core (continuation plan row 5.2); Phase 6 W5 Mutant farm follows
 
 **Old position line:** 5 -- W4 Judge VALIDATE vs REPLAY (Phase 4 complete 2026-10-13, see `phases/04-w3-candidate-snapshots-invalidation-proof-inheritance/04-VERIFICATION.md`)
 **Last Activity:** 2026-10-13
@@ -36,7 +36,11 @@ stopped_at: Phase 5 complete (verification passed, 05-VERIFICATION.md); ready to
   **Options:** (a) coordinator runs it on the Linux plane (GEX44) at the Phase 4 head and labels the result "Linux plane"; (b) defer it to Phase 6's entry obligation (R11, isolated-copy incumbent measurement); (c) run it on the laptop in an isolated copy with a longer timeout.
   **Pick:** (a). Phase 4 added no judge or mutation-suite change, so the risk is low; the gate stays honest as UNRUN until then.
 
-## OWNER DECISION NEEDED 2026-10-13 (WU-P5): Linux-plane runs
+## RESOLVED 2026-10-14 (WU-P51, option a executed): Phase 5 Linux-plane runs
+
+**Result:** coordinator ran d3 (KILLED) and the 58-mutant suite (58/58, 70 s) on GEX44 at 46d470e1 (`d057770f`). WU-P51 then made the suite mutate a disposable copy (`fdc0c18b`, hermetic gate 5/5, RED was 3/5), re-ran d3 on the laptop (KILLED), and ran 58/58 in a copy on Windows. Original entry kept below.
+
+## (original) OWNER DECISION NEEDED 2026-10-13 (WU-P5): Linux-plane runs
 
 - **Question:** who runs d3 and `tools/test_gsd_x_goal_mutation.py` for Phase 5, and when? Both were UNRUN on the laptop (d3 reaped for memory; the suite mutates live files).
   **Options:** (a) coordinator runs both on GEX44 at the Phase 5 head and labels them "Linux plane"; (b) defer to Phase 6's entry obligation (isolated-copy incumbent measurement).

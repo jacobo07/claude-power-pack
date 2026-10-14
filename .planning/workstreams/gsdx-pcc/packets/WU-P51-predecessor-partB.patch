@@ -1,0 +1,49 @@
+diff --git a/.planning/workstreams/gsdx-pcc/DENOMINATOR.md b/.planning/workstreams/gsdx-pcc/DENOMINATOR.md
+index 1f517b57..b381f2c4 100644
+--- a/.planning/workstreams/gsdx-pcc/DENOMINATOR.md
++++ b/.planning/workstreams/gsdx-pcc/DENOMINATOR.md
+@@ -21,7 +21,7 @@ disposition. Phase = the roadmap phase expected to close it.
+ | D12 | Causal proof binding (?11) | tree_id whole-repo (Reality 4) | EXTEND, unknown -> legacy binding | 4 | DONE | 04-VERIFICATION.md (Windows laptop plane; GSDX_INVALIDATION_PASS=26/26, frontier 40/40, replay 28/28); V-CERT-BINDING-SCHEME, V-INV-FALSE-REUSE; drill d6 KILLED |
+ | D13 | Proof certificate (?12) | evidence_bundle (no certificate) | EXTEND producer | 4 | DONE | 04-VERIFICATION.md (Windows laptop plane; GSDX_INVALIDATION_PASS=26/26, frontier 40/40, replay 28/28); V-CERT-PRODUCED-ON-SATISFY, V-CERT-ONLY-AFTER-SATISFY, V-CERT-LAW-CONSERVATION |
+ | D14 | Freshness classes (?13) | gate_class | EXTEND | 4 | DONE | 04-VERIFICATION.md (Windows laptop plane; GSDX_INVALIDATION_PASS=26/26, frontier 40/40, replay 28/28); V-INV-FRESH-REQUIRED-NEVER, V-INV-FRESH-ISLANDS |
+-| D15 | Judge VALIDATE vs REPLAY (?14) | judge.py | EXTEND | 5 | DONE | DONE 970ea212 (laptop): judge _validate re-derives via inherit.plan; GSDX_JUDGE_VALIDATE_PASS=11/11; d1,d2 KILLED; d3 UNRUN->Linux |
++| D15 | Judge VALIDATE vs REPLAY (?14) | judge.py | EXTEND | 5 | DONE | DONE 970ea212 (laptop): judge _validate re-derives via inherit.plan; GSDX_JUDGE_VALIDATE_PASS=11/11; d1,d2 KILLED; d3 KILLED on BOTH planes (Windows fdc0c18b, Linux 46d470e1, same modules tree dd6c4ba3 = PORTABILITY, see phases/05-*/05-CROSS-PLATFORM.md) |
+ | D16 | Parallel judge replay (?14) | judge.py serial | EXTEND bounded | 5 | DONE | DONE 0f1b2aba (laptop): replay.run_bounded; GSDX_REPLAY_PARALLEL_PASS=14/14; d4,d5 KILLED |
+ | D17 | Reviewer concurrency (?15) | evidence_bundle ticket/nonce | CONNECT + close A->B->A hole | 5 | DONE | DONE 73179700 (laptop): review.received + review.receive; GSDX_REVIEW_PASS=12/12; d8-d10 KILLED |
+ | D18 | Isolated parallel mutant farm (?16) | mutation_drill isolated; probe live | EXTEND drill discipline | 6 | OPEN | |
+diff --git a/.planning/workstreams/gsdx-pcc/STATE.md b/.planning/workstreams/gsdx-pcc/STATE.md
+index 06b1baca..a902e682 100644
+--- a/.planning/workstreams/gsdx-pcc/STATE.md
++++ b/.planning/workstreams/gsdx-pcc/STATE.md
+@@ -14,15 +14,15 @@ workstream: gsdx-pcc
+ created: 2026-10-07
+ current_phase_name: W5 Mutant farm
+ current_plan: Not started
+-stopped_at: Phase 5 complete (verification passed, 05-VERIFICATION.md); ready to plan Phase 6 (W5 mutant farm)
++stopped_at: Phase 5 CLOSED (Windows + Linux planes, 05-CROSS-PLATFORM.md); wave 5.2 (trust core) compiled as packets/WU-P52.md
+ ---
+ 
+ # Project State
+ 
+ ## Current Position
+ 
+-**Status:** Ready to plan
+-**Current Phase:** 6 -- W5 Mutant farm (Phase 5 complete 2026-10-13, see `phases/05-*/05-VERIFICATION.md`)
++**Status:** Phase 5 CLOSED 2026-10-14 (planes: Windows laptop py3.12.10 for all claims; Linux GEX44 py3.12.3 for d3 + the 58-mutant verdicts; PORTABILITY only for those two, see `phases/05-*/05-CROSS-PLATFORM.md`). Next: wave 5.2 trust core (`packets/WU-P52.md`), then Phase 6.
++**Current Phase:** 5.2 -- trust core (continuation plan row 5.2); Phase 6 W5 Mutant farm follows
+ 
+ **Old position line:** 5 -- W4 Judge VALIDATE vs REPLAY (Phase 4 complete 2026-10-13, see `phases/04-w3-candidate-snapshots-invalidation-proof-inheritance/04-VERIFICATION.md`)
+ **Last Activity:** 2026-10-13
+@@ -36,7 +36,11 @@ stopped_at: Phase 5 complete (verification passed, 05-VERIFICATION.md); ready to
+   **Options:** (a) coordinator runs it on the Linux plane (GEX44) at the Phase 4 head and labels the result "Linux plane"; (b) defer it to Phase 6's entry obligation (R11, isolated-copy incumbent measurement); (c) run it on the laptop in an isolated copy with a longer timeout.
+   **Pick:** (a). Phase 4 added no judge or mutation-suite change, so the risk is low; the gate stays honest as UNRUN until then.
+ 
+-## OWNER DECISION NEEDED 2026-10-13 (WU-P5): Linux-plane runs
++## RESOLVED 2026-10-14 (WU-P51, option a executed): Phase 5 Linux-plane runs
++
++**Result:** coordinator ran d3 (KILLED) and the 58-mutant suite (58/58, 70 s) on GEX44 at 46d470e1 (`d057770f`). WU-P51 then made the suite mutate a disposable copy (`fdc0c18b`, hermetic gate 5/5, RED was 3/5), re-ran d3 on the laptop (KILLED, 80 s), and ran 58/58 in a copy on Windows. Original entry kept below.
++
++## (original) OWNER DECISION NEEDED 2026-10-13 (WU-P5): Linux-plane runs
+ 
+ - **Question:** who runs d3 and `tools/test_gsd_x_goal_mutation.py` for Phase 5, and when? Both were UNRUN on the laptop (d3 reaped for memory; the suite mutates live files).
+   **Options:** (a) coordinator runs both on GEX44 at the Phase 5 head and labels them "Linux plane"; (b) defer to Phase 6's entry obligation (isolated-copy incumbent measurement).
