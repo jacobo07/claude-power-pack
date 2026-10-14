@@ -29,6 +29,12 @@
 - Correction to the earlier PARTIAL receipt: "lint-clean 14, all size_insns 1" was wrong. The retail L0 gives
   1/2/4/16/22/22/23 insns. 8 are 1 insn.
 
+## Booking of the closing coordinator session (2026-10-14)
+Programme raised 100M -> 150M (capital packet a14696400e97, Owner "approve tennis-rf only"). The closing session
+85b7c296 was settled at 12,392,178 measured, but the settle landed on L29, the lease the chain had opened for D9
+minutes earlier. **L29's 12.39M is D8v2 coordinator spend, not D9.** D9 continues on L30 (succession
+`tennis-rf:D9:r0-coordfix`, 2.16M, opened with --prev-lease L29). Any D9 overrun judgment must exclude L29.
+
 ## Env needed to reproduce
 `KSR_CAPSULE_PROFILE=tennis`, `MATCH_ACCEL_GEX44=<wst_tennis>\w10\F` (without it, stage resolves the Resort CURRENT
 and refuses TARGET_NOT_IN_CAPSULE), cwd = `wt_tennis_rf\tools\wros\binary\decomp\gex44`. Steps: `stage.py build

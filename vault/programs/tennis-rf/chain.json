@@ -231,18 +231,19 @@
             ]
         },
         {
-            "id": "D9",
+            "id": "D9c",
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D9.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D9-receipt.md",
-            "after": "D8v2"
+            "after": "D8v2",
+            "note": "renamed from D9 2026-10-14: lease L29 (succession tennis-rf:D9) holds 12.39M of D8v2 coordinator spend, not D9 (WU-D8v2-receipt.md)"
         },
         {
             "id": "D12a",
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12a.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12a-receipt.md",
-            "after": "D9"
+            "after": "D9c"
         },
         {
             "id": "D12b",
