@@ -37,9 +37,9 @@ Unit WU-X2: recertify and record knowledge (goal ccr). Linux plane GEX44, host 2
 ## K7: estimate vs actual processed tokens, every session of this unit
 | session | estimate | actual processed |
 |---|---:|---:|
-| X2 worker bf1bb90a-3941-4a94-9893-0c85558b7765 (Opus, GEX44) | 3,000,000 (packet budget) | 1,415,074 over 25 calls, measured just before this receipt. The receipt and commit calls add about 4 x 60k, so the final is about 1.65M |
+| X2 worker bf1bb90a-3941-4a94-9893-0c85558b7765 (Opus, GEX44) | 3,000,000 (packet budget) | 1,845,062 over 30 calls, measured after commit f1fc467d (it was 1,415,074 at 25 calls; the first draft's ~1.65M estimate was low). This correction commit adds about 2 x 90k, so the final is about 2.03M |
 | canary / probe sessions | 0 | 0 (no model calls) |
-| **total** | 3,000,000 | ~1.65M (under budget, under the 4,500,000 breaker). Final: `python3 tools/ccr_spend_census.py measure /home/kobii/missions/ccr-s3-data/run-X2.jsonl` |
+| **total** | 3,000,000 | ~2.03M (under budget, under the 4,500,000 breaker). Final: `python3 tools/ccr_spend_census.py measure /home/kobii/missions/ccr-s3-data/run-X2.jsonl` |
 
 ## LAPTOP_APPLY
 PowerShell on the laptop. Bare `git` is not on the non-interactive PATH. Repo root `C:\Users\User\.claude\skills\claude-power-pack`, worktree `.claude\worktrees\ccr` (branch ccr/v4).
@@ -97,14 +97,14 @@ Record both outputs. If the release was skipped, do not open the A7 canary pane:
 **Step 4. Book the ledger.** This step closes `ledgers_reconciled`.
 - First check that `goal-status --goal ccr` still shows L10 as the latest lease.
 - A0's cap of 22,826,870 covers only the census.
-- Post-census GEX44 spend is 12,968,143. X2 adds about 1.8M (estimate).
-- So open the lease with cap 1.05 x (21,739,876 + 12,968,143 + 1,800,000) = **38,333,420**. This books spend that has already happened; it is not new capital (programme 120M, 'approve p95' 6830508e).
+- Post-census GEX44 spend is 12,968,143. X2 adds about 2.03M (measured 1,845,062 at 30 calls); the cap below used 1.8M, and with ~2.03M the need is 36,737,940 x 1.05 = 38,574,837.
+- So open the lease with cap **38,574,837** (1.05 x (21,739,876 + 12,968,143 + 2,029,921 est. X2 final)). If X2's measured final is above 2,029,921, recompute as 1.05 x (34,708,019 + X2 final). This books spend that has already happened; it is not new capital (programme 120M, 'approve p95' 6830508e).
 
 Commands:
 
     Set-Location C:\Users\User\.claude\skills\claude-power-pack
     python tools/mission_spend.py goal-status --goal ccr
-    python tools/mission_spend.py goal-lease-open --goal ccr --succession-id ccr:book-s3 --cap 38333420 --prev-lease L10
+    python tools/mission_spend.py goal-lease-open --goal ccr --succession-id ccr:book-s3 --cap 38574837 --prev-lease L10
 
 Then:
 1. Run the 16 `goal-settle --measured` lines from `vault/programs/ccr/evidence-v4-stage3-A0.md` section `## LAPTOP_APPLY`, unchanged.
@@ -144,7 +144,7 @@ CCR v4 Stage 3 closed on GEX44 by X2 (2026-10-14). Certificate: **EFFECTIVENESS_
 
 State:
 - A0-A7 and X2 are committed on GEX44 mission/ccr-s3. They are not yet on laptop ccr/v4 or main.
-- Stage 3 GEX44 spend is 29,007,409 processed (A0-A7, all sessions incl. probes and canaries, census-measured), plus X2 at about 1.65M.
+- Stage 3 GEX44 spend is 29,007,409 processed (A0-A7, all sessions incl. probes and canaries, census-measured), plus X2 at about 2.03M.
 
 Ladder:
 - BOUNDARY_COST 1/4. Met: the real admission intervention (A6 DETERMINISTIC_PATH 4/4). ABSTAIN:
@@ -160,7 +160,7 @@ Negative knowledge:
 Next actions, in order:
 1. X2 LAPTOP_APPLY steps 0-2: fetch mission/ccr-s3 into ccr/v4, then ccr/v4 into main, then test_gsd_mission + test_goal_lease.
 2. Step 3: guarded release, then `ccr_release.py status --sessions`.
-3. Step 4: `goal-lease-open ccr:book-s3 --cap 38333420`, then all settles, then `goal-status --goal ccr`.
+3. Step 4: `goal-lease-open ccr:book-s3 --cap 38574837`, then all settles, then `goal-status --goal ccr`.
 4. The Owner's A7 canary pane (`$env:CCR_MAIN_CANARY='1'; claude`), then `python tools/ccr_main_shadow.py --canary ...`.
 5. A5 rounds 2-3 on GEX44 under a fresh budget (~2.94M) to move a5_real_canary from n 1 to n 3.
 6. Fix the GEX44 driver breaker: empty measurement means over the limit, plus a test with a string `message` line.
