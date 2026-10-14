@@ -78,5 +78,6 @@
                       "after":  "P10"
                   }
               ],
-    "note":  "PCC continuation (Owner Aprobar 175M, 2026-10-14). Each unit compiles its successor packet+route (plan CONTINUATION-PLAN-2026-10-14.md s6 cutoffs). Coordinator 7c5ac907 cap 3M, acts on chain_alert only. 2026-10-14 21:05: P52 (m-d563551d7aa9, semantic breaker after Part A 7e139cb3) recompiled as P52a/b/c."
+    "note":  "PCC continuation (Owner Aprobar 175M, 2026-10-14). Each unit compiles its successor packet+route (plan CONTINUATION-PLAN-2026-10-14.md s6 cutoffs). Coordinator 7c5ac907 cap 3M, acts on chain_alert only. 2026-10-14 21:05: P52 (m-d563551d7aa9, semantic breaker after Part A 7e139cb3) recompiled as P52a/b/c.",
+    "model":  "sonnet"
 }
