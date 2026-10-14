@@ -1,0 +1,1 @@
+{"unit":"gsdx-pcc-residual-r1","envelope":{"target":8000000,"warn":9500000,"stop":11000000,"calls":65},"workers":[{"name":"gsdx-pcc-residual","profile":"top-level-worker","calls":65,"packet":7500}]}
