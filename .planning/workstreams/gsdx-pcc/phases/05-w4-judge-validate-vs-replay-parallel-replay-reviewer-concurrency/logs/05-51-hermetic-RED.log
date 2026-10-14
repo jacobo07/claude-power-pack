@@ -1,0 +1,6 @@
+﻿  PASS V-HERM-CONTROL: 1-byte change on brief.py seen, then restored
+  FAIL V-HERM-KILL-UNMOVED: entry tree left mutated after a hard kill: ['log.py']
+  FAIL V-HERM-KILL-NO-JOURNAL: a restore journal exists for the entry tree (gsdx-goal-mutation-a0ec7d57a6df.json): the run depends on it
+  PASS V-HERM-FULL-UNMOVED: CAUGHT=58/58, entry tree byte-identical
+  PASS V-HERM-REAL-TREE-UNMOVED: 27 real target(s) byte-identical
+GSDX_MUTATION_HERMETIC_PASS=3/5  threshold=5/5
