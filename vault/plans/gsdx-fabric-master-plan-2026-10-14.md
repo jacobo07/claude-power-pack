@@ -88,10 +88,12 @@ actual ~38.7M from 63.3M to 102.0M), so the bands below use that overrun ratio, 
 | Unit | Scope | Mode | Route | Depends | P50 | P80 | P95 |
 |---|---|---|---|---|---|---|---|
 | F0 | This scan + plan + worktree/goal setup | EXECUTION | coordinator | -- | 0.6 | 0.8 | 1.0 |
-| F1 | `modules/recon_fabric/` core: entity identity (binary sha256, section, addr, size, normalized-insn hash), residual + census + autonomy lifted from D3, dirty closure from D7, frontier from D4. Corpus-general, Tennis = first corpus | EXECUTION | M | F0 | 3.5 | 4.5 | 6.0 |
-| F2 | Oracle-provider contract (target, evidence type, authority, cost, failure semantics, version) over existing adapters; REA declared, unavailable | EXECUTION | S | F1 | 1.6 | 2.0 | 2.6 |
-| F3 | D27-P0: read current upstream REA release + docs; isolated-prefix probe on GEX44 only if a PPC/DOL lane is claimed | EXECUTION | S (cap 1.2) | -- (parallel) | 0.6 | 1.0 | 1.2 |
-| F4 | Cross-title homology v0: SportsPackEP.dol vs Resort main.dol, EXACT / RELOCATED / NEAR / UNKNOWN on normalized insns + call neighbourhood; precision on W3b donors, shuffled red control | EXECUTION | M | F1 | 3.5 | 4.5 | 6.0 |
+| F1 | `modules/recon_fabric/` core: ingest Tennis (existing DTK split) into a Fabric-owned WROS DB as a `dtk` run (identity = WROS `bin_entities`, s13), then lift D3 residual + census + autonomy, D7 dirty closure and D4 frontier onto those entities. Corpus-general, Tennis = first corpus | EXECUTION | M | F0 | 3.5 | 4.5 | 6.0 |
+| F2 | Oracle Provider Contract = EXTEND WROS `bin_runs.backend` with a provider capability record (format / arch / endian / loader / ops / host / env, each scoped) + typed failure semantics + provider health; REA-absent independence test (s13) | EXECUTION | S | F1 | 1.5 | 2.0 | 2.5 |
+| F3a | D27-P0 upstream disposition: finalize the s13 scan as a scoped, self-invalidating capability record (version, target, host, date, invalidators) | EXECUTION | coordinator | -- | 0.3 | 0.4 | 0.5 |
+| F3b | Ghidra-direct canary on GEX44: pinned install of Ghidra 12.1.2 + GameCubeLoader 12.1 (hashes from the laptop copy), headless import of SportsPackEP.dol, export functions / calls / xrefs, ingest as a WROS `ghidra` run, substitution test against the DTK boundaries | EXECUTION | S | F2 | 1.0 | 1.4 | 1.8 |
+| F3c | REA canary (only if F3b passes): user-local Node 22 + rea-agents (pinned) on GEX44, DOL -> ELF32 ET_EXEC bridge (ours, no fork), `REA_GHIDRA_LANGUAGE_ID=PowerPC:BE:32:Gekko_Broadway`; one receipt per capability; economic adoption gate | EXECUTION | S | F3b | 0.8 | 1.1 | 1.5 |
+| F4 | Cross-title homology v0: lift W3 step0's exact-shape comparison (408 / 1,797 already measured) onto WROS entities, add RELOCATED / NEAR / UNKNOWN + call neighbourhood; precision on W3b donors, shuffled red control | EXECUTION | M | F1 | 2.0 | 2.8 | 3.5 |
 | F5 | Lift D12a/D12b tools (hypergraph, joint delta, motif mass, counterexample classes, bulk verify) into the module after their receipts; replay | EXECUTION | M | D12b receipt | 3.5 | 4.5 | 6.0 |
 | F6 | Proof of Non-Work in front of recon units: connect v2 disposition to the Fabric census (ALREADY_SATISFIED / REUSE / DETERMINISTIC / MODEL_REQUIRED / UNKNOWN) | EXECUTION | S | F1 | 1.6 | 2.0 | 2.6 |
 | F7 | CBR Reconstruction Birth + Construction Return records; fresh-process inheritance canary (no transcript, comparable target) | PLAN then EXECUTION | M | F1,F2,F6 | 3.5 | 4.5 | 6.0 |
@@ -99,12 +101,14 @@ actual ~38.7M from 63.3M to 102.0M), so the bands below use that overrun ratio, 
 | F9 | KV / FIOS / UKDL / CBR closeout | EXECUTION | S | all | 1.2 | 1.6 | 2.0 |
 | -- | Coordinator tax (cap) | -- | -- | -- | 1.5 | 2.0 | 2.5 |
 | -- | Recovery reserve (residual re-arms, breaker closeouts) | -- | -- | -- | 2.4 | 3.4 | 4.5 |
-| | **Total** | | | | **24.9** | **31.8** | **41.0** |
+| | **Total** (rev 2 with the s13 addendum; rev 1 was 24.9 / 31.8 / 41.0) | | | | **25.0** | **33.0** | **43.0** |
 
 Semantic lower bound ~9M (F1+F2+F4+F7 at face value, no residuals). Confidence: medium on F1/F2/F6/F9 (direct
-analogues measured in D3/D7), low on F4 (no prior homology run) and F7 (no prior Birth/Return code).
-**Requested hard authority: 45M** (P95 + 4M). Zero ULTRA-PLAN now; F7 has one PLAN step for the CBR contract. Entity
-identity is decided here (F1 row) rather than escalated.
+analogues measured in D3/D7), low on F3b/F3c (first Tennis Ghidra import, first REA PPC run) and F7 (no prior
+Birth/Return code). F4 shrank because W3 step0 already measured exact shapes.
+**Ceiling = P95 43.0M of new spend** (Owner chose P95 on rev 1 = 41.0M; rev 2 moves P95 by +2.0M). Zero ULTRA-PLAN;
+F7 has one PLAN step for the CBR contract. Entity identity is NOT minted here: it is WROS `bin_entities`
+(artifact, section, start, generation), which already exists (s13).
 
 ## 4. Resource budget
 
@@ -189,11 +193,115 @@ GEX44 CPU. Gate 27: every claim is labelled PROVEN, SHADOW, SIMULATED or HYPOTHE
 Micro-commits: one per unit slice (identity; residual lift; invalidation lift; frontier lift; provider contract; REA
 disposition; homology; PoNW connect; Birth; Return; each canary; KV/UKDL).
 
-## 12. Owner decision (the only one)
+## 12. Owner decision (the only one, consolidated with the s13 addendum)
 
-Approve gsdx-factory Part C (Reconstruction Fabric) under goal gsdx-factory-2 with **programme authority 45M**
-(P50 24.9M / P80 31.8M / P95 41.0M), 0 GEX44 jobs, 1 Sonnet worker on GEX44, shadow-only toward D28. The Part A
-units stay parked.
+Approve gsdx-factory Part C (Reconstruction Fabric) under goal gsdx-factory-2 at **P95 = 43.0M of new spend**
+(programme ceiling 51,817,916 = settled 8,817,916 + 43,000,000; P50 25.0M / P80 33.0M), 0 GEX44 compute jobs,
+1 Sonnet worker on GEX44, shadow-only toward D28. The Part A units stay parked. This includes the F3b/F3c installs
+on GEX44 (Ghidra 12.1.2 + GameCubeLoader 12.1, user-local Node 22 + rea-agents), each behind the s13 supply-chain gate.
+Packet rev 1 (55d12633, 49.8M) is withdrawn from pending and replaced by the rev 2 packet.
 
-On approval: create the worktree and branch, declare the goal on that cwd, write the chain (F0 -> F1 -> {F2, F3, F4, F6}
--> F7 -> F5 (gated on D12b) -> F8 -> F9), and arm F1 and F3, with arm, envelope and admit in one call.
+On approval: create the worktree and branch, declare the goal on that cwd, write the chain
+(F0 -> F1 -> {F2, F3a, F4, F6} -> F3b -> F3c -> F7 -> F5 (gated on D12b) -> F8 -> F9), and arm F1, with arm,
+envelope and admit in one call. F3a is coordinator work, done in the same session.
+
+## 13. Addendum 2026-10-14: oracle capability over oracle product (merged into F2/F3)
+
+### Reality Delta (measured 2026-10-14 ~17:00 local)
+
+| Fact | Value | Source |
+|---|---|---|
+| REA latest release | **rea-agents v6.5.0, released 2026-10-14** (6.4.0 on 10-11, 6.3.0 on 10-09). The W4 REJECT was measured on 6.3.0 and is stale as the "current" result | github.com/morluto/rea/releases |
+| REA PowerPC lane | `docs/ghidra-ppc.md`: admits **ELF32 EM_PPC big-endian ET_EXEC**, default `PowerPC:BE:32:default`, override `REA_GHIDRA_LANGUAGE_ID` admitted against the installed Ghidra catalog. Refuses ELF64, LE, **ET_REL / shared** (so DTK split `.o` files stay refused), EF_PPC_EMB. Verified on a 750-family fixture | upstream doc |
+| REA DOL | **Not supported.** It is Milestone 2 of issue #1741 (OPEN, P3): DOL header, Gekko/Broadway language, SDA base | issue #1741 |
+| Milestone 1 commit | `c86b09a` (2026-10-13, PR #1747). Which release ships it: **UNKNOWN** (it falls between 6.4.0 and 6.5.0; verify in the published tarball, F3c step 1) | issue #1741 |
+| REA raw binary | caller-selected CPU family limited to x86 / x86_64 / arm / arm64 / 6502, **little-endian only**, one mapping at one address (no DOL multi-section map). Not a PPC path | `docs/raw-binary.md` |
+| REA host scope | the PPC lane is **Linux/macOS only**; Windows Ghidra P0 is PE x86/x86-64 (+ raw 6502). On this laptop, REA PPC = TARGET_UNAVAILABLE by host, independent of JDK | `docs/ghidra-ppc.md`, `docs/raw-binary.md` |
+| REA Node requirement | Node 22.19+ / 24.11+ / 26+. **GEX44 has Node v18.19.1** -> ENVIRONMENT_BLOCKED on GEX44 until a user-local Node is supplied | README, `node -v` on GEX44 |
+| JDK | Laptop now has `Apps\jdk-21` beside jdk-17 (W4's blocker was JAVA_HOME = 17: an ENVIRONMENT failure, misfiled at the time as part of a target REJECT). GEX44 has OpenJDK 21.0.12 | `ls`, `java -version` |
+| Ghidra | Laptop: Ghidra 12.1.2 + **GameCubeLoader 12.1** (Cuyler, Apache-2.0, jar sha256 803D7A3C...EF53) giving the DOL/REL loader and `PowerPC:BE:32:Gekko_Broadway`; stock Ghidra has no Gekko id. Existing project RZTP01_PAL (Resort) + scripts DumpLoaderXrefs / FindSDA. **GEX44: no Ghidra installed** | `extension.properties`, ldefs, `ls` |
+| Existing provider substrate | WROS binary extension (KEOS-DTK M1, `tools/wros/binary/schema_ext.sql`): `bin_runs` (content-derived run_id over tool + input + config + output, `backend` dtk / ghidra / ea_xref, tool_identity, config_sha256, output_digest), `bin_entities` (canonical identity, generation, ACTIVE / CLOSED), `bin_observations`, `bin_aliases` (trust classes incl. REFUTED), `bin_lineage` (RESIZE / SPLIT / MERGE). `levels.py` already runs two producers (ghidra, m2c) with `abi_compare == AGREE` consensus. Used for Resort; **Tennis was never ingested** | read |
+| Cross-title shape evidence | W3 step0: 408 / 1,797 Tennis fns have an EXACT Resort shape, 166 loose | `TENNIS-TOOLCHAIN.md` |
+| GitHub MCP | 401 Bad credentials (public pages used instead) | tool error |
+
+### Iteration pass (after Reality Delta)
+- Premise false: "the old 6.3.0 REJECT is the current REA result" (CLASE 2). Two releases later, REA has a PPC BE ELF
+  lane. DOL is still absent, and so are relocatable objects.
+- Premise false: "F2 builds an oracle contract". WROS already holds identity, provenance, run reuse, aliases,
+  lineage and two-producer consensus. F2 adds only the missing **capability record + typed failures + health**.
+- Misfiled in W4: JDK 17 < 21 was an ENVIRONMENT_PREREQUISITE recorded inside a target REJECT. Kept as negative
+  knowledge (TARGET_UNSUPPORTED / ENVIRONMENT conflation).
+
+### F2: Oracle Provider Contract (extend WROS, no new store)
+New table `bin_provider_caps` (additive, like `schema_ext.sql`): provider, version, host_os, capability
+(one of: dol_load, rel_load, elf32_ppc_exec, elf32_ppc_rel, raw_bin, ppc_be_decode, gekko_paired_single,
+section_map, relocations, functions, cfg, calls, xrefs, data_refs, strings, types, decompile, headless,
+evidence_export), status (AVAILABLE / PARTIAL / TARGET_UNAVAILABLE / ENVIRONMENT_BLOCKED / DEGRADED /
+SUPERSEDED / ECONOMICALLY_INFERIOR / UNKNOWN), evidence (receipt path or run_id), measured_at, invalidators
+(version change, host change, upstream release). Failures on `bin_runs` get a typed class: FORMAT_UNSUPPORTED,
+ARCH_UNSUPPORTED, ENDIANNESS_UNSUPPORTED, ENVIRONMENT_PREREQUISITE, PROVIDER_STARTUP_FAILURE, ANALYSIS_FAILURE,
+TIMEOUT, RESOURCE_LIMIT, INVALID_OUTPUT, UNKNOWN. Health (configured / healthy / unhealthy) stays separate from
+capability. Normalization = existing `bin_observations` + `bin_aliases`. Conflicts between providers become WROS
+claims with the existing REFUTED trust, never an average. Selection: cheapest provider whose cap row is
+AVAILABLE for the obligation; an existing `bin_runs` row with the same run_id is reused (read once / singleflight
+by content). No provider SDK until two real adapters show the same shape (DTK + Ghidra will be the first two).
+
+**Independence test (mandatory, F2 done-gate):** with every REA cap row removed, the Tennis obligations
+{section_map, functions, calls, xrefs, relocations} resolve through DTK (+ Ghidra after F3b). A test drives the
+red branch: also remove DTK, and the same query must return a typed blocker, not an empty success.
+
+### Capability matrix (initial, to be proven per row)
+
+| Capability | DTK | m2c | Ghidra 12.1.2 + GameCubeLoader | REA 6.5.0 | compiler + objdiff |
+|---|---|---|---|---|---|
+| DOL load / section map | AVAILABLE (Tennis split, step0) | -- | UNKNOWN on Tennis (works on Resort) | TARGET_UNAVAILABLE (M2 open) | -- |
+| REL load | AVAILABLE | -- | UNKNOWN (loader claims it) | TARGET_UNAVAILABLE | -- |
+| ELF32 PPC ET_EXEC | -- | -- | AVAILABLE (stock) | PARTIAL: Linux/macOS only; release UNKNOWN | -- |
+| ELF32 PPC ET_REL (DTK `.o`) | produces | consumes | AVAILABLE | TARGET_UNAVAILABLE | consumes |
+| Gekko paired-single decode | UNKNOWN | -- | AVAILABLE (Gekko_Broadway id) | UNKNOWN (catalog override untested) | -- |
+| functions / boundaries | AVAILABLE | -- | UNKNOWN on Tennis | UNKNOWN | -- |
+| calls / xrefs / relocations | AVAILABLE (relocs) | -- | UNKNOWN on Tennis | calls verified upstream; xrefs not stated | -- |
+| decompile | -- | AVAILABLE (per fn) | AVAILABLE | AVAILABLE (upstream fixture) | -- |
+| equivalence proof | -- | -- | -- | -- | AVAILABLE (GEX44 jobs) |
+| headless on Windows laptop | yes | yes | yes | PPC: TARGET_UNAVAILABLE by host | GEX44 only |
+| headless on GEX44 | yes | yes | ENVIRONMENT_BLOCKED (not installed) | ENVIRONMENT_BLOCKED (Node 18) | yes |
+
+### F3: D27-P0 as capability discovery
+- **F3a (done in this scan, sealed in the record):** upstream reality above. Minimum delta from the current Wii path
+  to "REA as a Tennis provider" = **PROVIDER_BRIDGE + ENVIRONMENT_ONLY**: a DOL -> ELF32 ET_EXEC wrapper
+  (one PT_LOAD per DOL text/data section, entry from the header; ours, ~100 lines, no REA fork), the Gekko language via
+  `REA_GHIDRA_LANGUAGE_ID` (admitted only if the catalog includes GameCubeLoader's id), a Linux host, Node 22.
+  Not upstream work. Branch: **B (small delta, our side)**, pending F3c's economic gate.
+- **F3b:** Ghidra-direct on Tennis, headless on GEX44. Each capability (dol_load, section_map, functions, calls,
+  xrefs, gekko decode) gets its own receipt, compared with DTK boundaries as a substitution test (agreement %,
+  conflicts listed, CPU / RAM / wall time). Opening the file proves only dol_load.
+- **F3c:** REA on the same artifact through the bridge. Adoption needs REA to beat or match F3b on at least one
+  obligation **and** to lower a measured cost (latency, normalization code, model context, proof cost). Otherwise
+  the disposition is ECONOMICALLY_INFERIOR, recorded and inactive, with no architectural loss. If 6.5.0's tarball
+  does not contain the PPC lane: TARGET_UNAVAILABLE (version-scoped) and F3c stops.
+- **Upstream opportunity:** only as a packet (missing capability = DOL loader, M2 of #1741; patch surface; acceptance
+  odds; maintenance; alternative cost = Ghidra-direct, already working). No fork.
+- **Freshness:** the REA cap rows carry the release tag as an invalidator. Re-probe on a new rea-agents release
+  (checked when a Fabric campaign starts, never polled).
+
+### Supply-chain gate (before any F3b/F3c install)
+Origin (NSA Ghidra release asset, Cuyler/Ghidra-GameCube-Loader repo, npm rea-agents), pinned version, sha256
+recorded in `vault/programs/gsdx-fabric/supply-chain.json`. For the loader, a hash identical to the laptop copy.
+License (Ghidra Apache-2.0, GameCubeLoader Apache-2.0, REA MIT). Isolated prefix under `~/fabric-tools/`, nothing
+global. Rollback = delete that prefix. No install happens before the s12 approval is applied.
+
+### Resource budget for F2/F3
+Laptop: none (coordinator only). GEX44: Ghidra headless import of one ~4-5 MB DOL with a 6 GB heap, <= 4 cores,
+~10-20 min; REA run similar; disk < 3 GB for the tools. 0 GEX44 compute jobs; D28 jobs untouched.
+
+### Knowledge and closeout (inside F9)
+FIOS / KV candidates confirmed by this scan: STALE_PROVIDER_CAPABILITY_ASSUMPTION (6.3.0 result treated as
+current), ENVIRONMENT_FAILURE_MISCLASSIFIED_AS_TARGET_UNSUPPORTED (W4 JDK), FORMAT_SUPPORT_CONFLATED_WITH_ARCH_SUPPORT,
+UNSCOPED_NEGATIVE_TOOL_CLAIM. UKDL candidates go to promotion only after F2's independence test and F3b's canary
+pass. The CBR candidate is "capability over product", promoted only with a second domain consumer.
+
+### Done-gates F2-1..6, F3-1..10
+F2-1..4 belong to F2 (schema + tests), F2-5 to F3b (substitution), F2-6 to the independence test. F3-1..5 are met
+by this scan except the release that ships `c86b09a` (closed in F3c step 1, or recorded UNKNOWN). F3-6 = minimum
+delta above. F3-7 = the F3c disposition. F3-8 = per-capability receipts. F3-9 = independence test. F3-10 = every
+row in the matrix labelled with the evidence that proved it.
