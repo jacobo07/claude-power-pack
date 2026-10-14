@@ -15,18 +15,32 @@
                       "after":  null
                   },
                   {
-                      "id":  "P52",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52-receipt.md",
+                      "id":  "P52a",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52a.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52a.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52a-receipt.md",
                       "after":  "P51"
+                  },
+                  {
+                      "id":  "P52b",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52b.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52b.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52b-receipt.md",
+                      "after":  "P52a"
+                  },
+                  {
+                      "id":  "P52c",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52c.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52c.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52c-receipt.md",
+                      "after":  "P52b"
                   },
                   {
                       "id":  "P6",
                       "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P6.md",
                       "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P6.json",
                       "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P6-receipt.md",
-                      "after":  "P52"
+                      "after":  "P52c"
                   },
                   {
                       "id":  "P7",
@@ -64,5 +78,5 @@
                       "after":  "P10"
                   }
               ],
-    "note":  "PCC continuation (Owner Aprobar 175M, 2026-10-14). Each unit compiles its successor packet+route (plan CONTINUATION-PLAN-2026-10-14.md s6 cutoffs). Coordinator 7c5ac907 cap 3M, acts on chain_alert only."
+    "note":  "PCC continuation (Owner Aprobar 175M, 2026-10-14). Each unit compiles its successor packet+route (plan CONTINUATION-PLAN-2026-10-14.md s6 cutoffs). Coordinator 7c5ac907 cap 3M, acts on chain_alert only. 2026-10-14 21:05: P52 (m-d563551d7aa9, semantic breaker after Part A 7e139cb3) recompiled as P52a/b/c."
 }
