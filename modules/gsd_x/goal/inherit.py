@@ -37,14 +37,16 @@ def _seconds(ts):
         return None
 
 
-def _latest_live(ledger: pf.ProofLedger, cid: str):
+def _latest_live(ledger: pf.ProofLedger, cid: str, ob):
     """(certificate id, payload, seq, ts) of the newest certificate of claim `cid` that is live (not
-    invalidated, not revoked) and trusted. A pre-5.2 certificate has no authority or lineage: it is
-    never inherited from (05-2-01), though readers still project it."""
+    invalidated, not revoked) and verified (`trust.verify_certificate`: authority, claim, contract hash,
+    strength, lineage, plane). A pre-5.2 certificate has no authority or lineage: it is never inherited
+    from (05-2-01), though readers still project it. A forged one is skipped, not trusted."""
     live = set(pf.live_certificates(ledger, cid))
+    hashes = trust.contract_hashes(ledger, ob)
     for p in reversed(ledger.produced):
         cert = pf.certificate_id(cid, p["seq"])
-        if p["data"].get("claim_id") == cid and cert in live and trust.is_trusted(p["data"]):
+        if p["data"].get("claim_id") == cid and cert in live and trust.verify_certificate(ledger, p, cid, ob, hashes)[0]:
             return cert, p["data"], p["seq"], p["ts"]
     return None
 
@@ -96,7 +98,7 @@ def plan(state, root, candidate: str, now: float) -> list:
                 "reason": "", "premises": {}}
         out.append(item)
         v = ob.verdict or {}
-        live = _latest_live(ledger, cid)
+        live = _latest_live(ledger, cid, ob)
         if not on:
             item["reason"] = "inheritance switch off"
         elif cv.tree_equal(v.get("tree_hash"), candidate) and v.get("revision") == state.revision:
@@ -181,7 +183,7 @@ def inherited_ids(state, candidate: str) -> frozenset:
         if ob.disposition != cv.SATISFIED or (ob.verdict or {}).get("revision") != state.revision:
             continue
         cid = pf.claim_id(ob)
-        live = _latest_live(ledger, cid)
+        live = _latest_live(ledger, cid, ob)
         if live is None:
             continue
         cert, data, seq, _ts = live

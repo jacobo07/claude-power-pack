@@ -1,0 +1,32 @@
+﻿PASS V-FORGERY-HERMETIC-HOME tmp home
+PASS V-FORGERY-F1-REFUSED-WITH-CONTROL forged admitted=False control admitted=True
+FAIL V-FORGERY-F2-REFUSED-WITH-CONTROL raised ProofRefused: proof.inherited: authority strength above the certificate it inherits (N05)
+FAIL V-FORGERY-F3-REFUSED unit claim stamped live: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F3-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F4-REFUSED lineage parent of another claim: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F4-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F5a-REFUSED lineage cycle: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F5a-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F5b-REFUSED lineage depth disagrees: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F5b-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F6a-REFUSED unregistered authority id: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F6a-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F6b-REFUSED unregistered authority version: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F6b-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F7-REFUSED revoked authority signs again: forged: mode=None verdict=PASS runs=2; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F7-CONTROL-ADMITTED forged: mode=None verdict=PASS runs=2; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F8-REFUSED contract hash names no ledger contract: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F8-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F9-REFUSED premises.claim of another claim: forged: mode=None verdict=PASS runs=1; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F9-CONTROL-ADMITTED forged: mode=None verdict=PASS runs=1; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F11a-REFUSED PORTABILITY with one plane: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F11a-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F11b-REFUSED PORTABILITY over two different trees: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F11b-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F11c-REFUSED PORTABILITY over an unknown tree: forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+PASS V-FORGERY-F11c-CONTROL-ADMITTED forged: mode=VALIDATE verdict=PASS runs=0; control: mode=VALIDATE runs=0
+FAIL V-FORGERY-F3-LIVE-CLASS-CONTROL mode=None runs=2
+PASS V-FORGERY-F10-REFUSED-WITH-CONTROL forged admitted=False control admitted=True
+PASS V-FORGERY-F12-REFUSED-WITH-CONTROL future=['unknown'] control=['equal']
+FAIL V-FORGERY-COUNT 1 distinct attacks refused: ['F1', 'F10', 'F12', 'F7', 'F9']
+GSDX_TRUST_FORGERY_PASS=18/31  threshold=31/31
