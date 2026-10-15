@@ -4618,7 +4618,34 @@ def progress_fingerprint(work_dir: str) -> str | None:
             parts.append(r.stdout)
     except Exception:  # noqa: BLE001 -- unmeasured is its own answer
         return None
+    planning = _planning_artifacts(work_dir)
+    if planning:
+        parts.append(planning)
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def _planning_artifacts(work_dir: str) -> str:
+    """Names and sizes of GSD artifacts under `.planning/`, STATE.md excluded.
+
+    Measured 2026-10-15 (m-07a78fbae3c7, GEX44 dws-exec/rb): `.planning/` was git-excluded so the
+    product branch stays clean, phase 1 wrote only there, and the cost breaker held a working mission
+    at 5.36M "since the work tree last changed". git cannot see an excluded dir, and porcelain folds an
+    untracked one to a single line. STATE.md is left out because a worker rewrites it every turn: a
+    looping worker must still read as stalled. Empty when there is no `.planning/`."""
+    root = Path(work_dir) / ".planning"
+    if not root.is_dir():
+        return ""
+    rows = []
+    try:
+        for dirpath, _dirs, files in os.walk(root):
+            for name in files:
+                if name == "STATE.md":
+                    continue
+                p = Path(dirpath) / name
+                rows.append(f"{p.relative_to(root).as_posix()}:{p.stat().st_size}")
+    except OSError:
+        return ""
+    return "\n".join(sorted(rows))
 
 
 def mission_fingerprint(rec: dict, base_dir: str, fp_fn=None) -> str | None:
