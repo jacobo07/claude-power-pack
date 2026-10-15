@@ -277,17 +277,19 @@ def gsd_unit(work_dir: str, workstream: str | None, manager=None) -> dict:
     roadmap = _read(base / "ROADMAP.md")
     state = _read(base / "STATE.md")
     name = None
-    try:
-        if manager is None:
-            import gsd_long_run as lr
-            manager = lr.gsd_manager
-        data, _why = manager(work_dir, workstream=workstream)
-    except Exception:  # noqa: BLE001 -- GSD unreachable: the file readings answer
-        data = None
+    fm = _PHASE_RES[0].search(state)
+    data = None
+    if not fm:                         # the frontmatter answers alone: no node call (review LOW-4)
+        try:
+            if manager is None:
+                import gsd_long_run as lr
+                manager = lr.gsd_manager
+            data, _why = manager(work_dir, workstream=workstream)
+        except Exception:  # noqa: BLE001 -- GSD unreachable: the file readings answer
+            data = None
     if not (data and data.get("roadmap_exists") and data.get("state_exists")):
         data = None
     phases = (data or {}).get("phases") or []
-    fm = _PHASE_RES[0].search(state)
     if fm:
         num = fm.group(1).lstrip("0") or "0"
     elif phases:

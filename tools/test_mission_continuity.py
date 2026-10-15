@@ -131,6 +131,13 @@ def receipts(mid: str) -> list[str]:
     return [r.get("classification") for r in ledger(mid, "breaker_receipt")]
 
 
+def ge_kids(sid):
+    import gsd_epoch as ge
+    return ge.child_work(sid)
+
+
+NO_LAUNCH = lambda mid, **kw: {"ok": False, "why": "test: launches are never real"}  # noqa: E731
+NO_STOP = lambda *a, **k: (True, "test stop")  # noqa: E731
 NO_KIDS = lambda sid, now=None: {"verdict": "CLEAR", "pending": [], "unconsumed": []}  # noqa: E731
 
 
@@ -185,6 +192,22 @@ rec4 = breaker(breaker(rec4, 1_000_000), 1_000_000)
 git(wt4, "commit", "-q", "--allow-empty", "-m", "nothing")
 rec4 = breaker(rec4, 1_000_000 + STALL + 1)
 check("V-AMCR-R4B-EMPTY-COMMIT-IS-NOT-PROGRESS", bool(rec4.get("owner_hold")), str(receipts("m-c00000000003")))
+# review HIGH-1: that real stall hold must NOT be lifted as "false" by recovery (an empty commit moved no tree)
+r4r = gm.recover_mission(gm.load("m-c00000000003"), [{"sessionId": "m-c00000000003-w", "id": "x", "kind": "background",
+                         "state": "done"}], time.time(), pid_alive=lambda p: False,
+                         gsd_status=lambda wd, workstream=None: {"outcome": "OK"}, launch=NO_LAUNCH, stop_runner=NO_STOP)
+check("V-AMCR-R4B-EMPTY-COMMIT-HOLD-NOT-FALSE-STALL", r4r["action"] != "recover_false_stall"
+      and not ledger("m-c00000000003", "false_stall_reconciled"), str(r4r)[:160])
+t_amend = time.time() - 1
+git(wt4, "commit", "-q", "--amend", "--allow-empty", "--no-edit")
+legacy_hold = {"reason": "cost breaker: 5,000,000 processed since the work tree last changed", "set_at": time.time() + 1}
+check("V-AMCR-R4B-AMEND-IS-NOT-A-FALSE-STALL", mb.false_stall(gm.load("m-c00000000003"), legacy_hold,
+                                                               mark_at=t_amend) is None)
+commit(wt4, "src.txt", "real content\n")
+check("V-AMCR-R4B-CONTROL-CONTENT-COMMIT-IS-A-FALSE-STALL", mb.false_stall(
+    gm.load("m-c00000000003"), {**legacy_hold, "set_at": time.time() + 1}, mark_at=t_amend) is not None)
+check("V-AMCR-NO-MARK-NO-WINDOW", mb.false_stall({**gm.load("m-c00000000003"), "cost_mark": None},
+                                                 legacy_hold, mark_at=None) is None)
 
 # --- R3: a sample of an older binding generation never trips -------------------------------------------
 main3, wt3, rec3 = incident("r3", "m-c00000000004")
@@ -200,6 +223,28 @@ def rebind_mid_judgement(sid, now=None):
 rec3 = breaker(gm.load("m-c00000000004"), 1_000_000 + STALL + 1, child_fn=rebind_mid_judgement)
 check("V-AMCR-R3-STALE-GENERATION-NO-TRIP", not gm.load("m-c00000000004").get("owner_hold")
       and receipts("m-c00000000004")[-1] == mb.STALE_GENERATION and mb.generation(gm.load("m-c00000000004")) == 2)
+
+# review MEDIUM-1: a bind landing after the generation check (during obligation capture) still voids the trip
+main3c, wt3c, rec3c = incident("r3c", "m-c0000000000b", child=True)
+rec3c = breaker(breaker(rec3c, 1_000_000), 1_000_000)
+wt3d = worktree(main3c, "wt2", "gsd/r3c-second")
+real_capture = mb.capture_obligations
+
+
+def capture_then_rebind(*a, **k):
+    gm.bind_mission("m-c0000000000b", str(wt3d))
+    return real_capture(*a, **k)
+
+
+mb.capture_obligations = capture_then_rebind
+old_kids = lambda sid, now=None: {**ge_kids("m-c0000000000b-w"), "verdict": "EXPIRED", "youngest_age_s": 9999}  # noqa: E731
+try:
+    breaker(gm.load("m-c0000000000b"), 1_000_000 + STALL + 1, child_fn=old_kids)
+finally:
+    mb.capture_obligations = real_capture
+a3c = gm.load("m-c0000000000b")
+check("V-AMCR-R3-LATE-REBIND-VOIDS-TRIP", not a3c.get("owner_hold") and mb.generation(a3c) == 2
+      and receipts("m-c0000000000b")[-1] == mb.STALE_GENERATION, str(receipts("m-c0000000000b")))
 
 # --- R5: research-only progress (no code, an artifact in .planning) ---------------------------------------
 main5, wt5, rec5 = incident("r5", "m-c00000000005")
@@ -217,8 +262,7 @@ check("V-AMCR-R5-ARTIFACT-CLOSES-CHILD-OBLIGATION", (rec5.get("obligations") or 
 # --- R6: a working child extends the stall budget once; parent+child death keeps the obligation ----------
 main6, wt6, rec6 = incident("r6", "m-c00000000006", child=True)
 rec6 = breaker(breaker(rec6, 1_000_000), 1_000_000)
-import gsd_epoch as ge  # noqa: E402
-kids = ge.child_work("m-c00000000006-w")
+kids = ge_kids("m-c00000000006-w")
 young = lambda sid, now=None: {**kids, "verdict": "HOLD", "youngest_age_s": 60}  # noqa: E731
 rec6 = breaker(gm.load("m-c00000000006"), 1_000_000 + STALL + 1, child_fn=young)
 check("V-AMCR-R6-WORKING-CHILD-NO-TRIP", not rec6.get("owner_hold")
@@ -235,6 +279,9 @@ check("V-AMCR-R6-SUCCESSOR-CARD-CARRIES-OBLIGATION", "OUTSTANDING CHILD WORK" in
 
 # --- R2 + R10: the Credit Score case end to end -- worker died after its commit, legacy stall hold ----------
 main2, wt2, rec2 = incident("r2", "m-c00000000007", child=True)
+gm.transition("m-c00000000007", expect_epoch=1, expect_state=gm.RUNNING, event="cost_mark", touch=False,
+              cost_mark={"fp": "main-checkout-fp", "tokens": 2_048_142})   # a pre-AMCR mark: no `at`, ledger only
+time.sleep(1.1)
 commit(wt2, ".planning/phases/01-cases-and-persistence/01-CONTEXT.md", "context committed by the worker\n")
 time.sleep(1.1)
 gm.set_owner_hold("m-c00000000007", "cost breaker: 5,051,831 processed since the work tree last changed (stall "
@@ -250,7 +297,7 @@ check("V-AMCR-R2-BIND-REOPENS-LEGACY-UNREADABLE-PARK", legacy_plan["action"] != 
 dead =[{"sessionId": "m-c00000000007-w", "id": "m-c0000", "kind": "background", "state": "done"}]
 plan2 = gm.plan_next(gm.load("m-c00000000007"), time.time(), dead, pid_alive=lambda p: False)
 r2 = gm.recover_mission(gm.load("m-c00000000007"), dead, time.time(), pid_alive=lambda p: False,
-                        gsd_status=lambda wd, workstream=None: {"outcome": "OK"})
+                        gsd_status=lambda wd, workstream=None: {"outcome": "OK"}, launch=NO_LAUNCH, stop_runner=NO_STOP)
 a2 = gm.load("m-c00000000007")
 check("V-AMCR-R2-FALSE-STALL-RECONCILED", plan2["action"] == "recover" and r2["action"] == "recover_false_stall"
       and not a2.get("owner_hold") and not a2.get("amr"), str(r2)[:200])
@@ -310,6 +357,12 @@ check("V-AMCR-R9-REMOVED-ROOT-IS-UNKNOWN-NOT-ZERO", not a9.get("owner_hold")
       and receipts("m-c0000000000a")[-1] == mb.PROGRESS_UNKNOWN and a9["cost_mark"]["fp"] is not None)
 check("V-AMCR-R9-UNKNOWN-STREAK-SURFACES-INCIDENT", len(ledger("m-c0000000000a", "progress_unknown_incident")) == 1
       and str(a9.get("reason", "")).startswith("INCIDENT"), str(a9.get("reason"))[:160])
+# review MEDIUM-2: after the streak the breaker judges the cwd (where a worker goes after removing its worktree),
+# so a stalled worker is still stopped: one mark on the cwd, then a stall trips.
+rec9 = breaker(gm.load("m-c0000000000a"), 2_000_000)
+rec9 = breaker(gm.load("m-c0000000000a"), 2_000_000 + STALL + 1)
+check("V-AMCR-R9-INVALIDATED-BINDING-STILL-TRIPS-A-STALL", bool(gm.load("m-c0000000000a").get("owner_hold"))
+      and len(ledger("m-c0000000000a", "binding_invalidated")) == 1, str(receipts("m-c0000000000a")[-3:]))
 
 # --- binding: refusals and the resolver inventory ----------------------------------------------------------
 other = repo("unrelated")
@@ -326,12 +379,23 @@ except gm.MissionError as exc:
     refused = "not its top" in str(exc)
 check("V-AMCR-BIND-REFUSES-SUBDIR", refused)
 topo = gm.topology("m-c00000000001")
+before = gm.load("m-c00000000001")
+gm.transition("m-c00000000001", expect_epoch=1, expect_state=before["state"], event="t", touch=False,
+              cost_mark={"fp": "x", "tokens": 5, "at": 1.0})
+again = gm.bind_mission("m-c00000000001", str(wt1))
+check("V-AMCR-REBIND-SAME-ROOT-IS-NOOP", mb.generation(again) == 1 and (again.get("cost_mark") or {}).get("fp") == "x")
 check("V-AMCR-TOPOLOGY-RECEIPT", topo["execution_root"] == str(wt1.resolve()) and topo["binding_generation"] == 1
       and topo["live_branch"] == "gsd/r1" and topo["goal_liveness"] in ("RECOVERING", "OWNER_BOUNDARY"), str(topo)[:200])
 src = (HERE / "gsd_mission.py").read_text(encoding="utf-8")
 legacy_sites = src.count('rec.get("work_dir") or rec["cwd"]')
-check("V-AMCR-ONE-RESOLVER-INVENTORY", legacy_sites <= 1,
-      f"{legacy_sites} site(s) still derive the root themselves (allowed: the kill-switch branch only)")
+check("V-AMCR-ONE-RESOLVER-INVENTORY", legacy_sites == 0,
+      f"{legacy_sites} site(s) still derive the root themselves (the kill switch uses mb.legacy_root)")
+obs = [{"id": "c1", "state": "COMPLETED"}]
+kept = mb.capture_obligations({"obligations": obs}, {"pending": [{"tool_use_id": "c1", "tool": "Agent"}]}, None,
+                              "KILLED_WITH_PARENT", time.time(), Path(TMP) / "obl")
+check("V-AMCR-CLOSED-OBLIGATION-NEVER-REOPENED", kept[0]["state"] == "COMPLETED")
+check("V-AMCR-MENTIONS-MSYS-PATH", mb.mentions("cd /c/users/x/repo-wt && ls", r"C:\Users\x\repo-wt")
+      and not mb.mentions("cd /c/users/x/repo-wt2", r"C:\Users\x\repo-wt"))
 
 print(f"AMCR_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)

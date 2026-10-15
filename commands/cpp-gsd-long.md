@@ -121,7 +121,9 @@ incident), never a silent Owner wait.
 & $py "$pp\tools\gsd_mission.py" topology --mission <id>   # binding, live HEAD, frontier, spend since progress, obligations, liveness
 ```
 
-Kill switch: `CPP_MISSION_CONTINUITY=off` (the old `work_dir or cwd` observers). Plan:
+Kill switch: `CPP_MISSION_CONTINUITY=off` (the old `work_dir or cwd` observers). Two fixes stay on
+under it by design: the fingerprint keys on HEAD's tree (an empty commit is never progress), and
+the residual reader understands every STATE.md format GSD writes. Plan:
 `vault/plans/amcr-mission-continuity-20261015.md`.
 
 ## Sweep (every 5 minutes)

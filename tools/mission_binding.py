@@ -78,6 +78,11 @@ def generation(rec: dict) -> int:
     return int((binding(rec) or {}).get("gen") or 0)
 
 
+def legacy_root(rec: dict) -> str:
+    """The pre-AMCR derivation, used ONLY behind the kill switch."""
+    return rec.get("work_dir") or rec["cwd"]
+
+
 def execution_root(rec: dict) -> str:
     """THE answer to "where does this mission's work live". A bound root that has disappeared is still
     returned: measuring a missing tree yields None (unmeasured), measuring the main checkout instead
@@ -85,7 +90,7 @@ def execution_root(rec: dict) -> str:
     b = binding(rec) if enabled() else None
     if b:
         return b["root"]
-    return rec.get("work_dir") or rec["cwd"]
+    return legacy_root(rec)
 
 
 def describe(path: str, cwd: str) -> dict:
@@ -198,7 +203,9 @@ def tool_text_since(transcript: Path | None, since: float) -> str | None:
 def mentions(text: str, root: str) -> bool:
     """`root` named as a whole path: `.../r8-wt` must not match inside `.../r8-wt2` (measured in V-AMCR-R8)."""
     import re
-    for form in {_canon(str(Path(root).resolve())), _canon(root)}:
+    forms = {_canon(str(Path(root).resolve())), _canon(root)}
+    forms |= {"/" + f[0] + f[2:] for f in list(forms) if len(f) > 2 and f[1] == ":"}   # Git-Bash /c/... form
+    for form in forms:
         if re.search(re.escape(form) + r"(?![\w.-])", text):
             return True
     return False
@@ -283,15 +290,20 @@ def capture_obligations(rec: dict, kids: dict, transcript: Path | None, state: s
         if not oid:
             continue
         o = have.get(oid) or {"id": oid, "created_at": now}
+        if o.get("state") and o["state"] not in OUTSTANDING_CHILD_STATES:
+            continue                   # closed (COMPLETED/SUPERSEDED/CANCELLED) is never reopened
         inp = tool_input(transcript, oid) or {}
         kind = inp.get("subagent_type") or p.get("tool")
         prompt = inp.get("prompt") or inp.get("command") or ""
         ref = None
         if prompt:
-            store.mkdir(parents=True, exist_ok=True)
-            ref = store / f"{oid}.md"
-            ref.write_text(f"# Child obligation {oid} ({kind})\n\n{p.get('what') or ''}\n\n{prompt}\n",
-                           encoding="utf-8")
+            try:
+                store.mkdir(parents=True, exist_ok=True)
+                ref = store / f"{oid}.md"
+                ref.write_text(f"# Child obligation {oid} ({kind})\n\n{p.get('what') or ''}\n\n{prompt}\n",
+                               encoding="utf-8")
+            except OSError:
+                ref = None             # the obligation is kept without its prompt; the trip is not lost
         o.update({"kind": kind, "what": p.get("what"), "launched_at": p.get("at"), "state": state,
                   "prompt_ref": str(ref) if ref else o.get("prompt_ref"), "updated_at": now,
                   "expect": GSD_CHILD_ARTIFACT.get(str(kind)) or o.get("expect")})
@@ -340,23 +352,41 @@ def card_lines(rec: dict) -> list[str]:
     return lines
 
 
-def false_stall(rec: dict, hold: dict) -> dict | None:
-    """Was a stall hold contradicted by the bound tree? A commit in the execution root after the breaker's
-    last mark (mission start when the mark carries no time) and no later than the trip falsifies "the work
-    tree has not changed". Returns the evidence, or None."""
+def false_stall(rec: dict, hold: dict, mark_at: float | None = None) -> dict | None:
+    """Did the stall hold judge a tree that was not the mission's, while the mission's own tree changed?
+
+    Both halves are required (review HIGH-1, 2026-10-15). (a) The trip measured another root: a hold the
+    reconciled breaker wrote carries `measured` {gen, root}; equal to the current binding means it judged
+    this very tree and nothing is reconciled. A legacy hold (no `measured`) measured the cwd. (b) The bound
+    root's CONTENT moved inside the window [last mark, trip]: HEAD's tree at the trip differs from the tree
+    before the mark -- an empty commit, an amend or a revert pair is not progress. `mark_at` is the mark's
+    time from the ledger when the mark itself carries none; with neither there is no window (never "since
+    the mission started")."""
     if not enabled() or "since the work tree last changed" not in str(hold.get("reason") or ""):
         return None
     root = execution_root(rec)
-    if _norm(root) == _norm(rec["cwd"]) and not binding(rec):
+    measured = hold.get("measured") or {}
+    if measured:
+        if _norm(str(measured.get("root") or "")) == _norm(root) and int(measured.get("gen") or 0) == generation(rec):
+            return None
+    elif _norm(root) == _norm(rec["cwd"]):
         return None
-    start = float((rec.get("cost_mark") or {}).get("at") or rec.get("created_at") or 0)
-    end = float(hold.get("set_at") or time.time())
+    start = (rec.get("cost_mark") or {}).get("at") or mark_at
+    if start is None:
+        return None
+    start, end = float(start), float(hold.get("set_at") or time.time())
     base = (binding(rec) or {}).get("base")
-    # Only the mission's own commits: what the bound branch added on top of its base. A commit inherited
-    # from the base branch says nothing about whether this worker progressed.
-    out = _git(root, "log", "--format=%H %ct", "-n", "200", f"{base}..HEAD" if base else "HEAD")
+    out = _git(root, "log", "--format=%H %ct %T", "-n", "200", f"{base}..HEAD" if base else "HEAD")
     if out is None:
         return None
-    commits = [ln.split()[0] for ln in out.splitlines()
-               if ln.strip() and start <= int(ln.split()[1]) <= end + 1]
-    return {"root": root, "commits": commits} if commits else None
+    rows = [ln.split() for ln in out.splitlines() if len(ln.split()) == 3]          # newest first
+    inside = [r[0] for r in rows if start <= int(r[1]) <= end + 1]
+    if not inside:
+        return None
+    tree_end = next((r[2] for r in rows if int(r[1]) <= end + 1), None)
+    tree_start = next((r[2] for r in rows if int(r[1]) < start), None)
+    if tree_start is None:
+        tree_start = (_git(root, "rev-parse", f"{base}^{{tree}}") or "").strip() if base else None
+    if not tree_end or tree_end == tree_start:
+        return None
+    return {"root": root, "commits": inside, "tree_start": tree_start, "tree_end": tree_end}

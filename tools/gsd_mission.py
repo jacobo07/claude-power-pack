@@ -1321,7 +1321,10 @@ def handoff_packet(session_id: str, specs: list[str], context: int = 30) -> tupl
         live = effective_workdir(session_id, rec["cwd"], rec.get("workstream"))
     except Exception:  # noqa: BLE001 -- a packet is an aid; fall back, never block the hand-off
         live = None
-    root = (live if live and mb._norm(live) != mb._norm(rec["cwd"]) else None) or mb.execution_root(rec)
+    if mb.enabled():
+        root = (live if live and mb._norm(live) != mb._norm(rec["cwd"]) else None) or mb.execution_root(rec)
+    else:
+        root = live or mb.legacy_root(rec)
     paths, selectors = [], []
     for spec in specs:
         if "::" in spec:
@@ -1403,7 +1406,8 @@ def cost_hold_stop_enabled() -> bool:
     return str(os.environ.get("CPP_COST_HOLD_STOP") or "").strip().lower() not in ("0", "off", "false")
 
 
-def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind: str | None = None) -> dict:
+def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind: str | None = None,
+                   expect_seq: int | None = None, extra: dict | None = None) -> dict:
     """Park a live mission (spec mission-owner-hold): plan_next answers none and renewal is refused
     until release_owner_hold. The record keeps its identity, epoch and state. kind="cost" (the breaker)
     additionally stops the running worker (spec mission-cost-hold-stops-worker)."""
@@ -1416,9 +1420,10 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind:
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; there is nothing to hold")
     now = time.time() if now is None else now
-    out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+    out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expect_seq,
                      event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
-                     owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {})})
+                     owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {}),
+                                 **(extra or {})})
     hold_guard_budget(rec, reason)
     return out
 
@@ -1583,7 +1588,7 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         return _reconciled_breaker(rec, now, measure, fingerprint)
     try:
         spent = (measure or ms.processed_tokens)(rec)
-        fp = mission_fingerprint(rec, rec.get("work_dir") or rec["cwd"], fingerprint or progress_fingerprint)
+        fp = mission_fingerprint(rec, mb.legacy_root(rec), fingerprint or progress_fingerprint)
         verdict = ms.judge(rec, spent, fp)
     except Exception as exc:  # noqa: BLE001 -- recorded, never silent
         lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid,
@@ -1598,6 +1603,23 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
                           event="cost_mark", now=now, cost_mark=verdict["mark"],
                           reason=f"progress fingerprint moved at {spent:,} processed")
     return rec
+
+
+def _last_mark_at(mid: str, before: float) -> float | None:
+    """When the breaker last marked progress before `before`, from the ledger (marks written before AMCR
+    carry no time of their own). None = no mark: there is no window."""
+    import datetime as _d
+    best = None
+    try:
+        for row in lr.ledger_events(mid):
+            if row.get("event") != "cost_mark":
+                continue
+            t = _d.datetime.fromisoformat(str(row.get("ts")).replace("Z", "+00:00")).timestamp()
+            if t <= before + 1 and (best is None or t > best):
+                best = t
+    except Exception:  # noqa: BLE001 -- an unreadable ledger gives no window, never a guessed one
+        return None
+    return best
 
 
 def _save_child_obligations(rec: dict, failed_sid: str | None, now: float) -> dict:
@@ -1667,6 +1689,13 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
                               reason=f"workspace rebound (detected) gen {nb['gen']}: {nb['root']}")
     root = mb.execution_root(rec)
     fp_fn = fingerprint or progress_fingerprint
+    fallback = False
+    if mb.binding(rec) and not Path(root).is_dir() and (
+            rec.get("binding_invalidated_at")
+            or int((rec.get("progress_unknown") or {}).get("streak") or 0) >= mb.UNKNOWN_INCIDENT_STREAK):
+        # Review MEDIUM-2: the bound worktree is gone (merged and removed, or deleted). After the unknown
+        # streak the breaker judges the cwd -- where such a worker continues -- so a stall is still stopped.
+        fallback, root = True, rec["cwd"]
     try:
         fp = mission_fingerprint({**rec, "add_dirs": list(rec.get("add_dirs") or []) + cands}, root, fp_fn)
         verdict = ms.judge(rec, spent, fp)
@@ -1678,9 +1707,14 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
     if verdict["mark"]:
         _breaker_receipt(mid, mb.GOOD, "mark", **evidence)
         settled = mb.settle_obligations(rec, root, now)   # a landed artifact closes its child obligation
+        inval = {}
+        if fallback and not rec.get("binding_invalidated_at"):
+            inval = {"binding_invalidated_at": now}
+            lr.ledger_append(mid, "binding_invalidated", mission_id=mid, gen=gen0,
+                             root=(mb.binding(rec) or {}).get("root"), judged=root)
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="cost_mark", now=now,
                           cost_mark={**verdict["mark"], "at": now, "gen": gen0}, progress_unknown=None,
-                          **({"obligations": settled} if settled else {}),
+                          **({"obligations": settled} if settled else {}), **inval,
                           reason=f"progress fingerprint moved at {spent:,} processed (gen {gen0}, {root})")
     if fp is None and not verdict["trip"]:
         streak = int((rec.get("progress_unknown") or {}).get("streak") or 0) + 1
@@ -1714,17 +1748,28 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
     if mb.generation(current) != gen0:
         _breaker_receipt(mid, mb.STALE_GENERATION, "no_trip", current_gen=mb.generation(current), **evidence)
         return current
-    if kids and kids.get("pending"):
-        obs = mb.capture_obligations(rec, kids, transcript, "KILLED_WITH_PARENT", now,
-                                     lr.state_dir() / "obligations" / mid)
-        rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="obligations_saved",
-                         now=now, touch=False, obligations=obs,
-                         reason=f"{len(obs)} child obligation(s) saved before the breaker stops the worker")
+    # Review MEDIUM-1: from the generation check to the hold every write carries the seq it observed, so a
+    # bind landing in between (the worker runs `bind` as its card says) voids this sample instead of
+    # stopping the worker on it.
+    try:
+        rec = current
+        if kids and kids.get("pending"):
+            obs = mb.capture_obligations(rec, kids, transcript, "KILLED_WITH_PARENT", now,
+                                         lr.state_dir() / "obligations" / mid)
+            rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
+                             event="obligations_saved", now=now, touch=False, obligations=obs,
+                             reason=f"{len(obs)} child obligation(s) saved before the breaker stops the worker")
+        held = set_owner_hold(mid, verdict["trip"], now=now, kind="cost", expect_seq=rec.get("seq"),
+                              extra={"measured": {"gen": gen0, "root": root, "fallback": fallback}})
+    except CasConflict:
+        now_rec = load(mid) or rec
+        _breaker_receipt(mid, mb.STALE_GENERATION, "no_trip", current_gen=mb.generation(now_rec), **evidence)
+        return now_rec
     _breaker_receipt(mid, mb.ZERO_CONFIRMED if stall_trip else "BUDGET_EXCEEDED", "trip", reason=verdict["trip"],
                      **evidence)
     lr.ledger_append(mid, "cost_breaker_tripped", mission_id=mid, spent=spent,
                      estimate=rec.get("token_estimate"), reason=verdict["trip"])
-    return set_owner_hold(mid, verdict["trip"], now=now, kind="cost")
+    return held
 
 
 def bind_mission(mission_id: str, path: str, cause: str = "explicit", now: float | None = None) -> dict:
@@ -1736,6 +1781,10 @@ def bind_mission(mission_id: str, path: str, cause: str = "explicit", now: float
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; nothing to bind")
     now = time.time() if now is None else now
+    b = mb.binding(rec)
+    if b and Path(path).is_dir() and mb._norm(path) == mb._norm(b["root"]):
+        lr.ledger_append(mission_id, "bind_noop", mission_id=mission_id, root=b["root"], gen=b["gen"])
+        return rec                     # review LOW-1: re-declaring the same root must not reset the stall clock
     try:
         nb = mb.new_binding(rec, path, cause, now)
     except mb.BindError as exc:
@@ -2054,7 +2103,7 @@ def recover_mission(rec: dict, sessions, now: float, *, pid_alive=lr._pid_alive,
                 return {"action": "recover_wait_fence", "reason": f"old worker not stopped yet: {how}"}
             hold = {**hold, "worker_stopped_at": now, "stop": how}   # F3: our stop is recorded with the hold
     rec = _save_child_obligations(rec, failed_sid, now)
-    fs = mb.false_stall(rec, hold)
+    fs = mb.false_stall(rec, hold, mark_at=_last_mark_at(mid, float(hold.get("set_at") or now)))
     if fs:
         # AMCR: the hold said "nothing changed" about a tree that was not the mission's; the bound root
         # committed inside that window. Not a failed strategy -- nothing is fenced, nothing re-planned: lift
