@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
 current_phase: 1 — Context-rent attribution
-current_plan: Not started
-status: planning
-stopped_at: Owner approved (approve p95, packet 0b87df4e9b02); ready to plan Phase 1
+current_plan: Phase 1 complete
+status: phase-1-complete
+stopped_at: Phase 1 complete; ready to plan Phase 2
 last_updated: "2026-10-14T23:10:00.000Z"
 last_activity: 2026-10-14
 last_activity_desc: Workstream created from vault/plans/ccr-v5-svm-imc-2026-10-14.md
 progress:
   total_phases: 11
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 9
 workstream: ccr-v5
 created: 2026-10-14
 current_phase_name: Context-rent attribution
@@ -22,7 +22,7 @@ current_phase_name: Context-rent attribution
 
 ## Current Position
 
-**Status:** Ready to plan Phase 1. Goal `ccr`, lease L13 (`ccr:v5`, cap 79,000,000), programme 195,000,000.
+**Status:** Phase 1 COMPLETE (EVIDENCE.md, G1 not triggered). Ready to plan Phase 2. Goal `ccr`, lease L13 (`ccr:v5`, cap 79,000,000), programme 195,000,000.
 
 ## Decisions
 
@@ -39,3 +39,5 @@ current_phase_name: Context-rent attribution
   Stuck worker 29c88241 stopped so the sweep replaces it.
   Generalizes: any mission armed in a NEW worktree under `~/.claude` hits this before its first turn.
   Phase 11 must record it as a UKDL trap, and as a fix in `gsd_mission arm`.
+
+- 2026-10-15 (epoch 5): Phase 1 executed in the main thread (no planner subagent, per the successor packet). tools/ccr_rent_ledger.py extends ccr_anatomy; G1 NOT triggered (host-fixed 5.8-7.7 %, worst case 43 %), so Phase 6 keeps full scope. The 77K tool-schema+framing residual is UNJUDGED; Phase 6/10 own it.

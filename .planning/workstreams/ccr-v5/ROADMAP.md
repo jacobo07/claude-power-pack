@@ -38,7 +38,7 @@ durable dependency, never an Owner reminder. Nothing is SEALED while successor-c
 
 ## Phases
 
-### Phase 1: Context-rent attribution (route 3.0M)
+### Phase 1: Context-rent attribution (route 3.0M) -- COMPLETE 2026-10-15 (G1 not triggered; see phases/01-*/01-EVIDENCE.md)
 Decompose the LuckyArena Lobby first-call context (measured floor 206,186, `vault/programs/ccr/evidence-v4-stage3-A4.md:39`)
 into constitution / memory / rules / hook injections / tool schemas / skills / history / thinking, using existing
 receipts and transcripts (no re-spend to reproduce known numbers). Split project-age vs epoch-age drivers. Write a
