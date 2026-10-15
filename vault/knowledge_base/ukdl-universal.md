@@ -179,6 +179,40 @@ resumed. The rule already existed as a COMMENT in the same file ("a rearm below
 ~28 would never be reached after a compaction"); a comment is not a constraint.
 `2803576`; REARM_FLOOR_PCT=28, 8/8 with three negative controls, 3/3 mutations.
 
+### T-SOURCE-REGEX-TRIPS-ON-PROSE-001
+
+PROVEN. A gate that regex-scans a function's source text for forbidden names ("never read the outcome") trips on prose inside
+strings and is blind to a renamed read. gsdx-fabric F8: the router read only disposition-row keys, yet failed on the word
+"verdict" in an explanation string. Fix the check, not the string: walk the AST for keys read via subscript or `.get`, compare to
+an allow-list, and prove it with the mutant that performs the forbidden read (`readoutcome` -> red). Rewording the prose to pass
+the regex is the wrong repair. Evidence: fabric `evidence/f8/mutant-readoutcome.txt`, `7c5aa44f`.
+
+### T-NON-DISCRIMINATING-CONTROL-001
+
+SHADOW (recurred twice). When a control cannot separate the real result from a shuffled one, the number is a property of the
+sample, not of the method. gsdx-fabric: D4 rank vs shuffle (6.6667 vs max 8.6333) and F8 routing 9 calls saved vs shuffle mean
+9.565 / p95 10 (12 of 22 functions were already MATCH). Report the control verdict beside the number, and before trusting a
+saving show the control separates on a stand-in (F8: 10 vs 4.998, SIMULATED). Evidence: fabric `evidence/f8/summary.json`.
+
+### PR-UNJUDGED-REUSE-IS-NOT-SAVED-WORK-001
+
+PROVEN. A recorded oracle refutation outranks every reuse or determinism claim; REUSE and DETERMINISTIC stay SHADOW until an
+oracle judges the row, and a removed-unit count is never saved work (F6: 316 removed, 131 of them one-instruction rows; an
+identical-text donor still failed on SIZE). Gate proven able to fail by the `acceptfail` mutant. Evidence: fabric
+`evidence/f6/mutant-acceptfail.txt`.
+
+### PR-SYNTHETIC-CONTROL-ASSERTS-CONSTRUCTION-001
+
+PROVEN. A synthetic control must first assert that the row it needs exists; otherwise "no row" reads as a pass. An `or` clause
+that makes a check unfalsifiable is a defect. gsdx-fabric F2 (KN-F2-01); its mutants drop the gate to 24/33, 31/33, 28/33.
+Evidence: fabric `WU-F2-receipt.md`.
+
+### PR-FIXTURE-IS-ORACLE-POPULATION-001
+
+PROVEN (single incident). Pin a fixture as the oracle's whole input population, never the subset the lift consumes, and filter
+in code: F1 pinned a corpus subset and its diagnostic read 44 where D7 counted 101 over all 18,820 blocks. Evidence: fabric
+`evidence/f1/test.txt`.
+
 ### PR-COLD-START-IS-A-BUDGET-NOT-A-CEILING-001
 
 A timeout sized against a warm path is blind to the cold one, and the first call
