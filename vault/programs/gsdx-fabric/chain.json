@@ -90,7 +90,18 @@
       "wait": [
         "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F8-receipt.md"
       ],
-      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F8); packet fff8b9aa (route S per packet); the laptop tick must not arm it"
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F8); packet fff8b9aa (route S per packet); the laptop tick must not arm it. DONE slice 68d0c3bf (F8 + residual F8b, both breaker-stopped; receipt written by coordinator from its own re-run; shuffle control not discriminating), settled 2,020,316 (L13) + 1,525,158 (L14)"
+    },
+    {
+      "id": "F9",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F9.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F9-receipt.md",
+      "after": "F8",
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F9-receipt.md"
+      ],
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F9); packet 68d0c3bf; writes proposal files only, the coordinator applies KV/UKDL/FIOS on the laptop; the laptop tick must not arm it"
     }
   ]
 }
