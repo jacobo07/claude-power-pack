@@ -28,6 +28,17 @@ the history checker (modules/history_check) reads, so the lease has one record,
 not a record and a log that can disagree.
 
 Clock: `clock()` on THIS host only. Deadlines written here are judged only here.
+
+Resource leases (ccr-v5 phase 3): a lease may key a repo path instead of a free-form class.
+`resource_id(path)` maps a repo-relative path, under any spelling, to the class string
+"res:<normalized path>"; `acquire_resources` grants those classes with the intent, the expected
+base revision of every path and the writer identity carried in an optional `meta` key of the
+SAME `grant` record. No journal op was added: `_fold` ignores extra keys, so an older reader
+folds a resource journal unchanged and a rollback of this code never bricks the journal.
+`check_base` is the pre-effect compare-and-set point: it never writes. A foreign writer that
+never takes a lease is NOT stopped by it; that case belongs to the dirty-path probe and the HEAD
+recheck of the landing flow. Holder and writer fields are caller claims (same-user, single-host
+trust model); fences, not names, authorize release.
 """
 from __future__ import annotations
 
@@ -60,6 +71,13 @@ STALE_FENCE = "stale_fence"
 NOT_LIVE = "not_live"
 BAD_STATE = "bad_state"
 BAD_REQUEST = "bad_request"
+NO_BASE = "no_base"                    # resource request without a base revision for every path
+NO_INTENT = "no_intent"
+STALE_BASE = "stale_base"              # the resource moved since the recorded base revision
+BASE_ABSENT = "base_absent"            # the current revision could not be measured
+FREE = "FREE"
+RESOURCE_PREFIX = "res:"
+INTENT_MAX = 200
 
 REFUSED_FS = frozenset({"nfs", "nfs4", "cifs", "smb", "smbfs", "smb2", "smb3", "overlay",
                         "overlayfs", "9p", "sshfs", "davfs", "afs", "glusterfs", "ceph"})
@@ -97,6 +115,55 @@ class Lease:
     fences: dict
     queue_deadline: float | None
     deadline: float | None
+    meta: dict = field(default_factory=dict)
+
+
+def normalize_resource_path(path) -> str:
+    """One canonical spelling of a repo-relative path, or ValueError for a path the ledger must
+    never key. Lowercased on purpose: the filesystems this runs on are case-insensitive, so
+    over-contending is the safe error."""
+    if not isinstance(path, str) or not path:
+        raise ValueError("resource path must be a non-empty string")
+    if "\x00" in path:
+        raise ValueError("NUL byte in resource path")
+    p = path.replace("\\", "/")
+    if ":" in p:
+        raise ValueError("colon in resource path (drive letter or alternate data stream)")
+    if p.startswith("/"):
+        raise ValueError("absolute resource path")
+    segs = []
+    for seg in p.split("/"):
+        if seg in ("", "."):
+            continue
+        if seg == "..":
+            raise ValueError("parent segment in resource path")
+        if seg.endswith(".") or seg.endswith(" "):
+            raise ValueError("segment ending in a dot or space (Win32 resolves it to a shorter name)")
+        segs.append(seg.lower())
+    if not segs:
+        raise ValueError("empty resource path")
+    return "/".join(segs)
+
+
+def resource_id(path) -> str:
+    """The lease class string for a repo-relative path; ValueError when the path cannot be keyed."""
+    return RESOURCE_PREFIX + normalize_resource_path(path)
+
+
+_SCALARS = (str, int, float, bool, type(None))
+
+
+def _writer_problem(writer) -> bool:
+    if writer is None:
+        return False
+    if not isinstance(writer, dict) or len(writer) > 16:
+        return True
+    for k, v in writer.items():
+        if not isinstance(k, str) or not k or len(k) > 64 or not isinstance(v, _SCALARS):
+            return True
+        if isinstance(v, str) and len(v) > 200:
+            return True
+    return False
 
 
 # --- filesystem guard ------------------------------------------------------
@@ -289,7 +356,8 @@ class LeaseStore:
                     fences[c] = gen[c]
                 leases[r["lease_id"]] = Lease(r["lease_id"], r["holder"], tuple(r["classes"]),
                                               r["ttl_s"], RESERVED, fences,
-                                              r.get("queue_deadline"), None)
+                                              r.get("queue_deadline"), None,
+                                              dict(r.get("meta") or {}))
                 continue
             lease = leases[r["lease_id"]]
             if op in ("dispatch", "renew"):
@@ -335,6 +403,10 @@ class LeaseStore:
     def acquire(self, classes, holder: str, ttl_s: float, lease_id: str,
                 queue_wait_s: float | None = None) -> Result:
         """Reserve every class or none. The TTL does not run until dispatch()."""
+        return self._acquire(classes, holder, ttl_s, lease_id, queue_wait_s, None)
+
+    def _acquire(self, classes, holder: str, ttl_s: float, lease_id: str,
+                 queue_wait_s: float | None, meta: dict | None) -> Result:
         classes = tuple(sorted(set(classes)))
         if not classes or not holder or not lease_id:
             return Result(False, BAD_REQUEST, lease_id)
@@ -350,16 +422,19 @@ class LeaseStore:
                 prev = leases[lease_id]
                 # the same request replayed after a lost response returns what it got,
                 # but only for the same holder and classes
-                if prev.holder == holder and prev.classes == classes and prev.state in LIVE_STATES:
+                if prev.holder == holder and prev.classes == classes \
+                        and prev.meta == (meta or {}) and prev.state in LIVE_STATES:
                     return Result(True, "", lease_id, prev.fences, prev.state, prev.deadline)
                 return Result(False, BAD_REQUEST, lease_id, state=prev.state)
             busy = [c for c in classes if owner.get(c)]
             if busy:
                 return Result(False, HELD, lease_id, state=",".join(busy))
             qd = self.clock() + queue_wait_s if queue_wait_s is not None else None
-            self._append(records, {"op": "grant", "lease_id": lease_id, "holder": holder,
-                                   "classes": list(classes), "ttl_s": float(ttl_s),
-                                   "queue_deadline": qd})
+            grant = {"op": "grant", "lease_id": lease_id, "holder": holder,
+                     "classes": list(classes), "ttl_s": float(ttl_s), "queue_deadline": qd}
+            if meta is not None:
+                grant["meta"] = meta
+            self._append(records, grant)
             lease = self._fold(records)[0][lease_id]
             return Result(True, "", lease_id, lease.fences, lease.state)
 
@@ -433,8 +508,120 @@ class LeaseStore:
         with self._lock:
             records = self._read()
             leases, gen, owner = self._fold(records)
-        return {"leases": {k: vars(v) for k, v in leases.items()}, "fence": dict(gen),
+        return {"leases": {k: {a: b for a, b in vars(v).items() if a != "meta" or b}
+                           for k, v in leases.items()}, "fence": dict(gen),
                 "owner": dict(owner), "records": len(records), "torn_records": self.torn_records}
+
+    # -- resource leases ----------------------------------------------------------
+
+    def acquire_resources(self, resources, holder: str, ttl_s: float, lease_id: str, intent,
+                          base, queue_wait_s: float | None = None, writer=None) -> Result:
+        """Reserve every path or none, recording intent, the expected base revision of each path
+        and the writer identity in the grant record. A reserved lease that is never dispatched
+        still has a deadline (queue_wait_s defaults to ttl_s)."""
+        try:
+            paths = sorted({normalize_resource_path(p) for p in resources})
+        except (ValueError, TypeError):
+            return Result(False, BAD_REQUEST, lease_id)
+        if not paths:
+            return Result(False, BAD_REQUEST, lease_id)
+        if not isinstance(intent, str) or not intent.strip() or len(intent) > INTENT_MAX:
+            return Result(False, NO_INTENT, lease_id)
+        norm_base = {}
+        if isinstance(base, dict):
+            for k, v in base.items():
+                try:
+                    norm_base[normalize_resource_path(k)] = v
+                except (ValueError, TypeError):
+                    continue
+        recorded = {}
+        for p in paths:
+            rev = norm_base.get(p)
+            if not isinstance(rev, str) or not rev.strip():
+                return Result(False, NO_BASE, lease_id, state=p)
+            recorded[p] = rev
+        if _writer_problem(writer):
+            return Result(False, BAD_REQUEST, lease_id)
+        if queue_wait_s is None:
+            queue_wait_s = ttl_s
+        if not (isinstance(queue_wait_s, (int, float)) and not isinstance(queue_wait_s, bool)
+                and queue_wait_s > 0):
+            return Result(False, BAD_REQUEST, lease_id)
+        meta = {"intent": intent, "base": recorded, "writer": dict(writer or {})}
+        return self._acquire([RESOURCE_PREFIX + p for p in paths], holder, ttl_s, lease_id,
+                             queue_wait_s, meta)
+
+    def check_base(self, lease_id: str, holder: str, fences: dict, current) -> Result:
+        """Pre-effect compare-and-set: the holder is live with the current fence AND every path
+        still has the revision recorded at acquire. Appends nothing. Result.state names the
+        offending path on STALE_BASE / BASE_ABSENT."""
+        with self._lock:
+            records = self._read()
+            leases, _, owner = self._expire_due(records)
+            bad = self._holder_guard(leases, lease_id, holder, fences)
+            if bad:
+                lease = leases.get(lease_id)
+                if bad.reason == NOT_LIVE and lease is not None and any(
+                        owner.get(c) not in (None, lease_id) for c in lease.classes):
+                    # a paused holder whose resource was taken over holds a stale fence
+                    return Result(False, STALE_FENCE, lease_id, lease.fences, lease.state)
+                return bad
+            lease = leases[lease_id]
+            base = lease.meta.get("base") if isinstance(lease.meta, dict) else None
+            if not isinstance(base, dict) or not base:
+                return Result(False, BAD_REQUEST, lease_id, state=lease.state)
+            if lease.state != ACTIVE:
+                return Result(False, BAD_STATE, lease_id, lease.fences, lease.state)
+            cur = {}
+            if isinstance(current, dict):
+                for k, v in current.items():
+                    try:
+                        cur[normalize_resource_path(k)] = v
+                    except (ValueError, TypeError):
+                        continue
+            for p in sorted(base):
+                now_rev = cur.get(p)
+                if not isinstance(now_rev, str) or not now_rev.strip():
+                    return Result(False, BASE_ABSENT, lease_id, lease.fences, p)
+                if now_rev != base[p]:
+                    return Result(False, STALE_BASE, lease_id, lease.fences, p)
+            return Result(True, "", lease_id, lease.fences, ACTIVE, lease.deadline)
+
+    def resource_status(self, paths) -> dict:
+        """Expiry-aware view of resources, keyed by the path as given. Unlike snapshot() this
+        applies due expiries, so a vanished holder frees its resource at its deadline. A free
+        resource reports the state of the last lease that touched it (RELEASED, EXPIRED, ...)."""
+        wanted = {}
+        for p in paths:
+            wanted[p] = normalize_resource_path(p)
+        with self._lock:
+            records = self._read()
+            leases, _, owner = self._expire_due(records)
+        out = {}
+        for orig, norm in wanted.items():
+            cid = RESOURCE_PREFIX + norm
+            lid = owner.get(cid)
+            last = None
+            for lease in leases.values():
+                if cid in lease.classes:
+                    last = lease
+            held = leases[lid] if lid else None
+            show = held or last
+            meta = show.meta if show is not None else {}
+            base = meta.get("base") if isinstance(meta, dict) else None
+            out[orig] = {
+                "resource": cid, "free": held is None,
+                "state": show.state if show is not None else FREE,
+                "holder": show.holder if show is not None else None,
+                "lease_id": show.lease_id if show is not None else None,
+                "fence": show.fences.get(cid) if show is not None else None,
+                "deadline": show.deadline if show is not None else None,
+                "queue_deadline": show.queue_deadline if show is not None else None,
+                "intent": meta.get("intent") if isinstance(meta, dict) else None,
+                "base": base.get(norm) if isinstance(base, dict) else None,
+                "writer": meta.get("writer") if isinstance(meta, dict) else None,
+            }
+        return out
 
     def records(self) -> list[dict]:
         """The journal, for independent history checking."""
