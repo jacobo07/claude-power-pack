@@ -3,13 +3,13 @@
                      "target":  6000000,
                      "warn":  7000000,
                      "stop":  8000000,
-                     "calls":  45
+                     "calls":  20
                  },
     "workers":  [
                     {
                         "name":  "kernel-u1",
                         "profile":  "slim-t2",
-                        "calls":  45,
+                        "calls":  20,
                         "packet":  6500
                     }
                 ],
