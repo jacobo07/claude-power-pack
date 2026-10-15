@@ -432,6 +432,175 @@ def goal_liveness(rec: dict) -> str:
     return "RECOVERING"
 
 
+# --------------------------------------------------------------------------- WAIT_ON_RESOURCE (ccr-v5 phase 3)
+# A DURABLE_WAIT row for "this unit needs a resource another writer holds dirty". Pure and model-free like the
+# rest of this module: the row schema is code, the wake decision is a total function of (row, evidence, now).
+# Reading/writing rows and probing evidence is gsd_mission's job. UNKNOWN is never zero: an unmeasured
+# resource is blocked, an UNKNOWN writer is never abandoned, and an uncounted remainder is never landable.
+WAIT_ON_RESOURCE = "WAIT_ON_RESOURCE"
+WAIT_STATES = ("OPEN", "RESUMING", "DONE", "DONE_CARVED_OUT", "TIMED_OUT", "ESCALATED", "CANCELLED", "QUARANTINED")
+WRITER_VERDICTS = ("LIVE", "DEAD", "UNKNOWN", "AMBIGUOUS")
+WAKE_EVENTS = ("COMMIT", "LEASE_RELEASE", "CLEARED", "WRITER_DEAD", "TIMEOUT")
+WAKE_ACTIONS = ("RESUME", "WAIT", "CARVE_OUT", "ESCALATE")
+RESUME_KINDS = ("land_worktree",)          # the only action a row may ask for; no free-form command field
+MIN_EPOCH = 1_000_000_000                  # timeout_at is an absolute epoch, never a relative duration
+
+
+def _is_num(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def _is_str(x) -> bool:
+    return isinstance(x, str) and bool(x.strip())
+
+
+def _rel_posix_problem(p) -> str | None:
+    """None when p is a relative posix path inside the repo; otherwise why not."""
+    if not _is_str(p):
+        return "not a non-empty string"
+    if p.startswith("/") or p.startswith("\\") or "\\" in p:
+        return "absolute or backslash path"
+    if re.match(r"^[A-Za-z]:", p):
+        return "drive letter"
+    if any(seg == ".." for seg in p.split("/")):
+        return "parent segment"
+    return None
+
+
+def validate_wait_row(row) -> list[str]:
+    """Problems with a WAIT_ON_RESOURCE row; an empty list means valid. Never raises on bad input."""
+    if not isinstance(row, dict):
+        return ["row: not an object"]
+    out: list[str] = []
+    for k in ("wait_id", "goal", "wu", "live_head_at_open"):
+        if k not in row:
+            out.append(f"{k}: missing")
+        elif not _is_str(row[k]):
+            out.append(f"{k}: not a non-empty string")
+    if row.get("kind") != WAIT_ON_RESOURCE:
+        out.append(f"kind: must be {WAIT_ON_RESOURCE}")
+    if row.get("state") not in WAIT_STATES:
+        out.append("state: not in WAIT_STATES")
+    opened, tmo = row.get("opened_at"), row.get("timeout_at")
+    if "opened_at" not in row or not _is_num(opened):
+        out.append("opened_at: missing or not a number")
+    if "timeout_at" not in row:
+        out.append("timeout_at: missing")
+    elif not _is_num(tmo) or tmo <= MIN_EPOCH:
+        out.append("timeout_at: must be an absolute epoch time")
+    elif _is_num(opened) and tmo <= opened:
+        out.append("timeout_at: must be after opened_at")
+    res = row.get("resources")
+    if "resources" not in row:
+        out.append("resources: missing")
+    elif not isinstance(res, list) or not res:
+        out.append("resources: must be a non-empty list")
+    else:
+        for i, r in enumerate(res):
+            if not isinstance(r, dict):
+                out.append(f"resources[{i}]: not an object")
+                continue
+            why = _rel_posix_problem(r.get("path"))
+            if why:
+                out.append(f"resources[{i}].path: {why}")
+            w = r.get("writer")
+            if not isinstance(w, dict) or w.get("verdict") not in WRITER_VERDICTS:
+                out.append(f"resources[{i}].writer: verdict not in WRITER_VERDICTS")
+    ev = row.get("expected_event")
+    if "expected_event" not in row:
+        out.append("expected_event: missing")
+    elif not isinstance(ev, list) or not ev or any(e not in WAKE_EVENTS for e in ev):
+        out.append("expected_event: must be a non-empty list drawn from WAKE_EVENTS")
+    ra = row.get("resume_action")
+    if "resume_action" not in row:
+        out.append("resume_action: missing")
+    elif not isinstance(ra, dict):
+        out.append("resume_action: not an object")
+    else:
+        if ra.get("kind") not in RESUME_KINDS:
+            out.append("resume_action.kind: not in the allowlist")
+        if ra.get("strategy") != "merge":
+            out.append("resume_action.strategy: must be merge")
+        for k in ("worktree", "live", "branch"):
+            if not _is_str(ra.get(k)):
+                out.append(f"resume_action.{k}: not a non-empty string")
+        if "union" in ra:
+            un = ra["union"]
+            if not isinstance(un, list):
+                out.append("resume_action.union: must be a list")
+            else:
+                for i, p in enumerate(un):
+                    why = _rel_posix_problem(p)
+                    if why:
+                        out.append(f"resume_action.union[{i}]: {why}")
+    va = row.get("validation")
+    if "validation" not in row:
+        out.append("validation: missing")
+    elif not isinstance(va, dict):
+        out.append("validation: not an object")
+    else:
+        tests = va.get("tests")
+        if not isinstance(tests, list) or not tests or not all(_is_str(t) for t in tests):
+            out.append("validation.tests: must be a non-empty list of non-empty strings")
+        if va.get("rollback") != "any_red":
+            out.append("validation.rollback: must be any_red")
+        if not isinstance(va.get("baseline_red", []), list):
+            out.append("validation.baseline_red: must be a list")
+    return out
+
+
+def _decision(action: str, event, reason: str, cleared=(), blocked=(), carve_out=()) -> dict:
+    return {"action": action, "event": event, "reason": reason, "cleared": list(cleared),
+            "blocked": list(blocked), "carve_out": list(carve_out)}
+
+
+def wait_decision(row, evidence, now) -> dict:
+    """Pure wake decision for a WAIT_ON_RESOURCE row. Total: never raises, never RESUMEs on doubt.
+
+    evidence[path] = {dirty: True|False|None, committed_since_open: True|False|None,
+    lease: None | {free: bool, state, holder}, writer: WRITER_VERDICTS value}; evidence["other_paths"] is the
+    count of the landing's other paths (an int, or None when uncounted: never assumed landable).
+    """
+    probs = validate_wait_row(row)
+    if probs or not _is_num(now):
+        return _decision("ESCALATE", None, "invalid row or clock: " + ("; ".join(probs[:3]) or "now is not a number"))
+    ev = evidence if isinstance(evidence, dict) else {}
+    other = ev.get("other_paths")
+    paths = [r["path"] for r in row["resources"]]
+    cleared, blocked, dead_ok = [], [], []
+    committed = released = False
+    for p in paths:
+        e = ev.get(p)
+        e = e if isinstance(e, dict) else None
+        if e is None:
+            blocked.append(p)                     # no entry: unmeasured, never clear
+            dead_ok.append(False)
+            continue
+        lease = e.get("lease")
+        lease_free = lease is None or (isinstance(lease, dict) and lease.get("free") is True)
+        dirty = e.get("dirty")
+        if dirty is False and lease_free:
+            cleared.append(p)
+            committed = committed or e.get("committed_since_open") is True
+            released = released or (isinstance(lease, dict) and lease.get("state") == "RELEASED")
+        else:
+            blocked.append(p)
+            dead_ok.append(e.get("writer") == "DEAD" and dirty is True and lease_free)
+    if not blocked:
+        event = "COMMIT" if committed else ("LEASE_RELEASE" if released else "CLEARED")
+        return _decision("RESUME", event, "every resource is measured clean and unleased", cleared=cleared)
+    if all(dead_ok):
+        return _decision("CARVE_OUT", "WRITER_DEAD", "every blocked resource has a DEAD writer", cleared=cleared,
+                         blocked=blocked, carve_out=blocked)
+    if now >= row["timeout_at"]:
+        if isinstance(other, int) and not isinstance(other, bool) and other > 0:
+            return _decision("CARVE_OUT", "TIMEOUT", "timeout reached with a counted remainder of landable paths",
+                             cleared=cleared, blocked=blocked, carve_out=blocked)
+        return _decision("ESCALATE", "TIMEOUT", "timeout reached and the rest of the landing is zero or uncounted",
+                         cleared=cleared, blocked=blocked)
+    return _decision("WAIT", None, "blocked resources before the timeout", cleared=cleared, blocked=blocked)
+
+
 # --------------------------------------------------------------------------- ContextImage
 def render_packet(*, mission_id: str, goal: str, unit: dict, residual, topology: dict, failure: str,
                   progress: dict, failed_strategy: str, delta_path: str | None, lease: dict,
