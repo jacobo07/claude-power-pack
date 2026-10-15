@@ -1,0 +1,135 @@
+{
+ "measured_at": "2026-10-15",
+ "note": "sweep suites run without -I/-X utf8 (their tasklist decode fails under utf8 mode: a harness property, not a regression)",
+ "suites": [
+  {
+   "suite": "tools/test_lease.py",
+   "cmd": "python -I -X utf8 tools/test_lease.py",
+   "rc": 0,
+   "verdict": "LEASE_PASS=21/21",
+   "passed": 21,
+   "total": 21,
+   "measured": true,
+   "secs": 4.2
+  },
+  {
+   "suite": "tools/test_history_check.py",
+   "cmd": "python -I -X utf8 tools/test_history_check.py",
+   "rc": 0,
+   "verdict": "HIST_PASS=16/16",
+   "passed": 16,
+   "total": 16,
+   "measured": true,
+   "secs": 0.3
+  },
+  {
+   "suite": "tools/test_goal_lease.py",
+   "cmd": "python -I -X utf8 tools/test_goal_lease.py",
+   "rc": 0,
+   "verdict": "GOAL_LEASE_PASS=21/21",
+   "passed": 21,
+   "total": 21,
+   "measured": true,
+   "secs": 5.3
+  },
+  {
+   "suite": "tools/test_land_worktree.py",
+   "cmd": "python -I -X utf8 tools/test_land_worktree.py",
+   "rc": 0,
+   "verdict": "24 passed, 0 failed",
+   "passed": 24,
+   "total": 24,
+   "measured": true,
+   "secs": 23.3
+  },
+  {
+   "suite": "tools/test_gsd_sweep_pass.py",
+   "cmd": "python -I -X utf8 tools/test_gsd_sweep_pass.py",
+   "rc": 0,
+   "verdict": "SWEEP_PASS=11/11",
+   "passed": 11,
+   "total": 11,
+   "measured": true,
+   "secs": 39.8
+  },
+  {
+   "suite": "tools/test_gsd_sweep_pass_py.py",
+   "cmd": "python -I -X utf8 tools/test_gsd_sweep_pass_py.py",
+   "rc": 0,
+   "verdict": "SWEEPPY_PASS=17/17",
+   "passed": 17,
+   "total": 17,
+   "measured": true,
+   "secs": 27.0
+  },
+  {
+   "suite": "tools/test_gsd_mission.py",
+   "cmd": "python -I -X utf8 tools/test_gsd_mission.py",
+   "rc": 0,
+   "verdict": "MC_PASS=230/230",
+   "passed": 230,
+   "total": 230,
+   "measured": true,
+   "secs": 42.8
+  },
+  {
+   "suite": "tools/test_gsd_mission_ccr_a6.py",
+   "cmd": "python -I -X utf8 tools/test_gsd_mission_ccr_a6.py",
+   "rc": 0,
+   "verdict": "13 passed, 0 failed",
+   "passed": 13,
+   "total": 13,
+   "measured": true,
+   "secs": 1.9
+  },
+  {
+   "suite": "tools/test_gsd_mission_ccr_contract.py",
+   "cmd": "python -I -X utf8 tools/test_gsd_mission_ccr_contract.py",
+   "rc": 0,
+   "verdict": "5 passed, 0 failed",
+   "passed": 5,
+   "total": 5,
+   "measured": true,
+   "secs": 0.6
+  },
+  {
+   "suite": "tools/test_ccr_driver_breaker.py",
+   "cmd": "python -I -X utf8 tools/test_ccr_driver_breaker.py",
+   "rc": 0,
+   "verdict": "DRV_PASS=14/14",
+   "passed": 14,
+   "total": 14,
+   "measured": true,
+   "secs": 8.8
+  },
+  {
+   "suite": "tools/test_ccr_pgo_install.py",
+   "cmd": "python -I -X utf8 tools/test_ccr_pgo_install.py",
+   "rc": 0,
+   "verdict": "PGOINST_PASS=14/14",
+   "passed": 14,
+   "total": 14,
+   "measured": true,
+   "secs": 6.9
+  },
+  {
+   "suite": "tools/test_ccr_rent_ledger.py",
+   "cmd": "python -I -X utf8 tools/test_ccr_rent_ledger.py",
+   "rc": 0,
+   "verdict": "RENT_PASS=11/11  threshold=11/11",
+   "passed": 11,
+   "total": 11,
+   "measured": true,
+   "secs": 1.0
+  },
+  {
+   "suite": "tools/ccr_pgo.py verify",
+   "cmd": "python -I -X utf8 tools/ccr_pgo.py verify",
+   "rc": 0,
+   "verdict": "ok: true",
+   "passed": null,
+   "total": null,
+   "measured": true
+  }
+ ]
+}

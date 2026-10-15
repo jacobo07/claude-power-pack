@@ -1,0 +1,262 @@
+{
+ "decision": "MERGED",
+ "pre_sha": "6a37c85d6c7742066ca8799ecd3e43da24f41fb4",
+ "main_sha": "77e1cbf0805e470450964892c999de819fc45b23",
+ "merge_base": "e16e80366440958f3fa663f98ff4c93422d29e2a",
+ "ahead": 62,
+ "conflicts": [
+  "tools/gsd_mission.py",
+  "vault/knowledge_base/ukdl-universal.md",
+  "vault/programs/ccr/RESUMPTION_FILE.md"
+ ],
+ "resolutions": {
+  "tools/gsd_mission.py": "launch_worker signature keeps both kwargs: det_runner=None, mem_reader=None",
+  "vault/knowledge_base/ukdl-universal.md": "main block first, ccr/v5 block second; every line of both sides present (missing 0 / 0); CRLF preserved",
+  "vault/programs/ccr/RESUMPTION_FILE.md": "ccr/v5 bytes kept (identical to HEAD); discarded main-side blob bfb735c66403fd683c76b026e4e448e88e9d8d07 addressable at feature/knowledge-acquisition:vault/programs/ccr/RESUMPTION_FILE.md"
+ },
+ "suites": [
+  {
+   "suite": "tools/test_lease.py",
+   "before": {
+    "rc": 0,
+    "passed": 21,
+    "total": 21
+   },
+   "after": {
+    "rc": 0,
+    "passed": 21,
+    "total": 21
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_history_check.py",
+   "before": {
+    "rc": 0,
+    "passed": 16,
+    "total": 16
+   },
+   "after": {
+    "rc": 0,
+    "passed": 16,
+    "total": 16
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_goal_lease.py",
+   "before": {
+    "rc": 0,
+    "passed": 21,
+    "total": 21
+   },
+   "after": {
+    "rc": 0,
+    "passed": 21,
+    "total": 21
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_land_worktree.py",
+   "before": {
+    "rc": 0,
+    "passed": 24,
+    "total": 24
+   },
+   "after": {
+    "rc": 0,
+    "passed": 24,
+    "total": 24
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_gsd_sweep_pass.py",
+   "before": {
+    "rc": 0,
+    "passed": 11,
+    "total": 11
+   },
+   "after": {
+    "rc": 0,
+    "passed": 11,
+    "total": 11
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_gsd_sweep_pass_py.py",
+   "before": {
+    "rc": 0,
+    "passed": 17,
+    "total": 17
+   },
+   "after": {
+    "rc": 0,
+    "passed": 17,
+    "total": 17
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_gsd_mission.py",
+   "before": {
+    "rc": 0,
+    "passed": 230,
+    "total": 230
+   },
+   "after": {
+    "rc": 0,
+    "passed": 230,
+    "total": 230
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_gsd_mission_ccr_a6.py",
+   "before": {
+    "rc": 0,
+    "passed": 13,
+    "total": 13
+   },
+   "after": {
+    "rc": 0,
+    "passed": 13,
+    "total": 13
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_gsd_mission_ccr_contract.py",
+   "before": {
+    "rc": 0,
+    "passed": 5,
+    "total": 5
+   },
+   "after": {
+    "rc": 0,
+    "passed": 5,
+    "total": 5
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_ccr_driver_breaker.py",
+   "before": {
+    "rc": 0,
+    "passed": 14,
+    "total": 14
+   },
+   "after": {
+    "rc": 0,
+    "passed": 14,
+    "total": 14
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_ccr_pgo_install.py",
+   "before": {
+    "rc": 0,
+    "passed": 14,
+    "total": 14
+   },
+   "after": {
+    "rc": 0,
+    "passed": 14,
+    "total": 14
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_ccr_rent_ledger.py",
+   "before": {
+    "rc": 0,
+    "passed": 11,
+    "total": 11
+   },
+   "after": {
+    "rc": 0,
+    "passed": 11,
+    "total": 11
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  },
+  {
+   "suite": "tools/test_mission_recovery.py",
+   "before": null,
+   "after": {
+    "rc": 0,
+    "passed": 63,
+    "total": 63
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": true
+  },
+  {
+   "suite": "tools/test_mission_policy.py",
+   "before": null,
+   "after": {
+    "rc": 0,
+    "passed": 41,
+    "total": 41
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": true
+  },
+  {
+   "suite": "tools/ccr_pgo.py verify",
+   "before": {
+    "rc": 0
+   },
+   "after": {
+    "rc": 0
+   },
+   "measured": true,
+   "regressed": false,
+   "arrival_from_main": false
+  }
+ ],
+ "pre_existing_red_on_main": [],
+ "main_tree": {
+  "before": {
+   "ukdl_sha256": "CF4D567B90B906A4D31C1A1D1C65833A8A4CC4C134654AB3DD5B7EB882C9F6D5",
+   "resumption_sha256": "749FF9A92F01746A01CF7DE788CBCABD68ABFB94C39E3B3B2999F14AB78437E1",
+   "status_lines": 1173
+  },
+  "after": {
+   "ukdl_sha256": "CF4D567B90B906A4D31C1A1D1C65833A8A4CC4C134654AB3DD5B7EB882C9F6D5",
+   "resumption_sha256": "749FF9A92F01746A01CF7DE788CBCABD68ABFB94C39E3B3B2999F14AB78437E1",
+   "status_lines": 1173
+  },
+  "changed_during_window": false
+ },
+ "merge_commit": "c35d76a299fa74d9bb640c0a73d1496334c624bb"
+}
