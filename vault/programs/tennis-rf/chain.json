@@ -257,6 +257,19 @@
                 "DONE",
                 "DONE_WITH_LIMITS"
             ]
+        },
+        {
+            "id": "D12c",
+            "max_residuals": 2,
+            "note": "Owner 2026-10-15 option 1: joint helper+layout bundle on held-out (D12b next abstraction)",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12c.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12c-receipt.md",
+            "after": "D12b",
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
         }
     ]
 }
