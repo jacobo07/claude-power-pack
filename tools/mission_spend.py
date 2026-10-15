@@ -520,9 +520,38 @@ def _goal_ledger(goal: str):
     return GoalLedger(goal_root() / goal, goal)
 
 
+def session_tree_tokens(transcript: Path) -> dict:
+    """Processed tokens of a session AND its subagents (`<sid>/subagents/agent-*.jsonl`), one dedup set
+    over every file: a message id is counted once wherever it appears. Measured 2026-10-15: subagents
+    were 79% of an 80M incident, and a main-transcript count alone books the other 21%."""
+    files = [transcript] + sorted((transcript.parent / transcript.stem / "subagents").glob("agent-*.jsonl"))
+    seen, total, subs = set(), 0, 0
+    for f in files:
+        with open(f, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                m = r.get("message") if isinstance(r, dict) else None
+                u = m.get("usage") if isinstance(m, dict) else None
+                if not u or m.get("model") == "<synthetic>":
+                    continue
+                mid = m.get("id") or r.get("uuid")
+                if mid in seen:
+                    continue
+                seen.add(mid)
+                n = sum(int(u.get(k) or 0) for k in _UK)
+                total += n
+                if f is not transcript:
+                    subs += n
+    return {"tokens": total, "subagent_tokens": subs, "files": len(files)}
+
+
 def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = "goal-settle",
-                transcripts_root: Path | None = None) -> dict:
-    """Settle a STOPPED session and close all of its holds (never reserves). Blind -> refused."""
+                transcripts_root: Path | None = None, tree: bool = False) -> dict:
+    """Settle a STOPPED session and close all of its holds (never reserves). Blind -> refused.
+    `tree` also counts its subagents' transcripts (the supervisor's stop path sets it)."""
     if not _SID_RE.match(sid or ""):
         raise ValueError(f"invalid session id: {sid!r}")
     led = _goal_ledger(goal)
@@ -532,7 +561,7 @@ def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = 
         if tp is None:
             return {"ok": False, "goal": goal, "reason": "no transcript for the session and no --measured: "
                     "refusing to settle blind"}
-        measured = int(session_tokens(tp)["tokens"])
+        measured = int((session_tree_tokens(tp) if tree else session_tokens(tp))["tokens"])
         # A pane the guard already booked is charged only for what it booked plus its open holds: the
         # transcript total also holds its pre-binding and off-goal calls (a coordinator that left the
         # worktree was overcharged 18.6M this way, ctx-same-pane 2026-10-11).

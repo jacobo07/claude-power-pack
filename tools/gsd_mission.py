@@ -910,9 +910,9 @@ def slim_job_paths(mission_id: str, sid: str) -> tuple[Path, Path]:
     return d / f"{sid}.out.json", d / f"{sid}.err.txt"
 
 
-def _spawn_detached(argv: list[str], cwd: str, out_path: Path, err_path: Path) -> int:
+def _spawn_detached(argv: list[str], cwd: str, out_path: Path, err_path: Path, env: dict | None = None) -> int:
     """Start `claude -p` DETACHED (it is synchronous: the supervisor must not block on it) with its
-    stdout/stderr going to files. Returns the pid."""
+    stdout/stderr going to files. Returns the pid. ``env`` None inherits the supervisor's environment."""
     import subprocess
     out_path.parent.mkdir(parents=True, exist_ok=True)
     kw: dict = {}
@@ -921,7 +921,7 @@ def _spawn_detached(argv: list[str], cwd: str, out_path: Path, err_path: Path) -
     else:
         kw["start_new_session"] = True
     with open(out_path, "wb") as so, open(err_path, "wb") as se:
-        proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=so, stderr=se, **kw)
+        proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=so, stderr=se, env=env, **kw)
     return proc.pid
 
 
@@ -998,8 +998,13 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     # checkout on another branch, one `git commit` away from landing there.
     wd = mb.execution_root(rec)
     run_dir = wd if wd and Path(wd).is_dir() else rec["cwd"]
+    unit_env, drow = deflate_unit(rec)
+    if drow:
+        lr.ledger_append(mid, "deflate_" + ("applied" if unit_env else "observed"), mission_id=mid, epoch=epoch,
+                         **drow, delivered=bool(unit_env))
     try:
-        pid = (spawner or _spawn_detached)(argv, run_dir, out_path, err_path)
+        pid = (spawner or _spawn_detached)(argv, run_dir, out_path, err_path,
+                                           **({"env": {**os.environ, **unit_env}} if unit_env else {}))
     except Exception as exc:  # the launch itself could not happen
         why = f"{type(exc).__name__}: {exc}"
         lr.ledger_append(mid, "launch_failed", mission_id=mid, epoch=epoch, rc=None, bg_id=sid,
@@ -1112,7 +1117,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
                   progress: dict | None = None, packet: dict | None = None, spawner=None,
-                  mem_reader=None) -> dict:
+                  det_runner=None, mem_reader=None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
@@ -1162,6 +1167,16 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
+    # WU-A6 DETERMINISTIC_PATH: a packet that names its script is run, not given to a model. Before the
+    # claim: it spends no epoch and launches no worker.
+    try:
+        det = deterministic_script(rec)
+    except MissionError as exc:
+        lr.ledger_append(mission_id, "launch_refused_packet", mission_id=mission_id,
+                         epoch=rec.get("epoch"), why=str(exc)[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": str(exc), "detail": ""}
+    if det:
+        return _run_deterministic(rec, det, now, run=det_runner)   # never `runner`: that one starts claude
     resolved = resolve_baseline(rec)
     baseline_on = resolved is not rec
     legacy_why = baseline_legacy_verdict(resolved) if baseline_mode() != "off" else None
@@ -1213,6 +1228,11 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
             lr.ledger_append(mission_id, "would_refuse_legacy", mission_id=mission_id, epoch=epoch, why=legacy_why[:300])
     if slim_profile(rec):
         return _launch_slim(rec, prompt, epoch, now, spawner=spawner)
+    _, drow = deflate_unit(rec, declare=False)
+    if drow:
+        # `--bg` does not inherit the launcher's environment (W0 E3): a declaration cannot ride this launch.
+        lr.ledger_append(mission_id, "deflate_observed", mission_id=mission_id, epoch=epoch, **drow,
+                         delivered=False, why="--bg launch does not inherit env (W0 E3)")
     # `prompt` was bound above (launch_prompt -> bind_workstream), not only at create: a record armed
     # before bind_workstream existed still carries the bare command, and its relay would put the
     # successor on the root milestone.
@@ -1602,6 +1622,38 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                           event="cost_mark", now=now, cost_mark=verdict["mark"],
                           reason=f"progress fingerprint moved at {spent:,} processed")
+    return rec
+
+
+def _phase_breaker(rec: dict, now: float, measure=None, phase_fn=None) -> dict:
+    """CCR v5 A2: judge the mission's phase lease (tools/phase_lease.py) against measured spend. A TRIP, or an
+    ambiguity (BLOCKED: unmeasured spend, unreadable or moved GSD phase), parks the mission with a cost hold
+    flagged `phase_breaker`, which supervise stops WITHOUT the cost-hold grace. WARN is ledgered once per lease.
+    Unlike _cost_breaker this is not fail-open on a measuring error: a lease exists to be an authority, and an
+    unmeasured phase is BLOCKED, never permission. Returns the record as it now stands."""
+    import mission_spend as ms
+    import phase_lease as pls
+    lease = rec.get("phase_lease")
+    mid = rec["mission_id"]
+    if not lease or rec.get("state") in TERMINAL or rec.get("owner_hold"):
+        return rec
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception as exc:  # noqa: BLE001 -- becomes a BLOCKED verdict below
+        lr.ledger_append(mid, "phase_breaker_unmeasured", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+        spent = None
+    verdict = pls.judge(lease, spent, (phase_fn or pls.current_phase)(lease["state_file"]))
+    if verdict["verdict"] in (pls.TRIP, pls.BLOCKED):
+        lr.ledger_append(mid, "phase_breaker_tripped", mission_id=mid, verdict=verdict["verdict"],
+                         phase=lease["phase"], spend=verdict.get("spend"), forecast=lease["forecast"],
+                         reason=verdict["reason"])
+        return set_owner_hold(mid, f"cost breaker (phase lease): {verdict['reason']}", now=now, kind="cost",
+                              extra={"phase_breaker": True, "phase": lease["phase"], "verdict": verdict["verdict"],
+                                     "resume_with": "reforecast-only: set a new phase lease through envelope, "
+                                                    "do not continue the phase's work"})
+    if verdict["verdict"] == pls.WARN and rec.get("phase_lease_warned") != lease["set_at"]:
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="phase_warn", now=now,
+                          touch=False, phase_lease_warned=lease["set_at"], reason=verdict["reason"])
     return rec
 
 
@@ -2288,7 +2340,8 @@ def estimate_calibration(rec: dict, estimate: int, measure=None) -> dict:
 
 def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
                  wu_packet: str | None = None, continue_max_tokens=None, worker_mcp: str | None = None,
-                 ccr_class: str | None = None, now: float | None = None, estimate_basis: str | None = None, measure=None) -> dict:
+                 ccr_class: str | None = None, now: float | None = None, estimate_basis: str | None = None, measure=None,
+                 phase_lease: dict | None = None) -> dict:
     """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
     estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
     work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
@@ -2327,14 +2380,31 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}", ccr_class):
             raise MissionError(f"ccr_class must be a plain class name, not {ccr_class!r}")
         changes["ccr_class"] = ccr_class
-    if not changes:
+    if not changes and phase_lease is None:
         raise MissionError("nothing to set: give --token-estimate, --model, --autocompact, --wu-packet, "
-                           "--continue-max-tokens, --worker-mcp or --ccr-class")
+                           "--continue-max-tokens, --worker-mcp, --ccr-class or --phase-lease")
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; its envelope cannot change")
+    if phase_lease is not None:
+        # A phase lease is the stop-loss the model cannot read past (CCR v5 A2). Its base is MEASURED here,
+        # at the phase start, never supplied: a caller-chosen base would let the lease be pre-spent or pre-credited.
+        import phase_lease as pls
+        import mission_spend as ms
+        try:
+            base = (measure or ms.processed_tokens)(rec)
+        except Exception as exc:  # noqa: BLE001 -- refused with the cause, never a guessed base
+            raise MissionError(f"phase lease refused: cannot measure the lease base ({type(exc).__name__}: {exc})")
+        try:
+            changes["phase_lease"] = pls.make_lease(
+                phase=phase_lease.get("phase"), forecast=phase_lease.get("forecast"), base=int(base),
+                state_file=phase_lease.get("state_file"), reserve=phase_lease.get("reserve", 0),
+                set_at=time.time() if now is None else now)
+        except pls.LeaseError as exc:
+            raise MissionError(f"phase lease refused: {exc}")
+        changes["phase_lease_warned"] = None
     if "token_estimate" in changes:
         cal = estimate_calibration(rec, changes["token_estimate"], measure=measure)
         basis = (estimate_basis or "").strip()
@@ -2363,14 +2433,17 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
 
 def _ccr_contract(rec: dict, pkt_path: str, cap) -> dict:
     """WU-W1: the pre-launch cost contract (tools/ccr_pgo.py) for the mission's CCR work class. No class,
-    no PGO file or any failure -> UNFORECAST; this never raises."""
+    no PGO file or any failure -> UNFORECAST; this never raises. WU-A6: a `pgo-classes.json` (WU-A3 class
+    models) in the PGO dir wins; it classifies the packet itself and carries the class confidence."""
     cls = rec.get("ccr_class")
-    if not cls:
+    d = os.environ.get("CPP_CCR_PGO_DIR") or str(Path.home() / ".claude" / "ccr" / "state" / "pgo")
+    if not cls and not (Path(d) / "pgo-classes.json").is_file():
         return {"verdict": "UNFORECAST"}
     try:
         import ccr_pgo
-        d = os.environ.get("CPP_CCR_PGO_DIR") or str(Path.home() / ".claude" / "ccr" / "state" / "pgo")
-        f = Path(d) / f"{cls}.json"
+        f = Path(d) / "pgo-classes.json"
+        if not f.is_file():
+            f = Path(d) / f"{cls}.json"
         if not f.is_file():
             return {"verdict": "UNFORECAST", "work_class": cls}
         pgo = json.loads(f.read_text(encoding="utf-8-sig"))
@@ -2384,6 +2457,98 @@ def _ccr_contract(rec: dict, pkt_path: str, cap) -> dict:
 
 def _admission_switch_off() -> bool:
     return str(os.environ.get("CPP_ROUTE_ADMISSION") or "").strip().lower() in ("0", "off", "false")
+
+
+# WU-A6: a CCR contract acts only where its class model earned it. A3 confidence: MEDIUM/HIGH act, LOW observes.
+# A W1 single-class file carries no confidence and keeps the W1 behaviour.
+def _ccr_enforceable(contract: dict) -> bool:
+    return contract.get("confidence") in (None, "MEDIUM", "HIGH")
+
+
+# WU-A6 DEFLATE: the CCR mod's unit class (mods/cpp-cognitive-runtime/hooks/policy.ts WORK_CLASSES) for each
+# A3 work class. generic and multimodal have no closure the mod knows, so they are never declared.
+UNIT_FOR_CLASS = {"bounded-code": "bounded-code-worker", "long-textual": "bounded-code-worker",
+                  "lookup": "read-only-reviewer"}
+
+
+def deflate_unit(rec: dict, environ=None, declare: bool = True) -> tuple[dict, dict]:
+    """(env to add, ledger row) for a Work Unit launch. A launch that already declares CCR_WORK_UNIT, or is no
+    Work Unit, is left alone. A class the mod knows, at confidence MEDIUM or better, gets the unit declared
+    (a declaration file in the mission store, its path in CCR_WORK_UNIT); LOW only records would_deflate.
+    CPP_CCR_DEFLATE=off records and declares nothing. ``declare`` False (a launch that cannot carry the env)
+    records would_deflate and writes no file."""
+    environ = os.environ if environ is None else environ
+    if not rec.get("wu_packet") or environ.get("CCR_WORK_UNIT"):
+        return {}, {}
+    if str(environ.get("CPP_CCR_DEFLATE") or "").strip().lower() in ("0", "off", "false"):
+        return {}, {}
+    contract = (rec.get("admission") or {}).get("ccr_contract") or {}
+    cls, conf = contract.get("work_class"), contract.get("confidence")
+    unit = UNIT_FOR_CLASS.get(cls)
+    row = {"work_class": cls, "confidence": conf, "unit": unit}
+    if not unit:
+        return {}, {**row, "action": "no_unit_class"}
+    if conf not in ("MEDIUM", "HIGH") or not declare:
+        return {}, {**row, "action": "would_deflate"}
+    path = lr.state_dir() / "units" / f"{rec['mission_id']}-e{rec.get('epoch')}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"class": unit, "id": rec["mission_id"]}), encoding="utf-8")
+    return {"CCR_WORK_UNIT": str(path)}, {**row, "action": "deflated", "declared": str(path)}
+
+
+_DETERMINISTIC_RE = re.compile(r"^\s*deterministic:\s*(\S.*?)\s*$", re.MULTILINE)
+
+
+def deterministic_script(rec: dict) -> list[str] | None:
+    """The argv a packet's `deterministic: <script> [args]` line names, or None. The script must be a .py or
+    .sh file inside the mission's work tree; a line naming anything else raises MissionError."""
+    import shlex
+    pkt = rec.get("wu_packet")
+    if not pkt:
+        return None
+    try:
+        text = Path(pkt["path"]).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    m = _DETERMINISTIC_RE.search(text)
+    if not m:
+        return None
+    args = shlex.split(m.group(1))
+    root = Path(rec.get("work_dir") or rec["cwd"]).resolve()
+    script = (root / args[0]).resolve()
+    if not script.is_relative_to(root) or not script.is_file() or script.suffix not in (".py", ".sh"):
+        raise MissionError(f"deterministic: {args[0]!r} is not a .py/.sh file inside {root}")
+    return [sys.executable if script.suffix == ".py" else "bash", str(script), *args[1:]]
+
+
+def _run_deterministic(rec: dict, argv: list[str], now: float, run=None) -> dict:
+    """DETERMINISTIC_PATH: run the packet's script instead of a worker. No epoch is claimed and no model is
+    called. Exit 0 completes the mission with the output's sha256 on the record; anything else leaves the
+    mission where it was, ledgered, and never falls back to a model."""
+    import hashlib
+    import subprocess
+    mid = rec["mission_id"]
+    cwd = rec.get("work_dir") or rec["cwd"]
+    try:
+        r = (run or (lambda a, c: subprocess.run(a, cwd=c, capture_output=True, text=True, encoding="utf-8",
+                                                  errors="replace", timeout=600)))(argv, cwd)
+        rc, out, err = r.returncode, r.stdout or "", r.stderr or ""
+    except Exception as exc:  # noqa: BLE001 -- the script could not run: recorded, never retried by a model
+        rc, out, err = None, "", f"{type(exc).__name__}: {exc}"
+    out_path = lr.state_dir() / "deterministic" / mid / f"e{rec.get('epoch')}.out"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(out, encoding="utf-8")
+    res = {"argv": argv[1:], "rc": rc, "model_calls": 0, "out_path": str(out_path),
+           "stdout_sha256": hashlib.sha256(out.encode("utf-8")).hexdigest(), "at": now}
+    if rc != 0:
+        lr.ledger_append(mid, "deterministic_failed", mission_id=mid, epoch=rec.get("epoch"),
+                         **res, stderr=err[-300:])
+        return {"ok": False, "deterministic": True, "epoch": rec.get("epoch"), "bg_id": None,
+                "why": f"deterministic script exited {rc}", "detail": err[-300:], **res}
+    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="deterministic_completed",
+               now=now, state=COMPLETED, pending=None, deterministic=res,
+               reason=f"deterministic path: {Path(argv[1]).name} exit 0, 0 model calls")
+    return {"ok": True, "deterministic": True, "epoch": rec.get("epoch"), "bg_id": None, "stdout": out[-4000:], **res}
 
 
 def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = None,
@@ -2436,7 +2601,7 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
     contract = _ccr_contract(rec, pkt["path"], (res.get("envelope") or {}).get("stop"))
     admission["ccr_contract"] = contract
     if (str(os.environ.get("CPP_CCR_ADMISSION") or "").strip().lower() == "enforce"
-            and contract.get("verdict") in ("SPLIT", "DEFLATE")):
+            and contract.get("verdict") in ("SPLIT", "DEFLATE") and _ccr_enforceable(contract)):
         admission["verdict"] = "RECOMPILE"   # known and not launchable
         admission["reasons"] = ([f"ccr_contract:{contract['verdict']}"] + admission["reasons"])[:6]
         res = {**res, "verdict": "RECOMPILE", "reasons": admission["reasons"]}
@@ -3934,6 +4099,35 @@ def _unit_done(rec: dict) -> dict:
     return {"outcome": {0: "DONE", 1: "NOT_DONE"}.get(r.returncode, "UNANSWERED"), "detail": detail or f"rc {r.returncode}"}
 
 
+def settle_stopped_worker(rec: dict, settle=None) -> dict:
+    """Book a worker the supervisor just stopped: its whole session tree (main + subagents, one message-id
+    dedup set) through goal_settle, tagged mission/epoch. Idempotent (a second call books nothing new).
+    A mission with no ledger goal, or a settle that fails, is ledgered as `worker_unbooked` -- never silent:
+    the 2026-10-14 breaker stop left 25.1M booked as 4.4M short because nothing settled the stopped session."""
+    mid, sid = rec["mission_id"], (rec.get("owner") or {}).get("session_id")
+    goal = rec.get("ledger_goal")
+    why = None
+    if not sid:
+        why = "owner has no session id"
+    elif not goal:
+        why = "mission has no ledger_goal (armed outside a declared goal root)"
+    out: dict = {}
+    if not why:
+        try:
+            import mission_spend as ms
+            out = (settle or ms.goal_settle)(goal, sid, None, f"mission {mid} epoch {rec['epoch']} stopped", tree=True)
+            if not out.get("ok"):
+                why = str(out.get("reason") or "settle refused")[:200]
+        except Exception as exc:  # noqa: BLE001 -- ledgered below, the stop itself must still complete
+            why = f"{type(exc).__name__}: {exc}"[:200]
+    if why:
+        lr.ledger_append(mid, "worker_unbooked", mission_id=mid, worker=sid, goal=goal, why=why)
+        return {"booked": False, "why": why}
+    lr.ledger_append(mid, "worker_settled", mission_id=mid, worker=sid, goal=goal, epoch=rec["epoch"],
+                     closed=out.get("closed"), used=out.get("used"))
+    return {"booked": True, "goal": goal, "worker": sid, "closed": out.get("closed")}
+
+
 def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive,
               fingerprint=None, capsule_io: dict | None = None) -> list[dict]:
@@ -3995,6 +4189,8 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
         try:
             if not dry_run and rec.get("token_estimate") is None and not rec.get("owner_hold"):
                 rec = _auto_budget(rec, now)
+            if not dry_run and rec.get("phase_lease") and not rec.get("owner_hold"):
+                rec = _phase_breaker(rec, now)
             if not dry_run and rec.get("token_estimate") and not rec.get("owner_hold"):
                 rec = _cost_breaker(rec, now)
             plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
@@ -4036,6 +4232,9 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 # the grace a LIVE owner is stopped here. Only a LIVE one: UNKNOWN may be anything.
                 import gsd_epoch as ge
                 over = ge.cost_hold_overdue(rec, now)
+                if not over and rec["owner_hold"].get("phase_breaker"):
+                    # A phase-lease trip has no grace: the phase's authority is spent, the worker is stopped now.
+                    over = {"overdue_s": 0, "grace_s": 0, "phase_breaker": True}
                 if over and liveness(rec.get("owner"), sessions, pid_alive)[0] == LIVE:
                     ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
                     lr.ledger_append(mid, "cost_hold_worker_stopped" if ok else "cost_hold_stop_failed",
@@ -4043,6 +4242,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     row.update({"action": "cost_hold_stop", "reason": f"cost hold enforced: {how}",
                                 "cost_hold_enforced": over})
                     if ok:
+                        row["settled"] = settle_stopped_worker(rec)
                         transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                    event="cost_hold_worker_stopped", now=now,
                                    reason=f"cost hold: worker stopped ({how})",
@@ -4386,6 +4586,10 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         turn_end["evidence"] = {**(turn_end.get("evidence") or {}), "trigger": "wall_enforced"}
                         turn_end["reason"] = f"{plan['reason']} -- {turn_end['reason']}"
                     row["turn_end"] = {k: turn_end.get(k) for k in ("decision", "cause", "reason")}
+                    # CCR A4: the break-even rule's shadow verdict beside the ceiling's decision (observe only).
+                    sb = (turn_end.get("evidence") or {}).get("shadow_breakeven")
+                    if sb:
+                        row["turn_end"]["shadow_breakeven"] = sb
                     if turn_end["decision"] == ge.HOLD:
                         lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"],
                                          reason=turn_end["reason"])
@@ -5482,6 +5686,10 @@ def _cli(argv=None) -> int:
                     help="per-mission context ceiling for continuing the same session, e.g. 200k")
     en.add_argument("--ccr-class", help="CCR work class; admit then records the PGO cost contract "
                                         "(CPP_CCR_ADMISSION=enforce makes SPLIT/DEFLATE refuse)")
+    en.add_argument("--phase-lease", help="GSD phase number to lease (needs --phase-forecast and --phase-state); "
+                                          "the base is measured now, at the phase start")
+    en.add_argument("--phase-forecast", help="the phase's token forecast, e.g. 4.5M; warn 1.2x, hard 1.5x")
+    en.add_argument("--phase-state", help="the workstream STATE.md the current GSD phase is read from")
     en.add_argument("--worker-mcp", choices=WORKER_MCP_MODES,
                     help="none = launch this mission's worker with --strict-mcp-config and no servers")
     ad = sub.add_parser("admit", help="judge the compiled work unit's route against its envelope "
@@ -5571,8 +5779,12 @@ def _cli(argv=None) -> int:
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
                            autocompact=args.autocompact, wu_packet=args.wu_packet,
                            continue_max_tokens=args.continue_max_tokens, worker_mcp=args.worker_mcp,
-                           ccr_class=args.ccr_class, estimate_basis=args.estimate_basis)
-        pkt = (rec.get("wu_packet") or {}).get("path")
+                           ccr_class=args.ccr_class, estimate_basis=args.estimate_basis,
+                           phase_lease=(None if args.phase_lease is None else
+                                        {"phase": args.phase_lease, "state_file": args.phase_state,
+                                         "forecast": _token_count("phase_forecast", args.phase_forecast)
+                                         if args.phase_forecast else None}))
+        pkt =(rec.get("wu_packet") or {}).get("path")
         print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
               f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "
               f"wu_packet_epoch={rec.get('wu_packet_epoch')} continue_max_tokens={rec.get('continue_max_tokens')} "
