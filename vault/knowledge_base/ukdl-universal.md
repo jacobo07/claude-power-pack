@@ -1,4 +1,18 @@
 
+## UKDL PROMOTIONS -- AMCR mission continuity (2026-10-15, m-4e31db7aca3f). Proven by tools/test_mission_continuity.py R1-R10 (28/28) with a kill-switch control that reproduces the incident.
+- HARD-RULE HR-EXECUTION-LOCATION-IS-MISSION-STATE-001: every observer of an autonomous worker (breaker, relay, recovery, card) resolves the work's location through ONE resolver over a durable binding; no subsystem derives `work_dir or cwd` itself. (Three stale-observer stops in five days: add_dirs 10-11, excluded .planning 10-15, worktree 10-15; each earlier fix patched one instance.)
+- HARD-RULE HR-BREAKER-RECONCILES-BEFORE-ZERO-001: a cost breaker may not declare zero progress before rebinding to where the worker writes; an unmeasurable root is UNKNOWN, never zero; a sample taken under an older binding generation never trips. (V-AMCR-R1/R3/R9.)
+- HARD-RULE HR-OBLIGATION-OUTLIVES-EXECUTOR-001: a child (background agent/command) killed with its parent stays a durable obligation with its prompt saved outside the process until an artifact or an explicit transition closes it. (V-AMCR-R6.)
+- HARD-RULE HR-NO-SILENT-OWNER-WAIT-001: an unreadable recovery input is RECOVERY_FAILED (retried, then a surfaced liveness incident), never "not applicable" or an Owner wait. (8.5 h park on a parser defect; V-AMR-RESIDUAL-UNKNOWN-*.)
+- PROCESS RULE: a worker that moves its work to another git worktree declares it (`gsd_mission.py bind`); the supervisor's detection (worktree added after the binding AND named in the worker's tool inputs) is the backstop, not the contract.
+- PROCESS RULE: recovery of a stall hold first asks whether the bound root contradicts it (commits in base..HEAD inside the breaker's window); a contradicted hold is lifted and the residual continues, nothing is fenced. (V-AMCR-R2.)
+- PROCESS RULE: read a producer's state through the producer (GSD `init.manager`) or every format it emits; test the reader on a file the real producer wrote. (gsd_unit read only `current_phase:`, which a 1.14 roadmapper STATE.md never carries; the old fixture shared the assumption.)
+- TRAP: a transcript's `cwd` does not move when a worker changes directory with Set-Location; it is not evidence of where the work is.
+- TRAP: Claude Code's background-session isolation (`worktree.bgIsolation`) refuses edits in a shared checkout; that, not another open pane, is why a `claude --bg` worker leaves the checkout. Do not "fix" it by closing panes.
+- TRAP: substring path matching makes `...\r8-wt` match inside `...\r8-wt2`; match whole paths (V-AMCR-R8 found it).
+- TRAP: progress keyed on the HEAD commit counts an empty or amend-only commit; key on HEAD's tree (V-AMCR-R4B).
+- TRAP: a clean tree right after a commit is progress, not inactivity (V-AMCR-R4).
+
 ## UKDL PROMOTIONS -- Tennis D28 (WU-D11, 2026-10-13). One line each; source entry cited.
 - HARD-RULE: never close a unit from a worker's closing prose; derive status from the ledger by script. (KNOWLEDGE-TRFC K-TRFC-03: W12 said 14 MATCH, ledger 12.)
 - HARD-RULE: a guard over a field must carry a liveness twin (count of the positive case equals an independent figure). (K-TRFC-05: `status` vs `clean` gave 22/22 false regressions.)

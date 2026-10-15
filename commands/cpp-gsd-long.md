@@ -97,6 +97,33 @@ Get-Content "$env:USERPROFILE\.claude\state\gsd-long-run-sweep.log" -Tail 20
 `replace` that repeats pass after pass with a `stop:` or `held:` reason is a stuck relay; the
 reason names what holds it.
 
+## Execution binding and the breaker (AMCR, 2026-10-15)
+
+Execution location is mission state. The record's `binding` (generation, root, branch, base, head)
+is the one answer to "where does the work live"; every observer -- cost breaker, relay, AMR
+recovery, card -- reads it through `mission_binding.execution_root`. A worker that moves into a
+git worktree declares it (`gsd_mission.py bind --mission <id> --path <worktree>`, the card says
+so); if it does not, the breaker detects a worktree of the same repository added after the
+binding and named in the worker's own tool inputs, and rebinds before judging anything.
+
+Before a breaker trip the Progress Reconciliation Gate runs: rebind first; fingerprint the bound
+root (HEAD's tree, so an empty commit is not progress; `.planning` artifacts count); an
+unmeasurable root is PROGRESS_UNKNOWN (never zero; an incident after 3 passes); a working
+background child earns one extra stall budget; a binding that moved during the pass voids the
+sample. Only ZERO_PROGRESS_CONFIRMED trips, after pending children are saved as durable
+obligations (prompt kept under `state/obligations/<mission>/`). Every decision is a
+`breaker_receipt` ledger row. Recovery lifts a stall hold the bound root contradicts (commits in
+`base..HEAD` inside the breaker's window) and the ordinary relay continues -- no `release`. An
+unreadable residual is RECOVERY_FAILED (retried), then RECOVERY_EXHAUSTED (a surfaced liveness
+incident), never a silent Owner wait.
+
+```powershell
+& $py "$pp\tools\gsd_mission.py" topology --mission <id>   # binding, live HEAD, frontier, spend since progress, obligations, liveness
+```
+
+Kill switch: `CPP_MISSION_CONTINUITY=off` (the old `work_dir or cwd` observers). Plan:
+`vault/plans/amcr-mission-continuity-20261015.md`.
+
 ## Sweep (every 5 minutes)
 
 Task `PP-GsdLongRun-Sweep` (wscript + `tools/hidden_launch.vbs`, no window) runs
@@ -125,6 +152,8 @@ so the retired machinery stays honest, but it cannot arm a live run.
 
 ```
 python tools/test_gsd_mission.py            # V-MC-*    (Ralph: arm, relay, stop, linger)
+python tools/test_mission_continuity.py     # V-AMCR-*  (binding, rebind, reconciled breaker, obligations: R1-R10)
+python tools/test_mission_recovery.py       # V-AMR-*   (recovery: residual, fence, lease)
 python tools/test_gsd_epoch.py              # V-EPOCH-* (turn continuation vs context rotation, child hold)
 python tools/gsd_epoch.py census            # fresh sessions BY CAUSE, continuations, compactions
 python tools/gsd_epoch.py epochs --mission <id>   # one row per context epoch of a mission
