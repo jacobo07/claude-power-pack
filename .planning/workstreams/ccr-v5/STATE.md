@@ -26,6 +26,10 @@ current_phase_name: Context-rent attribution
 
 ## Decisions
 
+- 2026-10-15 (epoch 4): Phase 1 discuss skipped (config workflow.skip_discuss=true; CONTEXT.md auto-generated from the
+  ROADMAP goal). Planning delegated to one gsd-planner subagent (research folded in; reversible, internal). Epoch 4 is
+  the first epoch that ran a turn after the MCP-approval fix below.
+
 - 2026-10-15 (coordinator d124ce03): epochs 1-3 never ran a turn. Each `claude --bg` worker stopped at the
   host's project-MCP approval dialog (github, notion, @21st-dev/magic). This worktree inherits
   `~/.claude/.mcp.json` by walking up, and has no approval record of its own. The main tree's approval lives in
