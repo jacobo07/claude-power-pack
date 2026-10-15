@@ -7,6 +7,8 @@
     heldout  --cls C --train <...> --test <...>            forecast error on transcripts the model did not see
     anomaly  --pgo pgo.json <stream.jsonl>                 per-call steps above the class P95 step, with the row that caused it
     contract --pgo pgo.json --obligation TEXT --image F [--cap N]   Semantic Cost Contract + admission verdict, before launch
+    install  [--classes F] [--breakeven DIR] [--dest DIR] [--force] [--receipt F]   X2 step 5: put the Stage 3 model files
+             where the runtime reads them (validated first, atomic, read back); verify  [--dest DIR]  drive the REAL readers
 
 A step is the provider ctx growth between two calls (exact). The forecast of a boundary is floor x calls + the carry
 that the class's per-call growth implies: processed(n) = n*floor + g*n*(n-1)/2. Nothing here is a constant someone
@@ -16,8 +18,14 @@ ADMIT_UNFORECAST, never ADMIT, so an unknown cost is not reported as a known one
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import math
+import os
+import shutil
 import sys
+import tempfile
+import time
 from pathlib import Path
 
 import numpy as np
@@ -326,6 +334,256 @@ def contract(pgo: dict | None, obligation: str, image: Path, cap: float | None) 
     return c
 
 
+# --- X2 step 5: install the Stage 3 model files where the runtime reads them, and prove the readers read them ---
+
+REPO = Path(__file__).resolve().parent.parent
+CLASSES_NAME = "pgo-classes.json"
+BREAKEVEN_SUFFIX = ".breakeven.json"
+DEFAULT_CLASSES = REPO / "vault" / "programs" / "ccr" / "stage3" / "a3" / CLASSES_NAME
+DEFAULT_BREAKEVEN = REPO / "vault" / "programs" / "ccr" / "stage3" / "a4" / "pgo"
+CONFIDENCES = ("LOW", "MEDIUM", "HIGH")
+# The numeric fields of a break-even model: mirrors parseBreakevenModel in
+# mods/cpp-cognitive-runtime/hooks/policy.ts (pinned by V-PGOINST-MIRROR-PINNED-TO-TS).
+BREAKEVEN_NUMERIC = ("capsule", "R", "rehyd_cost", "first_overhead", "r", "g")
+# gsd_mission/long_run read these at call time; verify points all five at a temp dir so it never writes real state.
+STATE_ENV = ("GSD_LONG_RUN_STATE_DIR", "GSD_LONG_RUN_SESSIONS_DIR", "GSD_AUTORUN_MARKER_DIR",
+             "CPP_CLAUDE_JOBS_DIR", "GSD_LONG_RUN_PROJECTS_DIR")
+PROBES = (("bounded-code", "# WU fix the parser\nEdit tools/foo.py, add tests.\n"),
+          ("lookup", "# WU look up the predecessor\nWhere is X.\n"))
+
+
+def pgo_dir() -> Path:
+    """The directory gsd_mission._ccr_contract reads: CPP_CCR_PGO_DIR, else ~/.claude/ccr/state/pgo."""
+    env = os.environ.get("CPP_CCR_PGO_DIR")
+    return Path(env) if env else Path.home() / ".claude" / "ccr" / "state" / "pgo"
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _is_num(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def validate_classes(obj) -> list[str]:
+    """Errors in a WU-A3 class-model file (empty list = acceptable)."""
+    if not isinstance(obj, dict):
+        return ["pgo-classes: top level is not an object"]
+    errs: list[str] = []
+    classes = obj.get("classes")
+    if not isinstance(classes, dict) or not classes:
+        errs.append("pgo-classes: `classes` is not a non-empty object")
+        classes = {}
+    gen = obj.get("generic")
+    if not (isinstance(gen, dict) and isinstance(gen.get("model"), dict)):
+        errs.append("pgo-classes: `generic.model` is missing")
+    for name, ent in classes.items():
+        if not isinstance(ent, dict):
+            errs.append(f"pgo-classes: classes.{name} is not an object")
+        elif ent.get("confidence") not in CONFIDENCES:
+            errs.append(f"pgo-classes: classes.{name}.confidence is {ent.get('confidence')!r}, not one of {CONFIDENCES}")
+    return errs
+
+
+def validate_breakeven(obj, cls: str) -> list[str]:
+    """Errors in a break-even model for unit class `cls` (empty = acceptable). Same rule as parseBreakevenModel."""
+    if not isinstance(obj, dict):
+        return [f"{cls}: top level is not an object"]
+    errs: list[str] = []
+    if obj.get("cls") != cls:
+        errs.append(f"{cls}: field `cls` is {obj.get('cls')!r}, expected {cls!r}")
+    for k in BREAKEVEN_NUMERIC:
+        v = obj.get(k)
+        if not _is_num(v) or v < 0:
+            errs.append(f"{cls}: field `{k}` is {v!r}, not a finite number >= 0")
+    ln = obj.get("lengths")
+    if not isinstance(ln, list) or not ln:
+        errs.append(f"{cls}: field `lengths` is not a non-empty list")
+    elif not all(_is_num(v) for v in ln):
+        errs.append(f"{cls}: field `lengths` holds a non-number")
+    return errs
+
+
+def _load_json_bytes(data: bytes):
+    return json.loads(data.decode("utf-8-sig"))
+
+
+def _plan(classes_src: Path, breakeven_dir: Path | None) -> tuple[list[tuple[Path, str, bytes]], list[str]]:
+    """(source path, destination name, bytes) for every file to install, and every validation error."""
+    items: list[tuple[Path, str, bytes]] = []
+    errs: list[str] = []
+
+    def take(src: Path, name: str, check) -> None:
+        try:
+            data = Path(src).read_bytes()
+            obj = _load_json_bytes(data)
+        except (OSError, ValueError) as exc:
+            errs.append(f"{name}: cannot read/parse {src}: {type(exc).__name__}: {exc}")
+            return
+        bad = check(obj)
+        errs.extend(bad)
+        if not bad:
+            items.append((Path(src), name, data))
+
+    take(classes_src, CLASSES_NAME, validate_classes)
+    if breakeven_dir is not None:
+        d = Path(breakeven_dir)
+        if not d.is_dir():
+            errs.append(f"breakeven directory {d} does not exist")
+        else:
+            for f in sorted(d.glob("*" + BREAKEVEN_SUFFIX)):
+                cls = f.name[: -len(BREAKEVEN_SUFFIX)]
+                take(f, f.name, lambda o, c=cls: validate_breakeven(o, c))
+    return items, errs
+
+
+def install(dest, classes_src, breakeven_dir=None, force: bool = False) -> dict:
+    """Validate every source, then write each file (temp name + atomic replace) and read it BACK from disk.
+    All-or-nothing: an invalid source or a differing destination file (without force) writes nothing; a failure
+    while writing restores what this run changed."""
+    dest = Path(dest)
+    out: dict = {"ok": False, "dest": str(dest), "force": bool(force), "files": [], "errors": []}
+    items, errs = _plan(Path(classes_src), Path(breakeven_dir) if breakeven_dir is not None else None)
+    if errs:
+        out["errors"] = errs
+        return out
+    before: dict[str, bytes | None] = {}
+    for src, name, data in items:
+        cur = dest / name
+        old = cur.read_bytes() if cur.is_file() else None
+        before[name] = old
+        if old is not None and old != data and not force:
+            errs.append(f"{name}: destination exists with different bytes (sha256 {_sha256(old)[:12]}); "
+                        f"refusing to overwrite without --force")
+    if errs:
+        out["errors"] = errs
+        return out
+    written: list[str] = []
+    try:
+        dest.mkdir(parents=True, exist_ok=True)
+        for src, name, data in items:
+            row = {"name": name, "source": str(src), "source_sha256": _sha256(data), "destination": str(dest / name)}
+            old = before[name]
+            if old == data:
+                row["status"] = "unchanged"
+            else:
+                tmp = dest / f".{name}.{os.getpid()}.tmp"
+                try:
+                    tmp.write_bytes(data)
+                    os.replace(tmp, dest / name)
+                finally:
+                    if tmp.exists():
+                        tmp.unlink()
+                written.append(name)
+                row["status"] = "installed" if old is None else "overwritten"
+                if old is not None:
+                    row["previous_sha256"] = _sha256(old)
+            back = (dest / name).read_bytes()
+            row.update(destination_sha256=_sha256(back), bytes=len(back),
+                       installed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+            if row["destination_sha256"] != row["source_sha256"]:
+                raise OSError(f"{name}: read-back sha256 differs from the source")
+            out["files"].append(row)
+    except OSError as exc:
+        for name in written:                       # restore exactly what this run changed
+            try:
+                if before[name] is None:
+                    (dest / name).unlink(missing_ok=True)
+                else:
+                    (dest / name).write_bytes(before[name])
+            except OSError:
+                pass
+        out["files"] = []
+        out["errors"] = [f"{type(exc).__name__}: {exc}"]
+        return out
+    out["ok"] = True
+    return out
+
+
+def _probe_rows(gm, scratch: Path) -> tuple[list, list, list]:
+    contract_rows, on_rows, off_rows = [], [], []
+    for name, text in PROBES:
+        pkt = scratch / f"probe-{name}.md"
+        pkt.write_text(text, encoding="utf-8")
+        rec = {"mission_id": f"m-verify-{name}", "epoch": 1, "wu_packet": {"path": str(pkt)}}
+        c = gm._ccr_contract(rec, str(pkt), None)
+        contract_rows.append({"probe": name, "work_class": c.get("work_class"), "confidence": c.get("confidence"),
+                              "verdict": c.get("verdict")})
+        rec["admission"] = {"ccr_contract": c}
+        env_on, row_on = gm.deflate_unit(rec, environ={})
+        declared = row_on.get("declared")
+        decl = {}
+        if declared and Path(declared).is_file():
+            decl = json.loads(Path(declared).read_text(encoding="utf-8"))
+        on_rows.append({"probe": name, "action": row_on.get("action"), "unit": row_on.get("unit"),
+                        "declared_exists": bool(declared and Path(declared).is_file()), "declared_class": decl.get("class"),
+                        "env_declared": bool(env_on.get("CCR_WORK_UNIT"))})
+        env_off, row_off = gm.deflate_unit(rec, environ={"CPP_CCR_DEFLATE": "off"})
+        off_rows.append({"probe": name, "env": env_off, "row": row_off})
+    return contract_rows, on_rows, off_rows
+
+
+def verify(dest) -> dict:
+    """Drive the REAL readers (gsd_mission._ccr_contract, then deflate_unit with DEFLATE on and with the off
+    hold) against `dest`, with every mission-state env var pointed at a temp directory. ok is true iff the
+    contract came from the installed file, the off hold declares nothing, and no break-even file is invalid."""
+    dest = Path(dest)
+    scratch = Path(tempfile.mkdtemp(prefix="ccr-pgo-verify-"))
+    keys = STATE_ENV + ("CPP_CCR_PGO_DIR",)
+    saved = {k: os.environ.get(k) for k in keys}
+    out: dict = {"ok": False, "dest": str(dest), "dest_exists": dest.is_dir()}
+    try:
+        for k in STATE_ENV:
+            os.environ[k] = str(scratch / k.lower())
+        os.environ["CPP_CCR_PGO_DIR"] = str(dest)
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import gsd_mission as gm
+        state = Path(gm.lr.state_dir()).resolve()
+        if scratch.resolve() not in state.parents and state != scratch.resolve():
+            out["error"] = f"state dir {state} is not isolated under {scratch}; refusing to run"
+            return out
+        cf = dest / CLASSES_NAME
+        out["classes_present"] = cf.is_file()
+        out["classes_ok"] = False
+        if cf.is_file():
+            try:
+                cerr = validate_classes(_load_json_bytes(cf.read_bytes()))
+            except (OSError, ValueError) as exc:
+                cerr = [f"cannot parse: {exc}"]
+            out["classes_ok"] = not cerr
+            if cerr:
+                out["classes_errors"] = cerr
+        be = sorted(dest.glob("*" + BREAKEVEN_SUFFIX)) if dest.is_dir() else []
+        berr: list[str] = []
+        for f in be:
+            try:
+                berr += validate_breakeven(_load_json_bytes(f.read_bytes()), f.name[: -len(BREAKEVEN_SUFFIX)])
+            except (OSError, ValueError) as exc:
+                berr.append(f"{f.name}: cannot parse: {exc}")
+        out["breakeven_files"] = [f.name for f in be]
+        out["breakeven_ok"] = None if not be else not berr      # None = UNKNOWN (nothing to check), not a pass
+        if berr:
+            out["breakeven_errors"] = berr
+        contract_rows, on_rows, off_rows = _probe_rows(gm, scratch)
+        out.update(contract=contract_rows, deflate_on=on_rows, deflate_off=off_rows)
+        out["deflate_live"] = next((r["action"] for r in on_rows if r["probe"] == "bounded-code"), None)
+        from_file = all(r["verdict"] != "UNFORECAST" and r["work_class"] for r in contract_rows)
+        off_empty = all(not r["env"] and not r["row"] for r in off_rows)
+        out["ok"] = bool(from_file and off_empty and out["breakeven_ok"] is not False)
+        return out
+    except Exception as exc:  # noqa: BLE001 -- a verifier that cannot run reports not-ok, never ok
+        out["error"] = f"{type(exc).__name__}: {exc}"[:300]
+        return out
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -339,8 +597,25 @@ def main(argv: list[str]) -> int:
     a = sub.add_parser("anomaly"); a.add_argument("--pgo", required=True); a.add_argument("stream")
     c = sub.add_parser("contract"); c.add_argument("--pgo"); c.add_argument("--obligation", required=True)
     c.add_argument("--image", required=True); c.add_argument("--cap", type=float)
+    i = sub.add_parser("install"); i.add_argument("--classes", default=str(DEFAULT_CLASSES))
+    i.add_argument("--breakeven", default=str(DEFAULT_BREAKEVEN)); i.add_argument("--dest")
+    i.add_argument("--force", action="store_true"); i.add_argument("--receipt")
+    v = sub.add_parser("verify"); v.add_argument("--dest")
     x = ap.parse_args(argv)
     load = lambda p: json.loads(Path(p).read_text(encoding="utf-8"))  # noqa: E731
+    # install / verify return their own exit code; they sit ABOVE the contract fall-through below on purpose.
+    if x.cmd == "install":
+        r = install(Path(x.dest) if x.dest else pgo_dir(), Path(x.classes), Path(x.breakeven) if x.breakeven else None,
+                    force=x.force)
+        if x.receipt:
+            Path(x.receipt).parent.mkdir(parents=True, exist_ok=True)
+            Path(x.receipt).write_text(json.dumps(r, indent=1) + "\n", encoding="utf-8")
+        print(json.dumps(r, indent=1))
+        return 0 if r["ok"] else 1
+    if x.cmd == "verify":
+        r = verify(Path(x.dest) if x.dest else pgo_dir())
+        print(json.dumps(r, indent=1))
+        return 0 if r["ok"] else 1
     if x.cmd == "build" and x.by_class:
         if not (x.missions and x.pack and x.root):
             ap.error("build --by-class needs --missions, --pack and --root")
@@ -364,7 +639,7 @@ def main(argv: list[str]) -> int:
         r = heldout(x.cls, [Path(p) for p in x.train], [Path(p) for p in x.test])
     elif x.cmd == "anomaly":
         r = anomaly(load(x.pgo), Path(x.stream))
-    else:
+    elif x.cmd == "contract":
         pgo = load(x.pgo) if x.pgo and Path(x.pgo).exists() else None
         r = contract(pgo, x.obligation, Path(x.image), x.cap)
     print(json.dumps(r, indent=1))

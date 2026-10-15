@@ -1,0 +1,46 @@
+{
+ "status": "INSTALLED",
+ "plan": "ccr-v5 phase 2 plan 02 (X2 step 5)",
+ "release_precondition": "python tools/ccr_release.py status: active release 0.1.0-54f1824b",
+ "dest": "C:\\Users\\User\\.claude\\ccr\\state\\pgo",
+ "command": "python tools/ccr_pgo.py install (default dir, no --force)",
+ "measured": {
+  "before_verify_rc": 1,
+  "before_verify": "dest_exists false; both probes UNFORECAST; deflate_live no_unit_class",
+  "install_rc": 0,
+  "after_verify_rc": 0,
+  "after_verify": "classes_ok true; breakeven_ok true; bounded-code MEDIUM -> deflated (unit bounded-code-worker, declaration file written); lookup LOW -> would_deflate; CPP_CCR_DEFLATE=off rows empty",
+  "get_filehash_installed_equals_source": true
+ },
+ "files": [
+  {
+   "name": "pgo-classes.json",
+   "source": "vault/programs/ccr/stage3/a3/pgo-classes.json",
+   "source_sha256": "9815fbc4aa3d663b27f4a8bd8476e6aafb4b35bece5079354b58cd4f8bce682c",
+   "destination": "C:\\Users\\User\\.claude\\ccr\\state\\pgo\\pgo-classes.json",
+   "destination_sha256": "9815fbc4aa3d663b27f4a8bd8476e6aafb4b35bece5079354b58cd4f8bce682c",
+   "bytes": 14151,
+   "installed_at": "2026-10-15T07:27:29Z"
+  },
+  {
+   "name": "bounded-code-worker.breakeven.json",
+   "source": "vault/programs/ccr/stage3/a4/pgo/bounded-code-worker.breakeven.json",
+   "source_sha256": "0f2bf6a019b9905224d52c07fa49a03c5612700e68c70253deeb47c21727959f",
+   "destination": "C:\\Users\\User\\.claude\\ccr\\state\\pgo\\bounded-code-worker.breakeven.json",
+   "destination_sha256": "0f2bf6a019b9905224d52c07fa49a03c5612700e68c70253deeb47c21727959f",
+   "bytes": 410,
+   "installed_at": "2026-10-15T07:27:29Z"
+  },
+  {
+   "name": "read-only-reviewer.breakeven.json",
+   "source": "vault/programs/ccr/stage3/a4/pgo/read-only-reviewer.breakeven.json",
+   "source_sha256": "0cd328e20305635272b1f89b1e3ecbedd9c09f49199e3a83e48cfc4372b263fd",
+   "destination": "C:\\Users\\User\\.claude\\ccr\\state\\pgo\\read-only-reviewer.breakeven.json",
+   "destination_sha256": "0cd328e20305635272b1f89b1e3ecbedd9c09f49199e3a83e48cfc4372b263fd",
+   "bytes": 264,
+   "installed_at": "2026-10-15T07:27:29Z"
+  }
+ ],
+ "rollback": "delete exactly these three files by name after comparing sha256 (see vault/programs/ccr/PGO-INSTALL.md)",
+ "classifier_refusal": "none: the write under ~/.claude/ccr/state/pgo was not refused (HR-001 did not fire)"
+}
