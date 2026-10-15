@@ -426,6 +426,13 @@ const CHAIN_MAP = {
     // chain's settings matcher is "Bash|PowerShell" despite the chain's name, so PowerShell
     // launches -- the ones that actually caused it -- are covered.
     { exe: NODE_EXE, script: './gui-app-console-inherit-guard.js', timeoutMs: 5000, block: true },
+    // Console popups in the Owner's foreground (2026-10-15). Windows Terminal is the default terminal,
+    // so a console process given no hidden window becomes a focused WT window. Blocks Win32_Process
+    // Create without ShowWindow, Start-Process of a console program without -WindowStyle Hidden /
+    // -NoNewWindow, and scheduled tasks that run a console program directly. Measured both poles
+    // (1 window vs 0). Same script is in the Edit-chain as a file ratchet. Proof:
+    // hooks/tests/test-console-popup-guard.js --e2e (28/28).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/console-popup-guard.js', timeoutMs: 4000, block: true },
     // Carrier least privilege (agent-capability-virtualization S1, 2026-09-30). A carrier's
     // frontmatter can grant Bash but not a READ-ONLY Bash; the PreToolUse payload names the
     // calling subagent (agent_type, measured), so the verifier class is held to observe/test
@@ -528,6 +535,9 @@ const CHAIN_MAP = {
     // survive mergeOutputs (HSO shallow-merge keeps permissionDecision:deny).
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/uqf_pre_edit_gate.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/claude_md_firewall.js', timeoutMs: 8000, block: true },
+    // Console-popup file ratchet (2026-10-15; see the Bash-chain entry). On .ps1/.psm1/.bat/.cmd only
+    // a GROWING violation count blocks, so old debt never blocks an unrelated edit.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/console-popup-guard.js', timeoutMs: 4000, block: true },
     // CDIO I4 design gate (2026-07-13): on a Write/Edit to a visual surface
     // (frontend ext, or a landing/dashboard/component/hero filename), RUN
     // tools/design_gate.py against the project's DESIGN.md. Two tiers:
