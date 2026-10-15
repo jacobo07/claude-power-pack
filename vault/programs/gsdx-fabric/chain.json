@@ -101,7 +101,7 @@
       "wait": [
         "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F9-receipt.md"
       ],
-      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F9); packet 68d0c3bf; writes proposal files only, the coordinator applies KV/UKDL/FIOS on the laptop; the laptop tick must not arm it"
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F9); packet 68d0c3bf; writes proposal files only, the coordinator applies KV/UKDL/FIOS on the laptop; the laptop tick must not arm it. DONE 039af4a6 (15/15 + 4 mutants red re-run by coordinator, F1-F8 green), settled 2,112,091 (L15). Proposals applied 2026-10-15: KV domain/binary-reconstruction-fabric.md (+ Tennis DOL sha correction to KN-F1-04), UKDL 86658b3f. PROGRAMME CLOSED: settled 53,278,196 of 57,817,916"
     }
   ]
 }
