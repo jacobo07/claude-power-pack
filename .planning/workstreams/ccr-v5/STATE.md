@@ -2,22 +2,22 @@
 gsd_state_version: "1.0"
 milestone: v5
 milestone_name: Semantic Working Set + Institutional Mutation Coordination
-status: phase-1-complete
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-10-15T07:18:25.468Z"
-state_head: 6376f5897ef23afd06825e64bab52831ac38a9c6
+status: phase-2-complete
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-10-15T07:45:00.000Z"
+state_head: 44291071c763f88bd100a19cee66297f3d8e6b52
 progress:
   total_phases: 11
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 3
-  percent: 9
-last_activity: 2026-10-14
+  completed_plans: 6
+  percent: 18
+last_activity: 2026-10-15
 workstream: ccr-v5
 created: 2026-10-14
-current_phase: 1 — Context-rent attribution
-current_phase_name: Context-rent attribution
-current_plan: Phase 1 complete
+current_phase: 3 — Institutional Mutation Coordination (next, not started)
+current_phase_name: Institutional Mutation Coordination
+current_plan: Phase 2 complete; Phase 3 next
 last_activity_desc: Workstream created from vault/plans/ccr-v5-svm-imc-2026-10-14.md
 ---
 
@@ -25,7 +25,9 @@ last_activity_desc: Workstream created from vault/plans/ccr-v5-svm-imc-2026-10-1
 
 ## Current Position
 
-**Status:** Phase 1 COMPLETE (EVIDENCE.md, G1 not triggered). Ready to plan Phase 2. Goal `ccr`, lease L13 (`ccr:v5`, cap 79,000,000), programme 195,000,000.
+**Status:** Phase 1 COMPLETE (EVIDENCE.md, G1 not triggered). Phase 2 COMPLETE (phases/02-*/02-EVIDENCE.md). Ready to plan Phase 3. Goal `ccr`, lease L13 (`ccr:v5`, cap 79,000,000), programme 195,000,000.
+
+**Phase 2 (2026-10-15):** commits `6376f589` (GEX44 driver v3 versioned + breaker regression, DRV 14/14), `0930ee2e` (PGO install/verify + DEFLATE hold, PGOINST 14/14, files live in `~/.claude/ccr/state/pgo/`), `097a272e` (CCR RESUMPTION_FILE snapshot). Grades: clause 1 OBSERVED, clause 2 PROVEN (property), clause 3 PROVEN. No `mods/` change, no CCR release. Open residuals (named in the EVIDENCE): (a) `spent()` measures 0 for a missing stream file and for all-string-message streams, so it never trips (OPEN, not patched); (b) DEFLATE is live by default for bounded-code slim launches and `CPP_CCR_DEFLATE=off` does not reach Task Scheduler (only removing `pgo-classes.json` does; persisting the variable is an Owner decision); (c) main-tree `RESUMPTION_FILE.md` is dirty with the same bytes ccr/v5 commits (Phase 3 note; autocrlf=true, compare with `Get-FileHash`); (d) real-launch DEFLATE saving UNJUDGED. BLOCKED by name: scheduler-wide DEFLATE hold (Owner step in the EVIDENCE). Spend: session af436132 booked 25,095,992 processed on goal `ccr` (12.55x the 2.0M route; stop-loss rule is the coordinator's call, Phase 1 was never booked on L13). Self-hosting via `CCR_WORK_UNIT`: UNJUDGED (no unit supplied).
 
 ## Decisions
 
@@ -50,9 +52,12 @@ last_activity_desc: Workstream created from vault/plans/ccr-v5-svm-imc-2026-10-1
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 02 P01 | 25min | 2 tasks | 5 files |
+| Phase 02 P02 | 40min | 3 tasks | 4 files |
+| Phase 02 P03 | n/a | 2 tasks | 1 file |
+| Phase 02 P04 | n/a | 2 tasks | 4 files (EVIDENCE, STATE, ROADMAP, CONTEXT) |
 
 ## Session
 
-**Last session:** 2026-10-15T07:18:25.414Z
-**Stopped at:** Completed 02-01-PLAN.md
+**Last session:** 2026-10-15T07:45:00.000Z
+**Stopped at:** Completed 02-04-PLAN.md (Phase 2 closed)
 **Resume file:** None

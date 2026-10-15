@@ -45,7 +45,7 @@ receipts and transcripts (no re-spend to reproduce known numbers). Split project
 Context Rent Ledger (per-category rows, schema in code, not prose). **Gate G1:** if >70% of the lobby floor is
 host-fixed, Phase 6 shrinks to receipts only and the saving moves to Phase 8.
 
-### Phase 2: Quick CCR residuals (route 2.0M)
+### Phase 2: Quick CCR residuals (route 2.0M) -- COMPLETE 2026-10-15 (see phases/02-*/02-EVIDENCE.md; residuals a-d open there)
 X2 step 5 (copy `vault/programs/ccr/stage3/a3/pgo-classes.json` and `stage3/a4/pgo/*.breakeven.json` into
 `~/.claude/ccr/state/pgo/`; verify DEFLATE reads them; `CPP_CCR_DEFLATE=off` hold documented). Version the GEX44
 driver (`kobii@gex44:~/missions/ccr-s3-data/drive3.sh`, read via ssh `gex44`) into `vault/programs/ccr/stage3/driver/`
