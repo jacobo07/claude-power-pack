@@ -34,7 +34,13 @@ OWNER_BOUNDARY = "OWNER_BOUNDARY"
 DURABLE_WAIT = "DURABLE_WAIT"
 SHADOW_COMPILED = "SHADOW_COMPILED"
 NOT_APPLICABLE = "NOT_APPLICABLE"   # nothing AMR can recover (GSD complete / residual unreadable): legacy settle or park
-TERMINAL_RECOVERY_STATES = (SUCCESSOR_LAUNCHED, OWNER_BOUNDARY, DURABLE_WAIT, SHADOW_COMPILED, NOT_APPLICABLE)
+# AMCR: an unreadable residual is a failed recovery (retried, then a surfaced liveness incident), never
+# NOT_APPLICABLE and never an Owner wait. RECOVERY_FAILED is retried every pass; RECOVERY_EXHAUSTED is final.
+RECOVERY_FAILED = "RECOVERY_FAILED"
+RECOVERY_EXHAUSTED = "RECOVERY_EXHAUSTED"
+MAX_RECOVERY_FAILURES = 3
+TERMINAL_RECOVERY_STATES = (SUCCESSOR_LAUNCHED, OWNER_BOUNDARY, DURABLE_WAIT, SHADOW_COMPILED, NOT_APPLICABLE,
+                            RECOVERY_EXHAUSTED)
 
 
 def eligible(rec: dict) -> bool:
@@ -241,25 +247,77 @@ def _read(p: Path) -> str:
         return ""
 
 
-def gsd_unit(work_dir: str, workstream: str | None) -> dict:
-    """The phase the mission is on, from GSD's own files. Unreadable = {} (the residual is UNKNOWN)."""
+_PHASE_RES = (re.compile(r'^current_phase:\s*"?(\d+(?:\.\d+)?)', re.MULTILINE),     # frontmatter (older GSD)
+              re.compile(r"^\**Current Phase:?\**:?\s*(\d+(?:\.\d+)?)", re.MULTILINE),  # labelled body
+              re.compile(r"^Phase:\s*(\d+(?:\.\d+)?)\s+of\s+\d+", re.MULTILINE))      # GSD 1.14 roadmapper body
+
+
+def _phase_glob(num: str) -> str:
+    whole, _, frac = str(num).partition(".")
+    return f"{int(whole):02d}{'.' + frac if frac else ''}-*"
+
+
+def _research_required(base: Path) -> bool:
+    try:
+        cfg = json.loads(_read(base / "config.json") or "{}")
+    except ValueError:
+        return False
+    wf = cfg.get("workflow") if isinstance(cfg.get("workflow"), dict) else {}
+    return bool(wf.get("research", cfg.get("research", False)))
+
+
+def gsd_unit(work_dir: str, workstream: str | None, manager=None) -> dict:
+    """The phase the mission is on, in this order: STATE.md `current_phase:` frontmatter (GSD's own field,
+    when its state tooling wrote it); else GSD itself (`init.manager`, the relay's reader -- only when it
+    sees both ROADMAP.md and STATE.md, as gsd_status requires); else the STATE.md body (`Current Phase:` or
+    the 1.14 roadmapper's `Phase: N of M`). Unreadable = {} (residual UNKNOWN). Measured 2026-10-15
+    (m-4e31db7aca3f): only the frontmatter was read, which a 1.14 roadmapper STATE.md never carries, so
+    every recovery of that project was "unreadable"."""
     base = Path(work_dir) / ".planning" / (f"workstreams/{workstream}" if workstream else "")
-    state = _read(base / "STATE.md")
-    m = re.search(r"^current_phase:\s*\"?(\d+)", state, re.MULTILINE)
-    if not m:
-        return {}
-    num = int(m.group(1))
     roadmap = _read(base / "ROADMAP.md")
-    sec = re.search(rf"^### Phase {num}:\s*(.+?)$(.*?)(?=^### Phase |\Z)", roadmap, re.MULTILINE | re.DOTALL)
-    name = sec.group(1).strip() if sec else f"Phase {num}"
+    state = _read(base / "STATE.md")
+    name = None
+    try:
+        if manager is None:
+            import gsd_long_run as lr
+            manager = lr.gsd_manager
+        data, _why = manager(work_dir, workstream=workstream)
+    except Exception:  # noqa: BLE001 -- GSD unreachable: the file readings answer
+        data = None
+    if not (data and data.get("roadmap_exists") and data.get("state_exists")):
+        data = None
+    phases = (data or {}).get("phases") or []
+    fm = _PHASE_RES[0].search(state)
+    if fm:
+        num = fm.group(1).lstrip("0") or "0"
+    elif phases:
+        cur = next((ph for ph in phases if not ph.get("phase_complete")), None)
+        if cur is None:
+            return {}
+        num, name = str(cur.get("number")), cur.get("name")
+    else:
+        m = next((rx.search(state) for rx in _PHASE_RES[1:] if rx.search(state)), None)
+        if not m:
+            return {}
+        num = m.group(1)
+    gsd = next((ph for ph in phases if str(ph.get("number")) == str(num)), None)
+    whole = int(str(num).split(".")[0])
+    sec = re.search(rf"^#+ Phase {re.escape(str(num))}:\s*(.+?)$(.*?)(?=^#+ Phase |\Z)", roadmap, re.MULTILINE | re.DOTALL)
+    name = name or (sec.group(1).strip() if sec else f"Phase {num}")
     criteria = re.findall(r"^\s*\d+\.\s+(.+)$", sec.group(2), re.MULTILINE) if sec else []
-    pdir = next((d for d in sorted((base / "phases").glob(f"{num:02d}-*")) if d.is_dir()), None)
+    pdir = next((d for d in sorted((base / "phases").glob(_phase_glob(num))) if d.is_dir()), None)
     plans = sorted(p.name for p in pdir.glob("*-PLAN.md")) if pdir else []
     summaries = {p.name.replace("-SUMMARY.md", "") for p in pdir.glob("*-SUMMARY.md")} if pdir else set()
-    total = len(re.findall(r"^### Phase \d+:", roadmap, re.MULTILINE))
-    return {"phase": num, "name": name, "criteria": criteria, "dir": str(pdir) if pdir else None,
-            "plans": plans, "executed": sorted(p for p in plans if p.replace("-PLAN.md", "") in summaries),
-            "total_phases": total, "unit": f"{workstream or 'root'}/phase-{num:02d}"}
+    has = lambda suffix: bool(pdir and any(pdir.glob(f"*{suffix}")))  # noqa: E731
+    total = len(re.findall(r"^#+ Phase \d+(?:\.\d+)?:", roadmap, re.MULTILINE))
+    return {"phase": whole if "." not in str(num) else num, "name": name, "criteria": criteria,
+            "dir": str(pdir) if pdir else None, "plans": plans,
+            "executed": sorted(p for p in plans if p.replace("-PLAN.md", "") in summaries),
+            "total_phases": int((data or {}).get("phase_count") or total),
+            "has_context": bool(gsd.get("has_context")) if gsd else has("-CONTEXT.md"),
+            "has_research": bool(gsd.get("has_research")) if gsd else has("-RESEARCH.md"),
+            "research_required": _research_required(base), "source": "gsd" if gsd else "state.md",
+            "unit": f"{workstream or 'root'}/phase-{_phase_glob(num)[:-2]}"}
 
 
 def compile_residual(unit: dict, capital_paths) -> list[dict]:
@@ -267,6 +325,11 @@ def compile_residual(unit: dict, capital_paths) -> list[dict]:
     if not unit:
         return []
     items = []
+    if not unit["plans"] and unit.get("research_required") and not unit.get("has_research"):
+        items.append({"do": f"Research Phase {unit['phase']} ({unit['name']}) and commit its RESEARCH.md"
+                            + (" -- the CONTEXT.md is already committed: read it, do not redo the discussion"
+                               if unit.get("has_context") else ""),
+                      "proof": "the phase's *-RESEARCH.md exists and is committed", "kind": PLAN})
     if not unit["plans"]:
         items.append({"do": f"Write the plan files for Phase {unit['phase']} ({unit['name']}) in the main "
                             "thread, from the capitalized design; do not re-derive it.",
@@ -351,6 +414,10 @@ def goal_liveness(rec: dict) -> str:
     if not hold:
         return "ACTIVE" if st in ("RUNNING", "LAUNCHING", "HANDOFF", "PREPARED") else "WAITING"
     rs = (hold.get("recovery") or {}).get("state")
+    if rs == RECOVERY_EXHAUSTED:
+        return "LIVENESS_INCIDENT"       # AMCR: a failed recovery is surfaced, never parked on the Owner
+    if rs == RECOVERY_FAILED:
+        return "RECOVERING"
     if rs in (OWNER_BOUNDARY, NOT_APPLICABLE):
         return "OWNER_BOUNDARY"
     if rs == DURABLE_WAIT:

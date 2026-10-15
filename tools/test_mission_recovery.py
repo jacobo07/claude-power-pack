@@ -110,7 +110,7 @@ def held_mission(mid: str, wd: Path, *, estimate=7_500_000, kind="cost", tokens=
     return gm.load(mid)
 
 
-SIDS = [f"m-aaa00000000{c}-worker" for c in "0123456789abcd"] + [f"m-aaa0000000a{c}-worker" for c in "123456"] + ["m-aaa000000001-succ1", "m-aaa000000001-succ2"]
+SIDS = [f"m-aaa00000000{c}-worker" for c in "0123456789abcd"] + [f"m-aaa0000000a{c}-worker" for c in "1234567"] + ["m-aaa000000001-succ1", "m-aaa000000001-succ2"]
 DONE = [{"sessionId": s, "id": s[:8], "kind": "background", "state": "done"} for s in SIDS]
 
 
@@ -280,8 +280,28 @@ def main() -> int:
     wd9 = make_tree("nostate", state=False)
     rec9 = held_mission("m-aaa00000000a", wd9)
     r9 = gm.recover_mission(rec9, DONE, NOW + 60, stop_runner=stop_ok, launch=fake_launch, gsd_status=GSD_OK)
-    check("V-AMR-RESIDUAL-UNKNOWN-FALLS-BACK-TO-LEGACY", r9["action"] == "recover_not_applicable" and "UNKNOWN" in r9["reason"]
-          and gm.plan_next(gm.load("m-aaa00000000a"), NOW + 99, [], pid_alive=lambda p: False)["action"] != "recover")
+    # AMCR (2026-10-15, m-4e31db7aca3f): an unreadable residual is a FAILED recovery, retried, then a surfaced
+    # liveness incident -- it used to become NOT_APPLICABLE, i.e. a silent Owner wait.
+    check("V-AMR-RESIDUAL-UNKNOWN-IS-RECOVERY-FAILED", r9["action"] == "recover_failed" and "UNKNOWN" in r9["reason"]
+          and gm.plan_next(gm.load("m-aaa00000000a"), NOW + 99, [], pid_alive=lambda p: False)["action"] == "recover"
+          and mr.goal_liveness(gm.load("m-aaa00000000a")) == "RECOVERING", str(r9)[:200])
+    for k in (2, 3):
+        r9 = gm.recover_mission(gm.load("m-aaa00000000a"), DONE, NOW + 60 * k, stop_runner=stop_ok, launch=fake_launch,
+                                gsd_status=GSD_OK)
+    a9 = gm.load("m-aaa00000000a")
+    check("V-AMR-RESIDUAL-UNKNOWN-EXHAUSTS-TO-INCIDENT",
+          (a9["owner_hold"]["recovery"] or {}).get("state") == mr.RECOVERY_EXHAUSTED
+          and mr.goal_liveness(a9) == "LIVENESS_INCIDENT"
+          and gm.plan_next(a9, NOW + 999, [], pid_alive=lambda p: False)["action"] != "recover", str(a9.get("owner_hold"))[:200])
+    with_kill = dict(os.environ)
+    os.environ["CPP_MISSION_CONTINUITY"] = "off"
+    try:
+        wd9b = make_tree("nostate-legacy", state=False)
+        r9b = gm.recover_mission(held_mission("m-aaa0000000a7", wd9b), DONE, NOW + 60, stop_runner=stop_ok,
+                                 launch=fake_launch, gsd_status=GSD_OK)
+    finally:
+        os.environ.clear(); os.environ.update(with_kill)
+    check("V-AMR-RESIDUAL-UNKNOWN-KILL-SWITCH-LEGACY", r9b["action"] == "recover_not_applicable", str(r9b)[:160])
     wd11 = make_tree("complete")
     rec11 = held_mission("m-aaa00000000c", wd11)
     r11 = gm.recover_mission(rec11, DONE, NOW + 60, stop_runner=stop_ok, launch=fake_launch,
@@ -372,6 +392,7 @@ def main() -> int:
     # F5: an advance that cannot compile parks at a boundary and tells the relay not to launch.
     recC = gm.load("m-aaa00000000b")
     (wd10 / ".planning" / "workstreams" / "ksp" / "STATE.md").write_text("no phase here\n", encoding="utf-8")
+    (wd10 / ".planning" / "workstreams" / "ksp" / "ROADMAP.md").unlink()   # nothing GSD could answer from either
     nC, okC = gm.amr_advance(recC, NOW + 1200)
     check("V-AMR-F5-ADVANCE-REFUSAL-PARKS", okC is False
           and (nC.get("owner_hold") or {}).get("recovery", {}).get("state") == mr.OWNER_BOUNDARY)

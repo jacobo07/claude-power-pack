@@ -38,6 +38,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_long_run as lr  # noqa: E402  (state_dir, ledger, _pid_alive, sessions_dir)
+import mission_binding as mb  # noqa: E402  (AMCR: the one execution-root resolver)
 import receipt_judge as rj  # noqa: E402  (one receipt reading for mission, chain and steward)
 from route_admission import KNOWN_VERDICTS, LAUNCHABLE_VERDICTS  # noqa: E402  (one verdict contract)
 
@@ -995,7 +996,7 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     # `cwd` and its worktree as `work_dir`; a print-mode worker's shell starts in whatever directory it
     # is spawned in, so spawning in `cwd` put epoch 4 of m-8bbdf725cd52 (2026-10-06) in a shared
     # checkout on another branch, one `git commit` away from landing there.
-    wd = rec.get("work_dir")
+    wd = mb.execution_root(rec)
     run_dir = wd if wd and Path(wd).is_dir() else rec["cwd"]
     try:
         pid = (spawner or _spawn_detached)(argv, run_dir, out_path, err_path)
@@ -1192,7 +1193,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         # so skipping the render re-sent the PREVIOUS epoch's card. Measured 2026-09-25
         # (m-1d270cd85220): a replace from LAUNCHING (no owner -> no note) briefed epoch 4 as
         # "epoch 3" with a WORK TREE line the record had since corrected; the worker entered it.
-        wd = work_dir or rec.get("work_dir") or rec["cwd"]
+        wd = work_dir or mb.execution_root(rec)
         extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note or "",
                                      "packet": packet if note is not None else rec.get("packet"),
                                      "work_dir": wd}, _git_facts(wd), _plan_facts(wd, rec.get("workstream")))
@@ -1320,7 +1321,7 @@ def handoff_packet(session_id: str, specs: list[str], context: int = 30) -> tupl
         live = effective_workdir(session_id, rec["cwd"], rec.get("workstream"))
     except Exception:  # noqa: BLE001 -- a packet is an aid; fall back, never block the hand-off
         live = None
-    root = live or rec.get("work_dir") or rec["cwd"]
+    root = (live if live and mb._norm(live) != mb._norm(rec["cwd"]) else None) or mb.execution_root(rec)
     paths, selectors = [], []
     for spec in specs:
         if "::" in spec:
@@ -1578,6 +1579,8 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         # supervise() and crashed EVERY pass for every mission (GEX44: m-da6e925b5092, 264 passes over
         # ~24 h from 2026-10-07; m-79f84cdd34dc, 2026-10-08, a COMPLETED record whose hold was cleared).
         return rec
+    if mb.enabled():
+        return _reconciled_breaker(rec, now, measure, fingerprint)
     try:
         spent = (measure or ms.processed_tokens)(rec)
         fp = mission_fingerprint(rec, rec.get("work_dir") or rec["cwd"], fingerprint or progress_fingerprint)
@@ -1595,6 +1598,198 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
                           event="cost_mark", now=now, cost_mark=verdict["mark"],
                           reason=f"progress fingerprint moved at {spent:,} processed")
     return rec
+
+
+def _save_child_obligations(rec: dict, failed_sid: str | None, now: float) -> dict:
+    """AMCR: background children the failed worker launched and never got back become durable obligations
+    (KILLED_WITH_PARENT) before anything is compiled or relaunched. Idempotent; unknown children add none."""
+    if not mb.enabled() or not failed_sid:
+        return rec
+    import gsd_epoch as ge
+    try:
+        kids = ge.child_work(failed_sid, now)
+        transcript = lr.find_transcript(failed_sid)
+    except Exception:  # noqa: BLE001 -- an unreadable transcript invents no obligation
+        return rec
+    if not kids.get("pending"):
+        return rec
+    obs = mb.capture_obligations(rec, kids, transcript, "KILLED_WITH_PARENT", now,
+                                 lr.state_dir() / "obligations" / rec["mission_id"])
+    if obs == (rec.get("obligations") or []):
+        return rec
+    return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      expect_seq=rec.get("seq"), event="obligations_saved", now=now, touch=False,
+                      obligations=obs, reason=f"{len(obs)} child obligation(s) of {failed_sid[:8]} kept")
+
+def _breaker_receipt(mid: str, cls: str, action: str, **fields) -> None:
+    lr.ledger_append(mid, "breaker_receipt", mission_id=mid, classification=cls, action=action, **fields)
+
+
+def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, child_fn=None,
+                        transcript_fn=None) -> dict:
+    """AMCR Progress Reconciliation Gate: the breaker never declares zero progress about a tree it has not
+    proven to be the mission's. Order: rebind to where the worker actually writes -> fingerprint the
+    bound root (plus any ambiguous candidate) -> judge -> before a stall trip, a working child earns a
+    bounded extension, an unmeasurable tree never trips, and a binding that moved meanwhile voids the
+    sample. Only then the hold, with the pending children saved as obligations first."""
+    import gsd_epoch as ge
+    import mission_spend as ms
+    mid = rec["mission_id"]
+    owner_sid = (rec.get("owner") or {}).get("session_id")
+    find = transcript_fn or lr.find_transcript
+    try:
+        transcript = find(owner_sid) if owner_sid else None
+    except Exception:  # noqa: BLE001 -- no transcript is "unknown", handled below
+        transcript = None
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
+    gen0 = mb.generation(rec)
+    try:
+        det = mb.detect_rebind(rec, transcript)
+    except Exception as exc:  # noqa: BLE001 -- topology unknown is not "unchanged"
+        det = None
+        lr.ledger_append(mid, "rebind_detect_error", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+    cands = (det or {}).get("candidates") or []
+    if len(cands) == 1:
+        try:
+            nb = mb.new_binding(rec, cands[0], "detected", now)
+        except mb.BindError as exc:
+            nb = None
+            lr.ledger_append(mid, "rebind_refused", mission_id=mid, path=cands[0], why=str(exc)[:300])
+        if nb:
+            _breaker_receipt(mid, mb.TOPOLOGY_CHANGED, "rebind", gen=nb["gen"], root=nb["root"], spent=spent,
+                             previous=nb.get("previous"))
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="workspace_rebound",
+                              now=now, touch=False, binding=nb, work_dir=nb["root"], cost_mark=None,
+                              reason=f"workspace rebound (detected) gen {nb['gen']}: {nb['root']}")
+    root = mb.execution_root(rec)
+    fp_fn = fingerprint or progress_fingerprint
+    try:
+        fp = mission_fingerprint({**rec, "add_dirs": list(rec.get("add_dirs") or []) + cands}, root, fp_fn)
+        verdict = ms.judge(rec, spent, fp)
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
+    evidence = {"gen": gen0, "root": root, "fp": fp, "candidates": cands, "spent": spent,
+                "mark": rec.get("cost_mark"), "topology_judged": det is not None}
+    if verdict["mark"]:
+        _breaker_receipt(mid, mb.GOOD, "mark", **evidence)
+        settled = mb.settle_obligations(rec, root, now)   # a landed artifact closes its child obligation
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="cost_mark", now=now,
+                          cost_mark={**verdict["mark"], "at": now, "gen": gen0}, progress_unknown=None,
+                          **({"obligations": settled} if settled else {}),
+                          reason=f"progress fingerprint moved at {spent:,} processed (gen {gen0}, {root})")
+    if fp is None and not verdict["trip"]:
+        streak = int((rec.get("progress_unknown") or {}).get("streak") or 0) + 1
+        why = "bound root missing" if not Path(root).is_dir() else "git could not fingerprint the bound root"
+        _breaker_receipt(mid, mb.PROGRESS_UNKNOWN, "no_trip", streak=streak, why=why, **evidence)
+        if streak == mb.UNKNOWN_INCIDENT_STREAK:
+            lr.ledger_append(mid, "progress_unknown_incident", mission_id=mid, why=why, root=root)
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="progress_unknown",
+                          now=now, touch=False, progress_unknown={"streak": streak, "why": why, "root": root},
+                          reason=(f"INCIDENT: progress unmeasurable {streak} passes ({why}); the breaker will not "
+                                  f"call it zero" if streak >= mb.UNKNOWN_INCIDENT_STREAK else
+                                  f"progress unknown ({why}): no trip"))
+    if not verdict["trip"]:
+        return rec
+    stall_trip = "since the work tree last changed" in verdict["trip"]
+    kids = None
+    if owner_sid:
+        try:
+            kids = (child_fn or ge.child_work)(owner_sid, now)
+        except Exception:  # noqa: BLE001 -- unknown children: no extension, no obligation invented
+            kids = None
+    if stall_trip and kids and mb.child_active(kids, transcript, now):
+        est = int(rec["token_estimate"])
+        stall = int(rec.get("token_stall_budget") or est * ms.DEFAULT_STALL_FRACTION)
+        burned = spent - int((rec.get("cost_mark") or {}).get("tokens") or 0)
+        if burned <= stall * (1 + mb.CHILD_EXTRA_STALL_BUDGETS):
+            _breaker_receipt(mid, mb.CHILD_ACTIVE, "no_trip", burned=burned,
+                             children=[p.get("what") for p in kids.get("pending") or []], **evidence)
+            return rec
+    current = load(mid) or rec
+    if mb.generation(current) != gen0:
+        _breaker_receipt(mid, mb.STALE_GENERATION, "no_trip", current_gen=mb.generation(current), **evidence)
+        return current
+    if kids and kids.get("pending"):
+        obs = mb.capture_obligations(rec, kids, transcript, "KILLED_WITH_PARENT", now,
+                                     lr.state_dir() / "obligations" / mid)
+        rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="obligations_saved",
+                         now=now, touch=False, obligations=obs,
+                         reason=f"{len(obs)} child obligation(s) saved before the breaker stops the worker")
+    _breaker_receipt(mid, mb.ZERO_CONFIRMED if stall_trip else "BUDGET_EXCEEDED", "trip", reason=verdict["trip"],
+                     **evidence)
+    lr.ledger_append(mid, "cost_breaker_tripped", mission_id=mid, spent=spent,
+                     estimate=rec.get("token_estimate"), reason=verdict["trip"])
+    return set_owner_hold(mid, verdict["trip"], now=now, kind="cost")
+
+
+def bind_mission(mission_id: str, path: str, cause: str = "explicit", now: float | None = None) -> dict:
+    """AMCR workspace rebind: every observer of the mission (breaker, relay, AMR, card) follows the new root
+    from this one write. Refuses a path that is not the top of a worktree of the mission's repository."""
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; nothing to bind")
+    now = time.time() if now is None else now
+    try:
+        nb = mb.new_binding(rec, path, cause, now)
+    except mb.BindError as exc:
+        raise MissionError(f"bind refused: {exc}") from exc
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="workspace_rebound",
+                      now=now, touch=False, binding=nb, work_dir=nb["root"], cost_mark=None,
+                      ledger_extra={"gen": nb["gen"], "root": nb["root"], "branch": nb["branch"], "cause": cause},
+                      reason=f"workspace rebound ({cause}) gen {nb['gen']}: {nb['root']} [{nb['branch']}]")
+
+
+def set_obligation(mission_id: str, oid: str, state: str, now: float | None = None) -> dict:
+    """Close (or reopen) one durable child obligation. Only a mission transition removes an obligation."""
+    if state not in mb.CHILD_STATES:
+        raise MissionError(f"unknown obligation state {state!r} (one of {', '.join(mb.CHILD_STATES)})")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    obs = [dict(o) for o in rec.get("obligations") or []]
+    hit = [o for o in obs if o.get("id") == oid]
+    if not hit:
+        raise MissionError(f"{mission_id} has no obligation {oid}")
+    now = time.time() if now is None else now
+    hit[0].update(state=state, updated_at=now)
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="obligation_set",
+                      now=now, touch=False, obligations=obs, reason=f"obligation {oid} -> {state}")
+
+
+def topology(mission_id: str) -> dict:
+    """The mission topology receipt: one inspectable answer to where, what and why, read cheaply."""
+    import mission_recovery as mr
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    root = mb.execution_root(rec)
+    hold = rec.get("owner_hold") or {}
+    try:
+        import mission_spend as ms
+        spent = ms.processed_tokens(rec)
+    except Exception:  # noqa: BLE001 -- unmeasured is shown as such
+        spent = None
+    mark = rec.get("cost_mark") or {}
+    return {
+        "goal": f"{rec['cwd']}|{rec.get('workstream') or ''}", "mission": mission_id, "state": rec["state"],
+        "epoch": rec["epoch"], "worker": (rec.get("owner") or {}).get("session_id"),
+        "binding_generation": mb.generation(rec), "execution_root": root, "root_exists": Path(root).is_dir(),
+        "binding": mb.binding(rec), "live_head": (_git_ro(root, "rev-parse", "HEAD") or "").strip() or None,
+        "live_branch": (_git_ro(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip() or None,
+        "progress_frontier": mark or None,
+        "spend": spent, "spend_since_progress": (spent - int(mark.get("tokens") or 0)) if spent is not None and mark else None,
+        "progress_unknown": rec.get("progress_unknown"),
+        "obligations": rec.get("obligations") or [],
+        "hold": {k: hold.get(k) for k in ("reason", "kind", "set_at", "recovery")} if hold else None,
+        "goal_liveness": mr.goal_liveness(rec), "reason": rec.get("reason"),
+    }
 
 
 def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
@@ -1640,7 +1835,7 @@ def _amr_transcript(rec: dict, sid: str | None) -> Path | None:
     import mission_spend as ms
     if not sid:
         return None
-    for base in (rec.get("work_dir"), rec.get("cwd")):
+    for base in (rec.get("cwd"), mb.execution_root(rec)):
         for d in (ms.mission_dirs(base, ms.projects_root()) if base else []):
             p = d / f"{sid}.jsonl"
             if p.is_file():
@@ -1677,7 +1872,7 @@ def amr_compile(rec: dict, *, failed_sid: str | None, hold_reason: str, cause: s
     import mission_spend as ms
     import route_admission as ra
     mid = rec["mission_id"]
-    wd = rec.get("work_dir") or rec["cwd"]
+    wd = mb.execution_root(rec)
     amr = dict(rec.get("amr") or {})
     goal = f"{rec['cwd']}|{rec.get('workstream') or ''}"
     unit = mr.gsd_unit(wd, rec.get("workstream"))
@@ -1794,7 +1989,8 @@ def _amr_mark(rec: dict, hold: dict, state: str, why: str, now: float, event: st
     import mission_recovery as mr  # noqa: F401 -- state names live there
     return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
                       expect_seq=rec.get("seq"), event=event, now=now,
-                      owner_hold={**hold, "recovery": {"state": state, "at": now, "why": why[:300]}},
+                      owner_hold={**hold, "recovery": {**(hold.get("recovery") or {}), "state": state, "at": now,
+                                                       "why": why[:300]}},
                       reason=f"recovery {state}: {why[:200]}")
 
 
@@ -1809,7 +2005,7 @@ def recover_mission(rec: dict, sessions, now: float, *, pid_alive=lr._pid_alive,
     hold = dict(rec.get("owner_hold") or {})
     owner = rec.get("owner")
     failed_sid = (owner or {}).get("session_id") or (rec.get("previous_owner") or {}).get("session_id")
-    wd = rec.get("work_dir") or rec["cwd"]
+    wd = mb.execution_root(rec)
     try:
         st = (gsd_status or _supervise_gsd_status)(wd, workstream=rec.get("workstream"))
     except Exception as exc:  # noqa: BLE001 -- unanswered is not "work remains"
@@ -1849,6 +2045,19 @@ def recover_mission(rec: dict, sessions, now: float, *, pid_alive=lr._pid_alive,
             if not ok:
                 return {"action": "recover_wait_fence", "reason": f"old worker not stopped yet: {how}"}
             hold = {**hold, "worker_stopped_at": now, "stop": how}   # F3: our stop is recorded with the hold
+    rec = _save_child_obligations(rec, failed_sid, now)
+    fs = mb.false_stall(rec, hold)
+    if fs:
+        # AMCR: the hold said "nothing changed" about a tree that was not the mission's; the bound root
+        # committed inside that window. Not a failed strategy -- nothing is fenced, nothing re-planned: lift
+        # the hold and let the ordinary relay continue the residual (no Owner release).
+        lr.ledger_append(mid, "false_stall_reconciled", mission_id=mid, root=fs["root"], commits=fs["commits"][:10],
+                         gen=mb.generation(rec), hold=str(hold.get("reason"))[:300])
+        transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
+                   event="false_stall_reconciled", now=now, owner_hold=None, cost_mark=None,
+                   reason=f"false stall: {len(fs['commits'])} commit(s) in the bound root {fs['root']} inside the "
+                          f"breaker's window; hold lifted, residual continues")
+        return {"action": "recover_false_stall", "reason": f"{len(fs['commits'])} commit(s) in {fs['root']}"}
     c = amr_compile(rec, failed_sid=failed_sid, hold_reason=str(hold.get("reason") or ""), cause="breaker", now=now)
     lr.ledger_append(mid, "recovery_compiled", mission_id=mid, ok=c["ok"], failure=c.get("failure"),
                      progress=(c.get("progress") or {}).get("class"), unit=c.get("unit"),
@@ -1856,8 +2065,20 @@ def recover_mission(rec: dict, sessions, now: float, *, pid_alive=lr._pid_alive,
                      successor_strategy=(c.get("topology") or {}).get("strategy"),
                      lease=(c.get("lease") or {}).get("lease"), why=c.get("boundary"))
     if not c["ok"] and c.get("not_applicable"):
-        _amr_mark(rec, hold, mr.NOT_APPLICABLE, str(c.get("boundary")), now, "recovery_not_applicable")
-        return {"action": "recover_not_applicable", "reason": str(c.get("boundary"))[:300]}
+        if not mb.enabled():
+            _amr_mark(rec, hold, mr.NOT_APPLICABLE, str(c.get("boundary")), now, "recovery_not_applicable")
+            return {"action": "recover_not_applicable", "reason": str(c.get("boundary"))[:300]}
+        # AMCR: an unreadable residual is a recovery failure, not "nothing to recover" and not an Owner
+        # wait (m-4e31db7aca3f sat 8.5 h as OWNER_BOUNDARY on a parser defect). Retried every pass; after
+        # MAX_RECOVERY_FAILURES it is a surfaced liveness incident with its exact reason.
+        n = int(((hold.get("recovery") or {}).get("failures") or 0)) + 1
+        state = mr.RECOVERY_EXHAUSTED if n >= mr.MAX_RECOVERY_FAILURES else mr.RECOVERY_FAILED
+        why = f"{c.get('boundary')} (attempt {n}/{mr.MAX_RECOVERY_FAILURES}; root {wd})"
+        _amr_mark(rec, {**hold, "recovery": {"failures": n}}, state, why, now,
+                  "recovery_incident" if state == mr.RECOVERY_EXHAUSTED else "recovery_failed")
+        if state == mr.RECOVERY_EXHAUSTED:
+            lr.ledger_append(mid, "liveness_incident", mission_id=mid, why=why[:300])
+        return {"action": "recover_failed", "reason": why[:300]}
     if not c["ok"]:
         _amr_boundary(rec, c, now, hold)
         return {"action": "recover_boundary", "reason": str(c.get("boundary"))[:300]}
@@ -2376,7 +2597,8 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         f"HEAD at hand-off: {g.get('head') or 'unknown'}",
         f"Dirty paths at hand-off: {g.get('dirty') if g.get('dirty') is not None else 'unknown'}",
     ]
-    wd = rec.get("work_dir")
+    wd = mb.execution_root(rec) if mb.binding(rec) else rec.get("work_dir")
+    parts += mb.card_lines(rec)
     if wd and os.path.normcase(str(wd)) != os.path.normcase(str(rec.get("cwd") or "")):
         # Measured M6 (2026-09-24): /gsd-autonomous moved into a git worktree and reset the main
         # checkout's planning files, so everything done lives THERE. A successor that starts in
@@ -2571,6 +2793,22 @@ def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = N
             return base_cwd
         return str(Path(last).resolve())
     return base_cwd
+
+
+def live_root(rec: dict) -> str:
+    """AMCR: the execution root, overridden by the owner's transcript only when that names ANOTHER worktree
+    of the repository. effective_workdir answers the cwd itself for a worker that moved with Set-Location
+    (its transcript cwd never changes), and `ew or recorded` then discarded a binding that knew better."""
+    root = mb.execution_root(rec)
+    if not rec.get("owner"):
+        return root
+    try:
+        ew = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream"))
+    except Exception:  # noqa: BLE001 -- keep the bound dir; never guess
+        return root
+    if not mb.enabled():
+        return ew or root
+    return ew if ew and mb._norm(ew) != mb._norm(rec["cwd"]) else root
 
 
 def launched_row(pending: dict | None, sessions: list[dict] | None) -> dict | None:
@@ -3074,13 +3312,7 @@ def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str
     if m:
         t = _tree_inside_repo(m.group(1), rec["cwd"])
         return t, "packet work_tree" if t else f"work_tree {m.group(1)[:200]!r} is not inside the repo"
-    wd = rec.get("work_dir") or rec["cwd"]
-    if rec.get("owner"):
-        try:
-            wd = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream")) or wd
-        except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
-            pass
-    return wd, "worker tree"
+    return live_root(rec), "worker tree"
 
 
 def packet_receipt_path(rec: dict) -> str | None:
@@ -3106,7 +3338,7 @@ def spend_goal(rec: dict) -> str | None:
         return named
     try:
         import mission_spend as ms
-        wd = ms._norm(rec.get("work_dir") or rec["cwd"])
+        wd = ms._norm(mb.execution_root(rec))
         hits = [goal for goal, e in ms.read_index().items()
                 if any(wd == r or wd.startswith(r + os.sep) for r in (e.get("roots") or []))]
     except Exception:  # noqa: BLE001 -- unmeasurable is None, never a guess
@@ -3510,7 +3742,7 @@ def _seal_rejudge_wait(rec: dict, now: float) -> str | None:
     hold = rec.get("capsule_hold") or {}
     if hold.get("kind") != "seal_refused" or "retries" not in hold:
         return None
-    fp = _seal_refusal_fp(hold.get("fp_dir") or rec.get("work_dir") or rec["cwd"])
+    fp = _seal_refusal_fp(hold.get("fp_dir") or mb.execution_root(rec))
     if fp is not None and fp != hold.get("fingerprint"):
         return None                                    # the tree moved: what refused may be gone
     n = hold.get("retries")
@@ -3577,7 +3809,7 @@ def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: fl
         # G3: a busy owner's turn has not ended, so no hand-off seal. G5: past the grace, counted
         # from the FIRST refusal, a degraded capsule from durable state stops it anyway.
         origins = ["supervisor_fallback"] if overdue else []
-    wd = work_dir or rec.get("work_dir") or rec["cwd"]
+    wd = work_dir or mb.execution_root(rec)
     origin, seal, reasons = _capsule_seal(rec, origins, work_dir=wd, capsule_io=capsule_io)
     if not origins:
         reasons = [f"owner {verdict} and its turn has not ended: {why}"]
@@ -3788,13 +4020,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 # a git worktree, and `work_dir` is saved only by a fresh launch -- a same-session
                 # continuation never saves it. Asking the cwd read a finished milestone as
                 # "work remains", halted it, and renewed it.
-                halt_wd = rec.get("work_dir") or rec["cwd"]
-                if rec.get("owner"):
-                    try:
-                        halt_wd = (effective_workdir(rec["owner"]["session_id"], rec["cwd"],
-                                                     rec.get("workstream")) or halt_wd)
-                    except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
-                        pass
+                halt_wd = live_root(rec)
                 row["work_dir"] = halt_wd
                 if "budget:" in plan["reason"]:
                     # Asked BEFORE the halt is written: the worker whose turn finished the
@@ -3866,7 +4092,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                  pending=None, slim_result=s, worker=s.get("session_id"),
                                  reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
                 if halt_continue_on() and stopped:
-                    halt_continue(fin, fin.get("work_dir") or fin["cwd"], s.get("result") or "", s, row, now)
+                    halt_continue(fin, mb.execution_root(fin), s.get("result") or "", s, row, now)
             elif act == "settle":
                 # Terminal, never relaunched: HALTED keeps owner_hold, so renewal_refusal still refuses it,
                 # and leaves goal_conflicts because the state is terminal.
@@ -3957,7 +4183,11 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         lr.ledger_append(mid, "worktree_not_followed", mission_id=mid, epoch=rec["epoch"],
                                          work_dir=ew, why="use_worktrees=false")
                         ew = None
-                    work_dir = ew or rec.get("work_dir")
+                    if mb.enabled() and ew and mb._norm(ew) == mb._norm(rec["cwd"]):
+                        # AMCR: a transcript still in the cwd (the worker moved with Set-Location) proves no move;
+                        # the binding, not the launch directory, says where the work is.
+                        ew = None
+                    work_dir = ew or (mb.execution_root(rec) if mb.binding(rec) else rec.get("work_dir"))
                     # A worktree effective_workdir followed is PROVEN (the predecessor acted on this
                     # workstream there and it carries the roadmap): align_cwd may follow a diverged
                     # cwd then. A recorded work_dir alone proves nothing.
@@ -4002,7 +4232,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         row["unit_done"] = "RECEIPT_DONE"
                         continue
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
-                    st = (gsd_status or _supervise_gsd_status)(work_dir or rec.get("work_dir") or rec["cwd"],
+                    st = (gsd_status or _supervise_gsd_status)(work_dir or mb.execution_root(rec),
                                                        workstream=rec.get("workstream"))
                     row["gsd"] = st.get("outcome")
                     if st.get("outcome") == "ALL_COMPLETE":
@@ -4104,7 +4334,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         row["held"] = turn_end["reason"]
                         continue
                 fp_fn = fingerprint or progress_fingerprint
-                progress = next_progress(rec, mission_fingerprint(rec, work_dir or rec.get("work_dir") or rec["cwd"],
+                progress = next_progress(rec, mission_fingerprint(rec, work_dir or mb.execution_root(rec),
                                                                   fp_fn),
                                          ran=rec["state"] != LAUNCHING)
                 row["progress"] = progress
@@ -4610,7 +4840,8 @@ def progress_fingerprint(work_dir: str) -> str | None:
     g = resolve_exe("git") or "git"
     parts = []
     try:
-        for args in (["rev-parse", "HEAD"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
+        # HEAD's TREE, not its commit (AMCR anti-gaming): an empty or amend-only commit changes no content.
+        for args in (["rev-parse", "HEAD^{tree}"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
             r = subprocess.run([g, "-C", work_dir, *args], capture_output=True, text=True,
                                encoding="utf-8", errors="replace", timeout=30)
             if r.returncode != 0:
@@ -5158,6 +5389,17 @@ def _cli(argv=None) -> int:
     oh.add_argument("--reason", required=True)
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
     orl.add_argument("--mission", required=True)
+    bd = sub.add_parser("bind", help="AMCR: bind the mission to the git worktree its worker now writes "
+                                     "(every observer follows it)")
+    bd.add_argument("--mission", required=True)
+    bd.add_argument("--path", required=True)
+    bd.add_argument("--cause", default="explicit")
+    ob = sub.add_parser("obligation", help="AMCR: set a durable child obligation's state")
+    ob.add_argument("--mission", required=True)
+    ob.add_argument("--id", required=True)
+    ob.add_argument("--state", required=True)
+    tp = sub.add_parser("topology", help="AMCR: the mission's execution topology receipt (JSON)")
+    tp.add_argument("--mission", required=True)
     au = sub.add_parser("authority", help="record Owner programme authority: token ceiling AMR leases inside, "
                                           "and/or extra wall hours")
     au.add_argument("--mission", required=True)
@@ -5245,6 +5487,18 @@ def _cli(argv=None) -> int:
         rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason)
         print(f"AUTHORITY SET mission={rec['mission_id']} authority_tokens={rec.get('authority_tokens')} "
               f"max_hours={rec.get('max_hours')}")
+        return 0
+    if args.cmd == "bind":
+        rec = bind_mission(args.mission, args.path, args.cause)
+        b = rec["binding"]
+        print(f"BOUND mission={rec['mission_id']} gen={b['gen']} root={b['root']} branch={b['branch']} head={b['head']}")
+        return 0
+    if args.cmd == "obligation":
+        rec = set_obligation(args.mission, args.id, args.state)
+        print(f"OBLIGATION SET mission={rec['mission_id']} id={args.id} state={args.state}")
+        return 0
+    if args.cmd == "topology":
+        print(json.dumps(topology(args.mission), indent=1, default=str))
         return 0
     if args.cmd == "release":
         rec = release_owner_hold(args.mission)
