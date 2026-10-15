@@ -1,3 +1,6 @@
+> **gsdx-fabric (gsdx-factory Part C) coordinator, 2026-10-15:** resume from
+> `vault/programs/gsdx-fabric/RESUMPTION.md`. Unrelated to the sections below.
+
 # POST-INCIDENT STATE (2026-09-20) — /cpp-gsd-long: what is settled, what blocks C7
 
 Commits this wave, all pushed: `15bcdbe` `ba540f2` `27a7094` `d92bcc9`.
