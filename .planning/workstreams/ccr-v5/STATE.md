@@ -1,21 +1,24 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1 — Context-rent attribution
-current_plan: Phase 1 complete
+milestone: v5
+milestone_name: Semantic Working Set + Institutional Mutation Coordination
 status: phase-1-complete
-stopped_at: Phase 1 complete; ready to plan Phase 2
-last_updated: "2026-10-14T23:10:00.000Z"
-last_activity: 2026-10-14
-last_activity_desc: Workstream created from vault/plans/ccr-v5-svm-imc-2026-10-14.md
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-10-15T07:18:25.468Z"
+state_head: 6376f5897ef23afd06825e64bab52831ac38a9c6
 progress:
   total_phases: 11
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 6
+  completed_plans: 3
   percent: 9
+last_activity: 2026-10-14
 workstream: ccr-v5
 created: 2026-10-14
+current_phase: 1 — Context-rent attribution
 current_phase_name: Context-rent attribution
+current_plan: Phase 1 complete
+last_activity_desc: Workstream created from vault/plans/ccr-v5-svm-imc-2026-10-14.md
 ---
 
 # Project State
@@ -41,3 +44,15 @@ current_phase_name: Context-rent attribution
   Phase 11 must record it as a UKDL trap, and as a fix in `gsd_mission arm`.
 
 - 2026-10-15 (epoch 5): Phase 1 executed in the main thread (no planner subagent, per the successor packet). tools/ccr_rent_ledger.py extends ccr_anatomy; G1 NOT triggered (host-fixed 5.8-7.7 %, worst case 43 %), so Phase 6 keeps full scope. The 77K tool-schema+framing residual is UNJUDGED; Phase 6/10 own it.
+
+## Performance Metrics
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 02 P01 | 25min | 2 tasks | 5 files |
+
+## Session
+
+**Last session:** 2026-10-15T07:18:25.414Z
+**Stopped at:** Completed 02-01-PLAN.md
+**Resume file:** None
