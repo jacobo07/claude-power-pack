@@ -30,7 +30,7 @@ Principle: budget is authority, not guidance. A model may request a reforecast; 
 
 ## Phases
 
-### Phase 1: Hard enforcement (route 4.5M)
+### Phase 1: Hard enforcement (route 4.5M) — DONE 2026-10-15 (5bfce1df, abbb9322, d8390521; phases/01-hard-enforcement/01-EVIDENCE.md)
 - Per-phase lease in the mission record: `{phase, forecast, warn 1.2x, hard 1.5x, reserve}`. Writable only by `envelope`
   (CAS), never by the worker. Phase spend = processed since the phase's start (`gsd_epoch`/ledger cost marks keyed by the
   GSD phase read from STATE/ROADMAP). An unknown or ambiguous prior-phase accounting = BLOCKED, never permission.

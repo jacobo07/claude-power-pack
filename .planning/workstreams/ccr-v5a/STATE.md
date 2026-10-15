@@ -1,28 +1,28 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1 — Hard enforcement
+current_phase: 2 — Accounting authority
 current_plan: Not started
 status: planning
-stopped_at: Owner approved (approve p95, packet 25b5bd9f86e2); L14 open; ready to plan Phase 1
-last_updated: "2026-10-15T10:40:00.000Z"
+stopped_at: Phase 1 executed (commits 5bfce1df, abbb9322, d8390521); EVIDENCE written; ready to plan Phase 2
+last_updated: "2026-10-15T13:30:00.000Z"
 last_activity: 2026-10-15
-last_activity_desc: Workstream created from vault/plans/ccr-v5-vehicle-repair-2026-10-15.md
+last_activity_desc: Phase 1 hard enforcement complete (lease judge, supervise breaker, in-turn mission gate)
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 20
 workstream: ccr-v5a
 created: 2026-10-15
-current_phase_name: Hard enforcement
+current_phase_name: Accounting authority
 ---
 
 # Project State
 
 ## Current Position
 
-**Status:** Ready to plan Phase 1. Goal `ccr`, lease L14 (`ccr:v5-stageA`, cap 12,000,000, recovery 1,000,000),
+**Status:** Phase 1 done (see phases/01-hard-enforcement/01-EVIDENCE.md). Ready to plan Phase 2. Goal `ccr`, lease L14 (`ccr:v5-stageA`, cap 12,000,000, recovery 1,000,000),
 programme 213,000,000.
 
 ## Decisions
