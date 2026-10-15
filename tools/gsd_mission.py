@@ -1445,6 +1445,17 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind:
                      owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {}),
                                  **(extra or {})})
     hold_guard_budget(rec, reason)
+    if kind == "cost":
+        # Economic incident receipt (programme A2): a cost hold is a first-class event with a receipt, never only a
+        # ledger row a person has to find. Best effort: the hold above already stands whatever happens here.
+        try:
+            import econ_incident
+            receipt = econ_incident.record(out, reason, now=now)
+            lr.ledger_append(mission_id, "economic_incident", mission_id=mission_id, level=receipt.get("level"),
+                             spent=receipt.get("spent"), file=receipt.get("file"), error=receipt.get("error"))
+        except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+            lr.ledger_append(mission_id, "economic_incident_error", mission_id=mission_id,
+                             error=f"{type(exc).__name__}: {exc}"[:300])
     return out
 
 
@@ -4191,7 +4202,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 rec = _auto_budget(rec, now)
             if not dry_run and rec.get("phase_lease") and not rec.get("owner_hold"):
                 rec = _phase_breaker(rec, now)
-            if not dry_run and rec.get("token_estimate") and not rec.get("owner_hold"):
+            if not dry_run and (rec.get("token_estimate") or rec.get("authority_tokens")) and not rec.get("owner_hold"):
                 rec = _cost_breaker(rec, now)
             plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
         except Exception as exc:  # noqa: BLE001 -- isolated per mission, like capsule_v2 above
@@ -5837,6 +5848,12 @@ def _cli(argv=None) -> int:
     if drift:
         print(f"CODE DRIFT: live missions last written by another build than {CODE_ID}: "
               f"{', '.join(drift)}", file=sys.stderr)
+    try:
+        import econ_incident
+        for line in econ_incident.status_lines():
+            print(line, file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001 -- an unreadable incident store is itself reported
+        print(f"ECONOMIC INCIDENTS UNREADABLE: {type(exc).__name__}: {exc}", file=sys.stderr)
     return 0
 
 

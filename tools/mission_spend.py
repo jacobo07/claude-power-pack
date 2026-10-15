@@ -237,16 +237,43 @@ def _iso(ts: float) -> str:
     return _dt.datetime.fromtimestamp(float(ts), _dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+DEFAULT_CLOSEOUT_TOKENS = 1_000_000
+
+
+def closeout_reserve(rec: dict) -> int:
+    """Capital kept back from productive work for the closeout after a stop: the record's `closeout_tokens`, else
+    1M, never more than a twentieth of the authority (a 3M canary keeps 150K, not a third of its budget)."""
+    auth = int(rec.get("authority_tokens") or 0)
+    own = rec.get("closeout_tokens")
+    if own is not None:
+        return max(0, int(own))
+    return min(DEFAULT_CLOSEOUT_TOKENS, auth // 20) if auth else 0
+
+
 def judge(rec: dict, spent: int | None, fp: str | None, as_of: float | None = None,
           now: float | None = None) -> dict:
     """{trip: reason|None, mark: new cost_mark|None}. Pure. When `as_of` (measurement time) is given
     with `now`, a stale snapshot never trips (it returns `stale`) and a trip names its watermark."""
     est = rec.get("token_estimate")
-    if not est or spent is None:
+    auth = rec.get("authority_tokens")
+    if (not est and not auth) or spent is None:
         return {"trip": None, "mark": None}
     stale = stale_usage_guard(as_of, now) if now is not None else None
     if stale:
         return {"trip": None, "mark": None, "stale": stale}
+    if auth:
+        # 2026-10-15 m-ce2bacd4cbb0: authority 45M, estimate 45M, breaker at 2 x 45M; it spent 83.8M before a person
+        # noticed. The Owner's authority is the ceiling whatever the estimate says, minus a closeout reserve that
+        # productive work may not consume (commit, state, settlement after the hold).
+        auth = int(auth)
+        closeout = closeout_reserve(rec)
+        if spent >= auth - closeout:
+            wm = f" (as of {_iso(as_of)})" if as_of is not None else ""
+            return {"trip": (f"cost breaker (mission authority): processed {spent:,}{wm} >= authority {auth:,} "
+                             f"minus closeout reserve {closeout:,}; only closeout may run, new authority is the "
+                             "Owner's"), "mark": None, "level": "MISSION_AUTHORITY"}
+    if not est:
+        return {"trip": None, "mark": None}
     est = int(est)
     ratio = float(rec.get("token_trip_ratio") or DEFAULT_TRIP_RATIO)
     if spent > ratio * est:
