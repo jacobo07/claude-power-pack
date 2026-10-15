@@ -1,0 +1,60 @@
+{
+    "goal":  "cpp-evc",
+    "root":  "C:\\Users\\User\\Apps\\pp-cpp-evc",
+    "envelope":  55000000,
+    "max_residuals":  1,
+    "route_ladder":  [
+                         "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\route-R1.json"
+                     ],
+    "model":  "sonnet",
+    "units":  [
+                  {
+                      "id":  "EVC1",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC1.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\route-EVC1.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC1-receipt.md"
+                  },
+                  {
+                      "id":  "EVC2",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC2.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\route-EVC2.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC2-receipt.md",
+                      "after":  "EVC1"
+                  },
+                  {
+                      "id":  "EVC3",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC3.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\route-EVC3.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC3-receipt.md",
+                      "after":  "EVC2"
+                  },
+                  {
+                      "id":  "EVC4",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC4.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\route-EVC4.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC4-receipt.md",
+                      "after":  "EVC3"
+                  },
+                  {
+                      "id":  "EVC5",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC5.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\route-EVC5.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC5-receipt.md",
+                      "after":  "EVC4"
+                  },
+                  {
+                      "id":  "EVC6",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC6.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\route-EVC6.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC6-receipt.md",
+                      "after":  "EVC5"
+                  },
+                  {
+                      "id":  "EVC7",
+                      "packet":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC7.md",
+                      "route":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\route-EVC7.json",
+                      "receipt":  "C:\\Users\\User\\Apps\\pp-cpp-evc\\.planning\\cpp-evc\\packets\\WU-EVC7-receipt.md",
+                      "after":  "EVC6"
+                  }
+              ]
+}
