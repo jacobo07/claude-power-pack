@@ -79,7 +79,18 @@
       "wait": [
         "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F5-receipt.md"
       ],
-      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F5); gate met: D28 D12b receipt DONE_WITH_LIMITS; packet fff8b9aa; the laptop tick must not arm it"
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F5); gate met: D28 D12b receipt DONE_WITH_LIMITS; packet fff8b9aa; the laptop tick must not arm it. DONE slice 6d07f05d (F5 breaker no commit, residual F5r 20/20, receipt committed by coordinator after F5r breaker; 3 compiler replays NOT_LIFTED), settled 4,659,176 (L11) + 4,620,007 (L12)"
+    },
+    {
+      "id": "F8",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F8.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F8-receipt.md",
+      "after": "F5",
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F8-receipt.md"
+      ],
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F8); packet fff8b9aa (route S per packet); the laptop tick must not arm it"
     }
   ]
 }
