@@ -126,7 +126,7 @@ def build(telemetry: dict, output: dict, hold_overrides: dict | None = None) -> 
                 cursor_xy = centre
                 tl.cursor.append({"t_ms": arrive, "x": round(centre[0], 1), "y": round(centre[1], 1),
                                   "click": False})
-                if step["do"] in ("click", "check", "select", "fill"):
+                if step["do"] in ("click", "check", "select", "fill", "upload"):
                     cp = step.get("click_point") or {"x": centre[0], "y": centre[1]}
                     tl.cursor.append({"t_ms": t + dur - 60, "x": round(cp["x"], 1), "y": round(cp["y"], 1),
                                       "click": True})

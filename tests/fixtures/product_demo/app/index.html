@@ -27,6 +27,7 @@
       <select id="kind"><option>Long-term</option><option>Seasonal</option></select>
     </label>
     <label>Monthly rent <input id="rent" inputmode="numeric" autocomplete="off"></label>
+    <label>Signed scan <input id="scan" type="file"></label>
     <button id="gen" type="submit">Generate contract</button>
   </form>
   <div id="status" aria-live="polite"></div>
@@ -43,6 +44,10 @@
   // fill is reset by React (measured on a live Next.js sign-up form).
   if (mode === "reset") document.getElementById("tenant").addEventListener("input", e => {
     setTimeout(() => { e.target.value = ""; }, 60);
+  });
+  // A file input that drops the chosen file, so an upload the product threw away is refused.
+  if (mode === "uploadreset") document.getElementById("scan").addEventListener("change", e => {
+    e.target.value = "";
   });
   function go(e) {
     e.preventDefault();

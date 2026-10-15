@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import copy
 import functools
+import hashlib
 import http.server
 import json
 import socketserver
@@ -46,9 +47,16 @@ def gate(name: str, ok: bool, evidence: str = "") -> None:
     print(f"  {'PASS' if ok else 'FAIL'}  {name}  {evidence}", flush=True)
 
 
+UPLOAD = FIX / "app" / "signed-lease.txt"
+
+
+def fixture_raw() -> str:
+    # The spec is written to a temp dir by the browser gates, so the upload path is absolute.
+    return (FIX / "fixture_spec.json").read_text(encoding="utf-8").replace("{UPLOAD}", UPLOAD.as_posix())
+
+
 def base_spec() -> dict:
-    return json.loads((FIX / "fixture_spec.json").read_text(encoding="utf-8")
-                      .replace("{PORT}", "8").replace("{QUERY}", ""))
+    return json.loads(fixture_raw().replace("{PORT}", "8").replace("{QUERY}", ""))
 
 
 # ---------------------------------------------------------------- pure gates
@@ -58,9 +66,9 @@ print("=" * 64)
 
 try:
     s = parse(base_spec())
-    gate("V-DEMO-SPEC-VALID", len(s.steps) == 7 and s.steps[-1].do == "hover" and len(s.viewports) == 2
-         and len(s.sha256) == 64,
-         f"({len(s.steps)} steps, sha {s.sha256[:10]})")
+    gate("V-DEMO-SPEC-VALID", len(s.steps) == 8 and s.steps[-1].do == "hover" and len(s.viewports) == 2
+         and s.steps[5].do == "upload" and s.steps[5].file == UPLOAD and len(s.sha256) == 64,
+         f"({len(s.steps)} steps, upload -> {s.steps[5].file}, sha {s.sha256[:10]})")
 except Exception as exc:
     gate("V-DEMO-SPEC-VALID", False, f"({exc})")
 
@@ -71,6 +79,9 @@ refusals = {
     "duplicate step id": lambda d: d["steps"][2].update(id="tenant"),
     "fill without value": lambda d: d["steps"][1].pop("value"),
     "unknown stage": lambda d: d["viewports"][0].update(stage="tv"),
+    "upload of a missing file": lambda d: d["steps"][5].update(value=(FIX / "app" / "absent.pdf").as_posix()),
+    "upload from value_env": lambda d: (d["steps"][5].pop("value"), d["steps"][5].update(value_env="PDEMO_FILE")),
+    "upload without a file": lambda d: d["steps"][5].pop("value"),
 }
 wrong = []
 for label, mutate in refusals.items():
@@ -83,6 +94,15 @@ for label, mutate in refusals.items():
         pass
 gate("V-DEMO-SPEC-REFUSALS", not wrong, f"({len(refusals) - len(wrong)}/{len(refusals)} refused)"
      + (f" admitted: {wrong}" if wrong else ""))
+
+# Control for the upload refusals: a path relative to the spec file resolves beside it.
+d_rel = base_spec()
+d_rel["steps"][5]["value"] = "app/signed-lease.txt"
+try:
+    rel = parse(d_rel, FIX / "fixture_spec.json").steps[5].file
+except SpecError as exc:
+    rel = exc
+gate("V-DEMO-UPLOAD-RELATIVE", rel == UPLOAD, f"(app/signed-lease.txt beside the spec -> {rel})")
 
 pii_red = pii_findings("contact maria.lopez@example.org, NIF 12345678Z, IBAN ES91 2100 0418 4502 0005 1332", [])
 pii_ok = pii_findings("Tenant: Ana Ruiz, 950 EUR/month, NIF 12345678Z", ["12345678Z"])
@@ -250,7 +270,7 @@ work_dir = Path(tempfile.mkdtemp(prefix="pdemo_"))
 
 
 def spec_file(query: str = "", name: str = "spec.json", path: str | None = None) -> Path:
-    raw = (FIX / "fixture_spec.json").read_text(encoding="utf-8").replace("{PORT}", str(port)).replace("{QUERY}", query)
+    raw = fixture_raw().replace("{PORT}", str(port)).replace("{QUERY}", query)
     d = json.loads(raw)
     if path:
         d["steps"][0]["path"] = path
@@ -276,7 +296,9 @@ cases = [("V-DEMO-REFUSE-DRIFT", "?mode=moved", True, "TARGET_DRIFT"),
          ("V-DEMO-REFUSE-AMBIGUOUS", "?mode=dupe", True, "TARGET_AMBIGUOUS"),
          ("V-DEMO-REFUSE-PII", "?mode=pii", False, "PRIVACY_REFUSED"),
          ("V-DEMO-REFUSE-HTTP-ERROR", "?mode=500", True, "PRODUCT_ERROR"),
-         ("V-DEMO-REFUSE-INPUT-RESET", "?mode=reset", True, "INPUT_NOT_ACCEPTED")]
+         ("V-DEMO-REFUSE-INPUT-RESET", "?mode=reset", True, "INPUT_NOT_ACCEPTED"),
+         # Control: the clean fixture probe below admits the same upload step.
+         ("V-DEMO-REFUSE-UPLOAD-DROPPED", "?mode=uploadreset", True, "INPUT_NOT_ACCEPTED")]
 for name, q, probe, want in cases:
     t = capture(spec_file(q, f"{name}.json"), name, probe)
     gate(name, refusal_of(t) == want, f"(got {refusal_of(t) or t.get('outcome')}: {(t.get('refusal') or {}).get('detail', t.get('stderr', ''))})")
@@ -328,8 +350,14 @@ m = json.loads(mpath.read_text(encoding="utf-8")) if mpath.is_file() else {}
 probe_info = validate.probe(Path(res[0]["mp4"])) if res[0].get("mp4") else {}
 tl_path = out / "phone" / "timeline.json"
 clicks = sum(1 for k in json.loads(tl_path.read_text(encoding="utf-8"))["cursor"] if k["click"]) if tl_path.is_file() else -1
-# 2 fills + 1 select + 1 click activate; the closing hover must NOT show a click.
-gate("V-DEMO-HOVER-NO-CLICK", clicks == 4, f"({clicks} click emphases; expected 4 -- the hover adds none)")
+# 2 fills + 1 select + 1 click + 1 upload activate; the closing hover must NOT show a click.
+gate("V-DEMO-HOVER-NO-CLICK", clicks == 5, f"({clicks} click emphases; expected 5 -- the hover adds none)")
+tel_path = out / "phone" / "telemetry.json"
+up = next((st.get("upload") for st in json.loads(tel_path.read_text(encoding="utf-8"))["steps"]
+           if st["id"] == "scan"), None) if tel_path.is_file() else None
+want_sha = hashlib.sha256(UPLOAD.read_bytes()).hexdigest()
+gate("V-DEMO-UPLOAD-PROVENANCE", bool(up) and up["name"] == UPLOAD.name and up["sha256"] == want_sha,
+     f"(telemetry upload {up}; file sha {want_sha[:10]})")
 gate("V-DEMO-E2E", r.returncode == 0 and res[0].get("outcome") == "VALID"
      and (probe_info.get("w"), probe_info.get("h")) == (1080, 1920)
      and len(m.get("capture", {}).get("frameset_sha256", "")) == 64 and "mp4" in m.get("outputs", {}),

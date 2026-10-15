@@ -302,6 +302,16 @@ class Capture:
                 loc.press(step.value)
             elif step.do == "hover":
                 loc.hover(timeout=step.timeout_ms)   # real hover state; nothing is activated
+            elif step.do == "upload":
+                data = step.file.read_bytes()
+                rec["upload"] = {"name": step.file.name, "bytes": len(data),
+                                 "sha256": hashlib.sha256(data).hexdigest()}
+                loc.set_input_files(str(step.file), timeout=step.timeout_ms)
+                held = loc.evaluate("e => e.files ? Array.from(e.files, f => f.name) : null")
+                if held != [step.file.name]:
+                    raise Refusal("INPUT_NOT_ACCEPTED",
+                                  f"{step.target.describe()} holds {held!r} after uploading {step.file.name}",
+                                  step.id)
             elif step.do == "click":
                 box = rec["target"]["box"]
                 rec["click_point"] = {"x": round(box["x"] + box["width"] / 2, 2),

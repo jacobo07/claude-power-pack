@@ -14,10 +14,12 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ACTIONS = {"goto", "fill", "select", "check", "click", "press", "hover", "wait_text", "assert_absent"}
+ACTIONS = {"goto", "fill", "select", "check", "click", "press", "hover", "upload", "wait_text", "assert_absent"}
 # "hover" points at a target without activating it: the way a demo ends on a
 # control it must never press (a payment button, a destructive action).
-TARGETED = {"fill", "select", "check", "click", "press", "hover"}
+# "upload" sets a file input to a file that ships beside the spec (value = path
+# relative to the spec file), so the demo shows the real product reading a real file.
+TARGETED = {"fill", "select", "check", "click", "press", "hover", "upload"}
 TARGET_KINDS = ("role", "label", "testid", "text", "css")
 STAGES = {"raw", "browser", "laptop", "phone"}
 FORMATS = {"mp4", "webm", "poster"}
@@ -53,6 +55,7 @@ class Step:
     typed: bool = True             # fill: capture progressive typing states
     hold_ms: int | None = None     # presented hold after this step settles
     callout: str | None = None     # presentation text anchored to this step's target
+    file: Path | None = None       # upload: resolved file, relative paths from the spec's folder
 
     @property
     def secret(self) -> bool:
@@ -159,6 +162,14 @@ def parse(data: dict, source_path: Path | None = None) -> DemoSpec:
             raise SpecError(f"{where}: '{do}' needs 'text'")
         if do == "press" and not rs.get("value"):
             raise SpecError(f"{where}: 'press' needs a key in 'value'")
+        upload_file = None
+        if do == "upload":
+            if rs.get("value_env") or not rs.get("value"):
+                raise SpecError(f"{where}: 'upload' needs a file path in 'value' (value_env is not accepted)")
+            p = Path(str(rs["value"]))
+            upload_file = p if p.is_absolute() else ((source_path.parent if source_path else Path.cwd()) / p)
+            if not upload_file.is_file():
+                raise SpecError(f"{where}: upload file not found: {upload_file}")
         callout = rs.get("callout")
         if callout and tgt is None:
             raise SpecError(f"{where}: a callout must anchor to a target; '{do}' has none")
@@ -169,7 +180,7 @@ def parse(data: dict, source_path: Path | None = None) -> DemoSpec:
             timeout_ms=int(rs.get("timeout_ms", 15_000)), film=bool(rs.get("film", True)),
             typed=bool(rs.get("typed", True)),
             hold_ms=None if rs.get("hold_ms") is None else int(rs["hold_ms"]),
-            callout=callout,
+            callout=callout, file=upload_file,
         ))
     if not any(s.film for s in steps):
         raise SpecError("spec: no step has film=true; there is nothing to show")
