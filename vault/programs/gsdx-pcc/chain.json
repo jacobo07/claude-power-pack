@@ -1,83 +1,95 @@
 {
-    "goal":  "gsdx-pcc",
-    "root":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc",
-    "envelope":  175000000,
-    "max_residuals":  1,
-    "route_ladder":  [
-                         "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-R1.json"
-                     ],
-    "units":  [
-                  {
-                      "id":  "P51",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P51.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P51.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P51-receipt.md",
-                      "after":  null
-                  },
-                  {
-                      "id":  "P52a",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52a.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52a.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52a-receipt.md",
-                      "after":  "P51"
-                  },
-                  {
-                      "id":  "P52b",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52b.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52b.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52b-receipt.md",
-                      "after":  "P52a"
-                  },
-                  {
-                      "id":  "P52c",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52c.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52c.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52c-receipt.md",
-                      "after":  "P52b"
-                  },
-                  {
-                      "id":  "P6",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P6.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P6.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P6-receipt.md",
-                      "after":  "P52c"
-                  },
-                  {
-                      "id":  "P7",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P7.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P7.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P7-receipt.md",
-                      "after":  "P6"
-                  },
-                  {
-                      "id":  "P8",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P8.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P8.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P8-receipt.md",
-                      "after":  "P7"
-                  },
-                  {
-                      "id":  "P9",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P9.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P9.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P9-receipt.md",
-                      "after":  "P8"
-                  },
-                  {
-                      "id":  "P10",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P10.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P10.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P10-receipt.md",
-                      "after":  "P9"
-                  },
-                  {
-                      "id":  "P11",
-                      "packet":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P11.md",
-                      "route":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P11.json",
-                      "receipt":  "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P11-receipt.md",
-                      "after":  "P10"
-                  }
-              ],
-    "note":  "PCC continuation (Owner Aprobar 175M, 2026-10-14). Each unit compiles its successor packet+route (plan CONTINUATION-PLAN-2026-10-14.md s6 cutoffs). Coordinator 7c5ac907 cap 3M, acts on chain_alert only. 2026-10-14 21:05: P52 (m-d563551d7aa9, semantic breaker after Part A 7e139cb3) recompiled as P52a/b/c.",
-    "model":  "sonnet"
+  "goal": "gsdx-pcc",
+  "root": "C:\\Users\\User\\Apps\\pp-gsdx-pcc",
+  "envelope": 175000000,
+  "max_residuals": 1,
+  "route_ladder": [
+    "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-R1.json"
+  ],
+  "units": [
+    {
+      "id": "P51",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P51.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P51.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P51-receipt.md",
+      "after": null
+    },
+    {
+      "id": "P52a",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52a.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52a.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52a-receipt.md",
+      "after": "P51"
+    },
+    {
+      "id": "P52b",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52b.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52b.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52b-receipt.md",
+      "after": "P52a"
+    },
+    {
+      "id": "P52c",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52c.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52c.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52c-receipt.md",
+      "after": "P52b",
+      "accept": [
+        "DONE",
+        "PARTIAL"
+      ],
+      "accept_note": "Owner 2026-10-15 'Close 5.2 and re-plan': P52c residual exhausted at PARTIAL; remainder is unit P52d"
+    },
+    {
+      "id": "P52d",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52d.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P52d.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P52d-receipt.md",
+      "after": "P52c"
+    },
+    {
+      "id": "P6",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P6.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P6.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P6-receipt.md",
+      "after": "P52d"
+    },
+    {
+      "id": "P7",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P7.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P7.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P7-receipt.md",
+      "after": "P6"
+    },
+    {
+      "id": "P8",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P8.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P8.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P8-receipt.md",
+      "after": "P7"
+    },
+    {
+      "id": "P9",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P9.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P9.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P9-receipt.md",
+      "after": "P8"
+    },
+    {
+      "id": "P10",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P10.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P10.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P10-receipt.md",
+      "after": "P9"
+    },
+    {
+      "id": "P11",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P11.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\route-P11.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-pcc\\.planning\\workstreams\\gsdx-pcc\\packets\\WU-P11-receipt.md",
+      "after": "P10"
+    }
+  ],
+  "note": "PCC continuation (Owner Aprobar 175M, 2026-10-14). Each unit compiles its successor packet+route (plan CONTINUATION-PLAN-2026-10-14.md s6 cutoffs). Coordinator 7c5ac907 cap 3M, acts on chain_alert only. 2026-10-14 21:05: P52 (m-d563551d7aa9, semantic breaker after Part A 7e139cb3) recompiled as P52a/b/c.",
+  "model": "sonnet"
 }
