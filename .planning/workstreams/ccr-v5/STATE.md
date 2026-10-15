@@ -61,3 +61,9 @@ last_activity_desc: Workstream created from vault/plans/ccr-v5-svm-imc-2026-10-1
 **Last session:** 2026-10-15T07:45:00.000Z
 **Stopped at:** Completed 02-04-PLAN.md (Phase 2 closed)
 **Resume file:** None
+
+- 2026-10-15 (epoch 2 worker, RESOLVE_BY_DEFAULT): stop-loss at 12.55x -- rule is "above 1.5x its route TWICE"; Phase 2 is the first
+  measured overrun (Phase 1 never booked on L13), so the phase is NOT marked BLOCKED and work continues to Phase 3. The booked 25.1M is a
+  whole-coordinator-transcript charge (see feedback goal-settle overcharge); lowering it is goal-correct, Owner-only.
+  OWNER DECISION NEEDED: run `goal-correct` on goal ccr for session af436132 (pick: yes, measured excludes coordinator transcript).
+  OWNER DECISION NEEDED: persist `CPP_CCR_DEFLATE=off` scheduler-wide (DEFLATE hold). Pick: hold as-is (reversible by removing pgo-classes.json); no action by worker.
