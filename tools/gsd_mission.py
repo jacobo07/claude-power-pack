@@ -1625,6 +1625,38 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
     return rec
 
 
+def _phase_breaker(rec: dict, now: float, measure=None, phase_fn=None) -> dict:
+    """CCR v5 A2: judge the mission's phase lease (tools/phase_lease.py) against measured spend. A TRIP, or an
+    ambiguity (BLOCKED: unmeasured spend, unreadable or moved GSD phase), parks the mission with a cost hold
+    flagged `phase_breaker`, which supervise stops WITHOUT the cost-hold grace. WARN is ledgered once per lease.
+    Unlike _cost_breaker this is not fail-open on a measuring error: a lease exists to be an authority, and an
+    unmeasured phase is BLOCKED, never permission. Returns the record as it now stands."""
+    import mission_spend as ms
+    import phase_lease as pls
+    lease = rec.get("phase_lease")
+    mid = rec["mission_id"]
+    if not lease or rec.get("state") in TERMINAL or rec.get("owner_hold"):
+        return rec
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception as exc:  # noqa: BLE001 -- becomes a BLOCKED verdict below
+        lr.ledger_append(mid, "phase_breaker_unmeasured", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+        spent = None
+    verdict = pls.judge(lease, spent, (phase_fn or pls.current_phase)(lease["state_file"]))
+    if verdict["verdict"] in (pls.TRIP, pls.BLOCKED):
+        lr.ledger_append(mid, "phase_breaker_tripped", mission_id=mid, verdict=verdict["verdict"],
+                         phase=lease["phase"], spend=verdict.get("spend"), forecast=lease["forecast"],
+                         reason=verdict["reason"])
+        return set_owner_hold(mid, f"cost breaker (phase lease): {verdict['reason']}", now=now, kind="cost",
+                              extra={"phase_breaker": True, "phase": lease["phase"], "verdict": verdict["verdict"],
+                                     "resume_with": "reforecast-only: set a new phase lease through envelope, "
+                                                    "do not continue the phase's work"})
+    if verdict["verdict"] == pls.WARN and rec.get("phase_lease_warned") != lease["set_at"]:
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="phase_warn", now=now,
+                          touch=False, phase_lease_warned=lease["set_at"], reason=verdict["reason"])
+    return rec
+
+
 def _last_mark_at(mid: str, before: float) -> float | None:
     """When the breaker last marked progress before `before`, from the ledger (marks written before AMCR
     carry no time of their own). None = no mark: there is no window."""
@@ -2308,7 +2340,8 @@ def estimate_calibration(rec: dict, estimate: int, measure=None) -> dict:
 
 def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
                  wu_packet: str | None = None, continue_max_tokens=None, worker_mcp: str | None = None,
-                 ccr_class: str | None = None, now: float | None = None, estimate_basis: str | None = None, measure=None) -> dict:
+                 ccr_class: str | None = None, now: float | None = None, estimate_basis: str | None = None, measure=None,
+                 phase_lease: dict | None = None) -> dict:
     """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
     estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
     work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
@@ -2347,14 +2380,31 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}", ccr_class):
             raise MissionError(f"ccr_class must be a plain class name, not {ccr_class!r}")
         changes["ccr_class"] = ccr_class
-    if not changes:
+    if not changes and phase_lease is None:
         raise MissionError("nothing to set: give --token-estimate, --model, --autocompact, --wu-packet, "
-                           "--continue-max-tokens, --worker-mcp or --ccr-class")
+                           "--continue-max-tokens, --worker-mcp, --ccr-class or --phase-lease")
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; its envelope cannot change")
+    if phase_lease is not None:
+        # A phase lease is the stop-loss the model cannot read past (CCR v5 A2). Its base is MEASURED here,
+        # at the phase start, never supplied: a caller-chosen base would let the lease be pre-spent or pre-credited.
+        import phase_lease as pls
+        import mission_spend as ms
+        try:
+            base = (measure or ms.processed_tokens)(rec)
+        except Exception as exc:  # noqa: BLE001 -- refused with the cause, never a guessed base
+            raise MissionError(f"phase lease refused: cannot measure the lease base ({type(exc).__name__}: {exc})")
+        try:
+            changes["phase_lease"] = pls.make_lease(
+                phase=phase_lease.get("phase"), forecast=phase_lease.get("forecast"), base=int(base),
+                state_file=phase_lease.get("state_file"), reserve=phase_lease.get("reserve", 0),
+                set_at=time.time() if now is None else now)
+        except pls.LeaseError as exc:
+            raise MissionError(f"phase lease refused: {exc}")
+        changes["phase_lease_warned"] = None
     if "token_estimate" in changes:
         cal = estimate_calibration(rec, changes["token_estimate"], measure=measure)
         basis = (estimate_basis or "").strip()
@@ -4110,6 +4160,8 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
         try:
             if not dry_run and rec.get("token_estimate") is None and not rec.get("owner_hold"):
                 rec = _auto_budget(rec, now)
+            if not dry_run and rec.get("phase_lease") and not rec.get("owner_hold"):
+                rec = _phase_breaker(rec, now)
             if not dry_run and rec.get("token_estimate") and not rec.get("owner_hold"):
                 rec = _cost_breaker(rec, now)
             plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
@@ -4151,6 +4203,9 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 # the grace a LIVE owner is stopped here. Only a LIVE one: UNKNOWN may be anything.
                 import gsd_epoch as ge
                 over = ge.cost_hold_overdue(rec, now)
+                if not over and rec["owner_hold"].get("phase_breaker"):
+                    # A phase-lease trip has no grace: the phase's authority is spent, the worker is stopped now.
+                    over = {"overdue_s": 0, "grace_s": 0, "phase_breaker": True}
                 if over and liveness(rec.get("owner"), sessions, pid_alive)[0] == LIVE:
                     ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
                     lr.ledger_append(mid, "cost_hold_worker_stopped" if ok else "cost_hold_stop_failed",
@@ -5601,6 +5656,10 @@ def _cli(argv=None) -> int:
                     help="per-mission context ceiling for continuing the same session, e.g. 200k")
     en.add_argument("--ccr-class", help="CCR work class; admit then records the PGO cost contract "
                                         "(CPP_CCR_ADMISSION=enforce makes SPLIT/DEFLATE refuse)")
+    en.add_argument("--phase-lease", help="GSD phase number to lease (needs --phase-forecast and --phase-state); "
+                                          "the base is measured now, at the phase start")
+    en.add_argument("--phase-forecast", help="the phase's token forecast, e.g. 4.5M; warn 1.2x, hard 1.5x")
+    en.add_argument("--phase-state", help="the workstream STATE.md the current GSD phase is read from")
     en.add_argument("--worker-mcp", choices=WORKER_MCP_MODES,
                     help="none = launch this mission's worker with --strict-mcp-config and no servers")
     ad = sub.add_parser("admit", help="judge the compiled work unit's route against its envelope "
@@ -5690,8 +5749,12 @@ def _cli(argv=None) -> int:
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
                            autocompact=args.autocompact, wu_packet=args.wu_packet,
                            continue_max_tokens=args.continue_max_tokens, worker_mcp=args.worker_mcp,
-                           ccr_class=args.ccr_class, estimate_basis=args.estimate_basis)
-        pkt = (rec.get("wu_packet") or {}).get("path")
+                           ccr_class=args.ccr_class, estimate_basis=args.estimate_basis,
+                           phase_lease=(None if args.phase_lease is None else
+                                        {"phase": args.phase_lease, "state_file": args.phase_state,
+                                         "forecast": _token_count("phase_forecast", args.phase_forecast)
+                                         if args.phase_forecast else None}))
+        pkt =(rec.get("wu_packet") or {}).get("path")
         print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
               f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "
               f"wu_packet_epoch={rec.get('wu_packet_epoch')} continue_max_tokens={rec.get('continue_max_tokens')} "
