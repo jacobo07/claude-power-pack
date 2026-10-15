@@ -10,7 +10,7 @@ Status: COMPLETE (both tasks). Phase NOT marked complete (later plans 03-02..03-
 - Counts (before = after): test_lease 21/21, test_history_check 16/16, test_goal_lease 21/21, test_land_worktree 24/24, test_gsd_sweep_pass 11/11, test_gsd_sweep_pass_py 17/17, test_gsd_mission 230/230, test_gsd_mission_ccr_a6 13/13, test_gsd_mission_ccr_contract 5/5, test_ccr_driver_breaker 14/14, test_ccr_pgo_install 14/14, test_ccr_rent_ledger 11/11, ccr_pgo verify ok:true. Arrivals from main: test_mission_recovery 63/63, test_mission_policy 41/41 (both green on ccr/v5, no throwaway worktree needed).
 - Harness note: the two sweep suites must run WITHOUT `-I -X utf8` (their `tasklist` decode returns None under utf8 mode and raises TypeError); this is the suites' property, identical before and after, not a regression.
 - Main tree: read verbs only. Foreign-file hashes before/after identical (ukdl CF4D567B..., RESUMPTION 749FF9A9..., status lines 1173); changed_during_window=false.
-- Verify-script quirk: the plan's automated check reads `HEAD^2`, valid only while HEAD is the merge commit. The receipt commit sits on top, so the merge is `HEAD~1`; `HEAD~1^2` equals main_sha.
+- Verify-script quirk: the plan's automated check reads `HEAD^2`, valid only while HEAD is the merge commit. The receipt commit sits on top, so address the merge by sha: `c35d76a2^2` equals main_sha `77e1cbf0`.
 - Files: vault/programs/ccr/v5/phase3/sync-baseline.json, sync-receipt.json.
 
 ## Task 2: WAIT_ON_RESOURCE in tools/mission_recovery.py
