@@ -1,7 +1,7 @@
 {
   "goal": "gsdx-factory-2",
   "root": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric",
-  "envelope": 51817916,
+  "envelope": 57817916,
   "max_residuals": 1,
   "route_ladder": [
     "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
