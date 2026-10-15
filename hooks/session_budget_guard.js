@@ -197,6 +197,7 @@ const MISSION_SPEND = path.join(__dirname, '..', 'tools', 'mission_spend.py');
 const RENEW_TIMEOUT_MS = 8000;              // below the Read chain's 20 s, so a slow renew is a deny, not a kill
 
 const { goalBinding, fenceFor, readBinding } = require('./lib/goal_binding');
+const missionGate = require('./lib/mission_gate');
 
 // Only a bare status read is exempt in goal mode, anchored on the WHOLE command: python, then
 // mission_spend.py, then goal-status --goal <id>, then nothing. A substring match (audit gap 4) and
@@ -452,6 +453,10 @@ function decideGoal(event, sid, bind) {
 function decide(event) {
   const sid = event && event.session_id;
   if (!sid || !SID_RE.test(sid)) return null;
+  // Mission authority first (CCR v5 A3/A4): a cost-held worker, a write to its own record, or a subagent past its
+  // cap is refused before any budget arithmetic. Inert for every session that is not a mission worker.
+  const mg = missionGate.run(event);
+  if (mg) return mg;
   const sw = String(process.env.CPP_SESSION_BUDGET || '').trim().toLowerCase();
   if (sw === '0' || sw === 'off' || sw === 'false') return null;
   const bind = goalBinding(event, sid);
