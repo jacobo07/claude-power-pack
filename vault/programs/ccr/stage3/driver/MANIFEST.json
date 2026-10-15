@@ -1,0 +1,10 @@
+{
+    "host_alias":  "gex44",
+    "remote_path":  "/home/kobii/missions/ccr-s3-data/drive3.sh",
+    "bytes":  3882,
+    "sha256":  "9f74c589702a8d600c725fddbaa7825072daf04c071adcb57008c26371571dd7",
+    "remote_sha256":  "9f74c589702a8d600c725fddbaa7825072daf04c071adcb57008c26371571dd7",
+    "fetched_at":  "2026-10-15T07:13:16Z",
+    "fetched_by":  "ccr-v5 phase 2 plan 01",
+    "note":  "Fetched read-only (cat + sha256sum) via cmd-level redirect; plan-time observation was 3882 bytes, header (v3). header_has_v3=True over_present=True; bytes_match_plan_time=True"
+}
