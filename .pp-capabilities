@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-14T23:42:05.005Z",
+  "project_type": "package.json",
+  "capabilities": [
+    "ceps-capture",
+    "cross-project-baseline",
+    "spec-gate"
+  ],
+  "declined": [
+    {
+      "capability": "speckit-constitution",
+      "reason": "fork marker .specify"
+    }
+  ]
+}
