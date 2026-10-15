@@ -1696,6 +1696,12 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
         # Review MEDIUM-2: the bound worktree is gone (merged and removed, or deleted). After the unknown
         # streak the breaker judges the cwd -- where such a worker continues -- so a stall is still stopped.
         fallback, root = True, rec["cwd"]
+        if not rec.get("binding_invalidated_at"):
+            lr.ledger_append(mid, "binding_invalidated", mission_id=mid, gen=gen0,
+                             root=(mb.binding(rec) or {}).get("root"), judged=root)
+            rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="binding_invalidated_noted",
+                             now=now, touch=False, binding_invalidated_at=now,
+                             reason=f"bound root {(mb.binding(rec) or {}).get('root')} is gone; the breaker judges the cwd")
     try:
         fp = mission_fingerprint({**rec, "add_dirs": list(rec.get("add_dirs") or []) + cands}, root, fp_fn)
         verdict = ms.judge(rec, spent, fp)
@@ -1707,14 +1713,9 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
     if verdict["mark"]:
         _breaker_receipt(mid, mb.GOOD, "mark", **evidence)
         settled = mb.settle_obligations(rec, root, now)   # a landed artifact closes its child obligation
-        inval = {}
-        if fallback and not rec.get("binding_invalidated_at"):
-            inval = {"binding_invalidated_at": now}
-            lr.ledger_append(mid, "binding_invalidated", mission_id=mid, gen=gen0,
-                             root=(mb.binding(rec) or {}).get("root"), judged=root)
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="cost_mark", now=now,
                           cost_mark={**verdict["mark"], "at": now, "gen": gen0}, progress_unknown=None,
-                          **({"obligations": settled} if settled else {}), **inval,
+                          **({"obligations": settled} if settled else {}),
                           reason=f"progress fingerprint moved at {spent:,} processed (gen {gen0}, {root})")
     if fp is None and not verdict["trip"]:
         streak = int((rec.get("progress_unknown") or {}).get("streak") or 0) + 1
