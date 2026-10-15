@@ -228,6 +228,8 @@ def gate_without_premises():
     w = Alg("alg-legacy", "OR", ["src/a.txt", "src/b.txt"], legacy=True)
     s = Alg("alg-single", "OR", ["src/a.txt"])
     try:
+        w.edit("docs/n.txt")
+        s.edit("docs/n.txt")
         legacy, single = w.action(), s.action()
     finally:
         w.close()

@@ -572,6 +572,20 @@ def live_certificates(ledger: ProofLedger, cid: str) -> list:
             if p["data"].get("claim_id") == cid and certificate_id(cid, p["seq"]) not in dead]
 
 
+def element_premises(root, contract: dict, pin) -> list:
+    """Per contract element, in order: the premises that differ between elements (its own causal
+    fingerprint and environment) beside the shared gate pin. Recorded in a certificate and re-derived
+    from the tree, by this one function, so the two sides can only differ because the world did."""
+    from . import trust
+    out = []
+    for e in (e for e in contract.get("elements", []) if isinstance(e, dict)):
+        paths = sorted(set(e.get("causal_paths") or []))
+        fp = causal_fingerprint(root, paths) if (paths and root is not None) else _unknown_fp("no causal paths")
+        out.append({"fingerprint": fp, "environment": trust.environment_canonical(sorted(set(e.get("env_deps") or []))),
+                    "gate_pin": [list(p) for p in (pin or [])]})
+    return out
+
+
 def certificate_payload(obligation, verdict: dict, contract: dict, root, source: dict) -> dict:
     """The `proof.produced` payload for one satisfied claim: a causal binding when the contract
     declares causal paths and they fingerprint cleanly, the whole-tree binding otherwise."""
@@ -589,6 +603,7 @@ def certificate_payload(obligation, verdict: dict, contract: dict, root, source:
                          "fingerprint": fp, "environment": trust.environment_canonical(env_deps),
                          "policy": POLICY_VERSION},
             "freshness_class": freshness_class(obligation, verdict, contract), "env_deps": env_deps,
+            "element_premises": element_premises(root, contract, pin),
             "contract_hash": hashlib.sha256(_canonical(contract)).hexdigest()}
 
 

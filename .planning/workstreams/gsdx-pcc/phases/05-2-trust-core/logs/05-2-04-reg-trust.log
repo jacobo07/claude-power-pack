@@ -1,0 +1,8 @@
+﻿PASS V-TRUST-REVOKED-INVALID-BYTES-UNCHANGED before=INHERIT control_live=1 control=INHERIT after_live=0 after=RUN bytes_same=True
+PASS V-TRUST-REVOKED-CASCADES-LINEAGE before=2 after_revoking_root=0
+PASS V-TRUST-LINEAGE-FIELD lineage={'root': 'cert:fec1c67ba93fa590c6814ebb:15', 'parent': None, 'depth': 0, 'via': 'produced'}
+PASS V-TRUST-AUTHORITY-FIELD authority={'id': 'gsdx-sweep', 'version': 2, 'strength': 'integration'}
+PASS V-TRUST-MONOTONIC-REFUSED refused=True forged_ignored=True equal=True lower=True
+PASS V-TRUST-LEGACY-CERT-UNTRUSTED stamped=False projected=True action=RUN inherited=[]
+PASS V-TRUST-LEDGER-SEED active={'authority': 'gsdx-sweep', 'version': 2, 'state': 'ACTIVE', 'issued': 1, 'live': 1} revoked={'authority': 'gsdx-sweep', 'version': 2, 'state': 'REVOKED', 'issued': 1, 'live': 0} pure=True no_inverse=True once=True
+GSDX_TRUST_PASS=7/7  threshold=7/7

@@ -56,15 +56,25 @@ def ineligible(ob, contract: dict, cert_data: dict) -> str:
     if ob.plane == cv.REALITY:
         return "REALITY plane evidence is always re-run"
     els = contract.get("elements")
-    if contract.get("combine") != "AND" or not isinstance(els, list) or not els \
-            or not all(isinstance(e, dict) for e in els):
-        return "contract is not a plain AND of elements"
+    if not isinstance(els, list) or not els or not all(isinstance(e, dict) for e in els):
+        return "contract has no readable elements"
+    if contract.get("combine") != "AND":
+        eps = cert_data.get("element_premises")
+        if len(els) < 2:
+            return "a non-AND contract with fewer than 2 elements is degenerate: it re-runs"
+        if not isinstance(eps, list) or len(eps) != len(els) or not all(isinstance(p, dict) for p in eps):
+            return "the certificate records no per-element premises for its non-AND contract"
     if not all(e.get("inheritability") == "inheritable" for e in els):
         return "the contract did not opt in to inheritance"
     if any(e.get("nondeterministic") for e in els):
         return "the contract declares a nondeterministic element"
-    cls = pf._strictest(pf.freshness_class(ob, ob.verdict, contract),
-                        pf._class_from_word(cert_data.get("freshness_class")))
+    if contract.get("combine") != "AND":
+        # freshness_class() answers UNKNOWN for any non-AND contract. The algebra now decides skipping, so
+        # the class is the strictest any element carries -- never weaker than treating it as an AND.
+        cls = pf.freshness_class(ob, ob.verdict, dict(contract, combine="AND"))
+    else:
+        cls = pf._strictest(pf.freshness_class(ob, ob.verdict, contract),
+                            pf._class_from_word(cert_data.get("freshness_class")))
     if cls not in ELIGIBLE:
         return f"freshness class {cls} is never inherited"
     return ""
@@ -113,11 +123,15 @@ def plan(state, root, candidate: str, now: float) -> list:
             current = observe_current(state, ob, contract, root)
             recorded = dict(data.get("premises") or {}, freshness_class=data.get("freshness_class"),
                             env_deps=data.get("env_deps"), ts=_seconds(ts))
-            verdict, why = pf.state_from_premises(pf.observe_premises(recorded, current, now), True, on)
+            if contract.get("combine") != "AND":
+                verdict, why, states = _claim_state(contract, data, recorded, current, root, now, on)
+                item.update(elements=states, element_premises=pf.element_premises(root, contract, current["gate_pin"]))
+            else:
+                verdict, why = pf.state_from_premises(pf.observe_premises(recorded, current, now), True, on)
             item.update(certificate=cert, premises=current, reason=why)
             if verdict == pf.PS_STALE:
                 item["action"] = INVALIDATE
-            elif verdict == pf.PS_INHERITED:
+            elif verdict in (pf.PS_INHERITED, pf.PS_FRESH):
                 blocked = ineligible(ob, contract, data)
                 if blocked:
                     item["reason"] = blocked
@@ -138,6 +152,8 @@ def apply(log, items: list, candidate: str, actor: str) -> list:
                 continue
             body = {"v": 1, "claim_id": it["claim_id"], "certificate": it["certificate"],
                     "candidate": candidate, "premises": it["premises"]}
+            if "element_premises" in it:
+                body["element_premises"] = it["element_premises"]
             cert_auth = next((p["data"].get("authority") for p in pf.project_proofs(state).produced
                               if pf.certificate_id(p["data"].get("claim_id"), p["seq"]) == it["certificate"]), None)
             if isinstance(cert_auth, dict):
@@ -152,12 +168,50 @@ def apply(log, items: list, candidate: str, actor: str) -> list:
     return out
 
 
-def _agrees(event_premises, cert_premises: dict, ob, state) -> bool:
-    """The event repeats the certificate's six premises, and the four the log can derive hold today."""
+def _element_states(rec_base: dict, rec_eps: list, cur_base: dict, cur_eps: list, now: float, on: bool) -> list:
+    """One proof state per contract element: the shared premises plus that element's own fingerprint
+    and environment, observed exactly as a plain claim's six premises are."""
+    out = []
+    for r, c in zip(rec_eps, cur_eps):
+        rec = dict(rec_base, fingerprint=r.get("fingerprint"), environment=r.get("environment"))
+        cur = dict(cur_base, fingerprint=c.get("fingerprint"), environment=c.get("environment"))
+        out.append(pf.state_from_premises(pf.observe_premises(rec, cur, now), True, on)[0])
+    return out
+
+
+def _claim_state(contract: dict, data: dict, recorded: dict, current: dict, root, now: float, on: bool) -> tuple:
+    """(state, reason, element states) for a non-AND claim: the algebra over the per-element states."""
+    rec_eps = data.get("element_premises")
+    cur_eps = pf.element_premises(root, contract, current.get("gate_pin"))
+    if not isinstance(rec_eps, list) or len(rec_eps) != len(cur_eps) or not all(isinstance(p, dict) for p in rec_eps):
+        return pf.PS_UNKNOWN, "premise unknown: the certificate records no per-element premises", []
+    states = _element_states(recorded, rec_eps, current, cur_eps, now, on)
+    op = contract.get("combine")
+    return pf.combine_states(op, states, contract.get("k")), f"{op} over elements {states}", states
+
+
+def _agrees_nonand(d: dict, data: dict, contract: dict, ob, state) -> bool:
+    """A non-AND event agrees when the shared premises hold today and the algebra over the elements the
+    event repeats, against the ones the certificate recorded, is satisfied."""
+    ev, cert = d.get("premises"), data.get("premises") or {}
+    rec_eps, ev_eps = data.get("element_premises"), d.get("element_premises")
+    if not isinstance(ev_eps, list) or not isinstance(rec_eps, list) or len(ev_eps) != len(rec_eps) \
+            or not all(isinstance(p, dict) for p in rec_eps + ev_eps):
+        return False
+    if not _agrees(ev, cert, ob, state, aggregate=False):
+        return False
+    states = _element_states(dict(cert, ts=0.0, freshness_class=data.get("freshness_class"),
+                                  env_deps=data.get("env_deps")), rec_eps, ev, ev_eps, 0.0, True)
+    return pf.combine_states(contract.get("combine"), states, contract.get("k")) in (pf.PS_INHERITED, pf.PS_FRESH)
+
+
+def _agrees(event_premises, cert_premises: dict, ob, state, aggregate: bool = True) -> bool:
+    """The event repeats the certificate's six premises, and the four the log can derive hold today.
+    `aggregate=False` (non-AND) leaves the two per-element premises to the element algebra."""
     if not isinstance(event_premises, dict) or set(event_premises) != set(pf.PREMISES):
         return False
     for name in pf.PREMISES:
-        if name == "gate_pin":
+        if name == "gate_pin" or (not aggregate and name in ("fingerprint", "environment")):
             continue
         if event_premises.get(name) != cert_premises.get(name):
             return False
@@ -169,8 +223,8 @@ def _agrees(event_premises, cert_premises: dict, ob, state) -> bool:
         return False
     return (event_premises["claim"] == pf.claim_id(ob) and event_premises["revision"] == state.revision
             and event_premises["policy"] == pf.POLICY_VERSION
-            and not pf._is_unknown(event_premises["fingerprint"])
-            and not pf._is_unknown(event_premises["environment"]))
+            and (not aggregate or (not pf._is_unknown(event_premises["fingerprint"])
+                                   and not pf._is_unknown(event_premises["environment"]))))
 
 
 def inherited_ids(state, candidate: str) -> frozenset:
@@ -194,7 +248,8 @@ def inherited_ids(state, candidate: str) -> frozenset:
             d = e["data"]
             if (d.get("claim_id") == cid and d.get("certificate") == cert and d.get("candidate") == candidate
                     and e["seq"] > seq and trust.inherited_event_ok(ledger, d)
-                    and _agrees(d.get("premises"), data.get("premises") or {}, ob, state)):
+                    and (_agrees_nonand(d, data, contract, ob, state) if contract.get("combine") != "AND"
+                         else _agrees(d.get("premises"), data.get("premises") or {}, ob, state))):
                 out.add(oid)
                 break
     return frozenset(out)
@@ -229,9 +284,13 @@ def verification_set(state, root, candidate: str, now: float) -> dict:
     items = {it["obligation"]: it for it in plan(state, root, candidate, now)}
     inherited = inherited_ids(state, candidate)
     out = {"run": [], "inherit": [], "fresh": [], "islands": fresh_islands(state),
-           "full": pf._is_unknown(candidate), "reasons": {}}
+           "full": pf._is_unknown(candidate), "reasons": {}, "elements": {}}
     for oid in sorted(cv.project_convergence(state).obligations):
         it = items.get(oid)
+        if it is not None and it.get("elements"):
+            sat = (pf.PS_INHERITED, pf.PS_FRESH)
+            out["elements"][oid] = {"run": [i for i, s in enumerate(it["elements"]) if s not in sat],
+                                    "inherit": [i for i, s in enumerate(it["elements"]) if s in sat]}
         if it is not None and it["action"] == FRESH:
             out["fresh"].append(oid)
         elif oid in inherited:
