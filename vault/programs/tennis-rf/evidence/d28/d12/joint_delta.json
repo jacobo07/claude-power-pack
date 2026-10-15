@@ -1,0 +1,490 @@
+{
+ "bundles": [
+  {
+   "bundle": [
+    "HELPER:fn_801C7770",
+    "HELPER:fn_801C9670"
+   ],
+   "closure_size": 12,
+   "complementarity": 1,
+   "ebu": 5.5,
+   "hidden_blockers": {},
+   "new_errors": [],
+   "newly_clean": [
+    "fn_802070A8",
+    "fn_8020D1D8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_8021C6B0",
+    "fn_802219E4",
+    "fn_802221CC",
+    "fn_8024B7C8",
+    "fn_8032CDD4",
+    "fn_80331504",
+    "fn_80333D88"
+   ],
+   "sha": "061e39d020234cafddfadf29777aaa02348714993004aae8634159612d69dcae",
+   "single_unlock": {
+    "HELPER:fn_801C7770": 5,
+    "HELPER:fn_801C9670": 5
+   },
+   "size": 2,
+   "targets": [
+    "fn_802070A8",
+    "fn_8020D1D8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_8021C6B0",
+    "fn_802219E4",
+    "fn_802221CC",
+    "fn_8024B7C8",
+    "fn_8032CDD4",
+    "fn_80331504",
+    "fn_80333D88"
+   ],
+   "targets_closed_clean": [
+    "fn_802070A8",
+    "fn_8020D1D8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_8021C6B0",
+    "fn_802219E4",
+    "fn_802221CC",
+    "fn_8024B7C8",
+    "fn_8032CDD4",
+    "fn_80331504",
+    "fn_80333D88"
+   ],
+   "unlock": 11
+  },
+  {
+   "bundle": [
+    "HELPER:fn_801C7770",
+    "HELPER:fn_801C83F4",
+    "HELPER:fn_801C9670"
+   ],
+   "closure_size": 12,
+   "complementarity": 2,
+   "ebu": 4.0,
+   "hidden_blockers": {},
+   "new_errors": [],
+   "newly_clean": [
+    "fn_802070A8",
+    "fn_8020D1D8",
+    "fn_802103F8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_8021C6B0",
+    "fn_802219E4",
+    "fn_802221CC",
+    "fn_8024B7C8",
+    "fn_8032CDD4",
+    "fn_80331504",
+    "fn_80333D88"
+   ],
+   "sha": "af2575778ddc4ee627a8e614df4fdf7852fc57df16caad7d70fd9514bb859e2b",
+   "single_unlock": {
+    "HELPER:fn_801C7770": 5,
+    "HELPER:fn_801C83F4": 0,
+    "HELPER:fn_801C9670": 5
+   },
+   "size": 3,
+   "targets": [
+    "fn_802070A8",
+    "fn_8020D1D8",
+    "fn_802103F8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_8021C6B0",
+    "fn_802219E4",
+    "fn_802221CC",
+    "fn_8024B7C8",
+    "fn_8032CDD4",
+    "fn_80331504",
+    "fn_80333D88"
+   ],
+   "targets_closed_clean": [
+    "fn_802070A8",
+    "fn_8020D1D8",
+    "fn_802103F8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_8021C6B0",
+    "fn_802219E4",
+    "fn_802221CC",
+    "fn_8024B7C8",
+    "fn_8032CDD4",
+    "fn_80331504",
+    "fn_80333D88"
+   ],
+   "unlock": 12
+  },
+  {
+   "bundle": [
+    "HELPER:fn_801C7770",
+    "HELPER:fn_801C83F4"
+   ],
+   "closure_size": 7,
+   "complementarity": 1,
+   "ebu": 3.0,
+   "hidden_blockers": {},
+   "new_errors": [],
+   "newly_clean": [
+    "fn_802070A8",
+    "fn_802103F8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_802219E4",
+    "fn_8024B7C8"
+   ],
+   "sha": "331120d522a2f36cca691cc31539c17528bce24159d265dc8ea88a445b8fcbea",
+   "single_unlock": {
+    "HELPER:fn_801C7770": 5,
+    "HELPER:fn_801C83F4": 0
+   },
+   "size": 2,
+   "targets": [
+    "fn_802070A8",
+    "fn_802103F8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_802219E4",
+    "fn_8024B7C8"
+   ],
+   "targets_closed_clean": [
+    "fn_802070A8",
+    "fn_802103F8",
+    "fn_802116C8",
+    "fn_8021BD7C",
+    "fn_802219E4",
+    "fn_8024B7C8"
+   ],
+   "unlock": 6
+  },
+  {
+   "bundle": [
+    "HELPER:fn_801C3480",
+    "HELPER:fn_801C6030"
+   ],
+   "closure_size": 16,
+   "complementarity": 0,
+   "ebu": 2.0,
+   "hidden_blockers": {
+    "fn_8024081C": [],
+    "fn_8024087C": [],
+    "fn_80240AA8": [],
+    "fn_80240B10": []
+   },
+   "new_errors": [],
+   "newly_clean": [],
+   "sha": "a40961abd1120f37a666cdbd3482430e4321e9ac2319a4d9c6fbc7d1c6432e6e",
+   "single_unlock": {
+    "HELPER:fn_801C3480": 0,
+    "HELPER:fn_801C6030": 0
+   },
+   "size": 2,
+   "targets": [
+    "fn_8024081C",
+    "fn_8024087C",
+    "fn_80240AA8",
+    "fn_80240B10"
+   ],
+   "targets_closed_clean": [],
+   "unlock": 0
+  },
+  {
+   "bundle": [
+    "HELPER:fn_801C34D0",
+    "HELPER:fn_801C6030"
+   ],
+   "closure_size": 16,
+   "complementarity": 0,
+   "ebu": 2.0,
+   "hidden_blockers": {
+    "fn_8024081C": [],
+    "fn_8024087C": [],
+    "fn_80240AD8": [],
+    "fn_80240B10": []
+   },
+   "new_errors": [],
+   "newly_clean": [],
+   "sha": "b7520ddaa3f485cfd8c54ea48628d25b8bf35eb68e35ab88ba3aa7ab17f91199",
+   "single_unlock": {
+    "HELPER:fn_801C34D0": 0,
+    "HELPER:fn_801C6030": 0
+   },
+   "size": 2,
+   "targets": [
+    "fn_8024081C",
+    "fn_8024087C",
+    "fn_80240AD8",
+    "fn_80240B10"
+   ],
+   "targets_closed_clean": [],
+   "unlock": 0
+  },
+  {
+   "bundle": [
+    "HELPER:fn_801C3480",
+    "HELPER:fn_801C34D0",
+    "HELPER:fn_801C6030"
+   ],
+   "closure_size": 16,
+   "complementarity": 0,
+   "ebu": 1.667,
+   "hidden_blockers": {
+    "fn_8024081C": [],
+    "fn_8024087C": [],
+    "fn_80240AA8": [],
+    "fn_80240AD8": [],
+    "fn_80240B10": []
+   },
+   "new_errors": [],
+   "newly_clean": [],
+   "sha": "b427a5df1a16428b19514b791404780eb1f86c2b60547657f2d2b92c27c1c7af",
+   "single_unlock": {
+    "HELPER:fn_801C3480": 0,
+    "HELPER:fn_801C34D0": 0,
+    "HELPER:fn_801C6030": 0
+   },
+   "size": 3,
+   "targets": [
+    "fn_8024081C",
+    "fn_8024087C",
+    "fn_80240AA8",
+    "fn_80240AD8",
+    "fn_80240B10"
+   ],
+   "targets_closed_clean": [],
+   "unlock": 0
+  },
+  {
+   "bundle": [
+    "HELPER:fn_801C1804",
+    "HELPER:fn_801C1980",
+    "HELPER:fn_801C3478",
+    "HELPER:fn_801C3480",
+    "HELPER:fn_801C5F34",
+    "HELPER:fn_801C6030",
+    "HELPER:fn_8021EA10",
+    "HELPER:fn_8021EA34"
+   ],
+   "closure_size": 21,
+   "complementarity": 0,
+   "ebu": 0.875,
+   "hidden_blockers": {
+    "fn_80240358": [],
+    "fn_8024081C": [],
+    "fn_8024087C": [],
+    "fn_80240AA8": [],
+    "fn_80240B10": []
+   },
+   "new_errors": [],
+   "newly_clean": [
+    "fn_8022EBF0",
+    "fn_8022EBF8"
+   ],
+   "sha": "e0acc0a4012f1224fac86a40385c28f63f283f8e1afe2f8bcebe0eec1fb743ea",
+   "single_unlock": {
+    "HELPER:fn_801C1804": 1,
+    "HELPER:fn_801C1980": 0,
+    "HELPER:fn_801C3478": 0,
+    "HELPER:fn_801C3480": 0,
+    "HELPER:fn_801C5F34": 1,
+    "HELPER:fn_801C6030": 0,
+    "HELPER:fn_8021EA10": 0,
+    "HELPER:fn_8021EA34": 0
+   },
+   "size": 8,
+   "targets": [
+    "fn_8022EBF0",
+    "fn_8022EBF8",
+    "fn_80240358",
+    "fn_8024081C",
+    "fn_8024087C",
+    "fn_80240AA8",
+    "fn_80240B10"
+   ],
+   "targets_closed_clean": [
+    "fn_8022EBF0",
+    "fn_8022EBF8"
+   ],
+   "unlock": 2
+  },
+  {
+   "bundle": [
+    "HELPER:fn_801C1804",
+    "HELPER:fn_801C1980",
+    "HELPER:fn_801C3478",
+    "HELPER:fn_801C34D0",
+    "HELPER:fn_801C5F34",
+    "HELPER:fn_801C6030",
+    "HELPER:fn_8021EA10",
+    "HELPER:fn_8021EA34"
+   ],
+   "closure_size": 21,
+   "complementarity": 0,
+   "ebu": 0.875,
+   "hidden_blockers": {
+    "fn_80240358": [],
+    "fn_8024081C": [],
+    "fn_8024087C": [],
+    "fn_80240AD8": [],
+    "fn_80240B10": []
+   },
+   "new_errors": [],
+   "newly_clean": [
+    "fn_8022EBF0",
+    "fn_8022EBF8"
+   ],
+   "sha": "e4a8affa49d9b19b3836805791567f200df9d4d3e152b84ba788a4491e353cd1",
+   "single_unlock": {
+    "HELPER:fn_801C1804": 1,
+    "HELPER:fn_801C1980": 0,
+    "HELPER:fn_801C3478": 0,
+    "HELPER:fn_801C34D0": 0,
+    "HELPER:fn_801C5F34": 1,
+    "HELPER:fn_801C6030": 0,
+    "HELPER:fn_8021EA10": 0,
+    "HELPER:fn_8021EA34": 0
+   },
+   "size": 8,
+   "targets": [
+    "fn_8022EBF0",
+    "fn_8022EBF8",
+    "fn_80240358",
+    "fn_8024081C",
+    "fn_8024087C",
+    "fn_80240AD8",
+    "fn_80240B10"
+   ],
+   "targets_closed_clean": [
+    "fn_8022EBF0",
+    "fn_8022EBF8"
+   ],
+   "unlock": 2
+  },
+  {
+   "bundle": [
+    "HELPER:fn_801C1804",
+    "HELPER:fn_801C1980",
+    "HELPER:fn_801C3478",
+    "HELPER:fn_801C5F34",
+    "HELPER:fn_801C6030",
+    "HELPER:fn_8021EA10",
+    "HELPER:fn_8021EA34"
+   ],
+   "closure_size": 21,
+   "complementarity": 0,
+   "ebu": 0.857,
+   "hidden_blockers": {
+    "fn_80240358": [],
+    "fn_8024081C": [],
+    "fn_8024087C": [],
+    "fn_80240B10": []
+   },
+   "new_errors": [],
+   "newly_clean": [
+    "fn_8022EBF0",
+    "fn_8022EBF8"
+   ],
+   "sha": "3a999b88e3e5cc73751d6daf4df193c89315c7f358cc5f44bab2678b6f31e577",
+   "single_unlock": {
+    "HELPER:fn_801C1804": 1,
+    "HELPER:fn_801C1980": 0,
+    "HELPER:fn_801C3478": 0,
+    "HELPER:fn_801C5F34": 1,
+    "HELPER:fn_801C6030": 0,
+    "HELPER:fn_8021EA10": 0,
+    "HELPER:fn_8021EA34": 0
+   },
+   "size": 7,
+   "targets": [
+    "fn_8022EBF0",
+    "fn_8022EBF8",
+    "fn_80240358",
+    "fn_8024081C",
+    "fn_8024087C",
+    "fn_80240B10"
+   ],
+   "targets_closed_clean": [
+    "fn_8022EBF0",
+    "fn_8022EBF8"
+   ],
+   "unlock": 2
+  },
+  {
+   "bundle": [
+    "HELPER:fn_80052A70",
+    "HELPER:fn_801EF8C4",
+    "STRUCT:C3556+0x80"
+   ],
+   "closure_size": 1439,
+   "complementarity": 1,
+   "ebu": 0.667,
+   "hidden_blockers": {
+    "fn_802557F0": [
+     "M2C:R# from unset register $r#"
+    ]
+   },
+   "new_errors": [],
+   "newly_clean": [
+    "fn_8025550C"
+   ],
+   "sha": "471fdc0137e9deb9c3d976d178d66446759f6a00eeb478fb73529834d4f15df6",
+   "single_unlock": {
+    "HELPER:fn_80052A70": 0,
+    "HELPER:fn_801EF8C4": 0,
+    "STRUCT:C3556+0x80": 0
+   },
+   "size": 3,
+   "targets": [
+    "fn_8025550C",
+    "fn_802557F0"
+   ],
+   "targets_closed_clean": [
+    "fn_8025550C"
+   ],
+   "unlock": 1
+  }
+ ],
+ "controls": {
+  "d5_wrong_delta": {
+   "admitted": false,
+   "helper": "fn_801BB860",
+   "hypothesis": "void fn_801BB860(void);",
+   "reason": "fewer GPR params (0) than the callee reads at entry (1)"
+  },
+  "matched_null": {
+   "bundle": [
+    "HELPER:fn_800B4508",
+    "HELPER:fn_801DB24C"
+   ],
+   "closes_target_set": false,
+   "result": "ok",
+   "unlock": 0
+  },
+  "noop": {
+   "byte_identical": true,
+   "dirty": 0,
+   "lines": 0,
+   "sample": 30,
+   "unlock": 0
+  }
+ },
+ "n_candidate_bundles": 438,
+ "n_components": 2183,
+ "n_stateable_targets": 431,
+ "selector": "select_bundles reads var sets only (EBU = targets/size); bundles of size>=2 only",
+ "unstateable_reasons": {
+  "RESIDUAL_UNKNOWN or not in base": 184,
+  "helper already declared in context": 6,
+  "root FLD not ARG of own fn (nested/global: MODEL_NEEDED)": 199,
+  "root GLB not ARG of own fn (nested/global: MODEL_NEEDED)": 193,
+  "root RET not ARG of own fn (nested/global: MODEL_NEEDED)": 51,
+  "var type field not script-stateable": 46,
+  "var type qtype_local not script-stateable": 52,
+  "var type self_sig not script-stateable": 1,
+  "var type struct_field_untraced not script-stateable": 327
+ }
+}

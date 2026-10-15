@@ -1,0 +1,9 @@
+﻿class2-5 fns 1522 dist Counter({2: 1307, 3: 92, 4: 92, 5: 31})
+var-occurrence kinds {'m2c': 157, 'field_offset_untyped': 8274, 'field_untyped': 1134, 'helper': 2898, 'qtype_local': 400, 'field': 962, 'self_sig': 77, 'm2c_failed': 92}
+fns with no named var (UNKNOWN residual) 32
+distinct vars 3962 occurrences 13994
+vars by degree: 1:3158 2-4:456 5-19:269 20+:79
+vars per fn p25/med/p75/p90/max 2 5 12 22 188
+fns whose vars are ALL shared (no private var) 227
+conjunctive closure (fns fully unblocked, vars resolved): [(50, 1), (100, 2), (200, 23), (400, 227), (600, 487), (800, 830), (1000, 1261), (1200, 1893), (1490, 3962)]
+components 116 largest [1178, 78, 52, 37, 12] singleton-fn comps 99

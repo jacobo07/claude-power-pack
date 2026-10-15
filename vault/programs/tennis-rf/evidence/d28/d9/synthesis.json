@@ -1,0 +1,260 @@
+{
+ "job_id": "ksrmb-20261014-164017",
+ "build": "candidate-20261014T160717Z",
+ "donors": 3,
+ "per_fn": {
+  "802128D4": {
+   "variants": 24,
+   "match": 0,
+   "best_objdiff": 60.625,
+   "compile_errors": 0
+  },
+  "8032CF78": {
+   "variants": 7,
+   "match": 0,
+   "best_objdiff": 46.666668,
+   "compile_errors": 2
+  }
+ },
+ "model_calls_per_variant": 0,
+ "rows": [
+  {
+   "unit": "d9-802128D4-O4p-bool_var",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 60.5,
+   "oracle2": "SIZE 7 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-bool_var_init1",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 60.625,
+   "oracle2": "SIZE 7 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-cast_eq1_if",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-cast_s32",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-cast_u16",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 10.0,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-else_form",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-neg_if",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-not_sub",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-ret_eq",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-ret_eq_nocast",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-ret_ne_ternary",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-ret_ternary",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-rev_operands",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-rev_operands_cast",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-shift_idiom",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-sub_zero",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-tmp_ptr",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-tmp_ptr_cast",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-tmp_ptr_if",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-tmp_s32",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-tmp_u16",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 10.0,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-tmp_val",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-tmp_val_if",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-802128D4-O4p-u32_ret",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 16.875,
+   "oracle2": "SIZE 6 vs 8"
+  },
+  {
+   "unit": "d9-8032CF78-O4p-as_is",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 46.666668,
+   "oracle2": "SIZE 4 vs 3"
+  },
+  {
+   "unit": "d9-8032CF78-O4p-cast_f32",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 46.666668,
+   "oracle2": "SIZE 4 vs 3"
+  },
+  {
+   "unit": "d9-8032CF78-O4p-sda2_pragma",
+   "status": "BLOCKED_COMPILER",
+   "miss": "compile_error",
+   "objdiff": null,
+   "oracle2": "None"
+  },
+  {
+   "unit": "d9-8032CF78-O4p-sda_pragma",
+   "status": "BLOCKED_COMPILER",
+   "miss": "compile_error",
+   "objdiff": null,
+   "oracle2": "None"
+  },
+  {
+   "unit": "d9-8032CF78-O4p-tmp_double",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 46.666668,
+   "oracle2": "SIZE 4 vs 3"
+  },
+  {
+   "unit": "d9-8032CF78-O4p-tmp_f32",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 46.666668,
+   "oracle2": "SIZE 4 vs 3"
+  },
+  {
+   "unit": "d9-8032CF78-O4p-volatile_free_deref",
+   "status": "PARTIAL",
+   "miss": "codegen_diff",
+   "objdiff": 46.666668,
+   "oracle2": "SIZE 4 vs 3"
+  },
+  {
+   "unit": "w10c-tns_802029B0-O4p",
+   "status": "MATCH_CANDIDATE",
+   "miss": "-",
+   "objdiff": 100.0,
+   "oracle2": "MATCH"
+  },
+  {
+   "unit": "w10c-tns_802047D0-O4p",
+   "status": "MATCH_CANDIDATE",
+   "miss": "-",
+   "objdiff": 100.0,
+   "oracle2": "MATCH"
+  },
+  {
+   "unit": "w10c-tns_80209DD8-O4p",
+   "status": "MATCH_CANDIDATE",
+   "miss": "-",
+   "objdiff": 100.0,
+   "oracle2": "MATCH"
+  }
+ ]
+}

@@ -1,0 +1,63 @@
+{
+  "goal": "gsdx-factory-2",
+  "root": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric",
+  "envelope": 51817916,
+  "max_residuals": 1,
+  "route_ladder": [
+    "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
+    "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-M.json"
+  ],
+  "units": [
+    {
+      "id": "F1",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F1.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-M.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F1-receipt.md",
+      "after": null,
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F1-receipt.md"
+      ],
+      "note": "runs on GEX44 via Owner-run launcher (Owner option 2, 2026-10-14); the laptop tick must not arm it: it waits for this receipt"
+    },
+    {
+      "id": "F2",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F2.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F2-receipt.md",
+      "after": "F1"
+    },
+    {
+      "id": "F4",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F4.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-M.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F4-receipt.md",
+      "after": "F2",
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F4-receipt.md"
+      ],
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F4); the laptop tick must not arm it: it waits for this receipt"
+    },
+    {
+      "id": "F3b",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3b.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3b-receipt.md",
+      "after": "F4",
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3b-receipt.md"
+      ],
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3b); installs only under ~/fabric-tools behind supply-chain.json (2e65c565); the laptop tick must not arm it. DONE c888ecd0 after residuals F3br, F3br2 (L6-L8); F3c not compiled: functions PARTIAL (79.52% exact vs DTK, bar 90%)"
+    },
+    {
+      "id": "F6",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F6.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-M.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F6-receipt.md",
+      "after": "F3b",
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F6-receipt.md"
+      ],
+      "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F6); packet 8b12c0bc; route M because F3b on route S needed two residuals at ~65k tokens/message; the laptop tick must not arm it"
+    }
+  ]
+}

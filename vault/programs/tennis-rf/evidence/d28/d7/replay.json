@@ -1,0 +1,185 @@
+{
+ "D5_void_void": {
+  "clean_diff": [],
+  "clean_full": 279,
+  "clean_incremental": 279,
+  "closure_size": 44,
+  "direct_unlock": [
+   "fn_80242AC8",
+   "fn_80242CAC",
+   "fn_80242E24"
+  ],
+  "full_changed_outside_closure": [],
+  "info": {
+   "changed_lines": 1,
+   "ids": [
+    "fn_801D022C"
+   ],
+   "per_fact": {
+    "fn_801D022C": 101
+   },
+   "typedelta": false
+  },
+  "levels": [
+   44
+  ],
+  "n_full_unlock": 3,
+  "seed_size": 44,
+  "sha_equal": true,
+  "sha_full": "c963b7c46dc483fbce46bb3012dd66a98d854d01d75510150c9ec5818d53ca37",
+  "sha_incremental": "c963b7c46dc483fbce46bb3012dd66a98d854d01d75510150c9ec5818d53ca37",
+  "transitive_unlock": null,
+  "wall_s_full": 8.05,
+  "wall_s_incremental": 1.4,
+  "wave2": {
+   "dependents": [],
+   "newly_clean": [],
+   "newly_clean_in": [
+    "fn_80242AC8",
+    "fn_80242CAC",
+    "fn_80242E24"
+   ],
+   "note": "no function is blocked only by newly clean callees"
+  }
+ },
+ "fixed5_ptr_void": {
+  "clean_diff": [],
+  "clean_full": 276,
+  "clean_incremental": 276,
+  "closure_size": 44,
+  "direct_unlock": [],
+  "full_changed_outside_closure": [],
+  "info": {
+   "changed_lines": 1,
+   "ids": [
+    "fn_801D022C"
+   ],
+   "per_fact": {
+    "fn_801D022C": 101
+   },
+   "typedelta": false
+  },
+  "levels": [
+   44
+  ],
+  "n_full_unlock": 0,
+  "seed_size": 44,
+  "sha_equal": true,
+  "sha_full": "3f58dd4976b027ffbb70b6f5f3f5bc9859b6e34b44d6b61b89a4e39250b45adf",
+  "sha_incremental": "3f58dd4976b027ffbb70b6f5f3f5bc9859b6e34b44d6b61b89a4e39250b45adf",
+  "transitive_unlock": null,
+  "wall_s_full": 9.2,
+  "wall_s_incremental": 1.48,
+  "wave2": {
+   "dependents": [],
+   "newly_clean": [],
+   "newly_clean_in": [],
+   "note": "no function is blocked only by newly clean callees"
+  }
+ },
+ "fixed5_void": {
+  "clean_diff": [],
+  "clean_full": 276,
+  "clean_incremental": 276,
+  "closure_size": 44,
+  "direct_unlock": [],
+  "full_changed_outside_closure": [],
+  "info": {
+   "changed_lines": 1,
+   "ids": [
+    "fn_801D022C"
+   ],
+   "per_fact": {
+    "fn_801D022C": 101
+   },
+   "typedelta": false
+  },
+  "levels": [
+   44
+  ],
+  "n_full_unlock": 0,
+  "seed_size": 44,
+  "sha_equal": true,
+  "sha_full": "5a7237e9259b6bb0b031b09fe0aa72a7c986c1ce980a4e1402a4afbf01c450fd",
+  "sha_incremental": "5a7237e9259b6bb0b031b09fe0aa72a7c986c1ce980a4e1402a4afbf01c450fd",
+  "transitive_unlock": null,
+  "wall_s_full": 9.12,
+  "wall_s_incremental": 1.75,
+  "wave2": {
+   "dependents": [],
+   "newly_clean": [],
+   "newly_clean_in": [],
+   "note": "no function is blocked only by newly clean callees"
+  }
+ },
+ "var5_ptr_void": {
+  "clean_diff": [],
+  "clean_full": 276,
+  "clean_incremental": 276,
+  "closure_size": 44,
+  "direct_unlock": [],
+  "full_changed_outside_closure": [],
+  "info": {
+   "changed_lines": 1,
+   "ids": [
+    "fn_801D022C"
+   ],
+   "per_fact": {
+    "fn_801D022C": 101
+   },
+   "typedelta": false
+  },
+  "levels": [
+   44
+  ],
+  "n_full_unlock": 0,
+  "seed_size": 44,
+  "sha_equal": true,
+  "sha_full": "33a9ca26151bbd087aaeafcf0b681efee42ee00e0b4c84b8090896b7cb2e5d1a",
+  "sha_incremental": "33a9ca26151bbd087aaeafcf0b681efee42ee00e0b4c84b8090896b7cb2e5d1a",
+  "transitive_unlock": null,
+  "wall_s_full": 9.2,
+  "wall_s_incremental": 1.6,
+  "wave2": {
+   "dependents": [],
+   "newly_clean": [],
+   "newly_clean_in": [],
+   "note": "no function is blocked only by newly clean callees"
+  }
+ },
+ "var5_s32_void": {
+  "clean_diff": [],
+  "clean_full": 276,
+  "clean_incremental": 276,
+  "closure_size": 44,
+  "direct_unlock": [],
+  "full_changed_outside_closure": [],
+  "info": {
+   "changed_lines": 1,
+   "ids": [
+    "fn_801D022C"
+   ],
+   "per_fact": {
+    "fn_801D022C": 101
+   },
+   "typedelta": false
+  },
+  "levels": [
+   44
+  ],
+  "n_full_unlock": 0,
+  "seed_size": 44,
+  "sha_equal": true,
+  "sha_full": "e1aca67fe1121bf800ac7247e6ec69f66b5d87b8bfea01efbf884edea2260ea1",
+  "sha_incremental": "e1aca67fe1121bf800ac7247e6ec69f66b5d87b8bfea01efbf884edea2260ea1",
+  "transitive_unlock": null,
+  "wall_s_full": 9.14,
+  "wall_s_incremental": 1.37,
+  "wave2": {
+   "dependents": [],
+   "newly_clean": [],
+   "newly_clean_in": [],
+   "note": "no function is blocked only by newly clean callees"
+  }
+ }
+}

@@ -1,0 +1,172 @@
+{
+ "goal": "ce-a5",
+ "units": {
+  "U0": {
+   "packet": "packets/U0.md",
+   "route": "routes/route-U0.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U0-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u0.py"
+   ],
+   "after": [],
+   "estimate": 800000,
+   "max_cycles": 6
+  },
+  "U1": {
+   "packet": "packets/U1.md",
+   "route": "routes/route-U1.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U1-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u1.py"
+   ],
+   "after": [],
+   "estimate": 1500000,
+   "max_cycles": 6
+  },
+  "U5": {
+   "packet": "packets/U5.md",
+   "route": "routes/route-U5.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U5-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u5.py"
+   ],
+   "after": [],
+   "estimate": 1500000,
+   "max_cycles": 6
+  },
+  "U6": {
+   "packet": "packets/U6.md",
+   "route": "routes/route-U6.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U6-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u6.py"
+   ],
+   "after": [],
+   "estimate": 800000,
+   "max_cycles": 6
+  },
+  "U2": {
+   "packet": "packets/U2.md",
+   "route": "routes/route-U2.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U2-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u2.py"
+   ],
+   "after": [
+    "U1"
+   ],
+   "estimate": 1200000,
+   "max_cycles": 6
+  },
+  "U3": {
+   "packet": "packets/U3.md",
+   "route": "routes/route-U3.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U3-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u3.py"
+   ],
+   "after": [
+    "U1"
+   ],
+   "estimate": 2500000,
+   "max_cycles": 6
+  },
+  "U7": {
+   "packet": "packets/U7.md",
+   "route": "routes/route-U7.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U7-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u7.py"
+   ],
+   "after": [
+    "U1"
+   ],
+   "estimate": 1200000,
+   "max_cycles": 6
+  },
+  "U8": {
+   "packet": "packets/U8.md",
+   "route": "routes/route-U8.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U8-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u8.py"
+   ],
+   "after": [
+    "U1"
+   ],
+   "estimate": 1500000,
+   "max_cycles": 6
+  },
+  "U4": {
+   "packet": "packets/U4.md",
+   "route": "routes/route-U4.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U4-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u4.py"
+   ],
+   "after": [
+    "U3"
+   ],
+   "estimate": 1200000,
+   "max_cycles": 6
+  },
+  "U9": {
+   "packet": "packets/U9.md",
+   "route": "routes/route-U9.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U9-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u9.py"
+   ],
+   "after": [
+    "U2",
+    "U3"
+   ],
+   "estimate": 1000000,
+   "max_cycles": 6
+  },
+  "U10": {
+   "packet": "packets/U10.md",
+   "route": "routes/route-U10.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U10-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u10.py"
+   ],
+   "after": [
+    "U0",
+    "U2",
+    "U3",
+    "U4",
+    "U5",
+    "U6",
+    "U7",
+    "U8",
+    "U9"
+   ],
+   "estimate": 1000000,
+   "max_cycles": 6
+  },
+  "U10c": {
+   "packet": "packets/U10c.md",
+   "route": "routes/route-U10c.json",
+   "receipt": "vault/programs/cognitive-economy/a5/U10-receipt.md",
+   "gate": [
+    "python3",
+    "tools/test_a5_u10.py"
+   ],
+   "after": [],
+   "estimate": 600000,
+   "max_cycles": 3
+  }
+ }
+}

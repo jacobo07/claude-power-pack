@@ -40,7 +40,13 @@ const PROGRESS_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 const EXEMPT_CMD = /rollover\.py|mission_spend\.py|session-budget-/;
 const MAX_IDS = 20000;
 const DEFAULT_CALL_RATIO = 1.5;
-const DEFAULT_NOPROGRESS = 25;
+// ce-a5 U7: 14 = smallest K whose false-trip rate (gaps between mutations > K) is <= 5% on the DWS corpus
+// (A/STALL.md). Env CPP_NOPROGRESS_K overrides; a per-session budget.noprogress_calls outranks both.
+const DEFAULT_NOPROGRESS = 14;
+function defaultNoprogress() {
+  const e = Number(process.env.CPP_NOPROGRESS_K);
+  return Number.isFinite(e) && e >= 1 ? Math.floor(e) : DEFAULT_NOPROGRESS;
+}
 
 function stateDir() {
   return process.env.GSD_LONG_RUN_STATE_DIR || path.join(os.homedir(), '.claude', 'state');
@@ -123,7 +129,7 @@ function judge(budget, st) {
   if (ceil > 0 && st.context > ceil) {
     return deny(`context ${fmt(st.context)} > ceiling ${fmt(ceil)}: every further call re-reads it.`);
   }
-  const k = Number(budget.noprogress_calls) || DEFAULT_NOPROGRESS;
+  const k = Number(budget.noprogress_calls) || defaultNoprogress();
   if (st.calls - st.progress_at > k) {
     return deny(`${st.calls - st.progress_at} calls since the last edit or commit (limit ${k}): spend without progress.`);
   }

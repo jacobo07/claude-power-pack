@@ -1,0 +1,20 @@
+FULL D5_void_void 8.0 279 44
+FULL fixed5_void 9.1 276 44
+FULL fixed5_ptr_void 9.2 276 44
+FULL var5_ptr_void 9.2 276 44
+FULL var5_s32_void 9.1 276 44
+REPLAY D5_void_void 44 [] True 1.4 8.05
+REPLAY fixed5_void 44 [] True 1.75 9.12
+REPLAY fixed5_ptr_void 44 [] True 1.48 9.2
+REPLAY var5_ptr_void 44 [] True 1.6 9.2
+REPLAY var5_s32_void 44 [] True 1.37 9.14
+CONTROLS 0 7 [] []
+PASS V-D7-REPRO clean-set diff empty (5 variants) 
+PASS V-D7-REPRO-SHA output sha equals whole-corpus 
+PASS V-D7-SOUND no full-run change outside closure 
+PASS V-D7-CTRL-UNUSED empty closure 
+PASS V-D7-CTRL-WIDE wide-struct closure covers every changed fn and equals full size=7
+PASS V-D7-CTRL-D6 closure contains every fn D6 saw change 
+PASS V-D7-DET closure identical across runs 
+PASS V-D7-SMALLER closure < 1797 for D6 deltas {'D5_void_void': 44, 'fixed5_ptr_void': 44, 'fixed5_void': 44, 'var5_ptr_void': 44, 'var5_s32_void': 44}
+EXIT=0

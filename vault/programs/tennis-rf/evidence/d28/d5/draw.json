@@ -1,0 +1,175 @@
+{
+ "n_below_helpers": 1177,
+ "n_top30_helpers": 29,
+ "picks": [
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    43
+   ],
+   "d4_rank": 6,
+   "d4_rank_source": "dominators.json",
+   "d4_score": [
+    0.0,
+    43.0
+   ],
+   "n_fns": 43,
+   "stratum": "top30:Q1",
+   "var": "HELPER:fn_801D022C"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    29
+   ],
+   "d4_rank": 13,
+   "d4_rank_source": "dominators.json",
+   "d4_score": [
+    0.0,
+    29.0
+   ],
+   "n_fns": 29,
+   "stratum": "top30:Q2",
+   "var": "HELPER:fn_801CCE10"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    18
+   ],
+   "d4_rank": 27,
+   "d4_rank_source": "dominators.json",
+   "d4_score": [
+    0.0,
+    18.0
+   ],
+   "n_fns": 18,
+   "stratum": "top30:Q3",
+   "var": "HELPER:fn_801CD4DC"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    4
+   ],
+   "d4_rank": 23,
+   "d4_rank_source": "dominators.json",
+   "d4_score": [
+    0.0,
+    21.0
+   ],
+   "n_fns": 4,
+   "stratum": "top30:Q4",
+   "var": "HELPER:fn_802100EC"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    23
+   ],
+   "d4_rank": 19,
+   "d4_rank_source": "dominators.json",
+   "d4_score": [
+    0.0,
+    23.0
+   ],
+   "n_fns": 23,
+   "stratum": "top30:Q3(extra)",
+   "var": "HELPER:fn_80200A78"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    29
+   ],
+   "d4_rank": 14,
+   "d4_rank_source": "dominators.json",
+   "d4_score": [
+    0.0,
+    29.0
+   ],
+   "n_fns": 29,
+   "stratum": "top30:Q2(extra)",
+   "var": "HELPER:fn_801CD8AC"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    9
+   ],
+   "d4_rank": 89,
+   "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+   "d4_score": [
+    0.0,
+    9.0
+   ],
+   "n_fns": 9,
+   "stratum": "below30:Q1",
+   "var": "HELPER:fn_801E11E0"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    1
+   ],
+   "d4_rank": 908,
+   "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+   "d4_score": [
+    0.0,
+    1.0
+   ],
+   "n_fns": 1,
+   "stratum": "below30:Q2",
+   "var": "HELPER:fn_801BF164"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    1
+   ],
+   "d4_rank": 1096,
+   "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+   "d4_score": [
+    0.0,
+    1.0
+   ],
+   "n_fns": 1,
+   "stratum": "below30:Q3",
+   "var": "HELPER:fn_802087F4"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    1
+   ],
+   "d4_rank": 1175,
+   "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+   "d4_score": [
+    0.0,
+    1.0
+   ],
+   "n_fns": 1,
+   "stratum": "below30:Q4",
+   "var": "HELPER:fn_80234970"
+  },
+  {
+   "d4_degree_blocked_direct": [
+    0,
+    1
+   ],
+   "d4_rank": 1067,
+   "d4_rank_source": "recomputed (score midpoint, var tiebreak)",
+   "d4_score": [
+    0.0,
+    1.0
+   ],
+   "n_fns": 1,
+   "stratum": "below30:Q2(extra)",
+   "var": "HELPER:fn_801F4980"
+  }
+ ],
+ "population": "HELPER vars of frontier.json (the only kind whose intervention the asm lets a script state); cror handled as its own experiment",
+ "seed": 20261013,
+ "stratification": "degree = blocked_direct[1]; contiguous quartiles of the degree-sorted population; 1 per quartile + extras from seeded random quartiles (2 top30, 1 below30)",
+ "top30_set_equals_recomputed_global_top30": true
+}

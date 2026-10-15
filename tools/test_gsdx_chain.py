@@ -321,5 +321,21 @@ check("V-PRE-P1P2-NO-WORKER", r1["action"] == "closed_deterministic" and r2["act
       and armed == ["B"], f"{r1['action']} -> {r2['action']}")
 
 
+# Worker model: _arm passes --model from the unit or the chain (unattended arms otherwise launch on the host
+# default); absent stays absent (control).
+_seen = []
+route_m = TMP / "route-m.json"
+route_m.write_text(json.dumps({"envelope": {"target": 1}}), encoding="utf-8")
+_real_run = gc.subprocess.run
+gc.subprocess.run = lambda cmd, **kw: _seen.append(cmd) or type("P", (), {"stdout": '{"ok": true}', "stderr": "", "returncode": 0})()
+try:
+    gc._arm({"root": str(TMP), "model": "sonnet"}, {"packet": "x", "route": str(route_m)})
+    gc._arm({"root": str(TMP)}, {"packet": "x", "route": str(route_m), "model": "haiku"})
+    gc._arm({"root": str(TMP)}, {"packet": "x", "route": str(route_m)})
+finally:
+    gc.subprocess.run = _real_run
+_m = [c[c.index("--model") + 1] if "--model" in c else None for c in _seen]
+check("V-CHAIN-ARM-MODEL", _m == ["sonnet", "haiku", None], str(_m))
+
 print(f"CHAIN_PASS={passes}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)

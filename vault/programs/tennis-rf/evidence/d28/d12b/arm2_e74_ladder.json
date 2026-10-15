@@ -1,0 +1,30 @@
+{
+ "in_sample": {
+  "n": 45,
+  "vars_before": 993,
+  "vars_after": 921,
+  "fns_with_fewer_vars": 25,
+  "fns_zero_vars_left": 0,
+  "newly_lint_clean": 0,
+  "new_lint_regressions": [
+   [
+    "fn_8024DE84",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ]
+ },
+ "held_out": {
+  "n": 46,
+  "vars_before": 1285,
+  "vars_after": 1221,
+  "fns_with_fewer_vars": 23,
+  "fns_zero_vars_left": 0,
+  "newly_lint_clean": 0,
+  "new_lint_regressions": [
+   [
+    "fn_80279FCC",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ]
+ }
+}

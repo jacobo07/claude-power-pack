@@ -1,0 +1,12 @@
+DRAW [('HELPER:fn_801D022C', 6, 43), ('HELPER:fn_801CCE10', 13, 29), ('HELPER:fn_801CD4DC', 27, 18), ('HELPER:fn_802100EC', 23, 4), ('HELPER:fn_80200A78', 19, 23), ('HELPER:fn_801CD8AC', 14, 29), ('HELPER:fn_801E11E0', 89, 9), ('HELPER:fn_801BF164', 908, 1), ('HELPER:fn_802087F4', 1096, 1), ('HELPER:fn_80234970', 1175, 1), ('HELPER:fn_801F4980', 1067, 1)] top30_consistent True
+PASS V-D5-DRAW seed=20261013 picks=11
+PASS V-D5-DRAW-STRATA 6 top-30 + 5 below
+PASS V-D5-SUPPORT-REPRO reran 1 SUPPORT hypotheses
+PASS V-D5-CROR-REPRO 67 dependents rerun
+PASS V-D5-CONTRADICTION bad=[]
+PASS V-D5-CONTROL-WRONG-DELTA callee min_gpr=2; arity 0 rejected=True; void-with-r3-read rejected=True; consistent delta admitted=True
+PASS V-D5-CONTROL-NOOP unlock=0 output_identical_to_baseline=True
+PASS V-D5-CROR-EXACT-TOTAL-ORDER 12 cases
+PASS V-D5-CROR-REWRITE-FIRES /* 1 1  4C 41 13 82 */	nop | /* 2 2  40 82 00 44 */	blt .L_x | 
+PASS V-D5-CROR-BAILS unsafe shape left untouched
+TEST_D5 PASS

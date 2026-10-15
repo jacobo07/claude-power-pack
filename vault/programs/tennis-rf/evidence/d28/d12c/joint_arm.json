@@ -1,0 +1,157 @@
+[
+ {
+  "step": 0,
+  "name": "B1",
+  "components": [
+   "HELPER:fn_801C7770",
+   "HELPER:fn_801C83F4",
+   "HELPER:fn_801C9670"
+  ],
+  "cum_vars_resolved": 3,
+  "universe": 1449,
+  "unlock_B": 12,
+  "unlock_L": 0,
+  "unlock_BL": 12,
+  "complementarity": 0,
+  "new_BL_pack": [],
+  "new_BL_held": [],
+  "new_BL_b1_targets": [
+   "fn_802070A8",
+   "fn_8020D1D8",
+   "fn_802103F8",
+   "fn_802116C8",
+   "fn_8021BD7C",
+   "fn_8021C6B0",
+   "fn_802219E4",
+   "fn_802221CC",
+   "fn_8024B7C8",
+   "fn_8032CDD4",
+   "fn_80331504",
+   "fn_80333D88"
+  ],
+  "new_BL_other": [],
+  "new_B_pack": [],
+  "new_B_held": [],
+  "new_L_held": [],
+  "hidden_blockers_revealed": {},
+  "new_lint_codes": {
+   "UNRESOLVED_TYPE": 2
+  },
+  "regressions": [
+   [
+    "fn_8024DE84",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ],
+   [
+    "fn_80279FCC",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ],
+  "regressions_B": []
+ },
+ {
+  "step": 1,
+  "name": "rank4",
+  "components": [
+   "HELPER:fn_801C3480",
+   "HELPER:fn_801C6030",
+   "HELPER:fn_801C7770",
+   "HELPER:fn_801C83F4",
+   "HELPER:fn_801C9670"
+  ],
+  "cum_vars_resolved": 5,
+  "universe": 1449,
+  "unlock_B": 12,
+  "unlock_L": 0,
+  "unlock_BL": 12,
+  "complementarity": 0,
+  "new_BL_pack": [],
+  "new_BL_held": [],
+  "new_BL_b1_targets": [
+   "fn_802070A8",
+   "fn_8020D1D8",
+   "fn_802103F8",
+   "fn_802116C8",
+   "fn_8021BD7C",
+   "fn_8021C6B0",
+   "fn_802219E4",
+   "fn_802221CC",
+   "fn_8024B7C8",
+   "fn_8032CDD4",
+   "fn_80331504",
+   "fn_80333D88"
+  ],
+  "new_BL_other": [],
+  "new_B_pack": [],
+  "new_B_held": [],
+  "new_L_held": [],
+  "hidden_blockers_revealed": {},
+  "new_lint_codes": {
+   "UNRESOLVED_TYPE": 2
+  },
+  "regressions": [
+   [
+    "fn_8024DE84",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ],
+   [
+    "fn_80279FCC",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ],
+  "regressions_B": []
+ },
+ {
+  "step": 2,
+  "name": "rank5",
+  "components": [
+   "HELPER:fn_801C3480",
+   "HELPER:fn_801C34D0",
+   "HELPER:fn_801C6030",
+   "HELPER:fn_801C7770",
+   "HELPER:fn_801C83F4",
+   "HELPER:fn_801C9670"
+  ],
+  "cum_vars_resolved": 6,
+  "universe": 1449,
+  "unlock_B": 12,
+  "unlock_L": 0,
+  "unlock_BL": 12,
+  "complementarity": 0,
+  "new_BL_pack": [],
+  "new_BL_held": [],
+  "new_BL_b1_targets": [
+   "fn_802070A8",
+   "fn_8020D1D8",
+   "fn_802103F8",
+   "fn_802116C8",
+   "fn_8021BD7C",
+   "fn_8021C6B0",
+   "fn_802219E4",
+   "fn_802221CC",
+   "fn_8024B7C8",
+   "fn_8032CDD4",
+   "fn_80331504",
+   "fn_80333D88"
+  ],
+  "new_BL_other": [],
+  "new_B_pack": [],
+  "new_B_held": [],
+  "new_L_held": [],
+  "hidden_blockers_revealed": {},
+  "new_lint_codes": {
+   "UNRESOLVED_TYPE": 2
+  },
+  "regressions": [
+   [
+    "fn_8024DE84",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ],
+   [
+    "fn_80279FCC",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ],
+  "regressions_B": []
+ }
+]

@@ -1,7 +1,7 @@
 {
     "goal": "tennis-rf",
     "root": "C:\\Users\\User\\Apps\\recon_work\\wt_tennis_rf",
-    "envelope": 100000000,
+    "envelope": 150000000,
     "max_residuals": 2,
     "route_ladder": [
         "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
@@ -130,7 +130,10 @@
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D1c.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D1c-receipt.md",
-            "accept": ["DONE", "DONE_WITH_LIMITS"],
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ],
             "after": "W12"
         },
         {
@@ -159,7 +162,10 @@
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D4.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D4-receipt.md",
-            "accept": ["DONE", "PARTIAL"],
+            "accept": [
+                "DONE",
+                "PARTIAL"
+            ],
             "disposition": "PARTIAL/INCONCLUSIVE accepted with certified limitation (Owner 2026-10-13): evidence/d28/d4/DISPOSITION.md; V-D4-RED-FALLS stays red",
             "after": "D3"
         },
@@ -189,7 +195,11 @@
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D10.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D10-receipt.md",
-            "after": "D7"
+            "after": "D7",
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
         },
         {
             "id": "W8b",
@@ -209,18 +219,57 @@
             "after": "W8b"
         },
         {
-            "id": "D8",
-            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D8.md",
-            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-G.json",
-            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D8-receipt.md",
-            "after": "D11"
+            "id": "D8v2",
+            "max_residuals": 2,
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D8v2.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D8v2-receipt.md",
+            "after": "D11",
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
         },
         {
-            "id": "D9",
+            "id": "D9c",
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D9.md",
-            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-G.json",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D9-receipt.md",
-            "after": "D8"
+            "after": "D8v2",
+            "note": "renamed from D9 2026-10-14: lease L29 (succession tennis-rf:D9) holds 12.39M of D8v2 coordinator spend, not D9 (WU-D8v2-receipt.md)"
+        },
+        {
+            "id": "D12a",
+            "max_residuals": 3,
+            "note": "max_residuals 3 (Owner 2026-10-14 21:00, option 1): third residual scoped to steps 4-6 + receipt rewrite; steps 1-3 landed in 33d2a605/7a5a770e",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12a.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12a-receipt.md",
+            "after": "D9c"
+        },
+        {
+            "id": "D12b",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12b.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12b-receipt.md",
+            "after": "D12a",
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
+        },
+        {
+            "id": "D12c",
+            "max_residuals": 2,
+            "note": "Owner 2026-10-15 option 1: joint helper+layout bundle on held-out (D12b next abstraction)",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12c.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-D12c-receipt.md",
+            "after": "D12b",
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
         }
     ]
 }

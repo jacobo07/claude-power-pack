@@ -1,0 +1,55 @@
+{
+ "selector_reproduces_d12a_top10": true,
+ "step1_B1": {
+  "targets": [
+   "fn_802070A8",
+   "fn_8020D1D8",
+   "fn_802103F8",
+   "fn_802116C8",
+   "fn_8021BD7C",
+   "fn_8021C6B0",
+   "fn_802219E4",
+   "fn_802221CC",
+   "fn_8024B7C8",
+   "fn_8032CDD4",
+   "fn_80331504",
+   "fn_80333D88"
+  ],
+  "n_targets": 12,
+  "closure": 12,
+  "unlock": 12,
+  "newly_clean": [
+   "fn_802070A8",
+   "fn_8020D1D8",
+   "fn_802103F8",
+   "fn_802116C8",
+   "fn_8021BD7C",
+   "fn_8021C6B0",
+   "fn_802219E4",
+   "fn_802221CC",
+   "fn_8024B7C8",
+   "fn_8032CDD4",
+   "fn_80331504",
+   "fn_80333D88"
+  ],
+  "errors": []
+ },
+ "n_c0004_dependents": 91,
+ "step1_L": {
+  "closure": 1449,
+  "fns_run": 1449,
+  "unlock": 0,
+  "newly_clean": [],
+  "errors": [
+   [
+    "fn_8024DE84",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ],
+   [
+    "fn_80279FCC",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ]
+ },
+ "step1_reproduced": true
+}

@@ -1,0 +1,205 @@
+{
+ "job_id": "ksrmb-20261014-114911",
+ "judge": "oracle2 re-run on returned objects with the batch L0 (rejudge_l0.json); the ledger rows for this job read ORACLE_REFUSED because the profile L0 lacked the held-out rows (kept as written)",
+ "draw": {
+  "n": 40,
+  "seed": 20261013,
+  "arm_B_eligible_lint_clean": 14
+ },
+ "donors": {
+  "match": 3,
+  "n": 3
+ },
+ "arms": {
+  "A": {
+   "source": "history",
+   "W12": {
+    "match": 12,
+    "n": 22,
+    "rate": 0.545,
+    "wilson95": [
+     0.347,
+     0.731
+    ]
+   },
+   "W10c_no_context": {
+    "match": 0,
+    "n": 12
+   }
+  },
+  "B": {
+   "fn_O4p": {
+    "match": 12,
+    "n": 14,
+    "rate": 0.857,
+    "wilson95": [
+     0.601,
+     0.96
+    ]
+   },
+   "fn_any_preset": {
+    "match": 12,
+    "n": 14,
+    "rate": 0.857,
+    "wilson95": [
+     0.601,
+     0.96
+    ]
+   },
+   "nontrivial_ge2_insns": {
+    "match": 4,
+    "n": 6,
+    "rate": 0.667,
+    "wilson95": [
+     0.3,
+     0.903
+    ]
+   },
+   "trivial_1_insn": {
+    "match": 8,
+    "n": 8,
+    "rate": 1.0,
+    "wilson95": [
+     0.676,
+     1.0
+    ]
+   },
+   "per_drawn_fn": {
+    "match": 12,
+    "n": 40,
+    "rate": 0.3,
+    "wilson95": [
+     0.181,
+     0.454
+    ]
+   },
+   "model_calls_per_fn": 0,
+   "misses": [
+    "tns:80223804",
+    "tns:8027AA7C"
+   ],
+   "per_fn": {
+    "tns:802032B4": {
+     "insns": 1,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    },
+    "tns:802047BC": {
+     "insns": 1,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    },
+    "tns:80220094": {
+     "insns": 1,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    },
+    "tns:80223804": {
+     "insns": 4,
+     "presets": {
+      "O4p": "codegen_diff",
+      "O2": "codegen_diff"
+     }
+    },
+    "tns:802301F0": {
+     "insns": 16,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "codegen_diff"
+     }
+    },
+    "tns:80230964": {
+     "insns": 2,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    },
+    "tns:80232174": {
+     "insns": 1,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    },
+    "tns:8024B8C0": {
+     "insns": 1,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    },
+    "tns:80250334": {
+     "insns": 1,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    },
+    "tns:80250F80": {
+     "insns": 22,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "codegen_diff"
+     }
+    },
+    "tns:80250FF8": {
+     "insns": 1,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    },
+    "tns:80278F94": {
+     "insns": 22,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "codegen_diff"
+     }
+    },
+    "tns:8027AA7C": {
+     "insns": 23,
+     "presets": {
+      "O4p": "codegen_diff",
+      "O2": "codegen_diff"
+     }
+    },
+    "tns:803319C8": {
+     "insns": 1,
+     "presets": {
+      "O4p": "MATCH",
+      "O2": "MATCH"
+     }
+    }
+   }
+  },
+  "D": {
+   "verdict": "EMPTY/INCONCLUSIVE",
+   "why": "no motif->C emitter exists (factor/residual/frontier measure cover only)"
+  },
+  "E": {
+   "verdict": "EMPTY/INCONCLUSIVE",
+   "why": "D6 certified 0 facts; D4 ranking degree-driven"
+  },
+  "F": {
+   "verdict": "= B",
+   "why": "D contributes no candidates"
+  }
+ },
+ "tokens": {
+  "d8v2_leases": {
+   "L26": 1101816,
+   "L27": 1121020,
+   "L28_at_handoff": 992574
+  },
+  "sum": 3215410,
+  "per_O4p_match_lower_bound": 267951,
+  "note": "tooling/coordination spend of the unit, not generation: candidate sources are the reused ctx_run1 m2c output (0 model calls); excludes the closing coordinator session"
+ }
+}

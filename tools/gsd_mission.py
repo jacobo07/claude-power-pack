@@ -38,6 +38,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_long_run as lr  # noqa: E402  (state_dir, ledger, _pid_alive, sessions_dir)
+import mission_binding as mb  # noqa: E402  (AMCR: the one execution-root resolver)
 import receipt_judge as rj  # noqa: E402  (one receipt reading for mission, chain and steward)
 from route_admission import KNOWN_VERDICTS, LAUNCHABLE_VERDICTS  # noqa: E402  (one verdict contract)
 
@@ -288,7 +289,8 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
 
 def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
                now: float | None = None, worker: str | None = None,
-               ledger_extra: dict | None = None, touch: bool = True, **changes) -> dict:
+               ledger_extra: dict | None = None, touch: bool = True, expect_seq: int | None = None,
+               **changes) -> dict:
     """Compare-and-swap. ``expect_state`` is one state or a set of them.
 
     Raises CasConflict when the record moved since the caller observed it. The
@@ -317,6 +319,10 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
         if rec["epoch"] != expect_epoch or rec["state"] not in allowed:
             raise CasConflict(f"{mission_id}: expected epoch {expect_epoch} in {sorted(allowed)}, "
                               f"found epoch {rec['epoch']} {rec['state']}")
+        if expect_seq is not None and int(rec.get("seq") or 0) != int(expect_seq):
+            # AMR audit F1: a multi-write transaction (recover_mission) must not overwrite a hold or park
+            # written between its reads, which epoch+state alone cannot see.
+            raise CasConflict(f"{mission_id}: expected seq {expect_seq}, found {rec.get('seq')} (record moved)")
         new_state = changes.get("state", rec["state"])
         if new_state not in STATES:
             raise MissionError(f"unknown state {new_state!r}")
@@ -514,11 +520,12 @@ def budget_exhausted(rec: dict, now: float) -> str | None:
 
 
 def plan_next(rec: dict, now: float, sessions: list[dict] | None,
-              pid_alive=lr._pid_alive, v2: bool | None = None) -> dict:
+              pid_alive=lr._pid_alive, v2: bool | None = None, blocked_probe=None) -> dict:
     """What the out-of-band supervisor should do for this mission, and why.
 
     Actions: none · launch · replace · halt · surface_blocked · await.
-    Pure: no I/O beyond the injected ``pid_alive``. ``v2`` is capsule_v2(rec) as the caller read it
+    Pure except the injected ``pid_alive`` and, for a bare host-`blocked` owner only, ``blocked_probe``
+    (default blocked_recovery: reads the job file and the repo's .planning/config.json, may ask git once). ``v2`` is capsule_v2(rec) as the caller read it
     (the kill switch is a file); None reads the record's field alone.
     """
     if v2 is None:
@@ -534,6 +541,18 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # (EDD m-4bb8952b2903, m-79f84cdd34dc): a cost-breaker hold set on a worker that then finished
         # left the record RUNNING with its owner gone, and goal singleflight refused every later unit
         # until the Owner closed it by hand. Only positive DEAD evidence settles; UNKNOWN stays parked.
+        if state in (RUNNING, BLOCKED) and is_cost_hold(hold):
+            # AMR: a cost hold stops the executor, not the goal. Recovery runs until it launches a
+            # successor or records a boundary; only then does the hold fall back to parking/settling.
+            import mission_recovery as mr
+            rstate = (hold.get("recovery") or {}).get("state")
+            if mr.mode() != "off" and rstate not in mr.TERMINAL_RECOVERY_STATES and mr.eligible(rec):
+                return {"action": "recover",
+                        "reason": f"cost hold -> autonomous recovery ({str(hold.get('reason'))[:160]})"}
+            if rstate == mr.OWNER_BOUNDARY:
+                # Audit F3: a recovery boundary is a PARK with a decision packet, never a settle -- the packet's
+                # options (raise authority, extend hours, release) must still apply to a live record.
+                return {"action": "none", "reason": f"recovery owner boundary: {str((hold.get('recovery') or {}).get('why'))[:200]}"}
         if state in (RUNNING, BLOCKED) and rec.get("owner"):
             verdict, evidence = liveness(rec.get("owner"), sessions, pid_alive)
             if verdict == DEAD and hold.get("worker_stopped_at"):
@@ -598,6 +617,28 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # stays BLOCKED forever. Only a LIVE, busy owner is let finish its turn first.
         return {"action": "halt", "reason": f"owner {verdict} and budget: {spent}"}
     if verdict == WAITING_HUMAN:
+        # AMR-X (m-5cd1a041bc0f, 21 h 43 min parked): a bare host `blocked` is also a model that ENDED ITS
+        # TURN ON A QUESTION. The Owner Escalation Gate types it from the job's `needs`; a question the
+        # repo policy or the recommended option answers is not a human's, so the worker is replaced by a
+        # successor that carries the answer. Permission prompts, host gates and Owner-class questions
+        # stay surfaced exactly as before; an unjudgeable one (None/UNKNOWN) too.
+        # Only a BARE blocked is judged: a host row carrying `waitingFor` is a live permission prompt, whatever the
+        # job file says (review F3).
+        hrow = _host_row((rec.get("owner") or {}).get("session_id"), sessions)
+        b = ((blocked_probe or blocked_recovery)(rec)
+             if state in (RUNNING, BLOCKED) and hrow is not None and not hrow.get("waitingFor") else None)
+        cls = (b or {}).get("class")
+        if cls == "QUESTION_RESOLVABLE":
+            if int(rec.get("decision_recoveries") or 0) >= MAX_DECISION_RECOVERIES:
+                return {"action": "surface_blocked",
+                        "reason": f"OWNER_BOUNDARY: {MAX_DECISION_RECOVERIES} decision recoveries already spent; "
+                                  f"worker asks again: {b['why'][:160]}"}
+            return {"action": "replace", "decision": b,
+                    "reason": f"decision recovery ({b['gate']['result']}): the worker ended on a question the "
+                              f"runtime answers: {b['why'][:160]}"}
+        if cls == "QUESTION_OWNER":
+            return {"action": "surface_blocked",
+                    "reason": f"OWNER_BOUNDARY ({b['gate'].get('owner_class')}): {b['why'][:200]}"}
         return {"action": "surface_blocked", "reason": why}
     if verdict == UNKNOWN and state == RUNNING:
         owner = rec.get("owner") or {}
@@ -767,6 +808,43 @@ def slim_argv(rec: dict, prompt: str, exe: str, profile: str, session_id: str | 
     return argv + [prompt]
 
 
+MAX_DECISION_RECOVERIES = 2   # successors per mission launched to answer a worker's own question
+
+
+def _decision_recovery_off() -> bool:
+    return os.environ.get("CPP_MISSION_DECISION_RECOVERY", "").strip().lower() == "off"
+
+
+def worker_topology(rec: dict) -> dict:
+    """tools/mission_policy.compile_topology for the mission's repo. A policy that cannot be read keeps
+    today's topology (worktrees allowed): this gate may only narrow a launch, never break one."""
+    if _decision_recovery_off():
+        return {"worktrees": True, "disallowed_tools": [], "why": "CPP_MISSION_DECISION_RECOVERY=off"}
+    try:
+        import mission_policy as mpol
+        return mpol.topology_for(rec["cwd"])
+    except Exception as exc:  # noqa: BLE001 -- recorded, the launch proceeds as before
+        lr.ledger_append(rec.get("mission_id") or "-", "topology_policy_unavailable",
+                         mission_id=rec.get("mission_id"), error=f"{type(exc).__name__}: {exc}"[:200])
+        return {"worktrees": True, "disallowed_tools": [], "why": "policy unavailable"}
+
+
+def blocked_recovery(rec: dict) -> dict | None:
+    """Type a host-`blocked` BACKGROUND owner from its job's `needs` (tools/mission_policy.classify_blocked).
+
+    None = not judged (kill switch, no background owner, probe failed): the caller keeps today's
+    surface_blocked. Only QUESTION_RESOLVABLE ever leads to recovery."""
+    owner = rec.get("owner") or {}
+    if _decision_recovery_off() or owner.get("kind") != "background" or not owner.get("session_id"):
+        return None
+    try:
+        import mission_policy as mpol
+        return mpol.classify_blocked(mpol.job_state(owner["session_id"]),
+                                     mpol.repo_policy(rec["cwd"])["values"])
+    except Exception:  # noqa: BLE001 -- unknown is never recovered on
+        return None
+
+
 def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[str]:
     """The launch command. `--bg` manages the session id (W0 E4) and does not inherit the
     launcher's environment (E3), so identity comes back on stdout (E5), nowhere else.
@@ -789,14 +867,21 @@ def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[s
     # at "Do you want to create 02-VERIFICATION.md?" for 45+ min in auto mode, BLOCKED with the
     # phase's whole verdict computed and unwritten. GSD's own planning files are the mission's
     # bookkeeping, so edits under `.planning/` (relative to the worker's cwd) are pre-approved too.
-    tools = list(dict.fromkeys([*(rec.get("allowed_tools") or []), "EnterWorktree", "ExitWorktree",
-                                "Edit(.planning/**)"]))
+    # AMR-X 2026-10-13 (m-5cd1a041bc0f): the repo's own policy decides the topology BEFORE the worker runs.
+    # `.planning/config.json` said use_worktrees=false and the two pre-approvals above put the worker in a
+    # worktree anyway. A forbidding policy (or an unhealthy EnterWorktree) now drops them and disallows both.
+    topo = worker_topology(rec)
+    wt_tools = [] if not topo.get("worktrees", True) else ["EnterWorktree", "ExitWorktree"]
+    tools = list(dict.fromkeys([*(t for t in (rec.get("allowed_tools") or [])
+                                  if t not in topo.get("disallowed_tools", [])), *wt_tools, "Edit(.planning/**)"]))
     for tool in tools:
         argv += ["--allowedTools", tool]
     for d in rec.get("add_dirs") or []:
         argv += ["--add-dir", d]
     # A worker nobody watches must not be able to park on a question (Owner 2026-09-25).
     argv += ["--disallowedTools", "AskUserQuestion"]
+    for tool in topo.get("disallowed_tools", []):
+        argv += ["--disallowedTools", tool]
     if capsule_v2(rec) or rec.get("worker_mcp") == "none" or worker_mcp_verdict() == "APPLY":
         # Measured, not assumed: only a fresh APPLY from tools/worker_mcp_probe.sh strips MCP.
         # capsule-v2 always strips it (G9): the mutation guard sits on the Bash and Edit chains, so
@@ -911,7 +996,7 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     # `cwd` and its worktree as `work_dir`; a print-mode worker's shell starts in whatever directory it
     # is spawned in, so spawning in `cwd` put epoch 4 of m-8bbdf725cd52 (2026-10-06) in a shared
     # checkout on another branch, one `git commit` away from landing there.
-    wd = rec.get("work_dir")
+    wd = mb.execution_root(rec)
     run_dir = wd if wd and Path(wd).is_dir() else rec["cwd"]
     unit_env, drow = deflate_unit(rec)
     if drow:
@@ -933,7 +1018,7 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     owner = {"session_id": sid, "pid": pid, "proc_start": None, "heartbeat_at": now, "epoch": epoch,
              "kind": "slim", "profile": slim_profile(rec), "out_path": str(out_path), "err_path": str(err_path)}
     transition(mid, expect_epoch=epoch, expect_state=LAUNCHING, event="worker_acked", now=now, state=RUNNING,
-               pending=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid, owner=owner)
+               pending=None, pending_decision=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid, owner=owner)
     return {"ok": True, "epoch": epoch, "bg_id": sid, "pid": pid, "slim": True}
 
 
@@ -1032,13 +1117,17 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
                   progress: dict | None = None, packet: dict | None = None, spawner=None,
-                  det_runner=None) -> dict:
+                  det_runner=None, mem_reader=None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
     see effective_workdir). The worker is still LAUNCHED in the mission's cwd -- workspace
     trust is exact-path (W0 E2), a fresh worktree path is never trusted -- and the card tells
     it where the work is.
+
+    Resource admission (tools/resource_admission.py) refuses, before any claim or spawn, when available
+    RAM is below the worker profile's floor or unreadable (`launch_refused_resources`). Kill switch:
+    CPP_RESOURCE_ADMISSION=off.
 
     Claim-before-launch is what makes a duplicate supervisor harmless: the loser
     of the CAS launches nothing. The worker is bound only by the id the host
@@ -1050,6 +1139,10 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
+    pd = rec.get("pending_decision")
+    if pd and pd not in (note or ""):
+        # AMR-X: a runtime answer not yet delivered to an adopted worker rides every launch until one is adopted.
+        note = f"{pd}\n\n{note or ''}"
     try:
         # Asked BEFORE the claim: an unreadable work-unit packet spends no epoch and starts nothing.
         prompt = launch_prompt(rec)
@@ -1063,6 +1156,14 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         lr.ledger_append(mission_id, "launch_refused_admission", mission_id=mission_id,
                          epoch=rec.get("epoch"), why=why[:300])
         return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": why, "detail": ""}
+    import resource_admission as rsa
+    rref = rsa.refusal(slim_profile(rec) or "top-level-worker", reader=mem_reader)
+    if rref:
+        rwhy = (f"{rref['verdict']}: available_mb={rref['available_mb']} floor_mb={rref['floor_mb']} "
+                f"profile={rref['profile']}")
+        lr.ledger_append(mission_id, "launch_refused_resources", mission_id=mission_id,
+                         epoch=rec.get("epoch"), reading=rref, why=rwhy[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": rwhy, "detail": ""}
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
@@ -1107,7 +1208,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         # so skipping the render re-sent the PREVIOUS epoch's card. Measured 2026-09-25
         # (m-1d270cd85220): a replace from LAUNCHING (no owner -> no note) briefed epoch 4 as
         # "epoch 3" with a WORK TREE line the record had since corrected; the worker entered it.
-        wd = work_dir or rec.get("work_dir") or rec["cwd"]
+        wd = work_dir or mb.execution_root(rec)
         extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note or "",
                                      "packet": packet if note is not None else rec.get("packet"),
                                      "work_dir": wd}, _git_facts(wd), _plan_facts(wd, rec.get("workstream")))
@@ -1203,7 +1304,7 @@ def ack_session(session_id: str, *, pid: int | None = None, proc_start: str | No
             v2 = bool(rec.get("capsule_key")) and capsule_v2(rec)
             new = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
                              event="worker_acked", now=now, state=RUNNING, pending=None,
-                             failed_launches=0, iterations=rec.get("iterations", 0) + 1,
+                             pending_decision=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1,
                              worker=session_id,
                              owner={"session_id": session_id, "pid": pid,
                                     "proc_start": proc_start, "heartbeat_at": now,
@@ -1240,7 +1341,10 @@ def handoff_packet(session_id: str, specs: list[str], context: int = 30) -> tupl
         live = effective_workdir(session_id, rec["cwd"], rec.get("workstream"))
     except Exception:  # noqa: BLE001 -- a packet is an aid; fall back, never block the hand-off
         live = None
-    root = live or rec.get("work_dir") or rec["cwd"]
+    if mb.enabled():
+        root = (live if live and mb._norm(live) != mb._norm(rec["cwd"]) else None) or mb.execution_root(rec)
+    else:
+        root = live or mb.legacy_root(rec)
     paths, selectors = [], []
     for spec in specs:
         if "::" in spec:
@@ -1322,7 +1426,8 @@ def cost_hold_stop_enabled() -> bool:
     return str(os.environ.get("CPP_COST_HOLD_STOP") or "").strip().lower() not in ("0", "off", "false")
 
 
-def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind: str | None = None) -> dict:
+def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind: str | None = None,
+                   expect_seq: int | None = None, extra: dict | None = None) -> dict:
     """Park a live mission (spec mission-owner-hold): plan_next answers none and renewal is refused
     until release_owner_hold. The record keeps its identity, epoch and state. kind="cost" (the breaker)
     additionally stops the running worker (spec mission-cost-hold-stops-worker)."""
@@ -1335,9 +1440,10 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind:
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; there is nothing to hold")
     now = time.time() if now is None else now
-    out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+    out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expect_seq,
                      event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
-                     owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {})})
+                     owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {}),
+                                 **(extra or {})})
     hold_guard_budget(rec, reason)
     return out
 
@@ -1498,9 +1604,11 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         # supervise() and crashed EVERY pass for every mission (GEX44: m-da6e925b5092, 264 passes over
         # ~24 h from 2026-10-07; m-79f84cdd34dc, 2026-10-08, a COMPLETED record whose hold was cleared).
         return rec
+    if mb.enabled():
+        return _reconciled_breaker(rec, now, measure, fingerprint)
     try:
         spent = (measure or ms.processed_tokens)(rec)
-        fp = mission_fingerprint(rec, rec.get("work_dir") or rec["cwd"], fingerprint or progress_fingerprint)
+        fp = mission_fingerprint(rec, mb.legacy_root(rec), fingerprint or progress_fingerprint)
         verdict = ms.judge(rec, spent, fp)
     except Exception as exc:  # noqa: BLE001 -- recorded, never silent
         lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid,
@@ -1517,6 +1625,251 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
     return rec
 
 
+def _last_mark_at(mid: str, before: float) -> float | None:
+    """When the breaker last marked progress before `before`, from the ledger (marks written before AMCR
+    carry no time of their own). None = no mark: there is no window."""
+    import datetime as _d
+    best = None
+    try:
+        for row in lr.ledger_events(mid):
+            if row.get("event") != "cost_mark":
+                continue
+            t = _d.datetime.fromisoformat(str(row.get("ts")).replace("Z", "+00:00")).timestamp()
+            if t <= before + 1 and (best is None or t > best):
+                best = t
+    except Exception:  # noqa: BLE001 -- an unreadable ledger gives no window, never a guessed one
+        return None
+    return best
+
+
+def _save_child_obligations(rec: dict, failed_sid: str | None, now: float) -> dict:
+    """AMCR: background children the failed worker launched and never got back become durable obligations
+    (KILLED_WITH_PARENT) before anything is compiled or relaunched. Idempotent; unknown children add none."""
+    if not mb.enabled() or not failed_sid:
+        return rec
+    import gsd_epoch as ge
+    try:
+        kids = ge.child_work(failed_sid, now)
+        transcript = lr.find_transcript(failed_sid)
+    except Exception:  # noqa: BLE001 -- an unreadable transcript invents no obligation
+        return rec
+    if not kids.get("pending"):
+        return rec
+    obs = mb.capture_obligations(rec, kids, transcript, "KILLED_WITH_PARENT", now,
+                                 lr.state_dir() / "obligations" / rec["mission_id"])
+    if obs == (rec.get("obligations") or []):
+        return rec
+    return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      expect_seq=rec.get("seq"), event="obligations_saved", now=now, touch=False,
+                      obligations=obs, reason=f"{len(obs)} child obligation(s) of {failed_sid[:8]} kept")
+
+def _breaker_receipt(mid: str, cls: str, action: str, **fields) -> None:
+    lr.ledger_append(mid, "breaker_receipt", mission_id=mid, classification=cls, action=action, **fields)
+
+
+def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, child_fn=None,
+                        transcript_fn=None) -> dict:
+    """AMCR Progress Reconciliation Gate: the breaker never declares zero progress about a tree it has not
+    proven to be the mission's. Order: rebind to where the worker actually writes -> fingerprint the
+    bound root (plus any ambiguous candidate) -> judge -> before a stall trip, a working child earns a
+    bounded extension, an unmeasurable tree never trips, and a binding that moved meanwhile voids the
+    sample. Only then the hold, with the pending children saved as obligations first."""
+    import gsd_epoch as ge
+    import mission_spend as ms
+    mid = rec["mission_id"]
+    owner_sid = (rec.get("owner") or {}).get("session_id")
+    find = transcript_fn or lr.find_transcript
+    try:
+        transcript = find(owner_sid) if owner_sid else None
+    except Exception:  # noqa: BLE001 -- no transcript is "unknown", handled below
+        transcript = None
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
+    gen0 = mb.generation(rec)
+    try:
+        det = mb.detect_rebind(rec, transcript)
+    except Exception as exc:  # noqa: BLE001 -- topology unknown is not "unchanged"
+        det = None
+        lr.ledger_append(mid, "rebind_detect_error", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+    cands = (det or {}).get("candidates") or []
+    if len(cands) == 1:
+        try:
+            nb = mb.new_binding(rec, cands[0], "detected", now)
+        except mb.BindError as exc:
+            nb = None
+            lr.ledger_append(mid, "rebind_refused", mission_id=mid, path=cands[0], why=str(exc)[:300])
+        if nb:
+            _breaker_receipt(mid, mb.TOPOLOGY_CHANGED, "rebind", gen=nb["gen"], root=nb["root"], spent=spent,
+                             previous=nb.get("previous"))
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="workspace_rebound",
+                              now=now, touch=False, binding=nb, work_dir=nb["root"], cost_mark=None,
+                              reason=f"workspace rebound (detected) gen {nb['gen']}: {nb['root']}")
+    root = mb.execution_root(rec)
+    fp_fn = fingerprint or progress_fingerprint
+    fallback = False
+    if mb.binding(rec) and not Path(root).is_dir() and (
+            rec.get("binding_invalidated_at")
+            or int((rec.get("progress_unknown") or {}).get("streak") or 0) >= mb.UNKNOWN_INCIDENT_STREAK):
+        # Review MEDIUM-2: the bound worktree is gone (merged and removed, or deleted). After the unknown
+        # streak the breaker judges the cwd -- where such a worker continues -- so a stall is still stopped.
+        fallback, root = True, rec["cwd"]
+        if not rec.get("binding_invalidated_at"):
+            lr.ledger_append(mid, "binding_invalidated", mission_id=mid, gen=gen0,
+                             root=(mb.binding(rec) or {}).get("root"), judged=root)
+            rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="binding_invalidated_noted",
+                             now=now, touch=False, binding_invalidated_at=now,
+                             reason=f"bound root {(mb.binding(rec) or {}).get('root')} is gone; the breaker judges the cwd")
+    try:
+        fp = mission_fingerprint({**rec, "add_dirs": list(rec.get("add_dirs") or []) + cands}, root, fp_fn)
+        verdict = ms.judge(rec, spent, fp)
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
+    evidence = {"gen": gen0, "root": root, "fp": fp, "candidates": cands, "spent": spent,
+                "mark": rec.get("cost_mark"), "topology_judged": det is not None}
+    if verdict["mark"]:
+        _breaker_receipt(mid, mb.GOOD, "mark", **evidence)
+        settled = mb.settle_obligations(rec, root, now)   # a landed artifact closes its child obligation
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="cost_mark", now=now,
+                          cost_mark={**verdict["mark"], "at": now, "gen": gen0}, progress_unknown=None,
+                          **({"obligations": settled} if settled else {}),
+                          reason=f"progress fingerprint moved at {spent:,} processed (gen {gen0}, {root})")
+    if fp is None and not verdict["trip"]:
+        streak = int((rec.get("progress_unknown") or {}).get("streak") or 0) + 1
+        why = "bound root missing" if not Path(root).is_dir() else "git could not fingerprint the bound root"
+        _breaker_receipt(mid, mb.PROGRESS_UNKNOWN, "no_trip", streak=streak, why=why, **evidence)
+        if streak == mb.UNKNOWN_INCIDENT_STREAK:
+            lr.ledger_append(mid, "progress_unknown_incident", mission_id=mid, why=why, root=root)
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="progress_unknown",
+                          now=now, touch=False, progress_unknown={"streak": streak, "why": why, "root": root},
+                          reason=(f"INCIDENT: progress unmeasurable {streak} passes ({why}); the breaker will not "
+                                  f"call it zero" if streak >= mb.UNKNOWN_INCIDENT_STREAK else
+                                  f"progress unknown ({why}): no trip"))
+    if not verdict["trip"]:
+        return rec
+    stall_trip = "since the work tree last changed" in verdict["trip"]
+    kids = None
+    if owner_sid:
+        try:
+            kids = (child_fn or ge.child_work)(owner_sid, now)
+        except Exception:  # noqa: BLE001 -- unknown children: no extension, no obligation invented
+            kids = None
+    if stall_trip and kids and mb.child_active(kids, transcript, now):
+        est = int(rec["token_estimate"])
+        stall = int(rec.get("token_stall_budget") or est * ms.DEFAULT_STALL_FRACTION)
+        burned = spent - int((rec.get("cost_mark") or {}).get("tokens") or 0)
+        if burned <= stall * (1 + mb.CHILD_EXTRA_STALL_BUDGETS):
+            _breaker_receipt(mid, mb.CHILD_ACTIVE, "no_trip", burned=burned,
+                             children=[p.get("what") for p in kids.get("pending") or []], **evidence)
+            return rec
+    current = load(mid) or rec
+    if mb.generation(current) != gen0:
+        _breaker_receipt(mid, mb.STALE_GENERATION, "no_trip", current_gen=mb.generation(current), **evidence)
+        return current
+    # Review MEDIUM-1: from the generation check to the hold every write carries the seq it observed, so a
+    # bind landing in between (the worker runs `bind` as its card says) voids this sample instead of
+    # stopping the worker on it.
+    try:
+        rec = current
+        if kids and kids.get("pending"):
+            obs = mb.capture_obligations(rec, kids, transcript, "KILLED_WITH_PARENT", now,
+                                         lr.state_dir() / "obligations" / mid)
+            rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
+                             event="obligations_saved", now=now, touch=False, obligations=obs,
+                             reason=f"{len(obs)} child obligation(s) saved before the breaker stops the worker")
+        held = set_owner_hold(mid, verdict["trip"], now=now, kind="cost", expect_seq=rec.get("seq"),
+                              extra={"measured": {"gen": gen0, "root": root, "fallback": fallback}})
+    except CasConflict:
+        now_rec = load(mid) or rec
+        _breaker_receipt(mid, mb.STALE_GENERATION, "no_trip", current_gen=mb.generation(now_rec), **evidence)
+        return now_rec
+    _breaker_receipt(mid, mb.ZERO_CONFIRMED if stall_trip else "BUDGET_EXCEEDED", "trip", reason=verdict["trip"],
+                     **evidence)
+    lr.ledger_append(mid, "cost_breaker_tripped", mission_id=mid, spent=spent,
+                     estimate=rec.get("token_estimate"), reason=verdict["trip"])
+    return held
+
+
+def bind_mission(mission_id: str, path: str, cause: str = "explicit", now: float | None = None) -> dict:
+    """AMCR workspace rebind: every observer of the mission (breaker, relay, AMR, card) follows the new root
+    from this one write. Refuses a path that is not the top of a worktree of the mission's repository."""
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; nothing to bind")
+    now = time.time() if now is None else now
+    b = mb.binding(rec)
+    if b and Path(path).is_dir() and mb._norm(path) == mb._norm(b["root"]):
+        lr.ledger_append(mission_id, "bind_noop", mission_id=mission_id, root=b["root"], gen=b["gen"])
+        return rec                     # review LOW-1: re-declaring the same root must not reset the stall clock
+    try:
+        nb = mb.new_binding(rec, path, cause, now)
+    except mb.BindError as exc:
+        raise MissionError(f"bind refused: {exc}") from exc
+    extra = {}
+    hold = rec.get("owner_hold") or {}
+    rs = (hold.get("recovery") or {})
+    if rs.get("state") in ("NOT_APPLICABLE", "RECOVERY_FAILED", "RECOVERY_EXHAUSTED") and \
+            "unreadable" in str(rs.get("why") or ""):
+        # The "residual unreadable" verdict was judged on the OLD root; a topology change re-opens it so the
+        # next pass recovers on the bound root (m-4e31db7aca3f was parked on exactly that verdict).
+        extra["owner_hold"] = {**hold, "recovery": None}
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="workspace_rebound",
+                      now=now, touch=False, binding=nb, work_dir=nb["root"], cost_mark=None, **extra,
+                      ledger_extra={"gen": nb["gen"], "root": nb["root"], "branch": nb["branch"], "cause": cause},
+                      reason=f"workspace rebound ({cause}) gen {nb['gen']}: {nb['root']} [{nb['branch']}]")
+
+
+def set_obligation(mission_id: str, oid: str, state: str, now: float | None = None) -> dict:
+    """Close (or reopen) one durable child obligation. Only a mission transition removes an obligation."""
+    if state not in mb.CHILD_STATES:
+        raise MissionError(f"unknown obligation state {state!r} (one of {', '.join(mb.CHILD_STATES)})")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    obs = [dict(o) for o in rec.get("obligations") or []]
+    hit = [o for o in obs if o.get("id") == oid]
+    if not hit:
+        raise MissionError(f"{mission_id} has no obligation {oid}")
+    now = time.time() if now is None else now
+    hit[0].update(state=state, updated_at=now)
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="obligation_set",
+                      now=now, touch=False, obligations=obs, reason=f"obligation {oid} -> {state}")
+
+
+def topology(mission_id: str) -> dict:
+    """The mission topology receipt: one inspectable answer to where, what and why, read cheaply."""
+    import mission_recovery as mr
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    root = mb.execution_root(rec)
+    hold = rec.get("owner_hold") or {}
+    try:
+        import mission_spend as ms
+        spent = ms.processed_tokens(rec)
+    except Exception:  # noqa: BLE001 -- unmeasured is shown as such
+        spent = None
+    mark = rec.get("cost_mark") or {}
+    return {
+        "goal": f"{rec['cwd']}|{rec.get('workstream') or ''}", "mission": mission_id, "state": rec["state"],
+        "epoch": rec["epoch"], "worker": (rec.get("owner") or {}).get("session_id"),
+        "binding_generation": mb.generation(rec), "execution_root": root, "root_exists": Path(root).is_dir(),
+        "binding": mb.binding(rec), "live_head": (_git_ro(root, "rev-parse", "HEAD") or "").strip() or None,
+        "live_branch": (_git_ro(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip() or None,
+        "progress_frontier": mark or None,
+        "spend": spent, "spend_since_progress": (spent - int(mark.get("tokens") or 0)) if spent is not None and mark else None,
+        "progress_unknown": rec.get("progress_unknown"),
+        "obligations": rec.get("obligations") or [],
+        "hold": {k: hold.get(k) for k in ("reason", "kind", "set_at", "recovery")} if hold else None,
+        "goal_liveness": mr.goal_liveness(rec), "reason": rec.get("reason"),
+    }
+
+
 def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
     """Return a held mission to normal supervision. The budget clock is not reset."""
     rec = load(mission_id)
@@ -1527,6 +1880,374 @@ def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="owner_hold_released", now=now, owner_hold=None,
                       reason="owner hold released")
+
+
+# --------------------------------------------------------------------------- AMR: autonomous mission recovery
+# A cost hold stops the executor, not the goal (plan vault/plans/amr-autonomous-mission-recovery-20261013.md).
+# plan_next answers `recover` for a cost hold; recover_mission fences the failed worker, compiles a materially
+# different successor (tools/mission_recovery.py), prices a bounded lease inside the remaining authority, admits
+# its route, and only then lifts the hold and launches. Any refusal leaves the hold in place with a recorded
+# OWNER_BOUNDARY: either the successor becomes authoritative or the safe held state remains.
+AMR_LAUNCH_ATTEMPTS = 2
+
+
+def set_authority(mission_id: str, tokens=None, extend_hours: float | None = None,
+                  now: float | None = None, reason: str = "") -> dict:
+    """Record Owner-granted programme authority on a mission: `authority_tokens` is the processed-token
+    ceiling AMR may lease inside; `extend_hours` adds wall time. Both are Owner acts; the reason names it."""
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    fields = {}
+    if tokens is not None:
+        fields["authority_tokens"] = _token_count("authority", tokens)
+    if extend_hours:
+        fields["max_hours"] = float(rec.get("max_hours") or lr.DEFAULT_MAX_HOURS) + float(extend_hours)
+    if not fields:
+        raise MissionError("nothing to set: give --tokens and/or --extend-hours")
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})", **fields)
+
+
+def _amr_transcript(rec: dict, sid: str | None) -> Path | None:
+    import mission_spend as ms
+    if not sid:
+        return None
+    for base in (rec.get("cwd"), mb.execution_root(rec)):
+        for d in (ms.mission_dirs(base, ms.projects_root()) if base else []):
+            p = d / f"{sid}.jsonl"
+            if p.is_file():
+                return p
+    return None
+
+
+def _amr_delta(wd: str, head0: str | None) -> tuple[list[str], list[str], list[str]]:
+    """(all changed paths since head0, uncommitted ones, committed ones). git unresolved -> empty lists."""
+    porcelain = _git_ro(wd, "status", "--porcelain", "--untracked-files=all") or ""
+    dirty = sorted({ln[3:].strip().strip('"') for ln in porcelain.splitlines() if len(ln) > 3})
+    committed = []
+    if head0:
+        committed = [ln.strip() for ln in (_git_ro(wd, "diff", "--name-only", f"{head0}..HEAD") or "").splitlines()
+                     if ln.strip()]
+    return sorted(set(dirty) | set(committed)), dirty, sorted(set(committed))
+
+
+def _amr_head(wd: str) -> str | None:
+    h = (_git_ro(wd, "rev-parse", "HEAD") or "").strip()
+    return h or None
+
+
+def amr_compile(rec: dict, *, failed_sid: str | None, hold_reason: str, cause: str, now: float) -> dict:
+    """Compile the successor of a failed (or finished) executor. Pure decisions live in mission_recovery;
+    this gathers evidence and writes the packet, route and semantic delta under the state dir (never into
+    the mission's work tree, whose fingerprint they would move). Returns {ok, ...} or {ok: False, boundary}.
+
+    cause: "breaker" (a cost hold) or "unit_closed" (an AMR successor closed its receipt). A breaker on an
+    AMR successor that COMMITTED work since its lease began is a productive lease running out, not a failed
+    strategy: it renews the same strategy (law 2 forbids renewing only a zero-progress strategy) and is
+    neither fenced nor counted against the recursion cap. Its ceiling is still the authority."""
+    import mission_recovery as mr
+    import mission_spend as ms
+    import route_admission as ra
+    mid = rec["mission_id"]
+    wd = mb.execution_root(rec)
+    amr = dict(rec.get("amr") or {})
+    goal = f"{rec['cwd']}|{rec.get('workstream') or ''}"
+    unit = mr.gsd_unit(wd, rec.get("workstream"))
+    unit_id = (unit or {}).get("unit") or "unknown-unit"
+    ev = mr.window_evidence(_amr_transcript(rec, failed_sid), wd)
+    old_agents = [a["type"] for a in ev["agents"]]
+    was_successor = bool(amr.get("launched") and amr.get("packet")
+                         and (rec.get("wu_packet") or {}).get("path") == amr["packet"])
+    head0 = (amr.get("lease_head") if was_successor else None) or amr.get("head") or \
+        (re.search(r"HEAD at hand-off: ([0-9a-f]{7,40})", rec.get("card") or "") or [None, None])[1]
+    delta, dirty, committed = _amr_delta(wd, head0)
+    capital = [p for p in dirty if mr.path_class(p) in (mr.PLAN, mr.KNOWLEDGE)]
+    planner_ran = any("plan" in a.lower() for a in old_agents)
+    progress = mr.classify_progress(delta, ev, bool(unit) and not unit.get("plans") and planner_ran)
+    if was_successor:
+        old_strategy = amr["strategy"]          # the failed executor ran an AMR packet: it WAS the successor strategy
+    else:
+        old_strategy = mr.strategy_identity(goal, unit_id, mr.topology_of(old_agents), old_agents, "")
+    fenced = list(amr.get("fenced") or [])
+    renewal = cause == "breaker" and was_successor and any(mr.path_class(p) for p in committed)
+    if renewal:
+        failure = mr.LEASE_EXHAUSTED_WITH_PROGRESS
+    elif cause == "breaker":
+        failure = mr.classify_failure(hold_reason, ev, progress, old_strategy, fenced)
+    else:
+        failure = "UNIT_CLOSED"
+    history = list(amr.get("history") or [])
+    base = {"unit": unit_id, "failure": failure, "progress": progress, "failed_strategy": old_strategy,
+            "evidence": {k: (len(v) if isinstance(v, list) else v) for k, v in ev.items()},
+            "cause": "renewal" if renewal else cause}
+    if not unit:
+        return {"ok": False, **base, "not_applicable": True,
+                "boundary": "residual UNKNOWN: GSD state of the work tree is unreadable"}
+    if cause == "breaker" and not renewal and sum(
+            1 for h in history if h.get("unit") == unit_id and h.get("cause") == "breaker") >= mr.MAX_RECOVERIES_PER_UNIT:
+        return {"ok": False, **base, "boundary": f"recursion cap: {mr.MAX_RECOVERIES_PER_UNIT} recoveries of "
+                                                 f"{unit_id} already ran; a third needs a new strategy from the Owner"}
+    if cause == "breaker" and not renewal:
+        topo = mr.recompile_topology(failure, unit_id, goal, old_agents, fenced + [old_strategy])
+        if topo is None:
+            return {"ok": False, **base, "boundary": f"no materially different strategy known for {failure}"}
+        fenced = sorted(set(fenced) | {old_strategy})
+    else:
+        prev = amr.get("topology") or {}
+        topo = {**prev, "strategy": mr.strategy_identity(goal, unit_id, prev.get("topology", mr.MAIN_THREAD), (),
+                                                         prev.get("decomposition", ""))}
+    residual = mr.compile_residual(unit, capital)
+    spent = ms.processed_tokens(rec)
+    ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
+    ceiling = rec.get("authority_tokens") or (int(ratio * int(rec["token_estimate"])) if rec.get("token_estimate") else None)
+    lease = mr.price_lease(spent, ceiling, residual)
+    base.update(topology=topo, residual=residual, spent=spent, ceiling=ceiling)
+    if not lease["ok"]:
+        return {"ok": False, **base, "boundary": lease["why"]}
+    n = len(history) + 1
+    d = ms.state_dir() / "recovery" / mid / f"r{n}"
+    d.mkdir(parents=True, exist_ok=True)
+    delta_path = None
+    if ev["handbacks"] or capital:
+        delta_path = d / "semantic_delta.md"
+        delta_path.write_text("# Capitalized semantic delta of the failed attempt\n\n"
+                              + "".join(f"- uncommitted capital: `{p}`\n" for p in capital)
+                              + "\n" + "\n\n---\n\n".join(ev["handbacks"]) + "\n", encoding="utf-8")
+    elif was_successor and amr.get("delta_path"):
+        delta_path = Path(amr["delta_path"])     # still the paid-for design of this unit
+    packet = d / "successor-packet.md"
+    receipt = packet.with_name(packet.stem + "-receipt.md")
+    packet.write_text(mr.render_packet(
+        mission_id=mid, goal=goal, unit=unit, residual=residual, topology=topo, failure=failure, progress=progress,
+        failed_strategy=old_strategy, delta_path=str(delta_path) if delta_path else None, lease=lease,
+        receipt=str(receipt), work_dir=wd, workstream=rec.get("workstream")), encoding="utf-8")
+    route = d / "route.json"
+    route.write_text(json.dumps(mr.route_for(lease["envelope"], ra.load_floors()), indent=1), encoding="utf-8")
+    (d / "evidence.json").write_text(json.dumps({**base, "lease": lease, "delta": delta, "capital": capital,
+                                                 "committed": committed,
+                                                 "handback_chars": [len(h) for h in ev["handbacks"]]},
+                                                indent=1, default=str), encoding="utf-8")
+    return {"ok": True, **base, "lease": lease, "fenced": fenced, "packet": str(packet), "route": str(route),
+            "receipt": str(receipt), "dir": str(d), "n": n, "head": head0, "lease_head": _amr_head(wd),
+            "ratio": ratio, "delta_path": str(delta_path) if delta_path else None}
+
+
+def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> dict:
+    """Recovery cannot proceed safely: keep (or set) a cost-kind hold marked OWNER_BOUNDARY with ONE decision
+    packet. plan_next parks on it -- never settles it -- so the packet's options stay real."""
+    import mission_recovery as mr
+    import mission_spend as ms
+    mid = rec["mission_id"]
+    d = ms.state_dir() / "recovery" / mid
+    d.mkdir(parents=True, exist_ok=True)
+    pkt = d / "owner-decision.md"
+    pkt.write_text(
+        f"# Owner decision -- mission {mid}\n\nThe cost breaker stopped the executor and autonomous recovery "
+        f"stopped at a genuine boundary:\n\n> {c.get('boundary')}\n\nFailure {c.get('failure')}, progress "
+        f"{(c.get('progress') or {}).get('class')}, unit {c.get('unit')}, spent {c.get('spent')} of ceiling "
+        f"{c.get('ceiling')}.\n\nOptions: raise authority (`gsd_mission.py authority --mission {mid} --tokens N` "
+        "or `--extend-hours H`, then `release`), name a new strategy as a directive, or close the mission. "
+        "The mission stays parked (not settled) until then.\n", encoding="utf-8")
+    base_hold = hold or rec.get("owner_hold") or {"reason": f"amr: {str(c.get('boundary'))[:200]}",
+                                                  "set_at": now, "kind": "cost"}
+    new_hold = {**base_hold, "recovery": {"state": mr.OWNER_BOUNDARY, "why": c.get("boundary"),
+                                          "decision_packet": str(pkt), "at": now}}
+    lr.ledger_append(mid, "recovery_owner_boundary", mission_id=mid, why=str(c.get("boundary"))[:300],
+                     failure=c.get("failure"))
+    mr.pgo_append({"mission_id": mid, "result": "OWNER_BOUNDARY", "failure": c.get("failure"),
+                   "progress": (c.get("progress") or {}).get("class"), "why": c.get("boundary")},
+                  ms.state_dir() / "recovery" / "pgo.jsonl")
+    return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
+                      event="recovery_boundary", now=now, owner_hold=new_hold,
+                      reason=f"recovery owner boundary: {str(c.get('boundary'))[:240]}")
+
+
+def _amr_mark(rec: dict, hold: dict, state: str, why: str, now: float, event: str) -> dict:
+    import mission_recovery as mr  # noqa: F401 -- state names live there
+    return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      expect_seq=rec.get("seq"), event=event, now=now,
+                      owner_hold={**hold, "recovery": {**(hold.get("recovery") or {}), "state": state, "at": now,
+                                                       "why": why[:300]}},
+                      reason=f"recovery {state}: {why[:200]}")
+
+
+def recover_mission(rec: dict, sessions, now: float, *, pid_alive=lr._pid_alive, runner=None,
+                    stop_runner=None, launch=None, gsd_status=None) -> dict:
+    """The `recover` action, a transaction over ONE observed record (seq-CAS on every write, audit F1):
+    gates -> fence -> compile -> lease+settle -> admit -> commit (re-verify the hold, lift it) -> launch.
+    Any refusal before commit leaves the hold; a wait writes nothing. Returns the supervise row fields."""
+    import mission_recovery as mr
+    import mission_spend as ms
+    mid = rec["mission_id"]
+    hold = dict(rec.get("owner_hold") or {})
+    owner = rec.get("owner")
+    failed_sid = (owner or {}).get("session_id") or (rec.get("previous_owner") or {}).get("session_id")
+    wd = mb.execution_root(rec)
+    try:
+        st = (gsd_status or _supervise_gsd_status)(wd, workstream=rec.get("workstream"))
+    except Exception as exc:  # noqa: BLE001 -- unanswered is not "work remains"
+        st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"}
+    outcome = st.get("outcome")
+    if outcome in ("ALL_COMPLETE", "NO_PHASES"):
+        # Nothing remains to recover: the legacy settle/park path decides, exactly as before AMR.
+        _amr_mark(rec, hold, mr.NOT_APPLICABLE, f"gsd {outcome}: {st.get('reason')}", now, "recovery_not_applicable")
+        return {"action": "recover_not_applicable", "reason": f"gsd {outcome}"}
+    if outcome != "OK":
+        return {"action": "recover_wait_gsd", "reason": f"gsd {outcome}: {st.get('reason')}"}   # F6: no write
+    # F4: the same pre-launch gates the relay path applies, BEFORE anything is stopped or written.
+    spent_cap = budget_exhausted(rec, now)
+    if spent_cap:
+        _amr_boundary(rec, {"boundary": f"mission budget: {spent_cap}", "unit": None, "failure": None}, now, hold)
+        return {"action": "recover_boundary", "reason": f"budget: {spent_cap}"}
+    ph = provider_hold(rec, now)
+    if ph:
+        return {"action": "recover_wait_provider", "reason": f"provider {ph.get('class', 'quota')}: {ph.get('reason')}"}
+    try:
+        import mission_launch_gate as mlg
+        gate = mlg.refusal(rec, "replace", now)
+    except Exception:  # noqa: BLE001 -- the relay path proceeds visibly on an unavailable gate; so does this
+        gate = None
+    if gate and gate.get("refuse"):
+        return {"action": "recover_wait_gate", "reason": str(gate.get("reason"))[:300]}
+    if owner:
+        verdict, _ev = liveness(owner, sessions, pid_alive)
+        if verdict == UNKNOWN:
+            # The host could not be asked: the old worker may still be running, so no successor may start
+            # beside it. Nothing is written; the next pass asks again.
+            return {"action": "recover_wait_liveness", "reason": f"old worker liveness UNKNOWN: {_ev}"}
+        if verdict != DEAD:
+            ok, how = stop_owner(owner, sessions, pid_alive=pid_alive, runner=stop_runner)
+            lr.ledger_append(mid, "recovery_fenced" if ok else "recovery_fence_failed", mission_id=mid,
+                             worker=failed_sid, how=how)
+            if not ok:
+                return {"action": "recover_wait_fence", "reason": f"old worker not stopped yet: {how}"}
+            hold = {**hold, "worker_stopped_at": now, "stop": how}   # F3: our stop is recorded with the hold
+    rec = _save_child_obligations(rec, failed_sid, now)
+    fs = mb.false_stall(rec, hold, mark_at=_last_mark_at(mid, float(hold.get("set_at") or now)))
+    if fs:
+        # AMCR: the hold said "nothing changed" about a tree that was not the mission's; the bound root
+        # committed inside that window. Not a failed strategy -- nothing is fenced, nothing re-planned: lift
+        # the hold and let the ordinary relay continue the residual (no Owner release).
+        lr.ledger_append(mid, "false_stall_reconciled", mission_id=mid, root=fs["root"], commits=fs["commits"][:10],
+                         gen=mb.generation(rec), hold=str(hold.get("reason"))[:300])
+        transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
+                   event="false_stall_reconciled", now=now, owner_hold=None, cost_mark=None,
+                   reason=f"false stall: {len(fs['commits'])} commit(s) in the bound root {fs['root']} inside the "
+                          f"breaker's window; hold lifted, residual continues")
+        return {"action": "recover_false_stall", "reason": f"{len(fs['commits'])} commit(s) in {fs['root']}"}
+    c = amr_compile(rec, failed_sid=failed_sid, hold_reason=str(hold.get("reason") or ""), cause="breaker", now=now)
+    lr.ledger_append(mid, "recovery_compiled", mission_id=mid, ok=c["ok"], failure=c.get("failure"),
+                     progress=(c.get("progress") or {}).get("class"), unit=c.get("unit"),
+                     failed_strategy=c.get("failed_strategy"),
+                     successor_strategy=(c.get("topology") or {}).get("strategy"),
+                     lease=(c.get("lease") or {}).get("lease"), why=c.get("boundary"))
+    if not c["ok"] and c.get("not_applicable"):
+        if not mb.enabled():
+            _amr_mark(rec, hold, mr.NOT_APPLICABLE, str(c.get("boundary")), now, "recovery_not_applicable")
+            return {"action": "recover_not_applicable", "reason": str(c.get("boundary"))[:300]}
+        # AMCR: an unreadable residual is a recovery failure, not "nothing to recover" and not an Owner
+        # wait (m-4e31db7aca3f sat 8.5 h as OWNER_BOUNDARY on a parser defect). Retried every pass; after
+        # MAX_RECOVERY_FAILURES it is a surfaced liveness incident with its exact reason.
+        n = int(((hold.get("recovery") or {}).get("failures") or 0)) + 1
+        state = mr.RECOVERY_EXHAUSTED if n >= mr.MAX_RECOVERY_FAILURES else mr.RECOVERY_FAILED
+        why = f"{c.get('boundary')} (attempt {n}/{mr.MAX_RECOVERY_FAILURES}; root {wd})"
+        _amr_mark(rec, {**hold, "recovery": {"failures": n}}, state, why, now,
+                  "recovery_incident" if state == mr.RECOVERY_EXHAUSTED else "recovery_failed")
+        if state == mr.RECOVERY_EXHAUSTED:
+            lr.ledger_append(mid, "liveness_incident", mission_id=mid, why=why[:300])
+        return {"action": "recover_failed", "reason": why[:300]}
+    if not c["ok"]:
+        _amr_boundary(rec, c, now, hold)
+        return {"action": "recover_boundary", "reason": str(c.get("boundary"))[:300]}
+    if mr.mode() == "shadow":
+        _amr_mark(rec, {**hold, "recovery_dir": c["dir"]}, mr.SHADOW_COMPILED, c["dir"], now, "recovery_shadow")
+        return {"action": "recover_shadow", "reason": c["dir"]}
+    spent = c["spent"]
+    fp_now = mission_fingerprint(rec, wd, progress_fingerprint)
+    prev = rec.get("amr") or {}
+    entry = {"n": c["n"], "cause": c["cause"], "unit": c["unit"], "failure": c["failure"],
+             "progress": c["progress"]["class"], "failed_strategy": c["failed_strategy"],
+             "strategy": c["topology"]["strategy"], "lease": c["lease"]["lease"], "spent": spent,
+             "breaker_at": hold.get("set_at"), "compiled_at": now, "dir": c["dir"]}
+    amr = {**prev, "fenced": c["fenced"], "topology": c["topology"], "strategy": c["topology"]["strategy"],
+           "packet": c["packet"], "unit": c["unit"], "head": prev.get("head") or c.get("head"),
+           "lease_head": c.get("lease_head"), "delta_path": c.get("delta_path") or prev.get("delta_path"),
+           "deny_agent_types": c["topology"]["deny_agent_types"], "launched": False,
+           "history": [*(prev.get("history") or []), entry]}
+    # Settle: the old attempt's spend is closed at `spent`; the successor is judged from here. wu_packet_epoch
+    # (F2) makes decide_turn_end start a FRESH worker, never continue the fenced session.
+    rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
+                     event="recovery_leased", now=now,
+                     wu_packet={"path": c["packet"], "sha256": _packet_digest(c["packet"])},
+                     wu_packet_epoch=rec["epoch"],
+                     token_estimate=mr.lease_estimate(spent, c["lease"]["lease"], c["ratio"]),
+                     token_estimate_src="amr", token_stall_budget=int(c["lease"]["lease"] * 0.5),
+                     cost_mark={"fp": fp_now, "tokens": spent}, amr=amr,
+                     owner_hold={**hold, "recovery": {"state": "SUCCESSOR_LEASED", "dir": c["dir"], "at": now}},
+                     reason=f"recovery lease {c['lease']['lease']:,} for {c['unit']} ({c['failure']} -> "
+                            f"{c['topology']['topology']})")
+    rec = admit_route(mid, c["route"], now=now)
+    verdict = (rec.get("admission") or {}).get("verdict")
+    if verdict not in LAUNCHABLE_VERDICTS:
+        _amr_boundary(rec, {**c, "boundary": f"successor route not admitted: {verdict} "
+                                             f"{(rec.get('admission') or {}).get('reasons')}"}, now)
+        return {"action": "recover_boundary", "reason": f"route {verdict}"}
+    # Commit. admit_route re-read the record, so seq alone cannot prove the hold is still ours: re-verify its
+    # identity (same breaker hold, our lease, our packet) and CAS the lift on the seq we just verified.
+    cur = rec.get("owner_hold") or {}
+    if (cur.get("set_at") != hold.get("set_at") or (cur.get("recovery") or {}).get("state") != "SUCCESSOR_LEASED"
+            or (rec.get("amr") or {}).get("packet") != c["packet"]):
+        lr.ledger_append(mid, "recovery_commit_refused", mission_id=mid, why="hold changed under recovery")
+        return {"action": "recover_conflict", "reason": "the hold changed during recovery; nothing launched"}
+    rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
+                     event="recovery_committed", now=now, owner_hold=None,
+                     amr={**rec["amr"], "launched": True},
+                     last_recovery={"n": c["n"], "hold": hold, "at": now},
+                     reason=f"hold superseded by recovery r{c['n']} (fence kept on {failed_sid})")
+    # The failed worker's stop=1 session guard is NOT touched: it is the fence that keeps that session from
+    # spending again whatever happens to this record.
+    res = (launch or launch_worker)(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                    reason=f"AMR successor r{c['n']}: {c['failure']} -> {c['topology']['topology']}",
+                                    runner=runner, now=now, note="", work_dir=rec.get("work_dir"))
+    mr.pgo_append({"mission_id": mid, "result": "LAUNCHED" if res.get("ok") else "LAUNCH_FAILED", "n": c["n"],
+                   "cause": c["cause"], "failure": c["failure"], "progress": c["progress"]["class"],
+                   "old": c["failed_strategy"], "new": c["topology"]["strategy"], "topology": c["topology"]["topology"],
+                   "lease": c["lease"]["lease"], "spent": spent,
+                   "breaker_to_launch_s": round(now - float(hold.get("set_at") or now))},
+                  ms.state_dir() / "recovery" / "pgo.jsonl")
+    return {"action": "recovered" if res.get("ok") else "recover_launch_failed", "launch": res,
+            "reason": f"r{c['n']} {c['failure']} -> {c['topology']['topology']} lease {c['lease']['lease']:,}"}
+
+
+def amr_advance(rec: dict, now: float) -> tuple[dict, bool]:
+    """An AMR successor closed its unit's receipt: compile the next unit with the same deflated topology
+    (the fence stays). The mission's own GSD check has already said work remains. Returns (record, launch_ok):
+    a refusal parks the mission at an OWNER_BOUNDARY hold and the caller must not relaunch the closed packet (F5)."""
+    import mission_recovery as mr
+    c = amr_compile(rec, failed_sid=None, hold_reason="", cause="unit_closed", now=now)
+    lr.ledger_append(rec["mission_id"], "recovery_unit_advanced" if c["ok"] else "recovery_advance_refused",
+                     mission_id=rec["mission_id"], unit=c.get("unit"), why=c.get("boundary"))
+    if not c["ok"]:
+        return _amr_boundary(rec, {**c, "boundary": f"next unit not compiled: {c.get('boundary')}"}, now), False
+    prev = rec.get("amr") or {}
+    amr = {**prev, "unit": c["unit"], "packet": c["packet"], "strategy": c["topology"]["strategy"],
+           "lease_head": c.get("lease_head"), "delta_path": None, "launched": True,
+           "history": [*(prev.get("history") or []),
+                       {"n": c["n"], "cause": "unit_closed", "unit": c["unit"], "strategy": c["topology"]["strategy"],
+                        "lease": c["lease"]["lease"], "spent": c["spent"], "compiled_at": now, "dir": c["dir"]}]}
+    rec = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
+                     expect_seq=rec.get("seq"), event="recovery_unit_leased", now=now,
+                     wu_packet={"path": c["packet"], "sha256": _packet_digest(c["packet"])},
+                     wu_packet_epoch=rec["epoch"],
+                     token_estimate=mr.lease_estimate(c["spent"], c["lease"]["lease"], c["ratio"]),
+                     token_stall_budget=int(c["lease"]["lease"] * 0.5), amr=amr,
+                     reason=f"next unit {c['unit']} lease {c['lease']['lease']:,}")
+    rec = admit_route(rec["mission_id"], c["route"], now=now)
+    if (rec.get("admission") or {}).get("verdict") not in LAUNCHABLE_VERDICTS:
+        return _amr_boundary(rec, {**c, "boundary": f"next unit route not admitted: "
+                                                    f"{(rec.get('admission') or {}).get('verdict')}"}, now), False
+    return rec, True
 
 
 _COUNT_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([kKmM]?)\s*$")
@@ -2049,7 +2770,8 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         f"HEAD at hand-off: {g.get('head') or 'unknown'}",
         f"Dirty paths at hand-off: {g.get('dirty') if g.get('dirty') is not None else 'unknown'}",
     ]
-    wd = rec.get("work_dir")
+    wd = mb.execution_root(rec) if mb.binding(rec) else rec.get("work_dir")
+    parts += mb.card_lines(rec)
     if wd and os.path.normcase(str(wd)) != os.path.normcase(str(rec.get("cwd") or "")):
         # Measured M6 (2026-09-24): /gsd-autonomous moved into a git worktree and reset the main
         # checkout's planning files, so everything done lives THERE. A successor that starts in
@@ -2246,6 +2968,22 @@ def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = N
     return base_cwd
 
 
+def live_root(rec: dict) -> str:
+    """AMCR: the execution root, overridden by the owner's transcript only when that names ANOTHER worktree
+    of the repository. effective_workdir answers the cwd itself for a worker that moved with Set-Location
+    (its transcript cwd never changes), and `ew or recorded` then discarded a binding that knew better."""
+    root = mb.execution_root(rec)
+    if not rec.get("owner"):
+        return root
+    try:
+        ew = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream"))
+    except Exception:  # noqa: BLE001 -- keep the bound dir; never guess
+        return root
+    if not mb.enabled():
+        return ew or root
+    return ew if ew and mb._norm(ew) != mb._norm(rec["cwd"]) else root
+
+
 def launched_row(pending: dict | None, sessions: list[dict] | None) -> dict | None:
     """The host's row for the worker THIS launch printed, matched by that id only."""
     bg = (pending or {}).get("bg_id")
@@ -2262,7 +3000,7 @@ def adopt_launched(rec: dict, row: dict, now: float | None = None) -> dict:
     v2 = bool(rec.get("capsule_key")) and capsule_v2(rec)
     new = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
                      event="worker_adopted", now=now, state=RUNNING, pending=None,
-                     failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid,
+                     pending_decision=None, failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid,
                      reason="host witness; worker's own ack absent (no card this epoch)",
                      owner={"session_id": sid, "pid": row.get("pid"), "proc_start": None,
                             "heartbeat_at": now or time.time(), "epoch": rec["epoch"],
@@ -2458,7 +3196,8 @@ def _needs_look(m: dict, now: float) -> bool:
 
 MAX_RENEWALS = 3   # budget renewals per lineage (spec vault/specs/gex44-mission-plane.md, A)
 RENEWAL_CARRIED_ENVELOPE = ("token_estimate", "token_trip_ratio", "model", "autocompact",
-                            "continue_max_tokens", "wu_packet", "mission_terms", "note", "goal")
+                            "continue_max_tokens", "wu_packet", "mission_terms", "note", "goal",
+                            "amr", "authority_tokens")   # AMR audit F9: the fence and authority travel with the work
 
 
 def renewal_refusal(rec: dict, halt_reason: str, gsd_outcome: str | None) -> str | None:
@@ -2746,13 +3485,7 @@ def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str
     if m:
         t = _tree_inside_repo(m.group(1), rec["cwd"])
         return t, "packet work_tree" if t else f"work_tree {m.group(1)[:200]!r} is not inside the repo"
-    wd = rec.get("work_dir") or rec["cwd"]
-    if rec.get("owner"):
-        try:
-            wd = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream")) or wd
-        except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
-            pass
-    return wd, "worker tree"
+    return live_root(rec), "worker tree"
 
 
 def packet_receipt_path(rec: dict) -> str | None:
@@ -2778,7 +3511,7 @@ def spend_goal(rec: dict) -> str | None:
         return named
     try:
         import mission_spend as ms
-        wd = ms._norm(rec.get("work_dir") or rec["cwd"])
+        wd = ms._norm(mb.execution_root(rec))
         hits = [goal for goal, e in ms.read_index().items()
                 if any(wd == r or wd.startswith(r + os.sep) for r in (e.get("roots") or []))]
     except Exception:  # noqa: BLE001 -- unmeasurable is None, never a guess
@@ -3182,7 +3915,7 @@ def _seal_rejudge_wait(rec: dict, now: float) -> str | None:
     hold = rec.get("capsule_hold") or {}
     if hold.get("kind") != "seal_refused" or "retries" not in hold:
         return None
-    fp = _seal_refusal_fp(hold.get("fp_dir") or rec.get("work_dir") or rec["cwd"])
+    fp = _seal_refusal_fp(hold.get("fp_dir") or mb.execution_root(rec))
     if fp is not None and fp != hold.get("fingerprint"):
         return None                                    # the tree moved: what refused may be gone
     n = hold.get("retries")
@@ -3249,7 +3982,7 @@ def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: fl
         # G3: a busy owner's turn has not ended, so no hand-off seal. G5: past the grace, counted
         # from the FIRST refusal, a degraded capsule from durable state stops it anyway.
         origins = ["supervisor_fallback"] if overdue else []
-    wd = work_dir or rec.get("work_dir") or rec["cwd"]
+    wd = work_dir or mb.execution_root(rec)
     origin, seal, reasons = _capsule_seal(rec, origins, work_dir=wd, capsule_io=capsule_io)
     if not origins:
         reasons = [f"owner {verdict} and its turn has not ended: {why}"]
@@ -3460,13 +4193,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 # a git worktree, and `work_dir` is saved only by a fresh launch -- a same-session
                 # continuation never saves it. Asking the cwd read a finished milestone as
                 # "work remains", halted it, and renewed it.
-                halt_wd = rec.get("work_dir") or rec["cwd"]
-                if rec.get("owner"):
-                    try:
-                        halt_wd = (effective_workdir(rec["owner"]["session_id"], rec["cwd"],
-                                                     rec.get("workstream")) or halt_wd)
-                    except Exception:  # noqa: BLE001 -- keep the recorded dir; never guess
-                        pass
+                halt_wd = live_root(rec)
                 row["work_dir"] = halt_wd
                 if "budget:" in plan["reason"]:
                     # Asked BEFORE the halt is written: the worker whose turn finished the
@@ -3538,7 +4265,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                  pending=None, slim_result=s, worker=s.get("session_id"),
                                  reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
                 if halt_continue_on() and stopped:
-                    halt_continue(fin, fin.get("work_dir") or fin["cwd"], s.get("result") or "", s, row, now)
+                    halt_continue(fin, mb.execution_root(fin), s.get("result") or "", s, row, now)
             elif act == "settle":
                 # Terminal, never relaunched: HALTED keeps owner_hold, so renewal_refusal still refuses it,
                 # and leaves goal_conflicts because the state is terminal.
@@ -3581,6 +4308,9 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     transition(mid, expect_epoch=new["epoch"], expect_state=RUNNING,
                                event="mission_blocked", now=now, state=BLOCKED, reason=reason)
                     row["action"], row["reason"] = "adopted_blocked", reason
+            elif act == "recover":
+                row.update(recover_mission(rec, sessions, now, pid_alive=pid_alive, runner=runner,
+                                           stop_runner=stop_runner, gsd_status=gsd_status))
             elif act == "unblock":
                 transition(mid, expect_epoch=rec["epoch"], expect_state=BLOCKED,
                            event="mission_unblocked", now=now, state=RUNNING, gsd_hold=None,
@@ -3618,7 +4348,19 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     # run lived in a git worktree while the mission's cwd kept a reset roadmap,
                     # so asking GSD there would read 1/8 for ever and never complete.
                     ew = effective_workdir(rec["owner"]["session_id"], rec["cwd"], rec.get("workstream"))
-                    work_dir = ew or rec.get("work_dir")
+                    # Only an explicit policy refuses to follow: following uses Set-Location, not EnterWorktree,
+                    # so an unhealthy EnterWorktree (git off PATH) is no reason to strand a worktree's work.
+                    if ew and ew != rec["cwd"] and worker_topology(rec).get("policy_forbids"):
+                        # AMR-X: a predecessor that wandered into a worktree its repo forbids is not followed;
+                        # the successor works where the policy says (the mission's own cwd).
+                        lr.ledger_append(mid, "worktree_not_followed", mission_id=mid, epoch=rec["epoch"],
+                                         work_dir=ew, why="use_worktrees=false")
+                        ew = None
+                    if mb.enabled() and ew and mb._norm(ew) == mb._norm(rec["cwd"]):
+                        # AMCR: a transcript still in the cwd (the worker moved with Set-Location) proves no move;
+                        # the binding, not the launch directory, says where the work is.
+                        ew = None
+                    work_dir = ew or (mb.execution_root(rec) if mb.binding(rec) else rec.get("work_dir"))
                     # A worktree effective_workdir followed is PROVEN (the predecessor acted on this
                     # workstream there and it carries the roadmap): align_cwd may follow a diverged
                     # cwd then. A recorded work_dir alone proves nothing.
@@ -3641,8 +4383,29 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         reap(completed, row)
                         row["action"] = "completed"
                         continue
+                unit_rst = None
+                pkt = (rec.get("wu_packet") or {}).get("path")
+                if act in ("relay", "replace") and pkt and not rec.get("done_check"):
+                    # A packet unit armed without a done_check (every chain-armed unit) is closed by its own receipt,
+                    # written after the mission began. Measured 2026-10-14, gsdx-pcc P52a: receipt DONE, worker done, GSD
+                    # NO_PHASES on that roadmap, so the record sat BLOCKED 2.5 h and the chain waited on it (wait_writer).
+                    rp = _receipt_path(pkt)
+                    rst = rj.receipt_status(rp)
+                    try:
+                        if rst is not None and rp.stat().st_mtime >= float(rec.get("created_at") or 0):
+                            unit_rst = rst
+                    except OSError:
+                        unit_rst = None
+                    if unit_rst == "DONE":
+                        completed = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                               event="unit_completed", now=now, state=COMPLETED, pending=None,
+                                               reason=f"unit receipt DONE: {rp}")
+                        reap(completed, row)
+                        row["action"] = "completed"
+                        row["unit_done"] = "RECEIPT_DONE"
+                        continue
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
-                    st = (gsd_status or _supervise_gsd_status)(work_dir or rec.get("work_dir") or rec["cwd"],
+                    st = (gsd_status or _supervise_gsd_status)(work_dir or mb.execution_root(rec),
                                                        workstream=rec.get("workstream"))
                     row["gsd"] = st.get("outcome")
                     if st.get("outcome") == "ALL_COMPLETE":
@@ -3654,6 +4417,16 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         # Positive test: only "work remains" licenses a relay. UNAVAILABLE is
                         # an unanswered question and NO_PHASES a roadmap nobody can run.
                         outcome = st.get("outcome")
+                        if outcome == "NO_PHASES" and unit_rst not in (None, "DONE", "UNREADABLE"):
+                            # No relay can ever run this roadmap, and the unit's own receipt says it stopped short
+                            # (gsdx-pcc P52b, 2026-10-14: PARTIAL, held 2.5 h). Halt it so the owner of the
+                            # continuation (the chain's residual, or a person) sees a terminal record.
+                            halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                                event="unit_receipt_open", now=now, state=HALTED, pending=None,
+                                                reason=f"unit receipt {unit_rst}; gsd NO_PHASES: no relay can run it")
+                            reap(halted, row)
+                            row["action"] = "halted"
+                            continue
                         row["held"] = f"gsd {outcome}: {st.get('reason')}"
                         prev = rec.get("gsd_hold") or {}
                         same = prev.get("outcome") == outcome
@@ -3683,6 +4456,15 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                                 else "gsd_hold_cleared"),
                                          now=now, state=RUNNING, gsd_hold=None,
                                          reason=f"gsd OK: {st.get('reason')}")
+                if (act in ("relay", "replace") and rec.get("amr") and rec.get("wu_packet")
+                        and _receipt_present(rec)):
+                    # AMR: the successor closed its unit and GSD says work remains. The next unit keeps the
+                    # deflated topology and the fence; a fresh packet, lease and admission replace the old.
+                    rec, advanced = amr_advance(rec, now)
+                    row["amr_unit"] = (rec.get("amr") or {}).get("unit")
+                    if not advanced:
+                        row["held"] = "AMR: next unit not compiled; parked at an Owner boundary"
+                        continue
                 # The single pre-launch gate (tools/mission_launch_gate.py): a renewed successor
                 # inherits its predecessor's provider hold, and on a declared mission plane a
                 # measured NOT_READY env refuses. Asked before anything below stops, continues or
@@ -3729,7 +4511,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         row["held"] = turn_end["reason"]
                         continue
                 fp_fn = fingerprint or progress_fingerprint
-                progress = next_progress(rec, mission_fingerprint(rec, work_dir or rec.get("work_dir") or rec["cwd"],
+                progress = next_progress(rec, mission_fingerprint(rec, work_dir or mb.execution_root(rec),
                                                                   fp_fn),
                                          ran=rec["state"] != LAUNCHING)
                 row["progress"] = progress
@@ -3823,6 +4605,24 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     explicit = rec.get("note") if rec["state"] == HANDOFF else ""
                     packet = rec.get("packet") if rec["state"] == HANDOFF else None
                     note = explicit or handoff_note_from_transcript(rec["owner"]["session_id"]) or ""
+                    if plan.get("decision"):
+                        # AMR-X: the predecessor's open question is answered here, by the runtime, with the
+                        # gate's provenance -- the successor must not ask it again.
+                        d = plan["decision"]
+                        answer = (f"RUNTIME ANSWER to the predecessor's question ({d['gate']['result']}): "
+                                  f"{d['gate']['resolution']}\nThe question was: {d['why']}\n"
+                                  f"Do not end a turn on a question the repo policy or your own recommended option "
+                                  f"answers; Owner-only classes: deploy/push/live write, credentials, external "
+                                  f"properties, irreversible actions, product scope, authority.")
+                        note = f"{answer}\n\n{note}"
+                        # Persisted with the counter (review F2): the predecessor's job file is overwritten by its
+                        # stop, so a launch that fails after this point would otherwise lose the answer for good.
+                        # launch_worker re-injects it on every retry; adoption clears it.
+                        rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                         event="decision_recovered", now=now, pending_decision=answer,
+                                         decision_recoveries=int(rec.get("decision_recoveries") or 0) + 1,
+                                         ledger_extra={"gate": d["gate"]["result"], "question": d["why"][:200]})
+                        row["decision_recovery"] = d["gate"]["result"]
                     row["note_chars"] = len(note)
                 if (v2 and rec.get("capsule_key") and act in ("relay", "replace", "launch")
                         and not _capsule_arm(rec, row)):
@@ -3994,10 +4794,13 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
     """Atomic arm (WU-1H addendum C): arm --no-launch, envelope, admit. Any failure holds the armed
     mission with the reason; a mission is never launched here, and never without a packet."""
     kw.pop("launch", None)
+    # The worker model rides the same atomic step: without it the launch inherits the host default (Opus
+    # here), and a chain armed unattended has no later moment to set it before the sweep launches.
+    model = kw.pop("model", None)
     rec = arm(cwd, resume_command, launch=False, **kw)["mission"]
     mid = rec["mission_id"]
     try:
-        set_envelope(mid, wu_packet=wu_packet, token_estimate=token_estimate)
+        set_envelope(mid, wu_packet=wu_packet, token_estimate=token_estimate, model=model)
         adm = admit_route(mid, route, floors_path=floors_path)["admission"]
         if adm["verdict"] != "ADMISSIBLE":
             raise MissionError(f"route {adm['verdict']}: {'; '.join(adm.get('reasons') or [])}"[:600])
@@ -4214,7 +5017,8 @@ def progress_fingerprint(work_dir: str) -> str | None:
     g = resolve_exe("git") or "git"
     parts = []
     try:
-        for args in (["rev-parse", "HEAD"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
+        # HEAD's TREE, not its commit (AMCR anti-gaming): an empty or amend-only commit changes no content.
+        for args in (["rev-parse", "HEAD^{tree}"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
             r = subprocess.run([g, "-C", work_dir, *args], capture_output=True, text=True,
                                encoding="utf-8", errors="replace", timeout=30)
             if r.returncode != 0:
@@ -4222,7 +5026,34 @@ def progress_fingerprint(work_dir: str) -> str | None:
             parts.append(r.stdout)
     except Exception:  # noqa: BLE001 -- unmeasured is its own answer
         return None
+    planning = _planning_artifacts(work_dir)
+    if planning:
+        parts.append(planning)
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def _planning_artifacts(work_dir: str) -> str:
+    """Names and sizes of GSD artifacts under `.planning/`, STATE.md excluded.
+
+    Measured 2026-10-15 (m-07a78fbae3c7, GEX44 dws-exec/rb): `.planning/` was git-excluded so the
+    product branch stays clean, phase 1 wrote only there, and the cost breaker held a working mission
+    at 5.36M "since the work tree last changed". git cannot see an excluded dir, and porcelain folds an
+    untracked one to a single line. STATE.md is left out because a worker rewrites it every turn: a
+    looping worker must still read as stalled. Empty when there is no `.planning/`."""
+    root = Path(work_dir) / ".planning"
+    if not root.is_dir():
+        return ""
+    rows = []
+    try:
+        for dirpath, _dirs, files in os.walk(root):
+            for name in files:
+                if name == "STATE.md":
+                    continue
+                p = Path(dirpath) / name
+                rows.append(f"{p.relative_to(root).as_posix()}:{p.stat().st_size}")
+    except OSError:
+        return ""
+    return "\n".join(sorted(rows))
 
 
 def mission_fingerprint(rec: dict, base_dir: str, fp_fn=None) -> str | None:
@@ -4717,6 +5548,7 @@ def _cli(argv=None) -> int:
     ac.add_argument("--permission-mode", default="auto")
     ac.add_argument("--rollover-protocol", choices=(CAPSULE_V2,), default=None)
     ac.add_argument("--parallel-unit")
+    ac.add_argument("--model", help="worker model set in the atomic envelope step (else the host default)")
     s = sub.add_parser("session-start")
     s.add_argument("--session", required=True)
     s.add_argument("--source", default="")
@@ -4734,6 +5566,23 @@ def _cli(argv=None) -> int:
     oh.add_argument("--reason", required=True)
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
     orl.add_argument("--mission", required=True)
+    bd = sub.add_parser("bind", help="AMCR: bind the mission to the git worktree its worker now writes "
+                                     "(every observer follows it)")
+    bd.add_argument("--mission", required=True)
+    bd.add_argument("--path", required=True)
+    bd.add_argument("--cause", default="explicit")
+    ob = sub.add_parser("obligation", help="AMCR: set a durable child obligation's state")
+    ob.add_argument("--mission", required=True)
+    ob.add_argument("--id", required=True)
+    ob.add_argument("--state", required=True)
+    tp = sub.add_parser("topology", help="AMCR: the mission's execution topology receipt (JSON)")
+    tp.add_argument("--mission", required=True)
+    au = sub.add_parser("authority", help="record Owner programme authority: token ceiling AMR leases inside, "
+                                          "and/or extra wall hours")
+    au.add_argument("--mission", required=True)
+    au.add_argument("--tokens", help="processed-token ceiling for the whole mission, e.g. 66M")
+    au.add_argument("--extend-hours", type=float)
+    au.add_argument("--reason", default="", help="the Owner act this records")
     pr = sub.add_parser("protocol", help="set the rollover protocol on an existing mission "
                                          "(held or owner-less only; same permission-mode rule as arm)")
     pr.add_argument("--mission", required=True)
@@ -4783,7 +5632,8 @@ def _cli(argv=None) -> int:
         res = arm_chain(args.cwd, args.command, wu_packet=args.wu_packet, token_estimate=args.token_estimate,
                         route=args.route, floors_path=args.floors, workstream=args.workstream,
                         max_cycles=args.max_cycles, permission_mode=args.permission_mode,
-                        rollover_protocol=args.rollover_protocol, parallel_unit=args.parallel_unit)
+                        rollover_protocol=args.rollover_protocol, parallel_unit=args.parallel_unit,
+                        model=args.model)
         print(json.dumps({k: v for k, v in res.items() if k != "mission"}, indent=2))
         return 0 if res["ok"] else 1
     if args.cmd == "session-start":
@@ -4809,6 +5659,23 @@ def _cli(argv=None) -> int:
     if args.cmd == "hold":
         rec = set_owner_hold(args.mission, args.reason)
         print(f"OWNER HOLD SET mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
+        return 0
+    if args.cmd == "authority":
+        rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason)
+        print(f"AUTHORITY SET mission={rec['mission_id']} authority_tokens={rec.get('authority_tokens')} "
+              f"max_hours={rec.get('max_hours')}")
+        return 0
+    if args.cmd == "bind":
+        rec = bind_mission(args.mission, args.path, args.cause)
+        b = rec["binding"]
+        print(f"BOUND mission={rec['mission_id']} gen={b['gen']} root={b['root']} branch={b['branch']} head={b['head']}")
+        return 0
+    if args.cmd == "obligation":
+        rec = set_obligation(args.mission, args.id, args.state)
+        print(f"OBLIGATION SET mission={rec['mission_id']} id={args.id} state={args.state}")
+        return 0
+    if args.cmd == "topology":
+        print(json.dumps(topology(args.mission), indent=1, default=str))
         return 0
     if args.cmd == "release":
         rec = release_owner_hold(args.mission)

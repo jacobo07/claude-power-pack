@@ -1,0 +1,93 @@
+{
+ "selector_reproduces_d12a_top10": true,
+ "step1_B1": {
+  "targets": [
+   "fn_802070A8",
+   "fn_8020D1D8",
+   "fn_802103F8",
+   "fn_802116C8",
+   "fn_8021BD7C",
+   "fn_8021C6B0",
+   "fn_802219E4",
+   "fn_802221CC",
+   "fn_8024B7C8",
+   "fn_8032CDD4",
+   "fn_80331504",
+   "fn_80333D88"
+  ],
+  "n_targets": 12,
+  "closure": 12,
+  "unlock": 12,
+  "newly_clean": [
+   "fn_802070A8",
+   "fn_8020D1D8",
+   "fn_802103F8",
+   "fn_802116C8",
+   "fn_8021BD7C",
+   "fn_8021C6B0",
+   "fn_802219E4",
+   "fn_802221CC",
+   "fn_8024B7C8",
+   "fn_8032CDD4",
+   "fn_80331504",
+   "fn_80333D88"
+  ],
+  "errors": []
+ },
+ "n_c0004_dependents": 91,
+ "step1_L": {
+  "closure": 1449,
+  "fns_run": 1449,
+  "unlock": 0,
+  "newly_clean": [],
+  "errors": [
+   [
+    "fn_8024DE84",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ],
+   [
+    "fn_80279FCC",
+    "NEW_LINT_CODES ['UNRESOLVED_TYPE']"
+   ]
+  ]
+ },
+ "step1_reproduced": true,
+ "steps_available": 10,
+ "stop_loss": "B1+L and next 2 bundles: held-out newly lint-clean 0 and no hidden blocker revealed",
+ "pack_only_proto_differs_from_full": [],
+ "steps_run": 3,
+ "curve_heldout": [
+  [
+   3,
+   0
+  ],
+  [
+   5,
+   0
+  ],
+  [
+   6,
+   0
+  ]
+ ],
+ "control_noop": {
+  "byte_identical": true,
+  "n": 30,
+  "unlock": 0
+ },
+ "control_matched_null": {
+  "bundle": [
+   "HELPER:fn_800B4508",
+   "HELPER:fn_801DB24C",
+   "HELPER:fn_80263CA8"
+  ],
+  "unlock": 0,
+  "vs_L_alone_in_same_universe": 0
+ },
+ "control_wrong_width": {
+  "unlock_wrong": 12,
+  "unlock_right": 12,
+  "held_wrong": 0,
+  "held_right": 0
+ }
+}

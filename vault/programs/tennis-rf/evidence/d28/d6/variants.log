@@ -1,0 +1,5 @@
+VAR D5_void_void 3 None []
+VAR fixed5_void 0 None []
+VAR fixed5_ptr_void 0 None []
+VAR var5_ptr_void 0 None []
+VAR var5_s32_void 0 None []

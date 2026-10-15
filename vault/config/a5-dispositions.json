@@ -1,0 +1,230 @@
+{
+ "note": "hand-maintained; ids 'Pn:a-b,c;...'; each id in exactly one family. Plan 'OWNED'/'EXTEND'/'MERGE' mapped to allowed set.",
+ "families": [
+  {
+   "family": "Work/No-Work/No-Compute, extinction-first order",
+   "ids": "P1:1-3,50-56;P2:50-52,98-100;P3:3,12,90-98",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W2b (dossier before launch)",
+   "unit": "U3 (NO_COMPUTE class)",
+   "evidence": "plan s3; ce-unify D-35 (extinction per obligation), D-15"
+  },
+  {
+   "family": "Semantic demand, obligation vs computation, lower bound, overhead multiplier",
+   "ids": "P1:6,32,37;P2:1-5,17;P3:1-2,71",
+   "disposition": "IMPLEMENT_NOW",
+   "owner": "cost_to_completion.py extension (no new graph store)",
+   "unit": "U3",
+   "evidence": "plan s3 and s6; ce-unify D-16 (decision countable from receipts)"
+  },
+  {
+   "family": "Family factoring (bounded_coding), known_transform zero-model, kernels, known failures",
+   "ids": "P1:4-5,38-45;P3:21",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W2b COMPILED_UNIT; lifecycle failure policy",
+   "unit": "U3 (family classes)",
+   "evidence": "plan s3; ce-unify D-21, D-43"
+  },
+  {
+   "family": "Read-once / state projection / Markdown as view / SSA",
+   "ids": "P1:13-15;P2:21;P3:13-17,19",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W2c ContextImage + capsule-v2",
+   "unit": "U8 (GSD STATE projection)",
+   "evidence": "plan s3; ce-unify D-38; Context Compiler SPEC-ONLY (cpp-inventory #2)"
+  },
+  {
+   "family": "Proof-once / affected proof closure / subsumption / assurance",
+   "ids": "P1:21-23;P2:18-20;P3:22-23",
+   "disposition": "DEFER_INSUFFICIENT_EVIDENCE",
+   "owner": "A4 W2b proof transaction",
+   "unit": "U2 (measure repeated full re-verification first)",
+   "evidence": "plan s3; Gen1 P proof reuse 0.50% falsified (negative-investment memory); verified_reuse.py BUILT-NOT-WIRED; ce-unify D-41"
+  },
+  {
+   "family": "Reality-once / set-cover / Owner interaction compiler",
+   "ids": "P1:24-26;P3:24-26",
+   "disposition": "IMPLEMENT_NOW",
+   "owner": "A5",
+   "unit": "U4",
+   "evidence": "plan s3 (2 owner_reality claims + multi-PC session)"
+  },
+  {
+   "family": "Visual residual compiler (region diff, failure mask, freeze)",
+   "ids": "P1:27-29",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "image-calco gate_boxes.py / detect_scale.py",
+   "unit": "U5",
+   "evidence": "plan s3; cpp-inventory #14 (sleepless_qa visual.py asks a model)"
+  },
+  {
+   "family": "Resource admission (RAM headroom)",
+   "ids": "P1:30-31",
+   "disposition": "IMPLEMENT_NOW",
+   "owner": "gsd_mission launch path",
+   "unit": "U6",
+   "evidence": "plan s3; cpp-inventory #9 (host-memory-floor.js warns only)"
+  },
+  {
+   "family": "Interrupt provenance, purity, semantic interrupt budget, stall trip",
+   "ids": "P1:33-36,48;P2:6-8;P3:57-60",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "cost breaker (token x estimate) + A5 stall trip",
+   "unit": "U7",
+   "evidence": "plan s3 and s6; cpp-inventory #12"
+  },
+  {
+   "family": "Trace mining, sequence-to-primitive, flamegraphs, counterfactual lab",
+   "ids": "P1:7-12,46-47,49;P2:32-34;P3:31-32,75-76",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "goal-autopsy (LIVE) + A4 W3 PGO",
+   "unit": "U1, U2",
+   "evidence": "plan s3; ce-unify D-26; cpp-inventory #8, #11"
+  },
+  {
+   "family": "Context VM, page-fault economics, weighted cache, thrash detector, semantic compression",
+   "ids": "P1:16-18;P2:22-26;P3:28-30,33-36,39",
+   "disposition": "DEFER_INSUFFICIENT_EVIDENCE",
+   "owner": "none",
+   "unit": "U2 (measure the QUESTION only)",
+   "evidence": "ce-unify D-39 REJECT stands; plan s3"
+  },
+  {
+   "family": "Tool/capability virtualization, progressive disclosure, tool output ABI",
+   "ids": "P1:19-20;P2:30,53-55;P3:40-41,50",
+   "disposition": "NEGATIVE_ROI",
+   "owner": "A4 W1c / W3 (tool-output projection merged into 'receipt by reference')",
+   "unit": "U2 (attribute 102K floor by source)",
+   "evidence": "Gen1 C tool schemas 0.002% falsified; K 2.67% (D-40); jit_skill_loader LIVE; plan s3"
+  },
+  {
+   "family": "Constitutional compiler, prompt extinction, token rent, zero-prose ratio, knowledge rent",
+   "ids": "P2:27-29,68-71,96-97;P3:46-49,51-52",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W1c prompt extinction + D-32 rent ledger",
+   "unit": "",
+   "evidence": "plan s3; ce-unify D-32 (CLAUDE.md linter 39,812 chars)"
+  },
+  {
+   "family": "Role extinction (planner/reviewer/coordinator/researcher)",
+   "ids": "P2:60-67;P3:53-54",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W2b/W2c",
+   "unit": "",
+   "evidence": "plan s3; ce-unify D-21"
+  },
+  {
+   "family": "JIT, speculation, branch prediction, deopt",
+   "ids": "P2:35-38",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W2b (compiled unit names its assumptions)",
+   "unit": "",
+   "evidence": "plan s6 (JIT/deopt safety)"
+  },
+  {
+   "family": "CSE / singleflight / reason-once / content-addressed cognition",
+   "ids": "P2:9-10,16;P3:6-7,18,20",
+   "disposition": "DEFER_INSUFFICIENT_EVIDENCE",
+   "owner": "ce-unify D-37 / A4 W1a (goal singleflight LIVE gsd_mission.py:3483)",
+   "unit": "U2 (duplicate derivations), U7 (producer-kill canary)",
+   "evidence": "Gen1 G CSE falsified (negative-investment memory); cpp-inventory #6"
+  },
+  {
+   "family": "Superoptimizer / e-graph / exchange / futures / shadow price / VOI / markets",
+   "ids": "P2:11-15,31;P3:4-5,8-11,27,37-38,72",
+   "disposition": "NEGATIVE_ROI",
+   "owner": "none",
+   "unit": "",
+   "evidence": "ce-unify D-36 holds; one consumer, no measured basis; plan s3"
+  },
+  {
+   "family": "Capital allocator, balance sheet, debt register, NPV",
+   "ids": "P1:59-60;P2:39-40,92-95;P3:80-82",
+   "disposition": "MERGE_WITH_EXISTING",
+   "owner": "A4 W3 (ranking field in ledger + one NPV field in autopsy)",
+   "unit": "",
+   "evidence": "ce-unify D-29 (NPV field), D-48 (standalone allocator REJECT)"
+  },
+  {
+   "family": "Rejected instruments: capitalization rate, decision surface, cost-of-X ledgers, entropy-to-capital",
+   "ids": "P2:85;P3:55-56,64-70",
+   "disposition": "NEGATIVE_ROI",
+   "owner": "none",
+   "unit": "",
+   "evidence": "ce-unify D-30 REJECT (D-32 covers rent)"
+  },
+  {
+   "family": "Cognitive microkernel (new subsystem)",
+   "ids": "P3:45",
+   "disposition": "NEGATIVE_ROI",
+   "owner": "none",
+   "unit": "",
+   "evidence": "ce-unify D-39/D-36 pattern: new subsystem, nothing measured"
+  },
+  {
+   "family": "Economic theorem registry, negative memory, holdouts, mutation testing, CI, SLOs, self-host",
+   "ids": "P1:57;P2:72-83;P3:73-74,77-79,83-84,87-89",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W3 (UKDL via CEPS, Cognitive CI, Canary 1)",
+   "unit": "U9 (holdout replays)",
+   "evidence": "plan s3; ce-unify D-07, D-09, D-10, D-13, D-22, D-27, D-28; cpp-inventory #10, #13"
+  },
+  {
+   "family": "Architecture PGO, maintainability NFR, radius budgets, token-aware API",
+   "ids": "P1:58;P2:41-49",
+   "disposition": "DEFER_INSUFFICIENT_EVIDENCE",
+   "owner": "none",
+   "unit": "U1 (per-file attribution)",
+   "evidence": "plan s3; ce-unify D-31 UNKNOWN (no cost-of-change per module)"
+  },
+  {
+   "family": "Half-life metrics, deflation SLO, call amplification, velocity, deflation contract",
+   "ids": "P2:84,86-91;P3:61-63,99-100",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 sec.9 deflation definition",
+   "unit": "U10 (report for DWS)",
+   "evidence": "plan s3; ce-unify D-17, D-34"
+  },
+  {
+   "family": "Fresh-project auto-inheritance, CBR ratchet, cross-project transfer",
+   "ids": "P1:61-62;P3:85-86",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W1c/W3 (CBR, Canary 1)",
+   "unit": "",
+   "evidence": "plan s3 (OWNED); ce-unify D-49"
+  },
+  {
+   "family": "Routing, model-independent continuation, ABI, provider arbitrage",
+   "ids": "P2:56-58;P3:42-43",
+   "disposition": "EXTEND_EXISTING",
+   "owner": "A4 W1c one routing table; lifecycle continuation",
+   "unit": "",
+   "evidence": "ce-unify D-44, D-46; cpp-inventory #7"
+  },
+  {
+   "family": "Ensemble / information QoS classes",
+   "ids": "P2:59;P3:44",
+   "disposition": "DEFER_INSUFFICIENT_EVIDENCE",
+   "owner": "none",
+   "unit": "",
+   "evidence": "no measured information value per call; ce-unify D-46 purity UNKNOWN"
+  },
+  {
+   "family": "Extreme benchmark and terminal architecture",
+   "ids": "P1:63-64",
+   "disposition": "UNKNOWN",
+   "owner": "none",
+   "unit": "",
+   "evidence": "unmeasured",
+   "missing": "irreducible lower-bound number for DWS (ce-unify D-16; U3 output)"
+  },
+  {
+   "family": "Budget report (calls per claim step 424, n=19; 91 claims; 6.50 B candidate)",
+   "ids": "R-1",
+   "disposition": "CONNECT_EXISTING",
+   "owner": "cost_to_completion.py claim graph",
+   "unit": "U3, U10",
+   "evidence": "budget report lines 1-98; plan s6 last answer"
+  }
+ ]
+}

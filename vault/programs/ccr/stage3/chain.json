@@ -24,39 +24,15 @@
    "after": "A0"
   },
   {
-   "id": "A2",
-   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A2.md",
-   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
-   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A2-receipt.md",
-   "after": "A1"
-  },
-  {
-   "id": "A3",
-   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A3.md",
-   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3L.json",
-   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A3-receipt.md",
-   "after": "A2"
-  },
-  {
-   "id": "A4",
-   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A4.md",
-   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3L.json",
-   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A4-receipt.md",
-   "after": "A3"
-  },
-  {
-   "id": "A5",
-   "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A5.md",
-   "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3L.json",
-   "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A5-receipt.md",
-   "after": "A4"
-  },
-  {
    "id": "A6",
    "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A6.md",
    "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\route-S3M.json",
    "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A6-receipt.md",
-   "after": "A5"
+   "after": "A1",
+   "wait": [
+    "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A3-receipt.md",
+    "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-A5-receipt.md"
+   ]
   },
   {
    "id": "A7",
@@ -72,5 +48,6 @@
    "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\ccr\\stage3\\WU-X2-receipt.md",
    "after": "A7"
   }
- ]
+ ],
+ "note": "A2-A5 run on GEX44 (~/missions/ccr-s3, drive.sh); the coordinator copies their DONE receipts back here, which releases A6."
 }

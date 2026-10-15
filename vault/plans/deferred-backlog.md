@@ -1269,3 +1269,25 @@ overlaps D24 dgl W3 -- implement once, D24 W3 consumes it); (3) deterministic-fi
 steps before model admission; connects CCR Work-Class/PoCN); (4) frontier-collapse-before-leaf-execution as CBR after proof.
 
 **Activation:** Owner approves the plan's section 8 in one reply. TRF-C then opens tennis-rf L2 (8M tranche) and starts Ph0.
+
+**Separate debt found while running it (Owner, 2026-10-13: register, do not block D5):**
+- D28-DEBT-1, multi-lease `halt_authority` ungated. cf24e4af stopped `tools/gsd_mission.py halt_authority` counting
+  an open hold twice; its gate `V-LIFE-HALT-OPEN-COUNTED-ONCE` covers one lease only. The case that actually failed
+  (a leaked hold in a CLOSED lease must not reduce a NEW lease's authority, while the programme's `executable` still
+  counts it) has no gate. Close with a test that opens a programme, leaks a hold in L1, opens L2, and asserts
+  halt_authority == L2 cap and executable == programme - settled - open. No longer contaminating the ledger: the
+  three leaked holds (1,130,211) were settled from their transcripts 2026-10-13 (capped at mark + hold, total_used
+  unchanged at 79,053,296, open 0).
+- D28-DEBT-2, owner hold vs launch race. `gsd_mission.py hold` on a PREPARED mission (m-13e710106e99, 14:40) did not
+  stop its launch: it reached epoch 1, spent ~144k and halted "owner hold, owner DEAD". Either the launch had already
+  claimed it or the launcher does not re-read the hold. Reproduce before fixing.
+- D28-DEBT-3, a renewal does not count as a residual. m-13e710106e99 was a renewal (`renewed_from`), so the chain
+  armed one more residual (m-f3fa70353c8e, route L, need 6.4M) for a unit the Owner had just decided to close.
+  Halted before launch.
+- D28-DEBT-4, D1c limits 1-2 (carried to D11): DETERMINISTIC_USED_MODEL not fed the ledger's per-unit model-call
+  count; the `.pre.json` path is not put in the worker's card.
+- D28-DEBT-5, a unit whose route is not in `route_ladder` never climbs (`tools/gsdx_chain.py:99`, idx None keeps
+  the route): D8 on gate-only route-G (4 calls) stopped twice on the same call breaker, 0.41M for nothing; the
+  third attempt would have been identical. Workaround: D8v2 on route-M, D9 on route-S. Proposed gate: a residual
+  whose route is off the ladder goes to `human_gate` on the FIRST repeat, and a chain lint refuses a unit whose
+  packet has post-gate work on a gate route.

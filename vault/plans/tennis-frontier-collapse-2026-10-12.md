@@ -1,6 +1,6 @@
 ---
 covers: [tennis-rf, frontier-collapse, w12a-plus, semantic-residual, lease-succession, claim-evidence, deterministic-first]
-status: AWAITING_OWNER_APPROVAL
+status: EXECUTED
 owner_prompt: Owner 2026-10-12 ~22:00, "/cpp-gsd-long ... Frontier Collapse" (backlog D28); global optimization incl. CCR
 ---
 # Tennis Frontier Collapse + global corrections -- Master Continuation Plan (2026-10-12)
@@ -135,3 +135,24 @@ ritual. Authority: programme 90M -> 100M; successor lease L2 = 8M tranche opened
 authority), later tranches automatic once Ph1b lands. GEX44: job 4 + jobs 5-6. Gated (returns to Owner): Scope B scale,
 any job beyond 6, programme beyond 100M, deleting/rewriting anything outside tennis-rf files. Rollback: every phase is a
 pathspec micro-commit, revertible; live-hook change ships with its revert line.
+
+## Outcome (WU-D11, 2026-10-13)
+EXECUTED = every phase run to its gate or named blocked; Ph8/Ph9 are not run. Verdict `SCALE-READINESS.md`: **NO_SCALE**.
+| Ph | Unit | Status | MDG value | Commit |
+|---|---|---|---|---|
+| 0 | seal | DONE | 1 | wt_tennis_rf 88d36ff |
+| 1a | - | DONE | 2: receipt status from ledger | 729f7387 |
+| 1b | - | DONE | 3: auto successor lease (L2..L23) | 3c98097b |
+| 1c | D1c | DONE_WITH_LIMITS | 4 | be6060ed |
+| 1d | D1d | DONE | 5: structural_family, idiom_family INCONCLUSIVE; 7/7 idioms VALID | 76f2cf5d |
+| 2 | D2 | DONE | 6: 22 rows; 7: 5 classes/9 PARTIAL = 0.556; 8: 16 tag + 85 prototype of 101 | f9f4baef |
+| 3 | D3 | DONE | 9/17/18: distances 12/263/1307/92/92/31; 1,522 fns unpriced | 4524d258 |
+| 4 | D4 | PARTIAL (Owner-accepted) | 10/11/14/15: 3,429 vars; red control falls | e16e8036 |
+| 5 | D5 | DONE | 11: 1 SUPPORT, 11 CONTRADICTION of 12 | c2c3b5c0 |
+| 6 | D6 | DONE | 12: 0 certified facts, 276 -> 276 | 87231844 |
+| 7 | D7 | DONE | 13: closure 44/1797, 5-6x | a921761c |
+| 8 | D8 | NOT_RUN (jobs 5-6 approved, no receipt) | 16,19 open | - |
+| 9 | D9 | NOT_RUN (job 7 approved, gated) | - | - |
+| 10 | D10 | DONE_WITH_LIMITS | 20,21 (7d/72h not reachable), 22 | d8b5812e |
+| 11 | D11 | DONE | 23-27: NO_SCALE; promotions in `WU-D11-receipt.md` | this commit |
+Tokens (`goal-lineage --goal tennis-rf`, 2026-10-13): programme 100M, settled 84.72M, total used 85.47M, open lease L23 750k at read; L1 63.28M, D-unit leases 0-2.9M each (D2 2.88M, D4 1.73M, D6 1.54M).

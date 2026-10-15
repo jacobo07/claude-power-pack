@@ -1,0 +1,4 @@
+PASS V-TCTX-PRELUDE-ONCE  prelude in header and in a composed unit exactly once
+PASS V-TCTX-W12-DECLARED  24/24 prototypes (12 W5a + 12 W12)
+PASS V-TCTX-M2C-CONSUMES-CONTEXT  {'with': ['    return (arg0->f_1C - 2) == 0;', '}'], 'without_has_unk1C': True}
+TENNIS_CONTEXT_DRILL=9/9

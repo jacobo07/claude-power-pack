@@ -22,6 +22,7 @@ os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ.pop("CPP_MISSION_RENEW", None)
+os.environ["CPP_MISSION_RECOVERY"] = "off"  # pins the legacy park/settle path AMR falls back to; AMR gates: test_mission_recovery.py
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 if os.environ.get("GSD_MISSION_DRILL_DIR"):
     sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])
@@ -251,6 +252,50 @@ def main() -> int:
     for mid, want in (("m-unit-notdone", "NOT_DONE"), ("m-unit-broken", "UNANSWERED")):
         check(f"V-OH-CONTROL-UNIT-{want}-NOT-COMPLETED", gm.load(mid)["state"] != gm.COMPLETED
               and by[mid].get("unit_done") == want, f"{gm.load(mid)['state']} row={by.get(mid)}")
+
+    # 10. a packet unit WITHOUT a done_check (every chain-armed unit) is closed by its own receipt (gsdx-pcc P52a/P52b,
+    # 2026-10-14: DONE and PARTIAL receipts, worker done, GSD NO_PHASES, each record held BLOCKED 2.5 h while the chain
+    # waited on it). Controls: a receipt older than the mission is not this run's; PARTIAL with a runnable roadmap keeps
+    # the relay; no receipt keeps the old hold.
+    pk_dir = Path(TMP) / "packets"
+    pk_dir.mkdir(exist_ok=True)
+    def _pkt_mission(mid, status, mtime):
+        r = _mission(mid, gm.RUNNING)
+        pkt = pk_dir / f"WU-{mid}.md"
+        pkt.write_text("# packet\n", encoding="utf-8")
+        if status is not None:
+            rc_path = pk_dir / f"WU-{mid}-receipt.md"
+            rc_path.write_text(f"# receipt\nStatus: {status}\n", encoding="utf-8")
+            os.utime(rc_path, (mtime, mtime))
+        gm.transition(mid, expect_epoch=r["epoch"], expect_state=r["state"], event="t_pkt", now=NOW,
+                      wu_packet={"path": str(pkt), "sha256": "x", "bytes": 9}, max_hours=100.0)
+
+    cases = {"m-rc-done": ("DONE", NOW + 30), "m-rc-partial": ("PARTIAL -- half", NOW + 30),
+             "m-rc-stale": ("DONE", NOW - 3600), "m-rc-none": (None, None)}
+    for mid, (status, mtime) in cases.items():
+        _pkt_mission(mid, status, mtime)
+    launched = []
+    sup_rows = gm.supervise(now=NOW + 60, sessions=[{"sessionId": f"{m}-w", "id": f"{m}-w"[:8], "kind": "background",
+                                                     "state": "done"} for m in cases],
+                            runner=lambda *a, **k: launched.append(a) or "", stop_runner=lambda *a, **k: None,
+                            pid_alive=gone, fingerprint=lambda wd: None,
+                            gsd_status=lambda cwd, workstream=None: {"outcome": "NO_PHASES", "reason": "0 phases"})
+    by = {r["mission_id"]: r for r in sup_rows}
+    st = {m: gm.load(m)["state"] for m in cases}
+    check("V-OH-UNIT-RECEIPT-DONE-COMPLETES", st["m-rc-done"] == gm.COMPLETED
+          and by["m-rc-done"].get("unit_done") == "RECEIPT_DONE", f"{st['m-rc-done']} row={by.get('m-rc-done')}")
+    check("V-OH-UNIT-RECEIPT-PARTIAL-NOPHASES-HALTS", st["m-rc-partial"] == gm.HALTED,
+          f"{st['m-rc-partial']} row={by.get('m-rc-partial')}")
+    check("V-OH-CONTROL-STALE-RECEIPT-NOT-CLOSED", st["m-rc-stale"] not in gm.TERMINAL, st["m-rc-stale"])
+    check("V-OH-CONTROL-NO-RECEIPT-NOT-CLOSED", st["m-rc-none"] not in gm.TERMINAL, st["m-rc-none"])
+    # PARTIAL under a runnable roadmap: GSD answers OK, so the old relay path (not a halt) owns it.
+    _pkt_mission("m-rc-partial-ok", "PARTIAL", NOW + 30)
+    gm.supervise(now=NOW + 120, sessions=[{"sessionId": "m-rc-partial-ok-w", "id": "m-rc-pa", "kind": "background",
+                                           "state": "done"}],
+                 runner=lambda *a, **k: "", stop_runner=lambda *a, **k: None, pid_alive=gone,
+                 fingerprint=lambda wd: None, gsd_status=lambda cwd, workstream=None: {"outcome": "OK"})
+    check("V-OH-CONTROL-PARTIAL-RUNNABLE-NOT-HALTED", gm.load("m-rc-partial-ok")["state"] != gm.HALTED,
+          gm.load("m-rc-partial-ok")["state"])
 
     print(f"OWNER_HOLD_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1

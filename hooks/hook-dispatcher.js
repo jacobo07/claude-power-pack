@@ -95,6 +95,15 @@ const EVENT_MAP = {
   'UserPromptSubmit-default': [
     './power-pack-reminder.js',
     './baseline-translator.js',
+    // AKOS CREATIVE GROUNDING (2026-10-13, Owner: "mejora AKOS para que esto pase de forma 100% autónoma").
+    // A creative prompt (ad, brief, copy, hook, headline, script, image prompt) gets the top AKOS/01_Datasets
+    // hits WITH citable ids, plus the instruction to cite them. Advisory, fail-open (run() never throws; silent
+    // on a non-creative prompt, a missing index or AKOS_GROUNDING=0). IN-PROCESS on purpose: the companion
+    // bundle runs even when the chain abandons its pool, which on a loaded host it did on every prompt
+    // measured (critical lane 11-13 s of a 3000 ms deadline). node:sqlite query: 0.2-0.9 s on the live index.
+    // Enforcement is NOT here: the VLCE brief_evidence gate refuses an uncited execution.
+    // Test: skills/claude-power-pack/hooks/tests/test-creative-grounding.js.
+    '../skills/claude-power-pack/hooks/creative_grounding.js',
   ],
 
   // COMPANIONS IN-PROCESS de las tres cadenas PreToolUse ya registradas en
@@ -119,7 +128,12 @@ const EVENT_MAP = {
   // spend reserved from the goal BEFORE launch (A1: 42.3M against a 20M cap, nothing checked first).
   // Registered directly as --event=PreToolUse-Agent-default on matcher Task|Agent (Owner step, HR-001:
   // vault/OWNER_QUEUE.md). Inert for sessions bound to no goal and with no session budget.
-  'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js', '../skills/claude-power-pack/hooks/cognitive_admission.js', '../skills/claude-power-pack/hooks/semantic_breaker.js'],
+  // amr_fence.js (2026-10-13, AMR plan §8b): a recovered mission's worker may not respawn the agent type its
+  // recovery fenced. Inert for every session that is not a mission worker with `amr.deny_agent_types`; fail-open.
+  'PreToolUse-Agent-default': ['../skills/claude-power-pack/hooks/session_budget_guard.js',
+                               '../skills/claude-power-pack/hooks/amr_fence.js',
+                               '../skills/claude-power-pack/hooks/cognitive_admission.js',
+                               '../skills/claude-power-pack/hooks/semantic_breaker.js'],
   // Research lane (CDC C6): WebSearch|WebFetch reuse + singleflight + negative knowledge. Registered as
   // --event=PreToolUse-Web-default / PostToolUse-Web-default on matcher WebSearch|WebFetch (Owner step,
   // like the Agent lane). Kill switch CPP_RESEARCH_GATE=off. Pinned: tools/test_derivation_store.py.

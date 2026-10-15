@@ -1,0 +1,31 @@
+{
+ "unit": "D12b", "date": "2026-10-14", "scaling_verdict": "INSUFFICIENT",
+ "rows": {
+  "arm2_split": "split_lbl_80513E74.json",
+  "arm2_compile": "arm2_hdr_e74_v1.h.json",
+  "arm2_ladder": "arm2_e74_ladder.json",
+  "d12a_joint": "../d12/joint_delta.json",
+  "d12a_closure": "../d12/struct_summary.json",
+  "d12a_motif": "../d12/motif_mass.json"
+ },
+ "naive_baseline": {"status": "UNPRICED", "n_fns_attempted": 0, "tokens_per_verified_match": null,
+   "why": "naive arm not run: capsule cap1-fee7b09f053d fixes its 14 model targets (capsule_profile.TENNIS_MODELS, expected_units hard-coded); 8 new targets need a capsule rebuild, and job 4 would carry only the control (no Factory candidates)"},
+ "factory_forecast": {"status": "UNPRICED", "measured_current_factory": null,
+   "compounding_forecast": "UNPRICED (held-out transfer > 0 in vars, 0 in lint-clean; marginal cognition not measured, no model tokens on dependents)",
+   "frontier_7d": "NOT REACHABLE on measured inputs (unchanged)", "frontier_72h": "NOT REACHABLE on measured inputs (unchanged)",
+   "theoretical_compression": {"raw_functions": 1522, "vars_after_identity_collapse": 13811, "private_fraction": 0.956,
+     "vars_closed_by_scripts": "not measured; one layout fact closed 136 vars of 2278 across 91 dependents (arm2_ladder)"}},
+ "arm2": {"cluster_family": "lbl_80513E74 (C0004,C0001,C0035,C0585,C4246)", "seed": 20261014, "dependents": 91,
+   "in_sample": {"n": 45, "newly_lint_clean": 0, "vars_before": 993, "vars_after": 921, "fns_fewer_vars": 25, "new_lint_regressions": 1},
+   "held_out": {"n": 46, "newly_lint_clean": 0, "vars_before": 1285, "vars_after": 1221, "fns_fewer_vars": 23, "new_lint_regressions": 1},
+   "held_out_transfer": "YES in vars (23/46 fns, 64/1285 = 5.0%), NO in lint-clean (0/46), NO ladder move (0 fns with zero vars left)",
+   "stop_loss": "FIRED: no lint-clean on held-out; clusters 2 and 3 not resolved", "model_tokens": "not separated from session total (route accounting only)"},
+ "job4": {"status": "NOT_SENT", "reason": "newly lint-clean batch empty (arm 2 = 0) and naive arm unrunnable without capsule rebuild", "donors": "N/A"},
+ "counterexamples": "N/A (no bulk job; < 10 failures)",
+ "joint_delta_from_d12a": {"best_bundle_unlock": 12, "single_cluster_layout_unlock": 0, "note": "joint prototype/field bundles unlock; one struct layout alone does not"},
+ "search_solvable_fraction": "UNPRICED (decomp-permuter ABSENT)",
+ "motif_mass": {"covered_insn_share": 0.385, "valid_idiom_fn_share": 0.061},
+ "effective_remaining_work": "UNPRICED; raw 1522 fns, Research Frontier 13811 vars (structure, not cost)",
+ "w13": {"verdict": "NOT ADMITTED", "armed": false, "jobs_8plus_requested": false,
+   "next_abstraction_to_test": "joint prototype+field bundle (D12a top bundles unlock 11-12) propagated by D7 and composed with one layout fact; measure lint-clean on held-out"}
+}
