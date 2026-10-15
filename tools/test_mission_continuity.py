@@ -239,8 +239,15 @@ commit(wt2, ".planning/phases/01-cases-and-persistence/01-CONTEXT.md", "context 
 time.sleep(1.1)
 gm.set_owner_hold("m-c00000000007", "cost breaker: 5,051,831 processed since the work tree last changed (stall "
                   "budget 4,262,035); semantic progress is not keeping up with spend", now=time.time(), kind="cost")
+h7 = gm.load("m-c00000000007")["owner_hold"]                      # exactly how the old recovery parked it
+gm.transition("m-c00000000007", expect_epoch=1, expect_state=gm.RUNNING, event="t_legacy_park", touch=False,
+              owner_hold={**h7, "recovery": {"state": "NOT_APPLICABLE", "at": time.time(),
+                                             "why": "residual UNKNOWN: GSD state of the work tree is unreadable"}})
+legacy_plan = gm.plan_next(gm.load("m-c00000000007"), time.time(), [], pid_alive=lambda p: False)
 gm.bind_mission("m-c00000000007", str(wt2), cause="migration")
-dead = [{"sessionId": "m-c00000000007-w", "id": "m-c0000", "kind": "background", "state": "done"}]
+check("V-AMCR-R2-BIND-REOPENS-LEGACY-UNREADABLE-PARK", legacy_plan["action"] != "recover"
+      and (gm.load("m-c00000000007")["owner_hold"] or {}).get("recovery") is None, str(legacy_plan)[:120])
+dead =[{"sessionId": "m-c00000000007-w", "id": "m-c0000", "kind": "background", "state": "done"}]
 plan2 = gm.plan_next(gm.load("m-c00000000007"), time.time(), dead, pid_alive=lambda p: False)
 r2 = gm.recover_mission(gm.load("m-c00000000007"), dead, time.time(), pid_alive=lambda p: False,
                         gsd_status=lambda wd, workstream=None: {"outcome": "OK"})

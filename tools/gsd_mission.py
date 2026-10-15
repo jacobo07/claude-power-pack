@@ -1740,8 +1740,16 @@ def bind_mission(mission_id: str, path: str, cause: str = "explicit", now: float
         nb = mb.new_binding(rec, path, cause, now)
     except mb.BindError as exc:
         raise MissionError(f"bind refused: {exc}") from exc
+    extra = {}
+    hold = rec.get("owner_hold") or {}
+    rs = (hold.get("recovery") or {})
+    if rs.get("state") in ("NOT_APPLICABLE", "RECOVERY_FAILED", "RECOVERY_EXHAUSTED") and \
+            "unreadable" in str(rs.get("why") or ""):
+        # The "residual unreadable" verdict was judged on the OLD root; a topology change re-opens it so the
+        # next pass recovers on the bound root (m-4e31db7aca3f was parked on exactly that verdict).
+        extra["owner_hold"] = {**hold, "recovery": None}
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="workspace_rebound",
-                      now=now, touch=False, binding=nb, work_dir=nb["root"], cost_mark=None,
+                      now=now, touch=False, binding=nb, work_dir=nb["root"], cost_mark=None, **extra,
                       ledger_extra={"gen": nb["gen"], "root": nb["root"], "branch": nb["branch"], "cause": cause},
                       reason=f"workspace rebound ({cause}) gen {nb['gen']}: {nb['root']} [{nb['branch']}]")
 
