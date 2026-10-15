@@ -4099,6 +4099,35 @@ def _unit_done(rec: dict) -> dict:
     return {"outcome": {0: "DONE", 1: "NOT_DONE"}.get(r.returncode, "UNANSWERED"), "detail": detail or f"rc {r.returncode}"}
 
 
+def settle_stopped_worker(rec: dict, settle=None) -> dict:
+    """Book a worker the supervisor just stopped: its whole session tree (main + subagents, one message-id
+    dedup set) through goal_settle, tagged mission/epoch. Idempotent (a second call books nothing new).
+    A mission with no ledger goal, or a settle that fails, is ledgered as `worker_unbooked` -- never silent:
+    the 2026-10-14 breaker stop left 25.1M booked as 4.4M short because nothing settled the stopped session."""
+    mid, sid = rec["mission_id"], (rec.get("owner") or {}).get("session_id")
+    goal = rec.get("ledger_goal")
+    why = None
+    if not sid:
+        why = "owner has no session id"
+    elif not goal:
+        why = "mission has no ledger_goal (armed outside a declared goal root)"
+    out: dict = {}
+    if not why:
+        try:
+            import mission_spend as ms
+            out = (settle or ms.goal_settle)(goal, sid, None, f"mission {mid} epoch {rec['epoch']} stopped", tree=True)
+            if not out.get("ok"):
+                why = str(out.get("reason") or "settle refused")[:200]
+        except Exception as exc:  # noqa: BLE001 -- ledgered below, the stop itself must still complete
+            why = f"{type(exc).__name__}: {exc}"[:200]
+    if why:
+        lr.ledger_append(mid, "worker_unbooked", mission_id=mid, worker=sid, goal=goal, why=why)
+        return {"booked": False, "why": why}
+    lr.ledger_append(mid, "worker_settled", mission_id=mid, worker=sid, goal=goal, epoch=rec["epoch"],
+                     closed=out.get("closed"), used=out.get("used"))
+    return {"booked": True, "goal": goal, "worker": sid, "closed": out.get("closed")}
+
+
 def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive,
               fingerprint=None, capsule_io: dict | None = None) -> list[dict]:
@@ -4213,6 +4242,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     row.update({"action": "cost_hold_stop", "reason": f"cost hold enforced: {how}",
                                 "cost_hold_enforced": over})
                     if ok:
+                        row["settled"] = settle_stopped_worker(rec)
                         transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                    event="cost_hold_worker_stopped", now=now,
                                    reason=f"cost hold: worker stopped ({how})",
