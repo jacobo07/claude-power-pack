@@ -176,10 +176,13 @@ def g1(rows: list[dict]) -> dict:
     total = sum(r['tokens'] for r in rows if r['tokens'] is not None)
     fixed = sum(r['tokens'] for r in rows if r['tokens'] is not None and r['cls'] in HOST_FIXED_CLASSES)
     unknown = sum(r['tokens'] for r in rows if r['tokens'] is not None and r['cls'] == 'UNKNOWN')
+    resid = sum(r['tokens'] for r in rows if r['tokens'] is not None and r.get('category') == RESIDUAL and r['cls'] not in HOST_FIXED_CLASSES + ('UNKNOWN',))
     share = fixed / total if total else None
     return {'host_fixed_tokens': fixed, 'unknown_class_tokens': unknown, 'floor_tokens': total, 'host_fixed_share': share,
             'gate': G1_HOST_FIXED_SHARE, 'triggered': (share is not None and share > G1_HOST_FIXED_SHARE),
-            'upper_bound_share': ((fixed + unknown) / total if total else None)}
+            'upper_bound_share': ((fixed + unknown) / total if total else None),
+            # tool schemas + framing are graded REDUCIBLE only by analogy (A2 probes, 4,114 tokens); worst case they are host-fixed
+            'worst_case_share': ((fixed + unknown + resid) / total if total else None)}
 
 
 def age_split(rows: list[dict]) -> dict:

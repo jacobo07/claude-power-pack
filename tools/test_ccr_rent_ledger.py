@@ -80,6 +80,9 @@ def main() -> int:
         free_rows = [{'tokens': 100, 'cls': 'IRREDUCIBLE'}, {'tokens': 900, 'cls': 'REDUCIBLE'}]
         check('V-RENT-08 G1 both poles', L.g1(fixed_rows)['triggered'] and not L.g1(free_rows)['triggered'] and L.g1(fixed_rows)['unknown_class_tokens'] == 100,
               f"fixed={L.g1(fixed_rows)['host_fixed_share']} free={L.g1(free_rows)['host_fixed_share']}")
+        wc = L.g1(led)
+        check('V-RENT-11 worst case counts the unsplit residual', wc['worst_case_share'] > wc['upper_bound_share'] and wc['worst_case_share'] >= by[L.RESIDUAL]['share'],
+              f"upper={wc['upper_bound_share']} worst={wc['worst_case_share']}")
         sp = L.age_split(rows)
         check('V-RENT-09 age split separates drift', sp['rules']['drift_bytes'] > 20000 and abs(sp['constitution']['drift_bytes']) == 0,
               f"rules drift={sp['rules']['drift_bytes']} constitution drift={sp['constitution']['drift_bytes']}")

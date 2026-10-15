@@ -1,0 +1,416 @@
+{
+ "dir": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+ "sessions_with_call": 268,
+ "sessions_ge_min_ctx": 158,
+ "min_ctx": 150000,
+ "calibration": {
+  "n": 268,
+  "k_tok_per_byte": 0.2584820388153233,
+  "c0": 66431.99995700497,
+  "r2": 0.7163483536452704,
+  "ok": true
+ },
+ "age_split": {
+  "constitution": {
+   "early_median_bytes": 74365.0,
+   "late_median_bytes": 76561.0,
+   "drift_bytes": 2196.0,
+   "late_p10_bytes": 76561,
+   "late_p90_bytes": 76561,
+   "age_axis": "PROJECT"
+  },
+  "rules": {
+   "early_median_bytes": 210761.0,
+   "late_median_bytes": 260037.0,
+   "drift_bytes": 49276.0,
+   "late_p10_bytes": 219230,
+   "late_p90_bytes": 260037,
+   "age_axis": "PROJECT"
+  },
+  "memory": {
+   "early_median_bytes": 19000.0,
+   "late_median_bytes": 17519.0,
+   "drift_bytes": -1481.0,
+   "late_p10_bytes": 16814,
+   "late_p90_bytes": 17591,
+   "age_axis": "PROJECT"
+  },
+  "hook_injections": {
+   "early_median_bytes": 3569.0,
+   "late_median_bytes": 5933.0,
+   "drift_bytes": 2364.0,
+   "late_p10_bytes": 3655,
+   "late_p90_bytes": 14371,
+   "age_axis": "EPOCH"
+  },
+  "skills": {
+   "early_median_bytes": 14555.0,
+   "late_median_bytes": 14689.0,
+   "drift_bytes": 134.0,
+   "late_p10_bytes": 14642,
+   "late_p90_bytes": 15682,
+   "age_axis": "PROJECT"
+  },
+  "agent_listing": {
+   "early_median_bytes": 38262.0,
+   "late_median_bytes": 49645.0,
+   "drift_bytes": 11383.0,
+   "late_p10_bytes": 49645,
+   "late_p90_bytes": 62171,
+   "age_axis": "PROJECT"
+  },
+  "deferred_tools": {
+   "early_median_bytes": 5412.0,
+   "late_median_bytes": 5415.5,
+   "drift_bytes": 3.5,
+   "late_p10_bytes": 3622,
+   "late_p90_bytes": 9530,
+   "age_axis": "PROJECT"
+  },
+  "mcp_instructions": {
+   "early_median_bytes": 2804.0,
+   "late_median_bytes": 2804.0,
+   "drift_bytes": 0.0,
+   "late_p10_bytes": 1841,
+   "late_p90_bytes": 3859,
+   "age_axis": "PROJECT"
+  },
+  "system_prompt": {
+   "early_median_bytes": 14274.0,
+   "late_median_bytes": 14653.0,
+   "drift_bytes": 379.0,
+   "late_p10_bytes": 7124,
+   "late_p90_bytes": 16465,
+   "age_axis": "HOST"
+  },
+  "environment": {
+   "early_median_bytes": 4276.5,
+   "late_median_bytes": 1445.0,
+   "drift_bytes": -2831.5,
+   "late_p10_bytes": 1442,
+   "late_p90_bytes": 1668,
+   "age_axis": "HOST"
+  },
+  "file_attach": {
+   "early_median_bytes": 0.0,
+   "late_median_bytes": 3107.5,
+   "drift_bytes": 3107.5,
+   "late_p10_bytes": 0,
+   "late_p90_bytes": 6215,
+   "age_axis": "EPOCH"
+  },
+  "other_attach": {
+   "early_median_bytes": 500.0,
+   "late_median_bytes": 613.0,
+   "drift_bytes": 113.0,
+   "late_p10_bytes": 500,
+   "late_p90_bytes": 731,
+   "age_axis": "EPOCH"
+  },
+  "prompt": {
+   "early_median_bytes": 63549.0,
+   "late_median_bytes": 156.0,
+   "drift_bytes": -63393.0,
+   "late_p10_bytes": 145,
+   "late_p90_bytes": 100410,
+   "age_axis": "EPOCH"
+  }
+ },
+ "first_call_ctx": {
+  "p50": 196313.0,
+  "min": 151998,
+  "max": 258653
+ },
+ "nearest_206186": {
+  "sid": "e297571a-38d9-4c2d-bc20-90558bc8467c",
+  "ts": "2026-09-22T18:18:46.858Z",
+  "ctx": 206190,
+  "rows": [
+   {
+    "category": "constitution",
+    "bytes": 76561,
+    "tokens": 19790,
+    "share": 0.0959794364421165,
+    "basis": "CALIBRATED",
+    "cls": "REDUCIBLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+   },
+   {
+    "category": "rules",
+    "bytes": 259334,
+    "tokens": 67033,
+    "share": 0.3251030602842039,
+    "basis": "CALIBRATED",
+    "cls": "REDUCIBLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+   },
+   {
+    "category": "memory",
+    "bytes": 19056,
+    "tokens": 4926,
+    "share": 0.023890586352393422,
+    "basis": "CALIBRATED",
+    "cls": "ELIMINABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+   },
+   {
+    "category": "hook_injections",
+    "bytes": 12609,
+    "tokens": 3259,
+    "share": 0.015805810175081234,
+    "basis": "CALIBRATED",
+    "cls": "REDUCIBLE",
+    "age_axis": "EPOCH",
+    "class_evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+   },
+   {
+    "category": "skills",
+    "bytes": 15589,
+    "tokens": 4029,
+    "share": 0.01954022988505747,
+    "basis": "CALIBRATED",
+    "cls": "ELIMINABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+   },
+   {
+    "category": "agent_listing",
+    "bytes": 49645,
+    "tokens": 12832,
+    "share": 0.062233861971967605,
+    "basis": "CALIBRATED",
+    "cls": "ELIMINABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+   },
+   {
+    "category": "deferred_tools",
+    "bytes": 6085,
+    "tokens": 1573,
+    "share": 0.007628885978951452,
+    "basis": "CALIBRATED",
+    "cls": "PAGEABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+   },
+   {
+    "category": "mcp_instructions",
+    "bytes": 2804,
+    "tokens": 725,
+    "share": 0.0035161744022503515,
+    "basis": "CALIBRATED",
+    "cls": "ELIMINABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+   },
+   {
+    "category": "system_prompt",
+    "bytes": 10537,
+    "tokens": 2724,
+    "share": 0.013211115961006839,
+    "basis": "CALIBRATED",
+    "cls": "REDUCIBLE",
+    "age_axis": "HOST",
+    "class_evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+   },
+   {
+    "category": "environment",
+    "bytes": 1655,
+    "tokens": 428,
+    "share": 0.002075755371259518,
+    "basis": "CALIBRATED",
+    "cls": "IRREDUCIBLE",
+    "age_axis": "HOST",
+    "class_evidence": "cwd/platform; kept in probe P4 (every switch off)"
+   },
+   {
+    "category": "other_attach",
+    "bytes": 500,
+    "tokens": 129,
+    "share": 0.0006256365488142005,
+    "basis": "CALIBRATED",
+    "cls": "UNKNOWN",
+    "age_axis": "EPOCH",
+    "class_evidence": "no measurement for this category"
+   },
+   {
+    "category": "prompt",
+    "bytes": 44436,
+    "tokens": 11486,
+    "share": 0.055705902323100055,
+    "basis": "CALIBRATED",
+    "cls": "IRREDUCIBLE",
+    "age_axis": "EPOCH",
+    "class_evidence": "the task itself"
+   },
+   {
+    "category": "tool_schemas+framing",
+    "bytes": null,
+    "tokens": 77256,
+    "share": 0.37468354430379747,
+    "basis": "RESIDUAL",
+    "cls": "REDUCIBLE",
+    "age_axis": "HOST",
+    "class_evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+   }
+  ],
+  "g1": {
+   "host_fixed_tokens": 11914,
+   "unknown_class_tokens": 129,
+   "floor_tokens": 206190,
+   "host_fixed_share": 0.05778165769435957,
+   "gate": 0.7,
+   "triggered": false,
+   "upper_bound_share": 0.05840729424317377,
+   "worst_case_share": 0.4330908385469712
+  }
+ },
+ "p50_ledger": {
+  "ctx": 196313,
+  "rows": [
+   {
+    "category": "constitution",
+    "bytes": 76561.0,
+    "tokens": 19790,
+    "share": 0.10080840290760164,
+    "basis": "CALIBRATED",
+    "cls": "REDUCIBLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+   },
+   {
+    "category": "rules",
+    "bytes": 258468.0,
+    "tokens": 66809,
+    "share": 0.3403187766474966,
+    "basis": "CALIBRATED",
+    "cls": "REDUCIBLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "unit kernel+index replace 78,400 -> 4,817 B (V1 r2/r4), parity 5/5"
+   },
+   {
+    "category": "memory",
+    "bytes": 17591.0,
+    "tokens": 4547,
+    "share": 0.02316199130979609,
+    "basis": "CALIBRATED",
+    "cls": "ELIMINABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+   },
+   {
+    "category": "hook_injections",
+    "bytes": 5933.0,
+    "tokens": 1534,
+    "share": 0.007814052049533143,
+    "basis": "CALIBRATED",
+    "cls": "REDUCIBLE",
+    "age_axis": "EPOCH",
+    "class_evidence": "hook prose; probe P4 (--setting-sources \"\") removes 10,569 B; candidate, no parity run"
+   },
+   {
+    "category": "skills",
+    "bytes": 14689.0,
+    "tokens": 3797,
+    "share": 0.019341561689750552,
+    "basis": "CALIBRATED",
+    "cls": "ELIMINABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+   },
+   {
+    "category": "agent_listing",
+    "bytes": 49645.0,
+    "tokens": 12832,
+    "share": 0.06536500384589915,
+    "basis": "CALIBRATED",
+    "cls": "ELIMINABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+   },
+   {
+    "category": "deferred_tools",
+    "bytes": 5853.0,
+    "tokens": 1513,
+    "share": 0.007707080020171868,
+    "basis": "CALIBRATED",
+    "cls": "PAGEABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "names of deferred tools; ToolSearch pages them; absent in probe P3 (--tools \"\" --strict-mcp-config)"
+   },
+   {
+    "category": "mcp_instructions",
+    "bytes": 2804.0,
+    "tokens": 725,
+    "share": 0.0036930819660440217,
+    "basis": "CALIBRATED",
+    "cls": "ELIMINABLE",
+    "age_axis": "PROJECT",
+    "class_evidence": "dropped by unit closure in V1 r2/r4, parity 5/5"
+   },
+   {
+    "category": "system_prompt",
+    "bytes": 10537.0,
+    "tokens": 2724,
+    "share": 0.0138758003800054,
+    "basis": "CALIBRATED",
+    "cls": "REDUCIBLE",
+    "age_axis": "HOST",
+    "class_evidence": "session-specific section, kept in probes P1-P4 and V1 (absent in Madzia lean+print); candidate"
+   },
+   {
+    "category": "environment",
+    "bytes": 1662.0,
+    "tokens": 430,
+    "share": 0.0021903796488261093,
+    "basis": "CALIBRATED",
+    "cls": "IRREDUCIBLE",
+    "age_axis": "HOST",
+    "class_evidence": "cwd/platform; kept in probe P4 (every switch off)"
+   },
+   {
+    "category": "other_attach",
+    "bytes": 503.0,
+    "tokens": 130,
+    "share": 0.0006622078008078935,
+    "basis": "CALIBRATED",
+    "cls": "UNKNOWN",
+    "age_axis": "EPOCH",
+    "class_evidence": "no measurement for this category"
+   },
+   {
+    "category": "prompt",
+    "bytes": 56589.5,
+    "tokens": 14627,
+    "share": 0.07450856540320815,
+    "basis": "CALIBRATED",
+    "cls": "IRREDUCIBLE",
+    "age_axis": "EPOCH",
+    "class_evidence": "the task itself"
+   },
+   {
+    "category": "tool_schemas+framing",
+    "bytes": null,
+    "tokens": 66855,
+    "share": 0.3405530963308594,
+    "basis": "RESIDUAL",
+    "cls": "REDUCIBLE",
+    "age_axis": "HOST",
+    "class_evidence": "probes P1 -> P3 remove 4,114 tokens via --tools \"\" --strict-mcp-config --disable-slash-commands"
+   }
+  ],
+  "g1": {
+   "host_fixed_tokens": 15057,
+   "unknown_class_tokens": 130,
+   "floor_tokens": 196313,
+   "host_fixed_share": 0.07669894505203426,
+   "gate": 0.7,
+   "triggered": false,
+   "upper_bound_share": 0.07736115285284215,
+   "worst_case_share": 0.4179142491837015
+  }
+ }
+}
