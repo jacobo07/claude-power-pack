@@ -1,17 +1,17 @@
 {
-  "envelope": {
-    "target": 6000000,
-    "warn": 7000000,
-    "stop": 8000000,
-    "calls": 80
-  },
-  "workers": [
-    {
-      "name": "kernel-u1",
-      "profile": "slim-t2",
-      "calls": 80,
-      "packet": 6500
-    }
-  ],
-  "effect": "BOUNDED_COGNITION"
+    "envelope":  {
+                     "target":  6000000,
+                     "warn":  7000000,
+                     "stop":  8000000,
+                     "calls":  45
+                 },
+    "workers":  [
+                    {
+                        "name":  "kernel-u1",
+                        "profile":  "slim-t2",
+                        "calls":  45,
+                        "packet":  6500
+                    }
+                ],
+    "effect":  "BOUNDED_COGNITION"
 }
