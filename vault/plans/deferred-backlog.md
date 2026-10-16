@@ -1291,3 +1291,101 @@ steps before model admission; connects CCR Work-Class/PoCN); (4) frontier-collap
   third attempt would have been identical. Workaround: D8v2 on route-M, D9 on route-S. Proposed gate: a residual
   whose route is off the ladder goes to `human_gate` on the FIRST repeat, and a chain lint refuses a unit whose
   packet has post-gate work on a gate route.
+
+---
+
+## D29 -- GSD X Reconstruction Fabric (gsdx-factory Part C): everything left after the close (Owner, 2026-10-16)
+
+**State:** programme CLOSED 2026-10-15/16 in the coordinator pane ab1667dc. Chain `vault/programs/gsdx-fabric/chain.json`
+(f2f8af6f), resume file `vault/programs/gsdx-fabric/RESUMPTION.md`. Units F1 F2 F4 F3b F6 F7 F5 F8 F9 all receipted, all gates
+re-run by the coordinator at the close (34/33/41/36/28/43/20/20/15) with every mutant set red. Fabric branch
+gsdx-factory/fabric at 039af4a6 (worktree `Apps\pp-gsdx-factory-2\.claude\worktrees\fabric`, GEX44 `mission/gsdx-fabric`).
+Goal gsdx-factory-2: programme 57,817,916 (capital 63c090d4, Owner +6M), settled 53,278,196, **unspent 4,539,720**.
+KV `~/.claude/knowledge_vault/domain/binary-reconstruction-fabric.md`; UKDL 86658b3f (5 entries).
+
+**Open work (each needs an Owner word; none is armed):**
+1. **F3c REA canary** -- not compiled: Ghidra `functions` PARTIAL (79.52 % exact vs DTK, bar 90 %). First a
+   boundary-adjudication pass over the 4,176 in-range Ghidra-only functions and the 341 DTK functions Ghidra misses
+   (contradictions already first-class in the ingest), then re-derive `functions`. xrefs also PARTIAL (only call kinds
+   have an oracle).
+2. **Three D12 compiler replays NOT_LIFTED** (need GEX44 compute jobs, excluded from Part C): D12a joint-delta recompile,
+   D12b arm-2 m2c+lint over 91 dependents, D12c joint arm steps 4-10. Exact commands in fabric `WU-F5-receipt.md`.
+3. **CBR promotion:** nothing PROMOTED. Every Tennis-derived item (census, homology, D12 replays, F8 rule) stays CANDIDATE
+   until a held-out replay on a second corpus AND a consumer other than Tennis.
+4. **F8 economics unproven:** the routing saved 9 of 10 calls but the shuffled control did not discriminate (mean 9.565,
+   p95 10). MATCH-rate delta and tokens avoided NOT_PROVEN (need an oracle-judged rerouted sample = compute job). Re-run on
+   a draw where the control can separate before claiming any saving.
+5. **NEAR homology (KN-F4-02) HYPOTHESIZED:** needs a planted-edit control before NEAR counts as evidence.
+6. **UNKNOWNs carried:** dtk commit, xrefs, rel_load, gekko_paired_single (KN-F1-04). Correction to apply in the fabric
+   branch: F1's artifact row has Tennis DOL `tree_sha256='UNKNOWN'`, but it is known (fa0f39d8...b4a8, supply-chain.json).
+
+**Process debt found running it:**
+- **Route sizing:** workers ran ~65-70k processed tokens per message; F3b, F5, F8 needed residuals and F7/F5r/F8b/F9 hit the
+  breaker. Size routes from that floor, not from call counts (see memory feedback_budget_cap_must_be_projected_from_measured_floor).
+- **Receipt lost at the breaker** in 4 of 12 runs (F5r, F8, F8b + F7's WU-F8 draft): "commit the receipt before polish" did not
+  survive the token cap. Proposed: the driver reserves the last ~10 % for a forced receipt-commit turn, or the coordinator
+  commits a worker-written receipt as a documented step.
+- **F7 Birth pin is fragile:** Birth enumerates every module under `modules/recon_fabric/`, so any unit adding a module turns
+  F7 red until re-pinned (happened twice). Pin the module set separately or discover-and-diff instead of byte-pinning.
+- **Kit outside git:** `C:\Users\User\fabric-unit-gex44.ps1` and `C:\Users\User\fabric-kit\` (driver.py, run-unit.sh,
+  watch-unit.ps1, prompt-*.txt) are not version-controlled.
+
+**Security incident (2026-10-15/16):** a bulk "push every branch with unpushed commits" from session 7c5ac907 published
+gsdx-factory/fabric (disc-derived Tennis disassembly fixtures, first commit a5184533) to the PUBLIC GitHub repo for ~24 h.
+Branch deleted from origin 2026-10-16 (Owner go), verified by ls-remote. Pre-push guard installed in `.git/hooks/pre-push`
+(refuses github pushes of gsdx-factory/fabric, mission/*, or any commit touching modules/recon_fabric/fixtures; driven 2 red /
+2 green). Still open:
+- GitHub may serve cached SHAs (a5184533..505e644e) by hash and forks keep copies: GitHub Support purge request, or make the
+  repo private. Owner decision.
+- The guard is bypassed by `--no-verify` and is not carried by a fresh clone (`.git/hooks` is untracked): consider a tracked
+  hook installed by `core.hooksPath`.
+- Other panes still bulk-push this repo; the memory note `feedback_bulk_push_leaks_private_worktree_branch.md` covers this pane only.
+
+**GEX44 residue (cleanup when the Owner closes the topic):** `~/fabric-tools/` (Ghidra 12.1.2 891 MB + GameCubeLoader,
+projects, out; rollback = delete the folder), `~/missions/gsdx-fabric-stage/` (run-* dirs, logs, `f5-untracked/`,
+`WU-F8.F7-draft.md`), clone `~/missions/gsdx-fabric`.
+
+**Activation criterion:** the Owner names one of items 1-6 or the incident follow-ups. Start a fresh pane from
+`vault/programs/gsdx-fabric/RESUMPTION.md`; new units go through `fabric-unit-gex44.ps1` and a new capital packet (the
+remaining 4,539,720 sits under 63c090d4, which expires 2026-10-16T23:59+02:00).
+---
+
+## D30 -- cpp-evc programme (CPP global execution optimization): everything left (Owner, 2026-10-16)
+
+**State at 2026-10-16 ~13:30 (from receipts + `~/.claude/state/evc-chain-tick.log`):** goal `cpp-evc` cap 55M, used 26.63M
+at the 13:29 tick. EVC1-EVC4 DONE; EVC5 DONE on branch `cpp-evc/evc5-pcc` and fast-forwarded into `gsdx/pcc` (e74fee93 ->
+3a328d1c, EVC5_PASS=21/21). EVC6 RUNNING (residual armed 13:19, `WU-EVC6.md.residual.md`). EVC7 not started. Chain
+`vault/programs/cpp-evc/chain.json`, packets and receipts in `C:\Users\User\Apps\pp-cpp-evc\.planning\cpp-evc\packets\`.
+Plan of record: `vault/plans/cpp-evc-master-plan-2026-10-15.md`. Resumption: `C:\Users\User\Apps\pp-cpp-evc\RESUMPTION_FILE.md`.
+
+1. **Land `cpp-evc/main` (EVC1-4) into the live branch.** Merged clean in worktree `C:\Users\User\Apps\pp-evc-land`, branch
+   `cpp-evc/land`, commit 19e503c6 (parent 0f648fa5). Blocked in the live checkout only because `git merge` refuses:
+   `vault/plans/d12b-progress-2026-10-14.md` is dirty there (another pane) and `cpp-evc/main` also changes it. Fix: its owner
+   commits/stashes it, then fast-forward `feature/knowledge-acquisition` to `cpp-evc/land`. Do not stash or discard it blind.
+2. **Land EVC6 and EVC7 the same way** (clean worktree first, regression floor, then live) once their receipts are DONE.
+   Regression floor: `test_gsdx_chain` 43/43, `test_gsd_mission` 230/230, `test_gsd_mission_owner_hold` 41/41,
+   `test_mission_steward` 25/25, `test_mission_recovery` 63/63 (see item 3).
+3. **`V-AMR-SUPERVISE-RECOVERS-AND-LAUNCHES` red (AMR 62/63) on `feature/knowledge-acquisition` base 0f648fa5**, pre-existing
+   and identical with and without the EVC merge. Got `action: recover_launch_failed` with `launch.ok=False`; the failure text
+   was truncated, cause NOT diagnosed. EVC4 saw 63/63 on `cpp-evc/main`, so the base diverges from it. Diagnose before the
+   final landing, or the floor stays red for a reason outside cpp-evc.
+4. **EVC7: book GEX44 2.86M** (still unbooked) with the command in the EVC7 receipt; EVC7 builds `goal-external`.
+5. **E8 canary:** compile WU-P6a (smallest wave 6 unit: slim-t2 + phase_close) only after EVC7. PCC **wave 6 is BLOCKED**:
+   no WU-P6 is to be written before the canary. gsdx-pcc used 100.07M of 175M; PCC registry 39/46 (7 SINGLE_PLANE).
+6. **E9 reforecast** P50/P80/P95 from the canary. Fits PCC's remaining budget -> continue; otherwise ONE capital packet to
+   the Owner.
+7. **Act only on chain alerts** `breaker_residual`, `residual_exhausted`, `refuse_envelope`. The tick (`PP-EvcChain-Tick`,
+   10 min) arms residuals itself; EVC5's armed residual m-9383fa290539 COMPLETED redundantly after its DONE receipt, so a
+   residual can be spent after the unit already closed (~6.6M need was booked). Consider making the arm step re-read the
+   receipt first.
+8. **`RESUMPTION_FILE.md` is stale** (says EVC1 armed, EVC4/EVC5 pending). Rewrite after EVC6 closes, in the pp-cpp-evc
+   worktree, not while a worker is running there. Cap the coordinator at 4M, book it to `cpp-evc`.
+9. **Cleanup when the programme closes:** worktree `C:\Users\User\Apps\pp-evc-land` + branch `cpp-evc/land` (after landing),
+   worktree `C:\Users\User\Apps\pp-cpp-evc-evc5` + branch `cpp-evc/evc5-pcc` (now contained in `gsdx/pcc`), and the
+   `PP-EvcChain-Tick` scheduled task.
+10. **Compound Learnings STUCK** for this project: 13 pending files since 2026-10-15; `/cpp-compound` was auto-prompted 4x
+    without the cursor advancing (Step 7 partial-failing, see memory `project_compound_loop_sticks_at_steps_7_and_8`).
+    Auto-invoke is suppressed; run `/cpp-compound` manually and close with `steps78.py`.
+
+**Activation criterion:** the Owner names an item, or EVC6 posts a DONE receipt (then items 2, 4, 5 become actionable in
+order). Start a fresh thin pane (Sonnet is enough) from `RESUMPTION_FILE.md`; do not re-read transcripts.

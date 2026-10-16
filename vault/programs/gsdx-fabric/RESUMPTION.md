@@ -14,7 +14,7 @@ Programme 57,817,916, settled 53,278,196, unspent 4,539,720. KV `~/.claude/knowl
 
 **Coherence anchor.** `programme-status --goal gsdx-factory-2` settled 53,278,196, open 0; fabric worktree HEAD = GEX44 clone HEAD 039af4a6.
 
-**Open, Owner's choice (no work scheduled):**
+**Everything left is in the PP backlog as D29** (`vault/plans/deferred-backlog.md`). Summary, Owner's choice (no work scheduled):
 1. F3c (REA canary): needs Ghidra function boundaries >= 90 % vs DTK; F3b measured 79.52 %. A boundary-adjudication pass comes first.
 2. The three D12 compiler replays (commands in WU-F5-receipt.md) need GEX44 compute jobs, excluded from this programme.
 3. Promotion of any Tennis-derived item needs a held-out replay on a second corpus and an outside consumer (CBR: nothing PROMOTED).
