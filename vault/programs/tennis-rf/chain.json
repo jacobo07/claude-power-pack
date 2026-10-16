@@ -272,54 +272,43 @@
             ]
         },
         {
-            "id": "R2",
+            "id": "PX",
             "max_residuals": 1,
-            "note": "plan recon-factory-locality-routing-2026-10-15 (Owner 'y'): dossier + router + permuter admission",
-            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-R2.md",
+            "note": "plan r2-failure-recompile-2026-10-16 (Owner y): merged R2+R1min+P1, direct handles, checkpoint 1.0M",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-PX.md",
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
-            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-R2-receipt.md",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-PX-receipt.md",
             "after": "D12c",
-            "accept": ["DONE", "DONE_WITH_LIMITS"]
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
         },
         {
-            "id": "R1",
-            "max_residuals": 1,
-            "note": "judge contract, --l0, supersede, control fixture, D12 transfer matrix",
-            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-R1.md",
-            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
-            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-R1-receipt.md",
-            "after": "R2",
-            "accept": ["DONE", "DONE_WITH_LIMITS"]
-        },
-        {
-            "id": "P1",
-            "max_residuals": 1,
-            "note": "pilot on 9 PARTIALs, GEX44 job 4 (reassigned by Owner 2026-10-15)",
-            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-P1.md",
-            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
-            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-P1-receipt.md",
-            "after": "R1",
-            "accept": ["DONE", "DONE_WITH_LIMITS"]
-        },
+            "id": "PZ",
+            "max_residuals": 0,
+            "note": "reprice + NEXT/VERDICT + confirmed knowledge entries",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-PZ.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-PZ-receipt.md",
+            "after": "PX",
+            "accept": [
+                "DONE",
+                "DONE_WITH_LIMITS"
+            ]
+        }
+    ],
+    "deferred": [
         {
             "id": "R3",
-            "max_residuals": 1,
-            "note": "gsdx_chain strategy exhaustion + coordinator guard (PP global, additive)",
+            "class": "institutional CAPEX",
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-R3.md",
-            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
-            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-R3-receipt.md",
-            "after": "P1",
-            "accept": ["DONE", "DONE_WITH_LIMITS"]
+            "reason": "not needed for safe continuation; fund on cross-programme reuse (plan r2-failure-recompile-2026-10-16)"
         },
         {
-            "id": "P2",
-            "max_residuals": 1,
-            "note": "reprice by class, next strategy or verdict, KV/UKDL/CBR",
-            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-P2.md",
-            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
-            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-P2-receipt.md",
-            "after": "R3",
-            "accept": ["DONE", "DONE_WITH_LIMITS"]
+            "id": "R1-rest",
+            "class": "Tennis OPEX",
+            "reason": "judge contract doc + D8v2 supersede not needed to judge job 4"
         }
     ]
 }
