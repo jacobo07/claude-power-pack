@@ -134,6 +134,15 @@ progress: |
      967f48f result; laptop TB at 967f48f.
   NEXT (needs Owner): P33 = CameraCut framing variant for a head-on shot (smaller range, roty=180) + all frames at full
      res for the womprat (or a camera aimed at MainRoomIdle). Same coordinator-run shape, one slot.
+  OWNER "y". P33 DONE (coordinator; tbl-20261016-211232; disc 0bee95b6; ledger SLOT-TB-P33 138/139, PASS events=139
+     violations=0; its experiment field reads "tb_p33_hub_camera_hold", a sed-rename slip, slot/job correct, left as is).
+     A static survey of the stock .scp came first: Player0 is only used with campos_x/y/z; the stock close-up is
+     `range=2 rotx=10 roty=90 tgt_character=player`. Using it verbatim (end_time=60) gave a HEAD-ON MEDIUM shot held
+     t84-112 in 21/21 frames: front-camera PASS (medium, not a close-up). Womprat x2 (WompRat, spawned_womprat,
+     nearest_player): no four-legged shape in 21/21 frames (640px sheet). FAIL in view; an off-camera spawn is not excluded.
+     TB 28f9865 prereg, 1e2dd6f result; laptop TB at 1e2dd6f.
+  NEXT (needs Owner): P34 = the womprat spawn on a named, camera-visible locator, with a RandomMap spawn at the same locator as
+     the control (a patron appearing there proves the locator and the line work; then a missing womprat = a type/script problem).
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
