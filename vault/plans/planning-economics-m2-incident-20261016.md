@@ -87,6 +87,18 @@ progress: |
   OWNER "y": tranche P30 = 12M HARD (worker watchdog 10M hard, coordinator <=2M). P30 = static RE, read-only on game
      data: main.dol load-path strings (which file the engine opens for a level script) + MosEisley_C .AI2/.CSC vs the
      level.scp identifiers; deliverable docs/RE_CANTINA_LEVEL_SCRIPT.md + a read-only scan tool + a proposed P5 edit route.
+  P30 DONE: worker f0ae8f9c 1,500,297 processed, 6 min, TB 19ce128 (doc + tools/re/scan_level_script.py). Worker answer
+     LIVE_IN_MOSEISLEY_C.AI2 ("compiled script") WITHDRAWN by the coordinator. The AI2 is locator/path data: 46-byte
+     records = 16-byte name + LE f32 coordinates (Walk_0 -2.64,0.01,2.57). level.scp's type=cantinaaliens /
+     MosEisleyCitizen are absent from it. Its "ai2 first" load order was inferred from string adjacency and labelled OBSERVED.
+     Coordinator static checks: the P29 WBFS carries the unparseable level.scp (wit extract, 40 bytes); 203 .fpk / 22,597
+     entries hold no .scp. TB 3f5ae22 + c32df0f; laptop TB at c32df0f. Answer UNKNOWN. Live readings: (a) the loose
+     .scp is read and a parse failure is swallowed, or (c') an unfound source. Tranche P30: worker 1.50M + this pane.
+     Lesson: a cheap worker answer arrives fast and confident. 3 of 4 worker conclusions today (P27 reviewer, P29
+     first_cantina_t, P30 answer) did not survive one coordinator check.
+  NEXT (needs Owner: a Dolphin slot): P31 = ONE run of the existing P29 disc with Dolphin's FileMonitor log + console
+     log on; list every file opened under MosEisley_C and any "Script parse error"/"Failed to open" line. Decides
+     whether the loose .scp is opened at all. Same worker shape, P50 ~3M.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
