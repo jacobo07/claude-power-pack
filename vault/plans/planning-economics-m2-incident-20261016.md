@@ -6,12 +6,13 @@ progress: |
   E1 DONE: d466d977 hold --stop (owner_pause; V-OP 5/5, drill 2 red), 2f61b594 session-tree (V-STR 4/4; real M2
      tree on GEX44 = 29,947,551 exactly). PP clone on GEX44: ~/missions/pp-tbm2 (git archive of 2f61b594).
   E2 DONE: ae7c45c2 planning_gate.py + arm --work-unit/--planning-override (V-PNG 17/17; drills 9 + 1 red).
-  NEXT E3 (TB repo, laptop main f45be11, bundle to GEX44 clone): .planning/capsules/TB-DISC-PROBE.json
-     (closed obligations: hud-portraits P24, cantina-default-pair P22, names P12, goatee P21, linux-build-identity
-     P24, local-route P24; invalidators = sha of tools/gex44/tb_disc_boot.sh, tb_local.py, tb_client.py;
-     P22 timeline as default; max_unknowns 3; budgets DIRECT 0 / DELTA 1M) + tools/prereg_lint.py (json block
-     in the prereg: probe key in PROBES, every judged t in capture, claims not closed, tb_client grammar) + test
-     that reproduces the t300 and portrait blockers. Then E5 P25 (unit JSON -> planning_gate -> prereg -> lint ->
+  E3 DONE: TB ac66192 capsule .planning/capsules/TB-DISC-PROBE.json + c79728f tools/prereg_lint.py
+     (test_prereg_lint 15/15 laptop AND GEX44; in-memory mutants of the TIME and CLOSED checks go red; the t300
+     and portrait blockers are fixtures). GEX44 ~/missions/tb-m2 main fast-forwarded to c79728f by bundle
+     (worktree-m2-phase5 untouched); invalidator sha256 identical on Linux. ~/missions/pp-tbm2 got the 3 E2 files
+     (LF, blob-identical to ae7c45c2; the E1 archive there is CRLF via autocrlf, content = E1): V-PNG 17/17 there,
+     and planning_gate on a P25 unit (2 unknowns) -> DELTA_PLAN, 1M authority, no planner agent.
+  NEXT E5 P25 (unit JSON -> planning_gate -> prereg -> lint ->
      PROBES entry editing the Cantina .scp -> build -> tb_local on GEX44; bounded worker or this pane), E6
      reforecast, E7 CCR shadow receipt + UKDL/vault. Spend this pane from approval must be measured with
      mission_spend session-tree, never a line sum.
