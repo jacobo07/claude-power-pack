@@ -124,6 +124,16 @@ progress: |
   NEXT (needs Owner, new unit): P32 = P28's observables (CameraCut 60 s on Player0 + womprat x3) inserted into the
      HUB's Start state in Levels/Map/map/ai/ (read level.scp / level1.scp first for the owner of Start). TB-DISC-PROBE
      capsule, DELTA_PLAN, P50 ~3.6M; keep TB_DOLPHIN_LOG=1 on, so the log shows that the edited .scp is opened.
+  OWNER "y". P32 DONE (coordinator, no worker; tbl-20261016-205749; disc 62a42439; ledger SLOT-TB-P32 136/137, PASS
+     events=137 violations=0). The hub has no Start state: level1.scp is Base -> Update -> Enter_MainRoom (InHubArea
+     MAINROOM; creates the 13 patrons). Edits anchored on the Enter_MainRoom header (the first anchor, a comment, occurs 10x:
+     the build refused it, nothing spent). Gate PASS (level1.scp opened, log line 1033). hub-scp PASS with a deviation: a
+     held NON-STOCK camera t84-112 (far, behind a pillar, through the mirrored timer hologram; PLUS no longer pauses),
+     not the planned close-up. front-camera FAIL. spawn-route INCONCLUSIVE (4 of 21 frames looked at; womprat FileMon
+     opens are stock, P31c opens them too). P5-HUB-SCP CLOSED: the loose-.scp route works on the hub. TB 74b8007 prereg,
+     967f48f result; laptop TB at 967f48f.
+  NEXT (needs Owner): P33 = CameraCut framing variant for a head-on shot (smaller range, roty=180) + all frames at full
+     res for the womprat (or a camera aimed at MainRoomIdle). Same coordinator-run shape, one slot.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
