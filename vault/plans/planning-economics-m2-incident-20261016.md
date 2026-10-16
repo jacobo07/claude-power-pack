@@ -113,6 +113,17 @@ progress: |
   NEXT (needs Owner, a 3rd slot): the coordinator runs ONE literal command itself, no worker:
      TB_DOLPHIN_LOG=1 python3 tools/gex44/tb_local.py run build/TwoBuilders_P29.wbfs --capture <P29> --inputs <P29>,
      gated on runner.log "dolphin log on" + >=10 FileMon lines before any reading.
+  OWNER "do it yourself". P31c DONE (coordinator, no worker; tbl-20261016-204510; ledger SLOT-TB-P31C seq 134/135,
+     PASS events=135 violations=0): gate held (runner.log "dolphin log on"; 987 FileMon lines of 1073). ANSWER: the
+     Cantina on this route is the HUB level Levels/Map/map. MosEisley_C is never opened. The engine opens
+     Map/map/ai/MAP.AI2, ai/script.txt, then every loose ai/*.scp it lists (level, level1 16 kB, barman, band1-3, jabba,
+     party, Map*). Global Scripts/SCRIPT.TXT + Scripts/*.scp are read once scripts/ai.pak is not found. P25-P29 edited a
+     level this route never loads; P30's answer and reading (a) are both moot. TB b48bff9; laptop TB at b48bff9.
+     Lesson: four probes and one RE unit (~25M of workers plus panes) went to a premise nobody had checked: which
+     level is on screen. One instrumented run answered it.
+  NEXT (needs Owner, new unit): P32 = P28's observables (CameraCut 60 s on Player0 + womprat x3) inserted into the
+     HUB's Start state in Levels/Map/map/ai/ (read level.scp / level1.scp first for the owner of Start). TB-DISC-PROBE
+     capsule, DELTA_PLAN, P50 ~3.6M; keep TB_DOLPHIN_LOG=1 on, so the log shows that the edited .scp is opened.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
