@@ -72,9 +72,18 @@ progress: |
      corrected (it still said P27 confirmed the loose .scp). Ledger: SLOT-TB-P28 AUTHORIZED/CONSUMED, PASS events=127
      violations=0, IN SYNC. Laptop TB at 671078e. Finding: 3 runs, 2 different Start-state actions, zero effect.
      P5-SCP narrowed to "loose level.scp not read OR Start actions not executed".
-  NEXT (needs Owner; P28 tranche ~2.4M worker of 10M used, plus this pane): P29 = make the loose MosEisley_C
-     AI/level.scp unparseable or remove it, compare to P24 at t76-100/1 s (same = not read; different = read).
-     Same worker shape; fits the P28 tranche remainder.
+  OWNER "y": P29 from the P28 tranche remainder.
+  P29 DONE: worker caa0f1c1 4,581,461 processed, tbl-20261016-162456 (disc e5737cc5...). Loose MosEisley_C level.scp
+     replaced by one unparseable line -> Cantina at t085 identical to P24 (HUD, layout, patrons, pause menu at t100):
+     scp-read FAIL, scp-not-read PASS (qualified). Worker errors corrected in the result: first_cantina_t is 85 not
+     null; its packed-copy search was text-only (0 hits in 1561 .pak/.fpk/.AI2/.CSC/.CTR), which cannot see a compiled
+     script. The worker's process hung 16 min after its run: its sha256 one-liner reopened the file each read
+     (`iter(lambda: open(p).read(n), b'')`) and looped forever in a background shell; claude -p would not exit until
+     the coordinator killed it. TB 63e10ab prereg, eba80ef result + RESUMPTION. Ledger SLOT-TB-P29 PASS events=129
+     violations=0, IN SYNC. Laptop TB at eba80ef. P28 tranche used by workers: 2.40M + 4.58M = 6.98M of 10M, plus this pane.
+  CONCLUSION P26-P29: four runs, no loose level.scp edit has any effect, so the loose .scp is a dead end for P5.
+  NEXT (needs Owner, new tranche): static RE of MosEisley_C .AI2/.CSC to find the compiled level script (E6 phase-7
+     class: novel RE, BOUNDED_PLAN, P50 8M / P80 12M / P95 20M), offline, no Dolphin slot.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
