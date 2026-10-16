@@ -37,6 +37,9 @@ let prevCtx = 0
 // Image results of the main loop by tool_use_id: what a pixel GC compaction can evict and name.
 const imageUses = new Map<string, ImageFact[]>()
 
+// A planning fan-out agent: the planner or its checker. Receipt-only; nothing branches on it.
+export const isPlannerType = (t: unknown): boolean => typeof t === 'string' && /^gsd-(planner|plan-checker)$/.test(t)
+
 const receipt = (r: Receipt) => { receipts.push({ ts: Date.now(), sid, ...r }) }
 
 const flush = async ($: any) => {
@@ -199,7 +202,10 @@ export const register: Register = on => {
   on('agent.spawn', async ($, e, next) => {
     const r: any = await next(e)
     if (r.agentId) agentTypes.set(r.agentId, e.subagentType)
-    receipt({ ev: 'spawn', agentId: r.agentId ?? null, agentType: e.subagentType, prompt: e.prompt.length, model: r.model ?? null })
+    // Shadow facts for the Planning Necessity audit (PR-PLANNING-NECESSITY-001): recorded, never acted on.
+    const unit = await loadUnit($).catch(() => null) // no declaration: no mission id
+    receipt({ ev: 'spawn', agentId: r.agentId ?? null, agentType: e.subagentType, prompt: e.prompt.length, model: r.model ?? null,
+      planner: isPlannerType(e.subagentType), mission: unit?.id || null })
     return r
   })
 

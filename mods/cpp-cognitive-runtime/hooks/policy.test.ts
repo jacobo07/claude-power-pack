@@ -4,6 +4,15 @@ import {
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
   subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly,
 } from './policy'
+import { isPlannerType } from './register'
+
+test('the spawn receipt flags a planner fan-out agent and no other type', () => {
+  expect(isPlannerType('gsd-planner')).toBe(true)
+  expect(isPlannerType('gsd-plan-checker')).toBe(true)
+  expect(isPlannerType('gsd-executor')).toBe(false)
+  expect(isPlannerType('gsd-planner-extra')).toBe(false)
+  expect(isPlannerType(undefined)).toBe(false)
+})
 
 // The madzia-worker model tools/ccr_pgo.py built from post-fix attempts a6-a8 (2026-10-12).
 const MADZIA = JSON.stringify({ cls: 'madzia-worker', n: 3, floor: { p50: 18938, p80: 19049.6 }, calls: { p50: 25, p80: 28.6 },

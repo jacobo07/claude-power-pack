@@ -17661,3 +17661,18 @@ decision D-03 "repair, never carry known-incomplete gold forward". Mechanism: `e
 - [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
 
 - [tooling/powershell:Get-Item] `ceps_d284f9fa8e8a94c8` -- Tool failure in powershell:Get-Item: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+### PR-PLANNING-NECESSITY-001
+
+PROVEN. Before a planner fan-out, ask whether the work class has a valid precedent capsule (`tools/planning_gate.py`). A class with
+precedents becomes a DELTA_PLAN unit: a prereg plus `prereg_lint`, no planner or plan-checker agent. 2026-10-16 mission: a
+planner -> checker -> replanner loop spent 29.9M tokens over 224 turns with 0 executed, for a probe whose class had 3 precedents; the
+same probe as a headless Sonnet worker cost 3.65M and was executed and judged. The CCR spawn receipt now carries `planner` and
+`mission` (shadow, never blocks). Evidence: `vault/plans/planning-economics-m2-incident-20261016.md`.
+
+### T-OBSERVABLE-NOT-DISCRIMINATING-001
+
+SHADOW. A pass observable that the unedited control also produces proves nothing: P25 "no crash" passes on the unmodified build, and a
+trigger that never fired tests nothing. Sister of T-NON-DISCRIMINATING-CONTROL-001, for pass criteria rather than numbers. Judge every
+PASS as a difference from a control run on the same timeline, and show the trigger fired in the treated arm. Evidence:
+`vault/plans/planning-economics-m2-incident-20261016.md`.
