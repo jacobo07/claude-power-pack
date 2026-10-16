@@ -99,6 +99,10 @@ progress: |
   NEXT (needs Owner: a Dolphin slot): P31 = ONE run of the existing P29 disc with Dolphin's FileMonitor log + console
      log on; list every file opened under MosEisley_C and any "Script parse error"/"Failed to open" line. Decides
      whether the loose .scp is opened at all. Same worker shape, P50 ~3M.
+  OWNER "y": P31 from the P30 tranche remainder (Dolphin slot allowed). Coordinator added opt-in TB_DOLPHIN_LOG=1 to
+     tools/gex44/tb_disc_boot.sh (Logger.ini: FileMon + OSREPORT, copied to out/dolphin.log; default path unchanged,
+     test_tb_disc_boot 14/14, test_tb_local 7/7) and refreshed the capsule harness sha (TB 3019f13). Worker deaea746
+     launched 18:54:19Z on the existing P29 disc; log-works is an instrument claim (an empty log cannot show absence).
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
