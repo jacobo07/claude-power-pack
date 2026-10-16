@@ -19,7 +19,7 @@
     "pp-code-reviewer":          {"floor": 62682,  "p50": 65473,  "write": false, "n": 23},
     "Explore":                   {"floor": 24428,  "p50": 25226,  "write": false, "n": 14},
     "slim-t1":                   {"floor": 8848,   "p50": 8848,   "write": false, "n": 1},
-    "slim-t2":                   {"floor": 13507,  "p50": 13507,  "write": true,  "n": 2, "growth": 1725, "growth_n": 4, "physical_ratio": 2.4, "physical_ratio_n": 4, "misses": [], "requires": "vault/config/slim-critical-settings.json"}
+    "slim-t2":                   {"floor": 13507,  "p50": 13507,  "write": true,  "n": 2, "growth": 1815, "growth_n": 5, "physical_ratio": 2.4, "physical_ratio_n": 4, "notes": "2026-10-16: growth = n-weighted mean of 1725 (n=4) and 2174.2 (session a7e006a1-d5dc-4458-bdae-da5115e40f86, 10 distinct calls, ctx 18917->38485). physical_ratio unchanged: that sample was censored by the route call cap (20).", "misses": [], "requires": "vault/config/slim-critical-settings.json"}
   }
 }
 

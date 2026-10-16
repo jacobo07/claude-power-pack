@@ -78,7 +78,7 @@ def main() -> int:
 
     # slim-t2 carries the budget breaker: admitted with its measured floor only when the critical
     # settings file exists (control: present -> ADMISSIBLE; absent -> ESCALATE, never launched).
-    slim = {"envelope": W0R_ENV, "workers": [{"name": "s", "profile": "slim-t2", "calls": 25, "packet": 4_000}]}
+    slim = {"envelope": W0R_ENV, "workers": [{"name": "s", "profile": "slim-t2", "calls": 20, "packet": 4_000}]}
     with tempfile.TemporaryDirectory() as root:
         (Path(root) / "vault" / "config").mkdir(parents=True)
         missing = ra.admit(slim, floors, root=root)
