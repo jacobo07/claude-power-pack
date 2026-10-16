@@ -12,7 +12,12 @@ progress: |
      (worktree-m2-phase5 untouched); invalidator sha256 identical on Linux. ~/missions/pp-tbm2 got the 3 E2 files
      (LF, blob-identical to ae7c45c2; the E1 archive there is CRLF via autocrlf, content = E1): V-PNG 17/17 there,
      and planning_gate on a P25 unit (2 unknowns) -> DELTA_PLAN, 1M authority, no planner agent.
-  NEXT E5 P25 (unit JSON -> planning_gate -> prereg -> lint ->
+  BUDGET GATE (measured 2026-10-16 ~14:05Z, mission_spend._file_tokens deduped, since the approval message
+     13:23:01Z): predecessor 56c349b4 19,956,064 (avg ctx 278k, peak 454k: context rent) + successor efadfbcc
+     7,334,378 (avg 154k) = 27,290,442 of the 30.5M tranche. 25M "hard stop" (sec. 32) passed; ~3.2M left
+     cannot cover E5 (P95 8M). STOPPED for the Owner: raise/second tranche, or run E5 as a fresh small-context
+     Sonnet worker on GEX44 (the compiled-unit path this plan forecasts at <=70k ctx), not from an Opus pane.
+  NEXT (after Owner) E5 P25 (unit JSON -> planning_gate -> prereg -> lint ->
      PROBES entry editing the Cantina .scp -> build -> tb_local on GEX44; bounded worker or this pane), E6
      reforecast, E7 CCR shadow receipt + UKDL/vault. Spend this pane from approval must be measured with
      mission_spend session-tree, never a line sum.
