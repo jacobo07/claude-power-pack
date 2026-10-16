@@ -1335,8 +1335,10 @@ gsdx-factory/fabric (disc-derived Tennis disassembly fixtures, first commit a518
 Branch deleted from origin 2026-10-16 (Owner go), verified by ls-remote. Pre-push guard installed in `.git/hooks/pre-push`
 (refuses github pushes of gsdx-factory/fabric, mission/*, or any commit touching modules/recon_fabric/fixtures; driven 2 red /
 2 green). Still open:
-- GitHub may serve cached SHAs (a5184533..505e644e) by hash and forks keep copies: GitHub Support purge request, or make the
-  repo private. Owner decision.
+- CLOSED 2026-10-16, Owner: accept the residual; no GitHub Support purge, repo stays public ("trust no one saw it").
+  Measured at the close: 0 of 122 origin refs contain a5184533 or 505e644e (merge-base over ls-remote; the 2 refs not in
+  the local db are refs/pull/6,7/merge, PRs from unrelated branches), forks_count 0, but both SHAs are still served by
+  hash via the API (gh api .../commits/<sha>). Only GitHub Support can stop that; reopen this if the fixtures matter later.
 - The guard is bypassed by `--no-verify` and is not carried by a fresh clone (`.git/hooks` is untracked): consider a tracked
   hook installed by `core.hooksPath`.
 - Other panes still bulk-push this repo; the memory note `feedback_bulk_push_leaks_private_worktree_branch.md` covers this pane only.
