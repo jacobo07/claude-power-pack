@@ -47,6 +47,14 @@ progress: |
      26.9M: context rent ~300k/turn after images) + P25 3.65M + E7 2.02M = 52.56M vs the 40.5M tranche (+12M).
      Workers: 11.21M total for P25+P26+E7. STOPPED; no further work from this pane. Owner: next M2 unit P27
      (dense capture t35-60, named cropped evidence) needs a reviewer path that is not this pane.
+  OWNER "yes" (P27 + separate reviewer). P27 chain on GEX44 (~/missions/p27_chain.sh): Sonnet worker 865d227d (same
+     P26 disc, captures every 2 s t30-70, lists runs/<job>/candidates.json, NO verdicts; watchdog 8M/10M) -> fresh
+     Sonnet reviewer e96aac0a (sees only claims + candidate/control frames; cap 1.5M) writes the RESULT verdicts
+     and commits. Try 1 (cf54013a, 225k) stopped itself on a GEX44 "CONTEXT CRITICAL" hook advisory that a headless
+     run cannot act on; the packet now says such advisories are non-binding. Laptop waiter task ba9mwie2z.
+  NEXT (successor pane, small context): on chain end, read ~/missions/p27_chain.jsonl + p27_review.out + both
+     watch logs; fetch TB main to the laptop; spot-check ONE PASS frame vs control if any PASS; ledger_reconcile
+     --apply (P26 + P27 slots); record spend; then E-series is closed, and M2 continues phase by phase under the E6 table.
   E6 reforecast (processed tokens per phase; capsule probe cost from P25 n=1, so confidence LOW):
      | Phase | Class | Gate mode | P50 | P80 | P95 |
      | 5 rerun (unconditional trigger, then Force) | capsule | DELTA_PLAN | 3.6 | 5 | 8 |
