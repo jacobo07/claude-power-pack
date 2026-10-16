@@ -1459,6 +1459,28 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind:
     return out
 
 
+def owner_pause(mission_id: str, reason: str, now: float | None = None, sessions=None,
+                pid_alive=lr._pid_alive, stop_runner=None) -> dict:
+    """An Owner pause that also STOPS the live background worker, through the host (`claude stop` + wait).
+    Measured 2026-10-16 (m-f9290d78278f): a plain Owner hold left the worker running, and a raw SIGTERM
+    was read by the Claude daemon as a crash and resumed. The stop is recorded as the hold's
+    `worker_stopped_at`, so plan_next parks the dead owner instead of recovering or settling it.
+    A failed stop leaves the hold standing and returns ok=False; nothing is retried here."""
+    now = time.time() if now is None else now
+    rec = set_owner_hold(mission_id, reason, now=now, kind="owner_stop")
+    if sessions is None:
+        sessions = host_sessions()
+    ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
+    lr.ledger_append(mission_id, "owner_pause_stopped" if ok else "owner_pause_stop_failed",
+                     mission_id=mission_id, ok=ok, how=how)
+    if not ok:
+        return {"ok": False, "how": how, "record": rec}
+    rec = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="owner_pause_stopped",
+                     now=now, reason=f"owner pause: worker stopped ({how})",
+                     owner_hold={**rec["owner_hold"], "worker_stopped_at": now, "stop": how})
+    return {"ok": True, "how": how, "record": rec}
+
+
 def hold_guard_budget(rec: dict, reason: str = "") -> list[str]:
     """EVC U5: a hold that only flips the record leaves the live worker burning (it never reads the
     record). Also write a stop=1 session-budget guard file for every session the mission spent
@@ -5660,6 +5682,9 @@ def _cli(argv=None) -> int:
     oh = sub.add_parser("hold", help="park a live mission: no launch, halt or renewal (spec mission-owner-hold)")
     oh.add_argument("--mission", required=True)
     oh.add_argument("--reason", required=True)
+    oh.add_argument("--stop", action="store_true",
+                    help="also stop the live background worker through the host (claude stop + wait); "
+                         "never kill the pid by hand: the daemon resumes a killed session")
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
     orl.add_argument("--mission", required=True)
     bd = sub.add_parser("bind", help="AMCR: bind the mission to the git worktree its worker now writes "
@@ -5756,6 +5781,12 @@ def _cli(argv=None) -> int:
         rec = add_directive(args.mission, args.text)
         print(f"DIRECTIVE RECORDED mission={rec['mission_id']} total={len(rec['directives'])}")
         return 0
+    if args.cmd == "hold" and args.stop:
+        out = owner_pause(args.mission, args.reason)
+        rec = out["record"]
+        print(f"OWNER PAUSE {'STOPPED' if out['ok'] else 'HELD, STOP FAILED'} mission={rec['mission_id']} "
+              f"state={rec['state']} epoch={rec['epoch']} stop={out['how']}")
+        return 0 if out["ok"] else 1
     if args.cmd == "hold":
         rec = set_owner_hold(args.mission, args.reason)
         print(f"OWNER HOLD SET mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
