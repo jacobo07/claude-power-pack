@@ -82,6 +82,46 @@ function agentTokens(file) {
   return total;
 }
 
+// Used tokens of the session transcript (deduped, counted like agentTokens) and its LAST call's context.
+function sessionUsage(file) {
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch (e) { return null; }
+  const seen = new Set();
+  let total = 0;
+  let last = 0;
+  for (const line of text.split('\n')) {
+    if (line.indexOf('"usage"') < 0) continue;
+    let r;
+    try { r = JSON.parse(line); } catch (e) { continue; }
+    const m = (r && r.message) || {};
+    const u = m.usage;
+    if (!u || m.model === '<synthetic>') continue;
+    const id = m.id || r.uuid;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    let n = 0;
+    for (const k of USAGE_KEYS) n += Number(u[k]) || 0;
+    total += n;
+    last = n;
+  }
+  return { total, last };
+}
+
+// Hard cap of the mission in processed tokens: the tightest of authority, estimate x trip ratio, phase lease hard line.
+function hardCap(record) {
+  const caps = [];
+  const auth = positive(record.authority_tokens);
+  if (auth) caps.push({ cap: auth, what: 'authority' });
+  const est = positive(record.token_estimate);
+  if (est) caps.push({ cap: Math.floor((positive(record.token_trip_ratio) || 2) * est), what: 'estimate x trip ratio' });
+  const l = record.phase_lease;
+  if (l && positive(l.forecast) && positive(l.hard)) {
+    caps.push({ cap: (Number(l.base) || 0) + Math.floor(l.forecast * l.hard), what: `phase ${l.phase} hard line` });
+  }
+  caps.sort((a, b) => a.cap - b.cap);
+  return caps[0] || null;
+}
+
 function subagentTranscript(event, agentId) {
   const tp = event.transcript_path;
   if (!tp || !agentId || !SID_RE.test(agentId.replace(/^agent-/, ''))) return null;
@@ -141,6 +181,22 @@ function decide(event) {
       };
     }
   }
+  // 4. NEXT-CALL EXPOSURE (Env 0): used + the last call's context would pass the hard cap -> refuse, so a
+  //    mission overshoots by at most one call. `used` = this session's transcript + record.spend_carried (spend of
+  //    earlier sessions, when the supervisor recorded it): a lower bound of mission spend, so a deny is positive evidence.
+  const cap = hardCap(record);
+  if (cap && event.transcript_path) {
+    const u = sessionUsage(event.transcript_path);
+    if (u) {
+      const used = u.total + (Number(record.spend_carried) || 0);
+      if (used + u.last > cap.cap) {
+        return { mission: mid, kind: 'next_call_exposure',
+          deny: `MISSION CAP -- ${mid} has processed at least ${fmt(used)} tokens and the next call costs about ${fmt(u.last)} ` +
+            `(context of the last call); that passes the ${cap.what} hard cap ${fmt(cap.cap)}. End this turn with a status and ` +
+            'the next exact action; only the Owner or the supervisor reforecasts.' };
+      }
+    }
+  }
   const agentId = event.agent_id ? String(event.agent_id) : '';
   const agentType = event.agent_type ? String(event.agent_type) : '';
   const key = agentId || (agentType ? `type:${agentType}` : '');
@@ -174,4 +230,4 @@ function run(ev) {
   return null;
 }
 
-module.exports = { run, decide, capFor, agentTokens, DEFAULT_CAP };
+module.exports = { run, decide, capFor, agentTokens, sessionUsage, hardCap, DEFAULT_CAP };
