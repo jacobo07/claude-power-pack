@@ -147,6 +147,22 @@ def main() -> int:
     check("V-MG-CONTROL-NO-TRANSCRIPT-NOT-A-TOKEN-DENY", gate({**sub("t3"), "transcript_path": tp}, tok) is None,
           "an absent subagent file is unmeasured here; the call cap still governs")
 
+    # 4b. next-call exposure: used + last-call context past the hard cap is refused; under the cap is admitted.
+    cx = worker("m-a00005")
+    cproj = Path(TMP) / "cproj"
+    cproj.mkdir()
+    ctp = cproj / f"{cx}.jsonl"
+    ctp.write_text("\n".join([row(1, 400_000), row(2, 500_000)]) + "\n", encoding="utf-8")
+    gm.transition("m-a00005", expect_epoch=1, expect_state=gm.RUNNING, event="t_cap", authority_tokens=1_000_000)
+    r = gate({"session_id": cx, "tool_name": "Read", "tool_input": {"file_path": "a"}, "transcript_path": str(ctp)})
+    check("V-MG-NEXT-CALL-DENIES-NEAR-CAP", "MISSION CAP" in denied(r) and "authority hard cap 1,000,000" in denied(r),
+          denied(r)[:120] + "  (900,000 used + 500,000 next > 1,000,000)")
+    gm.transition("m-a00005", expect_epoch=1, expect_state=gm.RUNNING, event="t_cap2", authority_tokens=2_000_000)
+    check("V-MG-CONTROL-NEXT-CALL-UNDER-CAP-ALLOWED", gate({"session_id": cx, "tool_name": "Read",
+          "tool_input": {"file_path": "a"}, "transcript_path": str(ctp)}) is None, "1,400,000 <= 2,000,000")
+    check("V-MG-CONTROL-NEXT-CALL-NO-TRANSCRIPT-ALLOWED", gate({"session_id": cx, "tool_name": "Read",
+          "tool_input": {"file_path": "a"}}) is None, "unmeasured is not a deny here")
+
     # 5. wired through the registered guard: the same refusal comes out of session_budget_guard.decide.
     out = node("session_budget_guard.js", "decide", {"session_id": held, "tool_name": "Bash",
                                                        "tool_input": {"command": "ls"}, "cwd": TMP})
