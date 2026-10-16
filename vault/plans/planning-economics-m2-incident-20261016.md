@@ -103,6 +103,16 @@ progress: |
      tools/gex44/tb_disc_boot.sh (Logger.ini: FileMon + OSREPORT, copied to out/dolphin.log; default path unchanged,
      test_tb_disc_boot 14/14, test_tb_local 7/7) and refreshed the capsule harness sha (TB 3019f13). Worker deaea746
      launched 18:54:19Z on the existing P29 disc; log-works is an instrument claim (an empty log cannot show absence).
+  P31 + P31b: BOTH INSTRUMENT FAILURE, question still open. P31 (tbl-20261016-185808, 3,537,607): no dolphin.log,
+     because Dolphin does not create $U/Logs (my defect: switch never booted before spending the slot; proven afterwards
+     with a homebrew DOL, fixed TB c816999). P31b (tbl-20261016-191521, 1,575,394; retry I authorised myself as
+     within P31): the worker ran tb_local WITHOUT TB_DOLPHIN_LOG=1 (no "dolphin log on" in runner.log). A packet
+     defect: a decisive env var was left to the worker. TB f47f6a2 result; ledger P31+P31B AUTHORIZED/CONSUMED, PASS
+     events=133 violations=0; laptop TB at f47f6a2. Tranche P30 (12M): workers 1.50+3.54+1.58 = 6.62M, plus this pane.
+     2-failures rule: no third attempt of the same shape.
+  NEXT (needs Owner, a 3rd slot): the coordinator runs ONE literal command itself, no worker:
+     TB_DOLPHIN_LOG=1 python3 tools/gex44/tb_local.py run build/TwoBuilders_P29.wbfs --capture <P29> --inputs <P29>,
+     gated on runner.log "dolphin log on" + >=10 FileMon lines before any reading.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
