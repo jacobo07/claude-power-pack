@@ -575,6 +575,48 @@ def session_tree_tokens(transcript: Path) -> dict:
     return {"tokens": total, "subagent_tokens": subs, "files": len(files)}
 
 
+def session_tree_report(transcript: Path) -> dict:
+    """The cost tree of one session: a node per transcript (main + each subagent, typed from its meta.json),
+    with turns, processed tokens and context per turn, under the SAME dedup as session_tree_tokens, so the
+    node sum equals that total. Measured 2026-10-16 (m-f9290d78278f): a hand sum of `usage` per transcript
+    LINE read 65.4M for a 29.9M session tree (Claude repeats a message's usage on each content-block line)."""
+    files = [transcript] + sorted((transcript.parent / transcript.stem / "subagents").glob("agent-*.jsonl"))
+    seen, nodes = set(), []
+    for f in files:
+        node = {"file": f.name, "kind": "main" if f is transcript else "subagent", "turns": 0, "tokens": 0,
+                "ctx_sum": 0, "peak_ctx": 0}
+        meta = f.with_name(f.stem + ".meta.json")
+        if meta.is_file():
+            try:
+                m = json.loads(meta.read_text(encoding="utf-8"))
+                node["agent_type"], node["description"] = m.get("agentType"), m.get("description")
+            except ValueError:
+                node["agent_type"] = "unreadable meta"
+        with open(f, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                m = r.get("message") if isinstance(r, dict) else None
+                u = m.get("usage") if isinstance(m, dict) else None
+                if not u or m.get("model") == "<synthetic>":
+                    continue
+                mid = m.get("id") or r.get("uuid")
+                if mid in seen:
+                    continue
+                seen.add(mid)
+                n = sum(int(u.get(k) or 0) for k in _UK)
+                ctx = n - int(u.get("output_tokens") or 0)
+                node["turns"] += 1
+                node["tokens"] += n
+                node["ctx_sum"] += ctx
+                node["peak_ctx"] = max(node["peak_ctx"], ctx)
+        node["avg_ctx"] = node.pop("ctx_sum") // node["turns"] if node["turns"] else 0
+        nodes.append(node)
+    return {"tokens": sum(n["tokens"] for n in nodes), "turns": sum(n["turns"] for n in nodes), "nodes": nodes}
+
+
 def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = "goal-settle",
                 transcripts_root: Path | None = None, tree: bool = False) -> dict:
     """Settle a STOPPED session and close all of its holds (never reserves). Blind -> refused.
@@ -1298,7 +1340,12 @@ def _main(argv: list[str]) -> int:
         cp.add_argument("--goal", required=True)
     sub.add_parser("capital-status")
     sub.add_parser("capital-apply-pending")
+    sub.add_parser("session-tree", help="cost tree of one session: main + subagents, deduped by message id"
+                   ).add_argument("--transcript", required=True)
     a = ap.parse_args(argv)
+    if a.cmd == "session-tree":
+        print(json.dumps(session_tree_report(Path(a.transcript)), indent=1))
+        return 0
     if a.cmd.startswith("capital-"):
         import sys as _sys
         _repo = str(Path(__file__).resolve().parents[1])
