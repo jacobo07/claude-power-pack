@@ -61,6 +61,10 @@ progress: |
      The coordinator's full-res look is the only check that has caught it (2/2). Ledger: ledger_reconcile --apply
      appended P26+P27 AUTHORIZED/CONSUMED, SLOT_LEDGER PASS events=125 violations=0, re-run IN SYNC. Laptop TB at 6d239e0.
      P5-SCP and P5-FORCE stay OPEN; the CameraCut window (between t080 black and t085) is still uncaptured.
+  OWNER 2026-10-16 "y": tranche P28 = 10M HARD (P5 rerun only; worker watchdog 6M pre-run / 8M hard, coordinator
+     <=2M; one full-res crop look by the coordinator, no Sonnet reviewer) + remove Apps\pp-e7-ccr-shadow after a
+     clean+merged check. P28 design: primary observable = CameraCut held ~60 s on Player0 from level load (~t80-85;
+     P24 control t85/t112 show the normal camera), dense capture t76-92 every 0.5 s; womprat x3 spawn kept as secondary.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
