@@ -27,8 +27,18 @@ progress: |
      (121 events, 0 violations). Lesson: the gate+lint cut planning cost ~8x; neither judges whether an
      observable discriminates. That stays a reviewer's job.
   E6 DONE: reforecast below (sec. 28-29 table). Tranche measured 36.9M of 40.5M (laptop 33.25M + worker 3.65M).
-  NEXT E7 CCR shadow receipt + UKDL/vault: does NOT fit the ~3.6M left from an Opus pane (~170k/turn). Owner:
-     run it as a small Sonnet unit, or close the tranche here. M2 stays held until the Owner approves the table.
+  OWNER "approve both": E7 as a Sonnet unit; E6 table approved -> M2 advances one capsule-gated worker at a time
+     (old /gsd-autonomous mission m-f9290d78278f STAYS held: un-holding it restarts the planner loop).
+  E7 DONE: dc4bf2b4 (laptop Sonnet worker 9db680e6, 2,020,027 processed, 5 min, cap 3.2M): spawn receipt gains
+     planner (gsd-planner|gsd-plan-checker) + mission (CCR_WORK_UNIT id; gsd_mission sets no mission env var);
+     UKDL PR-PLANNING-NECESSITY-001 + T-OBSERVABLE-NOT-DISCRIMINATING-001. Mod tests 27/27 re-run by me. The two
+     receipt fields themselves are untested (no harness drives the live handler; only isPlannerType is). Landed by
+     CAS ff of the branch ref (another pane had a staged file and a dirty ukdl; both kept). Not deployed to any live
+     mod copy (shadow; repo only).
+  M2 P26 (phase-5 rerun, unconditional triggers judged vs P24 control) running on GEX44 as worker 23c5ea29.
+  PENDING (laptop, uncommitted): tb_local.dolphin_running used `pgrep -x dolphin-emu-nogui`, which can never match
+     (15-char comm); fixed to `pgrep -f` on the executable + V-TBL-DOLPHIN-REAL. Run on GEX44 only after P26 exits
+     (the test spawns a fake dolphin that would make P26's tb_local refuse), then refresh the capsule sha + commit.
   E6 reforecast (processed tokens per phase; capsule probe cost from P25 n=1, so confidence LOW):
      | Phase | Class | Gate mode | P50 | P80 | P95 |
      | 5 rerun (unconditional trigger, then Force) | capsule | DELTA_PLAN | 3.6 | 5 | 8 |
