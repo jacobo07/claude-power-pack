@@ -274,9 +274,9 @@
         {
             "id": "PX",
             "max_residuals": 1,
-            "note": "plan r2-failure-recompile-2026-10-16 (Owner y): merged R2+R1min+P1, direct handles, checkpoint 1.0M",
+            "note": "plan r2-failure-recompile-2026-10-16 (Owner y): merged R2+R1min+P1, direct handles, checkpoint 1.0M; route set to S on 2026-10-16 so its residual climbs to M (3.5M) not L (6.4M): PX hard cap 5.0M = 1.16M spent + 3.5M",
             "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-PX.md",
-            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-M.json",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\route-S.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\tennis-rf\\WU-PX-receipt.md",
             "after": "D12c",
             "accept": [
