@@ -1,6 +1,20 @@
 ---
 covers: [planning-necessity, work-class-capsule, m2-planning-incident, owner-pause-stop, p25-canary, prereg-lint]
-status: AWAITING_OWNER_APPROVAL
+status: APPROVED 2026-10-16 (Owner "a 1. 30.5M 2. b 3. a": tranche 30.5M hard; P25 from a PP clone on GEX44,
+  live install untouched; bootstrap in the interactive pane, no Ralph mission)
+progress: |
+  E1 DONE: d466d977 hold --stop (owner_pause; V-OP 5/5, drill 2 red), 2f61b594 session-tree (V-STR 4/4; real M2
+     tree on GEX44 = 29,947,551 exactly). PP clone on GEX44: ~/missions/pp-tbm2 (git archive of 2f61b594).
+  E2 DONE: ae7c45c2 planning_gate.py + arm --work-unit/--planning-override (V-PNG 17/17; drills 9 + 1 red).
+  NEXT E3 (TB repo, laptop main f45be11, bundle to GEX44 clone): .planning/capsules/TB-DISC-PROBE.json
+     (closed obligations: hud-portraits P24, cantina-default-pair P22, names P12, goatee P21, linux-build-identity
+     P24, local-route P24; invalidators = sha of tools/gex44/tb_disc_boot.sh, tb_local.py, tb_client.py;
+     P22 timeline as default; max_unknowns 3; budgets DIRECT 0 / DELTA 1M) + tools/prereg_lint.py (json block
+     in the prereg: probe key in PROBES, every judged t in capture, claims not closed, tb_client grammar) + test
+     that reproduces the t300 and portrait blockers. Then E5 P25 (unit JSON -> planning_gate -> prereg -> lint ->
+     PROBES entry editing the Cantina .scp -> build -> tb_local on GEX44; bounded worker or this pane), E6
+     reforecast, E7 CCR shadow receipt + UKDL/vault. Spend this pane from approval must be measured with
+     mission_spend session-tree, never a line sum.
 created: 2026-10-16
 owner_surface: chat (this file is the backup)
 ---
