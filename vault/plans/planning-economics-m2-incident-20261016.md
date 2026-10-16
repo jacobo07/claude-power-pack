@@ -17,7 +17,8 @@ progress: |
      7,334,378 (avg 154k) = 27,290,442 of the 30.5M tranche. 25M "hard stop" (sec. 32) passed; ~3.2M left
      cannot cover E5 (P95 8M). STOPPED for the Owner: raise/second tranche, or run E5 as a fresh small-context
      Sonnet worker on GEX44 (the compiled-unit path this plan forecasts at <=70k ctx), not from an Opus pane.
-  NEXT (after Owner) E5 P25 (unit JSON -> planning_gate -> prereg -> lint ->
+  OWNER 2026-10-16 "a": +10M (tranche 40.5M); E5 runs as a fresh small-context Sonnet worker on GEX44.
+  NEXT E5 P25 (unit JSON -> planning_gate -> prereg -> lint ->
      PROBES entry editing the Cantina .scp -> build -> tb_local on GEX44; bounded worker or this pane), E6
      reforecast, E7 CCR shadow receipt + UKDL/vault. Spend this pane from approval must be measured with
      mission_spend session-tree, never a line sum.
