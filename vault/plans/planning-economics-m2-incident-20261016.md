@@ -18,10 +18,30 @@ progress: |
      cannot cover E5 (P95 8M). STOPPED for the Owner: raise/second tranche, or run E5 as a fresh small-context
      Sonnet worker on GEX44 (the compiled-unit path this plan forecasts at <=70k ctx), not from an Opus pane.
   OWNER 2026-10-16 "a": +10M (tranche 40.5M); E5 runs as a fresh small-context Sonnet worker on GEX44.
-  NEXT E5 P25 (unit JSON -> planning_gate -> prereg -> lint ->
-     PROBES entry editing the Cantina .scp -> build -> tb_local on GEX44; bounded worker or this pane), E6
-     reforecast, E7 CCR shadow receipt + UKDL/vault. Spend this pane from approval must be measured with
-     mission_spend session-tree, never a line sum.
+  E5 DONE (economics PASS, science INCONCLUSIVE): headless Sonnet worker 17abbe26 on GEX44, watchdog 8M/10M.
+     gate DELTA_PLAN -> prereg (lint CLEAN) -> PROBES cantina-camera-force -> build -> tbl-20261016-135951 (rc 0,
+     59 frames) -> slot AUTHORIZED/CONSUMED -> commit. 3,648,572 processed, 12 min, 0 planner turns (old path 29.9M,
+     0 executed). TB 802217e prereg, 54afccc result, 8badfae review: all three verdicts INCONCLUSIVE ("no crash"
+     is met by P24's unedited disc; the Force trigger never fired, so CameraCut/CreateCreatures were not tested);
+     capsule template now requires a PASS observable the unedited disc cannot produce. KSR ledger reconciled
+     (121 events, 0 violations). Lesson: the gate+lint cut planning cost ~8x; neither judges whether an
+     observable discriminates. That stays a reviewer's job.
+  E6 DONE: reforecast below (sec. 28-29 table). Tranche measured 36.9M of 40.5M (laptop 33.25M + worker 3.65M).
+  NEXT E7 CCR shadow receipt + UKDL/vault: does NOT fit the ~3.6M left from an Opus pane (~170k/turn). Owner:
+     run it as a small Sonnet unit, or close the tranche here. M2 stays held until the Owner approves the table.
+  E6 reforecast (processed tokens per phase; capsule probe cost from P25 n=1, so confidence LOW):
+     | Phase | Class | Gate mode | P50 | P80 | P95 |
+     | 5 rerun (unconditional trigger, then Force) | capsule | DELTA_PLAN | 3.6 | 5 | 8 |
+     | 6 faces | capsule | DELTA_PLAN | 3.6 | 5 | 8 |
+     | 7 CHG archaeology (womprat buffers, 350-CHG census) | novel RE, offline | BOUNDED_PLAN | 8 | 12 | 20 |
+     | 8 writer | novel code | BOUNDED_PLAN | 8 | 12 | 20 |
+     | 9-11 hair/kitten (x3) | capsule after 8 | DELTA_PLAN | 11 | 15 | 24 |
+     | 12 Kitten Call | partial | BOUNDED_PLAN | 6 | 9 | 14 |
+     | 13 extras | capsule | DELTA_PLAN | 3.6 | 5 | 8 |
+     | 14 mixed | mixed | BOUNDED_PLAN | 6 | 9 | 14 |
+     | Total 5-14 | | | 50 | 72 | 116 |
+     vs M2 remainder ~98.5M (minus this tranche's 36.9M = ~61.6M): P50 fits, P80 does not. Every unit runs as a
+     headless Sonnet worker with a watchdog, never from an Opus pane (this tranche: Opus pane 33.25M vs worker 3.65M).
 created: 2026-10-16
 owner_surface: chat (this file is the backup)
 ---
