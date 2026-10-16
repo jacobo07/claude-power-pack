@@ -84,6 +84,9 @@ progress: |
   CONCLUSION P26-P29: four runs, no loose level.scp edit has any effect, so the loose .scp is a dead end for P5.
   NEXT (needs Owner, new tranche): static RE of MosEisley_C .AI2/.CSC to find the compiled level script (E6 phase-7
      class: novel RE, BOUNDED_PLAN, P50 8M / P80 12M / P95 20M), offline, no Dolphin slot.
+  OWNER "y": tranche P30 = 12M HARD (worker watchdog 10M hard, coordinator <=2M). P30 = static RE, read-only on game
+     data: main.dol load-path strings (which file the engine opens for a level script) + MosEisley_C .AI2/.CSC vs the
+     level.scp identifiers; deliverable docs/RE_CANTINA_LEVEL_SCRIPT.md + a read-only scan tool + a proposed P5 edit route.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
