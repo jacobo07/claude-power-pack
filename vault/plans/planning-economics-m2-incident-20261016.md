@@ -64,7 +64,17 @@ progress: |
   OWNER 2026-10-16 "y": tranche P28 = 10M HARD (P5 rerun only; worker watchdog 6M pre-run / 8M hard, coordinator
      <=2M; one full-res crop look by the coordinator, no Sonnet reviewer) + remove Apps\pp-e7-ccr-shadow after a
      clean+merged check. P28 design: primary observable = CameraCut held ~60 s on Player0 from level load (~t80-85;
-     P24 control t85/t112 show the normal camera), dense capture t76-92 every 0.5 s; womprat x3 spawn kept as secondary.
+     P24 control t85/t112 show the normal camera), dense capture t76-100 every 1 s; womprat x3 spawn kept as secondary.
+  P28 DONE (tranche 10M): worker bd6f5a09 2,400,916 processed, 12 min, tbl-20261016-155828 (disc 93a077fa..., first
+     Cantina frame t084). Coordinator verdicts from a 3-row full-frame grid vs P24: loose-scp FAIL, front-camera FAIL,
+     spawn-route FAIL (wide stock camera t84-100; the camera icon is stock HUD, present in P24 t085; t100 figure = the
+     P27 minifig patron, which the worker itself flagged). TB d9c3362 prereg, 671078e result + RESUMPTION P27 line
+     corrected (it still said P27 confirmed the loose .scp). Ledger: SLOT-TB-P28 AUTHORIZED/CONSUMED, PASS events=127
+     violations=0, IN SYNC. Laptop TB at 671078e. Finding: 3 runs, 2 different Start-state actions, zero effect.
+     P5-SCP narrowed to "loose level.scp not read OR Start actions not executed".
+  NEXT (needs Owner; P28 tranche ~2.4M worker of 10M used, plus this pane): P29 = make the loose MosEisley_C
+     AI/level.scp unparseable or remove it, compare to P24 at t76-100/1 s (same = not read; different = read).
+     Same worker shape; fits the P28 tranche remainder.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
