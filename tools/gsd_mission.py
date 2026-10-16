@@ -4846,6 +4846,23 @@ def worker_arm_refusal(sid: str | None) -> str | None:
     return None
 
 
+def planning_admission(resume_command: str, cwd: str, unit_path: str | None, override: str | None) -> dict:
+    """Planning Necessity at arm time (tools/planning_gate.py). A `/gsd-*` command runs plan-phase (planner,
+    checker, replanner); measured 2026-10-16 (m-f9290d78278f) that loop spent 29.9M on a work class with three
+    executed precedents. When the unit's gate answers DIRECT_TEMPLATE or DELTA_PLAN, a `/gsd-*` arm is refused
+    unless `override` states why. No unit = UNASSESSED: reported, never read as admitted-by-gate."""
+    if not unit_path:
+        return {"admitted": True, "gate": "UNASSESSED"}
+    import planning_gate as pg
+    d = pg.decide(json.loads(Path(unit_path).read_text(encoding="utf-8")), Path(cwd))
+    planning_route = resume_command.lstrip().startswith("/gsd-")
+    if planning_route and d["mode"] in ("DIRECT_TEMPLATE", "DELTA_PLAN") and not (override or "").strip():
+        return {"admitted": False, "gate": d["mode"], "decision": d,
+                "reason": f"planning gate {d['mode']} ({d['why']}): arm the compiled unit (--wu-packet / a "
+                          f"non-/gsd- command), or pass --planning-override with the reason"}
+    return {"admitted": True, "gate": d["mode"], "decision": d, "override": (override or None)}
+
+
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
         authority: str | None = None, parallel_unit: str | None = None, **kw) -> dict:
     ws = kw.get("workstream")
@@ -5633,6 +5650,9 @@ def _cli(argv=None) -> int:
     a = sub.add_parser("arm")
     a.add_argument("--cwd", required=True)
     a.add_argument("--command", required=True)
+    a.add_argument("--work-unit", help="unit JSON for tools/planning_gate.py; a DIRECT/DELTA verdict refuses a "
+                                       "/gsd-* (full planning) command")
+    a.add_argument("--planning-override", help="why full planning is needed despite the gate")
     a.add_argument("--workstream")
     a.add_argument("--max-cycles", type=int)
     a.add_argument("--max-hours", type=float)
@@ -5746,11 +5766,20 @@ def _cli(argv=None) -> int:
         if args.wall:
             snap, adv, rearm = (float(x) for x in args.wall.split(","))
             wall = {"snapshot": snap, "advisory": adv, "rearm": rearm}
+        adm = planning_admission(args.command, args.cwd, args.work_unit, args.planning_override)
+        if not adm["admitted"]:
+            print(f"REFUSED: {adm['reason']}")
+            return 4
         res = arm(args.cwd, args.command, launch=not args.no_launch, workstream=args.workstream,
                   max_cycles=args.max_cycles, max_hours=args.max_hours,
                   permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
                   add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol,
                   supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit)
+        mid = (res.get("mission") or res).get("mission_id")
+        if mid:
+            lr.ledger_append(mid, "planning_gate", mission_id=mid, gate=adm["gate"], override=adm.get("override"),
+                             why=(adm.get("decision") or {}).get("why"))
+        res["planning_gate"] = adm["gate"]
         print(json.dumps(res, indent=2))
         return 0 if args.no_launch or res.get("launch", {}).get("ok") else 1
     if args.cmd == "arm-chain":
