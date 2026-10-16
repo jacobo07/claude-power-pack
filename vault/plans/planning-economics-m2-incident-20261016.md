@@ -52,9 +52,18 @@ progress: |
      Sonnet reviewer e96aac0a (sees only claims + candidate/control frames; cap 1.5M) writes the RESULT verdicts
      and commits. Try 1 (cf54013a, 225k) stopped itself on a GEX44 "CONTEXT CRITICAL" hook advisory that a headless
      run cannot act on; the packet now says such advisories are non-binding. Laptop waiter task ba9mwie2z.
-  NEXT (successor pane, small context): on chain end, read ~/missions/p27_chain.jsonl + p27_review.out + both
-     watch logs; fetch TB main to the laptop; spot-check ONE PASS frame vs control if any PASS; ledger_reconcile
-     --apply (P26 + P27 slots); record spend; then E-series is closed, and M2 continues phase by phase under the E6 table.
+  P27 DONE (successor pane bd7ce4b7): chain_end 14:55:33Z, job tbl-20261016-144621. Spend (watch_end, processed):
+     worker 3,558,793 + reviewer 363,862 + try1 ~225k = ~4.15M (P26 was 5.54M). Reviewer e96aac0a: loose-scp PASS,
+     spawn-route PASS, front-camera INCONCLUSIVE (TB 07d8d65). Spot-check at full res: the t112 "tan rounded body" is a
+     minifig seen from behind (alien head piece, LEGO torso, C-shaped hands); the P24 control has a DIFFERENT minifig at
+     the same spot. Both PASS -> INCONCLUSIVE (TB 6d239e0). Lesson: the independent Sonnet reviewer repeated the P26
+     misreading WITH the control in hand; a same-t frame from another run is not a matched control for ambient NPCs.
+     The coordinator's full-res look is the only check that has caught it (2/2). Ledger: ledger_reconcile --apply
+     appended P26+P27 AUTHORIZED/CONSUMED, SLOT_LEDGER PASS events=125 violations=0, re-run IN SYNC. Laptop TB at 6d239e0.
+     P5-SCP and P5-FORCE stay OPEN; the CameraCut window (between t080 black and t085) is still uncaptured.
+  E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
+     Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
+     scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
   E6 reforecast (processed tokens per phase; capsule probe cost from P25 n=1, so confidence LOW):
      | Phase | Class | Gate mode | P50 | P80 | P95 |
      | 5 rerun (unconditional trigger, then Force) | capsule | DELTA_PLAN | 3.6 | 5 | 8 |
