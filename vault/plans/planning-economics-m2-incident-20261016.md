@@ -35,10 +35,18 @@ progress: |
      receipt fields themselves are untested (no harness drives the live handler; only isPlannerType is). Landed by
      CAS ff of the branch ref (another pane had a staged file and a dirty ukdl; both kept). Not deployed to any live
      mod copy (shadow; repo only).
-  M2 P26 (phase-5 rerun, unconditional triggers judged vs P24 control) running on GEX44 as worker 23c5ea29.
-  PENDING (laptop, uncommitted): tb_local.dolphin_running used `pgrep -x dolphin-emu-nogui`, which can never match
-     (15-char comm); fixed to `pgrep -f` on the executable + V-TBL-DOLPHIN-REAL. Run on GEX44 only after P26 exits
-     (the test spawns a fake dolphin that would make P26's tb_local refuse), then refresh the capsule sha + commit.
+  M2 P26 DONE (M2 budget): worker 23c5ea29, 5,540,073 processed, 14 min, tbl-20261016-142024. Worker said
+     loose-scp PASS + spawn-route PASS; I looked at t106 vs P24's t106: the "womprat" is a two-legged minifig NPC.
+     Reviewed: all INCONCLUSIVE, P5-SCP OPEN (TB 60ab421 result, d8cdab9 review). Capsule rule added: a worker's
+     PASS is a candidate until a reviewer has seen the frame and its control. Lesson: Sonnet frame-reading is not
+     a verdict; the 5.5M worker needs a cheap reviewer step, not an Opus pane.
+  tb_local FIX DONE: TB 05c3e5f, `pgrep -x dolphin-emu-nogui` never matched (15-char comm) -> pgrep -f on the
+     executable; V-TBL-DOLPHIN-REAL on GEX44: fixed 7/7, old fails (seen=[] with a live fake). Capsule sha
+     refreshed; GEX44 at d8cdab9: PRL 15/15, TBL 7/7, gate DELTA_PLAN, capsule not invalidated.
+  BUDGET BREACH (measured 2026-10-16 ~14:50Z, deduped since 13:23:01Z): laptop panes 46,891,601 (this pane
+     26.9M: context rent ~300k/turn after images) + P25 3.65M + E7 2.02M = 52.56M vs the 40.5M tranche (+12M).
+     Workers: 11.21M total for P25+P26+E7. STOPPED; no further work from this pane. Owner: next M2 unit P27
+     (dense capture t35-60, named cropped evidence) needs a reviewer path that is not this pane.
   E6 reforecast (processed tokens per phase; capsule probe cost from P25 n=1, so confidence LOW):
      | Phase | Class | Gate mode | P50 | P80 | P95 |
      | 5 rerun (unconditional trigger, then Force) | capsule | DELTA_PLAN | 3.6 | 5 | 8 |
