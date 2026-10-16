@@ -61,3 +61,20 @@ so mission_gate did not deny; the session-budget stop file did, main-transcript-
 - PR: arm -> record authority -> breaker binds at authority minus closeout -> incident receipt on trip.
 - Trap: storing a budget in STATE/record and assuming it is enforced; reading plan `estimate.tokens` as a forecast.
 Promote after the first real authority trip produces a receipt with no Owner involvement.
+
+## 2026-10-16 autopsy: SurvivalSMP Tranche 1 (m-ace6b0ef2472, 15M) spent 13.66M with no SurvivalSMP commit
+Workers 1b82630f (37 calls, 6.07M) and 9f3ee6dc (43 calls, 7.60M); main thread only, no subagents; floor
+118-123K, mean 163-176K per call. Causes, in order of cost:
+9. WORK_IN_AN_UNWATCHED_REPO — the tranche's units (BOOT-1..8) are Power Pack code (owner_queue wait types, Owner
+   boundary delivery), but the mission is bound to the SurvivalSMP worktree with no add_dirs. Worker 2 built BOOT-1
+   in C:\Users\User\Apps\pp-survivalsmp-t1 (14 gates), and the stall breaker, seeing no change in the bound root,
+   held it at 12:21:08Z, six seconds before its commit retry (denied 12:21:21Z by the cost-hold gate). The commit
+   0b8f580c landed later (16:33) on branch survivalsmp/tranche1-pp, not on PP main. Same blind spot as the K3
+   cross-repo mirror. Fix candidate: a mission whose plan writes another repo must declare it (add_dirs) at arm,
+   or the stall breaker cannot judge it.
+10. PLAN_ONLY_INLINE — the approved BOOT-1..8 and section-31 definitions existed only in the planning
+   transcript; the plan file was a summary. Each fresh worker spent ~10-12 calls (~1.5-2M) recovering it by
+   grepping an old transcript. Fix candidate: the plan file must carry the executable unit definitions.
+11. MAIN_TREE_EDIT_DENIED — worker 1 edited PP's shared main tree; the auto-mode classifier and the anti-thrash
+   gate (4 consecutive Edits) denied it, and it stopped with 0 commits (6.07M). Worker 2 moved to a worktree.
+12. bare `git` not on PATH in the worker shell (both workers' first call failed).
