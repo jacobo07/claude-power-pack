@@ -1,0 +1,89 @@
+{
+ "host": "2.1.302 (Claude Code)",
+ "guard": 1500000,
+ "cases": [
+  {
+   "id": "S1a",
+   "mode": "observe",
+   "session": "1e9ec829-ab02-4093-84f3-d692991ccaa4",
+   "answer": "4",
+   "rows": 386,
+   "total_processed": 201021,
+   "sub_processed": 52605,
+   "cost_usd": 0.019904715,
+   "verdict": "PASS",
+   "why": "baseline subagent processed=52605"
+  },
+  {
+   "id": "S1b",
+   "mode": "subagent-lean",
+   "session": "788eb83f-8e23-4cc0-9bd9-b32114c50423",
+   "answer": "4",
+   "rows": 386,
+   "total_processed": 167833,
+   "sub_processed": 20624,
+   "cost_usd": 0.009724435,
+   "verdict": "PASS",
+   "why": "subagent processed 20624 vs baseline 52605 (ratio 0.39, max 0.6)"
+  },
+  {
+   "id": "S2",
+   "mode": "subagent-replace",
+   "session": "ee68fdb1-baf9-408b-ab68-46e605d70676",
+   "answer": "4",
+   "rows": 386,
+   "total_processed": 180423,
+   "sub_processed": 32102,
+   "cost_usd": 0.015710575,
+   "verdict": "PASS",
+   "why": "instructions replaced by the marker"
+  },
+  {
+   "id": "S3",
+   "mode": "seam",
+   "session": "99ee96e6-88a7-4d8c-98ac-99517dfa1888",
+   "answer": "UZ-PROJECTED",
+   "rows": 374,
+   "total_processed": 146217,
+   "sub_processed": null,
+   "cost_usd": 0.01239696,
+   "verdict": "PASS",
+   "why": "result rewritten through next(e), command ran once"
+  },
+  {
+   "id": "S4",
+   "mode": "defer",
+   "session": "175708d0-9fdc-4f1f-9505-8e3b9b6c0f9f",
+   "answer": "OK",
+   "rows": 369,
+   "total_processed": 65033,
+   "sub_processed": null,
+   "cost_usd": 0.013008400000000003,
+   "verdict": "PASS",
+   "why": "331 tools deferred"
+  },
+  {
+   "id": "S5",
+   "mode": "section-drop",
+   "session": "8f485875-ba87-4890-a9a8-add9662f62fe",
+   "answer": "OK",
+   "rows": 369,
+   "total_processed": 69070,
+   "sub_processed": null,
+   "cost_usd": 0.0106765,
+   "verdict": "PASS",
+   "why": "memory section dropped"
+  }
+ ],
+ "spent": 829597,
+ "verdicts": {
+  "S1a": "PASS",
+  "S1b": "PASS",
+  "S2": "PASS",
+  "S3": "PASS",
+  "S4": "PASS",
+  "S5": "PASS"
+ },
+ "all_required_pass": true,
+ "named_limits": []
+}

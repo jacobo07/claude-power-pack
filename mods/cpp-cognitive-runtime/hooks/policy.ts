@@ -5,7 +5,7 @@ export const RUNTIME_VERSION = '0.1.0'
 
 // Claude Code builds whose hook semantics this release was measured against (plan section M1).
 // Any other build runs observe-only: receipts, no enforcement.
-export const COMPAT = ['2.1.296']
+export const COMPAT = ['2.1.296', '2.1.302']
 
 export type Mode = 'enforce' | 'shadow' | 'off'
 // main: interactive and undeclared sessions. unit: main sessions that declared a Work Unit.
