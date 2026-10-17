@@ -266,6 +266,147 @@ def unresolved(mission_id: str) -> list[str]:
     return [i for i, d in _fold(mission_id).items() if d["status"] in (OPEN, READY)]
 
 
+# --- delivery: a receipt travels as a verified bundle; the consumer applies and wakes, no model in between -------
+HOSTS = {"gex44": {"ssh": "gex44", "pp": "/home/kobii/.claude/skills/claude-power-pack",
+                   "env": "CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude"}}
+
+
+def consumer_hosts() -> dict:
+    """consumer mission -> host name, from a durable file next to the stores. No entry = local consumer."""
+    p = lr.state_dir() / "decision-hosts.json"
+    return json.loads(p.read_text(encoding="utf-8-sig")) if p.exists() else {}
+
+
+def export_bundle(mission_id: str, decision_id: str) -> dict:
+    rows = [r for r in _rows(mission_id) if r.get("id") == decision_id and r.get("ev") in ("created", "resolved")]
+    kinds = {r["ev"] for r in rows}
+    if kinds != {"created", "resolved"}:
+        raise DecisionError(f"{decision_id}: only a resolved decision can be delivered (have {sorted(kinds)})")
+    return {"rows": rows, "mission": mission_id, "id": decision_id}
+
+
+def verify_bundle(bundle: dict) -> tuple[dict, dict]:
+    """Everything the consumer relies on is recomputed here; nothing in the bundle is trusted for its own sake."""
+    by = {r.get("ev"): r for r in bundle.get("rows", [])}
+    if set(by) != {"created", "resolved"}:
+        raise DecisionError("bundle needs exactly a created and a resolved row")
+    obj, rec = by["created"]["object"], by["resolved"]["receipt"]
+    if obj.get("id") != rec.get("decision") or obj.get("mission") != rec.get("mission"):
+        raise DecisionError("receipt does not belong to the decision object")
+    if fingerprint(obj.get("evidence") or {}) != obj.get("fingerprint") or rec.get("evidence_fp") != obj["fingerprint"]:
+        raise DecisionError("evidence fingerprint mismatch")
+    if closure_gate(obj):
+        raise DecisionError(f"decision fails the Closure Gate: {closure_gate(obj)}")
+    opt = next((o for o in obj["options"] if o["token"] == rec.get("token")), None)
+    if opt is None or opt["params"] != rec.get("params"):
+        raise DecisionError("receipt token/params are not an option of the decision")
+    body = {k: rec.get(k) for k in ("decision", "mission", "token", "params", "evidence_fp", "consumers", "authority")}
+    if _receipt_sha(body) != rec.get("sha"):
+        raise DecisionError("receipt sha mismatch")
+    if obj["class"] in PRIVILEGED and not (rec.get("authority") or {}).get("uuid"):
+        raise DecisionError(f"{obj['class']} receipt carries no Owner-typed authority")
+    return obj, rec
+
+
+def render_view(obj: dict, rec: dict) -> str:
+    """Text is a VIEW of the receipt, for the worker's prompt and the mission's directive list."""
+    p, opt = rec["params"], next(o for o in obj["options"] if o["token"] == rec["token"])
+    cap = p.get("capital") or {}
+    return (f"OWNER DECISION {obj['id']} (receipt {rec['sha']}, binding; settles any open 'OWNER DECISION NEEDED' on this "
+            f"topic in STATE.md and in a blocked-on-Owner state): option {rec['token']} - {opt.get('label', '')}. "
+            f"Capital ceiling {cap.get('ceiling'):,} {cap.get('unit')}; scope {p.get('scope')}; efficiency policy "
+            f"{p.get('efficiency')} (cost reduction stays on whatever the ceiling). Record it as resolved in STATE.md and "
+            "continue with the next runnable work now; do not wait for the Owner again on this point.")
+
+
+def _wake(mission: str, view: str, *, sessions, runner, stop_runner, pid_alive, host_fetch, now) -> dict:
+    import gsd_mission as gm
+    import gsd_epoch as ge
+    rec = gm.load(mission)
+    if rec is None:
+        return {"ok": False, "why": "mission not on this host"}
+    if rec["state"] in gm.TERMINAL:
+        return {"ok": False, "why": f"mission is {rec['state']}"}
+    gm.add_directive(mission, view, now=now)
+    rec = gm.load(mission)
+    owner = rec.get("owner") or {}
+    sess = sessions if sessions is not None else gm.host_sessions()
+    row = gm._host_row(owner.get("session_id"), sess) if owner.get("session_id") and sess is not None else None
+    if not owner.get("session_id"):
+        return {"ok": False, "why": "no owner: the next launch card carries the decision"}
+    if owner.get("kind") != "background":
+        return {"ok": False, "why": "interactive owner: not resumed; the decision is on the mission"}
+    if sess is None:
+        return {"ok": False, "why": "host unreachable: the next launch card carries the decision"}
+    if row is None or row.get("state") in ("stopped", "failed", "exited"):
+        return {"ok": False, "why": "owner not live: the next launch card carries the decision"}
+    kw = {k: v for k, v in (("pid_alive", pid_alive), ("host_fetch", host_fetch)) if v is not None}
+    ok, how = gm.stop_owner(owner, sess, runner=stop_runner, **kw)
+    if not ok:
+        return {"ok": False, "why": f"owner did not stop ({how}); the next launch card carries the decision"}
+    return ge.continue_worker(mission, rec, prompt=view,
+                              decision={"decision": ge.CONTINUE, "cause": ge.TURN_CONTINUATION,
+                                        "reason": "owner decision receipt"},
+                              runner=runner, stop_runner=stop_runner, now=now)
+
+
+def consume_bundle(bundle: dict, wake: bool = True, sessions=None, runner=None, stop_runner=None, pid_alive=None,
+                   host_fetch=None, now: float | None = None) -> dict:
+    """Verify, persist, apply, wake. Idempotent per receipt sha. Fails closed on an effect it cannot apply:
+    this consumer applies decisions that leave the capital ceiling unchanged; a ceiling change needs D6."""
+    obj, rec = verify_bundle(bundle)
+    mid, did = obj["mission"], obj["id"]
+    cap = (rec["params"] or {}).get("capital")
+    if cap and cap["ceiling"] != (obj.get("evidence") or {}).get("old_trip"):
+        raise DecisionError(f"{did}: a ceiling change ({cap['ceiling']:,}) is not applied by this consumer (D6)")
+    have = _fold(mid).get(did)
+    if have and have["status"] == RESOLVED:
+        if have["receipt"]["sha"] != rec["sha"]:
+            raise DecisionError(f"{did} already resolved with receipt {have['receipt']['sha']}")
+        return {"receipt": rec, "recorded": False, "woke": {"ok": False, "why": "already consumed (idempotent)"}}
+    if have is None:
+        _append(mid, {"ev": "created", "id": did, "object": obj})
+    _append(mid, {"ev": "resolved", "id": did, "receipt": rec})
+    view = render_view(obj, rec)
+    woke = {"ok": False, "why": "wake not requested"}
+    if wake:
+        woke = {c: _wake(c, view, sessions=sessions, runner=runner, stop_runner=stop_runner, pid_alive=pid_alive,
+                         host_fetch=host_fetch, now=now) for c in obj["consumers"]}
+    return {"receipt": rec, "recorded": True, "woke": woke}
+
+
+def deliver(mission_id: str, decision_id: str, host: str) -> dict:
+    """Ship the verified bundle to the consumer host and run its consumer. One command; no model carries content."""
+    import subprocess
+    h = HOSTS.get(host)
+    if h is None:
+        raise DecisionError(f"unknown host {host!r}")
+    bundle = export_bundle(mission_id, decision_id)
+    sha = bundle["rows"][-1]["receipt"]["sha"]
+    remote = f"/tmp/dp-bundle-{sha}.json"
+    up = subprocess.run(["ssh", "-o", "BatchMode=yes", h["ssh"], f"cat > {remote}"], input=json.dumps(bundle).encode(),
+                        capture_output=True, timeout=60)
+    if up.returncode != 0:
+        raise DecisionError(f"upload to {host} failed: {up.stderr.decode(errors='replace')[-200:]}")
+    run = subprocess.run(["ssh", "-o", "BatchMode=yes", h["ssh"],
+                          f"cd {h['pp']} && {h['env']} python3 tools/decision_plane.py consume --file {remote}"],
+                         stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=300)
+    return {"returncode": run.returncode, "stdout": run.stdout.strip(), "stderr": run.stderr.strip()[-400:]}
+
+
+def route(mission_id: str, decision_id: str) -> list[dict]:
+    """The event router: each consumer on a remote host gets the receipt; a local consumer reads the store."""
+    d = get(mission_id, decision_id)
+    if d["status"] != RESOLVED:
+        raise DecisionError(f"{decision_id} is {d['status']}; nothing to route")
+    hosts, out = consumer_hosts(), []
+    for c in d["consumers"]:
+        h = hosts.get(c)
+        out.append({"consumer": c, "host": h, **(deliver(mission_id, decision_id, h) if h else {"returncode": 0,
+                    "stdout": "local consumer: reads the store", "stderr": ""})})
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="decision_plane")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -279,8 +420,36 @@ def main(argv=None) -> int:
     r.add_argument("--mission", required=True)
     r.add_argument("--decision", required=True)
     r.add_argument("--choice", required=True, help="the Owner's short input")
+    rt = sub.add_parser("resolve-transcript", help="resolve from an Owner-typed transcript entry, then route the receipt")
+    rt.add_argument("--mission", required=True)
+    rt.add_argument("--decision", required=True)
+    rt.add_argument("--transcript", required=True)
+    rt.add_argument("--no-route", action="store_true")
+    cs = sub.add_parser("consume", help="consumer side: verify a bundle, persist it, apply it, wake the owner")
+    cs.add_argument("--file", required=True)
+    cs.add_argument("--no-wake", action="store_true")
+    dv = sub.add_parser("deliver", help="ship a resolved decision to a host and run its consumer")
+    dv.add_argument("--mission", required=True)
+    dv.add_argument("--decision", required=True)
+    dv.add_argument("--host", required=True)
     a = ap.parse_args(argv)
     try:
+        if a.cmd == "resolve-transcript":
+            out = resolve_from_transcript(a.mission, a.decision, a.transcript)
+            print(f"RESOLVED {a.decision} token={out['receipt']['token']} sha={out['receipt']['sha']} "
+                  f"recorded={out['recorded']}")
+            for r in ([] if a.no_route else route(a.mission, a.decision)):
+                print(f"ROUTED consumer={r['consumer']} host={r.get('host')} rc={r['returncode']} {r['stdout']}")
+            return 0
+        if a.cmd == "consume":
+            out = consume_bundle(json.loads(Path(a.file).read_text(encoding="utf-8-sig")), wake=not a.no_wake)
+            print(f"CONSUMED {out['receipt']['decision']} sha={out['receipt']['sha']} recorded={out['recorded']} "
+                  f"woke={json.dumps(out['woke'], default=str)}")
+            return 0
+        if a.cmd == "deliver":
+            r = deliver(a.mission, a.decision, a.host)
+            print(f"DELIVERED rc={r['returncode']} {r['stdout']} {r['stderr']}")
+            return 0 if r["returncode"] == 0 else 1
         if a.cmd == "create":
             o = create(a.mission, json.loads(Path(a.file).read_text(encoding="utf-8")))
             print(f"DECISION {o['id']} status={o['status']} problems={o['problems']}")

@@ -16,8 +16,16 @@ from pathlib import Path
 
 TMP = tempfile.mkdtemp(prefix="decision-plane-test-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
+os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
+os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
+os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
+os.environ.pop("CPP_MISSION_CONTINUATION", None)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import decision_plane as dp  # noqa: E402
+import gsd_mission as gm  # noqa: E402
+
+gm.progress_fingerprint = lambda work_dir: None   # hermetic: never run git in TMP
+NOW = 1_800_000_000.0
 
 passes = fails = 0
 M = "m-dptest000001"
@@ -190,6 +198,80 @@ def main() -> int:
     check("V-DP-OWNER-TYPED-RESOLVES-CAPITAL", ok["recorded"] and ok["receipt"]["authority"]["uuid"] == "u1"
           and ok["receipt"]["token"] == "R-200", ok["receipt"].get("authority"))
     check("V-DP-CAPITAL-REPLAY-IS-NOOP", not dp.resolve_from_transcript(cm, "C1", tr([asst, typed]))["recorded"])
+
+    # --- delivery: the consumer verifies, applies, wakes; it fails closed and is idempotent
+    cid = "m-dptest000005"
+    gm.create(TMP, "/gsd-autonomous", mission_id=cid, now=NOW)
+    sid = "dec5dec5-0000-0000-0000-000000000000"
+    gm.transition(cid, expect_epoch=0, expect_state=gm.PREPARED, event="t", state=gm.RUNNING, epoch=1,
+                  owner={"session_id": sid, "kind": "background", "epoch": 1}, now=NOW)
+    base = spec("B", **{"class": "CAPITAL", "consumers": [cid]})
+    base["evidence"]["old_trip"] = 120_000_000
+    for o in base["options"]:
+        o["label"] = o["token"] + " label"
+    base["options"][0]["params"]["capital"]["ceiling"] = 120_000_000          # R-REFC-like: ceiling unchanged
+    base["options"][1]["params"]["capital"]["ceiling"] = 250_000_000          # a raise
+    src = "m-dptest000006"
+    dp.create(src, {**base, "id": "B"})
+    sd = dp.get(src, "B")
+    u = {"type": "user", "uuid": "uo", "timestamp": "t", "origin": {"kind": "human"}, "promptSource": "typed"}
+    tp = Path(TMP) / "own.jsonl"
+    tp.write_text("\n".join(json.dumps(x) for x in [
+        {"type": "assistant", "uuid": "ao", "message": {"content": [{"type": "text", "text": dp.anchor(sd)}]}},
+        {**u, "message": {"content": "R-200"}}]) + "\n", encoding="utf-8")
+    dp.resolve_from_transcript(src, "B", tp)
+    bundle = dp.export_bundle(src, "B")
+    # rebind to the consumer mission (the test shares one state dir; production is two hosts)
+    for r in bundle["rows"]:
+        if r["ev"] == "created":
+            r["object"]["mission"] = cid
+        else:
+            r["receipt"]["mission"] = cid
+            body = {k: r["receipt"].get(k) for k in ("decision", "mission", "token", "params", "evidence_fp",
+                                                      "consumers", "authority")}
+            r["receipt"]["sha"] = dp._receipt_sha(body)
+    calls = {"run": [], "stop": []}
+
+    def drun(argv, cwd):
+        calls["run"].append(argv)
+        return type("R", (), {"returncode": 0, "stderr": "", "stdout": f"backgrounded · {sid[:8]} · {cid}-e1"})()
+
+    live = [{"sessionId": sid, "id": sid[:8], "status": "idle", "kind": "background", "pid": 4242, "name": "x"}]
+    kw = dict(sessions=live, runner=drun, stop_runner=lambda a: calls["stop"].append(a), pid_alive=lambda p: False,
+              host_fetch=lambda: [], now=NOW)
+    check("V-DP-BUNDLE-VERIFIES", dp.verify_bundle(bundle)[1]["token"] == "R-200")
+    bad = json.loads(json.dumps(bundle))
+    bad["rows"][1]["receipt"]["params"]["capital"]["ceiling"] = 999_000_000
+    check("V-DP-TAMPERED-PARAMS-REFUSED", refused(lambda: dp.verify_bundle(bad)) is not None)
+    bad = json.loads(json.dumps(bundle))
+    bad["rows"][1]["receipt"]["sha"] = "0" * 16
+    check("V-DP-TAMPERED-SHA-REFUSED", refused(lambda: dp.verify_bundle(bad)) is not None)
+    bad = json.loads(json.dumps(bundle))
+    bad["rows"][1]["receipt"]["authority"] = None
+    check("V-DP-CAPITAL-BUNDLE-WITHOUT-AUTHORITY-REFUSED", refused(lambda: dp.verify_bundle(bad)) is not None)
+    out = dp.consume_bundle(bundle, **kw)
+    check("V-DP-CONSUME-RECORDS-AND-WAKES", out["recorded"] and out["woke"][cid].get("ok") and calls["stop"]
+          and calls["stop"][0][-1] == sid[:8] and calls["run"][0][1:4] == ["--bg", "--resume", sid]
+          and "OWNER DECISION B" in calls["run"][0][-1] and out["receipt"]["sha"] in calls["run"][0][-1],
+          (out["woke"], calls["run"][:1]))
+    check("V-DP-CONSUME-VIEW-NAMES-THE-UNCHANGED-CEILING", "120,000,000" in calls["run"][0][-1]
+          and "efficiency policy CONTINUE_OPTIMIZATION" in calls["run"][0][-1])
+    check("V-DP-DECISION-REACHES-LAUNCH-CARD", any("OWNER DECISION B" in d for d in gm.load(cid)["directives"]))
+    again = dp.consume_bundle(bundle, **kw)
+    check("V-DP-CONSUME-REPLAY-IS-NOOP", not again["recorded"] and len(calls["run"]) == 1)
+    raised = json.loads(json.dumps(bundle))
+    rc2 = "m-dptest000007"
+    dp.create(rc2, {**base, "id": "R", "consumers": [cid]})
+    tp2 = Path(TMP) / "own2.jsonl"
+    tp2.write_text("\n".join(json.dumps(x) for x in [
+        {"type": "assistant", "uuid": "ao", "message": {"content": [{"type": "text",
+                                                                    "text": dp.anchor(dp.get(rc2, "R"))}]}},
+        {**u, "message": {"content": "R-REFC"}}]) + "\n", encoding="utf-8")
+    dp.resolve_from_transcript(rc2, "R", tp2)
+    rb = dp.export_bundle(rc2, "R")
+    check("V-DP-CEILING-CHANGE-FAILS-CLOSED", refused(lambda: dp.consume_bundle(rb, **kw)) is not None
+          and len(calls["run"]) == 1)
+    check("V-DP-FAILED-CLOSED-WROTE-NOTHING", dp.get(rc2, "R")["status"] == dp.RESOLVED and len(calls["run"]) == 1)
 
     print(f"DP_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
