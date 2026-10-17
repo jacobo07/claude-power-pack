@@ -62,7 +62,10 @@ def supersede(mission_id: str, *, by: str, reason: str, apply: bool = False,
     kwargs = {} if pid_alive is None else {"pid_alive": pid_alive}
     verdict, why = gm.liveness(rec.get("owner"), sessions, **kwargs)
     if verdict != gm.DEAD:
-        return _refuse(mission_id, f"owner is {verdict}, not DEAD: {why}", verdict=verdict)
+        proof = never_launched(rec)
+        if proof is None:
+            return _refuse(mission_id, f"owner is {verdict}, not DEAD: {why}", verdict=verdict)
+        why = proof
     plan = {"ok": True, "applied": False, "mission_id": mission_id, "epoch": rec["epoch"],
             "from_state": rec["state"], "to_state": gm.ORPHANED, "superseded_by": by,
             "owner_evidence": why, "reason": "dry-run: pass --apply to write"}
@@ -80,6 +83,29 @@ def supersede(mission_id: str, *, by: str, reason: str, apply: bool = False,
         return _refuse(mission_id, f"record moved before the write: {e}")
     plan.update(applied=True, seq=out["seq"], reason="superseded")
     return plan
+
+
+# The only ledger events a failed `arm-chain` leaves behind. Any other row (a launch, an
+# acknowledgement, a hold release) means the mission did something, and the proof fails.
+ARM_FAILED_EVENTS = {"mission_prepared", "envelope_set", "route_admission", "owner_hold_set"}
+
+
+def never_launched(rec: dict) -> str | None:
+    """Positive proof that a mission was armed, refused by admission and never started, or None.
+
+    Every clause must hold: PREPARED at epoch 0, no owner session, no in-flight launch, the owner
+    hold written by a failed arm-chain, and a ledger holding only the failed-arm rows. A worker
+    that never existed cannot be alive, so this stands in for the DEAD verdict."""
+    if rec.get("state") != gm.PREPARED or int(rec.get("epoch") or 0) != 0:
+        return None
+    if (rec.get("owner") or {}).get("session_id") or (rec.get("pending") or {}).get("bg_id"):
+        return None
+    if not str((rec.get("owner_hold") or {}).get("reason", "")).startswith("arm-chain failed"):
+        return None
+    events = {e.get("event") for e in gm.lr.ledger_events(rec["mission_id"])}
+    if not events or not events <= ARM_FAILED_EVENTS:
+        return None
+    return "never launched: failed arm-chain stub (epoch 0, no owner, ledger " + ",".join(sorted(events)) + ")"
 
 
 def _refuse(mission_id: str, reason: str, **extra) -> dict:

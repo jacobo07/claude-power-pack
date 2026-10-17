@@ -142,6 +142,34 @@ def main() -> int:
     check("V-SUPERSEDE-CLI-EXIT", rc == 3 and raw("m-live") == live_before,
           "CLI exits 3 on refusal and writes nothing", f"rc={rc}")
 
+    # 8: never-launched stub proof (failed arm-chain). Positive control and each clause's negative.
+    def stub(mid: str, **over) -> None:
+        make(mid, "x", state=gm.PREPARED, epoch=0)
+        rec = raw(mid)
+        rec.update(owner=None, pending=None,
+                   owner_hold={"reason": "arm-chain failed: MissionError: route RECOMPILE", "set_at": 1.0})
+        rec.update(over)
+        gm.mission_path(mid).write_text(json.dumps(rec), encoding="utf-8")
+        for ev in ("mission_prepared", "envelope_set", "route_admission", "owner_hold_set"):
+            lr.ledger_append(mid, ev, mission_id=mid)
+
+    stub("m-stub")
+    r = ms.supersede("m-stub", by="none", reason="failed arm stub", apply=True, sessions=LIVE)
+    check("V-SUPERSEDE-STUB-OK", r["applied"] and raw("m-stub")["state"] == gm.ORPHANED
+          and "never launched" in raw("m-stub")["supersede_owner_evidence"],
+          "a never-launched failed-arm stub is retired", f"got {r}")
+    stub("m-stub-own", owner={"session_id": "live-1", "kind": "interactive"})
+    stub("m-stub-ep", epoch=1)
+    stub("m-stub-hold", owner_hold={"reason": "owner paused", "set_at": 1.0})
+    stub("m-stub-pend", pending={"bg_id": "abc", "deadline": 1.0})
+    stub("m-stub-ev")
+    lr.ledger_append("m-stub-ev", "launched", mission_id="m-stub-ev")
+    for mid in ("m-stub-own", "m-stub-ep", "m-stub-hold", "m-stub-pend", "m-stub-ev"):
+        b = raw(mid)
+        r = ms.supersede(mid, by="none", reason="x", apply=True, sessions=LIVE)
+        check(f"V-SUPERSEDE-STUB-REFUSES-{mid[7:].upper()}", not r["ok"] and raw(mid) == b,
+              "stub proof fails on this clause and the record is untouched", f"got {r}")
+
     print(f"SUPERSEDE_PASS={passes}/{passes + fails}  threshold=all")
     return 0 if fails == 0 else 1
 
