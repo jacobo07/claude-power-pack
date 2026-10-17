@@ -143,6 +143,14 @@ progress: |
      TB 28f9865 prereg, 1e2dd6f result; laptop TB at 1e2dd6f.
   NEXT (needs Owner): P34 = the womprat spawn on a named, camera-visible locator, with a RandomMap spawn at the same locator as
      the control (a patron appearing there proves the locator and the line work; then a missing womprat = a type/script problem).
+  OWNER "y". P34 DONE (coordinator; tbl-20261017-074625; disc 59b24f7b; ledger SLOT-TB-P34 140/141, PASS events=141
+     violations=0). P33 camera + cantinaband CONTROL + WompRat, both `MainRoomIdle / script=party / nearest_player`:
+     camera held (21/21); control FAIL and womprat FAIL in 21/21 frames. Chars/CantinaBand FileMon opens are stock (3 in P31c too).
+     Pre-registered reading: the line shape fails, not the type. The stock patron lines in the same state
+     (`MainRoomIdle / RandomMap / party / addtoset=1`) differ from ours only by nearest_player (ours) and addtoset=1
+     (theirs). TB 4acbedc prereg, dac589f result; laptop TB at dac589f.
+  NEXT (needs Owner): P35 = the stock patron line verbatim with only type= changed: 3x cantinaband (control) + 3x WompRat,
+     `"locator_set=MainRoomIdle" "type=<T>" "script=party" "addtoset=1"`; P33 camera kept. One slot, coordinator-run.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
