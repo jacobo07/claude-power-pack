@@ -1,0 +1,21 @@
+{
+  "schema": "certified-validation-receipt/0",
+  "subject": "ccr-compat-gate",
+  "branch": "ccr/v5",
+  "base_head": "fc0ea499",
+  "subject_sha256_12": {
+    "tools/ccr_compat_gate.py": "6CF4C963B76C",
+    "tools/ccr_compat_probe.py": "444768DE0B45",
+    "tools/test_ccr_compat_gate.py": "0CB2C8F2CBF1",
+    "vault/specs/ccr-compat-gate.md": "EC84FE6D5A1E",
+    "mods/ccr-uz-probe/.claude-plugin/plugin.json": "56C919442022",
+    "mods/ccr-uz-probe/hooks/hooks.json": "C835C92D8E11",
+    "mods/ccr-uz-probe/hooks/register.ts": "7E9AB8217E28"
+  },
+  "test": {"command": "python tools/test_ccr_compat_gate.py", "result": "COMPAT_PASS=21/21", "exit": 0, "gates": "V-COMPAT-*"},
+  "host": {"claude_code": "2.1.302", "platform": "win32"},
+  "proof_artifact": {"name": "compat_test3.txt", "sha256": "587843C9D3151EC8C21958EC69F3422D466A59A0E5C1C53169A27E4086761B9B", "written": "2026-10-17T19:55:15", "note": "temp file; the facts above are the durable copy"},
+  "applicability_decision": {"at": "2026-10-17", "verdict": "VALID_REUSE", "reason": "all 7 subject files carry the hashes listed and are older than the proof artifact; the 16 newer files are generated docs the test does not read; session and executor changes are not invalidators", "rerun": false},
+  "invalidators": ["any subject file hash differs from this list", "tools/test_ccr_compat_gate.py content changes", "claude --version differs from 2.1.302", "python interpreter major.minor changes"],
+  "reuse_limit": "proves the gate implementation only; it is NOT a confirmed host verdict for 2.1.302 (next obligation: reprobe --confirm)"
+}
