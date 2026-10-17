@@ -17676,3 +17676,32 @@ SHADOW. A pass observable that the unedited control also produces proves nothing
 trigger that never fired tests nothing. Sister of T-NON-DISCRIMINATING-CONTROL-001, for pass criteria rather than numbers. Judge every
 PASS as a difference from a control run on the same timeline, and show the trigger fired in the treated arm. Evidence:
 `vault/plans/planning-economics-m2-incident-20261016.md`.
+
+## Mission economics type separation (2026-10-17)
+
+Source: mission m-3f1feb210a74 cost hold; fixes 203e8e26, 142cf8ea, 1051b388, a98c0d9f, e6b649e0 (branch feature/knowledge-acquisition). Detail: `~/.claude/knowledge_vault/claude-doctrine/mission-economics-type-separation.md`.
+
+### Process Rules
+
+**`PR-SETTLE-THEN-ADMIT-001`** -- After every work unit: seal proof -> settle actual cost -> update the work-class profile -> recompute obligations and resources -> admit the next unit. A forecast that is not fed by the previous unit's settlement is a policy default wearing a forecast's name.
+Fix: `tools/work_class_profile.py` settle_unit/forecast (1051b388); phase settlement before admission (a98c0d9f); no quantiles below n=3.
+Evidence: structural forecast calls x (floor + median growth) reproduced the 17.03M spend within 0.3%. Tests: `tools/test_work_class_profile.py`, `tools/test_mission_unit_settlement.py`.
+
+### Traps
+
+**`T-FIXED-RATIO-READ-AS-A-FORECAST-001`** -- A trip ratio applied to a default ceiling is the ceiling again; reading it as a forecast reports a policy limit as an estimate miss.
+Fix: `authority_kind` OWNER|DEFAULT_POLICY, DEFAULT_CEILING incident level, forecast miss under Owner authority recompiles (203e8e26).
+Evidence: basis "(spent 1,664,910 + headroom 15,000,000) / trip ratio 2 = 8,332,455"; 2x = 16,664,910 = ceiling; spent 17,032,240. Test: `tools/test_gsd_mission_owner_hold.py`.
+
+**`T-POWERSHELL-51-REDIRECT-UTF16-READ-AS-UTF8-001`** -- PowerShell 5.1 `*>` writes UTF-16LE; a parser reading UTF-8 sees every run as HARNESS_FAILED. Driver keys also arrive mixed case (TEARDOWN_up).
+Fix: decode UTF-16LE (BOM-sniff) and match keys case-insensitively in `C:\Users\User\Apps\rbl\leg-verdict.py`.
+Evidence: every live leg looked HARNESS_FAILED until decoding was fixed.
+
+**`T-ASKING-THE-OWNER-INLINE-VS-WORKER-001`** -- The interactive agent asks the Owner to choose an execution topology (inline vs release vs stop) that the facts already decide; that menu was agent-written, not runtime-written.
+Fix: decide from facts; the runtime names the blocker in one `liveness_incident` (e6b649e0); typed `requires` park as WAIT_RESOURCE (142cf8ea).
+Evidence: one Owner topology decision caused by the agent in m-3f1feb210a74. Tests: `tools/test_mission_liveness_incident.py`, `tools/test_gsd_mission_resources.py`.
+
+### Hard Rule CANDIDATE (NOT registered; not in the compiled hard-rule set)
+
+**`HR-CANDIDATE-DEFAULT-ENVELOPE-IS-NEVER-OWNER-AUTHORITY`** -- STATUS: CANDIDATE pending production proof. A default policy envelope is never Owner authority: it may park a mission, it may not be presented as an Owner decision or as a forecast.
+Fix: 203e8e26 (`authority_kind`). Evidence: m-3f1feb210a74. Promote only after a production mission shows the typed split holding.
