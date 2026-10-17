@@ -250,6 +250,13 @@ def closeout_reserve(rec: dict) -> int:
     return min(DEFAULT_CLOSEOUT_TOKENS, auth // 20) if auth else 0
 
 
+def authority_kind(rec: dict) -> str:
+    """Whose ceiling binds: OWNER (declared authority), DEFAULT_POLICY (auto envelope only), else OPERATOR_ESTIMATE."""
+    if rec.get("authority_tokens"):
+        return "OWNER"
+    return "DEFAULT_POLICY" if rec.get("token_estimate_src") == "auto" else "OPERATOR_ESTIMATE"
+
+
 def judge(rec: dict, spent: int | None, fp: str | None, as_of: float | None = None,
           now: float | None = None) -> dict:
     """{trip: reason|None, mark: new cost_mark|None}. Pure. When `as_of` (measurement time) is given
@@ -278,6 +285,15 @@ def judge(rec: dict, spent: int | None, fp: str | None, as_of: float | None = No
     ratio = float(rec.get("token_trip_ratio") or DEFAULT_TRIP_RATIO)
     if spent > ratio * est:
         wm = f" (as of {_iso(as_of)})" if as_of is not None else ""
+        if rec.get("token_estimate_src") == "auto":
+            # An auto envelope is the default allowance, not a forecast the operator made (m-3f1feb210a74).
+            if auth:   # Owner capital remains (the authority check above passed): the forecast is stale, recompile it
+                return {"trip": None, "mark": None,
+                        "recompile": {"spent": spent, "estimate": est, "authority": auth, "ratio": ratio}}
+            return {"trip": (f"cost breaker: processed {spent:,}{wm} > default policy ceiling ({ratio:g} x estimate "
+                             f"{est:,}, an auto envelope); no Owner authority was ever declared for this mission, so "
+                             "this is the default allowance, not a forecast miss; declare authority to continue"),
+                    "mark": None, "level": "DEFAULT_CEILING", "authority_kind": "DEFAULT_POLICY"}
         return {"trip": (f"cost breaker: processed {spent:,}{wm} > {ratio:g} x estimate {est:,}; "
                          "explain the variance and recompute the remaining work before release"),
                 "mark": None}

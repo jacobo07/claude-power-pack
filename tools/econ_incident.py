@@ -21,6 +21,7 @@ LEVELS = (
     ("MISSION_AUTHORITY", re.compile(r"cost breaker \(mission authority\)")),
     ("PHASE_LEASE", re.compile(r"cost breaker \(phase lease\)")),
     ("STALL", re.compile(r"since the work tree last changed")),
+    ("DEFAULT_CEILING", re.compile(r"default policy ceiling")),   # before ESTIMATE_RATIO: its text also says "x estimate"
     ("ESTIMATE_RATIO", re.compile(r"x estimate")),
 )
 
@@ -48,6 +49,9 @@ def _next_action(level: str) -> str:
         return "closeout only; reforecast the phase from measured cost before any release"
     if level == "STALL":
         return "inspect why spend outran progress; recompile the work unit before any release"
+    if level == "DEFAULT_CEILING":
+        return ("the default allowance is spent and no Owner authority exists; declare authority with "
+                "`gsd_mission.py authority --tokens N`, then release, or keep the mission parked")
     return "explain the variance against the estimate and recompute the remaining work before release"
 
 
@@ -80,6 +84,8 @@ def record(rec: dict, reason: str, now: float | None = None, spent: int | None =
         "at_iso": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
         "authority_tokens": int(auth) if auth else None,
         "token_estimate": int(est) if est else None,
+        "authority_kind": ("OWNER" if auth else "DEFAULT_POLICY" if rec.get("token_estimate_src") == "auto"
+                           else "OPERATOR_ESTIMATE"),
         "spent": spent,
         "spent_error": err,
         "overshoot": (spent - int(auth)) if (spent is not None and auth) else None,

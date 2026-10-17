@@ -392,12 +392,13 @@ def recompile_topology(failure: str, unit_id: str, goal: str, old_agents, fenced
 
 
 # --------------------------------------------------------------------------- lease
-def price_lease(spent: int | None, ceiling: int | None, residual) -> dict:
+def price_lease(spent: int | None, ceiling: int | None, residual, ceiling_kind: str | None = None) -> dict:
     """Bounded successor lease inside the remaining authority (`ceiling` = the hard processed-token ceiling
     the mission may reach: Owner authority when declared, else the breaker's own ratio x estimate).
     Never hands over everything left: RESERVE_FRACTION stays for recovery and closeout."""
+    kind = {"ceiling_kind": ceiling_kind}   # OWNER vs DEFAULT_POLICY: a packet must say whose ceiling this is
     if spent is None or not ceiling:
-        return {"ok": False, "why": "spend or authority unmeasured: a lease cannot be priced (absent is not zero)"}
+        return {"ok": False, "why": "spend or authority unmeasured: a lease cannot be priced (absent is not zero)", **kind}
     remaining = int(ceiling) - int(spent)
     usable = int(remaining * (1 - RESERVE_FRACTION))
     price = max(MIN_LEASE_TOKENS, PRICE_PER_ITEM * max(1, len(residual or [])))
@@ -405,8 +406,8 @@ def price_lease(spent: int | None, ceiling: int | None, residual) -> dict:
     if lease < MIN_LEASE_TOKENS:
         return {"ok": False, "why": f"authority exhausted: {remaining:,} left of {int(ceiling):,}, "
                                     f"{usable:,} after reserve < minimum lease {MIN_LEASE_TOKENS:,}",
-                "remaining": remaining}
-    return {"ok": True, "lease": lease, "price": price, "remaining": remaining,
+                "remaining": remaining, **kind}
+    return {"ok": True, "lease": lease, "price": price, "remaining": remaining, **kind,
             "envelope": {"target": int(lease / LEASE_STOP_OVER_TARGET), "warn": int(lease / 1.15),
                          "stop": int(lease)}}
 

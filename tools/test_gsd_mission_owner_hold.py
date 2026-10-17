@@ -318,6 +318,86 @@ def main() -> int:
     check("V-OH-CONTROL-AMR-RECEIPT-ALL-COMPLETE-COMPLETES", gm.load("m-amr-rc-all")["state"] == gm.COMPLETED,
           f"{gm.load('m-amr-rc-all')['state']} row={amr_rows['m-amr-rc-all']}")
 
+    # 12. a DEFAULT policy envelope is not Owner authority (m-3f1feb210a74, 2026-10-17: the auto envelope's 2 x estimate
+    # ceiling parked a mission as a forecast miss and was priced as Owner capital). Owner authority recompiles the
+    # forecast; no authority names the default ceiling; an operator estimate keeps the ratio wording.
+    import json
+    import mission_recovery as mr
+    import mission_spend as mspend
+    import econ_incident as ei
+    os.environ["PP_OWNER_QUEUE_STATE_DIR"] = str(Path(TMP) / "owner-queue")
+    econ_fp = {"fingerprint": lambda wd: None}
+
+    def _econ(mid, estimate, src, authority=None):
+        r = _mission(mid, gm.RUNNING)
+        return gm.transition(mid, expect_epoch=r["epoch"], expect_state=r["state"], event="t_econ", now=NOW,
+                             token_estimate=estimate, token_estimate_src=src, authority_tokens=authority)
+
+    def _events(mid, name):
+        return [e for e in gm.lr.ledger_events(mid) if e.get("event") == name]
+
+    # 12a. Owner authority present, auto envelope trips -> recompile, no hold, authority bounds the new envelope.
+    r = _econ("m-econ-auth", 8_332_455, "auto", authority=20_000_000)
+    out = gm._cost_breaker(r, NOW + 60, measure=lambda rr: 17_032_240, **econ_fp)
+    new_est = int(out.get("token_estimate") or 0)
+    fi = _events("m-econ-auth", "forecast_invalidated")
+    check("V-ECON-AUTO-WITH-OWNER-AUTHORITY-RECOMPILES",
+          not out.get("owner_hold") and new_est != 8_332_455 and 17_032_240 < 2 * new_est <= 20_000_000
+          and len(fi) == 1 and fi[0].get("spent") == 17_032_240 and fi[0].get("old_estimate") == 8_332_455
+          and fi[0].get("authority") == 20_000_000 and out.get("token_estimate_src") == "auto",
+          f"hold={bool(out.get('owner_hold'))} est {new_est:,} events={fi}")
+    again = gm._cost_breaker(out, NOW + 120, measure=lambda rr: 17_032_240, **econ_fp)
+    check("V-ECON-RECOMPILE-IS-STABLE", not again.get("owner_hold") and len(_events("m-econ-auth", "forecast_invalidated")) == 1,
+          f"hold={bool(again.get('owner_hold'))}")
+
+    # 12b. no authority, auto envelope trips -> parked, and the hold says it is the DEFAULT ceiling.
+    r = _econ("m-econ-def", 8_332_455, "auto")
+    held = gm._cost_breaker(r, NOW + 60, measure=lambda rr: 17_032_240, **econ_fp)
+    hold = held.get("owner_hold") or {}
+    reason = hold.get("reason") or ""
+    ev_lvl = [e.get("level") for e in _events("m-econ-def", "economic_incident")]
+    boundary = gm._amr_boundary(held, {"boundary": reason}, NOW + 90, hold)
+    wait = (boundary.get("owner_hold") or {}).get("wait") or {}
+    packet = Path(wait.get("packet") or "nope").read_text(encoding="utf-8") if wait.get("packet") else ""
+    check("V-ECON-AUTO-NO-AUTHORITY-NAMES-DEFAULT-CEILING",
+          bool(hold) and "default policy ceiling" in reason and "no Owner authority" in reason
+          and "explain the variance" not in reason and hold.get("authority_kind") == "DEFAULT_POLICY"
+          and ev_lvl == ["DEFAULT_CEILING"] and wait.get("type") == "CAPITAL_EXHAUSTED"
+          and wait.get("authority_kind") == "DEFAULT_POLICY" and "DEFAULT_POLICY" in packet
+          and "explain the variance" not in ei._next_action("DEFAULT_CEILING"),
+          f"reason={reason!r} level={ev_lvl} wait={wait.get('type')}/{wait.get('authority_kind')}")
+
+    # 12c. Owner authority exhausted -> CAPITAL_EXHAUSTED owned by the Owner.
+    r = _econ("m-econ-own", 4_000_000, "auto", authority=10_000_000)
+    held = gm._cost_breaker(r, NOW + 60, measure=lambda rr: 10_000_000, **econ_fp)
+    hold = held.get("owner_hold") or {}
+    boundary = gm._amr_boundary(held, {"boundary": hold.get("reason")}, NOW + 90, hold)
+    wait = (boundary.get("owner_hold") or {}).get("wait") or {}
+    check("V-ECON-OWNER-AUTHORITY-EXHAUSTED",
+          bool(hold) and wait.get("type") == "CAPITAL_EXHAUSTED" and wait.get("authority_kind") == "OWNER"
+          and hold.get("authority_kind") == "OWNER" and not _events("m-econ-own", "forecast_invalidated"),
+          f"reason={hold.get('reason')!r} wait={wait.get('type')}/{wait.get('authority_kind')}")
+
+    # 12d. control: an operator-set estimate that trips keeps the ratio wording and the ESTIMATE_RATIO incident.
+    r = _econ("m-econ-op", 8_332_455, None)
+    held = gm._cost_breaker(r, NOW + 60, measure=lambda rr: 17_032_240, **econ_fp)
+    reason = (held.get("owner_hold") or {}).get("reason") or ""
+    ev_lvl = [e.get("level") for e in _events("m-econ-op", "economic_incident")]
+    check("V-ECON-OPERATOR-ESTIMATE-STILL-RATIO",
+          "explain the variance" in reason and "2 x estimate 8,332,455" in reason and ev_lvl == ["ESTIMATE_RATIO"]
+          and (held.get("owner_hold") or {}).get("authority_kind") != "OWNER",
+          f"reason={reason!r} level={ev_lvl}")
+
+    # 12e. price_lease names which ceiling it priced against; the arithmetic is unchanged.
+    base = mr.price_lease(17_032_240, 20_000_000, ["a"])
+    named = mr.price_lease(17_032_240, 20_000_000, ["a"], ceiling_kind="DEFAULT_POLICY")
+    check("V-ECON-PRICE-LEASE-NAMES-CEILING-KIND",
+          named.get("ceiling_kind") == "DEFAULT_POLICY" and {k: v for k, v in named.items() if k != "ceiling_kind"}
+          == {k: v for k, v in base.items() if k != "ceiling_kind"}
+          and mspend.authority_kind({"authority_tokens": 1}) == "OWNER"
+          and mspend.authority_kind({"token_estimate_src": "auto"}) == "DEFAULT_POLICY",
+          f"{named}")
+
     print(f"OWNER_HOLD_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

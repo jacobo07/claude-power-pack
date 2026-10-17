@@ -1690,7 +1690,15 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
         headroom, how = auto_headroom(spent, int(rec.get("epoch") or 0), rec.get("max_cycles"), cfg,
                                       claim_cost_for(rec))
         ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
+        cap = None
+        if rec.get("authority_tokens"):
+            # Owner authority is the upper bound of a default envelope: ratio x estimate may not outrun it.
+            cap = int(rec["authority_tokens"]) - ms.closeout_reserve(rec)
+            headroom = min(headroom, max(1, cap - (spent or 0)))
+            how += f"; bounded by Owner authority {int(rec['authority_tokens']):,} less closeout reserve"
         est = math.ceil(((spent or 0) + headroom) / ratio)
+        if cap is not None:
+            est = max(1, min(est, int(cap // ratio)))
         spent_txt = "spend unmeasured" if spent is None else f"spent {spent:,}"
         basis = (f"auto envelope: ({spent_txt} + headroom {headroom:,} [{how}; {src}]) / trip ratio"
                  f" {ratio:g} = {est:,}")
@@ -1701,6 +1709,14 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
         lr.ledger_append(mid, "envelope_auto_unassigned", mission_id=mid,
                          error=f"{type(exc).__name__}: {exc}"[:300])
         return rec
+
+
+def _recompile_forecast(rec: dict, now: float, rc: dict) -> dict:
+    """An auto envelope outran its forecast while Owner authority remains: the forecast is invalid, the mission is
+    not. Ledger what was spent against what was estimated, then re-assign the envelope inside the authority."""
+    lr.ledger_append(rec["mission_id"], "forecast_invalidated", mission_id=rec["mission_id"], spent=rc["spent"],
+                     old_estimate=rc["estimate"], authority=rc["authority"], ratio=rc["ratio"])
+    return _auto_budget(rec, now, measure=lambda _r: rc["spent"])
 
 
 def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict:
@@ -1726,10 +1742,13 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         lr.ledger_append(mid, "cost_breaker_unmeasured", mission_id=mid,
                          error=f"{type(exc).__name__}: {exc}"[:300])
         return rec
+    if verdict.get("recompile"):
+        return _recompile_forecast(rec, now, verdict["recompile"])
     if verdict["trip"]:
         lr.ledger_append(mid, "cost_breaker_tripped", mission_id=mid, spent=spent,
                          estimate=rec.get("token_estimate"), reason=verdict["trip"])
-        return set_owner_hold(mid, verdict["trip"], now=now, kind="cost")
+        return set_owner_hold(mid, verdict["trip"], now=now, kind="cost",
+                              extra={"authority_kind": ms.authority_kind(rec)})
     if verdict["mark"]:
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                           event="cost_mark", now=now, cost_mark=verdict["mark"],
@@ -1881,6 +1900,8 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
                           cost_mark={**verdict["mark"], "at": now, "gen": gen0}, progress_unknown=None,
                           **({"obligations": settled} if settled else {}),
                           reason=f"progress fingerprint moved at {spent:,} processed (gen {gen0}, {root})")
+    if verdict.get("recompile"):
+        return _recompile_forecast(rec, now, verdict["recompile"])
     if fp is None and not verdict["trip"]:
         streak = int((rec.get("progress_unknown") or {}).get("streak") or 0) + 1
         why = "bound root missing" if not Path(root).is_dir() else "git could not fingerprint the bound root"
@@ -1925,7 +1946,8 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
                              event="obligations_saved", now=now, touch=False, obligations=obs,
                              reason=f"{len(obs)} child obligation(s) saved before the breaker stops the worker")
         held = set_owner_hold(mid, verdict["trip"], now=now, kind="cost", expect_seq=rec.get("seq"),
-                              extra={"measured": {"gen": gen0, "root": root, "fallback": fallback}})
+                              extra={"measured": {"gen": gen0, "root": root, "fallback": fallback},
+                                     "authority_kind": ms.authority_kind(rec)})
     except CasConflict:
         now_rec = load(mid) or rec
         _breaker_receipt(mid, mb.STALE_GENERATION, "no_trip", current_gen=mb.generation(now_rec), **evidence)
@@ -2147,8 +2169,8 @@ def amr_compile(rec: dict, *, failed_sid: str | None, hold_reason: str, cause: s
     spent = ms.processed_tokens(rec)
     ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
     ceiling = rec.get("authority_tokens") or (int(ratio * int(rec["token_estimate"])) if rec.get("token_estimate") else None)
-    lease = mr.price_lease(spent, ceiling, residual)
-    base.update(topology=topo, residual=residual, spent=spent, ceiling=ceiling)
+    lease = mr.price_lease(spent, ceiling, residual, ceiling_kind=ms.authority_kind(rec))
+    base.update(topology=topo, residual=residual, spent=spent, ceiling=ceiling, ceiling_kind=lease.get("ceiling_kind"))
     if not lease["ok"]:
         return {"ok": False, **base, "boundary": lease["why"]}
     n = len(history) + 1
@@ -2267,15 +2289,18 @@ def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> d
               f'python "{gm_py}" release --mission {mid}')
     fig_txt = (f"spent {figs['spent']:,}" if "spent" in figs else "spend not recorded in the hold") + \
         (f" of ceiling {figs['ceiling']:,}" if "ceiling" in figs else "; ceiling not recorded in the hold")
+    akind = base_hold.get("authority_kind") or ms.authority_kind(rec)
+    akind_txt = {"DEFAULT_POLICY": "DEFAULT_POLICY (no Owner authority was ever declared; the default allowance ran out)",
+                 "OWNER": "OWNER (the Owner's declared authority)"}.get(akind, akind)
     pkt.write_text(
-        f"# Owner decision -- mission {mid}\n\nWAIT TYPE: {wtype}\n\nThe cost breaker stopped the executor and "
+        f"# Owner decision -- mission {mid}\n\nWAIT TYPE: {wtype}\n\nAUTHORITY KIND: {akind_txt}\n\nThe cost breaker stopped the executor and "
         f"autonomous recovery stopped at a genuine boundary:\n\n> {c.get('boundary')}\n\nFailure "
         f"{c.get('failure') or 'n/a'}, progress {(c.get('progress') or {}).get('class') or 'n/a'}, "
         f"unit {c.get('unit') or 'n/a'}, "
         f"{fig_txt}.\n\nOptions: raise authority (`gsd_mission.py authority --mission {mid} --tokens N` "
         "or `--extend-hours H`, then `release`), name a new strategy as a directive, or close the mission. "
         f"The mission stays parked (not settled) until then.\n\nResume command:\n\n    {resume}\n", encoding="utf-8")
-    wait = {"type": wtype, "figures": figs, "resume": resume, "packet": str(pkt), "at": now}
+    wait = {"type": wtype, "figures": figs, "resume": resume, "packet": str(pkt), "at": now, "authority_kind": akind}
     wait["queue_id"] = _enqueue_owner_wait(mid, wait)
     if wtype == "UNKNOWN":
         lr.ledger_append(mid, "owner_wait_unknown", mission_id=mid, why=str(c.get("boundary"))[:300],
