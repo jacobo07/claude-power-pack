@@ -680,6 +680,67 @@ def main() -> int:
     check("V-EPOCH-WATCH-SAMPLES-UNTIL-TERMINAL", n == 1 and c1["owner_samples"]["answered"] == 1
           and c1["owner_samples"]["max_live_workers"] == 1, c1["owner_samples"])
 
+    # --- an Owner decision is durable mission state and reaches a worker blocked on it --------
+    dsid = "dec1dec1-0000-0000-0000-000000000000"
+    running("m-dec", dsid, epoch=1)
+    dcalls = {"run": [], "stop": []}
+
+    def drun(argv, cwd):
+        dcalls["run"].append(argv)
+        return type("R", (), {"returncode": 0, "stderr": "", "stdout": f"backgrounded · {dsid[:8]} · m-dec-e1"})()
+
+    dkw = dict(runner=drun, stop_runner=lambda a: dcalls["stop"].append(a), pid_alive=lambda p: False,
+               host_fetch=lambda: [], now=NOW)
+    out = gm.deliver_decision("m-dec", "Decision B: ship the 7-character name", decision_id="B", sessions=host(dsid),
+                              **dkw)
+    after = gm.load("m-dec")
+    check("V-DECIDE-RECORDED-ON-MISSION", out["recorded"] and [d["id"] for d in after["decisions"]] == ["B"]
+          and "DECISION B: Decision B: ship the 7-character name" in after["directives"], after.get("directives"))
+    check("V-DECIDE-STOPS-THEN-RESUMES-SAME-SESSION", out["woke"].get("ok") and dcalls["stop"]
+          and dcalls["stop"][0][-1] == dsid[:8] and dcalls["run"][0][1:4] == ["--bg", "--resume", dsid]
+          and "OWNER DECISION B" in dcalls["run"][0][-1], (out["woke"], dcalls["run"][:1]))
+    check("V-DECIDE-RESEND-IS-NOOP", (lambda r: not r["recorded"] and len(dcalls["run"]) == 1)(
+        gm.deliver_decision("m-dec", "Decision B: ship the 7-character name", decision_id="B",
+                            sessions=host(dsid), **dkw)))
+    try:
+        gm.deliver_decision("m-dec", "other text", decision_id="B", sessions=host(dsid), **dkw)
+        check("V-DECIDE-SAME-ID-OTHER-TEXT-REFUSED", False, "accepted")
+    except gm.MissionError:
+        check("V-DECIDE-SAME-ID-OTHER-TEXT-REFUSED", True)
+    # control: with no live owner the decision is still recorded and the next card carries it (no wake)
+    running("m-dec2", "dec2dec2-0000-0000-0000-000000000000", epoch=1)
+    out2 = gm.deliver_decision("m-dec2", "first answer", decision_id="A", sessions=[], **dkw)
+    out3 = gm.deliver_decision("m-dec2", "better answer", decision_id="C", supersedes="A", wake=False, **dkw)
+    after2 = gm.load("m-dec2")
+    live_lines = [x for x in after2["directives"] if x.startswith("DECISION ")]
+    check("V-DECIDE-NO-LIVE-OWNER-STILL-RECORDED", out2["recorded"] and not out2["woke"]["ok"], out2["woke"])
+    check("V-DECIDE-SUPERSEDED-DROPPED-FROM-CARD", out3["recorded"] and live_lines == ["DECISION C: better answer"],
+          live_lines)
+    try:
+        gm.deliver_decision("m-dec2", "x", supersedes="nope", wake=False, **dkw)
+        check("V-DECIDE-UNKNOWN-SUPERSEDES-REFUSED", False, "accepted")
+    except gm.MissionError:
+        check("V-DECIDE-UNKNOWN-SUPERSEDES-REFUSED", True)
+    try:
+        gm.deliver_decision("m-dec2", "   ", wake=False, **dkw)
+        check("V-DECIDE-EMPTY-REFUSED", False, "accepted")
+    except gm.MissionError:
+        check("V-DECIDE-EMPTY-REFUSED", True)
+    gm.transition("m-dec2", expect_epoch=after2["epoch"], expect_state=after2["state"], event="t_end",
+                  state=gm.HALTED, now=NOW)
+    try:
+        gm.deliver_decision("m-dec2", "late", wake=False, **dkw)
+        check("V-DECIDE-TERMINAL-MISSION-REFUSED", False, "accepted")
+    except gm.MissionError:
+        check("V-DECIDE-TERMINAL-MISSION-REFUSED", True)
+    # the real CLI parses and reaches the handler (no-wake: nothing launches)
+    import subprocess
+    running("m-dec3", "dec3dec3-0000-0000-0000-000000000000", epoch=1)
+    cp = subprocess.run([sys.executable, str(Path(gm.__file__)), "decide", "--mission", "m-dec3", "--id", "B",
+                         "--text", "cli answer", "--no-wake"], capture_output=True, text=True, timeout=60)
+    check("V-DECIDE-CLI-RECORDS", cp.returncode == 0 and "DECISION RECORDED" in cp.stdout
+          and [d["id"] for d in gm.load("m-dec3")["decisions"]] == ["B"], (cp.returncode, cp.stdout, cp.stderr[-200:]))
+
     c = ge.census()
     check("V-EPOCH-CENSUS-SEPARATES-COUNTERS",
           c["fresh_worker_sessions"] >= 4 and c["context_rotations"] >= 1 and c["same_session_continuations"] >= 1

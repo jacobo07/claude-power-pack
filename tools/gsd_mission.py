@@ -1418,6 +1418,80 @@ def add_directive(mission_id: str, text: str, now: float | None = None) -> dict:
                       directives=[*(rec.get("directives") or []), text[:1000]])
 
 
+def _decision_prompt(d: dict) -> str:
+    return (f"OWNER DECISION {d['id']} (binding; it settles any open 'OWNER DECISION NEEDED' on this topic, in "
+            f"STATE.md and in a blocked-on-Owner state): {d['text']}\n"
+            "Record it as resolved in STATE.md, then continue the mission with the next runnable work. "
+            "Do not wait for the Owner again on this point.")
+
+
+def deliver_decision(mission_id: str, text: str, *, decision_id: str | None = None, supersedes: str | None = None,
+                     wake: bool = True, now: float | None = None, sessions: list[dict] | None = None,
+                     runner=None, stop_runner=None, pid_alive=lr._pid_alive, host_fetch=None) -> dict:
+    """An Owner decision as DURABLE mission state (2026-10-17, TB-FULL: an answer given in chat or written to a
+    scratch file never reached a worker that had stopped to ask; a stale 'OWNER DECISION NEEDED' kept winning).
+
+    One atomic record on the mission: a decision id, the text, and the id it supersedes. Every later launch card
+    carries the live decisions (a superseded one is dropped, never shown). A live background owner that stopped
+    to ask is stopped and RESUMED in the same session with the decision as its prompt; a mission with no live
+    owner simply carries it on the next card. Re-sending an id with the same text is a no-op (no second wake);
+    the same id with other text is refused. The caller never relays by hand."""
+    import gsd_epoch as ge
+    now = time.time() if now is None else now
+    text = (text or "").strip()
+    if not text:
+        raise MissionError("empty decision")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; a decision cannot reach it")
+    decisions = [dict(d) for d in (rec.get("decisions") or [])]
+    did = (decision_id or f"D{len(decisions) + 1}").strip()
+    prior = next((d for d in decisions if d["id"] == did), None)
+    if prior is not None:
+        if prior["text"] != text[:1000]:
+            raise MissionError(f"decision {did} already exists with other text; send a new id with --supersedes {did}")
+        return {"decision": prior, "recorded": False, "woke": {"ok": False, "why": "already recorded"}}
+    if supersedes:
+        old = next((d for d in decisions if d["id"] == supersedes), None)
+        if old is None:
+            raise MissionError(f"cannot supersede unknown decision {supersedes}")
+        old["superseded_by"] = did
+    new = {"id": did, "text": text[:1000], "at": now, **({"supersedes": supersedes} if supersedes else {})}
+    decisions.append(new)
+    legacy = [d for d in (rec.get("directives") or []) if not str(d).startswith("DECISION ")]
+    lines = [f"DECISION {d['id']}: {d['text']}" for d in decisions if not d.get("superseded_by")]
+    rec = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="owner_decision",
+                     now=now, decisions=decisions, directives=[*legacy, *lines])
+    import hashlib
+    lr.ledger_append(mission_id, "owner_decision", mission_id=mission_id, epoch=rec["epoch"], decision_id=did,
+                     supersedes=supersedes, sha=hashlib.sha256(new["text"].encode("utf-8")).hexdigest()[:16])
+    woke: dict = {"ok": False, "why": "wake not requested"}
+    if wake:
+        owner = rec.get("owner") or {}
+        sess = sessions if sessions is not None else host_sessions()
+        row = _host_row(owner.get("session_id"), sess) if owner.get("session_id") and sess is not None else None
+        if not owner.get("session_id"):
+            woke = {"ok": False, "why": "no owner: the next launch card carries the decision"}
+        elif owner.get("kind") != "background":
+            woke = {"ok": False, "why": "interactive owner: not resumed; the decision is on the mission"}
+        elif sess is None:
+            woke = {"ok": False, "why": "host unreachable: the next launch card carries the decision"}
+        elif row is None or row.get("state") in ("stopped", "failed", "exited"):
+            woke = {"ok": False, "why": "owner not live: the next launch card carries the decision"}
+        else:
+            ok, how = stop_owner(owner, sess, pid_alive=pid_alive, runner=stop_runner, host_fetch=host_fetch)
+            if not ok:
+                woke = {"ok": False, "why": f"owner did not stop ({how}); the next launch card carries the decision"}
+            else:
+                woke = ge.continue_worker(
+                    mission_id, rec, prompt=_decision_prompt(new),
+                    decision={"decision": ge.CONTINUE, "cause": ge.TURN_CONTINUATION, "reason": f"owner decision {did}"},
+                    runner=runner, stop_runner=stop_runner, now=now)
+    return {"decision": new, "recorded": True, "woke": woke}
+
+
 def is_cost_hold(hold: dict | None) -> bool:
     """spec mission-cost-hold-stops-worker: a hold the cost breaker set. Records written before `kind`
     existed are recognised by the breaker's own reason prefix."""
@@ -5821,6 +5895,13 @@ def _cli(argv=None) -> int:
     d = sub.add_parser("directive")
     d.add_argument("--mission", required=True)
     d.add_argument("--text", required=True)
+    dc = sub.add_parser("decide", help="record an Owner decision as durable mission state and resume a blocked "
+                                       "background owner with it")
+    dc.add_argument("--mission", required=True)
+    dc.add_argument("--text", required=True)
+    dc.add_argument("--id", default=None, help="decision id (default D<n>)")
+    dc.add_argument("--supersedes", default=None, help="id of an earlier decision this one replaces")
+    dc.add_argument("--no-wake", action="store_true", help="record only; do not stop and resume the owner")
     oh = sub.add_parser("hold", help="park a live mission: no launch, halt or renewal (spec mission-owner-hold)")
     oh.add_argument("--mission", required=True)
     oh.add_argument("--reason", required=True)
@@ -5931,6 +6012,13 @@ def _cli(argv=None) -> int:
     if args.cmd == "directive":
         rec = add_directive(args.mission, args.text)
         print(f"DIRECTIVE RECORDED mission={rec['mission_id']} total={len(rec['directives'])}")
+        return 0
+    if args.cmd == "decide":
+        out = deliver_decision(args.mission, args.text, decision_id=args.id, supersedes=args.supersedes,
+                               wake=not args.no_wake)
+        w = out["woke"]
+        print(f"DECISION {'RECORDED' if out['recorded'] else 'UNCHANGED'} mission={args.mission} "
+              f"id={out['decision']['id']} woke={bool(w.get('ok'))} why={w.get('why', 'resumed')}")
         return 0
     if args.cmd == "hold" and args.stop:
         out = owner_pause(args.mission, args.reason)
