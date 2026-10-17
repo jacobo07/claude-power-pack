@@ -159,6 +159,36 @@ progress: |
   NEXT (needs Owner): P36 = swap type=RandomMap -> type=WompRat in the 13 STOCK Enter_MainRoom lines (add nothing; counts and
      locators unchanged). Womprats = type works (additions blocked by a cap/pool); no patrons = type refused in the hub.
      Same coordinator-run shape (pN_run.sh derived by sed from p35_run.sh; check N of type=WompRat on the disc = 13). One slot.
+  OWNER "y". P36 DONE (coordinator; tbl-20261017-081422; disc 1e13c92d; disc gate WompRat 13 / CameraCut 1 / RandomMap 83;
+     ledger SLOT-TB-P36 144/145, PASS events=145 violations=0). hub-scp PASS. spawn-route FAIL in view (no four-legged shape
+     in 21/21). stock-lines-empty INCONCLUSIVE, because its premise was wrong. FIRST divergence from P33-P35: t81-83 are
+     pixel-identical to P35, and from t88 the frames differ by 2-6 %. Arrivals come at the same times (right edge t88, t90),
+     but they are different characters. So the stock-line edit changes the room and the added lines did not.
+     CORRECTION: in P35 too the room is empty of patrons at t84-87. Every patron seen in P33-P36 arrives from the right
+     from t88. This camera has NEVER shown a MainRoomIdle locator, so no idle-set spawn (P33-P36) was ever in view.
+     FileMon identical (21 char files, womprat preloaded after level1.scp in both). TB 341de79 prereg, 8fe3880 result;
+     laptop TB at 8fe3880.
+  NEXT (needs Owner): P37 = the arrivals are the in-view observable. Swap ONLY Spawn_MainRoom's one door line
+     (`locator_set=MainRoomDoor` "type=RandomMap" ... "state=EnterRoom" "addtoset=1") to WompRat, keep the 13 stock lines
+     stock and keep the P33 camera. Womprats walking in from the right at t88+ = the type spawns in the hub. No arrivals =
+     refused. Disc check: WompRat 1, RandomMap 95. One slot, coordinator-run (p37_run.sh from p36_run.sh).
+  OWNER "y". P37 DONE (coordinator; tbl-20261017-093135; disc 7fdbf2b8; disc gate WompRat 1 / CameraCut 1 / RandomMap 95;
+     ledger SLOT-TB-P37 146/147, PASS events=147 violations=0). hub-scp PASS. door-arrival PASS: ZERO arrivals in 21/21
+     frames, against P35's arrivals at t88/t90/t91+. spawn-route FAIL: the room holds only the two players t84-112.
+     READING: every patron seen in P33-P36 came from the one MainRoomDoor line, and with type=WompRat that proven, in-view
+     line makes nothing, so the hub REFUSES the type. Static lead: MosEisley.txt declares
+     `character "womprat" resident ;extra_toggle`, while the hub's Levels/Map/map.txt declares only `character "mapcar" resident`.
+     TB 4bda7b9 prereg, 46d4853 result; laptop TB at 46d4853.
+  NEXT (needs Owner): P38 = P37 + `character "womprat" resident` appended to Levels/Map/map.txt. Womprats at the door
+     from t88 = the declaration was missing (P5 route open). Still nothing = move P5 to a level that declares womprat.
+  OWNER "y". P38 DONE (coordinator; tbl-20261017-095242; disc dacf6b90; disc gate incl. map.txt womprat x1; ledger
+     SLOT-TB-P38 148/149, PASS events=149 violations=0). hub-scp PASS; door-arrival FAIL and spawn-route FAIL in 21/21,
+     the same as P37. The resident declaration is not enough. The hub also reads every level's .txt in one sweep, so
+     MosEisley.txt's womprat line was already read. CONFOUND FOUND: every stock womprat spawn pairs the type with a
+     womprat script (MosEisley_B level3 script=AlleyWompRat; MosEisley_D level2 script=CoinRat; EndorBattle_C
+     script=trailertrash), but every hub line in P33-P38 used script=party. TB 27c5a54 prereg, a636220 result; laptop TB at a636220.
+  NEXT (needs Owner): P39a = P37's door line with script=spawned_womprat (global Scripts/, the hub opens it), map.txt stock;
+     or P39b = move P5 to MosEisley_B alley / MosEisley_D, where stock scripts spawn womprats.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
