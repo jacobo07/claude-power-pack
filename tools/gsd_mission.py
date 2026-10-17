@@ -39,6 +39,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_long_run as lr  # noqa: E402  (state_dir, ledger, _pid_alive, sessions_dir)
 import mission_binding as mb  # noqa: E402  (AMCR: the one execution-root resolver)
+import mission_resources as mres  # noqa: E402  (M2: typed resource requirements, probes behind mres.PROBES)
 import receipt_judge as rj  # noqa: E402  (one receipt reading for mission, chain and steward)
 from route_admission import KNOWN_VERDICTS, LAUNCHABLE_VERDICTS  # noqa: E402  (one verdict contract)
 
@@ -553,6 +554,10 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
                 # Audit F3: a recovery boundary is a PARK with a decision packet, never a settle -- the packet's
                 # options (raise authority, extend hours, release) must still apply to a live record.
                 return {"action": "none", "reason": f"recovery owner boundary: {str((hold.get('recovery') or {}).get('why'))[:200]}"}
+        if hold.get("kind") == "resource":
+            # M2: parked for a resource, not for a person. A dead owner is the normal case (its turn is done),
+            # so it is NOT settled: the sweep lifts the hold when the requirement is met, then relays.
+            return {"action": "none", "reason": f"WAIT_RESOURCE: {str(hold.get('reason'))[:200]}"}
         if state in (RUNNING, BLOCKED) and rec.get("owner"):
             verdict, evidence = liveness(rec.get("owner"), sessions, pid_alive)
             if verdict == DEAD and hold.get("worker_stopped_at"):
@@ -2050,6 +2055,88 @@ def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
     return out
 
 
+# --------------------------------------------------------------------------- M2: typed resource requirements
+def _blocking_hold(rec: dict) -> bool:
+    """A hold that stops the breakers from judging. A resource hold does not: a cost trip must still be able
+    to land over it (and then wins, see resource_gate)."""
+    hold = rec.get("owner_hold")
+    return bool(hold) and hold.get("kind") != "resource"
+
+
+def set_requires(mission_id: str, obligation: str, specs: list[tuple[str, object]] | None = None,
+                 clear: bool = False, now: float | None = None) -> dict:
+    """Set/replace the requirements of ONE obligation (siblings kept), or clear them."""
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}; there is nothing to gate")
+    if not clear and not specs:
+        raise MissionError("give at least one requirement (--ram-free-gb, --path, --no-process) or --clear")
+    keep = [r for r in rec.get("requires") or [] if r.get("obligation") != obligation]
+    new = [] if clear else [{"id": f"{obligation}-{kind}", "kind": kind, "arg": arg, "obligation": obligation}
+                            for kind, arg in specs]
+    for r in new:
+        if r["kind"] not in mres.KINDS:
+            raise MissionError(f"unknown requirement kind {r['kind']!r}")
+    allreq = keep + new
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="requires_set",
+                      now=now, requires=allreq, reason=f"requires {obligation}: "
+                      + ("cleared" if clear else ", ".join(f"{k} {a}" for k, a in specs)))
+
+
+def resource_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive, probes: dict | None = None) -> dict:
+    """The sweep's resource step, run before plan_next. No model call. Returns the (possibly updated) record.
+
+    Unmet or UNKNOWN for every obligation -> park as owner_hold kind "resource" (WAIT_RESOURCE).
+    Any one obligation fully met -> admissible (siblings are independent); a resource hold is lifted with
+    RESOURCE_AVAILABLE and the ordinary relay path runs. A cost or Owner hold is never touched here."""
+    mid, hold = rec["mission_id"], rec.get("owner_hold") or {}
+    if rec["state"] in TERMINAL:
+        return rec
+    reqs = rec.get("requires")
+    if not reqs:
+        if hold.get("kind") == "resource":   # the requirements were cleared under a standing resource hold
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="resource_hold_dropped",
+                              now=now, owner_hold=None, resource_eval=None, reason="resource requirements cleared")
+        return rec
+    if hold and hold.get("kind") != "resource":
+        return rec   # V-RES-COST-HOLD-WINS: nothing a resource reading says lifts a cost or Owner hold
+    ev = mres.evaluate(reqs, probes)
+    snap = {**mres.snapshot(ev, now), "key": mres.key(ev)}
+    changed = (rec.get("resource_eval") or {}).get("key") != snap["key"]
+    errors = [r["error"] for o in ev["obligations"].values() for r in o["requirements"] if r.get("error")]
+    if ev["admissible"]:
+        if hold:
+            lr.ledger_append(mid, "RESOURCE_AVAILABLE", mission_id=mid, actionable=ev["actionable"],
+                             waiting=ev["waiting"], waited_s=int(now - float(hold.get("set_at") or now)))
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="resource_available",
+                              now=now, owner_hold=None, resource_eval=snap,
+                              reason=f"resources available for {', '.join(ev['actionable'])}")
+        if changed:
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="resource_evaluated",
+                              now=now, touch=False, resource_eval=snap)
+        return rec
+    event = "RESOURCE_UNKNOWN" if not any(r["status"] == mres.UNMET for o in ev["obligations"].values()
+                                          for r in o["requirements"]) else "RESOURCE_WAIT"
+    text, extra = mres.reason(ev), {"wait_type": "WAIT_RESOURCE", "resource": snap}
+    if hold:   # already parked: rewrite only when the verdict changed, so a drifting reading costs no row
+        if not changed:
+            return rec
+        lr.ledger_append(mid, event, mission_id=mid, waiting=ev["waiting"], errors=errors, reason=text[:400])
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="resource_wait_changed",
+                          now=now, owner_hold={**hold, "reason": text[:1000], **extra}, resource_eval=snap,
+                          reason=text[:300])
+    if rec["state"] == LAUNCHING:
+        return rec   # a launch is in flight; the requirement gates the NEXT one
+    if rec.get("owner") and liveness(rec.get("owner"), sessions, pid_alive)[0] != DEAD:
+        return rec   # a worker that may still be running is not parked under it; its successor is what waits
+    lr.ledger_append(mid, event, mission_id=mid, waiting=ev["waiting"], errors=errors, reason=text[:400])
+    held = set_owner_hold(mid, text, now=now, kind="resource", expect_seq=rec.get("seq"), extra=extra)
+    return transition(mid, expect_epoch=held["epoch"], expect_state=held["state"], event="resource_evaluated",
+                      now=now, touch=False, resource_eval=snap)
+
+
 # --------------------------------------------------------------------------- AMR: autonomous mission recovery
 # A cost hold stops the executor, not the goal (plan vault/plans/amr-autonomous-mission-recovery-20261013.md).
 # plan_next answers `recover` for a cost hold; recover_mission fences the failed worker, compiles a materially
@@ -2206,6 +2293,9 @@ def amr_compile(rec: dict, *, failed_sid: str | None, hold_reason: str, cause: s
 # grace, and the exact resume command. m-4e31db7aca3f sat 8.5 h and m-28ab89fff085 ~20 h as an invisible OWNER_BOUNDARY.
 OWNER_WAIT_TYPES = ("CAPITAL_EXHAUSTED", "OWNER_PRODUCT_DECISION", "SECURITY_BOUNDARY", "IRREVERSIBLE_ACTION",
                     "EXTERNAL_AUTHORITY_REQUIRED", "RESOURCE_POLICY_DECISION", "UNKNOWN")
+# A wait the sweep resolves by itself. Not an Owner wait: it has no queue row and no economic incident.
+NON_OWNER_WAIT_TYPES = ("WAIT_RESOURCE",)
+WAIT_TYPES = OWNER_WAIT_TYPES + NON_OWNER_WAIT_TYPES
 _WAIT_CAPITAL_RE = re.compile(r"cost breaker|mission budget|authority|ceiling|processed|iterations \d+ >= max|older than",
                               re.I)
 _WAIT_SECURITY_RE = re.compile(r"trust dialog|security boundary|credential|permission boundary", re.I)
@@ -3050,6 +3140,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
     ]
     wd = mb.execution_root(rec) if mb.binding(rec) else rec.get("work_dir")
     parts += mb.card_lines(rec)
+    parts += mres.card_lines(rec)   # [] for a mission without `requires`
     if wd and os.path.normcase(str(wd)) != os.path.normcase(str(rec.get("cwd") or "")):
         # Measured M6 (2026-09-24): /gsd-autonomous moved into a git worktree and reset the main
         # checkout's planning files, so everything done lives THERE. A successor that starts in
@@ -4438,12 +4529,14 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 pass
             continue
         try:
-            if not dry_run and rec.get("token_estimate") is None and not rec.get("owner_hold"):
+            if not dry_run and rec.get("token_estimate") is None and not _blocking_hold(rec):
                 rec = _auto_budget(rec, now)
-            if not dry_run and rec.get("phase_lease") and not rec.get("owner_hold"):
+            if not dry_run and rec.get("phase_lease") and not _blocking_hold(rec):
                 rec = _phase_breaker(rec, now)
-            if not dry_run and (rec.get("token_estimate") or rec.get("authority_tokens")) and not rec.get("owner_hold"):
+            if not dry_run and (rec.get("token_estimate") or rec.get("authority_tokens")) and not _blocking_hold(rec):
                 rec = _cost_breaker(rec, now)
+            if not dry_run and (rec.get("requires") or (rec.get("owner_hold") or {}).get("kind") == "resource"):
+                rec = resource_gate(rec, now, sessions, pid_alive)   # M2: no model call; absent field never gets here
             plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
         except Exception as exc:  # noqa: BLE001 -- isolated per mission, like capsule_v2 above
             # GEX44 2026-10-07/08: a breaker raise here (set_owner_hold on a terminal record) ended EVERY pass
@@ -5935,6 +6028,14 @@ def _cli(argv=None) -> int:
                          "never kill the pid by hand: the daemon resumes a killed session")
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
     orl.add_argument("--mission", required=True)
+    rq = sub.add_parser("requires", help="M2: typed resource requirements for ONE obligation; the sweep parks the "
+                                         "mission as WAIT_RESOURCE until they are met (no model call)")
+    rq.add_argument("--mission", required=True)
+    rq.add_argument("--obligation", help="the obligation these requirements gate, e.g. O-70")
+    rq.add_argument("--ram-free-gb", type=float, default=None)
+    rq.add_argument("--path", default=None, help="a path that must exist, e.g. R:\\hwf")
+    rq.add_argument("--no-process", default=None, help="an image name that must not be running, e.g. electron")
+    rq.add_argument("--clear", metavar="OBLIGATION", default=None, help="remove that obligation's requirements")
     bd = sub.add_parser("bind", help="AMCR: bind the mission to the git worktree its worker now writes "
                                      "(every observer follows it)")
     bd.add_argument("--mission", required=True)
@@ -6054,6 +6155,18 @@ def _cli(argv=None) -> int:
     if args.cmd == "hold":
         rec = set_owner_hold(args.mission, args.reason)
         print(f"OWNER HOLD SET mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
+        return 0
+    if args.cmd == "requires":
+        if args.clear:
+            rec = set_requires(args.mission, args.clear, clear=True)
+            print(f"REQUIRES CLEARED mission={rec['mission_id']} obligation={args.clear} left={len(rec['requires'])}")
+            return 0
+        if not args.obligation:
+            raise MissionError("--obligation is required (or --clear <obligation>)")
+        specs = [(k, v) for k, v in (("ram_free_gb", args.ram_free_gb), ("path_exists", args.path),
+                                     ("no_process", args.no_process)) if v is not None]
+        rec = set_requires(args.mission, args.obligation, specs)
+        print(f"REQUIRES SET mission={rec['mission_id']} obligation={args.obligation} total={len(rec['requires'])}")
         return 0
     if args.cmd == "authority":
         rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason)
