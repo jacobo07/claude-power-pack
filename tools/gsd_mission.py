@@ -727,6 +727,11 @@ ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 IDLE_LAUNCH_MARK = "send a prompt to start"   # host's words for a worker that got no prompt
 CARD_MAX_BYTES = 8000            # claude-code-handoff measured ~9 KB SessionStart truncation
 STOP_WAIT_S = 90                 # `claude stop` is asynchronous: the pid outlives the verb
+# A host row reports `state: done` when the TURN is over while `status: idle` says the session is still
+# alive in the background (measured 2026-10-17 GEX44 m-80fd126a23cc: 4 of 7 same-session continuations
+# resumed a session that was still "already running", so the host started a copy and a fresh worker
+# followed 4 minutes later). Alive is `status`, not `state`.
+HOST_LIVE_STATUSES = ("idle", "busy", "waiting")
 AUTOCOMPACT_SAFETY_NET = "600k"  # native compaction only if the hand-off itself failed
 
 
@@ -3219,9 +3224,23 @@ def _host_row(session_id: str, sessions: list[dict] | None) -> dict | None:
     return next((s for s in (sessions or []) if s.get("sessionId") == session_id), None)
 
 
+def _wait_host_released(session_id: str, fetch, wait_s: float) -> bool:
+    """True once the host no longer lists the session as live. An unanswerable host is not a release."""
+    deadline = time.time() + wait_s
+    while True:
+        rows = fetch()
+        if rows is not None:
+            row = _host_row(session_id, rows)
+            if row is None or row.get("status") not in HOST_LIVE_STATUSES:
+                return True
+        if time.time() >= deadline:
+            return False
+        time.sleep(1)
+
+
 def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pid_alive,
                runner=None, wait_s: float | None = None, cmdline=None,
-               killer=None) -> tuple[bool, str]:
+               killer=None, host_fetch=None) -> tuple[bool, str]:
     """Stop the predecessor and WAIT until its process is gone (W0: `claude stop` returns
     while the pid still lives). Only a background worker is stopped; an interactive pane
     is the Owner's and is left alone -- it simply no longer holds the lease."""
@@ -3237,7 +3256,8 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
         return True, "interactive owner left running; lease moves"
     exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
     run = runner or (lambda argv: subprocess.run(argv, capture_output=True, text=True, timeout=120))
-    if row.get("state") not in ("stopped", "done", "exited", "failed"):
+    live = row.get("status") in HOST_LIVE_STATUSES
+    if row.get("state") not in ("stopped", "done", "exited", "failed") or live:
         run([exe, "stop", row.get("id") or owner["session_id"][:8]])
     # Even a host `stopped`/`done` is waited on: the pid outlives the verdict (W0 E13), and a
     # successor launched before it is gone overlaps it.
@@ -3277,6 +3297,14 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
             return False, (f"pid {pid} still alive after {int(wait_s)} s; not terminated: "
                            + ("argv unreadable" if not argv else "argv is not this worker"))
         return False, f"pid {pid} still alive after {int(wait_s)} s"
+    # An injected stop runner means an injected world (tests, dry runs): there is no real host to poll.
+    fetch = host_fetch or (host_sessions if runner is None else None)
+    if live and fetch is not None:
+        # No pid, but the host still lists the session alive: resuming now makes the host start a COPY
+        # ("session X is already running in the background"). Wait for the host to release it.
+        if _wait_host_released(owner["session_id"], fetch, wait_s):
+            return True, "stopped; host no longer lists it as live"
+        return False, f"host still lists {owner['session_id'][:8]} as {row.get('status')} after {int(wait_s)} s"
     return True, "stopped; no pid to wait on"
 
 

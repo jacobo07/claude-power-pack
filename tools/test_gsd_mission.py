@@ -724,6 +724,36 @@ def main() -> int:
                             runner=stop_run, wait_s=0)
     check("V-MC-STOP-WAITS-FOR-PID", ok is False and "still alive" in why, why)
 
+    # 2026-10-17 (GEX44 m-80fd126a23cc): the host lists an idle worker `state: done` with NO pid while
+    # `status: idle` says it is alive. The old code skipped `claude stop` and resumed at once, so the host
+    # started a COPY ("already running in the background"). Alive is `status`, not `state`.
+    live_idle_row = {"sessionId": "s-idle", "id": "s-idle", "kind": "background", "state": "done", "status": "idle"}
+    idle_owner = {**bg, "session_id": "s-idle"}
+
+    def idle_case(release_after, wait_s, row=live_idle_row):
+        stopped, polls = [], []
+
+        def fetch():
+            polls.append(1)
+            if len(polls) > release_after:
+                return [{**row, "status": None, "state": "stopped"}]
+            return [dict(row)]
+        ok_, why_ = gm.stop_owner(idle_owner, [dict(row)], pid_alive=gone,
+                                  runner=lambda argv: stopped.append(argv), wait_s=wait_s, host_fetch=fetch)
+        return ok_, why_, stopped, polls
+    ok, why, stopped, polls = idle_case(release_after=1, wait_s=5)
+    check("V-MC-STOP-IDLE-NOPID-STOPS-AND-WAITS",
+          ok is True and len(stopped) == 1 and stopped[0][-2:] == ["stop", "s-idle"] and len(polls) >= 2
+          and "no longer lists" in why, f"{ok} {why} stops={stopped} polls={len(polls)}")
+    ok, why, stopped, polls = idle_case(release_after=99, wait_s=0)
+    check("V-MC-STOP-IDLE-NOPID-UNRELEASED-REFUSES",
+          ok is False and len(stopped) == 1 and "still lists" in why, f"{ok} {why}")
+    # negative control: a session the host truly shows gone (no live status, no pid) is NOT stopped again
+    gone_row = {**live_idle_row, "status": None}
+    ok, why, stopped, polls = idle_case(release_after=0, wait_s=0, row=gone_row)
+    check("V-MC-STOP-GONE-NOPID-NO-EXTRA-STOP",
+          ok is True and stopped == [] and polls == [] and "no pid to wait on" in why, f"{ok} {why} stops={stopped}")
+
     # 2026-09-25 (m-3aaa15177f2b): host says `done`, the pid lingers for hours. Terminate it
     # only when the argv proves it is THIS worker; every other shape keeps the refusal.
     def linger(state, argv, dies=True):
