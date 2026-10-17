@@ -27,6 +27,7 @@ _TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,23}$")
 _WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*")
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 DIM_KINDS = ("capital", "enum")
+PRIVILEGED = ("CAPITAL", "SECURITY", "IRREVERSIBLE", "EXTERNAL")
 
 
 class DecisionError(Exception):
@@ -188,9 +189,14 @@ def _receipt_sha(body: dict) -> str:
 
 
 def resolve(mission_id: str, decision_id: str, owner_text: str, evidence_now: dict | None = None,
-            now: float | None = None) -> dict:
-    """Owner selection -> typed Receipt. Idempotent; a stale decision is invalidated, never applied."""
+            now: float | None = None, authority: dict | None = None) -> dict:
+    """Owner selection -> typed Receipt. Idempotent; a stale decision is invalidated, never applied.
+
+    A PRIVILEGED class (capital, security, irreversible, external) is resolved only with `authority`: the uuid of an
+    Owner-typed transcript entry (resolve_from_transcript). Text a model could have written is not authority."""
     d = get(mission_id, decision_id)
+    if d["class"] in PRIVILEGED and d["status"] != RESOLVED and not (authority or {}).get("uuid"):
+        raise DecisionError(f"{decision_id} is {d['class']}: only an Owner-typed transcript entry can resolve it")
     token, valid = parse_choice(d, owner_text)
     if d["status"] == RESOLVED:
         if token is not None and token == d["receipt"]["token"]:
@@ -205,10 +211,43 @@ def resolve(mission_id: str, decision_id: str, owner_text: str, evidence_now: di
         raise DecisionError(f"{decision_id} invalidated: evidence changed since the packet was compiled")
     opt = next(o for o in d["options"] if o["token"] == token)
     body = {"decision": decision_id, "mission": mission_id, "token": token, "params": opt["params"],
-            "evidence_fp": d["fingerprint"], "consumers": d["consumers"]}
+            "evidence_fp": d["fingerprint"], "consumers": d["consumers"], "authority": authority}
     receipt = {**body, "at": time.time() if now is None else now, "sha": _receipt_sha(body)}
     _append(mission_id, {"ev": "resolved", "id": decision_id, "receipt": receipt})
     return {"receipt": receipt, "recorded": True}
+
+
+def anchor(dec: dict) -> str:
+    """The string an assistant message must display, verbatim, before an Owner entry can resolve this decision."""
+    return f"DP:{dec['id']}:{dec['fingerprint']}"
+
+
+def resolve_from_transcript(mission_id: str, decision_id: str, transcript_path, evidence_now: dict | None = None,
+                            now: float | None = None) -> dict:
+    """Resolve from the first Owner-typed entry that follows an assistant entry displaying the decision's anchor.
+    Same proof as capital_authority: type=user, origin human, promptSource typed|queued, string content."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from modules.provider_routing import capital_authority as oca
+    d = get(mission_id, decision_id)
+    seen = False
+    try:
+        lines = Path(transcript_path).read_text(encoding="utf-8-sig", errors="replace").splitlines()
+    except OSError as e:
+        raise DecisionError(f"transcript unreadable: {e}") from e
+    for ln in lines:
+        try:
+            e = json.loads(ln)
+        except ValueError:
+            continue
+        if not isinstance(e, dict):
+            continue
+        if not seen:
+            seen = e.get("type") == "assistant" and anchor(d) in oca._text_of(e)
+            continue
+        if oca._is_owner_typed(e) and parse_choice(d, e["message"]["content"])[0] is not None:
+            return resolve(mission_id, decision_id, e["message"]["content"], evidence_now, now,
+                           authority={"uuid": e.get("uuid"), "timestamp": e.get("timestamp"), "anchor": anchor(d)})
+    raise DecisionError(f"{decision_id}: no Owner-typed selection after an entry displaying {anchor(d)}")
 
 
 def invalidate(mission_id: str, decision_id: str, reason: str) -> None:
