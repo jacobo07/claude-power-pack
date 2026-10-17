@@ -1761,6 +1761,98 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
     return rec
 
 
+def _ledger_has(mid: str, event: str, **match) -> bool:
+    try:
+        return any(e.get("event") == event and all(e.get(k) == v for k, v in match.items())
+                   for e in lr.ledger_events(mid))
+    except Exception:  # noqa: BLE001 -- an unreadable ledger repeats a row, never hides a condition
+        return False
+
+
+def _phase_state_file(rec: dict) -> str | None:
+    """Where this mission's GSD phase is read: its lease's state file, else the workstream (or root) STATE.md."""
+    sf = (rec.get("phase_lease") or {}).get("state_file")
+    if sf:
+        return str(sf)
+    for base in (rec.get("work_dir"), rec.get("cwd")):
+        if not base:
+            continue
+        root = Path(base) / ".planning"
+        p = root / "workstreams" / rec["workstream"] / "STATE.md" if rec.get("workstream") else root / "STATE.md"
+        if p.is_file():
+            return str(p)
+    return None
+
+
+def _settle_completed_phase(rec: dict, now: float, measure=None, phase_fn=None) -> dict:
+    """M4 A: when the GSD phase advances, settle the finished phase into the mission's work-class profile
+    (tools/work_class_profile.py) BEFORE anything is leased or launched for the next one. processed = measured spend
+    since the previous settlement mark; forecast = the phase lease that covered it, else None. Unmeasured spend is
+    ledgered and settles nothing (a zero sample would teach the profile that phases are free); the mark stays, so a
+    later pass settles the whole span once it can be measured. Returns the record as it now stands."""
+    import mission_spend as ms
+    import phase_lease as pls
+    import work_class_profile as wcp
+    mid = rec["mission_id"]
+    if rec.get("state") in TERMINAL:
+        return rec
+    sf = _phase_state_file(rec)
+    phase_now = (phase_fn or pls.current_phase)(sf) if sf else None
+    if phase_now is None:
+        return rec
+    phase_now = str(phase_now)
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception:  # noqa: BLE001 -- unmeasured below
+        spent = None
+    cls = rec.get("work_class") or (rec.get("baseline") or {}).get("work_class") or "GSD_RESUME"
+    lease = rec.get("phase_lease") or {}
+    mark = rec.get("unit_settlement")
+    if not mark:
+        # First sight: the lease names where the phase began; without one the phase starts being counted here.
+        if lease.get("phase") is not None:
+            mark = {"phase": str(lease["phase"]), "processed": int(lease["base"]), "at": lease.get("set_at"),
+                    "work_class": cls}
+        elif spent is not None:
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="unit_settlement_seeded",
+                              now=now, touch=False, unit_settlement={"phase": phase_now, "processed": int(spent),
+                                                                      "at": now, "work_class": cls},
+                              reason=f"settlement mark seeded at phase {phase_now}")
+        else:
+            return rec
+    finished = str(mark["phase"])
+    if phase_now == finished:
+        return rec
+    delta = None if spent is None else int(spent) - int(mark["processed"])
+    if delta is None or delta <= 0:
+        if not _ledger_has(mid, "unit_settle_unmeasured", phase=finished, next_phase=phase_now):
+            lr.ledger_append(mid, "unit_settle_unmeasured", mission_id=mid, phase=finished, next_phase=phase_now,
+                             spent=spent, mark=mark.get("processed"),
+                             why="spend unmeasured" if delta is None else f"spend delta {delta} is not positive")
+        return rec
+    forecast = int(lease["forecast"]) if lease and str(lease.get("phase")) == finished else None
+    try:
+        receipt = wcp.settle_unit(cls, f"{mid}-phase-{finished}", {"processed": delta, "calls": 0},
+                                  forecast=forecast, cause=f"phase {finished} complete")
+    except (wcp.ProfileError, OSError) as exc:
+        if not _ledger_has(mid, "unit_settle_failed", phase=finished):
+            lr.ledger_append(mid, "unit_settle_failed", mission_id=mid, phase=finished,
+                             error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
+    try:
+        next_forecast = wcp.lease_forecast(cls)["forecast"]
+    except wcp.ProfileError:
+        next_forecast = None
+    return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="unit_settled", now=now,
+                      touch=False, reason=f"phase {finished} settled into {cls}: {delta:,} processed",
+                      unit_settlement={"phase": phase_now, "processed": int(spent), "at": now, "work_class": cls,
+                                       "last": {"phase": finished, "processed": delta, "forecast": forecast,
+                                                "idempotent": bool(receipt.get("idempotent"))},
+                                       "next_forecast": next_forecast},
+                      ledger_extra={"phase": finished, "next_phase": phase_now, "work_class": cls,
+                                    "processed": delta, "forecast": forecast, "next_forecast": next_forecast})
+
+
 def _phase_breaker(rec: dict, now: float, measure=None, phase_fn=None) -> dict:
     """CCR v5 A2: judge the mission's phase lease (tools/phase_lease.py) against measured spend. A TRIP, or an
     ambiguity (BLOCKED: unmeasured spend, unreadable or moved GSD phase), parks the mission with a cost hold
@@ -4529,6 +4621,14 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 pass
             continue
         try:
+            if not dry_run:
+                # M4 A: a finished phase is settled before any lease, breaker or relaunch for the next one.
+                try:
+                    rec = _settle_completed_phase(rec, now)
+                except CasConflict:
+                    raise
+                except Exception as exc:  # noqa: BLE001 -- a profile fault must not stop the mission; it is the row
+                    lr.ledger_append(mid, "unit_settle_failed", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
             if not dry_run and rec.get("token_estimate") is None and not _blocking_hold(rec):
                 rec = _auto_budget(rec, now)
             if not dry_run and rec.get("phase_lease") and not _blocking_hold(rec):
