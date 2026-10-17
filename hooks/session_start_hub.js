@@ -870,6 +870,9 @@ function hookOwnerQueue() {
       if (!r || r.status !== 'pending') {
         return false;
       }
+      if (r.urgent === true) {
+        return true;  // a capital wait or security boundary skips the 24h grace
+      }
       const t = Date.parse(r.created || '');
       if (Number.isNaN(t)) {
         return true;  // unparseable age -> surface (fail toward visibility)

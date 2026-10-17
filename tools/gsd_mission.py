@@ -1930,7 +1930,7 @@ def topology(mission_id: str) -> dict:
         "spend": spent, "spend_since_progress": (spent - int(mark.get("tokens") or 0)) if spent is not None and mark else None,
         "progress_unknown": rec.get("progress_unknown"),
         "obligations": rec.get("obligations") or [],
-        "hold": {k: hold.get(k) for k in ("reason", "kind", "set_at", "recovery")} if hold else None,
+        "hold": {k: hold.get(k) for k in ("reason", "kind", "set_at", "recovery", "wait")} if hold else None,
         "goal_liveness": mr.goal_liveness(rec), "reason": rec.get("reason"),
     }
 
@@ -1942,9 +1942,11 @@ def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
         raise MissionError(f"no mission {mission_id}")
     if not rec.get("owner_hold"):
         raise MissionError(f"{mission_id} has no owner hold")
-    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                      event="owner_hold_released", now=now, owner_hold=None,
-                      reason="owner hold released")
+    out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                     event="owner_hold_released", now=now, owner_hold=None,
+                     reason="owner hold released")
+    _complete_owner_wait(mission_id)
+    return out
 
 
 # --------------------------------------------------------------------------- AMR: autonomous mission recovery
@@ -2098,6 +2100,76 @@ def amr_compile(rec: dict, *, failed_sid: str | None, hold_reason: str, cause: s
             "ratio": ratio, "delta_path": str(delta_path) if delta_path else None}
 
 
+# --------------------------------------------------------------------------- Owner waits are typed and delivered
+# A parked wait is only valid if it has a known type, real figures from the hold, a queue row that skips the 24 h
+# grace, and the exact resume command. m-4e31db7aca3f sat 8.5 h and m-28ab89fff085 ~20 h as an invisible OWNER_BOUNDARY.
+OWNER_WAIT_TYPES = ("CAPITAL_EXHAUSTED", "OWNER_PRODUCT_DECISION", "SECURITY_BOUNDARY", "IRREVERSIBLE_ACTION",
+                    "EXTERNAL_AUTHORITY_REQUIRED", "RESOURCE_POLICY_DECISION", "UNKNOWN")
+_WAIT_CAPITAL_RE = re.compile(r"cost breaker|mission budget|authority|ceiling|processed|iterations \d+ >= max|older than",
+                              re.I)
+_WAIT_SECURITY_RE = re.compile(r"trust dialog|security boundary|credential|permission boundary", re.I)
+_FIG_SPENT_RE = re.compile(r"(?:processed (\d[\d,]{4,})|(\d[\d,]{4,}) processed)")
+_FIG_CEIL_RE = re.compile(r"(?:authority|ceiling|stall budget|budget) (\d[\d,]{4,})")
+
+
+def owner_wait_type(*texts) -> str:
+    """Deterministic classifier for why a mission parks on the Owner. Anything unrecognised is UNKNOWN (and is
+    reported as a failure to learn from, never silently parked)."""
+    blob = " ".join(str(t or "") for t in texts)
+    if _WAIT_SECURITY_RE.search(blob):
+        return "SECURITY_BOUNDARY"
+    if _WAIT_CAPITAL_RE.search(blob):
+        return "CAPITAL_EXHAUSTED"
+    return "UNKNOWN"
+
+
+def owner_wait_figures(hold_reason, c: dict | None = None) -> dict:
+    """Real spend/ceiling figures: parsed from the hold's own reason (OBSERVED there), else from the compile result,
+    else absent. Never the string "None"."""
+    c = c or {}
+    out: dict = {}
+    m = _FIG_SPENT_RE.search(str(hold_reason or ""))
+    if m:
+        out["spent"] = int((m.group(1) or m.group(2)).replace(",", ""))
+    elif isinstance(c.get("spent"), (int, float)):
+        out["spent"] = int(c["spent"])
+    m = _FIG_CEIL_RE.search(str(hold_reason or ""))
+    if m:
+        out["ceiling"] = int(m.group(1).replace(",", ""))
+    elif isinstance(c.get("ceiling"), (int, float)):
+        out["ceiling"] = int(c["ceiling"])
+    return out
+
+
+def _owner_queue():
+    root = str(Path(__file__).resolve().parents[1])
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from modules.owner_queue import owner_queue as oq
+    return oq
+
+
+def _enqueue_owner_wait(mid: str, wait: dict) -> str | None:
+    """Deliver the wait to the canonical Owner Queue as an urgent row (no grace). Fail-open: a queue fault must not
+    stop the park itself, but it is ledgered so the invisibility is at least recorded."""
+    try:
+        return _owner_queue().append(
+            f"Mission {mid} waits on the Owner: {wait['type']}", wait["resume"],
+            unblocks=f"mission {mid}", source="amr_boundary", row_id=f"q-wait-{mid}", urgent=True,
+            state_dir=os.environ.get("PP_OWNER_QUEUE_STATE_DIR") or None)
+    except Exception as exc:  # noqa: BLE001 -- park proceeds; the failure is the record
+        lr.ledger_append(mid, "owner_wait_enqueue_failed", mission_id=mid, why=f"{type(exc).__name__}: {exc}"[:200])
+        return None
+
+
+def _complete_owner_wait(mid: str) -> None:
+    try:
+        _owner_queue().complete(f"q-wait-{mid}", by="release_owner_hold",
+                                state_dir=os.environ.get("PP_OWNER_QUEUE_STATE_DIR") or None)
+    except Exception:  # noqa: BLE001 -- a stale row is visible noise, never a blocked release
+        pass
+
+
 def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> dict:
     """Recovery cannot proceed safely: keep (or set) a cost-kind hold marked OWNER_BOUNDARY with ONE decision
     packet. plan_next parks on it -- never settles it -- so the packet's options stay real."""
@@ -2107,19 +2179,32 @@ def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> d
     d = ms.state_dir() / "recovery" / mid
     d.mkdir(parents=True, exist_ok=True)
     pkt = d / "owner-decision.md"
-    pkt.write_text(
-        f"# Owner decision -- mission {mid}\n\nThe cost breaker stopped the executor and autonomous recovery "
-        f"stopped at a genuine boundary:\n\n> {c.get('boundary')}\n\nFailure {c.get('failure')}, progress "
-        f"{(c.get('progress') or {}).get('class')}, unit {c.get('unit')}, spent {c.get('spent')} of ceiling "
-        f"{c.get('ceiling')}.\n\nOptions: raise authority (`gsd_mission.py authority --mission {mid} --tokens N` "
-        "or `--extend-hours H`, then `release`), name a new strategy as a directive, or close the mission. "
-        "The mission stays parked (not settled) until then.\n", encoding="utf-8")
     base_hold = hold or rec.get("owner_hold") or {"reason": f"amr: {str(c.get('boundary'))[:200]}",
                                                   "set_at": now, "kind": "cost"}
-    new_hold = {**base_hold, "recovery": {"state": mr.OWNER_BOUNDARY, "why": c.get("boundary"),
-                                          "decision_packet": str(pkt), "at": now}}
+    wtype = owner_wait_type(c.get("boundary"), base_hold.get("reason"))
+    figs = owner_wait_figures(base_hold.get("reason"), c)
+    gm_py = Path(__file__).resolve()
+    resume = (f'python "{gm_py}" authority --mission {mid} --tokens <NEW_TOTAL> ; '
+              f'python "{gm_py}" release --mission {mid}')
+    fig_txt = (f"spent {figs['spent']:,}" if "spent" in figs else "spend not recorded in the hold") + \
+        (f" of ceiling {figs['ceiling']:,}" if "ceiling" in figs else "; ceiling not recorded in the hold")
+    pkt.write_text(
+        f"# Owner decision -- mission {mid}\n\nWAIT TYPE: {wtype}\n\nThe cost breaker stopped the executor and "
+        f"autonomous recovery stopped at a genuine boundary:\n\n> {c.get('boundary')}\n\nFailure "
+        f"{c.get('failure') or 'n/a'}, progress {(c.get('progress') or {}).get('class') or 'n/a'}, "
+        f"unit {c.get('unit') or 'n/a'}, "
+        f"{fig_txt}.\n\nOptions: raise authority (`gsd_mission.py authority --mission {mid} --tokens N` "
+        "or `--extend-hours H`, then `release`), name a new strategy as a directive, or close the mission. "
+        f"The mission stays parked (not settled) until then.\n\nResume command:\n\n    {resume}\n", encoding="utf-8")
+    wait = {"type": wtype, "figures": figs, "resume": resume, "packet": str(pkt), "at": now}
+    wait["queue_id"] = _enqueue_owner_wait(mid, wait)
+    if wtype == "UNKNOWN":
+        lr.ledger_append(mid, "owner_wait_unknown", mission_id=mid, why=str(c.get("boundary"))[:300],
+                         fios="failure: unclassified Owner wait")
+    new_hold = {**base_hold, "wait": wait, "recovery": {"state": mr.OWNER_BOUNDARY, "why": c.get("boundary"),
+                                                        "decision_packet": str(pkt), "at": now}}
     lr.ledger_append(mid, "recovery_owner_boundary", mission_id=mid, why=str(c.get("boundary"))[:300],
-                     failure=c.get("failure"))
+                     failure=c.get("failure"), wait_type=wtype, queue_id=wait["queue_id"])
     mr.pgo_append({"mission_id": mid, "result": "OWNER_BOUNDARY", "failure": c.get("failure"),
                    "progress": (c.get("progress") or {}).get("class"), "why": c.get("boundary")},
                   ms.state_dir() / "recovery" / "pgo.jsonl")

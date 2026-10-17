@@ -416,6 +416,8 @@ def goal_liveness(rec: dict) -> str:
     if not hold:
         return "ACTIVE" if st in ("RUNNING", "LAUNCHING", "HANDOFF", "PREPARED") else "WAITING"
     rs = (hold.get("recovery") or {}).get("state")
+    if hold.get("wait") and rs in (OWNER_BOUNDARY, NOT_APPLICABLE):
+        return "WAITING_OWNER"           # a typed, queued Owner wait: never reads as RUNNING, never invisible
     if rs == RECOVERY_EXHAUSTED:
         return "LIVENESS_INCIDENT"       # AMCR: a failed recovery is surfaced, never parked on the Owner
     if rs == RECOVERY_FAILED:
