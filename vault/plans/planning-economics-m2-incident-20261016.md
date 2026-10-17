@@ -151,6 +151,14 @@ progress: |
      (theirs). TB 4acbedc prereg, dac589f result; laptop TB at dac589f.
   NEXT (needs Owner): P35 = the stock patron line verbatim with only type= changed: 3x cantinaband (control) + 3x WompRat,
      `"locator_set=MainRoomIdle" "type=<T>" "script=party" "addtoset=1"`; P33 camera kept. One slot, coordinator-run.
+  OWNER "y". P35 DONE (coordinator; tbl-20261017-075718; disc b8974e2f; ledger SLOT-TB-P35 142/143, PASS events=143
+     violations=0). Camera held 21/21; no Bith and no womprat in 21/21. KEY MEASUREMENT: the stock patron choreography is
+     IDENTICAL in P33/P34/P35 (same figures, same places, same t), although those runs added 2/2/6 CreateCreatures lines BEFORE
+     the 13 stock lines. So the added lines create nothing (no locator or random draw consumed), while the CameraCut in the same
+     block runs. Non-RandomMap types added in the hub's Enter_MainRoom are no-ops. TB 262f441 prereg, 43e6bd6 result; laptop at 43e6bd6.
+  NEXT (needs Owner): P36 = swap type=RandomMap -> type=WompRat in the 13 STOCK Enter_MainRoom lines (add nothing; counts and
+     locators unchanged). Womprats = type works (additions blocked by a cap/pool); no patrons = type refused in the hub.
+     Same coordinator-run shape (pN_run.sh derived by sed from p35_run.sh; check N of type=WompRat on the disc = 13). One slot.
   E-SERIES CLOSED. NEXT: M2 continues phase by phase under the E6 table (headless Sonnet worker + watchdog, never an
      Opus pane); the P5 rerun capsule needs an observable the unedited disc cannot produce (four-legged silhouette at a
      scripted spot, or a forced spawn independent of PlayerUsingForce). Old mission m-f9290d78278f stays held.
