@@ -1,1 +1,1 @@
-{"unit": "ccr-v5-E1", "envelope": {"target": 1500000, "warn": 1724999, "stop": 2500000, "calls": 10}, "workers": [{"name": "ccr-unit", "profile": "slim-t2", "calls": 10, "packet": 6000}]}
+{"unit": "ccr-v5-E1", "envelope": {"target": 1500000, "warn": 1724999, "stop": 2500000, "calls": 8}, "workers": [{"name": "ccr-unit", "profile": "slim-t2", "calls": 8, "packet": 6000}]}
