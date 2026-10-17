@@ -173,7 +173,7 @@ def surface(mission_id: str, decision_id: str) -> dict:
         raise DecisionError(f"{decision_id} is {d['status']}; it cannot be shown"
                             + (f": {d['problems']}" if d.get("problems") else ""))
     return {"id": d["id"], "question": d["question"], "options": d["options"], "recommendation": d["recommendation"],
-            "valid_tokens": [o["token"] for o in d["options"]]}
+            "valid_tokens": [o["token"] for o in d["options"]], "anchor": anchor(d)}
 
 
 def parse_choice(dec: dict, text: str) -> tuple[str | None, list[str]]:
