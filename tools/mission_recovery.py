@@ -78,7 +78,10 @@ LEASE_STOP_OVER_TARGET = 1.3     # route envelope: target = lease / 1.3, warn = 
 
 # Paths a hook rewrites in every tree (mirror-drift counter, measured in the KSP worktree 01:20 UTC):
 # never progress, in either direction.
-HOOK_OWNED = (re.compile(r"^vault/handoffs/(ESCALATED\.md|escalations\.json)$"),)
+HOOK_OWNED = (re.compile(r"^vault/handoffs/(ESCALATED\.md|escalations\.json)$"),
+              # Session artifacts hooks write every session: never capital, never progress (m-0a2b4dad289b).
+              re.compile(r"^\.claude/"), re.compile(r"^LEARNINGS_PENDING\.md$"), re.compile(r"^\.pp-[^/]+$"),
+              re.compile(r"^_audit_cache/"), re.compile(r"^\.specify/"))
 
 
 def mode() -> str:
@@ -190,7 +193,10 @@ def window_evidence(transcript: Path | None, work_dir: str) -> dict:
 
 # --------------------------------------------------------------------------- progress
 def path_class(path: str) -> str | None:
-    p = path.replace("\\", "/").lstrip("./")
+    p = path.replace("\\", "/")
+    while p.startswith("./"):           # a prefix, not lstrip("./"), which also ate the dot of .planning/
+        p = p[2:]
+    p = p.lstrip("/")
     if any(rx.match(p) for rx in HOOK_OWNED):
         return None
     name = p.rsplit("/", 1)[-1]
@@ -318,6 +324,7 @@ def gsd_unit(work_dir: str, workstream: str | None, manager=None) -> dict:
             "total_phases": int((data or {}).get("phase_count") or total),
             "has_context": bool(gsd.get("has_context")) if gsd else has("-CONTEXT.md"),
             "has_research": bool(gsd.get("has_research")) if gsd else has("-RESEARCH.md"),
+            "has_verification": has("-VERIFICATION.md"),
             "research_required": _research_required(base), "source": "gsd" if gsd else "state.md",
             "unit": f"{workstream or 'root'}/phase-{_phase_glob(num)[:-2]}"}
 
@@ -345,6 +352,15 @@ def compile_residual(unit: dict, capital_paths) -> list[dict]:
     items.append({"do": f"Prove every success criterion of Phase {unit['phase']}, mark the phase complete in "
                         "ROADMAP/STATE, commit", "proof": "; ".join(unit["criteria"])[:900] or "phase gates",
                   "kind": PROOF})
+    if unit.get("has_verification") is False:
+        # GSD keeps a phase open ("verify") until its VERIFICATION.md exists; without this item a successor
+        # closes DONE and the same unit is recompiled (m-0a2b4dad289b r2, r3).
+        items.append({"do": f"Write the phase directory's {_phase_glob(unit['phase'])[:-2]}-VERIFICATION.md "
+                            "(GSD verify-work format: each success criterion with its observed evidence and "
+                            "status: passed); commit it only if .planning/ is tracked, never force-add an "
+                            "excluded .planning/",
+                      "proof": "the phase's *-VERIFICATION.md exists and GSD no longer reports the phase as "
+                               "'verify'", "kind": PROOF})
     if capital_paths:
         items.insert(0, {"do": "Commit the uncommitted capital first: " + ", ".join(capital_paths),
                          "proof": "git status shows them committed", "kind": PLAN})

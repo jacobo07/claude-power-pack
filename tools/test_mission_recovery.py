@@ -138,6 +138,25 @@ def main() -> int:
     check("V-AMR-STRATEGY-SAME-PLANNER-NEW-SESSION-EQUAL", s1 == s2)
     check("V-AMR-STRATEGY-MAIN-THREAD-MATERIALLY-DIFFERENT", s1 != s3)
     check("V-AMR-HOOK-OWNED-PATH-NOT-PROGRESS", mr.path_class("vault/handoffs/escalations.json") is None)
+    # m-0a2b4dad289b (2026-10-17): every successor's first residual was "commit the uncommitted capital" =
+    # session learnings a hook writes each session, so the item never ran out and polluted the product repo.
+    session = [".claude/cache/learnings/2026-10-17_07ec482e.md", "LEARNINGS_PENDING.md", ".pp-capabilities",
+               "_audit_cache/insights.json", ".claude/settings.local.json", ".claude\\cache\\learnings\\a.md"]
+    check("V-AMR-SESSION-ARTIFACT-NOT-CAPITAL", all(mr.path_class(p) is None for p in session),
+          str({p: mr.path_class(p) for p in session}))
+    # lstrip("./") stripped characters, so .planning/ never read as PLAN.
+    check("V-AMR-PLANNING-PATH-IS-PLAN", mr.path_class(".planning/phases/01-x/01-01-PLAN.md") == mr.PLAN,
+          str(mr.path_class(".planning/phases/01-x/01-01-PLAN.md")))
+    check("V-AMR-CONTROL-PATH-CLASSES-KEPT", mr.path_class("docs/dws/x.md") == mr.KNOWLEDGE
+          and mr.path_class("./src/main/a.ts") == mr.PRODUCT and mr.path_class("tests/e2e/a.spec.ts") == mr.PROOF)
+    # Every plan executed, no VERIFICATION.md: GSD says "verify", so the residual must ask for it, or the same
+    # unit closes DONE and is recompiled forever (m-0a2b4dad289b r2, r3).
+    done_unit = {"phase": 1, "name": "Row 61", "criteria": ["c1"], "plans": ["01-01-PLAN.md"],
+                 "executed": ["01-01-PLAN.md"], "has_verification": False}
+    res_v = mr.compile_residual(done_unit, [])
+    check("V-AMR-RESIDUAL-ASKS-VERIFICATION", any("VERIFICATION.md" in i["do"] for i in res_v), str(res_v)[:300])
+    res_nv = mr.compile_residual({**done_unit, "has_verification": True}, [])
+    check("V-AMR-CONTROL-VERIFIED-UNIT-NOT-ASKED", not any("VERIFICATION.md" in i["do"] for i in res_nv))
     p0 = mr.classify_progress([], {"measured": False, "handbacks": []}, False)
     check("V-AMR-UNMEASURED-IS-UNKNOWN-NOT-ZERO", p0["class"] == mr.UNKNOWN, p0["class"])
     p1 = mr.classify_progress([], {"measured": True, "handbacks": []}, True)
@@ -325,6 +344,12 @@ def main() -> int:
     check("V-AMR-ADVANCE-NEXT-UNIT-SAME-FENCE", ok10 and (n10.get("amr") or {}).get("unit") == "ksp/phase-02"
           and n10["amr"]["deny_agent_types"] == a10["amr"]["deny_agent_types"]
           and n10["wu_packet"]["path"] != a10["wu_packet"]["path"], str((n10.get("amr") or {}).get("unit")))
+    # The unit it advanced INTO closed again and GSD still lists it: its packet's done does not match GSD's.
+    # A third compile of the same unit is a loop (m-0a2b4dad289b r3), so it parks at an Owner boundary.
+    n10b, ok10b = gm.amr_advance(gm.load("m-aaa00000000b"), NOW + 950)
+    check("V-AMR-SAME-UNIT-CLOSED-TWICE-PARKS", ok10b is False
+          and (n10b.get("owner_hold") or {}).get("recovery", {}).get("state") == mr.OWNER_BOUNDARY
+          and "same unit" in str((n10b.get("owner_hold") or {}).get("reason")), str(n10b.get("owner_hold"))[:200])
 
     # --- 8. the spawn hook enforces the fence ------------------------------------------------------------
     Path(TMP, "mission-worker-succ-sid.json").write_text(json.dumps({"mission_id": "m-aaa000000001"}), encoding="utf-8")

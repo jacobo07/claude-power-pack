@@ -2386,6 +2386,12 @@ def amr_advance(rec: dict, now: float) -> tuple[dict, bool]:
     if not c["ok"]:
         return _amr_boundary(rec, {**c, "boundary": f"next unit not compiled: {c.get('boundary')}"}, now), False
     prev = rec.get("amr") or {}
+    last = (prev.get("history") or [{}])[-1]
+    if last.get("cause") == "unit_closed" and last.get("unit") == c["unit"]:
+        # The unit an advance already moved into closed again and GSD still lists it: its packet's done does
+        # not match GSD's, and a third compile is a loop (m-0a2b4dad289b r3: ~13M on phase 1 of 4).
+        return _amr_boundary(rec, {**c, "boundary": f"same unit {c['unit']} closed twice and GSD still lists "
+                                                    "it; its packet's done criteria do not match GSD's"}, now), False
     amr = {**prev, "unit": c["unit"], "packet": c["packet"], "strategy": c["topology"]["strategy"],
            "lease_head": c.get("lease_head"), "delta_path": None, "launched": True,
            "history": [*(prev.get("history") or []),
