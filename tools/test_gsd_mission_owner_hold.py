@@ -297,6 +297,27 @@ def main() -> int:
     check("V-OH-CONTROL-PARTIAL-RUNNABLE-NOT-HALTED", gm.load("m-rc-partial-ok")["state"] != gm.HALTED,
           gm.load("m-rc-partial-ok")["state"])
 
+    # 11. an AMR successor's receipt closes ITS unit, not the mission (m-b968b2afdca4, 2026-10-17: the r1 packet
+    # covered phase 1 of 4, its DONE receipt completed the whole mission before GSD was asked). GSD decides; the
+    # control is the same receipt under ALL_COMPLETE.
+    amr_rows = {}
+    for mid, outcome in (("m-amr-rc-more", "OK"), ("m-amr-rc-all", "ALL_COMPLETE")):
+        _pkt_mission(mid, "DONE", NOW + 30)
+        r = gm.load(mid)
+        gm.transition(mid, expect_epoch=r["epoch"], expect_state=r["state"], event="t_amr", now=NOW,
+                      amr={"launched": True, "packet": r["wu_packet"]["path"], "unit": "phase-1"})
+        rows = gm.supervise(now=NOW + 180, sessions=[{"sessionId": f"{mid}-w", "id": f"{mid}-w"[:8],
+                                                      "kind": "background", "state": "done"}],
+                            runner=lambda *a, **k: "", stop_runner=lambda *a, **k: None, pid_alive=gone,
+                            fingerprint=lambda wd: None,
+                            gsd_status=lambda cwd, workstream=None, o=outcome: {"outcome": o, "reason": o})
+        amr_rows[mid] = next((x for x in rows if x["mission_id"] == mid), {})
+    more = gm.load("m-amr-rc-more")["state"]
+    check("V-OH-AMR-RECEIPT-DOES-NOT-COMPLETE-MISSION", more not in gm.TERMINAL
+          and amr_rows["m-amr-rc-more"].get("gsd") == "OK", f"{more} row={amr_rows['m-amr-rc-more']}")
+    check("V-OH-CONTROL-AMR-RECEIPT-ALL-COMPLETE-COMPLETES", gm.load("m-amr-rc-all")["state"] == gm.COMPLETED,
+          f"{gm.load('m-amr-rc-all')['state']} row={amr_rows['m-amr-rc-all']}")
+
     print(f"OWNER_HOLD_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

@@ -4588,7 +4588,10 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         continue
                 unit_rst = None
                 pkt = (rec.get("wu_packet") or {}).get("path")
-                if act in ("relay", "replace") and pkt and not rec.get("done_check"):
+                # An AMR successor's packet is one unit of the mission, not the mission: its receipt is read
+                # after GSD (amr_advance below). m-b968b2afdca4 2026-10-17: phase 1 of 4 completed the mission.
+                amr_pkt = bool(pkt and (rec.get("amr") or {}).get("packet") == pkt)
+                if act in ("relay", "replace") and pkt and not rec.get("done_check") and not amr_pkt:
                     # A packet unit armed without a done_check (every chain-armed unit) is closed by its own receipt,
                     # written after the mission began. Measured 2026-10-14, gsdx-pcc P52a: receipt DONE, worker done, GSD
                     # NO_PHASES on that roadmap, so the record sat BLOCKED 2.5 h and the chain waited on it (wait_writer).
