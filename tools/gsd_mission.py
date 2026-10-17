@@ -1853,6 +1853,73 @@ def _settle_completed_phase(rec: dict, now: float, measure=None, phase_fn=None) 
                                     "processed": delta, "forecast": forecast, "next_forecast": next_forecast})
 
 
+def _note_liveness_incident(mid: str, key: str, why: str) -> bool:
+    """M4 B: one `liveness_incident` row per blocking condition (key), so a dead worker that cannot be replaced is
+    visible where status reads, and an unchanged blocker costs no further rows. True when a row was written."""
+    if _ledger_has(mid, "liveness_incident", key=key):
+        return False
+    lr.ledger_append(mid, "liveness_incident", mission_id=mid, key=key, why=why[:300])
+    return True
+
+
+def _dead_worker_open(rec: dict, sessions, pid_alive) -> bool:
+    """An open mission, no hold of any kind, whose worker is positively DEAD (or absent): the ordinary relay/replace
+    path owns it. LAUNCHING is excluded (a launch is already pending) and so is UNKNOWN liveness (it never replaces)."""
+    if rec.get("state") not in (RUNNING, BLOCKED) or rec.get("owner_hold"):
+        return False
+    owner = rec.get("owner")
+    return not owner or liveness(owner, sessions, pid_alive)[0] == DEAD
+
+
+def _dead_worker_authority_guard(rec: dict, now: float, sessions, pid_alive, measure=None) -> dict:
+    """M4 B: Owner authority with no room for a minimum lease is CAPITAL_EXHAUSTED, not a reason to launch. The cost
+    breaker trips at authority minus the closeout reserve; between that line and the smallest successor lease
+    (mission_recovery.MIN_LEASE_TOKENS before its reserve) a dead worker would be replaced by a successor AMR would
+    refuse to price. Park it as a cost hold at the Owner boundary instead, and say so once. An unmeasured spend keeps
+    today's path (the breaker is fail-open on a broken meter), it does not invent exhaustion."""
+    auth = rec.get("authority_tokens")
+    if not auth or not _dead_worker_open(rec, sessions, pid_alive):
+        return rec
+    import mission_recovery as mr
+    import mission_spend as ms
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception:  # noqa: BLE001 -- unmeasured keeps the ordinary path
+        return rec
+    if spent is None:
+        return rec
+    need = -(-mr.MIN_LEASE_TOKENS * 1000 // int(1000 * (1 - mr.RESERVE_FRACTION)))
+    room = int(auth) - int(spent)
+    if room >= need:
+        return rec
+    mid = rec["mission_id"]
+    why = (f"cost breaker (mission authority): CAPITAL_EXHAUSTED: {room:,} left of {int(auth):,} authority, below the "
+           f"{need:,} a minimum successor lease needs; the dead worker is not replaced, new authority is the Owner's")
+    _note_liveness_incident(mid, "CAPITAL_EXHAUSTED", why)
+    return set_owner_hold(mid, why, now=now, kind="cost", expect_seq=rec.get("seq"),
+                          extra={"authority_kind": ms.authority_kind(rec), "wait_type": "CAPITAL_EXHAUSTED"})
+
+
+def _dead_worker_visibility(mid: str, row: dict) -> None:
+    """M4 B: this pass planned an ordinary launch for a dead worker with actionable work and room. If the row shows
+    the launch did not happen, name why (once per condition). A launch that went through writes nothing."""
+    launch = row.get("launch")
+    if isinstance(launch, dict) and launch.get("ok"):
+        return
+    if row.get("action") in ("completed", "halted", "halt", "settle", "continue", "slim_finished"):
+        return
+    blocker = row.get("held") or row.get("blocked")
+    if not blocker and isinstance(launch, dict):
+        blocker = f"launch failed: {launch.get('error') or launch.get('reason') or launch.get('why') or 'no cause given'}"
+    if not blocker and row.get("stop") and row.get("action") in ("relay", "replace", "launch"):
+        blocker = f"old worker not stopped: {row['stop']}"
+    if not blocker:
+        return
+    text = str(blocker)
+    key = re.sub(r"[0-9]+", "#", text)[:80]
+    _note_liveness_incident(mid, key, f"dead worker with actionable work not relaunched: {text}")
+
+
 def _phase_breaker(rec: dict, now: float, measure=None, phase_fn=None) -> dict:
     """CCR v5 A2: judge the mission's phase lease (tools/phase_lease.py) against measured spend. A TRIP, or an
     ambiguity (BLOCKED: unmeasured spend, unreadable or moved GSD phase), parks the mission with a cost hold
@@ -4605,6 +4672,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
         if not _needs_look(rec, now):
             continue
         mid = rec["mission_id"]
+        dead_open = False
         try:
             v2 = capsule_v2(rec)   # False for every record without the field, before any I/O
         except Exception as exc:  # noqa: BLE001 -- isolated per mission, see below
@@ -4637,6 +4705,9 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 rec = _cost_breaker(rec, now)
             if not dry_run and (rec.get("requires") or (rec.get("owner_hold") or {}).get("kind") == "resource"):
                 rec = resource_gate(rec, now, sessions, pid_alive)   # M2: no model call; absent field never gets here
+            if not dry_run:
+                rec = _dead_worker_authority_guard(rec, now, sessions, pid_alive)   # M4 B: CAPITAL_EXHAUSTED, no launch
+                dead_open = _dead_worker_open(rec, sessions, pid_alive)
             plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
         except Exception as exc:  # noqa: BLE001 -- isolated per mission, like capsule_v2 above
             # GEX44 2026-10-07/08: a breaker raise here (set_owner_hold on a terminal record) ended EVERY pass
@@ -5187,6 +5258,13 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 lr.ledger_append(mid, "supervise_error", mission_id=mid, error=row["error"])
             except Exception:  # noqa: BLE001 -- the row still carries the error
                 pass
+        finally:
+            if dead_open:
+                # M4 B: a dead worker with no hold was planned for the ordinary launch; if it did not happen, say why.
+                try:
+                    _dead_worker_visibility(mid, row)
+                except Exception:  # noqa: BLE001 -- visibility must never fail the pass
+                    pass
     return unreadable + out + _steward_rows(missions, now, sessions, pid_alive, dry_run)
 
 
