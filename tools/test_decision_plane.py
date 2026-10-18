@@ -319,6 +319,21 @@ def main() -> int:
         raised_bundle("m-dptest000013", c5, 49_000_000, meters), wake=False)) is not None
           and gm.load(c5).get("token_estimate") is None)
 
+    # fresh meter: a predecessor's cost_mark lags its transcripts (2026-10-18: mark 46.8M, measured 51.3M), so the
+    # budget must come from the larger of snapshot, mark and a fresh read
+    import mission_spend as ms
+    p6, c6 = "m-dppred00003", "m-dptest000014"
+    gm.create(TMP, "/gsd-autonomous", mission_id=p6, now=NOW)
+    gm.create(TMP, "/gsd-autonomous", mission_id=c6, now=NOW)
+    real = ms.processed_tokens
+    ms.processed_tokens = lambda rec, *a, **k: 51_303_727 if rec.get("mission_id") == p6 else None
+    try:
+        got6 = dp.consume_bundle(raised_bundle("m-dptest000015", c6, 210_000_000, {p6: 46_780_899}), wake=False)
+    finally:
+        ms.processed_tokens = real
+    check("V-DP-D6-FRESH-METER-BEATS-STALE-SNAPSHOT", got6["applied"]["predecessors"] == 51_303_727
+          and gm.load(c6)["token_estimate"] == (210_000_000 - 51_303_727) // 2, got6.get("applied"))
+
     print(f"DP_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

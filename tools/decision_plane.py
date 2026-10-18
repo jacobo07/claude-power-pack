@@ -361,14 +361,21 @@ def apply_capital(consumer: str, ceiling: int, evidence: dict) -> dict:
     rec = gm.load(consumer)
     if rec is None:
         raise DecisionError(f"mission {consumer} is not on this host")
+    import mission_spend as ms
     spent_before = 0
     for m, v in meters.items():
         if m == consumer:
             continue
-        cur = (gm.load(m) or {}).get("cost_mark") or {}
-        spent_before += max(int(v), int(cur.get("tokens") or 0))     # a predecessor can only have grown since the snapshot
+        prec = gm.load(m) or {}
+        cur = prec.get("cost_mark") or {}
+        # cost_mark lags the transcripts by a supervisor pass (m-80fd126a23cc: mark 46.8M, measured 51.3M, 2026-10-18),
+        # so the fresh meter is read too; an unreadable meter is unknown, never zero, and the other two still count.
+        try:
+            fresh = int(ms.processed_tokens(prec) or 0) if prec else 0
+        except Exception:  # noqa: BLE001
+            fresh = 0
+        spent_before += max(int(v), int(cur.get("tokens") or 0), fresh)   # a predecessor can only have grown since the snapshot
     own = int(((rec.get("cost_mark") or {}).get("tokens")) or 0)
-    import mission_spend as ms
     ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
     budget = ceiling - spent_before
     if budget <= own:
