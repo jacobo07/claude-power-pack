@@ -273,6 +273,52 @@ def main() -> int:
           and len(calls["run"]) == 1)
     check("V-DP-FAILED-CLOSED-WROTE-NOTHING", dp.get(rc2, "R")["status"] == dp.RESOLVED and len(calls["run"]) == 1)
 
+    # --- D6: a raised CUMULATIVE ceiling becomes the consumer's own breaker envelope
+    pred1, pred2 = "m-dppred00001", "m-dppred00002"
+
+    def raised_bundle(src_id: str, consumer: str, ceiling: int, meters: dict | None):
+        d = json.loads(json.dumps(base))
+        d.update({"id": "D", "consumers": [consumer]})
+        d["options"][0]["params"]["capital"]["ceiling"] = ceiling      # the option the text "R-200" selects
+        if meters is not None:
+            d["evidence"]["meters"] = meters
+        dp.create(src_id, d)
+        tpx = Path(TMP) / f"{src_id}.jsonl"
+        tpx.write_text("\n".join(json.dumps(x) for x in [
+            {"type": "assistant", "uuid": "ao", "message": {"content": [{"type": "text",
+                                                                        "text": dp.anchor(dp.get(src_id, "D"))}]}},
+            {**u, "message": {"content": "R-200"}}]) + "\n", encoding="utf-8")
+        dp.resolve_from_transcript(src_id, "D", tpx)
+        b = dp.export_bundle(src_id, "D")
+        for r in b["rows"]:
+            if r["ev"] == "created":
+                r["object"]["mission"] = consumer + "-view"
+            else:
+                r["receipt"]["mission"] = consumer + "-view"
+                body = {k: r["receipt"].get(k) for k in ("decision", "mission", "token", "params", "evidence_fp",
+                                                          "consumers", "authority")}
+                r["receipt"]["sha"] = dp._receipt_sha(body)
+        return b
+
+    c3 = "m-dptest000008"
+    gm.create(TMP, "/gsd-autonomous", mission_id=c3, now=NOW)
+    meters = {pred1: 46_780_899, pred2: 2_959_145, c3: 21_000_000}
+    got = dp.consume_bundle(raised_bundle("m-dptest000009", c3, 210_000_000, meters), wake=False)
+    want = (210_000_000 - 46_780_899 - 2_959_145) // 2
+    check("V-DP-D6-CEILING-BECOMES-ENVELOPE", got["applied"] and got["applied"]["token_estimate"] == want
+          and gm.load(c3)["token_estimate"] == want, got.get("applied"))
+    check("V-DP-D6-EXCLUDES-THE-CONSUMER-OWN-METER", got["applied"]["predecessors"] == 46_780_899 + 2_959_145)
+    c4 = "m-dptest000010"
+    gm.create(TMP, "/gsd-autonomous", mission_id=c4, now=NOW)
+    check("V-DP-D6-WITHOUT-METERS-REFUSED", refused(lambda: dp.consume_bundle(
+        raised_bundle("m-dptest000011", c4, 210_000_000, None), wake=False)) is not None
+          and gm.load(c4).get("token_estimate") is None)
+    c5 = "m-dptest000012"
+    gm.create(TMP, "/gsd-autonomous", mission_id=c5, now=NOW)
+    check("V-DP-D6-CEILING-BELOW-PREDECESSORS-REFUSED", refused(lambda: dp.consume_bundle(
+        raised_bundle("m-dptest000013", c5, 49_000_000, meters), wake=False)) is not None
+          and gm.load(c5).get("token_estimate") is None)
+
     print(f"DP_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

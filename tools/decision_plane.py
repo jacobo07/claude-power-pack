@@ -350,20 +350,54 @@ def _wake(mission: str, view: str, *, sessions, runner, stop_runner, pid_alive, 
                               runner=runner, stop_runner=stop_runner, now=now)
 
 
+def apply_capital(consumer: str, ceiling: int, evidence: dict) -> dict:
+    """D6: a CUMULATIVE ceiling becomes the consumer's own breaker envelope. The consumer's meter covers only itself, so
+    its trip budget is the ceiling minus what the predecessors spent, and the estimate the breaker judges is that budget
+    over the trip ratio. Fails closed without predecessor meters in the evidence: a ceiling is never guessed."""
+    import gsd_mission as gm
+    meters = (evidence or {}).get("meters")
+    if not isinstance(meters, dict) or not meters:
+        raise DecisionError("a ceiling change needs evidence.meters (spend per mission on the cumulative meter)")
+    rec = gm.load(consumer)
+    if rec is None:
+        raise DecisionError(f"mission {consumer} is not on this host")
+    spent_before = 0
+    for m, v in meters.items():
+        if m == consumer:
+            continue
+        cur = (gm.load(m) or {}).get("cost_mark") or {}
+        spent_before += max(int(v), int(cur.get("tokens") or 0))     # a predecessor can only have grown since the snapshot
+    own = int(((rec.get("cost_mark") or {}).get("tokens")) or 0)
+    import mission_spend as ms
+    ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
+    budget = ceiling - spent_before
+    if budget <= own:
+        raise DecisionError(f"ceiling {ceiling:,} leaves {budget:,} for {consumer}, which already spent {own:,}")
+    estimate = int(budget / ratio)
+    if rec.get("token_estimate") != estimate:
+        gm.set_envelope(consumer, token_estimate=estimate)
+    return {"consumer": consumer, "ceiling": ceiling, "predecessors": spent_before, "trip_budget": budget,
+            "ratio": ratio, "token_estimate": estimate, "changed": rec.get("token_estimate") != estimate}
+
+
 def consume_bundle(bundle: dict, wake: bool = True, sessions=None, runner=None, stop_runner=None, pid_alive=None,
                    host_fetch=None, now: float | None = None) -> dict:
-    """Verify, persist, apply, wake. Idempotent per receipt sha. Fails closed on an effect it cannot apply:
-    this consumer applies decisions that leave the capital ceiling unchanged; a ceiling change needs D6."""
+    """Verify, persist, apply, wake. Idempotent per receipt sha. A ceiling equal to the old trip applies nothing; a
+    different one is applied through apply_capital (D6) BEFORE anything is recorded, so a refusal leaves no receipt."""
     obj, rec = verify_bundle(bundle)
     mid, did = obj["mission"], obj["id"]
     cap = (rec["params"] or {}).get("capital")
-    if cap and cap["ceiling"] != (obj.get("evidence") or {}).get("old_trip"):
-        raise DecisionError(f"{did}: a ceiling change ({cap['ceiling']:,}) is not applied by this consumer (D6)")
     have = _fold(mid).get(did)
+    if have and have["status"] == RESOLVED and have["receipt"]["sha"] != rec["sha"]:
+        raise DecisionError(f"{did} already resolved with receipt {have['receipt']['sha']}")
+    applied = None
+    if cap and cap["ceiling"] != (obj.get("evidence") or {}).get("old_trip"):
+        if len(obj["consumers"]) != 1:
+            raise DecisionError(f"{did}: a ceiling change needs exactly one consumer meter, got {obj['consumers']}")
+        applied = apply_capital(obj["consumers"][0], int(cap["ceiling"]), obj.get("evidence") or {})
     if have and have["status"] == RESOLVED:
-        if have["receipt"]["sha"] != rec["sha"]:
-            raise DecisionError(f"{did} already resolved with receipt {have['receipt']['sha']}")
-        return {"receipt": rec, "recorded": False, "woke": {"ok": False, "why": "already consumed (idempotent)"}}
+        return {"receipt": rec, "recorded": False, "applied": applied,
+                "woke": {"ok": False, "why": "already consumed (idempotent)"}}
     if have is None:
         _append(mid, {"ev": "created", "id": did, "object": obj})
     _append(mid, {"ev": "resolved", "id": did, "receipt": rec})
@@ -372,7 +406,7 @@ def consume_bundle(bundle: dict, wake: bool = True, sessions=None, runner=None, 
     if wake:
         woke = {c: _wake(c, view, sessions=sessions, runner=runner, stop_runner=stop_runner, pid_alive=pid_alive,
                          host_fetch=host_fetch, now=now) for c in obj["consumers"]}
-    return {"receipt": rec, "recorded": True, "woke": woke}
+    return {"receipt": rec, "recorded": True, "woke": woke, "applied": applied}
 
 
 def deliver(mission_id: str, decision_id: str, host: str) -> dict:
