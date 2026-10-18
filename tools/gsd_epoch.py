@@ -395,6 +395,12 @@ def budget_evidence(sid: str | None, n: int | None, ceiling: int, kids: dict | N
         return {"state": "UNMEASURED", "pressure": None, "reason": f"{exc.__class__.__name__}: {exc}"[:200]}
 
 
+def stalled_fresh_enabled() -> bool:
+    """A continuation that changed nothing is followed by a fresh worker (gsd_mission.supervise).
+    Kill switch: CPP_STALLED_CONTINUATION_FRESH=off restores resuming the same session."""
+    return (os.environ.get("CPP_STALLED_CONTINUATION_FRESH") or "").strip().lower() != "off"
+
+
 def decide_turn_end(rec: dict, now: float | None = None, *, events: list[dict] | None = None,
                     tokens=context_tokens, children=child_work, last_turn_at=last_assistant_at) -> dict:
     """The owner's turn ended and GSD says work remains. What starts the next turn?

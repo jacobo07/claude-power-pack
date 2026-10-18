@@ -1127,7 +1127,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
                   progress: dict | None = None, packet: dict | None = None, spawner=None,
-                  det_runner=None, mem_reader=None) -> dict:
+                  det_runner=None, mem_reader=None, gsd_fact: str = "") -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
@@ -1155,7 +1155,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         note = f"{pd}\n\n{note or ''}"
     try:
         # Asked BEFORE the claim: an unreadable work-unit packet spends no epoch and starts nothing.
-        prompt = launch_prompt(rec)
+        prompt = launch_prompt(rec) + (gsd_fact if not rec.get("wu_packet") else "")
     except MissionError as exc:
         lr.ledger_append(mission_id, "launch_refused_packet", mission_id=mission_id,
                          epoch=rec.get("epoch"), why=str(exc)[:300])
@@ -3190,6 +3190,23 @@ def _packet_digest(path: str) -> str | None:
     return hashlib.sha256(data).hexdigest() if data else None
 
 
+def gsd_fact_line(st: dict | None) -> str:
+    """GSD's own next action, appended to a /gsd-autonomous wake. m-b8541432cbf9 (2026-10-18): GSD
+    answered "phase 1: 3 plans, 0 summaries -> /gsd-execute-phase 1" on every pass while the worker,
+    woken with the bare command, read one phase directory as "the milestone's only phase" and halted
+    no_progress. Empty when GSD named nothing. Kill switch: CPP_GSD_FACT_PROMPT=off."""
+    if (os.environ.get("CPP_GSD_FACT_PROMPT") or "").strip().lower() == "off":
+        return ""
+    nxt = (st or {}).get("next") or {}
+    if (st or {}).get("outcome") != "OK" or not nxt.get("command"):
+        return ""
+    return ("\n\nSUPERVISOR FACT (asked GSD this pass): "
+            f"{(st or {}).get('reason') or 'work remains'}; next = {nxt['command']} "
+            f"(phase {nxt.get('phase')}: {nxt.get('phase_name')}; {nxt.get('reason')}). "
+            "Run it. Your own reading of the work tree does not override GSD's answer: a phase is done "
+            "only when GSD says so (every plan has its SUMMARY and the phase its VERIFICATION).")
+
+
 def launch_prompt(rec: dict) -> str:
     """What a launched or continued worker is told. Without a compiled work-unit packet: the bound
     resume command, byte for byte as before. With one: the packet (path + its CURRENT hash) and the
@@ -4984,6 +5001,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         row["action"] = "completed"
                         continue
                 unit_rst = None
+                gsd_fact = ""
                 pkt = (rec.get("wu_packet") or {}).get("path")
                 # An AMR successor's packet is one unit of the mission, not the mission: its receipt is read
                 # after GSD (amr_advance below). m-b968b2afdca4 2026-10-17: phase 1 of 4 completed the mission.
@@ -5011,6 +5029,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     st = (gsd_status or _supervise_gsd_status)(work_dir or mb.execution_root(rec),
                                                        workstream=rec.get("workstream"))
                     row["gsd"] = st.get("outcome")
+                    gsd_fact = gsd_fact_line(st)
                     if st.get("outcome") == "ALL_COMPLETE":
                         transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                    event="mission_completed", now=now, state=COMPLETED,
@@ -5118,6 +5137,16 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                                                   fp_fn),
                                          ran=rec["state"] != LAUNCHING)
                 row["progress"] = progress
+                if (turn_end is not None and turn_end["decision"] == ge.CONTINUE and progress.get("measured")
+                        and progress["stalls"] >= 1 and ge.stalled_fresh_enabled()):
+                    # m-b8541432cbf9: a resumed session keeps the belief that made it stop; three resumes of it
+                    # answered "nothing to run" and the mission halted no_progress. A continuation that moved
+                    # nothing is followed by a fresh worker, which reads the card and GSD's answer.
+                    turn_end = {**turn_end, "decision": ge.ROTATE, "mechanism": ge.FRESH,
+                                "reason": f"the last continuation changed nothing (stalls {progress['stalls']}): "
+                                          f"fresh worker -- {turn_end['reason']}",
+                                "evidence": {**(turn_end.get("evidence") or {}), "trigger": "stalled_continuation"}}
+                    row["turn_end"] = {k: turn_end.get(k) for k in ("decision", "cause", "reason")}
                 if act in ("relay", "replace") and progress["stalls"] >= NO_PROGRESS_EPOCHS:
                     # T5: convergence was asked first (above); a mission whose tree has not moved
                     # across NO_PROGRESS_EPOCHS epochs is not relayed again, and -- the reason
@@ -5171,7 +5200,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         row["action"], row["why"] = "continue_refused_admission", cwhy
                         continue
                     row["continue"] = ge.continue_worker(
-                        mid, rec, prompt=launch_prompt(rec),
+                        mid, rec, prompt=launch_prompt(rec) + gsd_fact,
                         decision=turn_end, runner=runner, stop_runner=stop_runner, now=now,
                         progress=progress, work_dir=work_dir)
                     row["action"] = "continue"
@@ -5240,7 +5269,8 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,
-                                              work_dir=work_dir, progress=progress, packet=packet)
+                                              work_dir=work_dir, progress=progress, packet=packet,
+                                              gsd_fact=gsd_fact)
                 if row["launch"].get("ok"):
                     # Every FRESH worker says why it exists: a rotation is certified by its cause,
                     # never by counting fresh sessions (tools/gsd_epoch.py census).

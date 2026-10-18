@@ -587,7 +587,17 @@ def gsd_status(project, timeout: int = 45, workstream: str | None = None) -> dic
                     reason="GSD parses 0 phases from ROADMAP.md (headings must be GSD phases)")
     if base["all_complete"] or base["incomplete"] == 0:
         return dict(base, outcome="ALL_COMPLETE", reason=f"{done}/{total} phases complete")
-    return dict(base, outcome="OK", reason=f"{done}/{total} phases complete")
+    return dict(base, outcome="OK", reason=f"{done}/{total} phases complete", next=next_action(data))
+
+
+def next_action(data: dict) -> dict | None:
+    """GSD's own first recommended action from `init.manager` ({phase, phase_name, action, command,
+    reason}), or None when it names none. The supervisor hands it to the worker verbatim."""
+    acts = data.get("recommended_actions") or []
+    first = acts[0] if acts and isinstance(acts[0], dict) else None
+    if not first or not first.get("command"):
+        return None
+    return {k: first.get(k) for k in ("phase", "phase_name", "action", "command", "reason")}
 
 
 def gsd_manager(project, timeout: int = 45, workstream: str | None = None) -> tuple[dict | None, str]:

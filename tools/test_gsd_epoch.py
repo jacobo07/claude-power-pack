@@ -401,8 +401,9 @@ def main() -> int:
             short = argv[3][:8] if "--resume" in argv else "fe5e5e5e"
             return type("R", (), {"returncode": 0, "stderr": "",
                                   "stdout": f"backgrounded · {short} · {name}"})()
+        gsd = kw.get("gsd") or {"outcome": "OK"}
         rows = gm.supervise(now=kw.get("now", NOW), sessions=kw.get("sessions") or host(sid),
-                            gsd_status=lambda cwd, workstream=None: {"outcome": "OK"},
+                            gsd_status=lambda cwd, workstream=None: gsd,
                             runner=runner, stop_runner=lambda a: calls["stop"].append(a),
                             pid_alive=lambda p: False, fingerprint=lambda wd: fp)
         return rows, calls
@@ -491,25 +492,81 @@ def main() -> int:
           and gm.load("m-s4")["epoch"] == 2 and next(x for x in rows if x["mission_id"] == "m-s4").get("cause")
           == ge.TURN_CONTINUATION)
 
-    # e9 (T5) contract: a same-session loop that never changes the tree still HALTs.
+    # --- GSD's own next action rides every wake (m-b8541432cbf9, 2026-10-18) ------------------
+    # GSD answered "phase 1: 3 plans, 0 summaries -> /gsd-execute-phase 1" on every pass; the worker
+    # was woken with the bare resume command, read one phase directory as "the milestone's only
+    # phase", answered "nothing to run" three times and the mission halted no_progress.
+    nxt = {"outcome": "OK", "reason": "1/7 phases complete",
+           "next": {"phase": "2", "phase_name": "Row 24 freshness window", "action": "discuss",
+                    "command": "/gsd-discuss-phase 2", "reason": "Unblocked, ready to gather context"}}
+    mgr = {"recommended_actions": [{"phase": "1", "phase_name": "Row 59 model turn", "action": "execute",
+                                    "reason": "3 plans ready, dependencies met",
+                                    "command": "/gsd-execute-phase 1"}]}
+    na = getattr(lr, "next_action", lambda data: None)
+    check("V-EPOCH-GSD-NEXT-READ-FROM-MANAGER", (na(mgr) or {}).get("command") == "/gsd-execute-phase 1"
+          and na({"recommended_actions": []}) is None and na({}) is None, na(mgr))
     sid = "eeee5555-0000-0000-0000-000000000000"
-    running("m-s5", sid, epoch=1)
-    t = NOW
-    halted = False
-    for i in range(6):
-        transcript(sid, [asst(t - 100 + i, small)])
-        rows, calls = sup(sid, fp="fp-SAME", now=t)
-        rec5 = gm.load("m-s5")
-        if rec5["state"] == gm.HALTED:
-            halted = "no_progress" in (rec5.get("reason") or "") or any(
-                "no_progress" in str(e.get("reason")) for e in lr.ledger_events("m-s5"))
-            break
-        if rec5["state"] == gm.LAUNCHING:   # the resumed session acks, then its turn runs and ends
-            gm.ack_session(sid, now=t + 1)
-            t += 120
-            transcript(sid, [asst(t - 10, small)])
-        t += 60
-    check("V-EPOCH-SUP-SAME-SESSION-LOOP-STILL-HALTS", halted, (i, gm.load("m-s5")["state"]))
+    running("m-gf1", sid, epoch=1, progress={"fp": "fp-0", "stalls": 0, "measured": True})
+    transcript(sid, [asst(NOW - 100, small)])
+    rows, calls = sup(sid, fp="fp-B", gsd=nxt)
+    sent = calls["run"][0][-1] if calls["run"] else ""
+    check("V-EPOCH-GSD-FACT-ON-CONTINUATION", "--resume" in (calls["run"][0] if calls["run"] else [])
+          and "/gsd-discuss-phase 2" in sent and "Row 24 freshness window" in sent, sent[:300])
+    sid = "ffff6666-0000-0000-0000-000000000000"
+    running("m-gf2", sid, epoch=1, progress={"fp": "fp-0", "stalls": 0, "measured": True})
+    transcript(sid, [asst(NOW - 100, small)])
+    rows, calls = sup(sid, fp="fp-B")
+    check("V-EPOCH-GSD-FACT-ABSENT-PROMPT-UNCHANGED", calls["run"] and calls["run"][0][-1] == "/gsd-autonomous",
+          calls["run"][0][-1:] if calls["run"] else None)
+
+    # --- a continuation that changed nothing is not resumed again (same incident) ---------------
+    # The resumed session keeps its wrong belief; a fresh worker reads the card and GSD's answer.
+    sid = "abab7777-0000-0000-0000-000000000000"
+    running("m-st1", sid, epoch=1, progress={"fp": "fp-S", "stalls": 0, "measured": True},
+            last_continuation_at=NOW - 300, last_continuation_session=sid)
+    transcript(sid, [asst(NOW - 100, small)])
+    rows, calls = sup(sid, fp="fp-S", gsd=nxt)
+    r = next(x for x in rows if x["mission_id"] == "m-st1")
+    check("V-EPOCH-STALLED-CONTINUATION-GOES-FRESH", calls["run"] and "--resume" not in calls["run"][0]
+          and gm.load("m-st1")["epoch"] == 2, (r.get("action"), r.get("turn_end"), calls["run"][:1]))
+    check("V-EPOCH-GSD-FACT-ON-FRESH-LAUNCH", calls["run"] and "/gsd-discuss-phase 2" in calls["run"][0][-1],
+          calls["run"][0][-1][:300] if calls["run"] else None)
+    sid = "cdcd8888-0000-0000-0000-000000000000"
+    running("m-st2", sid, epoch=1, progress={"fp": "fp-S", "stalls": 0, "measured": True},
+            last_continuation_at=NOW - 300, last_continuation_session=sid)
+    transcript(sid, [asst(NOW - 100, small)])
+    rows, calls = sup(sid, fp="fp-T", gsd=nxt)
+    check("V-EPOCH-PROGRESSING-CONTINUATION-STAYS", calls["run"] and "--resume" in calls["run"][0]
+          and gm.load("m-st2")["epoch"] == 1, calls["run"][:1])
+
+    # e9 (T5) contract: a loop that never changes the tree still HALTs, resumed or fresh.
+    def idle_loop(mid, sid):
+        running(mid, sid, epoch=1)
+        t, cur = NOW, sid
+        for i in range(8):
+            transcript(cur, [asst(t - 100 + i, small)])
+            sup(cur, fp="fp-SAME", now=t)
+            rec5 = gm.load(mid)
+            if rec5["state"] == gm.HALTED:
+                return "no_progress" in (rec5.get("reason") or "") or any(
+                    "no_progress" in str(e.get("reason")) for e in lr.ledger_events(mid)), (i, rec5["state"])
+            if rec5["state"] == gm.LAUNCHING:   # the printed worker acks, then its turn runs and ends
+                bg = (rec5.get("pending") or {}).get("bg_id") or cur[:8]
+                cur = bg + cur[len(bg):] if cur.startswith(bg) else bg + "-0000-0000-0000-000000000000"
+                gm.ack_session(cur, now=t + 1)
+                t += 120
+                transcript(cur, [asst(t - 10, small)])
+            t += 60
+        return False, (i, gm.load(mid)["state"])
+
+    os.environ["CPP_STALLED_CONTINUATION_FRESH"] = "off"
+    try:
+        halted, ev = idle_loop("m-s5", "eeee5555-0000-0000-0000-000000000000")
+    finally:
+        os.environ.pop("CPP_STALLED_CONTINUATION_FRESH", None)
+    check("V-EPOCH-SUP-SAME-SESSION-LOOP-STILL-HALTS", halted, ev)
+    halted, ev = idle_loop("m-s6", "eeee6666-0000-0000-0000-000000000000")
+    check("V-EPOCH-SUP-STALLED-FRESH-LOOP-STILL-HALTS", halted, ev)
 
     # --- a finished turn the host lists `done` is a turn end, not a death (m-47fe0c6cb54a) -----
     def listed(sid, state):
