@@ -698,6 +698,7 @@ No cuando supera un examen cuya respuesta ya figura en los prompts.
 ### 12\. Mi plan de construcción: de teoría a infraestructura ejecutable
 
 No intentaría implementar de golpe los más de cien mecanismos.
+
 Primero construiría la cadena mínima que demuestra una mejora institucional real.
 
 | Fase                           | Entregable                                                                  | Gate de aceptación                                                  |
@@ -1396,6 +1397,7 @@ Por tanto, el arqueólogo produciría dos grafos distintos:
 Observed System Contract: lo que la evidencia indica que el sistema hace.
 
 Intended Product Contract: lo que las decisiones autorizadas establecen que debe hacer.
+
 Las divergencias serían materia prima extraordinariamente valiosa para USCI y CBR.
 
 ### 6.2. Una consecuencia importante
