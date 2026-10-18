@@ -32,6 +32,7 @@ class NodeView:
     observed_at: int
     measured: dict    # name -> value dict, only for measurements that were measured
     unknown: dict     # name -> reason, kept apart from any number
+    known_heads: tuple[str, ...] | None = None   # None = the node did not say; never an empty tuple
 
 
 def _int(v) -> bool:
@@ -87,6 +88,11 @@ def read_node_manifest(doc, now_ms: int, max_age_ms: int) -> NodeView:
           "malformed", "node.address")
     meas = doc["measurements"]
     _need(isinstance(meas, dict) and set(meas) == set(MEASUREMENTS), "malformed", "measurements keys")
+    heads = doc.get("known_heads")
+    # Mirrors orca-node-manifest-1.schema.json: absent means unknown, an empty list is never emitted.
+    _need(heads is None and "known_heads" not in doc
+          or isinstance(heads, list) and heads and all(isinstance(h, str) and h for h in heads),
+          "malformed", "known_heads must be absent or a non-empty list of non-empty strings")
     _need(doc["observed_at"] - now_ms <= CLOCK_SKEW_MS, "from_future", f"observed_at is {doc['observed_at'] - now_ms} ms ahead")
     _need(now_ms - doc["observed_at"] <= max_age_ms, "stale_manifest",
           f"observed {now_ms - doc['observed_at']} ms ago, bound {max_age_ms}")
@@ -95,4 +101,5 @@ def read_node_manifest(doc, now_ms: int, max_age_ms: int) -> NodeView:
     return NodeView(
         address=node["address"], observed_at=doc["observed_at"],
         measured={n: meas[n]["value"] for n in MEASUREMENTS if meas[n]["status"] == "measured"},
-        unknown={n: meas[n]["reason"] for n in MEASUREMENTS if meas[n]["status"] == "unknown"})
+        unknown={n: meas[n]["reason"] for n in MEASUREMENTS if meas[n]["status"] == "unknown"},
+        known_heads=tuple(heads) if heads else None)

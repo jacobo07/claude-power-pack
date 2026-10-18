@@ -95,6 +95,37 @@ def main() -> int:
     check("V-NODE-UNKNOWN-STAYS-UNKNOWN", "vram" in uv.unknown and "vram" not in uv.measured,
           "an unknown measurement is carried as unknown with its reason, not a number")
 
+    # known_heads (S4-22 AC-4): Orca never emits it today, so the present case is the real manifest plus the field.
+    def heads_of(v):
+        return getattr(v, "known_heads", "FIELD-MISSING")   # a view without the field fails a gate, not the run
+
+    check("V-NODE-KNOWN-HEADS-ABSENT-IS-UNKNOWN", "known_heads" not in real and heads_of(view) is None,
+          "absent known_heads reads as None (unknown), not as an empty set", repr(heads_of(view)))
+    with_heads = copy.deepcopy(real)
+    with_heads["known_heads"] = ["1c44413db14ca811", "3266e1a41790ab35"]
+    hv = nd.read_node_manifest(with_heads, obs, 60_000)
+    check("V-NODE-KNOWN-HEADS-PRESENT", heads_of(hv) == ("1c44413db14ca811", "3266e1a41790ab35"),
+          "present known_heads are exposed in order", repr(heads_of(hv)))
+    dup = copy.deepcopy(real)
+    dup["known_heads"] = ["abc", "abc"]
+    try:
+        dup_ok = heads_of(nd.read_node_manifest(dup, obs, 60_000)) == ("abc", "abc")
+    except nd.NodeManifestError as exc:
+        dup_ok = False
+        print(f"  duplicate heads refused: {exc.code}")
+    check("V-NODE-KNOWN-HEADS-DUPLICATES-ACCEPTED", dup_ok, "duplicates pass, as the producer schema allows")
+    for gate, heads in {
+        "V-NODE-KNOWN-HEADS-EMPTY": [],
+        "V-NODE-KNOWN-HEADS-NULL": None,
+        "V-NODE-KNOWN-HEADS-NOT-LIST": "abc123",
+        "V-NODE-KNOWN-HEADS-EMPTY-ENTRY": ["abc123", ""],
+        "V-NODE-KNOWN-HEADS-NON-STRING": ["abc123", 7],
+    }.items():
+        bad = copy.deepcopy(with_heads)
+        bad["known_heads"] = heads
+        ok, got = refuses(bad, obs, 60_000, "malformed")
+        check(gate, ok, f"known_heads={heads!r} refused as malformed", got)
+
     print(f"\nGSDX_NODE_PASS={len(passes)}/{len(passes) + len(fails)}  threshold={len(passes) + len(fails)}/{len(passes) + len(fails)}")
     return 0 if not fails else 1
 

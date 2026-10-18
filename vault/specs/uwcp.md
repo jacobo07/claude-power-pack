@@ -71,7 +71,7 @@ Owner mid-turn request (2026-09-25): "run /cpp-gsd-long on GEX44 if the host can
 | resume capsule | goal/brief.py | EXTEND: hypotheses + node/provider + byte AND token bound (refuse, never truncate); gsd_mission card rendered from it (MERGE) |
 | workspace capsule | none | NEW goal/workspace.py |
 | baseline fingerprint | none (tower/capsule is applicability) | NEW goal/baseline.py; tower/capsule.py untouched |
-| node manifest | KSR capabilities.json | EXTEND via goal/node.py adapter (measured_at, known heads, max age) |
+| node manifest | orca.node-manifest/1 (superseded KSR capabilities.json, Owner 2026-10-18) | EXTEND via goal/node.py adapter (measured_at, known heads, max age); acceptance in uwcp-s4-22-node-adapter.md |
 | placement | none | NEW pure function goal/placement.py |
 | provider routing | reconcile._work_provider + cost_collapse + codex.py budget | MERGE: goal/route.py REPLACES _work_provider, consumes reconcile's gate-first step |
 | provider budgets | claude.py / codex.py per-host ledgers | MIGRATE: one VPS account ledger (flock), hosts reserve from it |
