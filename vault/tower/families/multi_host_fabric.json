@@ -1,0 +1,1 @@
+{"id":"multi_host_fabric","name":"Fabric multi-host (cliente y host propietario)","triggers":["multi-host","multi host","remote host","host remoto","owning host","gex44","ssh","wire compatibility","paired client","continue here","remote-first","fabric","node manifest"],"anti_triggers":[],"delegate":"family_scan","repo_markers":[]}

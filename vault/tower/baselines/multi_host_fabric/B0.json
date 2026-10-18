@@ -1,0 +1,88 @@
+{
+  "family": "multi_host_fabric",
+  "generation": 0,
+  "parent": null,
+  "parent_sha256": null,
+  "created_at": 1792338010.7105782,
+  "reason": "B0 from Owner-sealed governance; every entry's cited line re-read and verified",
+  "entries": [
+    {
+      "id": "multi_host_fabric-consider-ssh-not-local-only",
+      "requirement": "Every change must consider the SSH use case and never assume local-only execution.",
+      "why": "A change that only works locally breaks the remote host path the fabric exists for.",
+      "origin": {
+        "file": "C:\\Users\\User\\Apps\\orca-rb-live-wt\\AGENTS.md",
+        "line": 45,
+        "quote": "All changes must consider the SSH use case. Don't assume local-only execution."
+      },
+      "class": "D",
+      "check": "regex:AGENTS.md::## SSH Use Case",
+      "status": "reviewed"
+    },
+    {
+      "id": "multi_host_fabric-mixed-version-peers-are-normal",
+      "requirement": "Clients and remote servers update independently, so a change to what a paired client and host exchange must treat mixed versions as the normal state.",
+      "why": "A wire change that assumes lockstep versions fails on the first old peer.",
+      "origin": {
+        "file": "C:\\Users\\User\\Apps\\orca-rb-live-wt\\AGENTS.md",
+        "line": 53,
+        "quote": "Clients and remote Orca servers update independently, so mixed versions are the normal state. Before changing anything a paired client and host exchange — RPC params, stream frames, or the content either side publishes over them — follow [`docs/reference/remote-wire-compatibility.md`](./docs/reference/remote-wire-compatibility.md). A new optional field is safe; a new stream opcode must be capability-negotiated because decoders drop unknown opcodes silently; and changing what the host publishes reaches old clients even with no wire change."
+      },
+      "class": "D",
+      "check": "file:docs/reference/remote-wire-compatibility.md",
+      "status": "reviewed"
+    },
+    {
+      "id": "multi_host_fabric-client-disconnect-is-detach",
+      "requirement": "Window close, client disconnect and app quit are Detach for remote executions: they never stop one or cancel a workstream.",
+      "why": "Treating a disconnect as a stop destroys work the owning host is still running.",
+      "origin": {
+        "file": "C:\\Users\\User\\Apps\\orca-rb-live-wt\\AGENTS.md",
+        "line": 125,
+        "quote": "Window close, client disconnect and app quit are Detach for remote and runtime-hosted Executions: they never stop one or cancel a Workstream. A local PTY owned by this app process is the exception: `killAllPty()` on will-quit and update install ends it with the process (pinned by `src/main/quit-path-local-runtime-teardown.characterization.test.ts`); daemon-backed PTYs survive. Stop Execution is an explicit act (`terminal.stopExact` and its siblings). Cancel Workstream belongs to UWCP (`uwcp.control/1`) and is ABSENT (refuses): `workstream.cancel` answers `workstream_authority_unavailable` and never degrades into a Stop. An RPC that launches or mutates an Execution declares `effect: 'launch'`. See [`docs/reference/detach-stop-cancel-effects.md`](./docs/reference/detach-stop-cancel-effects.md)."
+      },
+      "class": "D",
+      "check": "file:docs/reference/detach-stop-cancel-effects.md",
+      "status": "reviewed"
+    },
+    {
+      "id": "multi_host_fabric-consent-refusal-is-not-failure",
+      "requirement": "A refusal of workspace consent is not a failure: the provider shows its own prompt, which is the control working.",
+      "why": "Pre-writing trust on a host forges consent the user never gave.",
+      "origin": {
+        "file": "C:\\Users\\User\\Apps\\orca-rb-live-wt\\AGENTS.md",
+        "line": 111,
+        "quote": "The gate lives in the four producer functions, not in their callers. The effect has five call sites across desktop launch prep, desktop resume, a renderer-callable IPC channel, remote worktrees and the runtime/headless host; guarding callers would fence those five and leave every future one open. A refusal is not a failure — the provider shows its own prompt, which is the control working. There is no product grant surface yet, so today every call degrades that way."
+      },
+      "class": "D",
+      "check": "file:src/main/workspace-execution-consent.ts",
+      "status": "reviewed"
+    },
+    {
+      "id": "multi_host_fabric-live-leg-restores-service-home",
+      "requirement": "A live leg on the owning host restores the service home: SVC_HOME_RESTORED must read True after the run.",
+      "why": "A leg that leaves the account home changed contaminates the next host run.",
+      "origin": {
+        "file": "C:\\Users\\User\\Apps\\orca-rb-live-wt\\docs\\dws\\live-2026-10-18-row-59-model-turn-evidence.md",
+        "line": 38,
+        "quote": "SVC_HOME_RESTORED=True"
+      },
+      "class": "D",
+      "check": "regex:docs/dws/live-2026-10-18-row-59-model-turn-evidence.md::SVC_HOME_RESTORED=True",
+      "status": "reviewed"
+    },
+    {
+      "id": "multi_host_fabric-live-leg-leaves-no-claude-projects",
+      "requirement": "A live leg leaves no claude projects behind on the owning host: HWF_CLAUDE_PROJECTS must read 0.",
+      "why": "Stray project records on the service account change what later sessions resume.",
+      "origin": {
+        "file": "C:\\Users\\User\\Apps\\orca-rb-live-wt\\docs\\dws\\live-2026-10-18-row-59-model-turn-evidence.md",
+        "line": 36,
+        "quote": "HWF_CLAUDE_PROJECTS=0"
+      },
+      "class": "D",
+      "check": "regex:docs/dws/live-2026-10-18-row-59-model-turn-evidence.md::HWF_CLAUDE_PROJECTS=0",
+      "status": "reviewed"
+    }
+  ]
+}

@@ -34,6 +34,8 @@ PROMPTS = {
                          "cambia el color del botón del hero"),
     "wii_homebrew": ("porta el menú de CavEX a la Wii con libogc y GX",
                      "crea una nueva modalidad de KobiiCraft tipo skywars con arenas y kits"),
+    "multi_host_fabric": ("revisa el continue here entre el host remoto y el cliente",
+                          "cambia el color del botón del hero"),
 }
 REPOS = {
     "web_surface": (CP + r"\CostaLuz Lawyers", CP + r"\Wii Projects\CavEX"),
