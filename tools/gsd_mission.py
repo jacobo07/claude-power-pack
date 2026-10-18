@@ -1737,6 +1737,7 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
         # supervise() and crashed EVERY pass for every mission (GEX44: m-da6e925b5092, 264 passes over
         # ~24 h from 2026-10-07; m-79f84cdd34dc, 2026-10-08, a COMPLETED record whose hold was cleared).
         return rec
+    rec = _check_wake(rec, now, fingerprint)
     if mb.enabled():
         return _reconciled_breaker(rec, now, measure, fingerprint)
     try:
@@ -1759,6 +1760,46 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
                           event="cost_mark", now=now, cost_mark=verdict["mark"],
                           reason=f"progress fingerprint moved at {spent:,} processed")
     return rec
+
+
+WAKE_GRACE_S = 1800   # a woken worker has this long to move the work tree before the wake is judged a no-op
+
+
+def judge_wake(expect: dict | None, fp_now: str | None, now: float, grace_s: float = WAKE_GRACE_S) -> str | None:
+    """A3: did a wake produce progress? PROGRESS | PENDING | NO_PROGRESS | UNKNOWN, None without a stamp.
+    The host's ack proves nothing (TB-FULL, 2026-10-18: a woken worker answered and produced no commit for 75 min
+    while 19M tokens went by); the work tree is the evidence. Unmeasurable is UNKNOWN, never NO_PROGRESS. Pure."""
+    if not expect:
+        return None
+    measurable = fp_now is not None and expect.get("fp") is not None
+    if measurable and fp_now != expect["fp"]:
+        return "PROGRESS"
+    if now - float(expect.get("at") or now) < grace_s:
+        return "PENDING"
+    return "NO_PROGRESS" if measurable else "UNKNOWN"
+
+
+def _check_wake(rec: dict, now: float, fingerprint=None) -> dict:
+    """Judge a stamped wake once its grace has run; the verdict is a ledger row and a record field, then the
+    stamp is cleared. Fail-open: a measuring error leaves the stamp for the next pass."""
+    exp = rec.get("wake_expect")
+    if not exp or rec.get("state") in TERMINAL:
+        return rec
+    mid = rec["mission_id"]
+    try:
+        fp = mission_fingerprint(rec, mb.legacy_root(rec), fingerprint or progress_fingerprint)
+        verdict = judge_wake(exp, fp, now)
+        if verdict in (None, "PENDING"):
+            return rec
+        lr.ledger_append(mid, {"PROGRESS": "wake_progress", "NO_PROGRESS": "wake_no_progress"}.get(verdict, "wake_unmeasured"),
+                         mission_id=mid,
+                         verdict=verdict, kind=exp.get("kind"), waited_s=int(now - float(exp.get("at") or now)))
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="wake_judged", now=now,
+                          wake_expect=None, wake_last={"verdict": verdict, "at": now, "kind": exp.get("kind")},
+                          reason=f"wake {verdict}")
+    except Exception as exc:  # noqa: BLE001 -- recorded, the stamp stays for the next pass
+        lr.ledger_append(mid, "wake_unjudged", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
 
 
 def _ledger_has(mid: str, event: str, **match) -> bool:
@@ -4928,9 +4969,26 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     needs = host_job_needs((rec.get("owner") or {}).get("session_id"))
                     reason = f"{plan['reason']}; host needs: {needs}" if needs else plan["reason"]
                     row["reason"] = reason
+                    # A2: the ask is typed, so the consumer reads an intent, not a sentence (2026-10-18: four
+                    # blocks asked for a command, a decision or already-supplied files; nothing read them).
+                    import blocked_intent as bint
+                    bi_ = bint.intent(needs, rec.get("directives"))
+                    row["blocked_intent"] = bi_["kind"], bi_["action"]
                     transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                event="mission_blocked", now=now, state=BLOCKED,
-                               reason=reason)
+                               reason=reason, blocked_intent=bi_)
+                    lr.ledger_append(mid, "blocked_intent", mission_id=mid, epoch=rec["epoch"],
+                                     kind=bi_["kind"], action=bi_["action"])
+                    if bi_["action"] == "ANSWER_STANDING":
+                        # A command ask is the one block answered without the Owner: nobody will type it. The wake
+                        # stamps the tree, so a worker that acks and stays silent is judged later (judge_wake).
+                        try:
+                            import decision_plane as dplane
+                            row["standing_answer"] = dplane._wake(
+                                mid, bi_["answer"], sessions=sessions, runner=runner, stop_runner=stop_runner,
+                                pid_alive=pid_alive, host_fetch=None, now=now)
+                        except Exception as exc:  # noqa: BLE001 -- the BLOCKED row stands; the failure is on it
+                            row["standing_answer"] = f"{type(exc).__name__}: {exc}"[:200]
             elif act == "surface_unknown":
                 # Once per epoch: every 5-minute pass would otherwise add the same row.
                 if not any(e.get("event") == "owner_unknown" and e.get("epoch") == rec["epoch"]

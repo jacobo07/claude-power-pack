@@ -344,10 +344,29 @@ def _wake(mission: str, view: str, *, sessions, runner, stop_runner, pid_alive, 
     ok, how = gm.stop_owner(owner, sess, runner=stop_runner, **kw)
     if not ok:
         return {"ok": False, "why": f"owner did not stop ({how}); the next launch card carries the decision"}
-    return ge.continue_worker(mission, rec, prompt=view,
-                              decision={"decision": ge.CONTINUE, "cause": ge.TURN_CONTINUATION,
-                                        "reason": "owner decision receipt"},
-                              runner=runner, stop_runner=stop_runner, now=now)
+    out = ge.continue_worker(mission, rec, prompt=view,
+                             decision={"decision": ge.CONTINUE, "cause": ge.TURN_CONTINUATION,
+                                       "reason": "owner decision receipt"},
+                             runner=runner, stop_runner=stop_runner, now=now)
+    if isinstance(out, dict) and out.get("ok"):
+        _stamp_wake(mission, now)
+    return out
+
+
+def _stamp_wake(mission: str, now: float, kind: str = "decision") -> None:
+    """A3: an accepted wake is not progress. Record what the work tree looked like at the wake, so the supervisor
+    judges it later by the tree (gsd_mission.judge_wake) and a silent worker becomes a ledger row, not a green ack."""
+    import gsd_mission as gm
+    try:
+        rec = gm.load(mission)
+        fp = gm.mission_fingerprint(rec, gm.mb.legacy_root(rec), gm.progress_fingerprint)
+        gm.transition(mission, expect_epoch=rec["epoch"], expect_state=rec["state"], event="wake_expected", now=now,
+                      wake_expect={"at": now, "fp": fp, "kind": kind}, reason="wake stamped")
+    except Exception as exc:  # noqa: BLE001 -- the wake already happened; an unstamped wake is reported, not hidden
+        try:
+            gm.lr.ledger_append(mission, "wake_unstamped", mission_id=mission, error=f"{type(exc).__name__}: {exc}"[:300])
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def apply_capital(consumer: str, ceiling: int, evidence: dict) -> dict:
