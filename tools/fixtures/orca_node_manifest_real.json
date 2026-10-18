@@ -1,0 +1,74 @@
+{
+  "schema": "orca.node-manifest/1",
+  "observed_at": 10000,
+  "node": {
+    "address": "runtime:vps",
+    "label": "env vps",
+    "fingerprint": "XpDcRQQDILN8vYTgnHCsTya8_-K8eXFU9k2OUNqQfkQ",
+    "runtime_id": "rt-vps",
+    "platform": "linux",
+    "capabilities": [
+      "cap.a"
+    ]
+  },
+  "measurements": {
+    "memory": {
+      "status": "measured",
+      "value": {
+        "total_bytes": 34359738368,
+        "available_bytes": 9663676416,
+        "available_source": "proc-meminfo"
+      },
+      "measured_at": 10000,
+      "max_age_ms": 60000,
+      "source": "proc-meminfo"
+    },
+    "disk": {
+      "status": "measured",
+      "value": {
+        "filesystems": [
+          {
+            "path": "/",
+            "total_bytes": 1870722568192,
+            "available_bytes": 34543001600
+          }
+        ]
+      },
+      "measured_at": 10000,
+      "max_age_ms": 600000,
+      "source": "statfs"
+    },
+    "vram": {
+      "status": "measured",
+      "value": {
+        "gpus": [
+          {
+            "name": "RTX 4000 SFF Ada",
+            "total_bytes": 21469593600,
+            "free_bytes": 3202351104
+          }
+        ]
+      },
+      "measured_at": 10000,
+      "max_age_ms": 60000,
+      "source": "nvidia-smi"
+    },
+    "resident_model": {
+      "status": "measured",
+      "value": {
+        "endpoints": [
+          {
+            "port": 8081,
+            "model_ids": [
+              "qwen3-coder-30b"
+            ]
+          }
+        ],
+        "unanswered_ports": []
+      },
+      "measured_at": 10000,
+      "max_age_ms": 300000,
+      "source": "v1-models"
+    }
+  }
+}
