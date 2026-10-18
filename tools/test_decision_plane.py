@@ -110,6 +110,14 @@ def main() -> int:
     check("V-DP-CASE-INSENSITIVE", dp.parse_choice(dec, "r-refc")[0] == "R-REFC")
     check("V-DP-BOTH-TOKENS-AMBIGUOUS", dp.parse_choice(dec, "R-200 or R-REFC")[0] is None)
     check("V-DP-NO-TOKEN-AMBIGUOUS", dp.parse_choice(dec, "a")[0] is None)
+    # the Owner's word `rec` picks the packet's own declared recommendation (2026-10-18, typed twice)
+    check("V-DP-REC-PICKS-THE-DECLARED-RECOMMENDATION", dp.parse_choice(dec, "rec")[0] == "R-200"
+          and dp.parse_choice(dec, "Recomendado")[0] == "R-200")
+    check("V-DP-REC-LOSES-TO-AN-EXPLICIT-TOKEN", dp.parse_choice(dec, "rec R-REFC")[0] == "R-REFC")
+    check("V-DP-REC-WITHOUT-A-RECOMMENDATION-IS-AMBIGUOUS",
+          dp.parse_choice({**dec, "recommendation": {}}, "rec")[0] is None)
+    check("V-DP-GO-AHEAD-IS-NOT-REC", dp.parse_choice(dec, "go ahead")[0] is None
+          and dp.parse_choice(dec, "dale")[0] is None)
     msg = refused(lambda: dp.resolve(M, "B", "tal vez"))
     check("V-DP-AMBIGUOUS-LISTS-VALID-TOKENS", msg is not None and "R-200" in msg and "R-REFC" in msg, msg)
     check("V-DP-AMBIGUOUS-DID-NOT-RESOLVE", dp.get(M, "B")["status"] == dp.READY)
@@ -335,6 +343,23 @@ def main() -> int:
           and gm.load(c6)["token_estimate"] == (210_000_000 - 51_303_727) // 2, got6.get("applied"))
     check("V-DP-A1-CEILING-WRITES-OWNER-AUTHORITY", gm.load(c6).get("authority_tokens") == 210_000_000 - 51_303_727
           and got6["applied"]["authority_tokens"] == 210_000_000 - 51_303_727, gm.load(c6).get("authority_tokens"))
+
+    # router: a consumer that is neither mapped to a host nor a local mission is UNROUTABLE, never "local, rc 0"
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-dplocal00001", now=NOW)
+    real_get, real_hosts, real_deliver = dp.get, dp.consumer_hosts, dp.deliver
+    delivered = []
+    dp.get = lambda m, d_: {"status": dp.RESOLVED, "consumers": ["m-dpghost00001", "m-dplocal00001", "m-dpremote0001"]}
+    dp.consumer_hosts = lambda: {"m-dpremote0001": "gex44"}
+    dp.deliver = lambda m, d_, h: delivered.append(h) or {"returncode": 0, "stdout": "delivered", "stderr": ""}
+    try:
+        routed = {r["consumer"]: r for r in dp.route(M, "B")}
+    finally:
+        dp.get, dp.consumer_hosts, dp.deliver = real_get, real_hosts, real_deliver
+    check("V-DP-ROUTE-UNKNOWN-CONSUMER-IS-UNROUTABLE", routed["m-dpghost00001"]["returncode"] == 2
+          and "UNROUTABLE" in routed["m-dpghost00001"]["stdout"], routed["m-dpghost00001"])
+    check("V-DP-ROUTE-LOCAL-MISSION-CONTROL", routed["m-dplocal00001"]["returncode"] == 0
+          and "local consumer" in routed["m-dplocal00001"]["stdout"])
+    check("V-DP-ROUTE-MAPPED-HOST-DELIVERS-CONTROL", delivered == ["gex44"] and routed["m-dpremote0001"]["host"] == "gex44")
 
     print(f"DP_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1

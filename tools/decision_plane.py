@@ -25,6 +25,7 @@ CLASSES = ("CAPITAL", "SCOPE", "PRODUCT", "SECURITY", "IRREVERSIBLE", "EXTERNAL"
 OPEN, READY, RESOLVED, SUPERSEDED, INVALIDATED = "OPEN", "READY_FOR_OWNER", "RESOLVED", "SUPERSEDED", "INVALIDATED"
 _TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,23}$")
 _WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*")
+REC_WORDS = ("rec", "recommended", "recomendado", "recomendada")   # the Owner's word for the declared recommendation
 _ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 DIM_KINDS = ("capital", "enum")
 PRIVILEGED = ("CAPITAL", "SECURITY", "IRREVERSIBLE", "EXTERNAL")
@@ -180,7 +181,14 @@ def parse_choice(dec: dict, text: str) -> tuple[str | None, list[str]]:
     """Providerless mapping of short Owner input to ONE option token. (token, valid_tokens); token None = ambiguous."""
     valid = [o["token"] for o in dec["options"]]
     low = {t.lower(): t for t in valid}
-    hits = {low[w.lower()] for w in _WORD.findall(text or "") if w.lower() in low}
+    words = [w.lower() for w in _WORD.findall(text or "")]
+    hits = {low[w] for w in words if w in low}
+    if not hits and any(w in REC_WORDS for w in words):
+        # The Owner typed `rec` (2026-10-18, twice): the word picks the option the packet itself declared as its
+        # recommendation. It is the Owner's typed word, not a model's inference; a decision with no recommendation
+        # (or an Owner who also names a token) never reaches this branch.
+        rec = (dec.get("recommendation") or {}).get("token")
+        return (rec if rec in valid else None), valid
     return (next(iter(hits)) if len(hits) == 1 else None), valid
 
 
@@ -466,10 +474,19 @@ def route(mission_id: str, decision_id: str) -> list[dict]:
     if d["status"] != RESOLVED:
         raise DecisionError(f"{decision_id} is {d['status']}; nothing to route")
     hosts, out = consumer_hosts(), []
+    import gsd_mission as gm
     for c in d["consumers"]:
         h = hosts.get(c)
-        out.append({"consumer": c, "host": h, **(deliver(mission_id, decision_id, h) if h else {"returncode": 0,
-                    "stdout": "local consumer: reads the store", "stderr": ""})})
+        if h:
+            out.append({"consumer": c, "host": h, **deliver(mission_id, decision_id, h)})
+        elif gm.load(c) is not None:
+            out.append({"consumer": c, "host": None, "returncode": 0, "stdout": "local consumer: reads the store",
+                        "stderr": ""})
+        else:
+            # 2026-10-18: a renewal consumer (new mission id on GEX44) had no host entry, and this branch reported
+            # "local consumer" with rc 0 for a mission that does not exist here: a silent non-delivery.
+            out.append({"consumer": c, "host": None, "returncode": 2, "stderr": "",
+                        "stdout": f"UNROUTABLE: {c} is not a mission on this host and has no entry in decision-hosts.json"})
     return out
 
 
