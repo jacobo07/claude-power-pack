@@ -383,8 +383,14 @@ def apply_capital(consumer: str, ceiling: int, evidence: dict) -> dict:
     estimate = int(budget / ratio)
     if rec.get("token_estimate") != estimate:
         gm.set_envelope(consumer, token_estimate=estimate)
+    # The Owner's ceiling is authority, not a forecast: `authority_tokens` is the field the breaker and the renewal
+    # carry (net of the lineage spend). `token_estimate` above stays for hosts whose breaker predates authority_tokens
+    # (GEX44 PP, 2026-10-18): there it is the only field that trips.
+    if int(rec.get("authority_tokens") or 0) != budget:
+        gm.set_authority(consumer, budget, reason=f"Decision Plane cumulative ceiling {ceiling:,}")
     return {"consumer": consumer, "ceiling": ceiling, "predecessors": spent_before, "trip_budget": budget,
-            "ratio": ratio, "token_estimate": estimate, "changed": rec.get("token_estimate") != estimate}
+            "ratio": ratio, "token_estimate": estimate, "authority_tokens": budget,
+            "changed": rec.get("token_estimate") != estimate}
 
 
 def consume_bundle(bundle: dict, wake: bool = True, sessions=None, runner=None, stop_runner=None, pid_alive=None,

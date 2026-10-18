@@ -333,6 +333,8 @@ def main() -> int:
         ms.processed_tokens = real
     check("V-DP-D6-FRESH-METER-BEATS-STALE-SNAPSHOT", got6["applied"]["predecessors"] == 51_303_727
           and gm.load(c6)["token_estimate"] == (210_000_000 - 51_303_727) // 2, got6.get("applied"))
+    check("V-DP-A1-CEILING-WRITES-OWNER-AUTHORITY", gm.load(c6).get("authority_tokens") == 210_000_000 - 51_303_727
+          and got6["applied"]["authority_tokens"] == 210_000_000 - 51_303_727, gm.load(c6).get("authority_tokens"))
 
     print(f"DP_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1

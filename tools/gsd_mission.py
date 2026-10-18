@@ -3824,6 +3824,17 @@ def _renewal_why_not(rec: dict, halt_reason: str, st: dict, halt_wd: str, finger
                            f"across lineage {rec.get('lineage_id') or rec['mission_id']}")
         except Exception:  # noqa: BLE001
             pass
+    if not why_not and rec.get("authority_tokens"):
+        try:
+            import mission_spend as ms
+            sp = ms.lineage_spend(rec["mission_id"], extra=rec)
+            base = int(rec.get("lineage_authority_tokens") or rec["authority_tokens"])
+            left = base - ms.closeout_reserve(rec) - int(sp["processed"])
+            if not sp["unmeasured"] and left <= 0:
+                why_not = (f"Owner authority exhausted: {sp['processed']:,} processed of {base:,} "
+                           f"across lineage {rec.get('lineage_id') or rec['mission_id']}")
+        except Exception:  # noqa: BLE001 -- an unanswered meter never refuses
+            pass
     if not why_not:
         # GGMC C4: a renewal is a new attempt of the same Goal and obeys the same authority as `arm`.
         try:
@@ -3877,6 +3888,22 @@ def renew_mission(rec: dict, now: float | None = None, capsule_key: str | None =
                 carried["lineage_spend_unknown"] = True
             else:
                 carried["token_estimate"] = max(int(lr_["remaining"]), 1)
+    # The Owner's authority is a ceiling on the lineage, not a fresh grant per link: the successor's meter starts at 0,
+    # so carrying `authority_tokens` unchanged let each iteration-cap renewal spend the full ceiling again
+    # (m-c63384bde9d0, 2026-10-18: ceiling 260M, the renewal inherited an unbounded envelope).
+    if rec.get("authority_tokens"):
+        import mission_spend as ms
+        try:
+            sp = ms.lineage_spend(rec["mission_id"], extra=rec)
+        except Exception:  # noqa: BLE001 -- an unanswered meter is unknown, never zero
+            sp = {"processed": 0, "unmeasured": [rec["mission_id"]]}
+        # the lineage keeps the ORIGINAL grant: the record's own `authority_tokens` is already net of earlier links
+        base = int(rec.get("lineage_authority_tokens") or rec["authority_tokens"])
+        carried["lineage_authority_tokens"] = base
+        if sp["unmeasured"]:
+            carried["lineage_spend_unknown"] = True
+        else:
+            carried["authority_tokens"] = max(base - int(sp["processed"]), 1)
     if not rec.get("token_estimate") and bounded_renewal_mode() == "shadow":
         lr.ledger_append(rec["mission_id"], "renewal_unbounded_shadow", mission_id=rec["mission_id"],
                          reason=UNBOUNDED_RENEWAL)

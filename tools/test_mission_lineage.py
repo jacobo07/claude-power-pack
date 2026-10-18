@@ -97,6 +97,40 @@ def main() -> int:
         SPEND["m-lf"] = 0
         why3 = gm._renewal_why_not(f, "budget: cycles", {"outcome": "OK"}, TMP)
         check("V-LINEAGE-ZERO-MEASURED-CONTROL", not (why3 and "lineage" in why3), str(why3))
+        # Owner authority is a ceiling on the lineage: the successor carries what REMAINS of it (m-c63384bde9d0)
+        g = _root("m-lg", 10 * M)
+        gm.set_authority("m-lg", 10 * M, now=NOW, reason="test")
+        SPEND.clear()
+        SPEND["m-lg"] = 7 * M
+        g1 = gm.renew_mission(gm.load("m-lg"), now=NOW + 3)
+        check("V-LINEAGE-AUTHORITY-REMAINING", g1.get("authority_tokens") == 3 * M, str(g1.get("authority_tokens")))
+        SPEND[g1["mission_id"]] = 2 * M
+        g2 = gm.renew_mission(gm.load(g1["mission_id"]), now=NOW + 4)
+        check("V-LINEAGE-AUTHORITY-REPLAY-CANARY", g2.get("authority_tokens") == 1 * M, str(g2.get("authority_tokens")))
+        real_ls = ms.lineage_spend
+        ms.lineage_spend = lambda *a, **k: {"processed": 0, "unmeasured": [], "members": []}
+        try:
+            h = _root("m-lh", 10 * M)
+            gm.set_authority("m-lh", 10 * M, now=NOW, reason="test")
+            SPEND["m-lh"] = 7 * M
+            hm = gm.renew_mission(gm.load("m-lh"), now=NOW + 5)
+        finally:
+            ms.lineage_spend = real_ls
+        check("V-LINEAGE-AUTHORITY-MUTATION-RED", hm.get("authority_tokens") != 3 * M, "fresh-authority mutant fails")
+        i = _root("m-li", 50 * M)
+        gm.set_authority("m-li", 10 * M, now=NOW, reason="test")
+        SPEND["m-li"] = 10 * M
+        why4 = gm._renewal_why_not(gm.load("m-li"), "budget: cycles", {"outcome": "OK"}, TMP)
+        check("V-LINEAGE-AUTHORITY-EXHAUSTED-REFUSED", why4 and "authority" in why4, str(why4))
+        SPEND["m-li"] = 4 * M
+        why5 = gm._renewal_why_not(gm.load("m-li"), "budget: cycles", {"outcome": "OK"}, TMP)
+        check("V-LINEAGE-AUTHORITY-LEFT-CONTROL", not (why5 and "authority" in why5), str(why5))
+        j = _root("m-lj", 10 * M)
+        gm.set_authority("m-lj", 10 * M, now=NOW, reason="test")
+        SPEND.pop("m-lj", None)
+        jn = gm.renew_mission(gm.load("m-lj"), now=NOW + 6)
+        check("V-LINEAGE-AUTHORITY-UNKNOWN-FLAGGED", jn.get("lineage_spend_unknown") is True and
+              jn.get("authority_tokens") == 10 * M, str(jn.get("authority_tokens")))
     finally:
         ms.processed_tokens = real
     print(f"LINEAGE_PASS={passes}/{passes + fails}")
