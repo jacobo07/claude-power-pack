@@ -28,7 +28,8 @@ EVIDENCE = os.path.join("docs", "dws", "live-2026-10-18-row-59-model-turn-eviden
 SUBJECT_FILES = ("AGENTS.md", EVIDENCE,
                  os.path.join("docs", "reference", "remote-wire-compatibility.md"),
                  os.path.join("docs", "reference", "detach-stop-cancel-effects.md"),
-                 os.path.join("src", "main", "workspace-execution-consent.ts"))
+                 os.path.join("src", "main", "workspace-execution-consent.ts"),
+                 os.path.join("tests", "e2e", "hwf-two-host-continue-here-resume.spec.ts"))
 _PASS = 0
 _FAIL = 0
 
@@ -68,8 +69,8 @@ def main() -> int:
     print("V-MHF gates")
 
     entries = bl.active_entries(FAMILY)
-    _check("V-MHF-B0-EXISTS", bl.generations(FAMILY) == [0] and len(entries) == 6,
-           "B0 only, %d active entries" % len(entries), "generations=%s" % bl.generations(FAMILY))
+    _check("V-MHF-B0-EXISTS", bl.generations(FAMILY) == [0, 1] and len(entries) == 8,
+           "B0 plus ratchet-promoted B1, %d active entries" % len(entries), "generations=%s" % bl.generations(FAMILY))
     bad = [e["id"] for e in entries if bl.verify_origin(e, window=0) != bl.VERIFIED]
     _check("V-MHF-ORIGINS-VERIFIED", not bad, "every cited quote is on its cited line", "drifted: %s" % bad)
     _check("V-MHF-ALL-CHECKABLE", all(e.get("check") for e in entries),
@@ -79,7 +80,7 @@ def main() -> int:
     _check("V-MHF-REAL-REPO-GREEN",
            green["status"] == dg.JUDGED and not green["would_block"]
            and set(_verdicts(green).values()) == {dg.APPLIED_VERIFIED},
-           "real Orca repo: %d/6 APPLIED_VERIFIED, would_block=False" % len(green["entries"]),
+           "real Orca repo: %d/8 APPLIED_VERIFIED, would_block=False" % len(green["entries"]),
            "verdicts %s" % _verdicts(green))
 
     tmp = tempfile.mkdtemp(prefix="mhf_")
@@ -100,7 +101,7 @@ def main() -> int:
         _check("V-MHF-VIOLATION-IS-ISOLATED",
                [k for k, x in v.items() if x == dg.VIOLATED] == ["multi_host_fabric-live-leg-restores-service-home"],
                "exactly one entry went red", "red set %s" % [k for k, x in v.items() if x != dg.APPLIED_VERIFIED])
-        _check("V-MHF-VERDICT-STAMPED", red["judged_under"] == FAMILY + "/B0" and red["chain_ok"],
+        _check("V-MHF-VERDICT-STAMPED", red["judged_under"] == FAMILY + "/B1" and red["chain_ok"],
                "report stamped %s, chain OK" % red["judged_under"], "stamp %s chain %s" % (red["judged_under"], red["chain_ok"]))
 
         missing_rule = os.path.join(tmp, "norule")
