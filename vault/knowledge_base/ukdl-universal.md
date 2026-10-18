@@ -17705,3 +17705,23 @@ Evidence: one Owner topology decision caused by the agent in m-3f1feb210a74. Tes
 
 **`HR-CANDIDATE-DEFAULT-ENVELOPE-IS-NEVER-OWNER-AUTHORITY`** -- STATUS: CANDIDATE pending production proof. A default policy envelope is never Owner authority: it may park a mission, it may not be presented as an Owner decision or as a forecast.
 Fix: 203e8e26 (`authority_kind`). Evidence: m-3f1feb210a74. Promote only after a production mission shows the typed split holding.
+
+## DWS program traps (2026-10-18, from the Orca dws rows 59 and 70 live runs)
+
+Evidence docs live in the Orca repo under docs/dws/ (live-2026-10-18-row-70-resume-evidence.md, live-2026-10-18-row-59-model-turn-evidence.md). Lessons: vault/lessons/dws-*.md.
+
+**`T-INK-SCREEN-SPACE-IS-CSI-C-001`** -- A serialized Ink screen writes word gaps as `CSI C` (cursor-forward); a text match over a screen with only the escapes stripped never sees a prompt that is on screen.
+Fix: map `CSI C` to a space before stripping (Orca harness, r70r3 to r70r5).
+Evidence: three resume runs sat on the folder-trust dialog with `trust=false` and a stable PTY id until the mapping; r70r5 passed. Lesson: `vault/lessons/dws-ink-screen-reads-spaces-as-csi-c.md`.
+
+**`T-LIVE-LEG-MUST-RESTORE-THE-SERVICE-HOME-001`** -- A restore that covers only the files the harness knows leaves the ones the leg wrote; prove restoration with a counter the driver reads.
+Fix: remove only the leg's own `projects` keys from `~/.claude.json` and report `HWF_CLAUDE_PROJECTS`.
+Evidence: r70r4 left a project entry that `svc-restore` never touched; rows 59 and 70 now print `HWF_CLAUDE_PROJECTS=0` and `SVC_HOME_RESTORED=True`. Lesson: `vault/lessons/dws-service-home-restore-leaves-no-claude-projects.md`.
+
+**`T-A-TEST-DOES-NOT-ACCEPT-BYPASS-PERMISSIONS-001`** -- Consent to Bypass Permissions mode on a real account persists there and is the Owner's; a harness changes the launch so it is never asked and asserts it was not, rather than answering.
+Fix: Manual permissions (`agentDefaultArgs.claude = ''` read back); the dialog is a refusal.
+Evidence: r70r4 met the dialog under the Yolo default; the row 59 turn printed `HWF59M_ARGV_BYPASS_FLAG=absent` and `bypassPermissionsModeAccepted` stayed absent. Lesson: `vault/lessons/dws-bypass-permissions-consent-belongs-to-the-owner.md`.
+
+**`T-SESSION-TRANSFER-NEEDS-AN-INDEPENDENT-READ-BACK-001`** -- A transfer's own status cannot witness itself; read the transferred bytes on the target with a tool the product does not use, and keep a mutant that makes the product lie.
+Fix: `stat` of the target transcript (`XFER_BYTES`) asserted by the spec.
+Evidence: r70m (`transferOne` returned present without writing) kept the product's status green while the target `stat` failed and the spec went red. Lesson: `vault/lessons/dws-session-transfer-is-proved-by-the-target-read-back.md`.
