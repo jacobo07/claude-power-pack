@@ -55,9 +55,16 @@ Memory: `project_ttb_wii_sdk_mission.md`.
   ship level; it has NEVER booted Gungan (only an `area "gungan"` line in a family text, build_two_builders.py:242). So: Gungan = decodable but
   boot path unproven; Negotiations = bootable (known camera, pre-read gate) but geometry mostly undecoded. Level text files hold no world
   coordinates (spawn is in binary).
-- Hypothesis H3c: the other vertex strides in a level draw can be decoded offline (measure the position field per stride, as the stride 5 and 8 fields were).
+- H3c INCONCLUSIVE (2026-10-19, `TB-wii-sdk/h3c_strides.py`, NEGOTIATIONS_A, 18 (flags,stride) groups): position field picked by strip coherence
+  (median edge / bbox diagonal). CONTROL passes only for the three stride-5 groups (u8@+0); this file has no stride-8 group. For the two biggest
+  groups (0x1087 stride 3, 344 draws; 0x1005 stride 2, 267 draws) winner and runner-up are within 0.002, and several tiny groups score 0.000
+  (too few vertices to discriminate). Not claimed: the position field of strides 2-4.
+- DERIVED, consistent with all 18 groups (by hand, not yet a gate): the level flag word predicts the vertex size: bits 0x1, 0x2, 0x4, 0x40 add 1 byte;
+  bits 0x8, 0x10, 0x20, 0x100 add 2 bytes; bit 0x80 adds none. A stronger instrument (cross-draw array extent, triangle area) is needed for the position field.
+- PIVOT for H4 that needs no stride knowledge: `chg_mesh.collapse` (any-format hide, already Dolphin-proven) makes a chosen draw vanish; a missing large
+  object in the known Negotiations camera is unambiguous evidence that an edited level scene is loaded and drawn. Moving geometry waits for H3c.
 
 ## Next
-- T2 released by the Owner ("y", 2026-10-19) but NOT spent: the H4 target depends on H3c (decode Negotiations) or on proving a boot path into Gungan.
+- T2 released by the Owner ("y", 2026-10-19) but NOT spent. H4 candidate: collapse the N largest Negotiations draws in one run, bisect afterwards.
 - Packet for the mission worker, not a direct write by this pane: probe `level-geom-<target>` + PREREG (ADMIT) in the tb-m2 clone, one Dolphin run.
 - Then collisions (H5) -> event -> pipeline -> decision report by 2026-11-09. PC lane: S2 mesh half and S3 are next, not parked.
