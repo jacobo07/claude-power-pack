@@ -4,6 +4,12 @@ Date 2026-10-19. Origin: the Owner shared a third-party proposal to make TCS on 
 how they will play in January ("Ambos": same sofa first, Remote Play as backup) and whether the physical Wii is part of the gift
 ("Solo importa jugarlo juntos"). PC becomes the target only if this spike passes; that is a decision for the Owner, not a default.
 
+## S3a (2026-10-19): new-mesh export path, offline
+- Correction: BrickBench is a MAP editor; it does not answer the new-character question. The character-mesh path is BactaTank Classic + its Blender add-on (`bactatank-classic-v03`, v3.1.6, `export_pcghg`).
+- Blender 5.1.1 (`C:\Program Files\Blender Foundation\Blender 5.1`) runs the add-on export after ONE patch in a copy (`b41_up` was true only for 4.x; on 5.x it called the removed `calc_normals_split`). Patched copy: `C:\Users\User\TB-PC-spike\s3\addon`; the original zip is untouched.
+- Evidence: headless run of `s3\s3_export_test.py` exported a new UV sphere (114 verts, 1 UV layer) to `s3\out\new_sphere.bmesh` (14,490 bytes), result FINISHED. Level: BUILT (file produced). NOT shown: BactaTank loading it, Replace into a GHG copy, the game drawing it, skinning to the minifig skeleton.
+- Next S3b: BactaTank GUI on a GHG COPY in a new CHARS folder: Replace a mesh with the .bmesh, Ctrl+S, boot the DAT-free `game_loose`, capture.
+
 ## What was verified (2026-10-19, primary pages read)
 - BrickBench: map editor for TCS, Windows and Linux x64, OpenGL 4.5, 67 stars, 25 open issues, last commit date not shown.
 - BactaTank Classic: loads only `*_PC.GHG`, says it does not work with console versions; some TCS models fail to load; mesh edits need the
