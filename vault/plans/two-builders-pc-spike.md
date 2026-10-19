@@ -33,6 +33,23 @@ says a PC result is not Wii proof; moving the target needs a new generation with
 - Evidence level for each result is "WORKS IN PC NATIVE"; none of it is Wii proof, and none is Owner-approved until a decision file says so.
 - Stop and report on the first test that fails twice for a structural reason, with the measured cause.
 
+## Status 2026-10-19
+- S1 DEFERRED by the Owner (no gamepads on the laptop; needs 2 DualShock/DualSense). S2 does not need a second pad.
+- BactaTank wiki read (Editing, Creating A Character): TCS PC editable via `*_PC.GHG` only (`*_LR_PC.GHG` not loadable).
+  Texture: Export (Ctrl+E) -> edit externally (DDS) -> Replace (Ctrl+R). Mesh: Export/Replace the same way, then Ctrl+S overwrites the
+  GHG, so work on a COPY in a new CHARS folder (rollback = delete the copy). New character = copy a base's `.GHG` + `.TXT`, rename, edit
+  `.TXT` tags, add a `name_id` (<1000, quoted) in `STUFF/TEXT/<LANG>.TXT`, append entries to `CHARS/CHARS.TXT` and `CHARS/COLLECTION.TXT`
+  (exact syntax is in screenshots only), delete `CHARSTXT.FPK` if the slot shows "?". Bones/Layers not editable; attributes cannot be added
+  or removed. Caveat: Paint.NET suggested for DDS export.
+- S2 texture half PASS (2026-10-19, WORKS IN PC NATIVE, screenshot not video): QuiGonJinn face atlas (tex #7, 512x512 DXT5) patched in place
+  (same byte size; the GHG stores textures as plain DDS blobs, so no pointer rebuild) shows teal brows/moustache in the Cantina demo.
+  Evidence: `C:/Users/User/TB-PC-spike/s2/shot_state.png`, `face_crop.png`. Mesh half and the continuous video are still open.
+- Loose files: the engine ignores loose files while the `.DAT` archives are present (the loose GHG's access time never moved). It reads them
+  from a DAT-free copy (`TB-PC-spike/game_loose`: extracted tree + non-DAT install files + `steam_appid.txt` = 32440). The Steam install is
+  untouched except one new `CHARS/QUIGONJINN` folder (rollback `s2/ROLLBACK.ps1`). Loading without DATs is slower per the community guides.
+- Iteration loop here (no GEX44 needed): `s2/shot.ps1` captures the 1024x768 window, `s2/key.ps1` sends keys (synthetic input works).
+  The title idle-demo shows Qui-Gon in the Cantina. The in-game prompt "Pulsa F2 o cualquier boton para empezar" is the player 2 join: relevant to S1.
+
 ## Decision after the spike
 All three PASS: ask the Owner to promote PC to the main target and write the new baseline generation (reason + authority).
 Any FAIL: keep Wii as the target, and say which test failed and why.
