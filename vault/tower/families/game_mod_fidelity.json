@@ -5,6 +5,7 @@
                "two builders", "dolphin capture", "wii physical", "visual approval"],
   "anti_triggers": [],
   "repo_markers": [
-    {"file": "docs/MISSION_TB_FINISH.md", "contains": ["TB-FINISH"]}
+    {"file": "MISSION_TB_FINISH.md", "contains": ["TB-FINISH"]},
+    {"file": "PROJECT.md", "contains": ["Two Builders"]}
   ]
 }

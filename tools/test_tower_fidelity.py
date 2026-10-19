@@ -130,6 +130,22 @@ def main():
     _check("V-GMF-JUDGE-GREEN-WITH-STRUCTURE", green.returncode == 0 and "VIOLATED" not in green.stdout,
            "a repo with the structure is not blocked", "rc=%s out=%s" % (green.returncode, green.stdout[-300:]))
 
+    from modules.tower import families as fam  # noqa: E402
+    _check("V-GMF-ACTIVATES-BY-PROMPT",
+           fam.classify_prompt("compare the kitten capture with a 1:1 fidelity gate")[0][0] == FAMILY
+           and fam.classify_prompt("fix the css padding on the pricing page") == [],
+           "a fidelity prompt selects the family; an unrelated one selects nothing",
+           "prompt classification wrong")
+    with tempfile.TemporaryDirectory() as proj, tempfile.TemporaryDirectory() as other:
+        os.makedirs(os.path.join(proj, ".planning"))
+        with open(os.path.join(proj, ".planning", "PROJECT.md"), "w", encoding="utf-8") as fh:
+            fh.write("# The Two Builders\n")
+        hit = FAMILY in fam.repo_families(proj)
+        miss = FAMILY not in fam.repo_families(other)
+    _check("V-GMF-ACTIVATES-BY-REPO", hit and miss,
+           "a repo marker selects the family without copying it; an empty repo does not",
+           "hit=%s miss=%s" % (hit, miss))
+
     print("GMF_PASS=%d/%d  threshold=%d/%d" % (_PASS, _PASS + _FAIL, _PASS + _FAIL, _PASS + _FAIL))
     return 0 if _FAIL == 0 else 1
 
