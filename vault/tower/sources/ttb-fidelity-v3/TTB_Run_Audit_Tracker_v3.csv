@@ -1,0 +1,16 @@
+Unit,Run,Shots,Assessment,Why,Next proof,Wii hardware tested?,Owner approved?
+F2A,tbl-20261019-073317,3,FAIL_VISUAL,No 7th TTB doorway clearly visible; at least one black frame,7-door front panorama + complete entry/return clip,NO,NO
+F2B,tbl-20261019-074139,3,UNVERIFIED,Hints/UI screenshots do not prove final layout,native-resolution HUD video & safe area,NO,NO
+F2B2,tbl-20261019-074701,3,UNVERIFIED,UI overlays and debugging values,native-resolution HUD video & safe area,NO,NO
+F2B3,tbl-20261019-075201,3,UNVERIFIED,"Menus shown, no finalized presentation proof",in-game UI sequence,NO,NO
+F2C,tbl-20261019-080054,3,UNVERIFIED,"Co-op characters visible, CameraCut not evidenced",replay with 2 controllers and camera path,NO,NO
+F2C2,tbl-20261019-080833,3,UNVERIFIED,Co-op marker visual only,replay with 2 controllers and camera path,NO,NO
+F3A,tbl-20261019-082816,3,FAIL_VISUAL,Kitten material/model not accepted,single kitten neutral silhouette + UV texture,NO,NO
+F3B,tbl-20261019-084012,3,FAIL_VISUAL,Multicolor malformed model,mesh index/UV/texture diagnostics,NO,NO
+F3C,tbl-20261019-085107,3,FAIL_VISUAL,White kitten silhouette incomplete,separate ears muzzle tail & material pass,NO,NO
+F4B,tbl-20261019-102541,3,PARTIAL,Animation reportedly plays; final form not evidenced,animation complete video and deform checks,NO,NO
+F6A,tbl-20261019-104938,3,UNVERIFIED,No complete Kitten Call state sequence,state telemetry + uncut video,NO,NO
+F6A2,tbl-20261019-112119,3,UNVERIFIED,Worker result may have changed,latest run outcome + uncut video,NO,NO
+F6B,tbl-20261019-110005,3,UNVERIFIED,Following behavior not proven,pathing and follower video,NO,NO
+F6B2,tbl-20261019-110811,3,UNVERIFIED,Follower remains unproven,pathing and follower video,NO,NO
+F6C,NO_RUN,0,NO_EVIDENCE,No captures for construction site,run gameplay evidence,NO,NO

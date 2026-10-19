@@ -1,0 +1,101 @@
+{
+  "family": "game_mod_fidelity",
+  "generation": 0,
+  "parent": null,
+  "parent_sha256": null,
+  "created_at": 1792412703.2187407,
+  "reason": "B0 from Owner-sealed governance; every entry's cited line re-read and verified",
+  "entries": [
+    {
+      "id": "gmf-no-pass-by-resemblance",
+      "class": "D",
+      "requirement": "A result is never PASS by surface resemblance, a good-looking capture, an isolated behaviour, a PC result or a partial Dolphin success; every run carries a fidelity assessment that is separate from the probe's own outcome letter.",
+      "why": "TB-FINISH 2026-10-19: the worker's probe letters (F3B 'A', F2A 'A') answered the probe's causal question, while the independent audit of the same captures read FAIL_VISUAL; reading the letter as fidelity hid four visual failures.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\tower\\sources\\ttb-fidelity-v3\\TTB_1to1_Fidelity_Pipeline_v3.md",
+        "line": 5,
+        "quote": "**Principio rector:** no declarar PASS por semejanza superficial, captura bonita, comportamiento aislado, resultado de PC ni éxito parcial en Dolphin."
+      },
+      "check": "regex:fidelity/measurements/run_audit_tracker.csv::^Unit,Run,Shots,Assessment",
+      "status": "reviewed"
+    },
+    {
+      "id": "gmf-evidence-levels-not-mixed",
+      "class": "D",
+      "requirement": "Every property is classified at exactly one evidence level (REFERENCE, DESIGNED, BUILT, LOADS IN DOLPHIN, WORKS IN DOLPHIN, VALIDATED ON WII, VISUALLY APPROVED) and the levels are never merged in a report.",
+      "why": "A feature that loads in Dolphin was reported alongside one approved by the Owner as if they were the same state.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\tower\\sources\\ttb-fidelity-v3\\TTB_1to1_Fidelity_Pipeline_v3.md",
+        "line": 16,
+        "quote": "**Regla de honestidad:** clasificar cada propiedad como REFERENCIA, DISEÑADO, CONSTRUIDO, CARGA EN DOLPHIN, FUNCIONA EN DOLPHIN, VALIDADO EN WII, APROBADO VISUALMENTE. No mezclar niveles de evidencia."
+      },
+      "check": "regex:fidelity/measurements/run_audit_tracker.csv::Wii hardware tested",
+      "status": "reviewed"
+    },
+    {
+      "id": "gmf-reference-registry-hashed",
+      "class": "D",
+      "requirement": "Every authorised reference (image, render, capture) is registered with its SHA-256 before work starts and the original is never overwritten.",
+      "why": "Without a hash the thing a result is compared against can change under the comparison.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\tower\\sources\\ttb-fidelity-v3\\TTB_1to1_Fidelity_Pipeline_v3.md",
+        "line": 21,
+        "quote": "- **Reference Registry:** asset original, hash, propietario, región de interés, resolución, relación de aspecto, versión e interpretación. La fotografía/render original nunca se sobrescribe."
+      },
+      "check": "glob:fidelity/references/*.sha256",
+      "status": "reviewed"
+    },
+    {
+      "id": "gmf-feature-contract-per-asset",
+      "class": "D",
+      "requirement": "Each asset has a feature contract that names its critical features, known unknowns, allowed deviation, required screenshots and behaviour, and its status.",
+      "why": "A contract is what makes 'looks like the reference' decidable instead of arguable.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\tower\\sources\\ttb-fidelity-v3\\TTB_1to1_Fidelity_Pipeline_v3.md",
+        "line": 55,
+        "quote": "Cada contrato debe especificar: `asset_id`, `reference_ids`, `source_sha256`, `critical_features`, `known_unknowns`, `allowed_deviation`, `disallowed_shortcuts`, `screenshots_required`, `behavior_required`, `wii_constraints`, `owner_approval`, `runtime_tests`, `metrics`, `status`, `evidence_links`."
+      },
+      "check": "glob:fidelity/contracts/*.json",
+      "status": "reviewed"
+    },
+    {
+      "id": "gmf-owner-approval-not-automatic",
+      "class": "D",
+      "requirement": "The Owner's sign-off on face, hair, torso, back, door and kitten is a recorded decision; automatic similarity never replaces it, and an agent never approves its own gate.",
+      "why": "Identity features are an artistic call that only the Owner makes.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\tower\\sources\\ttb-fidelity-v3\\TTB_1to1_Fidelity_Pipeline_v3.md",
+        "line": 24,
+        "quote": "- **Approvals:** owner sign-off por rostro, pelo, torso, espalda, puerta y gato; la similitud automática NO sustituye el visto bueno."
+      },
+      "check": "glob:fidelity/decisions/*.md",
+      "status": "reviewed"
+    },
+    {
+      "id": "gmf-dolphin-profiles-separate",
+      "class": "D",
+      "requirement": "Dolphin evidence names its profile (WII_EQUIVALENT or DOLPHIN_HD); DOLPHIN_HD is diagnostic only and is never a Wii criterion.",
+      "why": "An enhanced render hides defects the native console shows.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\tower\\sources\\ttb-fidelity-v3\\TTB_1to1_Fidelity_Pipeline_v3.md",
+        "line": 36,
+        "quote": "- Dos perfiles de Dolphin, uno **WII_EQUIVALENT** (nativa, sin mejoras visuales engañosas) y otro **DOLPHIN_HD** (solo diagnóstico/marketing, jamás criterio de Wii)."
+      },
+      "check": "glob:fidelity/captures/dolphin-native/*",
+      "status": "reviewed"
+    },
+    {
+      "id": "gmf-wii-pass-needs-hardware",
+      "class": "D",
+      "requirement": "WII_PASS requires physical-console evidence (video and logs); without it the highest state is a Dolphin state and the gate stays open.",
+      "why": "Dolphin on GEX44 is not real-Wii proof.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\tower\\sources\\ttb-fidelity-v3\\TTB_1to1_Fidelity_Pipeline_v3.md",
+        "line": 38,
+        "quote": "- Ensayos de hardware Wii física con vídeo y logs disponibles; sin esta evidencia no hay `WII_PASS`."
+      },
+      "check": "test:tools/test_fidelity_planes.py",
+      "status": "reviewed"
+    }
+  ]
+}

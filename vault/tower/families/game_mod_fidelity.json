@@ -1,0 +1,10 @@
+{
+  "id": "game_mod_fidelity",
+  "name": "Game mod with reference fidelity (Wii/Dolphin)",
+  "triggers": ["fidelity", "1:1", "golden baseline", "reference fidelity", "kitten call",
+               "two builders", "dolphin capture", "wii physical", "visual approval"],
+  "anti_triggers": [],
+  "repo_markers": [
+    {"file": "docs/MISSION_TB_FINISH.md", "contains": ["TB-FINISH"]}
+  ]
+}
