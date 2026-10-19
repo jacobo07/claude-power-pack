@@ -45,6 +45,19 @@ Memory: `project_ttb_wii_sdk_mission.md`.
 - Hypothesis H6: new geometry inside an existing mesh's byte budget (rewrite a display list that fits) before any relocation.
 - Fetched files live in `TB-wii-sdk/files/ro/tools` (from the GEX44 clone 1de00ad, read-only); the full clone is 2 GB+, do not repeat it.
 
+- H3b DONE offline (2026-10-19, `TB-wii-sdk/h3b_nodes.py`, `h3b_place.py`, `h3b_gungan_a_nodes.csv`): every draw of a level scene is referenced by a
+  scene node that carries a pointer to its transform 8 bytes before the draw pointer (GUNGAN_A: 420/420 draws, 1432 nodes; NEGOTIATIONS_A: 996/996).
+  Control: 420 random pointers give 2 hits at that offset and 8/420 anywhere, real draws give 1204 and 420/420 (NEGOTIATIONS_A: 28 vs 1977).
+  Transform = row-major 3x4, translation in column 3 (e.g. the 5.0x3.05x5.0 piece of array@0x76d240 sits at (-1.25, 1.35, -17.99) and again at
+  (-62.95, 0.05, 100.01): instancing; editing a shared array moves every instance). Stored scale of the unit is not yet tied to the character scale.
+- FINDING that moves the H4 target: GUNGAN_A has 106 decodable draws (35 arrays), NEGOTIATIONS_A has 996 draws but only 1 decodable array
+  (the other strides are undecoded, `chg_geom` doc: strides 2,3,4,6,7,9 unmeasured). The Dolphin harness has booted Negotiations, Tatooine and a
+  ship level; it has NEVER booted Gungan (only an `area "gungan"` line in a family text, build_two_builders.py:242). So: Gungan = decodable but
+  boot path unproven; Negotiations = bootable (known camera, pre-read gate) but geometry mostly undecoded. Level text files hold no world
+  coordinates (spawn is in binary).
+- Hypothesis H3c: the other vertex strides in a level draw can be decoded offline (measure the position field per stride, as the stride 5 and 8 fields were).
+
 ## Next
-- T2 needs the Owner: H4 is a Dolphin run (slot + queue behind TB-EVIDENCE). Offline next: H3b instance-transform census.
-- Then level geometry proof (H4) -> collisions (H5) -> event -> pipeline -> decision report by 2026-11-09.
+- T2 released by the Owner ("y", 2026-10-19) but NOT spent: the H4 target depends on H3c (decode Negotiations) or on proving a boot path into Gungan.
+- Packet for the mission worker, not a direct write by this pane: probe `level-geom-<target>` + PREREG (ADMIT) in the tb-m2 clone, one Dolphin run.
+- Then collisions (H5) -> event -> pipeline -> decision report by 2026-11-09. PC lane: S2 mesh half and S3 are next, not parked.
