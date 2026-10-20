@@ -33,6 +33,18 @@ ET_EXEC, `PowerPC:BE:32:default`, honours `REA_GHIDRA_LANGUAGE_ID`, refuses EF_P
 the DOL -> ELF32 ET_EXEC bridge, one receipt per capability, then the economic gate. Compare REA against ghidra_r1, not raw ghidra.
 Node's checksum list is same-origin, GPG unverified (recorded in supply-chain.json).
 
+**UPDATE 2026-10-20 (evening) -- F3c ran PARTIAL; residual F3cr RUNNING.** Node 22 and rea-agents are now INSTALLED offline by the coordinator
+(173 pkgs, lock sha256 18e1a5ce..., only frida has an install script, skipped). F3c worker (sid fe056ef8, packet 3f8366f0) hit its 4M breaker at 4,021,175
+tokens (72 msgs): SETTLED on gsdx-factory-2 (settled 56,048,968 -> 60,070,143; remaining 65,368,053 of cap 72,160,000). It committed the bridge
+(`modules/recon_fabric/dol_elf_bridge.py`), the gate `tools/test_recon_fabric_f3c.py` 27/27 and a partial receipt (842bc8a6, fast-forwarded into the
+fabric worktree). Measured: REA ADMITS the bridge ELF, procedure_count 12,061 = the raw Ghidra export of F3b; 237.7 s and 2.0 GB per call, and every REA call
+re-runs the analysis (the `function` call took 3:54 again, even with --snapshot). Half the budget went on 3 environment attempts (wrong GHIDRA_INSTALL_DIR;
+REA needs a full JDK, solved with `~/fabric-tools/jdk21-shim-rea`; recipe in `~/fabric-tools/out/f3c/rea_env.sh`). Likely disposition ECONOMICALLY_INFERIOR, NOT yet
+demonstrated per function. F3cr (packet fa3cfe68, Owner "1", stop 2,000,000, 40 turns, pid 3092045, log gex44 `~/missions/gsdx-fabric-stage/run-F3cr.log`) compares
+`runs/search.json` with the F3b export / DTK / ghidra_r1, writes `provider-caps/rea-tennis/*` receipts and `evidence/f3c/economics.json`. WHEN IT ENDS (coordinator):
+read `result.json` for sid + processed, `goal-settle --goal gsdx-factory-2 --session <sid> --measured <processed>`, pull the clone commits (`git fetch` from the clone, ff-only),
+re-run all ten gates on the clone, re-pin F7 (`--write-pin` on GEX44, scp the 3 files back), then apply the verdict as a separate provider record (like ghidra_r1), never over rea.json.
+
 **Everything left is in the PP backlog as D29** (`vault/plans/deferred-backlog.md`). Summary, Owner's choice (no work scheduled):
 1. F3c (REA canary): needs Ghidra function boundaries >= 90 % vs DTK; F3b measured 79.52 %. A boundary-adjudication pass comes first.
 2. The three D12 compiler replays (commands in WU-F5-receipt.md) need GEX44 compute jobs, excluded from this programme.
