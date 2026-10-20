@@ -1,4 +1,4 @@
-﻿# Roadmap â€” owner-control-plane (v1)
+# Roadmap — owner-control-plane (v1)
 
 Read `REQUIREMENTS.md`, then `vault/plans/owner-control-plane-2026-10-19.md` (design, root causes, budget).
 Worktree: `C:\Users\User\Apps\pp-owner-control`, branch `ocp/owner-control`. Goal: `owner-control-plane` (programme 22M, applied from packet sha 0878ac15a056).
