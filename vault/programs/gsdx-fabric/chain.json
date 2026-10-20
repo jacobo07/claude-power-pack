@@ -102,6 +102,17 @@
         "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F9-receipt.md"
       ],
       "note": "runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F9); packet 68d0c3bf; writes proposal files only, the coordinator applies KV/UKDL/FIOS on the laptop; the laptop tick must not arm it. DONE 039af4a6 (15/15 + 4 mutants red re-run by coordinator, F1-F8 green), settled 2,112,091 (L15). Proposals applied 2026-10-15: KV domain/binary-reconstruction-fabric.md (+ Tennis DOL sha correction to KN-F1-04), UKDL 86658b3f. PROGRAMME CLOSED: settled 53,278,196 of 57,817,916"
+    },
+    {
+      "id": "F3adj",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3adj.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3adj-receipt.md",
+      "after": "F9",
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3adj-receipt.md"
+      ],
+      "note": "D29 item 1, Owner go 2026-10-19; runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3adj -Stop 3500000); packet a3631cbd; the laptop tick must not arm it. Success = functions >= 90 % exact vs DTK with NO DTK boundary data as input, or a measured per-cause breakdown (both valid DONE). No new capital: unspent 4,539,720 under the applied ceiling. DONE 9d66f035 (F3adj 23/23, F3b 36/36, F2 33/33, F1 34/34 re-run by coordinator on the GEX44 clone at HEAD 9d66f035; worker 2,770,772 of 3,500,000 tokens): functions 79.52 % -> 92.93 % (1670/1797) via R1 return-split post-pass with no DTK boundary input; DTK was a development oracle so the figure is not held-out; the live functions row stays PARTIAL until the coordinator applies R1; F3c not compiled; worker spend NOT yet booked to gsdx-factory-2"
     }
   ]
 }
