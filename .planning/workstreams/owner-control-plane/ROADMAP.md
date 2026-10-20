@@ -1,4 +1,4 @@
-# Roadmap — owner-control-plane (v1)
+# Roadmap ??? owner-control-plane (v1)
 
 Read `REQUIREMENTS.md`, then `vault/plans/owner-control-plane-2026-10-19.md` (design, root causes, budget).
 Worktree: `C:\Users\User\Apps\pp-owner-control`, branch `ocp/owner-control`. Goal: `owner-control-plane` (programme 22M, applied from packet sha 0878ac15a056).
@@ -9,7 +9,7 @@ UNKNOWN / INCONCLUSIVE are never PASS. Prefer Sonnet subagents for build work; a
 
 - [x] **Phase 1: Reality delta + fence audit** (read first: vault/plans/econ-succession-2026-10-11*.md and owner-capital-ctx-rent-2026-10-11.md; they already treat "approved authority not executable from the control plane")
 - [x] **Phase 2: Capital grammar** (ADD/SET/KEEP/STOP, Spanish por/a, units, ambiguity)
-- [ ] **Phase 3: Pre-budget router** (inside hooks/econ_admission.js) + principal and target binding
+- [x] **Phase 3: Pre-budget router** (inside hooks/econ_admission.js) + principal and target binding
 - [ ] **Phase 4: owner_intent receipt** (idempotency, CAS, recovery WAL, crash points)
 - [ ] **Phase 5: WAIT_OWNER_CAPITAL fold + PROGRAMME_AUTHORITY_CHANGED event + wake consumer**
 - [ ] **Phase 6: Adaptive successor lease sizing + automatic activation**

@@ -138,6 +138,24 @@ function decide(event) {
   return verb ? text : `${text}\n\nYour message was NOT sent to the model: the goal paying for this session cannot afford it.`;
 }
 
+// Pre-budget Owner router (OCP Phase 3): a whole-message capital-grammar form is answered here, before the
+// affordability fence and before any model call. Every failure path returns null so decide() still runs.
+const OCP_ROUTER = path.join(__dirname, '..', 'tools', 'ocp_router.py');
+const OCP_CANDIDATE = /\d|\b(?:keep|mantener|stop|para|cierra|revoke)\b/i;
+
+function routeOwner(event) {
+  if (String(process.env.CPP_OCP_ROUTER || '').trim().toLowerCase() === 'off') return null;
+  const sid = event && event.session_id;
+  if (!sid || !SID_RE.test(sid)) return null;
+  const prompt = String((event && event.prompt) || '');
+  if (prompt.length > 160 || prompt.includes('\n') || VERB.test(prompt) || !OCP_CANDIDATE.test(prompt)) return null;
+  const r = spawnSync(PY, ['-I', OCP_ROUTER], { input: JSON.stringify(event), encoding: 'utf8', timeout: 9000, windowsHide: true });
+  let out = null;
+  try { out = JSON.parse(String(r.stdout || '').trim().split('\n').pop()); } catch (e) { return null; }
+  if (!out || out.outcome === 'NOT_CONTROL' || out.outcome === 'ERROR' || !out.reply) return null;
+  return out.reply;
+}
+
 if (require.main === module) {
   let raw = '';
   process.stdin.on('data', d => { raw += d; }).on('end', () => {
@@ -147,7 +165,11 @@ if (require.main === module) {
       try { require('./owner_capital_capture').run(raw.replace(/^﻿/, '')); } catch (e) { /* fail-open */ }
     }
     let reason = null;
-    try { reason = decide(JSON.parse(raw.replace(/^﻿/, ''))); } catch (e) { reason = null; }
+    try {
+      const ev = JSON.parse(raw.replace(/^﻿/, ''));
+      try { reason = routeOwner(ev); } catch (e) { reason = null; }
+      if (!reason) reason = decide(ev);
+    } catch (e) { reason = null; }
     if (reason) block(reason);
     else process.stdout.write('{}');
   });
