@@ -361,6 +361,76 @@ def _():
     assert len(rows) == 2 and rows[1]["kind"] == "approval", rows
 
 
+def _pending(e, rows):
+    """Write pending.json for ga and the given approvals.jsonl rows into e.root."""
+    e.root.mkdir(parents=True, exist_ok=True)
+    (e.root / "pending.json").write_text(json.dumps([{"packet": str(e.packet), "goals": ["ga"]}]), encoding="utf-8")
+    (e.root / "approvals.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+
+
+def _run_pending(e):
+    return ca.apply_pending(e.factory(), root=e.root, timeout=0, sleep=lambda s: None)
+
+
+@gate("V-OCA-D9A-APPLY-PENDING-PER-ROW")
+def _():
+    e = Env()
+    e.show_packet()
+    e.owner("approve everything")
+    other = e.tmp / "other.jsonl"
+    other.write_text(json.dumps({"type": "user", "message": {"content": "hola"}}) + "\n", encoding="utf-8")
+    real = {"kind": "approval", "transcript_path": str(e.transcript)}
+    sweep = {"kind": "pending-sweep", "transcript_path": str(other)}
+    _pending(e, [real, sweep])                       # a sweep row from another pane is the LAST row
+    _run_pending(e)
+    assert e.programme("ga") == 3 * M, e.programme("ga")
+    c = Env()                                        # control: the real row last applied before the fix too
+    c.show_packet()
+    c.owner("approve everything")
+    _pending(c, [sweep, {"kind": "approval", "transcript_path": str(c.transcript)}])
+    _run_pending(c)
+    assert c.programme("ga") == 3 * M
+
+
+@gate("V-OCA-D9A-NULL-AND-MISSING-TRANSCRIPT-ROWS")
+def _():
+    e = Env()
+    e.show_packet()
+    e.owner("approve everything")
+    rows = [{"kind": "approval", "transcript_path": str(e.transcript)},
+            {"kind": "pending-sweep", "transcript_path": None},
+            {"kind": "pending-sweep", "transcript_path": ""},
+            {"kind": "pending-sweep", "transcript_path": str(e.tmp / "missing.jsonl")}]
+    _pending(e, rows)
+    _run_pending(e)                                  # must not raise on the null path
+    assert e.programme("ga") == 3 * M
+    n = Env()                                        # negative pole: no Owner approval anywhere
+    n.show_packet()
+    _pending(n, [{"kind": "approval", "transcript_path": str(n.transcript)},
+                 {"kind": "pending-sweep", "transcript_path": None}])
+    res = _run_pending(n)
+    assert n.programme("ga") is None and res and not res[0]["ok"], res
+
+
+@gate("V-OCA-UPPERCASE-SHA-BINDS")
+def _():
+    e = Env()
+    e.assistant(f"Packet sha256 {e.sha().upper()} ready for approval")
+    e.owner("approve everything")
+    r = e.apply()
+    assert r["ok"] and r["applied"] and e.programme("ga") == 3 * M, r
+    n = Env()                                        # negative: a different hash never binds
+    s = n.sha()
+    other = ("0" if s[0] != "0" else "1") + s[1:]
+    n.assistant(f"Packet sha256 {other.upper()} ready for approval")
+    n.owner("approve everything")
+    assert not n.apply()["ok"] and n.programme("ga") is None
+    c = Env()                                        # control: lowercase still binds
+    c.show_packet()
+    c.owner("approve everything")
+    assert c.apply()["ok"]
+
+
 def main() -> int:
     for name, fn in GATES:
         try:

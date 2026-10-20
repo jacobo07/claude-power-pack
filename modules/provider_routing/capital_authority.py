@@ -84,9 +84,10 @@ def _is_owner_typed(e: dict) -> bool:
 def find_owner_decisions(transcript_path, sha: str) -> list[dict]:
     """Every parsed Owner decision typed after the first assistant entry that displayed `sha`, in file order."""
     out, seen = [], False
+    sha = str(sha).strip().lower()                         # a hash shown in uppercase must still bind
     try:
         lines = Path(transcript_path).read_text(encoding="utf-8-sig", errors="replace").splitlines()
-    except OSError:
+    except (OSError, TypeError):
         return []
     for ln in lines:
         try:
@@ -96,7 +97,7 @@ def find_owner_decisions(transcript_path, sha: str) -> list[dict]:
         if not isinstance(e, dict):
             continue
         if not seen:
-            seen = e.get("type") == "assistant" and sha in _text_of(e)
+            seen = e.get("type") == "assistant" and sha in _text_of(e).lower()
             continue
         if _is_owner_typed(e):
             d = parse_approval(e["message"]["content"])
@@ -235,16 +236,41 @@ def apply_pending(ledger_factory, root=None, timeout: float = 60.0, sleep=time.s
         ap = [json.loads(x) for x in (base / "approvals.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
     except (OSError, ValueError):
         return []
-    if not ap:
+    cands = candidate_transcripts(ap)
+    if not cands:
         return []
-    transcript = ap[-1]["transcript_path"]
     deadline, results = time.time() + timeout, []
     for ent in pend if isinstance(pend, list) else [pend]:
         for goal in ent.get("goals", []):
             while True:
-                r = apply(ent["packet"], transcript, goal, ledger_factory, now=now, root=root)
+                # D9a: the transcript is resolved per row, never from the latest row of whichever pane wrote last.
+                # apply() still demands the sha display then an Owner-typed approve inside the SAME transcript.
+                r = {}
+                for transcript in cands:
+                    r = apply(ent["packet"], transcript, goal, ledger_factory, now=now, root=root)
+                    if r.get("ok") or "no Owner-typed approval" not in r.get("reason", ""):
+                        break
                 if r.get("ok") or "no Owner-typed approval" not in r.get("reason", "") or time.time() >= deadline:
                     results.append({"goal": goal, **{k: r[k] for k in ("ok", "applied", "reason")}})
                     break
                 sleep(1.0)
     return results
+
+
+MAX_CANDIDATE_TRANSCRIPTS = 16
+
+
+def candidate_transcripts(approval_rows) -> list[str]:
+    """Transcript paths to search for an Owner approval: approval rows first, then pending-sweep rows, each newest
+    first; null/empty paths skipped, deduplicated, capped."""
+    rows = [r for r in approval_rows if isinstance(r, dict)]
+    ordered = ([r for r in reversed(rows) if r.get("kind") == "approval"]
+               + [r for r in reversed(rows) if r.get("kind") != "approval"])
+    out: list[str] = []
+    for r in ordered:
+        p = r.get("transcript_path")
+        if isinstance(p, str) and p.strip() and p not in out:
+            out.append(p)
+        if len(out) >= MAX_CANDIDATE_TRANSCRIPTS:
+            break
+    return out
