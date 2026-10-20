@@ -18,4 +18,5 @@ current_phase_name: Pre-budget router
 **Phase 1:** sealed, evidence in `vault/programs/owner-control-plane/P1-reality.md`.
 **Worktree:** `C:\Users\User\Apps\pp-owner-control` on `ocp/owner-control`.
 **Open Owner gates:** arming a new mission. The econ-safex `ADD +70M` was Owner-typed and applied 2026-10-20 (programme 102M, approval 8f8e90f6); Phase 10 now only observes the canary.
+**RESOLVED D-ocp-1 (Owner, 2026-10-20, binding):** the earlier "successor lease needed" OWNER DECISION is settled. Lease L2 is OPEN (cap 54,000,000, used 17,405,837), programme 72,000,000, goal OK. Work inside L2; open/request no lease, no capital. Continue from Phase 3. If truly out of room, stop and say so.
 **Known debts carried in:** econ-safex has 7 untracked routes (unclassified); its automatic tranche was tightened 50M to 4M before the +70M. D9a (apply_pending reads the latest approvals row of any pane) and the uppercase-sha mismatch go to Phase 3.

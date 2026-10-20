@@ -7,7 +7,7 @@ UNKNOWN / INCONCLUSIVE are never PASS. Prefer Sonnet subagents for build work; a
 
 ## Phases
 
-- [ ] **Phase 1: Reality delta + fence audit** (read first: vault/plans/econ-succession-2026-10-11*.md and owner-capital-ctx-rent-2026-10-11.md; they already treat "approved authority not executable from the control plane")
+- [x] **Phase 1: Reality delta + fence audit** (read first: vault/plans/econ-succession-2026-10-11*.md and owner-capital-ctx-rent-2026-10-11.md; they already treat "approved authority not executable from the control plane")
 - [x] **Phase 2: Capital grammar** (ADD/SET/KEEP/STOP, Spanish por/a, units, ambiguity)
 - [ ] **Phase 3: Pre-budget router** (inside hooks/econ_admission.js) + principal and target binding
 - [ ] **Phase 4: owner_intent receipt** (idempotency, CAS, recovery WAL, crash points)
