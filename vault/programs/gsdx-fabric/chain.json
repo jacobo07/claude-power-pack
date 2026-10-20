@@ -113,6 +113,17 @@
         "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3adj-receipt.md"
       ],
       "note": "D29 item 1, Owner go 2026-10-19; runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3adj -Stop 3500000); packet a3631cbd; the laptop tick must not arm it. Success = functions >= 90 % exact vs DTK with NO DTK boundary data as input, or a measured per-cause breakdown (both valid DONE). No new capital: unspent 4,539,720 under the applied ceiling. DONE 9d66f035 (F3adj 23/23, F3b 36/36, F2 33/33, F1 34/34 re-run by coordinator on the GEX44 clone at HEAD 9d66f035; worker 2,770,772 of 3,500,000 tokens): functions 79.52 % -> 92.93 % (1670/1797) via R1 return-split post-pass with no DTK boundary input; DTK was a development oracle so the figure is not held-out; R1 APPLIED 2026-10-20 as a separate provider record ghidra_r1 (commit 9c20b159, all ten fabric gates re-run green on the GEX44 clone: F1 34, F2 35, F3adj 31, F3b 36, F4 41, F5 20, F6 28, F7 43 re-pinned 68->72 inputs, F8 20, F9 15); the raw ghidra functions row stays PARTIAL 79.52 %; F3c not compiled; worker spend booked to gsdx-factory-2 (sid 9d28ea23, measured 2,770,772; settled 53,278,196 -> 56,048,968)"
+    },
+    {
+      "id": "F3c",
+      "packet": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3c.md",
+      "route": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\route-S.json",
+      "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3c-receipt.md",
+      "after": "F3adj",
+      "wait": [
+        "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3c-receipt.md"
+      ],
+      "note": "D29 item 1 follow-on, Owner go 2026-10-20 (F3c-2); runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3c -Stop 4000000 -Turns 60); packet 3f8366f0; the laptop tick must not arm it. F3c-1 (pins, PPC lane in 6.5.0) and the offline install were done by the coordinator, zero worker tokens. REA vs ghidra_r1 AND raw ghidra; ECONOMICALLY_INFERIOR / TARGET_UNAVAILABLE are valid DONE. No new capital: lease L16 cap 72,160,000"
     }
   ]
 }
