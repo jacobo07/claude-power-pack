@@ -32,6 +32,7 @@ import math
 import os
 import re
 import sys
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -4714,6 +4715,66 @@ def settle_stopped_worker(rec: dict, settle=None) -> dict:
     return {"booked": True, "goal": goal, "worker": sid, "closed": out.get("closed")}
 
 
+def _judge_pre_plan(rec: dict, now: float) -> dict:
+    """Everything the supervisor decides about a mission's money before it plans anything, in one fixed order:
+    settle a finished phase, give an unbudgeted mission an estimate, judge its phase lease, judge its cost.
+    One function for both callers (_breaker_first and the main loop), so the early pass cannot drift from it."""
+    mid = rec["mission_id"]
+    # M4 A: a finished phase is settled before any lease, breaker or relaunch for the next one.
+    try:
+        rec = _settle_completed_phase(rec, now)
+    except CasConflict:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- a profile fault must not stop the mission; it is the row
+        lr.ledger_append(mid, "unit_settle_failed", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
+    if rec.get("token_estimate") is None and not _blocking_hold(rec):
+        rec = _auto_budget(rec, now)
+    if rec.get("phase_lease") and not _blocking_hold(rec):
+        rec = _phase_breaker(rec, now)
+    if (rec.get("token_estimate") or rec.get("authority_tokens")) and not _blocking_hold(rec):
+        rec = _cost_breaker(rec, now)
+    return rec
+
+
+def _breaker_first(missions: list[dict], now: float) -> tuple[dict, set]:
+    """CCR v5 kernel-u1 task 3. Judge the phase and cost breakers of every live mission BEFORE the host is asked
+    for its sessions: `claude agents --json` was measured over 60 s under load, and a 600 s stage timeout on it
+    skipped the breakers three times on 2026-10-15 (11:31, 11:47, 12:01 UTC). Each mission runs under its own
+    thread timeout (CPP_SWEEP_BREAKER_MISSION_S, default 60), so one slow meter cannot starve the rest.
+    Returns (judged records by mission id, ids that timed out). A timed-out mission is skipped for the rest of
+    this pass: its thread may still finish and hold it, and a second concurrent judgement could double-hold."""
+    try:
+        limit = float(os.environ.get("CPP_SWEEP_BREAKER_MISSION_S", "60"))
+    except ValueError:
+        limit = 60.0
+    judged: dict[str, dict] = {}
+    timed_out: set[str] = set()
+    for rec in missions:
+        if rec.get("state") != RUNNING or _blocking_hold(rec) or not _needs_look(rec, now):
+            continue
+        mid = rec["mission_id"]
+        box: dict = {}
+
+        def judge(r=rec, out=box):
+            try:
+                out["rec"] = _judge_pre_plan(r, now)
+            except Exception as exc:  # noqa: BLE001 -- left for the per-mission isolation in the main loop
+                out["err"] = f"{type(exc).__name__}: {exc}"
+
+        worker = threading.Thread(target=judge, name=f"breaker-{mid}", daemon=True)
+        worker.start()
+        worker.join(limit)
+        if worker.is_alive():
+            timed_out.add(mid)
+            try:
+                lr.ledger_append(mid, "breaker_timeout", mission_id=mid, limit_s=limit)
+            except Exception:  # noqa: BLE001 -- the returned set still carries the skip
+                pass
+        elif "rec" in box:
+            judged[mid] = box["rec"]
+    return judged, timed_out
+
+
 def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive,
               fingerprint=None, capsule_io: dict | None = None) -> list[dict]:
@@ -4734,6 +4795,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
         return unreadable + [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
                               "action": "none", "reason": f"terminal {m['state']}"} for m in missions] \
             + _steward_rows(missions, now, sessions, pid_alive, dry_run)
+    judged, timed_out = ({}, set()) if dry_run else _breaker_first(missions, now)
     if sessions is None:
         sessions = host_sessions()
     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
@@ -4774,20 +4836,10 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 pass
             continue
         try:
-            if not dry_run:
-                # M4 A: a finished phase is settled before any lease, breaker or relaunch for the next one.
-                try:
-                    rec = _settle_completed_phase(rec, now)
-                except CasConflict:
-                    raise
-                except Exception as exc:  # noqa: BLE001 -- a profile fault must not stop the mission; it is the row
-                    lr.ledger_append(mid, "unit_settle_failed", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
-            if not dry_run and rec.get("token_estimate") is None and not _blocking_hold(rec):
-                rec = _auto_budget(rec, now)
-            if not dry_run and rec.get("phase_lease") and not _blocking_hold(rec):
-                rec = _phase_breaker(rec, now)
-            if not dry_run and (rec.get("token_estimate") or rec.get("authority_tokens")) and not _blocking_hold(rec):
-                rec = _cost_breaker(rec, now)
+            if mid in judged:
+                rec = judged[mid]   # settled, budgeted and breaker-judged by _breaker_first, before the host was asked
+            elif not dry_run and mid not in timed_out:
+                rec = _judge_pre_plan(rec, now)
             if not dry_run and (rec.get("requires") or (rec.get("owner_hold") or {}).get("kind") == "resource"):
                 rec = resource_gate(rec, now, sessions, pid_alive)   # M2: no model call; absent field never gets here
             if not dry_run:

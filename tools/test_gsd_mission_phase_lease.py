@@ -52,6 +52,8 @@ def _meter(rec):
     v = SPEND[rec["mission_id"]]
     if isinstance(v, Exception):
         raise v
+    if callable(v):
+        return v()
     return v
 
 
@@ -172,6 +174,51 @@ def main() -> int:
     _, r = _sweep("m-pl-nostate", stops)
     check("V-PL-STATE-UNREADABLE-BLOCKS", (r.get("owner_hold") or {}).get("verdict") == "BLOCKED" and len(stops) == 1,
           f"hold={r.get('owner_hold')}")
+
+    # 6. kernel-u1 task 3: the breakers are judged BEFORE the host is asked for its sessions.
+    _phase("1")
+    real_host = gm.host_sessions
+    for mid, spend, label in (("m-pl-first-over", BASE + int(FORECAST * 1.5) + 1, "OVER"),
+                              ("m-pl-first-under", BASE + 10, "CONTROL-UNDER")):
+        _running(mid)
+        SPEND[mid] = spend
+        seen: dict = {}
+
+        def fake_host(mid=mid, seen=seen):
+            seen["held_at_host_call"] = bool((gm.load(mid) or {}).get("owner_hold"))
+            return _row(mid)
+
+        gm.host_sessions = fake_host
+        try:
+            gm.supervise(now=NOW + 60, sessions=None, runner=lambda *a, **k: "", stop_runner=lambda a: None,
+                         pid_alive=gone, gsd_status=OK_GSD, fingerprint=lambda wd: None)
+        finally:
+            gm.host_sessions = real_host
+        want = label == "OVER"
+        check(f"V-PL-BREAKER-FIRST-{label}", seen.get("held_at_host_call") is want,
+              f"held when the host was asked={seen.get('held_at_host_call')} (want {want})")
+
+    # 7. one slow meter cannot starve the breakers of the other missions (CPP_SWEEP_BREAKER_MISSION_S).
+    import time
+    _running("m-pl-slow")
+    SPEND["m-pl-slow"] = lambda: (time.sleep(1.5), BASE + 10)[1]
+    _running("m-pl-fast-over")
+    SPEND["m-pl-fast-over"] = BASE + int(FORECAST * 1.5) + 1
+    os.environ["CPP_SWEEP_BREAKER_MISSION_S"] = "0.3"
+    t0 = time.time()
+    try:
+        gm.supervise(now=NOW + 60, sessions=_row("m-pl-slow") + _row("m-pl-fast-over"), runner=lambda *a, **k: "",
+                     stop_runner=lambda a: None, pid_alive=gone, gsd_status=OK_GSD, fingerprint=lambda wd: None)
+    finally:
+        os.environ.pop("CPP_SWEEP_BREAKER_MISSION_S", None)
+    took = time.time() - t0
+    timeouts = [e for e in gm.lr.ledger_events("m-pl-slow") if e.get("event") == "breaker_timeout"]
+    check("V-PL-SLOW-METER-TIMES-OUT-LEDGERED", len(timeouts) == 1 and timeouts[0].get("limit_s") == 0.3,
+          f"breaker_timeout rows={len(timeouts)}")
+    check("V-PL-SLOW-METER-DOES-NOT-STARVE-OTHERS", bool((gm.load("m-pl-fast-over") or {}).get("owner_hold")),
+          f"fast over-hard mission held={bool((gm.load('m-pl-fast-over') or {}).get('owner_hold'))} in {took:.2f}s")
+    check("V-PL-SLOW-METER-CONTROL-NOT-HELD", not (gm.load("m-pl-slow") or {}).get("owner_hold"),
+          "the timed-out mission is skipped this pass, not held")
 
     print(f"PHASE_LEASE_MISSION_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     shutil.rmtree(TMP, ignore_errors=True)
