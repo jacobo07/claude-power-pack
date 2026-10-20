@@ -14,6 +14,14 @@ Programme 57,817,916, settled 53,278,196, unspent 4,539,720. KV `~/.claude/knowl
 
 **Coherence anchor.** `programme-status --goal gsdx-factory-2` settled 53,278,196, open 0; fabric worktree HEAD = GEX44 clone HEAD 039af4a6.
 
+**UPDATE 2026-10-20 -- F3adj DONE and R1 applied.** Packet a3631cbd, receipt 9d66f035 (worker sid 9d28ea23, 2,770,772 of 3,500,000
+tokens, settled on gsdx-factory-2). `functions` 79.52 % -> 92.93 % (1670/1797) via the R1 return-split post-pass, NOT held-out (R1 was
+chosen after reading the DTK mismatches). Applied as a separate provider record `ghidra_r1` (`provider-caps/ghidra-r1.json`, built by
+`ghidra_f3adj caps` from `ghidra-tennis-adj/runs.json` only); the raw `ghidra` record keeps `functions` PARTIAL. Fabric branch HEAD
+9c20b159 (dbcf74ca apply, then the F7 re-pin 68 -> 72 inputs, all four new ones UNKNOWN). All ten gates green on the GEX44 clone.
+Goal gsdx-factory-2: programme 127,817,916 (Owner "subelo 70M", lease L16 cap 72,160,000), settled 56,048,968. F3c is NOT compiled and
+needs an Owner word (it spends compute on GEX44). Anchor: `programme-status --goal gsdx-factory-2` settled 56,048,968; fabric HEAD = GEX44 clone HEAD 9c20b159.
+
 **Everything left is in the PP backlog as D29** (`vault/plans/deferred-backlog.md`). Summary, Owner's choice (no work scheduled):
 1. F3c (REA canary): needs Ghidra function boundaries >= 90 % vs DTK; F3b measured 79.52 %. A boundary-adjudication pass comes first.
 2. The three D12 compiler replays (commands in WU-F5-receipt.md) need GEX44 compute jobs, excluded from this programme.
