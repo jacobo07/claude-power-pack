@@ -22,6 +22,17 @@ chosen after reading the DTK mismatches). Applied as a separate provider record 
 Goal gsdx-factory-2: programme 127,817,916 (Owner "subelo 70M", lease L16 cap 72,160,000), settled 56,048,968. F3c is NOT compiled and
 needs an Owner word (it spends compute on GEX44). Anchor: `programme-status --goal gsdx-factory-2` settled 56,048,968; fabric HEAD = GEX44 clone HEAD 9c20b159.
 
+**UPDATE 2026-10-20 (later) -- F3c-1 DONE by the coordinator, zero worker tokens.** The unit was only downloads and hashes, so no worker
+was armed (the F3adj packet forbids network to workers). Fabric HEAD 2718a453, ten gates green on GEX44 (F7 re-pinned again, 72 -> 74
+inputs: `pin:node`, `pin:rea-agents`, both INHERITED). `supply-chain.json` now pins node v22.23.3 linux-x64 (sha256 df450af8...2de) and
+rea-agents 6.5.0 (sha256 531717a0...699; sha1 + sha512 SRI match the registry). Both tarballs sit in `~/fabric-tools/dl/` on GEX44,
+NOTHING installed. Finding: the PPC lane IS in the 6.5.0 tarball (`dist/ghidra/GhidraPowerPcProfile.js`: ELF32 EM_PPC big-endian
+ET_EXEC, `PowerPC:BE:32:default`, honours `REA_GHIDRA_LANGUAGE_ID`, refuses EF_PPC_EMB, no DOL), so F3c does not stop at TARGET_UNAVAILABLE.
+**F3c-2 (next, needs the Owner word and a stop of ~4M):** extract node to `~/fabric-tools/node-22/` (never on PATH), `npm install
+--ignore-scripts` rea-agents into `~/fabric-tools/rea-agents/` (39 deps incl. native node-pty: judge what its absence disables), write
+the DOL -> ELF32 ET_EXEC bridge, one receipt per capability, then the economic gate. Compare REA against ghidra_r1, not raw ghidra.
+Node's checksum list is same-origin, GPG unverified (recorded in supply-chain.json).
+
 **Everything left is in the PP backlog as D29** (`vault/plans/deferred-backlog.md`). Summary, Owner's choice (no work scheduled):
 1. F3c (REA canary): needs Ghidra function boundaries >= 90 % vs DTK; F3b measured 79.52 %. A boundary-adjudication pass comes first.
 2. The three D12 compiler replays (commands in WU-F5-receipt.md) need GEX44 compute jobs, excluded from this programme.
