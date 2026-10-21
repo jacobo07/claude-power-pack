@@ -56,6 +56,19 @@ Packet 6cfb60f8 (`WU-D12d.md`), stop 3,500,000, 50 turns, pid 1895686, log gex44
 Pre-registered bar on held-out: >=100 newly lint-clean SUPPORTED, 1..99 PARTIAL, 0 CLOSED. WHEN IT ENDS: `result.json` -> `goal-settle --goal gsdx-factory-2 --session <sid> --measured <processed>`; `git fetch` from the clone and ff;
 rescue any uncommitted clone files; ten+ gates on the clone; F7 will be red (re-pin via `--write-pin`, scp 3 files, restore clone); add D12d to chain.json; commit with pathspec.
 
+**AFTER D12d -- decision tree for a fresh session (2026-10-21).** D12d only measures lint-clean (m2c output without unresolved types); it reconstructs NOTHING. MATCH needs a compile
+and a byte compare, and the verification rate is 12/22 = 0.545 (Wilson95 0.347-0.731, n=22).
+A. AUTONOMOUS (no Owner word needed): close the unit with the "WHEN IT ENDS" list above, then read `evidence/d12d/summary.json` and apply the pre-registered bar VERBATIM (never re-cut it):
+   - held-out newly lint-clean >= 100 -> SUPPORTED; 1..99 -> PARTIAL; 0 -> CLOSED. Check the three control rows and the ceiling assertion first; a failed control makes the result INVALID, not a pass.
+   - Record the verdict in `vault/knowledge_base`/KV `binary-reconstruction-fabric.md` as SHADOW (never PROVEN), and add negative knowledge KN-D12D-* if CLOSED. Update chain.json (D12d entry, DONE) and this file.
+B. SUPPORTED or PARTIAL -> next unit is D12e = VERIFY a sample by compile. Compile is a GEX44 compute job: the Fabric plan s4 says "0 jobs; any later compile need = new Owner ask", and D28 job slots
+   are 7 approved / 3 used / 4 reserved (D6, D8, D9). So the session may COMPILE THE PACKET (WU-D12e: random sample of <= 30 held-out newly-lint-clean fns, seed pinned, mwcc replay, MATCH count with Wilson interval,
+   header applied exactly as D12d wrote it) and stage the launcher command, but must STOP with one concrete question to the Owner: "approve D12e (1 compile job, stop ~3M)". Do not arm it unasked.
+C. CLOSED -> do NOT start compile work. The remaining 1,521 fns are model-per-function work with no measured price above class 1 (D3). Autonomous output: a one-page cost frame (class 0-1 = 275 fns scriptable; class 2-5 = 1,522 unpriced; naive bound 1,522 x 50-200K = 76-304M, H) and ONE question to the Owner:
+   whether to price class 2 with a small model-per-function pilot (N=20, stop ~2M), or park Tennis at the class 0-1 slice. Nothing else is scheduled.
+D. In every branch the claim "Tennis reconstructed to X %" is made ONLY from MATCH counts (byte-equal compile), never from lint-clean, never from the 0.347-0.731 estimate (that stays tagged D).
+E. Housekeeping the session does without asking: settle every worker (`--measured <processed>`), pull the clone commits, rerun the gates (F4 needs ~550 s), re-pin F7 if red, pathspec commits, keep `programme-status` anchor in this file.
+
 **Everything left is in the PP backlog as D29** (`vault/plans/deferred-backlog.md`). Summary, Owner's choice (no work scheduled):
 1. F3c (REA canary): needs Ghidra function boundaries >= 90 % vs DTK; F3b measured 79.52 %. A boundary-adjudication pass comes first.
 2. The three D12 compiler replays (commands in WU-F5-receipt.md) need GEX44 compute jobs, excluded from this programme.
