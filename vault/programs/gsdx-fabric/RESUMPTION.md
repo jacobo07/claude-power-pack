@@ -51,6 +51,11 @@ per operation vs Ghidra-direct 88.9 s for everything (2.6x wall). Eight receipts
 Fabric HEAD 29300bd1 = GEX44 clone HEAD (pushed to the bare repo only). Gates on the clone: F1 34, F2 35, F3adj 31, F3b 36, F3c 37, F4 41, F5 20, F6 28, F7 43 (re-pinned 74 -> 75 inputs, 1195da33), F8 20, F9 15.
 Anchor: `programme-status --goal gsdx-factory-2` settled 62,108,306, open 150,000 (f381f018 tombstoned, settles on detach).
 
+**UPDATE 2026-10-21 (later) -- D12d RUNNING.** Owner "go ahead" on the large-population joint-fact test (D12c had only 91 fns and was already negative: held-out 0/46, complementarity 0, stop-loss at step 3).
+Packet 6cfb60f8 (`WU-D12d.md`), stop 3,500,000, 50 turns, pid 1895686, log gex44 `~/missions/gsdx-fabric-stage/run-D12d.log`. Coordinator ceiling (from `residuals_v1.jsonl`): helper-only 133 fns, helper+fields 890 of 1,521.
+Pre-registered bar on held-out: >=100 newly lint-clean SUPPORTED, 1..99 PARTIAL, 0 CLOSED. WHEN IT ENDS: `result.json` -> `goal-settle --goal gsdx-factory-2 --session <sid> --measured <processed>`; `git fetch` from the clone and ff;
+rescue any uncommitted clone files; ten+ gates on the clone; F7 will be red (re-pin via `--write-pin`, scp 3 files, restore clone); add D12d to chain.json; commit with pathspec.
+
 **Everything left is in the PP backlog as D29** (`vault/plans/deferred-backlog.md`). Summary, Owner's choice (no work scheduled):
 1. F3c (REA canary): needs Ghidra function boundaries >= 90 % vs DTK; F3b measured 79.52 %. A boundary-adjudication pass comes first.
 2. The three D12 compiler replays (commands in WU-F5-receipt.md) need GEX44 compute jobs, excluded from this programme.
