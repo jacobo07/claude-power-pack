@@ -190,6 +190,46 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
     return {**out, "verdict": RECOMPILE, "reasons": reasons}
 
 
+MIN_MEASURED_N = 3
+MEASURED_PATH = REPO_ROOT / "vault" / "config" / "measured-ctx1.json"
+
+
+def load_measured(path: Path | str | None = None) -> dict:
+    """{profile: {"median", "n", "source"}} of first-call contexts observed in receipts. A missing
+    file is an empty table (every profile UNMEASURED), never a pass."""
+    p = Path(path or MEASURED_PATH)
+    if not p.is_file():
+        return {}
+    data = json.loads(p.read_text(encoding="utf-8-sig"))
+    return data.get("profiles") if isinstance(data.get("profiles"), dict) else {}
+
+
+def context_check(route: dict, floors: dict, measured: dict) -> dict:
+    """Context admission at arm: does the floor the route is priced at match what receipts show the
+    profile really pays on call 1? Per worker: OK, UNDERSTATED (measured median > MISS_FACTOR x the
+    table floor, so the route is under-priced) or UNMEASURED (fewer than MIN_MEASURED_N sessions or no
+    row: absence is not agreement). Verdict is UNDERSTATED if any worker is, else UNMEASURED if any
+    is, else OK. Pure; the caller decides whether a verdict refuses."""
+    rows = []
+    for i, w in enumerate(route.get("workers") or []):
+        name, profile = str(w.get("name") or f"worker-{i}"), w.get("profile")
+        floor = ((floors.get("profiles") or {}).get(profile) or {}).get("floor")
+        m = measured.get(profile) or {}
+        med, n = m.get("median"), m.get("n")
+        if not isinstance(floor, int) or isinstance(med, bool) or not isinstance(med, (int, float)) \
+                or isinstance(n, bool) or not isinstance(n, int) or n < MIN_MEASURED_N:
+            status = "UNMEASURED"
+        elif med > MISS_FACTOR * floor:
+            status = "UNDERSTATED"
+        else:
+            status = "OK"
+        rows.append({"name": name, "profile": profile, "floor": floor, "measured_median": med,
+                     "n": n, "status": status, "source": m.get("source")})
+    sts = {r["status"] for r in rows}
+    verdict = "UNDERSTATED" if "UNDERSTATED" in sts else "UNMEASURED" if ("UNMEASURED" in sts or not rows) else "OK"
+    return {"verdict": verdict, "workers": rows}
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     ap = argparse.ArgumentParser(prog="route_admission")

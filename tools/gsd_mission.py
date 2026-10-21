@@ -2621,6 +2621,20 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
         pass
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="route_admission", now=now, admission=admission, **prof,
+    # WU-E1: context admission. Observe records; CPP_CONTEXT_ADMISSION=enforce refuses a route priced
+    # below what receipts show its profile pays on call 1. UNMEASURED never refuses (absent is not wrong).
+    try:
+        cc = ra.context_check(route, ra.load_floors(floors_path), ra.load_measured())
+    except (OSError, ValueError) as exc:
+        cc = {"verdict": "UNMEASURED", "workers": [], "error": str(exc)[:200]}
+    admission["context_check"] = cc
+    if (str(os.environ.get("CPP_CONTEXT_ADMISSION") or "").strip().lower() == "enforce"
+            and cc["verdict"] == "UNDERSTATED" and admission["verdict"] in ("ADMISSIBLE", "WATCHED")):
+        admission["verdict"] = "RECOMPILE"
+        admission["reasons"] = (["context_check:UNDERSTATED " + ", ".join(
+            f"{r['profile']} floor {r['floor']:,} < measured {r['measured_median']:,}"
+            for r in cc["workers"] if r["status"] == "UNDERSTATED")] + admission["reasons"])[:6]
+        res = {**res, "verdict": "RECOMPILE", "reasons": admission["reasons"]}
                       reason=f"route {res['verdict']}: " + ("; ".join(res["reasons"]) or "fits")[:280])
 
 
