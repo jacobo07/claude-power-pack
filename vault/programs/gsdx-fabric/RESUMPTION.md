@@ -69,6 +69,10 @@ C. CLOSED -> do NOT start compile work, and do NOT conclude the 1,521 need a mod
    (families, libraries, cross-title donors, compiler rules, batch candidate search) by expected verified collapse per cost; the individually-reasoned residual is MEASURED after subtraction, never assumed.
    Early datum (worker commit 4dfe172b, not yet gate-verified): 707 helper + 585 struct facts from the pack half, 5 conflicts, HELD-OUT CEILING 9, so the >=100 bar is unreachable and CLOSED/low PARTIAL is expected.
 D. In every branch the claim "Tennis reconstructed to X %" is made ONLY from MATCH counts (byte-equal compile), never from lint-clean, never from the 0.347-0.731 estimate (that stays tagged D).
+F. POPULATION-COLLAPSE ADDENDUM (Owner 2026-10-21 approved STAGE 1 only; stage 2 = candidate search + compile jobs needs a separate Owner word AND the pre-registered gate). Central stage-1 budget ~12M (8-19M) of the 63.3M left in L16.
+   First unit PC1: packet `WU-PC1.md` is WRITTEN BUT UNCOMMITTED in the fabric worktree (deliberately: the clone branch moved ahead with D12d commits, so commit it after the ff from the clone) and the kit prompt is `C:\Users\User\fabric-kit\prompt-PC1.txt`.
+   Launch AFTER D12d is closed: `fabric-unit-gex44.ps1 -Unit PC1 -Stop 4000000 -Turns 50`. Gate for stage 2 (pinned in the packet): >= 150 fns of EXCLUSIVE new coverage with held-out evidence, or >= 300 mechanically skeletonable compiler-admissible fns; else the deliverable is the residual report.
+   Coordinator baseline: 14,329 of 14,963 distinct vars are singletons (some derived), so the fan-out thesis is untested, not assumed. Later units (decide from PC1's result, one worker at a time): PC2 = type/layout propagation + families on thunks/accessors/<=20-insn fns; PC3 = homology/delta + gate report.
 E. Housekeeping the session does without asking: settle every worker (`--measured <processed>`), pull the clone commits, rerun the gates (F4 needs ~550 s), re-pin F7 if red, pathspec commits, keep `programme-status` anchor in this file.
 
 **Everything left is in the PP backlog as D29** (`vault/plans/deferred-backlog.md`). Summary, Owner's choice (no work scheduled):
