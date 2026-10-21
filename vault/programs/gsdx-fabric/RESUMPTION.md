@@ -64,8 +64,10 @@ A. AUTONOMOUS (no Owner word needed): close the unit with the "WHEN IT ENDS" lis
 B. SUPPORTED or PARTIAL -> next unit is D12e = VERIFY a sample by compile. Compile is a GEX44 compute job: the Fabric plan s4 says "0 jobs; any later compile need = new Owner ask", and D28 job slots
    are 7 approved / 3 used / 4 reserved (D6, D8, D9). So the session may COMPILE THE PACKET (WU-D12e: random sample of <= 30 held-out newly-lint-clean fns, seed pinned, mwcc replay, MATCH count with Wilson interval,
    header applied exactly as D12d wrote it) and stage the launcher command, but must STOP with one concrete question to the Owner: "approve D12e (1 compile job, stop ~3M)". Do not arm it unasked.
-C. CLOSED -> do NOT start compile work. The remaining 1,521 fns are model-per-function work with no measured price above class 1 (D3). Autonomous output: a one-page cost frame (class 0-1 = 275 fns scriptable; class 2-5 = 1,522 unpriced; naive bound 1,522 x 50-200K = 76-304M, H) and ONE question to the Owner:
-   whether to price class 2 with a small model-per-function pilot (N=20, stop ~2M), or park Tennis at the class 0-1 slice. Nothing else is scheduled.
+C. CLOSED -> do NOT start compile work, and do NOT conclude the 1,521 need a model each. CLOSED retires ONLY the tested mechanism (scripted helper+field header facts) inside its tested envelope
+   (Owner correction 2026-10-21: "a failed collapse hypothesis does not prove the residual requires function-by-function reasoning"). Next = the population-collapse addendum: re-rank the OTHER collapse mechanisms
+   (families, libraries, cross-title donors, compiler rules, batch candidate search) by expected verified collapse per cost; the individually-reasoned residual is MEASURED after subtraction, never assumed.
+   Early datum (worker commit 4dfe172b, not yet gate-verified): 707 helper + 585 struct facts from the pack half, 5 conflicts, HELD-OUT CEILING 9, so the >=100 bar is unreachable and CLOSED/low PARTIAL is expected.
 D. In every branch the claim "Tennis reconstructed to X %" is made ONLY from MATCH counts (byte-equal compile), never from lint-clean, never from the 0.347-0.731 estimate (that stays tagged D).
 E. Housekeeping the session does without asking: settle every worker (`--measured <processed>`), pull the clone commits, rerun the gates (F4 needs ~550 s), re-pin F7 if red, pathspec commits, keep `programme-status` anchor in this file.
 
