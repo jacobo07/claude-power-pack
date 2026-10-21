@@ -268,6 +268,34 @@ def main() -> int:
           and good["ok"] is True and not gmm.get("owner_hold") and not gmm.get("owner")
           and gmm["state"] == gm.PREPARED and gmm["admission"]["verdict"] == "ADMISSIBLE"
           and gmm["wu_packet"]["path"] == str(pkt), f"{bad.get('why')} | {gmm['state']}")
+    # 8b. a failed-arm stub is retired by the re-arm itself: arm-chain carries --supersedes/--authority
+    sup_repo = make_repo("ac-sup")
+    sup_cmd = "/gsd-autonomous --ws wssup"
+    stub = gm.arm_chain(sup_repo, sup_cmd, wu_packet=str(pkt), token_estimate=250_000,
+                        route=str(Path(TMP) / "nope.json"), floors_path=FLOORS)
+    refused = None
+    try:    # control pair: the held stub blocks a plain re-arm of the same goal
+        gm.arm_chain(sup_repo, sup_cmd, wu_packet=str(pkt), token_estimate=250_000, route=str(route),
+                     floors_path=FLOORS)
+    except gm.MissionError as exc:
+        refused = str(exc)
+    no_auth = None
+    try:
+        gm.arm_chain(sup_repo, sup_cmd, wu_packet=str(pkt), token_estimate=250_000, route=str(route),
+                     floors_path=FLOORS, supersedes=stub["mission_id"])
+    except gm.MissionError as exc:
+        no_auth = str(exc)
+    redo = gm.arm_chain(sup_repo, sup_cmd, wu_packet=str(pkt), token_estimate=250_000, route=str(route),
+                        floors_path=FLOORS, supersedes=stub["mission_id"], authority="Owner go-ahead (test)")
+    old_rec, new_rec = gm.load(stub["mission_id"]), gm.load(redo["mission_id"])
+    helptext = subprocess.run([sys.executable, gm.__file__, "arm-chain", "--help"], capture_output=True,
+                              text=True, timeout=60).stdout
+    check("V-LIFE-ARMCHAIN-SUPERSEDES",
+          stub["ok"] is False and refused and no_auth and "--authority" in no_auth
+          and redo["ok"] is True and old_rec["state"] == gm.HALTED and new_rec["state"] == gm.PREPARED
+          and new_rec.get("supersedes") == stub["mission_id"]
+          and "--supersedes" in helptext and "--authority" in helptext,
+          f"refused={bool(refused)} no_auth={no_auth} old={old_rec['state']} new={new_rec['state']}")
     # 9. S2: capsule survives PATH loss; unresolved git says UNRESOLVED, never ""
     pl = make_repo("pathloss")
     saved = os.environ.get("PATH")

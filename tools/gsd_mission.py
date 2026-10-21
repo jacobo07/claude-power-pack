@@ -6346,6 +6346,9 @@ def _cli(argv=None) -> int:
     ac.add_argument("--rollover-protocol", choices=(CAPSULE_V2,), default=None)
     ac.add_argument("--parallel-unit")
     ac.add_argument("--model", help="worker model set in the atomic envelope step (else the host default)")
+    ac.add_argument("--supersedes", help="the live attempt of this goal this one replaces (e.g. a failed-arm "
+                                         "stub); needs --authority")
+    ac.add_argument("--authority", help="who decided the supersession and where it is recorded")
     s = sub.add_parser("session-start")
     s.add_argument("--session", required=True)
     s.add_argument("--source", default="")
@@ -6461,7 +6464,7 @@ def _cli(argv=None) -> int:
                         route=args.route, floors_path=args.floors, workstream=args.workstream,
                         max_cycles=args.max_cycles, permission_mode=args.permission_mode,
                         rollover_protocol=args.rollover_protocol, parallel_unit=args.parallel_unit,
-                        model=args.model)
+                        model=args.model, supersedes=args.supersedes, authority=args.authority)
         print(json.dumps({k: v for k, v in res.items() if k != "mission"}, indent=2))
         return 0 if res["ok"] else 1
     if args.cmd == "session-start":
