@@ -1,12 +1,15 @@
 # E1 floor decomposition (part 1 of 3 of WU-E1; not the done-check file)
 
 Measured 2026-10-21 by running `tools/ccr_anatomy.py table` on the GEX44 receipts root, read-only, script sent over stdin.
-Source receipts: `/home/kobii/missions/ccr-s3-data/pack/receipts` on GEX44, 41 sessions with two or more `call` rows (144 jsonl files in 10 groups).
-Calibration printed by the tool: call-1 3.01 B/token over 33 sessions in 10 groups; carry 2.494 B/token over 1002 steps. Neither rate is assumed.
+Source receipts: `/home/kobii/missions/ccr-s3-data/pack/receipts` on GEX44, 41 sessions with two or more `call` rows (144 jsonl files).
+Calibration printed by the tool: call-1 3.01 B/token over 33 sessions; carry 2.494 B/token over 1002 steps. Neither rate is assumed.
+The 33 are the sessions in the 10 tool-configuration groups (same offered tools, traits, section bytes and deferred-tool bytes) that have at least two distinct sized-byte values; the other 8 of the 41 are in groups that cannot supply a within-group slope. A "group" is a calibration unit, not a partition of the files (`calibrate` in `tools/ccr_anatomy.py`).
 The tool refuses on the laptop roots: `uz-probe-out` and `probe` use another row schema, and `.state-dev/receipts` calibrates call-1 (2.161 B/token, 7 sessions) but has no carry steps.
 
 Each row is the median over the sessions where the component is present; medians do not sum to the call-1 context.
-The ~59K invisible floor in the plan sits between the REDUCIBLE median (55,815) and the sum of the REDUCIBLE rows below.
+The ~59K invisible floor in the plan sits between the REDUCIBLE class median (55,815) and the sum of the REDUCIBLE rows below (31,103 + 27,025 + 1,847 + 927 = 60,902).
+
+Coverage of the call-1 context median (82,298), summing the row medians in the table: REDUCIBLE 60,902 + ELIMINABLE 20,662 + PAGEABLE 1,477 + IRREDUCIBLE 2,299 = 85,340 = 103.7%. It exceeds 100% because each row is a median over a different subset of sessions, so the rows are not additive; it is a consistency check (the rows account for the whole context), not an exact partition. The UNKNOWN rows (sum of medians 22,978) are sparse (1-11 of 41 sessions each) and are left out of that sum. Class medians (55,815 / 20,373 / 1,431 / 2,389) are medians of per-session class totals and differ slightly from the row sums for the same reason.
 
 Sessions: 41; call-1 context median 82,298, min 5,406, max 225,745.
 
