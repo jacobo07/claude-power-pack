@@ -45,6 +45,12 @@ demonstrated per function. F3cr (packet fa3cfe68, Owner "1", stop 2,000,000, 40 
 read `result.json` for sid + processed, `goal-settle --goal gsdx-factory-2 --session <sid> --measured <processed>`, pull the clone commits (`git fetch` from the clone, ff-only),
 re-run all ten gates on the clone, re-pin F7 (`--write-pin` on GEX44, scp the 3 files back), then apply the verdict as a separate provider record (like ghidra_r1), never over rea.json.
 
+**UPDATE 2026-10-21 -- F3c DONE: ECONOMICALLY_INFERIOR. Nothing is running.** F3cr (sid ad431c7f) stopped at its 2.0M breaker (2,038,163) and is SETTLED
+(settled 62,108,306 of programme 127,817,916; lease L16 remaining 63,329,890). REA's procedure start set is IDENTICAL to the F3b export (12,061), starts only, no sizes; 231-238 s and ~2 GB
+per operation vs Ghidra-direct 88.9 s for everything (2.6x wall). Eight receipts in `provider-caps/rea-tennis/`, `evidence/f3c/economics.json`; no provider record added, `rea.json` untouched.
+Fabric HEAD 29300bd1 = GEX44 clone HEAD (pushed to the bare repo only). Gates on the clone: F1 34, F2 35, F3adj 31, F3b 36, F3c 37, F4 41, F5 20, F6 28, F7 43 (re-pinned 74 -> 75 inputs, 1195da33), F8 20, F9 15.
+Anchor: `programme-status --goal gsdx-factory-2` settled 62,108,306, open 150,000 (f381f018 tombstoned, settles on detach).
+
 **Everything left is in the PP backlog as D29** (`vault/plans/deferred-backlog.md`). Summary, Owner's choice (no work scheduled):
 1. F3c (REA canary): needs Ghidra function boundaries >= 90 % vs DTK; F3b measured 79.52 %. A boundary-adjudication pass comes first.
 2. The three D12 compiler replays (commands in WU-F5-receipt.md) need GEX44 compute jobs, excluded from this programme.

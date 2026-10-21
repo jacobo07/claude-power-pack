@@ -123,7 +123,7 @@
       "wait": [
         "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\.claude\\worktrees\\fabric\\vault\\programs\\gsdx-fabric\\WU-F3c-receipt.md"
       ],
-      "note": "D29 item 1 follow-on, Owner go 2026-10-20 (F3c-2); runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3c -Stop 4000000 -Turns 60); packet 3f8366f0; the laptop tick must not arm it. F3c-1 (pins, PPC lane in 6.5.0) and the offline install were done by the coordinator, zero worker tokens. REA vs ghidra_r1 AND raw ghidra; ECONOMICALLY_INFERIOR / TARGET_UNAVAILABLE are valid DONE. No new capital: lease L16 cap 72,160,000"
+      "note": "D29 item 1 follow-on, Owner go 2026-10-20 (F3c-2); runs on GEX44 via Owner-run launcher (fabric-unit-gex44.ps1 -Unit F3c -Stop 4000000 -Turns 60); packet 3f8366f0; the laptop tick must not arm it. F3c-1 (pins, PPC lane in 6.5.0) and the offline install were done by the coordinator, zero worker tokens. REA vs ghidra_r1 AND raw ghidra; ECONOMICALLY_INFERIOR / TARGET_UNAVAILABLE are valid DONE. No new capital: lease L16 cap 72,160,000. DONE 2026-10-21 as ECONOMICALLY_INFERIOR: first run 4,021,175 (breaker) + residual F3cr 2,038,163 (packet fa3cfe68), both settled; final receipt 29300bd1"
     }
   ]
 }
