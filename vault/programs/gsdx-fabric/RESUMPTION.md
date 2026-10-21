@@ -51,6 +51,21 @@ per operation vs Ghidra-direct 88.9 s for everything (2.6x wall). Eight receipts
 Fabric HEAD 29300bd1 = GEX44 clone HEAD (pushed to the bare repo only). Gates on the clone: F1 34, F2 35, F3adj 31, F3b 36, F3c 37, F4 41, F5 20, F6 28, F7 43 (re-pinned 74 -> 75 inputs, 1195da33), F8 20, F9 15.
 Anchor: `programme-status --goal gsdx-factory-2` settled 62,108,306, open 150,000 (f381f018 tombstoned, settles on detach).
 
+**UPDATE 2026-10-21 (night) -- CURRENT STATE, read this first. Nothing is running on GEX44.**
+Fabric HEAD b11aca5b = clone HEAD; pushed to the bare repo only; F7 re-pinned 77 inputs; gates green (F1 34, F2 35, F3adj 31, F3b 36, F3c 37, F4 41, F5 20, F6 28, F7 43, F8 20, F9 15, PC1 43; D12d 20/22 with 2 intended scientific reds).
+Ledger gsdx-factory-2: settled 68,651,091 of programme 127,817,916, remaining 56,787,105 of cap 72,160,000 (lease L16), open 150,000 (f381f018 tombstone).
+- D12d FINAL: held-out 12 = shuffled 12 -> transfer NOT established; lint-clean is routing evidence only (KN-D12D-01..04 in the KV). Receipt 08d04105.
+- PC1 DONE (sid 46e776dd, 3,041,131 settled, receipt febfd213): ledger MATCH 12 / cross-title EXACT donor 129 (SHADOW) / family 0 / parameterized 0 / residual 1,656; stage 2 CLOSED (discounted compiler-admissible 284 < 300; no mechanism >= 150 held-out-backed);
+  residual bounds LOWER 0 / UPPER 1,473 (wide because library identity and behavioural sufficiency are UNMEASURED); graph: 625 shared roots, top-10 roots close 103 fns, top-50 150, all 625 only 227 (structure, correctness unproven).
+  Owner note in the receipt: 284 is 16 below the bar and rests on the unknown identity of the 169 D12d fns (only counts were persisted).
+- LEARNING LOOP tranche A (Owner approved 'Tramo A ahora; B y C automaticos solo si A paga') is in the PP worktree `C:\Users\User\Apps\pp-learning-loop` branch `gsdx-learning/loop`, commits 99f82883..1c300267, NOT merged, NOT pushed:
+  `modules/learning_loop/{surprise,proxy_authority,blast,outcome}.py`, `tools/learning_gate.py`, `tools/test_learning_loop.py` (44 V-LL gates, 11 mutants killed), `vault/learning_loop/` (bank D4/F8/D12c/D12d, authority registry with lint_clean semantic_correctness derived to NO from the raw run, gate kinds, 2 rescue events),
+  spec `vault/specs/learning-loop-tranche-a.md`, UKDL candidates `vault/knowledge_base/learning_loop/UKDL_CANDIDATES_PROXY_AUTHORITY.md`. The fabric launcher `C:/Users/User/fabric-unit-gex44.ps1` now runs `learning_gate check-packet` before arming (refused PC1 re-launch: no ack marker).
+- NEXT (autonomous, in order): (1) add the line `Proxy-authority-ack: lint_clean 2026-10-21` to `WU-PC1.md` in the fabric worktree (deliberately not done while PC1 ran), commit pathspec, push; (2) tranche A closing: run `python -I tools/test_learning_loop.py`, red-team the detector (false positives on D12c-like nulls, over-staling in `consumers`), write the tranche A receipt + KV/UKDL dispositions, measure actual spend of the learning layer;
+  (3) decide tranche B/C ONLY on evidence: B opens if tranche A caught a real failure the old prose rule did not (it did derive the D12d downgrade and refused the PC1 relaunch) AND a second incident family reproduces; otherwise FREEZE (meta-optimization moratorium);
+  (4) the Owner question that remains open and is NOT mine to answer: whether to fund a compile-verification pilot on a seeded sample of the lint-clean candidates (needs a GEX44 compile job, a new Owner ask) or to price the 625 shared roots first.
+  Open Owner correction to honour: a CLOSED verdict never means 'the rest needs a model per function'.
+
 **UPDATE 2026-10-21 (later) -- D12d RUNNING.** Owner "go ahead" on the large-population joint-fact test (D12c had only 91 fns and was already negative: held-out 0/46, complementarity 0, stop-loss at step 3).
 Packet 6cfb60f8 (`WU-D12d.md`), stop 3,500,000, 50 turns, pid 1895686, log gex44 `~/missions/gsdx-fabric-stage/run-D12d.log`. Coordinator ceiling (from `residuals_v1.jsonl`): helper-only 133 fns, helper+fields 890 of 1,521.
 Pre-registered bar on held-out: >=100 newly lint-clean SUPPORTED, 1..99 PARTIAL, 0 CLOSED. WHEN IT ENDS: `result.json` -> `goal-settle --goal gsdx-factory-2 --session <sid> --measured <processed>`; `git fetch` from the clone and ff;
