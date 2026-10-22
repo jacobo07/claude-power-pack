@@ -173,6 +173,51 @@ def main() -> int:
           and len(events("m-acc-blind", "worker_unbooked")) == 1 and blind not in ledger_state()[0]["marks"],
           str((row or {}).get("settled")))
 
+    # 5. derived estimate: arm/envelope read the open routes off the roadmap, they are not chosen by the caller.
+    rm = Path(TMP) / "ROADMAP.md"
+    rm.write_text("### Phase 1: Done one (route 4.5M) — DONE 2026-10-15\n### Phase 2: A (route 2.0M)\n"
+                  "### Phase 3: B, C (route 2.0M)\n### Phase 4: D (route 1.5M)\n### Phase 5: E (no figure)\n",
+                  encoding="utf-8")
+    d = gm.derive_estimate_from_roadmap(str(rm))
+    check("V-ACC-DERIVE-SUMS-OPEN-ROUTES-ONLY", d["total"] == 5_500_000 and d["unrouted"] == ["Phase 5"]
+          and [n for n, _ in d["open"]] == ["Phase 2", "Phase 3", "Phase 4"], f"{d}")
+    big = worker("m-acc-derive")
+    rec = gm.set_envelope("m-acc-derive", roadmap=str(rm), now=NOW)
+    check("V-ACC-ENVELOPE-USES-DERIVED", rec["token_estimate"] == 5_500_000
+          and "derived from 3 open roadmap route" in str(rec.get("token_estimate_basis")), str(rec.get("token_estimate_basis")))
+    try:
+        gm.set_envelope("m-acc-derive", roadmap=str(rm), token_estimate=9_000_000, now=NOW)
+        check("V-ACC-DERIVED-AND-CHOSEN-REFUSED", False, "accepted both")
+    except gm.MissionError as exc:
+        check("V-ACC-DERIVED-AND-CHOSEN-REFUSED", "not both" in str(exc), str(exc)[:80])
+    rm2 = Path(TMP) / "ROADMAP-done.md"
+    rm2.write_text("### Phase 1: x (route 1.0M) — DONE\n", encoding="utf-8")
+    try:
+        gm.derive_estimate_from_roadmap(str(rm2))
+        check("V-ACC-ALL-DONE-ROADMAP-REFUSED", False, "derived 0")
+    except gm.MissionError as exc:
+        check("V-ACC-ALL-DONE-ROADMAP-REFUSED", "no open phase" in str(exc), str(exc)[:80])
+
+    # 6. authority: an estimate above remaining - open - unused recovery reserve is refused; below is admitted.
+    troot = Path(TMP) / "tightroot"
+    troot.mkdir()
+    ms.goal_declare("tight", 8_000_000, "test", [str(troot)], None, 1, owner=True)
+    tled = ms._goal_ledger("tight")
+    tled.set_programme(8_000_000, "test", inside_agent=False)
+    lo = tled.lease_open("s-lease", 2_000_000, prev_lease="L1", reserves={"recovery": 500_000})
+    auth = gm.goal_authority("tight")
+    check("V-ACC-AUTHORITY-SUBTRACTS-RECOVERY-RESERVE", auth is not None and auth["reserve"] == 500_000
+          and auth["available"] == auth["remaining"] - auth["open"] - 500_000 and lo.get("ok"), f"{auth}")
+    tgt = worker("m-acc-over", goal="tight")
+    try:
+        gm.set_envelope("m-acc-over", token_estimate=auth["available"] + 1, now=NOW)
+        check("V-ACC-OVER-AUTHORITY-REFUSED", False, "accepted")
+    except gm.MissionError as exc:
+        check("V-ACC-OVER-AUTHORITY-REFUSED", "exceeds goal tight authority" in str(exc), str(exc)[:110])
+    rec = gm.set_envelope("m-acc-over", token_estimate=auth["available"], now=NOW)
+    check("V-ACC-CONTROL-AT-AUTHORITY-ADMITTED", rec["token_estimate"] == auth["available"], f"{rec['token_estimate']:,}")
+    check("V-ACC-CONTROL-NO-GOAL-NOT-JUDGED", gm.goal_authority("no-such-goal") is None, "unmeasurable is None, not 0")
+
     print(f"ACCOUNTING_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     shutil.rmtree(TMP, ignore_errors=True)
     return 0 if fails == 0 else 1
