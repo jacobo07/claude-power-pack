@@ -1,7 +1,7 @@
 {
  "goal": "ccr",
  "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\ccr-v5",
- "envelope": 307500000,
+ "envelope": 320000000,
  "max_residuals": 1,
  "units": [
   {"id": "E0", "succession": "v5-kernel-env0-3", "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\ccr-v5\\vault\\programs\\ccr\\v5\\WU-E0-a2.md", "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\ccr-v5\\vault\\programs\\ccr\\v5\\route-E0.json", "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\ccr-v5\\vault\\programs\\ccr\\v5\\WU-E0-receipt.md", "after": null, "accept": ["DONE_WITH_LIMITS"]},
