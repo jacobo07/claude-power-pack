@@ -3,7 +3,7 @@
 # Physical admission: no tick (so no new worker) while free RAM < 4 GB.
 $env:PYTHONIOENCODING = 'utf-8'
 $py    = 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe'
-$tool  = 'C:\Users\User\.claude\skills\claude-power-pack\tools\gsdx_chain.py'
+$tool  = 'C:\Users\User\.claude\skills\claude-power-pack\.claude\worktrees\ccr-v5\tools\gsdx_chain.py'
 $chain = Join-Path $PSScriptRoot 'chain.json'
 $log   = Join-Path $env:USERPROFILE '.claude\state\ccr-chain-tick.log'
 $freeGb = [math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 1)
