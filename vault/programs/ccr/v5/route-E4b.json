@@ -1,0 +1,1 @@
+{"unit": "ccr-v5-E4b", "envelope": {"target": 1600000, "warn": 1840000, "stop": 2500000, "calls": 12}, "workers": [{"name": "ccr-unit", "profile": "slim-t2", "calls": 12, "packet": 6000}]}
