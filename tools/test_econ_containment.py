@@ -210,6 +210,129 @@ def g_successor(e):
     check("V-ECON-SUCCESSOR-ADMISSION", admit(e, "NEW7", "go", work) == {}, "the successor session's messages reach the model")
 
 
+def g_raise(e):
+    """Owner raise verb (vault/specs/econ-owner-raise.md): `subelo N` is answered before the model."""
+    work = e.root / "w8"
+    work.mkdir()
+    tga.declare("t8", 1000, roots=[str(work)], lease_calls=1)
+    exhaust("t8", "R8")
+    bind("R8", "t8", "cwd")
+    led("t8").set_programme(5000, "test owner", inside_agent=False)
+    n0 = len(journal("t8"))
+    why = lambda o: o.get("reason") or ""  # noqa: E731
+    prose = admit(e, "R8", "please subelo 3k when you can", work)
+    comma = admit(e, "R8", "subelo 1,5M", work)
+    check("V-ECON-RAISE-WHOLE-MESSAGE",
+          all("NOT sent to the model" in why(o) and "OWNER RAISE" not in why(o) for o in (prose, comma))
+          and len(journal("t8")) == n0, "the verb inside a sentence, or with a comma decimal, is not the verb: ordinary block, ledger untouched")
+    absurd = admit(e, "R8", "subelo 10000000M", work)
+    check("V-ECON-RAISE-ARITHMETIC-GUARD", "REFUSED" in why(absurd) and len(journal("t8")) == n0,
+          "10 trillion tokens trips only the arithmetic guard and writes nothing")
+    work12 = e.root / "w12"
+    work12.mkdir()
+    tga.declare("t12", 1000, roots=[str(work12)], lease_calls=1)
+    exhaust("t12", "R12")
+    bind("R12", "t12", "cwd")
+    led("t12").set_programme(5000, "test owner", inside_agent=False)
+    huge = admit(e, "R12", "subelo 700000M", work12)                  # the old 200M ceiling would have refused this
+    lo12 = [r for r in journal("t12") if r["op"] == "lease_open"]
+    check("V-ECON-RAISE-UNBOUNDED", "OWNER RAISE APPLIED" in (huge.get("hookSpecificOutput") or {}).get("additionalContext", "")
+          and len(lo12) == 1 and lo12[0]["cap"] == 700_000_000_000,
+          f"700,000M is applied (cap {lo12[0]['cap'] if lo12 else 0:,}): no budget ceiling on the Owner's amount")
+    work13 = e.root / "w13"
+    work13.mkdir()
+    tga.declare("t13", 1000, roots=[str(work13)], lease_calls=1)
+    exhaust("t13", "X13")
+    led("t13").set_programme(9000, "test owner", inside_agent=False)
+    p13 = len(journal("t13"))
+    away = admit(e, "N13", "subelo 3k", e.root / "nowhere")            # control: no record, cwd under no goal root
+    check("V-ECON-RAISE-NEUTRAL-CONTROL", "NOT APPLIED" in why(away) and "recent goals" in why(away) and len(journal("t13")) == p13,
+          "a pane with no goal and no goal root says so, names goals it can address, and writes nothing")
+    by_cwd = admit(e, "N13", "subelo 3k", work13)                      # no binding record, cwd under the exhausted goal
+    lo13 = [r for r in journal("t13") if r["op"] == "lease_open"]
+    check("V-ECON-RAISE-NEUTRAL-CWD", by_cwd.get("decision") == "block" and "APPLIED" in why(by_cwd) and len(lo13) == 1
+          and lo13[0]["cap"] == 3000, "an unrecorded pane quarantined by cwd raises the goal it works on, answered before the model")
+    tga.declare("t14", 1000, lease_calls=1)
+    exhaust("t14", "X14")
+    led("t14").set_programme(9000, "test owner", inside_agent=False)
+    p14 = len(journal("t14"))
+    nogoal = admit(e, "N14", "subelo 3k nosuchgoal", e.root / "nowhere")
+    check("V-ECON-RAISE-NAMED-UNKNOWN", "NOT APPLIED" in why(nogoal) and "not declared" in why(nogoal) and len(journal("t14")) == p14,
+          "an undeclared goal name is refused and nothing is written")
+    named = admit(e, "N14", "Súbelo 3k T14", e.root / "nowhere")      # accents and case ignored, any pane
+    lo14 = [r for r in journal("t14") if r["op"] == "lease_open"]
+    check("V-ECON-RAISE-NAMED-GOAL", "APPLIED" in why(named) and len(lo14) == 1 and lo14[0]["cap"] == 3000,
+          "`subelo 3k t14` from a pane with no goal opens the successor lease on t14")
+    again14 = admit(e, "N14", "subelo 3k t14", e.root / "nowhere")
+    lo14 = [r for r in journal("t14") if r["op"] == "lease_open"]
+    check("V-ECON-RAISE-NAMED-SECOND-RAISE", len(lo14) == 2 and lo14[-1]["cap"] == 6000,
+          "a second raise on an unspent lease carries its remainder (3,000 + 3,000); the idempotency key is per lease: "
+          + why(again14)[:40])
+    tga.declare("t9", 1000, lease_calls=1)
+    exhaust("t9", "R9")
+    bind("R9", "t9", "cwd")
+    led("t9").set_programme(1100, "test owner", inside_agent=False)   # overdrawn: 1,200 spent, executable -100
+    m0 = len(journal("t9"))
+    small = admit(e, "R9", "subelo 100", work)
+    check("V-ECON-RAISE-ENVELOPE", "AUTHORITY_REQUIRED" in why(small) and len(journal("t9")) == m0,
+          "a raise whose successor does not fit the programme is refused and writes nothing")
+    tga.declare("t15", 1000, lease_calls=1)
+    exhaust("t15", "X15")                                             # L1 spent: 1,200 against cap 1,000
+    led("t15").set_programme(1300, "test owner", inside_agent=False)  # holds 100, less than the spent cap
+    live = admit(e, "N15", "subelo 3k t15", e.root / "nowhere")
+    lo15 = [r for r in journal("t15") if r["op"] == "lease_open"]
+    check("V-ECON-RAISE-SPENT-PROGRAMME", "APPLIED" in why(live) and "NOT APPLIED" not in why(live)
+          and len(lo15) == 1 and lo15[0]["cap"] == 3000,
+          "a spent lease and a nearly spent programme still take the raise: the successor holds N, not the spent "
+          "cap + N (gsdx-factory-2 2026-10-22: 70M and 150M both refused 69,882,516 short): " + why(live)[:80])
+    ok = admit(e, "R8", "Súbelo 3k", work)                       # accented spelling
+    j = journal("t8")
+    prog = [r for r in j if r["op"] == "programme"][-1]
+    lo = [r for r in j if r["op"] == "lease_open"]
+    ctx = (ok.get("hookSpecificOutput") or {}).get("additionalContext", "")
+    check("V-ECON-RAISE-APPLIED", ok.get("decision") != "block" and "OWNER RAISE APPLIED" in ctx and "/kclear" in ctx
+          and prog["value"] == 8000 and len(lo) == 1 and lo[0]["cap"] == 3000,
+          f"programme 5,000 -> {prog['value']:,}; successor lease cap {lo[0]['cap'] if lo else None} (3,000 new; L1 fully spent); "
+          f"{len(lo)} lease_open; message NOT blocked, carries the /kclear order")
+    n1 = len(j)
+    check("V-ECON-RAISE-PANE-UNFENCED", admit(e, "R8", "hello", work) == {},
+          "after the raise the same pane's next message reaches the model")
+    tx8 = e.root / "t8.jsonl"
+    tx8.write_text(tga.row("m1", 100), encoding="utf-8")
+    dec, _w = tga.run_guard(e, "R8", tx8, work, tool="Write", tool_input={"file_path": str(work / "x.py")})
+    check("V-ECON-RAISE-GUARD-LIFTED", dec is None, "the PreToolUse guard no longer denies this pane's changes (goal_binding fold)")
+    dec9, _w9 = tga.run_guard(e, "R9", tx8, work, tool="Write", tool_input={"file_path": str(work / "x.py")})
+    check("V-ECON-RAISE-CONTROL-REFUSED-STAYS-FENCED", dec9 == "deny",
+          "the pane whose raise was refused (envelope too small) is still fenced")
+    n1 = len(journal("t8"))                                         # after the guard's own settle rows
+    again = admit(e, "R8", "subelo 3k", work)
+    check("V-ECON-RAISE-IDEMPOTENT", "not blocked" in why(again) and len(journal("t8")) == n1,
+          "the same message once the pane is unfenced adds nothing")
+    tga.declare("t11", 1000, lease_calls=1)
+    exhaust("t11", "R11")
+    bind("R11", "t11", "cwd")
+    led("t11").set_programme(9000, "test owner", inside_agent=False)
+    led("t11").lease_open("owner-raise:R11:L1", 4000)               # a successor an earlier build opened, fence left on
+    n11 = len(journal("t11"))
+    res = admit(e, "R11", "subelo 3k", work)
+    check("V-ECON-RAISE-RESUME", "lifted" in (res.get("hookSpecificOutput") or {}).get("additionalContext", "")
+          and len([r for r in journal("t11") if r["op"] == "programme"]) == 1 and len(journal("t11")) == n11 + 1,
+          "a pane whose own successor already exists is unfenced with exactly one untomb row and no new money")
+    bind("NEW8", "t8", "cwd")
+    check("V-ECON-RAISE-SUCCESSOR-ADMITS", admit(e, "NEW8", "go", work) == {},
+          "a fresh session binds to the new lease and its messages reach the model")
+    tga.declare("t10", 10_000_000, lease_calls=1)
+    bind("R10", "t10")
+    led("t10").renew("R10", 0, 600, per_call=100)
+    k0 = len(journal("t10"))
+    free = admit(e, "R10", "subelo 3k", work)
+    check("V-ECON-RAISE-CONTROL-NOT-BLOCKED", "not blocked" in why(free) and len(journal("t10")) == k0,
+          "a session with room is told nothing was raised and the ledger is untouched")
+    led("t8").renew("R8", 6000, 600, per_call=100)                    # crosses lease L2's cap: fenced again
+    check("V-ECON-RAISE-REFENCES-ON-NEXT-CROSSING",
+          "R8" in led("t8")._gfold(led("t8")._read())["tombs"], "a later crossing of the successor lease tombstones the pane again")
+
+
 def g_roles(e):
     # WS-F: recovery spend has its own role under the programme's recovery reserve and is never productive
     # spend on a lease; refused-but-billed boundaries stay real cost and are reported apart.
@@ -317,7 +440,7 @@ def g_wiring(e):
 
 
 def main():
-    for g in (g_ledger, g_guard, g_admission, g_detach, g_successor, g_roles, g_wiring):
+    for g in (g_ledger, g_guard, g_admission, g_detach, g_successor, g_raise, g_roles, g_wiring):
         e = tga.Env()
         try:
             g(e)

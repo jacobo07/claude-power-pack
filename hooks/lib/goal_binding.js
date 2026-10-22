@@ -129,8 +129,16 @@ function goalExhausted(goal) {
   return rows.some(r => r.op === 'exhausted' && (r.lease || 'L1') === cur);
 }
 
+// Fold in journal order: an Owner raise ("untomb", written with the successor lease it opened) lifts the
+// session's fence; a later tombstone (the successor lease crossed too) fences it again.
 function sidTombstoned(goal, sid) {
-  return journalRows(goal, ['"tombstone"']).some(r => r.op === 'tombstone' && r.sid === sid);
+  let t = false;
+  for (const r of journalRows(goal, ['"tombstone"', '"untomb"'])) {
+    if (r.sid !== sid) continue;
+    if (r.op === 'tombstone') t = true;
+    else if (r.op === 'untomb') t = false;
+  }
+  return t;
 }
 
 const READ_TOOLS = new Set(['Read', 'Grep', 'Glob']);

@@ -209,6 +209,8 @@ class GoalLedger(SpendLedger):
             cur = leases[-1]
             if op == "tombstone":
                 tombs.setdefault(r["sid"], r)
+            elif op == "untomb":
+                tombs.pop(r["sid"], None)                 # Owner raise lifted this pane's fence (successor lease)
             elif op == "exhausted":
                 exhausted.add(r.get("lease") or cur["id"])
             elif op == "prebind":
@@ -343,6 +345,20 @@ class GoalLedger(SpendLedger):
             if sid not in g["tombs"]:
                 self._append(recs, {"op": "tombstone", "sid": sid, "lease": g["leases"][-1]["id"],
                                     "reason": reason, "used": g["used"], "cap": g["cap"]})
+                g = self._gfold(recs)
+            return self._summary(g, ok=True, reason="")
+
+    def untombstone(self, sid: str, lease: str, reason: str) -> dict:
+        """Lift `sid`'s fence on this goal. ONLY the Owner raise calls this (tools/econ_plane.py raise_capital),
+        and only for the CURRENT lease it just opened: the pane then spends against that lease, and a later
+        crossing of it tombstones the pane again. Idempotent; never reserves."""
+        with self._lock:
+            recs = self._read()
+            g = self._gfold(recs)
+            if g["leases"][-1]["id"] != lease:
+                return self._summary(g, ok=False, reason=f"{lease} is not the current lease ({g['leases'][-1]['id']})")
+            if sid in g["tombs"]:
+                self._append(recs, {"op": "untomb", "sid": sid, "lease": lease, "reason": reason})
                 g = self._gfold(recs)
             return self._summary(g, ok=True, reason="")
 

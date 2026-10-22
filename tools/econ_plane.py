@@ -103,7 +103,8 @@ def render(st: dict) -> str:
         lines.append("unknown in-flight: whatever this session spent since its last settle is settled on detach "
                      "from its transcript, never assumed zero.")
     lines.append(f"next: {st['next']}")
-    lines.append("The cap is never raised by this plane. Verbs: `econ status`, `econ detach`; `/clear` = fresh session.")
+    lines.append("Verbs: `econ status`, `econ detach`, `subelo 70M` (Owner raise: programme += N, successor lease), "
+                 "`subelo 70M <goal>` (any goal, any pane, no size limit); `/clear` = fresh session.")
     return "\n".join(lines)
 
 
@@ -130,6 +131,115 @@ def detach(sid: str, reason: str) -> dict:
     return out
 
 
+RAISE_MAX = 1_000_000_000_000  # arithmetic guard only (Owner 2026-10-20: "la cantidad que quiera"); no budget policy
+RECOVERY = "recovery"          # GoalLedger's reserve key for the recovery pool
+
+
+def _open_successor(led, g, cur, amount: int, key: str):
+    """programme += amount, then a successor lease at (amount + the current lease's unspent remainder),
+    reserves carried over.
+
+    Shared by the pane-bound raise and the goal-addressed raise. Returns (error | None, lease_open row,
+    programme before, new cap). The envelope is validated BEFORE the programme row is written: a refused
+    raise leaves the ledger untouched. Idempotent per `key` (programme row tag + lease succession id)."""
+    tag = f"owner-econ-raise:{key}"
+    done = g["programme_source"] == tag            # a previous attempt already wrote the programme row
+    # A lease cap is that lease's own budget (`used` reads the current lease once a successor exists, and
+    # _auto_succeed sizes a successor by its tranche). `cur.cap + amount` asked for the spent cap again:
+    # need - room was then cap - executable whatever amount was typed (gsdx-factory-2, 2026-10-22).
+    old_prog = int(g["programme"]) - (amount if done else 0)
+    new_cap = amount + max(0, int(cur["cap"]) - int(g["used"]))
+    rv = cur["reserves"]
+    carry = {k: int(v) for k, v in rv.items() if k != RECOVERY and int(v) > 0}
+    rec_left = int(rv.get(RECOVERY, 0)) - cur.get("rsettled", 0)
+    if rec_left > 0:
+        carry[RECOVERY] = rec_left
+    room = led._executable(g) + (0 if done else amount)
+    need = new_cap + sum(carry.values())
+    if need > room:
+        return ({"reason": f"AUTHORITY_REQUIRED: the successor needs {need:,} but the programme would hold {room:,} "
+                           f"after +{amount:,}; type a larger amount"}, None, old_prog, new_cap)
+    if not done:
+        pr = led.set_programme(old_prog + amount, tag, inside_agent=False)
+        if not pr.get("ok"):
+            return ({"reason": str(pr.get("reason"))}, None, old_prog, new_cap)
+    lo = led.lease_open(key, new_cap, prev_lease=cur["id"], reserves=carry)
+    if not lo.get("ok"):
+        return ({"reason": str(lo.get("reason")), "programme": old_prog + amount}, None, old_prog, new_cap)
+    return None, lo, old_prog, new_cap
+
+
+def raise_goal(goal: str, amount: int) -> dict:
+    """Owner raise addressed to a GOAL, from any pane (`subelo 70M <goal>`, or a neutral pane whose cwd lies under
+    the goal's root). Same money path as raise_capital (programme += amount, successor lease), but no pane is
+    unfenced: the tombstoned panes of that goal stay fenced and a fresh session (`/clear`) binds to the successor."""
+    if not isinstance(amount, int) or isinstance(amount, bool) or not 0 < amount <= RAISE_MAX:
+        return {"ok": False, "reason": f"amount must be 1..{RAISE_MAX:,} tokens, got {amount!r}"}
+    if ms.read_index().get(goal) is None:
+        return {"ok": False, "goal": goal, "reason": f"goal {goal} is not declared on this host; unknown is never admitted"}
+    led = ms._goal_ledger(goal)
+    g = _fold(goal)
+    cur = g["leases"][-1]
+    if g["programme"] is None or cur["cap"] is None:
+        return {"ok": False, "goal": goal,
+                "reason": "UNKNOWN: goal has no programme envelope or lease cap; unknown headroom is not free"}
+    err, lo, old_prog, new_cap = _open_successor(led, g, cur, amount, f"owner-raise:goal:{goal}:{cur['id']}")
+    if err:
+        return {"ok": False, "goal": goal, **err}
+    return {"ok": True, "goal": goal, "applied": bool(lo.get("applied")), "from_lease": cur["id"],
+            "lease": lo.get("lease"), "programme_old": old_prog, "programme_new": old_prog + amount,
+            "cap_old": int(cur["cap"]), "cap_new": new_cap, "reason": ""}
+
+
+def raise_capital(sid: str, amount: int, short: bool = False) -> dict:
+    """Owner raise: programme += amount, then a successor lease at (amount + unspent remainder).
+
+    Reached only from the Owner's typed `subelo N` (hooks/econ_admission.js). A crossed cap is not raised in
+    place: the money lands in a SUCCESSOR lease, and the blocked pane's tombstone is lifted (journal op
+    "untomb", tied to that lease) so the pane can run the rollover (/kclear) against it. Idempotent per
+    (session, lease): the lease_open succession id and the programme row's source tag carry the same key; a
+    pane whose own successor already exists is just unfenced (`resumed`), with no new money. `short` = the caller saw "next call does not fit" with no tombstone/exhaustion."""
+    if not isinstance(amount, int) or isinstance(amount, bool) or not 0 < amount <= RAISE_MAX:
+        return {"ok": False, "reason": f"amount must be 1..{RAISE_MAX:,} tokens, got {amount!r}"}
+    rec = ms.read_binding(sid)
+    if not rec or rec.get("goal") in (None, "", "none"):
+        return {"ok": True, "session": sid, "applied": False, "reason": "not bound to a goal; nothing blocks this pane"}
+    goal = rec["goal"]
+    if ms.read_index().get(goal) is None:
+        return {"ok": False, "session": sid, "goal": goal,
+                "reason": f"goal {goal} is not declared on this host; unknown is never admitted"}
+    led = ms._goal_ledger(goal)
+    g = _fold(goal)
+    cur = g["leases"][-1]
+    tomb = g["tombs"].get(sid)
+    if tomb and tomb.get("lease") != cur["id"]:
+        # A successor already exists. If THIS pane's own raise opened it (an earlier build, or a crash before the
+        # untomb), finish the job: lift the fence now, writing no money. Anyone else's successor stays theirs.
+        if str(cur.get("succession_id") or "").startswith(f"owner-raise:{sid}:"):
+            ut = led.untombstone(sid, cur["id"], "owner-econ-raise (resume)")
+            return {"ok": bool(ut.get("ok")), "session": sid, "goal": goal, "applied": bool(ut.get("ok")),
+                    "resumed": True, "lease": cur["id"], "cap_new": cur["cap"], "reason": str(ut.get("reason") or "")}
+        return {"ok": True, "session": sid, "goal": goal, "applied": False, "lease": cur["id"], "cap": cur["cap"],
+                "reason": f"successor lease {cur['id']} is already open and was not opened by this pane"}
+    if not (tomb or g["exhausted_now"] or short):
+        return {"ok": True, "session": sid, "goal": goal, "applied": False,
+                "reason": "this session is not blocked; nothing raised"}
+    if g["programme"] is None or cur["cap"] is None:
+        return {"ok": False, "session": sid, "goal": goal,
+                "reason": "UNKNOWN: goal has no programme envelope or lease cap; unknown headroom is not free"}
+    key = f"owner-raise:{sid}:{cur['id']}"
+    err, lo, old_prog, new_cap = _open_successor(led, g, cur, amount, key)
+    if err:
+        return {"ok": False, "session": sid, "goal": goal, **err}
+    if tomb:                                       # the pane spends against the lease it just got
+        ut = led.untombstone(sid, lo.get("lease"), "owner-econ-raise")
+        if not ut.get("ok"):
+            return {"ok": False, "session": sid, "goal": goal, "reason": f"lease opened but fence not lifted: {ut.get('reason')}"}
+    return {"ok": True, "session": sid, "goal": goal, "applied": bool(lo.get("applied")), "from_lease": cur["id"],
+            "lease": lo.get("lease"), "programme_old": old_prog, "programme_new": old_prog + amount,
+            "cap_old": int(cur["cap"]), "cap_new": new_cap, "reason": ""}
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     ap = argparse.ArgumentParser(prog="econ_plane")
@@ -140,14 +250,27 @@ def _main(argv: list[str]) -> int:
     d = sub.add_parser("detach")
     d.add_argument("--session", required=True)
     d.add_argument("--reason", default="owner-request")
+    r = sub.add_parser("raise")
+    r.add_argument("--session")
+    r.add_argument("--goal")
+    r.add_argument("--amount", required=True, type=int)
+    r.add_argument("--short", action="store_true")
     a = ap.parse_args(argv)
-    if not ms._SID_RE.match(a.session):
+    if a.cmd == "raise" and a.goal:
+        out = raise_goal(a.goal, a.amount)
+        print(json.dumps(out, sort_keys=True, default=str))
+        return 0 if out.get("ok") else 3
+    if not a.session or not ms._SID_RE.match(a.session):
         print(json.dumps({"ok": False, "reason": f"invalid session id: {a.session!r}"}))
         return 3
     if a.cmd == "status":
         st = status(a.session)
         print(render(st) if a.text else json.dumps(st, sort_keys=True, default=str))
         return 0
+    if a.cmd == "raise":
+        out = raise_capital(a.session, a.amount, a.short)
+        print(json.dumps(out, sort_keys=True, default=str))
+        return 0 if out.get("ok") else 3
     out = detach(a.session, a.reason)
     print(json.dumps(out, sort_keys=True, default=str))
     return 0 if out.get("ok") else 3

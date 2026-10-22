@@ -27,8 +27,68 @@ const PY = process.env.PYTHON_BIN || (process.platform === 'win32'
   ? 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe' : 'python3');
 const ECON_PLANE = path.join(__dirname, '..', 'tools', 'econ_plane.py');
 const VERB = /^\s*econ\s+(status|detach)\b/i;
+// Owner raise: WHOLE message only (`subelo 70M`, `sube 1.5M`, `econ raise 800k`), accents ignored. The same words
+// inside a sentence are ordinary prose and reach the model. Amount 1..RAISE_MAX tokens; no comma decimals ("1,5M"
+// would read as 15M), so anything ambiguous is not the verb.
+// Optional trailing goal name addresses a goal from ANY pane (`subelo 70M ccr`). Amount ceiling is an arithmetic
+// guard only (Owner 2026-10-20: "debo poder subirlo la cantidad que quiera"), mirrored in tools/econ_plane.py.
+const RAISE = /^(?:econ\s+)?(?:sube(?:lo)?|raise)\s+(\d+(?:\.\d+)?)\s*([mk])?(?:\s+([a-z0-9][a-z0-9._-]*))?\s*[.!]?$/;
+const RAISE_MAX = 1e12;
 
 function fmt(n) { return Number(n || 0).toLocaleString('en-US'); }
+
+// null = not the verb; {error} = the verb with an unusable amount; {amount, goal?} = tokens.
+function parseRaise(prompt) {
+  const t = String(prompt || '').normalize('NFD').replace(/\p{M}/gu, '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const m = t.match(RAISE);
+  if (!m) return null;
+  const amount = Math.round(parseFloat(m[1]) * (m[2] === 'm' ? 1e6 : m[2] === 'k' ? 1e3 : 1));
+  if (!(amount >= 1 && amount <= RAISE_MAX)) return { error: `amount ${fmt(amount)} is outside 1..${fmt(RAISE_MAX)} tokens` };
+  return m[3] ? { amount, goal: m[3] } : { amount };
+}
+
+function goalIndex() {
+  const ix = gb.readJson(path.join(gb.stateDir(), 'goal-budget', 'index.json'));
+  return ix && typeof ix === 'object' ? ix : {};
+}
+
+// Goals worth naming to the Owner: the most recently written ledgers, scratch/canary goals left out.
+function goalHints(limit) {
+  const ix = goalIndex();
+  const rows = [];
+  for (const g of Object.keys(ix)) {
+    if (/^canary-/.test(g)) continue;
+    let mt = 0;
+    try { mt = fs.statSync(path.join(gb.stateDir(), 'goal-budget', g, 'spend.journal.jsonl')).mtimeMs; } catch (e) { /* no ledger yet */ }
+    rows.push([g, mt]);
+  }
+  return rows.sort((a, b) => b[1] - a[1]).slice(0, limit).map(r => r[0]);
+}
+
+function raiseUsage(why) {
+  const hints = goalHints(8);
+  return `OWNER RAISE NOT APPLIED -- ${why} Nothing was changed (0 model tokens).\n` +
+    'Name the goal from any pane: `subelo 70M <goal>`' + (hints.length ? `  (recent goals: ${hints.join(', ')})` : '') + '.';
+}
+
+// Goal-addressed raise: programme += N and a successor lease, no pane unfenced (tools/econ_plane.py raise_goal).
+// Answered here with zero model tokens; blocked panes of that goal pick the successor up on /clear.
+function doRaiseGoal(goal, raise, why) {
+  const ix = goalIndex();
+  const key = Object.keys(ix).find(g => g.toLowerCase() === String(goal).toLowerCase());
+  if (!key) return raiseUsage(`goal "${goal}" is not declared on this host.`);
+  const r = spawnSync(PY, [ECON_PLANE, 'raise', '--goal', key, '--amount', String(raise.amount)],
+    { encoding: 'utf8', timeout: 9000, windowsHide: true });
+  let out = null;
+  try { out = JSON.parse(String(r.stdout || '').trim().split('\n').pop()); } catch (e) { out = null; }
+  if (!out) return `OWNER RAISE FAILED -- the ledger leg could not run (${r.error ? (r.error.code || r.error.message) : 'exit ' + r.status}). ` +
+    'Nothing is assumed written; send the same message again (the raise is idempotent per goal and lease).';
+  if (!out.ok) return `OWNER RAISE REFUSED -- ${out.reason}. Goal ${key} is unchanged (0 model tokens).`;
+  if (!out.applied) return `OWNER RAISE -- goal ${key}: lease ${out.lease} is already open from this same raise; nothing added (0 model tokens).`;
+  return `OWNER RAISE APPLIED (${why}; 0 model tokens). Goal ${key}: programme ${fmt(out.programme_old)} -> ${fmt(out.programme_new)} ` +
+    `(+${fmt(raise.amount)}); lease ${out.from_lease} -> ${out.lease}, cap ${fmt(out.cap_old)} -> ${fmt(out.cap_new)}.\n` +
+    'A pane already fenced on this goal stays fenced: `/clear` there starts a fresh session on the new lease. Panes that were never fenced just keep working.';
+}
 
 // Display fold of the journal (same ops as GoalLedger._gfold; agent-hold shrink is not modelled, so an
 // open agent hold reads at its full amount -- it errs toward "less is left", never more).
@@ -52,6 +112,7 @@ function ledgerView(goal) {
       for (const id of r.closes || []) if (res[id]) res[id].open = false;
     } else if (r.op === 'correct') marks[r.sid] = Number(r.measured) || 0;
     else if (r.op === 'tombstone' && !tombs[r.sid]) tombs[r.sid] = r;
+    else if (r.op === 'untomb') delete tombs[r.sid];
     else if (r.op === 'exhausted') exhausted.add(r.lease || cur);
   }
   const lease = `L${leases}`;
@@ -80,8 +141,35 @@ function render(sid, rec, v, state, next) {
     L.push('unknown in-flight: spend since this session\'s last settle is settled from its transcript on detach, never assumed zero.');
   }
   L.push(`next: ${next}`);
-  L.push('Verbs (type as a message): `econ status`, `econ detach`.  `/clear` = fresh session in this pane.  The cap is never raised here.');
+  L.push('Verbs (type as a message): `econ status`, `econ detach`, `subelo 70M` (adds 70M to this pane\'s goal and opens a successor lease; then /kclear + /kresume), `subelo 70M <goal>` (same for any named goal, from any pane; no size limit).  `/clear` = fresh session in this pane.');
   return L.join('\n');
+}
+
+// Owner raise, executed here (model-free) from the harness-supplied prompt. Effect and invariants:
+// vault/specs/econ-owner-raise.md. The blocked pane stays fenced; a successor lease opens and a fresh session binds to it.
+function doRaise(sid, rec, v, raise, tomb, short) {
+  const s8 = sid.slice(0, 8);
+  if (raise.error) return `OWNER RAISE REFUSED -- ${raise.error}. Nothing was changed (0 model tokens).`;
+  if (!(tomb || v.exhausted || short))
+    return `OWNER RAISE -- session ${s8} is not blocked (goal ${rec.goal} still holds a call); nothing raised (0 model tokens).`;
+  const args = [ECON_PLANE, 'raise', '--session', sid, '--amount', String(raise.amount)];
+  if (!tomb && !v.exhausted) args.push('--short');
+  const r = spawnSync(PY, args, { encoding: 'utf8', timeout: 9000, windowsHide: true });
+  let out = null;
+  try { out = JSON.parse(String(r.stdout || '').trim().split('\n').pop()); } catch (e) { out = null; }
+  if (!out) return `OWNER RAISE FAILED -- the ledger leg could not run (${r.error ? (r.error.code || r.error.message) : 'exit ' + r.status}). ` +
+    'Nothing is assumed written; send the same message again (the raise is idempotent per session and lease).';
+  if (!out.ok) return `OWNER RAISE REFUSED -- ${out.reason}. Goal ${rec.goal} is unchanged (0 model tokens).`;
+  if (!out.applied) return `OWNER RAISE -- ${out.reason} (0 model tokens).`;
+  // Applied: do NOT block. The message passes to the model with this context, and the model runs the existing
+  // rollover (/kclear seals; context-watchdog's self-sealed step types /clear; rollover_autotype types /kresume).
+  const what = out.resumed
+    ? `The Owner's earlier raise had already opened lease ${out.lease} (cap ${fmt(out.cap_new)}); this pane's fence is now lifted.`
+    : `Goal ${out.goal}: programme ${fmt(out.programme_old)} -> ${fmt(out.programme_new)} (+${fmt(raise.amount)}); ` +
+      `lease ${out.from_lease} -> ${out.lease}, cap ${fmt(out.cap_old)} -> ${fmt(out.cap_new)}. This pane's fence is lifted.`;
+  return { context: `OWNER RAISE APPLIED by the econ hook (0 model tokens). ${what} ` +
+    'The Owner wants the context rollover to start now, automatically: run the /kclear skill immediately (Skill tool, skill "kclear") ' +
+    'to seal the capsule, do no other work first, and do not ask for confirmation. The watchdog then types /clear and /kresume follows in the fresh session.' };
 }
 
 function block(reason) {
@@ -116,16 +204,28 @@ function decide(event) {
          : 'no binding was changed.');
   }
 
+  const raise = parseRaise(prompt);
+  if (raise && raise.error) return `OWNER RAISE REFUSED -- ${raise.error}. Nothing was changed (0 model tokens).`;
+  if (raise && raise.goal) return doRaiseGoal(raise.goal, raise, 'named goal');
+  if (raise && (!rec || rec.goal === 'none')) {
+    // No binding record: the goal this pane would bind to by cwd (observe-only, nothing is written) is the one it
+    // is working on. Same resolver as the PreToolUse guard, so a pane quarantined on an exhausted goal finds it.
+    let pb = null;
+    try { pb = gb.goalBinding(event, sid, { observe: true }); } catch (e) { pb = null; }
+    if (pb && pb.goal) return doRaiseGoal(pb.goal, raise, `pane cwd is under goal ${pb.goal}`);
+    return raiseUsage(`session ${sid.slice(0, 8)} is not bound to a goal and its directory is under no goal root.`);
+  }
   if (!rec || rec.goal === 'none') {
-    if (verb) return render(sid, rec, null, rec ? 'DETACHED' : 'NEUTRAL',
+    if (verb || raise) return render(sid, rec, null, rec ? 'DETACHED' : 'NEUTRAL',
       rec ? `fenced workspaces: ${(rec.fenced || []).join(', ') || 'none'}` : 'no goal pays for this session.');
     return null;
   }
   const v = ledgerView(rec.goal);
-  if (!v || v.cap == null) return verb ? render(sid, rec, null, 'UNKNOWN', `goal ${rec.goal} has no readable ledger; unknown is never admitted.`) : null;
+  if (!v || v.cap == null) return (verb || raise) ? render(sid, rec, null, 'UNKNOWN', `goal ${rec.goal} has no readable ledger; unknown is never admitted.`) : null;
   const tomb = !!v.tombs[sid];
   const nxt = nextRequest(sid);
   const short = nxt > 0 && v.cap - v.settled < nxt;
+  if (raise) return doRaise(sid, rec, v, raise, tomb, short);
   if (!verb && !tomb && !v.exhausted && !short) return null;
   const state = tomb ? 'TOMBSTONED' : v.exhausted ? 'EXHAUSTED' : short ? 'NEXT CALL DOES NOT FIT' : 'ACTIVE';
   let next;
@@ -148,7 +248,9 @@ if (require.main === module) {
     }
     let reason = null;
     try { reason = decide(JSON.parse(raw.replace(/^﻿/, ''))); } catch (e) { reason = null; }
-    if (reason) block(reason);
+    if (reason && typeof reason === 'object') {
+      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: reason.context } }));
+    } else if (reason) block(reason);
     else process.stdout.write('{}');
   });
 }
