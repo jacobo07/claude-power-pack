@@ -2411,6 +2411,13 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
                 raise MissionError(f"phase lease refused: cannot measure the call base ({type(exc).__name__}: {exc})")
             if calls_base is None:
                 raise MissionError("phase lease refused: the mission's call count is unmeasurable (max_calls needs a base)")
+            if str(os.environ.get("CPP_FORECAST_GATE") or "").strip().lower() != "off" and phase_lease.get("forecast"):
+                # E3 physical forecast gate: a forecast below calls x floor contradicts its own call cap.
+                import route_admission as ra
+                fg = ra.forecast_gate(phase_lease.get("forecast"), phase_lease.get("max_calls"),
+                                      phase_lease.get("profile") or rec.get("worker_profile") or ra.TOP_LEVEL, ra.load_floors())
+                if fg["verdict"] != "OK":
+                    raise MissionError(f"phase lease refused (forecast gate {fg['verdict']}): {fg['reason']}")
         try:
             changes["phase_lease"] = pls.make_lease(
                 phase=phase_lease.get("phase"), forecast=phase_lease.get("forecast"), base=int(base),
@@ -2420,6 +2427,11 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         except pls.LeaseError as exc:
             raise MissionError(f"phase lease refused: {exc}")
         changes["phase_lease_warned"] = None
+        old_phase = (rec.get("phase_lease") or {}).get("phase")
+        if old_phase is not None and str(old_phase) != str(changes["phase_lease"]["phase"]):
+            # E3 fresh epoch per plan: a lease for another phase is another plan. The running session's
+            # context carries none of its working set, so gsd_epoch rotates to a fresh worker (as for a new packet).
+            changes["wu_packet_epoch"] = rec["epoch"]
     if "token_estimate" in changes:
         cal = estimate_calibration(rec, changes["token_estimate"], measure=measure)
         basis = (estimate_basis or "").strip()

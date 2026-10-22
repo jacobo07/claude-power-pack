@@ -190,6 +190,25 @@ def admit(route: dict, floors: dict, *, margin: float = DEFAULT_GROWTH_MARGIN,
     return {**out, "verdict": RECOMPILE, "reasons": reasons}
 
 
+def forecast_gate(forecast, calls, profile: str, floors: dict) -> dict:
+    """Physical forecast gate (CCR v5 E3, plan R4): a forecast for `calls` model calls cannot be below
+    calls x the profile's measured first-call floor, because every call re-reads at least that context.
+    Verdict OK / UNDERPRICED (forecast < floor bound) / UNKNOWN (no measured floor for the profile, or an
+    input that is not a positive integer): unknown is not OK. Pure; `need` is the bound, not an estimate."""
+    prof = (floors.get("profiles") or {}).get(profile) or {}
+    floor = prof.get("floor")
+    for v in (forecast, calls):
+        if isinstance(v, bool) or not isinstance(v, int) or v <= 0:
+            return {"verdict": "UNKNOWN", "need": None, "reason": f"forecast and calls must be positive integers, got {forecast!r}, {calls!r}"}
+    if isinstance(floor, bool) or not isinstance(floor, int) or floor <= 0:
+        return {"verdict": "UNKNOWN", "need": None, "reason": f"profile {profile!r} has no measured floor"}
+    need = calls * floor
+    if forecast < need:
+        return {"verdict": "UNDERPRICED", "need": need, "floor": floor,
+                "reason": f"forecast {forecast:,} < {calls:,} calls x {profile} floor {floor:,} = {need:,}"}
+    return {"verdict": "OK", "need": need, "floor": floor, "reason": None}
+
+
 MIN_MEASURED_N = 3
 MEASURED_PATH = REPO_ROOT / "vault" / "config" / "measured-ctx1.json"
 
