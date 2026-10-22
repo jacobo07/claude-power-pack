@@ -181,6 +181,30 @@ def main() -> int:
         check("V-MCA-THREE-RELAYS", statuses == ["diverged_followed"] * 3 and kept,
               f"statuses={statuses} worktree kept every phase, cwd untouched={kept}")
 
+        # 17-18 a shared checkout merely BEHIND the proven worktree, dirty with a peer's edits
+        # (measured 2026-10-22: m-188e06ee9603 held on every pass by another pane's
+        # uncommitted files). Behind is milder than diverged: follow, move nothing, keep the edits.
+        def behind(root):
+            c, w = repo(root)
+            (w / ".planning" / "workstreams" / "ws").mkdir(parents=True)
+            commit(w, ".planning/workstreams/ws/ROADMAP.md", "phase 1 done")
+            (c / "seed.txt").write_text("a peer's uncommitted edit", encoding="utf-8")
+            return c, w
+
+        cwd, wt = behind(t / "c17")
+        bc, bw = head(cwd), head(wt)
+        r = gm.align_cwd(str(cwd), str(wt), proven_workstream="ws")
+        check("V-MCA-BEHIND-DIRTY-FOLLOWED", r["status"] == "behind_followed"
+              and "behind_followed" not in gm.CWD_ALIGN_BLOCKING
+              and head(cwd) == bc and head(wt) == bw
+              and (cwd / "seed.txt").read_text(encoding="utf-8") == "a peer's uncommitted edit",
+              f"status={r['status']} heads unchanged={head(cwd) == bc and head(wt) == bw}")
+
+        cwd, wt = behind(t / "c18")
+        r = gm.align_cwd(str(cwd), str(wt))
+        check("V-MCA-BEHIND-DIRTY-UNPROVEN", r["status"] == "behind_dirty",
+              f"no proof of the worktree -> still blocking: {r['status']}")
+
     # 9 structural: supervise aligns the cwd BEFORE it launches a worker
     src = Path(gm.__file__).read_text(encoding="utf-8")
     sup = src[src.index("def supervise("):]

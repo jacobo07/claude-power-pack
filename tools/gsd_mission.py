@@ -3497,6 +3497,15 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
                     " a worker launched here would branch from a lineage without the work", **facts}
         dirty = git(cwd, "status", "--porcelain", "--untracked-files=no").stdout.strip()
         if dirty:
+            # Behind is milder than diverged: a proven worktree is followed the same way, and the
+            # dirty files (a peer's, in a shared checkout) are left alone. Measured 2026-10-22:
+            # m-188e06ee9603 held on every pass by another pane's uncommitted edits.
+            if (proven_workstream
+                    and there[0] == os.path.normcase(str(Path(work_dir).resolve()))
+                    and _worktree_carries_workstream(work_dir, cwd, proven_workstream)):
+                return {"status": "behind_followed", "detail": f"cwd {hc[:12]} is behind work_dir"
+                        f" {hw[:12]} and dirty, but the work_dir is a proven worktree carrying"
+                        f" {proven_workstream}'s latest roadmap; following it, nothing moved", **facts}
             return {"status": "behind_dirty", "detail": f"cwd {hc[:12]} is behind work_dir {hw[:12]}"
                     " but has uncommitted tracked changes; not fast-forwarding over them", **facts}
         ff = git(cwd, "merge", "--ff-only", hw)
@@ -5349,8 +5358,8 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 if aligned["status"] == "fast_forwarded":
                     lr.ledger_append(mid, "cwd_fast_forwarded", mission_id=mid, epoch=rec["epoch"],
                                      detail=aligned["detail"])
-                elif aligned["status"] == "diverged_followed":
-                    lr.ledger_append(mid, "cwd_diverged_followed", mission_id=mid, epoch=rec["epoch"],
+                elif aligned["status"] in ("diverged_followed", "behind_followed"):
+                    lr.ledger_append(mid, f"cwd_{aligned['status']}", mission_id=mid, epoch=rec["epoch"],
                                      detail=aligned["detail"])
                 elif aligned["status"] in CWD_ALIGN_BLOCKING:
                     why = f"launch held: cwd not aligned with work_dir ({aligned['status']}): {aligned['detail']}"
