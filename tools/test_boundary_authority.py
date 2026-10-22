@@ -145,15 +145,18 @@ def main() -> int:
         [("Grep", {"pattern": "x"})],
         [("Edit", {"file_path": "a.py"})],
         [("Bash", {"command": "python tools/test_x.py"})],
+        [("PowerShell", {"command": "& $py -I tools/test_y.py"})],
+        [("PowerShell", {"command": "git status"})],
         [("Read", {"file_path": "a.py"})],
     ])
     calls = bl.read_calls(t)
     lg = bl.ledger(calls)
-    check("V-BND-LEDGER-COUNTS-CALLS-NOT-ROWS", lg["calls"] == 6, f"6 calls from 13 rows, synthetic skipped: {lg['calls']}")
+    check("V-BND-LEDGER-COUNTS-CALLS-NOT-ROWS", lg["calls"] == 8, f"8 calls from 17 rows, synthetic skipped: {lg['calls']}")
     check("V-BND-LEDGER-CLASSES", (lg["discovery_calls"], lg["write_calls"], lg["test_calls"], lg["parallel_calls"])
-          == (4, 1, 1, 1), str({k: lg[k] for k in ("discovery_calls", "write_calls", "test_calls", "parallel_calls")}))
+          == (4, 1, 2, 1), "test_calls counts the Bash and the PowerShell test run, not `git status`: "
+          + str({k: lg[k] for k in ("discovery_calls", "write_calls", "test_calls", "parallel_calls")}))
     check("V-BND-LEDGER-REREADS", lg["reread_calls"] == 2 and lg["rereads"] == {"a.py": 3}
-          and lg["rediscovery_ratio"] == round(2 / 6, 3), str(lg["rereads"]))
+          and lg["rediscovery_ratio"] == round(2 / 8, 3), str(lg["rereads"]))
     check("V-BND-LEDGER-EMPTY", bl.ledger([])["rediscovery_ratio"] is None, "no calls, no ratio")
     s = bl.suggest_max_calls([10, 12, 20, 40, 15])
     check("V-BND-PGO-P80", s["max_calls"] == 25 and s["p80"] == 20 and s["n"] == 5, "nearest-rank p80 of 5 is the 4th: " + str(s))

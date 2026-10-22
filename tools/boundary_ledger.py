@@ -23,6 +23,7 @@ from pathlib import Path
 
 DISCOVERY = frozenset({"Read", "Grep", "Glob"})
 WRITE = frozenset({"Edit", "Write", "NotebookEdit"})
+SHELLS = frozenset({"Bash", "PowerShell"})   # the 49c0ae70 worker ran its tests through PowerShell
 TEST_RE = re.compile(r"\b(pytest|test_\w+\.py|npm (run )?test|unittest)\b")
 MIN_SAMPLES = 3
 DEFAULT_MARGIN = 0.25
@@ -66,7 +67,7 @@ def ledger(calls: list[dict]) -> dict:
         names = [t for t, _ in c["tools"]]
         disc += bool(names) and all(t in DISCOVERY for t in names)
         write += any(t in WRITE for t in names)
-        test += any(t == "Bash" and TEST_RE.search(s) for t, s in c["tools"])
+        test += any(t in SHELLS and TEST_RE.search(s) for t, s in c["tools"])
         par += len(names) >= 2
         hit = False
         for t, s in c["tools"]:
