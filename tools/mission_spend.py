@@ -155,6 +155,48 @@ def processed_tokens(rec: dict, root: Path | None = None, cache: dict | None = N
     return total
 
 
+def _file_calls(path: Path, since_iso: str | None) -> int:
+    """Distinct model calls in a transcript, counted by the same rule as `_file_tokens`."""
+    seen = set()
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            if '"usage"' not in line:
+                continue
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            m = r.get("message") or {}
+            if not m.get("usage") or m.get("model") == "<synthetic>":
+                continue
+            if since_iso and (r.get("timestamp") or "") < since_iso:
+                continue
+            seen.add(m.get("id") or r.get("uuid"))
+    return len(seen)
+
+
+def processed_calls(rec: dict, root: Path | None = None,
+                    sessions: tuple[set[str], set[str]] | None = None) -> int | None:
+    """Model calls the mission's OWN sessions have made (CCR v5 E2 boundary authority), attributed exactly
+    like `processed_tokens`; None when it cannot be measured (absence is not zero)."""
+    root = root or projects_root()
+    dirs: list[Path] = []
+    for base in (rec.get("work_dir"), rec.get("cwd")):
+        for d in (mission_dirs(base, root) if base else []):
+            if d not in dirs:
+                dirs.append(d)
+    if not dirs:
+        return None
+    ids, prefixes = sessions if sessions is not None else mission_sessions(rec)
+    if not ids and not prefixes:
+        return None
+    since = None
+    if rec.get("created_at"):
+        import datetime as dt
+        since = dt.datetime.fromtimestamp(float(rec["created_at"]), dt.timezone.utc).isoformat()[:19]
+    return sum(_file_calls(p, since) for d in dirs for p in d.rglob("*.jsonl") if _attributed(p, d, ids, prefixes))
+
+
 # --- Lineage (UCDA A2, 2026-10-09) -----------------------------------------------------------------
 # A renewal used to carry a FRESH token_estimate: a lineage renewed three times could spend 4x its
 # envelope while every single mission stayed under its own. The lineage is the unit of budget.

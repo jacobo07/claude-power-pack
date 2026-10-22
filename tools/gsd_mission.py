@@ -1625,7 +1625,7 @@ def _cost_breaker(rec: dict, now: float, measure=None, fingerprint=None) -> dict
     return rec
 
 
-def _phase_breaker(rec: dict, now: float, measure=None, phase_fn=None) -> dict:
+def _phase_breaker(rec: dict, now: float, measure=None, phase_fn=None, measure_calls=None) -> dict:
     """CCR v5 A2: judge the mission's phase lease (tools/phase_lease.py) against measured spend. A TRIP, or an
     ambiguity (BLOCKED: unmeasured spend, unreadable or moved GSD phase), parks the mission with a cost hold
     flagged `phase_breaker`, which supervise stops WITHOUT the cost-hold grace. WARN is ledgered once per lease.
@@ -1642,7 +1642,13 @@ def _phase_breaker(rec: dict, now: float, measure=None, phase_fn=None) -> dict:
     except Exception as exc:  # noqa: BLE001 -- becomes a BLOCKED verdict below
         lr.ledger_append(mid, "phase_breaker_unmeasured", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:300])
         spent = None
-    verdict = pls.judge(lease, spent, (phase_fn or pls.current_phase)(lease["state_file"]))
+    calls = None
+    if lease.get("max_calls") is not None:
+        try:
+            calls = (measure_calls or ms.processed_calls)(rec)
+        except Exception as exc:  # noqa: BLE001 -- becomes a BLOCKED verdict in judge
+            lr.ledger_append(mid, "phase_breaker_unmeasured", mission_id=mid, error=f"calls: {type(exc).__name__}: {exc}"[:300])
+    verdict = pls.judge(lease, spent, (phase_fn or pls.current_phase)(lease["state_file"]), calls)
     if verdict["verdict"] in (pls.TRIP, pls.BLOCKED):
         lr.ledger_append(mid, "phase_breaker_tripped", mission_id=mid, verdict=verdict["verdict"],
                          phase=lease["phase"], spend=verdict.get("spend"), forecast=lease["forecast"],
@@ -2341,7 +2347,7 @@ def estimate_calibration(rec: dict, estimate: int, measure=None) -> dict:
 def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = None, autocompact=None,
                  wu_packet: str | None = None, continue_max_tokens=None, worker_mcp: str | None = None,
                  ccr_class: str | None = None, now: float | None = None, estimate_basis: str | None = None, measure=None,
-                 phase_lease: dict | None = None) -> dict:
+                 phase_lease: dict | None = None, measure_calls=None) -> dict:
     """Set the launch envelope of a live mission (spec mission-envelope-and-compiled-wu): the token
     estimate the cost breaker judges, the worker model, its autocompact window, and the compiled
     work-unit packet launch_prompt sends instead of resume_command. Every value is validated before
@@ -2397,11 +2403,20 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
             base = (measure or ms.processed_tokens)(rec)
         except Exception as exc:  # noqa: BLE001 -- refused with the cause, never a guessed base
             raise MissionError(f"phase lease refused: cannot measure the lease base ({type(exc).__name__}: {exc})")
+        calls_base = None
+        if phase_lease.get("max_calls") is not None:   # E2 boundary authority: the call base is measured, never supplied
+            try:
+                calls_base = (measure_calls or ms.processed_calls)(rec)
+            except Exception as exc:  # noqa: BLE001 -- refused with the cause
+                raise MissionError(f"phase lease refused: cannot measure the call base ({type(exc).__name__}: {exc})")
+            if calls_base is None:
+                raise MissionError("phase lease refused: the mission's call count is unmeasurable (max_calls needs a base)")
         try:
             changes["phase_lease"] = pls.make_lease(
                 phase=phase_lease.get("phase"), forecast=phase_lease.get("forecast"), base=int(base),
                 state_file=phase_lease.get("state_file"), reserve=phase_lease.get("reserve", 0),
-                set_at=time.time() if now is None else now)
+                set_at=time.time() if now is None else now,
+                max_calls=phase_lease.get("max_calls"), calls_base=calls_base)
         except pls.LeaseError as exc:
             raise MissionError(f"phase lease refused: {exc}")
         changes["phase_lease_warned"] = None
@@ -2605,6 +2620,20 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
         admission["verdict"] = "RECOMPILE"   # known and not launchable
         admission["reasons"] = ([f"ccr_contract:{contract['verdict']}"] + admission["reasons"])[:6]
         res = {**res, "verdict": "RECOMPILE", "reasons": admission["reasons"]}
+    # WU-E1: context admission. Observe records; CPP_CONTEXT_ADMISSION=enforce refuses a route priced
+    # below what receipts show its profile pays on call 1. UNMEASURED never refuses (absent is not wrong).
+    try:
+        cc = ra.context_check(route, ra.load_floors(floors_path), ra.load_measured())
+    except (OSError, ValueError) as exc:
+        cc = {"verdict": "UNMEASURED", "workers": [], "error": str(exc)[:200]}
+    admission["context_check"] = cc
+    if (str(os.environ.get("CPP_CONTEXT_ADMISSION") or "").strip().lower() == "enforce"
+            and cc["verdict"] == "UNDERSTATED" and admission["verdict"] in ("ADMISSIBLE", "WATCHED")):
+        admission["verdict"] = "RECOMPILE"
+        admission["reasons"] = (["context_check:UNDERSTATED " + ", ".join(
+            f"{r['profile']} floor {r['floor']:,} < measured {r['measured_median']:,}"
+            for r in cc["workers"] if r["status"] == "UNDERSTATED")] + admission["reasons"])[:6]
+        res = {**res, "verdict": "RECOMPILE", "reasons": admission["reasons"]}
     # The route's worker profile is recorded on the mission, so launch reads one field. Only an
     # admission-set value is ever replaced; a profile an operator set by hand stays.
     slim = next((w["profile"] for w in admission["workers"] if w["profile"] in SLIM_PROFILES), None)
@@ -2621,20 +2650,6 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
         pass
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                       event="route_admission", now=now, admission=admission, **prof,
-    # WU-E1: context admission. Observe records; CPP_CONTEXT_ADMISSION=enforce refuses a route priced
-    # below what receipts show its profile pays on call 1. UNMEASURED never refuses (absent is not wrong).
-    try:
-        cc = ra.context_check(route, ra.load_floors(floors_path), ra.load_measured())
-    except (OSError, ValueError) as exc:
-        cc = {"verdict": "UNMEASURED", "workers": [], "error": str(exc)[:200]}
-    admission["context_check"] = cc
-    if (str(os.environ.get("CPP_CONTEXT_ADMISSION") or "").strip().lower() == "enforce"
-            and cc["verdict"] == "UNDERSTATED" and admission["verdict"] in ("ADMISSIBLE", "WATCHED")):
-        admission["verdict"] = "RECOMPILE"
-        admission["reasons"] = (["context_check:UNDERSTATED " + ", ".join(
-            f"{r['profile']} floor {r['floor']:,} < measured {r['measured_median']:,}"
-            for r in cc["workers"] if r["status"] == "UNDERSTATED")] + admission["reasons"])[:6]
-        res = {**res, "verdict": "RECOMPILE", "reasons": admission["reasons"]}
                       reason=f"route {res['verdict']}: " + ("; ".join(res["reasons"]) or "fits")[:280])
 
 
@@ -5704,6 +5719,8 @@ def _cli(argv=None) -> int:
                                           "the base is measured now, at the phase start")
     en.add_argument("--phase-forecast", help="the phase's token forecast, e.g. 4.5M; warn 1.2x, hard 1.5x")
     en.add_argument("--phase-state", help="the workstream STATE.md the current GSD phase is read from")
+    en.add_argument("--phase-max-calls", type=int,
+                    help="boundary authority: the phase's model-call cap (base measured now); more calls trips the phase breaker")
     en.add_argument("--worker-mcp", choices=WORKER_MCP_MODES,
                     help="none = launch this mission's worker with --strict-mcp-config and no servers")
     ad = sub.add_parser("admit", help="judge the compiled work unit's route against its envelope "
@@ -5797,7 +5814,8 @@ def _cli(argv=None) -> int:
                            phase_lease=(None if args.phase_lease is None else
                                         {"phase": args.phase_lease, "state_file": args.phase_state,
                                          "forecast": _token_count("phase_forecast", args.phase_forecast)
-                                         if args.phase_forecast else None}))
+                                         if args.phase_forecast else None,
+                                         "max_calls": args.phase_max_calls}))
         pkt =(rec.get("wu_packet") or {}).get("path")
         print(f"ENVELOPE SET mission={rec['mission_id']} token_estimate={rec.get('token_estimate')} "
               f"model={rec.get('model')} autocompact={rec.get('autocompact')} wu_packet={pkt} "

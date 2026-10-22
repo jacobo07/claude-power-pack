@@ -35,8 +35,15 @@ class LeaseError(ValueError):
 
 
 def make_lease(*, phase, forecast, base, state_file, reserve=0, warn=WARN_RATIO, hard=HARD_RATIO,
-               set_at: float) -> dict:
-    """Validate and build a lease. `base` is the mission's processed total at the phase start."""
+               set_at: float, max_calls=None, calls_base=None) -> dict:
+    """Validate and build a lease. `base` is the mission's processed total at the phase start.
+    `max_calls` (CCR v5 E2, boundary authority) caps the phase's model calls; `calls_base` is the
+    mission's call count at the phase start, measured by the caller like `base`."""
+    if max_calls is not None:
+        if isinstance(max_calls, bool) or not isinstance(max_calls, int) or max_calls <= 0:
+            raise LeaseError(f"max_calls must be a positive integer, not {max_calls!r}")
+        if isinstance(calls_base, bool) or not isinstance(calls_base, int) or calls_base < 0:
+            raise LeaseError(f"max_calls needs a measured calls_base (non-negative integer), not {calls_base!r}")
     phase = str(phase).strip()
     if not re.fullmatch(r"\d+(?:\.\d+)?", phase):
         raise LeaseError(f"phase must be a phase number like 1 or 2.1, not {phase!r}")
@@ -49,8 +56,11 @@ def make_lease(*, phase, forecast, base, state_file, reserve=0, warn=WARN_RATIO,
         raise LeaseError(f"need 1 < warn < hard, got warn={warn} hard={hard}")
     if not str(state_file or "").strip():
         raise LeaseError("state_file is required: the lease names where the current GSD phase is read")
-    return {"phase": phase, "forecast": forecast, "warn": float(warn), "hard": float(hard), "reserve": reserve,
-            "base": base, "state_file": str(state_file), "set_by": "envelope", "set_at": set_at}
+    lease = {"phase": phase, "forecast": forecast, "warn": float(warn), "hard": float(hard), "reserve": reserve,
+             "base": base, "state_file": str(state_file), "set_by": "envelope", "set_at": set_at}
+    if max_calls is not None:
+        lease.update(max_calls=max_calls, calls_base=calls_base)
+    return lease
 
 
 def current_phase(state_file: str | Path) -> str | None:
@@ -63,7 +73,30 @@ def current_phase(state_file: str | Path) -> str | None:
     return m.group(1) if m else None
 
 
-def judge(lease: dict | None, spent: int | None, phase_now: str | None) -> dict:
+def judge(lease: dict | None, spent: int | None, phase_now: str | None, calls: int | None = None) -> dict:
+    """Token verdict (`_judge_tokens`) plus the boundary authority: a lease with `max_calls` also judges the
+    phase's model calls (`calls` now - `calls_base`). A call count that is unmeasured or below its base is
+    BLOCKED, never permission; more calls than `max_calls` is a TRIP whatever the tokens say, because a
+    cheap-per-call phase can still rediscover the same code forever. A lease without `max_calls` is unchanged."""
+    out = _judge_tokens(lease, spent, phase_now)
+    if not lease or lease.get("max_calls") is None or out["verdict"] in (TRIP, BLOCKED):
+        return out
+    cap, base = int(lease["max_calls"]), int(lease.get("calls_base") or 0)
+    if calls is None:
+        return {**out, "verdict": BLOCKED, "calls": None, "max_calls": cap,
+                "reason": f"phase {lease['phase']} call count is unmeasurable; unmeasured is not zero"}
+    n = calls - base
+    if n < 0:
+        return {**out, "verdict": BLOCKED, "calls": n, "max_calls": cap,
+                "reason": f"call count {calls:,} is below the lease base {base:,}: the baseline is not this lineage's"}
+    out.update(calls=n, max_calls=cap)
+    if n > cap:
+        return {**out, "verdict": TRIP,
+                "reason": f"boundary breaker: phase {lease['phase']} made {n:,} calls > max_calls {cap:,}; reforecast before release"}
+    return out
+
+
+def _judge_tokens(lease: dict | None, spent: int | None, phase_now: str | None) -> dict:
     """{verdict, spend, hard_at, warn_at, reason}. No lease -> OK with no reason (nothing to judge)."""
     if not lease:
         return {"verdict": OK, "reason": None}
