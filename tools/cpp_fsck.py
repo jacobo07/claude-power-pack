@@ -253,7 +253,10 @@ def check_resumption(r: Result, repo: Path, programmes: Path) -> None:
 # --- F5 ------------------------------------------------------------------------------------------
 def check_capsules(r: Result, state: Path, now: float) -> None:
     c = "capsule_without_disposition"
-    path = state / "rollover-ledger.jsonl"
+    # rollover.py writes under state/rollover/ (its STATE_DIR); a flat state/ ledger is the fixture layout.
+    path = state / "rollover" / "rollover-ledger.jsonl"
+    if not path.exists():
+        path = state / "rollover-ledger.jsonl"
     try:
         rows = _jsonl(path)
     except OSError as e:
