@@ -1,32 +1,27 @@
 # RESUMPTION_FILE: ctx-rent-a2
 
-**Identity.** Claude Power Pack, `C:\Users\User\.claude\skills\claude-power-pack`, branch `feature/knowledge-acquisition`
-(another writer is active: pathspec-scoped commits only). Goal `ctx-rent-a2`, cap 14,000,000 (Owner "y go p95",
-2026-10-11). Plan: `vault/plans/context-rent-a2-2026-10-11.md` (read sections 1, 4, 5 only). Thesis: per-call provider
-input must scale with the boundary's working set, not the session; the host re-sends the epoch, so eviction happens
-only through rotation, compiled carrier subagents, or zero-model paths.
+Regenerated 2026-10-23 from durable state. The 2026-10-11 version, which asked for Slice B, was STALE.
+**Coherence anchor:** HEAD contains 2259ca87 "status labels its denominators". If it does not, this file is stale: re-derive before acting.
 
-**State (coherence anchor: HEAD contains 6f5840a3 "plan(ctx-rent-a2)").**
-- Measured baseline: fresh floor 122,093 (32,664 host-cached + 89,427 CPP session floor); 28a5bd61 ran 139,327 ->
-  247,022 over 47 calls (9.54M). Always-loaded files 142,354 bytes (~39.5K tokens).
-- Slice A SEALED 4de21ba8: `tools/context_floor_census.py <sid...>` (gate `tools/test_context_floor_census.py` 23/23);
-  ranked table in plan section 1.1. CPP files = 139.8K chars (61 % of attributed floor): global CLAUDE.md 39.8K,
-  PP CLAUDE.md 39.0K, rules 38.0K (18 moved-to-skill stubs = 16.2K), MEMORY.md 17.1K, ~/CLAUDE.md 6.0K. Host
-  listings 57.5K (25 %). Session-specific unattributed bracket +28K / -3K. Hooks timed out before call 1.
-- econ-succession is paused before S1; its own file is
-  `vault/programs/econ-succession/RESUMPTION_FILE.md` (do not read it until slice H).
-- Held mission m-4d1b851262ff (ctx-same-pane) to be retired; its S0 commit 018230b9 (branch ctx/same-pane) to be merged in C/D.
+**Identity.** Claude Power Pack, `C:\Users\User\.claude\skills\claude-power-pack`, branch `feature/knowledge-acquisition`.
+Other writers are active, so commit by pathspec only. Goal `ctx-rent-a2`. Plan `vault/plans/context-rent-a2-2026-10-11.md`.
+Residual plan `vault/plans/incremental-kernel-residual-2026-10-23.md` (aa97ebf8), Owner `y residual`, then option 1.
 
-**Active decisions.** EXECUTION mode only; no GSD plan-phase; at most 2 subagents; order A -> B -> H -> C+F -> I ->
-D+E+G -> J -> K -> L. Never raise the 150K canary; budget = channel floor + packet. Rotate (/kclear) at every sealed slice.
-Bind each new session: write `~/.claude/state/goal-binding/<sid>.json` with goal ctx-rent-a2 before working.
+**Economics (read `goal-status`; every key now carries `scope`).**
+- Programme 60,000,000. The Owner raised it from 30M on 2026-10-23.
+- Lease L2 has a cap of 30,000,000.
+- Settled 18,943,657 across the goal, so programme_executable was 41,056,343 at regeneration.
+- The residual plan's own hard stop is 5.0M. The raise does not widen it.
+- Pending Owner correction packet `correct-ctx-rent-a2-b8ff709c-2026-10-23.json`. It lowers the b8ff709c mark from 6,867,353 to 5,845,727 (pre-binding 1,021,626 charged twice). The root cause is fixed in 7eafc2b0.
+
+**Slices.**
+- A: SEALED (4de21ba8).
+- B: SEALED, receipt `SLICE-B-RECEIPT.md`. Call-1 floor fell from 122,093 to 106,769.
+- Next in plan order: H (econ-succession S1 canary), then C+F, I, D+E+G, J, K, L.
 
 **Next 3 actions.**
-1. Slice B, CPP files only (listings need settings = Owner): back up each file to `~/.claude/backups/rules-<ts>/`,
-   then (a) collapse the 18 moved-to-skill rule stubs into ONE index file (one line each: name + load-when), (b) move
-   hook-enforced prose out of ~/.claude/CLAUDE.md (Windows bridge, closer-guard amendments) and the PP CLAUDE.md
-   inline HARD RULES mirror to linked files, keeping each rule's one-line trigger, (c) compact MEMORY.md. Revert line per move.
-2. Re-measure: new session call-1 floor via `tools/context_floor_census.py <new sid>`; record the delta in plan 1.1.
-3. Slice H (econ-succession S1 canary) on the reduced floor.
+1. Check whether H is still live before reading `vault/programs/econ-succession/RESUMPTION_FILE.md`. Later economics work (owner-control-plane, ccr) may have superseded econ-succession.
+2. Compact MEMORY.md (+4.2K regrowth since Slice A).
+3. Residual plan stages R3-R6 if not yet sealed. Check `git log --grep residual`.
 
-**Start.** Bind your session, then do action 1.
+**Start.** Bind your session to ctx-rent-a2, then run action 1.
