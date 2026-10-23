@@ -656,6 +656,10 @@ def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = 
             ceiling = mark + sum(r["hold"] for r in g["res"].values() if r["sid"] == sid)
             if measured > ceiling:
                 capped, measured = measured, ceiling
+        elif g["prebind"].get(sid, 0) and measured > g["prebind"][sid]:
+            # No mark, but its pre-binding history was booked as programme capex: never charge it again as
+            # goal spend (a leaked pane was charged 1,021,626 of history this way, ctx-rent-a2 2026-10-23).
+            capped, measured = measured, measured - g["prebind"][sid]
     out = led.settle_stopped(sid, int(measured), reason)
     if capped is not None:
         out["capped_from_transcript"] = capped

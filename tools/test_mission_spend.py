@@ -200,6 +200,14 @@ def main() -> int:
     ms.goal_settle("g-fix", worker, transcripts_root=Path(TMP) / "tr")
     wmark = led._gfold(led._read())["marks"][worker]
     check("V-MSPEND-SETTLE-UNBOOKED-CONTROL", wmark == 917_218, f"mark={wmark:,}")
+    # a leaked pane with no settle mark but a prebind row (ctx-rent-a2 b8ff709c 2026-10-23 shape)
+    pre = "b8ff709c-0000-4000-8000-000000000003"
+    (tr / f"{pre}.jsonl").write_text(_row("b1", "2027-01-15T08:00:00Z", cr=6_867_353) + "\n", encoding="utf-8")
+    led._append(led._read(), {"op": "prebind", "sid": pre, "measured": 1_021_626})
+    out = ms.goal_settle("g-fix", pre, transcripts_root=Path(TMP) / "tr")
+    pmark = led._gfold(led._read())["marks"][pre]
+    check("V-MSPEND-SETTLE-EXCLUDES-PREBIND", pmark == 5_845_727 and out.get("capped_from_transcript") == 6_867_353,
+          f"mark={pmark:,}")
 
     # --- same-pane Owner correction of a misbooked mark ----------------------------------------
     led._append(led._read(), {"op": "settle", "sid": coord, "measured": 19_879_802, "closes": []})
