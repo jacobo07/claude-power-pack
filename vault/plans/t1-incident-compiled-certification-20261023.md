@@ -1,6 +1,6 @@
 ---
 covers: [t1-incident, hold-enforcement, authority-provenance, econ-reconciliation, mission-rebind, compiled-certification-campaign, tennis-all-match]
-status: EXECUTING (Owner "y" + subelo 129M applied 3x = +387M, kept by Owner "mantén"; plan hard ceiling stays 60M). A4/F5 DONE (T1 settled to 196,160,185). A1/F1 DONE 8409d0f2: hold gate registered and drilled in a real session on both hosts; the sweep-side fixes are live on the laptop only, because GEX44's shared install 30fdbf0f is not updated (Owner decision).
+status: EXECUTING (Owner "y" + subelo 129M applied 3x = +387M, kept by Owner "mantén"; plan hard ceiling stays 60M). A4/F5 DONE (T1 settled to 196,160,185). A1/F1 DONE 8409d0f2: hold gate registered and drilled in a real session on both hosts; the sweep-side fixes are live on the laptop only, because GEX44's shared install 30fdbf0f is not updated (Owner decision). A2/F2+F3 DONE 34d3f4a7 (AUTHORITY_RECEIPT 28/28): enforced on laptop missions; GEX44 missions need that install update plus a cross-host owner-turn receipt, which is not designed yet. A3/F4 DONE 98256535 (REBIND_F4 7/7). Next: A0+A5 in the Fabric clone.
 date: 2026-10-23
 supersedes_execution_of: [tennis-all-match 03-02, 03-03, 03-04, 03-05 as GSD plans]
 ---
