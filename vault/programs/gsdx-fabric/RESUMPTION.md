@@ -1,5 +1,45 @@
 # gsdx-fabric RESUMPTION (coordinator pane, updated 2026-10-15) -- PROGRAMME CLOSED
 
+**UPDATE 2026-10-22 (night) -- ALL-MATCH plan approved by the Owner; READ THIS FIRST.** Plan = 4 lanes + closing planner (truth/certification,
+admissibility 1,070, exact search 276, generative cascade), commits in order: (1) canonical projection, (2) certification of the 439, (3) v4
+challenger + global type/prototype solver, (4) objdiff fingerprints + persistent search, (5) donor cascade, (6) repair-rule miner, (7) full
+regression on GEX44. Steps 1 and 2 are DONE (fabric HEAD 2f4e8147 = bare `mission/gsdx-fabric`; clone at b7d6cf4d, pull ff before the next job):
+- `modules/recon_fabric/projection.py` (NOT frontier.py, which is D4's dominator frontier): one row per fn from `evidence/pc1/ledger.jsonl` + the
+  four FM sweeps (champion v3 = `evidence/fm1-repair3`), counters derived, every inconsistency a FrontierError. `python -m modules.recon_fabric.projection build|check`.
+- `modules/recon_fabric/certify.py run` (GEX44 only): CERT1 batch 76f2c342 certified 439/439, 0 tokens, 121 s. Now CERTIFIED 451, COMPILES_NO_MATCH 276,
+  NO_COMPILE 1,070, UNKNOWN 0. Gates (local, any plane): FR1 15/15, CERT1 15/15, FM2 22/22.
+- How a deterministic job runs: push the sha to `ssh://kobii@gex44/home/kobii/repos/claude-power-pack.git` refs/heads/mission/gsdx-fabric (NEVER origin = GitHub),
+  then `cmd /c "ssh -i ~/.ssh/kobicraft_gex44 kobii@gex44 bash -s < script.sh"` (LF, no BOM, `</dev/null` on every inner command) in `/home/kobii/missions/gsdx-fabric`:
+  refuse if a tennis claude worker or `gsdx-fabric-stage/driver.py` runs, pull ff, check HEAD, run, commit evidence on the clone, then `git fetch <clone> HEAD` + `merge --ff-only` here.
+- Digests are over LF bytes and paths are POSIX (KN-FR1-01): never hash raw bytes of a checkout file that crosses planes.
+- Goal gsdx-factory-2 now on lease L18 (Owner raised twice: programme 267,817,916, cap 140,047,764). Work from the PP pane with `git -C`; never Set-Location into the worktree.
+- Step 3 (first round) DONE: repair v4 is the CHAMPION (sweep b7d8e028: compile 934, MATCH 485, 0 regressed vs v3); re-certified on v4 (687046fa:
+  473/473). Fabric HEAD 54ca4a8e = bare. Now CERTIFIED 485, COMPILES_NO_MATCH 449, NO_COMPILE 863. Gates FR1 15, CERT1 15, FM2 38, FM1 10.
+  A new champion lane = add it to projection.LANES, set CHAMPION, sweep `fastmatch sweep repairN`, require 0 regressions, then `certify run` again.
+  Read the compiler messages first: `diag_v4*.sh` pattern (read-only python heredoc on the clone printing first errors per family).
+- v5 challenger COMMITTED, NOT SWEPT: fabric HEAD 33ad265f = bare (FM2 49/49). v4 core refactored to `_core4(src, v5)`; the 92 "no-code" NO_COMPILE
+  are m2c jump-table lift failures (no C emitted; needs a lift-side fix, not a repair rule).
+- 2026-10-23 v5 is the CHAMPION. v4 identity re-sweep: 1797/1797 cache hits, sweep.jsonl sha 0eafbefb unchanged. v5 sweep c7d2ddda: compile 1059, MATCH 502,
+  0 match / 0 compile regressed vs v4 (+17 / +125). LANES+CHAMPION=v5 (44f4e735), CERT1 on v5 3d2a1fd3: 490/490 certified, 128 s, 0 tokens. Projection 1cbb2bbd
+  = bare = clone: CERTIFIED 502, COMPILES_NO_MATCH 557, NO_COMPILE 738, UNKNOWN 0. Gates on both planes: FR1 15, CERT1 15, FM2 49, FM1 10.
+  v5 NO_COMPILE first errors: 10149 x265, 10209 x109, no-code x92 (jump-table lift), 10377 x70, 10140 x57, 10499 x52.
+NEXT: step 4 = search lane on COMPILES_NO_MATCH (557 under v5); step 5 = lift-side fix for the 92 no-code NO_COMPILE.
+
+**UPDATE 2026-10-23 -- TENNIS ALL-MATCH T1 MISSION RUNNING (supersedes the step-4/5 NEXT above).** Owner "y" on the inline T1 master plan
+(brief: Tennis ALL-MATCH + Wii/MWCC reconstruction compiler + universal method mechanisms; dormant pieces get activation predicates, not code).
+- Ralph mission `m-260aa89142c8` on GEX44, clone `/home/kobii/missions/tennis-all-match` (branch `mission/tennis-all-match`, armed at d5a86458),
+  `/gsd-autonomous --workstream tennis-all-match`, capsule-v2, permission auto, **authority 56,000,000**, max 60 cycles / 120 h. Supervised by
+  `agora-mission-sweep.timer`. Worker 1 sid b541504e (launched ~2026-10-23 07:20 CEST), planning Phase 1.
+- Plan of record = `.planning/workstreams/tennis-all-match/ROADMAP.md` (10 phases: registry, fingerprints, search engine, near-match, NO_COMPILE families,
+  jump-table lift, inversion corpus, families, telemetry/CBR/red team, fixed-point + T2 sizing). Budget central 44M (25-73M) + 12M contingency.
+- COORDINATOR DUTIES (this pane, lean): (1) per epoch: settle each worker session into gsdx-factory-2 (`mission_spend.py goal-settle --goal gsdx-factory-2
+  --session <sid> --measured <processed>`); (2) fetch the worker's branch (it may run in `.claude/worktrees/<x>` on `mission/tennis-all-match-run`; check
+  `git -C <clone> branch -a`) and ff the Fabric worktree, push to bare `mission/gsdx-fabric`; (3) merge `tennis-all-match/knowledge` + `ukdl-candidates.md`
+  into the KV/UKDL; (4) carry `tennis-all-match/owner-bundle.md` lines to the Owner. Status: `CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude python3
+  ~/.claude/skills/claude-power-pack/tools/gsd_mission.py status` on GEX44.
+- Do NOT run sweeps/certify in `/home/kobii/missions/gsdx-fabric` while the mission runs (same toolchain/CPU; the worker owns deterministic jobs now).
+Pitfall seen: never pipe ssh through Select-Object -First (cuts the pipe; the remote commit survived only by luck).
+
 **Identity.** GSD X Reconstruction Fabric = gsdx-factory Part C, goal `gsdx-factory-2`. Plan:
 `vault/plans/gsdx-fabric-master-plan-2026-10-14.md` (in the fabric worktree). Live chain: `vault/programs/gsdx-fabric/chain.json`
 (this repo). Fabric worktree: `C:\Users\User\Apps\pp-gsdx-factory-2\.claude\worktrees\fabric` (branch gsdx-factory/fabric at
