@@ -331,9 +331,17 @@ class GoalLedger(SpendLedger):
 
     @staticmethod
     def _summary(g: dict, **extra) -> dict:
+        settled = sum(g["marks"].values())
+        other = sum(GoalLedger._committed_reserves(ls) for ls in g["leases"] if not ls["closed"])
+        # cap/used/open/remaining describe the CURRENT lease; settled is the whole goal; the programme pair is the
+        # Owner's authority. Read as one quantity they look like an overcommit (ctx-rent-a2 2026-10-23).
         return {"goal": g["goal"], "cap": g["cap"], "used": g["used"], "open": g["open"],
-                "settled": sum(g["marks"].values()),
+                "settled": settled,
                 "remaining": None if g["cap"] is None else g["cap"] - g["used"],
+                "lease": g["leases"][-1]["id"], "programme": g["programme"],
+                "programme_executable": None if g["programme"] is None else g["programme"] - settled - g["open"] - other,
+                "scope": {"cap": "lease", "used": "lease", "open": "lease", "remaining": "lease", "settled": "goal",
+                          "programme": "programme", "programme_executable": "programme"},
                 "exhausted": bool(g.get("exhausted_now")), "tombstoned": sorted(g.get("tombs") or {}),
                 "refused_billed": g.get("refused_billed", 0), "recovery": GoalLedger._recovery_view(g), **extra}
 

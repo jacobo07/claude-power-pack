@@ -354,6 +354,20 @@ def _():
     assert p.returncode == 0, (p.returncode, p.stdout, p.stderr)
 
 
+@_gate("V-STATUS-DENOMINATORS-LABELLED")
+def _():
+    # ctx-rent-a2 2026-10-23: "remaining" (lease) and "executable" (programme) were read as one quantity
+    led, _s = _ledger()
+    led.declare_cap(4 * M, "t")
+    led.set_programme(20 * M, "t", inside_agent=False)
+    led.settle_stopped("a", M, "t")
+    led.lease_open("s1", 4 * M, prev_lease="L1")
+    st, ps = led.status(), led.programme_status()
+    assert st["lease"] == ps["lease"] == "L2", (st.get("lease"), ps["lease"])
+    assert st["programme_executable"] == ps["executable"] and st["programme"] == 20 * M, st
+    assert st["scope"]["remaining"] == "lease" and st["scope"]["settled"] == "goal", st.get("scope")
+
+
 if __name__ == "__main__":
     mp.freeze_support()
     _run_gates()
