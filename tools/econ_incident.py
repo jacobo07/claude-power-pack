@@ -51,7 +51,8 @@ def _next_action(level: str) -> str:
         return "inspect why spend outran progress; recompile the work unit before any release"
     if level == "DEFAULT_CEILING":
         return ("the default allowance is spent and no Owner authority exists; declare authority with "
-                "`gsd_mission.py authority --tokens N`, then release, or keep the mission parked")
+                "`gsd_mission.py authority --tokens N --owner-turn <session>:<timestamp>`, then release, or keep "
+                "the mission parked")
     return "explain the variance against the estimate and recompute the remaining work before release"
 
 

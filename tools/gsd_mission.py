@@ -2278,6 +2278,7 @@ def topology(mission_id: str) -> dict:
         spent = ms.processed_tokens(rec)
     except Exception:  # noqa: BLE001 -- unmeasured is shown as such
         spent = None
+    measured_at = _utc_iso(time.time())
     mark = rec.get("cost_mark") or {}
     return {
         "goal": f"{rec['cwd']}|{rec.get('workstream') or ''}", "mission": mission_id, "state": rec["state"],
@@ -2286,7 +2287,9 @@ def topology(mission_id: str) -> dict:
         "binding": mb.binding(rec), "live_head": (_git_ro(root, "rev-parse", "HEAD") or "").strip() or None,
         "live_branch": (_git_ro(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip() or None,
         "progress_frontier": mark or None,
-        "spend": spent, "spend_since_progress": (spent - int(mark.get("tokens") or 0)) if spent is not None and mark else None,
+        "spend": spent, "spend_measured_at": measured_at if spent is not None else None,
+        "authority": authority_lineage(rec),
+        "spend_since_progress": (spent - int(mark.get("tokens") or 0)) if spent is not None and mark else None,
         "progress_unknown": rec.get("progress_unknown"),
         "obligations": rec.get("obligations") or [],
         "hold": {k: hold.get(k) for k in ("reason", "kind", "set_at", "recovery", "wait")} if hold else None,
@@ -2399,10 +2402,99 @@ def resource_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive,
 AMR_LAUNCH_ATTEMPTS = 2
 
 
+_HARNESS_TURN = ("<task-notification", "<system-reminder", "[SYSTEM NOTIFICATION")
+
+
+def _utc_iso(t) -> str | None:
+    try:
+        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(float(t)))
+    except (TypeError, ValueError):
+        return None
+
+
+def live_spend(rec: dict, measure=None) -> dict:
+    """T1 F3: processed spend measured NOW, with its time and the room left under the Owner's authority.
+    An unmeasurable spend is named, never shown as 0."""
+    import mission_spend as ms
+    at = time.time()
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception as exc:  # noqa: BLE001 -- unmeasured is a named state
+        return {"processed": None, "measured_at": _utc_iso(at), "error": f"{type(exc).__name__}: {exc}"[:200]}
+    auth = rec.get("authority_tokens")
+    room = (int(auth) - ms.closeout_reserve(rec) - int(spent)) if auth and spent is not None else None
+    return {"processed": spent, "measured_at": _utc_iso(at), "authority": auth, "room_after_reserve": room}
+
+
+def authority_lineage(rec: dict) -> dict:
+    """T1 F2: where the mission's ceiling came from. Every `authority_set` ledger row (older ones carry only a
+    free-text reason) and the typed receipts written since F2. Read-only; an unreadable ledger is named."""
+    try:
+        rows = [{"at": r.get("ts") or r.get("at"), "reason": str(r.get("reason") or "")[:240],
+                 "owner_turn": ((r.get("receipt") or {}).get("owner_turn") or {}).get("uuid")}
+                for r in lr.ledger_events(rec["mission_id"]) if r.get("event") == "authority_set"]
+    except Exception as exc:  # noqa: BLE001 -- shown, never hidden
+        rows = [{"error": f"ledger unreadable: {type(exc).__name__}: {exc}"[:200]}]
+    return {"tokens": rec.get("authority_tokens"), "set_rows": rows,
+            "receipts": rec.get("authority_receipts") or []}
+
+
+def verify_owner_turn(ref: str, finder=None) -> dict:
+    """T1 F2 (invariant I2): resolve `<session>:<timestamp>` to ONE user message the Owner typed, in that session's
+    own transcript. Refused: no transcript, a subagent session, a sidechain/meta row, a tool result, a harness
+    notification, no match or more than one match for the timestamp prefix. Measured 2026-10-23 (m-260aa89142c8):
+    the 80M raise carried only a free-text reason; the Owner's "a" was found by searching transcripts by hand.
+    -> {session, timestamp, uuid, text_sha256, text_head, transcript}."""
+    import hashlib
+    sid, _, ts = str(ref or "").partition(":")
+    if not sid or not ts or not re.fullmatch(r"[A-Za-z0-9._-]{8,128}", sid):
+        raise MissionError(f"owner turn {ref!r}: give <session>:<timestamp>, e.g. 15f5057c-...:2026-10-23T09:36:51")
+    if sid.startswith("agent-"):
+        raise MissionError(f"owner turn {ref!r}: a subagent session has no Owner turns")
+    path = (finder or lr.find_transcript)(sid)
+    if not path:
+        raise MissionError(f"owner turn {ref!r}: no transcript for session {sid}")
+    hits = []
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            if '"user"' not in line or ts not in line:
+                continue
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if (row.get("type") != "user" or not str(row.get("timestamp") or "").startswith(ts)
+                    or row.get("isSidechain") or row.get("isMeta")):
+                continue
+            content = (row.get("message") or {}).get("content")
+            if isinstance(content, list):
+                if any(isinstance(b, dict) and b.get("type") != "text" for b in content):
+                    continue   # a tool result (or anything not typed) is not an Owner turn
+                content = "".join(b.get("text", "") for b in content if isinstance(b, dict))
+            if not isinstance(content, str) or not content.strip() or content.lstrip().startswith(_HARNESS_TURN):
+                continue
+            hits.append((row, content))
+    if len(hits) != 1:
+        raise MissionError(f"owner turn {ref!r}: {len(hits)} Owner message(s) match in {path.name}; "
+                           "give the full timestamp of exactly one")
+    row, text = hits[0]
+    return {"session": sid, "timestamp": row["timestamp"], "uuid": row.get("uuid"),
+            "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(), "text_head": text.strip()[:80],
+            "transcript": str(path)}
+
+
 def set_authority(mission_id: str, tokens=None, extend_hours: float | None = None,
-                  now: float | None = None, reason: str = "") -> dict:
+                  now: float | None = None, reason: str = "", owner_turn: str | None = None,
+                  actor: str | None = None, expected_seq: int | None = None, recognize_overrun: bool = False,
+                  spent_fn=None, finder=None) -> dict:
     """Record Owner-granted programme authority on a mission: `authority_tokens` is the processed-token
-    ceiling AMR may lease inside; `extend_hours` adds wall time. Both are Owner acts; the reason names it."""
+    ceiling AMR may lease inside; `extend_hours` adds wall time. Both are Owner acts; the reason names it.
+    T1 F2: each act appends a receipt (prev, new, owner_turn, actor, expected_seq, spend at the set). The same
+    owner turn applied again with the same figure is an idempotent no-op; with another figure it is refused.
+    I3: a ceiling that leaves no room above live spend after the closeout reserve is refused unless
+    `recognize_overrun` (the T1 80M raise arrived below a live 141M and tripped 2m21s later). An unmeasurable
+    spend does not refuse; the receipt records it as unmeasured."""
+    import mission_spend as ms
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
@@ -2413,8 +2505,38 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
         fields["max_hours"] = float(rec.get("max_hours") or lr.DEFAULT_MAX_HOURS) + float(extend_hours)
     if not fields:
         raise MissionError("nothing to set: give --tokens and/or --extend-hours")
-    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                      event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})", **fields)
+    turn = verify_owner_turn(owner_turn, finder) if owner_turn else None
+    receipts = list(rec.get("authority_receipts") or [])
+    if turn:
+        used = [r for r in receipts if (r.get("owner_turn") or {}).get("uuid") == turn["uuid"]
+                and (r.get("owner_turn") or {}).get("session") == turn["session"]]
+        if used:
+            if used[-1].get("new") == fields.get("authority_tokens", rec.get("authority_tokens")) and \
+                    used[-1].get("extend_hours") == (float(extend_hours) if extend_hours else None):
+                lr.ledger_append(mission_id, "authority_replay_noop", mission_id=mission_id, owner_turn=turn["uuid"])
+                return rec
+            raise MissionError(f"owner turn {owner_turn!r} already authorized a different act on {mission_id}")
+    spent = None
+    if "authority_tokens" in fields:
+        try:
+            spent = (spent_fn or ms.processed_tokens)(rec)
+        except Exception:  # noqa: BLE001 -- unmeasured is recorded below, never read as zero
+            spent = None
+        new = fields["authority_tokens"]
+        reserve = ms.closeout_reserve({**rec, "authority_tokens": new})
+        if spent is not None and new - reserve <= spent and not recognize_overrun:
+            raise MissionError(
+                f"refused: authority {new:,} minus closeout reserve {reserve:,} is not above live spend {spent:,} "
+                f"(measured now), so the breaker would trip on arrival. Re-read spend (topology) and choose again, "
+                "or pass --recognize-overrun to record a ceiling that recognises spend already made")
+    entry = {"at": time.time() if now is None else now, "prev": rec.get("authority_tokens"),
+             "new": fields.get("authority_tokens", rec.get("authority_tokens")),
+             "extend_hours": float(extend_hours) if extend_hours else None, "owner_turn": turn, "actor": actor,
+             "expected_seq": expected_seq, "seq_before": rec.get("seq"), "spent_at_set": spent,
+             "recognize_overrun": bool(recognize_overrun)}
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expected_seq,
+                      event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})",
+                      authority_receipts=(receipts + [entry])[-20:], ledger_extra={"receipt": entry}, **fields)
 
 
 def _amr_transcript(rec: dict, sid: str | None) -> Path | None:
@@ -2628,10 +2750,14 @@ def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> d
     wtype = owner_wait_type(c.get("boundary"), base_hold.get("reason"))
     figs = owner_wait_figures(base_hold.get("reason"), c)
     gm_py = Path(__file__).resolve()
-    resume = (f'python "{gm_py}" authority --mission {mid} --tokens <NEW_TOTAL> ; '
-              f'python "{gm_py}" release --mission {mid}')
+    resume = (f'python "{gm_py}" authority --mission {mid} --tokens <NEW_TOTAL> '
+              f'--owner-turn <SESSION>:<TIMESTAMP> ; python "{gm_py}" release --mission {mid}')
     fig_txt = (f"spent {figs['spent']:,}" if "spent" in figs else "spend not recorded in the hold") + \
         (f" of ceiling {figs['ceiling']:,}" if "ceiling" in figs else "; ceiling not recorded in the hold")
+    # T1 F3: the figure is the hold's snapshot. Measured 2026-10-23: an option quoting "50.3M of 56M" from 06:41Z was
+    # answered at 09:36Z, when live spend was ~141M, and the new 80M ceiling tripped on arrival.
+    fig_txt += (f" (as of {_utc_iso(base_hold.get('set_at')) or 'an unrecorded time'}, the hold's snapshot, not live "
+                f"spend: read it now with `gsd_mission.py topology --mission {mid}`)")
     akind = base_hold.get("authority_kind") or ms.authority_kind(rec)
     akind_txt = {"DEFAULT_POLICY": "DEFAULT_POLICY (no Owner authority was ever declared; the default allowance ran out)",
                  "OWNER": "OWNER (the Owner's declared authority)"}.get(akind, akind)
@@ -6503,6 +6629,12 @@ def _cli(argv=None) -> int:
     au.add_argument("--tokens", help="processed-token ceiling for the whole mission, e.g. 66M")
     au.add_argument("--extend-hours", type=float)
     au.add_argument("--reason", default="", help="the Owner act this records")
+    au.add_argument("--owner-turn", help="REQUIRED (T1 F2): <session>:<timestamp> of the Owner's own message that "
+                                         "authorized this act, verified in that session's transcript")
+    au.add_argument("--actor", help="session id of whoever applies the act (default: CLAUDE_CODE_SESSION_ID)")
+    au.add_argument("--expected-seq", type=int, help="the record seq the act was decided on; a moved record conflicts")
+    au.add_argument("--recognize-overrun", action="store_true",
+                    help="admit a ceiling at or below live spend (recognises spend already made)")
     pr = sub.add_parser("protocol", help="set the rollover protocol on an existing mission "
                                          "(held or owner-less only; same permission-mode rule as arm)")
     pr.add_argument("--mission", required=True)
@@ -6619,9 +6751,23 @@ def _cli(argv=None) -> int:
         print(f"REQUIRES SET mission={rec['mission_id']} obligation={args.obligation} total={len(rec['requires'])}")
         return 0
     if args.cmd == "authority":
-        rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason)
+        if not args.owner_turn:
+            # T1 F2 (I2): an Owner act from the command line names the Owner message it records.
+            print("AUTHORITY REFUSED: --owner-turn <session>:<timestamp> is required (the Owner's own message "
+                  "authorizing this act; it is verified in that session's transcript)", file=sys.stderr)
+            return 2
+        try:
+            rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason,
+                                owner_turn=args.owner_turn, expected_seq=args.expected_seq,
+                                actor=args.actor or os.environ.get("CLAUDE_CODE_SESSION_ID"),
+                                recognize_overrun=args.recognize_overrun)
+        except MissionError as exc:
+            print(f"AUTHORITY REFUSED: {exc}", file=sys.stderr)
+            return 3
+        last = (rec.get("authority_receipts") or [{}])[-1]
         print(f"AUTHORITY SET mission={rec['mission_id']} authority_tokens={rec.get('authority_tokens')} "
-              f"max_hours={rec.get('max_hours')}")
+              f"max_hours={rec.get('max_hours')} owner_turn={(last.get('owner_turn') or {}).get('uuid')} "
+              f"spent_at_set={last.get('spent_at_set')}")
         return 0
     if args.cmd == "bind":
         rec = bind_mission(args.mission, args.path, args.cause)
@@ -6688,6 +6834,8 @@ def _cli(argv=None) -> int:
                      "iterations": m.get("iterations"), "owner": (m.get("owner") or {}).get("session_id"),
                      "liveness": v_, "evidence": why, "pending": m.get("pending"),
                      "plan": plan_next(m, time.time(), sessions)})
+        if m["state"] not in TERMINAL and (m.get("authority_tokens") or m.get("token_estimate")):
+            rows[-1]["spend"] = live_spend(m)   # T1 F3: the figure an Owner decides on is live, with its time
     if getattr(args, "surface", False):
         print(json.dumps(status_surface(rows, missions, time.time()), indent=2))
         return 0

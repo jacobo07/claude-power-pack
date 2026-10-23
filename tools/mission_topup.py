@@ -183,7 +183,8 @@ def sweep_one(mid: str, *, now: float | None = None, decide_fn=None, sender=None
         if pol.get("notified_hold_set_at") != hold_at:
             msg = (f"Mission {mid} is parked on its budget and was NOT topped up: {verdict['why']}. "
                    f"Authority {int(rec.get('authority_tokens') or 0):,}. "
-                   f"Raise it with: gsd_mission.py authority --mission {mid} --tokens N, then release.")
+                   f"Raise it with: gsd_mission.py authority --mission {mid} --tokens N "
+                   f"--owner-turn <session>:<timestamp>, then release.")
             pol["notified_hold_set_at"] = hold_at
             pol["last_refusal"] = {"at": now, "why": verdict["why"], "notify": notify(msg, sender)}
             save_policy(pol)
