@@ -1,6 +1,6 @@
 ---
 covers: [t1-incident, hold-enforcement, authority-provenance, econ-reconciliation, mission-rebind, compiled-certification-campaign, tennis-all-match]
-status: APPROVED_PLAN (Owner "y", 2026-10-23); CAPITAL_PENDING (subelo must be typed as a whole message)
+status: EXECUTING (Owner "y" + subelo 129M applied 3x = +387M, kept by Owner "mantén"; plan hard ceiling stays 60M). A4/F5 DONE (T1 settled to 196,160,185).
 date: 2026-10-23
 supersedes_execution_of: [tennis-all-match 03-02, 03-03, 03-04, 03-05 as GSD plans]
 ---
