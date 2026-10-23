@@ -48,6 +48,8 @@ def main() -> int:
         "import os, sys\n"
         "print('[{\"mission_id\": \"m-fake\", \"action\": \"relay\"}]')\n"
         "sys.exit(int(os.environ.get('FAKE_MISSION_RC', '0')))\n", encoding="utf-8")
+    # topup stage (spec mission-auto-topup): runs after mission, before v2
+    (tools / "mission_topup.py").write_text("print('TOPUP m-fake grant: fake')\n", encoding="utf-8")
     # v2 stage: spawns a grandchild that records its pid, then hangs. Its tree must die.
     (tools / "gsd_long_run.py").write_text(
         "import subprocess, sys, time, os\n"
@@ -70,7 +72,8 @@ def main() -> int:
     st = {s["name"]: s for s in b.get("stages", [])}
     check("V-SWEEP-PASS-RAN", r.returncode == 0 and b.get("outcome") == "ran", f"rc={r.returncode} {b} {r.stderr[-300:]}")
     check("V-SWEEP-MISSION-STAGE-FIRST-AND-OK",
-          list(st) == ["mission", "v2"] and st["mission"]["rc"] == 0, str(b.get("stages")))
+          list(st) == ["mission", "topup", "v2"] and st["mission"]["rc"] == 0 and st["topup"]["rc"] == 0,
+          str(b.get("stages")))
     check("V-SWEEP-STAGE-DEADLINE", st.get("v2", {}).get("timed_out") is True
           and st["v2"]["secs"] < 30, str(st.get("v2")))
     gpid = int((root / "grandchild.pid").read_text())

@@ -101,6 +101,12 @@ try {
     Add-Log 'mission ' $m.text
     if ($m.timed_out) { Add-Log '' "SWEEP_STAGE_TIMEOUT stage=mission after ${missionTimeout}s; tree of pid $($m.pid) killed" }
     $stages += $m
+    # Auto top-up (spec vault/specs/mission-auto-topup.md): after supervise has set this pass's holds, grant a
+    # pre-authorised budget step to a mission parked on its authority trip that kept committing.
+    $tu = Invoke-Stage 'topup' @("`"$(Join-Path $tools 'mission_topup.py')`"", 'sweep') 120
+    Add-Log 'topup ' $tu.text
+    if ($tu.timed_out) { Add-Log '' "SWEEP_STAGE_TIMEOUT stage=topup after 120s; tree of pid $($tu.pid) killed" }
+    $stages += $tu
     $v = Invoke-Stage 'v2' @("`"$(Join-Path $tools 'gsd_long_run.py')`"", 'sweep') $v2Timeout
     Add-Log '' $v.text
     if ($v.timed_out) { Add-Log '' "SWEEP_STAGE_TIMEOUT stage=v2 after ${v2Timeout}s; tree of pid $($v.pid) killed" }

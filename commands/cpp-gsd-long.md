@@ -42,6 +42,23 @@ $pp = 'C:\Users\User\.claude\skills\claude-power-pack'
 & $py "$pp\tools\gsd_mission.py" status
 ```
 
+**Budget at arm — mandatory (Owner decision 2026-10-23, spec `vault/specs/mission-auto-topup.md`).**
+Right after `arm`, give the mission an Owner authority and pre-authorised top-ups. Without it the breaker
+judges an auto envelope and parks the run at 2 x that guess (m-b3303ade7741: stopped at 17M, 00:01, lost
+seven hours). Propose the figure from `suggest`, say it to the Owner, then:
+
+```powershell
+& $py "$pp\tools\mission_topup.py" suggest --cwd .          # open ROADMAP phases x 40M (CPP_MISSION_PHASE_TOKENS)
+& $py "$pp\tools\mission_topup.py" budget --mission <id> --authority 120M --topups 3 --step 40M --reason "<Owner act>"
+```
+
+The 5-minute sweep then grants one step (up to `--topups`) when the mission parks on its **authority** trip
+AND the work tree has commits outside `.planning/` since the last grant; it releases the hold and wakes the
+worker with a `TOPUPn` decision. No commits, exhausted top-ups, or any other hold (default ceiling, stall,
+Owner pause) stays parked, ledgered as `authority_auto_topup_refused`, and is sent once to Telegram when
+`TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` are set. Kill switch `CPP_MISSION_AUTO_TOPUP=off`.
+Gate: `python tools/test_mission_topup.py` (V-TOPUP-*).
+
 `arm` creates the mission record (`~/.claude/state/gsd-mission-<id>.json`) and launches worker 1
 as `claude --bg`. From then on nothing needs the pane that armed it:
 
