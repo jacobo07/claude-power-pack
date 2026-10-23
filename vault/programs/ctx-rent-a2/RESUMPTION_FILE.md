@@ -22,6 +22,11 @@ Residual plan `vault/plans/incremental-kernel-residual-2026-10-23.md` (aa97ebf8)
 **Next 3 actions.**
 1. Check whether H is still live before reading `vault/programs/econ-succession/RESUMPTION_FILE.md`. Later economics work (owner-control-plane, ccr) may have superseded econ-succession.
 2. Compact MEMORY.md (+4.2K regrowth since Slice A).
-3. Residual plan stages R3-R6 if not yet sealed. Check `git log --grep residual`.
+3. Residual R5 (cpp_fsck) + R6 (knowledge) run as a GEX44 worker. It was launched 2026-10-23 at about 16:45 local, pid 2483351, clone `~/missions/residual-fsck`, branch `mission/residual-fsck` (base 34d3f4a7), brief `vault/plans/residual-fsck-gex44-brief.md`, sonnet, max-turns 45.
+   When `RESULT.md` exists there:
+   - `git fetch ssh://gex44/home/kobii/missions/residual-fsck mission/residual-fsck`, then cherry-pick by pathspec.
+   - Rerun `tools/test_cpp_fsck.py` on the laptop, then `python tools/cpp_fsck.py` against live state.
+   - Settle the spend into ctx-rent-a2 with `--measured` from `~/missions/residual-fsck.out.json` usage.
+   R1-R4 are SEALED: 7eafc2b0, 2259ca87, c6657844, 7f255a13, fa840b3c. The b8ff709c correction was APPLIED (approval 3384afb6).
 
 **Start.** Bind your session to ctx-rent-a2, then run action 1.
