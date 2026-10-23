@@ -1,6 +1,6 @@
 ---
 covers: [t1-incident, hold-enforcement, authority-provenance, econ-reconciliation, mission-rebind, compiled-certification-campaign, tennis-all-match]
-status: AWAITING_OWNER
+status: APPROVED_PLAN (Owner "y", 2026-10-23); CAPITAL_PENDING (subelo must be typed as a whole message)
 date: 2026-10-23
 supersedes_execution_of: [tennis-all-match 03-02, 03-03, 03-04, 03-05 as GSD plans]
 ---
