@@ -1,0 +1,3 @@
+{
+ "command": "# bash-safe\ncd /c/Users/User/Apps/pp-ce-lifecycle-v3 && python C:/Users/User/.claude/skills/claude-power-pack/tools/gsd_mission.py arm-chain -h 2>&1 | head -30; grep -rn \"arm-chain\" vault/programs/cognitive-economy/lifecycle/*.md | head -5"
+}

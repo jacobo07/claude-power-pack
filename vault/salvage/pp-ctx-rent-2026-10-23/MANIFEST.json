@@ -1,0 +1,19 @@
+{
+ "head": "0f8713fe12cd6c706a18ef80f8b85fc2f13c45c0",
+ "patch_sha256": "596899acc739aa4474c784e9c296a8bc7dba0965759ac444413276f909570093",
+ "patch_bytes": 13100,
+ "untracked": [
+  {
+   "path": ".pp-capabilities",
+   "sha256": "46fa5bf21add91c9866057f0e8a61932a0f76db2789fc8d0cc913f3e711d24d2"
+  },
+  {
+   "path": "vault/plans/ce-lifecycle-amendment-A1-executable-authority-PROPOSED.md",
+   "sha256": "c5998bd8c7bb57e52dfefe14601efcd8e83bd08e57b4e215701abcc6ce8fc72c"
+  },
+  {
+   "path": "vault/plans/ctx-rent-s2-recovery.md",
+   "sha256": "ad94bdb1d6063f574454a970a31ec0031fb8ccb4ab0a90648f4487baeb0b5398"
+  }
+ ]
+}

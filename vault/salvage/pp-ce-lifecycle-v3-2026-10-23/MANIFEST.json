@@ -1,0 +1,115 @@
+{
+ "head": "e2fa4e4228fbef1ab34be7edeb3e91d206b239a3",
+ "patch_sha256": "7988367e005b32d1e4127ce8e40c3974216ccd870171cab59b85ee116608791f",
+ "patch_bytes": 25798,
+ "untracked": [
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-ADV2a.md.partial.json",
+   "sha256": "0297c8f9ad08b972822fda402b7c769a1c1d002b58f4a8f03764bfd0f99e7abb"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-ADV2a.md.residual.md",
+   "sha256": "88d17bcf7f4a7d06a0d4c9097ec43ef0f37f7e7476ab7a9ac31fb5bf44a22b35"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-ADV2b.md.partial.json",
+   "sha256": "da01b4724b1939e6f53d37d033e14d74be28f1081a228422a58ed612639cc819"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-ADV2b.md.residual.md",
+   "sha256": "50ca3bdc3c6c06ebe36aba02a5bf9608602db21c96d398bcb77538292bb1b80b"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-INST2.md.partial.json",
+   "sha256": "bfe0fe65d3e7b5fe2c194a186844db04c9302c56ce35ecb07205878de97a8fda"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-INST2.md.residual.md",
+   "sha256": "e22086b35f3c04971ae36b111b2e13a151e7bfa3ed72ed2e88b8bf703be266a6"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S1.md.partial.json",
+   "sha256": "282151e26d5484c9db5319403c80229ea59c15dd76fc83806f39c277302c730f"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S1.md.residual.md",
+   "sha256": "b77790ad3879516c12a5e2b070a6056566c54862093d340f35ef1676234692bd"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S2.md.partial.json",
+   "sha256": "3b473ae29dc6c7ffdb85afeef0a04ed851ee301052190b0cbef566b15940bbbc"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S2.md.residual.md",
+   "sha256": "1bfcfe16dd59146753990fc846b75af664937db2403f360706183fe76d094452"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S3.md.partial.json",
+   "sha256": "36f8eb8b76be310c94782f64922a70b2d115e13a0b8ea163cbc12d42c79c0004"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S3.md.residual.md",
+   "sha256": "899a5125becd3866917fd7a0307575b28d23a3f3fc0131a8c9e683ece2dd4675"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S4.md.partial.json",
+   "sha256": "6147c4b0a0a79aeccfe0000c927c9c1e8e01c1f32b1446959c794f2f8d38208f"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S4.md.residual.md",
+   "sha256": "44301a2772c9a740d748fff08430f0d608b3367cca35f497e1e6788f602f7d6a"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S5.md.partial.json",
+   "sha256": "1cace793e4accf6ac7c7028860a60170304ea40711c83d8b90fe7a8559d2ed43"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S5.md.residual.md",
+   "sha256": "1beb51ce50b748c89bf98856d7d80a33a9c9cc767e69fc6a8ce0b0df911c822f"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S5b.md.partial.json",
+   "sha256": "d72596da48648c01a9e51137769e24469a84d6ef14e1ae91497d77d57c091175"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S5b.md.residual.md",
+   "sha256": "fa4fa2381e6f8df0679526b68e4d36ae2c37f5506f633106b3e2e866c3462cf3"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S5c.md.partial.json",
+   "sha256": "19cec95f4760427b5345fc124b71f6955290f8a8be302492dece51ee66cdc2e8"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S5c.md.residual.md",
+   "sha256": "370c84f8afc1e1bce668aaaff0273500d67fc5668cb5aa31d6762860d14f0c93"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S5d.md.partial.json",
+   "sha256": "32d234589c613995e7ed9ddb841047ce81b5af2cf4a82a00892dc8ce8364352d"
+  },
+  {
+   "path": "vault/programs/cognitive-economy/lifecycle/WU-S5d.md.residual.md",
+   "sha256": "7813e4707d12e26be5edabe43836a419ca5d948de516bc3ce2adab63b9a906cd"
+  },
+  {
+   "path": "vault/specs/salvage/m-3bf354f42adc/toolu_01NMszeKtHM9My4uEYTf1MYk.json",
+   "sha256": "d4331230441816568fee362de0168902fdfb3a9d3b5571ec6b9cbb0d90cd56c7"
+  },
+  {
+   "path": "vault/specs/salvage/m-4ace4480521c/toolu_01Hcj6AqpMDAG5wezYCFETuU.json",
+   "sha256": "41ab5dc6b837a2c1f08f53cd042d4fa55c655dc64f4e61823611822a303675cc"
+  },
+  {
+   "path": "vault/specs/salvage/m-5be659a071a7/toolu_01JqVU6uaxNqrEDezeyPwm1d.json",
+   "sha256": "8cc52e9f1e8bea23d6e9f03c5d897ef70ec2e96428aa33eddf43d0b65d6ca948"
+  },
+  {
+   "path": "vault/specs/salvage/m-7a70b9532e42/toolu_014WT7QCwWA7XK3vcvNiYeFi.json",
+   "sha256": "d7e707bc4b55b176a91c8a989d4ff2d949251e7e23233304fcba89ddcdc71070"
+  },
+  {
+   "path": "vault/specs/salvage/m-f3ad13bfd9bb/toolu_01KtzZGv3eMFSxiNTnaMnVMt.json",
+   "sha256": "763405693049d340e65ecaa9bc84185c3b7753e78a5e4a1473a637c6dd6355b3"
+  }
+ ]
+}

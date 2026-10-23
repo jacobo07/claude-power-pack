@@ -1,0 +1,26 @@
+{
+ "canonical": false,
+ "commits": [
+  "4caca0e9 fix(ce-lifecycle-v3): WU-S5d steward settles every terminal worker; title-line PARTIAL reads as no receipt",
+  "bf1b9725 plan(ce-lifecycle-v3): WU-ADV2a closed by coordinator proof + WU-S5d packet (steward scope, status-in-title)",
+  "3cf67a07 WU-ADV2a: consume-once approval_id in GoalLedger + goal-aware admit_route (PARTIAL, see receipt)",
+  "f07012d8 install(ce-lifecycle-v3): L3 econ live at 37a5f3c0 -- receipt",
+  "15327f34 chore(ce-lifecycle-v3): WU-INST2 L3-econ install patch and receipt",
+  "c6b61030 plan(ce-lifecycle-v3): WU-ADV2a (consume-once approval, goal-aware admission) and WU-ADV2b (advance stage) packets",
+  "cad938ce feat(ce-lifecycle-v3): WU-S5c receipt-gated completion, receipt closeout path, mission-scoped capsule, explained non-renewal",
+  "48a0bc02 plan(ce-lifecycle-v3): S5 first live canary -- settle the ce-unify lease (m-5a42ed8f28cc, open 750K) from measured spend",
+  "5dbc5470 plan(ce-lifecycle-v3): WU-S5c (F1/F3/F4/F5) and WU-INST2 (combined live install) packets + S5b route",
+  "5651818e docs(ce-lifecycle-v3): WU-S5b receipt",
+  "206634c2 feat(ce-lifecycle-v3): WU-S5b adopt mission steward (ledger, spend, gsd_mission hooks)",
+  "ec7f78a0 plan(ce-lifecycle-v3): obligation OB-APPROVAL-TO-ARM -- Owner YES must arm via the sweep, no hand-opened pane"
+ ],
+ "goal": "ce-lifecycle-v3",
+ "mission_id": "m-b2fefaf352e1",
+ "model_calls": 22,
+ "refused_calls": 0,
+ "salvage": [],
+ "session": "f16a4385-5fe2-41e6-b4e8-0eaee68393b0",
+ "status": "PARTIAL",
+ "tokens": 963852,
+ "tool_calls": 28
+}

@@ -1,0 +1,16 @@
+{
+ "canonical": false,
+ "commits": [
+  "74988af7 feat(ce-lifecycle-v3): WU-ADV2b advance stage -- approval record arms the next listed unit from the sweep",
+  "0c16b89f feat(ce-lifecycle-v3): advance stage - approval record to armed next unit in the sweep (WU-ADV2b)"
+ ],
+ "goal": "ce-lifecycle-v3",
+ "mission_id": "m-6d9ae372d08a",
+ "model_calls": 6,
+ "refused_calls": 0,
+ "salvage": [],
+ "session": "e0e6372a-a808-4280-afb9-548134d12680",
+ "status": "PARTIAL",
+ "tokens": 144748,
+ "tool_calls": 6
+}

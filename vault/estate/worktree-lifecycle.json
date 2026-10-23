@@ -1,0 +1,23 @@
+{
+ "schema": "worktree-lifecycle/1",
+ "states": ["ACTIVE_OWNER", "PREPARED_SUCCESSOR", "DURABLE_WAIT", "RECOVERY_REQUIRED", "SUPERSEDED", "ARCHIVED", "TERMINAL"],
+ "note": "Classifications only. The set of worktrees is DISCOVERED by tools/cpp_fsck.py from `git worktree list`; a worktree with no row here is reported by name, never assumed healthy.",
+ "rows": {
+  "C:/Users/User/Apps/pp-ctx-rent": {
+   "state": "SUPERSEDED",
+   "branch": "ctx/rent",
+   "head": "0f8713fe",
+   "reason": "ctx-rent S2 half-edit (2026-10-08) on tools/rollover.py + rollover_replay.py; live rollover/ASER has since moved on and ctx-same-pane is closed. Dirty state preserved, not applied.",
+   "salvage": "vault/salvage/pp-ctx-rent-2026-10-23/ (tracked.patch reverse-apply-checked rc 0, 3 untracked files with sha256)",
+   "classified": "2026-10-23 pane 36d35fab, residual plan aa97ebf8 R3"
+  },
+  "C:/Users/User/Apps/pp-ce-lifecycle-v3": {
+   "state": "DURABLE_WAIT",
+   "branch": "ce/lifecycle-v3",
+   "head": "e2fa4e42",
+   "reason": "ce-lifecycle-v3 parked in backlog vault/backlog/2026-10-10_ce-lifecycle-v3-remaining.md (6d9afbb0). Dirty = modified RESUMPTION_FILE.md + 22 steward partial/residual files + vault/specs/salvage/.",
+   "salvage": "vault/salvage/pp-ce-lifecycle-v3-2026-10-23/ (tracked.patch reverse-apply-checked rc 0, 27 untracked files with sha256)",
+   "classified": "2026-10-23 pane 36d35fab, residual plan aa97ebf8 R3"
+  }
+ }
+}

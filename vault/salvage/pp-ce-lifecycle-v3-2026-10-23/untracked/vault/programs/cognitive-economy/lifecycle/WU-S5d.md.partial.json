@@ -1,0 +1,17 @@
+{
+ "canonical": false,
+ "commits": [
+  "4caca0e9 fix(ce-lifecycle-v3): WU-S5d steward settles every terminal worker; title-line PARTIAL reads as no receipt"
+ ],
+ "goal": "ce-lifecycle-v3",
+ "mission_id": "m-3bf354f42adc",
+ "model_calls": 19,
+ "refused_calls": 1,
+ "salvage": [
+  "vault/specs/salvage/m-3bf354f42adc/toolu_01NMszeKtHM9My4uEYTf1MYk.json"
+ ],
+ "session": "02d59a1b-f08b-40ed-b694-73d9e7ebb1b2",
+ "status": "PARTIAL",
+ "tokens": 748679,
+ "tool_calls": 32
+}

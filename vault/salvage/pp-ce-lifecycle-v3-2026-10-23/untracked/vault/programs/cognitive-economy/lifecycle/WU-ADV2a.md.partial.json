@@ -1,0 +1,17 @@
+{
+ "canonical": false,
+ "commits": [
+  "4caca0e9 fix(ce-lifecycle-v3): WU-S5d steward settles every terminal worker; title-line PARTIAL reads as no receipt",
+  "bf1b9725 plan(ce-lifecycle-v3): WU-ADV2a closed by coordinator proof + WU-S5d packet (steward scope, status-in-title)",
+  "3cf67a07 WU-ADV2a: consume-once approval_id in GoalLedger + goal-aware admit_route (PARTIAL, see receipt)"
+ ],
+ "goal": "ce-lifecycle-v3",
+ "mission_id": "m-86c2f1a9f3b0",
+ "model_calls": 20,
+ "refused_calls": 0,
+ "salvage": [],
+ "session": "2664f99b-170c-4dbb-8c64-2351f27e0687",
+ "status": "PARTIAL",
+ "tokens": 718127,
+ "tool_calls": 20
+}
