@@ -211,10 +211,44 @@ def mentions(text: str, root: str) -> bool:
     return False
 
 
+def is_agent_worktree(root: str) -> bool:
+    """A harness subagent isolation worktree (`<repo>/.claude/worktrees/agent-*`): a child's scratch, never the
+    mission's work root."""
+    parts = _canon(str(root)).rstrip("/").split("/")
+    return len(parts) >= 3 and parts[-3:-1] == [".claude", "worktrees"] and parts[-1].startswith("agent-")
+
+
+def worker_cwd(transcript: Path | None, tail_bytes: int = 512 * 1024) -> str | None:
+    """The worker's own working directory as its transcript last records it (main thread rows only)."""
+    if not transcript or not Path(transcript).is_file():
+        return None
+    try:
+        with open(transcript, "rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            size = fh.tell()
+            fh.seek(max(0, size - tail_bytes))
+            lines = fh.read().decode("utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        if '"cwd"' not in line:
+            continue
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue   # the first line of the tail may be cut
+        if isinstance(row, dict) and row.get("cwd") and not row.get("isSidechain"):
+            return str(row["cwd"])
+    return None
+
+
 def detect_rebind(rec: dict, transcript: Path | None) -> dict | None:
     """Worktrees of the mission's repository that the worker made its own since the current binding:
     added after `bound_at` (or mission start) AND named in the worker's own tool inputs. Both, because a
     worktree another session added is not this mission's, and a path merely read is not a move.
+    T1 F4: harness `agent-*` isolation worktrees satisfy both and are excluded. Measured 2026-10-23
+    (m-260aa89142c8, 07:59Z): the auto-rebind chose subagent worktree agent-a33215aa. When the worker's own
+    last cwd lies in one candidate, that candidate alone is returned.
     None = could not be judged (git or transcript unreadable)."""
     b = binding(rec)
     since = float((b or {}).get("bound_at") or rec.get("created_at") or 0)
@@ -223,7 +257,7 @@ def detect_rebind(rec: dict, transcript: Path | None) -> dict | None:
     if rows is None or text is None:
         return None
     current = _norm(execution_root(rec))
-    cands = []
+    cands, excluded = [], []
     for w in rows:
         root = w["root"]
         if _norm(root) in (current, _norm(rec["cwd"])):
@@ -232,8 +266,14 @@ def detect_rebind(rec: dict, transcript: Path | None) -> dict | None:
         if made is None or made < since - 5:
             continue
         if mentions(text, root):
-            cands.append(root)
-    return {"candidates": cands}
+            (excluded if is_agent_worktree(root) else cands).append(root)
+    wcwd = worker_cwd(transcript)
+    if wcwd and len(cands) > 1:
+        n = _norm(wcwd)
+        hit = [c for c in cands if n == _norm(c) or n.startswith(_norm(c) + os.sep)]
+        if len(hit) == 1:
+            cands = hit
+    return {"candidates": cands, "excluded_agent_worktrees": excluded, "worker_cwd": wcwd}
 
 
 # ----------------------------------------------------------------------------- children
