@@ -1506,6 +1506,58 @@ def is_cost_hold(hold: dict | None) -> bool:
     return hold.get("kind") == "cost" or str(hold.get("reason") or "").startswith("cost breaker")
 
 
+AUTHORITY_TRIP_PREFIX = "cost breaker (mission authority)"   # mission_spend.judge's MISSION_AUTHORITY reason
+
+
+def is_authority_hold(hold: dict | None) -> bool:
+    """T1 F1: a cost hold set because spend reached the Owner's authority. Its worker is stopped with no grace:
+    the authority is spent, so nothing a finishing turn could do is still inside it."""
+    return bool(hold) and str(hold.get("reason") or "").startswith(AUTHORITY_TRIP_PREFIX)
+
+
+def _authority_under_hold_due(rec: dict) -> bool:
+    """A held, live mission with Owner authority whose hold is neither a resource hold (the cost breaker judges over
+    that one itself) nor already the authority hold. Pure: _breaker_first admits these to its timed thread."""
+    hold = rec.get("owner_hold")
+    return (bool(hold) and hold.get("kind") != "resource" and not is_authority_hold(hold)
+            and bool(rec.get("authority_tokens")) and rec.get("state") not in TERMINAL)
+
+
+def _authority_over_hold(rec: dict, now: float, measure=None) -> dict:
+    """T1 F1 (invariant I4): judge Owner authority even while another hold stands. The breakers skip a held
+    mission, so an existing hold masked the authority judgement. Measured 2026-10-23 (m-260aa89142c8): spend
+    passed the 56M authority at ~07:00Z under a stall hold and no MISSION_AUTHORITY incident existed until a new
+    authority made the breaker judge again. A breach under a COST hold replaces it with the authority hold; the
+    worker stop already recorded and the hold it supersedes travel with it. Under an Owner's own hold the breach is
+    ledgered once and the hold is kept (turning it into a cost hold would hand it to AMR). Runs only inside
+    _breaker_first's timed thread. Fail-open on a measuring error, like the breaker."""
+    if not _authority_under_hold_due(rec):
+        return rec
+    hold = rec["owner_hold"]
+    import mission_spend as ms
+    mid = rec["mission_id"]
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+        lr.ledger_append(mid, "authority_over_hold_unmeasured", mission_id=mid,
+                         error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
+    verdict = ms.judge({k: rec.get(k) for k in ("authority_tokens", "closeout_tokens")}, spent, None)
+    if verdict.get("level") != "MISSION_AUTHORITY":
+        return rec
+    if not is_cost_hold(hold):
+        if not _ledger_has(mid, "authority_breach_under_owner_hold", hold_set_at=hold.get("set_at")):
+            lr.ledger_append(mid, "authority_breach_under_owner_hold", mission_id=mid, spent=spent,
+                             authority=rec["authority_tokens"], hold_set_at=hold.get("set_at"), reason=verdict["trip"])
+        return rec
+    keep = {k: hold[k] for k in ("worker_stopped_at", "stop") if k in hold}
+    prior = {k: hold.get(k) for k in ("reason", "kind", "set_at")}
+    lr.ledger_append(mid, "authority_over_hold", mission_id=mid, spent=spent, authority=rec["authority_tokens"],
+                     prior=str(prior["reason"] or "")[:200])
+    return set_owner_hold(mid, verdict["trip"], now=now, kind="cost", expect_seq=rec.get("seq"),
+                          extra={"authority_kind": ms.authority_kind(rec), "supersedes_hold": prior, **keep})
+
+
 def cost_hold_stop_enabled() -> bool:
     """Kill switch CPP_COST_HOLD_STOP=off: the worker is still told, but never stopped."""
     return str(os.environ.get("CPP_COST_HOLD_STOP") or "").strip().lower() not in ("0", "off", "false")
@@ -4724,10 +4776,11 @@ def settle_stopped_worker(rec: dict, settle=None) -> dict:
     return {"booked": True, "goal": goal, "worker": sid, "closed": out.get("closed")}
 
 
-def _judge_pre_plan(rec: dict, now: float) -> dict:
+def _judge_pre_plan(rec: dict, now: float, under_hold: bool = False) -> dict:
     """Everything the supervisor decides about a mission's money before it plans anything, in one fixed order:
     settle a finished phase, give an unbudgeted mission an estimate, judge its phase lease, judge its cost.
-    One function for both callers (_breaker_first and the main loop), so the early pass cannot drift from it."""
+    One function for both callers (_breaker_first and the main loop), so the early pass cannot drift from it.
+    `under_hold` (only _breaker_first, inside its per-mission timeout) also judges authority under a hold."""
     mid = rec["mission_id"]
     # M4 A: a finished phase is settled before any lease, breaker or relaunch for the next one.
     try:
@@ -4742,6 +4795,8 @@ def _judge_pre_plan(rec: dict, now: float) -> dict:
         rec = _phase_breaker(rec, now)
     if (rec.get("token_estimate") or rec.get("authority_tokens")) and not _blocking_hold(rec):
         rec = _cost_breaker(rec, now)
+    elif under_hold and _authority_under_hold_due(rec):
+        rec = _authority_over_hold(rec, now)
     return rec
 
 
@@ -4751,7 +4806,9 @@ def _breaker_first(missions: list[dict], now: float) -> tuple[dict, set]:
     skipped the breakers three times on 2026-10-15 (11:31, 11:47, 12:01 UTC). Each mission runs under its own
     thread timeout (CPP_SWEEP_BREAKER_MISSION_S, default 60), so one slow meter cannot starve the rest.
     Returns (judged records by mission id, ids that timed out). A timed-out mission is skipped for the rest of
-    this pass: its thread may still finish and hold it, and a second concurrent judgement could double-hold."""
+    this pass: its thread may still finish and hold it, and a second concurrent judgement could double-hold.
+    T1 F1: a held mission is admitted only for its authority judgement (_authority_under_hold_due), so the meter
+    that judgement runs is bounded by the same timeout."""
     try:
         limit = float(os.environ.get("CPP_SWEEP_BREAKER_MISSION_S", "60"))
     except ValueError:
@@ -4759,14 +4816,15 @@ def _breaker_first(missions: list[dict], now: float) -> tuple[dict, set]:
     judged: dict[str, dict] = {}
     timed_out: set[str] = set()
     for rec in missions:
-        if rec.get("state") != RUNNING or _blocking_hold(rec) or not _needs_look(rec, now):
+        if (rec.get("state") != RUNNING or (_blocking_hold(rec) and not _authority_under_hold_due(rec))
+                or not _needs_look(rec, now)):
             continue
         mid = rec["mission_id"]
         box: dict = {}
 
         def judge(r=rec, out=box):
             try:
-                out["rec"] = _judge_pre_plan(r, now)
+                out["rec"] = _judge_pre_plan(r, now, under_hold=True)
             except Exception as exc:  # noqa: BLE001 -- left for the per-mission isolation in the main loop
                 out["err"] = f"{type(exc).__name__}: {exc}"
 
@@ -4896,6 +4954,10 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 if not over and rec["owner_hold"].get("phase_breaker"):
                     # A phase-lease trip has no grace: the phase's authority is spent, the worker is stopped now.
                     over = {"overdue_s": 0, "grace_s": 0, "phase_breaker": True}
+                if not over and is_authority_hold(rec["owner_hold"]):
+                    # T1 F1: nor has a mission-authority trip. Measured 2026-10-23 (m-260aa89142c8): 43.52M were
+                    # processed after the 09:41Z authority hold by a worker the sweep never stopped.
+                    over = {"overdue_s": 0, "grace_s": 0, "authority": True}
                 if over and liveness(rec.get("owner"), sessions, pid_alive)[0] == LIVE:
                     ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
                     lr.ledger_append(mid, "cost_hold_worker_stopped" if ok else "cost_hold_stop_failed",

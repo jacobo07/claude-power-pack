@@ -233,26 +233,33 @@ COST_HOLD_GRACE_S = 600   # first COST HOLD notice -> the supervisor stops a wor
 
 
 def cost_hold_overdue(rec: dict, now: float | None = None) -> dict | None:
-    """spec mission-cost-hold-stops-worker: the worker was told about the cost hold and is still in
-    its turn past the grace. The clock is the FIRST notice's `asked_at` (ms) in
-    `mission-costhold-<sid>.flag`; None with no notice, an unreadable one, or within grace."""
+    """spec mission-cost-hold-stops-worker: the cost hold has stood past the grace and the worker is
+    still in its turn. The clock is the FIRST notice's `asked_at` (ms) in `mission-costhold-<sid>.flag`;
+    with no notice for THIS hold it is the hold's own `set_at` (clock="hold_set_at"). Measured 2026-10-23
+    (T1 m-260aa89142c8, GEX44): that host's mission_wall predates the notice, no flag was ever written, and
+    the worker was never stopped through 3 h and 145.85M under a cost hold. None within grace or with no hold."""
     now = time.time() if now is None else now
     sid = (rec.get("owner") or {}).get("session_id")
     if not sid or rec.get("state") != "RUNNING":
         return None
+    set_at = (rec.get("owner_hold") or {}).get("set_at")
+    data, clock = {}, "notice"
     try:
         data = json.loads((_marker_dir() / f"mission-costhold-{sid}.flag").read_text(encoding="utf-8"))
         asked = float(data["asked_at"]) / 1000.0
+        if data.get("hold_set_at") != set_at:
+            raise ValueError("a notice for an earlier hold")
     except (OSError, ValueError, KeyError, TypeError):
-        return None
-    if data.get("hold_set_at") != (rec.get("owner_hold") or {}).get("set_at"):
-        return None   # a notice for an earlier hold: this hold's grace has not started
+        try:
+            asked, data, clock = float(set_at), {}, "hold_set_at"
+        except (TypeError, ValueError):
+            return None
 
     grace = float((rec.get("wall") or {}).get("cost_hold_grace_s") or COST_HOLD_GRACE_S)
     if now - asked < grace:
         return None
     return {"asked_at": asked, "overdue_s": int(now - asked - grace), "grace_s": int(grace),
-            "notices": int(data.get("n", 1))}
+            "notices": int(data.get("n", 1)) if data else 0, "clock": clock}
 
 
 # ------------------------------------------------------------------------ G6 child work

@@ -152,25 +152,38 @@ function touchesRecord(event) {
   return null;
 }
 
-// -> {deny: string|null, mission?, kind?}
-function decide(event) {
+// The worker's mission record, found through its marker. -> {sid, mid, record} | null
+function workerRecord(event) {
   const sid = event && event.session_id;
-  if (!sid || !SID_RE.test(sid)) return { deny: null };
+  if (!sid || !SID_RE.test(sid)) return null;
   const markerDir = process.env.GSD_AUTORUN_MARKER_DIR || stateDir();
   const w = readJson(path.join(markerDir, `mission-worker-${sid}.json`));
-  if (!w || !MID_RE.test(String(w.mission_id || ''))) return { deny: null };
-  const mid = w.mission_id;
-  const record = readJson(path.join(stateDir(), `gsd-mission-${mid}.json`));
-  if (!record) return { deny: null };
-  const hold = record.owner_hold;
-  if (isCostHold(hold)) {
-    return {
-      mission: mid, kind: 'cost_hold',
-      deny: `MISSION COST HOLD -- ${mid} is held (${String(hold.reason || 'cost breaker').slice(0, 240)}). ` +
-        'No further tool calls are admitted for this worker or its subagents. End this turn with a status and ' +
-        'the next exact action; the Owner releases the hold or approves a reforecast.',
-    };
-  }
+  if (!w || !MID_RE.test(String(w.mission_id || ''))) return null;
+  const record = readJson(path.join(stateDir(), `gsd-mission-${w.mission_id}.json`));
+  return record ? { sid, mid: w.mission_id, record } : null;
+}
+
+// Denial 1 alone, with no side effect (no counter is bumped): safe to run from a second registration.
+// -> {deny, mission, kind} | null
+function holdDecision(event, found) {
+  const f = found || workerRecord(event);
+  const hold = f && f.record.owner_hold;
+  if (!isCostHold(hold)) return null;
+  return {
+    mission: f.mid, kind: 'cost_hold',
+    deny: `MISSION COST HOLD -- ${f.mid} is held (${String(hold.reason || 'cost breaker').slice(0, 240)}). ` +
+      'No further tool calls are admitted for this worker or its subagents. End this turn with a status and ' +
+      'the next exact action; the Owner releases the hold or approves a reforecast.',
+  };
+}
+
+// -> {deny: string|null, mission?, kind?}
+function decide(event) {
+  const found = workerRecord(event);
+  if (!found) return { deny: null };
+  const { sid, mid, record } = found;
+  const held = holdDecision(event, found);
+  if (held) return held;
   if (WRITERS.test(String(event.tool_name || ''))) {
     const why = touchesRecord(event);
     if (why) {
@@ -230,4 +243,4 @@ function run(ev) {
   return null;
 }
 
-module.exports = { run, decide, capFor, agentTokens, sessionUsage, hardCap, DEFAULT_CAP };
+module.exports = { run, decide, holdDecision, off, capFor, agentTokens, sessionUsage, hardCap, DEFAULT_CAP };

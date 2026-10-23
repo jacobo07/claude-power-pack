@@ -171,6 +171,39 @@ def main() -> int:
                                                        "tool_input": {"command": "ls"}, "cwd": TMP})
     check("V-MG-CONTROL-GUARD-STRANGER-NULL", out is None, str(out))
 
+    # 6. T1 F1: the standalone hold gate, driven through its stdin entrypoint the way a direct "*" registration
+    # runs it (GEX44 has no dispatcher lane). Hold-only: it never bumps a subagent counter.
+    def stdin_gate(event: dict, env: dict | None = None, raw: str | None = None):
+        out = subprocess.run(["node", str(HOOKS / "mission_hold_gate.js")], capture_output=True, text=True, timeout=60,
+                             input=raw if raw is not None else json.dumps(event),
+                             env={**os.environ, "GSD_AUTORUN_MARKER_DIR": TMP, "GSD_LONG_RUN_STATE_DIR": TMP, **(env or {})})
+        return out.returncode, json.loads(out.stdout) if out.stdout.strip() else None
+    counters = Path(TMP) / f"mission-subagents-{held}.json"
+    before = counters.read_text(encoding="utf-8") if counters.exists() else None
+    for tool in ("Glob", "WebFetch", "mcp__x__y", "Skill"):
+        rc, r = stdin_gate({"session_id": held, "tool_name": tool, "tool_input": {}})
+        check(f"V-MG-HOLDGATE-DENIES-{tool}", rc == 0 and "MISSION COST HOLD" in denied(r), denied(r)[:80])
+    rc, r = stdin_gate({"session_id": held, "tool_name": "Read", "agent_id": "s1", "agent_type": "gsd-executor",
+                        "tool_input": {"file_path": "a"}})
+    check("V-MG-HOLDGATE-DENIES-SUBAGENT", "MISSION COST HOLD" in denied(r), "subagent carries the parent's session_id")
+    after = counters.read_text(encoding="utf-8") if counters.exists() else None
+    check("V-MG-HOLDGATE-BUMPS-NO-COUNTER", before == after, "hold-only: safe beside the dispatcher lane")
+    authority = worker("m-a00006")
+    gm.set_owner_hold("m-a00006", "cost breaker (mission authority): processed 152,641,947 >= authority 80,000,000",
+                      now=NOW, kind="cost")
+    check("V-MG-HOLDGATE-DENIES-AUTHORITY-HOLD", "MISSION COST HOLD" in denied(stdin_gate(
+          {"session_id": authority, "tool_name": "Bash", "tool_input": {"command": "ls"}})[1]))
+    for label, ev, env, raw in (
+        ("OWNER-HOLD", {"session_id": owner, "tool_name": "Bash"}, None, None),
+        ("UNHELD", {"session_id": free, "tool_name": "Bash"}, None, None),
+        ("STRANGER", {"session_id": "not-a-worker", "tool_name": "Bash"}, None, None),
+        ("KILL-SWITCH", {"session_id": held, "tool_name": "Bash"}, {"CPP_MISSION_GATE": "off"}, None),
+        ("GARBAGE-STDIN", {}, None, "not json"),
+        ("EMPTY-STDIN", {}, None, ""),
+    ):
+        rc, r = stdin_gate(ev, env, raw)
+        check(f"V-MG-CONTROL-HOLDGATE-{label}-ALLOWED", rc == 0 and r is None, f"rc={rc} out={r}")
+
     print(f"MISSION_GATE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     shutil.rmtree(TMP, ignore_errors=True)
     return 0 if fails == 0 else 1

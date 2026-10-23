@@ -125,6 +125,15 @@ def main() -> int:
     check("V-CH-CONTROL-NO-FLAG", ge.cost_hold_overdue(gm.load("m-hk-none"), NOW) is None)
     _flag("m-hk-cost", NOW - 7000, set_at=NOW - 9000)   # left by an earlier, released hold
     check("V-CH-STALE-FLAG-IGNORED", ge.cost_hold_overdue(r, NOW) is None)
+    # T1 F1: with no notice for this hold (GEX44's mission_wall never wrote one), the hold's set_at is the clock.
+    _running("m-nf-old")
+    gm.set_owner_hold("m-nf-old", TRIP, now=NOW - 700, kind="cost")
+    over = ge.cost_hold_overdue(gm.load("m-nf-old"), NOW)
+    check("V-CH-OVERDUE-NO-FLAG-USES-HOLD-CLOCK", bool(over) and over["overdue_s"] == 100
+          and over["clock"] == "hold_set_at", str(over))
+    _running("m-nf-new")
+    gm.set_owner_hold("m-nf-new", TRIP, now=NOW - 60, kind="cost")
+    check("V-CH-CONTROL-NO-FLAG-WITHIN-GRACE", ge.cost_hold_overdue(gm.load("m-nf-new"), NOW) is None)
 
     # 2b. the progress fingerprint covers add_dirs (m-4a0f39b59a60: commits in the add-dir read as no progress).
     trees = {"/base": "b1", "/extra": "e1"}
@@ -153,6 +162,74 @@ def main() -> int:
           f"stops={stops} row={by.get('m-sv-cost')}")
     check("V-CH-CONTROL-OWNER-HOLD-NOT-STOPPED", not any("m-sv-own"[:8] in " ".join(s) for s in stops)
           and not (gm.load("m-sv-owner").get("owner_hold") or {}).get("worker_stopped_at"), str(stops))
+
+    # 3b. T1 F1: an authority hold stops a LIVE worker on the first pass, no flag and no grace; an ordinary
+    # cost hold set the same moment waits out its grace.
+    auth_trip = (f"{gm.AUTHORITY_TRIP_PREFIX}: processed 152,641,947 >= authority 80,000,000 minus closeout "
+                 "reserve 1,000,000; only closeout may run, new authority is the Owner's")
+    for mid, hold in (("m-sv-auth", auth_trip), ("m-sv-fresh", TRIP)):
+        _running(mid)
+        gm.set_owner_hold(mid, hold, now=NOW, kind="cost")
+    stops = []
+    rows = gm.supervise(now=NOW, sessions=_row("m-sv-auth", "running") + _row("m-sv-fresh", "running"),
+                        runner=lambda *a, **k: "", stop_runner=lambda a: stops.append(a), pid_alive=gone,
+                        gsd_status=OK_GSD, fingerprint=lambda wd: None)
+    by = {x["mission_id"]: x for x in rows}
+    check("V-CH-AUTHORITY-HOLD-STOPS-NO-GRACE", any("m-sv-aut" in " ".join(s) for s in stops)
+          and (by["m-sv-auth"].get("cost_hold_enforced") or {}).get("authority") is True, f"stops={stops}")
+    check("V-CH-CONTROL-FRESH-COST-HOLD-WAITS-GRACE", not any("m-sv-fre" in " ".join(s) for s in stops),
+          str(by.get("m-sv-fresh"))[:160])
+
+    # 3c. T1 F1 (I4): authority is judged under another hold. A stall-held mission past its authority gets the
+    # authority hold; the stop already recorded and the superseded hold travel with it.
+    import mission_spend as ms
+    _running("m-pr-over")
+    gm.transition("m-pr-over", expect_epoch=1, expect_state=gm.RUNNING, event="t_auth", authority_tokens=56_000_000)
+    stall = "cost breaker: 16,778,592 processed since the work tree last changed (stall budget 13,750,000)"
+    gm.set_owner_hold("m-pr-over", stall, now=NOW, kind="cost", extra={"worker_stopped_at": NOW, "stop": "test"})
+    h = (gm._authority_over_hold(gm.load("m-pr-over"), NOW + 60, measure=lambda r: 60_000_000).get("owner_hold") or {})
+    check("V-CH-AUTHORITY-JUDGED-UNDER-HOLD", gm.is_authority_hold(h) and h.get("kind") == "cost"
+          and (h.get("supersedes_hold") or {}).get("reason") == stall and h.get("worker_stopped_at") == NOW, str(h)[:200])
+    check("V-CH-AUTHORITY-OVER-HOLD-LEDGERED", any(x.get("event") == "authority_over_hold"
+          for x in gm.lr.ledger_events("m-pr-over")), "ledger row")
+    for label, mid, auth, spent in (("UNDER-AUTHORITY", "m-pr-under", 56_000_000, 40_000_000),
+                                    ("NO-AUTHORITY", "m-pr-none", None, 900_000_000)):
+        _running(mid)
+        if auth:
+            gm.transition(mid, expect_epoch=1, expect_state=gm.RUNNING, event="t_auth", authority_tokens=auth)
+        gm.set_owner_hold(mid, stall, now=NOW, kind="cost")
+        h = gm._authority_over_hold(gm.load(mid), NOW + 60, measure=lambda r, s=spent: s).get("owner_hold") or {}
+        check(f"V-CH-CONTROL-PRECEDENCE-{label}-KEEPS-HOLD", h.get("reason") == stall, str(h)[:120])
+
+    def boom(_r):
+        raise OSError("meter down")
+    h = gm._authority_over_hold(gm.load("m-pr-under"), NOW + 60, measure=boom).get("owner_hold") or {}
+    check("V-CH-PRECEDENCE-UNMEASURED-FAILS-OPEN", h.get("reason") == stall and any(
+          x.get("event") == "authority_over_hold_unmeasured" for x in gm.lr.ledger_events("m-pr-under")), str(h)[:120])
+    # Under an Owner's own hold the breach is ledgered once and the hold is kept (a cost hold would go to AMR).
+    _running("m-pr-owner")
+    gm.transition("m-pr-owner", expect_epoch=1, expect_state=gm.RUNNING, event="t_auth", authority_tokens=56_000_000)
+    gm.set_owner_hold("m-pr-owner", "Owner park for review", now=NOW)
+    for _ in range(2):
+        h = gm._authority_over_hold(gm.load("m-pr-owner"), NOW + 60, measure=lambda r: 60_000_000).get("owner_hold") or {}
+    rows = [x for x in gm.lr.ledger_events("m-pr-owner") if x.get("event") == "authority_breach_under_owner_hold"]
+    check("V-CH-OWNER-HOLD-KEPT-BREACH-LEDGERED-ONCE", h.get("reason") == "Owner park for review" and len(rows) == 1,
+          f"rows={len(rows)} hold={str(h)[:80]}")
+
+    # Wiring: the judgement runs inside _breaker_first's timed thread; the untimed main-loop call does not meter.
+    real_pt = ms.processed_tokens
+    calls = []
+    ms.processed_tokens = lambda r: calls.append(r["mission_id"]) or 70_000_000
+    try:
+        main_loop = gm._judge_pre_plan(gm.load("m-pr-under"), NOW + 120)
+        main_calls = list(calls)
+        judged, timed_out = gm._breaker_first([gm.load("m-pr-under")], NOW + 120)
+    finally:
+        ms.processed_tokens = real_pt
+    check("V-CH-CONTROL-MAIN-LOOP-DOES-NOT-METER-HELD", main_calls == [] and main_loop["owner_hold"]["reason"] == stall,
+          f"calls={main_calls}")
+    check("V-CH-PRECEDENCE-WIRED-IN-BREAKER-FIRST", gm.is_authority_hold((judged.get("m-pr-under") or {}).get("owner_hold"))
+          and not timed_out, str(((judged.get("m-pr-under") or {}).get("owner_hold") or {}).get("reason"))[:120])
 
     # 4. a worker WE stopped is parked, not settled; without the mark the old settle stands.
     p = gm.plan_next(c, NOW + 60, _row("m-sv-cost", "done"), pid_alive=gone)
