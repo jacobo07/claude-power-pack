@@ -285,6 +285,17 @@ def g_raise(e):
           and len(lo15) == 1 and lo15[0]["cap"] == 3000,
           "a spent lease and a nearly spent programme still take the raise: the successor holds N, not the spent "
           "cap + N (gsdx-factory-2 2026-10-22: 70M and 150M both refused 69,882,516 short): " + why(live)[:80])
+    tga.declare("t16", 1000, lease_calls=1)
+    exhaust("t16", "X16")
+    led("t16").set_programme(1100, "test owner", inside_agent=False)  # overdrawn (this fixture: executable -200)
+    over = admit(e, "N16", "subelo 3k t16", e.root / "nowhere")
+    lo16 = [r for r in journal("t16") if r["op"] == "lease_open"]
+    pr16 = [r for r in journal("t16") if r["op"] == "programme"][-1]
+    cap16 = lo16[0]["cap"] if lo16 else None
+    check("V-ECON-RAISE-OVERDRAWN-ABSORBS-DEFICIT", "APPLIED" in why(over) and "NOT APPLIED" not in why(over)
+          and len(lo16) == 1 and cap16 == 2800 and pr16["value"] == 4100,
+          "an overdrawn goal takes the raise: programme +3,000, the successor holds what is left after the deficit "
+          f"(gsdx-factory-2 2026-10-23: 129M refused for any amount): cap {cap16}, programme {pr16['value']:,}")
     ok = admit(e, "R8", "Súbelo 3k", work)                       # accented spelling
     j = journal("t8")
     prog = [r for r in j if r["op"] == "programme"][-1]

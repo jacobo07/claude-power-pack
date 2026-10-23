@@ -155,10 +155,14 @@ def _open_successor(led, g, cur, amount: int, key: str):
     if rec_left > 0:
         carry[RECOVERY] = rec_left
     room = led._executable(g) + (0 if done else amount)
-    need = new_cap + sum(carry.values())
-    if need > room:
-        return ({"reason": f"AUTHORITY_REQUIRED: the successor needs {need:,} but the programme would hold {room:,} "
-                           f"after +{amount:,}; type a larger amount"}, None, old_prog, new_cap)
+    reserved = sum(carry.values())
+    # An overdrawn goal absorbs its deficit first: the successor holds what the programme holds after the raise,
+    # never more. Unclamped, need exceeded room for EVERY amount once executable < 0 (gsdx-factory-2 2026-10-23).
+    new_cap = min(new_cap, room - reserved)
+    if new_cap <= 0:
+        return ({"reason": f"AUTHORITY_REQUIRED: the programme would hold {room:,} after +{amount:,}, which leaves no "
+                           f"room for a successor beyond reserves {reserved:,}; type more than "
+                           f"{amount - room + reserved:,}"}, None, old_prog, new_cap)
     if not done:
         pr = led.set_programme(old_prog + amount, tag, inside_agent=False)
         if not pr.get("ok"):
