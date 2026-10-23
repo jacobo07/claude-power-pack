@@ -1382,6 +1382,54 @@ def declare_budget_or_refuse(claimant: str, stop: int, calls_estimate: Optional[
     return 0, f
 
 
+def _failure_classes(fails: list) -> list:
+    out = []
+    for e in fails:
+        keys = [(w.get("key") if isinstance(w, dict) else w) for w in (e.get("wrong") or [])] or [None]
+        for k in keys:
+            c = f"EXAM_{str(k).upper()}_MISMATCH" if k else "UNKNOWN_RESUME_FAILURE"
+            if c not in out:
+                out.append(c)
+    return out
+
+
+def dispositions(rows: list, since: str | None = None) -> dict:
+    """Exactly one disposition per sealed capsule, joined capsule -> claim -> verdict (never counted per day:
+    a certification often lands on another day, 2026-10-23). A capsule's window ends at its session's next seal."""
+    seals: dict = {}
+    for e in rows:
+        if e.get("event") == "capsule_sealed":
+            seals.setdefault(e.get("session_id"), []).append(str(e.get("ts")))
+    caps, counts = [], {}
+    for sid, tss in seals.items():
+        tss.sort()
+        for i, t in enumerate(tss):
+            if since and t < since:
+                continue
+            end = tss[i + 1] if i + 1 < len(tss) else None
+            ev = [e for e in rows if e.get("session_id") == sid and str(e.get("ts")) >= t
+                  and (end is None or str(e.get("ts")) < end)
+                  and e.get("event") in ("successor_claimed", "resume_certified", "resume_failed")]
+            kinds = [e["event"] for e in ev]
+            fails = [e for e in ev if e["event"] == "resume_failed"]
+            if "resume_certified" in kinds:
+                cert = kinds.index("resume_certified")
+                fails = [e for e in ev[:cert] if e["event"] == "resume_failed"]
+                d = "RESUMED_CERTIFIED"
+            elif fails:
+                d = "RESUME_FAILED_TYPED"
+            elif "successor_claimed" in kinds:
+                d = "CLAIMED_NO_VERDICT"
+            else:
+                d = "SUPERSEDED" if end else "PENDING"
+            counts[d] = counts.get(d, 0) + 1
+            caps.append({"session_id": sid, "sealed_at": t, "disposition": d, "failed_exams": len(fails),
+                         "failure_classes": _failure_classes(fails)})
+    caps.sort(key=lambda c: c["sealed_at"])
+    return {"capsules": caps, "counts": counts,
+            "unreconciled": counts.get("PENDING", 0) + counts.get("CLAIMED_NO_VERDICT", 0)}
+
+
 def main(argv=None) -> int:
     for s in (sys.stdout, sys.stderr):
         try:
@@ -1421,6 +1469,9 @@ def main(argv=None) -> int:
     ga.add_argument("--max-age-s", type=float, default=RESET_MAX_AGE_S)
     st = sub.add_parser("status")
     st.add_argument("--n", type=int, default=10)
+    di = sub.add_parser("dispositions", help="one disposition per sealed capsule (read-only)")
+    di.add_argument("--since", help="ISO date/time prefix, e.g. 2026-10-22")
+    di.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
     if a.cmd == "shadow":
@@ -1491,6 +1542,24 @@ def main(argv=None) -> int:
             d = e.get("decision") or {}
             print(f"{e.get('ts')} {e.get('event'):20} {str(e.get('session_id'))[:8]} "
                   f"{e.get('safe_to_forget', e.get('refresh', ''))} {d.get('reason', '')}")
+        return 0
+    if a.cmd == "dispositions":
+        path = STATE_DIR / "rollover-ledger.jsonl"
+        rows = []
+        for ln in (path.read_text(encoding="utf-8", errors="replace").splitlines() if path.is_file() else []):
+            try:
+                rows.append(json.loads(ln))
+            except ValueError:
+                continue
+        out = dispositions(rows, a.since)
+        if a.json:
+            print(json.dumps(out, indent=1))
+        else:
+            print(f"capsules {len(out['capsules'])}  unreconciled {out['unreconciled']}  {out['counts']}")
+            for c in out["capsules"]:
+                if c["disposition"] != "RESUMED_CERTIFIED" or c["failed_exams"]:
+                    print(f"  {c['sealed_at'][:19]} {c['session_id'][:8]} {c['disposition']:20} "
+                          f"failed_exams={c['failed_exams']} {','.join(c['failure_classes'])}")
         return 0
     return 2
 
