@@ -5818,21 +5818,52 @@ def progress_fingerprint(work_dir: str) -> str | None:
     import hashlib
     import subprocess
     g = resolve_exe("git") or "git"
+    count_bookkeeping = (os.environ.get("CPP_PROGRESS_BOOKKEEPING") or "").strip().lower() == "count"
+    if count_bookkeeping:
+        # HEAD's TREE, not its commit (AMCR anti-gaming): an empty or amend-only commit changes no content.
+        queries = (["rev-parse", "HEAD^{tree}"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"])
+    else:
+        # Bookkeeping is not progress (measured 2026-10-23, GEX44 m-95e10a5bb636 -> m-01e5d5509ee6): ~54
+        # epochs each committed only `.planning/**/STATE.md` + `RESUMPTION.md` saying "no Owner input, no
+        # unit", HEAD's tree moved every time, and the no_progress halt never fired. Read the tree with
+        # those files left out: the top-level entries (one hash per subtree, cheap on a big repo) with
+        # `.planning` replaced by its own listing minus bookkeeping. Kill switch: CPP_PROGRESS_BOOKKEEPING=count.
+        queries = (["ls-tree", "HEAD"], ["ls-tree", "-r", "HEAD", "--", ".planning"],
+                   ["status", "--porcelain"],
+                   ["diff", "HEAD", "--shortstat", "--", ".", *_BOOKKEEPING_EXCLUDES])
     parts = []
     try:
-        # HEAD's TREE, not its commit (AMCR anti-gaming): an empty or amend-only commit changes no content.
-        for args in (["rev-parse", "HEAD^{tree}"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"]):
+        for args in queries:
             r = subprocess.run([g, "-C", work_dir, *args], capture_output=True, text=True,
                                encoding="utf-8", errors="replace", timeout=30)
             if r.returncode != 0:
                 return None
-            parts.append(r.stdout)
+            out = r.stdout
+            if not count_bookkeeping and args[0] in ("ls-tree", "status"):
+                out = "\n".join(ln for ln in out.splitlines()
+                                if not (args[0] == "ls-tree" and len(args) == 2 and ln.endswith("\t.planning"))
+                                and not _is_bookkeeping(ln.split("\t", 1)[-1] if args[0] == "ls-tree"
+                                                        else ln[3:]))
+            parts.append(out)
     except Exception:  # noqa: BLE001 -- unmeasured is its own answer
         return None
     planning = _planning_artifacts(work_dir)
     if planning:
         parts.append(planning)
     return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+_BOOKKEEPING_NAMES = ("STATE.md", "RESUMPTION.md")
+_BOOKKEEPING_EXCLUDES = tuple(f":(exclude,glob).planning/**/{n}" for n in _BOOKKEEPING_NAMES)
+
+
+def _is_bookkeeping(path: str) -> bool:
+    """A worker's per-turn status file under `.planning/` (STATE.md, RESUMPTION.md): rewriting it says
+    where the worker is, not that it did anything. Paths come from git, '/'-separated and repo-relative."""
+    p = path.strip().strip('"')
+    if " -> " in p:   # porcelain rename "old -> new": judge the new path
+        p = p.split(" -> ", 1)[1]
+    return p.startswith(".planning/") and p.rsplit("/", 1)[-1] in _BOOKKEEPING_NAMES
 
 
 def _planning_artifacts(work_dir: str) -> str:
@@ -5850,7 +5881,7 @@ def _planning_artifacts(work_dir: str) -> str:
     try:
         for dirpath, _dirs, files in os.walk(root):
             for name in files:
-                if name == "STATE.md":
+                if name in _BOOKKEEPING_NAMES:   # STATE.md + RESUMPTION.md: per-turn status, not work
                     continue
                 p = Path(dirpath) / name
                 rows.append(f"{p.relative_to(root).as_posix()}:{p.stat().st_size}")

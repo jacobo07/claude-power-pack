@@ -77,6 +77,44 @@ def main() -> int:
         fp5 = gm.progress_fingerprint(str(repo))
         check("V-PFP-COMMIT-MOVES", fp5 != fp4, "a commit still counts")
 
+        # Bookkeeping commits (measured 2026-10-23, GEX44 m-95e10a5bb636 -> m-01e5d5509ee6): ~54 epochs each
+        # committed only a TRACKED STATE.md + RESUMPTION.md ("no Owner input, no unit") and every one read as
+        # progress, because HEAD's tree moved. Tracked .planning here, as on that branch.
+        trk = tmp / "tracked"
+        trk.mkdir()
+        git(trk, "init", "-q")
+        ws = trk / ".planning" / "workstreams" / "ws"
+        ws.mkdir(parents=True)
+        (trk / "a.txt").write_text("a\n", encoding="utf-8")
+        (ws / "STATE.md").write_text("s0\n", encoding="utf-8")
+        (ws / "RESUMPTION.md").write_text("r0\n", encoding="utf-8")
+        git(trk, "add", "-A")
+        git(trk, "commit", "-q", "-m", "init")
+        t0 = gm.progress_fingerprint(str(trk))
+        (ws / "STATE.md").write_text("s1 epoch 24 - no Owner input, no unit\n", encoding="utf-8")
+        t1 = gm.progress_fingerprint(str(trk))
+        check("V-PFP-TRACKED-STATE-DIRT-STILL", t1 == t0, "an uncommitted tracked STATE.md edit is not progress")
+        (ws / "RESUMPTION.md").write_text("r1 longer resumption text\n", encoding="utf-8")
+        git(trk, "commit", "-q", "-am", "STATE + RESUMPTION epoch 24 - no Owner input, no unit")
+        t2 = gm.progress_fingerprint(str(trk))
+        check("V-PFP-BOOKKEEPING-COMMIT-STILL", t2 == t0, "a commit of only STATE.md + RESUMPTION.md is not progress")
+        (ws / "PLAN-01.md").write_text("a real plan\n", encoding="utf-8")
+        git(trk, "add", "-A")
+        git(trk, "commit", "-q", "-m", "plan")
+        t3 = gm.progress_fingerprint(str(trk))
+        check("V-PFP-TRACKED-PLAN-MOVES", t3 != t2, "a committed plan under .planning still counts")
+        (trk / "a.txt").write_text("a\nwork\n", encoding="utf-8")
+        t4 = gm.progress_fingerprint(str(trk))
+        check("V-PFP-PRODUCT-DIRT-MOVES", t4 != t3, "an uncommitted product edit still counts")
+        os.environ["CPP_PROGRESS_BOOKKEEPING"] = "count"
+        try:
+            k0 = gm.progress_fingerprint(str(trk))
+            (ws / "STATE.md").write_text("s2 kill switch\n", encoding="utf-8")
+            k1 = gm.progress_fingerprint(str(trk))
+            check("V-PFP-KILL-SWITCH-COUNTS", k1 != k0, "CPP_PROGRESS_BOOKKEEPING=count restores the old reading")
+        finally:
+            os.environ.pop("CPP_PROGRESS_BOOKKEEPING", None)
+
         bare = tmp / "noplanning"
         bare.mkdir()
         git(bare, "init", "-q")
@@ -89,7 +127,7 @@ def main() -> int:
               "outside git stays unmeasured")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    print(f"PFP_PASS={passes}/{passes + fails}  threshold=8/8")
+    print(f"PFP_PASS={passes}/{passes + fails}  threshold=13/13")
     return 0 if fails == 0 else 1
 
 
