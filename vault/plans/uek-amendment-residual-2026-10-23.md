@@ -1,6 +1,6 @@
 ---
 covers: [uek, uek-amendment-residual, cpp-fsck, aser-disposition, ctx-rent-a2-reconcile, slice-b-receipt, zombie-worktree]
-status: OWNER-DIRECTED FOLD 2026-10-23 ("anadelo todo a otra mision que este corriendo"). Folds plan aa97ebf8 (incremental-kernel-residual-2026-10-23.md) into mission UEK m-8ed9da30553c.
+status: WITHDRAWN 2026-10-23 ~15:45 (Owner chose option 1 after raising ctx-rent-a2 to 60M): R1-R6 run in pane 36d35fab on goal ctx-rent-a2, hard 5.0M. UEK owns nothing from this card. Was: OWNER-DIRECTED FOLD (785a9c6b).
 priority: AFTER every UEK phase; only inside remaining goal-uek authority. If uek authority cannot cover it, return to the Owner; never raise 38M silently.
 ---
 
