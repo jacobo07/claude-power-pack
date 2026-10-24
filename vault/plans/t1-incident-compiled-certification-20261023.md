@@ -9,7 +9,7 @@ Not yet certified: the other 7 depth-1 matches from the pool (802060CC, 8020D1D8
 
 Pre-existing debt, failing identically at 87c85d62: D12D 20/22, F1-F7 (`entities.function_table`/`ingest` missing), IR0A (`CORPUS_TENNIS`).
 
-Push of t1/campaign to the GEX44 bare repo is BLOCKED by the laptop-side ovo-push-gate. It needs a fresh /ovo-audit A verdict on the laptop tree, which is not the tree being pushed; this is waiting on the Owner. Spend since 2026-10-24 "arranca": ~12.1M for A0+A5 (hard 14M combined).
+PUSHED by the Owner via `! ssh` (2026-10-24): the bare repo's refs/heads/t1/campaign = 2201bb10, verified with ls-remote. **GATE: A7 stage ceiling.** The session processed 20.0M in total (transcript usage, 95 calls), 7.37M of it at the Owner's approval. A7 therefore cost ≈12.6M against its 9M hard ceiling; the estimate was 3-4M, and the gate repairs for the first real search receipt (c8e8b743) took most of the gap. Next, once the Owner approves further spend: widen the cohort to certify the 7 other arg-passthru matches (deterministic, mostly CPU), then the IMMEDIATE_ONLY interrupt. Spend since 2026-10-24 "arranca": ~12.1M for A0+A5 (hard 14M combined).
 date: 2026-10-23
 supersedes_execution_of: [tennis-all-match 03-02, 03-03, 03-04, 03-05 as GSD plans]
 ---
