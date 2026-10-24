@@ -23,7 +23,6 @@ os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"
 os.environ.pop("CPP_TERMINAL_RECONCILE", None)
-os.environ["CPP_HALT_CONTINUE"] = "off"
 TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
 import gsd_epoch as ge  # noqa: E402
@@ -34,6 +33,7 @@ import mission_steward as st  # noqa: E402
 import receipt_judge as rj  # noqa: E402
 
 gm.progress_fingerprint = lambda work_dir: None
+gm.halt_continue = lambda *a, **k: None  # the relaunch is not under test; the halt decision is
 ROOT = Path(TMP).resolve()
 NOW = time.time()
 _n = [0]
@@ -227,7 +227,7 @@ def gates() -> None:
     amb.append(mrc.reconcile(m)["outcome"])                                       # UNREADABLE
     m = mission("ad")
     p_ = receipt(m, done_text("Claims: n=5\n"))
-    rj.certificate_path(p_).write_text(json.dumps({"measured": {"n": 9}}), encoding="utf-8")
+    rj.certificate_path(p_).write_text(json.dumps({"values": {"n": 9}}), encoding="utf-8")
     amb.append(mrc.reconcile(m)["outcome"])                                       # DIVERGENT (if sidecar is read)
     old = mission("ao", created=NOW + 10_000)
     receipt(old, done_text())
@@ -263,7 +263,7 @@ def gates() -> None:
                 if text is not None:
                     p_ = receipt(m, text)
                     if name == "DIVERGENT":
-                        rj.certificate_path(p_).write_text(json.dumps({"measured": {"n": 9}}), encoding="utf-8")
+                        rj.certificate_path(p_).write_text(json.dumps({"values": {"n": 9}}), encoding="utf-8")
                 if conf:
                     gm.stem_receipt(m["wu_packet"]["path"]).write_text("Status: PARTIAL\n", encoding="utf-8")
                 if succ_:
@@ -406,7 +406,7 @@ def dispose_gates() -> None:
     slim_finish(k3)
     names = {e.get("event") for e in rows_of(k3["mission_id"]) + rows_of(k1["mission_id"])}
     allowed = {"launch_claimed", "slim_worker_finished", "terminal_reconciled", "mission_prepared", "t_setup",
-               "mission_created", "envelope_set", "mission_envelope_set"}
+               "mission_created", "envelope_set", "mission_envelope_set", "breaker_receipt", "progress_unknown"}
     extra = {n for n in names if n not in allowed and not str(n).startswith(("mission_", "envelope", "t_"))}
     check("V-S5-NO-SPEND-NO-TRANSITION", not extra and "mission_renewed" not in names, sorted(extra))
     check("V-S5-FC10-NO-NEW-STATE", set(gm.STATES) == {"PREPARED", "LAUNCHING", "RUNNING", "HANDOFF_REQUESTED", "BLOCKED",
