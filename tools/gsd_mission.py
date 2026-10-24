@@ -1853,11 +1853,32 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
         return rec
 
 
+def _renew_lease(rec: dict, now: float, rc: dict) -> dict:
+    """Operator estimate outrun with verified semantic progress: grant another allowance equal to the old estimate,
+    bounded by Owner authority less the closeout reserve. Keyed by the progress fingerprint, so one delta renews once."""
+    import mission_spend as ms
+    cap = int(rc["authority"]) - ms.closeout_reserve(rec)
+    headroom = min(int(rc["estimate"]), max(1, cap - int(rc["spent"])))
+    est = max(1, min(math.ceil((int(rc["spent"]) + headroom) / float(rc["ratio"])), int(cap // float(rc["ratio"]))))
+    n = int(rec.get("lease_renewals") or 0) + 1
+    basis = (f"economic lease #{n}: fingerprint moved at {int(rc['spent']):,} processed; estimate "
+             f"{int(rc['estimate']):,} -> {est:,} inside authority {int(rc['authority']):,}")
+    lr.ledger_append(rec["mission_id"], "lease_renewed", mission_id=rec["mission_id"], n=n, fp=rc.get("fp"),
+                     spent=rc["spent"], new_estimate=est)
+    return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="lease_renewed", now=now, touch=False, token_estimate=est, lease_renewals=n,
+                      token_estimate_basis=basis, cost_mark={"fp": rc.get("fp"), "tokens": rc["spent"], "at": now},
+                      reason=basis)
+
+
 def _recompile_forecast(rec: dict, now: float, rc: dict) -> dict:
     """An auto envelope outran its forecast while Owner authority remains: the forecast is invalid, the mission is
     not. Ledger what was spent against what was estimated, then re-assign the envelope inside the authority."""
     lr.ledger_append(rec["mission_id"], "forecast_invalidated", mission_id=rec["mission_id"], spent=rc["spent"],
-                     old_estimate=rc["estimate"], authority=rc["authority"], ratio=rc["ratio"])
+                     old_estimate=rc["estimate"], authority=rc["authority"], ratio=rc["ratio"],
+                     lease=bool(rc.get("lease")))
+    if rc.get("lease"):
+        return _renew_lease(rec, now, rc)
     return _auto_budget(rec, now, measure=lambda _r: rc["spent"])
 
 
@@ -2235,6 +2256,9 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
         return rec
     evidence = {"gen": gen0, "root": root, "fp": fp, "candidates": cands, "spent": spent,
                 "mark": rec.get("cost_mark"), "topology_judged": det is not None}
+    if verdict.get("recompile") and verdict["recompile"].get("lease"):
+        _breaker_receipt(mid, mb.GOOD, "lease", **evidence)
+        return _recompile_forecast(rec, now, verdict["recompile"])
     if verdict["mark"]:
         _breaker_receipt(mid, mb.GOOD, "mark", **evidence)
         settled = mb.settle_obligations(rec, root, now)   # a landed artifact closes its child obligation

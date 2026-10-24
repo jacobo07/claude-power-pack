@@ -26,6 +26,13 @@ from pathlib import Path
 
 DEFAULT_TRIP_RATIO = 2.0
 DEFAULT_STALL_FRACTION = 0.5
+LEASE_MAX_RENEWALS = 20
+
+
+def lease_on() -> bool:
+    """Kill switch for the economic lease (variance with verified progress recompiles instead of stopping)."""
+    import os
+    return (os.environ.get("CPP_ECON_LEASE") or "").strip().lower() != "off"
 _UK = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")
 
 
@@ -294,6 +301,15 @@ def judge(rec: dict, spent: int | None, fp: str | None, as_of: float | None = No
                              f"{est:,}, an auto envelope); no Owner authority was ever declared for this mission, so "
                              "this is the default allowance, not a forecast miss; declare authority to continue"),
                     "mark": None, "level": "DEFAULT_CEILING", "authority_kind": "DEFAULT_POLICY"}
+        mark0 = rec.get("cost_mark") or {}
+        if (auth and lease_on() and fp is not None and mark0.get("fp") and mark0.get("fp") != fp
+                and int(rec.get("lease_renewals") or 0) < LEASE_MAX_RENEWALS):
+            # Variance is not a stop: the work tree moved since the last mark (a semantic delta, never a commit
+            # count) and Owner authority remains (the check above passed), so the estimate is stale, not the
+            # mission. Renew once per fingerprint; an unmoved fingerprint falls through to the trip below.
+            return {"trip": None, "mark": {"fp": fp, "tokens": spent},
+                    "recompile": {"spent": spent, "estimate": est, "authority": auth, "ratio": ratio,
+                                  "lease": True, "fp": fp}}
         return {"trip": (f"cost breaker: processed {spent:,}{wm} > {ratio:g} x estimate {est:,}; "
                          "explain the variance and recompute the remaining work before release"),
                 "mark": None}
