@@ -7,6 +7,11 @@ can swap a broken function in and require at least one gate to go red. UNKNOWN /
 Controls checked against the REAL reader before they count (Phase 5 incident): the OLD_* key sets below were captured
 by running the HEAD (cea6b85b) writer through the real supervise seam; the census strings are copied from the host
 ledger's own mission_blocked reasons; the kill-switch twin runs the same real writer with the switch off.
+Task 3 controls checked against the real compiler before they were kept: every CONTROLS pair (positive lands in its
+class, negative lands in the NAMED neighbour), the FC-06 requirement line and the STATE "Stop only on" line (both read
+from this repository), the force-push / push / deploy / read-only questions against the real autonomy_gate, and the
+planted-bypass / docstring / planted-launch sources against the real AST walker. Mutation drills (V-S6-DRILL-*) each
+require every gate MUTANT_FOR maps to them to go red, and V-S6-DRILL-CONTROL-NOOP-FIRES shows a do-nothing mutant fails.
 """
 from __future__ import annotations
 
@@ -810,9 +815,412 @@ GROUPS = {"tracer": tracer_gates, "batch": batch_gates, "class": class_gates, "i
           "census": census_gates}
 
 
+# ------------------------------------------------------------------------------------------------ mutation drills
+# Every gate above must be able to go red. A drill swaps one deliberately broken piece in, re-runs the gate groups that
+# hold the gates the mutant is mapped to, and requires EACH mapped gate to be red (a gate that crashes or never reports
+# counts as red). It also requires the mapped gate to be green without the mutant, so a gate that is red for every
+# input cannot "kill" anything. Each drill is one gate in S6_PASS, so a skipped drill cannot pass.
+def _gp(short: str) -> str:
+    return "V-S6-" + short
+
+
+MUTANT_FOR = {_gp(k): v for k, v in {
+    "TRACER-SURFACE-BLOCKED-TYPED": ["M-UNTYPED-BLOCK", "M-DROP-INTENT-RULE"],
+    "TRACER-KILLSWITCH-OLD-SHAPE": ["M-KILL-SWITCH-IGNORED"],
+    "TRACER-FAIL-OPEN": ["M-FAIL-CLOSED"],
+    "TRACER-UNKNOWN-REACHABLE": ["M-UNKNOWN-INDEPENDENT"],
+    "TRACER-CENSUS-POPULATION": ["M-CENSUS-DROPS-EVENT"],
+    "BATCH-ITEMS": ["M-ITEM-ID-UNSTABLE"],
+    "BATCH-NEGATIVE-FC06": ["M-FC06-LINE-NOT-FILTERED"],
+    "BATCH-NEGATIVE-STATE-LINE": ["M-FC06-LINE-NOT-FILTERED"],
+    "BATCH-ANSWERED": ["M-DROP-ANSWERED"],
+    "BATCH-ONE-RECORD-ONE-QUEUE": ["M-ONE-QUEUE-PER-ITEM"],
+    "BATCH-IDEMPOTENT": ["M-NOT-IDEMPOTENT", "M-ONE-QUEUE-PER-ITEM"],
+    "BATCH-POLICY-RULE-RECORDED": ["M-POLICY-RULE-DROPPED"],
+    "BATCH-POLICY-REFUSED-WITHOUT-RULE": ["M-EXPAND-AUTHORITY"],
+    "BATCH-POLICY-NEVER-OUTWARD": ["M-EXPAND-AUTHORITY"],
+    "BATCH-PREFLIGHT-READONLY": ["M-PREFLIGHT-WRITES"],
+    "BATCH-KILL-SWITCH": ["M-KILL-SWITCH-IGNORED"],
+    "BATCH-FAIL-OPEN": ["M-FAIL-CLOSED"],
+    "BATCH-UNMEASURED-SOURCE": ["M-UNMEASURED-READ-AS-ZERO"],
+    "CLASS-POSITIVE": ["M-DROP-CLASS", "M-CLASS-CONTROL-MISSING"],
+    "CLASS-NEGATIVE": ["M-DROP-CLASS", "M-CLASS-CONTROL-MISSING"],
+    "INDEPENDENT-POSITIVE": ["M-NEVER-INDEPENDENT"],
+    "UNKNOWN-NEVER-INDEPENDENT": ["M-UNKNOWN-INDEPENDENT"],
+    "INDEPENDENT-NO-OTHER-UNIT": ["M-ALWAYS-INDEPENDENT"],
+    "INDEPENDENT-UNMEASURED": ["M-UNMEASURED-AS-FALSE-REASON", "M-ALWAYS-INDEPENDENT"],
+    "INDEPENDENT-STALE-BOX": ["M-STALE-BOX-COUNTS"],
+    "INDEPENDENT-AUTHORITY-HOLD": ["M-AUTHORITY-HOLD-IGNORED"],
+    "INDEPENDENT-REAL-ROADMAP": ["M-FIXTURE-ONLY-ROADMAP", "M-ALWAYS-INDEPENDENT"],
+    "DETERMINISTIC": ["M-NONDETERMINISTIC"],
+    "AUTONOMY-AGREEMENT": ["M-IGNORE-AUTONOMY-GATE"],
+    "WRITER-DISCOVERY": ["M-BYPASS-WRITER", "M-NO-ANNOTATE"],
+    "NO-NEW-LAUNCH-PATH": ["M-LAUNCHES"],
+    "FC10-NO-NEW-STATE": ["M-NEW-STATE", "M-NEW-STATE-LIVE"],
+    "CONSUMERS-TOLERATE": ["M-CONSUMER-BREAKS"],
+    "HOLD-PARKS-TYPED": ["M-HOLD-UNTYPED"],
+    "ISOLATION": ["M-HOST-LEDGER"],
+    "CENSUS-ARTIFACT": ["M-CENSUS-EMPTY"],
+}.items()}
+# Gates that carry no mutant of their own, each with its reason (D-10: declared, never silent).
+UNMUTATED = {
+    "V-S6-MUTANT-MAP": "meta gate: it checks that this table covers every gate; its own failure mode is a red suite",
+}
+
+
+@contextlib.contextmanager
+def swapped(obj, **attrs):
+    old = {k: getattr(obj, k) for k in attrs}
+    for k, v in attrs.items():
+        setattr(obj, k, v)
+    try:
+        yield
+    finally:
+        for k, v in old.items():
+            setattr(obj, k, v)
+
+
+def patched(mod, fname, *pairs, extra_globals=None):
+    """The function `fname` of `mod` recompiled from its own source with `pairs` of (old, new) text replaced."""
+    src = textwrap.dedent(inspect.getsource(getattr(mod, fname)))
+    for old, new in pairs:
+        if old not in src:
+            raise AssertionError(f"mutant anchor missing in {fname}: {old[:60]!r}")
+        src = src.replace(old, new, 1)
+    ns: dict = {}
+    for k, v in (extra_globals or {}).items():
+        setattr(mod, k, v)
+    exec(compile(src, f"<mutant {fname}>", "exec"), mod.__dict__, ns)  # noqa: S102 -- test-only mutant
+    return ns[fname]
+
+
+def _real_sources() -> dict:
+    return {p.name: p.read_text(encoding="utf-8") for p in sorted(TOOLS.glob("*.py")) if not p.name.startswith("test_")}
+
+
+@contextlib.contextmanager
+def source_hook(**edits):
+    """tool_sources() returns the real sources with `edits` ({file: fn(text)->text}) applied."""
+    def hooked():
+        s = _real_sources()
+        for f, fn in edits.items():
+            s[f] = fn(s[f])
+        return s
+    SRC_HOOK[0] = hooked
+    try:
+        yield
+    finally:
+        SRC_HOOK[0] = None
+
+
+def m_untyped_block():
+    def untyped(rec, *, expect_epoch, expect_state, now=None, reason, intent=None, **changes):
+        return gm.transition(rec["mission_id"], expect_epoch=expect_epoch, expect_state=expect_state,
+                             event="mission_blocked", now=now, state=gm.BLOCKED, reason=reason, **changes)
+    return swapped(gm, block_mission=untyped)
+
+
+def m_drop_intent_rule():
+    return swapped(bc, RULES=tuple(r for r in bc.RULES if r[0] != "intent_ask"))
+
+
+def m_kill_switch_ignored():
+    return swapped(gm, blocker_compile_on=lambda: True)
+
+
+@contextlib.contextmanager
+def m_fail_closed():
+    def raw(rec, reason, **k):
+        return bc.compile_blocker(reason, hold=k.get("hold"), intent=k.get("intent"), rec=rec, cwd=rec.get("cwd"),
+                                  workstream=rec.get("workstream"), is_hold=k.get("is_hold", False))
+
+    def batch(rec, cwd, workstream):
+        bc.foreseeable_decisions(cwd, workstream)
+        return None
+    with swapped(gm, _compile_blocker=raw, batch_foreseeable_decisions=batch):
+        yield
+
+
+def m_unknown_independent():
+    real = bc._independent
+    return swapped(bc, _independent=lambda k, r, h, e: (True, "mutant") if k == "UNKNOWN" else real(k, r, h, e))
+
+
+def m_always_independent():
+    return swapped(bc, _independent=lambda *a, **k: (True, "mutant"))
+
+
+def m_never_independent():
+    return swapped(bc, _independent=lambda *a, **k: (False, "mutant"))
+
+
+def m_census_drops_event():
+    return swapped(bc, CENSUS_EVENTS=tuple(e for e in bc.CENSUS_EVENTS if e != "owner_hold_set"))
+
+
+def m_item_id_unstable():
+    return swapped(bc, item_id=lambda category, text: "OD-%08x" % (hash((category, text, time.time_ns())) & 0xFFFFFFFF))
+
+
+def m_fc06_line_not_filtered():
+    return swapped(bc, ASK_MARKERS=re.compile(r"(?s)."), GUARD_FILTER=re.compile(r"(?!x)x"),
+                   _autonomy_for=lambda text, authorized=(): {"owner": "OWNER", "category": "outward-facing", "kind": None})
+
+
+def m_drop_answered():
+    return swapped(bc, ANSWER_MARK=re.compile(r"(?!x)x"))
+
+
+@contextlib.contextmanager
+def m_one_queue_per_item():
+    def per_item(delta, fn, *a, **k):
+        for it in delta:
+            fn(*a, **{**k, "row_id": k["row_id"] + "-" + it["id"]})
+    mut = patched(gm, "batch_foreseeable_decisions", ("_owner_queue().append(", "_per_item(delta, _owner_queue().append, "),
+                  extra_globals={"_per_item": per_item})
+    try:
+        with swapped(gm, batch_foreseeable_decisions=mut):
+            yield
+    finally:
+        del gm.__dict__["_per_item"]
+
+
+def m_not_idempotent():
+    mut = patched(gm, "batch_foreseeable_decisions", ('prior.update(r.get("ids") or [])', "pass"))
+    return swapped(gm, batch_foreseeable_decisions=mut)
+
+
+def m_policy_rule_dropped():
+    mut = patched(bc, "foreseeable_decisions",
+                  ('"rule": {"key": q["key"], "source": pol["source"], "fingerprint": pol.get("fingerprint")}',
+                   '"rule": None'))
+    return swapped(bc, foreseeable_decisions=mut)
+
+
+def m_expand_authority():
+    mut = patched(bc, "foreseeable_decisions",
+                  ('elif category == "preference" and not protected:', "elif True:"),
+                  ('if q.get("result") == "RESOLVE_BY_POLICY" and q.get("key") and (pol or {}).get("source"):', "if True:"),
+                  ('"rule": {"key": q["key"], "source": pol["source"]', '"rule": {"key": q.get("key"), "source": (pol or {}).get("source")'))
+    return swapped(bc, foreseeable_decisions=mut)
+
+
+def m_preflight_writes():
+    real = gm.arm_preflight
+
+    def writes(*a, **k):
+        out = real(*a, **k)
+        lr.ledger_append("arm-preflight", "mutant_preflight_write", note="a preflight that writes")
+        return out
+    return swapped(gm, arm_preflight=writes)
+
+
+def m_unmeasured_read_as_zero():
+    real = bc._read_text
+    return swapped(bc, _read_text=lambda p: real(p) or "")
+
+
+def m_drop_class():
+    return swapped(bc, RULES=tuple(r for r in bc.RULES if r[0] != "host_wait_gate"))
+
+
+def m_class_control_missing():
+    return swapped(THIS, CONTROLS={k: v for k, v in CONTROLS.items() if k != "SETUP_HOLD"})
+
+
+def m_unmeasured_as_false_reason():
+    real = bc.plan_evidence
+
+    def mut(cwd, ws):
+        ev = real(cwd, ws)
+        return ev if ev.get("measured") else {"measured": True, "reason": "ok", "current": 0, "units": [], "candidates": []}
+    return swapped(bc, plan_evidence=mut)
+
+
+def m_stale_box_counts():
+    real = bc.plan_evidence
+
+    def mut(cwd, ws):
+        ev = real(cwd, ws)
+        if not ev.get("measured"):
+            return ev
+        text = (Path(cwd) / ".planning/workstreams" / ws / "ROADMAP.md").read_text(encoding="utf-8")
+        open_units = {float(n) for n in re.findall(r"^- \[ \] \*\*Phase (\d+(?:\.\d+)?)", text, re.M)}
+        return {**ev, "candidates": sorted(open_units - {ev["current"]})}
+    return swapped(bc, plan_evidence=mut)
+
+
+def m_authority_hold_ignored():
+    return swapped(bc, _is_cost=lambda hold: False, _authority_hold=lambda hold: False)
+
+
+def m_fixture_only_roadmap():
+    cwd, ws = rm_fx({1: True, 2: False, 3: False})
+    return swapped(THIS, REAL_CWD=cwd, REAL_WS=ws)
+
+
+def m_nondeterministic():
+    real = bc.compile_blocker
+    return swapped(bc, compile_blocker=lambda *a, **k: {**real(*a, **k), "stamp": time.time_ns()})
+
+
+def m_ignore_autonomy_gate():
+    def flip(builder):
+        return lambda c: (lambda t: (t[0], t[1], False))(builder(c))
+    rules = tuple((n, k, m, flip(b) if n == "autonomy_outward" else b) for n, k, m, b in bc.RULES)
+    return swapped(bc, RULES=rules)
+
+
+def m_bypass_writer():
+    return source_hook(**{"gsd_mission.py": lambda t: t + "\n\ndef sneaky(rec):\n    return transition(rec['mission_id'], "
+                          "expect_epoch=0, expect_state=PREPARED, event='mission_blocked', state=BLOCKED)\n"})
+
+
+def m_no_annotate():
+    return source_hook(**{"gsd_mission.py": lambda t: t.replace("annotate_hold(rec, ", "_passthrough(rec, ")})
+
+
+def m_launches():
+    return source_hook(**{"blocker_compiler.py": lambda t: t + "\n\ndef _x():\n    launch_worker()\n"})
+
+
+def m_new_state():
+    return source_hook(**{"gsd_mission.py": lambda t: t.replace('"owner_decisions_batched"', '"owner_decisions_pending"')})
+
+
+def m_new_state_live():
+    return swapped(gm, STATES=set(gm.STATES) | {"PARKED"})
+
+
+def m_consumer_breaks():
+    real = gm.plan_next
+
+    def mut(rec, *a, **k):
+        out = real(rec, *a, **k)
+        if "blocker" in rec or "blocker" in (rec.get("owner_hold") or {}):
+            out = {**out, "reason": str(out.get("reason")) + " [whole-record compare]"}
+        return out
+    return swapped(gm, plan_next=mut)
+
+
+def m_hold_untyped():
+    return swapped(gm, annotate_hold=lambda rec, hold: hold)
+
+
+def m_host_ledger():
+    return swapped_env("GSD_LONG_RUN_STATE_DIR", str(Path.home() / ".claude" / "state"))
+
+
+@contextlib.contextmanager
+def swapped_env(key, value):
+    old = os.environ.get(key)
+    os.environ[key] = value
+    try:
+        yield
+    finally:
+        if old is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = old
+
+
+@contextlib.contextmanager
+def m_census_empty():
+    text = CENSUS_PATH.read_text(encoding="utf-8")
+    text = re.sub(r"^\| (mission_blocked|blocked_intent|owner_hold_set|recovery_owner_boundary) \| \d+ \|",
+                  r"| \1 | 0 |", text, flags=re.M)
+    text = re.sub(r"^\| SETUP_HOLD \| .*\n", "", text, flags=re.M)
+    bad = Path(TMP) / "census-mutant.md"
+    bad.write_text(text, encoding="utf-8")
+    with swapped(THIS, CENSUS_PATH=bad):
+        yield
+
+
+DRILLS = {
+    "M-UNTYPED-BLOCK": m_untyped_block, "M-DROP-INTENT-RULE": m_drop_intent_rule,
+    "M-KILL-SWITCH-IGNORED": m_kill_switch_ignored, "M-FAIL-CLOSED": m_fail_closed,
+    "M-UNKNOWN-INDEPENDENT": m_unknown_independent, "M-ALWAYS-INDEPENDENT": m_always_independent,
+    "M-NEVER-INDEPENDENT": m_never_independent, "M-CENSUS-DROPS-EVENT": m_census_drops_event,
+    "M-ITEM-ID-UNSTABLE": m_item_id_unstable, "M-FC06-LINE-NOT-FILTERED": m_fc06_line_not_filtered,
+    "M-DROP-ANSWERED": m_drop_answered, "M-ONE-QUEUE-PER-ITEM": m_one_queue_per_item,
+    "M-NOT-IDEMPOTENT": m_not_idempotent, "M-POLICY-RULE-DROPPED": m_policy_rule_dropped,
+    "M-EXPAND-AUTHORITY": m_expand_authority, "M-PREFLIGHT-WRITES": m_preflight_writes,
+    "M-UNMEASURED-READ-AS-ZERO": m_unmeasured_read_as_zero, "M-DROP-CLASS": m_drop_class,
+    "M-CLASS-CONTROL-MISSING": m_class_control_missing, "M-UNMEASURED-AS-FALSE-REASON": m_unmeasured_as_false_reason,
+    "M-STALE-BOX-COUNTS": m_stale_box_counts, "M-AUTHORITY-HOLD-IGNORED": m_authority_hold_ignored,
+    "M-FIXTURE-ONLY-ROADMAP": m_fixture_only_roadmap, "M-NONDETERMINISTIC": m_nondeterministic,
+    "M-IGNORE-AUTONOMY-GATE": m_ignore_autonomy_gate, "M-BYPASS-WRITER": m_bypass_writer,
+    "M-NO-ANNOTATE": m_no_annotate, "M-LAUNCHES": m_launches, "M-NEW-STATE": m_new_state,
+    "M-NEW-STATE-LIVE": m_new_state_live, "M-CONSUMER-BREAKS": m_consumer_breaks, "M-HOLD-UNTYPED": m_hold_untyped,
+    "M-HOST-LEDGER": m_host_ledger, "M-CENSUS-EMPTY": m_census_empty,
+}
+
+
+def run_groups(names) -> dict:
+    """Run gate groups in isolation; {gate name: ok}. A group that raises reports its gates as absent (= red)."""
+    saved = RESULTS[:]
+    RESULTS.clear()
+    crashed = {}
+    for name in names:
+        try:
+            GROUPS[name]()
+        except Exception as exc:  # noqa: BLE001 -- a crashing gate is a red gate
+            crashed[name] = f"{type(exc).__name__}: {exc}"[:160]
+    out = {n: ok for n, ok, _ in RESULTS}
+    RESULTS[:] = saved
+    out["__crashed__"] = crashed
+    return out
+
+
+def drills(base: dict, group_of: dict) -> None:
+    for mutant, ctx in DRILLS.items():
+        expected = sorted(g for g, ms in MUTANT_FOR.items() if mutant in ms)
+        groups = sorted({group_of[g] for g in expected if g in group_of}, key=list(GROUPS).index)
+        try:
+            with ctx():
+                got = run_groups(groups)
+        except Exception as exc:  # noqa: BLE001 -- a mutant that cannot be applied is a failed drill
+            check(f"V-S6-DRILL-{mutant}", False, f"mutant not applicable: {type(exc).__name__}: {exc}")
+            continue
+        still_green = [g for g in expected if got.get(g) is True]
+        never_green = [g for g in expected if base.get(g) is not True]
+        check(f"V-S6-DRILL-{mutant}", bool(expected) and not still_green and not never_green,
+              f"expected_red={len(expected)} still_green={still_green} baseline_not_green={never_green} "
+              f"crashed={list(got['__crashed__'])}")
+
+
+def drill_control(base: dict, group_of: dict) -> None:
+    """The drill harness itself must be able to fail: a do-nothing 'mutant' must leave the mapped gates green, which the
+    drill judges as a failure. If this reports the harness passing a no-op, every drill above is meaningless."""
+    expected = sorted(g for g, ms in MUTANT_FOR.items() if "M-DROP-CLASS" in ms)
+    got = run_groups(sorted({group_of[g] for g in expected}, key=list(GROUPS).index))
+    still_green = [g for g in expected if got.get(g) is True]
+    would_pass = bool(expected) and not still_green
+    check("V-S6-DRILL-CONTROL-NOOP-FIRES", bool(expected) and not would_pass and still_green == expected,
+          f"noop mutant left {len(still_green)}/{len(expected)} mapped gates green (the harness reads that as a failed drill)")
+
+
+def map_gate(names: list) -> None:
+    gate_names = [n for n in names if not n.startswith("V-S6-DRILL-") and n != "V-S6-MUTANT-MAP"]
+    unmapped = [n for n in gate_names if n not in MUTANT_FOR and n not in UNMUTATED]
+    stale = [g for g in MUTANT_FOR if g not in gate_names]
+    no_drill = sorted({m for ms in MUTANT_FOR.values() for m in ms if m not in DRILLS})
+    unused = sorted(m for m in DRILLS if not any(m in ms for ms in MUTANT_FOR.values()))
+    check("V-S6-MUTANT-MAP", not unmapped and not stale and not no_drill and not unused and len(gate_names) >= 30,
+          f"unmapped={unmapped} stale={stale} no_drill={no_drill} unused={unused} gates={len(gate_names)}")
+
+
 def gates() -> None:
-    for fn in GROUPS.values():
+    group_of = {}
+    for name, fn in GROUPS.items():
+        before = len(RESULTS)
         fn()
+        for n, _, _ in RESULTS[before:]:
+            group_of[n] = name
+    base = {n: ok for n, ok, _ in RESULTS}
+    drills(base, group_of)
+    drill_control(base, group_of)
+    map_gate(list(group_of))
 
 
 def run_once() -> tuple[int, int]:
