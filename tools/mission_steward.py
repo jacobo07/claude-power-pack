@@ -171,7 +171,7 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         row["settled"] = int(tok["tokens"])
     fresh = gm.load(mid) or fresh
     st = dict(fresh.get("steward") or {})
-    base = Path(re.sub(r"(\.residual\.md)+$", "", str(pkt)))
+    base = Path(re.sub(r"(\.residual(-\d+)?\.md)+$", "", str(pkt)))
     partial = Path(receipt + ".partial.json") if receipt else Path(str(base) + ".partial.json")
     if not st.get("partial"):
         adm_at = float((rec.get("admission") or {}).get("at") or rec.get("created_at") or 0)
@@ -198,6 +198,10 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
     # A residual mission's packet is itself a residual: write next to the BASE packet and rebuild from the base
     # text, or residuals stack (`x.residual.md.residual.md`) and each attempt re-reads every earlier proposal.
     residual = Path(str(base) + ".residual.md")
+    n = 1
+    while residual.exists() and not st.get("residual") and residual.resolve() == pkt.resolve():
+        n += 1                            # the admitted file is never rewritten: a new path, a new digest
+        residual = Path(f"{base}.residual-{n}.md")
     if not st.get("residual"):
         text = base.read_text(encoding="utf-8-sig", errors="replace") if base.exists() else ""
         text = text.split("\n\n## Residual\n")[0]

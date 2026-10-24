@@ -84,6 +84,17 @@ MAX_REPLACEMENTS = 3          # consecutive unacknowledged launches before HALTE
 # relay every pass for 1.5 h while the record said RUNNING. NO_PHASES does not clear by waiting;
 # UNAVAILABLE (a loaded host) can, so it gets the longer bound. Blocking never relays: only OK does.
 GSD_HOLD_BLOCK_AFTER = {"NO_PHASES": 2, "UNAVAILABLE": 6}
+GSD_HOLD_UNBLOCK = {"NO_PHASES": "ROADMAP.md headings parse as GSD phases (gsd-tools init.manager reports phases)",
+                    "UNAVAILABLE": "node and gsd-tools.cjs answer for this project"}
+
+
+def gsd_backoff_on() -> bool:
+    return (os.environ.get("CPP_GSD_HOLD_BACKOFF") or "").strip().lower() != "off"
+
+
+def gsd_hold_backoff_s(k: int, base: int = 300, cap: int = 1800) -> int:
+    """Wait before asking GSD again about a refusal that has not changed: doubles per blocked pass, capped."""
+    return min(cap, base * (2 ** max(0, int(k))))
 # Hand-off wall, % of context used, in the watchdog's own vocabulary. The same narrowed wall
 # /cpp-gsd-long has run on since v2 (crossing at 40 % used), so a worker hands off long
 # before native compaction would fire.
@@ -3137,7 +3148,7 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         if not data:
             raise MissionError(f"wu_packet {str(p)!r} is not an existing, non-empty file")
         import hashlib
-        changes["wu_packet"] = {"path": str(p), "sha256": hashlib.sha256(data).hexdigest(),
+        changes["wu_packet"] = {"path": str(p), "sha256": hashlib.sha256(_normalise_packet(data)).hexdigest(),
                                 "bytes": len(data), "set_at": time.time() if now is None else now}
     if continue_max_tokens is not None:
         changes["continue_max_tokens"] = _token_count("continue_max_tokens", continue_max_tokens)
@@ -3412,9 +3423,9 @@ def admission_refusal(rec: dict, *, for_launch: bool = True) -> str | None:
     if for_launch and adm.get("consumed_epoch") is not None:
         return (f"the admission was used by epoch {adm['consumed_epoch']}: admit again so the remaining "
                 f"budget is re-measured (`gsd_mission.py admit --mission {rec['mission_id']} --route ...`)")
-    if adm.get("packet_sha256") != _packet_digest(pkt["path"]):
+    if not _packet_digest_matches(adm.get("packet_sha256"), pkt["path"]):
         return "the packet changed since it was admitted: admit it again"
-    if adm.get("route_file_sha256") != _packet_digest(adm.get("route_path") or ""):
+    if not _packet_digest_matches(adm.get("route_file_sha256"), adm.get("route_path") or ""):
         return "the route file changed or vanished since admission: admit it again"
     return None
 
@@ -3432,8 +3443,8 @@ def readmit_for_relay(rec: dict, *, now: float | None = None, measure=None) -> d
     if (not rec.get("wu_packet") or _admission_switch_off() or adm.get("verdict") != "ADMISSIBLE"
             or adm.get("consumed_epoch") is None or not adm.get("route_path")):
         return {"readmitted": False, "rec": rec}
-    if (adm.get("packet_sha256") != _packet_digest(rec["wu_packet"]["path"])
-            or adm.get("route_file_sha256") != _packet_digest(adm["route_path"])):
+    if (not _packet_digest_matches(adm.get("packet_sha256"), rec["wu_packet"]["path"])
+            or not _packet_digest_matches(adm.get("route_file_sha256"), adm["route_path"])):
         return {"readmitted": False, "rec": rec}   # changed under us: a human decision, not a relay
     try:
         new = admit_route(mid, adm["route_path"], now=now, measure=measure)
@@ -3480,7 +3491,28 @@ def _packet_digest(path: str) -> str | None:
         data = Path(path).read_bytes()
     except OSError:
         return None
+    return hashlib.sha256(_normalise_packet(data)).hexdigest() if data else None
+
+
+def _normalise_packet(data: bytes) -> bytes:
+    """EOL/BOM-insensitive packet bytes: a CRLF checkout or an editor-added BOM is not a changed packet."""
+    if data.startswith(b"\xef\xbb\xbf"):
+        data = data[3:]
+    return data.replace(b"\r\n", b"\n")
+
+
+def _packet_digest_raw(path: str) -> str | None:
+    import hashlib
+    try:
+        data = Path(path).read_bytes()
+    except OSError:
+        return None
     return hashlib.sha256(data).hexdigest() if data else None
+
+
+def _packet_digest_matches(stored, path: str) -> bool:
+    """A digest recorded before normalisation (raw bytes) still matches an unchanged file."""
+    return stored is not None and stored in (_packet_digest(path), _packet_digest_raw(path))
 
 
 def gsd_fact_line(st: dict | None) -> str:
@@ -3511,7 +3543,7 @@ def launch_prompt(rec: dict) -> str:
     digest = _packet_digest(pkt["path"])
     if digest is None:
         raise MissionError(f"wu_packet {pkt['path']!r} is missing or empty")
-    drift = "" if digest == pkt.get("sha256") else f" (changed since it was set: was {str(pkt.get('sha256'))[:12]})"
+    drift = "" if _packet_digest_matches(pkt.get("sha256"), pkt["path"]) else f" (changed since it was set: was {str(pkt.get('sha256'))[:12]})"
     cap = (rec.get("continuity_from") or {}).get("capsule_path")
     return "\n".join([
         *([f"FAULT CAPSULE: your predecessor stopped without its receipt. Start from {cap} "
@@ -5432,6 +5464,14 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         row["action"] = "completed"
                         row["unit_done"] = "RECEIPT_DONE"
                         continue
+                gh = rec.get("gsd_hold") or {}
+                if (act in ("relay", "replace") and rec["state"] == BLOCKED and gh.get("next_check")
+                        and now < float(gh["next_check"]) and gsd_backoff_on()):
+                    # Identical refusal, nothing changed since the last answer: do not ask GSD or write a row
+                    # again before the backoff is due (m-9d00610493fc: 52 identical relay_held in 4.7 h).
+                    row["held"] = (f"gsd {gh.get('outcome')} hold (pass {gh.get('n')}); next check in "
+                                   f"{int(float(gh['next_check']) - now)} s; unblock: {gh.get('unblock')}")
+                    continue
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
                     st = (gsd_status or _supervise_gsd_status)(work_dir or mb.execution_root(rec),
                                                        workstream=rec.get("workstream"))
@@ -5462,6 +5502,11 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         hold = {"outcome": outcome, "n": int(prev.get("n") or 0) + 1 if same else 1,
                                 "since": prev.get("since") if same else now, "reason": st.get("reason")}
                         bound = GSD_HOLD_BLOCK_AFTER.get(outcome)
+                        if bound and hold["n"] >= bound and gsd_backoff_on():
+                            hold["next_check"] = now + gsd_hold_backoff_s(hold["n"] - bound)
+                            hold["unblock"] = GSD_HOLD_UNBLOCK.get(outcome, "GSD answers OK")
+                        else:
+                            hold.pop("next_check", None)
                         if bound and hold["n"] >= bound and rec["state"] != BLOCKED:
                             # Bounded silence: RUNNING with an idle owner and a refusal that
                             # waiting has not cleared is not healthy; say so where status reads.
