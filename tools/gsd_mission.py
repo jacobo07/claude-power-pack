@@ -1209,7 +1209,12 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         extra["progress"] = progress
         if not rec.get("progress_origin") and progress.get("measured"):
             extra["progress_origin"] = progress["fp"]   # the tree this mission started from
-    if note is not None or rec.get("card") or (rec.get("capsule_key") and capsule_v2(rec)):
+    # FIRST-WORKER DECISION GAP (Phase 4.1, Owner D5 item 8): epoch 1 has no note and no older card, so the
+    # card was only ever rendered at a relay and a mission armed (or decided on while PREPARED) reached its
+    # first worker with NO decisions. `arm` launches through here with expect_epoch=0, and a mission armed
+    # --no-launch is launched here later, so this one place covers both. Rendered with the same render_card.
+    first_worker_decisions = expect_epoch == 0 and bool(rec.get("directives"))
+    if note is not None or rec.get("card") or first_worker_decisions or (rec.get("capsule_key") and capsule_v2(rec)):
         # A capsule-v2 renewal's first worker has no note and no older card, yet it is a successor:
         # its certify instruction must ride the launch, not the SessionStart hook W8 saw fail.
         # Pre-render the successor's card NOW: this runs out of band with no deadline, and
