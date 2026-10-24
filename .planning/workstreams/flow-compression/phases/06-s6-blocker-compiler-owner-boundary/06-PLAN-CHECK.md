@@ -10,3 +10,10 @@ WARNING 4: truths implementation-heavy (acceptable for tooling).
 WARNING 5: D-05 deliberately narrowed to information-only (no consumer acts on independent_work); record it in the plan/SUMMARY as a deliberate narrowing.
 
 Next: revise the plan (SendMessage planner, or edit Task 3(b)/(e) directly), re-run gsd-plan-checker once, then /gsd-execute-phase 6 --ws flow-compression.
+
+## Re-check 2026-10-24
+Verdict: PASSED (no new blocker).
+- BLOCKER 1 resolved: Task 3(b) now lists 13 original + 14 added mutants and a MUTANT_FOR gate-to-mutant table covering every gate named in the review; a self-check gate fails the suite if any V-S6 gate lacks an existing mutant (UNMUTATED list with reasons otherwise).
+- WARNING 2 resolved: Task 3(e) is conditional, post-verifier; completed_phases/current_phase edits only after init.progress reports phase_complete, else stop and report.
+- WARNING 5 resolved: D-05 narrowing (independent_work information-only) is recorded for the SUMMARY.
+- Residual INFO: the MUTANT_FOR self-check gate itself has no mutant; grouped labels ("KILL-SWITCH gates", "BATCH-ANSWERED gates") should be expanded to exact gate names at implementation. WARNING 3 (scope size) stands as accepted.
