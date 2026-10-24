@@ -1,7 +1,8 @@
 # RESUMPTION — flow-compression
 
-Identity: GSD X Autonomous Flow Compression. Worktree `C:\Users\User\.claude\skills\claude-power-pack\.claude\worktrees\flow-compression`
-(branch `gsd/flow-compression`). Live system = main checkout (branch feature/knowledge-acquisition, shared with other panes).
+Identity: GSD X Autonomous Flow Compression. Runs on GEX44 in `~/missions/flow-compression` (branch
+`mission/flow-compression`; the worker may enter its own worktree branch). Laptop copy m-0bd772045f65 is HELD.
+Never push, never edit GEX44's live install; the laptop coordinator fetches and lands.
 Thesis: missions lose time to idle control-plane states and in-worker compaction, not to relay latency.
 
 State: S1 (rotation invariant) code + tests landed by the arming pane; its Production Reality is Phase 1.

@@ -2,12 +2,16 @@
 
 Read `REQUIREMENTS.md`, then `vault/specs/flow-compression.md` (contracts, acceptance, budget) and
 `vault/plans/flow-compression-ownership-map.md` (who owns what; do NOT re-scan what it already states).
-Work happens in the worktree `.claude/worktrees/flow-compression` (branch `gsd/flow-compression`). The live system
-runs from the main checkout `C:\Users\User\.claude\skills\claude-power-pack` (branch feature/knowledge-acquisition,
-shared with other panes): land each sealed phase there with a pathspec-scoped commit of exactly your files, after
-backing up each live file, and verify `git log -1 --format=%s`.
-Each phase ends with: tests run (foreground, bounded, `CPP_RESOURCE_ADMISSION=off` only inside test runs when host RAM
-< 3000 MB), micro-commit(s), `STATE.md` + `RESUMPTION_FILE.md` (this dir) updated with measured spend.
+PLANE: this mission runs on GEX44 (Linux) in the clone `~/missions/flow-compression` (Owner 2026-10-24, laptop RAM
+under the launch floor). Commit every sealed phase on YOUR branch with a repo-local git identity; do NOT push and do
+NOT touch the GEX44 live install `~/.claude/skills/claude-power-pack` (other missions run on it). The laptop
+coordinator fetches your branch and lands it on the laptop live checkout. The supervisor relaying you is GEX44's
+older install: S1's rotation is carried by explicit knobs on your record (continue_max_tokens 175k, wall 15/17/12 %),
+so Phase 1 judges THOSE on this host. Data for replay/measurement = THIS host's `~/.claude/state/` ledger and
+transcripts; laptop-plane facts in the spec are quoted evidence, not data you can re-read. Anything that needs the
+laptop's `~/.claude` (live hooks, settings) is marked LAPTOP-ONLY in your phase notes, never claimed from here.
+Each phase ends with: tests run (foreground, bounded; use Bash, not PowerShell), micro-commit(s), `STATE.md` +
+`RESUMPTION_FILE.md` (this dir) updated with measured spend.
 UNKNOWN / INCONCLUSIVE are never PASS. Every new gate gets a mutation drill that must go red.
 
 ## Phases
