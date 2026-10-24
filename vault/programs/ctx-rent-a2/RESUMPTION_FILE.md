@@ -17,8 +17,12 @@ R6 SEALED AS A SEPARATE FILE (Owner "y", 2026-10-24): the UKDL entry RECOMPUTATI
 `vault/knowledge_base/ukdl-recomputation-without-causal-invalidation.md`. The patch (worker commit 83d58547) stopped applying
 because `ukdl-universal.md` carries ~1,500 uncommitted lines of another writer. Merging the entry into UKDL is left for later.
 
-**Live `python tools/cpp_fsck.py` (2026-10-23):** exit 1. stranded_lease: 70 of 71 reserves settled with Owner consent;
-only cp50-c1 c021de1c (150,000; no mark and no prebind) remains, waiting for an Owner decision. worktree_without_lifecycle FINDING (dirty worktrees with no lifecycle row), capsule_without_disposition
+**Live `python tools/cpp_fsck.py` (2026-10-24):** exit 1. stranded_lease: none. All 71 reserves plus 3 that leaked
+later are settled with Owner consent (cp50-c1 c021de1c booked at its one-call transcript, 215,716).
+Those settles over-charged 14,795,560 of pre-binding history across 13 sessions in 9 goals, because a booked pane was
+capped only at mark + holds. The fix is 7ea946df (gates V-MSPEND-SETTLE-BOOKED-EXCLUDES-PREBIND-*). The 13
+Owner-approved correction packets are APPLIED in `~/.claude/state/capital-authority/corrections.jsonl`, and all 13
+marks were re-read equal to the packet values. worktree_without_lifecycle FINDING (dirty worktrees with no lifecycle row), capsule_without_disposition
 FINDING (36 PENDING capsules 2026-09-28..10-20), stale_resumption UNKNOWN (econ-contain has no anchor),
 parked_chain_polled UNKNOWN (needs --chain/--tick-log), denominators PASS. Repairs are printed per finding; none applied.
 
@@ -26,7 +30,7 @@ parked_chain_polled UNKNOWN (needs --chain/--tick-log), denominators PASS. Repai
 
 **Next 3 actions.**
 1. When `ukdl-universal.md` is clean in `git status`, append the entry from the separate file into it, then delete that file and the salvage patch in the same commit.
-2. Ask the Owner about cp50-c1 c021de1c: book it with `goal-settle --measured <evidence>`, or leave it held.
+2. cp50-c1's lease reads -6,250,345 (used 7,750,345 vs cap 1,500,000). That was mostly there before the settles; ask the Owner whether to investigate it.
 3. Check whether slice H is still live before reading `vault/programs/econ-succession/RESUMPTION_FILE.md`; compact MEMORY.md (+4.2K).
 
 **Start.** Bind your session to ctx-rent-a2, run `python tools/cpp_fsck.py`, then action 1.
