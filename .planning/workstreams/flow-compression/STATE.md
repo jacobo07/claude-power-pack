@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 milestone_name: flow-compression
-current_phase: 6
-current_phase_name: Phase 6 (see ROADMAP.md)
+current_phase: 7
+current_phase_name: Phase 7 (see ROADMAP.md)
 status: ready
 workstream: flow-compression
 created: 2026-10-24
 last_updated: "2026-10-24T00:00:00.000Z"
-last_activity_desc: Phase 5 sealed (terminal reconciliation, S5 44/44, GSD 5/8); 149 h LAPTOP-ONLY unmeasured
+last_activity_desc: Phase 6 sealed (S6 blocker compiler + Owner boundary, 72/72, VERIFICATION passed, GSD 6/8)
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
 ---
 
 # Project State
@@ -43,7 +43,7 @@ Update this file and `RESUMPTION_FILE.md` (this dir) after every sealed phase, w
 - Step 0 findings (before any edit): no consumer compares an `owner_hold` as a whole; no BLOCKED writer exists beyond the five AST-confirmed `block_mission` callers; `annotate_hold` is used by `set_owner_hold` and `_amr_boundary`.
 - V-S6-HOLD-PARKS-TYPED first run failed: the gate read ledger event `recovery_owner_boundary`, but the typed row is the transition event `recovery_boundary` (the separate `recovery_owner_boundary` ledger row carries no blocker fields). Root: a gate written from memory of the writer, not from the writer. Repair: read `recovery_boundary`. Same class as the S5 fixture incident; prevention unchanged.
 - Every gate passed on its first run, which proves nothing about their ability to fail. Answer: 34 mutation drills (each mapped gate must be green on baseline and red under its mutant) plus V-S6-DRILL-CONTROL-NOOP-FIRES (all 34 drills fail when the mutants are replaced by no-ops).
-- RESOLVE_BY_POLICY is narrowed to preference-class items with a recorded rule; anything touching a PROTECTED keyword, money, publish or credentials stays an Owner decision. The FC-06 requirement line classifies OWNER/deploy and is kept out only by the ask-form filter; the STATE line "needs Owner authorization (name it)" classifies AGENT and is excluded by two layers.
+- RESOLVE_BY_POLICY is narrowed to preference-class items with a recorded rule; anything touching a protected keyword stays with the Owner. Requirement lines and prior STATE wording are kept out of the decision list by the ask-form filter plus the autonomy classifier (two layers); incident text no longer quotes those phrases, so the live compilation over this workstream reports no spurious item (verifier W1, fixed).
 - `arm_chain` batching goes through `arm(launch=False)`, so the single call in `arm` covers both; no second call site was added.
 - Decision (safest option): the worktree branch `worktree-flow-compression-w` does not match the agent-* allow-list in the pre-commit assertion, but it is the orchestrator-designated, non-protected branch. Only the protected-branch case was enforced. Commits ff-merged into `mission/flow-compression` after each commit; no push.
 - Host measurement: `decisions --cwd . --workstream flow-compression` returns measured true, 0 items. OWNER_QUEUE.jsonl sha256 prefix 2c03045bfb579004 before and after both regression batches (tests never wrote the host queue). The host ledger is live (6249 rows at census time, 6268 later) so the census is a dated snapshot.
