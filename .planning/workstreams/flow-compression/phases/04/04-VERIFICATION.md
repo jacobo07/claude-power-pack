@@ -1,3 +1,10 @@
+---
+phase: 04-s4-economic-lease
+verified: 2026-10-24T00:00:00Z
+status: passed
+score: "14/14 gates"
+---
+
 # Phase 4 verification — PASSED (Owner-top-up class calibration deferred)
 - `python3 tools/test_s4_lease.py` S4_PASS=14/14: productive mission crosses 2x variance (est 10M -> 17.5M, no Owner hold, ledger lease_renewed); same fingerprint cannot renew twice; unchanged fp, missing mark, unmeasured fp, no authority, renewal cap, kill switch all still stop; runaway at authority-less-closeout still holds (MISSION_AUTHORITY); mutant lease_on=False turns the productive gate red.
 - Regression: see SUMMARY. Pre-existing red: V-MSPEND-HOLD-PLAN-NONE (verified by stashing the change).
