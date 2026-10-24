@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 milestone_name: flow-compression
-current_phase: 3
-current_phase_name: S3 Admission refusal loop + packet identity
+current_phase: 4
+current_phase_name: S4 Economic lease (variance is not a stop)
 status: ready
 workstream: flow-compression
 created: 2026-10-24
 last_updated: "2026-10-24T00:00:00.000Z"
-last_activity_desc: Phases 1-2 sealed (arm_preflight landed, PRE 16/16)
+last_activity_desc: Phase 3 sealed (backoff 53->12 asks, digest, residual-N); DEFER autopsy LAPTOP-ONLY unmeasured
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
 ---
 
 # Project State
