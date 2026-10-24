@@ -6039,10 +6039,77 @@ def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = Non
         add("authority", "ok")
     else:
         add("authority", "warn", "no authority_tokens on this arm: spend is bounded only by a goal ledger, if bound")
+    if blocker_compile_on():
+        # S6 / D-08: the Owner decisions this goal can already foresee, read-only. Never a refusal.
+        try:
+            import blocker_compiler as bc
+            fd = bc.foreseeable_decisions(cwd, workstream, records=_goal_records(cwd, workstream))
+            if not fd["measured"]:
+                bad = [s_["path"] for s_ in fd["sources"] if s_["status"] != "ok"]
+                add("foreseeable_decisions", "unmeasured", f"unreadable source(s): {', '.join(bad)}"[:300])
+            elif fd["items"]:
+                add("foreseeable_decisions", "warn",
+                    f"{len(fd['items'])} Owner decision(s) foreseeable: {', '.join(i['id'] for i in fd['items'])}")
+            else:
+                add("foreseeable_decisions", "ok")
+        except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
+            add("foreseeable_decisions", "unmeasured", f"{type(exc).__name__}: {exc}"[:200])
     fixed = apply_rotation_invariant(kw).get("rotation_invariant") if kw.get("autocompact") else None
     if fixed and fixed.get("repaired"):
         add("rotation_invariant", "warn", f"would repair {sorted(fixed['repaired'])}")
     return {"ok": refusal is None, "checks": checks, "refusal": refusal}
+
+
+def _goal_records(cwd: str, workstream: str | None) -> list[dict]:
+    """Mission records of the same workstream and repository (the goal), for answered-decision detection."""
+    if not workstream:
+        return []
+    key = goal_key(cwd, workstream)
+    return [r for r in all_missions() if r.get("workstream") == workstream
+            and goal_key(r.get("cwd") or "", r.get("workstream")) == key]
+
+
+def batch_foreseeable_decisions(rec: dict, cwd: str, workstream: str | None) -> dict | None:
+    """S6 / D-08: list the foreseeable Owner decisions ONCE. The delta against every earlier batch for this cwd and
+    workstream is written as one ledger row and one Owner-queue entry; an empty delta writes nothing at all (a second
+    arm over the same items adds no row). FAIL-OPEN: a fault is ledgered as owner_decisions_batch_failed and never
+    stops the arm. The queue entry is written first, so a queue fault leaves no batched row and the next arm retries
+    (the queue append is idempotent by row_id). CPP_BLOCKER_COMPILE=off skips it."""
+    if not blocker_compile_on():
+        return None
+    mid = rec.get("mission_id")
+    try:
+        import blocker_compiler as bc
+        fd = bc.foreseeable_decisions(cwd, workstream, records=_goal_records(cwd, workstream))
+        prior = set()
+        for r in lr.ledger_events("arm-preflight"):
+            if (r.get("event") == "owner_decisions_batched" and r.get("cwd") == str(cwd)
+                    and r.get("workstream") == workstream):
+                prior.update(r.get("ids") or [])
+        delta = [i for i in fd["items"] if i["id"] not in prior]
+        if not delta:
+            return None
+        ids = [i["id"] for i in delta]
+        key = bc.batch_key(workstream, ids)
+        cmd = f'python "{Path(__file__).resolve().parent / "blocker_compiler.py"}" decisions --batch {key}'
+        _owner_queue().append(
+            f"Owner decisions foreseeable for {workstream or Path(cwd).name}: {len(delta)} to settle once",
+            cmd, unblocks=f"workstream {workstream or Path(cwd).name}", source="arm_decisions",
+            row_id=f"q-decisions-{key}", urgent=False,
+            state_dir=os.environ.get("PP_OWNER_QUEUE_STATE_DIR") or None)
+        lr.ledger_append("arm-preflight", "owner_decisions_batched", cwd=str(cwd), workstream=workstream,
+                         batch_key=key, ids=ids, mission_id=mid,
+                         items=[{k: i[k] for k in ("id", "category", "text", "source", "line")} for i in delta],
+                         omitted=[{"id": o["id"], "reason": o["reason"]} for o in fd["omitted"]],
+                         resolved_by_policy=[{"id": o["id"], "rule": o["rule"]} for o in fd["resolved_by_policy"]])
+        return {"batch_key": key, "ids": ids}
+    except Exception as exc:  # noqa: BLE001 -- the arm proceeds; the failure is the record
+        try:
+            lr.ledger_append("arm-preflight", "owner_decisions_batch_failed", cwd=str(cwd), workstream=workstream,
+                             mission_id=mid, why=f"{type(exc).__name__}: {exc}"[:200])
+        except Exception:  # noqa: BLE001
+            pass
+        return None
 
 
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
@@ -6081,6 +6148,7 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
             lr.ledger_append("arm-guard", "worker_arm_refused", why=why[:300])
             raise MissionError(why)
     rec = create(cwd, resume_command, **kw)
+    batch_foreseeable_decisions(rec, str(cwd), ws)
     extra = {}
     try:   # plain arm under a declared goal root binds to that goal's ledger: no new capital per mission id
         import mission_spend as _ms

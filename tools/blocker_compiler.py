@@ -413,6 +413,154 @@ def compile_blocker(reason: str | None, *, hold: dict | None = None, intent: dic
             "independent_reason": why, "owner_required": bool(owner_required), "rule": name}
 
 
+# ------------------------------------------------------------------------------------------------ decisions
+# D-08 / D-09: foreseeable Owner decisions, listed ONCE at arm instead of discovered one by one in live workers.
+# Read-only. The compiler never resolves anything outward, irreversible or capital: those stay the Owner's (FC-06).
+ASK_MARKERS = re.compile(r"OWNER DECISION NEEDED|needs? (?:the )?Owner|requires? (?:the )?Owner|Owner must|"
+                         r"awaiting (?:the )?Owner|Owner-only", re.I)
+# Guard / negation phrasing: a rule ABOUT the Owner boundary is not a question for the Owner.
+GUARD_FILTER = re.compile(r"\b(?:never|must not|no owner|without the owner|does not need|do not need|not needed|"
+                          r"stop only on)\b", re.I)
+ANSWER_MARK = re.compile(r"\b(?:DECIDED|ANSWERED|RESOLVED|Owner chose)\b")
+# Items FC-06 protects even where the generic classifier would call them self-answerable ("raise the capital
+# ceiling" is an Owner act, and the classifier has no capital category). Fail toward the Owner.
+PROTECTED = re.compile(r"capital|\bceiling\b|\btop-?up\b|authority|branch protection|\bprotection\b|force[- ]push", re.I)
+OUTWARD_CATEGORIES = ("outward-facing", "irreversible", "resource-blocked")
+
+
+def decisions_on() -> bool:
+    return (os.environ.get("CPP_BLOCKER_COMPILE") or "").strip().lower() not in ("0", "off", "false")
+
+
+def _norm(text: str) -> str:
+    return " ".join(re.sub(r"^[\s>*\-\d.)]+", "", text).lower().split())
+
+
+def item_id(category: str, text: str) -> str:
+    return "OD-" + hashlib.sha256(f"{category}|{_norm(text)}".encode("utf-8")).hexdigest()[:8]
+
+
+def _read_text(path: Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def foreseeable_decisions(cwd: str, workstream: str | None, *, records=None, policy=None, authorized=(),
+                          read=None, use_filters: bool = True) -> dict:
+    """{measured, items, omitted, resolved_by_policy, sources}. Writes nothing.
+
+    A source that cannot be read is listed as unmeasured and makes `measured` False: it is never read as
+    "no decisions" (absent is not zero)."""
+    cwd_p = Path(cwd)
+    reader = read or _read_text
+    if workstream:
+        srcs = [cwd_p / "vault" / "specs" / f"{workstream}.md",
+                cwd_p / ".planning" / "workstreams" / workstream / "ROADMAP.md",
+                cwd_p / ".planning" / "workstreams" / workstream / "STATE.md"]
+    else:
+        srcs = [cwd_p / ".planning" / "ROADMAP.md", cwd_p / ".planning" / "STATE.md"]
+    sources, cands = [], []
+    for sp in srcs:
+        text = reader(sp)
+        if text is None:
+            sources.append({"path": str(sp), "status": "unmeasured"})
+            continue
+        sources.append({"path": str(sp), "status": "ok"})
+        for no, line in enumerate(text.splitlines(), 1):
+            if use_filters and not ASK_MARKERS.search(line):
+                continue
+            if use_filters and GUARD_FILTER.search(line):
+                continue
+            if not use_filters and not line.strip():
+                continue
+            cands.append((str(sp), no, re.sub(r"^[\s>*\-]+", "", line).strip()))
+    recs = [r for r in (records or []) if isinstance(r, dict) and r.get("workstream") == workstream]
+    live_ids = {d.get("id") for r in recs for d in (r.get("decisions") or []) if not d.get("superseded_by")}
+    directives = [str(d) for r in recs for d in (r.get("directives") or [])]
+    pol = policy
+    items, omitted, resolved, seen = [], [], [], set()
+    for path, no, text in cands:
+        verdict = _autonomy_for(text, authorized)
+        protected = bool(PROTECTED.search(text))
+        if use_filters and not ((verdict or {}).get("owner") == "OWNER" or protected):
+            continue
+        category = (verdict or {}).get("category") if (verdict or {}).get("owner") == "OWNER" else "protected"
+        if category == "gate-error":
+            category = "protected"
+        iid = item_id(category, text)
+        if iid in seen:
+            continue
+        seen.add(iid)
+        item = {"id": iid, "category": category, "kind": (verdict or {}).get("kind"), "text": text[:300],
+                "source": path, "line": no, "resolution": "OWNER", "rule": None}
+        if ANSWER_MARK.search(text):
+            omitted.append({**item, "reason": "doc answer marker on the line"})
+        elif iid in live_ids:
+            omitted.append({**item, "reason": "live decision recorded on a mission of the same goal"})
+        elif any(f"answers:{iid}" in d for d in directives):
+            omitted.append({**item, "reason": "directive answers it"})
+        elif category == "preference" and not protected:
+            if pol is None:
+                pol = _repo_policy(cwd)
+            q = _gate_question(text, (pol or {}).get("values") or {})
+            if q.get("result") == "RESOLVE_BY_POLICY" and q.get("key") and (pol or {}).get("source"):
+                resolved.append({**item, "resolution": "RESOLVE_BY_POLICY",
+                                 "rule": {"key": q["key"], "source": pol["source"], "fingerprint": pol.get("fingerprint")}})
+            else:
+                items.append(item)
+        else:
+            items.append(item)
+    return {"measured": all(s["status"] == "ok" for s in sources), "items": items, "omitted": omitted,
+            "resolved_by_policy": resolved, "sources": sources}
+
+
+def _autonomy_for(text: str, authorized=()):
+    try:
+        root = str(TOOLS.parent)
+        if root not in sys.path:
+            sys.path.insert(0, root)
+        from modules.autonomy_gate import gate
+        return gate.classify(text, authorized=authorized)
+    except Exception:  # noqa: BLE001 -- fail toward the Owner: an unloadable gate cannot clear an item
+        return {"owner": "OWNER", "category": "gate-error", "why": "autonomy gate unavailable"}
+
+
+def _repo_policy(cwd: str) -> dict:
+    try:
+        sys.path.insert(0, str(TOOLS))
+        import mission_policy as mp
+        return mp.repo_policy(cwd)
+    except Exception:  # noqa: BLE001 -- no policy readable means nothing is resolved by policy
+        return {"values": {}, "source": None, "fingerprint": None}
+
+
+def _gate_question(text: str, values: dict) -> dict:
+    try:
+        sys.path.insert(0, str(TOOLS))
+        import mission_policy as mp
+        return mp.gate_question(text, values)
+    except Exception:  # noqa: BLE001
+        return {"result": "OWNER_REQUIRED"}
+
+
+def batch_key(workstream: str | None, ids) -> str:
+    return hashlib.sha256(f"{workstream or ''}|{','.join(sorted(ids))}".encode("utf-8")).hexdigest()[:12]
+
+
+def print_batch(key: str, ledger: Path | str | None = None) -> dict:
+    """A recorded batch, read back from the ledger, with the exact command the Owner runs to answer each item."""
+    path = Path(ledger) if ledger else _default_ledger()
+    for r in _read_rows(path):
+        if r.get("event") == "owner_decisions_batched" and r.get("batch_key") == key:
+            items = [{**it, "answer_command": f'python "{GM_PY}" decide --mission <MISSION> --id {it["id"]} --text "<ANSWER>"'}
+                     for it in r.get("items") or []]
+            return {"batch_key": key, "workstream": r.get("workstream"), "cwd": r.get("cwd"), "items": items,
+                    "omitted": r.get("omitted"), "resolved_by_policy": r.get("resolved_by_policy")}
+    return {"batch_key": key, "items": [], "error": "no such batch in the ledger"}
+
+
 # ------------------------------------------------------------------------------------------------ census
 CENSUS_EVENTS = ("mission_blocked", "blocked_intent", "owner_hold_set", "recovery_owner_boundary")
 
@@ -510,7 +658,7 @@ def main(argv=None) -> int:
     cp.add_argument("--out")
     cp.add_argument("--ledger")
     dp = sub.add_parser("decisions")
-    dp.add_argument("--cwd", required=True)
+    dp.add_argument("--cwd", default=os.getcwd())
     dp.add_argument("--workstream")
     dp.add_argument("--batch")
     a = ap.parse_args(argv)
@@ -524,11 +672,10 @@ def main(argv=None) -> int:
             print(text)
         return 0
     if a.cmd == "decisions":
-        fn = globals().get("foreseeable_decisions")
-        if fn is None:
-            print(json.dumps({"measured": False, "reason": "foreseeable_decisions not installed"}))
-            return 1
-        print(json.dumps(fn(a.cwd, a.workstream), indent=2, sort_keys=True))
+        if a.batch:
+            print(json.dumps(print_batch(a.batch), indent=2, sort_keys=True))
+            return 0
+        print(json.dumps(foreseeable_decisions(a.cwd, a.workstream), indent=2, sort_keys=True))
         return 0
     return 2
 
