@@ -5792,12 +5792,80 @@ def planning_admission(resume_command: str, cwd: str, unit_path: str | None, ove
     return {"admitted": True, "gate": d["mode"], "decision": d, "override": (override or None)}
 
 
+def arm_preflight_on() -> bool:
+    return (os.environ.get("CPP_ARM_PREFLIGHT") or "").strip().lower() != "off"
+
+
+def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = None, launch: bool = True,
+                  status_reader=None, memory_reader=None, **kw) -> dict:
+    """One check before `arm` creates a record: refuse, naming the cause, what would only fail later.
+
+    Refuses on a MEASURED NO_PHASES / ALL_COMPLETE (only for a `/gsd-` resume command: another route
+    has no GSD roadmap to judge) and, when a worker would launch now, on a measured low-memory host.
+    UNAVAILABLE / unreadable is `unmeasured`, never a refusal and never a pass. Authority absence and a
+    rotation-invariant repair are reported (`warn`), not refused: the first is the Owner's call, the
+    second is repaired by the launch itself. Read-only and idempotent. CPP_ARM_PREFLIGHT=off disables."""
+    if not arm_preflight_on():
+        return {"ok": True, "checks": [], "refusal": None, "off": True}
+    checks, refusal = [], None
+
+    def add(name, status, why=""):
+        nonlocal refusal
+        checks.append({"check": name, "status": status, "why": why})
+        if status == "refuse" and refusal is None:
+            refusal = f"{name}: {why}"
+
+    if resume_command.lstrip().startswith("/gsd-"):
+        try:
+            st = (status_reader or (lambda c, w: lr.gsd_status(c, workstream=w)))(cwd, workstream)
+        except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
+            st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"[:160]}
+        out = st.get("outcome")
+        if out in ("NO_PHASES", "ALL_COMPLETE"):
+            add("gsd_status", "refuse", f"{out}: {st.get('reason')} -- arming would launch a worker with no work")
+        elif out == "OK":
+            add("gsd_status", "ok", str(st.get("reason") or ""))
+        else:
+            add("gsd_status", "unmeasured", f"{out}: {st.get('reason')}")
+    else:
+        add("gsd_status", "n/a", "not a /gsd- resume command")
+
+    if launch:
+        import resource_admission as rsa
+        res = rsa.refusal(slim_profile(kw) or "top-level-worker", reader=memory_reader)
+        if res is None:
+            add("resource_admission", "ok")
+        elif res.get("verdict") == rsa.REFUSE_LOW_MEMORY:
+            add("resource_admission", "refuse",
+                f"available {res.get('available_mb')} MB below floor {res.get('floor_mb')} MB")
+        else:
+            add("resource_admission", "unmeasured", str(res.get("verdict")))
+    else:
+        add("resource_admission", "n/a", "no launch now")
+
+    if kw.get("authority_tokens") or kw.get("ledger_goal") or kw.get("authority_tokens") == 0:
+        add("authority", "ok")
+    else:
+        add("authority", "warn", "no authority_tokens on this arm: spend is bounded only by a goal ledger, if bound")
+    fixed = apply_rotation_invariant(kw).get("rotation_invariant") if kw.get("autocompact") else None
+    if fixed and fixed.get("repaired"):
+        add("rotation_invariant", "warn", f"would repair {sorted(fixed['repaired'])}")
+    return {"ok": refusal is None, "checks": checks, "refusal": refusal}
+
+
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
         authority: str | None = None, parallel_unit: str | None = None, **kw) -> dict:
     ws = kw.get("workstream")
     if ws is None and resume_command.startswith("/gsd-"):
         m = _WS_FLAG.search(resume_command)
         ws = m.group(1) if m else None
+    if launch:
+        pre = arm_preflight(cwd, resume_command, workstream=ws, launch=True, **{k: v for k, v in kw.items() if k != "workstream"})
+        if pre.get("checks"):
+            lr.ledger_append("arm-preflight", "arm_preflight", cwd=str(cwd), ok=pre["ok"], refusal=pre["refusal"],
+                             checks=[(c["check"], c["status"]) for c in pre["checks"]])
+        if not pre["ok"]:
+            raise MissionError(f"arm refused by preflight -- {pre['refusal']}"[:600])
     key = goal_key(cwd, ws)
     conflicts = goal_conflicts(key)
     old = None
@@ -5861,6 +5929,13 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
     # The worker model rides the same atomic step: without it the launch inherits the host default (Opus
     # here), and a chain armed unattended has no later moment to set it before the sweep launches.
     model = kw.pop("model", None)
+    pre = arm_preflight(cwd, resume_command, workstream=kw.get("workstream"), launch=True,
+                        **{k: v for k, v in kw.items() if k != "workstream"})
+    if pre.get("checks"):
+        lr.ledger_append("arm-preflight", "arm_preflight", cwd=str(cwd), ok=pre["ok"], refusal=pre["refusal"],
+                         chain=True, checks=[(c["check"], c["status"]) for c in pre["checks"]])
+    if not pre["ok"]:
+        return {"ok": False, "held": False, "why": f"arm refused by preflight -- {pre['refusal']}"[:600]}
     rec = arm(cwd, resume_command, launch=False, **kw)["mission"]
     mid = rec["mission_id"]
     try:

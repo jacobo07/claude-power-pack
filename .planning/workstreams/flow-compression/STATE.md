@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 milestone_name: flow-compression
-current_phase: 0
-current_phase_name: S1 Rotation invariant — Production Reality
+current_phase: 3
+current_phase_name: S3 Admission refusal loop + packet identity
 status: ready
 workstream: flow-compression
 created: 2026-10-24
 last_updated: "2026-10-24T00:00:00.000Z"
-last_activity_desc: Phase 1 evidence committed; epoch 1 ended by live context wall (17%); Phase 2 design in RESUMPTION_FILE
+last_activity_desc: Phases 1-2 sealed (arm_preflight landed, PRE 16/16)
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 2
 ---
 
 # Project State
