@@ -227,6 +227,17 @@ def revoke(packet_path, transcript_path, goal: str, ledger_factory, now: float |
     return {"ok": bool(out.get("ok")), "revoked": True, "state": "REVOKED", "reason": "", "row": row}
 
 
+def approval_transcripts(ap: list[dict]) -> list[str]:
+    """Transcripts an apply must search: the last row's (a sweep row names the pane to search) and the last
+    approval row's. Other panes append sweep rows every few seconds, so reading only the last row missed an
+    approval made seconds earlier (ctx-rent-a2 2026-10-24: cost-collapse and cp50-c1 corrections)."""
+    last = next((a for a in reversed(ap) if a.get("kind") == "approval"), None)
+    out = [ap[-1]["transcript_path"]]
+    if last is not None and last["transcript_path"] not in out:
+        out.append(last["transcript_path"])
+    return out
+
+
 def apply_pending(ledger_factory, root=None, timeout: float = 60.0, sleep=time.sleep, now=None) -> list[dict]:
     """Hook leg: retry until the transcript has flushed the Owner entry, then apply every pending goal."""
     base = capital_root(root)
@@ -237,12 +248,15 @@ def apply_pending(ledger_factory, root=None, timeout: float = 60.0, sleep=time.s
         return []
     if not ap:
         return []
-    transcript = ap[-1]["transcript_path"]
+    transcripts = approval_transcripts(ap)
     deadline, results = time.time() + timeout, []
     for ent in pend if isinstance(pend, list) else [pend]:
         for goal in ent.get("goals", []):
             while True:
-                r = apply(ent["packet"], transcript, goal, ledger_factory, now=now, root=root)
+                for t in transcripts:
+                    r = apply(ent["packet"], t, goal, ledger_factory, now=now, root=root)
+                    if "no Owner-typed approval" not in r.get("reason", ""):
+                        break
                 if r.get("ok") or "no Owner-typed approval" not in r.get("reason", "") or time.time() >= deadline:
                     results.append({"goal": goal, **{k: r[k] for k in ("ok", "applied", "reason")}})
                     break

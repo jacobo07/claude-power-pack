@@ -192,6 +192,25 @@ def _():
     assert len([r for r in ca._rows(e.root) if r["state"] == "APPLIED"]) == 1
 
 
+@gate("V-OCA-PENDING-SURVIVES-SWEEP-ROW")
+def _():
+    # another pane's sweep row after the approval row must not hide it (ctx-rent-a2 2026-10-24); a sweep row's
+    # own transcript is still searched (V-OCA-HOOK-SWEEP semantics)
+    e = Env()
+    e.show_packet()
+    e.owner("approve ga only")
+    (e.root).mkdir(parents=True, exist_ok=True)
+    (e.root / "pending.json").write_text(json.dumps([{"packet": str(e.packet), "goals": ["ga"]}]), encoding="utf-8")
+    other = e.tmp / "other.jsonl"
+    other.write_text("", encoding="utf-8")
+    rows = [{"transcript_path": str(e.transcript), "kind": "approval"},
+            {"transcript_path": str(other), "kind": "pending-sweep"}]
+    (e.root / "approvals.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+    r = ca.apply_pending(e.factory(), root=e.root, timeout=0, sleep=lambda s: None)
+    assert r and r[0]["ok"] and e.programme("ga") == 3 * M, r
+    assert ca.approval_transcripts(list(reversed(rows))) == [str(e.transcript)]   # control: sweep-only list
+
+
 @gate("V-OCA-GOAL-ONLY-SCOPE")
 def _():
     e = Env()
