@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 milestone: v1
 milestone_name: flow-compression
-current_phase: 5
-current_phase_name: S5 Terminal reconciliation
+current_phase: 6
+current_phase_name: Phase 6 (see ROADMAP.md)
 status: ready
 workstream: flow-compression
 created: 2026-10-24
 last_updated: "2026-10-24T00:00:00.000Z"
-last_activity_desc: Phase 4 sealed (economic lease, S4 14/14); P3 DEFER autopsy LAPTOP-ONLY unmeasured
+last_activity_desc: Phase 5 sealed (terminal reconciliation, S5 44/44, GSD 5/8); 149 h LAPTOP-ONLY unmeasured
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
 ---
 
 # Project State
