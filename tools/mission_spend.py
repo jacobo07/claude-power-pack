@@ -694,7 +694,10 @@ def correction_apply_pending(ledger_factory=None, root=None, timeout: float = 60
                 continue
             if r.get("state") == "APPLIED":
                 done.add(r.get("sha"))
-    transcript = ap[-1]["transcript_path"]
+    # Other panes append sweep rows every few seconds, so the last row is rarely the approver's: read the last
+    # approval row's transcript (an apply run seconds after the approval missed it, ctx-rent-a2 2026-10-24).
+    last = next((a for a in reversed(ap) if a.get("kind") == "approval"), ap[-1])
+    transcript = last["transcript_path"]
     if ap[-1].get("kind") != "approval":
         timeout = 0                                      # a sweep row is not an Owner approval: do not wait
     deadline, results = time.time() + timeout, []

@@ -252,6 +252,17 @@ def main() -> int:
     r1 = run()
     check("V-MSPEND-CORRECT-APPLIED", r1[0]["applied"] and marks() == 1_298_631, f"mark={marks():,}")
     check("V-MSPEND-CORRECT-IDEMPOTENT", not run()[0]["applied"] and marks() == 1_298_631)
+    # another pane's sweep row after the approval must not hide it (ctx-rent-a2 2026-10-24, cp50-c1 packet)
+    led._append(led._read(), {"op": "settle", "sid": coord, "measured": 1_500_000, "closes": []})
+    p3 = croot / "sweep.json"
+    p3.write_text(json.dumps({**json.loads(pk.read_text(encoding="utf-8")), "expected_mark": 1_500_000}), encoding="utf-8")
+    sha = ca.packet_sha(p3)
+    (croot / "corrections.json").write_text(json.dumps([str(p3)]), encoding="utf-8")
+    owner_says("approve")
+    with (croot / "approvals.jsonl").open("a", encoding="utf-8") as f:
+        f.write(json.dumps({"transcript_path": str(Path(TMP) / "other.jsonl"), "kind": "pending-sweep"}) + "\n")
+    rs = run()
+    check("V-MSPEND-CORRECT-SURVIVES-SWEEP-ROW", rs[0]["applied"] and marks() == 1_298_631, str(rs))
     for name, body, why in (("cas", {"expected_mark": 5}, "mark moved"),
                             ("raise", {"expected_mark": 1_298_631, "measured": 9 * M}, "only lowers")):
         p2 = croot / f"{name}.json"
