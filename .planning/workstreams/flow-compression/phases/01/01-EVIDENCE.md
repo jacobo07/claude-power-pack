@@ -36,3 +36,12 @@ Phase 1 closes LIVE when `python3 tools/gsd_epoch.py epochs --mission m-3d5f0a27
 start_cause CONTEXT_ROTATION (trigger wall) and the successor's first commit; record rehydration minutes then.
 Observation to weigh: the wall fired at 17% after little real work — the fixed preamble (CLAUDE.md, rules, hook
 context) is a large share of each epoch. Measure it: tokens at first tool call of epoch 2 vs epoch 1.
+
+## LIVE closure (epoch 2, recorded 2026-10-24 ~16:35Z)
+`gsd_epoch.py epochs --mission m-3d5f0a27e41d`: epoch 1 `wall: true`, end_cause CONTEXT_ROTATION (16:31:00Z); epoch 2
+start_cause CONTEXT_ROTATION, `ack: worker_acked`, session 335041f2. State intact: epoch 2 re-oriented from
+RESUMPTION_FILE.md + git log alone (HEAD f9f048e4, 0 dirty paths) and resumed at the planned next action.
+Preamble at epoch-2 first assistant call (transcript usage): 78,619 cache-creation + 26,507 cache-read = ~105k tokens
+before any work. That fixed preamble, not the work, is what the 17% wall mostly measures; a lighter preamble would
+buy more productive tokens per epoch than moving the threshold. No threshold change proposed (no evidence rotation
+loses). Epoch-1 transcript usage not on this host's project dir, so epoch-1 preamble is unmeasured (not assumed equal).

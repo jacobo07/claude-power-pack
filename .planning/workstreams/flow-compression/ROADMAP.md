@@ -16,7 +16,7 @@ UNKNOWN / INCONCLUSIVE are never PASS. Every new gate gets a mutation drill that
 
 ## Phases
 
-- [ ] **Phase 1: S1 Rotation invariant — Production Reality**
+- [x] **Phase 1: S1 Rotation invariant — Production Reality**
 - [ ] **Phase 2: S2 Arm preflight**
 - [ ] **Phase 3: S3 Admission refusal loop + packet identity**
 - [ ] **Phase 4: S4 Economic lease (variance is not a stop)**
