@@ -29,3 +29,8 @@ Update this file and `RESUMPTION_FILE.md` (this dir) after every sealed phase, w
 - Fix applied: frontmatter added (commit 89fa5527); `gsd_long_run.gsd_status` now reports 4/8.
 - Prevention (S2/S5 check): after every phase seal, assert `gsd_status.completed` advanced; if not, the seal is not closed. Phases 5-8 artifacts are produced via GSD workflows (gsd-planner/verifier), not by hand.
 - Decision: worked in the main clone (bound branch mission/flow-compression); the stale worktree .claude/worktrees/flow-compression-w (f7ee5b7d) is not used.
+
+## Incidents for Phase 8 (recorded 2026-10-24, epoch 8)
+- S5 gate fixtures (5 red at hand-off): the divergence fixture wrote `{"measured": ...}` while `receipt_judge` reads `values`, so a DIVERGENT receipt looked DONE in two gates; the test set `CPP_HALT_CONTINUE=off`, which also disables the missing-receipt halt, so two gates could not see the halt. Root: fixtures written from memory of the contract, not from the reader. Earliest discoverable point: the first red run (a fixture whose negative control never fires proves nothing). Prevention: every negative control must be shown to fire against the real reader before it counts as a gate.
+- Plane: the directive says work in the clone with no worktree; the mission card binds the worker to `.claude/worktrees/flow-compression-w`. Decision (reversible, internal): keep committing in the bound worktree and `git merge --ff-only` into the clone after each commit, so the clone's branch `mission/flow-compression` carries every commit. No push.
+- `gsd_long_run.gsd_status` is not a CLI subcommand. Status check used: `node ~/.claude/gsd-core/bin/gsd-tools.cjs query init.progress --ws flow-compression --raw` (per-phase `phase_complete`).
