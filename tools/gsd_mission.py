@@ -2755,7 +2755,7 @@ def amr_compile(rec: dict, *, failed_sid: str | None, hold_reason: str, cause: s
     elif was_successor and amr.get("delta_path"):
         delta_path = Path(amr["delta_path"])     # still the paid-for design of this unit
     packet = d / "successor-packet.md"
-    receipt = packet.with_name(packet.stem + "-receipt.md")
+    receipt = stem_receipt(packet)
     packet.write_text(mr.render_packet(
         mission_id=mid, goal=goal, unit=unit, residual=residual, topology=topo, failure=failure, progress=progress,
         failed_strategy=old_strategy, delta_path=str(delta_path) if delta_path else None, lease=lease,
@@ -4369,12 +4369,19 @@ def write_fault_capsule(rec: dict, wd: str, result_text: str, slim: dict | None)
     return str(path)
 
 
-def _receipt_path(pkt, programs_dir=None) -> Path:
-    """Where the receipt of the unit that owns `pkt` is. A residual packet (X.md.residual.md) belongs to the unit of X.md:
-    the receipt is the chain unit's own (APR-7 A8: the stem rule read 'X.md.residual-receipt.md' and said 'no receipt'
-    for a closed receipt, so a duplicate worker ran). No chain unit -> the stem convention on the base packet."""
-    pk = str(pkt)
-    base = pk[:-len(".residual.md")] if pk.endswith(".residual.md") else pk
+def receipt_name(stem: str) -> str:
+    """The ONLY owner of the receipt filename suffix (S5: one derivation, never a second builder)."""
+    return f"{stem}-receipt.md"
+
+
+def stem_receipt(pkt) -> Path:
+    """The stem convention: the packet's own name with its receipt suffix, beside it."""
+    p = Path(str(pkt))
+    return p.with_name(receipt_name(p.stem))
+
+
+def _chain_receipt(base: str, programs_dir=None) -> Path | None:
+    """The receipt of the chain unit that owns `base` (APR-7 A8), or None."""
     try:
         import gsdx_chain  # noqa: E402 -- same tools dir
         for cp in gsdx_chain.discover_chains(base, programs_dir):
@@ -4386,15 +4393,61 @@ def _receipt_path(pkt, programs_dir=None) -> Path:
                 return Path(u["receipt"])
     except Exception:  # noqa: BLE001 -- a chain read must never hide the stem fallback
         pass
-    p = Path(base)
-    return p.with_name(p.stem + "-receipt.md")
+    return None
+
+
+def _declared_receipt(pkt, rec=None) -> Path | None:
+    """The packet's `receipt:` line, resolved inside the work tree (absolute and escaping paths dropped)."""
+    try:
+        text = Path(str(pkt)).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None
+    m = _RECEIPT_RE.search(text)
+    if not m or Path(m.group(1)).is_absolute():
+        return None
+    if rec is not None:
+        tree, _ = packet_gate_dir(rec, text)
+    else:
+        t = _TREE_RE.search(text)
+        tree = t.group(1) if t and Path(t.group(1)).is_dir() else None
+    if not tree:
+        return None
+    root = Path(tree).resolve()
+    p = (root / m.group(1)).resolve()
+    return p if root in p.parents else None
+
+
+def resolve_receipt(pkt, rec=None, programs_dir=None) -> dict:
+    """The single answer to 'where is the receipt of the unit that owns `pkt`'. Candidates in precedence order:
+    CHAIN_UNIT, PACKET_DECLARED, STEM. The first one that exists wins; none exists -> the first candidate, absent.
+    Two distinct present candidates that disagree on status or closure are a `conflict`."""
+    pk = str(pkt)
+    base = pk[:-len(".residual.md")] if pk.endswith(".residual.md") else pk
+    found = [("CHAIN_UNIT", _chain_receipt(base, programs_dir)), ("PACKET_DECLARED", _declared_receipt(base, rec)),
+             ("STEM", stem_receipt(base))]
+    cands = [{"source": src, "path": str(p), "status": rj.receipt_status(p)} for src, p in found if p is not None]
+    present = [c for c in cands if c["status"] is not None]
+    chosen = (present or cands)[0]
+    distinct: dict = {}
+    for c in present:
+        distinct.setdefault(os.path.realpath(c["path"]), c)
+    vals = list(distinct.values())
+    conflict = len(vals) > 1 and any(v["status"] != vals[0]["status"]
+                                     or rj.is_closed(v["path"]) != rj.is_closed(vals[0]["path"]) for v in vals[1:])
+    return {"path": chosen["path"], "source": chosen["source"], "status": chosen["status"],
+            "present": chosen["status"] is not None, "conflict": conflict, "candidates": cands}
+
+
+def _receipt_path(pkt, programs_dir=None, rec=None) -> Path:
+    return Path(resolve_receipt(pkt, rec, programs_dir)["path"])
 
 
 def _receipt_present(rec: dict, programs_dir=None) -> bool:
     pkt = (rec.get("wu_packet") or {}).get("path")
     if not pkt:
         return True   # no packet = nothing to continue
-    return _receipt_body_ok(_receipt_path(pkt, programs_dir))
+    r = resolve_receipt(pkt, rec, programs_dir)
+    return (not r["conflict"]) and _receipt_body_ok(r["path"])
 
 
 def _receipt_body_ok(path) -> bool:
@@ -4442,17 +4495,12 @@ def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str
 
 
 def packet_receipt_path(rec: dict) -> str | None:
-    """The packet's `receipt:` line resolved to one absolute path inside the work tree, or None."""
-    text = _packet_text(rec)
-    m = _RECEIPT_RE.search(text) if text else None
-    if not m or Path(m.group(1)).is_absolute():
+    """The resolved receipt path when the packet declares it or it exists, else None."""
+    pkt = (rec.get("wu_packet") or {}).get("path")
+    if not pkt:
         return None
-    tree, _ = packet_gate_dir(rec, text)
-    if not tree:
-        return None
-    root = Path(tree).resolve()
-    p = (root / m.group(1)).resolve()
-    return str(p) if root in p.parents else None
+    r = resolve_receipt(pkt, rec)
+    return r["path"] if r["source"] == "PACKET_DECLARED" or r["present"] else None
 
 
 def spend_goal(rec: dict) -> str | None:
@@ -4497,7 +4545,7 @@ def _seal_instead_of_renew(rec: dict, row: dict) -> bool:
     pkt = (rec.get("wu_packet") or {}).get("path")
     if not pkt:
         return False
-    if rj.receipt_status(_receipt_path(pkt)) is None:
+    if rj.receipt_status(_receipt_path(pkt, rec=rec)) is None:
         return False
     try:
         res = _chain_try_seal(pkt)
@@ -5317,16 +5365,27 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
             elif act == "slim_finished":
                 s = plan["slim"]
                 stopped = s.get("tripped") or ("worker reported is_error" if s["is_error"] else None)
+                _rstop = False
                 if not stopped and halt_continue_on() and (rec.get("wu_packet") or {}).get("path") \
                         and not _receipt_present(rec):
                     # F1: a clean finish without its receipt is a fault, not done. Name WHY (APR-1): a receipt that
                     # exists but carries no closing Status is the K5 case, and the renewed worker must be told so.
-                    _st = rj.receipt_status(_receipt_path(rec["wu_packet"]["path"]))
+                    _st = rj.receipt_status(_receipt_path(rec["wu_packet"]["path"], rec=rec))
                     stopped = "no receipt" if _st is None else f"receipt not closed (status {_st})"
+                    _rstop = True
                 fin = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                  event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
                                  pending=None, slim_result=s, worker=s.get("session_id"),
                                  reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
+                if _rstop and os.environ.get("CPP_TERMINAL_RECONCILE", "") != "off":
+                    try:  # S5: annotate only; the stop decision above is _receipt_present's alone (FC-10)
+                        import mission_reconcile as _mrc
+                        _rv = _mrc.reconcile(fin)
+                        lr.ledger_append(mid, "terminal_reconciled", mission_id=mid, epoch=fin["epoch"],
+                                         outcome=_rv["outcome"], reason=_rv["reason"][:200])
+                        row["reconciled"] = _rv["outcome"]
+                    except Exception as _exc:  # noqa: BLE001 -- an annotation never breaks the supervisor
+                        row["reconciled"] = f"unavailable: {type(_exc).__name__}"
                 if halt_continue_on() and stopped:
                     halt_continue(fin, mb.execution_root(fin), s.get("result") or "", s, row, now)
             elif act == "settle":
@@ -5473,7 +5532,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     # A packet unit armed without a done_check (every chain-armed unit) is closed by its own receipt,
                     # written after the mission began. Measured 2026-10-14, gsdx-pcc P52a: receipt DONE, worker done, GSD
                     # NO_PHASES on that roadmap, so the record sat BLOCKED 2.5 h and the chain waited on it (wait_writer).
-                    rp = _receipt_path(pkt)
+                    rp = _receipt_path(pkt, rec=rec)
                     rst = rj.receipt_status(rp)
                     try:
                         if rst is not None and rp.stat().st_mtime >= float(rec.get("created_at") or 0):
@@ -6089,9 +6148,9 @@ def advance_unit(rec: dict, plan: dict, unit: str, repo: Path, *, arm_fn=None, h
         return {"status": "NOT_LISTED", "why": f"{unit} is not in the plan's units"}
     i = plan["units"].index(unit)
     pdir = repo / plan["packet_dir"]
-    if i > 0 and not receipt_complete(pdir / f"{plan['units'][i - 1]}-receipt.md"):
+    if i > 0 and not receipt_complete(pdir / receipt_name(plan['units'][i - 1])):
         return {"status": "WAITING_FOR_RECEIPT", "why": f"predecessor {plan['units'][i - 1]} has no complete receipt"}
-    own = pdir / f"{unit}-receipt.md"
+    own = pdir / receipt_name(unit)
     if own.exists() and not receipt_complete(own):
         return {"status": "WAITING_FOR_RECEIPT", "why": f"{unit} has a stub/partial receipt; a worker owns it"}
     packet, route = pdir / f"{unit}.md", pdir / f"route-{unit}.json"
@@ -6147,7 +6206,7 @@ def advance_pass(*, arm_fn=None, headroom=None, ledger_for=None) -> list[dict]:
                 pdir = repo / plan["packet_dir"]
                 row = {"unit": None, "status": "PLAN_COMPLETE", "why": "every unit has a receipt"}
                 for u in plan["units"]:
-                    if not receipt_complete(pdir / f"{u}-receipt.md"):
+                    if not receipt_complete(pdir / receipt_name(u)):
                         row = {"unit": u, **advance_unit(rec, plan, u, repo, arm_fn=arm_fn, headroom=headroom)}
                         break
                 if row["status"] in ("WAITING_FOR_AUTHORITY", "WAITING_FOR_PACKET"):

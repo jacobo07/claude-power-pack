@@ -135,7 +135,12 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
     if st.get("done"):
         return None
     sid = (rec.get("owner") or {}).get("session_id")
-    receipt = gm.packet_receipt_path(rec)
+    res = gm.resolve_receipt(rec["wu_packet"]["path"], rec) if (rec.get("wu_packet") or {}).get("path") else None
+    if res and res["conflict"]:
+        row.update(action="UNKNOWN", reason="conflicting receipts, nothing settled: "
+                   + "; ".join(f"{c['source']}={c['status']}" for c in res["candidates"] if c["status"] is not None))
+        return row
+    receipt = res["path"] if res and (res["present"] or res["source"] == "PACKET_DECLARED") else None
     if receipt and rj.is_closed(receipt):
         return None                       # the canonical receipt is the worker's own close: untouched
     # a receipt that exists but closes nothing (no Status, PARTIAL, stub) is not a close: steward it (APR-1, K5)
@@ -284,7 +289,8 @@ def _r3(missions: list[dict]) -> list[dict]:
         if not pkt:
             continue
         texts = [gm._packet_text(m) or ""]
-        receipt = gm.packet_receipt_path(m)
+        _res = gm.resolve_receipt(pkt, m)
+        receipt = _res["path"] if _res["present"] else None
         if receipt and Path(receipt).exists():
             try:
                 texts.append(Path(receipt).read_text(encoding="utf-8-sig", errors="replace"))
