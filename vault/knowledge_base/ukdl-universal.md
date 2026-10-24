@@ -187,6 +187,43 @@ resumed. The rule already existed as a COMMENT in the same file ("a rearm below
 ~28 would never be reached after a compaction"); a comment is not a constraint.
 `2803576`; REARM_FLOOR_PCT=28, 8/8 with three negative controls, 3/3 mutations.
 
+### T-CANDIDATE-FACING-READS-AS-CANNOT-EVALUATE-001
+
+PROVEN. A foreign mesh imported for judging can arrive turned around, and the judge then reports CANNOT_EVALUATE ("forehead not
+visible"), not FAIL, so the facing error looks like a property of the candidate. TTB lane B3: PartCrafter's front is glTF -Z, which
+Blender imports facing +Y; the first harness render of its hair showed the BACK of the hair to the front camera. Declare the
+candidate's facing in the spec and confirm it by LOOKING at one render before reading any contract. A same-scale sheet of the parts
+(identical axes for every panel) is the audit for the parts map. Evidence: ttb `38cd40b`, `knowledge/bench/partcrafter_madzia_hair.json`
+(`transform_correction`).
+
+### T-CONTACT-SHEET-AT-MIXED-SCALES-READ-AS-DEFECT-001
+
+SHADOW (named by the previous lane B session, not re-measured here). Panels auto-scaled to their own content make a small part look as
+big as a large one, and a size difference reads as a defect that isn't there. Put every panel of a comparison sheet on the same axes.
+Lane B3 applied it: the PartCrafter parts sheet uses fixed [-1, 1] axes for every part. Evidence: ttb `fa06aed` session, plan
+`sequential-leaping-dove.md` B8.
+
+### T-CONTRACT-PASSES-ON-ABSENT-FEATURE-001
+
+PROVEN. A contract that measures a feature's offset can PASS when the feature is absent: TTB `hairline.notch` (head showing through
+the part above the hairline) returned PASS at 0.0 for a candidate whose hair sealed the whole forehead, because no hairline means no
+notch. A measurement of zero must first prove the feature exists (the hairline was found), else CANNOT_EVALUATE. Fix owed by the
+owner of `ttb/fidelity/contracts.py`. Evidence: ttb `38cd40b` commit message.
+
+### T-SSH-JOINS-ARGV-INTO-ONE-REMOTE-LINE-001
+
+PROVEN. `ssh host bash -lc "<script>"` passed as separate argv items does not run the script: ssh joins its arguments into one
+remote command line, so the remote shell runs `bash -lc mkdir -p a b`, i.e. a bare `mkdir` with "-p" as $0 ("mkdir: missing
+operand"). Send the remote command as ONE quoted word (`"bash -lc " + shlex.quote(script)`). Evidence: ttb `07fefec` (first remote
+run of the B2 harness).
+
+### T-CMAKE-PICKS-SYSTEM-NVCC-OVER-PATH-001
+
+PROVEN. With a local CUDA toolkit first on PATH and CUDA_HOME set, a CMake-built extension (natten 0.21.0) still probed the system
+nvcc 12.0 (`/usr/lib/nvidia-cuda-toolkit`), which cannot parse gcc 13 headers (`_Float32 does not name a type`). torch's own
+cpp_extension builds honoured CUDA_HOME in the same venv. Force `CUDACXX` / `CMAKE_CUDA_COMPILER`. Evidence: GEX44
+`~/ttb-lab-b/install_px2.log` (fail) vs `install_px3.log` (INSTALL_DONE), ttb `bff0fc3`.
+
 ### T-SOURCE-REGEX-TRIPS-ON-PROSE-001
 
 PROVEN. A gate that regex-scans a function's source text for forbidden names ("never read the outcome") trips on prose inside
