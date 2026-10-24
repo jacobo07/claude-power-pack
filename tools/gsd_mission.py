@@ -1037,9 +1037,10 @@ LEGACY_REASONS = ("host_limitation", "uncertified_work_class", "quality_requirem
                   "safe_deopt")
 _BASELINE_FIELDS = ("model", "autocompact", "continue_max_tokens")
 # Built-in fallback = the policy values (never Opus / 600k). Evidence: gen3/packets/T1.md + T3.md ran
-# `--model sonnet --autocompact 250k`; continuation ceiling kept equal to the compaction line.
+# `--model sonnet --autocompact 250k`; continuation ceiling at 0.70 x the compaction line (policy v2:
+# v1 kept it EQUAL to the line, where it could never fire -- see apply_rotation_invariant).
 _BUILTIN_BASELINE = {"version": "builtin", "classes": {
-    c: {"model": "sonnet", "autocompact": "250k", "continue_max_tokens": 250_000}
+    c: {"model": "sonnet", "autocompact": "250k", "continue_max_tokens": 175_000}
     for c in ("COMPILED_UNIT", "GSD_RESUME", "OTHER")}}
 
 
@@ -1080,6 +1081,60 @@ def _tokens_of(v) -> int:
     return int(float(m.group(1)) * {"": 1, "k": 1000, "m": 1_000_000}[m.group(2).lower()]) if m else 0
 
 
+# Semantic rotation must be reachable BEFORE native compaction. Measured 2026-10-24 (worker 8ff5e205 of
+# m-6d657a4d8d8c): `--autocompact 250k` compacted 41/41 times at 214-221k (~87 % of nominal), so the
+# 250k continuation ceiling and the 40 %-of-1M wall (~400k) could never fire -- 0 rotations vs 382
+# compactions host-wide from 10-08, when the CE baseline lowered compaction under both predicates.
+ROTATION_FRACTION = 0.70   # rotate at this fraction of the compaction line (policy: rotation_fraction)
+
+
+def rotation_invariant_enabled() -> bool:
+    """Kill switch: CPP_ROTATION_INVARIANT=off leaves ceiling and wall exactly as resolved."""
+    return (os.environ.get("CPP_ROTATION_INVARIANT") or "").strip().lower() != "off"
+
+
+def _rotation_fraction() -> float:
+    try:
+        f = float(json.loads(_BUDGET_DEFAULTS.read_text(encoding="utf-8-sig")).get("rotation_fraction",
+                                                                                   ROTATION_FRACTION))
+        return f if 0.3 <= f <= 0.9 else ROTATION_FRACTION
+    except Exception:  # noqa: BLE001 -- unreadable policy answers with the measured constant
+        return ROTATION_FRACTION
+
+
+def apply_rotation_invariant(rec: dict) -> dict:
+    """Bound the turn-end ceiling and the mid-turn token wall under the compaction line.
+
+    Applies to explicit values too: a rotation predicate above the compaction line is unreachable
+    whoever set it. Returns a NEW record; `rotation_invariant` names what was repaired (absent when
+    nothing was)."""
+    line = _tokens_of(rec.get("autocompact"))
+    if not line or not rotation_invariant_enabled():
+        return rec
+    import gsd_epoch as ge
+    frac = _rotation_fraction()
+    limit = int(line * frac)
+    out, repaired, derived = dict(rec), {}, {}
+    ceiling = int(rec.get("continue_max_tokens") or ge.CONTINUE_MAX_TOKENS)
+    if ceiling > limit:
+        out["continue_max_tokens"] = limit
+        repaired["continue_max_tokens"] = [ceiling, limit]
+    wall = dict(rec.get("wall") or DEFAULT_WALL)
+    adv = int(wall.get("advisory_tokens") or 0)
+    if adv > limit:
+        repaired["wall.advisory_tokens"] = [adv, limit]
+    elif adv <= 0:
+        derived["wall.advisory_tokens"] = limit     # absent: the first launch derives it, once
+    if not 0 < adv <= limit:
+        wall["advisory_tokens"] = limit
+    out["wall"] = wall
+    out.pop("rotation_invariant", None)
+    if repaired or derived:
+        out["rotation_invariant"] = {"compaction_line": line, "fraction": frac, "limit": limit,
+                                     "repaired": repaired, "derived": derived}
+    return out
+
+
 def _legacy_combo(rec: dict) -> bool:
     """The final launch is --bg + Opus + >=600k compaction."""
     model = str(rec.get("model") or "").lower()
@@ -1108,7 +1163,14 @@ def resolve_baseline(rec: dict) -> dict:
         else:
             out[f] = base[f]
             src[f] = f"policy@{pol['version']}" if origin == "policy" else "builtin"
-        values[f] = out.get(f)
+    out = apply_rotation_invariant(out)
+    inv = out.get("rotation_invariant")
+    if inv and inv["repaired"].get("continue_max_tokens") and rec.get("continue_max_tokens") == out["continue_max_tokens"]:
+        # Re-resolved from policy and bounded again to what the record already held: not a new repair.
+        inv["repaired"].pop("continue_max_tokens")
+        if not inv["repaired"] and not inv["derived"]:
+            out.pop("rotation_invariant")
+    values = {f: out.get(f) for f in _BASELINE_FIELDS}
     out["baseline"] = {"version": pol["version"], "tier": "COMPILED" if rec.get("wu_packet") else "BASIC",
                        "work_class": cls, "src": src, "values": values, "legacy_reason": rec.get("legacy_reason")}
     return out
@@ -1200,6 +1262,12 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     extra = {"note": note} if note is not None else {}
     if baseline_on:
         extra.update({k: resolved[k] for k in (*_BASELINE_FIELDS, "baseline")})
+        if "wall" in resolved:
+            extra["wall"] = resolved["wall"]
+        extra["rotation_invariant"] = resolved.get("rotation_invariant")
+        if resolved.get("rotation_invariant"):
+            lr.ledger_append(mission_id, "baseline_invariant_repaired", mission_id=mission_id,
+                             epoch=expect_epoch + 1, **resolved["rotation_invariant"])
     if note is not None:
         # The packet travels with THIS hand-off's note and is cleared with it, never inherited.
         extra["packet"] = packet

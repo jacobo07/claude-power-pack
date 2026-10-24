@@ -20,6 +20,10 @@ os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ.pop("CPP_MISSION_RENEW", None)
 os.environ.pop("CPP_CE_BASELINE", None)
+os.environ.pop("CPP_ROTATION_INVARIANT", None)
+# Host RAM is not under test here (resource_admission has its own gates): under the 3000 MB floor
+# every launch below was refused and the suite failed on a busy laptop (2026-10-24, 2,728 MB free).
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 if os.environ.get("GSD_MISSION_DRILL_DIR"):
     sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])
@@ -72,11 +76,14 @@ def main() -> int:
     res, argv = launch("m-abs")
     rec = gm.load("m-abs")
     check("V-BASE-ABSENT-MODEL", bool(argv) and arg(argv, "--model") == "sonnet", str(argv))
-    check("V-BASE-ABSENT-CEILINGS", arg(argv, "--autocompact") == "250k" and rec.get("continue_max_tokens") == 250_000,
-          f"{arg(argv, '--autocompact')} {rec.get('continue_max_tokens')}")
+    # Policy v2: the ceiling sits under the compaction line (0.70 x 250k) and the mid-turn token wall is
+    # derived at the same limit (tools/test_rotation_invariant.py). v1 had 250k = the line: unreachable.
+    check("V-BASE-ABSENT-CEILINGS", arg(argv, "--autocompact") == "250k" and rec.get("continue_max_tokens") == 175_000
+          and (rec.get("wall") or {}).get("advisory_tokens") == 175_000,
+          f"{arg(argv, '--autocompact')} {rec.get('continue_max_tokens')} {rec.get('wall')}")
     b = rec.get("baseline") or {}
-    check("V-BASE-RECORD", b.get("version") == "1" and b.get("tier") == "BASIC" and b.get("work_class") == "GSD_RESUME"
-          and set((b.get("src") or {}).values()) == {"policy@1"}, str(b))
+    check("V-BASE-RECORD", b.get("version") == "2" and b.get("tier") == "BASIC" and b.get("work_class") == "GSD_RESUME"
+          and set((b.get("src") or {}).values()) == {"policy@2"}, str(b))
     check("V-BASE-LEDGER-ROW", any(e.get("event") == "baseline_resolved" for e in gm.lr.ledger_events("m-abs")))
     check("V-BASE-GSD-RESUME-NEVER-SLIM", not gm.slim_profile(rec) and argv[1] == "--bg", str(argv[:3]))
 
@@ -86,7 +93,7 @@ def main() -> int:
     b = gm.load("m-exp")["baseline"]
     check("V-BASE-EXPLICIT-KEPT", arg(argv, "--model") == "claude-opus-5-5" and arg(argv, "--autocompact") == "300k"
           and b["src"]["model"] == "explicit" and b["src"]["autocompact"] == "explicit"
-          and b["src"]["continue_max_tokens"] == "policy@1", str(b))
+          and b["src"]["continue_max_tokens"] == "policy@2", str(b))
 
     # V-BASE-BUILTIN: unreadable policy -> built-in values, never opus / 600k.
     gm._BUDGET_DEFAULTS = Path(TMP) / "nope.json"

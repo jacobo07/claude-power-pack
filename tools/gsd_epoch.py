@@ -128,6 +128,37 @@ def context_tokens(session_id: str) -> int | None:
     return None
 
 
+def last_compaction(session_id: str) -> dict | None:
+    """The host's own record of the worker's last compaction (`compact_boundary` metadata):
+    trigger, tokens before and after, duration. None when the transcript does not show one."""
+    path = _transcript(session_id)
+    if not path:
+        return None
+    for row in reversed(lr._tail_rows(path)):
+        if row.get("type") == "system" and row.get("subtype") == "compact_boundary":
+            m = row.get("compactMetadata") or {}
+            return {"trigger": m.get("trigger"), "pre_tokens": m.get("preTokens"),
+                    "post_tokens": m.get("postTokens"), "duration_ms": m.get("durationMs")}
+    return None
+
+
+def compaction_evidence(rec: dict, comp: dict | None) -> dict:
+    """Why this compaction was not a rotation: the predicates in force against the tokens it fired at."""
+    wall = rec.get("wall") or {}
+    ceiling = rec.get("continue_max_tokens")
+    adv = wall.get("advisory_tokens")
+    out = {"autocompact": rec.get("autocompact"), "continue_max_tokens": ceiling,
+           "wall_advisory_pct": wall.get("advisory"), "wall_advisory_tokens": adv, **(comp or {})}
+    pre = (comp or {}).get("pre_tokens")
+    if not isinstance(pre, int):
+        out["rotation_verdict"] = "UNMEASURED"
+    elif (adv and int(adv) <= pre) or (ceiling and int(ceiling) <= pre):
+        out["rotation_verdict"] = "REACHABLE_NOT_TAKEN"   # a predicate was at or below it: the hand-off lost
+    else:
+        out["rotation_verdict"] = "UNREACHABLE"     # no rotation predicate at or below the tokens it fired at
+    return out
+
+
 def last_assistant_at(session_id: str) -> float | None:
     """Timestamp of the worker's last assistant row: proof that a turn actually ran."""
     path = _transcript(session_id)
@@ -655,7 +686,8 @@ def on_session_start(rec: dict, session_id: str, source: str, session_cwd: str |
     if (source or "").lower() == "compact":
         lr.ledger_append(rec["mission_id"], "epoch_compacted", mission_id=rec["mission_id"],
                          epoch=rec.get("epoch"), worker=session_id, requested=False,
-                         observed="SessionStart source=compact")
+                         observed="SessionStart source=compact",
+                         **compaction_evidence(rec, last_compaction(session_id)))
     if first:
         ident = identity_check(rec, session_id, session_cwd)
         if ident["verdict"] == "MISMATCH":

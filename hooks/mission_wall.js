@@ -18,6 +18,36 @@ const STATE = process.env.GSD_AUTORUN_MARKER_DIR || path.join(os.homedir(), '.cl
 const SID_RE = /^[A-Za-z0-9._-]{1,128}$/;
 const NOTE_TAG = 'HANDOFF NOTE:';  // must match tools/gsd_mission.py NOTE_TAG
 const REASK_STEP_PCT = 3;          // re-ask a worker still working this many points past its last notice
+const REASK_STEP_TOKENS = 10000;   // the same, for the token wall
+const TAIL_BYTES = 262144;         // enough tail of the transcript to hold the last model call
+
+// Resident tokens of the LAST real model call (input + cache writes + cache reads), read from the
+// transcript tail. A host-written <synthetic> row carries zero usage and is skipped; unmeasured -> null.
+function residentTokens(transcriptPath) {
+  if (!transcriptPath) return null;
+  let fd = null;
+  try {
+    fd = fs.openSync(transcriptPath, 'r');
+    const size = fs.fstatSync(fd).size;
+    const len = Math.min(size, TAIL_BYTES);
+    const buf = Buffer.alloc(len);
+    fs.readSync(fd, buf, 0, len, size - len);
+    const lines = buf.toString('utf8').split('\n');
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (lines[i].indexOf('"usage"') < 0) continue;
+      let row = null; try { row = JSON.parse(lines[i]); } catch (e) { continue; }
+      const msg = row && row.type === 'assistant' ? row.message : null;
+      if (!msg || msg.model === '<synthetic>' || !msg.usage) continue;
+      const u = msg.usage;
+      return Number(u.input_tokens || 0) + Number(u.cache_creation_input_tokens || 0) + Number(u.cache_read_input_tokens || 0);
+    }
+    return null;
+  } catch (e) {
+    return null;
+  } finally {
+    if (fd !== null) { try { fs.closeSync(fd); } catch (e) { /* closed */ } }
+  }
+}
 const DEFAULT_GRACE_S = 1800;      // must match tools/gsd_epoch.py WALL_GRACE_S
 const COST_HOLD_GRACE_S = 600;     // must match tools/gsd_epoch.py COST_HOLD_GRACE_S
 const MISSION_STATE = process.env.GSD_LONG_RUN_STATE_DIR || path.join(os.homedir(), '.claude', 'state');
@@ -77,10 +107,19 @@ function decide(event) {
   if (cost) return cost;
   const wall = marker.wall || {};
   const adv = Number(wall.advisory);
-  if (!(adv > 0 && adv <= 95)) return null;
+  const advTok = Number(wall.advisory_tokens);
+  const pctOn = adv > 0 && adv <= 95;
+  if (!pctOn && !(advTok > 0)) return null;
   const metrics = readJson(path.join(os.tmpdir(), `claude-ctx-${sid}.json`));
   const used = metrics && Number(metrics.used_pct);
-  if (!(used >= adv)) return null;
+  // The percent wall alone is unreachable when native compaction fires first: 250k autocompact
+  // compacts at ~217k = ~21 % of a 1M window, under a 40 % wall (m-6d657a4d8d8c, 41 compactions,
+  // 0 rotations). advisory_tokens (set by gsd_mission.apply_rotation_invariant) is judged on the
+  // resident tokens of the last model call, whatever the window.
+  const tok = advTok > 0 ? residentTokens(event.transcript_path) : null;
+  const pctOver = pctOn && used >= adv;
+  const tokOver = advTok > 0 && tok >= advTok;
+  if (!pctOver && !tokOver) return null;
   // One flag per worker epoch: the flag carries the epoch, so a successor is judged afresh.
   // It records the FIRST notice (asked_at -- the supervisor's enforcement clock) and the last one.
   // Measured 2026-09-28 (m-916e905e23d4, worker 9e89a87e): asked once at 31 %, the worker kept
@@ -95,16 +134,21 @@ function decide(event) {
       let st = null; try { st = fs.statSync(flag); } catch (e) { return null; }
       prev = { asked_at: st.mtimeMs, pct: adv, n: 1 };
     }
-    if (!(used >= Number(prev.pct) + REASK_STEP_PCT)) return null;
+    const pctAgain = pctOver && used >= Number(prev.pct) + REASK_STEP_PCT;
+    const tokAgain = tokOver && tok >= Number(prev.tokens || advTok) + REASK_STEP_TOKENS;
+    if (!pctAgain && !tokAgain) return null;
   }
   const askedAt = prev ? Number(prev.asked_at) : Date.now();
   const n = prev ? Number(prev.n || 1) + 1 : 1;
-  try { fs.writeFileSync(flag, JSON.stringify({ asked_at: askedAt, pct: used, n })); } catch (e) { return null; }
+  const rec = { asked_at: askedAt, pct: pctOver ? used : Number((prev && prev.pct) || adv || 0), n };
+  if (tokOver) rec.tokens = tok;
+  try { fs.writeFileSync(flag, JSON.stringify(rec)); } catch (e) { return null; }
   const graceS = Number(wall.grace_s) > 0 ? Number(wall.grace_s) : DEFAULT_GRACE_S;
   const stopAt = new Date(askedAt + graceS * 1000).toISOString().slice(11, 16) + 'Z';
+  const level = tokOver ? `${Math.round(tok / 1000)}k tokens resident` : `${used}% used`;
   const head = n === 1
-    ? `CONTEXT WALL — ${used}% used (>= ${adv}%).`
-    : `CONTEXT WALL, NOTICE ${n} — ${used}% used, ${Math.round(used - adv)} points past the wall. You did not hand off.`;
+    ? `CONTEXT WALL — ${level} (wall ${tokOver ? `${Math.round(advTok / 1000)}k tokens` : `${adv}%`}).`
+    : `CONTEXT WALL, NOTICE ${n} — ${level}, past the wall. You did not hand off.`;
   return {
     decision: 'block',
     reason:

@@ -1,22 +1,23 @@
 {
   "headroom_tokens": 15000000,
   "min_headroom_tokens": 1000000,
-  "baseline_version": "1",
+  "baseline_version": "2",
+  "rotation_fraction": 0.70,
   "baseline_classes": {
     "COMPILED_UNIT": {
       "model": "sonnet",
       "autocompact": "250k",
-      "continue_max_tokens": 250000
+      "continue_max_tokens": 175000
     },
     "GSD_RESUME": {
       "model": "sonnet",
       "autocompact": "250k",
-      "continue_max_tokens": 250000
+      "continue_max_tokens": 175000
     },
     "OTHER": {
       "model": "sonnet",
       "autocompact": "250k",
-      "continue_max_tokens": 250000
+      "continue_max_tokens": 175000
     }
   }
 }
