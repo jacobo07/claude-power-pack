@@ -8,7 +8,7 @@ status: ready
 workstream: flow-compression
 created: 2026-10-24
 last_updated: "2026-10-24T00:00:00.000Z"
-last_activity_desc: Reality scan + S1 code (rotation invariant) done in the arming pane af0b2bb1; plan Owner-approved; mission armed
+last_activity_desc: Phase 1 evidence committed; epoch 1 ended by live context wall (17%); Phase 2 design in RESUMPTION_FILE
 progress:
   total_phases: 8
   completed_phases: 0

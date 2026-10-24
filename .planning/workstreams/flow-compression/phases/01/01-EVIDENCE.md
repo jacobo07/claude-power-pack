@@ -28,3 +28,11 @@ proven to win. Token cost to next verified delta is NOT measured here (per-turn 
   or a CONTEXT_ROTATION launch_cause with `trigger=economic_ceiling|wall` appears for it. Check:
   `python3 tools/gsd_epoch.py epochs --mission m-3d5f0a27e41d`.
 - No threshold change is proposed: no evidence rotation loses.
+
+## LIVE firing (this mission, appended 2026-10-24 ~16:5xZ)
+`hooks/mission_wall.js` blocked epoch 1 of m-3d5f0a27e41d at "17% used (>= 17%)" (advisory wall, wall 15/17/12 %),
+after a handful of exploration turns + 1 evidence commit (4071ec52). State handed on via committed files.
+Phase 1 closes LIVE when `python3 tools/gsd_epoch.py epochs --mission m-3d5f0a27e41d` shows epoch 2 with
+start_cause CONTEXT_ROTATION (trigger wall) and the successor's first commit; record rehydration minutes then.
+Observation to weigh: the wall fired at 17% after little real work — the fixed preamble (CLAUDE.md, rules, hook
+context) is a large share of each epoch. Measure it: tokens at first tool call of epoch 2 vs epoch 1.
