@@ -357,6 +357,70 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
     return rec
 
 
+# ----------------------------------------------------------------------------------------------- S6 blockers
+# FC-08: every BLOCKED transition and every Owner-hold park carries a typed blocker {class, unblock_condition,
+# independent_work, owner_required, rule} compiled by tools/blocker_compiler.py. `block_mission` is the ONE writer of
+# event="mission_blocked"; a guard test discovers the writers by AST, so a sixth site cannot bypass it.
+# Kill switch CPP_BLOCKER_COMPILE=off restores the exact old call and row shape. The compiler REPORTS; it never
+# launches anything, and independent_work is information only (no consumer acts on it).
+def blocker_compile_on() -> bool:
+    return (os.environ.get("CPP_BLOCKER_COMPILE") or "").strip().lower() not in ("0", "off", "false")
+
+
+def _compile_blocker(rec: dict, reason: str, *, hold: dict | None = None, intent: dict | None = None,
+                     is_hold: bool = False) -> dict | None:
+    """The typed blocker, or None when compilation is switched off. FAIL-OPEN: a compiler fault yields an UNKNOWN
+    blocker carrying the exception class (UNKNOWN is never independent work); it can never stop the BLOCKED write."""
+    if not blocker_compile_on():
+        return None
+    try:
+        import blocker_compiler as bc
+        return bc.compile_blocker(reason, hold=hold, intent=intent, rec=rec, cwd=rec.get("cwd"),
+                                  workstream=rec.get("workstream"), is_hold=is_hold)
+    except Exception as exc:  # noqa: BLE001 -- the BLOCKED row stands; the failure is on it
+        return {"class": "UNKNOWN", "unblock_condition": {"kind": "unknown", "what": "blocker compilation failed"},
+                "unblock_text": "Unclassified: the blocker compiler raised; read the reason.",
+                "independent_work": False, "independent_reason": "compile_error", "owner_required": True,
+                "rule": "compile_error", "compile_error": type(exc).__name__}
+
+
+def _blocker_ledger(b: dict | None) -> dict:
+    if not b:
+        return {}
+    return {"blocker_class": b["class"], "independent_work": b["independent_work"],
+            "owner_required": b["owner_required"], "unblock_kind": (b.get("unblock_condition") or {}).get("kind")}
+
+
+def block_mission(rec: dict, *, expect_epoch: int, expect_state, now: float | None = None, reason: str,
+                  intent: dict | None = None, **changes) -> dict:
+    """The one writer of event="mission_blocked": state BLOCKED, the writer's own fields (capsule_hold, gsd_hold,
+    blocked_intent, ...) in `changes`, plus the compiled blocker on the record and its class on the ledger row."""
+    hold = changes.get("gsd_hold") or changes.get("capsule_hold")
+    b = _compile_blocker(rec, reason, hold=hold, intent=intent or changes.get("blocked_intent"))
+    if b is not None:
+        changes = {**changes, "blocker": {**b, "epoch": expect_epoch, "at": now}}
+    return transition(rec["mission_id"], expect_epoch=expect_epoch, expect_state=expect_state,
+                      event="mission_blocked", now=now, state=BLOCKED, reason=reason,
+                      ledger_extra=_blocker_ledger(b) or None, **changes)
+
+
+def annotate_hold(rec: dict, hold: dict) -> dict:
+    """`hold` with its compiled blocker attached (a copy), or `hold` itself when compilation is off. Used by the two
+    hold writers (set_owner_hold, _amr_boundary): an Owner-hold park is as typed as a BLOCKED transition."""
+    b = _compile_blocker(rec, str(hold.get("reason") or ""), hold=hold, is_hold=True)
+    return hold if b is None else {**hold, "blocker": b}
+
+
+def current_blocker(rec: dict) -> dict | None:
+    """The typed blocker a record is parked on NOW: its BLOCKED blocker while it is BLOCKED in the epoch that wrote
+    it, else the blocker on a live owner hold. A blocker left from an earlier block is not current."""
+    b = rec.get("blocker")
+    if rec.get("state") == BLOCKED and isinstance(b, dict) and b.get("epoch") == rec.get("epoch"):
+        return b
+    hb = (rec.get("owner_hold") or {}).get("blocker")
+    return hb if isinstance(hb, dict) else None
+
+
 def history_gaps(rec: dict, events: list[dict] | None = None) -> dict:
     """Does the ledger hold a row for every transition the record has committed?
 
@@ -1661,10 +1725,11 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind:
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; there is nothing to hold")
     now = time.time() if now is None else now
+    new_hold = annotate_hold(rec, {"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {}),
+                                   **(extra or {})})
     out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expect_seq,
                      event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
-                     owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {}),
-                                 **(extra or {})})
+                     ledger_extra=_blocker_ledger(new_hold.get("blocker")) or None, owner_hold=new_hold)
     hold_guard_budget(rec, reason)
     if kind == "cost":
         # Economic incident receipt (programme A2): a cost hold is a first-class event with a receipt, never only a
@@ -2882,8 +2947,9 @@ def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> d
     if wtype == "UNKNOWN":
         lr.ledger_append(mid, "owner_wait_unknown", mission_id=mid, why=str(c.get("boundary"))[:300],
                          fios="failure: unclassified Owner wait")
-    new_hold = {**base_hold, "wait": wait, "recovery": {"state": mr.OWNER_BOUNDARY, "why": c.get("boundary"),
-                                                        "decision_packet": str(pkt), "at": now}}
+    new_hold = annotate_hold(rec, {**base_hold, "wait": wait,
+                                   "recovery": {"state": mr.OWNER_BOUNDARY, "why": c.get("boundary"),
+                                                "decision_packet": str(pkt), "at": now}})
     lr.ledger_append(mid, "recovery_owner_boundary", mission_id=mid, why=str(c.get("boundary"))[:300],
                      failure=c.get("failure"), wait_type=wtype, queue_id=wait["queue_id"])
     mr.pgo_append({"mission_id": mid, "result": "OWNER_BOUNDARY", "failure": c.get("failure"),
@@ -2891,6 +2957,7 @@ def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> d
                   ms.state_dir() / "recovery" / "pgo.jsonl")
     return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
                       event="recovery_boundary", now=now, owner_hold=new_hold,
+                      ledger_extra=_blocker_ledger(new_hold.get("blocker")) or None,
                       reason=f"recovery owner boundary: {str(c.get('boundary'))[:240]}")
 
 
@@ -4702,9 +4769,9 @@ def _capsule_certify_check(rec: dict, row: dict, now: float, sessions=None, pid_
                        reason=f"{why}; stopped ({how}), successor {n} of {MAX_SUCCESSOR_ATTEMPTS} on this capsule")
             row["action"], row["reason"], row["stop"] = "capsule_successor_stopped", why, how
             return True
-        transition(mid, expect_epoch=rec["epoch"], expect_state=RUNNING, event="mission_blocked",
-                   now=now, state=BLOCKED, reason=why, capsule_attempts=attempts,
-                   capsule_hold={"kind": "resume_not_certified", "reason": why, "since": now})
+        block_mission(rec, expect_epoch=rec["epoch"], expect_state=RUNNING,
+                      now=now, reason=why, capsule_attempts=attempts,
+                      capsule_hold={"kind": "resume_not_certified", "reason": why, "since": now})
         row["action"], row["reason"] = "capsule_blocked", why
         return True
     return False
@@ -5005,8 +5072,8 @@ def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: fl
             transition(mid, expect_epoch=rec["epoch"], expect_state=BLOCKED, event="capsule_seal_refused",
                        now=now, capsule_hold=hold, reason=reason)
         else:
-            transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="mission_blocked",
-                       now=now, state=BLOCKED, reason=why_b, capsule_hold=hold)
+            block_mission(rec, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                          now=now, reason=why_b, capsule_hold=hold)
         row["blocked"] = why_b
     elif first is None:
         transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="capsule_seal_refused",
@@ -5411,9 +5478,8 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     import blocked_intent as bint
                     bi_ = bint.intent(needs, rec.get("directives"))
                     row["blocked_intent"] = bi_["kind"], bi_["action"]
-                    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                               event="mission_blocked", now=now, state=BLOCKED,
-                               reason=reason, blocked_intent=bi_)
+                    block_mission(rec, expect_epoch=rec["epoch"], expect_state=rec["state"], now=now,
+                                  reason=reason, blocked_intent=bi_)
                     lr.ledger_append(mid, "blocked_intent", mission_id=mid, epoch=rec["epoch"],
                                      kind=bi_["kind"], action=bi_["action"])
                     if bi_["action"] == "ANSWER_STANDING":
@@ -5444,8 +5510,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                               f"{lrow.get('state')}"
                               + (f"; waiting for {lrow['waitingFor']}" if lrow.get("waitingFor") else "")
                               + (f"; host needs: {needs}" if needs else ""))
-                    transition(mid, expect_epoch=new["epoch"], expect_state=RUNNING,
-                               event="mission_blocked", now=now, state=BLOCKED, reason=reason)
+                    block_mission(new, expect_epoch=new["epoch"], expect_state=RUNNING, now=now, reason=reason)
                     row["action"], row["reason"] = "adopted_blocked", reason
             elif act == "recover":
                 row.update(recover_mission(rec, sessions, now, pid_alive=pid_alive, runner=runner,
@@ -5596,9 +5661,8 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                             why = (f"gsd {outcome} on {hold['n']} consecutive passes "
                                    f"({int(now - float(hold['since'] or now))} s): {st.get('reason')}"
                                    f" -- no relay until GSD answers OK")
-                            transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                                       event="mission_blocked", now=now, state=BLOCKED,
-                                       gsd_hold=hold, reason=why)
+                            block_mission(rec, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                          now=now, gsd_hold=hold, reason=why)
                             row["blocked"] = why
                         else:
                             transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
@@ -7112,6 +7176,10 @@ def _cli(argv=None) -> int:
                      "plan": plan_next(m, time.time(), sessions)})
         if m["state"] not in TERMINAL and (m.get("authority_tokens") or m.get("token_estimate")):
             rows[-1]["spend"] = live_spend(m)   # T1 F3: the figure an Owner decides on is live, with its time
+        cb_ = current_blocker(m)
+        if cb_:   # S6: read-only; absent for a mission that is not parked, so existing rows keep their shape
+            rows[-1]["blocker"] = {k: cb_.get(k) for k in ("class", "unblock_text", "independent_work",
+                                                           "independent_reason", "owner_required")}
     if getattr(args, "surface", False):
         print(json.dumps(status_surface(rows, missions, time.time()), indent=2))
         return 0
