@@ -230,9 +230,8 @@ def dispose(events: list[dict] | None = None, now: float | None = None, programs
         except Exception:  # noqa: BLE001
             disagree.append(m["mission_id"])
             continue
-        if not os.path.exists(legacy) and res["present"] and os.path.realpath(res["path"]) != os.path.realpath(legacy) \
-                and res["source"] == "STEM":
-            disagree.append(m["mission_id"])
+        if not os.path.exists(legacy) and res["present"] and os.path.realpath(res["path"]) != os.path.realpath(legacy):
+            disagree.append(m["mission_id"])  # the stem convention sees no receipt, the resolver found one elsewhere
     return {
         "now": now,
         "missions": len(missions),

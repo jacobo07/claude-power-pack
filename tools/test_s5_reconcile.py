@@ -382,6 +382,14 @@ def dispose_gates() -> None:
     check("V-S5-DISPOSE-SUMMED-VS-UNION", abs(r2["summed_mission_h"] - 3.0) < 1e-3 and abs(r2["union_wall_h"] - 2.0) < 1e-3, (r2["summed_mission_h"], r2["union_wall_h"]))
     check("V-S5-DISPOSE-149-NOT-MEASURED", "LAPTOP-ONLY" in rep["quoted_not_measured"] and "149" not in json.dumps(
         {k: v for k, v in rep.items() if k != "quoted_not_measured"}), "")
+    # resolver audit: stem absent but a declared receipt exists => counted (positive); stem present => not (control)
+    ra = mission("ra")
+    receipt(ra, done_text())
+    rc = mission("rc")
+    receipt(rc, done_text())
+    gm.stem_receipt(rc["wu_packet"]["path"]).write_text("Status: DONE\n", encoding="utf-8")
+    aud = mrc.dispose(events=[], now=T, missions=[ra, rc])["resolver_audit"]
+    check("V-S5-RESOLVER-AUDIT-COUNTS-DECLARED-ONLY", aud["ids"] == [ra["mission_id"]] and aud["packet_bearing"] == 2, aud)
     # read-only on the live temp ledger/records
     x = mission("ro")
     receipt(x, done_text())
@@ -470,6 +478,8 @@ def main() -> int:
     drill("M-RECONCILE-IGNORE-CONFLICT", gm, "resolve_receipt", lambda o: (lambda pkt, rec=None, pd=None: {**o(pkt, rec, pd), "conflict": False}))
     drill("M-RECONCILE-NO-SUCCESSOR", mrc, "_successor_id", lambda o: (lambda *a, **k: (None, None)))
     drill("M-RECONCILE-STALE-OK", mrc, "reconcile", lambda o: (lambda rec, **k: o({**rec, "created_at": 0}, **k)))
+    drill("M-AUDIT-NEVER-COUNTS", gm, "resolve_receipt", lambda o: (lambda pkt, rec=None, pd=None: {
+        **o(pkt, rec, pd), "path": str(gm.stem_receipt(pkt)), "source": "STEM"}))
     drill("M-DISPOSE-ALL-LOST", mrc, "reconcile", lambda o: (lambda rec, **k: {"outcome": mrc.FAILED, "reason": "m", "evidence": {}}))
     drill("M-WIRING-LEGACY-PRESENT", gm, "_receipt_present", lambda o: (lambda rec, programs_dir=None: gm.rj.is_closed(
         gm.stem_receipt((rec.get("wu_packet") or {}).get("path") or "x")) if (rec.get("wu_packet") or {}).get("path") else True))
