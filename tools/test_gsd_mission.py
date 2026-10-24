@@ -662,7 +662,14 @@ def main() -> int:
     r3 = gm.load("m-nophase")
     check("V-MC-GSD-BLOCK-STAYS-WHILE-NOT-OK",
           r3["state"] == gm.BLOCKED and r3["gsd_hold"]["n"] == 3 and len(launches) == nb, str(r3.get("gsd_hold")))
+    # S3: inside the backoff window GSD is not asked at all (an OK there is not observed); past it, OK clears.
+    nh = len(hs)
     gm.supervise(now=NOW + 900, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    rb = gm.load("m-nophase")
+    check("V-S3-BACKOFF-SKIPS-ASK-INSIDE-WINDOW", rb["state"] == gm.BLOCKED and rb["gsd_hold"]["n"] == 3
+          and float(rb["gsd_hold"]["next_check"]) > NOW + 900, str(rb.get("gsd_hold")))
+    gm.supervise(now=NOW + 1300, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
                  stop_runner=stop_run, pid_alive=gone)
     r4 = gm.load("m-nophase")
     check("V-MC-GSD-BLOCK-CLEARS-ON-OK-AND-PROCEEDS",
