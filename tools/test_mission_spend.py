@@ -208,6 +208,19 @@ def main() -> int:
     pmark = led._gfold(led._read())["marks"][pre]
     check("V-MSPEND-SETTLE-EXCLUDES-PREBIND", pmark == 5_845_727 and out.get("capped_from_transcript") == 6_867_353,
           f"mark={pmark:,}")
+    # a booked pane that also has a prebind row: the booked ceiling alone still charged the history
+    # (ctx-rent-a2 2026-10-24: gsdx-factory-2 b2746017 under its ceiling, cost-collapse c0338e7b over it)
+    for sid, total, prebind, booked, hold, want in (
+            ("b2746017-0000-4000-8000-000000000004", 4_214_993, 130_268, 3_695_643, 977_610, 4_084_725),
+            ("c0338e7b-0000-4000-8000-000000000005", 17_083_606, 14_751_121, 1_249_027, 13_674_211, 2_332_485)):
+        (tr / f"{sid}.jsonl").write_text(_row(sid[:2], "2027-01-15T08:00:00Z", cr=total) + "\n", encoding="utf-8")
+        led._append(led._read(), {"op": "prebind", "sid": sid, "measured": prebind})
+        led._append(led._read(), {"op": "settle", "sid": sid, "measured": booked, "closes": []})
+        led._append(led._read(), {"op": "reserve", "id": f"g-fix:{sid}:1", "sid": sid, "kind": "final",
+                                  "provider": "g-fix", "amount": hold, "window": "goal", "base": booked})
+        ms.goal_settle("g-fix", sid, transcripts_root=Path(TMP) / "tr")
+        got = led._gfold(led._read())["marks"][sid]
+        check(f"V-MSPEND-SETTLE-BOOKED-EXCLUDES-PREBIND-{sid[:4]}", got == want, f"mark={got:,} want={want:,}")
 
     # --- same-pane Owner correction of a misbooked mark ----------------------------------------
     led._append(led._read(), {"op": "settle", "sid": coord, "measured": 19_879_802, "closes": []})

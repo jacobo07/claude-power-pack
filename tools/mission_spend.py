@@ -654,8 +654,11 @@ def goal_settle(goal: str, sid: str, measured: int | None = None, reason: str = 
         mark = g["marks"].get(sid, 0)
         if mark:
             ceiling = mark + sum(r["hold"] for r in g["res"].values() if r["sid"] == sid)
-            if measured > ceiling:
-                capped, measured = measured, ceiling
+            # The transcript also holds the pre-binding history booked as capex: the ceiling alone charged
+            # it again whenever it was wider than post-binding spend (ctx-rent-a2 2026-10-24, ~14.8M).
+            post = measured - g["prebind"].get(sid, 0)
+            if measured > min(ceiling, post):
+                capped, measured = measured, max(mark, min(ceiling, post))
         elif g["prebind"].get(sid, 0) and measured > g["prebind"][sid]:
             # No mark, but its pre-binding history was booked as programme capex: never charge it again as
             # goal spend (a leaked pane was charged 1,021,626 of history this way, ctx-rent-a2 2026-10-23).
