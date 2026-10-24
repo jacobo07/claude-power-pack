@@ -26,6 +26,7 @@ os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ["PP_OWNER_QUEUE_STATE_DIR"] = str(Path(TMP) / "owner-queue")
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"
+os.environ["CLAUDE_CONFIG_DIR"] = str(Path(TMP) / "cc")
 os.environ.pop("CPP_BLOCKER_COMPILE", None)
 os.environ.pop("CPP_FORESEEABLE_DECISIONS", None)
 TOOLS = Path(__file__).resolve().parent
@@ -175,7 +176,7 @@ def tracer_gates() -> None:
     host_ok = host["rows"] == 0 or (sum(v["count"] for v in host["classes"].values())
                                     == sum(n for e, n in host["populations"].items() if e != "blocked_intent"))
     check("V-S6-TRACER-CENSUS-POPULATION",
-          c["populations"]["mission_blocked"] == 6 and c["populations"]["owner_hold_set"] == 1
+          c["populations"].get("mission_blocked") == 6 and c["populations"].get("owner_hold_set") == 1
           and cls == {"HOST_GATE": 2, "PROVIDER_LIMIT": 1, "COMMAND_REQUEST": 1, "GSD_HOLD": 1, "UNKNOWN": 1,
                       "OWNER_PARK": 1} and c["rows"] == 8 and host_ok, f"{cls} host_rows={host['rows']}")
 
@@ -386,9 +387,432 @@ def batch_gates() -> None:
           and chk_u.get("status") == "unmeasured", f"measured={fu['measured']} chk={chk_u}")
 
 
+# ------------------------------------------------------------------------------------------------ Task 3: full set
+import ast  # noqa: E402
+import contextlib  # noqa: E402
+import inspect  # noqa: E402
+import re  # noqa: E402
+import subprocess  # noqa: E402
+import textwrap  # noqa: E402
+
+THIS = sys.modules[__name__]
+PHASE_DIR = REPO / ".planning/workstreams/flow-compression/phases/06-s6-blocker-compiler-owner-boundary"
+CENSUS_PATH = PHASE_DIR / "06-CENSUS.md"
+REAL_CWD = str(REPO)
+REAL_WS = "flow-compression"
+
+# Reason strings below are copied from the host ledger census (06-CENSUS.md) or, for the zero-row classes, built from
+# the named hold kinds the writers produce. Every pair was run through the REAL compiler before it was kept: the
+# positive must compile to its class and the negative must compile to the NAMED neighbour, so a negative that lands
+# anywhere else is a changed control, not a pass.
+H = "host lists session blocked (no waitingFor); host needs: "
+CMD = H + "run /clear"
+DEC = H + 'Reply "approve all 8", name the subset, or say "keep all"'
+HOSTGATE = "host: waiting for permission prompt"
+PUSH = (H + "From the laptop: push feat/wsctx-m2 to GitHub, open the PR using PR_BODY.md, wait for CI, then merge and "
+        "deploy Phoenix and infinity_ui together.")
+CAP = H + "approve ~3M more budget to finish (judge P39 frames)"
+COSTR = ("cost breaker: 1,958,619 processed since the work tree last changed (stall budget 1,500,000); "
+         "semantic progress is not kept")
+COSTH = {"kind": "cost", "reason": COSTR}
+GSDR = ("gsd NO_PHASES on 2 consecutive passes (300 s): GSD parses 0 phases from ROADMAP.md -- "
+        "no relay until GSD answers OK")
+SEAL = "capsule-v2 seal impossible for mission-m-c474d0bfc3e6-e3: recovery REFUSED: obligations: no open item found"
+CERT = "resume_not_certified: successor not certified"
+PARK = "E1 ALL_DECIDED at 9787a946 work complete, no rerun"
+UNK = H + "open this session to continue setup"
+
+CONTROLS = {
+    "HOST_GATE": ({"reason": HOSTGATE}, {"reason": CMD}, "COMMAND_REQUEST"),
+    "COMMAND_REQUEST": ({"reason": CMD}, {"reason": HOSTGATE}, "HOST_GATE"),
+    "DECISION_REQUEST": ({"reason": DEC}, {"reason": CMD}, "COMMAND_REQUEST"),
+    "RESOURCE_REQUEST": ({"reason": H + "Supply target images (kitten reshape, Jacobo hair) or a new offline source"},
+                         {"reason": DEC}, "DECISION_REQUEST"),
+    "PUBLISH_BOUNDARY": ({"reason": PUSH}, {"reason": CMD}, "COMMAND_REQUEST"),
+    "CAPITAL_EXHAUSTED": ({"reason": CAP}, {"reason": COSTR, "hold": COSTH, "is_hold": True}, "COST_HOLD_RECOVERING"),
+    "COST_HOLD_RECOVERING": ({"reason": COSTR, "hold": COSTH, "is_hold": True}, {"reason": CAP}, "CAPITAL_EXHAUSTED"),
+    "PROVIDER_LIMIT": ({"reason": "GEX44 account weekly limit until 2026-10-21 19:00 Europe/Berlin (worker a3937ee7 "
+                                  "got the limit message on turn 1)"}, {"reason": HOSTGATE}, "HOST_GATE"),
+    "WAIT_RESOURCE": ({"reason": "disk pressure hold", "hold": {"kind": "resource", "reason": "disk pressure hold"},
+                       "is_hold": True},
+                      {"reason": "disk pressure hold", "hold": {"kind": "owner_stop", "reason": "disk pressure hold"},
+                       "is_hold": True}, "OWNER_PARK"),
+    "GSD_HOLD": ({"reason": GSDR, "hold": {"outcome": "NO_PHASES", "reason": "x", "unblock": "GSD parses the roadmap"}},
+                 {"reason": "totally unrecognised reason text"}, "UNKNOWN"),
+    "CAPSULE_NOT_CERTIFIED": ({"reason": CERT, "hold": {"kind": "resume_not_certified"}},
+                              {"reason": SEAL, "hold": {"kind": "seal_refused"}}, "CAPSULE_SEAL_REFUSED"),
+    "CAPSULE_SEAL_REFUSED": ({"reason": SEAL, "hold": {"kind": "seal_refused"}},
+                             {"reason": CERT, "hold": {"kind": "resume_not_certified"}}, "CAPSULE_NOT_CERTIFIED"),
+    "SETUP_HOLD": ({"reason": "canary: envelope before first launch", "is_hold": True}, {"reason": HOSTGATE},
+                   "HOST_GATE"),
+    "OWNER_PARK": ({"reason": PARK, "is_hold": True}, {"reason": PARK}, "UNKNOWN"),
+    "UNKNOWN": ({"reason": UNK}, {"reason": CMD}, "COMMAND_REQUEST"),
+}
+
+
+def cb(**kw):
+    kw.setdefault("evidence", {"measured": False})
+    return bc.compile_blocker(**kw)
+
+
+def class_gates() -> None:
+    missing = [k for k in bc.CLASSES if k not in CONTROLS]
+    extra = [k for k in CONTROLS if k not in bc.CLASSES]
+    pos_bad, neg_bad = [], []
+    for k in bc.CLASSES:
+        if k not in CONTROLS:
+            continue
+        p, n, nb = CONTROLS[k]
+        got = cb(**p)
+        if got["class"] != k or not (got.get("unblock_condition") or {}).get("kind"):
+            pos_bad.append(f"{k}->{got['class']}")
+        neg = cb(**n)["class"]
+        if neg == k or neg != nb:
+            neg_bad.append(f"{k}->{neg}")
+    check("V-S6-CLASS-POSITIVE", not missing and not extra and not pos_bad,
+          f"missing={missing} extra={extra} bad={pos_bad}")
+    check("V-S6-CLASS-NEGATIVE", not missing and not extra and not neg_bad, f"missing={missing} bad={neg_bad}")
+
+
+# ------------------------------------------------------------------------------------------------ independent_work
+def rm_fx(boxes: dict, deps: dict | None = None, current=2, state: bool = True, roadmap: bool = True,
+          ws: str = "rw") -> tuple[str, str]:
+    _n[0] += 1
+    cwd = ROOT / f"rm-{_n[0]}"
+    base = cwd / ".planning" / "workstreams" / ws
+    base.mkdir(parents=True)
+    if roadmap:
+        lines = ["# roadmap", ""]
+        for n, done in boxes.items():
+            lines.append(f"- [{'x' if done else ' '}] **Phase {n}: unit {n}**")
+        lines.append("")
+        for n in boxes:
+            d = (deps or {}).get(n)
+            lines += [f"### Phase {n}: unit {n}", "**Depends on**: " + (", ".join(f"Phase {x}" for x in d) if d else "Nothing"), ""]
+        (base / "ROADMAP.md").write_text("\n".join(lines), encoding="utf-8")
+    if state:
+        body = f"current_phase: {current}\n" if current is not None else "status: ok\n"
+        (base / "STATE.md").write_text(f"---\n{body}---\n", encoding="utf-8")
+    return str(cwd), ws
+
+
+def indep(cwd, ws, reason=HOSTGATE, **kw):
+    return cb(reason=reason, cwd=cwd, workstream=ws, evidence=None, **kw)
+
+
+def indep_gates() -> None:
+    cwd, ws = rm_fx({1: True, 2: False, 3: False, 4: False}, {3: [1], 4: [2]})
+    pos = indep(cwd, ws)
+    check("V-S6-INDEPENDENT-POSITIVE",
+          pos["class"] == "HOST_GATE" and pos["independent_work"] is True and "unit(s) 3 " in pos["independent_reason"] + " "
+          and "4" not in pos["independent_reason"].split("unit(s)")[1].split("runnable")[0],
+          f"{pos['independent_work']} {pos['independent_reason']}")
+    unk = indep(cwd, ws, reason=UNK)
+    check("V-S6-UNKNOWN-NEVER-INDEPENDENT",
+          unk["class"] == "UNKNOWN" and unk["independent_work"] is False and unk["independent_reason"] == "unclassified"
+          and pos["independent_work"] is True, f"{unk['class']} {unk['independent_work']} {unk['independent_reason']}")
+    cwd2, ws2 = rm_fx({1: True, 2: False, 3: False, 4: False}, {3: [2], 4: [3]})
+    lin = indep(cwd2, ws2)
+    ev2 = bc.plan_evidence(cwd2, ws2)
+    check("V-S6-INDEPENDENT-NO-OTHER-UNIT",
+          ev2["measured"] is True and lin["independent_work"] is False and lin["independent_reason"] == "no_other_unit",
+          f"{lin['independent_work']} {lin['independent_reason']}")
+    cases = {"no ROADMAP": rm_fx({1: True, 2: False}, roadmap=False),
+             "no STATE": rm_fx({1: True, 2: False, 3: False}, {3: [1]}, state=False),
+             "no current_phase": rm_fx({1: True, 2: False, 3: False}, {3: [1]}, current=None),
+             "no parsed units": rm_fx({})}
+    bad = []
+    for label, (c_, w_) in cases.items():
+        r = indep(c_, w_)
+        if r["independent_work"] is not False or r["independent_reason"] != "unmeasured":
+            bad.append(f"{label}: {r['independent_work']}/{r['independent_reason']}")
+    nocwd = cb(reason=HOSTGATE, evidence=None)
+    if nocwd["independent_work"] is not False or nocwd["independent_reason"] != "unmeasured":
+        bad.append(f"no cwd: {nocwd['independent_work']}/{nocwd['independent_reason']}")
+    check("V-S6-INDEPENDENT-UNMEASURED", not bad, "; ".join(bad))
+    cs, ws_s = rm_fx({1: False, 2: False}, {})
+    stale = indep(cs, ws_s)
+    cs2, ws_s2 = rm_fx({1: False, 2: False, 3: False}, {3: []})
+    ahead = indep(cs2, ws_s2)
+    check("V-S6-INDEPENDENT-STALE-BOX",
+          stale["independent_work"] is False and stale["independent_reason"] == "no_other_unit"
+          and ahead["independent_work"] is True and "unit(s) 3 " in ahead["independent_reason"] + " "
+          and "unit(s) 1" not in ahead["independent_reason"],
+          f"stale={stale['independent_reason']} ahead={ahead['independent_reason']}")
+    rec_cost = {"mission_id": "m-x", "owner_hold": COSTH}
+    held = indep(cwd, ws, rec=rec_cost)
+    held_arg = indep(cwd, ws, hold=COSTH)
+    check("V-S6-INDEPENDENT-AUTHORITY-HOLD",
+          held["independent_work"] is False and held["independent_reason"] == "authority_exhausted"
+          and held_arg["independent_work"] is False and pos["independent_work"] is True,
+          f"{held['independent_reason']} {held_arg['independent_reason']}")
+    real_ev = bc.plan_evidence(REAL_CWD, REAL_WS)
+    roadmap_txt = (Path(REAL_CWD) / ".planning/workstreams" / REAL_WS / "ROADMAP.md").read_text(encoding="utf-8")
+    n_real = len(re.findall(r"^- \[[ xX]\] \*\*Phase \d", roadmap_txt, re.M))
+    real = indep(REAL_CWD, REAL_WS)
+    check("V-S6-INDEPENDENT-REAL-ROADMAP",
+          Path(REAL_CWD).resolve() == REPO.resolve() and real_ev["measured"] is True and len(real_ev["units"]) == n_real
+          and n_real >= 6 and real["independent_work"] is False and real["independent_reason"] == "no_other_unit",
+          f"cwd={REAL_CWD} units={len(real_ev.get('units', []))}/{n_real} cur={real_ev.get('current')} "
+          f"{real['independent_work']}/{real['independent_reason']}")
+    a = [json.dumps(cb(**CONTROLS[k][0]), sort_keys=True) for k in bc.CLASSES if k in CONTROLS]
+    b = [json.dumps(cb(**CONTROLS[k][0]), sort_keys=True) for k in bc.CLASSES if k in CONTROLS]
+    c = json.dumps(indep(cwd, ws), sort_keys=True), json.dumps(indep(cwd, ws), sort_keys=True)
+    check("V-S6-DETERMINISTIC", a == b and len(a) == len(bc.CLASSES) and c[0] == c[1], f"controls={len(a)} equal={a == b}")
+
+    # the autonomy gate decides who must act; the compiler only agrees with it (FC-06)
+    from modules.autonomy_gate import gate as ag
+    force = "git push --force origin main"
+    plain = "git push origin feat/x"
+    deploy = "deploy the build to production"
+    inspect_only = "read the log file and summarize the failing test"
+    rubric = (ag.classify(force)["owner"] == "OWNER" and ag.classify(plain)["owner"] == "OWNER"
+              and ag.classify(plain, authorized=("git-push",))["owner"] == "AGENT"
+              and ag.classify(deploy)["owner"] == "OWNER" and ag.classify(inspect_only)["owner"] == "AGENT")
+    seen = {}
+    for label, text in (("force", force), ("plain", plain), ("deploy", deploy)):
+        r = cb(reason=H + text)
+        seen[label] = (r["class"], r["owner_required"])
+    agrees = all(v == ("PUBLISH_BOUNDARY", True) for v in seen.values())
+    ctrl = cb(reason=H + inspect_only)
+    check("V-S6-AUTONOMY-AGREEMENT", rubric and agrees and ctrl["class"] != "PUBLISH_BOUNDARY",
+          f"rubric={rubric} seen={seen} control={ctrl['class']}")
+
+
+# ------------------------------------------------------------------------------------------------ structure (AST)
+SRC_HOOK: list = [None]
+WRITER_CALLEES = {"transition", "ledger_append"}
+LAUNCH_NAMES = {"launch_worker", "transition", "create", "arm", "arm_chain", "wake", "wake_mission", "system",
+                "Popen", "run", "check_call", "check_output", "call", "spawn"}
+ALLOWED_S6_EVENTS = {"mission_blocked", "owner_decisions_batched", "owner_decisions_batch_failed"}
+STATES_LITERAL = {"PREPARED", "LAUNCHING", "RUNNING", "HANDOFF_REQUESTED", "BLOCKED", "COMPLETED", "HALTED", "ORPHANED"}
+ACTIONS_LITERAL = {"adopt", "await", "halt", "launch", "none", "recover", "relay", "replace", "settle", "slim_finished",
+                   "surface_blocked", "surface_unknown", "unblock"}
+
+
+def tool_sources() -> dict:
+    if SRC_HOOK[0]:
+        return SRC_HOOK[0]()
+    return {p.name: p.read_text(encoding="utf-8") for p in sorted(TOOLS.glob("*.py")) if not p.name.startswith("test_")}
+
+
+def _nm(n):
+    return n.id if isinstance(n, ast.Name) else n.attr if isinstance(n, ast.Attribute) else None
+
+
+class _Walk(ast.NodeVisitor):
+    def __init__(self, out):
+        self.out, self.stack = out, []
+
+    def visit_FunctionDef(self, n):
+        self.stack.append(n.name)
+        self.generic_visit(n)
+        self.stack.pop()
+
+    visit_AsyncFunctionDef = visit_FunctionDef
+
+    def visit_Call(self, c):
+        fn = self.stack[-1] if self.stack else "<module>"
+        callee = _nm(c.func)
+        consts = [a.value for a in c.args if isinstance(a, ast.Constant)] + \
+                 [k.value.value for k in c.keywords if isinstance(k.value, ast.Constant)]
+        if callee in WRITER_CALLEES:
+            if "mission_blocked" in consts or any(k.arg == "state" and _nm(k.value) == "BLOCKED" for k in c.keywords):
+                self.out["blocked"].add(fn)
+            for ev in ("owner_hold_set", "recovery_boundary"):
+                if ev in consts:
+                    self.out["hold_writers"].add(fn)
+        if callee == "annotate_hold":
+            self.out["annotating"].add(fn)
+        if callee == "block_mission":
+            self.out["block_calls"] += 1
+        self.generic_visit(c)
+
+
+def discover(sources: dict) -> dict:
+    out = {"blocked": set(), "hold_writers": set(), "annotating": set(), "block_calls": 0, "parse_errors": []}
+    for fname, src in sources.items():
+        try:
+            tree = ast.parse(src)
+        except SyntaxError:
+            out["parse_errors"].append(fname)
+            continue
+        _Walk(out).visit(tree)
+    return out
+
+
+def launch_violations(src: str) -> list:
+    v = []
+    for n in ast.walk(ast.parse(src)):
+        if isinstance(n, ast.Import) and any(a.name.split(".")[0] in ("subprocess", "gsd_mission") for a in n.names):
+            v.append("import " + ",".join(a.name for a in n.names))
+        if isinstance(n, ast.ImportFrom) and (n.module or "").split(".")[0] in ("subprocess", "gsd_mission"):
+            v.append("from " + str(n.module))
+        if isinstance(n, ast.Call) and _nm(n.func) in LAUNCH_NAMES:
+            v.append("call " + str(_nm(n.func)))
+    return v
+
+
+def _fn(src: str, name: str):
+    return next((n for n in ast.walk(ast.parse(src)) if isinstance(n, ast.FunctionDef) and n.name == name), None)
+
+
+def _calls(fn, names) -> list:
+    return [c for c in ast.walk(fn) if isinstance(c, ast.Call) and _nm(c.func) in names]
+
+
+def struct_gates() -> None:
+    srcs = tool_sources()
+    d = discover(srcs)
+    planted = discover({"p.py": "def sneaky(m):\n    transition(m, expect_epoch=0, expect_state=1, event='mission_blocked', "
+                                "state=BLOCKED)\n"})
+    docstr = discover({"p.py": 'def quiet():\n    """mission_blocked is written by transition(state=BLOCKED)."""\n    return 1\n'})
+    unann = discover({"p.py": "def h(m):\n    transition(m, event='owner_hold_set')\n"})
+    ann = discover({"p.py": "def h(m):\n    annotate_hold(m, {})\n    transition(m, event='owner_hold_set')\n"})
+    controls = (planted["blocked"] == {"sneaky"} and docstr["blocked"] == set() and unann["hold_writers"] == {"h"}
+                and "h" not in unann["annotating"] and "h" in ann["annotating"])
+    unannotated = sorted(d["hold_writers"] - d["annotating"])
+    check("V-S6-WRITER-DISCOVERY",
+          controls and d["blocked"] == {"block_mission"} and not unannotated
+          and {"set_owner_hold", "_amr_boundary"} <= d["hold_writers"] and d["block_calls"] >= 5
+          and not d["parse_errors"] and len(srcs) >= 20,
+          f"blocked={sorted(d['blocked'])} unannotated={unannotated} hold_writers={sorted(d['hold_writers'])} "
+          f"block_calls={d['block_calls']} controls={controls}")
+
+    comp = srcs.get("blocker_compiler.py", "")
+    gm_src = srcs.get("gsd_mission.py", "")
+    planted_launch = launch_violations("def x():\n    launch_worker()\n")
+    clean_ctrl = launch_violations("def y():\n    return 1\n")
+    viol = launch_violations(comp)
+    read_only = ["annotate_hold", "_compile_blocker", "_blocker_ledger", "current_blocker", "batch_foreseeable_decisions"]
+    gm_viol = []
+    for name in read_only:
+        f = _fn(gm_src, name)
+        if f is None:
+            gm_viol.append(f"{name} missing")
+            continue
+        gm_viol += [f"{name}: {_nm(c.func)}" for c in _calls(f, LAUNCH_NAMES)]
+    bm = _fn(gm_src, "block_mission")
+    bm_calls = [_nm(c.func) for c in _calls(bm, LAUNCH_NAMES)] if bm else ["missing"]
+    check("V-S6-NO-NEW-LAUNCH-PATH",
+          planted_launch and not clean_ctrl and bool(comp) and not viol and not gm_viol and bm_calls == ["transition"],
+          f"compiler={viol} gm={gm_viol} block_mission={bm_calls} control={planted_launch}")
+
+    events = set()
+    for name in ("block_mission", "annotate_hold", "batch_foreseeable_decisions", "_compile_blocker", "_blocker_ledger"):
+        f = _fn(gm_src, name)
+        for c in (_calls(f, WRITER_CALLEES) if f else []):
+            for k in c.keywords:
+                if k.arg == "event" and isinstance(k.value, ast.Constant):
+                    events.add(k.value.value)
+            if _nm(c.func) == "ledger_append" and len(c.args) > 1 and isinstance(c.args[1], ast.Constant):
+                events.add(c.args[1].value)
+    pn = _fn(gm_src, "plan_next")
+    actions = set()
+    for n in ast.walk(pn) if pn else []:
+        if isinstance(n, ast.Dict):
+            for k, v in zip(n.keys, n.values):
+                if isinstance(k, ast.Constant) and k.value == "action" and isinstance(v, ast.Constant):
+                    actions.add(v.value)
+    check("V-S6-FC10-NO-NEW-STATE",
+          set(gm.STATES) == STATES_LITERAL and actions == ACTIONS_LITERAL and bool(events) and events <= ALLOWED_S6_EVENTS,
+          f"states={sorted(set(gm.STATES) ^ STATES_LITERAL)} actions={sorted(actions ^ ACTIONS_LITERAL)} "
+          f"events={sorted(events - ALLOWED_S6_EVENTS)}")
+
+
+# ------------------------------------------------------------------------------------------------ consumers, holds
+def consumers_gates() -> None:
+    mid, rec = supervised_block("Choose 1 or run /compact")
+    plan = lambda r: gm.plan_next(r, NOW + 5, [], pid_alive=lambda p: True)  # noqa: E731
+    bare = {k: v for k, v in rec.items() if k != "blocker"}
+    flipped = {**rec, "blocker": {**rec["blocker"], "independent_work": True, "owner_required": False, "zzz": 1}}
+    a, b, c = plan(rec), plan(bare), plan(flipped)
+    hid = held_mission("c")
+    gm.set_owner_hold(hid, "Owner reviewing the plan", now=NOW)
+    hrec = gm.load(hid)
+    nohb = {**hrec, "owner_hold": {k: v for k, v in hrec["owner_hold"].items() if k != "blocker"}}
+    ha, hb = plan(hrec), plan(nohb)
+    check("V-S6-CONSUMERS-TOLERATE",
+          a == b == c and ha == hb and "blocker" in rec and "blocker" in hrec["owner_hold"]
+          and gm.current_blocker(bare) is None and gm.current_blocker(nohb) is None
+          and gm.current_blocker(rec) is not None and gm.current_blocker(hrec) is not None,
+          f"blocked_same={a == b == c} hold_same={ha == hb} plan={a.get('action')}/{ha.get('action')}")
+
+
+BREAKER = "cost breaker: processed 156,097,796 >= authority 155,000,000 minus 1,000,000 closeout reserve"
+
+
+def hold_gates() -> None:
+    hid = held_mission("p")
+    gm.set_owner_hold(hid, "Owner reviewing the plan", now=NOW)
+    hold = gm.load(hid)["owner_hold"]
+    hb = hold.get("blocker") or {}
+    hrow = ledger_rows(hid, "owner_hold_set")
+    wd = ROOT / f"amr-{uid('w')}"
+    wd.mkdir()
+    subprocess.run([gm.resolve_exe("git"), "-C", str(wd), "init", "-q"], check=True)
+    mid = uid("q")
+    gm.create(str(wd), "/gsd-autonomous --ws obd", mission_id=mid, workstream="obd", now=NOW)
+    gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t_setup", now=NOW, state=gm.RUNNING, epoch=2,
+                  max_hours=100.0)
+    gm.set_owner_hold(mid, BREAKER, now=NOW, kind="cost")
+    rec = gm.load(mid)
+    gm._amr_boundary(rec, {"boundary": "no materially different strategy known for UNCLASSIFIED", "unit": None,
+                           "failure": None}, NOW + 5, rec.get("owner_hold"))
+    after = gm.load(mid)
+    ab = (after.get("owner_hold") or {}).get("blocker") or {}
+    wait = (after.get("owner_hold") or {}).get("wait") or {}
+    arow = ledger_rows(mid, "recovery_boundary")
+    cond = ab.get("unblock_condition") or {}
+    check("V-S6-HOLD-PARKS-TYPED",
+          hb.get("class") == "OWNER_PARK" and hb.get("owner_required") is True and bool(hb.get("unblock_condition"))
+          and len(hrow) == 1 and hrow[0].get("blocker_class") == "OWNER_PARK"
+          and ab.get("class") == "CAPITAL_EXHAUSTED" and cond.get("kind") == "owner_act" and bool(wait.get("resume"))
+          and cond.get("command") == wait.get("resume") and (arow and arow[-1].get("blocker_class") == "CAPITAL_EXHAUSTED"),
+          f"park={hb.get('class')} amr={ab.get('class')} cmd_ok={cond.get('command') == wait.get('resume')} "
+          f"rows={len(hrow)}/{len(arow)}")
+
+
+def isolation_gates() -> None:
+    lp = Path(lr.ledger_path()).resolve()
+    qd = Path(os.environ.get("PP_OWNER_QUEUE_STATE_DIR", "")).resolve()
+    home_state = (Path.home() / ".claude" / "state").resolve()
+    inside = lambda p: str(p).startswith(str(ROOT))  # noqa: E731
+    check("V-S6-ISOLATION",
+          inside(lp) and inside(qd) and not str(lp).startswith(str(home_state)) and not str(qd).startswith(str(home_state))
+          and os.environ.get("CPP_CLAUDE_EXE") == "__no_such_claude_in_tests__",
+          f"ledger={lp} queue={qd}")
+
+
+def census_gates() -> None:
+    try:
+        text = CENSUS_PATH.read_text(encoding="utf-8")
+    except OSError as exc:
+        check("V-S6-CENSUS-ARTIFACT", False, f"unreadable {type(exc).__name__}")
+        return
+    led = re.search(r"^Ledger: `(.+)`", text, re.M)
+    rows = re.search(r"^Rows read: (\d+)", text, re.M)
+    pops = {e: int(n) for e, n in re.findall(r"^\| (mission_blocked|blocked_intent|owner_hold_set|recovery_owner_boundary) \| (\d+) \|",
+                                              text, re.M)}
+    table = {k: int(n) for k, n in re.findall(r"^\| ([A-Z_]+) \| (\d+) \|", text, re.M) if k in bc.CLASSES}
+    total = re.search(r"Compiled rows: (\d+); UNKNOWN residual: (\d+)", text)
+    resid = sum(int(n) for n in re.findall(r"^- x(\d+): ", text, re.M))
+    ok = (bool(led) and bool(rows) and int(rows.group(1)) > 0 and set(pops) == set(bc.CENSUS_EVENTS) and sum(pops.values()) > 0
+          and set(table) == set(bc.CLASSES) and bool(total) and sum(table.values()) == int(total.group(1))
+          and table.get("UNKNOWN") == int(total.group(2)) == resid)
+    check("V-S6-CENSUS-ARTIFACT", ok,
+          f"ledger={bool(led)} rows={rows.group(1) if rows else None} pops={pops} classes={len(table)} "
+          f"sum={sum(table.values())} stated={total.groups() if total else None} resid={resid}")
+
+
+GROUPS = {"tracer": tracer_gates, "batch": batch_gates, "class": class_gates, "indep": indep_gates,
+          "struct": struct_gates, "consumers": consumers_gates, "hold": hold_gates, "isolation": isolation_gates,
+          "census": census_gates}
+
+
 def gates() -> None:
-    tracer_gates()
-    batch_gates()
+    for fn in GROUPS.values():
+        fn()
 
 
 def run_once() -> tuple[int, int]:

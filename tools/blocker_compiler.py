@@ -262,7 +262,8 @@ def _m_hostgate(c):
 
 def _m_publish(c):
     a = c["auto"]
-    return bool(a) and a.get("owner") == "OWNER" and a.get("category") == "outward-facing"
+    # irreversible (a force push) is as much an Owner boundary as a plain push: typed, never left UNKNOWN
+    return bool(a) and a.get("owner") == "OWNER" and a.get("category") in ("outward-facing", "irreversible")
 
 
 def _m_intent(c):
