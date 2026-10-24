@@ -224,6 +224,15 @@ nvcc 12.0 (`/usr/lib/nvidia-cuda-toolkit`), which cannot parse gcc 13 headers (`
 cpp_extension builds honoured CUDA_HOME in the same venv. Force `CUDACXX` / `CMAKE_CUDA_COMPILER`. Evidence: GEX44
 `~/ttb-lab-b/install_px2.log` (fail) vs `install_px3.log` (INSTALL_DONE), ttb `bff0fc3`.
 
+### T-OPTIMISER-SATISFIES-THE-JUDGE-NOT-THE-LIKENESS-001
+
+PROVEN. A black-box optimiser with a correct acceptance rule (fit better, held-out not worse, no PASS -> FAIL) will find what the judge
+cannot see. TTB lane B5: rigid hair moves took Madzia's hairline centre/side and face.vis_eye from FAIL to PASS with no regression, but
+the 16 mm lift exposed a dark band of the head top that the reference lacks. The ID-based hairline contract labels that band as head, so
+it counted as forehead. Before accepting an optimised result, LOOK at it beside the reference at the same scale; a knob that can open a
+gap needs a contract that checks contact. The best point also sat on the declared bound (BOUND_LIMITED), so the search range, not the
+representation, stopped it. Evidence: ttb `12aa4ee`, `knowledge/bench/b6_value_gate_madzia_2026-10-24.md`, ledger run 20261024T184333.
+
 ### T-SOURCE-REGEX-TRIPS-ON-PROSE-001
 
 PROVEN. A gate that regex-scans a function's source text for forbidden names ("never read the outcome") trips on prose inside
