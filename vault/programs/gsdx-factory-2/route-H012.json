@@ -9,7 +9,7 @@
   "workers": [
     {
       "name": "f2-hardening",
-      "profile": "top",
+      "profile": "top-level-worker",
       "calls": 31,
       "packet": 7000
     }
