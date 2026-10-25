@@ -26,10 +26,15 @@ GEX44, not the laptop; it was used here only for the tests and the stale_resumpt
 `ctx-rent-obs`: programme null, cap null, settled 0, used 0, binding null.  `ctx-rent-a2`: same, all null/0.
 Spend of this run is therefore unbooked anywhere (UNKNOWN).
 
-## LEDGER_TODO (ledger moves pending, done on the laptop plane)
-1. `python tools/mission_spend.py goal-settle --goal ctx-rent-a2 --session 36d35fab-bc56-4c68-bccc-d4487d7db2c2 --measured <session_tokens(transcript, since_iso="2026-10-23T15:20:10")["tokens"] read at that moment>`
-2. Lower the ctx-rent-a2 programme to settled + open; record the released amount in CLOSURE.md (do not reuse it).
-Then book this GEX44 run on ctx-rent-obs.
+## LEDGER moves: DONE on the laptop plane 2026-10-25 (Owner choice "a")
+1. ctx-rent-a2: 36d35fab booked 75,443,513 by `goal-settle` without `--measured` (transcript minus prebind). The
+   `since_iso` above was local time against UTC transcript timestamps (would have under-booked ~26.6M) and was not used.
+2. ctx-rent-a2 programme set to settled + open = 94,966,147 by the Owner (`goal-programme --owner`); nothing released,
+   over-run 34,966,147 (CLOSURE.md, 7d2b2992).
+3. ctx-rent-obs: this GEX44 run booked 8,874,921, measured on GEX44 with `session_tree_tokens`, one settle per session:
+   worker af2877d3 7,651,518 (equals its modelUsage); B1 probes 6d548cf6 / 928488da / f836e015 = 202,702 (19019039, the
+   refused attempt, measured 0 and was not booked); C1 runs 2101c6e3 / cf0d162d / d50d0b66 / f09df71a / f84b2ad9 =
+   1,020,701 including subagents. Settled 8,874,921 against the 7,000,000 ceiling: overdraft 1,874,921, ceiling not raised.
 
 ## Other notes
 - Turn budget: stopped before 45 turns; tranche 1 complete except the laptop-plane items. Tranche 2 needs a new Owner approval.
