@@ -1,9 +1,9 @@
 {
   "unit": "gsdx-f2-h012-r1",
   "envelope": {
-    "target": 8000000,
-    "warn": 9000000,
-    "stop": 10000000,
+    "target": 8700000,
+    "warn": 9500000,
+    "stop": 10500000,
     "calls": 60
   },
   "workers": [
