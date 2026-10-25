@@ -36,6 +36,25 @@ Spend of this run is therefore unbooked anywhere (UNKNOWN).
    refused attempt, measured 0 and was not booked); C1 runs 2101c6e3 / cf0d162d / d50d0b66 / f09df71a / f84b2ad9 =
    1,020,701 including subagents. Settled 8,874,921 against the 7,000,000 ceiling: overdraft 1,874,921, ceiling not raised.
 
+## Tranche 2 (laptop plane, 2026-10-25; plan e26dd9f4; capital packet f651f202, approval 05863e30)
+| unit | state | evidence |
+|---|---|---|
+| W5a worker boot census | DONE (fe149cdf selection, 066a6e92) | `B2.md`: background 102,244-105,796, slim-t2 18,285-20,218 |
+| W5b C2 | SKIPPED by the saturation rule | no attributable boot source above 10K (B2) |
+| W6 estate rent | DONE (7c4d9be7) | `ESTATE.md`: week 9.18B processed, top-level 92.5%, floor rent 48.1% |
+| W7 receipt | this section | |
+
+**Overrun, stop-loss crossed.** W5a and W6 ran inline in this coordinator pane (~150-190K per call) instead of a fresh
+worker, on the reasoning that both are deterministic. The pane cost was the overrun: since the first tranche-2 turn
+(2026-10-25T19:51:59Z, UTC cut) `session_tokens` = **8,839,459** over 60 calls (5,470,937 since the approval alone),
+against 4,000,000 approved. Booked: `goal-settle --goal ctx-rent-obs --session e9fc375e-... --measured 8839459`.
+Goal now: programme 12,874,921, settled 17,714,380, **overdraft 4,839,459**. Ceiling not raised. Work stopped at
+the crossing; nothing else ran. The ctx-rent-obs follow-ups earlier in this session (items 2-5, before 19:51:59Z)
+are measured as part of the same transcript and not booked anywhere.
+
+Next lever (from ESTATE): the top-level boot floor, ~356M/week per 10K removed. Not started; needs its own plan and
+capital, run by a fresh worker, never inline in a long pane.
+
 ## Other notes
 - Hook pass-through of the approval uuid (`hooks/econ_admission.js` `doRaiseGoal`/`doRaise` do not send `--approval-uuid`):
   Owner decision 2026-10-25 (a): NOT wired on this branch. The approving entry is not yet in the transcript when
