@@ -151,7 +151,21 @@ def main() -> int:
     out = gm._cost_breaker(gm.load("m-trip"), NOW, measure=lambda r: 141 * M, fingerprint=lambda w: "f")
     check("V-MSPEND-TRIP-HOLDS", bool(out.get("owner_hold")) and "cost breaker" in out["owner_hold"]["reason"],
           str(out.get("owner_hold")))
-    check("V-MSPEND-HOLD-PLAN-NONE", gm.plan_next(out, NOW, [], pid_alive=lambda p: True)["action"] == "none")
+    # Since AMR (03c681eb) a cost hold on an eligible live mission plans "recover" (pinned in test_mission_recovery
+    # V-AMR-COST-HOLD-PLANS-RECOVER); with the kill switch off the hold parks as before. Both poles, so neither the
+    # breaker->AMR handoff nor the parked fallback can regress silently.
+    held = gm.plan_next(out, NOW, [], pid_alive=lambda p: True)
+    check("V-MSPEND-HOLD-PLAN-RECOVER", held["action"] == "recover", str(held))
+    _amr_env = os.environ.get("CPP_MISSION_RECOVERY")
+    os.environ["CPP_MISSION_RECOVERY"] = "off"
+    try:
+        parked = gm.plan_next(out, NOW, [], pid_alive=lambda p: True)
+    finally:
+        if _amr_env is None:
+            os.environ.pop("CPP_MISSION_RECOVERY", None)
+        else:
+            os.environ["CPP_MISSION_RECOVERY"] = _amr_env
+    check("V-MSPEND-HOLD-PLAN-NONE-AMR-OFF", parked["action"] == "none", str(parked))
     _mission("m-ok", token_estimate=17 * M, max_hours=1000.0)
     ok = gm._cost_breaker(gm.load("m-ok"), NOW, measure=lambda r: 3 * M, fingerprint=lambda w: "f")
     check("V-MSPEND-CONTROL-NO-HOLD", not ok.get("owner_hold") and ok.get("cost_mark", {}).get("tokens") == 3 * M)
