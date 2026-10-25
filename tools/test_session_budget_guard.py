@@ -76,6 +76,7 @@ class Box:
     def env(self, **extra):
         e = dict(os.environ, GSD_LONG_RUN_STATE_DIR=str(self.state))
         e.pop("CPP_SESSION_BUDGET", None)
+        e["CPP_PREBOUNDARY"] = "off"   # these gates pin the post-crossing comparison; tools/test_preboundary_ceiling.py pins the default
         e.update(extra)
         return e
 

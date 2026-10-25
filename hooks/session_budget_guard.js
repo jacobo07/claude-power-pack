@@ -57,7 +57,7 @@ function readJson(p) {
 }
 
 function fresh(since) {
-  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, ids: [], grace: false };
+  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, ids: [], grace: false, recent: [] };
 }
 
 // Fold the complete lines appended since st.offset into st. Mirrors mission_spend.session_tokens.
@@ -99,6 +99,7 @@ function advance(st, transcript) {
     st.ids.push(mid);
     st.tokens += UK.reduce((s, k) => s + (Number(u[k]) || 0), 0);
     st.context = UK.slice(0, 3).reduce((s, k) => s + (Number(u[k]) || 0), 0);
+    st.recent = (Array.isArray(st.recent) ? st.recent : []).concat(UK.reduce((s, k) => s + (Number(u[k]) || 0), 0)).slice(-3);
   }
   if (st.ids.length > MAX_IDS) st.ids = st.ids.slice(-MAX_IDS);
 }
@@ -116,9 +117,28 @@ function advise(text) {
   return { hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: text } };
 }
 
+// Size of the call about to be admitted: the larger of the last counted call and the mean of the last three.
+function nextCall(st) {
+  const r = Array.isArray(st.recent) ? st.recent : [];
+  if (!r.length) return 0;
+  const tail = r.slice(-3);
+  return Math.max(r[r.length - 1], tail.reduce((s, v) => s + v, 0) / tail.length);
+}
+
 function judge(budget, st) {
   if (st.tokens > budget.stop) {
     return deny(`processed ${fmt(st.tokens)} > stop ${fmt(budget.stop)} (target ${fmt(budget.target)}).`);
+  }
+  // Pre-boundary ceiling (WU-H012): the call that crosses stop used to be admitted (3M envelope, 4.31M spent).
+  // Deny once processed + the next call + the closeout reserve (paid INSIDE stop) would cross it.
+  if (String(process.env.CPP_PREBOUNDARY || '').trim().toLowerCase() !== 'off') {
+    const next = nextCall(st);
+    const declared = Number(budget.closeout_calls);
+    const reserve = (Number.isFinite(declared) && declared >= 0 ? declared : DEFAULT_CLOSEOUT) * next;
+    if (next > 0 && st.tokens + next + reserve > budget.stop) {
+      return deny(`processed ${fmt(st.tokens)} + next call ~${fmt(Math.round(next))} + closeout reserve ${fmt(Math.round(reserve))} ` +
+        `would cross stop ${fmt(budget.stop)} (target ${fmt(budget.target)}).`);
+    }
   }
   const est = Number(budget.calls_estimate) || 0;
   const ratio = Number(budget.call_ratio) || DEFAULT_CALL_RATIO;
