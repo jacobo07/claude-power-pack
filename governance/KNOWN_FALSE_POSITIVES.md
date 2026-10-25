@@ -188,3 +188,8 @@ always bounded to ≤2 minutes).
 
 ## agent-solo-guard: cross-pane block (2026-10-05, TOK-18 Gen3 T2)
 The guard's tracker (~/.claude/state/agent-solo-tracker.json) is estate-wide, so an Agent dispatched by ANOTHER pane within ~30 s blocks this pane's solo Agent call (observed twice: another pane's Explore 'READ-ONLY reality scan of the InfinityOps Sidecar'). The rule it enforces is per-message. Do not delete another session's tracker; do one useful non-Agent call, then dispatch again.
+
+## FP-GOAL-STATE-WORD-IN-SHELL-TEXT -- bound-session guard refuses a shell call that only QUOTES goal-budget (2026-10-25, ce-lifecycle-v3 WU-PKT)
+- **What it really is:** `hooks/session_budget_guard.js:227` `GOAL_STATE = /goal-budget|goal-binding|session-budget-|.../` is tested against a shell command's TEXT (+ file_path/path), not against what the call does. A bound worker that writes files through a heredoc whose prose names those state dirs (any CE/goal-economics packet does) is refused as if it touched the ledger. Write/Edit content is not scanned.
+- **Symptom:** a bound worker stops with `GOAL BUDGET (<goal>) -- a call that touches goal-budget state is not admitted from a bound session` before writing anything; partial receipt shows 0 commits. m-48d90b5a48de lost 535,948 tokens this way.
+- **Response:** the fence is correct; do not loosen it. In packets for bound workers, require file creation via Write/Edit only and running scripts by path. Recover a drafted heredoc from the worker transcript into a file and re-arm a residual (WU-PKT-r1, a109cce3).
