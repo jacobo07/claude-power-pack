@@ -140,7 +140,11 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         return None                       # the canonical receipt is the worker's own close: untouched
     # a receipt that exists but closes nothing (no Status, PARTIAL, stub) is not a close: steward it (APR-1, K5)
     g0 = rec.get("goal")
-    goal = (g0 if isinstance(g0, str) and g0 else None) or spend_goal_for(rec.get("cwd"), index)
+    # a chain-armed mission names its goal (goal.ce_goal / goal.workstream); the goal's roots need not cover the cwd
+    # (gsdx-factory-2 H012 2026-10-25). Only a name that IS a declared goal counts; the cwd binding stays the fallback.
+    named = [g0.get(k) for k in ("ce_goal", "workstream")] if isinstance(g0, dict) else []
+    goal = (g0 if isinstance(g0, str) and g0 else None) or next((g for g in named if isinstance(g, str) and g in index),
+                                                               None) or spend_goal_for(rec.get("cwd"), index)
     if not goal:
         row.update(action="UNKNOWN", reason="no spend goal is bound to this mission's cwd: nothing settled")
         return row
