@@ -1,0 +1,16 @@
+{
+    "goal": "gsdx-factory-2",
+    "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+    "envelope": 26500000,
+    "max_residuals": 1,
+    "units": [
+        {
+            "id": "H012",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-H012.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\route-H012.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-H012-receipt.md",
+            "after": null,
+            "accept": ["DONE", "DONE_WITH_LIMITS"]
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+{
+  "unit": "gsdx-f2-h012",
+  "envelope": {
+    "target": 4600000,
+    "warn": 6200000,
+    "stop": 7600000,
+    "calls": 31
+  },
+  "workers": [
+    {
+      "name": "f2-hardening",
+      "profile": "top",
+      "calls": 31,
+      "packet": 7000
+    }
+  ]
+}
