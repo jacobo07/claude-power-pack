@@ -612,6 +612,96 @@ def gate_report(res: dict):
     check("V-S7-REPORT-MD", res["pin"]["sha256"] in md and "UNMEASURED (apart)" in md and "Time (three separate numbers)" in md)
 
 
+# ----------------------------------------------------------------------------------------- FC-06 + mutants (07-02 task 1)
+MUT_RESULTS: list[dict] = []
+
+
+def _digests(res: dict) -> dict:
+    return {i["id"]: i["effect_digest"] for i in res["incidents"] + res["seeded"]}
+
+
+def gate_fc06(res: dict):
+    st = res["fc06"]["selftest"]
+    tab = res["fc06"]["table"]
+    for gate, name in (("V-S7-FC06-CAPITAL", "capital_ceiling"), ("V-S7-FC06-DIGEST", "packet_digest"),
+                       ("V-S7-FC06-DONE-PROOF", "done_proof"), ("V-S7-FC06-PROTECTIONS", "protections")):
+        measured = tab[name]["host"]["clear"] + tab[name]["seeded"]["clear"]
+        fired = [m["name"] for m in MUT_RESULTS if any(
+            b["assertion"] == name for b in m.get("breach_list", []))]
+        check(gate, st[name]["breach_fires"] and st[name]["clean_quiet"] and measured > 0 and fired,
+              f"selftest={st[name]} measured_clear={measured} breach_under_mutants={fired}")
+    check("V-S7-FC06-CHALLENGER-CLEAN", res["fc06"]["challenger_breaches"] == 0,
+          f"challenger breaches={res['fc06']['challenger_breaches']}")
+    good = dict(res)
+    bad = dict(res, fc06=dict(res["fc06"], challenger_breaches=1,
+                              host_breaches=[{"assertion": "capital_ceiling", "detail": "x"}], seeded_breaches=[]))
+    rc_good, _ = fr.run_status(good, [])
+    rc_bad, msgs = fr.run_status(bad, [])
+    unc = fr.run_status(good, [{"name": "m", "harness_defect": False, "caught": False}])[0]
+    dfc = fr.run_status(good, [{"name": "m", "harness_defect": True, "caught": False}])[0]
+    check("V-S7-FC06-HARD-FAIL", rc_good == 0 and rc_bad == 3 and unc == 4 and dfc == 4 and msgs,
+          f"clean={rc_good} breach={rc_bad} uncaught={unc} defect={dfc} (breach exits nonzero whatever the verdict totals)")
+
+
+def _scoped_targets():
+    return [(m, a, getattr(__import__(m, fromlist=["x"]), a)) for mu in fr.MUTANTS.values() for m, a, _ in mu["targets"]]
+
+
+def gate_mutants(res: dict):
+    src_before = sha(SRC)
+    before = _scoped_targets()
+    MUT_RESULTS.clear()
+    for name in fr.MUTANTS:
+        with fr.mutant_scope(name):
+            r = fr.replay(PIN)
+        m = fr.compare_mutant(name, res, r)
+        m["stub_calls"] = dict(fr.MUTANT_CALLS)
+        m["breach_list"] = [b for i in r["incidents"] + r["seeded"] for b in i["fc06"]["breaches"]]
+        MUT_RESULTS.append(m)
+    by = {m["name"]: m for m in MUT_RESULTS}
+    for gate, name in (("V-S7-MUTANT-ALWAYS-ADMIT", "always-admit"), ("V-S7-MUTANT-NEVER-ROTATE", "never-rotate"),
+                       ("V-S7-MUTANT-ALWAYS-RENEW", "always-renew"),
+                       ("V-S7-MUTANT-TERMINAL-NO-PROOF", "terminal-without-proof"),
+                       ("V-S7-MUTANT-DROP-CLASS", "drop-blocker-class"),
+                       ("V-S7-MUTANT-EXPAND-AUTHORITY", "expand-authority")):
+        m = by[name]
+        check(gate, m["caught"] and not m["harness_defect"],
+              f"caught_by={m['caught_by']} differing host={m['differing_host']} seeded={m['differing_seeded']} "
+              f"fc06={m['fc06_breaches']} vs challenger {m['fc06_breaches_challenger']}")
+    # identical replay is a named defect, never a pass: a stub that IS the original changes nothing
+    fr.MUTANTS["noop-control"] = {"intent": "control", "targets": [("receipt_judge", "is_done", fr._originals()["is_done"])]}
+    try:
+        with fr.mutant_scope("noop-control"):
+            r = fr.replay(PIN)
+        nm = fr.compare_mutant("noop-control", res, r)
+    finally:
+        fr.MUTANTS.pop("noop-control", None)
+    check("V-S7-MUTANT-IDENTICAL-IS-DEFECT", nm["harness_defect"] and not nm["caught"] and nm["caught_by"] == "none"
+          and fr.run_status(res, [nm])[0] == 4 and all(not m["harness_defect"] for m in MUT_RESULTS),
+          f"noop mutant defect={nm['harness_defect']} real mutants defect-free")
+    after = _scoped_targets()
+    check("V-S7-MUTANT-SCOPE-RESTORED", all(a[2] is b[2] for a, b in zip(before, after)),
+          f"{len(after)} patched names restored to the identical objects")
+    check("V-S7-MUTANT-NO-SOURCE-EDIT", src_before == sha(SRC), f"flow_replay.py sha256 {src_before[:12]} unchanged")
+    check("V-S7-MUTANT-STUB-CALLED", all(sum(m["stub_calls"].values()) > 0 for m in MUT_RESULTS)
+          and all(v > 0 for m in MUT_RESULTS for v in m["stub_calls"].values()),
+          {m["name"]: sum(m["stub_calls"].values()) for m in MUT_RESULTS})
+
+
+def gate_seeded_apart(res: dict):
+    ids = {i["id"] for i in res["incidents"]}
+    sd = res["seeded"]
+    check("V-S7-SEEDED-APART",
+          sd and all(s["constructed"] and s["section"] == "seeded" for s in sd)
+          and not ids & {s["id"] for s in sd}
+          and sum(res["counts_by_verdict"].values()) == len(res["incidents"])
+          and all("verdict" not in s for s in sd),
+          f"{len(sd)} seeded scenarios, none in the {len(ids)} host incidents or the verdict totals")
+    again = fr.replay(PIN)
+    check("V-S7-NO-REDEFINE-AFTER-MUTANTS", _digests(again) == _digests(res),
+          "a replay after every mutant ran is digest-identical to the one before: nothing leaked")
+
+
 def main() -> int:
     global res_main
     gate_pin()
@@ -630,6 +720,9 @@ def main() -> int:
     gate_idle(res_main)
     gate_s8()
     gate_report(res_main)
+    gate_mutants(res_main)
+    gate_fc06(res_main)
+    gate_seeded_apart(res_main)
     n = len(RESULTS)
     p = sum(1 for _, ok, _ in RESULTS if ok)
     print(f"S7_PASS={p}/{n}  threshold={n}/{n}")

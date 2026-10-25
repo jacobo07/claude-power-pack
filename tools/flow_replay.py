@@ -548,7 +548,10 @@ def s6_incidents(rows: list[dict]) -> list[dict]:
         he = {"typed": comp is not None, "class": klass, "owner_required": comp and comp["owner_required"],
               "independent_work": comp and comp["independent_work"], "rule": comp and comp["rule"], "count": None,
               "stops": True, "stop_ts": t, "stop_reason": klass if klass and klass != bc.UNKNOWN else None}
-        out.append(_row_incident(base, verdict(ce, he), hold=is_hold))
+        out.append(_row_incident(base, verdict(ce, he), hold=is_hold,
+                                 fc06_inputs={"resolved": [{"text": str(r.get("reason") or ""),
+                                                            "owner_required": bool(comp and comp["owner_required"])}]}
+                                 if comp else None))
     return out
 
 
@@ -626,7 +629,7 @@ def s4_judge(rows: list[dict], idx: int) -> dict:
         return {"class": klass, "unmeasured": "replay_unfaithful", "rebuilt": {a: bool(res[a].get("trip")) for a in res}}
     return {"class": klass, "authority": bool(auth), "champion_trip": trip["champion"],
             "challenger_trip": trip["challenger"], "assumption": assumption, "ts": t,
-            "level": res["champion"].get("level")}
+            "level": res["champion"].get("level"), "spent": int(spent), "auth": int(auth) if auth else None}
 
 
 def s4_incidents(rows: list[dict]) -> list[dict]:
@@ -653,7 +656,11 @@ def s4_incidents(rows: list[dict]) -> list[dict]:
         he = {"count": len(he_trips), "stops": bool(he_trips), "stop_ts": he_trips[0]["ts"] if he_trips else None,
               "stop_reason": f"cost breaker: {klass}" if he_trips else None}
         assume = next((j["assumption"] for j in ok if j.get("assumption")), None)
-        out.append(_row_incident(base, verdict(ce, he, assumption=assume)))
+        grants = [{"kind": "spend", "amount": j["spent"], "granted": not j["challenger_trip"], "ceiling": j["auth"]}
+                  for j in ok if j.get("auth")]
+        out.append(_row_incident(base, verdict(ce, he, assumption=assume),
+                                 fc06_inputs={"capital": {"authority": None, "topups": [], "grants": grants}}
+                                 if grants else None))
     return out
 
 
@@ -714,11 +721,17 @@ def s5_incidents(rows: list[dict], records: dict, drift: dict, now: float) -> tu
     for p in rep["per_mission"]:
         base = {"slice": "S5", "kind": "terminal_reconcile", "mission_id": p["id"], "first_ts": None, "last_ts": None,
                 "rows": 1, "seam": "mission_reconcile.reconcile/dispose"}
+        done_in = None
+        if p["outcome"] == mrc.RECOVERED_DONE:    # a DONE claim is checked against the receipt the resolver named
+            rec_ = records.get(p["id"]) or {}
+            pkt = (rec_.get("wu_packet") or {}).get("path")
+            done_in = {"done": [{"path": gm.resolve_receipt(pkt, rec_)["path"], "claimed": True}]} if pkt else None
         ce = {"count": None, "classified": False, "stops": False, "stop_ts": None, "stop_reason": None}
         he = {"count": None, "classified": True, "outcome": p["outcome"], "stops": False, "stop_ts": None,
               "stop_reason": None, **{b: p[b] for b in mrc.BUCKETS}}
         out.append(_row_incident(base, verdict(ce, he, assumption="the annotation (CPP_TERMINAL_RECONCILE) changes no "
-                                                                  "launch decision; reconcile has no switch of its own")))
+                                                                  "launch decision; reconcile has no switch of its own"),
+                                 fc06_inputs=done_in))
     for u in rep["unmeasured"]:
         out.append(_row_incident({"slice": "S5", "kind": "terminal_reconcile", "mission_id": u["id"], "first_ts": None,
                                   "last_ts": None, "rows": 1, "seam": "mission_reconcile.dispose"},
@@ -808,6 +821,486 @@ def unmapped_incidents(rows: list[dict], loops: list[dict]) -> list[dict]:
     return out
 
 
+# ---------------------------------------------------------------------------------------------------- FC-06 + mutants
+# The REAL decision functions, captured once before any mutant is installed. The FC-06 assertions judge with these, never
+# with whatever a mutant has put in the module namespace, so a mutant cannot grade itself.
+_ORIG: dict | None = None
+
+
+def _originals() -> dict:
+    global _ORIG
+    if _ORIG is None:
+        with sandbox():
+            gm = _mods()
+            import receipt_judge as rj
+            import blocker_compiler as bc
+            import mission_spend as ms
+            root = str(TOOLS.parent)
+            if root not in sys.path:
+                sys.path.insert(0, root)
+            from modules.autonomy_gate import gate
+            _ORIG = {"arm_preflight": gm.arm_preflight, "_packet_digest_matches": gm._packet_digest_matches,
+                     "apply_rotation_invariant": gm.apply_rotation_invariant, "renewal_refusal": gm.renewal_refusal,
+                     "is_done": rj.is_done, "compile_blocker": bc.compile_blocker, "judge": ms.judge,
+                     "classify": gate.classify, "PROTECTED": bc.PROTECTED, "UNKNOWN": bc.UNKNOWN}
+    return _ORIG
+
+
+ASSERTIONS = ("capital_ceiling", "packet_digest", "done_proof", "protections")
+
+
+def _na() -> dict:
+    return {"status": "not_applicable", "breaches": [], "checked": 0}
+
+
+def _result(name: str, checked: int, breaches: list) -> dict:
+    return {"status": "breach" if breaches else "clear", "breaches": [{"assertion": name, **b} for b in breaches],
+            "checked": checked}
+
+
+def _chk_capital(inp: dict) -> dict:
+    """No spend, lease or renewal grant beyond the recorded authority plus recorded top-ups. No recorded authority means
+    there is no ceiling to breach: not_applicable, never a pass."""
+    c = (inp or {}).get("capital")
+    if not c:
+        return _na()
+    base = None if c.get("authority") is None else int(c["authority"]) + sum(int(x) for x in c.get("topups") or [])
+    checked, bad = 0, []
+    for g in c.get("grants") or []:
+        ceiling = g.get("ceiling", base)
+        if ceiling is None:
+            continue
+        checked += 1
+        if g.get("granted") and int(g["amount"]) > int(ceiling):
+            bad.append({"detail": f"{g.get('kind')} granted {g['amount']} above the ceiling {ceiling}"})
+    return _result("capital_ceiling", checked, bad) if checked else _na()
+
+
+def _chk_digest(inp: dict) -> dict:
+    """A packet is never admitted against a different digest: judged by the REAL _packet_digest_matches."""
+    ds = (inp or {}).get("digests") or []
+    if not ds:
+        return _na()
+    real = _originals()["_packet_digest_matches"]
+    bad = [{"detail": f"admitted {d.get('path')} but its bytes do not match the stored digest"}
+           for d in ds if d.get("admitted") and not real(d.get("stored"), d.get("path"))]
+    return _result("packet_digest", len(ds), bad)
+
+
+def _chk_done(inp: dict) -> dict:
+    """DONE only with receipt_judge.is_done on the same receipt: judged by the REAL is_done."""
+    ds = (inp or {}).get("done") or []
+    if not ds:
+        return _na()
+    real = _originals()["is_done"]
+    bad = [{"detail": f"DONE claimed on {d.get('path')} but receipt_judge.is_done is false"}
+           for d in ds if d.get("claimed") and not real(d.get("path"))]
+    return _result("done_proof", len(ds), bad)
+
+
+def _chk_protect(inp: dict) -> dict:
+    """An item resolved without the Owner that the REAL autonomy gate classes Owner, or that blocker_compiler.PROTECTED
+    matches (capital, authority, branch protection, force-push), is a weakened protection."""
+    rs = (inp or {}).get("resolved") or []
+    if not rs:
+        return _na()
+    o = _originals()
+    bad = []
+    for it in rs:
+        if it.get("owner_required"):
+            continue
+        text = str(it.get("text") or "")
+        gate_owner = (o["classify"](text, authorized=()) or {}).get("owner") == "OWNER"
+        if gate_owner or o["PROTECTED"].search(text):
+            bad.append({"detail": f"resolved without the Owner: {text[:120]}",
+                        "by": "autonomy_gate" if gate_owner else "PROTECTED"})
+    return _result("protections", len(rs), bad)
+
+
+def fc06_status(inputs: dict | None) -> dict:
+    """{assertion: {status: clear|breach|not_applicable, breaches, checked}} for one scenario's inputs."""
+    return {"capital_ceiling": _chk_capital(inputs or {}), "packet_digest": _chk_digest(inputs or {}),
+            "done_proof": _chk_done(inputs or {}), "protections": _chk_protect(inputs or {})}
+
+
+def fc06(scenario_result: dict) -> list[dict]:
+    """The named breaches of one scenario result (empty = none). A scenario with no inputs has none to find."""
+    st = fc06_status((scenario_result or {}).get("fc06_inputs"))
+    return [b for a in ASSERTIONS for b in st[a]["breaches"]]
+
+
+def attach_fc06(inc: dict) -> dict:
+    inputs = inc.get("fc06_inputs")
+    st = fc06_status(inputs)
+    inc["fc06"] = {"status": {a: st[a]["status"] for a in ASSERTIONS}, "breaches": [b for a in ASSERTIONS for b in st[a]["breaches"]]}
+    return inc
+
+
+# --- the controls: each assertion fires on a seeded breach and stays quiet on a clean control built the same way
+def fc06_selftest() -> dict:
+    """{assertion: {breach_fires, clean_quiet}} using real files for the digest and receipt checks."""
+    out = {}
+    out["capital_ceiling"] = _selftest_pair(
+        {"capital": {"authority": 1000, "topups": [500], "grants": [{"kind": "spend", "amount": 1501, "granted": True}]}},
+        {"capital": {"authority": 1000, "topups": [500], "grants": [{"kind": "spend", "amount": 1500, "granted": True}]}},
+        "capital_ceiling")
+    d = Path(tempfile.mkdtemp(prefix="flow-fc06-"))
+    try:
+        pkt = d / "packet.md"
+        pkt.write_text("packet one\n", encoding="utf-8")
+        stored = hashlib.sha256(b"packet one\n").hexdigest()
+        out["packet_digest"] = _selftest_pair(
+            {"digests": [{"stored": "0" * 64, "path": str(pkt), "admitted": True}]},
+            {"digests": [{"stored": stored, "path": str(pkt), "admitted": True}]}, "packet_digest")
+        rj_real = _originals()["is_done"]
+        bad_r, good_r = d / "stub.md", d / "done.md"
+        bad_r.write_text("# Receipt\nStatus: IN PROGRESS\n", encoding="utf-8")
+        good_r.write_text("# Receipt\nStatus: DONE\n", encoding="utf-8")
+        assert rj_real(bad_r) is False and rj_real(good_r) is True, "receipt fixtures do not read as intended"
+        out["done_proof"] = _selftest_pair({"done": [{"path": str(bad_r), "claimed": True}]},
+                                           {"done": [{"path": str(good_r), "claimed": True}]}, "done_proof")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    out["protections"] = _selftest_pair(
+        {"resolved": [{"text": "do not force-push the protected branch", "owner_required": False}]},
+        {"resolved": [{"text": "rename the local helper variable", "owner_required": False}]}, "protections")
+    return out
+
+
+def _selftest_pair(breach_in: dict, clean_in: dict, name: str) -> dict:
+    b, c = fc06_status(breach_in)[name], fc06_status(clean_in)[name]
+    return {"breach_fires": b["status"] == "breach" and bool(b["breaches"]),
+            "clean_quiet": c["status"] == "clear" and not c["breaches"]}
+
+
+# --- seeded scenarios: constructed inputs for one real seam each, never host evidence
+def _seed_rotation(root, arm):
+    gm = _mods()
+    res = gm.apply_rotation_invariant({"mission_id": "m-seed", "autocompact": "600k", "continue_max_tokens": 590000})
+    inv = res.get("rotation_invariant") or {}
+    return {"effect": {"repaired": inv.get("repaired") or {}, "continue_max_tokens": res.get("continue_max_tokens"),
+                       "has_marker": "rotation_invariant" in res}}
+
+
+def _seed_arm(outcome: str, reason: str):
+    def run(root, arm):
+        res = _mods().arm_preflight(str(root), "/gsd-autonomous", launch=False,
+                                    status_reader=lambda c, w: {"outcome": outcome, "reason": reason})
+        return {"effect": {"ok": res["ok"], "refusal": res["refusal"]}}
+    return run
+
+
+def _seed_renewal(rec: dict, halt: str, gsd: str, spent: int):
+    def run(root, arm):
+        why = _mods().renewal_refusal(dict(rec), halt, gsd)
+        auth = rec.get("authority_tokens")
+        return {"effect": {"refusal": why},
+                "fc06_inputs": {"capital": {"authority": auth, "topups": [],
+                                            "grants": [{"kind": "renewal", "amount": spent, "granted": why is None}]}}}
+    return run
+
+
+def _seed_spend(rec: dict, spent: int, fp=None):
+    def run(root, arm):
+        import mission_spend as ms
+        res = ms.judge(dict(rec), spent, fp)
+        auth = rec.get("authority_tokens")
+        return {"effect": {"trip": bool(res.get("trip")), "level": res.get("level")},
+                "fc06_inputs": {"capital": {"authority": auth, "topups": [],
+                                            "grants": [{"kind": "spend", "amount": spent, "granted": not res.get("trip")}]}}}
+    return run
+
+
+def _seed_digest(match: bool):
+    def run(root, arm):
+        pkt = root / "packet.md"
+        pkt.write_bytes(b"packet body\n")
+        stored = hashlib.sha256(b"packet body\n" if match else b"another packet body\n").hexdigest()
+        admitted = _mods()._packet_digest_matches(stored, str(pkt))
+        return {"effect": {"admitted": bool(admitted)},
+                "fc06_inputs": {"digests": [{"stored": stored, "path": str(pkt), "admitted": bool(admitted)}]}}
+    return run
+
+
+def _seed_receipt(done: bool):
+    def run(root, arm):
+        rcp = root / "receipt.md"
+        rcp.write_text("# Receipt\nStatus: " + ("DONE" if done else "IN PROGRESS") + "\n", encoding="utf-8")
+        truth = _originals()["is_done"](rcp)
+        if truth is not done:                              # the S5 fixture incident: read is_done BEFORE trusting a fixture
+            raise AssertionError(f"seed receipt reads is_done={truth}, intended {done}")
+        claimed = _mods().receipt_complete(rcp)
+        return {"effect": {"done_claimed": bool(claimed)},
+                "fc06_inputs": {"done": [{"path": str(rcp), "claimed": bool(claimed)}]}}
+    return run
+
+
+def _seed_blocker(reason: str):
+    def run(root, arm):
+        import blocker_compiler as bc
+        comp = bc.compile_blocker(reason, cwd=None)
+        return {"effect": {"class": comp["class"], "owner_required": comp["owner_required"], "rule": comp["rule"]},
+                "fc06_inputs": {"resolved": [{"text": reason, "owner_required": bool(comp["owner_required"])}]}}
+    return run
+
+
+_REN = {"mission_id": "m-seed", "epoch": 2, "renewal": 0, "token_estimate": 5_000_000, "authority_tokens": 9_000_000}
+SEEDED = {
+    "rotation_over_line": ("S1", "gsd_mission.apply_rotation_invariant", _seed_rotation),
+    "arm_no_phases": ("S2", "gsd_mission.arm_preflight", _seed_arm("NO_PHASES", "GSD parses 0 phases from ROADMAP.md")),
+    "arm_phases_remain": ("S2", "gsd_mission.arm_preflight", _seed_arm("OK", "phases remain")),
+    "renewal_clean": ("renewal", "gsd_mission.renewal_refusal",
+                      _seed_renewal(_REN, "budget: tokens", "OK", 4_000_000)),
+    "renewal_cap_reached": ("renewal", "gsd_mission.renewal_refusal",
+                            _seed_renewal({**_REN, "renewal": 3}, "budget: tokens", "OK", 4_000_000)),
+    "renewal_authority_exhausted": ("renewal", "gsd_mission.renewal_refusal", _seed_renewal(
+        {**_REN, "owner_hold": {"reason": "cost breaker (mission authority): processed 9,100,000 >= authority 9,000,000"}},
+        "budget: tokens", "OK", 9_100_000)),
+    "renewal_owner_hold": ("renewal", "gsd_mission.renewal_refusal", _seed_renewal(
+        {**_REN, "owner_hold": {"reason": "owner park"}}, "budget: tokens", "OK", 4_000_000)),
+    "renewal_never_launched": ("renewal", "gsd_mission.renewal_refusal",
+                               _seed_renewal({**_REN, "epoch": 0}, "budget: tokens", "OK", 4_000_000)),
+    "spend_within_authority": ("S4", "mission_spend.judge", _seed_spend(
+        {"mission_id": "m-seed", "token_estimate": 600000, "authority_tokens": 1_000_000}, 300_000)),
+    "spend_over_authority": ("S4", "mission_spend.judge", _seed_spend(
+        {"mission_id": "m-seed", "token_estimate": 100000, "authority_tokens": 1_000_000}, 1_200_000)),
+    "spend_no_authority": ("S4", "mission_spend.judge", _seed_spend(
+        {"mission_id": "m-seed", "token_estimate": 100000, "token_estimate_src": "auto"}, 500_000)),
+    "packet_digest_mismatch": ("admission", "gsd_mission._packet_digest_matches", _seed_digest(False)),
+    "packet_digest_match": ("admission", "gsd_mission._packet_digest_matches", _seed_digest(True)),
+    "receipt_not_done": ("S5", "gsd_mission.receipt_complete -> receipt_judge.is_done", _seed_receipt(False)),
+    "receipt_done": ("S5", "gsd_mission.receipt_complete -> receipt_judge.is_done", _seed_receipt(True)),
+    "blocker_capital": ("S6", "blocker_compiler.compile_blocker", _seed_blocker(
+        "capital ceiling exhausted: the Owner must approve a top-up before work continues")),
+    "blocker_force_push": ("S6", "blocker_compiler.compile_blocker", _seed_blocker(
+        "needs a force-push of the rebased main branch")),
+    "blocker_branch_protection": ("S6", "blocker_compiler.compile_blocker", _seed_blocker(
+        "needs the branch protection on main relaxed so the merge can land")),
+    "blocker_ordinary": ("S6", "blocker_compiler.compile_blocker", _seed_blocker(
+        "rename the local helper variable in the scratch file")),
+}
+
+
+def _scrub(inputs):
+    """Seeded inputs name temp files; the report keeps only the file's basename so two replays are byte-identical."""
+    if not inputs:
+        return inputs
+    out = json.loads(json.dumps(inputs, default=str))
+    for k in ("digests", "done"):
+        for d in out.get(k) or []:
+            if d.get("path"):
+                d["path"] = Path(d["path"]).name
+    return out
+
+
+def run_seeded() -> list[dict]:
+    """Every seeded scenario through the real seams under both policies. Reported apart; never counted as host evidence."""
+    _originals()
+    out = []
+    for name in sorted(SEEDED):
+        slice_, seam, fn = SEEDED[name]
+        eff, inputs = {}, None
+        for arm in ("champion", "challenger"):
+            with sandbox() as root, policy_scope(arm):
+                try:
+                    r = fn(root, arm)
+                    eff[arm] = r["effect"]
+                    if arm == "challenger":
+                        inputs = r.get("fc06_inputs")
+                        st = fc06_status(inputs)          # judged inside the sandbox: files the check reads still exist
+                except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
+                    eff[arm] = {"error": f"{type(exc).__name__}: {str(exc)[:120]}"}
+                    st = fc06_status(None)
+        out.append({"id": "seed:" + name, "section": "seeded", "constructed": True, "slice": slice_, "seam": seam,
+                    "champion": eff["champion"], "challenger": eff["challenger"], "fc06_inputs": _scrub(inputs),
+                    "fc06": {"status": {a: st[a]["status"] for a in ASSERTIONS},
+                             "breaches": [b for a in ASSERTIONS for b in st[a]["breaches"]]},
+                    "effect_digest": effect_digest(eff["champion"], eff["challenger"])})
+    return out
+
+
+# --- policy mutants (D-05): attribute patches on the real modules, restored in a finally block
+MUTANT_CALLS: dict[str, int] = {}
+
+
+def _called(name: str) -> None:
+    MUTANT_CALLS[name] = MUTANT_CALLS.get(name, 0) + 1
+
+
+def mutant_admit_arm_preflight(cwd, resume_command, *, workstream=None, launch=True, status_reader=None,
+                               memory_reader=None, **kw):
+    _called("mutant_admit_arm_preflight")
+    return {"ok": True, "checks": [{"check": "gsd_status", "status": "ok", "why": "mutant"}], "refusal": None}
+
+
+def mutant_admit_packet_digest(stored, path):
+    _called("mutant_admit_packet_digest")
+    return True
+
+
+def mutant_keep_rotation_invariant(rec):
+    _called("mutant_keep_rotation_invariant")
+    return rec
+
+
+def mutant_renew_refusal(rec, halt_reason, gsd_outcome):
+    _called("mutant_renew_refusal")
+    return None
+
+
+def mutant_proofless_is_done(path):
+    _called("mutant_proofless_is_done")
+    return True
+
+
+def mutant_classless_compile_blocker(*a, **k):
+    _called("mutant_classless_compile_blocker")
+    out = dict(_originals()["compile_blocker"](*a, **k))
+    out["class"], out["owner_required"] = None, False
+    return out
+
+
+def mutant_never_trip_judge(rec, spent, fp, as_of=None, now=None):
+    _called("mutant_never_trip_judge")
+    return {"trip": None, "mark": None}
+
+
+def mutant_never_owner_classify(question, *, authorized=()):
+    _called("mutant_never_owner_classify")
+    return {"owner": "AGENT", "category": "self-answerable", "reversibility": None, "why": "mutant"}
+
+
+MUTANTS = {
+    "always-admit": {"intent": "arm_preflight refuses nothing and every packet digest matches",
+                     "targets": [("gsd_mission", "arm_preflight", mutant_admit_arm_preflight),
+                                 ("gsd_mission", "_packet_digest_matches", mutant_admit_packet_digest)]},
+    "never-rotate": {"intent": "apply_rotation_invariant returns its record unchanged",
+                     "targets": [("gsd_mission", "apply_rotation_invariant", mutant_keep_rotation_invariant)]},
+    "always-renew": {"intent": "renewal_refusal returns None for every halt",
+                     "targets": [("gsd_mission", "renewal_refusal", mutant_renew_refusal)]},
+    "terminal-without-proof": {"intent": "receipt_judge.is_done is true for every path",
+                               "targets": [("receipt_judge", "is_done", mutant_proofless_is_done)]},
+    "drop-blocker-class": {"intent": "compile_blocker returns no class and owner_required false",
+                           "targets": [("blocker_compiler", "compile_blocker", mutant_classless_compile_blocker)]},
+    "expand-authority": {"intent": "mission_spend.judge never trips and the autonomy gate never answers Owner",
+                         "targets": [("mission_spend", "judge", mutant_never_trip_judge),
+                                     ("modules.autonomy_gate.gate", "classify", mutant_never_owner_classify)]},
+}
+
+
+def _module(name: str):
+    import importlib
+    root = str(TOOLS.parent)
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    return importlib.import_module(name)
+
+
+@contextlib.contextmanager
+def mutant_scope(name: str):
+    """Install the named mutant's stubs on the real modules for the block and put the original objects back in a finally."""
+    if name not in MUTANTS:
+        raise ValueError(f"unknown mutant {name!r}")
+    _originals()                                        # snapshot BEFORE any patch
+    MUTANT_CALLS.clear()
+    saved = []
+    try:
+        with sandbox():
+            _mods()
+        for modname, attr, stub in MUTANTS[name]["targets"]:
+            mod = _module(modname)
+            saved.append((mod, attr, getattr(mod, attr)))
+            setattr(mod, attr, stub)
+        yield
+    finally:
+        for mod, attr, prev in reversed(saved):
+            setattr(mod, attr, prev)
+
+
+def renewal_scenarios(res: dict) -> list[dict]:
+    """Renewal-axis items as comparable scenarios (labelled sensitivity, outside the S2-S6 totals)."""
+    out = []
+    for it in res["renewal_axis"]["items"]:
+        eff = {k: it.get(k) for k in ("unmeasured", "gsd_outcome", "refusal_unset", "refusal_off")}
+        out.append({"id": "renewal:" + _short(it["mission_id"], it["halt_ts"]), "effect_digest": effect_digest(eff, eff),
+                    "fc06": {"breaches": []}})
+    return out
+
+
+def _scenario_view(res: dict) -> dict:
+    host = {i["id"]: i["effect_digest"] for i in res["incidents"]}
+    host.update({s["id"]: s["effect_digest"] for s in renewal_scenarios(res)})
+    seeded = {s["id"]: s["effect_digest"] for s in res["seeded"]}
+    hb = sum(len(i["fc06"]["breaches"]) for i in res["incidents"])
+    sb = sum(len(s["fc06"]["breaches"]) for s in res["seeded"])
+    return {"host": host, "seeded": seeded, "host_breaches": hb, "seeded_breaches": sb}
+
+
+def compare_mutant(name: str, base: dict, mut: dict) -> dict:
+    """Caught = the set of (scenario, effect digest) differs from the challenger's, or FC-06 breaches exceed its count.
+    Identical on every scenario with no extra breach = HARNESS_DEFECT, never a pass."""
+    b, m = _scenario_view(base), _scenario_view(mut)
+    diff_host = sorted(k for k in set(b["host"]) | set(m["host"]) if b["host"].get(k) != m["host"].get(k))
+    diff_seed = sorted(k for k in set(b["seeded"]) | set(m["seeded"]) if b["seeded"].get(k) != m["seeded"].get(k))
+    more_host, more_seed = m["host_breaches"] > b["host_breaches"], m["seeded_breaches"] > b["seeded_breaches"]
+    by_host, by_seed = bool(diff_host) or more_host, bool(diff_seed) or more_seed
+    caught = by_host or by_seed
+    return {"name": name, "intent": MUTANTS[name]["intent"], "caught": caught,
+            "caught_by": "both" if by_host and by_seed else "host" if by_host else "seeded" if by_seed else "none",
+            "differing_scenarios": diff_host + diff_seed, "differing_host": len(diff_host),
+            "differing_seeded": len(diff_seed),
+            "fc06_breaches": m["host_breaches"] + m["seeded_breaches"],
+            "fc06_breaches_challenger": b["host_breaches"] + b["seeded_breaches"],
+            "stub_calls": dict(MUTANT_CALLS), "harness_defect": not caught}
+
+
+def run_mutant(name: str, pin_path, base: dict) -> dict:
+    with mutant_scope(name):
+        mut = replay(pin_path)
+        calls = dict(MUTANT_CALLS)
+    out = compare_mutant(name, base, mut)
+    out["stub_calls"] = calls
+    return out
+
+
+def run_mutants(pin_path, base: dict) -> list[dict]:
+    return [run_mutant(n, pin_path, base) for n in MUTANTS]
+
+
+def fc06_summary(res: dict) -> dict:
+    inc_b = [b for i in res["incidents"] for b in i["fc06"]["breaches"]]
+    seed_b = [b for s in res["seeded"] for b in s["fc06"]["breaches"]]
+    table = {}
+    for a in ASSERTIONS:
+        row = {}
+        for label, items in (("host", res["incidents"]), ("seeded", res["seeded"])):
+            c = {"breach": 0, "clear": 0, "not_applicable": 0}
+            for i in items:
+                c[i["fc06"]["status"][a]] += 1
+            row[label] = c
+        table[a] = row
+    return {"challenger_breaches": len(inc_b) + len(seed_b), "host_breaches": inc_b, "seeded_breaches": seed_b,
+            "table": table, "selftest": fc06_selftest()}
+
+
+def run_status(res: dict, mutants: list | None) -> tuple[int, list[str]]:
+    """Exit code and lines. FC-06 first: a breach is a hard failure whatever the verdict totals or any speed gain say."""
+    lines, rc = [], 0
+    fc = res["fc06"]
+    if fc["challenger_breaches"]:
+        rc = 3
+        lines.append(f"FC-06 BREACH x{fc['challenger_breaches']}: " + "; ".join(
+            f"{b['assertion']}: {b['detail']}" for b in fc["host_breaches"] + fc["seeded_breaches"]))
+    for m in mutants or []:
+        if m["harness_defect"]:
+            rc = rc or 4
+            lines.append(f"HARNESS_DEFECT: mutant {m['name']} replays identical to the challenger")
+        elif not m["caught"]:
+            rc = rc or 4
+            lines.append(f"MUTANT NOT CAUGHT: {m['name']}")
+    return rc, lines
+
+
 # ---------------------------------------------------------------------------------------------------- replay
 def replay(pin_path: str | Path, command: str | None = None) -> dict:
     pn = load_pin(pin_path)
@@ -831,8 +1324,11 @@ def replay(pin_path: str | Path, command: str | None = None) -> dict:
         renewal = renewal_axis(rows, records, drift)
     incidents += provider_incidents(rows)
     incidents += unmapped_incidents(rows, loops)
+    _originals()
+    seeded = run_seeded()
     for inc in incidents:
         validate_verdict(inc["verdict"])
+        attach_fc06(inc)
         inc["id"] = _short(inc["slice"], inc["kind"], inc["mission_id"], inc["first_ts"], inc.get("trip_class"))
         inc["effect_digest"] = effect_digest(inc["champion"], inc["challenger"])
     incidents.sort(key=lambda i: (i["first_ts"] or "", i["slice"], i["kind"], i["mission_id"] or "", i["id"]))
@@ -841,7 +1337,7 @@ def replay(pin_path: str | Path, command: str | None = None) -> dict:
                 for sl in sorted({i["slice"] for i in incidents})}
     cov = coverage(rows, loops)
     cens = _census_cross_check(rows)
-    return {"schema": SCHEMA,
+    res = {"schema": SCHEMA,
             "command": command or f"python3 tools/flow_replay.py replay --pin {pin_path}",
             "pin": {"path": str(pin_path), "ledger": pn["ledger"], "bytes": pn["bytes"], "rows": pn["rows"],
                     "sha256": pn["sha256"]},
@@ -850,7 +1346,10 @@ def replay(pin_path: str | Path, command: str | None = None) -> dict:
                            "PASS_CAP": PASS_CAP},
             "torn_rows": torn, "record_drift": sorted(drift), "loops_found": len(loops),
             "coverage": cov, "census_cross_check": cens, "incidents": incidents,
-            "counts_by_verdict": counts, "counts_by_slice": by_slice, "s5": s5_rep, "renewal_axis": renewal}
+            "counts_by_verdict": counts, "counts_by_slice": by_slice, "s5": s5_rep, "renewal_axis": renewal,
+            "seeded": seeded}
+    res["fc06"] = fc06_summary(res)
+    return res
 
 
 def _census_cross_check(rows: list[dict]) -> dict:
@@ -1087,7 +1586,8 @@ def validate_tagged(report: dict, path: str = "") -> None:
             raise ValueError(f"untagged numbers at {path + k}")
 
 
-def build_report(res: dict, rows: list[dict], records: dict, generated_at: str | None = None) -> dict:
+def build_report(res: dict, rows: list[dict], records: dict, generated_at: str | None = None,
+                 mutants: list | None = None) -> dict:
     cmd, sha_ = res["command"], res["pin"]["sha256"]
     s2m = {i["mission_id"] for i in res["incidents"] if i["slice"] == "S2" and i["verdict"] != "UNMEASURED"}
     rep = {
@@ -1104,6 +1604,8 @@ def build_report(res: dict, rows: list[dict], records: dict, generated_at: str |
         "incidents": tag(res["incidents"], cmd, sha_),
         "renewal_axis": tag(res["renewal_axis"], cmd, sha_),
         "s5": tag(res["s5"], cmd, sha_),
+        "fc06": tag(res["fc06"], cmd, sha_),
+        "seeded": tag(res["seeded"], cmd, sha_),
         "time": tag(time_accounting(rows, records), cmd, sha_),
         "avoidable_idle": tag(avoidable_idle(rows, s2m), cmd, sha_),
         "s8": tag(s8_sentence(rows), cmd, sha_),
@@ -1112,6 +1614,8 @@ def build_report(res: dict, rows: list[dict], records: dict, generated_at: str |
                      "prior_failures": ["V-AMCR-ONE-RESOLVER-INVENTORY 37/38", "V-MSPEND-HOLD-PLAN-NONE 44/45"]},
                     cmd, sha_),
     }
+    if mutants is not None:
+        rep["mutants"] = tag(mutants, cmd, sha_)
     validate_tagged(rep)
     if generated_at:
         rep["generated_at"] = generated_at
@@ -1138,6 +1642,25 @@ def render_md(rep: dict) -> str:
     for i in g("incidents"):
         out.append(f"| {i['slice']} | {i['kind']} | {i['mission_id']} | {(i['champion'] or {}).get('count')} | "
                    f"{(i['challenger'] or {}).get('count')} | {i['verdict']} | {i['basis']} | {i['delta_s']} |")
+    fc = g("fc06")
+    out += ["", "## FC-06 invariants (challenger, host + seeded)", "",
+            f"Challenger breaches: {fc['challenger_breaches']}", "", "| assertion | host clear/breach/n.a. | seeded clear/breach/n.a. |",
+            "|---|---|---|"]
+    for a_, row in fc["table"].items():
+        h, sd = row["host"], row["seeded"]
+        out.append(f"| {a_} | {h['clear']}/{h['breach']}/{h['not_applicable']} | {sd['clear']}/{sd['breach']}/{sd['not_applicable']} |")
+    out += ["", "Self-test (breach fires, clean control quiet): " + json.dumps(fc["selftest"], sort_keys=True), "",
+            "## Seeded scenarios (CONSTRUCTED; not host evidence; never counted in verdict totals)", "",
+            "| scenario | seam | champion | challenger | FC-06 breaches |", "|---|---|---|---|---|"]
+    for sc in g("seeded"):
+        out.append(f"| {sc['id']} | {sc['seam']} | {json.dumps(sc['champion'], sort_keys=True)} | "
+                   f"{json.dumps(sc['challenger'], sort_keys=True)} | {len(sc['fc06']['breaches'])} |")
+    if "mutants" in rep:
+        out += ["", "## Policy mutants (each must differ from the challenger)", "",
+                "| mutant | caught | by | differing host | differing seeded | FC-06 breaches | stub calls |", "|---|---|---|---|---|---|---|"]
+        for m in g("mutants"):
+            out.append(f"| {m['name']} | {m['caught']} | {m['caught_by']} | {m['differing_host']} | {m['differing_seeded']} | "
+                       f"{m['fc06_breaches']} | {sum(m['stub_calls'].values())} |")
     out += ["", f"Every number above carries command `{cmd}` and pin `{sha_[:12]}`.", ""]
     return "\n".join(out)
 
@@ -1154,10 +1677,12 @@ def main(argv=None) -> int:
     r.add_argument("--pin", required=True)
     r.add_argument("--json")
     r.add_argument("--md")
+    r.add_argument("--mutants", action="store_true")
     q = sub.add_parser("report")
     q.add_argument("--pin", required=True)
     q.add_argument("--json")
     q.add_argument("--md")
+    q.add_argument("--mutants", action="store_true")
     a = ap.parse_args(argv)
     cmd = "python3 tools/flow_replay.py " + " ".join(sys.argv[1:] if argv is None else argv)
     if a.cmd == "pin":
@@ -1169,21 +1694,28 @@ def main(argv=None) -> int:
     except Inconclusive as exc:
         print(f"INCONCLUSIVE: {exc}", file=sys.stderr)
         return 2
+    muts = run_mutants(a.pin, res) if a.mutants else None
+    rc, msgs = run_status(res, muts)
+    for m_ in msgs:
+        print(m_, file=sys.stderr)
     if a.cmd == "report":
         pn = load_pin(a.pin)
         rows, _ = read_prefix(pn)
         records, _ = read_records(pn)
-        rep = build_report(res, rows, records)
+        rep = build_report(res, rows, records, mutants=muts)
         if a.json:
             Path(a.json).write_text(json.dumps(rep, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
         if a.md:
             Path(a.md).write_text(render_md(rep), encoding="utf-8")
         print(f"REPORT pin={res['pin']['sha256'][:12]} incidents={len(res['incidents'])}")
-        return 0
+        return rc
     if a.json:
         Path(a.json).write_text(json.dumps(res, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
     print(f"REPLAY pin={res['pin']['sha256'][:12]} incidents={len(res['incidents'])} counts={res['counts_by_verdict']}")
-    return 0
+    if muts is not None:
+        for m_ in muts:
+            print(f"MUTANT {m_['name']} caught={m_['caught']} by={m_['caught_by']} calls={sum(m_['stub_calls'].values())}")
+    return rc
 
 
 if __name__ == "__main__":
