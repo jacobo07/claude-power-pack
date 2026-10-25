@@ -138,6 +138,8 @@ def worktrees(cwd: str) -> list[dict] | None:
             cur["head"] = line[5:].strip()
         elif line.startswith("branch "):
             cur["branch"] = line[7:].strip().replace("refs/heads/", "")
+        elif line.strip() == "detached":
+            cur["detached"] = True
     return rows
 
 
@@ -172,6 +174,26 @@ def _canon(text: str) -> str:
 def tool_text_since(transcript: Path | None, since: float) -> str | None:
     """Everything the worker put in its own tool inputs since `since`, canonical slashes, lower case.
     None = no transcript (unknown, never "mentions nothing")."""
+    uses = tool_uses_since(transcript, since)
+    return None if uses is None else _canon("\n".join(_flat(b.get("input")) for b in uses))
+
+
+WRITE_TOOLS = ("Write", "Edit", "MultiEdit", "NotebookEdit")
+
+
+def written_paths(uses: list[dict]) -> list[str]:
+    """Files the worker wrote through its own edit tools: write evidence, which a path merely named is not."""
+    out = []
+    for b in uses:
+        inp = b.get("input") if isinstance(b.get("input"), dict) else {}
+        p = inp.get("file_path") or inp.get("notebook_path")
+        if b.get("name") in WRITE_TOOLS and p:
+            out.append(str(p))
+    return out
+
+
+def tool_uses_since(transcript: Path | None, since: float) -> list[dict] | None:
+    """The worker's own tool_use blocks since `since`. None = no transcript."""
     if not transcript or not Path(transcript).is_file():
         return None
     out = []
@@ -194,21 +216,28 @@ def tool_text_since(transcript: Path | None, since: float) -> str | None:
                     continue
                 for b in (row.get("message") or {}).get("content") or []:
                     if isinstance(b, dict) and b.get("type") == "tool_use":
-                        out.append(_flat(b.get("input")))
+                        out.append(b)
     except OSError:
         return None
-    return _canon("\n".join(out))
+    return out
 
 
-def mentions(text: str, root: str) -> bool:
-    """`root` named as a whole path: `.../r8-wt` must not match inside `.../r8-wt2` (measured in V-AMCR-R8)."""
+def mentions(text: str, root: str, lead: str = "") -> bool:
+    """`root` named as a whole path: `.../r8-wt` must not match inside `.../r8-wt2` (measured in V-AMCR-R8).
+    `lead` is a regex that must directly precede the path (see ENTERS)."""
     import re
     forms = {_canon(str(Path(root).resolve())), _canon(root)}
     forms |= {"/" + f[0] + f[2:] for f in list(forms) if len(f) > 2 and f[1] == ":"}   # Git-Bash /c/... form
     for form in forms:
-        if re.search(re.escape(form) + r"(?![\w.-])", text):
+        if re.search(lead + re.escape(form) + r"(?![\w.-])", text):
             return True
     return False
+
+
+# A shell command that works IN a root rather than naming it. The transcript cwd does not follow a shell
+# Set-Location (the V-AMCR-R1 worker commits in its worktree with cwd still on main), so this is write evidence too.
+ENTERS = r"(?:\bcd|\bpushd|\bsl|set-location|push-location|\bgit\s+-c)\s+(?:-(?:literal)?path\s+)?[\"']?"
+SHELL_TOOLS = ("Bash", "PowerShell")
 
 
 def is_agent_worktree(root: str) -> bool:
@@ -249,31 +278,53 @@ def detect_rebind(rec: dict, transcript: Path | None) -> dict | None:
     T1 F4: harness `agent-*` isolation worktrees satisfy both and are excluded. Measured 2026-10-23
     (m-260aa89142c8, 07:59Z): the auto-rebind chose subagent worktree agent-a33215aa. When the worker's own
     last cwd lies in one candidate, that candidate alone is returned.
+    NEVER_AGAIN 2026-10-25 (m-8e496d13dff1, 13:35Z): a single candidate was bound although the worker had only
+    named it -- a detached read-only benchmark pin. A candidate now also needs write evidence (the worker's cwd
+    lies in it, an edit tool wrote under it, or a shell command entered it; else it is reported `unowned`), and a detached-HEAD worktree is
+    never one (`excluded_detached`): a mission's work lands on a branch.
     None = could not be judged (git or transcript unreadable)."""
     b = binding(rec)
     since = float((b or {}).get("bound_at") or rec.get("created_at") or 0)
     rows = worktrees(rec["cwd"])
-    text = tool_text_since(transcript, since - 5)
-    if rows is None or text is None:
+    uses = tool_uses_since(transcript, since - 5)
+    if rows is None or uses is None:
         return None
+    text = _canon("\n".join(_flat(u.get("input")) for u in uses))
     current = _norm(execution_root(rec))
-    cands, excluded = [], []
+    cands, excluded, detached = [], [], []
     for w in rows:
         root = w["root"]
         if _norm(root) in (current, _norm(rec["cwd"])):
             continue
         made = created_at(root)
-        if made is None or made < since - 5:
+        if made is None or made < since - 5 or not mentions(text, root):
             continue
-        if mentions(text, root):
-            (excluded if is_agent_worktree(root) else cands).append(root)
+        if is_agent_worktree(root):
+            excluded.append(root)
+        elif w.get("detached") or not w.get("branch"):
+            detached.append(root)
+        else:
+            cands.append(root)
     wcwd = worker_cwd(transcript)
+
+    def inside(p: str, root: str) -> bool:
+        n, r = _norm(p), _norm(root)
+        return n == r or n.startswith(r + os.sep)
+
+    wrote = written_paths(uses)
+    shell = _canon("\n".join(_flat(u.get("input")) for u in uses if u.get("name") in SHELL_TOOLS))
+
+    def owned(c: str) -> bool:
+        return bool((wcwd and inside(wcwd, c)) or any(inside(p, c) for p in wrote) or mentions(shell, c, ENTERS))
+
+    unowned = [c for c in cands if not owned(c)]
+    cands = [c for c in cands if c not in unowned]
     if wcwd and len(cands) > 1:
-        n = _norm(wcwd)
-        hit = [c for c in cands if n == _norm(c) or n.startswith(_norm(c) + os.sep)]
+        hit = [c for c in cands if inside(wcwd, c)]
         if len(hit) == 1:
             cands = hit
-    return {"candidates": cands, "excluded_agent_worktrees": excluded, "worker_cwd": wcwd}
+    return {"candidates": cands, "excluded_agent_worktrees": excluded, "excluded_detached": detached,
+            "unowned": unowned, "worker_cwd": wcwd}
 
 
 # ----------------------------------------------------------------------------- children
