@@ -252,7 +252,7 @@ def _transferred_next(resumption: Path, text: str) -> list[str]:
     listed = " ".join(m.group(1) for m in re.finditer(r"plan order:([^\n]*)", blob, re.I))
     named = []
     for sl in moved:
-        if re.search(rf"\bslice[\s-]*{re.escape(sl)}\b", blob, re.I) or re.search(rf"(?:^|[\s,+(]){re.escape(sl)}(?=[\s,+()]|$)", listed):
+        if re.search(rf"\bslice[\s-]*{re.escape(sl)}\b", blob, re.I) or re.search(rf"(?:^|[\s,+(]){re.escape(sl)}(?=[\s,+().;]|$)", listed):
             named.append(sl)
     return named
 

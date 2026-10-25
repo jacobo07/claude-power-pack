@@ -189,8 +189,9 @@ def main() -> int:
         trows = [{"slice": "C", "implementation_state": "TRANSFERRED", "old_path_status": "SUPERSEDED"},
                  {"slice": "H", "implementation_state": "SUPERSEDED_BY_CCR", "old_path_status": "SUPERSEDED"},
                  {"slice": "I", "implementation_state": "PARTIAL", "old_path_status": "ACTIVE"},
-                 {"slice": "A", "implementation_state": "DELIVERED", "old_path_status": "CLOSED"}]
-        takeover("names_transferred", f"# x\n{anchor_line}**Slices.** Next in plan order: H (canary), then C+F, I.\n", trows)
+                 {"slice": "A", "implementation_state": "DELIVERED", "old_path_status": "CLOSED"},
+                {"slice": "L", "implementation_state": "TRANSFERRED", "old_path_status": "SUPERSEDED"}]
+        takeover("names_transferred", f"# x\n{anchor_line}**Slices.** Next in plan order: H (canary), then C+F, I, L.\n", trows)
         takeover("names_slice_word", f"# x\n{anchor_line}**Next 3 actions.**\n1. Build slice C, the router.\n\nOther prose.\n", trows)
         takeover("names_live_only", f"# x\n{anchor_line}**Slices.** Next in plan order: I (carrier canary).\n", trows)
         takeover("pronoun_prose", f"# x\n{anchor_line}I will check the state. Next, A is sealed and C was moved.\n", trows)
@@ -199,7 +200,7 @@ def main() -> int:
         cpp_fsck.check_resumption(r, repo, tk)
         tstale = {Path(x["file"]).parent.name: x for x in only(r, "stale_resumption")}
         gate("V-FSCK-F4-TRANSFERRED-NEXT", set(tstale) == {"names_transferred", "names_slice_word"}
-             and sorted(tstale["names_transferred"].get("obligations", [])) == ["C", "H"]
+             and sorted(tstale["names_transferred"].get("obligations", [])) == ["C", "H", "L"]
              and tstale["names_slice_word"].get("obligations") == ["C"],
              f"flagged={sorted(tstale)} obligations={ {k: v.get('obligations') for k, v in tstale.items()} }")
         gate("V-FSCK-F4-TRANSFERRED-NEXT-CONTROL", not ({"names_live_only", "pronoun_prose", "no_takeover"} & set(tstale)),
