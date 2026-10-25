@@ -106,3 +106,24 @@ Update this file and `RESUMPTION_FILE.md` (this dir) after every sealed phase, w
 - Subagents (planner) are blocked from writing the clone by the harness guard ("parent bg session hasn't isolated"); execute plans from the main session itself (Bash cp/Write worked there). No worktree per Owner directive; no push.
 - OWNER DECISION NEEDED: red-team claim 15 is not in the repo; plans record it as UNMEASURED. Pick: leave UNMEASURED.
 - Next: execute 08-01 Task 1 (tools/s9_kv_check.py + phase-seal incident), then 08-02 (independent), then 08-03, then gsd-verifier, then `python3 tools/s9_done_gate.py seal-check --expect 8`.
+
+## Phase 8 plan 08-02 decisions (worker epoch 8, 2026-10-25)
+
+- 08-02 executed: all 15 claims attacked, S9RT_PASS=112/112 (341 s). Verdicts: HELD 4,6,7,9,10,11,13,14; BREACH 8,12; UNMEASURED 1,2,3,5,15. Report 08-REDTEAM.json/.md; summary 08-02-SUMMARY.md.
+- BREACH claim 8 (noisy commits/tests move the fingerprint and earn a lease renewal) is real; repair left to a gap-closure plan, not done here (safe: nothing outward-facing, reversible).
+- BREACH claim 12 (summed mission-hours count open missions to the pin: 27.5k h vs ~1.7k h bounded) is real; repair left to a gap-closure plan.
+- Claim 5 staleness rule is my own choice, recorded here: stale-fast = packet superseded within 24 h of admission, proven at a share of 25% or more; measured 12.5% (2 of 16). Sensitivity is printed in the report (72 h flips nothing). Verdict stays UNMEASURED because closed-phase re-targeting (the Owner's live evidence) is not observable in the pin.
+- Claim 7 drives the real `mission_topup` hold-keyed idempotency, not a `seq` key; the always-renew control patches `LEASE_MAX_RENEWALS`.
+- Claim 2 deviates from the plan's instrument (first-call context, compactions inferred from context falls) because transcripts hold no compact_boundary; compaction side n=0 so UNMEASURED.
+- OWNER DECISION NEEDED: claim 15 text is absent from the repo (searched STATE, both RESUMPTION files, 08-CONTEXT, the spec; no 15-item list). Options: (a) supply the text, (b) drop the claim. Pick: leave UNMEASURED.
+- 08-REDTEAM.json embeds sweeps over the tools tree; it is regenerated at the end of 08-03 so V-S9RT-REPORT-REPRODUCES stays green.
+
+## Phase 8 executed, close pending verifier (worker epoch 8, 2026-10-25)
+
+- Status: phase 8 executed (08-01, 08-02, 08-03) and close pending the verifier; frontmatter counters are left for the seal. Post-seal command: `python3 tools/s9_done_gate.py seal-check --expect 8` (PENDING_VERIFIER, exit 2, until 08-VERIFICATION passes).
+- MISSION VERDICT: NOT_DONE. Evidence in 08-DONE-GATE.json (suites collected on a clean tree at one subject-tree hash), rendered in 08-REPORT.md. Only cause: suite test_cpp_gsd_long_routing red outside the known set (V-ROUTE-LIVE-COMMAND-IS-REPO-COMMAND: no live cpp-gsd-long.md under the test's HOME on this host; 8 of its 9 gates pass). Every other suite passes, including test_s9_redteam 112/112 and test_mission_spend 46/46 (its known red did not reproduce on this host). With that suite green the judge returns DONE_WITH_RESIDUALS; this is a host-sync item, not a repo defect, and I did not edit host files.
+- Residuals: red-team BREACH 8 and 12 (incident vault/incidents/2026-10-25-flow-compression-redteam-breaches.md), UNMEASURED claims 1, 2, 3, 5, 15, milestones S1-S5 and S7 MET_WITH_UNMEASURED, LAPTOP-ONLY items, 4 legacy PLAN files without frontmatter, and the carried W1-W5 and epoch_compacted rows quoted verbatim in 08-REPORT.md.
+- Live S1 context-rotation count (m-3d5f0a27e41d): 7 of 17 observed epochs.
+- Owner red-team directive (15 hypotheses) supersedes D-01 (narrow categories): all 15 were attacked; claim 15 stays UNMEASURED (see the claim-15 line in the 08-02 decisions section).
+- OWNER DECISION NEEDED: which text should red-team claim 15 test; Owner must supply it (pure preference). Options: (a) supply the text, (b) drop the claim. Pick: leave UNMEASURED.
+- Gap-closure candidates for the Owner: repair claim 8 (progress fingerprint blind to noisy commits) and claim 12 (mission-hours must bound open missions).

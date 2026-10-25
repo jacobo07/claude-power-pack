@@ -15,8 +15,9 @@ Test-only env: CPP_RESOURCE_ADMISSION=off when host RAM < 3000 MB. Never push. G
 Phase 4 SEALED (economic lease in mission_spend.judge + gsd_mission._renew_lease; debt: V-MSPEND-HOLD-PLAN-NONE pre-existing red). Phase 3 SEALED (dc7428d3): backoff, normalised digest, residual-N; tests green; DEFER autopsy unmeasured on GEX44 (laptop-plane).
 
 Next 3 actions:
-1. Phase 7 per ROADMAP.md via /gsd-discuss-phase 7 then plan/execute (artifacts through GSD workflows, assert gsd_status advanced after each seal).
-2. Phases 7-8; Phase 8 reads the incident entries in STATE.md.
+0. Phase 8 EXECUTED 2026-10-25 (08-01, 08-02 red team 112/112, 08-03 gate 43/43); close pending the verifier. Mission verdict NOT_DONE (one red suite, test_cpp_gsd_long_routing, host-sync); see 08-REPORT.md. After 08-VERIFICATION passes run `python3 tools/s9_done_gate.py seal-check --expect 8`.
+1. Phases 1-7 are sealed; nothing left in phases 1-7.
+2. Owner: supply claim-15 text or drop it; decide on gap-closure for red-team BREACH 8 and 12.
 3. Laptop coordinator reruns `python3 tools/mission_reconcile.py dispose --json` on its ledger for the 149 h comparison.
 
 Start: read ROADMAP.md, then `/gsd-autonomous --ws flow-compression`.

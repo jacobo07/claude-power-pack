@@ -1,0 +1,2445 @@
+{
+ "command": "python3 tools/s9_done_gate.py judge --evidence /tmp/s9-gate/evidence.json --write-gate <path>",
+ "context": {
+  "breach_incident": {
+   "exists": true,
+   "sections": [
+    8,
+    12
+   ]
+  },
+  "core_diff": [],
+  "frontmatter": {
+   "bad": [],
+   "files": 28,
+   "legacy_no_frontmatter": [
+    "01-01-PLAN.md",
+    "02-01-PLAN.md",
+    "03-01-PLAN.md",
+    "04-01-PLAN.md"
+   ],
+   "pending_verifier": [
+    "08-VERIFICATION.md"
+   ]
+  },
+  "incidents": {
+   "files": [
+    "2026-10-24-flow-compression-class-regex-over-match.md",
+    "2026-10-24-flow-compression-control-never-shown-to-fire.md",
+    "2026-10-24-flow-compression-execution-plane-mismatch.md",
+    "2026-10-24-flow-compression-fixture-from-memory-of-reader.md",
+    "2026-10-24-flow-compression-phase-seal-without-frontmatter.md",
+    "2026-10-25-flow-compression-figure-without-basis.md",
+    "2026-10-25-flow-compression-harness-state-leak.md",
+    "2026-10-25-flow-compression-plan-premise-not-in-code.md",
+    "2026-10-25-flow-compression-redteam-breaches.md"
+   ],
+   "findings": []
+  },
+  "live": {
+   "context_rotation": 7,
+   "mission": "m-3d5f0a27e41d",
+   "observed": true,
+   "total": 17
+  },
+  "preamble_105k": true,
+  "redteam": {
+   "blob_equals_file": true,
+   "breaches": [
+    8,
+    12
+   ],
+   "claims": {
+    "1": {
+     "held_controls_fired": true,
+     "planes": [
+      "repo-artefact",
+      "seeded"
+     ],
+     "reason": "causal-effect:rotation and compaction were not randomised and no stratum is recorded, so no causal effect is estimable; S1 replay holds only UNMEASURED",
+     "verdict": "UNMEASURED"
+    },
+    "10": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-host-readonly",
+      "GEX44-temp-copy"
+     ],
+     "reason": null,
+     "verdict": "HELD"
+    },
+    "11": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-host-readonly",
+      "repo-artefact"
+     ],
+     "reason": null,
+     "verdict": "HELD"
+    },
+    "12": {
+     "held_controls_fired": true,
+     "planes": [
+      "seeded"
+     ],
+     "reason": null,
+     "verdict": "BREACH"
+    },
+    "13": {
+     "held_controls_fired": true,
+     "planes": [
+      "repo-artefact",
+      "seeded"
+     ],
+     "reason": null,
+     "verdict": "HELD"
+    },
+    "14": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-host-readonly",
+      "repo-artefact"
+     ],
+     "reason": null,
+     "verdict": "HELD"
+    },
+    "15": {
+     "held_controls_fired": true,
+     "planes": [
+      "repo-artefact"
+     ],
+     "reason": "claim-text-search:claim text absent; OWNER DECISION NEEDED",
+     "verdict": "UNMEASURED"
+    },
+    "2": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-host-readonly"
+     ],
+     "reason": "rehydration-cost:n too small (rotation 6, compaction 0; need 3)",
+     "verdict": "UNMEASURED"
+    },
+    "3": {
+     "held_controls_fired": true,
+     "planes": [
+      "repo-artefact"
+     ],
+     "reason": "span-effect:one S2 incident and its resolution is exogenous: the span effect of an earlier stop is not observable",
+     "verdict": "UNMEASURED"
+    },
+    "4": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-temp-copy",
+      "repo-artefact"
+     ],
+     "reason": null,
+     "verdict": "HELD"
+    },
+    "5": {
+     "held_controls_fired": true,
+     "planes": [
+      "seeded"
+     ],
+     "reason": "packet-staleness:supersession share 0.125 is under 0.25 but closed-phase re-targeting (Owner live evidence) is not observable in the pin",
+     "verdict": "UNMEASURED"
+    },
+    "6": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-host-readonly",
+      "repo-artefact",
+      "seeded"
+     ],
+     "reason": null,
+     "verdict": "HELD"
+    },
+    "7": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-temp-copy"
+     ],
+     "reason": null,
+     "verdict": "HELD"
+    },
+    "8": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-temp-copy"
+     ],
+     "reason": null,
+     "verdict": "BREACH"
+    },
+    "9": {
+     "held_controls_fired": true,
+     "planes": [
+      "GEX44-host-readonly"
+     ],
+     "reason": null,
+     "verdict": "HELD"
+    }
+   },
+   "n": 15,
+   "pin_sha256": "b47ff018fb44766fb9e2add7b9e23276c18dc6c2ec84cb88d4709c82d95e2743",
+   "predicate_value": false,
+   "verdicts_closed": [
+    "HELD",
+    "BREACH",
+    "UNMEASURED"
+   ]
+  },
+  "replay": {
+   "s1_unmeasured": 13,
+   "s2_moved_earlier": 1,
+   "s3_prevented": 1
+  },
+  "spec_findings": [],
+  "spec_predicate": false,
+  "ukdl_findings": []
+ },
+ "evidence": {
+  "suites": {
+   "test_arm_preflight": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_arm_preflight.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 16,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_arm_preflight",
+    "passes": [
+     "V-PRE-HAPPY",
+     "V-PRE-REFUSE-NO_PHASES",
+     "V-PRE-REFUSE-ALL_COMPLETE",
+     "V-PRE-UNAVAILABLE-IS-UNMEASURED",
+     "V-PRE-RAISING-READER-IS-UNMEASURED",
+     "V-PRE-NON-GSD-ROUTE-SKIPS-GSD",
+     "V-PRE-REFUSE-LOW-MEMORY",
+     "V-PRE-NO-LAUNCH-NO-MEMORY-CHECK",
+     "V-PRE-UNREADABLE-MEMORY-IS-UNMEASURED",
+     "V-PRE-NO-AUTHORITY-WARNS-NOT-REFUSES",
+     "V-PRE-ROTATION-REPAIR-REPORTED",
+     "V-PRE-IDEMPOTENT",
+     "V-PRE-KILL-SWITCH",
+     "V-PRE-ARM-WIRED",
+     "V-PRE-PACKET-NO-PHASES-WARNS",
+     "V-PRE-ARM-CHAIN-PACKET-PASSES",
+     "V-PRE-ARM-CHAIN-WIRED",
+     "V-PRE-MUTANT-ALWAYS-PASS-GOES-RED"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "PRE_PASS",
+    "tag_line": {
+     "name": "PRE_PASS",
+     "passed": 18,
+     "total": 18
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.1
+   },
+   "test_blocked_intent": {
+    "basis": "STATE phase 6",
+    "bracket_moved": false,
+    "command": "python3 tools/test_blocked_intent.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 16,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_blocked_intent",
+    "passes": [
+     "V-BI-SCOPE-IS-DECISION",
+     "V-BI-CHOOSE3-IS-DECISION",
+     "V-BI-CHOOSE-RUN-IS-DECISION",
+     "V-BI-IMAGES-IS-RESOURCE",
+     "V-BI-IMAGES-UNSUPPLIED-ESCALATES",
+     "V-BI-IMAGES-SUPPLIED-REPOINTS",
+     "V-BI-COMMAND-GETS-STANDING-ANSWER",
+     "V-BI-DECISION-OUTRANKS-COMMAND",
+     "V-BI-LOGIN-IS-HOST-GATE-NOT-COMMAND",
+     "V-BI-EMPTY-IS-UNKNOWN-ESCALATES",
+     "V-BI-NEVER-ANSWERS-A-DECISION",
+     "V-BI-SUPERVISE-TYPES-A-DECISION",
+     "V-BI-SUPERVISE-LEDGERS-IT",
+     "V-BI-SUPERVISE-NEVER-ANSWERS-A-DECISION",
+     "V-BI-SUPERVISE-ANSWERS-A-COMMAND",
+     "V-BI-MUTATION-RED"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "BI_PASS",
+    "tag_line": {
+     "name": "BI_PASS",
+     "passed": 16,
+     "total": 16
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 90.1
+   },
+   "test_cpp_gsd_long_routing": {
+    "basis": "first_observed_phase_8",
+    "bracket_moved": false,
+    "command": "python3 tools/test_cpp_gsd_long_routing.py",
+    "exit": 1,
+    "fails": [
+     "V-ROUTE-LIVE-COMMAND-IS-REPO-COMMAND"
+    ],
+    "floor": null,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_cpp_gsd_long_routing",
+    "passes": [
+     "V-ROUTE-CLI-REFUSES-PLAIN",
+     "V-ROUTE-CLI-REFUSES-AUTOCOMPACT-WORDING",
+     "V-ROUTE-CLI-REFUSAL-WRITES-NOTHING",
+     "V-ROUTE-CLI-LEGACY-OPT-IN-PASSES-GATE",
+     "V-ROUTE-CLI-LEGACY-RETIRED-ON-LIVE-DIR",
+     "V-ROUTE-DESCRIPTION-SAYS-RALPH",
+     "V-ROUTE-ROUTING-SECTION-FIRST",
+     "V-ROUTE-NO-LIVE-V2-STEPS"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "ROUTE_PASS",
+    "tag_line": {
+     "name": "ROUTE_PASS",
+     "passed": 8,
+     "total": 9
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.0
+   },
+   "test_gsd_epoch": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_gsd_epoch.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 111,
+    "group": "B",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_gsd_epoch",
+    "passes": [
+     "V-EPOCH-CONTEXT-MEASURED",
+     "V-EPOCH-CONTEXT-UNMEASURED-IS-NONE",
+     "V-EPOCH-CONTEXT-SYNTHETIC-ROW-SKIPPED",
+     "V-EPOCH-CONTEXT-SYNTHETIC-ONLY-IS-UNMEASURED",
+     "V-EPOCH-TURN-END-CONTINUES",
+     "V-EPOCH-WALL-ROTATES",
+     "V-EPOCH-WALL-IS-PER-EPOCH",
+     "V-EPOCH-WALL-LEDGER-WITNESS",
+     "V-EPOCH-ECONOMIC-CEILING-ROTATES",
+     "V-EPOCH-CEILING-PER-MISSION",
+     "V-EPOCH-UNMEASURED-GOES-FRESH-NOT-ROTATION",
+     "V-EPOCH-HANDOFF-IS-ROTATION",
+     "V-EPOCH-KILL-SWITCH",
+     "V-EPOCH-CHILD-PENDING-HOLDS",
+     "V-EPOCH-CHILD-HOLD-BEATS-CONTINUE",
+     "V-EPOCH-CHILD-REPORTED-CLEARS",
+     "V-EPOCH-UNCONSUMED-RESULT-HOLDS",
+     "V-EPOCH-CHILD-EXPIRES",
+     "V-EPOCH-EXPIRED-NAMED-LOST",
+     "V-EPOCH-SYNC-AGENT-IS-NOT-A-CHILD",
+     "V-EPOCH-ASYNC-AGENT-IS-A-CHILD",
+     "V-EPOCH-SUBAGENT-CHILD-SEEN",
+     "V-EPOCH-NO-TRANSCRIPT-UNKNOWN",
+     "V-EPOCH-DENIED-BG-IS-NOT-A-CHILD",
+     "V-EPOCH-STARTED-BG-STILL-HOLDS",
+     "V-EPOCH-TASKSTOP-ENDS-CHILD",
+     "V-EPOCH-FAILED-TASKSTOP-STILL-HOLDS",
+     "V-EPOCH-OTHER-TASKSTOP-STILL-HOLDS",
+     "V-EPOCH-CONTINUATION-IN-FLIGHT-HOLDS",
+     "V-EPOCH-CONTINUATION-NEVER-RAN-FAILS",
+     "V-EPOCH-CONTINUATION-RAN-CONTINUES-AGAIN",
+     "V-EPOCH-NEW-PACKET-ROTATES-FRESH",
+     "V-EPOCH-SAME-PACKET-CONTINUES",
+     "V-EPOCH-SAME-PACKET-CEILING-ROTATES",
+     "V-EPOCH-NEW-PACKET-CHILD-STILL-HOLDS",
+     "V-EPOCH-NEW-PACKET-INFLIGHT-STILL-HOLDS",
+     "V-EPOCH-RESUME-ARGV-HAS-NO-FLAGS",
+     "V-EPOCH-CONTINUATION-SAME-EPOCH-LAUNCHING",
+     "V-EPOCH-RESUMED-SESSION-IS-RECOGNISED",
+     "V-EPOCH-ACK-RETURNS-TO-RUNNING-SAME-EPOCH",
+     "V-EPOCH-CAUSE-RECORDED",
+     "V-EPOCH-CONTINUATION-RECORDS-WORK-DIR",
+     "V-EPOCH-CONTINUATION-UNKNOWN-WORK-DIR-KEPT",
+     "V-EPOCH-RIVAL-SUPERVISOR-LOSES-CAS",
+     "V-EPOCH-COPY-REFUSED-AND-STOPPED",
+     "V-EPOCH-FAILED-CONTINUATION-IS-REPLACED",
+     "V-EPOCH-FAILED-CONTINUATION-CAUSE",
+     "V-EPOCH-CAUSE-INITIAL",
+     "V-EPOCH-CAUSE-RENEWAL",
+     "V-EPOCH-CAUSE-RETRY",
+     "V-EPOCH-CAUSE-RECOVERY",
+     "V-EPOCH-CAUSE-UNKNOWN-IS-AN-ANSWER",
+     "V-EPOCH-IDENTITY-OK",
+     "V-EPOCH-IDENTITY-WRONG-CWD",
+     "V-EPOCH-IDENTITY-STALE-EPOCH",
+     "V-EPOCH-IDENTITY-UNKNOWN",
+     "V-EPOCH-COMPACTION-OBSERVED-ONCE",
+     "V-EPOCH-VIEW-COUNTS",
+     "V-EPOCH-VIEW-CAUSES",
+     "V-EPOCH-VIEW-WALL-BASIS",
+     "V-EPOCH-VIEW-END-CAUSE",
+     "V-EPOCH-SUP-CONTINUES-SAME-SESSION",
+     "V-EPOCH-SUP-STOPS-BEFORE-RESUME",
+     "V-EPOCH-SUP-CONTINUATION-COUNTED-BY-PROGRESS",
+     "V-EPOCH-ADMITTED-PACKET-CONTINUES",
+     "V-EPOCH-EDITED-PACKET-NOT-CONTINUED",
+     "V-EPOCH-SUP-WALL-LAUNCHES-FRESH",
+     "V-EPOCH-SUP-FRESH-CAUSE-LEDGERED",
+     "V-EPOCH-SUP-CHILD-HOLDS-NOTHING-STOPPED",
+     "V-EPOCH-SUP-KILL-SWITCH-IS-TODAY",
+     "V-EPOCH-GSD-NEXT-READ-FROM-MANAGER",
+     "V-EPOCH-GSD-FACT-ON-CONTINUATION",
+     "V-EPOCH-GSD-FACT-ABSENT-PROMPT-UNCHANGED",
+     "V-EPOCH-STALLED-CONTINUATION-GOES-FRESH",
+     "V-EPOCH-GSD-FACT-ON-FRESH-LAUNCH",
+     "V-EPOCH-PROGRESSING-CONTINUATION-STAYS",
+     "V-EPOCH-SUP-SAME-SESSION-LOOP-STILL-HALTS",
+     "V-EPOCH-SUP-STALLED-FRESH-LOOP-STILL-HALTS",
+     "V-EPOCH-DONE-END-TURN-CONTINUES",
+     "V-EPOCH-DONE-MIDTURN-IS-RECOVERY",
+     "V-EPOCH-FAILED-IS-RECOVERY",
+     "V-EPOCH-CRASH-AFTER-STOP-RECOVERS-FRESH",
+     "V-EPOCH-CRASH-AFTER-CLAIM-AWAITS-DEADLINE",
+     "V-EPOCH-CRASH-AFTER-CLAIM-REPLACED-AS-FAILED-CONTINUATION",
+     "V-EPOCH-CRASH-AFTER-WAKE-ADOPTS-SAME-SESSION",
+     "V-EPOCH-BUDGET-DURING-CONTINUATION-HALTS-AND-REAPS",
+     "V-EPOCH-WALL-WITHIN-GRACE",
+     "V-EPOCH-WALL-OVERDUE",
+     "V-EPOCH-WALL-OVERDUE-LEGACY-FLAG",
+     "V-EPOCH-WALL-NO-FLAG-NOT-OVERDUE",
+     "V-EPOCH-SUP-WALL-ENFORCED-ROTATES",
+     "V-EPOCH-SUP-WALL-WITHIN-GRACE-LEFT-ALONE",
+     "V-EPOCH-SUP-UNKNOWN-OWNER-NEVER-FORCED",
+     "V-EPOCH-CERTIFY-POSITIVE-CONTROL",
+     "V-EPOCH-CERTIFY-NEEDS-USEFUL-WORK",
+     "V-EPOCH-CERTIFY-NEEDS-PREDECESSOR-TRANSCRIPT",
+     "V-EPOCH-CERTIFY-NEEDS-RECORDED-CAUSE",
+     "V-EPOCH-WATCH-SAMPLES-UNTIL-TERMINAL",
+     "V-DECIDE-RECORDED-ON-MISSION",
+     "V-DECIDE-STOPS-THEN-RESUMES-SAME-SESSION",
+     "V-DECIDE-RESEND-IS-NOOP",
+     "V-DECIDE-SAME-ID-OTHER-TEXT-REFUSED",
+     "V-DECIDE-NO-LIVE-OWNER-STILL-RECORDED",
+     "V-DECIDE-SUPERSEDED-DROPPED-FROM-CARD",
+     "V-DECIDE-UNKNOWN-SUPERSEDES-REFUSED",
+     "V-DECIDE-EMPTY-REFUSED",
+     "V-DECIDE-TERMINAL-MISSION-REFUSED",
+     "V-DECIDE-CLI-RECORDS",
+     "V-EPOCH-SLIM-FINISHED-CLOSES",
+     "V-EPOCH-STATE-MENTION-NO-SEQ-NOT-TERMINAL",
+     "V-EPOCH-CENSUS-SEPARATES-COUNTERS"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "EPOCH_PASS",
+    "tag_line": {
+     "name": "EPOCH_PASS",
+     "passed": 111,
+     "total": 111
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 2.9
+   },
+   "test_gsd_mission": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_gsd_mission.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 234,
+    "group": "B",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_gsd_mission",
+    "passes": [
+     "V-MC-PREPARED-NOT-RUNNING",
+     "V-MC-PREPARED-PLANS-LAUNCH",
+     "V-MC-NO-DOUBLE-CREATE",
+     "V-MC-CAS-CONTROL",
+     "V-MC-CAS-STALE-REFUSED",
+     "V-MC-REPLACE-RACE-ONE-WINNER",
+     "V-MC-MALFORMED-RAISES",
+     "V-MC-ABSENT-IS-NONE",
+     "V-MC-UNREADABLE-LISTED",
+     "V-MC-UNREADABLE-SURFACED-BY-SUPERVISE",
+     "V-MC-UNREADABLE-LEDGERED-ONCE-PER-FILE-STATE",
+     "V-MC-UNREADABLE-CONTROL-READABLE-NOT-FLAGGED",
+     "V-MC-KILL-BEFORE-RENAME-KEEPS-PRIOR",
+     "V-MC-KILL-AFTER-RENAME-HAS-NEXT",
+     "V-MC-LOCK-KILLED-HOLDER-RELEASED",
+     "V-MC-LOCK-LIVE-HOLDER-NEVER-STOLEN",
+     "V-MC-LOCK-CONTROL-FREE-AFTER-CLEAN-EXIT",
+     "V-MC-HISTORY-CONTIGUOUS",
+     "V-MC-HISTORY-FAILED-APPEND-REPORTED",
+     "V-MC-HISTORY-GAP-NAMED",
+     "V-MC-HISTORY-PRE-T4-UNJUDGED",
+     "V-MC-LEDGER-APPEND-RETURNS-TRUE-CONTROL",
+     "V-MC-CODE-ID-ON-LEDGER-AND-RECORD",
+     "V-MC-SCHEMA-NEWER-REFUSED",
+     "V-MC-SCHEMA-NEWER-SURFACED-UNREADABLE",
+     "V-MC-SCHEMA-CURRENT-CONTROL-READS",
+     "V-MC-SWEEP-ABSENT-NOT-OBSERVED",
+     "V-MC-SWEEP-FRESH-OK",
+     "V-MC-SWEEP-TIMEOUT-DEGRADED",
+     "V-MC-SWEEP-STAGE-RC-FAILING",
+     "V-MC-SWEEP-STAGE-RC0-CONTROL-OK",
+     "V-MC-SWEEP-OLD-STALE",
+     "V-MC-SWEEP-RUNNING-PAST-BOUND-STUCK",
+     "V-MC-LIVE-HOST-LISTED",
+     "V-MC-LIVE-WAITING-IS-BLOCKED",
+     "V-MC-LIVE-HOST-STOPPED-DEAD",
+     "V-MC-LIVE-UNLISTED-PID-GONE-DEAD",
+     "V-MC-LIVE-HOST-UNAVAILABLE-UNKNOWN",
+     "V-MC-LIVE-PID-UNCHECKABLE-UNKNOWN",
+     "V-MC-LIVE-UNLISTED-PID-ALIVE-UNKNOWN",
+     "V-MC-LIVE-NO-OWNER-UNKNOWN",
+     "V-MC-LIVE-PID-REUSE-DEAD",
+     "V-MC-LIVE-PID-SAME-START-UNKNOWN",
+     "V-MC-PLAN-RUNNING-LIVE-NONE",
+     "V-MC-PLAN-RUNNING-DEAD-REPLACE",
+     "V-MC-PLAN-RUNNING-UNKNOWN-NEVER-REPLACES",
+     "V-MC-PLAN-BLOCKED-SURFACED",
+     "V-MC-PLAN-LAUNCH-AWAIT",
+     "V-MC-PLAN-LAUNCH-OVERDUE-REPLACE",
+     "V-MC-PLAN-LAUNCH-BOUNDED-HALT",
+     "V-MC-PLAN-HANDOFF-AWAIT",
+     "V-MC-PLAN-HANDOFF-DEAD-REPLACE",
+     "V-MC-PLAN-HANDOFF-OVERDUE-SURFACED",
+     "V-MC-PLAN-BUDGET-HALT",
+     "V-MC-PLAN-TERMINAL-NONE",
+     "V-MC-PARSE-REAL-IDLE",
+     "V-MC-PARSE-REAL-BACKGROUNDED",
+     "V-MC-PARSE-OTHER-NAME-REFUSED",
+     "V-MC-ARGV-PROMPT-NOT-AFTER-VARIADIC",
+     "V-MC-ARGV-WORKTREE-TOOLS-PREAPPROVED",
+     "V-MC-ARGV-WORKTREE-TOOLS-NO-DUPLICATE",
+     "V-MC-MCP-NO-VERDICT-NO-CHANGE",
+     "V-MC-MCP-APPLY-STRIPS-BEFORE-PROMPT",
+     "V-MC-MCP-KEEP-NO-CHANGE",
+     "V-MC-MCP-STALE-APPLY-IGNORED",
+     "V-MC-ARGV-ASKUSER-DISALLOWED",
+     "V-MC-CARD-UNATTENDED-CLAUSE",
+     "V-MC-CARD-RENDERS-DIRECTIVES",
+     "V-MC-CARD-GATE-RUBRIC",
+     "V-MC-CARD-GATE-FALLBACK",
+     "V-MC-DIRECTIVE-ON-BLOCKED-APPENDS",
+     "V-MC-DIRECTIVE-REFUSES-EMPTY",
+     "V-MC-DIRECTIVE-REFUSES-MISSING",
+     "V-MC-DIRECTIVE-REFUSES-TERMINAL",
+     "V-MC-WS-BOUND-AT-CREATE",
+     "V-MC-WS-NONE-UNCHANGED",
+     "V-MC-WS-EXPLICIT-NOT-DOUBLED",
+     "V-MC-WS-NON-GSD-UNCHANGED",
+     "V-MC-WS-CONFLICT-REFUSED",
+     "V-MC-WS-INFERRED-FROM-COMMAND",
+     "V-MC-WS-NOT-INFERRED-NON-GSD",
+     "V-MC-WS-LONG-FLAG-INFERRED",
+     "V-MC-WS-LONG-FLAG-EQ-INFERRED",
+     "V-MC-WS-LONG-CONFLICT-REFUSED",
+     "V-MC-WS-LEGACY-LAUNCH-BINDS",
+     "V-MC-CARD-NEVER-STALE",
+     "V-MC-WS-CARD-PINS-POINTER",
+     "V-MC-WS-CARD-NONE-SILENT",
+     "V-MC-LAUNCH-BINDS-HOST-ID",
+     "V-MC-LAUNCH-ARGV-BG-NO-SESSION-ID",
+     "V-MC-LAUNCH-DUPLICATE-REFUSED",
+     "V-MC-ACK-STRANGER-IGNORED",
+     "V-MC-STILL-LAUNCHING-UNTIL-ACK",
+     "V-MC-ACK-MAKES-RUNNING",
+     "V-MC-HEARTBEAT",
+     "V-MC-HANDOFF-OWNER-ONLY",
+     "V-MC-HANDOFF-STATE",
+     "V-MC-LAUNCH-FAIL-VISIBLE",
+     "V-MC-CARD-CAPPED",
+     "V-MC-CARD-RECONCILE-FIRST",
+     "V-MC-CARD-NO-NOTE-SAYS-SO",
+     "V-MC-BG-KILLED-NOT-DEAD",
+     "V-MC-BG-KILLED-NEVER-REPLACED",
+     "V-MC-BG-TURN-ENDED-RELAY",
+     "V-MC-BG-BLOCKED-NO-WAITING-IS-BLOCKED",
+     "V-MC-LIVE-BLOCKED-NO-WAITING-IS-BLOCKED",
+     "V-MC-BG-BLOCKED-NEVER-IDLE",
+     "V-MC-BG-BUSY-NO-RELAY",
+     "V-MC-SUP-REPLACE-ASKS-GSD-FIRST",
+     "V-MC-SUP-RELAY-STOPS-THEN-LAUNCHES",
+     "V-MC-SUP-COMPLETE-NO-LAUNCH",
+     "V-MC-SUP-GSD-UNAVAILABLE-HOLDS",
+     "V-MC-GSD-HOLD-ONCE-STAYS-RUNNING",
+     "V-MC-GSD-HOLD-BOUNDED-BLOCKS",
+     "V-MC-GSD-BLOCK-NOT-UNBLOCKED-BY-LIVE-OWNER",
+     "V-MC-GSD-BLOCK-STAYS-WHILE-NOT-OK",
+     "V-S3-BACKOFF-SKIPS-ASK-INSIDE-WINDOW",
+     "V-MC-GSD-BLOCK-CLEARS-ON-OK-AND-PROCEEDS",
+     "V-MC-GSD-UNAVAILABLE-GETS-LONGER-BOUND",
+     "V-MC-GSD-UNAVAILABLE-BLOCKS-AT-BOUND",
+     "V-MC-GSD-HOLD-COUNTS-CONSECUTIVE-SAME-OUTCOME",
+     "V-MC-SUP-HOST-BLOCKED-PARKS-NOT-REPLACED",
+     "V-MC-SUP-HOST-BLOCKED-REASON-IS-HOSTS",
+     "V-MC-SUP-CONTROL-STOPPED-STILL-REPLACED",
+     "V-MC-STOP-WAITS-FOR-PID",
+     "V-MC-STOP-IDLE-NOPID-STOPS-AND-WAITS",
+     "V-MC-STOP-IDLE-NOPID-UNRELEASED-REFUSES",
+     "V-MC-STOP-GONE-NOPID-NO-EXTRA-STOP",
+     "V-MC-STOP-LINGER-TERMINATED",
+     "V-MC-STOP-LINGER-REUSED-PID-SPARED",
+     "V-MC-STOP-LINGER-UNREADABLE-SPARED",
+     "V-MC-STOP-LINGER-LIVE-VERDICT-SPARED",
+     "V-MC-STOP-LINGER-SURVIVOR-REPORTED",
+     "V-MC-STOP-POOLED-SPARE-RELEASED",
+     "V-MC-STOP-POOLED-PTY-HOST-RELEASED",
+     "V-MC-STOP-POOLED-LIVE-VERDICT-SPARED",
+     "V-MC-STOP-POOLED-CARRYING-US-TERMINATED",
+     "V-MC-STOP-POOLED-WORD-ELSEWHERE-SPARED",
+     "V-MC-RENEW-BUDGET-HALT-RENEWS",
+     "V-MC-RENEW-CARRIES-DIRECTIVES",
+     "V-MC-RENEW-GSD-UNAVAILABLE-NO-RENEW",
+     "V-MC-RENEW-CAP-HALTS-FOR-REAL",
+     "V-MC-RENEW-NOT-FOR-HAND-HALT",
+     "V-MC-RENEW-KILL-SWITCH",
+     "V-MC-RENEW-CONTROL-ALLOWED",
+     "V-MC-CONVERGE-AT-BUDGET-COMPLETES",
+     "V-MC-CONVERGE-GSD-ASKED-ONCE",
+     "V-MC-CONVERGE-CONTROL-WORK-REMAINS-HALTS-AND-RENEWS",
+     "V-MC-PROGRESS-STALL-HALTS",
+     "V-MC-PROGRESS-CONTROL-MOVING-RELAYS",
+     "V-MC-PROGRESS-UNMEASURED-NEVER-STALLS",
+     "V-MC-PROGRESS-CONVERGENCE-FIRST",
+     "V-MC-PROGRESS-NO-RENEWAL-WITHOUT-PROGRESS",
+     "V-MC-PROGRESS-CONTROL-PROGRESS-RENEWS",
+     "V-MC-PROGRESS-ORIGIN-AT-FIRST-LAUNCH",
+     "V-MC-REVIEW-F1-BUDGET-HALT-ASKS-THE-WORKTREE",
+     "V-MC-REVIEW-F2-ONLY-TRANSITIONS-WITNESS-SEQ",
+     "V-MC-REVIEW-F4-UNRUN-EPOCH-NOT-A-STALL",
+     "V-MC-REVIEW-F4-CONTROL-RUN-EPOCH-STALLS",
+     "V-MC-REVIEW-F5-WRONG-SHAPE-IS-UNREADABLE",
+     "V-MC-REVIEW-F6-ORIGIN-AT-ARM",
+     "V-MC-CONVERGE-UNANSWERED-STILL-HALTS",
+     "V-MC-SUP-IDLE-NO-HOST-QUERY",
+     "V-MC-SUP-LIVE-ASKS-HOST",
+     "V-MC-PLAN-RELAY-BUDGET-HALT",
+     "V-MC-NOTE-FROM-TRANSCRIPT",
+     "V-MC-STALE-NOTE-NOT-INHERITED",
+     "V-MC-NOTE-EXTRACTED",
+     "V-MC-NOTE-ABSENT-EMPTY",
+     "V-MC-QUOTA-RESET-PARSED",
+     "V-MC-QUOTA-RESET-EXACT",
+     "V-MC-QUOTA-RESET-TIME-ONLY",
+     "V-MC-QUOTA-HOLD-BEFORE-RESET",
+     "V-MC-QUOTA-RELEASE-AFTER-RESET",
+     "V-MC-QUOTA-UNPARSED-HOLDS-AN-HOUR",
+     "V-MC-QUOTA-CONTROL-NORMAL-REPLY",
+     "V-MC-QUOTA-CONTROL-NO-TEXT",
+     "V-MC-QUOTA-ANCHOR-SAME-DAY",
+     "V-MC-QUOTA-ANCHOR-RELEASES-AFTER-RESET",
+     "V-MC-QUOTA-ANCHOR-CONTROL-HOLDS-BEFORE",
+     "V-MC-QUOTA-ANCHOR-FROM-ROW-TIMESTAMP",
+     "V-MC-QUOTA-ANCHOR-MTIME-FALLBACK",
+     "V-MC-QUOTA-SUP-HOLDS-NO-LAUNCH",
+     "V-MC-QUOTA-SUP-CONTROL-RELAYS",
+     "V-MC-BREAKER-AUTH-NO-LAUNCH",
+     "V-MC-ADOPT-PLANNED",
+     "V-MC-ADOPT-NEVER-A-STRANGER",
+     "V-MC-ADOPT-RUNNING",
+     "V-MC-ADOPT-ARMS-MARKER",
+     "V-MC-ADOPT-LATE-ACK-HEARTBEATS",
+     "V-MC-ADOPT-BLOCKED-SURFACED-FIRST-PASS",
+     "V-MC-ORPHAN-OF-HALTED-STOPPED",
+     "V-MC-ORPHAN-OWNER-KEPT",
+     "V-MC-ORPHAN-STRANGER-KEPT",
+     "V-MC-OLD-TERMINAL-NO-HOST-QUERY",
+     "V-MC-CARD-PRERENDERED-AT-RELAY",
+     "V-MC-CARD-PLAN-GRAPH-AT-RELAY",
+     "V-MC-PLAN-FACTS-REFUSES-OVERLAP",
+     "V-MC-PLAN-FACTS-KILL-SWITCH",
+     "V-MC-PLAN-FACTS-CRASH-NAMED",
+     "V-MC-CARD-RIDES-THE-LAUNCH",
+     "V-MC-SESSIONSTART-NO-GIT-NO-DUPLICATE",
+     "V-MC-LAUNCH-OVERDUE-HOST-UNKNOWN-AWAITS",
+     "V-MC-BUDGET-UNKNOWN-HALTS",
+     "V-MC-BUDGET-BLOCKED-HALTS",
+     "V-MC-BUDGET-LIVE-BUSY-FINISHES-TURN",
+     "V-MC-UNKNOWN-STALE-SURFACED-NOT-BLOCKED",
+     "V-MC-UNKNOWN-FRESH-QUIET",
+     "V-MC-SUP-HOST-UNANSWERED-NOT-BLOCKED",
+     "V-MC-CLAIM-CLEARS-OWNER",
+     "V-MC-OLD-OWNER-CANNOT-CLAIM",
+     "V-MC-NEW-WORKER-STILL-CLAIMS",
+     "V-MC-REPLACE-WAITS-FOR-PID",
+     "V-MC-REPLACE-PID-GONE-LAUNCHES",
+     "V-MC-INFLIGHT-LAUNCH-NOT-REAPED",
+     "V-MC-OLD-EPOCH-STILL-REAPED",
+     "V-MC-SUP-ERROR-ISOLATED",
+     "V-MC-WORKDIR-FOLLOWS-WORKTREE",
+     "V-MC-WORKDIR-SUBDIR-IGNORED",
+     "V-MC-WORKDIR-OTHER-REPO-IGNORED",
+     "V-MC-WORKDIR-NO-TRANSCRIPT-UNKNOWN",
+     "V-MC-WORKDIR-WS-OFF-MISSION-NOT-FOLLOWED",
+     "V-MC-WORKDIR-WS-ON-MISSION-FOLLOWED",
+     "V-MC-WORKDIR-WS-ARGS-ONLY-NOT-FOLLOWED",
+     "V-MC-WORKDIR-WS-BEHIND-BASE-NOT-FOLLOWED",
+     "V-MC-WORKDIR-WS-CONTAINS-BASE-FOLLOWED",
+     "V-MC-SUP-GSD-ASKED-IN-WORKTREE",
+     "V-MC-CARD-NAMES-WORKTREE",
+     "V-MC-CARD-ENTERS-BY-SHELL",
+     "V-MC-LAUNCH-STAYS-AT-TRUSTED-CWD",
+     "V-MC-NO-WORKTREE-NO-LINE",
+     "V-MC-SUP-GSD-PATIENT",
+     "V-MC-CLI-PERMISSION-AUTO",
+     "V-MC-CLI-PERMISSION-ACCEPTEDITS"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "MC_PASS",
+    "tag_line": {
+     "name": "MC_PASS",
+     "passed": 234,
+     "total": 234
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 24.2
+   },
+   "test_gsd_mission_baseline": {
+    "basis": "first_observed_phase_8",
+    "bracket_moved": false,
+    "command": "python3 tools/test_gsd_mission_baseline.py",
+    "exit": 0,
+    "fails": [],
+    "floor": null,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_gsd_mission_baseline",
+    "passes": [
+     "V-BASE-ABSENT-MODEL",
+     "V-BASE-ABSENT-CEILINGS",
+     "V-BASE-RECORD",
+     "V-BASE-LEDGER-ROW",
+     "V-BASE-GSD-RESUME-NEVER-SLIM",
+     "V-BASE-EXPLICIT-KEPT",
+     "V-BASE-BUILTIN",
+     "V-BASE-MALFORMED-POLICY-BUILTIN",
+     "V-BASE-OLD-KEYS-UNCHANGED",
+     "V-BASE-CLASS",
+     "V-BASE-PACKET-SLIM-UNTOUCHED",
+     "V-BASE-RERESOLVE-STAYS-POLICY",
+     "V-BASE-RERESOLVE-OPERATOR-EXPLICIT",
+     "V-BASE-OFF-ARGV-IDENTICAL",
+     "V-BASE-OFF-NO-LEDGER",
+     "V-BASE-ENFORCE-REFUSED",
+     "V-BASE-ENFORCE-WITH-REASON",
+     "V-BASE-ENFORCE-UNKNOWN-REASON-REFUSED",
+     "V-BASE-ENFORCE-DEFAULTS-PASS",
+     "V-BASE-SHADOW-LOGS",
+     "V-BASE-MODE-PARSER"
+    ],
+    "plain": {
+     "failed": 0,
+     "passed": 21
+    },
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": null,
+    "tag_line": null,
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.1
+   },
+   "test_mission_continuity": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_mission_continuity.py",
+    "exit": 1,
+    "fails": [
+     "V-AMCR-ONE-RESOLVER-INVENTORY"
+    ],
+    "floor": 38,
+    "group": "B",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_mission_continuity",
+    "passes": [
+     "V-AMCR-R1-REBIND-DETECTED",
+     "V-AMCR-R1-COMMIT-IN-WORKTREE-IS-PROGRESS",
+     "V-AMCR-R1-CONTROL-LEGACY-FALSE-STALL",
+     "V-AMCR-R4-CLEAN-TREE-AFTER-COMMIT-IS-PROGRESS",
+     "V-AMCR-R4-CONTROL-NOTHING-AFTER-IS-ZERO",
+     "V-AMCR-R4B-EMPTY-COMMIT-IS-NOT-PROGRESS",
+     "V-AMCR-R4B-EMPTY-COMMIT-HOLD-NOT-FALSE-STALL",
+     "V-AMCR-R4B-AMEND-IS-NOT-A-FALSE-STALL",
+     "V-AMCR-R4B-CONTROL-CONTENT-COMMIT-IS-A-FALSE-STALL",
+     "V-AMCR-NO-MARK-NO-WINDOW",
+     "V-AMCR-R3-STALE-GENERATION-NO-TRIP",
+     "V-AMCR-R3-LATE-REBIND-VOIDS-TRIP",
+     "V-AMCR-R5-RESEARCH-ARTIFACT-IS-PROGRESS",
+     "V-AMCR-R5-ARTIFACT-CLOSES-CHILD-OBLIGATION",
+     "V-AMCR-R6-WORKING-CHILD-NO-TRIP",
+     "V-AMCR-R6-CHILD-EXTENSION-IS-BOUNDED",
+     "V-AMCR-R6-OBLIGATION-SAVED-BEFORE-STOP",
+     "V-AMCR-R6-SUCCESSOR-CARD-CARRIES-OBLIGATION",
+     "V-AMCR-R2-BIND-REOPENS-LEGACY-UNREADABLE-PARK",
+     "V-AMCR-R2-FALSE-STALL-RECONCILED",
+     "V-AMCR-R2-CHILD-OBLIGATION-SURVIVES",
+     "V-AMCR-R2-RESIDUAL-IS-RESEARCH-NOT-CONTEXT",
+     "V-AMCR-R10-NEXT-PASS-RELAUNCHES-WITHOUT-OWNER",
+     "V-AMCR-R10-SUCCESSOR-BRIEFED-ON-BOUND-ROOT",
+     "V-AMCR-R2-CONTROL-REAL-STALL-NOT-RECONCILED",
+     "V-AMCR-R7-GSD-DOWN-STATE-BODY-ANSWERS",
+     "V-AMCR-R7-NOTHING-READABLE-IS-EMPTY",
+     "V-AMCR-R8-LATEST-GENERATION-ONLY",
+     "V-AMCR-R9-REMOVED-ROOT-IS-UNKNOWN-NOT-ZERO",
+     "V-AMCR-R9-UNKNOWN-STREAK-SURFACES-INCIDENT",
+     "V-AMCR-R9-INVALIDATED-BINDING-STILL-TRIPS-A-STALL",
+     "V-AMCR-BIND-REFUSES-OTHER-REPO",
+     "V-AMCR-BIND-REFUSES-SUBDIR",
+     "V-AMCR-REBIND-SAME-ROOT-IS-NOOP",
+     "V-AMCR-TOPOLOGY-RECEIPT",
+     "V-AMCR-CLOSED-OBLIGATION-NEVER-REOPENED",
+     "V-AMCR-MENTIONS-MSYS-PATH"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "AMCR_PASS",
+    "tag_line": {
+     "name": "AMCR_PASS",
+     "passed": 37,
+     "total": 38
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 4.3
+   },
+   "test_mission_recovery": {
+    "basis": "STATE phase 7",
+    "bracket_moved": false,
+    "command": "python3 tools/test_mission_recovery.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 69,
+    "group": "B",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_mission_recovery",
+    "passes": [
+     "V-AMR-STRATEGY-SAME-PLANNER-NEW-SESSION-EQUAL",
+     "V-AMR-STRATEGY-MAIN-THREAD-MATERIALLY-DIFFERENT",
+     "V-AMR-HOOK-OWNED-PATH-NOT-PROGRESS",
+     "V-AMR-SESSION-ARTIFACT-NOT-CAPITAL",
+     "V-AMR-PLANNING-PATH-IS-PLAN",
+     "V-AMR-CONTROL-PATH-CLASSES-KEPT",
+     "V-AMR-RESIDUAL-ASKS-VERIFICATION",
+     "V-AMR-CONTROL-VERIFIED-UNIT-NOT-ASKED",
+     "V-AMR-UNMEASURED-IS-UNKNOWN-NOT-ZERO",
+     "V-AMR-CONTROL-MEASURED-NOTHING-IS-ZERO",
+     "V-AMR-HANDBACK-DESIGN-IS-PLAN-PROGRESS",
+     "V-AMR-MODE-ROUTER-PLANNER-FAILURE-TYPED",
+     "V-AMR-DEFLATES-TO-MAIN-THREAD-EXECUTION",
+     "V-AMR-FENCED-SUCCESSOR-NOT-RECOMPILED",
+     "V-AMR-UNCLASSIFIED-HAS-NO-TOPOLOGY",
+     "V-AMR-LEASE-BOUNDED-BELOW-REMAINING",
+     "V-AMR-LEASE-EXHAUSTED-REFUSES",
+     "V-AMR-LEASE-UNMEASURED-REFUSES",
+     "V-AMR-COST-HOLD-PLANS-RECOVER",
+     "V-AMR-RECOVERED-AND-LAUNCHED",
+     "V-AMR-HOLD-SUPERSEDED-NOT-DELETED",
+     "V-AMR-OLD-EXECUTOR-FENCE-KEPT",
+     "V-AMR-FAILED-STRATEGY-FENCED",
+     "V-AMR-FAILURE-AND-PROGRESS-RECORDED",
+     "V-AMR-CONTEXTIMAGE-MINIMAL",
+     "V-AMR-FAILED-ATTEMPT-CAPITALIZED",
+     "V-AMR-NO-TRANSCRIPT-REPLAY",
+     "V-AMR-SPEND-SETTLED-LEASE-PRICED",
+     "V-AMR-SUCCESSOR-ROUTE-ADMITTED",
+     "V-AMR-PGO-ROW",
+     "V-AMR-NOT-IN-WORK-TREE",
+     "V-AMR-SECOND-RECOVERY-DIFFERENT-STRATEGY",
+     "V-AMR-RECURSION-BOUNDED",
+     "V-AMR-BOUNDARY-PARKS-NOT-SETTLES",
+     "V-AMR-BOUNDARY-DECISION-PACKET",
+     "V-AMR-AUTHORITY-EXHAUSTED-OWNER-BOUNDARY",
+     "V-AMR-AUTHORITY-NOT-SELF-EXPANDED",
+     "V-AMR-CONTROL-AUTHORITY-RAISED-RECOVERS",
+     "V-AMR-OWNER-PARK-NOT-RECOVERED",
+     "V-AMR-LIVENESS-OWNER-PARK-IS-BOUNDARY",
+     "V-AMR-KILL-SWITCH-RESTORES-PARK",
+     "V-AMR-LIVENESS-INCIDENT-WHEN-RECOVERY-OFF",
+     "V-AMR-SHADOW-COMPILES-NOT-LAUNCHES",
+     "V-AMR-LIVENESS-RECOVERING",
+     "V-AMR-NO-SUCCESSOR-BEFORE-FENCE",
+     "V-AMR-LAUNCH-FAILURE-VISIBLE",
+     "V-AMR-RESIDUAL-UNKNOWN-IS-RECOVERY-FAILED",
+     "V-AMR-RESIDUAL-UNKNOWN-EXHAUSTS-TO-INCIDENT",
+     "V-AMR-RESIDUAL-UNKNOWN-KILL-SWITCH-LEGACY",
+     "V-AMR-GSD-COMPLETE-NOT-RECOVERED",
+     "V-AMR-UNKNOWN-LIVENESS-NO-SECOND-WRITER",
+     "V-AMR-ADVANCE-NEXT-UNIT-SAME-FENCE",
+     "V-AMR-SAME-UNIT-CLOSED-TWICE-PARKS",
+     "V-AMR-SPAWN-HOOK-DENIES-FENCED-PLANNER",
+     "V-AMR-CONTROL-SPAWN-HOOK-ALLOWS-EXPLORE",
+     "V-AMR-CONTROL-SPAWN-HOOK-UNFENCED-SESSION",
+     "V-AMR-FENCE-READS-MARKER-DIR",
+     "V-AMR-READ-ONLY-AGENT-NEVER-FENCED",
+     "V-AMR-F1-OWNER-HOLD-NOT-OVERWRITTEN",
+     "V-AMR-F1-SEQ-CAS-REFUSES-STALE-WRITE",
+     "V-AMR-F2-PACKET-EPOCH-PINNED",
+     "V-AMR-F4-BUDGET-GATE",
+     "V-AMR-F4-CAPSULE-V2-INELIGIBLE",
+     "V-AMR-F5-ADVANCE-REFUSAL-PARKS",
+     "V-AMR-F6-GSD-OUTAGE-WAITS",
+     "V-AMR-F3-STOP-RECORDED-ON-HOLD",
+     "V-AMR-PRODUCTIVE-LEASE-RENEWS-SAME-STRATEGY",
+     "V-AMR-SUPERVISE-RECOVERS-AND-LAUNCHES",
+     "V-AMR-SUPERVISE-SUCCESSOR-GETS-PACKET-NOT-GSD"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "AMR_PASS",
+    "tag_line": {
+     "name": "AMR_PASS",
+     "passed": 69,
+     "total": 69
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 2.2
+   },
+   "test_mission_spend": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_mission_spend.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 45,
+    "group": "B",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_mission_spend",
+    "passes": [
+     "V-MSPEND-EXACT-SUM",
+     "V-MSPEND-SIBLING-EXCLUDED",
+     "V-MSPEND-UNKNOWN-NOT-ZERO",
+     "V-MSPEND-LAUNCH-CWD-MEASURED",
+     "V-MSPEND-LAUNCH-CWD-CONTROL-ABSENT",
+     "V-MSPEND-CACHE-SEES-GROWTH",
+     "V-MSPEND-FOREIGN-SESSION-EXCLUDED",
+     "V-MSPEND-FOREIGN-CONTROL-COUNTED",
+     "V-MSPEND-SUBAGENT-ATTRIBUTED",
+     "V-MSPEND-PREFIX-PENDING-WORKER",
+     "V-MSPEND-UNATTRIBUTED-IS-UNKNOWN",
+     "V-MSPEND-SESSIONS-DERIVED",
+     "V-MSPEND-OTHER-MISSION-WORKER-EXCLUDED",
+     "V-MSPEND-DERIVED-END-TO-END",
+     "V-MSPEND-NO-ESTIMATE-NEVER-TRIPS",
+     "V-MSPEND-UNMEASURED-NEVER-TRIPS",
+     "V-MSPEND-E1-REPLAY-TRIPS",
+     "V-MSPEND-AT-RATIO-CONTROL",
+     "V-MSPEND-OVER-RATIO-TRIPS",
+     "V-MSPEND-MARK-ON-NEW-FP",
+     "V-MSPEND-STALL-CONTROL",
+     "V-MSPEND-STALL-TRIPS",
+     "V-MSPEND-PROGRESS-RESETS-STALL",
+     "V-MSPEND-U1-FRESH-TRIPS-WITH-WATERMARK",
+     "V-MSPEND-U1-STALE-NEVER-TRIPS",
+     "V-MSPEND-U1-NO-WATERMARK-IS-STALE",
+     "V-MSPEND-U1-FUTURE-IS-STALE",
+     "V-MSPEND-TRIP-HOLDS",
+     "V-MSPEND-HOLD-PLAN-RECOVER",
+     "V-MSPEND-HOLD-PLAN-NONE-AMR-OFF",
+     "V-MSPEND-CONTROL-NO-HOLD",
+     "V-MSPEND-METER-ERROR-FAILS-OPEN",
+     "V-MSPEND-SUPERVISE-WIRED",
+     "V-MSPEND-MODEL-PASSED",
+     "V-MSPEND-NO-MODEL-CONTROL",
+     "V-MSPEND-SETTLE-CAPPED-TO-BOOKED",
+     "V-MSPEND-SETTLE-UNBOOKED-CONTROL",
+     "V-MSPEND-SETTLE-EXCLUDES-PREBIND",
+     "V-MSPEND-SETTLE-BOOKED-EXCLUDES-PREBIND-b274",
+     "V-MSPEND-SETTLE-BOOKED-EXCLUDES-PREBIND-c033",
+     "V-MSPEND-CORRECT-NEEDS-OWNER-TYPED",
+     "V-MSPEND-CORRECT-APPLIED",
+     "V-MSPEND-CORRECT-IDEMPOTENT",
+     "V-MSPEND-CORRECT-SURVIVES-SWEEP-ROW",
+     "V-MSPEND-CORRECT-REFUSES-CAS",
+     "V-MSPEND-CORRECT-REFUSES-RAISE"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "MSPEND_PASS",
+    "tag_line": {
+     "name": "MSPEND_PASS",
+     "passed": 46,
+     "total": 46
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.1
+   },
+   "test_mission_steward": {
+    "basis": "first_observed_phase_8",
+    "bracket_moved": false,
+    "command": "python3 tools/test_mission_steward.py",
+    "exit": 0,
+    "fails": [],
+    "floor": null,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_mission_steward",
+    "passes": [
+     "V-STEWARD-SETTLE-CLOSES-ALL",
+     "V-STEWARD-SETTLE-IDEMPOTENT",
+     "V-STEWARD-DUP-PASS-ONE-EFFECT",
+     "V-STEWARD-SALVAGE",
+     "V-STEWARD-PARTIAL-RECEIPT",
+     "V-STEWARD-WORKSTREAM-GOAL",
+     "V-STEWARD-RESIDUAL-NO-STACK",
+     "V-S3-RESIDUAL-NEVER-OVERWRITES-ADMITTED",
+     "V-STEWARD-RESIDUAL-CITES-OWN-RESUME",
+     "V-STEWARD-NO-TRANSCRIPT-UNKNOWN",
+     "V-STEWARD-LIVE-OWNER-UNTOUCHED",
+     "V-STEWARD-CANONICAL-RECEIPT-UNTOUCHED",
+     "V-APR-K5-STEWARD-UNCLOSED-RECEIPT",
+     "V-STEWARD-RESTART-MIDWAY",
+     "V-STEWARD-NEVER-ARMS",
+     "V-STEWARD-HOLD-NOT-FORGOTTEN",
+     "V-STEWARD-FORGOTTEN-ONCE-PER-24H",
+     "V-STEWARD-KILL-SWITCH",
+     "V-STEWARD-CORRECT-LOWERS",
+     "V-STEWARD-CORRECT-NEEDS-TTY",
+     "V-STEWARD-CLI-SETTLE-REFUSES-BLIND",
+     "V-STEWARD-SUPERVISE-ERROR-ISOLATED",
+     "V-STEWARD-CONTROL-NOTHING-QUALIFIES",
+     "V-STEWARD-SETTLES-COMPLETED",
+     "V-STEWARD-SETTLE-ONCE",
+     "V-STEWARD-PRE-GOAL-SPEND-EXCLUDED",
+     "V-STEWARD-STRADDLE-POST-SINCE-ONLY"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "STEWARD_PASS",
+    "tag_line": {
+     "name": "STEWARD_PASS",
+     "passed": 27,
+     "total": 27
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.5
+   },
+   "test_owner_boundary_delivery": {
+    "basis": "STATE phase 6",
+    "bracket_moved": false,
+    "command": "python3 tools/test_owner_boundary_delivery.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 14,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_owner_boundary_delivery",
+    "passes": [
+     "V-OBD-TYPE-CAPITAL",
+     "V-OBD-TYPE-SECURITY",
+     "V-OBD-TYPE-UNKNOWN-CONTROL",
+     "V-OBD-FIGURES-FROM-HOLD",
+     "V-OBD-FIGURES-ABSENT-NOT-ZERO",
+     "V-OBD-QUEUE-URGENT-NO-GRACE",
+     "V-OBD-HOLD-TYPED",
+     "V-OBD-PACKET-REAL-FIGURES",
+     "V-OBD-QUEUED-URGENT",
+     "V-OBD-VISIBLE-NEXT-SESSIONSTART",
+     "V-OBD-NOT-RUNNING-LABEL",
+     "V-OBD-HUB-SEES-URGENT-FLAG",
+     "V-OBD-RELEASE-CLEARS-ROW",
+     "V-OBD-UNKNOWN-IS-NOT-LIVENESS-INCIDENT-CONTROL"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "OBD_PASS",
+    "tag_line": {
+     "name": "OBD_PASS",
+     "passed": 14,
+     "total": 14
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.1
+   },
+   "test_rotation_invariant": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_rotation_invariant.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 17,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [
+     "V-ROT-REPLAY"
+    ],
+    "name": "test_rotation_invariant",
+    "passes": [
+     "V-ROT-POLICY-SATISFIES",
+     "V-ROT-REPAIRS-CEILING",
+     "V-ROT-ADDS-TOKEN-WALL",
+     "V-ROT-BASELINE-RECORDS-FINAL-VALUE",
+     "V-ROT-IDEMPOTENT",
+     "V-ROT-EXPLICIT-BELOW-KEPT",
+     "V-ROT-EXPLICIT-ABOVE-REPAIRED",
+     "V-ROT-KILL-SWITCH",
+     "V-ROT-EVIDENCE-OLD-UNREACHABLE",
+     "V-ROT-EVIDENCE-NEW-REACHABLE",
+     "V-ROT-EVIDENCE-UNMEASURED",
+     "V-ROT-EVIDENCE-BELOW-BOTH-NOT-REACHABLE",
+     "V-ROT-IDEMPOTENT-SMALL-LINE",
+     "V-ROT-WALL-TOKENS-FIRES",
+     "V-ROT-WALL-UNDER-SILENT",
+     "V-ROT-WALL-PCT-ONLY-BLIND",
+     "V-ROT-WALL-FLAG-IS-WITNESS"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "ROT_PASS",
+    "tag_line": {
+     "name": "ROT_PASS",
+     "passed": 17,
+     "total": 17
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.2
+   },
+   "test_s3_admission": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_s3_admission.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 11,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_s3_admission",
+    "passes": [
+     "V-S3-DIGEST-CRLF-EQUAL",
+     "V-S3-DIGEST-BOM-EQUAL",
+     "V-S3-DIGEST-CONTENT-DIFFERS",
+     "V-S3-DIGEST-MISSING-NONE",
+     "V-S3-LEGACY-RAW-DIGEST-STILL-MATCHES",
+     "V-S3-MATCH-REJECTS-NONE-AND-WRONG",
+     "V-S3-BACKOFF-DOUBLES-THEN-CAPS",
+     "V-S3-KILL-SWITCH",
+     "V-S3-BACKOFF-DEFAULT-ON",
+     "V-S3-MUTANT-NO-NORMALISE-GOES-RED",
+     "V-S3-MUTANT-NO-BACKOFF-GOES-RED"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "S3_PASS",
+    "tag_line": {
+     "name": "S3_PASS",
+     "passed": 11,
+     "total": 11
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.0
+   },
+   "test_s4_lease": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_s4_lease.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 14,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_s4_lease",
+    "passes": [
+     "V-S4-PRODUCTIVE-CROSSES-VARIANCE",
+     "V-S4-NONPRODUCTIVE-STILL-STOPS",
+     "V-S4-UNVERIFIED-DELTA-STOPS",
+     "V-S4-UNMEASURED-FP-STOPS",
+     "V-S4-CEILING-AUTHORITATIVE",
+     "V-S4-NO-AUTHORITY-STILL-STOPS",
+     "V-S4-RENEWAL-CAP",
+     "V-S4-KILL-SWITCH",
+     "V-S4-RENEW-NO-OWNER-HOLD",
+     "V-S4-RENEWED-INSIDE-AUTHORITY",
+     "V-S4-IDEMPOTENT-SAME-FP",
+     "V-S4-STUCK-HOLDS",
+     "V-S4-RUNAWAY-HOLDS-AT-CEILING",
+     "V-S4-MUTANT-NO-LEASE-GOES-RED"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "S4_PASS",
+    "tag_line": {
+     "name": "S4_PASS",
+     "passed": 14,
+     "total": 14
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 0.1
+   },
+   "test_s5_reconcile": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_s5_reconcile.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 44,
+    "group": "A",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_s5_reconcile",
+    "passes": [
+     "V-S5-TRACER-DECLARED-RECEIPT-COMPLETES",
+     "V-S5-TRACER-EPOCH-CLOSED",
+     "V-S5-TRACER-RECONCILE-DONE",
+     "V-S5-TRACER-MISSING-HALTS",
+     "V-S5-TRACER-NOT-OVERWRITTEN",
+     "V-S5-EPOCH-EVERY-TERMINAL-EVENT",
+     "V-S5-EPOCH-MENTION-IS-NOT-TERMINAL",
+     "V-S5-RESOLVER-DECLARED-WINS-OVER-ABSENT-STEM",
+     "V-S5-RESOLVER-STEM-DEFAULT-WHEN-NONE-EXIST",
+     "V-S5-RESOLVER-CHAIN-BEATS-STEM-WHEN-NONE-EXIST",
+     "V-S5-RESOLVER-CONFLICT",
+     "V-S5-RESOLVER-TRAVERSAL-REFUSED-DOTDOT",
+     "V-S5-RESOLVER-TRAVERSAL-REFUSED-ABS",
+     "V-S5-RESOLVER-TRAVERSAL-REFUSED-SYMLINK",
+     "V-S5-RESOLVER-AMR-SUCCESSOR",
+     "V-S5-STEWARD-SEES-RESOLVER-CLOSED",
+     "V-S5-STEWARD-CONFLICT-IS-UNKNOWN",
+     "V-S5-RECONCILE-POSITIVE",
+     "V-S5-RECONCILE-CONTINUATION",
+     "V-S5-RECONCILE-FAILED",
+     "V-S5-RECONCILE-AMBIGUOUS",
+     "V-S5-NO-FALSE-DONE-MATRIX",
+     "V-S5-RECEIPT-INVENTORY",
+     "V-S5-RECEIPT-INVENTORY-CONTROL",
+     "V-S5-DISPOSE-PARTITION-CONSERVES",
+     "V-S5-DISPOSE-UNMEASURED-SEPARATE",
+     "V-S5-DISPOSE-SUMMED-VS-UNION",
+     "V-S5-DISPOSE-149-NOT-MEASURED",
+     "V-S5-RESOLVER-AUDIT-COUNTS-DECLARED-ONLY",
+     "V-S5-READONLY",
+     "V-S5-KILL-SWITCH",
+     "V-S5-NO-SPEND-NO-TRANSITION",
+     "V-S5-FC10-NO-NEW-STATE",
+     "V-S5-MUTANT-M-EPOCH-ONLY-HALTED",
+     "V-S5-MUTANT-M-RESOLVER-STEM-ONLY",
+     "V-S5-MUTANT-M-RESOLVER-FIRST-NOT-PRESENT",
+     "V-S5-MUTANT-M-RECONCILE-ALWAYS-DONE",
+     "V-S5-MUTANT-M-RECONCILE-IGNORE-CONFLICT",
+     "V-S5-MUTANT-M-RECONCILE-NO-SUCCESSOR",
+     "V-S5-MUTANT-M-RECONCILE-STALE-OK",
+     "V-S5-MUTANT-M-AUDIT-NEVER-COUNTS",
+     "V-S5-MUTANT-M-DISPOSE-ALL-LOST",
+     "V-S5-MUTANT-M-WIRING-LEGACY-PRESENT",
+     "V-S5-MUTANT-M-INVENTORY-SECOND-SITE"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "S5_PASS",
+    "tag_line": {
+     "name": "S5_PASS",
+     "passed": 44,
+     "total": 44
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 131.2
+   },
+   "test_s6_blockers": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_s6_blockers.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 72,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_s6_blockers",
+    "passes": [
+     "V-S6-TRACER-SURFACE-BLOCKED-TYPED",
+     "V-S6-TRACER-KILLSWITCH-OLD-SHAPE",
+     "V-S6-TRACER-FAIL-OPEN",
+     "V-S6-TRACER-UNKNOWN-REACHABLE",
+     "V-S6-TRACER-CENSUS-POPULATION",
+     "V-S6-BATCH-ITEMS",
+     "V-S6-BATCH-NEGATIVE-FC06",
+     "V-S6-BATCH-NEGATIVE-STATE-LINE",
+     "V-S6-BATCH-ANSWERED",
+     "V-S6-BATCH-ONE-RECORD-ONE-QUEUE",
+     "V-S6-BATCH-IDEMPOTENT",
+     "V-S6-BATCH-POLICY-RULE-RECORDED",
+     "V-S6-BATCH-POLICY-REFUSED-WITHOUT-RULE",
+     "V-S6-BATCH-POLICY-NEVER-OUTWARD",
+     "V-S6-BATCH-PREFLIGHT-READONLY",
+     "V-S6-BATCH-KILL-SWITCH",
+     "V-S6-BATCH-FAIL-OPEN",
+     "V-S6-BATCH-UNMEASURED-SOURCE",
+     "V-S6-CLASS-POSITIVE",
+     "V-S6-CLASS-NEGATIVE",
+     "V-S6-INDEPENDENT-POSITIVE",
+     "V-S6-UNKNOWN-NEVER-INDEPENDENT",
+     "V-S6-INDEPENDENT-NO-OTHER-UNIT",
+     "V-S6-INDEPENDENT-UNMEASURED",
+     "V-S6-INDEPENDENT-STALE-BOX",
+     "V-S6-INDEPENDENT-AUTHORITY-HOLD",
+     "V-S6-INDEPENDENT-REAL-ROADMAP",
+     "V-S6-DETERMINISTIC",
+     "V-S6-AUTONOMY-AGREEMENT",
+     "V-S6-WRITER-DISCOVERY",
+     "V-S6-NO-NEW-LAUNCH-PATH",
+     "V-S6-FC10-NO-NEW-STATE",
+     "V-S6-CONSUMERS-TOLERATE",
+     "V-S6-HOLD-PARKS-TYPED",
+     "V-S6-ISOLATION",
+     "V-S6-CENSUS-ARTIFACT",
+     "V-S6-DRILL-M-UNTYPED-BLOCK",
+     "V-S6-DRILL-M-DROP-INTENT-RULE",
+     "V-S6-DRILL-M-KILL-SWITCH-IGNORED",
+     "V-S6-DRILL-M-FAIL-CLOSED",
+     "V-S6-DRILL-M-UNKNOWN-INDEPENDENT",
+     "V-S6-DRILL-M-ALWAYS-INDEPENDENT",
+     "V-S6-DRILL-M-NEVER-INDEPENDENT",
+     "V-S6-DRILL-M-CENSUS-DROPS-EVENT",
+     "V-S6-DRILL-M-ITEM-ID-UNSTABLE",
+     "V-S6-DRILL-M-FC06-LINE-NOT-FILTERED",
+     "V-S6-DRILL-M-DROP-ANSWERED",
+     "V-S6-DRILL-M-ONE-QUEUE-PER-ITEM",
+     "V-S6-DRILL-M-NOT-IDEMPOTENT",
+     "V-S6-DRILL-M-POLICY-RULE-DROPPED",
+     "V-S6-DRILL-M-EXPAND-AUTHORITY",
+     "V-S6-DRILL-M-PREFLIGHT-WRITES",
+     "V-S6-DRILL-M-UNMEASURED-READ-AS-ZERO",
+     "V-S6-DRILL-M-DROP-CLASS",
+     "V-S6-DRILL-M-CLASS-CONTROL-MISSING",
+     "V-S6-DRILL-M-UNMEASURED-AS-FALSE-REASON",
+     "V-S6-DRILL-M-STALE-BOX-COUNTS",
+     "V-S6-DRILL-M-AUTHORITY-HOLD-IGNORED",
+     "V-S6-DRILL-M-FIXTURE-ONLY-ROADMAP",
+     "V-S6-DRILL-M-NONDETERMINISTIC",
+     "V-S6-DRILL-M-IGNORE-AUTONOMY-GATE",
+     "V-S6-DRILL-M-BYPASS-WRITER",
+     "V-S6-DRILL-M-NO-ANNOTATE",
+     "V-S6-DRILL-M-LAUNCHES",
+     "V-S6-DRILL-M-NEW-STATE",
+     "V-S6-DRILL-M-NEW-STATE-LIVE",
+     "V-S6-DRILL-M-CONSUMER-BREAKS",
+     "V-S6-DRILL-M-HOLD-UNTYPED",
+     "V-S6-DRILL-M-HOST-LEDGER",
+     "V-S6-DRILL-M-CENSUS-EMPTY",
+     "V-S6-DRILL-CONTROL-NOOP-FIRES",
+     "V-S6-MUTANT-MAP"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "S6_PASS",
+    "tag_line": {
+     "name": "S6_PASS",
+     "passed": 72,
+     "total": 72
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 11.7
+   },
+   "test_s7_replay": {
+    "basis": "07-VERIFICATION line 14",
+    "bracket_moved": false,
+    "command": "python3 tools/test_s7_replay.py",
+    "exit": 0,
+    "fails": [],
+    "floor": 164,
+    "group": "A",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_s7_replay",
+    "passes": [
+     "V-S7-TRACER-PIN-STABLE",
+     "V-S7-TRACER-PIN-FLIPPED-BYTE",
+     "V-S7-TRACER-PIN-COMMITTED-VERIFIES",
+     "V-S7-SCOPE-RESTORED",
+     "V-S7-TRACER-S3-DIFFERS",
+     "V-S7-TRACER-S2-REFUSES",
+     "V-S7-FAITHFUL-CONTROL",
+     "V-S7-READONLY-PROBE-FIRES",
+     "V-S7-READONLY-COPY-IDENTICAL",
+     "V-S7-READONLY-NO-HOST-WRITE",
+     "V-S7-RECORD-DRIFT-UNMEASURED",
+     "V-S7-TRACER-REALSEAM",
+     "V-S7-DISCOVER-COVERAGE",
+     "V-S7-NO-IDS",
+     "V-S7-UNMAPPED-LOOP",
+     "V-S7-UNMAPPED-LOOP-NEIGHBOUR",
+     "V-S7-CENSUS-DIFFERENCE-PRINTED",
+     "V-S7-S6-CLASSED",
+     "V-S7-S6-UNKNOWN-IS-UNCHANGED",
+     "V-S7-S4-TRIP-NO-AUTH-LEGIT",
+     "V-S7-S4-PREVENTED-NEEDS-AUTHORITY",
+     "V-S7-S4-FP-MISSING-UNMEASURED",
+     "V-S7-S1-EFFECT-UNMEASURED",
+     "V-S7-S5-NO-149H-CLAIM",
+     "V-S7-S5-NOW-FIXED",
+     "V-S7-RENEWAL-AXIS-LABELLED",
+     "V-S7-RENEWAL-OUTCOME-UNMEASURED",
+     "V-S7-HELD-EQUAL",
+     "V-S7-HELD-RESTORED",
+     "V-S7-VERDICT-POS-PREVENTED",
+     "V-S7-VERDICT-NEIGHBOUR-PREVENTED",
+     "V-S7-VERDICT-POS-MOVED_EARLIER",
+     "V-S7-VERDICT-NEIGHBOUR-MOVED_EARLIER",
+     "V-S7-VERDICT-POS-LEGITIMATE_STOP",
+     "V-S7-VERDICT-NEIGHBOUR-LEGITIMATE_STOP",
+     "V-S7-VERDICT-POS-UNCHANGED",
+     "V-S7-VERDICT-NEIGHBOUR-UNCHANGED",
+     "V-S7-VERDICT-POS-UNMEASURED",
+     "V-S7-VERDICT-NEIGHBOUR-UNMEASURED",
+     "V-S7-VERDICT-CLOSED",
+     "V-S7-UNMEASURED-REACHABLE-REAL",
+     "V-S7-UNMEASURED-NOT-PREVENTED",
+     "V-S7-ALL-FIVE-REAL",
+     "V-S7-NO-NEW-STATE",
+     "V-S7-TIME-THREE-DISTINCT",
+     "V-S7-TIME-NEVER-CONFLATED",
+     "V-S7-TIME-UNMEASURED-NOT-ZERO",
+     "V-S7-IDLE-REALSEAM",
+     "V-S7-IDLE-AVOIDABLE-POS",
+     "V-S7-IDLE-LEGIT-NEIGHBOUR",
+     "V-S7-IDLE-INCOMPLETE",
+     "V-S7-IDLE-BEFORE-AFTER",
+     "V-S7-S8-SENTENCE-FORMS",
+     "V-S7-S8-NO-CWD-READ",
+     "V-S7-REPORT-TAGGED",
+     "V-S7-REPORT-UNMEASURED-APART",
+     "V-S7-DETERMINISTIC",
+     "V-S7-REPORT-MD",
+     "V-S7-MUTANT-ALWAYS-ADMIT",
+     "V-S7-MUTANT-NEVER-ROTATE",
+     "V-S7-MUTANT-ALWAYS-RENEW",
+     "V-S7-MUTANT-TERMINAL-NO-PROOF",
+     "V-S7-MUTANT-DROP-CLASS",
+     "V-S7-MUTANT-EXPAND-AUTHORITY",
+     "V-S7-MUTANT-IDENTICAL-IS-DEFECT",
+     "V-S7-MUTANT-SCOPE-RESTORED",
+     "V-S7-MUTANT-NO-SOURCE-EDIT",
+     "V-S7-MUTANT-STUB-CALLED",
+     "V-S7-FC06-CAPITAL",
+     "V-S7-FC06-DIGEST",
+     "V-S7-FC06-DONE-PROOF",
+     "V-S7-FC06-PROTECTIONS",
+     "V-S7-FC06-CHALLENGER-CLEAN",
+     "V-S7-FC06-HARD-FAIL",
+     "V-S7-SEEDED-APART",
+     "V-S7-NO-REDEFINE-AFTER-MUTANTS",
+     "V-S7-NEGCONTROL-FLIPPED-BYTE",
+     "V-S7-NEGCONTROL-UNFAITHFUL",
+     "V-S7-NEGCONTROL-UNMEASURED-NOT-PREVENTED",
+     "V-S7-NEGCONTROL-EMPTY-S8",
+     "V-S7-NEGCONTROL-MISSING-COMMAND",
+     "V-S7-NEGCONTROL-SEEDED-FC06",
+     "V-S7-NEGCONTROL-IDENTICAL-STUB",
+     "V-S7-DRILL-M-ALL-LOOPS-UNMAPPED",
+     "V-S7-DRILL-M-CENSUS-DIFF-ZERO",
+     "V-S7-DRILL-M-CHAMPION-IS-CHALLENGER",
+     "V-S7-DRILL-M-COVERAGE-DROPS-ROW",
+     "V-S7-DRILL-M-DRIFT-READ-ANYWAY",
+     "V-S7-DRILL-M-ENV-NOT-RESTORED",
+     "V-S7-DRILL-M-FAITHFUL-DISABLED",
+     "V-S7-DRILL-M-FC06-BREACH-SOFT",
+     "V-S7-DRILL-M-FC06-CAPITAL-OFF",
+     "V-S7-DRILL-M-FC06-CHALLENGER-BREACH",
+     "V-S7-DRILL-M-FC06-DIGEST-OFF",
+     "V-S7-DRILL-M-FC06-DONE-OFF",
+     "V-S7-DRILL-M-FC06-PROTECT-OFF",
+     "V-S7-DRILL-M-HARDCODED-MISSION-ID",
+     "V-S7-DRILL-M-HELD-DIFFERS",
+     "V-S7-DRILL-M-HELD-LEAKS",
+     "V-S7-DRILL-M-IDENTICAL-NOT-DEFECT",
+     "V-S7-DRILL-M-IDLE-HOLD-IGNORED",
+     "V-S7-DRILL-M-IDLE-INCOMPLETE-LEGIT",
+     "V-S7-DRILL-M-IDLE-NEVER-AVOIDABLE",
+     "V-S7-DRILL-M-IDLE-NO-PLAN-NEXT",
+     "V-S7-DRILL-M-IDLE-NO-S2-REMOVAL",
+     "V-S7-DRILL-M-INCONCLUSIVE-EXITS-ZERO",
+     "V-S7-DRILL-M-LEDGER-WRITE-MODE",
+     "V-S7-DRILL-M-LOOP-NOT-CARRIED",
+     "V-S7-DRILL-M-LOOP-THRESHOLD",
+     "V-S7-DRILL-M-NEW-STATE-VAR",
+     "V-S7-DRILL-M-PIN-DROPS-ROW",
+     "V-S7-DRILL-M-PIN-NO-HASH",
+     "V-S7-DRILL-M-PIN-READS-WHOLE",
+     "V-S7-DRILL-M-PROBE-BLIND",
+     "V-S7-DRILL-M-REDUCTION-NEVER",
+     "V-S7-DRILL-M-REDUCTION-ZERO",
+     "V-S7-DRILL-M-REIMPLEMENT-SEAM",
+     "V-S7-DRILL-M-RENEWAL-IN-TOTALS",
+     "V-S7-DRILL-M-RENEWAL-OUTCOME-DEFAULTED",
+     "V-S7-DRILL-M-REPORT-MD-LABEL",
+     "V-S7-DRILL-M-REPORT-NONDETERMINISTIC",
+     "V-S7-DRILL-M-REPORT-NOT-VALIDATED",
+     "V-S7-DRILL-M-REPORT-UNMEASURED-MERGED",
+     "V-S7-DRILL-M-S1-EFFECT-COUNTED",
+     "V-S7-DRILL-M-S2-OUTCOME-OK",
+     "V-S7-DRILL-M-S4-FP-DEFAULTED",
+     "V-S7-DRILL-M-S4-NO-STALL-CLASS",
+     "V-S7-DRILL-M-S5-NOW-CLOCK",
+     "V-S7-DRILL-M-S5-QUOTE-DROPPED",
+     "V-S7-DRILL-M-S6-UNKNOWN-STOPS",
+     "V-S7-DRILL-M-S6-UNTYPED",
+     "V-S7-DRILL-M-S8-EMPTY-NONE-FOUND",
+     "V-S7-DRILL-M-S8-READS-CWD",
+     "V-S7-DRILL-M-SANDBOX-STATE-NOT-REDIRECTED",
+     "V-S7-DRILL-M-SCOPE-NOT-RESTORED",
+     "V-S7-DRILL-M-SEEDED-MERGED",
+     "V-S7-DRILL-M-SOURCE-TOUCHED",
+     "V-S7-DRILL-M-STUB-ALWAYS-ADMIT-REAL",
+     "V-S7-DRILL-M-STUB-ALWAYS-RENEW-REAL",
+     "V-S7-DRILL-M-STUB-DROP-CLASS-REAL",
+     "V-S7-DRILL-M-STUB-EXPAND-REAL",
+     "V-S7-DRILL-M-STUB-NEVER-COUNTED",
+     "V-S7-DRILL-M-STUB-NEVER-ROTATE-REAL",
+     "V-S7-DRILL-M-STUB-TERMINAL-REAL",
+     "V-S7-DRILL-M-SWITCH-MISSING",
+     "V-S7-DRILL-M-UNMEASURED-HOURS-ZERO",
+     "V-S7-DRILL-M-VERDICT-LEGIT-ALWAYS",
+     "V-S7-DRILL-M-VERDICT-LEGIT-OFF",
+     "V-S7-DRILL-M-VERDICT-MOVED-INVERTED",
+     "V-S7-DRILL-M-VERDICT-MOVED-LOOSE",
+     "V-S7-DRILL-M-VERDICT-NOT-VALIDATED",
+     "V-S7-DRILL-M-VERDICT-PREVENTED-LOOSE",
+     "V-S7-DRILL-M-VERDICT-PREVENTED-UNREACHABLE",
+     "V-S7-DRILL-M-VERDICT-SET-WIDENED",
+     "V-S7-DRILL-M-VERDICT-UNCHANGED-WRONG",
+     "V-S7-DRILL-M-VERDICT-UNMEASURED-ALWAYS",
+     "V-S7-DRILL-M-VERDICT-UNMEASURED-AS-PREVENTED",
+     "V-S7-DRILL-M-VERDICT-UNMEASURED-AS-UNCHANGED",
+     "V-S7-DRILL-M-VERDICT-UNMEASURED-OFF",
+     "V-S7-DRILL-M-WALL-CALLS-SUM",
+     "V-S7-DRILL-M-WALL-IS-SUM",
+     "V-S7-DRILL-CONTROL-NOOP-FIRES",
+     "V-S7-DRILL-REAL-FILE-UNTOUCHED",
+     "V-S7-MUTANT-MAP"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "S7_PASS",
+    "tag_line": {
+     "name": "S7_PASS",
+     "passed": 164,
+     "total": 164
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 218.1
+   },
+   "test_s9_redteam": {
+    "basis": "08-02-SUMMARY",
+    "bracket_moved": false,
+    "command": "python3 tools/test_s9_redteam.py",
+    "exit": 0,
+    "fails": [],
+    "floor": null,
+    "group": "C",
+    "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+    "inconclusive": [],
+    "name": "test_s9_redteam",
+    "passes": [
+     "V-S9RT-REGISTRY",
+     "V-S9RT-SUBATTACKS-DECLARED",
+     "V-S9RT-CLOSED-SET",
+     "V-S9RT-NO-PASS-TOKEN",
+     "V-S9RT-HELD-NEEDS-CONTROL",
+     "V-S9RT-WORST-OF",
+     "V-S9RT-PLANE-NAMED",
+     "V-S9RT-NONESSENTIAL",
+     "V-S9RT-READONLY",
+     "V-S9RT-READONLY-PROBE-FIRES",
+     "V-S9RT-READONLY-COPY-IDENTICAL",
+     "V-S9RT-PATCH-RESTORED",
+     "V-S9RT-C14-CONTROLS",
+     "V-S9RT-C14-SUBJECT",
+     "V-S9RT-C10-CONTROLS",
+     "V-S9RT-C10-CASES",
+     "V-S9RT-C10-SUBJECT",
+     "V-S9RT-C7-CONTROLS",
+     "V-S9RT-C7-SUBJECT",
+     "V-S9RT-C8-CONTROLS",
+     "V-S9RT-C8-SUBJECT",
+     "V-S9RT-C4-CONTROLS",
+     "V-S9RT-C4-SUBJECT",
+     "V-S9RT-C9-CONTROLS",
+     "V-S9RT-C9-SUBJECT",
+     "V-S9RT-C11-CONTROLS",
+     "V-S9RT-C11-SUBJECT",
+     "V-S9RT-C13-CONTROLS",
+     "V-S9RT-C13-SUBJECT",
+     "V-S9RT-C6-CONTROLS",
+     "V-S9RT-C6-SUBJECT",
+     "V-S9RT-C12-CONTROLS",
+     "V-S9RT-C12-SUBJECT",
+     "V-S9RT-C15-CONTROLS",
+     "V-S9RT-C15-SUBJECT",
+     "V-S9RT-C3-CONTROLS",
+     "V-S9RT-C3-SUBJECT",
+     "V-S9RT-C5-CONTROLS",
+     "V-S9RT-C5-SUBJECT",
+     "V-S9RT-C1-CONTROLS",
+     "V-S9RT-C1-SUBJECT",
+     "V-S9RT-C2-CONTROLS",
+     "V-S9RT-C2-SUBJECT",
+     "V-S9RT-ALL-ATTACKED",
+     "V-S9RT-REUSE-HASHED",
+     "V-S9RT-PIN",
+     "V-S9RT-DETERMINISTIC",
+     "V-S9RT-REPORT-REPRODUCES",
+     "V-S9RT-DRILL-M-ATTACK-DROPPED",
+     "V-S9RT-DRILL-M-C1-CTL-OFF",
+     "V-S9RT-DRILL-M-C1-QUALIFIER-BLIND",
+     "V-S9RT-DRILL-M-C1-STRATA-OFF",
+     "V-S9RT-DRILL-M-C10-CASE-DROPPED",
+     "V-S9RT-DRILL-M-C10-HOSTEVIDENCE-HELD",
+     "V-S9RT-DRILL-M-C10-MUTANT-OFF",
+     "V-S9RT-DRILL-M-C10-NEG-BLIND",
+     "V-S9RT-DRILL-M-C10-NOT-COUNTED",
+     "V-S9RT-DRILL-M-C11-CTL-OFF",
+     "V-S9RT-DRILL-M-C11-PIN-FALSE-TRUE",
+     "V-S9RT-DRILL-M-C11-READERS-NONE",
+     "V-S9RT-DRILL-M-C11-SEED-NOT-TRUE",
+     "V-S9RT-DRILL-M-C12-OPEN-AT-LAST",
+     "V-S9RT-DRILL-M-C12-TERMINAL-BLIND",
+     "V-S9RT-DRILL-M-C12-TOL-HUGE",
+     "V-S9RT-DRILL-M-C13-CTL-OFF",
+     "V-S9RT-DRILL-M-C13-READERS-NONE",
+     "V-S9RT-DRILL-M-C14-CLASSIFY-ALL-READ",
+     "V-S9RT-DRILL-M-C14-CORE-ABSENT",
+     "V-S9RT-DRILL-M-C14-DIFF-BLIND",
+     "V-S9RT-DRILL-M-C15-CTL-OFF",
+     "V-S9RT-DRILL-M-C15-FILES-NONE",
+     "V-S9RT-DRILL-M-C15-LIST-BLIND",
+     "V-S9RT-DRILL-M-C2-CTL-OFF",
+     "V-S9RT-DRILL-M-C2-ROTATION-NONE",
+     "V-S9RT-DRILL-M-C3-CTL-OFF",
+     "V-S9RT-DRILL-M-C3-EXO-BLIND",
+     "V-S9RT-DRILL-M-C4-CTL-OFF",
+     "V-S9RT-DRILL-M-C4-ENTRIES-EMPTY",
+     "V-S9RT-DRILL-M-C4-FILES-FEW",
+     "V-S9RT-DRILL-M-C5-CTL-OFF",
+     "V-S9RT-DRILL-M-C5-SUPERSEDED-NONE",
+     "V-S9RT-DRILL-M-C5-UNTIMED-ZERO",
+     "V-S9RT-DRILL-M-C6-CLAIMS-NONE",
+     "V-S9RT-DRILL-M-C6-CTL-OFF",
+     "V-S9RT-DRILL-M-C6-CYCLE-BLIND",
+     "V-S9RT-DRILL-M-C6-DELTA-NOT-RELEASED",
+     "V-S9RT-DRILL-M-C7-LOOP-SHORT",
+     "V-S9RT-DRILL-M-C7-MUTANT-OFF",
+     "V-S9RT-DRILL-M-C8-CASE-DROPPED",
+     "V-S9RT-DRILL-M-C8-CTL-OFF",
+     "V-S9RT-DRILL-M-C9-CTL-OFF",
+     "V-S9RT-DRILL-M-C9-SEED-DROPPED",
+     "V-S9RT-DRILL-M-C9-SWEEP-EMPTY",
+     "V-S9RT-DRILL-M-HELD-WITHOUT-CONTROL",
+     "V-S9RT-DRILL-M-NONDETERMINISTIC",
+     "V-S9RT-DRILL-M-NONESSENTIAL-DECIDES",
+     "V-S9RT-DRILL-M-PATCH-NOT-RESTORED",
+     "V-S9RT-DRILL-M-PIN-UNVERIFIED",
+     "V-S9RT-DRILL-M-PLANE-NOT-CHECKED",
+     "V-S9RT-DRILL-M-PROBE-BLIND-MKDIR",
+     "V-S9RT-DRILL-M-PROBE-BLIND-WRITE",
+     "V-S9RT-DRILL-M-RANK-INVERTED",
+     "V-S9RT-DRILL-M-REASON-DROPPED",
+     "V-S9RT-DRILL-M-REGISTRY-TEXT",
+     "V-S9RT-DRILL-M-REPORT-DRIFT",
+     "V-S9RT-DRILL-M-REUSE-UNHASHED",
+     "V-S9RT-DRILL-M-SUBATTACK-EMPTY",
+     "V-S9RT-DRILL-M-VERDICT-NOT-VALIDATED",
+     "V-S9RT-DRILL-M-VERDICT-SET-WIDENED",
+     "V-S9RT-DRILL-CONTROL-NOOP-FIRES",
+     "V-S9RT-DRILL-REAL-FILE-UNTOUCHED",
+     "V-S9RT-MUTANT-MAP"
+    ],
+    "plain": null,
+    "porcelain_after": [
+     "?? .pp-capabilities"
+    ],
+    "porcelain_before": [
+     "?? .pp-capabilities"
+    ],
+    "tag": "S9RT_PASS",
+    "tag_line": {
+     "name": "S9RT_PASS",
+     "passed": 112,
+     "total": 112
+    },
+    "trees": {
+     "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+     "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+     "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+    },
+    "wall_s": 339.0
+   }
+  }
+ },
+ "generated_at": "2026-10-25T18:02:40Z",
+ "judged_tree": {
+  "head": "39361ea9a5f4d57f5ecdca758e31dbd6f4af4a85",
+  "trees": {
+   "hooks": "cd5c6430cf0a515a7532c595fb156e68431ba969a62298fdfd830257999c9651",
+   "modules": "7f97b2b7e6f7038a06e8830ae3a0a03949db8602f1bff8fb46efb0be2f70f4ba",
+   "tools": "c79e1ddfa3d735c786418c5aade894ad8c57125098a1d0a217374cc87cab107a"
+  }
+ },
+ "judgement": {
+  "causes": [
+   "suite test_cpp_gsd_long_routing red: [\"red outside the known set: ['V-ROUTE-LIVE-COMMAND-IS-REPO-COMMAND']\"]"
+  ],
+  "fc": {
+   "FC-01": {
+    "items": [
+     "suite:test_arm_preflight",
+     "suite:test_s3_admission",
+     "replay:s2_moved_earlier"
+    ],
+    "status": "MET"
+   },
+   "FC-02": {
+    "items": [
+     "suite:test_arm_preflight",
+     "claim:3"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "FC-03": {
+    "items": [
+     "suite:test_rotation_invariant",
+     "live:rotation_epochs",
+     "claim:1",
+     "claim:2"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "FC-04": {
+    "items": [
+     "suite:test_s3_admission",
+     "claim:5",
+     "claim:6"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "FC-05": {
+    "items": [
+     "suite:test_mission_spend",
+     "suite:test_s4_lease",
+     "claim:7",
+     "claim:8"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "FC-06": {
+    "items": [
+     "suite:test_mission_spend",
+     "claim:7",
+     "claim:10",
+     "claim:14"
+    ],
+    "status": "MET"
+   },
+   "FC-07": {
+    "items": [
+     "suite:test_s5_reconcile",
+     "suite:test_mission_recovery",
+     "claim:10"
+    ],
+    "status": "MET"
+   },
+   "FC-08": {
+    "items": [
+     "suite:test_s6_blockers",
+     "suite:test_blocked_intent",
+     "suite:test_owner_boundary_delivery",
+     "claim:9",
+     "claim:11"
+    ],
+    "status": "MET"
+   },
+   "FC-09": {
+    "items": [
+     "suite:test_s7_replay",
+     "claim:12",
+     "claim:13"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "FC-10": {
+    "items": [
+     "core:unchanged",
+     "claim:14"
+    ],
+    "status": "MET"
+   },
+   "FC-11": {
+    "items": [
+     "suite:test_s7_replay",
+     "claim:13"
+    ],
+    "status": "MET"
+   },
+   "FC-12": {
+    "items": [
+     "incidents:cited",
+     "incidents:breach-iff"
+    ],
+    "status": "MET"
+   }
+  },
+  "gates": {
+   "V-S9-ACCEPTANCE": {
+    "detail": "['test_cpp_gsd_long_routing'] not PASS",
+    "ok": false
+   },
+   "V-S9-BREACH-INCIDENT-IFF": {
+    "detail": "breaches [8, 12] file True sections [8, 12]",
+    "ok": true
+   },
+   "V-S9-CORE-UNCHANGED": {
+    "detail": "gsd-core paths changed since 7edba723: []",
+    "ok": true
+   },
+   "V-S9-FC-TABLE": {
+    "detail": "FC-01=MET FC-02=MET_WITH_UNMEASURED FC-03=MET_WITH_UNMEASURED FC-04=MET_WITH_UNMEASURED FC-05=MET_WITH_UNMEASURED FC-06=MET FC-07=MET FC-08=MET FC-09=MET_WITH_UNMEASURED FC-10=MET FC-11=MET FC-12=MET",
+    "ok": true
+   },
+   "V-S9-FRONTMATTER": {
+    "detail": "28 files, bad [], pending ['08-VERIFICATION.md']",
+    "ok": true
+   },
+   "V-S9-INCIDENTS": {
+    "detail": "9 files, findings []",
+    "ok": true
+   },
+   "V-S9-MILESTONES": {
+    "detail": "S1=MET_WITH_UNMEASURED S2=MET_WITH_UNMEASURED S3=MET_WITH_UNMEASURED S4=MET_WITH_UNMEASURED S5=MET_WITH_UNMEASURED S6=MET S7=MET_WITH_UNMEASURED",
+    "ok": true
+   },
+   "V-S9-PREDICATE-AGREE": {
+    "detail": "spec False red team False",
+    "ok": true
+   },
+   "V-S9-REDTEAM": {
+    "detail": "blob_equals_file=True claims=15 claim15=UNMEASURED",
+    "ok": true
+   },
+   "V-S9-SPEC-PREDICATE": {
+    "detail": "findings []",
+    "ok": true
+   },
+   "V-S9-SUITES": {
+    "detail": "17/18 suites PASS, red ['test_cpp_gsd_long_routing'], inconclusive []",
+    "ok": false
+   },
+   "V-S9-UKDL": {
+    "detail": "findings []",
+    "ok": true
+   },
+   "V-S9-VERDICT": {
+    "detail": "NOT_DONE",
+    "ok": true
+   }
+  },
+  "items": {
+   "claim:1": {
+    "detail": "claim 1 UNMEASURED",
+    "plane": "repo-artefact+seeded",
+    "status": "UNMEASURED"
+   },
+   "claim:10": {
+    "detail": "claim 10 HELD",
+    "plane": "GEX44-host-readonly+GEX44-temp-copy",
+    "status": "GREEN"
+   },
+   "claim:11": {
+    "detail": "claim 11 HELD",
+    "plane": "GEX44-host-readonly+repo-artefact",
+    "status": "GREEN"
+   },
+   "claim:12": {
+    "detail": "claim 12 BREACH",
+    "plane": "seeded",
+    "status": "BREACH"
+   },
+   "claim:13": {
+    "detail": "claim 13 HELD",
+    "plane": "repo-artefact+seeded",
+    "status": "GREEN"
+   },
+   "claim:14": {
+    "detail": "claim 14 HELD",
+    "plane": "GEX44-host-readonly+repo-artefact",
+    "status": "GREEN"
+   },
+   "claim:15": {
+    "detail": "claim 15 UNMEASURED",
+    "plane": "repo-artefact",
+    "status": "UNMEASURED"
+   },
+   "claim:2": {
+    "detail": "claim 2 UNMEASURED",
+    "plane": "GEX44-host-readonly",
+    "status": "UNMEASURED"
+   },
+   "claim:3": {
+    "detail": "claim 3 UNMEASURED",
+    "plane": "repo-artefact",
+    "status": "UNMEASURED"
+   },
+   "claim:4": {
+    "detail": "claim 4 HELD",
+    "plane": "GEX44-temp-copy+repo-artefact",
+    "status": "GREEN"
+   },
+   "claim:5": {
+    "detail": "claim 5 UNMEASURED",
+    "plane": "seeded",
+    "status": "UNMEASURED"
+   },
+   "claim:6": {
+    "detail": "claim 6 HELD",
+    "plane": "GEX44-host-readonly+repo-artefact+seeded",
+    "status": "GREEN"
+   },
+   "claim:7": {
+    "detail": "claim 7 HELD",
+    "plane": "GEX44-temp-copy",
+    "status": "GREEN"
+   },
+   "claim:8": {
+    "detail": "claim 8 BREACH",
+    "plane": "GEX44-temp-copy",
+    "status": "BREACH"
+   },
+   "claim:9": {
+    "detail": "claim 9 HELD",
+    "plane": "GEX44-host-readonly",
+    "status": "GREEN"
+   },
+   "core:unchanged": {
+    "detail": "gsd-core paths changed since 7edba723: []",
+    "plane": "repo-artefact",
+    "status": "GREEN"
+   },
+   "evidence:preamble_105k": {
+    "detail": "01-EVIDENCE epoch-2 preamble ~105k",
+    "plane": "repo-artefact",
+    "status": "GREEN"
+   },
+   "incidents:breach-iff": {
+    "detail": "breaches [8, 12] sections [8, 12]",
+    "plane": "repo-artefact",
+    "status": "GREEN"
+   },
+   "incidents:cited": {
+    "detail": "9 incident files",
+    "plane": "repo-artefact",
+    "status": "GREEN"
+   },
+   "laptop:s3_defer_autopsy": {
+    "detail": "S3 DEFER autopsy",
+    "plane": "LAPTOP-ONLY-not-observed",
+    "status": "UNMEASURED"
+   },
+   "laptop:s5_149h": {
+    "detail": "S5 149 h disposal on the laptop ledger",
+    "plane": "LAPTOP-ONLY-not-observed",
+    "status": "UNMEASURED"
+   },
+   "live:rotation_epochs": {
+    "detail": "7 CONTEXT_ROTATION epochs of 17 for m-3d5f0a27e41d",
+    "plane": "GEX44-host-readonly",
+    "status": "GREEN"
+   },
+   "replay:s1_outcomes": {
+    "detail": "07-REPLAY S1 UNMEASURED 13",
+    "plane": "repo-artefact",
+    "status": "UNMEASURED"
+   },
+   "replay:s2_moved_earlier": {
+    "detail": "07-REPLAY S2 MOVED_EARLIER 1",
+    "plane": "repo-artefact",
+    "status": "GREEN"
+   },
+   "replay:s3_prevented": {
+    "detail": "07-REPLAY S3 PREVENTED 1",
+    "plane": "repo-artefact",
+    "status": "GREEN"
+   },
+   "suite:test_arm_preflight": {
+    "detail": "test_arm_preflight PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_blocked_intent": {
+    "detail": "test_blocked_intent PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_cpp_gsd_long_routing": {
+    "detail": "test_cpp_gsd_long_routing FAIL",
+    "plane": "GEX44-clone",
+    "status": "RED"
+   },
+   "suite:test_gsd_epoch": {
+    "detail": "test_gsd_epoch PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_gsd_mission": {
+    "detail": "test_gsd_mission PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_gsd_mission_baseline": {
+    "detail": "test_gsd_mission_baseline PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_mission_continuity": {
+    "detail": "test_mission_continuity PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_mission_recovery": {
+    "detail": "test_mission_recovery PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_mission_spend": {
+    "detail": "test_mission_spend PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_mission_steward": {
+    "detail": "test_mission_steward PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_owner_boundary_delivery": {
+    "detail": "test_owner_boundary_delivery PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_rotation_invariant": {
+    "detail": "test_rotation_invariant PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_s3_admission": {
+    "detail": "test_s3_admission PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_s4_lease": {
+    "detail": "test_s4_lease PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_s5_reconcile": {
+    "detail": "test_s5_reconcile PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_s6_blockers": {
+    "detail": "test_s6_blockers PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_s7_replay": {
+    "detail": "test_s7_replay PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   },
+   "suite:test_s9_redteam": {
+    "detail": "test_s9_redteam PASS",
+    "plane": "GEX44-clone",
+    "status": "GREEN"
+   }
+  },
+  "milestones": {
+   "S1": {
+    "items": [
+     "suite:test_rotation_invariant",
+     "live:rotation_epochs",
+     "replay:s1_outcomes",
+     "evidence:preamble_105k",
+     "claim:1",
+     "claim:2"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "S2": {
+    "items": [
+     "suite:test_arm_preflight",
+     "replay:s2_moved_earlier",
+     "claim:3"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "S3": {
+    "items": [
+     "suite:test_s3_admission",
+     "replay:s3_prevented",
+     "claim:5",
+     "claim:6",
+     "laptop:s3_defer_autopsy"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "S4": {
+    "items": [
+     "suite:test_s4_lease",
+     "suite:test_mission_spend",
+     "claim:7",
+     "claim:8"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "S5": {
+    "items": [
+     "suite:test_s5_reconcile",
+     "suite:test_mission_recovery",
+     "claim:10",
+     "laptop:s5_149h"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   },
+   "S6": {
+    "items": [
+     "suite:test_s6_blockers",
+     "suite:test_blocked_intent",
+     "suite:test_owner_boundary_delivery",
+     "claim:9"
+    ],
+    "status": "MET"
+   },
+   "S7": {
+    "items": [
+     "suite:test_s7_replay",
+     "claim:12",
+     "claim:13"
+    ],
+    "status": "MET_WITH_UNMEASURED"
+   }
+  },
+  "residuals": [
+   "claim 8 BREACH",
+   "claim 12 BREACH",
+   "claim 1 UNMEASURED",
+   "claim 2 UNMEASURED",
+   "claim 3 UNMEASURED",
+   "claim 5 UNMEASURED",
+   "claim 15 UNMEASURED",
+   "milestone S1 MET_WITH_UNMEASURED",
+   "milestone S2 MET_WITH_UNMEASURED",
+   "milestone S3 MET_WITH_UNMEASURED",
+   "milestone S4 MET_WITH_UNMEASURED",
+   "milestone S5 MET_WITH_UNMEASURED",
+   "milestone S7 MET_WITH_UNMEASURED",
+   "4 legacy PLAN files carry no frontmatter: ['01-01-PLAN.md', '02-01-PLAN.md', '03-01-PLAN.md', '04-01-PLAN.md']",
+   "LAPTOP-ONLY: S3 DEFER autopsy",
+   "LAPTOP-ONLY: S5 149 h disposal on the laptop ledger",
+   "LAPTOP-ONLY: live laptop hooks and settings",
+   "LAPTOP-ONLY: the laptop gsd-core",
+   "known red V-AMCR-ONE-RESOLVER-INVENTORY"
+  ],
+  "suites": {
+   "test_arm_preflight": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 18
+   },
+   "test_blocked_intent": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 16
+   },
+   "test_cpp_gsd_long_routing": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [
+     "red outside the known set: ['V-ROUTE-LIVE-COMMAND-IS-REPO-COMMAND']"
+    ],
+    "status": "FAIL",
+    "total": 9
+   },
+   "test_gsd_epoch": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 111
+   },
+   "test_gsd_mission": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 234
+   },
+   "test_gsd_mission_baseline": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 21
+   },
+   "test_mission_continuity": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [
+     "V-AMCR-ONE-RESOLVER-INVENTORY"
+    ],
+    "reasons": [],
+    "status": "PASS",
+    "total": 38
+   },
+   "test_mission_recovery": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 69
+   },
+   "test_mission_spend": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 46
+   },
+   "test_mission_steward": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 27
+   },
+   "test_owner_boundary_delivery": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 14
+   },
+   "test_rotation_invariant": {
+    "gate_inconclusive": [
+     "V-ROT-REPLAY"
+    ],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 17
+   },
+   "test_s3_admission": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 11
+   },
+   "test_s4_lease": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 14
+   },
+   "test_s5_reconcile": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 44
+   },
+   "test_s6_blockers": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 72
+   },
+   "test_s7_replay": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 164
+   },
+   "test_s9_redteam": {
+    "gate_inconclusive": [],
+    "known_reds_seen": [],
+    "reasons": [],
+    "status": "PASS",
+    "total": 112
+   }
+  },
+  "verdict": "NOT_DONE"
+ },
+ "schema": "s9-done-gate/1"
+}
