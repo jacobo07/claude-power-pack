@@ -52,6 +52,26 @@ def unit_card(p, digest=None):
             f"MUST-CARRY (binding for this unit):\n{must}\n\nCARD AUTHORED AGAINST:\n{stamps}\n")
 
 
+FLOORS = REPO / "vault" / "config" / "route-floors.json"
+
+
+def slim_floor(profile, floors=None):
+    """(floor, growth) measured for a slim profile in route-floors.json; None when absent or unreadable."""
+    try:
+        row = json.loads(Path(floors or FLOORS).read_text(encoding="utf-8-sig"))["profiles"][profile]  # file has a BOM
+        return int(row["floor"]), int(row.get("growth") or 2_100)
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def slim_calls(stop, floor, growth, reserve=2):
+    """Largest n with (n + reserve) calls x floor + growth triangle <= stop, the guard's own projection formula."""
+    n = 0
+    while (n + 1 + reserve) * floor + growth * (n + 1 + reserve) * (n + 2 + reserve) // 2 <= stop:
+        n += 1
+    return n
+
+
 def slim_launch_argv(p, claude, profile, sid, card):
     """`gsd_mission.slim_argv` for one packet; the prompt goes on stdin, so the positional prompt slot is dropped."""
     sys.path.insert(0, str(REPO / "tools"))
@@ -184,15 +204,24 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
                 log(f"{p['step']} REFUSED_NO_CARD hard-rules digest unreadable: {DIGEST}")
                 break
         sid = str(uuid.uuid4())
-        calls = calls_fn(sid, p["cap"])
+        # The guard projects a NEW session at the repo's median first call (~100k+), which starves a ~13k slim
+        # unit; a slim unit is projected at its own measured profile floor instead, and only the projection is
+        # skipped at declare time. The stop stays hard: slim-t2 carries the budget hooks that enforce it.
+        proj = slim_floor(profile) if profile else None
+        calls = slim_calls(p["cap"], *proj) if proj else calls_fn(sid, p["cap"])
         if calls == 0:
             res["steps"][p["step"]] = {"verdict": "REFUSED_INFEASIBLE", "sid": sid, "cap": p["cap"]}
             log(f"{p['step']} REFUSED_INFEASIBLE sid={sid} cap={p['cap']:,}: not one call fits at the measured floor")
             break
+        if profile and proj is None:
+            res["steps"][p["step"]] = {"verdict": "REFUSED_NO_FLOOR", "profile": profile}
+            log(f"{p['step']} REFUSED_NO_FLOOR no measured floor for {profile} in {FLOORS}")
+            break
         calls = calls or max(1, p["cap"] // PER_CALL)
         d = run_fn([sys.executable, "tools/mission_spend.py", "session-declare", "--session", sid, "--target",
                     str(int(p["cap"] * .8)), "--warn", str(int(p["cap"] * .9)), "--stop", str(p["cap"]),
-                    "--calls-estimate", str(calls)], cwd=REPO)  # admission prices calls from REPO, as calls_for does
+                    "--calls-estimate", str(calls)] + (["--skip-feasibility"] if proj else []),
+                   cwd=REPO)  # admission prices calls from REPO, as calls_for does
         if d != 0:
             res["steps"][p["step"]] = {"verdict": "ADMISSION_REFUSED", "sid": sid, "declare_rc": d}
             log(f"{p['step']} ADMISSION_REFUSED sid={sid} declare_rc={d}")
@@ -231,7 +260,8 @@ def main(argv=None):
     ap.add_argument("--step-max", type=int, default=1_200_000)
     ap.add_argument("--root", help="git worktree the workers edit (outside ~/.claude); receipts/tests checked there")
     ap.add_argument("--manifest", help="JSON with coordinator.sid + coordinator.allowance: declare the coordinator first")
-    ap.add_argument("--profile", choices=("slim-t1", "slim-t2"),
+    # slim-t2 only: slim-t1 carries no budget hooks, so a unit's stop could not be enforced at runtime.
+    ap.add_argument("--profile", choices=("slim-t2",),
                     help="launch workers slim (gsd_mission.slim_argv): Hard Rules digest + packet must_carry on the card, "
                          "a packet whose `stamps` changed is refused")
     a = ap.parse_args(argv)

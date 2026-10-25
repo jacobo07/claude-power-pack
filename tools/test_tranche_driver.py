@@ -128,7 +128,8 @@ with tempfile.TemporaryDirectory() as tmp:
     st = t / "STATE.md"; st.write_text("state v1\n", encoding="utf-8")
     td.DIGEST, td.ROOT = dg, t
     try:
-        slim = dict(pk, must_carry=["reserve membership is never opened"], stamps={"STATE.md": td.sha256_of(st)})
+        slim = dict(pk, cap=800_000, must_carry=["reserve membership is never opened"],
+                    stamps={"STATE.md": td.sha256_of(st)})
         sl, sargs = [], []
         slaunch = lambda argv, prompt: sl.append(argv) or sargs.append(prompt) or 0
         r = td.drive([slim], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), decl(0), slaunch,
@@ -153,7 +154,26 @@ with tempfile.TemporaryDirectory() as tmp:
         r = td.drive([dict(pk)], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), decl(0), slaunch, **q)
         gate("V-DRIVER-DEFAULT-PROFILE-UNCHANGED", bool(sl) and "--session-id" in sl[0]
              and not any(x.startswith("--system-prompt=") for x in sl[0]), sl[:1])
+        # slim units are projected at the slim floor (20 calls in 800k) not the repo floor (4 calls), the guard's
+        # projection is skipped at declare, and the stop it enforces stays the packet cap.
+        n_slim, n_fat = td.slim_calls(800_000, 13_507, 1_815), td.calls_for("x", 800_000, fz(0, 124_166))
+        gate("V-DRIVER-SLIM-CALLS-AT-PROFILE-FLOOR", n_slim == 20 and n_fat == 4, (n_slim, n_fat))
+        td.DIGEST = dg
+        dargs = []
+        dcap = lambda argv, timeout=None, cwd=None: (dargs.append(argv) or 0) if "session-declare" in argv \
+            else td.run(argv, timeout)
+        st.write_text("state v1\n", encoding="utf-8")
+        td.drive([slim], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), dcap, slaunch, profile="slim-t2", **q)
+        da = dargs[0] if dargs else []
+        gate("V-DRIVER-SLIM-DECLARE-SKIPS-PROJECTION-KEEPS-STOP", "--skip-feasibility" in da
+             and da[da.index("--stop") + 1] == str(slim["cap"]), da)
+        td.FLOORS = t / "absent-floors.json"
+        sl.clear()
+        r = td.drive([slim], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), dcap, slaunch, profile="slim-t2", **q)
+        gate("V-DRIVER-SLIM-NO-FLOOR-REFUSED", r["steps"]["SX"]["verdict"] == "REFUSED_NO_FLOOR" and not sl,
+             r["steps"]["SX"])
     finally:
+        td.FLOORS = td.REPO / "vault" / "config" / "route-floors.json"
         td.DIGEST, td.ROOT = td.Path.home() / ".claude" / "knowledge_vault" / "core" / "HARD-RULES-DIGEST.md", td.REPO
 
 print(f"DRIVER_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
