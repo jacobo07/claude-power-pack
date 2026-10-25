@@ -110,6 +110,29 @@ armed.clear()
 r = gc.tick(p, state=lambda: ([mission(d, "A", "RUNNING")], 0), armer=arm)
 check("V-CHAIN-ONE-WRITER", r["action"] == "running" and not armed, r["action"])
 
+# a foreign mission PARKED in the same root (PREPARED + Owner hold) writes nothing: it does not block the arm;
+# control: a foreign RUNNING one does (gsdx-factory-2 2026-10-25: a held ctx-rent-obs record blocked H012's residual)
+d, p, _ = setup("parked-foreign")
+parked = {"mission_id": "m-p", "cwd": str(d), "state": "PREPARED", "wu_packet": {"path": str(d / "other.md")},
+          "owner_hold": {"reason": "Owner: run it on GEX44 instead"}}
+busy = {"mission_id": "m-b", "cwd": str(d), "state": "RUNNING", "wu_packet": {"path": str(d / "other.md")}}
+armed.clear()
+r1 = gc.tick(p, state=lambda: ([parked], 0), armer=arm)
+r2 = gc.tick(p, state=lambda: ([busy], 0), armer=arm)
+check("V-CHAIN-PARKED-FOREIGN-NOT-WRITER", r1["action"] == "arm" and r2["action"] == "wait_writer" and armed == ["A"],
+      f"{r1['action']} / {r2['action']}")
+
+# envelope_base: a chain's envelope is measured from the goal spend at its approval, not the goal's lifetime
+# (gsdx-factory-2 gen-2: 26.5M envelope against 336M of gen-1 lifetime spend -> refuse_envelope forever)
+d, p, chain = setup("base", envelope=26_500_000)
+armed.clear()
+r1 = gc.tick(p, state=lambda: ([], 336_000_000), armer=arm)
+chain["envelope_base"] = 330_000_000
+p.write_text(json.dumps(chain), encoding="utf-8")
+r2 = gc.tick(p, state=lambda: ([], 336_000_000), armer=arm)
+check("V-CHAIN-ENVELOPE-BASE", r1["action"] == "refuse_envelope" and r2["action"] == "arm" and armed == ["A"],
+      f"{r1['action']} / {r2['action']}")
+
 # HALTED without receipt, no max_residuals -> never re-armed (the default keeps the old behaviour)
 d, p, _ = setup("halted")
 armed.clear()
