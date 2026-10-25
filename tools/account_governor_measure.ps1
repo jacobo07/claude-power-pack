@@ -24,3 +24,12 @@ if ($LASTEXITCODE -eq 0) {
 } else {
     Add-Content -Path $log -Value ("gex44 pull failed rc=" + $LASTEXITCODE)
 }
+# 3. pushes this laptop's measurement to GEX44, so its arm/topup governor sees the whole account.
+# Uploaded as .part and renamed there: a half-written file would read as a missing host, never as a low one.
+$ssh = Join-Path $env:SystemRoot 'System32\OpenSSH\ssh.exe'
+$remote = '.claude/state/account-governor-hosts/laptop.json'
+& $scp -q -i $key -o BatchMode=yes -o ConnectTimeout=20 (Join-Path $hosts 'laptop.json') ("gex44:" + $remote + ".part") 2>&1 | Out-String | Add-Content -Path $log
+if ($LASTEXITCODE -eq 0) {
+    & $ssh -i $key -o BatchMode=yes -o ConnectTimeout=20 gex44 ("mv -f " + $remote + ".part " + $remote) 2>&1 | Out-String | Add-Content -Path $log
+}
+Add-Content -Path $log -Value ("laptop push rc=" + $LASTEXITCODE)
