@@ -366,9 +366,13 @@ def try_seal(packet, missions=None, runner=None, git=None, programs_dir=None, lo
 
 def decide(chain: dict, missions: list[dict], goal_used: int, route_target, infra=()) -> dict:
     """Pure decision: what this tick should do. route_target(path) -> int."""
+    missions = [m for m in missions if not repaired_refusal(m)]
     units = chain["units"]
     roots = {_norm(chain["root"])} | {_norm(u["cwd"]) for u in units if u.get("cwd")}
-    held = [m for m in missions if _norm(m.get("cwd", "")) in roots and m.get("state") not in TERMINAL]
+    # a parked record (PREPARED + Owner hold) writes nothing, so it is not a second writer (gsdx-factory-2 2026-10-25:
+    # a held ctx-rent-obs record blocked H012's residual). This chain's OWN parked units still answer `held` below.
+    held = [m for m in missions if _norm(m.get("cwd", "")) in roots and m.get("state") not in TERMINAL
+            and not is_parked(m)]
     by_packet = _by_packet(missions)
     status = {u["id"]: receipt_status(Path(u["receipt"])) for u in units}
     refusal = {u["id"]: _current(u, REFUSAL) for u in units if u.get("acceptance")}
@@ -427,6 +431,12 @@ def _live_state(goal: str) -> tuple[list, int]:
     led = ms._goal_ledger(goal)
     g = led._gfold(led._read())
     return gm._scan()[0], int(g["total_used"])    # envelope arithmetic is lifetime spend, not the current lease's
+
+
+def chain_used(chain: dict, goal_used: int) -> int:
+    """The chain's own spend: the goal's lifetime spend minus `envelope_base`, the goal's lifetime spend when this chain
+    was approved (gsdx-factory-2 gen-2: a 26.5M envelope against 336M of gen-1 spend refused every arm)."""
+    return int(goal_used) - int(chain.get("envelope_base") or 0)
 
 
 def _route_stop(path) -> int:
@@ -601,8 +611,22 @@ def _live_measured(goal: str) -> dict:
     return out
 
 
+def repaired_refusal(m: dict) -> bool:
+    """A failed arm (held stub) whose route file changed since the refusal: the route was repaired, so the stub is
+    history -- not arm_refused, not a residual attempt, not a duplicate (gsdx-factory-2 2026-10-25: r1 RECOMPILE)."""
+    if m.get("state") != "PREPARED" or not str((m.get("owner_hold") or {}).get("reason", "")).startswith("arm-chain failed"):
+        return False
+    adm = m.get("admission") or {}
+    if not adm.get("route_path") or not adm.get("route_file_sha256"):
+        return False
+    try:
+        return hashlib.sha256(Path(adm["route_path"]).read_bytes()).hexdigest() != adm["route_file_sha256"]
+    except OSError:
+        return False
+
+
 def _armed_for(missions: list, packet: str) -> list:
-    bp = _by_packet(missions)
+    bp = _by_packet([m for m in missions if not repaired_refusal(m)])
     return [m for m in bp.get(_norm(packet), []) + bp.get(_norm(packet + RESIDUAL), []) if m.get("state") not in TERMINAL]
 
 
@@ -633,6 +657,7 @@ def tick(chain_path: Path, dry_run: bool = False, state=None, armer=None, settle
 def _tick_locked(chain: dict, dry_run, state, armer, settler, ledger, gate_runner, git, trigger, measured, history,
                  alerter, now) -> dict:
     missions, used = state() if state else _live_state(chain["goal"])
+    used = chain_used(chain, used)
     settled = []
     if not dry_run:
         settled = (settler or (lambda: _live_settle(chain["goal"], missions, chain)))() if (settler or state is None) else []

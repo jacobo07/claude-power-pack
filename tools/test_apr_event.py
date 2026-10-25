@@ -143,6 +143,12 @@ check("V-APR3-COMPLETED-TRANSITION-TICKS-ONCE", sum(1 for _ in ticks) == 2 and r
 n0 = len(ticks)
 gm.event_chain_ticks({"m1": ("COMPLETED", pk)}, {"m1": ("COMPLETED", pk)}, ticker=lambda q: gc.tick_for_packet(q, programs_dir=pdir, ticker=tk))
 check("V-APR3-NO-TRANSITION-NO-TICK", len(ticks) == n0)
+# the steward finished on an already-HALTED mission this pass: its residual exists now, so the chain ticks again
+# (gsdx-factory-2 H012 2026-10-25: the HALTED event ticked before the steward wrote the residual -> wait_steward forever)
+gm.event_chain_ticks({"m1": ("HALTED", pk)}, {"m1": ("HALTED", pk)}, stewarded={"m1"},
+                     ticker=lambda q: gc.tick_for_packet(q, programs_dir=pdir, ticker=tk))
+check("V-APR3-STEWARD-DONE-TICKS", len(ticks) == n0 + 1, f"{len(ticks) - n0} tick(s)")
+n0 = len(ticks)
 os.environ["CPP_GSDX_CHAIN_EVENT"] = "off"
 rows = gm.event_chain_ticks(before, {"m1": ("HALTED", pk)}, ticker=lambda q: gc.tick_for_packet(q, programs_dir=pdir, ticker=tk))
 check("V-APR3-KILL-SWITCH-NO-TICK", len(ticks) == n0 and rows == [])
@@ -264,4 +270,5 @@ check("V-APR3-STATUS-SHAPE", s["current_unit"] == "B" and s["decision"] == "runn
 check("V-APR3-FOREIGN-BINDINGS", [b["sid"] for b in s["foreign_bindings"]] == ["stranger"], str(s["foreign_bindings"]))
 
 print(f"{passes} pass / {fails} fail")
+print(f"APR_EVENT_PASS={passes}/{passes + fails}")
 sys.exit(1 if fails else 0)

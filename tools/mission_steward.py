@@ -145,7 +145,11 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         return None                       # the canonical receipt is the worker's own close: untouched
     # a receipt that exists but closes nothing (no Status, PARTIAL, stub) is not a close: steward it (APR-1, K5)
     g0 = rec.get("goal")
-    goal = (g0 if isinstance(g0, str) and g0 else None) or spend_goal_for(rec.get("cwd"), index)
+    # a chain-armed mission names its goal (goal.ce_goal / goal.workstream); the goal's roots need not cover the cwd
+    # (gsdx-factory-2 H012 2026-10-25). Only a name that IS a declared goal counts; the cwd binding stays the fallback.
+    named = [g0.get(k) for k in ("ce_goal", "workstream")] if isinstance(g0, dict) else []
+    goal = (g0 if isinstance(g0, str) and g0 else None) or next((g for g in named if isinstance(g, str) and g in index),
+                                                               None) or spend_goal_for(rec.get("cwd"), index)
     if not goal:
         row.update(action="UNKNOWN", reason="no spend goal is bound to this mission's cwd: nothing settled")
         return row
@@ -215,10 +219,23 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         # cite it only when THIS mission wrote it: a tree can carry another programme's resume file
         rf_line = str(rf) if rf.exists() and rf.stat().st_mtime >= adm_at else "none written by this mission"
         dirty = _git_dirty(tree)
+        # The worker's own receipt can live in its work tree, not at the canonical path (gsdx-factory-2 H012,
+        # 2026-10-25: PARTIAL with the exact next steps sat in a worktree no successor was told about).
+        # The canonical receipt is the chain unit's (or the stem convention), named in the checkout, not the tree.
+        canon = Path(gm._receipt_path(str(base)))
+        own = None
+        try:
+            own = Path(tree) / canon.resolve().relative_to(Path(rec["cwd"]).resolve())
+        except (ValueError, OSError):
+            own = None
+        own_line = str(own) if own is not None and own.exists() and own.resolve() != canon.resolve() \
+            else "none outside the canonical path"
         add = ("\n\n## Residual\n"
                f"Written by the steward for stopped mission {mid}. The programme chain may arm it (bounded "
                "residual re-arm); otherwise the Owner/coordinator does.\n"
                "Continue from the work below; do not redo steps it already covers. Commit early.\n"
+               f"- Work tree (continue there; land the commits onto the packet's branch before the final receipt): {tree}\n"
+               f"- Worker's own receipt in the work tree (read it first): {own_line}\n"
                f"- Partial receipt: {partial}\n"
                f"- RESUMPTION_FILE: {rf_line}\n"
                f"- Salvage: {sdir}\n"

@@ -2,7 +2,12 @@
     "goal": "gsdx-factory-2",
     "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
     "envelope": 26500000,
+    "envelope_base": 336027848,
     "max_residuals": 1,
+    "route_ladder": [
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\route-H012.json",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\route-H012-r1.json"
+    ],
     "units": [
         {
             "id": "H012",

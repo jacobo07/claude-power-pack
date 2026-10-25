@@ -154,6 +154,23 @@ pj = json.loads(part.read_text(encoding="utf-8")) if part.exists() else {}
 check("V-STEWARD-PARTIAL-RECEIPT", pj.get("model_calls") == 2 and pj.get("tool_calls") == 1
       and pj.get("tokens") == 4000 and not (cs["tree"] / "out" / "r.json").exists()
       and "## Residual" in Path(str(cs["pkt"]) + ".residual.md").read_text(encoding="utf-8"), str(pj)[:120])
+# --- a chain-armed mission names its goal in goal.workstream; the goal's roots need not cover the cwd
+# (gsdx-factory-2 H012 2026-10-25: goal roots = Apps\pp-gsdx-factory-2, cwd = the PP repo -> "no spend goal", never stewarded)
+cw = case(with_goal=False)
+other = Path(TMP) / "elsewhere"
+other.mkdir(exist_ok=True)
+assert ms.goal_declare("g-ws", 50_000_000, "test", [str(other)])["ok"]
+rw = gm.load(cw["mid"])
+gm.transition(cw["mid"], expect_epoch=rw["epoch"], expect_state=rw["state"], event="test_setup", now=NOW - 400,
+              goal={"repo": "r", "workstream": "g-ws", "unit": None})
+cu = case(with_goal=False)                       # control: a workstream that is not a goal stays UNKNOWN
+ru = gm.load(cu["mid"])
+gm.transition(cu["mid"], expect_epoch=ru["epoch"], expect_state=ru["state"], event="test_setup", now=NOW - 400,
+              goal={"repo": "r", "workstream": "not-a-goal", "unit": None})
+row_w = mine(run(cw), cw)
+row_u = mine(run(cu), cu)
+check("V-STEWARD-WORKSTREAM-GOAL", row_w and row_w[0]["action"] == "steward_settled"
+      and row_u and row_u[0]["action"] == "UNKNOWN", f"{row_w[:1]} / {row_u[:1]}")
 # --- a residual mission's residual: written next to the BASE packet, one Residual section, no foreign resume file
 cz = case()
 base_res = Path(str(cz["pkt"]) + ".residual.md")
