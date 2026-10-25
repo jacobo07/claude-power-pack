@@ -1,0 +1,56 @@
+{"id": "q01", "lang": "es", "domain": "ops-hang", "q": "por qué se queda la pantalla del panel en blanco cuando un hook lanza conhost en modo headless", "expect": ["mem:feedback_conhost_headless_hook_clears_screen.md"]}
+{"id": "q02", "lang": "es", "domain": "hooks", "q": "un BOM al principio del fichero json hace que el guard falle abierto sin dejar logs", "expect": ["mem:feedback_bom_defeats_json_parse_guard.md"]}
+{"id": "q03", "lang": "en", "domain": "ops-hang", "q": "the laptop freezes across every repo, is the host simply starving for RAM", "expect": ["mem:feedback_host_ram_starvation_is_the_transversal_hang.md"]}
+{"id": "q04", "lang": "en", "domain": "infra", "q": "is the GEX44 box actually dead or are the files just unreadable to my user", "expect": ["mem:feedback_existence_is_not_access.md"]}
+{"id": "q05", "lang": "en", "domain": "measurement", "q": "the memory trimmer reported it freed 19 GB but no process succeeded", "expect": ["mem:feedback_ram_trimmer_reported_phantom_success.md"]}
+{"id": "q06", "lang": "en", "domain": "hooks", "q": "PreToolUse hook cannot find the request that triggered it in the transcript yet", "expect": ["mem:feedback_pretooluse_before_transcript_flush.md"]}
+{"id": "q07", "lang": "es", "domain": "hooks", "q": "una llamada a herramienta que el usuario rechazó cuenta como trabajo hecho en el guard", "expect": ["mem:feedback_rejected_tool_call_is_not_work.md"]}
+{"id": "q08", "lang": "en", "domain": "process", "q": "a tool call was interrupted with no reason given, should I retry it or treat it as a refusal", "expect": ["mem:feedback_interruption_is_not_refusal.md"]}
+{"id": "q09", "lang": "en", "domain": "measurement", "q": "INCONCLUSIVE gate results were being counted as PASS in the summary total", "expect": ["mem:feedback_inconclusive_counted_as_pass.md"]}
+{"id": "q10", "lang": "es", "domain": "storage", "q": "sumar el tamaño de los ficheros borrados no da el espacio libre real por culpa de los hardlinks", "expect": ["mem:feedback_file_length_sums_are_not_disk_space.md"]}
+{"id": "q11", "lang": "en", "domain": "storage", "q": "a huge cache directory does not prove it is waste, measure the orphan rate first", "expect": ["mem:feedback_cache_size_is_not_evidence_of_waste.md"]}
+{"id": "q12", "lang": "en", "domain": "testing", "q": "running a mutation drill against a hook file that is loaded live put the mutant in production", "expect": ["mem:feedback_mutation_drill_on_live_loaded_file.md"]}
+{"id": "q13", "lang": "en", "domain": "testing", "q": "mutation drill of a launch guard spawned a real claude process and burned tokens", "expect": ["mem:feedback_mutation_drill_reaches_real_launch.md"]}
+{"id": "q14", "lang": "en", "domain": "windows", "q": "compact fails with EBUSY because ReadLines holds the transcript open and denies writers", "expect": ["mem:feedback_readlines_denies_writers_breaks_compact.md"]}
+{"id": "q15", "lang": "en", "domain": "processes", "q": "the timeout kills only the direct child and leaves dozens of orphan processes behind", "expect": ["mem:feedback_timeout_without_reaping_is_the_leak_engine.md"]}
+{"id": "q16", "lang": "en", "domain": "measurement", "q": "why should a gate never be a ratio threshold, the denominator can shrink", "expect": ["mem:feedback_never_gate_on_a_ratio.md"]}
+{"id": "q17", "lang": "es", "domain": "windows", "q": "git no se reconoce como cmdlet en PowerShell, qué ruta uso", "expect": ["pp:vault/lessons/powershell-git-path-gap.md", "mem:feedback_no_cd_prefix_on_git.md"]}
+{"id": "q18", "lang": "en", "domain": "agents", "q": "parallel Explore subagents cascade into internal error sentinels on Windows", "expect": ["pp:vault/lessons/parallel-explore-cascade.md"]}
+{"id": "q19", "lang": "en", "domain": "hooks", "q": "the write gate blocks plan files because they are not on the allowlist", "expect": ["pp:vault/lessons/plan-files-not-allowlisted.md"]}
+{"id": "q20", "lang": "es", "domain": "windows", "q": "un script ps1 con acentos falla al ejecutarlo con -File en PowerShell 5.1", "expect": ["mem:feedback_powershell_51_script_encoding_ascii_only.md"]}
+{"id": "q21", "lang": "en", "domain": "python", "q": "python still sees a byte order mark when reading the file with plain utf-8 encoding", "expect": ["mem:feedback_python_utf8_bom.md"]}
+{"id": "q22", "lang": "en", "domain": "windows", "q": "a .bat file saved with LF-only line endings breaks the cmd parser", "expect": ["mem:feedback_lf_only_bat_cmd_cascade.md"]}
+{"id": "q23", "lang": "en", "domain": "windows", "q": "scheduled task that runs without flashing a console window", "expect": ["mem:feedback_scheduled_task_zero_flash_wscript.md"]}
+{"id": "q24", "lang": "es", "domain": "tooling", "q": "cuántas escrituras Write puedo lanzar en paralelo en un mismo turno", "expect": ["mem:feedback_parallel_write_batch_limit.md", "mem:feedback_sequential_writes_per_turn.md"]}
+{"id": "q25", "lang": "en", "domain": "concurrency", "q": "Edit fails with file modified since read, is another pane writing the same file", "expect": ["mem:feedback_edit_modified_since_read_is_live_concurrent_pane.md"]}
+{"id": "q26", "lang": "es", "domain": "economics", "q": "los experimentos con el modelo deben ir con la cuota de la suscripción y no con pago por uso", "expect": ["mem:feedback_experiments_on_subscription_quota_not_paid.md"]}
+{"id": "q27", "lang": "en", "domain": "process", "q": "a gate denied my action, should I find a way around it", "expect": ["mem:feedback_qa_gate_data_vs_output.md"]}
+{"id": "q28", "lang": "en", "domain": "git", "q": "can I push commits to the power pack repo without asking the owner first", "expect": ["mem:feedback_push_autonomy.md"]}
+{"id": "q29", "lang": "en", "domain": "automation", "q": "set up an n8n workflow to automate this", "expect": ["mem:feedback_no_n8n_ever.md"]}
+{"id": "q30", "lang": "en", "domain": "sessions", "q": "after restarting Cursor the revival opens brand new empty sessions instead of resuming", "expect": ["mem:feedback_revival_opens_new_sessions_is_allowautomatictasks.md"]}
+{"id": "q31", "lang": "es", "domain": "hardware", "q": "el portátil se apaga de golpe, es un corte de luz o un pantallazo azul", "expect": ["mem:project_laptop_shutdowns_are_bsod_not_power_loss.md"]}
+{"id": "q32", "lang": "en", "domain": "games", "q": "Minecraft Titan launcher fixed, which java runtime does it use", "expect": ["mem:project_minecraft_titan_launcher_corregido.md"]}
+{"id": "q33", "lang": "en", "domain": "missions", "q": "answering a blocked background worker with double-dash tokens started a copy of the session", "expect": ["mem:feedback_bg_resume_prompt_dashes_spawn_copy.md"]}
+{"id": "q34", "lang": "es", "domain": "economics", "q": "el panel coordinador gasta mucho más que los workers de la misión", "expect": ["mem:feedback_coordinator_pane_is_the_overrun.md"]}
+{"id": "q35", "lang": "en", "domain": "infra", "q": "running claude inside ssh bash -s swallows the rest of the remote script from stdin", "expect": ["mem:feedback_remote_bash_s_stdin_eaten.md"]}
+{"id": "q36", "lang": "en", "domain": "economics", "q": "how to set a session token cap, project it from the measured per-call context floor", "expect": ["mem:feedback_budget_cap_must_be_projected_from_measured_floor.md"]}
+{"id": "q37", "lang": "es", "domain": "missions", "q": "rotar el worker con kclear clear kresume en vez de autocompactar", "expect": ["mem:feedback_semantic_rotation_not_autocompact.md"]}
+{"id": "q38", "lang": "en", "domain": "missions", "q": "should a long GSD mission use the compiled grammar with dossier packet envelope and gate by default", "expect": ["mem:project_compiled_grammar_default.md"]}
+{"id": "q39", "lang": "es", "domain": "economics", "q": "auditoría semanal de tokens, qué cuenta usa el portátil y cuándo se resetea", "expect": ["mem:project_token_audit_week_2026-10-04.md"]}
+{"id": "q40", "lang": "es", "domain": "sessions", "q": "cómo restauro un solo panel después de que se cierre Cursor", "expect": ["mem:feedback_restore_one_pane_is_lazarus_not_restore_panes.md"]}
+{"id": "q41", "lang": "en", "domain": "sessions", "q": "pane map marks old sessions as live because a sweep touched their file mtime", "expect": ["mem:feedback_pane_map_mtime_forges_liveness.md"]}
+{"id": "q42", "lang": "en", "domain": "security", "q": "bypassPermissions mode ignores the deny rules in settings", "expect": ["mem:feedback_bypasspermissions_defeats_deny.md"]}
+{"id": "q43", "lang": "en", "domain": "rules", "q": "a terminal pane counts as open only when a running process proves it, not by recency", "expect": ["pp:vault/hard_rules/HARD_RULES.md", "pp:vault/knowledge_base/ukdl-universal.md"], "rule_id": "HR-REVIVAL-LIVENESS-IS-PROCESS-001"}
+{"id": "q44", "lang": "en", "domain": "rules", "q": "an audit whose subjects are enrolled by hand measures memory not reality", "expect": ["pp:vault/knowledge_base/ukdl-universal.md", "mem:feedback_hand_curated_audit_measures_memory.md"], "rule_id": "PR-COVERAGE-BY-CONSTRUCTION-001"}
+{"id": "q45", "lang": "es", "domain": "design", "q": "un juicio de diseño debe citar un criterio medible y no una opinión de que se ve mejor", "expect": ["pp:vault/knowledge_base/ukdl-universal.md"], "rule_id": "T-DESIGN-OPINION-VS-CRITERIA-001"}
+{"id": "q46", "lang": "en", "domain": "rules", "q": "choose execution mode by default and ultra plan only for genuine architecture decisions", "expect": ["pp:vault/knowledge_base/ukdl-universal.md"], "rule_id": "PR-MODE-SELECTION-001"}
+{"id": "q47", "lang": "en", "domain": "rules", "q": "a session hung for ten hours undetected and caused the kickbacks suspension", "expect": ["pp:vault/knowledge_base/ukdl-universal.md", "pp:vault/hard_rules/HARD_RULES.md"], "rule_id": "T-UNBOUNDED-SESSION-001"}
+{"id": "q48", "lang": "en", "domain": "security", "q": "secret firewall blocked my Write because the content had an api key", "expect": ["pp:vault/hard_rules/HARD_RULES.md"], "rule_id": "HR-SECRET-001"}
+{"id": "q49", "lang": "en", "domain": "seo", "q": "SEO GEO corpus methodology, cite the SG ids before deciding page ideas", "expect": ["corpus_map_", "seo-geo-answers-source2-full.jsonl"]}
+{"id": "q50", "lang": "en", "domain": "rules", "q": "verify that every planned output file exists on disk before declaring a multi-file plan complete", "expect": ["pp:vault/hard_rules/HARD_RULES.md", "pp:vault/knowledge_base/ukdl-universal.md"], "rule_id": "HR-CONTEXT-001"}
+{"id": "n01", "lang": "es", "domain": "negative", "q": "receta de paella valenciana con marisco y azafrán", "expect": [], "negative": true}
+{"id": "n02", "lang": "en", "domain": "negative", "q": "what is the weather forecast in madrid this weekend", "expect": [], "negative": true}
+{"id": "n03", "lang": "en", "domain": "negative", "q": "write a haiku about autumn leaves falling in a quiet park", "expect": [], "negative": true}
+{"id": "n04", "lang": "en", "domain": "negative", "q": "translate good morning and thank you into french and italian", "expect": [], "negative": true}
+{"id": "n05", "lang": "es", "domain": "negative", "q": "cuál es el mejor equipo de fútbol de la historia de la liga española", "expect": [], "negative": true}
+{"id": "n06", "lang": "en", "domain": "negative", "q": "explain the plot of the movie inception and its ending", "expect": [], "negative": true}

@@ -1,0 +1,1697 @@
+{
+ "metrics": {
+  "positives_scored": 50,
+  "negatives_scored": 6,
+  "invalid_labels": 0,
+  "errors": 0,
+  "recall_at_5": 0.64,
+  "mrr": 0.5857,
+  "labelled_precision_at_5_lower_bound": 0.2533,
+  "abstain_rate_positives": 0.0,
+  "negative_false_positive_rate": 0.3333,
+  "foreign_memory_hit_share": 0.4612,
+  "stale_hit_share": 0.0,
+  "latency_ms_p50": 107.42,
+  "latency_ms_p95": 181.22,
+  "miss_classes": {
+   "term-gate": 14,
+   "source-not-indexed": 3,
+   "ranking": 1
+  },
+  "by_lang": {
+   "en": {
+    "n": 36,
+    "recall_at_5": 0.7222
+   },
+   "es": {
+    "n": 14,
+    "recall_at_5": 0.4286
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "q01",
+   "lang": "es",
+   "domain": "ops-hang",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_conhost_headless_hook_clears_screen.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_hook_registration_identity_loss.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_host_ram_starvation_is_the_transversal_hang.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects\\memory\\feedback_host_starvation_transversal_hang.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_conhost_headless_hook_clears_screen.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q02",
+   "lang": "es",
+   "domain": "hooks",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_bom_defeats_json_parse_guard.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\feedback_guard_downstream_of_its_own_cost.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\feedback-python-fixtures-cannot-emit-a-bom.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_bom_defeats_json_parse_guard.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_existence_is_not_access.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 3,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q03",
+   "lang": "en",
+   "domain": "ops-hang",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_cost_collapse_e3_recovery.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_ram_trimmer_reported_phantom_success.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_ram_crash_is_claude_native_not_pp.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_motion_grammar_pipeline.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_laptop_shutdowns_are_bsod_not_power_loss.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 0,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q04",
+   "lang": "en",
+   "domain": "infra",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X-TUAX-UGC-SYSTEM\\memory\\project_dna30000_tri_continental.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects\\memory\\reference_gex44_ssh.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\orca-x-aeos-program-state.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-CavEX\\memory\\cavex-work-stranded-on-gex44.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\reference_gex44_ssh.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 5,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q05",
+   "lang": "en",
+   "domain": "measurement",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_ram_trimmer_reported_phantom_success.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_ram_trimmer_reported_phantom_success.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\reference_gex44_ssh.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects\\memory\\project_gex44_disk_full_incident.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 3,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q06",
+   "lang": "en",
+   "domain": "hooks",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_pretooluse_before_transcript_flush.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_pretooluse_before_transcript_flush.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\cognitive-control-plane-2026-10-02.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_graphify_live_activation_pending.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_interrupted_turn_leaves_no_trace.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q07",
+   "lang": "es",
+   "domain": "hooks",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_interrupted_turn_leaves_no_trace.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_rhetorical_question_closer.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\feedback_closing_report_mandatory.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects\\memory\\feedback_host_starvation_transversal_hang.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\gsdx-econ-recon-program-plan.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 4,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q08",
+   "lang": "en",
+   "domain": "process",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_interruption_is_not_refusal.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_interruption_is_not_refusal.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_internal_error_verify_before_retry.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_internal_error_switch_tool_and_notify.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Software-para-Provs-Proveedores-Deng-Chaowei-Website\\memory\\feedback_transient_tool_error_recovery.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 3,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q09",
+   "lang": "en",
+   "domain": "measurement",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_inconclusive_counted_as_pass.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_inconclusive_counted_as_pass.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_hook_fanout_disables_the_antihang_guards.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Personal-Assistants-PA-Template\\memory\\feedback_completion_gates.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\ksr-epoch-rehydration-2026-10-03.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q10",
+   "lang": "es",
+   "domain": "storage",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_file_length_sums_are_not_disk_space.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_file_length_sums_are_not_disk_space.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Jacobo\\memory\\kiw-capacidad-viva.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q11",
+   "lang": "en",
+   "domain": "storage",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_cache_size_is_not_evidence_of_waste.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_cache_size_is_not_evidence_of_waste.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\knowledge_vault\\core\\HARD-RULES.md",
+     "kind": "hard-rules"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_founding_finding_is_a_hypothesis.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\cognitive-microkernel-brief-2026-10-04.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q12",
+   "lang": "en",
+   "domain": "testing",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_mutation_drill_on_live_loaded_file.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_mutation_drill_on_live_loaded_file.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_mutation_drill_reaches_real_launch.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_settings_session_load.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q13",
+   "lang": "en",
+   "domain": "testing",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_mutation_drill_reaches_real_launch.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_mutation_drill_reaches_real_launch.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\context-rent-same-pane-2026-10-10.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\cognitive-resource-os-2026-09-27.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_redundant_guard_disarms_its_drill.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q14",
+   "lang": "en",
+   "domain": "windows",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_readlines_denies_writers_breaks_compact.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_readlines_denies_writers_breaks_compact.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_bl0013_windows_filelock.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_bl0013_windows_filelock.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_no_classified_fails_at_done_gate.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q15",
+   "lang": "en",
+   "domain": "processes",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-KobiiAI\\memory\\project_orphan_reaper_BL_2026-05-22.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\trap-never-kill-a-running-nsis-installer.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\ram-optimization-2026-06-04.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\hr-secret-gate-liveness-and-chunking.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 3,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q16",
+   "lang": "en",
+   "domain": "measurement",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_reference_derived_from_post_state.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\sqi-weakening-detectors-2026-07-12.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_hand_curated_audit_measures_memory.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\predictive-governance-2026-08-10.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 0,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q17",
+   "lang": "es",
+   "domain": "windows",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects\\memory\\feedback_powershell_bracket_path_wildcard.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Jacobo\\memory\\powershell-sandbox-lee-rutas-en-heredoc.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\feedback_rtk_proxy_rewrites_inline_powershell.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\feedback_powershell_herestring_path_sandbox_block.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 4,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q18",
+   "lang": "en",
+   "domain": "agents",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_parallel_edit_cascade.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\agent-solo-violation-sprint9.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_lf_only_bat_cmd_cascade.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_parallel_write_batch_limit.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\subagent-bash-bridge-hang-2026-05-28.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "source-not-indexed"
+  },
+  {
+   "id": "q19",
+   "lang": "en",
+   "domain": "hooks",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Software-para-Provs-Proveedores-Deng-Chaowei-Website\\memory\\feedback_gate_discipline.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\orca-x-host-workspace-fabric-mission.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\feedback-jobs-write-hook-magic-numbers.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\rollback-skill-2026-05-25.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_plan_code_is_hypothesis_verify_source.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 3,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "source-not-indexed"
+  },
+  {
+   "id": "q20",
+   "lang": "es",
+   "domain": "windows",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_powershell_51_script_encoding_ascii_only.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\SESSION_RECOVERY.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_paste_window_is_powershell_startup.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_restart_opens_new_terminal_not_in_place.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_scheduled_task_zero_flash_wscript.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 1,
+   "status": "HIT"
+  },
+  {
+   "id": "q21",
+   "lang": "en",
+   "domain": "python",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_powershell_bom_to_native_exe.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_python_utf8_bom.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_powershell_51_script_encoding_ascii_only.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_powershell_bom_to_native_exe.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_grep_large_file_sentinel.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 2,
+   "relevant_hits": 1,
+   "status": "HIT"
+  },
+  {
+   "id": "q22",
+   "lang": "en",
+   "domain": "windows",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_lf_only_bat_cmd_cascade.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_lf_only_bat_cmd_cascade.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\reference_kclaude_live_launcher_chain.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_lazarus_validate_transcript_before_resume.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\process-hibernation-fase-a.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q23",
+   "lang": "en",
+   "domain": "windows",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_scheduled_task_zero_flash_wscript.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_scheduled_task_zero_flash_wscript.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_paste_window_is_powershell_startup.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-GEO-audit\\memory\\project_costaluz_gsc_observation_cadence.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q24",
+   "lang": "es",
+   "domain": "tooling",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_parallel_read_six_cap_break.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\parallel-agent-result-drop.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-GEO-audit\\memory\\feedback_host_starvation_mutes_every_guard.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\fe-s4-freedom-trajectory-and-meta.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_interrupted_turn_leaves_no_trace.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 5,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q25",
+   "lang": "en",
+   "domain": "concurrency",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_edit_modified_since_read_is_live_concurrent_pane.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_sibling_commit_absorbs_untracked_files.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_edit_modified_since_read_is_live_concurrent_pane.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\ic-009-blocking-io-eradication.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_sibling_commit_absorbs_untracked_files.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q26",
+   "lang": "es",
+   "domain": "economics",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_acquisition\\raw\\response\\15\\15a3443655f4f12af02079783fb949aae2be8cb0d515f2563a12121ed07d0c66.md",
+     "kind": "candidate"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\project_nurture_sequence_and_ed068_070.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q27",
+   "lang": "en",
+   "domain": "process",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\feedback_no_harness_bypass_wrappers.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\feedback_secret_leak_format_assumption.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q28",
+   "lang": "en",
+   "domain": "git",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_push_autonomy.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_no_cd_prefix_on_git.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_push_autonomy.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\cdio-enforcement-trust-root-resumption-2026-09-13.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects\\memory\\feedback_power_pack_and_skills.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q29",
+   "lang": "en",
+   "domain": "automation",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\deployment-skill-2026-05-24.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 0,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q30",
+   "lang": "en",
+   "domain": "sessions",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_collection_gate_drops_live_pane.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_pending_resume_race.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_revival_opens_new_sessions_is_allowautomatictasks.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_bl0013_windows_filelock.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 0,
+   "stale": 0,
+   "rank": 4,
+   "relevant_hits": 1,
+   "status": "HIT"
+  },
+  {
+   "id": "q31",
+   "lang": "es",
+   "domain": "hardware",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_laptop_shutdowns_are_bsod_not_power_loss.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\project_laptop_shutdowns_are_bsod_not_power_loss.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q32",
+   "lang": "en",
+   "domain": "games",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_minecraft_titan_launcher_corregido.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\project_minecraft_titan_launcher_corregido.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-LuckyFly\\memory\\project_v273_horizon_engineered.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\reference_local_real_client_capture.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-LuckyFly\\memory\\feedback_luckyfly_ms_bypass.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 4,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q33",
+   "lang": "en",
+   "domain": "missions",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_bg_resume_prompt_dashes_spawn_copy.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_bg_resume_prompt_dashes_spawn_copy.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_unattended_run_accepts_recommended.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\bg-mission-launch-traps-worktree-mcp-respawn.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\SOVEREIGN_ADAPTER_PLAN.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 3,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q34",
+   "lang": "es",
+   "domain": "economics",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\token-optimization-backlog-2026-10-03.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 0,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q35",
+   "lang": "en",
+   "domain": "infra",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_remote_bash_s_stdin_eaten.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_remote_bash_s_stdin_eaten.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-GEO-audit\\memory\\project_costaluz_brain_deploy_and_gtm.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\gex44-private-sshd-real-ssh-rung.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 3,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q36",
+   "lang": "en",
+   "domain": "economics",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_budget_cap_must_be_projected_from_measured_floor.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_coordinator_pane_is_the_overrun.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_budget_cap_must_be_projected_from_measured_floor.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_token_audit_week_2026-10-04.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_cost_breaker_ratio_2_and_never_halts.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q37",
+   "lang": "es",
+   "domain": "missions",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_semantic_rotation_not_autocompact.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_semantic_rotation_not_autocompact.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\context-wall-run-kclear-yourself.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\cognitive-microkernel-brief-2026-10-04.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\ce-presence-contract-2026-10-07.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q38",
+   "lang": "en",
+   "domain": "missions",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_compiled_grammar_default.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\project_compiled_grammar_default.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\ce-a4-estate-rearm-2026-10-08.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_dossier_must_print_every_constant.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\ce-presence-contract-2026-10-07.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q39",
+   "lang": "es",
+   "domain": "economics",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\token-optimization-backlog-2026-10-03.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\feedback-monitor-quiescence-vs-compact-pause.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\project_journal_w43_ed140_apuestas_emprender.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\project_quicklease_mcweb18_adaptive_intake.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 3,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q40",
+   "lang": "es",
+   "domain": "sessions",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\project_kobicraft_panel_design_system.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\project_network_messaging_baseline.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\project_totp_ui_recovery.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects\\memory\\feedback_host_starvation_transversal_hang.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\bdci-corpus-lives-in-its-own-worktree.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 5,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q41",
+   "lang": "en",
+   "domain": "sessions",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_pane_map_mtime_forges_liveness.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_cursor_reload_persistent_sessions_pane_map.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_pane_map_mtime_forges_liveness.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\pane-map-versioning-2026-07-06.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q42",
+   "lang": "en",
+   "domain": "security",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_bypasspermissions_defeats_deny.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_bypasspermissions_defeats_deny.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_hook_dispatch_asymmetry.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_mirror_sync_direction_and_hooks_dir_deny.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    }
+   ],
+   "foreign_memory": 2,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q43",
+   "lang": "en",
+   "domain": "rules",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_cpc_tab_count_derivation_vs_recording.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_collection_gate_drops_live_pane.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\orca-terminal-live-state-and-atlas-desync.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_presence_is_not_identity.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 3,
+   "relevant_hits": 1,
+   "status": "HIT"
+  },
+  {
+   "id": "q44",
+   "lang": "en",
+   "domain": "rules",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_hand_curated_audit_measures_memory.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_hand_curated_audit_measures_memory.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\crpf-2026-07-27.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_ownership_audit_absorption_bias.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_ksf_deferred_after_igef.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 2,
+   "status": "HIT"
+  },
+  {
+   "id": "q45",
+   "lang": "es",
+   "domain": "design",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_acquisition\\raw\\response\\79\\796f43ed956c7728a4475f84287a0b0f5ace2c3f09b4a6015601e20c2e002983.md",
+     "kind": "candidate"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\project_landing_merge_design_copy_dimensions.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\project_bef_business_education_fabric.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\project_journal_critic_agent.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\project_kobiicraft_magazine.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 4,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "term-gate"
+  },
+  {
+   "id": "q46",
+   "lang": "en",
+   "domain": "rules",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\sdd-os-evolution-2026-10-01.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\acis-generation-zero-2026-07-11.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\decision-intelligence-2026-07-11.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\aishf-corpus-2026-07-21.md",
+     "kind": "plan"
+    }
+   ],
+   "foreign_memory": 0,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 1,
+   "status": "HIT"
+  },
+  {
+   "id": "q47",
+   "lang": "en",
+   "domain": "rules",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    }
+   ],
+   "foreign_memory": 0,
+   "stale": 0,
+   "rank": 1,
+   "relevant_hits": 1,
+   "status": "HIT"
+  },
+  {
+   "id": "q48",
+   "lang": "en",
+   "domain": "security",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_hook_dispatcher_block_swallow_secret_firewall_unwired.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\feedback_secret_scanner_test_fixtures.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\feedback-antithrash-exit2-plan-file.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\hook-write-gotchas.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-mcp-video-analyzer\\memory\\feedback_hook_dispatcher_block_swallow_secret_firewall_unwired.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 4,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "source-not-indexed"
+  },
+  {
+   "id": "q49",
+   "lang": "en",
+   "domain": "seo",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-GEO-audit\\memory\\feedback_apply_corpus_methodology_globally.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-GEO-audit\\memory\\project_seo_geo_corpus_complete.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\project_prompt_recall.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-GEO-audit\\memory\\project_costaluz_human_trust_email_os.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\memory\\sl-blog-hreflang-cluster-landing-sprint.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 4,
+   "stale": 0,
+   "rank": null,
+   "relevant_hits": 0,
+   "status": "MISS",
+   "miss_class": "ranking"
+  },
+  {
+   "id": "q50",
+   "lang": "en",
+   "domain": "rules",
+   "negative": false,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\backup-skill-2026-05-24.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\feedback_cursor_reload_persistent_sessions_pane_map.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\knowledge_vault\\core\\HARD-RULES.md",
+     "kind": "hard-rules"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\plans\\rollback-skill-2026-05-25.md",
+     "kind": "plan"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+     "kind": "ukdl"
+    }
+   ],
+   "foreign_memory": 0,
+   "stale": 0,
+   "rank": 5,
+   "relevant_hits": 1,
+   "status": "HIT"
+  },
+  {
+   "id": "n01",
+   "lang": "es",
+   "domain": "negative",
+   "negative": true,
+   "hits": [],
+   "foreign_memory": 0,
+   "stale": 0,
+   "status": "OK"
+  },
+  {
+   "id": "n02",
+   "lang": "en",
+   "domain": "negative",
+   "negative": true,
+   "hits": [],
+   "foreign_memory": 0,
+   "stale": 0,
+   "status": "OK"
+  },
+  {
+   "id": "n03",
+   "lang": "en",
+   "domain": "negative",
+   "negative": true,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\feedback-fix-mission-obstacles-as-a-class.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\trap-a-merge-commit-runs-lint-staged-on-every-file.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\feedback_arming_is_not_starting.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\orca-x-resource-elasticity-reality-scan.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Orca-X\\memory\\orca-laptop-parity-lp0-reality-scan.md",
+     "kind": "memory"
+    }
+   ],
+   "foreign_memory": 5,
+   "stale": 0,
+   "status": "FALSE_POSITIVE"
+  },
+  {
+   "id": "n04",
+   "lang": "en",
+   "domain": "negative",
+   "negative": true,
+   "hits": [],
+   "foreign_memory": 0,
+   "stale": 0,
+   "status": "OK"
+  },
+  {
+   "id": "n05",
+   "lang": "es",
+   "domain": "negative",
+   "negative": true,
+   "hits": [
+    {
+     "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\project_perfiles_pillars_strategy.md",
+     "kind": "memory"
+    },
+    {
+     "path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_acquisition\\raw\\response\\4c\\4c3a3924cba718688d9da07998c7db40a247de493dbef739f8862e10343773c5.md",
+     "kind": "candidate"
+    }
+   ],
+   "foreign_memory": 1,
+   "stale": 0,
+   "status": "FALSE_POSITIVE"
+  },
+  {
+   "id": "n06",
+   "lang": "en",
+   "domain": "negative",
+   "negative": true,
+   "hits": [],
+   "foreign_memory": 0,
+   "stale": 0,
+   "status": "OK"
+  }
+ ],
+ "label": "baseline",
+ "index": "C:\\Users\\User\\.claude\\state\\recall\\recall.db",
+ "snapshot": "C:\\Users\\User\\AppData\\Local\\Temp\\recall_eval_96xf23ro\\recall.db",
+ "measured_at": "2026-10-10T16:48:25",
+ "index_files": 2970
+}
