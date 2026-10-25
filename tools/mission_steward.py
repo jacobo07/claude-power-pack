@@ -206,10 +206,22 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         # cite it only when THIS mission wrote it: a tree can carry another programme's resume file
         rf_line = str(rf) if rf.exists() and rf.stat().st_mtime >= adm_at else "none written by this mission"
         dirty = _git_dirty(tree)
+        # The worker's own receipt can live in its work tree, not at the canonical path (gsdx-factory-2 H012,
+        # 2026-10-25: PARTIAL with the exact next steps sat in a worktree no successor was told about).
+        own = None
+        if receipt:
+            try:
+                own = Path(tree) / Path(receipt).resolve().relative_to(Path(rec["cwd"]).resolve())
+            except (ValueError, OSError):
+                own = None
+        own_line = str(own) if own is not None and own.exists() and own.resolve() != Path(receipt).resolve() \
+            else "none outside the canonical path"
         add = ("\n\n## Residual\n"
                f"Written by the steward for stopped mission {mid}. The programme chain may arm it (bounded "
                "residual re-arm); otherwise the Owner/coordinator does.\n"
                "Continue from the work below; do not redo steps it already covers. Commit early.\n"
+               f"- Work tree (continue there; land the commits onto the packet's branch before the final receipt): {tree}\n"
+               f"- Worker's own receipt in the work tree (read it first): {own_line}\n"
                f"- Partial receipt: {partial}\n"
                f"- RESUMPTION_FILE: {rf_line}\n"
                f"- Salvage: {sdir}\n"

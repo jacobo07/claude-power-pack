@@ -157,6 +157,11 @@ function judge(budget, st) {
 const READ_ONLY = new Set(['Read', 'Grep', 'Glob']);
 const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md|[^\\/]+-receipt\.md)$/;   // F3: a work-unit receipt is a closeout file
 const DEFAULT_CLOSEOUT = 4;
+// A tripped worker commits what is green: one pathspec `git add|commit ... -- <paths>`, nothing chained after it.
+// gsdx-factory-2 H012 (2026-10-25) tripped the calls wall with H0 GREEN 9/9 and could not commit it.
+const SHELL_TOOLS = new Set(['Bash', 'PowerShell']);
+const CLOSEOUT_COMMIT = new RegExp(String.raw`^\s*(?:&\s*)?(?:'[^']*git(?:\.exe)?'|"[^"]*git(?:\.exe)?"|\S*git(?:\.exe)?)` +
+  String.raw`\s+(?:-C\s+\S+\s+)?(?:add|commit)\b[^;&|\r\n]*\s--\s+[^;&|\r\n]+$`);
 
 // Goal mode passes `goal`: one handoff write, no reads. The live canary of 2026-10-07 (CANARY.md,
 // 51e46273) refused at 3,005,579 against a 3M cap, then admitted 4 Reads per pane at ~100K each:
@@ -168,11 +173,14 @@ function closeout(budget, st, event, verdict, goal = false) {
   const limit = goal ? 1 : (Number.isFinite(declared) && declared >= 0 ? declared : DEFAULT_CLOSEOUT);
   const tool = String(event.tool_name || '');
   const fp = event.tool_input && typeof event.tool_input.file_path === 'string' ? event.tool_input.file_path : '';
-  const eligible = (!goal && READ_ONLY.has(tool)) || (PROGRESS_TOOLS.has(tool) && CLOSEOUT_PATH.test(fp));
+  const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
+  const eligible = (!goal && READ_ONLY.has(tool)) || (PROGRESS_TOOLS.has(tool) && CLOSEOUT_PATH.test(fp)) ||
+    (SHELL_TOOLS.has(tool) && CLOSEOUT_COMMIT.test(cmd));
   const used = Number(st.closeout) || 0;
   if (!eligible || used >= limit) {
     d.permissionDecisionReason += ` Closeout allowance ${used}/${limit} used; only ` +
-      (goal ? '' : 'Read/Grep/Glob and ') + 'writes to vault/plans/*.md, memory/handoffs/*.md or RESUMPTION_FILE.md qualify.';
+      (goal ? '' : 'Read/Grep/Glob and ') + 'writes to vault/plans/*.md, memory/handoffs/*.md, RESUMPTION_FILE.md or *-receipt.md, and one ' +
+      'pathspec `git add|commit ... -- <paths>`, qualify.';
     return verdict;
   }
   st.closeout = used + 1;

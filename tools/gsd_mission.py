@@ -5700,6 +5700,19 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     if ra_res["readmitted"]:
                         rec = ra_res["rec"]
                         row["readmitted"] = True
+                    adm_v = (rec.get("admission") or {}).get("verdict")
+                    if (act in ("relay", "replace") and rec.get("wu_packet") and adm_v in ("DEFER", "RECOMPILE")
+                            and os.environ.get("CPP_RELAY_DEFER_HALT", "").strip().lower() != "off"):
+                        # The unit's own lease cannot fund another epoch of its route, and no pass will change that:
+                        # retrying refused 17 launches in 85 min with the record RUNNING (gsdx-factory-2 H012,
+                        # 2026-10-25), so neither the steward (HALTED only) nor the chain's residual could act.
+                        halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                            event="unit_lease_exhausted", now=now, state=HALTED, pending=None,
+                                            reason=f"relay re-admission {adm_v}: the unit lease cannot fund another "
+                                                   f"epoch; the steward and the chain residual continue it")
+                        reap(halted, row)
+                        row["action"] = "halted"
+                        continue
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,

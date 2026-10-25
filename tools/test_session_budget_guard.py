@@ -188,6 +188,18 @@ def main():
     ot = kind(call_write(b, r"C:\x\src\app.py"))
     check("V-SBG-CALLS-WALL-RECEIPT", (rc, ot) == ("advise", "deny"), f"receipt -> {rc}, other write -> {ot}")
 
+    # V-SBG-CLOSEOUT-COMMIT: a tripped worker may commit what is green (pathspec add/commit), nothing else.
+    # gsdx-factory-2 H012 2026-10-25: H0 was GREEN 9/9 at the calls wall and stayed uncommitted in a worktree.
+    b = Box(); b.declare(calls_estimate=2)
+    b.append(row("a", U(1), tools=[("Edit", {})] * 5))
+    push = kind(b.call(cmd="git push origin HEAD")["out"])
+    addall = kind(b.call(cmd="git add -A")["out"])
+    chained = kind(b.call(cmd="git commit -F m.txt -- a.py; rm -rf x")["out"])
+    add = kind(b.call(cmd="& 'C:\\Program Files\\Git\\cmd\\git.exe' -C C:\\w add -- hooks/a.js tools/b.py")["out"])
+    com = kind(b.call(cmd="git -C C:\\w commit -F C:\\t\\msg.txt -- hooks/a.js tools/b.py")["out"])
+    check("V-SBG-CLOSEOUT-COMMIT", (push, addall, chained, add, com) == ("deny", "deny", "deny", "advise", "advise"),
+          f"push {push}, add -A {addall}, chained {chained}, pathspec add {add}, pathspec commit {com}")
+
     # V-SBG-CONTEXT
     b = Box(); b.declare(target=10**9, warn=10**9, stop=10**9, context_ceiling=50000)
     b.append(row("a", U(10, 0, 40000)))
@@ -254,7 +266,9 @@ def main():
               f"{snap.stat().st_size/1e6:.1f} MB: js {s['tokens']:,}/{s['calls']} py {py['tokens']:,}/{py['calls']}; first full read {r['ms']:.0f} ms")
         b.append(row("zz-new", U(1)))
         r2 = b.call()
-        check("V-SBG-LATENCY", 0 <= r2["ms"] < 50, f"incremental call after one appended line: {r2['ms']:.2f} ms (< 50)")
+        # SBG_LATENCY_MS: a mutation drill on a loaded host may widen it; the gate's default stays 50 ms
+        lat = float(os.environ.get("SBG_LATENCY_MS") or 50)
+        check("V-SBG-LATENCY", 0 <= r2["ms"] < lat, f"incremental call after one appended line: {r2['ms']:.2f} ms (< {lat:g})")
 
     # V-SBG-WIRED: canonical and live dispatchers list the guard on all three PreToolUse lanes
     for d in DISPATCHERS:

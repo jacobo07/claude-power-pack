@@ -22,6 +22,7 @@ os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ.pop("CPP_MISSION_RENEW", None)
 os.environ.pop("CPP_ROUTE_ADMISSION", None)
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"   # the host's free RAM is not what these gates measure
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 if os.environ.get("GSD_MISSION_DRILL_DIR"):
     sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])
@@ -132,7 +133,38 @@ def main() -> int:
     check("V-CHAIN-SUPERVISE-RELAYS-WITHOUT-ADMIT", row.get("readmitted") is True
           and (row.get("launch") or {}).get("ok") is True and len(calls) == n + 1, str(row)[:400])
 
+    # 7. a dead owner whose re-admission recorded DEFER is HALTED once, not relaunched every pass: the steward and
+    # the chain's bounded residual own the rest (gsdx-factory-2 H012 2026-10-25: 17 refused launches in 85 min,
+    # RUNNING with a dead owner, so neither the steward nor the chain could act).
+    r8 = consumed_mission("m-defer-sup", cmd="/packet-unit run")
+    gm.set_envelope("m-defer-sup", token_estimate="2M", now=NOW)
+    gm.readmit_for_relay(gm.load("m-defer-sup"), now=NOW + 10, measure=lambda r: 3_900_000)
+    sid8 = gm.load("m-defer-sup")["pending"]["bg_id"] + "-0000-4000-8000-000000000000"
+    gm.ack_session(sid8, pid=1, now=NOW + 15)
+    n = len(calls)
+    rows = gm.supervise(now=NOW + 4000, sessions=[{"sessionId": sid8, "state": "stopped"}], pid_alive=lambda p: False,
+                        runner=runner)
+    row = next((r for r in rows if r.get("mission_id") == "m-defer-sup"), {})
+    st8 = gm.load("m-defer-sup")
+    check("V-CHAIN-DEFER-HALTS-DEAD-OWNER", st8["state"] == gm.HALTED and len(calls) == n
+          and any(e.get("event") == "unit_lease_exhausted" for e in gm.lr.ledger_events("m-defer-sup")),
+          f"{st8['state']} {str(row)[:300]}")
+    # control: the kill switch keeps the old refusal (still RUNNING, no launch)
+    r9 = consumed_mission("m-defer-off", cmd="/packet-unit run")
+    gm.set_envelope("m-defer-off", token_estimate="2M", now=NOW)
+    gm.readmit_for_relay(gm.load("m-defer-off"), now=NOW + 10, measure=lambda r: 3_900_000)
+    sid9 = gm.load("m-defer-off")["pending"]["bg_id"] + "-0000-4000-8000-000000000000"
+    gm.ack_session(sid9, pid=1, now=NOW + 15)
+    os.environ["CPP_RELAY_DEFER_HALT"] = "off"
+    try:
+        gm.supervise(now=NOW + 4000, sessions=[{"sessionId": sid9, "state": "stopped"}], pid_alive=lambda p: False,
+                     runner=runner)
+    finally:
+        os.environ.pop("CPP_RELAY_DEFER_HALT", None)
+    check("V-CHAIN-DEFER-HALT-SWITCH-OFF", gm.load("m-defer-off")["state"] != gm.HALTED)
+
     print(f"{passes} passed, {fails} failed")
+    print(f"CHAIN_PASS={passes}/{passes + fails}")
     return 1 if fails else 0
 
 

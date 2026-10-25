@@ -1,0 +1,17 @@
+{
+  "unit": "gsdx-f2-h012-r1",
+  "envelope": {
+    "target": 5500000,
+    "warn": 6800000,
+    "stop": 8000000,
+    "calls": 80
+  },
+  "workers": [
+    {
+      "name": "f2-hardening-residual",
+      "profile": "top-level-worker",
+      "calls": 80,
+      "packet": 9000
+    }
+  ]
+}
