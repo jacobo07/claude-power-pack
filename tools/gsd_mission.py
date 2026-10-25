@@ -3581,7 +3581,20 @@ def _packet_lines(ref) -> list[str]:
         return ["", f"SOURCE PACKET from the hand-off could not be checked ({type(exc).__name__}): read the files directly."]
 
 
-def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -> str:
+def _live_spend_card_lines(rec: dict, spend_fn=None) -> list[str]:
+    """W3a: the worker sees how much of the Owner's authority is spent. Nothing without a ceiling."""
+    if not rec.get("authority_tokens"):
+        return []
+    s = live_spend(rec, measure=spend_fn)
+    if s.get("processed") is None:
+        return [f"LIVE SPEND: UNMEASURED ({s.get('error')}) -- treat the room as unknown, never as available."]
+    room = s.get("room_after_reserve")
+    return [f"LIVE SPEND (measured {s['measured_at']}): {int(s['processed']):,} processed of authority "
+            f"{int(s['authority']):,}; room after closeout reserve {room:,}. "
+            "Stop and hand off before the room reaches 0."]
+
+
+def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "", spend_fn=None) -> str:
     """The rehydration card for a fresh worker. Mechanical sources only (the mission
     record, git, GSD); the predecessor's note is labelled as a claim, not a fact.
     Hard-capped: a card the host truncates silently is worse than a short one."""
@@ -3628,6 +3641,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         f"HEAD at hand-off: {g.get('head') or 'unknown'}",
         f"Dirty paths at hand-off: {g.get('dirty') if g.get('dirty') is not None else 'unknown'}",
     ]
+    parts += _live_spend_card_lines(rec, spend_fn)   # W3a: before work-tree/GSD lines so the cap never cuts it
     wd = mb.execution_root(rec) if mb.binding(rec) else rec.get("work_dir")
     parts += mb.card_lines(rec)
     parts += mres.card_lines(rec)   # [] for a mission without `requires`
