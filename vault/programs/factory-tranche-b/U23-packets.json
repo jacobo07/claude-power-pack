@@ -1,0 +1,29 @@
+[
+ {"step": "U2", "prompt": "vault/programs/factory-tranche-b/U2-packet.md",
+  "receipt": "vault/programs/factory-tranche-b/U2-receipt.md", "cap": 1200000,
+  "tests": ["tools/test_w3_marginal_gain.py", "tools/test_w3_live_spend_card.py", "tools/test_w3_stage_authority.py"],
+  "stamps": {"tools/gsd_mission.py": "0f101da88851ee2f3d97adae100f6cd7129e74e7baf68edc7e681e0d038579f3",
+             "tools/test_w3_marginal_gain.py": "58d20a59b846b2bb6868c662cbd0bf200db1bd5c24598c04543243b1368aa879"},
+  "must_carry": [
+   "Reserve boundary: stop and write the receipt before your cap; an overrun is a FAIL, not a stretch.",
+   "HR-04: no write to any live/production server, Pterodactyl, VPS or GEX44. This unit is local code only.",
+   "Done-gate: the named tests exit 0 in your working tree; a claim without that output is not done.",
+   "Measurement honesty: a result you did not observe is UNKNOWN; a fix needs its red output on the old code.",
+   "Owner decision D10/D13 (2026-10-25): worker-scoped changes only. Never edit any CLAUDE.md, agent catalog, MEMORY.md or hooks. This is Tranche B unit 2; do nothing beyond this packet.",
+   "Commit with a pathspec only (git commit -m ... -- <files>); never git add -A, never push."
+  ]},
+ {"step": "U3", "prompt": "vault/programs/factory-tranche-b/U3-packet.md",
+  "receipt": "vault/programs/factory-tranche-b/U3-receipt.md", "cap": 1200000,
+  "tests": ["tools/test_w4_benchmark.py", "tools/test_credential_filter_fp.py", "tools/test_floor_regression_gate.py"],
+  "stamps": {"tools/w4_benchmark.py": "3f0c5bedb0f1445323214270372998bfc939ca25a5aa9358217a1e5d68f5e7c0",
+             "vendor/genesis-suite/modules/genesis-source-packets/index.cjs": "5e44272f1a9e771fd5aad9ee7b320c67044091e8bac4959721d1d93954411c06",
+             "tools/test_credential_filter_fp.py": "b5c80455817d4d64300bc5be37267ed6f1793c6996b4597329e597f02a9da960"},
+  "must_carry": [
+   "Reserve boundary: stop and write the receipt before your cap; an overrun is a FAIL, not a stretch.",
+   "HR-04: no write to any live/production server, Pterodactyl, VPS or GEX44. This unit is local code only.",
+   "Done-gate: the named tests exit 0 in your working tree; a claim without that output is not done.",
+   "Measurement honesty: a result you did not observe is UNKNOWN; a fix needs its red output on the old code.",
+   "Owner decision D10/D13 (2026-10-25): worker-scoped changes only. Never edit any CLAUDE.md, agent catalog, MEMORY.md or hooks. This is Tranche B unit 3; do nothing beyond this packet.",
+   "Commit with a pathspec only (git commit -m ... -- <files>); never git add -A, never push."
+  ]}
+]
