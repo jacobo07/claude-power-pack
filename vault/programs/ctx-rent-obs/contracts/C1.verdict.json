@@ -1,0 +1,43 @@
+{
+  "contract": "C1",
+  "plane": "GEX44",
+  "verdict": "REFUTED",
+  "contract_commit": "78f7c666",
+  "rule_applied": "REFUTED: every pair measured, answer intact, and r outside [0.62, 0.72]",
+  "pairs": [
+    {
+      "pair": 1,
+      "observe_first_call_total": 46658,
+      "lean_first_call_total": 10823,
+      "reduction_fraction": 0.768,
+      "answer_observe": "OK",
+      "answer_lean": "OK",
+      "data": [
+        "c1data/pair1-observe.json",
+        "c1data/pair1-subagent-lean.json"
+      ]
+    },
+    {
+      "pair": 2,
+      "observe_first_call_total": 46658,
+      "lean_first_call_total": 10823,
+      "reduction_fraction": 0.768,
+      "answer_observe": "OK",
+      "answer_lean": "OK",
+      "data": [
+        "c1data/pair2-observe.json",
+        "c1data/pair2-subagent-lean.json"
+      ]
+    }
+  ],
+  "claimed_reduction_fraction": 0.67,
+  "measured_reduction_fraction": 0.768,
+  "reading": "The direction and the mechanism hold (dropping instructions + skill_listing removes most of a trivial subagent's first call, answer intact). The stated -67% does NOT hold on this plane: -76.8%, outside the frozen +-5-point band, because GEX44 attachments are larger relative to the subagent's irreducible floor (10,823 here vs 15,571 on the laptop). This is a plane difference in the denominator, not a failure of the lever; the contract compares fractions, so the verdict stands as REFUTED for the number -67%.",
+  "caveats": [
+    "N=2 pairs but both arms were bit-identical across pairs (46,658 / 10,823): the second pair adds no independent variance information, the prompt cache and a fixed install make them deterministic",
+    "model claude-haiku-5-5 here; M1 used haiku on the laptop (version unknown): model equality with the claim is UNKNOWN",
+    "executable ~/.local/bin/claude 2.1.310; M1 ran 2.1.296",
+    "laptop raw transcripts for 47,591 / 15,571 not available on this plane; those two numbers were not re-read"
+  ],
+  "CBR_consequence": "CBR promotion stays gated on W3 evidence; this verdict does not certify -67%"
+}
