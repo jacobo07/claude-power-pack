@@ -20,9 +20,9 @@ UNKNOWN / INCONCLUSIVE are never PASS. Every new gate gets a mutation drill that
 - [x] **Phase 2: S2 Arm preflight**
 - [x] **Phase 3: S3 Admission refusal loop + packet identity**
 - [x] **Phase 4: S4 Economic lease (variance is not a stop)**
-- [ ] **Phase 5: S5 Terminal reconciliation**
-- [ ] **Phase 6: S6 Blocker compiler + Owner boundary**
-- [ ] **Phase 7: S7 Historical replay + champion/challenger**
+- [x] **Phase 5: S5 Terminal reconciliation**
+- [x] **Phase 6: S6 Blocker compiler + Owner boundary**
+- [x] **Phase 7: S7 Historical replay + champion/challenger**
 - [ ] **Phase 8: S9 Knowledge Vault, UKDL, CBR, red team, master done-gate**
 
 ## Phase Details
