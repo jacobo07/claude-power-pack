@@ -1,0 +1,17 @@
+{
+  "unit": "gsdx-f2-u1",
+  "envelope": {
+    "target": 2100000,
+    "warn": 2200000,
+    "stop": 2400000,
+    "calls": 13
+  },
+  "workers": [
+    {
+      "name": "f2-u1-census",
+      "profile": "top-level-worker",
+      "calls": 13,
+      "packet": 6000
+    }
+  ]
+}

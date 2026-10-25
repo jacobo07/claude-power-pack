@@ -141,6 +141,11 @@ Fusion: U1 fuses all widening (one census instead of per-label widen units). Fis
 
 Seal reserve: each unit keeps 2 x next (~300K) inside its hard figure.
 
+**Amendment 2026-10-25 (Owner: "sube el tope"):** hard raised 26.5M -> **36M** (`chain.json` envelope). Basis: CAPEX
+closed at 15,793,127 measured (H012 9,999,228 + H3 5,793,899; 1.5x its 10.5M hard); remaining hard U1 1.5M + U2 6M +
+U3 6M + E0 2.5M = 16M; reserve ~4.2M (26%) for the measured overrun ratio. Goal ledger programme is not the binding
+ceiling (654.8M, settled 350.7M lifetime).
+
 ## 13. Micro-commits, order, rollback
 
 H0a fixture (red) -> H0b pre-boundary judge -> H0c launcher envelope -> H1a drill (red) -> H1b exact_push -> H2 unit_econ -> H3 campaign next (GEX44) -> C-A..C-D -> U1 -> U2 -> U3 -> E0 -> KV/UKDL -> CBR. Each commit pathspec-scoped, `-F` msgfile, verified subject. Rollback: `CPP_PREBOUNDARY=off` restores the old `judge`; exact_push is additive (old push path untouched); campaign next is additive. GEX44 pushes go through exact_push once H1 lands (self-hosting).

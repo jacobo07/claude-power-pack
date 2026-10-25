@@ -1,7 +1,7 @@
 {
     "goal": "gsdx-factory-2",
     "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
-    "envelope": 26500000,
+    "envelope": 36000000,
     "envelope_base": 336027848,
     "max_residuals": 1,
     "route_ladder": [
@@ -24,6 +24,13 @@
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-H3-receipt.md",
             "after": "H012",
             "accept": ["DONE", "DONE_WITH_LIMITS"]
+        },
+        {
+            "id": "U1",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-U1.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\route-U1.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-U1-receipt.md",
+            "after": "H3"
         }
     ]
 }
