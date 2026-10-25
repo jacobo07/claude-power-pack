@@ -1,0 +1,31 @@
+{
+    "id":  "conversion_funnel",
+    "name":  "Embudo de conversión / checkout",
+    "triggers":  [
+                     "checkout",
+                     "embudo",
+                     "funnel",
+                     "conversion",
+                     "conversiones",
+                     "tasa de conversion",
+                     "conversion rate",
+                     "pricing page",
+                     "pagina de precios",
+                     "onboarding",
+                     "signup",
+                     "sign-up",
+                     "stripe",
+                     "pasarela de pago",
+                     "a/b test",
+                     "atribucion",
+                     "attribution",
+                     "utm",
+                     "cro"
+                 ],
+    "anti_triggers":  [
+                          "wii",
+                          "libogc",
+                          "servidor de minecraft",
+                          "plugin de paper"
+                      ]
+}

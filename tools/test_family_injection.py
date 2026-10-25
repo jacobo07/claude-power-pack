@@ -84,7 +84,7 @@ def main() -> int:
         check("V-FINJ-HERMETIC-HOME", Path.home() == Path(home), Path.home())
         fams = sorted(f.id for f in fm.load_families())
         check("V-FINJ-POPULATION", fams == sorted(PROMPTS) and all(bl.active_entries(f) for f in fams),
-              "4 families, each with an active generation: %s" % fams)
+              "every predeclared family, each with an active generation: %s" % fams)
 
         # -- every family, both poles, and the text is the compiler's choice --------
         for fid, (inside, outside) in PROMPTS.items():
