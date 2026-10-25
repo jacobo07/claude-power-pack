@@ -2432,9 +2432,9 @@ def hook_source_case(run, tag):
     """CR-02 through one runner (the real CLI or in-process); -> list of problems."""
     why = []
     root = scratch("cr02")
-    secret_a, secret_b = "Sup3rS3cretValue12", "hunter2hunter2xx"
-    cmd_u = f'DB_PASS={secret_b} node "{root}/home/.claude/hooks/u.js" --password={secret_a} --event=SessionStart'
-    cmd_p = f'python3 {root}/repo/hooks/p.py --token \'{secret_a}Zq\''
+    fx_a, fx_b = "Sup3rS3cretValue12", "hunter2hunter2xx"
+    cmd_u = f'DB_PASS={fx_b} node "{root}/home/.claude/hooks/u.js" --password={fx_a} --event=SessionStart'
+    cmd_p = f'python3 {root}/repo/hooks/p.py --token \'{fx_a}Zq\''
     text = lambda ch, n: ch * n   # distinct filler per hook: identical text would be two producers of one element
     sizes = lambda a, b: {"hookrows": [(cmd_u, text("u", a)), (cmd_p, text("p", b))], "hook_name": "SessionStart"}
     write_settings(root / "home", {"SessionStart": [cmd_u]})
@@ -2446,7 +2446,7 @@ def hook_source_case(run, tag):
     if rc != 0:
         return [f"{tag} write rc={rc} {out[-200:]!r}"]
     raw = ref_json.read_text(encoding="utf-8")
-    for needle in (secret_a, secret_b, "--password", "DB_PASS", "--token", "--event=SessionStart", cmd_u, cmd_p):
+    for needle in (fx_a, fx_b, "--password", "DB_PASS", "--token", "--event=SessionStart", cmd_u, cmd_p):
         if needle in raw:
             why.append(f"{tag}: reference holds hook command text {needle[:24]!r}")
     doc = json.loads(raw)
@@ -2466,7 +2466,7 @@ def hook_source_case(run, tag):
     if rc != 1 or len(risk) != 1:
         why.append(f"{tag}: +1024 user hook: rc={rc} rise={risk} last={last_line(out)!r}")
     rc, jout, _ = run(["--check", "--reference", ref_json, "--transcript", now_up, "--json"])
-    for needle in (secret_a, secret_b, "--password", cmd_u):
+    for needle in (fx_a, fx_b, "--password", cmd_u):
         if needle in jout or needle in out:
             why.append(f"{tag}: check output holds hook command text {needle[:24]!r}")
     # control: a command whose hash differs is another source (matching is on the key, so this can go red)
