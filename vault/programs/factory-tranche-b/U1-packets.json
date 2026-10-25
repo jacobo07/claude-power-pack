@@ -1,0 +1,15 @@
+[
+ {"step": "U1", "prompt": "vault/programs/factory-tranche-b/U1-packet.md",
+  "receipt": "vault/programs/factory-tranche-b/U1-receipt.md", "cap": 1200000,
+  "tests": ["tools/test_floor_regression_gate.py"],
+  "stamps": {"tools/floor_regression_gate.py": "e72d3fea4d8902f9a22cd856d7a301515106ef02a4417386d119db38e8eb488b",
+             "governance/KNOWN_FALSE_POSITIVES.md": "530dd5b99bdabda98518318e655e855f212607b0c7a066550e14c4f41c85e6f7"},
+  "must_carry": [
+   "Reserve boundary: stop and write the receipt before your cap; an overrun is a FAIL, not a stretch.",
+   "HR-04: no write to any live/production server, Pterodactyl, VPS or GEX44. This unit is local code only.",
+   "Done-gate: the named tests exit 0 in your working tree; a claim without that output is not done.",
+   "Measurement honesty: a result you did not observe is UNKNOWN; 'still fires' and 'no longer fires' both need the filter's own output.",
+   "Owner decision D10/D13 (2026-10-25): worker-scoped changes only. Never edit any CLAUDE.md, agent catalog, MEMORY.md or hooks. This is Tranche B unit 1 (second consumer); do nothing beyond this packet.",
+   "Commit with a pathspec only (git commit -m ... -- <files>); never git add -A, never push."
+  ]}
+]
