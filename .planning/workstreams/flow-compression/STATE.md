@@ -61,3 +61,8 @@ Update this file and `RESUMPTION_FILE.md` (this dir) after every sealed phase, w
 **Last session:** 2026-10-24T20:25:13.087Z
 **Stopped at:** Phase 7 context gathered
 **Resume file:** .planning/workstreams/flow-compression/phases/07-s7-historical-replay-champion-challenger/07-CONTEXT.md
+
+## Decisions (phase 7 planning, 2026-10-25)
+
+- D-02 switch names: the real S1-S6 switches are CPP_ROTATION_INVARIANT, CPP_ARM_PREFLIGHT, CPP_GSD_HOLD_BACKOFF, CPP_ECON_LEASE, CPP_TERMINAL_RECONCILE, CPP_BLOCKER_COMPILE. CPP_CCR_ADMISSION / CPP_MISSION_RENEW / CPP_MISSION_BOUNDED_RENEWAL pre-date flow-compression, so they are held equal in both arms and replayed on a separate renewal axis. Chosen because a champion with them off would be a strawman; reversible, internal.
+- Read-only proof uses an open-mode write probe plus a byte check on a temp copy, not before/after hashes of live host files (other processes append).
