@@ -1,0 +1,836 @@
+[
+  {
+    "session": "80119ef0-d685-4b71-a888-250d5c12326c",
+    "calls": 22,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 4,
+      "median_chars_per_token": 2.02
+    },
+    "floor": {
+      "measured_tokens": 102244,
+      "attributed_chars": 182008,
+      "estimated_tokens": 50558,
+      "unattributed_tokens": 51686,
+      "host_prefix_tokens": 31868,
+      "session_tokens": 70376,
+      "session_estimated_tokens": 46493,
+      "session_unattributed_tokens": 23883,
+      "session_unattributed_at_calibrated": -12483,
+      "sources": [
+        {
+          "source": "attachment:skill_listing",
+          "chars": 30098,
+          "est_tokens": 8361
+        },
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 27352,
+          "est_tokens": 7598
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+          "chars": 22861,
+          "est_tokens": 6350
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\MEMORY.md",
+          "chars": 17369,
+          "est_tokens": 4825
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 14633,
+          "est_tokens": 4065
+        },
+        {
+          "source": "hook:SessionStart:SessionStart",
+          "chars": 8329,
+          "est_tokens": 2314
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "hook:UserPromptSubmit:UserPromptSubmit",
+          "chars": 2152,
+          "est_tokens": 598
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 1727,
+          "est_tokens": 480
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 1392,
+          "est_tokens": 387
+        },
+        {
+          "source": "attachment:mcp_instructions_delta",
+          "chars": 1286,
+          "est_tokens": 357
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 945,
+          "est_tokens": 262
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 866,
+          "est_tokens": 241
+        },
+        {
+          "source": "user_prompt",
+          "chars": 616,
+          "est_tokens": 171
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 581,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:model",
+          "chars": 165,
+          "est_tokens": 46
+        },
+        {
+          "source": "attachment:total_tokens_reminder",
+          "chars": 86,
+          "est_tokens": 24
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {
+        "tool_result:PowerShell": 15209,
+        "tool_result:Read": 5097,
+        "tool_result:Grep": 1551,
+        "hook:PreToolUse:PreToolUse:PowerShell": 870,
+        "attachment:total_tokens_reminder": 762,
+        "hook:PostToolUse:PostToolUse:Edit": 669,
+        "tool_result:Bash": 598,
+        "tool_result:Edit": 490,
+        "attachment:task_reminder": 466,
+        "tool_result:Write": 307,
+        "hook:PreToolUse:PreToolUse:Write": 287,
+        "attachment:silent_turn_reminder": 122,
+        "tool_result:ToolSearch": 9
+      },
+      "assistant_output_tokens": 23889,
+      "resets": [],
+      "last_call_tokens": 152570,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "b34f3d0f-25e1-4c26-a8a2-d700db45bd63",
+    "calls": 32,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 6,
+      "median_chars_per_token": 2.21
+    },
+    "floor": {
+      "measured_tokens": 103858,
+      "attributed_chars": 186281,
+      "estimated_tokens": 51745,
+      "unattributed_tokens": 52113,
+      "host_prefix_tokens": 31868,
+      "session_tokens": 71990,
+      "session_estimated_tokens": 47680,
+      "session_unattributed_tokens": 24310,
+      "session_unattributed_at_calibrated": -5679,
+      "sources": [
+        {
+          "source": "attachment:skill_listing",
+          "chars": 30098,
+          "est_tokens": 8361
+        },
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 27352,
+          "est_tokens": 7598
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+          "chars": 22861,
+          "est_tokens": 6350
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\MEMORY.md",
+          "chars": 17369,
+          "est_tokens": 4825
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 14633,
+          "est_tokens": 4065
+        },
+        {
+          "source": "hook:SessionStart:SessionStart",
+          "chars": 8310,
+          "est_tokens": 2308
+        },
+        {
+          "source": "hook:UserPromptSubmit:UserPromptSubmit",
+          "chars": 6430,
+          "est_tokens": 1786
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 1727,
+          "est_tokens": 480
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 1392,
+          "est_tokens": 387
+        },
+        {
+          "source": "attachment:mcp_instructions_delta",
+          "chars": 1286,
+          "est_tokens": 357
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 945,
+          "est_tokens": 262
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 866,
+          "est_tokens": 241
+        },
+        {
+          "source": "user_prompt",
+          "chars": 630,
+          "est_tokens": 175
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 581,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:model",
+          "chars": 165,
+          "est_tokens": 46
+        },
+        {
+          "source": "attachment:total_tokens_reminder",
+          "chars": 86,
+          "est_tokens": 24
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {
+        "tool_result:Read": 8563,
+        "tool_result:PowerShell": 7743,
+        "tool_result:Grep": 1942,
+        "hook:UserPromptSubmit:UserPromptSubmit": 1315,
+        "attachment:total_tokens_reminder": 1143,
+        "hook:PreToolUse:PreToolUse:PowerShell": 1075,
+        "attachment:task_reminder": 711,
+        "attachment:queued_command": 634,
+        "attachment:environment": 516,
+        "tool_result:Write": 466,
+        "hook:PreToolUse:PreToolUse:Write": 448,
+        "attachment:silent_turn_reminder": 218,
+        "hook:PreToolUse:PreToolUse:Grep": 174,
+        "attachment:edited_text_file": 169
+      },
+      "assistant_output_tokens": 30136,
+      "resets": [],
+      "last_call_tokens": 159111,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "ea45f4e4-f196-42ca-bf11-cc24fc4658fa",
+    "calls": 38,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 7,
+      "median_chars_per_token": 2.04
+    },
+    "floor": {
+      "measured_tokens": 105796,
+      "attributed_chars": 188714,
+      "estimated_tokens": 52421,
+      "unattributed_tokens": 53375,
+      "host_prefix_tokens": 31868,
+      "session_tokens": 73928,
+      "session_estimated_tokens": 48356,
+      "session_unattributed_tokens": 25572,
+      "session_unattributed_at_calibrated": -11406,
+      "sources": [
+        {
+          "source": "attachment:skill_listing",
+          "chars": 30097,
+          "est_tokens": 8360
+        },
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 27352,
+          "est_tokens": 7598
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+          "chars": 22861,
+          "est_tokens": 6350
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\MEMORY.md",
+          "chars": 16825,
+          "est_tokens": 4674
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 14633,
+          "est_tokens": 4065
+        },
+        {
+          "source": "hook:SessionStart:SessionStart",
+          "chars": 7955,
+          "est_tokens": 2210
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "hook:UserPromptSubmit:UserPromptSubmit",
+          "chars": 5937,
+          "est_tokens": 1649
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 4359,
+          "est_tokens": 1211
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "attachment:mcp_instructions_delta",
+          "chars": 2157,
+          "est_tokens": 599
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 1727,
+          "est_tokens": 480
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 945,
+          "est_tokens": 262
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 866,
+          "est_tokens": 241
+        },
+        {
+          "source": "user_prompt",
+          "chars": 618,
+          "est_tokens": 172
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 581,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:model",
+          "chars": 165,
+          "est_tokens": 46
+        },
+        {
+          "source": "attachment:total_tokens_reminder",
+          "chars": 86,
+          "est_tokens": 24
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {
+        "tool_result:Read": 21590,
+        "tool_result:PowerShell": 5931,
+        "attachment:deferred_tools_delta": 1824,
+        "tool_result:Grep": 1591,
+        "attachment:total_tokens_reminder": 1350,
+        "attachment:mcp_instructions_delta": 1225,
+        "tool_result:Edit": 1172,
+        "attachment:task_reminder": 880,
+        "attachment:queued_command": 640,
+        "tool_result:Write": 543,
+        "hook:PreToolUse:PreToolUse:Write": 519,
+        "hook:PreToolUse:PreToolUse:Bash": 497,
+        "attachment:environment": 422,
+        "tool_result:Bash": 408,
+        "tool_result:ToolSearch": 242,
+        "hook:PreToolUse:PreToolUse:PowerShell": 226,
+        "hook:PreToolUse:PreToolUse:Grep": 183,
+        "hook:PostToolUse:PostToolUse:Read": 183,
+        "attachment:silent_turn_reminder": 174,
+        "attachment:skill_listing": 161,
+        "tool_result:Glob": 94,
+        "hook:UserPromptSubmit:UserPromptSubmit": 75
+      },
+      "assistant_output_tokens": 31470,
+      "resets": [],
+      "last_call_tokens": 177195,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "34925e4e-7382-4006-8298-3ea83cd5c866",
+    "calls": 4,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 1,
+      "median_chars_per_token": 1.91
+    },
+    "floor": {
+      "measured_tokens": 20218,
+      "attributed_chars": 25763,
+      "estimated_tokens": 7156,
+      "unattributed_tokens": 13062,
+      "host_prefix_tokens": 8389,
+      "session_tokens": 11829,
+      "session_estimated_tokens": 7136,
+      "session_unattributed_tokens": 4693,
+      "session_unattributed_at_calibrated": null,
+      "sources": [
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\MEMORY.md",
+          "chars": 21486,
+          "est_tokens": 5968
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 1526,
+          "est_tokens": 424
+        },
+        {
+          "source": "user_prompt",
+          "chars": 814,
+          "est_tokens": 226
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 581,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 570,
+          "est_tokens": 158
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 396,
+          "est_tokens": 110
+        },
+        {
+          "source": "attachment:model",
+          "chars": 165,
+          "est_tokens": 46
+        },
+        {
+          "source": "attachment:total_tokens_reminder",
+          "chars": 86,
+          "est_tokens": 24
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 75,
+          "est_tokens": 21
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {
+        "tool_result:Read": 5776,
+        "tool_result:PowerShell": 1132,
+        "hook:PreToolUse:PreToolUse:Bash": 436,
+        "tool_result:Bash": 414,
+        "hook:PreToolUse:PreToolUse:PowerShell": 300,
+        "attachment:total_tokens_reminder": 123
+      },
+      "assistant_output_tokens": 607,
+      "resets": [],
+      "last_call_tokens": 29006,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "d565220e-d236-4075-afdb-379b608ef991",
+    "calls": 15,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 6,
+      "median_chars_per_token": 2.45
+    },
+    "floor": {
+      "measured_tokens": 20099,
+      "attributed_chars": 25518,
+      "estimated_tokens": 7088,
+      "unattributed_tokens": 13011,
+      "host_prefix_tokens": 8389,
+      "session_tokens": 11710,
+      "session_estimated_tokens": 7068,
+      "session_unattributed_tokens": 4642,
+      "session_unattributed_at_calibrated": 1325,
+      "sources": [
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\MEMORY.md",
+          "chars": 21440,
+          "est_tokens": 5956
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 1526,
+          "est_tokens": 424
+        },
+        {
+          "source": "user_prompt",
+          "chars": 615,
+          "est_tokens": 171
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 581,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 570,
+          "est_tokens": 158
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 396,
+          "est_tokens": 110
+        },
+        {
+          "source": "attachment:model",
+          "chars": 165,
+          "est_tokens": 46
+        },
+        {
+          "source": "attachment:total_tokens_reminder",
+          "chars": 86,
+          "est_tokens": 24
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 75,
+          "est_tokens": 21
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {
+        "tool_result:PowerShell": 10781,
+        "tool_result:Read": 2352,
+        "hook:PreToolUse:PreToolUse:PowerShell": 716,
+        "attachment:total_tokens_reminder": 499,
+        "hook:PreToolUse:PreToolUse:Bash": 427,
+        "tool_result:Bash": 370,
+        "attachment:environment": 158,
+        "attachment:silent_turn_reminder": 106
+      },
+      "assistant_output_tokens": 5332,
+      "resets": [],
+      "last_call_tokens": 40839,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "869464ed-2ab0-4bde-9c98-b8296eb2d7d1",
+    "calls": 4,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 1,
+      "median_chars_per_token": 1.96
+    },
+    "floor": {
+      "measured_tokens": 18285,
+      "attributed_chars": 21657,
+      "estimated_tokens": 6016,
+      "unattributed_tokens": 12269,
+      "host_prefix_tokens": 8389,
+      "session_tokens": 9896,
+      "session_estimated_tokens": 5995,
+      "session_unattributed_tokens": 3901,
+      "session_unattributed_at_calibrated": null,
+      "sources": [
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\MEMORY.md",
+          "chars": 17369,
+          "est_tokens": 4825
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 1531,
+          "est_tokens": 425
+        },
+        {
+          "source": "user_prompt",
+          "chars": 823,
+          "est_tokens": 229
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 581,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 570,
+          "est_tokens": 158
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 393,
+          "est_tokens": 109
+        },
+        {
+          "source": "attachment:model",
+          "chars": 165,
+          "est_tokens": 46
+        },
+        {
+          "source": "attachment:total_tokens_reminder",
+          "chars": 86,
+          "est_tokens": 24
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 75,
+          "est_tokens": 21
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {
+        "tool_result:Read": 4313,
+        "tool_result:PowerShell": 949,
+        "hook:PreToolUse:PreToolUse:Bash": 432,
+        "tool_result:Bash": 378,
+        "hook:PreToolUse:PreToolUse:PowerShell": 186,
+        "attachment:total_tokens_reminder": 122
+      },
+      "assistant_output_tokens": 621,
+      "resets": [],
+      "last_call_tokens": 25286,
+      "image_blocks": 0
+    }
+  }
+]
