@@ -16,6 +16,14 @@
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-H012-receipt.md",
             "after": null,
             "accept": ["DONE", "DONE_WITH_LIMITS"]
+        },
+        {
+            "id": "H3",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-H3.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\route-H3.json",
+            "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-H3-receipt.md",
+            "after": "H012",
+            "accept": ["DONE", "DONE_WITH_LIMITS"]
         }
     ]
 }

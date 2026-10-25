@@ -1,0 +1,17 @@
+{
+  "unit": "gsdx-f2-h3",
+  "envelope": {
+    "target": 2600000,
+    "warn": 2750000,
+    "stop": 2900000,
+    "calls": 18
+  },
+  "workers": [
+    {
+      "name": "f2-campaign-next",
+      "profile": "top-level-worker",
+      "calls": 18,
+      "packet": 7000
+    }
+  ]
+}
