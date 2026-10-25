@@ -1,0 +1,277 @@
+{
+ "sessions": {
+  "W3a": "c6c0e19d-c447-4de8-be77-4b4dd1abd63b",
+  "W3b": "dab6a4f1-5520-4887-b07c-604aeee8ebde",
+  "W3c": "c3c64013-d65a-415d-b32d-e068f3c715a3",
+  "W3d": "943a6303-6d4a-4794-ad85-6965b2412dd2"
+ },
+ "results": {
+  "W3a": {
+   "calls": 7,
+   "call1_processed": 19271,
+   "processed": 180180,
+   "input": 14,
+   "cache_read": 150153,
+   "cache_write": 30013,
+   "cache_write_5m": 0,
+   "cache_write_1h": 30013,
+   "output": 4243,
+   "cache_hit_ratio": 0.8333499833499833,
+   "models": {
+    "claude-sonnet-5-5": 7
+   },
+   "cost_usd": 0.1775253,
+   "cost_status": "priced",
+   "cost_usd_at_opus_5_5": 0.3550506,
+   "last_call_cumulative_processed": 180180,
+   "budget_hook_texts": [],
+   "session_tokens_crosscheck": {
+    "tokens_incl_output": 184423,
+    "ours_incl_output": 184423,
+    "match": true
+   }
+  },
+  "W3b": {
+   "calls": 13,
+   "call1_processed": 19661,
+   "processed": 435607,
+   "input": 26,
+   "cache_read": 393072,
+   "cache_write": 42509,
+   "cache_write_5m": 0,
+   "cache_write_1h": 42509,
+   "output": 8872,
+   "cache_hit_ratio": 0.9023546453569387,
+   "models": {
+    "claude-sonnet-5-5": 13
+   },
+   "cost_usd": 0.2981152,
+   "cost_status": "priced",
+   "cost_usd_at_opus_5_5": 0.5962304,
+   "last_call_cumulative_processed": 435607,
+   "budget_hook_texts": [],
+   "session_tokens_crosscheck": {
+    "tokens_incl_output": 444479,
+    "ours_incl_output": 444479,
+    "match": true
+   }
+  },
+  "W3c": {
+   "calls": 22,
+   "call1_processed": 20023,
+   "processed": 930639,
+   "input": 44,
+   "cache_read": 880814,
+   "cache_write": 49781,
+   "cache_write_5m": 0,
+   "cache_write_1h": 49781,
+   "output": 14737,
+   "cache_hit_ratio": 0.946461517301553,
+   "models": {
+    "claude-sonnet-5-5": 22
+   },
+   "cost_usd": 0.43466340000000003,
+   "cost_status": "priced",
+   "cost_usd_at_opus_5_5": 0.8693268000000001,
+   "last_call_cumulative_processed": 930639,
+   "budget_hook_texts": [],
+   "session_tokens_crosscheck": {
+    "tokens_incl_output": 945376,
+    "ours_incl_output": 945376,
+    "match": true
+   }
+  },
+  "W3d": {
+   "calls": 5,
+   "call1_processed": 18605,
+   "processed": 107917,
+   "input": 10,
+   "cache_read": 91075,
+   "cache_write": 16832,
+   "cache_write_5m": 0,
+   "cache_write_1h": 16832,
+   "output": 1323,
+   "cache_hit_ratio": 0.8439356171872828,
+   "models": {
+    "claude-sonnet-5-5": 5
+   },
+   "cost_usd": 0.0896855,
+   "cost_status": "priced",
+   "cost_usd_at_opus_5_5": 0.179371,
+   "last_call_cumulative_processed": 107917,
+   "budget_hook_texts": [
+    {
+     "timestamp": "2026-10-25T16:04:43.002Z",
+     "text": "SESSION BUDGET TRIPPED (processed 61,515 + next call ~22,033 + closeout reserve 88,132 would cross stop 150,000 (target 120,000).) -- closeout call 1/4 allowed: record the spend row and the handoff, then stop.",
+     "calls_before": 3
+    },
+    {
+     "timestamp": "2026-10-25T16:05:25.963Z",
+     "text": "SESSION BUDGET TRIPPED (processed 85,071 + next call ~23,556 + closeout reserve 94,224 would cross stop 150,000 (target 120,000).) -- closeout call 2/4 allowed: record the spend row and the handoff, then stop.",
+     "calls_before": 4
+    }
+   ],
+   "session_tokens_crosscheck": {
+    "tokens_incl_output": 109240,
+    "ours_incl_output": 109240,
+    "match": true
+   }
+  }
+ },
+ "verdicts": [
+  [
+   "cost<=40% vs executor_per_session @transcript model",
+   "W3a",
+   "PASS",
+   "$0.178 vs limit $1.088 (old $2.719)"
+  ],
+  [
+   "cost<=40% vs executor_per_session @Opus 5.5",
+   "W3a",
+   "PASS",
+   "$0.355 vs limit $1.088 (old $2.719)"
+  ],
+  [
+   "cost<=40% vs worker_per_epoch @transcript model",
+   "W3a",
+   "PASS",
+   "$0.178 vs limit $1.400 (old $3.500)"
+  ],
+  [
+   "cost<=40% vs worker_per_epoch @Opus 5.5",
+   "W3a",
+   "PASS",
+   "$0.355 vs limit $1.400 (old $3.500)"
+  ],
+  [
+   "first call <=20k",
+   "W3a",
+   "PASS",
+   "19271"
+  ],
+  [
+   "cache-hit >=85%",
+   "W3a",
+   "FAIL",
+   "83.3%"
+  ],
+  [
+   "cost<=40% vs executor_per_session @transcript model",
+   "W3b",
+   "PASS",
+   "$0.298 vs limit $1.088 (old $2.719)"
+  ],
+  [
+   "cost<=40% vs executor_per_session @Opus 5.5",
+   "W3b",
+   "PASS",
+   "$0.596 vs limit $1.088 (old $2.719)"
+  ],
+  [
+   "cost<=40% vs worker_per_epoch @transcript model",
+   "W3b",
+   "PASS",
+   "$0.298 vs limit $1.400 (old $3.500)"
+  ],
+  [
+   "cost<=40% vs worker_per_epoch @Opus 5.5",
+   "W3b",
+   "PASS",
+   "$0.596 vs limit $1.400 (old $3.500)"
+  ],
+  [
+   "first call <=20k",
+   "W3b",
+   "PASS",
+   "19661"
+  ],
+  [
+   "cache-hit >=85%",
+   "W3b",
+   "PASS",
+   "90.2%"
+  ],
+  [
+   "cost<=40% vs executor_per_session @transcript model",
+   "W3c",
+   "PASS",
+   "$0.435 vs limit $1.088 (old $2.719)"
+  ],
+  [
+   "cost<=40% vs executor_per_session @Opus 5.5",
+   "W3c",
+   "PASS",
+   "$0.869 vs limit $1.088 (old $2.719)"
+  ],
+  [
+   "cost<=40% vs worker_per_epoch @transcript model",
+   "W3c",
+   "PASS",
+   "$0.435 vs limit $1.400 (old $3.500)"
+  ],
+  [
+   "cost<=40% vs worker_per_epoch @Opus 5.5",
+   "W3c",
+   "PASS",
+   "$0.869 vs limit $1.400 (old $3.500)"
+  ],
+  [
+   "first call <=20k",
+   "W3c",
+   "FAIL",
+   "20023"
+  ],
+  [
+   "cache-hit >=85%",
+   "W3c",
+   "PASS",
+   "94.6%"
+  ],
+  [
+   "cost<=40% vs executor_per_session @transcript model",
+   "W3d",
+   "PASS",
+   "$0.090 vs limit $1.088 (old $2.719)"
+  ],
+  [
+   "cost<=40% vs executor_per_session @Opus 5.5",
+   "W3d",
+   "PASS",
+   "$0.179 vs limit $1.088 (old $2.719)"
+  ],
+  [
+   "cost<=40% vs worker_per_epoch @transcript model",
+   "W3d",
+   "PASS",
+   "$0.090 vs limit $1.400 (old $3.500)"
+  ],
+  [
+   "cost<=40% vs worker_per_epoch @Opus 5.5",
+   "W3d",
+   "PASS",
+   "$0.179 vs limit $1.400 (old $3.500)"
+  ],
+  [
+   "first call <=20k",
+   "W3d",
+   "PASS",
+   "18605"
+  ],
+  [
+   "cache-hit >=85%",
+   "W3d",
+   "FAIL",
+   "84.4%"
+  ],
+  [
+   "cache-hit >=85% pooled",
+   "pooled",
+   "PASS",
+   "91.6%"
+  ]
+ ],
+ "old_arm": {
+  "executor_per_session": 2.719047619047619,
+  "worker_per_epoch": 3.5
+ }
+}
