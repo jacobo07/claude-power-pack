@@ -38,3 +38,14 @@ ajusta hasta despues de registrarlo.
 - Cualquier DENTRO fuera, o FUERA dentro -> fallo de la senal, registrado.
 - «que hora es» en alguna familia -> falsa activacion, STOP.
 - Un sujeto de repo que no existe en disco -> resultado INVALIDO, no negativo.
+
+## Adenda 2026-10-25 -- `conversion_funnel` (QuickLease conversion intelligence, PP worktree `feat/conversion-baseline`)
+
+Escrita ANTES de ejecutar el clasificador sobre estas frases. `landing` NO es disparador a proposito:
+una landing sin embudo comercial (portfolio, anuncio de modalidad) no debe pagar reglas de conversion.
+
+| familia | DENTRO (debe clasificar) | FUERA (no debe) |
+|---|---|---|
+| `conversion_funnel` | «anade un checkout con Stripe y mide la tasa de conversion de la pagina de precios» | «hazme una landing para un restaurante con reservas online» |
+
+Sin sujeto por repo: la familia no declara `repo_markers` (un repo no dice si vende).

@@ -13185,3 +13185,26 @@ the whole history on disk under one session id costs no RAM after a recycle. Evi
 absolute interpreter path, or refuse when `sys.executable` is empty. Also: `bash -c "exec -a ...; trailer"`
 never runs the trailer, because exec replaces the shell. Evidence: E; `longrun.default_hook_cmd`.
 
+
+
+### HR-CONV-SYNTHETIC-IS-NOT-EVIDENCE-001
+
+A scripted, simulated, smoke or twin journey measures the software, never people. It is labelled synthetic,
+counts runs (never a rate), and must be invisible to visitor and conversion counts by construction, proven by a
+read-only query after the run. Enforced as family conversion_funnel (governance/CONVERSION_GOVERNANCE.md
+CONV-01..08), injected into any checkout / funnel / pricing / onboarding prompt; gate
+	ools/test_family_conversion_funnel.py. Evidence: E (QuickLease 2026-10-22: curl probes stored as buyers).
+
+### PR-CONV-ATTRIBUTION-AND-EXPOSURE-FIRST-001
+
+Before optimizing a page or blaming a price, establish what was observable: that each traffic source reaches
+the first funnel event (positive + negative control), which page emits each event, and where the price is shown
+and how many reached it. At 0 conversions the answer is INCONCLUSIVE + the sample still needed, never a rate.
+Evidence: E (QuickLease 2026-10-25: no public page states the fee; no external visitor reached Review & pay).
+
+### T-TEXT-PRESENCE-READS-A-DEFERRAL-AS-AN-ANSWER-001
+
+A keyword check for "does this page answer X" matches sentences that DEFER X ("full fee, VAT included, on the
+review step" read as a stated price) and misses reordered phrasing ("rules ... rental"). It also misses answers
+split across DOM text nodes. Read text per block, require the answer's substance (an amount, a duration), keep
+the matched text, and pin goldens including a deferral sentence. Evidence: E (Website Twin, InfinityOps #594).

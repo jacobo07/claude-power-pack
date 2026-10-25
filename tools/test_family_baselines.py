@@ -34,6 +34,9 @@ PROMPTS = {
                          "cambia el color del botón del hero"),
     "wii_homebrew": ("porta el menú de CavEX a la Wii con libogc y GX",
                      "crea una nueva modalidad de KobiiCraft tipo skywars con arenas y kits"),
+    # Addendum 2026-10-25 in 18_FAMILY_MISSION_PREDECLARATION.md, written before the run.
+    "conversion_funnel": ("añade un checkout con Stripe y mide la tasa de conversión de la página de precios",
+                          "hazme una landing para un restaurante con reservas online"),
 }
 REPOS = {
     "web_surface": (CP + r"\CostaLuz Lawyers", CP + r"\Wii Projects\CavEX"),

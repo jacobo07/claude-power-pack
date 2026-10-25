@@ -1,0 +1,114 @@
+{
+  "family": "conversion_funnel",
+  "generation": 0,
+  "parent": null,
+  "parent_sha256": null,
+  "created_at": 1792957271.8503172,
+  "reason": "B0 from Owner-sealed governance; every entry's cited line re-read and verified",
+  "entries": [
+    {
+      "id": "conversion_funnel-synthetic-never-counted",
+      "requirement": "Label or store every scripted, simulated, smoke or bot visit so it can never count as a visitor or conversion; after a run, a read-only query shows zero external rows from it.",
+      "why": "Measured on QuickLease 2026-10-22..25 (conversion intelligence mission): see the origin line under the rule.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\CONVERSION_GOVERNANCE.md",
+        "line": 9,
+        "quote": "CONV-01 Every scripted, simulated, smoke, bot or twin visit must be stored or labelled so it can never be counted as a visitor or a conversion, and a read-only query after the run must show zero external rows from it."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "conversion_funnel-attribution-before-optimizing",
+      "requirement": "Before optimizing a landing page for a traffic source, prove that source reaches the first funnel event: a tagged visit is recorded (positive) and a bot visit is not (negative).",
+      "why": "Measured on QuickLease 2026-10-22..25 (conversion intelligence mission): see the origin line under the rule.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\CONVERSION_GOVERNANCE.md",
+        "line": 12,
+        "quote": "CONV-02 Before optimizing a landing page for a traffic source, prove that source reaches the first funnel event, with a positive control (a tagged visit is recorded) and a negative control (an untagged or bot visit is not)."
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "conversion_funnel-paid-is-a-server-event",
+      "requirement": "Count a paid conversion only from the payment processor's server event (webhook), never from a success-page visit or client event; keep the case record joined to it.",
+      "why": "Measured on QuickLease 2026-10-22..25 (conversion intelligence mission): see the origin line under the rule.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\CONVERSION_GOVERNANCE.md",
+        "line": 15,
+        "quote": "CONV-03 Count a paid conversion only from the payment processor's server event (webhook), never from a success-page visit or a client event, and keep the case record joined to it."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "conversion_funnel-no-rate-below-sample",
+      "requirement": "Report a conversion rate, lift or forecast only above a declared minimum sample; below it say INCONCLUSIVE plus the sample and minimum detectable effect still needed.",
+      "why": "Measured on QuickLease 2026-10-22..25 (conversion intelligence mission): see the origin line under the rule.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\CONVERSION_GOVERNANCE.md",
+        "line": 18,
+        "quote": "CONV-04 Report a conversion rate, lift or forecast only above a declared minimum sample; below it the answer is INCONCLUSIVE together with the sample size and minimum detectable effect still needed, never a precise percentage."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "conversion_funnel-name-the-emitting-page",
+      "requirement": "Before dividing one funnel count by another, name the page that emits each event; visitors-to-starts is a page-to-form rate only if the entry event fires on that page.",
+      "why": "Measured on QuickLease 2026-10-22..25 (conversion intelligence mission): see the origin line under the rule.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\CONVERSION_GOVERNANCE.md",
+        "line": 21,
+        "quote": "CONV-05 A ratio such as visitors to starts is a page-to-form rate only if the entry event is emitted on that page; name the page that emits each event before dividing one count by another."
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "conversion_funnel-price-needs-exposure",
+      "requirement": "Test a 'price reduces conversion' hypothesis only on visitors who saw the price: first measure where the price is shown and how many visitors reached that point.",
+      "why": "Measured on QuickLease 2026-10-22..25 (conversion intelligence mission): see the origin line under the rule.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\CONVERSION_GOVERNANCE.md",
+        "line": 24,
+        "quote": "CONV-06 A hypothesis that price reduces conversion is testable only on visitors who saw the price; first measure where the price is shown and how many visitors reached that point."
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "conversion_funnel-text-checks-have-goldens",
+      "requirement": "A text-presence check claiming a page answers a visitor question needs golden tests, including a sentence that defers or negates the answer.",
+      "why": "Measured on QuickLease 2026-10-22..25 (conversion intelligence mission): see the origin line under the rule.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\CONVERSION_GOVERNANCE.md",
+        "line": 27,
+        "quote": "CONV-07 A text-presence check that says a page answers a visitor question must carry golden tests, including a sentence that defers or negates the answer, so neither a false present nor a false missing passes."
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "conversion_funnel-same-price-paid-metric",
+      "requirement": "Experiments keep the price fixed unless price is the declared, authorized treatment; the primary metric is paid, qualified conversion, never clicks or CTR alone.",
+      "why": "Measured on QuickLease 2026-10-22..25 (conversion intelligence mission): see the origin line under the rule.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\governance\\CONVERSION_GOVERNANCE.md",
+        "line": 30,
+        "quote": "CONV-08 Experiments keep the price fixed unless price is the declared and authorized treatment, and their primary metric is paid, qualified conversion, never clicks or click-through rate alone."
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    }
+  ]
+}
