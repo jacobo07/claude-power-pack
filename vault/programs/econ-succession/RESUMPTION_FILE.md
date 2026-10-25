@@ -1,3 +1,6 @@
+> **STALE (2026-10-25).** S2/S3 (af7ec647) and S4 (44396331) landed after this file's anchor 4e9953a7, so the "do S1" line below is
+> stale. The anchor check passes only because 4e9953a7 is an ancestor of HEAD. NEXT is its owner's decision; nothing else here was changed.
+
 # RESUMPTION_FILE: econ-succession
 
 **Identity.** Claude Power Pack, `C:\Users\User\.claude\skills\claude-power-pack`, branch
