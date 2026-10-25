@@ -392,5 +392,23 @@ finally:
 _m = [c[c.index("--model") + 1] if "--model" in c else None for c in _seen]
 check("V-CHAIN-ARM-MODEL", _m == ["sonnet", "haiku", None], str(_m))
 
+# a refused arm changes no mission, so no event re-ticks its chain: the sweep retries it (gsdx-factory-2 H3 residual
+# 2026-10-25, refused at 2,537 MB free). Controls: too recent, an arm that succeeded, a held arm, and a newer row of
+# another checkout's chain under the same goal (a unit this chain does not own) must not hide the refusal.
+_pd = TMP / "retry-programs"
+for _name in ("refused", "recent", "okarm", "held"):
+    (_pd / _name).mkdir(parents=True, exist_ok=True)
+    (_pd / _name / "chain.json").write_text(json.dumps({"goal": f"g-{_name}", "units": [{"id": "U"}]}), encoding="utf-8")
+_T = 10_000.0
+_hist = [{"goal": "g-refused", "unit": "U", "action": "arm", "at": _T - 300, "armed": {"ok": False, "why": "low memory"}},
+         {"goal": "g-refused", "unit": "OTHER", "action": "complete", "at": _T - 100},
+         {"goal": "g-recent", "unit": "U", "action": "arm", "at": _T - 60, "armed": {"ok": False}},
+         {"goal": "g-okarm", "unit": "U", "action": "arm", "at": _T - 300, "armed": {"ok": True}},
+         {"goal": "g-held", "unit": "U", "action": "arm", "at": _T - 300, "armed": {"ok": False, "held": True}}]
+_ticked = []
+_rr = gc.retry_refused_arms(programs_dir=_pd, now=_T, history=_hist,
+                            ticker=lambda cp, trigger: _ticked.append((Path(cp).parent.name, trigger)) or {"action": "arm"})
+check("V-CHAIN-RETRY-REFUSED-ARM", _ticked == [("refused", "retry")] and len(_rr) == 1, f"{_ticked} {_rr}")
+
 print(f"CHAIN_PASS={passes}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)

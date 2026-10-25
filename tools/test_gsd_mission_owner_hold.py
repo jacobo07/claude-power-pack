@@ -297,6 +297,27 @@ def main() -> int:
     check("V-OH-CONTROL-PARTIAL-RUNNABLE-NOT-HALTED", gm.load("m-rc-partial-ok")["state"] != gm.HALTED,
           gm.load("m-rc-partial-ok")["state"])
 
+    # 10b. the cwd's roadmap does not close a receipt unit (gsdx-factory-2 H3, 2026-10-25: the PP checkout's archived
+    # milestone read ALL_COMPLETE one turn in, and the chain unit went COMPLETED with only its RED test written).
+    # No receipt -> the relay continues; an open receipt -> HALTED for the residual. Control: a plain GSD mission.
+    _pkt_mission("m-ac-none", None, None)
+    _pkt_mission("m-ac-partial", "PARTIAL -- half", NOW + 30)
+    _mission("m-ac-plain", gm.RUNNING)
+    launched = []
+    ac_rows = gm.supervise(now=NOW + 240, sessions=[{"sessionId": f"{m}-w", "id": f"{m}-w"[:8], "kind": "background",
+                                                     "state": "done"} for m in ("m-ac-none", "m-ac-partial", "m-ac-plain")],
+                           runner=lambda *a, **k: launched.append(a) or "", stop_runner=lambda *a, **k: None,
+                           pid_alive=gone, fingerprint=lambda wd: None,
+                           gsd_status=lambda cwd, workstream=None: {"outcome": "ALL_COMPLETE", "reason": "v1 archived"})
+    by = {r["mission_id"]: r for r in ac_rows}
+    check("V-OH-UNIT-NO-RECEIPT-ALLCOMPLETE-CONTINUES", gm.load("m-ac-none")["state"] not in gm.TERMINAL
+          and by["m-ac-none"].get("action") in ("relay", "replace", "launch", "continue"),
+          f"{gm.load('m-ac-none')['state']} row={by.get('m-ac-none')}")
+    check("V-OH-UNIT-OPEN-RECEIPT-ALLCOMPLETE-HALTS", gm.load("m-ac-partial")["state"] == gm.HALTED,
+          f"{gm.load('m-ac-partial')['state']} row={by.get('m-ac-partial')}")
+    check("V-OH-CONTROL-PLAIN-ALLCOMPLETE-COMPLETES", gm.load("m-ac-plain")["state"] == gm.COMPLETED,
+          gm.load("m-ac-plain")["state"])
+
     # 11. an AMR successor's receipt closes ITS unit, not the mission (m-b968b2afdca4, 2026-10-17: the r1 packet
     # covered phase 1 of 4, its DONE receipt completed the whole mission before GSD was asked). GSD decides; the
     # control is the same receipt under ALL_COMPLETE.

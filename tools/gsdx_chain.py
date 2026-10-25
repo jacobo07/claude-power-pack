@@ -783,6 +783,52 @@ def tick_for_packet(packet, programs_dir=None, budget_s: float = 540.0, ticker=N
     return rows
 
 
+def retry_refused_arms(programs_dir=None, now=None, min_age_s: float = 240.0, ticker=None, history=None) -> list:
+    """Re-tick a programme chain whose newest own row is an arm the armer refused (preflight low memory, a failed
+    arm-chain). No mission changed state, so no event ticks it again (gsdx-factory-2 H3 residual 2026-10-25: refused at
+    2,537 MB free, then the chain waited on nothing). A row is the chain's own when its goal matches and it names one
+    of the chain's units: another checkout's chain may log under the same goal. At most one retry per `min_age_s`;
+    a held arm (the armer parked the record) is not retried. Never raises; off with CPP_GSDX_CHAIN_EVENT=off."""
+    if os.environ.get("CPP_GSDX_CHAIN_EVENT", "").lower() == "off":
+        return []
+    t = time.time() if now is None else now
+    base = Path(programs_dir) if programs_dir else LIVE.parent / "vault" / "programs"
+    rows = []
+    try:
+        chains = [(cp, _jload(cp) or {}) for cp in sorted(base.glob("*/chain.json"))]
+        hist = history if history is not None else _history_rows()
+        for cp, c in chains:
+            ids = {u.get("id") for u in c.get("units") or [] if isinstance(u, dict)}
+            own = [r for r in hist if c.get("goal") and r.get("goal") == c["goal"] and r.get("unit") in ids]
+            last = own[-1] if own else {}
+            armed = last.get("armed") or {}
+            if (last.get("action") == "arm" and armed and not armed.get("ok") and not armed.get("held")
+                    and t - float(last.get("at") or 0) >= min_age_s):
+                try:
+                    rows.append({**(ticker or tick)(cp, trigger="retry"), "chain": str(cp)})
+                except Exception as e:  # noqa: BLE001
+                    rows.append({"action": "event_error", "trigger": "retry", "chain": str(cp),
+                                 "error": f"{type(e).__name__}: {e}"[:200]})
+    except Exception as e:  # noqa: BLE001
+        rows.append({"action": "event_error", "trigger": "retry", "error": f"{type(e).__name__}: {e}"[:200]})
+    return rows
+
+
+def _history_rows(limit: int = 1600) -> list:
+    out = []
+    try:
+        for ln in _log_path().read_text(encoding="utf-8", errors="replace").splitlines()[-limit:]:
+            try:
+                r = json.loads(ln)
+            except ValueError:
+                continue
+            if isinstance(r, dict):
+                out.append(r)
+    except OSError:
+        pass
+    return out
+
+
 # ---- APR-3: health ------------------------------------------------------------------------------------------------
 def foreign_bindings(chain: dict, missions: list, open_sids: dict) -> list:
     """Sessions holding open reservations on the goal that own none of the chain's missions (read-only)."""

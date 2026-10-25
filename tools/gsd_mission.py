@@ -5672,6 +5672,15 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                                        workstream=rec.get("workstream"))
                     row["gsd"] = st.get("outcome")
                     gsd_fact = gsd_fact_line(st)
+                    if (pkt and not rec.get("done_check") and not amr_pkt
+                            and st.get("outcome") in ("ALL_COMPLETE", "NO_PHASES")):
+                        # A receipt unit's work is its packet, not the cwd's roadmap (arm_preflight already says so).
+                        # gsdx-factory-2 H3 2026-10-25: the PP checkout's archived milestone read ALL_COMPLETE one turn
+                        # in and the chain unit went COMPLETED with only its RED test written. No receipt yet: relay on;
+                        # an open receipt: the NO_PHASES halt below, so the chain's residual owns the continuation.
+                        st = ({**st, "outcome": "OK", "reason": f"packet unit, no receipt (gsd {st.get('outcome')})"}
+                              if unit_rst is None else {**st, "outcome": "NO_PHASES"})
+                        row["gsd_unit"] = st["outcome"]
                     if st.get("outcome") == "ALL_COMPLETE":
                         transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                    event="mission_completed", now=now, state=COMPLETED,
@@ -6495,6 +6504,18 @@ def supervise(*args, **kw) -> list[dict]:
                 rows = rows + event_chain_ticks(before, _packet_states(), stewarded=stewarded)
             except Exception as exc:  # noqa: BLE001
                 rows = rows + [{"mission_id": "chain_event", "action": "chain_event", "status": "ERROR",
+                                "error": f"{type(exc).__name__}: {exc}"[:300]}]
+            try:
+                # a refused arm changes no mission, so no event re-ticks its chain (gsdx-factory-2 H3, 2026-10-25)
+                # only where the chain log and these missions share a state dir: a test that redirected the missions
+                # alone must never re-tick (and arm on) the real programme chains
+                import gsdx_chain  # noqa: E402
+                if lr.state_dir().resolve() == gsdx_chain._state_dir().resolve():
+                    rows = rows + [{"mission_id": "chain_retry", "action": "chain_event", "status": r.get("action"),
+                                    **{k: r[k] for k in ("unit", "trigger", "chain", "error") if k in r}}
+                                   for r in gsdx_chain.retry_refused_arms()]
+            except Exception as exc:  # noqa: BLE001
+                rows = rows + [{"mission_id": "chain_retry", "action": "chain_event", "status": "ERROR",
                                 "error": f"{type(exc).__name__}: {exc}"[:300]}]
     return rows
 

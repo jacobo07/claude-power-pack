@@ -337,5 +337,29 @@ run(cmix)
 check("V-STEWARD-STRADDLE-POST-SINCE-ONLY", cmix["led"].status()["used"] == 2500,
       f"used={cmix['led'].status()['used']}")
 
+# --- a COMPLETED chain unit with no receipt, armed outside its goal's roots and naming no goal, is stewarded under the
+# goal of the chain that owns its packet (gsdx-factory-2 H3 2026-10-25: skipped by the cwd-only COMPLETED gate, the
+# chain waited on a residual nobody wrote). Control: a chain whose goal is not declared leaves it untouched.
+import gsdx_chain  # noqa: E402
+far = Path(TMP) / "far-roots"
+far.mkdir(exist_ok=True)
+assert ms.goal_declare("g-chain", 50_000_000, "test", [str(far)])["ok"]
+chains = {}
+for tag, cgoal in (("ok", "g-chain"), ("ctl", "g-undeclared")):
+    cc = case(state=gm.COMPLETED, with_goal=False, goal_field=False)
+    cp = Path(TMP) / f"chain-{tag}.json"
+    cp.write_text(json.dumps({"goal": cgoal, "units": [{"id": "U", "packet": str(cc["pkt"])}]}), encoding="utf-8")
+    chains[str(cc["pkt"])] = cp
+    chains[tag] = cc
+real_dc = gsdx_chain.discover_chains
+gsdx_chain.discover_chains = lambda packet, programs_dir=None: [chains[k] for k in chains
+                                                                 if k == str(packet) and isinstance(chains[k], Path)]
+try:
+    r_ok, r_ctl = mine(run(chains["ok"]), chains["ok"]), mine(run(chains["ctl"]), chains["ctl"])
+finally:
+    gsdx_chain.discover_chains = real_dc
+check("V-STEWARD-COMPLETED-CHAIN-GOAL", r_ok and r_ok[0]["action"] == "steward_settled"
+      and Path(str(chains["ok"]["pkt"]) + ".residual.md").exists() and not r_ctl, f"{r_ok[:1]} / {r_ctl[:1]}")
+
 print(f"STEWARD_PASS={passes}/{passes + fails}")
 sys.exit(0 if not fails else 1)

@@ -128,6 +128,30 @@ def _step(gm, mid: str, rec: dict, name: str, value, steward: dict) -> dict:
                          event=f"steward_{name}", steward=new)
 
 
+def goal_of(rec: dict, index: dict) -> str | None:
+    """The spend goal a stopped mission's work belongs to: a goal the record names (goal / goal.ce_goal /
+    goal.workstream), else the goal of the chain that owns its packet, else the goal bound to its cwd.
+    A chain-armed unit names no goal and may run outside the goal's roots (gsdx-factory-2 H012 2026-10-25), and the
+    COMPLETED gate asked the cwd alone, so H3 (COMPLETED, no receipt) never got a residual. Only a declared goal counts."""
+    g0 = rec.get("goal")
+    named = [g0.get(k) for k in ("ce_goal", "workstream")] if isinstance(g0, dict) else []
+    goal = (g0 if isinstance(g0, str) and g0 else None) or next((g for g in named if isinstance(g, str) and g in index),
+                                                               None)
+    pkt = (rec.get("wu_packet") or {}).get("path")
+    if not goal and pkt:
+        try:
+            import gsdx_chain  # noqa: E402 -- same tools dir
+            base = re.sub(r"(\.residual(-\d+)?\.md)+$", "", str(pkt))
+            for cp in gsdx_chain.discover_chains(base):
+                g = None if isinstance(cp, tuple) else (gsdx_chain._jload(cp) or {}).get("goal")
+                if isinstance(g, str) and g in index:
+                    goal = g
+                    break
+        except Exception:  # noqa: BLE001 -- an unreadable chain leaves the cwd binding as the answer
+            goal = None
+    return goal or spend_goal_for(rec.get("cwd"), index)
+
+
 def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool, index: dict) -> dict:
     mid = rec["mission_id"]
     row = {"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"], "rule": "R1", "action": "none"}
@@ -144,12 +168,7 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
     if receipt and rj.is_closed(receipt):
         return None                       # the canonical receipt is the worker's own close: untouched
     # a receipt that exists but closes nothing (no Status, PARTIAL, stub) is not a close: steward it (APR-1, K5)
-    g0 = rec.get("goal")
-    # a chain-armed mission names its goal (goal.ce_goal / goal.workstream); the goal's roots need not cover the cwd
-    # (gsdx-factory-2 H012 2026-10-25). Only a name that IS a declared goal counts; the cwd binding stays the fallback.
-    named = [g0.get(k) for k in ("ce_goal", "workstream")] if isinstance(g0, dict) else []
-    goal = (g0 if isinstance(g0, str) and g0 else None) or next((g for g in named if isinstance(g, str) and g in index),
-                                                               None) or spend_goal_for(rec.get("cwd"), index)
+    goal = goal_of(rec, index)
     if not goal:
         row.update(action="UNKNOWN", reason="no spend goal is bound to this mission's cwd: nothing settled")
         return row
@@ -345,7 +364,7 @@ def steward_pass(missions: list[dict], now: float, *, sessions=None, pid_alive=N
     for m in missions:
         if m["state"] not in (gm.COMPLETED, gm.HALTED, gm.BLOCKED) or not m.get("wu_packet"):
             continue
-        if m["state"] == gm.COMPLETED and not spend_goal_for(m.get("cwd"), index):
+        if m["state"] == gm.COMPLETED and not goal_of(m, index):
             continue                      # a finished mission bound to no goal has nothing to settle
         verdict = gm.liveness(m.get("owner"), sessions, pid_alive)[0]
         if verdict in (gm.LIVE, gm.WAITING_HUMAN):
