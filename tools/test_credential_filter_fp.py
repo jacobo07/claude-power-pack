@@ -33,14 +33,20 @@ def check(name, ok):
 import tempfile
 with tempfile.TemporaryDirectory() as d:
     d = Path(d)
-    # fake key built at runtime so this file carries no key-shaped literal
-    fake = d / "fake.txt"
-    fake.write_text("tok = '" + "sk" + "-" + "A1b2C3d4E5f6G7h8I9j0" + "'\n" + "pass" + "word" + "=" + "hunter2hunter2xx\n")
+    # fake secrets built at runtime so this file carries no key-shaped literal; one per file, so no
+    # alternative masks another (an sk- line alone would keep a mixed file BLOCKED)
+    pw = "pass" + "word"
+    fakes = {"sk-key": "tok = '" + "sk" + "-" + "A1b2C3d4E5f6G7h8I9j0" + "'\n",
+             "quoted-assign": pw + ': "' + "abc123XYZ789" + '"\n',
+             "plain-env": "DB_" + "PASS" + "=" + "hunter2hunter2xx\n"}
     for c in CONTROLS:
         check(f"V-CFP-ADMIT {c}", verdict(BUILDER, ROOT / c) == "ADMITTED")
     for c in COPIES:
         check(f"V-CFP-COPY-SYNC {c.parts[-3]}", FIX in c.read_text(encoding="utf-8") and FIX in BUILDER.read_text(encoding="utf-8"))
-    check("V-CFP-FAKE-KEY-STILL-BLOCKED", verdict(BUILDER, fake) == "BLOCKED")
+    for name, text in fakes.items():
+        fake = d / f"fake-{name}.txt"
+        fake.write_text(text)
+        check(f"V-CFP-FAKE-STILL-BLOCKED {name}", verdict(BUILDER, fake) == "BLOCKED")
     # mutant: fix reverted in memory -> an admitted control returns to BLOCKED
     mut = d / "mutant.cjs"
     mut.write_text(BUILDER.read_text(encoding="utf-8").replace(FIX, ""), encoding="utf-8")
