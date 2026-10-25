@@ -798,6 +798,16 @@ def main() -> int:
     check("V-DECIDE-CLI-RECORDS", cp.returncode == 0 and "DECISION RECORDED" in cp.stdout
           and [d["id"] for d in gm.load("m-dec3")["decisions"]] == ["B"], (cp.returncode, cp.stdout, cp.stderr[-200:]))
 
+    # S5: any transition row into a terminal state closes the epoch; a row that only mentions one does not
+    t0, t1 = "2026-01-01T00:00:00+00:00", "2026-01-01T01:00:00+00:00"
+    ev_s5 = [{"mission_id": "m-s5t", "event": "launch_claimed", "epoch": 1, "ts": t0},
+             {"mission_id": "m-s5t", "event": "slim_worker_finished", "state": "COMPLETED", "seq": 4, "ts": t1}]
+    e_s5 = ge.epochs("m-s5t", ev_s5)
+    check("V-EPOCH-SLIM-FINISHED-CLOSES", len(e_s5) == 1 and e_s5[0]["end"] == t1 and e_s5[0]["end_cause"] == "COMPLETED"
+          and e_s5[0]["end_event"] == "slim_worker_finished", e_s5)
+    e_nr = ge.epochs("m-s5t", [ev_s5[0], {**ev_s5[1], "seq": None}])
+    check("V-EPOCH-STATE-MENTION-NO-SEQ-NOT-TERMINAL", len(e_nr) == 1 and e_nr[0]["end"] is None, e_nr)
+
     c = ge.census()
     check("V-EPOCH-CENSUS-SEPARATES-COUNTERS",
           c["fresh_worker_sessions"] >= 4 and c["context_rotations"] >= 1 and c["same_session_continuations"] >= 1

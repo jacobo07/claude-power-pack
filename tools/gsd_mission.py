@@ -84,6 +84,17 @@ MAX_REPLACEMENTS = 3          # consecutive unacknowledged launches before HALTE
 # relay every pass for 1.5 h while the record said RUNNING. NO_PHASES does not clear by waiting;
 # UNAVAILABLE (a loaded host) can, so it gets the longer bound. Blocking never relays: only OK does.
 GSD_HOLD_BLOCK_AFTER = {"NO_PHASES": 2, "UNAVAILABLE": 6}
+GSD_HOLD_UNBLOCK = {"NO_PHASES": "ROADMAP.md headings parse as GSD phases (gsd-tools init.manager reports phases)",
+                    "UNAVAILABLE": "node and gsd-tools.cjs answer for this project"}
+
+
+def gsd_backoff_on() -> bool:
+    return (os.environ.get("CPP_GSD_HOLD_BACKOFF") or "").strip().lower() != "off"
+
+
+def gsd_hold_backoff_s(k: int, base: int = 300, cap: int = 1800) -> int:
+    """Wait before asking GSD again about a refusal that has not changed: doubles per blocked pass, capped."""
+    return min(cap, base * (2 ** max(0, int(k))))
 # Hand-off wall, % of context used, in the watchdog's own vocabulary. The same narrowed wall
 # /cpp-gsd-long has run on since v2 (crossing at 40 % used), so a worker hands off long
 # before native compaction would fire.
@@ -344,6 +355,70 @@ def transition(mission_id: str, *, expect_epoch: int, expect_state, event: str,
     lr.ledger_append(mission_id, event, mission_id=mission_id, epoch=rec["epoch"],
                      state=rec["state"], seq=rec["seq"], code=CODE_ID, **extra)
     return rec
+
+
+# ----------------------------------------------------------------------------------------------- S6 blockers
+# FC-08: every BLOCKED transition and every Owner-hold park carries a typed blocker {class, unblock_condition,
+# independent_work, owner_required, rule} compiled by tools/blocker_compiler.py. `block_mission` is the ONE writer of
+# event="mission_blocked"; a guard test discovers the writers by AST, so a sixth site cannot bypass it.
+# Kill switch CPP_BLOCKER_COMPILE=off restores the exact old call and row shape. The compiler REPORTS; it never
+# launches anything, and independent_work is information only (no consumer acts on it).
+def blocker_compile_on() -> bool:
+    return (os.environ.get("CPP_BLOCKER_COMPILE") or "").strip().lower() not in ("0", "off", "false")
+
+
+def _compile_blocker(rec: dict, reason: str, *, hold: dict | None = None, intent: dict | None = None,
+                     is_hold: bool = False) -> dict | None:
+    """The typed blocker, or None when compilation is switched off. FAIL-OPEN: a compiler fault yields an UNKNOWN
+    blocker carrying the exception class (UNKNOWN is never independent work); it can never stop the BLOCKED write."""
+    if not blocker_compile_on():
+        return None
+    try:
+        import blocker_compiler as bc
+        return bc.compile_blocker(reason, hold=hold, intent=intent, rec=rec, cwd=rec.get("cwd"),
+                                  workstream=rec.get("workstream"), is_hold=is_hold)
+    except Exception as exc:  # noqa: BLE001 -- the BLOCKED row stands; the failure is on it
+        return {"class": "UNKNOWN", "unblock_condition": {"kind": "unknown", "what": "blocker compilation failed"},
+                "unblock_text": "Unclassified: the blocker compiler raised; read the reason.",
+                "independent_work": False, "independent_reason": "compile_error", "owner_required": True,
+                "rule": "compile_error", "compile_error": type(exc).__name__}
+
+
+def _blocker_ledger(b: dict | None) -> dict:
+    if not b:
+        return {}
+    return {"blocker_class": b["class"], "independent_work": b["independent_work"],
+            "owner_required": b["owner_required"], "unblock_kind": (b.get("unblock_condition") or {}).get("kind")}
+
+
+def block_mission(rec: dict, *, expect_epoch: int, expect_state, now: float | None = None, reason: str,
+                  intent: dict | None = None, **changes) -> dict:
+    """The one writer of event="mission_blocked": state BLOCKED, the writer's own fields (capsule_hold, gsd_hold,
+    blocked_intent, ...) in `changes`, plus the compiled blocker on the record and its class on the ledger row."""
+    hold = changes.get("gsd_hold") or changes.get("capsule_hold")
+    b = _compile_blocker(rec, reason, hold=hold, intent=intent or changes.get("blocked_intent"))
+    if b is not None:
+        changes = {**changes, "blocker": {**b, "epoch": expect_epoch, "at": now}}
+    return transition(rec["mission_id"], expect_epoch=expect_epoch, expect_state=expect_state,
+                      event="mission_blocked", now=now, state=BLOCKED, reason=reason,
+                      ledger_extra=_blocker_ledger(b) or None, **changes)
+
+
+def annotate_hold(rec: dict, hold: dict) -> dict:
+    """`hold` with its compiled blocker attached (a copy), or `hold` itself when compilation is off. Used by the two
+    hold writers (set_owner_hold, _amr_boundary): an Owner-hold park is as typed as a BLOCKED transition."""
+    b = _compile_blocker(rec, str(hold.get("reason") or ""), hold=hold, is_hold=True)
+    return hold if b is None else {**hold, "blocker": b}
+
+
+def current_blocker(rec: dict) -> dict | None:
+    """The typed blocker a record is parked on NOW: its BLOCKED blocker while it is BLOCKED in the epoch that wrote
+    it, else the blocker on a live owner hold. A blocker left from an earlier block is not current."""
+    b = rec.get("blocker")
+    if rec.get("state") == BLOCKED and isinstance(b, dict) and b.get("epoch") == rec.get("epoch"):
+        return b
+    hb = (rec.get("owner_hold") or {}).get("blocker")
+    return hb if isinstance(hb, dict) else None
 
 
 def history_gaps(rec: dict, events: list[dict] | None = None) -> dict:
@@ -1671,10 +1746,11 @@ def set_owner_hold(mission_id: str, reason: str, now: float | None = None, kind:
     if rec["state"] in TERMINAL:
         raise MissionError(f"{mission_id} is {rec['state']}; there is nothing to hold")
     now = time.time() if now is None else now
+    new_hold = annotate_hold(rec, {"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {}),
+                                   **(extra or {})})
     out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expect_seq,
                      event="owner_hold_set", now=now, reason=f"owner hold: {reason[:300]}",
-                     owner_hold={"reason": reason[:1000], "set_at": now, **({"kind": kind} if kind else {}),
-                                 **(extra or {})})
+                     ledger_extra=_blocker_ledger(new_hold.get("blocker")) or None, owner_hold=new_hold)
     hold_guard_budget(rec, reason)
     if kind == "cost":
         # Economic incident receipt (programme A2): a cost hold is a first-class event with a receipt, never only a
@@ -1863,11 +1939,32 @@ def _auto_budget(rec: dict, now: float, measure=None) -> dict:
         return rec
 
 
+def _renew_lease(rec: dict, now: float, rc: dict) -> dict:
+    """Operator estimate outrun with verified semantic progress: grant another allowance equal to the old estimate,
+    bounded by Owner authority less the closeout reserve. Keyed by the progress fingerprint, so one delta renews once."""
+    import mission_spend as ms
+    cap = int(rc["authority"]) - ms.closeout_reserve(rec)
+    headroom = min(int(rc["estimate"]), max(1, cap - int(rc["spent"])))
+    est = max(1, min(math.ceil((int(rc["spent"]) + headroom) / float(rc["ratio"])), int(cap // float(rc["ratio"]))))
+    n = int(rec.get("lease_renewals") or 0) + 1
+    basis = (f"economic lease #{n}: fingerprint moved at {int(rc['spent']):,} processed; estimate "
+             f"{int(rc['estimate']):,} -> {est:,} inside authority {int(rc['authority']):,}")
+    lr.ledger_append(rec["mission_id"], "lease_renewed", mission_id=rec["mission_id"], n=n, fp=rc.get("fp"),
+                     spent=rc["spent"], new_estimate=est)
+    return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
+                      event="lease_renewed", now=now, touch=False, token_estimate=est, lease_renewals=n,
+                      token_estimate_basis=basis, cost_mark={"fp": rc.get("fp"), "tokens": rc["spent"], "at": now},
+                      reason=basis)
+
+
 def _recompile_forecast(rec: dict, now: float, rc: dict) -> dict:
     """An auto envelope outran its forecast while Owner authority remains: the forecast is invalid, the mission is
     not. Ledger what was spent against what was estimated, then re-assign the envelope inside the authority."""
     lr.ledger_append(rec["mission_id"], "forecast_invalidated", mission_id=rec["mission_id"], spent=rc["spent"],
-                     old_estimate=rc["estimate"], authority=rc["authority"], ratio=rc["ratio"])
+                     old_estimate=rc["estimate"], authority=rc["authority"], ratio=rc["ratio"],
+                     lease=bool(rc.get("lease")))
+    if rc.get("lease"):
+        return _renew_lease(rec, now, rc)
     return _auto_budget(rec, now, measure=lambda _r: rc["spent"])
 
 
@@ -2245,6 +2342,9 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
         return rec
     evidence = {"gen": gen0, "root": root, "fp": fp, "candidates": cands, "spent": spent,
                 "mark": rec.get("cost_mark"), "topology_judged": det is not None}
+    if verdict.get("recompile") and verdict["recompile"].get("lease"):
+        _breaker_receipt(mid, mb.GOOD, "lease", **evidence)
+        return _recompile_forecast(rec, now, verdict["recompile"])
     if verdict["mark"]:
         _breaker_receipt(mid, mb.GOOD, "mark", **evidence)
         settled = mb.settle_obligations(rec, root, now)   # a landed artifact closes its child obligation
@@ -2741,7 +2841,7 @@ def amr_compile(rec: dict, *, failed_sid: str | None, hold_reason: str, cause: s
     elif was_successor and amr.get("delta_path"):
         delta_path = Path(amr["delta_path"])     # still the paid-for design of this unit
     packet = d / "successor-packet.md"
-    receipt = packet.with_name(packet.stem + "-receipt.md")
+    receipt = stem_receipt(packet)
     packet.write_text(mr.render_packet(
         mission_id=mid, goal=goal, unit=unit, residual=residual, topology=topo, failure=failure, progress=progress,
         failed_strategy=old_strategy, delta_path=str(delta_path) if delta_path else None, lease=lease,
@@ -2868,8 +2968,9 @@ def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> d
     if wtype == "UNKNOWN":
         lr.ledger_append(mid, "owner_wait_unknown", mission_id=mid, why=str(c.get("boundary"))[:300],
                          fios="failure: unclassified Owner wait")
-    new_hold = {**base_hold, "wait": wait, "recovery": {"state": mr.OWNER_BOUNDARY, "why": c.get("boundary"),
-                                                        "decision_packet": str(pkt), "at": now}}
+    new_hold = annotate_hold(rec, {**base_hold, "wait": wait,
+                                   "recovery": {"state": mr.OWNER_BOUNDARY, "why": c.get("boundary"),
+                                                "decision_packet": str(pkt), "at": now}})
     lr.ledger_append(mid, "recovery_owner_boundary", mission_id=mid, why=str(c.get("boundary"))[:300],
                      failure=c.get("failure"), wait_type=wtype, queue_id=wait["queue_id"])
     mr.pgo_append({"mission_id": mid, "result": "OWNER_BOUNDARY", "failure": c.get("failure"),
@@ -2877,6 +2978,7 @@ def _amr_boundary(rec: dict, c: dict, now: float, hold: dict | None = None) -> d
                   ms.state_dir() / "recovery" / "pgo.jsonl")
     return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
                       event="recovery_boundary", now=now, owner_hold=new_hold,
+                      ledger_extra=_blocker_ledger(new_hold.get("blocker")) or None,
                       reason=f"recovery owner boundary: {str(c.get('boundary'))[:240]}")
 
 
@@ -3158,7 +3260,7 @@ def set_envelope(mission_id: str, *, token_estimate=None, model: str | None = No
         if not data:
             raise MissionError(f"wu_packet {str(p)!r} is not an existing, non-empty file")
         import hashlib
-        changes["wu_packet"] = {"path": str(p), "sha256": hashlib.sha256(data).hexdigest(),
+        changes["wu_packet"] = {"path": str(p), "sha256": hashlib.sha256(_normalise_packet(data)).hexdigest(),
                                 "bytes": len(data), "set_at": time.time() if now is None else now}
     if continue_max_tokens is not None:
         changes["continue_max_tokens"] = _token_count("continue_max_tokens", continue_max_tokens)
@@ -3433,9 +3535,9 @@ def admission_refusal(rec: dict, *, for_launch: bool = True) -> str | None:
     if for_launch and adm.get("consumed_epoch") is not None:
         return (f"the admission was used by epoch {adm['consumed_epoch']}: admit again so the remaining "
                 f"budget is re-measured (`gsd_mission.py admit --mission {rec['mission_id']} --route ...`)")
-    if adm.get("packet_sha256") != _packet_digest(pkt["path"]):
+    if not _packet_digest_matches(adm.get("packet_sha256"), pkt["path"]):
         return "the packet changed since it was admitted: admit it again"
-    if adm.get("route_file_sha256") != _packet_digest(adm.get("route_path") or ""):
+    if not _packet_digest_matches(adm.get("route_file_sha256"), adm.get("route_path") or ""):
         return "the route file changed or vanished since admission: admit it again"
     return None
 
@@ -3453,8 +3555,8 @@ def readmit_for_relay(rec: dict, *, now: float | None = None, measure=None) -> d
     if (not rec.get("wu_packet") or _admission_switch_off() or adm.get("verdict") != "ADMISSIBLE"
             or adm.get("consumed_epoch") is None or not adm.get("route_path")):
         return {"readmitted": False, "rec": rec}
-    if (adm.get("packet_sha256") != _packet_digest(rec["wu_packet"]["path"])
-            or adm.get("route_file_sha256") != _packet_digest(adm["route_path"])):
+    if (not _packet_digest_matches(adm.get("packet_sha256"), rec["wu_packet"]["path"])
+            or not _packet_digest_matches(adm.get("route_file_sha256"), adm["route_path"])):
         return {"readmitted": False, "rec": rec}   # changed under us: a human decision, not a relay
     try:
         new = admit_route(mid, adm["route_path"], now=now, measure=measure)
@@ -3501,7 +3603,28 @@ def _packet_digest(path: str) -> str | None:
         data = Path(path).read_bytes()
     except OSError:
         return None
+    return hashlib.sha256(_normalise_packet(data)).hexdigest() if data else None
+
+
+def _normalise_packet(data: bytes) -> bytes:
+    """EOL/BOM-insensitive packet bytes: a CRLF checkout or an editor-added BOM is not a changed packet."""
+    if data.startswith(b"\xef\xbb\xbf"):
+        data = data[3:]
+    return data.replace(b"\r\n", b"\n")
+
+
+def _packet_digest_raw(path: str) -> str | None:
+    import hashlib
+    try:
+        data = Path(path).read_bytes()
+    except OSError:
+        return None
     return hashlib.sha256(data).hexdigest() if data else None
+
+
+def _packet_digest_matches(stored, path: str) -> bool:
+    """A digest recorded before normalisation (raw bytes) still matches an unchanged file."""
+    return stored is not None and stored in (_packet_digest(path), _packet_digest_raw(path))
 
 
 def gsd_fact_line(st: dict | None) -> str:
@@ -3532,7 +3655,7 @@ def launch_prompt(rec: dict) -> str:
     digest = _packet_digest(pkt["path"])
     if digest is None:
         raise MissionError(f"wu_packet {pkt['path']!r} is missing or empty")
-    drift = "" if digest == pkt.get("sha256") else f" (changed since it was set: was {str(pkt.get('sha256'))[:12]})"
+    drift = "" if _packet_digest_matches(pkt.get("sha256"), pkt["path"]) else f" (changed since it was set: was {str(pkt.get('sha256'))[:12]})"
     cap = (rec.get("continuity_from") or {}).get("capsule_path")
     return "\n".join([
         *([f"FAULT CAPSULE: your predecessor stopped without its receipt. Start from {cap} "
@@ -4334,12 +4457,19 @@ def write_fault_capsule(rec: dict, wd: str, result_text: str, slim: dict | None)
     return str(path)
 
 
-def _receipt_path(pkt, programs_dir=None) -> Path:
-    """Where the receipt of the unit that owns `pkt` is. A residual packet (X.md.residual.md) belongs to the unit of X.md:
-    the receipt is the chain unit's own (APR-7 A8: the stem rule read 'X.md.residual-receipt.md' and said 'no receipt'
-    for a closed receipt, so a duplicate worker ran). No chain unit -> the stem convention on the base packet."""
-    pk = str(pkt)
-    base = pk[:-len(".residual.md")] if pk.endswith(".residual.md") else pk
+def receipt_name(stem: str) -> str:
+    """The ONLY owner of the receipt filename suffix (S5: one derivation, never a second builder)."""
+    return f"{stem}-receipt.md"
+
+
+def stem_receipt(pkt) -> Path:
+    """The stem convention: the packet's own name with its receipt suffix, beside it."""
+    p = Path(str(pkt))
+    return p.with_name(receipt_name(p.stem))
+
+
+def _chain_receipt(base: str, programs_dir=None) -> Path | None:
+    """The receipt of the chain unit that owns `base` (APR-7 A8), or None."""
     try:
         import gsdx_chain  # noqa: E402 -- same tools dir
         for cp in gsdx_chain.discover_chains(base, programs_dir):
@@ -4351,15 +4481,61 @@ def _receipt_path(pkt, programs_dir=None) -> Path:
                 return Path(u["receipt"])
     except Exception:  # noqa: BLE001 -- a chain read must never hide the stem fallback
         pass
-    p = Path(base)
-    return p.with_name(p.stem + "-receipt.md")
+    return None
+
+
+def _declared_receipt(pkt, rec=None) -> Path | None:
+    """The packet's `receipt:` line, resolved inside the work tree (absolute and escaping paths dropped)."""
+    try:
+        text = Path(str(pkt)).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None
+    m = _RECEIPT_RE.search(text)
+    if not m or Path(m.group(1)).is_absolute():
+        return None
+    if rec is not None:
+        tree, _ = packet_gate_dir(rec, text)
+    else:
+        t = _TREE_RE.search(text)
+        tree = t.group(1) if t and Path(t.group(1)).is_dir() else None
+    if not tree:
+        return None
+    root = Path(tree).resolve()
+    p = (root / m.group(1)).resolve()
+    return p if root in p.parents else None
+
+
+def resolve_receipt(pkt, rec=None, programs_dir=None) -> dict:
+    """The single answer to 'where is the receipt of the unit that owns `pkt`'. Candidates in precedence order:
+    CHAIN_UNIT, PACKET_DECLARED, STEM. The first one that exists wins; none exists -> the first candidate, absent.
+    Two distinct present candidates that disagree on status or closure are a `conflict`."""
+    pk = str(pkt)
+    base = pk[:-len(".residual.md")] if pk.endswith(".residual.md") else pk
+    found = [("CHAIN_UNIT", _chain_receipt(base, programs_dir)), ("PACKET_DECLARED", _declared_receipt(base, rec)),
+             ("STEM", stem_receipt(base))]
+    cands = [{"source": src, "path": str(p), "status": rj.receipt_status(p)} for src, p in found if p is not None]
+    present = [c for c in cands if c["status"] is not None]
+    chosen = (present or cands)[0]
+    distinct: dict = {}
+    for c in present:
+        distinct.setdefault(os.path.realpath(c["path"]), c)
+    vals = list(distinct.values())
+    conflict = len(vals) > 1 and any(v["status"] != vals[0]["status"]
+                                     or rj.is_closed(v["path"]) != rj.is_closed(vals[0]["path"]) for v in vals[1:])
+    return {"path": chosen["path"], "source": chosen["source"], "status": chosen["status"],
+            "present": chosen["status"] is not None, "conflict": conflict, "candidates": cands}
+
+
+def _receipt_path(pkt, programs_dir=None, rec=None) -> Path:
+    return Path(resolve_receipt(pkt, rec, programs_dir)["path"])
 
 
 def _receipt_present(rec: dict, programs_dir=None) -> bool:
     pkt = (rec.get("wu_packet") or {}).get("path")
     if not pkt:
         return True   # no packet = nothing to continue
-    return _receipt_body_ok(_receipt_path(pkt, programs_dir))
+    r = resolve_receipt(pkt, rec, programs_dir)
+    return (not r["conflict"]) and _receipt_body_ok(r["path"])
 
 
 def _receipt_body_ok(path) -> bool:
@@ -4407,17 +4583,12 @@ def packet_gate_dir(rec: dict, text: str | None = None) -> tuple[str | None, str
 
 
 def packet_receipt_path(rec: dict) -> str | None:
-    """The packet's `receipt:` line resolved to one absolute path inside the work tree, or None."""
-    text = _packet_text(rec)
-    m = _RECEIPT_RE.search(text) if text else None
-    if not m or Path(m.group(1)).is_absolute():
+    """The resolved receipt path when the packet declares it or it exists, else None."""
+    pkt = (rec.get("wu_packet") or {}).get("path")
+    if not pkt:
         return None
-    tree, _ = packet_gate_dir(rec, text)
-    if not tree:
-        return None
-    root = Path(tree).resolve()
-    p = (root / m.group(1)).resolve()
-    return str(p) if root in p.parents else None
+    r = resolve_receipt(pkt, rec)
+    return r["path"] if r["source"] == "PACKET_DECLARED" or r["present"] else None
 
 
 def spend_goal(rec: dict) -> str | None:
@@ -4462,7 +4633,7 @@ def _seal_instead_of_renew(rec: dict, row: dict) -> bool:
     pkt = (rec.get("wu_packet") or {}).get("path")
     if not pkt:
         return False
-    if rj.receipt_status(_receipt_path(pkt)) is None:
+    if rj.receipt_status(_receipt_path(pkt, rec=rec)) is None:
         return False
     try:
         res = _chain_try_seal(pkt)
@@ -4619,9 +4790,9 @@ def _capsule_certify_check(rec: dict, row: dict, now: float, sessions=None, pid_
                        reason=f"{why}; stopped ({how}), successor {n} of {MAX_SUCCESSOR_ATTEMPTS} on this capsule")
             row["action"], row["reason"], row["stop"] = "capsule_successor_stopped", why, how
             return True
-        transition(mid, expect_epoch=rec["epoch"], expect_state=RUNNING, event="mission_blocked",
-                   now=now, state=BLOCKED, reason=why, capsule_attempts=attempts,
-                   capsule_hold={"kind": "resume_not_certified", "reason": why, "since": now})
+        block_mission(rec, expect_epoch=rec["epoch"], expect_state=RUNNING,
+                      now=now, reason=why, capsule_attempts=attempts,
+                      capsule_hold={"kind": "resume_not_certified", "reason": why, "since": now})
         row["action"], row["reason"] = "capsule_blocked", why
         return True
     return False
@@ -4922,8 +5093,8 @@ def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: fl
             transition(mid, expect_epoch=rec["epoch"], expect_state=BLOCKED, event="capsule_seal_refused",
                        now=now, capsule_hold=hold, reason=reason)
         else:
-            transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="mission_blocked",
-                       now=now, state=BLOCKED, reason=why_b, capsule_hold=hold)
+            block_mission(rec, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                          now=now, reason=why_b, capsule_hold=hold)
         row["blocked"] = why_b
     elif first is None:
         transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="capsule_seal_refused",
@@ -5282,16 +5453,27 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
             elif act == "slim_finished":
                 s = plan["slim"]
                 stopped = s.get("tripped") or ("worker reported is_error" if s["is_error"] else None)
+                _rstop = False
                 if not stopped and halt_continue_on() and (rec.get("wu_packet") or {}).get("path") \
                         and not _receipt_present(rec):
                     # F1: a clean finish without its receipt is a fault, not done. Name WHY (APR-1): a receipt that
                     # exists but carries no closing Status is the K5 case, and the renewed worker must be told so.
-                    _st = rj.receipt_status(_receipt_path(rec["wu_packet"]["path"]))
+                    _st = rj.receipt_status(_receipt_path(rec["wu_packet"]["path"], rec=rec))
                     stopped = "no receipt" if _st is None else f"receipt not closed (status {_st})"
+                    _rstop = True
                 fin = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                  event="slim_worker_finished", now=now, state=HALTED if stopped else COMPLETED,
                                  pending=None, slim_result=s, worker=s.get("session_id"),
                                  reason=f"{plan['reason']}; {stopped}" if stopped else plan["reason"])
+                if _rstop and os.environ.get("CPP_TERMINAL_RECONCILE", "") != "off":
+                    try:  # S5: annotate only; the stop decision above is _receipt_present's alone (FC-10)
+                        import mission_reconcile as _mrc
+                        _rv = _mrc.reconcile(fin)
+                        lr.ledger_append(mid, "terminal_reconciled", mission_id=mid, epoch=fin["epoch"],
+                                         outcome=_rv["outcome"], reason=_rv["reason"][:200])
+                        row["reconciled"] = _rv["outcome"]
+                    except Exception as _exc:  # noqa: BLE001 -- an annotation never breaks the supervisor
+                        row["reconciled"] = f"unavailable: {type(_exc).__name__}"
                 if halt_continue_on() and stopped:
                     halt_continue(fin, mb.execution_root(fin), s.get("result") or "", s, row, now)
             elif act == "settle":
@@ -5317,9 +5499,8 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     import blocked_intent as bint
                     bi_ = bint.intent(needs, rec.get("directives"))
                     row["blocked_intent"] = bi_["kind"], bi_["action"]
-                    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                               event="mission_blocked", now=now, state=BLOCKED,
-                               reason=reason, blocked_intent=bi_)
+                    block_mission(rec, expect_epoch=rec["epoch"], expect_state=rec["state"], now=now,
+                                  reason=reason, blocked_intent=bi_)
                     lr.ledger_append(mid, "blocked_intent", mission_id=mid, epoch=rec["epoch"],
                                      kind=bi_["kind"], action=bi_["action"])
                     if bi_["action"] == "ANSWER_STANDING":
@@ -5350,8 +5531,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                               f"{lrow.get('state')}"
                               + (f"; waiting for {lrow['waitingFor']}" if lrow.get("waitingFor") else "")
                               + (f"; host needs: {needs}" if needs else ""))
-                    transition(mid, expect_epoch=new["epoch"], expect_state=RUNNING,
-                               event="mission_blocked", now=now, state=BLOCKED, reason=reason)
+                    block_mission(new, expect_epoch=new["epoch"], expect_state=RUNNING, now=now, reason=reason)
                     row["action"], row["reason"] = "adopted_blocked", reason
             elif act == "recover":
                 row.update(recover_mission(rec, sessions, now, pid_alive=pid_alive, runner=runner,
@@ -5438,7 +5618,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                     # A packet unit armed without a done_check (every chain-armed unit) is closed by its own receipt,
                     # written after the mission began. Measured 2026-10-14, gsdx-pcc P52a: receipt DONE, worker done, GSD
                     # NO_PHASES on that roadmap, so the record sat BLOCKED 2.5 h and the chain waited on it (wait_writer).
-                    rp = _receipt_path(pkt)
+                    rp = _receipt_path(pkt, rec=rec)
                     rst = rj.receipt_status(rp)
                     try:
                         if rst is not None and rp.stat().st_mtime >= float(rec.get("created_at") or 0):
@@ -5453,6 +5633,14 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         row["action"] = "completed"
                         row["unit_done"] = "RECEIPT_DONE"
                         continue
+                gh = rec.get("gsd_hold") or {}
+                if (act in ("relay", "replace") and rec["state"] == BLOCKED and gh.get("next_check")
+                        and now < float(gh["next_check"]) and gsd_backoff_on()):
+                    # Identical refusal, nothing changed since the last answer: do not ask GSD or write a row
+                    # again before the backoff is due (m-9d00610493fc: 52 identical relay_held in 4.7 h).
+                    row["held"] = (f"gsd {gh.get('outcome')} hold (pass {gh.get('n')}); next check in "
+                                   f"{int(float(gh['next_check']) - now)} s; unblock: {gh.get('unblock')}")
+                    continue
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
                     st = (gsd_status or _supervise_gsd_status)(work_dir or mb.execution_root(rec),
                                                        workstream=rec.get("workstream"))
@@ -5483,15 +5671,19 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         hold = {"outcome": outcome, "n": int(prev.get("n") or 0) + 1 if same else 1,
                                 "since": prev.get("since") if same else now, "reason": st.get("reason")}
                         bound = GSD_HOLD_BLOCK_AFTER.get(outcome)
+                        if bound and hold["n"] >= bound and gsd_backoff_on():
+                            hold["next_check"] = now + gsd_hold_backoff_s(hold["n"] - bound)
+                            hold["unblock"] = GSD_HOLD_UNBLOCK.get(outcome, "GSD answers OK")
+                        else:
+                            hold.pop("next_check", None)
                         if bound and hold["n"] >= bound and rec["state"] != BLOCKED:
                             # Bounded silence: RUNNING with an idle owner and a refusal that
                             # waiting has not cleared is not healthy; say so where status reads.
                             why = (f"gsd {outcome} on {hold['n']} consecutive passes "
                                    f"({int(now - float(hold['since'] or now))} s): {st.get('reason')}"
                                    f" -- no relay until GSD answers OK")
-                            transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                                       event="mission_blocked", now=now, state=BLOCKED,
-                                       gsd_hold=hold, reason=why)
+                            block_mission(rec, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                          now=now, gsd_hold=hold, reason=why)
                             row["blocked"] = why
                         else:
                             transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
@@ -5819,12 +6011,147 @@ def planning_admission(resume_command: str, cwd: str, unit_path: str | None, ove
     return {"admitted": True, "gate": d["mode"], "decision": d, "override": (override or None)}
 
 
+def arm_preflight_on() -> bool:
+    return (os.environ.get("CPP_ARM_PREFLIGHT") or "").strip().lower() != "off"
+
+
+def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = None, launch: bool = True,
+                  status_reader=None, memory_reader=None, **kw) -> dict:
+    """One check before `arm` creates a record: refuse, naming the cause, what would only fail later.
+
+    Refuses on a MEASURED NO_PHASES / ALL_COMPLETE (only for a `/gsd-` resume command: another route
+    has no GSD roadmap to judge) and, when a worker would launch now, on a measured low-memory host.
+    UNAVAILABLE / unreadable is `unmeasured`, never a refusal and never a pass. Authority absence and a
+    rotation-invariant repair are reported (`warn`), not refused: the first is the Owner's call, the
+    second is repaired by the launch itself. Read-only and idempotent. CPP_ARM_PREFLIGHT=off disables."""
+    if not arm_preflight_on():
+        return {"ok": True, "checks": [], "refusal": None, "off": True}
+    checks, refusal = [], None
+
+    def add(name, status, why=""):
+        nonlocal refusal
+        checks.append({"check": name, "status": status, "why": why})
+        if status == "refuse" and refusal is None:
+            refusal = f"{name}: {why}"
+
+    if resume_command.lstrip().startswith("/gsd-"):
+        try:
+            st = (status_reader or (lambda c, w: lr.gsd_status(c, workstream=w)))(cwd, workstream)
+        except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
+            st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"[:160]}
+        out = st.get("outcome")
+        if out in ("NO_PHASES", "ALL_COMPLETE"):
+            add("gsd_status", "refuse", f"{out}: {st.get('reason')} -- arming would launch a worker with no work")
+        elif out == "OK":
+            add("gsd_status", "ok", str(st.get("reason") or ""))
+        else:
+            add("gsd_status", "unmeasured", f"{out}: {st.get('reason')}")
+    else:
+        add("gsd_status", "n/a", "not a /gsd- resume command")
+
+    if launch:
+        import resource_admission as rsa
+        res = rsa.refusal(slim_profile(kw) or "top-level-worker", reader=memory_reader)
+        if res is None:
+            add("resource_admission", "ok")
+        elif res.get("verdict") == rsa.REFUSE_LOW_MEMORY:
+            add("resource_admission", "refuse",
+                f"available {res.get('available_mb')} MB below floor {res.get('floor_mb')} MB")
+        else:
+            add("resource_admission", "unmeasured", str(res.get("verdict")))
+    else:
+        add("resource_admission", "n/a", "no launch now")
+
+    if kw.get("authority_tokens") or kw.get("ledger_goal") or kw.get("authority_tokens") == 0:
+        add("authority", "ok")
+    else:
+        add("authority", "warn", "no authority_tokens on this arm: spend is bounded only by a goal ledger, if bound")
+    if blocker_compile_on():
+        # S6 / D-08: the Owner decisions this goal can already foresee, read-only. Never a refusal.
+        try:
+            import blocker_compiler as bc
+            fd = bc.foreseeable_decisions(cwd, workstream, records=_goal_records(cwd, workstream))
+            if not fd["measured"]:
+                bad = [s_["path"] for s_ in fd["sources"] if s_["status"] != "ok"]
+                add("foreseeable_decisions", "unmeasured", f"unreadable source(s): {', '.join(bad)}"[:300])
+            elif fd["items"]:
+                add("foreseeable_decisions", "warn",
+                    f"{len(fd['items'])} Owner decision(s) foreseeable: {', '.join(i['id'] for i in fd['items'])}")
+            else:
+                add("foreseeable_decisions", "ok")
+        except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
+            add("foreseeable_decisions", "unmeasured", f"{type(exc).__name__}: {exc}"[:200])
+    fixed = apply_rotation_invariant(kw).get("rotation_invariant") if kw.get("autocompact") else None
+    if fixed and fixed.get("repaired"):
+        add("rotation_invariant", "warn", f"would repair {sorted(fixed['repaired'])}")
+    return {"ok": refusal is None, "checks": checks, "refusal": refusal}
+
+
+def _goal_records(cwd: str, workstream: str | None) -> list[dict]:
+    """Mission records of the same workstream and repository (the goal), for answered-decision detection."""
+    if not workstream:
+        return []
+    key = goal_key(cwd, workstream)
+    return [r for r in all_missions() if r.get("workstream") == workstream
+            and goal_key(r.get("cwd") or "", r.get("workstream")) == key]
+
+
+def batch_foreseeable_decisions(rec: dict, cwd: str, workstream: str | None) -> dict | None:
+    """S6 / D-08: list the foreseeable Owner decisions ONCE. The delta against every earlier batch for this cwd and
+    workstream is written as one ledger row and one Owner-queue entry; an empty delta writes nothing at all (a second
+    arm over the same items adds no row). FAIL-OPEN: a fault is ledgered as owner_decisions_batch_failed and never
+    stops the arm. The queue entry is written first, so a queue fault leaves no batched row and the next arm retries
+    (the queue append is idempotent by row_id). CPP_BLOCKER_COMPILE=off skips it."""
+    if not blocker_compile_on():
+        return None
+    mid = rec.get("mission_id")
+    try:
+        import blocker_compiler as bc
+        fd = bc.foreseeable_decisions(cwd, workstream, records=_goal_records(cwd, workstream))
+        prior = set()
+        for r in lr.ledger_events("arm-preflight"):
+            if (r.get("event") == "owner_decisions_batched" and r.get("cwd") == str(cwd)
+                    and r.get("workstream") == workstream):
+                prior.update(r.get("ids") or [])
+        delta = [i for i in fd["items"] if i["id"] not in prior]
+        if not delta:
+            return None
+        ids = [i["id"] for i in delta]
+        key = bc.batch_key(workstream, ids)
+        cmd = f'python "{Path(__file__).resolve().parent / "blocker_compiler.py"}" decisions --batch {key}'
+        _owner_queue().append(
+            f"Owner decisions foreseeable for {workstream or Path(cwd).name}: {len(delta)} to settle once",
+            cmd, unblocks=f"workstream {workstream or Path(cwd).name}", source="arm_decisions",
+            row_id=f"q-decisions-{key}", urgent=False,
+            state_dir=os.environ.get("PP_OWNER_QUEUE_STATE_DIR") or None)
+        lr.ledger_append("arm-preflight", "owner_decisions_batched", cwd=str(cwd), workstream=workstream,
+                         batch_key=key, ids=ids, mission_id=mid,
+                         items=[{k: i[k] for k in ("id", "category", "text", "source", "line")} for i in delta],
+                         omitted=[{"id": o["id"], "reason": o["reason"]} for o in fd["omitted"]],
+                         resolved_by_policy=[{"id": o["id"], "rule": o["rule"]} for o in fd["resolved_by_policy"]])
+        return {"batch_key": key, "ids": ids}
+    except Exception as exc:  # noqa: BLE001 -- the arm proceeds; the failure is the record
+        try:
+            lr.ledger_append("arm-preflight", "owner_decisions_batch_failed", cwd=str(cwd), workstream=workstream,
+                             mission_id=mid, why=f"{type(exc).__name__}: {exc}"[:200])
+        except Exception:  # noqa: BLE001
+            pass
+        return None
+
+
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
         authority: str | None = None, parallel_unit: str | None = None, **kw) -> dict:
     ws = kw.get("workstream")
     if ws is None and resume_command.startswith("/gsd-"):
         m = _WS_FLAG.search(resume_command)
         ws = m.group(1) if m else None
+    if launch:
+        pre = arm_preflight(cwd, resume_command, workstream=ws, launch=True, **{k: v for k, v in kw.items() if k != "workstream"})
+        if pre.get("checks"):
+            lr.ledger_append("arm-preflight", "arm_preflight", cwd=str(cwd), ok=pre["ok"], refusal=pre["refusal"],
+                             checks=[(c["check"], c["status"]) for c in pre["checks"]])
+        if not pre["ok"]:
+            raise MissionError(f"arm refused by preflight -- {pre['refusal']}"[:600])
     key = goal_key(cwd, ws)
     conflicts = goal_conflicts(key)
     old = None
@@ -5857,6 +6184,7 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
             lr.ledger_append("arm-guard", "worker_arm_refused", why=why[:300])
             raise MissionError(why)
     rec = create(cwd, resume_command, **kw)
+    batch_foreseeable_decisions(rec, str(cwd), ws)
     extra = {}
     try:   # plain arm under a declared goal root binds to that goal's ledger: no new capital per mission id
         import mission_spend as _ms
@@ -5897,6 +6225,13 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
     # The worker model rides the same atomic step: without it the launch inherits the host default (Opus
     # here), and a chain armed unattended has no later moment to set it before the sweep launches.
     model = kw.pop("model", None)
+    pre = arm_preflight(cwd, resume_command, workstream=kw.get("workstream"), launch=True,
+                        **{k: v for k, v in kw.items() if k != "workstream"})
+    if pre.get("checks"):
+        lr.ledger_append("arm-preflight", "arm_preflight", cwd=str(cwd), ok=pre["ok"], refusal=pre["refusal"],
+                         chain=True, checks=[(c["check"], c["status"]) for c in pre["checks"]])
+    if not pre["ok"]:
+        return {"ok": False, "held": False, "why": f"arm refused by preflight -- {pre['refusal']}"[:600]}
     rec = arm(cwd, resume_command, launch=False, **kw)["mission"]
     mid = rec["mission_id"]
     try:
@@ -5981,9 +6316,9 @@ def advance_unit(rec: dict, plan: dict, unit: str, repo: Path, *, arm_fn=None, h
         return {"status": "NOT_LISTED", "why": f"{unit} is not in the plan's units"}
     i = plan["units"].index(unit)
     pdir = repo / plan["packet_dir"]
-    if i > 0 and not receipt_complete(pdir / f"{plan['units'][i - 1]}-receipt.md"):
+    if i > 0 and not receipt_complete(pdir / receipt_name(plan['units'][i - 1])):
         return {"status": "WAITING_FOR_RECEIPT", "why": f"predecessor {plan['units'][i - 1]} has no complete receipt"}
-    own = pdir / f"{unit}-receipt.md"
+    own = pdir / receipt_name(unit)
     if own.exists() and not receipt_complete(own):
         return {"status": "WAITING_FOR_RECEIPT", "why": f"{unit} has a stub/partial receipt; a worker owns it"}
     packet, route = pdir / f"{unit}.md", pdir / f"route-{unit}.json"
@@ -6039,7 +6374,7 @@ def advance_pass(*, arm_fn=None, headroom=None, ledger_for=None) -> list[dict]:
                 pdir = repo / plan["packet_dir"]
                 row = {"unit": None, "status": "PLAN_COMPLETE", "why": "every unit has a receipt"}
                 for u in plan["units"]:
-                    if not receipt_complete(pdir / f"{u}-receipt.md"):
+                    if not receipt_complete(pdir / receipt_name(u)):
                         row = {"unit": u, **advance_unit(rec, plan, u, repo, arm_fn=arm_fn, headroom=headroom)}
                         break
                 if row["status"] in ("WAITING_FOR_AUTHORITY", "WAITING_FOR_PACKET"):
@@ -6945,6 +7280,10 @@ def _cli(argv=None) -> int:
                      "plan": plan_next(m, time.time(), sessions)})
         if m["state"] not in TERMINAL and (m.get("authority_tokens") or m.get("token_estimate")):
             rows[-1]["spend"] = live_spend(m)   # T1 F3: the figure an Owner decides on is live, with its time
+        cb_ = current_blocker(m)
+        if cb_:   # S6: read-only; absent for a mission that is not parked, so existing rows keep their shape
+            rows[-1]["blocker"] = {k: cb_.get(k) for k in ("class", "unblock_text", "independent_work",
+                                                           "independent_reason", "owner_required")}
     if getattr(args, "surface", False):
         print(json.dumps(status_surface(rows, missions, time.time()), indent=2))
         return 0

@@ -39,7 +39,7 @@ HALTED "no receipt": 86 missions, followed by steward_settled (45) / mission_ren
   independent-work flag; foreseeable decisions batched at arm; RESOLVE_BY_POLICY only for explicit policy.
 - S7 replay — harness over the ledger through plan_next() seams; champion vs challenger S2-S6; mutants
   (always-admit, never-rotate, always-renew, terminal-without-proof) must fail; mission-hours vs wall vs critical path.
-- S8 work stealing — DORMANT: activation predicate recorded; build only if S7 shows a consumer.
+- S8 work stealing — DORMANT: activation predicate recorded; build only if S7 shows a consumer. Activation predicate: at least one incident where an independent safe action existed while the critical path was blocked AND the blocker row recorded independent_work=true. Measured value at the 07 pin (ledger prefix 1740294 bytes, 6339 rows, sha256 b47ff018fb44766fb9e2add7b9e23276c18dc6c2ec84cb88d4709c82d95e2743): FALSE. The pinned prefix holds 55 mission_blocked rows and 0 of them carry independent_work=true (the key is absent from all 55, so this is not-recorded, not measured-false-per-row); recounted in phase 8 by tools/s9_kv_check.py from flow_replay.read_prefix and agreeing with 07-VERIFICATION. S8 stays DORMANT, and no work-stealing code is written, until the S6 independent_work field accumulates real rows that make the predicate true.
 - S9 Knowledge Vault + UKDL + CBR + red team.
 
 ## Acceptance (master done-gate)

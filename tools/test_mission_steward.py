@@ -165,10 +165,15 @@ rf = cz["tree"] / "RESUMPTION_FILE.md"
 rf.write_text("another programme's resume file\n", encoding="utf-8")
 os.utime(rf, (NOW - 5000, NOW - 5000))           # older than the mission's admission (NOW - 1000)
 run(cz)
-txt = base_res.read_text(encoding="utf-8") if base_res.exists() else ""
+adm_txt = base_res.read_text(encoding="utf-8")
+res2 = Path(str(cz["pkt"]) + ".residual-2.md")
+txt = res2.read_text(encoding="utf-8") if res2.exists() else ""
+# S3: the admitted packet (itself a residual) is never rewritten; the new residual is a new path, one section
 check("V-STEWARD-RESIDUAL-NO-STACK", txt.count("## Residual") == 1 and cz["mid"] in txt and "m-old" not in txt
-      and not Path(str(base_res) + ".residual.md").exists()
+      and "m-old" in adm_txt and not Path(str(base_res) + ".residual.md").exists()
       and "RESUMPTION_FILE: none written by this mission" in txt, txt[-300:].replace("\n", " | "))
+check("V-S3-RESIDUAL-NEVER-OVERWRITES-ADMITTED", adm_txt == base_res.read_text(encoding="utf-8")
+      and adm_txt.count("## Residual") == 1 and "m-old" in adm_txt)
 cy = case()                                      # control: a resume file written after admission IS cited
 (cy["tree"] / "RESUMPTION_FILE.md").write_text("mine\n", encoding="utf-8")
 os.utime(cy["tree"] / "RESUMPTION_FILE.md", (NOW - 100, NOW - 100))

@@ -727,6 +727,17 @@ def classify_launch(row: dict, prev_owner: str | None, prev_epoch, events: list[
     return UNKNOWN, "reason unrecognised"
 
 
+_TERMINAL_STATES = ("COMPLETED", "HALTED", "ORPHANED")
+
+
+def is_terminal_row(e: dict) -> bool:
+    """A ledger row that ends a mission: the two legacy events, or a transition row (it carries a
+    `seq`) whose state is terminal. A row that merely mentions a state is not a transition."""
+    if e.get("event") in ("mission_halted", "mission_completed"):
+        return True
+    return e.get("state") in _TERMINAL_STATES and e.get("seq") is not None
+
+
 def epochs(mission_id: str, events: list[dict] | None = None) -> list[dict]:
     """One row per CONTEXT EPOCH of a mission (a fresh worker session), with the turns it carried."""
     events = lr.ledger_events() if events is None else events
@@ -747,12 +758,14 @@ def epochs(mission_id: str, events: list[dict] | None = None) -> list[dict]:
             rec_cause = causes.get(e.get("epoch"))
             cause, basis = classify_launch({**e, **({"cause": rec_cause["cause"]} if rec_cause else {})},
                                            prev_owner, prev_epoch, events, renewed)
-            if cur:
+            if cur and cur["end"] is None:
+                # a terminal end already recorded is never rewritten by the next launch
                 cur["end"] = e.get("ts")
                 cur["end_cause"] = cause
             cur = {"epoch": e.get("epoch"), "start": e.get("ts"), "start_cause": cause,
                    "basis": basis, "reason": e.get("reason"), "session": None, "turns": 0,
-                   "continuations": 0, "compactions": 0, "wall": False, "end": None, "end_cause": None}
+                   "continuations": 0, "compactions": 0, "wall": False, "end": None, "end_cause": None,
+                   "end_event": None}
             out.append(cur)
         elif cur is None:
             continue
@@ -769,8 +782,11 @@ def epochs(mission_id: str, events: list[dict] | None = None) -> list[dict]:
             cur["session"] = cur["session"] or e.get("worker")
         elif ev == "epoch_compacted":
             cur["compactions"] += 1
-        elif ev in ("mission_halted", "mission_completed"):
-            cur["end"], cur["end_cause"] = e.get("ts"), ev.replace("mission_", "").upper()
+        elif is_terminal_row(e) and cur["end"] is None:
+            # first terminal row wins; any event name that carries a transition into a terminal state closes
+            cur["end"] = e.get("ts")
+            cur["end_cause"] = e.get("state") or ev.replace("mission_", "").upper()
+            cur["end_event"] = ev
     for c in out:
         if c["session"] and wall_evidence(c["session"], c["epoch"], events):
             c["wall"] = True
