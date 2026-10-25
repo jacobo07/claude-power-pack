@@ -1,0 +1,51 @@
+{
+ "plane": "laptop",
+ "since": "2026-10-18T00:00:00Z",
+ "until": "2026-10-25T00:00:00Z",
+ "classes": {
+  "top-level": {
+   "sessions": 257,
+   "calls": 35586,
+   "processed": 8491240902,
+   "floor_rent": 4018738657,
+   "floor_sum": 27806710,
+   "mean_floor": 108197,
+   "floor_share": 0.473
+  },
+  "worker:slim": {
+   "sessions": 9,
+   "calls": 88,
+   "processed": 2374042,
+   "floor_rent": 1758095,
+   "floor_sum": 180127,
+   "mean_floor": 20014,
+   "floor_share": 0.741
+  },
+  "worker:background": {
+   "sessions": 13,
+   "calls": 1176,
+   "processed": 190683738,
+   "floor_rent": 129732597,
+   "floor_sum": 1447760,
+   "mean_floor": 111366,
+   "floor_share": 0.68
+  },
+  "subagent": {
+   "sessions": 225,
+   "calls": 4042,
+   "processed": 490962757,
+   "floor_rent": 266759851,
+   "floor_sum": 14106817,
+   "mean_floor": 62697,
+   "floor_share": 0.543
+  }
+ },
+ "total": {
+  "sessions": 504,
+  "calls": 40892,
+  "processed": 9175261439,
+  "floor_rent": 4416989200
+ },
+ "elapsed_s": 37.9,
+ "method": "calls = unique assistant message.id with usage inside the window; floor = call-1 input incl. cache; floor_rent = calls x floor"
+}
