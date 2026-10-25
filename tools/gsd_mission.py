@@ -6068,14 +6068,17 @@ def _packet_states() -> dict:
     return {m["mission_id"]: (m["state"], (m["wu_packet"] or {}).get("path")) for m in _scan()[0] if m.get("wu_packet")}
 
 
-def event_chain_ticks(before: dict, after: dict, ticker=None) -> list[dict]:
+def event_chain_ticks(before: dict, after: dict, ticker=None, stewarded=frozenset()) -> list[dict]:
     """APR-3: a packet mission that became COMPLETED/HALTED in this pass ticks its owning chain(s) at once.
+    `stewarded`: missions whose steward finished this pass tick too, without a state change -- the residual the
+    chain waits for exists only now (gsdx-factory-2 H012 2026-10-25: the HALTED tick ran before the steward).
     Fail-isolated (an exception is a row), once per packet, off with CPP_GSDX_CHAIN_EVENT=off."""
     if os.environ.get("CPP_GSDX_CHAIN_EVENT", "").lower() == "off":
         return []
     rows, seen = [], set()
     for mid, (st, pkt) in after.items():
-        if st not in (COMPLETED, HALTED) or not pkt or pkt in seen or (before.get(mid) or (None,))[0] == st:
+        if (st not in (COMPLETED, HALTED) or not pkt or pkt in seen
+                or ((before.get(mid) or (None,))[0] == st and mid not in stewarded)):
             continue
         seen.add(pkt)
         try:
@@ -6106,7 +6109,9 @@ def supervise(*args, **kw) -> list[dict]:
                             "error": f"{type(exc).__name__}: {exc}"[:300]}]
         if before is not None:
             try:
-                rows = rows + event_chain_ticks(before, _packet_states())
+                stewarded = {r.get("mission_id") for r in rows if r.get("rule") == "R1"
+                             and r.get("action") in ("steward_settled", "steward_completed")}
+                rows = rows + event_chain_ticks(before, _packet_states(), stewarded=stewarded)
             except Exception as exc:  # noqa: BLE001
                 rows = rows + [{"mission_id": "chain_event", "action": "chain_event", "status": "ERROR",
                                 "error": f"{type(exc).__name__}: {exc}"[:300]}]
