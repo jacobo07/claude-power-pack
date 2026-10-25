@@ -488,10 +488,12 @@ def to_settle(chain: dict, missions: list[dict], open_sids: set, booked: set | N
     With `booked` (sids the ledger has a mark for), a COMPLETED unit's sid the ledger never booked is settled too:
     a worker armed in a checkout outside the goal's roots reserves nothing, so it holds no reservation to find
     (gsdx-factory-2 H012 residual b34f3d0f, 2026-10-25: ~3.4M finished and was never booked)."""
-    packets = {_norm(u["packet"]) for u in chain["units"]}
+    # a unit's missions include its residual's (packet + RESIDUAL), as everywhere else in the chain: matching the
+    # base packet alone never saw a residual worker, held or not
+    bp = _by_packet(missions)
     out = []
-    for m in missions:
-        if m.get("state") in TERMINAL and _norm((m.get("wu_packet") or {}).get("path", "")) in packets:
+    for m in (m for u in chain["units"] for m in _unit_ms(u, bp)):
+        if m.get("state") in TERMINAL:
             sids = [(m.get("owner") or {}).get("session_id")] + [p.get("session_id") for p in m.get("previous_owners") or []
                                                                  if isinstance(p, dict)]
             unbooked = booked is not None and m.get("state") == "COMPLETED"

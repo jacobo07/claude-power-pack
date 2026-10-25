@@ -124,6 +124,13 @@ halted = dict(mission(d, "B", "HALTED"), owner={"session_id": "sid-C"})
 unb = gc.to_settle(chain, [term, halted], set(), booked=set())
 bk = gc.to_settle(chain, [term], set(), booked={"sid-A"})
 check("V-CHAIN-SETTLES-UNBOOKED-COMPLETED", unb == ["sid-A"] and bk == [], f"{unb} / {bk}")
+# a unit's RESIDUAL mission (packet + .residual.md) is the unit's: held or never booked, it is settled
+# (H012's residual m-23f5b6aef501 ran on WU-H012.md.residual.md and the base-packet match never saw it)
+res = {"mission_id": "m-Ar", "cwd": str(d), "state": "COMPLETED", "owner": {"session_id": "sid-R"},
+       "wu_packet": {"path": str(d / "WU-A.md") + gc.RESIDUAL}}
+check("V-CHAIN-SETTLES-RESIDUAL-WORKER", gc.to_settle(chain, [res], {"sid-R"}) == ["sid-R"]
+      and gc.to_settle(chain, [res], set(), booked=set()) == ["sid-R"],
+      f"{gc.to_settle(chain, [res], {'sid-R'})} / {gc.to_settle(chain, [res], set(), booked=set())}")
 
 # a running mission -> nothing armed
 d, p, _ = setup("running")
