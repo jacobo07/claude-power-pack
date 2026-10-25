@@ -3,3 +3,6 @@
 - driver 2026-10-25T15:57:40 W3b REFUSED_OVER_CAP total_before=6,287,622 step_cap=1,200,000 limit=7,300,000
 - driver 2026-10-25T16:14:28 W3b PASS sid=dab6a4f1-5520-4887-b07c-604aeee8ebde launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=444479 cap=1,200,000
 - driver 2026-10-25T16:30:45 W3c PASS sid=c3c64013-d65a-415d-b32d-e068f3c715a3 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=945376 cap=1,200,000
+- driver 2026-10-25T17:07:59 W3d FAIL sid=943a6303-6d4a-4794-ad85-6965b2412dd2 launch_rc=0 checks={'receipt': True, 'commits': False, 'tests': True, 'spend': True} spend=109240 cap=150,000
+- driver 2026-10-25T17:09:03 W4 REFUSED_OVER_CAP total_before=8,564,632 step_cap=1,000,000 limit=7,632,305
+- driver 2026-10-25T17:52:37 W4 PASS sid=b9ee6d4a-ecad-43f9-b694-e7b15bb9ea34 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=268450 cap=900,000

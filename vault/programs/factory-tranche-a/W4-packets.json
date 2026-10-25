@@ -1,0 +1,14 @@
+[
+ {"step": "W4", "prompt": "vault/programs/factory-tranche-a/W4-packet.md",
+  "receipt": "vault/programs/factory-tranche-a/W4-receipt.md", "cap": 900000,
+  "tests": ["tools/test_w4_benchmark.py"],
+  "stamps": {"tools/gsd_mission.py": "0b74e819a9f378201d497f0515e25a73ad798576be85a264f861755f8cf02871"},
+  "must_carry": [
+   "Reserve boundary: stop and write the receipt before your cap; an overrun is a FAIL, not a stretch.",
+   "HR-04: no write to any live/production server, Pterodactyl, VPS or GEX44. This unit is local code only.",
+   "Done-gate: the named tests exit 0 in your working tree; a claim without that output is not done.",
+   "Measurement honesty: a number you did not measure is UNKNOWN, never 0; an unpriced model is UNPRICED. Transcripts are read-only.",
+   "Owner decision D10 (2026-10-25): worker-scoped changes only. Never edit any CLAUDE.md, agent catalog, MEMORY.md or hooks. STOP before Tranche B.",
+   "Commit with a pathspec only (git commit -m ... -- <files>); never git add -A, never push."
+  ]}
+]

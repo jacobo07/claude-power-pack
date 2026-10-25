@@ -1,0 +1,12 @@
+[
+ {"step": "W3d", "prompt": "vault/programs/factory-tranche-a/W3d-packet.md",
+  "receipt": "vault/programs/factory-tranche-a/W3d-receipt.md", "cap": 150000,
+  "tests": ["tools/test_gsd_mission.py"],
+  "stamps": {"tools/gsd_mission.py": "0b74e819a9f378201d497f0515e25a73ad798576be85a264f861755f8cf02871"},
+  "must_carry": [
+   "This unit is a deliberate cap-trip probe: the task is larger than your cap and being stopped by the budget hook is the expected outcome. Write as you go.",
+   "HR-04: no write to any live/production server, Pterodactyl, VPS or GEX44. This unit is local files only.",
+   "Owner decision D10 (2026-10-25): worker-scoped changes only. Never edit any CLAUDE.md, agent catalog, MEMORY.md, hooks or code. STOP before Tranche B.",
+   "Do not commit, never git add -A, never push."
+  ]}
+]

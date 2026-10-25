@@ -50,8 +50,42 @@
    "secs": 877,
    "calls": 34,
    "boundaries": 1
+  },
+  "W3d": {
+   "verdict": "FAIL",
+   "sid": "943a6303-6d4a-4794-ad85-6965b2412dd2",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": true,
+    "commits": false,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 109240,
+   "cap": 150000,
+   "receipt": "vault/programs/factory-tranche-a/W3d-receipt.md",
+   "secs": 301,
+   "calls": 6,
+   "boundaries": 1
+  },
+  "W4": {
+   "verdict": "PASS",
+   "sid": "b9ee6d4a-ecad-43f9-b694-e7b15bb9ea34",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": true,
+    "commits": true,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 268450,
+   "cap": 900000,
+   "receipt": "vault/programs/factory-tranche-a/W4-receipt.md",
+   "secs": 168,
+   "calls": 10,
+   "boundaries": 1
   }
  },
- "coordinator_spend": 3201920,
- "cap": 5932305
+ "coordinator_spend": 7658926,
+ "cap": 9932305
 }
