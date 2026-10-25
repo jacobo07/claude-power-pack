@@ -20,7 +20,11 @@ No AUTHORITY_PROVENANCE_FAILURE. Weakness: the 60M row had no approving entry uu
   file:line or commit that proves the transfer.
 - UNVERIFIED on this plane: the econ-succession commits af7ec647 and 44396331 are not objects in this clone (rows I and J).
 
-## Ledger moves: pending, done on the laptop plane
-Plane GEX44 holds no ctx-rent-a2 ledger (`goal-status` here reads programme null, settled 0), so no pane booking and no
-programme lowering was done here. Released amount: not recorded here (UNKNOWN until the laptop lowers the programme).
-See `vault/programs/ctx-rent-obs/STATUS.md` section LEDGER_TODO for the two exact actions.
+## Ledger moves (laptop plane, 2026-10-25, Owner choice "a")
+Plane GEX44 holds no ctx-rent-a2 ledger, so the moves were done on the laptop.
+- Pane 36d35fab booked: `mission_spend.py goal-settle --goal ctx-rent-a2 --session 36d35fab-...` without `--measured`.
+  The tool charged transcript 81,237,945 minus prebind 5,794,432 = **75,443,513**; settled 19,522,634 -> 94,966,147.
+  The LEDGER_TODO cut `since_iso="2026-10-23T15:20:10"` was local time against UTC transcript timestamps (48.6M, under-booked
+  by ~26.6M) and was not used.
+- Programme: settled + open = 94,966,147 against 60,000,000. **Released amount: none; over-run 34,966,147.** Matching the
+  programme to settled + open is a raise, which only the Owner can make (`goal-programme --owner`).
