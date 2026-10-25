@@ -45,6 +45,8 @@ COMMIT_RE = re.compile(r"^\s*(?:[-*]\s+)?commit:\s*([0-9a-f]{7,40})\b")
 CHECK_RE = re.compile(r"^\s*(?:[-*]\s+)?check:\s*([a-z][a-z0-9-]*)\b")
 MIN_COMPLETED = 7          # phases 01-07 were complete when this checker was written; a later seal only raises it
 GSD_WS = "flow-compression"
+UKDL_SECTION = "Flow-compression S9 promotions (2026-10-25)"
+S8_PIN = ".planning/workstreams/flow-compression/phases/07-s7-historical-replay-champion-challenger/07-PIN.json"
 
 _INIT_CACHE: dict = {}
 
@@ -227,6 +229,136 @@ def check_incidents(paths, evidence_dir, repo, gsd_tools: str | None = None) -> 
     return findings
 
 
+# ------------------------------------------------------------------------------------------------ UKDL section
+_ID = r"(?:PR|T|HR)-[A-Z0-9][A-Z0-9-]*[A-Z0-9]"
+_DEF_RE = re.compile(r"^(?:#{2,4}\s+|\*\*`)(" + _ID + r")(?![A-Za-z0-9-])", re.M)
+_LINK_RE = re.compile(r"(?<![A-Za-z0-9-])(" + _ID + r")(?![A-Za-z0-9-])")
+_TICK_RE = re.compile(r"`([^`\n]+)`")
+_FILE_TOKEN_RE = re.compile(r"^[A-Za-z0-9_./-]+\.(?:md|py|json)$")
+_HEX_TOKEN_RE = re.compile(r"^[0-9a-f]{7,40}$")
+
+
+def _ukdl_section(text: str, title: str) -> str | None:
+    m = re.search(r"^## " + re.escape(title) + r"\s*$", text, re.M)
+    if not m:
+        return None
+    rest = text[m.end():]
+    nxt = re.search(r"^## ", rest, re.M)
+    return rest[:nxt.start()] if nxt else rest
+
+
+def check_ukdl(path, section_title: str, repo: Path = REPO, hard_rules=None) -> list[dict]:
+    """The dated UKDL section must (1) exist, (2) define only IDs that are defined nowhere else in the file, (3) give every
+    promoted entry an Evidence line, (4) link, under 'Evaluated, not promoted', only IDs defined elsewhere in the file or in
+    HARD_RULES.md, and (5) cite only files that exist and commits that resolve. A file that cannot be read is INCONCLUSIVE."""
+    path = Path(path)
+    hard_rules = Path(hard_rules) if hard_rules else repo / "vault/hard_rules/HARD_RULES.md"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return [finding(path, "INCONCLUSIVE_UNREADABLE", type(exc).__name__)]
+    sec = _ukdl_section(text, section_title)
+    if sec is None:
+        return [finding(path, "MISSING_SECTION", section_title)]
+    out: list[dict] = []
+    start = text.index(sec) if sec else 0
+    outside = text[:start] + text[start + len(sec):]
+    defined_outside = set(_DEF_RE.findall(outside))
+    in_section = _DEF_RE.findall(sec)
+    for ident in sorted(set(in_section)):
+        if in_section.count(ident) > 1:
+            out.append(finding(path, "DUPLICATE_ID", f"{ident} defined {in_section.count(ident)} times inside the section"))
+        if ident in defined_outside:
+            out.append(finding(path, "DUPLICATE_ID", f"{ident} is already defined elsewhere in the file"))
+    if not in_section:
+        out.append(finding(path, "NO_PROMOTIONS", "the section defines no ID"))
+    # every promoted entry carries an Evidence line
+    blocks = re.split(r"(?m)^(?=(?:#{2,4}\s+|\*\*`)" + _ID + r")", sec)
+    for blk in blocks:
+        m = _DEF_RE.match(blk)
+        if m and not re.search(r"(?m)^Evidence:|\bEvidence:", blk):
+            out.append(finding(path, "MISSING_EVIDENCE", f"{m.group(1)} has no Evidence line"))
+    # links under 'Evaluated, not promoted'
+    em = re.search(r"(?m)^### Evaluated, not promoted\s*$", sec)
+    if not em:
+        out.append(finding(path, "MISSING_SECTION", "### Evaluated, not promoted"))
+    else:
+        hr_ids = None
+        for ident in sorted(set(_LINK_RE.findall(sec[em.end():]))):
+            if ident in defined_outside or ident in in_section:
+                continue
+            if hr_ids is None:
+                try:
+                    hr_ids = set(_DEF_RE.findall(hard_rules.read_text(encoding="utf-8")))
+                except OSError as exc:
+                    out.append(finding(path, "INCONCLUSIVE_UNREADABLE", f"HARD_RULES.md: {type(exc).__name__}"))
+                    hr_ids = set()
+                    continue
+            if ident not in hr_ids:
+                out.append(finding(path, "LINK_UNRESOLVED", f"{ident} is defined neither in the file nor in HARD_RULES.md"))
+    # cited files and commits exist
+    for tok in sorted(set(_TICK_RE.findall(sec))):
+        tok = tok.strip()
+        if "*" in tok or "<" in tok:
+            continue
+        if _FILE_TOKEN_RE.match(tok):
+            target = repo / (tok if "/" in tok else f"vault/incidents/{tok}")
+            if not target.is_file():
+                out.append(finding(path, "EVIDENCE_PATH_MISSING", tok))
+        elif _HEX_TOKEN_RE.match(tok) and not _git_resolves(repo, tok):
+            out.append(finding(path, "COMMIT_UNRESOLVED", tok))
+    return out
+
+
+# ------------------------------------------------------------------------------------------------ S8 spec predicate
+def recount_s8(pin_path) -> dict:
+    """Recount from the PINNED ledger prefix (flow_replay.read_prefix verifies the bytes hash to the pin)."""
+    sys.path.insert(0, str(TOOLS))
+    import flow_replay as fr  # noqa: PLC0415 -- the tool reuses the replay's own reader, not a second parser
+    pn = fr.load_pin(pin_path)
+    rows, torn = fr.read_prefix(pn)
+    blocked = [r for r in rows if "mission_blocked" in (r.get("event"), r.get("type"), r.get("kind"))]
+    true_rows = [r for r in blocked if r.get("independent_work") is True]
+    return {"rows": len(rows), "torn": torn, "blocked": len(blocked), "independent_true": len(true_rows),
+            "sha256": pn["sha256"], "predicate": len(true_rows) > 0}
+
+
+def check_spec_predicate(spec_path, pin_path) -> list[dict]:
+    """The S8 line states both conjuncts, DORMANT, and a measured value that the pinned ledger prefix reproduces."""
+    spec_path = Path(spec_path)
+    try:
+        lines = [ln for ln in spec_path.read_text(encoding="utf-8").splitlines() if "S8" in ln and "DORMANT" in ln.upper()]
+    except OSError as exc:
+        return [finding(spec_path, "INCONCLUSIVE_UNREADABLE", type(exc).__name__)]
+    if not lines:
+        return [finding(spec_path, "MISSING_S8_LINE", "no line names S8 as DORMANT")]
+    line = lines[0]
+    out: list[dict] = []
+    if not re.search(r"independent safe action existed while the critical path was blocked", line):
+        out.append(finding(spec_path, "PREDICATE_CONJUNCT_MISSING", "conjunct 1: independent safe action while blocked"))
+    if not re.search(r"AND the blocker row recorded independent_work=true", line):
+        out.append(finding(spec_path, "PREDICATE_CONJUNCT_MISSING", "conjunct 2: blocker row recorded independent_work=true"))
+    try:
+        got = recount_s8(pin_path)
+    except Exception as exc:  # noqa: BLE001 -- Inconclusive, OSError, bad pin: none of them may read as a pass
+        return out + [finding(spec_path, "INCONCLUSIVE_PIN", f"{type(exc).__name__}: {exc}")]
+    m = re.search(r"holds (\d+) mission_blocked rows and (\d+) of them carry independent_work=true", line)
+    if not m:
+        out.append(finding(spec_path, "STATED_COUNT_MISSING", "no 'holds N mission_blocked rows and M of them carry independent_work=true'"))
+    elif (int(m.group(1)), int(m.group(2))) != (got["blocked"], got["independent_true"]):
+        out.append(finding(spec_path, "STATED_COUNT_MISMATCH",
+                           f"stated {m.group(1)}/{m.group(2)}, recounted {got['blocked']}/{got['independent_true']}"))
+    if got["sha256"] not in line:
+        out.append(finding(spec_path, "STATED_SHA_MISMATCH", f"pin sha256 {got['sha256']} not stated"))
+    stated_false = bool(re.search(r"\bFALSE\b", line))
+    stated_true = bool(re.search(r"\bTRUE\b", line))
+    if stated_false == stated_true or stated_true != got["predicate"]:
+        out.append(finding(spec_path, "STATED_VALUE_MISMATCH", f"recounted predicate is {str(got['predicate']).upper()}"))
+    if got["predicate"] and "DORMANT" in line.upper():
+        out.append(finding(spec_path, "NOT_DORMANT_BUT_PREDICATE_TRUE", "the predicate is true; S8 can no longer be called dormant"))
+    return out
+
+
 # ------------------------------------------------------------------------------------------------ selftest
 def _expect(findings: list[dict], code: str) -> bool:
     return any(f["code"] == code for f in findings)
@@ -317,6 +449,55 @@ def selftest(repo: Path = REPO, base: str | None = None) -> int:
         # exit_code ordering: a failure alongside an INCONCLUSIVE stays 2; failure alone is 1; empty is 0
         record("S9KV-EXIT-CODES", exit_code([]) == 0 and exit_code([finding("x", "EMPTY_SECTION", "")]) == 1
                and exit_code([finding("x", "INCONCLUSIVE_NO_EVIDENCE", ""), finding("x", "EMPTY_SECTION", "")]) == 2)
+        # ---- UKDL: mutated temp copies of the REAL file, judged by the REAL checker
+        ukdl_real = repo / "vault/knowledge_base/ukdl-universal.md"
+        title = UKDL_SECTION
+        utext = ukdl_real.read_text(encoding="utf-8")
+
+        def ukdl_run(name: str, text: str) -> list[dict]:
+            p = td / f"{name}.md"
+            p.write_text(text, encoding="utf-8")
+            return check_ukdl(p, title, repo=repo)
+
+        f = ukdl_run("ukdl_control", utext)
+        record("S9KV-UKDL-CONTROL-CLEAN", f == [], f"findings={[x['code'] for x in f]}")
+        promoted = "PR-SEAL-IS-CLOSED-WHEN-THE-SCHEDULER-AGREES-001"
+        f = ukdl_run("ukdl_dup", utext + f"\n### {promoted}\n\nsecond definition.\nEvidence: none.\n")
+        record("S9KV-UKDL-NEG-DUPLICATE-ID", _expect(f, "DUPLICATE_ID"), f"findings={[x['code'] for x in f]}")
+        # the section is the last in the file, so the appended copy sits inside it; now a pre-existing ID defined outside it
+        existing = "T-ZERO-MATCH-READS-AS-EMPTY-INPUT-001"
+        f = ukdl_run("ukdl_dup2", utext.replace(promoted, existing, 1))
+        record("S9KV-UKDL-NEG-ID-ALREADY-DEFINED-ELSEWHERE", _expect(f, "DUPLICATE_ID"), f"findings={[x['code'] for x in f]}")
+        f = ukdl_run("ukdl_link", utext.replace("`T-REGEX-STEM-MATCHES-NOUN-001`", "`T-NO-SUCH-LAW-XYZ-001`", 1))
+        record("S9KV-UKDL-NEG-LINKED-ID-ABSENT", _expect(f, "LINK_UNRESOLVED"), f"findings={[x['code'] for x in f]}")
+        f = ukdl_run("ukdl_path", utext.replace("`tools/test_s7_replay.py`", "`tools/test_no_such_suite.py`", 1))
+        record("S9KV-UKDL-NEG-EVIDENCE-PATH-ABSENT", _expect(f, "EVIDENCE_PATH_MISSING"), f"findings={[x['code'] for x in f]}")
+        f = ukdl_run("ukdl_commit", utext.replace("`89fa5527`", "`deadbeef`", 1))
+        record("S9KV-UKDL-NEG-COMMIT-UNRESOLVED", _expect(f, "COMMIT_UNRESOLVED"), f"findings={[x['code'] for x in f]}")
+        f = ukdl_run("ukdl_nosection", utext.replace(f"## {title}", "## Something else", 1))
+        record("S9KV-UKDL-NEG-SECTION-ABSENT", _expect(f, "MISSING_SECTION"), f"findings={[x['code'] for x in f]}")
+        # ---- S8 spec predicate
+        spec_real = repo / "vault/specs/flow-compression.md"
+        pin = repo / S8_PIN
+        stext = spec_real.read_text(encoding="utf-8")
+
+        def spec_run(name: str, text: str, pin_path=pin) -> list[dict]:
+            p = td / f"{name}.md"
+            p.write_text(text, encoding="utf-8")
+            return check_spec_predicate(p, pin_path)
+
+        f = spec_run("spec_control", stext)
+        record("S9KV-SPEC-CONTROL-CLEAN", f == [], f"findings={[x['code'] for x in f]}")
+        f = spec_run("spec_conj", stext.replace("AND the blocker row recorded independent_work=true", "", 1))
+        record("S9KV-SPEC-NEG-CONJUNCT-REMOVED", _expect(f, "PREDICATE_CONJUNCT_MISSING"), f"findings={[x['code'] for x in f]}")
+        f = spec_run("spec_count", stext.replace("holds 55 mission_blocked rows", "holds 56 mission_blocked rows", 1))
+        record("S9KV-SPEC-NEG-COUNT-OFF-BY-ONE", _expect(f, "STATED_COUNT_MISMATCH"), f"findings={[x['code'] for x in f]}")
+        f = spec_run("spec_sha", stext.replace("b47ff018", "b47ff019", 1))
+        record("S9KV-SPEC-NEG-SHA-ALTERED", _expect(f, "STATED_SHA_MISMATCH"), f"findings={[x['code'] for x in f]}")
+        f = spec_run("spec_value", stext.replace("FALSE", "TRUE", 1))
+        record("S9KV-SPEC-NEG-VALUE-FLIPPED", _expect(f, "STATED_VALUE_MISMATCH"), f"findings={[x['code'] for x in f]}")
+        f = spec_run("spec_nopin", stext, pin_path=td / "no-such-pin.json")
+        record("S9KV-SPEC-NEG-PIN-MISSING-EXIT2", exit_code(f) == 2, f"findings={[x['code'] for x in f]} exit={exit_code(f)}")
     total = passes + fails
     print(f"SELFTEST_PASS={passes}/{total}")
     return 0 if fails == 0 else 1
@@ -340,6 +521,18 @@ def _cmd_incidents(args) -> int:
     return code
 
 
+def _print_findings(label: str, subject, findings: list[dict]) -> int:
+    for f in findings:
+        print(f"FINDING {Path(f['file']).name} {f['code']} {f['detail']}")
+    code = exit_code(findings)
+    print(f"{label} subject={subject} findings={len(findings)} exit={code}")
+    return code
+
+
+def _abs(p: str) -> str:
+    return p if os.path.isabs(p) else str(REPO / p)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--selftest", action="store_true")
@@ -348,11 +541,21 @@ def main(argv=None) -> int:
     p.add_argument("--glob", required=True)
     p.add_argument("--evidence", required=True)
     p.add_argument("--expect", type=int)
+    pu = sub.add_parser("ukdl")
+    pu.add_argument("--path", required=True)
+    pu.add_argument("--section", required=True)
+    ps = sub.add_parser("spec")
+    ps.add_argument("--spec", required=True)
+    ps.add_argument("--pin", required=True)
     args = ap.parse_args(argv)
     if args.selftest:
         return selftest()
     if args.cmd == "incidents":
         return _cmd_incidents(args)
+    if args.cmd == "ukdl":
+        return _print_findings("UKDL", args.section, check_ukdl(_abs(args.path), args.section))
+    if args.cmd == "spec":
+        return _print_findings("SPEC", Path(args.spec).name, check_spec_predicate(_abs(args.spec), _abs(args.pin)))
     ap.print_help()
     return 2
 
