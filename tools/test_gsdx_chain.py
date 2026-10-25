@@ -118,6 +118,12 @@ foreign = {"mission_id": "m-x", "cwd": str(d), "state": "HALTED", "wu_packet": {
 picked = gc.to_settle(chain, [term, live, foreign], {"sid-A", "sid-B", "sid-X"})
 none_open = gc.to_settle(chain, [term], set())
 check("V-CHAIN-SETTLES-TERMINAL", picked == ["sid-A"] and none_open == [], f"{picked} / {none_open}")
+# a COMPLETED unit worker the ledger never booked (armed outside the goal's roots: no reservation) is settled;
+# controls: one already booked is not, and a HALTED one stays the steward's
+halted = dict(mission(d, "B", "HALTED"), owner={"session_id": "sid-C"})
+unb = gc.to_settle(chain, [term, halted], set(), booked=set())
+bk = gc.to_settle(chain, [term], set(), booked={"sid-A"})
+check("V-CHAIN-SETTLES-UNBOOKED-COMPLETED", unb == ["sid-A"] and bk == [], f"{unb} / {bk}")
 
 # a running mission -> nothing armed
 d, p, _ = setup("running")
@@ -147,6 +153,10 @@ p.write_text(json.dumps(chain), encoding="utf-8")
 r2 = gc.tick(p, state=lambda: ([], 336_000_000), armer=arm)
 check("V-CHAIN-ENVELOPE-BASE", r1["action"] == "refuse_envelope" and r2["action"] == "arm" and armed == ["A"],
       f"{r1['action']} / {r2['action']}")
+# status reports the same base-relative spend the tick decides on (it showed used 341M / remaining -315M)
+st = gc.status(p, state=lambda: ([], 336_000_000), history=[], measured={}, open_sids={}, git=lambda *a: "")
+check("V-CHAIN-STATUS-ENVELOPE-BASE", st["envelope"]["used"] == 6_000_000 and st["envelope"]["remaining"] == 20_500_000
+      and st["decision"] != "refuse_envelope", f"{st['envelope']} {st['decision']}")
 
 # HALTED without receipt, no max_residuals -> never re-armed (the default keeps the old behaviour)
 d, p, _ = setup("halted")

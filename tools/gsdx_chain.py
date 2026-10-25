@@ -481,17 +481,21 @@ def _arm(chain: dict, u: dict) -> dict:
     return {"rc": p.returncode, **res, "stderr": p.stderr.strip()[-300:]}
 
 
-def to_settle(chain: dict, missions: list[dict], open_sids: set) -> list[str]:
+def to_settle(chain: dict, missions: list[dict], open_sids: set, booked: set | None = None) -> list[str]:
     """Session ids of TERMINAL missions of this chain's units that still hold an open goal reservation.
     A worker that finished WITH a receipt is not the steward's case (it acts only without one), so nobody else
-    closes its lease: the chain does, at transcript-measured spend (goal-settle refuses blind)."""
+    closes its lease: the chain does, at transcript-measured spend (goal-settle refuses blind).
+    With `booked` (sids the ledger has a mark for), a COMPLETED unit's sid the ledger never booked is settled too:
+    a worker armed in a checkout outside the goal's roots reserves nothing, so it holds no reservation to find
+    (gsdx-factory-2 H012 residual b34f3d0f, 2026-10-25: ~3.4M finished and was never booked)."""
     packets = {_norm(u["packet"]) for u in chain["units"]}
     out = []
     for m in missions:
         if m.get("state") in TERMINAL and _norm((m.get("wu_packet") or {}).get("path", "")) in packets:
             sids = [(m.get("owner") or {}).get("session_id")] + [p.get("session_id") for p in m.get("previous_owners") or []
                                                                  if isinstance(p, dict)]
-            out += [s for s in sids if s and s in open_sids and s not in out]
+            unbooked = booked is not None and m.get("state") == "COMPLETED"
+            out += [s for s in sids if s and (s in open_sids or unbooked and s not in booked) and s not in out]
     return out
 
 
@@ -500,10 +504,12 @@ def _live_settle(goal: str, missions: list[dict], chain: dict) -> list[dict]:
     led = ms._goal_ledger(goal)
     g = led._gfold(led._read())
     open_sids = {r["sid"] for r in g["res"].values() if r.get("hold")}
+    booked = set(g["marks"])
     done = []
-    for sid in to_settle(chain, missions, open_sids):
+    for sid in to_settle(chain, missions, open_sids, booked):
         try:
-            r = ms.goal_settle(goal, sid)
+            # a never-booked worker is charged with its subagents, as the supervisor's stop path books one
+            r = ms.goal_settle(goal, sid, tree=sid not in booked)
             done.append({"sid": sid[:8], "ok": r.get("ok"), "closed": len(r.get("closed", [])), "reason": r.get("reason", "")})
         except Exception as e:  # noqa: BLE001 -- one bad row must not stop arming; it is reported
             done.append({"sid": sid[:8], "ok": False, "reason": f"{type(e).__name__}: {e}"[:200]})
@@ -792,6 +798,7 @@ def status(chain_path: Path, state=None, history=None, measured=None, open_sids=
     chain = json.loads(Path(chain_path).read_text(encoding="utf-8-sig"))
     now = time.time() if now is None else now
     missions, used = state() if state else _live_state(chain["goal"])
+    used = chain_used(chain, used)     # the same spend the tick decides on, or status reports a lifetime overrun
     row = decide(chain, missions, used, _route_target)
     hist = history if history is not None else _history(chain["goal"])
     bp = _by_packet(missions)
