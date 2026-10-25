@@ -296,6 +296,23 @@ def g_raise(e):
           and len(lo16) == 1 and cap16 == 2800 and pr16["value"] == 4100,
           "an overdrawn goal takes the raise: programme +3,000, the successor holds what is left after the deficit "
           f"(gsdx-factory-2 2026-10-23: 129M refused for any amount): cap {cap16}, programme {pr16['value']:,}")
+    tga.declare("t17", 1000, lease_calls=1)
+    exhaust("t17", "X17")
+    led("t17").set_programme(9000, "test owner", inside_agent=False)
+    uuid17 = "25a5410c-54d3-4e9b-a944-3d8089f069fe"
+    cp17 = subprocess.run([sys.executable, str(HERE / "econ_plane.py"), "raise", "--goal", "t17", "--amount", "3000",
+                           "--approval-uuid", uuid17], capture_output=True, text=True, timeout=60, env=os.environ.copy())
+    pr17 = [r for r in journal("t17") if r["op"] == "programme"][-1]
+    check("V-ECON-RAISE-APPROVAL-UUID", cp17.returncode == 0 and uuid17 in str(pr17.get("source")),
+          f"the programme row of a raise carries the approving transcript entry uuid: exit {cp17.returncode}, source {pr17.get('source')!r}")
+    tga.declare("t18", 1000, lease_calls=1)
+    exhaust("t18", "X18")
+    led("t18").set_programme(9000, "test owner", inside_agent=False)
+    cp18 = subprocess.run([sys.executable, str(HERE / "econ_plane.py"), "raise", "--goal", "t18", "--amount", "3000"],
+                          capture_output=True, text=True, timeout=60, env=os.environ.copy())
+    pr18 = [r for r in journal("t18") if r["op"] == "programme"][-1]
+    check("V-ECON-RAISE-APPROVAL-UUID-CONTROL", cp18.returncode == 0 and "approval" not in str(pr18.get("source")),
+          f"control: with no uuid known the tag is the old one and no uuid is invented: {pr18.get('source')!r}")
     ok = admit(e, "R8", "Súbelo 3k", work)                       # accented spelling
     j = journal("t8")
     prog = [r for r in j if r["op"] == "programme"][-1]

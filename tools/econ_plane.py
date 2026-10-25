@@ -135,15 +135,19 @@ RAISE_MAX = 1_000_000_000_000  # arithmetic guard only (Owner 2026-10-20: "la ca
 RECOVERY = "recovery"          # GoalLedger's reserve key for the recovery pool
 
 
-def _open_successor(led, g, cur, amount: int, key: str):
+def _open_successor(led, g, cur, amount: int, key: str, approval_uuid: str | None = None):
     """programme += amount, then a successor lease at (amount + the current lease's unspent remainder),
     reserves carried over.
 
     Shared by the pane-bound raise and the goal-addressed raise. Returns (error | None, lease_open row,
     programme before, new cap). The envelope is validated BEFORE the programme row is written: a refused
     raise leaves the ledger untouched. Idempotent per `key` (programme row tag + lease succession id)."""
-    tag = f"owner-econ-raise:{key}"
-    done = g["programme_source"] == tag            # a previous attempt already wrote the programme row
+    base = f"owner-econ-raise:{key}"
+    # The approving transcript entry uuid rides in the programme row's source when the caller knows it, so the
+    # authority lineage is not recovered from transcript text later (ctx-rent-a2 had a 60M row without it).
+    tag = f"{base}:approval:{approval_uuid}" if approval_uuid else base
+    src = g["programme_source"]
+    done = src == tag or src == base or str(src).startswith(base + ":approval:")  # a previous attempt wrote the row
     # A lease cap is that lease's own budget (`used` reads the current lease once a successor exists, and
     # _auto_succeed sizes a successor by its tranche). `cur.cap + amount` asked for the spent cap again:
     # need - room was then cap - executable whatever amount was typed (gsdx-factory-2, 2026-10-22).
@@ -173,7 +177,7 @@ def _open_successor(led, g, cur, amount: int, key: str):
     return None, lo, old_prog, new_cap
 
 
-def raise_goal(goal: str, amount: int) -> dict:
+def raise_goal(goal: str, amount: int, approval_uuid: str | None = None) -> dict:
     """Owner raise addressed to a GOAL, from any pane (`subelo 70M <goal>`, or a neutral pane whose cwd lies under
     the goal's root). Same money path as raise_capital (programme += amount, successor lease), but no pane is
     unfenced: the tombstoned panes of that goal stay fenced and a fresh session (`/clear`) binds to the successor."""
@@ -187,7 +191,7 @@ def raise_goal(goal: str, amount: int) -> dict:
     if g["programme"] is None or cur["cap"] is None:
         return {"ok": False, "goal": goal,
                 "reason": "UNKNOWN: goal has no programme envelope or lease cap; unknown headroom is not free"}
-    err, lo, old_prog, new_cap = _open_successor(led, g, cur, amount, f"owner-raise:goal:{goal}:{cur['id']}")
+    err, lo, old_prog, new_cap = _open_successor(led, g, cur, amount, f"owner-raise:goal:{goal}:{cur['id']}", approval_uuid)
     if err:
         return {"ok": False, "goal": goal, **err}
     return {"ok": True, "goal": goal, "applied": bool(lo.get("applied")), "from_lease": cur["id"],
@@ -195,7 +199,7 @@ def raise_goal(goal: str, amount: int) -> dict:
             "cap_old": int(cur["cap"]), "cap_new": new_cap, "reason": ""}
 
 
-def raise_capital(sid: str, amount: int, short: bool = False) -> dict:
+def raise_capital(sid: str, amount: int, short: bool = False, approval_uuid: str | None = None) -> dict:
     """Owner raise: programme += amount, then a successor lease at (amount + unspent remainder).
 
     Reached only from the Owner's typed `subelo N` (hooks/econ_admission.js). A crossed cap is not raised in
@@ -232,7 +236,7 @@ def raise_capital(sid: str, amount: int, short: bool = False) -> dict:
         return {"ok": False, "session": sid, "goal": goal,
                 "reason": "UNKNOWN: goal has no programme envelope or lease cap; unknown headroom is not free"}
     key = f"owner-raise:{sid}:{cur['id']}"
-    err, lo, old_prog, new_cap = _open_successor(led, g, cur, amount, key)
+    err, lo, old_prog, new_cap = _open_successor(led, g, cur, amount, key, approval_uuid)
     if err:
         return {"ok": False, "session": sid, "goal": goal, **err}
     if tomb:                                       # the pane spends against the lease it just got
@@ -259,9 +263,10 @@ def _main(argv: list[str]) -> int:
     r.add_argument("--goal")
     r.add_argument("--amount", required=True, type=int)
     r.add_argument("--short", action="store_true")
+    r.add_argument("--approval-uuid", default=None)
     a = ap.parse_args(argv)
     if a.cmd == "raise" and a.goal:
-        out = raise_goal(a.goal, a.amount)
+        out = raise_goal(a.goal, a.amount, a.approval_uuid)
         print(json.dumps(out, sort_keys=True, default=str))
         return 0 if out.get("ok") else 3
     if not a.session or not ms._SID_RE.match(a.session):
@@ -272,7 +277,7 @@ def _main(argv: list[str]) -> int:
         print(render(st) if a.text else json.dumps(st, sort_keys=True, default=str))
         return 0
     if a.cmd == "raise":
-        out = raise_capital(a.session, a.amount, a.short)
+        out = raise_capital(a.session, a.amount, a.short, a.approval_uuid)
         print(json.dumps(out, sort_keys=True, default=str))
         return 0 if out.get("ok") else 3
     out = detach(a.session, a.reason)
