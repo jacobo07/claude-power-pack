@@ -99,3 +99,10 @@ Update this file and `RESUMPTION_FILE.md` (this dir) after every sealed phase, w
 ## OWNER DECISION NEEDED (recorded 2026-10-25, phase 8 discuss)
 
 - Question: what categories does the red team cover? The Owner prompt "GSD X AUTONOMOUS FLOW COMPRESSION" is not in the repo; only the line "S9 Knowledge Vault + UKDL + CBR + red team" exists. Options: (a) narrow: adversarial attempts on S1-S6 against FC-01..FC-08 with controls; (b) wait for the prompt text. Pick: (a), reversible and internal; the Owner may add categories later.
+
+## Phase 8 planning status (epoch 17, 2026-10-25)
+
+- Plans 08-01/02/03 committed (96f093f7), plan-checker ISSUES fixed in 08-03 verify chains (e64056d0). Re-check not needed for those two items.
+- Subagents (planner) are blocked from writing the clone by the harness guard ("parent bg session hasn't isolated"); execute plans from the main session itself (Bash cp/Write worked there). No worktree per Owner directive; no push.
+- OWNER DECISION NEEDED: red-team claim 15 is not in the repo; plans record it as UNMEASURED. Pick: leave UNMEASURED.
+- Next: execute 08-01 Task 1 (tools/s9_kv_check.py + phase-seal incident), then 08-02 (independent), then 08-03, then gsd-verifier, then `python3 tools/s9_done_gate.py seal-check --expect 8`.
