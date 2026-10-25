@@ -437,23 +437,410 @@ def s2_incident(rows: list[dict], loop: dict, records: dict, drift: dict) -> dic
             "hold_window_s": None if loop["last_ts"] is None or arm_ts is None else round(loop["last_ts"] - arm_ts, 3)}
 
 
+# ---------------------------------------------------------------------------------------------------- failure kinds
+# Data, not a list of mission ids. Per ledger event kind: ordered (reason-regex | None, incident kind, slices, seam).
+# `slices` empty = nothing in S1-S6 acts on it: counted, listed, reported UNCHANGED, never dropped.
+FAILURE_KINDS = {
+    "relay_held": [(r"^gsd (?:NO_PHASES|UNAVAILABLE|ALL_COMPLETE):", "gsd_hold", ("S3", "S2"),
+                    "gsd_mission.supervise + arm_preflight"),
+                   (None, "relay_hold_other", (), None)],
+    "mission_blocked": [(None, "blocked_park", ("S6",), "blocker_compiler.compile_blocker")],
+    "blocked_intent": [(None, "blocked_intent_companion", ("S6",), "blocker_compiler.compile_blocker (intent)")],
+    "owner_hold_set": [(None, "owner_hold", ("S6",), "blocker_compiler.compile_blocker (hold)")],
+    "recovery_owner_boundary": [(None, "owner_hold", ("S6",), "blocker_compiler.compile_blocker (hold)")],
+    "cost_breaker_tripped": [(None, "cost_trip", ("S4",), "mission_spend.judge")],
+    "epoch_compacted": [(None, "compaction", ("S1",), "gsd_mission.apply_rotation_invariant")],
+    "envelope_set": [(None, "envelope", ("S1",), "gsd_mission.apply_rotation_invariant")],
+    "mission_halted": [(r"budget:", "budget_halt", ("S5", "renewal"), "mission_reconcile + renewal_refusal"),
+                       (None, "terminal_halt", ("S5",), "mission_reconcile.reconcile/dispose")],
+    "mission_renewed": [(None, "renewal", ("renewal",), "gsd_mission.renewal_refusal")],
+    "quota_held": [(None, "provider_wait", ("provider",), "provider holds, not the policy")],
+    "provider_held": [(None, "provider_wait", ("provider",), "provider holds, not the policy")],
+    "supervise_error": [(None, "supervise_error", (), None)],
+    "launch_failed": [(None, "launch_failed", (), None)],
+    "launch_held": [(None, "launch_held", (), None)],
+    "launch_held_cwd": [(None, "launch_held", (), None)],
+    "continuation_failed": [(None, "continuation_failed", (), None)],
+}
+# Real slice seams only. "renewal" is a labelled sensitivity axis and "provider" a wait the provider owns: neither is S2-S6.
+SLICE_NAMES = ("S1", "S2", "S3", "S4", "S5", "S6")
+
+
+def classify_row(row: dict) -> tuple[str, tuple] | None:
+    """(incident kind, slices) for a failure-class row, else None. Exactly one answer per row."""
+    table = FAILURE_KINDS.get(row.get("event"))
+    if not table:
+        return None
+    reason = str(row.get("reason") or "")
+    for rx, kind, slices, _seam in table:
+        if rx is None or re.search(rx, reason):
+            return kind, slices
+    return None
+
+
+def coverage(rows: list[dict], loops: list[dict]) -> dict:
+    """The coverage line, COMPUTED from the pinned rows."""
+    by_kind: dict[str, int] = {}
+    mapped = unmapped = total = 0
+    per_event = {k: 0 for k in sorted(FAILURE_KINDS)}
+    for r in rows:
+        c = classify_row(r)
+        if c is None:
+            continue
+        total += 1
+        per_event[r["event"]] += 1
+        by_kind[c[0]] = by_kind.get(c[0], 0) + 1
+        if any(sl in SLICE_NAMES for sl in c[1]):
+            mapped += 1
+        else:
+            unmapped += 1
+    unmapped_loops = []
+    for l in loops:
+        probe = {"event": l["kind"], "reason": l["reason"]}
+        c = classify_row(probe)
+        if c is None or not any(sl in SLICE_NAMES for sl in c[1]):
+            unmapped_loops.append({"mission_id": l["mission_id"], "kind": l["kind"], "rows": l["count"],
+                                   "first_ts": _iso(l["first_ts"]), "last_ts": _iso(l["last_ts"]),
+                                   "sample": l["reason"][:160], "carried_to": "Phase 8",
+                                   "in_failure_table": c is not None})
+    return {"failure_rows_total": total, "mapped_to_slice": mapped, "unmapped": unmapped,
+            "sums_to_total": sum(by_kind.values()) == total and mapped + unmapped == total,
+            "rows_by_event": per_event, "rows_by_incident_kind": dict(sorted(by_kind.items())),
+            "unmapped_loops": unmapped_loops}
+
+
+# ---------------------------------------------------------------------------------------------------- seams: S6 / S4 / S1 / S5
+def _row_incident(base: dict, v: dict, **extra) -> dict:
+    return {**base, **v, "faithful": extra.pop("faithful", None), **extra}
+
+
+def s6_incidents(rows: list[dict]) -> list[dict]:
+    """Every mission_blocked / owner_hold_set row through the real compile_blocker with cwd=None: a historical row is
+    never explained from today's ROADMAP or STATE (W2)."""
+    import blocker_compiler as bc
+    out = []
+    intents = [(i, r) for i, r in enumerate(rows) if r.get("event") == "blocked_intent"]
+    for i, r in enumerate(rows):
+        if r.get("event") not in ("mission_blocked", "owner_hold_set"):
+            continue
+        is_hold = r["event"] == "owner_hold_set"
+        t = _epoch(r.get("ts"))
+        base = {"slice": "S6", "kind": r["event"], "mission_id": _mid(r), "first_ts": r.get("ts"),
+                "last_ts": r.get("ts"), "rows": 1, "seam": "blocker_compiler.compile_blocker"}
+        intent = next(({"kind": x.get("kind"), "action": x.get("action")} for _, x in intents
+                       if _mid(x) == _mid(r) and x.get("epoch") == r.get("epoch")
+                       and t is not None and abs((_epoch(x.get("ts")) or 0) - t) <= 60), None)
+        effects = {}
+        try:
+            gm = _mods()
+            for arm in ("champion", "challenger"):
+                with policy_scope(arm):
+                    on = gm.blocker_compile_on()
+                    comp = bc.compile_blocker(r.get("reason"), hold={"reason": r.get("reason")} if is_hold else None,
+                                              intent=intent, rec=None, cwd=None, is_hold=is_hold) if on else None
+                effects[arm] = comp
+        except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
+            out.append(_row_incident(base, verdict(None, None, unmeasured_reason=f"compile_error:{type(exc).__name__}")))
+            continue
+        ce = {"typed": False, "class": None, "count": None, "stops": True, "stop_ts": t, "stop_reason": None}
+        comp = effects["challenger"]
+        klass = comp["class"] if comp else None
+        he = {"typed": comp is not None, "class": klass, "owner_required": comp and comp["owner_required"],
+              "independent_work": comp and comp["independent_work"], "rule": comp and comp["rule"], "count": None,
+              "stops": True, "stop_ts": t, "stop_reason": klass if klass and klass != bc.UNKNOWN else None}
+        out.append(_row_incident(base, verdict(ce, he), hold=is_hold))
+    return out
+
+
+_TRIP_AUTH = re.compile(r"'authority_tokens':\s*(\d+)")
+_N = lambda m: int(m.group(1).replace(",", ""))  # noqa: E731
+
+
+def _trip_class(reason: str) -> str:
+    if "(mission authority)" in reason:
+        return "authority_ceiling"
+    if "default policy ceiling" in reason:
+        return "default_ceiling"
+    if "since the work tree last changed" in reason:
+        return "stall"
+    if " x estimate" in reason:
+        return "variance"
+    return "other"
+
+
+def s4_judge(rows: list[dict], idx: int) -> dict:
+    """Rebuild (rec, spent, fp) for one cost_breaker_tripped row from the rows BEFORE it and call the real judge under
+    both policies. A field the ledger cannot supply is named and the row is UNMEASURED, never defaulted."""
+    r = rows[idx]
+    mid, t = _mid(r), _epoch(r.get("ts"))
+    reason, spent, est = str(r.get("reason") or ""), r.get("spent"), r.get("estimate")
+    klass = _trip_class(reason)
+    if spent is None or est is None or klass == "other":
+        return {"class": klass, "unmeasured": "inputs_incomplete" if klass != "other" else "unrecognised_trip_reason"}
+    prior = [x for x in rows[:idx] if _mid(x) == mid]
+    auth = None
+    for x in prior:
+        if x.get("event") == "authority_set":
+            m = _TRIP_AUTH.search(str(x.get("reason") or ""))
+            auth = int(m.group(1)) if m else auth
+        elif x.get("event") == "authority_topup_policy" and x.get("authority"):
+            auth = int(x["authority"])
+    rec = {"mission_id": mid, "token_estimate": int(est)}
+    if auth:
+        rec["authority_tokens"] = auth
+    auto = [x for x in prior if x.get("event") == "envelope_auto_assigned"]
+    if auto:
+        m = re.search(r"=\s*([\d,]+)\s*$", str(auto[-1].get("reason") or ""))
+        if m and _N(m) == int(est):
+            rec["token_estimate_src"] = "auto"
+    fp, assumption = None, None
+    if klass == "stall":
+        burned = re.search(r"([\d,]+) processed since", reason)
+        stall = re.search(r"stall budget ([\d,]+)", reason)
+        if not (burned and stall):
+            return {"class": klass, "unmeasured": "inputs_incomplete"}
+        rec["cost_mark"] = {"fp": "same", "tokens": int(spent) - _N(burned)}
+        rec["token_stall_budget"] = _N(stall)
+        fp = "same"
+        assumption = "work tree unchanged since the mark, as the recorded reason states"
+    elif klass == "variance" and auth:
+        rcp = [x for x in prior if x.get("event") == "breaker_receipt" and x.get("fp")]
+        if not rcp:
+            return {"class": klass, "unmeasured": "fingerprint"}
+        fp = rcp[-1]["fp"]
+        rec["cost_mark"] = rcp[-1].get("mark") or {}
+        if not rec["cost_mark"].get("fp"):
+            return {"class": klass, "unmeasured": "fingerprint"}
+        assumption = "no lease renewals had been taken before this trip (lease_renewals = 0)"
+    elif klass == "authority_ceiling" and not auth:
+        return {"class": klass, "unmeasured": "authority_unrecorded"}
+    res = {}
+    gm_ms = None
+    for arm in ("champion", "challenger"):
+        with policy_scope(arm):
+            import mission_spend as ms
+            gm_ms = ms
+            res[arm] = ms.judge(dict(rec), int(spent), fp)
+    trip = {a: bool(res[a].get("trip")) for a in res}
+    if not trip["champion"]:
+        return {"class": klass, "unmeasured": "replay_unfaithful", "rebuilt": {a: bool(res[a].get("trip")) for a in res}}
+    return {"class": klass, "authority": bool(auth), "champion_trip": trip["champion"],
+            "challenger_trip": trip["challenger"], "assumption": assumption, "ts": t,
+            "level": res["champion"].get("level")}
+
+
+def s4_incidents(rows: list[dict]) -> list[dict]:
+    groups: dict[tuple, list[dict]] = {}
+    for i, r in enumerate(rows):
+        if r.get("event") != "cost_breaker_tripped":
+            continue
+        j = s4_judge(rows, i)
+        groups.setdefault((_mid(r), j["class"], bool(j.get("authority"))), []).append({**j, "ts_iso": r.get("ts")})
+    out = []
+    for (mid, klass, has_auth), js in sorted(groups.items(), key=lambda kv: (kv[1][0]["ts_iso"], kv[0][0], kv[0][1])):
+        ok = [j for j in js if "unmeasured" not in j]
+        bad = [j for j in js if "unmeasured" in j]
+        base = {"slice": "S4", "kind": "cost_breaker_tripped", "mission_id": mid, "trip_class": klass,
+                "first_ts": js[0]["ts_iso"], "last_ts": js[-1]["ts_iso"], "rows": len(js),
+                "seam": "mission_spend.judge", "unmeasured_rows": len(bad),
+                "unmeasured_reasons": sorted({j["unmeasured"] for j in bad})}
+        if not ok:
+            out.append(_row_incident(base, verdict(None, None, unmeasured_reason=bad[0]["unmeasured"])))
+            continue
+        ce = {"count": sum(j["champion_trip"] for j in ok), "stops": True, "stop_ts": ok[0]["ts"],
+              "stop_reason": f"cost breaker: {klass}"}
+        he_trips = [j for j in ok if j["challenger_trip"]]
+        he = {"count": len(he_trips), "stops": bool(he_trips), "stop_ts": he_trips[0]["ts"] if he_trips else None,
+              "stop_reason": f"cost breaker: {klass}" if he_trips else None}
+        assume = next((j["assumption"] for j in ok if j.get("assumption")), None)
+        out.append(_row_incident(base, verdict(ce, he, assumption=assume)))
+    return out
+
+
+_ENV_AUTOCOMPACT = re.compile(r"autocompact\s+\S+\s*->\s*(\d+[kKmM]?)")
+
+
+def s1_incidents(rows: list[dict]) -> list[dict]:
+    """Missions with recorded compactions, run through the real apply_rotation_invariant. The repair is the effect; the
+    compactions it would have prevented cannot be shown (epoch_compacted carries no size): UNMEASURED."""
+    gm = _mods()
+    missions: dict[str, dict] = {}
+    for r in rows:
+        mid = _mid(r)
+        if r.get("event") == "baseline_resolved" and isinstance(r.get("values"), dict):
+            v = r["values"]
+            missions.setdefault(mid, {})
+            if v.get("autocompact"):
+                missions[mid]["autocompact"] = v["autocompact"]
+            if v.get("continue_max_tokens"):
+                missions[mid]["continue_max_tokens"] = int(v["continue_max_tokens"])
+        elif r.get("event") == "envelope_set":
+            m = _ENV_AUTOCOMPACT.search(str(r.get("reason") or ""))
+            if m:
+                missions.setdefault(mid, {})["autocompact"] = m.group(1)
+    comp: dict[str, list[dict]] = {}
+    for r in rows:
+        if r.get("event") == "epoch_compacted":
+            comp.setdefault(_mid(r), []).append(r)
+    out = []
+    for mid, cs in sorted(comp.items(), key=lambda kv: kv[1][0]["ts"]):
+        base = {"slice": "S1", "kind": "epoch_compacted", "mission_id": mid, "first_ts": cs[0]["ts"],
+                "last_ts": cs[-1]["ts"], "rows": len(cs), "seam": "gsd_mission.apply_rotation_invariant"}
+        rec = missions.get(mid)
+        if not rec or not rec.get("autocompact"):
+            out.append(_row_incident(base, verdict(None, None, unmeasured_reason="inputs_incomplete")))
+            continue
+        eff = {}
+        for arm in ("champion", "challenger"):
+            with policy_scope(arm):
+                res = gm.apply_rotation_invariant(dict(rec))
+            inv = res.get("rotation_invariant") or {}
+            eff[arm] = {"count": None, "stops": False, "stop_ts": None, "stop_reason": None,
+                        "repaired": inv.get("repaired") or {}, "derived": inv.get("derived") or {},
+                        "continue_max_tokens": res.get("continue_max_tokens", gm.lr and rec.get("continue_max_tokens")),
+                        "compactions_recorded": len(cs)}
+        out.append(_row_incident(base, verdict(eff["champion"], eff["challenger"], unmeasured_reason="no_size_evidence"),
+                                 repair_differs=eff["champion"]["repaired"] != eff["challenger"]["repaired"]))
+    return out
+
+
+def s5_incidents(rows: list[dict], records: dict, drift: dict, now: float) -> tuple[list[dict], dict]:
+    """Terminal missions through the real reconcile + dispose, `now` fixed at the pin so the hours do not drift."""
+    import mission_reconcile as mrc
+    gm = _mods()
+    missions = [r for r in records.values()]
+    rep = mrc.dispose(events=rows, now=now, missions=missions)
+    out = []
+    for p in rep["per_mission"]:
+        base = {"slice": "S5", "kind": "terminal_reconcile", "mission_id": p["id"], "first_ts": None, "last_ts": None,
+                "rows": 1, "seam": "mission_reconcile.reconcile/dispose"}
+        ce = {"count": None, "classified": False, "stops": False, "stop_ts": None, "stop_reason": None}
+        he = {"count": None, "classified": True, "outcome": p["outcome"], "stops": False, "stop_ts": None,
+              "stop_reason": None, **{b: p[b] for b in mrc.BUCKETS}}
+        out.append(_row_incident(base, verdict(ce, he, assumption="the annotation (CPP_TERMINAL_RECONCILE) changes no "
+                                                                  "launch decision; reconcile has no switch of its own")))
+    for u in rep["unmeasured"]:
+        out.append(_row_incident({"slice": "S5", "kind": "terminal_reconcile", "mission_id": u["id"], "first_ts": None,
+                                  "last_ts": None, "rows": 1, "seam": "mission_reconcile.dispose"},
+                                 verdict(None, None, unmeasured_reason="no_terminal_row")))
+    for name in sorted(drift):
+        mid = name[len("gsd-mission-"):-len(".json")]
+        out.append(_row_incident({"slice": "S5", "kind": "terminal_reconcile", "mission_id": mid, "first_ts": None,
+                                  "last_ts": None, "rows": 1, "seam": "mission_reconcile.dispose"},
+                                 verdict(None, None, unmeasured_reason="record_changed_since_pin")))
+    return out, {"buckets_h": rep["buckets_h"], "missions": rep["missions"], "quoted_not_measured": rep["quoted_not_measured"],
+                 "unmeasured": rep["unmeasured"], "now": _iso(now)}
+
+
+def renewal_axis(rows: list[dict], records: dict, drift: dict) -> dict:
+    """Sensitivity over the real renewal_refusal, NOT part of the S2-S6 totals. A halt row's gsd outcome is used only
+    when the ledger implies one (a later mission_renewed row means GSD answered OK); otherwise UNMEASURED."""
+    gm = _mods()
+    renewed_from = {r.get("session_id") for r in rows if r.get("event") == "mission_renewed" and r.get("successor")}
+    items, refusals = [], {"unset": {}, "off": {}}
+    for r in rows:
+        if r.get("event") != "mission_halted" or "budget:" not in str(r.get("reason") or ""):
+            continue
+        mid = _mid(r)
+        item = {"mission_id": mid, "halt_ts": r.get("ts"), "halt_reason": str(r["reason"])[:120]}
+        if _record_file(mid) in drift:
+            item["unmeasured"] = "record_changed_since_pin"
+        elif mid not in records:
+            item["unmeasured"] = "no_pinned_record"
+        elif mid not in renewed_from:
+            item["unmeasured"] = "gsd_outcome"
+        else:
+            item["gsd_outcome"] = "OK"
+            item["assumption"] = "a later mission_renewed row implies GSD answered OK at renewal"
+            for label, val in (("unset", ""), ("off", "off")):
+                with policy_scope("challenger"), _env({"CPP_MISSION_RENEW": val}):
+                    why = gm.renewal_refusal(dict(records[mid]), r["reason"], "OK")
+                item[f"refusal_{label}"] = why
+                key = (why or "renewable")[:60]
+                refusals[label][key] = refusals[label].get(key, 0) + 1
+        items.append(item)
+    return {"axis": "renewal", "in_s2_s6_totals": False, "halts_budget": len(items),
+            "unmeasured": sum(1 for i in items if "unmeasured" in i),
+            "unmeasured_reasons": sorted({i["unmeasured"] for i in items if "unmeasured" in i}),
+            "refusals_by_reason": {k: dict(sorted(v.items())) for k, v in refusals.items()}, "items": items}
+
+
+def provider_incidents(rows: list[dict]) -> list[dict]:
+    groups: dict[tuple, list[dict]] = {}
+    for r in rows:
+        c = classify_row(r)
+        if c and c[0] == "provider_wait":
+            groups.setdefault((r["event"], _mid(r)), []).append(r)
+    out = []
+    for (kind, mid), rs in sorted(groups.items(), key=lambda kv: (kv[1][0]["ts"], kv[0])):
+        eff = {"count": len(rs), "stops": True, "stop_ts": _epoch(rs[0]["ts"]), "stop_reason": f"provider hold ({kind})"}
+        out.append(_row_incident({"slice": "provider", "kind": kind, "mission_id": mid, "first_ts": rs[0]["ts"],
+                                  "last_ts": rs[-1]["ts"], "rows": len(rs), "seam": "provider holds, not the policy"},
+                                 verdict(dict(eff), dict(eff))))
+    return out
+
+
+def unmapped_incidents(rows: list[dict], loops: list[dict]) -> list[dict]:
+    """Failure rows no slice acts on, and loops of ANY kind that nothing explains: reported UNCHANGED, never dropped."""
+    groups: dict[tuple, list[dict]] = {}
+    for r in rows:
+        c = classify_row(r)
+        if c and not any(sl in SLICE_NAMES or sl in ("provider", "renewal") for sl in c[1]):
+            groups.setdefault((c[0], _mid(r)), []).append(r)
+    out = []
+    in_loop = {(l["kind"], l["mission_id"]): l for l in loops}
+    for (kind, mid), rs in sorted(groups.items(), key=lambda kv: (kv[1][0]["ts"], kv[0])):
+        lp = in_loop.get((rs[0]["event"], mid))
+        eff = {"count": len(rs), "stops": False, "stop_ts": None, "stop_reason": None}
+        out.append(_row_incident({"slice": "none", "kind": rs[0]["event"], "incident_kind": kind, "mission_id": mid,
+                                  "first_ts": rs[0]["ts"], "last_ts": rs[-1]["ts"], "rows": len(rs),
+                                  "seam": "no slice acts on this kind", "loop": bool(lp),
+                                  "carried_to": "Phase 8" if lp else None}, verdict(dict(eff), dict(eff))))
+    for lp in loops:
+        c = classify_row({"event": lp["kind"], "reason": lp["reason"]})
+        if c is None:
+            eff = {"count": lp["count"], "stops": False, "stop_ts": None, "stop_reason": None}
+            out.append(_row_incident({"slice": "none", "kind": lp["kind"], "incident_kind": "unexplained_loop",
+                                      "mission_id": lp["mission_id"], "first_ts": _iso(lp["first_ts"]),
+                                      "last_ts": _iso(lp["last_ts"]), "rows": lp["count"],
+                                      "seam": "generic loop detector; kind not in the failure table", "loop": True,
+                                      "carried_to": "Phase 8"}, verdict(dict(eff), dict(eff))))
+    return out
+
+
 # ---------------------------------------------------------------------------------------------------- replay
 def replay(pin_path: str | Path, command: str | None = None) -> dict:
     pn = load_pin(pin_path)
     rows, torn = read_prefix(pn)                         # raises Inconclusive on a mismatch
     records, drift = read_records(pn)
+    now = _epoch(pn.get("last_ts")) or 0.0
     loops = detect_loops(rows)
     incidents = []
     for lp in loops:
-        if lp["kind"] == "relay_held" and _GSD_HOLD.match(lp["reason"]):
+        m = _GSD_HOLD.match(lp["reason"]) if lp["kind"] == "relay_held" else None
+        if m:
             incidents.append(s3_incident(rows, lp, records, drift))
-            if _GSD_HOLD.match(lp["reason"]).group(1) in ("NO_PHASES", "ALL_COMPLETE"):
+            if m.group(1) in ("NO_PHASES", "ALL_COMPLETE"):
                 incidents.append(s2_incident(rows, lp, records, drift))
+    with sandbox():                                      # first import of the decision modules happens inside the sandbox
+        incidents += s6_incidents(rows)
+        incidents += s4_incidents(rows)
+        incidents += s1_incidents(rows)
+        s5, s5_rep = s5_incidents(rows, records, drift, now)
+        incidents += s5
+        renewal = renewal_axis(rows, records, drift)
+    incidents += provider_incidents(rows)
+    incidents += unmapped_incidents(rows, loops)
     for inc in incidents:
-        inc["id"] = _short(inc["slice"], inc["kind"], inc["mission_id"], inc["first_ts"])
+        validate_verdict(inc["verdict"])
+        inc["id"] = _short(inc["slice"], inc["kind"], inc["mission_id"], inc["first_ts"], inc.get("trip_class"))
         inc["effect_digest"] = effect_digest(inc["champion"], inc["challenger"])
-    incidents.sort(key=lambda i: (i["first_ts"] or "", i["kind"], i["mission_id"], i["slice"]))
+    incidents.sort(key=lambda i: (i["first_ts"] or "", i["slice"], i["kind"], i["mission_id"] or "", i["id"]))
     counts = {v: sum(1 for i in incidents if i["verdict"] == v) for v in VERDICTS}
+    by_slice = {sl: {v: sum(1 for i in incidents if i["slice"] == sl and i["verdict"] == v) for v in VERDICTS}
+                for sl in sorted({i["slice"] for i in incidents})}
+    cov = coverage(rows, loops)
+    cens = _census_cross_check(rows)
     return {"schema": SCHEMA,
             "command": command or f"python3 tools/flow_replay.py replay --pin {pin_path}",
             "pin": {"path": str(pin_path), "ledger": pn["ledger"], "bytes": pn["bytes"], "rows": pn["rows"],
@@ -462,7 +849,16 @@ def replay(pin_path: str | Path, command: str | None = None) -> dict:
             "tolerances": {"LOOP_MIN": LOOP_MIN, "REDUCTION_MIN": REDUCTION_MIN, "FAITHFUL_TOL": FAITHFUL_TOL,
                            "PASS_CAP": PASS_CAP},
             "torn_rows": torn, "record_drift": sorted(drift), "loops_found": len(loops),
-            "incidents": incidents, "counts_by_verdict": counts}
+            "coverage": cov, "census_cross_check": cens, "incidents": incidents,
+            "counts_by_verdict": counts, "counts_by_slice": by_slice, "s5": s5_rep, "renewal_axis": renewal}
+
+
+def _census_cross_check(rows: list[dict]) -> dict:
+    """The S6 population against the Phase 6 census snapshot (55 mission_blocked rows when it was taken): the pinned
+    prefix may differ, and the difference is printed, not asserted equal."""
+    now_n = sum(1 for r in rows if r.get("event") == "mission_blocked")
+    return {"mission_blocked_at_phase6_snapshot": 55, "mission_blocked_in_pin": now_n, "difference": now_n - 55,
+            "source": "06-CENSUS.md"}
 
 
 # ---------------------------------------------------------------------------------------------------- cli

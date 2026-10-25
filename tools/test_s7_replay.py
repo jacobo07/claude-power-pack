@@ -231,7 +231,7 @@ def gate_drift():
     d["edited_after_pin"] = True
     rec_p.write_text(json.dumps(d), encoding="utf-8")
     post = run_replay(pin_p)
-    inc = [i for i in post["incidents"] if i["mission_id"] == mid]
+    inc = [i for i in post["incidents"] if i["mission_id"] == mid and i["slice"] in ("S2", "S3", "S5")]
     check("V-S7-RECORD-DRIFT-UNMEASURED",
           ctl is not None and ctl["verdict"] != fr.UNMEASURED and inc and
           all(i["verdict"] == fr.UNMEASURED and i["reason"] == "record_changed_since_pin" for i in inc) and
@@ -356,6 +356,131 @@ def gate_realseam():
 res_main: dict = {}
 
 
+# ----------------------------------------------------------------------------------------- gates (Task 2)
+def _ledger_rows() -> list[dict]:
+    rows, _ = fr.read_prefix(fr.load_pin(PIN))
+    return rows
+
+
+def gate_discover(res: dict):
+    import re
+    rows = _ledger_rows()
+    cov = res["coverage"]
+    raw = sum(1 for r in rows if r.get("event") in fr.FAILURE_KINDS)
+    check("V-S7-DISCOVER-COVERAGE", cov["sums_to_total"] and cov["failure_rows_total"] == raw and raw > 0
+          and cov["mapped_to_slice"] + cov["unmapped"] == raw
+          and set(cov["rows_by_event"]) == set(fr.FAILURE_KINDS),
+          f"total={raw} mapped={cov['mapped_to_slice']} unmapped={cov['unmapped']} (recount from raw events)")
+    src = SRC.read_text()
+    check("V-S7-NO-IDS", not re.search(r"\bm-[0-9a-f]{12}\b", src), "no mission id literal in the tracer source")
+    loops = cov["unmapped_loops"]
+    se = [l for l in loops if l["kind"] == "supervise_error"]
+    check("V-S7-UNMAPPED-LOOP", se and max(l["rows"] for l in se) >= 500 and all(l["carried_to"] == "Phase 8" for l in loops),
+          f"supervise_error loop rows={max((l['rows'] for l in se), default=0)} listed, carried to Phase 8")
+    gsd = fr.detect_loops([r for r in rows if r.get("event") == "relay_held"])
+    mapped_loop = [l for l in fr.coverage(rows, gsd)["unmapped_loops"] if str(l["sample"]).startswith("gsd ")]
+    check("V-S7-UNMAPPED-LOOP-NEIGHBOUR", not mapped_loop, "a gsd_hold loop (S3/S2) is NOT listed unmapped")
+    cc = res["census_cross_check"]
+    check("V-S7-CENSUS-DIFFERENCE-PRINTED", cc["difference"] == cc["mission_blocked_in_pin"] - 55
+          and cc["source"] == "06-CENSUS.md", f"pin={cc['mission_blocked_in_pin']} snapshot=55")
+
+
+def gate_slices(res: dict):
+    import re
+    inc = res["incidents"]
+    s6 = [i for i in inc if i["slice"] == "S6"]
+    typed = [i for i in s6 if i["challenger"] and i["challenger"].get("typed") and not i["champion"]["typed"]
+             and i["challenger"].get("class") != "UNKNOWN"]
+    check("V-S7-S6-CLASSED", len(typed) >= 10 and all(i["verdict"] == "LEGITIMATE_STOP" for i in typed),
+          f"{len(typed)} blocks typed only by the challenger, via compile_blocker(cwd=None)")
+    check("V-S7-S6-UNKNOWN-IS-UNCHANGED", any(i["verdict"] == "UNCHANGED" for i in s6)
+          and all((i["challenger"] or {}).get("class") == "UNKNOWN" for i in s6 if i["verdict"] == "UNCHANGED"),
+          "UNKNOWN is the neighbour of a typed class")
+    s4 = [i for i in inc if i["slice"] == "S4"]
+    stall = [i for i in s4 if i.get("trip_class") == "stall"]
+    check("V-S7-S4-TRIP-NO-AUTH-LEGIT", stall and all(i["verdict"] == "LEGITIMATE_STOP" for i in stall),
+          f"{len(stall)} stall groups stay trips in both arms")
+    check("V-S7-S4-PREVENTED-NEEDS-AUTHORITY", all(i.get("trip_class") in ("variance", "authority_ceiling")
+                                                    for i in s4 if i["verdict"] == "PREVENTED"),
+          "only a variance trip with recorded authority can be prevented")
+    base = [{"event": "authority_set", "mission_id": "x", "reason": "{'authority_tokens': 900000}"},
+            {"event": "cost_breaker_tripped", "mission_id": "x", "ts": "2026-10-01T00:00:00+00:00", "spent": 500000,
+             "estimate": 100000, "reason": "spent 500,000 tokens = 5.0 x estimate 100,000"}]
+    miss = fr.s4_judge(base, 1)
+    ctrl = fr.s4_judge([{"event": "breaker_receipt", "mission_id": "x", "fp": "f1", "mark": {"fp": "f1", "tokens": 1}}]
+                       + base, 2)
+    check("V-S7-S4-FP-MISSING-UNMEASURED", miss.get("unmeasured") == "fingerprint"
+          and ctrl.get("unmeasured") != "fingerprint", f"no receipt -> {miss.get('unmeasured')}; with receipt -> "
+                                                        f"{ctrl.get('unmeasured') or 'judged'}")
+    s1 = [i for i in inc if i["slice"] == "S1"]
+    check("V-S7-S1-EFFECT-UNMEASURED", s1 and all(i["verdict"] == "UNMEASURED" for i in s1)
+          and {i["reason"] for i in s1} <= {"no_size_evidence", "inputs_incomplete"},
+          f"{len(s1)} compaction groups never counted as prevented")
+    s5 = res["s5"]
+    check("V-S7-S5-NO-149H-CLAIM", "LAPTOP" in str(s5["quoted_not_measured"]).upper()
+          and not any(re.search(r"\b149(\.\d+)?\s*h", json.dumps(i)) for i in inc), "quoted, never an incident claim")
+    check("V-S7-S5-NOW-FIXED", s5["now"] == fr.load_pin(PIN)["last_ts"].replace("+00:00", "+00:00")
+          or s5["now"][:19] == fr.load_pin(PIN)["last_ts"][:19], f"now={s5['now']} (the pin's last row)")
+    ra = res["renewal_axis"]
+    check("V-S7-RENEWAL-AXIS-LABELLED", ra["in_s2_s6_totals"] is False and "renewal" not in res["counts_by_slice"]
+          and ra["axis"] == "renewal", f"{ra['halts_budget']} budget halts, own section, outside S2-S6 totals")
+    check("V-S7-RENEWAL-OUTCOME-UNMEASURED", ra["unmeasured"] > 0 and "gsd_outcome" in ra["unmeasured_reasons"],
+          "no recorded GSD outcome: named, not defaulted")
+    seen = {}
+    for arm in ("champion", "challenger"):
+        with fr.policy_scope(arm):
+            seen[arm] = {k: os.environ.get(k) for k in fr.HELD}
+    check("V-S7-HELD-EQUAL", seen["champion"] == seen["challenger"] == fr.HELD
+          and not set(fr.HELD) & set(fr.SWITCHES), "held group identical in both arms")
+    before = {k: os.environ.get(k) for k in list(fr.SWITCHES) + list(fr.HELD)}
+    with fr.policy_scope("challenger"):
+        pass
+    check("V-S7-HELD-RESTORED", before == {k: os.environ.get(k) for k in before})
+
+
+def gate_verdicts(res: dict):
+    import flow_replay as f
+    stop = lambda t, r="named": {"count": None, "stops": True, "stop_ts": t, "stop_reason": r}  # noqa: E731
+    nostop = {"count": None, "stops": False, "stop_ts": None, "stop_reason": None}
+    cases = {
+        "PREVENTED": (f.verdict({"count": 10, "stops": True, "stop_ts": 5, "stop_reason": "x"},
+                                {"count": 2, "stops": False, "stop_ts": None, "stop_reason": None}),
+                      f.verdict({"count": 10, "stops": False, "stop_ts": None, "stop_reason": None},
+                                {"count": 9, "stops": False, "stop_ts": None, "stop_reason": None}), "UNCHANGED"),
+        "MOVED_EARLIER": (f.verdict(stop(100, "a"), stop(40, "a")), f.verdict(stop(100, "a"), stop(100, "a")),
+                          "LEGITIMATE_STOP"),
+        "LEGITIMATE_STOP": (f.verdict(nostop, stop(None, "a")), f.verdict(nostop, nostop), "UNCHANGED"),
+        "UNCHANGED": (f.verdict(nostop, nostop), f.verdict(nostop, stop(None, "a")), "LEGITIMATE_STOP"),
+        "UNMEASURED": (f.verdict(None, None, unmeasured_reason="r"), f.verdict(nostop, nostop), "UNCHANGED"),
+    }
+    for name, (pos, neigh, nname) in cases.items():
+        check(f"V-S7-VERDICT-POS-{name}", pos["verdict"] == name, pos["verdict"])
+        check(f"V-S7-VERDICT-NEIGHBOUR-{name}", neigh["verdict"] == nname != name, f"neighbour -> {neigh['verdict']}")
+    raised = False
+    try:
+        f.validate_verdict("MAYBE")
+    except ValueError:
+        raised = True
+    check("V-S7-VERDICT-CLOSED", raised and all(i["verdict"] in f.VERDICTS for i in res["incidents"])
+          and set(res["counts_by_verdict"]) == set(f.VERDICTS), "outside the set raises; every real incident inside")
+    um = [i for i in res["incidents"] if i["verdict"] == "UNMEASURED"]
+    check("V-S7-UNMEASURED-REACHABLE-REAL", len(um) >= 1 and res["counts_by_verdict"]["UNMEASURED"] == len(um),
+          f"{len(um)} UNMEASURED incidents on the real ledger")
+    prev = [i for i in res["incidents"] if i["verdict"] == "PREVENTED"]
+    check("V-S7-UNMEASURED-NOT-PREVENTED", not any(i["basis"] == "unmeasured" for i in prev)
+          and all(i["basis"] == "unmeasured" for i in um) and sum(res["counts_by_verdict"].values()) == len(res["incidents"]),
+          "no unmeasured incident is counted prevented; counts partition the incidents")
+    real = {v: res["counts_by_verdict"][v] for v in f.VERDICTS}
+    check("V-S7-ALL-FIVE-REAL", all(real[v] > 0 for v in f.VERDICTS), str(real))
+
+
+def gate_nonewstate():
+    import re
+    names = set(re.findall(r"CPP_[A-Z0-9_]+", SRC.read_text()))
+    allowed = set(fr.SWITCHES) | set(fr.HELD) | {"CPP_CLAUDE_JOBS_DIR", "CPP_CLAUDE_EXE", "CPP_RESOURCE_ADMISSION"}
+    check("V-S7-NO-NEW-STATE", names <= allowed, f"unknown CPP_ names: {sorted(names - allowed)}")
+
+
 def main() -> int:
     global res_main
     gate_pin()
@@ -366,6 +491,10 @@ def main() -> int:
     gate_readonly()
     gate_drift()
     gate_realseam()
+    gate_discover(res_main)
+    gate_slices(res_main)
+    gate_verdicts(res_main)
+    gate_nonewstate()
     n = len(RESULTS)
     p = sum(1 for _, ok, _ in RESULTS if ok)
     print(f"S7_PASS={p}/{n}  threshold={n}/{n}")
