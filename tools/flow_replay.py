@@ -861,6 +861,287 @@ def _census_cross_check(rows: list[dict]) -> dict:
             "source": "06-CENSUS.md"}
 
 
+# ---------------------------------------------------------------------------------------------------- time accounting
+def _terminal_ts(rows: list[dict]) -> float | None:
+    import gsd_epoch as ge
+    return next((_epoch(r.get("ts")) for r in rows if ge.is_terminal_row(r)), None)
+
+
+def mission_windows(rows: list[dict], end_of_pin: float) -> dict:
+    """{mission: {start, end, open_at_pin, unmeasured}}; a mission with no usable start is listed, not counted."""
+    by: dict[str, list[dict]] = {}
+    for r in rows:
+        if _mid(r):
+            by.setdefault(_mid(r), []).append(r)
+    out = {}
+    for mid, rs in by.items():
+        start = _epoch(rs[0].get("ts"))
+        end = _terminal_ts(rs)
+        if start is None:
+            out[mid] = {"start": None, "end": None, "unmeasured": "no_start_in_prefix"}
+        elif end is None:
+            out[mid] = {"start": start, "end": end_of_pin, "open_at_pin": True, "unmeasured": None}
+        else:
+            out[mid] = {"start": start, "end": end, "open_at_pin": False, "unmeasured": None}
+    return out
+
+
+def summed_mission_hours(windows: dict) -> dict:
+    """NUMBER 1: sum over missions of (end - start). Concurrent missions add."""
+    ok = {m: w for m, w in windows.items() if w["unmeasured"] is None}
+    return {"hours": round(sum(w["end"] - w["start"] for w in ok.values()) / 3600, 3), "missions": len(ok),
+            "open_at_pin": sum(1 for w in ok.values() if w.get("open_at_pin")),
+            "left_out": sorted(m for m, w in windows.items() if w["unmeasured"] is not None)}
+
+
+def wall_clock_hours(windows: dict, first_launch: float | None, last_row: float | None) -> dict:
+    """NUMBER 2: first launch to the last row of the window as ONE interval."""
+    if first_launch is None or last_row is None:
+        return {"hours": None, "unmeasured": "no_launch_in_prefix"}
+    return {"hours": round((last_row - first_launch) / 3600, 3), "from": _iso(first_launch), "to": _iso(last_row)}
+
+
+def critical_path_hours(rows: list[dict], windows: dict, records: dict) -> dict:
+    """NUMBER 3: the longest chain of dependent missions by successor link, head start to tail end, gaps included."""
+    import mission_reconcile as mrc
+    by: dict[str, list[dict]] = {}
+    for r in rows:
+        if _mid(r):
+            by.setdefault(_mid(r), []).append(r)
+    succ = {}
+    for mid, rs in by.items():
+        sid, _how = mrc._successor_id(mid, rs, records.get(mid, {}))
+        if not sid:
+            for r in rs:
+                m = re.search(r"superseded by (m-[0-9a-f]+)", str(r.get("reason") or "")) if r.get("event") == "mission_superseded" else None
+                if m:
+                    sid = m.group(1)
+        if sid and sid in by and sid != mid:
+            succ[mid] = sid
+    heads = [m for m in by if m not in set(succ.values())]
+    best = {"hours": 0.0, "chain": [], "unmeasured": []}
+    for h in sorted(heads):
+        chain, cur, seen = [h], h, {h}
+        while cur in succ and succ[cur] not in seen:
+            cur = succ[cur]
+            chain.append(cur)
+            seen.add(cur)
+        if any(windows.get(m, {}).get("unmeasured") for m in (chain[0], chain[-1])):
+            best["unmeasured"].append(h)
+            continue
+        hrs = (windows[chain[-1]]["end"] - windows[chain[0]]["start"]) / 3600
+        if hrs > best["hours"]:
+            best.update(hours=round(hrs, 3), chain=chain)
+    best["basis"] = "ledger_lineage"
+    best["chain_len"] = len(best["chain"])
+    return best
+
+
+def time_accounting(rows: list[dict], records: dict) -> dict:
+    end = _epoch(rows[-1].get("ts")) if rows else None
+    first = next((_epoch(r["ts"]) for r in rows if r.get("event") == "launch_claimed"), None)
+    win = mission_windows(rows, end or 0.0)
+    return {"definitions": {
+        "summed_mission_hours": "sum over missions of (end - start); concurrent missions add",
+        "wall_clock_hours": "first launch to last row of the window as one interval",
+        "critical_path_wall_clock_hours": "longest successor chain, head start to tail end, gaps included"},
+        "summed_mission_hours": summed_mission_hours(win),
+        "wall_clock_hours": wall_clock_hours(win, first, end),
+        "critical_path_wall_clock_hours": critical_path_hours(rows, win, records)}
+
+
+# ---------------------------------------------------------------------------------------------------- avoidable idle
+_BLOCKING = ("owner_hold_set", "mission_blocked", "quota_held", "provider_held", "cost_breaker_tripped",
+             "mission_halted", "recovery_owner_boundary", "launch_held", "launch_held_cwd")
+
+
+def _gap_record(rows: list[dict], mid: str, upto: int) -> dict | None:
+    """The record as the ledger supports it at row index `upto`, or None when it cannot be rebuilt."""
+    gm = _mods()
+    mine = [r for r in rows[:upto + 1] if _mid(r) == mid]
+    st = next((r for r in reversed(mine) if r.get("state")), None)
+    sid = next((r.get("worker") for r in reversed(mine) if r.get("worker")), None)
+    if not mine or st is None or (not sid and st["state"] != "PREPARED"):
+        return None
+    hold = None
+    for r in mine:
+        if r["event"] == "owner_hold_set":
+            hold = {"reason": r.get("reason"), "kind": r.get("kind")}
+        elif r["event"] in ("owner_hold_released", "hold_settled"):
+            hold = None
+    rec = {"mission_id": mid, "state": st["state"], "epoch": st.get("epoch")}
+    if sid:   # the ledger records no owner kind; every recorded launch is a host-backgrounded worker
+        rec["owner"] = {"session_id": sid, "pid": 1, "kind": "background"}
+    if hold:
+        rec["owner_hold"] = hold
+    return rec
+
+
+def idle_gaps(rows: list[dict]) -> list[dict]:
+    """Quiet intervals of one mission: its last row of epoch N to the launch_claimed of epoch N+1, or to its terminal
+    row. Basis inferred: the ledger records no explicit worker-end row."""
+    import gsd_epoch as ge
+    out = []
+    by: dict[str, list[tuple[int, dict]]] = {}
+    for i, r in enumerate(rows):
+        if _mid(r):
+            by.setdefault(_mid(r), []).append((i, r))
+    for mid, ir in by.items():
+        for k in range(1, len(ir)):
+            i, r = ir[k]
+            if r.get("event") != "launch_claimed":
+                continue
+            j, prev = ir[k - 1]
+            t0, t1 = _epoch(prev.get("ts")), _epoch(r.get("ts"))
+            if t0 is None or t1 is None or t1 <= t0:
+                continue
+            inside = [x for _, x in ir if t0 < (_epoch(x.get("ts")) or 0) < t1]
+            out.append({"mission_id": mid, "start_idx": j, "start": t0, "end": t1, "hours": (t1 - t0) / 3600,
+                        "ends_at": "launch_claimed", "inside": sorted({x["event"] for x in inside})})
+    return out
+
+
+def classify_gap(rows: list[dict], gap: dict, plan_next=None) -> dict:
+    """Run the REAL plan_next on the record at the gap start with an always-dead pid_alive."""
+    gm = _mods()
+    pn = plan_next or gm.plan_next
+    rec = _gap_record(rows, gap["mission_id"], gap["start_idx"])
+    if rec is None:
+        return {**gap, "class": "inputs_incomplete", "reason": "record not rebuildable from the ledger"}
+    ans = pn(rec, gap["start"] + 1.0, [], pid_alive=lambda p: False, blocked_probe=lambda *a: None)
+    action = ans.get("action")
+    blocking = [e for e in gap["inside"] if e in _BLOCKING]
+    if action in ("launch", "replace", "relay", "recover") and not rec.get("owner_hold") and not blocking:
+        return {**gap, "class": "avoidable", "plan_next": action, "reason": ans.get("reason")}
+    return {**gap, "class": "legitimate", "plan_next": action,
+            "reason": ans.get("reason") if action not in ("launch", "replace", "relay", "recover")
+            else "ledger shows " + ", ".join(blocking)}
+
+
+def avoidable_idle(rows: list[dict], s2_missions: set | None = None, plan_next=None) -> dict:
+    """Champion = gaps as recorded. Challenger recomputes only the gaps a seam changes (an S2 refusal removes the idle
+    that follows a launch of a mission that would never have been armed); the rest are carried_unchanged."""
+    cls = [classify_gap(rows, g, plan_next) for g in idle_gaps(rows)]
+    s2 = s2_missions or set()
+    for c in cls:
+        c["challenger"] = ("removed_by_S2" if c["class"] == "avoidable" and c["mission_id"] in s2
+                           else "carried_unchanged")
+    h = lambda f: round(sum(c["hours"] for c in cls if f(c)), 3)  # noqa: E731
+    before = h(lambda c: c["class"] == "avoidable")
+    after = h(lambda c: c["class"] == "avoidable" and c["challenger"] == "carried_unchanged")
+    return {"gaps": len(cls), "by_class": {k: sum(1 for c in cls if c["class"] == k)
+                                           for k in ("avoidable", "legitimate", "inputs_incomplete")},
+            "avoidable_h_before": before, "avoidable_h_after": after,
+            "legitimate_h": h(lambda c: c["class"] == "legitimate"),
+            "unmeasured_h": h(lambda c: c["class"] == "inputs_incomplete"),
+            "moved": [{"mission_id": c["mission_id"], "hours": round(c["hours"], 3)} for c in cls
+                      if c["challenger"] == "removed_by_S2"],
+            "carried_unchanged": sum(1 for c in cls if c["challenger"] == "carried_unchanged"),
+            "basis": "inferred: gap start is the mission's last row before the next launch (no worker-end row exists); the owner is rebuilt as a host-backgrounded worker, which plan_next leaves to the host (UNKNOWN -> none)",
+            "note": "a challenger figure for a gap no seam recomputed is the champion figure, not a measured gain"}
+
+
+# ---------------------------------------------------------------------------------------------------- S8 sentence
+def s8_sentence(rows: list[dict]) -> dict:
+    """Counts from RECORDED fields only. compile_blocker is never called with a cwd here (W2)."""
+    blocked = [r for r in rows if r.get("event") == "mission_blocked"]
+    have = [r for r in blocked if "independent_work" in r]
+    true = [r for r in have if r.get("independent_work") is True]
+    pre = len(blocked) - len(have)
+    tail = ("W3: the recorded mission_blocked row carries no unblock_condition/independent_reason, so why a value is "
+            "false is not recoverable; the replay does not need it. The replay does not depend on W2 "
+            "(compile_blocker is called with cwd=None).")
+    if true:
+        ids = sorted({_mid(r) for r in true})
+        form, body = "consumer_found", (f"S8 consumer found: {len(true)} of {len(have)} recorded independent_work "
+                                        f"values are true (missions {', '.join(ids)}).")
+    elif have:
+        form, body = "none_found", f"S8: no consumer found among {len(have)} measured rows (0 true)."
+    else:
+        form, body = "unmeasured", ("S8 unmeasured: no recorded independent_work values exist yet; S8 stays dormant "
+                                    "for lack of evidence.")
+    return {"form": form, "recorded": len(have), "true": len(true), "pre_s6_unmeasured": pre,
+            "sentence": f"{body} {pre} pre-S6 mission_blocked rows are unmeasured. {tail}"}
+
+
+# ---------------------------------------------------------------------------------------------------- report
+def tag(section, command: str, pin_sha: str):
+    """Wrap a section so it carries the command and pin hash that produced it."""
+    return {"_tag": {"command": command, "pin_sha256": pin_sha}, "data": section}
+
+
+def validate_tagged(report: dict, path: str = "") -> None:
+    """Raise when a numeric-bearing section lacks its tag."""
+    for k, v in report.items():
+        if k.startswith("_"):
+            continue
+        if isinstance(v, dict) and "data" in v and "_tag" in v:
+            t = v["_tag"]
+            if not (isinstance(t, dict) and t.get("command") and t.get("pin_sha256")):
+                raise ValueError(f"section {path + k} has an empty tag")
+        elif isinstance(v, (int, float)) and not isinstance(v, bool):
+            raise ValueError(f"untagged number at {path + k}")
+        elif isinstance(v, dict):
+            validate_tagged(v, path + k + ".")
+        elif isinstance(v, list) and any(isinstance(x, (int, float)) and not isinstance(x, bool) for x in v):
+            raise ValueError(f"untagged numbers at {path + k}")
+
+
+def build_report(res: dict, rows: list[dict], records: dict, generated_at: str | None = None) -> dict:
+    cmd, sha_ = res["command"], res["pin"]["sha256"]
+    s2m = {i["mission_id"] for i in res["incidents"] if i["slice"] == "S2" and i["verdict"] != "UNMEASURED"}
+    rep = {
+        "schema": "flow-replay-report/1",
+        "pin": tag(res["pin"], cmd, sha_),
+        "held": tag(res["held"], cmd, sha_),
+        "policies": tag(res["policies"], cmd, sha_),
+        "tolerances": tag(res["tolerances"], cmd, sha_),
+        "verdict_totals": tag({"measured": {v: res["counts_by_verdict"][v] for v in VERDICTS if v != UNMEASURED},
+                               "unmeasured_apart": res["counts_by_verdict"][UNMEASURED]}, cmd, sha_),
+        "by_slice": tag(res["counts_by_slice"], cmd, sha_),
+        "coverage": tag(res["coverage"], cmd, sha_),
+        "census_cross_check": tag(res["census_cross_check"], cmd, sha_),
+        "incidents": tag(res["incidents"], cmd, sha_),
+        "renewal_axis": tag(res["renewal_axis"], cmd, sha_),
+        "s5": tag(res["s5"], cmd, sha_),
+        "time": tag(time_accounting(rows, records), cmd, sha_),
+        "avoidable_idle": tag(avoidable_idle(rows, s2m), cmd, sha_),
+        "s8": tag(s8_sentence(rows), cmd, sha_),
+        "debt": tag({"W2": "compile_blocker reads ROADMAP/STATE when given a cwd; the replay passes cwd=None",
+                     "W3": "mission_blocked rows lack unblock_condition/independent_reason",
+                     "prior_failures": ["V-AMCR-ONE-RESOLVER-INVENTORY 37/38", "V-MSPEND-HOLD-PLAN-NONE 44/45"]},
+                    cmd, sha_),
+    }
+    validate_tagged(rep)
+    if generated_at:
+        rep["generated_at"] = generated_at
+    return rep
+
+
+def render_md(rep: dict) -> str:
+    g = lambda k: rep[k]["data"]  # noqa: E731
+    cmd, sha_ = rep["incidents"]["_tag"]["command"], rep["pin"]["data"]["sha256"]
+    t = g("time")
+    out = [f"# S7 replay report", "", f"Command: `{cmd}`", f"Pin sha256: `{sha_}`", "",
+           "## Verdicts (UNMEASURED shown beside, never inside)", ""]
+    vt = g("verdict_totals")
+    out += [f"- {k}: {v}" for k, v in vt["measured"].items()] + [f"- UNMEASURED (apart): {vt['unmeasured_apart']}", ""]
+    cv = g("coverage")
+    out += ["## Coverage", "", f"failure-class rows {cv['failure_rows_total']}; mapped to S1-S6 {cv['mapped_to_slice']}; "
+            f"unmapped {cv['unmapped']}; unmapped loops {len(cv['unmapped_loops'])} (carried to Phase 8)", "",
+            "## Time (three separate numbers)", ""]
+    out += [f"- {k}: {t[k]}" for k in ("summed_mission_hours", "wall_clock_hours", "critical_path_wall_clock_hours")]
+    out += [f"- definitions: {t['definitions']}", "", "## Avoidable idle", "", f"{g('avoidable_idle')}", "",
+            "## S8", "", g("s8")["sentence"], "", "## Held group", "", f"{g('held')}", "",
+            "## Incidents", "", "| slice | kind | mission | champion | challenger | verdict | basis | delta_s |",
+            "|---|---|---|---|---|---|---|---|"]
+    for i in g("incidents"):
+        out.append(f"| {i['slice']} | {i['kind']} | {i['mission_id']} | {(i['champion'] or {}).get('count')} | "
+                   f"{(i['challenger'] or {}).get('count')} | {i['verdict']} | {i['basis']} | {i['delta_s']} |")
+    out += ["", f"Every number above carries command `{cmd}` and pin `{sha_[:12]}`.", ""]
+    return "\n".join(out)
+
+
 # ---------------------------------------------------------------------------------------------------- cli
 def main(argv=None) -> int:
     import argparse
@@ -873,6 +1154,10 @@ def main(argv=None) -> int:
     r.add_argument("--pin", required=True)
     r.add_argument("--json")
     r.add_argument("--md")
+    q = sub.add_parser("report")
+    q.add_argument("--pin", required=True)
+    q.add_argument("--json")
+    q.add_argument("--md")
     a = ap.parse_args(argv)
     cmd = "python3 tools/flow_replay.py " + " ".join(sys.argv[1:] if argv is None else argv)
     if a.cmd == "pin":
@@ -884,6 +1169,17 @@ def main(argv=None) -> int:
     except Inconclusive as exc:
         print(f"INCONCLUSIVE: {exc}", file=sys.stderr)
         return 2
+    if a.cmd == "report":
+        pn = load_pin(a.pin)
+        rows, _ = read_prefix(pn)
+        records, _ = read_records(pn)
+        rep = build_report(res, rows, records)
+        if a.json:
+            Path(a.json).write_text(json.dumps(rep, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
+        if a.md:
+            Path(a.md).write_text(render_md(rep), encoding="utf-8")
+        print(f"REPORT pin={res['pin']['sha256'][:12]} incidents={len(res['incidents'])}")
+        return 0
     if a.json:
         Path(a.json).write_text(json.dumps(res, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
     print(f"REPLAY pin={res['pin']['sha256'][:12]} incidents={len(res['incidents'])} counts={res['counts_by_verdict']}")

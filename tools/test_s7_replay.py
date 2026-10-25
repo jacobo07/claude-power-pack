@@ -481,6 +481,137 @@ def gate_nonewstate():
     check("V-S7-NO-NEW-STATE", names <= allowed, f"unknown CPP_ names: {sorted(names - allowed)}")
 
 
+# ----------------------------------------------------------------------------------------- gates (Task 3)
+def _iso_h(h: float) -> str:
+    return fr._iso(1_790_000_000.0 + h * 3600)
+
+
+def _row(h, mid, event, **kw):
+    return {"ts": _iso_h(h), "session_id": mid, "mission_id": mid, "event": event, **kw}
+
+
+def _constructed_time():
+    """A 0-10 h, B 2-8 h (concurrent), C 12-20 h is A's renewed successor, D 30-31 h unrelated after an idle gap."""
+    rows = []
+    for mid, a, z in (("A", 0, 10), ("B", 2, 8), ("C", 12, 20), ("D", 30, 31)):
+        rows.append(_row(a, mid, "launch_claimed", epoch=1, state="LAUNCHING"))
+        if mid == "A":
+            rows.append(_row(5, mid, "mission_renewed", successor="C"))
+        rows.append(_row(z, mid, "mission_completed", epoch=1, state="COMPLETED", seq=9))
+    rows.sort(key=lambda r: r["ts"])
+    return rows
+
+
+def gate_time():
+    rows = _constructed_time()
+    t = fr.time_accounting(rows, {})
+    sm, wc, cp = (t["summed_mission_hours"]["hours"], t["wall_clock_hours"]["hours"],
+                  t["critical_path_wall_clock_hours"]["hours"])
+    check("V-S7-TIME-THREE-DISTINCT", (sm, wc, cp) == (25.0, 31.0, 20.0) and len({sm, wc, cp}) == 3,
+          f"sum={sm} (10+6+8+1) wall={wc} (0..31) critical={cp} (A->C 0..20)")
+    import ast
+    tree = ast.parse(SRC.read_text())
+    fns = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
+    names = ("summed_mission_hours", "wall_clock_hours", "critical_path_hours")
+    cross = {a: {n.id for n in ast.walk(fns[a]) if isinstance(n, ast.Name)} & (set(names) - {a}) for a in names}
+    check("V-S7-TIME-NEVER-CONFLATED", all(a in fns for a in names) and not any(cross.values())
+          and len(t["definitions"]) == 3, f"cross-references: {cross}")
+    open_rows = [r for r in rows if r["mission_id"] != "D"] + [_row(30, "E", "mission_prepared")]
+    open_rows = [r for r in open_rows if not (r["mission_id"] == "B" and r["event"] == "launch_claimed")]
+    # B now has a terminal row but no start row of its own: its first row IS the terminal row (zero length, measured);
+    # the unmeasured case is a row with no parseable ts
+    bad = open_rows + [{"ts": "not-a-time", "mission_id": "F", "event": "launch_claimed"}]
+    w = fr.mission_windows(bad, fr._epoch(bad[-2]["ts"]))
+    ts = fr.summed_mission_hours(w)
+    check("V-S7-TIME-UNMEASURED-NOT-ZERO", "F" in ts["left_out"] and w["F"]["unmeasured"] and ts["open_at_pin"] >= 1,
+          f"left_out={ts['left_out']}, open_at_pin={ts['open_at_pin']}")
+
+
+def _idle_rows(hold: bool, worker: bool = True):
+    rows = [_row(0, "M", "mission_prepared", epoch=0, state="PREPARED")] if worker else \
+        [_row(0, "M", "launch_claimed", epoch=1, state="LAUNCHING")]
+    if hold:
+        rows.append(_row(0.5, "M", "owner_hold_set", reason="owner park", kind="owner"))
+    rows.append(_row(1.5, "M", "launch_claimed", epoch=2, state="LAUNCHING"))
+    return rows
+
+
+def gate_idle(res: dict):
+    calls = []
+    real = fr._mods().plan_next
+
+    def probe(*a, **k):
+        calls.append(1)
+        return real(*a, **k)
+    pos = fr.avoidable_idle(_idle_rows(False), plan_next=probe)
+    gap = [c for c in [fr.classify_gap(_idle_rows(False), g, probe) for g in fr.idle_gaps(_idle_rows(False))]]
+    check("V-S7-IDLE-REALSEAM", len(calls) > 0 and "def plan_next" not in SRC.read_text(), f"plan_next called {len(calls)}x")
+    check("V-S7-IDLE-AVOIDABLE-POS", gap and gap[0]["class"] == "avoidable" and gap[0]["plan_next"] in
+          ("launch", "replace", "relay", "recover"), f"{gap[0].get('plan_next')}: {str(gap[0].get('reason'))[:80]}")
+    neigh = [fr.classify_gap(_idle_rows(True), g) for g in fr.idle_gaps(_idle_rows(True))]
+    check("V-S7-IDLE-LEGIT-NEIGHBOUR", neigh and neigh[0]["class"] == "legitimate" and neigh[0]["reason"],
+          f"{neigh[0].get('plan_next')}: {str(neigh[0].get('reason'))[:80]}")
+    inc = fr.avoidable_idle(_idle_rows(False, worker=False))
+    check("V-S7-IDLE-INCOMPLETE", inc["by_class"]["inputs_incomplete"] == 1 and inc["unmeasured_h"] > 0
+          and inc["avoidable_h_before"] == 0, f"unmeasured_h={inc['unmeasured_h']} avoidable_h={inc['avoidable_h_before']}")
+    two = _idle_rows(False) + [{**r, "mission_id": "N", "session_id": "N"} for r in _idle_rows(False)]
+    ba = fr.avoidable_idle(sorted(two, key=lambda r: r["ts"]), s2_missions={"M"})
+    check("V-S7-IDLE-BEFORE-AFTER", ba["avoidable_h_after"] < ba["avoidable_h_before"] and ba["carried_unchanged"] >= 1
+          and ba["moved"] and ba["moved"][0]["mission_id"] == "M",
+          f"before={ba['avoidable_h_before']} after={ba['avoidable_h_after']}, N carried_unchanged")
+
+
+def gate_s8():
+    blk = lambda **kw: _row(1, "S", "mission_blocked", reason="x", **kw)  # noqa: E731
+    none_found = fr.s8_sentence([blk(independent_work=False)])
+    found = fr.s8_sentence([blk(independent_work=True)])
+    empty = fr.s8_sentence([blk()])
+    zero = fr.s8_sentence([])
+    check("V-S7-S8-SENTENCE-FORMS", (found["form"], none_found["form"], empty["form"]) ==
+          ("consumer_found", "none_found", "unmeasured") and zero["form"] == "unmeasured"
+          and "W3" in empty["sentence"] and "W2" in empty["sentence"],
+          "an empty measured population never yields the none-found form")
+    import blocker_compiler as bc
+    seen = []
+    real = bc.compile_blocker
+    bc.compile_blocker = lambda *a, **k: seen.append(k.get("cwd")) or real(*a, **k)
+    try:
+        fr.s8_sentence(_ledger_rows())
+    finally:
+        bc.compile_blocker = real
+    check("V-S7-S8-NO-CWD-READ", not seen, f"compile_blocker calls during the S8 count: {len(seen)}")
+
+
+def gate_report(res: dict):
+    rows = _ledger_rows()
+    records, _ = fr.read_records(fr.load_pin(PIN))
+    rep = fr.build_report(res, rows, records)
+    raised = False
+    try:
+        fr.validate_tagged({**rep, "stray": 7})
+    except ValueError:
+        raised = True
+    try:
+        broken = {**rep, "time": {"_tag": {"command": "", "pin_sha256": ""}, "data": {}}}
+        fr.validate_tagged(broken)
+        raised = False
+    except ValueError:
+        pass
+    check("V-S7-REPORT-TAGGED", raised and all(v["_tag"]["command"] and v["_tag"]["pin_sha256"] == res["pin"]["sha256"]
+                                               for v in rep.values() if isinstance(v, dict) and "_tag" in v),
+          "an untagged number and an empty tag both raise; every section carries command and pin hash")
+    vt = rep["verdict_totals"]["data"]
+    check("V-S7-REPORT-UNMEASURED-APART", "UNMEASURED" not in vt["measured"]
+          and vt["unmeasured_apart"] == res["counts_by_verdict"]["UNMEASURED"] > 0
+          and sum(vt["measured"].values()) + vt["unmeasured_apart"] == len(res["incidents"]),
+          f"measured={sum(vt['measured'].values())} apart={vt['unmeasured_apart']}")
+    a = json.dumps(fr.build_report(res, rows, records), sort_keys=True, default=str)
+    b = json.dumps(fr.build_report(run_replay(PIN), rows, records), sort_keys=True, default=str)
+    check("V-S7-DETERMINISTIC", a == b and len(a) > 1000, f"two replays, {len(a)} bytes, byte-identical")
+    md = fr.render_md(rep)
+    check("V-S7-REPORT-MD", res["pin"]["sha256"] in md and "UNMEASURED (apart)" in md and "Time (three separate numbers)" in md)
+
+
 def main() -> int:
     global res_main
     gate_pin()
@@ -495,6 +626,10 @@ def main() -> int:
     gate_slices(res_main)
     gate_verdicts(res_main)
     gate_nonewstate()
+    gate_time()
+    gate_idle(res_main)
+    gate_s8()
+    gate_report(res_main)
     n = len(RESULTS)
     p = sum(1 for _, ok, _ in RESULTS if ok)
     print(f"S7_PASS={p}/{n}  threshold={n}/{n}")
