@@ -212,13 +212,14 @@ def _r1(gm, rec: dict, now: float, *, ledger_for, transcript_for, dry_run: bool,
         dirty = _git_dirty(tree)
         # The worker's own receipt can live in its work tree, not at the canonical path (gsdx-factory-2 H012,
         # 2026-10-25: PARTIAL with the exact next steps sat in a worktree no successor was told about).
+        # The canonical receipt is the chain unit's (or the stem convention), named in the checkout, not the tree.
+        canon = Path(gm._receipt_path(str(base)))
         own = None
-        if receipt:
-            try:
-                own = Path(tree) / Path(receipt).resolve().relative_to(Path(rec["cwd"]).resolve())
-            except (ValueError, OSError):
-                own = None
-        own_line = str(own) if own is not None and own.exists() and own.resolve() != Path(receipt).resolve() \
+        try:
+            own = Path(tree) / canon.resolve().relative_to(Path(rec["cwd"]).resolve())
+        except (ValueError, OSError):
+            own = None
+        own_line = str(own) if own is not None and own.exists() and own.resolve() != canon.resolve() \
             else "none outside the canonical path"
         add = ("\n\n## Residual\n"
                f"Written by the steward for stopped mission {mid}. The programme chain may arm it (bounded "
