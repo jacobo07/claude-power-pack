@@ -130,6 +130,18 @@ class WriteProbe:
             setattr(obj, name, real)
 
 
+_RES_CACHE: dict = {}
+
+
+def RES() -> dict:
+    """The full replay of the module under test, computed once per module object."""
+    k = id(fr)
+    if k not in _RES_CACHE:
+        _RES_CACHE.clear()
+        _RES_CACHE[k] = fr.replay(PIN)
+    return _RES_CACHE[k]
+
+
 def run_replay(pin_path: Path) -> dict:
     return fr.replay(pin_path)
 
@@ -188,7 +200,7 @@ def gate_readonly():
     host = Path(PN["missions_dir"])
     # the probe itself must fire: a control against the real wrapper, not an assumption
     probe_dir = Path(TMP) / "probe-control"
-    probe_dir.mkdir()
+    probe_dir.mkdir(exist_ok=True)
     with WriteProbe([probe_dir]) as pr:
         with open(probe_dir / "f", "a") as fh:
             fh.write("x")
@@ -307,7 +319,7 @@ def gate_tracer(res: dict):
 
 def gate_faithful():
     good, bad = fr.faithful(54, 54), fr.faithful(54, 20)
-    inc = s3_of(res_main)
+    inc = s3_of(RES())
     loop = next(l for l in fr.detect_loops(ROWS) if l["count"] == 53 and l["kind"] == "relay_held")
     real_drive = fr.s3_drive
 
@@ -353,7 +365,6 @@ def gate_realseam():
     return res
 
 
-res_main: dict = {}
 
 
 # ----------------------------------------------------------------------------------------- gates (Task 2)
@@ -439,7 +450,7 @@ def gate_slices(res: dict):
 
 
 def gate_verdicts(res: dict):
-    import flow_replay as f
+    f = fr
     stop = lambda t, r="named": {"count": None, "stops": True, "stop_ts": t, "stop_reason": r}  # noqa: E731
     nostop = {"count": None, "stops": False, "stop_ts": None, "stop_reason": None}
     cases = {
@@ -702,29 +713,456 @@ def gate_seeded_apart(res: dict):
           "a replay after every mutant ran is digest-identical to the one before: nothing leaked")
 
 
+GROUPS = {
+    "pin": lambda: gate_pin(), "scope": lambda: gate_scope(),
+    "tracer": lambda: gate_tracer(RES()), "faithful": lambda: gate_faithful(), "readonly": lambda: gate_readonly(),
+    "drift": lambda: gate_drift(), "realseam": lambda: gate_realseam(), "discover": lambda: gate_discover(RES()),
+    "slices": lambda: gate_slices(RES()), "verdicts": lambda: gate_verdicts(RES()),
+    "nonewstate": lambda: gate_nonewstate(), "time": lambda: gate_time(), "idle": lambda: gate_idle(RES()),
+    "s8": lambda: gate_s8(), "report": lambda: gate_report(RES()),
+    "mutants": lambda: gate_mutants(RES()), "fc06": lambda: gate_fc06(RES()),
+    "seeded": lambda: gate_seeded_apart(RES()),
+}
+
+# ----------------------------------------------------------------------------------------- negative controls (07-02 task 2d)
+def gate_negcontrols():
+    """Each control is run against the REAL reader and must produce the failing signal it exists to produce."""
+    base = Path(TMP) / "neg"
+    led = copy_host(base, records=[], queue=False)
+    pn = fr.pin(led, base / "pin.json")
+    raw = bytearray(led.read_bytes())
+    raw[len(raw) // 2] ^= 0x01
+    (base / "flip.jsonl").write_bytes(bytes(raw))
+    try:
+        fr.read_prefix(dict(pn, ledger=str(base / "flip.jsonl")))
+        sig = False
+    except fr.Inconclusive:
+        sig = True
+    check("V-S7-NEGCONTROL-FLIPPED-BYTE", sig, "a flipped byte in the pinned prefix raises Inconclusive")
+    loop = next(l for l in fr.detect_loops(ROWS) if l["count"] == 53 and l["kind"] == "relay_held")
+    real = fr.s3_drive
+
+    def unfaithful(lp, passes, cadence, arm):
+        out = real(lp, passes, cadence, arm)
+        return dict(out, count=out["count"] // 3) if arm == "champion" else out
+
+    fr.s3_drive = unfaithful
+    try:
+        inc = fr.s3_incident(ROWS, loop, *fr.read_records(PN))
+    finally:
+        fr.s3_drive = real
+    check("V-S7-NEGCONTROL-UNFAITHFUL", inc["verdict"] == fr.UNMEASURED and inc["reason"] == "replay_unfaithful",
+          f"a champion replay far from the recorded count is {inc['verdict']}/{inc['reason']}")
+    big = {"count": 10, "stops": True, "stop_ts": 5, "stop_reason": "x"}
+    small = {"count": 1, "stops": False, "stop_ts": None, "stop_reason": None}
+    um = fr.verdict(big, small, unmeasured_reason="named")
+    check("V-S7-NEGCONTROL-UNMEASURED-NOT-PREVENTED", um["verdict"] == fr.UNMEASURED
+          and fr.verdict(big, small)["verdict"] == fr.PREVENTED,
+          "a 10 -> 1 drop with a named unmeasured reason stays UNMEASURED; without it the same pair is PREVENTED")
+    e = fr.s8_sentence([])
+    check("V-S7-NEGCONTROL-EMPTY-S8", e["form"] == "unmeasured" and e["recorded"] == 0,
+          "an empty recorded population never yields the none-found form")
+    try:
+        fr.validate_tagged({"x": {"_tag": {"command": "", "pin_sha256": "a"}, "data": {}}})
+        raised = False
+    except ValueError:
+        raised = True
+    check("V-S7-NEGCONTROL-MISSING-COMMAND", raised, "a section whose command is empty is refused")
+    st = fr.fc06_selftest()
+    check("V-S7-NEGCONTROL-SEEDED-FC06", all(v["breach_fires"] and v["clean_quiet"] for v in st.values()) and len(st) == 4,
+          f"all four FC-06 assertions fire on a seeded breach and stay quiet on the control: {st}")
+    fr.MUTANTS["noop-neg"] = {"intent": "control", "targets": [("receipt_judge", "is_done", fr._originals()["is_done"])]}
+    try:
+        with fr.mutant_scope("noop-neg"):
+            r = fr.replay(PIN)
+        nm = fr.compare_mutant("noop-neg", RES(), r)
+    finally:
+        fr.MUTANTS.pop("noop-neg", None)
+    check("V-S7-NEGCONTROL-IDENTICAL-STUB", nm["harness_defect"] and fr.run_status(RES(), [nm])[0] == 4,
+          "a mutant whose stub is the real function replays identical and is named a HARNESS_DEFECT")
+
+
+# ----------------------------------------------------------------------------------------- mutation drills (07-02 task 2)
+# A drill mutates a TEMP COPY of flow_replay.py (one textual substitution, or a test-side instrument for the probe gate),
+# imports it under another module name, points the global `fr` at it, re-runs the gate groups that hold the gates the
+# mutation is mapped to, and requires each mapped gate red (absent or crashing counts red) AND green on the baseline.
+import importlib.util  # noqa: E402
+
+REAL_FR = fr
+REAL_SRC = SRC
+REAL_TEXT = SRC.read_text(encoding="utf-8")
+VAR_DIR = Path(TMP) / "variants"
+VARIANTS: list = []
+_SEEN_FILE = "TOOLS = Path(__file__).resolve().parent"
+
+
+MUTATIONS: dict[str, list[tuple[str, str]]] = {
+    # pin and read-only
+    "M-PIN-NO-HASH": [('if hashlib.sha256(data).hexdigest() != pn["sha256"]:', "if False:")],
+    "M-PIN-READS-WHOLE": [("data = fh.read(n)\n    if len(data) != n:", "data = fh.read()\n    if False:"),
+                          ('if hashlib.sha256(data).hexdigest() != pn["sha256"]:', "if False:")],
+    "M-PIN-DROPS-ROW": [("    return _parse(data)\n\n\ndef read_records", "    _r, _t = _parse(data)\n    return _r[:-1], _t\n\n\ndef read_records")],
+    "M-HELD-LEAKS": [("    with _env({**POLICIES[name], **HELD}):\n        yield\n",
+                      "    os.environ.update({k: str(v) for k, v in {**POLICIES[name], **HELD}.items()})\n    yield\n")],
+    "M-INCONCLUSIVE-EXITS-ZERO": [('print(f"INCONCLUSIVE: {exc}", file=sys.stderr)\n        return 2',
+                                   'print(f"INCONCLUSIVE: {exc}", file=sys.stderr)\n        return 0')],
+    "M-LEDGER-WRITE-MODE": [('with open(pn["ledger"], "rb") as fh:                # read-only, exactly the pinned length',
+                             'with open(pn["ledger"], "r+b") as fh:')],
+    "M-SANDBOX-STATE-NOT-REDIRECTED": [('    dirs["GSD_LONG_RUN_STATE_DIR"] = str(root)\n', "    dirs.pop('GSD_LONG_RUN_STATE_DIR', None)\n")],
+    "M-DRIFT-READ-ANYWAY": [("if now != digest:", "if False:")],
+    "M-ENV-NOT-RESTORED": [("    finally:\n        for k, v in prior.items():\n            if v is None:\n                os.environ.pop(k, None)\n            else:\n                os.environ[k] = v",
+                            "    finally:\n        pass")],
+    "M-SWITCH-MISSING": [('"champion": {k: "off" for k in SWITCHES}', '"champion": {k: "off" for k in SWITCHES if k != "CPP_GSD_HOLD_BACKOFF"}')],
+    "M-HELD-DIFFERS": [("with _env({**POLICIES[name], **HELD}):", 'with _env({**POLICIES[name], **(HELD if name == "champion" else {})}):')],
+    "M-CHAMPION-IS-CHALLENGER": [('"champion": {k: "off" for k in SWITCHES}', '"champion": {k: "on" for k in SWITCHES}')],
+    "M-S2-OUTCOME-OK": [('status_reader=lambda c, w: {"outcome": outcome, "reason": why})', 'status_reader=lambda c, w: {"outcome": "OK", "reason": why})')],
+    "M-FAITHFUL-DISABLED": [('"ok": dev <= tol}', '"ok": True}')],
+    "M-REIMPLEMENT-SEAM": [("def effect_digest(champion, challenger) -> str:", "def plan_next(rec):\n    return {}\n\n\ndef effect_digest(champion, challenger) -> str:")],
+    "M-LOOP-THRESHOLD": [("LOOP_MIN = 10 ", "LOOP_MIN = 100 ")],
+    # discovery
+    "M-COVERAGE-DROPS-ROW": [('"failure_rows_total": total,', '"failure_rows_total": total - 1,')],
+    "M-HARDCODED-MISSION-ID": [('SCHEMA = "flow-replay/1"', 'SCHEMA = "flow-replay/1"\nSEED_MISSION = "m-0123456789ab"')],
+    "M-LOOP-NOT-CARRIED": [('"sample": l["reason"][:160], "carried_to": "Phase 8",', '"sample": l["reason"][:160], "carried_to": None,')],
+    "M-ALL-LOOPS-UNMAPPED": [("if c is None or not any(sl in SLICE_NAMES for sl in c[1]):\n            unmapped_loops", "if True:\n            unmapped_loops")],
+    "M-CENSUS-DIFF-ZERO": [('"difference": now_n - 55,', '"difference": now_n - 54,')],
+    # slices
+    "M-S6-UNTYPED": [('he = {"typed": comp is not None,', 'he = {"typed": False,')],
+    "M-S6-UNKNOWN-STOPS": [('"stop_reason": klass if klass and klass != bc.UNKNOWN else None}', '"stop_reason": klass or "unknown"}')],
+    "M-S4-NO-STALL-CLASS": [('if "since the work tree last changed" in reason:\n        return "stall"', 'if "since the work tree last changed" in reason:\n        return "variance"')],
+    "M-REDUCTION-ZERO": [("REDUCTION_MIN = 0.5 ", "REDUCTION_MIN = 0.0 ")],
+    "M-REDUCTION-NEVER": [("REDUCTION_MIN = 0.5 ", "REDUCTION_MIN = 5.0 ")],
+    "M-S4-FP-DEFAULTED": [('return {"class": klass, "unmeasured": "fingerprint"}', 'return {"class": klass, "unmeasured": "inputs_incomplete"}')],
+    "M-S1-EFFECT-COUNTED": [('unmeasured_reason="no_size_evidence"),', "unmeasured_reason=None),")],
+    "M-S5-QUOTE-DROPPED": [('"quoted_not_measured": rep["quoted_not_measured"],', '"quoted_not_measured": {},')],
+    "M-S5-NOW-CLOCK": [('"now": _iso(now)}', '"now": _iso(time.time())}')],
+    "M-RENEWAL-IN-TOTALS": [('"in_s2_s6_totals": False', '"in_s2_s6_totals": True')],
+    "M-RENEWAL-OUTCOME-DEFAULTED": [('item["unmeasured"] = "gsd_outcome"', 'item["gsd_outcome"] = "OK"')],
+    # verdicts
+    "M-VERDICT-PREVENTED-UNREACHABLE": [("(cc - hc) / cc >= REDUCTION_MIN:", "(cc - hc) / cc >= 2:")],
+    "M-VERDICT-PREVENTED-LOOSE": [("(cc - hc) / cc >= REDUCTION_MIN:", "(cc - hc) / cc > 0:")],
+    "M-VERDICT-MOVED-INVERTED": [("and hs < cs:", "and hs > cs:")],
+    "M-VERDICT-MOVED-LOOSE": [("and hs < cs:", "and hs <= cs:")],
+    "M-VERDICT-LEGIT-OFF": [('if challenger.get("stops") and challenger.get("stop_reason"):', "if False:")],
+    "M-VERDICT-LEGIT-ALWAYS": [('if challenger.get("stops") and challenger.get("stop_reason"):', "if True:")],
+    "M-VERDICT-UNCHANGED-WRONG": [('out.update(verdict=UNCHANGED, reason="both arms behave the same")', 'out.update(verdict=LEGITIMATE_STOP, reason="both arms behave the same")')],
+    "M-VERDICT-UNMEASURED-OFF": [("if unmeasured_reason or champion is None or challenger is None:", "if False:")],
+    "M-VERDICT-UNMEASURED-ALWAYS": [("if unmeasured_reason or champion is None or challenger is None:", "if True:")],
+    "M-VERDICT-UNMEASURED-AS-UNCHANGED": [('out.update(verdict=UNMEASURED, reason=unmeasured_reason or "inputs_incomplete", basis="unmeasured")', 'out.update(verdict=UNCHANGED, reason=unmeasured_reason or "inputs_incomplete", basis="unmeasured")')],
+    "M-VERDICT-UNMEASURED-AS-PREVENTED": [('out.update(verdict=UNMEASURED, reason=unmeasured_reason or "inputs_incomplete", basis="unmeasured")', 'out.update(verdict=PREVENTED, reason=unmeasured_reason or "inputs_incomplete", basis="unmeasured")')],
+    "M-VERDICT-NOT-VALIDATED": [("    if v not in VERDICTS:\n        raise ValueError", "    if False:\n        raise ValueError")],
+    "M-VERDICT-SET-WIDENED": [("VERDICTS = (PREVENTED, MOVED_EARLIER, LEGITIMATE_STOP, UNCHANGED, UNMEASURED)", 'VERDICTS = (PREVENTED, MOVED_EARLIER, LEGITIMATE_STOP, UNCHANGED, UNMEASURED, "MAYBE")')],
+    "M-NEW-STATE-VAR": [('SCHEMA = "flow-replay/1"', 'SCHEMA = "flow-replay/1"\n_NEW = os.environ.get("CPP_REPLAY_SECRET_STATE")')],
+    # time
+    "M-WALL-IS-SUM": [('"wall_clock_hours": wall_clock_hours(win, first, end),', '"wall_clock_hours": summed_mission_hours(win),')],
+    "M-WALL-CALLS-SUM": [("    if first_launch is None or last_row is None:", "    _ = summed_mission_hours(windows)\n    if first_launch is None or last_row is None:")],
+    "M-UNMEASURED-HOURS-ZERO": [('out[mid] = {"start": None, "end": None, "unmeasured": "no_start_in_prefix"}', 'out[mid] = {"start": 0.0, "end": 0.0, "unmeasured": None}')],
+    # idle
+    "M-IDLE-NO-PLAN-NEXT": [('ans = pn(rec, gap["start"] + 1.0, [], pid_alive=lambda p: False, blocked_probe=lambda *a: None)', 'ans = {"action": "launch", "reason": "stub"}')],
+    "M-IDLE-NEVER-AVOIDABLE": [('if action in ("launch", "replace", "relay", "recover") and not rec.get("owner_hold") and not blocking:', "if False:")],
+    "M-IDLE-HOLD-IGNORED": [('if action in ("launch", "replace", "relay", "recover") and not rec.get("owner_hold") and not blocking:', 'if True:')],
+    "M-IDLE-INCOMPLETE-LEGIT": [('"class": "inputs_incomplete", "reason": "record not rebuildable from the ledger"}', '"class": "legitimate", "reason": "record not rebuildable from the ledger"}')],
+    "M-IDLE-NO-S2-REMOVAL": [('c["class"] == "avoidable" and c["mission_id"] in s2', 'False')],
+    # s8
+    "M-S8-EMPTY-NONE-FOUND": [("    elif have:\n", "    elif True:\n")],
+    "M-S8-READS-CWD": [('    blocked = [r for r in rows if r.get("event") == "mission_blocked"]\n    have', '    blocked = [r for r in rows if r.get("event") == "mission_blocked"]\n    import blocker_compiler as _bc\n    _bc.compile_blocker("x", cwd=".")\n    have')],
+    # report
+    "M-REPORT-NOT-VALIDATED": [('if not (isinstance(t, dict) and t.get("command") and t.get("pin_sha256")):', "if False:")],
+    "M-REPORT-UNMEASURED-MERGED": [('for v in VERDICTS if v != UNMEASURED},', "for v in VERDICTS},")],
+    "M-REPORT-NONDETERMINISTIC": [('"schema": "flow-replay-report/1",', '"schema": "flow-replay-report/1" + str(time.time_ns()),')],
+    "M-REPORT-MD-LABEL": [("- UNMEASURED (apart):", "- UNMEASURED:")],
+    # FC-06
+    "M-FC06-CAPITAL-OFF": [('c = (inp or {}).get("capital")\n    if not c:', "c = None\n    if not c:")],
+    "M-FC06-DIGEST-OFF": [('ds = (inp or {}).get("digests") or []', "ds = []")],
+    "M-FC06-DONE-OFF": [('ds = (inp or {}).get("done") or []', "ds = []")],
+    "M-FC06-PROTECT-OFF": [('rs = (inp or {}).get("resolved") or []', "rs = []")],
+    "M-FC06-CHALLENGER-BREACH": [('"fc06_inputs": {"resolved": [{"text": reason, "owner_required": bool(comp["owner_required"])}]}}', '"fc06_inputs": {"resolved": [{"text": reason, "owner_required": False}]}}')],
+    "M-FC06-BREACH-SOFT": [("        rc = 3\n", "        rc = 0\n")],
+    # policy mutants
+    "M-STUB-ALWAYS-ADMIT-REAL": [('("gsd_mission", "arm_preflight", mutant_admit_arm_preflight),', '("gsd_mission", "arm_preflight", lambda *a, **k: _originals()["arm_preflight"](*a, **k)),'),
+                                 ('("gsd_mission", "_packet_digest_matches", mutant_admit_packet_digest)]},', '("gsd_mission", "_packet_digest_matches", lambda *a, **k: _originals()["_packet_digest_matches"](*a, **k))]},')],
+    "M-STUB-NEVER-ROTATE-REAL": [('("gsd_mission", "apply_rotation_invariant", mutant_keep_rotation_invariant)]},', '("gsd_mission", "apply_rotation_invariant", lambda *a, **k: _originals()["apply_rotation_invariant"](*a, **k))]},')],
+    "M-STUB-ALWAYS-RENEW-REAL": [('("gsd_mission", "renewal_refusal", mutant_renew_refusal)]},', '("gsd_mission", "renewal_refusal", lambda *a, **k: _originals()["renewal_refusal"](*a, **k))]},')],
+    "M-STUB-TERMINAL-REAL": [('("receipt_judge", "is_done", mutant_proofless_is_done)]},', '("receipt_judge", "is_done", lambda *a, **k: _originals()["is_done"](*a, **k))]},')],
+    "M-STUB-DROP-CLASS-REAL": [('("blocker_compiler", "compile_blocker", mutant_classless_compile_blocker)]},', '("blocker_compiler", "compile_blocker", lambda *a, **k: _originals()["compile_blocker"](*a, **k))]},')],
+    "M-STUB-EXPAND-REAL": [('("mission_spend", "judge", mutant_never_trip_judge),', '("mission_spend", "judge", lambda *a, **k: _originals()["judge"](*a, **k)),'),
+                           ('("modules.autonomy_gate.gate", "classify", mutant_never_owner_classify)]},', '("modules.autonomy_gate.gate", "classify", lambda *a, **k: _originals()["classify"](*a, **k))]},')],
+    "M-IDENTICAL-NOT-DEFECT": [('"harness_defect": not caught}', '"harness_defect": False}')],
+    "M-SCOPE-NOT-RESTORED": [("        for mod, attr, prev in reversed(saved):\n            setattr(mod, attr, prev)", "        pass")],
+    "M-SOURCE-TOUCHED": [("    MUTANT_CALLS.clear()\n    saved = []", '    MUTANT_CALLS.clear()\n    Path(__file__).write_text(Path(__file__).read_text(encoding="utf-8") + "\\n# touched\\n", encoding="utf-8")\n    saved = []')],
+    "M-STUB-NEVER-COUNTED": [("def _called(name: str) -> None:\n    MUTANT_CALLS[name] = MUTANT_CALLS.get(name, 0) + 1", "def _called(name: str) -> None:\n    pass")],
+    "M-SEEDED-MERGED": [("    seeded = run_seeded()\n    for inc in incidents:", '    seeded = [dict(s, verdict="UNCHANGED") for s in run_seeded()]\n    for inc in incidents:')],
+}
+
+# test-side mutations: break the instrument the gate itself uses (the module under test is untouched)
+TEST_SIDE = {}
+
+
+def _probe_blind():
+    global WriteProbe
+    real = WriteProbe
+
+    class Blind(real):
+        def __enter__(self):
+            self._saved = {}
+            return self
+    WriteProbe = Blind
+    return real
+
+
+def _ctx_probe_blind():
+    global WriteProbe
+    real = WriteProbe
+    _probe_blind()
+    try:
+        yield
+    finally:
+        WriteProbe = real
+
+
+TEST_SIDE["M-PROBE-BLIND"] = contextlib.contextmanager(_ctx_probe_blind)
+
+
+def make_variant(mid: str, subs: list):
+    text = REAL_TEXT.replace(_SEEN_FILE, f"TOOLS = Path({str(TOOLS)!r})", 1)
+    for old, new in subs:
+        if old not in text:
+            raise ValueError(f"mutation {mid}: pattern not found: {old[:70]!r}")
+        text = text.replace(old, new)
+    VAR_DIR.mkdir(parents=True, exist_ok=True)
+    n = len(VARIANTS)
+    path = VAR_DIR / f"flow_replay_v{n}.py"
+    path.write_text(text, encoding="utf-8")
+    name = f"flow_replay_v{n}"
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    VARIANTS.append(mod)
+    return mod, path
+
+
+def _real_targets():
+    return [(m, a, getattr(__import__(m, fromlist=["x"]), a)) for mu in REAL_FR.MUTANTS.values() for m, a, _ in mu["targets"]]
+
+
+@contextlib.contextmanager
+def using(mod, path):
+    """Point the gates at `mod`; afterwards put back the globals, the environment and every patched module attribute."""
+    global fr, SRC
+    prev, env, tg = (fr, SRC), dict(os.environ), _real_targets()
+    fr, SRC = mod, path
+    try:
+        yield
+    finally:
+        fr, SRC = prev
+        os.environ.clear()
+        os.environ.update(env)
+        for m, a, v in tg:
+            setattr(__import__(m, fromlist=["x"]), a, v)
+
+
+NEEDS = {"fc06": ["mutants"], "seeded": ["mutants"]}
+GROUP_ORDER = ["pin", "scope", "tracer", "faithful", "readonly", "drift", "realseam", "discover", "slices", "verdicts",
+               "nonewstate", "time", "idle", "s8", "report", "mutants", "fc06", "seeded", "negcontrols"]
+GROUPS["negcontrols"] = lambda: gate_negcontrols()
+
+
+def run_groups(names) -> dict:
+    """Run gate groups in isolation against the module `fr` currently names; {gate: ok}. A group that raises reports the
+    gates it never reached as absent (= red)."""
+    want = []
+    for n in sorted(set(names), key=GROUP_ORDER.index):
+        for need in NEEDS.get(n, []):
+            if need not in want:
+                want.append(need)
+        if n not in want:
+            want.append(n)
+    saved = RESULTS[:]
+    RESULTS.clear()
+    crashed = {}
+    out_io = io.StringIO()
+    with contextlib.redirect_stdout(out_io):
+        for n in sorted(set(want), key=GROUP_ORDER.index):
+            try:
+                GROUPS[n]()
+            except Exception as exc:  # noqa: BLE001 -- a crashing gate is a red gate
+                crashed[n] = f"{type(exc).__name__}: {exc}"[:160]
+    out = {g: ok for g, ok, _ in RESULTS}
+    RESULTS[:] = saved
+    out["__crashed__"] = crashed
+    return out
+
+
+def run_mutation(mid: str, groups) -> dict:
+    if mid in TEST_SIDE:
+        with using(fr, SRC), TEST_SIDE[mid]():
+            return run_groups(groups)
+    mod, path = make_variant(mid, MUTATIONS[mid])
+    with using(mod, path):
+        return run_groups(groups)
+
+
+# gate -> mutations that must turn it red. Filled from the calibration matrix and checked by V-S7-MUTANT-MAP.
+MUTANT_FOR: dict[str, list[str]] = {
+    'V-S7-ALL-FIVE-REAL': ['M-S2-OUTCOME-OK', 'M-VERDICT-MOVED-INVERTED'],
+    'V-S7-CENSUS-DIFFERENCE-PRINTED': ['M-CENSUS-DIFF-ZERO'],
+    'V-S7-DETERMINISTIC': ['M-REPORT-NONDETERMINISTIC', 'M-S5-NOW-CLOCK'],
+    'V-S7-DISCOVER-COVERAGE': ['M-COVERAGE-DROPS-ROW'],
+    'V-S7-FAITHFUL-CONTROL': ['M-FAITHFUL-DISABLED', 'M-SWITCH-MISSING'],
+    'V-S7-FC06-CAPITAL': ['M-FC06-CAPITAL-OFF'],
+    'V-S7-FC06-CHALLENGER-CLEAN': ['M-FC06-CHALLENGER-BREACH'],
+    'V-S7-FC06-DIGEST': ['M-FC06-DIGEST-OFF', 'M-STUB-ALWAYS-ADMIT-REAL'],
+    'V-S7-FC06-DONE-PROOF': ['M-FC06-DONE-OFF', 'M-STUB-TERMINAL-REAL'],
+    'V-S7-FC06-HARD-FAIL': ['M-FC06-BREACH-SOFT', 'M-FC06-CHALLENGER-BREACH'],
+    'V-S7-FC06-PROTECTIONS': ['M-FC06-PROTECT-OFF'],
+    'V-S7-HELD-EQUAL': ['M-HELD-DIFFERS'],
+    'V-S7-IDLE-AVOIDABLE-POS': ['M-IDLE-NEVER-AVOIDABLE'],
+    'V-S7-IDLE-BEFORE-AFTER': ['M-IDLE-NEVER-AVOIDABLE', 'M-IDLE-NO-S2-REMOVAL'],
+    'V-S7-IDLE-INCOMPLETE': ['M-IDLE-INCOMPLETE-LEGIT'],
+    'V-S7-IDLE-LEGIT-NEIGHBOUR': ['M-IDLE-HOLD-IGNORED'],
+    'V-S7-IDLE-REALSEAM': ['M-IDLE-NO-PLAN-NEXT', 'M-REIMPLEMENT-SEAM'],
+    'V-S7-MUTANT-ALWAYS-ADMIT': ['M-STUB-ALWAYS-ADMIT-REAL'],
+    'V-S7-MUTANT-ALWAYS-RENEW': ['M-STUB-ALWAYS-RENEW-REAL'],
+    'V-S7-MUTANT-DROP-CLASS': ['M-STUB-DROP-CLASS-REAL'],
+    'V-S7-MUTANT-EXPAND-AUTHORITY': ['M-STUB-EXPAND-REAL'],
+    'V-S7-MUTANT-IDENTICAL-IS-DEFECT': ['M-IDENTICAL-NOT-DEFECT', 'M-STUB-ALWAYS-RENEW-REAL'],
+    'V-S7-MUTANT-NEVER-ROTATE': ['M-STUB-NEVER-ROTATE-REAL'],
+    'V-S7-MUTANT-NO-SOURCE-EDIT': ['M-SOURCE-TOUCHED'],
+    'V-S7-MUTANT-SCOPE-RESTORED': ['M-SCOPE-NOT-RESTORED'],
+    'V-S7-MUTANT-STUB-CALLED': ['M-STUB-ALWAYS-RENEW-REAL', 'M-STUB-NEVER-COUNTED'],
+    'V-S7-MUTANT-TERMINAL-NO-PROOF': ['M-STUB-TERMINAL-REAL'],
+    'V-S7-NEGCONTROL-EMPTY-S8': ['M-S8-EMPTY-NONE-FOUND'],
+    'V-S7-NEGCONTROL-FLIPPED-BYTE': ['M-PIN-NO-HASH', 'M-PIN-READS-WHOLE'],
+    'V-S7-NEGCONTROL-IDENTICAL-STUB': ['M-IDENTICAL-NOT-DEFECT', 'M-SCOPE-NOT-RESTORED'],
+    'V-S7-NEGCONTROL-MISSING-COMMAND': ['M-REPORT-NOT-VALIDATED'],
+    'V-S7-NEGCONTROL-SEEDED-FC06': ['M-FC06-CAPITAL-OFF', 'M-FC06-DIGEST-OFF'],
+    'V-S7-NEGCONTROL-UNFAITHFUL': ['M-FAITHFUL-DISABLED', 'M-VERDICT-UNMEASURED-OFF'],
+    'V-S7-NEGCONTROL-UNMEASURED-NOT-PREVENTED': ['M-REDUCTION-NEVER', 'M-VERDICT-UNMEASURED-OFF'],
+    'V-S7-NO-IDS': ['M-HARDCODED-MISSION-ID'],
+    'V-S7-NO-NEW-STATE': ['M-NEW-STATE-VAR'],
+    'V-S7-NO-REDEFINE-AFTER-MUTANTS': ['M-SCOPE-NOT-RESTORED'],
+    'V-S7-READONLY-NO-HOST-WRITE': ['M-LEDGER-WRITE-MODE', 'M-PROBE-BLIND'],
+    'V-S7-READONLY-PROBE-FIRES': ['M-PROBE-BLIND'],
+    'V-S7-RECORD-DRIFT-UNMEASURED': ['M-DRIFT-READ-ANYWAY', 'M-SWITCH-MISSING'],
+    'V-S7-RENEWAL-AXIS-LABELLED': ['M-RENEWAL-IN-TOTALS'],
+    'V-S7-RENEWAL-OUTCOME-UNMEASURED': ['M-RENEWAL-OUTCOME-DEFAULTED'],
+    'V-S7-REPORT-MD': ['M-REPORT-MD-LABEL'],
+    'V-S7-REPORT-TAGGED': ['M-REPORT-NOT-VALIDATED'],
+    'V-S7-REPORT-UNMEASURED-APART': ['M-REPORT-UNMEASURED-MERGED', 'M-VERDICT-UNMEASURED-AS-UNCHANGED'],
+    'V-S7-S1-EFFECT-UNMEASURED': ['M-S1-EFFECT-COUNTED', 'M-VERDICT-UNMEASURED-AS-UNCHANGED'],
+    'V-S7-S4-FP-MISSING-UNMEASURED': ['M-S4-FP-DEFAULTED'],
+    'V-S7-S4-PREVENTED-NEEDS-AUTHORITY': ['M-REDUCTION-ZERO'],
+    'V-S7-S4-TRIP-NO-AUTH-LEGIT': ['M-REDUCTION-ZERO', 'M-S4-NO-STALL-CLASS'],
+    'V-S7-S5-NO-149H-CLAIM': ['M-S5-QUOTE-DROPPED'],
+    'V-S7-S5-NOW-FIXED': ['M-S5-NOW-CLOCK'],
+    'V-S7-S6-CLASSED': ['M-S6-UNTYPED', 'M-VERDICT-MOVED-LOOSE'],
+    'V-S7-S6-UNKNOWN-IS-UNCHANGED': ['M-S6-UNKNOWN-STOPS', 'M-VERDICT-MOVED-LOOSE'],
+    'V-S7-S8-NO-CWD-READ': ['M-S8-READS-CWD'],
+    'V-S7-S8-SENTENCE-FORMS': ['M-S8-EMPTY-NONE-FOUND'],
+    'V-S7-SCOPE-RESTORED': ['M-ENV-NOT-RESTORED', 'M-HELD-LEAKS', 'M-SANDBOX-STATE-NOT-REDIRECTED'],
+    'V-S7-SEEDED-APART': ['M-SEEDED-MERGED'],
+    'V-S7-TIME-NEVER-CONFLATED': ['M-WALL-CALLS-SUM'],
+    'V-S7-TIME-THREE-DISTINCT': ['M-WALL-IS-SUM'],
+    'V-S7-TIME-UNMEASURED-NOT-ZERO': ['M-UNMEASURED-HOURS-ZERO'],
+    'V-S7-TRACER-PIN-COMMITTED-VERIFIES': ['M-PIN-DROPS-ROW', 'M-PIN-READS-WHOLE'],
+    'V-S7-TRACER-PIN-FLIPPED-BYTE': ['M-INCONCLUSIVE-EXITS-ZERO', 'M-PIN-NO-HASH'],
+    'V-S7-TRACER-PIN-STABLE': ['M-PIN-DROPS-ROW', 'M-PIN-READS-WHOLE'],
+    'V-S7-TRACER-REALSEAM': ['M-LOOP-THRESHOLD', 'M-REIMPLEMENT-SEAM'],
+    'V-S7-TRACER-S2-REFUSES': ['M-CHAMPION-IS-CHALLENGER', 'M-LOOP-THRESHOLD'],
+    'V-S7-TRACER-S3-DIFFERS': ['M-LOOP-THRESHOLD', 'M-REDUCTION-NEVER'],
+    'V-S7-UNMAPPED-LOOP': ['M-LOOP-NOT-CARRIED'],
+    'V-S7-UNMAPPED-LOOP-NEIGHBOUR': ['M-ALL-LOOPS-UNMAPPED'],
+    'V-S7-UNMEASURED-NOT-PREVENTED': ['M-VERDICT-UNMEASURED-AS-PREVENTED'],
+    'V-S7-UNMEASURED-REACHABLE-REAL': ['M-VERDICT-UNMEASURED-AS-PREVENTED', 'M-VERDICT-UNMEASURED-AS-UNCHANGED'],
+    'V-S7-VERDICT-CLOSED': ['M-VERDICT-NOT-VALIDATED', 'M-VERDICT-SET-WIDENED'],
+    'V-S7-VERDICT-NEIGHBOUR-LEGITIMATE_STOP': ['M-VERDICT-LEGIT-ALWAYS', 'M-VERDICT-UNCHANGED-WRONG'],
+    'V-S7-VERDICT-NEIGHBOUR-MOVED_EARLIER': ['M-VERDICT-LEGIT-OFF', 'M-VERDICT-MOVED-LOOSE'],
+    'V-S7-VERDICT-NEIGHBOUR-PREVENTED': ['M-REDUCTION-ZERO', 'M-VERDICT-PREVENTED-LOOSE'],
+    'V-S7-VERDICT-NEIGHBOUR-UNCHANGED': ['M-VERDICT-LEGIT-OFF', 'M-VERDICT-UNMEASURED-ALWAYS'],
+    'V-S7-VERDICT-NEIGHBOUR-UNMEASURED': ['M-VERDICT-LEGIT-ALWAYS', 'M-VERDICT-UNCHANGED-WRONG'],
+    'V-S7-VERDICT-POS-LEGITIMATE_STOP': ['M-VERDICT-LEGIT-OFF', 'M-VERDICT-UNMEASURED-ALWAYS'],
+    'V-S7-VERDICT-POS-MOVED_EARLIER': ['M-VERDICT-MOVED-INVERTED', 'M-VERDICT-UNMEASURED-ALWAYS'],
+    'V-S7-VERDICT-POS-PREVENTED': ['M-REDUCTION-NEVER', 'M-VERDICT-PREVENTED-UNREACHABLE'],
+    'V-S7-VERDICT-POS-UNCHANGED': ['M-VERDICT-LEGIT-ALWAYS', 'M-VERDICT-UNCHANGED-WRONG'],
+    'V-S7-VERDICT-POS-UNMEASURED': ['M-VERDICT-UNMEASURED-AS-PREVENTED', 'M-VERDICT-UNMEASURED-AS-UNCHANGED'],
+}
+UNMUTATED: dict[str, str] = {
+    "V-S7-HELD-RESTORED": "an env leak persists after its first occurrence, so this before/after cannot see a leak that an earlier call already made; the restore itself is pinned red by V-S7-SCOPE-RESTORED under M-HELD-LEAKS",
+    "V-S7-READONLY-COPY-IDENTICAL": "its subject is the temp copy tree, which no flow_replay line targets; its in-gate control (an implicit-accessor append must read as a change) is what proves it can fail, and V-S7-READONLY-PROBE-FIRES is drilled by M-PROBE-BLIND",
+}
+
+
+def drills(base: dict, group_of: dict) -> None:
+    mids = sorted({m for ms in MUTANT_FOR.values() for m in ms})
+    for mid in mids:
+        expected = sorted(g for g, ms in MUTANT_FOR.items() if mid in ms)
+        groups = sorted({group_of[g] for g in expected if g in group_of}, key=GROUP_ORDER.index)
+        try:
+            got = run_mutation(mid, groups)
+        except Exception as exc:  # noqa: BLE001 -- a mutation that cannot be applied is a failed drill
+            check(f"V-S7-DRILL-{mid}", False, f"mutation not applicable: {type(exc).__name__}: {exc}")
+            continue
+        still_green = [g for g in expected if got.get(g) is True]
+        never_green = [g for g in expected if base.get(g) is not True]
+        check(f"V-S7-DRILL-{mid}", bool(expected) and not still_green and not never_green,
+              f"expected_red={len(expected)} still_green={still_green} baseline_not_green={never_green} "
+              f"crashed={list(got['__crashed__'])}")
+
+
+def drill_control(base: dict, group_of: dict) -> None:
+    """The harness itself must be able to fail: with every mutation replaced by a no-op, every mapped gate stays green,
+    which each drill reads as a failed drill. If this does not hold, the drills above prove nothing."""
+    expected = sorted(MUTANT_FOR)
+    groups = sorted({group_of[g] for g in expected if g in group_of}, key=GROUP_ORDER.index)
+    with using(*make_variant("noop", [])):
+        got = run_groups(groups)
+    still_green = [g for g in expected if got.get(g) is True]
+    mids = sorted({m for ms in MUTANT_FOR.values() for m in ms})
+    would_fail = [m for m in mids
+                  if not [g for g, ms in MUTANT_FOR.items() if m in ms and got.get(g) is not True]]
+    check("V-S7-DRILL-CONTROL-NOOP-FIRES", bool(expected) and len(still_green) == len(expected) and len(would_fail) == len(mids),
+          f"no-op substitution left {len(still_green)}/{len(expected)} mapped gates green: all {len(would_fail)}/{len(mids)} "
+          f"drills would read it as a failure")
+
+
+def map_gate(names: list) -> None:
+    gate_names = [n for n in names if not n.startswith("V-S7-DRILL-") and n != "V-S7-MUTANT-MAP"]
+    unmapped = [n for n in gate_names if n not in MUTANT_FOR and n not in UNMUTATED]
+    stale = [g for g in MUTANT_FOR if g not in gate_names]
+    undefined = sorted({m for ms in MUTANT_FOR.values() for m in ms if m not in MUTATIONS and m not in TEST_SIDE})
+    unused = sorted(m for m in list(MUTATIONS) + list(TEST_SIDE) if not any(m in ms for ms in MUTANT_FOR.values()))
+    check("V-S7-MUTANT-MAP", not unmapped and not stale and not undefined and not unused and len(gate_names) >= 80,
+          f"unmapped={unmapped} stale={stale} undefined={undefined} unused={unused} gates={len(gate_names)} "
+          f"unmutated={sorted(UNMUTATED)}")
+
+
 def main() -> int:
-    global res_main
-    gate_pin()
-    gate_scope()
-    res_main = run_replay(PIN)
-    gate_tracer(res_main)
-    gate_faithful()
-    gate_readonly()
-    gate_drift()
-    gate_realseam()
-    gate_discover(res_main)
-    gate_slices(res_main)
-    gate_verdicts(res_main)
-    gate_nonewstate()
-    gate_time()
-    gate_idle(res_main)
-    gate_s8()
-    gate_report(res_main)
-    gate_mutants(res_main)
-    gate_fc06(res_main)
-    gate_seeded_apart(res_main)
+    real_before = sha(REAL_SRC)
+    group_of = {}
+    for name in GROUP_ORDER:
+        before = len(RESULTS)
+        GROUPS[name]()
+        for n, _, _ in RESULTS[before:]:
+            group_of[n] = name
+    base = {n: ok for n, ok, _ in RESULTS}
+    if len(sys.argv) > 2 and sys.argv[1] == "--calibrate":
+        mid = sys.argv[2]
+        got = run_mutation(mid, list(GROUP_ORDER))
+        red = sorted(g for g in group_of if got.get(g) is False and base.get(g) is True)
+        absent = sorted(g for g in group_of if g not in got and base.get(g) is True)
+        print("CALIBRATE", json.dumps({"mutation": mid, "red": red, "all": sorted(group_of), "absent": len(absent), "crashed": got["__crashed__"]}, default=str))
+        shutil.rmtree(TMP, ignore_errors=True)
+        return 0
+    drills(base, group_of)
+    drill_control(base, group_of)
+    check("V-S7-DRILL-REAL-FILE-UNTOUCHED", sha(REAL_SRC) == real_before and REAL_TEXT == REAL_SRC.read_text(encoding="utf-8"),
+          f"tools/flow_replay.py sha256 {real_before[:12]} identical before and after {len(VARIANTS)} mutated copies")
+    map_gate(list(group_of))
     n = len(RESULTS)
     p = sum(1 for _, ok, _ in RESULTS if ok)
+    for name, ok, ev in RESULTS:
+        if not ok:
+            print(f"FAIL {name} {ev}")
     print(f"S7_PASS={p}/{n}  threshold={n}/{n}")
     shutil.rmtree(TMP, ignore_errors=True)
     return 0 if p == n else 1
