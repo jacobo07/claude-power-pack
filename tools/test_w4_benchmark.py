@@ -67,6 +67,13 @@ def main():
     t("V-5 mutant dropping cache_write from processed is caught", len(mutant_bad) > 0)
     v = w.judge({"X": {"error": "e"}})
     t("V-6 judge surfaces error", v and v[0][2] == "ERROR")
+    with tempfile.TemporaryDirectory() as td:
+        fake = Path(td) / "anthropic_2099-01.json"
+        fake.write_text("{}", encoding="utf-8")
+        md = w.render_md({"W3d": {"error": "x"}}, [], fake)
+        t("V-7 report text uses the resolved pricing path, not a literal",
+          "anthropic_2099-01.json" in md and "anthropic_2026-10.json" not in md)
+    t("V-8 default resolves through pricing_source", w.resolve_pricing() == w.current_pricing_path())
     print("W4_PASS=%d/%d" % (ok, n))
     return 0 if ok == n else 1
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-PRICING = ROOT / "vault" / "pricing" / "anthropic_2026-10.json"
+from pricing_source import current_pricing_path  # noqa: E402
 OUT = ROOT / "vault" / "programs" / "factory-tranche-a"
 REF_MODEL = "claude-opus-5-5"
 SESSIONS = {
@@ -25,7 +25,20 @@ def _processed(u):
             + int(u.get("cache_creation_input_tokens") or 0))
 
 
-def load_prices(path=PRICING):
+def resolve_pricing():
+    """Resolved current pricing file. Raises FileNotFoundError when none exists: never price at 0."""
+    return Path(current_pricing_path())
+
+
+def _rel(p):
+    try:
+        return Path(p).resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(p)
+
+
+def load_prices(path=None):
+    path = resolve_pricing() if path is None else path
     return json.loads(Path(path).read_text(encoding="utf-8"))["models"]
 
 
@@ -162,9 +175,10 @@ def judge(res):
     return v
 
 
-def render_md(res, verdicts):
+def render_md(res, verdicts, pricing_path=None):
+    pricing_path = resolve_pricing() if pricing_path is None else pricing_path
     L = ["# W4 benchmark: slim-t2 units vs W1 baseline", "",
-         "Measured from transcripts (read-only); pricing vault/pricing/anthropic_2026-10.json. "
+         "Measured from transcripts (read-only); pricing %s. " % _rel(pricing_path) +
          "Processed = input + cache read + cache write (output excluded). Calls = deduplicated assistant usage rows.", "",
          "| unit | calls | call-1 | processed | input | cache read | cw 5m | cw 1h | output | hit | $ transcript model | $ @Opus 5.5 |",
          "|---|---|---|---|---|---|---|---|---|---|---|---|"]
@@ -202,13 +216,18 @@ def render_md(res, verdicts):
 
 
 def main():
-    prices = load_prices()
+    try:
+        pricing_path = resolve_pricing()
+    except FileNotFoundError as e:
+        print("FAIL: no current pricing file: %s" % e, file=sys.stderr)
+        return 2
+    prices = load_prices(pricing_path)
     res = {k: analyze(find_transcript(s), prices) for k, s in SESSIONS.items()}
     verdicts = judge(res)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "W4-benchmark.json").write_text(json.dumps(
         {"sessions": SESSIONS, "results": res, "verdicts": verdicts, "old_arm": OLD}, indent=1), encoding="utf-8")
-    (OUT / "W4-benchmark.md").write_text(render_md(res, verdicts), encoding="utf-8")
+    (OUT / "W4-benchmark.md").write_text(render_md(res, verdicts, pricing_path), encoding="utf-8")
     print("wrote W4-benchmark.json/.md")
     return 0
 

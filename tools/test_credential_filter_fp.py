@@ -8,7 +8,7 @@ BUILDER = ROOT / "vendor/genesis-suite/modules/genesis-source-packets/index.cjs"
 COPIES = [ROOT / "vendor/genesis-suite/modules/genesis-task-context/lib/genesis-source-packets.cjs",
           ROOT / "vendor/genesis-suite/modules/genesis-batch-drafts/lib/genesis-source-packets.cjs"]
 CONTROLS = ["tools/floor_regression_gate.py", "tools/test_floor_regression_gate.py", "tools/cep_gen2.py"]
-FIX = '(?!\\s*["\']?(?:\\$?\\{|\\d+\\s*[,}/]\\d*))'
+FIX = '(?!\\s*["\']?(?:\\$?\\{|\\d+(?:\\/\\d+)?(?:\\s*[,}]?\\s*(?:\\r?\\n|$)|[,\\s]\\s*["\']?\\w+["\']?\\s*[:=])))'
 NODE = ("const fs=require('fs');const src=fs.readFileSync(process.argv[1],'utf8');"
         "const l=src.split('\\n').find(x=>x.startsWith('const CREDENTIAL'));"
         "const CREDENTIAL=eval(l.replace(/^const CREDENTIAL =/,'(').replace(/;\\s*$/,'')+')');"
@@ -38,7 +38,9 @@ with tempfile.TemporaryDirectory() as d:
     pw = "pass" + "word"
     fakes = {"sk-key": "tok = '" + "sk" + "-" + "A1b2C3d4E5f6G7h8I9j0" + "'\n",
              "quoted-assign": pw + ': "' + "abc123XYZ789" + '"\n',
-             "plain-env": "DB_" + "PASS" + "=" + "hunter2hunter2xx\n"}
+             "plain-env": "DB_" + "PASS" + "=" + "hunter2hunter2xx\n",
+             "digit-prefix-comma": pw + "=" + "42," + "hunter" + "2\n",
+             "digit-prefix-slash": "tok" + "en=" + "7/" + "Qx9AbCdEfGhIjKlMn\n"}
     for c in CONTROLS:
         check(f"V-CFP-ADMIT {c}", verdict(BUILDER, ROOT / c) == "ADMITTED")
     for c in COPIES:
@@ -51,6 +53,11 @@ with tempfile.TemporaryDirectory() as d:
     mut = d / "mutant.cjs"
     mut.write_text(BUILDER.read_text(encoding="utf-8").replace(FIX, ""), encoding="utf-8")
     back = [c for c in CONTROLS if verdict(mut, ROOT / c) == "BLOCKED"]
+    # numeric-only controls stay ADMITTED, each in its own file
+    for name, text in {"budget": '{"budget": 100,\n', "pass-ratio": 'FLOOR_PASS=0/1\n', "auth-num": '"authorization_boundary": 100\n'}.items():
+        f = d / f"ctl-{name}.txt"
+        f.write_text(text)
+        check(f"V-CFP-NUMERIC-ADMITTED {name}", verdict(BUILDER, f) == "ADMITTED")
     check(f"V-CFP-MUTANT-REVERTED-BLOCKS ({len(back)}/{len(CONTROLS)} back to BLOCKED)", len(back) >= 1)
 
 n = sum(results)
