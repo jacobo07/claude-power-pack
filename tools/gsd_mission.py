@@ -5797,12 +5797,21 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 rec["gain_samples"] = _gain_sample(rec, work_dir or mb.execution_root(rec))
                 gain = judge_marginal_gain(rec["gain_samples"])
                 row["marginal_gain"] = gain
-                if (act in ("relay", "replace") and gain == "MARGINAL_GAIN_LOW"
-                        and (os.environ.get("GSD_MARGINAL_GAIN") or "").strip().lower() != "off"):
+                gain_held = (act in ("relay", "replace") and gain == "MARGINAL_GAIN_LOW"
+                             and (os.environ.get("GSD_MARGINAL_GAIN") or "").strip().lower() != "off")
+                tail = rec["gain_samples"][-(MARGINAL_GAIN_WINDOW + 1):]
+                # One persistence point (review MEDIUM-1): every later path (continue, readmit, capsule
+                # rotation, launch) rewrites the record from disk, so the samples are stored here, once.
+                # The hold's identity is what makes it held (head + note of the window), not the spend, which
+                # rises on every pass by definition.
+                hold_key = [{"head": x.get("head"), "note_sha": x.get("note_sha")} for x in tail]
+                _persist_gain(mid, rec["epoch"], rec["gain_samples"], hold_key if gain_held else None)
+                if gain_held:
                     why = ("marginal_gain_low: spend rose over %d relays with no new commit and the same note"
                            % MARGINAL_GAIN_WINDOW)
-                    lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"], reason=why,
-                                     samples=rec["gain_samples"][-(MARGINAL_GAIN_WINDOW + 1):])
+                    if (rec.get("gain_hold") or None) != hold_key:   # LOW-1: a row only when the hold changed
+                        lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"], reason=why,
+                                         samples=tail)
                     row["held"] = why
                     continue
                 if (turn_end is not None and turn_end["decision"] == ge.CONTINUE and progress.get("measured")
@@ -6638,6 +6647,24 @@ def judge_marginal_gain(samples: list, window: int = MARGINAL_GAIN_WINDOW) -> st
     same_head = all(s["head"] == tail[0]["head"] for s in tail)
     same_note = all(s.get("note_sha") == tail[0].get("note_sha") for s in tail)
     return "MARGINAL_GAIN_LOW" if (rises and same_head and same_note) else "GAINING"
+
+
+def _persist_gain(mission_id: str, epoch: int, samples: list, hold_tail: list | None) -> None:
+    """Store gain_samples (and the last held tail, None = not held) on the record without a transition:
+    no seq bump, no ledger row, no updated_at touch. Skipped if the record moved epoch meanwhile."""
+    path = mission_path(mission_id)
+    with _Lock(path.with_suffix(".lock")):
+        cur = load(mission_id)
+        if cur is None or cur.get("epoch") != epoch:
+            return
+        if cur.get("gain_samples") == samples and cur.get("gain_hold") == hold_tail:
+            return
+        cur["gain_samples"] = samples
+        if hold_tail is None:
+            cur.pop("gain_hold", None)
+        else:
+            cur["gain_hold"] = hold_tail
+        _write(path, cur)
 
 
 def _gain_sample(rec: dict, work_dir: str) -> list:

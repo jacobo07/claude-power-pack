@@ -68,7 +68,7 @@ real = gm.judge_marginal_gain
 gm.judge_marginal_gain = mutant
 red = gm.judge_marginal_gain(commit) != "GAINING"   # the NEW-COMMIT assertion would FAIL
 gm.judge_marginal_gain = real
-check("V-W3C-MUTATION-RED", red and j(commit) == "GAINING", "head-blind mutant fails NEW-COMMIT; restored")
+judge_red = red and j(commit) == "GAINING"
 
 # --- supervisor wiring ---------------------------------------------------------------------
 class R:
@@ -94,8 +94,10 @@ gsd_ok = lambda c, workstream=None: {"outcome": "OK", "reason": "ok"}   # noqa: 
 empty_sha = hashlib.sha256(b"").hexdigest()
 gm.progress_fingerprint = lambda work_dir: None
 import mission_spend  # noqa: E402
-mission_spend.processed_tokens = lambda rec: 4 * M
-gm._git_facts = lambda cwd: {"head": "abc"}
+SPEND = [4 * M]
+HEAD = ["abc"]
+mission_spend.processed_tokens = lambda rec: SPEND[0]
+gm._git_facts = lambda cwd: {"head": HEAD[0]}
 
 
 def seeded(mid):
@@ -125,6 +127,53 @@ try:
     off = gm.load("m-w3c-off")
     check("V-W3C-WIRED-KILL-SWITCH-RELAYS", off["epoch"] == 2 and len(off.get("gain_samples") or []) == 3,
           f"epoch={off['epoch']} samples={len(off.get('gain_samples') or [])}")
+    os.environ.pop("GSD_MARGINAL_GAIN", None)
+
+    def sup(mid, hs):
+        return gm.supervise(now=NOW, sessions=hs, gsd_status=gsd_ok, runner=launch_run,
+                            stop_runner=stop_run, pid_alive=gone, fingerprint=lambda d: "B")
+
+    def held_rows(mid):
+        return [r for r in gm.lr.ledger_events(mid) if r.get("event") == "relay_held"
+                and "marginal_gain_low" in str(r.get("reason"))]
+
+    # MEDIUM-1: a path that is NOT launch_worker (the hold) keeps the samples on the record.
+    SPEND[0] = 4 * M
+    hs = seeded("m-w3c-persist")
+    sup("m-w3c-persist", hs)
+    p = gm.load("m-w3c-persist")
+    check("V-W3C-PERSIST-NON-LAUNCH", p["epoch"] == 1 and len(p.get("gain_samples") or []) == 3,
+          f"epoch={p['epoch']} samples={len(p.get('gain_samples') or [])}")
+    # LOW-1: identical held pass -> still one row; a changed window -> a second row.
+    SPEND[0] = 5 * M
+    sup("m-w3c-persist", hs)
+    check("V-W3C-HELD-ONE-ROW", len(held_rows("m-w3c-persist")) == 1, f"rows={len(held_rows('m-w3c-persist'))}")
+    HEAD[0] = "def"
+    # the window moves to another head and holds again (a GAINING pass would relay, so seed it directly)
+    gm._persist_gain("m-w3c-persist", 1, [s("def", M, empty_sha), s("def", 2 * M, empty_sha)],
+                     gm.load("m-w3c-persist").get("gain_hold"))
+    SPEND[0] = 6 * M
+    sup("m-w3c-persist", hs)
+    n = len(held_rows("m-w3c-persist"))
+    check("V-W3C-HELD-CHANGED-ROW", n == 2, f"rows={n}")
+    HEAD[0] = "abc"
+
+    # LOW-3: the REAL gate path on a head-blind mutant goes red (held), and the restore relays again.
+    HEAD[0] = "new"
+    SPEND[0] = 4 * M
+    gm.judge_marginal_gain = mutant
+    try:
+        hs = seeded("m-w3c-mut")
+        n0 = len(launches)
+        sup("m-w3c-mut", hs)
+        mut_held = gm.load("m-w3c-mut")["epoch"] == 1 and len(launches) == n0
+    finally:
+        gm.judge_marginal_gain = real
+    hs = seeded("m-w3c-mut2")
+    sup("m-w3c-mut2", hs)
+    real_relays = gm.load("m-w3c-mut2")["epoch"] == 2
+    check("V-W3C-MUTATION-RED", judge_red and mut_held and real_relays and gm.judge_marginal_gain is real,
+          f"judge_red={judge_red} mutant_held={mut_held} real_relays={real_relays}")
 except Exception as exc:  # noqa: BLE001
     check("V-W3C-WIRED", False, f"{exc.__class__.__name__}: {exc}")
 
