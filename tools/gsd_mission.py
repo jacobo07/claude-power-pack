@@ -1286,7 +1286,8 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
                   progress: dict | None = None, packet: dict | None = None, spawner=None,
-                  det_runner=None, mem_reader=None, gsd_fact: str = "") -> dict:
+                  det_runner=None, mem_reader=None, gsd_fact: str = "",
+                  gain_samples: list | None = None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
@@ -1373,6 +1374,8 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         extra["progress"] = progress
         if not rec.get("progress_origin") and progress.get("measured"):
             extra["progress_origin"] = progress["fp"]   # the tree this mission started from
+    if gain_samples is not None:
+        extra["gain_samples"] = gain_samples   # W3c: persisted beside `progress`
     # FIRST-WORKER DECISION GAP (Phase 4.1, Owner D5 item 8): epoch 1 has no note and no older card, so the
     # card was only ever rendered at a relay and a mission armed (or decided on while PREPARED) reached its
     # first worker with NO decisions. `arm` launches through here with expect_epoch=0, and a mission armed
@@ -2680,7 +2683,7 @@ def verify_owner_turn(ref: str, finder=None) -> dict:
 def set_authority(mission_id: str, tokens=None, extend_hours: float | None = None,
                   now: float | None = None, reason: str = "", owner_turn: str | None = None,
                   actor: str | None = None, expected_seq: int | None = None, recognize_overrun: bool = False,
-                  spent_fn=None, finder=None) -> dict:
+                  spent_fn=None, finder=None, stage: str | None = None) -> dict:
     """Record Owner-granted programme authority on a mission: `authority_tokens` is the processed-token
     ceiling AMR may lease inside; `extend_hours` adds wall time. Both are Owner acts; the reason names it.
     T1 F2: each act appends a receipt (prev, new, owner_turn, actor, expected_seq, spend at the set). The same
@@ -2699,13 +2702,22 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
         fields["max_hours"] = float(rec.get("max_hours") or lr.DEFAULT_MAX_HOURS) + float(extend_hours)
     if not fields:
         raise MissionError("nothing to set: give --tokens and/or --extend-hours")
+    if stage is not None and not re.fullmatch(r"[A-Za-z0-9._-]{1,40}", str(stage)):
+        raise MissionError(f"stage {stage!r}: use 1-40 characters of A-Z a-z 0-9 . _ -")
     turn = verify_owner_turn(owner_turn, finder) if owner_turn else None
     receipts = list(rec.get("authority_receipts") or [])
+    cur_stage = receipts[-1].get("stage") if receipts else None
+    stage_opened = stage is not None and stage != cur_stage
+    if stage_opened and not turn:
+        raise MissionError(f"refused: stage {stage} opens after {cur_stage}; a new stage needs --owner-turn "
+                           "<session>:<timestamp> (the Owner's own message opening it)")
+    eff_stage = stage if stage is not None else cur_stage
     if turn:
         used = [r for r in receipts if (r.get("owner_turn") or {}).get("uuid") == turn["uuid"]
                 and (r.get("owner_turn") or {}).get("session") == turn["session"]]
         if used:
             if used[-1].get("new") == fields.get("authority_tokens", rec.get("authority_tokens")) and \
+                    used[-1].get("stage") == eff_stage and \
                     used[-1].get("extend_hours") == (float(extend_hours) if extend_hours else None):
                 lr.ledger_append(mission_id, "authority_replay_noop", mission_id=mission_id, owner_turn=turn["uuid"])
                 return rec
@@ -2727,7 +2739,7 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
              "new": fields.get("authority_tokens", rec.get("authority_tokens")),
              "extend_hours": float(extend_hours) if extend_hours else None, "owner_turn": turn, "actor": actor,
              "expected_seq": expected_seq, "seq_before": rec.get("seq"), "spent_at_set": spent,
-             "recognize_overrun": bool(recognize_overrun)}
+             "recognize_overrun": bool(recognize_overrun), "stage": eff_stage, "stage_opened": bool(stage_opened)}
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expected_seq,
                       event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})",
                       authority_receipts=(receipts + [entry])[-20:], ledger_extra={"receipt": entry}, **fields)
@@ -3704,7 +3716,20 @@ def _packet_lines(ref) -> list[str]:
         return ["", f"SOURCE PACKET from the hand-off could not be checked ({type(exc).__name__}): read the files directly."]
 
 
-def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -> str:
+def _live_spend_card_lines(rec: dict, spend_fn=None) -> list[str]:
+    """W3a: the worker sees how much of the Owner's authority is spent. Nothing without a ceiling."""
+    if not rec.get("authority_tokens"):
+        return []
+    s = live_spend(rec, measure=spend_fn)
+    if s.get("processed") is None:
+        return [f"LIVE SPEND: UNMEASURED ({s.get('error')}) -- treat the room as unknown, never as available."]
+    room = s.get("room_after_reserve")
+    return [f"LIVE SPEND (measured {s['measured_at']}): {int(s['processed']):,} processed of authority "
+            f"{int(s['authority']):,}; room after closeout reserve {room:,}. "
+            "Stop and hand off before the room reaches 0."]
+
+
+def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "", spend_fn=None) -> str:
     """The rehydration card for a fresh worker. Mechanical sources only (the mission
     record, git, GSD); the predecessor's note is labelled as a claim, not a fact.
     Hard-capped: a card the host truncates silently is worse than a short one."""
@@ -3751,6 +3776,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         f"HEAD at hand-off: {g.get('head') or 'unknown'}",
         f"Dirty paths at hand-off: {g.get('dirty') if g.get('dirty') is not None else 'unknown'}",
     ]
+    parts += _live_spend_card_lines(rec, spend_fn)   # W3a: before work-tree/GSD lines so the cap never cuts it
     wd = mb.execution_root(rec) if mb.binding(rec) else rec.get("work_dir")
     parts += mb.card_lines(rec)
     parts += mres.card_lines(rec)   # [] for a mission without `requires`
@@ -5757,6 +5783,19 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                                                   fp_fn),
                                          ran=rec["state"] != LAUNCHING)
                 row["progress"] = progress
+                # W3c: marginal gain. A pure verdict over a bounded sample list; the hold sits beside
+                # NO_PROGRESS and never halts. GSD_MARGINAL_GAIN=off keeps the verdict, drops the hold.
+                rec["gain_samples"] = _gain_sample(rec, work_dir or mb.execution_root(rec))
+                gain = judge_marginal_gain(rec["gain_samples"])
+                row["marginal_gain"] = gain
+                if (act in ("relay", "replace") and gain == "MARGINAL_GAIN_LOW"
+                        and (os.environ.get("GSD_MARGINAL_GAIN") or "").strip().lower() != "off"):
+                    why = ("marginal_gain_low: spend rose over %d relays with no new commit and the same note"
+                           % MARGINAL_GAIN_WINDOW)
+                    lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"], reason=why,
+                                     samples=rec["gain_samples"][-(MARGINAL_GAIN_WINDOW + 1):])
+                    row["held"] = why
+                    continue
                 if (turn_end is not None and turn_end["decision"] == ge.CONTINUE and progress.get("measured")
                         and progress["stalls"] >= 1 and ge.stalled_fresh_enabled()):
                     # m-b8541432cbf9: a resumed session keeps the belief that made it stop; three resumes of it
@@ -5909,7 +5948,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,
                                               work_dir=work_dir, progress=progress, packet=packet,
-                                              gsd_fact=gsd_fact)
+                                              gsd_fact=gsd_fact, gain_samples=rec.get("gain_samples"))
                 if row["launch"].get("ok"):
                     # Every FRESH worker says why it exists: a rotation is certified by its cause,
                     # never by counting fresh sessions (tools/gsd_epoch.py census).
@@ -6564,6 +6603,38 @@ def mission_fingerprint(rec: dict, base_dir: str, fp_fn=None) -> str | None:
     return hashlib.sha256("|".join(f or "?" for f in fps).encode("utf-8")).hexdigest()[:16]
 
 
+MARGINAL_GAIN_WINDOW = 2
+
+
+def judge_marginal_gain(samples: list, window: int = MARGINAL_GAIN_WINDOW) -> str:
+    """W3c, pure. UNKNOWN | MARGINAL_GAIN_LOW | GAINING over per-relay samples (oldest first)
+    {"head","spent","note_sha"}. LOW = spend strictly rises every step, the head never changes
+    and the note is identical across the last window+1 samples. Unmeasured never holds."""
+    tail = list(samples or [])[-(window + 1):]
+    if len(tail) < window + 1 or any(s.get("head") is None or s.get("spent") is None for s in tail):
+        return "UNKNOWN"
+    rises = all(tail[i + 1]["spent"] > tail[i]["spent"] for i in range(window))
+    same_head = all(s["head"] == tail[0]["head"] for s in tail)
+    same_note = all(s.get("note_sha") == tail[0].get("note_sha") for s in tail)
+    return "MARGINAL_GAIN_LOW" if (rises and same_head and same_note) else "GAINING"
+
+
+def _gain_sample(rec: dict, work_dir: str) -> list:
+    """rec's gain_samples plus this relay's sample, last 5. Unmeasurable fields are None."""
+    import hashlib
+    import mission_spend as ms
+    try:
+        spent = ms.processed_tokens(rec)
+    except Exception:  # noqa: BLE001 -- unmeasured is None, never a hold
+        spent = None
+    try:
+        head = _git_facts(work_dir).get("head")
+    except Exception:  # noqa: BLE001
+        head = None
+    sha = hashlib.sha256((rec.get("note") or "").strip().encode("utf-8")).hexdigest()
+    return (list(rec.get("gain_samples") or []) + [{"head": head, "spent": spent, "note_sha": sha}])[-5:]
+
+
 def next_progress(rec: dict, fp: str | None, ran: bool = True) -> dict:
     """The progress entry a relay records: stalls count up only on a MEASURED unchanged tree,
     and only for an epoch whose worker actually ran. A launch that was never acknowledged left
@@ -7104,6 +7175,7 @@ def _cli(argv=None) -> int:
     au.add_argument("--expected-seq", type=int, help="the record seq the act was decided on; a moved record conflicts")
     au.add_argument("--recognize-overrun", action="store_true",
                     help="admit a ceiling at or below live spend (recognises spend already made)")
+    au.add_argument("--stage", help="named programme stage; opening a different stage needs --owner-turn")
     pr = sub.add_parser("protocol", help="set the rollover protocol on an existing mission "
                                          "(held or owner-less only; same permission-mode rule as arm)")
     pr.add_argument("--mission", required=True)
@@ -7229,14 +7301,14 @@ def _cli(argv=None) -> int:
             rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason,
                                 owner_turn=args.owner_turn, expected_seq=args.expected_seq,
                                 actor=args.actor or os.environ.get("CLAUDE_CODE_SESSION_ID"),
-                                recognize_overrun=args.recognize_overrun)
+                                recognize_overrun=args.recognize_overrun, stage=args.stage)
         except MissionError as exc:
             print(f"AUTHORITY REFUSED: {exc}", file=sys.stderr)
             return 3
         last = (rec.get("authority_receipts") or [{}])[-1]
         print(f"AUTHORITY SET mission={rec['mission_id']} authority_tokens={rec.get('authority_tokens')} "
               f"max_hours={rec.get('max_hours')} owner_turn={(last.get('owner_turn') or {}).get('uuid')} "
-              f"spent_at_set={last.get('spent_at_set')}")
+              f"spent_at_set={last.get('spent_at_set')} stage={last.get('stage')}")
         return 0
     if args.cmd == "bind":
         rec = bind_mission(args.mission, args.path, args.cause)
