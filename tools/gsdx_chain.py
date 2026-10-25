@@ -492,11 +492,15 @@ def to_settle(chain: dict, missions: list[dict], open_sids: set, booked: set | N
     # base packet alone never saw a residual worker, held or not
     bp = _by_packet(missions)
     out = []
-    for m in (m for u in chain["units"] for m in _unit_ms(u, bp)):
+    # A HALTED/ORPHANED worker of a unit whose receipt is closed is not the steward's either (it skips a closed
+    # receipt): gsdx-factory-2 H3 residual m-e1ae498acaa4 halted, the receipt was closed DONE after it, and its
+    # 2,843,464 sat unbooked by both. The goal ledger's per-sid watermark keeps a later steward settle idempotent.
+    closed = {u["id"]: receipt_status(Path(u["receipt"])) not in NOT_CLOSED for u in chain["units"]}
+    for u, m in ((u, m) for u in chain["units"] for m in _unit_ms(u, bp)):
         if m.get("state") in TERMINAL:
             sids = [(m.get("owner") or {}).get("session_id")] + [p.get("session_id") for p in m.get("previous_owners") or []
                                                                  if isinstance(p, dict)]
-            unbooked = booked is not None and m.get("state") == "COMPLETED"
+            unbooked = booked is not None and (m.get("state") == "COMPLETED" or closed[u["id"]])
             out += [s for s in sids if s and (s in open_sids or unbooked and s not in booked) and s not in out]
     return out
 

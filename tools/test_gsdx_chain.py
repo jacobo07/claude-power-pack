@@ -124,6 +124,14 @@ halted = dict(mission(d, "B", "HALTED"), owner={"session_id": "sid-C"})
 unb = gc.to_settle(chain, [term, halted], set(), booked=set())
 bk = gc.to_settle(chain, [term], set(), booked={"sid-A"})
 check("V-CHAIN-SETTLES-UNBOOKED-COMPLETED", unb == ["sid-A"] and bk == [], f"{unb} / {bk}")
+# a HALTED worker whose unit receipt is closed (closed after it stopped) is not the steward's: the chain books it;
+# controls: same with the receipt PARTIAL stays the steward's, and an already-booked one is not settled again
+(d / "R-B.json").write_text(json.dumps({"status": "DONE"}), encoding="utf-8")
+hc = gc.to_settle(chain, [halted], set(), booked=set())
+hb = gc.to_settle(chain, [halted], set(), booked={"sid-C"})
+(d / "R-B.json").write_text(json.dumps({"status": "PARTIAL"}), encoding="utf-8")
+hp = gc.to_settle(chain, [halted], set(), booked=set())
+check("V-CHAIN-SETTLES-HALTED-CLOSED-RECEIPT", hc == ["sid-C"] and hb == [] and hp == [], f"{hc} / {hb} / {hp}")
 # a unit's RESIDUAL mission (packet + .residual.md) is the unit's: held or never booked, it is settled
 # (H012's residual m-23f5b6aef501 ran on WU-H012.md.residual.md and the base-packet match never saw it)
 res = {"mission_id": "m-Ar", "cwd": str(d), "state": "COMPLETED", "owner": {"session_id": "sid-R"},
