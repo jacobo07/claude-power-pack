@@ -17,6 +17,51 @@ PER_CALL = 110_000
 COORD_CALLS = 6
 PROJECTS = Path.home() / ".claude" / "projects"
 ROOT = REPO  # the tree workers edit; --root points it at a git worktree outside ~/.claude (sensitive-path block)
+DIGEST = Path.home() / ".claude" / "knowledge_vault" / "core" / "HARD-RULES-DIGEST.md"
+SLIM_TOOLS = ["Read", "Write", "Edit", "Grep", "Glob", "PowerShell"]
+UNIT_KERNEL = ("You are a terse worker for ONE bounded work unit. Use only the tools given. Do exactly what is asked, "
+               "write the receipt, then stop.")
+
+
+def sha256_of(path):
+    import hashlib
+    try:
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def stale_stamps(p, root=None):
+    """Paths in the packet's `stamps` {path: sha256} whose bytes changed (or vanished) since the card was authored.
+    [] = the card still describes the tree it was written against."""
+    root = Path(root or ROOT)
+    return [k for k, v in (p.get("stamps") or {}).items() if sha256_of(root / k) != v]
+
+
+def unit_card(p, digest=None):
+    """System prompt of a slim worker. A slim launch reads no CLAUDE.md, rules or memory (--setting-sources=local),
+    so the Hard Rules digest travels here verbatim with the packet's must-carry lines. An unreadable digest gives
+    None: a card without its rules is refused, never sent."""
+    try:
+        rules = Path(digest or DIGEST).read_text(encoding="utf-8")
+    except OSError:
+        return None
+    must = "\n".join(f"- {m}" for m in p.get("must_carry") or []) or "- none"
+    stamps = "\n".join(f"- {k} sha256 {v}" for k, v in (p.get("stamps") or {}).items()) or "- none"
+    return (f"{UNIT_KERNEL}\n\nHARD RULES (verbatim digest, binding):\n{rules}\n\n"
+            f"MUST-CARRY (binding for this unit):\n{must}\n\nCARD AUTHORED AGAINST:\n{stamps}\n")
+
+
+def slim_launch_argv(p, claude, profile, sid, card):
+    """`gsd_mission.slim_argv` for one packet; the prompt goes on stdin, so the positional prompt slot is dropped."""
+    sys.path.insert(0, str(REPO / "tools"))
+    import gsd_mission as gm
+    rec = {"card": card, "allowed_tools": list(p.get("tools") or SLIM_TOOLS), "permission_mode": "acceptEdits",
+           "model": p.get("model")}
+    argv = gm.slim_argv(rec, "", claude, profile, session_id=sid)
+    if argv[-1] != "":
+        raise RuntimeError("slim_argv no longer ends with the prompt slot")
+    return argv[:-1]
 
 
 def spend(sid, projects=PROJECTS):
@@ -114,7 +159,7 @@ def declare_coordinator(co, res, spend_fn, run_fn, log):
 
 
 def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run_fn=run, launch_fn=None, log=print,
-          calls_fn=calls_for, manifest=None, calls_count_fn=calls_of):
+          calls_fn=calls_for, manifest=None, calls_count_fn=calls_of, profile=None):
     claude = shutil.which("claude") or "claude"
     launch_fn = launch_fn or (lambda argv, prompt: run(argv, 3600, prompt))
     co = (manifest or {}).get("coordinator") or {}
@@ -126,6 +171,18 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
             res["steps"][p["step"]] = {"verdict": "REFUSED_OVER_CAP", "total_before": total, "cap": p["cap"]}
             log(f"{p['step']} REFUSED_OVER_CAP total_before={total:,} step_cap={p['cap']:,} limit={cap - reserve:,}")
             break
+        card = None
+        if profile:
+            stale = stale_stamps(p)
+            if stale:
+                res["steps"][p["step"]] = {"verdict": "REFUSED_STALE_CARD", "stale": stale}
+                log(f"{p['step']} REFUSED_STALE_CARD changed since the card was authored: {stale}")
+                break
+            card = unit_card(p)
+            if card is None:
+                res["steps"][p["step"]] = {"verdict": "REFUSED_NO_CARD", "digest": str(DIGEST)}
+                log(f"{p['step']} REFUSED_NO_CARD hard-rules digest unreadable: {DIGEST}")
+                break
         sid = str(uuid.uuid4())
         calls = calls_fn(sid, p["cap"])
         if calls == 0:
@@ -146,9 +203,10 @@ def drive(packets, res, coordinator, cap, reserve, step_max, spend_fn=spend, run
             f"\n\nYOUR SESSION ID: {sid}. CAP {p['cap']:,} processed tokens = {calls} calls at this repo's measured "
             f"per-call floor. Write the receipt {p['receipt']} with a `COMMITS: <hash ...>` line before your last call.\n")
         t0 = time.time()
-        lrc = launch_fn([claude, "-p", "--session-id", sid, "--output-format", "json",
-                         "--permission-mode", "acceptEdits", "--allowedTools", "Read Write Edit Grep Glob PowerShell"],
-                        prompt)
+        argv = (slim_launch_argv(p, claude, profile, sid, card) if profile else
+                [claude, "-p", "--session-id", sid, "--output-format", "json",
+                 "--permission-mode", "acceptEdits", "--allowedTools", "Read Write Edit Grep Glob PowerShell"])
+        lrc = launch_fn(argv, prompt)
         c, s = check(p, sid, spend_fn, run_fn)
         v = "PASS" if all(c.values()) else "FAIL"
         rcpt = ROOT / p["receipt"]
@@ -173,6 +231,9 @@ def main(argv=None):
     ap.add_argument("--step-max", type=int, default=1_200_000)
     ap.add_argument("--root", help="git worktree the workers edit (outside ~/.claude); receipts/tests checked there")
     ap.add_argument("--manifest", help="JSON with coordinator.sid + coordinator.allowance: declare the coordinator first")
+    ap.add_argument("--profile", choices=("slim-t1", "slim-t2"),
+                    help="launch workers slim (gsd_mission.slim_argv): Hard Rules digest + packet must_carry on the card, "
+                         "a packet whose `stamps` changed is refused")
     a = ap.parse_args(argv)
     global ROOT
     if a.root:
@@ -189,7 +250,7 @@ def main(argv=None):
             f.write(f"- driver {time.strftime('%Y-%m-%dT%H:%M:%S')} {msg}\n")
         print(msg)
     drive(json.loads((REPO / a.packets).read_text(encoding="utf-8")), res, a.coordinator, a.cap, a.reserve,
-          a.step_max, log=log, manifest=manifest)
+          a.step_max, log=log, manifest=manifest, profile=a.profile)
     out.write_text(json.dumps(res, indent=1), encoding="utf-8")
     if res.get("coordinator_admission", {}).get("verdict") == "REFUSED":
         return 1  # nothing ran: an empty step set must not read as all-PASS

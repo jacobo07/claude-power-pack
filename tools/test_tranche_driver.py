@@ -123,6 +123,38 @@ with tempfile.TemporaryDirectory() as tmp:
          (td.calls_of("w2", proj), ref))
     gate("V-DRIVER-BOUNDARIES-LISTED", td.boundaries("x\nBOUNDARIES: a; b; c\n") == 3 and td.boundaries("") == 1
          and td.boundaries("BOUNDARIES: 4") == 4)
+    # slim profile: the card carries the Hard Rules digest verbatim + must_carry; the prompt goes on stdin.
+    dg = t / "digest.md"; dg.write_text("HR-TEST-01 never write production without the phrase\n", encoding="utf-8")
+    st = t / "STATE.md"; st.write_text("state v1\n", encoding="utf-8")
+    td.DIGEST, td.ROOT = dg, t
+    try:
+        slim = dict(pk, must_carry=["reserve membership is never opened"], stamps={"STATE.md": td.sha256_of(st)})
+        sl, sargs = [], []
+        slaunch = lambda argv, prompt: sl.append(argv) or sargs.append(prompt) or 0
+        r = td.drive([slim], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), decl(0), slaunch,
+                     profile="slim-t2", **q)
+        a0 = sl[0] if sl else []
+        sysp = next((x for x in a0 if x.startswith("--system-prompt=")), "")
+        gate("V-DRIVER-SLIM-ARGV-AND-CARD", "--setting-sources=local" in a0 and "--disable-slash-commands" in a0
+             and any(x.startswith("--session-id=") for x in a0) and "HR-TEST-01" in sysp
+             and "reserve membership is never opened" in sysp and a0[-1] != "" and bool(sargs and sargs[0]),
+             r["steps"].get("SX"))
+        st.write_text("state v2\n", encoding="utf-8")
+        sl.clear()
+        r = td.drive([slim], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), decl(0), slaunch,
+                     profile="slim-t2", **q)
+        gate("V-DRIVER-SLIM-STALE-CARD-REFUSED", r["steps"]["SX"]["verdict"] == "REFUSED_STALE_CARD" and not sl
+             and r["steps"]["SX"]["stale"] == ["STATE.md"], r["steps"]["SX"])
+        td.DIGEST = t / "absent-digest.md"
+        r = td.drive([dict(pk)], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), decl(0), slaunch,
+                     profile="slim-t2", **q)
+        gate("V-DRIVER-SLIM-NO-DIGEST-REFUSED", r["steps"]["SX"]["verdict"] == "REFUSED_NO_CARD" and not sl,
+             r["steps"]["SX"])
+        r = td.drive([dict(pk)], {"steps": {}}, "c", 4_500_000, 0, 1_200_000, sp(500), decl(0), slaunch, **q)
+        gate("V-DRIVER-DEFAULT-PROFILE-UNCHANGED", bool(sl) and "--session-id" in sl[0]
+             and not any(x.startswith("--system-prompt=") for x in sl[0]), sl[:1])
+    finally:
+        td.DIGEST, td.ROOT = td.Path.home() / ".claude" / "knowledge_vault" / "core" / "HARD-RULES-DIGEST.md", td.REPO
 
 print(f"DRIVER_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
 sys.exit(0 if fails == 0 else 1)
