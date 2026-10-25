@@ -2,15 +2,15 @@
 gsd_state_version: "1.0"
 milestone: v1
 status: ready
-stopped_at: Phase 7 context gathered
-last_updated: "2026-10-24T20:25:13.412Z"
-state_head: 9d20755c7b87a474edb24f546202288fe7ae0f87
+stopped_at: Phase 8 context gathered
+last_updated: "2026-10-25T06:10:56.688Z"
+state_head: 5c0995074e48550f89b70cb91f1096062cd0bdb1
 progress:
   total_phases: 8
-  completed_phases: 6
-  total_plans: 6
-  completed_plans: 6
-  percent: 75
+  completed_phases: 7
+  total_plans: 8
+  completed_plans: 8
+  percent: 88
 milestone_name: flow-compression
 workstream: flow-compression
 created: 2026-10-24
@@ -58,9 +58,9 @@ Update this file and `RESUMPTION_FILE.md` (this dir) after every sealed phase, w
 
 ## Session
 
-**Last session:** 2026-10-24T20:25:13.087Z
-**Stopped at:** Phase 7 context gathered
-**Resume file:** .planning/workstreams/flow-compression/phases/07-s7-historical-replay-champion-challenger/07-CONTEXT.md
+**Last session:** 2026-10-25T06:10:56.303Z
+**Stopped at:** Phase 8 context gathered
+**Resume file:** .planning/workstreams/flow-compression/phases/08-s9-knowledge-vault-ukdl-cbr-red-team-master-done-gate/08-CONTEXT.md
 
 ## Decisions (phase 7 planning, 2026-10-25)
 
@@ -95,3 +95,7 @@ Update this file and `RESUMPTION_FILE.md` (this dir) after every sealed phase, w
 
 **Last session:** 2026-10-25
 **Stopped at:** Phase 7 verified; next Phase 8 (discuss)
+
+## OWNER DECISION NEEDED (recorded 2026-10-25, phase 8 discuss)
+
+- Question: what categories does the red team cover? The Owner prompt "GSD X AUTONOMOUS FLOW COMPRESSION" is not in the repo; only the line "S9 Knowledge Vault + UKDL + CBR + red team" exists. Options: (a) narrow: adversarial attempts on S1-S6 against FC-01..FC-08 with controls; (b) wait for the prompt text. Pick: (a), reversible and internal; the Owner may add categories later.
