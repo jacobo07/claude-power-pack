@@ -221,6 +221,42 @@ def check_worktrees(r: Result, repo: Path, lifecycle: Path) -> None:
     r.info["unclassified_clean"] = clean
 
 
+_MOVED_PREFIXES = ("TRANSFERRED", "SUPERSEDED")
+
+
+def _transferred_next(resumption: Path, text: str) -> list[str]:
+    """Slices of a TAKEOVER.json beside `resumption` marked TRANSFERRED/SUPERSEDED that its next-actions block still
+    names. The block runs from a line containing the word NEXT to the next blank line. A slice is named by
+    `slice X` / `slice-X`, or as a bare letter in the list after `plan order:` (a bare letter anywhere else is prose)."""
+    tk = resumption.parent / "TAKEOVER.json"
+    if not tk.exists():
+        return []
+    try:
+        rows = json.loads(tk.read_text(encoding="utf-8")).get("rows", [])
+    except (OSError, ValueError, AttributeError):
+        return []
+    moved = sorted(str(x.get("slice")) for x in rows if isinstance(x, dict) and x.get("slice") and any(
+        str(x.get(k, "")).upper().startswith(_MOVED_PREFIXES) for k in ("implementation_state", "old_path_status")))
+    if not moved:
+        return []
+    block: list[str] = []
+    inside = False
+    for ln in text.splitlines():
+        if re.search(r"\bnext\b", ln, re.I):
+            inside = True
+        elif inside and not ln.strip():
+            inside = False
+        if inside:
+            block.append(ln)
+    blob = "\n".join(block)
+    listed = " ".join(m.group(1) for m in re.finditer(r"plan order:([^\n]*)", blob, re.I))
+    named = []
+    for sl in moved:
+        if re.search(rf"\bslice[\s-]*{re.escape(sl)}\b", blob, re.I) or re.search(rf"(?:^|[\s,+(]){re.escape(sl)}(?=[\s,+()]|$)", listed):
+            named.append(sl)
+    return named
+
+
 # --- F4 ------------------------------------------------------------------------------------------
 def check_resumption(r: Result, repo: Path, programmes: Path) -> None:
     c = "stale_resumption"
@@ -248,6 +284,11 @@ def check_resumption(r: Result, repo: Path, programmes: Path) -> None:
         elif cp.returncode != 0:
             r.unk(c, file=str(f), anchor=sha, verdict="UNKNOWN_FRESHNESS",
                   why=f"git could not resolve the anchor: {cp.stderr.strip()[:200]}")
+        moved = _transferred_next(f, text)
+        if moved:
+            r.finding(c, file=str(f), verdict="NEXT_NAMES_TRANSFERRED_OBLIGATION", obligations=moved,
+                      repair="the owner of these obligations acts on them; seal this file with a closure class and no NEXT "
+                             "(see TAKEOVER.json beside it)")
 
 
 # --- F5 ------------------------------------------------------------------------------------------

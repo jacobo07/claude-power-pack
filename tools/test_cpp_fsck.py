@@ -175,6 +175,36 @@ def main() -> int:
         gate("V-FSCK-F4-CONTROL", "fresh" not in stale and "old" not in stale and "fresh" not in unk,
              "anchor == HEAD and ancestor anchor pass")
 
+        # --- F4b: a RESUMPTION whose next-actions block names an obligation a TAKEOVER.json beside it
+        # marks TRANSFERRED or SUPERSEDED is stale even when its anchor is a fresh ancestor of HEAD.
+        tk = tmp / "prog_takeover"
+
+        def takeover(name: str, resumption: str, rows: list[dict] | None) -> None:
+            (tk / name).mkdir(parents=True)
+            (tk / name / "RESUMPTION_FILE.md").write_text(resumption)
+            if rows is not None:
+                (tk / name / "TAKEOVER.json").write_text(json.dumps({"rows": rows}))
+
+        anchor_line = f"**Coherence anchor:** HEAD contains {head} tip\n"
+        trows = [{"slice": "C", "implementation_state": "TRANSFERRED", "old_path_status": "SUPERSEDED"},
+                 {"slice": "H", "implementation_state": "SUPERSEDED_BY_CCR", "old_path_status": "SUPERSEDED"},
+                 {"slice": "I", "implementation_state": "PARTIAL", "old_path_status": "ACTIVE"},
+                 {"slice": "A", "implementation_state": "DELIVERED", "old_path_status": "CLOSED"}]
+        takeover("names_transferred", f"# x\n{anchor_line}**Slices.** Next in plan order: H (canary), then C+F, I.\n", trows)
+        takeover("names_slice_word", f"# x\n{anchor_line}**Next 3 actions.**\n1. Build slice C, the router.\n\nOther prose.\n", trows)
+        takeover("names_live_only", f"# x\n{anchor_line}**Slices.** Next in plan order: I (carrier canary).\n", trows)
+        takeover("pronoun_prose", f"# x\n{anchor_line}I will check the state. Next, A is sealed and C was moved.\n", trows)
+        takeover("no_takeover", f"# x\n{anchor_line}**Slices.** Next in plan order: H, then C+F.\n", None)
+        r = cpp_fsck.Result()
+        cpp_fsck.check_resumption(r, repo, tk)
+        tstale = {Path(x["file"]).parent.name: x for x in only(r, "stale_resumption")}
+        gate("V-FSCK-F4-TRANSFERRED-NEXT", set(tstale) == {"names_transferred", "names_slice_word"}
+             and sorted(tstale["names_transferred"].get("obligations", [])) == ["C", "H"]
+             and tstale["names_slice_word"].get("obligations") == ["C"],
+             f"flagged={sorted(tstale)} obligations={ {k: v.get('obligations') for k, v in tstale.items()} }")
+        gate("V-FSCK-F4-TRANSFERRED-NEXT-CONTROL", not ({"names_live_only", "pronoun_prose", "no_takeover"} & set(tstale)),
+             "a NEXT naming only a live slice, prose that merely contains a letter, and a file with no TAKEOVER.json pass")
+
         # --- F5
         def row(ts, ev, sid, **kw):
             return {"ts": ts, "event": ev, "session_id": sid, **kw}
