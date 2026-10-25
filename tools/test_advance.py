@@ -145,6 +145,17 @@ def advance_checks() -> None:
     check("V-LIFE-ADV-ARM-RAISES-RETRIES", first[0]["status"] == "ARM_FAILED" and again[0]["status"] == "ARMED"
           and armed[-1] == "U3", f"{first[0]['status']} -> {again[0]['status']}")
     (adir / "ap-4.json").unlink()
+    # a preflight refusal armed nothing (ok False, no mission_id): the key is released, not kept as a held arm
+    plan5 = repo / "plan5.md"
+    plan5.write_text("---\nstatus: APPROVED\nunits: [U1, U2]\npacket_dir: pk\n---\n", encoding="utf-8")
+    (adir / "ap-5.json").write_text(json.dumps({"approval_id": "ap-5", "plan_path": str(plan5), "goal": "g-adv5",
+                                                "repo": str(repo)}), encoding="utf-8")
+    refuse = lambda cwd, cmd, **k: {"ok": False, "held": False, "why": "arm refused by preflight -- x"}
+    first = gm.advance_pass(arm_fn=refuse, headroom=lambda g: 1_000_000)
+    again = gm.advance_pass(arm_fn=arm, headroom=lambda g: 1_000_000)
+    check("V-LIFE-ADV-PREFLIGHT-REFUSAL-RETRIES", first[0]["status"] == "ARM_REFUSED_PREFLIGHT"
+          and again[0]["status"] == "ARMED", f"{first[0]['status']} -> {again[0]['status']}")
+    (adir / "ap-5.json").unlink()
 
 
 def advance_real_arm() -> None:

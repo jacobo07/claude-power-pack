@@ -54,6 +54,10 @@ def tree_digest(d: Path) -> dict:
 
 
 PN = fr.load_pin(PIN)
+if not Path(PN["ledger"]).is_file():
+    # The pin names the ledger of the plane that recorded it (GEX44); elsewhere the replay is unmeasured.
+    print(f"S7_INCONCLUSIVE pinned ledger {PN['ledger']} absent on this plane; the replay runs where it was pinned")
+    sys.exit(2)
 ROWS, _TORN = fr.read_prefix(PN)
 
 

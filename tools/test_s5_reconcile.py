@@ -171,10 +171,14 @@ def gates() -> None:
     (outside / "o.json").write_text(done_text(), encoding="utf-8")
     t = mission("tl")
     link = ROOT / t["mission_id"] / "link"
-    link.symlink_to(outside)
-    write(f"{t['mission_id']}/WU.md", f"# WU\nwork_tree: {ROOT}\nreceipt: {t['mission_id']}/link/o.json\n")
-    r = gm.resolve_receipt(t["wu_packet"]["path"], t)
-    check("V-S5-RESOLVER-TRAVERSAL-REFUSED-SYMLINK", all(x["source"] != "PACKET_DECLARED" for x in r["candidates"]) and not r["present"], r)
+    try:
+        link.symlink_to(outside)
+    except OSError as exc:  # Windows without SeCreateSymbolicLinkPrivilege: unmeasured here, never a pass
+        print(f"INCONCLUSIVE V-S5-RESOLVER-TRAVERSAL-REFUSED-SYMLINK no symlink on this plane: {exc.__class__.__name__}")
+    else:
+        write(f"{t['mission_id']}/WU.md", f"# WU\nwork_tree: {ROOT}\nreceipt: {t['mission_id']}/link/o.json\n")
+        r = gm.resolve_receipt(t["wu_packet"]["path"], t)
+        check("V-S5-RESOLVER-TRAVERSAL-REFUSED-SYMLINK", all(x["source"] != "PACKET_DECLARED" for x in r["candidates"]) and not r["present"], r)
     amr_pkt = write("amr/succ.md", f"# S\nwork_tree: {ROOT}\nreceipt: amr/succ.RECEIPT.json\n")
     write("amr/succ.RECEIPT.json", done_text())
     r = gm.resolve_receipt(str(amr_pkt), {**c, "wu_packet": {"path": str(amr_pkt)}})

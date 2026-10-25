@@ -6016,7 +6016,7 @@ def arm_preflight_on() -> bool:
 
 
 def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = None, launch: bool = True,
-                  status_reader=None, memory_reader=None, **kw) -> dict:
+                  status_reader=None, memory_reader=None, wu_packet: str | None = None, **kw) -> dict:
     """One check before `arm` creates a record: refuse, naming the cause, what would only fail later.
 
     Refuses on a MEASURED NO_PHASES / ALL_COMPLETE (only for a `/gsd-` resume command: another route
@@ -6040,7 +6040,10 @@ def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = Non
         except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
             st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"[:160]}
         out = st.get("outcome")
-        if out in ("NO_PHASES", "ALL_COMPLETE"):
+        if out in ("NO_PHASES", "ALL_COMPLETE") and wu_packet:
+            # A packet unit's work is the packet, closed by its own receipt (gsdx-pcc P52a/b), not the roadmap.
+            add("gsd_status", "warn", f"{out}: {st.get('reason')} -- packet unit, the packet is the work")
+        elif out in ("NO_PHASES", "ALL_COMPLETE"):
             add("gsd_status", "refuse", f"{out}: {st.get('reason')} -- arming would launch a worker with no work")
         elif out == "OK":
             add("gsd_status", "ok", str(st.get("reason") or ""))
@@ -6225,7 +6228,7 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
     # The worker model rides the same atomic step: without it the launch inherits the host default (Opus
     # here), and a chain armed unattended has no later moment to set it before the sweep launches.
     model = kw.pop("model", None)
-    pre = arm_preflight(cwd, resume_command, workstream=kw.get("workstream"), launch=True,
+    pre = arm_preflight(cwd, resume_command, workstream=kw.get("workstream"), launch=True, wu_packet=wu_packet,
                         **{k: v for k, v in kw.items() if k != "workstream"})
     if pre.get("checks"):
         lr.ledger_append("arm-preflight", "arm_preflight", cwd=str(cwd), ok=pre["ok"], refusal=pre["refusal"],
@@ -6348,6 +6351,10 @@ def advance_unit(rec: dict, plan: dict, unit: str, repo: Path, *, arm_fn=None, h
     except Exception as exc:  # noqa: BLE001 -- no mission was armed, so the key must not claim one
         kp.unlink(missing_ok=True)
         return {"status": "ARM_FAILED", "why": f"{type(exc).__name__}: {exc}"[:300], "mission_id": None}
+    if not res.get("ok") and not res.get("mission_id"):
+        # Refused before any record (S2 preflight): nothing exists to hold, so the next pass may retry.
+        kp.unlink(missing_ok=True)
+        return {"status": "ARM_REFUSED_PREFLIGHT", "why": res.get("why") or "", "mission_id": None}
     # A held arm keeps its key: that mission exists and is the Owner's to release, never armed a second time.
     return {"status": "ARMED" if res.get("ok") else "ARM_FAILED", "why": res.get("why") or "",
             "mission_id": res.get("mission_id"), "key": key}

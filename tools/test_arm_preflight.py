@@ -92,9 +92,25 @@ def main():
         check("V-PRE-ARM-WIRED", False, "arm did not refuse")
     except gm.MissionError as exc:
         check("V-PRE-ARM-WIRED", "preflight" in str(exc) and "NO_PHASES" in str(exc), str(exc)[:120])
-    res = gm.arm_chain("/tmp/x-nonexistent", "/gsd-autonomous --ws x", wu_packet="p", token_estimate=1, route="r")
-    check("V-PRE-ARM-CHAIN-WIRED", res["ok"] is False and "preflight" in res["why"], res.get("why", "")[:100])
+    # a packet unit on a NO_PHASES roadmap is the supported P52a/b shape: warned, never refused
+    r = pre(status_reader=status("NO_PHASES"), wu_packet="p.md")
+    check("V-PRE-PACKET-NO-PHASES-WARNS", r["ok"] and by(r, "gsd_status")["status"] == "warn", str(r["checks"]))
+    try:
+        gm.arm_chain("/tmp/x-nonexistent", "/gsd-autonomous --ws x", wu_packet="p", token_estimate=1, route="r")
+        passed = False
+    except Reached:
+        passed = True
+    check("V-PRE-ARM-CHAIN-PACKET-PASSES", passed, "arm_chain reached create() on NO_PHASES with a packet")
     os.environ.pop("_TEST_GSD_STATUS")
+    # wiring: arm_chain consults the preflight with its packet and returns its refusal unarmed
+    real, seen = gm.arm_preflight, {}
+    gm.arm_preflight = lambda *a, **k: (seen.update(k), {"ok": False, "checks": [], "refusal": "spy: refused"})[1]
+    try:
+        res = gm.arm_chain("/tmp/x-nonexistent", "/gsd-autonomous --ws x", wu_packet="p", token_estimate=1, route="r")
+    finally:
+        gm.arm_preflight = real
+    check("V-PRE-ARM-CHAIN-WIRED", res["ok"] is False and not res.get("mission_id") and "preflight" in res["why"]
+          and seen.get("wu_packet") == "p", res.get("why", "")[:100])
 
     # mutation drill: an always-pass preflight must turn the refusal gates red
     real = gm.arm_preflight
