@@ -1,0 +1,98 @@
+{
+  "schema": "ctx-rent-obs/B1/1",
+  "plane": "GEX44",
+  "host_note": "baseline of THIS GEX44 install; not the laptop's",
+  "plan": "vault/plans/context-rent-observatory-2026-10-25.md section 4",
+  "n_probes": 3,
+  "probe_command": "tools/floor_regression_gate.py --write-reference b1/probe-N.reference.json --probe --cwd /tmp/probecwd  (env CPP_CLAUDE_EXE=~/.local/bin/claude, CPP_FLOOR_PROBE_RESULTS=b1/probe-results.jsonl)",
+  "fields": {
+    "plane": "GEX44",
+    "claude_code_version": "2.1.310 (executable used by the probe: ~/.local/bin/claude). PATH `claude` is 2.1.113 and was REFUSED by the API for this model (b1/attempt0-claude-2.1.113-refused.jsonl); no install changed",
+    "model": "claude-opus-5-5 (assistant row model in the probe transcript; fixed by wiki/tools/listing_floor_probe.py MODEL)",
+    "mcp_set_digest": "UNKNOWN: the transcript carries only mcp_instructions_delta for servers that supply instructions: ['claude.ai Claude Docs','plugin:context7:context7']; the full connected set is not observable from the transcript",
+    "skill_listing_chars": [
+      29989,
+      29993,
+      29993
+    ],
+    "skill_listing_entries": [
+      297,
+      298,
+      298
+    ],
+    "agent_listing_chars": [
+      25996,
+      25996,
+      25996
+    ],
+    "hook_context_chars": [
+      9909,
+      9909,
+      9909
+    ],
+    "memory_global_chars": [
+      25037,
+      25037,
+      25037
+    ],
+    "rules_chars": [
+      35605,
+      35605,
+      35605
+    ],
+    "memory_project_chars": "UNKNOWN: no project-scope memory layer in the probe window (cwd /tmp/probecwd has no CLAUDE.md); absent, not zero",
+    "system_prompt_chars": [
+      7318,
+      7318,
+      7318
+    ],
+    "total_chars": [
+      143678,
+      143682,
+      143682
+    ],
+    "prompt_digest": "c5c169d113f9a2c8fae34a08908b70dd120023134785b89738e99d8e4259bcaa",
+    "prompt_digest_equal_across_probes": true,
+    "window_sha256": [
+      "e3be119f29f2",
+      "497ad09f7748",
+      "98fb606eeed1"
+    ],
+    "call1_tokens": [
+      67568,
+      67561,
+      67561
+    ],
+    "probe_sessions": [
+      "f836e015-bf07-4b28-87d5-1592cb370138",
+      "928488da-bc8b-4064-9b8c-687ee8bf55e9",
+      "6d548cf6-2b7d-440f-838a-0898f29987db"
+    ],
+    "probe_cost_usd": [
+      0.4531234,
+      0.2439572,
+      0.013599799999999999
+    ]
+  },
+  "call1_tokens_spread": {
+    "n": 3,
+    "min": 67561,
+    "max": 67568,
+    "range": 7,
+    "range_pct_of_min": 0.01
+  },
+  "claim_types": {
+    "BOOT_REDUCTION": "ESTIMATED (controlled chars, slice B) / MEASURED_ONCE (provider 122,093 -> 106,769 on the LAPTOP). This plane gives a different baseline, not a re-measurement of that pair",
+    "STEADY_STATE_REDUCTION": "UNKNOWN",
+    "LIFETIME_CARRIAGE_REDUCTION": "UNKNOWN",
+    "CONCURRENCY_SCALING": "MEASURED elsewhere (CAF ~1.01, vault/plans/ccn-concurrency-neutrality-2026-10-24.md); not re-measured",
+    "CROSS_PROJECT": "UNKNOWN",
+    "QUALITY_PRESERVED": "UNKNOWN"
+  },
+  "pending": {
+    "census_json_slice_B": "laptop-plane, pending (scratchpad copy not available on GEX44, cpp tools/context_floor_census.py not run: sessions 36d35fab 5cadebe8 live on the laptop)",
+    "N3_retype_of_slice_B": "NOT done: B's N=1 was on the laptop; these N=3 are GEX44 and cannot re-type it"
+  },
+  "debt": "MEMORY.md regrowth (+4.2K, 21.9 KB on the laptop) recorded as debt, not fixed; GEX44 memory_global is 25,037 chars",
+  "caveat": "the 3 probes share one prompt and one cwd; the skill listing sits at the 30,000-char harness budget, so its +4 chars / +1 entry between probe 1 and 2 is real drift in the install, not noise in the method"
+}
