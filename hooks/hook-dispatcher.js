@@ -609,6 +609,11 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: './dead-closer-recovery.js', timeoutMs: 6000, critical: true },
     { exe: NODE_EXE, script: './correction-guard.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: './prd-keyword-sentinel.js', timeoutMs: 8000 },
+    // Corpus-reuse sentinel (cognitive-work-reuse W4): a registered corpus root named in the
+    // prompt gets its coverage ledger briefing injected before the work is paid for again.
+    // Fail-open, failures counted in vault/cognitive_os/delivery.jsonl. Kill: PP_CORPUS_REUSE=off.
+    // Subagent spawns (PreToolUse Task|Agent) are the same script, an Owner step (HR-001).
+    { exe: NODE_EXE, script: './corpus-reuse-sentinel.js', timeoutMs: 5000 },
     // GSD X ambient applicability (2026-09-16, Jacobo). Computes the ExecutionOS
     // Lite tier from the prompt's measured evidence instead of leaving it to the
     // model's self-assessment, so the posture stops depending on the operator

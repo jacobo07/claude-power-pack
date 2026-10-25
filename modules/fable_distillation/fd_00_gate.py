@@ -129,8 +129,43 @@ def _route_rung(task: str, *, route_fn=None) -> tuple[str, str]:
 
 
 def check_admission(task_description: str, *, kb_dir: Path | None = None,
-                    route_fn=None, record: bool = False,
-                    state_dir=None) -> AdmissionDecision:
+                    route_fn=None, record: bool = False, state_dir=None,
+                    corpus_requester: str | None = None, corpus_registry=None,
+                    corpus_ledger=None) -> AdmissionDecision:
+    """Corpus-coverage front door (cognitive-work-reuse): a registered corpus named in the task
+    that is already FULL_READ under the requester's scope resolves from its stored artifacts
+    (0 model tokens); a partly covered one is admitted through the normal path with the delta
+    attached to `signals`. Fail-open: any error falls through to the unchanged gate."""
+    corpus = None
+    try:
+        from modules.cognitive_os import corpus_delivery as cd
+        req = corpus_requester or cd.requester_from("")
+        for cid in cd.find_named(task_description, registry=corpus_registry):
+            b = cd.briefing(cid, requester=req, registry=corpus_registry, ledger=corpus_ledger)
+            if b and b["fully_covered"]:
+                dec = AdmissionDecision(
+                    "ANSWER_FROM_ASSET", "reject",
+                    f"corpus '{cid}' already FULL_READ under scope '{req}' -- answer from "
+                    f"{len(b['artifacts'])} stored artifact(s), do not mine again",
+                    "asset", baseline_ref=f"corpus:{cid}")
+                dec = _emit(dec, task_description or "", record, state_dir)
+                dec.signals["corpus_artifacts"] = [a.get("path") for a in b["artifacts"]]
+                return dec
+            if b:
+                corpus = b
+    except Exception:  # noqa: BLE001 -- fail-open
+        corpus = None
+    dec = _check_core(task_description, kb_dir=kb_dir, route_fn=route_fn, record=record,
+                      state_dir=state_dir)
+    if corpus is not None:
+        dec.signals["corpus_coverage"] = corpus["report"]
+        dec.signals["corpus_id"] = corpus["corpus_id"]
+    return dec
+
+
+def _check_core(task_description: str, *, kb_dir: Path | None = None,
+                route_fn=None, record: bool = False,
+                state_dir=None) -> AdmissionDecision:
     """Classify a would-be frontier call against the CO-03/CO-05 floor and the
     demand's shape. Advisory + fail-open ABSOLUTE: any error -> ADMIT. Set
     record=True to emit the CO-12 session signal (off by default so the gate is a
