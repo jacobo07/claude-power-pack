@@ -26,10 +26,10 @@ pathspec needs no extra untracked phase file.
 ## 1. Inputs
 
 p1_evidence: .planning/workstreams/cognitive-resource-os/phases/01-gate-verdict-on-the-big-host/EVIDENCE.md
-p1_verdict_line: phase_verdict: BLOCKED
-p1_verification: gaps_found
+p1_verdict_line: phase_verdict: PASS
+p1_verification: passed
 p1_review: absent
-p1_next: Re-run plan 01-02 from Task 1 once the Owner approves the pinned pytest 9.1.1 / pluggy 1.6.0 / iniconfig 2.3.0 install.
+p1_next: Carry 016c19f to the laptop branch. (Updated 2026-09-30: 01-02 re-run after Owner approval, phase_verdict PASS, commit 81bc0de; this line and the two above were BLOCKED / gaps_found / re-run 01-02 at the 2026-09-28 seal.)
 
 p2_evidence: .planning/workstreams/cognitive-resource-os/phases/02-gex44-observed-baseline/EVIDENCE.md
 p2_verdict_line: phase_verdict: MEASURED
