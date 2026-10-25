@@ -1,0 +1,13 @@
+[
+ {"step": "W3a", "prompt": "vault/programs/factory-tranche-a/W3a-packet.md",
+  "receipt": "vault/programs/factory-tranche-a/W3a-receipt.md", "cap": 1200000,
+  "tests": ["tools/test_w3_live_spend_card.py", "tools/test_gsd_mission.py"],
+  "stamps": {"tools/gsd_mission.py": "3118c2fddcefcc73b311e16ab6383a8c189de765ee45abc8cf52f9aa1c6b5a18"},
+  "must_carry": [
+   "Reserve boundary: stop and write the receipt before your cap; an overrun is a FAIL, not a stretch.",
+   "HR-04: no write to any live/production server, Pterodactyl, VPS or GEX44. This unit is local code only.",
+   "Done-gate: the named tests exit 0 in your working tree, so a claim without that output is not done.",
+   "Owner decision D10 (2026-10-25): worker-scoped changes only. Never edit any CLAUDE.md, agent catalog, MEMORY.md or hooks. STOP before Tranche B.",
+   "Commit with a pathspec only (git commit -m ... -- <files>); never git add -A, never push."
+  ]}
+]

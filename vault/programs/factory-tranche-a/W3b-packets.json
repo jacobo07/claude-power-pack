@@ -1,0 +1,13 @@
+[
+ {"step": "W3b", "prompt": "vault/programs/factory-tranche-a/W3b-packet.md",
+  "receipt": "vault/programs/factory-tranche-a/W3b-receipt.md", "cap": 1200000,
+  "tests": ["tools/test_w3_stage_authority.py", "tools/test_gsd_mission.py"],
+  "stamps": {"tools/gsd_mission.py": "8659c246cec3532fd10dcfb4d2418126039fbe74e9c0ce3fbf2dcf101efe516c"},
+  "must_carry": [
+   "Reserve boundary: stop and write the receipt before your cap; an overrun is a FAIL, not a stretch.",
+   "HR-04: no write to any live/production server, Pterodactyl, VPS or GEX44. This unit is local code only.",
+   "Done-gate: the named tests exit 0 in your working tree; a claim without that output is not done.",
+   "Owner decision D10 (2026-10-25): worker-scoped changes only. Never edit any CLAUDE.md, agent catalog, MEMORY.md or hooks. STOP before Tranche B.",
+   "Commit with a pathspec only (git commit -m ... -- <files>); never git add -A, never push."
+  ]}
+]

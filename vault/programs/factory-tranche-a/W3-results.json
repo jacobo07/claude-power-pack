@@ -1,0 +1,28 @@
+{
+ "steps": {
+  "W3a": {
+   "verdict": "PASS",
+   "sid": "c6c0e19d-c447-4de8-be77-4b4dd1abd63b",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": true,
+    "commits": true,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 184423,
+   "cap": 1200000,
+   "receipt": "vault/programs/factory-tranche-a/W3a-receipt.md",
+   "secs": 412,
+   "calls": 10,
+   "boundaries": 1
+  },
+  "W3b": {
+   "verdict": "REFUSED_OVER_CAP",
+   "total_before": 6287622,
+   "cap": 1200000
+  }
+ },
+ "coordinator_spend": 6103199,
+ "cap": 8300000
+}
