@@ -1,0 +1,224 @@
+{
+  "programme": "ctx-rent-a2",
+  "plan": "vault/plans/context-rent-observatory-2026-10-25.md",
+  "plan_commit": "1be23133",
+  "verified_plane": "GEX44 clone mission/ctx-rent-obs at 92f49ca0; laptop-plane items marked UNVERIFIED",
+  "rows": [
+    {
+      "slice": "A",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "boot context floor census",
+      "intent": "per-source floor census method",
+      "implementation_owner": "ctx-rent-a2",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "DELIVERED 4de21ba8",
+      "evidence_state": "PROVEN (method)",
+      "transfer_basis": "-",
+      "residual_proof": "commit 4de21ba8 exists (2026-10-11); tools/context_floor_census.py + tools/test_context_floor_census.py present. plane GEX44: commit/file verified in clone mission/ctx-rent-obs at 92f49ca0",
+      "open_measurement": "none for the method",
+      "old_path_status": "CLOSED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "census method changed"
+      ]
+    },
+    {
+      "slice": "B",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "boot deflation",
+      "intent": "reduce the always-loaded floor",
+      "implementation_owner": "ctx-rent-a2",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "DELIVERED (applied 2026-10-11)",
+      "evidence_state": "BOOT_REDUCTION_ESTIMATED (controlled chars -31%) / MEASURED_ONCE (provider 122,093 -> 106,769, N=1)",
+      "transfer_basis": "-",
+      "residual_proof": "commit c6657844 (2026-10-23) vault/programs/ctx-rent-a2/SLICE-B-RECEIPT.md. plane GEX44: commit/file verified in clone mission/ctx-rent-obs at 92f49ca0",
+      "open_measurement": "STEADY_STATE, LIFETIME_CARRIAGE, CROSS_PROJECT, QUALITY_PRESERVED all UNKNOWN; N=3 re-type is B1 (W2)",
+      "old_path_status": "CLOSED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "model or MCP set changes the floor"
+      ]
+    },
+    {
+      "slice": "C",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "router + lean carrier",
+      "intent": "route work to a lean carrier",
+      "implementation_owner": "ccr",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "TRANSFERRED",
+      "evidence_state": "OPEN",
+      "transfer_basis": "vault/plans/ccr-mods-backend-2026-10-11.md:26 'execution backend of ctx-rent-a2'",
+      "residual_proof": "line 26 re-read in this clone",
+      "open_measurement": "W3 C1 certifies one CCR claim (M1 trivial subagent 47,591 -> 15,571) against an independent instrument",
+      "old_path_status": "SUPERSEDED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "CCR plan withdrawn or renumbered"
+      ]
+    },
+    {
+      "slice": "D",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "boundary rotation",
+      "intent": "rotate context at a boundary",
+      "implementation_owner": "ccr",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "TRANSFERRED",
+      "evidence_state": "PARTIAL (tools/ccr_epoch_econ.py is CCR-authored, so it cannot certify CCR)",
+      "transfer_basis": "vault/plans/ccr-mods-backend-2026-10-11.md:26 + commit 59babe7d (ccr v4 E1)",
+      "residual_proof": "59babe7d exists (2026-10-12) 'Lobby BEATS_A (D k=40)'; tools/ccr_epoch_econ.py present",
+      "open_measurement": "independent re-measure of E1 is the W3 fallback claim",
+      "old_path_status": "SUPERSEDED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "E1 recomputed with a different k"
+      ]
+    },
+    {
+      "slice": "E",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "zero-model status",
+      "intent": "answer status with zero model tokens",
+      "implementation_owner": "ccr / goal runtime",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "TRANSFERRED (tools/programme_status.py exists)",
+      "evidence_state": "OPEN",
+      "transfer_basis": "vault/plans/ccr-mods-backend-2026-10-11.md:26",
+      "residual_proof": "tools/programme_status.py + test present in this clone",
+      "open_measurement": "status model tax is CCR's; candidate for a later contract",
+      "old_path_status": "SUPERSEDED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "programme_status.py removed"
+      ]
+    },
+    {
+      "slice": "F",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "boundary metrics",
+      "intent": "measure per-boundary carry",
+      "implementation_owner": "ccr",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "TRANSFERRED (tools/ccr_carry_fit.py, tools/session_autopsy.py)",
+      "evidence_state": "OPEN (CCR self-measured)",
+      "transfer_basis": "vault/plans/ccr-mods-backend-2026-10-11.md:26",
+      "residual_proof": "ccr_carry_fit.py and session_autopsy.py present",
+      "open_measurement": "independent measurement not run",
+      "old_path_status": "SUPERSEDED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "metric definitions change"
+      ]
+    },
+    {
+      "slice": "G",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "context CI",
+      "intent": "a CI gate that goes red when a resident addition appears",
+      "implementation_owner": "incremental-cognition (floor_regression_gate, pillar K)",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "PRODUCTION (tools/wake_check.py:21 calls floor_regression_gate.py --check)",
+      "evidence_state": "W4 drill",
+      "transfer_basis": "commits 8169092c (2026-10-06) .. 0f07a3d7 (2026-10-06), both ancestors of HEAD",
+      "residual_proof": "wake_check.py:21 verified",
+      "open_measurement": "W4: observe an exit 1 on an injected resident addition",
+      "old_path_status": "TRANSFERRED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "gate removed from wake_check"
+      ]
+    },
+    {
+      "slice": "H",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "first production canary",
+      "intent": "CPP code canary for CCR",
+      "implementation_owner": "ccr (ring R2)",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "SUPERSEDED_BY_CCR",
+      "evidence_state": "OPEN",
+      "transfer_basis": "vault/plans/ccr-mods-backend-2026-10-11.md:146 'R2: ctx-rent-a2 slice H (econ-succession S1) as the CPP code canary'",
+      "residual_proof": "line 146 re-read in this clone",
+      "open_measurement": "R2 canary not run on this plane",
+      "old_path_status": "SUPERSEDED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "CCR ring plan changes"
+      ]
+    },
+    {
+      "slice": "I",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "carrier successor canary",
+      "intent": "successor canary through the carrier",
+      "implementation_owner": "econ-succession",
+      "evidence_owner": "econ-succession",
+      "implementation_state": "PARTIAL (S3 done, not via carrier)",
+      "evidence_state": "OPEN",
+      "transfer_basis": "af7ec647 (UNVERIFIED on GEX44: object not in this clone; laptop-plane)",
+      "residual_proof": "cannot re-verify here",
+      "open_measurement": "carrier path canary not run",
+      "old_path_status": "TRANSFERRED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "af7ec647 absent from the laptop repo"
+      ]
+    },
+    {
+      "slice": "J",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "econ-succession S2-S10",
+      "intent": "remaining succession workstreams",
+      "implementation_owner": "econ-succession",
+      "evidence_owner": "econ-succession",
+      "implementation_state": "PARTIAL (S2-S4 af7ec647, 44396331)",
+      "evidence_state": "OPEN S5-S10",
+      "transfer_basis": "econ-succession goal 12.86M of 20M (plan section 2); commits UNVERIFIED on GEX44 (not in this clone)",
+      "residual_proof": "cannot re-verify here",
+      "open_measurement": "S5-S10",
+      "old_path_status": "TRANSFERRED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "goal spend figure changes"
+      ]
+    },
+    {
+      "slice": "K",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "econ-contain-2 S9 canary",
+      "intent": "real canary for succession.py",
+      "implementation_owner": "econ-succession",
+      "evidence_owner": "econ-succession",
+      "implementation_state": "EXPIRED (packet 2026-10-14)",
+      "evidence_state": "NOT_RUN",
+      "transfer_basis": "Owner packet expiry 2026-10-14T00:00:00Z (econ-succession RESUMPTION_FILE.md)",
+      "residual_proof": "expiry text read in vault/programs/econ-succession/RESUMPTION_FILE.md",
+      "open_measurement": "needs a new Owner act if wanted",
+      "old_path_status": "SUPERSEDED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "a new Owner packet"
+      ]
+    },
+    {
+      "slice": "L",
+      "original_programme": "ctx-rent-a2",
+      "obligation": "KV/UKDL/CBR",
+      "intent": "promote proven CCR into the baseline",
+      "implementation_owner": "ccr (R5 CBR)",
+      "evidence_owner": "ctx-rent-obs",
+      "implementation_state": "TRANSFERRED",
+      "evidence_state": "OPEN",
+      "transfer_basis": "vault/plans/ccr-mods-backend-2026-10-11.md:156 'CBR promotes CCR to baseline at R5'",
+      "residual_proof": "line 156 re-read in this clone",
+      "open_measurement": "promotion only after W3 evidence",
+      "old_path_status": "SUPERSEDED",
+      "effective_date": "2026-10-25",
+      "invalidators": [
+        "W3 verdict REFUTED"
+      ]
+    }
+  ]
+}
