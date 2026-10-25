@@ -175,6 +175,15 @@ def sweep_one(mid: str, *, now: float | None = None, decide_fn=None, sender=None
     rec = gm.load(mid)
     prog = progress_since(mb.execution_root(rec), pol.get("last_head")) if rec else {"measured": False}
     verdict = judge(rec, pol, prog)
+    if verdict["action"] == "grant" and not dry_run:
+        try:   # CCN-3 weekly account ceiling (Owner Q2 = enforce 85%), checked before the grant is written
+            import account_governor as _ag
+            _code, _verdict, _why, _ = _ag.check(_ag.DEFAULT_STATE, "topup")
+        except Exception as exc:  # noqa: BLE001 -- the governor fails open
+            _code = 0
+            gm.lr.ledger_append(mid, "account_governor_error", mission_id=mid, why=f"{type(exc).__name__}: {exc}"[:300])
+        if _code == 3:
+            verdict = {"action": "refuse", "why": _why}
     out = {"mission": mid, **verdict}
     if dry_run or verdict["action"] == "none":
         return out

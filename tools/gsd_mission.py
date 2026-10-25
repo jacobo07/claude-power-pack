@@ -5815,6 +5815,15 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         if key is not None:
             lr.ledger_append(f"goal-{key[1]}", "goal_arm_refused", workstream=key[1], why=why[:300])
         raise MissionError(why)
+    try:   # CCN-3 weekly account ceiling (Owner Q2 = enforce 85%); covers arm_chain, which calls arm
+        import account_governor as _ag
+        _code, _verdict, _why, _ = _ag.check(_ag.DEFAULT_STATE, "arm")
+    except Exception as exc:  # noqa: BLE001 -- the governor fails open; a fault here must not stop every mission
+        _code, _why = 0, ""
+        lr.ledger_append("arm-guard", "account_governor_error", why=f"{type(exc).__name__}: {exc}"[:300])
+    if _code == 3:
+        lr.ledger_append("arm-guard", "account_arm_refused", why=_why[:300])
+        raise MissionError(_why)
     if launch:
         why = worker_arm_refusal(os.environ.get("CLAUDE_CODE_SESSION_ID"))
         if why:
