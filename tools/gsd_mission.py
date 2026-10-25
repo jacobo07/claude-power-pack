@@ -2580,7 +2580,7 @@ def verify_owner_turn(ref: str, finder=None) -> dict:
 def set_authority(mission_id: str, tokens=None, extend_hours: float | None = None,
                   now: float | None = None, reason: str = "", owner_turn: str | None = None,
                   actor: str | None = None, expected_seq: int | None = None, recognize_overrun: bool = False,
-                  spent_fn=None, finder=None) -> dict:
+                  spent_fn=None, finder=None, stage: str | None = None) -> dict:
     """Record Owner-granted programme authority on a mission: `authority_tokens` is the processed-token
     ceiling AMR may lease inside; `extend_hours` adds wall time. Both are Owner acts; the reason names it.
     T1 F2: each act appends a receipt (prev, new, owner_turn, actor, expected_seq, spend at the set). The same
@@ -2599,13 +2599,22 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
         fields["max_hours"] = float(rec.get("max_hours") or lr.DEFAULT_MAX_HOURS) + float(extend_hours)
     if not fields:
         raise MissionError("nothing to set: give --tokens and/or --extend-hours")
+    if stage is not None and not re.fullmatch(r"[A-Za-z0-9._-]{1,40}", str(stage)):
+        raise MissionError(f"stage {stage!r}: use 1-40 characters of A-Z a-z 0-9 . _ -")
     turn = verify_owner_turn(owner_turn, finder) if owner_turn else None
     receipts = list(rec.get("authority_receipts") or [])
+    cur_stage = receipts[-1].get("stage") if receipts else None
+    stage_opened = stage is not None and stage != cur_stage
+    if stage_opened and not turn:
+        raise MissionError(f"refused: stage {stage} opens after {cur_stage}; a new stage needs --owner-turn "
+                           "<session>:<timestamp> (the Owner's own message opening it)")
+    eff_stage = stage if stage is not None else cur_stage
     if turn:
         used = [r for r in receipts if (r.get("owner_turn") or {}).get("uuid") == turn["uuid"]
                 and (r.get("owner_turn") or {}).get("session") == turn["session"]]
         if used:
             if used[-1].get("new") == fields.get("authority_tokens", rec.get("authority_tokens")) and \
+                    used[-1].get("stage") == eff_stage and \
                     used[-1].get("extend_hours") == (float(extend_hours) if extend_hours else None):
                 lr.ledger_append(mission_id, "authority_replay_noop", mission_id=mission_id, owner_turn=turn["uuid"])
                 return rec
@@ -2627,7 +2636,7 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
              "new": fields.get("authority_tokens", rec.get("authority_tokens")),
              "extend_hours": float(extend_hours) if extend_hours else None, "owner_turn": turn, "actor": actor,
              "expected_seq": expected_seq, "seq_before": rec.get("seq"), "spent_at_set": spent,
-             "recognize_overrun": bool(recognize_overrun)}
+             "recognize_overrun": bool(recognize_overrun), "stage": eff_stage, "stage_opened": bool(stage_opened)}
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expected_seq,
                       event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})",
                       authority_receipts=(receipts + [entry])[-20:], ledger_extra={"receipt": entry}, **fields)
@@ -6758,6 +6767,7 @@ def _cli(argv=None) -> int:
     au.add_argument("--expected-seq", type=int, help="the record seq the act was decided on; a moved record conflicts")
     au.add_argument("--recognize-overrun", action="store_true",
                     help="admit a ceiling at or below live spend (recognises spend already made)")
+    au.add_argument("--stage", help="named programme stage; opening a different stage needs --owner-turn")
     pr = sub.add_parser("protocol", help="set the rollover protocol on an existing mission "
                                          "(held or owner-less only; same permission-mode rule as arm)")
     pr.add_argument("--mission", required=True)
@@ -6883,14 +6893,14 @@ def _cli(argv=None) -> int:
             rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason,
                                 owner_turn=args.owner_turn, expected_seq=args.expected_seq,
                                 actor=args.actor or os.environ.get("CLAUDE_CODE_SESSION_ID"),
-                                recognize_overrun=args.recognize_overrun)
+                                recognize_overrun=args.recognize_overrun, stage=args.stage)
         except MissionError as exc:
             print(f"AUTHORITY REFUSED: {exc}", file=sys.stderr)
             return 3
         last = (rec.get("authority_receipts") or [{}])[-1]
         print(f"AUTHORITY SET mission={rec['mission_id']} authority_tokens={rec.get('authority_tokens')} "
               f"max_hours={rec.get('max_hours')} owner_turn={(last.get('owner_turn') or {}).get('uuid')} "
-              f"spent_at_set={last.get('spent_at_set')}")
+              f"spent_at_set={last.get('spent_at_set')} stage={last.get('stage')}")
         return 0
     if args.cmd == "bind":
         rec = bind_mission(args.mission, args.path, args.cause)
