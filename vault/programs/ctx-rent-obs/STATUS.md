@@ -9,7 +9,7 @@ GEX44, not the laptop; it was used here only for the tests and the stale_resumpt
 | W1 RESUMPTION seal + STALE banner | DONE (07d32082, e863190d) | see gate below |
 | W1 econ_plane approval uuid | DONE (958cea47) | red first: `FAIL V-ECON-RAISE-APPROVAL-UUID ... exit 2`; then PASS (source `...:approval:25a5410c-...`). `test_econ_containment.py` ECON_PASS=58/59; the 1 FAIL is V-ECON-ADMISSION-STANDALONE (this host's settings.json has no standalone entry), pre-existing and GEX44-plane |
 | W1 cpp_fsck transferred-NEXT | DONE (c3eb72ce, 60965597) | red first `FAIL V-FSCK-F4-TRANSFERRED-NEXT flagged=[]`; then FSCK_PASS=18/18. A second fix after the live file missed slice L at a sentence end |
-| W1 ledger moves | NOT DONE here, laptop plane | see LEDGER_TODO |
+| W1 ledger moves | DONE on the laptop plane (08a441b7) | see LEDGER moves below |
 | W2 B1 | DONE with limits (9efbd87e) | N=3 on GEX44: call-1 67,568 / 67,561 / 67,561. PATH `claude` 2.1.113 was refused by the API (`b1/attempt0-...jsonl`); probes used the already-installed `~/.local/bin/claude` 2.1.310 via CPP_CLAUDE_EXE, no install or settings change. Census JSON of slice B: laptop-plane, pending. B is NOT re-typed from N=1 (different plane) |
 | W3 C1 | DONE: REFUTED (78f7c666 then 66201429) | contract commit precedes verdict commit; contract unedited (`git diff 78f7c666 HEAD -- contracts/C1.json` empty). 2 matched pairs, haiku, `--plugin-dir mods/ccr-probe`: subagent first call 46,658 -> 10,823, r = 76.8%, answer OK in both arms. Outside the frozen band [62%, 72%] around the claimed 67%. Direction holds; the number does not transfer (plane difference). Both pairs were bit-identical, so N=2 gives no variance information |
 | W4 CI drill | NOT NEEDED, existing | `tools/test_floor_regression_gate.py` already drives injected additions to exit 1: `V-FLOOR-TRACER-E2E ... seeded+1024=1(RISE memory_global universal universal_1k)`, `V-FLOOR-POSITIVE-UNIVERSAL ... rc=1`. Run: `FLOOR_PASS=71/71 threshold=71/71 skipped=0` |
@@ -37,6 +37,10 @@ Spend of this run is therefore unbooked anywhere (UNKNOWN).
    1,020,701 including subagents. Settled 8,874,921 against the 7,000,000 ceiling: overdraft 1,874,921, ceiling not raised.
 
 ## Other notes
+- Hook pass-through of the approval uuid (`hooks/econ_admission.js` `doRaiseGoal`/`doRaise` do not send `--approval-uuid`):
+  Owner decision 2026-10-25 (a): NOT wired on this branch. The approving entry is not yet in the transcript when
+  UserPromptSubmit runs, and econ-succession S3/S2 (branch `oc1-econ-succession`, af7ec647) rewrites this path with durable
+  pre-model approval receipts. It closes when that programme integrates S3; a separate fix here would duplicate and conflict.
 - Turn budget: stopped before 45 turns; tranche 1 complete except the laptop-plane items. Tranche 2 needs a new Owner approval.
 - Goal binding (First step 1) skipped per the GEX44 brief.
 - `.pp-capabilities` untracked file in the clone is not mine; left alone.
