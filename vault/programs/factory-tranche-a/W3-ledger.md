@@ -1,3 +1,5 @@
 - driver 2026-10-25T13:51:36 W3a PASS sid=c6c0e19d-c447-4de8-be77-4b4dd1abd63b launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=184423 cap=1,200,000
 - coordinator 2026-10-25T14:08 W3b KILLED_BY_HOST_MEMORY_REAP (no verdict) sid=2c06b8f5-bf64-49a7-9e75-cea57f82d2f7 spend=537051 calls=26 cap=1,200,000; left uncommitted: tools/gsd_mission.py (+17/-4), tools/test_w3_stage_authority.py; not relaunched (needs Owner go)
 - driver 2026-10-25T15:57:40 W3b REFUSED_OVER_CAP total_before=6,287,622 step_cap=1,200,000 limit=7,300,000
+- driver 2026-10-25T16:14:28 W3b PASS sid=dab6a4f1-5520-4887-b07c-604aeee8ebde launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=444479 cap=1,200,000
+- driver 2026-10-25T16:30:45 W3c PASS sid=c3c64013-d65a-415d-b32d-e068f3c715a3 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=945376 cap=1,200,000
