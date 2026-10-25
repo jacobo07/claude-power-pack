@@ -1211,7 +1211,8 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
                   progress: dict | None = None, packet: dict | None = None, spawner=None,
-                  det_runner=None, mem_reader=None, gsd_fact: str = "") -> dict:
+                  det_runner=None, mem_reader=None, gsd_fact: str = "",
+                  gain_samples: list | None = None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
@@ -1298,6 +1299,8 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         extra["progress"] = progress
         if not rec.get("progress_origin") and progress.get("measured"):
             extra["progress_origin"] = progress["fp"]   # the tree this mission started from
+    if gain_samples is not None:
+        extra["gain_samples"] = gain_samples   # W3c: persisted beside `progress`
     # FIRST-WORKER DECISION GAP (Phase 4.1, Owner D5 item 8): epoch 1 has no note and no older card, so the
     # card was only ever rendered at a relay and a mission armed (or decided on while PREPARED) reached its
     # first worker with NO decisions. `arm` launches through here with expect_epoch=0, and a mission armed
@@ -5588,6 +5591,19 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                                                   fp_fn),
                                          ran=rec["state"] != LAUNCHING)
                 row["progress"] = progress
+                # W3c: marginal gain. A pure verdict over a bounded sample list; the hold sits beside
+                # NO_PROGRESS and never halts. GSD_MARGINAL_GAIN=off keeps the verdict, drops the hold.
+                rec["gain_samples"] = _gain_sample(rec, work_dir or mb.execution_root(rec))
+                gain = judge_marginal_gain(rec["gain_samples"])
+                row["marginal_gain"] = gain
+                if (act in ("relay", "replace") and gain == "MARGINAL_GAIN_LOW"
+                        and (os.environ.get("GSD_MARGINAL_GAIN") or "").strip().lower() != "off"):
+                    why = ("marginal_gain_low: spend rose over %d relays with no new commit and the same note"
+                           % MARGINAL_GAIN_WINDOW)
+                    lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"], reason=why,
+                                     samples=rec["gain_samples"][-(MARGINAL_GAIN_WINDOW + 1):])
+                    row["held"] = why
+                    continue
                 if (turn_end is not None and turn_end["decision"] == ge.CONTINUE and progress.get("measured")
                         and progress["stalls"] >= 1 and ge.stalled_fresh_enabled()):
                     # m-b8541432cbf9: a resumed session keeps the belief that made it stop; three resumes of it
@@ -5727,7 +5743,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                               expect_state=rec["state"], reason=plan["reason"],
                                               runner=runner, now=now, note=note,
                                               work_dir=work_dir, progress=progress, packet=packet,
-                                              gsd_fact=gsd_fact)
+                                              gsd_fact=gsd_fact, gain_samples=rec.get("gain_samples"))
                 if row["launch"].get("ok"):
                     # Every FRESH worker says why it exists: a rotation is certified by its cause,
                     # never by counting fresh sessions (tools/gsd_epoch.py census).
@@ -6225,6 +6241,38 @@ def mission_fingerprint(rec: dict, base_dir: str, fp_fn=None) -> str | None:
     if all(f is None for f in fps):
         return None
     return hashlib.sha256("|".join(f or "?" for f in fps).encode("utf-8")).hexdigest()[:16]
+
+
+MARGINAL_GAIN_WINDOW = 2
+
+
+def judge_marginal_gain(samples: list, window: int = MARGINAL_GAIN_WINDOW) -> str:
+    """W3c, pure. UNKNOWN | MARGINAL_GAIN_LOW | GAINING over per-relay samples (oldest first)
+    {"head","spent","note_sha"}. LOW = spend strictly rises every step, the head never changes
+    and the note is identical across the last window+1 samples. Unmeasured never holds."""
+    tail = list(samples or [])[-(window + 1):]
+    if len(tail) < window + 1 or any(s.get("head") is None or s.get("spent") is None for s in tail):
+        return "UNKNOWN"
+    rises = all(tail[i + 1]["spent"] > tail[i]["spent"] for i in range(window))
+    same_head = all(s["head"] == tail[0]["head"] for s in tail)
+    same_note = all(s.get("note_sha") == tail[0].get("note_sha") for s in tail)
+    return "MARGINAL_GAIN_LOW" if (rises and same_head and same_note) else "GAINING"
+
+
+def _gain_sample(rec: dict, work_dir: str) -> list:
+    """rec's gain_samples plus this relay's sample, last 5. Unmeasurable fields are None."""
+    import hashlib
+    import mission_spend as ms
+    try:
+        spent = ms.processed_tokens(rec)
+    except Exception:  # noqa: BLE001 -- unmeasured is None, never a hold
+        spent = None
+    try:
+        head = _git_facts(work_dir).get("head")
+    except Exception:  # noqa: BLE001
+        head = None
+    sha = hashlib.sha256((rec.get("note") or "").strip().encode("utf-8")).hexdigest()
+    return (list(rec.get("gain_samples") or []) + [{"head": head, "spent": spent, "note_sha": sha}])[-5:]
 
 
 def next_progress(rec: dict, fp: str | None, ran: bool = True) -> dict:
