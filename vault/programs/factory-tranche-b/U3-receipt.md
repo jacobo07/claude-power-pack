@@ -1,4 +1,4 @@
-﻿# U3 receipt: W4 pricing source (LOW-2) + credential filter digit-prefix residual (U1 LOW-1)
+# U3 receipt: W4 pricing source (LOW-2) + credential filter digit-prefix residual (U1 LOW-1)
 
 ## Changed
 - tools/w4_benchmark.py: removed hardcoded PRICING; `resolve_pricing()` calls `pricing_source.current_pricing_path`; report text prints the resolved path (`render_md(..., pricing_path)`); `main()` returns 2 with a stderr message if no pricing file resolves (never prices at 0).
@@ -26,4 +26,4 @@ node --test test/index.test.cjs: genesis-source-packets, genesis-task-context, g
 ```
 Not observed: the no-pricing-file exit-2 path was not exercised by a test (code path only).
 
-COMMITS: 86345085
+COMMITS: 08ab33ab
