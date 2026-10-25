@@ -366,6 +366,7 @@ def try_seal(packet, missions=None, runner=None, git=None, programs_dir=None, lo
 
 def decide(chain: dict, missions: list[dict], goal_used: int, route_target, infra=()) -> dict:
     """Pure decision: what this tick should do. route_target(path) -> int."""
+    missions = [m for m in missions if not repaired_refusal(m)]
     units = chain["units"]
     roots = {_norm(chain["root"])} | {_norm(u["cwd"]) for u in units if u.get("cwd")}
     # a parked record (PREPARED + Owner hold) writes nothing, so it is not a second writer (gsdx-factory-2 2026-10-25:
@@ -610,8 +611,22 @@ def _live_measured(goal: str) -> dict:
     return out
 
 
+def repaired_refusal(m: dict) -> bool:
+    """A failed arm (held stub) whose route file changed since the refusal: the route was repaired, so the stub is
+    history -- not arm_refused, not a residual attempt, not a duplicate (gsdx-factory-2 2026-10-25: r1 RECOMPILE)."""
+    if m.get("state") != "PREPARED" or not str((m.get("owner_hold") or {}).get("reason", "")).startswith("arm-chain failed"):
+        return False
+    adm = m.get("admission") or {}
+    if not adm.get("route_path") or not adm.get("route_file_sha256"):
+        return False
+    try:
+        return hashlib.sha256(Path(adm["route_path"]).read_bytes()).hexdigest() != adm["route_file_sha256"]
+    except OSError:
+        return False
+
+
 def _armed_for(missions: list, packet: str) -> list:
-    bp = _by_packet(missions)
+    bp = _by_packet([m for m in missions if not repaired_refusal(m)])
     return [m for m in bp.get(_norm(packet), []) + bp.get(_norm(packet + RESIDUAL), []) if m.get("state") not in TERMINAL]
 
 

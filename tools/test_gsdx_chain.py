@@ -94,6 +94,21 @@ r2 = gc.tick(p, state=lambda: ([mission(d, "A", "PREPARED")], 0), armer=arm)
 check("V-CHAIN-ARM-REFUSED-SURFACED", r1["action"] == "arm_refused" and r2["action"] == "running",
       f"{r1['action']} / {r2['action']}")
 
+# a refused arm whose route file changed since the refusal was repaired: the stub is history (not arm_refused, not
+# a duplicate); control: the same stub with the route unchanged is still surfaced (gsdx-factory-2 r1 RECOMPILE)
+import hashlib  # noqa: E402
+d, p, chain = setup("repaired")
+rt = Path(chain["units"][0]["route"])
+stub = dict(mission(d, "A", "PREPARED"), owner_hold={"reason": "arm-chain failed: MissionError: route RECOMPILE"},
+            admission={"verdict": "RECOMPILE", "route_path": str(rt),
+                       "route_file_sha256": hashlib.sha256(rt.read_bytes()).hexdigest()})
+armed.clear()
+r1 = gc.tick(p, state=lambda: ([stub], 0), armer=arm)
+rt.write_text(json.dumps({"envelope": {"target": 900_000}}), encoding="utf-8")
+r2 = gc.tick(p, state=lambda: ([stub], 0), armer=arm)
+check("V-CHAIN-REPAIRED-REFUSAL-RETRIES", r1["action"] == "arm_refused" and r2["action"] == "arm" and armed == ["A"],
+      f"{r1['action']} / {r2['action']}")
+
 # terminal missions of chain units with open holds are settled; live or foreign missions are not
 d, p, chain = setup("settle")
 term = dict(mission(d, "A", "COMPLETED"), owner={"session_id": "sid-A"})
