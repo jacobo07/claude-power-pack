@@ -66,12 +66,14 @@ def make_repo(name: str, use_worktrees) -> Path:
     return wd
 
 
-def blocked_mission(mid: str, wd: Path, *, needs: str | None = QUESTION, waiting_for=None, recoveries=0) -> dict:
+def blocked_mission(mid: str, wd: Path, *, needs: str | None = QUESTION, waiting_for=None, recoveries=0,
+                    fp=None) -> dict:
     gm.create(str(wd), "/gsd-autonomous", mission_id=mid, now=NOW)
     sid = f"{mid}-worker"
     owner = {"session_id": sid, "pid": None, "proc_start": None, "heartbeat_at": NOW, "epoch": 1, "kind": "background"}
     gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t_setup", now=NOW, state=gm.BLOCKED,
-                  epoch=1, max_hours=100.0, owner=owner, decision_recoveries=recoveries)
+                  epoch=1, max_hours=100.0, owner=owner, decision_recoveries=recoveries,
+                  **({"decision_recovery_fp": fp} if fp else {}))
     if needs is not None or waiting_for:
         j = Path(os.environ["CPP_CLAUDE_JOBS_DIR"]) / sid[:8]
         j.mkdir(parents=True, exist_ok=True)
@@ -178,6 +180,25 @@ def main() -> int:
     r = blocked_mission("m-bbb000000006", wd, recoveries=gm.MAX_DECISION_RECOVERIES)
     p = gm.plan_next(r, NOW, host_rows("m-bbb000000006"), pid_alive=lambda p: False)
     check("V-AMRX-CTRL-CAP", p["action"] == "surface_blocked" and "decision recoveries" in p["reason"], p["reason"][:100])
+    # 2026-10-25 (GEX44 m-8f97c4d49069): the cap counts recoveries with NO progress between them.
+    r = blocked_mission("m-bbb0000000c1", wd, recoveries=gm.MAX_DECISION_RECOVERIES, fp="fp-fixture")
+    p = gm.plan_next(r, NOW, host_rows("m-bbb0000000c1"), pid_alive=lambda p: False)
+    check("V-AMRX-CAP-NO-PROGRESS", p["action"] == "surface_blocked" and "decision recoveries" in p["reason"],
+          "tree unchanged since the last recovery: the cap binds")
+    r = blocked_mission("m-bbb0000000c2", wd, recoveries=gm.MAX_DECISION_RECOVERIES, fp="fp-before")
+    p = gm.plan_next(r, NOW, host_rows("m-bbb0000000c2"), pid_alive=lambda p: False)
+    check("V-AMRX-CAP-RESET-ON-PROGRESS", p["action"] == "replace", f"tree moved: {p['action']}")
+    os.environ["CPP_DECISION_RECOVERY_CAP"] = "lifetime"
+    p = gm.plan_next(r, NOW, host_rows("m-bbb0000000c2"), pid_alive=lambda p: False)
+    os.environ.pop("CPP_DECISION_RECOVERY_CAP")
+    check("V-AMRX-CAP-KILL-SWITCH", p["action"] == "surface_blocked", "lifetime restores the old cap")
+    ARGVS.clear()
+    gm._supervise_core(now=NOW + 60, sessions=host_rows("m-bbb0000000c2"), gsd_status=GSD_OK, runner=host,
+                       stop_runner=stop_ok, pid_alive=lambda p: False)
+    sc = gm.load("m-bbb0000000c2")
+    check("V-AMRX-CAP-COUNTER-RESET", len(ARGVS) == 1 and sc.get("decision_recoveries") == 1
+          and sc.get("decision_recovery_fp") == "fp-fixture",
+          f"launches={len(ARGVS)} recoveries={sc.get('decision_recoveries')} fp={sc.get('decision_recovery_fp')}")
     os.environ["CPP_MISSION_DECISION_RECOVERY"] = "off"
     r = blocked_mission("m-bbb000000007", wd)
     p = gm.plan_next(r, NOW, host_rows("m-bbb000000007"), pid_alive=lambda p: False)

@@ -635,7 +635,8 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
              if state in (RUNNING, BLOCKED) and hrow is not None and not hrow.get("waitingFor") else None)
         cls = (b or {}).get("class")
         if cls == "QUESTION_RESOLVABLE":
-            if int(rec.get("decision_recoveries") or 0) >= MAX_DECISION_RECOVERIES:
+            if (int(rec.get("decision_recoveries") or 0) >= MAX_DECISION_RECOVERIES
+                    and not decision_progress_since(rec)):
                 return {"action": "surface_blocked",
                         "reason": f"OWNER_BOUNDARY: {MAX_DECISION_RECOVERIES} decision recoveries already spent; "
                                   f"worker asks again: {b['why'][:160]}"}
@@ -819,7 +820,27 @@ def slim_argv(rec: dict, prompt: str, exe: str, profile: str, session_id: str | 
     return argv + [prompt]
 
 
-MAX_DECISION_RECOVERIES = 2   # successors per mission launched to answer a worker's own question
+MAX_DECISION_RECOVERIES = 2   # successors launched to answer a worker's own question, with no progress between them
+
+
+def decision_progress_since(rec: dict) -> bool:
+    """True when the work tree moved since the last decision recovery: the cap then starts again.
+
+    Why (measured 2026-10-25, GEX44 m-8f97c4d49069): the cap was per mission LIFETIME. Two recoveries
+    spent on 10-24 meant a third, resolvable question at 05:33 the next day (after 4 product commits)
+    was parked as OWNER_BOUNDARY for 4.5 h. The cap exists to stop a worker re-asking one question in a
+    loop; a loop makes no progress, so only recoveries with an unchanged tree between them count.
+    Unmeasured (no fingerprint either side) keeps the cap. Kill switch: CPP_DECISION_RECOVERY_CAP=lifetime."""
+    if (os.environ.get("CPP_DECISION_RECOVERY_CAP") or "").strip().lower() == "lifetime":
+        return False
+    then = rec.get("decision_recovery_fp")
+    if not then:
+        return False
+    try:
+        now_fp = progress_fingerprint(mb.execution_root(rec))
+    except Exception:  # noqa: BLE001 -- unmeasured keeps the cap
+        return False
+    return now_fp is not None and now_fp != then
 
 
 def _decision_recovery_off() -> bool:
@@ -5657,9 +5678,15 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         # Persisted with the counter (review F2): the predecessor's job file is overwritten by its
                         # stop, so a launch that fails after this point would otherwise lose the answer for good.
                         # launch_worker re-injects it on every retry; adoption clears it.
+                        moved = decision_progress_since(rec)
+                        try:
+                            fp_now = progress_fingerprint(mb.execution_root(rec))
+                        except Exception:  # noqa: BLE001 -- unmeasured: the next cap check keeps the cap
+                            fp_now = None
                         rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                          event="decision_recovered", now=now, pending_decision=answer,
-                                         decision_recoveries=int(rec.get("decision_recoveries") or 0) + 1,
+                                         decision_recoveries=1 if moved else int(rec.get("decision_recoveries") or 0) + 1,
+                                         decision_recovery_fp=fp_now,
                                          ledger_extra={"gate": d["gate"]["result"], "question": d["why"][:200]})
                         row["decision_recovery"] = d["gate"]["result"]
                     row["note_chars"] = len(note)
