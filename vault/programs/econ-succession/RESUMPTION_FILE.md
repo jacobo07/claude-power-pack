@@ -1,5 +1,10 @@
-> **STALE (2026-10-25).** S2/S3 (af7ec647) and S4 (44396331) landed after this file's anchor 4e9953a7, so the "do S1" line below is
-> stale. The anchor check passes only because 4e9953a7 is an ancestor of HEAD. NEXT is its owner's decision; nothing else here was changed.
+> **SUPERSEDED on this branch (corrected 2026-10-25, laptop plane).** This copy is frozen at anchor 4e9953a7. The programme
+> continues on worktree branch `oc1-econ-succession` (`.claude/worktrees/oc1`). Its live resume file is that branch's copy of
+> this path (`git show oc1-econ-succession:vault/programs/econ-succession/RESUMPTION_FILE.md`): S1-S4 sealed (af7ec647,
+> 44396331), next S5. S2-S4 are **NOT** in feature/knowledge-acquisition: an earlier banner said "landed", which was wrong.
+> That programme's own decision is "never merge into feature/knowledge-acquisition". A dry-run merge (`git merge-tree`)
+> conflicts in econ_admission.js, capital_authority.py, mission_spend.py and test_goal_lease.py. Do not resume from the
+> text below.
 
 # RESUMPTION_FILE: econ-succession
 
