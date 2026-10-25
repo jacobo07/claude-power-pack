@@ -1,0 +1,39 @@
+{
+  "contract": "C1",
+  "goal": "ctx-rent-obs",
+  "plane": "GEX44",
+  "frozen_before_data": true,
+  "claim": {
+    "source": "vault/plans/ccr-mods-backend-2026-10-11.md lines 35-36 (M1)",
+    "text": "A trivial subagent's first call is 47,591 tokens under mode observe and 15,571 with the `instructions` and `skill_listing` attachments dropped on subagent requests: -67%, answer intact.",
+    "claimed_reduction_fraction": 0.67,
+    "claim_numbers_are_laptop_plane": true
+  },
+  "instrument": {
+    "reader": "vault/programs/ctx-rent-obs/contracts/c1_measure.py (committed with this contract, self-test PASS)",
+    "definition": "first_call_total = input + cache_creation + cache_read tokens of the subagent's first non-synthetic assistant row, the usage definition of tools/floor_regression_gate.py _USAGE_KEYS",
+    "not_used": "any ccr_* tool; ccr-probe's own recorded sizes are not evidence"
+  },
+  "population": {
+    "arms": [
+      "observe",
+      "subagent-lean"
+    ],
+    "treatment": "mods/ccr-probe loaded read-only with `--plugin-dir mods/ccr-probe`; the arm is selected by the mod's own mode.json, no ~/.claude settings and no install change",
+    "unit": "one fresh headless session (`claude -p`, one model, cwd outside any repo) whose prompt makes the main loop launch exactly one trivial subagent that answers with one word",
+    "pairs": "up to 2 matched pairs (same prompt, same model, same cwd, same claude executable); both must satisfy the rule for CERTIFIED",
+    "executable": "~/.local/bin/claude (PATH claude 2.1.113 is refused by the API for current models)"
+  },
+  "denominator": "the subagent first_call_total of the observe arm of the same pair; reduction r = 1 - lean/observe. Absolute numbers are NOT compared to 47,591 / 15,571 (laptop attachments differ in size)",
+  "answer_intact": "the subagent's final text, trimmed and case-folded with trailing punctuation removed, equals the one word requested, in both arms",
+  "verdict_rule": {
+    "CERTIFIED": "every pair measured, answer intact in both arms of every pair, and 0.62 <= r <= 0.72 for every pair",
+    "REFUTED": "every pair measured and (some r outside [0.62, 0.72], or answer not intact in a lean arm)",
+    "UNMEASURABLE": "anything else: the mod does not load or run under a CLI flag alone, no subagent launched, a subagent usage row is missing in any arm, the pair would need a settings or install change, or fewer than 1 complete pair. UNMEASURABLE is never CERTIFIED and never REFUTED; the reason is written"
+  },
+  "stop_rules": [
+    "this file is not edited after any C1 data is read; a change is a new contract C1b with its own commit",
+    "no settings, install or ~/.claude edit to make the pair run"
+  ],
+  "data_commit_must_follow": "C1.verdict.json is committed in a later commit than this file"
+}
