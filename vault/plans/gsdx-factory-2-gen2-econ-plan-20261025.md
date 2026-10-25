@@ -1,5 +1,5 @@
 ---
-status: AWAITING_OWNER (one approval, section 14)
+status: APPROVED (Owner 2026-10-25 "y, y con solo bloques secretos": 26.5M hard under gsdx-factory-2; PP repo stays public, push scan blocks secrets only). H012 armed as m-14651d89ee80 (authority 7.6M, packet 9213fb43, route 5c3061c4); failed-arm stub m-029bd48a694f superseded.
 date: 2026-10-25
 program: gsdx-factory
 goal: gsdx-factory-2 (existing identity; no new programme)
