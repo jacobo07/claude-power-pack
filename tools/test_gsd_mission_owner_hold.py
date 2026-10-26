@@ -296,6 +296,24 @@ def main() -> int:
                  fingerprint=lambda wd: None, gsd_status=lambda cwd, workstream=None: {"outcome": "OK"})
     check("V-OH-CONTROL-PARTIAL-RUNNABLE-NOT-HALTED", gm.load("m-rc-partial-ok")["state"] != gm.HALTED,
           gm.load("m-rc-partial-ok")["state"])
+    # 10b. a BLOCKED unit (surface_blocked: the host shows the worker waiting) whose receipt is closed DONE after the block
+    # is completed, not re-surfaced every pass (gsdx-factory-2 U1 m-dfd1cc5d2d41, 2026-10-26: blocked at its session stop,
+    # the coordinator closed the receipt, the record stayed BLOCKED and its 2.4M unbooked). Control: PARTIAL stays BLOCKED.
+    for mid, status in (("m-blk-done", "DONE"), ("m-blk-partial", "PARTIAL -- half")):
+        _pkt_mission(mid, status, NOW + 30)
+        r = gm.load(mid)
+        gm.transition(mid, expect_epoch=r["epoch"], expect_state=r["state"], event="t_blk", now=NOW, state=gm.BLOCKED,
+                      owner={"session_id": f"{mid}-w", "pid": None, "proc_start": None, "heartbeat_at": NOW,
+                             "epoch": r["epoch"], "kind": "background"})
+    blk_rows = gm.supervise(now=NOW + 60, sessions=[{"sessionId": f"{m}-w", "id": f"{m}-w"[:8], "kind": "background",
+                                                     "state": "blocked", "waitingFor": "permission"}
+                                                    for m in ("m-blk-done", "m-blk-partial")],
+                            runner=lambda *a, **k: "", stop_runner=lambda *a, **k: None, pid_alive=gone,
+                            fingerprint=lambda wd: None, gsd_status=lambda cwd, workstream=None: {"outcome": "OK"})
+    bb = {r["mission_id"]: r for r in blk_rows}
+    check("V-OH-BLOCKED-UNIT-RECEIPT-DONE-COMPLETES", gm.load("m-blk-done")["state"] == gm.COMPLETED
+          and gm.load("m-blk-partial")["state"] == gm.BLOCKED,
+          f"{gm.load('m-blk-done')['state']} {bb.get('m-blk-done')} / {gm.load('m-blk-partial')['state']}")
 
     # 10b. the cwd's roadmap does not close a receipt unit (gsdx-factory-2 H3, 2026-10-25: the PP checkout's archived
     # milestone read ALL_COMPLETE one turn in, and the chain unit went COMPLETED with only its RED test written).

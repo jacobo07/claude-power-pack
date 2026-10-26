@@ -4556,6 +4556,20 @@ def _receipt_path(pkt, programs_dir=None, rec=None) -> Path:
     return Path(resolve_receipt(pkt, rec, programs_dir)["path"])
 
 
+def _unit_receipt_done(rec: dict):
+    """The receipt path of a chain-armed packet unit (no done_check, not an AMR successor's packet) whose receipt reads
+    DONE and was written after the mission began; None otherwise."""
+    pkt = (rec.get("wu_packet") or {}).get("path")
+    if not pkt or rec.get("done_check") or (rec.get("amr") or {}).get("packet") == pkt:
+        return None
+    rp = _receipt_path(pkt, rec=rec)
+    try:
+        fresh = rp.stat().st_mtime >= float(rec.get("created_at") or 0)
+    except OSError:
+        return None
+    return rp if fresh and rj.receipt_status(rp) == "DONE" else None
+
+
 def _receipt_present(rec: dict, programs_dir=None) -> bool:
     pkt = (rec.get("wu_packet") or {}).get("path")
     if not pkt:
@@ -5516,6 +5530,17 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                      reason=plan["reason"], **who)
                 reap(settled, row)
             elif act == "surface_blocked":
+                rp = _unit_receipt_done(rec)
+                if rp:
+                    # The unit's receipt was closed (by a successor, a residual or the coordinator) while its worker
+                    # sat blocked: done, not re-surfaced every pass (gsdx-factory-2 U1 m-dfd1cc5d2d41, 2026-10-26).
+                    completed = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                           event="unit_completed", now=now, state=COMPLETED, pending=None,
+                                           reason=f"unit receipt DONE while blocked: {rp}")
+                    reap(completed, row)
+                    row["action"] = "completed"
+                    row["unit_done"] = "RECEIPT_DONE"
+                    continue
                 if rec["state"] != BLOCKED:
                     needs = host_job_needs((rec.get("owner") or {}).get("session_id"))
                     reason = f"{plan['reason']}; host needs: {needs}" if needs else plan["reason"]
