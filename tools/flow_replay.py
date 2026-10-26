@@ -1367,7 +1367,10 @@ def _terminal_ts(rows: list[dict]) -> float | None:
 
 
 def mission_windows(rows: list[dict], end_of_pin: float) -> dict:
-    """{mission: {start, end, open_at_pin, unmeasured}}; a mission with no usable start is listed, not counted."""
+    """{mission: {start, end, open_at_pin, unmeasured, unobserved_tail_s}}; a mission with no usable start is
+    listed, not counted. An OPEN mission (no terminal row) ends at its LAST ROW, never at the pin (red-team
+    claim 12): the pin says nothing about what happened after that row, so the stretch from the last row to the
+    pin is reported as `unobserved_tail_s`, beside the figure and never inside it."""
     by: dict[str, list[dict]] = {}
     for r in rows:
         if _mid(r):
@@ -1379,17 +1382,24 @@ def mission_windows(rows: list[dict], end_of_pin: float) -> dict:
         if start is None:
             out[mid] = {"start": None, "end": None, "unmeasured": "no_start_in_prefix"}
         elif end is None:
-            out[mid] = {"start": start, "end": end_of_pin, "open_at_pin": True, "unmeasured": None}
+            last = max([t for t in (_epoch(r.get("ts")) for r in rs) if t is not None], default=start)
+            out[mid] = {"start": start, "end": last, "open_at_pin": True, "unmeasured": None,
+                        "unobserved_tail_s": max(0.0, end_of_pin - last)}
         else:
             out[mid] = {"start": start, "end": end, "open_at_pin": False, "unmeasured": None}
     return out
 
 
 def summed_mission_hours(windows: dict) -> dict:
-    """NUMBER 1: sum over missions of (end - start). Concurrent missions add."""
+    """NUMBER 1: sum over missions of (end - start). Concurrent missions add. Open missions are bounded at
+    their last row; their count and the unobserved tail (last row -> pin) are reported beside `hours`."""
     ok = {m: w for m, w in windows.items() if w["unmeasured"] is None}
+    opn = [w for w in ok.values() if w.get("open_at_pin")]
     return {"hours": round(sum(w["end"] - w["start"] for w in ok.values()) / 3600, 3), "missions": len(ok),
-            "open_at_pin": sum(1 for w in ok.values() if w.get("open_at_pin")),
+            "open_at_pin": len(opn),
+            "open_hours_bounded_at_last_row": round(sum(w["end"] - w["start"] for w in opn) / 3600, 3),
+            "unobserved_tail_hours": round(sum(w["unobserved_tail_s"] for w in opn) / 3600, 3),
+            "basis": "open missions end at their last row; the unobserved tail is not part of hours",
             "left_out": sorted(m for m, w in windows.items() if w["unmeasured"] is not None)}
 
 

@@ -17,9 +17,10 @@ failure-class rows 3400; mapped to S1-S6 588; unmapped 2812; unmapped loops 41 (
 
 ## Time (three separate numbers)
 
-- summed_mission_hours: {'hours': 27483.911, 'missions': 148, 'open_at_pin': 92, 'left_out': []}
+- summed_mission_hours: {'basis': 'open missions end at their last row; the unobserved tail is not part of hours', 'hours': 1651.959, 'left_out': [], 'missions': 148, 'open_at_pin': 92, 'open_hours_bounded_at_last_row': 874.328, 'unobserved_tail_hours': 25831.952}
 - wall_clock_hours: {'hours': 715.125, 'from': '2026-09-25T09:52:05+00:00', 'to': '2026-10-25T04:59:35+00:00'}
-- critical_path_wall_clock_hours: {'hours': 516.808, 'chain': ['m-1fb7263df86b', 'm-eaf2843afb16'], 'unmeasured': [], 'basis': 'ledger_lineage', 'chain_len': 2}
+- critical_path_wall_clock_hours: {'hours': 323.921, 'chain': ['m-f011d7fdebc9'], 'unmeasured': [], 'basis': 'ledger_lineage', 'chain_len': 1}
+- phase 9 note (claim 12): this Time section was regenerated; open missions end at their last row and the unobserved tail is reported beside hours (see summed_mission_hours). Other sections are the phase-7 output as committed.
 - definitions: {'summed_mission_hours': 'sum over missions of (end - start); concurrent missions add', 'wall_clock_hours': 'first launch to last row of the window as one interval', 'critical_path_wall_clock_hours': 'longest successor chain, head start to tail end, gaps included'}
 
 ## Avoidable idle

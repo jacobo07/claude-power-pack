@@ -6574,14 +6574,14 @@ def progress_fingerprint(work_dir: str) -> str | None:
         # HEAD's TREE, not its commit (AMCR anti-gaming): an empty or amend-only commit changes no content.
         queries = (["rev-parse", "HEAD^{tree}"], ["status", "--porcelain"], ["diff", "HEAD", "--shortstat"])
     else:
-        # Bookkeeping is not progress (measured 2026-10-23, GEX44 m-95e10a5bb636 -> m-01e5d5509ee6): ~54
-        # epochs each committed only `.planning/**/STATE.md` + `RESUMPTION.md` saying "no Owner input, no
-        # unit", HEAD's tree moved every time, and the no_progress halt never fired. Read the tree with
-        # those files left out: the top-level entries (one hash per subtree, cheap on a big repo) with
-        # `.planning` replaced by its own listing minus bookkeeping. Kill switch: CPP_PROGRESS_BOOKKEEPING=count.
-        queries = (["ls-tree", "HEAD"], ["ls-tree", "-r", "HEAD", "--", ".planning"],
-                   ["status", "--porcelain"],
-                   ["diff", "HEAD", "--shortstat", "--", ".", *_BOOKKEEPING_EXCLUDES])
+        # Progress is an ALLOW-LISTED content set (red-team claim 8, phase 9), not "everything minus the
+        # bookkeeping files someone remembered": a root RESUMPTION_FILE.md edit, a tracked junk file and an
+        # untracked test log each moved the old reading and bought a lease renewal. Bookkeeping is still not
+        # progress (measured 2026-10-23, GEX44 m-95e10a5bb636 -> m-01e5d5509ee6): ~54 epochs committed only
+        # `.planning/**/STATE.md` + `RESUMPTION.md` and the no_progress halt never fired. Every tracked file, dirty
+        # path and diff stat is read through `_counts_as_work`; `.planning` artifacts join via
+        # `_planning_artifacts` under the same predicate. Kill switch: CPP_PROGRESS_BOOKKEEPING=count.
+        queries = (["ls-tree", "-r", "HEAD"], ["status", "--porcelain", "-uall"], ["diff", "HEAD", "--numstat"])
     parts = []
     try:
         for args in queries:
@@ -6590,11 +6590,10 @@ def progress_fingerprint(work_dir: str) -> str | None:
             if r.returncode != 0:
                 return None
             out = r.stdout
-            if not count_bookkeeping and args[0] in ("ls-tree", "status"):
-                out = "\n".join(ln for ln in out.splitlines()
-                                if not (args[0] == "ls-tree" and len(args) == 2 and ln.endswith("\t.planning"))
-                                and not _is_bookkeeping(ln.split("\t", 1)[-1] if args[0] == "ls-tree"
-                                                        else ln[3:]))
+            if not count_bookkeeping:
+                out = "\n".join(ln for ln in out.splitlines() if _counts_as_work(
+                    ln.split("\t", 1)[-1] if args[0] == "ls-tree"
+                    else ln.split("\t", 2)[-1] if args[0] == "diff" else ln[3:]))
             parts.append(out)
     except Exception:  # noqa: BLE001 -- unmeasured is its own answer
         return None
@@ -6605,7 +6604,38 @@ def progress_fingerprint(work_dir: str) -> str | None:
 
 
 _BOOKKEEPING_NAMES = ("STATE.md", "RESUMPTION.md")
-_BOOKKEEPING_EXCLUDES = tuple(f":(exclude,glob).planning/**/{n}" for n in _BOOKKEEPING_NAMES)
+_BOOKKEEPING_ANYWHERE = ("RESUMPTION_FILE.md",)   # the hand-off card: status wherever it sits, not work
+
+# What counts as work. An allow-list on purpose: a path outside it (a .log, a .txt, a scratch file) is not
+# progress however it changes. Source, build config, docs and data a worker is asked to produce are in.
+_WORK_EXTS = frozenset((
+    ".py", ".pyi", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".sh", ".bash", ".ps1", ".psm1", ".bat", ".cmd",
+    ".go", ".rs", ".java", ".kt", ".kts", ".scala", ".c", ".h", ".cc", ".cpp", ".hpp", ".cs", ".swift", ".m",
+    ".rb", ".php", ".lua", ".ex", ".exs", ".erl", ".hs", ".ml", ".clj", ".dart", ".r", ".sql", ".proto", ".graphql",
+    ".html", ".htm", ".css", ".scss", ".less", ".vue", ".svelte", ".json", ".jsonl", ".yaml", ".yml", ".toml",
+    ".ini", ".cfg", ".xml", ".gradle", ".md", ".mdx", ".rst", ".csv", ".tsv", ".svg", ".prisma", ".tf",
+    ".ipynb", ".lock", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".woff", ".woff2",   # assets a phase may produce
+))
+_WORK_NAMES = frozenset(("makefile", "dockerfile", "cmakelists.txt", "gemfile", "rakefile", "justfile", "procfile",
+                         "requirements.txt", "constraints.txt", ".gitignore", ".gitattributes"))
+
+
+def _counts_as_work(path: str) -> bool:
+    """True when a change to this repo-relative path is progress. Paths come from git ('/'-separated; porcelain
+    renames "old -> new" judge the new path; quoted names are unquoted)."""
+    p = path.strip().strip('"')
+    if " -> " in p:
+        p = p.split(" -> ", 1)[1].strip().strip('"')
+    if not p or p.endswith("/"):
+        return False
+    base = p.rsplit("/", 1)[-1]
+    if base in _BOOKKEEPING_ANYWHERE or _is_bookkeeping(p):
+        return False
+    low = base.lower()
+    if low in _WORK_NAMES or (low.startswith("requirements") and low.endswith(".txt")):
+        return True
+    dot = low.rfind(".")
+    return dot > 0 and low[dot:] in _WORK_EXTS
 
 
 def _is_bookkeeping(path: str) -> bool:
@@ -6629,12 +6659,15 @@ def _planning_artifacts(work_dir: str) -> str:
     if not root.is_dir():
         return ""
     rows = []
+    count_mode = (os.environ.get("CPP_PROGRESS_BOOKKEEPING") or "").strip().lower() == "count"
     try:
         for dirpath, _dirs, files in os.walk(root):
             for name in files:
                 if name in _BOOKKEEPING_NAMES:   # STATE.md + RESUMPTION.md: per-turn status, not work
                     continue
                 p = Path(dirpath) / name
+                if not count_mode and not _counts_as_work(f".planning/{p.relative_to(root).as_posix()}"):
+                    continue   # allow-list: a log or scratch file under .planning is not an artifact
                 rows.append(f"{p.relative_to(root).as_posix()}:{p.stat().st_size}")
     except OSError:
         return ""

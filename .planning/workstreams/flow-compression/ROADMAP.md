@@ -74,3 +74,15 @@ UNKNOWN / INCONCLUSIVE are never PASS. Every new gate gets a mutation drill that
 **Depends on**: Phase 7
 - KV incident per bug found; UKDL HR/PR/Traps without duplicating stronger laws; CBR only for proven items with
   fresh-inheritance proof; red team per the Owner prompt; S8 work-stealing activation predicate recorded.
+
+### Phase 9: Red-team gap closure (claims 8 and 12)
+**Depends on**: Phase 8
+- Claim 8: the progress fingerprint must not move for the three BREACH cases of 08-REDTEAM (root
+  `RESUMPTION_FILE.md`-only edit, tracked junk file, untracked test log) while the six HELD cases stay held AND
+  real work still moves it (code under tools/, a new untracked source file, .planning PLAN/SUMMARY/VERIFICATION):
+  a positive control is mandatory, because a blind fingerprint already caused a false no_progress halt
+  (m-3d5f0a27e41d). Keep the `CPP_PROGRESS_BOOKKEEPING=count` kill switch.
+- Claim 12: the replay headline is bounded: an open mission ends at its last row, not at the pin, and the open count
+  and the unobserved tail are reported beside the figure, never folded into it.
+- Re-run the red team for claims 8 and 12: both must turn HELD with their controls still firing; regenerate
+  08-REPORT / the done gate; update the breach incident's Repair section.

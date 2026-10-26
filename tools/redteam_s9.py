@@ -636,6 +636,11 @@ def _g(repo, *args):
     return r.stdout
 
 
+# Real work the fingerprint MUST still see (a blind fingerprint already caused a false no_progress halt, m-3d5f0a27e41d).
+C8_WORK_CASES = ("real_code_change", "code_under_tools", "new_untracked_source", "planning_plan", "planning_summary",
+                 "planning_verification")
+
+
 def _c8_repo(td: Path) -> Path:
     repo = td / "repo"
     (repo / ".planning" / "workstreams" / "x").mkdir(parents=True)
@@ -677,6 +682,20 @@ def _c8_apply(repo: Path, case: str) -> None:
     elif case == "real_code_change":
         (repo / "app.py").write_text("print('v2')\n", encoding="utf-8")
         _g(repo, "add", "-A"), _g(repo, "commit", "-q", "-m", "feat")
+    elif case == "code_under_tools":
+        (repo / "tools").mkdir(exist_ok=True)
+        (repo / "tools" / "run.py").write_text("print('tool')\n", encoding="utf-8")
+        _g(repo, "add", "-A"), _g(repo, "commit", "-q", "-m", "tool")
+    elif case == "new_untracked_source":
+        (repo / "newmod.py").write_text("X = 1\n", encoding="utf-8")
+    elif case == "planning_plan":
+        (ws / "01-01-PLAN.md").write_text("# plan\n", encoding="utf-8")
+        _g(repo, "add", "-A"), _g(repo, "commit", "-q", "-m", "plan")
+    elif case == "planning_summary":
+        (ws / "01-01-SUMMARY.md").write_text("# summary\n", encoding="utf-8")
+    elif case == "planning_verification":
+        (ws / "01-VERIFICATION.md").write_text("# verification\n", encoding="utf-8")
+        _g(repo, "add", "-A"), _g(repo, "commit", "-q", "-m", "verification")
     else:
         raise ValueError(case)
 
@@ -715,16 +734,25 @@ def attack_8(ctx) -> list[dict]:
     import gsd_mission as gm
     import mission_spend as ms
     base = c8_cases(gm, ms, C8_CASES)
-    real = c8_cases(gm, ms, ("real_code_change",))["real_code_change"]
-    ctl = c8_cases(gm, ms, ("state_md_only",), bookkeeping_count=True)["state_md_only"]
+    work = c8_cases(gm, ms, C8_WORK_CASES)
+    real = work["real_code_change"]
+    ctl_all = c8_cases(gm, ms, ("state_md_only", "tracked_junk_file", "untracked_test_log", "resumption_file_md_only"),
+                       bookkeeping_count=True)
+    ctl = ctl_all["state_md_only"]
     gamed = sorted(c for c, v in base.items() if v["moved"] and v["renewal_granted"])
-    ev = {"cases": base, "gamed_cases": gamed, "real_code_change": real,
+    blind = sorted(c for c, v in work.items() if not (v["moved"] and v["renewal_granted"]))
+    ev = {"cases": base, "gamed_cases": gamed, "real_code_change": real, "work_cases": work, "blind_cases": blind,
           "control_count_mode_state_md_only_moved": ctl["moved"],
+          "control_count_mode_noise_moved": sorted(c for c, v in ctl_all.items() if v["moved"]),
           "bound_on_damage": {"lease_max_renewals": ms.LEASE_MAX_RENEWALS, "ceiling": "authority less closeout reserve (claim 7)"},
-          "unmeasured_cases": sorted(c for c, v in base.items() if not v["measured"])}
-    fired = bool(ctl["moved"])
+          "unmeasured_cases": sorted(c for c, v in list(base.items()) + list(work.items()) if not v["measured"])}
+    fired = bool(ctl["moved"]) and all(ctl_all[c]["moved"] for c in ("tracked_junk_file", "untracked_test_log", "resumption_file_md_only"))
     quiet = bool(real["moved"] and real["renewal_granted"]) and not base["state_md_only"]["moved"]
-    cmd = "gsd_mission.progress_fingerprint before/after 9 noise cases in temp git repos + mission_spend.judge; CPP_PROGRESS_BOOKKEEPING=count control"
+    cmd = ("gsd_mission.progress_fingerprint before/after 9 noise cases and 6 real-work cases in temp git repos + mission_spend.judge; "
+           "CPP_PROGRESS_BOOKKEEPING=count control")
+    if blind:
+        return [result("noise-cases", BREACH, "GEX44-temp-copy", ev, control_fired=fired, negative_quiet=quiet,
+                       reason=f"real work does not move the fingerprint (a blind fingerprint): {', '.join(blind)}", command=cmd)]
     if gamed:
         return [result("noise-cases", BREACH, "GEX44-temp-copy", ev, control_fired=fired, negative_quiet=quiet,
                        reason=f"content-free change moves the fingerprint and is granted a lease renewal: {', '.join(gamed)}",
@@ -1369,26 +1397,57 @@ def _c12_seed(with_terminals: bool) -> tuple[list[dict], float]:
 def attack_12(ctx) -> list[dict]:
     pin_end = max(t for t in (_c12_ts(r.get("ts")) for r in ctx.rows) if t is not None)
     real = c12_bias(ctx.rows, pin_end)
-    acct = ctx.fr.time_accounting(ctx.rows, {})["summed_mission_hours"]
+    fr = ctx.fr
+    acct = fr.time_accounting(ctx.rows, {})["summed_mission_hours"]
     seeded_full, seeded_cut = c12_bias(*_c12_seed(True)), c12_bias(*_c12_seed(False))
     rep = load_replay(ctx)["raw"]
     vt = (rep.get("verdict_totals") or {}).get("data") or {}
     measured, apart = sum((vt.get("measured") or {}).values()), vt.get("unmeasured_apart")
     cov = (rep.get("coverage") or {}).get("data") or {}
-    tol = ctx.fr.FAITHFUL_TOL
-    agrees = abs(real["headline_h"] - acct["hours"]) <= 0.01 * acct["hours"]
-    breach = real["bias_ratio"] is not None and real["bias_ratio"] > tol
-    ev = {"independent": real, "flow_replay_summed_h": acct["hours"], "independent_matches_flow_replay": agrees,
+    tol = fr.FAITHFUL_TOL
+    # The guard: flow_replay's figure is the BOUNDED one (open missions end at their last row), and the open count
+    # and the unobserved tail sit BESIDE it. Breach = any of the three is missing or folded back into the figure.
+    judged = c12_judge(acct, real, tol)
+    breach = judged["breach"]
+    # Control (guard removed): the pre-repair windows end every open mission at the pin. The same judge must breach.
+    orig_windows = fr.mission_windows
+
+    def pin_ended(rows, end_of_pin):
+        out = orig_windows(rows, end_of_pin)
+        for w in out.values():
+            if w.get("open_at_pin"):
+                w["end"], w["unobserved_tail_s"] = end_of_pin, 0.0
+        return out
+    with attr_patch(fr, "mission_windows", pin_ended):
+        mutant_acct = fr.time_accounting(ctx.rows, {})["summed_mission_hours"]
+    mutant = c12_judge(mutant_acct, real, tol)
+    seeded_fr = {k: v for k, v in fr.time_accounting(*_c12_seed(False)[:1], {})["summed_mission_hours"].items()
+                 if k in ("hours", "open_at_pin", "unobserved_tail_hours")}
+    ev = {"independent": real, "flow_replay_summed_h": acct["hours"], "independent_matches_flow_replay": judged["bounded_ok"],
+          "flow_replay_beside": {k: acct.get(k) for k in ("open_at_pin", "open_hours_bounded_at_last_row", "unobserved_tail_hours")},
+          "judged": judged, "guard_removed_pin_ended": {"summed_h": mutant_acct["hours"], **mutant},
+          "seeded_terminals_removed_flow_replay": seeded_fr,
           "tolerance": tol, "bias_exceeds_tolerance": breach,
           "unmeasured_kept_apart": {"measured_total": measured, "unmeasured_apart": apart,
                                     "rows_mapped_of_total": [cov.get("mapped_to_slice"), cov.get("failure_rows_total")]},
           "seeded_complete": seeded_full, "seeded_terminals_removed": seeded_cut}
-    fired = seeded_full["bias_h"] == 0 and seeded_cut["bias_h"] == 9.0
+    fired = (seeded_full["bias_h"] == 0 and seeded_cut["bias_h"] == 9.0 and mutant["breach"] is True
+             and seeded_fr == {"hours": 11.0, "open_at_pin": 1, "unobserved_tail_hours": 9.0})
     return [result("missing-telemetry", BREACH if breach else HELD, "seeded", ev, control_fired=fired,
-                   negative_quiet=seeded_full["bias_h"] == 0 and agrees,
-                   reason=(f"summed mission-hours are {real['bias_h']} h over the bounded figure ({real['bias_ratio']:.0%}): "
-                           f"{real['open']} open missions are ended at the pin, not at their last row") if breach else None,
-                   command="recompute mission spans with my own terminal predicate; seeded complete ledger bias 0, terminals removed bias 9 h")]
+                   negative_quiet=seeded_full["bias_h"] == 0 and judged["bounded_ok"],
+                   reason=(f"flow_replay's summed mission-hours ({acct['hours']} h) are not the bounded figure "
+                           f"({real['bounded_h']} h) or hide the open count / unobserved tail: {judged}") if breach else None,
+                   command="recompute mission spans with my own terminal predicate; flow_replay's figure must be bounded with the open count and tail beside it; pin-ended windows are the control")]
+
+
+def c12_judge(acct: dict, real: dict, tol: float) -> dict:
+    """Independent verdict on flow_replay's summed-hours block against c12_bias: bounded figure, open count, tail beside it."""
+    close = lambda a, b: a is not None and b is not None and abs(a - b) <= tol * max(abs(b), 1e-9)   # noqa: E731
+    bounded_ok = close(acct.get("hours"), real["bounded_h"])
+    open_ok = acct.get("open_at_pin") == real["open"]
+    tail_ok = close(acct.get("unobserved_tail_hours"), real["bias_h"])
+    return {"breach": not (bounded_ok and open_ok and tail_ok), "bounded_ok": bounded_ok, "open_count_ok": open_ok,
+            "tail_beside_ok": tail_ok}
 
 
 # --------------------------------------------------------------------------------------------------- claim 3

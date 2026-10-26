@@ -586,9 +586,10 @@
    "reason": null,
    "subs": [
     {
-     "command": "gsd_mission.progress_fingerprint before/after 9 noise cases in temp git repos + mission_spend.judge; CPP_PROGRESS_BOOKKEEPING=count control",
+     "command": "gsd_mission.progress_fingerprint before/after 9 noise cases and 6 real-work cases in temp git repos + mission_spend.judge; CPP_PROGRESS_BOOKKEEPING=count control",
      "control_fired": true,
      "evidence": {
+      "blind_cases": [],
       "bound_on_damage": {
        "ceiling": "authority less closeout reserve (claim 7)",
        "lease_max_renewals": 20
@@ -616,8 +617,8 @@
        },
        "resumption_file_md_only": {
         "measured": true,
-        "moved": true,
-        "renewal_granted": true
+        "moved": false,
+        "renewal_granted": false
        },
        "resumption_md_only": {
         "measured": true,
@@ -631,36 +632,70 @@
        },
        "tracked_junk_file": {
         "measured": true,
-        "moved": true,
-        "renewal_granted": true
+        "moved": false,
+        "renewal_granted": false
        },
        "untracked_test_log": {
         "measured": true,
-        "moved": true,
-        "renewal_granted": true
+        "moved": false,
+        "renewal_granted": false
        }
       },
-      "control_count_mode_state_md_only_moved": true,
-      "gamed_cases": [
+      "control_count_mode_noise_moved": [
        "resumption_file_md_only",
+       "state_md_only",
        "tracked_junk_file",
        "untracked_test_log"
       ],
+      "control_count_mode_state_md_only_moved": true,
+      "gamed_cases": [],
       "real_code_change": {
        "measured": true,
        "moved": true,
        "renewal_granted": true
       },
-      "unmeasured_cases": []
+      "unmeasured_cases": [],
+      "work_cases": {
+       "code_under_tools": {
+        "measured": true,
+        "moved": true,
+        "renewal_granted": true
+       },
+       "new_untracked_source": {
+        "measured": true,
+        "moved": true,
+        "renewal_granted": true
+       },
+       "planning_plan": {
+        "measured": true,
+        "moved": true,
+        "renewal_granted": true
+       },
+       "planning_summary": {
+        "measured": true,
+        "moved": true,
+        "renewal_granted": true
+       },
+       "planning_verification": {
+        "measured": true,
+        "moved": true,
+        "renewal_granted": true
+       },
+       "real_code_change": {
+        "measured": true,
+        "moved": true,
+        "renewal_granted": true
+       }
+      }
      },
      "name": "noise-cases",
      "negative_control_quiet": true,
      "plane": "GEX44-temp-copy",
-     "reason": "content-free change moves the fingerprint and is granted a lease renewal: resumption_file_md_only, tracked_junk_file, untracked_test_log",
-     "verdict": "BREACH"
+     "reason": null,
+     "verdict": "HELD"
     }
    ],
-   "verdict": "BREACH"
+   "verdict": "HELD"
   },
   {
    "claim": "Night readiness asks too many Owner questions.",
@@ -883,11 +918,23 @@
    "reason": null,
    "subs": [
     {
-     "command": "recompute mission spans with my own terminal predicate; seeded complete ledger bias 0, terminals removed bias 9 h",
+     "command": "recompute mission spans with my own terminal predicate; flow_replay's figure must be bounded with the open count and tail beside it; pin-ended windows are the control",
      "control_fired": true,
      "evidence": {
-      "bias_exceeds_tolerance": true,
-      "flow_replay_summed_h": 27483.911,
+      "bias_exceeds_tolerance": false,
+      "flow_replay_beside": {
+       "open_at_pin": 92,
+       "open_hours_bounded_at_last_row": 874.328,
+       "unobserved_tail_hours": 25831.952
+      },
+      "flow_replay_summed_h": 1651.959,
+      "guard_removed_pin_ended": {
+       "bounded_ok": false,
+       "breach": true,
+       "open_count_ok": true,
+       "summed_h": 27483.911,
+       "tail_beside_ok": false
+      },
       "independent": {
        "bias_h": 25831.952,
        "bias_ratio": 15.232,
@@ -897,6 +944,12 @@
        "open": 92
       },
       "independent_matches_flow_replay": true,
+      "judged": {
+       "bounded_ok": true,
+       "breach": false,
+       "open_count_ok": true,
+       "tail_beside_ok": true
+      },
       "seeded_complete": {
        "bias_h": 0.0,
        "bias_ratio": 0.0,
@@ -913,6 +966,11 @@
        "missions": 2,
        "open": 1
       },
+      "seeded_terminals_removed_flow_replay": {
+       "hours": 11.0,
+       "open_at_pin": 1,
+       "unobserved_tail_hours": 9.0
+      },
       "tolerance": 0.1,
       "unmeasured_kept_apart": {
        "measured_total": 249,
@@ -926,11 +984,11 @@
      "name": "missing-telemetry",
      "negative_control_quiet": true,
      "plane": "seeded",
-     "reason": "summed mission-hours are 25831.952 h over the bounded figure (1523%): 92 open missions are ended at the pin, not at their last row",
-     "verdict": "BREACH"
+     "reason": null,
+     "verdict": "HELD"
     }
    ],
-   "verdict": "BREACH"
+   "verdict": "HELD"
   },
   {
    "claim": "The efficiency compiler optimizes aggregate mission-hours rather than the actual critical path.",
@@ -1089,7 +1147,7 @@
   }
  ],
  "command": "python3 tools/redteam_s9.py run --pin .planning/workstreams/flow-compression/phases/07-s7-historical-replay-champion-challenger/07-PIN.json --claims all --json .planning/workstreams/flow-compression/phases/08-s9-knowledge-vault-ukdl-cbr-red-team-master-done-gate/08-REDTEAM.json --md .planning/workstreams/flow-compression/phases/08-s9-knowledge-vault-ukdl-cbr-red-team-master-done-gate/08-REDTEAM.md",
- "generated_at": "2026-10-25T17:47:24Z",
+ "generated_at": "2026-10-26T08:20:54Z",
  "host_writes_observed": [],
  "pin_rows": 6339,
  "pin_sha256": "b47ff018fb44766fb9e2add7b9e23276c18dc6c2ec84cb88d4709c82d95e2743",

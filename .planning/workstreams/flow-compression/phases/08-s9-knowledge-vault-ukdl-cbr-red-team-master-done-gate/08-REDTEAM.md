@@ -15,11 +15,11 @@ Verdicts are HELD / BREACH / UNMEASURED. HELD means the attack failed on the rea
 | 5 | Immutable packets become stale too quickly. | **UNMEASURED** | seeded | packet-staleness=UNMEASURED |
 | 6 | Admission reservation causes deadlocks or resource hoarding. | **HELD** | GEX44-host-readonly, repo-artefact, seeded | primitive-sweep=HELD; hoarding=HELD; deadlock=HELD |
 | 7 | Auto-renew allows runaway cost. | **HELD** | GEX44-temp-copy | renew-loop=HELD |
-| 8 | The semantic progress signal can be gamed by noisy commits or tests. | **BREACH** | GEX44-temp-copy | noise-cases=BREACH |
+| 8 | The semantic progress signal can be gamed by noisy commits or tests. | **HELD** | GEX44-temp-copy | noise-cases=HELD |
 | 9 | Night readiness asks too many Owner questions. | **HELD** | GEX44-host-readonly | decisions-sweep=HELD; production-frequency=UNMEASURED |
 | 10 | The terminal reconciler creates false DONE. | **HELD** | GEX44-host-readonly, GEX44-temp-copy | crafted-receipts=HELD; host-evidence=UNMEASURED |
 | 11 | Blocked work stealing violates dependency or workspace ownership. | **HELD** | GEX44-host-readonly, repo-artefact | no-stealing-code=HELD; predicate=HELD |
-| 12 | Historical replay is biased by missing telemetry. | **BREACH** | seeded | missing-telemetry=BREACH |
+| 12 | Historical replay is biased by missing telemetry. | **HELD** | seeded | missing-telemetry=HELD |
 | 13 | The efficiency compiler optimizes aggregate mission-hours rather than the actual critical path. | **HELD** | repo-artefact, seeded | subject=HELD; objective-sweep=HELD; seeded-serialization=HELD |
 | 14 | GSD X policy leaked into GSD Core. | **HELD** | GEX44-host-readonly, repo-artefact | branch-diff=HELD; host-core=HELD |
 | 15 | (claim text absent from the repo) | **UNMEASURED** | repo-artefact | claim-text-search=UNMEASURED |
@@ -86,19 +86,11 @@ Verdict: **HELD**
   - evidence: `{"authority_lapsed_at_call_10": {"cap": 9999000000, "final_spent": 17964, "over_cap_no_trip": 0, "renew_after_lapse": 0, "renewals": 4, "tripped_at": 11, "trips": 1}, "base": {"cap": 9999000000, "final_spent": 79550930, "over_cap_no_trip": 0, "renew_after_lapse": 0, "renewals": 20, "tripped_at": 43, "trips": 1}, "control_expand_authority_over_cap_calls": 39, "control_lease_cap_removed_renewals": 30, "control_seq_ignored_grants": 30, "lease_max_renewals": 20, "topup": {"grants_for_one_hold": 1, "second_hold_at_max_refused": true, "terminal_is_none": true}}`
 
 ## Claim 8: The semantic progress signal can be gamed by noisy commits or tests.
-Verdict: **BREACH**
+Verdict: **HELD**
 
-- `noise-cases` BREACH [GEX44-temp-copy] control_fired=True negative_quiet=True reason: content-free change moves the fingerprint and is granted a lease renewal: resumption_file_md_only, tracked_junk_file, untracked_test_log
-  - command: `gsd_mission.progress_fingerprint before/after 9 noise cases in temp git repos + mission_spend.judge; CPP_PROGRESS_BOOKKEEPING=count control`
-  - evidence: `{"bound_on_damage": {"ceiling": "authority less closeout reserve (claim 7)", "lease_max_renewals": 20}, "cases": {"amend_identical_tree": {"measured": true, "moved": false, "renewal_granted": false}, "empty_commit": {"measured": true, "moved": false, "renewal_granted": false}, "gitignored_dir_file": {"measured": true, "moved": false, "renewal_granted": false}, "mtime_only": {"measured": true, "moved": false, "renewal_granted": false}, "resumption_file_md_only": {"measured": true, "moved": true, "renewal_granted": true}, "resumption_md_only": {"measured": true, "moved": false, "renewal_granted": false}, "state_md_only": {"measured": true, "moved": false, "renewal_granted": false}, "tracked_ju`
-
-### FC-12 incident draft (claim 8)
-- symptom: content-free change moves the fingerprint and is granted a lease renewal: resumption_file_md_only, tracked_junk_file, untracked_test_log
-- root cause: see the evidence above
-- earliest discoverable point: the red-team attack named above, runnable at any commit
-- repair: none in this plan; a gap-closure plan owns repairs
-- test: the V-S9RT-C08 gates
-- pattern: a guard asserted by prose and never attacked
+- `noise-cases` HELD [GEX44-temp-copy] control_fired=True negative_quiet=True
+  - command: `gsd_mission.progress_fingerprint before/after 9 noise cases and 6 real-work cases in temp git repos + mission_spend.judge; CPP_PROGRESS_BOOKKEEPING=count control`
+  - evidence: `{"blind_cases": [], "bound_on_damage": {"ceiling": "authority less closeout reserve (claim 7)", "lease_max_renewals": 20}, "cases": {"amend_identical_tree": {"measured": true, "moved": false, "renewal_granted": false}, "empty_commit": {"measured": true, "moved": false, "renewal_granted": false}, "gitignored_dir_file": {"measured": true, "moved": false, "renewal_granted": false}, "mtime_only": {"measured": true, "moved": false, "renewal_granted": false}, "resumption_file_md_only": {"measured": true, "moved": false, "renewal_granted": false}, "resumption_md_only": {"measured": true, "moved": false, "renewal_granted": false}, "state_md_only": {"measured": true, "moved": false, "renewal_granted"`
 
 ## Claim 9: Night readiness asks too many Owner questions.
 Verdict: **HELD**
@@ -131,19 +123,11 @@ Verdict: **HELD**
   - evidence: `{"action_without_independent_work_true": false, "independent_work_true_without_action": false, "pin_rows": 6339, "pinned_prefix": {"blocked_rows": 55, "blocked_with_independent_work_true": 0, "incidents": 0, "value": false}, "seeded_qualifying": true}`
 
 ## Claim 12: Historical replay is biased by missing telemetry.
-Verdict: **BREACH**
+Verdict: **HELD**
 
-- `missing-telemetry` BREACH [seeded] control_fired=True negative_quiet=True reason: summed mission-hours are 25831.952 h over the bounded figure (1523%): 92 open missions are ended at the pin, not at their last row
-  - command: `recompute mission spans with my own terminal predicate; seeded complete ledger bias 0, terminals removed bias 9 h`
-  - evidence: `{"bias_exceeds_tolerance": true, "flow_replay_summed_h": 27483.911, "independent": {"bias_h": 25831.952, "bias_ratio": 15.232, "bounded_h": 1695.94, "headline_h": 27527.892, "missions": 148, "open": 92}, "independent_matches_flow_replay": true, "seeded_complete": {"bias_h": 0.0, "bias_ratio": 0.0, "bounded_h": 12.0, "headline_h": 12.0, "missions": 2, "open": 0}, "seeded_terminals_removed": {"bias_h": 9.0, "bias_ratio": 0.818, "bounded_h": 11.0, "headline_h": 20.0, "missions": 2, "open": 1}, "tolerance": 0.1, "unmeasured_kept_apart": {"measured_total": 249, "rows_mapped_of_total": [588, 3400], "unmeasured_apart": 17}}`
-
-### FC-12 incident draft (claim 12)
-- symptom: summed mission-hours are 25831.952 h over the bounded figure (1523%): 92 open missions are ended at the pin, not at their last row
-- root cause: see the evidence above
-- earliest discoverable point: the red-team attack named above, runnable at any commit
-- repair: none in this plan; a gap-closure plan owns repairs
-- test: the V-S9RT-C12 gates
-- pattern: a guard asserted by prose and never attacked
+- `missing-telemetry` HELD [seeded] control_fired=True negative_quiet=True
+  - command: `recompute mission spans with my own terminal predicate; flow_replay's figure must be bounded with the open count and tail beside it; pin-ended windows are the control`
+  - evidence: `{"bias_exceeds_tolerance": false, "flow_replay_beside": {"open_at_pin": 92, "open_hours_bounded_at_last_row": 874.328, "unobserved_tail_hours": 25831.952}, "flow_replay_summed_h": 1651.959, "guard_removed_pin_ended": {"bounded_ok": false, "breach": true, "open_count_ok": true, "summed_h": 27483.911, "tail_beside_ok": false}, "independent": {"bias_h": 25831.952, "bias_ratio": 15.232, "bounded_h": 1695.94, "headline_h": 27527.892, "missions": 148, "open": 92}, "independent_matches_flow_replay": true, "judged": {"bounded_ok": true, "breach": false, "open_count_ok": true, "tail_beside_ok": true}, "seeded_complete": {"bias_h": 0.0, "bias_ratio": 0.0, "bounded_h": 12.0, "headline_h": 12.0, "missio`
 
 ## Claim 13: The efficiency compiler optimizes aggregate mission-hours rather than the actual critical path.
 Verdict: **HELD**

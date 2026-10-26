@@ -50,8 +50,7 @@ measured them against an adversary.
 
 ## Repair
 
-None in phase 8. Owner: a gap-closure plan (claim 8: fingerprint over an allow-listed content set; claim 12:
-headline bounded or labelled per open mission). The breaches are recorded, not hidden.
+Phase 9 (2026-10-26, commit 111f7ac8): claim 8, the fingerprint reads an allow-listed content set (`_counts_as_work`) with RESUMPTION_FILE.md as bookkeeping anywhere; claim 12, an open mission ends at its last row and the open count and unobserved tail are reported beside the figure. Both re-attacked: HELD, controls firing (test_s9_redteam 114/114).
 
 ## Test
 

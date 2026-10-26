@@ -233,14 +233,19 @@ def gate_c8():
     cases = e["cases"]
     ctl = e["control_count_mode_state_md_only_moved"] is True and not cases["state_md_only"]["moved"] \
         and e["real_code_change"]["moved"] and e["real_code_change"]["renewal_granted"] \
+        and not e["blind_cases"] and sorted(e["work_cases"]) == sorted(["real_code_change", "code_under_tools", "new_untracked_source", "planning_plan", "planning_summary", "planning_verification"]) \
+        and all(v["moved"] and v["renewal_granted"] for v in e["work_cases"].values()) \
+        and e["control_count_mode_noise_moved"] == sorted(["state_md_only", "tracked_junk_file", "untracked_test_log", "resumption_file_md_only"]) \
         and s["control_fired"] is True and s["negative_control_quiet"] is True
     check("V-S9RT-C8-CONTROLS", ctl, f"count mode moves the STATE.md-only fingerprint ({e['control_count_mode_state_md_only_moved']}); "
           f"a real code change moves it and renews ({e['real_code_change']['renewal_granted']})")
     six = ["empty_commit", "amend_identical_tree", "state_md_only", "resumption_file_md_only", "resumption_md_only",
            "tracked_junk_file", "untracked_test_log", "gitignored_dir_file", "mtime_only"]
     check("V-S9RT-C8-SUBJECT", sorted(cases) == sorted(six) and not e["unmeasured_cases"]
-          and (c["verdict"] == "BREACH") == bool(e["gamed_cases"]) and (not e["gamed_cases"] or c["verdict"] == "BREACH"),
-          f"{len(cases)} noise cases through the real progress_fingerprint and judge; gamed={e['gamed_cases']}; verdict {c['verdict']}")
+          and (c["verdict"] == "BREACH") == bool(e["gamed_cases"] or e["blind_cases"])
+          and c["verdict"] == "HELD" and not e["gamed_cases"] and not e["blind_cases"],
+          f"{len(cases)} noise cases and {len(e['work_cases'])} real-work cases through the real progress_fingerprint and judge; "
+          f"gamed={e['gamed_cases']} blind={e['blind_cases']}; verdict {c['verdict']}")
 
 
 def gate_c4():
@@ -330,12 +335,21 @@ def gate_c12():
     c = run(12)
     ms = sub(12, "missing-telemetry")
     e = ms["evidence"]
-    check("V-S9RT-C12-CONTROLS", ms["control_fired"] is True and e["seeded_complete"]["bias_h"] == 0.0 and e["seeded_terminals_removed"]["bias_h"] == 9.0,
-          f"a fully telemetered seeded ledger has bias {e['seeded_complete']['bias_h']} h; the same ledger without terminal rows has {e['seeded_terminals_removed']['bias_h']} h")
+    g = e["guard_removed_pin_ended"]
+    check("V-S9RT-C12-CONTROLS", ms["control_fired"] is True and e["seeded_complete"]["bias_h"] == 0.0 and e["seeded_terminals_removed"]["bias_h"] == 9.0
+          and g["breach"] is True and g["summed_h"] > 20000
+          and e["seeded_terminals_removed_flow_replay"] == {"hours": 11.0, "open_at_pin": 1, "unobserved_tail_hours": 9.0},
+          f"a fully telemetered seeded ledger has bias {e['seeded_complete']['bias_h']} h; the same ledger without terminal rows has "
+          f"{e['seeded_terminals_removed']['bias_h']} h; pin-ended windows (guard removed) read {g['summed_h']} h and breach={g['breach']}; "
+          f"repaired flow_replay on the cut ledger {e['seeded_terminals_removed_flow_replay']}")
     i = e["independent"]
-    check("V-S9RT-C12-SUBJECT", c["verdict"] == "BREACH" and i["open"] >= 50 and i["bias_h"] > 20000 and e["independent_matches_flow_replay"] is True
+    b = e["flow_replay_beside"]
+    check("V-S9RT-C12-SUBJECT", c["verdict"] == "HELD" and i["open"] >= 50 and e["independent_matches_flow_replay"] is True
+          and e["judged"] == {"breach": False, "bounded_ok": True, "open_count_ok": True, "tail_beside_ok": True}
+          and e["flow_replay_summed_h"] < 0.5 * i["headline_h"] and b["open_at_pin"] == i["open"] and b["unobserved_tail_hours"] > 20000
           and e["unmeasured_kept_apart"]["unmeasured_apart"] == 17 and e["unmeasured_kept_apart"]["measured_total"] == 249,
-          f"headline {i['headline_h']} h vs bounded {i['bounded_h']} h over {i['open']} open missions; unmeasured kept apart {e['unmeasured_kept_apart']}; verdict {c['verdict']}")
+          f"flow_replay {e['flow_replay_summed_h']} h vs independent bounded {i['bounded_h']} h (pin-ended {i['headline_h']} h) with open={b['open_at_pin']} "
+          f"and unobserved tail {b['unobserved_tail_hours']} h beside it; unmeasured kept apart {e['unmeasured_kept_apart']}; verdict {c['verdict']}")
 
 
 def gate_c3():
@@ -496,7 +510,8 @@ MUTATIONS: dict[str, list[tuple[str, str]]] = {
     "M-C15-FILES-NONE": [("for rel in _C15_FILES if (ROOT / rel).is_file()}", "for rel in _C15_FILES if False}")],
     "M-C12-TERMINAL-BLIND": [('            m["terminal"] = True', '            m["terminal"] = False')],
     "M-C12-OPEN-AT-LAST": [('(m["last"] if m["terminal"] else pin_end) - m["first"]', 'm["last"] - m["first"]')],
-    "M-C12-TOL-HUGE": [('real["bias_ratio"] > tol', 'real["bias_ratio"] > 1e9')],
+    "M-C12-TOL-HUGE": [('    tol = fr.FAITHFUL_TOL\n    # The guard', '    tol = 1e9\n    # The guard')],
+    "M-C12-JUDGE-BLIND": [('"breach": not (bounded_ok and open_ok and tail_ok)', '"breach": False')],
     "M-C3-CTL-OFF": [('fired = seeded_fixed["span_delta_s"] == 0 and seeded_notify["span_delta_s"] == -900.0', 'fired = False')],
     "M-C3-EXO-BLIND": [('exo = last.get("event") == "mission_halted" and', 'exo = False and')],
     "M-C5-CTL-OFF": [("    fired = fast[\"share\"] >= C5_SHARE > slow[\"share\"] and untimed[\"share\"] is None", "    fired = False")],
@@ -536,7 +551,8 @@ MUTATIONS: dict[str, list[tuple[str, str]]] = {
                             'C10_CASES = ("measured_key", "divergent_values", "other_mission_receipt", "epoch_mismatch", "not_done")')],
     "M-C7-MUTANT-OFF": [('fr.mutant_scope("expand-authority")', 'fr.mutant_scope("never-rotate")')],
     "M-C7-LOOP-SHORT": [("C7_CALLS = 10_000_000_000, 100", "C7_CALLS = 10_000_000_000, 3")],
-    "M-C8-CTL-OFF": [('c8_cases(gm, ms, ("state_md_only",), bookkeeping_count=True)', 'c8_cases(gm, ms, ("state_md_only",), bookkeeping_count=False)')],
+    "M-C8-CTL-OFF": [('                       bookkeeping_count=True)\n    ctl = ctl_all["state_md_only"]', '                       bookkeeping_count=False)\n    ctl = ctl_all["state_md_only"]')],
+    "M-C8-WORK-DROPPED": [('"new_untracked_source", "planning_plan", "planning_summary",\n                 "planning_verification")', '"new_untracked_source", "planning_plan", "planning_summary")')],
     "M-C8-CASE-DROPPED": [('"tracked_junk_file", "untracked_test_log", "gitignored_dir_file", "mtime_only")\n\n\ndef _g', '"tracked_junk_file", "gitignored_dir_file", "mtime_only")\n\n\ndef _g')],
     "M-C4-CTL-OFF": [("    def stripping(data: bytes) -> bytes:\n        return data.strip()", "    def stripping(data: bytes) -> bytes:\n        return data")],
     "M-C4-ENTRIES-EMPTY": [('_C4_ENTRIES = ("arm_preflight", "arm_chain", "arm", "arm_mission", "plan_next", "supervise", "supervisor_pass")', '_C4_ENTRIES = ("zz_none",)')],
@@ -568,7 +584,7 @@ MUTANT_FOR: dict[str, list[str]] = {
     "V-S9RT-C10-SUBJECT": ["M-C10-HOSTEVIDENCE-HELD"],
     "V-S9RT-C7-CONTROLS": ["M-C7-MUTANT-OFF"],
     "V-S9RT-C7-SUBJECT": ["M-C7-LOOP-SHORT"],
-    "V-S9RT-C8-CONTROLS": ["M-C8-CTL-OFF"],
+    "V-S9RT-C8-CONTROLS": ["M-C8-CTL-OFF", "M-C8-WORK-DROPPED"],
     "V-S9RT-C4-CONTROLS": ["M-C4-CTL-OFF", "M-C4-ENTRIES-EMPTY"],
     "V-S9RT-C4-SUBJECT": ["M-C4-FILES-FEW"],
     "V-S9RT-C9-CONTROLS": ["M-C9-CTL-OFF", "M-C9-SEED-DROPPED"],
@@ -595,8 +611,8 @@ MUTANT_FOR: dict[str, list[str]] = {
     "V-S9RT-C2-SUBJECT": ["M-C2-ROTATION-NONE"],
     "V-S9RT-C15-CONTROLS": ["M-C15-CTL-OFF", "M-C15-LIST-BLIND"],
     "V-S9RT-C15-SUBJECT": ["M-C15-FILES-NONE"],
-    "V-S9RT-C12-CONTROLS": ["M-C12-TERMINAL-BLIND", "M-C12-OPEN-AT-LAST"],
-    "V-S9RT-C12-SUBJECT": ["M-C12-TOL-HUGE"],
+    "V-S9RT-C12-CONTROLS": ["M-C12-TERMINAL-BLIND", "M-C12-OPEN-AT-LAST", "M-C12-TOL-HUGE", "M-C12-JUDGE-BLIND"],
+    "V-S9RT-C12-SUBJECT": ["M-C12-TERMINAL-BLIND", "M-C12-OPEN-AT-LAST"],
 }
 UNMUTATED: dict[str, str] = {
     "V-S9RT-NO-PASS-TOKEN": "it reads verdicts of a real run; the closed-set widening is pinned red by V-S9RT-CLOSED-SET under M-VERDICT-SET-WIDENED",

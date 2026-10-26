@@ -14704,11 +14704,10 @@
       "critical_path_wall_clock_hours": {
         "basis": "ledger_lineage",
         "chain": [
-          "m-1fb7263df86b",
-          "m-eaf2843afb16"
+          "m-f011d7fdebc9"
         ],
-        "chain_len": 2,
-        "hours": 516.808,
+        "chain_len": 1,
+        "hours": 323.921,
         "unmeasured": []
       },
       "definitions": {
@@ -14716,11 +14715,15 @@
         "summed_mission_hours": "sum over missions of (end - start); concurrent missions add",
         "wall_clock_hours": "first launch to last row of the window as one interval"
       },
+      "regenerated": "phase 9 (red-team claim 12): this section only, from flow_replay.time_accounting at the 07 pin; every other section is the phase-7 output, left as committed because host records have drifted since (unmeasured_apart 17 -> 18) and gates pin them",
       "summed_mission_hours": {
-        "hours": 27483.911,
+        "basis": "open missions end at their last row; the unobserved tail is not part of hours",
+        "hours": 1651.959,
         "left_out": [],
         "missions": 148,
-        "open_at_pin": 92
+        "open_at_pin": 92,
+        "open_hours_bounded_at_last_row": 874.328,
+        "unobserved_tail_hours": 25831.952
       },
       "wall_clock_hours": {
         "from": "2026-09-25T09:52:05+00:00",

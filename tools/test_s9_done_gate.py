@@ -107,22 +107,24 @@ check("V-S9-EXIT-UNEXPLAINED", v["status"] == "FAIL", f"{v}")
 SEAL_FM = ("---\nphase: 08-s9-knowledge-vault-ukdl-cbr-red-team-master-done-gate\nverified: 2026-10-25T20:00:00Z\n"
            "status: {status}\nscore: \"control\"\n---\n\n# control verification\n")
 seal_out = {}
+# Every phase of the workstream, not a literal 8: phase 9 (red-team gap closure) made the literal stale.
+TOTAL = sum(1 for d in PHASE.parent.iterdir() if d.is_dir() and d.name[:2].isdigit())
 with tempfile.TemporaryDirectory(prefix="s9-seal-") as td:
     for status in ("passed", "gaps_found"):
         root = Path(td) / status
         shutil.copytree(ROOT / ".planning", root / ".planning", ignore=shutil.ignore_patterns("*.out"))
         (root / ".planning/workstreams/flow-compression/phases" / PHASE.name / "08-VERIFICATION.md").write_text(
             SEAL_FM.format(status=status), encoding="utf-8")
-        seal_out[status] = (root, dg.seal_check(root, 8), dg.seal_progress(root))
+        seal_out[status] = (root, dg.seal_check(root, TOTAL), dg.seal_progress(root))
 root8, (code8, msg8), prog8 = seal_out["passed"]
 root7, (code7, msg7), prog7 = seal_out["gaps_found"]
-check("V-S9-SEAL-CONTROL-8", prog8["completed_count"] == 8 and code8 == 0, f"{msg8}")
-check("V-S9-SEAL-CONTROL-7", prog7["completed_count"] == 7 and code7 != 0, f"{msg7}")
+check("V-S9-SEAL-CONTROL-8", prog8["completed_count"] == TOTAL and code8 == 0, f"{msg8}")
+check("V-S9-SEAL-CONTROL-7", prog7["completed_count"] == TOTAL - 1 and code7 != 0, f"{msg7}")
 check("V-S9-SEAL-ROOT-IS-TEMP", prog8["project_root"] == str(root8) and prog7["project_root"] == str(root7)
       and str(ROOT) not in (prog8["project_root"], prog7["project_root"]), f"{prog8['project_root']} | {prog7['project_root']}")
-real_code, real_msg = dg.seal_check(ROOT, 8)
+real_code, real_msg = dg.seal_check(ROOT, TOTAL)
 check("V-S9-SEAL-REAL-PENDING", real_code in (0, 2), f"{real_msg}")
-w_code, w_msg = dg.seal_check(Path(tempfile.gettempdir()), 8)
+w_code, w_msg = dg.seal_check(Path(tempfile.gettempdir()), TOTAL)
 check("V-S9-SEAL-WRONG-ROOT-REFUSED", w_code != 0 and "SEAL_OK" not in w_msg, f"{w_msg}")
 
 
