@@ -1,0 +1,361 @@
+{
+  "valid_sessions": 7,
+  "excluded_floor_unknown": [
+    "e3375b9a"
+  ],
+  "mean_floor": 110190,
+  "named_estimate_sum": 55393,
+  "unattributed_mean": 54797,
+  "unattributed_pct": 49.7,
+  "sessions": [
+    {
+      "sid": "3beeecf5",
+      "repo": "Users-User-Apps-mcp-video-analyzer",
+      "calls": 134,
+      "floor": 109953,
+      "hooks_timed_out": []
+    },
+    {
+      "sid": "af5891a4",
+      "repo": "Users-User-Apps-mcp-video-analyzer",
+      "calls": 185,
+      "floor": 101952,
+      "hooks_timed_out": [
+        {
+          "hook": "SessionStart:startup",
+          "event": "SessionStart",
+          "timeout_ms": 15000
+        }
+      ]
+    },
+    {
+      "sid": "e3375b9a",
+      "repo": "ser-Desktop-Cursor-Projects-Jacobo",
+      "calls": 69,
+      "floor": 0,
+      "hooks_timed_out": []
+    },
+    {
+      "sid": "5debf7f2",
+      "repo": "ser-Desktop-Cursor-Projects-Jacobo",
+      "calls": 213,
+      "floor": 84267,
+      "hooks_timed_out": [
+        {
+          "hook": "SessionStart:clear",
+          "event": "SessionStart",
+          "timeout_ms": 15000
+        },
+        {
+          "hook": "UserPromptSubmit",
+          "event": "UserPromptSubmit",
+          "timeout_ms": 15000
+        }
+      ]
+    },
+    {
+      "sid": "16bec9db",
+      "repo": "finityOps-17-Businesses-QuickLease",
+      "calls": 146,
+      "floor": 134543,
+      "hooks_timed_out": [
+        {
+          "hook": "SessionStart:startup",
+          "event": "SessionStart",
+          "timeout_ms": 15000
+        }
+      ]
+    },
+    {
+      "sid": "111a2bb7",
+      "repo": "finityOps-17-Businesses-QuickLease",
+      "calls": 101,
+      "floor": 112856,
+      "hooks_timed_out": []
+    },
+    {
+      "sid": "e797f26f",
+      "repo": "ft-Workspace-KobiiCraft-Core-Files",
+      "calls": 65,
+      "floor": 115181,
+      "hooks_timed_out": [
+        {
+          "hook": "SessionStart:clear",
+          "event": "SessionStart",
+          "timeout_ms": 10000
+        },
+        {
+          "hook": "SessionStart:clear",
+          "event": "SessionStart",
+          "timeout_ms": 10000
+        },
+        {
+          "hook": "SessionStart:clear",
+          "event": "SessionStart",
+          "timeout_ms": 15000
+        }
+      ]
+    },
+    {
+      "sid": "9b793013",
+      "repo": "ft-Workspace-KobiiCraft-Core-Files",
+      "calls": 289,
+      "floor": 112575,
+      "hooks_timed_out": []
+    }
+  ],
+  "sources": [
+    {
+      "source": "attachment:agent_listing_delta",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 10624,
+      "max": 14847
+    },
+    {
+      "source": "attachment:skill_listing",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 6693,
+      "max": 8361
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 5323,
+      "max": 5323
+    },
+    {
+      "source": "system_prompt(host)",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 2540,
+      "max": 3519
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+      "sessions": 2,
+      "repos": 1,
+      "mean_tokens_over_valid": 2461,
+      "max": 8613
+    },
+    {
+      "source": "user_prompt",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 2303,
+      "max": 15692
+    },
+    {
+      "source": "attachment:deferred_tools_delta",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 1945,
+      "max": 3204
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+      "sessions": 2,
+      "repos": 1,
+      "mean_tokens_over_valid": 1814,
+      "max": 6350
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 1738,
+      "max": 1738
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\memory\\MEMORY.md",
+      "sessions": 2,
+      "repos": 1,
+      "mean_tokens_over_valid": 1719,
+      "max": 6016
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 1694,
+      "max": 1694
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 1654,
+      "max": 1654
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\MEMORY.md",
+      "sessions": 2,
+      "repos": 1,
+      "mean_tokens_over_valid": 1565,
+      "max": 6284
+    },
+    {
+      "source": "hook:SessionStart:SessionStart",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 1475,
+      "max": 2319
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\memory\\MEMORY.md",
+      "sessions": 2,
+      "repos": 1,
+      "mean_tokens_over_valid": 1363,
+      "max": 4772
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 1255,
+      "max": 1255
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\Desktop\\Cursor Projects\\Jacobo\\CLAUDE.md",
+      "sessions": 1,
+      "repos": 1,
+      "mean_tokens_over_valid": 893,
+      "max": 6254
+    },
+    {
+      "source": "hook:UserPromptSubmit:UserPromptSubmit",
+      "sessions": 6,
+      "repos": 3,
+      "mean_tokens_over_valid": 854,
+      "max": 1584
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 784,
+      "max": 784
+    },
+    {
+      "source": "attachment:mcp_instructions_delta",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 777,
+      "max": 1103
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Jacobo\\memory\\MEMORY.md",
+      "sessions": 1,
+      "repos": 1,
+      "mean_tokens_over_valid": 717,
+      "max": 5021
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 691,
+      "max": 691
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\Desktop\\Cursor Projects\\InfinityOps\\CLAUDE.md",
+      "sessions": 2,
+      "repos": 1,
+      "mean_tokens_over_valid": 614,
+      "max": 2148
+    },
+    {
+      "source": "user_prompt:meta",
+      "sessions": 4,
+      "repos": 4,
+      "mean_tokens_over_valid": 601,
+      "max": 1252
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\Desktop\\Cursor Projects\\InfinityOps\\17_Businesses\\QuickLease\\CLAUDE.md",
+      "sessions": 2,
+      "repos": 1,
+      "mean_tokens_over_valid": 563,
+      "max": 1969
+    },
+    {
+      "source": "instructions:(wrapper)",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 500,
+      "max": 523
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 483,
+      "max": 483
+    },
+    {
+      "source": "attachment:environment",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 483,
+      "max": 500
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 341,
+      "max": 341
+    },
+    {
+      "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 338,
+      "max": 338
+    },
+    {
+      "source": "attachment:session_context",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 238,
+      "max": 241
+    },
+    {
+      "source": "attachment:remote_session_change",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 161,
+      "max": 161
+    },
+    {
+      "source": "attachment:auto_mode",
+      "sessions": 6,
+      "repos": 3,
+      "mean_tokens_over_valid": 123,
+      "max": 143
+    },
+    {
+      "source": "attachment:model",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 45,
+      "max": 46
+    },
+    {
+      "source": "attachment:date",
+      "sessions": 7,
+      "repos": 4,
+      "mean_tokens_over_valid": 18,
+      "max": 18
+    },
+    {
+      "source": "attachment:total_tokens_reminder",
+      "sessions": 1,
+      "repos": 1,
+      "mean_tokens_over_valid": 3,
+      "max": 24
+    }
+  ]
+}
