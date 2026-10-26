@@ -31,6 +31,13 @@
             "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\route-U1.json",
             "receipt": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-U1-receipt.md",
             "after": "H3"
+        },
+        {
+            "id": "U2",
+            "packet": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\WU-U2.md",
+            "route": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\programs\\gsdx-factory-2\\route-U2.json",
+            "receipt": "C:\\Users\\User\\Apps\\pp-gsdx-factory-2\\vault\\programs\\gsdx-factory-2\\WU-U2-receipt.md",
+            "after": "U1"
         }
     ]
 }
