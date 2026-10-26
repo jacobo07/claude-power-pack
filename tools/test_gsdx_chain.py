@@ -140,6 +140,21 @@ check("V-CHAIN-SETTLES-RESIDUAL-WORKER", gc.to_settle(chain, [res], {"sid-R"}) =
       and gc.to_settle(chain, [res], set(), booked=set()) == ["sid-R"],
       f"{gc.to_settle(chain, [res], {'sid-R'})} / {gc.to_settle(chain, [res], set(), booked=set())}")
 
+# a receipt inside a MAIN git checkout is unwritable by a background worker (harness bgIsolation; gsdx-factory-2 U1
+# burned 2.13M and could not write WU-U1-receipt.md): refuse the arm. Controls: the same root as a linked worktree
+# (.git is a file) arms, and so does a receipt outside any checkout (every other fixture here)
+d, p, chain = setup("bg-receipt")
+(d / ".git").mkdir()
+armed.clear()
+rm = gc.tick(p, state=lambda: ([], 0), armer=arm)
+am = list(armed)
+(d / ".git").rmdir()
+(d / ".git").write_text("gitdir: elsewhere", encoding="utf-8")
+armed.clear()
+rw = gc.tick(p, state=lambda: ([], 0), armer=arm)
+check("V-CHAIN-REFUSES-MAIN-CHECKOUT-RECEIPT", rm["action"] == "receipt_unwritable" and am == []
+      and rw["action"] == "arm" and armed == ["A"], f"{rm['action']} {am} / {rw['action']} {armed}")
+
 # a running mission -> nothing armed
 d, p, _ = setup("running")
 armed.clear()

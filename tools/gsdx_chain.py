@@ -400,6 +400,8 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target, infr
                 return {**row, "receipt": "FALSE_DONE" if refusal.get(u["id"]) else status[u["id"]]}
             if held:
                 return {"action": "wait_writer", "unit": u["id"], "held_by": [m["mission_id"] for m in held]}
+            if _unwritable(u):   # a residual writes the same receipt
+                return _unwritable(u)
             need = route_target(row["route"])
             if goal_used + need > int(chain["envelope"]):
                 return {"action": "refuse_envelope", "unit": u["id"], "used": goal_used, "need": need,
@@ -412,12 +414,32 @@ def decide(chain: dict, missions: list[dict], goal_used: int, route_target, infr
             return {"action": "wait_event", "unit": u["id"], "missing": missing}
         if held:
             return {"action": "wait_writer", "unit": u["id"], "held_by": [m["mission_id"] for m in held]}
+        if _unwritable(u):
+            return _unwritable(u)
         need = route_target(u["route"])
         if goal_used + need > int(chain["envelope"]):
             return {"action": "refuse_envelope", "unit": u["id"], "used": goal_used, "need": need,
                     "envelope": chain["envelope"]}
         return {"action": "arm", "unit": u["id"], "need": need}
     return {"action": "complete"}
+
+
+def receipt_main_checkout(receipt) -> str | None:
+    """The main git checkout holding `receipt`, or None (a linked worktree, or no checkout). A background worker cannot
+    write into a main checkout (harness bgIsolation): gsdx-factory-2 U1 spent 2.13M and could not write its receipt.
+    Kill switch CPP_CHAIN_RECEIPT_WORKTREE=off."""
+    if os.environ.get("CPP_CHAIN_RECEIPT_WORKTREE", "on") == "off":
+        return None
+    for d in Path(receipt).resolve().parents:
+        if (d / ".git").exists():
+            return str(d) if (d / ".git").is_dir() else None
+    return None
+
+
+def _unwritable(u: dict) -> dict | None:
+    root = receipt_main_checkout(u["receipt"])
+    return root and {"action": "receipt_unwritable", "unit": u["id"], "receipt": u["receipt"],
+                     "why": f"receipt is in the main checkout {root}; a background worker can only write in a linked worktree"}
 
 
 def _route_target(path) -> int:
