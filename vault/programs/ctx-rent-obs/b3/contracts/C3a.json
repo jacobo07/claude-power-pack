@@ -1,0 +1,20 @@
+{
+  "id": "C3a",
+  "frozen_before_data": true,
+  "group": "attachment:skill_listing (resident skill listing in the boot context)",
+  "flag": "--disable-slash-commands",
+  "flag_help_text": "Disable all skills and commands (printed by `claude --help`, read 2026-10-26)",
+  "mechanism": "treated arm sets CPP_CLAUDE_EXE (process env only) to a scratch wrapper that runs the same claude executable with --disable-slash-commands appended; no settings, env file, hook, rule or CLAUDE.md edit",
+  "instrument": "python tools/floor_regression_gate.py --probe --cwd <repo> --json, results via CPP_FLOOR_PROBE_RESULTS to b3/probe-results.jsonl",
+  "design": "2 matched pairs, one per repo (PP repo, mcp-video-analyzer); each pair = baseline probe then treated probe, same cwd, same model, same fixed prompt 'Reply with the single word OK.'",
+  "frozen_saving_band_tokens": {"low": 5000, "high": 8400, "basis": "W8 B3.md: skill_listing mean 6,693, per-session max 8,361 (ESTIMATE, chars/3.6); the band is on call-1 measured floor"},
+  "pass_rule": "a probe passes when it reaches its first call and its result is the word OK",
+  "verdict_rule": {
+    "CERTIFIED": "all 4 probes pass AND both pairs show (baseline floor - treated floor) inside the band",
+    "REFUTED": "all 4 probes pass AND at least one pair's delta is outside the band",
+    "UNMEASURABLE": "any probe fails to reach its first call, answers wrongly, or yields no measured floor"
+  },
+  "c3b": "NONE: the agent listing (largest group, ~10.6K) has no flag in `claude --help` that removes it (--agents adds agents, --bare is a composite of hooks, CLAUDE.md, memory and skills). Not contracted.",
+  "known_noise": "baseline call-1 floor varies by session (B3 range 84K-135K across repos); the pair design holds repo and prompt fixed, N=2 pairs bounds nothing statistically",
+  "side_effect_disclosed": "--disable-slash-commands also removes commands; a treated pane could not invoke any skill"
+}
