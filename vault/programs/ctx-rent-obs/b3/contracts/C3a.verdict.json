@@ -1,0 +1,22 @@
+{
+  "id": "C3a",
+  "verdict": "CERTIFIED",
+  "contract_commit": "0258d4ac",
+  "rule_applied": "all 4 probes pass AND both pairs' (baseline floor - treated floor) inside the frozen band 5,000-8,400",
+  "probes": [
+    {"pair": 1, "repo": "claude-power-pack", "arm": "baseline", "session": "b88befff-7423-478d-aed8-4aa4ef8fe7c8", "answer": "OK", "call1_floor_measured": 86086},
+    {"pair": 1, "repo": "claude-power-pack", "arm": "treated (--disable-slash-commands)", "session": "4ddf22fb-bcf8-499b-81f3-0545396644f1", "answer": "OK", "call1_floor_measured": 80248},
+    {"pair": 2, "repo": "mcp-video-analyzer", "arm": "baseline", "session": "1f67c11e-b0ab-4e68-9603-f997d7287421", "answer": "OK", "call1_floor_measured": 76887},
+    {"pair": 2, "repo": "mcp-video-analyzer", "arm": "treated (--disable-slash-commands)", "session": "56b768f6-452f-4406-9f64-82a3f24a0587", "answer": "OK", "call1_floor_measured": 70707}
+  ],
+  "measured_delta_tokens": {"pair1": 5838, "pair2": 6180, "mean": 6009},
+  "band": {"low": 5000, "high": 8400},
+  "evidence_class": "measured (call-1 usage of fresh headless probes, N=2 pairs)",
+  "notes": [
+    "Treated probes carry no skill_listing attachment (census: absent); baselines carry it (8,361 / 8,362 ESTIMATE).",
+    "The measured saving (~6.0K) is below the census chars/3.6 ESTIMATE of the listing (8.4K): the estimate overstates by ~2.3K for this source.",
+    "Headless probe floors (70K-86K) are lower than organic top-level floors (110K mean): the probe has no resident session context, so the delta transfers, the absolute floor does not.",
+    "N=2 pairs bound no variance; both deltas agree within 342 tokens.",
+    "Side effect: --disable-slash-commands also removes commands, so a pane cannot invoke a skill."
+  ]
+}
