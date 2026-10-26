@@ -579,6 +579,22 @@ def _goal_ledger(goal: str):
     return GoalLedger(goal_root() / goal, goal)
 
 
+def _sid_missions(sids: list[str]) -> dict:
+    """sid -> mission id for sessions that own a mission record. Best effort: a consumer with no mission is a
+    plain interactive session, which is exactly the case the contention warning exists for."""
+    import sys
+    repo = str(Path(__file__).resolve().parents[1])
+    if repo not in sys.path:
+        sys.path.insert(0, repo)
+    try:
+        from tools.gsd_mission import all_missions
+        recs = all_missions()
+    except Exception:
+        return {}
+    return {(r.get("owner") or {}).get("session_id"): r.get("mission_id") for r in recs
+            if (r.get("owner") or {}).get("session_id") in sids}
+
+
 def session_tree_tokens(transcript: Path) -> dict:
     """Processed tokens of a session AND its subagents (`<sid>/subagents/agent-*.jsonl`), one dedup set
     over every file: a message id is counted once wherever it appears. Measured 2026-10-15: subagents
@@ -1343,6 +1359,8 @@ def _main(argv: list[str]) -> int:
     gc.add_argument("--owner", action="store_true")
     gs = sub.add_parser("goal-status")
     gs.add_argument("--goal", required=True)
+    gs.add_argument("--consumers", action="store_true", help="who draws the current lease (read-only, A2-18)")
+    gs.add_argument("--window", type=int, default=3600, help="burn window in seconds for --consumers")
     ga = sub.add_parser("goal-autopsy")
     ga.add_argument("--goal", required=True)
     ga.add_argument("--projects")
@@ -1477,6 +1495,9 @@ def _main(argv: list[str]) -> int:
             out = goal_renew(a.goal, a.session, a.measured, a.per_call, a.host)
         elif a.cmd == "goal-spawn":
             out = goal_spawn(a.goal, a.session, a.estimate, a.per_call, a.host, a.measured)
+        elif a.consumers:
+            out = {"ok": True, **_goal_ledger(a.goal).consumers(window_s=a.window), "binding": read_index().get(a.goal)}
+            out["missions"] = _sid_missions([c["sid"] for c in out["consumers"]])
         else:
             out = {**_goal_ledger(a.goal).status(), "binding": read_index().get(a.goal)}
         print(json.dumps(out, sort_keys=True))

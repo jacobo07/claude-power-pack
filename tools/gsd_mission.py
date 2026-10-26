@@ -3456,6 +3456,21 @@ def _run_deterministic(rec: dict, argv: list[str], now: float, run=None) -> dict
     return {"ok": True, "deterministic": True, "epoch": rec.get("epoch"), "bg_id": None, "stdout": out[-4000:], **res}
 
 
+def _lease_contention(rec: dict, authority: int | None) -> dict | None:
+    """SHARED_LEASE_CONTENTION for this mission's goal: other live sessions drawing the same lease. Fail-open."""
+    goal = spend_goal(rec)
+    if authority is None or not goal:
+        return None
+    try:
+        from modules.provider_routing.ledger import lease_contention
+        c = ms._goal_ledger(goal).consumers()
+        me = (rec.get("owner") or {}).get("session_id")
+        sib = sum(x["burn_per_hour"] for x in c["consumers"] if x["live"] and x["sid"] != me)
+        return lease_contention(authority, c["remaining"], sib)
+    except Exception:
+        return None
+
+
 def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = None,
                 now: float | None = None, measure=None) -> dict:
     """Judge the mission's compiled work unit against its route (tools/route_admission.py) and record
@@ -3502,6 +3517,7 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
                  "reasons": res["reasons"][:6], "at": now,
                  "workers": [{k: w.get(k) for k in ("name", "profile", "calls", "floor")}
                              for w in res.get("workers") or []]}
+    admission["lease_contention"] = _lease_contention(rec, goal_rem)   # A2-18: advisory, never changes the verdict
     # WU-W1: CCR pre-launch cost contract. Observe records; CPP_CCR_ADMISSION=enforce refuses SPLIT/DEFLATE.
     contract = _ccr_contract(rec, pkt["path"], (res.get("envelope") or {}).get("stop"))
     admission["ccr_contract"] = contract

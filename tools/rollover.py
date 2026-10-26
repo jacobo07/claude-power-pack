@@ -478,6 +478,34 @@ def seal(capsule: dict, state_dir: Optional[Path] = None, shadow: bool = False) 
     return {"sealed": True, "path": str(path), "sha256": want, "bytes": len(data)}
 
 
+def repo_key(root: Optional[str]) -> str:
+    """FNV-1a 32 of the lower-cased, slash-normalised root: the SAME key mods/cpp-cognitive-runtime
+    policy.ts repoKey() computes, so the mod finds the pointer without knowing the cwd."""
+    s = (root or "no-repo").lower().replace("\\", "/")
+    h = 0x811C9DC5
+    for ch in s:
+        h = ((h ^ ord(ch)) * 0x01000193) & 0xFFFFFFFF
+    return f"{h:08x}"
+
+
+def write_latest_pointer(capsule: dict, receipt: dict, state_dir: Optional[Path] = None) -> Optional[Path]:
+    """`latest/<repo-key>.json` {capsule, sha256, sealed_at}: how a successor's CCR finds the task it
+    resumes without the `/kresume` command carrying any semantics. Only a verified seal gets one;
+    a missing pointer is UNKNOWN to the reader, never a guess."""
+    if not receipt.get("sealed"):
+        return None
+    repo = capsule.get("repo") or {}
+    root = repo.get("root") if repo.get("state") == "OK" else capsule.get("cwd")
+    path = (state_dir or STATE_DIR) / "latest" / f"{repo_key(root)}.json"
+    data = json.dumps({"capsule": receipt["path"], "sha256": receipt["sha256"], "sealed_at": _now()},
+                      indent=1, sort_keys=True).encode("utf-8")
+    try:
+        _atomic_write(path, data)
+    except OSError:
+        return None
+    return path
+
+
 def safe_to_forget(receipt: dict, comp: dict) -> dict:
     """PASS only for a sealed capsule that is still the bytes it was sealed as, and complete."""
     reasons = []
@@ -1501,6 +1529,7 @@ def main(argv=None) -> int:
             return 2
         cap = compile_capsule(a.session, a.cwd, a.transcript, goal=a.goal, next_items=a.next, summary=a.summary)
         receipt, comp = seal(cap), completeness(cap)
+        write_latest_pointer(cap, receipt)
         stf = safe_to_forget(receipt, comp)
         recorded = ledger("capsule_sealed", session_id=a.session, cwd=a.cwd, capsule=receipt,
                           safe_to_forget=stf["verdict"], refusals=stf["reasons"])
