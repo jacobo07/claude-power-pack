@@ -1493,3 +1493,61 @@ ODR). Combined measured levers cap at 34-56% in the datasets' own account.
 
 **Activation criterion:** the Owner picks a row, or the "known repeating work" measurement (C.1/D) is funded. Recommended order:
 C.1 tool-schema share (cheap, closes the floor question from D36), then A.3/A.4/A.6 as measurements before any build.
+
+
+---
+
+## D38 -- Expansion of the Cognitive Economics work: verification, measurement and housekeeping (Owner, 2026-10-26: "añade todo al backlog, absolutamente todo")
+
+Companion to D36 (t3 carry-over) and D37 (systems the datasets propose). Everything the 2026-10-26 session proposed or found that
+is not already a row there. Evidence class of every row: PROPOSAL (nothing here has been run).
+
+### A. Verify what was read (do this before building anything from D37)
+1. **Audit the digests against the source datasets.** D37 rests on model digests that no second reader has checked. An independent
+   agent samples ~40 numeric claims (most-cited first: EDD 5.76M vs 32.06M, re-reads 1.88-2.4%, cache reads 97.7%, A-G1 3.76M vs 1.9M,
+   34-56% lever cap, 242 CSE groups, 54.8K unattributed) and checks the cited line in the zip's file; record CONFIRMED / CHANGED /
+   NOT FOUND per claim in `vault/programs/cognitive-economy/datasets-digest-2026-10-26/AUDIT.md`. Est. 0.5-1M tokens, Sonnet.
+   Activation: before any D37 row is accepted for a build.
+2. **Re-run the D37 "absent" greps with full plan/vault coverage.** The systems cross-check used code-folder greps with partial
+   plan and vault coverage; search the cost-collapse branch (`gsd_compile`, `gsd_dossier`) and `~/.claude/hooks`, which it did not read. S.
+3. **Verify two digest-level unknowns:** the CIF lines 14220-14545 "95% Token Reduction" doctrine and `recon_factory` L4584+ references
+   to "el corpus", whose provenance is not in the datasets. S.
+
+### B. Measure (ordered by cost; each closes a named UNKNOWN)
+1. **Known repeating work** (the only route the datasets leave to 60-80%; unmeasured). Mine the transcript corpus with
+   `tools/a5_trace.py` for repeated identical read targets plus identical next-3 tool sequences across sessions, then canary 30 groups for
+   identical derivation; go above 3%. Subsumes D37 C.2 (242 CSE groups). Est. 1-2M.
+2. **Tool-schema share of the first-call floor** (D37 C.1; closes D36 step 4). Probe pair with the Agent tool's agent-type list changed.
+   Est. ~0.3M.
+3. **Counterbalanced C3c/C3d rerun** (D36 step 2): control twice per repo, arm order swapped, live rules path isolated too. 1.5-2.5M, fresh pane.
+4. **Estimator calibration.** C3a measured the chars/3.6 estimator 0.72x too high for one source; measure the factor for agents, rules and
+   MEMORY.md, and record it in `context_floor_census.py` output as a per-source caveat instead of a constant. S.
+5. **Organic vs headless floor gap** (organic 110K vs probe 70-86K): find what the 25-40K difference is made of (resident session
+   context, hooks, settings, skills). Needed before any probe delta is quoted as an organic saving. M.
+
+### C. Read what the first gap scan did not reach
+1. `vault/knowledge_base/cognitive_os/cognitive_os_00..08, 10, 12, 13` bodies (only the index and CO-09/CO-14 excerpts were read).
+2. `a5/inputs/dataset-dws-optimization-1.md` lines 3542-5914 (covered only through `a5/LEDGER.md`).
+3. `vault/programs/cognitive-economy/ukdl-candidates.md`, `owner-bundle.md`, `ledger.json` and the MASTER-PLAN decisions, beyond greps.
+
+### D. Reconcile the datasets with each other
+One synthesis page, `wiki/syntheses/`, listing where datasets contradict and which evidence the repo currently favours:
+CIF "quality > quantity > minimization" (l1363) vs TOK-18 target under 100-150M; the "95% reduction" doctrine vs the measured 34-56% cap;
+SkyParty "kill-shot" cap vs the 124M plan; Gen1 falsified levers (proof reuse 0.50%, tool filtering 2.67%) vs the Gen2 reading of them as
+conditional theorems with reopen triggers. Follow `wiki/CLAUDE.md` (citations with commit hash, a Disagreements section). S/M.
+
+### E. Housekeeping found this session
+1. **Unbooked agent spend:** the 15-dataset reads and the two scans used ~2.56M subagent tokens (sum of the 9 agents' `subagent_tokens` usage notices: 156,599 + 365,160 + 319,743 +
+   332,104 + 330,933 + 324,745 + 291,484 + 255,921 + 181,339; not `session_tokens`, so it may exclude cache reads and understate processed tokens;
+   measure from their transcripts before booking); book with the t3 spend in D36 step 1, separately from the pane.
+2. **Stale loose copies in Downloads:** `Dataset CPP KSR + KME Optimization 1.md` (114 KB) and `Dataset CPP SkyParty Optimization 1.md` (119 KB) are
+   older than the zip's (201 KB / 199 KB) and are not what the Owner's phone listing shows. Do not delete; mark the zip as canonical in the README (done) and ask the Owner before removing the loose files.
+3. **Two guard behaviours seen while dispatching agents** (candidates for `governance/KNOWN_FALSE_POSITIVES.md`, Owner's standing
+   obligation to record a false positive the same session): (a) the cognitive-admission duplicate guard refused an identical prompt
+   whose first dispatch had been blocked by the AGENT-SOLO guard and so never ran; (b) the AGENT-SOLO guard blocked an Agent call
+   because a different session dispatched an agent 14.6 s earlier. Neither is a defect in the work; both cost a retry.
+4. **Mojibake in sources:** `ksr_kme_opt` and `skyparty_opt` datasets are partly UTF-8 read as Latin-1. If they are ever re-ingested, repair the encoding first.
+5. **Other datasets in Downloads** (many more `Dataset*` and dataset-family files, ~70 matched by name: KobiiCraft, KME suite, Wii, CommonWealth, GSD X 34k funciones,
+   PP_DATASET_20260531...) were not scoped: they are not Cognitive Economics. Listed so the choice is explicit, not forgotten.
+
+**Activation criterion:** the Owner names a row, or A.1 is funded (it gates trust in D37). Recommended order: A.1, B.1, B.2, then D.
