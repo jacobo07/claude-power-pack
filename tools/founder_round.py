@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import sys
@@ -228,6 +229,20 @@ def record(repo: Path, payload: dict, state_home: Path | None = None) -> dict:
                "baseline_ref", "after_ref", "metric", "window", "method"}
     if set(payload) - allowed:
         raise ValueError(f"unsupported event fields: {sorted(set(payload) - allowed)}")
+    # Secret Firewall is CPP-owned. No raw token or unbounded nested customer
+    # payload may flow into this otherwise-private evidence journal.
+    from modules.secret_firewall.redactor import redact_for_log
+    clean = {}
+    for field, value in payload.items():
+        if isinstance(value, str):
+            clean[field] = redact_for_log(value, max_len=2000)
+        elif value is None or isinstance(value, (bool, int)):
+            clean[field] = value
+        elif isinstance(value, float) and math.isfinite(value):
+            clean[field] = value
+        else:
+            raise ValueError(f"unsupported or non-finite value for {field}; metadata scalars only")
+    payload = clean
     if len(_json_bytes(payload)) > 16000:
         raise ValueError("event exceeds 16KB; store raw sources externally")
     with _locked(d):
