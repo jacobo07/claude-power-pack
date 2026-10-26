@@ -1,0 +1,64 @@
+{
+  "rule": "transcripts directly under ~/.claude/projects/<repo>/ (no subagent dirs) modified in the 7 days before 2026-10-26; >=20 assistant calls with usage; 2 newest per repo, a session id counted once (first repo, newest-first, that holds it); the 4 repos with the newest qualifying transcript; this pane excluded. Chosen before any census read.",
+  "selected_at_utc": "2026-10-26T09:09:19Z",
+  "n": 8,
+  "repos": 4,
+  "sessions": [
+    {
+      "repo": "C--Users-User-Apps-mcp-video-analyzer",
+      "sid": "3beeecf5-a4c5-4609-abd9-eafa7a5bbc04",
+      "calls": 324,
+      "bytes": 5447870,
+      "mtime_utc": "2026-10-26T09:09:05Z"
+    },
+    {
+      "repo": "C--Users-User-Apps-mcp-video-analyzer",
+      "sid": "af5891a4-8b07-4cf1-b1ef-5fb7e5051fde",
+      "calls": 399,
+      "bytes": 5847409,
+      "mtime_utc": "2026-10-26T09:09:04Z"
+    },
+    {
+      "repo": "C--Users-User-Desktop-Cursor-Projects-Jacobo",
+      "sid": "e3375b9a-aa9a-4c48-a82c-942805380f7d",
+      "calls": 123,
+      "bytes": 2681184,
+      "mtime_utc": "2026-10-26T09:06:30Z"
+    },
+    {
+      "repo": "C--Users-User-Desktop-Cursor-Projects-Jacobo",
+      "sid": "5debf7f2-bcc8-4bbe-b84f-fecbc30ee073",
+      "calls": 374,
+      "bytes": 6367766,
+      "mtime_utc": "2026-10-26T08:46:39Z"
+    },
+    {
+      "repo": "C--Users-User-Desktop-Cursor-Projects-InfinityOps-17-Businesses-QuickLease",
+      "sid": "16bec9db-f15f-4e35-9538-7f48bac75078",
+      "calls": 389,
+      "bytes": 5957109,
+      "mtime_utc": "2026-10-26T08:49:51Z"
+    },
+    {
+      "repo": "C--Users-User-Desktop-Cursor-Projects-InfinityOps-17-Businesses-QuickLease",
+      "sid": "111a2bb7-88ae-4e42-8189-2be7d36e0ac9",
+      "calls": 193,
+      "bytes": 3088830,
+      "mtime_utc": "2026-10-26T08:44:25Z"
+    },
+    {
+      "repo": "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+      "sid": "e797f26f-bbc4-4d5b-bc24-41d6efac8b91",
+      "calls": 142,
+      "bytes": 2573625,
+      "mtime_utc": "2026-10-26T08:12:22Z"
+    },
+    {
+      "repo": "C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+      "sid": "9b793013-ac93-4457-bfa7-fd56e1b78aaa",
+      "calls": 617,
+      "bytes": 19295901,
+      "mtime_utc": "2026-10-26T08:12:21Z"
+    }
+  ]
+}
