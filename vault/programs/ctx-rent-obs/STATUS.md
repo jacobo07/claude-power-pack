@@ -64,3 +64,16 @@ capital, run by a fresh worker, never inline in a long pane.
 - Turn budget: stopped before 45 turns; tranche 1 complete except the laptop-plane items. Tranche 2 needs a new Owner approval.
 - Goal binding (First step 1) skipped per the GEX44 brief.
 - `.pp-capabilities` untracked file in the clone is not mine; left alone.
+
+## Tranche 3 (laptop plane, 2026-10-26; plan e4d889a8): STOPPED after W8 on the per-unit stop-loss
+- **Capital approval not verified by this pane.** The pane was launched with the plan's section 6 prompt; the t3 packet
+  approval (`approve ctx-rent-obs only`) was not visible in this repo and the pane did not check the ledger. The Owner
+  should confirm it exists before any booking.
+- **W8 done** (4564caa3 selection first, b4466a8b data): `B3.md`, N=8 selected, 7 valid (e3375b9a floor UNKNOWN), 4 repos,
+  mean measured floor 110,190, named sources 55,393 (ESTIMATE), UNATTRIBUTED 54,797 (49.7%).
+- **Metered** with `mission_spend.session_tokens` on this transcript right after W8 (UTC 2026-10-26): **2,801,368
+  tokens over 27 calls**, against a W8 P80 of 0.9M. That is 3.1x P80, over the plan's 2x stop-loss (1.8M).
+- **Stopped.** W9, W10, W11 not run. The remaining 1.2M under the 4.0M ceiling is under W9's P50 (1.6M).
+- Cause: the per-call floor in this pane was ~104K (the PP repo's own boot), so 27 calls cost ~2.8M before any probe.
+  W8 carried about 8 tool-result reads of ~20K each and a failed Bash call; the plan's 0.6M P50 assumed ~6 calls.
+- Not booked: no `goal-settle` was run. W11 booking needs the Owner's decision on the 2.8M.
