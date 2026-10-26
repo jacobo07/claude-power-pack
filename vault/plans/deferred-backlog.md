@@ -1391,3 +1391,28 @@ Plan of record: `vault/plans/cpp-evc-master-plan-2026-10-15.md`. Resumption: `C:
 
 **Activation criterion:** the Owner names an item, or EVC6 posts a DONE receipt (then items 2, 4, 5 become actionable in
 order). Start a fresh thin pane (Sonnet is enough) from `RESUMPTION_FILE.md`; do not re-read transcripts.
+
+---
+
+## D36 -- ctx-rent-obs tranche 3 carry-over: top-level boot floor (Owner "añade todo lo pendiente al backlog", 2026-10-26)
+
+State: t3 W8-W11 plus the C3c/C3d scratch extension are done and committed (receipt `vault/programs/ctx-rent-obs/STATUS.md`,
+last commit 2803cf6a). Findings: `b3/B3.md`, `b3/PROPOSAL.md`, `b3/contracts/`. Metered about 10.03M against a 10.4M chat ceiling.
+
+**Pending, in order:**
+1. **Ledger.** Confirm the t3 packet approval (`approve ctx-rent-obs only`) and the 7.0M / +3.5M ceilings exist in the ledger; they were
+   given in chat only. Then book the spend with `goal-settle --goal ctx-rent-obs --measured <pane tokens>`, pane 242e49b5 =
+   9,264,721 at the last meter; the probe sessions (C3a 313,944; C3c/C3d 453,082) count separately. Settle before opening any successor lease.
+2. **Counterbalanced rerun of C3c/C3d** from a FRESH pane (this pane cost ~120K per call). Control run twice per repo, arm order swapped,
+   rules isolated by also removing the live rules path, not only the scratch copy (census showed 16 vs 9 rule-like sources). New contract
+   committed before any probe; needs a new ceiling (estimate 1.5-2.5M in a fresh pane).
+3. **Owner picks PROPOSAL rows.** Rows 1-3 (agent listing, rules, MEMORY.md) are ESTIMATE until step 2; row 4 (skill listing, 6.0K measured)
+   must not be applied as a blanket `--disable-slash-commands`. Applying any row touches `~/.claude` (HR-001) and is a separate tranche.
+4. **Unattributed half of the floor** (54.8K per session, 49.7%). C3a shows the chars/3.6 estimator overstated one source by ~0.72x, so the
+   remainder is larger than stated. Needs a probe-based tool-schema attribution (the Agent tool description lists agent types).
+5. **C3b re-check:** no `claude --help` flag removes the agent listing (2026-10-26). Re-read the help after a binary update.
+
+**Constraints:** the observation tranche forbade settings, hooks, rules, CLAUDE.md and MEMORY.md edits. A C3 contract is never edited after
+its data is read.
+
+**Activation criterion:** the Owner says continue, or a floor regression gate run shows the top-level floor above 120K.
