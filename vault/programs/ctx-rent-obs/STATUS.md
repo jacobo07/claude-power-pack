@@ -77,3 +77,18 @@ capital, run by a fresh worker, never inline in a long pane.
 - Cause: the per-call floor in this pane was ~104K (the PP repo's own boot), so 27 calls cost ~2.8M before any probe.
   W8 carried about 8 tool-result reads of ~20K each and a failed Bash call; the plan's 0.6M P50 assumed ~6 calls.
 - Not booked: no `goal-settle` was run. W11 booking needs the Owner's decision on the 2.8M.
+
+### Tranche 3 update (same day): ceiling raised to 7.0M by the Owner in chat; W9, W10 done; W11 receipt
+- **Ceiling:** the Owner chose 7.0M total (`session_tokens`) in this pane. This is a chat statement; the pane did not move
+  the ledger authority or check the t3 packet. The ledger move is the Owner's.
+- **W9 C3:** one contract only. C3a (skill listing, `--disable-slash-commands`), contract 0258d4ac before any probe,
+  verdict 03dbe2c7: **CERTIFIED**, measured deltas 5,838 and 6,180 call-1 tokens (band 5,000-8,400), all 4 probes
+  answered OK. C3b: none, no printed flag removes the agent listing; recorded in the contract, not a verdict.
+  The C3a estimate (chars/3.6, 8.36K) overstated the measured saving by ~2.35K.
+- **W10:** `b3/PROPOSAL.md` (09675b73): 6 rows, 1 measured, 5 ESTIMATE, each with its revert. Nothing applied.
+- **Metered, UTC 2026-10-26, after the W10 commit:** this pane **6,542,639** tokens over 54 calls; the 4 probe sessions
+  **313,944** (separate transcripts, not in the pane figure); sum **6,856,583**, under 7.0M. This STATUS commit is one
+  more call, not in these figures.
+- **Not booked:** no `goal-settle` was run. Booking needs the Owner to confirm the packet and the figure; use
+  `--measured 6542639` for the pane and the probes separately, not the whole transcript.
+- W8 stop-loss (2x P80) was exceeded as recorded above; W9 (probes 0.31M vs 2.4M P80) and W10 came in under.
