@@ -1416,3 +1416,80 @@ last commit 2803cf6a). Findings: `b3/B3.md`, `b3/PROPOSAL.md`, `b3/contracts/`. 
 its data is read.
 
 **Activation criterion:** the Owner says continue, or a floor regression gate run shows the top-level floor above 120K.
+
+
+---
+
+## D37 -- Cognitive Economics datasets: systems proposed but not built, and open items (Owner, 2026-10-26: "sí, haz ambos")
+
+Source: full reads of the 15 datasets of `Dataset CPP Context Intelligence Fabric.zip` (digests in
+`vault/programs/cognitive-economy/datasets-digest-2026-10-26/`, commit 8311c3846) plus a gap scan of
+`a5/inputs/dataset-dws-optimization-1.md` (that one was already dispositioned: `a5/LEDGER.md`, 265 rows, OMITTED 0).
+
+**Evidence class: LEADS.** Everything below comes from model digests and repo greps by subagents. No line was re-verified against
+the source datasets, and "ABSENT" rests on code-folder greps with partial plan/vault coverage. Verify the named line in the dataset
+and re-run the greps before acting on any row.
+
+**Count (subagent reading, N=41 named systems):** BUILT 14, PARTIAL 9, SPEC_ONLY 7, ABSENT 11. Most of the named components already
+exist (mainly the Cognitive Deflation Closure programme CDC C1-C12, `vault/programs/cdc/`: semantic breaker, Model-Call Firewall at
+the Agent/Task spawn edge, effect system, Cognitive CI, derivation store, Safe-to-Forget, fences and leases, AgentSpec, trace mining
+and PGO, route admission, Cognitive GC). What is missing is mostly the high-concept layer below.
+
+### A. Systems not built (ranked by how many datasets propose them; effort S/M/L)
+1. **Mission Compiler / Mission IR** (8 datasets: tok18, ce_gen1gen2, quicklease, skyparty_opt/spawn, gsdx_edd, recon_factory, orca_dws). Backing
+   number: EDD Phase 1 5.76M compiled vs 32.06M old grammar, n=1 scan phase only (gsdx_edd L88). `mission_ir`, `work_ir`, `gsd_compile`,
+   `gsd_dossier`: 0 code hits (inventory of 10-09 says they live only on the cost-collapse branch, not searched). L.
+2. **Full Context MMU / Resident Context Admission Gate / page-fault family** (6; gap scan P1-16..18, P2-22..26, P3-28..39 DEFER owner "none").
+   Resident floor is 44-49% of context (tok18 L11365). Counter-evidence: Gen1 MMU variants were falsified (ksr_kme_opt L6554). Only
+   ContextImage packets exist. L.
+3. **Read-depth K0-K4 / Semantic Read Barrier / UCRE read elimination** (5). Counter-evidence: raw re-reads only 1.88-2.4% (ce_gen1gen2
+   l104), so the ceiling is low; only the first rung exists (`ccr-v2-addendum-2026-10-11.md:36`). `read_barrier`, `read_depth`: 0 hits. M.
+4. **Decision Extinction Rate / role extinction** (5). Spec only (`cognitive-deflation-closure-MASTER-PLAN-2026-10-10.md:106`). M.
+5. **Closeout fault runner** (NOVELTY / PROOF / REALITY / AUTHORITY faults, 5-14M green path) (3). Closeout code exists, the fault
+   taxonomy has 0 hits. Backing: A-G1 spent 3.76M vs 1.9M target (gsdx_edd L344-376). M.
+6. **Belady oracle on historical traces** (4), to bound the headroom of any residency policy. One plan hit, no code. M.
+7. **Irreducible Cognition Certificate / Irreducibility Registry** (4). `Irreducible Cognition`: 0 hits. M.
+8. **Activation precision/recall, Critical Context Recall** (3), no thresholds anywhere in the datasets. M.
+9. **Economic Diff per commit** (3). `cognitive_ci` is a release gate, not a per-commit diff. S.
+10. **Output Budget Governor CO-11** (July scan GAP-REAL, `COGNITIVE_OS_INDEX.md:169`, "approved, deferred, not built"). No backlog row until now. S-M.
+11. **Memory ROI ledger** (3). The derivation store exists; `memory roi`: 0 hits. S.
+12. **Cognitive MVCC/SSA** (3) and **Cognitive ISA / 11 syscalls** (3). The ISA case is weak: mechanical calls are only 3-6% of calls
+    (tok18 L11248). L each.
+13. **Zero Repeated Transport ladder ZRT-0..9** (2; selective_semantic L12181-12219). Plans only. S-M.
+14. **Global Token Constitution / CROS control plane** (4). 0 hits; doctrine is split across hard rules. M.
+15. **Truth lattice** (`deferred-backlog.md:770`) and **Token NPV** (only ROIC inside `cognitive_pgo`). S each.
+
+**Explicit do-not-build (datasets' own conclusion, measured):** Model-Call Admission for mechanical calls (3-6% of calls, below the
+10% bar: skyparty_spawn L244). Do not reopen without a new measurement.
+
+### B. Partial systems to finish
+`UNACCOUNTED_ORIGINAL_OBLIGATION` (scope conservation, 8 dispositions): dispositions exist in `tools/a5_ledger.py` and
+`gsd_x/mission/obligation.py`, the compile-fail code has 0 hits. Carry-cost rotation formula (`ccr_carry_fit.py`, unverified).
+Continuation compiler (`ccr_continuation.py`). Token Rent Ledger (`ccr_reread_audit.py` plus ctx-rent-obs, see D36).
+
+### C. Measurements and re-runs the gap scan found unopened
+1. **Tool-schema share of the first-call floor** (`COUNTERFACTUAL.md:38` UNKNOWN). Links to D36 step 4 (unattributed half of the floor). S.
+2. **242 semantic-CSE candidate groups** (`COUNTERFACTUAL.md:37`): canary on 30 groups, go above 3% (the Gen1 materiality line). S/M.
+3. **Architecture-cost cluster** (P1-58, P2-41..49): radius budgets, token-aware API. Needs per-file attribution first; refactor one top-5-by-read-burden file as canary. M.
+4. **CO-14 Dependent Register regeneration producer** (deliberately unbuilt, `cognitive_os_14_residency_jurisdiction.md:114-115`). S.
+5. **CO-13 re-run**: its numbers come from one installation on one date, depth ladder inverted at 880 `full` vs 4 `discovery`. S.
+6. Smaller DEFER-owner-none rows: model ensemble only where information value justifies it (P2-59); information QoS classes (P3-44). One line each.
+
+### D. Open items the datasets leave unresolved (leads, line numbers are the digests')
+- tok18 L13783-13800: six unanswered Owner questions on Gen3 T2; T2-0 redesign proposed, not executed (L14612-14758); repair
+  amplification and known-work share UNKNOWN (L13642-13644); the 589M remaining baseline has no derivation on disk (L13653).
+- "Known repeating work" is the only unmeasured route to 60-80% savings (ce_gen1gen2 l399; tok18 L13498). Measuring it is the decision point for most of A.
+- quicklease: the recompile gate and its numbers were never produced; WU-G2b closeout measurements never reported.
+- sidecar: the state compiler ignores `renew_mission` (RESUMPTION.md went stale); a renewal must propagate atomically to durable
+  state, attribution, continuation and resume. 20 BLOCKED_HUMAN claims, perhaps ~7 truly human.
+- ksr_kme_opt: a ~60K first-call block unexplained (39.5% of KSR context); gen2's 150M budget has no unit field and is suspended
+  (L6910); a BLOCKED mission could silently renew and relaunch the old architecture (L7413).
+- cif L14220-14545: the "95% Token Reduction" doctrine is an unreproduced hypothesis; three deltas (compression, memory growth,
+  doctrine install) must be reported separately.
+- recon_factory L4584+: cites "el corpus" and TOK-18 as sources of many ideas; that corpus is not in the datasets, provenance unverified.
+
+**Constraints:** Context-economy measurements here are processed tokens, not billed; cache reads dominate (97-99% across KSR, CW Ops,
+ODR). Combined measured levers cap at 34-56% in the datasets' own account.
+
+**Activation criterion:** the Owner picks a row, or the "known repeating work" measurement (C.1/D) is funded. Recommended order:
+C.1 tool-schema share (cheap, closes the floor question from D36), then A.3/A.4/A.6 as measurements before any build.
