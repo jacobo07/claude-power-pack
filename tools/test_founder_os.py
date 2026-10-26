@@ -5,6 +5,7 @@ Run from CPP repo root: python tools/test_founder_os.py.
 from __future__ import annotations
 
 import json
+import math
 import tempfile
 import unittest
 from pathlib import Path
@@ -127,6 +128,20 @@ class TestFounderRound(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "locked"):
             start(self.a, self.home)
         self.assertFalse((d / "events.jsonl").exists())
+
+    def test_nested_customer_payload_is_refused(self):
+        start(self.a, self.home)
+        with self.assertRaisesRegex(ValueError, "metadata scalars"):
+            record(self.a, {"kind": "observation", "summary": "customer table",
+                "effect": "internal_reversible", "source_ref": "file:example",
+                "evidence_class": "observed", "limitations": {"private_customer": "do not store"}}, self.home)
+
+    def test_nan_is_refused(self):
+        start(self.a, self.home)
+        with self.assertRaisesRegex(ValueError, "non-finite"):
+            record(self.a, {"kind": "observation", "summary": "bad metric",
+                "effect": "internal_reversible", "source_ref": "file:example",
+                "evidence_class": "observed", "estimated_value": math.nan}, self.home)
 
     def test_no_git_repo_refused(self):
         x = self.root / "loose";x.mkdir()
