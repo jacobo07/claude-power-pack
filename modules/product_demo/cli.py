@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -26,7 +27,8 @@ from modules.product_demo.runner import run_bounded  # noqa: E402
 from modules.product_demo.spec import SpecError, load  # noqa: E402
 
 PP_ROOT = Path(__file__).resolve().parents[2]
-CAPTURE_TIMEOUT_S = 600
+# A spec whose steps wait on a real model (minutes per step) needs more; the bound stays explicit.
+CAPTURE_TIMEOUT_S = int(os.environ.get("PRODUCT_DEMO_CAPTURE_TIMEOUT_S", "600"))
 RENDER_TIMEOUT_S = 1800
 MAX_REVISIONS = 3
 RENDER_ATTEMPTS = 2
