@@ -1,0 +1,23 @@
+{
+ "steps": {
+  "U1": {
+   "verdict": "PASS",
+   "sid": "6263b9ba-f5d1-4b61-a3a0-0ef031d3d9be",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": true,
+    "commits": true,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 413896,
+   "cap": 1200000,
+   "receipt": "vault/programs/factory-tranche-b/U1-receipt.md",
+   "secs": 455,
+   "calls": 16,
+   "boundaries": 1
+  }
+ },
+ "coordinator_spend": 2350813,
+ "cap": 3155110
+}

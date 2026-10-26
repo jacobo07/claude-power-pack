@@ -1,0 +1,23 @@
+{
+ "steps": {
+  "U3": {
+   "verdict": "PASS",
+   "sid": "239a740a-0a3c-4193-879b-dcd905436691",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": true,
+    "commits": true,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 860484,
+   "cap": 1200000,
+   "receipt": "vault/programs/factory-tranche-b/U3-receipt.md",
+   "secs": 572,
+   "calls": 34,
+   "boundaries": 1
+  }
+ },
+ "coordinator_spend": 9806993,
+ "cap": 10903537
+}

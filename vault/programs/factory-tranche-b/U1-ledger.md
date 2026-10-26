@@ -1,0 +1,3 @@
+- driver 2026-10-25T20:40:31 U1 REFUSED_OVER_CAP total_before=13,730,988 step_cap=1,200,000 limit=10,600,000
+- driver 2026-10-25T20:41:18 U1 REFUSED_OVER_CAP total_before=14,253,658 step_cap=1,200,000 limit=15,030,988
+- driver 2026-10-25T21:07:06 U1 PASS sid=6263b9ba-f5d1-4b61-a3a0-0ef031d3d9be launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=413896 cap=1,200,000

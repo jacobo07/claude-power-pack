@@ -1,0 +1,28 @@
+{
+ "steps": {
+  "U2": {
+   "verdict": "PASS",
+   "sid": "e37f0c44-9bd6-4d8d-8fcf-a3ccb212d701",
+   "launch_rc": 0,
+   "checks": {
+    "receipt": true,
+    "commits": true,
+    "tests": true,
+    "spend": true
+   },
+   "spend": 968169,
+   "cap": 1200000,
+   "receipt": "vault/programs/factory-tranche-b/U2-receipt.md",
+   "secs": 387,
+   "calls": 30,
+   "boundaries": 1
+  },
+  "U3": {
+   "verdict": "REFUSED_OVER_CAP",
+   "total_before": 8338714,
+   "cap": 1200000
+  }
+ },
+ "coordinator_spend": 7370545,
+ "cap": 9459932
+}

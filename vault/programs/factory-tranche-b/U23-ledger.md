@@ -1,0 +1,2 @@
+- driver 2026-10-25T21:45:38 U2 PASS sid=e37f0c44-9bd6-4d8d-8fcf-a3ccb212d701 launch_rc=0 checks={'receipt': True, 'commits': True, 'tests': True, 'spend': True} spend=968169 cap=1,200,000
+- driver 2026-10-25T21:45:38 U3 REFUSED_OVER_CAP total_before=8,338,714 step_cap=1,200,000 limit=9,459,932
