@@ -1,0 +1,33 @@
+{
+  "contracts": ["C3c", "C3d"],
+  "contract_commit": "8e53a45f",
+  "probes": [
+    {"repo": "claude-power-pack", "arm": "control", "session": "7da351aa", "answer": "OK", "call1_floor_measured": 85441},
+    {"repo": "claude-power-pack", "arm": "no-agents", "session": "e90171e5", "answer": "OK", "call1_floor_measured": 76972},
+    {"repo": "claude-power-pack", "arm": "no-rules", "session": "1867b083", "answer": "OK", "call1_floor_measured": 78320},
+    {"repo": "mcp-video-analyzer", "arm": "control", "session": "2d7083fd", "answer": "OK", "call1_floor_measured": 77480},
+    {"repo": "mcp-video-analyzer", "arm": "no-agents", "session": "f648cd92", "answer": "OK", "call1_floor_measured": 67330},
+    {"repo": "mcp-video-analyzer", "arm": "no-rules", "session": "eb8dc5ae", "answer": "OK", "call1_floor_measured": 67515}
+  ],
+  "C3c_agents": {
+    "verdict_by_contract_rule": "CERTIFIED",
+    "deltas_tokens": {"pair1": 8469, "pair2": 10150},
+    "band": {"low": 3000, "high": 10700},
+    "support": "census agent_listing_delta fell 7,300 -> 465 est. in the no-agents arm; census-unattributed fell 33,717 -> 30,399 (-3.3K) in the repo-2 pair, which is consistent with the Agent tool schema listing the same agent types (hypothesis, not isolated)"
+  },
+  "C3d_rules": {
+    "verdict_by_contract_rule": "REFUTED",
+    "deltas_tokens": {"pair1": 7121, "pair2": 9965},
+    "band": {"low": 3000, "high": 7400},
+    "why": "pair 2 delta 9,965 is outside the frozen band"
+  },
+  "validity": "CONFOUNDED for both; do not quote either delta as a clean per-source saving",
+  "confounds": [
+    "The scratch CLAUDE_CONFIG_DIR did not isolate rules: the census shows 16 rule-like instruction sources in the control and 9 in the no-rules arm, so removing the scratch copy left other rule loads in place and the removed amount does not equal 'the rules'.",
+    "The control probe ran first in each repo and sits 8.5K-10K above BOTH treated arms (pair 2: 77,480 vs 67,330 and 67,515). Two different removals giving the same drop suggests a shared control-side excess; the design did not counterbalance arm order, so an order or first-run effect is not excluded.",
+    "Control floors (67K-85K) lack skills, hooks and settings, so they are not organic floors.",
+    "N=2 pairs, one control per repo, no repeat."
+  ],
+  "consequence": "PROPOSAL.md rows 1 and 2 stay ESTIMATE. C3c's measured range is an upper-bound indication that the user agent files cost at least several K per call; C3d does not support any number. A counterbalanced rerun (control run twice, order swapped) is needed before either is accepted.",
+  "evidence_class": "measured, confounded"
+}
