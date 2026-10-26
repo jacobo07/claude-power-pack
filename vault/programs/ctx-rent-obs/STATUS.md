@@ -48,7 +48,8 @@ Spend of this run is therefore unbooked anywhere (UNKNOWN).
 worker, on the reasoning that both are deterministic. The pane cost was the overrun: since the first tranche-2 turn
 (2026-10-25T19:51:59Z, UTC cut) `session_tokens` = **8,839,459** over 60 calls (5,470,937 since the approval alone),
 against 4,000,000 approved. Booked: `goal-settle --goal ctx-rent-obs --session e9fc375e-... --measured 8839459`.
-Goal now: programme 12,874,921, settled 17,714,380, **overdraft 4,839,459**. Ceiling not raised. Work stopped at
+Goal now: programme 12,874,921, settled 17,714,380, **overdraft 4,839,459**. Covered 2026-10-26 by the Owner (`goal-programme --owner --value 17714380`): programme ==
+settled == 17,714,380, open 0, executable 0. The goal is closed with no spendable remainder. Work stopped at
 the crossing; nothing else ran. The ctx-rent-obs follow-ups earlier in this session (items 2-5, before 19:51:59Z)
 are measured as part of the same transcript and not booked anywhere.
 
