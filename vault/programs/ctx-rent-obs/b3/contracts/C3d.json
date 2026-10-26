@@ -1,0 +1,17 @@
+{
+  "id": "C3d",
+  "tranche": "t3 extension, Owner 'authorize' scratch-only, ceiling +3.5M (10.4M pane total), 2026-10-26",
+  "frozen_before_data": true,
+  "group": "always-loaded user rules: the 8 files under ~/.claude/rules (PROPOSAL.md row 2)",
+  "mechanism": "same scratch CLAUDE_CONFIG_DIR as C3c; treated arm omits rules/. Live ~/.claude is not written",
+  "instrument": "same as C3c; the control probes are shared with C3c",
+  "design": "2 repos x (control vs no-rules); control floors are the C3c control probes",
+  "frozen_saving_band_tokens": {"low": 3000, "high": 7400, "basis": "B3.md rule rows sum 7,324 ESTIMATE; low allows the C3a 0.72x haircut (5.3K) and a further shortfall"},
+  "pass_rule": "a probe passes when its result is the word OK and the census gives a MEASURED call-1 floor",
+  "verdict_rule": {
+    "CERTIFIED": "all probes pass AND both pairs' (control floor - no-rules floor) inside the band",
+    "REFUTED": "all pass AND at least one delta outside the band",
+    "UNMEASURABLE": "scratch config rejected, auth fails, any probe fails or has no measured floor"
+  },
+  "known_limits": "same as C3c"
+}

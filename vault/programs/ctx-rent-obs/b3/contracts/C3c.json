@@ -1,0 +1,17 @@
+{
+  "id": "C3c",
+  "tranche": "t3 extension, Owner 'authorize' scratch-only, ceiling +3.5M (10.4M pane total), 2026-10-26",
+  "frozen_before_data": true,
+  "group": "user agent listing: the 95 files of ~/.claude/agents (PROPOSAL.md row 1). Plugin and project agents are not removed, so this measures the user-agent share only",
+  "mechanism": "process env CLAUDE_CONFIG_DIR -> a scratch dir holding CLAUDE.md, rules/, agents/ copies and a temporary copy of .credentials.json (deleted after the run); treated arm omits agents/. Live ~/.claude is not written. Control and treated both lack settings.json, hooks and skills, equally",
+  "instrument": "python tools/floor_regression_gate.py --check --probe --cwd <repo> --json with CPP_CLAUDE_EXE = scratch wrapper that sets CLAUDE_CONFIG_DIR; results to b3/probe-results-c3cd.jsonl; floor from tools/context_floor_census.py",
+  "design": "2 repos (PP repo, mcp-video-analyzer) x [control, no-agents, no-rules] = 6 probes; control shared with C3d; fixed prompt 'Reply with the single word OK.'",
+  "frozen_saving_band_tokens": {"low": 3000, "high": 10700, "basis": "B3.md agent_listing_delta mean 10,624 ESTIMATE; low = ~0.28x allowing the C3a 0.72x haircut plus plugin/project agents that stay"},
+  "pass_rule": "a probe passes when its result is the word OK and the census gives a MEASURED call-1 floor",
+  "verdict_rule": {
+    "CERTIFIED": "all probes of both arms pass AND both pairs' (control floor - no-agents floor) inside the band",
+    "REFUTED": "all pass AND at least one delta outside the band",
+    "UNMEASURABLE": "scratch config rejected, auth fails, any probe fails or has no measured floor"
+  },
+  "known_limits": "control floor will be well below organic (no skills, hooks, settings); the delta is the claim, not the absolute floor. N=2 pairs bound no variance."
+}
