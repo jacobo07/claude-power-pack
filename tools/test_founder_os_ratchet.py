@@ -117,6 +117,34 @@ class TestBusinessRoundFamily(unittest.TestCase):
                               "effect": "internal_reversible", "source_ref": "repo:x",
                               "evidence_class": "observed"}, state)
 
+    # --- G14: the Owner can undo the automatic promotion, and ordinary build work is not burdened ---
+    def test_owner_can_revert_the_auto_entry_and_the_chain_still_verifies(self):
+        from modules.tower import ratchet
+        entry_id = "business_round-journal-refuses-customer-data"
+        before = bl.generation_sha256(FAMILY, 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = os.path.join(tmp, "baselines")
+            shutil.copytree(bl.BASELINES_DIR, root)
+            ratchet.revert(FAMILY, entry_id, "owner review test", "owner-test", root=root)
+            ids = {e["id"] for e in bl.active_entries(FAMILY, root)}
+            self.assertNotIn(entry_id, ids)
+            self.assertIn("business_round-claim-needs-a-fact", ids)
+            self.assertEqual(bl.generations(FAMILY, root), [0, 1, 2])
+            self.assertEqual(bl.generation_sha256(FAMILY, 1, root), before)
+            self.assertEqual(ratchet.verify_chain(FAMILY, root).generations, [0, 1, 2])
+            with self.assertRaises(ratchet.RatchetRefusal):
+                ratchet.revert(FAMILY, entry_id, "again", "owner-test", root=root)
+        self.assertIn(entry_id, {e["id"] for e in bl.active_entries(FAMILY)})
+
+    def test_ordinary_build_prompts_get_no_business_baseline(self):
+        for prompt in ("implementa un parser de CSV en python con tests",
+                       "add a retry with backoff to the upload client",
+                       "refactoriza el módulo de logging para usar structlog",
+                       "write a README section explaining the install steps"):
+            with self.subTest(prompt=prompt):
+                self.assertNotIn(self._header(), cli.family_block(prompt, {}))
+                self.assertNotIn(FAMILY, _ids(prompt))
+
     def test_generation_chain_verifies(self):
         r = subprocess.run([sys.executable, str(ROOT / "tools" / "family_baseline.py"), "verify", FAMILY],
                            capture_output=True, text=True, cwd=str(ROOT), timeout=60)
