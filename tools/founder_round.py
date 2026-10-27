@@ -15,7 +15,9 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import sys
+import time
 import uuid
 
 PP_ROOT = Path(__file__).resolve().parent.parent
@@ -53,6 +55,54 @@ def _require_text(row: dict, field: str) -> str:
     return value.strip()
 
 
+_EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+_IBAN = re.compile(r"(?<![A-Za-z0-9])[A-Z]{2}\d{2}(?: ?[A-Z0-9]){11,30}(?![A-Za-z0-9])")
+_CARD = re.compile(r"(?<![A-Za-z0-9])(?:\d[ -]?){12,18}\d(?![A-Za-z0-9])")
+_PHONE = re.compile(r"(?<![A-Za-z0-9])\+\d[\d ()-]{7,}\d")
+_PAYMENT_KEY = re.compile(r"\b(?:[sr]k|pk)_(?:live|test)_[A-Za-z0-9]{16,}|\bwhsec_[A-Za-z0-9]{16,}")
+
+
+def _luhn(digits: str) -> bool:
+    total = 0
+    for i, ch in enumerate(reversed(digits)):
+        n = int(ch)
+        if i % 2:
+            n = n * 2 - 9 if n * 2 > 9 else n * 2
+        total += n
+    return total % 10 == 0
+
+
+def _iban_ok(raw: str) -> bool:
+    s = raw.replace(" ", "")
+    if not 15 <= len(s) <= 34:
+        return False
+    moved = s[4:] + s[:4]
+    return int("".join(str(int(c, 36)) for c in moved)) % 97 == 1
+
+
+def _sensitive_kind(text: str) -> str | None:
+    """Name the first personal or secret datum in text, else None.
+
+    The shared Secret Firewall covers credentials only. A business journal's
+    realistic leak is customer data, so this guard refuses instead of redacting:
+    the journal holds metadata, and a refusal makes the author move the raw
+    source out of the summary rather than ship a half-masked one.
+    """
+    if _PAYMENT_KEY.search(text):
+        return "payment_key"
+    if _EMAIL.search(text):
+        return "email"
+    if any(_iban_ok(m.group()) for m in _IBAN.finditer(text)):
+        return "iban"
+    for m in _CARD.finditer(text):
+        digits = re.sub(r"\D", "", m.group())
+        if 13 <= len(digits) <= 19 and _luhn(digits):
+            return "payment_card"
+    if _PHONE.search(text):
+        return "phone"
+    return None
+
+
 def _storage(repo: Path, state_home: Path | None = None) -> Path:
     # The existing canonical_repo handles subdirs and git worktrees. Reuse it.
     root = Path(canonical_repo(str(repo.resolve()))).resolve()
@@ -82,6 +132,41 @@ def _write_new(p: Path, value: dict) -> None:
         p.chmod(0o600)
 
 
+def _pid_alive(pid: int) -> bool:
+    if os.name == "nt":
+        # os.kill(pid, 0) would TerminateProcess on Windows; query instead.
+        import ctypes
+        handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)  # QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        try:
+            code = ctypes.c_ulong()
+            ok = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
+            return bool(ok) and code.value == 259  # STILL_ACTIVE
+        finally:
+            ctypes.windll.kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _lock_verdict(lock: Path) -> str:
+    """'stale' only on positive proof the owner is gone; anything else is 'live'."""
+    try:
+        pid = int(json.loads(lock.read_text(encoding="utf-8"))["pid"])
+    except (OSError, ValueError, KeyError, TypeError):
+        # A crash between create and write leaves an empty lock; give a writer 60s.
+        try:
+            return "stale" if time.time() - lock.stat().st_mtime > 60 else "live"
+        except OSError:
+            return "live"
+    return "live" if _pid_alive(pid) else "stale"
+
+
 @contextmanager
 def _locked(d: Path):
     lock = d / ".write.lock"
@@ -90,7 +175,10 @@ def _locked(d: Path):
     try:
         fd = os.open(str(lock), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError as e:
-        raise RuntimeError("round state locked; inspect its owner before manual recovery") from e
+        if _lock_verdict(lock) == "stale":
+            raise RuntimeError("round state lock is stale (owner process is gone); "
+                               "run recover to clear it") from e
+        raise RuntimeError("round state locked by a live writer; retry shortly") from e
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(json.dumps({"pid": os.getpid(), "time": _utc()}))
@@ -116,10 +204,19 @@ def _read_events(d: Path) -> list[dict]:
     path = d / "events.jsonl"
     if not path.exists():
         return []
+    raw = path.read_bytes()
+    if raw and not raw.endswith(b"\n"):
+        # _append writes record and newline in one call, so a missing newline is a crash mid-append.
+        raise RuntimeError("journal integrity failure: TORN_TAIL (last write was cut off; "
+                           "run recover to quarantine it)")
+    return _parse_events(raw.decode("utf-8"))
+
+
+def _parse_events(text: str) -> list[dict]:
     events = []
     prev = "0" * 64
     seen = set()
-    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    for line_number, line in enumerate(text.splitlines(), 1):
         try:
             row = json.loads(line)
             digest = row.pop("sha256")
@@ -229,12 +326,29 @@ def record(repo: Path, payload: dict, state_home: Path | None = None) -> dict:
                "baseline_ref", "after_ref", "metric", "window", "method"}
     if set(payload) - allowed:
         raise ValueError(f"unsupported event fields: {sorted(set(payload) - allowed)}")
+    for field in ("estimated_cost", "estimated_value"):
+        amount = payload.get(field)
+        if amount is None:
+            continue
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+            raise ValueError(f"{field} must be a number")
+        if isinstance(amount, float) and not math.isfinite(amount):
+            raise ValueError(f"unsupported or non-finite value for {field}; metadata scalars only")
+        if amount < 0:
+            raise ValueError(f"{field} must not be negative; record a cost as a positive amount")
+        code = payload.get("currency")
+        if not (isinstance(code, str) and re.fullmatch(r"[A-Z]{3}", code)):
+            raise ValueError(f"{field} needs an ISO 4217 currency code; an amount without a currency is not recorded")
     # Secret Firewall is CPP-owned. No raw token or unbounded nested customer
     # payload may flow into this otherwise-private evidence journal.
     from modules.secret_firewall.redactor import redact_for_log
     clean = {}
     for field, value in payload.items():
         if isinstance(value, str):
+            found = _sensitive_kind(value)
+            if found:
+                raise ValueError(f"{field} contains personal or secret data ({found}); "
+                                 "reference the source instead of quoting it")
             clean[field] = redact_for_log(value, max_len=2000)
         elif value is None or isinstance(value, (bool, int)):
             clean[field] = value
@@ -251,10 +365,49 @@ def record(repo: Path, payload: dict, state_home: Path | None = None) -> dict:
         round_id = _active(events)
         if not round_id:
             raise RuntimeError("no active round; run start first")
+        if kind == "execution" and any(
+                e.get("round_id") == round_id and e.get("kind") == "execution"
+                and e.get("payload", {}).get("action_ref") == payload["action_ref"] for e in events):
+            raise ValueError(f"duplicate action_ref in this round: {payload['action_ref']}")
         row = _append(d, events, {"kind": kind, "round_id": round_id,
                                   "payload": payload})
     return {"event_id": row["event_id"], "round_id": round_id, "seq": row["seq"],
             "sha256": row["sha256"]}
+
+
+def recover(repo: Path, state_home: Path | None = None) -> dict:
+    """Clear a dead writer's lock and quarantine a cut-off last write.
+
+    Acts only on positive evidence: the lock owner is gone, or the journal's last
+    line lacks its newline. The journal minus that line must still verify, so
+    mid-journal corruption or tampering is never repaired, only reported.
+    """
+    d = _storage(repo, state_home)
+    if not d.is_dir():
+        raise RuntimeError("uninitialized: run init from this repository first")
+    lock = d / ".write.lock"
+    stale_removed = False
+    if lock.exists() and _lock_verdict(lock) == "stale":
+        lock.unlink(missing_ok=True)
+        stale_removed = True
+    quarantined = 0
+    with _locked(d):
+        _identity(repo, d)
+        path = d / "events.jsonl"
+        raw = path.read_bytes() if path.exists() else b""
+        if raw and not raw.endswith(b"\n"):
+            keep = raw[:raw.rfind(b"\n") + 1]
+            _parse_events(keep.decode("utf-8"))  # refuses unless the rest verifies
+            tail = raw[len(keep):]
+            (d / f"torn-tail-{int(time.time())}.bin").write_bytes(tail)
+            tmp = d / "events.jsonl.recover"
+            tmp.write_bytes(keep)
+            os.replace(tmp, path)
+            quarantined = len(tail)
+        else:
+            _parse_events(raw.decode("utf-8"))
+    return {"stale_lock_removed": stale_removed, "quarantined_bytes": quarantined,
+            "journal_integrity": "VERIFIED"}
 
 
 def close(repo: Path, outcome: str, proof_ids: list[str], *,
@@ -313,6 +466,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("init")
     sub.add_parser("start")
     sub.add_parser("status")
+    sub.add_parser("recover")
     add = sub.add_parser("event")
     add.add_argument("--file", type=Path, required=True)
     end = sub.add_parser("close")
@@ -327,6 +481,8 @@ def main(argv: list[str] | None = None) -> int:
             result = start(args.repo)
         elif args.command == "event":
             result = record(args.repo, json.loads(args.file.read_text(encoding="utf-8")))
+        elif args.command == "recover":
+            result = recover(args.repo)
         elif args.command == "close":
             result = close(args.repo, args.outcome, args.proof, blocker=args.blocker)
         else:
