@@ -125,5 +125,26 @@ the Real-World Loop of GATE 8 stay **BLOCKED**, not simulated. The loop's pure p
 business repository that already holds exported metrics, which Founder OS can read as `repo:` sources with no connector.
 Both are Owner actions; nothing here pretends otherwise.
 
+## Gate ledger (observed 2026-10-27; every command run from the worktree root; exit 0 unless stated)
+Founder suites: `tools/test_founder_os.py` 17, `_f0` 7, `_cli` 4, `_kernel` 8, `_compiler` 10, `_assessment` 9,
+`_evolution` 9, `_ratchet` 10, `_gates` 8 = 82 tests. Family suites: `test_family_baselines.py` 22/22, `test_family_injection.py` 26/26.
+
+| Gate | Status | What was observed, and the limit of it |
+|---|---|---|
+| G1 foundational integrity | PASS | The five F0 defects plus the latent spread override are fixed with regression tests. Not a proof v0 has no other defects. |
+| G2 universal activation | INCONCLUSIVE | `_repo_population('commands')` contains the command; global install not performed (dry-run only). The live PP checkout lacks `tools/founder_round.py` until this lands. |
+| G3 identity and isolation | PASS | Two real git repos through the real CLI (`_cli`, `_gates`); no cross-read, foreign proof refused. Monorepo/ambiguous-mapping case NOT built (deferred, Owner-confirmed mapping). |
+| G4 kernel | PASS | UNKNOWN stays UNKNOWN, STALE/CONTRADICTED/INFERRED exercised, state resumes from the journal. |
+| G5 knowledge intelligence | PASS | Provenance on every item, no cross-business leak (`_compiler`). Reads no vault/AKOS directly by design. |
+| G6 evolution engine | PASS | Full opportunity cycle with live cap and verified-measurement gating (`_evolution`). Structural only; no real business round has run. |
+| G7 business reality | BLOCKED | No authentic external evidence reachable: Web Analytics not enabled on `kobicraft-web`; no GA/Ads/CRM. Owner action required (section F5). |
+| G8 production reality | BLOCKED | Real CLI and real hook paths ran; the real-world loop did not, for the G7 reason. |
+| G9 security and autonomy | PASS | No network or subprocess imports in Founder code (mutation-checked), every external effect needs an `authorization_ref`, that string changes no verdict. Static and functional; no pentest. |
+| G10 constitutive ratchet | PASS | `business_round` B1 entry reaches a fresh prompt through the real CLI and node hook. Benefit measured: UNKNOWN. |
+| G11 cross-business | PASS | SaaS-like and workshop-like businesses through every command. Structural fixtures, NOT economic validation. |
+| G12 fresh-agent recovery | see ledger note | Scripted fresh process: PASS. A genuinely new agent was dispatched; its result is recorded in the handoff. |
+| G13 regression safety | PASS with named exceptions | 12 of 15 neighbouring suites exit 0. `test_install_population`, `test_mirror_parity`, `test_hook_mirror_identity` exit 1 and ALSO exit 1 on a clean checkout of the PR base `d698513cf`: pre-existing repo-versus-`~/.claude` drift, not caused here. Liveness exits 1 on 71 pre-existing orphans, none Founder. |
+| G14 completion standard | PASS | The Owner can revert the auto entry (chain verifies, B1 unchanged); ordinary build prompts get no business baseline. Cost comparison X versus X-prime: not claimed, no historical baseline. |
+
 ## Rollback
 Each fix is one commit on `feat/founder-os-v1-20261027`; revert the commit.
