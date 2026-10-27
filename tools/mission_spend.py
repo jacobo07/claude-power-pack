@@ -861,6 +861,33 @@ def goal_declare(goal: str, cap: int, source: str, roots: list[str] | None = Non
     return {**out, "binding": entry}
 
 
+def goal_unroot(goal: str, root: str) -> dict:
+    """Remove `root` from goal's roots, only when the goal is exhausted (remaining <= 0) or superseded.
+    It only removes authority, so there is no owner path."""
+    import sys
+    led = _goal_ledger(goal)
+    repo = str(Path(__file__).resolve().parents[1])
+    if repo not in sys.path:
+        sys.path.insert(0, repo)
+    from modules.lease.store import Exclusive
+    with Exclusive(goal_root() / "index.lock", 10.0):
+        ix = read_index()
+        cur = ix.get(goal)
+        if cur is None:
+            return {"ok": False, "goal": goal, "reason": f"UNKNOWN: goal {goal!r} is not declared"}
+        n = _norm(root)
+        if n not in cur.get("roots", []):
+            return {"ok": False, "goal": goal, "reason": f"root {n!r} is not a root of goal {goal!r}"}
+        rem = led.status().get("remaining")
+        if not cur.get("superseded") and (rem is None or rem > 0):
+            return {"ok": False, "goal": goal, "reason": f"goal {goal!r} is live (remaining {rem}); "
+                    "a root is released only when remaining <= 0 or the goal is superseded"}
+        cur["roots"] = [r for r in cur["roots"] if r != n]
+        ix[goal] = cur
+        _write_index(ix)
+    return {"ok": True, "goal": goal, "removed": n, "binding": cur}
+
+
 def _goal_entry(goal: str, host: str) -> tuple[dict | None, str]:
     e = read_index().get(goal)
     if e is None:
@@ -1334,6 +1361,9 @@ def _main(argv: list[str]) -> int:
     gd.add_argument("--lease-calls", type=int)
     gd.add_argument("--owner", action="store_true",
                     help="raise a cap or rebind a goal: asks you to type the goal id on an interactive terminal")
+    gu = sub.add_parser("goal-unroot")
+    gu.add_argument("--goal", required=True)
+    gu.add_argument("--root", required=True)
     for name in ("goal-renew", "goal-spawn"):
         g = sub.add_parser(name)
         g.add_argument("--goal", required=True)
@@ -1473,6 +1503,8 @@ def _main(argv: list[str]) -> int:
                     return 3
                 owner = input(f"Owner change to goal {a.goal!r}: type the goal id to confirm: ").strip() == a.goal
             out = goal_declare(a.goal, a.cap, a.source, a.root, a.host, a.lease_calls, owner=owner)
+        elif a.cmd == "goal-unroot":
+            out = goal_unroot(a.goal, a.root)
         elif a.cmd == "goal-prebind":
             out = goal_prebind(a.goal, a.session, a.measured)
         elif a.cmd == "goal-settle":

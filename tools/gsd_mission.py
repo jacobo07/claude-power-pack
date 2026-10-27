@@ -1098,6 +1098,7 @@ def _launch_slim(rec: dict, prompt: str, epoch: int, now: float, spawner=None) -
     sid = str(uuid.uuid4())
     out_path, err_path = slim_job_paths(mid, sid)
     _declare_worker_envelope(rec, sid)
+    _write_launcher_binding(rec, sid)   # WU-1D-v3-r1: same launcher record as --bg, BEFORE the first call can cwd-bind
     argv = worker_argv(rec, prompt, session_id=sid)
     # Start where the work lives. A mission armed from the main checkout records that checkout as
     # `cwd` and its worktree as `work_dir`; a print-mode worker's shell starts in whatever directory it
@@ -1282,6 +1283,18 @@ def baseline_legacy_verdict(rec: dict) -> str | None:
         f"{rec.get('mission_id')} --model sonnet --autocompact 250k` or set legacy_reason in {LEGACY_REASONS}")
 
 
+def _write_launcher_binding(rec: dict, sid: str) -> None:
+    """WU-1D-v3: arm --goal G -> the worker's sid gets an immutable launcher record (never bound by cwd)."""
+    goal = (rec.get("launch_goal") or "").strip()
+    if not goal or not sid:
+        return
+    try:
+        import mission_spend as ms
+        ms.write_binding(sid, goal, "launcher")
+    except Exception:  # noqa: BLE001 -- binding is best effort; the launch already happened
+        pass
+
+
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
@@ -1451,6 +1464,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     rec = transition(mission_id, expect_epoch=epoch, expect_state=LAUNCHING, event="launched",
                      now=now, pending={**rec["pending"], "bg_id": bg_id}, **used)
     _record_launch_account(bg_id)
+    _write_launcher_binding(rec, bg_id)
     if rec.get("capsule_key") and capsule_v2(rec):
         _capsule_bind(rec, bg_id=bg_id)
     return {"ok": True, "epoch": epoch, "bg_id": bg_id}
@@ -6254,7 +6268,7 @@ def batch_foreseeable_decisions(rec: dict, cwd: str, workstream: str | None) -> 
 
 
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
-        authority: str | None = None, parallel_unit: str | None = None, **kw) -> dict:
+        authority: str | None = None, parallel_unit: str | None = None, goal: str | None = None, **kw) -> dict:
     ws = kw.get("workstream")
     if ws is None and resume_command.startswith("/gsd-"):
         m = _WS_FLAG.search(resume_command)
@@ -6311,6 +6325,8 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         extra["goal"] = {"repo": key[0], "workstream": key[1], "unit": parallel_unit}
     if supersedes:
         extra.update(supersedes=supersedes, authority=authority.strip()[:1000])
+    if (goal or "").strip():
+        extra["launch_goal"] = goal.strip()   # WU-1D-v3: the launcher binds the worker's sid to this goal
     if extra:
         rec = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=PREPARED,
                          event="goal_bound", **extra)
@@ -7223,7 +7239,8 @@ def _cli(argv=None) -> int:
     a.add_argument("--authority", help="who decided the supersession and where it is recorded")
     a.add_argument("--parallel-unit", help="a named work unit that may run beside other named units "
                                            "of the same goal")
-    ac = sub.add_parser("arm-chain", help="atomic arm: --no-launch + envelope + admit; hold on any failure")
+    a.add_argument("--goal", help="bind the worker's session to this goal at launch (launcher binding record)")
+    ac =sub.add_parser("arm-chain", help="atomic arm: --no-launch + envelope + admit; hold on any failure")
     ac.add_argument("--cwd", required=True)
     ac.add_argument("--command", required=True)
     ac.add_argument("--wu-packet", required=True)
@@ -7348,7 +7365,8 @@ def _cli(argv=None) -> int:
                   max_cycles=args.max_cycles, max_hours=args.max_hours,
                   permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
                   add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol,
-                  supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit)
+                  supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit,
+                  goal=args.goal)
         mid = (res.get("mission") or res).get("mission_id")
         if mid:
             lr.ledger_append(mid, "planning_gate", mission_id=mid, gate=adm["gate"], override=adm.get("override"),
