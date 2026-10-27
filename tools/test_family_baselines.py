@@ -34,6 +34,11 @@ PROMPTS = {
                          "cambia el color del botón del hero"),
     "wii_homebrew": ("porta el menú de CavEX a la Wii con libogc y GX",
                      "crea una nueva modalidad de KobiiCraft tipo skywars con arenas y kits"),
+    # Predeclared in vault/audits/ucr_cif/19_BUSINESS_ROUND_FAMILY_PREDECLARATION.md (commit 4b59d4d32),
+    # before the family file existed. No REPOS pole: the family is decided by the prompt alone.
+    "business_round": ("haz una ronda de negocio en este repositorio: encuentra el cuello de botella "
+                       "del embudo de ventas y propone un experimento",
+                       "arregla el crash del escritor de level.dat en la Wii"),
 }
 REPOS = {
     "web_surface": (CP + r"\CostaLuz Lawyers", CP + r"\Wii Projects\CavEX"),

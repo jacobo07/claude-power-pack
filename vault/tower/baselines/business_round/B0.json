@@ -1,0 +1,75 @@
+{
+  "family": "business_round",
+  "generation": 0,
+  "parent": null,
+  "parent_sha256": null,
+  "created_at": 1793096666.5329945,
+  "reason": "B0 from Owner-sealed governance; every entry's cited line re-read and verified",
+  "entries": [
+    {
+      "id": "business_round-claim-needs-a-fact",
+      "requirement": "Every assertive business statement you write or report (price, savings, demand, conversion, what customers said, results) must cite a fact from a system of record; if no fact exists, the claim stays absent and the reason for its absence is recorded.",
+      "why": "A structural check passes a fabricated claim because a false claim is well-formed; only an evidence gate looks at content.",
+      "origin": {
+        "file": "C:/Users/User/.claude/rules/generated-content-needs-an-evidence-gate.md",
+        "line": 32,
+        "quote": "**A claim about the world needs a fact. Absence stays absent.**"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "business_round-recommendation-is-not-a-fact",
+      "requirement": "Never let a modelled or projected figure fill a slot whose meaning is 'this was true': a projection, anchor price or forecast conversion rate is not an observed value, and only observed data may be reported as a result.",
+      "why": "A modelled anchor price presented as a former price is a false statement even when the model is sound.",
+      "origin": {
+        "file": "C:/Users/User/.claude/rules/generated-content-needs-an-evidence-gate.md",
+        "line": 52,
+        "quote": "- **Never let a recommendation become a fact.** A modelled anchor price is not a former"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "business_round-amount-travels-with-qualifiers",
+      "requirement": "Every monetary amount you record or compute carries its currency, scale and basis as fields; amounts without them are not added, compared or divided with other amounts.",
+      "why": "Combining amounts that differ in currency, scale or basis yields a number that looks precise and means nothing.",
+      "origin": {
+        "file": "C:/Users/User/.claude/skills/monetary-quantity-integrity/SKILL.md",
+        "line": 15,
+        "quote": "**An amount travels with its qualifiers as fields, or it cannot be combined with"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "business_round-no-message-to-a-person-unreviewed",
+      "requirement": "Do not send, post or schedule any message to a customer, prospect or other person from a business round without an explicit owner approval bound to the exact message content; prepare it as a draft and stop.",
+      "why": "A message to a person is a mutation that cannot be taken back.",
+      "origin": {
+        "file": "C:/Users/User/.claude/skills/human-facing-external-effects/SKILL.md",
+        "line": 12,
+        "quote": "mutation that cannot be taken back and whose cost is paid in someone's"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "business_round-global-flag-never-decides-per-business-effect",
+      "requirement": "If the work can spend, send, publish or mutate third-party state for more than one business, decide each effect from that business's own recorded authorization; a process-wide setting may only cap it, never grant it.",
+      "why": "Process-global mutable state cannot represent two businesses that legitimately hold different permissions.",
+      "origin": {
+        "file": "C:/Users/User/.claude/skills/scoped-side-effect-authority/SKILL.md",
+        "line": 25,
+        "quote": "- A process-global control is legitimate as a **ceiling** (a fleet-wide emergency stop)"
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    }
+  ]
+}

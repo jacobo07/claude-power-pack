@@ -36,10 +36,18 @@ Universal Workstream Continuity Plane (TLA+ model, not a business-state concern)
   test, fixed in `kernel.py`. Class: dict-spread key-order override. Candidate Trap; a grep-able detector is feasible.
 - I-3 Anti-thrash hook blocks a 3rd Edit on a file without a Read between; plan one consolidated Edit per Read.
 
-**Next 3 actions.**
-1. F2 Business Knowledge Compiler: per-lens context (Strategy, Growth, Sales, Finance, Product, Operations, Customer, Competitive, Research, Experimentation, Risk, Knowledge) composed from existing Knowledge Vault / UKDL / AKOS retrieval plus this business's kernel view only; provenance and freshness on every item; no cross-business reads.
-2. F6 groundwork: add ONE business-context family under `vault/tower/families/` (two predeclared poles first, per the family-baselines spec section 4) and prove a fresh `gsd_x/cli.py` prompt receives its entries while a non-business prompt receives none.
-3. Regression safety (G13): neighbour suites (`secret_firewall`, `repo_identity`, `test_family_baselines.py`, `test_family_injection.py`) and `python modules/liveness/reachability.py` before any "done".
+**F6 first slice sealed (G10 evidence, not yet G14).** Family `business_round` (`vault/tower/families/business_round.json`),
+predeclared alone in `4b59d4d32` BEFORE the family existed; B0 = 5 Owner-sealed entries with verified citations; B1 = first
+mission-derived entry (`business_round-journal-refuses-customer-data`, status `auto`, awaiting Owner `review`). A fresh
+prompt receives it through the real CLI and the real node hook (`tools/test_founder_os_ratchet.py` 8/8). Existing gates
+extended, not weakened: `test_family_baselines.py` 22/22, `test_family_injection.py` 26/26. Limit: the promoted entry cites a
+repo-relative file, so `verify_origin` needs cwd = the PP root. Liveness: `modules/liveness/reachability.py` exits 1 on 71
+pre-existing orphans, none Founder (not compared against a clean baseline).
 
-**Start.** `Set-Location` to the worktree, `git log --oneline -3`, run the three suites above, continue at action 1.
+**Next 3 actions.**
+1. F2 Business Knowledge Compiler: per-lens context (Strategy, Growth, Sales, Finance, Product, Operations, Customer, Competitive, Research, Experimentation, Risk, Knowledge) composed from existing Knowledge Vault / UKDL / AKOS retrieval plus this business's kernel view only; provenance and freshness on every item; no cross-business reads. Amend the spec first.
+2. G14 inheritance: show a build task for a NEW feature (not a business prompt) is not burdened, and that the Owner can `revert` the auto entry; decide whether PII-refusal also belongs in a non-business family.
+3. G13 breadth: run the wider CPP suites (`tools/test_*.py` touching `secret_firewall`, hooks, installer) and compare liveness against a clean baseline commit; then F3-F5 per the plan (F5 first checks which connectors are really connected).
+
+**Start.** `Set-Location` to the worktree, `git log --oneline -3`, run `tools/test_founder_os*.py`, `tools/test_family_baselines.py`, `tools/test_family_injection.py`, continue at action 1.
 Budget plan 240k tokens (telemetry UNKNOWN unless measured). Recovery cycles max 12, campaign max 24h.
