@@ -47,6 +47,30 @@ class TestSecurityAndAutonomy(unittest.TestCase):
                 bad = {m for m in _imports(path) if m in FORBIDDEN_IMPORTS or m.split(".")[0] in FORBIDDEN_IMPORTS}
                 self.assertEqual(bad, set(), f"{path.name} imports {bad}")
 
+    @staticmethod
+    def _spread_overrides(source: str) -> list:
+        """Dict literals where an explicit key precedes a `**` unpack: the unpack can overwrite that key."""
+        hits = []
+        for node in ast.walk(ast.parse(source)):
+            if isinstance(node, ast.Dict):
+                explicit: list = []
+                for key in node.keys:
+                    if key is None and explicit:
+                        hits.append((node.lineno, list(explicit)))
+                    elif isinstance(key, ast.Constant):
+                        explicit.append(key.value)
+        return hits
+
+    def test_no_dict_literal_lets_a_spread_overwrite_an_earlier_explicit_key(self):
+        """Incident I-2: {"status": "STALE", **row} reported STALE as OBSERVED. Spread first, explicit keys last."""
+        for path in SOURCES:
+            with self.subTest(file=path.name):
+                self.assertEqual(self._spread_overrides(path.read_text(encoding="utf-8")), [])
+
+    def test_the_spread_detector_can_fail(self):
+        bad = 'row = {}\nx = {"status": "STALE", **row}\ny = {**row, "status": "STALE"}\n'
+        self.assertEqual(self._spread_overrides(bad), [(2, ["status"])])
+
     def test_every_external_effect_needs_an_authorization_ref(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo, state = Path(tmp) / "biz", Path(tmp) / "state"

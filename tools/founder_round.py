@@ -237,9 +237,11 @@ def _parse_events(text: str) -> list[dict]:
 
 
 def _append(d: Path, events: list[dict], row: dict) -> dict:
-    record = {"schema": SCHEMA, "seq": len(events) + 1,
+    # Spread FIRST: a later explicit key wins, so a caller's row can never overwrite a system field.
+    # Key order does not change the digest (_json_bytes sorts keys).
+    record = {**row, "schema": SCHEMA, "seq": len(events) + 1,
               "event_id": str(uuid.uuid4()), "ts": _utc(),
-              "prev_sha256": events[-1]["sha256"] if events else "0" * 64, **row}
+              "prev_sha256": events[-1]["sha256"] if events else "0" * 64}
     record["sha256"] = hashlib.sha256(_json_bytes(record)).hexdigest()
     p = d / "events.jsonl"
     with p.open("a", encoding="utf-8") as f:

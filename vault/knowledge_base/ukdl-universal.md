@@ -13185,3 +13185,56 @@ the whole history on disk under one session id costs no RAM after a recycle. Evi
 absolute interpreter path, or refuse when `sys.executable` is empty. Also: `bash -c "exec -a ...; trailer"`
 never runs the trailer, because exec replaces the shell. Evidence: E; `longrun.default_hook_cmd`.
 
+
+
+## Founder OS v1 (campaign 2026-10-27)
+
+Evidence and rollback: `vault/specs/founder-os-v1.md`. Every entry below has a regression test or a named guard.
+No Hard Rule was promoted: no incident here showed an irreversible-damage mode, and one incident per class is not
+the evidence a universal invariant needs. Hypotheses are listed last, unpromoted.
+
+### T-CREDENTIAL-SCANNER-IS-NOT-A-PRIVACY-GATE-001
+
+A secret scanner covers credentials; it says nothing about customer personal data. Probed on the shared Secret
+Firewall: 5 of 9 realistic shapes passed through untouched (Stripe live key, email, IBAN, payment card, phone).
+A journal that "redacts via the firewall" therefore ships PII while its documentation claims privacy. Refuse (not
+mask) the data classes the journal must not hold, and cite the source instead of quoting it. Test:
+`tools/test_founder_os_f0.py::test_personal_data_is_refused`. Local promotion: `business_round-journal-refuses-customer-data`
+(status `auto`, Owner reviews with `family_baseline.py review business_round`). Open: the shared detector still lacks a
+payment-key pattern.
+
+### T-DICT-SPREAD-AFTER-AN-EXPLICIT-KEY-OVERWRITES-IT-001
+
+`{"status": "STALE", **row}` lets `row["status"]` replace the explicit value; the kernel reported a 200-day-old fact as
+OBSERVED. The same shape sat latent in the journal writer (`{"seq": n, ..., **row}`). Put the spread first and the
+explicit keys last. Guard: an AST scan over all Founder code asserts no dict literal has an explicit key before a `**`
+unpack, and a synthetic mutant proves the scan can fail. Test: `tools/test_founder_os_gates.py`
+(`test_no_dict_literal_lets_a_spread_overwrite_an_earlier_explicit_key`, `test_the_spread_detector_can_fail`).
+
+### T-CONNECTED-IS-NOT-ENABLED-001
+
+An authenticated connector does not mean its data source is switched on. Vercel answered `get_auth_user` and
+`list_projects`, then `aggregate_pageviews` returned HTTP 400 `web_analytics_not_enabled` for the real business site.
+Probe the DATA endpoint before building a loop on a connector, and record the exact error as BLOCKED; never fill the
+gap with simulated data. Recorded in `vault/specs/founder-os-v1.md` section F5.
+
+### PR-A-WRITE-IS-AN-EDIT-ATTEMPT-ONE-EDIT-THEN-READ-001
+
+The anti-thrash hook counts a `Write` as an attempt: after creating a file only ONE `Edit` fits before a `Read` of that
+path resets the counter. Plan the file's follow-up change as one consolidated edit, or read between edits. Measured
+four times in one campaign (journal writer, spec, evolution module, ratchet test).
+
+### PR-NEW-FAMILY-PREDECLARE-THEN-EXTEND-THE-POPULATION-GATES-001
+
+Adding a baseline family makes `test_family_baselines.py` and `test_family_injection.py` fail with "registry != predeclared"
+until the family's poles are added to `PROMPTS`. That failure is the design (a family cannot exist without predeclared
+subjects). Order: predeclaration document in its own commit, then the family file, then B0 from cited sealed doctrine,
+then extend `PROMPTS`. A promoted entry that cites a repo-relative file verifies only with cwd at the PP root.
+
+### Unpromoted hypotheses (recorded, not rules)
+
+- H-1 "A gate that reports a property must measure each data class it names" may generalise to every logging and
+  journalling system. Evidence: one incident. Needs a second independent instance before any promotion.
+- H-2 Connector probes should always target the data endpoint, not the auth endpoint. Evidence: one connector.
+- H-3 The Founder baseline (`business_round`) reducing rediscovery cost is unmeasured; there is no historical baseline for
+  the cost of this class of problem, so no X versus X-prime comparison is claimed.
