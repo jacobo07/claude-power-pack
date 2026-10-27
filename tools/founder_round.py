@@ -326,7 +326,8 @@ def record(repo: Path, payload: dict, state_home: Path | None = None) -> dict:
                "action_ref", "outcome_ref", "success_gate", "abandon_gate", "hypothesis_ref",
                "opportunity_ref", "estimated_cost", "estimated_value", "currency", "limitations",
                "baseline_ref", "after_ref", "metric", "window", "method",
-               "subject", "value", "observed_at", "supersedes"}
+               "subject", "value", "observed_at", "supersedes",
+               "confidence", "state_change", "proof_ref", "merged_into"}
     if set(payload) - allowed:
         raise ValueError(f"unsupported event fields: {sorted(set(payload) - allowed)}")
     if ("subject" in payload or "value" in payload) and kind not in kernel.SUBJECT_KINDS:
@@ -392,6 +393,8 @@ def record(repo: Path, payload: dict, state_home: Path | None = None) -> dict:
             old = next((e for e in events if e["event_id"] == target), None)
             if old is None or old.get("payload", {}).get("subject") != payload.get("subject"):
                 raise ValueError("supersedes must name an earlier event with the same subject")
+        from modules.founder_os import evolution
+        evolution.check_write(events, kind, payload)
         row = _append(d, events, {"kind": kind, "round_id": round_id,
                                   "payload": payload})
     return {"event_id": row["event_id"], "round_id": round_id, "seq": row["seq"],
@@ -509,6 +512,17 @@ def assess_business(repo: Path, state_home: Path | None = None, as_of: datetime 
     return assessment.assess(kernel_view(repo, state_home, as_of)["fields"])
 
 
+def backlog_view(repo: Path, state_home: Path | None = None, as_of: datetime | None = None) -> dict:
+    """Opportunity lifecycle and the evidence-based bottleneck for THIS business."""
+    from modules.founder_os import evolution
+    d = _storage(repo, state_home)
+    _identity(repo, d)
+    events = _read_events(d)
+    opps = evolution.states(events)
+    return {"opportunities": opps, "live": evolution.live_count(events), "live_cap": evolution.LIVE_CAP,
+            "bottleneck": evolution.bottleneck(kernel.build_view(events, as_of=as_of)), "executes": "NOTHING"}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
@@ -519,6 +533,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("recover")
     sub.add_parser("kernel")
     sub.add_parser("assess")
+    sub.add_parser("backlog")
     ctx = sub.add_parser("context")
     ctx.add_argument("--lens", required=True)
     add = sub.add_parser("event")
@@ -543,6 +558,8 @@ def main(argv: list[str] | None = None) -> int:
             result = context_for(args.repo, args.lens)
         elif args.command == "assess":
             result = assess_business(args.repo)
+        elif args.command == "backlog":
+            result = backlog_view(args.repo)
         elif args.command == "close":
             result = close(args.repo, args.outcome, args.proof, blocker=args.blocker)
         else:

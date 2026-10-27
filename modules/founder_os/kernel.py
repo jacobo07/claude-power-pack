@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 PROFILE_FIELDS = ("business_model", "revenue_model", "customer_segments", "stage",
                   "products_services", "value_proposition", "objectives", "constraints",
                   "budget", "costs", "margins", "operating_capacity", "funnel", "metrics",
-                  "risks")
+                  "risks", "bottleneck")
 # Missing-fact order = value of knowing it first; the first four decide which capability applies.
 CORE = ("business_model", "revenue_model", "customer_segments", "stage")
 SUBJECT_KINDS = frozenset({"observation", "measurement", "hypothesis"})

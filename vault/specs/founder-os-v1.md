@@ -95,5 +95,21 @@ higher than the weakest of Economic, Demand and Operational. Evidence Confidence
 ratio (a threshold on a ratio is satisfied by deleting a field). No dimension computes money: amounts need typed
 currency and period, which the journal already requires, and the arithmetic waits for a connector with a source.
 
+## F4 — Evolution Engine contract
+Opportunities are journal events (`kind: opportunity`, already requiring `success_gate` and `abandon_gate`), so there is
+no second backlog; `backlog_autopilot` is not reused because its priority/effort score is not a business model (the
+command already says so). State is folded, never stored: PROPOSED on creation, then `decision` events carrying
+`opportunity_ref` and `state_change` move it: `adopt` (PROPOSED to ACTIVE), `succeed` (ACTIVE to DONE),
+`abandon` and `merge` (to ABANDONED; `merge` names `merged_into`, a live opportunity). Rules enforced at write time
+under the lock: at most 5 live (PROPOSED or ACTIVE) opportunities; `succeed` must cite a `proof_ref`, a
+`measurement` event of the same round or earlier whose `opportunity_ref` matches and whose class is `verified`
+(a simulated or hypothesis measurement does not move an opportunity to DONE); a terminal opportunity cannot move
+again; `confidence` is low, medium, high or absent (absent reads as unknown). The Bottleneck Resolver returns the
+bottleneck ONLY if an observation with `subject: bottleneck` is live; an `inferred` one is reported as a hypothesis,
+and with none it returns `bottleneck: null` plus the highest-value uncertainty reducer from the kernel plan, so the
+next experiment is the one that most reduces uncertainty, not an intuition presented as fact. Gates are free text
+predeclared at creation; the engine verifies linkage and evidence class, and the success judgement stays an
+agent-plus-Owner decision (v0 contract 8).
+
 ## Rollback
 Each fix is one commit on `feat/founder-os-v1-20261027`; revert the commit.
