@@ -1,0 +1,10 @@
+{
+  "id": "business_round",
+  "name": "Ronda de negocio / Founder OS",
+  "triggers": ["ronda de negocio", "ronda del fundador", "founder round", "business round",
+               "business bottleneck", "cuello de botella del negocio", "mejorar el negocio",
+               "improve the business", "cpp-founder-round", "founder os"],
+  "anti_triggers": [],
+  "delegate": "",
+  "repo_markers": []
+}

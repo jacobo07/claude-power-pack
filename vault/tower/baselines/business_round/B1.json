@@ -1,0 +1,89 @@
+{
+  "family": "business_round",
+  "generation": 1,
+  "parent": 0,
+  "parent_sha256": "37428f8b7d933883a8ceb491abb38ac9c9409896a9a55ccd7ac8bac6777e410f",
+  "created_at": 1793096829.7926247,
+  "reason": "promote business_round-journal-refuses-customer-data: first mission-derived entry: Founder OS v1 F0 finding F0-1 (commit 3847d92cc)",
+  "entries": [
+    {
+      "id": "business_round-claim-needs-a-fact",
+      "requirement": "Every assertive business statement you write or report (price, savings, demand, conversion, what customers said, results) must cite a fact from a system of record; if no fact exists, the claim stays absent and the reason for its absence is recorded.",
+      "why": "A structural check passes a fabricated claim because a false claim is well-formed; only an evidence gate looks at content.",
+      "origin": {
+        "file": "C:/Users/User/.claude/rules/generated-content-needs-an-evidence-gate.md",
+        "line": 32,
+        "quote": "**A claim about the world needs a fact. Absence stays absent.**"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "business_round-recommendation-is-not-a-fact",
+      "requirement": "Never let a modelled or projected figure fill a slot whose meaning is 'this was true': a projection, anchor price or forecast conversion rate is not an observed value, and only observed data may be reported as a result.",
+      "why": "A modelled anchor price presented as a former price is a false statement even when the model is sound.",
+      "origin": {
+        "file": "C:/Users/User/.claude/rules/generated-content-needs-an-evidence-gate.md",
+        "line": 52,
+        "quote": "- **Never let a recommendation become a fact.** A modelled anchor price is not a former"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "business_round-amount-travels-with-qualifiers",
+      "requirement": "Every monetary amount you record or compute carries its currency, scale and basis as fields; amounts without them are not added, compared or divided with other amounts.",
+      "why": "Combining amounts that differ in currency, scale or basis yields a number that looks precise and means nothing.",
+      "origin": {
+        "file": "C:/Users/User/.claude/skills/monetary-quantity-integrity/SKILL.md",
+        "line": 15,
+        "quote": "**An amount travels with its qualifiers as fields, or it cannot be combined with"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "business_round-no-message-to-a-person-unreviewed",
+      "requirement": "Do not send, post or schedule any message to a customer, prospect or other person from a business round without an explicit owner approval bound to the exact message content; prepare it as a draft and stop.",
+      "why": "A message to a person is a mutation that cannot be taken back.",
+      "origin": {
+        "file": "C:/Users/User/.claude/skills/human-facing-external-effects/SKILL.md",
+        "line": 12,
+        "quote": "mutation that cannot be taken back and whose cost is paid in someone's"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "business_round-global-flag-never-decides-per-business-effect",
+      "requirement": "If the work can spend, send, publish or mutate third-party state for more than one business, decide each effect from that business's own recorded authorization; a process-wide setting may only cap it, never grant it.",
+      "why": "Process-global mutable state cannot represent two businesses that legitimately hold different permissions.",
+      "origin": {
+        "file": "C:/Users/User/.claude/skills/scoped-side-effect-authority/SKILL.md",
+        "line": 25,
+        "quote": "- A process-global control is legitimate as a **ceiling** (a fleet-wide emergency stop)"
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "status": "auto",
+      "check": "tools/test_founder_os_f0.py::test_personal_data_is_refused",
+      "id": "business_round-journal-refuses-customer-data",
+      "requirement": "A journal, report or ledger that keeps business evidence as metadata must refuse, not merely redact, customer personal data (emails, IBANs, payment cards, phone numbers) and payment-provider keys, and point at the source instead of quoting it; a credentials-only secret scanner does not cover this.",
+      "why": "Measured 2026-10-27: the shared Secret Firewall passed 5 of 9 realistic secret and personal-data shapes through (Stripe live key, email, IBAN, card, phone); masking part of a datum still ships the rest.",
+      "origin": {
+        "file": "tools/founder_round.py",
+        "line": 88,
+        "quote": "The shared Secret Firewall covers credentials only. A business journal's"
+      },
+      "class": "D"
+    }
+  ],
+  "promoted_by": "auto: Founder OS v1 campaign; Owner reviews with family_baseline.py review business_round"
+}
