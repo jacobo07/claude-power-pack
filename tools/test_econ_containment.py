@@ -263,6 +263,10 @@ def g_raise(e):
     lo14 = [r for r in journal("t14") if r["op"] == "lease_open"]
     check("V-ECON-RAISE-NAMED-GOAL", "APPLIED" in why(named) and len(lo14) == 1 and lo14[0]["cap"] == 3000,
           "`subelo 3k t14` from a pane with no goal opens the successor lease on t14")
+    check("V-ECON-RAISE-SUCCESS-NOT-ERROR-LABEL",
+          "NOT AN ERROR" in why(named) and "NOT AN ERROR" not in why(nogoal) and "NOT AN ERROR" not in why(absurd),
+          "a block-delivered success says it is not an error (the harness labels every pre-model answer 'blocked'); "
+          "the refusals of the same verb do not carry that line")
     again14 = admit(e, "N14", "subelo 3k t14", e.root / "nowhere")
     lo14 = [r for r in journal("t14") if r["op"] == "lease_open"]
     check("V-ECON-RAISE-NAMED-SECOND-RAISE", len(lo14) == 2 and lo14[-1]["cap"] == 6000,
