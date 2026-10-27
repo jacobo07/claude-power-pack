@@ -111,5 +111,19 @@ next experiment is the one that most reduces uncertainty, not an intuition prese
 predeclared at creation; the engine verifies linkage and evidence class, and the success judgement stays an
 agent-plus-Owner decision (v0 contract 8).
 
+## F5 — Real-world loop: connector reality (probed 2026-10-27, read-only)
+| Source | Probe | Result |
+|---|---|---|
+| Vercel | `get_auth_user`, `list_projects` | CONNECTED, authenticated. Hobby plan, 5 projects: `jacobo-portfolio`, `kobicraft-web`, `regina-margherita`, `mytilus-belgian-restaurant`, `webapp`. |
+| Vercel Web Analytics for `kobicraft-web` | `aggregate_pageviews` 2026-08-01..2026-10-27 | **BLOCKED**: HTTP 400 `web_analytics_not_enabled` (request `iad1:cdg1:iad1:sfo1::878bb-1793097802496-45d830e55982`). No demand data exists to read. Enabling it changes the Owner's external configuration and is NOT covered by the plan approval. |
+| Google Analytics, Google Ads, Meta Ads, CRM, bank, billing | none configured in this session | ABSENT. Gmail is attached but is a communication channel, not a business-metrics source, and reading it is not authorised for this mission. Google Drive: `authenticate` pending, unauthenticated. |
+
+Consequence, stated plainly: no authentic external business evidence is reachable today, so GATE 7 (BUSINESS REALITY) and
+the Real-World Loop of GATE 8 stay **BLOCKED**, not simulated. The loop's pure parts are built and tested
+(kernel, assess, context, backlog). What unblocks it, in order of cost: (a) the Owner enables Web Analytics on
+`kobicraft-web` (one dashboard toggle, then a real before/after window needs elapsed time), or (b) the Owner names a
+business repository that already holds exported metrics, which Founder OS can read as `repo:` sources with no connector.
+Both are Owner actions; nothing here pretends otherwise.
+
 ## Rollback
 Each fix is one commit on `feat/founder-os-v1-20261027`; revert the commit.

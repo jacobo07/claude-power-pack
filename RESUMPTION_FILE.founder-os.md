@@ -44,10 +44,19 @@ extended, not weakened: `test_family_baselines.py` 22/22, `test_family_injection
 repo-relative file, so `verify_origin` needs cwd = the PP root. Liveness: `modules/liveness/reachability.py` exits 1 on 71
 pre-existing orphans, none Founder (not compared against a clean baseline).
 
+**F2, F3, F4 sealed** (commits `d4a514085`, `b198ec67a`, `df548b56f`): compiler (`modules/founder_os/compiler.py`, 10 tests),
+assessment (`assessment.py`, 9), evolution (`evolution.py`, 9). New commands on the CLI: `context --lens`, `assess`, `backlog`.
+Founder Skill is UNVERIFIED (not on disk, no web match for an 11-skill repo); the Owner must name the repository. F5 connector
+probe is in the spec: Vercel connected, Web Analytics NOT enabled on `kobicraft-web`, no GA/Ads/CRM, so the Real-World Loop is
+BLOCKED on an Owner action. Gate suite `tools/test_founder_os_gates.py` (G9 no-network/authorization, G11 two businesses,
+G12 fresh agent and documented-commands-exist) 6/6.
+
+**Anti-thrash rule learned (I-3):** a `Write` counts as an attempt, so after creating a file only ONE Edit fits before a Read.
+
 **Next 3 actions.**
-1. F2 Business Knowledge Compiler: per-lens context (Strategy, Growth, Sales, Finance, Product, Operations, Customer, Competitive, Research, Experimentation, Risk, Knowledge) composed from existing Knowledge Vault / UKDL / AKOS retrieval plus this business's kernel view only; provenance and freshness on every item; no cross-business reads. Amend the spec first.
-2. G14 inheritance: show a build task for a NEW feature (not a business prompt) is not burdened, and that the Owner can `revert` the auto entry; decide whether PII-refusal also belongs in a non-business family.
-3. G13 breadth: run the wider CPP suites (`tools/test_*.py` touching `secret_firewall`, hooks, installer) and compare liveness against a clean baseline commit; then F3-F5 per the plan (F5 first checks which connectors are really connected).
+1. G14 inheritance: show a build task for a NEW feature (not a business prompt) is not burdened, and that the Owner can `revert` the auto entry; decide whether PII-refusal also belongs in a non-business family.
+2. G13 breadth: run the wider CPP suites (`tools/test_*.py` touching `secret_firewall`, hooks, installer) and compare liveness against a clean baseline commit.
+3. F7: UKDL entries for I-1, I-2, I-3 (incident, root cause, regression test, guard, vault, classification), then the second-order meta-analysis and the two-layer handoff. If the Owner supplies a metrics source, run the F5 loop for real first.
 
 **Start.** `Set-Location` to the worktree, `git log --oneline -3`, run `tools/test_founder_os*.py`, `tools/test_family_baselines.py`, `tools/test_family_injection.py`, continue at action 1.
 Budget plan 240k tokens (telemetry UNKNOWN unless measured). Recovery cycles max 12, campaign max 24h.
