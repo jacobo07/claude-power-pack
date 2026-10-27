@@ -317,6 +317,38 @@ def g_raise(e):
     pr18 = [r for r in journal("t18") if r["op"] == "programme"][-1]
     check("V-ECON-RAISE-APPROVAL-UUID-CONTROL", cp18.returncode == 0 and "approval" not in str(pr18.get("source")),
           f"control: with no uuid known the tag is the old one and no uuid is invented: {pr18.get('source')!r}")
+    # Envelope-less goal (ccr-a2 2026-10-27): declared elsewhere, only spend here. Spec econ-raise-envelope-bootstrap.
+    tga.declare("t19", 1000, lease_calls=1)
+    exhaust("t19", "X19")
+    g19 = led("t19")._gfold(led("t19")._read())
+    floor19 = sum(g19["marks"].values()) + g19["open"]
+    boot = admit(e, "N19", "subelo 3k t19", e.root / "nowhere")
+    pr19 = [r for r in journal("t19") if r["op"] == "programme"]
+    lo19 = [r for r in journal("t19") if r["op"] == "lease_open"]
+    ex19 = led("t19").programme_status()["executable"]
+    check("V-ECON-RAISE-BOOTSTRAP-ENVELOPE", "APPLIED" in why(boot) and "NOT APPLIED" not in why(boot)
+          and len(pr19) == 1 and pr19[0]["value"] == floor19 + 3000 and len(lo19) == 1 and lo19[0]["cap"] == 3000
+          and ex19 == 3000, f"typed raise on an envelope-less goal: programme {pr19[0]['value'] if pr19 else None} "
+          f"(spent {floor19} + 3,000), lease cap {lo19[0]['cap'] if lo19 else None}, executable {ex19}: " + why(boot)[:80])
+    tga.declare("t20", 1000, lease_calls=1)
+    exhaust("t20", "X20")
+    direct = led("t20").lease_open("agent-try", 3000, prev_lease=led("t20").lineage()["leases"][-1]["id"])
+    check("V-ECON-RAISE-BOOTSTRAP-ONLY-VIA-OWNER-VERB",
+          not direct["ok"] and not [r for r in journal("t20") if r["op"] in ("lease_open", "programme")],
+          f"control: lease_open called directly on an envelope-less goal is still refused and writes nothing: {direct.get('reason')}")
+    tga.declare("t21", 1000, lease_calls=1)
+    exhaust("t21", "X21")
+    g21 = led("t21")._gfold(led("t21")._read())
+    floor21 = sum(g21["marks"].values()) + g21["open"]
+    cur21 = g21["leases"][-1]["id"]                                 # a crash after the programme row, before the lease
+    led("t21").set_programme(floor21 + 3000, f"owner-econ-raise:owner-raise:goal:t21:{cur21}:bootstrap", inside_agent=False)
+    cp21 = subprocess.run([sys.executable, str(HERE / "econ_plane.py"), "raise", "--goal", "t21", "--amount", "3000"],
+                          capture_output=True, text=True, timeout=60, env=os.environ.copy())
+    pr21 = [r for r in journal("t21") if r["op"] == "programme"]
+    lo21 = [r for r in journal("t21") if r["op"] == "lease_open"]
+    check("V-ECON-RAISE-BOOTSTRAP-CRASH-REPLAY", cp21.returncode == 0 and len(pr21) == 1 and len(lo21) == 1
+          and lo21[0]["cap"] == 3000, f"a raise replayed after a crash between its two writes adds no second programme row: "
+          f"{len(pr21)} programme, {len(lo21)} lease_open, exit {cp21.returncode}")
     ok = admit(e, "R8", "Súbelo 3k", work)                       # accented spelling
     j = journal("t8")
     prog = [r for r in j if r["op"] == "programme"][-1]

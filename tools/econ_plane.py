@@ -177,6 +177,38 @@ def _open_successor(led, g, cur, amount: int, key: str, approval_uuid: str | Non
     return None, lo, old_prog, new_cap
 
 
+def _bootstrap_envelope(led, g, cur, amount: int, key: str, approval_uuid: str | None = None):
+    """The Owner's typed raise on a goal that holds no envelope here (ccr-a2 2026-10-27: declared on another host,
+    only settled spend on this one). The typed amount is the whole new headroom and what the goal already spent
+    stays spent: programme = settled + open + other leases' reserves + amount, then a successor lease of `amount`.
+
+    Same return shape as _open_successor. Only the raise verbs reach this: lease_open and set_programme called
+    from anywhere else keep refusing an envelope-less goal. Idempotent per `key` for a crash between the two
+    writes: the programme row is skipped once present and lease_open is keyed by succession id."""
+    base = f"owner-econ-raise:{key}:bootstrap"
+    tag = f"{base}:approval:{approval_uuid}" if approval_uuid else base
+    if g["programme"] is None:
+        other = sum(led._committed_reserves(ls) for ls in g["leases"] if not ls["closed"] and ls is not cur)
+        programme = sum(g["marks"].values()) + g["open"] + other + amount
+        pr = led.set_programme(programme, tag, inside_agent=False)
+        if not pr.get("ok"):
+            return ({"reason": str(pr.get("reason"))}, None, programme - amount, 0)
+    else:
+        programme = int(g["programme"])
+    lo = led.lease_open(f"{key}:bootstrap", amount, prev_lease=cur["id"])
+    if not lo.get("ok"):
+        return ({"reason": str(lo.get("reason")), "programme": programme}, None, programme - amount, 0)
+    return None, lo, programme - amount, amount
+
+
+def _opener(g, cur):
+    """Which writer opens the successor: the bootstrap when the goal has no envelope or no lease cap, or when THIS
+    lease's own bootstrap already wrote its programme row and died before the lease (the row's tag names the lease it
+    was written against). Without the replay arm that retry takes the ordinary path and raises a second time."""
+    replay = f":{cur['id']}:bootstrap" in str(g["programme_source"] or "")
+    return _bootstrap_envelope if g["programme"] is None or cur["cap"] is None or replay else _open_successor
+
+
 def raise_goal(goal: str, amount: int, approval_uuid: str | None = None) -> dict:
     """Owner raise addressed to a GOAL, from any pane (`subelo 70M <goal>`, or a neutral pane whose cwd lies under
     the goal's root). Same money path as raise_capital (programme += amount, successor lease), but no pane is
@@ -188,15 +220,13 @@ def raise_goal(goal: str, amount: int, approval_uuid: str | None = None) -> dict
     led = ms._goal_ledger(goal)
     g = _fold(goal)
     cur = g["leases"][-1]
-    if g["programme"] is None or cur["cap"] is None:
-        return {"ok": False, "goal": goal,
-                "reason": "UNKNOWN: goal has no programme envelope or lease cap; unknown headroom is not free"}
-    err, lo, old_prog, new_cap = _open_successor(led, g, cur, amount, f"owner-raise:goal:{goal}:{cur['id']}", approval_uuid)
+    open_successor = _opener(g, cur)
+    err, lo, old_prog, new_cap = open_successor(led, g, cur, amount, f"owner-raise:goal:{goal}:{cur['id']}", approval_uuid)
     if err:
         return {"ok": False, "goal": goal, **err}
     return {"ok": True, "goal": goal, "applied": bool(lo.get("applied")), "from_lease": cur["id"],
             "lease": lo.get("lease"), "programme_old": old_prog, "programme_new": old_prog + amount,
-            "cap_old": int(cur["cap"]), "cap_new": new_cap, "reason": ""}
+            "cap_old": int(cur["cap"] or 0), "cap_new": new_cap, "reason": ""}
 
 
 def raise_capital(sid: str, amount: int, short: bool = False, approval_uuid: str | None = None) -> dict:
@@ -232,11 +262,9 @@ def raise_capital(sid: str, amount: int, short: bool = False, approval_uuid: str
     if not (tomb or g["exhausted_now"] or short):
         return {"ok": True, "session": sid, "goal": goal, "applied": False,
                 "reason": "this session is not blocked; nothing raised"}
-    if g["programme"] is None or cur["cap"] is None:
-        return {"ok": False, "session": sid, "goal": goal,
-                "reason": "UNKNOWN: goal has no programme envelope or lease cap; unknown headroom is not free"}
+    open_successor = _opener(g, cur)
     key = f"owner-raise:{sid}:{cur['id']}"
-    err, lo, old_prog, new_cap = _open_successor(led, g, cur, amount, key, approval_uuid)
+    err, lo, old_prog, new_cap = open_successor(led, g, cur, amount, key, approval_uuid)
     if err:
         return {"ok": False, "session": sid, "goal": goal, **err}
     if tomb:                                       # the pane spends against the lease it just got
@@ -245,7 +273,7 @@ def raise_capital(sid: str, amount: int, short: bool = False, approval_uuid: str
             return {"ok": False, "session": sid, "goal": goal, "reason": f"lease opened but fence not lifted: {ut.get('reason')}"}
     return {"ok": True, "session": sid, "goal": goal, "applied": bool(lo.get("applied")), "from_lease": cur["id"],
             "lease": lo.get("lease"), "programme_old": old_prog, "programme_new": old_prog + amount,
-            "cap_old": int(cur["cap"]), "cap_new": new_cap, "reason": ""}
+            "cap_old": int(cur["cap"] or 0), "cap_new": new_cap, "reason": ""}
 
 
 def _main(argv: list[str]) -> int:
