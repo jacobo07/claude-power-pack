@@ -25,6 +25,18 @@ goal declared with cap 81M on GEX44, only settled spend present on the laptop).
 3. Refused still: goal not in `read_index()`; N outside 1..RAISE_MAX; a goal whose journal is unreadable (unknown stays unknown).
 4. The model never calls this. No agent verb, no tool, no new hook lane.
 
+## Amendment 2026-10-27 (G2 d3f66e44e, vault/audits/g2_econ_raise_bootstrap_2026-10-27.md; Owner "rec")
+5. Reserves carry (MEDIUM-2). The bootstrap carries the current lease's reserves exactly as `_open_successor` does (recovery counted
+   net of what it settled), so a recovery pane is not orphaned. Programme = settled + open + other + amount + carried reserves;
+   the lease cap stays `amount`, so executable after the bootstrap = amount + carried reserves (the reserves are held, not spendable).
+6. The model never raises (MEDIUM-1). "The model never calls this" was true by convention only: nothing denied
+   `python tools/econ_plane.py raise ...` from a shell tool call. `hooks/session_budget_guard.js` (already registered) denies any
+   Bash/PowerShell command that runs `econ_plane.py` with the `raise` verb. `econ_admission.js` starts the CLI as a child process, not
+   as a tool call, so the Owner-typed path is untouched. Nothing new to register (HR-001 not triggered).
+Acceptance additions: A6 recovery reserve on the current lease is carried (lease reserves == carried, executable == amount + reserves);
+A7 the guard denies `raise` (plain, quoted, `&`-prefixed, via cmd /c) and passes `status`, `detach` and an unrelated script that merely contains
+the word raise (control); A8 mutant: remove the deny -> A7 red; remove the carry -> A6 red.
+
 ## Out of scope
 Changing `RAISE_MAX`; auto-raising from a model turn; GEX44 ledger; the CCR compat pipeline (separate spec).
 

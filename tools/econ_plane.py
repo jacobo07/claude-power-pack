@@ -180,22 +180,29 @@ def _open_successor(led, g, cur, amount: int, key: str, approval_uuid: str | Non
 def _bootstrap_envelope(led, g, cur, amount: int, key: str, approval_uuid: str | None = None):
     """The Owner's typed raise on a goal that holds no envelope here (ccr-a2 2026-10-27: declared on another host,
     only settled spend on this one). The typed amount is the whole new headroom and what the goal already spent
-    stays spent: programme = settled + open + other leases' reserves + amount, then a successor lease of `amount`.
+    stays spent: programme = settled + open + other leases' reserves + the current lease's reserves + amount, then a
+    successor lease of `amount` that carries those reserves exactly as _open_successor does (a recovery pane is not
+    orphaned; G2 d3f66e44e MEDIUM-2). Executable afterwards is amount + the carried reserves, which are held.
 
     Same return shape as _open_successor. Only the raise verbs reach this: lease_open and set_programme called
     from anywhere else keep refusing an envelope-less goal. Idempotent per `key` for a crash between the two
     writes: the programme row is skipped once present and lease_open is keyed by succession id."""
     base = f"owner-econ-raise:{key}:bootstrap"
     tag = f"{base}:approval:{approval_uuid}" if approval_uuid else base
+    rv = cur["reserves"]
+    carry = {k: int(v) for k, v in rv.items() if k != RECOVERY and int(v) > 0}
+    rec_left = int(rv.get(RECOVERY, 0)) - cur.get("rsettled", 0)
+    if rec_left > 0:
+        carry[RECOVERY] = rec_left
     if g["programme"] is None:
         other = sum(led._committed_reserves(ls) for ls in g["leases"] if not ls["closed"] and ls is not cur)
-        programme = sum(g["marks"].values()) + g["open"] + other + amount
+        programme = sum(g["marks"].values()) + g["open"] + other + sum(carry.values()) + amount
         pr = led.set_programme(programme, tag, inside_agent=False)
         if not pr.get("ok"):
             return ({"reason": str(pr.get("reason"))}, None, programme - amount, 0)
     else:
         programme = int(g["programme"])
-    lo = led.lease_open(f"{key}:bootstrap", amount, prev_lease=cur["id"])
+    lo = led.lease_open(f"{key}:bootstrap", amount, prev_lease=cur["id"], reserves=carry)
     if not lo.get("ok"):
         return ({"reason": str(lo.get("reason")), "programme": programme}, None, programme - amount, 0)
     return None, lo, programme - amount, amount
