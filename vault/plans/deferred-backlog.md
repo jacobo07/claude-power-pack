@@ -1551,3 +1551,51 @@ conditional theorems with reopen triggers. Follow `wiki/CLAUDE.md` (citations wi
    PP_DATASET_20260531...) were not scoped: they are not Cognitive Economics. Listed so the choice is explicit, not forgotten.
 
 **Activation criterion:** the Owner names a row, or A.1 is funded (it gates trust in D37). Recommended order: A.1, B.1, B.2, then D.
+---
+
+## D39 -- Index of `vault/backlog/` (Owner 2026-10-27: "une todos los backlogs a deferred-backlog")
+
+This file is the single entry point. The items below keep their own files, because about 20 documents link to those paths
+(receipts, knowledge-base indexes, wiki/raw) and the cp50 `.patch` files cannot be inlined. Each row is a pointer: the
+title is the file's own heading, and status was **not** re-verified on 2026-10-27 unless the row says otherwise. Before
+acting on one, read the file and check its state against the repo.
+
+**Waiting on laptop RAM (verified 2026-10-26/27):**
+- `2026-10-25_uek-phase13-e4-canary.md` -- UEK Phase 13 (E4 canary, goal ccr). Chain unparked in ccr/v5 `b6bfc54a`;
+  E4b2 auto-arms at >=4.5 GB free on two samples (1.7 GB at 10:21 on 2026-10-26). Pending list in the file.
+- `2026-10-26_ccr-a2-laptop-closeout.md` -- CCR-NEXT A2 laptop close-out, waiting on RAM.
+- `2026-10-26_gsdx-factory-2-ram-gated.md` -- GSDX factory-2 work gated on free RAM.
+
+**Missions and programmes (remaining work):**
+- `2026-10-17_ccr-vm-t0-hallazgos-y-pendiente.md` -- CCR boundary CWS (goal ccr-vm): T0A findings and what remains.
+- `2026-10-10_cp50-c2-remaining.md` -- CP50 C2 (recon-factory Phase 7). Patches beside it:
+  `2026-10-10_cp50-c2a-fix.patch`, `2026-10-10_cp50-c2a-partial.patch`, `2026-10-10_cp50-c2b-phase7.patch`,
+  `2026-10-11_cp50-c2b-fix.patch`, `2026-10-11_cp50-c2c-fix.patch`.
+- `2026-10-10_ce-a4-remaining.md` -- CE Amendment A4 (estate rearm), parked by the Owner.
+- `2026-10-10_ce-lifecycle-remaining-mission.md` -- ce-a3 / lifecycle control-plane mission.
+- `2026-10-10_ce-lifecycle-v3-remaining.md` -- ce-lifecycle-v3 mission.
+- `2026-10-10_ce-unify-remaining.md` -- ce-unify mission.
+- `2026-10-10_caa-wake-t3-residual.md` -- caa-wake chain residual after W1R-2R (goal caa-wake-t3).
+- `2026-09-27_mission-supervisor-blocked.md` -- mission supervisor: 48 workers, zero work (m-66ebaaa0324e lineage).
+
+**Design and absorption:**
+- `2026-10-10_animejs-design-absorption.md` -- absorb Anime.js into PP Design.
+- `2026-10-02_cdio-modern-saas-styles.md` -- CDIO: three modern SaaS styles.
+- `2026-07-06_cognitive-os-vdepth-expansion.md` -- Cognitive OS V-DEPTH expansion to 2500 words/Part.
+- `2026-07-01_parallel-mesh-deferred.md` -- Parallel Mesh deferred systems.
+
+**Tokens, cost and session delivery:**
+- `2026-10-03_token-economy-wave2.md` -- token economy, wave 2.
+- `2026-10-03_handoff-harvest.md` -- harvest of pending handoffs.
+- `2026-10-02_weekly-limit-burn-followups.md` -- follow-ups of the weekly-limit incident.
+- `2026-09-23_autocompact-withdrawal-race.md` -- `/compact` delivery: the withdrawal race.
+- `2026-06-30_costgate-weeklyburn-slow.md` -- cost_gate.weekly_burn takes 13.6 s.
+
+**Out of scope of a past slice:**
+- `2026-09-23_torre-universal-out-of-scope.md` -- Torre Universal, outside the PERSISTENT_STATE slice.
+
+**Rule from here on:** a new backlog item goes in this file as a `D<n>` entry. A long one may keep its own file under
+`vault/backlog/`, but it gets a row in this index in the same commit.
+
+**Activation criterion:** per row, as written in its file. Next step for the index itself: when a row is confirmed done
+or obsolete, mark it here with the commit that closed it.
