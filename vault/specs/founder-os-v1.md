@@ -54,5 +54,17 @@ Remaining gates per the campaign prompt; each is reported with its real command 
 | UWCP | No integration. It is the *Universal Workstream Continuity Plane*, a TLA+ model of goal/epoch/fence continuity (`vault/specs/tla/UWCP.tla`) used by long-run continuation, not a business-state concern. Founder rounds are single-writer and already lock-guarded. | Header of `UWCP.tla`; no advantage found for this mission. |
 | Iteration prompt | Adopt two mechanisms only: classify the failing premise before fixing (CLASE N) and a done-gate that does not move while a loop runs. Everything else duplicates SCS C28, the premise verifier and NEVER_AGAIN. | `iteracion-avanzada-universal.txt` read through line 120. |
 
+## F1 — Founder Kernel contract
+`modules/founder_os/kernel.py` is a pure fold over the journal; there is no second store, so the kernel
+cannot hold a fact the journal does not. An observation/measurement/hypothesis event may carry `subject`
+(a profile field) and `value` (short text). Per field the view returns one of VERIFIED, OBSERVED, INFERRED,
+HYPOTHESIS, SIMULATED, STALE, CONTRADICTED, UNKNOWN. The agent's own inference is the class `inferred`
+and never proves a closing outcome. Rules: freshness uses `observed_at` (else the record time, flagged
+`recorded_at`); two live claims of class VERIFIED/OBSERVED with different values are CONTRADICTED and are
+never resolved silently, only by a later event naming the retired one in `supersedes`; no event means UNKNOWN
+with the evidence that would change it. BLOCKED is a round outcome, not a profile-field state.
+`plan_round` is deterministic and returns at most 5 recommendations ordered contradiction, then the most
+valuable missing core fact, then stale facts, then instrumentation; it never names a company and never acts.
+
 ## Rollback
 Each fix is one commit on `feat/founder-os-v1-20261027`; revert the commit.

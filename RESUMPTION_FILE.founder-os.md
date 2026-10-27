@@ -25,10 +25,21 @@ No second identity engine, backlog or ratchet platform. UNKNOWN stays UNKNOWN; I
 `/cpp-gsd-long` is NOT armed: it runs `/gsd-autonomous` over a GSD roadmap, and this worktree has none for this campaign.
 Arm it only after `/gsd-new-milestone` inside this worktree, and only if context pressure demands it.
 
+**Also sealed.** F0b decisions are in the spec (commit `40bd18c0e`): the Constitutive Baseline machinery is LIVE
+(`vault/tower/families|baselines`, `tools/family_baseline.py`, injection via `modules/gsd_x/cli.py`), UWCP is the
+Universal Workstream Continuity Plane (TLA+ model, not a business-state concern). F1 Founder Kernel
+(`modules/founder_os/kernel.py`, `python tools/founder_round.py --repo . kernel`), suite `tools/test_founder_os_kernel.py` 8/8.
+
+**Incidents for the UKDL step (F7), each needs root cause, regression test, guard and a vault entry.**
+- I-1 Secret Firewall passes Stripe keys and PII (fixed locally; shared detector still open).
+- I-2 `{"status": X, **row}` lets the row's own `status` overwrite X (STALE reported as OBSERVED). Found by the kernel
+  test, fixed in `kernel.py`. Class: dict-spread key-order override. Candidate Trap; a grep-able detector is feasible.
+- I-3 Anti-thrash hook blocks a 3rd Edit on a file without a Read between; plan one consolidated Edit per Read.
+
 **Next 3 actions.**
-1. F0b: read the real contracts of UCR-CIF, Constitutive Baseline and UWCP (`vault/specs/tla/`, `.planning/workstreams/{ucep,cognitive-reuse}`, `docs/superpowers/specs/2026-09-24-family-baselines-design.md`); decide state location, business-vs-repo identity and the recommend-vs-act boundary; amend the spec.
-2. F1: Founder Kernel, a versioned business state with the evidence-class vocabulary mapped to CPP's canonical one, plus a deterministic capability router.
-3. Regression safety (G13): suites of neighbours (`secret_firewall`, `repo_identity`) and `python modules/liveness/reachability.py` before any "done".
+1. F2 Business Knowledge Compiler: per-lens context (Strategy, Growth, Sales, Finance, Product, Operations, Customer, Competitive, Research, Experimentation, Risk, Knowledge) composed from existing Knowledge Vault / UKDL / AKOS retrieval plus this business's kernel view only; provenance and freshness on every item; no cross-business reads.
+2. F6 groundwork: add ONE business-context family under `vault/tower/families/` (two predeclared poles first, per the family-baselines spec section 4) and prove a fresh `gsd_x/cli.py` prompt receives its entries while a non-business prompt receives none.
+3. Regression safety (G13): neighbour suites (`secret_firewall`, `repo_identity`, `test_family_baselines.py`, `test_family_injection.py`) and `python modules/liveness/reachability.py` before any "done".
 
 **Start.** `Set-Location` to the worktree, `git log --oneline -3`, run the three suites above, continue at action 1.
 Budget plan 240k tokens (telemetry UNKNOWN unless measured). Recovery cycles max 12, campaign max 24h.

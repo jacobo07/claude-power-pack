@@ -24,6 +24,7 @@ PP_ROOT = Path(__file__).resolve().parent.parent
 if str(PP_ROOT) not in sys.path:
     sys.path.insert(0, str(PP_ROOT))
 
+from modules.founder_os import kernel  # noqa: E402
 from modules.repo_identity.identity import canonical_repo  # noqa: E402
 
 SCHEMA = 1
@@ -34,7 +35,8 @@ EFFECTS = frozenset({"internal_reversible", "outward", "spend", "legal", "sensit
 OUTCOMES = frozenset({"IMPACT_VERIFIED", "UNCERTAINTY_REDUCED", "CAPABILITY_VERIFIED",
                       "BLOCKED", "INCONCLUSIVE"})
 PROVEN = OUTCOMES - {"BLOCKED", "INCONCLUSIVE"}
-EVIDENCE_CLASSES = frozenset({"verified", "observed", "simulated", "hypothesis"})
+EVIDENCE_CLASSES = frozenset({"verified", "observed", "inferred", "simulated", "hypothesis"})
+NOT_PROOF = frozenset({"inferred", "simulated", "hypothesis"})
 
 
 def _utc() -> str:
@@ -323,9 +325,25 @@ def record(repo: Path, payload: dict, state_home: Path | None = None) -> dict:
     allowed = {"kind", "summary", "effect", "authorization_ref", "source_ref", "evidence_class",
                "action_ref", "outcome_ref", "success_gate", "abandon_gate", "hypothesis_ref",
                "opportunity_ref", "estimated_cost", "estimated_value", "currency", "limitations",
-               "baseline_ref", "after_ref", "metric", "window", "method"}
+               "baseline_ref", "after_ref", "metric", "window", "method",
+               "subject", "value", "observed_at", "supersedes"}
     if set(payload) - allowed:
         raise ValueError(f"unsupported event fields: {sorted(set(payload) - allowed)}")
+    if ("subject" in payload or "value" in payload) and kind not in kernel.SUBJECT_KINDS:
+        raise ValueError("subject/value are only valid on observation, measurement or hypothesis events")
+    if "subject" in payload:
+        if payload["subject"] not in kernel.PROFILE_FIELDS:
+            raise ValueError(f"subject must be one of {list(kernel.PROFILE_FIELDS)}")
+        value = _require_text(payload, "value")
+        if len(value) > 200:
+            raise ValueError("value exceeds 200 characters; keep detail in the source")
+    elif "value" in payload:
+        raise ValueError("value requires a subject")
+    if "observed_at" in payload:
+        try:
+            datetime.fromisoformat(payload["observed_at"])
+        except (TypeError, ValueError):
+            raise ValueError("observed_at must be an ISO-8601 date or datetime") from None
     for field in ("estimated_cost", "estimated_value"):
         amount = payload.get(field)
         if amount is None:
@@ -369,6 +387,11 @@ def record(repo: Path, payload: dict, state_home: Path | None = None) -> dict:
                 e.get("round_id") == round_id and e.get("kind") == "execution"
                 and e.get("payload", {}).get("action_ref") == payload["action_ref"] for e in events):
             raise ValueError(f"duplicate action_ref in this round: {payload['action_ref']}")
+        target = payload.get("supersedes")
+        if target is not None:
+            old = next((e for e in events if e["event_id"] == target), None)
+            if old is None or old.get("payload", {}).get("subject") != payload.get("subject"):
+                raise ValueError("supersedes must name an earlier event with the same subject")
         row = _append(d, events, {"kind": kind, "round_id": round_id,
                                   "payload": payload})
     return {"event_id": row["event_id"], "round_id": round_id, "seq": row["seq"],
@@ -436,7 +459,7 @@ def close(repo: Path, outcome: str, proof_ids: list[str], *,
                         own[p].get("payload", {}).get("evidence_class") == "verified"
                         for p in proof_ids):
                 raise ValueError("capability verification needs a verified test measurement")
-            if any(own[p].get("payload", {}).get("evidence_class") in {"hypothesis", "simulated"}
+            if any(own[p].get("payload", {}).get("evidence_class") in NOT_PROOF
                    for p in proof_ids):
                 raise ValueError("simulated evidence cannot prove results")
         if outcome == "BLOCKED" and not (isinstance(blocker, str) and blocker.strip()):
@@ -459,6 +482,16 @@ def status(repo: Path, state_home: Path | None = None) -> dict:
             "events": len(events), "state_dir": str(d), "journal_integrity": "VERIFIED"}
 
 
+def kernel_view(repo: Path, state_home: Path | None = None, as_of: datetime | None = None) -> dict:
+    """Business-state view and recommended plan, folded from this business's journal only."""
+    d = _storage(repo, state_home)
+    _identity(repo, d)
+    events = _read_events(d)
+    view = kernel.build_view(events, as_of=as_of)
+    return {"repository": str(Path(canonical_repo(str(repo.resolve()))).resolve()),
+            "fields": view, "plan": kernel.plan_round(view), "executes": "NOTHING"}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
@@ -467,6 +500,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("start")
     sub.add_parser("status")
     sub.add_parser("recover")
+    sub.add_parser("kernel")
     add = sub.add_parser("event")
     add.add_argument("--file", type=Path, required=True)
     end = sub.add_parser("close")
@@ -483,6 +517,8 @@ def main(argv: list[str] | None = None) -> int:
             result = record(args.repo, json.loads(args.file.read_text(encoding="utf-8")))
         elif args.command == "recover":
             result = recover(args.repo)
+        elif args.command == "kernel":
+            result = kernel_view(args.repo)
         elif args.command == "close":
             result = close(args.repo, args.outcome, args.proof, blocker=args.blocker)
         else:
