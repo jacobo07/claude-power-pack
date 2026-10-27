@@ -82,7 +82,14 @@ an SEO/GEO/AIO audit service whose reference client is CostaLuz Lawyers (flat fe
 - Hard rules in force there: no invented data, client hard rules win, SEO/GEO decisions cite the corpus (SG-IDs). The working tree is
   dirty with other sessions' work: never write or commit inside it.
 
-**Next 3 actions.**
+**F5 round DONE (2026-10-27, nothing written inside GEO-audit).** State dir `~/.claude/state/founder-os/3d703b291b8a4fc87aa3780eb0913054`,
+round `9f0e2f4d`, 8 events (init/start, 6 source-hashed observations, close), journal_integrity VERIFIED, closed INCONCLUSIVE.
+Kernel: business_model, customer_segments, constraints, metrics OBSERVED; revenue_model, stage, costs, margins, funnel, etc. UNKNOWN;
+plan = discover revenue_model. Assess: all four verdicts UNKNOWN. Backlog: 0 opportunities, bottleneck UNKNOWN. Guard learned: event
+`value` max 200 chars and no extra fields (put prose in `summary`). Remaining: action 3 below, then Owner items (Vercel analytics on
+kobicraft-web, name the Founder Skill repo, push decision).
+
+**Next 3 actions (1 and 2 are DONE, kept for history).**
 1. F5 real round on GEO-audit: `init`, `start` with `--repo "C:\Users\User\Desktop\Cursor Projects\GEO-audit"`, then record only what the sources above support (`source_ref: repo:<path>#sha256:<hash>`), including the measurement.db emptiness and the monthly_traffic defects as observations; keep client PII out of summaries (the journal refuses emails, IBANs, cards, phones).
 2. Run `kernel`, `assess`, `backlog` on that journal and close the round honestly (`INCONCLUSIVE` unless a before and after measurement exists).
 3. Second-order meta-analysis and the two-layer final handoff; push decision is still the Owner's.
