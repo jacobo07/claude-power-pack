@@ -53,10 +53,39 @@ G12 fresh agent and documented-commands-exist) 6/6.
 
 **Anti-thrash rule learned (I-3):** a `Write` counts as an attempt, so after creating a file only ONE Edit fits before a Read.
 
+**Later commits (all sealed, local):** `43b77bc79` gate suite (`tools/test_founder_os_gates.py`, 8 tests), `1bbfc5855` G14 revert +
+ordinary-prompt tests (`test_founder_os_ratchet.py`, 10 tests), `597af64dd` spread fix in `_append` + AST detector + UKDL entries
+(section "Founder OS v1" in `vault/knowledge_base/ukdl-universal.md`), `e7135ca79` gate ledger in the spec. Suites: 82 Founder tests,
+all exit 0. G13: 12 of 15 neighbouring suites pass; `test_install_population`, `test_mirror_parity`, `test_hook_mirror_identity`
+fail identically on the clean PR base `d698513cf` (pre-existing drift). **G12 verified by a genuinely fresh agent** (2026-10-27): it
+followed this file, reproduced every exit code and got `discover / Research / business_model` from `kernel`; it found this file stale,
+which is why this block exists.
+
+**Owner choice 2026-10-27: the business repo for the first real round is `C:\Users\User\Desktop\Cursor Projects\GEO-audit`.**
+It is a dirty working tree with other sessions' changes (never edit or commit there from this campaign); its nested `geo-seo-os/`
+is its own git repo. Its client hard rules win every conflict (flat fees, no invented data, English/Spanish only). SEO/GEO decisions
+there must cite the corpus per `~/.claude/rules/seo-geo-corpus-methodology.md`. Founder OS writes only to `~/.claude/state/founder-os/`.
+
+**GEO-audit reconnaissance (read-only, observed 2026-10-27, nothing recorded in any journal yet).** Business per its CLAUDE.md:
+an SEO/GEO/AIO audit service whose reference client is CostaLuz Lawyers (flat fees). Sources found:
+- `data/costaluz-seo/measurement.db` (modified 2026-03-28): the 6 expected tables exist and ALL have 0 rows (`gsc_daily`,
+  `gsc_query_daily`, `ai_citations`, `lead_attribution`, `content_actions`, `technical_audit`). Empty schema = no stored measurements; it
+  is NOT evidence that no measurements exist elsewhere.
+- Authentic GSC exports: `clients/costaluz/icp-R146/gsc-mvt-baseline-R146.json` (sha256 prefix 62fc911bbeca16f8, generated 2026-06-21,
+  window 28d: site clicks 3561, impressions 616791); `clients/costaluz/r270-dnv-leg2-gsc.json` (b5466d7468a5af1c, window
+  2026-06-18..2026-09-16, 90d, ONLY 32 queries: clicks 61, impressions 5607); `geo-seo-os/data/costaluz-seo/gsc_api/monthly_traffic.json`
+  (4c3f8fb5ff8f93c1; 2025-04..2026-03 monthly clicks 6419 to 1674, impressions 397k to 330k).
+- DO NOT compare R146 with R270 as a before/after: different windows (28d vs 90d) and R270 is a 32-query subset, not site totals. A
+  valid comparison needs two same-window, same-scope exports; otherwise close the round INCONCLUSIVE.
+- Data-quality defects in `monthly_traffic.json`: month 2025-12 appears twice (identical rows) and 2026-02 is missing; 2026-03 looks partial.
+  Record these as CONTRADICTED/UNKNOWN facts, not smoothed.
+- Hard rules in force there: no invented data, client hard rules win, SEO/GEO decisions cite the corpus (SG-IDs). The working tree is
+  dirty with other sessions' work: never write or commit inside it.
+
 **Next 3 actions.**
-1. G14 inheritance: show a build task for a NEW feature (not a business prompt) is not burdened, and that the Owner can `revert` the auto entry; decide whether PII-refusal also belongs in a non-business family.
-2. G13 breadth: run the wider CPP suites (`tools/test_*.py` touching `secret_firewall`, hooks, installer) and compare liveness against a clean baseline commit.
-3. F7: UKDL entries for I-1, I-2, I-3 (incident, root cause, regression test, guard, vault, classification), then the second-order meta-analysis and the two-layer handoff. If the Owner supplies a metrics source, run the F5 loop for real first.
+1. F5 real round on GEO-audit: `init`, `start` with `--repo "C:\Users\User\Desktop\Cursor Projects\GEO-audit"`, then record only what the sources above support (`source_ref: repo:<path>#sha256:<hash>`), including the measurement.db emptiness and the monthly_traffic defects as observations; keep client PII out of summaries (the journal refuses emails, IBANs, cards, phones).
+2. Run `kernel`, `assess`, `backlog` on that journal and close the round honestly (`INCONCLUSIVE` unless a before and after measurement exists).
+3. Second-order meta-analysis and the two-layer final handoff; push decision is still the Owner's.
 
 **Start.** `Set-Location` to the worktree, `git log --oneline -3`, run `tools/test_founder_os*.py`, `tools/test_family_baselines.py`, `tools/test_family_injection.py`, continue at action 1.
 Budget plan 240k tokens (telemetry UNKNOWN unless measured). Recovery cycles max 12, campaign max 24h.
