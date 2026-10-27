@@ -66,5 +66,18 @@ with the evidence that would change it. BLOCKED is a round outcome, not a profil
 `plan_round` is deterministic and returns at most 5 recommendations ordered contradiction, then the most
 valuable missing core fact, then stale facts, then instrumentation; it never names a company and never acts.
 
+## F2 — Business Knowledge Compiler contract
+`modules/founder_os/compiler.py` composes a specialist context from exactly two sources and invents a third
+never: (1) the kernel view of ONE business, and (2) the active entries of the `business_round` family baseline
+(universal principles, already cited and generation-stamped). It does not read the Knowledge Vault, UKDL or AKOS
+directly: those retrievals run in the agent session, and anything they return enters a round only as a journal
+event with a `source_ref`, so it is then company evidence with provenance, not an uncited paragraph.
+Every item carries `kind` (principle | verified_fact | observed_fact | inferred | hypothesis | simulated |
+stale | contradicted | gap), `scope` (`universal` | `this_business`), `provenance` and freshness. Lenses are
+a field map, not standing agents: Strategy, Growth, Sales, Finance, Product, Operations, Customer, Competitive,
+Research, Experimentation, Risk, Knowledge. A lens receives only its fields and is capped (12 items, 2600 chars);
+a cut is reported as `omitted`, never silent. `Competitive` owns no kernel field, so it returns a `gap` naming the
+evidence needed, not text from memory. A function takes one business's events; no signature accepts two.
+
 ## Rollback
 Each fix is one commit on `feat/founder-os-v1-20261027`; revert the commit.

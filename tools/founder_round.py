@@ -492,6 +492,17 @@ def kernel_view(repo: Path, state_home: Path | None = None, as_of: datetime | No
             "fields": view, "plan": kernel.plan_round(view), "executes": "NOTHING"}
 
 
+def context_for(repo: Path, lens: str, state_home: Path | None = None,
+                as_of: datetime | None = None) -> dict:
+    """Lens-scoped context for THIS business: its kernel view plus the universal business_round baseline."""
+    from modules.founder_os import compiler
+    from modules.tower import baselines as bl
+    view = kernel_view(repo, state_home, as_of)["fields"]
+    gens = bl.generations("business_round")
+    stamp = f"business_round/B{gens[-1]} sha256 {bl.generation_sha256('business_round', gens[-1])[:12]}" if gens else ""
+    return compiler.compile_context(view, lens, bl.active_entries("business_round"), stamp)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
@@ -501,6 +512,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("status")
     sub.add_parser("recover")
     sub.add_parser("kernel")
+    ctx = sub.add_parser("context")
+    ctx.add_argument("--lens", required=True)
     add = sub.add_parser("event")
     add.add_argument("--file", type=Path, required=True)
     end = sub.add_parser("close")
@@ -519,6 +532,8 @@ def main(argv: list[str] | None = None) -> int:
             result = recover(args.repo)
         elif args.command == "kernel":
             result = kernel_view(args.repo)
+        elif args.command == "context":
+            result = context_for(args.repo, args.lens)
         elif args.command == "close":
             result = close(args.repo, args.outcome, args.proof, blocker=args.blocker)
         else:
