@@ -43,5 +43,16 @@ false-premise-as-root-cause classification are adopted.
 G1 foundational integrity: `python tools/test_founder_os.py` and `python tools/test_founder_os_f0.py` exit 0.
 Remaining gates per the campaign prompt; each is reported with its real command and exit code.
 
+## F0b — foundational decisions (decided from repo evidence, 2026-10-27)
+| Decision | Choice | Evidence / reason |
+|---|---|---|
+| Where business state lives | Host-local `~/.claude/state/founder-os/<sha256(canonical_repo)[:32]>/`, as in v0. Never inside the business repo. | v0 contract 1; keeps customer-adjacent metadata out of commits. Cross-host portability stays deferred (`repo_identity.portable_repo_id`). |
+| Repo vs business identity | A namespace is a repo. `identity.json` carries `business_name`/`sector` as `UNKNOWN` until an Owner-confirmed mapping sets them. A repo that holds several ventures, or a company with several repos, is reported as ambiguous and gets NO automatic merge. | v0 fields already exist and are null; the prompt forbids inventing identities. |
+| Multi-repo company | Only through an explicit grant file listing namespaces, written by the Owner. Default is no sharing. | Isolation gate G3; privacy by default. |
+| Recommend vs act | The kernel returns recommendations. Any non-internal effect needs a grant record naming scope, expiry and the hash of the exact action bytes; a bare `authorization_ref` string never suffices. Built before any executable external action (F5). | `human-facing-external-effects` doctrine; v0 contract 5. |
+| Promotion to baseline | Reuse the live Constitutive Baseline machinery: `vault/tower/families/*.json` + immutable `vault/tower/baselines/<family>/B<n>.json`, `tools/family_baseline.py review|revert`, injection via `modules/gsd_x/cli.py`, kill switch `CPP_FAMILY_BASELINES=off`. F6 adds ONE family for business-context work; business-only requirements apply only when its triggers fire, and a prompt of no family receives nothing (`FALSE ACTIVATION IS A BUG`). | `docs/superpowers/specs/2026-09-24-family-baselines-design.md` (T3, Owner decisions 2026-09-24); files verified present in this tree. |
+| UWCP | No integration. It is the *Universal Workstream Continuity Plane*, a TLA+ model of goal/epoch/fence continuity (`vault/specs/tla/UWCP.tla`) used by long-run continuation, not a business-state concern. Founder rounds are single-writer and already lock-guarded. | Header of `UWCP.tla`; no advantage found for this mission. |
+| Iteration prompt | Adopt two mechanisms only: classify the failing premise before fixing (CLASE N) and a done-gate that does not move while a loop runs. Everything else duplicates SCS C28, the premise verifier and NEVER_AGAIN. | `iteracion-avanzada-universal.txt` read through line 120. |
+
 ## Rollback
 Each fix is one commit on `feat/founder-os-v1-20261027`; revert the commit.
