@@ -503,6 +503,12 @@ def context_for(repo: Path, lens: str, state_home: Path | None = None,
     return compiler.compile_context(view, lens, bl.active_entries("business_round"), stamp)
 
 
+def assess_business(repo: Path, state_home: Path | None = None, as_of: datetime | None = None) -> dict:
+    """Five separate verdicts for THIS business, from its kernel view only."""
+    from modules.founder_os import assessment
+    return assessment.assess(kernel_view(repo, state_home, as_of)["fields"])
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
@@ -512,6 +518,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("status")
     sub.add_parser("recover")
     sub.add_parser("kernel")
+    sub.add_parser("assess")
     ctx = sub.add_parser("context")
     ctx.add_argument("--lens", required=True)
     add = sub.add_parser("event")
@@ -534,6 +541,8 @@ def main(argv: list[str] | None = None) -> int:
             result = kernel_view(args.repo)
         elif args.command == "context":
             result = context_for(args.repo, args.lens)
+        elif args.command == "assess":
+            result = assess_business(args.repo)
         elif args.command == "close":
             result = close(args.repo, args.outcome, args.proof, blocker=args.blocker)
         else:

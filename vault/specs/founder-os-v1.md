@@ -79,5 +79,21 @@ Research, Experimentation, Risk, Knowledge. A lens receives only its fields and 
 a cut is reported as `omitted`, never silent. `Competitive` owns no kernel field, so it returns a `gap` naming the
 evidence needed, not text from memory. A function takes one business's events; no signature accepts two.
 
+## F3 — Economic and business assessment contract
+**Founder Skill: UNVERIFIED, not integrated.** Not on disk (skills and plugins searched), not named anywhere in this
+repo, and a web search on 2026-10-27 found no repository with that name and 11 skills. Near matches
+(`slavingia/skills`, 10 skills; `founder-coach` inside `alirezarezvani/claude-skills`) were NOT adopted: a similar name is
+not the artifact the Owner meant. This blocks only the adapter; it needs the Owner to name the repository. Everything
+below proceeds without it, and no adapter is fabricated.
+
+`modules/founder_os/assessment.py` returns FIVE separate verdicts from the kernel view, never a blended score:
+Economic Viability, Demand Validation, Operational Readiness, Growth Readiness and Evidence Confidence.
+Verdict vocabulary: UNKNOWN (a needed fact has no live evidence; the missing facts are named), UNPROVEN (facts exist
+but only projected, simulated, inferred or stale), SUPPORTED (live VERIFIED/OBSERVED evidence for every needed
+fact), CONTRADICTED. Only Growth Readiness may depend on another dimension, and it declares which: it is never
+higher than the weakest of Economic, Demand and Operational. Evidence Confidence is a named breakdown by class, never a
+ratio (a threshold on a ratio is satisfied by deleting a field). No dimension computes money: amounts need typed
+currency and period, which the journal already requires, and the arithmetic waits for a connector with a source.
+
 ## Rollback
 Each fix is one commit on `feat/founder-os-v1-20261027`; revert the commit.
