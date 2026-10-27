@@ -30,3 +30,34 @@ goal ledger. Measured free RAM on 2026-10-25: about 3.4 GB, under the 4.5 GB flo
 3. Measure RAM twice >= 4.5 GB before arming E4b2; otherwise record WAIT_RESOURCE and stop.
 4. Do not create E5-E17 directories. Writing obligation.contract rows into `vault/programs/ccr/v5/evidence.jsonl` needs the
    Phase 6 gate (pins that ledger at two rows) updated deliberately in the same commit.
+
+## State 2026-10-26: steps 1-2 done, waiting only on RAM (Owner "añade todo al backlog para cuando tenga RAM", 2026-10-27)
+
+Owner 2026-10-26: "approve" (go for Phase 13), then "1" (Phase 13 before CCR-NEXT and CCN). Landed in `ccr/v5`, local, not
+pushed: `17defeee` (a retired failed-arm stub is not an attempt) and `b6bfc54a` (chain unparked).
+
+- chain.json: `parked: false` with `unparked_reason`; `yield_root` = CCR-NEXT `m-c60b6defbe97` (55M) and CCN
+  `m-b85fa1eacc8c` (25M). They yield the tree only while held and never launched; released, they take it back.
+- Envelope 330M -> 723M = the programme ceiling (`mission_spend.py programme-status --goal ccr`). Sync, not new capital.
+- route-E4b2 ADMISSIBLE (need 3,458,564 <= 3,500,000). Failed-arm stub `m-50183b34f0eb` retired (never launched).
+- Dry tick on the real chain: `arm E4b2`. Live ticks 10:11 and 10:21: `ram_hold free_gb=1.7`
+  (`~/.claude/state/ccr-chain-tick.log`).
+- Suites at landing: CHAIN 41/41, UEK 54/54, UEK_LEDGER 69/69, UEK_AUTH 35/35, SUPERSEDE 22/22.
+
+## What runs by itself once RAM is free
+
+PP-CcrChain-Tick (every 10 min) runs python only at >= 4 GB free, and arms E4b2 only at >= 4.5 GB on two samples
+(else `wait_resource`). No Owner action is needed beyond freeing RAM (close idle panes / claude sessions; /clear and
+/compact do not release claude.exe memory).
+
+## Pending, in order (when RAM allows)
+
+1. Watch the first E4b2 arm: `~/.claude/state/gsdx-chain.jsonl` and the mission's receipt `WU-E4b2-receipt.md`.
+2. When E4b2 writes rows into `vault/programs/ccr/v5/evidence.jsonl`, update the Phase 6 two-row pin
+   (`tools/test_uek_safety.py`) deliberately, in the same commit that records those rows.
+3. E4c2 arms after E4b2 only with Static Feasibility, authority and discriminative-power receipts. E4 verdict from
+   `closure.json` only.
+4. After E4c2 ends: release CCR-NEXT and CCN (no release task exists: PP-CCRNext-Start / PP-CCN-Start were never created).
+   Their 80M of authority exceeds goal ccr's current window remaining (40.2M on 2026-10-26), so a window/capital
+   check comes before release.
+5. ccr/v5 commits stay local; pushing is an Owner decision.
