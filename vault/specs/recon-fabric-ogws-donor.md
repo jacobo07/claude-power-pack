@@ -1,0 +1,90 @@
+---
+status: OG1 APPROVED 2026-10-29 (Owner "go ahead": certify the ogws candidates; prepare the names spec). OG2 DRAFT, needs an Owner word before any build.
+covers: [recon-fabric-ogws-donor, ogws-donor, og1, og2, tennis-ogws]
+extends: [recon-fabric-tc-search.md, wsr-reconstruction.md]
+tier: T2 (certification authority, persisted evidence, projection change)
+---
+
+# OG1/OG2: doldecomp/ogws as a donor for Tennis (SportsPackEP.dol)
+
+## Premises (measured 2026-10-29, GEX44; probe outputs `~/tennis_twin/`)
+- Tennis frontier 619/1797 (t1/campaign 2dbbf392). The Tennis DOL is Wii Sports (SportsPackEP.dol of SP2P01); ogws
+  (CC0, e5a4d369) is a Wii Sports decomp. ogws has no Tennis source: `RPTnsScene` is one `_unsplit.o`.
+- Matching every compiled ogws function (RP included) against the Sports DOL by size + relocation-masked bytes:
+  357 Tennis functions match; 30 are uncertified. Negative control 3383/3387 (4 mutated matches still hit).
+- objdiff on those 30 (probe `og_probe.py`): **6 have exactly one ogws donor and reach 100** once the donor's own
+  symbol AND its relocation targets carry the Tennis target's names (`RPSysScene::init/exit/calc/reinit/
+  incoming_childDestroy`, `main`), with 0 relocation offsets disagreeing. Renaming only the own symbol gives ~98.
+  The other 24 are generic tiny shapes matched by 2-350 ogws functions: the bytes agree, the source is unknowable.
+- RP objects need `SportsPack.mch`. It builds only when MWCC runs inside the output directory with the bare name
+  `-precompile SportsPack.mch`; any path with a slash crashes wibo (`FormatMessageA`). 67/69 RP objects then compile.
+- The champion lane's `retype` (toolchain_sd v5r-sd8) already gives synthetic struct types to the two 10149 shapes.
+
+## OG1 design (build now)
+1. `modules/recon_fabric/ogws_donor.py`, GEX44 clone only. Pin `OGWS_PIN = e5a4d369`; refuse when `~/ogws` HEAD
+   differs or `src/`/`include/` are dirty.
+   - `compile`: every completed ogws object with its own compiler version and flags, the PCH built by the bare-name
+     rule. Objects and manifest go under `.local/ogws-donor/` (git-ignored, disc-free but not committed).
+   - `match`: one masker for both sides (zero every word a relocation touches), donor objects vs the Tennis target
+     objects of `cv1.target_index`. A candidate is a Tennis function, not CERTIFIED in the frontier, whose masked key
+     equals exactly ONE ogws function. Ambiguous keys are listed with their donor count, never candidates.
+     Evidence: `evidence/og1/{candidates.jsonl, ambiguous.jsonl, summary.json}`.
+   - `certify` (the CERT1 rule, adapted):
+     - controls: `m1.run_controls` before and after;
+     - callee map: donor and target relocations must sit at the same offsets with the same types, and map each donor
+       symbol to one target symbol (section-local targets on both sides are left alone). Else REFUSED `RELOC_DISAGREES`;
+     - judge: the donor object with the map applied (strtab appended, the section header repointed) must get objdiff
+       100 for the Tennis name. Else `NOT_100`;
+     - replay: the donor source recompiled in a fresh temp dir must give the same function bytes and relocations, and
+       objdiff 100 again. Else `REPLAY_DIFFERS` / `REPLAY_NOT_100`;
+     - extent: `certify.disputed_extents`. Else `EXTENT_DISPUTED`;
+     - A2 negative: the donor renamed onto its `cv1.neg_partners_a2` partner, judged against the partner's target,
+       must not reach 100. The batch is healthy only by `certify.batch_ok`. Else every row is `INSTRUMENT`.
+   - Receipts: `evidence/cert1-ogws/receipts.jsonl`. Fields: `kind: "ogws"`, verdict, reason, `ogws_commit`, the
+     donor (lib, src, sym, mw, cflags sha256), donor function sha256, target object sha256, callee map, pct, replay
+     pct, negative partner and its outcome, batch.
+2. `projection.py`: an optional `ogws_cert` input. A receipt certifies (`certified_by: "ogws"`) only when it is
+   CERTIFIED, names `ogws_commit == OGWS_PIN`, and no earlier authority (ledger, cert1, search, toolchain) holds the
+   function. An unknown verdict is a hard red. Absent input = the pre-OG1 projection byte for byte.
+   `fingerprint.built_frontier` leaves `ogws_cert` out, as it does the other post-view lanes.
+
+## OG1 acceptance (each driven red -> green)
+- V-RF-OG1-RENAME: renamed symbols read back. Every other symbol and every section is byte-identical.
+- V-RF-OG1-CALLEE-MAP: a consistent map is built. A moved offset, a changed type and a two-way mapping are each refused.
+- V-RF-OG1-UNIQUE: only single-donor keys become candidates.
+- V-RF-OG1-DECIDE: the rule order, with each refusal reachable.
+- V-RF-OG1-PROJECTION: certifies; a refusal, a wrong pin and an earlier authority do not; an unknown verdict is red.
+- V-RF-OG1-ABSENT: no input = no `ogws` counter or input.
+- A real `certify` run with healthy controls. Expected about 6 by the probe; whatever is measured is the result.
+- Every existing suite stays green: TC1, FR1, FP1, CERT1, RR1, CP1, NEXT. `projection check` OK after `build`.
+
+## OG1 result (2026-10-29, GEX44 t1/campaign a66c1c21, unpushed)
+- `compile` 525/528 objects (RP 67/69, PCH built by the module). `match`: 356 Tennis functions keyed to ogws, 327 of
+  them already certified, **6 candidates**, 23 ambiguous.
+- `certify` batch aecfd741913cf084: **6/6 CERTIFIED**, controls OK/OK, A2 negative 6 pairs 0 match.
+- Frontier **619 -> 625/1797** (`certified_by.ogws: 6`), 0 invalidated, 0 regressed, FRONTIER_CHECK OK.
+- Suites: OG1 7/7 (the projection pin check mutation-drilled red, 4/5 reds caught with the check removed), TC1 11/11,
+  FR1 15/15, FP1 25/25, CERT1 16/16, RR1 19/19, CP1 16/16, NEXT 25/25. FR1/FP1/CERT1/RR1 now name the new authority
+  beside search and toolchain.
+
+## OG2 (DRAFT, not built): real names and types for the NO_COMPILE families
+- **Measured 2026-10-29 on the toolchain lane (v5r-sd8, after retype):** 1172 uncertified; 673 NO_COMPILE in the
+  lane; first errors 10149 x169, 10209 x112, 10377 x73, 10499 x64, 10140 x64. Of the 169, **38 call an ogws-named
+  callee**, and 7 call `fn_800B7AD4`, which ogws does not name. Of all 673 NO_COMPILE, 160 call a named callee.
+  Calling a named callee does not make it the cause of the error, so 38 is a ceiling for the 10149 family, not a
+  forecast.
+- Input: the 127 callees of uncertified Tennis functions that get a unique ogws name (probe, masked bytes), and
+  ogws's headers for their classes.
+- Measure first, under the lane that matters: the 10149 count in the toolchain lane sweep (v5r-sd8, after retype),
+  not the champion's 259. Then measure how many of those functions call a named callee. If the overlap is small,
+  stop there.
+- Design: a typed-prototype layer for named callees (return types, `this` classes) composed before the lane source,
+  for functions that call them; swept as a new lane generation and certified by the existing lane rule.
+- Known limit: the controller getter `fn_800B7AD4` (40 of the 10149 errors) gets no ogws name.
+
+## Out of scope
+The 24 ambiguous shapes, names in `symbols`/views, pushing.
+
+## Rollback
+Revert the commits. OG1 evidence lives in new paths only; with `evidence/cert1-ogws/` removed the projection is the
+pre-OG1 one.
