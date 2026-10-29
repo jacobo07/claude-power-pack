@@ -83,5 +83,17 @@ Delete the new repo. Nothing existing is edited.
   - **Red pole:** one byte flipped in a linked object fails CHECK, and restoring it passes. Editing
     `build/RZTP01/asm/*.s` does not reach the link: those files are reference only.
   - **Tracking:** `orig/` tracks only `.gitkeep`.
-- **Next: M2 (shiftable).** Add code or move a section, rebuild, and boot it in Dolphin on GEX44. The risk is pointers
-  in data that dtk did not turn into relocations.
+- **M2 DONE 2026-10-29** (wsr-decomp 58ae485).
+  - `src/wsr_shift.c` is linked first, only with `--non-matching`, and needs `#pragma force_active on`. Without it the
+    probe is deadstripped and the "shifted" DOL is byte-identical to retail, which would make a boot test vacuous.
+  - Shifted DOL e1c15139: `.text` grows 0x1A0, and 67,553 of 67,844 symbols move.
+  - `tools/wsr_shiftcheck.py`:
+    - 49,814 in-image data pointers are relocated;
+    - 10 words stay UNRELOCATED, and none is a real pointer (9 point at odd addresses inside functions, 1 is an extab
+      encoding word);
+    - the 8 OTHER are the checker's own `.ctors`/`.dtors` mapping, checked against a direct dump.
+  - **Dolphin (GEX44, boot, 45 s):** retail and shifted both PASS, and both reach the same title screen. The pixel
+    differences (RMSE 2-6 %) are the animated background.
+  - Not shown: gameplay beyond the title screen under a shifted build.
+- **Next: M3 (C in).** It needs its own spec section first. Open question: which TU gets real C first, either the ogws
+  donors (EGG, nw4r, SDK) by masked bytes, or the 8,687 KSR-certified functions.
