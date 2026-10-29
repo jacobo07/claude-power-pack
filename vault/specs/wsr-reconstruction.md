@@ -95,5 +95,39 @@ Delete the new repo. Nothing existing is edited.
   - **Dolphin (GEX44, boot, 45 s):** retail and shifted both PASS, and both reach the same title screen. The pixel
     differences (RMSE 2-6 %) are the animated background.
   - Not shown: gameplay beyond the title screen under a shifted build.
-- **Next: M3 (C in).** It needs its own spec section first. Open question: which TU gets real C first, either the ogws
-  donors (EGG, nw4r, SDK) by masked bytes, or the 8,687 KSR-certified functions.
+- **Next: M3 (C in).** The Owner picked option 1, the ogws donors.
+
+## M3a -- ogws donor probe (spec section; Owner pick "1", 2026-10-29)
+- **What:** compile doldecomp/ogws (CC0) C/C++ sources with ogws's own per-library compiler versions and flags, using
+  the compilers dtk already downloaded. No Wii Sports DOL is needed for that.
+- **Comparison:**
+  - Hash every compiled function with relocated bytes masked (from the object's own relocation table).
+  - Compare with every WSR function, masked the same way from the wsr-decomp split objects.
+  - Size must be equal, and masked bytes must be equal.
+- **Output (read-only, nothing linked into wsr-decomp):**
+  - per library: matched functions out of compiled functions;
+  - TUs whose every compiled function matches WSR in the same order (a candidate real TU, with the name, flags and
+    compiler version ogws uses);
+  - collisions where one masked hash maps to more than one WSR function.
+- **Gate:**
+  - A control must hit: a compiled function that ogws itself marks Matching is expected in WSR if WSR uses that
+    library version.
+  - The negative control must miss: the same function with one instruction changed.
+  - A 0 result counts only if the positive control hits.
+- **Then M3b:** link the matching TUs as C into wsr-decomp, one TU at a time, and keep sha1 7752caae on the matching
+  build.
+- **M3a RESULT 2026-10-29** (ogws e5a4d369; scripts and README in wsr-decomp `tools/m3a/`).
+  - 458 of 459 ogws library objects compiled. HBMBase.cpp needs sjiswrap. RP game code is excluded.
+  - 6,147 functions compiled; 2,563 match WSR by masked bytes, 1,197 of them uniquely. 689 of the matches are <= 8
+    bytes, so they are weak evidence.
+  - Controls:
+    - the positive control: sampled WSR functions find themselves;
+    - the negative control: 2,513 of 2,513 matches with one word flipped miss.
+  - Contiguous, ordered TUs in WSR: **50** (93 functions, 9,412 bytes; RVL_SDK 32, MSL 7, nw4r 9, Runtime 1,
+    RVLFaceLib 1), plus 11 made only of tiny functions. 392 TUs are not contiguous.
+  - **Reading:** WSR (2009) carries newer nw4r, EGG and SDK than Wii Sports (2006). Whole-TU donation is therefore small.
+    The large yield is names: 1,197 unique function matches give WSR functions their real (mangled C++) names. That
+    feeds the atlas's class grouping and the Kamek headers.
+  - GC/3.0a5.2-compiled ogws code matches WSR bytes, which is evidence about WSR's library compiler.
+- **Next (Owner pick):** M3b-names (rename the 1,197 uniquely matched functions in symbols.txt: no byte change, and
+  sha1 must stay 7752caae) and/or M3b-TUs (link the 50 contiguous TUs as C).
