@@ -1,5 +1,5 @@
 ---
-status: OG1 APPROVED 2026-10-29 (Owner "go ahead": certify the ogws candidates; prepare the names spec). OG2 DRAFT, needs an Owner word before any build.
+status: OG1 DONE 2026-10-29 (Owner "go ahead"). OG2 DONE 2026-10-29 (Owner "construyelo"): the names design was measured and falsified, and vtype was built from that measurement.
 covers: [recon-fabric-ogws-donor, ogws-donor, og1, og2, tennis-ogws]
 extends: [recon-fabric-tc-search.md, wsr-reconstruction.md]
 tier: T2 (certification authority, persisted evidence, projection change)
@@ -67,7 +67,24 @@ tier: T2 (certification authority, persisted evidence, projection change)
   FR1 15/15, FP1 25/25, CERT1 16/16, RR1 19/19, CP1 16/16, NEXT 25/25. FR1/FP1/CERT1/RR1 now name the new authority
   beside search and toolchain.
 
-## OG2 (DRAFT, not built): real names and types for the NO_COMPILE families
+## OG2 result (Owner "construyelo", 2026-10-29; GEX44 t1/campaign 612e7493, unpushed)
+- **The names design was falsified before any build.** The MWCC error line of each of the 169 lane 10149 functions
+  (`~/tennis_twin/og2_diag.jsonl`): **0** are rooted at an ogws-named callee. The 12 that mention one
+  (`fn_8004D010`) fail on an untyped local passed to it (`temp_rN->unk100`), and a callee's name does not type that.
+- **The shape the measurement found instead:** shape D, `(*X)->unkN(..)` (96 virtual calls) and `(*X)->unkN`
+  (7 reads). All 148 roots are declared `void **`, and no compiling lane source contains the shape. The rest:
+  C local chains 30, B globals 25, global+offset 6, A 2, other 3.
+- **Built:** `toolchain_sd.vtype` (lane generation v5d-sd8 = v5 + retype + vtype) casts a `void **` root to a
+  synthetic vtable struct (a function pointer for a call, an s32 for a read). It needs no ogws input.
+  - Sweep: compiles 1123 -> 1208, matches 565 -> 572, 0 no-op violations.
+  - `certify` 70/70 (63 re-judged + 7 new); TC3's 2 search rows re-judged by `certify-solved`.
+  - Frontier **625 -> 632/1797**.
+  - Gates: V-RF-TC1-VTYPE (mutation-drilled red) and V-RF-TC1-VTYPE-NO-OP. Every suite green, SR1 included.
+- **Running:** TC3 search on the v5d lane near-misses (cohort 152 at >= 95 %, of which ~34 are new to vtype), detached
+  on GEX44 with its log at `~/tc3_v5d.log`. When it ends: `toolchain_sd certify-solved
+  evidence/tc-search/v5d-sd8-sl-a6656c20d1b1-d3-p95/solved.jsonl`, then `projection build`, FR1 repin, commit.
+
+## OG2 original draft (superseded by the result above): real names and types for the NO_COMPILE families
 - **Measured 2026-10-29 on the toolchain lane (v5r-sd8, after retype):** 1172 uncertified; 673 NO_COMPILE in the
   lane; first errors 10149 x169, 10209 x112, 10377 x73, 10499 x64, 10140 x64. Of the 169, **38 call an ogws-named
   callee**, and 7 call `fn_800B7AD4`, which ogws does not name. Of all 673 NO_COMPILE, 160 call a named callee.
