@@ -76,6 +76,9 @@ Before acting on any item, re-read the evidence on GEX44. Nothing below has been
   inside ssh. The laptop can `git fetch ssh://gex44/home/kobii/missions/t1-campaign t1/campaign`.
 - **Evidence size.** The KSR lane commit adds about 30 MB (sweep 19 MB, cert1-ksr 6.9 MB, frontier 3.7 MB). Decide
   before pushing whether it stays in history or moves to a compressed or ignored location.
-- **`campaign --help` runs a default pin** instead of printing usage.
-- **Throwaway probe scripts in GEX44 `/tmp`** (`d21_*.py`, `ksr_*.py`, `/tmp/d21_ksr_full_sd8.jsonl`). The KSR lane
+- ~~**`campaign --help` runs a default pin**~~ **FIXED** in GEX44 0a809dc8 (unpushed).
+  - Precisely: `campaign <sub> --help` ran the subcommand on tam-ds-1, so `run --help` launched a run.
+  - Gate V-NEXT-HELP-RUNS-NOTHING, RED -> GREEN. NEXT 25/25, CP1 16/16, CP1 --live 17/17.
+  - With it, the branch is at 0a809dc8, and 13 commits are unpushed.
+- **Throwaway probe scripts in GEX44 `/tmp`** (`d21_*.py`, `ksr_*.py`, `atlas_probe*.py`, `/tmp/d21_ksr_full_sd8.jsonl`). The KSR lane
   sweep supersedes them. Delete them once the evidence above is pushed.
