@@ -10,7 +10,8 @@ specs `vault/specs/recon-fabric-tc-search.md` and `vault/specs/recon-fabric-ksr-
   - 14c4e6c2, ded1d1e8: TC2 feat and evidence;
   - dc01ea78: next packet 005;
   - f617112f, 2dbbf392: TC3 feat and evidence;
-  - ae6b70d7, 252a2652: KSR lane feat and evidence.
+  - ae6b70d7, 252a2652: KSR lane feat and evidence;
+  - 5b851691, 1c00a895: KSR atlas ka1 feat and evidence (added after write time, item 12). The branch is now at 1c00a895.
 - t1 frontier: **619/1797** certified (12 ledger + 490 cert1 + 52 search + 65 toolchain).
 - D21 motion closure: **1 of 50** certified (fn_8020A1A4). Scope A is still **NOT ADMITTED**.
 - KSR frontier (its own population): **8,687 certified** of 30,388 L1 lifts.
@@ -53,6 +54,22 @@ Before acting on any item, re-read the evidence on GEX44. Nothing below has been
     - or park D21.
 11. **KSR certify speed.** `ksr_lane certify` still uses a thread pool, which is GIL-bound on objdiff's JSON: 710 s
     for 8,687 candidates. Move it to the sweep's process pool before any larger run.
+12. **KSR class-layout atlas, narrowed** (Owner pick 2026-10-29; spec `vault/specs/recon-fabric-ksr-atlas.md`).
+    - Population: 778 certified KSR accessors with receiver `arg0` (237 getters, 326 setters, 215 initialisers).
+    - Field offset and width come from the target asm. 216 getters start with lwz, 20 with lbz, 1 with lhz.
+    - Class grouping was weaker than proposed:
+      - Only 17 initialisers store a vtable at +0 (16 distinct), and 0 accessors are vtable slots.
+      - Grouping by co-receiver call sites gives 73 candidate classes (220 accessors, largest 10, 35 with an
+        initialiser). The other 558 stay UNGROUPED.
+    - Out of scope: emitting Kamek headers, and the t1 10149 retype, which needs item 9 first.
+    - **DONE as ka1** (D21 plan step 4g; GEX44 5b851691 + 1c00a895, unpushed):
+      - 757 OK and 21 ASM_DISAGREE;
+      - 55 CANDIDATE classes holding 136 accessors, 0 CONFLICT;
+      - 621 UNGROUPED, 16 vtable anchors;
+      - V-RF-KA 8/8, mutants 7/7.
+
+      Prototypes were excluded from the call sites, which shrank the probe's 220/73. Open: a ka2 that tracks
+      `mr rX, r3` receiver copies, to recover the 21.
 
 ## Debt
 - **Push and hand-back of the GEX44 commits** (list above). Push needs the Owner: `ovo-push-gate` blocks pushes from

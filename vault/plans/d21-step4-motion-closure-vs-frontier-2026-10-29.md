@@ -267,6 +267,41 @@ NO_COMPILE 5,453, FLAGS_SPLIT 3,447, NO_TARGET 2,858, XF_ERROR 2. KSR_FRONTIER_C
 - A search lane on the 9,941 KSR near-misses.
 - A lane-local fix for the 2 XF_ERROR sources.
 
+## Step 4g -- the KSR atlas, narrowed (spec `vault/specs/recon-fabric-ksr-atlas.md`; Owner pick, then the narrowed scope)
+Commits on GEX44 `t1/campaign`, unpushed:
+- 5b851691 feat: `modules/recon_fabric/ksr_atlas.py`, `tools/test_recon_fabric_ksr_atlas.py` and
+  `tools/mutants_recon_fabric_ksr_atlas.py`.
+- 1c00a895 evidence: `evidence/ksr-atlas/ka1/`, about 340 KB.
+
+**Premise probe (before the spec).** The proposal assumed class layouts. Measured:
+- only 17 initialisers store a vtable;
+- 0 accessors are vtable slots;
+- no certified function has a name.
+
+So classes can only be candidates, built from call-site evidence. The Owner picked that narrowed scope.
+- The probe's own call regex also matched m2c prototypes (`void fn_X(void *, s32);`), which join accessors through a
+  shared parameter type. The module scans bodies only, and V-RF-KA-CALLS pins it. Grouping fell from 220/73 (probe) to
+  136/55.
+
+**Result (ka1).** Population: 8,687 certified rows, of which 778 are accessors (GET 237, SET 326, INIT 215).
+- **Fields:** 757 OK, read from the target bytes and equal to the source's offsets.
+  - 21 ASM_DISAGREE, listed by name. They are non-leaf setters that move the receiver out of r3 (`mr r31, r3`) before a
+    call, and the decoder tracks r3 only.
+- **Classes:** 55 CANDIDATE holding 136 accessors (sizes: 2 x36, 3 x14, 4 x3, 5 x2). 0 CONFLICT, 0 MULTI_VTABLE.
+  - The CONFLICT result is not vacuous. Across all accessors, 64 of 241 offsets carry more than one width.
+- **621 UNGROUPED.**
+- **16 vtable anchors.** Each label was confirmed from the DOL's own lis/addi.
+- **main.dol premise:** 2,878 words, 96 masked relocation sites, 0 mismatched.
+
+**Gates.** V-RF-KA-* 8/8, and the source-mutant drill caught 7/7. KSR 9/9, and the KSR `rows_sha256` is unchanged.
+
+**What it does not give.**
+- Kamek headers: the largest candidate holds 5 accessors.
+- A t1 retype: that needs backlog item 9.
+
+The cheapest widening is to track receiver copies (`mr rX, r3`) in the decoder. It would recover most of the 21 and would
+need a ka2 generation.
+
 ## Next options (Owner decision; none started)
 1. Point the campaign's next class at NO_COMPILE 10149 restricted to the motion set (25 functions), instead of the
    COUNT_DIFFERS small-function cohort U2 is on.
