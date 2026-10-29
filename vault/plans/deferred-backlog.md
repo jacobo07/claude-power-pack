@@ -1585,6 +1585,7 @@ acting on one, read the file and check its state against the repo.
 - `2026-10-26_gsdx-factory-2-ram-gated.md` -- GSDX factory-2 work gated on free RAM.
 
 **Missions and programmes (remaining work):**
+- `2026-10-29_d21-ksr-remaining.md` -- D21 / recon fabric after TC3 and the KSR lane. Open items: re-split the 6 FLAGS_SPLIT KSR objects (652 matches), a KSR search lane (9,941 near-misses), deeper search on 2 motion near-misses, the 10499/v6 lane, the campaign at sd8, 2 XF_ERROR, 2,858 NO_TARGET, a byte-identity map, the Scope A decision, certify speed. Debt: push of 10 unpushed GEX44 commits, 30 MB of evidence, `campaign --help`.
 - `2026-10-17_ccr-vm-t0-hallazgos-y-pendiente.md` -- CCR boundary CWS (goal ccr-vm): T0A findings and what remains.
 - `2026-10-10_cp50-c2-remaining.md` -- CP50 C2 (recon-factory Phase 7). Patches beside it:
   `2026-10-10_cp50-c2a-fix.patch`, `2026-10-10_cp50-c2a-partial.patch`, `2026-10-10_cp50-c2b-phase7.patch`,
@@ -1617,4 +1618,3 @@ acting on one, read the file and check its state against the repo.
 
 **Activation criterion:** per row, as written in its file. Next step for the index itself: when a row is confirmed done
 or obsolete, mark it here with the commit that closed it.
-- `2026-10-29_d21-ksr-remaining.md` -- D21 / recon fabric after TC3 and the KSR lane. Open items: re-split the 6 FLAGS_SPLIT KSR objects (652 matches), a KSR search lane (9,941 near-misses), deeper search on 2 motion near-misses, the 10499/v6 lane, the campaign at sd8, 2 XF_ERROR, 2,858 NO_TARGET, a byte-identity map, the Scope A decision, certify speed. Debt: push of 10 unpushed GEX44 commits, 30 MB of evidence, `campaign --help`.
