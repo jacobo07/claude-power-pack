@@ -1,5 +1,5 @@
 ---
-status: DRAFT 2026-10-29 (route chosen by Owner, "KSR toolchain lane"; this design needs an Owner go before the first edit)
+status: APPROVED 2026-10-29 (Owner chose the route "KSR toolchain lane", then "go" on this design)
 covers: [recon-fabric-ksr-lane, ksr-lane, ksr-toolchain-lane, ksr-certification]
 extends: [recon-fabric-tc-search.md, d21-step4-motion-closure-vs-frontier-2026-10-29.md]
 tier: T2 (certification authority, new persisted population, gate changes)
