@@ -1,0 +1,130 @@
+# D21 step 4 -- motion closure against the certified frontier (zero-model, 2026-10-29)
+
+Question (Owner "go ahead", 2026-10-29): how much of Tennis's motion code is already certified, and can D21 Scope A
+start without waiting for Tennis ALL-MATCH or recon-factory CP50?
+
+## Instruments
+- Motion set: `wst_tennis/step3/probe_step3.py` re-run untruncated (the committed report cuts the lists at 25).
+  Copy with `[:25]` removed, output to the session scratchpad. Result: c = 50 getter callers, d = 20 field readers
+  (d is a subset of c), the same counts as step 3, so the re-run reproduces it.
+- Frontier: GEX44 `~/missions/t1-campaign/evidence/frontier/frontier.jsonl`, read-only over ssh. Clone HEAD 281b9881,
+  `counters.json`: CERTIFIED 519, COMPILES_NO_MATCH 540, NO_COMPILE 738, UNKNOWN 0. Working tree has U2's uncommitted
+  operator edits; they do not touch the frontier files.
+- All 50 motion functions were found in the frontier (0 ABSENT), so a 0 below is a real 0, not a failed look.
+
+## Results (measured)
+| set | n | CERTIFIED | COMPILES_NO_MATCH | NO_COMPILE |
+|---|---|---|---|---|
+| getter callers (c) | 50 | **0** | 4 (pct 24.6, 44.7, 74.0, 84.0) | 46 |
+| field readers (d) | 20 | **0** | 0 | 20 |
+
+- NO_COMPILE first errors in the motion set: 10149 x25, 10377 x5, 10499 x4, 10140 x4, 10393 x4, 10209 x3, 10121 x1.
+  10149 is also the largest NO_COMPILE family overall (265 of 738).
+- Size: motion median 138 insns, rest of Tennis median 23, CERTIFIED median 3.
+
+Frontier state by function size:
+| insns | n | CERTIFIED | CNM | NO_COMPILE |
+|---|---|---|---|---|
+| 1-4 | 390 | 318 | 56 | 16 |
+| 5-19 | 389 | 144 | 106 | 139 |
+| 20-49 | 404 | 54 | 211 | 139 |
+| 50-137 | 425 | 3 | 137 | 285 |
+| 138+ | 189 | 0 | 30 | 159 |
+
+Largest certified function: 68 insns.
+
+## Reading
+- The 519 certified functions are almost all small: 462 of them have fewer than 20 instructions. Above 50 instructions,
+  3 of 614 are certified. The motion code sits in exactly that band. So the ALL-MATCH count says nothing about how
+  close D21 is: the frontier can keep rising without reaching one motion function.
+- What blocks the motion code is NO_COMPILE, and its largest family is 10149. A fix for the 10149 family is the single
+  lever that touches the most motion functions (25 of 50). The meaning of MWCC error 10149 is not recorded in the
+  vault; this note does not guess it.
+- D21 Scope A admission (reforecast 2026-10-12) stays **NOT ADMITTED**:
+  - a >=20-insn match exists (57 certified at >=20 insns), which is evidence for the compiler/flags condition;
+  - but 0 motion functions are verified, the certified population is unrepresentative of the closure, and the
+    Tennis A/A and the family curve were not checked here (UNKNOWN).
+- The step-3 caveats still hold: the closure is a floor (no argument propagation, no virtual calls). The true closure
+  is larger, not smaller.
+
+## Step 4b -- the 10149 family on the motion set (Owner "go ahead" = option 1, 2026-10-29)
+All compiles ran in throwaway temp dirs on GEX44 (`~/missions/t1-campaign` @ 281b9881, no recon_fabric peer running).
+Nothing was written to the clone, its cache or its evidence. Sources = champion v5 (`repair.transform_v5`).
+- **What 10149 is:** MWCC `(10149) not a struct/union/class`, i.e. `.unkN`/`->unkN` on something with no struct type.
+- **Census of every 10149 error** (265 functions; counts are lower bounds, because MWCC aborts):
+  - A, a call returning `void *` dereferenced (`fn_X(...)->unkN`): 72 errors. 40 of them are the controller getter
+    `fn_800B7AD4`, and all 40 are inside the motion set.
+  - B, an extern declared scalar used as a struct (`lbl_X.unkN`): 740 errors. Top globals lbl_803CDE58 x117,
+    lbl_804F96D8 x73, lbl_804F97F4 x55, lbl_804FB048 x20 (19 of those are in motion code).
+  - C, other (pointer chains such as `p->unk0->unkAC(...)`, untyped locals): 570 errors.
+  - Motion set: 25 functions, errors A 44 / B 27 / C 35. 16 of the 25 show only A/B errors.
+- **Experimental transform** (not committed anywhere): for each A callee and B global actually dereferenced, it
+  synthesises a padded struct with the observed offsets (width = gap to the next offset, capped at 4) and retypes the
+  prototype or extern.
+  - Motion 10149: **0 -> 9 of 25 compile**. pct 84.4, 84.2, 3.9, 87.7, 84.9, 89.6, 84.5, 76.0, 85.6. 0 MATCH.
+  - Still failing: 10149 x7 (shape C), 10499 x7, 10140 x1, 10377 x1.
+  - All 265: 0 -> 64 compile, 0 MATCH. No regression check was run on the other 1,532 functions.
+- **Reading:** typing the controller object is the unlock, as expected from steps 2-3, but it moves NO_COMPILE to
+  COMPILES_NO_MATCH, not to MATCH. The field widths are guesses (the getter's struct gets s32 by default), and that
+  probably explains part of the ~85 % plateau.
+  - Next, in order:
+    1. Take field widths from the target asm (lbz/lhz/lwz/lfs at each offset) rather than the gap rule.
+    2. Land it as a v6 repair lane. Then a full 1,797 sweep with 0 regressions vs v5, the search lane on the new
+       COMPILES_NO_MATCH, and certify.
+    3. Attack 10499, the next motion blocker (7).
+  - Collision: U2's uncommitted operator edits sit in the same clone, so step 2 must wait for U2 to commit or be
+    discarded.
+
+## Step 4c -- the plateau is the compiler flags, not the field widths (Owner "y, sigue hasta terminar", 2026-10-29)
+All measurements below ran in temp dirs on GEX44 with `cv1.FLAGS` overridden only inside the measuring process. The
+clone's flags, cache and evidence are unchanged.
+- **Asm field widths (step 1): negative.** Types were read from the target's load/store opcodes (lbz/lha/lhz/lwz/lfs,
+  with extsb giving s8): 431 fields typed from asm vs 158 by the gap rule.
+  - Motion: the same 9 compile at the same pcts.
+  - The 265: mean pct of the compiled ones 53.7 -> 56.5, 0 MATCH.
+- **Diff of fn_80209FC8** (objdiff, instruction by instruction):
+  - The target addresses `lbl_805133B8` and `lbl_80512348` as `@sda21`. Ours uses `lis` + `@l`, which costs 2 extra
+    instructions and a different register allocation, so it can never reach 100.
+  - The rest of the gap is one v5 struct field: the target loads it with `lha` (s16) and v5 types it f32.
+- **Cause:** the campaign compiles with `-sdata 0 -sdata2 0` (cv1.FLAGS). The census already names this as
+  FLAGS_BLOCKED_SDA, and D9 left it "untested, not refuted".
+- **`-sdata 8 -sdata2 8`, champion v5 sources, all 1,797:**
+  - 502/502 cert1+ledger functions stay at 100.
+  - The 17 search-certified sources (materialized from their receipts' paths) stay at 100.
+  - **58 COMPILES_NO_MATCH become 100.**
+  - All 58 come from `-sdata` alone: (8, 0) gives 58, (0, 8) gives 0, (4, 4) gives 58.
+  - 0 regressions.
+- **sd8 + the step-4b struct transform:**
+  - The 10149 family (265) gives **5 MATCH** (0 at sdata 0) and 10 at >= 95 %.
+  - Motion: still 9 compile, now 82-99 % (fn_8020A1A4 99.2, fn_8021C99C 95.9); fn_8020AAF0 stays at 7.5.
+- **10499 (step 3) census, motion NO_COMPILE 46.**
+  - One shape dominates: `(arg0->unk20 + (i * 0x18))->unkN`, an array of 0x18-byte records reached through a field
+    typed s32.
+  - Fix shape: type the field as a pointer to a 0x18-byte element struct and rewrite to `arg0->unk20[i].unkN`.
+  - Errors across the 46: 10149 x163, 10141 x56, 10121 x32, 10209 x27, 10377 x23, 10499 x22.
+- **U2 closed in the same session:** tam-ds-10 certified 35 by `cond-retest@1`, so the frontier went 519 -> 554
+  (receipt `WU-U2-receipt.md`, GEX44 78d625bf).
+
+### Reading
+The 0-of-50 motion result was mostly an instrument fault. The campaign's pinned flags cannot reproduce any function that
+touches a small global, and motion code is almost all such functions. Struct typing helps only once the flags are right.
+
+### Proposed next unit (needs Owner go: it re-bases frozen evidence)
+Re-base the toolchain flags to `-sdata 8 -sdata2 8` as an explicit, versioned input. Today cv1.FLAGS is frozen, and
+V-RF-SR1-FROZEN pins cv1/fastmatch/repair/m1/cert1 at base 9ae2ed9e.
+1. Make the flags part of the pinned toolchain identity (cache keys already carry them). Re-sweep v5 under sd8 as a new
+   lane evidence dir, leaving the old sweeps untouched.
+2. Re-certify through the existing certify path. The forecast is about 577 = 554 + 58 (the 58 is measured at objdiff
+   level, not yet certified). Re-pin FR1 and SR1-FROZEN deliberately.
+3. Then land the struct transform (10149) and the 0x18-stride array rule (10499) as a v6 repair lane under sd8.
+4. Re-run `campaign next`.
+
+## Next options (Owner decision; none started)
+1. Point the campaign's next class at NO_COMPILE 10149 restricted to the motion set (25 functions), instead of the
+   COUNT_DIFFERS small-function cohort U2 is on.
+2. Drop exact match for the motion closure: Scope A only needs source that compiles and behaves the same, relinked
+   against retail objects. That would need a behavioural-equivalence gate instead of objdiff 100 %. It changes what
+   counts as done, so it is an Owner call.
+3. Leave D21 parked; ALL-MATCH continues on small functions.
+</content>
+</invoke>
