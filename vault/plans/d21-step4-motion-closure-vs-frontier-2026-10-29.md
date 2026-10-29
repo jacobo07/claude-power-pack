@@ -216,6 +216,13 @@ Results:
 like TC1, with flags chosen per TU and recorded in every key and receipt, certified through the CERT1 rule. The ksrmb
 job route (needs a job cap; CP50 HOLD) was not taken. The lane needs its own T2 spec before the first edit.
 
+**Correction from the premise check for that spec** (`vault/specs/recon-fabric-ksr-lane.md`, DRAFT):
+- KSR has no real TU flags. Every preset and capsule unit is sdata 0, and the targets are 303 auto-split objects. So
+  "per-TU" above means per split object, chosen by measurement.
+- The t1 frontier and the KSR sweep are different populations. Only 48 symbol names are shared, and 41 of those point
+  at different target bytes (54 symbols are defined in more than one object across the 21 stages).
+- So 9,339 is not frontier growth, and no KSR row may be joined to a t1 row by name.
+
 ## Next options (Owner decision; none started)
 1. Point the campaign's next class at NO_COMPILE 10149 restricted to the motion set (25 functions), instead of the
    COUNT_DIFFERS small-function cohort U2 is on.
