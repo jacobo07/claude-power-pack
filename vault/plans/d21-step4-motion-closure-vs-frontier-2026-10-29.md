@@ -172,6 +172,50 @@ width taken from the target asm. 0 MATCH means it would add no certification tod
 - This changes the search's identity (root keys, stores, pins), which needs its own spec.
 - Packet 005 (WIDEN 367) is the current `next`, and it is still computed at sdata 0.
 
+## Step 4e -- TC3: search under the toolchain flags (spec `vault/specs/recon-fabric-tc-search.md`, Owner "go ahead")
+Feature commit f617112f on GEX44 `t1/campaign` (unpushed). Run `v5r-sd8-sl-a6656c20d1b1-d3-p95`: the SR1 engine with
+`cv1.FLAGS` switched to -sdata 8, rooted at the v5r-sd8 lane source.
+- **Cohort:** 118 lane near-misses (compiles, no match, pct >= 95, not certified). Budget: 400 evals, depth 3, seed 7.
+- **Outcome:** 92 EXHAUSTED, 24 BUDGET_EVALS, **2 SOLVED**, 14,503 fresh evals.
+  - fn_8020A1A4 (motion, 58 insns), 99.2 -> 100 by `decl-swap@1`. It was NO_COMPILE in the frontier (10149).
+  - fn_80219968, 96.5 -> 100 by `arg-passthru@1`. It was COMPILES_NO_MATCH.
+- **certify-solved:** 2 candidates, 2 CERTIFIED (batch 8264f9eb9e92c001).
+  - Controls were OK before and after, and the fresh-cache replay hit 100.
+  - The A2 negative: n 2, 0 matches, 0 excluded.
+  - Receipts are of kind `search` in `evidence/cert1-sd8/receipts.jsonl`.
+- **Frontier 617 -> 619/1797** = 12 ledger + 490 cert1 + 52 search + 65 toolchain.
+  - CNM 447 -> 446, NO_COMPILE 733 -> 732.
+  - 0 regressed, 0 invalidated, FRONTIER_CHECK OK. FR1 re-pinned.
+- **Motion closure: 0 -> 1 of 50 certified** (fn_8020A1A4). This is the first certified motion function.
+  - The other two motion functions at >= 95 % did not close. fn_80251168 (99.5) EXHAUSTED its depth-3 neighbourhood.
+    fn_8021C99C (95.9) ran out of evals.
+- Evidence commit: GEX44 `t1/campaign` 2dbbf392 (unpushed). Suites: TC1 11/11, FR1 15/15, FP1 25/25, CERT1 16/16,
+  RR1 19/19, CP1 16/16 and --live 17/17, NEXT 24/24, SR1 --live 26/26.
+
+### KSR at -sdata 8 (read-only probe, `/tmp/d21_k9.py` on GEX44, nothing written to any clone)
+Inputs:
+- Sources: KSR main m2c L1 lifts (`decomp_work/b8d1db7edd42/m2c_main`). Transform: v5 + `retype`.
+- Prelude: the Tennis context typedefs.
+- Flags: cv1.FLAGS with sdata 8 / sdata2 8.
+- Target: the KSR main split objects (`ksrmb-20261001-101754`).
+
+Results:
+- **30,388 L1 lifts, 27,530 with a target symbol. 20,547 compile, and 9,339 are at objdiff 100 (33.9 %).**
+- pct bands of the compiling ones: 100: 9,339 · >=95: 1,764 · >=80: 3,172 · <80: 6,272.
+- The full sweep has no sdata 0 arm (c0/p0 were not measured), so it gives no sd0-vs-sd8 delta. The 1,522-function
+  sample gave 135 raw at sd0. That sample also lacked v5+retype, so the two numbers are not one A/B.
+- **A defect in a frozen module:** `repair.transform_v5` raises `KeyError` in `_render` (`node.f[off]`) on 2 KSR
+  sources. Tennis never reached it.
+  - The first run of the probe had no per-function guard, so this one exception killed the pool at 17,712 rows. The
+    probe now records it as `xf_error`.
+  - repair is frozen at base 9ae2ed9e, so the fix belongs in the KSR lane's own transform, not in repair.
+- Per-TU flags matter. main:800A3120 drops to 46.7 at sd8. A single global flag set would lose functions that match
+  today.
+
+**Owner decision (2026-10-29): KSR certification goes through a KSR toolchain lane** (option 2): an additive module
+like TC1, with flags chosen per TU and recorded in every key and receipt, certified through the CERT1 rule. The ksrmb
+job route (needs a job cap; CP50 HOLD) was not taken. The lane needs its own T2 spec before the first edit.
+
 ## Next options (Owner decision; none started)
 1. Point the campaign's next class at NO_COMPILE 10149 restricted to the motion set (25 functions), instead of the
    COUNT_DIFFERS small-function cohort U2 is on.
