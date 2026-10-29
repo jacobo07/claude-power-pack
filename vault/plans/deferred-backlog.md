@@ -979,6 +979,24 @@ with the Resort census.
 - Controls: positive met; negative 0/50.
 Optional step 4: one level of argument propagation, then subtract the Resort-shape overlap.
 
+**Step 4 DONE 2026-10-29** (zero-model, `vault/plans/d21-step4-motion-closure-vs-frontier-2026-10-29.md`): against the
+GEX44 frontier (519/1797 certified), **0 of the 50 motion functions are certified** (46 NO_COMPILE, 4 COMPILES_NO_MATCH;
+0 of the 20 field readers). Motion median is 138 insns; certified median is 3, and 3 of 614 functions over 50 insns are
+certified. ALL-MATCH progress does not move D21. The largest blocker is the NO_COMPILE 10149 family (25 of 50).
+Scope A stays NOT ADMITTED.
+**Step 4c 2026-10-29** (same doc): the motion plateau is the pinned compiler flags (`-sdata 0`; the target uses
+`@sda21`), not field widths. Under `-sdata 8` with the v5 sources, 58 more functions reach objdiff 100 and 0 of the
+519 certified regress. Adding the 10149 struct transform gives 5 more, and moves motion to 82-99 %. U2 closed the same
+day: frontier 519 -> 554. The next unit is a flags re-base of frozen evidence, which waits for the Owner's go.
+**Step 4d 2026-10-29** (Owner go): the re-base landed as an additive toolchain lane (TC1/TC2, `toolchain_sd`; frozen
+modules and evidence untouched). Frontier 554 -> **617/1797** with 0 regressions. Motion: 13 of 50 now compile under the
+lane, 3 at >= 95 %, still 0 certified. The next lever is search under the toolchain flags (needs its own spec). Scope A
+stays NOT ADMITTED.
+**Steps 4e-4f 2026-10-29** (Owner go on both specs): TC3, the search under -sdata 8, certified 2 more functions. One of
+them is fn_8020A1A4, the **first certified motion function (1 of 50)**, and the frontier is now **619/1797**. The KSR
+lane certified **8,687 KSR main functions** under flags measured per object. That is its own population, not t1
+growth. Scope A stays NOT ADMITTED. Everything still open is in `vault/backlog/2026-10-29_d21-ksr-remaining.md`.
+
 **Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
 per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
 
@@ -1599,3 +1617,4 @@ acting on one, read the file and check its state against the repo.
 
 **Activation criterion:** per row, as written in its file. Next step for the index itself: when a row is confirmed done
 or obsolete, mark it here with the commit that closed it.
+- `2026-10-29_d21-ksr-remaining.md` -- D21 / recon fabric after TC3 and the KSR lane. Open items: re-split the 6 FLAGS_SPLIT KSR objects (652 matches), a KSR search lane (9,941 near-misses), deeper search on 2 motion near-misses, the 10499/v6 lane, the campaign at sd8, 2 XF_ERROR, 2,858 NO_TARGET, a byte-identity map, the Scope A decision, certify speed. Debt: push of 10 unpushed GEX44 commits, 30 MB of evidence, `campaign --help`.
