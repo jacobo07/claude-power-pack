@@ -223,6 +223,50 @@ job route (needs a job cap; CP50 HOLD) was not taken. The lane needs its own T2 
   at different target bytes (54 symbols are defined in more than one object across the 21 stages).
 - So 9,339 is not frontier growth, and no KSR row may be joined to a t1 row by name.
 
+## Step 4f -- the KSR lane, built and run (spec `vault/specs/recon-fabric-ksr-lane.md`, APPROVED; Owner "go")
+Commits on GEX44 `t1/campaign`, unpushed:
+- ae6b70d7 feat: `modules/recon_fabric/ksr_lane.py` and `tools/test_recon_fabric_ksr.py`.
+- 252a2652 evidence: about 30 MB, of which the sweep is 19 MB.
+
+**Sweep.** 30,388 m2c_main L1 lifts against the pinned stage `ksrmb-20261001-101754`, every function on both arms:
+- 27,528 OK, 2,858 NO_TARGET, 2 XF_ERROR (the repair KeyError).
+- sd0: 20,547 compile, **8,305** at objdiff 100.
+- sd8: 20,547 compile, **9,339** at objdiff 100. This reproduces the read-only probe exactly.
+
+**One arm per object.** 304 objects:
+- 187 take sd8 and 111 take sd0.
+- **6 are FLAGS_SPLIT**, holding 3,447 functions and 652 matches. The set includes the two largest objects:
+  `auto_03_80007EE0` (3,928 functions) and `auto_03_800C4EE4` (1,381).
+- These 652 matches are the measured cost of refusing a choice per function.
+
+**Certify.** 8,687 candidates (sd0 1,302, sd8 7,385), **8,687 CERTIFIED**, 710 s.
+- Controls before and after: 294/294 capsule units, compiled as fn.c, reproduce `local_object_sha256` and reach
+  objdiff 100. No-op 5/5.
+- For all 8,687: the replay bytes equal the sweep bytes, and the compiled size equals the target size.
+- A2 negative: n 8,643, 0 match, 44 excluded. So the instrument could refuse; it just found nothing to refuse.
+
+**KSR frontier** (its own population, separate from t1's 619/1797): CERTIFIED 8,687, COMPILES_NO_MATCH 9,941,
+NO_COMPILE 5,453, FLAGS_SPLIT 3,447, NO_TARGET 2,858, XF_ERROR 2. KSR_FRONTIER_CHECK OK.
+
+**Gates.**
+- KSR 9/9. Six source mutants (split rule, receipt arm, identity bytes, transform guard, resume corruption, control
+  tolerance) each turn their named gate red.
+- A6 is green: TC1 11/11, FR1 15/15, FP1 25/25, CERT1 16/16, RR1 19/19, CP1 16/16 and --live 17/17, NEXT 24/24,
+  SR1 --live 26/26.
+- t1 `evidence/frontier` and `evidence/cert1` are unchanged.
+
+**Measured along the way.**
+- MWCC records the source file name in the object. The capsule's object shas reproduce only when the source is
+  compiled as fn.c.
+- The sweep is GIL-bound: objdiff's JSON is parsed in Python. A thread pool did about 60 rows/min inside the
+  3,928-function object; a process pool did 132.
+
+**Open next (not started):**
+- Resolve the 6 FLAGS_SPLIT objects, for instance by re-splitting them at the arm boundary. That would release up to
+  652 matches.
+- A search lane on the 9,941 KSR near-misses.
+- A lane-local fix for the 2 XF_ERROR sources.
+
 ## Next options (Owner decision; none started)
 1. Point the campaign's next class at NO_COMPILE 10149 restricted to the motion set (25 functions), instead of the
    COUNT_DIFFERS small-function cohort U2 is on.
