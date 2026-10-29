@@ -130,4 +130,24 @@ Delete the new repo. Nothing existing is edited.
     feeds the atlas's class grouping and the Kamek headers.
   - GC/3.0a5.2-compiled ogws code matches WSR bytes, which is evidence about WSR's library compiler.
 - **Next (Owner pick):** M3b-names (rename the 1,197 uniquely matched functions in symbols.txt: no byte change, and
-  sha1 must stay 7752caae) and/or M3b-TUs (link the 50 contiguous TUs as C).
+  sha1 must stay 7752caae) and/or M3b-TUs (link the 50 contiguous TUs as C). The Owner picked both ("las dos").
+- **M3b-names DONE** (wsr-decomp c32f8e2).
+  - 948 WSR functions renamed to their ogws names: 481 C++ (mangled) and 467 C.
+  - 105 already carried the same name from dtk's signatures, and none disagreed.
+  - 15 refused because several ogws functions claim them.
+  - sha1 is still 7752caae.
+- **M3b-TUs DONE, first C in WSR** (wsr-decomp aed3a2c).
+  - **Plan:** 41 of 50 TUs were placed. Data sections are placed from relocation correspondence, and every relocation
+    must agree.
+  - **Linked as C: 11 TUs**, kept only while the DOL hashes to retail:
+    - MSL: k_cos, k_sin, s_copysign, s_frexp, s_modf;
+    - SDK: exi2, mtxvec, OSSync, AXProf, AXFXSrcCoef, wenc;
+    - 17 functions, 3,852 code bytes and 2,272 data bytes.
+  - **Reverted, 30 TUs:**
+    - 19 link errors: a callee is still unnamed in WSR (for example `__fpclassifyd`). Naming it should unlock them.
+    - 11 compile errors: nw4r C++.
+  - **Toolchain evidence:** ogws's GC/3.0a5.2 flags plus the Wii/1.0 linker reproduce retail with C linked.
+  - **Fixed in the apply driver:** ninja prints its CHECK line only when it relinks, so "green" is now the DOL hash
+    computed directly. The text match failed twice on up-to-date builds.
+- **Next:** name the missing callees and retry the 19 link-error TUs; then the nw4r C++ compile errors; then the KSR
+  lane's certified functions (M3c, needs its own spec section).
