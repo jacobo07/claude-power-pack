@@ -119,6 +119,59 @@ V-RF-SR1-FROZEN pins cv1/fastmatch/repair/m1/cert1 at base 9ae2ed9e.
 3. Then land the struct transform (10149) and the 0x18-stride array rule (10499) as a v6 repair lane under sd8.
 4. Re-run `campaign next`.
 
+## Step 4d -- the re-base, landed as a toolchain lane (Owner "go ahead", 2026-10-29)
+Commits on GEX44 `t1/campaign`, unpushed:
+- e61df767 feat TC1
+- 4fdbedb8 evidence TC1
+- 14c4e6c2 feat TC2
+- ded1d1e8 evidence TC2
+- dc01ea78 next packet 005
+
+**Design.** `modules/recon_fabric/toolchain_sd.py` is additive.
+- It sets `cv1.FLAGS` to `-sdata 8 -sdata2 8` inside its own process only. cv1, fastmatch, repair, m1 and
+  evidence/cert1 stay frozen.
+- It reuses CERT1's rule as is: controls before and after, a fresh-cache replay to the lane's bytes at 100, the extent
+  check, and an A2 negative.
+- Flags are recorded in every sweep row's key, in the summary and in each receipt.
+- The champion stays v5. Projection adds `certified_by: toolchain`. A toolchain receipt lapses when the lane sweep,
+  the champion sweep or the champion key moves, or when its lane row stops matching.
+
+**Generations** (`TC_LANES`; a swept generation is frozen history):
+
+| generation | source | compiles | MATCH |
+|---|---|---|---|
+| v5-sd8 | v5 | 1,059 | 560 (v5 at sdata 0: 502) |
+| v5r-sd8 | v5 + `retype` (the 10149 shapes A/B) | 1,123 | 565 |
+
+`retype` is a proven no-op on compiling sources: all 1,059 keep their key (V-RF-TC1-RETYPE-NO-OP).
+
+**Frontier: 554 -> 612 (TC1) -> 617/1797 (TC2)** = 12 ledger + 490 cert1 + 52 search + 63 toolchain.
+- 0 regressed, 0 invalidated; NO_COMPILE 738 -> 733.
+- With U2, the frontier rose **519 -> 617** today.
+
+**Gates:**
+- V-RF-TC1-* 8/8. Five source mutants of the projection branch each turn it red.
+- FP1, CERT1 and RR1 now count toolchain certifications beside search ones. FP1 lets toolchain rows leave NO_COMPILE,
+  while search stays restricted to near-miss rows; narrowing that turns FP1 red.
+- All suites green: TC1 8/8, FR1 15/15, FP1 25/25, CERT1 16/16, RR1 19/19, CP1 16/16 and --live 17/17, NEXT 24/24,
+  SR1 --live 26/26.
+
+**Motion closure now.**
+- Frontier: still 0 of 50 certified.
+- Lane v5r-sd8: 13 compile (was 0 at sdata 0), 3 at >= 95 % (fn_80251168 99.5, fn_8020A1A4 99.2, fn_8021C99C 95.9).
+- First blockers: 10499 x11, 10149 x7, 10377 x6.
+
+**10499 rule, measured and not landed.** It casts an integer sum `(e)->unkN` to a one-field struct pointer, with the
+width taken from the target asm. 0 MATCH means it would add no certification today.
+- Motion: 7/12 compile, at 46-96 %.
+- All 80 functions with 10499: 19 compile, 3 at >= 95 %.
+
+**Next unit (not started).** Run the search lane under the toolchain flags, over the toolchain lane's sources.
+- search_c and the campaign still compile at sdata 0, so every near-miss in the lane (including the 3 motion functions
+  at >= 95 %) is out of the search's reach.
+- This changes the search's identity (root keys, stores, pins), which needs its own spec.
+- Packet 005 (WIDEN 367) is the current `next`, and it is still computed at sdata 0.
+
 ## Next options (Owner decision; none started)
 1. Point the campaign's next class at NO_COMPILE 10149 restricted to the motion set (25 functions), instead of the
    COUNT_DIFFERS small-function cohort U2 is on.
