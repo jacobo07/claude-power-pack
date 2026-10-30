@@ -115,6 +115,15 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
   - The 9 that ran: 9 SOLVED ($6.52), 8 CERTIFIED, 1 EXTENT_DISPUTED (refused, as the rule says).
 - **Frontier 639 -> 721/1797** (`llm` 89), 0 invalidated, 0 regressed. All 11 suites green.
 
+### Nocompile batch 1, resumed (GEX44 f0dd5d52)
+- Run `v5d-sd8-nocompile-opus-5-5-o0-n60-t40`, after the start fix: 68 judged, **42 SOLVED, 26 IMPROVED**, $55.27 for the
+  run ($48.75 for the resume), about $0.64-1.58 per function.
+- certify batch 01d7470dac91ce85: controls OK/OK, A2 42 pairs 0 match, **41 CERTIFIED**, 1 EXTENT_DISPUTED (the same
+  function as the first pass).
+- **Frontier 721 -> 754/1797** (`llm` 122, NO_COMPILE 713 -> 680), 0 invalidated, 0 regressed, FRONTIER_CHECK OK.
+  FR1 repinned; all 11 suites green.
+- Yield: 62 % SOLVED on the smallest NO_COMPILE functions, so the next batches go ahead at the same size.
+
 ## Out of scope
 Names, pushing, changing the shared Claude CLI.
 
