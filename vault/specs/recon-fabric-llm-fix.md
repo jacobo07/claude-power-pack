@@ -68,6 +68,17 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
   Whatever is measured is the result, 0 included.
 - Every existing suite stays green: TC1, OG1, FR1, FP1, CERT1, RR1, CP1, NEXT, SR1. `projection check` OK.
 
+## Result (2026-10-30, GEX44 t1/campaign f2decd83 code, 301a4e3c evidence; unpushed)
+- Pilot `v5d-sd8-opus-5-5-n12-t30`, the top 12 near-misses (99.78-99.92 %): **7 SOLVED, 5 NO_GAIN**, $10.26 total
+  ($0.66-1.28 each), 3-4 turns per solve, 13-32 s each.
+- What the agent fixed: mostly an argument m2c missed (a value in r3 passed through, e.g. `fn_801CD384(arg0->unk8, ..)`),
+  restored by reading the diff. These are real source fixes, and the objects match byte for byte.
+- `certify-solved` batch a8d8063493640c77: controls OK/OK, A2 negative 5 pairs 0 match (2 excluded), **7/7 CERTIFIED**.
+- Frontier **632 -> 639/1797** (`certified_by.llm: 7`), 0 invalidated, 0 regressed, FRONTIER_CHECK OK.
+- Gates: LF1 8/8, REAL included. Mutation drills went red on the NULL-head exception (POLICY-REAL) and on the pragma rule
+  (POLICY). FR1 repinned to 639; FP1/CERT1/RR1 name `llm` beside ogws. Every other suite is green.
+- The missed-argument fix is a candidate deterministic operator: cheaper than the agent if it generalises.
+
 ## Out of scope
 NO_COMPILE functions (pilot first), names, pushing, changing the shared Claude CLI.
 
