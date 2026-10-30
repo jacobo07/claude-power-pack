@@ -177,6 +177,19 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
   10 never-ran functions, the motion retry, and batch 4. Their run dirs exist, so `needs_retry` resumes exactly the
   unrun rows.
 
+### After the account switch (GEX44 98c8d79a)
+- New GEX44 account; a 1-turn smoke returned OK for $0.46. The three runs resumed only their never-ran rows.
+- Motion run, its 10 never-ran functions: 0 SOLVED, all 10 IMPROVED. The cap went from $80 to $100 because it counts the
+  $59.06 already spent. The run now stands at 30 IMPROVED, 6 NO_GAIN, $79.19.
+- Motion retry r2 (seeded from best.c, 80 turns): **4 SOLVED**, 4 IMPROVED, 12 NO_GAIN, $33.45. Certified **4/4**.
+- Nocompile batch 4: **27 SOLVED**, 29 IMPROVED, 3 NO_GAIN, 1 POLICY_REFUSED, $68.86. Certified **27/27**.
+- **Frontier 837 -> 868/1797** (`llm` 232, NO_COMPILE 569). **Motion set 14 -> 18/50.** 0 invalidated, 0 regressed.
+  11 suites green.
+- What the yields say:
+  - Nocompile holds at about 45 %.
+  - On motion, a seed at 99 %+ still mostly ends NO_GAIN: 12 of 20.
+- LF1 spend to date: about $497.
+
 ## Out of scope
 Names, pushing, changing the shared Claude CLI.
 
