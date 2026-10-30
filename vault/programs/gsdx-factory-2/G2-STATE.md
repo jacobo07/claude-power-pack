@@ -24,12 +24,14 @@ Addendum: `ADDENDUM-recon-factory-gen2-2026-10-30.md` (this folder). The plan wa
 | Phase | Content | Status |
 |---|---|---|
 | P1 | Provider health plane + circuit breaker; `llm_fix health` | **DONE** `de47cb7b` (LF1 17/17, mutations red, 11 suites green) |
+| P1b | **Incident**: the agent's Bash is unrestricted on GEX44 (user settings allow Bash, mode auto; `--allowedTools` only adds). The agent ran `cp fn.c best.c` and `rm -f best.c`, which understated 12 rows (4 at 100 %). Fix: the harness keeps its own sha copy outside the agent's cwd; `judge_work` measures every candidate; `llm_fix rejudge RUN`. Backfill gave +4 certified at $0 (868 -> 872) and motion 18 -> 20 | **DONE** `06c3862b`. **Open, P1b-2**: a real agent sandbox (own CLAUDE_CONFIG_DIR, deny by default, allow only Read/Edit/`Bash(python3 check.py)`), proven with one real agent call. **Pending**: the running campaign loaded the pre-fix code, so restart it after its generation 1 and run `rejudge` on its `-g00N-` runs |
+| P9a | Motion factorisation census `evidence/d21-motion/factor-v1.json`. Of the 32 uncertified, 22 already have a compiling candidate >= 95 %: a compiler-form tail, whose resolver is exact search (P8), not more LLM turns. 8 sit at 80-95 %, 2 have no useful candidate | DONE (in `06c3862b`) |
 | P2 | Semantic run identity + immutable manifest; `--resume RUN` reads the cohort from the manifest; options not given on resume come from the manifest | **DONE** `164f221f` |
 | P13 | `llm_fix campaign --cap-usd 340`: regime cohorts, per-regime demotion, health wait, certify + projection per generation, receipts in `evidence/llm-fix/campaign/campaign.jsonl` | **DONE** `c4b55e88`; **RUNNING** on GEX44 since 2026-10-30 (pid 3746887, log `~/g2_campaign.log`). The remaining $60 of the $400 is reserved for the Motion lane |
 | P3 | Durable candidate store `evidence/llm-fix/candidates/` (CAS, lineage, Pareto <= 4); seeds read from it | |
 | P4 | pct trajectory per function, adaptive lease (20 turns, extend on gradient), plateau = reroute | |
 | P5 | Incremental idempotent certify-solved + projection every K solves | |
-| P6 | FR1 checks invariants and a monotone floor written by the projection; `llm_fix report` | |
+| P6 | FR1 checks invariants and a monotone floor written by the projection | **DONE** `ad795cf9` (FR1 17/17; mutations red). `llm_fix report` is still open: the campaign receipts in `campaign.jsonl` already give machine-derived metrics |
 | P7 | objdiff diff-row morphology | |
 | P8 | decomp-permuter audit + thin adapter; 2 motion CNM + a sample of CNM | |
 | P9-11 | Motion factorisation: clusters, layout graph of the 0xFC0 controller struct, families. No raw retry | |
