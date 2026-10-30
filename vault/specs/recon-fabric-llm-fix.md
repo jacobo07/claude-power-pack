@@ -99,6 +99,22 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
 3. **NO_COMPILE:** `--cohort nocompile` (uncertified, lifting, smallest first). It runs in batches; the first is 60
    functions at 40 turns with a $120 cap, and its measured yield decides the next batches.
 
+### Widening results (GEX44 5c9d056c)
+- **Near run** `v5d-sd8-near-opus-5-5-o0-n200-t30` (140 functions):
+  - 74 SOLVED, 27 IMPROVED, 39 NO_GAIN, $129.98;
+  - certify batch 2c29275acd6b34cf: controls OK/OK, A2 72 pairs 0 match, **74/74 CERTIFIED**.
+- **P1 probe** of v5p on the 473 changed uncertified functions:
+  - for: 6 match, 4 start to compile, 28 rise in pct;
+  - against: 102 stop compiling, 39 fall in pct.
+  - So proto is gated by `evidence/m2c-proto/apply.json` (32 functions where it measurably helps), and the lane can
+    lose nothing.
+- **Nocompile batch 1**:
+  - 51 of 60 starts were refused by the policy itself. m2c writes `?` for an unknown type, and a m2c failure leaves no
+    definition; both read as NOT_DEFINED. The fix allows those starts in the nocompile cohort only (the final source
+    still passes the full policy).
+  - The 9 that ran: 9 SOLVED ($6.52), 8 CERTIFIED, 1 EXTENT_DISPUTED (refused, as the rule says).
+- **Frontier 639 -> 721/1797** (`llm` 89), 0 invalidated, 0 regressed. All 11 suites green.
+
 ## Out of scope
 Names, pushing, changing the shared Claude CLI.
 
