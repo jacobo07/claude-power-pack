@@ -156,6 +156,11 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
   getter callers; the 20 field readers are among them.
 - State at launch: 2 CERTIFIED (one is LF1's `fn_80251168`), 3 COMPILES_NO_MATCH, 45 NO_COMPILE (132-4140 bytes).
 - Run `v5p-sd8-list-opus-5-5-o0-n48-t60-motion`: the 48 uncertified functions, 60 turns, 1 h per agent, $80 cap.
+- Result (GEX44 f5259ce6): **12 SOLVED, 20 IMPROVED, 16 NO_GAIN**, $59.06.
+  - certify batch c642689e3c90d768: controls OK/OK, **12/12 CERTIFIED**. `fn_802099C4` was already held from batch 3.
+  - **Motion set 2 -> 14/50 CERTIFIED** (2 COMPILES_NO_MATCH, 34 NO_COMPILE).
+- **Frontier 826 -> 837/1797** (`llm` 201), 0 invalidated, 0 regressed. 11 suites green.
+- LF1 spend to date: about $371.
 
 ## Out of scope
 Names, pushing, changing the shared Claude CLI.
