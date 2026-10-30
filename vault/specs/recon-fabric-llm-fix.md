@@ -79,8 +79,28 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
   (POLICY). FR1 repinned to 639; FP1/CERT1/RR1 name `llm` beside ogws. Every other suite is green.
 - The missed-argument fix is a candidate deterministic operator: cheaper than the agent if it generalises.
 
+## Widening (Owner "do all 3, including later", 2026-10-30)
+1. **Near-misses:** `llm_fix run --cohort near --exclude-runs <pilot> --n 200 --budget-usd 150`. That is every remaining
+   function at >= 95 %, minus those the pilot already judged.
+2. **P1, the deterministic operator** (`modules/recon_fabric/m2c_proto.py`, GEX44 7b285c93).
+   - Measured first: 200 uncertified functions call a Tennis callee with an arity that disagrees with the callee's own
+     m2c definition (288 calls with fewer arguments, 315 with more).
+   - Design: m2c is re-run with each function's own signature in the context, so m2c recovers the dropped register
+     value itself; a regex cannot know that value.
+   - Control: the original context reproduces ctx_run1 byte for byte on 40 functions before the run is trusted.
+   - Run: 1,687 signatures; 594 sources change; clean 276 -> 293.
+   - Lane generation `v5p-sd8` (`proto_source`) applies only to functions outside `keep` (the v5d matches plus the TC3
+     solves, 574), so no lane or search certification can lapse. It adds the callee prototypes that `cv1.compose`'s base
+     header lacks.
+   - Limit: the pilot's own callees (`fn_801CD384`, `fn_80282D50`, `fn_801CDA9C`) are DOL library functions outside the
+     1,797, so P1 does not reach them; the agent does.
+   - Gates: V-RF-P1-* 5/5 (the keep rule mutation-drilled red). TC1 RETYPE-NO-OP had skipped silently whenever a later
+     generation had no sweep; it now fails UNMEASURED instead.
+3. **NO_COMPILE:** `--cohort nocompile` (uncertified, lifting, smallest first). It runs in batches; the first is 60
+   functions at 40 turns with a $120 cap, and its measured yield decides the next batches.
+
 ## Out of scope
-NO_COMPILE functions (pilot first), names, pushing, changing the shared Claude CLI.
+Names, pushing, changing the shared Claude CLI.
 
 ## Rollback
 Revert the commits; with `evidence/cert1-llm/` removed the projection is the pre-LF1 one.
