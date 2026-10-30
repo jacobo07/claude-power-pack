@@ -233,3 +233,8 @@ All BI items start **OPEN / NOT IMPLEMENTED**. Prior research is recorded, but n
 - [CDIO-00 kernel](https://github.com/jacobo07/claude-power-pack/blob/main/vault/knowledge_base/cdio/CDIO-00-design-intelligence-kernel.md) and [CDIO-05 review](https://github.com/jacobo07/claude-power-pack/blob/main/vault/knowledge_base/cdio/CDIO-05-design-review-pipeline.md).
 - [CCF architecture](https://github.com/jacobo07/claude-power-pack/blob/main/vault/plans/CCF_ARCHITECTURE.md), [CCF quality gates](https://github.com/jacobo07/claude-power-pack/blob/main/vault/plans/CCF_QUALITY_GATES.md), [CCF learning](https://github.com/jacobo07/claude-power-pack/blob/main/vault/plans/CCF_KNOWLEDGE_SYSTEMS.md).
 - [CDICF ownership audit](https://github.com/jacobo07/claude-power-pack/blob/main/vault/audits/cdicf/CPP_DESIGN_OVERLAP_MAP.md).
+
+
+## Adjacent CDIO universal design-source absorption (2026-10-30)
+
+The owner additionally requested exhaustive capability coverage of 21 named design sources from six supplied @nocodealex slides. That **separate, cross-domain backlog** lives in [CDIO 21 Design Resources Universal Absorption](2026-10-30_cdio-21-design-resources-universal-absorption.md): 21 source records, 62 actionable tasks, 36 proposed negative/positive tests, and source-specific license/ownership controls. This brand/logo backlog remains the canonical owner of BI-00..BI-35 and its prior 16 BR checks; the newer workstream may consume its outputs but must **not** duplicate CCF or assert the earlier tasks have been implemented.
