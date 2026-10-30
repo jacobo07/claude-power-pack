@@ -162,6 +162,21 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
 - **Frontier 826 -> 837/1797** (`llm` 201), 0 invalidated, 0 regressed. 11 suites green.
 - LF1 spend to date: about $371.
 
+### Correction: the account limit read as NO_GAIN (GEX44 34aba349)
+- The GEX44 Claude account hit its 5-hour limit. `claude -p` then returned `is_error` at $0, and `final_state` recorded
+  those functions as NO_GAIN or POLICY_REFUSED. A resume therefore skipped them as already judged.
+- In the motion run, **10 of the 16 NO_GAIN never ran**. Only 6 are real NO_GAIN. The committed f5259ce6 results
+  overstate NO_GAIN; nothing that was certified is affected.
+- The motion retry (`--seed-run`, the 20 IMPROVED, t80, $80 cap) and nocompile batch 4 (`--tag b4`, 60, $120 cap) were
+  launched on Owner "lanza ambas". Both ran entirely against the limit: 80 starts at $0. They are not committed.
+- Fix:
+  - `final_state(never_ran=...)` returns AGENT_ERROR for a zero-cost agent error, unless the start already matched.
+  - `needs_retry()` re-dispatches AGENT_ERROR and also the rows written before this fix.
+  - Gates: V-RF-LF1-NEVER-RAN and V-RF-LF1-SEED. Each mutation drill turns LF1 red. LF1 13/13; all 11 suites green.
+- Next, after the limit resets (15:10 Europe/Berlin): re-issue the same three commands. That means the motion run for its
+  10 never-ran functions, the motion retry, and batch 4. Their run dirs exist, so `needs_retry` resumes exactly the
+  unrun rows.
+
 ## Out of scope
 Names, pushing, changing the shared Claude CLI.
 
