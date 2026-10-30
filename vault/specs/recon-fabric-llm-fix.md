@@ -124,6 +124,16 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
   FR1 repinned; all 11 suites green.
 - Yield: 62 % SOLVED on the smallest NO_COMPILE functions, so the next batches go ahead at the same size.
 
+### P1 lane switch (GEX44 45b1babc)
+- `toolchain_sd.LANE` and `projection.TOOLCHAIN` moved to `v5p-sd8`.
+- Sweep (controls OK/OK): compiles 1208 -> 1212, matches 572 -> 578.
+- certify 74/74; the 2 TC3 search rows re-judged 2/2.
+- **Frontier 754 -> 758/1797** (toolchain 72 -> 76). It is +4, not +6: 2 of the new lane matches were already held by
+  another authority. 0 invalidated, 0 regressed. FR1 repinned; all 11 suites green.
+- Nocompile batch 2: `--exclude-runs v5d-sd8-nocompile-opus-5-5-o0-n60-t40 --n 60 --max-turns 40 --budget-usd 120`. It
+  uses the exclude, not `--offset 60`: certified functions leave the cohort, so an offset would skip functions never
+  tried.
+
 ## Out of scope
 Names, pushing, changing the shared Claude CLI.
 
