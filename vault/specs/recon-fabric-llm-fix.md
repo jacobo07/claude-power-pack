@@ -141,6 +141,22 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
   green.
 - Yield 70 % at about $1.34 per certified function. LF1 spend to date: about $252.
 
+### Nocompile batch 3 and two run options (GEX44 26264e89, Owner "run batch 3")
+- `--tag T` is appended to the run id only when given. Without it, batch 3 would have reused batch 2's id and
+  overwritten that committed run.
+- `--cohort list --fns FILE` takes the named functions that lift and are uncertified, smallest first. An unknown name
+  or an empty list is refused. Gate: V-RF-LF1-COHORT-LIST; dropping the certified filter turns it red (10/11).
+- Run `...-o0-n60-t40-b3` (84-172 bytes): **26 SOLVED, 33 IMPROVED, 1 NO_GAIN**, $60.15.
+  - certify batch dc652e224ff3fa37: controls OK/OK, **26/26 CERTIFIED**.
+  - Yield fell to 43 % as function size grew, about $2.31 per certified function.
+- **Frontier 800 -> 826/1797** (`llm` 190, NO_COMPILE 610), 0 invalidated, 0 regressed. 11 suites green.
+
+### D21 motion batch (Owner "lanza ese batch en paralelo", 2026-10-30)
+- Motion set: `evidence/d21-motion/motion50.txt`, from the D21 step-3 probe re-run without its 25-row cut. It has 50
+  getter callers; the 20 field readers are among them.
+- State at launch: 2 CERTIFIED (one is LF1's `fn_80251168`), 3 COMPILES_NO_MATCH, 45 NO_COMPILE (132-4140 bytes).
+- Run `v5p-sd8-list-opus-5-5-o0-n48-t60-motion`: the 48 uncertified functions, 60 turns, 1 h per agent, $80 cap.
+
 ## Out of scope
 Names, pushing, changing the shared Claude CLI.
 
