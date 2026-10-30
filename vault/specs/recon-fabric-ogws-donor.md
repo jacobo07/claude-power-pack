@@ -84,6 +84,18 @@ tier: T2 (certification authority, persisted evidence, projection change)
   152 at >= 95 %: **0 solved**, 128 EXHAUSTED, 24 BUDGET_EVALS; `solved.jsonl` is empty. Nothing to certify, so the
   frontier stays 632/1797. The same search solved 2 on the previous lane, so it can return a solve.
 
+## OG3 probe (Owner "haz ambas", 2026-10-30; read-only, GEX44 `~/og3_diag.py`, `~/og3_probe.py`, own cache dirs)
+- v5d lane, 1165 uncertified, 588 NO_COMPILE. First errors: 10209 x116, none x92, 10377 x75, **10149 x72** (was 169 before
+  vtype), 10499 x66, 10140 x65. Root declarations of the 72: `void **` with `X->unkN` (shape E) 18, global+offset /
+  array index 9, `extern u8 lbl[]` used as `lbl.unkN` (B2) 5, typed struct params whose field is itself untyped ~20.
+- Probe: shape E cast at the use site `((O_X *)X)->unkN` (a declaration retype would rescale `X + 0xA04`), the chained
+  `X->unk0->unkM(..)` given a function-pointer vtable, and B2 cast as `((A_lbl *)lbl)->unkN`. Field type s32.
+  - Changes 47 functions; **21 now compile, 0 match**; 3 at >= 95 % (fn_8024DE84 97.8, fn_8027AFD0 96.6, fn_802293D0 96.0).
+  - `void *` fields: 5 compile, 0 match (s32 strictly better).
+  - First error after the cast: 10209 x10, 10140 x5, 10149 x3. The type error was the first of several.
+- **Not built as a lane generation:** it certifies nothing directly. Its only route to the frontier is a TC3 search on 3
+  near-misses, and that search just went 0/152 on the v5d near-misses. Next lever by count: 10209 (116 first errors).
+
 ## OG2 original draft (superseded by the result above): real names and types for the NO_COMPILE families
 - **Measured 2026-10-29 on the toolchain lane (v5r-sd8, after retype):** 1172 uncertified; 673 NO_COMPILE in the
   lane; first errors 10149 x169, 10209 x112, 10377 x73, 10499 x64, 10140 x64. Of the 169, **38 call an ogws-named
