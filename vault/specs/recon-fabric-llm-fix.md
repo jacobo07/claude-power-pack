@@ -134,6 +134,13 @@ tier: T2 (a model in the loop of a certification authority, persisted evidence, 
   uses the exclude, not `--offset 60`: certified functions leave the cohort, so an offset would skip functions never
   tried.
 
+### Nocompile batch 2 (GEX44 45852dd8)
+- Run `v5p-sd8-nocompile-opus-5-5-o0-n60-t40`: 60 judged, **42 SOLVED, 18 IMPROVED**, $56.24.
+- certify batch 1b5d489b85b17c0a: controls OK/OK, A2 42 pairs 0 match, **42/42 CERTIFIED**.
+- **Frontier 758 -> 800/1797** (`llm` 164, NO_COMPILE 636), 0 invalidated, 0 regressed. FR1 repinned; all 11 suites
+  green.
+- Yield 70 % at about $1.34 per certified function. LF1 spend to date: about $252.
+
 ## Out of scope
 Names, pushing, changing the shared Claude CLI.
 
