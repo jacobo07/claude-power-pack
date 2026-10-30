@@ -80,9 +80,9 @@ tier: T2 (certification authority, persisted evidence, projection change)
   - `certify` 70/70 (63 re-judged + 7 new); TC3's 2 search rows re-judged by `certify-solved`.
   - Frontier **625 -> 632/1797**.
   - Gates: V-RF-TC1-VTYPE (mutation-drilled red) and V-RF-TC1-VTYPE-NO-OP. Every suite green, SR1 included.
-- **Running:** TC3 search on the v5d lane near-misses (cohort 152 at >= 95 %, of which ~34 are new to vtype), detached
-  on GEX44 with its log at `~/tc3_v5d.log`. When it ends: `toolchain_sd certify-solved
-  evidence/tc-search/v5d-sd8-sl-a6656c20d1b1-d3-p95/solved.jsonl`, then `projection build`, FR1 repin, commit.
+- **TC3 search on the v5d near-misses (ended 2026-10-29 23:03, GEX44):** run `v5d-sd8-sl-a6656c20d1b1-d3-p95`, cohort
+  152 at >= 95 %: **0 solved**, 128 EXHAUSTED, 24 BUDGET_EVALS; `solved.jsonl` is empty. Nothing to certify, so the
+  frontier stays 632/1797. The same search solved 2 on the previous lane, so it can return a solve.
 
 ## OG2 original draft (superseded by the result above): real names and types for the NO_COMPILE families
 - **Measured 2026-10-29 on the toolchain lane (v5r-sd8, after retype):** 1172 uncertified; 673 NO_COMPILE in the
