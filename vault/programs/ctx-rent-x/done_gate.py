@@ -115,8 +115,22 @@ def conditions(root, repo):
     put("CR-22", P if (valid and ksr and ksr.get("sessions", 0) > 0) else U,
         ("ksr_style class sessions=%s" % ksr.get("sessions")) if ksr else "no KSR-style session in the replay window")
     put("CR-24", P if (est and (est.get("total") or 0) and delta_txt) else U, "laptop week total measured + weekly delta" if est else "no estate")
-    for cr in ("CR-25", "CR-26", "CR-27", "CR-28", "CR-29"):
-        put(cr, U, "Phase 8 institutionalisation not done")
+    def _rd(rel):
+        try:
+            return open(os.path.join(repo, rel), encoding="utf-8").read()
+        except OSError:
+            return ""
+    ukdl, imm, lap = _rd("vault/knowledge_base/ukdl-universal.md"), _rd("vault/programs/ctx-rent-x/IMMUNITY.md"), _rd("vault/programs/ctx-rent-x/LAPTOP_RESULTS.md")
+    led = _rd("vault/baseline_ledger.jsonl")
+    pr = "PR-NO-RUNNABLE-UNIT-STOPS-THE-EPOCH-001" in ukdl
+    put("CR-25", P if (pr and "WRITTEN" in imm) else U, "UKDL process rule + immunity entry present" if pr else "no UKDL entry")
+    trap = "T-DEFAULT-FLIP-NEEDS-LIVE-PANE-RECEIPT-001" in ukdl
+    put("CR-26", P if (pr and trap) else U, "PR + Trap entries cite L8 evidence; no Hard Rule promoted (no production recurrence yet)" if trap else "no trap entry")
+    rows = led.count("repo:ctx-rent-x")
+    put("CR-27", P if rows >= 3 else U, "%d ratchet rows in baseline_ledger (main default, source_commit, closeout/epoch rule)" % rows)
+    live = "LIVE" in lap and "0.1.0-265d3d55" in lap and "PASS" in lap
+    put("CR-28", P if live else U, "main enforce default-on LIVE release 0.1.0-265d3d55 with start-receipt smoke + rollback verified (L8)" if live else "L8 receipts absent")
+    put("CR-29", U, "fresh-agent recovery not exercised as a /clear->/kresume successor smoke (Phase 4)")
     put("CR-30", U, "run plan section 8 commands; not aggregated here")
     try:
         dirty = subprocess.run(["git", "-C", repo, "status", "--short"], capture_output=True, text=True, timeout=30).stdout.strip()

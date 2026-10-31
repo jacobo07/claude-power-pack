@@ -134,3 +134,11 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 - Reconciled: HEAD 6073e63a, clean (untracked .claude/worktrees, .pp-capabilities only). Remote branches unchanged (laptop d486ab6d, laptop2 6862bc96, l6 68996971; origin/mission/ctx-rent-x is an ancestor of HEAD). No L8 result.
 - L8 (compiled-digest release, fresh-pane start-receipt smoke, rollback verify) needs the laptop; D1 forbids touching GEX44 ~/.claude. Default-on NOT live; CR-25..29 stay UNKNOWN. No GEX44-runnable unit; no spend.
 - DECISION (RESOLVE_BY_DEFAULT): not fakeable here, left in LAPTOP_STEPS.md L8. OWNER ACTION: on the laptop run L8, then resume `/gsd-autonomous --ws ctx-rent-x`.
+
+## OWNER DECISION D2 (2026-10-31) -- RESOLVED
+- L8 done on laptop (mission/ctx-rent-x-l8 cb4e81fb; live release 0.1.0-265d3d55, source_commit e8d29ffb; smoke PASS; rollback verified). Merged here. Settles every earlier OWNER DECISION NEEDED / OWNER ACTION on L8 and default-on.
+
+## Worker epoch 7 (GEX44) -- Phase 8 institutionalisation
+- Merged L8. Wrote UKDL (2 PR, 2 Traps), IMMUNITY.md status, 3 baseline_ledger rows, HANDOFF.md; done_gate CR-25..28 now derived from artifacts (PASS), CR-29 UNKNOWN. test_done_gate 16/16. done_gate: pass 20+ / unknown 11, CR-31 reads PASS only on clean tree.
+- Section 8 commands: 5 of 7 green here; capsule_v2 72/73 and reachability exit 1 are pre-existing and not caused by this mission (not claimed green). CR-30 stays UNKNOWN.
+- Remaining is laptop-plane only (Phase 4 smoke, Phase 5, dogfood). ONE owner note in HANDOFF.md; stopping this epoch, no reconcile epochs to follow.
