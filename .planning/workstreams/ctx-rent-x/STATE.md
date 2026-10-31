@@ -65,3 +65,9 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 - DECISION per D2: CCR_MAIN_MODE dropped (EXTEND > CREATE; my own tests for it removed, mainCanaryMode tests added). Defects fixed: (1) floor_diet skill description cut at a sentence/word boundary and JSON-quoted (YAML-safe); (2) memory_trim now parks the OLDEST lines and keeps the newest tail. test_floor_diet 16/16.
 - Defect 3 lesson: I built against the branch, not the live release. Rule: before building a lever, grep the live release (laptop contents recorded at 35776051) for an existing one.
 - Phase 2 measured on laptop (rules only applied); Phase 3 measured (-22.3%). Remaining: L6 quality/page-fault arm, then Phase 4,5,7,8. Phase 4/5 need laptop panes.
+
+## Worker epoch 5 (2026-10-31, plane GEX44)
+- Reconciled: HEAD 340a1438, tree clean, matches STATE. Remaining phases 4,5,7,8 need laptop panes/releases (L6, L7 pending in LAPTOP_STEPS).
+- Built the one GEX44-runnable slice of Phase 4: `gsd_epoch.breakeven_advisory` + `gsd_epoch.py breakeven` CLI (advisory only; missing input -> UNMEASURED, never ROTATE; needs boundary + saving). `test_gsd_epoch_breakeven.py` 9/9, `test_gsd_epoch.py` 111/111. The inputs (successor floor, bootstrap tokens, page-ins) are NOT measured yet: the /clear -> /kresume smoke and fresh-start cost stay BLOCKED-ON-LAPTOP.
+- DECISION: did not build Phase 5 policy.ts Safe-to-Forget here; per D2 lesson it must extend the live b15bfc3d canary and be validated in laptop panes (L5-style), so it waits for a laptop worker.
+- OWNER ACTION NEEDED: run LAPTOP_STEPS L6 (page-fault/quality arm), then Phase 4 smoke + Phase 5 on the laptop.
