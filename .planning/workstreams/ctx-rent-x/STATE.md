@@ -71,3 +71,8 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 - Built the one GEX44-runnable slice of Phase 4: `gsd_epoch.breakeven_advisory` + `gsd_epoch.py breakeven` CLI (advisory only; missing input -> UNMEASURED, never ROTATE; needs boundary + saving). `test_gsd_epoch_breakeven.py` 9/9, `test_gsd_epoch.py` 111/111. The inputs (successor floor, bootstrap tokens, page-ins) are NOT measured yet: the /clear -> /kresume smoke and fresh-start cost stay BLOCKED-ON-LAPTOP.
 - DECISION: did not build Phase 5 policy.ts Safe-to-Forget here; per D2 lesson it must extend the live b15bfc3d canary and be validated in laptop panes (L5-style), so it waits for a laptop worker.
 - OWNER ACTION NEEDED: run LAPTOP_STEPS L6 (page-fault/quality arm), then Phase 4 smoke + Phase 5 on the laptop.
+
+## Worker epoch 6 (2026-10-31, plane GEX44)
+- Reconciled: HEAD 9e2aa30f, tree clean, matches STATE. No new laptop branch (remote mission/ctx-rent-x-laptop2 still 6862bc96; mission/ctx-rent-x is an ancestor of HEAD).
+- Phases 1, 6 done; 2, 3 code-complete + laptop-measured; 4, 5, 7, 8 need laptop panes/releases (L6, L7 pending). Nothing runnable on GEX44, so no spend.
+- DECISION (RESOLVE_BY_DEFAULT): L6 is laptop-plane; left in LAPTOP_STEPS.md, not claimed. OWNER ACTION NEEDED: run L6 on the laptop (fetch w0 first), then resume `/gsd-autonomous --ws ctx-rent-x` there.
