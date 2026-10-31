@@ -5,7 +5,7 @@ export const RUNTIME_VERSION = '0.1.0'
 
 // Claude Code builds whose hook semantics this release was measured against (plan section M1).
 // Any other build runs observe-only: receipts, no enforcement.
-export const COMPAT = ['2.1.296']
+export const COMPAT = ['2.1.296', '2.1.302', '2.1.310', '2.1.311', '2.1.312', '2.1.314', '2.1.316']
 
 export type Mode = 'enforce' | 'shadow' | 'off'
 // main: interactive and undeclared sessions. unit: main sessions that declared a Work Unit.
@@ -13,13 +13,95 @@ export type Mode = 'enforce' | 'shadow' | 'off'
 export type Modes = { subagent: Mode; main: Mode; unit: Mode; project?: Mode }
 export const DEFAULT_MODES: Modes = { subagent: 'enforce', main: 'shadow', unit: 'enforce' }
 
-// Per-process opt-in for the main tier (ctx-rent-x Phase 3). Only the exact value 'enforce' moves `main`
-// off the release default, and only for the process that carries the variable: the kill switch ('off', or
-// the OFF file) always wins, and anything else (unset, empty, 'shadow', a typo) keeps what the release says.
-export function resolveMainMode(fileMode: Mode, envValue: string | null | undefined): { mode: Mode; source: 'env' | 'release' } {
-  if (fileMode === 'off') return { mode: 'off', source: 'release' }
-  if (envValue === 'enforce') return { mode: 'enforce', source: 'env' }
-  return { mode: fileMode, source: 'release' }
+// The mode each surface actually runs at. A build outside COMPAT downgrades enforce to shadow; `off` stays off.
+// project: modes.project, else `unit` in a Work Unit session and shadow elsewhere; off whenever main is off.
+export type Surface = 'main' | 'subagent' | 'unit' | 'project'
+export function effectiveModes(modes: Modes, compatible: boolean, hasUnit: boolean): Record<Surface, Mode> {
+  const eff = (m: Mode): Mode => (compatible ? m : m === 'off' ? 'off' : 'shadow')
+  const asked: Mode = modes.project ?? (hasUnit ? modes.unit : 'shadow')
+  return { main: eff(modes.main), subagent: eff(modes.subagent), unit: eff(modes.unit),
+    project: modes.main === 'off' || asked === 'off' ? 'off' : eff(asked) }
+}
+
+// A host build outside COMPAT silently downgrades every enforce to shadow (CLASS 0, recurred on every host auto-update).
+// This is the loud half: the status line that names the build, and whether a receipt must say so. Null status = nothing
+// was downgraded (covered build, or every surface is off so there was nothing to downgrade).
+export function compatStatus(version: string, compatible: boolean, modes: Modes): { status: string | null; shadowed: boolean } {
+  const wanted = [modes.main, modes.subagent, modes.unit, modes.project ?? 'shadow'].some(m => m === 'enforce')
+  if (compatible || !wanted) return { status: null, shadowed: false }
+  return { status: `CCR SHADOW: host ${version || 'unknown'} not in COMPAT`, shadowed: true }
+}
+
+// Tool description census (observe only): the ~66K first-call tokens no receipt attributed include every tool's
+// description. `bytes` is the UTF-8 length of the description the host gave `tool.describe`, or null when it gave none
+// (unmeasured, never 0). Input schemas are not on this surface, so they stay unattributed.
+export type DescribeSeen = Map<string, { bytes: number | null; deferred: boolean | null; provider: string | null }>
+export type DescribeReceipt = {
+  ev: 'tools'; late: boolean; n: number; bytes: number; deferredBytes: number; unmeasured: number
+  tools: { t: string; b: number | null; d: boolean | null; p: string | null }[]
+}
+
+export function textBytes(s: unknown): number | null {
+  return typeof s === 'string' ? new TextEncoder().encode(s).length : null
+}
+
+// One receipt for the tools not reported yet. The first one is the session's census; a later one (`late`) is a tool that
+// appeared after it, e.g. an MCP server that connected mid-session. Null when nothing is new.
+export function describeReceipt(seen: DescribeSeen, reported: Set<string>): DescribeReceipt | null {
+  const fresh = [...seen].filter(([name]) => !reported.has(name))
+  if (fresh.length === 0) return null
+  const late = reported.size > 0
+  for (const [name] of fresh) reported.add(name)
+  return {
+    ev: 'tools', late, n: fresh.length,
+    bytes: fresh.reduce((s, [, v]) => s + (v.bytes ?? 0), 0),
+    deferredBytes: fresh.reduce((s, [, v]) => s + (v.deferred ? v.bytes ?? 0 : 0), 0),
+    unmeasured: fresh.filter(([, v]) => v.bytes === null).length,
+    tools: fresh.map(([name, v]) => ({ t: name, b: v.bytes, d: v.deferred, p: v.provider })),
+  }
+}
+
+// Policy generation (A1 version truth): a short sha256 of the effective modes and the kernel text this process read.
+// Two sessions with the same policyGen made the same decisions from the same inputs, whatever release they came from.
+// The main-lean canary (v4 A7) moves the generation only when it runs, so every pre-A7 session keeps its id.
+export async function policyGen(eff: Record<Surface, Mode>, kernel: string | null, canary: Mode = 'off'): Promise<string> {
+  const surfaces = [eff.main, eff.subagent, eff.unit, eff.project, ...(canary === 'off' ? [] : [`canary:${canary}`])]
+  const text = JSON.stringify(surfaces) + '\n' + (kernel ?? '')
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return [...new Uint8Array(d)].slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+// The release id of the directory this process loaded: RELEASE.json, which tools/ccr_release.py writes into every
+// release it builds. A development load (--plugin-dir on the repo) or an unreadable file has no id: null, never a guess.
+export function parseReleaseId(text: string | null): string | null {
+  if (!text) return null
+  try {
+    const o = JSON.parse(text)
+    return typeof o?.release === 'string' && /^[\w.+-]+$/.test(o.release) ? o.release : null
+  } catch { return null } // not JSON: no id
+}
+
+// Generation awareness (A2-14): the release this process loaded vs the one ACTIVE.json names now. A process cannot
+// migrate itself: only a new process (`/restart`, `claude --resume`) loads the current release, and `/clear` never does.
+export const ACTIVE_MAX_BYTES = 200
+export const IMPACT_CLASSES = ['none', 'hook', 'policy', 'breaking'] as const
+export type ImpactClass = (typeof IMPACT_CLASSES)[number]
+export interface ActiveInfo { release: string; impact: ImpactClass | null }
+export function parseActive(text: string | null): ActiveInfo | null {
+  if (!text || text.length > ACTIVE_MAX_BYTES) return null // unreadable or oversized: no verdict, never a guess
+  try {
+    const o = JSON.parse(text)
+    if (typeof o?.release !== 'string' || !/^[\w.+-]+$/.test(o.release)) return null
+    const impact = IMPACT_CLASSES.includes(o.impact_class) ? (o.impact_class as ImpactClass) : null
+    return { release: o.release, impact }
+  } catch { return null } // not JSON: no verdict
+}
+export interface GenerationVerdict { stale: boolean; current: string; status: string | null; key: string }
+// loaded null = a development load (no RELEASE.json): there is nothing to compare, so no verdict at all.
+export function generationVerdict(loaded: string | null, active: ActiveInfo | null): GenerationVerdict | null {
+  if (!loaded || !active) return null
+  const stale = loaded !== active.release
+  return { stale, current: active.release, status: stale ? `CCR stale: loaded ${loaded}, current ${active.release}${active.impact ? ` (${active.impact})` : ''}` : null, key: `${loaded}>${active.release}` }
 }
 
 // Subagent types that keep the skill listing: they can run skills (Skill tool in their set).
@@ -66,22 +148,45 @@ export function firstHeading(content: string): string {
   return line ? line.replace(/^#\s+/, '').trim().slice(0, 90) : ''
 }
 
-// The text a subagent reads in place of the full instruction files: the compiled HARD-RULES
-// digest (the constitutional kernel, maintained by rule_compiler) plus one line per file it did
-// not receive, so a file the task turns out to need is one Read away.
-export function subagentInstructions(kernel: string, files: readonly InstructionFileInfo[]): string {
-  const index = files
+// The kernel size the runtime reads (register.ts slices the digest to it). The whole replacement text stays within
+// it whatever the size of the estate (v4 A4 estate gate: 10x the files must not mean 10x the bytes).
+export const KERNEL_CHARS = 8000
+
+const dirOf = (p: string) => { const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\')); return i > 0 ? p.slice(0, i) : p }
+
+// One line per file while the lines fit the budget. Past it, files are named by directory (count and size), and the
+// directories by their parents until the index fits: every file stays one Glob + Read away, none is named twice.
+export function fileIndex(files: readonly InstructionFileInfo[], budget: number): string {
+  const full = files
     .map(f => `- ${f.path} (${f.kind}, ${f.content.length} chars)${firstHeading(f.content) ? ` -- ${firstHeading(f.content)}` : ''}`)
     .join('\n')
-  return [
+  if (full.length <= budget) return full
+  let dirs = files.map(f => ({ dir: dirOf(f.path), chars: f.content.length }))
+  let text = ''
+  for (let depth = 0; depth < 64; depth++) {
+    const by = new Map<string, { n: number; chars: number }>()
+    for (const d of dirs) { const v = by.get(d.dir) ?? { n: 0, chars: 0 }; v.n++; v.chars += d.chars; by.set(d.dir, v) }
+    text = [...by].map(([d, v]) => `- ${d}/ (${v.n} files, ${v.chars} chars; Glob it for the names)`).join('\n')
+    const up = dirs.map(d => ({ ...d, dir: dirOf(d.dir) }))
+    if (text.length <= budget || up.every((d, i) => d.dir === dirs[i].dir)) break
+    dirs = up
+  }
+  return text.length <= budget ? text : `- ${files.length} instruction files (${files.reduce((s, f) => s + f.content.length, 0)} chars) are on disk; Glob for them`
+}
+
+// The text a subagent reads in place of the full instruction files: the compiled HARD-RULES
+// digest (the constitutional kernel, maintained by rule_compiler) plus an index of the files it did
+// not receive, so a file the task turns out to need is one Read away.
+export function subagentInstructions(kernel: string, files: readonly InstructionFileInfo[]): string {
+  const head = [
     'Instruction files for this subagent were linked by the CPP Cognitive Runtime: the constitutional kernel is below, and',
     'the full files are not loaded. If your task touches one of them, Read it before acting. Hooks and guards still apply in full.',
     '',
     kernel.trim(),
     '',
     'Instruction files available on disk:',
-    index,
   ].join('\n')
+  return `${head}\n${fileIndex(files, KERNEL_CHARS - head.length - 1)}`
 }
 
 export function decideSubagentAttachment(
@@ -262,11 +367,54 @@ export function rowFacts(blocks: readonly unknown[]): RowFacts {
 // from then on every call pays at least twice what a fresh epoch's call pays.
 export const ROTATE_CARRY_RATIO = 1
 
-export type CarryAdvice = { rotate: boolean; floor: number; ctx: number; carry: number; imageTok: number; textCarry: number }
+export type CarryAdvice = { rotate: boolean; floor: number; ctx: number; carry: number; imageTok: number; textCarry: number
+  rotateAdvice?: RotateAdvice }
 
-export function carryAdvice(floor: number, ctx: number, imageTok: number): CarryAdvice {
+export function carryAdvice(floor: number, ctx: number, imageTok: number, be?: { model: BreakevenModel; call: number } | null): CarryAdvice {
   const carry = Math.max(0, ctx - floor)
-  return { rotate: floor > 0 && carry >= ROTATE_CARRY_RATIO * floor, floor, ctx, carry, imageTok, textCarry: Math.max(0, carry - imageTok) }
+  const a: CarryAdvice = { rotate: floor > 0 && carry >= ROTATE_CARRY_RATIO * floor, floor, ctx, carry, imageTok, textCarry: Math.max(0, carry - imageTok) }
+  if (be && floor > 0) a.rotateAdvice = rotateAdvice(be.model, floor, ctx, be.call)
+  return a
+}
+
+// Weighted rotation break-even (v4 A4, tools/ccr_breakeven.py; observe only, nothing here rotates). A rotation pays
+// once: write floor + capsule, the rehydration calls, the first call's overhead. It then saves W_READ on every token
+// of carry above floor + capsule + R on each later call. With carry growing g per call the cheapest cycle rotates at
+// carry X* = sqrt(2 * once * g / W_READ); it is advised only when the calls still expected exceed the payback k*.
+// Measured (Linux plane GEX44, host 2.1.296): capsules of 164-564 tokens, not the 8k E1 assumed.
+export const W_READ = 0.1
+export const W_WRITE = 1.25
+export type BreakevenModel = { cls: string; capsule: number; R: number; rehyd_cost: number; first_overhead: number
+  r: number; g: number; lengths: number[] }
+export type RotateAdvice = { rotate: boolean; kStar: number | null; xStar: number | null; carry: number; remaining: number }
+
+export function parseBreakevenModel(text: string | null, cls: string): BreakevenModel | null {
+  if (!text) return null
+  try {
+    const m = JSON.parse(text)
+    const ok = m?.cls === cls && [m.capsule, m.R, m.rehyd_cost, m.first_overhead, m.r, m.g]
+      .every((v: unknown) => typeof v === 'number' && Number.isFinite(v) && v >= 0)
+      && Array.isArray(m.lengths) && m.lengths.length > 0 && m.lengths.every((v: unknown) => typeof v === 'number')
+    return ok ? m as BreakevenModel : null
+  } catch { return null } // unparseable model: no break-even advice, the carry receipt stands alone
+}
+
+// Median calls still to come for a session at `call`, over the class sessions that lasted longer.
+export function expectedRemaining(call: number, lengths: readonly number[]): number {
+  const rest = lengths.filter(n => n > call).map(n => n - call).sort((x, y) => x - y)
+  if (!rest.length) return 0
+  const h = rest.length >> 1
+  return rest.length % 2 ? rest[h] : (rest[h - 1] + rest[h]) / 2
+}
+
+export function rotateAdvice(m: BreakevenModel, floor: number, ctx: number, call: number): RotateAdvice {
+  const once = W_WRITE * (floor + m.capsule) + m.rehyd_cost + m.r * W_READ * m.capsule + m.first_overhead
+  const carry = ctx - floor - m.capsule - m.R
+  const kStar = carry > 0 ? once / (W_READ * carry) : null
+  const xStar = m.g > 0 ? Math.sqrt(2 * once * m.g / W_READ) : null
+  const remaining = expectedRemaining(call, m.lengths)
+  return { rotate: kStar !== null && xStar !== null && carry >= xStar && remaining > kStar,
+    kStar: kStar === null ? null : +kStar.toFixed(1), xStar: xStar === null ? null : Math.round(xStar), carry: Math.round(carry), remaining }
 }
 
 // Image results by the call they answer, so a compaction can name what it evicts.
@@ -387,4 +535,247 @@ export function pageLines(listing: string, query: string, limit = 40): string {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)
   const hits = listing.split('\n').filter(l => words.length === 0 || words.some(w => l.toLowerCase().includes(w)))
   return hits.slice(0, limit).join('\n') || '(no matching entries)'
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Main-lean canary (v4 A7). Opt-in per launch: CCR_MAIN_CANARY=1, read once at session start, on an interactive
+// session with no Work Unit. The A7 shadow (tools/ccr_main_shadow.py) found that dropping the listings, as unit closure
+// does, would have removed a capability 19 of 50 interactive sessions later used (14 Skill, 43 Agent calls), so the
+// main session keeps every name and loses only the descriptions; the full text is one page call away.
+// Rollback: unset the variable, `ccr_release.py rollback`, or the OFF file (main off turns the canary off too).
+export const MAIN_LEAN_ATTACHMENTS = new Set(['skill_listing', 'agent_listing_delta', 'mcp_instructions_delta'])
+
+export function mainCanaryMode(env: string | undefined, interactive: boolean, hasUnit: boolean, modes: Modes, compatible: boolean): Mode {
+  if (env !== '1' || !interactive || hasUnit || modes.main === 'off') return 'off'
+  return compatible ? 'enforce' : 'shadow'
+}
+
+const PAGE_HINT = (kind: string) =>
+  `(CPP Cognitive Runtime main canary: names only. For a description, load mcp__cpp-cognitive-runtime__page with ToolSearch and call it with kind "${kind}" and the name as query.)`
+
+// "- name: description" becomes "- name". A name ends at the first colon followed by whitespace, so a plugin-scoped
+// name (plugin:skill) stays whole. Every other line is kept. No compacted line, or no saving: keep the stock text.
+// `keep` names entries whose full line stays (the always-on whitelist of the successor canary).
+export function nameOnlyListing(text: string, kind: 'skills' | 'agents', keep?: ReadonlySet<string>): string | null {
+  let n = 0
+  const out = text.split('\n').map(l => {
+    const m = /^- (\S+?):\s/.exec(l)
+    if (!m || keep?.has(m[1])) return l
+    n++
+    return `- ${m[1]}`
+  }).join('\n')
+  if (n === 0) return null
+  const res = `${out.trimEnd()}\n${PAGE_HINT(kind)}`
+  return res.length < text.length ? res : null
+}
+
+// MCP server instructions become their headings (one per server); the servers' tools are not touched.
+export function mcpHeadings(text: string): string | null {
+  const heads = text.split('\n').filter(l => /^#{1,3}\s/.test(l))
+  if (heads.length === 0) return null
+  const res = `${heads.join('\n')}\n${PAGE_HINT('mcp')}`
+  return res.length < text.length ? res : null
+}
+
+export function decideMainLeanAttachment(type: string, text: string, keepSkills?: ReadonlySet<string>): AttachmentDecision {
+  if (!MAIN_LEAN_ATTACHMENTS.has(type)) return { action: 'keep', reason: 'not-linked' }
+  const out = type === 'skill_listing' ? nameOnlyListing(text, 'skills', keepSkills)
+    : type === 'agent_listing_delta' ? nameOnlyListing(text, 'agents') : mcpHeadings(text)
+  return out === null ? { action: 'keep', reason: 'no-names-parsed' } : { action: 'replace', reason: 'main-lean', text: out }
+}
+
+// The page fault for MCP instructions: the block under each heading that matches the query (all blocks if none given).
+export function pageBlocks(text: string, query: string): string {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  const blocks = text.split(/\n(?=#{1,3}\s)/)
+  const hits = blocks.filter(b => words.length === 0 || words.some(w => (b.split('\n')[0] ?? '').toLowerCase().includes(w)))
+  return hits.join('\n') || '(no matching entries)'
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Floor-diet canary on /kresume successors (ccr-next Tranche A4). A successor pays the first-call floor on every one of
+// its calls, so the main-lean listings and the unlinked instruction files are withheld on successors only, behind `page`.
+// Recognition is the START of the first prompt: the analysis class in tools/ccr_weekly_loss.py is a substring test, so it
+// can over-count successors but never hide a canary. `prompt.submit` runs before the first attachment (Phase 3 receipt).
+// The host submits a slash command expanded, <command-message> first and <command-name> second, so the tag may sit anywhere.
+export const SUCCESSOR_MARK = /^\s*(\/|<command-(name|message)>\s*\/?)kresume\b|<command-name>\s*\/?kresume\b/i
+export const isKresumeSuccessor = (prompt: string): boolean => SUCCESSOR_MARK.test(prompt.slice(0, 600))
+// A /clear and its local-command caveat are submitted before the successor's own prompt (ddf628be): neither is the first prompt.
+const LOCAL_RECORD = /^\s*(<local-command-(caveat|stdout|stderr)>|(<command-name>\s*)?\/clear(?![\w-]))/i
+export const isFirstPromptCandidate = (text: string): boolean => !LOCAL_RECORD.test(text)
+
+// Skills whose description line stays in a successor's listing: the ones this estate's transcripts show used 3+ times
+// (GEX44 week of 2026-10-17: gsd-plan-phase 43, gsd-execute-phase 36, gsd-code-review 20, code-reviewer 19, gsd-autonomous 10,
+// gsd-ui-phase 5, kclear 3, gsd-discuss-phase 3). Every other skill keeps its name and is one `page` call from its text.
+export const SUCCESSOR_KEEP_SKILLS: ReadonlySet<string> = new Set([
+  'gsd-plan-phase', 'gsd-execute-phase', 'gsd-code-review', 'code-reviewer', 'gsd-autonomous', 'gsd-ui-phase', 'kclear', 'gsd-discuss-phase',
+])
+
+// kill is CCR_SUCCESSOR_CANARY: '0' turns the canary off for the launch. Any other state, with a successor marker on an
+// interactive session with no Work Unit and main not off, runs it (enforce on a covered build, shadow elsewhere).
+export function successorCanaryMode(prompt: string, kill: string | undefined, interactive: boolean, hasUnit: boolean, modes: Modes, compatible: boolean): Mode {
+  if (kill === '0' || !interactive || hasUnit || modes.main === 'off' || !isKresumeSuccessor(prompt)) return 'off'
+  return compatible ? 'enforce' : 'shadow'
+}
+
+// Resumed-task frontier (Tramo A2 Phase 2). `tools/rollover.py seal` writes rollover/latest/<repoKey>.json
+// {capsule, sha256, sealed_at (epoch s)}. A successor trusts it only when it is fresh, parses, and the capsule's bytes hash to
+// the sealed sha256. Anything else is UNKNOWN (null) and the rule files stay.
+export const FRONTIER_MAX_AGE_S = 30 * 60
+export type FrontierPointer = { capsule: string; sha256: string; sealedAt: number }
+export function parseFrontierPointer(text: string | null, nowMs: number): FrontierPointer | null {
+  if (!text) return null
+  try {
+    const o = JSON.parse(text)
+    if (typeof o?.capsule !== 'string' || !/^[0-9a-f]{64}$/.test(o?.sha256) || !Number.isFinite(o?.sealed_at)) return null
+    const age = nowMs / 1000 - o.sealed_at
+    return age >= 0 && age <= FRONTIER_MAX_AGE_S ? { capsule: o.capsule, sha256: o.sha256, sealedAt: o.sealed_at } : null
+  } catch { return null } // unreadable pointer: UNKNOWN
+}
+// The task text rule linking runs on: obligations, summary, goal path and the session's recent writes. An empty frontier is UNKNOWN.
+export function frontierText(capsuleText: string): string | null {
+  try {
+    const c = JSON.parse(capsuleText)
+    const parts: string[] = [
+      ...(Array.isArray(c?.obligations) ? c.obligations : []), typeof c?.summary === 'string' ? c.summary : '',
+      typeof c?.goal?.path === 'string' ? c.goal.path : '', ...(Array.isArray(c?.writes) ? c.writes : []),
+    ].filter(x => typeof x === 'string' && x.trim() !== '')
+    return parts.length ? parts.join('\n') : null
+  } catch { return null } // unreadable capsule: UNKNOWN
+}
+
+// Each `unlinked` file is cut out of the rendered instructions by exact content match and replaced by a one-line marker.
+// A file whose content is not found exactly once stays (fail open); `always`, `managed` and `untriaged` files are never touched.
+// `frontier` is the resumed task's text (obligations, summary, goal, writes), never the `/kresume` command: that command
+// carries no task semantics, so linking on it withheld every rule file whatever the task (CONTROL_COMMAND_USED_AS_TASK_SEMANTICS).
+// A null frontier is UNKNOWN and fails toward keeping all rules.
+export function decideSuccessorInstructions(text: string, files: readonly InstructionFileInfo[] | null, frontier: string | null): AttachmentDecision & { withheld: string[] } {
+  if (!files || files.length === 0) return { action: 'keep', reason: 'files-missing', withheld: [] }
+  if (frontier === null) return { action: 'keep', reason: 'frontier-unknown', withheld: [] }
+  let out = text
+  const withheld: string[] = []
+  for (const d of linkInstructionFiles(files, frontier)) {
+    if (d.keep) continue
+    const f = files.find(x => x.path === d.path)
+    if (!f || f.content.length === 0) continue
+    const at = out.indexOf(f.content)
+    if (at < 0 || out.indexOf(f.content, at + 1) >= 0) continue
+    out = `${out.slice(0, at)}[CCR withheld ${baseName(f.path)} (${f.content.length} chars). Read ${f.path} if the task touches it.]${out.slice(at + f.content.length)}`
+    withheld.push(f.path)
+  }
+  if (withheld.length === 0) return { action: 'keep', reason: 'nothing-unlinked-found', withheld }
+  return out.length < text.length ? { action: 'replace', reason: 'successor-unlinked', text: out, withheld } : { action: 'keep', reason: 'no-saving', withheld: [] }
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Capability Linker + Minimum Discoverability Signatures (Tramo A2 Phase 3). A successor listing keeps a name for every
+// capability; what a name-only entry still owes the model is a way to FIND it. Each entry records how it stays reachable:
+//   DETERMINISTIC_LINK       full line kept: whitelisted, linked by the frontier text, or the frontier is UNKNOWN (keep).
+//   DISCOVERABILITY_SIGNATURE pilot entry reduced to `name — <mds-v1 signature>` (<= MDS_MAX chars).
+//   RUNTIME_GUARD            name only; the `page` tool (and the model's own ToolSearch) is the way back.
+//   NOT_REQUIRED             the line carried no description, so nothing was removed.
+// Context Reachability Coverage = classified entries / entries, and must be 1 by construction (every parsed entry gets a class).
+export type ReachClass = 'DETERMINISTIC_LINK' | 'DISCOVERABILITY_SIGNATURE' | 'RUNTIME_GUARD' | 'NOT_REQUIRED'
+export const MDS_MAX = 72
+export const MDS_SPEC = 'mds-v1|clause=(use when|use for|use this (skill )?when|use to)...first-sentence-fallback|ws-collapsed|max=72|ellipsis=…'
+// Pilot set, measured: Skill/Agent tool_use counts over 14 days of this host's (GEX44) own transcripts, tools/ccr_usage_counts.py
+// (phase 3 EVIDENCE). Only 9 distinct skills were used; gsd-autonomous and kclear come from the policy.ts counts above, so 11, not 12.
+export const PILOT_SKILLS: ReadonlySet<string> = new Set([
+  'gsd-plan-phase', 'gsd-execute-phase', 'code-reviewer', 'gsd-discuss-phase', 'gsd-code-review', 'gsd-ui-phase',
+  'gsd-ai-integration-phase', 'plugin-authoring', 'claude-power-pack', 'gsd-autonomous', 'kclear',
+])
+export const PILOT_AGENTS: ReadonlySet<string> = new Set(['gsd-executor', 'gsd-planner', 'gsd-plan-checker', 'gsd-verifier', 'general-purpose', 'gsd-code-reviewer'])
+// Frontier text -> capability. A capability whose pattern matches the resumed task keeps its full line.
+export const SKILL_LINKS: Readonly<Record<string, RegExp>> = {
+  'gsd-plan-phase': /plan[- ]phase|PLAN\.md|\bplanning\b/i, 'gsd-execute-phase': /execute[- ]phase|SUMMARY\.md|\bwave\b/i,
+  'code-reviewer': /code[- ]review|\breview\b/i, 'gsd-code-review': /code[- ]review|REVIEW\.md/i, 'gsd-discuss-phase': /\bdiscuss|CONTEXT\.md/i,
+  'gsd-ui-phase': /UI-SPEC|\bfrontend\b/i, 'gsd-ai-integration-phase': /AI-SPEC/i, 'plugin-authoring': /\bplugin\b|\bmod\b/i,
+  'claude-power-pack': /power[- ]pack/i, 'gsd-autonomous': /autonomous/i, kclear: /kclear|hand-?off/i,
+}
+export const AGENT_LINKS: Readonly<Record<string, RegExp>> = {
+  'gsd-executor': /execut|PLAN\.md/i, 'gsd-planner': /\bplan/i, 'gsd-plan-checker': /\bplan/i, 'gsd-verifier': /verif|VERIFICATION\.md/i,
+  'general-purpose': /./, 'gsd-code-reviewer': /review/i,
+}
+
+// mds-v1: the description's "Use when/for ..." clause, else its first sentence; whitespace collapsed; cut at a word boundary to MDS_MAX.
+export function mdsSignature(desc: string): string {
+  const d = desc.replace(/\s+/g, ' ').trim()
+  const clause = /\b(use when|use for|use this (?:skill )?when|use to)\b[^.]*/i.exec(d)?.[0]
+  const first = clause ?? /^[^.]*/.exec(d)?.[0] ?? d
+  const t = first.trim()
+  if (t.length <= MDS_MAX) return t
+  const cut = t.slice(0, MDS_MAX - 1)
+  const sp = cut.lastIndexOf(' ')
+  return `${(sp > 20 ? cut.slice(0, sp) : cut).trimEnd()}…`
+}
+export async function mdsSha(): Promise<string> {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(MDS_SPEC))
+  return [...new Uint8Array(d)].slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+export type ReachEntry = { name: string; cls: ReachClass }
+// The names whose full line stays: the always-on whitelist, plus every capability the frontier links. An UNKNOWN frontier
+// keeps the whole pilot set (absent is not zero: it fails toward keeping context).
+export function linkedNames(frontier: string | null, links: Readonly<Record<string, RegExp>>, pilot: ReadonlySet<string>, always: ReadonlySet<string>): Set<string> {
+  const keep = new Set(always)
+  for (const n of pilot) if (frontier === null || links[n]?.test(frontier)) keep.add(n)
+  return keep
+}
+
+export function successorListing(text: string, kind: 'skills' | 'agents', frontier: string | null): { text: string; entries: ReachEntry[] } | null {
+  const pilot = kind === 'skills' ? PILOT_SKILLS : PILOT_AGENTS
+  const keep = linkedNames(frontier, kind === 'skills' ? SKILL_LINKS : AGENT_LINKS, pilot, kind === 'skills' ? SUCCESSOR_KEEP_SKILLS : new Set())
+  const entries: ReachEntry[] = []
+  let changed = 0
+  const out = text.split('\n').map(l => {
+    const m = /^- (\S+?):\s+(.*)$/.exec(l)
+    if (!m) {
+      const bare = /^- (\S+)\s*$/.exec(l)
+      if (bare) entries.push({ name: bare[1], cls: 'NOT_REQUIRED' })
+      return l
+    }
+    if (keep.has(m[1])) { entries.push({ name: m[1], cls: 'DETERMINISTIC_LINK' }); return l }
+    changed++
+    if (pilot.has(m[1])) { entries.push({ name: m[1], cls: 'DISCOVERABILITY_SIGNATURE' }); return `- ${m[1]} — ${mdsSignature(m[2])}` }
+    entries.push({ name: m[1], cls: 'RUNTIME_GUARD' })
+    return `- ${m[1]}`
+  }).join('\n')
+  if (changed === 0) return null
+  const res = `${out.trimEnd()}\n${PAGE_HINT(kind)}`
+  return res.length < text.length ? { text: res, entries } : null
+}
+
+export function reachSummary(entries: readonly ReachEntry[]): Record<ReachClass | 'coverage', number> {
+  const r = { DETERMINISTIC_LINK: 0, DISCOVERABILITY_SIGNATURE: 0, RUNTIME_GUARD: 0, NOT_REQUIRED: 0, coverage: 1 }
+  for (const e of entries) r[e.cls]++
+  return r
+}
+
+// Benchmark arm B (CCR_A2_ARM=B): release 82c98708 behaviour, pinned for the A/B. Rule files are linked on the first prompt (the
+// `/kresume` command, which matches no trigger) and listings are the plain whitelist name-only form. Never set in production.
+export function decideArmBAttachment(type: string, text: string, files: readonly InstructionFileInfo[] | null, firstPrompt: string): AttachmentDecision & { withheld?: string[] } {
+  return type === 'instructions' ? decideSuccessorInstructions(text, files, firstPrompt) : decideMainLeanAttachment(type, text, SUCCESSOR_KEEP_SKILLS)
+}
+
+export function decideSuccessorAttachment(type: string, text: string, files: readonly InstructionFileInfo[] | null, frontier: string | null): AttachmentDecision & { withheld?: string[]; reach?: ReachEntry[] } {
+  if (type === 'instructions') return decideSuccessorInstructions(text, files, frontier)
+  if (type === 'skill_listing' || type === 'agent_listing_delta') {
+    const r = successorListing(text, type === 'skill_listing' ? 'skills' : 'agents', frontier)
+    return r === null ? { action: 'keep', reason: 'no-names-parsed' } : { action: 'replace', reason: 'successor-linked', text: r.text, reach: r.entries }
+  }
+  return decideMainLeanAttachment(type, text, SUCCESSOR_KEEP_SKILLS)
+}
+
+// Shell projection on successors (Tranche A5). A successor session has no Work Unit, so `project` is shadow there; the
+// successor canary lifts it to the canary's mode, but only when the launch did not pick a project mode itself.
+export function successorProjectMode(projectMode: Mode, successor: boolean, canary: Mode, modes: Modes, hasUnit: boolean): Mode {
+  if (!successor || hasUnit || modes.project !== undefined || projectMode === 'off') return projectMode
+  return canary
+}
+
+// A failed command's output is the evidence of the failure: it is never projected. A result that carries none of these
+// fields is treated as a success (no failure signal = nothing to protect); the host's real field names are probed, not assumed.
+export function shellFailed(res: { exitCode?: unknown; code?: unknown; interrupted?: unknown; isError?: unknown }): boolean {
+  const n = res.exitCode ?? res.code
+  return res.interrupted === true || res.isError === true || (typeof n === 'number' && n !== 0)
 }

@@ -1,10 +1,17 @@
 import type { Register } from 'claude-code'
 import {
-  COMPAT, DEFAULT_MODES, RUNTIME_VERSION, resolveMainMode, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
+  COMPAT, compatStatus, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
   carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
   PROJECT_BUDGET_CHARS, PROJECT_TOOLS, boundaryForecast, parseClassModel, projectToolOutput, stepAnomaly,
-  type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
+  KERNEL_CHARS, parseBreakevenModel, effectiveModes, parseReleaseId, policyGen, mainCanaryMode, decideMainLeanAttachment, pageBlocks, type BreakevenModel, type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
 } from './policy'
+import { generationVerdict, parseActive } from './policy'
+import { describeReceipt, textBytes, type DescribeSeen } from './policy'
+import { decideArmBAttachment, decideSuccessorAttachment, frontierText, mdsSha, reachSummary, parseFrontierPointer, isFirstPromptCandidate, isKresumeSuccessor, shellFailed, successorCanaryMode, successorProjectMode } from './policy'
+
+// Tool description census (observe only): what tool.describe saw, and which tools a receipt already named.
+const describeSeen: DescribeSeen = new Map()
+const describeReported = new Set<string>()
 
 // CPP Cognitive Runtime (CCR). Every optimisation hook here fails OPEN: a hook that throws or
 // overruns is skipped by the engine and the stock context is sent. No hook here guards a tool,
@@ -21,8 +28,22 @@ let compatible = false
 let kernel: string | null = null
 let files: InstructionFileInfo[] | null = null
 let firstPrompt = ''
+// The resumed task's text; null = UNKNOWN until the capsule frontier reader lands (Phase 2). Never derived from the `/kresume` command.
+let successorFrontier: string | null = null
+// Benchmark arm B (CCR_A2_ARM=B): the pre-A2 successor behaviour, for the frozen A/B only.
+let armB = false
+// Generation awareness: the release id this process loaded, and the last (loaded>current) pair already receipted.
+let loadedRelease: string | null = null
+let lastGeneration: string | null = null
 let skillListing = ''
 let agentListing = ''
+let mcpListing = ''
+// Main-lean canary (v4 A7): set once at session start from CCR_MAIN_CANARY; 'off' until then, so stock text.
+let canary: Mode = 'off'
+// Floor-diet canary on /kresume successors (Tranche A4): decided once, at the first main attachment, from the first prompt.
+let successor = false
+let successorDecision: Promise<void> | undefined
+let sessionInteractive = false
 let unitP: Promise<WorkUnit | null> | null = null
 const agentTypes = new Map<string, string>()
 const receipts: Receipt[] = []
@@ -33,12 +54,11 @@ let floor = 0
 let advised = false
 // Cognitive PGO (v4 B6): the declared unit's Work-Class model, if tools/ccr_pgo.py built one; the last call's ctx.
 let classModel: ClassModel | null = null
+let beModel: BreakevenModel | null = null
+let beLast: boolean | null = null
 let prevCtx = 0
 // Image results of the main loop by tool_use_id: what a pixel GC compaction can evict and name.
 const imageUses = new Map<string, ImageFact[]>()
-
-// A planning fan-out agent: the planner or its checker. Receipt-only; nothing branches on it.
-export const isPlannerType = (t: unknown): boolean => typeof t === 'string' && /^gsd-(planner|plan-checker)$/.test(t)
 
 const receipt = (r: Receipt) => { receipts.push({ ts: Date.now(), sid, ...r }) }
 
@@ -80,19 +100,83 @@ const projectShell = async ($: any, e: any, next: any) => {
   const res = r?.result
   if (r?.deny !== undefined || !res || typeof res.stdout !== 'string' || res.isImage || res.backgroundTaskId || res.persistedOutputPath) return r
   const unit = await loadUnit($)
-  const asked: Mode = modes.project ?? (unit ? modes.unit : 'shadow')
-  const mode: Mode = modes.main === 'off' || asked === 'off' ? 'off' : compatible ? asked : 'shadow'
-  if (mode === 'off' || !stateDir) return r
+  const mode: Mode = successorProjectMode(effectiveModes(modes, compatible, !!unit).project, successor, canary, modes, !!unit)
+  if (mode === 'off' || !stateDir || shellFailed(res)) return r
   const full = `${stateDir}/tool-results/${sid}/${e.tool_use_id ?? `t${Date.now()}`}.txt`
   const p = projectToolOutput(res.stdout, full, projectBudget)
   if (p.action === 'pass') return r
   const base = { ev: 'project', tool: e.tool, use: e.tool_use_id ?? null, agent: e.agentId ? agentTypes.get(e.agentId) ?? 'unknown' : null,
-    kind: p.kind, bytes: p.bytes, lines: p.lines, out: p.out.length, budget: projectBudget }
+    kind: p.kind, bytes: p.bytes, lines: p.lines, out: p.out.length, budget: projectBudget, ...(successor ? { successor: true } : {}) }
   if (mode !== 'enforce') { receipt({ ...base, applied: false }); return r }
   try { await $.fs.write(full, res.stdout) }
   catch (err) { receipt({ ...base, applied: false, error: String(err).slice(0, 200) }); return r } // full output not kept: send it whole
   receipt({ ...base, applied: true, path: full })
   return { result: { ...res, stdout: p.out }, ...(r.context ? { context: r.context } : {}) }
+}
+
+// One receipt per session says whether the first prompt marked a /kresume successor and what the canary did about it, so
+// predicted-vs-realized can be audited on sessions that were NOT successors too. CCR_SUCCESSOR_CANARY=0 turns it off.
+const decideSuccessor = async ($: any) => {
+  if (effective('main') === 'off') return
+  const unit = await loadUnit($)
+  let kill: string | undefined
+  try { kill = await $.env.get('CCR_SUCCESSOR_CANARY') } catch { kill = undefined } // no env access: canary stays as launched
+  const mode: Mode = canary === 'off' ? successorCanaryMode(firstPrompt, kill, sessionInteractive, !!unit, modes, compatible) : 'off'
+  if (mode !== 'off') { canary = mode; successor = true }
+  let gen: string | null = null
+  try { gen = await policyGen(effectiveModes(modes, compatible, !!unit), kernel, canary) } catch { gen = null } // no digest: the receipt says so
+  receipt({ ev: 'successor', marker: isKresumeSuccessor(firstPrompt), interactive: sessionInteractive, unit: !!unit, killed: kill === '0',
+    mode, canary, policyGen: gen })
+  if (successor) $.ui.status(`CCR ${RUNTIME_VERSION} successor canary:${mode}`)
+  let arm: string | undefined
+  try { arm = await $.env.get('CCR_A2_ARM') } catch { arm = undefined } // no env access: arm C (the default behaviour)
+  armB = successor && arm === 'B'
+  if (successor && !armB) await resolveFrontier($)
+  if (armB) receipt({ ev: 'arm', arm: 'B' })
+}
+
+// The resumed task, from the capsule the predecessor sealed (rollover/latest/<repoKey>.json). Every failure leaves
+// successorFrontier null = UNKNOWN, so the rule files stay; the receipt names which basis decided.
+const resolveFrontier = async ($: any) => {
+  let basis = 'unknown', capsule: string | null = null, sha: string | null = null
+  try {
+    let dir: string | undefined
+    try { dir = await $.env.get('CPP_ROLLOVER_STATE_DIR') } catch { dir = undefined }
+    if (!dir) {
+      let home: string | undefined
+      try { home = (await $.env.get('HOME')) ?? (await $.env.get('USERPROFILE')) } catch { home = undefined }
+      if (home) dir = `${home.replace(/\\/g, '/')}/.claude/state/rollover`
+    }
+    if (!dir) basis = 'no-state-dir'
+    else {
+      const ptr = parseFrontierPointer(await $.fs.read(`${dir.replace(/\\/g, '/')}/latest/${rkey}.json`), Date.now())
+      if (!ptr) basis = 'pointer-missing-or-stale'
+      else {
+        capsule = ptr.capsule; sha = ptr.sha256
+        const bytes = await $.fs.read(ptr.capsule)
+        const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(bytes))
+        const got = [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('')
+        const text = got === ptr.sha256 ? frontierText(bytes) : null
+        if (got !== ptr.sha256) basis = 'hash-mismatch'
+        else if (text === null) basis = 'capsule-empty'
+        else { successorFrontier = text; basis = 'capsule' }
+      }
+    }
+  } catch { basis = 'unreadable' } // no pointer / no read access: UNKNOWN
+  receipt({ ev: 'frontier', frontier: { capsule, sha, basis }, bytes: successorFrontier?.length ?? 0 })
+}
+
+// One bounded read (<= ACTIVE_MAX_BYTES) of <ccr>/ACTIVE.json per prompt: a change of the (loaded>current) pair is one receipt,
+// a stale pair also repaints the status line. Fails open: no file, no id, an unreadable file = no verdict.
+async function noteGeneration($: { fs: { read(p: string): Promise<string> }; ui: { status(s: string): void } }): Promise<void> {
+  if (!stateDir || !loadedRelease || stateDir.endsWith('/.state-dev')) return
+  try {
+    const v = generationVerdict(loadedRelease, parseActive(await $.fs.read(`${stateDir.replace(/\/state$/, '')}/ACTIVE.json`)))
+    if (!v || v.key === lastGeneration) return
+    lastGeneration = v.key
+    receipt({ ev: 'generation', loaded: loadedRelease, current: v.current, stale: v.stale })
+    if (v.status) $.ui.status(v.status)
+  } catch { /* ACTIVE.json absent or unreadable: no verdict */ }
 }
 
 export const register: Register = on => {
@@ -116,33 +200,46 @@ export const register: Register = on => {
       }
       catch { modes = { ...DEFAULT_MODES } } // no override file: release defaults
     }
-    // Phase 3 canary: CCR_MAIN_MODE=enforce in THIS process's environment, nothing persisted.
-    let mainEnv: string | undefined
-    try { mainEnv = await $.env.get('CCR_MAIN_MODE') } catch { mainEnv = undefined } // no env access: release default
-    const mm = resolveMainMode(modes.main, mainEnv)
-    modes = { ...modes, main: mm.mode }
-    try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, 8000) }
+    try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, KERNEL_CHARS) }
     catch { kernel = null } // missing kernel: the linkers keep the full instructions
     const unit = await loadUnit($)
-    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, main_source: mm.source, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null })
+    // Version truth (v4 A1): the directory this process loaded and its release id, not ACTIVE.json (that is only
+    // what is current now), plus the policy generation it runs and the effective mode of every surface.
+    let releaseText: string | null = null
+    try { releaseText = await $.fs.read(`${$.plugin.root}/RELEASE.json`) } catch { releaseText = null } // dev load: no release id
+    const eff = effectiveModes(modes, compatible, !!unit)
+    let canaryEnv: string | undefined
+    try { canaryEnv = await $.env.get('CCR_MAIN_CANARY') } catch { canaryEnv = undefined } // no env access: no canary
+    canary = mainCanaryMode(canaryEnv, e.isInteractive === true, !!unit, modes, compatible)
+    sessionInteractive = e.isInteractive === true
+    let gen: string | null = null
+    try { gen = await policyGen(eff, kernel, canary) } catch { gen = null } // no digest available: the receipt says so
+    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null,
+      release: root, releaseId: loadedRelease = parseReleaseId(releaseText), policyGen: gen, effective: eff, workClass: unit?.cls ?? null, canary })
     // Semantic Cost Contract (v4 B4) for a declared unit: obligation, class, forecast. No model -> ADMIT_UNFORECAST:
     // the cost is unknown, and the receipt says so instead of reporting a number nobody measured.
     if (unit) {
       let text: string | null = null
       try { text = await $.fs.read(`${stateDir}/pgo/${unit.cls}.json`) } catch { text = null } // no model built for this class yet
       classModel = parseClassModel(text, unit.cls)
+      let beText: string | null = null
+      try { beText = await $.fs.read(`${stateDir}/pgo/${unit.cls}.breakeven.json`) } catch { beText = null } // no break-even model for this class yet
+      beModel = parseBreakevenModel(beText, unit.cls)
       const fc = classModel ? boundaryForecast(classModel) : null
       receipt({ ev: 'contract', cls: unit.cls, obligation: unit.id, model_n: classModel?.n ?? 0, forecast: fc,
         step_p95: classModel?.step.p95 ?? null, verdict: classModel ? 'ADMIT' : 'ADMIT_UNFORECAST' })
     }
-    $.ui.status(modes.main === 'off' ? 'CCR off'
-      : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}${unit ? ` unit:${unit.cls}:${effective('unit')}` : ''}`)
+    // Host build outside COMPAT: every enforce is downgraded to shadow. Say so on the status line and in one receipt.
+    const cs = compatStatus(version, compatible, modes)
+    if (cs.shadowed) receipt({ ev: 'compat', verdict: 'SHADOW', version, compat: COMPAT, status: cs.status })
+    $.ui.status(cs.status ?? (modes.main === 'off' ? 'CCR off'
+      : `CCR ${RUNTIME_VERSION} sub:${effective('subagent')} main:${effective('main')}${unit ? ` unit:${unit.cls}:${effective('unit')}` : ''}${canary !== 'off' ? ` canary:${canary}` : ''}`))
     await $.tool.register({
       name: 'page',
-      description: 'CPP Cognitive Runtime page fault: fetch context the runtime did not preload. kind "skills" or "agents" returns listing lines matching query; kind "file" returns an instruction file by absolute path.',
+      description: 'CPP Cognitive Runtime page fault: fetch context the runtime did not preload. kind "skills" or "agents" returns listing lines matching query; kind "mcp" returns the instructions of the MCP servers whose name matches query; kind "file" returns an instruction file by absolute path.',
       inputSchema: {
         type: 'object',
-        properties: { kind: { type: 'string', enum: ['skills', 'agents', 'file'] }, query: { type: 'string' }, path: { type: 'string' } },
+        properties: { kind: { type: 'string', enum: ['skills', 'agents', 'mcp', 'file'] }, query: { type: 'string' }, path: { type: 'string' } },
         required: ['kind'],
       },
     })
@@ -151,14 +248,15 @@ export const register: Register = on => {
   })
 
   on('prompt.submit', async ($, e, next) => {
-    if (!firstPrompt) firstPrompt = e.text.slice(0, 4000)
+    if (!firstPrompt && isFirstPromptCandidate(e.text)) firstPrompt = e.text.slice(0, 4000)
+    await noteGeneration($)
     return next(e)
   })
 
   on('prompt.context', async ($, e, next) => {
     const r = await next(e)
     files = e.instructionFiles ? e.instructionFiles.map(f => ({ path: f.path, kind: f.kind, content: f.content })) : null
-    if (files && effective('main') !== 'off' && !(await loadUnit($))) {
+    if (files && !successor && effective('main') !== 'off' && !(await loadUnit($))) { // a successor links through its own frontier path
       for (const d of linkInstructionFiles(files, firstPrompt)) {
         receipt({ ev: 'link', agent: null, surface: 'instruction-file', path: d.path, bytes: d.bytes, keep: d.keep, reason: d.reason, mode: effective('main') })
       }
@@ -169,6 +267,10 @@ export const register: Register = on => {
   // Tool Linker (work units only): every tool outside the class closure moves behind ToolSearch.
   on('tool.describe', async ($, e, next) => {
     const r: any = await next(e)
+    if (effective('main') !== 'off' && !(e as any).agentId) {
+      describeSeen.set(e.tool, { bytes: textBytes(r?.description), deferred: typeof r?.isDeferred === 'boolean' ? r.isDeferred : null,
+        provider: typeof (e as any).provider === 'string' ? (e as any).provider : null })
+    }
     const unit = await loadUnit($)
     const mode = effective('unit')
     if (!unit || mode === 'off' || r.isDeferred || decideUnitTool(e.tool, unit) === 'keep') return r
@@ -207,10 +309,7 @@ export const register: Register = on => {
   on('agent.spawn', async ($, e, next) => {
     const r: any = await next(e)
     if (r.agentId) agentTypes.set(r.agentId, e.subagentType)
-    // Shadow facts for the Planning Necessity audit (PR-PLANNING-NECESSITY-001): recorded, never acted on.
-    const unit = await loadUnit($).catch(() => null) // no declaration: no mission id
-    receipt({ ev: 'spawn', agentId: r.agentId ?? null, agentType: e.subagentType, prompt: e.prompt.length, model: r.model ?? null,
-      planner: isPlannerType(e.subagentType), mission: unit?.id || null })
+    receipt({ ev: 'spawn', agentId: r.agentId ?? null, agentType: e.subagentType, prompt: e.prompt.length, model: r.model ?? null })
     return r
   })
 
@@ -221,7 +320,11 @@ export const register: Register = on => {
     const text = r.text
     if (text === null) return r
     if (!agentId && a.type === 'skill_listing') skillListing = text
-    if (!agentId && a.type === 'agent_listing_delta') agentListing = text
+    // Deltas add to what came before: the page fault answers from every delta of the session, not only the last one.
+    if (!agentId && a.type === 'agent_listing_delta') agentListing = agentListing ? `${agentListing}\n${text}` : text
+    if (!agentId && a.type === 'mcp_instructions_delta') mcpListing = mcpListing ? `${mcpListing}\n${text}` : text
+    // Attachments arrive concurrently: every main one awaits the same decision, or the early ones pass before the mode is known.
+    if (!agentId) { successorDecision ??= decideSuccessor($); await successorDecision }
 
     if (agentId) {
       const mode = effective('subagent')
@@ -244,8 +347,20 @@ export const register: Register = on => {
       return applied ? { text: out } : r
     }
 
-    // Interactive or undeclared main session: shadow receipts only in this release.
+    // Interactive or undeclared main session: shadow receipts only, unless the launch opted into the main-lean canary.
     if (effective('main') === 'off') return r
+    if (canary !== 'off') {
+      const d: any = armB ? decideArmBAttachment(a.type, text, files, firstPrompt) : successor ? decideSuccessorAttachment(a.type, text, files, successorFrontier) : decideMainLeanAttachment(a.type, text)
+      if (d.action !== 'keep') {
+        const applied = canary === 'enforce'
+        const out = d.text ?? text
+        receipt({ ev: 'attach', agent: null, canary, type: a.type, origin: a.origin?.kind, hookEvent: a.origin?.event ?? null, bytes: text.length,
+          out: applied ? out.length : text.length, lean: out.length, action: d.action, applied, reason: d.reason,
+          ...(successor ? { successor: true, withheld: d.withheld ?? [] } : {}),
+          ...(d.reach ? { reach: reachSummary(d.reach), reachEntries: d.reach, mds: await mdsSha() } : {}) })
+        return applied ? { text: out } : r
+      }
+    }
     const adv = a.origin?.kind === 'hook' ? advisoryBytes(text) : 0
     receipt({ ev: 'attach', agent: null, type: a.type, origin: a.origin?.kind, hookEvent: a.origin?.event ?? null, bytes: text.length, advisory: adv, applied: false })
     return r
@@ -323,10 +438,18 @@ export const register: Register = on => {
     if (floor === 0) floor = ctx
     let imageTok = 0
     for (const v of hotImages.values()) imageTok += v.tok
-    const a = carryAdvice(floor, ctx, imageTok)
+    const a = carryAdvice(floor, ctx, imageTok, beModel ? { model: beModel, call: calls } : null)
     const step = prevCtx > 0 ? ctx - prevCtx : 0
     prevCtx = ctx
     receipt({ ev: 'call', agent: null, call: calls, msgs: e.messageCount, ctx, step, out: u.output_tokens ?? 0, carry: a.carry, imageTok, rotate: a.rotate })
+    const dr = describeReceipt(describeSeen, describeReported) // observe only: names the tool descriptions in the prefix
+    if (dr) receipt({ ...dr, call: calls })
+    // Weighted break-even (v4 A4), observe only: a receipt at the first call and whenever the verdict flips; the
+    // driver that owns the epoch decides, this hook never rotates.
+    if (a.rotateAdvice && a.rotateAdvice.rotate !== beLast) {
+      beLast = a.rotateAdvice.rotate
+      receipt({ ev: 'rotate_advice', call: calls, ctx, floor, ...a.rotateAdvice, rule: 'breakeven', ratioRule: a.rotate, applied: false })
+    }
     // Intra-epoch governor (v4 B6): a step above the class P95 is named at the call that pays for it first, with the
     // cost it will carry if it rides to the class's P80 length. Advice only: the driver that owns the epoch decides.
     if (classModel && step > 0) {
@@ -360,6 +483,15 @@ export const register: Register = on => {
     const r = await next(e)
     receipt({ ev: 'end' })
     await flush($)
+    // /clear ends the session but keeps this process, and no session.start follows (receipts ff2c1af0, 2026-10-24): the next
+    // conversation decides its own first prompt and successor. A successor canary only ever replaced a launch canary of 'off'.
+    if (successor) { successor = false; canary = 'off' }
+    firstPrompt = ''
+    successorFrontier = null
+    armB = false
+    successorDecision = undefined
+    skillListing = agentListing = mcpListing = ''
+    files = null
     return r
   })
 
@@ -374,6 +506,7 @@ export const register: Register = on => {
     let result: string
     if (a.kind === 'skills') result = pageLines(skillListing, a.query ?? '')
     else if (a.kind === 'agents') result = pageLines(agentListing, a.query ?? '')
+    else if (a.kind === 'mcp') result = pageBlocks(mcpListing, a.query ?? '')
     else {
       const f = files?.find(x => x.path.toLowerCase() === String(a.path ?? '').toLowerCase())
       result = f ? f.content : `(not an instruction file of this session: ${a.path ?? ''})`
