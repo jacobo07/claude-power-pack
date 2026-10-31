@@ -68,3 +68,25 @@ Not measured yet: page faults (descriptions paged back) and task quality on real
 Scale (ESTIMATE): x 35,586 top-level calls/week (laptop ESTATE 10-18..25) = ~740M/week if every interactive pane ran it.
 The A1 partial (1 control 93,396) is consistent with the batch controls.
 Next: page-fault + quality arm on a real bounded task, then the Phase 8 decision on making it the main default (ratchet).
+
+## L6 RESULT: PASS (2026-10-31 ~19:00 local) -> `main-canary-quality.json`
+Real bounded Work Unit in real interactive panes (ConPTY, `claude --model haiku`, PP root, live release 0.1.0-b15bfc3d, claude 2.1.316),
+order S E | E S | S E (3 pairs, contract P3-main-canary-v1). Prompt: find the file defining DEFAULT_MODES via the best read-only search
+subagent, run it in the foreground, answer `<path> <mode>`. Every receipt matches its arm (off / enforce).
+| arm | processed (3 runs) | mean | cache-weighted mean | calls mean | correct | page faults | repairs | rereads |
+|---|---|---:|---:|---:|---|---:|---:|---:|
+| shadow | 444,103 / 491,738 / 628,815 | 521,552 | 153,453 | 7.33 | 3/3 | 0 | 0 | 0 |
+| canary | 374,983 / 382,659 / 371,346 | 376,329 | 98,610 | 6.33 | 3/3 | 0 | 0 | 0 |
+**Delta: processed -27.8 %, cache-weighted -35.7 %, per call -16.5 % (71.1K -> 59.4K).** Names-only listings still led the model to
+Explore in all 6 runs: no capability loss, no page-in needed on this unit. Part of the total delta is call-count variance (shadow arm
+used more tool calls); the per-call figure is the conservative one. n=3 pairs, one unit class: not yet a population claim.
+Harness defect found and fixed before counting: the first batch counted a turn that ended while a BACKGROUND Explore agent was still
+running as "done" (`main-canary-quality.INVALID-b1.json`, discarded); completion now requires the answer line.
+
+## Successor instruction (from the laptop coordinator)
+m-f92eb3ef9ccc HALTED after 3 empty reconcile epochs (8-10): the mission paid model calls to discover it was waiting on the laptop.
+That is a WAITING-is-not-model-activity defect of this very mission: record it in Error -> Immunity (Phase 8) with the epoch rows.
+Successor scope: Phase 7 (replay of THIS host's KSR/KME-style transcripts under the A7 main-lean policy = counterfactual ESTIMATE,
+labelled; this IS runnable on GEX44), Phase 8 (UKDL, Knowledge Vault, Baseline Ratchet proposal: CCR_MAIN_CANARY default-on for
+interactive panes with kill switch + floor ratchet, dogfood comparison, done_gate). If no runnable unit remains, write one OWNER NOTE
+line in STATE.md and STOP in the same epoch; never spend an epoch only to reconcile.
