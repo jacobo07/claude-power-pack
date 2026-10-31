@@ -153,6 +153,32 @@ def work_cost(work: dict, cal: dict, floor: int) -> tuple[int, int]:
     return n, n * c0 + g * n * (n - 1) // 2 + out * n + carried
 
 
+def work_call_table(work: dict, cal: dict, floor: int) -> list[dict]:
+    """Per-call forecast of the same model as work_cost (context, output, processed, role), for closeout's
+    forecast-vs-actual table. Sum of `processed` is work_cost's total to within one token per call (rounding)."""
+    fpc = float(cal["files_per_call"])
+    orient, explore = int(work.get("orient", 0)), int(work.get("explore", 0))
+    nfile = math.ceil(float(work.get("files", 0)) / fpc)
+    roles = (["orient"] * orient + ["explore"] * explore + ["files"] * nfile + ["runs"] * int(work.get("runs", 0))
+             + ["repairs"] * int(work.get("repairs", 0)) + ["commit"] * int(work.get("commit", 0))
+             + ["report"] * int(work.get("report", 0)))
+    n = len(roles)
+    if n <= 0:
+        raise Refused("BAD_CLAIM", "work describes zero calls")
+    c0 = floor + int(cal["ctx_start_over_floor"]) + int(work.get("extra_ctx", 0))
+    g, out = int(cal["ctx_growth_per_call"]), int(cal["output_per_call"])
+    ex, wo = int(work.get("explore_ctx", 0)), int(work.get("write_output", 0))
+    w_idx = orient + explore + nfile - 1
+    res = int(round(wo * float(cal.get("write_residency", 1.0)))) if wo and work.get("files") else 0
+    rows = []
+    for i, role in enumerate(roles):
+        carried = ex * min(max(i - orient, 0), explore) // explore if explore and ex else 0
+        ctx = c0 + g * i + carried + (res if i > w_idx else 0)
+        o = wo if (wo and work.get("files") and i == w_idx) else out
+        rows.append({"call": i + 1, "role": role, "context": ctx, "output": o, "processed": ctx + o})
+    return rows
+
+
 class Refused(Exception):
     def __init__(self, reason: str, detail: str):
         super().__init__(f"{reason}: {detail}")
@@ -413,7 +439,7 @@ def compile_cost(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_M
         "profile_source": source, "worker_floor": worker_floor, "margin": margin,
         "units": [{k: r[k] for k in ("id", "profile", "model_prior", "calls", "reserve_calls", "ctx_eff",
                                      "profile_floor", "cost", "claims", "image_ctx", "image_basis",
-                                     "grounding_basis", "shape_basis")}
+                                     "grounding_basis", "shape_basis", "work")}
                   for r in active_rows],
         "reserve_calls": reserve_calls, "reserve_tokens": reserve_tokens,
         "unmeasured_allowance": allowance,
@@ -452,6 +478,19 @@ def route_verdict(doc: dict, floors: dict, *, margin: float = ra.DEFAULT_GROWTH_
     verdict = PROVISIONAL if prior and adm["verdict"] == ra.ADMISSIBLE else adm["verdict"]
     return {"verdict": verdict, "route": route, "admission": adm, "cost": cost, "prior_units": prior,
             "uncertainty_ceiling_tokens": cost["ceiling"]["tokens"]}
+
+
+def unit_row(doc: dict, floors: dict, uid: str, *, margin: float = ra.DEFAULT_GROWTH_MARGIN) -> dict:
+    """The compiled row of one unit as if its claims were still open. A closed unit is not in compile_cost's
+    active frontier, but its closeout still compares the actual against what was planned for it."""
+    d = json.loads(json.dumps(doc))
+    for c in d.get("claims") or []:
+        if c.get("unit") == uid and c.get("status") in ("satisfied", "done", "sleeping"):
+            c["status"] = "open"
+    row = next((r for r in compile_cost(d, floors, margin=margin)["units"] if r["id"] == uid), None)
+    if row is None:
+        raise Refused("BAD_CLAIM", f"unit {uid!r} has no model claim: nothing was forecast for it")
+    return row
 
 
 def main(argv: list[str] | None = None) -> int:

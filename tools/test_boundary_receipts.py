@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -175,8 +176,181 @@ def image_checks() -> None:
             check("V-BR-REAL-T-TEXT-ONLY-ZERO-IMAGES-CONTROL", len(truth) == 0 and not events, f"raw={len(truth)}")
 
 
+IR_PATH = Path(os.environ.get("QL_CLAIMS_IR") or r"C:\Users\User\Apps\io-ql-story\17_Businesses\QuickLease"
+               r"\docs\plans\ql-story-tour\claims.json")
+F_E6 = "22b08816"
+WANT_F = {"orient": 1, "explore": 7, "files": 1, "runs": 0, "repairs": 0, "commit": 1, "report": 1, "images": 8}
+
+
+def ir_copy(mutate=None) -> Path:
+    p = Path(tempfile.mkdtemp(prefix="br-closeout-")) / "claims.json"
+    if mutate:
+        doc = json.loads(IR_PATH.read_text(encoding="utf-8-sig"))
+        mutate(doc)
+        p.write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    else:
+        p.write_bytes(IR_PATH.read_bytes())
+    return p
+
+
+def drop_f_e6(doc) -> None:
+    f = next(u for u in doc["units"] if u["id"] == "F")
+    f["actuals"] = [a for a in f["actuals"] if a.get("session") != F_E6]
+
+
+def unit_actuals(p: Path, uid: str) -> list:
+    return next(u for u in json.loads(p.read_text(encoding="utf-8-sig"))["units"] if u["id"] == uid).get("actuals") or []
+
+
+def raw_processed(main: Path, through_report: bool = True) -> int:
+    """Independent census: last usage row per assistant message id, input + cache + output, main transcript only,
+    through the first assistant message with no tool_use (the worker's report) unless through_report is False."""
+    last, order, has_tool = {}, [], {}
+    for raw in main.read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            row = json.loads(raw)
+        except ValueError:
+            continue
+        m = row.get("message") if isinstance(row, dict) else None
+        if row.get("type") == "assistant" and isinstance(m, dict) and m.get("id") and m.get("usage"):
+            if m["id"] not in last:
+                order.append(m["id"])
+            last[m["id"]] = m["usage"]
+            has_tool[m["id"]] = has_tool.get(m["id"], False) or any(
+                isinstance(b, dict) and b.get("type") == "tool_use" for b in (m.get("content") or []))
+    if through_report:
+        stop = next((i for i, k in enumerate(order) if not has_tool[k]), len(order) - 1)
+        order = order[:stop + 1]
+    return sum(int(last[k].get("input_tokens") or 0) + int(last[k].get("cache_read_input_tokens") or 0)
+               + int(last[k].get("cache_creation_input_tokens") or 0) + int(last[k].get("output_tokens") or 0) for k in order)
+
+
+def closeout_checks() -> None:
+    import hashlib
+    import io
+    from contextlib import redirect_stdout
+    import cost_to_completion as ctc
+    # synthetic roles from tools alone: orient, explore, files, red run, repair, green run, commit, report
+    r = T()
+    r.add([("Read", {"file_path": "p"}, "packet")])
+    r.add([("Read", {"file_path": "a"}, "alpha")])
+    r.add([("Write", {"file_path": "C:/repo/src/a.ts", "content": "const a = 1;"}, "ok")])
+    r.add([bash("pytest tests/test_a.py -q", "1 failed", True)])
+    r.add([("Edit", {"file_path": "C:/repo/src/a.ts", "old_string": "1", "new_string": "2"}, "ok")])
+    r.add([bash("pytest tests/test_a.py -q", "1 passed")])
+    r.add([bash("git commit -m x", "[main abc] x")])
+    r.add(text="done")
+    rc = r.run()
+    sh = br.derive_shape(rc)
+    check("V-BR-SHAPE-ROLES-FROM-TOOLS", all(sh[k] == v for k, v in {"orient": 1, "explore": 1, "files": 1, "runs": 2,
+          "repairs": 1, "commit": 1, "report": 1, "images": 0}.items()), str(sh))
+    ok = T()
+    ok.add([("Read", {"file_path": "p"}, "packet")])
+    ok.add([("Write", {"file_path": "C:/repo/src/a.ts", "content": "const a = 1;"}, "ok")])
+    ok.add([("Edit", {"file_path": "C:/repo/src/a.ts", "old_string": "1", "new_string": "2"}, "ok")])
+    sc = br.derive_shape(ok.run())
+    check("V-BR-EDIT-WITHOUT-RED-RUN-IS-NOT-A-REPAIR-CONTROL", sc["repairs"] == 0 and sc["files"] == 1, str(sc))
+    check("V-BR-WALL-TIME-FROM-RECEIPT-TIMESTAMPS", br._wall_seconds(rc) == 7, str(br._wall_seconds(rc)))
+
+    # real F epoch 6: the packet's acceptance shape, 8 images, the 14,298-token write
+    if not (FIX_F.exists() and (PACKETS / "F.md").exists() and IR_PATH.exists()):
+        check("V-BR-CLOSEOUT-FIXTURES-EXIST", False, f"{FIX_F} {IR_PATH}")
+        return
+    allf = real_receipts(FIX_F, PACKETS / "F.md")
+    wf, ignored = br.worker_receipts(allf)
+    shf = br.derive_shape(wf)
+    check("V-BR-REAL-F-SHAPE-EQUALS-ACCEPTANCE", all(shf[k] == v for k, v in WANT_F.items()) and shf.get("write_output") == 14298,
+          str(shf))
+    check("V-BR-REAL-F-CALLS-AFTER-REPORT-NOT-IN-SHAPE", len(wf) == 11 and ignored == len(allf) - 11 and ignored > 0,
+          f"worker={len(wf)} all={len(allf)} ignored={ignored}")
+    # failure words in a grep/ls dump are not a red run: the write after it is `files`, not `repairs`
+    g = T()
+    g.add([("Read", {"file_path": "p"}, "packet")])
+    g.add([bash("git grep -n FAILED -- src", "src/x.py:3: FAILED Traceback Error")])
+    g.add([("Write", {"file_path": "C:/repo/src/a.ts", "content": "x"}, "ok")])
+    check("V-BR-FAILURE-WORDS-IN-GREP-DUMP-NOT-A-RED-RUN", br.derive_shape(g.run())["repairs"] == 0
+          and br.derive_shape(g.run())["files"] == 1)
+
+    # closeout on the unmodified IR: F e6 is already recorded, so nothing is appended and no byte moves
+    base = ir_copy()
+    before = hashlib.sha256(base.read_bytes()).hexdigest()
+    res = br.closeout(FIX_F, PACKETS / "F.md", base)
+    check("V-BR-CLOSEOUT-RECORDED-SESSION-IS-NOOP", res["status"] == "already_recorded"
+          and hashlib.sha256(base.read_bytes()).hexdigest() == before, res["status"])
+
+    # on a copy without the e6 entry: appended once, earlier entries untouched, second run adds nothing
+    cp = ir_copy(drop_f_e6)
+    old = unit_actuals(cp, "F")
+    other_before = {u["id"]: u for u in json.loads(cp.read_text(encoding="utf-8"))["units"] if u["id"] != "F"}
+    res = br.closeout(FIX_F, PACKETS / "F.md", cp, epoch=6)
+    new = unit_actuals(cp, "F")
+    check("V-BR-CLOSEOUT-APPENDS-ONE-ENTRY-APPEND-ONLY", res["status"] == "appended" and new[:-1] == old and len(new) == len(old) + 1
+          and new[-1]["session"] == F_E6 and new[-1]["epoch"] == 6 and new[-1]["calls"] == 11, str(new[-1]["shape"]))
+    check("V-BR-CLOSEOUT-ENTRY-SHAPE-AND-PROCESSED", all(new[-1]["shape"][k] == v for k, v in WANT_F.items())
+          and new[-1]["processed"] == raw_processed(FIX_F) and res["summary"]["processed"] == new[-1]["processed"],
+          f"{new[-1]['processed']:,} raw={raw_processed(FIX_F):,}")
+    other_after = {u["id"]: u for u in json.loads(cp.read_text(encoding="utf-8"))["units"] if u["id"] != "F"}
+    check("V-BR-CLOSEOUT-OTHER-UNITS-UNTOUCHED", other_before == other_after)
+    h1 = hashlib.sha256(cp.read_bytes()).hexdigest()
+    again = br.closeout(FIX_F, PACKETS / "F.md", cp, epoch=6)
+    check("V-BR-CLOSEOUT-TWICE-NO-DUPLICATE-APPEND", again["status"] == "already_recorded"
+          and hashlib.sha256(cp.read_bytes()).hexdigest() == h1 and len(unit_actuals(cp, "F")) == len(new))
+
+    # forecast vs actual: the 7 pre-registered calls have a forecast, the 4 unforecast calls say so (None), not 0
+    pc = res["per_call"]
+    fc = [p for p in pc if p["forecast_processed"] is not None]
+    check("V-BR-CLOSEOUT-FORECAST-TABLE-UNFORECAST-CALLS-ARE-NONE", len(pc) == 11 and len(fc) == res["forecast"]["calls"] == 7
+          and all(p["forecast_processed"] is None and p["delta_pct"] is None for p in pc[7:])
+          and abs(sum(p["forecast_processed"] for p in fc) - res["forecast"]["processed"]) <= 7,
+          f"{len(pc)} {len(fc)} {res['forecast']}")
+    check("V-BR-CLOSEOUT-ACTUAL-COLUMN-EQUALS-RECEIPTS", [p["actual_processed"] for p in pc] == [x["processed"] for x in res["receipts"]])
+
+    # route recompiled with the measured actual: the unit is now `measured`
+    check("V-BR-CLOSEOUT-ROUTE-RECOMPILED-UNIT-MEASURED", res["route"].get("unit_shape_basis") == "measured"
+          and "F" not in res["route"].get("prior_units", ["F"]) and res["route"]["verdict"] != "REFUSED", str(res["route"]))
+
+    # Orchestration Amplification Ratio = orchestration processed / worker processed, with and without orchestrators
+    if FIX_T.exists():
+        o = br.closeout(FIX_F, PACKETS / "F.md", ir_copy(), orchestrators=[FIX_T])
+        want = round(raw_processed(FIX_T, through_report=False) / raw_processed(FIX_F), 4)
+        check("V-BR-CLOSEOUT-OAR-IS-ORCH-OVER-WORKER", o["orchestration_amplification_ratio"] == want, f"{o['orchestration_amplification_ratio']} want {want}")
+    check("V-BR-CLOSEOUT-NO-ORCHESTRATOR-OAR-NONE-CONTROL", res["orchestration_amplification_ratio"] is None)
+
+    # append_actual_text keeps the hand-formatted IR bytes: only the inserted text differs
+    text = IR_PATH.read_text(encoding="utf-8-sig")
+    ent = {"session": "deadbeef", "calls": 1, "processed": 2}
+    ins = json.dumps(ent)
+    t_new = br.append_actual_text(text, "T", ent)
+    mh_new = br.append_actual_text(text, "MH", ent)
+    check("V-BR-APPEND-TEXT-EXISTING-ACTUALS-BYTES-PRESERVED", t_new.replace(",\n      " + ins, "") == text and ins in t_new)
+    check("V-BR-APPEND-TEXT-NEW-ACTUALS-BYTES-PRESERVED", mh_new.replace(',\n     "actuals": [' + ins + "]", "") == text and ins in mh_new)
+    try:
+        br.append_actual_text(text, "NOPE", ent)
+        check("V-BR-APPEND-TEXT-UNKNOWN-UNIT-REFUSED", False, "accepted")
+    except ValueError:
+        check("V-BR-APPEND-TEXT-UNKNOWN-UNIT-REFUSED", True)
+
+    # CLI: --no-write leaves the file alone; --closeout without --claims and an unknown unit are refused
+    cn = ir_copy(drop_f_e6)
+    h0 = hashlib.sha256(cn.read_bytes()).hexdigest()
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        rc_ok = br.main(["--transcript", str(FIX_F), "--packet", str(PACKETS / "F.md"), "--closeout", "--claims", str(cn), "--no-write"])
+    out = json.loads(buf.getvalue())
+    check("V-BR-CLI-CLOSEOUT-NO-WRITE", rc_ok == 0 and out["status"] == "not_written" and hashlib.sha256(cn.read_bytes()).hexdigest() == h0
+          and "receipts" not in out)
+    check("V-BR-CLI-CLOSEOUT-WITHOUT-CLAIMS-REFUSED", br.main(["--transcript", str(FIX_F), "--packet", str(PACKETS / "F.md"), "--closeout"]) == 2)
+    noun = Path(tempfile.mkdtemp(prefix="br-pk-")) / "p.md"
+    noun.write_text(PACKET.replace("unit: U", "unit: ZZ"), encoding="utf-8")
+    try:
+        br.closeout(FIX_F, noun, ir_copy())
+        check("V-BR-CLOSEOUT-UNKNOWN-UNIT-REFUSED", False, "accepted")
+    except ctc.Refused as e:
+        check("V-BR-CLOSEOUT-UNKNOWN-UNIT-REFUSED", e.reason == "BAD_CLAIM", e.reason)
+
+
 def main() -> int:
-    fail_out = "FAILED tests/test_x.py::test_boom - AssertionError: boom\n1 failed"
+    fail_out ="FAILED tests/test_x.py::test_boom - AssertionError: boom\n1 failed"
     r = T()
     for i in range(3):
         r.add([bash(f"pytest -k boom # try {i}", fail_out)])
@@ -265,6 +439,7 @@ def main() -> int:
           str(count(r.run(prose), "artifact_delta")))
 
     image_checks()
+    closeout_checks()
     print(f"BR_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

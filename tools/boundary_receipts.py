@@ -231,6 +231,7 @@ def build_receipts(calls: list[dict], results: dict, packet: dict, *, since: str
     seen_images: set = set()
     closed: set = set()
     receipts = []
+    red_seen = False
     for call in calls:
         if since and call["ts"] < since:
             continue
@@ -238,10 +239,18 @@ def build_receipts(calls: list[dict], results: dict, packet: dict, *, since: str
         context = int(u.get("input_tokens") or 0) + int(u.get("cache_read_input_tokens") or 0) \
             + int(u.get("cache_creation_input_tokens") or 0)
         events, advancements, dups, n_images, img_dups = [], [], 0, 0, 0
+        writes, cmds, red_now = [], [], False
         for t in call["tools"]:
             name, inp = t.get("name"), t.get("input") or {}
             res = results.get(t.get("id"), {"text": "", "is_error": False, "images": []})
             text = res["text"]
+            if name in EDIT_TOOLS and inp.get("file_path"):
+                writes.append(str(inp["file_path"]))
+            if name in SHELL_TOOLS:
+                cmds.append(str(inp.get("command") or ""))
+                # only a failing verification RUN makes a later edit a repair; failure words in a grep/ls dump do not
+                if _RUN.search(cmds[-1]) and not _COMMIT.search(cmds[-1]):
+                    red_now = red_now or res["is_error"] or bool(_BAD_RESULT.search(text))
             for im in res.get("images", []):
                 n_images += 1
                 if im["sha"][:12] in seen_images:
@@ -319,12 +328,48 @@ def build_receipts(calls: list[dict], results: dict, packet: dict, *, since: str
                 else:
                     seen_adv.add(h)
                     advancements.append({"text": m.group(1), "key": h[:12]})
+        role = _role(first=not receipts, has_tools=bool(call["tools"]), writes=writes, cmds=cmds, red_before=red_seen)
+        red_seen = red_seen or red_now
         receipts.append({"msg": call["id"], "ts": call["ts"], "model": call["model"], "context": context,
+                         "output": int(u.get("output_tokens") or 0),
                          "processed": context + int(u.get("output_tokens") or 0),
                          "tools": [t.get("name") for t in call["tools"]], "unit": packet["unit"],
                          "consumer_claims": list(packet["claims"]), "events": events,
-                         "advancements": advancements, "duplicates": dups, "images": n_images, "image_dups": img_dups})
+                         "advancements": advancements, "duplicates": dups, "images": n_images, "image_dups": img_dups,
+                         "role": role, "writes": writes})
     return receipts
+
+
+_COMMIT = re.compile(r"\bgit\b.*\bcommit\b")
+_RUN = re.compile(r"pytest|\btest\b|playwright|vitest|jest|\btsc\b|\bbuild\b|python\S*\s+\S*test_|\bnode\b.*(?:spec|drill|capture)")
+
+
+def _role(*, first: bool, has_tools: bool, writes: list, cmds: list, red_before: bool) -> str:
+    """What a call was for, from its tools alone (zero model): the shape components cost_to_completion models."""
+    if not has_tools:
+        return "report"
+    if first:
+        return "orient"
+    if writes:
+        return "repairs" if red_before else "files"
+    if any(_COMMIT.search(c) for c in cmds):
+        return "commit"
+    if any(_RUN.search(c) for c in cmds):
+        return "runs"
+    return "explore"
+
+
+def derive_shape(receipts: list[dict]) -> dict:
+    """The actual shape in the vocabulary of a unit's `work`: call-role counts, distinct files written,
+    images read, and the largest single write's output tokens."""
+    shape = {k: sum(1 for r in receipts if r["role"] == k)
+             for k in ("orient", "explore", "files", "runs", "repairs", "commit", "report")}
+    shape["files"] = len({w for r in receipts for w in r["writes"]})
+    shape["images"] = sum(r["images"] for r in receipts)
+    wo = max((r["output"] for r in receipts if r["role"] == "files"), default=0)
+    if wo:
+        shape["write_output"] = wo
+    return shape
 
 
 def summarize(receipts: list[dict], stall: int = DEFAULT_STALL) -> dict:
@@ -352,6 +397,142 @@ def transcript_paths(main: Path) -> list[Path]:
     return [main] + (sorted(sub.glob("*.jsonl")) if sub.is_dir() else [])
 
 
+def _match_close(text: str, i: int) -> int:
+    """Index of the bracket closing the { or [ at text[i]; string-aware."""
+    depth, in_str, esc = 0, False, False
+    for j in range(i, len(text)):
+        c = text[j]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c in "{[":
+            depth += 1
+        elif c in "}]":
+            depth -= 1
+            if depth == 0:
+                return j
+    raise ValueError("unbalanced JSON")
+
+
+def append_actual_text(text: str, unit_id: str, entry: dict) -> str:
+    """Append `entry` to a unit's `actuals` by inserting text, so the hand-formatted IR keeps its bytes and
+    every earlier entry is untouched (append-only). Verified by parsing before and after."""
+    m = re.search(r'\{\s*"id"\s*:\s*"%s"' % re.escape(unit_id), text)
+    if not m:
+        raise ValueError(f"unit {unit_id!r} not found in the IR text")
+    start = m.start()
+    end = _match_close(text, start)
+    ent = json.dumps(entry, ensure_ascii=False)
+    k = text.find('"actuals": [', start, end)
+    if k >= 0:
+        a = k + len('"actuals": ')
+        ae = _match_close(text, a)
+        new = text[:ae] + (",\n      " if text[a + 1:ae].strip() else "") + ent + text[ae:]
+    else:
+        new = text[:end] + ',\n     "actuals": [' + ent + "]" + text[end:]
+    before = next(u for u in json.loads(text)["units"] if u["id"] == unit_id).get("actuals") or []
+    after = next(u for u in json.loads(new)["units"] if u["id"] == unit_id).get("actuals") or []
+    if after != before + [entry]:
+        raise ValueError("append would alter earlier entries; refused")
+    return new
+
+
+def _wall_seconds(receipts: list[dict]) -> int | None:
+    from datetime import datetime
+    try:
+        ts = [datetime.fromisoformat(r["ts"].replace("Z", "+00:00")) for r in receipts if r["ts"]]
+        return int((max(ts) - min(ts)).total_seconds()) if ts else None
+    except ValueError:
+        return None
+
+
+def worker_receipts(receipts: list[dict]) -> tuple[list[dict], int]:
+    """(receipts through the worker's first tool-less report, calls ignored after it)."""
+    cut = next((i for i, r in enumerate(receipts) if r["role"] == "report"), None)
+    if cut is None:
+        return receipts, 0
+    return receipts[:cut + 1], len(receipts) - cut - 1
+
+
+def closeout(transcript: Path, packet_path: Path, claims_path: Path, *, orchestrators: list[Path] = (),
+             epoch: int | None = None, outcome: str | None = None, write: bool = True,
+             floors_path: str | None = None) -> dict:
+    """Zero-model closeout: transcript(s) + packet + claims -> receipts, actual shape, forecast vs actual per
+    call, an append-only `actuals` entry (idempotent on the session id), the recompiled route, and the
+    Orchestration Amplification Ratio (orchestration processed / worker processed) when orchestrator
+    transcripts are given."""
+    import cost_to_completion as ctc
+    import route_admission as ra
+    packet = load_packet(packet_path)
+    calls, results = read_transcripts(transcript_paths(transcript))
+    receipts = build_receipts(calls, results, packet)
+    # A worker ends at its first tool-less message (the report). Calls after it are a resumed or reviewed
+    # continuation of the same transcript (F e6: 3 calls an hour later) and belong to no shape; say how many.
+    receipts, after_report = worker_receipts(receipts)
+    summary = summarize(receipts)
+    shape = derive_shape(receipts)
+    uid, session = packet["unit"], transcript.stem[:8]
+    raw = claims_path.read_bytes()
+    text = raw.decode("utf-8-sig")
+    doc = json.loads(text)
+    unit = next((u for u in doc.get("units") or [] if u.get("id") == uid), None)
+    if unit is None:
+        raise ctc.Refused("BAD_CLAIM", f"unit {uid!r} is not in {claims_path}")
+    floors = ra.load_floors(floors_path)
+    row = ctc.unit_row(doc, floors, uid)
+    forecast = {"calls": row["calls"], "processed": row["cost"]}
+    table = ctc.work_call_table(row["work"], doc["calibration"], row["profile_floor"]) if row.get("work") else None
+    per_call = []
+    for i, r in enumerate(receipts):
+        f = table[i] if table and i < len(table) else None
+        per_call.append({"call": i + 1, "role": r["role"], "actual_context": r["context"],
+                         "actual_processed": r["processed"],
+                         "forecast_context": f["context"] if f else None,
+                         "forecast_processed": f["processed"] if f else None,
+                         "delta_pct": round((r["processed"] - f["processed"]) / f["processed"] * 100, 1) if f else None})
+    oar = None
+    if orchestrators and summary["processed"]:
+        orch = 0
+        for p in orchestrators:
+            oc, orr = read_transcripts(transcript_paths(p))
+            orch += summarize(build_receipts(oc, orr, packet))["processed"]
+        oar = round(orch / summary["processed"], 4)
+    entry = {"session": session, "calls": len(receipts), "processed": summary["processed"], "forecast": forecast,
+             "shape": shape, "wall_seconds": _wall_seconds(receipts),
+             "outcome": outcome or "closeout: zero-model derivation from receipts"}
+    if epoch is not None:
+        entry = {"epoch": epoch, **entry}
+    if oar is not None:
+        entry["orchestration_amplification_ratio"] = oar
+    prior = next((a for a in unit.get("actuals") or [] if a.get("session") == session), None)
+    new_text, status = text, "already_recorded"
+    if prior is None:
+        new_text = append_actual_text(text, uid, entry)
+        status = "appended" if write else "not_written"
+        if write:
+            claims_path.write_bytes((b"\xef\xbb\xbf" if raw.startswith(b"\xef\xbb\xbf") else b"") + new_text.encode("utf-8"))
+    latest = prior or entry
+    doc2 = json.loads(new_text)
+    doc2.setdefault("actuals", {})[uid] = {"calls": latest["calls"], "ctx_tokens": -(-latest["processed"] // latest["calls"])}
+    try:
+        rv = ctc.route_verdict(doc2, floors)
+        route = {"verdict": rv["verdict"], "admission": rv["admission"]["verdict"], "prior_units": rv["prior_units"],
+                 "unit_shape_basis": ctc.unit_row(doc2, floors, uid)["shape_basis"]}
+    except ctc.Refused as exc:
+        route = {"verdict": "REFUSED", "reason": exc.reason, "detail": exc.detail}
+    return {"unit": uid, "session": session, "status": status, "calls_after_report_ignored": after_report,
+            "summary": summary, "shape": shape,
+            "forecast": forecast, "per_call": per_call, "entry": entry, "route": route,
+            "orchestration_amplification_ratio": oar, "wall_seconds": entry["wall_seconds"], "receipts": receipts}
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="boundary_receipts")
     ap.add_argument("--transcript", required=True)
@@ -359,7 +540,29 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--since")
     ap.add_argument("--stall", type=int, default=DEFAULT_STALL)
     ap.add_argument("--out")
+    ap.add_argument("--closeout", action="store_true", help="derive shape, forecast-vs-actual, append to --claims")
+    ap.add_argument("--claims")
+    ap.add_argument("--orchestrator", action="append", default=[])
+    ap.add_argument("--epoch", type=int)
+    ap.add_argument("--outcome")
+    ap.add_argument("--no-write", action="store_true")
+    ap.add_argument("--floors")
     args = ap.parse_args(argv)
+    if args.closeout:
+        if not args.claims:
+            print("REFUSED: --closeout needs --claims", file=sys.stderr)
+            return 2
+        try:
+            res = closeout(Path(args.transcript), Path(args.packet), Path(args.claims),
+                           orchestrators=[Path(p) for p in args.orchestrator], epoch=args.epoch,
+                           outcome=args.outcome, write=not args.no_write, floors_path=args.floors)
+        except Exception as exc:  # Refused from cost_to_completion, OSError, ValueError: one honest exit
+            print(f"REFUSED: {exc}", file=sys.stderr)
+            return 2
+        if args.out:
+            Path(args.out).write_text(json.dumps(res, indent=1), encoding="utf-8")
+        print(json.dumps({k: v for k, v in res.items() if k != "receipts"}, indent=1))
+        return 0
     try:
         packet = load_packet(Path(args.packet))
         calls, results = read_transcripts(transcript_paths(Path(args.transcript)))
