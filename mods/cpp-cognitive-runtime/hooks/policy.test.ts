@@ -4,15 +4,8 @@ import {
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
   subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, mainCanaryMode, DEFAULT_MODES,
 } from './policy'
-import { isPlannerType } from './register'
-
-test('the spawn receipt flags a planner fan-out agent and no other type', () => {
-  expect(isPlannerType('gsd-planner')).toBe(true)
-  expect(isPlannerType('gsd-plan-checker')).toBe(true)
-  expect(isPlannerType('gsd-executor')).toBe(false)
-  expect(isPlannerType('gsd-planner-extra')).toBe(false)
-  expect(isPlannerType(undefined)).toBe(false)
-})
+// isPlannerType (dc4bf2b4) is not in the live release 0.1.0-b15bfc3d that 35776051 synced register.ts to; its test lives
+// with that branch. Importing it here made this whole file fail to load, so no test in it ran.
 
 // The madzia-worker model tools/ccr_pgo.py built from post-fix attempts a6-a8 (2026-10-12).
 const MADZIA = JSON.stringify({ cls: 'madzia-worker', n: 3, floor: { p50: 18938, p80: 19049.6 }, calls: { p50: 25, p80: 28.6 },
