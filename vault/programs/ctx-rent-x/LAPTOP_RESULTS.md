@@ -90,3 +90,15 @@ Successor scope: Phase 7 (replay of THIS host's KSR/KME-style transcripts under 
 labelled; this IS runnable on GEX44), Phase 8 (UKDL, Knowledge Vault, Baseline Ratchet proposal: CCR_MAIN_CANARY default-on for
 interactive panes with kill switch + floor ratchet, dogfood comparison, done_gate). If no runnable unit remains, write one OWNER NOTE
 line in STATE.md and STOP in the same epoch; never spend an epoch only to reconcile.
+## L8 -- CCR_MAIN_CANARY default-on SHIPPED (laptop, 2026-10-31, Owner D1)
+- Source: 4a7939bc + e8d29ffb (laptop fix: policy.test.ts imported isPlannerType, absent from live b15bfc3d's register.ts since 35776051, so the whole file failed to load and NO test in it ran; stale test dropped).
+- Step 2: `claude plugin test mods/cpp-cognitive-runtime` rc 0, 28 pass / 0 fail (incl. "default-on ... CCR_MAIN_CANARY=0 opts out"). `tools/test_ccr_release.py` CCR_PASS=24/24.
+- API check: `$.env.get` resolves `undefined` when unset (claude-code.d.ts 2.1.316 L3728), so `env !== undefined && env !== '1'` is default-on; empty string opts out like `0`.
+- Step 3: rollback target 0.1.0-b15bfc3d; `ccr_release.py release --impact policy` -> active 0.1.0-265d3d55, RELEASE.json source_commit e8d29ffbb4c7cca72874d730cd725d78307cc482.
+- Step 4 (real ConPTY interactive panes, haiku, neutral scratch cwd, n=1 per arm, SMOKE not a measurement):
+  - unset: session ef47d37f, start receipt releaseId 0.1.0-265d3d55, canary=enforce, policyGen ab131b607542, call-1 65,258
+  - `=0`:  session b54d6a66, start receipt releaseId 0.1.0-265d3d55, canary=off, policyGen 271dcb3e9d8c, call-1 87,704
+  - VERDICT PASS (call-1 delta -22,446 / -25.6 %, n=1, indicative only)
+- Step 5: rollback -> active 0.1.0-b15bfc3d (verified); re-release -> active 0.1.0-265d3d55 with source_commit (verified). LIVE.
+- Incident: between two test runs, plugin.json, hooks/hooks.json and kernel/HARD-RULES-DIGEST.md vanished from this laptop worktree (%TEMP%/claude/ctxrx-w0), cause not identified; restored from git, did not recur. Watch for a %TEMP%/claude cleaner.
+- Next: Phase 8 (UKDL, ratchet, dogfood, done_gate) on GEX44; CR-25..29 now have receipts above.
