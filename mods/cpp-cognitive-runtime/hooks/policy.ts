@@ -13,6 +13,15 @@ export type Mode = 'enforce' | 'shadow' | 'off'
 export type Modes = { subagent: Mode; main: Mode; unit: Mode; project?: Mode }
 export const DEFAULT_MODES: Modes = { subagent: 'enforce', main: 'shadow', unit: 'enforce' }
 
+// Per-process opt-in for the main tier (ctx-rent-x Phase 3). Only the exact value 'enforce' moves `main`
+// off the release default, and only for the process that carries the variable: the kill switch ('off', or
+// the OFF file) always wins, and anything else (unset, empty, 'shadow', a typo) keeps what the release says.
+export function resolveMainMode(fileMode: Mode, envValue: string | null | undefined): { mode: Mode; source: 'env' | 'release' } {
+  if (fileMode === 'off') return { mode: 'off', source: 'release' }
+  if (envValue === 'enforce') return { mode: 'enforce', source: 'env' }
+  return { mode: fileMode, source: 'release' }
+}
+
 // Subagent types that keep the skill listing: they can run skills (Skill tool in their set).
 export const SKILL_CAPABLE_AGENTS = new Set(['general-purpose', 'claude', 'fork'])
 

@@ -53,3 +53,9 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 ## Worker epoch 4 (2026-10-31, plane GEX44)
 - Reconciled: HEAD d47426d8, tree clean, matches epoch-3 STATE. Phases 1 and 6 done on this plane; 2,3,4,5,7,8 remain BLOCKED-ON-LAPTOP (live ~/.claude edits, interactive panes, laptop release). No runnable phase left, so no further spend.
 - OWNER ACTION NEEDED: run LAPTOP_STEPS.md L1/L2 on the laptop, then resume `/gsd-autonomous --ws ctx-rent-x` there for Phases 2-5, 7, 8.
+
+## OWNER DECISION D1 — RESOLVED (2026-10-31, worker epoch 4)
+- Owner D1: laptop L1+L2 done; merged d486ab6d ff-only into w0. Laptop finding (MEASURED): top-level 84.5% of 7.47B processed, mean top-level floor ~100-122K in every CCR generation incl. CURRENT b15bfc3d, so generation rollout does not move the interactive floor. L2: source_commit 40-hex in scratch root.
+- Priority per D1: floor (attachments ~119K/call) over dead tool-output rent (5.8-16.5%).
+- Built on GEX44: Phase 3 `resolveMainMode` + `CCR_MAIN_MODE` opt-in (policy.ts, register.ts, 2 new tests in policy.test.ts; logic verified by node extraction, MAINMODE_OK; `claude plugin test` is unavailable here, build 2.1.113 vs COMPAT 2.1.296 -> laptop L5). Phase 2 `tools/floor_diet.py` + `test_floor_diet.py` 13/13 (scratch HOME, revert byte-identical). Frozen contracts in vault/programs/ctx-rent-x/contracts/. LAPTOP_STEPS L3-L5 written.
+- Phases 2 and 3 are CODE-COMPLETE; their measured acceptance remains laptop-only (L3-L5). Phases 4,5,7,8 still depend on them.

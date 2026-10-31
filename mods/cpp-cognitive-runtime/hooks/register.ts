@@ -1,6 +1,6 @@
 import type { Register } from 'claude-code'
 import {
-  COMPAT, DEFAULT_MODES, RUNTIME_VERSION, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
+  COMPAT, DEFAULT_MODES, RUNTIME_VERSION, resolveMainMode, advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection,
   carryAdvice, decideUnitTool, gcKeptSet, imagesByUse, linkInstructionFiles, pageLines, parseWorkUnit, repoKey, rowFacts,
   PROJECT_BUDGET_CHARS, PROJECT_TOOLS, boundaryForecast, parseClassModel, projectToolOutput, stepAnomaly,
   type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
@@ -116,10 +116,15 @@ export const register: Register = on => {
       }
       catch { modes = { ...DEFAULT_MODES } } // no override file: release defaults
     }
+    // Phase 3 canary: CCR_MAIN_MODE=enforce in THIS process's environment, nothing persisted.
+    let mainEnv: string | undefined
+    try { mainEnv = await $.env.get('CCR_MAIN_MODE') } catch { mainEnv = undefined } // no env access: release default
+    const mm = resolveMainMode(modes.main, mainEnv)
+    modes = { ...modes, main: mm.mode }
     try { kernel = (await $.fs.read(`${$.plugin.root}/kernel/HARD-RULES-DIGEST.md`)).slice(0, 8000) }
     catch { kernel = null } // missing kernel: the linkers keep the full instructions
     const unit = await loadUnit($)
-    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null })
+    receipt({ ev: 'start', runtime: RUNTIME_VERSION, version, compatible, modes, main_source: mm.source, repoKey: rkey, interactive: e.isInteractive, kernel: kernel?.length ?? 0, unit: unit?.cls ?? null })
     // Semantic Cost Contract (v4 B4) for a declared unit: obligation, class, forecast. No model -> ADMIT_UNFORECAST:
     // the cost is unknown, and the receipt says so instead of reporting a number nobody measured.
     if (unit) {

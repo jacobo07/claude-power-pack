@@ -1,0 +1,12 @@
+{
+  "id": "P3-main-canary-v1",
+  "status": "FROZEN-BEFORE-PROBES",
+  "plane": "laptop",
+  "question": "Does CCR_MAIN_MODE=enforce cut processed tokens / cost of a bounded Work Unit in a real interactive pane without hurting correctness?",
+  "arms": {"shadow": "CCR_MAIN_MODE unset", "enforce": "CCR_MAIN_MODE=enforce"},
+  "counterbalance": "n>=3 pairs; arm order alternates (S E E S S E); same CCR release and Claude build both arms",
+  "unit": "one fixed bounded Work Unit prompt with a checkable answer, same repo state each run",
+  "report": ["processed tokens", "cache-weighted cost", "calls", "repairs", "rereads", "answer correct (bool)"],
+  "gate": "start receipt must show main:<arm> and main_source env|release; a run whose receipt disagrees with its arm is discarded",
+  "decision": "enforce becomes default only via a Phase 8 ratchet item, not here"
+}

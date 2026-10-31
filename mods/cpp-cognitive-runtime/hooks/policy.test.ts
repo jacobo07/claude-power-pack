@@ -2,7 +2,7 @@ import { expect, test } from 'claude-code/testing'
 import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
-  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly,
+  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, resolveMainMode, DEFAULT_MODES,
 } from './policy'
 import { isPlannerType } from './register'
 
@@ -269,4 +269,20 @@ test('a unit drops listings it cannot act on, replaces instructions with kernel 
 test('a unit leaves the memory section out and keeps every other section', () => {
   expect(decideUnitSection('memory').action).toBe('drop')
   expect(decideUnitSection('env_info_simple').action).toBe('keep')
+})
+
+test('CCR_MAIN_MODE=enforce opts one process into main enforcement; unset keeps the shadow default', () => {
+  expect(DEFAULT_MODES.main).toBe('shadow')
+  expect(resolveMainMode('shadow', 'enforce')).toEqual({ mode: 'enforce', source: 'env' })
+  expect(resolveMainMode('shadow', undefined)).toEqual({ mode: 'shadow', source: 'release' })
+  expect(resolveMainMode('shadow', null).mode).toBe('shadow')
+  expect(resolveMainMode('shadow', '').mode).toBe('shadow')
+})
+
+test('CCR_MAIN_MODE: only the exact value enforces, and the kill switch always wins', () => {
+  expect(resolveMainMode('shadow', 'Enforce').mode).toBe('shadow')
+  expect(resolveMainMode('shadow', 'shadow').mode).toBe('shadow')
+  expect(resolveMainMode('shadow', 'off').mode).toBe('shadow')
+  expect(resolveMainMode('off', 'enforce')).toEqual({ mode: 'off', source: 'release' })
+  expect(resolveMainMode('enforce', undefined).mode).toBe('enforce')
 })
