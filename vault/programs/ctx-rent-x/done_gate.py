@@ -43,6 +43,7 @@ def conditions(root, repo):
     diet = load(root, "floor-diet-results.json")
     ca, cb = load(root, "main-canary-A.json"), load(root, "main-canary-B.json")
     qual = load(root, "main-canary-quality.json")
+    rep = load(root, "replay-gex44-a7.json")
     delta_txt = os.path.exists(os.path.join(root, "weekly-delta.txt")) and os.path.getsize(os.path.join(root, "weekly-delta.txt")) > 0
     R = {}
 
@@ -76,12 +77,26 @@ def conditions(root, repo):
     put("CR-14", U, "Phase 4 successor smoke not run")
     put("CR-15", U, "fresh-start cost not measured")
     put("CR-16", U, "gsd_epoch breakeven advisory exists but its inputs (successor floor, bootstrap, page-ins) are unmeasured")
-    # CR-17 needs a live arm with quality; call-1 alone is not a Work Unit
-    # L6 schema: {"pairs":int,"delta_processed":num,"correct_all":bool,"page_faults":n,"repairs":n,"rereads":n}
-    q = qual if isinstance(qual, dict) else {}
-    put("CR-17", P if q.get("pairs", 0) >= 3 and q.get("delta_processed", 0) > 0 else U, "needs L6 quality file with pairs>=3 and delta_processed>0")
-    put("CR-18", P if q.get("correct_all") is True else U, "needs L6 correct_all=true")
-    put("CR-19", P if all(k in q for k in ("page_faults", "repairs", "rereads")) else U, "needs L6 page_faults/repairs/rereads")
+    # CR-17..19: derived from the raw per-run file (never from a self-reported summary).
+    # Valid run = finished AND its receipt matches its arm. Pairs = min(valid S, valid E).
+    runs = [r for r in ((qual or {}).get("runs") or []) if r.get("finished") and r.get("receipt_matches_arm")]
+    S = [r for r in runs if r.get("arm") == "S"]
+    E = [r for r in runs if r.get("arm") == "E"]
+    pairs = min(len(S), len(E))
+    if pairs >= 3:
+        ds = sum(r["processed"] for r in S) / len(S) - sum(r["processed"] for r in E) / len(E)
+        put("CR-17", P if ds > 0 else F, "pairs=%d shadow-mean minus canary-mean processed=%.0f" % (pairs, ds))
+        ok = all(r.get("correct") is True for r in S + E)
+        put("CR-18", P if ok else F, "correct %d/%d valid runs" % (sum(1 for r in S + E if r.get("correct") is True), len(S + E)))
+        keys = ("page_faults", "repairs", "rereads")
+        if all(k in r for r in S + E for k in keys):
+            tot = {k: sum(r[k] for r in S + E) for k in keys}
+            put("CR-19", P if tot["page_faults"] == 0 and tot["repairs"] == 0 else F, "totals %s" % tot)
+        else:
+            put("CR-19", U, "runs lack page_faults/repairs/rereads")
+    else:
+        for cr in ("CR-17", "CR-18", "CR-19"):
+            put(cr, U, "need >=3 valid S/E pairs, have %d" % pairs)
     put("CR-20", P if wait and wait.get("wait_calls", 0) > 0 else U, "waiting calls=%s share=%s (shadow)" % ((wait or {}).get("wait_calls"), (wait or {}).get("wait_processed_share")))
     ra, rb = delta_ok((ca or {}).get("summary")), delta_ok((cb or {}).get("summary"))
     if ra and rb:
@@ -89,8 +104,16 @@ def conditions(root, repo):
         put("CR-21", st, "canary A: %s | B: %s" % (ra[1], rb[1]))
     else:
         put("CR-21", U, "no canary receipts")
-    put("CR-22", U, "KSR-style replay (Phase 7) not run")
-    put("CR-23", U, "X -> X-prime report (Phase 7) not written")
+    rc = (rep or {}).get("classes") or {}
+    rt = (rep or {}).get("total") or {}
+    valid = bool(rep) and str(rep.get("label", "")).startswith("ESTIMATE") and len(rc) >= 3 and rt.get("X", 0) > 0
+    if valid and rt.get("X_prime", 0) < rt["X"]:
+        put("CR-23", P, "X=%s X'=%s saving=%s%% ESTIMATE, %d classes" % (rt["X"], rt["X_prime"], rt.get("saving_pct"), len(rc)))
+    else:
+        put("CR-23", U, "no valid labelled X -> X-prime replay")
+    ksr = rc.get("ksr_style")
+    put("CR-22", P if (valid and ksr and ksr.get("sessions", 0) > 0) else U,
+        ("ksr_style class sessions=%s" % ksr.get("sessions")) if ksr else "no KSR-style session in the replay window")
     put("CR-24", P if (est and (est.get("total") or 0) and delta_txt) else U, "laptop week total measured + weekly delta" if est else "no estate")
     for cr in ("CR-25", "CR-26", "CR-27", "CR-28", "CR-29"):
         put(cr, U, "Phase 8 institutionalisation not done")

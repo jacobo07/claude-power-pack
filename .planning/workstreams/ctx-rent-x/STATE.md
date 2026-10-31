@@ -96,3 +96,11 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 
 ## Worker epoch 10 (GEX44)
 - Reconciled: HEAD f734e611, clean. Remote mission/ctx-rent-x (fe08358f) is an ancestor of HEAD; laptop/laptop2 unchanged; no L6 file. Phases 4,5,7,8 still need laptop panes/releases. No GEX44-runnable unit; no spend.
+
+## Worker epoch 11 (GEX44) -- new laptop data: L6 landed
+- Fast-forwarded to mission/ctx-rent-x-l6 (68996971). L6 PASS on laptop: 3 pairs, processed -27.8%, 6/6 correct, 0 page faults/repairs/rereads.
+- done_gate now derives CR-17..19 from the raw per-run file (valid run = finished AND receipt matches arm); test_done_gate 16/16 incl. 4 new mutation drills.
+- Phase 7 built on GEX44: `tools/ctx_replay.py` + `test_ctx_replay.py` 7/7; `REPLAY.md` + `replay-gex44-a7.json`: X 1,767.4M -> X-prime 1,443.8M = 18.3% ESTIMATE (upper bound, floor lever only). CR-23 PASS; CR-22 UNKNOWN (no KSR-style session on this host).
+- Immunity entry for the waiting-is-not-model-activity defect: `IMMUNITY.md` (PROPOSED).
+- done_gate: pass=16 unknown=15 (CR-31 reads FAIL until the tree is committed). Remaining: Phase 4 smoke, Phase 5, Phase 8 UKDL/ratchet/dogfood/HANDOFF.
+- OWNER NOTE: Phases 4/5 need laptop panes; Phase 8 ratchet (CCR_MAIN_CANARY default-on) needs Owner approval. Nothing further runnable on GEX44; stopping.
