@@ -90,3 +90,6 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 
 ## Worker epoch 8 (GEX44)
 - Reconciled: HEAD 2908cc50, clean; remote branches unchanged; no L6 file. done_gate 13 pass / 19 unknown. No GEX44-runnable unit; no spend.
+
+## Worker epoch 9 (GEX44)
+- Reconciled: HEAD f87fd805, clean. Remote mission/ctx-rent-x is an ancestor of HEAD; laptop/laptop2 unchanged; no L6 file. Phases 4,5,7,8 still need laptop panes/releases. No GEX44-runnable unit; no spend.
