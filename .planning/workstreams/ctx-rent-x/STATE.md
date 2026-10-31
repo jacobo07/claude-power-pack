@@ -114,3 +114,6 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 - Reconciled: HEAD b5bf48b6, clean (untracked .claude/worktrees, .pp-capabilities only). Remote ctx-rent-x-l6 (68996971), laptop, laptop2, obs unchanged; mission/ctx-rent-x is an ancestor of HEAD. No GEX44-runnable unit; no spend.
 - DECISION (RESOLVE_BY_DEFAULT): CCR_MAIN_CANARY default-on is the evidence-backed pick (L5 -22.3%, L6 -27.8%, 6/6 correct, 0 page faults), reversible via the env var kill switch; it is a live ~/.claude release on the laptop, so left as OWNER DECISION NEEDED, not acted on here.
 - Remaining laptop-only: Phase 4 smoke (/clear -> /kresume), Phase 5, Phase 8 ratchet/UKDL/dogfood.
+
+## Worker epoch 14 (GEX44)
+- Reconciled: HEAD 6e973568, clean (untracked .claude/worktrees, .pp-capabilities only). Remote laptop (d486ab6d), laptop2 (6862bc96), ctx-rent-x-l6 (68996971) unchanged. Phases 4,5,8 remain laptop-only; CCR_MAIN_CANARY default-on stays OWNER DECISION NEEDED. No GEX44-runnable unit; no spend.
