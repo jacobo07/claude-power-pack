@@ -271,10 +271,12 @@ test('a unit leaves the memory section out and keeps every other section', () =>
   expect(decideUnitSection('env_info_simple').action).toBe('keep')
 })
 
-test('main-lean canary: only CCR_MAIN_CANARY=1 on an interactive, unit-less session turns it on', () => {
+test('main-lean canary: default-on on an interactive, unit-less session; CCR_MAIN_CANARY=0 opts out', () => {
   const m = { ...DEFAULT_MODES }
   expect(mainCanaryMode('1', true, false, m, true)).toBe('enforce')
-  expect(mainCanaryMode(undefined, true, false, m, true)).toBe('off')
+  expect(mainCanaryMode(undefined, true, false, m, true)).toBe('enforce')
+  expect(mainCanaryMode(undefined, false, false, m, true)).toBe('off')
+  expect(mainCanaryMode(undefined, true, true, m, true)).toBe('off')
   expect(mainCanaryMode('0', true, false, m, true)).toBe('off')
   expect(mainCanaryMode('true', true, false, m, true)).toBe('off')
   expect(mainCanaryMode('1', false, false, m, true)).toBe('off')

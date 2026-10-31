@@ -38,7 +38,7 @@ let lastGeneration: string | null = null
 let skillListing = ''
 let agentListing = ''
 let mcpListing = ''
-// Main-lean canary (v4 A7): set once at session start from CCR_MAIN_CANARY; 'off' until then, so stock text.
+// Main-lean canary (v4 A7): set once at session start from CCR_MAIN_CANARY; 'off' until then, so stock text; default-on, CCR_MAIN_CANARY=0 opts out.
 let canary: Mode = 'off'
 // Floor-diet canary on /kresume successors (Tranche A4): decided once, at the first main attachment, from the first prompt.
 let successor = false
@@ -209,7 +209,7 @@ export const register: Register = on => {
     try { releaseText = await $.fs.read(`${$.plugin.root}/RELEASE.json`) } catch { releaseText = null } // dev load: no release id
     const eff = effectiveModes(modes, compatible, !!unit)
     let canaryEnv: string | undefined
-    try { canaryEnv = await $.env.get('CCR_MAIN_CANARY') } catch { canaryEnv = undefined } // no env access: no canary
+    try { canaryEnv = await $.env.get('CCR_MAIN_CANARY') } catch { canaryEnv = '0' } // no env access: fail closed, no canary
     canary = mainCanaryMode(canaryEnv, e.isInteractive === true, !!unit, modes, compatible)
     sessionInteractive = e.isInteractive === true
     let gen: string | null = null

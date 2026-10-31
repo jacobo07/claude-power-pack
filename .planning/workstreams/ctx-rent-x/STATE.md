@@ -117,3 +117,6 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 
 ## Worker epoch 14 (GEX44)
 - Reconciled: HEAD 6e973568, clean (untracked .claude/worktrees, .pp-capabilities only). Remote laptop (d486ab6d), laptop2 (6862bc96), ctx-rent-x-l6 (68996971) unchanged. Phases 4,5,8 remain laptop-only; CCR_MAIN_CANARY default-on stays OWNER DECISION NEEDED. No GEX44-runnable unit; no spend.
+
+## OWNER DECISION D1 (2026-10-31) -- RESOLVED
+- CCR_MAIN_CANARY default-on: Owner YES. Conditions: ship as CCR release via tools/ccr_release.py (source_commit in RELEASE.json); start-receipt smoke on a fresh interactive pane (release id + main mode); `ccr_release.py rollback` verified before declaring live; CCR_MAIN_CANARY=0 still opts a pane out. Do not edit GEX44 ~/.claude. Then units 7/8 + Phase 8 (UKDL/ratchet/done_gate) within 20M.

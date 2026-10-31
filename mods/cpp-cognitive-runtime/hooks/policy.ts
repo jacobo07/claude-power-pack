@@ -538,15 +538,16 @@ export function pageLines(listing: string, query: string, limit = 40): string {
 }
 
 // ---------------------------------------------------------------------------------------------------
-// Main-lean canary (v4 A7). Opt-in per launch: CCR_MAIN_CANARY=1, read once at session start, on an interactive
-// session with no Work Unit. The A7 shadow (tools/ccr_main_shadow.py) found that dropping the listings, as unit closure
+// Main-lean canary (v4 A7). DEFAULT-ON (Owner D1, 2026-10-31; L5 -22.3% call-1, L6 -27.8% processed, 6/6 correct, 0 page
+// faults): unset or CCR_MAIN_CANARY=1 turns it on, CCR_MAIN_CANARY=0 (or any other value) opts the pane out. Read once at
+// session start, on an interactive session with no Work Unit. The A7 shadow (tools/ccr_main_shadow.py) found that dropping the listings, as unit closure
 // does, would have removed a capability 19 of 50 interactive sessions later used (14 Skill, 43 Agent calls), so the
 // main session keeps every name and loses only the descriptions; the full text is one page call away.
-// Rollback: unset the variable, `ccr_release.py rollback`, or the OFF file (main off turns the canary off too).
+// Rollback: CCR_MAIN_CANARY=0, `ccr_release.py rollback`, or the OFF file (main off turns the canary off too).
 export const MAIN_LEAN_ATTACHMENTS = new Set(['skill_listing', 'agent_listing_delta', 'mcp_instructions_delta'])
 
 export function mainCanaryMode(env: string | undefined, interactive: boolean, hasUnit: boolean, modes: Modes, compatible: boolean): Mode {
-  if (env !== '1' || !interactive || hasUnit || modes.main === 'off') return 'off'
+  if ((env !== undefined && env !== '1') || !interactive || hasUnit || modes.main === 'off') return 'off'
   return compatible ? 'enforce' : 'shadow'
 }
 
