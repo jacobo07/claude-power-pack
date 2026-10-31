@@ -7257,6 +7257,7 @@ def _cli(argv=None) -> int:
     rq.add_argument("--ram-free-gb", type=float, default=None)
     rq.add_argument("--path", default=None, help="a path that must exist, e.g. R:\\hwf")
     rq.add_argument("--no-process", default=None, help="an image name that must not be running, e.g. electron")
+    rq.add_argument("--not-before", help="ISO time with a timezone (or epoch seconds); the mission waits parked, no launch and no iteration, until then")
     rq.add_argument("--clear", metavar="OBLIGATION", default=None, help="remove that obligation's requirements")
     bd = sub.add_parser("bind", help="AMCR: bind the mission to the git worktree its worker now writes "
                                      "(every observer follows it)")
@@ -7393,7 +7394,7 @@ def _cli(argv=None) -> int:
         if not args.obligation:
             raise MissionError("--obligation is required (or --clear <obligation>)")
         specs = [(k, v) for k, v in (("ram_free_gb", args.ram_free_gb), ("path_exists", args.path),
-                                     ("no_process", args.no_process)) if v is not None]
+                                     ("no_process", args.no_process), ("not_before", args.not_before)) if v is not None]
         rec = set_requires(args.mission, args.obligation, specs)
         print(f"REQUIRES SET mission={rec['mission_id']} obligation={args.obligation} total={len(rec['requires'])}")
         return 0

@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import os
 import subprocess
+import time
+from datetime import datetime
 from typing import Any, Callable
 
-KINDS = ("ram_free_gb", "path_exists", "no_process")
+KINDS = ("ram_free_gb", "path_exists", "no_process", "not_before")
 MET, UNMET, UNKNOWN = "MET", "UNMET", "UNKNOWN"
 NO_OBLIGATION = "(mission)"
 
@@ -64,7 +66,26 @@ def probe_no_process(arg: Any) -> int:
     return sum(1 for ln in out.stdout.splitlines() if ln.startswith('"'))
 
 
+def probe_not_before(arg: Any) -> float:
+    """The wall clock (epoch seconds). The arg is judged in _judge, so a bad arg is UNKNOWN there."""
+    return time.time()
+
+
+def not_before_ts(arg: Any) -> float:
+    """Epoch seconds from an epoch number or a timezone-aware ISO time. A naive ISO time is refused (ValueError):
+    the laptop runs CET and GEX44 UTC, so a naive time would mean two different instants."""
+    try:
+        return float(arg)
+    except (TypeError, ValueError):
+        pass
+    dt = datetime.fromisoformat(str(arg).strip().replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        raise ValueError(f"not_before {arg!r} has no timezone")
+    return dt.timestamp()
+
+
 PROBES: dict[str, Callable[[Any], Any]] = {
+    "not_before": probe_not_before,
     "ram_free_gb": probe_ram_free_gb,
     "path_exists": probe_path_exists,
     "no_process": probe_no_process,
@@ -80,6 +101,9 @@ def _judge(kind: str, arg: Any, measured: Any) -> tuple[str, str]:
         return (MET, "present") if measured else (UNMET, "absent")
     if kind == "no_process":
         return (MET, "not running") if int(measured) == 0 else (UNMET, f"{int(measured)} running")
+    if kind == "not_before":
+        need, got = not_before_ts(arg), float(measured)
+        return (MET, "time reached") if got >= need else (UNMET, f"{int(need - got)} s to go")
     raise ValueError(f"unknown requirement kind {kind!r}")
 
 
