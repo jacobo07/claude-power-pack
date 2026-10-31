@@ -1,0 +1,38 @@
+[
+ {
+  "plane": "kobicraft-gex44",
+  "file": "035583c5-ccc5-44ee-8326-3a73f6584474.jsonl",
+  "processed_input": 26004951,
+  "calls": 112,
+  "tool_results": 96,
+  "result_rent_tokens_APPROX": 2849011,
+  "dead_rent_tokens_UPPER_BOUND": 470770,
+  "dead_share_of_result_rent": 0.165,
+  "never_referenced_rent_tokens": 216288,
+  "compaction_boundaries": 0
+ },
+ {
+  "plane": "kobicraft-gex44",
+  "file": "382f1d27-4d0e-4a50-b5bd-504940ee1194.jsonl",
+  "processed_input": 36249140,
+  "calls": 223,
+  "tool_results": 227,
+  "result_rent_tokens_APPROX": 3557374,
+  "dead_rent_tokens_UPPER_BOUND": 207913,
+  "dead_share_of_result_rent": 0.058,
+  "never_referenced_rent_tokens": 82459,
+  "compaction_boundaries": 5
+ },
+ {
+  "plane": "kobicraft-gex44",
+  "file": "770ad1bc-3ded-4626-be5d-bdcf67cae537.jsonl",
+  "processed_input": 40791258,
+  "calls": 258,
+  "tool_results": 220,
+  "result_rent_tokens_APPROX": 3257145,
+  "dead_rent_tokens_UPPER_BOUND": 233103,
+  "dead_share_of_result_rent": 0.072,
+  "never_referenced_rent_tokens": 96717,
+  "compaction_boundaries": 6
+ }
+]
