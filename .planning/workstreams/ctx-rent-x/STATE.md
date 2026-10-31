@@ -129,3 +129,8 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 - Reconciled: HEAD c520ddcc, clean (untracked .claude/worktrees, .pp-capabilities only). No new laptop branches (laptop d486ab6d, laptop2 6862bc96, l6 68996971 unchanged; mission/ctx-rent-x is an ancestor).
 - The predecessor's open step is L8 (`claude plugin test`, then `python3 tools/ccr_release.py release` on the laptop). It needs the laptop's compiled digest and a fresh interactive pane; GEX44 ~/.claude must not be touched (D1). Not runnable here, so default-on stays NOT live and CR-25..29 stay UNKNOWN.
 - DECISION (RESOLVE_BY_DEFAULT): no fakeable unit; no spend. OWNER ACTION: on the laptop, check out mission/ctx-rent-x and run LAPTOP_STEPS.md L8, then resume `/gsd-autonomous --ws ctx-rent-x`.
+
+## Worker epoch 6 of mission (GEX44)
+- Reconciled: HEAD 6073e63a, clean (untracked .claude/worktrees, .pp-capabilities only). Remote branches unchanged (laptop d486ab6d, laptop2 6862bc96, l6 68996971; origin/mission/ctx-rent-x is an ancestor of HEAD). No L8 result.
+- L8 (compiled-digest release, fresh-pane start-receipt smoke, rollback verify) needs the laptop; D1 forbids touching GEX44 ~/.claude. Default-on NOT live; CR-25..29 stay UNKNOWN. No GEX44-runnable unit; no spend.
+- DECISION (RESOLVE_BY_DEFAULT): not fakeable here, left in LAPTOP_STEPS.md L8. OWNER ACTION: on the laptop run L8, then resume `/gsd-autonomous --ws ctx-rent-x`.
