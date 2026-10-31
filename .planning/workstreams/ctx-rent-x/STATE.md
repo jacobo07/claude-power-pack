@@ -42,3 +42,10 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 - Spend: this session 67aa29b4 = 1,033,530 processed (measured, session-tree). Epoch-1 spend still unbooked (no sid in handoff).
 - DECISION: ff-merge of mission/ctx-rent-x-w0 into mission/ctx-rent-x skipped; the mission is bound to w0 and the laptop coordinator fetches w0. Reversible later.
 - OWNER NOTE: none needed. Next runnable: Phase 2 (floor diet) edits `~/.claude` on GEX44, which the roadmap forbids from here -> its edits go to LAPTOP_STEPS; Phase 2 BLOCKED-ON-LAPTOP.
+
+## Phase 6 results (worker epoch 3, 2026-10-31, plane GEX44)
+- `tools/ctx_wait.py` classifies calls as WAIT_SLEEP / WAIT_NOTIFY / WAIT_REASK / WORK (APPROX command-text heuristic; processed counts measured). `ccr_pgo.contract(..., waiting=)` carries a shadow annotation; the verdict never reads it.
+- Estate 2026-10-25..10-31, 976 sessions, 15,893 calls: waiting = 159 calls (68 sleep, 17 notify, 74 re-ask), 20.85M of 1,577.9M processed = 1.32%. Small lever on this host; worst sessions 6-20% share. File: `vault/programs/ctx-rent-x/waiting-gex44-w0.json`.
+- `test_ctx_wait.py` 12/12 (incl. mutation drill and positive/negative controls); `test_ctx_rent.py` 20/20.
+- Phase 6 COMPLETE (shadow). Phases 2,3,4,5,7,8 all need the laptop (live ~/.claude edits, interactive panes, laptop release) or depend on them: BLOCKED-ON-LAPTOP. Laptop steps pending: L1, L2 (in LAPTOP_STEPS.md).
+- DECISION: L1/L2 are laptop-plane and not runnable here; left in LAPTOP_STEPS.md, not claimed.

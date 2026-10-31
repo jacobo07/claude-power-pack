@@ -89,11 +89,13 @@ def anomaly(pgo: dict, path: Path) -> list[dict]:
     return out
 
 
-def contract(pgo: dict | None, obligation: str, image: Path, cap: float | None) -> dict:
+def contract(pgo: dict | None, obligation: str, image: Path, cap: float | None, waiting: dict | None = None) -> dict:
     text = image.read_text(encoding="utf-8", errors="replace")
     image_tok = round(len(text) * PROSE_TOK_PER_CHAR)
     c = {"obligation": obligation, "image": str(image), "image_chars": len(text), "image_tok_est": image_tok,
          "work_class": pgo["cls"] if pgo else None, "necessity": "NOVEL", "reasons": []}
+    if waiting is not None:  # Phase 6 shadow: advisory only, the verdict below never reads it
+        c["waiting_shadow"] = waiting
     if not pgo or not pgo.get("n"):
         c.update(verdict="ADMIT_UNFORECAST", forecast=None)
         c["reasons"].append("no Work-Class model: cost is UNKNOWN, not zero")
