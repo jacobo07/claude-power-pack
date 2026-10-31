@@ -102,7 +102,10 @@ def run(arm):
 
 def main():
     res = {"contract": "P3-main-canary (existing v4 A7 CCR_MAIN_CANARY=1, live release)", "cwd": str(CWD), "probes": []}
-    for s, seq in (("A", "CTCT"), ("B", "TCTC")):
+    seqs = (("A", "CTCT"), ("B", "TCTC"))
+    if len(sys.argv) > 4:
+        seqs = ((sys.argv[4], sys.argv[5]),)
+    for s, seq in seqs:
         for i, a in enumerate(seq):
             r = run(a); r["seq"] = f"{s}{i}"
             res["probes"].append(r)

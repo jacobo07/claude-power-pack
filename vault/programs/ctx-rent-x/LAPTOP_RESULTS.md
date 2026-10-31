@@ -56,3 +56,15 @@ Needs `hooks/session_start_hub.js`, which carries another pane's uncommitted edi
 1. floor_diet.py skill description = first non-heading line cut at 300 chars: mid-sentence, and a leading quote broke the YAML.
 2. memory_trim keeps the HEAD 200 lines; memory indexes append at the END, so it would park the newest hooks.
 3. Phase 3 built CCR_MAIN_MODE without finding CCR_MAIN_CANARY (v4 A7) in the live release: the worker read the branch, not live.
+
+## L5 RESULT: PASS (2026-10-31 ~18:00 local, foreground batches after the reaper kill)
+Existing v4 A7 main-lean canary on the LIVE release, real interactive `claude --model haiku` panes (ConPTY), cwd = PP root,
+claude 2.1.316. Batch A CTCT (`main-canary-A.json`), batch B TCTC (`main-canary-B.json`). Every start receipt: release 0.1.0-b15bfc3d,
+canary `enforce` on all 4 T, `off` on all 4 C.
+- control call-1: 93,239 / 92,943 / 93,433 / 92,940 (mean 93,139, spread 0.53 %)
+- CCR_MAIN_CANARY=1: 71,053 / 72,621 / 73,076 / 72,623 (mean 72,343)
+- **delta -20,795 call-1 tokens (-22.3 %), N=4 per arm, MEASURED.**
+Not measured yet: page faults (descriptions paged back) and task quality on real work; the probe is "reply OK".
+Scale (ESTIMATE): x 35,586 top-level calls/week (laptop ESTATE 10-18..25) = ~740M/week if every interactive pane ran it.
+The A1 partial (1 control 93,396) is consistent with the batch controls.
+Next: page-fault + quality arm on a real bounded task, then the Phase 8 decision on making it the main default (ratchet).
