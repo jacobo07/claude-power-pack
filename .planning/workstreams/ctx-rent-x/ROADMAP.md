@@ -3,9 +3,20 @@
 Authority: `vault/plans/ctx-rent-x-2026-10-31.md` (Owner `approve ctx-rent-x only`, 2026-10-31). Read its sections 1
 (Reality Scan: owners already exist — EXTEND, never create a parallel system) and 3-5 (economics, kill switches,
 Production Reality) before Phase 1, then do NOT re-scan what it already states.
-PLANE: laptop, live checkout `~/.claude/skills/claude-power-pack`, branch `feature/knowledge-acquisition`, shared tree with
-1000+ foreign dirty files: pathspec-scoped micro-commits only, one causal delta each, never take a foreign hunk; after every
-commit check `git log -1 --format=%s`. Git is `& 'C:\Program Files\Git\cmd\git.exe'` (not on PowerShell PATH). No push.
+PLANE: **GEX44** (Owner "arm on GEX44", 2026-10-31; laptop had 0.7-1.5 GB free against the 3000 MB floor). You run in
+the clone `~/missions/ctx-rent-x`, branch `mission/ctx-rent-x`. Commit every sealed delta there with the repo-local
+identity, one causal delta per commit. Do NOT push and do NOT touch GEX44's live install `~/.claude/skills/claude-power-pack`
+or `~/.claude` config (other missions run on it). Use Bash (Linux). The laptop coordinator fetches your branch and lands it.
+The laptop record m-41a3cf339d68 is OWNER-HELD; you are the only writer.
+- **Your data:** THIS host's `~/.claude/projects/**/*.jsonl` and `~/.claude/state/` (same account as the laptop; GEX44 ran
+  KSR/KME, Flow Compression, CCR-NEXT and CCN missions, so high-rent transcripts are here). Laptop-plane numbers in the
+  plan are quoted evidence, never data you can re-read. Label every figure with its plane.
+- **CCR here** loads only as `--plugin-dir mods/cpp-cognitive-runtime` (dev); use that for `claude -p` champion/challenger.
+- **LAPTOP STEPs:** anything needing the laptop's `~/.claude` (live CCR release, interactive panes, laptop transcripts,
+  floor-diet edits to laptop rules/agents/MEMORY/hooks) is written as a numbered, copy-pasteable entry in
+  `vault/programs/ctx-rent-x/LAPTOP_STEPS.md` (command, expected output, acceptance), committed, and the phase is marked
+  BLOCKED-ON-LAPTOP in STATE.md. Continue with any phase that does not depend on it. Never claim a laptop result from here.
+- **Spend** is booked by the laptop coordinator into laptop goal `ctx-rent-x` with `--measured` from your transcripts.
 EXECUTION mode, small scopes. **Plan each phase inline in this session. Do NOT dispatch gsd-planner / gsd-phase-researcher
 subagents** (m-868c1464febb: an unbounded planner burned 16.3M and wrote no plan). At most 2 bounded subagents in parallel,
 each with a compiled packet (files, question, bound, output path).
