@@ -63,6 +63,21 @@ def main() -> int:
         check("V-CCR-MARKETPLACE", mp["plugins"][0]["source"] == "./active" and mp["name"] == cr.MARKETPLACE,
               f"marketplace entry {mp['plugins'][0]}")
 
+        # source_commit: the generation -> commit link must be observable in RELEASE.json
+        rj = json.loads((r1 / "RELEASE.json").read_text(encoding="utf-8"))
+        check("V-CCR-SOURCE-COMMIT-KEY", "source_commit" in rj, f"RELEASE.json keys {sorted(rj)}")
+        m_sc = make_mod(base, "0.3.0", "export const v = 3")
+        r_sc = cr.build(root, m_sc, digest, source_commit="deadbeef" * 5)
+        check("V-CCR-SOURCE-COMMIT-EXPLICIT",
+              json.loads((r_sc / "RELEASE.json").read_text(encoding="utf-8")).get("source_commit") == "deadbeef" * 5,
+              "an explicit source_commit is recorded verbatim")
+        check("V-CCR-SOURCE-COMMIT-NOT-IN-ID", r_sc.name.startswith("0.3.0-") and cr.build(root, m_sc, digest, source_commit="0" * 40) == r_sc,
+              "the release id is content-only: a different commit does not mint a new release")
+        m_nogit = make_mod(base, "0.4.0", "export const v = 4")
+        r_ng = cr.build(root, m_nogit, digest)
+        check("V-CCR-SOURCE-COMMIT-UNKNOWN-NOT-FAKED", json.loads((r_ng / "RELEASE.json").read_text(encoding="utf-8"))["source_commit"] is None,
+              "a mod outside any git work tree records null, never a guessed hash")
+
         # v2 then rollback restores v1 (and a second rollback restores v2)
         m2 = make_mod(base, "0.2.0", "export const v = 2")
         r2 = cr.build(root, m2, digest)
