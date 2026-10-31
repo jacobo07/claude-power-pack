@@ -43,7 +43,9 @@ with tempfile.TemporaryDirectory() as td:
     ok("V-DIET-APPLY-INDEX-LISTS-MOVED", all(r in (c / "rules/skill-rule-index.md").read_text() for r in fd.RULES_TO_SKILLS))
     mem = c / "projects/p1/memory"
     ok("V-DIET-APPLY-MEMORY-200", len((mem / "MEMORY.md").read_text().splitlines()) == 200 and len((mem / "MEMORY_COLD.md").read_text().splitlines()) == 60)
-    ok("V-DIET-APPLY-LOSSLESS-MEMORY", (mem / "MEMORY.md").read_text().splitlines() + (mem / "MEMORY_COLD.md").read_text().splitlines() == [f"- line {i}" for i in range(260)])
+    mm = (mem / "MEMORY.md").read_text().splitlines()
+    ok("V-DIET-APPLY-LOSSLESS-MEMORY", sorted(mm + (mem / "MEMORY_COLD.md").read_text().splitlines()) == sorted(f"- line {i}" for i in range(260)))
+    ok("V-DIET-MEMORY-KEEPS-NEWEST-TAIL", mm[-1] == "- line 259" and "- line 0" not in mm and "- line 0" in (mem / "MEMORY_COLD.md").read_text())
     ok("V-DIET-APPLY-CHANGED-SOMETHING", snap(home) != before)
     fd.revert(home, b)
     ok("V-DIET-REVERT-BYTE-IDENTICAL", snap(home) == before)
@@ -54,5 +56,11 @@ with tempfile.TemporaryDirectory() as td:
     except SystemExit: refused = True
     ok("V-DIET-REFUSES-SKILL-COLLISION", refused)
 
+long = "Alpha beta. " * 40 + "tail"
+d = fd._description("# T\n\n" + long, "x")
+import json as _j
+ok("V-DIET-DESC-NOT-MIDWORD", _j.loads(d).endswith(".") and len(_j.loads(d)) <= 300, d[-20:])
+q = fd._description("# T\n\n\"Quoted\" start: with colon", "x")
+ok("V-DIET-DESC-YAML-SAFE", q.startswith('"') and _j.loads(q) == '"Quoted" start: with colon')
 print(f"DIET_PASS={P}/{P+F}  threshold={P+F}/{P+F}")
 sys.exit(0 if F == 0 else 1)

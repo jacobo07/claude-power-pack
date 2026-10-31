@@ -22,9 +22,10 @@ Acceptance: per-row measured delta, N>=2 per arm.
 ## L4 — Row 5, hook additionalContext cap (laptop; edits ~/.claude/hooks)
 Back up each hook file to ~/.claude/backups/ctx-rent-x-<ts>/, cap emitted additionalContext at 1000 chars inside the hook, revert = restore the backup. Measure with the same contract (row `hook_context_cap`, add it to the contract before probing).
 
-## L5 — Phase 3 main canary (laptop)
-Requires Claude build in `COMPAT` (2.1.296; GEX44 has 2.1.113, so mod tests cannot run here).
-1. Mod tests: `claude plugin test mods/cpp-cognitive-runtime` (red first: before this commit's policy.ts change `resolveMainMode` import fails; now 2 new tests must pass). Dev load: `claude --plugin-dir mods/cpp-cognitive-runtime`.
-2. Release: `python tools/ccr_release.py release --impact none`; backup `~/.claude/ccr/ACTIVE.json` first; revert = restore it.
-3. Run the frozen `contracts/P3-main-canary.contract.json`: >=3 counterbalanced pairs in real interactive panes, arm = `CCR_MAIN_MODE=enforce` vs unset. Smoke: start receipt shows `main:enforce` and `main_source:"env"`.
-Do not flip the default; that is a Phase 8 ratchet item.
+## L5 — SUPERSEDED (D2). CCR_MAIN_MODE dropped; the live release already ships CCR_MAIN_CANARY=1 (v4 A7).
+Measured on laptop: -20,795 call-1 (-22.3%), N=4/arm. Mod tests for `mainCanaryMode` are in policy.test.ts; run `claude plugin test mods/cpp-cognitive-runtime` on the laptop (claude >= COMPAT build). Never release mods from a tree that lacks 35776051.
+
+## L6 — Canary page-fault + quality arm (laptop, real bounded task)
+Contract `contracts/P3-main-canary.contract.json` (arm = CCR_MAIN_CANARY=1 vs unset, n>=3 pairs, ABBA). Report processed tokens, cache-weighted cost, calls, page faults (page tool calls), repairs, rereads, answer correct. Foreground batches only (memory reaper kills long background runs). Output: vault/programs/ctx-rent-x/main-canary-quality.json. Then Phase 8 default decision.
+
+## L7 — Row 5 hook context cap: still NOT RUN (foreign WIP in session_start_hub.js). Run only when that file is clean.

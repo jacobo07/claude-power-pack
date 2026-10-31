@@ -43,6 +43,17 @@ def _dispatched_agents(claude: Path) -> set[str]:
     return names
 
 
+def _description(body: str, name: str) -> str:
+    """One YAML-safe line: the first prose line, cut at a sentence/word boundary (never mid-word), JSON-quoted."""
+    first = next((l.strip() for l in body.splitlines() if l.strip() and not l.startswith("#")), name)
+    if len(first) > 300:
+        cut = first[:300]
+        m = list(re.finditer(r"[.;:!?](\s|$)", cut))
+        cut = cut[: m[-1].end()] if m and m[-1].end() > 80 else cut.rsplit(" ", 1)[0]
+        first = cut.rstrip()
+    return json.dumps(first, ensure_ascii=False)  # JSON string is a valid YAML double-quoted scalar
+
+
 def plan(home: Path, keep_agents: set[str], used_agents: set[str]) -> dict:
     claude = home / ".claude"
     keep = keep_agents | used_agents | _dispatched_agents(claude)
@@ -96,8 +107,7 @@ def apply(home: Path, p: dict, ts: str) -> Path:
         if sk.exists():
             raise SystemExit(f"skill exists, refusing to overwrite: {sk}")
         sk.parent.mkdir(parents=True)
-        first = next((l for l in body.splitlines() if l.strip() and not l.startswith("#")), r)
-        sk.write_text(f"---\nname: {r}\ndescription: {first[:300].replace(chr(10), ' ')}\n---\n\n{body}")
+        sk.write_text(f"---\nname: {r}\ndescription: {_description(body, r)}\n---\n\n{body}")
         created.append(f".claude/skills/{r}/SKILL.md")
         src.unlink()
         lines.append(f"- `{r}` -> skill `{r}` (moved from always-loaded rules by ctx-rent-x floor diet)")
@@ -114,7 +124,11 @@ def apply(home: Path, p: dict, ts: str) -> Path:
         _backup(home, bdir, Path(m["path"]))
         touched.append(m["path"])
         ls = path.read_text().splitlines()
-        # keep the head (hooks to the newest/most-used memories are written first) and park the rest
+        # indexes append at the END, so the newest hooks are last: park the OLDEST lines (after the header), keep the tail
+        head = [l for l in ls[:2]] if ls and ls[0].startswith("#") else []
+        body_l = ls[len(head):]
+        keep_n = MEMORY_LIMIT - len(head)
+        old, new = body_l[: len(body_l) - keep_n], body_l[len(body_l) - keep_n:]
         cold = path.with_name("MEMORY_COLD.md")
         if cold.exists():
             _backup(home, bdir, Path(m["path"]).with_name("MEMORY_COLD.md"))
@@ -122,8 +136,8 @@ def apply(home: Path, p: dict, ts: str) -> Path:
         else:
             created.append(str(Path(m["path"]).with_name("MEMORY_COLD.md")))
         prior = cold.read_text() if cold.exists() else ""
-        cold.write_text(prior + ("\n" if prior and not prior.endswith("\n") else "") + "\n".join(ls[MEMORY_LIMIT:]) + "\n")
-        path.write_text("\n".join(ls[:MEMORY_LIMIT]) + "\n")
+        cold.write_text(prior + ("\n" if prior and not prior.endswith("\n") else "") + "\n".join(old) + "\n")
+        path.write_text("\n".join(head + new) + "\n")
 
     (bdir / "manifest.json").write_text(json.dumps({"home": str(home), "created": created, "touched": touched}, indent=1))
     return bdir

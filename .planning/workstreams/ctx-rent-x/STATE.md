@@ -59,3 +59,9 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 - Priority per D1: floor (attachments ~119K/call) over dead tool-output rent (5.8-16.5%).
 - Built on GEX44: Phase 3 `resolveMainMode` + `CCR_MAIN_MODE` opt-in (policy.ts, register.ts, 2 new tests in policy.test.ts; logic verified by node extraction, MAINMODE_OK; `claude plugin test` is unavailable here, build 2.1.113 vs COMPAT 2.1.296 -> laptop L5). Phase 2 `tools/floor_diet.py` + `test_floor_diet.py` 13/13 (scratch HOME, revert byte-identical). Frozen contracts in vault/programs/ctx-rent-x/contracts/. LAPTOP_STEPS L3-L5 written.
 - Phases 2 and 3 are CODE-COMPLETE; their measured acceptance remains laptop-only (L3-L5). Phases 4,5,7,8 still depend on them.
+
+## OWNER DECISION D2 — RESOLVED (2026-10-31, worker epoch 4)
+- Merged 6862bc96 ff-only. Laptop MEASURED: rules->skills -4,645 call-1 (kept applied); agents_park -9,664 not applied (needs parking used agents); L4 not run (foreign WIP in session_start_hub.js); L5 existing live CCR_MAIN_CANARY=1: -20,795 call-1 (-22.3%), N=4/arm interactive panes.
+- DECISION per D2: CCR_MAIN_MODE dropped (EXTEND > CREATE; my own tests for it removed, mainCanaryMode tests added). Defects fixed: (1) floor_diet skill description cut at a sentence/word boundary and JSON-quoted (YAML-safe); (2) memory_trim now parks the OLDEST lines and keeps the newest tail. test_floor_diet 16/16.
+- Defect 3 lesson: I built against the branch, not the live release. Rule: before building a lever, grep the live release (laptop contents recorded at 35776051) for an existing one.
+- Phase 2 measured on laptop (rules only applied); Phase 3 measured (-22.3%). Remaining: L6 quality/page-fault arm, then Phase 4,5,7,8. Phase 4/5 need laptop panes.

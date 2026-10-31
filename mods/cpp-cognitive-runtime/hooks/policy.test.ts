@@ -2,7 +2,7 @@ import { expect, test } from 'claude-code/testing'
 import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
-  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, resolveMainMode, DEFAULT_MODES,
+  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, mainCanaryMode, DEFAULT_MODES,
 } from './policy'
 import { isPlannerType } from './register'
 
@@ -271,18 +271,17 @@ test('a unit leaves the memory section out and keeps every other section', () =>
   expect(decideUnitSection('env_info_simple').action).toBe('keep')
 })
 
-test('CCR_MAIN_MODE=enforce opts one process into main enforcement; unset keeps the shadow default', () => {
-  expect(DEFAULT_MODES.main).toBe('shadow')
-  expect(resolveMainMode('shadow', 'enforce')).toEqual({ mode: 'enforce', source: 'env' })
-  expect(resolveMainMode('shadow', undefined)).toEqual({ mode: 'shadow', source: 'release' })
-  expect(resolveMainMode('shadow', null).mode).toBe('shadow')
-  expect(resolveMainMode('shadow', '').mode).toBe('shadow')
+test('main-lean canary: only CCR_MAIN_CANARY=1 on an interactive, unit-less session turns it on', () => {
+  const m = { ...DEFAULT_MODES }
+  expect(mainCanaryMode('1', true, false, m, true)).toBe('enforce')
+  expect(mainCanaryMode(undefined, true, false, m, true)).toBe('off')
+  expect(mainCanaryMode('0', true, false, m, true)).toBe('off')
+  expect(mainCanaryMode('true', true, false, m, true)).toBe('off')
+  expect(mainCanaryMode('1', false, false, m, true)).toBe('off')
+  expect(mainCanaryMode('1', true, true, m, true)).toBe('off')
 })
 
-test('CCR_MAIN_MODE: only the exact value enforces, and the kill switch always wins', () => {
-  expect(resolveMainMode('shadow', 'Enforce').mode).toBe('shadow')
-  expect(resolveMainMode('shadow', 'shadow').mode).toBe('shadow')
-  expect(resolveMainMode('shadow', 'off').mode).toBe('shadow')
-  expect(resolveMainMode('off', 'enforce')).toEqual({ mode: 'off', source: 'release' })
-  expect(resolveMainMode('enforce', undefined).mode).toBe('enforce')
+test('main-lean canary: an incompatible build only observes, and the main kill switch wins', () => {
+  expect(mainCanaryMode('1', true, false, { ...DEFAULT_MODES }, false)).toBe('shadow')
+  expect(mainCanaryMode('1', true, false, { ...DEFAULT_MODES, main: 'off' }, true)).toBe('off')
 })
