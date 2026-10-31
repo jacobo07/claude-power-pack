@@ -124,3 +124,8 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 ## Worker epoch 14 addendum (GEX44) -- D1 executed as far as this host allows
 - Committed 4a7939bc: mainCanaryMode default-on (unset or =1 -> on; =0/other -> off; non-interactive, unit, main-off, incompatible rules unchanged); register.ts env-read failure now fails closed. Predicate verified in node against 8 cases; test_ccr_release 24/24. `claude plugin test` not runnable here, so policy.test.ts is edited but not executed on this host.
 - Release rehearsal on GEX44 in a temp root (~/.claude untouched): build with source_commit, activate, rollback, re-swap verified. The real release needs the laptop's compiled digest (absent here), plus the fresh-pane start-receipt smoke -> LAPTOP_STEPS.md L8. Default-on is NOT declared live; CR-25..29 stay UNKNOWN until L8 passes.
+
+## Worker epoch 5 of mission (GEX44) -- post-D1 reconcile
+- Reconciled: HEAD c520ddcc, clean (untracked .claude/worktrees, .pp-capabilities only). No new laptop branches (laptop d486ab6d, laptop2 6862bc96, l6 68996971 unchanged; mission/ctx-rent-x is an ancestor).
+- The predecessor's open step is L8 (`claude plugin test`, then `python3 tools/ccr_release.py release` on the laptop). It needs the laptop's compiled digest and a fresh interactive pane; GEX44 ~/.claude must not be touched (D1). Not runnable here, so default-on stays NOT live and CR-25..29 stay UNKNOWN.
+- DECISION (RESOLVE_BY_DEFAULT): no fakeable unit; no spend. OWNER ACTION: on the laptop, check out mission/ctx-rent-x and run LAPTOP_STEPS.md L8, then resume `/gsd-autonomous --ws ctx-rent-x`.
