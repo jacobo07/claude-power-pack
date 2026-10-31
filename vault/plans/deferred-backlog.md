@@ -1596,6 +1596,7 @@ acting on one, read the file and check its state against the repo.
 - `2026-10-10_ce-unify-remaining.md` -- ce-unify mission.
 - `2026-10-10_caa-wake-t3-residual.md` -- caa-wake chain residual after W1R-2R (goal caa-wake-t3).
 - `2026-09-27_mission-supervisor-blocked.md` -- mission supervisor: 48 workers, zero work (m-66ebaaa0324e lineage).
+- `2026-10-31_ce-a3b-r-v2-milestone-blocked.md` -- ce-a3b-r v2 milestone, blocked on a spent goal (9,533,534 of 8,600,000). Also: the overwritten worktree RESUMPTION_FILE (old body at `8fb014fe`), the `/cpp-compound` 7+8 blocker, cap overshoot, budget-hook ETIMEDOUT, blind-overwrite allow-list. See D40.
 
 **Design and absorption:**
 - `2026-10-10_animejs-design-absorption.md` -- absorb Anime.js into PP Design.
@@ -1618,3 +1619,17 @@ acting on one, read the file and check its state against the repo.
 
 **Activation criterion:** per row, as written in its file. Next step for the index itself: when a row is confirmed done
 or obsolete, mark it here with the commit that closed it.
+
+## D40 -- ce-a3b-r: v2 milestone blocked on the goal budget, plus what the stall exposed (Owner 2026-10-31: "ponlo tambien en deferred backlog")
+
+Full item list: `vault/backlog/2026-10-31_ce-a3b-r-v2-milestone-blocked.md`. Worktree `C:\Users\User\Apps\pp-ce-a3b-r`.
+
+- **First:** the worktree `RESUMPTION_FILE.md` was overwritten (uncommitted, +20 / -356). The old body is intact at
+  `8fb014fe`. Merge it back under the new v2 block before anything commits that file.
+- **Owner decision:** a successor goal id for the milestone (`subelo 70M <goal>`), or close `ce-a3b-r`.
+- **Then:** `/gsd-new-milestone` + `/gsd-autonomous` with the approved v2 scope (chain-deadline instrument, reap path,
+  `continuation_transport` delivery, 5 mirror DRIFT pairs). The `/cpp-compound` 7+8 fix is excluded.
+- **Open defects:** `/cpp-compound` 7+8 blocked by an abandoned change in `tools/compound_unattended.py`; goal cap
+  overshot by ~933k (10.8 %); budget hook ETIMEDOUT on PowerShell; the closeout allow-list permits a blind overwrite.
+
+**Activation criterion:** the Owner gives a goal id, or anyone is about to commit in `pp-ce-a3b-r`, whichever comes first.
