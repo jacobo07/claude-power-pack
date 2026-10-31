@@ -1603,6 +1603,21 @@ acting on one, read the file and check its state against the repo.
 - `2026-10-02_cdio-modern-saas-styles.md` -- CDIO: three modern SaaS styles.
 - `2026-07-06_cognitive-os-vdepth-expansion.md` -- Cognitive OS V-DEPTH expansion to 2500 words/Part.
 - `2026-07-01_parallel-mesh-deferred.md` -- Parallel Mesh deferred systems.
+- `2026-10-21_cdio-brand-identity-logo-absorption.md` -- CDIO Brand Identity & Logos: evidence-gated GitHub absorption. Imported from `origin/main` 2026-10-31 (blob-identical). See D41.
+- `2026-10-30_cdio-21-design-resources-universal-absorption.md` -- CDIO Backlog: universal absorption of the 21 design resources (six screenshots), 36 falsification gates. Imported from `origin/main` 2026-10-31. See D41.
+- `2026-10-13_synsation-ux-patterns-absorption.md` -- absorb Synsation UX interaction patterns into PP Design. Imported from `origin/main` 2026-10-31. See D41.
+- `2026-10-31_orca-relay-design-captures.md` -- 65 design/UX/visual captures from other projects in the Orca relay (QuickLease Quickie's World, CostaLuz Legal Academy, KobiiCraft/CW Ops visual realism, KSR, Rail demo). None names CDIO literally. See D41.
+- `2026-10-31_github-issues-design-cdio.md` -- GitHub issues verbatim: TUA-X #4-#10 (CDIO named in #4, #6, #8, #10) + claude-power-pack #5. See D41.
+
+**Engineering absorption (imported from `origin/main` 2026-10-31, see D41):**
+- `2026-10-11_addyosmani-agent-skills-selective-absorption.md` -- CPP-AGSK-001: universal agent skills absorption & engineering baseline elevation.
+- `2026-10-11_diagnosing-bugs-causal-proof-ratchet.md` -- CPP-DBG-001: evidence-driven bug diagnosis & causal proof ratchet.
+- `2026-10-11_ruflo-security-absorption-sovereign-updates.md` -- CPP-RUFLO-001: secure Ruflo absorption, hardening & sovereign upstream updates.
+- `2026-10-11_tdd-evidence-first-vertical-slice-ratchet.md` -- CPP-TDD-001: evidence-first TDD & behavioral verification ratchet.
+
+**Orca relay (all 452 ChatGPT captures, collected and acked 2026-10-31, see D41):**
+- `2026-10-31_orca-relay-other-captures.md` -- 166 captures of other projects (Orca X, Rail, KobiiCraft, QuickLease, KSR, CW Ops, CostaLuz); durable copy, route to their own backlogs.
+- `2026-10-31_orca-relay-cpp-captures.md` -- 221 Claude Power Pack + GSD X Reconstruction Fabric captures (2026-10-05 UCR-CIF/ARCIF/AutoResearch; 10-10 Autonomous Mission Fabric, Semantic Control, Cognitive Architecture, GSD X REA/Procedure/Intervention; 10-11 SSM/Context Compiler/UTVM).
 
 **Tokens, cost and session delivery:**
 - `2026-10-03_token-economy-wave2.md` -- token economy, wave 2.
@@ -1633,3 +1648,41 @@ Full item list: `vault/backlog/2026-10-31_ce-a3b-r-v2-milestone-blocked.md`. Wor
   overshot by ~933k (10.8 %); budget hook ETIMEDOUT on PowerShell; the closeout allow-list permits a blind overwrite.
 
 **Activation criterion:** the Owner gives a goal id, or anyone is about to commit in `pp-ce-a3b-r`, whichever comes first.
+
+## D41 -- Every backlog seen on 2026-10-31: Orca relay, GitHub issues, and `main`-only backlog files (Owner 2026-10-31: "quiero que añadas absolutamente todos los backlogs que hemos visto al backlog de claude power pack")
+
+Six new files plus seven imported ones, all indexed under D39. Nothing below has been started or checked against the repo.
+
+- **Orca relay (VPS), collected 2026-10-31 (Owner: "recogelas todas y haz commit").** Source:
+  `infinity_mie_prod.orca_intent_relay` in the `infinityops_postgres_prod` container on 204.168.166.63. 452 captures
+  from 2026-10-05 to 2026-10-31; Orca had pulled none. All 452 now live in three files, partitioned by relay `id` (each
+  in exactly one): `2026-10-31_orca-relay-cpp-captures.md` (221: 161 Claude Power Pack + 60 GSD X),
+  `2026-10-31_orca-relay-design-captures.md` (65 design/UX/visual rows from other projects) and
+  `2026-10-31_orca-relay-other-captures.md` (166 remaining rows of other projects: Orca X 46, Rail 36, KobiiCraft Post
+  Launch 34, QuickLease 18, KSR 14, CW Ops 8, CostaLuz 7, others 3).
+  - **Acked:** all 452 via `InfinityMie.OrcaRelay.ack/3` (the module's own operation, through release `rpc`, batches of
+    100), outcome `ingested`, `acked_by = owner-cli:cpp-backlog-import-20261031`. Read back from the DB: 452 total,
+    0 unacked, 452 acked by the import. The relay is empty again (cap 500).
+  - **Consequence:** the purge job nulls the relay text 24 h after the ack and deletes the rows 7 days after it. From
+    then on these backlog files are the only copy of the text, apart from the backup below.
+  - **Backup before the ack (PR-7):** `/home/kobicraft/backups/orca_intent_relay_pre_ack_20261031.sql` on the VPS, 424,185
+    bytes, sha256 `a0401bd358393165d0779369bacf8513706d9488069524bf741d325e571f016f`. It covers
+    `orca_intent_relay` + `session_backlog_items` + `session_backlog_item_events`, and has 452 relay rows (matching the DB
+    count at dump time).
+  - **Ownership note:** the ack ran outside the HTTP relay-owner check (`owner_check`), so the bound Orca installation
+    did not perform it. If Orca later pulls, it gets nothing for these ids. That is intended: they were ingested here.
+- **GitHub issues.** `2026-10-31_github-issues-design-cdio.md`: TUA-X #4-#10 and claude-power-pack #5, bodies verbatim
+  via `gh` (the GitHub MCP returned 401). CDIO-owned work is TUA-X #4 (visual 10/10, render QA, >=3 distinct PDP
+  presentations); #6, #8 and #10 defer to CDIO / #4.
+- **`main`-only backlog files.** Seven files existed on `origin/main` `vault/backlog/` but not on this branch, and had no
+  index row on either side. Copied blob-identical (`git hash-object` = `origin/main` blob): the two CDIO files
+  (brand identity & logos 10-21, 21 design resources 10-30), Synsation UX patterns, and CPP-AGSK/DBG/RUFLO/TDD-001.
+- **Not exported:** Orca X's own local backlog (`C:\Users\User\Apps\orca-*-wt`, `docs/reference/universal-backlog.md`);
+  the search there was killed by Claude Code because the host was low on RAM.
+
+**First action:** route the 166 + 65 other-project items to their own project backlogs (they are kept here only as the
+durable copy). Then triage the Power Pack items by SDD-OS tier. Most relay items are ChatGPT-dictated epics, so verify
+premises (HR-PREMISE-001) before acting on any.
+
+**Activation criterion:** any CDIO / design work starts, or a project named in the relay files opens its backlog,
+whichever comes first.
