@@ -120,3 +120,7 @@ Arming pane f432029e (interactive, PP root) did the Reality Scan and arming inli
 
 ## OWNER DECISION D1 (2026-10-31) -- RESOLVED
 - CCR_MAIN_CANARY default-on: Owner YES. Conditions: ship as CCR release via tools/ccr_release.py (source_commit in RELEASE.json); start-receipt smoke on a fresh interactive pane (release id + main mode); `ccr_release.py rollback` verified before declaring live; CCR_MAIN_CANARY=0 still opts a pane out. Do not edit GEX44 ~/.claude. Then units 7/8 + Phase 8 (UKDL/ratchet/done_gate) within 20M.
+
+## Worker epoch 14 addendum (GEX44) -- D1 executed as far as this host allows
+- Committed 4a7939bc: mainCanaryMode default-on (unset or =1 -> on; =0/other -> off; non-interactive, unit, main-off, incompatible rules unchanged); register.ts env-read failure now fails closed. Predicate verified in node against 8 cases; test_ccr_release 24/24. `claude plugin test` not runnable here, so policy.test.ts is edited but not executed on this host.
+- Release rehearsal on GEX44 in a temp root (~/.claude untouched): build with source_commit, activate, rollback, re-swap verified. The real release needs the laptop's compiled digest (absent here), plus the fresh-pane start-receipt smoke -> LAPTOP_STEPS.md L8. Default-on is NOT declared live; CR-25..29 stay UNKNOWN until L8 passes.

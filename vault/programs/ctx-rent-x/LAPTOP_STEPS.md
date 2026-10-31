@@ -29,3 +29,12 @@ Measured on laptop: -20,795 call-1 (-22.3%), N=4/arm. Mod tests for `mainCanaryM
 Contract `contracts/P3-main-canary.contract.json` (arm = CCR_MAIN_CANARY=1 vs unset, n>=3 pairs, ABBA). Report processed tokens, cache-weighted cost, calls, page faults (page tool calls), repairs, rereads, answer correct. Foreground batches only (memory reaper kills long background runs). Output: vault/programs/ctx-rent-x/main-canary-quality.json. Then Phase 8 default decision.
 
 ## L7 — Row 5 hook context cap: still NOT RUN (foreign WIP in session_start_hub.js). Run only when that file is clean.
+
+## L8 — Ship CCR_MAIN_CANARY default-on (Owner D1, 2026-10-31; laptop, the only host with the compiled kernel digest)
+Source: commit 4a7939bc (policy.ts default-on, register.ts env-failure fails closed, policy.test.ts). GEX44 rehearsal (temp root, repo kernel copy): build -> activate -> rollback -> re-swap all swap `active` correctly; release carries source_commit. Not claimed live.
+1. `git fetch && git checkout mission/ctx-rent-x` (>= 4a7939bc, and tree must contain 35776051).
+2. `claude plugin test mods/cpp-cognitive-runtime` (needs claude >= COMPAT build); policy.test.ts default-on test must pass.
+3. `python3 tools/ccr_release.py status` (note current active id = rollback target), then `python3 tools/ccr_release.py release`. Check `~/.claude/ccr/active/RELEASE.json` has source_commit 4a7939bc or a descendant.
+4. Start a FRESH interactive pane WITHOUT CCR_MAIN_CANARY set; the latest `start` receipt in ~/.claude/ccr/state/receipts must show releaseId = the new id and canary = enforce (main mode). A second pane with CCR_MAIN_CANARY=0 must show canary = off.
+5. `python3 tools/ccr_release.py rollback`, confirm active id == the previous id, then re-run `release` (or rollback again) to restore. Only after 4 and 5 pass is it live.
+6. Save receipts' lines to vault/programs/ctx-rent-x/LAPTOP_RESULTS.md and resume `/gsd-autonomous --ws ctx-rent-x` for Phase 8 UKDL/ratchet.
