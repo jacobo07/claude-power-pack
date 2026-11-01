@@ -1,0 +1,49 @@
+{
+ "plane": "kobicraft-gex44",
+ "since": "2026-10-25T00:00:00Z",
+ "until": "2026-10-31T15:00:00Z",
+ "active_release": null,
+ "classes": {
+  "top-level": {
+   "UNKNOWN": {
+    "sessions": 935,
+    "calls": 14355,
+    "processed": 1341613291,
+    "floor_rent": 846868023,
+    "floor_sum": 55667786,
+    "mean_floor": 59538,
+    "floor_share": 0.631
+   }
+  },
+  "worker:background": {
+   "UNKNOWN": {
+    "sessions": 12,
+    "calls": 695,
+    "processed": 110241005,
+    "floor_rent": 72758476,
+    "floor_sum": 1235211,
+    "mean_floor": 102934,
+    "floor_share": 0.66
+   }
+  },
+  "subagent": {
+   "UNKNOWN": {
+    "sessions": 23,
+    "calls": 725,
+    "processed": 111594294,
+    "floor_rent": 55882964,
+    "floor_sum": 1499979,
+    "mean_floor": 65216,
+    "floor_share": 0.501
+   }
+  }
+ },
+ "total": {
+  "sessions": 970,
+  "calls": 15775,
+  "processed": 1563448590,
+  "floor_rent": 975509463
+ },
+ "files_read": 970,
+ "method": "calls = unique assistant message.id with usage inside the window; floor = call-1 input incl. cache; floor_rent = calls x floor; generation from the newest CCR start receipt by sid, none = UNKNOWN"
+}

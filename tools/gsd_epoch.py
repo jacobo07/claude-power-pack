@@ -960,6 +960,42 @@ def certify(mission_id: str, events: list[dict] | None = None, commits=_commits_
     return out
 
 
+# ------------------------------------------------------------------ rollover breakeven (advisory)
+def breakeven_advisory(context_tokens: int | None, expected_calls: int | None, *, successor_floor: int | None,
+                       bootstrap_tokens: int | None, page_in_tokens: int = 0, growth_per_call: int = 0,
+                       at_boundary: bool = False) -> dict:
+    """Advisory only: would a successor pane cost fewer processed tokens than continuing?
+
+    continue  = sum_{i<E} (C + g*i)               (every call re-carries the whole context)
+    successor = B + P + sum_{i<E} (F + g*i)        (bootstrap + page-ins, then a lean floor)
+    An input that is None makes the verdict UNMEASURED, never ROTATE. ROTATE_ADVISED needs a
+    semantic boundary and a saving; it never rotates a pane, it only names the numbers.
+    """
+    need = {"context_tokens": context_tokens, "expected_calls": expected_calls,
+            "successor_floor": successor_floor, "bootstrap_tokens": bootstrap_tokens}
+    missing = [k for k, v in need.items() if v is None]
+    if missing:
+        return {"verdict": "UNMEASURED", "missing": missing, "advisory_only": True}
+    e = max(0, int(expected_calls))
+    ramp = growth_per_call * (e * (e - 1) // 2)
+    cont = e * context_tokens + ramp
+    succ = bootstrap_tokens + page_in_tokens + e * successor_floor + ramp
+    saving = cont - succ
+    if saving <= 0:
+        verdict = "CONTINUE"
+    elif not at_boundary:
+        verdict = "HOLD_UNTIL_BOUNDARY"
+    else:
+        verdict = "ROTATE_ADVISED"
+    be = None
+    per_call_gain = context_tokens - successor_floor
+    if per_call_gain > 0:
+        be = -(-(bootstrap_tokens + page_in_tokens) // per_call_gain)
+    return {"verdict": verdict, "continue_tokens": cont, "successor_tokens": succ,
+            "saving_tokens": saving, "breakeven_calls": be, "at_boundary": bool(at_boundary),
+            "advisory_only": True}
+
+
 def _cli(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="context epochs of GSD missions")
@@ -973,6 +1009,12 @@ def _cli(argv=None) -> int:
     t.add_argument("--session", required=True)
     f = sub.add_parser("certify")
     f.add_argument("--mission", required=True)
+    b = sub.add_parser("breakeven")
+    for k in ("context", "calls", "floor", "bootstrap"):
+        b.add_argument("--" + k, type=int, required=True)
+    b.add_argument("--page-in", type=int, default=0)
+    b.add_argument("--growth", type=int, default=0)
+    b.add_argument("--boundary", action="store_true")
     w = sub.add_parser("watch")
     w.add_argument("--mission", required=True)
     w.add_argument("--every", type=int, default=180)
@@ -982,7 +1024,10 @@ def _cli(argv=None) -> int:
         print(json.dumps({"samples": watch(a.mission, a.every, int(a.max_hours * 3600)),
                           "log": str(owners_log(a.mission))}))
         return 0
-    if a.cmd == "certify":
+    if a.cmd == "breakeven":
+        out = breakeven_advisory(a.context, a.calls, successor_floor=a.floor, bootstrap_tokens=a.bootstrap,
+                                 page_in_tokens=a.page_in, growth_per_call=a.growth, at_boundary=a.boundary)
+    elif a.cmd == "certify":
         out = certify(a.mission)
     elif a.cmd == "census":
         out = census()

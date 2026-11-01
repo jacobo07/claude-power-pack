@@ -1,0 +1,56 @@
+[
+ {
+  "class": "subagent",
+  "generation": "UNKNOWN",
+  "from": {
+   "sessions": 73,
+   "calls": 3124,
+   "processed": 456063413,
+   "mean_floor": 66722
+  },
+  "to": {
+   "sessions": 23,
+   "calls": 725,
+   "processed": 111594294,
+   "mean_floor": 65216
+  },
+  "delta_processed": -344469119,
+  "delta_mean_floor": -1506
+ },
+ {
+  "class": "top-level",
+  "generation": "UNKNOWN",
+  "from": {
+   "sessions": 131,
+   "calls": 1603,
+   "processed": 254385454,
+   "mean_floor": 85763
+  },
+  "to": {
+   "sessions": 935,
+   "calls": 14355,
+   "processed": 1341613291,
+   "mean_floor": 59538
+  },
+  "delta_processed": 1087227837,
+  "delta_mean_floor": -26225
+ },
+ {
+  "class": "worker:background",
+  "generation": "UNKNOWN",
+  "from": {
+   "sessions": 12,
+   "calls": 703,
+   "processed": 113784413,
+   "mean_floor": 94050
+  },
+  "to": {
+   "sessions": 12,
+   "calls": 695,
+   "processed": 110241005,
+   "mean_floor": 102934
+  },
+  "delta_processed": -3543408,
+  "delta_mean_floor": 8884
+ }
+]

@@ -22,6 +22,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -51,7 +52,17 @@ def _inside(root: Path, target: Path) -> Path:
     return target
 
 
-def build(root: Path, mod: Path = MOD, digest: Path = DIGEST) -> Path:
+def _source_commit(mod: Path) -> str | None:
+    """HEAD of the git work tree holding the mod, or None when it is not in one. Never guessed."""
+    try:
+        r = subprocess.run(["git", "-C", str(mod), "rev-parse", "HEAD"], capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    out = r.stdout.strip()
+    return out if r.returncode == 0 and len(out) == 40 and all(c in "0123456789abcdef" for c in out) else None
+
+
+def build(root: Path, mod: Path = MOD, digest: Path = DIGEST, source_commit: str | None = None) -> Path:
     files = sorted(p for p in mod.rglob("*") if p.is_file() and _included(p, mod))
     if not digest.is_file():
         raise SystemExit(f"refused: kernel digest missing at {digest}; a release without it keeps full subagent instructions")
@@ -74,7 +85,8 @@ def build(root: Path, mod: Path = MOD, digest: Path = DIGEST) -> Path:
         shutil.copy2(p, out)
     (tmp / "kernel").mkdir(parents=True, exist_ok=True)
     shutil.copy2(digest, tmp / "kernel" / "HARD-RULES-DIGEST.md")
-    (tmp / "RELEASE.json").write_text(json.dumps({"release": dest.name, "version": _version(mod)}) + "\n", encoding="utf-8")
+    (tmp / "RELEASE.json").write_text(json.dumps({"release": dest.name, "version": _version(mod),
+                                                       "source_commit": source_commit or _source_commit(mod)}) + "\n", encoding="utf-8")
     tmp.rename(dest)
     return dest
 

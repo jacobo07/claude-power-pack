@@ -2,17 +2,10 @@ import { expect, test } from 'claude-code/testing'
 import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
-  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly,
+  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, mainCanaryMode, DEFAULT_MODES,
 } from './policy'
-import { isPlannerType } from './register'
-
-test('the spawn receipt flags a planner fan-out agent and no other type', () => {
-  expect(isPlannerType('gsd-planner')).toBe(true)
-  expect(isPlannerType('gsd-plan-checker')).toBe(true)
-  expect(isPlannerType('gsd-executor')).toBe(false)
-  expect(isPlannerType('gsd-planner-extra')).toBe(false)
-  expect(isPlannerType(undefined)).toBe(false)
-})
+// isPlannerType (dc4bf2b4) is not in the live release 0.1.0-b15bfc3d that 35776051 synced register.ts to; its test lives
+// with that branch. Importing it here made this whole file fail to load, so no test in it ran.
 
 // The madzia-worker model tools/ccr_pgo.py built from post-fix attempts a6-a8 (2026-10-12).
 const MADZIA = JSON.stringify({ cls: 'madzia-worker', n: 3, floor: { p50: 18938, p80: 19049.6 }, calls: { p50: 25, p80: 28.6 },
@@ -269,4 +262,21 @@ test('a unit drops listings it cannot act on, replaces instructions with kernel 
 test('a unit leaves the memory section out and keeps every other section', () => {
   expect(decideUnitSection('memory').action).toBe('drop')
   expect(decideUnitSection('env_info_simple').action).toBe('keep')
+})
+
+test('main-lean canary: default-on on an interactive, unit-less session; CCR_MAIN_CANARY=0 opts out', () => {
+  const m = { ...DEFAULT_MODES }
+  expect(mainCanaryMode('1', true, false, m, true)).toBe('enforce')
+  expect(mainCanaryMode(undefined, true, false, m, true)).toBe('enforce')
+  expect(mainCanaryMode(undefined, false, false, m, true)).toBe('off')
+  expect(mainCanaryMode(undefined, true, true, m, true)).toBe('off')
+  expect(mainCanaryMode('0', true, false, m, true)).toBe('off')
+  expect(mainCanaryMode('true', true, false, m, true)).toBe('off')
+  expect(mainCanaryMode('1', false, false, m, true)).toBe('off')
+  expect(mainCanaryMode('1', true, true, m, true)).toBe('off')
+})
+
+test('main-lean canary: an incompatible build only observes, and the main kill switch wins', () => {
+  expect(mainCanaryMode('1', true, false, { ...DEFAULT_MODES }, false)).toBe('shadow')
+  expect(mainCanaryMode('1', true, false, { ...DEFAULT_MODES, main: 'off' }, true)).toBe('off')
 })

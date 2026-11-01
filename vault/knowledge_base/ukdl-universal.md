@@ -17778,3 +17778,19 @@ Evidence: one Owner topology decision caused by the agent in m-3f1feb210a74. Tes
 
 **`HR-CANDIDATE-DEFAULT-ENVELOPE-IS-NEVER-OWNER-AUTHORITY`** -- STATUS: CANDIDATE pending production proof. A default policy envelope is never Owner authority: it may park a mission, it may not be presented as an Owner decision or as a forecast.
 Fix: 203e8e26 (`authority_kind`). Evidence: m-3f1feb210a74. Promote only after a production mission shows the typed split holding.
+
+## ctx-rent-x Phase 8 (2026-10-31) -- evidence-backed entries only
+
+### Process Rules
+**`PR-NO-RUNNABLE-UNIT-STOPS-THE-EPOCH-001`** -- A worker whose reconcile finds no runnable unit on its plane writes ONE owner note in STATE.md and stops in that same epoch; epochs that only reconcile are not scheduled.
+Fix: recorded in `vault/programs/ctx-rent-x/IMMUNITY.md` (runner check proposed there: refuse a new epoch after N "no runnable unit" epochs with no moved remote branch).
+Evidence: ctx-rent-x epochs 5-6 and m-f92eb3ef9ccc epochs 8-10 each paid model calls only to re-learn that work waited on the laptop; Phase 6 measures waiting at 1.32% of processed tokens (`waiting-gex44-w0.json`).
+
+**`PR-TEST-THAT-NEVER-LOADED-IS-NOT-GREEN-001`** -- A test file whose import fails loads zero tests; its "pass" is an absence. After editing a mod test, assert the pass count, not only rc.
+Evidence: L8, `policy.test.ts` imported `isPlannerType`, absent from the live register.ts since 35776051, so no test in the file ran (fixed e8d29ffb; 28 pass / 0 fail after). See LAPTOP_RESULTS.md L8.
+
+### Traps
+**`T-DEFAULT-FLIP-NEEDS-LIVE-PANE-RECEIPT-001`** -- A default flipped in source is not live. Live means a CCR release whose RELEASE.json carries source_commit plus a start receipt from a fresh interactive pane showing release id and mode, and a verified rollback.
+Evidence: CCR_MAIN_CANARY default-on: source 4a7939bc was committed epochs before it was live; live only at release 0.1.0-265d3d55 (L8: unset->enforce, =0->off, rollback to b15bfc3d verified).
+
+**`T-LAPTOP-TEMP-WORKTREE-FILES-VANISH-001`** -- OBSERVED ONCE, cause unknown: plugin.json, hooks/hooks.json and kernel/HARD-RULES-DIGEST.md vanished from a worktree under %TEMP%/claude between test runs. Do not promote; watch for a %TEMP% cleaner.

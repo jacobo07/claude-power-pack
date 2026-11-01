@@ -1,0 +1,61 @@
+{
+ "plane": "GEX44",
+ "window": "2026-10-25..now",
+ "sessions": 976,
+ "calls": 15893,
+ "processed": 1577933178,
+ "by_class": {
+  "WAIT_SLEEP": {
+   "calls": 68,
+   "processed": 10359515
+  },
+  "WAIT_NOTIFY": {
+   "calls": 17,
+   "processed": 2293495
+  },
+  "WAIT_REASK": {
+   "calls": 74,
+   "processed": 8199889
+  },
+  "WORK": {
+   "calls": 15734,
+   "processed": 1557080279
+  }
+ },
+ "wait_calls": 159,
+ "wait_processed": 20852899,
+ "wait_processed_share": 0.0132,
+ "top5": [
+  [
+   2225220,
+   "ac48369c-5a60-4dcf-a1f2-12160ccf3158.jsonl",
+   227,
+   0.0618
+  ],
+  [
+   1311081,
+   "382f1d27-4d0e-4a50-b5bd-504940ee1194.jsonl",
+   223,
+   0.0362
+  ],
+  [
+   999642,
+   "2a10ea73-f20d-4b86-b5e0-402e8def6f9a.jsonl",
+   35,
+   0.2049
+  ],
+  [
+   886352,
+   "82fe0e11-5bc9-4627-9969-c99ba1fd3424.jsonl",
+   48,
+   0.1351
+  ],
+  [
+   699908,
+   "6d589e52-35bc-438f-8202-b46235e2d541.jsonl",
+   58,
+   0.0973
+  ]
+ ],
+ "method": "APPROX heuristic classification; processed counts measured"
+}

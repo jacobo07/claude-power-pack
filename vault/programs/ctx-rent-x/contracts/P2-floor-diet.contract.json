@@ -1,0 +1,13 @@
+{
+  "id": "P2-floor-diet-v1",
+  "status": "FROZEN-BEFORE-PROBES",
+  "plane": "laptop",
+  "question": "How many call-1 floor tokens does each diet row remove on the LIVE path (not a scratch config)?",
+  "rows": ["agents_park", "rules_to_skills", "memory_trim"],
+  "arms": {"control": "live ~/.claude unchanged", "treatment": "tools/floor_diet.py apply on the live HOME, one row set per arm"},
+  "counterbalance": "per row: C1 T1 T2 C2 (control twice, order of the two treatment/control halves swapped on the repeat run: C T C T then T C T C); N>=2 per arm",
+  "probe": {"cmd": "claude -p \"reply OK\" --model haiku --output-format json", "measure": "call-1 usage input+cache_creation+cache_read", "cwd": "fixed scratch repo, identical across arms"},
+  "confound_guards": ["isolate the source on the live path: apply then probe then revert, never --setting-sources scratch (C3c/C3d confound)", "same claude version both arms", "control must reproduce within 1% across its two runs or the pair is discarded"],
+  "acceptance": "measured call-1 delta per row with N>=2 per arm; no capability a hook needs lost (floor_diet plan keeps every hook-dispatched agent)",
+  "ratchet": "lower the measured floor into tools/test_floor_regression_gate.py, down only"
+}
