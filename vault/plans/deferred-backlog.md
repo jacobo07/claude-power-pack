@@ -1680,9 +1680,25 @@ Six new files plus seven imported ones, all indexed under D39. Nothing below has
 - **Not exported:** Orca X's own local backlog (`C:\Users\User\Apps\orca-*-wt`, `docs/reference/universal-backlog.md`);
   the search there was killed by Claude Code because the host was low on RAM.
 
-**First action:** route the 166 + 65 other-project items to their own project backlogs (they are kept here only as the
-durable copy). Then triage the Power Pack items by SDD-OS tier. Most relay items are ChatGPT-dictated epics, so verify
-premises (HR-PREMISE-001) before acting on any.
+**Routed 2026-11-01 (Owner: "reparte las capturas de otros proyectos a sus propios backlogs").** All 231 non-Power-Pack
+captures (166 + 65) now also live in their own repos, one new untracked file each, verbatim with relay ids
+(`route_projects.py`: every non-PP id in exactly one destination). Not committed in those repos, and no existing index
+there was edited:
+
+| Project tags | Items | File (under `C:\Users\User\Desktop\Cursor Projects\`) |
+|---|---:|---|
+| CommonWealth Ops, CW Ops | 11 | `TUA-X\docs\backlog\2026-11-01_orca-relay-captures.md` (merge into `docs/BACKLOG.md`) |
+| CostaLuz Lawyers | 20 | `CostaLuz Lawyers\vault\backlog\2026-11-01_orca-relay-captures.md` |
+| InfinityOps | 1 | `InfinityOps\vault\backlog\2026-11-01_orca-relay-captures.md` |
+| QuickLease | 34 | `InfinityOps\17_Businesses\QuickLease\docs\plans\2026-11-01_orca-relay-captures.md` |
+| InfinityOps Rail Division | 44 | `InfinityOps Rail Division\vault\backlog\2026-11-01_orca-relay-captures.md` |
+| KobiiCraft — Post Launch, KobiiCraft, KobiCraft | 42 | `Minecraft Projects\KobiiCraft Workspace\KobiiCraft Core Files\vault\plans\2026-11-01_orca-relay-post-launch-backlog.md` (triage P1-P3 per `JUNE_11_BACKLOG_TRIAGE_RULES.md`) |
+| KobiiSports Resort | 22 | `Wii Projects\KobiiSports Resort\CursorProjects\backlog\2026-11-01_orca-relay-captures.md` (Owner STOP 2026-10-01 holds) |
+| LEGO Two Builders, + the `Orca X / KobiiCraft` row (its text is Two Builders) | 5 | `Wii Projects\LEGO-SW-Two-Builders\vault\backlog\2026-11-01_orca-relay-captures.md` |
+| Orca X | 52 | `Vibe Coding Projects\Orca X\docs\backlog\2026-11-01_orca-relay-captures.md`. **Git-ignored by design** (`.gitignore:92` `docs/**`: local-only planning docs), so it is on disk but never versioned |
+
+**First action:** triage the Power Pack items by SDD-OS tier. Most relay items are ChatGPT-dictated epics, so verify
+premises (HR-PREMISE-001) before acting on any. The other projects triage their own file.
 
 **Activation criterion:** any CDIO / design work starts, or a project named in the relay files opens its backlog,
 whichever comes first.
