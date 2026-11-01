@@ -591,8 +591,13 @@ def budget_exhausted(rec: dict, now: float) -> str | None:
     mh = rec.get("max_hours") or lr.DEFAULT_MAX_HOURS
     if rec.get("iterations", 0) >= mc:
         return f"iterations {rec['iterations']} >= max {mc}"
-    if now - float(rec.get("created_at") or now) > mh * 3600:
-        return f"older than {mh} h"
+    # S9 A1: time parked on a durable wait (resource / clock / checkpoint) is not execution time.
+    waited = int(rec.get("waited_s") or 0)
+    hold = rec.get("owner_hold") or {}
+    if hold.get("kind") in WAIT_HOLD_KINDS:
+        waited += max(0, int(now - float(hold.get("set_at") or now)))
+    if now - float(rec.get("created_at") or now) - waited > mh * 3600:
+        return f"older than {mh} h (excluding {waited} s waited)" if waited else f"older than {mh} h"
     return None
 
 
@@ -630,10 +635,12 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
                 # Audit F3: a recovery boundary is a PARK with a decision packet, never a settle -- the packet's
                 # options (raise authority, extend hours, release) must still apply to a live record.
                 return {"action": "none", "reason": f"recovery owner boundary: {str((hold.get('recovery') or {}).get('why'))[:200]}"}
-        if hold.get("kind") == "resource":
+        if hold.get("kind") in WAIT_HOLD_KINDS:
             # M2: parked for a resource, not for a person. A dead owner is the normal case (its turn is done),
             # so it is NOT settled: the sweep lifts the hold when the requirement is met, then relays.
-            return {"action": "none", "reason": f"WAIT_RESOURCE: {str(hold.get('reason'))[:200]}"}
+            # S9 A3: a declared checkpoint parks the same way -- nonterminal, cleared by a new plan.
+            return {"action": "none",
+                    "reason": f"{hold.get('wait_type') or 'WAIT_RESOURCE'}: {str(hold.get('reason'))[:200]}"}
         if state in (RUNNING, BLOCKED) and rec.get("owner"):
             verdict, evidence = liveness(rec.get("owner"), sessions, pid_alive)
             if verdict == DEAD and hold.get("worker_stopped_at"):
@@ -641,6 +648,14 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
                 # hold, so its death is ours, not the end of the work. Parked; release replaces it.
                 return {"action": "none",
                         "reason": f"cost hold, worker stopped ({hold.get('stop')}): parked until release"}
+            if verdict == DEAD and not is_cost_hold(hold) and hold_is_pause_on():
+                # S9 A1, HR "hold is not pause" made safe: an OWNER park outlives its worker. Measured 2026-11-01
+                # (m-38e82763a156): the Owner held a mission to wait out a quota reset, the idle worker ended, the
+                # sweep settled it HALTED, and the later release revived nothing. Settlement stays for cost holds
+                # (EDD m-79f84cdd34dc), whose RUNNING-without-owner record blocked goal singleflight.
+                return {"action": "none",
+                        "reason": f"owner hold, owner DEAD ({evidence}): parked nonterminal; release relaunches "
+                                  f"(hold: {str(hold.get('reason'))[:200]})"}
             if verdict == DEAD:
                 return {"action": "settle",
                         "reason": f"owner hold, owner DEAD ({evidence}): settled terminal, hold kept "
@@ -912,7 +927,7 @@ def decision_progress_since(rec: dict) -> bool:
     if not then:
         return False
     try:
-        now_fp = progress_fingerprint(mb.execution_root(rec))
+        now_fp = mission_fingerprint(rec, mb.execution_root(rec))   # S9 A2: the whole Workset, not one root
     except Exception:  # noqa: BLE001 -- unmeasured keeps the cap
         return False
     return now_fp is not None and now_fp != then
@@ -1681,7 +1696,60 @@ def deliver_decision(mission_id: str, text: str, *, decision_id: str | None = No
                     mission_id, rec, prompt=_decision_prompt(new),
                     decision={"decision": ge.CONTINUE, "cause": ge.TURN_CONTINUATION, "reason": f"owner decision {did}"},
                     runner=runner, stop_runner=stop_runner, now=now)
+        if not woke.get("ok") and _transient_wake_failure(woke.get("why")):
+            # S9 A5 wake-when-ready. Measured 2026-10-31: `decide` from a plain ssh shell got "host unreachable", the
+            # decision sat on a mission whose idle worker never relaunched, and a second decide was needed. The wake
+            # is now an obligation the sweep retries until the owner is idle (or gone, when the card carries it).
+            cur = load(mission_id) or rec
+            transition(mission_id, expect_epoch=cur["epoch"], expect_state=cur["state"], event="decision_wake_pending",
+                       now=now, touch=False, pending_wake={"decision_id": did, "at": now, "why": woke.get("why")})
+            woke = {**woke, "pending": True}
     return {"decision": new, "recorded": True, "woke": woke}
+
+
+def _transient_wake_failure(why) -> bool:
+    w = str(why or "")
+    return w.startswith("host unreachable") or w.startswith("owner did not stop")
+
+
+def retry_pending_wake(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, runner=None, stop_runner=None) -> dict:
+    """Sweep step: deliver a decision whose wake failed. Owner gone -> the next launch card carries it (cleared);
+    owner busy or host unanswerable -> keep waiting; owner idle -> stop + same-session continue with the decision."""
+    import gsd_epoch as ge
+    pw = rec.get("pending_wake") or {}
+    mid = rec["mission_id"]
+    dec = next((d for d in rec.get("decisions") or [] if d["id"] == pw.get("decision_id")), None)
+    owner = rec.get("owner") or {}
+    if sessions is None:
+        return rec
+    verdict = liveness(owner, sessions, pid_alive)[0] if owner.get("session_id") else DEAD
+    held = bool(rec.get("owner_hold"))
+    if dec is None or dec.get("superseded_by") or verdict == DEAD or held or (rec.get("owner_hold") or {}).get(
+            "worker_stopped_at"):
+        # A standing hold (wait, checkpoint, Owner or cost) is never woken through: in the same pass resource_gate
+        # may have just stopped this owner for a wait, and the host list is the one read before that stop. The
+        # decision is on the record; the launch that follows the hold's release carries it on its card.
+        lr.ledger_append(mid, "decision_wake_cleared", mission_id=mid, decision_id=pw.get("decision_id"),
+                         why="superseded" if dec and dec.get("superseded_by") else
+                         "mission held: the next launch card carries it" if held else "owner gone: card carries it")
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="decision_wake_cleared",
+                          now=now, touch=False, pending_wake=None)
+    if not owner_idle(owner, sessions):
+        return rec
+    ok, how = stop_owner(owner, sessions, pid_alive=pid_alive, runner=stop_runner)
+    if not ok:
+        return rec
+    woke = ge.continue_worker(mid, rec, prompt=_decision_prompt(dec),
+                              decision={"decision": ge.CONTINUE, "cause": ge.TURN_CONTINUATION,
+                                        "reason": f"owner decision {dec['id']} (pending wake)"},
+                              runner=runner, stop_runner=stop_runner, now=now)
+    lr.ledger_append(mid, "decision_wake_delivered" if woke.get("ok") else "decision_wake_retry_failed",
+                     mission_id=mid, decision_id=dec["id"], how=how, why=woke.get("why"))
+    cur = load(mid) or rec
+    if woke.get("ok"):
+        return transition(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], event="decision_wake_delivered",
+                          now=now, touch=False, pending_wake=None)
+    return cur
 
 
 def is_cost_hold(hold: dict | None) -> bool:
@@ -2552,7 +2620,8 @@ def set_requires(mission_id: str, obligation: str, specs: list[tuple[str, object
                       + ("cleared" if clear else ", ".join(f"{k} {a}" for k, a in specs)))
 
 
-def resource_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive, probes: dict | None = None) -> dict:
+def resource_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive, probes: dict | None = None,
+                  stop_runner=None) -> dict:
     """The sweep's resource step, run before plan_next. No model call. Returns the (possibly updated) record.
 
     Unmet or UNKNOWN for every obligation -> park as owner_hold kind "resource" (WAIT_RESOURCE).
@@ -2577,8 +2646,10 @@ def resource_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive,
         if hold:
             lr.ledger_append(mid, "RESOURCE_AVAILABLE", mission_id=mid, actionable=ev["actionable"],
                              waiting=ev["waiting"], waited_s=int(now - float(hold.get("set_at") or now)))
+            waited = max(0, int(now - float(hold.get("set_at") or now)))
             return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="resource_available",
                               now=now, owner_hold=None, resource_eval=snap,
+                              waited_s=int(rec.get("waited_s") or 0) + waited,   # S9 A1: waiting is not max_hours
                               reason=f"resources available for {', '.join(ev['actionable'])}")
         if changed:
             return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="resource_evaluated",
@@ -2596,12 +2667,116 @@ def resource_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive,
                           reason=text[:300])
     if rec["state"] == LAUNCHING:
         return rec   # a launch is in flight; the requirement gates the NEXT one
+    extra["wait_type"] = wait_type_of(ev)
+    idle_live = False
     if rec.get("owner") and liveness(rec.get("owner"), sessions, pid_alive)[0] != DEAD:
-        return rec   # a worker that may still be running is not parked under it; its successor is what waits
-    lr.ledger_append(mid, event, mission_id=mid, waiting=ev["waiting"], errors=errors, reason=text[:400])
+        # S9 A1 (HR "waiting consumes zero execution budget"). Until 2026-11-01 a live owner was never parked
+        # ("its successor is what waits"), so an IDLE worker kept receiving same-session continuations through a
+        # known clock wait (m-f9560b5e8f1f / not_before incident). A BUSY owner is still let finish its turn; an
+        # owner whose turn has ended is parked now and stopped below -- the wait then holds no worker lease.
+        if not (wait_park_live_on() and owner_idle(rec.get("owner"), sessions)):
+            return rec
+        idle_live = True
+    lr.ledger_append(mid, event, mission_id=mid, waiting=ev["waiting"], errors=errors, reason=text[:400],
+                     wait_type=extra["wait_type"], idle_live_owner=idle_live)
     held = set_owner_hold(mid, text, now=now, kind="resource", expect_seq=rec.get("seq"), extra=extra)
-    return transition(mid, expect_epoch=held["epoch"], expect_state=held["state"], event="resource_evaluated",
-                      now=now, touch=False, resource_eval=snap)
+    out = transition(mid, expect_epoch=held["epoch"], expect_state=held["state"], event="resource_evaluated",
+                     now=now, touch=False, resource_eval=snap)
+    if idle_live:
+        out = _stop_for_wait(out, now, sessions, pid_alive, stop_runner)
+    return out
+
+
+def wait_park_live_on() -> bool:
+    """Kill switch CPP_WAIT_PARK_LIVE=off: the pre-S9 behaviour (a live owner is never parked by a wait)."""
+    return (os.environ.get("CPP_WAIT_PARK_LIVE") or "").strip().lower() not in ("0", "off", "false")
+
+
+def hold_is_pause_on() -> bool:
+    """Kill switch CPP_HOLD_SETTLES=on: the pre-S9 behaviour (an Owner hold whose owner dies is settled terminal)."""
+    return (os.environ.get("CPP_HOLD_SETTLES") or "").strip().lower() not in ("1", "on", "true")
+
+
+def wait_type_of(ev: dict) -> str:
+    """WAIT_TIME when every unmet requirement is a clock (not_before), else WAIT_RESOURCE. Pure."""
+    kinds = [r.get("kind") for o in ev.get("obligations", {}).values() for r in o.get("requirements", [])
+             if r.get("status") != mres.MET]
+    return "WAIT_TIME" if kinds and all(k == "not_before" for k in kinds) else "WAIT_RESOURCE"
+
+
+def _stop_for_wait(rec: dict, now: float, sessions, pid_alive, stop_runner) -> dict:
+    """Release the worker lease of a mission parked on a wait (resource, clock or checkpoint): stop the idle owner
+    through the host and record it as the hold's worker_stopped_at, so plan_next parks the dead owner instead of
+    settling it terminal. A failed stop leaves the hold standing and is ledgered; the mission still spends nothing,
+    because a held mission is never continued."""
+    mid = rec["mission_id"]
+    ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
+    lr.ledger_append(mid, "wait_worker_stopped" if ok else "wait_worker_stop_failed", mission_id=mid, ok=ok, how=how,
+                     wait_type=(rec.get("owner_hold") or {}).get("wait_type"))
+    if not ok:
+        return rec
+    try:
+        settle_stopped_worker(rec)
+    except Exception as exc:  # noqa: BLE001 -- booking is best effort; the stop already happened
+        lr.ledger_append(mid, "worker_unbooked", mission_id=mid, error=f"{type(exc).__name__}: {exc}"[:200])
+    cur = load(mid) or rec
+    return transition(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], event="wait_worker_stopped", now=now,
+                      reason=f"wait: worker stopped ({how}), lease released",
+                      owner_hold={**(cur.get("owner_hold") or {}), "worker_stopped_at": now, "stop": how})
+
+
+# --------------------------------------------------------------------------- S9 A3: checkpoint states
+# "All planned obligations of this wave are closed, the global Goal is not" is not a stall. Measured 2026-11-01
+# (m-f9560b5e8f1f): after wave S8 closed, three fresh workers (epochs 3-5) found nothing to run and the mission
+# went HALTED no_progress -- terminal, renewal refused, three boots spent on a finished wave. A worker (or the
+# Decision Compiler) now DECLARES the checkpoint; the mission parks nonterminal, the idle worker is stopped (lease
+# released) and nothing is relaunched until the checkpoint is cleared by a new plan.
+CHECKPOINT_KIND = "checkpoint"
+CHECKPOINT_STATES = ("CHECKPOINT_COMPLETE", "NEXT_PLAN_REQUIRED", "METHOD_PIVOT_REQUIRED")
+WAIT_HOLD_KINDS = ("resource", CHECKPOINT_KIND)   # non-owner, nonterminal, never settled, not execution time
+
+
+def set_checkpoint(mission_id: str, state: str, reason: str, evidence: str | None = None,
+                   now: float | None = None) -> dict:
+    if state not in CHECKPOINT_STATES:
+        raise MissionError(f"checkpoint state must be one of {', '.join(CHECKPOINT_STATES)}")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    hold = rec.get("owner_hold") or {}
+    if hold and hold.get("kind") not in WAIT_HOLD_KINDS:
+        raise MissionError(f"{mission_id} is under a {hold.get('kind') or 'owner'} hold; that hold wins")
+    lr.ledger_append(mission_id, "checkpoint_declared", mission_id=mission_id, checkpoint=state,
+                     reason=(reason or "")[:400], evidence=evidence)
+    return set_owner_hold(mission_id, f"{state}: {reason}", now=now, kind=CHECKPOINT_KIND, expect_seq=rec.get("seq"),
+                          extra={"wait_type": state, "checkpoint": state, "evidence": evidence})
+
+
+def clear_checkpoint(mission_id: str, reason: str, now: float | None = None) -> dict:
+    """A new plan exists: lift the checkpoint, keep the waited time out of max_hours, and let the relay launch."""
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    hold = rec.get("owner_hold") or {}
+    if hold.get("kind") != CHECKPOINT_KIND:
+        raise MissionError(f"{mission_id} is not at a checkpoint")
+    now = time.time() if now is None else now
+    waited = max(0, int(now - float(hold.get("set_at") or now)))
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="checkpoint_cleared",
+                      now=now, owner_hold=None, waited_s=int(rec.get("waited_s") or 0) + waited,
+                      progress={**(rec.get("progress") or {}), "stalls": 0},
+                      reason=f"checkpoint {hold.get('checkpoint')} cleared: {(reason or '')[:200]}")
+
+
+def checkpoint_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive, stop_runner=None) -> dict:
+    """Sweep step for a declared checkpoint: once the declaring worker's turn has ended, stop it (lease released).
+    A busy worker finishes its turn first; an already-stopped or dead one needs nothing."""
+    hold = rec.get("owner_hold") or {}
+    if rec["state"] in TERMINAL or hold.get("worker_stopped_at") or not rec.get("owner"):
+        return rec
+    if liveness(rec.get("owner"), sessions, pid_alive)[0] == DEAD or not owner_idle(rec.get("owner"), sessions):
+        return rec
+    return _stop_for_wait(rec, now, sessions, pid_alive, stop_runner)
 
 
 # --------------------------------------------------------------------------- AMR: autonomous mission recovery
@@ -2889,8 +3064,64 @@ def amr_compile(rec: dict, *, failed_sid: str | None, hold_reason: str, cause: s
 OWNER_WAIT_TYPES = ("CAPITAL_EXHAUSTED", "OWNER_PRODUCT_DECISION", "SECURITY_BOUNDARY", "IRREVERSIBLE_ACTION",
                     "EXTERNAL_AUTHORITY_REQUIRED", "RESOURCE_POLICY_DECISION", "UNKNOWN")
 # A wait the sweep resolves by itself. Not an Owner wait: it has no queue row and no economic incident.
-NON_OWNER_WAIT_TYPES = ("WAIT_RESOURCE",)
+NON_OWNER_WAIT_TYPES = ("WAIT_RESOURCE", "WAIT_TIME") + CHECKPOINT_STATES
 WAIT_TYPES = OWNER_WAIT_TYPES + NON_OWNER_WAIT_TYPES
+
+
+# --------------------------------------------------------------------------- S9 A2: Mission Workset
+# A mission may own several repositories. Until S9 the extra trees (`add_dirs`) could only be named at arm, and
+# m-f9560b5e8f1f was armed in gen3-pp with add_dirs [] while every product commit landed in t1-campaign: the stall
+# breaker read the sibling's work as zero progress and the plan needed hand-written status commits as a workaround.
+WORKSET_ROLES = ("control", "product", "runtime", "evidence")
+
+
+def workset(rec: dict) -> list[dict]:
+    """[{path, role}] -- the bound root first (role control unless declared), then every add_dir. Pure."""
+    roles = rec.get("workset_roles") or {}
+    root = mb.execution_root(rec)
+    out = [{"path": root, "role": roles.get(root, "control")}]
+    out += [{"path": d, "role": roles.get(d, "product")} for d in (rec.get("add_dirs") or []) if d and d != root]
+    return out
+
+
+def add_workset(mission_id: str, path: str, role: str = "product", now: float | None = None) -> dict:
+    """Add a repository to a live mission's Workset. Its tree counts toward every progress fingerprint from the next
+    sample on, and the worker is granted it on its next launch (add_dirs is passed to `claude --add-dir`)."""
+    if role not in WORKSET_ROLES:
+        raise MissionError(f"role must be one of {', '.join(WORKSET_ROLES)}")
+    return _add_workset(mission_id, path, role, now)
+
+
+def assert_mission_cwd(mission_id: str, expect_cwd: str) -> dict:
+    """S9 A5: refuse to act on a mission unless `expect_cwd` is its cwd or one of its Workset paths. Raises."""
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    want = os.path.normcase(str(Path(expect_cwd).expanduser().resolve()))
+    have = {os.path.normcase(str(Path(p).resolve())) for p in [rec.get("cwd")] + [w["path"] for w in workset(rec)] if p}
+    if want not in have:
+        raise MissionError(f"{mission_id} lives in {sorted(have)}, not {want}: wrong mission id? (take ids only from "
+                           f"the arming command's own output)")
+    return rec
+
+
+def _add_workset(mission_id: str, path: str, role: str, now: float | None) -> dict:
+    if role not in WORKSET_ROLES:
+        raise MissionError(f"role must be one of {', '.join(WORKSET_ROLES)}")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}")
+    p = Path(path).expanduser().resolve()
+    if not p.is_dir():
+        raise MissionError(f"{p} is not a directory")
+    dirs = list(rec.get("add_dirs") or [])
+    if str(p) not in dirs and str(p) != mb.execution_root(rec):
+        dirs.append(str(p))
+    roles = {**(rec.get("workset_roles") or {}), str(p): role}
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="workset_added", now=now,
+                      touch=False, add_dirs=dirs, workset_roles=roles, reason=f"workset +{p} ({role})")
 _WAIT_CAPITAL_RE = re.compile(r"cost breaker|mission budget|authority|ceiling|processed|iterations \d+ >= max|older than",
                               re.I)
 _WAIT_SECURITY_RE = re.compile(r"trust dialog|security boundary|credential|permission boundary", re.I)
@@ -3433,7 +3664,7 @@ def deterministic_script(rec: dict) -> list[str] | None:
     if not m:
         return None
     args = shlex.split(m.group(1))
-    root = Path(rec.get("work_dir") or rec["cwd"]).resolve()
+    root = Path(mb.execution_root(rec)).resolve()   # AMCR one resolver (V-AMCR-ONE-RESOLVER-INVENTORY)
     script = (root / args[0]).resolve()
     if not script.is_relative_to(root) or not script.is_file() or script.suffix not in (".py", ".sh"):
         raise MissionError(f"deterministic: {args[0]!r} is not a .py/.sh file inside {root}")
@@ -3447,7 +3678,7 @@ def _run_deterministic(rec: dict, argv: list[str], now: float, run=None) -> dict
     import hashlib
     import subprocess
     mid = rec["mission_id"]
-    cwd = rec.get("work_dir") or rec["cwd"]
+    cwd = mb.execution_root(rec)   # AMCR one resolver: the deterministic path runs where the binding says
     try:
         r = (run or (lambda a, c: subprocess.run(a, cwd=c, capture_output=True, text=True, encoding="utf-8",
                                                   errors="replace", timeout=600)))(argv, cwd)
@@ -3477,6 +3708,7 @@ def _lease_contention(rec: dict, authority: int | None) -> dict | None:
         return None
     try:
         from modules.provider_routing.ledger import lease_contention
+        import mission_spend as ms   # S9: was an unbound name, so this fail-open block always returned None
         c = ms._goal_ledger(goal).consumers()
         me = (rec.get("owner") or {}).get("session_id")
         sib = sum(x["burn_per_hour"] for x in c["consumers"] if x["live"] and x["sid"] != me)
@@ -5369,7 +5601,12 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
             elif not dry_run and mid not in timed_out:
                 rec = _judge_pre_plan(rec, now)
             if not dry_run and (rec.get("requires") or (rec.get("owner_hold") or {}).get("kind") == "resource"):
-                rec = resource_gate(rec, now, sessions, pid_alive)   # M2: no model call; absent field never gets here
+                rec = resource_gate(rec, now, sessions, pid_alive,   # M2: no model call; absent field never gets here
+                                    stop_runner=stop_runner)
+            if not dry_run and (rec.get("owner_hold") or {}).get("kind") == CHECKPOINT_KIND:
+                rec = checkpoint_gate(rec, now, sessions, pid_alive, stop_runner=stop_runner)
+            if not dry_run and rec.get("pending_wake") and rec["state"] not in TERMINAL:
+                rec = retry_pending_wake(rec, now, sessions, pid_alive, runner=runner, stop_runner=stop_runner)
             if not dry_run:
                 rec = _dead_worker_authority_guard(rec, now, sessions, pid_alive)   # M4 B: CAPITAL_EXHAUSTED, no launch
                 dead_open = _dead_worker_open(rec, sessions, pid_alive)
@@ -5984,7 +6221,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         # launch_worker re-injects it on every retry; adoption clears it.
                         moved = decision_progress_since(rec)
                         try:
-                            fp_now = progress_fingerprint(mb.execution_root(rec))
+                            fp_now = mission_fingerprint(rec, mb.execution_root(rec))   # S9 A2: same Workset as the check
                         except Exception:  # noqa: BLE001 -- unmeasured: the next cap check keeps the cap
                             fp_now = None
                         rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
@@ -7292,6 +7529,17 @@ def _cli(argv=None) -> int:
     rq.add_argument("--no-process", default=None, help="an image name that must not be running, e.g. electron")
     rq.add_argument("--not-before", help="ISO time with a timezone (or epoch seconds); the mission waits parked, no launch and no iteration, until then")
     rq.add_argument("--clear", metavar="OBLIGATION", default=None, help="remove that obligation's requirements")
+    ck = sub.add_parser("checkpoint", help="S9 A3: the wave's obligations are closed, the Goal is not -- park "
+                                           "nonterminal (worker released), never HALTED no_progress")
+    ck.add_argument("--mission", required=True)
+    ck.add_argument("--state", choices=CHECKPOINT_STATES, default="NEXT_PLAN_REQUIRED")
+    ck.add_argument("--reason", default="")
+    ck.add_argument("--evidence", default=None, help="path or commit that proves the wave closed")
+    ck.add_argument("--clear", action="store_true", help="a new plan exists: lift the checkpoint and relay")
+    ws = sub.add_parser("workset", help="S9 A2: add a repository to a live mission's Workset (progress counted there)")
+    ws.add_argument("--mission", required=True)
+    ws.add_argument("--add", required=True, metavar="PATH")
+    ws.add_argument("--role", choices=WORKSET_ROLES, default="product")
     bd = sub.add_parser("bind", help="AMCR: bind the mission to the git worktree its worker now writes "
                                      "(every observer follows it)")
     bd.add_argument("--mission", required=True)
@@ -7352,7 +7600,14 @@ def _cli(argv=None) -> int:
     st = sub.add_parser("status")
     st.add_argument("--surface", action="store_true",
                     help="exception surface: non-terminal attempts as HOT/WARM/COLD + KPIs (GGMC C6)")
+    # S9 A5 mission-id authority. Measured 2026-11-01: after a failed arm an id taken from `ls -t` put an Owner hold
+    # on ANOTHER live mission. Every verb that mutates one mission can assert where it lives; a mismatch refuses.
+    for _p in (dc, oh, orl, rq, ck, ws):
+        _p.add_argument("--expect-cwd", default=None,
+                        help="refuse unless the mission's cwd (or a Workset path) is this directory")
     args = ap.parse_args(argv)
+    if getattr(args, "expect_cwd", None) and getattr(args, "mission", None):
+        assert_mission_cwd(args.mission, args.expect_cwd)
     if args.cmd == "arm":
         wall = None
         if args.wall:
@@ -7419,6 +7674,19 @@ def _cli(argv=None) -> int:
     if args.cmd == "hold":
         rec = set_owner_hold(args.mission, args.reason)
         print(f"OWNER HOLD SET mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
+        return 0
+    if args.cmd == "checkpoint":
+        if args.clear:
+            rec = clear_checkpoint(args.mission, args.reason)
+            print(f"CHECKPOINT CLEARED mission={rec['mission_id']} state={rec['state']} waited_s={rec.get('waited_s')}")
+            return 0
+        rec = set_checkpoint(args.mission, args.state, args.reason, evidence=args.evidence)
+        print(f"CHECKPOINT {args.state} mission={rec['mission_id']} state={rec['state']} (nonterminal; the sweep "
+              f"releases the worker when its turn ends)")
+        return 0
+    if args.cmd == "workset":
+        rec = add_workset(args.mission, args.add, role=args.role)
+        print(f"WORKSET mission={rec['mission_id']} " + " ".join(f"{w['role']}={w['path']}" for w in workset(rec)))
         return 0
     if args.cmd == "requires":
         if args.clear:

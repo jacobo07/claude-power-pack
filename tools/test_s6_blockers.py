@@ -451,6 +451,12 @@ CONTROLS = {
     "SETUP_HOLD": ({"reason": "canary: envelope before first launch", "is_hold": True}, {"reason": HOSTGATE},
                    "HOST_GATE"),
     "OWNER_PARK": ({"reason": PARK, "is_hold": True}, {"reason": PARK}, "UNKNOWN"),
+    # S9 A3: the same completion text is a CHECKPOINT only under a declared checkpoint hold; under an Owner stop it
+    # stays OWNER_PARK (the named neighbour).
+    "CHECKPOINT": ({"reason": "NEXT_PLAN_REQUIRED: " + PARK, "is_hold": True,
+                    "hold": {"kind": "checkpoint", "checkpoint": "NEXT_PLAN_REQUIRED", "reason": PARK}},
+                   {"reason": "NEXT_PLAN_REQUIRED: " + PARK, "is_hold": True,
+                    "hold": {"kind": "owner_stop", "reason": PARK}}, "OWNER_PARK"),
     "UNKNOWN": ({"reason": UNK}, {"reason": CMD}, "COMMAND_REQUEST"),
 }
 

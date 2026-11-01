@@ -30,6 +30,7 @@ Rows read: 6249 (census date 2026-10-24)
 | CAPSULE_SEAL_REFUSED | 2 | capsule_seal_refused x2 | capsule-v2 seal impossible for mission-m-c474d0bfc3e6-e3: recovery REFUSED: obligations: no open item found in the goal ; capsule-v2 seal impossible for mission-m-ce29fdac4224-e2: recovery REFUSED: obligations: no open item found in the goal  |
 | SETUP_HOLD | 16 | setup_text x16 | canary: envelope before first launch; canary2: envelope before first launch; WU-1R: envelope before launch |
 | OWNER_PARK | 24 | owner_park x24 | E1 ALL_DECIDED at 9787a946 (merged into feature/knowledge-acquisition as 223612e9 on the laptop); work complete, no reru; Owner y 2026-10-06 ~20:30Z: Orca P4 compiled-execution canary (CPP spec vault/specs/orca-p4-compiled-execution-canary.md; Owner y 2026-10-07: compiled-execution canary (vault/specs/edd-compiled-execution-canary.md); stop unbounded GSD grammar |
+| CHECKPOINT | 0 | (class added 2026-11-01, wave S9 A3: zero by construction at the 2026-10-24 census; completion parks such as "E1 ALL_DECIDED ... work complete" above were filed as OWNER_PARK) | - |
 | UNKNOWN | 5 | no_rule_matched x5 | host lists session blocked (no waitingFor); host needs: dispatch gsd-executor to run tools/test_kme_challenger.py + wiki; host lists session blocked (no waitingFor); host needs: open this session to continue setup; host lists session blocked (no waitingFor); host needs: arm a new TB-FULL mission epoch under the R-REFC packet, or tell |
 
 Compiled rows: 116; UNKNOWN residual: 5.

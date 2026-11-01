@@ -50,10 +50,11 @@ CAPSULE_NOT_CERTIFIED = "CAPSULE_NOT_CERTIFIED"
 CAPSULE_SEAL_REFUSED = "CAPSULE_SEAL_REFUSED"
 SETUP_HOLD = "SETUP_HOLD"
 OWNER_PARK = "OWNER_PARK"
+CHECKPOINT = "CHECKPOINT"   # S9 A3: wave closed, Goal open -- a plan is due, not a person
 UNKNOWN = "UNKNOWN"
 CLASSES = (HOST_GATE, COMMAND_REQUEST, DECISION_REQUEST, RESOURCE_REQUEST, PUBLISH_BOUNDARY, CAPITAL_EXHAUSTED,
            COST_HOLD_RECOVERING, PROVIDER_LIMIT, WAIT_RESOURCE, GSD_HOLD, CAPSULE_NOT_CERTIFIED,
-           CAPSULE_SEAL_REFUSED, SETUP_HOLD, OWNER_PARK, UNKNOWN)
+           CAPSULE_SEAL_REFUSED, SETUP_HOLD, OWNER_PARK, CHECKPOINT, UNKNOWN)
 
 # Classes that block ONE unit of work: another unit may be runnable. Every other class is mission-wide.
 UNIT_SCOPED = frozenset({HOST_GATE, COMMAND_REQUEST, DECISION_REQUEST, RESOURCE_REQUEST, PUBLISH_BOUNDARY})
@@ -170,8 +171,26 @@ def _b_provider(c):
 
 
 def _b_resource(c):
+    if (c["hold"] or {}).get("wait_type") == "WAIT_TIME":
+        return ({"kind": "time_delta", "what": "the not_before time is reached",
+                 "until_text": str((c["hold"] or {}).get("reason") or "")[:120] or None},
+                "A clock wait: the worker is released and a successor starts when the time is reached.", False)
     return ({"kind": "resource_supplied", "what": "the held resource (memory, disk, account) is available again"},
             "A resource this mission needs is exhausted; it resumes when the resource is supplied.", False)
+
+
+def _b_checkpoint(c):
+    st = (c["hold"] or {}).get("checkpoint") or "CHECKPOINT_COMPLETE"
+    return ({"kind": "plan_delta", "checkpoint": st,
+             "what": "a new bounded plan inside the existing authority clears the checkpoint "
+                     f'({_cmd("checkpoint", c["mid"], "--clear --reason <plan ref>")})'},
+            f"{st}: the wave's obligations are closed and the Goal is not; the next plan is compiled inside the "
+            "standing authority. Only a plan that crosses capital, intent or an irreversible action needs the Owner.",
+            False)
+
+
+def _m_checkpoint(c):
+    return (c["hold"] or {}).get("kind") == "checkpoint"
 
 
 def _b_hostgate(c):
@@ -290,6 +309,7 @@ RULES = (
     ("authority_trip", CAPITAL_EXHAUSTED, _m_authority_trip, _b_capital),
     ("provider_limit_text", PROVIDER_LIMIT, _m_provider, _b_provider),
     ("hold_kind_resource", WAIT_RESOURCE, _m_resource_kind, _b_resource),
+    ("hold_kind_checkpoint", CHECKPOINT, _m_checkpoint, _b_checkpoint),
     ("cost_hold", COST_HOLD_RECOVERING, _m_cost, _b_cost),
     ("capital_text", CAPITAL_EXHAUSTED, _m_capital_text, _b_capital),
     # Census-driven: the host labels "approve Write: <path>" permission prompts, so the host-gate wording must be
