@@ -6,13 +6,21 @@ Run: python tools/test_mission_policy.py   (exit 0 = all pass)
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+if os.environ.get("MPOL_DRILL_DIR"):  # --drills: the mutant copy of mission_policy.py shadows the real one
+    sys.path.insert(0, os.environ["MPOL_DRILL_DIR"])
 import mission_policy as mp  # noqa: E402
+
+OWNER_FIXTURE = Path(__file__).resolve().parent.parent / "vault" / "evidence" / "phys" / "g2" / \
+    "phys-p14-owner-gate-questions-fixture.json"
+KILL_SWITCH = "CPP_MISSION_OWNER_GATES"
+DONE_CLS = "DONE_GATE_OR_DEVIATION"
 
 passes = fails = 0
 
@@ -126,6 +134,57 @@ def main() -> int:
     check("V-MPOL-GATE-NO-POLICY", mp.gate_question(INCIDENT_JOB["needs"], {})["result"] == "RESOLVE_BY_DEFAULT",
           "worktree question with no stated policy: not an Owner class either")
 
+    # 14-01 W2a: done-gate / overrun / deviation Owner class (addendum section 3), kill switch CPP_MISSION_OWNER_GATES.
+    saved_ks = os.environ.pop(KILL_SWITCH, None)
+    try:
+        fx = json.loads(OWNER_FIXTURE.read_text(encoding="utf-8")) if OWNER_FIXTURE.is_file() else {"questions": []}
+        qs = fx.get("questions", [])
+        real = [q for q in qs if not q.get("standin")]
+        stand = [q for q in qs if q.get("standin")]
+        got = [mp.gate_question(q["text"], pv) for q in qs]
+        check("V-MPOL-OWNER-FIXTURE-QUESTIONS",
+              bool(qs) and (bool(real) or all(q.get("standin") and q.get("standin_quotes") for q in qs))
+              and all(g["result"] == "OWNER_REQUIRED" and g.get("owner_class") == DONE_CLS for g in got),
+              f"{len(real)} real + {len(stand)} stand-in questions -> {[g.get('owner_class') or g['result'] for g in got]}")
+        os.environ[KILL_SWITCH] = "off"
+        hist = [(q["recorded_result"], mp.gate_question(q["text"], pv)["result"]) for q in qs]
+        check("V-MPOL-OWNER-REPLAY-HISTORICAL", bool(qs) and all(a == b for a, b in hist),
+              f"kill switch off: {len(hist)} fixture questions give the recorded result {sorted(set(a for a, _ in hist))}")
+        os.environ.pop(KILL_SWITCH, None)
+        synth = ["Override the done-gate and mark the phase passed?",
+                 "Accept the spend breach and continue?",
+                 "Set the VERIFICATION status to passed with the gaps recorded as accepted deviations?",
+                 "Record the gap as a deviation and continue?",
+                 "Accept the overrun past P95 and keep going?",
+                 "Release the envelope STOP for one verifier run?"]
+        bad = [s for s in synth if mp.gate_question(s, pv).get("owner_class") != DONE_CLS]
+        check("V-MPOL-OWNER-SYNTH", not bad, f"{len(synth) - len(bad)}/{len(synth)} synthetic forms -> {DONE_CLS}; missed={bad}")
+        neg = ["Should I write the SERP notes before the intent map?",
+               "Should I run the drills before the full suite?",
+               "Close the gap between the two grid columns first?",
+               "Which deviation metric should the chart use, sigma or MAD?",
+               "Is the verification script under tools/ or scripts/?"]
+        badn = [s for s in neg if mp.gate_question(s, pv)["result"] != "RESOLVE_BY_DEFAULT"]
+        inc_ok = mp.gate_question(INCIDENT_JOB["needs"], pv)["result"] == "RESOLVE_BY_POLICY"
+        check("V-MPOL-OWNER-NEG", not badn and inc_ok,
+              f"{len(neg) - len(badn)}/{len(neg)} ordinary questions stay RESOLVE_BY_DEFAULT; worktree incident stays "
+              f"RESOLVE_BY_POLICY={inc_ok}; wrongly escalated={badn}")
+        probe = synth[0]
+        states = {}
+        for val in (None, "on", "1", "off", "OFF", "On"):
+            if val is None:
+                os.environ.pop(KILL_SWITCH, None)
+            else:
+                os.environ[KILL_SWITCH] = val
+            states[val] = mp.gate_question(probe, pv)["result"]
+        want = {None: "OWNER_REQUIRED", "on": "OWNER_REQUIRED", "1": "OWNER_REQUIRED", "On": "OWNER_REQUIRED",
+                "off": "RESOLVE_BY_DEFAULT", "OFF": "RESOLVE_BY_DEFAULT"}
+        check("V-MPOL-OWNER-KILL-SWITCH", states == want, f"read at call time in one process: {states}")
+    finally:
+        os.environ.pop(KILL_SWITCH, None)
+        if saved_ks is not None:
+            os.environ[KILL_SWITCH] = saved_ks
+
     # Blocked typing.
     b = mp.classify_blocked(INCIDENT_JOB, pv)
     check("V-MPOL-BLOCKED-INCIDENT", b["class"] == "QUESTION_RESOLVABLE", str(b["class"]))
@@ -189,5 +248,34 @@ def main() -> int:
     return 0 if fails == 0 else 1
 
 
+# --drills: each mutant of mission_policy.py must turn the named gate red (the drill never writes tools/mission_policy.py).
+DRILLS = (
+    ("M1 class entry removed", '    ("DONE_GATE_OR_DEVIATION", DONE_GATE_RX),\n', "", "V-MPOL-OWNER-FIXTURE-QUESTIONS"),
+    ("M2 kill-switch read ignored", '.lower() == "off"', '.lower() == "off-ignored-by-drill"', "V-MPOL-OWNER-KILL-SWITCH"),
+    ("M3 class pattern reduced to one literal phrase", '("DONE_GATE_OR_DEVIATION", DONE_GATE_RX)',
+     '("DONE_GATE_OR_DEVIATION", re.compile(r"override the done-gate", re.I))', "V-MPOL-OWNER-SYNTH"),
+)
+
+
+def drills() -> int:
+    src = (Path(__file__).resolve().parent / "mission_policy.py").read_text(encoding="utf-8")
+    ok = 0
+    for name, needle, repl, gate in DRILLS:
+        if needle not in src:
+            print(f"DRILL-FAIL {name}: needle absent from tools/mission_policy.py")
+            continue
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / "mission_policy.py").write_text(src.replace(needle, repl, 1), encoding="utf-8")
+            env = {**os.environ, "MPOL_DRILL_DIR": td}
+            env.pop(KILL_SWITCH, None)
+            r = subprocess.run([sys.executable, "-B", str(Path(__file__).resolve())], capture_output=True, text=True,
+                               env=env, timeout=300)
+        red = f"FAIL {gate}" in r.stdout
+        print(f"{'DRILL-PASS' if red else 'DRILL-FAIL'} {name}: expected 'FAIL {gate}' -> {'seen' if red else 'NOT seen'} (exit {r.returncode})")
+        ok += int(red)
+    print(f"MPOL_DRILLS_PASS={ok}/{len(DRILLS)}")
+    return 0 if ok == len(DRILLS) else 1
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(drills() if "--drills" in sys.argv[1:] else main())

@@ -342,8 +342,12 @@ class Capture:
                     has_touch=self.vp.is_mobile, locale=self.spec.locale,
                     timezone_id=self.spec.timezone, service_workers="block")
                 page = ctx.new_page()
-                page.on("console", lambda m: m.type == "error" and self.console_errors.append(
-                    {"t_ms": self.now_ms(), "text": m.text[:300]}))
+                # The browser echoes every failed request as a "Failed to load resource" console
+                # error; for a URL the spec allows, that echo is the same allowed event, not a new one.
+                page.on("console", lambda m: m.type == "error" and not (
+                    m.text.startswith("Failed to load resource")
+                    and any(a in (m.location or {}).get("url", "") for a in allowed))
+                    and self.console_errors.append({"t_ms": self.now_ms(), "text": m.text[:300]}))
                 page.on("pageerror", lambda e: self.console_errors.append(
                     {"t_ms": self.now_ms(), "text": f"pageerror: {str(e)[:300]}"}))
                 page.on("response", lambda r: r.status >= 400 and not any(a in r.url for a in allowed)

@@ -1,0 +1,186 @@
+{
+ "contract": "P3-main-canary-v1",
+ "prompt": "Use the subagent type best suited for read-only codebase search to find which file in this repo defines DEFAULT_MODES, and what the default mode of `main` is there. Run the subagent in the foreground (not in the background) and wait for its result. Reply with exactly one final line: <repo-relative path> <mode>",
+ "runs": [
+  {
+   "arm": "S",
+   "session": "6fdf7f3d-beaf-45c8-acfc-836bdb2fac19",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "off",
+    "policyGen": "271dcb3e9d8c",
+    "version": "2.1.316"
+   },
+   "finished": true,
+   "calls": 6,
+   "processed": 444103,
+   "weighted": 157927,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods\\cpp-cognitive-runtime\\hooks\\policy.ts shadow",
+   "correct": true,
+   "receipt_matches_arm": true,
+   "seq": "b10"
+  },
+  {
+   "arm": "E",
+   "session": "53d1c834-ed2e-415c-a567-304927a9df0c",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "finished": true,
+   "calls": 7,
+   "processed": 374983,
+   "weighted": 93117,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "Read",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "receipt_matches_arm": true,
+   "seq": "b11"
+  },
+  {
+   "arm": "E",
+   "session": "0dc04f94-9bd0-4db4-ae07-846b97e053c7",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "finished": true,
+   "calls": 6,
+   "processed": 382659,
+   "weighted": 103856,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "receipt_matches_arm": true,
+   "seq": "b20"
+  },
+  {
+   "arm": "S",
+   "session": "cef2ece6-9cfc-4f45-9a70-f4faf61c8c20",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "off",
+    "policyGen": "271dcb3e9d8c",
+    "version": "2.1.316"
+   },
+   "finished": true,
+   "calls": 7,
+   "processed": 491738,
+   "weighted": 139577,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "Glob",
+    "Read",
+    "Grep",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "receipt_matches_arm": true,
+   "seq": "b21"
+  },
+  {
+   "arm": "S",
+   "session": "e793bb00-20ef-498a-8c55-95978e1632cf",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "off",
+    "policyGen": "271dcb3e9d8c",
+    "version": "2.1.316"
+   },
+   "finished": true,
+   "calls": 9,
+   "processed": 628815,
+   "weighted": 162855,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "Read",
+    "Read",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "receipt_matches_arm": true,
+   "seq": "b30"
+  },
+  {
+   "arm": "E",
+   "session": "df3d4af5-c17b-45d3-9a06-5ee60c7497fc",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "finished": true,
+   "calls": 6,
+   "processed": 371346,
+   "weighted": 98856,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "receipt_matches_arm": true,
+   "seq": "b31"
+  }
+ ]
+}

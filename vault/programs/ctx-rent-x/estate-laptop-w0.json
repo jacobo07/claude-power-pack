@@ -1,0 +1,186 @@
+{
+ "plane": "DESKTOP-PMT5BS8",
+ "since": "2026-10-25T00:00:00Z",
+ "until": "2026-11-01T00:00:00Z",
+ "active_release": "0.1.0-b15bfc3d",
+ "classes": {
+  "top-level": {
+   "STALE:0.1.0-fce69916": {
+    "sessions": 203,
+    "calls": 8330,
+    "processed": 1533945422,
+    "floor_rent": 928102640,
+    "floor_sum": 21576713,
+    "mean_floor": 106289,
+    "floor_share": 0.605
+   },
+   "UNKNOWN": {
+    "sessions": 73,
+    "calls": 10043,
+    "processed": 2269174028,
+    "floor_rent": 1001548525,
+    "floor_sum": 6567138,
+    "mean_floor": 89961,
+    "floor_share": 0.441
+   },
+   "STALE:0.1.0-40f2c160": {
+    "sessions": 34,
+    "calls": 2252,
+    "processed": 531039483,
+    "floor_rent": 228943990,
+    "floor_sum": 3273871,
+    "mean_floor": 96290,
+    "floor_share": 0.431
+   },
+   "STALE:0.1.0-c42eb4e7": {
+    "sessions": 27,
+    "calls": 1841,
+    "processed": 437057407,
+    "floor_rent": 211594729,
+    "floor_sum": 2709156,
+    "mean_floor": 100339,
+    "floor_share": 0.484
+   },
+   "STALE:0.1.0-f79e3c46": {
+    "sessions": 14,
+    "calls": 1905,
+    "processed": 413503921,
+    "floor_rent": 233393029,
+    "floor_sum": 1792304,
+    "mean_floor": 128022,
+    "floor_share": 0.564
+   },
+   "STALE:0.1.0-384b03a0": {
+    "sessions": 71,
+    "calls": 1023,
+    "processed": 142520620,
+    "floor_rent": 105706514,
+    "floor_sum": 6981939,
+    "mean_floor": 98337,
+    "floor_share": 0.742
+   },
+   "STALE:0.1.0-c5b18294": {
+    "sessions": 7,
+    "calls": 41,
+    "processed": 5975872,
+    "floor_rent": 4703017,
+    "floor_sum": 382515,
+    "mean_floor": 54645,
+    "floor_share": 0.787
+   },
+   "STALE:0.1.0-82c98708": {
+    "sessions": 19,
+    "calls": 1631,
+    "processed": 284857949,
+    "floor_rent": 173349147,
+    "floor_sum": 2055768,
+    "mean_floor": 108198,
+    "floor_share": 0.609
+   },
+   "CURRENT:0.1.0-b15bfc3d": {
+    "sessions": 18,
+    "calls": 845,
+    "processed": 154275711,
+    "floor_rent": 91524350,
+    "floor_sum": 1890946,
+    "mean_floor": 105053,
+    "floor_share": 0.593
+   },
+   "STALE:0.1.0-7df93813": {
+    "sessions": 138,
+    "calls": 3414,
+    "processed": 545364180,
+    "floor_rent": 347726517,
+    "floor_sum": 13331741,
+    "mean_floor": 96607,
+    "floor_share": 0.638
+   }
+  },
+  "worker:background": {
+   "STALE:0.1.0-40f2c160": {
+    "sessions": 13,
+    "calls": 383,
+    "processed": 50884973,
+    "floor_rent": 39536581,
+    "floor_sum": 1344501,
+    "mean_floor": 103423,
+    "floor_share": 0.777
+   },
+   "STALE:0.1.0-82c98708": {
+    "sessions": 2,
+    "calls": 76,
+    "processed": 11324760,
+    "floor_rent": 8040496,
+    "floor_sum": 211592,
+    "mean_floor": 105796,
+    "floor_share": 0.71
+   },
+   "STALE:0.1.0-7df93813": {
+    "sessions": 8,
+    "calls": 422,
+    "processed": 67702552,
+    "floor_rent": 46762967,
+    "floor_sum": 870109,
+    "mean_floor": 108764,
+    "floor_share": 0.691
+   },
+   "STALE:0.1.0-384b03a0": {
+    "sessions": 2,
+    "calls": 34,
+    "processed": 5205253,
+    "floor_rent": 4143124,
+    "floor_sum": 221972,
+    "mean_floor": 110986,
+    "floor_share": 0.796
+   },
+   "STALE:0.1.0-fce69916": {
+    "sessions": 9,
+    "calls": 172,
+    "processed": 25400325,
+    "floor_rent": 19847066,
+    "floor_sum": 1036010,
+    "mean_floor": 115112,
+    "floor_share": 0.781
+   },
+   "CURRENT:0.1.0-b15bfc3d": {
+    "sessions": 3,
+    "calls": 72,
+    "processed": 11203396,
+    "floor_rent": 8506296,
+    "floor_sum": 337429,
+    "mean_floor": 112476,
+    "floor_share": 0.759
+   }
+  },
+  "worker:slim": {
+   "UNKNOWN": {
+    "sessions": 25,
+    "calls": 400,
+    "processed": 14734664,
+    "floor_rent": 7421085,
+    "floor_sum": 465425,
+    "mean_floor": 18617,
+    "floor_share": 0.504
+   }
+  },
+  "subagent": {
+   "UNKNOWN": {
+    "sessions": 621,
+    "calls": 10147,
+    "processed": 969778852,
+    "floor_rent": 399770127,
+    "floor_sum": 24507853,
+    "mean_floor": 39465,
+    "floor_share": 0.412
+   }
+  }
+ },
+ "total": {
+  "sessions": 1287,
+  "calls": 43031,
+  "processed": 7473949368,
+  "floor_rent": 3860620200
+ },
+ "files_read": 1287,
+ "method": "calls = unique assistant message.id with usage inside the window; floor = call-1 input incl. cache; floor_rent = calls x floor; generation from the newest CCR start receipt by sid, none = UNKNOWN"
+}

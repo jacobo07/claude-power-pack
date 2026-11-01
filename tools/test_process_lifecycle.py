@@ -201,9 +201,130 @@ def g_binding():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def g_roots():
+    """V-LIFE-UNROOT / V-LIFE-ROOT-OVERLAP: hermetic temp state dir."""
+    if str(HERE) not in sys.path:
+        sys.path.insert(0, str(HERE))
+    if str(PP) not in sys.path:
+        sys.path.insert(0, str(PP))
+    import mission_spend as ms
+    from modules.provider_routing.ledger import GoalLedger
+    tmp = Path(tempfile.mkdtemp(prefix="life_roots_"))
+    keys = ("GSD_LONG_RUN_STATE_DIR", "CLAUDECODE", "CPP_GOAL")
+    saved = {k: os.environ.get(k) for k in keys}
+    try:
+        (tmp / "state").mkdir()
+        os.environ["GSD_LONG_RUN_STATE_DIR"] = str(tmp / "state")
+        os.environ.pop("CLAUDECODE", None)
+        os.environ.pop("CPP_GOAL", None)
+        ra, rb = str(tmp / "rootA"), str(tmp / "rootB")
+        ms.goal_declare("ua", 1000, "test", [ra], owner=True)
+        r = ms.goal_unroot("ua", ra)
+        check("V-LIFE-UNROOT", not r["ok"] and ms._norm(ra) in ms.read_index()["ua"]["roots"],
+              f"live goal refused: {r.get('reason')}")
+        # second goal on a live goal's root is refused
+        r = ms.goal_declare("ub", 1000, "test", [str(Path(ra) / "sub")], owner=True)
+        check("V-LIFE-ROOT-OVERLAP", not r["ok"] and "overlap" in r["reason"], f"live holder blocks: {r.get('reason')}")
+        ms.goal_declare("uc", 1000, "test", [rb], owner=True)   # control: a disjoint root is admitted
+        # exhaust ua
+        GoalLedger(ms.goal_root() / "ua", "ua").renew("s1", 0, 1000)
+        rem = GoalLedger(ms.goal_root() / "ua", "ua").status()["remaining"]
+        r = ms.goal_unroot("ua", ra)
+        check("V-LIFE-UNROOT", rem is not None and rem <= 0 and r["ok"] and ms.read_index()["ua"]["roots"] == [],
+              f"exhausted goal (remaining {rem}) releases its root")
+        r = ms.goal_declare("ub", 1000, "test", [ra], owner=True)
+        check("V-LIFE-ROOT-OVERLAP", r["ok"], "control: after the exhausted holder is unrooted the root is admitted")
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def g_launcher():
+    """V-LIFE-LAUNCHER-WINS / V-LIFE-ARM-GOAL (WU-1D-v3): hermetic temp state dir, stub launcher."""
+    tools = os.environ.get("LIFE_TOOLS_DIR") or str(HERE)   # a mutation drill points this at a mutant copy
+    for p in (str(PP), tools):
+        if p in sys.path:
+            sys.path.remove(p)
+        sys.path.insert(0, p)
+    for mod in ("mission_spend", "gsd_mission", "gsd_long_run"):   # reload from `tools` (mutant copy or real)
+        sys.modules.pop(mod, None)
+    import mission_spend as ms
+    import gsd_mission as gm
+    tmp = Path(tempfile.mkdtemp(prefix="life_launch_"))
+    keys = ("GSD_LONG_RUN_STATE_DIR", "CLAUDECODE", "CPP_GOAL", "CPP_PROSPECTIVE_BIND")
+    saved = {k: os.environ.get(k) for k in keys}
+    try:
+        (tmp / "state").mkdir()
+        os.environ["GSD_LONG_RUN_STATE_DIR"] = str(tmp / "state")
+        for k in ("CLAUDECODE", "CPP_GOAL", "CPP_PROSPECTIVE_BIND"):
+            os.environ.pop(k, None)
+        work = tmp / "rootB"
+        work.mkdir()
+        ms.goal_declare("gb", 1000, "test", [str(work)], owner=True)
+        ms.write_binding("sid-L", "ga", "launcher")
+        b = ms.resolve_binding({"cwd": str(work), "tool_name": "Bash", "tool_input": {"command": "x"}}, "sid-L")
+        c = ms.resolve_binding({"cwd": str(work), "tool_name": "Bash", "tool_input": {"command": "x"}}, "sid-none")
+        check("V-LIFE-LAUNCHER-WINS", b and b["goal"] == "ga" and c and c["goal"] == "gb",
+              f"launcher record -> {b and b['goal']} (want ga) under gb's root; control without record -> {c and c['goal']} (want gb)")
+        # ARM-GOAL: arm --goal persists; the launch writes the record for the sid the host printed
+        cwd = tmp / "proj"
+        cwd.mkdir()
+        rec = gm.arm(str(cwd), "do the thing", launch=False, goal="ga")["mission"]
+        mid = rec["mission_id"]
+        persisted = (gm.load(mid) or {}).get("launch_goal")
+        name = f"{mid}-e1"
+
+        class R:
+            returncode = 0
+            stdout = f"backgrounded · abcd1234 · {name}\n"
+            stderr = ""
+        res = gm.launch_worker(mid, expect_epoch=0, expect_state=gm.PREPARED, reason="armed",
+                               runner=lambda argv, cwd_: R())
+        w = ms.read_binding("abcd1234")
+        rec2 = gm.arm(str(tmp / "proj2"), "x", launch=False)["mission"]
+        check("V-LIFE-ARM-GOAL",
+              persisted == "ga" and res.get("ok") and w and w["goal"] == "ga" and w["source"] == "launcher"
+              and (gm.load(rec2["mission_id"]) or {}).get("launch_goal") is None
+              and "--goal" in (HERE / "gsd_mission.py").read_text(encoding="utf-8"),
+              f"persisted={persisted} launch_ok={res.get('ok')} record={w and (w['goal'], w['source'])}; control: no --goal -> no launch_goal")
+        # SLIM-LAUNCHER: the `-p` path writes the same launcher record, keyed by the sid it generated
+        spawned = []
+
+        def spawner(argv, run_dir, out_p, err_p):
+            spawned.append(argv)
+            return 4242
+        srec = gm.arm(str(tmp / "proj3"), "slim thing", launch=False, goal="ga")["mission"]
+        gm.transition(srec["mission_id"], expect_epoch=0, expect_state=gm.PREPARED, event="goal_bound", worker_profile="slim-t1")
+        sres = gm.launch_worker(srec["mission_id"], expect_epoch=0, expect_state=gm.PREPARED, reason="armed",
+                                spawner=spawner)
+        sw = ms.read_binding(sres.get("bg_id") or "none")
+        nrec = gm.arm(str(tmp / "proj4"), "slim ctl", launch=False)["mission"]
+        gm.transition(nrec["mission_id"], expect_epoch=0, expect_state=gm.PREPARED, event="goal_bound", worker_profile="slim-t1")
+        nres = gm.launch_worker(nrec["mission_id"], expect_epoch=0, expect_state=gm.PREPARED, reason="armed",
+                                spawner=spawner)
+        nw = ms.read_binding(nres.get("bg_id") or "none")
+        check("V-LIFE-SLIM-LAUNCHER",
+              sres.get("ok") and sres.get("slim") and sw and sw["goal"] == "ga" and sw["source"] == "launcher"
+              and nres.get("ok") and nw is None and len(spawned) == 2,
+              f"slim launch_ok={sres.get('ok')} record={sw and (sw['goal'], sw['source'])}; control: no --goal -> record={nw}")
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main():
     g_transport()
     g_binding()
+    g_roots()
+    g_launcher()
     print(f"LIFE_PASS={passes} LIFE_FAIL={fails}")
     print(f"{passes} pass, {fails} fail")
     return 1 if fails else 0

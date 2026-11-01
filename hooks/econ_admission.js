@@ -85,7 +85,8 @@ function doRaiseGoal(goal, raise, why) {
     'Nothing is assumed written; send the same message again (the raise is idempotent per goal and lease).';
   if (!out.ok) return `OWNER RAISE REFUSED -- ${out.reason}. Goal ${key} is unchanged (0 model tokens).`;
   if (!out.applied) return `OWNER RAISE -- goal ${key}: lease ${out.lease} is already open from this same raise; nothing added (0 model tokens).`;
-  return `OWNER RAISE APPLIED (${why}; 0 model tokens). Goal ${key}: programme ${fmt(out.programme_old)} -> ${fmt(out.programme_new)} ` +
+  return `DONE, NOT AN ERROR -- the harness label "operation blocked by hook" only means this message was answered without a model call. ` +
+    `OWNER RAISE APPLIED (${why}; 0 model tokens). Goal ${key}: programme ${fmt(out.programme_old)} -> ${fmt(out.programme_new)} ` +
     `(+${fmt(raise.amount)}); lease ${out.from_lease} -> ${out.lease}, cap ${fmt(out.cap_old)} -> ${fmt(out.cap_new)}.\n` +
     'A pane already fenced on this goal stays fenced: `/clear` there starts a fresh session on the new lease. Panes that were never fenced just keep working.';
 }

@@ -84,6 +84,13 @@ def main():
 
         shown, rc = render(None, session)
         check("V-SL-NO-DATA-NO-METER", shown is None and rc == 0, f"shown={shown} rc={rc}")
+
+        # The live file is GSD-owned and outside git; the PP copy is the source of truth.
+        # Skipped under SL_TEST_SCRIPT: a mutation drill points at a deliberately different copy.
+        if not os.environ.get("SL_TEST_SCRIPT"):
+            sync = subprocess.run([sys.executable, "-I", str(Path(__file__).with_name("statusline_sync.py")),
+                                   "--check"], capture_output=True, text=True, timeout=30)
+            check("V-SL-VENDOR-MATCHES-LIVE", sync.returncode == 0, sync.stdout.strip() or sync.stderr.strip())
     finally:
         try:
             bridge.unlink()

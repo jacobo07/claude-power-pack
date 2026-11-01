@@ -979,6 +979,24 @@ with the Resort census.
 - Controls: positive met; negative 0/50.
 Optional step 4: one level of argument propagation, then subtract the Resort-shape overlap.
 
+**Step 4 DONE 2026-10-29** (zero-model, `vault/plans/d21-step4-motion-closure-vs-frontier-2026-10-29.md`): against the
+GEX44 frontier (519/1797 certified), **0 of the 50 motion functions are certified** (46 NO_COMPILE, 4 COMPILES_NO_MATCH;
+0 of the 20 field readers). Motion median is 138 insns; certified median is 3, and 3 of 614 functions over 50 insns are
+certified. ALL-MATCH progress does not move D21. The largest blocker is the NO_COMPILE 10149 family (25 of 50).
+Scope A stays NOT ADMITTED.
+**Step 4c 2026-10-29** (same doc): the motion plateau is the pinned compiler flags (`-sdata 0`; the target uses
+`@sda21`), not field widths. Under `-sdata 8` with the v5 sources, 58 more functions reach objdiff 100 and 0 of the
+519 certified regress. Adding the 10149 struct transform gives 5 more, and moves motion to 82-99 %. U2 closed the same
+day: frontier 519 -> 554. The next unit is a flags re-base of frozen evidence, which waits for the Owner's go.
+**Step 4d 2026-10-29** (Owner go): the re-base landed as an additive toolchain lane (TC1/TC2, `toolchain_sd`; frozen
+modules and evidence untouched). Frontier 554 -> **617/1797** with 0 regressions. Motion: 13 of 50 now compile under the
+lane, 3 at >= 95 %, still 0 certified. The next lever is search under the toolchain flags (needs its own spec). Scope A
+stays NOT ADMITTED.
+**Steps 4e-4f 2026-10-29** (Owner go on both specs): TC3, the search under -sdata 8, certified 2 more functions. One of
+them is fn_8020A1A4, the **first certified motion function (1 of 50)**, and the frontier is now **619/1797**. The KSR
+lane certified **8,687 KSR main functions** under flags measured per object. That is its own population, not t1
+growth. Scope A stays NOT ADMITTED. Everything still open is in `vault/backlog/2026-10-29_d21-ksr-remaining.md`.
+
 **Activation criterion:** recon-factory CP50 has reported its cost per function and the learning-curve result (the
 per-game cost model needs both). Step 0 may run earlier, because it is zero-model.
 
@@ -1391,3 +1409,296 @@ Plan of record: `vault/plans/cpp-evc-master-plan-2026-10-15.md`. Resumption: `C:
 
 **Activation criterion:** the Owner names an item, or EVC6 posts a DONE receipt (then items 2, 4, 5 become actionable in
 order). Start a fresh thin pane (Sonnet is enough) from `RESUMPTION_FILE.md`; do not re-read transcripts.
+
+---
+
+## D36 -- ctx-rent-obs tranche 3 carry-over: top-level boot floor (Owner "añade todo lo pendiente al backlog", 2026-10-26)
+
+State: t3 W8-W11 plus the C3c/C3d scratch extension are done and committed (receipt `vault/programs/ctx-rent-obs/STATUS.md`,
+last commit 2803cf6a). Findings: `b3/B3.md`, `b3/PROPOSAL.md`, `b3/contracts/`. Metered about 10.03M against a 10.4M chat ceiling.
+
+**Pending, in order:**
+1. **Ledger.** Confirm the t3 packet approval (`approve ctx-rent-obs only`) and the 7.0M / +3.5M ceilings exist in the ledger; they were
+   given in chat only. Then book the spend with `goal-settle --goal ctx-rent-obs --measured <pane tokens>`, pane 242e49b5 =
+   9,264,721 at the last meter; the probe sessions (C3a 313,944; C3c/C3d 453,082) count separately. Settle before opening any successor lease.
+2. **Counterbalanced rerun of C3c/C3d** from a FRESH pane (this pane cost ~120K per call). Control run twice per repo, arm order swapped,
+   rules isolated by also removing the live rules path, not only the scratch copy (census showed 16 vs 9 rule-like sources). New contract
+   committed before any probe; needs a new ceiling (estimate 1.5-2.5M in a fresh pane).
+3. **Owner picks PROPOSAL rows.** Rows 1-3 (agent listing, rules, MEMORY.md) are ESTIMATE until step 2; row 4 (skill listing, 6.0K measured)
+   must not be applied as a blanket `--disable-slash-commands`. Applying any row touches `~/.claude` (HR-001) and is a separate tranche.
+4. **Unattributed half of the floor** (54.8K per session, 49.7%). C3a shows the chars/3.6 estimator overstated one source by ~0.72x, so the
+   remainder is larger than stated. Needs a probe-based tool-schema attribution (the Agent tool description lists agent types).
+5. **C3b re-check:** no `claude --help` flag removes the agent listing (2026-10-26). Re-read the help after a binary update.
+
+**Constraints:** the observation tranche forbade settings, hooks, rules, CLAUDE.md and MEMORY.md edits. A C3 contract is never edited after
+its data is read.
+
+**Activation criterion:** the Owner says continue, or a floor regression gate run shows the top-level floor above 120K.
+
+
+---
+
+## D37 -- Cognitive Economics datasets: systems proposed but not built, and open items (Owner, 2026-10-26: "sí, haz ambos")
+
+Source: full reads of the 15 datasets of `Dataset CPP Context Intelligence Fabric.zip` (digests in
+`vault/programs/cognitive-economy/datasets-digest-2026-10-26/`, commit 8311c3846) plus a gap scan of
+`a5/inputs/dataset-dws-optimization-1.md` (that one was already dispositioned: `a5/LEDGER.md`, 265 rows, OMITTED 0).
+
+**Evidence class: LEADS.** Everything below comes from model digests and repo greps by subagents. No line was re-verified against
+the source datasets, and "ABSENT" rests on code-folder greps with partial plan/vault coverage. Verify the named line in the dataset
+and re-run the greps before acting on any row.
+
+**Count (subagent reading, N=41 named systems):** BUILT 14, PARTIAL 9, SPEC_ONLY 7, ABSENT 11. Most of the named components already
+exist (mainly the Cognitive Deflation Closure programme CDC C1-C12, `vault/programs/cdc/`: semantic breaker, Model-Call Firewall at
+the Agent/Task spawn edge, effect system, Cognitive CI, derivation store, Safe-to-Forget, fences and leases, AgentSpec, trace mining
+and PGO, route admission, Cognitive GC). What is missing is mostly the high-concept layer below.
+
+### A. Systems not built (ranked by how many datasets propose them; effort S/M/L)
+1. **Mission Compiler / Mission IR** (8 datasets: tok18, ce_gen1gen2, quicklease, skyparty_opt/spawn, gsdx_edd, recon_factory, orca_dws). Backing
+   number: EDD Phase 1 5.76M compiled vs 32.06M old grammar, n=1 scan phase only (gsdx_edd L88). `mission_ir`, `work_ir`, `gsd_compile`,
+   `gsd_dossier`: 0 code hits (inventory of 10-09 says they live only on the cost-collapse branch, not searched). L.
+2. **Full Context MMU / Resident Context Admission Gate / page-fault family** (6; gap scan P1-16..18, P2-22..26, P3-28..39 DEFER owner "none").
+   Resident floor is 44-49% of context (tok18 L11365). Counter-evidence: Gen1 MMU variants were falsified (ksr_kme_opt L6554). Only
+   ContextImage packets exist. L.
+3. **Read-depth K0-K4 / Semantic Read Barrier / UCRE read elimination** (5). Counter-evidence: raw re-reads only 1.88-2.4% (ce_gen1gen2
+   l104), so the ceiling is low; only the first rung exists (`ccr-v2-addendum-2026-10-11.md:36`). `read_barrier`, `read_depth`: 0 hits. M.
+4. **Decision Extinction Rate / role extinction** (5). Spec only (`cognitive-deflation-closure-MASTER-PLAN-2026-10-10.md:106`). M.
+5. **Closeout fault runner** (NOVELTY / PROOF / REALITY / AUTHORITY faults, 5-14M green path) (3). Closeout code exists, the fault
+   taxonomy has 0 hits. Backing: A-G1 spent 3.76M vs 1.9M target (gsdx_edd L344-376). M.
+6. **Belady oracle on historical traces** (4), to bound the headroom of any residency policy. One plan hit, no code. M.
+7. **Irreducible Cognition Certificate / Irreducibility Registry** (4). `Irreducible Cognition`: 0 hits. M.
+8. **Activation precision/recall, Critical Context Recall** (3), no thresholds anywhere in the datasets. M.
+9. **Economic Diff per commit** (3). `cognitive_ci` is a release gate, not a per-commit diff. S.
+10. **Output Budget Governor CO-11** (July scan GAP-REAL, `COGNITIVE_OS_INDEX.md:169`, "approved, deferred, not built"). No backlog row until now. S-M.
+11. **Memory ROI ledger** (3). The derivation store exists; `memory roi`: 0 hits. S.
+12. **Cognitive MVCC/SSA** (3) and **Cognitive ISA / 11 syscalls** (3). The ISA case is weak: mechanical calls are only 3-6% of calls
+    (tok18 L11248). L each.
+13. **Zero Repeated Transport ladder ZRT-0..9** (2; selective_semantic L12181-12219). Plans only. S-M.
+14. **Global Token Constitution / CROS control plane** (4). 0 hits; doctrine is split across hard rules. M.
+15. **Truth lattice** (`deferred-backlog.md:770`) and **Token NPV** (only ROIC inside `cognitive_pgo`). S each.
+
+**Explicit do-not-build (datasets' own conclusion, measured):** Model-Call Admission for mechanical calls (3-6% of calls, below the
+10% bar: skyparty_spawn L244). Do not reopen without a new measurement.
+
+### B. Partial systems to finish
+`UNACCOUNTED_ORIGINAL_OBLIGATION` (scope conservation, 8 dispositions): dispositions exist in `tools/a5_ledger.py` and
+`gsd_x/mission/obligation.py`, the compile-fail code has 0 hits. Carry-cost rotation formula (`ccr_carry_fit.py`, unverified).
+Continuation compiler (`ccr_continuation.py`). Token Rent Ledger (`ccr_reread_audit.py` plus ctx-rent-obs, see D36).
+
+### C. Measurements and re-runs the gap scan found unopened
+1. **Tool-schema share of the first-call floor** (`COUNTERFACTUAL.md:38` UNKNOWN). Links to D36 step 4 (unattributed half of the floor). S.
+2. **242 semantic-CSE candidate groups** (`COUNTERFACTUAL.md:37`): canary on 30 groups, go above 3% (the Gen1 materiality line). S/M.
+3. **Architecture-cost cluster** (P1-58, P2-41..49): radius budgets, token-aware API. Needs per-file attribution first; refactor one top-5-by-read-burden file as canary. M.
+4. **CO-14 Dependent Register regeneration producer** (deliberately unbuilt, `cognitive_os_14_residency_jurisdiction.md:114-115`). S.
+5. **CO-13 re-run**: its numbers come from one installation on one date, depth ladder inverted at 880 `full` vs 4 `discovery`. S.
+6. Smaller DEFER-owner-none rows: model ensemble only where information value justifies it (P2-59); information QoS classes (P3-44). One line each.
+
+### D. Open items the datasets leave unresolved (leads, line numbers are the digests')
+- tok18 L13783-13800: six unanswered Owner questions on Gen3 T2; T2-0 redesign proposed, not executed (L14612-14758); repair
+  amplification and known-work share UNKNOWN (L13642-13644); the 589M remaining baseline has no derivation on disk (L13653).
+- "Known repeating work" is the only unmeasured route to 60-80% savings (ce_gen1gen2 l399; tok18 L13498). Measuring it is the decision point for most of A.
+- quicklease: the recompile gate and its numbers were never produced; WU-G2b closeout measurements never reported.
+- sidecar: the state compiler ignores `renew_mission` (RESUMPTION.md went stale); a renewal must propagate atomically to durable
+  state, attribution, continuation and resume. 20 BLOCKED_HUMAN claims, perhaps ~7 truly human.
+- ksr_kme_opt: a ~60K first-call block unexplained (39.5% of KSR context); gen2's 150M budget has no unit field and is suspended
+  (L6910); a BLOCKED mission could silently renew and relaunch the old architecture (L7413).
+- cif L14220-14545: the "95% Token Reduction" doctrine is an unreproduced hypothesis; three deltas (compression, memory growth,
+  doctrine install) must be reported separately.
+- recon_factory L4584+: cites "el corpus" and TOK-18 as sources of many ideas; that corpus is not in the datasets, provenance unverified.
+
+**Constraints:** Context-economy measurements here are processed tokens, not billed; cache reads dominate (97-99% across KSR, CW Ops,
+ODR). Combined measured levers cap at 34-56% in the datasets' own account.
+
+**Activation criterion:** the Owner picks a row, or the "known repeating work" measurement (C.1/D) is funded. Recommended order:
+C.1 tool-schema share (cheap, closes the floor question from D36), then A.3/A.4/A.6 as measurements before any build.
+
+
+---
+
+## D38 -- Expansion of the Cognitive Economics work: verification, measurement and housekeeping (Owner, 2026-10-26: "añade todo al backlog, absolutamente todo")
+
+Companion to D36 (t3 carry-over) and D37 (systems the datasets propose). Everything the 2026-10-26 session proposed or found that
+is not already a row there. Evidence class of every row: PROPOSAL (nothing here has been run).
+
+### A. Verify what was read (do this before building anything from D37)
+1. **Audit the digests against the source datasets.** D37 rests on model digests that no second reader has checked. An independent
+   agent samples ~40 numeric claims (most-cited first: EDD 5.76M vs 32.06M, re-reads 1.88-2.4%, cache reads 97.7%, A-G1 3.76M vs 1.9M,
+   34-56% lever cap, 242 CSE groups, 54.8K unattributed) and checks the cited line in the zip's file; record CONFIRMED / CHANGED /
+   NOT FOUND per claim in `vault/programs/cognitive-economy/datasets-digest-2026-10-26/AUDIT.md`. Est. 0.5-1M tokens, Sonnet.
+   Activation: before any D37 row is accepted for a build.
+2. **Re-run the D37 "absent" greps with full plan/vault coverage.** The systems cross-check used code-folder greps with partial
+   plan and vault coverage; search the cost-collapse branch (`gsd_compile`, `gsd_dossier`) and `~/.claude/hooks`, which it did not read. S.
+3. **Verify two digest-level unknowns:** the CIF lines 14220-14545 "95% Token Reduction" doctrine and `recon_factory` L4584+ references
+   to "el corpus", whose provenance is not in the datasets. S.
+
+### B. Measure (ordered by cost; each closes a named UNKNOWN)
+1. **Known repeating work** (the only route the datasets leave to 60-80%; unmeasured). Mine the transcript corpus with
+   `tools/a5_trace.py` for repeated identical read targets plus identical next-3 tool sequences across sessions, then canary 30 groups for
+   identical derivation; go above 3%. Subsumes D37 C.2 (242 CSE groups). Est. 1-2M.
+2. **Tool-schema share of the first-call floor** (D37 C.1; closes D36 step 4). Probe pair with the Agent tool's agent-type list changed.
+   Est. ~0.3M.
+3. **Counterbalanced C3c/C3d rerun** (D36 step 2): control twice per repo, arm order swapped, live rules path isolated too. 1.5-2.5M, fresh pane.
+4. **Estimator calibration.** C3a measured the chars/3.6 estimator 0.72x too high for one source; measure the factor for agents, rules and
+   MEMORY.md, and record it in `context_floor_census.py` output as a per-source caveat instead of a constant. S.
+5. **Organic vs headless floor gap** (organic 110K vs probe 70-86K): find what the 25-40K difference is made of (resident session
+   context, hooks, settings, skills). Needed before any probe delta is quoted as an organic saving. M.
+
+### C. Read what the first gap scan did not reach
+1. `vault/knowledge_base/cognitive_os/cognitive_os_00..08, 10, 12, 13` bodies (only the index and CO-09/CO-14 excerpts were read).
+2. `a5/inputs/dataset-dws-optimization-1.md` lines 3542-5914 (covered only through `a5/LEDGER.md`).
+3. `vault/programs/cognitive-economy/ukdl-candidates.md`, `owner-bundle.md`, `ledger.json` and the MASTER-PLAN decisions, beyond greps.
+
+### D. Reconcile the datasets with each other
+One synthesis page, `wiki/syntheses/`, listing where datasets contradict and which evidence the repo currently favours:
+CIF "quality > quantity > minimization" (l1363) vs TOK-18 target under 100-150M; the "95% reduction" doctrine vs the measured 34-56% cap;
+SkyParty "kill-shot" cap vs the 124M plan; Gen1 falsified levers (proof reuse 0.50%, tool filtering 2.67%) vs the Gen2 reading of them as
+conditional theorems with reopen triggers. Follow `wiki/CLAUDE.md` (citations with commit hash, a Disagreements section). S/M.
+
+### E. Housekeeping found this session
+1. **Unbooked agent spend:** the 15-dataset reads and the two scans used ~2.56M subagent tokens (sum of the 9 agents' `subagent_tokens` usage notices: 156,599 + 365,160 + 319,743 +
+   332,104 + 330,933 + 324,745 + 291,484 + 255,921 + 181,339; not `session_tokens`, so it may exclude cache reads and understate processed tokens;
+   measure from their transcripts before booking); book with the t3 spend in D36 step 1, separately from the pane.
+2. **Stale loose copies in Downloads:** `Dataset CPP KSR + KME Optimization 1.md` (114 KB) and `Dataset CPP SkyParty Optimization 1.md` (119 KB) are
+   older than the zip's (201 KB / 199 KB) and are not what the Owner's phone listing shows. Do not delete; mark the zip as canonical in the README (done) and ask the Owner before removing the loose files.
+3. **Two guard behaviours seen while dispatching agents** (candidates for `governance/KNOWN_FALSE_POSITIVES.md`, Owner's standing
+   obligation to record a false positive the same session): (a) the cognitive-admission duplicate guard refused an identical prompt
+   whose first dispatch had been blocked by the AGENT-SOLO guard and so never ran; (b) the AGENT-SOLO guard blocked an Agent call
+   because a different session dispatched an agent 14.6 s earlier. Neither is a defect in the work; both cost a retry.
+4. **Mojibake in sources:** `ksr_kme_opt` and `skyparty_opt` datasets are partly UTF-8 read as Latin-1. If they are ever re-ingested, repair the encoding first.
+5. **Other datasets in Downloads** (many more `Dataset*` and dataset-family files, ~70 matched by name: KobiiCraft, KME suite, Wii, CommonWealth, GSD X 34k funciones,
+   PP_DATASET_20260531...) were not scoped: they are not Cognitive Economics. Listed so the choice is explicit, not forgotten.
+
+**Activation criterion:** the Owner names a row, or A.1 is funded (it gates trust in D37). Recommended order: A.1, B.1, B.2, then D.
+---
+
+## D39 -- Index of `vault/backlog/` (Owner 2026-10-27: "une todos los backlogs a deferred-backlog")
+
+This file is the single entry point. The items below keep their own files, because about 20 documents link to those paths
+(receipts, knowledge-base indexes, wiki/raw) and the cp50 `.patch` files cannot be inlined. Each row is a pointer: the
+title is the file's own heading, and status was **not** re-verified on 2026-10-27 unless the row says otherwise. Before
+acting on one, read the file and check its state against the repo.
+
+**Waiting on laptop RAM (verified 2026-10-26/27):**
+- `2026-10-25_uek-phase13-e4-canary.md` -- UEK Phase 13 (E4 canary, goal ccr). Chain unparked in ccr/v5 `b6bfc54a`;
+  E4b2 auto-arms at >=4.5 GB free on two samples (1.7 GB at 10:21 on 2026-10-26). Pending list in the file.
+- `2026-10-26_ccr-a2-laptop-closeout.md` -- CCR-NEXT A2 laptop close-out, waiting on RAM.
+- `2026-10-26_gsdx-factory-2-ram-gated.md` -- GSDX factory-2 work gated on free RAM.
+
+**Missions and programmes (remaining work):**
+- `2026-10-29_d21-ksr-remaining.md` -- D21 / recon fabric after TC3 and the KSR lane. Open items: re-split the 6 FLAGS_SPLIT KSR objects (652 matches), a KSR search lane (9,941 near-misses), deeper search on 2 motion near-misses, the 10499/v6 lane, the campaign at sd8, 2 XF_ERROR, 2,858 NO_TARGET, a byte-identity map, the Scope A decision, certify speed. Debt: push of 10 unpushed GEX44 commits, 30 MB of evidence, `campaign --help`.
+- `2026-10-17_ccr-vm-t0-hallazgos-y-pendiente.md` -- CCR boundary CWS (goal ccr-vm): T0A findings and what remains.
+- `2026-10-10_cp50-c2-remaining.md` -- CP50 C2 (recon-factory Phase 7). Patches beside it:
+  `2026-10-10_cp50-c2a-fix.patch`, `2026-10-10_cp50-c2a-partial.patch`, `2026-10-10_cp50-c2b-phase7.patch`,
+  `2026-10-11_cp50-c2b-fix.patch`, `2026-10-11_cp50-c2c-fix.patch`.
+- `2026-10-10_ce-a4-remaining.md` -- CE Amendment A4 (estate rearm), parked by the Owner.
+- `2026-10-10_ce-lifecycle-remaining-mission.md` -- ce-a3 / lifecycle control-plane mission.
+- `2026-10-10_ce-lifecycle-v3-remaining.md` -- ce-lifecycle-v3 mission.
+- `2026-10-10_ce-unify-remaining.md` -- ce-unify mission.
+- `2026-10-10_caa-wake-t3-residual.md` -- caa-wake chain residual after W1R-2R (goal caa-wake-t3).
+- `2026-09-27_mission-supervisor-blocked.md` -- mission supervisor: 48 workers, zero work (m-66ebaaa0324e lineage).
+- `2026-10-31_ce-a3b-r-v2-milestone-blocked.md` -- ce-a3b-r v2 milestone, blocked on a spent goal (9,533,534 of 8,600,000). Also: the overwritten worktree RESUMPTION_FILE (old body at `8fb014fe`), the `/cpp-compound` 7+8 blocker, cap overshoot, budget-hook ETIMEDOUT, blind-overwrite allow-list. See D40.
+
+**Design and absorption:**
+- `2026-10-10_animejs-design-absorption.md` -- absorb Anime.js into PP Design.
+- `2026-10-02_cdio-modern-saas-styles.md` -- CDIO: three modern SaaS styles.
+- `2026-07-06_cognitive-os-vdepth-expansion.md` -- Cognitive OS V-DEPTH expansion to 2500 words/Part.
+- `2026-07-01_parallel-mesh-deferred.md` -- Parallel Mesh deferred systems.
+- `2026-10-21_cdio-brand-identity-logo-absorption.md` -- CDIO Brand Identity & Logos: evidence-gated GitHub absorption. Imported from `origin/main` 2026-10-31 (blob-identical). See D41.
+- `2026-10-30_cdio-21-design-resources-universal-absorption.md` -- CDIO Backlog: universal absorption of the 21 design resources (six screenshots), 36 falsification gates. Imported from `origin/main` 2026-10-31. See D41.
+- `2026-10-13_synsation-ux-patterns-absorption.md` -- absorb Synsation UX interaction patterns into PP Design. Imported from `origin/main` 2026-10-31. See D41.
+- `2026-10-31_orca-relay-design-captures.md` -- 65 design/UX/visual captures from other projects in the Orca relay (QuickLease Quickie's World, CostaLuz Legal Academy, KobiiCraft/CW Ops visual realism, KSR, Rail demo). None names CDIO literally. See D41.
+- `2026-10-31_github-issues-design-cdio.md` -- GitHub issues verbatim: TUA-X #4-#10 (CDIO named in #4, #6, #8, #10) + claude-power-pack #5. See D41.
+
+**Engineering absorption (imported from `origin/main` 2026-10-31, see D41):**
+- `2026-10-11_addyosmani-agent-skills-selective-absorption.md` -- CPP-AGSK-001: universal agent skills absorption & engineering baseline elevation.
+- `2026-10-11_diagnosing-bugs-causal-proof-ratchet.md` -- CPP-DBG-001: evidence-driven bug diagnosis & causal proof ratchet.
+- `2026-10-11_ruflo-security-absorption-sovereign-updates.md` -- CPP-RUFLO-001: secure Ruflo absorption, hardening & sovereign upstream updates.
+- `2026-10-11_tdd-evidence-first-vertical-slice-ratchet.md` -- CPP-TDD-001: evidence-first TDD & behavioral verification ratchet.
+
+**Orca relay (all 452 ChatGPT captures, collected and acked 2026-10-31, see D41):**
+- `2026-10-31_orca-relay-other-captures.md` -- 166 captures of other projects (Orca X, Rail, KobiiCraft, QuickLease, KSR, CW Ops, CostaLuz); durable copy, route to their own backlogs.
+- `2026-10-31_orca-relay-cpp-captures.md` -- 221 Claude Power Pack + GSD X Reconstruction Fabric captures (2026-10-05 UCR-CIF/ARCIF/AutoResearch; 10-10 Autonomous Mission Fabric, Semantic Control, Cognitive Architecture, GSD X REA/Procedure/Intervention; 10-11 SSM/Context Compiler/UTVM).
+
+**Tokens, cost and session delivery:**
+- `2026-10-03_token-economy-wave2.md` -- token economy, wave 2.
+- `2026-10-03_handoff-harvest.md` -- harvest of pending handoffs.
+- `2026-10-02_weekly-limit-burn-followups.md` -- follow-ups of the weekly-limit incident.
+- `2026-09-23_autocompact-withdrawal-race.md` -- `/compact` delivery: the withdrawal race.
+- `2026-06-30_costgate-weeklyburn-slow.md` -- cost_gate.weekly_burn takes 13.6 s.
+
+**Out of scope of a past slice:**
+- `2026-09-23_torre-universal-out-of-scope.md` -- Torre Universal, outside the PERSISTENT_STATE slice.
+
+**Rule from here on:** a new backlog item goes in this file as a `D<n>` entry. A long one may keep its own file under
+`vault/backlog/`, but it gets a row in this index in the same commit.
+
+**Activation criterion:** per row, as written in its file. Next step for the index itself: when a row is confirmed done
+or obsolete, mark it here with the commit that closed it.
+
+## D40 -- ce-a3b-r: v2 milestone blocked on the goal budget, plus what the stall exposed (Owner 2026-10-31: "ponlo tambien en deferred backlog")
+
+Full item list: `vault/backlog/2026-10-31_ce-a3b-r-v2-milestone-blocked.md`. Worktree `C:\Users\User\Apps\pp-ce-a3b-r`.
+
+- **First:** the worktree `RESUMPTION_FILE.md` was overwritten (uncommitted, +20 / -356). The old body is intact at
+  `8fb014fe`. Merge it back under the new v2 block before anything commits that file.
+- **Owner decision:** a successor goal id for the milestone (`subelo 70M <goal>`), or close `ce-a3b-r`.
+- **Then:** `/gsd-new-milestone` + `/gsd-autonomous` with the approved v2 scope (chain-deadline instrument, reap path,
+  `continuation_transport` delivery, 5 mirror DRIFT pairs). The `/cpp-compound` 7+8 fix is excluded.
+- **Open defects:** `/cpp-compound` 7+8 blocked by an abandoned change in `tools/compound_unattended.py`; goal cap
+  overshot by ~933k (10.8 %); budget hook ETIMEDOUT on PowerShell; the closeout allow-list permits a blind overwrite.
+
+**Activation criterion:** the Owner gives a goal id, or anyone is about to commit in `pp-ce-a3b-r`, whichever comes first.
+
+## D41 -- Every backlog seen on 2026-10-31: Orca relay, GitHub issues, and `main`-only backlog files (Owner 2026-10-31: "quiero que añadas absolutamente todos los backlogs que hemos visto al backlog de claude power pack")
+
+Six new files plus seven imported ones, all indexed under D39. Nothing below has been started or checked against the repo.
+
+- **Orca relay (VPS), collected 2026-10-31 (Owner: "recogelas todas y haz commit").** Source:
+  `infinity_mie_prod.orca_intent_relay` in the `infinityops_postgres_prod` container on 204.168.166.63. 452 captures
+  from 2026-10-05 to 2026-10-31; Orca had pulled none. All 452 now live in three files, partitioned by relay `id` (each
+  in exactly one): `2026-10-31_orca-relay-cpp-captures.md` (221: 161 Claude Power Pack + 60 GSD X),
+  `2026-10-31_orca-relay-design-captures.md` (65 design/UX/visual rows from other projects) and
+  `2026-10-31_orca-relay-other-captures.md` (166 remaining rows of other projects: Orca X 46, Rail 36, KobiiCraft Post
+  Launch 34, QuickLease 18, KSR 14, CW Ops 8, CostaLuz 7, others 3).
+  - **Acked:** all 452 via `InfinityMie.OrcaRelay.ack/3` (the module's own operation, through release `rpc`, batches of
+    100), outcome `ingested`, `acked_by = owner-cli:cpp-backlog-import-20261031`. Read back from the DB: 452 total,
+    0 unacked, 452 acked by the import. The relay is empty again (cap 500).
+  - **Consequence:** the purge job nulls the relay text 24 h after the ack and deletes the rows 7 days after it. From
+    then on these backlog files are the only copy of the text, apart from the backup below.
+  - **Backup before the ack (PR-7):** `/home/kobicraft/backups/orca_intent_relay_pre_ack_20261031.sql` on the VPS, 424,185
+    bytes, sha256 `a0401bd358393165d0779369bacf8513706d9488069524bf741d325e571f016f`. It covers
+    `orca_intent_relay` + `session_backlog_items` + `session_backlog_item_events`, and has 452 relay rows (matching the DB
+    count at dump time).
+  - **Ownership note:** the ack ran outside the HTTP relay-owner check (`owner_check`), so the bound Orca installation
+    did not perform it. If Orca later pulls, it gets nothing for these ids. That is intended: they were ingested here.
+- **GitHub issues.** `2026-10-31_github-issues-design-cdio.md`: TUA-X #4-#10 and claude-power-pack #5, bodies verbatim
+  via `gh` (the GitHub MCP returned 401). CDIO-owned work is TUA-X #4 (visual 10/10, render QA, >=3 distinct PDP
+  presentations); #6, #8 and #10 defer to CDIO / #4.
+- **`main`-only backlog files.** Seven files existed on `origin/main` `vault/backlog/` but not on this branch, and had no
+  index row on either side. Copied blob-identical (`git hash-object` = `origin/main` blob): the two CDIO files
+  (brand identity & logos 10-21, 21 design resources 10-30), Synsation UX patterns, and CPP-AGSK/DBG/RUFLO/TDD-001.
+- **Not exported:** Orca X's own local backlog (`C:\Users\User\Apps\orca-*-wt`, `docs/reference/universal-backlog.md`);
+  the search there was killed by Claude Code because the host was low on RAM.
+
+**Routed 2026-11-01 (Owner: "reparte las capturas de otros proyectos a sus propios backlogs").** All 231 non-Power-Pack
+captures (166 + 65) now also live in their own repos, one new untracked file each, verbatim with relay ids
+(`route_projects.py`: every non-PP id in exactly one destination). Not committed in those repos, and no existing index
+there was edited:
+
+| Project tags | Items | File (under `C:\Users\User\Desktop\Cursor Projects\`) |
+|---|---:|---|
+| CommonWealth Ops, CW Ops | 11 | `TUA-X\docs\backlog\2026-11-01_orca-relay-captures.md` (merge into `docs/BACKLOG.md`) |
+| CostaLuz Lawyers | 20 | `CostaLuz Lawyers\vault\backlog\2026-11-01_orca-relay-captures.md` |
+| InfinityOps | 1 | `InfinityOps\vault\backlog\2026-11-01_orca-relay-captures.md` |
+| QuickLease | 34 | `InfinityOps\17_Businesses\QuickLease\docs\plans\2026-11-01_orca-relay-captures.md` |
+| InfinityOps Rail Division | 44 | `InfinityOps Rail Division\vault\backlog\2026-11-01_orca-relay-captures.md` |
+| KobiiCraft — Post Launch, KobiiCraft, KobiCraft | 42 | `Minecraft Projects\KobiiCraft Workspace\KobiiCraft Core Files\vault\plans\2026-11-01_orca-relay-post-launch-backlog.md` (triage P1-P3 per `JUNE_11_BACKLOG_TRIAGE_RULES.md`) |
+| KobiiSports Resort | 22 | `Wii Projects\KobiiSports Resort\CursorProjects\backlog\2026-11-01_orca-relay-captures.md` (Owner STOP 2026-10-01 holds) |
+| LEGO Two Builders, + the `Orca X / KobiiCraft` row (its text is Two Builders) | 5 | `Wii Projects\LEGO-SW-Two-Builders\vault\backlog\2026-11-01_orca-relay-captures.md` |
+| Orca X | 52 | `Vibe Coding Projects\Orca X\docs\backlog\2026-11-01_orca-relay-captures.md`. **Git-ignored by design** (`.gitignore:92` `docs/**`: local-only planning docs), so it is on disk but never versioned |
+
+**First action:** triage the Power Pack items by SDD-OS tier. Most relay items are ChatGPT-dictated epics, so verify
+premises (HR-PREMISE-001) before acting on any. The other projects triage their own file.
+
+**Activation criterion:** any CDIO / design work starts, or a project named in the relay files opens its backlog,
+whichever comes first.

@@ -263,6 +263,10 @@ def g_raise(e):
     lo14 = [r for r in journal("t14") if r["op"] == "lease_open"]
     check("V-ECON-RAISE-NAMED-GOAL", "APPLIED" in why(named) and len(lo14) == 1 and lo14[0]["cap"] == 3000,
           "`subelo 3k t14` from a pane with no goal opens the successor lease on t14")
+    check("V-ECON-RAISE-SUCCESS-NOT-ERROR-LABEL",
+          "NOT AN ERROR" in why(named) and "NOT AN ERROR" not in why(nogoal) and "NOT AN ERROR" not in why(absurd),
+          "a block-delivered success says it is not an error (the harness labels every pre-model answer 'blocked'); "
+          "the refusals of the same verb do not carry that line")
     again14 = admit(e, "N14", "subelo 3k t14", e.root / "nowhere")
     lo14 = [r for r in journal("t14") if r["op"] == "lease_open"]
     check("V-ECON-RAISE-NAMED-SECOND-RAISE", len(lo14) == 2 and lo14[-1]["cap"] == 6000,
@@ -313,6 +317,68 @@ def g_raise(e):
     pr18 = [r for r in journal("t18") if r["op"] == "programme"][-1]
     check("V-ECON-RAISE-APPROVAL-UUID-CONTROL", cp18.returncode == 0 and "approval" not in str(pr18.get("source")),
           f"control: with no uuid known the tag is the old one and no uuid is invented: {pr18.get('source')!r}")
+    # Envelope-less goal (ccr-a2 2026-10-27): declared elsewhere, only spend here. Spec econ-raise-envelope-bootstrap.
+    tga.declare("t19", 1000, lease_calls=1)
+    exhaust("t19", "X19")
+    g19 = led("t19")._gfold(led("t19")._read())
+    floor19 = sum(g19["marks"].values()) + g19["open"]
+    boot = admit(e, "N19", "subelo 3k t19", e.root / "nowhere")
+    pr19 = [r for r in journal("t19") if r["op"] == "programme"]
+    lo19 = [r for r in journal("t19") if r["op"] == "lease_open"]
+    ex19 = led("t19").programme_status()["executable"]
+    check("V-ECON-RAISE-BOOTSTRAP-ENVELOPE", "APPLIED" in why(boot) and "NOT APPLIED" not in why(boot)
+          and len(pr19) == 1 and pr19[0]["value"] == floor19 + 3000 and len(lo19) == 1 and lo19[0]["cap"] == 3000
+          and ex19 == 3000, f"typed raise on an envelope-less goal: programme {pr19[0]['value'] if pr19 else None} "
+          f"(spent {floor19} + 3,000), lease cap {lo19[0]['cap'] if lo19 else None}, executable {ex19}: " + why(boot)[:80])
+    tga.declare("t20", 1000, lease_calls=1)
+    exhaust("t20", "X20")
+    direct = led("t20").lease_open("agent-try", 3000, prev_lease=led("t20").lineage()["leases"][-1]["id"])
+    check("V-ECON-RAISE-BOOTSTRAP-ONLY-VIA-OWNER-VERB",
+          not direct["ok"] and not [r for r in journal("t20") if r["op"] in ("lease_open", "programme")],
+          f"control: lease_open called directly on an envelope-less goal is still refused and writes nothing: {direct.get('reason')}")
+    tga.declare("t21", 1000, lease_calls=1)
+    exhaust("t21", "X21")
+    g21 = led("t21")._gfold(led("t21")._read())
+    floor21 = sum(g21["marks"].values()) + g21["open"]
+    cur21 = g21["leases"][-1]["id"]                                 # a crash after the programme row, before the lease
+    led("t21").set_programme(floor21 + 3000, f"owner-econ-raise:owner-raise:goal:t21:{cur21}:bootstrap", inside_agent=False)
+    cp21 = subprocess.run([sys.executable, str(HERE / "econ_plane.py"), "raise", "--goal", "t21", "--amount", "3000"],
+                          capture_output=True, text=True, timeout=60, env=os.environ.copy())
+    pr21 = [r for r in journal("t21") if r["op"] == "programme"]
+    lo21 = [r for r in journal("t21") if r["op"] == "lease_open"]
+    check("V-ECON-RAISE-BOOTSTRAP-CRASH-REPLAY", cp21.returncode == 0 and len(pr21) == 1 and len(lo21) == 1
+          and lo21[0]["cap"] == 3000, f"a raise replayed after a crash between its two writes adds no second programme row: "
+          f"{len(pr21)} programme, {len(lo21)} lease_open, exit {cp21.returncode}")
+    # G2 d3f66e44e MEDIUM-2: the bootstrap carries the current lease's reserves like _open_successor does.
+    import econ_plane as ep
+    tga.declare("t22", 1000, lease_calls=1)
+    exhaust("t22", "X22")
+    g22 = led("t22")._gfold(led("t22")._read())
+    floor22 = sum(g22["marks"].values()) + g22["open"]
+    cur22 = dict(g22["leases"][-1])
+    cur22["reserves"] = {"closeout": 500}                          # a reserve in flight on the lease being replaced
+    err22, lo22, _old, cap22 = ep._bootstrap_envelope(led("t22"), g22, cur22, 3000, "k-test")
+    pr22 = [r for r in journal("t22") if r["op"] == "programme"]
+    lease22 = led("t22").lineage()["leases"][-1]
+    check("V-ECON-RAISE-BOOTSTRAP-CARRIES-RESERVES", err22 is None and cap22 == 3000 and lease22["reserves"] == {"closeout": 500}
+          and len(pr22) == 1 and pr22[0]["value"] == floor22 + 500 + 3000 and led("t22").programme_status()["executable"] == 3000,
+          f"the successor holds the in-flight reserve: reserves {lease22['reserves']}, programme {pr22[0]['value'] if pr22 else None} "
+          f"(spent {floor22} + 500 reserve + 3,000), executable {led('t22').programme_status()['executable']}, err {err22}")
+    # G2 MEDIUM-1: a shell tool call never raises capital, bound or neutral; the Owner's typed message is the only route.
+    txg = e.root / "tg30.jsonl"
+    txg.write_text(tga.row("m1", 100), encoding="utf-8")
+    raise_cmds = ['python tools/econ_plane.py raise --goal t19 --amount 100',
+                  '& "C:\\Python312\\python.exe" "C:\\x\\econ_plane.py" raise --goal g --amount 1',
+                  'cmd /c python econ_plane.py "raise" --goal g --amount 1',
+                  'python -c "import econ_plane; econ_plane.raise_goal(\'g\', 5)"']
+    denied = [tga.run_guard(e, "G30", txg, e.root / "nowhere", tool=t, tool_input={"command": c})[0]
+              for t in ("Bash", "PowerShell") for c in raise_cmds]
+    passed = [tga.run_guard(e, "G30", txg, e.root / "nowhere", tool=t, tool_input={"command": c})[0]
+              for t in ("Bash", "PowerShell")
+              for c in ('python tools/econ_plane.py status --session G30', 'python tools/other.py raise --x 1', 'git log --oneline -3')]
+    check("V-ECON-RAISE-MODEL-DENIED", denied == ["deny"] * 8 and passed == [None] * 6,
+          f"a Bash/PowerShell call that runs econ_plane.py raise or its raise functions is denied for a neutral session "
+          f"({denied.count('deny')}/8); status, an unrelated `raise` and git pass ({passed.count(None)}/6)")
     ok = admit(e, "R8", "Súbelo 3k", work)                       # accented spelling
     j = journal("t8")
     prog = [r for r in j if r["op"] == "programme"][-1]

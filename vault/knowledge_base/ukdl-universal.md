@@ -1,4 +1,13 @@
 
+## UKDL PROMOTIONS -- TTB Z-3 original head-space hair reconstruction (2026-10-26, ttb 7fe9abd..HEAD; docs ttb/knowledge/bench/hy3d_license.md, z3_flow_defects.md, z_iteration_log.jsonl)
+- HARD RULE (read the model licence, territory clause included, before the first inference): Hunyuan3D-2mv was run on a public HF Space; its licence "DOES NOT APPLY IN THE EUROPEAN UNION, UNITED KINGDOM AND SOUTH KOREA" (s.5(c): use outside the Territory is unlicensed). The lab is in Spain: the guide and every asset derived from it became LICENSE_BLOCKED after the work was done. A public endpoint answering is access, not permission; an Owner authorisation to upload inputs is not a model licence. Executable form: the generator script refuses to run (ttb/d2b/hy3d_guide.py).
+- PROCESS RULE (the producer's verdict is not QA; run a blind A/B with positions swapped): the producer judged f19 its best build on every metric; a blind reviewer preferred the old z8 on 5/6 criteria ("helmet rim"). After the fix, a second blind round with A/B swapped preferred f22 on 6/6. Only the second round supports an improvement claim.
+- PROCESS RULE (three settings that move a defect but never remove it = the representation is the cause): the profile "flap" survived three band widths (f22-f24); it was a web that a single continuous sheet must stretch between columns going in front of and behind the shoulder. Cutting the sheet removed it in one build (f25). Stop tuning, change the structure.
+- PROCESS RULE (hair is built ON the head, never AROUND it): fifteen cap-shell + lock builds left a cavity between hair and head that read as a hood. Columns whose inner face lies on the head's convex hull (centred solidify) removed the cavity in the first build. Generalises to any covering (clothing, armour): model the inner surface on the body, not an offset shell.
+- TRAP (an instrument that does not move after an edit says the edit missed): f10 and f11 produced identical numbers to three decimals; the weighting covered u < 0.11 while the occluding columns were u 0.11-0.22. An unchanged measure is evidence about the edit before it is evidence about the shape.
+- TRAP (solidify even offset on converging faces): use_even_offset divides by the cosine of the corner angle; where whorl roots converge it threw 0.4 m spikes (f5).
+- TRAP (a thick slab's edge reads as a helmet rim): the face-side edge carried the full 26 mm thickness; QA saw a helmet. Thinning the edge to 25% removed it (f20).
+
 ## UKDL PROMOTIONS -- TTB Causal Fidelity, lane B (2026-10-25, ttb fa32ca6..4370a8b; doc ttb/knowledge/bench/causal_hairline_madzia_2026-10-25.md)
 - PROCESS RULE (prove the effect before paying for the evaluation): before an optimiser renders a knob, perturb it on the cheapest plane that can move (the generator alone, ~3 s) and require the TARGET region to move by more than a pixel in an evaluated view. Measured: the keepout knob that cost 9 pixel-identical renders (r3) is now PARAMETER_INERT in seconds with 0 renders (tests.test_sensitivity, with an always-inert mutant killed). Classes are distinct claims: inert / outside target / not visible / geometry changed / image changed / contract changed / validated improvement.
 - PROCESS RULE (compute the honest ceiling before optimising toward a reference): project the geometry's own limit into the judge's units first. Madzia's head-top edge caps an honest forehead at 0.59 eye->chin; the reference asks 0.919. Every PASS on that contract (0.896, 0.873) was the stud showing. A target beyond the representation's ceiling is REPRESENTATION_LIMITED, and an optimiser aimed at it can only learn to cheat.
@@ -17769,3 +17778,19 @@ Evidence: one Owner topology decision caused by the agent in m-3f1feb210a74. Tes
 
 **`HR-CANDIDATE-DEFAULT-ENVELOPE-IS-NEVER-OWNER-AUTHORITY`** -- STATUS: CANDIDATE pending production proof. A default policy envelope is never Owner authority: it may park a mission, it may not be presented as an Owner decision or as a forecast.
 Fix: 203e8e26 (`authority_kind`). Evidence: m-3f1feb210a74. Promote only after a production mission shows the typed split holding.
+
+## ctx-rent-x Phase 8 (2026-10-31) -- evidence-backed entries only
+
+### Process Rules
+**`PR-NO-RUNNABLE-UNIT-STOPS-THE-EPOCH-001`** -- A worker whose reconcile finds no runnable unit on its plane writes ONE owner note in STATE.md and stops in that same epoch; epochs that only reconcile are not scheduled.
+Fix: recorded in `vault/programs/ctx-rent-x/IMMUNITY.md` (runner check proposed there: refuse a new epoch after N "no runnable unit" epochs with no moved remote branch).
+Evidence: ctx-rent-x epochs 5-6 and m-f92eb3ef9ccc epochs 8-10 each paid model calls only to re-learn that work waited on the laptop; Phase 6 measures waiting at 1.32% of processed tokens (`waiting-gex44-w0.json`).
+
+**`PR-TEST-THAT-NEVER-LOADED-IS-NOT-GREEN-001`** -- A test file whose import fails loads zero tests; its "pass" is an absence. After editing a mod test, assert the pass count, not only rc.
+Evidence: L8, `policy.test.ts` imported `isPlannerType`, absent from the live register.ts since 35776051, so no test in the file ran (fixed e8d29ffb; 28 pass / 0 fail after). See LAPTOP_RESULTS.md L8.
+
+### Traps
+**`T-DEFAULT-FLIP-NEEDS-LIVE-PANE-RECEIPT-001`** -- A default flipped in source is not live. Live means a CCR release whose RELEASE.json carries source_commit plus a start receipt from a fresh interactive pane showing release id and mode, and a verified rollback.
+Evidence: CCR_MAIN_CANARY default-on: source 4a7939bc was committed epochs before it was live; live only at release 0.1.0-265d3d55 (L8: unset->enforce, =0->off, rollback to b15bfc3d verified).
+
+**`T-LAPTOP-TEMP-WORKTREE-FILES-VANISH-001`** -- OBSERVED ONCE, cause unknown: plugin.json, hooks/hooks.json and kernel/HARD-RULES-DIGEST.md vanished from a worktree under %TEMP%/claude between test runs. Do not promote; watch for a %TEMP% cleaner.

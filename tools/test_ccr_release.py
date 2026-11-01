@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -62,6 +63,21 @@ def main() -> int:
         check("V-CCR-MARKETPLACE", mp["plugins"][0]["source"] == "./active" and mp["name"] == cr.MARKETPLACE,
               f"marketplace entry {mp['plugins'][0]}")
 
+        # source_commit: the generation -> commit link must be observable in RELEASE.json
+        rj = json.loads((r1 / "RELEASE.json").read_text(encoding="utf-8"))
+        check("V-CCR-SOURCE-COMMIT-KEY", "source_commit" in rj, f"RELEASE.json keys {sorted(rj)}")
+        m_sc = make_mod(base, "0.3.0", "export const v = 3")
+        r_sc = cr.build(root, m_sc, digest, source_commit="deadbeef" * 5)
+        check("V-CCR-SOURCE-COMMIT-EXPLICIT",
+              json.loads((r_sc / "RELEASE.json").read_text(encoding="utf-8")).get("source_commit") == "deadbeef" * 5,
+              "an explicit source_commit is recorded verbatim")
+        check("V-CCR-SOURCE-COMMIT-NOT-IN-ID", r_sc.name.startswith("0.3.0-") and cr.build(root, m_sc, digest, source_commit="0" * 40) == r_sc,
+              "the release id is content-only: a different commit does not mint a new release")
+        m_nogit = make_mod(base, "0.4.0", "export const v = 4")
+        r_ng = cr.build(root, m_nogit, digest)
+        check("V-CCR-SOURCE-COMMIT-UNKNOWN-NOT-FAKED", json.loads((r_ng / "RELEASE.json").read_text(encoding="utf-8"))["source_commit"] is None,
+              "a mod outside any git work tree records null, never a guessed hash")
+
         # v2 then rollback restores v1 (and a second rollback restores v2)
         m2 = make_mod(base, "0.2.0", "export const v = 2")
         r2 = cr.build(root, m2, digest)
@@ -95,6 +111,45 @@ def main() -> int:
             _fail("V-CCR-REFUSE-NO-PREV", "rolled back with no previous release")
         except SystemExit as e:
             _ok("V-CCR-REFUSE-NO-PREV", str(e))
+
+        # A1 version truth: every release names itself; rollback records the id it restored, not a placeholder
+        check("V-CCR-RELEASE-ID", cr._release_id(r1) == r1.name and cr._release_id(r2) == r2.name, f"{r1.name}, {r2.name}")
+        cr.rollback(root)
+        check("V-CCR-ROLLBACK-ID", json.loads((root / "ACTIVE.json").read_text(encoding="utf-8"))["release"] == r1.name,
+              "ACTIVE.json after rollback names the restored release")
+        cr.activate(root, r2)
+
+        # status --sessions on a fake listing. Pids: 11 CURRENT (Linux shapes), 12 STALE (Windows shapes), 13 DEV,
+        # 14 pre-A1 receipt, 15 no receipt, 16 dead, 17 pid reused (procStart differs). Liveness is injected.
+        listing, rdir = base / "sessions", root / "state" / "receipts"
+        listing.mkdir()
+        (listing / "garbage.json").write_text("{not json", encoding="utf-8")
+        cwds = {11: "/home/kobii/missions/ccr-s3", 12: "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+                13: "/home/kobii/missions/ccr-s3", 14: "C:\\Users\\User", 15: "/tmp", 16: "/tmp", 17: "/tmp"}
+        for pid, cwd in cwds.items():
+            (listing / f"{pid}.json").write_text(json.dumps({"pid": pid, "sessionId": f"s{pid}", "cwd": cwd, "procStart": "100",
+                                                             "version": "2.1.296", "kind": "interactive"}), encoding="utf-8")
+        starts = {11: {"releaseId": r2.name, "release": "/home/kobii/.claude/ccr/active"},
+                  12: {"releaseId": r1.name, "release": "C:/Users/User/.claude/ccr/active"},
+                  13: {"releaseId": None, "release": "/home/kobii/missions/ccr-s3/mods/cpp-cognitive-runtime"},
+                  14: {}, 16: {"releaseId": r2.name}, 17: {"releaseId": r2.name}}
+        for pid, extra in starts.items():
+            f = rdir / ("667e1ff2" if pid % 2 else "f936ca72") / f"s{pid}.jsonl"
+            f.parent.mkdir(parents=True, exist_ok=True)
+            older = {"ts": 1, "sid": f"s{pid}", "ev": "start", "releaseId": "0.0.1-deadbeef"} if pid == 12 else None
+            lines = ([older] if older else []) + [{"ts": 2, "sid": f"s{pid}", "ev": "start", **extra}, {"ts": 3, "ev": "end"}]
+            f.write_text("\n".join(json.dumps(x) for x in lines) + "\n", encoding="utf-8")
+        st = cr.session_status(root, listing, [rdir], alive=lambda p: p != 16, proc_start=lambda p: "999" if p == 17 else "100")
+        by = {r["pid"]: r["state"] for r in st["sessions"]}
+        check("V-CCR-SESSIONS-STATES", by == {11: "CURRENT", 12: "STALE", 13: "DEV", 14: "UNKNOWN", 15: "UNKNOWN"},
+              f"states {by}")
+        check("V-CCR-SESSIONS-NEWEST-START", next(r for r in st["sessions"] if r["pid"] == 12)["loaded"] == r1.name,
+              "a resumed session is judged by its newest start receipt")
+        check("V-CCR-SESSIONS-STALE-FLAG", [r["pid"] for r in st["sessions"] if r["stale"]] == [12] and st["counts"]["STALE"] == 1,
+              f"counts {st['counts']}")
+        check("V-CCR-SESSIONS-NO-ACTIVE", {r["state"] for r in cr.session_status(fresh, listing, [rdir], alive=lambda p: True,
+              proc_start=lambda p: None)["sessions"]} <= {"UNKNOWN", "DEV"}, "nothing active: no session is called CURRENT or STALE")
+        check("V-CCR-ALIVE-REAL", cr._alive(os.getpid()) and not cr._alive(0), f"this pid {os.getpid()} alive, pid 0 not")
 
         cmds = cr.install_commands(root)
         check("V-CCR-INSTALL-PRINTED-ONLY", len(cmds) == 2 and cmds[1].startswith("claude plugin install cpp-cognitive-runtime@cpp-local"),

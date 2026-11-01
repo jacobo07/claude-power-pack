@@ -92,3 +92,16 @@ capital, run by a fresh worker, never inline in a long pane.
 - **Not booked:** no `goal-settle` was run. Booking needs the Owner to confirm the packet and the figure; use
   `--measured 6542639` for the pane and the probes separately, not the whole transcript.
 - W8 stop-loss (2x P80) was exceeded as recorded above; W9 (probes 0.31M vs 2.4M P80) and W10 came in under.
+
+### Tranche 3 extension: scratch measurement of proposal rows 1+2 (Owner "authorize", scratch only, ceiling +3.5M = 10.4M)
+- Contracts C3c (user agents) and C3d (rules) committed first (8e53a45f); 6 probes via a scratch `CLAUDE_CONFIG_DIR`
+  (credential copies deleted after); live `~/.claude` not written. Results commit 64db6d55: `b3/contracts/C3cd.verdict.json`.
+- By the frozen rules: **C3c CERTIFIED** (deltas 8,469 and 10,150; band 3,000-10,700), **C3d REFUTED** (7,121 and 9,965;
+  band 3,000-7,400). **Both CONFOUNDED**: the rules were not isolated (16 vs 9 rule-like sources in the census, so live
+  rule loads stayed), and the control sits 8.5K-10K above both treated arms in each repo with arm order not counterbalanced.
+  Neither delta is a clean per-source saving. PROPOSAL rows 1 and 2 stay ESTIMATE.
+- **Metered after the verdict commit (UTC 2026-10-26):** pane **9,264,721** over 69 calls; probes of this extension
+  **453,082**; earlier C3a probes 313,944; total about **10.03M** against the 10.4M ceiling. Stopped here: ~0.37M left,
+  below one probe round. Nothing booked.
+- Next, if wanted: a counterbalanced rerun (control twice, order swapped, rules isolated by moving the live path too) from
+  a fresh pane; that needs a new ceiling.

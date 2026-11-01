@@ -1,0 +1,19 @@
+{
+ "plane": "kobicraft-gex44",
+ "file": "035583c5-ccc5-44ee-8326-3a73f6584474.jsonl",
+ "calls": 112,
+ "floor_measured": 88272,
+ "mean_actual_input": 232187,
+ "mean_est_by_class_APPROX": {
+  "thinking": 6,
+  "assistant_text": 2433,
+  "tool_use": 8453,
+  "tool_result": 25438,
+  "user_text": 2753,
+  "attachment": 119385
+ },
+ "mean_est_total_APPROX": 246740,
+ "calibration_est_over_actual": 1.063,
+ "unattributed_APPROX": -14553,
+ "compactions": 0
+}

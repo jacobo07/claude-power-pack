@@ -179,6 +179,14 @@ def denies_command(command: str, topology: dict) -> str | None:
 
 # --------------------------------------------------------------------------- Owner Escalation Gate
 # The ONLY question classes that may reach the Owner. Each needs a match in the question itself.
+# Done-gate override, spend/overrun acceptance, VERIFICATION set to passed with gaps/deviations, envelope-STOP release.
+# Bare "gap", "deviation" and "verification" must NOT match (an ordinary ordering question stays RESOLVE_BY_DEFAULT).
+DONE_GATE_RX = re.compile(
+    r"\boverrid\w*\b[^?.]{0,40}\b(?:done[- ]?gate|envelope|breach|stop)\b|"
+    r"\baccept\w*\b[^?.]{0,25}\b(?:breach|overrun)\b|"
+    r"\bverification\b[^?.]{0,60}\bpassed\b[^?.]{0,80}\b(?:gaps?|deviations?|breach)\b|"
+    r"\b(?:record|accept)\w*\b[^?.]{0,50}\bas\s+(?:an?\s+|accepted\s+)*deviations?\b|"
+    r"\b(?:release|lift|waive|bypass|authori[sz]e)\b[^?.]{0,80}\b(?:envelope|stop)\b", re.I)
 OWNER_CLASSES = (
     ("DEPLOY_OR_LIVE_WRITE", re.compile(r"\bHR-0?4\b|\bdeploy|\bpush\b|producci[oó]n|\bprod(uction)?\b|live (server|write)|"
                                         r"servidor (vivo|en vivo)", re.I)),
@@ -188,6 +196,7 @@ OWNER_CLASSES = (
     ("IRREVERSIBLE", re.compile(r"irreversib|permanently|force[- ]push|drop (table|database)|delete (the )?(remote|production)", re.I)),
     ("PRODUCT_SCOPE", re.compile(r"\bscope\b|alcance|product decision|decisi[oó]n de producto|pricing|precio|monetiz", re.I)),
     ("AUTHORITY", re.compile(r"budget (is )?exhausted|authority|more tokens|raise the (cap|envelope)", re.I)),
+    ("DONE_GATE_OR_DEVIATION", DONE_GATE_RX),
 )
 # Questions the runtime answers itself, with the policy key that answers them.
 POLICY_RESOLVABLE = (
@@ -204,7 +213,10 @@ def gate_question(text: str, policy_values: dict | None = None) -> dict:
     Owner is not necessary: proof of necessity is a match, not the presence of a question mark."""
     t = text or ""
     pv = policy_values or {}
+    gates_off = os.environ.get("CPP_MISSION_OWNER_GATES", "").lower() == "off"
     for cls, rx in OWNER_CLASSES:
+        if cls == "DONE_GATE_OR_DEVIATION" and gates_off:
+            continue
         if rx.search(t):
             return {"result": "OWNER_REQUIRED", "owner_class": cls,
                     "resolution": "Record an `OWNER DECISION NEEDED:` line in the mission STATE and continue every "

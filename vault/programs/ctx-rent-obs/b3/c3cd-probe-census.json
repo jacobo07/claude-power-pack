@@ -1,0 +1,1066 @@
+[
+  {
+    "session": "7da351aa-766e-4425-9a68-067c3693703b",
+    "calls": 1,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 0,
+      "median_chars_per_token": null
+    },
+    "floor": {
+      "measured_tokens": 85441,
+      "attributed_chars": 178736,
+      "estimated_tokens": 49649,
+      "unattributed_tokens": 35792,
+      "host_prefix_tokens": 16776,
+      "session_tokens": 68665,
+      "session_estimated_tokens": 47649,
+      "session_unattributed_tokens": 21016,
+      "session_unattributed_at_calibrated": null,
+      "sources": [
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 26279,
+          "est_tokens": 7300
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+          "chars": 22861,
+          "est_tokens": 6350
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "attachment:skill_listing",
+          "chars": 16311,
+          "est_tokens": 4531
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 7201,
+          "est_tokens": 2000
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 3774,
+          "est_tokens": 1048
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 2745,
+          "est_tokens": 762
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 866,
+          "est_tokens": 241
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 849,
+          "est_tokens": 236
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 579,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:model",
+          "chars": 161,
+          "est_tokens": 45
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        },
+        {
+          "source": "user_prompt",
+          "chars": 30,
+          "est_tokens": 8
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {},
+      "assistant_output_tokens": 0,
+      "resets": [],
+      "last_call_tokens": 85441,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "e90171e5-94cd-4d1c-910f-180498d080da",
+    "calls": 1,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 0,
+      "median_chars_per_token": null
+    },
+    "floor": {
+      "measured_tokens": 76972,
+      "attributed_chars": 156511,
+      "estimated_tokens": 43475,
+      "unattributed_tokens": 33497,
+      "host_prefix_tokens": 16776,
+      "session_tokens": 60196,
+      "session_estimated_tokens": 41475,
+      "session_unattributed_tokens": 18721,
+      "session_unattributed_at_calibrated": null,
+      "sources": [
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+          "chars": 22861,
+          "est_tokens": 6350
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "attachment:skill_listing",
+          "chars": 16311,
+          "est_tokens": 4531
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 7202,
+          "est_tokens": 2001
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 3783,
+          "est_tokens": 1051
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 3063,
+          "est_tokens": 851
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "attachment:mcp_instructions_delta",
+          "chars": 2053,
+          "est_tokens": 570
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 1673,
+          "est_tokens": 465
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 866,
+          "est_tokens": 241
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 849,
+          "est_tokens": 236
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 579,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:model",
+          "chars": 161,
+          "est_tokens": 45
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        },
+        {
+          "source": "user_prompt",
+          "chars": 30,
+          "est_tokens": 8
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {},
+      "assistant_output_tokens": 0,
+      "resets": [],
+      "last_call_tokens": 76972,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "1867b083-e853-40af-b745-2c9fc4eb2faf",
+    "calls": 1,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 0,
+      "median_chars_per_token": null
+    },
+    "floor": {
+      "measured_tokens": 78320,
+      "attributed_chars": 155814,
+      "estimated_tokens": 43282,
+      "unattributed_tokens": 35038,
+      "host_prefix_tokens": 16776,
+      "session_tokens": 61544,
+      "session_estimated_tokens": 41281,
+      "session_unattributed_tokens": 20263,
+      "session_unattributed_at_calibrated": null,
+      "sources": [
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 26279,
+          "est_tokens": 7300
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md",
+          "chars": 22861,
+          "est_tokens": 6350
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_norules\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "attachment:skill_listing",
+          "chars": 16311,
+          "est_tokens": 4531
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 7201,
+          "est_tokens": 2000
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 4342,
+          "est_tokens": 1206
+        },
+        {
+          "source": "attachment:mcp_instructions_delta",
+          "chars": 3867,
+          "est_tokens": 1074
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 1755,
+          "est_tokens": 488
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 866,
+          "est_tokens": 241
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 849,
+          "est_tokens": 236
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 579,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:model",
+          "chars": 161,
+          "est_tokens": 45
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        },
+        {
+          "source": "user_prompt",
+          "chars": 30,
+          "est_tokens": 8
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {},
+      "assistant_output_tokens": 0,
+      "resets": [],
+      "last_call_tokens": 78320,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "2d7083fd-fe8d-45b9-a17e-6eb521ac1f56",
+    "calls": 1,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 0,
+      "median_chars_per_token": null
+    },
+    "floor": {
+      "measured_tokens": 77480,
+      "attributed_chars": 157547,
+      "estimated_tokens": 43763,
+      "unattributed_tokens": 33717,
+      "host_prefix_tokens": 16778,
+      "session_tokens": 60702,
+      "session_estimated_tokens": 41688,
+      "session_unattributed_tokens": 19014,
+      "session_unattributed_at_calibrated": null,
+      "sources": [
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 26279,
+          "est_tokens": 7300
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "attachment:skill_listing",
+          "chars": 16242,
+          "est_tokens": 4512
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 7469,
+          "est_tokens": 2075
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 3651,
+          "est_tokens": 1014
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 2592,
+          "est_tokens": 720
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "attachment:mcp_instructions_delta",
+          "chars": 2053,
+          "est_tokens": 570
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_control\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 841,
+          "est_tokens": 234
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 579,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 570,
+          "est_tokens": 158
+        },
+        {
+          "source": "attachment:model",
+          "chars": 161,
+          "est_tokens": 45
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        },
+        {
+          "source": "user_prompt",
+          "chars": 30,
+          "est_tokens": 8
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {},
+      "assistant_output_tokens": 0,
+      "resets": [],
+      "last_call_tokens": 77480,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "f648cd92-aff0-43cd-a8ab-f42452adbb85",
+    "calls": 1,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 0,
+      "median_chars_per_token": null
+    },
+    "floor": {
+      "measured_tokens": 67330,
+      "attributed_chars": 132951,
+      "estimated_tokens": 36931,
+      "unattributed_tokens": 30399,
+      "host_prefix_tokens": 16778,
+      "session_tokens": 50552,
+      "session_estimated_tokens": 34856,
+      "session_unattributed_tokens": 15696,
+      "session_unattributed_at_calibrated": null,
+      "sources": [
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "attachment:skill_listing",
+          "chars": 16242,
+          "est_tokens": 4512
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 7470,
+          "est_tokens": 2075
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 3660,
+          "est_tokens": 1017
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 2592,
+          "est_tokens": 720
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "attachment:mcp_instructions_delta",
+          "chars": 2053,
+          "est_tokens": 570
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 1673,
+          "est_tokens": 465
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_noagents\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 841,
+          "est_tokens": 234
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 579,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 570,
+          "est_tokens": 158
+        },
+        {
+          "source": "attachment:model",
+          "chars": 161,
+          "est_tokens": 45
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        },
+        {
+          "source": "user_prompt",
+          "chars": 30,
+          "est_tokens": 8
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {},
+      "assistant_output_tokens": 0,
+      "resets": [],
+      "last_call_tokens": 67330,
+      "image_blocks": 0
+    }
+  },
+  {
+    "session": "eb8dc5ae-716d-4440-8383-eda8fb7958f8",
+    "calls": 1,
+    "verdict": "MEASURED",
+    "chars_per_token": {
+      "value": 3.6,
+      "source": "default"
+    },
+    "calibration": {
+      "samples": 0,
+      "median_chars_per_token": null
+    },
+    "floor": {
+      "measured_tokens": 67515,
+      "attributed_chars": 129161,
+      "estimated_tokens": 35878,
+      "unattributed_tokens": 31637,
+      "host_prefix_tokens": 16778,
+      "session_tokens": 50737,
+      "session_estimated_tokens": 33803,
+      "session_unattributed_tokens": 16934,
+      "session_unattributed_at_calibrated": null,
+      "sources": [
+        {
+          "source": "attachment:agent_listing_delta",
+          "chars": 26279,
+          "est_tokens": 7300
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\242e49b5-aa23-40fb-9ef3-6b4e7326014e\\scratchpad\\cfg_norules\\CLAUDE.md",
+          "chars": 19163,
+          "est_tokens": 5323
+        },
+        {
+          "source": "attachment:skill_listing",
+          "chars": 16242,
+          "est_tokens": 4512
+        },
+        {
+          "source": "system_prompt(host)",
+          "chars": 7469,
+          "est_tokens": 2075
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md",
+          "chars": 6257,
+          "est_tokens": 1738
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md",
+          "chars": 6100,
+          "est_tokens": 1694
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\CLAUDE.md",
+          "chars": 5956,
+          "est_tokens": 1654
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\skill-rule-index.md",
+          "chars": 4517,
+          "est_tokens": 1255
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+          "chars": 2824,
+          "est_tokens": 784
+        },
+        {
+          "source": "attachment:deferred_tools_delta",
+          "chars": 2592,
+          "est_tokens": 720
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\python\\testing.md",
+          "chars": 2489,
+          "est_tokens": 691
+        },
+        {
+          "source": "attachment:mcp_instructions_delta",
+          "chars": 2053,
+          "est_tokens": 570
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\common\\code-review.md",
+          "chars": 1739,
+          "est_tokens": 483
+        },
+        {
+          "source": "instructions:(wrapper)",
+          "chars": 1632,
+          "est_tokens": 453
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md",
+          "chars": 1226,
+          "est_tokens": 341
+        },
+        {
+          "source": "instructions:C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md",
+          "chars": 1215,
+          "est_tokens": 338
+        },
+        {
+          "source": "attachment:environment",
+          "chars": 841,
+          "est_tokens": 234
+        },
+        {
+          "source": "attachment:remote_session_change",
+          "chars": 579,
+          "est_tokens": 161
+        },
+        {
+          "source": "attachment:session_context",
+          "chars": 570,
+          "est_tokens": 158
+        },
+        {
+          "source": "attachment:model",
+          "chars": 161,
+          "est_tokens": 45
+        },
+        {
+          "source": "attachment:date",
+          "chars": 64,
+          "est_tokens": 18
+        },
+        {
+          "source": "user_prompt",
+          "chars": 30,
+          "est_tokens": 8
+        }
+      ],
+      "hooks_timed_out": []
+    },
+    "history": {
+      "by_producer": {},
+      "assistant_output_tokens": 0,
+      "resets": [],
+      "last_call_tokens": 67515,
+      "image_blocks": 0
+    }
+  }
+]

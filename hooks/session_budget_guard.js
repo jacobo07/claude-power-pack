@@ -478,7 +478,25 @@ function decideGoal(event, sid, bind) {
   return verdict;
 }
 
+// Capital is raised by the Owner's typed `subelo N [goal]` only (hooks/econ_admission.js starts econ_plane.py as a
+// child process, which is not a tool call and never reaches this guard). A shell tool call that runs the CLI's `raise`
+// verb, or calls its raise functions, is the model raising its own budget: denied for EVERY session, bound or neutral,
+// and before the CPP_SESSION_BUDGET switch. Same trust boundary as GOAL_STATE: it stops the direct call, not an agent
+// that writes a script or edits this hook. Pure regex, no I/O: a throw here would fail open in run().
+const RAISE_VERB = /econ_plane(?:\.py)?['"]?\s+['"]?raise\b|\braise_(?:goal|capital)\b|\b_bootstrap_envelope\b/i;
+function raiseDeny(event) {
+  const tool = String(event.tool_name || '');
+  if (tool !== 'Bash' && tool !== 'PowerShell') return null;
+  const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
+  if (!cmd || !RAISE_VERB.test(cmd)) return null;
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
+    permissionDecisionReason: 'OWNER-ONLY -- raising a budget is the Owner\'s typed message (`subelo N <goal>`), answered by ' +
+      'the control plane without a model call. A tool call never raises capital. Ask the Owner to type it.' } };
+}
+
 function decide(event) {
+  const rd = event && typeof event === 'object' ? raiseDeny(event) : null;
+  if (rd) return rd;
   const sid = event && event.session_id;
   if (!sid || !SID_RE.test(sid)) return null;
   // Mission authority first (CCR v5 A3/A4): a cost-held worker, a write to its own record, or a subagent past its

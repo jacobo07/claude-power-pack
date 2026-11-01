@@ -181,6 +181,19 @@ DEFAULT_GOAL_LEAK_S = 6 * 3600
 # draws on the current lease's `recovery` reserve (pre-funded by lease_open) and is never part of a lease's
 # productive `used`, so recovering a spent lease cannot overdraw it again.
 PRODUCTIVE, RECOVERY = "productive", "recovery"
+
+
+def lease_contention(authority: int | None, remaining: int | None, sibling_burn_per_hour: int, horizon_h: float = 4.0) -> dict | None:
+    """SHARED_LEASE_CONTENTION (A2-18): a mission asks for `authority` tokens from a lease with `remaining`, while OTHER
+    live sessions draw it at `sibling_burn_per_hour`. Returns the warning, or None when the envelope survives the horizon.
+    Unknown authority/remaining is not contention (absent is not zero). Advisory: admission never refuses on it."""
+    if authority is None or remaining is None:
+        return None
+    left = remaining - int(sibling_burn_per_hour * horizon_h)
+    if authority <= left:
+        return None
+    return {"code": "SHARED_LEASE_CONTENTION", "authority": authority, "remaining": remaining,
+            "sibling_burn_per_hour": int(sibling_burn_per_hour), "horizon_h": horizon_h, "left_after_siblings": left}
 ROLES = (PRODUCTIVE, RECOVERY)
 
 
@@ -726,6 +739,49 @@ class GoalLedger(SpendLedger):
             self._append(recs, {"op": "reserve", "id": rid, "sid": sid, "kind": "agent", "provider": self.goal,
                                 "amount": estimate, "window": GOAL_WINDOW, "base": base})
             return self._summary(self._gfold(recs), ok=True, reason="", reservation=rid)
+
+    def consumers(self, now: float | None = None, window_s: int = 3600, live_s: int = 1800) -> dict:
+        """Who draws the CURRENT lease (A2-18). Read-only: nothing is appended, no leak sweep runs.
+
+        Per sid: tokens booked into the current lease, share of all such tokens, burn per hour over the last
+        `window_s`, whether it settled or reserved within `live_s`, and its role. A sid whose settle rows carry
+        no lease id is booked where the replay stands (as `_gfold` does). Shares are over what the sids booked,
+        not over `used` (holds are not a session's spend yet)."""
+        now = self.clock() if now is None else now
+        with self._lock:
+            recs = self._read()
+        g = self._gfold(recs)
+        cur = g["leases"][-1]["id"]
+        marks, events, seen, opened, n = {}, {}, {}, set(), 1
+        for r in recs:
+            op, sid = r["op"], r.get("sid")
+            if op == "lease_open":
+                if r["succession_id"] not in opened:
+                    opened.add(r["succession_id"])
+                    n += 1
+            elif op in ("settle", "correct"):
+                prev = marks.get(sid, 0)
+                new = max(prev, int(r["measured"])) if op == "settle" else int(r["measured"])
+                marks[sid] = new
+                seen[sid] = max(seen.get(sid, 0), r["ts"])
+                if new != prev:
+                    events.setdefault(sid, []).append((r["ts"], (r.get("lease") if op == "settle" else None) or f"L{n}", new - prev))
+            elif op == "reserve":
+                seen[sid] = max(seen.get(sid, 0), r["ts"])
+        spent = {sid: sum(d for _, lid, d in ev if lid == cur) for sid, ev in events.items()}
+        total = sum(v for v in spent.values() if v > 0)
+        rows = []
+        for sid, v in spent.items():
+            if v <= 0:
+                continue
+            burn = sum(d for t, lid, d in events[sid] if lid == cur and t >= now - window_s) * 3600 / window_s
+            rows.append({"sid": sid, "spent": v, "share": round(v / total, 3), "burn_per_hour": int(burn),
+                         "live": seen.get(sid, 0) >= now - live_s, "role": g["roles"].get(sid, PRODUCTIVE)})
+        rows.sort(key=lambda x: (-x["spent"], x["sid"]))
+        cap = g["cap"]
+        return {"goal": self.goal, "lease": cur, "cap": cap, "used": g["used"],
+                "remaining": None if cap is None else cap - g["used"], "window_s": window_s,
+                "consumers": rows, "live_burn_per_hour": sum(x["burn_per_hour"] for x in rows if x["live"])}
 
     def status(self) -> dict:
         with self._lock:
