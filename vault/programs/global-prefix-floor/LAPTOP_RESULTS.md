@@ -61,3 +61,16 @@ correctly refused the test capsule ("no resumable capsule"), so time-to-first-co
 **CR-16, CR-29:** blocked by the frontier defect (breakeven inputs and fresh-agent recovery both need a working frontier).
 **CR-09 / CR-10 / CR-13 (Phase 5 Safe-to-Forget in main):** not a measurement gap. `register.ts` projectShell enforces only
 in Work Unit sessions and shadows in main; the Phase 5 extension to main was never built. These stay UNKNOWN as UNBUILT.
+
+## Fix attempt 2026-11-02 16:42 -> ROLLED BACK 16:51 (HR-2: no green smoke)
+Commit 83069706: `policy.successorMode` (a successor activates under the main canary and keeps its mode) plus
+`register.ts` restoring the launch canary at /clear. plugin test 29/0 (was 28/0); mutation drill with the old gate -> 28/1,
+killed; test_ccr_release 24/24. Released `0.1.0-39151f03` (source_commit 83069706).
+Smoke S3 (predecessor 6988bac6, successor 1a16ffc5): start receipt `releaseId 0.1.0-39151f03 canary enforce`, then `end` at /clear
+and **no receipt of any kind** for the successor conversation, in any receipt file; the successor transcript carries no capsule
+text. The fix is therefore UNPROVEN live, and HR-2 forbids leaving it active: `ccr_release.py rollback` -> active
+`0.1.0-265d3d55` (source e8d29ffb) at 16:51:16. Panes launched 16:42-16:51 keep 39151f03 until they restart.
+**New open defect, not caused by the fix:** the plugin is silent after /clear in S2 (OLD release, canary 0) and S3 (new release),
+but writes the successor decision after /clear in S1 and in the real pane fd4ffce8 (both old release, canary on). The
+post-/clear lifecycle (which hook fires first in the new conversation, and whether `receipt`/`flush` still run) is the next
+thing to isolate. Until it is, no successor-frontier smoke can be read, whichever gate logic is live.
