@@ -1,0 +1,11 @@
+{
+ "arm": "full",
+ "call1": 99991,
+ "in": 2,
+ "cc": 76983,
+ "cr": 23006,
+ "session": "a95b255e-6df1-4222-83cc-617add222770",
+ "plane": "GEX44",
+ "isolated_transcript": "/home/kobii/missions/gpf-cfg/full/projects/-home-kobii-missions-global-prefix-floor/a95b255e-6df1-4222-83cc-617add222770.jsonl",
+ "screen_tail": null
+}
