@@ -356,7 +356,13 @@ def compile_capsule(session_id: str, cwd: str, transcript: Optional[str], *, goa
     gp = goal_pointer(cwd, writes, goal)
     handoff = handoff_facts(cwd, session_id)
     own_handoff = handoff.get("state") == "OK" and handoff.get("session") == session_id
-    items, source = list(next_items or []), "explicit"
+    stated = list(next_items or [])
+    # A goal file the caller NAMED is the durable statement of the work: its own Next items win over
+    # the stated ones, which /kclear gets from a model summary (K4, 2026-11-02: the summary dropped the
+    # token's suffix and invented an "Owner go-ahead", and the exam keyed on it -> 3 failed certifies).
+    # A goal only inferred from this session's writes keeps the stated items first, as before.
+    named = obligations_from(gp.get("path")) if gp.get("state") == "OK" and gp.get("basis") == "explicit" else []
+    items, source = (named, "goal file") if named else (stated, "explicit")
     if not items:
         items, source = obligations_from(gp.get("path")), "goal file"
     if not items and own_handoff:
@@ -370,6 +376,7 @@ def compile_capsule(session_id: str, cwd: str, transcript: Optional[str], *, goa
         "repo": repo, "goal": gp,
         "foreign": foreign_custody(writes, repo.get("root") if repo.get("state") == "OK" else None),
         "obligations": items or [], "obligations_source": source if items else None,
+        "obligations_stated": stated[:10],
         "handoff": handoff, "children": child_state(session_id),
         "usage": usage_facts(tp),
         "writes": writes[-15:],

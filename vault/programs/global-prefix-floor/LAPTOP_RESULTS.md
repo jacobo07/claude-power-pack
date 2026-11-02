@@ -113,3 +113,16 @@ Findings (open debt, n=1):
   /kclear capsule schema).
 - **Instrument fixed:** the driver read the verdict from `final[-300:]`, which had cut it to `_TO_FORGET`. It now reads
   `ledger_facts()` from the isolated ledger. K4's ledger fields were backfilled from its own `state_dir` and labelled.
+### K5 -- both capsule fixes live (2026-11-02, same trusted root, working-tree tools)
+Fixes (CCR_CAPSULE_DEFECTS_SCOPE.md): `session_checkpoint.seal_capsule` now writes `latest/<repo-key>.json`, and `compile_capsule`
+lets a NAMED goal file's verbatim Next items win over the /kclear model summary (kept as `obligations_stated`).
+Gates: `tools/test_rollover_obligations.py` 8/8; on HEAD code 6 FAIL + 2 controls PASS (red pole proven). 24 rollover/kresume/
+capsule suites green except 2 that fail identically on HEAD/host state (V-MV2-L1-WITHIN-BACKOFF-HELD-SILENT, V-HUB-REGISTERED).
+Review (pp-code-reviewer): APPROVE, one LOW design note (a stale named goal file now beats an accurate pending list; intended).
+| | K4 (before) | K5 (fixed) |
+|---|---|---|
+| failed certify attempts | 3 (`wrong=[next]`) | **0** |
+| frontier receipt | `unreadable`, capsule/sha null | **`capsule`**, sha 46b9b6dc... |
+| seconds to correct done.txt | 91 | **51** |
+| successor calls / processed | 12 / 813,369 | **6 / 378,691 (-53%)** |
+**CR-29 PASS, CR-15 PASS 51 s (MEASURED, n=1).** CR-11 now also holds on a real /kclear capsule, not only the synthetic one.

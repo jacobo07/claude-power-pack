@@ -90,6 +90,66 @@
    "capsule_obligations": [
     "Owner go-ahead to execute RESUMPTION_FILE.md next steps: create done.txt in project root with the RESUMED-K4 token, then reply with goal and token"
    ]
+  },
+  {
+   "label": "K5",
+   "root": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-cr29-probe",
+   "fixed_root": true,
+   "memory_preexisting": [
+    "MEMORY.md",
+    "handoffs",
+    "project_session_handoff.md"
+   ],
+   "state_dir": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-rollover-kpk4koh9",
+   "predecessor": "1f6b1008-ba61-4b86-a728-b5473180591f",
+   "token": "RESUMED-K5-8a40e5",
+   "turn1_done": true,
+   "kclear_done": true,
+   "kclear_tail": "recorded with the open obligations: create `done.txt` in the probe root with `RESUMED-K5-8a40e5`, then reply with the goal and token. Neither has run yet, since you asked me to hold the work.\n\nThe first attempt was blocked by the Bash guard, so I wrote the payload through PowerShell instead.\n\n/clear",
+   "capsule_verdict": null,
+   "state_files": [
+    "capsules\\1f6b1008-ba61-4b86-a728-b5473180591f.json",
+    "latest\\e182506e.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "first_correct_action": true,
+   "seconds_to_first_correct_action": 51,
+   "successor_turn_done": true,
+   "successor": "336005be-7f32-47d1-b773-ebbd44f4952a",
+   "successor_metrics": {
+    "call1": 60927,
+    "calls": 6,
+    "processed": 378691,
+    "reads": 1,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "Goal: prove a fresh successor resumes from the compiled capsule alone. Token written: `RESUMED-K5-8a40e5` (in `done.txt` at the project root)."
+   },
+   "token_named": true,
+   "frontier": [
+    {
+     "capsule": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-rollover-kpk4koh9\\capsules\\1f6b1008-ba61-4b86-a728-b5473180591f.json",
+     "sha": "46b9b6dc14a4f83f507e5b7ff0128997244e5fd6bebdd3c4bfee8b26b8deb06c",
+     "basis": "capsule"
+    }
+   ],
+   "successor_decision": [
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": true,
+     "mode": "enforce",
+     "frontier": null,
+     "bytes": null
+    }
+   ],
+   "done_txt": "RESUMED-K5-8a40e5",
+   "ledger_verdict": "SAFE_TO_FORGET",
+   "resume_failed": 0,
+   "resume_failed_wrong": [],
+   "resume_certified": true
   }
  ]
 }

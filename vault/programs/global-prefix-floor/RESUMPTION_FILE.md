@@ -21,10 +21,8 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
   Rerun: `python vault/programs/global-prefix-floor/gpf_cr29_kclear.py vault/programs/global-prefix-floor/gpf-cr29.json K5`.
 
 ## Next
-1. SCOPED, both root causes CONFIRMED (CCR_CAPSULE_DEFECTS_SCOPE.md): (a) the /kclear seal path never writes `latest/<rkey>.json`
-   (`session_checkpoint.seal_capsule` lacks `write_latest_pointer`), so the frontier is `unreadable`; (b) `compile_capsule` lets the
-   model's `pending` paraphrase override the goal file's verbatim Next items. Python-only fixes plus V-LATEST-KCLEAR and 4 V-OBL gates,
-   then K5 must certify on the first try with basis `capsule`. Governing spec: vault/specs/interactive-context-rollover.md. Awaiting Owner go to implement.
+1. DONE: capsule fixes (seal_capsule writes latest/ pointer; named goal file's verbatim Next items win). test_rollover_obligations 8/8
+   (red pole 6 FAIL on HEAD), review APPROVE. K5: 0 failed certifies, frontier basis `capsule`, 51 s, processed -53% vs K4 (n=1).
 2. DONE: GEX44 diet LIVE (GEX44_APPLY.md): smoke green, attributable -13,786/call-1 (-13.8%, n=2). Backup /home/kobii/.claude/backups/gpf-apply-20261102T183952.
 3. DONE: done_gate reads CR-11/14/15/29 from receipts; 24 pass / 1 fail (CR-31 dirty shared tree) / 7 unknown.
 Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects, CR-09/10/13 unbuilt, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers.
