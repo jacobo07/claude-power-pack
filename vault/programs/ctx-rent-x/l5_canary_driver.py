@@ -62,22 +62,33 @@ def start_receipt(sid):
     return None
 
 
-def run(arm):
+def run(arm, session_id=None):
+    """session_id (GPF 2026-11-02): pin the probe's own transcript by id. Without it the newest same-cwd transcript is
+    taken, which measures ANOTHER pane when one is active in the same cwd (observed: 09664f88 in the PP root)."""
+    import threading, uuid
     env = dict(os.environ)
     env.pop("CCR_MAIN_CANARY", None)
     if arm == "T":
         env["CCR_MAIN_CANARY"] = "1"
     t0 = time.time() - 1
-    p = PtyProcess.spawn([CLAUDE, "--model", "haiku"], cwd=str(CWD), env=env, dimensions=(50, 200))
-    buf = ""
-    def pump(secs):
-        nonlocal buf
-        end = time.time() + secs
-        while time.time() < end and p.isalive():
+    argv = [CLAUDE, "--model", "haiku"]
+    if session_id is True:
+        session_id = str(uuid.uuid4())
+    if session_id:
+        argv += ["--session-id", session_id]
+    p = PtyProcess.spawn(argv, cwd=str(CWD), env=env, dimensions=(50, 200))
+    chunks = []
+    def reader():  # p.read blocks while the pane is quiet; a thread keeps pump() bounded by its deadline
+        while p.isalive():
             try:
-                buf += p.read(4096)
+                chunks.append(p.read(4096))
             except Exception:
                 time.sleep(0.2)
+    threading.Thread(target=reader, daemon=True).start()
+    def pump(secs):
+        end = time.time() + secs
+        while time.time() < end and p.isalive():
+            time.sleep(0.25)
     pump(25)
     p.write("reply OK")
     time.sleep(1)
@@ -86,7 +97,10 @@ def run(arm):
     deadline = time.time() + 150
     while time.time() < deadline and call1 is None:
         pump(5)
-        cands = [x for x in new_transcripts(t0) if (cwd_of(x) or "").lower() == str(CWD).lower()]
+        if session_id:
+            cands = [x for x in PROJ.glob(f"*/{session_id}.jsonl")]
+        else:
+            cands = [x for x in new_transcripts(t0) if (cwd_of(x) or "").lower() == str(CWD).lower()]
         if cands:
             f = max(cands, key=lambda x: x.stat().st_mtime)
             call1 = first_usage(f)
@@ -97,7 +111,7 @@ def run(arm):
         p.terminate(force=True)
     sid = f.stem if f else None
     return {"arm": arm, "call1": call1, "session": sid, "receipt": start_receipt(sid) if sid else None,
-            "screen_tail": buf[-400:] if call1 is None else None}
+            "screen_tail": "".join(chunks)[-400:] if call1 is None else None}
 
 
 def main():

@@ -1,0 +1,34 @@
+{
+ "contract": "GPF-L2-laptop-v1",
+ "plane": "DESKTOP-PMT5BS8",
+ "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+ "backup": "C:\\Users\\User\\.claude\\backups\\gpf-20261102T160735",
+ "orig_sha": {
+  "C:\\Users\\User\\.claude\\CLAUDE.md": "32cc4fefc586c43795ccd41546d44811bd6779a4bb3eb4623be8fca3f035bbfe",
+  "C:\\Users\\User\\.claude\\rules\\common\\code-review.md": "bf2d8c52c562cd76db301a21649f70dbb2ec46b04ca73be62ee28f82fbcf6723",
+  "C:\\Users\\User\\.claude\\rules\\python\\testing.md": "777800cfcf0627d9eee3f0c9053dbaf64272fe2828fbf0ae8ccbdabc204d2073"
+ },
+ "diet_sha": {
+  "C:\\Users\\User\\.claude\\CLAUDE.md": "32cc4fefc586c43795ccd41546d44811bd6779a4bb3eb4623be8fca3f035bbfe",
+  "C:\\Users\\User\\.claude\\rules\\common\\code-review.md": "bf2d8c52c562cd76db301a21649f70dbb2ec46b04ca73be62ee28f82fbcf6723",
+  "C:\\Users\\User\\.claude\\rules\\python\\testing.md": "777800cfcf0627d9eee3f0c9053dbaf64272fe2828fbf0ae8ccbdabc204d2073"
+ },
+ "probes": [
+  {
+   "arm": "C",
+   "call1": 72059,
+   "session": "f5c11e6b-e0c1-4c9f-bd30-a7a22111bbe6",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "POST0"
+  }
+ ],
+ "restored_original": true
+}
