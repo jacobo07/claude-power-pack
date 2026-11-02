@@ -2752,7 +2752,9 @@ WAIT_HOLD_KINDS = ("resource", CHECKPOINT_KIND)   # non-owner, nonterminal, neve
 
 
 def set_checkpoint(mission_id: str, state: str, reason: str, evidence: str | None = None,
-                   now: float | None = None) -> dict:
+                   now: float | None = None, residual: str | None = None, gain: bool = False) -> dict:
+    """`residual` names the file that states what the falsified method left (the pivot's input); `gain` says the
+    wave still produced a certificate or passed a positive control, which resets the pivot streak (S11 A2)."""
     if state not in CHECKPOINT_STATES:
         raise MissionError(f"checkpoint state must be one of {', '.join(CHECKPOINT_STATES)}")
     rec = load(mission_id)
@@ -2762,9 +2764,14 @@ def set_checkpoint(mission_id: str, state: str, reason: str, evidence: str | Non
     if hold and hold.get("kind") not in WAIT_HOLD_KINDS:
         raise MissionError(f"{mission_id} is under a {hold.get('kind') or 'owner'} hold; that hold wins")
     lr.ledger_append(mission_id, "checkpoint_declared", mission_id=mission_id, checkpoint=state,
-                     reason=(reason or "")[:400], evidence=evidence)
+                     reason=(reason or "")[:400], evidence=evidence, residual=residual, gain=bool(gain))
+    extra = {"wait_type": state, "checkpoint": state, "evidence": evidence}
+    if residual:
+        extra["residual"] = residual
+    if gain:
+        extra["gain"] = True
     return set_owner_hold(mission_id, f"{state}: {reason}", now=now, kind=CHECKPOINT_KIND, expect_seq=rec.get("seq"),
-                          extra={"wait_type": state, "checkpoint": state, "evidence": evidence})
+                          extra=extra)
 
 
 def clear_checkpoint(mission_id: str, reason: str, now: float | None = None) -> dict:
@@ -2788,10 +2795,85 @@ def checkpoint_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_aliv
     A busy worker finishes its turn first; an already-stopped or dead one needs nothing."""
     hold = rec.get("owner_hold") or {}
     if rec["state"] in TERMINAL or hold.get("worker_stopped_at") or not rec.get("owner"):
+        return pivot_gate(rec, now, sessions, pid_alive)
+    if liveness(rec.get("owner"), sessions, pid_alive)[0] == DEAD:
+        return pivot_gate(rec, now, sessions, pid_alive)
+    if not owner_idle(rec.get("owner"), sessions):
         return rec
-    if liveness(rec.get("owner"), sessions, pid_alive)[0] == DEAD or not owner_idle(rec.get("owner"), sessions):
+    return pivot_gate(_stop_for_wait(rec, now, sessions, pid_alive, stop_runner), now, sessions, pid_alive)
+
+
+# --------------------------------------------------------------------------- S11 A2: opt-in Method-Pivot autonomy
+# Measured 2026-11-02 (Tennis S10 m-e6e0340e743d, S10b m-f41146776f2b): both waves ended at a checkpoint whose next
+# step was an engineering method change, and both parked until the Owner wrote the next plan. On a mission armed for it
+# (`pivot-autonomy --on`), a METHOD_PIVOT_REQUIRED / NEXT_PLAN_REQUIRED checkpoint that names its residual is turned
+# into a directive and the relay continues -- unless the reason is an Owner class (mission_policy.gate_question, which
+# carries TRUTH_CONTRACT since A1) or the streak cap is reached. Missions without the flag keep the park unchanged.
+PIVOT_STATES = ("METHOD_PIVOT_REQUIRED", "NEXT_PLAN_REQUIRED")
+PIVOT_MAX_STREAK = 3
+
+
+def pivot_autonomy_on() -> bool:
+    """Kill switch CPP_PIVOT_AUTONOMY=off: every checkpoint parks for the Owner, as before S11."""
+    return (os.environ.get("CPP_PIVOT_AUTONOMY") or "").strip().lower() not in ("0", "off", "false")
+
+
+def set_pivot_autonomy(mission_id: str, on: bool, now: float | None = None) -> dict:
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="pivot_autonomy_set",
+                      now=now, touch=False, pivot_autonomy=bool(on))
+
+
+def pivot_decision(rec: dict, hold: dict) -> dict:
+    """Pure. -> {action: pivot|owner|park, why, streak?}. Owner classes are checked before anything else."""
+    import mission_policy as mpol
+    cp = hold.get("checkpoint")
+    if cp not in PIVOT_STATES:
+        return {"action": "park", "why": f"{cp} is not a pivot state"}
+    g = mpol.gate_question(hold.get("reason") or "", {})
+    if g["result"] == "OWNER_REQUIRED":
+        return {"action": "owner", "why": f"owner class {g.get('owner_class')}"}
+    if not hold.get("residual"):
+        return {"action": "park", "why": "no residual declared (checkpoint --residual)"}
+    streak = 0 if hold.get("gain") else int(rec.get("pivot_streak") or 0)
+    if streak >= PIVOT_MAX_STREAK:
+        return {"action": "owner", "why": f"{streak} consecutive pivots without a certificate or a passed control"}
+    return {"action": "pivot", "why": "engineering-resolvable method change inside the approved envelope",
+            "streak": streak + 1}
+
+
+def _pivot_directive(hold: dict, streak: int) -> str:
+    return (f"AUTO METHOD PIVOT {streak}/{PIVOT_MAX_STREAK} (Owner-approved pivot autonomy). The previous worker "
+            f"declared {hold.get('reason')}. Residual: {hold.get('residual')}. Read it and the method graph, mark the "
+            "falsified route, choose the next evidence-supported route inside the approved plan, truth contract and "
+            "budget, and run it shadow then canary. If that route needs a truth-contract, held-out, capital or scope "
+            "change, declare a checkpoint naming that question instead (it reaches the Owner). Pass --gain to the "
+            "next checkpoint when a route yields a certificate or passes a positive control.")
+
+
+def pivot_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive) -> dict:
+    """Sweep step after a checkpoint's worker is released. Acts once per checkpoint, only on an opted-in mission."""
+    hold = rec.get("owner_hold") or {}
+    if (rec["state"] in TERMINAL or hold.get("kind") != CHECKPOINT_KIND or hold.get("pivot")
+            or not rec.get("pivot_autonomy") or not pivot_autonomy_on()):
         return rec
-    return _stop_for_wait(rec, now, sessions, pid_alive, stop_runner)
+    owner = rec.get("owner")
+    if owner and not hold.get("worker_stopped_at") and liveness(owner, sessions, pid_alive)[0] != DEAD:
+        return rec
+    mid = rec["mission_id"]
+    d = pivot_decision(rec, hold)
+    lr.ledger_append(mid, f"pivot_{d['action']}", mission_id=mid, checkpoint=hold.get("checkpoint"), why=d["why"],
+                     streak=d.get("streak"), residual=hold.get("residual"))
+    if d["action"] != "pivot":
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event=f"pivot_{d['action']}",
+                          now=now, touch=False, owner_hold={**hold, "pivot": d})
+    add_directive(mid, _pivot_directive(hold, d["streak"]), now=now)
+    cur = load(mid)
+    transition(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], event="pivot_streak", now=now, touch=False,
+               pivot_streak=d["streak"])
+    return clear_checkpoint(mid, f"auto pivot {d['streak']}/{PIVOT_MAX_STREAK}: {d['why']}", now=now)
 
 
 # --------------------------------------------------------------------------- AMR: autonomous mission recovery
@@ -7557,6 +7639,14 @@ def _cli(argv=None) -> int:
     ck.add_argument("--reason", default="")
     ck.add_argument("--evidence", default=None, help="path or commit that proves the wave closed")
     ck.add_argument("--clear", action="store_true", help="a new plan exists: lift the checkpoint and relay")
+    ck.add_argument("--residual", default=None, help="S11 A2: file stating what the falsified method left (pivot input)")
+    ck.add_argument("--gain", action="store_true", help="S11 A2: this wave certified or passed a positive control")
+    pa = sub.add_parser("pivot-autonomy", help="S11 A2: opt this mission in/out of autonomous method pivots at a "
+                                               "METHOD_PIVOT_REQUIRED / NEXT_PLAN_REQUIRED checkpoint")
+    pa.add_argument("--mission", required=True)
+    pa.add_argument("--on", dest="on", action="store_true")
+    pa.add_argument("--off", dest="on", action="store_false")
+    pa.set_defaults(on=None)
     ws = sub.add_parser("workset", help="S9 A2: add a repository to a live mission's Workset (progress counted there)")
     ws.add_argument("--mission", required=True)
     ws.add_argument("--add", required=True, metavar="PATH")
@@ -7701,9 +7791,19 @@ def _cli(argv=None) -> int:
             rec = clear_checkpoint(args.mission, args.reason)
             print(f"CHECKPOINT CLEARED mission={rec['mission_id']} state={rec['state']} waited_s={rec.get('waited_s')}")
             return 0
-        rec = set_checkpoint(args.mission, args.state, args.reason, evidence=args.evidence)
+        rec = set_checkpoint(args.mission, args.state, args.reason, evidence=args.evidence, residual=args.residual,
+                             gain=args.gain)
         print(f"CHECKPOINT {args.state} mission={rec['mission_id']} state={rec['state']} (nonterminal; the sweep "
               f"releases the worker when its turn ends)")
+        return 0
+    if args.cmd == "pivot-autonomy":
+        if args.on is None:
+            r = load(args.mission) or {}
+            print(f"PIVOT AUTONOMY mission={args.mission} on={bool(r.get('pivot_autonomy'))} "
+                  f"streak={int(r.get('pivot_streak') or 0)}/{PIVOT_MAX_STREAK} kill_switch_off={not pivot_autonomy_on()}")
+            return 0
+        rec = set_pivot_autonomy(args.mission, args.on)
+        print(f"PIVOT AUTONOMY {'ON' if rec.get('pivot_autonomy') else 'OFF'} mission={rec['mission_id']}")
         return 0
     if args.cmd == "workset":
         rec = add_workset(args.mission, args.add, role=args.role)
