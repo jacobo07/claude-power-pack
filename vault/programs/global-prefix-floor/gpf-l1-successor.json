@@ -1,0 +1,33 @@
+{
+ "contract": "GPF-L1-successor-v1",
+ "plane": "DESKTOP-PMT5BS8",
+ "runs": [
+  {
+   "label": "S1",
+   "state_dir": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-rollover-zv55ihno",
+   "predecessor": "eac88636-cb69-4a78-bbed-cf2a74ff5522",
+   "goal": "GPF successor smoke S1",
+   "predecessor_metrics": {
+    "call1": 70970,
+    "calls": 1,
+    "processed": 70970,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "OK"
+   },
+   "seal": {
+    "rc": 3,
+    "out": "capsule   C:\\Users\\User\\AppData\\Local\\Temp\\gpf-rollover-zv55ihno\\capsules\\eac88636-cb69-4a78-bbed-cf2a74ff5522.json  sealed=True  sha=4b02c773e04f\nverdict   REFUSED\n  missing  goal: named goal GPF successor smoke S1 does not exist\n  missing  handoff: written by session c3e68525, not this one -- run /kclear\n  note     70 dirty tracked paths survive on disk, not in context\n",
+    "err": ""
+   },
+   "state_files": [
+    "capsules\\eac88636-cb69-4a78-bbed-cf2a74ff5522.json",
+    "latest\\576459d4.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "seconds_to_turn_end": 362
+  }
+ ]
+}

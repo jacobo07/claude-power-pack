@@ -31,3 +31,33 @@ Revert: copy those three backup files back over `~/.claude/`.
    transcript only.
 3. `l6_quality_driver.py` imports `p3_canary`, which no longer exists (vanished temp worktree,
    T-LAPTOP-TEMP-WORKTREE-FILES-VANISH-001). GPF aliases it to l5 (same three functions).
+
+# GPF-L1 (ctx-rent-x Phase 4 successor smoke) -- 2026-11-02 ~16:15-16:31 local, live release, diet applied
+Driver `gpf_successor_smoke.py`: predecessor pane (pinned sid, `--permission-mode plan`, isolated empty CPP_ROLLOVER_STATE_DIR)
+-> "reply OK" -> `rollover.py seal` into that dir -> `/clear` -> `/kresume` in the same pane. Recompute from the session ids below
+(transcripts under `~/.claude/projects/C--Users-User--claude-skills-claude-power-pack/`, receipts under `~/.claude/ccr/state/receipts/576459d4/`).
+
+| run | CCR_MAIN_CANARY | predecessor | successor | seal | CCR receipts after /clear | frontier receipt |
+|---|---|---|---|---|---|---|
+| S1 | default (enforce) | eac88636 | 1698fe36 | capsule + latest pointer written; verdict REFUSED (test goal not registered, no /kclear handoff) | under the PREDECESSOR sid: `successor marker:true mode:"off" canary:"enforce"` | **none** |
+| S2 | 0 | e2700fe9 | ffbb61ce | same | `end` at /clear, then **no receipt at all** for the successor | **none** |
+
+**CR-11 / CR-14: FAIL (MEASURED, n=1 per arm), not UNKNOWN.** On the live release a `/clear` -> `/kresume` successor never
+resolves the capsule frontier:
+- canary on (the default since L8): `register.ts:124` sets `mode = canary === 'off' ? successorCanaryMode(...) : 'off'`. With
+  the main canary enforcing, the successor mode is always off, so `successor` stays false and `resolveFrontier` (line 134)
+  never runs. The L8 default-on flip structurally disabled the successor frontier path. Its L8 smoke checked start receipts
+  only, so it could not see this.
+- canary off: the plugin records `end` at /clear and nothing for the successor session (lifecycle cause not isolated).
+- The other pane seen in the window (`fd4ffce8`, a real /kresume) shows the same `marker:true mode:"off"`: this hits real
+  successors, not just the probe.
+Also: after /clear the canary-on plugin keeps writing under the predecessor's sid, so any consumer that keys successor
+receipts by the new transcript id finds nothing.
+
+**CR-15 fresh-start cost: PARTIAL (MEASURED bootstrap, no correct resume).** Successor call-1 75,239 (S1) / 75,844 (S2);
+/kresume turn 2 calls 150,770 processed (S1) / 3 calls 232,175 (S2); 0 Reads, 0 rereads, 0 page faults. Both successors
+correctly refused the test capsule ("no resumable capsule"), so time-to-first-correct-action is unmeasured. That needs a real
+/kclear-sealed capsule.
+**CR-16, CR-29:** blocked by the frontier defect (breakeven inputs and fresh-agent recovery both need a working frontier).
+**CR-09 / CR-10 / CR-13 (Phase 5 Safe-to-Forget in main):** not a measurement gap. `register.ts` projectShell enforces only
+in Work Unit sessions and shadows in main; the Phase 5 extension to main was never built. These stay UNKNOWN as UNBUILT.
