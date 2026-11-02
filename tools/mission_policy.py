@@ -187,6 +187,19 @@ DONE_GATE_RX = re.compile(
     r"\bverification\b[^?.]{0,60}\bpassed\b[^?.]{0,80}\b(?:gaps?|deviations?|breach)\b|"
     r"\b(?:record|accept)\w*\b[^?.]{0,50}\bas\s+(?:an?\s+|accepted\s+)*deviations?\b|"
     r"\b(?:release|lift|waive|bypass|authori[sz]e)\b[^?.]{0,80}\b(?:envelope|stop)\b", re.I)
+# Truth contract (S11 A1, incident 2026-11-02 Tennis S10 m-e6e0340e743d: "Decide whether cert-cxx may admit an sd8
+# variant" was answered RESOLVE_BY_DEFAULT). Changing what counts as certified, exact or held-out changes WHAT the
+# Owner authorised, never only HOW. Strong nouns pair with any change verb; bare exact/certified only with a relaxing
+# verb, so "count exact matches per batch" stays an ordinary question.
+_TC_VERB = r"(?:admit|allow|accept|relax|loosen|weaken|change|modify|redefine|waive|lower|widen|count|reuse|treat)\w*"
+_TC_RELAX = r"(?:accept|relax|loosen|weaken|redefine|waive|lower)\w*"
+_TC_STRONG = (r"(?:certification contract|cert-[a-z0-9]+(?:@\d+)?|truth contract|match threshold|held[- ]?out|"
+              r"independent evidence|evidence (?:accounting|independence)|definition of (?:exact|certified))")
+TRUTH_CONTRACT_RX = re.compile(
+    r"\b" + _TC_VERB + r"\b[^?.]{0,80}" + _TC_STRONG + r"|"
+    r"\b" + _TC_RELAX + r"\b[^?.]{0,60}\b(?:exact(?:ness)?|certified)\b|"
+    + _TC_STRONG + r"[^?.]{0,60}\b" + _TC_VERB + r"\b[^?.]{0,40}\b(?:variant|flags?|config\w*|lane|threshold|rules?)\b",
+    re.I)
 OWNER_CLASSES = (
     ("DEPLOY_OR_LIVE_WRITE", re.compile(r"\bHR-0?4\b|\bdeploy|\bpush\b|producci[oó]n|\bprod(uction)?\b|live (server|write)|"
                                         r"servidor (vivo|en vivo)", re.I)),
@@ -196,6 +209,7 @@ OWNER_CLASSES = (
     ("IRREVERSIBLE", re.compile(r"irreversib|permanently|force[- ]push|drop (table|database)|delete (the )?(remote|production)", re.I)),
     ("PRODUCT_SCOPE", re.compile(r"\bscope\b|alcance|product decision|decisi[oó]n de producto|pricing|precio|monetiz", re.I)),
     ("AUTHORITY", re.compile(r"budget (is )?exhausted|authority|more tokens|raise the (cap|envelope)", re.I)),
+    ("TRUTH_CONTRACT", TRUTH_CONTRACT_RX),
     ("DONE_GATE_OR_DEVIATION", DONE_GATE_RX),
 )
 # Questions the runtime answers itself, with the policy key that answers them.

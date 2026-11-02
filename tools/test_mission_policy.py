@@ -134,6 +134,31 @@ def main() -> int:
     check("V-MPOL-GATE-NO-POLICY", mp.gate_question(INCIDENT_JOB["needs"], {})["result"] == "RESOLVE_BY_DEFAULT",
           "worktree question with no stated policy: not an Owner class either")
 
+    # S11 A1: a certification/truth-contract change is the Owner's. Incident 2026-11-02 (Tennis S10, mission
+    # m-e6e0340e743d): the sweep answered this exact question RESOLVE_BY_DEFAULT.
+    sd8 = ("Decide whether cert-cxx may admit an sd8 variant (fn_80222ED8 is the case in question); then a new S10-1 "
+           "plan can be written")
+    g = mp.gate_question(sd8, pv)
+    check("V-MPOL-GATE-TRUTH-SD8", g["result"] == "OWNER_REQUIRED" and g.get("owner_class") == "TRUTH_CONTRACT",
+          f"sd8 admission incident -> {g.get('owner_class') or g['result']}")
+    tsynth = ["Relax exactness to accept 99.5 % matches for this class?",
+              "Should the certification contract admit a -O4,s variant?",
+              "Count the corroborating configurations as independent evidence?",
+              "Can we change the held-out rules and reuse H as development data?",
+              "Accept pct >= 99 as certified for the near misses?",
+              "Lower the match threshold of the judge to 99?"]
+    tbad = [s for s in tsynth if mp.gate_question(s, pv).get("owner_class") != "TRUTH_CONTRACT"]
+    check("V-MPOL-GATE-TRUTH-SYNTH", not tbad, f"{len(tsynth) - len(tbad)}/{len(tsynth)} -> TRUTH_CONTRACT; missed={tbad}")
+    tneg = ["Should I certify the dev batch before the census?",
+            "Change the batch size of the census from 25 to 50?",
+            "Should I run the held-out preflight after B5?",
+            "Which certifier controls should run first, positive or negative?",
+            "Lower the log verbosity of the judge script?",
+            "Should I count exact matches per batch in the report?"]
+    tbadn = [s for s in tneg if mp.gate_question(s, pv)["result"] != "RESOLVE_BY_DEFAULT"]
+    check("V-MPOL-GATE-TRUTH-NEG", not tbadn, f"{len(tneg) - len(tbadn)}/{len(tneg)} HOW questions stay default; "
+                                              f"wrongly escalated={tbadn}")
+
     # 14-01 W2a: done-gate / overrun / deviation Owner class (addendum section 3), kill switch CPP_MISSION_OWNER_GATES.
     saved_ks = os.environ.pop(KILL_SWITCH, None)
     try:
@@ -254,6 +279,7 @@ DRILLS = (
     ("M2 kill-switch read ignored", '.lower() == "off"', '.lower() == "off-ignored-by-drill"', "V-MPOL-OWNER-KILL-SWITCH"),
     ("M3 class pattern reduced to one literal phrase", '("DONE_GATE_OR_DEVIATION", DONE_GATE_RX)',
      '("DONE_GATE_OR_DEVIATION", re.compile(r"override the done-gate", re.I))', "V-MPOL-OWNER-SYNTH"),
+    ("M4 truth-contract class removed", '    ("TRUTH_CONTRACT", TRUTH_CONTRACT_RX),\n', "", "V-MPOL-GATE-TRUTH-SD8"),
 )
 
 
