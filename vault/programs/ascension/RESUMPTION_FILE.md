@@ -84,4 +84,11 @@
 - Function status unchanged by today's work: CERTIFIED_C 1086 (frontier 1086/1797), CERTIFIED_CXX 0, LANE_CANDIDATE 3 (+2 near misses), r12 class 139 (14 in H) uncertified.
 - Next: (a) Owner go on the S10 plan, then write the S10 section into ASCENSION-PLAN.md and arm with `--no-launch` + topup; (b) Owner go to ff the live GEX44 clone `98504a8d` -> `24d117e2` (HR-LIVE-CLONE-IS-DEPLOY-001); (c) close m-9f94bef51619's checkpoint into S10.
 
+**Update 2026-11-02 ~13:30 UTC (Owner "apruebo y autorizo": S9-8 deployed, S10 RUNNING).**
+- Deploy: live GEX44 PP clone ff `98504a8d` -> `24d117e2` at 13:15:30Z, between passes (HR-2: same-commit smoke 16/16). First real pass at 13:19:40Z; 0 `supervise_error` since the deploy (re-checked at 13:25). Rollback: `git reset --keep 98504a8d` in `~/.claude/skills/claude-power-pack` on GEX44.
+- gen3 `e6fe9ac3` holds the approved "Wave S10" section.
+- S10 mission **m-e6e0340e743d**: cwd gen3-pp, Workset + t1-campaign, 40M authority + 1x15M, 12 cycles, 36 h. Launched by the sweep at 13:25:10Z, RUNNING, worker 3fbc7b02 (own ack).
+- m-9f94bef51619 (S9) is left parked at checkpoint METHOD_PIVOT_REQUIRED: nonterminal, no worker, no spend. `--supersedes` refuses without a workstream goal key, and `checkpoint --clear` would relaunch S9 (S9-12).
+- Next: (1) monitor m-e6e0340e743d: gen3 status lines, t1 commits; the S10-1/S10-2 V-CXX controls and mutation drill are the first gate (K1); (2) on S10-3, check the independent revalidation of the 3 LANE_EXACT; (3) on its checkpoint verb, judge the S10 stop rule.
+
 **Start.** Read this file, probe GEX44 for the mission and frontier state, then ask the Owner the open question.
