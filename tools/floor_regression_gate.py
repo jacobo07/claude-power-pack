@@ -9,6 +9,12 @@ transcript whose floor rose materially against that reference without an explana
 
     python3 tools/floor_regression_gate.py --write-reference OUT --transcript T.jsonl [--replace] [--json]
     python3 tools/floor_regression_gate.py --check --reference REF.json --transcript T.jsonl [--json]
+    python3 tools/floor_regression_gate.py --budget BUDGET.json --transcript T.jsonl [--json]
+
+--budget (GPF W3, vault/specs/gpf-resident-admission.md): ABSOLUTE per-layer char ceilings (schema resident-budget/1)
+against what the window actually loaded. The --check rule only sees a rise against its reference, so a reference
+written before a diet lets the doctrine re-inflate unseen; a budget does not. 0 WITHIN_BUDGET, 1 OVER_BUDGET,
+2 UNMEASURABLE (budget_invalid, not_comparable, no_applicable_budget, layer_absent:<layer>, window_degraded).
 
 Measurement source (one of): --transcript T.jsonl | --project-dir DIR (the newest top-level *.jsonl) |
 --session SID (located by the owner's listing_floor_probe.transcript) | --probe [--cwd DIR] (one fresh headless
@@ -1080,7 +1086,7 @@ def is_material(row, ref_total):
 
 def exit_code(verdict):
     return {"WITHIN_BOUND": EXIT_OK, "WITHIN_BOUND_CHARS_ONLY": EXIT_OK, "MATERIAL_RISE": EXIT_RISE, "UNMEASURABLE": EXIT_UNMEASURABLE,
-            "REFERENCE_WRITTEN": EXIT_OK}.get(verdict, EXIT_UNMEASURABLE)
+            "REFERENCE_WRITTEN": EXIT_OK, "WITHIN_BUDGET": EXIT_OK, "OVER_BUDGET": EXIT_RISE}.get(verdict, EXIT_UNMEASURABLE)
 
 
 def _tokens_axis(ref, now):
@@ -1198,6 +1204,85 @@ def compare(ref, now, chars_only=False, admit_cwd=False):
     }
 
 
+# --------------------------------------------------------------------------- resident budget (GPF W3)
+BUDGET_SCHEMA = "resident-budget/1"
+
+
+def load_budget(path):
+    """-> the validated budget document; any defect is UNMEASURABLE budget_invalid (never an empty, passing budget).
+    Spec: vault/specs/gpf-resident-admission.md."""
+    try:
+        # utf-8-sig: a budget edited on Windows (PowerShell 5.1 Set-Content, Notepad) carries a BOM; it is still a budget
+        doc = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        raise Unmeasurable("budget_invalid", f"budget file unreadable: {exc.__class__.__name__}") from None
+    if not isinstance(doc, dict) or doc.get("schema") != BUDGET_SCHEMA:
+        raise Unmeasurable("budget_invalid", f"budget schema is not {BUDGET_SCHEMA}")
+    for field in ("plane", "install_home"):
+        if not isinstance(doc.get(field), str) or not doc[field]:
+            raise Unmeasurable("budget_invalid", f"budget field {field} missing or empty")
+    entries = doc.get("budgets")
+    if not isinstance(entries, list) or not entries:
+        raise Unmeasurable("budget_invalid", "budget has no entries")
+    seen = set()
+    for i, e in enumerate(entries):
+        if not isinstance(e, dict) or not isinstance(e.get("layer"), str) or not e["layer"]:
+            raise Unmeasurable("budget_invalid", f"entry {i}: layer missing")
+        mc = e.get("max_chars")
+        if not isinstance(mc, int) or isinstance(mc, bool) or mc <= 0:
+            raise Unmeasurable("budget_invalid", f"entry {i} ({e['layer']}): max_chars must be an int > 0")
+        if "cwd" in e and (not isinstance(e["cwd"], str) or not e["cwd"]):
+            raise Unmeasurable("budget_invalid", f"entry {i} ({e['layer']}): cwd must be a non-empty string")
+        key = (e["layer"], _budget_cwd(e.get("cwd")))
+        if key in seen:
+            raise Unmeasurable("budget_invalid", f"entry {i} ({e['layer']}): duplicate layer for the same cwd")
+        seen.add(key)
+    return doc
+
+
+_WIN_DRIVE_RE = re.compile(r"^[A-Za-z]:/")
+
+
+def _budget_cwd(value):
+    """cwd key for budget scoping. A Windows path compares case-insensitively: a transcript that records
+    `c:\\Users\\...` must still be judged by the entry written as `C:\\Users\\...`, or a scoped ceiling silently
+    stops applying (BUDGET_NA, exit 0) -- the fail-open the --check path cannot have (it refuses on any cwd
+    difference)."""
+    v = _comparable_value(value)
+    return v.casefold() if v and _WIN_DRIVE_RE.match(v) else v
+
+
+def check_budget(budget, now):
+    """Absolute per-layer ceilings against what the session actually loaded. Exit semantics in the spec table."""
+    np0 = now["provenance"]
+    differing = [f for f in ("plane", "install_home")
+                 if _comparable_value(budget.get(f)) != _comparable_value(np0.get(f))]
+    if differing:
+        raise Unmeasurable("not_comparable", "budget and transcript differ on: " + ", ".join(differing))
+    measured = {}
+    for c in now["components"]:
+        measured[c["layer"]] = measured.get(c["layer"], 0) + c["chars"]
+    cwd_now = _budget_cwd(np0.get("cwd"))
+    rows, na = [], []
+    for e in budget["budgets"]:
+        if "cwd" in e and _budget_cwd(e["cwd"]) != cwd_now:
+            na.append({"layer": e["layer"], "cwd": e["cwd"]})
+            continue
+        rows.append({"layer": e["layer"], "max": e["max_chars"], "now": measured.get(e["layer"]),
+                     "scoped": "cwd" in e})
+    if not rows:
+        raise Unmeasurable("no_applicable_budget", f"no budget entry applies to cwd {np0.get('cwd')}; nothing was measured")
+    gone = sorted(r["layer"] for r in rows if r["now"] is None)
+    if gone:
+        raise Unmeasurable(f"layer_absent:{gone[0]}",
+                           f"{len(gone)} budgeted layer(s) have no component in this window: {', '.join(gone)}; "
+                           "absent is not zero")
+    over = [r for r in rows if r["now"] > r["max"]]
+    verdict, reason = ("OVER_BUDGET", "over_budget") if over else ("WITHIN_BUDGET", "within_budget")
+    return {"verdict": verdict, "reason": reason, "detail": "", "budget_rows": rows, "budget_na": na,
+            "budget_over": [r["layer"] for r in over]}
+
+
 def _s(n):
     return f"{n:+d}"
 
@@ -1259,6 +1344,13 @@ def render(r):
         lines.append(f"TOKENS status={ta['status']} ref={ta['ref']} now={ta['now']} delta={delta}")
         if r["verdict"] == "WITHIN_BOUND_CHARS_ONLY":
             lines.append(f"CHARS_ONLY the tokens axis was not compared (status={ta['status']}); only the chars axis was checked")
+    for row in r.get("budget_rows") or ():
+        tag = "OVER" if row["now"] is not None and row["now"] > row["max"] else "BUDGET"
+        headroom = _s(row["max"] - row["now"]) if row["now"] is not None else "na"
+        lines.append(f"{tag} {row['layer']} now={row['now']} max={row['max']} headroom={headroom} "
+                     f"scope={'cwd' if row['scoped'] else 'plane'}")
+    for row in r.get("budget_na") or ():
+        lines.append(f"BUDGET_NA {row['layer']} cwd={row['cwd']} (entry is scoped to another working directory)")
     if r.get("window_health"):
         lines.append(f"WINDOW_HEALTH {r['window_health']}")
     lines.append(f"FLOOR verdict={r['verdict']} exit={r['exit']} reason={r['reason']}")
@@ -1271,6 +1363,9 @@ def build_parser():
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true", help="compare a transcript's floor with the reference")
     mode.add_argument("--write-reference", metavar="OUT", help="measure and write the reference JSON to OUT")
+    mode.add_argument("--budget", metavar="BUDGET",
+                      help="absolute per-layer char ceilings (schema resident-budget/1) against the transcript's floor: "
+                           "0 within, 1 over, 2 unmeasurable (spec vault/specs/gpf-resident-admission.md)")
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--transcript", metavar="PATH", help="session transcript (jsonl)")
     src.add_argument("--project-dir", metavar="DIR", help="the newest top-level *.jsonl of a project directory")
@@ -1310,6 +1405,9 @@ def _emit(result, as_json, redact):
         doc = {k: result.get(k) for k in JSON_KEYS}
         for k in ("rows", "findings", "explained", "caveats"):
             doc[k] = doc[k] or []
+        if "budget_rows" in result:   # --budget only, so the --check document keeps its exact key set
+            for k in ("budget_rows", "budget_na", "budget_over", "budget"):
+                doc[k] = result.get(k)
         print(json.dumps(redact_obj(doc, redact), indent=1, sort_keys=True))
     else:
         for line in render(result).split("\n"):
@@ -1348,6 +1446,18 @@ def main(argv=None):
                       "detail": f"FLOOR reference written path={args.write_reference} total_chars={measured['total_chars']} "
                                 f"tokens={tok} window_sha256={prov['window_sha256'][:12]} window_rows={prov['window_rows']}",
                       "provenance": prov, "reference": {"path": str(args.write_reference)}}
+        elif args.budget:
+            budget = load_budget(args.budget)
+            path, src = resolve_source(args)
+            now = measure(path)
+            # degraded -> exit 2; 'unknown' does not downgrade: budgeted layers are harness-loaded instruction files,
+            # which an abandoned SessionStart hub cannot shrink (spec, Contract).
+            health = refuse_degraded(now["provenance"]["session_id"], "the budgeted floor",
+                                     now["provenance"].get("first_call_at"))
+            result = check_budget(budget, now)
+            result["window_health"] = health
+            result["provenance"] = stamp_source(now["provenance"], src)
+            result["budget"] = {"path": str(args.budget), "schema": budget["schema"], "plane": budget["plane"]}
         else:
             ref = load_reference(ref_path)
             path, src = resolve_source(args)

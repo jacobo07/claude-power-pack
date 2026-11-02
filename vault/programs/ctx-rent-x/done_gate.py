@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""ctx-rent-x master done-gate: CR-01..CR-32, each a receipt with a measured value or a justified UNKNOWN.
+"""ctx-rent-x master done-gate: CR-01..CR-36, each a receipt with a measured value or a justified UNKNOWN.
+CR-33..36 are the GPF plan's gates (vault/specs/gpf-resident-admission.md): W0 decomposition, W1 delta, W1 quality,
+resident budget pinned (the real floor gate in --budget mode on the newest session of --budget-src).
 
 Status: PASS (measured value meets its bar) | FAIL (measured, bar missed) | UNKNOWN (no receipt yet; reason given).
 Exit 0 only when no condition is FAIL or UNKNOWN. UNKNOWN is never PASS. Evidence is read from --root (default: the
@@ -35,7 +37,72 @@ def delta_ok(summary):
     return (P if d > 0 else F), "call-1 delta_mean=%d n=%d/%d spread=%.4f" % (d, len(c), len(t), spread)
 
 
-def conditions(root, repo, gpf=GPF):
+PP_PROJECT_DIR = os.path.join(os.path.expanduser("~"), ".claude", "projects", "C--Users-User--claude-skills-claude-power-pack")
+_BUDGET_RUNS = {}
+
+
+def budget_run(repo, budget, src):
+    """CR-36: the real floor gate, --budget mode, on the newest session of src. Memoised per (budget, src)."""
+    key = (budget, src)
+    if key not in _BUDGET_RUNS:
+        try:
+            p = subprocess.run([sys.executable, os.path.join(repo, "tools", "floor_regression_gate.py"), "--budget", budget,
+                                "--project-dir", src], capture_output=True, text=True, timeout=120)
+            last = ([ln for ln in p.stdout.splitlines() if ln.strip()] or [""])[-1]
+            _BUDGET_RUNS[key] = (p.returncode, last)
+        except (OSError, subprocess.SubprocessError) as e:
+            _BUDGET_RUNS[key] = (None, "gate did not run: %s" % e.__class__.__name__)
+    return _BUDGET_RUNS[key]
+
+
+def gpf_rows(root, repo, gpf, budget_src, put):
+    """CR-33..36 (GPF plan, section Gates). A missing or unreadable receipt is UNKNOWN, never PASS."""
+    dec = load(root, "floor-decomposition.json")
+    arms = (dec or {}).get("arms") or {}
+    dd = (dec or {}).get("decomposition") or {}
+    need = ("full", "no_claudemd", "no_rules")
+    if not dec:
+        put("CR-33", U, "no floor-decomposition.json (W0 receipt)")
+    elif all((arms.get(a) or {}).get("label") == "MEASURED" and (arms.get(a) or {}).get("n", 0) >= 3 for a in need) \
+            and dd.get("claude_md_chain", 0) > 0 and dd.get("rules", 0) > 0:
+        put("CR-33", P, "W0 %s: CLAUDE.md chain %s, rules %s of call-1 %s (n>=3 per arm)" % (
+            dec.get("plane"), dd["claude_md_chain"], dd["rules"], dd.get("full_call1")))
+    else:
+        put("CR-33", F, "W0 receipt lacks MEASURED n>=3 arms %s or positive chain/rules shares" % (need,))
+    l2 = (load(gpf, "gpf-l2-laptop.json") or {}).get("summary")
+    if not l2:
+        put("CR-34", U, "no gpf-l2-laptop.json summary (W1 delta)")
+    else:
+        c, t = l2.get("control") or [], l2.get("treatment") or []
+        if len(c) < 4 or len(t) < 4:
+            put("CR-34", F, "W1 needs n=4 per arm, have %d/%d" % (len(c), len(t)))
+        else:
+            # spec: spread < 1 % strictly, on BOTH arms (delta_ok alone checks control only, and admits exactly 1 %)
+            sp = {arm: (max(v) - min(v)) / (sum(v) / len(v)) for arm, v in (("control", c), ("treatment", t))}
+            r = delta_ok(l2)
+            wide = [arm for arm, x in sp.items() if x >= 0.01]
+            put("CR-34", F if wide else r[0], "W1 " + r[1] + (" | spread >= 1%% on %s" % wide if wide else
+                                                              " | treatment spread=%.4f" % sp["treatment"]))
+    q = load(gpf, "gpf-l2-quality.json")
+    n = (q or {}).get("summary", {}).get("n") if isinstance((q or {}).get("summary"), dict) else None
+    cor = (q or {}).get("correct")
+    if not isinstance(cor, dict) or not isinstance(n, list) or len(n) != 2:
+        put("CR-35", U, "no gpf-l2-quality.json with per-arm correct counts and n=[control, treatment]")
+    else:
+        # per arm, never the summed total: {"C": 6, "T": 0} over n=[3, 3] is a broken treatment, not 6/6
+        ok = cor.get("C") == n[0] and cor.get("T") == n[1] and sum(n) >= 6
+        put("CR-35", P if ok else F, "W1 quality control %s/%s, treatment %s/%s correct" % (cor.get("C"), n[0], cor.get("T"), n[1]))
+    budget = os.path.join(gpf, "resident_budget.json")
+    if not os.path.isfile(budget):
+        put("CR-36", U, "no resident_budget.json")
+    elif not os.path.isdir(budget_src):
+        put("CR-36", U, "no session directory to measure on this plane: %s" % budget_src)
+    else:
+        code, last = budget_run(repo, budget, budget_src)
+        put("CR-36", {0: P, 1: F}.get(code, U), "floor gate --budget on newest session: exit %s %s" % (code, last))
+
+
+def conditions(root, repo, gpf=GPF, budget_src=PP_PROJECT_DIR):
     est = load(root, "estate-laptop-w0.json")
     gex = load(root, "estate-gex44-w0.json")
     car = load(root, "carriage-A.json")
@@ -163,7 +230,11 @@ def conditions(root, repo, gpf=GPF):
     except (OSError, subprocess.SubprocessError) as e:
         put("CR-31", U, "git unavailable: %s" % e)
         put("CR-32", U, "git unavailable")
+    gpf_rows(root, repo, gpf, budget_src, put)
     return R
+
+
+N_CONDITIONS = 36
 
 
 def main(argv=None):
@@ -171,14 +242,15 @@ def main(argv=None):
     ap.add_argument("--root", default=HERE)
     ap.add_argument("--repo", default=REPO)
     ap.add_argument("--gpf-root", default=GPF)
+    ap.add_argument("--budget-src", default=PP_PROJECT_DIR, help="CR-36: project dir whose newest session is budgeted")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
-    res = conditions(a.root, a.repo, a.gpf_root)
-    assert len(res) == 32, len(res)
+    res = conditions(a.root, a.repo, a.gpf_root, a.budget_src)
+    assert len(res) == N_CONDITIONS, len(res)
     for k in sorted(res):
         print("%s %-7s %s" % (k, res[k][0], res[k][1]))
     n = {s: sum(1 for v in res.values() if v[0] == s) for s in (P, F, U)}
-    print("DONE_GATE pass=%d fail=%d unknown=%d of 32" % (n[P], n[F], n[U]))
+    print("DONE_GATE pass=%d fail=%d unknown=%d of %d" % (n[P], n[F], n[U], N_CONDITIONS))
     return 0 if n[F] == 0 and n[U] == 0 else 1
 
 

@@ -29,7 +29,7 @@ def status(root):
 
 base = fresh()
 s = status(base)
-check("V-DONEGATE-32", len(s) == 32 and sorted(s) == ["CR-%02d" % i for i in range(1, 33)])
+check("V-DONEGATE-36", len(s) == 36 and sorted(s) == ["CR-%02d" % i for i in range(1, 37)])
 check("V-DONEGATE-CONTROL-PASS", s["CR-12"] == "PASS" and s["CR-21"] == "PASS" and s["CR-20"] == "PASS")
 check("V-DONEGATE-UNKNOWN-NOT-PASS", s["CR-09"] == "UNKNOWN" and s["CR-17"] == "PASS" and dg.main(["--root", base]) == 1)
 # mutation 1: treatment worse than control -> FAIL, not PASS
@@ -83,5 +83,38 @@ g = gfile([good, {**good, "frontier_basis": None}], [{**kok, "done_txt": "WRONG"
 check("V-DONEGATE-GPF-LATEST-FAIL", g["CR-11"] == g["CR-14"] == g["CR-29"] == "FAIL")
 g = gfile([], [{"label": "K1", "aborted": "trust dialog"}])
 check("V-DONEGATE-GPF-ABORT-UNKNOWN", g["CR-11"] == g["CR-14"] == g["CR-15"] == g["CR-29"] == "UNKNOWN")
+# GPF CR-33..36 (spec vault/specs/gpf-resident-admission.md): each row driven PASS and not-PASS.
+check("V-DONEGATE-W0-PASS", s["CR-33"] == "PASS", "real W0 receipt (imported from 9ecdf2cfd)")
+w = fresh(); d = json.load(open(w + "/floor-decomposition.json")); d["arms"]["no_rules"]["label"] = "ESTIMATE"
+json.dump(d, open(w + "/floor-decomposition.json", "w"))
+check("V-DONEGATE-MUT-W0-ESTIMATE", status(w)["CR-33"] == "FAIL")
+w = fresh(); os.remove(w + "/floor-decomposition.json")
+check("V-DONEGATE-MUT-W0-MISSING", status(w)["CR-33"] == "UNKNOWN")
+def l2file(ctrl, trt, cor, n, budget=False, src=None):
+    g = tempfile.mkdtemp()
+    json.dump({"summary": {"control": ctrl, "treatment": trt}}, open(g + "/gpf-l2-laptop.json", "w"))
+    json.dump({"summary": {"n": n}, "correct": cor}, open(g + "/gpf-l2-quality.json", "w"))
+    if budget:
+        open(g + "/resident_budget.json", "w").write("{}")
+    return {k: v[0] for k, v in dg.conditions(base, REPO, g, src or g).items()}
+C4, T4 = [78236, 78231, 78530, 78571], [71723, 72007, 72008, 72053]
+g = l2file(C4, T4, {"C": 3, "T": 3}, [3, 3])
+check("V-DONEGATE-GPF-L2-PASS", g["CR-34"] == g["CR-35"] == "PASS")
+check("V-DONEGATE-MUT-L2-N3", l2file(C4[:3], T4[:3], {"C": 3, "T": 3}, [3, 3])["CR-34"] == "FAIL")
+check("V-DONEGATE-MUT-L2-NO-DELTA", l2file(C4, C4, {"C": 3, "T": 3}, [3, 3])["CR-34"] == "FAIL")
+check("V-DONEGATE-MUT-L2-WRONG", l2file(C4, T4, {"C": 3, "T": 2}, [3, 3])["CR-35"] == "FAIL")
+# review findings 2/3: treatment spread >= 1 % fails (delta_ok checks control only); arm totals are per arm
+check("V-DONEGATE-MUT-L2-TREATMENT-SPREAD", l2file(C4, [71000, 71000, 71000, 71720], {"C": 3, "T": 3}, [3, 3])["CR-34"] == "FAIL")
+check("V-DONEGATE-MUT-L2-ARM-SKEW", l2file(C4, T4, {"C": 6, "T": 0}, [3, 3])["CR-35"] == "FAIL")
+e = tempfile.mkdtemp(); ge = {k: v[0] for k, v in dg.conditions(base, REPO, e, e).items()}
+check("V-DONEGATE-GPF-L2-MISSING", ge["CR-34"] == ge["CR-35"] == ge["CR-36"] == "UNKNOWN")
+# CR-36 maps the floor gate's exit code: 0 PASS, 1 FAIL, anything else UNKNOWN (the gate itself is V-FLOOR-BUDGET-*)
+real_run = dg.budget_run
+for code, want in ((0, "PASS"), (1, "FAIL"), (2, "UNKNOWN"), (None, "UNKNOWN")):
+    dg.budget_run = lambda repo, b, src, c=code: (c, "stub")
+    got = l2file(C4, T4, {"C": 3, "T": 3}, [3, 3], budget=True)["CR-36"]
+    check("V-DONEGATE-CR36-EXIT-%s" % code, got == want, "exit %s -> %s" % (code, got))
+dg.budget_run = real_run
+check("V-DONEGATE-CR36-NO-SRC", l2file(C4, T4, {"C": 3, "T": 3}, [3, 3], budget=True, src=e + "/absent")["CR-36"] == "UNKNOWN")
 print("DONEGATE_PASS=%d/%d  threshold=N/N" % (passes, passes + fails))
 sys.exit(0 if fails == 0 else 1)

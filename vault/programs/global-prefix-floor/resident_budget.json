@@ -1,0 +1,19 @@
+{
+ "schema": "resident-budget/1",
+ "plane": "DESKTOP-PMT5BS8",
+ "install_home": "C:\\Users\\User",
+ "measured_from": "sessions bcf0a0bc-e334-41d4-a16e-772b5edf21b5 and 07f7d1bd-eac3-46b8-9950-180544e627a0 (2026-11-02, post GPF laptop diet), identical layer sums",
+ "rule": "max_chars = measured * 1.10, rounded up to the next 100. Raising a ceiling is a reviewed diff of this file (spec vault/specs/gpf-resident-admission.md).",
+ "budgets": [
+  {"layer": "memory_global", "max_chars": 8700, "measured": 7871,
+   "basis": "~/.claude/CLAUDE.md after the GPF diet (was 39,809 in the 2026-10-05 reference)"},
+  {"layer": "rules", "max_chars": 9100, "measured": 8239,
+   "basis": "~/.claude/rules/** (5 files) after the GPF diet (was 63,625 in the 2026-10-05 reference)"},
+  {"layer": "memory_project", "max_chars": 31700, "measured": 28817,
+   "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+   "basis": "~/CLAUDE.md 5,956 + PP repo CLAUDE.md 22,861; the repo CLAUDE.md diet is open debt"},
+  {"layer": "other:instructions", "max_chars": 3100, "measured": 2747,
+   "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+   "basis": "auto-memory MEMORY.md hub for this project"}
+ ]
+}

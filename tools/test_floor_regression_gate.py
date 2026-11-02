@@ -2746,6 +2746,206 @@ def g_json_detail_and_probe_note():
     return (not why), "; ".join(why) or "--json carries detail / probe_error on exit 2 (and null/empty on success); --help and the docstring name wiki/tools/listing_floor_probe.results.jsonl"
 
 
+# --------------------------------------------------------------------------- resident budget (GPF W3)
+# Spec vault/specs/gpf-resident-admission.md. Fixture floor: memory_global g, memory_project p, rules r (chars).
+REAL_BUDGET = REPO / "vault" / "programs" / "global-prefix-floor" / "resident_budget.json"
+
+
+def budget_case(prefix, sizes=None):
+    """-> (root, now transcript, its provenance) for one synthetic floor."""
+    root = scratch(prefix)
+    _, now_tx = floor_pair(root, {}, sizes or {})
+    return root, now_tx, GATE.measure(now_tx)["provenance"]
+
+
+def write_budget(root, prov, entries, name="budget.json", **over):
+    doc = {"schema": "resident-budget/1", "plane": prov["plane"], "install_home": prov["install_home"], "budgets": entries}
+    doc.update(over)
+    path = Path(root) / name
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    return path
+
+
+def _budget_runs():
+    return (("cli", run_cli), ("in-process", run_main))
+
+
+def budget_verdict(rc, out, verdict, code):
+    return rc == code and last_line(out).startswith(f"FLOOR verdict={verdict} exit={code}")
+
+
+def g_budget_poles():
+    """max == measured is green; max == measured - 1 is OVER_BUDGET exit 1 and names the layer; CLI and in-process."""
+    why = []
+    root, tx, prov = budget_case("bud-poles", {"g": 10000, "r": 8000})
+    for tag, run in _budget_runs():
+        for label, gmax, rmax, want, code in (("within", 10000, 8000, "WITHIN_BUDGET", 0),
+                                              ("global over by 1", 9999, 8000, "OVER_BUDGET", 1),
+                                              ("rules over by 1", 10000, 7999, "OVER_BUDGET", 1)):
+            b = write_budget(root, prov, [{"layer": "memory_global", "max_chars": gmax},
+                                          {"layer": "rules", "max_chars": rmax}], name=f"b-{gmax}-{rmax}.json")
+            rc, out, _ = run(["--budget", b, "--transcript", tx])
+            if not budget_verdict(rc, out, want, code):
+                why.append(f"{tag} {label}: rc={rc} last={last_line(out)!r}")
+            if code == 1 and not any(ln.startswith("OVER ") for ln in out.splitlines()):
+                why.append(f"{tag} {label}: no OVER line names the layer")
+    return (not why), "; ".join(why) or "max==now -> WITHIN_BUDGET 0; max==now-1 on either layer -> OVER_BUDGET 1 with an OVER line; CLI and in-process"
+
+
+def g_budget_layer_absent():
+    """A budgeted layer with no component is exit 2 layer_absent:<layer>, never a zero that fits under any ceiling."""
+    why = []
+    root, tx, prov = budget_case("bud-absent", {"r": 8000})
+    _drop_rules(tx)
+    b = write_budget(root, prov, [{"layer": "memory_global", "max_chars": 10**6}, {"layer": "rules", "max_chars": 10**6}])
+    for tag, run in _budget_runs():
+        rc, out, _ = run(["--budget", b, "--transcript", tx])
+        if not unmeasurable(rc, out, "layer_absent:rules"):
+            why.append(f"{tag}: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "rules dropped from the window -> exit 2 layer_absent:rules under a 1M ceiling (absent is not zero)"
+
+
+def g_budget_cwd_scoped():
+    """An entry scoped to another cwd is BUDGET_NA (not enforced); scoped to this cwd it is enforced."""
+    why = []
+    root, tx, prov = budget_case("bud-cwd", {"p": 10000})
+    plane_entry = {"layer": "memory_global", "max_chars": 10**6}
+    other = write_budget(root, prov, [plane_entry, {"layer": "memory_project", "max_chars": 1, "cwd": str(Path(root) / "elsewhere")}],
+                         name="other.json")
+    mine = write_budget(root, prov, [plane_entry, {"layer": "memory_project", "max_chars": 9999, "cwd": prov["cwd"]}],
+                        name="mine.json")
+    for tag, run in _budget_runs():
+        rc, out, _ = run(["--budget", other, "--transcript", tx])
+        if not budget_verdict(rc, out, "WITHIN_BUDGET", 0) or "BUDGET_NA memory_project" not in out:
+            why.append(f"{tag} foreign cwd: rc={rc} last={last_line(out)!r}")
+        rc, out, _ = run(["--budget", mine, "--transcript", tx])
+        if not budget_verdict(rc, out, "OVER_BUDGET", 1):
+            why.append(f"{tag} own cwd over by 1: rc={rc} last={last_line(out)!r}")
+    # review finding 1: a Windows cwd that differs only in case is the SAME directory and must stay enforced
+    # (fail-open otherwise: BUDGET_NA, exit 0). POSIX paths stay case-sensitive.
+    if GATE._budget_cwd("c:\\Users\\X\\proj") != GATE._budget_cwd("C:/users/x/PROJ/"):
+        why.append("unit: Windows cwd keys differ by case")
+    if GATE._budget_cwd("/home/X/proj") == GATE._budget_cwd("/home/x/proj"):
+        why.append("unit: POSIX cwd keys folded case")
+    swapped = str(prov["cwd"]).swapcase()
+    if re.match(r"^[A-Za-z]:[\\/]", swapped):   # e2e only where the fixture cwd is a drive path (win32 host)
+        case = write_budget(root, prov, [plane_entry, {"layer": "memory_project", "max_chars": 9999, "cwd": swapped}],
+                            name="case.json")
+        for tag, run in _budget_runs():
+            rc, out, _ = run(["--budget", case, "--transcript", tx])
+            if not budget_verdict(rc, out, "OVER_BUDGET", 1):
+                why.append(f"{tag} case-swapped own cwd not enforced: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or ("foreign-cwd entry (max 1) -> BUDGET_NA, exit 0; same entry on this cwd at now-1 -> "
+                                         "exit 1; a case-swapped Windows cwd is still enforced; POSIX stays case-sensitive")
+
+
+def g_budget_no_applicable():
+    """Only foreign-cwd entries: nothing was measured, so exit 2 no_applicable_budget (never a green that measured nothing)."""
+    why = []
+    root, tx, prov = budget_case("bud-none")
+    b = write_budget(root, prov, [{"layer": "memory_project", "max_chars": 10**6, "cwd": str(Path(root) / "elsewhere")}])
+    for tag, run in _budget_runs():
+        rc, out, _ = run(["--budget", b, "--transcript", tx])
+        if not unmeasurable(rc, out, "no_applicable_budget"):
+            why.append(f"{tag}: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "every entry scoped elsewhere -> exit 2 no_applicable_budget"
+
+
+def g_budget_invalid():
+    """Every malformed budget is exit 2 budget_invalid; a BOM-prefixed but valid budget is still read (exit 0)."""
+    why = []
+    root, tx, prov = budget_case("bud-invalid")
+    ok_entry = {"layer": "memory_global", "max_chars": 10**6}
+    bad = {
+        "wrong schema": write_budget(root, prov, [ok_entry], name="s.json", schema="resident-budget/0"),
+        "no entries": write_budget(root, prov, [], name="e.json"),
+        "max 0": write_budget(root, prov, [{"layer": "rules", "max_chars": 0}], name="z.json"),
+        "max bool": write_budget(root, prov, [{"layer": "rules", "max_chars": True}], name="t.json"),
+        "max str": write_budget(root, prov, [{"layer": "rules", "max_chars": "9000"}], name="q.json"),
+        "no layer": write_budget(root, prov, [{"max_chars": 5}], name="l.json"),
+        "duplicate": write_budget(root, prov, [ok_entry, dict(ok_entry)], name="d.json"),
+        "empty cwd": write_budget(root, prov, [{"layer": "rules", "max_chars": 5, "cwd": ""}], name="c.json"),
+        "no install_home": write_budget(root, prov, [ok_entry], name="h.json", install_home=""),
+        "missing file": Path(root) / "absent.json",
+    }
+    torn = Path(root) / "torn.json"
+    torn.write_text('{"schema": "resident-budget/1", "budg', encoding="utf-8")
+    bad["torn json"] = torn
+    bom = Path(root) / "bom.json"
+    bom.write_bytes(b"\xef\xbb\xbf" + write_budget(root, prov, [ok_entry], name="plain.json").read_bytes())
+    for tag, run in _budget_runs():
+        for label, path in bad.items():
+            rc, out, _ = run(["--budget", path, "--transcript", tx])
+            if not unmeasurable(rc, out, "budget_invalid"):
+                why.append(f"{tag} {label}: rc={rc} last={last_line(out)!r}")
+        rc, out, _ = run(["--budget", bom, "--transcript", tx])
+        if not budget_verdict(rc, out, "WITHIN_BUDGET", 0):
+            why.append(f"{tag} BOM budget: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or f"{len(bad)} malformed budgets -> exit 2 budget_invalid; a BOM-prefixed valid budget -> exit 0"
+
+
+def g_budget_not_comparable():
+    """A budget written on another plane or install_home cannot judge this window: exit 2 not_comparable."""
+    why = []
+    root, tx, prov = budget_case("bud-plane")
+    entry = [{"layer": "memory_global", "max_chars": 10**6}]
+    for label, over in (("plane", {"plane": "OTHER-HOST"}), ("install_home", {"install_home": str(Path(root) / "nohome")})):
+        b = write_budget(root, prov, entry, name=f"{label}.json", **over)
+        for tag, run in _budget_runs():
+            rc, out, _ = run(["--budget", b, "--transcript", tx])
+            if not unmeasurable(rc, out, "not_comparable"):
+                why.append(f"{tag} {label}: rc={rc} last={last_line(out)!r}")
+    return (not why), "; ".join(why) or "plane or install_home differ -> exit 2 not_comparable"
+
+
+def g_budget_json():
+    """--budget --json carries budget_rows / budget_over; the --check document keeps its exact key set (V-FLOOR-JSON)."""
+    why = []
+    root, tx, prov = budget_case("bud-json", {"r": 8000})
+    b = write_budget(root, prov, [{"layer": "rules", "max_chars": 7999}])
+    rc, out, _ = run_cli(["--budget", b, "--transcript", tx, "--json"])
+    try:
+        doc = json.loads(out)
+    except ValueError:
+        return False, f"--json output is not JSON: rc={rc} {out[:200]!r}"
+    if rc != 1 or doc.get("verdict") != "OVER_BUDGET" or doc.get("budget_over") != ["rules"]:
+        why.append(f"rc={rc} verdict={doc.get('verdict')} over={doc.get('budget_over')}")
+    rows = doc.get("budget_rows") or []
+    if not rows or rows[0].get("now") != 8000 or rows[0].get("max") != 7999:
+        why.append(f"budget_rows={rows}")
+    return (not why), "; ".join(why) or "--budget --json: OVER_BUDGET exit 1, budget_over=['rules'], row now=8000 max=7999"
+
+
+def g_budget_real_pinned():
+    """The committed resident_budget.json validates, and pins the four layers the GPF diet shrank."""
+    if not REAL_BUDGET.is_file():
+        return False, f"{REAL_BUDGET} missing"
+    try:
+        doc = GATE.load_budget(REAL_BUDGET)
+    except GATE.Unmeasurable as exc:
+        return False, f"committed budget invalid: {exc.reason} {exc.detail}"
+    layers = {e["layer"] for e in doc["budgets"]}
+    want = {"memory_global", "rules", "memory_project", "other:instructions"}
+    if not want <= layers:
+        return False, f"missing layers {sorted(want - layers)}"
+    loose = [e["layer"] for e in doc["budgets"] if "measured" in e and e["max_chars"] > e["measured"] * 1.1 + 100]
+    if loose:
+        return False, f"ceilings above measured*1.10 (+100 rounding): {loose}"
+    return True, f"{REAL_BUDGET.name} validates; layers {sorted(layers)}; every ceiling <= measured*1.10 (+100)"
+
+
+GATES_BUDGET = [
+    ("V-FLOOR-BUDGET-POLES", g_budget_poles),
+    ("V-FLOOR-BUDGET-LAYER-ABSENT", g_budget_layer_absent),
+    ("V-FLOOR-BUDGET-CWD-SCOPED", g_budget_cwd_scoped),
+    ("V-FLOOR-BUDGET-NO-APPLICABLE", g_budget_no_applicable),
+    ("V-FLOOR-BUDGET-INVALID", g_budget_invalid),
+    ("V-FLOOR-BUDGET-NOT-COMPARABLE", g_budget_not_comparable),
+    ("V-FLOOR-BUDGET-JSON", g_budget_json),
+    ("V-FLOOR-BUDGET-REAL-PINNED", g_budget_real_pinned),
+]
+
+
 GATES_REVIEWFIX = [
     ("V-FLOOR-JSON-DETAIL-AND-PROBE-NOTE", g_json_detail_and_probe_note),
     ("V-FLOOR-REPLACE-FAILURE-NO-STRAY-TMP", g_replace_failure_no_stray_tmp),
@@ -2832,7 +3032,7 @@ GATES_SOURCES = [
     ("V-FLOOR-REAL-REFERENCE-PINNED", g_real_reference_pinned),
     ("V-FLOOR-BUNDLE-ARGV-PARSES", g_bundle_argv_parses),
 ]
-GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY + GATES_SOURCES + GATES_REVIEWFIX
+GATES = GATES_TRACER + GATES_RULES + GATES_ATTRIBUTION + GATES_SAFETY + GATES_SOURCES + GATES_REVIEWFIX + GATES_BUDGET
 
 
 def run_all() -> int:
@@ -3005,6 +3205,50 @@ MUTANTS = [
      _m_event_fallback_project, ["V-FLOOR-HOOK-UNCORRELATED-UNATTRIBUTED", "V-FLOOR-HOOK-EVENT-FALLBACK"]),
     ("M18 unmeasured_tokens_verdict returns plain WITHIN_BOUND (WR-03: a tokens axis nobody compared reads green)",
      _m_tokens_gap_green, ["V-FLOOR-TOKENS-UNMEASURED", "V-FLOOR-NO-MODEL-CALL", "V-FLOOR-TOKENS-RULE"]),
+]
+
+
+def _m_budget_unvalidated():
+    return _patch("load_budget", lambda path: json.loads(Path(path).read_text(encoding="utf-8-sig")))
+
+
+def _m_budget_absent_is_zero():
+    real = GATE.check_budget
+
+    def mut(budget, now):
+        present = {c["layer"] for c in now["components"]}
+        pad = [{"layer": e["layer"], "chars": 0, "source": "mutant", "scope": "universal"}
+               for e in budget["budgets"] if e["layer"] not in present]
+        return real(budget, {**now, "components": list(now["components"]) + pad})
+    return _patch("check_budget", mut)
+
+
+def _m_budget_over_green():
+    real = GATE.exit_code
+    return _patch("exit_code", lambda v: 0 if v == "OVER_BUDGET" else real(v))
+
+
+def _m_budget_scope_ignored():
+    real = GATE.check_budget
+    return _patch("check_budget", lambda budget, now: real(
+        {**budget, "budgets": [{k: v for k, v in e.items() if k != "cwd"} for e in budget["budgets"]]}, now))
+
+
+def _m_budget_cwd_case_sensitive():
+    return _patch("_budget_cwd", lambda v: GATE._comparable_value(v))
+
+
+MUTANTS += [
+    ("M23 _budget_cwd compares Windows cwds case-sensitively (c:\\ vs C:\\ turns a scoped ceiling into BUDGET_NA)",
+     _m_budget_cwd_case_sensitive, ["V-FLOOR-BUDGET-CWD-SCOPED"]),
+    ("M19 load_budget skips validation (a malformed budget is read as a budget)", _m_budget_unvalidated,
+     ["V-FLOOR-BUDGET-INVALID"]),
+    ("M20 check_budget reads an absent layer as 0 chars (absent fits under any ceiling)", _m_budget_absent_is_zero,
+     ["V-FLOOR-BUDGET-LAYER-ABSENT"]),
+    ("M21 exit_code maps OVER_BUDGET to 0 (a re-inflated doctrine reads green)", _m_budget_over_green,
+     ["V-FLOOR-BUDGET-POLES"]),
+    ("M22 check_budget ignores cwd scoping (another project's ceiling judges this one)", _m_budget_scope_ignored,
+     ["V-FLOOR-BUDGET-CWD-SCOPED", "V-FLOOR-BUDGET-NO-APPLICABLE"]),
 ]
 
 

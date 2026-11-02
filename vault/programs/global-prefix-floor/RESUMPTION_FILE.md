@@ -24,8 +24,15 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
 1. DONE: capsule fixes (seal_capsule writes latest/ pointer; named goal file's verbatim Next items win). test_rollover_obligations 8/8
    (red pole 6 FAIL on HEAD), review APPROVE. K5: 0 failed certifies, frontier basis `capsule`, 51 s, processed -53% vs K4 (n=1).
 2. DONE: GEX44 diet LIVE (GEX44_APPLY.md): smoke green, attributable -13,786/call-1 (-13.8%, n=2). Backup /home/kobii/.claude/backups/gpf-apply-20261102T183952.
-3. DONE: done_gate reads CR-11/14/15/29 from receipts; 24 pass / 1 fail (CR-31 dirty shared tree) / 7 unknown.
-Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects, CR-09/10/13 unbuilt, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers.
+3. DONE: done_gate reads CR-11/14/15/29 from receipts.
+4. DONE (W3, spec vault/specs/gpf-resident-admission.md, Owner "y" 2026-11-02): floor_regression_gate.py --budget
+   (absolute per-layer ceilings read from the session window) + resident_budget.json (measured +10%); live: exit 0,
+   rules ceiling 8238 -> exit 1, 8239 -> exit 0. FLOOR 69/69, drill 22/22. done_gate CR-33..36 all PASS;
+   W0 receipt imported verbatim from 9ecdf2cfd. done_gate now 28 pass / 1 fail (CR-31) / 7 unknown of 36.
+5. OWNER QUESTION (not done): re-baseline incremental-cognition floor/reference.json (2026-10-05, pre-diet) with
+   --write-reference --replace? K-prg.md says re-baseline is the Owner's call; tools/wake_check.py (scheduled) reads it.
+Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects, CR-09/10/13 unbuilt (Phase 5),
+CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file.
 
 ## Start
-Read CCR_CAPSULE_DEFECTS_SCOPE.md, then do Next 1 once the Owner says go.
+Ask the Owner item 5; otherwise the next build is Phase 5 (CR-09/10/13) and needs its own plan.
