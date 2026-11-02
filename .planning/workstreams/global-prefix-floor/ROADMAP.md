@@ -3,12 +3,20 @@
 Authority: `vault/plans/global-prefix-floor-2026-11-02.md` (Owner `y go`, 2026-11-02, laptop). Read it first. Do NOT re-scan
 what its Reality Scan states. It EXTENDS ctx-rent-x (`vault/programs/ctx-rent-x/`, done_gate.py, l5/l6 drivers, floor_diet,
 floor_regression_gate). Never create a parallel system.
-PLANE: **laptop** DESKTOP-PMT5BS8, live install `~/.claude/skills/claude-power-pack`, branch `feature/knowledge-acquisition`.
-The tree is shared, with 1,200+ dirty paths from other panes. Commit ONLY your own paths (`git commit -- <paths>`), one causal
-delta per commit, and verify `git log -1 --format=%s` after each commit. Do NOT push. Use PowerShell (Bash is guarded).
-**RAM:** free RAM was 2.2 GB at arm, under the 3000 MB floor. Run probe panes one at a time, in the foreground. Before each probe
-batch, check free MB. If it is under 2500, wait (an event, not a sleep loop) or stop and write the Owner note. A probe killed by the
-reaper is INCOMPLETE, never data.
+PLANE: **GEX44** (Owner "do it on GEX44", 2026-11-02; the laptop arm was refused at 1,496 MB free vs the 3000 MB floor). You run in
+the clone `~/missions/global-prefix-floor`, branch `mission/global-prefix-floor`. Commit with the repo-local identity, one causal
+delta per commit. Do NOT push. Use Bash (Linux). The laptop coordinator fetches your branch.
+**Never touch GEX44's live `~/.claude` or `~/.claude/skills/claude-power-pack`** (agora-mission-sweep runs that tree for other
+missions). Measure in an ISOLATED config: copy `~/.claude` to `~/missions/gpf-cfg/<arm>` (CLAUDE.md, rules, memory, settings,
+plugins incl. the CCR release or `--plugin-dir mods/cpp-cognitive-runtime`), launch with `CLAUDE_CONFIG_DIR=<that dir>` and
+`/home/kobii/.local/bin/claude` (2.1.316, `stdin </dev/null`). Before trusting any arm, prove the isolation took effect
+(the arm's call-1 differs, or its start receipt names that dir). Interactive panes: drive them with a pty (python `pty`/`pexpect`),
+porting the ConPTY l5 driver as an extension, not a fork. Label every number `plane=GEX44`.
+- **Laptop-only items** (the laptop's live CLAUDE.md/rules/memory, laptop CCR release, laptop interactive panes, and the ctx-rent-x
+  CR items its HANDOFF names as laptop-plane) are written as numbered, copy-pasteable entries in
+  `vault/programs/ctx-rent-x/LAPTOP_STEPS.md`, and the phase is marked BLOCKED-ON-LAPTOP. Continue with any phase that does not
+  depend on them. The PP repo `CLAUDE.md` is in-repo: its edit is a commit, and you measure it here. Edits to `~/.claude/CLAUDE.md`
+  and `~/.claude/rules` are measured on GEX44 copies, then shipped as a LAPTOP STEP with the exact diff and its revert.
 EXECUTION mode. Plan each phase inline. Do NOT dispatch gsd-planner / gsd-phase-researcher subagents. At most 2 bounded subagents.
 Measure your own spend after each phase (`python tools/mission_spend.py session-tree --session <sid>`) and record it in STATE.md.
 Stage-1 authority is 8M. If phases 1-2 have not produced a measured call-1 delta by 8M: METHOD_PIVOT, then stop with an Owner note.
