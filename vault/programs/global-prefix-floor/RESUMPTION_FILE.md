@@ -22,7 +22,7 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
 
 ## Next
 1. Apply the trust fix, run K2, then record CR-29 (fresh-agent recovery: done.txt == token) and CR-15 (seconds/tokens to first correct action) in LAPTOP_RESULTS.md; commit.
-2. Make `vault/programs/ctx-rent-x/done_gate.py` read CR-11/14/15/29 from `gpf-l1-successor.json` / `gpf-cr29.json` instead of hardcoding UNKNOWN; run it; commit.
+2. DONE c918dc17: done_gate reads CR-11/14/15/29 from receipts (CR-11/14 PASS; CR-15/29 UNKNOWN until K4). After K4, just re-run it.
 3. Report to the Owner. Open debt: repo CLAUDE.md diet (blocked by another pane's uncommitted edit), l6 driver defects, CR-09/10/13 unbuilt, GEX44 mission BLOCKED (live ~/.claude apply on GEX44 is an Owner decision).
 
 ## Start
