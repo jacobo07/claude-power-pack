@@ -4304,7 +4304,13 @@ def adopt_launched(rec: dict, row: dict, now: float | None = None) -> dict:
     # MarkerError on a record whose resume command does not start with '/', and the adopted W0r worker
     # ran with no session envelope until it was declared by hand.
     _declare_worker_envelope(new, sid)
-    _arm_worker_marker(new, sid)
+    try:
+        _arm_worker_marker(new, sid)
+    except Exception as exc:  # noqa: BLE001 -- recorded, as session_start records it; the adoption stands
+        # S9-8 canary (m-8cd4f6e1a7f3, 2026-11-02): adopting a fast finisher of a mission whose command is not a
+        # `/command` raised MarkerError here, after the record was already RUNNING, and failed the sweep pass (rc 3).
+        lr.ledger_append(sid or rec["mission_id"], "worker_marker_refused", mission_id=rec["mission_id"],
+                         epoch=new["epoch"], via="adopt", error=f"{type(exc).__name__}: {exc}"[:300])
     if v2 and sid:
         _capsule_bind(new, owner_session=sid)
     return new

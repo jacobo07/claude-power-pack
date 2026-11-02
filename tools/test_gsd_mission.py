@@ -1194,6 +1194,20 @@ def main() -> int:
           and ff["owner"]["session_id"] == "ff0ff0ff-1111-2222" and ff["iterations"] == 1
           and ff.get("failed_launches", 0) == 0 and len(launches) == n_l, json.dumps(
               {k: ff.get(k) for k in ("state", "epoch", "iterations", "failed_launches")}))
+    # S9-8 canary (m-8cd4f6e1a7f3): the adopt path armed a marker for a non-`/` command and raised MarkerError after
+    # the record was RUNNING, failing the sweep pass. The refusal is a ledger row; the adoption stands.
+    gm.create(TMP, "Canary: reply OK and end your turn", mission_id="m-ffm", now=NOW)
+    gm.transition("m-ffm", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.LAUNCHING, epoch=1,
+                  pending={"kind": "worker_start", "bg_id": "fa0fa0fa", "deadline": NOW + 300})
+    fm_row = [{"id": "fa0fa0fa", "sessionId": "fa0fa0fa-1111-2222", "kind": "background", "state": "done"}]
+    fm_rows = gm.supervise(now=NOW + 10, sessions=fm_row, gsd_status=gsd("OK"), runner=launch_run,
+                           stop_runner=stop_run, pid_alive=gone)
+    fm = next((r for r in fm_rows if r["mission_id"] == "m-ffm"), {})
+    refused = [e for e in gm.lr.ledger_events("fa0fa0fa-1111-2222") + gm.lr.ledger_events("m-ffm")
+               if e.get("event") == "worker_marker_refused"]
+    check("V-MC-ADOPT-MARKER-REFUSAL-NOT-A-PASS-ERROR", not fm.get("error") and gm.load("m-ffm")["state"] == gm.RUNNING
+          and refused, {"row": {k: fm.get(k) for k in ("action", "error")}, "refused": len(refused)})
     nxt = gm.plan_next(ff, NOW + 20, done_row, gone)
     check("V-MC-ADOPT-FAST-FINISHER-TURN-JUDGED", nxt["action"] == "replace" and "owner dead" in nxt["reason"],
           str(nxt))
