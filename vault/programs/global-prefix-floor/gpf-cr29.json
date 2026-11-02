@@ -1,0 +1,14 @@
+{
+ "contract": "GPF-CR29-kclear-v1",
+ "plane": "DESKTOP-PMT5BS8",
+ "runs": [
+  {
+   "label": "K1",
+   "root": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-cr29-0v2ou6m6",
+   "state_dir": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-rollover-ws79s1kh",
+   "predecessor": "723258b8-0493-4414-813f-a33c685f3299",
+   "token": "RESUMED-K1-ebabaa",
+   "aborted": "trust dialog shown; not typing into it"
+  }
+ ]
+}
