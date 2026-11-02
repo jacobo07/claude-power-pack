@@ -31,3 +31,20 @@ Before editing anything under `~/.claude/` (HR-001): back it up to `~/.claude/ba
   with a mutation drill that goes red. Add a baseline_ledger row that splits availability from residency. Ceiling 4M.
 - [ ] **Phase 5: Closeout.** done_gate.py CR-33..36 (decomposition, W1 delta, quality, pinned budget). UKDL entries only where
   evidence-backed. HANDOFF.md with the plan's closeout answers. Ceiling 3M.
+
+## Phase Details
+
+### Phase 1: W0 floor decomposition
+**Depends on**: nothing. P50 4M, ceiling 5M. Requirement GPF-01. Scope as in the Phases list above.
+
+### Phase 2: W1 resident doctrine compile-out
+**Depends on**: Phase 1. P50 9M, ceiling 12M. Requirement GPF-02. Needs stage-2 authority unless the Phase-1 spend leaves room.
+
+### Phase 3: W2 close ctx-rent-x laptop UNKNOWNs
+**Depends on**: nothing (runs after Phase 2 by order). P50 11M, ceiling 15M. Requirement GPF-03.
+
+### Phase 4: W3 Resident Context Admission
+**Depends on**: Phase 2. P50 3M, ceiling 4M. Requirement GPF-04.
+
+### Phase 5: Closeout
+**Depends on**: Phases 1-4. P50 2M, ceiling 3M. Requirement GPF-05.
