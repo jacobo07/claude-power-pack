@@ -103,8 +103,14 @@ def main():
     _rc = globals()["receipts"]
     receipts = lambda sid: _rc(s1) + ([] if sid == s1 else _rc(sid))  # noqa: E731
     run = {"label": LABEL, "state_dir": str(state), "predecessor": s1, "goal": GOAL}
-    p = PtyProcess.spawn(["claude", "--model", "haiku", "--session-id", s1, "--permission-mode", "plan"],
-                         cwd=str(ROOT), env=env, dimensions=(50, 200))
+    # Not plan mode: in S2-S4 the successor called ExitPlanMode, the dialog held the turn open, and the driver's "/exit"+Enter
+    # APPROVED the plan (S4, 17:51:44). auto mode with file-mutation tools disallowed; the shell inherits the isolated state dir.
+    argv = ["claude", "--model", "haiku", "--session-id", s1, "--permission-mode", os.environ.get("GPF_PERMISSION_MODE", "auto"),
+            "--disallowedTools", "Write", "Edit", "NotebookEdit"]
+    if os.environ.get("GPF_DEBUG_FILE"):  # host debug log for the /clear lifecycle diagnosis (S2/S3: plugin silent after /clear)
+        argv += ["--debug-file", os.environ["GPF_DEBUG_FILE"]]
+        run["debug_file"] = os.environ["GPF_DEBUG_FILE"]
+    p = PtyProcess.spawn(argv, cwd=str(ROOT), env=env, dimensions=(50, 200))
     def reader():
         while p.isalive():
             try:
@@ -144,19 +150,22 @@ def main():
                 except OSError:
                     continue
             return None
-        wait(TURN_S, lambda: succ() is not None and turn_done(succ()))
+        done = wait(TURN_S, lambda: succ() is not None and turn_done(succ()))
         f2 = succ()
+        run["turn_completed"] = bool(done)
         run["seconds_to_turn_end"] = round(time.time() - t_k)
         if f2:
             run["successor"] = f2.stem
             run["successor_first_prompt"] = first_prompt(f2)[:200]
             run["successor_metrics"] = metrics(f2)
             run["goal_named"] = GOAL.lower() in (run["successor_metrics"]["final"] or "").lower()
-            wait(8)
+        if done:  # never type into an unfinished turn: a pending dialog takes the keystrokes (S4 approved a plan this way)
+            say("/exit"); wait(15)
+        if f2:  # read receipts only after /exit: the post-/clear buffer is flushed at turn.complete / session.end (S5)
             run["receipts"] = receipts(f2.stem)
             run["frontier_basis"] = next((r["frontier"].get("basis") for r in run["receipts"]
                                           if r["ev"] == "frontier" and r.get("frontier")), None)
-        say("/exit"); wait(15)
+            run["successor_decision"] = [r for r in run["receipts"] if r["ev"] == "successor" and r.get("marker")]
     finally:
         try:
             if p.isalive():

@@ -70,7 +70,22 @@ Smoke S3 (predecessor 6988bac6, successor 1a16ffc5): start receipt `releaseId 0.
 and **no receipt of any kind** for the successor conversation, in any receipt file; the successor transcript carries no capsule
 text. The fix is therefore UNPROVEN live, and HR-2 forbids leaving it active: `ccr_release.py rollback` -> active
 `0.1.0-265d3d55` (source e8d29ffb) at 16:51:16. Panes launched 16:42-16:51 keep 39151f03 until they restart.
-**New open defect, not caused by the fix:** the plugin is silent after /clear in S2 (OLD release, canary 0) and S3 (new release),
-but writes the successor decision after /clear in S1 and in the real pane fd4ffce8 (both old release, canary on). The
-post-/clear lifecycle (which hook fires first in the new conversation, and whether `receipt`/`flush` still run) is the next
-thing to isolate. Until it is, no successor-frontier smoke can be read, whichever gate logic is live.
+~~New open defect: plugin silent after /clear~~ **RETRACTED (harness artifact, not a CCR defect).** Diagnosed with
+`--debug-file` (S4): after /clear the plugin received `prompt.attachment` x19 (so the successor decision ran and its receipts were
+buffered), but no `turn.complete` or `session.end`, so the buffer was never flushed. Cause: the probe ran `--permission-mode plan`.
+The successor called `ExitPlanMode` at 17:46:11, and the dialog held the turn open. At the 360 s timeout the driver typed
+`/exit`+Enter **into that dialog, approving the plan** (17:51:44; the model then ran `rollover.py resume`, exit 4, nothing claimed),
+and the pane was terminated 15 s later, before any flush. S1 was fast only because its successor never called ExitPlanMode.
+Harness fixed: no plan mode (`auto` + `--disallowedTools Write Edit NotebookEdit`), `/exit` typed only after `end_turn`, receipts
+read after exit.
+
+## Clean A/B with the fixed harness (2026-11-02 18:55-18:58) -> fix RE-RELEASED and KEPT LIVE
+| run | release | after /clear -> /kresume | frontier receipt |
+|---|---|---|---|
+| S5 | 0.1.0-265d3d55 (old, e8d29ffb) | `successor marker:true mode:"off" canary:"enforce"` | **none** |
+| S6 | 0.1.0-39151f03 (fix, 83069706) | `successor marker:true mode:"enforce" canary:"enforce"` | **`basis:"capsule"`**, sha 60b039fb..., 33 bytes |
+Both turns completed (19 s / 31 s), successor call-1 73,734 / 73,660, 2 calls each, 0 rereads.
+**HR-2: green smoke from the same commit -> 0.1.0-39151f03 stays active** (released 18:57:05; the rollback path was exercised
+for real at 16:51). **CR-11 / CR-14: PASS (MEASURED, n=1 per arm, clean A/B).** CR-15: bootstrap measured (~73.7K call-1, 2 calls,
+~148K processed per /kresume turn); time-to-first-correct-action still needs a real /kclear-sealed capsule (the test capsule is
+REFUSED by design, so the successor correctly stops). CR-16, CR-29: unblocked, not yet run.
