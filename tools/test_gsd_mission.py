@@ -1160,6 +1160,44 @@ def main() -> int:
     check("V-MC-ADOPT-LATE-ACK-HEARTBEATS", gm.load("m-ad")["iterations"] == before_iter
           and gm.load("m-ad")["state"] == gm.RUNNING)
 
+    # S9-8 (canary m-514bd00df395, 2026-11-01): a worker that finishes its turn before the next sweep pass
+    # is listed `done`. It RAN; it is adopted and its turn end judged, never waited out and relaunched
+    # (LAUNCH_RETRY, one wasted boot per retry). A `failed` row still counts as a failed launch.
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-ff", now=NOW)
+    gm.transition("m-ff", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.LAUNCHING, epoch=1,
+                  pending={"kind": "worker_start", "bg_id": "ff0ff0ff", "deadline": NOW + 300})
+    done_row = [{"id": "ff0ff0ff", "sessionId": "ff0ff0ff-1111-2222", "kind": "background", "state": "done"}]
+    failed_row = [{**done_row[0], "state": "failed"}]
+    ff = gm.load("m-ff")
+    check("V-MC-ADOPT-FAST-FINISHER-IN-DEADLINE", gm.plan_next(ff, NOW + 10, done_row, gone)["action"] == "adopt",
+          str(gm.plan_next(ff, NOW + 10, done_row, gone)))
+    check("V-MC-ADOPT-FAST-FINISHER-OVERDUE", gm.plan_next(ff, NOW + 400, done_row, gone)["action"] == "adopt",
+          str(gm.plan_next(ff, NOW + 400, done_row, gone)))
+    check("V-MC-FAILED-LAUNCH-STILL-REPLACES", gm.plan_next(ff, NOW + 400, failed_row, gone)["action"] == "replace",
+          str(gm.plan_next(ff, NOW + 400, failed_row, gone)))
+    cont = {**ff, "pending": {**ff["pending"], "kind": "turn_continuation"}}
+    check("V-MC-CONTINUATION-DONE-ROW-NOT-ADOPTED",
+          gm.plan_next(cont, NOW + 10, done_row, gone)["action"] != "adopt",
+          "a --resume continuation reuses the old id: its `done` row is the previous turn")
+    os.environ["CPP_ADOPT_FINISHED"] = "off"
+    try:
+        check("V-MC-ADOPT-FINISHED-KILL-SWITCH",
+              gm.plan_next(ff, NOW + 400, done_row, gone)["action"] == "replace")
+    finally:
+        os.environ.pop("CPP_ADOPT_FINISHED", None)
+    n_l = len(launches)
+    gm.supervise(now=NOW + 10, sessions=done_row, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    ff = gm.load("m-ff")
+    check("V-MC-ADOPT-FAST-FINISHER-RUNNING", ff["state"] == gm.RUNNING and ff["epoch"] == 1
+          and ff["owner"]["session_id"] == "ff0ff0ff-1111-2222" and ff["iterations"] == 1
+          and ff.get("failed_launches", 0) == 0 and len(launches) == n_l, json.dumps(
+              {k: ff.get(k) for k in ("state", "epoch", "iterations", "failed_launches")}))
+    nxt = gm.plan_next(ff, NOW + 20, done_row, gone)
+    check("V-MC-ADOPT-FAST-FINISHER-TURN-JUDGED", nxt["action"] == "replace" and "owner dead" in nxt["reason"],
+          str(nxt))
+
     # 2026-09-28 (m-66ebaaa0324e): the launched worker is listed but already blocked before its
     # first turn. The FIRST pass that sees it parks the mission BLOCKED with the host's reason.
     gm.create(TMP, "/gsd-autonomous", mission_id="m-adblk", now=NOW)

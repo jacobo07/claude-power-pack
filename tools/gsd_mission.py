@@ -685,6 +685,15 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             # still returning); the host listing THAT id -- the one it printed for this
             # launch -- is independent evidence the worker exists. Never "a new session".
             return {"action": "adopt", "reason": f"host lists launched worker {pending.get('bg_id')}"}
+        if (row is not None and row.get("state") == "done" and pending.get("kind") == "worker_start"
+                and adopt_finished_on()):
+            # S9-8 (canary m-514bd00df395, 2026-11-01): a worker that ends its turn before the next sweep pass is
+            # listed `done`. It RAN, so it is adopted and the next pass judges its turn end (owner DEAD). Until then
+            # the sweep waited out the ack deadline and relaunched (LAUNCH_RETRY): one wasted boot per retry.
+            # `failed`/`stopped`/`exited` keep counting as a failed launch (a boot crash must reach MAX_REPLACEMENTS).
+            # FRESH launches only: a same-session continuation (`--resume`) reuses the old session id as bg_id, so a
+            # `done` row there is the PREVIOUS turn, not evidence this launch ran (5 test_gsd_epoch reds, 2026-11-02).
+            return {"action": "adopt", "reason": f"host lists launched worker {pending.get('bg_id')} done: it ran"}
         if now <= deadline:
             return {"action": "await", "reason": f"start ack due in {int(deadline - now)} s"}
         if sessions is None:
@@ -2685,6 +2694,12 @@ def resource_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive,
     if idle_live:
         out = _stop_for_wait(out, now, sessions, pid_alive, stop_runner)
     return out
+
+
+def adopt_finished_on() -> bool:
+    """Kill switch CPP_ADOPT_FINISHED=off: the pre-S9-8 behaviour (a launch row already `done` is waited out
+    and relaunched)."""
+    return (os.environ.get("CPP_ADOPT_FINISHED") or "").strip().lower() not in ("0", "off", "false")
 
 
 def wait_park_live_on() -> bool:
