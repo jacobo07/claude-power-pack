@@ -9,6 +9,26 @@
    "predecessor": "723258b8-0493-4414-813f-a33c685f3299",
    "token": "RESUMED-K1-ebabaa",
    "aborted": "trust dialog shown; not typing into it"
+  },
+  {
+   "label": "K2",
+   "root": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-cr29-a9rwlly5",
+   "state_dir": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-rollover-lhmbc_cr",
+   "predecessor": "1ef71a96-3168-41bb-b9c9-6ecaa16eefdd",
+   "token": "RESUMED-K2-328c74",
+   "aborted": "trust dialog shown; not typing into it",
+   "screen_tail": ""
+  },
+  {
+   "label": "K3",
+   "root": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-cr29-jks9iq71",
+   "state_dir": "C:\\Users\\User\\AppData\\Local\\Temp\\gpf-rollover-j8sk4_5j",
+   "predecessor": "e7feb674-07ac-4eb6-b3af-6b4c66ce09e9",
+   "token": "RESUMED-K3-a019bb",
+   "aborted": "trust dialog shown; not typing into it",
+   "screen_tail": "",
+   "screen_raw_len": 1216,
+   "screen_raw_at_trust": "\"ject,\\x1b[125Gor\\x1b[128Gwork\\x1b[133Gfrom\\x1b[138Gyour\\x1b[143Gteam).\\x1b[150GIf\\x1b[153Gnot,\\x1b[158Gtake\\x1b[163Ga\\x1b[165Gmoment\\x1b[172Gto\\x1b[175Greview\\x1b[182Gwhat's\\x1b[189Gin\\x1b[192Gthis\\r\\n\\x1b[2Gfolder\\x1b[9Gfirst.\\r\\n\\r\\n\\x1b[2GClaude\\x1b[9GCode'll\\x1b[17Gbe\\x1b[20Gable\\x1b[25Gto\\x1b[28Gread,\\x1b[34Gedit,\\x1b[40Gand\\x1b[44Gexecute\\x1b[52Gfiles\\x1b[58Ghere.\\r\\n\\r\\n\\x1b[2G\\x1b[38;2;153;153;153mSecurity\\x1b[11Gguide\\x1b[39m\\r\\n\\r\\n\\x1b[2G\\x1b[38;2;177;185;249m\u276f\\x1b[4GNo,\\x1b[8Gexit\\x1b[39m\\r\\n\\x1b[4GYes,\\x1b[9GI\\x1b[11Gtrust\\x1b[17Gthis\\x1b[22Gfolder\\r\\n\\r\\n\\x1b[2G\\x1b[38;2;153;153;153mEnter\\x1b[8Gto\\x1b[11Gconfirm\\x1b[19G\u00b7\\x1b[21GEsc\\x1b[25Gto\\x1b[28Gcancel\\x1b[39m\\r\\n\\x1b[1C\\x1b[4A\\x1b[?2026l\\x1b[>0q\\x1b[?u\\x1b]7501;?\\x07\\x1b[c\""
   }
  ]
 }

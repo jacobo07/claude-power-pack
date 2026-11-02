@@ -12,11 +12,13 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
 
 ## In flight
 - CR-29/CR-15 probe `vault/programs/global-prefix-floor/gpf_cr29_kclear.py` (real /kclear -> /clear -> /kresume in a temp repo
-  under %TEMP%). K1 ABORTED SAFELY: the trust dialog appeared. Trust is NOT inherited from the trusted `C:/Users/User/AppData/Local/Temp`
-  entry, and the driver correctly refused to type into the dialog.
-  Fix before K2: in the driver, after creating the temp root, set `~/.claude.json` `projects["<root with / separators>"].hasTrustDialogAccepted=true`
-  (back up first, write a temp file + os.replace; read HR-001 in `vault/hard_rules/HARD_RULES.md` first: agent-owned global config).
-  Then run it in the background: `python vault/programs/global-prefix-floor/gpf_cr29_kclear.py vault/programs/global-prefix-floor/gpf-cr29.json K2`.
+  under %TEMP%). K1/K2/K3 ABORTED SAFELY at the trust dialog. K3 raw screen PROVES it is the real dialog ("Yes, I trust this
+  folder", default "No, exit"); trust is not inherited from the trusted `%TEMP%` entry.
+  The agent-side pre-trust write was DENIED by the auto-mode classifier (Self-Modification) = HR-001 class; not worked around.
+  Shipped instead: driver reuses a fixed, marker-gated root `%TEMP%/gpf-cr29-probe` when it exists (else mkdtemp, aborts safely),
+  and `gpf_cr29_owner_trust.py` = the Owner-run half (backup, merge one key, read back).
+  HUMAN GATE: Owner runs `! python vault/programs/global-prefix-floor/gpf_cr29_owner_trust.py`; then run K4:
+  `python vault/programs/global-prefix-floor/gpf_cr29_kclear.py vault/programs/global-prefix-floor/gpf-cr29.json K4`.
 
 ## Next
 1. Apply the trust fix, run K2, then record CR-29 (fresh-agent recovery: done.txt == token) and CR-15 (seconds/tokens to first correct action) in LAPTOP_RESULTS.md; commit.

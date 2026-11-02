@@ -28,9 +28,32 @@ def git(cwd, *a):
                           cwd=cwd, capture_output=True, text=True, timeout=60)
 
 
+FIXED = Path(os.environ["TEMP"]) / "gpf-cr29-probe"   # trusted ONCE by the Owner (HR-001: the agent may not write trust)
+MARKER = ".gpf-cr29-probe"
+
+
+def probe_root():
+    """A fresh mkdtemp root always shows the trust dialog (K2/K3 screen evidence) and the auto-mode classifier refuses an
+    agent write of hasTrustDialogAccepted (HR-001). So: if the Owner-trusted FIXED root exists AND carries MARKER, reset
+    its contents (marker-gated: never wipe a directory this probe did not create) and reuse it; else fall back to mkdtemp,
+    which will abort safely at the dialog."""
+    import shutil, stat
+    if not (FIXED / MARKER).is_file():
+        return Path(tempfile.mkdtemp(prefix="gpf-cr29-", dir=os.environ["TEMP"])), False
+    def _rw(fn, path, _exc):  # .git objects are read-only on Windows
+        os.chmod(path, stat.S_IWRITE); fn(path)
+    for x in FIXED.iterdir():
+        if x.name == MARKER:
+            continue
+        shutil.rmtree(x, onerror=_rw) if x.is_dir() else x.unlink()
+    return FIXED, True
+
+
 def main():
     from winpty import PtyProcess
-    root = Path(tempfile.mkdtemp(prefix="gpf-cr29-", dir=os.environ["TEMP"]))
+    root, fixed = probe_root()
+    mem = Path.home() / ".claude" / "projects" / str(root).replace(":", "-").replace("\\", "-").replace("/", "-") / "memory"
+    mem_pre = sorted(x.name for x in mem.iterdir()) if mem.is_dir() else []  # a reused root can carry a prior run's handoff
     (root / "RESUMPTION_FILE.md").write_text(
         "# RESUMPTION_FILE -- GPF CR-29 probe\n\n"
         "Goal: prove a fresh successor resumes from the compiled capsule alone.\n\n"
@@ -41,7 +64,8 @@ def main():
     state = Path(tempfile.mkdtemp(prefix="gpf-rollover-", dir=os.environ["TEMP"]))
     env = dict(os.environ); env["CPP_ROLLOVER_STATE_DIR"] = str(state)
     s1 = str(uuid.uuid4())
-    run = {"label": LABEL, "root": str(root), "state_dir": str(state), "predecessor": s1, "token": TOKEN}
+    run = {"label": LABEL, "root": str(root), "fixed_root": fixed, "memory_preexisting": mem_pre, "state_dir": str(state),
+           "predecessor": s1, "token": TOKEN}
     argv = ["claude", "--model", "haiku", "--session-id", s1, "--permission-mode", "auto",
             "--disallowedTools", "Edit", "NotebookEdit"]
     p = PtyProcess.spawn(argv, cwd=str(root), env=env, dimensions=(50, 200))
@@ -73,7 +97,14 @@ def main():
     try:
         wait(25)
         if "trust" in "".join(screen)[-3000:].lower():
+            import re
+            plain = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\x07]*\x07", "", "".join(screen))
             run["aborted"] = "trust dialog shown; not typing into it"
+            run["screen_tail"] = " ".join(plain.split())[-1200:]  # evidence: was it really the dialog?
+            raw = "".join(screen)
+            i = raw.lower().rfind("trust")
+            run["screen_raw_len"] = len(raw)
+            run["screen_raw_at_trust"] = repr(raw[max(0, i - 400):i + 400])
             return finish(run, p)
         t = iso(); say("Read RESUMPTION_FILE.md and reply with its goal in one line. Do not do the work yet.")
         run["turn1_done"] = wait(TURN_S, lambda: f1() is not None and assistant_after(f1(), t))
