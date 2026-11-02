@@ -89,3 +89,12 @@ Both turns completed (19 s / 31 s), successor call-1 73,734 / 73,660, 2 calls ea
 for real at 16:51). **CR-11 / CR-14: PASS (MEASURED, n=1 per arm, clean A/B).** CR-15: bootstrap measured (~73.7K call-1, 2 calls,
 ~148K processed per /kresume turn); time-to-first-correct-action still needs a real /kclear-sealed capsule (the test capsule is
 REFUSED by design, so the successor correctly stops). CR-16, CR-29: unblocked, not yet run.
+
+## CR-29 / CR-15 real /kclear probe (2026-11-02, laptop, `gpf_cr29_kclear.py`, receipts `gpf-cr29.json`)
+K1, K2, K3 all **ABORTED SAFELY at the folder-trust dialog** before any prompt was typed. K3 recorded the raw screen: "Yes, I
+trust this folder" with default "No, exit", so the dialog is real, not a false match. Trust is not inherited from the trusted
+`%TEMP%` entry. The agent-side fix (merge `hasTrustDialogAccepted` into `~/.claude.json`) was **DENIED by the auto-mode
+classifier (Self-Modification)**. That is the HR-001 class, so it was not worked around. Shipped in 90eb6263: the driver reuses a fixed,
+marker-gated root `%TEMP%/gpf-cr29-probe` once trusted, and `gpf_cr29_owner_trust.py` is the Owner-run half.
+**CR-29, CR-15 (time-to-first-correct-action): UNKNOWN, Owner gate.** `done_gate.py` now reads CR-11/14/15/29 from these
+receipt files (latest measured run decides; aborted runs stay UNKNOWN), drilled at both poles (`tools/test_done_gate.py` 19/19).

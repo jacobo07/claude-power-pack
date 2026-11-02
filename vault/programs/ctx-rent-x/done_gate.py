@@ -9,6 +9,7 @@ import argparse, json, os, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
+GPF = os.path.abspath(os.path.join(HERE, "..", "global-prefix-floor"))  # laptop successor / CR-29 smoke receipts
 P, F, U = "PASS", "FAIL", "UNKNOWN"
 
 
@@ -34,7 +35,7 @@ def delta_ok(summary):
     return (P if d > 0 else F), "call-1 delta_mean=%d n=%d/%d spread=%.4f" % (d, len(c), len(t), spread)
 
 
-def conditions(root, repo):
+def conditions(root, repo, gpf=GPF):
     est = load(root, "estate-laptop-w0.json")
     gex = load(root, "estate-gex44-w0.json")
     car = load(root, "carriage-A.json")
@@ -70,12 +71,34 @@ def conditions(root, repo):
     put("CR-08", F if miss else P, "missing owners %s" % miss if miss else "all %d plan-section-1 owners present; new tools are ctx_rent/ctx_wait/floor_diet extensions" % len(owners))
     put("CR-09", U, "Safe-to-Forget consumer (Phase 5) not run")
     put("CR-10", U, "Phase 5 not run")
-    put("CR-11", U, "capsule frontier smoke (Phase 4) not run")
+    # CR-11/14/15/29: read from the GPF laptop smoke receipts (per-run files, latest measured run decides; an aborted run
+    # measured nothing and stays UNKNOWN with its reason).
+    succ_runs = [r for r in ((load(gpf, "gpf-l1-successor.json") or {}).get("runs") or []) if r.get("successor")]
+    last = succ_runs[-1] if succ_runs else None
+    if not last:
+        put("CR-11", U, "no successor smoke run in gpf-l1-successor.json")
+        put("CR-14", U, "no successor smoke run in gpf-l1-successor.json")
+    else:
+        cap = last.get("frontier_basis") == "capsule"
+        put("CR-11", P if cap else F, "latest successor run %s frontier_basis=%s (%d successor runs)" % (last.get("label"), last.get("frontier_basis"), len(succ_runs)))
+        ok14 = cap and "/kresume" in (last.get("successor_first_prompt") or "") and last.get("turn_completed") is True
+        put("CR-14", P if ok14 else F, "latest %s: first prompt /kresume=%s turn_completed=%s basis=%s" % (
+            last.get("label"), "/kresume" in (last.get("successor_first_prompt") or ""), last.get("turn_completed"), last.get("frontier_basis")))
+    k_runs = (load(gpf, "gpf-cr29.json") or {}).get("runs") or []
+    measured = [r for r in k_runs if not r.get("aborted")]
+    if not measured:
+        why = "no measured /kclear->/clear->/kresume run (%d aborted, last: %s)" % (len(k_runs), k_runs[-1].get("aborted") if k_runs else "none run")
+        put("CR-15", U, "time-to-first-correct-action: " + why)
+        put("CR-29", U, why)
+    else:
+        k = measured[-1]
+        hit = k.get("first_correct_action") is True and (k.get("done_txt") or "").strip() == k.get("token")
+        secs = k.get("seconds_to_first_correct_action")
+        put("CR-15", P if hit and secs is not None else F, "%s: %ss to first correct action, successor %s" % (k.get("label"), secs, (k.get("successor_metrics") or {}).get("call1")))
+        put("CR-29", P if hit else F, "%s: done.txt==token %s, capsule verdict %s" % (k.get("label"), hit, k.get("capsule_verdict")))
     r = delta_ok((diet or {}).get("rows", {}).get("rules_to_skills"))
     put("CR-12", r[0] if r else U, r[1] if r else "no floor-diet rows")
     put("CR-13", U, "Phase 5 externalisation not run")
-    put("CR-14", U, "Phase 4 successor smoke not run")
-    put("CR-15", U, "fresh-start cost not measured")
     put("CR-16", U, "gsd_epoch breakeven advisory exists but its inputs (successor floor, bootstrap, page-ins) are unmeasured")
     # CR-17..19: derived from the raw per-run file (never from a self-reported summary).
     # Valid run = finished AND its receipt matches its arm. Pairs = min(valid S, valid E).
@@ -130,7 +153,6 @@ def conditions(root, repo):
     put("CR-27", P if rows >= 3 else U, "%d ratchet rows in baseline_ledger (main default, source_commit, closeout/epoch rule)" % rows)
     live = "LIVE" in lap and "0.1.0-265d3d55" in lap and "PASS" in lap
     put("CR-28", P if live else U, "main enforce default-on LIVE release 0.1.0-265d3d55 with start-receipt smoke + rollback verified (L8)" if live else "L8 receipts absent")
-    put("CR-29", U, "fresh-agent recovery not exercised as a /clear->/kresume successor smoke (Phase 4)")
     put("CR-30", U, "run plan section 8 commands; not aggregated here")
     try:
         dirty = subprocess.run(["git", "-C", repo, "status", "--short"], capture_output=True, text=True, timeout=30).stdout.strip()
@@ -147,9 +169,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=HERE)
     ap.add_argument("--repo", default=REPO)
+    ap.add_argument("--gpf-root", default=GPF)
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
-    res = conditions(a.root, a.repo)
+    res = conditions(a.root, a.repo, a.gpf_root)
     assert len(res) == 32, len(res)
     for k in sorted(res):
         print("%s %-7s %s" % (k, res[k][0], res[k][1]))
