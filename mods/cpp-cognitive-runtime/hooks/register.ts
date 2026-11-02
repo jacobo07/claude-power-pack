@@ -7,7 +7,7 @@ import {
 } from './policy'
 import { generationVerdict, parseActive } from './policy'
 import { describeReceipt, textBytes, type DescribeSeen } from './policy'
-import { decideArmBAttachment, decideSuccessorAttachment, frontierText, mdsSha, reachSummary, parseFrontierPointer, isFirstPromptCandidate, isKresumeSuccessor, shellFailed, successorCanaryMode, successorProjectMode } from './policy'
+import { decideArmBAttachment, decideSuccessorAttachment, frontierText, mdsSha, reachSummary, parseFrontierPointer, isFirstPromptCandidate, isKresumeSuccessor, shellFailed, successorMode, successorProjectMode } from './policy'
 
 // Tool description census (observe only): what tool.describe saw, and which tools a receipt already named.
 const describeSeen: DescribeSeen = new Map()
@@ -40,6 +40,8 @@ let agentListing = ''
 let mcpListing = ''
 // Main-lean canary (v4 A7): set once at session start from CCR_MAIN_CANARY; 'off' until then, so stock text; default-on, CCR_MAIN_CANARY=0 opts out.
 let canary: Mode = 'off'
+// The canary session.start decided; /clear restores it (a successor under the main canary must not leave the pane 'off').
+let launchCanary: Mode = 'off'
 // Floor-diet canary on /kresume successors (Tranche A4): decided once, at the first main attachment, from the first prompt.
 let successor = false
 let successorDecision: Promise<void> | undefined
@@ -121,7 +123,7 @@ const decideSuccessor = async ($: any) => {
   const unit = await loadUnit($)
   let kill: string | undefined
   try { kill = await $.env.get('CCR_SUCCESSOR_CANARY') } catch { kill = undefined } // no env access: canary stays as launched
-  const mode: Mode = canary === 'off' ? successorCanaryMode(firstPrompt, kill, sessionInteractive, !!unit, modes, compatible) : 'off'
+  const mode: Mode = successorMode(canary, firstPrompt, kill, sessionInteractive, !!unit, modes, compatible)
   if (mode !== 'off') { canary = mode; successor = true }
   let gen: string | null = null
   try { gen = await policyGen(effectiveModes(modes, compatible, !!unit), kernel, canary) } catch { gen = null } // no digest: the receipt says so
@@ -211,6 +213,7 @@ export const register: Register = on => {
     let canaryEnv: string | undefined
     try { canaryEnv = await $.env.get('CCR_MAIN_CANARY') } catch { canaryEnv = '0' } // no env access: fail closed, no canary
     canary = mainCanaryMode(canaryEnv, e.isInteractive === true, !!unit, modes, compatible)
+    launchCanary = canary
     sessionInteractive = e.isInteractive === true
     let gen: string | null = null
     try { gen = await policyGen(eff, kernel, canary) } catch { gen = null } // no digest available: the receipt says so
@@ -484,8 +487,9 @@ export const register: Register = on => {
     receipt({ ev: 'end' })
     await flush($)
     // /clear ends the session but keeps this process, and no session.start follows (receipts ff2c1af0, 2026-10-24): the next
-    // conversation decides its own first prompt and successor. A successor canary only ever replaced a launch canary of 'off'.
-    if (successor) { successor = false; canary = 'off' }
+    // conversation decides its own first prompt and successor. Restore the launch canary: under the default-on main canary a
+    // successor keeps 'enforce', and forcing 'off' here would drop the main canary for the rest of the pane.
+    if (successor) { successor = false; canary = launchCanary }
     firstPrompt = ''
     successorFrontier = null
     armB = false

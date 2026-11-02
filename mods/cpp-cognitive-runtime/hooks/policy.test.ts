@@ -2,7 +2,7 @@ import { expect, test } from 'claude-code/testing'
 import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
-  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, mainCanaryMode, DEFAULT_MODES,
+  subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, mainCanaryMode, successorMode, DEFAULT_MODES,
 } from './policy'
 // isPlannerType (dc4bf2b4) is not in the live release 0.1.0-b15bfc3d that 35776051 synced register.ts to; its test lives
 // with that branch. Importing it here made this whole file fail to load, so no test in it ran.
@@ -279,4 +279,18 @@ test('main-lean canary: default-on on an interactive, unit-less session; CCR_MAI
 test('main-lean canary: an incompatible build only observes, and the main kill switch wins', () => {
   expect(mainCanaryMode('1', true, false, { ...DEFAULT_MODES }, false)).toBe('shadow')
   expect(mainCanaryMode('1', true, false, { ...DEFAULT_MODES, main: 'off' }, true)).toBe('off')
+})
+
+// GPF-L1 2026-11-02: with the main canary default-on (L8), the old gate `canary === 'off' ? successor : 'off'` never let a
+// /kresume successor activate, so resolveFrontier never ran (laptop smoke S1, real pane fd4ffce8: marker:true mode:"off").
+test('a /kresume successor activates under the default-on main canary and keeps the main mode; no marker stays off', () => {
+  const m = { ...DEFAULT_MODES }
+  const kresume = '<command-name>/kresume</command-name>'
+  expect(successorMode('enforce', kresume, undefined, true, false, m, true)).toBe('enforce')
+  expect(successorMode('shadow', kresume, undefined, true, false, m, false)).toBe('shadow')
+  expect(successorMode('off', kresume, undefined, true, false, m, true)).toBe('enforce')
+  expect(successorMode('enforce', 'reply OK', undefined, true, false, m, true)).toBe('off')
+  expect(successorMode('enforce', kresume, '0', true, false, m, true)).toBe('off')
+  expect(successorMode('enforce', kresume, undefined, true, true, m, true)).toBe('off')
+  expect(successorMode('enforce', kresume, undefined, false, false, m, true)).toBe('off')
 })

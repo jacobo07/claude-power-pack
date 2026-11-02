@@ -619,6 +619,14 @@ export function successorCanaryMode(prompt: string, kill: string | undefined, in
   return compatible ? 'enforce' : 'shadow'
 }
 
+// The successor decision against the session's launch (main) canary. With no launch canary it is the successor canary, as
+// before. With the main canary on (default since L8) a /kresume successor still activates -- so its frontier is resolved --
+// and keeps the main canary's mode; the old gate returned 'off' there, which disabled the frontier path (GPF-L1 2026-11-02).
+export function successorMode(launch: Mode, prompt: string, kill: string | undefined, interactive: boolean, hasUnit: boolean, modes: Modes, compatible: boolean): Mode {
+  const s = successorCanaryMode(prompt, kill, interactive, hasUnit, modes, compatible)
+  return launch === 'off' || s === 'off' ? s : launch
+}
+
 // Resumed-task frontier (Tramo A2 Phase 2). `tools/rollover.py seal` writes rollover/latest/<repoKey>.json
 // {capsule, sha256, sealed_at (epoch s)}. A successor trusts it only when it is fresh, parses, and the capsule's bytes hash to
 // the sealed sha256. Anything else is UNKNOWN (null) and the rule files stay.
