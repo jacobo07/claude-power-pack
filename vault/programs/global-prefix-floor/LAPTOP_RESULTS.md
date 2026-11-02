@@ -98,3 +98,18 @@ classifier (Self-Modification)**. That is the HR-001 class, so it was not worked
 marker-gated root `%TEMP%/gpf-cr29-probe` once trusted, and `gpf_cr29_owner_trust.py` is the Owner-run half.
 **CR-29, CR-15 (time-to-first-correct-action): UNKNOWN, Owner gate.** `done_gate.py` now reads CR-11/14/15/29 from these
 receipt files (latest measured run decides; aborted runs stay UNKNOWN), drilled at both poles (`tools/test_done_gate.py` 19/19).
+### K4 (Owner trusted `%TEMP%/gpf-cr29-probe`, 2026-11-02 19:27; run 18:28-18:31 UTC)
+Real /kclear -> /clear -> /kresume, fresh successor 7aa6cd09, no predecessor transcript. Ledger: `reset_gate SAFE_TO_FORGET`,
+`successor_claimed refresh=CONTINUE`, 3x `resume_failed wrong=[next]`, then `resume_certified`.
+**CR-29: PASS (MEASURED, n=1).** done.txt == `RESUMED-K4-6186fd` (the exact token). **CR-15: PASS (MEASURED, n=1).** 91 s
+from /kresume to the correct file. Successor call-1 62,073, 12 calls, 813,369 processed, 4 Reads, 1 reread, 0 page faults.
+Findings (open debt, n=1):
+- **Lossy capsule obligation.** The predecessor's handoff paraphrased the goal, and the sealed obligation reads "...with the
+  RESUMED-K4 token": it dropped the `-6186fd` suffix and added an "Owner go-ahead" the goal file never asked for. The certify
+  exam keys `next` on that paraphrase, so the successor failed it 3 times. It recovered only because the capsule also points
+  at the goal file, which it read and followed. The goal pointer did the recovery; the obligation text was a hazard.
+- **Frontier basis `unreadable`** on a real /kclear capsule, against `capsule` for the synthetic S6 capsule. CR-11 is PASS
+  only on the synthetic path, and the real path needs its own investigation (CCR `register.ts` frontier reader vs the
+  /kclear capsule schema).
+- **Instrument fixed:** the driver read the verdict from `final[-300:]`, which had cut it to `_TO_FORGET`. It now reads
+  `ledger_facts()` from the isolated ledger. K4's ledger fields were backfilled from its own `state_dir` and labelled.

@@ -95,7 +95,8 @@ def conditions(root, repo, gpf=GPF):
         hit = k.get("first_correct_action") is True and (k.get("done_txt") or "").strip() == k.get("token")
         secs = k.get("seconds_to_first_correct_action")
         put("CR-15", P if hit and secs is not None else F, "%s: %ss to first correct action, successor %s" % (k.get("label"), secs, (k.get("successor_metrics") or {}).get("call1")))
-        put("CR-29", P if hit else F, "%s: done.txt==token %s, capsule verdict %s" % (k.get("label"), hit, k.get("capsule_verdict")))
+        put("CR-29", P if hit else F, "%s: done.txt==token %s, capsule verdict %s, failed certify attempts %s" % (
+            k.get("label"), hit, k.get("ledger_verdict") or k.get("capsule_verdict"), k.get("resume_failed")))
     r = delta_ok((diet or {}).get("rows", {}).get("rules_to_skills"))
     put("CR-12", r[0] if r else U, r[1] if r else "no floor-diet rows")
     put("CR-13", U, "Phase 5 externalisation not run")

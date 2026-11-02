@@ -144,6 +144,7 @@ def main():
             run["frontier"] = [r.get("frontier") for r in rec if r["ev"] == "frontier"]
             run["successor_decision"] = [r for r in rec if r["ev"] == "successor" and r.get("marker")]
         run["done_txt"] = done_txt.read_text(encoding="utf-8", errors="replace")[:80] if done_txt.is_file() else None
+        run.update(ledger_facts(state))  # K4: the screen-text verdict was truncated (final[-300:]); the ledger is the record
     finally:
         try:
             if p.isalive():
@@ -151,6 +152,21 @@ def main():
         except OSError as exc:
             run["terminate_error"] = f"{type(exc).__name__}: {exc}"[:160]
     return finish(run, None)
+
+
+def ledger_facts(state):
+    """Verdict and certify attempts from the isolated rollover ledger, never from truncated screen text."""
+    rows = []
+    for line in (Path(state) / "rollover-ledger.jsonl").read_text(encoding="utf-8").splitlines() if (Path(state) / "rollover-ledger.jsonl").is_file() else []:
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            continue
+    gate = [r.get("verdict") for r in rows if r.get("event") == "reset_gate"]
+    return {"ledger_verdict": gate[-1] if gate else None,
+            "resume_failed": sum(1 for r in rows if r.get("event") == "resume_failed"),
+            "resume_failed_wrong": sorted({w for r in rows if r.get("event") == "resume_failed" for w in r.get("wrong") or []}),
+            "resume_certified": any(r.get("event") == "resume_certified" for r in rows)}
 
 
 def finish(run, p):

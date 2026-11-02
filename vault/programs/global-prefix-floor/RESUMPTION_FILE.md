@@ -17,12 +17,13 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
   The agent-side pre-trust write was DENIED by the auto-mode classifier (Self-Modification) = HR-001 class; not worked around.
   Shipped instead: driver reuses a fixed, marker-gated root `%TEMP%/gpf-cr29-probe` when it exists (else mkdtemp, aborts safely),
   and `gpf_cr29_owner_trust.py` = the Owner-run half (backup, merge one key, read back).
-  HUMAN GATE: Owner runs `! python vault/programs/global-prefix-floor/gpf_cr29_owner_trust.py`; then run K4:
-  `python vault/programs/global-prefix-floor/gpf_cr29_kclear.py vault/programs/global-prefix-floor/gpf-cr29.json K4`.
+  K4 DONE (Owner ran gpf_cr29_owner_trust.py from an external PowerShell; `!` runs had no effect): CR-29 PASS, CR-15 PASS 91 s.
+  Rerun: `python vault/programs/global-prefix-floor/gpf_cr29_kclear.py vault/programs/global-prefix-floor/gpf-cr29.json K5`.
 
 ## Next
-1. Apply the trust fix, run K2, then record CR-29 (fresh-agent recovery: done.txt == token) and CR-15 (seconds/tokens to first correct action) in LAPTOP_RESULTS.md; commit.
-2. DONE c918dc17: done_gate reads CR-11/14/15/29 from receipts (CR-11/14 PASS; CR-15/29 UNKNOWN until K4). After K4, just re-run it.
+1. Open (n=1, LAPTOP_RESULTS K4): the capsule obligation is a lossy paraphrase (token suffix dropped, so 3 failed certifies), and the real-capsule
+   frontier basis is `unreadable` (CR-11 PASS holds only on the synthetic capsule). Both are CCR product fixes, not yet scoped.
+2. DONE: done_gate reads CR-11/14/15/29 from receipts; 24 pass / 1 fail (CR-31 dirty shared tree) / 7 unknown.
 3. Report to the Owner. Open debt: repo CLAUDE.md diet (blocked by another pane's uncommitted edit), l6 driver defects, CR-09/10/13 unbuilt, GEX44 mission BLOCKED (live ~/.claude apply on GEX44 is an Owner decision).
 
 ## Start
