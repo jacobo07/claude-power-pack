@@ -138,6 +138,48 @@ def main() -> int:
     check("V-PIVOT-KILL-SWITCH", (s.get("owner_hold") or {}).get("kind") == gm.CHECKPOINT_KIND
           and "pivot" not in (s.get("owner_hold") or {}), str(s.get("owner_hold")))
 
+    # S11 D1 -- incident 2026-11-03 (GEX44 m-f0b595fd509f epoch 13): the worker declared METHOD_PIVOT_REQUIRED at
+    # 23:31:40Z and exited; the host kept listing its job as a bare state:"blocked" (no waitingFor, no status), so
+    # owner_idle() was False, liveness() not DEAD, and checkpoint_gate returned before pivot_gate for ~6 h. The real
+    # host row shape and the real reason are replayed here.
+    S11 = ("OM-PR1 2/3: fn_80222480 98.9 (mwcc reg priority), in-scope routes falsified; "
+           "6 dev registry-attributable CXX")
+
+    def _blocked(mid: str, at: float, started_ms: float, waiting: str | None = None, stops: list | None = None) -> dict:
+        row = {"id": f"{mid}-w"[:8], "cwd": "/w", "kind": "background", "startedAt": started_ms,
+               "sessionId": f"{mid}-w", "name": f"{mid}-e13", "state": "blocked"}
+        if waiting:
+            row["waitingFor"] = waiting
+        return gm.checkpoint_gate(gm.load(mid), at, sessions=[row], pid_alive=gone,
+                                  stop_runner=lambda argv: (stops if stops is not None else []).append(argv))
+
+    started = (NOW - 3600) * 1000
+    _mission("m-blk", True)
+    gm.set_checkpoint("m-blk", "METHOD_PIVOT_REQUIRED", S11, residual="evidence/ascension/s11/residual.md", now=NOW)
+    stops: list = []
+    early = _blocked("m-blk", NOW + 60, started, stops=stops)
+    check("V-PIVOT-BLOCKED-GRACE", (early.get("owner_hold") or {}).get("kind") == gm.CHECKPOINT_KIND and not stops
+          and "pivot" not in (early.get("owner_hold") or {}), f"1 min after the checkpoint: stops={stops}")
+    late = _blocked("m-blk", NOW + gm.CHECKPOINT_BLOCKED_GRACE_S + 1, started, stops=stops)
+    check("V-PIVOT-BLOCKED-AFTER-CHECKPOINT", late.get("owner_hold") is None and late.get("pivot_streak") == 1
+          and len(stops) == 1, f"hold={late.get('owner_hold')} streak={late.get('pivot_streak')} stops={stops}")
+    check("V-PIVOT-S11-REASON-PIVOTS", any("AUTO METHOD PIVOT 1/" in d and "residual.md" in d
+                                           for d in (late.get("directives") or [])), str(late.get("directives"))[-200:])
+
+    _mission("m-perm", True)
+    gm.set_checkpoint("m-perm", "METHOD_PIVOT_REQUIRED", S11, residual="r.md", now=NOW)
+    pstops: list = []
+    p2 = _blocked("m-perm", NOW + 7200, started, waiting="permission: Bash(git push)", stops=pstops)
+    check("V-PIVOT-PERMISSION-PROMPT-STAYS", (p2.get("owner_hold") or {}).get("kind") == gm.CHECKPOINT_KIND
+          and not pstops, f"a waitingFor prompt is a human's, never stopped: stops={pstops}")
+
+    _mission("m-later", True)
+    gm.set_checkpoint("m-later", "METHOD_PIVOT_REQUIRED", S11, residual="r.md", now=NOW)
+    lstops: list = []
+    l2 = _blocked("m-later", NOW + 7200, (NOW + 30) * 1000, stops=lstops)
+    check("V-PIVOT-BLOCKED-LATER-JOB-STAYS", (l2.get("owner_hold") or {}).get("kind") == gm.CHECKPOINT_KIND
+          and not lstops, f"a job started after the checkpoint did not declare it: stops={lstops}")
+
     print(f"PIVOT_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

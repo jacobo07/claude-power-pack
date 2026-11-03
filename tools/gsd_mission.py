@@ -2799,8 +2799,33 @@ def checkpoint_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_aliv
     if liveness(rec.get("owner"), sessions, pid_alive)[0] == DEAD:
         return pivot_gate(rec, now, sessions, pid_alive)
     if not owner_idle(rec.get("owner"), sessions):
-        return rec
+        if not _blocked_after_checkpoint(rec, hold, sessions, now):
+            return rec
+        sid = (rec.get("owner") or {}).get("session_id")
+        lr.ledger_append(rec["mission_id"], "checkpoint_owner_blocked", mission_id=rec["mission_id"], worker=sid,
+                         needs=host_job_needs(sid), checkpoint=hold.get("checkpoint"),
+                         age_s=int(now - float(hold.get("set_at") or now)))
     return pivot_gate(_stop_for_wait(rec, now, sessions, pid_alive, stop_runner), now, sessions, pid_alive)
+
+
+# S11 D1 -- measured 2026-11-03 (GEX44 m-f0b595fd509f): the worker declared METHOD_PIVOT_REQUIRED and exited, and the
+# host kept listing its job as a bare state:"blocked" (no waitingFor, no status) for ~6 h, so owner_idle() never held
+# and the checkpoint was never released. A job that DECLARED the checkpoint has closed its wave by contract; once the
+# grace has passed, a bare block is released like an idle turn (its `needs` is ledgered BEFORE the stop overwrites it).
+# A permission prompt (waitingFor) and a job started after the declaration are never touched.
+CHECKPOINT_BLOCKED_GRACE_S = 600
+
+
+def _blocked_after_checkpoint(rec: dict, hold: dict, sessions, now: float) -> bool:
+    row = _host_row((rec.get("owner") or {}).get("session_id"), sessions)
+    if not row or row.get("waitingFor") or row.get("state") != "blocked":
+        return False
+    try:
+        set_at = float(hold["set_at"])
+        started = float(row["startedAt"]) / 1000.0
+    except (KeyError, TypeError, ValueError):
+        return False   # unknown order is never read as "this job declared it"
+    return started <= set_at and now - set_at >= CHECKPOINT_BLOCKED_GRACE_S
 
 
 # --------------------------------------------------------------------------- S11 A2: opt-in Method-Pivot autonomy
