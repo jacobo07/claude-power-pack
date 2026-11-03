@@ -646,6 +646,122 @@
     "wrapper/verify_before_emit": {
       "class": "LIBRARY",
       "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    "reconstruction_factory/__init__": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/atoms": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/build_twin": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/causal_diff": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/cbr": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/certify": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/claims": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/core": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/elf": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/fingerprint": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/frontier": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/gatekit": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/genome": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/heldout": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/invalidation": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/judge": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/manifest": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/maturity": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/method_graph": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/nsm": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/om": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/om_skeleton": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/operators": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/permute": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/provenance": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/residual": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/search": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/search_plan": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
+    },
+    "reconstruction_factory/toolchain": {
+      "class": "LIBRARY",
+      "note": "Reconstruction Factory (general) engine module, 2026-11-03. Library for the consumers named in vault/specs/reconstruction-factory-general.md (ROADMAP WII-RF epics); exercised by python tools/test_reconstruction_factory.py (V-RF gates, drills). Parity row: vault/programs/reconstruction-factory/PARITY.md."
     }
   }
 }

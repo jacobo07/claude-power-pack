@@ -1,0 +1,485 @@
+{
+ "counts": {
+  "GAP": 6,
+  "GREEN": 20,
+  "NOT_PORTED": 3
+ },
+ "rows": [
+  {
+   "gates": [
+    "V-RF-JUDGE",
+    "V-RF-CERT-POSITIVE",
+    "V-RF-CERT-NEGATIVE",
+    "V-RF-HELDOUT-REFUSE"
+   ],
+   "id": "P01",
+   "mechanism": "exact certification (judge, certificate, independent vs corroborating evidence, UNDERDETERMINED_TOOLCHAIN, held-out refusal)",
+   "private_modules": [
+    "judge",
+    "certify",
+    "cert_cxx"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/judge.py",
+    "modules/reconstruction_factory/certify.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-FINGERPRINT",
+    "V-RF-CAUSAL-DIFF",
+    "V-RF-RESIDUAL"
+   ],
+   "id": "P02",
+   "mechanism": "fingerprint / causal diff / residual",
+   "private_modules": [
+    "fingerprint",
+    "causal_diff",
+    "residual",
+    "diagnostics"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/fingerprint.py",
+    "modules/reconstruction_factory/causal_diff.py",
+    "modules/reconstruction_factory/residual.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-SEARCH",
+    "V-RF-SEARCH-BUDGET",
+    "V-RF-PERMUTE",
+    "V-RF-PLAN"
+   ],
+   "id": "P03",
+   "mechanism": "search / search_plan / permute",
+   "private_modules": [
+    "search",
+    "search_c",
+    "search_ops",
+    "search_plan",
+    "permute",
+    "permute_cut"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/search.py",
+    "modules/reconstruction_factory/search_plan.py",
+    "modules/reconstruction_factory/permute.py",
+    "modules/reconstruction_factory/operators.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-BUILD-TWIN"
+   ],
+   "id": "P04",
+   "mechanism": "Build Twin + toolchain discrimination",
+   "private_modules": [
+    "build_twin",
+    "toolchain_sd"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/build_twin.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-OM-REGISTRY",
+    "V-RF-OM-PROPAGATE",
+    "V-RF-OM-THISCALL",
+    "V-RF-OM-VCALL"
+   ],
+   "id": "P05",
+   "mechanism": "Object Model (tables, vptr installs, vcalls, support rule, prototype propagation, this-call fields)",
+   "private_modules": [
+    "om"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/om.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-OM-DECLS",
+    "V-RF-OM-VCALL"
+   ],
+   "id": "P06",
+   "mechanism": "om_skeleton generator (class decls, method<->vslot)",
+   "private_modules": [
+    "om_skeleton"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/om_skeleton.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-METHOD-GRAPH"
+   ],
+   "id": "P07",
+   "mechanism": "Method Graph + supercompiled macros",
+   "private_modules": [],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/method_graph.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-GENOME"
+   ],
+   "id": "P08",
+   "mechanism": "Strategy Genome",
+   "private_modules": [],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/genome.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-NSM"
+   ],
+   "id": "P09",
+   "mechanism": "Negative Search Memory (sound refutations only)",
+   "private_modules": [],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/nsm.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-ATOMS"
+   ],
+   "id": "P10",
+   "mechanism": "atoms (typed predicates)",
+   "private_modules": [
+    "atoms",
+    "g3_atoms"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/atoms.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-CLAIMS"
+   ],
+   "id": "P11",
+   "mechanism": "claims (semantic-key store)",
+   "private_modules": [
+    "claims"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/claims.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-INVALIDATION"
+   ],
+   "id": "P12",
+   "mechanism": "invalidation (header delta, compiler ground truth)",
+   "private_modules": [
+    "invalidation"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/invalidation.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-MATURITY"
+   ],
+   "id": "P13",
+   "mechanism": "maturity contract (executable rubric, frozen hash)",
+   "private_modules": [
+    "maturity"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/maturity.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-CBR"
+   ],
+   "id": "P14",
+   "mechanism": "CBR birth + construction return",
+   "private_modules": [
+    "cbr"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/cbr.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-HELDOUT-REFUSE",
+    "V-RF-HELDOUT-RELEASE"
+   ],
+   "id": "P15",
+   "mechanism": "held-out law (seal, leak scan, one-way release bound to a solver freeze)",
+   "private_modules": [],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/heldout.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-FRONTIER"
+   ],
+   "id": "P16",
+   "mechanism": "frontier projection (a function counts once)",
+   "private_modules": [
+    "frontier"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/frontier.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-PROVENANCE"
+   ],
+   "id": "P17",
+   "mechanism": "provenance (language evidence from the object)",
+   "private_modules": [
+    "provenance_cxx"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/provenance.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [
+    "V-RF-CORPUS-DETERMINISTIC"
+   ],
+   "id": "P18",
+   "mechanism": "synthetic corpus + manifest (recon.toml) + toolchain adapter gcc-ppc",
+   "private_modules": [
+    "fixtures",
+    "toolchain"
+   ],
+   "proof": "python tools/test_reconstruction_factory.py",
+   "public_modules": [
+    "modules/reconstruction_factory/manifest.py",
+    "modules/reconstruction_factory/toolchain.py",
+    "modules/reconstruction_factory/elf.py",
+    "modules/reconstruction_factory/core.py",
+    "modules/reconstruction_factory/gatekit.py"
+   ],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [],
+   "id": "P19",
+   "mechanism": "public gate (derived-content scanner)",
+   "private_modules": [],
+   "proof": "python tools/recon_public_gate.py && python tools/test_recon_public_gate.py --drills",
+   "public_modules": [],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [],
+   "id": "P20",
+   "mechanism": "liveness: package declared, scanner lists no reconstruction_factory row",
+   "private_modules": [],
+   "proof": "python modules/liveness/reachability.py | grep -c reconstruction_factory   # 0",
+   "public_modules": [],
+   "reason": "",
+   "status": "GREEN"
+  },
+  {
+   "gates": [],
+   "id": "P21",
+   "mechanism": "m2c lift + objdiff adapters",
+   "private_modules": [
+    "m2c_proto"
+   ],
+   "proof": "",
+   "public_modules": [],
+   "reason": "external tools not installed on the build host; lift is fixture skeletons, so the adapters are unexercised",
+   "status": "GAP"
+  },
+  {
+   "gates": [],
+   "id": "P22",
+   "mechanism": "mwcc toolchain adapter",
+   "private_modules": [],
+   "proof": "",
+   "public_modules": [
+    "modules/reconstruction_factory/toolchain.py"
+   ],
+   "reason": "adapter exists but no compiler binary may ship or be required; unexercised by any test",
+   "status": "GAP"
+  },
+  {
+   "gates": [],
+   "id": "P23",
+   "mechanism": "public gate denylist of private names",
+   "private_modules": [],
+   "proof": "",
+   "public_modules": [],
+   "reason": "gate carries SHA-256 hashed built-in floor; the Owner's full private list must be supplied as hashes (--deny-file / RECON_GATE_DENY)",
+   "status": "GAP"
+  },
+  {
+   "gates": [],
+   "id": "P24",
+   "mechanism": "operator-reachable skeleton coverage",
+   "private_modules": [],
+   "proof": "",
+   "public_modules": [],
+   "reason": "22 corpus functions have no skeleton reachable by operators from a lifted form",
+   "status": "GAP"
+  },
+  {
+   "gates": [],
+   "id": "P25",
+   "mechanism": "Object Model: virtual-method return types",
+   "private_modules": [],
+   "proof": "",
+   "public_modules": [
+    "modules/reconstruction_factory/om_skeleton.py"
+   ],
+   "reason": "default to s32; no evidence channel for return type",
+   "status": "GAP"
+  },
+  {
+   "gates": [],
+   "id": "P26",
+   "mechanism": "Object Model: field layout",
+   "private_modules": [],
+   "proof": "",
+   "public_modules": [
+    "modules/reconstruction_factory/om.py"
+   ],
+   "reason": "field layout comes from this-call evidence only (no allocation-site or ctor-store evidence)",
+   "status": "GAP"
+  },
+  {
+   "gates": [],
+   "id": "N01",
+   "mechanism": "private wave scripts (g4_*, ascension, sweeps, shared-blocker waves)",
+   "private_modules": [
+    "asc_fresh",
+    "g4_ab",
+    "g4_atlas",
+    "g4_cohort",
+    "g4_domain",
+    "g4_fresh",
+    "g4_mine",
+    "g4_ops",
+    "g4_policy",
+    "g4_reach",
+    "g4_s6",
+    "g4_solv",
+    "microscope",
+    "motion_canary",
+    "pop_collapse",
+    "progress_cse",
+    "roots",
+    "science",
+    "shared_actuate",
+    "shared_blockers",
+    "shared_scope",
+    "shared_types",
+    "shared_types_sweep",
+    "tomography"
+   ],
+   "proof": "",
+   "public_modules": [],
+   "reason": "served one private wave; the spec lists them as out of scope",
+   "status": "NOT_PORTED"
+  },
+  {
+   "gates": [],
+   "id": "N02",
+   "mechanism": "private-target bridges (binary-format, donor, decompiler-import, title-specific tables; 21 modules, names withheld because the public gate denylist matches some)",
+   "private_modules": [],
+   "proof": "",
+   "public_modules": [],
+   "reason": "bound to the private binary/title; the general engine reads a manifest instead",
+   "status": "NOT_PORTED"
+  },
+  {
+   "gates": [],
+   "id": "N03",
+   "mechanism": "model-driven lane and campaign runners, regime routing, economics",
+   "private_modules": [
+    "campaign",
+    "compiler_causality",
+    "compounding",
+    "farm",
+    "fastmatch",
+    "fixed_point",
+    "llm_fix",
+    "operator_coverage",
+    "projection",
+    "regime_router",
+    "regimes",
+    "repair",
+    "roofline",
+    "semantic_interrupt"
+   ],
+   "proof": "",
+   "public_modules": [],
+   "reason": "need credentials/evidence from the private campaign; outside the spec's mechanism list",
+   "status": "NOT_PORTED"
+  }
+ ],
+ "schema": 1,
+ "spec": "vault/specs/reconstruction-factory-general.md"
+}

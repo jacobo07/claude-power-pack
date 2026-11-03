@@ -1,6 +1,6 @@
 {
  "dimensions": 10,
- "rubric_sha256": "2c655eea80bbc879baa22c250a66fd8fc4e3d23a1fdacea37965ab37805ee1de",
+ "rubric_sha256": "f79fe95418318cd4ad5fd223ab1bd5eb1be05448344150701c239601cfa8161a",
  "rule": "the rubric is never edited to pass",
  "version": "maturity1"
 }

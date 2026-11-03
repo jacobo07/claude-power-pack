@@ -33,3 +33,6 @@ Tokens: steps 1-3 green. Epoch 3 ended at context wall (~177k) after step 5b.
 - FINDING (real): the leak scan caught generated skeletons and mutants of the 8 sealed functions in the dev tree. Generator no longer emits them; files removed. Seal unchanged.
 - Decision: search/search_plan take nsm/prior by injection (no import), so maturity anchors for them are greps, not import edges.
 - Decision: maturity anchor 10 of every dimension = OWNER_ACCEPTANCE.json (absent on purpose); the engine never self-grades to 10.
+- Step 6 committed: tools/rf_parity.py -> PARITY.md/.json (GREEN 20, GAP 6, NOT_PORTED 3), gate V-RF-PARITY (33 gates, drills red), liveness declared (scanner lists no reconstruction_factory row; its exit 1 is pre-existing debt of other modules).
+- Public gate caught a denylisted token in PARITY.json (a private module name); the private-target group now lists a count, not names.
+- REMAINING: close-out only: write residual file and run gsd_mission.py checkpoint CHECKPOINT_COMPLETE.

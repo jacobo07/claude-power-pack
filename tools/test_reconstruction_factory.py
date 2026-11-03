@@ -643,5 +643,39 @@ def g_cbr(ctx):
     assert _raises(ValueError, CB.construction_return, [{"kind": "WISHFUL", "subject": "s", "evidence": ["e"]}], rows)
 
 
+import rf_parity as RP
+_rp_build = RP.build
+
+
+@kit.gate("V-RF-PARITY", drill=lambda: patched(RP, "build", lambda: (lambda d: dict(d, rows=d["rows"][:-1]))(_rp_build())))
+def g_parity(ctx):
+    import glob
+    import re
+    doc = RP.build()
+    for n, t in RP.files(doc).items():
+        with open(os.path.join(RP.OUT, n)) as fh:
+            assert fh.read() == t, n + " drifted from tools/rf_parity.py (run: python tools/rf_parity.py write)"
+    suite = open(os.path.join(ROOT, "tools/test_reconstruction_factory.py")).read()
+    covered = set()
+    for r in doc["rows"]:
+        assert r["status"] in ("GREEN", "GAP", "NOT_PORTED"), r["id"]
+        assert r["status"] == "GREEN" or r["reason"], "unexplained row " + r["id"]
+        assert r["status"] != "GREEN" or r["gates"] or r["proof"], "GREEN without a proving command: " + r["id"]
+        for g in r["gates"]:
+            assert re.search(r'@kit\.gate\("%s"' % re.escape(g), suite) or g.startswith("V-RF-") and ('"%s"' % g) in suite, "row %s cites a gate that does not exist: %s" % (r["id"], g)
+        for m in r["public_modules"]:
+            assert os.path.exists(os.path.join(ROOT, m)), m
+            covered.add(os.path.basename(m)[:-3])
+    mods = {os.path.basename(f)[:-3] for f in glob.glob(os.path.join(ROOT, "modules/reconstruction_factory/*.py"))} - {"__init__"}
+    assert mods <= covered, "modules with no parity row: %s" % sorted(mods - covered)
+    green = " ".join(r["mechanism"] for r in doc["rows"] if r["status"] == "GREEN")
+    for need in ("certification", "causal diff", "search", "Build Twin", "Object Model", "om_skeleton", "Method Graph", "Genome", "Negative Search", "atoms", "claims", "maturity", "CBR",
+                 "held-out", "frontier", "invalidation", "provenance"):
+        assert need in green, "spec mechanism not GREEN: " + need
+    gaps = " ".join(r["reason"] + r["mechanism"] for r in doc["rows"] if r["status"] == "GAP")
+    for need in ("m2c", "mwcc", "denylist", "22 corpus functions", "s32", "this-call"):
+        assert need in gaps, "known gap not recorded: " + need
+
+
 if __name__ == "__main__":
     sys.exit(kit.main(Ctx))

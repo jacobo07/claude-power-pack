@@ -20,7 +20,7 @@ M = "modules/reconstruction_factory/"
 
 RUBRIC = {
     "D01_certification": [(2, ("file", M + "certify.py"), "certifier exists"), (4, ("gate", "V-RF-CERT-POSITIVE"), "positive controls certify"),
-                          (6, ("gate", "V-RF-CERT-NEGATIVE"), "mutants are refused"), (8, ("gate", "V-RF-HELDOUT"), "held-out law enforced"), (10, ("file", ACCEPT), "Owner acceptance")],
+                          (6, ("gate", "V-RF-CERT-NEGATIVE"), "mutants are refused"), (8, ("gate", "V-RF-HELDOUT-REFUSE"), "held-out law enforced"), (10, ("file", ACCEPT), "Owner acceptance")],
     "D02_search": [(2, ("file", M + "search.py"), "search exists"), (4, ("gate", "V-RF-SEARCH"), "search solves"), (6, ("gate", "V-RF-SEARCH-BUDGET"), "budget honoured"),
                    (8, ("gate", "V-RF-PLAN"), "plan chooses families by class"), (10, ("file", ACCEPT), "Owner acceptance")],
     "D03_object_model": [(2, ("file", M + "om.py"), "object model exists"), (4, ("gate", "V-RF-OM-REGISTRY"), "registry graded"), (6, ("gate", "V-RF-OM-PROPAGATE"), "prototypes propagate"),
