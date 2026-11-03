@@ -126,3 +126,209 @@ A few items of the original "100% baseline" depend on infrastructure outside thi
 - **macOS dev workstation** — for local Apple dev; not infra Power Pack can "ship."
 
 These are infrastructure decisions, not code. The pack can document the gates and the fastlane config (MC-OVO-33 did this) but cannot execute them from a Linux VPS.
+
+---
+
+## GSD X Reconstruction Factory — Universal Wii Inverse Compiler backlog
+
+**North Star:** evolve the current Tennis-focused Reconstruction Factory into a reusable Wii reconstruction capability where a single human mission can ingest a new Wii title, inherit prior platform/toolchain knowledge, collapse known code and families deterministically, reserve strong-model reasoning for genuinely novel semantic residuals, and return source-like projections + certificates + Program Genome + irreducible unknowns in hours rather than weeks where the title's novelty permits.
+
+**One-shot definition:** one human intent starts one durable autonomous mission. Internally the mission may rotate contexts, launch agents, run thousands of compiles/experiments, consult cross-title corpora and improve the Factory. Externally it should continue until completion or a genuine Owner boundary.
+
+**Current maturity statement:** Tennis demonstrates a real, increasingly self-improving reconstruction capability, but this is not yet a general "arbitrary Wii DOL -> near-exact source in one session" system. The next proof is transfer: title #2 and title #3 must start materially higher than Tennis. If title #5 still repays the same GX/BRRES/MWCC/SDK archaeology, compounding has failed.
+
+### Priority epic WII-RF-1 — Massive Wii Known-Code Excision
+
+**Goal:** remove verified Nintendo SDK, runtime, middleware, common libraries, compiler-generated artifacts and reusable engine code from the expensive game-specific reconstruction frontier before bespoke reasoning.
+
+Backlog:
+- Build/extend library and SDK certificate corpus with explicit provenance, version/build applicability, positive/negative fixtures and counterexamples.
+- Fingerprint DOL/REL/library regions early in intake and classify known mass before function-level work.
+- Separate platform/runtime/library identity from game-specific semantics.
+- Reuse cross-title exact and normalized matches.
+- Make verified known-code excision trigger a population-collapse rescan.
+- Measure known-code mass removed per title and false-positive rate.
+
+**Done when:** an unseen compatible Wii title can automatically excise a material fraction of non-game-specific functions with exact/proven lineage and zero silent false lifts.
+
+### Priority epic WII-RF-2 — Wii Toolchain Genome / MWCC Verified Inverse Compiler
+
+**Goal:** make MWCC, PPC EABI, SDA, linker/build-context and common lowering behavior increasingly known before a new game's unique logic is analyzed.
+
+Backlog:
+- Expand Build Twin/toolchain evidence profiles across known Wii titles and certified calibration functions.
+- Continue MWCC forward-probe corpus and Active Compiler Tomography.
+- Promote verified native-motif <-> source-construct mappings into Compiler Genome rules.
+- Cover C/C++, virtual dispatch, constructors/destructors, thunks, switch/loop lowering, SDA, inlining, templates, register-allocation/source-shape tails and TU-sensitive behavior as evidence demands.
+- Mine natural discriminating functions before synthetic probes.
+- Preserve toolchain/source equivalence and UNDERDETERMINED_TOOLCHAIN when multiple configurations explain the same native artifact.
+- Add compiler-profile transfer holdouts across titles.
+
+**Done when:** common compiler/source-pattern classes route deterministically to bounded candidate spaces and strong-model use is confined to genuinely novel residuals.
+
+### Priority epic WII-RF-3 — Industrial C++ Object Model Recovery
+
+**Goal:** recover class/object structure globally instead of solving C++ functions independently.
+
+Backlog:
+- Global class/vtable registry.
+- Constructor/destructor mining.
+- VTable slot solver.
+- This-pointer recovery.
+- Base-class/thunk classification.
+- Global class-layout constraint solving.
+- Bidirectional prototype/callsite propagation.
+- State/data ownership inference.
+- Structured C++ source skeleton generation from the recovered object model.
+- Regional/class-level compile-back where function-local harnesses lose relevant context.
+- Promote S11-derived rules only at demonstrated applicability scope.
+
+**Done when:** unseen C++ virtual-call/class families can be reconstructed from raw binary/decompiler evidence without hand-written per-function layouts, and shared recovered facts close multiple dependent functions.
+
+### Priority epic WII-RF-4 — Generative Function Families / Semantic Quotient Compiler
+
+**Goal:** replace N-function reconstruction with minimal verified generators + parameter vectors wherever the source population is generative.
+
+Backlog:
+- Family induction over CFG, call topology, constants, field accesses, ABI, stack behavior, dataflow and compile-back behavior.
+- Convert clusters into executable generators, not similarity labels.
+- Parameterize type, field offset, constant, callee, branch polarity, enum/slot and other bounded dimensions.
+- Minimum Generative Basis per subsystem.
+- Self-factoring recovery for latent helpers/templates/base methods.
+- Leave-one-family-out validation.
+- Bulk Collapse Sweep after every promoted family/rule.
+
+**Done when:** Work Unit Compression rises materially; large raw populations collapse into a much smaller number of reconstruction problems and future members instantiate without whole-function reasoning.
+
+### Priority epic WII-RF-5 — Cross-Title Wii Donor Corpus / Platform Genome
+
+**Goal:** every reconstructed Wii title raises the starting line for the next.
+
+Backlog:
+- Build a cross-title donor index for exact and normalized functions, SDK/library code, compiler motifs, engine helpers and data formats.
+- Maintain separate Wii Platform Genome, Toolchain Genome, Engine/Series Genome, Game Genome and local subsystem/sport knowledge.
+- Track donor provenance and legal/clean-room status.
+- Add cross-title homology confidence and counterexamples.
+- Make intake query platform/compiler/library/engine ancestry before bespoke reconstruction.
+- Treat cross-title transfer as a required CBR/fresh-consumer test for platform-scope promotions.
+
+**Done when:** a new compatible title begins partially understood before game-specific analysis, with inherited deterministic coverage measurable at intake.
+
+### Priority epic WII-RF-6 — Unknown Tail Factory / P90-P99 Reconstruction
+
+**Goal:** industrialize the last hard 5-20% instead of allowing rare C++, SDA, inlining, templates, large CFGs, stateful logic or cross-TU cases to dominate calendar time.
+
+Backlog:
+- Continuously cluster the slowest unresolved historical cases by causal bottleneck.
+- Build tail-specific tools/solvers only when break-even is positive.
+- Maintain WHY_NOT_EXACT / WHY_UNKNOWN machine-readable diagnoses.
+- Route compiler-shape residuals to Compilation Fabric rather than semantic regeneration.
+- Optimize P50/P90/P99 time-to-diagnosis and time-to-certificate.
+- Track Unknown Debt/interest by fan-out and downstream rework.
+- Preserve underdetermined distinctions rather than chasing unknowable source syntax.
+
+**Done when:** tail latency falls generation over generation and no recurring tail morphology repeatedly requires artisanal rediscovery.
+
+### Priority epic WII-RF-7 — Proof Compression / Certification Throughput
+
+**Goal:** prevent assurance, not generation, from becoming the dominant bottleneck at thousands of functions.
+
+Backlog:
+- Content-addressed compile transactions and proof receipts.
+- Proof caching and dependency-aware invalidation.
+- Shared Build Twin/toolchain proofs.
+- Family certificates and proof inheritance.
+- Proof CSE / dominator concepts where consumers justify them.
+- Incremental regional re-certification after semantic deltas.
+- Separate exact native certification, semantic truth, source proximity and evidence independence.
+- Measure proof-compression ratio and certification P90/P99.
+
+**Done when:** thousands of derived/reused instances do not each repay the full independent reasoning + verification cost while exactness authority remains unchanged.
+
+### Priority epic WII-RF-8 — Cross-Title Factory Benchmark Arena
+
+**Goal:** prove, rather than claim, that the Factory is becoming universal and faster.
+
+Required benchmark generations:
+- Factory G(n) -> unseen Wii title A.
+- Factory G(n) -> unseen Wii title B.
+- Factory G(n) -> unseen Wii title C.
+- Repeat later with a promoted Factory generation on equivalent hidden cohorts.
+
+Measure at minimum:
+- deterministic coverage at intake;
+- known-code excision coverage;
+- cross-title inherited coverage;
+- family-generated coverage;
+- strong-model calls per 1,000 functions;
+- functions per reusable rule;
+- Work Unit Compression Ratio;
+- Reasoning Compression Ratio;
+- Proof Compression Ratio;
+- exact certification rate;
+- false-positive / false-lift rate;
+- compile iterations per exact;
+- time to first 50%, 90%, 99%;
+- P50/P90/P99 reconstruction latency;
+- Owner interventions per verified engineering delta;
+- prompt size / Prompt Compression Ratio;
+- residual semantic entropy and novel semantic mass.
+
+**Hard transfer expectation:** title #2 should require materially less reasoning/function than Tennis. Title #3 should inherit more again. If transfer does not improve the curve, pause claims of universalization and fix the missing compounding layer.
+
+### Supporting backlog — Wii Reconstruction Performance / One-Mission Economics
+
+- Build a Time Compression Frontier that attributes wall time to scope, knowledge rediscovery, context, inference, search, compile, verification, human waits, coordination and resource contention.
+- Optimize the dominant reducible term rather than adding features by habit.
+- Trade deterministic compute for serial cognition when ROI is positive.
+- Maintain no-model zones for fully covered deterministic regions and a model-only frontier for true novelty.
+- Make work units variable-sized: one function, one family, one library, one type system, one dispatcher + leaves, whichever is epistemically coherent.
+- Track the slope of throughput: every solved cohort should make an applicable future cohort cheaper.
+- Version the Factory explicitly by generation with benchmark deltas and failure modes.
+- Run candidate Factory generations in shadow on historical workloads before promotion.
+- Promote time-compression improvements through CBR only when they preserve or strengthen truth.
+- Treat reconstruction performance regressions like runtime regressions.
+
+### Universal Wii one-mission admission gate
+
+Do not claim "any Wii game in one session" until independent cross-title evidence shows that a new title can automatically execute most of this chain:
+
+binary census
+-> platform/toolchain fingerprint
+-> known-code excision
+-> cross-title matching
+-> family collapse
+-> C/C++ class/type recovery
+-> global constraint propagation
+-> compile-back search
+-> sparse semantic-model frontier
+-> exact/incremental certification
+-> Program Genome + unresolved irreducible residual report.
+
+The end-state target is **reconstruction as throughput, not reconstruction as per-function cognition**.
+
+### Institutional metrics to keep visible
+
+The main leading indicator is not raw certified-function count. Track whether the number of functions requiring individual reasoning is collapsing.
+
+Required trend:
+- Work Unit Compression Ratio up.
+- Reasoning Compression Ratio up faster.
+- Deterministic Coverage up.
+- Cross-title inherited coverage up.
+- Functions per reusable rule up.
+- Compile iterations per exact down.
+- P99 reconstruction latency down.
+- Owner interventions down.
+- Prompt size / Prompt Debt down.
+- Residual Semantic Entropy down.
+- Novel Semantic Mass becomes the dominant irreducible cost.
+
+### Constitutive Baseline Ratchet
+
+Every proven improvement from these epics must be evaluated for promotion at the narrowest evidence-supported scope:
+
+function family -> module/game -> engine/series -> toolchain/build -> Wii platform -> broader reconstruction archetype.
+
+Promotion requires explicit applicability, positive/negative evidence, counterexamples, regression protection, Production Reality and a fresh consumer. Future projects must inherit promoted capability automatically; falling back to a slower known path should require an applicability explanation.
+
