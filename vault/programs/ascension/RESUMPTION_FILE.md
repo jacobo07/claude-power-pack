@@ -5,7 +5,13 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT (2026-11-03 14:15 UTC) — read this first; the blocks below are history.**
+**CURRENT (2026-11-03 ~15:45 UTC, session 95e69b3d) — read this first; the blocks below are history.**
+- Owner (publish): "1 + 2" = full lineage stays PRIVATE; curated public export only. Done: PR jacobo07/claude-power-pack#11, branch `export/s11-mission-policy` @ `2ef46df6` off public main 70c2fde4 (mission_policy + heldout_release + 2 tests + owner-gate fixture; fn_80222480/80222ED8 -> fn_00000A01/B02, "Tennis" + local paths scrubbed; MPOL 52/52, HOLDOUT 10/10 in the export worktree; secret scan 0 hits / control 1/1). Pivot autonomy (gsd_mission.py, ~35 deps absent on public main) NOT exportable without the lineage. Export worktree: scratchpad `pp-public-export`; older clean worktree `C:/Users/User/Apps/pp-public-s11` (gsdx/s11-mission-autonomy @ 70c2fde4) is superseded, not deleted.
+- Owner (H2): KEEP 20. Record the static-scan exposure (H2x vptr/this-call scan touched 2 members, raw feature only) as an incident; debt = corpus scans exclude H2 by structure.
+- recon-general m-a9d8915ae366 RUNNING epoch 4 (head 6e723398, PARITY landed; step 6 pending). `recon_public_gate.py --range 70c2fde4..HEAD` = 16 commits, **VIOLATIONS {TITLE: 1}** (tools/rf_parity.py). Default-scope run is CLEAN, but default scope ignores history. Do not push until CHECKPOINT_COMPLETE AND the --range run exits 0 (a run with an empty base reads CLEAN on 0 commits: always pass 70c2fde4).
+- Pre-existing on public main: vault/evidence/two-pane-exactness/*.json carry C:\Users\User paths (low risk, not touched).
+
+**Earlier CURRENT (2026-11-03 14:15 UTC).**
 - S11 CLOSED without H2 (Owner D1: no waiver, no control swap; t1 `58082c73`). H2 sealed, unread, unspent (manifest sha `922f214e`).
 - Frontier unique 1095/1797 = C 1086 + CXX 9, overlap 0 (H0, t1 `c3dc137f`). fn_80222480 is already CERTIFIED_CXX (S10b fixture); its 98.9 is only the raw-m2c control.
 - S11H (Owner "y", gen3 `3955257f`, plan backup `S11H-PLAN-PROPOSAL.md`): H0/H1/H2x done (t1 `c3dc137f`, `bba49802`, `6fbf44f7`, handoff `474670d1`). Mission m-f0b595fd509f HALTED on max-cycles 24; successor **m-fc7047a29f01** launched 14:10:39Z (authority 19.8M = remainder of the 80M, max-cycles 16, pivot Gen2 on), continuing at H3.
