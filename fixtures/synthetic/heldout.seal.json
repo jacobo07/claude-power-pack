@@ -1,0 +1,14 @@
+{
+ "functions": {
+  "hs_flt_sq": "83fe1864007358b630050630dbeee4a04dff858e8b05045b8a1e19cc59df3e08",
+  "hs_max_u": "48db836ba39c0ca8f3a8f3241364958ed092a17fa1435dd7d50a1a1aef007f66",
+  "hs_mul_add": "9981e60c31c4946b8ece16d8737d14143274747450bcb7d697189c420d978a38",
+  "hs_rect_perim": "0342652c33d2140f680f7de7bd700aaaac314e32c41e0453d1cf326d8a863e7f",
+  "hs_shape_id": "cbb5c8a9753aad78a4fe527cefd56fbfe6c9bfbc2f44b54bb548373fb8a818c3",
+  "hs_sum_arr": "cb518d049e455c6dbfb82ea508301c03b9d6958ded47dec34d4ce67999c9e20f",
+  "hs_total_scaled": "b5a1aec1d16055992ab4f17742a2959c58d9e6538ba630c5a6064e6bfcf619ad",
+  "hs_wrap_inc": "792074e0b65f39a81aef52ba58e0eee8825749cd5a24bc4a7732db3bf032bb68"
+ },
+ "manifest_sha256": "f14b73536347a06ae8ccb26a3fde583235c498e4808dacd8733400185e2e67a1",
+ "schema": 1
+}
