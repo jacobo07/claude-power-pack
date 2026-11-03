@@ -15,6 +15,9 @@ from modules.reconstruction_factory import build_twin as BT
 from modules.reconstruction_factory import causal_diff as CD
 from modules.reconstruction_factory import certify as C
 from modules.reconstruction_factory import fingerprint as FP
+from modules.reconstruction_factory import atoms as AT
+from modules.reconstruction_factory import claims as CL
+from modules.reconstruction_factory import invalidation as INV
 from modules.reconstruction_factory import judge as J
 from modules.reconstruction_factory import genome as GN
 from modules.reconstruction_factory import method_graph as MG
@@ -424,6 +427,88 @@ def g_genome(ctx):
     for _ in range(40):
         g = GN.mutate(g, rng)
         assert 0 <= g["depth"] <= 4 and 1 <= g["width"] <= 6 and len(set(g["ops"])) == len(g["ops"])
+
+
+def _raises(exc, fn, *a):
+    try:
+        fn(*a)
+    except exc:
+        return True
+    return False
+
+
+@kit.gate("V-RF-ATOMS", drill=lambda: patched(AT, "_check", lambda *a: None))
+def g_atoms(ctx):
+    good = {"fn": "rf_add3", "verdict": "CERTIFIED_EXACT", "candidate_sha256": "ab"}
+    assert AT.validate("certificate", good) is good
+    for bad in ({"fn": "x", "verdict": "MAYBE", "candidate_sha256": None}, {"fn": 1, "verdict": "NOT_EXACT", "candidate_sha256": None},
+                {"fn": "x", "verdict": "NOT_EXACT"}, {"fn": "x", "verdict": "NOT_EXACT", "candidate_sha256": None, "extra": 1}):
+        assert _raises(AT.Malformed, AT.validate, "certificate", bad), bad
+    assert _raises(AT.Malformed, AT.validate, "no_such_predicate", {})
+    assert _raises(AT.Malformed, AT.validate, "vcall_site", {"fn": "x", "slot": -1}) and not _raises(AT.Malformed, AT.validate, "vcall_site", {"fn": "x", "slot": 0})
+    w1, w2 = AT.world(compiler_profile="o0"), AT.world(compiler_profile="o2")
+    k = AT.semantic_key("f", "vcall_site", {"fn": "f", "slot": 1}, w1)
+    assert k == AT.semantic_key("f", "vcall_site", {"slot": 1, "fn": "f"}, w1) and k != AT.semantic_key("f", "vcall_site", {"fn": "f", "slot": 1}, w2)
+    assert AT.world_compatible(w1, {}) and not AT.world_compatible(w1, w2) and AT.world_compatible(w1, AT.world(tool_versions="1"))
+    assert _raises(AT.Malformed, lambda: AT.world(bogus=1))
+    n = len(AT.PREDICATES)
+    assert _raises(AT.Refused, AT.register, "vtable", {"consumers": ["x"]}) and _raises(AT.Refused, AT.register, "fresh_pred", {"fields": {}, "consumers": []})
+    try:
+        AT.register("fresh_pred", {"fields": {"a": "int"}, "consumers": ["tools/x.py::y"]})
+        assert AT.validate("fresh_pred", {"a": 1}) == {"a": 1}
+    finally:
+        AT.PREDICATES.pop("fresh_pred", None)
+    assert len(AT.PREDICATES) == n
+
+
+@kit.gate("V-RF-CLAIMS", drill=lambda: patched(CL.ClaimStore, "invalidate", lambda self, reason, w: {"reason": reason, "claims": []}))
+def g_claims(ctx):
+    st = CL.ClaimStore()
+    w = AT.world(compiler_profile="o0", tool_versions="gcc-a")
+    c1 = C.certify(ctx.f, "rf_add3", ctx.f.read_source("rf_add3"))
+    a = st.from_certificate("rf_add3", c1, w)
+    b = st.from_certificate("rf_add3", c1, w)
+    assert a is b and len(st.claims) == 1 and len(a["evidence"]) == 2 and a["grade"] == "PROVEN", "the same proposition is one claim"
+    neg = C.certify(ctx.f, "rf_add3", ctx.mutants()["rf_add3"])
+    n = st.from_certificate("rf_add3", neg, w)
+    assert n["grade"] == "SHADOW" and n["payload"]["candidate_sha256"] is None and len(st.claims) == 2
+    st.from_judge("rf_add3", ctx.f.judge_text("rf_add3", ctx.f.read_source("rf_add3"))[0], w)
+    assert st.require("rf_add3", "certificate", w)["grade"] == "PROVEN"
+    assert _raises(CL.Refused, st.require, "rf_never", "certificate", w), "UNKNOWN is a refusal, not a pass"
+    assert _raises(AT.Malformed, st.assert_claim, "x", "certificate", {"fn": "x", "verdict": "BOGUS", "candidate_sha256": None}, w)
+    assert _raises(AT.Malformed, st.assert_claim, "x", "vtable", {"cls": "X", "grade": "VTABLE", "kinds": [], "slots": 0}, w, "INVALIDATED")
+    ev = st.invalidate("tool_version_changed", AT.world(tool_versions="gcc-b"))
+    assert len(ev["claims"]) == 3 and all(c["grade"] == "INVALIDATED" for c in st.claims.values()), ev
+    assert _raises(CL.Refused, st.require, "rf_add3", "certificate", AT.world(compiler_profile="o0", tool_versions="gcc-a")), "an invalidated claim is not handed over"
+    assert st.invalidate("scope_changed", AT.world(tool_versions="gcc-b"))["claims"] == [], "nothing live left to withdraw"
+    assert _raises(AT.Malformed, st.invalidate, "because", {})
+
+
+@kit.gate("V-RF-INVALIDATION", drill=lambda: patched(INV, "delta_ids", lambda o, n: ([], False, [])))
+def g_invalidation(ctx):
+    f, P = ctx.f, ctx.P
+    hdr = os.path.join(ROOT, "fixtures/synthetic/ctx/ctx.h")
+    old = open(hdr).read()
+    src = {fn: f.read_source(fn) for fn in P.names()}
+    edits = {"reorder RfRect": old.replace("    s32 w;\n    s32 h;\n} RfRect;", "    s32 h;\n    s32 w;\n} RfRect;"),
+             "widen RfVec2.x": old.replace("typedef struct RfVec2 {\n    s32 x;", "typedef struct RfVec2 {\n    s16 x;"),
+             "comment only": old + "\n/* nothing changes */\n"}
+    seen_changed = {}
+    for label, new in edits.items():
+        assert new != old, label
+        d = os.path.join(ctx.tmp.name, "inc-" + label.replace(" ", "_"))
+        shutil.copytree(os.path.dirname(hdr), d)
+        open(os.path.join(d, "ctx.h"), "w").write(new)
+        truth = set()
+        for fn in P.names():
+            a = f.adapter.compile(src[fn], P.functions[fn]["lang"], f.flags_for(fn), [d], f._clean_dir("inv"), name=fn)
+            if not a.ok or open(a.obj, "rb").read() != open(f.target(fn), "rb").read():
+                truth.add(fn)
+        dirty, info = INV.closure(src, old, new)
+        assert truth <= set(dirty), "UNSOUND %s: compiler changed %s, closure missed %s" % (label, sorted(truth), sorted(truth - set(dirty)))
+        seen_changed[label] = (len(truth), len(dirty))
+    assert seen_changed["reorder RfRect"][0] >= 3 and seen_changed["reorder RfRect"][1] < len(src) // 2, seen_changed      # sound AND selective
+    assert seen_changed["comment only"] == (0, 0), seen_changed
 
 
 if __name__ == "__main__":
