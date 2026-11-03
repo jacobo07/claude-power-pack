@@ -18,7 +18,7 @@ FAMILY_BY_CLASS = {
 def plan(primary_class, prior=None, nsm=None, fn=None):
     fams = FAMILY_BY_CLASS.get(primary_class, list(FAMILY_BY_CLASS["OPCODE"]))
     rank = {f: i for i, f in enumerate(fams)}
-    names = sorted(OPS, key=lambda n: (rank.get(OPS[n].family, 99) - (prior or {}).get(n, 0), n))
+    names = sorted(OPS, key=lambda n: (rank.get(OPS[n].family, 99) - 3 * (prior or {}).get(n, 0), n))
     if nsm is not None and fn is not None:
         names = [n for n in names if not nsm.refuted_operator(fn, primary_class, n)]
     return names

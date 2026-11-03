@@ -30,7 +30,12 @@ def pareto(items):
     return out
 
 
-def search(factory, fn, skeleton, budget=200, width=4, depth=3, nsm=None, ops=None, extra=None):
+def search(factory, fn, skeleton, budget=200, width=4, depth=3, nsm=None, ops=None, extra=None, prior=None):
+    run_key = "%s|w%d|d%d|%s" % (h(skeleton), width, depth, ",".join(ops or []))
+    if nsm is not None:
+        memo = nsm.known_not_found(fn, run_key)
+        if memo is not None:
+            return dict(memo, text=memo["text"] or skeleton)
     sc0 = score(factory, fn, skeleton)
     if sc0 is None:
         return {"status": "SKELETON_DOES_NOT_COMPILE", "compiles": 0, "text": skeleton, "path": []}
@@ -48,7 +53,9 @@ def search(factory, fn, skeleton, budget=200, width=4, depth=3, nsm=None, ops=No
             primary = None
             if obj:
                 primary = causal_diff(factory.adapter, factory.target(fn), obj["obj"], factory.project.functions[fn]["symbols"])["primary"]
-            names = ops or make_plan(primary, nsm=nsm, fn=fn)
+            view = nsm.at(h(text)) if nsm is not None else None
+            names = ops or make_plan(primary, prior=prior, nsm=view, fn=fn)
+            tried, okc = {}, {}
             for opn, t in apply_all(text, names, extra):
                 k = h(t)
                 if k in seen:
@@ -59,22 +66,31 @@ def search(factory, fn, skeleton, budget=200, width=4, depth=3, nsm=None, ops=No
                     return {"status": "BUDGET_EXHAUSTED", "compiles": compiles, "text": best[2], "pct": best[0], "path": best[3], "front": [x[:2] for x in front]}
                 s = score(factory, fn, t)
                 compiles += 1
+                tried[opn] = tried.get(opn, 0) + 1
                 if s is None:
-                    if nsm is not None:
-                        nsm.record(fn, primary, opn, "COMPILE_FAILED")
                     continue
+                okc[opn] = okc.get(opn, 0) + 1
                 cand = (s["pct"], s["gap"], t, path + [opn])
                 allc.append(cand)
                 if s["exact"]:
+                    if nsm is not None:
+                        for o in cand[3]:
+                            nsm.record(fn, primary, o, "SOLVED")
                     return {"status": "EXACT", "compiles": compiles, "text": t, "path": cand[3], "front": [cand[:2]]}
-                if nsm is not None and s["pct"] <= pct:
-                    nsm.record(fn, primary, opn, "NO_GAIN")
+                if view is not None and s["pct"] <= pct:
+                    view.record(fn, primary, opn, "NO_GAIN")                 # advisory only: a beam can need a non-gaining step
                 nxt.append(cand)
                 if (cand[0], -cand[1]) > (best[0], -best[1]):
                     best = cand
+            if view is not None:
+                for o in tried:
+                    if not okc.get(o):
+                        view.record(fn, primary, o, "NO_COMPILE_ALL")       # deterministic: no site of o at this text compiles
         if not nxt:
             break
         nxt.sort(key=lambda x: (-x[0], x[1], len(x[3])))
         beam = nxt[:width]
     front = pareto(allc)
+    if nsm is not None:
+        nsm.memo_not_found(fn, run_key, {"status": "NOT_FOUND", "compiles": 0, "memo": True, "text": best[2], "pct": best[0], "path": best[3], "front": [x[:2] for x in front]})
     return {"status": "NOT_FOUND", "compiles": compiles, "text": best[2], "pct": best[0], "path": best[3], "front": [x[:2] for x in front]}

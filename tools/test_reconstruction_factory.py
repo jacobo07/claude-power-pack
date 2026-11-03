@@ -16,6 +16,9 @@ from modules.reconstruction_factory import causal_diff as CD
 from modules.reconstruction_factory import certify as C
 from modules.reconstruction_factory import fingerprint as FP
 from modules.reconstruction_factory import judge as J
+from modules.reconstruction_factory import genome as GN
+from modules.reconstruction_factory import method_graph as MG
+from modules.reconstruction_factory import nsm as NS
 from modules.reconstruction_factory import om as OM
 from modules.reconstruction_factory import om_skeleton as OS
 from modules.reconstruction_factory import permute as PM
@@ -345,6 +348,82 @@ def g_om_vcall(ctx):
     sk = ctx.skeletons()["rf_scale_all"]
     assert S.search(ctx.f, "rf_scale_all", sk, budget=80, extra={"vslot_to_method": vs})["status"] == "EXACT"
     assert OS.vslot_to_method("int x;", reg) == []
+
+
+@kit.gate("V-RF-NSM", drill=lambda: patched(NS.NSM, "known_not_found", lambda *a: None))
+def g_nsm(ctx):
+    f = ctx.f
+    path = os.path.join(ctx.tmp.name, "nsm.jsonl")
+    n = NS.NSM(path, world="A")
+    mut = ctx.mutants()["rf_abs_diff"]
+    r1 = S.search(f, "rf_abs_diff", mut, budget=200, nsm=n)
+    r2 = S.search(f, "rf_abs_diff", mut, budget=200, nsm=n)
+    assert r1["status"] == "NOT_FOUND" and r1["compiles"] > 0
+    assert r2["status"] == "NOT_FOUND" and r2["compiles"] == 0, "a known dead run must not be re-paid: %s" % r2["compiles"]
+    assert NS.NSM(path, world="A").known_not_found("rf_abs_diff", "x") is None                   # a different key is not known
+    assert any(r["why"] == "RUN_NOT_FOUND" for r in NS.NSM(path, world="A").applicable())
+    assert NS.NSM(path, world="B").applicable() == [], "another world must not inherit negatives"
+    for _ in range(3):                                           # soundness: pruning must never make a solvable function unsolvable
+        assert S.search(f, "rf_collatz", ctx.skeletons()["rf_collatz"], budget=300, nsm=n)["status"] == "EXACT"
+    m = NS.NSM(world="A")
+    m.record("fx", "OPCODE", "shr_to_div", "REFUTED")
+    assert m.refuted_operator("fx", "OPCODE", "shr_to_div") and not m.refuted_operator("fx", "ORDER", "shr_to_div")
+    m.record("fx", "OPCODE", "shr_to_div", "SOLVED")
+    assert not m.refuted_operator("fx", "OPCODE", "shr_to_div"), "a solve vetoes a refutation"
+    m.record("fx", "OPCODE", "mul_to_shl", "NO_GAIN")
+    assert not m.refuted_operator("fx", "OPCODE", "mul_to_shl"), "no-gain is advisory, never a refutation"
+    w = NS.NSM(world="B")
+    w.rows = list(m.rows)
+    assert not w.refuted_operator("fx", "OPCODE", "shr_to_div") and w.applicable() == []
+
+
+def _cls(ctx, fn, text):
+    c = ctx.f.judge_text(fn, text)[1]
+    return CD.causal_diff(ctx.f.adapter, ctx.f.target(fn), c.obj, ctx.P.functions[fn]["symbols"])["primary"]
+
+
+@kit.gate("V-RF-METHOD-GRAPH", drill=lambda: patched(MG, "expand", lambda *a, **k: []))
+def g_mgraph(ctx):
+    sk = ctx.skeletons()
+    g = MG.MethodGraph()
+    assert g.prior("OPCODE") == {} and g.supercompile() == {}, "an empty graph must claim nothing"
+    solved = {}
+    for fn in ("rf_clamp", "rf_min3", "rf_abs_diff", "rf_bsearch", "rf_collatz"):
+        r = S.search(ctx.f, fn, sk[fn], budget=300)
+        assert r["status"] == "EXACT", fn
+        solved[fn] = r["path"]
+        g.learn(_cls(ctx, fn, sk[fn]), r["path"])
+    g.learn("OPCODE", ["x"], solved=False)
+    macros = g.supercompile(min_count=2)
+    assert "flip_cmp+flip_cmp" in macros, macros                                    # clamp and min3 share a trajectory -> one macro
+    assert all(len(v) >= 2 for v in macros.values())
+    cls = _cls(ctx, "rf_clamp", sk["rf_clamp"])
+    pri = g.prior(cls)
+    assert pri.get("flip_cmp", 0) > 0 and "x" not in pri
+    assert SP.plan(cls, prior=pri)[0] in pri and SP.plan(cls, prior=pri) != SP.plan(cls), "a learned prior must reorder the plan"
+    for fn in ("rf_clamp", "rf_min3"):                                                # the macro replays as ONE step and reaches an exact text
+        ts = MG.expand(sk[fn], macros["flip_cmp+flip_cmp"])
+        assert ts and any(ctx.f.judge_text(fn, t)[0]["exact"] for t in ts), fn
+    g2 = MG.MethodGraph.from_json(g.to_json())
+    assert g2.supercompile(2) == macros and g2.prior(cls) == pri
+    r = S.search(ctx.f, "rf_clamp", sk["rf_clamp"], budget=300, prior=pri)
+    assert r["status"] == "EXACT"
+
+
+@kit.gate("V-RF-GENOME", drill=lambda: patched(GN, "fitness", lambda *a, **k: (0, 0)))
+def g_genome(ctx):
+    sk = ctx.skeletons()
+    train = [(fn, sk[fn]) for fn in ("rf_abs_diff", "rf_bsearch", "rf_clamp")]
+    a = GN.evolve(ctx.f, train, seed=3, pop=4, gens=2, budget=40)
+    b = GN.evolve(ctx.f, train, seed=3, pop=4, gens=2, budget=40)
+    assert a == b, "evolution must be reproducible from its seed"
+    assert a["baseline_fitness"][0] == 0, "the depth-0 baseline solves nothing"
+    assert a["fitness"][0] >= 2 and a["fitness"] > a["baseline_fitness"], a
+    g = GN.baseline()
+    rng = __import__("random").Random(1)
+    for _ in range(40):
+        g = GN.mutate(g, rng)
+        assert 0 <= g["depth"] <= 4 and 1 <= g["width"] <= 6 and len(set(g["ops"])) == len(g["ops"])
 
 
 if __name__ == "__main__":
