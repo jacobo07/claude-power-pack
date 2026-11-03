@@ -42,11 +42,16 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
    (main-lean canary off on every pane since); and the 52 KB fixture was host-persisted. Fixture now 18,735 chars;
    driver + done_gate count only compatible runs with a project receipt (DONEGATE 45/45). Null receipt:
    ctx-rent-x/phase5-smoke-null-host-2.1.317.json.
-   OWNER QUESTION: widen COMPAT to 2.1.317 via the governed reprobe (last: 0c0eb4da7, 1.1M haiku tokens; tool in
-   .claude/worktrees/ccr-next-verify/tools/ccr_compat_gate.py)? Then: release cc993f2f+COMPAT, rerun
-   `phase5_smoke.py <PP repo> vault/programs/ctx-rent-x/phase5-safe-to-forget.json FNNFFN`, keep/rollback by HR-2.
+   Owner "y" to the governed reprobe. Ran TWICE (ccr-next-verify/tools/ccr_compat_gate.py reprobe --confirm), 856,181 +
+   767,245 haiku tokens: S1a S1b S2 S4 S5 PASS, S3 FAIL both times -> gate REFUSES to widen; COMPAT unchanged.
+   S3 FAIL is not a hook verdict: the probe's Bash command itself exits 127 (shell never starts; `exit 3` -> 127 too).
+   The Bash tool 127s INTERMITTENTLY on this host (this pane, a subagent, fresh `claude -p`); CLAUDE_CODE_GIT_BASH_PATH /
+   PATH order looked like a fix at n=1 and then failed again: cause unknown (memory feedback_bash_127_scoop_git_first.md).
+   OWNER QUESTION: (a) investigate the Bash 127 first, then one more reprobe; (b) wait for a host update; (c) widen
+   COMPAT with S3 named UNMEASURED (outside the governed recipe; the main-lean canary does not use the tool.call seam,
+   but Phase 5 does, so CR-09/10/13 stay unmeasurable while Bash 127s).
 Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects,
 CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file.
 
 ## Start
-Ask the Owner the COMPAT 2.1.317 question (item 6). Phase 5 cannot be measured on an incompatible host.
+Ask the Owner item 6 (a/b/c). Do not spend another reprobe until a Bash `echo` succeeds 3/3 in fresh `claude -p`.
