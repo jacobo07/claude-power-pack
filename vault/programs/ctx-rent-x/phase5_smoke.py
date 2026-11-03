@@ -117,6 +117,11 @@ def run(arm, key, cwd, claude):
     m = re.search(r"CODE\s+`?([0-9A-Fa-f]{6})`?", r["final"])
     r["correct"] = bool(m and m.group(1).upper() == code_for(key))
     r["receipts"] = receipts(sid)
+    # A run measured Safe-to-Forget only if CCR ran compatible (else every surface is shadow) AND the shell result reached
+    # projectShell (a host-persisted result never does). Anything else is recorded with its reason, never counted.
+    start = r["receipts"]["start"] or {}
+    r["invalid"] = ("host-not-in-COMPAT" if start.get("compatible") is not True
+                    else "no-project-receipt" if not r["receipts"]["project"] else None)
     return r
 
 
@@ -135,8 +140,8 @@ def main():
         pr = r["receipts"]["project"]
         print(key, arm, r.get("finished"), r.get("correct"), r.get("calls"), r.get("processed"),
               [(x.get("applied"), (x.get("forget") or {}).get("reason")) for x in pr], r["receipts"]["faults"],
-              (r["receipts"]["start"] or {}).get("releaseId"), r["final"][:60], flush=True)
-    arms = {a: [x for x in res["runs"] if x["arm"] == a and x.get("finished")] for a in "FN"}
+              (r["receipts"]["start"] or {}).get("releaseId"), r.get("invalid"), r["final"][:60], flush=True)
+    arms = {a: [x for x in res["runs"] if x["arm"] == a and x.get("finished") and not x.get("invalid")] for a in "FN"}
     res["summary"] = {a: {"n": len(v), "correct": sum(1 for x in v if x["correct"]),
                           "processed": [x.get("processed") for x in v]} for a, v in arms.items()}
     out.write_text(json.dumps(res, indent=1), encoding="utf-8")

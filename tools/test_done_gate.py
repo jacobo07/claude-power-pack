@@ -124,7 +124,7 @@ def p5run(arm, correct=True, proc=None, applied=None, forget=True, hoisted=1, du
          "durable": (durable if on else None), "mainProject": True if on else None,
          "forget": ({"verdict": "FORGET", "reason": "safe-hoisted" if hoisted else "safe", "hoisted": hoisted, "named": []} if forget else None)}
     return {"arm": arm, "finished": True, "correct": correct, "processed": proc or (60000 if on else 90000),
-            "receipts": {"start": {}, "project": [x], "faults": 0}}
+            "receipts": {"start": {"compatible": True}, "project": [x], "faults": 0}}
 def p5(runs, drop=False):
     q = fresh()
     path = q + "/phase5-safe-to-forget.json"
@@ -144,5 +144,9 @@ check("V-DONEGATE-MUT-P5-UNDURABLE", p5(GOOD5[:5] + [p5run("N", durable=False)])
 check("V-DONEGATE-MUT-P5-UNEXERCISED", p5([p5run("F"), p5run("N", hoisted=0)] * 3)[1] == "FAIL")
 check("V-DONEGATE-MUT-P5-NOT-APPLIED", p5(GOOD5[:5] + [p5run("N", applied=False)])[2] == "FAIL")
 check("V-DONEGATE-MUT-P5-NO-SAVING", p5([p5run("F", proc=60000), p5run("N", proc=60000)] * 3)[2] == "FAIL")
+# 2026-11-03 null smoke: host 2.1.317 outside COMPAT (all shadow) / result host-persisted (no project receipt) -> not counted
+inc = [{**r, "receipts": {**r["receipts"], "start": {"compatible": False}}} for r in GOOD5]
+check("V-DONEGATE-P5-INCOMPATIBLE-NOT-COUNTED", p5(inc) == ("UNKNOWN", "UNKNOWN", "UNKNOWN"))
+check("V-DONEGATE-P5-INVALID-NOT-COUNTED", p5([{**r, "invalid": "no-project-receipt"} for r in GOOD5]) == ("UNKNOWN", "UNKNOWN", "UNKNOWN"))
 print("DONEGATE_PASS=%d/%d  threshold=N/N" % (passes, passes + fails))
 sys.exit(0 if fails == 0 else 1)

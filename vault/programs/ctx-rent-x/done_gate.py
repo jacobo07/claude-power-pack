@@ -107,7 +107,10 @@ def phase5_rows(root, put):
     phase5-safe-to-forget.json (vault/programs/ctx-rent-x/phase5_smoke.py). Arm N = CCR_MAIN_PROJECT=1, arm F = unset.
     Fewer than 3 finished runs per arm measured too little: UNKNOWN, never PASS."""
     doc = load(root, "phase5-safe-to-forget.json")
-    runs = [r for r in (doc or {}).get("runs") or [] if r.get("finished")]
+    # A run counts only if CCR ran compatible (an incompatible host shadows every surface: 2.1.317 smoke, 2026-11-03) and
+    # the shell result reached projectShell; the driver's `invalid` names why not. Uncounted runs leave the rows UNKNOWN.
+    runs = [r for r in (doc or {}).get("runs") or [] if r.get("finished") and not r.get("invalid")
+            and ((r.get("receipts") or {}).get("start") or {}).get("compatible") is True]
     on, off = [r for r in runs if r.get("arm") == "N"], [r for r in runs if r.get("arm") == "F"]
     if not doc or len(on) < 3 or len(off) < 3:
         why = "no phase5-safe-to-forget.json (Phase 5 smoke not run)" if not doc else \
