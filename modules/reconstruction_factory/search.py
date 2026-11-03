@@ -30,7 +30,7 @@ def pareto(items):
     return out
 
 
-def search(factory, fn, skeleton, budget=200, width=4, depth=3, nsm=None, ops=None):
+def search(factory, fn, skeleton, budget=200, width=4, depth=3, nsm=None, ops=None, extra=None):
     sc0 = score(factory, fn, skeleton)
     if sc0 is None:
         return {"status": "SKELETON_DOES_NOT_COMPILE", "compiles": 0, "text": skeleton, "path": []}
@@ -49,7 +49,7 @@ def search(factory, fn, skeleton, budget=200, width=4, depth=3, nsm=None, ops=No
             if obj:
                 primary = causal_diff(factory.adapter, factory.target(fn), obj["obj"], factory.project.functions[fn]["symbols"])["primary"]
             names = ops or make_plan(primary, nsm=nsm, fn=fn)
-            for opn, t in apply_all(text, names):
+            for opn, t in apply_all(text, names, extra):
                 k = h(t)
                 if k in seen:
                     continue

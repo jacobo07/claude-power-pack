@@ -144,6 +144,27 @@ def _unneg_eq(text):
             for m in re.finditer(r"!\((%s) (==|!=) (%s)\)" % (ATOM, ATOM), text)]
 
 
+CALL = r"\w+(?:\[\w+\])?->\w+\([^()]*\)"
+
+
+def _commute_call_add(text):
+    out = []
+    for m in re.finditer(r"(?<![\w)\]])(%s|%s) \+ (%s|%s)(?![\w(\[.>])" % (ATOM, CALL, CALL, ATOM), text):
+        if (CALL and re.fullmatch(CALL, m.group(1))) or re.fullmatch(CALL, m.group(2)):
+            out.append(text[:m.start()] + "%s + %s" % (m.group(2), m.group(1)) + text[m.end():])
+    return out
+
+
+def _assign_via_tmp(text):
+    return [text[:m.start()] + "{\n        s32 av;\n        av = %s;\n        %s = av;\n    }" % (m.group(2), m.group(1)) + text[m.end():]
+            for m in re.finditer(r"(?<=\n        )(rf_\w+) = ([^;{}]+);", text)]
+
+
+def _tmp_assign_inline(text):
+    return [text[:m.start()] + "%s = %s;" % (m.group(2), m.group(1)) + text[m.end():]
+            for m in re.finditer(r"\{\n        s32 av;\n        av = ([^;]+);\n        (\w+) = av;\n    \}", text)]
+
+
 class Op:
     def __init__(self, name, fn, inverse, family):
         self.name, self.sites, self.inverse, self.family = name, fn, inverse, family
@@ -170,17 +191,22 @@ _defs = [
     ("swap_ifelse", _swap_ifelse, "swap_ifelse", "control"),
     ("ret_via_tmp", _ret_via_tmp, "tmp_inline", "temps"),
     ("tmp_inline", _tmp_inline, "ret_via_tmp", "temps"),
+    ("commute_call_add", _commute_call_add, "commute_call_add", "order"),
+    ("assign_via_tmp", _assign_via_tmp, "tmp_assign_inline", "temps"),
+    ("tmp_assign_inline", _tmp_assign_inline, "assign_via_tmp", "temps"),
     ("neg_eq", _neg_eq, "unneg_eq", "control"),
     ("unneg_eq", _unneg_eq, "neg_eq", "control"),
 ]
 OPS = {n: Op(n, f, inv, fam) for n, f, inv, fam in _defs}
 
 
-def apply_all(text, names=None):
-    """-> [(op name, new text)] every single-site rewrite, deduplicated, never the identity."""
+def apply_all(text, names=None, extra=None):
+    """-> [(op name, new text)] every single-site rewrite, deduplicated, never the identity. `extra` = {name: sites(text)} context operators
+    (e.g. Object Model lifts) that are appended to the plan."""
     seen, out = {text}, []
-    for n in (names or OPS):
-        for t in OPS[n].sites(text):
+    extra = extra or {}
+    for n in list(names or OPS) + [e for e in extra if e not in (names or [])]:
+        for t in (extra[n](text) if n in extra else OPS[n].sites(text)):
             if t not in seen:
                 seen.add(t)
                 out.append((n, t))

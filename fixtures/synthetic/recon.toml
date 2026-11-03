@@ -543,3 +543,10 @@ recipe = "o0"
 symbols = ["hs_wrap_inc"]
 group = "int"
 heldout = true
+
+[[function]]
+name = "rf_shape_area"
+source = "rf_shape_area.cpp"
+recipe = "o0"
+symbols = ["_ZNK5Shape4areaEv"]
+group = "cxx"

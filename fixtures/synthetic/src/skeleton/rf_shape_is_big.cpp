@@ -2,7 +2,7 @@
 
 s32 rf_shape_is_big(const Shape *s, s32 limit)
 {
-    if (s->area() > limit) {
+    if (((s32 (*)(const Shape*))(*(void ***)s)[0])(s) > limit) {
         return 1;
     }
     {

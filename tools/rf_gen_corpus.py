@@ -15,12 +15,32 @@ sys.path.insert(0, ROOT)
 from modules.reconstruction_factory.core import Factory
 from modules.reconstruction_factory.operators import apply_all
 from modules.reconstruction_factory.search import score
+from modules.reconstruction_factory import om as OM, om_skeleton as OS
 
 MUT = [(r"(?<![\w])(\w+) \+ (\w+)", r"\1 - \2"), (r" < ", " <= "), (r" > ", " >= "), (r" == ", " != "), (r"\* (\d+)", r"* \1 + 1"),
        (r"return (\w+);", r"return \1 + 1;"), (r" \+ (\w+);", r" + \1 + 1;")]
 
 
-def skeleton_for(f, fn, text):
+def om_registry(f):
+    img = OM.Image(f.adapter, {n: f.target(n) for n in f.project.names() if f.project.functions[n]["lang"] == "cxx"})
+    return OM.build_registry(img)
+
+
+def lifted_skeleton(f, fn, text, reg):
+    """Object-Model skeleton: a virtual call is written as the raw vptr/slot call (the lift's form) after one inverse operator."""
+    for t1 in [text] + [t for _o, t in apply_all(text)]:
+        for lt in OS.method_to_vslot(t1, reg)[:1]:
+            s = score(f, fn, lt)
+            if s and not s["exact"]:
+                return lt
+    return None
+
+
+def skeleton_for(f, fn, text, reg=None):
+    if reg is not None and f.project.functions[fn]["lang"] == "cxx" and "->" in text:
+        lt = lifted_skeleton(f, fn, text, reg)
+        if lt:
+            return lt
     first = None
     for o1, t1 in apply_all(text):
         s1 = score(f, fn, t1)
@@ -49,11 +69,12 @@ def build(root):
     f = Factory(os.path.join(root, "fixtures/synthetic/recon.toml"))
     P = f.project
     out = {"skeleton": {}, "mutants": {}}
+    reg = om_registry(f)
     for fn in sorted(P.functions):
         kind = "heldout" if P.functions[fn].get("heldout") else "ref"
         text = f.read_source(fn, kind if kind == "heldout" else "ref")
         src = P.functions[fn]["source"]
-        s = skeleton_for(f, fn, text)
+        s = skeleton_for(f, fn, text, reg)
         if s:
             out["skeleton"][src] = s
         m = mutant_for(f, fn, text)

@@ -7,7 +7,7 @@ from .operators import apply_all
 from .search import h, score
 
 
-def permute(factory, fn, skeleton, seed=0, iters=120, restarts=4):
+def permute(factory, fn, skeleton, seed=0, iters=120, restarts=4, extra=None):
     rng = random.Random(seed)
     s0 = score(factory, fn, skeleton)
     if s0 is None:
@@ -20,7 +20,7 @@ def permute(factory, fn, skeleton, seed=0, iters=120, restarts=4):
     for _ in range(restarts):
         cur = best
         for _ in range(iters // restarts):
-            opts = apply_all(cur[2])
+            opts = apply_all(cur[2], None, extra)
             if not opts:
                 break
             opn, t = opts[rng.randrange(len(opts))]
