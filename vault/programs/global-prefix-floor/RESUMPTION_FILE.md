@@ -27,12 +27,16 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
 3. DONE: done_gate reads CR-11/14/15/29 from receipts.
 4. DONE (W3, spec vault/specs/gpf-resident-admission.md, Owner "y" 2026-11-02): floor_regression_gate.py --budget
    (absolute per-layer ceilings read from the session window) + resident_budget.json (measured +10%); live: exit 0,
-   rules ceiling 8238 -> exit 1, 8239 -> exit 0. FLOOR 69/69, drill 22/22. done_gate CR-33..36 all PASS;
-   W0 receipt imported verbatim from 9ecdf2cfd. done_gate now 28 pass / 1 fail (CR-31) / 7 unknown of 36.
-5. OWNER QUESTION (not done): re-baseline incremental-cognition floor/reference.json (2026-10-05, pre-diet) with
-   --write-reference --replace? K-prg.md says re-baseline is the Owner's call; tools/wake_check.py (scheduled) reads it.
+   rules ceiling 8238 -> exit 1, 8239 -> exit 0. FLOOR 69/69, drill 23/23. done_gate CR-33..36 all PASS;
+   W0 receipt imported verbatim from 9ecdf2cfd. done_gate now 28 pass / 1 fail (CR-31) / 7 unknown of 36. 03b77e40.
+5. DONE (Owner "y" 2026-11-03): incremental-cognition floor/reference.json re-baselined from post-diet session
+   bcf0a0bc (total 182,303 chars; memory_global 7,871, rules 8,239). Old one (2026-10-05) was already exit 2 for
+   wake_check (layer_absent:other:deferred_tools_record). Self-check exit 0; wake_check gate cmd exit 0.
+   KNOWN FLAP: --project-dir picks the newest transcript by mtime; pre-diet sessions still open (8639e1eb from
+   11-01, bfa8b8ff from 11-02 13:18) carry 19,163 / 12,126 and read MATERIAL_RISE / OVER_BUDGET when they write
+   last. Correct verdict for those windows, clears when they close; not a regression.
 Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects, CR-09/10/13 unbuilt (Phase 5),
 CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file.
 
 ## Start
-Ask the Owner item 5; otherwise the next build is Phase 5 (CR-09/10/13) and needs its own plan.
+Next build is Phase 5 (CR-09/10/13); it needs its own plan before any edit.

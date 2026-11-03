@@ -9,6 +9,13 @@
  ],
  "components": [
   {
+   "chars": 4824,
+   "layer": "hook_context:SessionStart:SessionStart",
+   "scope": "universal",
+   "scope_basis": "user_settings",
+   "source": "hook:89ad43afb4eafffa:hook-dispatcher.js"
+  },
+  {
    "chars": 3405,
    "layer": "hook_context:SessionStart:SessionStart",
    "scope": "universal",
@@ -16,7 +23,7 @@
    "source": "hook:12d079e1117bd6db:run-hook.cmd"
   },
   {
-   "chars": 379,
+   "chars": 551,
    "layer": "other:environment",
    "scope": "harness",
    "scope_basis": "harness_type",
@@ -30,7 +37,7 @@
    "source": "model"
   },
   {
-   "chars": 5116,
+   "chars": 45603,
    "layer": "other:deferred_tools_delta",
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
@@ -63,6 +70,13 @@
    "scope": "unattributed",
    "scope_basis": "no_file",
    "source": "claude"
+  },
+  {
+   "chars": 1072,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "claude-code-guide"
   },
   {
    "chars": 124,
@@ -527,7 +541,7 @@
    "source": "woz"
   },
   {
-   "chars": 2033,
+   "chars": 8975,
    "layer": "other:mcp_instructions_delta",
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
@@ -548,7 +562,7 @@
    "source": "agent-reach"
   },
   {
-   "chars": 443,
+   "chars": 30,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -604,6 +618,13 @@
    "source": "canvas-design"
   },
   {
+   "chars": 573,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "capability-preserving-compaction"
+  },
+  {
    "chars": 15,
    "layer": "skill_listing",
    "scope": "universal",
@@ -616,6 +637,13 @@
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "claude-power-pack"
+  },
+  {
+   "chars": 34,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "claude-power-pack-wt-founder-os"
   },
   {
    "chars": 15,
@@ -646,7 +674,7 @@
    "source": "composition-patterns"
   },
   {
-   "chars": 632,
+   "chars": 644,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -695,7 +723,7 @@
    "source": "destructive-state-authorization"
   },
   {
-   "chars": 592,
+   "chars": 27,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -707,6 +735,27 @@
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "dios-segun-buda"
+  },
+  {
+   "chars": 43,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "documented-capability-must-be-executable"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "durable-exit-transaction"
+  },
+  {
+   "chars": 37,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "effect-authority-across-transports"
   },
   {
    "chars": 30,
@@ -756,6 +805,20 @@
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "game-feel-codex"
+  },
+  {
+   "chars": 43,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "generated-content-needs-an-evidence-gate"
+  },
+  {
+   "chars": 651,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gex44-run-ops"
   },
   {
    "chars": 27,
@@ -1276,11 +1339,18 @@
    "source": "gsd-workstreams"
   },
   {
-   "chars": 664,
+   "chars": 27,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "guard-event-reachability"
+  },
+  {
+   "chars": 556,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "human-facing-external-effects"
   },
   {
    "chars": 12,
@@ -1353,7 +1423,7 @@
    "source": "kobiicraft-prd"
   },
   {
-   "chars": 103,
+   "chars": 21,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -1372,6 +1442,13 @@
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "kobiicraft-testing"
+  },
+  {
+   "chars": 28,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiimii-character-artist"
   },
   {
    "chars": 625,
@@ -1463,6 +1540,13 @@
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "pojavlauncher-headless-driver"
+  },
+  {
+   "chars": 29,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "post-effect-resource-truth"
   },
   {
    "chars": 40,
@@ -1563,6 +1647,20 @@
    "source": "remotion-kobii-templates"
   },
   {
+   "chars": 330,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "reverse-engineer-anything"
+  },
+  {
+   "chars": 557,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "scoped-side-effect-authority"
+  },
+  {
    "chars": 21,
    "layer": "skill_listing",
    "scope": "universal",
@@ -1619,6 +1717,13 @@
    "source": "spanish-mc-menus"
   },
   {
+   "chars": 33,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "state-lifetime-and-incarnation"
+  },
+  {
    "chars": 24,
    "layer": "skill_listing",
    "scope": "universal",
@@ -1626,11 +1731,25 @@
    "source": "stripe-best-practices"
   },
   {
+   "chars": 37,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "technical-failure-to-product-state"
+  },
+  {
    "chars": 14,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "test-master"
+  },
+  {
+   "chars": 36,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "validation-planes-do-not-transfer"
   },
   {
    "chars": 285,
@@ -1668,7 +1787,14 @@
    "source": "webapp-testing"
   },
   {
-   "chars": 89,
+   "chars": 22,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "wii-asset-authoring"
+  },
+  {
+   "chars": 655,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -1682,6 +1808,13 @@
    "source": "wii-disc-reconstruction"
   },
   {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "wii-memory-and-frame-budget"
+  },
+  {
    "chars": 824,
    "layer": "skill_listing",
    "scope": "universal",
@@ -1689,7 +1822,7 @@
    "source": "wii-power-pack"
   },
   {
-   "chars": 115,
+   "chars": 118,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -1710,7 +1843,7 @@
    "source": "autoupdate"
   },
   {
-   "chars": 92,
+   "chars": 20,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -1759,7 +1892,7 @@
    "source": "bmad:dev-story"
   },
   {
-   "chars": 105,
+   "chars": 11,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -1822,7 +1955,7 @@
    "source": "carl:manager"
   },
   {
-   "chars": 37,
+   "chars": 22,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -1836,7 +1969,7 @@
    "source": "carl:tasks:create-command"
   },
   {
-   "chars": 47,
+   "chars": 27,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -1890,6 +2023,13 @@
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "cpp-compound"
+  },
+  {
+   "chars": 272,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-founder-round"
   },
   {
    "chars": 361,
@@ -1948,7 +2088,7 @@
    "source": "kclear"
   },
   {
-   "chars": 74,
+   "chars": 12,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -1983,11 +2123,25 @@
    "source": "omni-verification-oracle-audit"
   },
   {
+   "chars": 6,
+   "layer": "skill_listing",
+   "scope": "project",
+   "scope_basis": "project_file",
+   "source": "osa"
+  },
+  {
    "chars": 12,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
    "source": "ovo-audit"
+  },
+  {
+   "chars": 210,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "practicar-cafe"
   },
   {
    "chars": 87,
@@ -2046,7 +2200,14 @@
    "source": "test-gaps"
   },
   {
-   "chars": 158,
+   "chars": 217,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "tiempo"
+  },
+  {
+   "chars": 164,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "install_file",
@@ -2081,7 +2242,7 @@
    "source": "code-review:code-review"
   },
   {
-   "chars": 228,
+   "chars": 243,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "plugin_namespace",
@@ -2095,7 +2256,7 @@
    "source": "superpowers:diagnosing-superpowers"
   },
   {
-   "chars": 150,
+   "chars": 42,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "plugin_namespace",
@@ -2151,7 +2312,7 @@
    "source": "superpowers:test-driven-development"
   },
   {
-   "chars": 232,
+   "chars": 34,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "plugin_namespace",
@@ -2193,7 +2354,7 @@
    "source": "frontend-design:frontend-design"
   },
   {
-   "chars": 838,
+   "chars": 30,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "plugin_namespace",
@@ -2207,7 +2368,7 @@
    "source": "andrej-karpathy-skills:karpathy-guidelines"
   },
   {
-   "chars": 406,
+   "chars": 50,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "plugin_namespace",
@@ -2284,7 +2445,7 @@
    "source": "run"
   },
   {
-   "chars": 250,
+   "chars": 267,
    "layer": "skill_listing",
    "scope": "unattributed",
    "scope_basis": "no_file",
@@ -2319,7 +2480,7 @@
    "source": "anthropic-skills:chrome-browser"
   },
   {
-   "chars": 968,
+   "chars": 32,
    "layer": "skill_listing",
    "scope": "universal",
    "scope_basis": "plugin_namespace",
@@ -2345,13 +2506,6 @@
    "scope": "universal",
    "scope_basis": "plugin_namespace",
    "source": "anthropic-skills:docx"
-  },
-  {
-   "chars": 36,
-   "layer": "skill_listing",
-   "scope": "universal",
-   "scope_basis": "plugin_namespace",
-   "source": "anthropic-skills:google-workspace"
   },
   {
    "chars": 33,
@@ -2396,193 +2550,67 @@
    "source": "anthropic-skills:xlsx"
   },
   {
-   "chars": 105,
+   "chars": 131,
    "layer": "other:auto_mode",
    "scope": "harness",
    "scope_basis": "harness_type",
    "source": "auto_mode"
   },
   {
-   "chars": 60,
-   "layer": "other:total_tokens_reminder",
-   "scope": "unattributed",
-   "scope_basis": "origin_unprovable",
-   "source": "total_tokens_reminder"
+   "chars": 45,
+   "layer": "other:command_permissions",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "command_permissions"
   },
   {
-   "chars": 2073,
+   "chars": 2267,
    "layer": "hook_context:UserPromptSubmit:UserPromptSubmit",
    "scope": "unattributed",
    "scope_basis": "event_uncorrelated",
    "source": "event:UserPromptSubmit"
   },
   {
-   "chars": 39809,
+   "chars": 7871,
    "layer": "memory_global",
    "scope": "universal",
    "scope_basis": "file_type",
    "source": "C:\\Users\\User\\.claude\\CLAUDE.md"
   },
   {
-   "chars": 3325,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\capability-preserving-compaction.md"
-  },
-  {
-   "chars": 1739,
+   "chars": 171,
    "layer": "rules",
    "scope": "universal",
    "scope_basis": "file_type",
    "source": "C:\\Users\\User\\.claude\\rules\\common\\code-review.md"
   },
   {
-   "chars": 913,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\concurrent-writers-shared-tree.md"
-  },
-  {
-   "chars": 728,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\destructive-state-authorization.md"
-  },
-  {
-   "chars": 689,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\develop-here-prove-there.md"
-  },
-  {
-   "chars": 5023,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\documented-capability-must-be-executable.md"
-  },
-  {
-   "chars": 2824,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md"
-  },
-  {
-   "chars": 6100,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\effect-authority-across-transports.md"
-  },
-  {
-   "chars": 689,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\evaluation-corpus-governance.md"
-  },
-  {
-   "chars": 6257,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\generated-content-needs-an-evidence-gate.md"
-  },
-  {
-   "chars": 674,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\guard-event-reachability.md"
-  },
-  {
-   "chars": 5510,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\human-facing-external-effects.md"
-  },
-  {
-   "chars": 591,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\instrument-before-claim.md"
-  },
-  {
-   "chars": 694,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\monetary-quantity-integrity.md"
-  },
-  {
-   "chars": 3112,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\post-effect-resource-truth.md"
-  },
-  {
-   "chars": 674,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\presence-is-not-residency.md"
-  },
-  {
-   "chars": 2489,
+   "chars": 170,
    "layer": "rules",
    "scope": "universal",
    "scope_basis": "file_type",
    "source": "C:\\Users\\User\\.claude\\rules\\python\\testing.md"
   },
   {
-   "chars": 634,
+   "chars": 1226,
    "layer": "rules",
    "scope": "universal",
    "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\real-context-reachability.md"
+   "source": "C:\\Users\\User\\.claude\\rules\\seo-geo-corpus-methodology.md"
   },
   {
-   "chars": 686,
+   "chars": 5457,
    "layer": "rules",
    "scope": "universal",
    "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\recurring-work-cardinality.md"
+   "source": "C:\\Users\\User\\.claude\\rules\\skill-rule-index.md"
   },
   {
-   "chars": 6580,
+   "chars": 1215,
    "layer": "rules",
    "scope": "universal",
    "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\scoped-side-effect-authority.md"
-  },
-  {
-   "chars": 3133,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\state-lifetime-and-incarnation.md"
-  },
-  {
-   "chars": 6912,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\technical-failure-to-product-state.md"
-  },
-  {
-   "chars": 3649,
-   "layer": "rules",
-   "scope": "universal",
-   "scope_basis": "file_type",
-   "source": "C:\\Users\\User\\.claude\\rules\\validation-planes-do-not-transfer.md"
+   "source": "C:\\Users\\User\\.claude\\rules\\test-plan-against-facts-in-hand.md"
   },
   {
    "chars": 5956,
@@ -2592,7 +2620,21 @@
    "source": "C:\\Users\\User\\CLAUDE.md"
   },
   {
-   "chars": 304,
+   "chars": 22861,
+   "layer": "memory_project",
+   "scope": "project",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\CLAUDE.md"
+  },
+  {
+   "chars": 2747,
+   "layer": "other:instructions",
+   "scope": "unattributed",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\memory\\MEMORY.md"
+  },
+  {
+   "chars": 3308,
    "layer": "other:session_context",
    "scope": "harness",
    "scope_basis": "harness_type",
@@ -2620,11 +2662,11 @@
    "source": "remote_session_change"
   },
   {
-   "chars": 1603,
+   "chars": 2025,
    "layer": "system_prompt",
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
-   "source": "part:f042871f58ae"
+   "source": "part:469950f24f45"
   },
   {
    "chars": 34,
@@ -2632,13 +2674,6 @@
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
    "source": "part:26490c16e8c5"
-  },
-  {
-   "chars": 94,
-   "layer": "system_prompt",
-   "scope": "unattributed",
-   "scope_basis": "origin_unprovable",
-   "source": "part:ee43af373985"
   },
   {
    "chars": 357,
@@ -2655,25 +2690,25 @@
    "source": "part:972441535793"
   },
   {
-   "chars": 662,
+   "chars": 921,
    "layer": "system_prompt",
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
-   "source": "part:0937acefc6d6"
+   "source": "part:5db7179f598c"
   },
   {
-   "chars": 2097,
+   "chars": 2102,
    "layer": "system_prompt",
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
-   "source": "part:be94f5deb70a"
+   "source": "part:ba433ddd54ac"
   },
   {
-   "chars": 602,
+   "chars": 579,
    "layer": "system_prompt",
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
-   "source": "part:fbd0152b3ebc"
+   "source": "part:c34f6aeb8af3"
   },
   {
    "chars": 280,
@@ -2690,11 +2725,18 @@
    "source": "part:4e4e48fb23ce"
   },
   {
-   "chars": 49,
+   "chars": 188,
    "layer": "system_prompt",
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
-   "source": "part:2b7db5539346"
+   "source": "part:8747e6877311"
+  },
+  {
+   "chars": 231,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:46a24a6f7d26"
   },
   {
    "chars": 423,
@@ -2702,57 +2744,37 @@
    "scope": "unattributed",
    "scope_basis": "origin_unprovable",
    "source": "part:41631e7eb968"
-  },
-  {
-   "chars": 1761,
-   "layer": "other:deferred_tools_record",
-   "scope": "unattributed",
-   "scope_basis": "origin_unprovable",
-   "source": "deferred_tools_record"
   }
  ],
  "excluded": {
   "file_chars": 0,
   "hook_success_rows": 2,
-  "prompt_chars": 30
+  "prompt_chars": 3730
  },
- "explanations": [
-  {
-   "commit": "e336e06a",
-   "consumer": "interactive sessions that use the Gmail / Google Drive tools; none in a K probe",
-   "delta_bound": 3400,
-   "evidence": "vault/programs/incremental-cognition/evidence/K-deferred-tools.md",
-   "layer": "other:deferred_tools_delta",
-   "producer": "host: MCP servers configured for the account (claude.ai connectors)",
-   "reason": "41 claude.ai connector tool NAMES (Gmail 30, Google Drive 11) added to the account after the champion; names only, descriptions stay deferred. Interactive sessions have no launch flag to scope them: account floor, budgeted by Owner decision 2026-10-05. Headless launches can remove them (--strict-mcp-config).",
-   "review_when": "the connector set changes, or worker launches adopt --strict-mcp-config (tool-surface phase)",
-   "scope": "unattributed",
-   "unit": "chars"
-  }
- ],
+ "explanations": [],
  "layers": [
   {
-   "chars": 3405,
+   "chars": 8229,
    "layer": "hook_context:SessionStart:SessionStart",
    "scope": "universal"
   },
   {
-   "chars": 2073,
+   "chars": 2267,
    "layer": "hook_context:UserPromptSubmit:UserPromptSubmit",
    "scope": "unattributed"
   },
   {
-   "chars": 39809,
+   "chars": 7871,
    "layer": "memory_global",
    "scope": "universal"
   },
   {
-   "chars": 5956,
+   "chars": 28817,
    "layer": "memory_project",
    "scope": "project"
   },
   {
-   "chars": 1579,
+   "chars": 2651,
    "layer": "other:agent_listing_delta",
    "scope": "unattributed"
   },
@@ -2762,8 +2784,13 @@
    "scope": "universal"
   },
   {
-   "chars": 105,
+   "chars": 131,
    "layer": "other:auto_mode",
+   "scope": "harness"
+  },
+  {
+   "chars": 45,
+   "layer": "other:command_permissions",
    "scope": "harness"
   },
   {
@@ -2777,22 +2804,22 @@
    "scope": "harness"
   },
   {
-   "chars": 5116,
+   "chars": 45603,
    "layer": "other:deferred_tools_delta",
    "scope": "unattributed"
   },
   {
-   "chars": 1761,
-   "layer": "other:deferred_tools_record",
-   "scope": "unattributed"
-  },
-  {
-   "chars": 379,
+   "chars": 551,
    "layer": "other:environment",
    "scope": "harness"
   },
   {
-   "chars": 2033,
+   "chars": 2747,
+   "layer": "other:instructions",
+   "scope": "unattributed"
+  },
+  {
+   "chars": 8975,
    "layer": "other:mcp_instructions_delta",
    "scope": "unattributed"
   },
@@ -2807,63 +2834,62 @@
    "scope": "harness"
   },
   {
-   "chars": 304,
+   "chars": 3308,
    "layer": "other:session_context",
    "scope": "harness"
   },
   {
-   "chars": 60,
-   "layer": "other:total_tokens_reminder",
-   "scope": "unattributed"
-  },
-  {
-   "chars": 63625,
+   "chars": 8239,
    "layer": "rules",
    "scope": "universal"
   },
   {
-   "chars": 5493,
+   "chars": 6,
+   "layer": "skill_listing",
+   "scope": "project"
+  },
+  {
+   "chars": 5510,
    "layer": "skill_listing",
    "scope": "unattributed"
   },
   {
-   "chars": 24507,
+   "chars": 24472,
    "layer": "skill_listing",
    "scope": "universal"
   },
   {
-   "chars": 6998,
+   "chars": 7937,
    "layer": "system_prompt",
    "scope": "unattributed"
   }
  ],
  "provenance": {
-  "command": "python.exe tools/floor_regression_gate.py --write-reference vault/programs/incremental-cognition/floor/reference.json --session 8f983bc6-d760-4440-938d-aeed86a548ae",
-  "cwd": "C:\\Users\\User\\Apps\\listing-probe\\champion",
-  "first_call_at": "2026-10-03T13:34:53.743Z",
-  "install_commit": null,
-  "install_commit_reason": "no git work tree at <install_home>/.claude/skills/claude-power-pack",
+  "command": "python.exe tools/floor_regression_gate.py --write-reference vault/programs/incremental-cognition/floor/reference.json --session bcf0a0bc-e334-41d4-a16e-772b5edf21b5 --replace",
+  "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+  "first_call_at": "2026-11-02T19:33:25.146Z",
+  "install_commit": "03b77e4057aba4d8f6b6fd7df76ce067993ac303",
   "install_home": "C:\\Users\\User",
-  "measured_at": "2026-10-05T20:28:17Z",
+  "measured_at": "2026-11-03T05:15:19Z",
   "plane": "DESKTOP-PMT5BS8",
   "platform": "win32",
-  "repo_commit": null,
-  "session_id": "8f983bc6-d760-4440-938d-aeed86a548ae",
+  "repo_commit": "03b77e4057aba4d8f6b6fd7df76ce067993ac303",
+  "session_id": "bcf0a0bc-e334-41d4-a16e-772b5edf21b5",
   "source": "session",
-  "transcript": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-listing-probe-champion\\8f983bc6-d760-4440-938d-aeed86a548ae.jsonl",
-  "window_rows": 25,
-  "window_sha256": "22042236b82bec96ff7641a9c52159090adb0ac7ecd476bc7a795b57214b8f42"
+  "transcript": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\bcf0a0bc-e334-41d4-a16e-772b5edf21b5.jsonl",
+  "window_rows": 48,
+  "window_sha256": "48df4608800e2c2b22205b4262ebade6977ce5de5097363984fcc174a2333bf9"
  },
  "schema": "floor-reference/1",
  "skill_listing": {
-  "chars": 30000,
-  "entries": 266,
-  "skill_count": 266
+  "chars": 29988,
+  "entries": 286,
+  "skill_count": 286
  },
  "tokens": {
-  "first_call_total": 87739,
-  "prompt_digest": "c5c169d113f9a2c8fae34a08908b70dd120023134785b89738e99d8e4259bcaa",
+  "first_call_total": 71883,
+  "prompt_digest": "c538b295a90e977fc9ed7e6446168fe41873618f5d5bb7de66f86c91c8b982c3",
   "status": "measured"
  },
- "total_chars": 188147
+ "total_chars": 182303
 }
