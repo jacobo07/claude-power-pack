@@ -35,8 +35,18 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
    KNOWN FLAP: --project-dir picks the newest transcript by mtime; pre-diet sessions still open (8639e1eb from
    11-01, bfa8b8ff from 11-02 13:18) carry 19,163 / 12,126 and read MATERIAL_RISE / OVER_BUDGET when they write
    last. Correct verdict for those windows, clears when they close; not a regression.
-Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects, CR-09/10/13 unbuilt (Phase 5),
+6. Phase 5 Safe-to-Forget (Owner "y" 2026-11-03, spec vault/specs/ccr-safe-to-forget-main.md): BUILT cc993f2f
+   (safeToForget + CCR_MAIN_PROJECT=1 opt-in + projected page faults; plugin test 36/0, mutation killed, DONEGATE 43/43,
+   review APPROVE, M1+5 LOW fixed). Released 0.1.0-9bdf5998; smoke 1 measured NOTHING -> ROLLED BACK to 0.1.0-39151f03
+   (HR-2), b699bdaa: host auto-updated to Claude Code 2.1.317 (2026-11-03 02:32), outside COMPAT -> ALL CCR shadow
+   (main-lean canary off on every pane since); and the 52 KB fixture was host-persisted. Fixture now 18,735 chars;
+   driver + done_gate count only compatible runs with a project receipt (DONEGATE 45/45). Null receipt:
+   ctx-rent-x/phase5-smoke-null-host-2.1.317.json.
+   OWNER QUESTION: widen COMPAT to 2.1.317 via the governed reprobe (last: 0c0eb4da7, 1.1M haiku tokens; tool in
+   .claude/worktrees/ccr-next-verify/tools/ccr_compat_gate.py)? Then: release cc993f2f+COMPAT, rerun
+   `phase5_smoke.py <PP repo> vault/programs/ctx-rent-x/phase5-safe-to-forget.json FNNFFN`, keep/rollback by HR-2.
+Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects,
 CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file.
 
 ## Start
-Next build is Phase 5 (CR-09/10/13); it needs its own plan before any edit.
+Ask the Owner the COMPAT 2.1.317 question (item 6). Phase 5 cannot be measured on an incompatible host.
