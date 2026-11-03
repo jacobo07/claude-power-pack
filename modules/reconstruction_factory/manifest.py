@@ -8,7 +8,8 @@ Schema (schema = 1):
                     runner           : optional wrapper command list (mwcc only; never shipped)
                     [toolchain.recipe.<id>]  flags (list[str]), lang_flags.c / lang_flags.cxx (list[str], optional)
                     [toolchain.variant.<id>] base (recipe id), add (list[str]), drop (list[str])   -- Build Twin alternatives
-  [corpus]          include (list[dir]), ref_dir, skeleton_dir, mutant_dir (optional), heldout_dir, heldout_seal (file)
+  [corpus]          include (list[dir]), ref_dir, skeleton_dir, mutant_dir (optional), heldout_dir, heldout_seal (file),
+                    target_dir (optional: prebuilt target objects <function>.o; absent = targets are built from ref_dir sources)
   [[function]]      name, source (file in ref_dir), recipe (recipe id), symbols (list[str]), lang "c"|"cxx" (default by extension),
                     group (optional str), heldout (bool, optional; source then lives in heldout_dir)
 Relative paths resolve against the manifest's directory. Nothing else is read from anywhere.
@@ -71,7 +72,7 @@ def validate(doc):
         if v["base"] not in tc["recipe"]:
             raise ManifestError("toolchain.variant.%s.base names no recipe" % vid)
     _check(doc["corpus"], {"include": (list, True), "ref_dir": (str, True), "skeleton_dir": (str, True), "mutant_dir": (str, False),
-                           "heldout_dir": (str, False), "heldout_seal": (str, False)}, "corpus")
+                           "heldout_dir": (str, False), "heldout_seal": (str, False), "target_dir": (str, False)}, "corpus")
     seen = set()
     for f in doc["function"]:
         _check(f, {"name": (str, True), "source": (str, True), "recipe": (str, True), "symbols": (list, True), "lang": (str, False),
