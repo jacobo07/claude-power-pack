@@ -16,6 +16,8 @@ from modules.reconstruction_factory import causal_diff as CD
 from modules.reconstruction_factory import certify as C
 from modules.reconstruction_factory import fingerprint as FP
 from modules.reconstruction_factory import judge as J
+from modules.reconstruction_factory import om as OM
+from modules.reconstruction_factory import om_skeleton as OS
 from modules.reconstruction_factory import permute as PM
 from modules.reconstruction_factory import residual as RS
 from modules.reconstruction_factory import search as S
@@ -259,6 +261,90 @@ def g_corpus(ctx):
     assert set(out["skeleton"]) == {s for s in os.listdir(P.source_dir("skeleton"))}
     assert json.load(open(P.p(P.doc["corpus"]["heldout_seal"]))) == seal, "held-out seal drifted"
     assert len(seal["functions"]) == 8
+
+
+def _reg(ctx):
+    if not hasattr(ctx, "reg"):
+        ctx.reg = GC.om_registry(ctx.f)
+    return ctx.reg
+
+
+@contextlib.contextmanager
+def _no_override():
+    orig = OM.propagate
+
+    def flat(reg):
+        return {c: [dict(x, override=False) for x in rows] for c, rows in orig(reg).items()}
+    OM.propagate = flat
+    try:
+        yield
+    finally:
+        OM.propagate = orig
+
+
+@kit.gate("V-RF-OM-REGISTRY", drill=lambda: patched(OM, "grade", lambda kinds: "VTABLE"))
+def g_om_registry(ctx):
+    reg = _reg(ctx)
+    assert {c: reg[c]["grade"] for c in reg} == {"Shape": "VTABLE", "CircleShape": "VTABLE", "RectShape": "VTABLE"}, {c: reg[c]["grade"] for c in reg}
+    assert reg["Shape"]["kinds"] == ["data", "install", "vcall"] and reg["CircleShape"]["base"] == "Shape" and reg["Shape"]["base"] is None
+    f = ctx.f                                                          # single-kind case: one object that only carries the table stays a CANDIDATE
+    img = OM.Image(f.adapter, {"only": f.target("rf_shape_area")})
+    one = OM.build_registry(img)
+    assert one and all(r["grade"] == "CANDIDATE" and len(r["kinds"]) < 2 for r in one.values()), one
+    assert OM.grade(["data", "data"]) == "CANDIDATE" and OM.grade(["data", "install"]) == "VTABLE"
+
+
+@kit.gate("V-RF-OM-PROPAGATE", drill=_no_override)
+def g_om_prop(ctx):
+    reg = _reg(ctx)
+    pr = OM.propagate(reg)
+    circ = {x["method"] or x["kind"]: x for x in pr["CircleShape"]}
+    rect = {x["method"] or x["kind"]: x for x in pr["RectShape"]}
+    assert circ["area"]["override"] and circ["scale"]["override"] and circ["area"]["index"] == 0 and circ["scale"]["index"] == 1
+    assert rect["area"]["override"] and not rect["scale"]["override"], "RectShape inherits Shape::scale"
+    assert OM.root_methods(reg) == {0: ("area", [], True), 1: ("scale", ["s32"], False)}
+    assert not any(x["override"] for x in pr["Shape"])
+
+
+@kit.gate("V-RF-OM-THISCALL", drill=lambda: patched(OM, "field_accesses", lambda rows: []))
+def g_om_this(ctx):
+    f = ctx.f
+    fn = "rf_circle_ctor"
+    img = OM.Image(f.adapter, {fn: f.target(fn)})
+    got = OM.field_accesses(img.rows(fn, ctx.P.functions[fn]["symbols"][0]))
+    assert got == [(0, "stw"), (8, "stw")], got                             # vptr at 0, r at 8 (Shape::id is stored by the base ctor)
+    assert OM.field_accesses([("blr", "", "", "")]) == []                   # no this-slot evidence -> no invented fields
+
+
+@kit.gate("V-RF-OM-DECLS", drill=lambda: patched(OS, "class_decls", lambda reg: "struct Shape {};\n"))
+def g_om_decls(ctx):
+    reg = _reg(ctx)
+    d = OS.class_decls(reg)
+    assert "struct CircleShape : Shape" in d and d.index("virtual s32 area() const;") < d.index("virtual s32 scale(s32);")
+    f = ctx.f
+    c = f.adapter.compile("typedef int s32;\n" + d + "s32 g(const Shape *s){ return s->area(); }\n", "cxx", ctx.P.flags("o0", "cxx"), [], f._clean_dir("decl"), name="decls")
+    assert c.ok, c.log
+    cr = dict(reg)
+    cr["Shape"] = dict(reg["Shape"], grade="CANDIDATE")
+    assert "CANDIDATE: not promoted" in OS.class_decls(cr), "a CANDIDATE table must not emit declarations"
+
+
+@kit.gate("V-RF-OM-VCALL", drill=lambda: patched(OS, "vslot_to_method", lambda t, reg: []))
+def g_om_vcall(ctx):
+    reg = _reg(ctx)
+    vs = lambda t: OS.vslot_to_method(t, reg)
+    for fn in ("rf_call_area", "rf_total_area", "rf_scale_all"):
+        ref = ctx.f.read_source(fn)
+        raw = OS.method_to_vslot(ref, reg)
+        assert raw and "(*(void ***)" in raw[0], fn
+        assert ctx.f.judge_text(fn, raw[0])[1].ok, "raw slot form must compile: " + fn
+        assert OS.vslot_to_method(raw[0], reg) == [ref], fn                    # the OM operator inverts the lift exactly
+        r = S.search(ctx.f, fn, raw[0], budget=60, extra={"vslot_to_method": vs})
+        assert r["status"] == "EXACT", (fn, r["status"])
+        assert C.certify(ctx.f, fn, r["text"], released=True)["verdict"] == "CERTIFIED_EXACT", fn
+    sk = ctx.skeletons()["rf_scale_all"]
+    assert S.search(ctx.f, "rf_scale_all", sk, budget=80, extra={"vslot_to_method": vs})["status"] == "EXACT"
+    assert OS.vslot_to_method("int x;", reg) == []
 
 
 if __name__ == "__main__":
