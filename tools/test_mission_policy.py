@@ -158,6 +158,27 @@ def main() -> int:
     tbadn = [s for s in tneg if mp.gate_question(s, pv)["result"] != "RESOLVE_BY_DEFAULT"]
     check("V-MPOL-GATE-TRUTH-NEG", not tbadn, f"{len(tneg) - len(tbadn)}/{len(tneg)} HOW questions stay default; "
                                               f"wrongly escalated={tbadn}")
+    # S11 D3: incident 2026-11-02 23:31Z (m-f0b595fd509f epoch 12) -- waiving a held-out release control was answered
+    # RESOLVE_BY_DEFAULT. A positive/negative control or a release/kill gate is part of the truth contract.
+    waive = "Waive fn_80222480 for OM-PR1, or authorize a new source-shape approach beyond declaration order"
+    g = mp.gate_question(waive, pv)
+    wsynth = [waive, "Can we waive the positive control that still fails?", "Drop one negative control from the release set?",
+              "Relax the kill gate K5 for this wave?", "Treat OM-PR1 as passed at 2/3?"]
+    wbad = [s for s in wsynth if mp.gate_question(s, pv).get("owner_class") != "TRUTH_CONTRACT"]
+    check("V-MPOL-GATE-TRUTH-CONTROL-WAIVER", not wbad, f"{len(wsynth) - len(wbad)}/{len(wsynth)} control waivers -> "
+                                                        f"TRUTH_CONTRACT; missed={wbad}")
+    # S11 D2: incident 2026-11-03 (same mission): the checkpoint reason "in-scope routes falsified" read as PRODUCT_SCOPE,
+    # which would have parked an engineering pivot for the Owner. A descriptive in-scope adjective is not a scope question;
+    # a question ABOUT scope still is.
+    reason = ("OM-PR1 2/3: fn_80222480 98.9 (mwcc reg priority), in-scope routes falsified; "
+              "6 dev registry-attributable CXX")
+    sneg = [reason, "All in-scope methods exhausted for the residual; next route is the ctor hint generator"]
+    sbad = [s for s in sneg if mp.gate_question(s, pv)["result"] != "RESOLVE_BY_DEFAULT"]
+    spos = ["Is the ctor hint route in scope?", "Should we expand the scope to the C++ runtime library?",
+            "Is that out of scope for S11?"]
+    sbadp = [s for s in spos if mp.gate_question(s, pv).get("owner_class") != "PRODUCT_SCOPE"]
+    check("V-MPOL-GATE-SCOPE-DESCRIPTIVE", not sbad and not sbadp,
+          f"descriptive stays default (wrongly escalated={sbad}); scope questions stay PRODUCT_SCOPE (missed={sbadp})")
 
     # 14-01 W2a: done-gate / overrun / deviation Owner class (addendum section 3), kill switch CPP_MISSION_OWNER_GATES.
     saved_ks = os.environ.pop(KILL_SWITCH, None)
@@ -280,6 +301,10 @@ DRILLS = (
     ("M3 class pattern reduced to one literal phrase", '("DONE_GATE_OR_DEVIATION", DONE_GATE_RX)',
      '("DONE_GATE_OR_DEVIATION", re.compile(r"override the done-gate", re.I))', "V-MPOL-OWNER-SYNTH"),
     ("M4 truth-contract class removed", '    ("TRUTH_CONTRACT", TRUTH_CONTRACT_RX),\n', "", "V-MPOL-GATE-TRUTH-SD8"),
+    ("M5 control terms dropped from the truth contract", r'|kill[- ]gates?|OM-PR\d+|', "|",
+     "V-MPOL-GATE-TRUTH-CONTROL-WAIVER"),
+    ("M6 descriptive-scope neutraliser bypassed", "t_scope = _DESCRIPTIVE_SCOPE_RX.sub(\" \", t)", "t_scope = t",
+     "V-MPOL-GATE-SCOPE-DESCRIPTIVE"),
 )
 
 

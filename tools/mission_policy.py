@@ -191,10 +191,19 @@ DONE_GATE_RX = re.compile(
 # variant" was answered RESOLVE_BY_DEFAULT). Changing what counts as certified, exact or held-out changes WHAT the
 # Owner authorised, never only HOW. Strong nouns pair with any change verb; bare exact/certified only with a relaxing
 # verb, so "count exact matches per batch" stays an ordinary question.
-_TC_VERB = r"(?:admit|allow|accept|relax|loosen|weaken|change|modify|redefine|waive|lower|widen|count|reuse|treat)\w*"
+_TC_VERB = (r"(?:admit|allow|accept|relax|loosen|weaken|change|modify|redefine|waive|lower|widen|count|reuse|treat|"
+            r"drop|skip|bypass)\w*")
 _TC_RELAX = r"(?:accept|relax|loosen|weaken|redefine|waive|lower)\w*"
+# S11 D3 (incident 2026-11-02 23:31Z, "Waive fn_80222480 for OM-PR1" answered RESOLVE_BY_DEFAULT): the controls and
+# gates that release a held-out are part of the truth contract too.
 _TC_STRONG = (r"(?:certification contract|cert-[a-z0-9]+(?:@\d+)?|truth contract|match threshold|held[- ]?out|"
-              r"independent evidence|evidence (?:accounting|independence)|definition of (?:exact|certified))")
+              r"independent evidence|evidence (?:accounting|independence)|definition of (?:exact|certified)|"
+              r"(?:positive|negative) controls?|kill[- ]gates?|OM-PR\d+|release (?:conditions?|gates?|set))")
+# S11 D2 (incident 2026-11-03, a checkpoint reason "in-scope routes falsified" read as PRODUCT_SCOPE): an in/out-of-scope
+# adjective in front of an engineering noun describes work; it does not ask about scope. Removed before the class check.
+_DESCRIPTIVE_SCOPE_RX = re.compile(
+    r"\b(?:in|within|out[- ]of)[- ]scope(?=[ -]+(?:routes?|methods?|options?|approach\w*|candidates?|variants?|work|"
+    r"items?|attempts?|fixes)\b)", re.I)
 TRUTH_CONTRACT_RX = re.compile(
     r"\b" + _TC_VERB + r"\b[^?.]{0,80}" + _TC_STRONG + r"|"
     r"\b" + _TC_RELAX + r"\b[^?.]{0,60}\b(?:exact(?:ness)?|certified)\b|"
@@ -228,10 +237,11 @@ def gate_question(text: str, policy_values: dict | None = None) -> dict:
     t = text or ""
     pv = policy_values or {}
     gates_off = os.environ.get("CPP_MISSION_OWNER_GATES", "").lower() == "off"
+    t_scope = _DESCRIPTIVE_SCOPE_RX.sub(" ", t)
     for cls, rx in OWNER_CLASSES:
         if cls == "DONE_GATE_OR_DEVIATION" and gates_off:
             continue
-        if rx.search(t):
+        if rx.search(t_scope if cls == "PRODUCT_SCOPE" else t):
             return {"result": "OWNER_REQUIRED", "owner_class": cls,
                     "resolution": "Record an `OWNER DECISION NEEDED:` line in the mission STATE and continue every "
                                   "obligation that does not depend on it."}
