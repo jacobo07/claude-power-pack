@@ -5,6 +5,13 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**CURRENT (2026-11-03 14:15 UTC) — read this first; the blocks below are history.**
+- S11 CLOSED without H2 (Owner D1: no waiver, no control swap; t1 `58082c73`). H2 sealed, unread, unspent (manifest sha `922f214e`).
+- Frontier unique 1095/1797 = C 1086 + CXX 9, overlap 0 (H0, t1 `c3dc137f`). fn_80222480 is already CERTIFIED_CXX (S10b fixture); its 98.9 is only the raw-m2c control.
+- S11H (Owner "y", gen3 `3955257f`, plan backup `S11H-PLAN-PROPOSAL.md`): H0/H1/H2x done (t1 `c3dc137f`, `bba49802`, `6fbf44f7`, handoff `474670d1`). Mission m-f0b595fd509f HALTED on max-cycles 24; successor **m-fc7047a29f01** launched 14:10:39Z (authority 19.8M = remainder of the 80M, max-cycles 16, pivot Gen2 on), continuing at H3.
+- PP live on GEX44 `ce2414c1` (Gen2: typed receipts, authority objects, evidence-weighted pivots; D1-D3 + P5). Laptop `23691d01`. Rollback `git reset --keep db6bc9c6`.
+- Next: watch m-fc7047a29f01 H3->S; at its CHECKPOINT_COMPLETE review s11h/closeout.md. Coordinator debt: K unit (KV incidents, UKDL, CBR, Prompt Debt registry), U (upstream desk audit), `retarget` CLI for a generation's launch prompt (gap found today).
+
 **State (sealed 2026-11-01 ~15:10 UTC).**
 - Waves R0, M0 and S1-S8 are CLOSED. No mission is active in gen3-pp. The last one, m-f9560b5e8f1f, is HALTED with no_progress after S8 closed.
 - Frontier **1086/1797** (`FRONTIER_CHECK OK`).
@@ -90,5 +97,35 @@
 - S10 mission **m-e6e0340e743d**: cwd gen3-pp, Workset + t1-campaign, 40M authority + 1x15M, 12 cycles, 36 h. Launched by the sweep at 13:25:10Z, RUNNING, worker 3fbc7b02 (own ack).
 - m-9f94bef51619 (S9) is left parked at checkpoint METHOD_PIVOT_REQUIRED: nonterminal, no worker, no spend. `--supersedes` refuses without a workstream goal key, and `checkpoint --clear` would relaunch S9 (S9-12).
 - Next: (1) monitor m-e6e0340e743d: gen3 status lines, t1 commits; the S10-1/S10-2 V-CXX controls and mutation drill are the first gate (K1); (2) on S10-3, check the independent revalidation of the 3 LANE_EXACT; (3) on its checkpoint verb, judge the S10 stop rule.
+
+**Update 2026-11-02 ~15:45 UTC (S10 closed on K5; S10b proposed).**
+- S10 m-e6e0340e743d: K5 tripped (count of `s8/sweep-h.json` read before S10-6), 0 certificates, `cert_cxx.py` draft UNVALIDATED. t1 `35a1e465`, gen3 `d8c4e40c`. The epoch-2 worker only declared checkpoint NEXT_PLAN_REQUIRED (13:36Z). The sweep has not acted on it since, so it is parked. The sweep's RESOLVE_BY_DEFAULT on the sd8 question was NOT acted on.
+- Owner decisions: (1) old H is cohort-exposed: development/replay only; a new unseen H2 with a frozen manifest, sealed run, no partial reads. (2) `cert-cxx@2` admits sd8 with the same gates; count once; corroborating ≠ independent; both-exact → UNDERDETERMINED_TOOLCHAIN.
+- Plan: `S10B-PLAN-PROPOSAL.md` (this dir). Awaiting Owner approval. Nothing armed, nothing written to GEX44.
+- Next on approval: S10b section + H2 manifest into gen3, measure S10's token use, arm with `--no-launch` inside the remaining S10 envelope.
+
+**Update 2026-11-02 ~17:49 UTC (S10b approved "y"; S10b-0 sealed; mission armed).**
+- gen3 `475a5559` S10b section (= H2 seed), `fe8ad47d` H2 manifest `S10B-H2-MANIFEST.json` (file sha256 922f214e..., h2_sha256 0a706af9...). Universe 122 = 139 r12 − 12 in `H.json` − 5 with S9/S10 C++-lane names; H2 = 20, disjoint from old H in every name form (verified). B4's "14 H" list was 15 r12 names, 3 outside `H.json`; all excluded.
+- Isolation is structural: the worker runs S10b-1..5 only, freezes the method, checkpoints "ready for sealed H2". THE COORDINATOR runs S10b-6 (sealed) and, before it, audits the worker transcripts for any H2 name (K5'). There is no per-mission read-deny knob, and a settings deny would not stop Bash `cat` (P1b).
+- S10 consumed 8.44M (transcript usage sum; cost_mark said 3.6M). Mission **m-f41146776f2b** PREPARED, cwd gen3 + t1 product, 12 cycles / 36 h, authority 31.5M + 1x15M. Command text `/tmp/s10b_command.txt` on GEX44. The sweep launches it.
+- Debt: the sweep's decision recovery answered an Owner-class question (sd8 admission) as RESOLVE_BY_DEFAULT on S10; it was not acted on, but the classifier is wrong for contract questions.
+- Next: watch m-f41146776f2b to CHECKPOINT_COMPLETE; then K5' audit, run S10b-6 sealed, open after SEAL, S10b-7.
+
+**Update 2026-11-02 ~19:15 UTC (S10b CLOSED, METHOD_PIVOT_REQUIRED, H2 UNSPENT).**
+- Worker S10b-1..5 (t1 6816d2a4..5bb40081): cert-cxx@2 gates 27/27, controls 28/28, mutants 16/16; **3 CERTIFIED_CXX** (80222ED8 UNDERDETERMINED_TOOLCHAIN; 80222480 and 80256314 IDENTIFIED:cxx/sd8); census 940 of 1086: 752 UNDERDETERMINED, 188 c/sd8, 146 not reconstructed; batches 0/262, K3; model $0.
+- The frozen method c631de1e FAILS its positive control (OFF_SHAPE on the 3 known CXX). Owner "a": S10b-6 not run, H2 stays sealed and unspent (manifest fe8ad47d unchanged).
+- K5' audit clean. K6 3/3 (identical unit/object sha). My first K6 attempt fed the raw fixture without `make_unit` and refused 3/3: an instrument error, not a lane failure.
+- Closeout t1 `6515f6b0`, gen3 `80c0703c`, mission checkpoint METHOD_PIVOT_REQUIRED. Frontier: 1089/1797 functions certified once (C 1086 + CXX 3). Master gate 5/6 (maturity 2).
+- Open Owner question: plan a layout-recovery method (vtable/class structs before the operator) that H2 can test, or close the programme.
+
+**Update 2026-11-02 ~20:15 UTC (Generation S11 APPROVED "y"; Lane B RUNNING; A1 sealed).**
+- Owner addendum (C++ Object Model Recovery + Method-Pivot autonomy) → inline plan approved. gen3 `7f27924f` = S11 section; backup `S11-PLAN-PROPOSAL.md` (this dir).
+- Reality: official frontier is 1086 (CXX 3 outside the projection; S11 adds the column). Model $140.07 left; S11 cap $40. `.data` readable via `dol_elf_bridge` → vtables measurable.
+- Lane B mission **m-f0b595fd509f**: gen3 + t1, 24 cycles / 72 h, 60M + 2×15M, RUNNING (worker b633a8c7, epoch 1 at 20:12Z). Command `/tmp/s11_command.txt` on GEX44. Ends at CHECKPOINT_COMPLETE "ready for H2 preflight".
+- Lane A (coordinator, laptop PP): **A1 DONE** `c138604e` (TRUTH_CONTRACT owner class; red 47/49 → green 49/49, drills 4/4, S6 72/72, S9_WAIT 31/31). NOT yet on GEX44.
+- **Update ~20:30 UTC — Lane A DONE and LIVE.** Laptop: A1 `c138604e`, A2 `0206a1e8` (opt-in `pivot-autonomy --on`, `checkpoint --residual/--gain`, streak cap 3, kill switch CPP_PIVOT_AUTONOMY=off; PIVOT 12/12, drills 3/3, MC 242/242), A3 `a6a0a032` (`tools/heldout_release.py`, HOLDOUT 10/10, drills 3/3). GEX44: `canary/s11` = 24d117e2 + cherry-picks (bccb45ad, 98bc6224, 41773cc3) — the laptop line also carries 14 foreign GPF/CCR commits, NOT deployed. Canary on host: MPOL 49/49, PIVOT 12/12, HOLDOUT 10/10, S9_WAIT 31/31, EPOCH 111/111, MC 241/242 == base 24d117e2 (pre-existing node v18 bridge gate). Live clone ff 24d117e2 → **41773cc3** at 20:24:32Z; first pass 0 supervise_error. Rollback: `git reset --keep 24d117e2`. Pivot autonomy ON for m-f0b595fd509f. Future sync: the laptop line holds the originals; the cherry-picks are patch-identical (a rebase drops them).
+- Lane B progress: t1 `f798a6a3` S11-0 census + B1 registry (upstream live read incomplete), `cc0afa79` B1 controls 15/15, mutants 4/4.
+- Next: watch Lane B to OM-PR1 (positive control from raw m2c); at CHECKPOINT_COMPLETE run `heldout_release.py` preflight, then the sealed H2 run. K unit pending: KV incidents (RESOLVE_BY_DEFAULT, make_unit false refusal, stale RUNNING after closeout, positive-control blindness), UKDL (Held-out Consumption Law, TRUTH_CONTRACT), prompt-debt record.
+- (superseded) Next: A2 opt-in pivot routing (`arm --pivot-autonomy`, `checkpoint --residual`, method graph, ≤3 pivots, gate_question on every proposal) + MA-PR1..5 replays; A3 H2 consumption law; then canary on a throwaway mission and ff the live GEX44 clone (covered by the Owner's "y", only if the canary is green). Then H2 preflight + sealed run when Lane B checkpoints.
 
 **Start.** Read this file, probe GEX44 for the mission and frontier state, then ask the Owner the open question.
