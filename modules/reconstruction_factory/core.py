@@ -31,9 +31,7 @@ class Factory:
 
     def _clean_dir(self, tag):
         self._n += 1
-        d = os.path.join(self.workdir, "%s-%d" % (tag, self._n))
-        os.makedirs(d)
-        return d
+        return tempfile.mkdtemp(prefix="%s-%d-" % (tag, self._n), dir=self.workdir)
 
     def read_source(self, fn, kind="ref"):
         with open(self.project.source_path(fn, kind), "r") as fh:
