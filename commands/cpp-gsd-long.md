@@ -33,15 +33,12 @@ Specs: `vault/specs/mission-continuity.md` (v3, the only live path). Historical:
 Spec `vault/specs/gsd-x-universal-mission.md`. `arm` / `arm-chain` now refuse ANY mission (packet units and
 non-`/gsd-` commands included) when GSD answers NO_PHASES or ALL_COMPLETE for the cwd: without a milestone the
 capsule-v2 seal is refused at the first context wall and the mission sits BLOCKED forever (three ttb missions,
-2026-11-02/03). **Do this yourself, automatically, never as an Owner chore:**
-
-1. `& $py -c "import sys,json; sys.path.insert(0,r'$pp\tools'); import gsd_long_run as g; print(json.dumps(g.gsd_status(r'<cwd>')))"`
-2. NO_PHASES / ALL_COMPLETE → create the milestone now: `/gsd-new-milestone`, or write `.planning/ROADMAP.md`
-   (`- [ ] **Phase N: Name**` checklist + `### Phase N: Name` details with Goal / Depends on / Success Criteria),
-   `.planning/STATE.md` (front-matter `milestone`, `current_phase`, a NEXT line) and `.planning/PROJECT.md`, with the
-   packet's phases as the GSD phases. Re-run step 1 until it says `OK`. Commit `.planning/` in that repo.
-3. Arm. The packet stays the rules; the roadmap is what the capsule seals from. `CPP_GSD_X_OPTOUT=<reason>` exists for
-   throwaway smokes with no rollover only; a real unit never uses it.
+2026-11-02/03). **It is automatic: `arm` / `arm-chain` create the milestone themselves** (`tools/gsd_milestone_scaffold.py`)
+from the packet's phases when GSD has none, keep it only if the real GSD then answers `OK`, and archive (never delete)
+any previous `.planning` files. Nobody runs `/gsd-new-milestone` by hand for a mission. After arming, commit the new
+`.planning/` in that repo (or let the worker do it). For a better roadmap than the packet-derived one, write it before
+arming: an `OK` roadmap is never touched. `CPP_GSD_X_OPTOUT=<reason>` exists for throwaway smokes with no rollover only;
+`CPP_GSD_X_AUTOSCAFFOLD=off` disables the auto-creation (the arm then refuses with the remedy).
 
 ## Default: Ralph mission (fresh session at every wall) — v3
 

@@ -6607,6 +6607,21 @@ def planning_admission(resume_command: str, cwd: str, unit_path: str | None, ove
     return {"admitted": True, "gate": d["mode"], "decision": d, "override": (override or None)}
 
 
+def ensure_gsd_milestone(cwd: str, resume_command: str, *, workstream: str | None = None,
+                         wu_packet: str | None = None) -> dict:
+    """GSD X universal, autonomous: create the milestone from the packet when GSD has none, BEFORE the preflight
+    judges it (Owner 2026-11-03). tools/gsd_milestone_scaffold.py; never raises, every outcome is ledgered."""
+    try:
+        import gsd_milestone_scaffold as gms
+        res = gms.ensure(cwd, wu_packet=wu_packet, command=resume_command, workstream=workstream)
+    except Exception as exc:  # noqa: BLE001 -- a scaffold fault leaves the preflight to refuse with its remedy
+        res = {"action": "failed", "why": f"{type(exc).__name__}: {exc}"[:200]}
+    if res.get("action") in ("scaffolded", "failed"):
+        lr.ledger_append("arm-preflight", "gsd_milestone_scaffold", cwd=str(cwd), **{k: v for k, v in res.items()
+                                                                                      if k != "archived"})
+    return res
+
+
 def arm_preflight_on() -> bool:
     return (os.environ.get("CPP_ARM_PREFLIGHT") or "").strip().lower() != "off"
 
@@ -6638,8 +6653,10 @@ def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = Non
         st = (status_reader or (lambda c, w: lr.gsd_status(c, workstream=w)))(cwd, workstream)
     except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
         st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"[:160]}
+    import gsd_milestone_scaffold as _gms
+    st = _gms.absent_roadmap(st)   # "No ROADMAP.md found" is GSD answering, not GSD unreachable
     out = st.get("outcome")
-    optout = (os.environ.get("CPP_GSD_X_OPTOUT") or "").strip()
+    optout =(os.environ.get("CPP_GSD_X_OPTOUT") or "").strip()
     if out in ("NO_PHASES", "ALL_COMPLETE") and optout:
         add("gsd_status", "warn", f"{out}: {st.get('reason')} -- GSD X opt-out: {optout}"[:300])
     elif out in ("NO_PHASES", "ALL_COMPLETE"):
@@ -6751,6 +6768,8 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         m = _WS_FLAG.search(resume_command)
         ws = m.group(1) if m else None
     if launch:
+        if arm_preflight_on():
+            ensure_gsd_milestone(cwd, resume_command, workstream=ws, wu_packet=kw.get("wu_packet"))
         pre = arm_preflight(cwd, resume_command, workstream=ws, launch=True, **{k: v for k, v in kw.items() if k != "workstream"})
         if pre.get("checks"):
             lr.ledger_append("arm-preflight", "arm_preflight", cwd=str(cwd), ok=pre["ok"], refusal=pre["refusal"],
@@ -6832,6 +6851,8 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
     # The worker model rides the same atomic step: without it the launch inherits the host default (Opus
     # here), and a chain armed unattended has no later moment to set it before the sweep launches.
     model = kw.pop("model", None)
+    if arm_preflight_on():
+        ensure_gsd_milestone(cwd, resume_command, workstream=kw.get("workstream"), wu_packet=wu_packet)
     pre = arm_preflight(cwd, resume_command, workstream=kw.get("workstream"), launch=True, wu_packet=wu_packet,
                         **{k: v for k, v in kw.items() if k != "workstream"})
     if pre.get("checks"):

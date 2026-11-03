@@ -19,9 +19,16 @@ found"). Three ttb missions died that way at their first context wall: m-6b8ea8f
    phases are the packet's phases), then arm. UNAVAILABLE stays `unmeasured` (never a refusal, never a pass).
 2. Opt-out is explicit and recorded: env `CPP_GSD_X_OPTOUT="<reason>"` turns the refusal into a `warn` carrying the reason.
    An empty reason is no opt-out. `CPP_ARM_PREFLIGHT=off` still disables the whole preflight (existing kill switch).
-3. Automatic, not an Owner chore: `/cpp-gsd-long` (and any agent arming a mission) creates the milestone itself when GSD
-   answers NO_PHASES/ALL_COMPLETE, from the packet's phases, verifies `gsd_long_run.gsd_status(cwd)` == OK, then arms.
-   It never asks the Owner to run `/gsd-new-milestone`.
+3. Automatic in the CODE, not an Owner chore (Owner 2026-11-03: "si no tiene el milestone, debe crearse autónomamente,
+   no esperar a que yo lo abra"): `arm` (when it launches) and `arm_chain` call `tools/gsd_milestone_scaffold.ensure`
+   BEFORE the preflight. On NO_PHASES/ALL_COMPLETE it writes `.planning/ROADMAP.md` + `STATE.md` + `PROJECT.md` with the
+   packet's phases (Q/P/W-labels, "Phase N", numbered lines; one fallback phase when none), re-asks the real GSD, keeps
+   the files only on `OK`, otherwise restores the previous files. Prior files are moved to
+   `.planning/milestones/auto-archived-<stamp>/`, never deleted. Kill switch `CPP_GSD_X_AUTOSCAFFOLD=off`.
+4. Measured absence: gsd-tools EXITS 1 with "No ROADMAP.md found" / "No STATE.md found" on a repo with no milestone,
+   which `gsd_status` reports as UNAVAILABLE. `gsd_milestone_scaffold.absent_roadmap` reads that as NO_PHASES in both the
+   scaffold and the preflight (without it, decision 1 never fired on the commonest case -- found 2026-11-03 by the
+   scaffold suite's real-GSD precondition).
 
 ## Acceptance
 - `tools/test_arm_preflight.py`: V-PRE-GSDX-PACKET-NO-PHASES-REFUSES, V-PRE-GSDX-NON-GSD-ROUTE-REFUSES (both poles: OK passes),

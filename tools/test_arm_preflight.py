@@ -71,6 +71,10 @@ def main():
           and "capsule could not seal" in r["refusal"], r["refusal"])
     r = pre("python tool.py", status_reader=status("OK"))
     check("V-PRE-GSDX-NON-GSD-ROUTE-OK-PASSES", r["ok"] and by(r, "gsd_status")["status"] == "ok", str(r["checks"]))
+    # gsd-tools exits 1 "No ROADMAP.md found" on a repo with no milestone: a measured absence, it must refuse
+    r = pre("python tool.py", status_reader=lambda c, w: {"outcome": "UNAVAILABLE",
+                                                          "reason": "gsd-tools rc=1: Error: No ROADMAP.md found. Run /gsd-new-milestone first."})
+    check("V-PRE-GSDX-ABSENT-ROADMAP-REFUSES", not r["ok"] and "gsd_status" in (r["refusal"] or ""), str(r["refusal"]))
     os.environ["CPP_GSD_X_OPTOUT"] = "throwaway smoke, no rollover"
     r = pre("python tool.py", status_reader=status("NO_PHASES"))
     check("V-PRE-GSDX-OPTOUT-WARNS", r["ok"] and by(r, "gsd_status")["status"] == "warn"
