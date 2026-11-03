@@ -65,8 +65,20 @@ def main():
     check("V-PRE-UNAVAILABLE-IS-UNMEASURED", r["ok"] and by(r, "gsd_status")["status"] == "unmeasured")
     r = pre(status_reader=lambda c, w: 1 / 0)
     check("V-PRE-RAISING-READER-IS-UNMEASURED", r["ok"] and by(r, "gsd_status")["status"] == "unmeasured")
+    # GSD X universal (spec gsd-x-universal-mission.md): a non-/gsd- route is judged too, both poles
     r = pre("python tool.py", status_reader=status("NO_PHASES"))
-    check("V-PRE-NON-GSD-ROUTE-SKIPS-GSD", r["ok"] and by(r, "gsd_status")["status"] == "n/a")
+    check("V-PRE-GSDX-NON-GSD-ROUTE-REFUSES", not r["ok"] and "gsd_status" in r["refusal"]
+          and "capsule could not seal" in r["refusal"], r["refusal"])
+    r = pre("python tool.py", status_reader=status("OK"))
+    check("V-PRE-GSDX-NON-GSD-ROUTE-OK-PASSES", r["ok"] and by(r, "gsd_status")["status"] == "ok", str(r["checks"]))
+    os.environ["CPP_GSD_X_OPTOUT"] = "throwaway smoke, no rollover"
+    r = pre("python tool.py", status_reader=status("NO_PHASES"))
+    check("V-PRE-GSDX-OPTOUT-WARNS", r["ok"] and by(r, "gsd_status")["status"] == "warn"
+          and "throwaway smoke" in by(r, "gsd_status")["why"], str(r["checks"]))
+    os.environ["CPP_GSD_X_OPTOUT"] = "   "
+    r = pre("python tool.py", status_reader=status("NO_PHASES"))
+    check("V-PRE-GSDX-EMPTY-OPTOUT-REFUSES", not r["ok"], str(r["refusal"]))
+    os.environ.pop("CPP_GSD_X_OPTOUT")
     r = pre(memory_reader=mem(100))
     check("V-PRE-REFUSE-LOW-MEMORY", not r["ok"] and "resource_admission" in r["refusal"], r["refusal"])
     r = pre(memory_reader=mem(100), launch=False)
@@ -92,15 +104,18 @@ def main():
         check("V-PRE-ARM-WIRED", False, "arm did not refuse")
     except gm.MissionError as exc:
         check("V-PRE-ARM-WIRED", "preflight" in str(exc) and "NO_PHASES" in str(exc), str(exc)[:120])
-    # a packet unit on a NO_PHASES roadmap is the supported P52a/b shape: warned, never refused
+    # GSD X universal: the P52a/b packet warn is retired -- a packet unit on NO_PHASES refuses (its capsule cannot seal)
     r = pre(status_reader=status("NO_PHASES"), wu_packet="p.md")
-    check("V-PRE-PACKET-NO-PHASES-WARNS", r["ok"] and by(r, "gsd_status")["status"] == "warn", str(r["checks"]))
+    check("V-PRE-GSDX-PACKET-NO-PHASES-REFUSES", not r["ok"] and "capsule could not seal" in r["refusal"], str(r["refusal"]))
+    r = pre(status_reader=status("OK"), wu_packet="p.md")
+    check("V-PRE-GSDX-PACKET-OK-PASSES", r["ok"] and by(r, "gsd_status")["status"] == "ok", str(r["checks"]))
     try:
-        gm.arm_chain("/tmp/x-nonexistent", "/gsd-autonomous --ws x", wu_packet="p", token_estimate=1, route="r")
-        passed = False
+        res = gm.arm_chain("/tmp/x-nonexistent", "Execute the work unit in the wu_packet", wu_packet="p",
+                           token_estimate=1, route="r")
+        refused = res.get("ok") is False and not res.get("mission_id") and "NO_PHASES" in res.get("why", "")
     except Reached:
-        passed = True
-    check("V-PRE-ARM-CHAIN-PACKET-PASSES", passed, "arm_chain reached create() on NO_PHASES with a packet")
+        refused = False
+    check("V-PRE-GSDX-ARM-CHAIN-PACKET-REFUSES", refused, "arm_chain must not reach create() on NO_PHASES with a packet")
     os.environ.pop("_TEST_GSD_STATUS")
     # wiring: arm_chain consults the preflight with its packet and returns its refusal unarmed
     real, seen = gm.arm_preflight, {}

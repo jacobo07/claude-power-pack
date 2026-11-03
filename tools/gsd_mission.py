@@ -6615,8 +6615,9 @@ def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = Non
                   status_reader=None, memory_reader=None, wu_packet: str | None = None, **kw) -> dict:
     """One check before `arm` creates a record: refuse, naming the cause, what would only fail later.
 
-    Refuses on a MEASURED NO_PHASES / ALL_COMPLETE (only for a `/gsd-` resume command: another route
-    has no GSD roadmap to judge) and, when a worker would launch now, on a measured low-memory host.
+    Refuses on a MEASURED NO_PHASES / ALL_COMPLETE for EVERY resume command, packet units included (GSD X
+    universal, 2026-11-03; CPP_GSD_X_OPTOUT=<reason> downgrades to warn) and, when a worker would launch now,
+    on a measured low-memory host.
     UNAVAILABLE / unreadable is `unmeasured`, never a refusal and never a pass. Authority absence and a
     rotation-invariant repair are reported (`warn`), not refused: the first is the Owner's call, the
     second is repaired by the launch itself. Read-only and idempotent. CPP_ARM_PREFLIGHT=off disables."""
@@ -6630,23 +6631,28 @@ def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = Non
         if status == "refuse" and refusal is None:
             refusal = f"{name}: {why}"
 
-    if resume_command.lstrip().startswith("/gsd-"):
-        try:
-            st = (status_reader or (lambda c, w: lr.gsd_status(c, workstream=w)))(cwd, workstream)
-        except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
-            st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"[:160]}
-        out = st.get("outcome")
-        if out in ("NO_PHASES", "ALL_COMPLETE") and wu_packet:
-            # A packet unit's work is the packet, closed by its own receipt (gsdx-pcc P52a/b), not the roadmap.
-            add("gsd_status", "warn", f"{out}: {st.get('reason')} -- packet unit, the packet is the work")
-        elif out in ("NO_PHASES", "ALL_COMPLETE"):
-            add("gsd_status", "refuse", f"{out}: {st.get('reason')} -- arming would launch a worker with no work")
-        elif out == "OK":
-            add("gsd_status", "ok", str(st.get("reason") or ""))
-        else:
-            add("gsd_status", "unmeasured", f"{out}: {st.get('reason')}")
+    # GSD X universal (spec vault/specs/gsd-x-universal-mission.md, Owner 2026-11-03): EVERY arm runs on an open GSD
+    # milestone, whatever its resume command. The P52a/b packet warn is retired: capsule-v2 seals from GSD, so a packet
+    # unit on NO_PHASES died BLOCKED (CAPSULE_SEAL_REFUSED) at its first context wall -- three ttb missions, 2026-11-02/03.
+    try:
+        st = (status_reader or (lambda c, w: lr.gsd_status(c, workstream=w)))(cwd, workstream)
+    except Exception as exc:  # noqa: BLE001 -- an instrument that raises measured nothing
+        st = {"outcome": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"[:160]}
+    out = st.get("outcome")
+    optout = (os.environ.get("CPP_GSD_X_OPTOUT") or "").strip()
+    if out in ("NO_PHASES", "ALL_COMPLETE") and optout:
+        add("gsd_status", "warn", f"{out}: {st.get('reason')} -- GSD X opt-out: {optout}"[:300])
+    elif out in ("NO_PHASES", "ALL_COMPLETE"):
+        add("gsd_status", "refuse",
+            f"{out}: {st.get('reason')} -- no open GSD milestone in {cwd}: the worker would have no work"
+            + (" and its capsule could not seal at the first context wall" if wu_packet or not
+               resume_command.lstrip().startswith("/gsd-") else "")
+            + ". Create the milestone first (/gsd-new-milestone, or .planning/ROADMAP.md + STATE.md with the packet's phases),"
+              " check gsd_long_run.gsd_status == OK, then arm; or set CPP_GSD_X_OPTOUT=<reason>")
+    elif out == "OK":
+        add("gsd_status", "ok", str(st.get("reason") or ""))
     else:
-        add("gsd_status", "n/a", "not a /gsd- resume command")
+        add("gsd_status", "unmeasured", f"{out}: {st.get('reason')}")
 
     if launch:
         import resource_admission as rsa

@@ -28,6 +28,21 @@ context wall", and on this estate that means a fresh session: the relay IS the a
 Specs: `vault/specs/mission-continuity.md` (v3, the only live path). Historical:
 `vault/specs/gsd-autonomous-autocompact.md` (v1), `vault/specs/gsd-long-run-v2.md` (v2).
 
+## GSD X universal — every mission runs on an open GSD milestone (Owner decision 2026-11-03)
+
+Spec `vault/specs/gsd-x-universal-mission.md`. `arm` / `arm-chain` now refuse ANY mission (packet units and
+non-`/gsd-` commands included) when GSD answers NO_PHASES or ALL_COMPLETE for the cwd: without a milestone the
+capsule-v2 seal is refused at the first context wall and the mission sits BLOCKED forever (three ttb missions,
+2026-11-02/03). **Do this yourself, automatically, never as an Owner chore:**
+
+1. `& $py -c "import sys,json; sys.path.insert(0,r'$pp\tools'); import gsd_long_run as g; print(json.dumps(g.gsd_status(r'<cwd>')))"`
+2. NO_PHASES / ALL_COMPLETE → create the milestone now: `/gsd-new-milestone`, or write `.planning/ROADMAP.md`
+   (`- [ ] **Phase N: Name**` checklist + `### Phase N: Name` details with Goal / Depends on / Success Criteria),
+   `.planning/STATE.md` (front-matter `milestone`, `current_phase`, a NEXT line) and `.planning/PROJECT.md`, with the
+   packet's phases as the GSD phases. Re-run step 1 until it says `OK`. Commit `.planning/` in that repo.
+3. Arm. The packet stays the rules; the roadmap is what the capsule seals from. `CPP_GSD_X_OPTOUT=<reason>` exists for
+   throwaway smokes with no rollover only; a real unit never uses it.
+
 ## Default: Ralph mission (fresh session at every wall) — v3
 
 **Owner decision 2026-09-23:** a long run continues in a **new session** at its context wall
