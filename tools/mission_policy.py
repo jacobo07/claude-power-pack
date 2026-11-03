@@ -207,6 +207,8 @@ _DESCRIPTIVE_SCOPE_RX = re.compile(
 TRUTH_CONTRACT_RX = re.compile(
     r"\b" + _TC_VERB + r"\b[^?.]{0,80}" + _TC_STRONG + r"|"
     r"\b" + _TC_RELAX + r"\b[^?.]{0,60}\b(?:exact(?:ness)?|certified)\b|"
+    # S11H P5: waiving a named function (a gate member) is a gate change even with no control noun beside it.
+    r"\bwaiv\w*\b[^?.]{0,20}\bfn_[0-9a-f]{6,8}\b|"
     + _TC_STRONG + r"[^?.]{0,60}\b" + _TC_VERB + r"\b[^?.]{0,40}\b(?:variant|flags?|config\w*|lane|threshold|rules?)\b",
     re.I)
 OWNER_CLASSES = (
@@ -280,6 +282,9 @@ HOST_GATES = re.compile(r"login required|startup approval|trust (this|the) (fold
                         r"do you want to (proceed|allow|create|make this edit)", re.I)
 
 
+LIFECYCLE_WORDS = ("stopped", "done", "exited", "failed", "killed")
+
+
 def classify_blocked(job: dict | None, policy_values: dict | None = None) -> dict:
     """Type a host-`blocked` session. {"class", "why", "gate"?}.
 
@@ -293,6 +298,9 @@ def classify_blocked(job: dict | None, policy_values: dict | None = None) -> dic
         return {"class": "PERMISSION_PROMPT", "why": f"host waiting for {job.get('waitingFor')}"}
     if not needs:
         return {"class": "UNKNOWN", "why": "blocked with no `needs` text"}
+    # S11H P5: a lifecycle word is the job's end, never a model's question (it cost a decision recovery on GEX44).
+    if str(job.get("state") or "").lower() in LIFECYCLE_WORDS or needs.strip().lower() in LIFECYCLE_WORDS:
+        return {"class": "STOPPED", "why": f"job ended ({job.get('state')}: {needs.strip()[:40]})"}
     if HOST_GATES.search(needs):
         return {"class": "HOST_GATE", "why": needs[:200]}
     g = gate_question(needs, policy_values)

@@ -180,9 +180,151 @@ def main() -> int:
     check("V-PIVOT-BLOCKED-LATER-JOB-STAYS", (l2.get("owner_hold") or {}).get("kind") == gm.CHECKPOINT_KIND
           and not lstops, f"a job started after the checkpoint did not declare it: stops={lstops}")
 
+    # S11H P1-P4 (Owner "y" 2026-11-03): typed Method Failure Receipt, typed authority objects, Pivot Gen2 budget,
+    # compiled Owner question. Authority = typed objects UNION the wording net (typed may only add); strategy (pivot or
+    # stop, budget) is driven by the receipt alone when one is declared.
+    def rcpt(method, delta=True, objs=(), fclass="METHOD_PLATEAU", **kw):
+        return {"failure_class": fclass, "method_class": method, "evidence_delta": delta,
+                "methods_falsified": [method], "residual_class": "COMPILER_SHAPE_RESIDUAL",
+                "authority_objects": list(objs), **kw}
+
+    def _gen2(mid, receipt, streak=0, history=(), authority=80_000_000, spent=10_000_000, reason=S11):
+        _mission(mid, True)
+        gm.transition(mid, expect_epoch=1, expect_state=gm.RUNNING, event="t_gen2", now=NOW, pivot_streak=streak,
+                      pivot_history=list(history), authority_tokens=authority, cost_mark={"tokens": spent})
+        gm.set_checkpoint(mid, "METHOD_PIVOT_REQUIRED", reason, residual="r.md", receipt=receipt, now=NOW)
+        return _gate(mid)
+
+    try:
+        gm.set_checkpoint("m-pivot", "METHOD_PIVOT_REQUIRED", S11, residual="r.md",
+                          receipt={"failure_class": "METHOD_PLATEAU", "evidence_delta": True}, now=NOW)
+        bad = None
+    except gm.MissionError as exc:
+        bad = str(exc)
+    try:
+        gm.set_checkpoint("m-pivot", "METHOD_PIVOT_REQUIRED", S11, residual="r.md",
+                          receipt=rcpt("x", objs=("MY_OWN_AUTHORITY",)), now=NOW)
+        bad2 = None
+    except gm.MissionError as exc:
+        bad2 = str(exc)
+    check("V-PIVOT-RECEIPT-INVALID-REFUSED", bool(bad) and "method_class" in bad and bool(bad2)
+          and "MY_OWN_AUTHORITY" in bad2, f"{bad} | {bad2}")
+
+    a = _gen2("m-r-obj", rcpt("ctor-hints", objs=("HELD_OUT_CONTRACT",)))
+    ap_ = (a.get("owner_hold") or {}).get("pivot") or {}
+    oq = ap_.get("owner_question") or {}
+    check("V-PIVOT-RECEIPT-AUTHORITY-OBJECT", ap_.get("action") == "owner" and "HELD_OUT_CONTRACT" in ap_.get("why", "")
+          and oq.get("authority_objects") == ["HELD_OUT_CONTRACT"] and oq.get("exhausted") == ["ctor-hints"],
+          str(ap_)[:300])
+    n_ = _gen2("m-r-net", rcpt("decl-order"), reason=SD8)
+    check("V-PIVOT-RECEIPT-WORDING-NET-STAYS", ((n_.get("owner_hold") or {}).get("pivot") or {}).get("action") == "owner",
+          "an empty authority list never removes the wording net: " + str((n_.get("owner_hold") or {}).get("pivot"))[:160])
+    p_ = _gen2("m-r-ok", rcpt("pragmas"))
+    check("V-PIVOT-RECEIPT-DRIVES", p_.get("owner_hold") is None and p_.get("pivot_streak") == 1
+          and (p_.get("pivot_history") or [{}])[-1].get("method_class") == "pragmas", str(p_.get("pivot_history")))
+
+    e_ = _gen2("m-g-early", rcpt("decl-order", delta=False), streak=1,
+               history=[{"method_class": "decl-order", "evidence_delta": False}])
+    check("V-PIVOT-GEN2-EARLY-STOP", ((e_.get("owner_hold") or {}).get("pivot") or {}).get("action") == "owner",
+          "2 zero-delta receipts in one method class stop before the fixed 3: "
+          + str((e_.get("owner_hold") or {}).get("pivot"))[:160])
+    good = [{"method_class": m, "evidence_delta": True} for m in ("decl-order", "ctor-hints", "pragmas")]
+    x_ = _gen2("m-g-ext", rcpt("coloring-model"), streak=3, history=good)
+    check("V-PIVOT-GEN2-EXTENDS", x_.get("owner_hold") is None and x_.get("pivot_streak") == 4,
+          f"distinct classes with evidence delta continue past 3: streak={x_.get('pivot_streak')}")
+    c_ = _gen2("m-g-cap", rcpt("donor"), streak=gm.PIVOT_HARD_CAP,
+               history=good + [{"method_class": "coloring-model", "evidence_delta": True},
+                               {"method_class": "probe", "evidence_delta": True}])
+    check("V-PIVOT-GEN2-HARD-CAP", ((c_.get("owner_hold") or {}).get("pivot") or {}).get("action") == "owner",
+          str((c_.get("owner_hold") or {}).get("pivot"))[:160])
+    d_ = _gen2("m-g-dup", rcpt("pragmas"), streak=3, history=good)
+    check("V-PIVOT-GEN2-REPEAT-CLASS-NO-EXTENSION", ((d_.get("owner_hold") or {}).get("pivot") or {}).get("action") == "owner",
+          "a class already in the streak is not independent: " + str((d_.get("owner_hold") or {}).get("pivot"))[:160])
+    q_ = _gen2("m-g-poor", rcpt("coloring-model"), streak=3, history=good, authority=60_000_000, spent=59_000_000)
+    check("V-PIVOT-GEN2-AUTHORITY-LEFT", ((q_.get("owner_hold") or {}).get("pivot") or {}).get("action") == "owner",
+          "no extension without a lease of authority left: " + str((q_.get("owner_hold") or {}).get("pivot"))[:160])
+
+    import json as _json
+    rp = Path(TMP) / "receipt.json"
+    rp.write_text(_json.dumps(rcpt("cli-route")), encoding="utf-8")
+    _mission("m-cli", True)
+    rc = gm._cli(["checkpoint", "--mission", "m-cli", "--state", "METHOD_PIVOT_REQUIRED", "--reason", "cli",
+                  "--residual", "r.md", "--receipt", str(rp)])
+    check("V-PIVOT-RECEIPT-CLI", rc == 0 and ((gm.load("m-cli").get("owner_hold") or {}).get("receipt") or {})
+          .get("method_class") == "cli-route", f"rc={rc}")
+
+    # S11H P5: a job that ENDED (lifecycle word in its record) is relayed as a dead owner, never as a decision
+    # recovery (GEX44 2026-11-03 09:54:41Z spent one on the "question" `stopped`) and never surfaced as blocked.
+    _mission("m-life", False)
+    blk = [{"sessionId": "m-life-w", "id": "m-life-w"[:8], "kind": "background", "state": "blocked"}]
+    lp = gm.plan_next(gm.load("m-life"), NOW + 60, blk, pid_alive=gone,
+                      blocked_probe=lambda r: {"class": "STOPPED", "why": "job ended (blocked: stopped)"})
+    check("V-PIVOT-LIFECYCLE-RELAYS", lp["action"] == "replace" and not lp.get("decision")
+          and "decision recovery" not in lp.get("reason", ""), f"{lp['action']}: {lp.get('reason', '')[:100]}")
+
+    # PA2-PR5: a fresh worker of an opted-in mission learns the typed checkpoint from its card, not from a prompt.
+    on_card = gm.render_card(gm.load("m-cli"), {"head": "abc", "dirty": []})
+    off_card = gm.render_card(gm.load("m-off"), {"head": "abc", "dirty": []})
+    check("V-PIVOT-CARD-TEACHES-RECEIPT", "--receipt" in on_card and "method_class" in on_card
+          and "--receipt" not in off_card, "opted-in card names --receipt; a mission without pivot autonomy does not")
+
     print(f"PIVOT_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
 
+# --drills: each mutant of gsd_mission.py must turn the named gate red (the drill never writes tools/gsd_mission.py).
+DRILLS = (
+    ("D1 opt-in ignored", 'or not rec.get("pivot_autonomy") or not pivot_autonomy_on()', "or not pivot_autonomy_on()",
+     "V-PIVOT-OPT-IN-ONLY"),
+    ("D2 owner gate skipped", '    if objs:\n        why = "authority object(s) "',
+     '    if False:\n        why = "authority object(s) "', "V-PIVOT-OWNER-BOUNDARY"),
+    ("D3 streak cap removed", "if streak >= PIVOT_MAX_STREAK:", "if False:", "V-PIVOT-STREAK-CAP"),
+    ("D4 blocked-after-checkpoint release removed",
+     "return started <= set_at and now - set_at >= CHECKPOINT_BLOCKED_GRACE_S", "return False",
+     "V-PIVOT-BLOCKED-AFTER-CHECKPOINT"),
+    ("D5 grace dropped", "return started <= set_at and now - set_at >= CHECKPOINT_BLOCKED_GRACE_S",
+     "return started <= set_at", "V-PIVOT-BLOCKED-GRACE"),
+    ("D6 waitingFor not excluded", 'if not row or row.get("waitingFor") or row.get("state") != "blocked":',
+     'if not row or row.get("state") != "blocked":', "V-PIVOT-PERMISSION-PROMPT-STAYS"),
+    ("D7 declaration order ignored", "return started <= set_at and now - set_at", "return now - set_at",
+     "V-PIVOT-BLOCKED-LATER-JOB-STAYS"),
+    ("D8 typed authority objects ignored", 'objs = list((r or {}).get("authority_objects") or [])', "objs = []",
+     "V-PIVOT-RECEIPT-AUTHORITY-OBJECT"),
+    ("D9 wording net dropped when a receipt exists", 'g = mpol.gate_question(hold.get("reason") or "", {})',
+     'g = {"result": "RESOLVE_BY_DEFAULT"} if r else mpol.gate_question(hold.get("reason") or "", {})',
+     "V-PIVOT-RECEIPT-WORDING-NET-STAYS"),
+    ("D10 Gen2 early stop removed", 'if not r["evidence_delta"] and any(', "if False and any(",
+     "V-PIVOT-GEN2-EARLY-STOP"),
+    ("D11 independence ignored", "if not independent or left is None", "if left is None",
+     "V-PIVOT-GEN2-REPEAT-CLASS-NO-EXTENSION"),
+    ("D12 authority-left ignored", " or left < PIVOT_LEASE_MIN_TOKENS:", ":", "V-PIVOT-GEN2-AUTHORITY-LEFT"),
+    ("D13 lifecycle relay removed", 'if cls == "STOPPED":', "if False:", "V-PIVOT-LIFECYCLE-RELAYS"),
+    ("D14 card receipt lesson removed", 'if rec.get("pivot_autonomy") else []),', "if False else []),",
+     "V-PIVOT-CARD-TEACHES-RECEIPT"),
+    ("D15 receipt validation bypassed", "        receipt = validate_receipt(receipt)\n", "        receipt = receipt\n",
+     "V-PIVOT-RECEIPT-INVALID-REFUSED"),
+)
+
+
+def drills() -> int:
+    import subprocess
+    here = Path(__file__).resolve().parent
+    src = (here / "gsd_mission.py").read_text(encoding="utf-8")
+    ok = 0
+    for name, needle, repl, gate in DRILLS:
+        if needle not in src:
+            print(f"DRILL-FAIL {name}: needle absent from tools/gsd_mission.py")
+            continue
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / "gsd_mission.py").write_text(src.replace(needle, repl, 1), encoding="utf-8")
+            r = subprocess.run([sys.executable, "-B", str(Path(__file__).resolve())], capture_output=True, text=True,
+                               env={**os.environ, "GSD_MISSION_DRILL_DIR": td}, timeout=300)
+        red = f"FAIL {gate}" in r.stdout
+        print(f"{'DRILL-PASS' if red else 'DRILL-FAIL'} {name}: expected 'FAIL {gate}' -> {'seen' if red else 'NOT seen'}")
+        ok += int(red)
+    print(f"PIVOT_DRILLS_PASS={ok}/{len(DRILLS)}")
+    return 0 if ok == len(DRILLS) else 1
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(drills() if "--drills" in sys.argv[1:] else main())

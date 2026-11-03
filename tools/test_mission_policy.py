@@ -163,7 +163,9 @@ def main() -> int:
     waive = "Waive fn_80222480 for OM-PR1, or authorize a new source-shape approach beyond declaration order"
     g = mp.gate_question(waive, pv)
     wsynth = [waive, "Can we waive the positive control that still fails?", "Drop one negative control from the release set?",
-              "Relax the kill gate K5 for this wave?", "Treat OM-PR1 as passed at 2/3?"]
+              "Relax the kill gate K5 for this wave?", "Treat OM-PR1 as passed at 2/3?",
+              # 2026-11-03 05:33Z, same mission, still RESOLVE_BY_DEFAULT after the D3 fix (no control noun in it):
+              "Owner to waive fn_80222480, or supply a donor with the same two-block lookup"]
     wbad = [s for s in wsynth if mp.gate_question(s, pv).get("owner_class") != "TRUTH_CONTRACT"]
     check("V-MPOL-GATE-TRUTH-CONTROL-WAIVER", not wbad, f"{len(wsynth) - len(wbad)}/{len(wsynth)} control waivers -> "
                                                         f"TRUTH_CONTRACT; missed={wbad}")
@@ -234,6 +236,12 @@ def main() -> int:
     # Blocked typing.
     b = mp.classify_blocked(INCIDENT_JOB, pv)
     check("V-MPOL-BLOCKED-INCIDENT", b["class"] == "QUESTION_RESOLVABLE", str(b["class"]))
+    # S11H P5 (GEX44 2026-11-03 09:54:41Z): after the supervisor's own stop the job record read `stopped`, which was
+    # typed QUESTION_RESOLVABLE with the question "stopped" -- a decision recovery spent on a lifecycle word.
+    life = [mp.classify_blocked(j, pv)["class"] for j in ({"state": "blocked", "detail": "stopped"},
+                                                         {"state": "stopped", "detail": "stopped"},
+                                                         {"state": "blocked", "needs": " Done "})]
+    check("V-MPOL-BLOCKED-LIFECYCLE-NOT-QUESTION", all(c == "STOPPED" for c in life), str(life))
     check("V-MPOL-BLOCKED-LOGIN", mp.classify_blocked({"state": "blocked", "needs": "login required"}, pv)["class"]
           == "HOST_GATE", "login gate stays a human wait")
     check("V-MPOL-BLOCKED-PERMISSION", mp.classify_blocked({"waitingFor": "approve Bash"}, pv)["class"]
@@ -303,6 +311,11 @@ DRILLS = (
     ("M4 truth-contract class removed", '    ("TRUTH_CONTRACT", TRUTH_CONTRACT_RX),\n', "", "V-MPOL-GATE-TRUTH-SD8"),
     ("M5 control terms dropped from the truth contract", r'|kill[- ]gates?|OM-PR\d+|', "|",
      "V-MPOL-GATE-TRUTH-CONTROL-WAIVER"),
+    ("M7 named-function waiver dropped", '    r"\\bwaiv\\w*\\b[^?.]{0,20}\\bfn_[0-9a-f]{6,8}\\b|"\n', "",
+     "V-MPOL-GATE-TRUTH-CONTROL-WAIVER"),
+    ("M8 lifecycle words read as questions",
+     'if str(job.get("state") or "").lower() in LIFECYCLE_WORDS or needs.strip().lower() in LIFECYCLE_WORDS:',
+     "if False:", "V-MPOL-BLOCKED-LIFECYCLE-NOT-QUESTION"),
     ("M6 descriptive-scope neutraliser bypassed", "t_scope = _DESCRIPTIVE_SCOPE_RX.sub(\" \", t)", "t_scope = t",
      "V-MPOL-GATE-SCOPE-DESCRIPTIVE"),
 )

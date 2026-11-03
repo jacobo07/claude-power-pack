@@ -745,6 +745,12 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         if cls == "QUESTION_OWNER":
             return {"action": "surface_blocked",
                     "reason": f"OWNER_BOUNDARY ({b['gate'].get('owner_class')}): {b['why'][:200]}"}
+        if cls == "STOPPED":
+            # S11H P5: the job record says it ended (often our own stop): a dead owner, relayed as one -- not a
+            # question (GEX44 2026-11-03 spent a decision recovery on "stopped") and not a human wait.
+            if spent:
+                return {"action": "halt", "reason": f"owner ended and budget: {spent}"}
+            return {"action": "replace", "reason": f"owner dead: {b['why'][:160]}"}
         return {"action": "surface_blocked", "reason": why}
     if verdict == UNKNOWN and state == RUNNING:
         owner = rec.get("owner") or {}
@@ -2752,11 +2758,15 @@ WAIT_HOLD_KINDS = ("resource", CHECKPOINT_KIND)   # non-owner, nonterminal, neve
 
 
 def set_checkpoint(mission_id: str, state: str, reason: str, evidence: str | None = None,
-                   now: float | None = None, residual: str | None = None, gain: bool = False) -> dict:
+                   now: float | None = None, residual: str | None = None, gain: bool = False,
+                   receipt: dict | None = None) -> dict:
     """`residual` names the file that states what the falsified method left (the pivot's input); `gain` says the
-    wave still produced a certificate or passed a positive control, which resets the pivot streak (S11 A2)."""
+    wave still produced a certificate or passed a positive control, which resets the pivot streak (S11 A2).
+    `receipt` is the typed Method Failure Receipt (S11H P1); an invalid one is refused, never stored half-read."""
     if state not in CHECKPOINT_STATES:
         raise MissionError(f"checkpoint state must be one of {', '.join(CHECKPOINT_STATES)}")
+    if receipt is not None:
+        receipt = validate_receipt(receipt)
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
@@ -2770,6 +2780,8 @@ def set_checkpoint(mission_id: str, state: str, reason: str, evidence: str | Non
         extra["residual"] = residual
     if gain:
         extra["gain"] = True
+    if receipt is not None:
+        extra["receipt"] = receipt
     return set_owner_hold(mission_id, f"{state}: {reason}", now=now, kind=CHECKPOINT_KIND, expect_seq=rec.get("seq"),
                           extra=extra)
 
@@ -2851,21 +2863,103 @@ def set_pivot_autonomy(mission_id: str, on: bool, now: float | None = None) -> d
                       now=now, touch=False, pivot_autonomy=bool(on))
 
 
+# S11H P1 (Owner "y" 2026-11-03): the typed Method Failure Receipt. Machine logic reads these fields; the reason text
+# stays the human projection. Each field has a consumer: pivot_decision (method_class, evidence_delta,
+# authority_objects, failure_class) and the compiled Owner question (methods_falsified, residual_class,
+# independent_work). An unknown authority object is refused: the vocabulary is the Owner's, never the worker's.
+FAILURE_CLASSES = ("INSTRUMENT_BLIND", "METHOD_PLATEAU", "BUILD_TWIN_UNCERTAIN", "COMPILER_SHAPE_RESIDUAL",
+                   "TYPE_LAYOUT_BLOCKED", "OBJECT_MODEL_BLOCKED", "NO_DONOR", "UNIQUE_SEMANTIC_RESIDUAL",
+                   "PROOF_FAILURE", "RESOURCE_FAILURE", "OWNER_AUTHORITY_REQUIRED")
+AUTHORITY_OBJECTS = ("MISSION_GOAL", "TRUTH_CONTRACT", "CERTIFICATION_RULE", "HELD_OUT_CONTRACT", "CAPITAL_ENVELOPE",
+                     "PUSH_RELEASE_AUTHORITY", "PRODUCT_SCOPE", "IRREVERSIBLE_EXTERNAL_ACTION")
+# S11H P3 Pivot Gen2: the fixed 3 stays the default without receipts. With receipts: stop EARLY when the same method
+# class returns zero evidence delta twice; continue PAST 3 (never past the hard cap) only while every pivot of the
+# streak is a distinct method class with evidence delta and a lease of authority is left.
+PIVOT_HARD_CAP = 5
+PIVOT_LEASE_MIN_TOKENS = 3_000_000   # ~one measured S11 epoch (50.7M over 18 epochs = 2.8M)
+
+
+def validate_receipt(r) -> dict:
+    if not isinstance(r, dict):
+        raise MissionError("receipt must be a JSON object")
+    if not isinstance(r.get("method_class"), str) or not r["method_class"].strip():
+        raise MissionError("receipt needs method_class (non-empty string)")
+    if not isinstance(r.get("evidence_delta"), bool):
+        raise MissionError("receipt needs evidence_delta (true/false)")
+    if r.get("failure_class") not in FAILURE_CLASSES:
+        raise MissionError(f"receipt failure_class must be one of {', '.join(FAILURE_CLASSES)}")
+    objs = r.get("authority_objects") or []
+    if not isinstance(objs, list) or any(o not in AUTHORITY_OBJECTS for o in objs):
+        raise MissionError(f"receipt authority_objects must be a list drawn from {', '.join(AUTHORITY_OBJECTS)}; "
+                           f"got {objs}")
+    falsified = r.get("methods_falsified") or []
+    if not isinstance(falsified, list):
+        raise MissionError("receipt methods_falsified must be a list")
+    return {"failure_class": r["failure_class"], "method_class": r["method_class"].strip(),
+            "evidence_delta": r["evidence_delta"], "authority_objects": list(objs),
+            "methods_falsified": [str(m) for m in falsified], "residual_class": r.get("residual_class"),
+            "independent_work": r.get("independent_work")}
+
+
+def _owner_question(hold: dict, receipt: dict | None, why: str, objs: list) -> dict:
+    """S11H P4: what the Owner is asked is compiled, never 'what should I try next'."""
+    r = receipt or {}
+    return {"authority_objects": objs, "why_policy_blocks": why, "exhausted": r.get("methods_falsified") or [],
+            "blocked_branch": r.get("residual_class") or hold.get("checkpoint"),
+            "continuing_work": r.get("independent_work"), "residual": hold.get("residual")}
+
+
 def pivot_decision(rec: dict, hold: dict) -> dict:
-    """Pure. -> {action: pivot|owner|park, why, streak?}. Owner classes are checked before anything else."""
+    """Pure. -> {action: pivot|owner|park, why, streak?, owner_question?}.
+
+    Authority first, as the UNION of the typed receipt objects and the wording net (mission_policy.gate_question over
+    the reason): a typed object can only ADD an Owner requirement, and an empty object list never removes the net
+    (red team: a worker must not lower its own authority by declaring nothing). Strategy second: with a receipt the
+    budget is Gen2's; without one it is the fixed PIVOT_MAX_STREAK."""
     import mission_policy as mpol
     cp = hold.get("checkpoint")
     if cp not in PIVOT_STATES:
         return {"action": "park", "why": f"{cp} is not a pivot state"}
+    r = hold.get("receipt")
+    objs = list((r or {}).get("authority_objects") or [])
+    if r and r.get("failure_class") == "OWNER_AUTHORITY_REQUIRED" and not objs:
+        objs = ["MISSION_GOAL"]
     g = mpol.gate_question(hold.get("reason") or "", {})
-    if g["result"] == "OWNER_REQUIRED":
-        return {"action": "owner", "why": f"owner class {g.get('owner_class')}"}
+    if g["result"] == "OWNER_REQUIRED" and g.get("owner_class") not in objs:
+        objs.append(g.get("owner_class"))
+    if objs:
+        why = "authority object(s) " + ", ".join(str(o) for o in objs)
+        return {"action": "owner", "why": why, "owner_question": _owner_question(hold, r, why, objs)}
     if not hold.get("residual"):
         return {"action": "park", "why": "no residual declared (checkpoint --residual)"}
     streak = 0 if hold.get("gain") else int(rec.get("pivot_streak") or 0)
+    if not r:
+        if streak >= PIVOT_MAX_STREAK:
+            why = f"{streak} consecutive pivots without a certificate or a passed control"
+            return {"action": "owner", "why": why, "owner_question": _owner_question(hold, r, why, [])}
+        return {"action": "pivot", "why": "engineering-resolvable method change inside the approved envelope",
+                "streak": streak + 1}
+    window = list(rec.get("pivot_history") or [])[-streak:] if streak else []
+    mc = r["method_class"]
+    if not r["evidence_delta"] and any(h.get("method_class") == mc and not h.get("evidence_delta") for h in window):
+        why = f"Gen2 early stop: method class {mc!r} returned zero evidence delta twice"
+        return {"action": "owner", "why": why, "owner_question": _owner_question(hold, r, why, [])}
+    if streak >= PIVOT_HARD_CAP:
+        why = f"Gen2 hard cap: {streak} consecutive pivots"
+        return {"action": "owner", "why": why, "owner_question": _owner_question(hold, r, why, [])}
     if streak >= PIVOT_MAX_STREAK:
-        return {"action": "owner", "why": f"{streak} consecutive pivots without a certificate or a passed control"}
-    return {"action": "pivot", "why": "engineering-resolvable method change inside the approved envelope",
+        classes = [h.get("method_class") for h in window] + [mc]
+        independent = (len(set(classes)) == len(classes) and all(h.get("evidence_delta") for h in window)
+                       and r["evidence_delta"])
+        try:
+            left = int(rec.get("authority_tokens")) - int((rec.get("cost_mark") or {}).get("tokens"))
+        except (TypeError, ValueError):
+            left = None   # unknown authority is never room to extend
+        if not independent or left is None or left < PIVOT_LEASE_MIN_TOKENS:
+            why = (f"Gen2: {streak} pivots; extension needs distinct method classes with evidence delta and "
+                   f">= {PIVOT_LEASE_MIN_TOKENS} tokens of authority left (independent={independent}, left={left})")
+            return {"action": "owner", "why": why, "owner_question": _owner_question(hold, r, why, [])}
+    return {"action": "pivot", "why": f"Gen2 receipt-driven pivot ({mc}, evidence_delta={r['evidence_delta']})",
             "streak": streak + 1}
 
 
@@ -2896,8 +2990,12 @@ def pivot_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive) ->
                           now=now, touch=False, owner_hold={**hold, "pivot": d})
     add_directive(mid, _pivot_directive(hold, d["streak"]), now=now)
     cur = load(mid)
+    hist = list(cur.get("pivot_history") or [])
+    if hold.get("receipt"):
+        hist.append({"method_class": hold["receipt"]["method_class"],
+                     "evidence_delta": hold["receipt"]["evidence_delta"], "at": now})
     transition(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], event="pivot_streak", now=now, touch=False,
-               pivot_streak=d["streak"])
+               pivot_streak=d["streak"], pivot_history=hist[-20:])
     return clear_checkpoint(mid, f"auto pivot {d['streak']}/{PIVOT_MAX_STREAK}: {d['why']}", now=now)
 
 
@@ -4152,6 +4250,14 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "", s
         *(["", "OWNER DIRECTIVES (binding; they override the note below):"]
           + [f"  - {d}" for d in rec.get("directives") or []]
           if rec.get("directives") else []),
+        # S11H PA2-PR5: an opted-in mission's worker learns the typed checkpoint here, not from a prompt.
+        *(["", "METHOD PIVOT AUTONOMY is on. When a method is exhausted, end the wave with",
+           f"  python <pp>/tools/gsd_mission.py checkpoint --mission {rec['mission_id']} --state METHOD_PIVOT_REQUIRED",
+           "  --reason <one line> --residual <file> --receipt <json> where the JSON has failure_class",
+           f"  ({' | '.join(FAILURE_CLASSES)}), method_class, evidence_delta (true only for a new certificate,",
+           "  a passed control or a newly falsified region), methods_falsified, residual_class, independent_work,",
+           "  and authority_objects (only when the next route changes one of: " + ", ".join(AUTHORITY_OBJECTS) + ")."]
+          if rec.get("pivot_autonomy") else []),
         "",
         "RECONCILE BEFORE ACTING (run these first and say what you found):",
         "  git status --short ; git log --oneline -5 ; GSD progress for the active milestone",
@@ -7666,6 +7772,9 @@ def _cli(argv=None) -> int:
     ck.add_argument("--clear", action="store_true", help="a new plan exists: lift the checkpoint and relay")
     ck.add_argument("--residual", default=None, help="S11 A2: file stating what the falsified method left (pivot input)")
     ck.add_argument("--gain", action="store_true", help="S11 A2: this wave certified or passed a positive control")
+    ck.add_argument("--receipt", default=None, help="S11H P1: JSON file with the typed Method Failure Receipt "
+                                                    "(failure_class, method_class, evidence_delta, authority_objects, "
+                                                    "methods_falsified, residual_class, independent_work)")
     pa = sub.add_parser("pivot-autonomy", help="S11 A2: opt this mission in/out of autonomous method pivots at a "
                                                "METHOD_PIVOT_REQUIRED / NEXT_PLAN_REQUIRED checkpoint")
     pa.add_argument("--mission", required=True)
@@ -7816,8 +7925,14 @@ def _cli(argv=None) -> int:
             rec = clear_checkpoint(args.mission, args.reason)
             print(f"CHECKPOINT CLEARED mission={rec['mission_id']} state={rec['state']} waited_s={rec.get('waited_s')}")
             return 0
+        receipt = None
+        if args.receipt:
+            try:
+                receipt = json.loads(Path(args.receipt).read_text(encoding="utf-8"))
+            except (OSError, ValueError) as exc:
+                raise MissionError(f"receipt unreadable: {args.receipt}: {exc}") from exc
         rec = set_checkpoint(args.mission, args.state, args.reason, evidence=args.evidence, residual=args.residual,
-                             gain=args.gain)
+                             gain=args.gain, receipt=receipt)
         print(f"CHECKPOINT {args.state} mission={rec['mission_id']} state={rec['state']} (nonterminal; the sweep "
               f"releases the worker when its turn ends)")
         return 0
