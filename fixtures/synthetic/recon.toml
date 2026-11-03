@@ -1,0 +1,545 @@
+schema = 1
+
+[project]
+name = "synthetic"
+description = "Original synthetic C/C++ corpus for the public Reconstruction Factory (no derived content)."
+
+[toolchain]
+adapter = "gcc-ppc"
+cc = ["powerpc-eabi-gcc", "/opt/devkitpro/devkitPPC/bin/powerpc-eabi-gcc", "powerpc-linux-gnu-gcc"]
+cxx = ["powerpc-eabi-g++", "/opt/devkitpro/devkitPPC/bin/powerpc-eabi-g++"]
+objdump = ["powerpc-eabi-objdump", "/opt/devkitpro/devkitPPC/bin/powerpc-eabi-objdump", "powerpc-linux-gnu-objdump"]
+
+[toolchain.recipe.o0]
+flags = ["-O0", "-ffunction-sections", "-fno-common", "-fno-asynchronous-unwind-tables"]
+lang_flags = { cxx = ["-fno-exceptions", "-fno-rtti"] }
+
+[toolchain.recipe.o1]
+flags = ["-O1", "-ffunction-sections", "-fno-common", "-fno-asynchronous-unwind-tables"]
+lang_flags = { cxx = ["-fno-exceptions", "-fno-rtti"] }
+
+# Build Twin alternatives: one edit at a time from a pinned recipe
+[toolchain.variant.o0_to_o1]
+base = "o0"
+drop = ["-O0"]
+add = ["-O1"]
+
+[toolchain.variant.o0_to_o2]
+base = "o0"
+drop = ["-O0"]
+add = ["-O2"]
+
+[toolchain.variant.o0_to_os]
+base = "o0"
+drop = ["-O0"]
+add = ["-Os"]
+
+[toolchain.variant.o0_sdata0]
+base = "o0"
+add = ["-msdata=none"]
+
+[toolchain.variant.o0_sdata_eabi]
+base = "o0"
+add = ["-msdata=eabi"]
+
+[toolchain.variant.o1_to_o2]
+base = "o1"
+drop = ["-O1"]
+add = ["-O2"]
+
+[toolchain.variant.o1_to_o0]
+base = "o1"
+drop = ["-O1"]
+add = ["-O0"]
+
+[corpus]
+include = ["ctx"]
+ref_dir = "src/ref"
+skeleton_dir = "src/skeleton"
+mutant_dir = "src/mutants"
+heldout_dir = "src/heldout"
+heldout_seal = "heldout.seal.json"
+
+[[function]]
+name = "rf_abs_diff"
+source = "rf_abs_diff.c"
+recipe = "o0"
+symbols = ["rf_abs_diff"]
+group = "int"
+
+[[function]]
+name = "rf_add3"
+source = "rf_add3.c"
+recipe = "o0"
+symbols = ["rf_add3"]
+group = "int"
+
+[[function]]
+name = "rf_arr_max"
+source = "rf_arr_max.c"
+recipe = "o0"
+symbols = ["rf_arr_max"]
+group = "int"
+
+[[function]]
+name = "rf_arr_reverse"
+source = "rf_arr_reverse.c"
+recipe = "o0"
+symbols = ["rf_arr_reverse"]
+group = "int"
+
+[[function]]
+name = "rf_bit_test"
+source = "rf_bit_test.c"
+recipe = "o0"
+symbols = ["rf_bit_test"]
+group = "int"
+
+[[function]]
+name = "rf_bsearch"
+source = "rf_bsearch.c"
+recipe = "o1"
+symbols = ["rf_bsearch"]
+group = "ctrl"
+
+[[function]]
+name = "rf_call_area"
+source = "rf_call_area.cpp"
+recipe = "o1"
+symbols = ["_Z12rf_call_areaPK5Shape"]
+group = "cxx"
+
+[[function]]
+name = "rf_checksum"
+source = "rf_checksum.c"
+recipe = "o0"
+symbols = ["rf_checksum"]
+group = "int"
+
+[[function]]
+name = "rf_circle_area_m"
+source = "rf_circle_area_m.cpp"
+recipe = "o0"
+symbols = ["_ZNK11CircleShape4areaEv"]
+group = "cxx"
+
+[[function]]
+name = "rf_circle_ctor"
+source = "rf_circle_ctor.cpp"
+recipe = "o0"
+symbols = ["_ZN11CircleShapeC1Eii", "_ZN11CircleShapeC2Eii"]
+group = "cxx"
+
+[[function]]
+name = "rf_circle_scale"
+source = "rf_circle_scale.cpp"
+recipe = "o0"
+symbols = ["_ZN11CircleShape5scaleEi"]
+group = "cxx"
+
+[[function]]
+name = "rf_clamp"
+source = "rf_clamp.c"
+recipe = "o0"
+symbols = ["rf_clamp"]
+group = "int"
+
+[[function]]
+name = "rf_collatz"
+source = "rf_collatz.c"
+recipe = "o1"
+symbols = ["rf_collatz"]
+group = "ctrl"
+
+[[function]]
+name = "rf_counter_add"
+source = "rf_counter_add.cpp"
+recipe = "o0"
+symbols = ["_ZN7Counter3addEi"]
+group = "cxx"
+
+[[function]]
+name = "rf_counter_dtor"
+source = "rf_counter_dtor.cpp"
+recipe = "o0"
+symbols = ["_ZN7CounterD1Ev", "_ZN7CounterD2Ev"]
+group = "cxx"
+
+[[function]]
+name = "rf_counter_get"
+source = "rf_counter_get.cpp"
+recipe = "o0"
+symbols = ["_ZNK7Counter3getEv"]
+group = "cxx"
+
+[[function]]
+name = "rf_counter_inc"
+source = "rf_counter_inc.cpp"
+recipe = "o0"
+symbols = ["_ZN7Counter3incEv"]
+group = "cxx"
+
+[[function]]
+name = "rf_counter_next"
+source = "rf_counter_next.c"
+recipe = "o0"
+symbols = ["rf_counter_next"]
+group = "int"
+
+[[function]]
+name = "rf_counter_reset"
+source = "rf_counter_reset.cpp"
+recipe = "o0"
+symbols = ["_ZN7Counter5resetEv"]
+group = "cxx"
+
+[[function]]
+name = "rf_div4"
+source = "rf_div4.c"
+recipe = "o0"
+symbols = ["rf_div4"]
+group = "int"
+
+[[function]]
+name = "rf_fact"
+source = "rf_fact.c"
+recipe = "o0"
+symbols = ["rf_fact"]
+group = "int"
+
+[[function]]
+name = "rf_find_first"
+source = "rf_find_first.c"
+recipe = "o1"
+symbols = ["rf_find_first"]
+group = "ctrl"
+
+[[function]]
+name = "rf_flt_avg"
+source = "rf_flt_avg.c"
+recipe = "o0"
+symbols = ["rf_flt_avg"]
+group = "float"
+
+[[function]]
+name = "rf_flt_clamp"
+source = "rf_flt_clamp.c"
+recipe = "o0"
+symbols = ["rf_flt_clamp"]
+group = "float"
+
+[[function]]
+name = "rf_flt_dot3"
+source = "rf_flt_dot3.c"
+recipe = "o0"
+symbols = ["rf_flt_dot3"]
+group = "float"
+
+[[function]]
+name = "rf_flt_len2"
+source = "rf_flt_len2.c"
+recipe = "o0"
+symbols = ["rf_flt_len2"]
+group = "float"
+
+[[function]]
+name = "rf_flt_lerp"
+source = "rf_flt_lerp.c"
+recipe = "o0"
+symbols = ["rf_flt_lerp"]
+group = "float"
+
+[[function]]
+name = "rf_flt_mad"
+source = "rf_flt_mad.c"
+recipe = "o0"
+symbols = ["rf_flt_mad"]
+group = "float"
+
+[[function]]
+name = "rf_flt_smooth"
+source = "rf_flt_smooth.c"
+recipe = "o0"
+symbols = ["rf_flt_smooth"]
+group = "float"
+
+[[function]]
+name = "rf_flt_to_int"
+source = "rf_flt_to_int.c"
+recipe = "o0"
+symbols = ["rf_flt_to_int"]
+group = "float"
+
+[[function]]
+name = "rf_gcd"
+source = "rf_gcd.c"
+recipe = "o0"
+symbols = ["rf_gcd"]
+group = "int"
+
+[[function]]
+name = "rf_is_pow2"
+source = "rf_is_pow2.c"
+recipe = "o0"
+symbols = ["rf_is_pow2"]
+group = "int"
+
+[[function]]
+name = "rf_lerp_i"
+source = "rf_lerp_i.c"
+recipe = "o0"
+symbols = ["rf_lerp_i"]
+group = "int"
+
+[[function]]
+name = "rf_mat_trace"
+source = "rf_mat_trace.c"
+recipe = "o0"
+symbols = ["rf_mat_trace"]
+group = "int"
+
+[[function]]
+name = "rf_min3"
+source = "rf_min3.c"
+recipe = "o0"
+symbols = ["rf_min3"]
+group = "int"
+
+[[function]]
+name = "rf_mod10"
+source = "rf_mod10.c"
+recipe = "o0"
+symbols = ["rf_mod10"]
+group = "int"
+
+[[function]]
+name = "rf_node_sum"
+source = "rf_node_sum.c"
+recipe = "o0"
+symbols = ["rf_node_sum"]
+group = "int"
+
+[[function]]
+name = "rf_opcode_cost"
+source = "rf_opcode_cost.c"
+recipe = "o1"
+symbols = ["rf_opcode_cost"]
+group = "ctrl"
+
+[[function]]
+name = "rf_popcount"
+source = "rf_popcount.c"
+recipe = "o0"
+symbols = ["rf_popcount"]
+group = "int"
+
+[[function]]
+name = "rf_rect_area"
+source = "rf_rect_area.c"
+recipe = "o0"
+symbols = ["rf_rect_area"]
+group = "int"
+
+[[function]]
+name = "rf_rect_area_m"
+source = "rf_rect_area_m.cpp"
+recipe = "o0"
+symbols = ["_ZNK9RectShape4areaEv"]
+group = "cxx"
+
+[[function]]
+name = "rf_rect_contains"
+source = "rf_rect_contains.c"
+recipe = "o0"
+symbols = ["rf_rect_contains"]
+group = "int"
+
+[[function]]
+name = "rf_rect_ctor"
+source = "rf_rect_ctor.cpp"
+recipe = "o0"
+symbols = ["_ZN9RectShapeC1Eiii", "_ZN9RectShapeC2Eiii"]
+group = "cxx"
+
+[[function]]
+name = "rf_rect_dtor"
+source = "rf_rect_dtor.cpp"
+recipe = "o0"
+symbols = ["_ZN9RectShapeD0Ev", "_ZN9RectShapeD1Ev", "_ZN9RectShapeD2Ev"]
+group = "cxx"
+
+[[function]]
+name = "rf_rect_grow"
+source = "rf_rect_grow.c"
+recipe = "o0"
+symbols = ["rf_rect_grow"]
+group = "int"
+
+[[function]]
+name = "rf_ring_push"
+source = "rf_ring_push.c"
+recipe = "o0"
+symbols = ["rf_ring_push"]
+group = "int"
+
+[[function]]
+name = "rf_rotl_mix"
+source = "rf_rotl_mix.c"
+recipe = "o0"
+symbols = ["rf_rotl_mix"]
+group = "int"
+
+[[function]]
+name = "rf_scale_all"
+source = "rf_scale_all.cpp"
+recipe = "o1"
+symbols = ["_Z12rf_scale_allPP5Shapeii"]
+group = "cxx"
+
+[[function]]
+name = "rf_shape_ctor"
+source = "rf_shape_ctor.cpp"
+recipe = "o0"
+symbols = ["_ZN5ShapeC1Ei", "_ZN5ShapeC2Ei"]
+group = "cxx"
+
+[[function]]
+name = "rf_shape_is_big"
+source = "rf_shape_is_big.cpp"
+recipe = "o0"
+symbols = ["_Z15rf_shape_is_bigPK5Shapei"]
+group = "cxx"
+
+[[function]]
+name = "rf_shape_scale"
+source = "rf_shape_scale.cpp"
+recipe = "o0"
+symbols = ["_ZN5Shape5scaleEi"]
+group = "cxx"
+
+[[function]]
+name = "rf_sign"
+source = "rf_sign.c"
+recipe = "o0"
+symbols = ["rf_sign"]
+group = "int"
+
+[[function]]
+name = "rf_state_next"
+source = "rf_state_next.c"
+recipe = "o1"
+symbols = ["rf_state_next"]
+group = "ctrl"
+
+[[function]]
+name = "rf_str_eq"
+source = "rf_str_eq.c"
+recipe = "o0"
+symbols = ["rf_str_eq"]
+group = "int"
+
+[[function]]
+name = "rf_str_len"
+source = "rf_str_len.c"
+recipe = "o0"
+symbols = ["rf_str_len"]
+group = "int"
+
+[[function]]
+name = "rf_sum_n"
+source = "rf_sum_n.c"
+recipe = "o0"
+symbols = ["rf_sum_n"]
+group = "int"
+
+[[function]]
+name = "rf_swap16"
+source = "rf_swap16.c"
+recipe = "o0"
+symbols = ["rf_swap16"]
+group = "int"
+
+[[function]]
+name = "rf_total_area"
+source = "rf_total_area.cpp"
+recipe = "o1"
+symbols = ["_Z13rf_total_areaPP5Shapei"]
+group = "cxx"
+
+[[function]]
+name = "rf_vec_add"
+source = "rf_vec_add.c"
+recipe = "o0"
+symbols = ["rf_vec_add"]
+group = "int"
+
+[[function]]
+name = "rf_vec_dot"
+source = "rf_vec_dot.c"
+recipe = "o0"
+symbols = ["rf_vec_dot"]
+group = "int"
+
+[[function]]
+name = "hs_flt_sq"
+source = "hs_flt_sq.c"
+recipe = "o0"
+symbols = ["hs_flt_sq"]
+group = "float"
+heldout = true
+
+[[function]]
+name = "hs_max_u"
+source = "hs_max_u.c"
+recipe = "o0"
+symbols = ["hs_max_u"]
+group = "int"
+heldout = true
+
+[[function]]
+name = "hs_mul_add"
+source = "hs_mul_add.c"
+recipe = "o0"
+symbols = ["hs_mul_add"]
+group = "int"
+heldout = true
+
+[[function]]
+name = "hs_rect_perim"
+source = "hs_rect_perim.c"
+recipe = "o0"
+symbols = ["hs_rect_perim"]
+group = "int"
+heldout = true
+
+[[function]]
+name = "hs_shape_id"
+source = "hs_shape_id.cpp"
+recipe = "o0"
+symbols = ["_Z11hs_shape_idPK5Shape"]
+group = "cxx"
+heldout = true
+
+[[function]]
+name = "hs_sum_arr"
+source = "hs_sum_arr.c"
+recipe = "o0"
+symbols = ["hs_sum_arr"]
+group = "int"
+heldout = true
+
+[[function]]
+name = "hs_total_scaled"
+source = "hs_total_scaled.cpp"
+recipe = "o0"
+symbols = ["_Z15hs_total_scaledP5ShapeS0_i"]
+group = "cxx"
+heldout = true
+
+[[function]]
+name = "hs_wrap_inc"
+source = "hs_wrap_inc.c"
+recipe = "o0"
+symbols = ["hs_wrap_inc"]
+group = "int"
+heldout = true
