@@ -1640,6 +1640,60 @@ def add_directive(mission_id: str, text: str, now: float | None = None) -> dict:
                       directives=[*(rec.get("directives") or []), text[:1000]])
 
 
+def retarget_mission(mission_id: str, command: str, reason: str, now: float | None = None,
+                     sessions: list[dict] | None = None, pid_alive=lr._pid_alive) -> dict:
+    """Spec mission-retarget: replace a PARKED mission's launch prompt in place (S11-13, 2026-11-03: a new generation
+    needed a new prompt and the only route was a second mission, losing directives, decisions and lineage).
+    Allowed only while no worker can be following the old prompt: PREPARED, or held with the owner positively gone
+    (absent, stopped by the hold, or DEAD by liveness). A hold alone is not enough: a checkpoint lets a busy worker
+    finish its turn, and a plain hold does not stop it (review 2026-11-03, MEDIUM-1).
+    The retarget's own ledger row gets both sha256 and the reason, never the text."""
+    command, reason = (command or "").strip(), (reason or "").strip()
+    if not command:
+        raise MissionError("empty command")
+    if not reason:
+        raise MissionError("a retarget needs a reason")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is {rec['state']}: retarget its successor (renewal carries the command)")
+    hold = rec.get("owner_hold") or {}
+    if rec["state"] != PREPARED:
+        if not hold:
+            raise MissionError(f"{mission_id} is {rec['state']} with no hold: a live worker is executing the old "
+                               f"prompt; hold it first")
+        if rec.get("owner") and not hold.get("worker_stopped_at"):
+            verdict, evidence = liveness(rec["owner"], host_sessions() if sessions is None else sessions,
+                                         pid_alive=pid_alive)
+            if verdict != DEAD:
+                raise MissionError(f"{mission_id} is held but its owner is not proven gone ({verdict}: {evidence}); "
+                                   f"pause it first (`hold --stop`) or wait for the worker to end")
+    if rec.get("wu_packet"):
+        raise MissionError(f"{mission_id} launches from a work-unit packet, not resume_command: a retarget would "
+                           f"change nothing")
+    old = rec["resume_command"]
+    if old.lstrip().startswith("/gsd-") != command.lstrip().startswith("/gsd-"):
+        raise MissionError("route class change (/gsd- vs prose): arm admission judged the old class; re-arm instead")
+    # create() derives the workstream from a /gsd- command's --ws flag; the goal key and GSD status follow it. A
+    # retarget that implies a different workstream is a different Goal: re-arm (review 2026-11-03, HIGH-1).
+    m = _WS_FLAG.search(command) if command.lstrip().startswith("/gsd-") else None
+    if m and m.group(1) != rec.get("workstream"):
+        raise MissionError(f"workstream change ({rec.get('workstream')!r} -> {m.group(1)!r}) changes the Goal; "
+                           f"re-arm instead")
+    new = bind_workstream(command, rec.get("workstream"))
+    import hashlib
+    sha = lambda s: hashlib.sha256(s.encode("utf-8")).hexdigest()   # noqa: E731
+    row = {"at": time.time() if now is None else now, "from_sha256": sha(old), "to_sha256": sha(new),
+           "reason": reason[:500]}
+    # expect_seq: a hold released or a checkpoint cleared between the load and this write moves seq, not epoch/state
+    # (AMR F1); without it the retarget would land on an unheld live mission (review 2026-11-03, MEDIUM-2).
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="mission_retargeted",
+                      now=now, touch=False, expect_seq=rec.get("seq"), resume_command=new,
+                      retargets=[*(rec.get("retargets") or []), row],
+                      ledger_extra={k: row[k] for k in ("from_sha256", "to_sha256", "reason")})
+
+
 def _decision_prompt(d: dict) -> str:
     return (f"OWNER DECISION {d['id']} (binding; it settles any open 'OWNER DECISION NEEDED' on this topic, in "
             f"STATE.md and in a blocked-on-Owner state): {d['text']}\n"
@@ -7766,6 +7820,11 @@ def _cli(argv=None) -> int:
     d = sub.add_parser("directive")
     d.add_argument("--mission", required=True)
     d.add_argument("--text", required=True)
+    rt = sub.add_parser("retarget", help="spec mission-retarget: replace a PREPARED or held mission's launch prompt "
+                                         "in place (directives, decisions, workset and lineage kept)")
+    rt.add_argument("--mission", required=True)
+    rt.add_argument("--command-file", required=True, help="UTF-8 file holding the new launch prompt")
+    rt.add_argument("--reason", required=True)
     dc = sub.add_parser("decide", help="record an Owner decision as durable mission state and resume a blocked "
                                        "background owner with it")
     dc.add_argument("--mission", required=True)
@@ -7874,7 +7933,7 @@ def _cli(argv=None) -> int:
                     help="exception surface: non-terminal attempts as HOT/WARM/COLD + KPIs (GGMC C6)")
     # S9 A5 mission-id authority. Measured 2026-11-01: after a failed arm an id taken from `ls -t` put an Owner hold
     # on ANOTHER live mission. Every verb that mutates one mission can assert where it lives; a mismatch refuses.
-    for _p in (dc, oh, orl, rq, ck, ws):
+    for _p in (dc, oh, orl, rq, ck, ws, rt):
         _p.add_argument("--expect-cwd", default=None,
                         help="refuse unless the mission's cwd (or a Workset path) is this directory")
     args = ap.parse_args(argv)
@@ -7925,6 +7984,13 @@ def _cli(argv=None) -> int:
         rec = request_handoff(args.session, args.note, packet=packet)
         extra = f" packet={packet['sha256'][:12]} ({packet['bytes']} bytes)" if packet else ""
         print(f"HANDOFF RECORDED mission={rec['mission_id']} epoch={rec['epoch']}{extra} -- end your turn now")
+        return 0
+    if args.cmd == "retarget":
+        cmd_text = Path(args.command_file).read_text(encoding="utf-8")
+        rec = retarget_mission(args.mission, cmd_text, args.reason)
+        r = rec["retargets"][-1]
+        print(f"RETARGETED mission={rec['mission_id']} state={rec['state']} "
+              f"from={r['from_sha256'][:12]} to={r['to_sha256'][:12]} total={len(rec['retargets'])}")
         return 0
     if args.cmd == "directive":
         rec = add_directive(args.mission, args.text)
