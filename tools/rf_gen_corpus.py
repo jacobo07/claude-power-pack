@@ -74,6 +74,8 @@ def build(root):
         kind = "heldout" if P.functions[fn].get("heldout") else "ref"
         text = f.read_source(fn, kind if kind == "heldout" else "ref")
         src = P.functions[fn]["source"]
+        if kind == "heldout":
+            continue                      # held-out law: no derived artifact of a sealed function may sit in the dev-visible tree
         s = skeleton_for(f, fn, text, reg)
         if s:
             out["skeleton"][src] = s

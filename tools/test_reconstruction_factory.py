@@ -20,6 +20,10 @@ from modules.reconstruction_factory import claims as CL
 from modules.reconstruction_factory import invalidation as INV
 from modules.reconstruction_factory import judge as J
 from modules.reconstruction_factory import genome as GN
+from modules.reconstruction_factory import heldout as HO
+from modules.reconstruction_factory import frontier as FR
+from modules.reconstruction_factory import maturity as MT
+from modules.reconstruction_factory import cbr as CB
 from modules.reconstruction_factory import method_graph as MG
 from modules.reconstruction_factory import nsm as NS
 from modules.reconstruction_factory import om as OM
@@ -51,7 +55,7 @@ class Ctx:
         out = {}
         for fn, d in self.P.functions.items():
             p = os.path.join(self.P.source_dir("skeleton"), d["source"])
-            if os.path.exists(p):
+            if os.path.exists(p) and not d.get("heldout"):
                 out[fn] = open(p).read()
         return out
 
@@ -509,6 +513,134 @@ def g_invalidation(ctx):
         seen_changed[label] = (len(truth), len(dirty))
     assert seen_changed["reorder RfRect"][0] >= 3 and seen_changed["reorder RfRect"][1] < len(src) // 2, seen_changed      # sound AND selective
     assert seen_changed["comment only"] == (0, 0), seen_changed
+
+
+@kit.gate("V-RF-HELDOUT-RELEASE", drill=lambda: patched(HO, "verify_seal", lambda project: []))
+def g_heldout(ctx):
+    from modules.reconstruction_factory.manifest import Project
+    P = ctx.P
+    assert HO.verify_seal(P) == [] and HO.leak_scan(P) == [], (HO.verify_seal(P), HO.leak_scan(P))
+    held = P.names(heldout=True)
+    assert len(held) >= 8
+    root = os.path.join(ctx.tmp.name, "ho")
+    shutil.copytree(os.path.join(ROOT, "fixtures/synthetic"), root)
+    P2 = Project(os.path.join(root, "recon.toml"))
+    led = os.path.join(ctx.tmp.name, "ledger.json")
+    f2 = Factory(P2, workdir=ctx.tmp.name)
+    txt = f2.read_source(held[0], "heldout") if False else open(P2.source_path(held[0])).read()
+    assert C.certify(f2, held[0], txt)["verdict"] == "HELDOUT_NOT_RELEASED"
+    assert HO.certify_released(f2, held[0], txt, led)["verdict"] == "HELDOUT_NOT_RELEASED", "no ledger entry: still refused"
+    sha = "ab" * 32
+    assert _raises(HO.HeldoutError, HO.release, P2, led, held[:1], "short", "x") and _raises(HO.HeldoutError, HO.release, P2, led, held[:1], sha, "")
+    assert _raises(HO.HeldoutError, HO.release, P2, led, [P2.names()[0]], sha, "dev fn is not held-out")
+    HO.release(P2, led, held[:2], sha, "first evaluation")
+    assert HO.is_released(led, held[0]) and not HO.is_released(led, held[2])
+    assert HO.certify_released(f2, held[0], txt, led)["verdict"] == "CERTIFIED_EXACT"
+    assert HO.certify_released(f2, held[2], open(P2.source_path(held[2])).read(), led)["verdict"] == "HELDOUT_NOT_RELEASED"
+    assert _raises(HO.HeldoutError, HO.release, P2, led, held[2:3], "cd" * 32, "solver edited after peeking")
+    HO.release(P2, led, held[2:3], sha, "same frozen solver")
+    # tamper: a changed held-out source breaks the seal; release and certification both stop
+    with open(P2.source_path(held[3]), "a") as fh:
+        fh.write("\n/* tampered */\n")
+    assert HO.verify_seal(P2) == ["SOURCE_CHANGED:" + held[3]], HO.verify_seal(P2)
+    assert _raises(HO.HeldoutError, HO.release, P2, led, held[3:4], sha, "after tamper")
+    assert HO.certify_released(f2, held[0], txt, led)["verdict"] == "HELDOUT_NOT_RELEASED", "a broken seal revokes the door"
+    f2.close()
+    # leak: a held-out name in the dev corpus is caught
+    with open(os.path.join(root, "ctx", "leak.h"), "w") as fh:
+        fh.write("/* %s */\n" % held[0])
+    assert any(x.startswith("NAME:" + held[0]) for x in HO.leak_scan(P2)), HO.leak_scan(P2)
+
+
+@kit.gate("V-RF-PROVENANCE", drill=lambda: patched(OM, "scan_installs", lambda img: ([], {})))
+def g_provenance(ctx):
+    from modules.reconstruction_factory import provenance as PV
+    f = ctx.f
+    want = {"rf_circle_ctor": "E2", "rf_rect_ctor": "E2", "rf_rect_dtor": "E2", "rf_shape_ctor": "E3", "rf_counter_inc": "E0", "rf_shape_scale": "E0", "rf_call_area": "E0",
+            "rf_add3": "NONE", "rf_clamp": "NONE"}
+    for fn, g in want.items():
+        if fn not in ctx.P.functions:
+            continue
+        r = PV.grade(f.adapter, f.target(fn), ctx.P.functions[fn]["symbols"] if ctx.P.functions[fn]["lang"] == "cxx" else [e["name"] for e in OM.read_elf(f.target(fn)).defined_function_symbols()])
+        assert r["grade"] == g, (fn, r)
+    assert sum(1 for fn in want if fn in ctx.P.functions) >= 7
+
+
+@kit.gate("V-RF-FRONTIER", drill=lambda: patched(FR, "project", lambda rows, removed: ([f for f, b in [(r["fn"], x) for r in rows for x in r["blockers"] if x in removed]], [])))
+def g_frontier(ctx):
+    rows = [{"fn": "A", "blockers": ["x", "y"], "callers": ["D"]}, {"fn": "B", "blockers": ["x"], "callers": []}, {"fn": "C", "blockers": ["y"], "callers": []},
+            {"fn": "D", "blockers": ["z"], "callers": []}]
+    unl, touched = FR.project(rows, ["x", "y"])
+    assert unl == ["A", "B", "C"] and touched == ["A", "B", "C"], (unl, touched)
+    assert FR.project(rows, ["x"])[0] == ["B"] and FR.project(rows, [])[0] == []
+    fr = FR.compute(rows)
+    assert fr["x"]["blocked_direct"] == [1, 2] and fr["x"]["sole"] == ["B"]
+    assert fr["z"]["blocked"] == [1, 1] and fr["x"]["blocked_transitive_high"] == 1, fr["x"]      # D calls A: A's blocker x also blocks D transitively (high side only)
+    pl = FR.plan(rows, 3)
+    assert pl[-1][2] == 4 and sum(p[1] for p in pl) == pl[-1][2], pl      # newly-unlocked counts add up to the union: each function once
+    res = {}
+    for fn, t in ctx.skeletons().items():
+        r, c = ctx.f.judge_text(fn, t)
+        if c.ok and not r["exact"]:
+            res[fn] = RS.residual(ctx.f.adapter, ctx.f.target(fn), c.obj, ctx.P.functions[fn]["symbols"])
+    real = FR.rows_from_project(ctx.f, res)
+    assert len(real) >= 10 and all(r["blockers"] for r in real)
+    top = FR.rank(FR.compute(real))
+    assert top and top[0]["blocked"][1] >= 2
+    unl2, _ = FR.project(real, [d["blocker"] for d in top])
+    assert len(unl2) == len(set(unl2)) == len(real), "removing every blocker unlocks each function exactly once"
+    sc = FR.shuffle_control(real, n=5)
+    assert set(sc) == {"real", "shuffled_mean", "shuffled_max", "falls"}
+
+
+@kit.gate("V-RF-MATURITY", drill=lambda: patched(MT, "holds", lambda p, graph=None: True))
+def g_maturity(ctx):
+    rub = {"D": [(2, ("file", "modules/reconstruction_factory/certify.py"), "a"), (4, ("file", "no/such/file"), "b"), (6, ("file", "modules/reconstruction_factory/search.py"), "c")]}
+    assert MT.vector(rub)["dimensions"]["D"] == 2, "a chain: anchor 6 holds but anchor 4 does not, so the grade is 2"
+    assert MT.grade([], None) == 0 and MT.grade([(3, ("file", "no/such"), "x")]) == 0
+    assert _raises(ValueError, MT.holds, ("nope",))
+    v = MT.vector()
+    assert v["overall"] == min(v["dimensions"].values()) and v["overall"] < 10, "10 is Owner acceptance; nothing here may self-grade to it"
+    assert all(g < 10 for g in v["dimensions"].values())
+    g = MT.import_graph()
+    assert "judge" in g["search"] and MT.reachable("judge") and not MT.reachable("maturity")
+    assert MT.verify_contract(), "the frozen rubric hash must match"
+    edited = dict(MT.RUBRIC, D01_certification=[(2, ("file", "modules/reconstruction_factory/certify.py"), "edited")])
+    assert not MT.verify_contract(edited), "editing the rubric turns the contract red"
+    assert not MT.verify_contract(path=os.path.join(ctx.tmp.name, "absent.json"))
+
+
+_cbr_decide = CB.decide
+
+
+@kit.gate("V-RF-CBR", drill=lambda: patched(CB, "decide", lambda p, satisfied=(): _cbr_decide(p, satisfied)[:-1]))
+def g_cbr(ctx):
+    P = ctx.P
+    b = CB.birth(P)
+    ins = ["%s:%s" % x for x in CB.discover(P)]
+    assert len(b["rows"]) == len(ins) and sorted(r["input"] for r in b["rows"]) == ins, "one row per discovered input"
+    assert "module:heldout" in ins and "heldout:sealed" in ins and "adapter:gcc-ppc" in ins and "lang:cxx" in ins
+    assert b["counts"]["UNKNOWN"] == 0 and b["counts"]["INHERITED"] > 30, b["counts"]
+    assert CB.birth(P)["digest"] == b["digest"], "deterministic"
+    prof = CB.profile(P)
+    assert CB._decide("module", "om", dict(prof, cxx=False))[0] == "NOT_APPLICABLE"
+    assert CB._decide("module", "heldout", dict(prof, sealed=False))[0] == "CONFLICT"
+    assert CB._decide("module", "judge", dict(prof, adapter="mwcc"))[0] == "ADAPTED"
+    assert CB._decide("module", "never_heard_of_it", prof)[0] == "UNKNOWN" and CB._decide("adapter", "mwcc", prof)[0] == "UNKNOWN"
+    assert CB._decide("module", "judge", prof, satisfied=("module:judge",))[0] == "ALREADY_SATISFIED"
+    assert {CB._decide("module", m, prof)[0] for m in ("om", "judge")} == {"INHERITED"}
+    assert any(r["disposition"] == "ALREADY_SATISFIED" for r in CB.decide(P, satisfied=("module:judge",)))
+    rows = b["rows"]
+    assert CB.check_rows(rows[:-1], P) and CB.check_rows(rows + rows[:1], P) and CB.check_rows(rows + [{"input": "x:y", "disposition": "INHERITED", "reason": "", "evidence": ["e"]}], P)
+    assert CB.check_rows([dict(r, disposition="MAYBE") if i == 0 else r for i, r in enumerate(rows)], P)
+    assert CB.check_rows([dict(r, evidence=[]) if r["disposition"] == "INHERITED" and i == 0 else r for i, r in enumerate(rows)], P)
+    ret = CB.construction_return([{"kind": "NEW_ORACLE", "subject": "objdump text compare", "evidence": ["V-RF-CERT-POSITIVE"]}], rows)
+    assert len(ret["digest"]) == 64
+    conflict = [dict(rows[0], input="adapter:mwcc", disposition="UNKNOWN")] + rows
+    assert CB.construction_return([{"kind": "FAILED_TRANSFER", "subject": "mwcc", "birth_input": "adapter:mwcc", "evidence": ["x"]}], conflict)
+    assert _raises(ValueError, CB.construction_return, [{"kind": "FAILED_TRANSFER", "subject": "judge", "birth_input": rows[0]["input"], "evidence": ["x"]}], rows)
+    assert _raises(ValueError, CB.construction_return, [{"kind": "NEW_CAPABILITY", "subject": "s", "evidence": []}], rows)
+    assert _raises(ValueError, CB.construction_return, [{"kind": "WISHFUL", "subject": "s", "evidence": ["e"]}], rows)
 
 
 if __name__ == "__main__":
