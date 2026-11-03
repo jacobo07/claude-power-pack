@@ -788,3 +788,71 @@ export function shellFailed(res: { exitCode?: unknown; code?: unknown; interrupt
   const n = res.exitCode ?? res.code
   return res.interrupted === true || res.isError === true || (typeof n === 'number' && n !== 0)
 }
+
+// ---------------------------------------------------------------------------------------------------
+// Safe-to-Forget (ctx-rent-x Phase 5, CR-09/10/13; spec vault/specs/ccr-safe-to-forget-main.md). A projection is applied
+// only when the full output is durable, the open obligation is known and names no omitted line, and every omitted proof
+// line is hoisted back. Every refusal sends the whole output, so this can only ever keep MORE than projectToolOutput.
+export const PROTECTED_LINE = new RegExp([
+  String.raw`\b(?:FAIL\w*|ERROR|Traceback|Exception|fatal|panic)\b`,
+  String.raw`\w(?:Error|Exception)\b`, // ValueError:, AssertionError, IOException (review L1)
+  String.raw`\b(?:exit|rc|returncode|status)(?:\s*code)?\s*[=:]\s*-?\d+`,
+  String.raw`\bverdict\s*[=:]`,
+  String.raw`\b(?:PASS|FAIL|OK)\w*\s*[=:]\s*\d+`,
+  String.raw`\b\d+\s*/\s*\d+\s*(?:pass|passed|ok|fail|failed)\b`,
+  String.raw`^\s*\[[^\]]+ [0-9a-f]{7,40}\]`, // also "[main (root-commit) abc1234]", "[detached HEAD abc1234]" (review L2)
+].join('|'), 'i')
+export const HOIST_MAX_LINES = 20
+export const HOIST_MAX_CHARS = 2000
+
+// Distinctive terms of the obligation text: a token of >= 4 chars that carries a digit, `.`, `_`, `-`, a slash or an inner
+// capital (file names, ids, hashes). Plain words are not terms: "the" or "carry" must not pin every output whole.
+export function obligationTerms(text: string): string[] {
+  const out = new Set<string>()
+  for (const t of text.match(/[A-Za-z0-9_][\w.\-\/\\]*[A-Za-z0-9_]/g) ?? []) {
+    if (t.length < 4) continue
+    if (/[0-9._\-\/\\]/.test(t) || /[a-z][A-Z]/.test(t)) out.add(t.toLowerCase())
+    if (out.size >= 200) break
+  }
+  return [...out]
+}
+
+export type ForgetVerdict = { verdict: 'FORGET' | 'KEEP' | 'UNKNOWN'; reason: string; out: string; hoisted: number; named: string[] }
+
+export function safeToForget(text: string, p: Projection, obligation: string | null, durable: boolean): ForgetVerdict {
+  const keep = (verdict: 'KEEP' | 'UNKNOWN', reason: string, named: string[] = []): ForgetVerdict =>
+    ({ verdict, reason, out: text, hoisted: 0, named })
+  if (p.action === 'pass') return keep('KEEP', 'under-budget')
+  if (!durable) return keep('KEEP', 'not-durable')
+  // A blank obligation (image-only prompt, empty subagent prompt) is as unknown as a missing one (review M1).
+  if (obligation === null || !obligation.trim()) return keep('UNKNOWN', 'no-obligation-text')
+  // An omitted line is any line of the full text whose trimmed form is not a line of the projection (a line cut at the
+  // head/tail boundary counts as omitted: conservative).
+  const shown = new Set(p.out.split('\n').map(l => l.trim()))
+  const omitted = text.split('\n').filter(l => l.trim() && !shown.has(l.trim()))
+  const terms = obligationTerms(obligation)
+  const named = terms.filter(t => omitted.some(l => l.toLowerCase().includes(t)))
+  if (named.length) return keep('KEEP', 'obligation-named', named.slice(0, 5))
+  const proof = omitted.filter(l => PROTECTED_LINE.test(l))
+  if (proof.length === 0) return { verdict: 'FORGET', reason: 'safe', out: p.out, hoisted: 0, named: [] }
+  const block = proof.join('\n')
+  if (proof.length > HOIST_MAX_LINES || block.length > HOIST_MAX_CHARS) return keep('KEEP', 'proof-too-large')
+  return { verdict: 'FORGET', reason: 'safe-hoisted', hoisted: proof.length, named: [],
+    out: `${p.out}\n[CCR kept these ${proof.length} line(s) from the omitted part: verdicts, failures, exit codes, commits]\n${block}` }
+}
+
+// Main-pane projection (Phase 5): CCR_MAIN_PROJECT=1 lifts `project` to enforce on a main pane with no unit, not a
+// successor (its own rule decides), no explicit modes.project, main not off. An incompatible build only observes.
+export function mainProjectMode(env: string | undefined, projectMode: Mode, hasUnit: boolean, successor: boolean, modes: Modes, compatible: boolean): Mode {
+  if (env !== '1' || hasUnit || successor || modes.project !== undefined || projectMode === 'off' || modes.main === 'off') return projectMode
+  return compatible ? 'enforce' : 'shadow'
+}
+
+// A Read or Grep of a projected full output is a page fault: the projection was not enough for that call.
+export function projectedFaultPath(stateDir: string, path: unknown): string | null {
+  if (!stateDir || typeof path !== 'string' || !path) return null
+  const p = path.replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '')
+  const root = `${stateDir.replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '')}/tool-results`
+  // the store itself (a Grep over every projected output) counts too (review L5)
+  return p === root || p.startsWith(`${root}/`) ? path : null
+}

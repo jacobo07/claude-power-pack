@@ -102,6 +102,48 @@ def gpf_rows(root, repo, gpf, budget_src, put):
         put("CR-36", {0: P, 1: F}.get(code, U), "floor gate --budget on newest session: exit %s %s" % (code, last))
 
 
+def phase5_rows(root, put):
+    """CR-09/10/13 (Phase 5 Safe-to-Forget in main; spec vault/specs/ccr-safe-to-forget-main.md), from the live smoke file
+    phase5-safe-to-forget.json (vault/programs/ctx-rent-x/phase5_smoke.py). Arm N = CCR_MAIN_PROJECT=1, arm F = unset.
+    Fewer than 3 finished runs per arm measured too little: UNKNOWN, never PASS."""
+    doc = load(root, "phase5-safe-to-forget.json")
+    runs = [r for r in (doc or {}).get("runs") or [] if r.get("finished")]
+    on, off = [r for r in runs if r.get("arm") == "N"], [r for r in runs if r.get("arm") == "F"]
+    if not doc or len(on) < 3 or len(off) < 3:
+        why = "no phase5-safe-to-forget.json (Phase 5 smoke not run)" if not doc else \
+            "n<3 finished runs per arm (N=%d F=%d)" % (len(on), len(off))
+        for cr in ("CR-09", "CR-10", "CR-13"):
+            put(cr, U, why)
+        return
+
+    def main_proj(r):
+        return [x for x in ((r.get("receipts") or {}).get("project") or []) if x.get("agent") is None]
+    # CR-09: the judgement ran on the real path: every ON run has a main-pane projection receipt carrying `forget`.
+    judged = [r for r in on if any(x.get("forget") and x.get("mainProject") for x in main_proj(r))]
+    put("CR-09", P if len(judged) == len(on) else F, "safeToForget judged a main-pane projection in %d/%d ON runs" % (len(judged), len(on)))
+    # CR-10: proof survived: every ON run answered from the buried verdict line; the protection was exercised (hoisted or a
+    # named KEEP); and nothing was applied without a read-back-verified full output.
+    rec = [x for r in on for x in main_proj(r)]
+    exercised = sum(1 for x in rec if (x.get("forget") or {}).get("hoisted", 0) > 0 or (x.get("forget") or {}).get("reason") == "obligation-named")
+    undurable = sum(1 for x in rec if x.get("applied") and x.get("durable") is not True)
+    ok_on = sum(1 for r in on if r.get("correct"))
+    ok10 = ok_on == len(on) and exercised > 0 and undurable == 0
+    put("CR-10", P if ok10 else F, "ON correct %d/%d (OFF %d/%d); protection exercised %d; applied without durable read-back %d" % (
+        ok_on, len(on), sum(1 for r in off if r.get("correct")), len(off), exercised, undurable))
+    # CR-13: the recurring large class (shell output > budget) was actually externalised in every ON run, and it paid.
+    applied = [r for r in on if any(x.get("applied") for x in main_proj(r))]
+    saved = sum(x.get("bytes", 0) - x.get("out", 0) for x in rec if x.get("applied"))
+    pon, poff = [r.get("processed") for r in on], [r.get("processed") for r in off]
+    if any(not isinstance(v, int) for v in pon + poff):
+        put("CR-13", U, "processed tokens unmeasured in some run")
+        return
+    m_on, m_off = sum(pon) / len(pon), sum(poff) / len(poff)
+    ok13 = len(applied) == len(on) and m_on < m_off
+    put("CR-13", P if ok13 else F, "applied in %d/%d ON runs, %d chars externalised; processed mean ON %d vs OFF %d (%+.1f%%); projected faults %d" % (
+        len(applied), len(on), saved, m_on, m_off, 100.0 * (m_on - m_off) / m_off,
+        sum((r.get("receipts") or {}).get("faults", 0) for r in on)))
+
+
 def conditions(root, repo, gpf=GPF, budget_src=PP_PROJECT_DIR):
     est = load(root, "estate-laptop-w0.json")
     gex = load(root, "estate-gex44-w0.json")
@@ -136,8 +178,7 @@ def conditions(root, repo, gpf=GPF, budget_src=PP_PROJECT_DIR):
     owners = ["tools/ccr_release.py", "tools/mission_capsule.py", "tools/gsd_epoch.py", "tools/ccr_pgo.py", "tools/mission_spend.py", "mods/cpp-cognitive-runtime/hooks/policy.ts"]
     miss = [o for o in owners if not os.path.exists(os.path.join(repo, o))]
     put("CR-08", F if miss else P, "missing owners %s" % miss if miss else "all %d plan-section-1 owners present; new tools are ctx_rent/ctx_wait/floor_diet extensions" % len(owners))
-    put("CR-09", U, "Safe-to-Forget consumer (Phase 5) not run")
-    put("CR-10", U, "Phase 5 not run")
+    phase5_rows(root, put)
     # CR-11/14/15/29: read from the GPF laptop smoke receipts (per-run files, latest measured run decides; an aborted run
     # measured nothing and stays UNKNOWN with its reason).
     succ_runs = [r for r in ((load(gpf, "gpf-l1-successor.json") or {}).get("runs") or []) if r.get("successor")]
@@ -166,7 +207,6 @@ def conditions(root, repo, gpf=GPF, budget_src=PP_PROJECT_DIR):
             k.get("label"), hit, k.get("ledger_verdict") or k.get("capsule_verdict"), k.get("resume_failed")))
     r = delta_ok((diet or {}).get("rows", {}).get("rules_to_skills"))
     put("CR-12", r[0] if r else U, r[1] if r else "no floor-diet rows")
-    put("CR-13", U, "Phase 5 externalisation not run")
     put("CR-16", U, "gsd_epoch breakeven advisory exists but its inputs (successor floor, bootstrap, page-ins) are unmeasured")
     # CR-17..19: derived from the raw per-run file (never from a self-reported summary).
     # Valid run = finished AND its receipt matches its arm. Pairs = min(valid S, valid E).

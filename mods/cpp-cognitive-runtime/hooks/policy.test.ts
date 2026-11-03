@@ -3,7 +3,97 @@ import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
   subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, mainCanaryMode, successorMode, DEFAULT_MODES,
+  safeToForget, obligationTerms, mainProjectMode, projectedFaultPath, HOIST_MAX_LINES,
 } from './policy'
+
+// Safe-to-Forget (Phase 5; spec vault/specs/ccr-safe-to-forget-main.md). A 600-line log with one buried verdict line.
+const LOG = (buried: string) => {
+  const rows: string[] = []
+  for (let i = 0; i < 600; i++) rows.push(i === 300 ? buried : `step ${i} processed record ok ${'.'.repeat(40)}`)
+  return rows.join('\n')
+}
+
+test('safe-to-forget: a buried verdict line is hoisted back into the projection (FORGET safe-hoisted)', () => {
+  const text = LOG('FLOOR verdict=MATERIAL_RISE exit=1 reason=material_rise')
+  const p = projectToolOutput(text, '/s/full.txt', 8000)
+  expect(p.out.includes('verdict=MATERIAL_RISE')).toBe(false) // the bare projection loses it
+  const f = safeToForget(text, p, 'what did the gate say?', true)
+  expect(f.verdict).toBe('FORGET')
+  expect(f.reason).toBe('safe-hoisted')
+  expect(f.hoisted).toBe(1)
+  expect(f.out.includes('FLOOR verdict=MATERIAL_RISE exit=1')).toBe(true)
+  expect(f.out.length < text.length / 2).toBe(true)
+})
+
+test('safe-to-forget: nothing protected and nothing named -> FORGET with the plain projection', () => {
+  const text = LOG('step 300 processed record ok')
+  const p = projectToolOutput(text, '/s/full.txt', 8000)
+  const f = safeToForget(text, p, 'carry on', true)
+  expect(f.verdict).toBe('FORGET')
+  expect(f.reason).toBe('safe')
+  expect(f.out).toBe(p.out)
+})
+
+test('safe-to-forget refuses: not durable, no obligation text, a named omitted line, too much proof, under budget', () => {
+  const text = LOG('wrote vault/programs/ctx-rent-x/phase5.json')
+  const p = projectToolOutput(text, '/s/full.txt', 8000)
+  expect(safeToForget(text, p, 'x', false)).toEqual({ verdict: 'KEEP', reason: 'not-durable', out: text, hoisted: 0, named: [] })
+  const u = safeToForget(text, p, null, true)
+  expect(u.verdict).toBe('UNKNOWN'); expect(u.reason).toBe('no-obligation-text'); expect(u.out).toBe(text)
+  const n = safeToForget(text, p, 'did it write vault/programs/ctx-rent-x/phase5.json?', true)
+  expect(n.verdict).toBe('KEEP'); expect(n.reason).toBe('obligation-named'); expect(n.out).toBe(text)
+  expect(n.named).toEqual(['vault/programs/ctx-rent-x/phase5.json'])
+  const many = Array.from({ length: 600 }, (_, i) => (i > 100 && i < 100 + HOIST_MAX_LINES + 10 ? `FAIL case ${i}` : `ok ${i} ${'.'.repeat(40)}`)).join('\n')
+  const pm = projectToolOutput(many, '/s/full.txt', 8000)
+  const k = safeToForget(many, pm, 'run it', true)
+  expect(k.verdict).toBe('KEEP'); expect(k.reason).toBe('proof-too-large'); expect(k.out).toBe(many)
+  const small = projectToolOutput('ok', '/s/t.txt')
+  expect(safeToForget('ok', small, 'x', true).reason).toBe('under-budget')
+  // review M1: a blank obligation is unknown, never "nothing named"
+  for (const blank of ['', '   \n ']) {
+    const b = safeToForget(text, p, blank, true)
+    expect(b.verdict).toBe('UNKNOWN'); expect(b.out).toBe(text)
+  }
+})
+
+test('safe-to-forget: exception-type and root-commit lines are proof; a listing projection is judged too', () => {
+  for (const line of ['ValueError: shard 19 checksum mismatch', 'AssertionError', '[main (root-commit) 953af53] init', '[detached HEAD abc1234] wip']) {
+    const text = LOG(line)
+    const f = safeToForget(text, projectToolOutput(text, '/s/full.txt', 8000), 'go', true)
+    expect(f.reason).toBe('safe-hoisted'); expect(f.out.includes(line)).toBe(true)
+  }
+  const tree = runsTree(400)
+  const pl = projectToolOutput(tree, '/s/full.txt', 8000)
+  expect(safeToForget(tree, pl, 'list the runs', true).verdict).toBe('FORGET')
+  expect(safeToForget(tree, pl, 'look at runs\\phase2\\a17\\review.md', true).reason).toBe('obligation-named')
+})
+
+test('obligation terms are distinctive tokens only: ids, paths, hashes, camelCase; never plain words', () => {
+  expect(obligationTerms('carry on with the plan please')).toEqual([])
+  expect(obligationTerms('fix CR-09 in done_gate.py at 953af539 via safeToForget')).toEqual(['cr-09', 'done_gate.py', '953af539', 'safetoforget'])
+})
+
+test('main projection mode: CCR_MAIN_PROJECT=1 enforces only on a compatible unit-less non-successor main pane', () => {
+  const m = { ...DEFAULT_MODES }
+  expect(mainProjectMode('1', 'shadow', false, false, m, true)).toBe('enforce')
+  expect(mainProjectMode(undefined, 'shadow', false, false, m, true)).toBe('shadow')
+  expect(mainProjectMode('0', 'shadow', false, false, m, true)).toBe('shadow')
+  expect(mainProjectMode('1', 'enforce', true, false, m, true)).toBe('enforce') // unit: its own rule
+  expect(mainProjectMode('1', 'shadow', false, true, m, true)).toBe('shadow') // successor: its own rule
+  expect(mainProjectMode('1', 'shadow', false, false, m, false)).toBe('shadow') // incompatible build observes
+  expect(mainProjectMode('1', 'shadow', false, false, { ...m, project: 'shadow' }, true)).toBe('shadow') // explicit modes.project wins
+  expect(mainProjectMode('1', 'off', false, false, { ...m, main: 'off' }, true)).toBe('off')
+  expect(mainProjectMode('1', 'shadow', false, false, { ...m, main: 'off' }, true)).toBe('shadow') // main off alone blocks the lift (review L3)
+})
+
+test('a Read/Grep of a projected full output is a page fault; any other path is not', () => {
+  expect(projectedFaultPath('C:/Users/U/.claude/ccr/state', 'C:\\Users\\U\\.claude\\ccr\\state\\tool-results\\s1\\t1.txt')).toBe('C:\\Users\\U\\.claude\\ccr\\state\\tool-results\\s1\\t1.txt')
+  expect(projectedFaultPath('C:/Users/U/.claude/ccr/state', 'C:/Users/U/.claude/ccr/state/tool-results')).toBe('C:/Users/U/.claude/ccr/state/tool-results') // review L5
+  expect(projectedFaultPath('C:/Users/U/.claude/ccr/state', 'C:/Users/U/.claude/ccr/state/tool-results-old/x.txt')).toBe(null)
+  expect(projectedFaultPath('C:/Users/U/.claude/ccr/state', 'C:/repo/tool-results/x.txt')).toBe(null)
+  expect(projectedFaultPath('', 'C:/Users/U/.claude/ccr/state/tool-results/x.txt')).toBe(null)
+  expect(projectedFaultPath('C:/s', undefined)).toBe(null)
+})
 // isPlannerType (dc4bf2b4) is not in the live release 0.1.0-b15bfc3d that 35776051 synced register.ts to; its test lives
 // with that branch. Importing it here made this whole file fail to load, so no test in it ran.
 

@@ -31,7 +31,7 @@ base = fresh()
 s = status(base)
 check("V-DONEGATE-36", len(s) == 36 and sorted(s) == ["CR-%02d" % i for i in range(1, 37)])
 check("V-DONEGATE-CONTROL-PASS", s["CR-12"] == "PASS" and s["CR-21"] == "PASS" and s["CR-20"] == "PASS")
-check("V-DONEGATE-UNKNOWN-NOT-PASS", s["CR-09"] == "UNKNOWN" and s["CR-17"] == "PASS" and dg.main(["--root", base]) == 1)
+check("V-DONEGATE-UNKNOWN-NOT-PASS", s["CR-16"] == "UNKNOWN" and s["CR-17"] == "PASS" and dg.main(["--root", base]) == 1)
 # mutation 1: treatment worse than control -> FAIL, not PASS
 m = fresh(); d = json.load(open(m + "/floor-diet-results.json"))
 d["rows"]["rules_to_skills"]["treatment"] = d["rows"]["rules_to_skills"]["control"]
@@ -116,5 +116,33 @@ for code, want in ((0, "PASS"), (1, "FAIL"), (2, "UNKNOWN"), (None, "UNKNOWN")):
     check("V-DONEGATE-CR36-EXIT-%s" % code, got == want, "exit %s -> %s" % (code, got))
 dg.budget_run = real_run
 check("V-DONEGATE-CR36-NO-SRC", l2file(C4, T4, {"C": 3, "T": 3}, [3, 3], budget=True, src=e + "/absent")["CR-36"] == "UNKNOWN")
+# Phase 5 CR-09/10/13 (spec vault/specs/ccr-safe-to-forget-main.md): read from phase5-safe-to-forget.json, each row both poles.
+def p5run(arm, correct=True, proc=None, applied=None, forget=True, hoisted=1, durable=True):
+    on = arm == "N"
+    applied = on if applied is None else applied
+    x = {"tool": "PowerShell", "agent": None, "bytes": 40000, "out": 7900 if applied else 7700, "applied": applied,
+         "durable": (durable if on else None), "mainProject": True if on else None,
+         "forget": ({"verdict": "FORGET", "reason": "safe-hoisted" if hoisted else "safe", "hoisted": hoisted, "named": []} if forget else None)}
+    return {"arm": arm, "finished": True, "correct": correct, "processed": proc or (60000 if on else 90000),
+            "receipts": {"start": {}, "project": [x], "faults": 0}}
+def p5(runs, drop=False):
+    q = fresh()
+    path = q + "/phase5-safe-to-forget.json"
+    if drop:
+        if os.path.exists(path): os.remove(path)
+    else:
+        json.dump({"runs": runs}, open(path, "w"))
+    st = status(q)
+    return st["CR-09"], st["CR-10"], st["CR-13"]
+GOOD5 = [p5run("F"), p5run("N")] * 3
+check("V-DONEGATE-P5-PASS", p5(GOOD5) == ("PASS", "PASS", "PASS"))
+check("V-DONEGATE-P5-MISSING", p5(None, drop=True) == ("UNKNOWN", "UNKNOWN", "UNKNOWN"))
+check("V-DONEGATE-P5-N2", p5(GOOD5[:4]) == ("UNKNOWN", "UNKNOWN", "UNKNOWN"))
+check("V-DONEGATE-MUT-P5-NOT-JUDGED", p5(GOOD5[:5] + [p5run("N", forget=False)])[0] == "FAIL")
+check("V-DONEGATE-MUT-P5-WRONG-ANSWER", p5(GOOD5[:5] + [p5run("N", correct=False)])[1] == "FAIL")
+check("V-DONEGATE-MUT-P5-UNDURABLE", p5(GOOD5[:5] + [p5run("N", durable=False)])[1] == "FAIL")
+check("V-DONEGATE-MUT-P5-UNEXERCISED", p5([p5run("F"), p5run("N", hoisted=0)] * 3)[1] == "FAIL")
+check("V-DONEGATE-MUT-P5-NOT-APPLIED", p5(GOOD5[:5] + [p5run("N", applied=False)])[2] == "FAIL")
+check("V-DONEGATE-MUT-P5-NO-SAVING", p5([p5run("F", proc=60000), p5run("N", proc=60000)] * 3)[2] == "FAIL")
 print("DONEGATE_PASS=%d/%d  threshold=N/N" % (passes, passes + fails))
 sys.exit(0 if fails == 0 else 1)

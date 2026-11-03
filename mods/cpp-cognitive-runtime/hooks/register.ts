@@ -8,6 +8,7 @@ import {
 import { generationVerdict, parseActive } from './policy'
 import { describeReceipt, textBytes, type DescribeSeen } from './policy'
 import { decideArmBAttachment, decideSuccessorAttachment, frontierText, mdsSha, reachSummary, parseFrontierPointer, isFirstPromptCandidate, isKresumeSuccessor, shellFailed, successorMode, successorProjectMode } from './policy'
+import { mainProjectMode, projectedFaultPath, safeToForget, type ForgetVerdict } from './policy'
 
 // Tool description census (observe only): what tool.describe saw, and which tools a receipt already named.
 const describeSeen: DescribeSeen = new Map()
@@ -28,6 +29,8 @@ let compatible = false
 let kernel: string | null = null
 let files: InstructionFileInfo[] | null = null
 let firstPrompt = ''
+// The open obligation of a main pane for Safe-to-Forget: the latest submitted prompt; null = none recorded (UNKNOWN).
+let lastPrompt: string | null = null
 // The resumed task's text; null = UNKNOWN until the capsule frontier reader lands (Phase 2). Never derived from the `/kresume` command.
 let successorFrontier: string | null = null
 // Benchmark arm B (CCR_A2_ARM=B): the pre-A2 successor behaviour, for the frozen A/B only.
@@ -48,6 +51,8 @@ let successorDecision: Promise<void> | undefined
 let sessionInteractive = false
 let unitP: Promise<WorkUnit | null> | null = null
 const agentTypes = new Map<string, string>()
+// A subagent's prompt is its open obligation for Safe-to-Forget (bounded copy).
+const agentPrompts = new Map<string, string>()
 const receipts: Receipt[] = []
 // Main-loop carry state for the epoch deopt advice: images that entered the transcript, the call count, the floor.
 const hotImages = new Map<string, { tok: number; since: number; n: number }>()
@@ -96,24 +101,56 @@ const loadUnit = ($: any): Promise<WorkUnit | null> => {
 
 // Tool Output Projection (v4 B5): a shell result over the budget reaches the model as a projection plus the path
 // of the full output. Fails open: anything unexpected, or a failed write of the full output, sends the stock result.
-// Mode: modes.project, else enforce in a Work Unit session (as `unit`) and shadow elsewhere.
+// Mode: modes.project, else enforce in a Work Unit session (as `unit`) and shadow elsewhere; CCR_MAIN_PROJECT=1 lifts a
+// plain main pane to enforce (Phase 5). Outside a Work Unit every projection must pass Safe-to-Forget (durable full output
+// read back, known obligation naming no omitted line, omitted proof lines hoisted); any refusal sends the whole output.
+// A Work Unit keeps the B5 behaviour unchanged, so its measured receipts stay comparable.
+const forgetFields = (f: ForgetVerdict) => ({ verdict: f.verdict, reason: f.reason, hoisted: f.hoisted, named: f.named })
 const projectShell = async ($: any, e: any, next: any) => {
   const r: any = await next(e)
   const res = r?.result
   if (r?.deny !== undefined || !res || typeof res.stdout !== 'string' || res.isImage || res.backgroundTaskId || res.persistedOutputPath) return r
   const unit = await loadUnit($)
-  const mode: Mode = successorProjectMode(effectiveModes(modes, compatible, !!unit).project, successor, canary, modes, !!unit)
+  let mainEnv: string | undefined
+  try { mainEnv = await $.env.get('CCR_MAIN_PROJECT') } catch { mainEnv = undefined } // no env access: today's mode
+  const mode: Mode = mainProjectMode(mainEnv,
+    successorProjectMode(effectiveModes(modes, compatible, !!unit).project, successor, canary, modes, !!unit), !!unit, successor, modes, compatible)
   if (mode === 'off' || !stateDir || shellFailed(res)) return r
   const full = `${stateDir}/tool-results/${sid}/${e.tool_use_id ?? `t${Date.now()}`}.txt`
   const p = projectToolOutput(res.stdout, full, projectBudget)
   if (p.action === 'pass') return r
   const base = { ev: 'project', tool: e.tool, use: e.tool_use_id ?? null, agent: e.agentId ? agentTypes.get(e.agentId) ?? 'unknown' : null,
-    kind: p.kind, bytes: p.bytes, lines: p.lines, out: p.out.length, budget: projectBudget, ...(successor ? { successor: true } : {}) }
-  if (mode !== 'enforce') { receipt({ ...base, applied: false }); return r }
+    kind: p.kind, bytes: p.bytes, lines: p.lines, out: p.out.length, budget: projectBudget, ...(successor ? { successor: true } : {}),
+    ...(mainEnv === '1' ? { mainProject: true } : {}) }
+  // The open obligation: a subagent's own prompt; a successor's frontier plus the latest prompt; else the latest prompt.
+  const obligation = e.agentId ? agentPrompts.get(e.agentId) ?? null
+    : successor ? ([successorFrontier, lastPrompt].filter(Boolean).join('\n') || null) : lastPrompt
+  if (mode !== 'enforce') {
+    receipt({ ...base, applied: false, ...(unit ? {} : { forget: forgetFields(safeToForget(res.stdout, p, obligation, true)), durable: null }) })
+    return r
+  }
   try { await $.fs.write(full, res.stdout) }
   catch (err) { receipt({ ...base, applied: false, error: String(err).slice(0, 200) }); return r } // full output not kept: send it whole
-  receipt({ ...base, applied: true, path: full })
-  return { result: { ...res, stdout: p.out }, ...(r.context ? { context: r.context } : {}) }
+  if (unit) {
+    receipt({ ...base, applied: true, path: full })
+    return { result: { ...res, stdout: p.out }, ...(r.context ? { context: r.context } : {}) }
+  }
+  let back: string | null = null
+  try { back = await $.fs.read(full) } catch { back = null } // unreadable right after the write: not durable
+  const durable = back !== null && back.length === res.stdout.length && back === res.stdout
+  const f = safeToForget(res.stdout, p, obligation, durable)
+  if (f.verdict !== 'FORGET') { receipt({ ...base, applied: false, path: full, forget: forgetFields(f), durable }); return r }
+  receipt({ ...base, applied: true, path: full, out: f.out.length, forget: forgetFields(f), durable })
+  return { result: { ...res, stdout: f.out }, ...(r.context ? { context: r.context } : {}) }
+}
+
+// Page-fault counter for projected outputs: a Read or Grep of a tool-results/ file means the projection was not enough.
+// Observe only: the tool runs unchanged.
+const noteProjectedFault = async ($: any, e: any, next: any) => {
+  const r: any = await next(e)
+  const path = projectedFaultPath(stateDir, e.file_path ?? e.path ?? e.input?.file_path ?? e.input?.path)
+  if (path) receipt({ ev: 'fault', kind: 'projected', tool: e.tool, path, agent: e.agentId ? agentTypes.get(e.agentId) ?? 'unknown' : null })
+  return r
 }
 
 // One receipt per session says whether the first prompt marked a /kresume successor and what the canary did about it, so
@@ -252,6 +289,7 @@ export const register: Register = on => {
 
   on('prompt.submit', async ($, e, next) => {
     if (!firstPrompt && isFirstPromptCandidate(e.text)) firstPrompt = e.text.slice(0, 4000)
+    if (typeof e.text === 'string') lastPrompt = e.text.trim() ? e.text.slice(0, 4000) : null // blank = unknown (review M1)
     await noteGeneration($)
     return next(e)
   })
@@ -311,7 +349,7 @@ export const register: Register = on => {
 
   on('agent.spawn', async ($, e, next) => {
     const r: any = await next(e)
-    if (r.agentId) agentTypes.set(r.agentId, e.subagentType)
+    if (r.agentId) { agentTypes.set(r.agentId, e.subagentType); if (typeof e.prompt === 'string') agentPrompts.set(r.agentId, e.prompt.slice(0, 4000)) }
     receipt({ ev: 'spawn', agentId: r.agentId ?? null, agentType: e.subagentType, prompt: e.prompt.length, model: r.model ?? null })
     return r
   })
@@ -491,6 +529,8 @@ export const register: Register = on => {
     // successor keeps 'enforce', and forcing 'off' here would drop the main canary for the rest of the pane.
     if (successor) { successor = false; canary = launchCanary }
     firstPrompt = ''
+    lastPrompt = null
+    agentPrompts.clear()
     successorFrontier = null
     armB = false
     successorDecision = undefined
@@ -503,6 +543,9 @@ export const register: Register = on => {
   // fails open by replay: next(e) after a throw resolves to what the call settled to, and the command never runs twice.
   on('tool.call', { tool: 'Bash' }, projectShell).catch(($, e, next) => next(e))
   on('tool.call', { tool: 'PowerShell' }, projectShell).catch(($, e, next) => next(e))
+  // Projected-output page faults (Phase 5), observe only; same fail-open-by-replay shape.
+  on('tool.call', { tool: 'Read' }, noteProjectedFault).catch(($, e, next) => next(e))
+  on('tool.call', { tool: 'Grep' }, noteProjectedFault).catch(($, e, next) => next(e))
 
   // Context page faults: what a linker withheld stays one call away, and every call is a receipt.
   on('tool.call', { tool: 'mcp__cpp-cognitive-runtime__page' }, async ($, e) => {
