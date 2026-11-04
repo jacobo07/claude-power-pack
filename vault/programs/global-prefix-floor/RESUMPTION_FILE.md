@@ -47,11 +47,15 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
    S3 FAIL is not a hook verdict: the probe's Bash command itself exits 127 (shell never starts; `exit 3` -> 127 too).
    The Bash tool 127s INTERMITTENTLY on this host (this pane, a subagent, fresh `claude -p`); CLAUDE_CODE_GIT_BASH_PATH /
    PATH order looked like a fix at n=1 and then failed again: cause unknown (memory feedback_bash_127_scoop_git_first.md).
-   OWNER QUESTION: (a) investigate the Bash 127 first, then one more reprobe; (b) wait for a host update; (c) widen
-   COMPAT with S3 named UNMEASURED (outside the governed recipe; the main-lean canary does not use the tool.call seam,
-   but Phase 5 does, so CR-09/10/13 stay unmeasurable while Bash 127s).
+   Owner chose (a) 2026-11-04. CAUSE CONFIRMED: Git for Windows git-prompt.sh loads git-completion; Claude Code's
+   shell snapshot serializes those __git_* functions corruptly and sourcing it kills the shell (127). Single-variable
+   A/B (scratchpad bash127_ab.py, fresh claude -p haiku, one echo): control 0/6, disableAllHooks 0/3,
+   WINELOADERNOEXEC=1 only 3/3, fake HOME 8/8. Hooks/CCR/rtk ruled out. Host is now 2.1.318 (on disk 11-03 23:02).
+   OWNER QUESTION (HR-001, global config): install the fix as ~/.config/git/git-prompt.sh (same prompt; skip
+   git-completion when $CLAUDECODE is set), or as settings.json env WINELOADERNOEXEC=1? Then 3/3 fresh echo, then ONE
+   reprobe against 2.1.318.
 Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects,
 CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file.
 
 ## Start
-Ask the Owner item 6 (a/b/c). Do not spend another reprobe until a Bash `echo` succeeds 3/3 in fresh `claude -p`.
+Ask the Owner item 6 (which fix form). Do not spend another reprobe until a Bash `echo` succeeds 3/3 in fresh `claude -p`.
