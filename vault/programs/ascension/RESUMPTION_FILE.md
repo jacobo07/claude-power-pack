@@ -5,7 +5,21 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT (2026-11-04 ~10:00 UTC, session 95e69b3d) — read this first.**
+**CURRENT (2026-11-04 ~14:00 UTC, session 95e69b3d) — read this first.**
+- The Owner's /cpp-gsd-long brief "GSD X Reconstruction Factory: Convergence and First Population Collapse" = **Generation S12C**. It supersedes the unlaunched S12.
+  - Brief condensed faithfully into gen3 `vault/programs/gsdx-factory-2/S12C-CONVERGENCE-BRIEF.md`: 18-item done-gate, 6 mission terms.
+  - gen3 commit `86da3c29` = brief + `S12C-PHASES.md` + ASCENSION-PLAN section + GSD milestone (8 phases W0..W5; GSD was NO_PHASES, scaffold → OK 0/8; old v1 files archived under `.planning/milestones/auto-archived-20261104T145409`).
+- **Mission m-9dc71428699e**: cwd gen3-pp, workset t1 product, 12 cycles / 24 h, authority 60M processed tokens, 0 top-ups, model USD $0, no push, worker never edits the PP.
+  - Launched by the sweep 13:59:09Z; worker d8280bc4 acked and rehydrated.
+  - The brief's "300k model tokens" is not the breaker's unit (processed = input + cache + output; S11H's 2 epochs = 11.6M), so cycles and hours are the binding budget. Recorded in the brief.
+  - `worker_marker_refused` (the retired v2 marker requires a leading '/') is benign for Ralph missions.
+- m-fc7047a29f01 (S12, never launched) and m-a9d8915ae366 (recon general, done) are under owner hold "never launch".
+- Coordinator duties:
+  - watch the epochs (`gsd_mission.py topology --mission m-9dc71428699e`);
+  - land KV/UKDL/baseline candidates from t1 `evidence/ascension/s12c/promotions.json` into the PP;
+  - judge the closeout's 18-item done-gate.
+
+**Earlier (2026-11-04 ~10:00 UTC).**
 - Owner "hazlo tú y prepara la siguiente generación". Public PRs: #11 squash-merged (`36e83ca8`). #12 had a private host path in its spec (`/home/kobii/missions/t1-campaign`, found by a pattern scan with a 1/1 control; recon_public_gate does not check paths). Scrubbed and squashed to 1 commit `58c3ebe6` (force-push with lease). GitHub never synced #12's head and reopen failed, so #12 was closed and **#13** was merged (`abc63bb9`). Public main = 70c2fde4 + 2 commits, 201 files, 0 hits. Residue: closed #12 still serves old commit 429b0126 (path visible) via refs/pull/12; only GitHub support can purge it. /tmp/pp-kunit removed from GEX44.
 - S11H final: t1 `2091cdad` R4 certified 5 more; **frontier 1100** = C 1086 + CXX 14.
 - **S12 PREPARED, not launched:** proposal `S12-PLAN-PROPOSAL.md` (this dir). Prompt `/tmp/s12_command.txt` on GEX44 (sha 3055fd6d...). `retarget` applied live to m-fc7047a29f01 (first production use; seq 19; still held at checkpoint, worker stopped). On Owner "y": write the S12 section into gen3 ASCENSION-PLAN.md, run mission_topup budget to 50M, then `checkpoint --clear`.
