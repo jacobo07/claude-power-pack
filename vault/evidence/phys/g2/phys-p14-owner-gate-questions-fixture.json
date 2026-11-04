@@ -1,0 +1,36 @@
+{
+ "schema": 1,
+ "kind": "phys-p14-owner-gate-questions",
+ "extracted_by": "python -I read-only: json.loads of ~/.claude/state/gsd-mission-m-6*.json (workstream phys-fabric-g2; all 12 phys-fabric-g2 mission files were scanned for 'The question was:'); text taken between 'The question was:' and the runtime suffix 'Do not end a turn'; modules.secret_firewall.redactor.redact_for_log applied, text unchanged",
+ "extracted_at": "2026-10-31T16:58:00Z",
+ "recovered": true,
+ "recovered_note": "1 verbatim question recovered (Phase 12 epoch 15). The Phase 11 and Phase 12 --gaps VERIFICATION-passed questions are in no mission file (the mission note field is overwritten each epoch), so they are stand-ins with standin true, each quoting the STATE.md line it paraphrases.",
+ "questions": [
+  {
+   "mission_id": "m-622a75637fee",
+   "epoch": 15,
+   "text": "authorize one read-only gsd-verifier run for Phase 12 despite the STOP, or wait for the envelope to allow spend",
+   "recorded_result": "RESOLVE_BY_DEFAULT",
+   "source_file_name": "gsd-mission-m-622a75637fee.json",
+   "redacted": false
+  },
+  {
+   "mission_id": null,
+   "epoch": null,
+   "standin": true,
+   "text": "Set the Phase 11 VERIFICATION to passed with gap 1 recorded as a breach?",
+   "recorded_result": "RESOLVE_BY_DEFAULT",
+   "source_file_name": null,
+   "standin_quotes": ".planning/workstreams/phys-fabric-g2/STATE.md:357 'resolved C2 by the runtime's RESOLVE_BY_DEFAULT: Phase 11 VERIFICATION set to passed with gap 1 recorded as a breach'"
+  },
+  {
+   "mission_id": null,
+   "epoch": null,
+   "standin": true,
+   "text": "Set the Phase 12 VERIFICATION status to passed with the 3 gaps recorded as accepted deviations?",
+   "recorded_result": "RESOLVE_BY_DEFAULT",
+   "source_file_name": null,
+   "standin_quotes": ".planning/workstreams/phys-fabric-g2/STATE.md:372 '12-VERIFICATION.md status set to passed with the 3 gaps ... recorded as accepted deviations'"
+  }
+ ]
+}
