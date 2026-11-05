@@ -22,7 +22,7 @@ Harness rules for live probes (GPF): pin `--session-id`, reader thread on the pt
 
 ## Phases
 
-- [ ] **Phase 1: W0 Request-plane floor truth (early-value checkpoint)**
+- [x] **Phase 1: W0 Request-plane floor truth (early-value checkpoint)**
 - [ ] **Phase 2: W1 Capability virtualization of deferred tool names (CCR canary)**
 - [ ] **Phase 3: W2 Instruction elimination in repo CLAUDE.md (conditional)**
 - [ ] **Phase 4: W3 Model-call accounting + Zero-Model Fraction + zero-model closeout**
