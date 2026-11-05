@@ -104,7 +104,8 @@ def gpf_rows(root, repo, gpf, budget_src, put):
 
 def phase5_rows(root, put):
     """CR-09/10/13 (Phase 5 Safe-to-Forget in main; spec vault/specs/ccr-safe-to-forget-main.md), from the live smoke file
-    phase5-safe-to-forget.json (vault/programs/ctx-rent-x/phase5_smoke.py). Arm N = CCR_MAIN_PROJECT=1, arm F = unset.
+    phase5-safe-to-forget.json (vault/programs/ctx-rent-x/phase5_smoke.py). Arm N = CCR_MAIN_PROJECT=1, arm F = CCR_MAIN_PROJECT=0
+    (unset was OFF before spec Amendment A, 2026-11-05, and is ON after it; review L1).
     Fewer than 3 finished runs per arm measured too little: UNKNOWN, never PASS."""
     doc = load(root, "phase5-safe-to-forget.json")
     # A run counts only if CCR ran compatible (an incompatible host shadows every surface: 2.1.317 smoke, 2026-11-03) and

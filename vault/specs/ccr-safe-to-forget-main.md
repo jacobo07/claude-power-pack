@@ -51,10 +51,25 @@ Page-fault counter: a `Read` or `Grep` whose path lies under `<stateDir>/tool-re
 
 ## Never
 - Never project a failed command's output (unchanged).
-- Never make `CCR_MAIN_PROJECT` default-on here: that is the Owner's call on the numbers.
+- Never make `CCR_MAIN_PROJECT` default-on without the Owner's call on the numbers (taken 2026-11-05, see Amendment A).
 - Never change Work Unit projection behaviour in this change.
 - Never treat an unknown obligation as "nothing named".
 
 ## Rollback
-Unset `CCR_MAIN_PROJECT` (default). `python tools/ccr_release.py rollback` (or `off`). Code: revert the commit; the judgement
-only ever sends MORE text than before, so a revert restores today's projection exactly.
+Set `CCR_MAIN_PROJECT=0` (after Amendment A; before it, unset). `python tools/ccr_release.py rollback` (or `off`). Code:
+revert the commit; the judgement only ever sends MORE text than before, so a revert restores today's projection exactly.
+
+## Amendment A -- default-on (Owner "y" 2026-11-05, conditional on n=10/arm; condition met)
+Evidence (`vault/programs/ctx-rent-x/phase5-safe-to-forget-n10.json`, release 0.1.0-a2116a3b, host 2.1.318, FNNF x5):
+ON applied 10/10 (safe-hoisted), 20/20 correct, 0 projected faults, processed mean ON 139,594 vs OFF 142,307 (-1.9%;
+ranges disjoint: ON max 140,042 < OFF min 142,293). Fixture: one 18,735-char output per run.
+- `mainProjectMode`: the lift applies unless `CCR_MAIN_PROJECT=0`. Every other guard is unchanged (unit, successor,
+  explicit `modes.project`, `project` off, `main` off, incompatible build -> shadow).
+- `register.ts`: an env that cannot be read keeps today's mode (treated as `0`); a failure never turns the lift on.
+  The receipt's `mainProject` flag records that the lift actually changed the mode (`mode !== baseMode`), not the env value.
+- Main loop only: a subagent's shell call (`e.agentId`) keeps its base mode, env on or not. The n=10 evidence measured
+  no subagent projection, and `modes.subagent` does not gate this path (review M1, 2026-11-05).
+- `phase5_smoke.py`: the OFF arm sets `CCR_MAIN_PROJECT=0` (unset would now be ON).
+Acceptance: plugin tests (unset -> enforce, `0` -> today's mode, every guard pole kept), mutation (reverting to
+`env !== '1'` turns the unset pole red), DONEGATE suite green, pp-code-reviewer, release, then HR-2 smoke FNNFFN with
+the OFF arm on `0`: CR-09/10/13 PASS or rollback.

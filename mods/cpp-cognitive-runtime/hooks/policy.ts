@@ -841,10 +841,12 @@ export function safeToForget(text: string, p: Projection, obligation: string | n
     out: `${p.out}\n[CCR kept these ${proof.length} line(s) from the omitted part: verdicts, failures, exit codes, commits]\n${block}` }
 }
 
-// Main-pane projection (Phase 5): CCR_MAIN_PROJECT=1 lifts `project` to enforce on a main pane with no unit, not a
-// successor (its own rule decides), no explicit modes.project, main not off. An incompatible build only observes.
-export function mainProjectMode(env: string | undefined, projectMode: Mode, hasUnit: boolean, successor: boolean, modes: Modes, compatible: boolean): Mode {
-  if (env !== '1' || hasUnit || successor || modes.project !== undefined || projectMode === 'off' || modes.main === 'off') return projectMode
+// Main-pane projection (Phase 5): lifts `project` to enforce on a main pane with no unit, not a successor (its own rule
+// decides), no explicit modes.project, main not off. An incompatible build only observes. Default-on since Amendment A
+// (Owner, 2026-11-05, n=10/arm): CCR_MAIN_PROJECT=0 is the off switch; unset or any other value lifts.
+// Main loop only: a subagent's shell call keeps its base mode (the n=10 evidence measured no subagent projection; review M1).
+export function mainProjectMode(env: string | undefined, projectMode: Mode, hasUnit: boolean, successor: boolean, modes: Modes, compatible: boolean, isAgent = false): Mode {
+  if (env === '0' || isAgent || hasUnit || successor || modes.project !== undefined || projectMode === 'off' || modes.main === 'off') return projectMode
   return compatible ? 'enforce' : 'shadow'
 }
 

@@ -73,11 +73,19 @@ test('obligation terms are distinctive tokens only: ids, paths, hashes, camelCas
   expect(obligationTerms('fix CR-09 in done_gate.py at 953af539 via safeToForget')).toEqual(['cr-09', 'done_gate.py', '953af539', 'safetoforget'])
 })
 
-test('main projection mode: CCR_MAIN_PROJECT=1 enforces only on a compatible unit-less non-successor main pane', () => {
+test('main projection mode: default-on (Amendment A), CCR_MAIN_PROJECT=0 is the off switch; enforces only on a compatible unit-less non-successor main pane', () => {
   const m = { ...DEFAULT_MODES }
   expect(mainProjectMode('1', 'shadow', false, false, m, true)).toBe('enforce')
-  expect(mainProjectMode(undefined, 'shadow', false, false, m, true)).toBe('shadow')
-  expect(mainProjectMode('0', 'shadow', false, false, m, true)).toBe('shadow')
+  expect(mainProjectMode(undefined, 'shadow', false, false, m, true)).toBe('enforce') // unset = on since Amendment A
+  expect(mainProjectMode('', 'shadow', false, false, m, true)).toBe('enforce')
+  expect(mainProjectMode('0', 'shadow', false, false, m, true)).toBe('shadow') // the off switch keeps today's mode
+  expect(mainProjectMode('0', 'enforce', false, false, m, true)).toBe('enforce')
+  expect(mainProjectMode(undefined, 'shadow', false, false, m, false)).toBe('shadow') // default-on still only observes on an incompatible build
+  expect(mainProjectMode(undefined, 'shadow', false, true, m, true)).toBe('shadow') // nor touches a successor
+  expect(mainProjectMode(undefined, 'shadow', true, false, m, true)).toBe('shadow') // nor a unit
+  expect(mainProjectMode(undefined, 'shadow', false, false, m, true, true)).toBe('shadow') // nor a subagent's shell call (review M1)
+  expect(mainProjectMode('1', 'shadow', false, false, m, true, true)).toBe('shadow') // not even with the env on
+  expect(mainProjectMode(undefined, 'shadow', false, false, m, true, false)).toBe('enforce') // the main loop is lifted
   expect(mainProjectMode('1', 'enforce', true, false, m, true)).toBe('enforce') // unit: its own rule
   expect(mainProjectMode('1', 'shadow', false, true, m, true)).toBe('shadow') // successor: its own rule
   expect(mainProjectMode('1', 'shadow', false, false, m, false)).toBe('shadow') // incompatible build observes

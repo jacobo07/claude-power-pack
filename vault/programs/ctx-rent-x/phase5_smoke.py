@@ -1,7 +1,8 @@
 """ctx-rent-x Phase 5 live smoke: Safe-to-Forget in REAL interactive main panes (ConPTY, `claude --model haiku`).
 
 usage: python phase5_smoke.py <cwd> <out.json> <seq> [claude]      e.g. ... C:/repo phase5-safe-to-forget.json FNFNFN
-Arm F = CCR_MAIN_PROJECT unset (today: shadow projection); arm N = CCR_MAIN_PROJECT=1 (enforce, judged by safeToForget).
+Arm F = CCR_MAIN_PROJECT=0 (the off switch: shadow projection; unset is ON since spec Amendment A, 2026-11-05);
+arm N = CCR_MAIN_PROJECT=1 (enforce, judged by safeToForget).
 Each run asks the pane to run phase5_fixture.py with its own 3-char key and to report the code printed on the ONE buried
 verdict line, so a correct answer proves the proof line reached the model. Per run: correctness, calls, processed tokens
 (transcript usage), the CCR start receipt and this session's `project` / projected-`fault` receipts.
@@ -75,9 +76,7 @@ def run(arm, key, cwd, claude):
     from winpty import PtyProcess
     sid = str(uuid.uuid4())
     env = dict(os.environ)
-    env.pop("CCR_MAIN_PROJECT", None)
-    if arm == "N":
-        env["CCR_MAIN_PROJECT"] = "1"
+    env["CCR_MAIN_PROJECT"] = "1" if arm == "N" else "0"  # explicit both ways: unset would be ON (Amendment A)
     p = PtyProcess.spawn([claude, "--model", "haiku", "--session-id", sid, "--permission-mode", "auto",
                           "--disallowedTools", "Write", "Edit", "NotebookEdit"], cwd=cwd, env=env, dimensions=(50, 200))
 

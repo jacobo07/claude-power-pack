@@ -101,8 +101,8 @@ const loadUnit = ($: any): Promise<WorkUnit | null> => {
 
 // Tool Output Projection (v4 B5): a shell result over the budget reaches the model as a projection plus the path
 // of the full output. Fails open: anything unexpected, or a failed write of the full output, sends the stock result.
-// Mode: modes.project, else enforce in a Work Unit session (as `unit`) and shadow elsewhere; CCR_MAIN_PROJECT=1 lifts a
-// plain main pane to enforce (Phase 5). Outside a Work Unit every projection must pass Safe-to-Forget (durable full output
+// Mode: modes.project, else enforce in a Work Unit session (as `unit`) and shadow elsewhere; a plain main pane is lifted to
+// enforce (Phase 5, default-on since Amendment A; CCR_MAIN_PROJECT=0 switches the lift off). Outside a Work Unit every projection must pass Safe-to-Forget (durable full output
 // read back, known obligation naming no omitted line, omitted proof lines hoisted); any refusal sends the whole output.
 // A Work Unit keeps the B5 behaviour unchanged, so its measured receipts stay comparable.
 const forgetFields = (f: ForgetVerdict) => ({ verdict: f.verdict, reason: f.reason, hoisted: f.hoisted, named: f.named })
@@ -112,16 +112,18 @@ const projectShell = async ($: any, e: any, next: any) => {
   if (r?.deny !== undefined || !res || typeof res.stdout !== 'string' || res.isImage || res.backgroundTaskId || res.persistedOutputPath) return r
   const unit = await loadUnit($)
   let mainEnv: string | undefined
-  try { mainEnv = await $.env.get('CCR_MAIN_PROJECT') } catch { mainEnv = undefined } // no env access: today's mode
-  const mode: Mode = mainProjectMode(mainEnv,
-    successorProjectMode(effectiveModes(modes, compatible, !!unit).project, successor, canary, modes, !!unit), !!unit, successor, modes, compatible)
+  // An env that cannot be read keeps today's mode: a failure must never turn the default-on lift on (Amendment A).
+  try { mainEnv = await $.env.get('CCR_MAIN_PROJECT') } catch { mainEnv = '0' }
+  const baseMode: Mode = successorProjectMode(effectiveModes(modes, compatible, !!unit).project, successor, canary, modes, !!unit)
+  const mode: Mode = mainProjectMode(mainEnv, baseMode, !!unit, successor, modes, compatible, !!e.agentId)
+  const lifted = mode !== baseMode // the receipt names a projection the main lift decided, never just the env value
   if (mode === 'off' || !stateDir || shellFailed(res)) return r
   const full = `${stateDir}/tool-results/${sid}/${e.tool_use_id ?? `t${Date.now()}`}.txt`
   const p = projectToolOutput(res.stdout, full, projectBudget)
   if (p.action === 'pass') return r
   const base = { ev: 'project', tool: e.tool, use: e.tool_use_id ?? null, agent: e.agentId ? agentTypes.get(e.agentId) ?? 'unknown' : null,
     kind: p.kind, bytes: p.bytes, lines: p.lines, out: p.out.length, budget: projectBudget, ...(successor ? { successor: true } : {}),
-    ...(mainEnv === '1' ? { mainProject: true } : {}) }
+    ...(lifted ? { mainProject: true } : {}) }
   // The open obligation: a subagent's own prompt; a successor's frontier plus the latest prompt; else the latest prompt.
   const obligation = e.agentId ? agentPrompts.get(e.agentId) ?? null
     : successor ? ([successorFrontier, lastPrompt].filter(Boolean).join('\n') || null) : lastPrompt
