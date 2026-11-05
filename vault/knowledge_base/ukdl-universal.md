@@ -17821,3 +17821,19 @@ Evidence: L8, `policy.test.ts` imported `isPlannerType`, absent from the live re
 Evidence: CCR_MAIN_CANARY default-on: source 4a7939bc was committed epochs before it was live; live only at release 0.1.0-265d3d55 (L8: unset->enforce, =0->off, rollback to b15bfc3d verified).
 
 **`T-LAPTOP-TEMP-WORKTREE-FILES-VANISH-001`** -- OBSERVED ONCE, cause unknown: plugin.json, hooks/hooks.json and kernel/HARD-RULES-DIGEST.md vanished from a worktree under %TEMP%/claude between test runs. Do not promote; watch for a %TEMP% cleaner.
+
+### ICC closeout entries (2026-11-05, mission m-1f1ba12950ec; each proven in-mission)
+**`T-RECORDED-VS-REQUEST-PLANE-001`** -- Transcript attachment chars are not request tokens, and `-p` is not an interactive pane. Label every figure with its plane; never subtract across planes.
+Evidence: `vault/programs/icc/floor-request-plane.md`: `-p` control call-1 78,179 vs interactive 71,883 at arm; CCR canary +41 in `-p` (no effect, so no saving may be claimed from that path).
+
+**`T-SHADOW-SILENT-ON-HOST-UPDATE-001`** -- A host update that changes an injected format can leave a shadow/collapse feature silently inert (no error, no saving). The compat line in SessionStart must say so, not the receipts.
+Evidence: Phase 1 `hooks/ccr_compat_line.js` (both poles tested); Phase 2 enforce stays gated on checking real attachment format in shadow receipts (reviewer note M2).
+
+**`T-AGENT-RESULT-IS-POINTER-001`** -- On claude 2.1.318 the Agent `tool_result` is only a pointer; the subagent report is in `task_notification.handback_report.text`. A runner that records the tool_result records a pointer as the reply.
+Evidence: Phase 5 fix in `tools/agent_carrier_run.py`; `phase5-bundle-vs-prose.json` (bundle reply 4,284 vs prose 3,491 chars, no parent-growth win).
+
+**`PR-UNSTABLE-LAYER-IS-NOT-BUDGETED-001`** -- A floor ceiling only belongs on a layer whose size is a property of the repo. A layer that varies with connection timing (deferred tool names, MCP instructions) flaps the gate; exclude it by name with the reason.
+Evidence: `resident_budget.json` `excluded_layers`: deferred_tools_delta 8,946-47,339 chars and mcp_instructions_delta 2,163-10,028 across 6 sessions; skill_listing and agent_listing_delta budgeted instead (Phase 6, test_floor_regression_gate V-FLOOR-BUDGET-REAL-PINNED).
+
+**`PR-ZERO-MODEL-CLOSE-NEEDS-A-GATE-LINE-001`** -- A mission closes without a model call only when its packet carries a `done-gate:` line and the gate passes; a failing or out-of-root gate falls back to a normal epoch.
+Evidence: Phase 4 `gsd_mission.try_done_gate_close`, `tools/test_done_gate_close.py` 5/5, mutation (failure still closes) red.

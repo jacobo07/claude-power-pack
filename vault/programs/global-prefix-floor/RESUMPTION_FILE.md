@@ -77,3 +77,4 @@ subagent shell projection unmeasured (excluded from the lift).
 GPF items 1-7 DONE. Continued by ICC (Owner "y go ICC" 2026-11-05): plan vault/plans/icc-state-centric-2026-11-05.md,
 workstream .planning/workstreams/icc, Ralph mission m-1f1ba12950ec (authority 60M + 3x10M). Status:
 `python tools/gsd_mission.py status`. GPF debt above is carried into ICC phases 1-7.
+ICC status 2026-11-05: Phases 1,2(shadow),4,5,6,7 done; Phase 3 blocked on foreign CLAUDE.md edit. Read workstream STATE.md Notes for OWNER ITEMS.

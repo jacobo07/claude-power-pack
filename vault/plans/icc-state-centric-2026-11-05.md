@@ -60,3 +60,19 @@ shadow receipts. Breaker: two consecutive 5M intervals without a causal commit -
 ## Kill switches / rollback
 CCR_DEFERRED_NAMES=0 (new), CCR_MAIN_CANARY=0, CCR_MAIN_PROJECT=0, tools/ccr_release.py rollback; every wave = revertable commits.
 HR-2: no green smoke -> rollback. HR-001: no write under ~/.claude outside the repo without a separate Owner go.
+
+## Master done-gate mapping (Phase 7, 2026-11-05)
+Each wave: gate that proves it, status, and the NPV of what was deferred. Planes labelled; chars are recorded-plane, tokens request-plane.
+
+| Wave | Gate (command) | Status |
+|---|---|---|
+| W0 request-plane floor | `vault/programs/icc/floor-request-plane.{md,json}`; `python tools/test_floor_regression_gate.py` 70/70 | DONE; MCP names+instr marginal 3.56k tokens (-p) |
+| W1 CCR deferred-name collapse | `claude plugin test mods/cpp-cognitive-runtime` 39/39; HR-2 smoke `phase2-release-hr2-smoke.json` 2/2 | RELEASED IN SHADOW 0.1.0-05998d9a; enforce NOT enabled (M2 format check pending) |
+| W2 CLAUDE.md chain diet | gate `git status -- CLAUDE.md` clean | DEFERRED-FOREIGN-WRITER (main checkout ` M CLAUDE.md`); NPV unmeasured until the foreign edit lands |
+| W3 model-call accounting | `python tools/test_done_gate_close.py` 5/5, mutation red; `python tools/mission_spend.py model-calls --mission m-1f1ba12950ec` | DONE; not Work-Class-aware (all unclassified) |
+| W4 handback bundle | `vault/programs/icc/phase5-bundle-vs-prose.json` | MEASURED, REJECTED for savings (+23% chars, no parent-growth win) |
+| W5 regret + floor CI | `python tools/test_ctx_regret.py`; `V-FLOOR-BUDGET-REAL-PINNED` (skill_listing, agent_listing ceilings, growth fails) | DONE; regret is an upper bound (chars/4) |
+| Closeout | UKDL 5 entries; errors.md 4 rows; fresh-agent recovery test (STATE Notes) | DONE |
+
+Deferred, with NPV: enforce deferred-name collapse (positive only if shadow receipts show the assumed one-name-per-line format; potential up to the 8-14k-char deferred layer, request-tokens UNMEASURED in interactive); Work-Class grouping in model_call_report (low: reporting only); pp-code-reviewer on Phase 4/5 diffs (risk-reduction, not savings); proof reuse / singleflight / distributed cache stay deferred as in the Waves section (P falsified 0.50%).
+Baseline Ratchet: floor ceilings tightened for two listing layers only; request-plane call-1 has no committed ceiling (plane differs per host/mode), so no ratchet claim is made on it.
