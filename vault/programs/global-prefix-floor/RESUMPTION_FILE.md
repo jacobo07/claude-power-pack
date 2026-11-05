@@ -51,11 +51,15 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
    shell snapshot serializes those __git_* functions corruptly and sourcing it kills the shell (127). Single-variable
    A/B (scratchpad bash127_ab.py, fresh claude -p haiku, one echo): control 0/6, disableAllHooks 0/3,
    WINELOADERNOEXEC=1 only 3/3, fake HOME 8/8. Hooks/CCR/rtk ruled out. Host is now 2.1.318 (on disk 11-03 23:02).
-   OWNER QUESTION (HR-001, global config): install the fix as ~/.config/git/git-prompt.sh (same prompt; skip
-   git-completion when $CLAUDECODE is set), or as settings.json env WINELOADERNOEXEC=1? Then 3/3 fresh echo, then ONE
-   reprobe against 2.1.318.
+   FIX INSTALLED 2026-11-05 (Owner "1"): ~/.config/git/git-prompt.sh (skip git-completion when $CLAUDECODE set;
+   rollback = delete it). Fresh claude -p echo 3/3 after (0/6 before). Open panes keep their old snapshot until restart.
+   Reprobe 2.1.318: ALL PASS incl. S3 (845,338 haiku tokens). `ccr_compat_gate.py auto` from detached worktree
+   .claude/worktrees/ccr-compat-2.1.318 (@83069706 + 3 gate scripts copied from ccr-next-verify, which 83069706 lacks):
+   gates green, RELEASED 0.1.0-4a6f6f61, SAME_EXCEPT_COMPAT + COVERED. Smoke: fresh claude -p, Bash SMOKE-OK, start
+   receipt compatible:true releaseId 0.1.0-4a6f6f61 (modes as pre-update). Main tree COMPAT += 2.1.318 (plugin 36/0).
+   NEXT: Phase 5 release from main + phase5_smoke.py FNNFFN (HR-2).
 Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects,
 CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file.
 
 ## Start
-Ask the Owner item 6 (which fix form). Do not spend another reprobe until a Bash `echo` succeeds 3/3 in fresh `claude -p`.
+Item 6 NEXT: Phase 5 release from the main tree, then phase5_smoke.py; keep or roll back by HR-2.
