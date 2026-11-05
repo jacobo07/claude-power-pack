@@ -33,3 +33,5 @@ Deferred MCP names: vercel 241 (8,237 chars), rea 207 (6,355), github 41, artifa
 (one row per phase: phase, session id, processed tokens, command)
 
 ## Notes
+- 2026-11-05 epoch2: Phase 1 partial. DONE: floor gate refuses ambiguous newest-by-mtime (f78e2b5f); A1 probes (vault/programs/icc/floor-request-plane.{json,md}): -p control 78,179 / CCR off +41 (canary no effect in -p, UNMEASURED there) / no-MCP -3,560. PENDING in Phase 1: COMPAT-miss SessionStart line, GEX44 items (any GEX44 ~/.claude write = OWNER_STEPS).
+- DECISION: A1 run in -p (cheap, pinned) as the plan specifies; interactive-pane canary effect needs a pty probe (phase5_smoke.py driver) - deferred to Phase 2 shadow receipts.
