@@ -74,4 +74,6 @@ throwaway worktree .claude/worktrees/ccr-compat-2.1.318, open panes need a resta
 subagent shell projection unmeasured (excluded from the lift).
 
 ## Start
-GPF items 1-7 DONE. Next: Owner picks from the open debt (or closes GPF).
+GPF items 1-7 DONE. Continued by ICC (Owner "y go ICC" 2026-11-05): plan vault/plans/icc-state-centric-2026-11-05.md,
+workstream .planning/workstreams/icc, Ralph mission m-1f1ba12950ec (authority 60M + 3x10M). Status:
+`python tools/gsd_mission.py status`. GPF debt above is carried into ICC phases 1-7.
