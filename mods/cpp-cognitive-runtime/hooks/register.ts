@@ -5,7 +5,9 @@ import {
   PROJECT_BUDGET_CHARS, PROJECT_TOOLS, boundaryForecast, parseClassModel, projectToolOutput, stepAnomaly,
   KERNEL_CHARS, parseBreakevenModel, effectiveModes, parseReleaseId, policyGen, mainCanaryMode, decideMainLeanAttachment, pageBlocks, type BreakevenModel, type ClassModel, type ImageFact, type InstructionFileInfo, type Mode, type Modes, type WorkUnit,
 } from './policy'
-import { generationVerdict, parseActive } from './policy'
+import { generationVerdict, parseActive, collapseDeferredNames, deferredNamesMode } from './policy'
+// ICC W1: CCR_DEFERRED_NAMES ('0' off, 'enforce' applies, anything else/unset = shadow receipts only).
+let deferredEnv: string | undefined
 import { describeReceipt, textBytes, type DescribeSeen } from './policy'
 import { decideArmBAttachment, decideSuccessorAttachment, frontierText, mdsSha, reachSummary, parseFrontierPointer, isFirstPromptCandidate, isKresumeSuccessor, shellFailed, successorMode, successorProjectMode } from './policy'
 import { mainProjectMode, projectedFaultPath, safeToForget, type ForgetVerdict } from './policy'
@@ -252,6 +254,7 @@ export const register: Register = on => {
     let canaryEnv: string | undefined
     try { canaryEnv = await $.env.get('CCR_MAIN_CANARY') } catch { canaryEnv = '0' } // no env access: fail closed, no canary
     canary = mainCanaryMode(canaryEnv, e.isInteractive === true, !!unit, modes, compatible)
+    try { deferredEnv = await $.env.get('CCR_DEFERRED_NAMES') } catch { deferredEnv = '0' } // no env access: fail closed
     launchCanary = canary
     sessionInteractive = e.isInteractive === true
     let gen: string | null = null
@@ -392,6 +395,16 @@ export const register: Register = on => {
 
     // Interactive or undeclared main session: shadow receipts only, unless the launch opted into the main-lean canary.
     if (effective('main') === 'off') return r
+    if (a.type === 'deferred_tools_delta') {
+      const dn = deferredNamesMode(deferredEnv, canary)
+      const col = dn === 'off' ? null : collapseDeferredNames(text)
+      if (col !== null) {
+        const applied = dn === 'enforce'
+        receipt({ ev: 'attach', agent: null, canary, type: a.type, origin: a.origin?.kind, bytes: text.length, out: applied ? col.length : text.length,
+          lean: col.length, action: 'replace', applied, reason: 'deferred-names' })
+        return applied ? { text: col } : r
+      }
+    }
     if (canary !== 'off') {
       const d: any = armB ? decideArmBAttachment(a.type, text, files, firstPrompt) : successor ? decideSuccessorAttachment(a.type, text, files, successorFrontier) : decideMainLeanAttachment(a.type, text)
       if (d.action !== 'keep') {

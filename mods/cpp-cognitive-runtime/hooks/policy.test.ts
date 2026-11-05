@@ -3,8 +3,34 @@ import {
   advisoryBytes, decideSubagentAttachment, decideUnitAttachment, decideUnitSection, decideUnitTool, linkInstructionFiles,
   carryAdvice, gcKeptSet, imageDims, imagesByUse, imageTokens, pageLines, parseWorkUnit, projectToolOutput, repoKey, rowFacts,
   subagentInstructions, boundaryForecast, parseClassModel, stepAnomaly, mainCanaryMode, successorMode, DEFAULT_MODES,
-  safeToForget, obligationTerms, mainProjectMode, projectedFaultPath, HOIST_MAX_LINES,
+  safeToForget, obligationTerms, mainProjectMode, projectedFaultPath, HOIST_MAX_LINES, collapseDeferredNames, deferredNamesMode,
 } from './policy'
+
+// ICC W1: deferred tool names collapse to one line per server; built-ins and prose stay; no mcp name = no change.
+const DEFERRED = ['The following deferred tools are now available via ToolSearch.', 'CronCreate', 'WebSearch',
+  ...Array.from({ length: 30 }, (_, i) => `mcp__vercel__list_resource_number_${i}`),
+  ...Array.from({ length: 10 }, (_, i) => `mcp__claude_ai_Gmail__message_operation_${i}`)].join('\n')
+test('deferred names: mcp tools collapse per server with count + ToolSearch hint, built-ins and prose stay', () => {
+  const out = collapseDeferredNames(DEFERRED)!
+  expect(out).toContain('CronCreate')
+  expect(out).toContain('WebSearch')
+  expect(out).toContain('The following deferred tools')
+  expect(out).toContain('mcp__vercel__* (30 deferred tools')
+  expect(out).toContain('mcp__claude_ai_Gmail__* (10 deferred tools')
+  expect(out).not.toContain('list_resource_number_7')
+  expect(out.length).toBeLessThan(DEFERRED.length)
+})
+test('deferred names: nothing to collapse, or no saving, keeps stock text', () => {
+  expect(collapseDeferredNames('CronCreate\nWebSearch')).toBeNull()
+  expect(collapseDeferredNames('mcp__a__b')).toBeNull() // the summary line is longer than the one name
+})
+test('deferred names mode: shadow by default, enforce only when asked on an enforcing canary, kill switch wins', () => {
+  expect(deferredNamesMode(undefined, 'enforce')).toBe('shadow')
+  expect(deferredNamesMode('enforce', 'enforce')).toBe('enforce')
+  expect(deferredNamesMode('enforce', 'shadow')).toBe('shadow')
+  expect(deferredNamesMode('0', 'enforce')).toBe('off')
+  expect(deferredNamesMode('enforce', 'off')).toBe('off')
+})
 
 // Safe-to-Forget (Phase 5; spec vault/specs/ccr-safe-to-forget-main.md). A 600-line log with one buried verdict line.
 const LOG = (buried: string) => {
