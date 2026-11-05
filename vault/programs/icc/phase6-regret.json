@@ -1,0 +1,25 @@
+﻿{
+ "plane": "DESKTOP-PMT5BS8",
+ "classes": {
+  "worker:background": {
+   "sessions": 3,
+   "calls": 943,
+   "processed_input": 161267621,
+   "result_rent": 52882639,
+   "regret_dead_rent_UPPER_BOUND": 11893901,
+   "regret_share_of_processed": 0.074,
+   "regret_share_of_result_rent": 0.225
+  },
+  "top-level": {
+   "sessions": 4,
+   "calls": 1455,
+   "processed_input": 378795060,
+   "result_rent": 33304893,
+   "regret_dead_rent_UPPER_BOUND": 15494699,
+   "regret_share_of_processed": 0.041,
+   "regret_share_of_result_rent": 0.465
+  }
+ },
+ "skipped": [],
+ "sessions_measured": 7
+}

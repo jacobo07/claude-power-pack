@@ -258,6 +258,35 @@ def diff(a: dict, b: dict) -> list[dict]:
     return rows
 
 
+def class_of(p: Path, worker_kind: dict[str, str]) -> str:
+    """Same Work Class rule as `estate`: subagent / worker:<kind> / top-level."""
+    return "subagent" if "subagents" in p.parts else f"worker:{worker_kind[p.stem]}" if p.stem in worker_kind else "top-level"
+
+
+def regret(files: list[Path], worker_kind: dict[str, str], min_calls: int = 10) -> dict:
+    """ICC-08 Context Policy Regret = actual tool_result carriage minus the offline Belady bound, i.e. the dead rent,
+    per Work Class. An UPPER BOUND (a result used without quoting counts dead). Transcripts under `min_calls` calls are
+    listed as skipped, never averaged in: a 2-call smoke run has no policy to regret."""
+    agg: dict[str, dict] = {}
+    skipped = []
+    for f in files:
+        d, proc = dead_rent(f), processed_input(f)
+        if d.get("calls", 0) < min_calls:
+            skipped.append({"file": f.name, "calls": d.get("calls", 0)})
+            continue
+        a = agg.setdefault(class_of(f, worker_kind), {"sessions": 0, "calls": 0, "processed_input": 0,
+                                                       "result_rent": 0, "regret_dead_rent_UPPER_BOUND": 0})
+        a["sessions"] += 1
+        a["calls"] += d["calls"]
+        a["processed_input"] += proc
+        a["result_rent"] += d["result_rent_tokens_APPROX"]
+        a["regret_dead_rent_UPPER_BOUND"] += d["dead_rent_tokens_UPPER_BOUND"]
+    for a in agg.values():
+        a["regret_share_of_processed"] = round(a["regret_dead_rent_UPPER_BOUND"] / a["processed_input"], 3) if a["processed_input"] else None
+        a["regret_share_of_result_rent"] = round(a["regret_dead_rent_UPPER_BOUND"] / a["result_rent"], 3) if a["result_rent"] else None
+    return {"classes": agg, "skipped": skipped, "sessions_measured": sum(a["sessions"] for a in agg.values())}
+
+
 def _worker_kinds() -> dict[str, str]:
     try:
         import gsd_mission as g
@@ -290,7 +319,13 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("file", type=Path)
     r = sub.add_parser("dead-rent")
     r.add_argument("files", type=Path, nargs="+")
+    g = sub.add_parser("regret", help="dead rent (carriage minus Belady bound) per Work Class (ICC Phase 6)")
+    g.add_argument("files", type=Path, nargs="+")
+    g.add_argument("--min-calls", type=int, default=10)
     a = ap.parse_args(argv)
+    if a.cmd == "regret":
+        print(json.dumps({"plane": a.plane, **regret(a.files, _worker_kinds(), a.min_calls)}, indent=1))
+        return 0
     if a.cmd == "estate":
         try:
             active = json.loads((a.root / "ACTIVE.json").read_text(encoding="utf-8")).get("release")
