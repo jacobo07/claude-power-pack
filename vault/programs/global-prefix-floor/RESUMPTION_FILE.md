@@ -57,9 +57,14 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
    .claude/worktrees/ccr-compat-2.1.318 (@83069706 + 3 gate scripts copied from ccr-next-verify, which 83069706 lacks):
    gates green, RELEASED 0.1.0-4a6f6f61, SAME_EXCEPT_COMPAT + COVERED. Smoke: fresh claude -p, Bash SMOKE-OK, start
    receipt compatible:true releaseId 0.1.0-4a6f6f61 (modes as pre-update). Main tree COMPAT += 2.1.318 (plugin 36/0).
-   NEXT: Phase 5 release from main + phase5_smoke.py FNNFFN (HR-2).
+   DONE 2026-11-05: Phase 5 RELEASED from main 0.1.0-a2116a3b (COVERED); smoke FNNFFN all 6 valid + correct, ON
+   applied 3/3 (safe-hoisted), OFF shadow 3/3; KEPT (HR-2 green). done_gate CR-09/10/13 PASS: 32,310 chars
+   externalised, processed mean ON 139,424 vs OFF 142,367 (-2.1%, n=3/arm), 0 projected faults. DONE_GATE 31/1/4
+   (fail CR-31 shared-tree dirt). Receipt vault/programs/ctx-rent-x/phase5-safe-to-forget.json. Rollback point
+   0.1.0-4a6f6f61. CCR_MAIN_PROJECT stays opt-in (env); default-on is a separate Owner decision.
 Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects,
-CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file.
+CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file,
+throwaway worktree .claude/worktrees/ccr-compat-2.1.318, open panes need a restart for Bash (old snapshot).
 
 ## Start
-Item 6 NEXT: Phase 5 release from the main tree, then phase5_smoke.py; keep or roll back by HR-2.
+GPF items 1-6 DONE. Ask the Owner: make CCR_MAIN_PROJECT default-on (needs a larger n), or close GPF and pick from debt.
