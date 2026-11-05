@@ -728,6 +728,74 @@ def main() -> int:
           (rec.get("capsule_stop_authorized") or {}).get("origin") == "supervisor_fallback" and cap.get("degraded")
           and len(stops) == n_s + 1 and len(launches) == n_l + 1, f"auth={rec.get('capsule_stop_authorized')}")
 
+    # --- spec capsule-seal-on-question-end D1: a bare host `blocked` whose job holds a QUESTION ended its turn ----------
+    # (m-81b9650c6ff2, 2026-11-03: 7 refusals, 30-min grace, degraded capsule). Seal the hand-off on the FIRST pass.
+    def job(mid, **j):
+        d = TMP / "jobs" / f"s-{mid}"[:8]
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "state.json").write_text(json.dumps({"sessionId": f"s-{mid}", "state": "blocked", **j}), encoding="utf-8")
+
+    def ask_question_end(mid, jobspec, row_extra, with_note=True):
+        wipe()
+        mission(mid)
+        if with_note:
+            gm.transition(mid, expect_epoch=1, expect_state=gm.RUNNING, event="t", now=NOW, note="phase 1: keys sealed",
+                          pending={"kind": "handoff", "from": f"s-{mid}", "deadline": NOW + 1800})
+        if jobspec is not None:
+            job(mid, **jobspec)
+        n_s = len(stops)
+        rows = run(host(mid, state="blocked", status=None, **row_extra))
+        return gm.load(mid), row_of(rows, mid), len(stops) - n_s
+
+    # Review F3: the guard itself, driven directly (plan_next stops these cases before _capsule_rotate, so the
+    # supervise-level gates below could not tell a missing or always-True guard apart).
+    def eoq(mid, jobspec, row_extra):
+        mission(mid)
+        if jobspec is not None:
+            job(mid, **jobspec)
+        return gm._ended_on_question(gm.load(mid), host(mid, state="blocked", status=None, **row_extra))
+
+    wipe()
+    unit = {"question": eoq("m-u1", {"needs": "continue with the narrower step, or re-plan it?"}, {}),
+            "permission": eoq("m-u2", {"needs": "approve Bash"}, {"waitingFor": "approve Bash"}),
+            "no_job": eoq("m-u3", None, {}),
+            "host_gate": eoq("m-u4", {"needs": "login required"}, {}),
+            "stopped": eoq("m-u5", {"needs": "stopped"}, {})}
+    os.environ["CPP_MISSION_DECISION_RECOVERY"] = "off"
+    try:
+        unit["kill_switch"] = eoq("m-u6", {"needs": "continue with the narrower step, or re-plan it?"}, {})
+    finally:
+        os.environ.pop("CPP_MISSION_DECISION_RECOVERY", None)
+    check("V-MV2-ENDED-ON-QUESTION-UNIT",
+          unit == {"question": True, "permission": False, "no_job": False, "host_gate": False, "stopped": False,
+                   "kill_switch": False}, str(unit))
+    # Review F1: a question-ended worker with NO note is not asked for one (its stop would erase the question the
+    # runtime answers); the degraded seal happens on this pass and the successor carries the answer.
+    n_l = len(launches)
+    rec, r, ns = ask_question_end("m-qn", {"needs": "continue with the narrower Phase 1 judging step, or re-plan it?"},
+                                  {}, with_note=False)
+    card = "\n".join(launches[-1]) if len(launches) == n_l + 1 else ""
+    carried = "RUNTIME ANSWER" in card or "RUNTIME ANSWER" in str(rec.get("pending_decision") or "")
+    check("V-MV2-QUESTION-END-NO-NOTE-CARRIES-ANSWER",
+          (rec.get("capsule_stop_authorized") or {}).get("origin") == "supervisor_fallback" and ns == 1
+          and not rec.get("capsule_note_asked") and "decision_recovered" in events("m-qn") and carried,
+          f"auth={rec.get('capsule_stop_authorized')} stops={ns} asked={rec.get('capsule_note_asked')} "
+          f"carried={carried} launched={len(launches) - n_l} ev={events('m-qn')[-5:]} held={r.get('held')}")
+
+    rec, r, ns = ask_question_end("m-qe", {"needs": "continue with the narrower Phase 1 judging step, or re-plan it?"}, {})
+    check("V-MV2-QUESTION-END-SEALS",
+          (rec.get("capsule_stop_authorized") or {}).get("origin") == "worker_handoff"
+          and rec.get("capsule_first_refused_at") is None and ns == 1,
+          f"auth={rec.get('capsule_stop_authorized')} first={rec.get('capsule_first_refused_at')} stops={ns} "
+          f"capsule={r.get('capsule')} held={r.get('held')} action={r.get('action')}")
+    for mid, gate, jobspec, extra in (
+            ("m-qp", "V-MV2-PERMISSION-STILL-HELD", {"needs": "approve Bash"}, {"waitingFor": "approve Bash"}),
+            ("m-qu", "V-MV2-UNKNOWN-JOB-HELD", None, {}),
+            ("m-qg", "V-MV2-HOST-GATE-STILL-HELD", {"needs": "login required"}, {})):
+        rec, r, ns = ask_question_end(mid, jobspec, extra)
+        check(gate, not (rec.get("capsule_stop_authorized") or {}).get("origin") and ns == 0,
+              f"auth={rec.get('capsule_stop_authorized')} stops={ns} held={r.get('held')} action={r.get('action')}")
+
     # --- dead owner: recovery capsule (G21) --------------------------------------------------------
     wipe()
     mission("m-rec")

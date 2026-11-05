@@ -211,6 +211,16 @@ TRUTH_CONTRACT_RX = re.compile(
     r"\bwaiv\w*\b[^?.]{0,20}\bfn_[0-9a-f]{6,8}\b|"
     + _TC_STRONG + r"[^?.]{0,60}\b" + _TC_VERB + r"\b[^?.]{0,40}\b(?:variant|flags?|config\w*|lane|threshold|rules?)\b",
     re.I)
+# An IMPERATIVE switch-off acting on a guard ("clear the breaker", "set the kill switch off"), or a CPP_* env switch
+# set off. Review F2: status sentences ("kill gate K5 cleared at 3/3", "the breaker reset overnight"), the adjective
+# ("not clear which gate") and "kick off the gate suite" are descriptions, and checkpoint REASONS are gated too.
+_GD_VERB = r"(?:disable|clear|reset|bypass|skip|silence|mute|turn\s+off|switch\s+off)"
+_GD_NOUN = r"(?:breakers?|guards?|gates?|hooks?|kill[- ]?switch(?:es)?|firewalls?|sentinels?)"
+_GD_DET = r"(?:the|this|that|its|their|a|an|all|every|both|my|our)"
+GUARD_DISABLE_RX = re.compile(
+    r"\b" + _GD_VERB + r"\s+" + _GD_DET + r"\s+(?:[\w-]+\s+){0,3}" + _GD_NOUN + r"\b|"
+    r"\b(?:set|turn|switch|put)\s+" + _GD_DET + r"\s+(?:[\w-]+\s+){0,3}" + _GD_NOUN + r"\s+off\b|"
+    r"\bCPP_[A-Z0-9_]+\s*=\s*(?:off|0|false|disabled?)\b", re.I)
 OWNER_CLASSES = (
     ("DEPLOY_OR_LIVE_WRITE", re.compile(r"\bHR-0?4\b|\bdeploy|\bpush\b|producci[oó]n|\bprod(uction)?\b|live (server|write)|"
                                         r"servidor (vivo|en vivo)", re.I)),
@@ -218,6 +228,9 @@ OWNER_CLASSES = (
                                           r"sign[ -]?in|oauth", re.I)),
     ("EXTERNAL_PROPERTY", re.compile(r"\bGA4\b|property|propiedad|vercel|dns|registrar|billing|factur|purchase|pago", re.I)),
     ("IRREVERSIBLE", re.compile(r"irreversib|permanently|force[- ]push|drop (table|database)|delete (the )?(remote|production)", re.I)),
+    # Spec capsule-seal-on-question-end D2 (m-81b9650c6ff2, 2026-11-03 15:47Z): "set CPP_SEM_BREAKER=off (or clear the
+    # breaker)" was answered RESOLVE_BY_DEFAULT, so a successor would have been told to switch a guard off.
+    ("GUARD_DISABLE", GUARD_DISABLE_RX),
     ("PRODUCT_SCOPE", re.compile(r"\bscope\b|alcance|product decision|decisi[oó]n de producto|pricing|precio|monetiz", re.I)),
     ("AUTHORITY", re.compile(r"budget (is )?exhausted|authority|more tokens|raise the (cap|envelope)", re.I)),
     ("TRUTH_CONTRACT", TRUTH_CONTRACT_RX),

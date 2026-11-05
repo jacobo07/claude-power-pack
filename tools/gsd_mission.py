@@ -4618,6 +4618,17 @@ def _host_row(session_id: str, sessions: list[dict] | None) -> dict | None:
     return next((s for s in (sessions or []) if s.get("sessionId") == session_id), None)
 
 
+def _ended_on_question(rec: dict, sessions: list[dict] | None) -> bool:
+    """True when a bare host `blocked` owner ended its turn on a question (its job's `needs` is typed
+    QUESTION_*). A permission prompt (`waitingFor`), a host gate, a stopped job or an unreadable job record
+    is NOT an ended turn: False, and the caller keeps the refuse-then-grace path (spec
+    capsule-seal-on-question-end D1)."""
+    hrow = _host_row((rec.get("owner") or {}).get("session_id"), sessions)
+    if hrow is None or hrow.get("waitingFor") or hrow.get("state") != "blocked":
+        return False
+    return ((blocked_recovery(rec) or {}).get("class") or "") in ("QUESTION_RESOLVABLE", "QUESTION_OWNER")
+
+
 def _wait_host_released(session_id: str, fetch, wait_s: float) -> bool:
     """True once the host no longer lists the session as live. An unanswerable host is not a release."""
     deadline = time.time() + wait_s
@@ -5638,13 +5649,23 @@ def _capsule_rotate(rec: dict, row: dict, act: str, sessions, pid_alive, now: fl
         row["capsule"] = f"stop authorized for {key} ({auth.get('origin')}), reused"
         return rec
     idle = verdict == LIVE and owner_idle(rec.get("owner"), sessions)
+    question_end = False
+    if not idle and verdict == WAITING_HUMAN:
+        # Spec capsule-seal-on-question-end D1 (m-81b9650c6ff2, 2026-11-03): a bare host `blocked` whose job
+        # holds a question is a model that ENDED its turn (plan_next already reads it so, AMR-X). Refusing the
+        # hand-off seal there cost 7 refusals, a 30-min grace and a degraded capsule.
+        idle = question_end = _ended_on_question(rec, sessions)
     done = act == "replace" and verdict == DEAD and ge.turn_ended_as_done(rec, sessions)
     grace = float((rec.get("wall") or {}).get("grace_s") or ge.WALL_GRACE_S)
     first = rec.get("capsule_first_refused_at")
     overdue = first is not None and now - float(first) >= grace
     if idle or done:
         origins = ["worker_handoff"] + (["supervisor_fallback"] if overdue else [])
-        if not _owner_note(rec)[0]:
+        if not _owner_note(rec)[0] and question_end:
+            # Review F1: no note request for a question-ended worker. Its stop overwrites the job's `needs`, so
+            # a resumed note turn would lose the runtime answer this pass carries; seal degraded now instead.
+            origins = ["supervisor_fallback"]
+        elif not _owner_note(rec)[0]:
             # Spec 11.4: a turn that ended with no note is asked for one ONCE per epoch, in the same
             # session (nothing sealed, nothing handed over); still none at its next turn end -> the
             # degraded fallback at once, not after a 30-minute grace that cannot produce a note.
