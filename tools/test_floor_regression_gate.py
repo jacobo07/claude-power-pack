@@ -2942,9 +2942,19 @@ def g_budget_real_pinned():
     except GATE.Unmeasurable as exc:
         return False, f"committed budget invalid: {exc.reason} {exc.detail}"
     layers = {e["layer"] for e in doc["budgets"]}
-    want = {"memory_global", "rules", "memory_project", "other:instructions"}
+    want = {"memory_global", "rules", "memory_project", "other:instructions",
+            "skill_listing", "other:agent_listing_delta"}   # the last two: ICC Phase 6 request-plane listing layers
     if not want <= layers:
         return False, f"missing layers {sorted(want - layers)}"
+    # growth pole: a listing layer one char over its committed ceiling must read OVER_BUDGET; at the ceiling, within.
+    prov = {"plane": doc["plane"], "install_home": doc["install_home"], "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack"}
+    for layer in ("skill_listing", "other:agent_listing_delta"):
+        mx = next(e["max_chars"] for e in doc["budgets"] if e["layer"] == layer)
+        for chars, want_v in ((mx, "WITHIN_BUDGET"), (mx + 1, "OVER_BUDGET")):
+            comps = [{"layer": e["layer"], "chars": (chars if e["layer"] == layer else 1)} for e in doc["budgets"]]
+            v = GATE.check_budget(doc, {"provenance": prov, "components": comps})
+            if v["verdict"] != want_v or (want_v == "OVER_BUDGET" and v["budget_over"] != [layer]):
+                return False, f"{layer} at {chars}: verdict={v['verdict']} over={v['budget_over']}, wanted {want_v}"
     loose = [e["layer"] for e in doc["budgets"] if "measured" in e and e["max_chars"] > e["measured"] * 1.1 + 100]
     if loose:
         return False, f"ceilings above measured*1.10 (+100 rounding): {loose}"
