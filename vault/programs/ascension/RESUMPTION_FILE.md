@@ -5,7 +5,16 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT (2026-11-04 ~14:00 UTC, session 95e69b3d) — read this first.**
+**CURRENT (2026-11-05 ~14:35 UTC, session 95e69b3d) — read this first.**
+- Owner /cpp-gsd-long brief "Global Constraint Closure, Exact Tail Compression, Generative Population Collapse" = **Generation S13**.
+  - Brief stored VERBATIM (no condensation; S12C lost §XXIX that way) in gen3 `vault/programs/gsdx-factory-2/S13-BRIEF-VERBATIM.md` (40 sections, body sha256 321961cda6f6e669), plus `S13-COORDINATOR-NOTES.md` (scan, cohort correction, paths, budget) and the iteration methodology copy. gen3 commit `7a5e1468`.
+  - S12C milestone archived under `.planning/milestones/s12c-closed-partial-*` with CLOSE-NOTE (phase 8 unmet: gates 11, 14); new 8-phase milestone W0..W7, GSD 0/8.
+- **Mission m-84f2641865dd**: 30M processed, 0 top-ups, 12 cycles / 24 h, USD 0, workset t1. Launched 14:33:51Z (INITIAL), worker ca4ef299 working W0.
+- **S12C m-9dc71428699e closed PARTIALLY PROVEN**: frontier 1121/1797, compiler pin cc38fa03, 15 pre-S12C reds classified; 46.4M/60M; envelope ended 13:54Z; owner hold "never launch".
+- Coordinator duties: watch `topology --mission m-84f2641865dd`; at the S13 closeout land S12C + S13 `promotions.json` together (PP UKDL has a dirty concurrent hunk on the laptop: land via private index) and run the fresh-inheritance check; judge the 25 gates.
+- Trap: `claude ps` on GEX44 is not a listing; it ran a model turn.
+
+**Earlier (2026-11-04 ~14:00 UTC, session 95e69b3d).**
 - The Owner's /cpp-gsd-long brief "GSD X Reconstruction Factory: Convergence and First Population Collapse" = **Generation S12C**. It supersedes the unlaunched S12.
   - Brief condensed faithfully into gen3 `vault/programs/gsdx-factory-2/S12C-CONVERGENCE-BRIEF.md`: 18-item done-gate, 6 mission terms.
   - gen3 commit `86da3c29` = brief + `S12C-PHASES.md` + ASCENSION-PLAN section + GSD milestone (8 phases W0..W5; GSD was NO_PHASES, scaffold → OK 0/8; old v1 files archived under `.planning/milestones/auto-archived-20261104T145409`).
