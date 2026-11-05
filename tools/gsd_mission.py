@@ -1390,6 +1390,9 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": str(exc), "detail": ""}
     if det:
         return _run_deterministic(rec, det, now, run=det_runner)   # never `runner`: that one starts claude
+    gate = try_done_gate_close(rec, now, run=det_runner)           # ICC-05: gate passes -> closed, no model turn
+    if gate:
+        return gate
     resolved = resolve_baseline(rec)
     baseline_on = resolved is not rec
     legacy_why = baseline_legacy_verdict(resolved) if baseline_mode() != "off" else None
@@ -3921,9 +3924,31 @@ def deflate_unit(rec: dict, environ=None, declare: bool = True) -> tuple[dict, d
 
 
 _DETERMINISTIC_RE = re.compile(r"^\s*deterministic:\s*(\S.*?)\s*$", re.MULTILINE)
+_DONE_GATE_RE = re.compile(r"^\s*done-gate:\s*(\S.*?)\s*$", re.MULTILINE)
 
 
-def deterministic_script(rec: dict) -> list[str] | None:
+def zero_model_close_on() -> bool:
+    """ICC Phase 4 kill switch: GSD_ZERO_MODEL_CLOSE=0 disables the done-gate closeout (default on)."""
+    return os.environ.get("GSD_ZERO_MODEL_CLOSE", "1") != "0"
+
+
+def try_done_gate_close(rec: dict, now: float, run=None) -> dict | None:
+    """ICC-05: a packet that names `done-gate: <script>` whose script exits 0 is closed without a model turn,
+    through the same COMPLETED transition as the deterministic path. A failing/unrunnable gate returns None so
+    the mission proceeds to a normal model epoch (unlike `deterministic:`, a gate never blocks a launch)."""
+    if not zero_model_close_on():
+        return None
+    try:
+        argv = deterministic_script(rec, _DONE_GATE_RE)
+    except MissionError:
+        return None
+    if not argv:
+        return None
+    res = _run_deterministic(rec, argv, now, run=run, event="done_gate_completed")
+    return res if res.get("ok") else None
+
+
+def deterministic_script(rec: dict, regex=None) -> list[str] | None:
     """The argv a packet's `deterministic: <script> [args]` line names, or None. The script must be a .py or
     .sh file inside the mission's work tree; a line naming anything else raises MissionError."""
     import shlex
@@ -3934,7 +3959,7 @@ def deterministic_script(rec: dict) -> list[str] | None:
         text = Path(pkt["path"]).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
-    m = _DETERMINISTIC_RE.search(text)
+    m = (regex or _DETERMINISTIC_RE).search(text)
     if not m:
         return None
     args = shlex.split(m.group(1))
@@ -3945,7 +3970,8 @@ def deterministic_script(rec: dict) -> list[str] | None:
     return [sys.executable if script.suffix == ".py" else "bash", str(script), *args[1:]]
 
 
-def _run_deterministic(rec: dict, argv: list[str], now: float, run=None) -> dict:
+def _run_deterministic(rec: dict, argv: list[str], now: float, run=None,
+                       event: str = "deterministic_completed") -> dict:
     """DETERMINISTIC_PATH: run the packet's script instead of a worker. No epoch is claimed and no model is
     called. Exit 0 completes the mission with the output's sha256 on the record; anything else leaves the
     mission where it was, ledgered, and never falls back to a model."""
@@ -3969,9 +3995,10 @@ def _run_deterministic(rec: dict, argv: list[str], now: float, run=None) -> dict
                          **res, stderr=err[-300:])
         return {"ok": False, "deterministic": True, "epoch": rec.get("epoch"), "bg_id": None,
                 "why": f"deterministic script exited {rc}", "detail": err[-300:], **res}
-    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="deterministic_completed",
+    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event=event,
                now=now, state=COMPLETED, pending=None, deterministic=res,
-               reason=f"deterministic path: {Path(argv[1]).name} exit 0, 0 model calls")
+               reason=f"{'done-gate' if event == 'done_gate_completed' else 'deterministic path'}: "
+                      f"{Path(argv[1]).name} exit 0, 0 model calls")
     return {"ok": True, "deterministic": True, "epoch": rec.get("epoch"), "bg_id": None, "stdout": out[-4000:], **res}
 
 

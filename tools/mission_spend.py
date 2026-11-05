@@ -1332,6 +1332,35 @@ def programme_spend(goal: str, *, projects: Path | None = None, mission_sids: se
             "telemetry_ok": not failures, "telemetry_failures": failures, "sessions": rows}
 
 
+_MODEL_EPOCH_EVENTS = ("launched",)
+_ZERO_MODEL_EVENTS = ("deterministic_completed", "done_gate_completed")
+
+
+def model_call_report(events: list[dict]) -> dict:
+    """ICC-04/06: per Work Class, model epochs vs zero-model closes from mission ledger rows.
+    Fraction is None when nothing was observed (absent is not zero)."""
+    by: dict[str, dict] = {}
+    for ev in events or []:
+        name = ev.get("event")
+        if name in _MODEL_EPOCH_EVENTS:
+            key = "model_epochs"
+        elif name in _ZERO_MODEL_EVENTS:
+            key = "zero_model_closes"
+        else:
+            continue
+        wc = str(ev.get("work_class") or "unclassified")
+        by.setdefault(wc, {"model_epochs": 0, "zero_model_closes": 0})[key] += 1
+    tot = {"model_epochs": 0, "zero_model_closes": 0}
+    for row in by.values():
+        n = row["model_epochs"] + row["zero_model_closes"]
+        row["zero_model_fraction"] = row["zero_model_closes"] / n if n else None
+        for k in tot:
+            tot[k] += row[k]
+    n = tot["model_epochs"] + tot["zero_model_closes"]
+    tot["zero_model_fraction"] = tot["zero_model_closes"] / n if n else None
+    return {"by_work_class": by, "total": tot}
+
+
 def _main(argv: list[str]) -> int:
     import argparse
     import socket
@@ -1429,7 +1458,13 @@ def _main(argv: list[str]) -> int:
     sub.add_parser("capital-apply-pending")
     sub.add_parser("session-tree", help="cost tree of one session: main + subagents, deduped by message id"
                    ).add_argument("--transcript", required=True)
+    sub.add_parser("model-calls", help="model epochs vs zero-model closes (ICC Phase 4)"
+                   ).add_argument("--mission", help="mission id; default: every mission in the ledger")
     a = ap.parse_args(argv)
+    if a.cmd == "model-calls":
+        import gsd_long_run as _lr
+        print(json.dumps(model_call_report(_lr.ledger_events(a.mission)), indent=1))
+        return 0
     if a.cmd == "session-tree":
         print(json.dumps(session_tree_report(Path(a.transcript)), indent=1))
         return 0
