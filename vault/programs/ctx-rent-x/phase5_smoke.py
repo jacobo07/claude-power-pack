@@ -76,7 +76,12 @@ def run(arm, key, cwd, claude):
     from winpty import PtyProcess
     sid = str(uuid.uuid4())
     env = dict(os.environ)
-    env["CCR_MAIN_PROJECT"] = "1" if arm == "N" else "0"  # explicit both ways: unset would be ON (Amendment A)
+    # explicit both ways: unset would be ON (Amendment A). Arm D = unset: the shipped default itself (ON since Amendment A);
+    # done_gate counts only N and F, so D runs are a separate check of the default, never mixed into CR-09/10/13.
+    if arm == "D":
+        env.pop("CCR_MAIN_PROJECT", None)
+    else:
+        env["CCR_MAIN_PROJECT"] = "1" if arm == "N" else "0"
     p = PtyProcess.spawn([claude, "--model", "haiku", "--session-id", sid, "--permission-mode", "auto",
                           "--disallowedTools", "Write", "Edit", "NotebookEdit"], cwd=cwd, env=env, dimensions=(50, 200))
 
@@ -140,7 +145,8 @@ def main():
         print(key, arm, r.get("finished"), r.get("correct"), r.get("calls"), r.get("processed"),
               [(x.get("applied"), (x.get("forget") or {}).get("reason")) for x in pr], r["receipts"]["faults"],
               (r["receipts"]["start"] or {}).get("releaseId"), r.get("invalid"), r["final"][:60], flush=True)
-    arms = {a: [x for x in res["runs"] if x["arm"] == a and x.get("finished") and not x.get("invalid")] for a in "FN"}
+    arms = {a: [x for x in res["runs"] if x["arm"] == a and x.get("finished") and not x.get("invalid")]
+            for a in sorted({x["arm"] for x in res["runs"]} | {"F", "N"})}
     res["summary"] = {a: {"n": len(v), "correct": sum(1 for x in v if x["correct"]),
                           "processed": [x.get("processed") for x in v]} for a, v in arms.items()}
     out.write_text(json.dumps(res, indent=1), encoding="utf-8")

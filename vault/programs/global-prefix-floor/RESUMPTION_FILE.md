@@ -61,10 +61,17 @@ Evidence: `vault/programs/global-prefix-floor/LAPTOP_RESULTS.md` (read it first;
    applied 3/3 (safe-hoisted), OFF shadow 3/3; KEPT (HR-2 green). done_gate CR-09/10/13 PASS: 32,310 chars
    externalised, processed mean ON 139,424 vs OFF 142,367 (-2.1%, n=3/arm), 0 projected faults. DONE_GATE 31/1/4
    (fail CR-31 shared-tree dirt). Receipt vault/programs/ctx-rent-x/phase5-safe-to-forget.json. Rollback point
-   0.1.0-4a6f6f61. CCR_MAIN_PROJECT stays opt-in (env); default-on is a separate Owner decision.
+   0.1.0-4a6f6f61.
+7. DONE 2026-11-05 (Owner "y", conditional on n=10/arm): CCR_MAIN_PROJECT DEFAULT-ON, spec Amendment A.
+   n=10 (phase5-safe-to-forget-n10.json): ON 10/10 applied, 20/20 correct, 0 faults, mean 139,594 vs 142,307 (-1.9%).
+   Code 2d0c5802 (lift unless =0; main loop only, review M1; unreadable env = off; flag = lift changed the mode).
+   Plugin 36/0, DONEGATE 45/45, 2 mutants killed, review APPROVE (M1+L1 fixed). RELEASED 0.1.0-b4aede4f (COVERED).
+   HR-2 smoke (phase5-default-on-hr2.json, arms F=0/N=1/D=unset): N and D applied 3/3 each with mainProject, F never;
+   9/9 correct, 0 faults -> KEPT. Rollback: CCR_MAIN_PROJECT=0, or ccr_release.py rollback (-> 0.1.0-a2116a3b).
 Open debt: repo CLAUDE.md diet (another pane's uncommitted edit), l6 driver defects,
 CR-16/07/22/30 unknown, unattributed -13.8K GEX44 floor change, GEX44 dangling doctrine pointers, GEX44 budget file,
-throwaway worktree .claude/worktrees/ccr-compat-2.1.318, open panes need a restart for Bash (old snapshot).
+throwaway worktree .claude/worktrees/ccr-compat-2.1.318, open panes need a restart for Bash (old snapshot),
+subagent shell projection unmeasured (excluded from the lift).
 
 ## Start
-GPF items 1-6 DONE. Ask the Owner: make CCR_MAIN_PROJECT default-on (needs a larger n), or close GPF and pick from debt.
+GPF items 1-7 DONE. Next: Owner picks from the open debt (or closes GPF).
