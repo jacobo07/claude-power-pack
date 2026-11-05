@@ -1599,6 +1599,23 @@ def g_project_dir_newest():
     return (not why), "; ".join(why) or "newest by mtime, ties by name, nested / non-jsonl ignored, empty and absent dir -> no_transcript"
 
 
+def g_project_dir_live_ambiguous():
+    """ICC W0: two transcripts written inside the live window -> 'newest by mtime' is a coin flip -> UNMEASURABLE."""
+    ref_root, ref_tx, now_tx, ref_json = good_ref("pdirlive")
+    why = []
+    os.utime(ref_tx, None)
+    os.utime(now_tx, None)
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--project-dir", ref_tx.parent])
+    if not unmeasurable(rc, out, "ambiguous_live_sessions"):
+        why.append(f"two live transcripts: rc={rc} last={last_line(out)!r} (want UNMEASURABLE ambiguous_live_sessions)")
+    old = 1_000_000_000
+    os.utime(ref_tx, (old, old))
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--project-dir", ref_tx.parent])
+    if unmeasurable(rc, out, "ambiguous_live_sessions"):
+        why.append("one live + one stale transcript was refused as ambiguous")
+    return (not why), "; ".join(why) or "two live transcripts -> ambiguous_live_sessions; one live + one stale -> measured"
+
+
 def g_session_unknown():
     root, ref_tx, now_tx, ref_json = good_ref("sunk")
     home = root / "home"
@@ -3013,6 +3030,7 @@ GATES_SAFETY = [
 GATES_SOURCES = [
     ("V-FLOOR-SOURCES-E2E", g_sources_e2e),
     ("V-FLOOR-PROJECT-DIR-NEWEST", g_project_dir_newest),
+    ("V-FLOOR-PROJECT-DIR-LIVE-AMBIGUOUS", g_project_dir_live_ambiguous),
     ("V-FLOOR-SESSION-UNKNOWN", g_session_unknown),
     ("V-FLOOR-SESSION-ID-REFUSED", g_session_id_refused),
     ("V-FLOOR-PROBE-STUB", g_probe_stub),
