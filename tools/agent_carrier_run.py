@@ -137,7 +137,7 @@ def parse_stream(lines: list[str]) -> dict:
     a 'launched' notice and the carrier's answer arrives later. So the carrier's reply is
     its own LAST sidechain text block, not the parent's tool_result."""
     carrier_tools, parent_agent_calls, agent_results, final, usage = [], [], [], "", {}
-    carrier_text, denied = "", []
+    carrier_text, denied, handback = "", [], ""
     # Run accounting (ACV C6): every result event (real streams carry two), the first session id
     # seen (the init event has it even when a timeout cuts the result off), and the models each
     # side ACTUALLY ran on, from message.model.
@@ -183,12 +183,18 @@ def parse_stream(lines: list[str]) -> dict:
                     denied.append(d.group(1))
                 if not side:
                     agent_results.append(text)
+        elif ev.get("type") == "system" and ev.get("subtype") == "task_notification":
+            # Measured 2026-11-05 (claude 2.1.318, ICC Phase 5): the Agent tool_result is only a pointer
+            # ("delivered to you as a message ... SubagentHandback"); the real report rides on this event.
+            hb = ev.get("handback_report")
+            if isinstance(hb, dict) and isinstance(hb.get("text"), str) and hb["text"].strip():
+                handback = hb["text"]
         elif ev.get("type") == "result":
             final, usage = ev.get("result") or "", ev.get("usage") or {}
             results.append(ev)
     return {"carrier_tools": carrier_tools, "parent_calls": parent_agent_calls,
             "agent_results": agent_results, "final": final, "usage": usage,
-            "carrier_text": carrier_text, "denied_tools": denied,
+            "carrier_text": carrier_text, "handback": handback, "denied_tools": denied,
             "results": results, "init_session": init_session, "models": models}
 
 
@@ -203,6 +209,8 @@ def carrier_reply(s: dict) -> tuple[str, str]:
       2.1.285 (2026-10-01, GEX44): Agent is SYNC -- no sidechain text is streamed at all; the
                answer is the parent's Agent tool_result, followed by an `agentId: ...` footer.
     Reading only the first shape recorded three GEX44 runs as MEASURED with reply=0."""
+    if s.get("handback", "").strip():     # 2.1.318: the tool_result is a pointer; the report is on the notification
+        return s["handback"], "handback"
     if s.get("carrier_text", "").strip():
         return s["carrier_text"], "sidechain"
     tool_result = s["agent_results"][-1] if s.get("agent_results") else ""

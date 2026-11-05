@@ -1,0 +1,9 @@
+{
+ "phase": 5, "host": "claude 2.1.318 (laptop, -p parent haiku, carrier sonnet)", "task": "review of the Phase 4 diff (7,016 bytes)",
+ "metric": "chars of the carrier report that cross into the parent (handback_report.text); compact line is what a parent could keep",
+ "prose_arm": {"spec": "python-reviewer (output_contract native)", "n": 3, "reply_chars": [4001, 3630, 2843], "mean": 3491},
+ "bundle_arm": {"spec": "silent-failure-hunter (proof-bundle-v1)", "n": 3, "reply_chars": [4444, 4052, 4356], "mean": 4284, "verdicts": ["VALID","VALID","VALID"], "compact_chars": 225},
+ "finding": "On 2.1.318 the harness delivers the whole report to the parent as a SubagentHandback message regardless of format, so the bundle does not reduce parent growth (+23% vs prose). The 225-char compact line only helps if the parent never receives the full message, which this host does not offer.",
+ "caveats": ["different reviewer specs per arm (no native-prose spec shares silent-failure-hunter's checks); n=3 each; one diff", "chars not tokens"],
+ "fix_found_on_the_way": "agent_carrier_run read the 147-char pointer as the reply (MEASURED, reply=pointer); now reads task_notification.handback_report.text; test tools/test_carrier_handback.py"
+}
