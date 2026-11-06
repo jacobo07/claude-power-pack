@@ -1952,6 +1952,71 @@ def owner_pause(mission_id: str, reason: str, now: float | None = None, sessions
     return {"ok": True, "how": how, "record": rec}
 
 
+CLOSE_OUTCOMES = (HALTED, COMPLETED)
+CLOSED_HOLD_KIND = "closed"
+_ASK_HOST = object()
+
+
+def close_mission(mission_id: str, reason: str, owner_turn: str, outcome: str = HALTED, now: float | None = None,
+                  sessions=_ASK_HOST, pid_alive=lr._pid_alive, stop_runner=None, finder=None) -> dict:
+    """spec mission-close: settle a mission terminal on a verified Owner turn. Measured 2026-11-06 (GEX44): 12
+    missions were closed by a hand `transition(event="hold_settled")`, with no authority, no reason of the Owner's
+    and no worker stop. A background worker is stopped through the host first; an unanswered host or a failed stop
+    never closes (the failed stop parks the mission instead). -> {closed, record, stop}."""
+    reason = (reason or "").strip()
+    if not reason:
+        raise MissionError("a close needs a reason")
+    if outcome not in CLOSE_OUTCOMES:
+        raise MissionError(f"close outcome must be one of {', '.join(CLOSE_OUTCOMES)}, not {outcome!r}")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if rec["state"] in TERMINAL:
+        raise MissionError(f"{mission_id} is already {rec['state']}; there is nothing to close")
+    turn = verify_owner_turn(owner_turn, finder)
+    now = time.time() if now is None else now
+    hold = rec.get("owner_hold") or {}
+    if not rec.get("owner") or hold.get("worker_stopped_at"):
+        how = "no owner" if not rec.get("owner") else f"stopped earlier ({hold.get('stop') or 'recorded'})"
+    else:
+        if sessions is _ASK_HOST:
+            sessions = host_sessions()
+        if sessions is None:
+            # stop_owner answers "not listed by host" = ok for a None list; an unanswered host is UNKNOWN here.
+            raise MissionError(f"{mission_id}: host session list unavailable; the worker cannot be proven stopped")
+        if not hold:
+            # Park BEFORE the stop (review F1, 2026-11-06): with no hold, a sweep pass during the stop's wait could
+            # read the dead owner and launch a successor, which a terminal write after the stop would then bury.
+            rec = set_owner_hold(mission_id, f"close requested, stopping worker: {reason}", now=now,
+                                 kind="owner_stop", expect_seq=rec.get("seq"))
+        ok, how = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive, runner=stop_runner)
+        if not ok:
+            lr.ledger_append(mission_id, "mission_close_stop_failed", mission_id=mission_id, how=how,
+                             owner_turn=turn.get("uuid"))
+            return {"closed": False, "record": load(mission_id) or rec, "stop": how}
+        try:
+            settle_stopped_worker(rec)
+        except Exception as exc:  # noqa: BLE001 -- booking is best effort; the stop already happened
+            lr.ledger_append(mission_id, "worker_unbooked", mission_id=mission_id,
+                             error=f"{type(exc).__name__}: {exc}"[:200])
+    cur = load(mission_id) or rec
+    if cur["epoch"] != rec["epoch"] or cur.get("owner") != rec.get("owner"):
+        # The worker that was stopped is no longer the record's owner: someone launched or adopted in between.
+        raise CasConflict(f"{mission_id}: owner/epoch moved during the close (epoch {rec['epoch']} -> "
+                          f"{cur['epoch']}); the stopped worker is not the current one, nothing closed")
+    closed = {"at": now, "outcome": outcome, "reason": reason[:1000], "prior_state": cur["state"], "stop": how,
+              "owner_turn": turn, "prior_hold": hold or None}
+    out = transition(mission_id, expect_epoch=cur["epoch"], expect_state=cur["state"], expect_seq=cur.get("seq"),
+                     event="mission_closed", now=now, state=outcome, pending=None, closed=closed,
+                     owner_hold={"kind": CLOSED_HOLD_KIND, "reason": f"closed: {reason[:300]}", "set_at": now,
+                                 "prior": cur.get("owner_hold")},
+                     reason=f"owner close ({outcome}): {reason[:300]}",
+                     ledger_extra={"outcome": outcome, "prior_state": cur["state"], "stop": how,
+                                   "owner_turn": turn.get("uuid")})
+    hold_guard_budget(out, f"closed: {reason}")
+    return {"closed": True, "record": out, "stop": how}
+
+
 def hold_guard_budget(rec: dict, reason: str = "") -> list[str]:
     """EVC U5: a hold that only flips the record leaves the live worker burning (it never reads the
     record). Also write a stop=1 session-budget guard file for every session the mission spent
@@ -2866,6 +2931,9 @@ def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
         raise MissionError(f"no mission {mission_id}")
     if not rec.get("owner_hold"):
         raise MissionError(f"{mission_id} has no owner hold")
+    if rec["owner_hold"].get("kind") == CLOSED_HOLD_KIND:
+        # spec mission-close: a closed mission is reopened only by arming a new one.
+        raise MissionError(f"{mission_id} was closed by the Owner ({rec['state']}); arm a new mission instead")
     out = transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"],
                      event="owner_hold_released", now=now, owner_hold=None,
                      reason="owner hold released")
@@ -8106,6 +8174,13 @@ def _cli(argv=None) -> int:
     dc.add_argument("--id", default=None, help="decision id (default D<n>)")
     dc.add_argument("--supersedes", default=None, help="id of an earlier decision this one replaces")
     dc.add_argument("--no-wake", action="store_true", help="record only; do not stop and resume the owner")
+    cl = sub.add_parser("close", help="spec mission-close: settle a mission terminal on a verified Owner turn; a "
+                                      "live background worker is stopped through the host first")
+    cl.add_argument("--mission", required=True)
+    cl.add_argument("--reason", required=True)
+    cl.add_argument("--owner-turn", default=None, help="REQUIRED: <session>:<timestamp> of the Owner's own message "
+                                                       "authorizing the close (verified in that transcript)")
+    cl.add_argument("--outcome", choices=list(CLOSE_OUTCOMES), default=HALTED)
     oh = sub.add_parser("hold", help="park a live mission: no launch, halt or renewal (spec mission-owner-hold)")
     oh.add_argument("--mission", required=True)
     oh.add_argument("--reason", required=True)
@@ -8277,6 +8352,20 @@ def _cli(argv=None) -> int:
         print(f"DECISION {'RECORDED' if out['recorded'] else 'UNCHANGED'} mission={args.mission} "
               f"id={out['decision']['id']} woke={bool(w.get('ok'))} why={w.get('why', 'resumed')}")
         return 0
+    if args.cmd == "close":
+        if not args.owner_turn:
+            print("CLOSE REFUSED: --owner-turn <session>:<timestamp> is required (the Owner's own message "
+                  "authorizing the close; it is verified in that session's transcript)", file=sys.stderr)
+            return 2
+        try:
+            out = close_mission(args.mission, args.reason, args.owner_turn, outcome=args.outcome)
+        except MissionError as exc:
+            print(f"CLOSE REFUSED: {exc}", file=sys.stderr)
+            return 3
+        rec = out["record"]
+        print(f"{'MISSION CLOSED' if out['closed'] else 'CLOSE NOT APPLIED, WORKER STOP FAILED (parked)'} "
+              f"mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']} stop={out['stop']}")
+        return 0 if out["closed"] else 1
     if args.cmd == "hold" and args.stop:
         out = owner_pause(args.mission, args.reason)
         rec = out["record"]
