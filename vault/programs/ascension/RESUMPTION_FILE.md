@@ -5,7 +5,96 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT (2026-11-06 ~01:15 UTC, session 95e69b3d) — read this first.**
+**Update 2026-11-06 ~13:52 UTC (session 59d25469): lane C1 DONE and LIVE.**
+- `gsd_mission.py close --mission --reason --owner-turn <sid>:<ts> [--outcome HALTED|COMPLETED]`, spec
+  `vault/specs/mission-close.md`. Laptop `5abc1574`. Behaviour:
+  - the Owner turn is verified in its transcript;
+  - an unanswered host refuses;
+  - the mission is parked with `owner_stop` BEFORE the worker stop, and the close refuses if epoch or owner moved
+    during the stop (review F1);
+  - the terminal record keeps a `closed` hold, so renewal and `release` both refuse.
+- Laptop evidence: V-CLOSE 17/17, drills 6/6, MC 242, OWNER_HOLD 49, S9_WAIT 31, RETARGET 14, COST_HOLD 59, MPOL 54.
+  legacy_characterization 8/33 is pre-existing (same on clean HEAD).
+- GEX44 canary `canary/close` = 94df931c + `6016664a`:
+  - suites green, MC 241/242 (V-MC-PLAN-FACTS-REFUSES-OVERLAP, same on the base);
+  - real-host smoke 3/3 (real transcript turn 3da4c996, real host listing of 309 rows, unverifiable turn refused).
+- **DEPLOYED** (covered by the S16 approval, lane C1): live clone ff 94df931c -> **6016664a** at 13:46:34Z.
+  - The predicate control was caught first.
+  - First pass 13:50:39Z: 0 supervise_error in the ledger (control: 526 historical rows); S16 epoch 4, 21.3M.
+  - Rollback: `git reset --keep 94df931c`.
+- Use it next time instead of a hand `transition(event="hold_settled")`.
+
+**CURRENT (2026-11-06 ~13:15 UTC, session 177efe77) — read this first.**
+
+**Generation S16 "Natural Evidence Mining, Generative Family Discovery & Reconstruction Yield Compounding" is RUNNING.**
+- Mission **m-29dd612ed825**.
+  - Owner "y 60M" at 2026-11-06T13:05:52Z, uuid 3da4c996. The owner-turn check verified it against this session's transcript, copied to GEX44 `~/.claude/projects/laptop-coordinator-177efe77/`.
+  - Limits: 60M processed, 0 top-ups, 12 cycles, 24 h, USD 0.
+  - cwd gen3-pp, workset t1 (product).
+- Brief VERBATIM: gen3 `S16-BRIEF-VERBATIM.md`, extracted byte-exact from the transcript (I-XXXIX, body sha 85c4c439). Beside it: `S16-COORDINATOR-NOTES.md` (scan, negative knowledge, per-wave caps) and `S16-PHASES.md`.
+  - gen3 `2fa62974`: brief, notes, phases, ASCENSION-PLAN section, S15 milestone archived as s15-closed-partial.
+  - gen3 `70691ff1`: GSD milestone with 8 phases (0/8).
+- **Trap seen at arm:**
+  - `arm` did not scaffold the milestone; `.planning/ROADMAP.md` was absent after rc=0.
+  - `gsd_milestone_scaffold.py ensure --command` alone turned the resume command into ONE phase.
+  - The right call is `ensure --wu-packet <S16-PHASES.md>`. The 1-phase roadmap is archived under `.planning/milestones/auto-wrong-1phase-*`.
+- Launched by the sweep 13:12:09Z; worker 4fa9405d acked. Its transcript is growing and it is in W0 (19 calls at 13:14Z).
+- Plan backup: `S16-PLAN-PROPOSAL.md` (this dir).
+- Coordinator duties:
+  - watch `topology --mission m-29dd612ed825`;
+  - lane C1: build the mission `close` verb (T2 spec first, canary, deploy; covered by the approval);
+  - at the closeout: judge the 38 items, land promotions via a private index, run the inheritance check.
+
+**Earlier (2026-11-06 ~11:15 UTC, session 95e69b3d).**
+
+**Generation S15, "Atomic Causal Inversion"**
+- Mission **m-9f27dc5a3edd**.
+- Owner grant: "y" at 2026-11-06T10:35:26Z (uuid 24c82159, owner-turn verified on GEX44). 20M processed, 6 cycles, 12 h, 0 top-ups, reserve 1M.
+- The brief is VERBATIM in gen3 `S15-BRIEF-VERBATIM.md` (47 sections, sha 7f68e92f), with `S15-COORDINATOR-NOTES.md` and `S15-PHASES.md` beside it. The 6-phase milestone W0..W5 is gen3 `4d480180`; the S14 milestone is archived as s14-closed-partial.
+- At 11:09Z the mission was at epoch 3 with 14.1M spent.
+- t1 `57a8e3a1`:
+  - one counterfactual probe was repeatable 32/32 (arg-forwarding decides r0 vs r3; local-naming was falsified);
+  - new operator `cmp-forward@1`;
+  - **fn_8020BAC0 CERTIFIED_CXX, frontier 1156**;
+  - held-out 0/10, negative controls 0/68.
+
+**S14** (m-99fe8fd825d8)
+- CHECKPOINT_COMPLETE, PARTIALLY PROVEN, 1146 -> 1155.
+- Its promotions are landed: UKDL + B1 in `9b327a92`, plus the knowledge vault.
+- Its D2 gate defect was fixed in `62e581fd` (an AUTO estimate under Owner authority was treated as a hard cap).
+
+**Update 2026-11-06 ~13:00 UTC (session 177efe77): S15 closeout JUDGED, promotions landed.**
+- The S15 closeout is t1 `2dcc6095`, verdict PARTIALLY PROVEN, 30 items. The coordinator AGREES. It re-ran these on GEX44, all exit 0: `projection check` (FRONTIER_CHECK OK), test_s15_w3 (S15_W3_PASS, operator-off control included), s13_w3/w8, s14_w1..w6, sr1 22/22. PREREG landed in 3e96ccde, before the HELD run in 57a8e3a1. The H2 manifest sha is still 922f214e. The H2 guard skips sealed functions before compile or judge.
+- Correction: the closeout's "60 H2 sealed" counts h2_guard hits, one per function per method, so it is 20 functions x 3 methods, not 60 functions.
+- Landed on the laptop:
+  - UKDL `be71b6bc`, through a private index; the foreign UKDL hunk stays uncommitted. It holds T-A-SYNTHETIC-PERTURBATION-PROVES-MECHANISM-NOT-PREVALENCE-001 plus 2 reinforcements.
+  - KV `binary-reconstruction-fabric.md` += KN-S15-LOCAL-NAMING-FALSIFIED, KN-S15-CMP-FORWARD and KN-S15-HOTPATH-SWEEP-NULL.
+  - No baseline candidate.
+- The inheritance re-check found that the trigger `decompil` could never match (the matcher anchors whole words). It was fixed in `cbff662c`. Now 3/3 reconstruction prompts get B1 plus the absolute `rule --deferred` command, and the control gets none. Obedience is unproven: the 5 deferred rules stay NAME_ONLY until a worker reads them.
+- Hashes: closeout launcher laptop `b655ca6d`, on GEX44 PP `912ec917` (live). Rule retrieval is laptop `46ecae0b`.
+- GEX44 port SMOKED, NOT DEPLOYED:
+  - worktree `/tmp/pp-tower` = 912ec917 + 4 patches (B0, B1, 46ecae0b, cbff662c; UKDL hunk excluded), HEAD `94df931c`;
+  - donegate 12/12 -> 18/18; capability_runtime 33/33; inheritance 3/3 plus control;
+  - same reds as the base, both already failing: V-FINJ-POPULATION and the predeclared list in test_family_baselines.
+- **DEPLOYED (Owner "y")**: the live GEX44 clone was ff'd 912ec917 -> **94df931c** at 11:44:04Z.
+  - The "no live-clone gsd_* python3" predicate ran first, with a sweep-shaped control that it caught.
+  - On the live clone: donegate 18/18 and capability_runtime 33/33. A recon prompt gets B1 plus the retrieval command; the control gets none.
+  - First sweep pass at 11:45:09Z: 0 supervise_error. Smoke worktree removed. Rollback: `git reset --keep 912ec917`.
+- Seen, not mine: m-088f20232c3c logs `closeout_unfunded` every pass (-4.49M left of its 8M authority), and did so before the deploy too.
+- **Missions closed (Owner "go ahead", 11:50:30Z):** 12 RUNNING-without-progress missions were moved to HALTED through `gm.transition(event="hold_settled")`. owner_hold is kept, so the sweep never relaunches them.
+  - The 12: S9, S10, S10b, S12, S12C, S13, S14, S15, recon-general, flow-compression m-088f20232c3c (overspent), tb-m2 m-34bc2fe24e53 and uek m-5b1d5ae8d356.
+  - Backup: GEX44 `~/.claude/state/mission-backup-close-20261106/`.
+  - The 11:50:38Z pass ran with 0 supervise_error, and the closeout_unfunded loop stopped.
+  - GEX44 now has 94 missions: 80 HALTED, 8 COMPLETED, 3 BLOCKED, 1 LAUNCHING (m-5797d3d34285, wrong HOME), 2 PREPARED. Those last 6 were left untouched.
+- **Private GitHub sync (Owner 2026-11-06):** `jacobo07/gsdx-reconstruction-factory-private` (visibility verified PRIVATE). Pushed as fast-forwards, with a lease on the old heads.
+  - t1/campaign 2091cdad -> **2dcc6095** (63 commits, S12C..S15).
+  - mission/gen3 49c1e3c8 -> **1b0604b3** (41 commits).
+  - Route: GEX44 has no GitHub credentials, so the commits went as GEX44 bundles to the laptop and were pushed from a scratch bare repo.
+  - The secret-pattern scan of the added lines found 0 hits; the pattern was proven able to fire.
+  - The PP lineage (laptop commits) is NOT in that repo, because PP origin is public.
+- NEXT: the next generation: a blind cohort for one of the 9 s13 FAMILY_PROSPECTS groups (the closeout's recommendation; needs an Owner brief).
+
+**Earlier (2026-11-06 ~01:15 UTC, session 95e69b3d).**
 - **Generation S14** "Production Convergence & Mass Exact Closure" = mission **m-99fe8fd825d8**: Owner "y" 2026-11-06T00:23:47Z, authority 60M processed (owner-turn verified), 12 cycles / 24 h, 0 top-ups, USD 0. Brief VERBATIM in gen3 `S14-BRIEF-VERBATIM.md` (33 sections, sha 9bcdc45db71b1fc0) + `S14-COORDINATOR-NOTES.md`; milestone 8 phases (gen3 823461be). At 00:48Z: W0-W2 ticked (frontier 1146/1797 recounted; hotpath.py pre-model route, 0 new certs on the real root), epoch 3, ~24.7M.
 - **S13 m-84f2641865dd closed PARTIALLY PROVEN** at W8: frontier 1121 -> 1146 (+10 wb_cxx, +15 ARRAY_GUARD_CALL after the Owner-approved byte-identical alias), 47.06M of 160M; owner hold "never launch"; authority does not transfer.
 - **Coordinator lane, done (laptop commits private, never pushed):** UKDL S12C+S13 section `fb9a4ca2` (5 PR, 6 T); KV `knowledge_vault/domain/binary-reconstruction-fabric.md` += 9 KN-S12C/S13 facts; tower family `binary_reconstruction` B0 `739a3970` (8 entries, inheritance check: 3/3 fresh reconstruction prompts inject it, web control does not; injection proven, obedience not); breaker gate fix `06dc4c1f` + `c470c414` (spec `vault/specs/mission-gate-carried-spend.md`: floor on cost_mark/spend_stamp, subagents counted, cap = authority - reserve; GEX44 had NO pre-call exposure gate — only agora's hold gate is registered — now the hold gate runs it). Deployed to GEX44 PP (`31d18a4b`, `886bc4f7`) and `~/agora/mission-hooks` (backup-20261106T010919); live S14 worker smoke: allowed.
