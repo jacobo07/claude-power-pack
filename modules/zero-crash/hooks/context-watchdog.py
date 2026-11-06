@@ -1417,6 +1417,11 @@ def _econ_rollover(session_id: str, cwd: str, transcript_path: str, used_pct) ->
             return None
         if used_pct is None or float(used_pct) < _econ_floor() or head == st.get("declined_head"):
             return None
+        if head == st.get("asked_head"):
+            # 2026-11-06 block loop (Owner-approved fix): between the econ floor and THRESHOLD_REARM_PCT
+            # the rearm clears ROLLOVER_ASK_FLAG on every Stop, so the same head was re-asked each turn
+            # (10x observed). One ask per head; a new commit re-asks.
+            return None
         dec = _econ_decision(session_id)
         if head != st.get("eval_head") or (dec.get("head") == head and
                                            (dec.get("decision") or {}).get("would_rollover") is True):
