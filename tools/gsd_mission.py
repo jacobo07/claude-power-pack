@@ -2433,6 +2433,35 @@ def _breaker_receipt(mid: str, cls: str, action: str, **fields) -> None:
     lr.ledger_append(mid, "breaker_receipt", mission_id=mid, classification=cls, action=action, **fields)
 
 
+SPEND_STAMP_STEP = 1_000_000
+
+
+def _stamp_spend(rec: dict, spent, now: float) -> dict:
+    """Spec mission-gate-carried-spend: record the measured mission spend `{tokens, at}` so the pre-call gate
+    (hooks/lib/mission_gate.js) can floor a later epoch's worker on it. Written only when the spend moved by
+    SPEND_STAMP_STEP since the freshest of the last stamp and cost_mark (bounded writes). Never fatal."""
+    if spent is None:
+        return rec
+    seen = max(int((rec.get("spend_stamp") or {}).get("tokens") or 0),
+               int((rec.get("cost_mark") or {}).get("tokens") or 0))
+    if int(spent) - seen < SPEND_STAMP_STEP:
+        return rec
+    # Review MEDIUM-1: `at` is read AFTER the measurement. A floor dated before its measurement would let the gate
+    # count rows of the gap twice (inside `tokens` and again as "after"); dated after, a late row is at worst missed.
+    at = max(float(now), time.time())
+    try:
+        return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"],
+                          expect_seq=rec.get("seq"), event="spend_stamped", now=now, touch=False,
+                          spend_stamp={"tokens": int(spent), "at": at},
+                          reason=f"measured spend {int(spent):,} processed (gate floor)")
+    except CasConflict:
+        return load(rec["mission_id"]) or rec
+    except Exception as exc:  # noqa: BLE001 -- review LOW-2: bookkeeping never raises into the sweep
+        lr.ledger_append(rec["mission_id"], "spend_stamp_failed", mission_id=rec["mission_id"],
+                         error=f"{type(exc).__name__}: {exc}"[:300])
+        return rec
+
+
 def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, child_fn=None,
                         transcript_fn=None) -> dict:
     """AMCR Progress Reconciliation Gate: the breaker never declares zero progress about a tree it has not
@@ -2503,7 +2532,8 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
         _breaker_receipt(mid, mb.GOOD, "mark", **evidence)
         settled = mb.settle_obligations(rec, root, now)   # a landed artifact closes its child obligation
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="cost_mark", now=now,
-                          cost_mark={**verdict["mark"], "at": now, "gen": gen0}, progress_unknown=None,
+                          cost_mark={**verdict["mark"], "at": max(float(now), time.time()), "gen": gen0},
+                          progress_unknown=None,
                           **({"obligations": settled} if settled else {}),
                           reason=f"progress fingerprint moved at {spent:,} processed (gen {gen0}, {root})")
     if verdict.get("recompile"):
@@ -2520,7 +2550,7 @@ def _reconciled_breaker(rec: dict, now: float, measure=None, fingerprint=None, c
                                   f"call it zero" if streak >= mb.UNKNOWN_INCIDENT_STREAK else
                                   f"progress unknown ({why}): no trip"))
     if not verdict["trip"]:
-        return rec
+        return _stamp_spend(rec, spent, now)
     stall_trip = "since the work tree last changed" in verdict["trip"]
     kids = None
     if owner_sid:

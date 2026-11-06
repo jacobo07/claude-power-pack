@@ -155,13 +155,70 @@ def main() -> int:
     ctp.write_text("\n".join([row(1, 400_000), row(2, 500_000)]) + "\n", encoding="utf-8")
     gm.transition("m-a00005", expect_epoch=1, expect_state=gm.RUNNING, event="t_cap", authority_tokens=1_000_000)
     r = gate({"session_id": cx, "tool_name": "Read", "tool_input": {"file_path": "a"}, "transcript_path": str(ctp)})
-    check("V-MG-NEXT-CALL-DENIES-NEAR-CAP", "MISSION CAP" in denied(r) and "authority hard cap 1,000,000" in denied(r),
-          denied(r)[:120] + "  (900,000 used + 500,000 next > 1,000,000)")
+    check("V-MG-NEXT-CALL-DENIES-NEAR-CAP", "MISSION CAP" in denied(r)
+          and "authority minus closeout reserve hard cap 950,000" in denied(r),
+          denied(r)[:140] + "  (900,000 used + 500,000 next > 1,000,000 - 50,000 reserve)")
     gm.transition("m-a00005", expect_epoch=1, expect_state=gm.RUNNING, event="t_cap2", authority_tokens=2_000_000)
     check("V-MG-CONTROL-NEXT-CALL-UNDER-CAP-ALLOWED", gate({"session_id": cx, "tool_name": "Read",
           "tool_input": {"file_path": "a"}, "transcript_path": str(ctp)}) is None, "1,400,000 <= 2,000,000")
     check("V-MG-CONTROL-NEXT-CALL-NO-TRANSCRIPT-ALLOWED", gate({"session_id": cx, "tool_name": "Read",
           "tool_input": {"file_path": "a"}}) is None, "unmeasured is not a deny here")
+
+    # 4c. spec mission-gate-carried-spend (S13 m-84f2641865dd: 33.4M on a 30M authority; the epoch-5 worker's gate saw
+    #     only its own session). Floor = freshest cost_mark/spend_stamp + usage dated after it; subagents count; the
+    #     cap is authority minus the closeout reserve.
+    import datetime as _dt
+    iso = lambda t: _dt.datetime.fromtimestamp(t, _dt.timezone.utc).isoformat().replace("+00:00", "Z")  # noqa: E731
+    rowt = lambda i, n, t: json.dumps({"uuid": f"u{i}", "timestamp": iso(t), "message": {  # noqa: E731
+        "id": f"msg-{i}", "model": "claude", "usage": {"input_tokens": n, "cache_creation_input_tokens": 0,
+                                                       "cache_read_input_tokens": 0, "output_tokens": 0}}})
+    M = 1_000_000
+
+    def capcase(mid, rows, sub_rows=None, **fields):
+        sid = worker(mid)
+        d = Path(TMP) / f"proj-{mid}"
+        d.mkdir()
+        tp = d / f"{sid}.jsonl"
+        tp.write_text("\n".join(rows) + "\n", encoding="utf-8")
+        if sub_rows:
+            (d / sid / "subagents").mkdir(parents=True)
+            (d / sid / "subagents" / "agent-x1.jsonl").write_text("\n".join(sub_rows) + "\n", encoding="utf-8")
+        gm.transition(mid, expect_epoch=1, expect_state=gm.RUNNING, event="t_cc", authority_tokens=30 * M, **fields)
+        return gate({"session_id": sid, "tool_name": "Read", "tool_input": {"file_path": "a"}, "transcript_path": str(tp)})
+
+    early = [rowt(1, 3 * M, NOW - 600)]
+    late = [rowt(2, 400_000, NOW + 60), rowt(3, 300_000, NOW + 120)]
+    r = capcase("m-a00007", early + late, cost_mark={"fp": "x", "tokens": 28_700_000, "at": NOW})
+    check("V-MG-CARRIED-FLOOR-DENIES", "MISSION CAP" in denied(r), denied(r)[:120]
+          + "  (28.7M floor + 0.7M after + 0.3M next > 29M)")
+    r = capcase("m-a00008", early + late, cost_mark={"fp": "x", "tokens": 20 * M, "at": NOW})
+    check("V-MG-CONTROL-CARRIED-FLOOR-LOW-ALLOWED", r is None, "20M floor + 0.7M + 0.3M < 29M")
+    r = capcase("m-a00009", early + late, spend_stamp={"tokens": 28_700_000, "at": NOW},
+                cost_mark={"fp": "x", "tokens": 10 * M, "at": NOW - 3600})
+    check("V-MG-SPEND-STAMP-FRESHER-WINS", "MISSION CAP" in denied(r), "the fresher spend_stamp floors, not the old mark")
+
+    main20 = [rowt(11, 19 * M, NOW), rowt(12, M, NOW + 1)]
+    r = capcase("m-a0000a", main20, sub_rows=[rowt(21, 8_500_000, NOW)])
+    check("V-MG-SUBAGENTS-COUNT", "MISSION CAP" in denied(r), denied(r)[:120] + "  (20M + 8.5M subagents + 1M > 29M)")
+    r = capcase("m-a0000b", main20)
+    check("V-MG-CONTROL-NO-SUBAGENTS-ALLOWED", r is None, "20M + 1M < 29M")
+
+    near = [rowt(31, 29_000_000, NOW), rowt(32, 200_000, NOW + 1)]
+    r = capcase("m-a0000c", near)
+    check("V-MG-RESERVE-CAP-DENIES", "authority minus closeout reserve hard cap 29,000,000" in denied(r),
+          denied(r)[:140] + "  (29.2M + 0.2M: under 30M, over 30M - 1M reserve)")
+    r = capcase("m-a0000d", near, closeout_tokens=0)
+    check("V-MG-CONTROL-ZERO-RESERVE-ALLOWED", r is None, "closeout_tokens=0 -> cap 30M, 29.4M admitted")
+
+    # the supervisor side: _stamp_spend writes only after a 1M move (bounded writes).
+    worker("m-a0000e")
+    rec = gm._stamp_spend(gm.load("m-a0000e"), 1_500_000, NOW)
+    check("V-MG-STAMP-WRITES-ON-1M", (rec.get("spend_stamp") or {}).get("tokens") == 1_500_000, str(rec.get("spend_stamp")))
+    rec2 = gm._stamp_spend(rec, 2_000_000, NOW + 300)
+    check("V-MG-STAMP-SKIPS-UNDER-1M", (rec2.get("spend_stamp") or {}).get("tokens") == 1_500_000, "0.5M move: no write")
+    rec3 = gm._stamp_spend(rec2, 2_600_000, NOW + 600)
+    check("V-MG-STAMP-WRITES-AGAIN", (rec3.get("spend_stamp") or {}).get("tokens") == 2_600_000, str(rec3.get("spend_stamp")))
+    check("V-MG-STAMP-UNMEASURED-NO-WRITE", gm._stamp_spend(rec3, None, NOW + 900) is rec3, "None spend writes nothing")
 
     # 5. wired through the registered guard: the same refusal comes out of session_budget_guard.decide.
     out = node("session_budget_guard.js", "decide", {"session_id": held, "tool_name": "Bash",

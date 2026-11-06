@@ -82,13 +82,16 @@ function agentTokens(file) {
   return total;
 }
 
-// Used tokens of the session transcript (deduped, counted like agentTokens) and its LAST call's context.
-function sessionUsage(file) {
+// Used tokens of the session transcript (deduped, counted like agentTokens), its LAST call's context, and the part
+// dated after `afterMs`. A row without a readable timestamp counts in `total` (the session's own count) but never in
+// `after`, which is added on top of a floor that may already contain it.
+function sessionUsage(file, afterMs) {
   let text;
   try { text = fs.readFileSync(file, 'utf8'); } catch (e) { return null; }
   const seen = new Set();
   let total = 0;
   let last = 0;
+  let after = 0;
   for (const line of text.split('\n')) {
     if (line.indexOf('"usage"') < 0) continue;
     let r;
@@ -103,15 +106,52 @@ function sessionUsage(file) {
     for (const k of USAGE_KEYS) n += Number(u[k]) || 0;
     total += n;
     last = n;
+    const t = Date.parse(r.timestamp || '');
+    if (Number.isFinite(t) && t > afterMs) after += n;   // undated rows stay in `total` only (no double count)
   }
-  return { total, last };
+  return { total, last, after };
 }
 
-// Hard cap of the mission in processed tokens: the tightest of authority, estimate x trip ratio, phase lease hard line.
+// The session's subagent transcripts (<transcript dir>/subagents/agent-*.jsonl): the sweep's meter counts them, so the
+// gate does too (S13 2026-11-05: they were invisible here). -> {total, after}
+function subagentUsage(transcriptPath, afterMs) {
+  const dir = path.join(String(transcriptPath).replace(/\.jsonl$/, ''), 'subagents');
+  let names;
+  try { names = fs.readdirSync(dir); } catch (e) { return { total: 0, after: 0 }; }
+  let total = 0;
+  let after = 0;
+  for (const n of names) {
+    if (!/^agent-.*\.jsonl$/.test(n)) continue;
+    const u = sessionUsage(path.join(dir, n), afterMs);
+    if (u) { total += u.total; after += u.after; }
+  }
+  return { total, after };
+}
+
+// The freshest measured mission spend the supervisor recorded: cost_mark or spend_stamp, each {tokens, at (s)}.
+function spendFloor(record) {
+  let best = null;
+  for (const f of [record.cost_mark, record.spend_stamp]) {
+    if (!f || !positive(f.tokens) || !positive(f.at)) continue;
+    if (!best || Number(f.at) > Number(best.at)) best = { tokens: Number(f.tokens), at: Number(f.at) };
+  }
+  return best;
+}
+
+// Same rule as tools/mission_spend.py closeout_reserve: closeout_tokens, else min(1M, authority / 20).
+function closeoutReserve(record, auth) {
+  if (record.closeout_tokens !== undefined && record.closeout_tokens !== null) {
+    return Math.max(0, Math.floor(Number(record.closeout_tokens) || 0));
+  }
+  return auth ? Math.min(1000000, Math.floor(auth / 20)) : 0;
+}
+
+// Hard cap of the mission in processed tokens: the tightest of authority minus the closeout reserve (the line the
+// breaker trips at), estimate x trip ratio, phase lease hard line.
 function hardCap(record) {
   const caps = [];
   const auth = positive(record.authority_tokens);
-  if (auth) caps.push({ cap: auth, what: 'authority' });
+  if (auth) caps.push({ cap: auth - closeoutReserve(record, auth), what: 'authority minus closeout reserve' });
   const est = positive(record.token_estimate);
   if (est) caps.push({ cap: Math.floor((positive(record.token_trip_ratio) || 2) * est), what: 'estimate x trip ratio' });
   const l = record.phase_lease;
@@ -197,11 +237,18 @@ function decide(event) {
   // 4. NEXT-CALL EXPOSURE (Env 0): used + the last call's context would pass the hard cap -> refuse, so a
   //    mission overshoots by at most one call. `used` = this session's transcript + record.spend_carried (spend of
   //    earlier sessions, when the supervisor recorded it): a lower bound of mission spend, so a deny is positive evidence.
+  //    2026-11-06 (spec mission-gate-carried-spend, S13 overshoot 33.4M on 30M): `used` also counts this session's
+  //    subagents and the supervisor's measured floor (cost_mark / spend_stamp) plus everything dated after it, so a
+  //    later epoch's worker sees what earlier epochs spent.
   const cap = hardCap(record);
   if (cap && event.transcript_path) {
-    const u = sessionUsage(event.transcript_path);
+    const floor = spendFloor(record);
+    const afterMs = floor ? floor.at * 1000 : 0;
+    const u = sessionUsage(event.transcript_path, afterMs);
     if (u) {
-      const used = u.total + (Number(record.spend_carried) || 0);
+      const s = subagentUsage(event.transcript_path, afterMs);
+      const own = u.total + s.total + (Number(record.spend_carried) || 0);
+      const used = floor ? Math.max(own, floor.tokens + u.after + s.after) : own;
       if (used + u.last > cap.cap) {
         return { mission: mid, kind: 'next_call_exposure',
           deny: `MISSION CAP -- ${mid} has processed at least ${fmt(used)} tokens and the next call costs about ${fmt(u.last)} ` +
