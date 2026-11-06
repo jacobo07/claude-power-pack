@@ -1,0 +1,114 @@
+{
+  "family": "binary_reconstruction",
+  "generation": 0,
+  "parent": null,
+  "parent_sha256": null,
+  "created_at": 1793926235.489605,
+  "reason": "B0 from Owner-sealed governance; every entry's cited line re-read and verified",
+  "entries": [
+    {
+      "id": "binary_reconstruction-forward-intermediate-results",
+      "requirement": "Every stage that produces a useful intermediate (a repaired source that compiles, a candidate, a shared fact) persists it where the next stage reads it, in the same change; a computed-and-dropped result is a defect, checked by asserting the downstream consumer actually receives it.",
+      "why": "S13: the fixed point compiled 131 of 477 NO_COMPILE functions and discarded the sources, so exact-tail search never saw them; writing them back produced the first exact closures of that path (10).",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 21786,
+        "quote": "**`PR-FORWARD-AN-INTERMEDIATE-RESULT-TO-ITS-CONSUMER-001`** [UNIVERSAL] -- A stage that computes a useful intermediate (a repaired source that compiles, a candidate, a fact) must persist it where the next stage reads it, in the same change that produces it. A result that is computed, scored and dropped is lost work that every later run pays again."
+      },
+      "class": "D",
+      "check": "a test asserts the downstream stage reads the produced artifact",
+      "status": "reviewed"
+    },
+    {
+      "id": "binary_reconstruction-route-lifecycle-named-executor",
+      "requirement": "Every deterministic route reports eligible, admitted, executed, candidate, compiled, improved and exact separately and names the executor of each stage; a stage with no executor is reported as projected, and its savings are never reported as observed.",
+      "why": "S13: a FAMILY router stage existed with no input file and no executor, so 0 functions ever ran there while it looked wired and its savings were quoted.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 21789,
+        "quote": "**`PR-A-ROUTE-REPORTS-ITS-LIFECYCLE-WITH-A-NAMED-EXECUTOR-001`** [FACTORY] -- Every deterministic route reports eligible, admitted, executed, candidate, compiled, improved and exact as separate counts, and names the executor of each stage. A stage with no executor is \"projected\"; its savings are never \"saved\". Instance of [[T-PRODUCERLESS-FIELD-001]] on the consumer side."
+      },
+      "class": "D",
+      "check": "the ownership matrix lists a producer and an executor per route stage",
+      "status": "reviewed"
+    },
+    {
+      "id": "binary_reconstruction-canonical-frontier-consumers",
+      "requirement": "Routers, cohort builders and maturity checks decide 'resolved' from the one canonical frontier, never from a private per-lane view.",
+      "why": "S12C: 14 C++-certified functions were routed back to model search because maturity read a C-lane terminal.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 21792,
+        "quote": "**`PR-CONSUMERS-READ-THE-CANONICAL-FRONTIER-001`** [FACTORY] -- A router, cohort builder or maturity check decides \"resolved\" from the canonical frontier, never from a private view coupled to one lane."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "binary_reconstruction-measure-exhaustion-before-reordering",
+      "requirement": "Before investing in a smarter search order or scheduler, measure whether the search exhausts its move set or converges to the same best node; if it does, extend the operator vocabulary instead.",
+      "why": "S13 W4: causal ordering equalled the frozen baseline at equal budget; 17/20 near-misses exhausted in <= 99 evaluations.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 21802,
+        "quote": "**`T-REORDERING-CANNOT-ADD-A-MISSING-OPERATOR-001`** [UNIVERSAL] -- When a search over a finite move set exhausts or converges to the same best node, re-ordering the moves by a smarter policy changes nothing. The bottleneck is the move vocabulary. Measure exhaustion before buying a scheduler."
+      },
+      "class": "D",
+      "check": "an exhaustion/convergence measurement precedes any scheduler change",
+      "status": "reviewed"
+    },
+    {
+      "id": "binary_reconstruction-alias-needs-byte-evidence",
+      "requirement": "A symbol rename or alias that turns a compile into an exact match is only accepted with byte-identical evidence for both sides plus a refused mutant; until then the result carries the alias assumption and is not counted.",
+      "why": "S13: 15 family members stayed alias-conditional until the target bytes were compared 22/22 words and a 1-byte mutant was refused; comments describing the bytes were rejected as evidence.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 21805,
+        "quote": "**`T-A-RENAMED-SYMBOL-IS-AN-ASSUMPTION-UNTIL-ITS-BYTES-ARE-COMPARED-001`** [FACTORY] -- Renaming symbols to match the target turns a compile into \"exact\" only if the aliasing itself is evidenced (byte-identical bodies of both sides). Until then the verdict carries the alias assumption and is not counted. A comment that describes the bytes is not the bytes."
+      },
+      "class": "D",
+      "check": "certify without the alias record: must be refused",
+      "status": "reviewed"
+    },
+    {
+      "id": "binary_reconstruction-hidden-split-parameter-coverage",
+      "requirement": "A generative-family report states whether hidden members test new instances or unseen parameter values, and the gate pins which; a split whose train set covers every parameter value cannot claim extrapolation.",
+      "why": "S13 W5: the pre-registered first-N train split already contained every parameter value; the first report claimed extrapolation.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 21808,
+        "quote": "**`T-A-TRAIN-SPLIT-CAN-SPAN-EVERY-PARAMETER-001`** [UNIVERSAL] -- A pre-registered \"first N\" train split can already cover every parameter value. Hidden members then prove transfer to new instances, not to unseen values. Say which, and pin it in the gate."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "binary_reconstruction-resolve-referenced-artifacts",
+      "requirement": "Before declaring target evidence absent, resolve it from existing references (code constants, manifests, knowledge vault, hashes) and verify its identity by hash; a name search that finds nothing is missing search coverage, not missing evidence.",
+      "why": "S13 W8 declared the target DOL bytes absent after a name search although the reconstruction code already referenced the path and the knowledge vault named the file.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 21814,
+        "quote": "**`T-SEARCHING-BY-NAME-MISSES-AN-ARTIFACT-THE-CODE-ALREADY-REFERENCES-001`** [UNIVERSAL] -- \"Not found on this host\" after a name search (`*Tennis*.dol`) is not absence. Resolve the artifact from the references that already exist (code constants, manifests, the knowledge vault) before declaring evidence missing."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "binary_reconstruction-pin-receipts-not-counts",
+      "requirement": "Gates pin receipts or an independently rebuilt count, never a frontier count that legitimately advances.",
+      "why": "S12C/S13: gate fixtures pinned to a frontier count went red when the frontier grew and had to be relaxed.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\knowledge_base\\ukdl-universal.md",
+        "line": 21811,
+        "quote": "**`T-A-FIXTURE-PINNED-TO-A-COUNT-THAT-LEGITIMATELY-ADVANCES-001`** [UNIVERSAL] -- A gate pinned to a frontier count goes red when the frontier legitimately grows. Pin to receipts, or rebuild the count independently."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    }
+  ]
+}

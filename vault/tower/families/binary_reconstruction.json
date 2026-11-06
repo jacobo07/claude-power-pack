@@ -1,0 +1,12 @@
+{
+  "id": "binary_reconstruction",
+  "name": "Binary reconstruction factory (decompilation to exact source)",
+  "triggers": ["decomp", "decompil", "reconstruction factory", "binary reconstruction", "matching decomp",
+               "mwcc", "m2c", "objdiff", "decomp-toolkit", "exact certification", "physical frontier",
+               "recon_fabric", "gsd x reconstruction"],
+  "anti_triggers": [],
+  "repo_markers": [
+    {"file": "configure.py", "contains": ["decomp-toolkit", "objdiff", "dtk"]},
+    {"file": "objdiff.json", "contains": ["units"]}
+  ]
+}
