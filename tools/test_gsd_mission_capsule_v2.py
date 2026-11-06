@@ -596,8 +596,19 @@ def main() -> int:
           v2rec.get("rollover_protocol") == gm.CAPSULE_V2 and "rollover_protocol" not in legrec
           and "rollover_protocol" not in json.loads(gm.mission_path("m-armleg").read_text(encoding="utf-8")),
           f"v2={v2rec.get('rollover_protocol')} legacy keys has={('rollover_protocol' in legrec)}")
-    rc = gm._cli(["arm", "--cwd", str(REPO), "--command", "/gsd-autonomous", "--no-launch",
-                  "--rollover-protocol", gm.CAPSULE_V2])
+    # spec arm-no-launch-milestone: an --no-launch arm now scaffolds a GSD milestone into its cwd. REPO is the shared
+    # fixture the L1 backoff sections fingerprint later, and this gate checks only the CLI flag, so the scaffold is
+    # switched off here (its own kill switch) rather than letting it rewrite REPO/.planning.
+    _scaffold = os.environ.get("CPP_GSD_X_AUTOSCAFFOLD")
+    os.environ["CPP_GSD_X_AUTOSCAFFOLD"] = "off"
+    try:
+        rc = gm._cli(["arm", "--cwd", str(REPO), "--command", "/gsd-autonomous", "--no-launch",
+                      "--rollover-protocol", gm.CAPSULE_V2])
+    finally:
+        if _scaffold is None:
+            os.environ.pop("CPP_GSD_X_AUTOSCAFFOLD", None)
+        else:
+            os.environ["CPP_GSD_X_AUTOSCAFFOLD"] = _scaffold
     armed = [m for m in gm.all_missions() if m.get("rollover_protocol") == gm.CAPSULE_V2
              and m["mission_id"] not in ("m-armv2",)]
     check("V-MV2-CLI-ARM-FLAG", rc == 0 and len(armed) == 1, f"rc={rc} armed={[m['mission_id'] for m in armed]}")

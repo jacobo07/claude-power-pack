@@ -7023,8 +7023,10 @@ def arm_preflight_on() -> bool:
 
 
 def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = None, launch: bool = True,
-                  status_reader=None, memory_reader=None, wu_packet: str | None = None, **kw) -> dict:
+                  status_reader=None, memory_reader=None, wu_packet: str | None = None, gsd_refuse: bool = True,
+                  **kw) -> dict:
     """One check before `arm` creates a record: refuse, naming the cause, what would only fail later.
+    `gsd_refuse=False` (an --no-launch arm) turns the NO_PHASES/ALL_COMPLETE refusal into a ledgered warn.
 
     Refuses on a MEASURED NO_PHASES / ALL_COMPLETE for EVERY resume command, packet units included (GSD X
     universal, 2026-11-03; CPP_GSD_X_OPTOUT=<reason> downgrades to warn) and, when a worker would launch now,
@@ -7055,6 +7057,11 @@ def arm_preflight(cwd: str, resume_command: str, *, workstream: str | None = Non
     optout =(os.environ.get("CPP_GSD_X_OPTOUT") or "").strip()
     if out in ("NO_PHASES", "ALL_COMPLETE") and optout:
         add("gsd_status", "warn", f"{out}: {st.get('reason')} -- GSD X opt-out: {optout}"[:300])
+    elif out in ("NO_PHASES", "ALL_COMPLETE") and not gsd_refuse:
+        # spec arm-no-launch-milestone: an --no-launch arm is told, not refused (workers arm sub-missions that way).
+        add("gsd_status", "warn", f"{out}: {st.get('reason')} -- no open GSD milestone in {cwd} and the scaffold "
+                                  f"did not create one; give --milestone-from <phases file> or create it before "
+                                  f"the sweep launches"[:400])
     elif out in ("NO_PHASES", "ALL_COMPLETE"):
         add("gsd_status", "refuse",
             f"{out}: {st.get('reason')} -- no open GSD milestone in {cwd}: the worker would have no work"
@@ -7158,15 +7165,27 @@ def batch_foreseeable_decisions(rec: dict, cwd: str, workstream: str | None) -> 
 
 
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
-        authority: str | None = None, parallel_unit: str | None = None, goal: str | None = None, **kw) -> dict:
+        authority: str | None = None, parallel_unit: str | None = None, goal: str | None = None,
+        milestone_from: str | None = None, preflighted: bool = False, **kw) -> dict:
     ws = kw.get("workstream")
     if ws is None and resume_command.startswith("/gsd-"):
         m = _WS_FLAG.search(resume_command)
         ws = m.group(1) if m else None
-    if launch:
-        if arm_preflight_on():
-            ensure_gsd_milestone(cwd, resume_command, workstream=ws, wu_packet=kw.get("wu_packet"))
-        pre = arm_preflight(cwd, resume_command, workstream=ws, launch=True, **{k: v for k, v in kw.items() if k != "workstream"})
+    # spec arm-no-launch-milestone: --no-launch used to skip BOTH the milestone scaffold and the preflight, so a
+    # mission armed for the sweep to launch reached its worker with no GSD milestone (S16 m-29dd612ed825, GEX44
+    # 2026-11-06: no arm-preflight row at all). The GSD check runs on every arm; only memory admission is launch-only.
+    worker_why = worker_arm_refusal(os.environ.get("CLAUDE_CODE_SESSION_ID"))
+    if launch and worker_why:
+        # A4-P5, checked FIRST: a worker's refused launch must name the worker and must not scaffold anything.
+        lr.ledger_append("arm-guard", "worker_arm_refused", why=worker_why[:300])
+        raise MissionError(worker_why)
+    if not preflighted:
+        # Review 2026-11-06 (MEDIUM): a mission worker arming a sub-mission --no-launch must not have its own
+        # .planning archived and replaced mid-run by the scaffold; it gets the GSD check (warn) only.
+        if arm_preflight_on() and not worker_why:
+            ensure_gsd_milestone(cwd, resume_command, workstream=ws, wu_packet=milestone_from or kw.get("wu_packet"))
+        pre = arm_preflight(cwd, resume_command, workstream=ws, launch=launch, gsd_refuse=launch,
+                            **{k: v for k, v in kw.items() if k != "workstream"})
         if pre.get("checks"):
             lr.ledger_append("arm-preflight", "arm_preflight", cwd=str(cwd), ok=pre["ok"], refusal=pre["refusal"],
                              checks=[(c["check"], c["status"]) for c in pre["checks"]])
@@ -7198,11 +7217,6 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
     if _code == 3:
         lr.ledger_append("arm-guard", "account_arm_refused", why=_why[:300])
         raise MissionError(_why)
-    if launch:
-        why = worker_arm_refusal(os.environ.get("CLAUDE_CODE_SESSION_ID"))
-        if why:
-            lr.ledger_append("arm-guard", "worker_arm_refused", why=why[:300])
-            raise MissionError(why)
     rec = create(cwd, resume_command, **kw)
     batch_foreseeable_decisions(rec, str(cwd), ws)
     extra = {}
@@ -7256,7 +7270,7 @@ def arm_chain(cwd: str, resume_command: str, *, wu_packet: str, token_estimate, 
                          chain=True, checks=[(c["check"], c["status"]) for c in pre["checks"]])
     if not pre["ok"]:
         return {"ok": False, "held": False, "why": f"arm refused by preflight -- {pre['refusal']}"[:600]}
-    rec = arm(cwd, resume_command, launch=False, **kw)["mission"]
+    rec = arm(cwd, resume_command, launch=False, preflighted=True, **kw)["mission"]
     mid = rec["mission_id"]
     try:
         set_envelope(mid, wu_packet=wu_packet, token_estimate=token_estimate, model=model)
@@ -8116,6 +8130,9 @@ def _cli(argv=None) -> int:
     a.add_argument("--max-cycles", type=int)
     a.add_argument("--max-hours", type=float)
     a.add_argument("--no-launch", action="store_true")
+    a.add_argument("--milestone-from", default=None,
+                   help="phases file (e.g. S16-PHASES.md) the GSD milestone is scaffolded from when cwd has none; "
+                        "phase source only, never the launch packet (spec arm-no-launch-milestone)")
     # Owner decision 2026-09-24: real mission workers run `auto`. Pinned here rather than left
     # to the host's settings default, so a settings change cannot silently turn an unattended
     # worker into one that stops on every prompt (acceptEdits cannot run git here, T-CONT-16).
@@ -8302,7 +8319,7 @@ def _cli(argv=None) -> int:
                   permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
                   add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol,
                   supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit,
-                  goal=args.goal)
+                  goal=args.goal, milestone_from=args.milestone_from)
         mid = (res.get("mission") or res).get("mission_id")
         if mid:
             lr.ledger_append(mid, "planning_gate", mission_id=mid, gate=adm["gate"], override=adm.get("override"),
