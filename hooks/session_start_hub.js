@@ -978,6 +978,16 @@ async function main() {
         : busLine;
     }
 
+    // 13b. CCR COMPAT miss (ICC-10): a host build outside COMPAT silently downgrades enforce -> shadow.
+    try {
+      const compatLine = require('./ccr_compat_line').compatMissLine(path.join(os.homedir(), '.claude', 'ccr', 'state'));
+      if (compatLine && ownerFacing) {
+        additionalContext = additionalContext ? (additionalContext + '\n' + compatLine) : compatLine;
+      }
+    } catch (compatErr) {
+      note('ccr compat line failed', compatErr);
+    }
+
     // 14. OWNER_QUEUE digest -- inline read of the materialized pending view (D4).
     const ownerQueueLine = hookOwnerQueue();
     if (ownerQueueLine && ownerFacing) {

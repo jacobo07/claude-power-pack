@@ -585,6 +585,37 @@ export function decideMainLeanAttachment(type: string, text: string, keepSkills?
   return out === null ? { action: 'keep', reason: 'no-names-parsed' } : { action: 'replace', reason: 'main-lean', text: out }
 }
 
+// ICC W1: the deferred-tool-name list (attachment deferred_tools_delta) is the largest static source on a many-MCP
+// estate (laptop recorded plane 45,603 chars: vercel 241 names, rea 207). Each `mcp__<server>__<tool>` line is collapsed
+// to one line per server (count + a ToolSearch hint). Built-in deferred names and every non-name line stay verbatim, so a
+// built-in tool is still listed. The tools are not removed: ToolSearch finds them by keyword or exact select.
+// Kill switch CCR_DEFERRED_NAMES=0. Default shadow (receipt carries before/after chars); 'enforce' is explicit until the
+// quality bench (n=10 ON/OFF) is non-inferior.
+const MCP_NAME = /^mcp__(.+?)__\S+$/
+export function collapseDeferredNames(text: string): string | null {
+  const counts = new Map<string, number>()
+  const firstAt = new Map<string, number>()
+  const lines = text.split('\n')
+  const out: (string | null)[] = lines.map((l, i) => {
+    const m = MCP_NAME.exec(l.trim())
+    if (!m) return l
+    counts.set(m[1], (counts.get(m[1]) ?? 0) + 1)
+    if (!firstAt.has(m[1])) firstAt.set(m[1], i)
+    return null
+  })
+  if (counts.size === 0) return null
+  for (const [server, i] of firstAt) {
+    out[i] = `mcp__${server}__* (${counts.get(server)} deferred tools; find by keyword with ToolSearch, or select:mcp__${server}__<name>)`
+  }
+  const res = out.filter((l): l is string => l !== null).join('\n')
+  return res.length < text.length ? res : null
+}
+
+export function deferredNamesMode(env: string | undefined, canary: Mode): Mode {
+  if (env === '0' || canary === 'off') return 'off'
+  return env === 'enforce' && canary === 'enforce' ? 'enforce' : 'shadow'
+}
+
 // The page fault for MCP instructions: the block under each heading that matches the query (all blocks if none given).
 export function pageBlocks(text: string, query: string): string {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)

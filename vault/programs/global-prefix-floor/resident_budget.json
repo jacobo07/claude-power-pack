@@ -14,6 +14,16 @@
    "basis": "~/CLAUDE.md 5,956 + PP repo CLAUDE.md 22,861; the repo CLAUDE.md diet is open debt"},
   {"layer": "other:instructions", "max_chars": 3100, "measured": 2747,
    "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
-   "basis": "auto-memory MEMORY.md hub for this project"}
- ]
+   "basis": "auto-memory MEMORY.md hub for this project"},
+  {"layer": "skill_listing", "max_chars": 33000, "measured": 29998,
+   "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+   "basis": "ICC Phase 6, recorded-plane CHARS of the skill-listing attachment (not request tokens); harness-capped near 30,000, so growth shows as displaced descriptions, not chars; 286 entries; 6 sessions 29,988-29,999"},
+  {"layer": "other:agent_listing_delta", "max_chars": 32000, "measured": 29043,
+   "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+   "basis": "ICC Phase 6, recorded-plane CHARS of the agent-listing attachment; sessions 27,068-29,043 (grows when an agent file is added)"}
+ ],
+ "excluded_layers": {
+  "other:deferred_tools_delta": "not budgeted: 8,946-47,339 chars across sessions depending on which MCP servers had connected at the first call; a ceiling would flap (ICC Phase 6)",
+  "other:mcp_instructions_delta": "not budgeted: 2,163-10,028 chars, same connection-timing variance (ICC Phase 6)"
+ }
 }

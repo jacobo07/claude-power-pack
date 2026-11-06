@@ -1,0 +1,68 @@
+{
+  "plane": "request (API usage call-1, input+cache_creation+cache_read)",
+  "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\icc-autonomous",
+  "arms": {
+    "control": {
+      "runs": [
+        {
+          "sid": "19337783-d757-489d-95b3-44e711ac2247",
+          "rc": 0,
+          "call1": 78174
+        },
+        {
+          "sid": "1d2f046f-2310-4de1-af80-ceb046cf0c03",
+          "rc": 0,
+          "call1": 78179
+        },
+        {
+          "sid": "86fd4218-7d9e-428f-af5b-d65e61812e83",
+          "rc": 0,
+          "call1": 79381
+        }
+      ],
+      "median": 78179
+    },
+    "ccr_off": {
+      "runs": [
+        {
+          "sid": "47ef9992-f5cc-4138-95e0-166afbda0f4e",
+          "rc": 0,
+          "call1": 78220
+        },
+        {
+          "sid": "6aa0b74b-9df7-4635-b110-48d464c64ac8",
+          "rc": 0,
+          "call1": 78217
+        },
+        {
+          "sid": "7befe1c3-c7c4-446e-b6b5-f839f53d2cdc",
+          "rc": 0,
+          "call1": 78225
+        }
+      ],
+      "median": 78220,
+      "delta_vs_control": 41
+    },
+    "no_mcp": {
+      "runs": [
+        {
+          "sid": "9774b7e4-3591-4432-9010-e4ff2fa13321",
+          "rc": 0,
+          "call1": 74616
+        },
+        {
+          "sid": "3d654c47-7481-4059-9473-742c0dd89ef2",
+          "rc": 0,
+          "call1": 74623
+        },
+        {
+          "sid": "625a5e68-8c73-4973-a206-04aefd262788",
+          "rc": 0,
+          "call1": 74619
+        }
+      ],
+      "median": 74619,
+      "delta_vs_control": -3560
+    }
+  }
+}

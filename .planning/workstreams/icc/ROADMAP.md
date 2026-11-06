@@ -22,13 +22,13 @@ Harness rules for live probes (GPF): pin `--session-id`, reader thread on the pt
 
 ## Phases
 
-- [ ] **Phase 1: W0 Request-plane floor truth (early-value checkpoint)**
-- [ ] **Phase 2: W1 Capability virtualization of deferred tool names (CCR canary)**
-- [ ] **Phase 3: W2 Instruction elimination in repo CLAUDE.md (conditional)**
-- [ ] **Phase 4: W3 Model-call accounting + Zero-Model Fraction + zero-model closeout**
-- [ ] **Phase 5: W4 Agent semantic-delta return (agent_bundle on one real path)**
-- [ ] **Phase 6: W5 Context Policy Regret + floor CI on the request plane**
-- [ ] **Phase 7: Closeout: UKDL, Error->Immunity, Baseline Ratchet, fresh-agent test, final handoff**
+- [x] **Phase 1: W0 Request-plane floor truth (early-value checkpoint)**
+- [x] **Phase 2: W1 Capability virtualization of deferred tool names (CCR canary)**
+- [ ] **Phase 3: W2 Instruction elimination in repo CLAUDE.md (conditional)** (DEFERRED-FOREIGN-WRITER: gate `git status -- CLAUDE.md` not clean)
+- [x] **Phase 4: W3 Model-call accounting + Zero-Model Fraction + zero-model closeout**
+- [x] **Phase 5: W4 Agent semantic-delta return (agent_bundle on one real path)**
+- [x] **Phase 6: W5 Context Policy Regret + floor CI on the request plane**
+- [x] **Phase 7: Closeout: UKDL, Error->Immunity, Baseline Ratchet, fresh-agent test, final handoff**
 
 ## Phase Details
 

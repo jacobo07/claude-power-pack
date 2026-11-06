@@ -86,6 +86,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -690,6 +691,7 @@ def measure(path):
 
 
 # --------------------------------------------------------------------------- measurement sources
+LIVE_WINDOW_S = 120
 SESSION_ID_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z-]{2,63}$")
 
 
@@ -708,6 +710,12 @@ def newest_transcript(directory):
         raise Unmeasurable("unreadable", exc.__class__.__name__)
     if not stamped:
         raise Unmeasurable("no_transcript", "no *.jsonl directly in the directory")
+    now_ns = time.time_ns()
+    live = [s for s in stamped if 0 <= now_ns - s[0] <= LIVE_WINDOW_S * 1_000_000_000]
+    if len(live) >= 2:
+        # Two sessions wrote within the window: "newest by mtime" would measure whichever flushed last (ICC W0).
+        raise Unmeasurable("ambiguous_live_sessions",
+                           "%d transcripts modified in the last %ds; pin --session instead" % (len(live), LIVE_WINDOW_S))
     best = max(stamped, key=lambda t: (t[0], t[1]))
     return best[2], len(stamped)
 

@@ -1599,6 +1599,23 @@ def g_project_dir_newest():
     return (not why), "; ".join(why) or "newest by mtime, ties by name, nested / non-jsonl ignored, empty and absent dir -> no_transcript"
 
 
+def g_project_dir_live_ambiguous():
+    """ICC W0: two transcripts written inside the live window -> 'newest by mtime' is a coin flip -> UNMEASURABLE."""
+    ref_root, ref_tx, now_tx, ref_json = good_ref("pdirlive")
+    why = []
+    os.utime(ref_tx, None)
+    os.utime(now_tx, None)
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--project-dir", ref_tx.parent])
+    if not unmeasurable(rc, out, "ambiguous_live_sessions"):
+        why.append(f"two live transcripts: rc={rc} last={last_line(out)!r} (want UNMEASURABLE ambiguous_live_sessions)")
+    old = 1_000_000_000
+    os.utime(ref_tx, (old, old))
+    rc, out, _ = run_main(["--check", "--reference", ref_json, "--project-dir", ref_tx.parent])
+    if unmeasurable(rc, out, "ambiguous_live_sessions"):
+        why.append("one live + one stale transcript was refused as ambiguous")
+    return (not why), "; ".join(why) or "two live transcripts -> ambiguous_live_sessions; one live + one stale -> measured"
+
+
 def g_session_unknown():
     root, ref_tx, now_tx, ref_json = good_ref("sunk")
     home = root / "home"
@@ -2925,9 +2942,19 @@ def g_budget_real_pinned():
     except GATE.Unmeasurable as exc:
         return False, f"committed budget invalid: {exc.reason} {exc.detail}"
     layers = {e["layer"] for e in doc["budgets"]}
-    want = {"memory_global", "rules", "memory_project", "other:instructions"}
+    want = {"memory_global", "rules", "memory_project", "other:instructions",
+            "skill_listing", "other:agent_listing_delta"}   # the last two: ICC Phase 6 request-plane listing layers
     if not want <= layers:
         return False, f"missing layers {sorted(want - layers)}"
+    # growth pole: a listing layer one char over its committed ceiling must read OVER_BUDGET; at the ceiling, within.
+    prov = {"plane": doc["plane"], "install_home": doc["install_home"], "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack"}
+    for layer in ("skill_listing", "other:agent_listing_delta"):
+        mx = next(e["max_chars"] for e in doc["budgets"] if e["layer"] == layer)
+        for chars, want_v in ((mx, "WITHIN_BUDGET"), (mx + 1, "OVER_BUDGET")):
+            comps = [{"layer": e["layer"], "chars": (chars if e["layer"] == layer else 1)} for e in doc["budgets"]]
+            v = GATE.check_budget(doc, {"provenance": prov, "components": comps})
+            if v["verdict"] != want_v or (want_v == "OVER_BUDGET" and v["budget_over"] != [layer]):
+                return False, f"{layer} at {chars}: verdict={v['verdict']} over={v['budget_over']}, wanted {want_v}"
     loose = [e["layer"] for e in doc["budgets"] if "measured" in e and e["max_chars"] > e["measured"] * 1.1 + 100]
     if loose:
         return False, f"ceilings above measured*1.10 (+100 rounding): {loose}"
@@ -3013,6 +3040,7 @@ GATES_SAFETY = [
 GATES_SOURCES = [
     ("V-FLOOR-SOURCES-E2E", g_sources_e2e),
     ("V-FLOOR-PROJECT-DIR-NEWEST", g_project_dir_newest),
+    ("V-FLOOR-PROJECT-DIR-LIVE-AMBIGUOUS", g_project_dir_live_ambiguous),
     ("V-FLOOR-SESSION-UNKNOWN", g_session_unknown),
     ("V-FLOOR-SESSION-ID-REFUSED", g_session_id_refused),
     ("V-FLOOR-PROBE-STUB", g_probe_stub),

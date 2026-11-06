@@ -1,0 +1,104 @@
+{
+ "contract": "ctx-rent-x-phase5-v1",
+ "spec": "vault/specs/ccr-safe-to-forget-main.md",
+ "plane": "DESKTOP-PMT5BS8",
+ "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\.claude\\worktrees\\icc-autonomous",
+ "runs": [
+  {
+   "session": "c5ac1b6b-3396-4b04-a56a-5ef3f1ee49fa",
+   "arm": "D",
+   "key": "k00",
+   "finished": true,
+   "calls": 2,
+   "processed": 153109,
+   "final": "CODE A11A79",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-05998d9a",
+     "compatible": true,
+     "interactive": true,
+     "canary": "enforce",
+     "unit": null
+    },
+    "project": [
+     {
+      "tool": "PowerShell",
+      "agent": null,
+      "bytes": 18733,
+      "out": 7963,
+      "applied": true,
+      "forget": {
+       "verdict": "FORGET",
+       "reason": "safe-hoisted",
+       "hoisted": 1,
+       "named": []
+      },
+      "durable": true,
+      "mainProject": true
+     }
+    ],
+    "faults": 0
+   },
+   "invalid": null
+  },
+  {
+   "session": "3d85d2ef-2506-4718-a2e2-febb7240b3bd",
+   "arm": "D",
+   "key": "k01",
+   "finished": true,
+   "calls": 2,
+   "processed": 153115,
+   "final": "CODE D3E246",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-05998d9a",
+     "compatible": true,
+     "interactive": true,
+     "canary": "enforce",
+     "unit": null
+    },
+    "project": [
+     {
+      "tool": "PowerShell",
+      "agent": null,
+      "bytes": 18733,
+      "out": 7963,
+      "applied": true,
+      "forget": {
+       "verdict": "FORGET",
+       "reason": "safe-hoisted",
+       "hoisted": 1,
+       "named": []
+      },
+      "durable": true,
+      "mainProject": true
+     }
+    ],
+    "faults": 0
+   },
+   "invalid": null
+  }
+ ],
+ "summary": {
+  "D": {
+   "n": 2,
+   "correct": 2,
+   "processed": [
+    153109,
+    153115
+   ]
+  },
+  "F": {
+   "n": 0,
+   "correct": 0,
+   "processed": []
+  },
+  "N": {
+   "n": 0,
+   "correct": 0,
+   "processed": []
+  }
+ }
+}
