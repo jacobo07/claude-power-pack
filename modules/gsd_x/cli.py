@@ -147,8 +147,11 @@ def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
                      % (stamp, sha[:12], fid, ", ".join(hits), fid)]
             lines += ["- [%s] %s" % (e.get("id"), e.get("requirement")) for e in s.injected]
             if s.deferred:
-                lines.append("Not shown (prompt ceiling), judged anyway: "
-                             + ", ".join(str(e.get("id")) for e in s.deferred))
+                # spec baseline-rule-content-reachability: a deferred NAME is not its content -- say how to read it.
+                fb = Path(__file__).resolve().parents[2] / "tools" / "family_baseline.py"
+                lines.append("Not shown (prompt ceiling), judged anyway -- READ them before building: "
+                             "`python \"%s\" rule %s --deferred` (ids: %s). Until read, the done-gate reports each "
+                             "as KNOWLEDGE UNMET." % (fb.as_posix(), fid, ", ".join(str(e.get("id")) for e in s.deferred)))
             blocks.append("\n".join(lines))
         return "\n\n".join(blocks)
     except Exception:                                   # noqa: BLE001

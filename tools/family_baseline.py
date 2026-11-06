@@ -164,7 +164,42 @@ def judge_cmd(family: str, repo: str, na_args: list, as_json: bool) -> int:
             counts[x["verdict"]] = counts.get(x["verdict"], 0) + 1
         print("verdicts: %s  would_block=%s  (report-only: nothing was refused)"
               % (", ".join("%s=%d" % kv for kv in sorted(counts.items())), rep["would_block"]))
+        if rep.get("knowledge_unmet"):
+            print("KNOWLEDGE UNMET (deferred, never read; read with `rule %s --deferred`): %s"
+                  % (family, ", ".join(rep["knowledge_unmet"])))
     return 1 if rep["would_block"] else 0
+
+
+def rule_cmd(family: str, ids: list, deferred: bool) -> int:
+    """Print the FULL content of baseline entries and ledger the retrieval (spec baseline-rule-content-reachability).
+    `--deferred` = the entries the prompt ceiling kept out of the injected block."""
+    from modules.tower import select as sel
+    active = bl.active_entries(family)
+    if not active:
+        print("%s: no active baseline entries" % family)
+        return 2
+    by_id = {e.get("id"): e for e in active}
+    if deferred:
+        want = [e.get("id") for e in sel.select_for_injection(active).deferred]
+    else:
+        want = list(ids)
+    unknown = [i for i in want if i not in by_id]
+    if unknown:
+        print("UNKNOWN entry id(s) for %s: %s" % (family, ", ".join(unknown)))
+        return 2
+    if not want:
+        print("%s: nothing deferred -- every active rule fits in the injected block" % family)
+        return 0
+    row = bl.record_retrieval(family, want, sid=os.environ.get("CLAUDE_SESSION_ID", ""))
+    print("%s (%s): %d rule(s)%s" % (family, (row or {}).get("judged_under", "?"), len(want),
+                                     "" if row else "  [WARNING: retrieval NOT ledgered]"))
+    for i in want:
+        e = by_id[i]
+        o = e.get("origin") or {}
+        print("\n- [%s] %s\n  why: %s\n  check: %s\n  origin: %s:%s"
+              % (i, e.get("requirement"), e.get("why"), e.get("check") or "(prose: show how you applied it, or "
+                 "state NO APLICA with a reason)", o.get("file"), o.get("line")))
+    return 0 if row else 1
 
 
 def _opt(argv: list, name: str) -> str:
@@ -186,6 +221,8 @@ def main(argv: list) -> int:
     if len(argv) >= 2 and argv[0] == "judge":
         na = [argv[i + 1] for i, a in enumerate(argv[:-1]) if a == "--na"]
         return judge_cmd(argv[1], _opt(argv, "--repo"), na, "--json" in argv)
+    if len(argv) >= 3 and argv[0] == "rule":
+        return rule_cmd(argv[1], [a for a in argv[2:] if a != "--deferred"], "--deferred" in argv[2:])
     print(__doc__)
     return 2
 

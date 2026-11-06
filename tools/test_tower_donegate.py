@@ -202,6 +202,61 @@ def main() -> int:
                nob.returncode == 0 and "no baseline generation" in nob.stdout,
                "unknown family says so and exits 0", (nob.returncode, nob.stdout))
 
+        # spec baseline-rule-content-reachability (S15 XXIX): binary_reconstruction/B1 defers 5 of 12 rules at the
+        # ceiling. A deferred NAME is not its content: unread -> KNOWLEDGE UNMET; `rule --deferred` reads + ledgers.
+        os.environ["CPP_TOWER_STATE_DIR"] = os.path.join(tmp, "tower-state")
+        fam = "binary_reconstruction"
+        r0 = dg.judge(fam, broken)
+        deferred = set(r0["deferred_from_prompt"])
+        content = {x["entry_id"]: x["content"] for x in r0["entries"]}
+        prose_deferred = {x["entry_id"] for x in r0["entries"] if not x["injected"]
+                          and x["verdict"] not in (dg.APPLIED_VERIFIED, dg.NOT_APPLICABLE)}
+        _check("V-TDG-NAME-ONLY-IS-UNMET",
+               len(deferred) >= 1 and all(content[i] == dg.NAME_ONLY for i in deferred)
+               and all(content[i] == dg.INJECTED for i in content if i not in deferred)
+               and set(r0["knowledge_unmet"]) == prose_deferred and prose_deferred,
+               "%d deferred, all NAME_ONLY; knowledge_unmet = %d" % (len(deferred), len(r0["knowledge_unmet"])),
+               {"deferred": sorted(deferred), "unmet": r0["knowledge_unmet"], "content": content})
+        _check("V-TDG-CONTROL-FIT-NO-UNMET",
+               rep["knowledge_unmet"] == [] and all(x["content"] == dg.INJECTED for x in rep["entries"]),
+               "a family whose rules all fit has no unmet knowledge", rep["knowledge_unmet"])
+        rc = _sp.run([sys.executable, tool, "rule", fam, "--deferred"],
+                     capture_output=True, text=True, encoding="utf-8", timeout=60, env=dict(os.environ))
+        reqs = {x["entry_id"]: x["requirement"] for x in r0["entries"]}
+        ledger = bl.consumption_ledger()
+        rows = [ln for ln in open(ledger, encoding="utf-8")] if os.path.exists(ledger) else []
+        _check("V-TDG-RULE-CLI-PRINTS-CONTENT",
+               rc.returncode == 0 and all(reqs[i] in rc.stdout for i in deferred) and len(rows) == 1,
+               "rule --deferred printed %d full requirements, 1 ledger row" % len(deferred),
+               (rc.returncode, rc.stdout[-300:], rc.stderr[-300:], len(rows)))
+        r1 = dg.judge(fam, broken)
+        _check("V-TDG-RETRIEVED-CLEARS-UNMET",
+               r1["knowledge_unmet"] == []
+               and all(x["content"] == dg.RETRIEVED for x in r1["entries"] if x["entry_id"] in deferred),
+               "after retrieval: deferred entries RETRIEVED, no unmet knowledge", r1["knowledge_unmet"])
+        bad = _sp.run([sys.executable, tool, "rule", fam, "no-such-entry"],
+                      capture_output=True, text=True, encoding="utf-8", timeout=60, env=dict(os.environ))
+        _check("V-TDG-RULE-CLI-UNKNOWN-ID", bad.returncode == 2 and "UNKNOWN" in bad.stdout,
+               "an unknown id is refused, not silently empty", (bad.returncode, bad.stdout))
+        from modules.gsd_x import cli as gx
+        saved = {k: os.environ.get(k) for k in ("HOME", "USERPROFILE")}
+        os.environ["HOME"] = os.environ["USERPROFILE"] = os.path.join(tmp, "home")
+        try:
+            block = gx.family_block("Build a binary reconstruction pipeline that turns m2c output into exact C",
+                                    {"session_id": ""})
+        finally:
+            for k, val in saved.items():
+                if val is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = val
+        import re as _re
+        m = _re.search(r'`python "([^"]+)" rule (\S+) --deferred`', block)
+        _check("V-TDG-BLOCK-NAMES-RUNNABLE-RETRIEVAL",
+               bool(m) and os.path.isfile(m.group(1)) and m.group(2) == fam,
+               "the injected block carries an absolute, existing retrieval command", block[-400:])
+        os.environ.pop("CPP_TOWER_STATE_DIR", None)
+
         print()
         print("TOWER_DONEGATE_PASS=%d/%d  threshold=%d/%d"
               % (_PASS, _PASS + _FAIL, _PASS + _FAIL, _PASS + _FAIL))

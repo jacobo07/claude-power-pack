@@ -144,6 +144,58 @@ def generation_sha256(family: str, n: int, root: str | None = None) -> str:
     return hashlib.sha256(_generation_bytes(family, n, root).replace(b"\r\n", b"\n")).hexdigest()
 
 
+# --------------------------------------------------------------------------- rule-content reachability
+# spec vault/specs/baseline-rule-content-reachability.md (S15 brief XXIX). Measured 2026-11-06: binary_reconstruction/B1
+# deferred 5 of 12 rules at the 1,400-char ceiling and a fresh agent saw only their NAMES. A deferred rule is now
+# retrievable by command, and each retrieval is ledgered beside the injection rows family_block writes.
+RULE_RETRIEVED = "rule_retrieved"
+
+
+def consumption_ledger() -> str:
+    """The tower consumption ledger (the same file modules.gsd_x.cli.family_block appends to)."""
+    d = os.environ.get("CPP_TOWER_STATE_DIR") or os.path.join(os.path.expanduser("~"), ".claude", "state", "tower")
+    return os.path.join(d, "consumption.jsonl")
+
+
+def record_retrieval(family: str, ids: list, root: str | None = None, sid: str = "") -> dict | None:
+    """Ledger that these entries' CONTENT was read for the newest generation. None when nothing could be recorded."""
+    gens = generations(family, root)
+    if not gens or not ids:
+        return None
+    n = gens[-1]
+    row = {"ts": time.time(), "kind": RULE_RETRIEVED, "sid": sid, "family": family,
+           "judged_under": "%s/B%d" % (family, n), "generation_sha256": generation_sha256(family, n, root),
+           "ids": sorted(str(i) for i in ids)}
+    path = consumption_ledger()
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row) + "\n")
+    except OSError:
+        return None
+    return row
+
+
+def retrieved_ids(family: str, sha: str) -> set:
+    """Entry ids whose content a rule_retrieved row records for exactly this generation's sha. Unreadable -> empty
+    (unknown is never read as retrieved)."""
+    out: set = set()
+    try:
+        with open(consumption_ledger(), "r", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if RULE_RETRIEVED not in line:
+                    continue
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                if r.get("kind") == RULE_RETRIEVED and r.get("family") == family and r.get("generation_sha256") == sha:
+                    out.update(str(i) for i in (r.get("ids") or []))
+    except OSError:
+        return set()
+    return out
+
+
 def generation_anchors(family: str, n: int, root: str | None = None) -> set:
     """Every anchor a child may legitimately hold for generation n.
 
