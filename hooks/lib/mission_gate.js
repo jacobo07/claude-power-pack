@@ -208,10 +208,21 @@ function workerRecord(event) {
 
 // Denial 1 alone, with no side effect (no counter is bumped): safe to run from a second registration.
 // -> {deny, mission, kind} | null
+// spec mission-closeout-reserve-launch: the ONE session the sweep launched on the closeout reserve, while its lease is
+// live (CLOSEOUT_LAUNCHED, this record's owner, this epoch). Every other session of a held mission stays denied.
+function closeoutLease(record, sid) {
+  const l = record && record.closeout_lease;
+  if (!l || l.state !== 'CLOSEOUT_LAUNCHED' || !positive(l.tokens)) return null;
+  const o = record.owner || {};
+  if (!sid || o.session_id !== sid || Number(l.epoch) !== Number(record.epoch)) return null;
+  return l;
+}
+
 function holdDecision(event, found) {
   const f = found || workerRecord(event);
   const hold = f && f.record.owner_hold;
   if (!isCostHold(hold)) return null;
+  if (closeoutLease(f.record, f.sid)) return null;   // admitted; exposureDecision caps it at the lease
   return {
     mission: f.mid, kind: 'cost_hold',
     deny: `MISSION COST HOLD -- ${f.mid} is held (${String(hold.reason || 'cost breaker').slice(0, 240)}). ` +
@@ -226,6 +237,19 @@ function exposureDecision(event, found) {
   const f = found || workerRecord(event);
   if (!f) return null;
   const { mid, record } = f;
+  const lease = closeoutLease(record, f.sid);
+  if (lease) {
+    // The closeout session is fresh: its own usage (main + subagents) against the lease, not the mission's line.
+    const lu = event.transcript_path ? sessionUsage(event.transcript_path, 0) : null;
+    if (!lu) return null;
+    const ls = subagentUsage(event.transcript_path, 0);
+    const lused = lu.total + ls.total;
+    if (lused + lu.last <= Number(lease.tokens)) return null;
+    return { mission: mid, kind: 'closeout_lease',
+      deny: `CLOSEOUT LEASE -- ${mid}'s closeout session has processed ${fmt(lused)} tokens and the next call costs about ` +
+        `${fmt(lu.last)}; that passes its closeout lease of ${fmt(lease.tokens)}. Commit what is written, declare the ` +
+        'checkpoint if you can, and end the turn.' };
+  }
   const cap = hardCap(record);
   if (!cap || !event.transcript_path) return null;
   const floor = spendFloor(record);

@@ -1,5 +1,5 @@
 ---
-status: DRAFT 2026-11-06 (coordinator lane (b) of the S14 plan the Owner approved with "y"; implementation follows mission-gate-carried-spend)
+status: IMPLEMENTED 2026-11-06 (S14 coordinator lane (b), Owner "y"; S15 brief XXVIII). See "As built" at the end.
 covers: [closeout-reserve-launch, authority-trip-closeout]
 owner: tools/gsd_mission.py supervise (cost-hold stop branch) · hooks/lib/mission_gate.js holdDecision
 ---
@@ -48,3 +48,40 @@ persisted by the closeout worker) -> mission parked. A stopped worker plus a hol
 
 ## Rollback
 `CPP_MISSION_CLOSEOUT_LAUNCH=off`, or revert the commit; `closeout_lease` is read by nothing else.
+
+## As built (2026-11-06) -- deviations from the draft, each for a measured reason
+- **Owner:** `gsd_mission.closeout_gate` runs as a sweep step before `_dead_worker_authority_guard`, not inside the stop
+  branch. It fires once the authority hold has `worker_stopped_at` (or the owner is DEAD), which is one pass after the
+  stop.
+- **Lease size:** `tokens = min(reserve, authority - spent)`, not the bare reserve. S13 overshot the line by 4.4M, so a
+  bare-reserve lease would have spent past the Owner's authority. Under 100k of room, the lease is recorded
+  `CLOSEOUT_FAILED unfunded` and no worker is launched.
+- **Launch:** `launch_worker(prompt_override=closeout_prompt)` takes the existing claim -> launch -> ack path. The
+  deterministic and done-gate closes are skipped, and the prompt is closeout-only, with the checkpoint command in it.
+- **Completion:** `set_checkpoint` under an authority hold with a launched lease of the current epoch marks
+  `CLOSEOUT_COMPLETED` and keeps the hold. `_closeout_follow` stops the idle worker.
+  - A closeout worker that ends its turn without a checkpoint is `CLOSEOUT_FAILED`.
+  - So is one that ends on a question (WAITING_HUMAN). A closeout needs no human, and S14 sat 7.5 h on such a question.
+  - So is one never acked before the start deadline.
+  - None of these is relaunched.
+- **Supervisor:** `plan_next` returns `none` while the lease is AUTHORIZED or LAUNCHED, so recovery, settle and relay
+  cannot touch the closeout worker.
+- **Gate:** `mission_gate.js closeoutLease`. `holdDecision` admits only the record's owner at the lease epoch.
+  `exposureDecision` caps that session's own usage (main + subagents) at the lease. `mission_wall.js` already stays
+  silent once `worker_stopped_at` is set.
+- **Review fixes** (pp-code-reviewer verdict WARNING: one HIGH and two MEDIUM, all fixed):
+  - **H1.** A lease left `CLOSEOUT_AUTHORIZED` by a lost final write is now resolved. When the record reached
+    claim_epoch + 1 it becomes LAUNCHED; past the start deadline it becomes FAILED. The final write is retried on
+    CasConflict.
+  - **M1.** The AUTHORIZED write is a CAS on `seq`. A launcher that loses the claim writes nothing.
+  - **M2.** A finished lease is history only under a NEW Owner authority, so a new trip gets its own closeout. A
+    LAUNCHED lease whose record moved epoch is retired as `superseded`.
+- **Gates:** test_gsd_mission_cost_hold V-COST-CLOSEOUT-* (24 checks; suite 59/59). Five mutation drills were run, and
+  each turned its target red:
+  - once-only lease check removed: 3 checks red;
+  - the gate's lease admission removed: 2 red;
+  - `expect_seq` dropped: CONCURRENT-SWEEP red;
+  - the history rule dropped: NEW-AUTHORITY red;
+  - the AUTHORIZED branch dropped: 2 red.
+- **Residual:** metering is post-hoc, so the lease can be passed by about one call. With no transcript path the lease
+  session is admitted unmetered (the same rule as the exposure check).

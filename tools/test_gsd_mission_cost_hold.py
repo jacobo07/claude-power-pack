@@ -242,6 +242,197 @@ def main() -> int:
     p = gm.plan_next(rel, NOW + 180, _row("m-sv-cost", "done"), pid_alive=gone)
     check("V-CH-RELEASE-REPLACES", p["action"] == "replace", str(p))
 
+    # 4b. spec mission-closeout-reserve-launch (S13 m-84f2641865dd: the reserve never launched a closeout).
+    auth30 = (f"{gm.AUTHORITY_TRIP_PREFIX}: processed 29,400,000 >= authority 30,000,000 minus closeout reserve "
+              "1,000,000; only closeout may run, new authority is the Owner's")
+    launches = []
+
+    def fake_launch(mid, **kw):
+        launches.append((mid, kw))
+        r = gm.load(mid)
+        gm.transition(mid, expect_epoch=kw["expect_epoch"], expect_state=kw["expect_state"], event="t_claim", now=NOW,
+                      state=gm.LAUNCHING, epoch=kw["expect_epoch"] + 1, owner=None, previous_owner=r.get("owner"),
+                      pending={"kind": "worker_start", "epoch": kw["expect_epoch"] + 1, "requested_at": NOW,
+                               "deadline": NOW + 300})
+        return {"ok": True, "epoch": kw["expect_epoch"] + 1, "bg_id": "c1053d01"}
+
+    def held(mid, hold=auth30, stopped=True, **fields):
+        _running(mid)
+        gm.transition(mid, expect_epoch=1, expect_state=gm.RUNNING, event="t_auth", authority_tokens=30_000_000,
+                      **fields)
+        return gm.set_owner_hold(mid, hold, now=NOW, kind="cost",
+                                 extra={"worker_stopped_at": NOW, "stop": "test"} if stopped else None)
+
+    m29 = lambda r: 29_400_000  # noqa: E731
+    rec = gm.closeout_gate(held("m-c10a01"), NOW + 60, [], gone, measure=m29, launcher=fake_launch)
+    lease = rec.get("closeout_lease") or {}
+    check("V-COST-CLOSEOUT-LAUNCHES-ONE", len(launches) == 1 and lease.get("state") == gm.CL_LAUNCHED
+          and "CLOSEOUT ONLY" in (launches[0][1].get("prompt_override") or ""), f"n={len(launches)} lease={lease}")
+    check("V-COST-CLOSEOUT-LEASE-WITHIN-AUTHORITY", lease.get("tokens") == 600_000,
+          f"tokens={lease.get('tokens')} (min(reserve 1M, 30M - 29.4M))")
+    r = gm.closeout_gate(gm.load("m-c10a01"), NOW + 200, [], gone, measure=m29, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-SECOND-PASS-NO-LAUNCH", len(launches) == 1
+          and (r.get("closeout_lease") or {}).get("state") == gm.CL_LAUNCHED, f"n={len(launches)}")
+    p = gm.plan_next(gm.load("m-c10a01"), NOW + 120, [], pid_alive=gone)
+    check("V-COST-CLOSEOUT-PLAN-HELD-OFF", p["action"] == "none" and "closeout running" in p["reason"], str(p))
+    gm.closeout_gate(held("m-c10a09"), NOW + 60, [], gone, measure=m29, launcher=fake_launch)
+    r = gm.closeout_gate(gm.load("m-c10a09"), NOW + 400, [], gone, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-NEVER-ACKED-FAILS", (r.get("closeout_lease") or {}).get("state") == gm.CL_FAILED
+          and "never acked" in str((r.get("closeout_lease") or {}).get("why")), str(r.get("closeout_lease"))[:140])
+    for label, mid, kw in (("NO-RESERVE", "m-c10a02", {"fields": {"closeout_tokens": 0}}),
+                           ("NON-AUTHORITY-HOLD", "m-c10a03", {"hold": TRIP}),
+                           ("LIVE-WORKER", "m-c10a04", {"stopped": False})):
+        n0 = len(launches)
+        r = gm.closeout_gate(held(mid, hold=kw.get("hold", auth30), stopped=kw.get("stopped", True),
+                                  **kw.get("fields", {})),
+                             NOW + 60, _row(mid, "running"), gone, measure=m29, launcher=fake_launch)
+        check(f"V-COST-CLOSEOUT-CONTROL-{label}", len(launches) == n0 and not r.get("closeout_lease"),
+              str(r.get("closeout_lease")))
+    os.environ["CPP_MISSION_CLOSEOUT_LAUNCH"] = "off"
+    n0 = len(launches)
+    r = gm.closeout_gate(held("m-c10a05"), NOW + 60, [], gone, measure=m29, launcher=fake_launch)
+    os.environ.pop("CPP_MISSION_CLOSEOUT_LAUNCH", None)
+    check("V-COST-CLOSEOUT-KILL-SWITCH", len(launches) == n0 and not r.get("closeout_lease"), "off -> today's park")
+    n0 = len(launches)
+    r = gm.closeout_gate(held("m-c10a06"), NOW + 60, [], gone, measure=lambda r: 29_950_000, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-UNFUNDED-FAILS-NO-LAUNCH", len(launches) == n0
+          and (r.get("closeout_lease") or {}).get("state") == gm.CL_FAILED, str(r.get("closeout_lease"))[:160])
+
+    # the launched worker acks (epoch 2) -> its checkpoint completes the lease; the authority hold stays.
+    def acked(mid, sid):
+        r = gm.load(mid)
+        return gm.transition(mid, expect_epoch=r["epoch"], expect_state=gm.LAUNCHING, event="t_ack", now=NOW,
+                             state=gm.RUNNING, pending=None,
+                             owner={"session_id": sid, "pid": None, "proc_start": None, "heartbeat_at": NOW,
+                                    "epoch": r["epoch"], "kind": "background"})
+    acked("m-c10a01", "m-c10a01-c")
+    r = gm.set_checkpoint("m-c10a01", "CHECKPOINT_COMPLETE", "closeout written", residual="closeout.md", now=NOW + 500)
+    check("V-COST-CLOSEOUT-CHECKPOINT-COMPLETES", (r.get("closeout_lease") or {}).get("state") == gm.CL_DONE
+          and gm.is_authority_hold(r.get("owner_hold")), str(r.get("closeout_lease"))[:160])
+    try:
+        gm.set_checkpoint("m-c10a03", "CHECKPOINT_COMPLETE", "no lease", now=NOW + 500)
+        refused = False
+    except gm.MissionError:
+        refused = True
+    check("V-COST-CLOSEOUT-CONTROL-CHECKPOINT-REFUSED-WITHOUT-LEASE", refused, "a cost hold without a lease still wins")
+    stops = []
+    idle = [{"sessionId": "m-c10a01-c", "id": "m-c10a01"[:8], "kind": "background", "state": "running", "status": "idle"}]
+    r = gm.closeout_gate(gm.load("m-c10a01"), NOW + 600, idle, gone, launcher=fake_launch,
+                         stop_runner=lambda a: stops.append(a) or subprocess.CompletedProcess(a, 0, "", ""))
+    check("V-COST-CLOSEOUT-DONE-WORKER-STOPPED", (r.get("closeout_lease") or {}).get("worker_stopped") is True
+          and (r.get("closeout_lease") or {}).get("state") == gm.CL_DONE, str(r.get("closeout_lease"))[:160])
+
+    # a closeout worker that ends its turn WITHOUT a checkpoint -> CLOSEOUT_FAILED, surfaced, never relaunched.
+    gm.closeout_gate(held("m-c10a07"), NOW + 60, [], gone, measure=m29, launcher=fake_launch)
+    acked("m-c10a07", "m-c10a07-c")
+    n0 = len(launches)
+    idle = [{"sessionId": "m-c10a07-c", "id": "m-c10a07"[:8], "kind": "background", "state": "running", "status": "idle"}]
+    r = gm.closeout_gate(gm.load("m-c10a07"), NOW + 600, idle, gone, launcher=fake_launch,
+                         stop_runner=lambda a: subprocess.CompletedProcess(a, 0, "", ""))
+    r = gm.closeout_gate(gm.load("m-c10a07"), NOW + 900, [], gone, measure=m29, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-ENDED-WITHOUT-CHECKPOINT-FAILS", (r.get("closeout_lease") or {}).get("state") == gm.CL_FAILED
+          and len(launches) == n0 and any(x.get("event") == "closeout_failed" for x in gm.lr.ledger_events("m-c10a07")),
+          str(r.get("closeout_lease"))[:160])
+
+    # review H1: a lease left AUTHORIZED (lost final write) is resolved from the claimed epoch, or failed when stale.
+    held("m-c10a0a")
+    a = {"state": gm.CL_AUTHORIZED, "granted_at": NOW, "tokens": 600_000, "claim_epoch": 1, "authority": 30_000_000}
+    gm.transition("m-c10a0a", expect_epoch=1, expect_state=gm.RUNNING, event="t_lease", closeout_lease=a)
+    fake_launch("m-c10a0a", expect_epoch=1, expect_state=gm.RUNNING)
+    acked("m-c10a0a", "m-c10a0a-c")
+    r = gm.closeout_gate(gm.load("m-c10a0a"), NOW + 60, [], gone, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-AUTHORIZED-RECOVERED", (r.get("closeout_lease") or {}).get("state") == gm.CL_LAUNCHED
+          and (r.get("closeout_lease") or {}).get("epoch") == 2, str(r.get("closeout_lease"))[:140])
+    held("m-c10a0b")
+    gm.transition("m-c10a0b", expect_epoch=1, expect_state=gm.RUNNING, event="t_lease", closeout_lease=a)
+    r = gm.closeout_gate(gm.load("m-c10a0b"), NOW + gm.START_DEADLINE_S + 60, [], gone, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-AUTHORIZED-STALE-FAILS", (r.get("closeout_lease") or {}).get("state") == gm.CL_FAILED,
+          str(r.get("closeout_lease"))[:140])
+    # the final write survives a CAS loss to the worker's ack (one injected conflict, then the retry lands).
+    real_tr, hits = gm.transition, []
+
+    def flaky(mid, **kw):
+        if kw.get("event") == "closeout_launched" and not hits:
+            hits.append(1)
+            raise gm.CasConflict("injected ack race")
+        return real_tr(mid, **kw)
+    gm.transition = flaky
+    try:
+        r = gm.closeout_gate(held("m-c10a0c"), NOW + 60, [], gone, measure=m29, launcher=fake_launch)
+    finally:
+        gm.transition = real_tr
+    check("V-COST-CLOSEOUT-FINAL-WRITE-RETRIED", hits == [1] and (r.get("closeout_lease") or {}).get("state")
+          == gm.CL_LAUNCHED, str(r.get("closeout_lease"))[:140])
+
+    # review M1: a second sweep holding the pre-lease record cannot authorize or launch a second worker.
+    stale = held("m-c10a0d")
+    inner = []
+
+    def racing_launch(mid, **kw):
+        inner.append(gm.closeout_gate(stale, NOW + 61, [], gone, measure=m29, launcher=fake_launch))
+        return fake_launch(mid, **kw)
+    n0 = len(launches)
+    r = gm.closeout_gate(stale, NOW + 60, [], gone, measure=m29, launcher=racing_launch)
+    check("V-COST-CLOSEOUT-CONCURRENT-SWEEP-ONE-LAUNCH", len(launches) == n0 + 1
+          and (r.get("closeout_lease") or {}).get("state") == gm.CL_LAUNCHED, f"launches={len(launches) - n0}")
+
+    # review M2: a finished lease is history only under a NEW Owner authority (a new trip gets its own closeout).
+    r = gm.load("m-c10a01")
+    gm.transition("m-c10a01", expect_epoch=r["epoch"], expect_state=r["state"], event="t_hold2",
+                  owner_hold={**r["owner_hold"], "set_at": NOW + 700})
+    n0 = len(launches)
+    gm.closeout_gate(gm.load("m-c10a01"), NOW + 700, [], gone, measure=m29, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-CONTROL-SAME-AUTHORITY-NO-SECOND", len(launches) == n0, "same authority: one trip, one lease")
+    r = gm.load("m-c10a01")
+    gm.transition("m-c10a01", expect_epoch=r["epoch"], expect_state=r["state"], event="t_auth2",
+                  authority_tokens=40_000_000)
+    r = gm.closeout_gate(gm.load("m-c10a01"), NOW + 800, [], gone, measure=lambda r: 39_400_000, launcher=fake_launch)
+    lease2 = r.get("closeout_lease") or {}
+    check("V-COST-CLOSEOUT-NEW-AUTHORITY-NEW-TRIP", len(launches) == n0 + 1 and lease2.get("state") == gm.CL_LAUNCHED
+          and lease2.get("authority") == 40_000_000 and (lease2.get("previous") or {}).get("state") == gm.CL_DONE,
+          str(lease2)[:160])
+    held("m-c10a0e")
+    gm.closeout_gate(gm.load("m-c10a0e"), NOW + 60, [], gone, measure=m29, launcher=fake_launch)
+    acked("m-c10a0e", "m-c10a0e-c")
+    r = gm.load("m-c10a0e")
+    gm.transition("m-c10a0e", expect_epoch=r["epoch"], expect_state=r["state"], event="t_relaunch", epoch=r["epoch"] + 1)
+    r = gm.closeout_gate(gm.load("m-c10a0e"), NOW + 120, [], gone, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-SUPERSEDED-RETIRED", (r.get("closeout_lease") or {}).get("state") == gm.CL_FAILED
+          and "superseded" in str((r.get("closeout_lease") or {}).get("why")), str(r.get("closeout_lease"))[:140])
+
+    # the pre-call gate: the lease session is admitted under its lease and denied past it; the old worker stays denied.
+    gm.closeout_gate(held("m-c10a08"), NOW + 60, [], gone, measure=m29, launcher=fake_launch)
+    acked("m-c10a08", "m-c10a08-c")
+    proj = Path(TMP) / "proj-closeout"
+    proj.mkdir(exist_ok=True)
+
+    def transcript(name, n):
+        row = {"uuid": name, "timestamp": "2026-11-06T10:00:00Z", "message": {"id": name, "model": "claude", "usage": {
+            "input_tokens": n, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0, "output_tokens": 0}}}
+        f = proj / f"{name}.jsonl"
+        f.write_text(json.dumps(row) + "\n", encoding="utf-8")
+        return str(f)
+    for sid in ("m-c10a08-c", "m-c10a08-w"):
+        Path(TMP, f"mission-worker-{sid}.json").write_text(json.dumps({"session_id": sid, "mission_id": "m-c10a08"}),
+                                                           encoding="utf-8")
+
+    def gate(sid, tp):
+        lib = json.dumps(str(HERE.parent / "hooks" / "lib" / "mission_gate.js"))
+        ev = json.dumps({"session_id": sid, "tool_name": "Read", "tool_input": {"file_path": "a"}, "transcript_path": tp})
+        js = (f"const g=require({lib});const e={ev};"
+              "process.stdout.write(JSON.stringify(g.holdDecision(e)||g.exposureDecision(e)))")
+        out = subprocess.run(["node", "-e", js], capture_output=True, text=True, timeout=60,
+                             env={**os.environ, "GSD_AUTORUN_MARKER_DIR": TMP, "GSD_LONG_RUN_STATE_DIR": TMP})
+        return json.loads(out.stdout or "null")
+    g_under = gate("m-c10a08-c", transcript("lease-under", 200_000))
+    g_over = gate("m-c10a08-c", transcript("lease-over", 400_000))
+    g_old = gate("m-c10a08-w", transcript("old-worker", 1_000))
+    check("V-COST-CLOSEOUT-GATE-ADMITS-UNDER-LEASE", g_under is None, str(g_under)[:120] + "  (200k + 200k <= 600k)")
+    check("V-COST-CLOSEOUT-GATE-DENIES-PAST-LEASE", "CLOSEOUT LEASE" in str((g_over or {}).get("deny")),
+          str(g_over)[:120] + "  (400k + 400k > 600k)")
+    check("V-COST-CLOSEOUT-GATE-OTHER-SESSION-DENIED", "MISSION COST HOLD" in str((g_old or {}).get("deny")),
+          str(g_old)[:120])
+
     # 5. calibration against the supersedes chain.
     gm.create(TMP, "/gsd-autonomous", mission_id="m-cal-p", now=NOW)
     gm.transition("m-cal-p", expect_epoch=0, expect_state=gm.PREPARED, event="t_done", now=NOW + 24 * 3600,

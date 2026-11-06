@@ -623,6 +623,10 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # (EDD m-4bb8952b2903, m-79f84cdd34dc): a cost-breaker hold set on a worker that then finished
         # left the record RUNNING with its owner gone, and goal singleflight refused every later unit
         # until the Owner closed it by hand. Only positive DEAD evidence settles; UNKNOWN stays parked.
+        if (rec.get("closeout_lease") or {}).get("state") in (CL_AUTHORIZED, CL_LAUNCHED):
+            # spec mission-closeout-reserve-launch: closeout_gate owns this record until the lease ends; no recovery,
+            # settle or relay may act on the closeout worker meanwhile.
+            return {"action": "none", "reason": "closeout running on the reserve (closeout_gate follows it)"}
         if state in (RUNNING, BLOCKED) and is_cost_hold(hold):
             # AMR: a cost hold stops the executor, not the goal. Recovery runs until it launches a
             # successor or records a boundary; only then does the hold fall back to parking/settling.
@@ -1330,8 +1334,11 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                   stop_runner=None, work_dir: str | None = None,
                   progress: dict | None = None, packet: dict | None = None, spawner=None,
                   det_runner=None, mem_reader=None, gsd_fact: str = "",
-                  gain_samples: list | None = None) -> dict:
+                  gain_samples: list | None = None, prompt_override: str | None = None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
+
+    ``prompt_override`` (closeout reserve launch only) replaces the mission prompt and skips the deterministic and
+    done-gate closes: the closeout worker writes the closeout, it does not resume the work.
 
     ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
     see effective_workdir). The worker is still LAUNCHED in the mission's cwd -- workspace
@@ -1358,7 +1365,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         note = f"{pd}\n\n{note or ''}"
     try:
         # Asked BEFORE the claim: an unreadable work-unit packet spends no epoch and starts nothing.
-        prompt = launch_prompt(rec) + (gsd_fact if not rec.get("wu_packet") else "")
+        prompt = prompt_override or (launch_prompt(rec) + (gsd_fact if not rec.get("wu_packet") else ""))
     except MissionError as exc:
         lr.ledger_append(mission_id, "launch_refused_packet", mission_id=mission_id,
                          epoch=rec.get("epoch"), why=str(exc)[:300])
@@ -1383,14 +1390,14 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     # WU-A6 DETERMINISTIC_PATH: a packet that names its script is run, not given to a model. Before the
     # claim: it spends no epoch and launches no worker.
     try:
-        det = deterministic_script(rec)
+        det = None if prompt_override else deterministic_script(rec)
     except MissionError as exc:
         lr.ledger_append(mission_id, "launch_refused_packet", mission_id=mission_id,
                          epoch=rec.get("epoch"), why=str(exc)[:300])
         return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": str(exc), "detail": ""}
     if det:
         return _run_deterministic(rec, det, now, run=det_runner)   # never `runner`: that one starts claude
-    gate = try_done_gate_close(rec, now, run=det_runner)           # ICC-05: gate passes -> closed, no model turn
+    gate = None if prompt_override else try_done_gate_close(rec, now, run=det_runner)   # ICC-05: no model turn
     if gate:
         return gate
     resolved = resolve_baseline(rec)
@@ -2320,6 +2327,8 @@ def _dead_worker_authority_guard(rec: dict, now: float, sessions, pid_alive, mea
     refuse to price. Park it as a cost hold at the Owner boundary instead, and say so once. An unmeasured spend keeps
     today's path (the breaker is fail-open on a broken meter), it does not invent exhaustion."""
     auth = rec.get("authority_tokens")
+    if (rec.get("closeout_lease") or {}).get("state") in (CL_AUTHORIZED, CL_LAUNCHED):
+        return rec   # the closeout reserve is being spent on its closeout; its worker is not "dead, not replaced"
     if not auth or not _dead_worker_open(rec, sessions, pid_alive):
         return rec
     import mission_recovery as mr
@@ -2340,6 +2349,178 @@ def _dead_worker_authority_guard(rec: dict, now: float, sessions, pid_alive, mea
     _note_liveness_incident(mid, "CAPITAL_EXHAUSTED", why)
     return set_owner_hold(mid, why, now=now, kind="cost", expect_seq=rec.get("seq"),
                           extra={"authority_kind": ms.authority_kind(rec), "wait_type": "CAPITAL_EXHAUSTED"})
+
+
+# --------------------------------------------------------------------------- closeout reserve launch
+# spec vault/specs/mission-closeout-reserve-launch.md (S14 brief XVII, S15 brief XXVIII). Measured 2026-11-05 (S13
+# m-84f2641865dd): the authority trip stopped the worker with zero grace and nothing ever spent the 1M closeout reserve
+# on a closeout; the reserve was accounting only. Now ONE closeout-only worker is launched per trip, on a lease the
+# pre-call gate enforces (hooks/lib/mission_gate.js closeoutLease). Kill switch CPP_MISSION_CLOSEOUT_LAUNCH=off.
+CLOSEOUT_SWITCH = "CPP_MISSION_CLOSEOUT_LAUNCH"
+CLOSEOUT_MIN_TOKENS = 100_000
+CL_AUTHORIZED, CL_LAUNCHED = "CLOSEOUT_AUTHORIZED", "CLOSEOUT_LAUNCHED"
+CL_DONE, CL_FAILED = "CLOSEOUT_COMPLETED", "CLOSEOUT_FAILED"
+
+
+def closeout_launch_on() -> bool:
+    return os.environ.get(CLOSEOUT_SWITCH, "").strip().lower() not in ("off", "0", "false")
+
+
+def closeout_prompt(rec: dict, tokens: int) -> str:
+    mid = rec["mission_id"]
+    me = Path(__file__).resolve()
+    return (f"CLOSEOUT ONLY -- mission {mid} reached its Owner authority "
+            f"({str((rec.get('owner_hold') or {}).get('reason') or '')[:200]}). You run on the closeout reserve: at most "
+            f"{int(tokens):,} processed tokens, enforced on every tool call. Do NOT continue the implementation and "
+            "launch no agent.\n1. Read the closeout / handoff section of the brief the mission command below names.\n"
+            "2. From COMMITTED evidence only, write or update the mission's closeout file: what is done (with commands "
+            "and exit codes), what is unmet, and the exact next action. Commit it.\n"
+            f"3. Declare the checkpoint: python3 {me} checkpoint --mission {mid} --state CHECKPOINT_COMPLETE "
+            "--reason \"<one line>\" --residual <closeout file path>. Then end the turn.\n\n"
+            f"Mission command (context only, do not execute it):\n{str(rec.get('resume_command') or '')[:4000]}")
+
+
+def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, runner=None, stop_runner=None,
+                  measure=None, launcher=None) -> dict:
+    """Sweep step. An authority hold whose implementation worker is stopped or dead gets ONE closeout worker on a lease of
+    min(reserve, authority - spent); a launched lease is followed to CLOSEOUT_COMPLETED (its checkpoint) or
+    CLOSEOUT_FAILED (ended without one, never acked, launch refused). Never a second lease for the same trip."""
+    if rec.get("state") in TERMINAL or not closeout_launch_on():
+        return rec
+    hold = rec.get("owner_hold") or {}
+    lease = rec.get("closeout_lease")
+    if lease and not _closeout_lease_is_history(rec, lease):
+        return _closeout_follow(rec, lease, now, sessions, pid_alive, stop_runner)
+    if not is_authority_hold(hold) or rec.get("state") not in (RUNNING, BLOCKED):
+        return rec
+    owner = rec.get("owner")
+    if not (hold.get("worker_stopped_at") or not owner or liveness(owner, sessions, pid_alive)[0] == DEAD):
+        return rec   # the stop branch acts first: a live implementation worker never shares the closeout
+    import mission_spend as ms
+    reserve = int(ms.closeout_reserve(rec) or 0)
+    auth = int(rec.get("authority_tokens") or 0)
+    if reserve <= 0 or auth <= 0:
+        return rec   # no reserve: today's CAPITAL_EXHAUSTED park
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception:  # noqa: BLE001 -- unmeasured: no lease is priced on a guess
+        spent = None
+    if spent is None:
+        return rec
+    mid = rec["mission_id"]
+    tokens = min(reserve, auth - int(spent))   # the Owner's authority is never exceeded to fund a closeout
+    if tokens < CLOSEOUT_MIN_TOKENS:
+        why = f"unfunded: {auth - int(spent):,} left of authority {auth:,} (reserve {reserve:,})"
+        lr.ledger_append(mid, "closeout_failed", mission_id=mid, why=why)
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_unfunded",
+                          now=now, closeout_lease={"state": CL_FAILED, "why": why, "at": now, "tokens": max(0, tokens),
+                                                   "base_spend": int(spent), "reserve": reserve})
+    lease = {"state": CL_AUTHORIZED, "granted_at": now, "tokens": tokens, "base_spend": int(spent), "reserve": reserve,
+             "claim_epoch": int(rec["epoch"]), "authority": auth, "hold_set_at": hold.get("set_at")}
+    if rec.get("closeout_lease"):
+        lease["previous"] = {k: rec["closeout_lease"].get(k) for k in ("state", "authority", "why", "at")}
+    try:
+        # expect_seq (review M1): two sweeps that both read "no lease" cannot both authorize; the loser launches nothing.
+        rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_authorized",
+                         now=now, expect_seq=rec.get("seq"), closeout_lease=lease)
+    except CasConflict:
+        return load(mid) or rec
+    try:
+        res = (launcher or launch_worker)(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                          reason="closeout reserve: Owner authority reached", runner=runner, now=now,
+                                          stop_runner=stop_runner, prompt_override=closeout_prompt(rec, tokens))
+    except CasConflict:
+        return load(mid) or rec   # lost the claim: whoever won owns the lease; writing FAILED here would kill its worker
+    except Exception as exc:  # noqa: BLE001 -- a refused launch is a failed closeout, recorded, never a crashed pass
+        res = {"ok": False, "why": f"{type(exc).__name__}: {exc}"}
+    if res.get("ok"):
+        new = {**lease, "state": CL_LAUNCHED, "epoch": res.get("epoch"), "bg_id": res.get("bg_id"), "launched_at": now}
+        lr.ledger_append(mid, "closeout_launched", mission_id=mid, epoch=res.get("epoch"), bg_id=res.get("bg_id"),
+                         tokens=tokens)
+    else:
+        new = {**lease, "state": CL_FAILED, "why": f"launch: {str(res.get('why'))[:200]}", "at": now}
+        lr.ledger_append(mid, "closeout_failed", mission_id=mid, why=new["why"])
+    for _ in range(3):
+        # review H1: the worker's own ack can move LAUNCHING -> RUNNING between the reload and this write. Only
+        # closeout_lease changes here, so re-reading and writing again is safe. Left AUTHORIZED after three losses,
+        # _closeout_follow resolves it from the claimed epoch.
+        cur = load(mid) or rec
+        try:
+            return transition(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], now=now, closeout_lease=new,
+                              event="closeout_launched" if res.get("ok") else "closeout_launch_failed")
+        except CasConflict:
+            continue
+    return load(mid) or rec
+
+
+def _closeout_lease_is_history(rec: dict, lease: dict) -> bool:
+    """Review M2: a FINISHED lease belongs to its trip. A new Owner authority opens a new trip, and that trip's
+    authority hold gets its own closeout. Same authority -> same trip -> never a second lease."""
+    if lease.get("state") not in (CL_DONE, CL_FAILED):
+        return False
+    try:
+        return int(lease.get("authority") or 0) != int(rec.get("authority_tokens") or 0)
+    except (TypeError, ValueError):
+        return False
+
+
+def _closeout_follow(rec: dict, lease: dict, now: float, sessions, pid_alive, stop_runner) -> dict:
+    """A launched lease ends COMPLETED (set_checkpoint marked it) or FAILED; an idle finished closeout worker is
+    stopped so it holds no RAM. One lease per trip: a FAILED one is surfaced, never relaunched."""
+    mid = rec["mission_id"]
+    st = lease.get("state")
+    if st == CL_AUTHORIZED:
+        # Review H1: the final LAUNCHED/FAILED write was lost (CAS race with the ack, or the sweep died mid-launch).
+        ce = int(lease.get("claim_epoch", -1))
+        if int(rec.get("epoch") or 0) == ce + 1 and rec["state"] in (LAUNCHING, RUNNING):
+            lr.ledger_append(mid, "closeout_launched", mission_id=mid, epoch=ce + 1, recovered=True)
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_launched",
+                              now=now, closeout_lease={**lease, "state": CL_LAUNCHED, "epoch": ce + 1,
+                                                       "launched_at": now, "recovered": True})
+        if now - float(lease.get("granted_at") or now) > START_DEADLINE_S:
+            why = "closeout launch never claimed its epoch"
+            lr.ledger_append(mid, "closeout_failed", mission_id=mid, why=why)
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_failed",
+                              now=now, closeout_lease={**lease, "state": CL_FAILED, "why": why, "at": now})
+        return rec
+    if st not in (CL_LAUNCHED, CL_DONE) or lease.get("worker_stopped"):
+        return rec
+    if rec["state"] == LAUNCHING:
+        deadline = float((rec.get("pending") or {}).get("deadline") or 0)
+        if st == CL_LAUNCHED and deadline and now > deadline:
+            why = "closeout worker never acked before the start deadline"
+            lr.ledger_append(mid, "closeout_failed", mission_id=mid, why=why)
+            return transition(mid, expect_epoch=rec["epoch"], expect_state=LAUNCHING, event="closeout_failed", now=now,
+                              closeout_lease={**lease, "state": CL_FAILED, "why": why, "at": now})
+        return rec
+    if int(rec.get("epoch") or 0) != int(lease.get("epoch") or -1):
+        # Review M2: the record moved on (Owner release / relaunch) while the lease was live. Left LAUNCHED it would
+        # keep plan_next silent and the CAPITAL_EXHAUSTED guard off on every later trip: retire it on the record.
+        if st == CL_DONE:
+            return rec
+        why = f"superseded: the record moved to epoch {rec.get('epoch')} while the lease (epoch {lease.get('epoch')}) was live"
+        lr.ledger_append(mid, "closeout_failed", mission_id=mid, why=why)
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_superseded",
+                          now=now, closeout_lease={**lease, "state": CL_FAILED, "why": why, "at": now})
+    owner = rec.get("owner")
+    verdict = liveness(owner, sessions, pid_alive)[0] if owner else DEAD
+    # A closeout needs no human: a turn that ended on a question (WAITING_HUMAN) is an ended closeout too, or the
+    # lease would hold the record for ever (S14 2026-11-06: a worker ended on an "authority" question, 7.5 h parked).
+    ended = verdict in (DEAD, WAITING_HUMAN) or (verdict == LIVE and owner_idle(owner, sessions))
+    if not ended:
+        return rec
+    stop = None
+    if verdict in (LIVE, WAITING_HUMAN):
+        ok, how = stop_owner(owner, sessions, pid_alive=pid_alive, runner=stop_runner)
+        stop = how if ok else f"stop failed: {how}"
+    if st == CL_DONE:
+        return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_worker_stopped",
+                          now=now, closeout_lease={**lease, "worker_stopped": True, "stop": stop})
+    why = "closeout worker ended its turn without declaring a checkpoint"
+    lr.ledger_append(mid, "closeout_failed", mission_id=mid, why=why, stop=stop)
+    return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_failed", now=now,
+                      closeout_lease={**lease, "state": CL_FAILED, "why": why, "at": now, "worker_stopped": True,
+                                      "stop": stop})
 
 
 def _dead_worker_visibility(mid: str, row: dict) -> None:
@@ -2858,6 +3039,18 @@ def set_checkpoint(mission_id: str, state: str, reason: str, evidence: str | Non
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
     hold = rec.get("owner_hold") or {}
+    lease = rec.get("closeout_lease") or {}
+    if (is_authority_hold(hold) and lease.get("state") == CL_LAUNCHED and rec.get("state") == RUNNING
+            and int(lease.get("epoch") or -1) == int(rec.get("epoch") or 0)):
+        # spec mission-closeout-reserve-launch: the closeout worker's checkpoint completes the lease; the authority
+        # hold stays (the mission is parked at the Owner boundary, never "released" by its own closeout).
+        lr.ledger_append(mission_id, "checkpoint_declared", mission_id=mission_id, checkpoint=state,
+                         reason=(reason or "")[:400], evidence=evidence, residual=residual, gain=bool(gain))
+        lr.ledger_append(mission_id, "closeout_done", mission_id=mission_id, checkpoint=state, residual=residual)
+        return transition(mission_id, expect_epoch=rec["epoch"], expect_state=RUNNING, event="closeout_done", now=now,
+                          closeout_lease={**lease, "state": CL_DONE, "checkpoint": state,
+                                          "reason": (reason or "")[:300], "residual": residual,
+                                          "done_at": time.time() if now is None else now})
     if hold and hold.get("kind") not in WAIT_HOLD_KINDS:
         raise MissionError(f"{mission_id} is under a {hold.get('kind') or 'owner'} hold; that hold wins")
     lr.ledger_append(mission_id, "checkpoint_declared", mission_id=mission_id, checkpoint=state,
@@ -5974,6 +6167,9 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
             if not dry_run and rec.get("pending_wake") and rec["state"] not in TERMINAL:
                 rec = retry_pending_wake(rec, now, sessions, pid_alive, runner=runner, stop_runner=stop_runner)
             if not dry_run:
+                # spec mission-closeout-reserve-launch: BEFORE the CAPITAL_EXHAUSTED guard, so a stopped authority
+                # trip spends its reserve on one closeout worker instead of parking with no closeout.
+                rec = closeout_gate(rec, now, sessions, pid_alive, runner=runner, stop_runner=stop_runner)
                 rec = _dead_worker_authority_guard(rec, now, sessions, pid_alive)   # M4 B: CAPITAL_EXHAUSTED, no launch
                 dead_open = _dead_worker_open(rec, sessions, pid_alive)
             plan = plan_next(rec, now, sessions, pid_alive, v2=v2)
