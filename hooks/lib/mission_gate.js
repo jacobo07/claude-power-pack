@@ -153,7 +153,10 @@ function hardCap(record) {
   const auth = positive(record.authority_tokens);
   if (auth) caps.push({ cap: auth - closeoutReserve(record, auth), what: 'authority minus closeout reserve' });
   const est = positive(record.token_estimate);
-  if (est) caps.push({ cap: Math.floor((positive(record.token_trip_ratio) || 2) * est), what: 'estimate x trip ratio' });
+  // Same rule as mission_spend.judge: with Owner authority declared, an AUTO envelope over its ratio is a stale
+  // forecast the supervisor recompiles, never a trip (m-99fe8fd825d8 S14: denied every call at 30.4M of 60M).
+  const autoUnderAuthority = auth && record.token_estimate_src === 'auto';
+  if (est && !autoUnderAuthority) caps.push({ cap: Math.floor((positive(record.token_trip_ratio) || 2) * est), what: 'estimate x trip ratio' });
   const l = record.phase_lease;
   if (l && positive(l.forecast) && positive(l.hard)) {
     caps.push({ cap: (Number(l.base) || 0) + Math.floor(l.forecast * l.hard), what: `phase ${l.phase} hard line` });

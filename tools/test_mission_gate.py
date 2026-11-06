@@ -210,6 +210,13 @@ def main() -> int:
     r = capcase("m-a0000d", near, closeout_tokens=0)
     check("V-MG-CONTROL-ZERO-RESERVE-ALLOWED", r is None, "closeout_tokens=0 -> cap 30M, 29.4M admitted")
 
+    # S14 incident: an AUTO estimate under Owner authority is recompiled by judge, never a gate cap.
+    mid20 = [rowt(41, 20 * M, NOW), rowt(42, 200_000, NOW + 1)]
+    r = capcase("m-a0000f", mid20, token_estimate=7 * M, token_estimate_src="auto")
+    check("V-MG-AUTO-ESTIMATE-UNDER-AUTHORITY-ALLOWED", r is None, "20.2M > 2 x 7M auto, but authority 30M binds")
+    r = capcase("m-a00010", mid20, token_estimate=7 * M, token_estimate_src="operator")
+    check("V-MG-CONTROL-OPERATOR-ESTIMATE-DENIES", "estimate x trip ratio" in denied(r), denied(r)[:120])
+
     # the supervisor side: _stamp_spend writes only after a 1M move (bounded writes).
     worker("m-a0000e")
     rec = gm._stamp_spend(gm.load("m-a0000e"), 1_500_000, NOW)
