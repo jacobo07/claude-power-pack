@@ -38,8 +38,18 @@
   - V-ANL 8/8, drills 5/5, PRE 23, SCAFFOLD 14, GOAL_CONTROL 27, CLOSE 17, ADM 43;
   - MC 241/242 is pre-existing; first_worker_card needs pytest, which GEX44 lacks;
   - real-host S16-shape smoke: 4 phases scaffolded, real gsd OK.
-- OWNER GO PENDING: ff the live clone 6016664a -> ac1f85af (same predicate and control as C1). Rollback
-  `git reset --keep 6016664a`.
+- **DEPLOYED (Owner "y")**: the live clone was ff'd 6016664a -> **ac1f85af** at 15:44:38Z.
+  - The predicate control was caught first.
+  - On the live clone: V-ANL 8/8, CLOSE 17/17.
+  - First pass 15:45:08Z: 0 supervise_error (control: 526 historical rows), no traceback.
+  - Rollback: `git reset --keep 6016664a`.
+- **S16 m-29dd612ed825 is at CHECKPOINT_COMPLETE (13:54:19Z)**: W0-W7 done, scientific objective UNMET
+  (0 independent exact closures).
+  - It is parked: no worker, no spend.
+  - gen3 head 41524cdc ("residual file").
+- NEXT (obligation 4): judge the S16 closeout (38 items) in t1/gen3, land promotions through the private index, and
+  run the fresh-agent inheritance check. Then ask the Owner for the next generation, or whether to close the
+  programme.
 - Next generation arm: `arm --no-launch --milestone-from <gen3>/S17-PHASES.md` (no hand `ensure`).
 
 **CURRENT (2026-11-06 ~13:15 UTC, session 177efe77) — read this first.**
