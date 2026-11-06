@@ -5,7 +5,14 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT (2026-11-05 ~14:35 UTC, session 95e69b3d) — read this first.**
+**CURRENT (2026-11-06 ~01:15 UTC, session 95e69b3d) — read this first.**
+- **Generation S14** "Production Convergence & Mass Exact Closure" = mission **m-99fe8fd825d8**: Owner "y" 2026-11-06T00:23:47Z, authority 60M processed (owner-turn verified), 12 cycles / 24 h, 0 top-ups, USD 0. Brief VERBATIM in gen3 `S14-BRIEF-VERBATIM.md` (33 sections, sha 9bcdc45db71b1fc0) + `S14-COORDINATOR-NOTES.md`; milestone 8 phases (gen3 823461be). At 00:48Z: W0-W2 ticked (frontier 1146/1797 recounted; hotpath.py pre-model route, 0 new certs on the real root), epoch 3, ~24.7M.
+- **S13 m-84f2641865dd closed PARTIALLY PROVEN** at W8: frontier 1121 -> 1146 (+10 wb_cxx, +15 ARRAY_GUARD_CALL after the Owner-approved byte-identical alias), 47.06M of 160M; owner hold "never launch"; authority does not transfer.
+- **Coordinator lane, done (laptop commits private, never pushed):** UKDL S12C+S13 section `fb9a4ca2` (5 PR, 6 T); KV `knowledge_vault/domain/binary-reconstruction-fabric.md` += 9 KN-S12C/S13 facts; tower family `binary_reconstruction` B0 `739a3970` (8 entries, inheritance check: 3/3 fresh reconstruction prompts inject it, web control does not; injection proven, obedience not); breaker gate fix `06dc4c1f` + `c470c414` (spec `vault/specs/mission-gate-carried-spend.md`: floor on cost_mark/spend_stamp, subagents counted, cap = authority - reserve; GEX44 had NO pre-call exposure gate — only agora's hold gate is registered — now the hold gate runs it). Deployed to GEX44 PP (`31d18a4b`, `886bc4f7`) and `~/agora/mission-hooks` (backup-20261106T010919); live S14 worker smoke: allowed.
+- **Open:** closeout-reserve launcher (spec DRAFT `vault/specs/mission-closeout-reserve-launch.md`, not built; S14 writes closeout.md each phase meanwhile); S14 promotions to land at its checkpoint; pre-existing reds: tower test_family_baselines predeclared list, V-FINJ-POPULATION, V-BGEN-REAL-B0-CITATIONS-HOLD, GEX44 V-MC-PLAN-FACTS-REFUSES-OVERLAP, V-SBG-WIRED (no dispatcher lane on GEX44).
+- GEX44 git has no identity: use `git -c user.name=User -c user.email=... am`.
+
+**Earlier (2026-11-05 ~14:35 UTC, session 95e69b3d).**
 - Owner /cpp-gsd-long brief "Global Constraint Closure, Exact Tail Compression, Generative Population Collapse" = **Generation S13**.
   - Brief stored VERBATIM (no condensation; S12C lost §XXIX that way) in gen3 `vault/programs/gsdx-factory-2/S13-BRIEF-VERBATIM.md` (40 sections, body sha256 321961cda6f6e669), plus `S13-COORDINATOR-NOTES.md` (scan, cohort correction, paths, budget) and the iteration methodology copy. gen3 commit `7a5e1468`.
   - S12C milestone archived under `.planning/milestones/s12c-closed-partial-*` with CLOSE-NOTE (phase 8 unmet: gates 11, 14); new 8-phase milestone W0..W7, GSD 0/8.
