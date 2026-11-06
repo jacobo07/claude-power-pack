@@ -1,7 +1,7 @@
 {
   "id": "binary_reconstruction",
   "name": "Binary reconstruction factory (decompilation to exact source)",
-  "triggers": ["decomp", "decompil", "reconstruction factory", "binary reconstruction", "matching decomp",
+  "triggers": ["decomp", "decompile", "decompiled", "decompiler", "decompiling", "decompilation", "reconstruction factory", "binary reconstruction", "matching decomp",
                "mwcc", "m2c", "objdiff", "decomp-toolkit", "exact certification", "physical frontier",
                "recon_fabric", "gsd x reconstruction"],
   "anti_triggers": [],
