@@ -17907,3 +17907,14 @@ Evidence: S14 W3 (`evidence/ascension/s14/w3/residual.json`): fn_802252CC, fn_80
 ### Reinforced (S14 evidence for existing entries; no new id)
 - [[T-REORDERING-CANNOT-ADD-A-MISSING-OPERATOR-001]]: S14 W3-W5 added 4 operators that can express the missing transformations (callee_linkage, decl_orders, stride_variants, VCALL_ELIDED_SELF). They closed 9 functions after S13 had shown that reordering at equal budget closed none (candidate PR-OPERATOR-EXPRESSIVENESS-OVER-ORDERING-001).
 - [[T-A-FIXTURE-PINNED-TO-A-COUNT-THAT-LEGITIMATELY-ADVANCES-001]]: S14 W7 (t1 6ca6f449). `tools/test_s13_w2.py` pinned >= 35 write-back rows and went red when S14 closures brought them down to 26. Pin a floor using the arithmetic of how the count can shrink (candidate T-FROZEN-COUNT-PIN-001).
+
+## GSD X Reconstruction Factory, S15 promotions (2026-11-06, coordinator laptop 177efe77)
+Source: t1 `evidence/ascension/s15/promotions.json` and `closeout.md` (t1 8829e574, 2dcc6095; GEX44, private). The mission is m-9f27dc5a3edd. Its verdict was PARTIALLY PROVEN: frontier 1155 -> 1156/1797, fn_8020BAC0 CERTIFIED_CXX via cmp-forward@1, HELD 0/10, NEG_NAT 0/68, real-root sweep 0/641. The coordinator re-ran these on GEX44 on 2026-11-06, all exit 0: projection check, test_s15_w3, s13_w3/w8, s14_w1..w6, sr1 22/22. The H2 manifest sha is still 922f214e. No baseline candidate: no rule transferred.
+
+### Traps
+**`T-A-SYNTHETIC-PERTURBATION-PROVES-MECHANISM-NOT-PREVALENCE-001`** [UNIVERSAL] -- A one-factor perturbation that reproduces every time proves that a mechanism exists. It says nothing about how often natural cases carry it. Before promoting the mechanism as a rule, measure it on a held-out cohort registered in advance and over the real population. If no natural positive control exists, say so, and treat the rule as narrow knowledge.
+Evidence: S15 W2-W4 (t1 9f002e2a, 57a8e3a1, 8829e574). Forwarding the argument decided whether the compare register was r0 or r3: 32/32 repeatable. The rule then transferred 1/16 DEV, 0/10 HELD, 0/68 NEG_NAT and 0/641 in the real-root sweep. None of the 168 exact-certified C functions has a named-register compare, so the only positive control is synthetic.
+
+### Reinforced (S15 evidence for existing entries; no new id)
+- [[PR-PROMOTE-AN-OPERATOR-ONLY-ON-HIDDEN-TRANSFER-001]]: S15 obeyed it. cmp-forward@1 was frozen and pre-registered (PREREG.md in t1 3e96ccde, before the HELD run in 57a8e3a1). It closed 0/10 HELD, so it stays DEV-only n=1, in the hot-path tail only, and is not promoted.
+- [[T-A-NUMBER-IN-A-COMMIT-MESSAGE-IS-A-CLAIM-001]]: the S15 closeout and promotions say "60 H2 sealed counted". `hotpath.attempt` counts one `h2_guard` hit per (function, method), so 60 means 20 sealed functions x 3 methods. None of them was compiled or judged. Before quoting a guard counter, name its unit.
