@@ -15,7 +15,9 @@ const gate = require('./lib/mission_gate');
 function run(event) {
   try {
     if (gate.off()) return null;
-    const r = gate.holdDecision(event || {});
+    // 2026-11-06 (spec mission-gate-carried-spend): also the next-call exposure check, side-effect free. On GEX44
+    // this file is the only registered mission gate, so without it the authority line was enforced by the sweep alone.
+    const r = gate.holdDecision(event || {}) || gate.exposureDecision(event || {});
     if (r && r.deny) {
       return { hookSpecificOutput: { hookEventName: 'PreToolUse',
         permissionDecision: 'deny', permissionDecisionReason: r.deny } };

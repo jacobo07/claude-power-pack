@@ -217,6 +217,28 @@ function holdDecision(event, found) {
   };
 }
 
+// Denial 4 alone (next-call exposure), side-effect free like holdDecision, so the standalone hold gate can run it on
+// a host with no dispatcher lane (GEX44, 2026-11-06: the S13 overshoot ran with only the sweep enforcing). -> |null
+function exposureDecision(event, found) {
+  const f = found || workerRecord(event);
+  if (!f) return null;
+  const { mid, record } = f;
+  const cap = hardCap(record);
+  if (!cap || !event.transcript_path) return null;
+  const floor = spendFloor(record);
+  const afterMs = floor ? floor.at * 1000 : 0;
+  const u = sessionUsage(event.transcript_path, afterMs);
+  if (!u) return null;
+  const s = subagentUsage(event.transcript_path, afterMs);
+  const own = u.total + s.total + (Number(record.spend_carried) || 0);
+  const used = floor ? Math.max(own, floor.tokens + u.after + s.after) : own;
+  if (used + u.last <= cap.cap) return null;
+  return { mission: mid, kind: 'next_call_exposure',
+    deny: `MISSION CAP -- ${mid} has processed at least ${fmt(used)} tokens and the next call costs about ${fmt(u.last)} ` +
+      `(context of the last call); that passes the ${cap.what} hard cap ${fmt(cap.cap)}. End this turn with a status and ` +
+      'the next exact action; only the Owner or the supervisor reforecasts.' };
+}
+
 // -> {deny: string|null, mission?, kind?}
 function decide(event) {
   const found = workerRecord(event);
@@ -240,23 +262,8 @@ function decide(event) {
   //    2026-11-06 (spec mission-gate-carried-spend, S13 overshoot 33.4M on 30M): `used` also counts this session's
   //    subagents and the supervisor's measured floor (cost_mark / spend_stamp) plus everything dated after it, so a
   //    later epoch's worker sees what earlier epochs spent.
-  const cap = hardCap(record);
-  if (cap && event.transcript_path) {
-    const floor = spendFloor(record);
-    const afterMs = floor ? floor.at * 1000 : 0;
-    const u = sessionUsage(event.transcript_path, afterMs);
-    if (u) {
-      const s = subagentUsage(event.transcript_path, afterMs);
-      const own = u.total + s.total + (Number(record.spend_carried) || 0);
-      const used = floor ? Math.max(own, floor.tokens + u.after + s.after) : own;
-      if (used + u.last > cap.cap) {
-        return { mission: mid, kind: 'next_call_exposure',
-          deny: `MISSION CAP -- ${mid} has processed at least ${fmt(used)} tokens and the next call costs about ${fmt(u.last)} ` +
-            `(context of the last call); that passes the ${cap.what} hard cap ${fmt(cap.cap)}. End this turn with a status and ` +
-            'the next exact action; only the Owner or the supervisor reforecasts.' };
-      }
-    }
-  }
+  const exposed = exposureDecision(event, found);
+  if (exposed) return exposed;
   const agentId = event.agent_id ? String(event.agent_id) : '';
   const agentType = event.agent_type ? String(event.agent_type) : '';
   const key = agentId || (agentType ? `type:${agentType}` : '');
@@ -290,4 +297,4 @@ function run(ev) {
   return null;
 }
 
-module.exports = { run, decide, holdDecision, off, capFor, agentTokens, sessionUsage, hardCap, DEFAULT_CAP };
+module.exports = { run, decide, holdDecision, exposureDecision, off, capFor, agentTokens, sessionUsage, hardCap, DEFAULT_CAP };

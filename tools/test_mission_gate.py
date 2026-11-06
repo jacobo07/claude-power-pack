@@ -250,6 +250,14 @@ def main() -> int:
                       now=NOW, kind="cost")
     check("V-MG-HOLDGATE-DENIES-AUTHORITY-HOLD", "MISSION COST HOLD" in denied(stdin_gate(
           {"session_id": authority, "tool_name": "Bash", "tool_input": {"command": "ls"}})[1]))
+    # spec mission-gate-carried-spend: on GEX44 this standalone gate is the only registered mission gate, so it also
+    # runs the next-call exposure check (S13 overshot 33.4M on 30M with only the sweep enforcing).
+    rc, r = stdin_gate({"session_id": "m-a00007-w", "tool_name": "Read", "tool_input": {"file_path": "a"},
+                        "transcript_path": str(Path(TMP) / "proj-m-a00007" / "m-a00007-w.jsonl")})
+    check("V-MG-HOLDGATE-DENIES-EXPOSURE", rc == 0 and "MISSION CAP" in denied(r), denied(r)[:100])
+    rc, r = stdin_gate({"session_id": "m-a00008-w", "tool_name": "Read", "tool_input": {"file_path": "a"},
+                        "transcript_path": str(Path(TMP) / "proj-m-a00008" / "m-a00008-w.jsonl")})
+    check("V-MG-CONTROL-HOLDGATE-EXPOSURE-UNDER-CAP", rc == 0 and r is None, "20M floor: admitted")
     for label, ev, env, raw in (
         ("OWNER-HOLD", {"session_id": owner, "tool_name": "Bash"}, None, None),
         ("UNHELD", {"session_id": free, "tool_name": "Bash"}, None, None),

@@ -48,6 +48,14 @@ claimed.
 - Existing suites stay green: test_mission_gate, test_mission_spend, test_mission_authority, test_gsd_mission_cost_hold,
   test_mission_continuity, test_gsd_mission.
 
+## Amendment A (2026-11-06): the gate was not running on GEX44 at all
+Measured on GEX44 after landing the change there: `~/.claude/settings.json` registers only
+`~/agora/mission-hooks/mission_hold_gate.js` (matcher "*", hold-only) for missions; session_budget_guard has no
+dispatcher lane (V-SBG-WIRED 0/3 lanes there), so decide's step 4 never ran for any GEX44 worker. Fix: step 4 is now
+`exposureDecision` (side-effect free, like holdDecision) and the standalone hold gate runs it after the hold check.
+Deploy: the agora copy (hook + lib) is replaced from the PP after a backup. Gates V-MG-HOLDGATE-DENIES-EXPOSURE and its
+under-cap control, driven through the hook's stdin entrypoint; the mutant without the call goes red.
+
 ## Never
 - Never deny on an unmeasured number (no transcript -> no exposure deny, as today).
 - Never let the gate write the record.
