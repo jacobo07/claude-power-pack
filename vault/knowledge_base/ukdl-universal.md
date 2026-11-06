@@ -17874,3 +17874,36 @@ Evidence: `resident_budget.json` `excluded_layers`: deferred_tools_delta 8,946-4
 
 **`PR-ZERO-MODEL-CLOSE-NEEDS-A-GATE-LINE-001`** -- A mission closes without a model call only when its packet carries a `done-gate:` line and the gate passes; a failing or out-of-root gate falls back to a normal epoch.
 Evidence: Phase 4 `gsd_mission.try_done_gate_close`, `tools/test_done_gate_close.py` 5/5, mutation (failure still closes) red.
+
+## GSD X Reconstruction Factory, S14 promotions (2026-11-06, coordinator laptop 95e69b3d)
+Landed from t1 `evidence/ascension/s14/promotions.json` (GEX44, branch t1/campaign, never pushed; t1 626d61ee). Same scope tags as the S12C/S13 section above. Of the 15 candidates, 9 land here (two HR candidates are landed as PR: an HR needs a sealed production stop the Owner adopts), 2 reinforce existing S13 entries (no new id), 3 are Wii/MWCC operator facts (knowledge vault `binary-reconstruction-fabric.md`), and 1, the breaker incident, is owned by `vault/specs/mission-gate-carried-spend.md` and `vault/specs/mission-closeout-reserve-launch.md`.
+
+### Process Rules
+**`PR-A-CAPABILITY-IS-INTEGRATED-ONLY-WHEN-THE-PRODUCTION-ENTRY-RUNS-IT-001`** [UNIVERSAL] -- A verified capability is not integrated until the real production entrypoint invokes it on an automatic, eligible workload. A producer whose output has no consumer on the production path is a defect, not a result. Detector: assert the consumer's call order inside the production entrypoint, plus one fresh end-to-end run from that entrypoint. Extends [[PR-FORWARD-AN-INTERMEDIATE-RESULT-TO-ITS-CONSUMER-001]] from a stage to the whole entrypoint.
+Evidence: S14 W2 (t1 d2befb04, tools/test_s14_w2.py): `hotpath.pre_model` placed before the model pool in `llm_fix run`; 2 fresh functions certified end-to-end at model USD 0. S13 W2 had 132 compilable functions that never reached exact-tail search.
+
+**`PR-RESOLVE-AN-ARTIFACT-BY-CONTENT-IDENTITY-WITH-EXPLICIT-UNKNOWN-001`** [UNIVERSAL] -- Identify an artifact by content (size + hash + parse), never by name or recorded path. A resolver answers one of four verdicts: RESOLVED, MISSING_EVIDENCE, UNCOVERED, CONFLICT. "Not found" is never proof of absence, and any proof that depends on the artifact fails closed when its identity is not recorded. Generalises [[T-PATH-IDENTITY-IS-NOT-RESOURCE-IDENTITY-001]] and [[T-SEARCHING-BY-NAME-MISSES-AN-ARTIFACT-THE-CODE-ALREADY-REFERENCES-001]] into a resolver contract.
+Evidence: S14 W6 (t1 d6070f2e, tools/test_s14_w6.py, 13 checks): `dol_elf_bridge.resolve` gives four distinct verdicts and rejects a mutated file with the same name; alias authority carries the artifact identity; hot-path admission fails closed.
+
+**`PR-PROMOTE-AN-OPERATOR-ONLY-ON-HIDDEN-TRANSFER-001`** [FACTORY] -- Promote a reconstruction family or operator to the production hot path only after a pre-registered train/hidden split shows exact transfer. Record the frozen cohort hash and the hidden-member results. If residuals were read before the rule was written, record that as a caveat ("not blind"). See [[T-A-TRAIN-SPLIT-CAN-SPAN-EVERY-PARAMETER-001]] for what the hidden members can prove.
+Evidence: S12C W3a 12/12, S13 W5 12/12 hidden; S14 W5 (t1 a0fb0348) n=3 with the caveat "residuals read pre-rule".
+
+### Traps
+**`T-A-RECOUNTED-CERTIFICATE-IS-NOT-A-NEW-CLOSURE-001`** [UNIVERSAL] -- A certificate that already existed, counted again, is not a new closure. Attribute a closure to an operator only by diffing receipts before and after it, and showing the verdict before the operator ran.
+Evidence: S14 W3 (t1 312b5a4e): S13 `batch.json` listed the 5 functions as PCT_BELOW before callee_linkage/decl_orders; frontier 1146 -> 1151 attributed by receipt diff.
+
+**`T-A-NUMBER-IN-A-COMMIT-MESSAGE-IS-A-CLAIM-001`** [UNIVERSAL] -- A count quoted in a commit message or closeout (frontier, pass rate, spend) is a claim from the moment it was written. Recount it from raw receipts at each phase. Append a dated correction instead of rewriting history.
+Evidence: S14 W0 (t1 c7bd424e): a recount from receipts confirmed 1146, but S13 closeout items 12 and 21 were stale and needed a correction note.
+
+**`T-A-CONDENSED-BRIEF-DROPS-OBLIGATIONS-001`** [UNIVERSAL] -- Condensing a long brief for a worker silently drops constitutional obligations (stop conditions, scope bans, done-gate items). Keep the brief verbatim in a file the worker reads, and cite its section in each answer.
+Evidence: S14 coordinator notes: the worker got the verbatim S14 brief file and no condensed version; earlier generations lost closeout items through condensation.
+
+**`T-A-GATE-MADE-REACHABLE-CARRIES-ALL-ITS-PREDICATES-001`** [UNIVERSAL] -- Registering a guard on a host where it never ran activates every predicate it has, not only the one being fixed. Before widening reach, diff each predicate against the authority it mirrors.
+Evidence: 2026-11-06, m-99fe8fd825d8. The exposure check was made to run on GEX44 (PP c470c414) to stop a budget overshoot. It also activated a dormant "2 x auto estimate" cap that `mission_spend.judge` never enforces under Owner authority. The worker was denied every call at 30.4M of 60M and sat BLOCKED for about 7.5 h. Fixed in PP 62e581fd; see `vault/specs/mission-gate-carried-spend.md`, Amendment B.
+
+**`T-CONTEXT-HEADER-CALLEES-OUTSIDE-EXTERN-C-ARE-MANGLED-001`** [WII-MWCC] -- A context header that declares callees outside `extern "C"` makes a C++ unit call the mangled symbol (`fn_X__FPvll`), while the target uses the plain name, so the result is RELOC_TARGET. Re-declaring the callee hits MWCC error 10199 (ambiguous overload). Use an `extern "C"` shim with exact int/void* parameters and cast the arguments.
+Evidence: S14 W3 (`evidence/ascension/s14/w3/residual.json`): fn_802252CC, fn_8022E800, fn_802257D8.
+
+### Reinforced (S14 evidence for existing entries; no new id)
+- [[T-REORDERING-CANNOT-ADD-A-MISSING-OPERATOR-001]]: S14 W3-W5 added 4 operators that can express the missing transformations (callee_linkage, decl_orders, stride_variants, VCALL_ELIDED_SELF). They closed 9 functions after S13 had shown that reordering at equal budget closed none (candidate PR-OPERATOR-EXPRESSIVENESS-OVER-ORDERING-001).
+- [[T-A-FIXTURE-PINNED-TO-A-COUNT-THAT-LEGITIMATELY-ADVANCES-001]]: S14 W7 (t1 6ca6f449). `tools/test_s13_w2.py` pinned >= 35 write-back rows and went red when S14 closures brought them down to 26. Pin a floor using the arithmetic of how the count can shrink (candidate T-FROZEN-COUNT-PIN-001).
