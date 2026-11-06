@@ -24,6 +24,24 @@
   - Rollback: `git reset --keep 94df931c`.
 - Use it next time instead of a hand `transition(event="hold_settled")`.
 
+**Update 2026-11-06 ~14:40 UTC (session 59d25469): arm gap FIXED on the laptop, canaried on GEX44, NOT deployed.**
+- Measured cause: `arm --no-launch` skipped both the milestone scaffold and the preflight. The GEX44 ledger has no
+  arm-preflight row for S16. The "unmeasured GSD state" theory was false: STATE.md without ROADMAP.md already reads
+  NO_PHASES.
+- Laptop `c44c925c` (spec `vault/specs/arm-no-launch-milestone.md`):
+  - every arm runs the scaffold and preflight;
+  - `arm --milestone-from <PHASES.md>` gives the scaffold its phases;
+  - at `--no-launch` a missing milestone is a warn;
+  - a mission worker's arm never scaffolds, and its launch refusal runs first.
+  - Laptop evidence: V-ANL 8/8, drills 5/5, plus the regression list in the commit.
+- GEX44 canary branch `canary/close`, worktree `/tmp/pp-close`, is 6016664a + **ac1f85af**:
+  - V-ANL 8/8, drills 5/5, PRE 23, SCAFFOLD 14, GOAL_CONTROL 27, CLOSE 17, ADM 43;
+  - MC 241/242 is pre-existing; first_worker_card needs pytest, which GEX44 lacks;
+  - real-host S16-shape smoke: 4 phases scaffolded, real gsd OK.
+- OWNER GO PENDING: ff the live clone 6016664a -> ac1f85af (same predicate and control as C1). Rollback
+  `git reset --keep 6016664a`.
+- Next generation arm: `arm --no-launch --milestone-from <gen3>/S17-PHASES.md` (no hand `ensure`).
+
 **CURRENT (2026-11-06 ~13:15 UTC, session 177efe77) — read this first.**
 
 **Generation S16 "Natural Evidence Mining, Generative Family Discovery & Reconstruction Yield Compounding" is RUNNING.**
