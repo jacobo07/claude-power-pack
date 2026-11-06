@@ -56,6 +56,18 @@ dispatcher lane (V-SBG-WIRED 0/3 lanes there), so decide's step 4 never ran for 
 Deploy: the agora copy (hook + lib) is replaced from the PP after a backup. Gates V-MG-HOLDGATE-DENIES-EXPOSURE and its
 under-cap control, driven through the hook's stdin entrypoint; the mutant without the call goes red.
 
+## Amendment B (2026-11-06): the gate capped on an AUTO estimate under Owner authority
+Measured, m-99fe8fd825d8 (S14): once Amendment A made the exposure check run on GEX44, `hardCap` took
+2 x `token_estimate` (src `auto`, the supervisor's rolling envelope) as a hard line. The cap was 30,402,086 while the
+authority was 60,000,000. Every call was denied from about 01:19Z, and the worker ended BLOCKED/OWNER_BOUNDARY for about
+7.5 h. `mission_spend.judge` never trips on that case; it returns `recompile`. Fix (PP 62e581fd laptop / 2a14b1fd
+GEX44): `hardCap` skips the auto estimate when `authority_tokens` is set. Gates
+V-MG-AUTO-ESTIMATE-UNDER-AUTHORITY-ALLOWED and V-MG-CONTROL-OPERATOR-ESTIMATE-DENIES. Residual: an OPERATOR estimate
+under authority can still deny where `judge` would renew it on a moved fingerprint (lease). The gate cannot see the
+fingerprint, so this stays strict.
+Lesson: a gate made reachable on a new host carries ALL of its predicates there, not only the one being fixed. Before
+widening a gate, diff each cap against the breaker it mirrors.
+
 ## Never
 - Never deny on an unmeasured number (no transcript -> no exposure deny, as today).
 - Never let the gate write the record.
