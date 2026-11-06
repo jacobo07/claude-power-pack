@@ -17821,3 +17821,41 @@ Evidence: L8, `policy.test.ts` imported `isPlannerType`, absent from the live re
 Evidence: CCR_MAIN_CANARY default-on: source 4a7939bc was committed epochs before it was live; live only at release 0.1.0-265d3d55 (L8: unset->enforce, =0->off, rollback to b15bfc3d verified).
 
 **`T-LAPTOP-TEMP-WORKTREE-FILES-VANISH-001`** -- OBSERVED ONCE, cause unknown: plugin.json, hooks/hooks.json and kernel/HARD-RULES-DIGEST.md vanished from a worktree under %TEMP%/claude between test runs. Do not promote; watch for a %TEMP% cleaner.
+
+## GSD X Reconstruction Factory, S12C + S13 promotions (2026-11-06, coordinator laptop 95e69b3d)
+Landed from t1 `evidence/ascension/s12c/promotions.json` and `evidence/ascension/s13/promotions.json` (GEX44, branch t1/campaign, never pushed; t1 15cbc418). Scope tags: [UNIVERSAL] = any software, [FACTORY] = any binary-reconstruction factory, [WII-MWCC] = Wii/GameCube MWCC decomp only. Wii-local facts live in `~/.claude/knowledge_vault/domain/binary-reconstruction-fabric.md`, not here.
+
+### Process Rules
+**`PR-FORWARD-AN-INTERMEDIATE-RESULT-TO-ITS-CONSUMER-001`** [UNIVERSAL] -- A stage that computes a useful intermediate (a repaired source that compiles, a candidate, a fact) must persist it where the next stage reads it, in the same change that produces it. A result that is computed, scored and dropped is lost work that every later run pays again.
+Evidence: S13 W2 (t1 dc7b90fe): the fixed point compiled 131 of 477 NO_COMPILE functions but never wrote the sources back, so exact-tail search never saw them; after the write-back the first exact closure from that path followed (W3 e4b2b0c5, fn_80331454), then 9 more.
+
+**`PR-A-ROUTE-REPORTS-ITS-LIFECYCLE-WITH-A-NAMED-EXECUTOR-001`** [FACTORY] -- Every deterministic route reports eligible, admitted, executed, candidate, compiled, improved and exact as separate counts, and names the executor of each stage. A stage with no executor is "projected"; its savings are never "saved". Instance of [[T-PRODUCERLESS-FIELD-001]] on the consumer side.
+Evidence: S13 W6 (t1 eff5d1d9, `evidence/ascension/s13/w6/measure.json`): regime_router's FAMILY stage existed since S12C with no input file and no executor, so 0 functions ever ran there while the stage looked wired.
+
+**`PR-CONSUMERS-READ-THE-CANONICAL-FRONTIER-001`** [FACTORY] -- A router, cohort builder or maturity check decides "resolved" from the canonical frontier, never from a private view coupled to one lane.
+Evidence: S12C W1 (`evidence/ascension/s12c/w1c_router_measurement.md`, tools/test_s12c_w1.py): 14 CXX-certified functions were routed back to model search because maturity read a C-lane terminal.
+
+**`PR-CERTIFY-IDENTICAL-DONORS-AS-AN-EQUIVALENCE-CLASS-001`** [FACTORY] -- When several library donors have byte-identical bodies and identical renamed relocations, certify by equivalence class (identity stays non-unique, the class is recorded); a member with a disputed extent stays unresolved.
+Evidence: S12C W3b (tools/test_s12c_w3b.py, `evidence/cert1-ogws/receipts.jsonl`): 12 judged, 11 certified, 1 refused EXTENT_DISPUTED, 0/12 negatives passed.
+
+**`PR-RETYPE-THE-DECLARATION-NOT-THE-BODY-001`** [WII-MWCC] -- m2c types a synthetic-struct field it later dereferences as `s32 unkNN`; MWCC rejects with POINTER_EXPECTED. Retype the declaration as a pointer. Compiles gained, exactness separate.
+Evidence: S12C W2 (`evidence/ascension/s12c/w2/summary.json`): 498 population, +7 compiles, 0 lost, 0 exact (best 98.0%).
+
+### Traps
+**`T-REORDERING-CANNOT-ADD-A-MISSING-OPERATOR-001`** [UNIVERSAL] -- When a search over a finite move set exhausts or converges to the same best node, re-ordering the moves by a smarter policy changes nothing. The bottleneck is the move vocabulary. Measure exhaustion before buying a scheduler.
+Evidence: S13 W4 (t1 32cd41c6, tools/test_s13_w4.py): causal ordering == frozen baseline at equal budget (6 fns d2/100, 3 fns d3/500); 17/20 EXHAUSTED in <= 99 evals; missing classes DECL_ADD, CONTROL_FLOW, TYPE_CHANGE.
+
+**`T-A-RENAMED-SYMBOL-IS-AN-ASSUMPTION-UNTIL-ITS-BYTES-ARE-COMPARED-001`** [FACTORY] -- Renaming symbols to match the target turns a compile into "exact" only if the aliasing itself is evidenced (byte-identical bodies of both sides). Until then the verdict carries the alias assumption and is not counted. A comment that describes the bytes is not the bytes.
+Evidence: S13 W5/W8 (t1 584a57a8, dc5bd4d8, 15cbc418): 15 ARRAY_GUARD_CALL members were alias-conditional; W8 first refused (target bytes not found, comments only), then applied after a 22/22-word compare against the target DOL plus a refused 1-byte mutant; frontier 1131 -> 1146.
+
+**`T-A-TRAIN-SPLIT-CAN-SPAN-EVERY-PARAMETER-001`** [UNIVERSAL] -- A pre-registered "first N" train split can already cover every parameter value. Hidden members then prove transfer to new instances, not to unseen values. Say which, and pin it in the gate.
+Evidence: S13 W5 (tools/test_s13_w5.py): A in {24,28,32} all appeared in train; the first draft of the report claimed extrapolation.
+
+**`T-A-FIXTURE-PINNED-TO-A-COUNT-THAT-LEGITIMATELY-ADVANCES-001`** [UNIVERSAL] -- A gate pinned to a frontier count goes red when the frontier legitimately grows. Pin to receipts, or rebuild the count independently.
+Evidence: S12C W3b: tools/test_s12c_w1/w2 broke after the frontier moved; S13 W3 relaxed frozen pins to ">=" (t1 2fc21c2a).
+
+**`T-SEARCHING-BY-NAME-MISSES-AN-ARTIFACT-THE-CODE-ALREADY-REFERENCES-001`** [UNIVERSAL] -- "Not found on this host" after a name search (`*Tennis*.dol`) is not absence. Resolve the artifact from the references that already exist (code constants, manifests, the knowledge vault) before declaring evidence missing.
+Evidence: S13 W8 (t1 dc5bd4d8) declared the target bytes absent; the DOL was at the path `modules/recon_fabric` already referenced, and `knowledge_vault/domain/binary-reconstruction-fabric.md` already named it (SportsPackEP.dol). Found by the coordinator in 3 commands.
+
+**`T-AN-ORACLE-FROM-A-NEIGHBOURING-COMPILER-VERSION-001`** [WII-MWCC] -- GC/2.7 mwcc oracles are not truth for GC/3.0a5.2 (code identical on 13/18 units). Compare executable-section bytes, never whole objects.
+Evidence: S12C W4 (`evidence/ascension/s12c/w4/mwcc_verdict.md`, tools/test_s12c_w4.py); pinned cc38fa03 differs from shelf 3.0a5.2 on 1/18.
