@@ -17918,3 +17918,18 @@ Evidence: S15 W2-W4 (t1 9f002e2a, 57a8e3a1, 8829e574). Forwarding the argument d
 ### Reinforced (S15 evidence for existing entries; no new id)
 - [[PR-PROMOTE-AN-OPERATOR-ONLY-ON-HIDDEN-TRANSFER-001]]: S15 obeyed it. cmp-forward@1 was frozen and pre-registered (PREREG.md in t1 3e96ccde, before the HELD run in 57a8e3a1). It closed 0/10 HELD, so it stays DEV-only n=1, in the hot-path tail only, and is not promoted.
 - [[T-A-NUMBER-IN-A-COMMIT-MESSAGE-IS-A-CLAIM-001]]: the S15 closeout and promotions say "60 H2 sealed counted". `hotpath.attempt` counts one `h2_guard` hit per (function, method), so 60 means 20 sealed functions x 3 methods. None of them was compiled or judged. Before quoting a guard counter, name its unit.
+
+## GSD X Reconstruction Factory, S16 promotions (2026-11-07, coordinator laptop 6451ca22)
+Source: t1 `evidence/ascension/s16/promotions.json` and `closeout.md` (t1 60e64922; GEX44, private). The mission is m-29dd612ed825. Verdict: scientific objective UNMET, operationally complete. Frontier 1156 -> 1156/1797, 0 new exact certificates, NO CHAMPION, spend 23,137,860 of 60M processed, USD 0. The coordinator re-ran these on GEX44 on 2026-11-07, all exit 0: projection check (FRONTIER_CHECK OK), test_s16_w0..w6 (w5 11/11), test_cert_cxx_controls 28/28 with 16/16 mutants. The H2 manifest sha is still 922f214e. No baseline candidate. Not landed: the SDA literal-equivalence candidates. They re-ask the S9 question the Owner answered NO (2026-11-02), so they go to the Owner as a re-ask with new evidence, not as a rule.
+
+### Traps
+**`T-A-NATIVE-IMPROVED-IS-NOT-EXACT-001`** [UNIVERSAL] -- A transfer measured as native match % can climb to 99.8 and still certify nothing. The last differing row can be one that the judge refuses by policy. Report native-improved, compiles and certified as three separate columns, and never call a native gain a closure.
+Evidence: S16 W2 route A (t1 43274c3a, 41310f63). The group 2eea363c62d3 generator was frozen by commit before the hidden read and moved 3/3 hidden functions from 72.90 to 99.83. It certified 0/3 (cert_cxx PCT_BELOW). The one remaining row is an `lfd` against split label lbl_80516B18 where the compiler pools the literal as @70, which is the NEAR:SDA_RELOCATION class.
+
+### Process rules
+**`PR-INVALIDATE-A-KEYED-CACHE-WHEN-A-FIXTURE-REWRITES-ITS-KEY-001`** [UNIVERSAL] -- When a cache is keyed by path or name, a test that rewrites the same key with new content must clear the cache. If a control goes red after a cache or performance change, call it a fixture defect only when two things are proven: the pre-change commit is green on a scratch worktree, and the guard predicate is unchanged. Put such a suite in a standing gate, or its red goes unseen.
+Evidence: S16 W5 (t1 ae778f53). cert_cxx `_H2_CACHE` is path-keyed. Control `guard/nonmember-admitted` was red from ae3da98d (2026-11-03) until S16, which is 28/28 at ae3da98d^ and 27/28 after it. No standing gate ran the suite. The fix was in the fixture only (clear the cache): 28/28, 16/16 mutants, guard untouched.
+
+### Reinforced (S16 evidence for existing entries; no new id)
+- [[PR-POSITIVE-CONTROL-BEFORE-FREEZE-001]]: S16 route C. The natural DECL_ADD operator reproduced 2/6 of its own natural controls (single hunk sufficient=false x6), which is INSTRUMENT_FAIL. DEV then closed 0/4 applicable. A run made after its own controls failed is not evidence about the population.
+- [[PR-PROMOTE-AN-OPERATOR-ONLY-ON-HIDDEN-TRANSFER-001]]: S16 obeyed it. With 0 attributed certificates on hidden, the recorded outcome was NO CHAMPION (w3/champion.md), and W4 degraded to a measure-only sweep: 35 applicable, 15 compile, 0 certified. Acceptance was not tuned after the results were seen.
