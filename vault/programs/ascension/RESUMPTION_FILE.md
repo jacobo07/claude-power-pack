@@ -19,7 +19,15 @@
 - Watch: `topology --mission m-6d8ccba44d39`; K1 at the W0 census; the yield table in t1 evidence/ascension/s17/closeout.md. At its checkpoint: judge it, then land promotions.
 - Risk: the model pool and the worker share the Owner's subscription usage windows.
 - 13:19Z: W0 DONE (t1 e1b0f14c), K1 PASS (UNKNOWN 0%). Census: 189 compile under sd8 (REG_ONLY 140, INSERT_DELETE 127, counted with the COMPILES_NO_MATCH residuals), 345 stop on mwcc (IMPLICIT_CONVERSION 65, ILLEGAL_OPERANDS 61, NOT_STRUCT 53, UNDEFINED_IDENT 48, ...). W1 partial: 40/227 newly compiled, 0 objdiff-100. Epoch 2, 6.5M spent.
-- **CORRECTION to the 12:20 entry:** the GEX44 recall index was NOT stale for days. My own canary query (/tmp/pp-s16ukdl) spawned a refresh that re-keyed the SHARED index onto the canary's paths (PP_ROOT comes from the module location; the state dir was shared). Fixed on the laptop: `fe174676`, a non-installed copy uses recall-worktrees/<hash>. Gates: sources 8/8 with a red drill, prompt_recall 34/34, eval 11/11. Bridge 5/6 is pre-existing (same at HEAD). NOT deployed to GEX44: a live-clone deploy needs the Owner's go.
+- **CORRECTION to the 12:20 entry:** the GEX44 recall index was NOT stale for days. My own canary query (/tmp/pp-s16ukdl) spawned a refresh that re-keyed the SHARED index onto the canary's paths (PP_ROOT comes from the module location; the state dir was shared). Fixed on the laptop: `fe174676`, a non-installed copy uses recall-worktrees/<hash>. Gates: sources 8/8 with a red drill, prompt_recall 34/34, eval 11/11. Bridge 5/6 is pre-existing (same at HEAD).
+- **DEPLOYED (Owner "y")**: GEX44 live PP ff 6323f904 -> **1788f8a1** (the fe174676 patch) at 13:35:40Z.
+  - Canary smoke, end to end: a query from the canary used recall-worktrees/ca53473197f7, while the shared recall.db mtime/size and last_attempt were unchanged. Sources 8/8, prompt 34/34, bridge 5/6 (pre-existing, same red).
+  - The predicate caught its control (1) and read 0 for real.
+  - Live: canonical=True, the shared dir is in use, recall 1+ hits on the topic query and 0 on the control.
+  - Canary worktree and its index removed; branch canary/recall-fix kept. Rollback: `git reset --keep 6323f904`.
+- **STALL found and cleared**: the epoch-2 worker b7f38b5b ended its turn at 13:15:36Z, waiting on a Monitor for tools/s17_w1_search.py. The search finished at 13:28Z, and the worker was never woken. The owner process (claude bg-spare) stayed alive, and the 13:30Z sweep logged GOOD_PROGRESS.
+  - Woken at 13:41Z through `decide --id C1-WAKE-W1-SEARCH` (labelled COORDINATOR NOTE, not an Owner decision). woke=True, and the transcript is growing again.
+  - Debt: a Monitor does not wake a bg-spare worker across turns, and the sweep does not detect a live-idle owner whose wake never comes (unit-gated only since S9).
 
 **Earlier 2026-11-07 ~12:20 UTC (session 6451ca22): PROGRAMME CLOSED (Owner "all rec", uuid 552ad9aa, 12:05:13Z).**
 - Owner took all four recommendations:
