@@ -5,7 +5,47 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-07 ~17:00 UTC (session 280f506f): S17 CLOSED +40 (frontier 1196); Generation S18 RUNNING (Owner "approve el plan").**
+**CURRENT — 2026-11-07 ~20:05 UTC (session d45b2056): Owner chose "S19 IC-only pilot" + "Yes, sync". S19 RUNNING; UKDL synced to GEX44.**
+- Owner answers (AskUserQuestion, session d45b2056, ~19:10Z): "S19 IC-only pilot (Recommended)" and "Yes, sync (Recommended)".
+- S19 setup:
+  - gen3 `b7bef52d`: S19-BRIEF-VERBATIM.md (question + chosen option verbatim, sha 7f2a1389), S19-PHASES.md, ASCENSION-PLAN section. S18 milestone archived as `s18-closed-1cert-*`; a 2-phase milestone (W8, W9) scaffolded 0/2.
+  - Prompt `/tmp/s19_command.txt` (sha a2d79aef). `retarget` 71ffe228 -> 5236482a rc=0. `checkpoint --clear` rc=0.
+  - K3 is a full partition: 0 or 1 of 20 ends the generation and the programme closes; >= 2 scales to the other 25. It is evaluated only when judged == 20.
+- S19 launched: epoch 6, worker **c21678cd**. W8 cohort frozen in t1 `2475849b` (seed 20261109) before any model call. Spend 32.2M of 40M at 20:03Z.
+- **UKDL synced (Owner "y")**: live PP ff c22821be -> **00022d52** at 20:00:37Z (the laptop 254b2434 UKDL blob, +9/-0; live sha matched the laptop's pre-S18 blob 2f540485).
+  - Canary worktree /tmp/pp-s18ukdl (branch `canary/ukdl-s18`): donegate 18/18, prompt_recall 34/34, sources 8/8, eval 11/11. With its own index: topic 2+2, control 0; shared recall.db size/mtime unchanged.
+  - The predicate caught its control (1), then read 0.
+  - Post-deploy: live recall `--refresh` changed 1 file; topic 2+2, control 0.
+  - gsd-autorun-ledger has 0 rows after the ff (527 historical supervise_error rows = the control), so post-deploy supervise_error is UNOBSERVED.
+  - Rollback: `git reset --keep c22821be`.
+- NEXT: watch the S19 W8 pilot. Check supervise_error on the first sweep pass. At the S19 checkpoint, judge it. If K3 < 2, the programme closes: `gsd_mission.py close --outcome COMPLETED` needs an Owner turn.
+
+**Earlier — 2026-11-07 ~19:05 UTC (session d45b2056): S18 at CHECKPOINT_COMPLETE, judged (coordinator AGREES), promotions landed.**
+- t1 `8e79f3cf`, gen3 `d3db9974`. Hold kind checkpoint. Spend 31.4M of 40M.
+- Re-run on GEX44, all exit 0: FRONTIER_CHECK OK, S18_W6_PASS, S18_W7_PASS (every promotion has a receipt), cert_cxx 28/28 + 16/16. The S18 commits touch none of the t1 residue.
+- Result: **frontier 1196 -> 1197**.
+  - W5 0/30; W6 1/80 (IC 1/20 held, IO/NS/UI 0/20 retired); W7 re-sweep 0.
+  - llm_fix 11.2M fresh / 177.8M gross, notional 144.90 USD; 0.089 certified per 1M fresh.
+- Landed:
+  - UKDL `254b2434` via a private index (T-KILL-RULE-MUST-PARTITION-ITS-OUTCOMES-001, T-ZERO-COST-ERROR-ROWS-ARE-NOT-A-NEGATIVE-001); the foreign hunk is unchanged at 4129/40.
+  - KV `6a661c0` (KN-S18 x3).
+  - Recall after `--refresh`: topic queries return the ids at rank 1 and rank 3; the control returns neither. GEX44 UKDL is NOT synced (a live-clone deploy, Owner).
+- Falsifier in hand: the closeout's next action proposes a second pass over the 51 functions at >=95%. W5 already ran exactly that lever on the top 30 IMPROVED: 0/30, all NO_GAIN. Only the 45 unseen IMPLICIT_CONVERSION functions are untested.
+- OPEN Owner question: (a) S19 = an IC-only 20-fn pilot inside the remaining ~8.6M, with a partitioned K3; or close; (b) sync the UKDL to the GEX44 live clone.
+
+**Earlier — 2026-11-07 ~17:40 UTC (session d45b2056, successor of 280f506f): S18 W6 ran, epoch 5, worker 983b8340.**
+- W5: 0/30 on the residual pass; kill gate fired (t1 `0ae39893`).
+- W6 IMPLICIT_CONVERSION pilot (typectx, frozen `e9de731f`): 1 SOLVED + 19 IMPROVED of 20 (`w6_ic_run.log`).
+  - certify-solved: 1/1 CERTIFIED fn_8020AFB4 (controls OK, neg a2 0). FRONTIER_CHECK OK, t1 `0dd1c465`.
+  - Cost: 2.28M fresh / 40.0M gross, notional 30.82 USD. Mission spend 26.3M of 40M; llm_fix tokens are not counted in it.
+- **Plan gap (mine):** the brief defines 0/20 (retire) and >=2/20 (scale) but not 1/20. The worker read it as hold-and-next-class, which I agree with. The class is neither scaled nor retired.
+- ILLEGAL_OPERANDS pilot (`462302e6`). Run 1 judged 2/20; the other 18 were AGENT_ERROR 'sig' at zero cost: the typectx cache raced on its threaded first load.
+  - The worker fixed it itself (`783b47ce`, lock + test_s18_w6) and resumed. The resume judged 20/20: **0 SOLVED, 20 IMPROVED**, 32.21 USD. K3 retires the class (`9bfa9919`).
+- NOT_STRUCT pilot running since 18:02Z. UNDEFINED_IDENT is frozen next. Spend 29.0M of 40M at 18:03Z.
+- At the checkpoint, check: the W6 rows are in closeout.md (absent at 18:03Z); the 1/20 reading is recorded; AGENT_ERROR rows are not counted as K3 evidence.
+- NEXT: judge NOT_STRUCT and UNDEFINED_IDENT (K3), then the S18 checkpoint (judge closeout, land promotions).
+
+**Earlier — 2026-11-07 ~17:00 UTC (session 280f506f): S17 CLOSED +40 (frontier 1196); Generation S18 RUNNING (Owner "approve el plan").**
 - S17 closeout judged; the coordinator AGREES. Gates re-run on GEX44, all exit 0: FRONTIER_CHECK OK, tools/test_s17_w2.py S17_W2_PASS, cert_cxx 28/28 + 16/16.
   - t1 0c715693 / 2db97ca2. REG_ONLY 17/103, INSERT_DELETE 23/86.
   - Caveats: llm_fix claude -p tokens are not in the mission spend (yield bound 0.29-2.0 per 1M); counters.json is 1 below the projection (pre-existing).
