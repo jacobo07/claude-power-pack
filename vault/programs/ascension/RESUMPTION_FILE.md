@@ -16,7 +16,16 @@
   - scaled 14/83, so **17/103 certified, frontier 1156 -> 1173** (t1 `6073a355`, check OK), ~108 notional USD;
   - INSERT_DELETE pilot: llm_fix 4 SOLVED, 16 IMPROVED of 20, not yet certified.
 - STALL #2: the worker's wait loops (`until ! pgrep -f "llm_fix run ..."`) matched their own command line and never ended. I killed both pids and woke the worker with `decide --id C2-WAKE-W2-ID-PILOT` (woke=True); the transcript moved at 15:53Z. Debt: worker waits must use a pid or a sentinel file, never `pgrep -f` on a string the waiting shell contains.
-- NEXT: at the W2 checkpoint, judge the S17 closeout (now including W2), then land promotions.json via the private index.
+- 16:14Z: INSERT_DELETE pilot **4/20 certified** (t1 `0265c2af`, K3 passed). Scaling to the remaining 66 is running (`fd165102` froze them).
+- **Owner "go ahead" (16:0xZ) to (a) S18 and (b) the wait fix:**
+  - (b) DONE and LIVE: hook `hooks/self_match_pgrep_guard.js`, spec `vault/specs/self-match-pgrep-guard.md`, V-PGREP 23/23.
+    - Review fixes F2/F3/F4 are proven to discriminate: the old file fails 4.
+    - On GEX44 it lives in `~/agora/mission-hooks/` (sha 539751f7) and is registered in `~/.claude/settings.json` PreToolUse Bash. Backup `settings.json.bak-pgrep-20261107T161309Z`.
+    - A real `claude -p` on GEX44 was denied. Rollback: remove the entry plus the file.
+  - (a) Plan `S18-PLAN-PROPOSAL.md` (this dir): W5 compounds the IMPROVED (residual fed back); W6 runs the model on NO_COMPILE with type context (K3 per class); W7 folds and closes out.
+    - It runs as a retarget of m-6d8ccba44d39 at the W2 checkpoint, inside the 40M.
+    - A top-up beyond the 40M is a separate Owner question.
+- NEXT: at the W2 checkpoint, judge the S17 closeout (now including W2), then retarget for S18 + `checkpoint --clear`, then land promotions.json via the private index.
 
 **Earlier — 2026-11-07 ~14:05 UTC (session 6451ca22): S17 at CHECKPOINT_COMPLETE, 0 certified; Owner question OPEN (answered above).**
 - m-6d8ccba44d39 declared CHECKPOINT_COMPLETE at 13:43:45Z (owner hold set). t1 `e97f9c2b`. Spend 8.07M of 40M.
