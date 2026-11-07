@@ -17933,3 +17933,16 @@ Evidence: S16 W5 (t1 ae778f53). cert_cxx `_H2_CACHE` is path-keyed. Control `gua
 ### Reinforced (S16 evidence for existing entries; no new id)
 - [[PR-POSITIVE-CONTROL-BEFORE-FREEZE-001]]: S16 route C. The natural DECL_ADD operator reproduced 2/6 of its own natural controls (single hunk sufficient=false x6), which is INSTRUMENT_FAIL. DEV then closed 0/4 applicable. A run made after its own controls failed is not evidence about the population.
 - [[PR-PROMOTE-AN-OPERATOR-ONLY-ON-HIDDEN-TRANSFER-001]]: S16 obeyed it. With 0 attributed certificates on hidden, the recorded outcome was NO CHAMPION (w3/champion.md), and W4 degraded to a measure-only sweep: 35 applicable, 15 compile, 0 certified. Acceptance was not tuned after the results were seen.
+
+## GSD X Reconstruction Factory, S17 promotions (2026-11-07, coordinator laptop 280f506f)
+S17 "Yield First" closed at t1 0c715693. It certified 40 (all from the W2 model pilot), and the frontier went from 1156 to 1196/1797. The coordinator re-ran the gates on GEX44, all exit 0: FRONTIER_CHECK OK, S17_W2_PASS, cert_cxx 28/28 + 16/16.
+
+### Traps
+**`T-COMPILED-CLASS-FIX-NOT-CERTIFIED-001`** [UNIVERSAL] -- A class-wide compile fix raises the compiled count while the certified count stays 0, because what is left is INSERT_DELETE instruction count plus register allocation. Judge a class fix by certified, on a frozen dev/hidden split, never by compiled.
+Evidence: S17 W1 (t1 e97f9c2b). voidptr_arith, stack_decl and long_to_ptr compiled 40/227 of the top-4 NO_COMPILE classes, and certified 0. Deterministic search (400 evals, depth 3) over the 17 compiled functions at >= 60% gave 0 SOLVED (best 98.1). This is the third confirmation, after S1 (6d7cbf82) and S8.
+
+**`T-STOP-RULE-WRONG-POPULATION-001`** [UNIVERSAL] -- A yield stop rule computed on one lever and one population must not gate a different lever on a different population. Scope every stop rule to the lever and population it measured.
+Evidence: S17. The stop rule measured W1 (deterministic compile fixes on NO_COMPILE, 0 certified), and it skipped W2, a model pilot on the COMPILES_NO_MATCH residuals. After an Owner reopening, W2 certified 40: REG_ONLY 17/103 and INSERT_DELETE 23/86 (t1 653fb6fe, 0c715693). Pilot rates of 15% and 20% held at scale (17% and 29%).
+
+**`T-SELF-MATCHING-PGREP-WAIT-001`** [UNIVERSAL] -- `until ! pgrep -f "<x>"` inside a Bash tool call never ends. The tool runs the command inside a shell whose own command line holds <x>, and pgrep excludes only itself. `pkill -f "<x>"` kills the caller. Wait on a pid (`while kill -0 $PID`), on a log sentinel, or on a pattern that cannot match itself (`[l]lm_fix`).
+Evidence: S17 W2 on GEX44. llm_fix finished at about 15:46Z, and the worker sat idle until the coordinator killed both of its loops at 15:52Z. It is now enforced: `hooks/self_match_pgrep_guard.js` (PP 3d71c9de, V-PGREP 23/23), live in GEX44 mission-hooks, where a real `claude -p` call was denied.
