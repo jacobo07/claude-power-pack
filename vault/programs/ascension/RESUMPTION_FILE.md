@@ -5,7 +5,16 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-07 ~13:10 UTC (session 6451ca22): PROGRAMME REOPENED, Generation S17 "Yield First" RUNNING.**
+**CURRENT — 2026-11-07 ~14:05 UTC (session 6451ca22): S17 at CHECKPOINT_COMPLETE, 0 certified; Owner question OPEN.**
+- m-6d8ccba44d39 declared CHECKPOINT_COMPLETE at 13:43:45Z (owner hold set). t1 `e97f9c2b`. Spend 8.07M of 40M.
+- Coordinator re-ran on GEX44, all exit 0: test_s17_w0/w1/w3 PASS, cert_cxx 28/28 + 16/16 mutants, FRONTIER_CHECK OK. Frontier 1156/1797 unchanged.
+- W1, frozen dev/hidden per class: compiled 40/227, native >=90% 15, certified 0. K2 retired all 4 classes (UNDEFINED_IDENT 26/48, ILLEGAL_OPERANDS 13/61, IMPLICIT_CONVERSION 1/65, NOT_STRUCT 0/53).
+- The yield stop rule then fired and **W2 was skipped**. W3 hotpath sweep: 0/621.
+- Plan defect (mine): the stop rule gated W2, a model pilot on the 189 COMPILING residuals (REG_ONLY 140, INSERT_DELETE 127), on W1's yield, and W1 worked on a different population (NO_COMPILE). The uncapped model lever was never tested.
+- **OPEN Owner question:** run a W2-only model pilot in this mission? It has about 32M of authority left. The pilot is 20 REG_ONLY functions; K3 0/20 ends it; >=2/20 scales to the class, then INSERT_DELETE. How: `retarget --command-file` (a W2-only prompt), then release the checkpoint.
+- Either way: judge the S17 closeout and land t1 evidence/ascension/s17/promotions.json via the private index.
+
+**Earlier — 2026-11-07 ~13:10 UTC (session 6451ca22): PROGRAMME REOPENED, Generation S17 "Yield First" RUNNING.**
 - Owner, verbatim: "y to both, and infinite capital for the model, because it'd all be spent on CLI subscription tokens" (uuid 69ae6e27, 12:56:58Z).
 - Premise verified: llm_fix runs `claude -p`, and GEX44 has no ANTHROPIC_API_KEY. Its USD is the notional figure on the subscription. K3 and the yield stop rule still bind.
 - gen3:
