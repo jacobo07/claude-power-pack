@@ -11,6 +11,11 @@
 - `retarget` rc=0 (361fb627 -> 959178ac, retargets=1). `checkpoint --clear` rc=0 (waited 2226 s); hold None, seq 22. `release` was not needed.
 - Relay resumes the SAME session: epoch stays 2 and owner b7f38b5b. The prompt is in the transcript at 14:25:41Z, and the worker is active at 14:27Z. Do not wait for "epoch 3" as the launch signal.
 - GSD ROADMAP: Phase 3 (W2) is still `[ ]` (SKIPPED), the open phase.
+- 15:52Z progress, epoch 3 (worker e4371815):
+  - REG_ONLY pilot 3/20 (K3 passed);
+  - scaled 14/83, so **17/103 certified, frontier 1156 -> 1173** (t1 `6073a355`, check OK), ~108 notional USD;
+  - INSERT_DELETE pilot: llm_fix 4 SOLVED, 16 IMPROVED of 20, not yet certified.
+- STALL #2: the worker's wait loops (`until ! pgrep -f "llm_fix run ..."`) matched their own command line and never ended. I killed both pids and woke the worker with `decide --id C2-WAKE-W2-ID-PILOT` (woke=True); the transcript moved at 15:53Z. Debt: worker waits must use a pid or a sentinel file, never `pgrep -f` on a string the waiting shell contains.
 - NEXT: at the W2 checkpoint, judge the S17 closeout (now including W2), then land promotions.json via the private index.
 
 **Earlier — 2026-11-07 ~14:05 UTC (session 6451ca22): S17 at CHECKPOINT_COMPLETE, 0 certified; Owner question OPEN (answered above).**
