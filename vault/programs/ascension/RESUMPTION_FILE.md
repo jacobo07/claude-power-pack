@@ -17,6 +17,13 @@
   - gen3 `fbc25945`: S18-BRIEF-VERBATIM.md (plan + Owner approval verbatim + launch facts), S18-PHASES.md, ASCENSION-PLAN section; S17 milestone archived to `.planning/milestones/s17-closed-40cert-*`; 3-phase milestone 0/3. Trap: `ensure` returns `none` while GSD reads the old milestone as OK, so archive it first.
   - Retarget 959178ac -> 71ffe228 (`/tmp/s18_command.txt`), checkpoint cleared, hold None.
   - The S18 prompt was delivered to worker **54e19d1a** at 16:53:11Z. Mission spend before S18: 16.4M of 40M.
+- **UKDL synced to GEX44 (Owner "y", ~17:00Z): live PP ff 1788f8a1 -> c22821be at 17:01:35Z.**
+  - The commit is the laptop HEAD UKDL file, additions only (+137 lines: S9, S10-S11H, S12C+S13, S14, S15, S17); the diff removed 0 lines.
+  - Canary on the same commit (worktree of the live clone, branch `canary/ukdl-sync`, kept): donegate 18/18, prompt_recall 34/34, sources 8/8, eval 11/11. Canary recall used its own index: topic 2/2, control 0, and the shared recall.db mtime and size were unchanged.
+  - The predicate caught its control (1) before the ff.
+  - Post-deploy: live recall topic 2, control 0; the sweep pass at 17:04:12Z finished with 0 supervise_error; S18 worker 54e19d1a was writing at 17:05:44Z.
+  - Rollback: `git reset --keep 1788f8a1`.
+  - Closes debt "S12C-S15 UKDL absent on GEX44". Note: `canary/*` branches live in the live clone, not in the bare repo (the bare repo lacks 1788f8a1).
 - NEXT: watch S18 (W5 IMPROVED compounding first). At its checkpoint, judge it and land promotions.
 
 **Earlier — 2026-11-07 ~14:30 UTC (session 280f506f, successor of 6451ca22): Owner "y" to the W2-only pilot; S17 RUNNING again.**
