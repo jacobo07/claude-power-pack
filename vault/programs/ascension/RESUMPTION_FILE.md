@@ -5,7 +5,27 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — Update 2026-11-07 ~11:50 UTC (session 6451ca22): S16 closeout JUDGED, promotions landed.**
+**CURRENT — 2026-11-07 ~12:20 UTC (session 6451ca22): PROGRAMME CLOSED (Owner "all rec", uuid 552ad9aa, 12:05:13Z).**
+- Owner took all four recommendations:
+  - the programme is closed, with no S17;
+  - the SDA NO of 2026-11-02 stands;
+  - S16 is closed;
+  - the lessons are synced to GEX44.
+- S16 m-29dd612ed825: `gsd_mission.py close --outcome HALTED` with the owner turn verified (transcript copied to GEX44 `~/.claude/projects/laptop-coordinator-6451ca22/`), ledger `mission_closed` 12:09:49Z, hold `closed`. Backup: GEX44 `~/.claude/state/mission-backup-close-20261107/`.
+- gen3 `3a500710`: ASCENSION-PLAN "PROGRAMME CLOSED" section.
+- GEX44 live PP ff ac1f85af -> **6323f904** at 12:14:47Z.
+  - 6323f904 = the UKDL S16 section appended at EOF; d5182bb9 did not apply, because GEX44 never received the S12C-S15 UKDL sections.
+  - The predicate caught its control (1) and read 0 for real.
+  - Live checks: donegate 18/18; recall 2/2 topic hits, control 0, after `recall --refresh`.
+  - No sweep pass is logged since the deploy (0 ledger rows after 12:14Z), so post-deploy supervise_error is unobserved.
+  - Rollback: `git reset --keep ac1f85af`. Canary worktree removed; branch canary/s16-ukdl kept.
+- New debt:
+  - the GEX44 recall index was stale (refresh changed 317 of 325 files), so GEX44 workers got old recall;
+  - GEX44 test_tower_inheritance raises IndexError (V-TINH-MSYS-WORKTREE drive path on Linux), pre-existing on ac1f85af;
+  - S12C-S15 UKDL sections are absent on GEX44.
+- Reopening needs a new Owner brief and a new mission.
+
+**Update 2026-11-07 ~11:50 UTC (session 6451ca22): S16 closeout JUDGED, promotions landed.**
 - The closeout is t1 `60e64922`, 38 items. Verdict: scientific objective UNMET, operationally complete. The coordinator AGREES.
 - Re-run on GEX44, all exit 0: projection check (FRONTIER_CHECK OK 1156/1797), test_s16_w0..w6 (w5 11/11), test_cert_cxx_controls 28/28 + 16/16 mutants. H2 manifest sha 922f214e. The generators (43274c3a, 3ff6f80d) were committed before the hidden-result commit 41310f63.
 - Corrections to the closeout:
