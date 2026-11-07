@@ -5,7 +5,15 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-07 ~14:05 UTC (session 6451ca22): S17 at CHECKPOINT_COMPLETE, 0 certified; Owner question OPEN.**
+**CURRENT — 2026-11-07 ~14:30 UTC (session 280f506f, successor of 6451ca22): Owner "y" to the W2-only pilot; S17 RUNNING again.**
+- Owner answered "Yes, run W2 pilot" (AskUserQuestion, session 280f506f).
+- Prompt: GEX44 `/tmp/s17_w2_command.txt`, sha 959178ac. P1 freezes 20 REG_ONLY (excluding H2, SDA, certified) in t1 `evidence/ascension/s17/w2_pilot_cohort.json` before any model call. P2 runs llm_fix. K3 0/20 means stop. >=2/20 scales to REG_ONLY, then an INSERT_DELETE pilot if the yield is >=1/10M. Then re-sweep and update the closeout. Gate: `tools/test_s17_w2.py`.
+- `retarget` rc=0 (361fb627 -> 959178ac, retargets=1). `checkpoint --clear` rc=0 (waited 2226 s); hold None, seq 22. `release` was not needed.
+- Relay resumes the SAME session: epoch stays 2 and owner b7f38b5b. The prompt is in the transcript at 14:25:41Z, and the worker is active at 14:27Z. Do not wait for "epoch 3" as the launch signal.
+- GSD ROADMAP: Phase 3 (W2) is still `[ ]` (SKIPPED), the open phase.
+- NEXT: at the W2 checkpoint, judge the S17 closeout (now including W2), then land promotions.json via the private index.
+
+**Earlier — 2026-11-07 ~14:05 UTC (session 6451ca22): S17 at CHECKPOINT_COMPLETE, 0 certified; Owner question OPEN (answered above).**
 - m-6d8ccba44d39 declared CHECKPOINT_COMPLETE at 13:43:45Z (owner hold set). t1 `e97f9c2b`. Spend 8.07M of 40M.
 - Coordinator re-ran on GEX44, all exit 0: test_s17_w0/w1/w3 PASS, cert_cxx 28/28 + 16/16 mutants, FRONTIER_CHECK OK. Frontier 1156/1797 unchanged.
 - W1, frozen dev/hidden per class: compiled 40/227, native >=90% 15, certified 0. K2 retired all 4 classes (UNDEFINED_IDENT 26/48, ILLEGAL_OPERANDS 13/61, IMPLICIT_CONVERSION 1/65, NOT_STRUCT 0/53).
