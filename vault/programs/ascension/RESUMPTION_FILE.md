@@ -5,6 +5,23 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**CURRENT — Update 2026-11-07 ~11:50 UTC (session 6451ca22): S16 closeout JUDGED, promotions landed.**
+- The closeout is t1 `60e64922`, 38 items. Verdict: scientific objective UNMET, operationally complete. The coordinator AGREES.
+- Re-run on GEX44, all exit 0: projection check (FRONTIER_CHECK OK 1156/1797), test_s16_w0..w6 (w5 11/11), test_cert_cxx_controls 28/28 + 16/16 mutants. H2 manifest sha 922f214e. The generators (43274c3a, 3ff6f80d) were committed before the hidden-result commit 41310f63.
+- Corrections to the closeout:
+  - item 3 MET: the only RUNNING mission on GEX44 is S16 itself, under its checkpoint hold;
+  - item 35 MET: final spend **23,137,860 of 60M** (the worker is dead and its transcript last wrote 2026-11-06T14:55Z), not "19.09M at hand-off";
+  - item 36 stays open: a terminal close needs `gsd_mission.py close` with an Owner turn.
+- **CONFLICT**: the residual's top recommendation (SDA literal-bytes equivalence, 761 fns) re-asks the S9 question the Owner answered NO on 2026-11-02. The S16 coordinator notes line 20 record that NO. The new evidence: group 2eea is native 3/3 hidden at 99.83, blocked by that one row. It goes to the Owner only as a re-ask.
+- Landed on the laptop:
+  - UKDL `d5182bb9` (private index; the foreign hunk stays uncommitted): T-A-NATIVE-IMPROVED-IS-NOT-EXACT-001, PR-INVALIDATE-A-KEYED-CACHE-WHEN-A-FIXTURE-REWRITES-ITS-KEY-001, plus 2 reinforcements;
+  - KV `~/.claude` `57ca754`: KN-S16 x4;
+  - no baseline candidate.
+- Inheritance: tower donegate 18/18, tower_inheritance 16/16 (the baseline is unchanged). Prompt recall returns each new id first on its topic query; the control query returns neither. Obedience is unproven. GEX44 live PP (ac1f85af) does NOT have these UKDL lines; syncing it is a live-clone deploy (Owner).
+- GEX44 `/tmp/pp-close` removed (clean, head == live ac1f85af); branch canary/close kept. Older canary worktrees /tmp/pp-s9 and /tmp/pp-s98 remain (not judged).
+- Residue, not touched: t1 has 4 tracked evidence files dirty since 2026-11-06 13:46Z (s12c router_events, s14 hotpath attempts, gsdx-fabric f7).
+- NEXT: Owner answers (a) next generation or close the programme, (b) SDA re-ask, (c) close S16 terminally, (d) sync the UKDL to the GEX44 live clone.
+
 **Update 2026-11-06 ~13:52 UTC (session 59d25469): lane C1 DONE and LIVE.**
 - `gsd_mission.py close --mission --reason --owner-turn <sid>:<ts> [--outcome HALTED|COMPLETED]`, spec
   `vault/specs/mission-close.md`. Laptop `5abc1574`. Behaviour:
