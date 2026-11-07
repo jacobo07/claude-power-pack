@@ -5,7 +5,21 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-07 ~14:30 UTC (session 280f506f, successor of 6451ca22): Owner "y" to the W2-only pilot; S17 RUNNING again.**
+**CURRENT — 2026-11-07 ~17:00 UTC (session 280f506f): S17 CLOSED +40 (frontier 1196); Generation S18 RUNNING (Owner "approve el plan").**
+- S17 closeout judged; the coordinator AGREES. Gates re-run on GEX44, all exit 0: FRONTIER_CHECK OK, tools/test_s17_w2.py S17_W2_PASS, cert_cxx 28/28 + 16/16.
+  - t1 0c715693 / 2db97ca2. REG_ONLY 17/103, INSERT_DELETE 23/86.
+  - Caveats: llm_fix claude -p tokens are not in the mission spend (yield bound 0.29-2.0 per 1M); counters.json is 1 below the projection (pre-existing).
+- Promotions landed:
+  - UKDL `22025298` via a private index (3 T-: COMPILED-CLASS-FIX-NOT-CERTIFIED, STOP-RULE-WRONG-POPULATION, SELF-MATCHING-PGREP-WAIT). The foreign hunk stays uncommitted, and the main index was reset to HEAD for that file.
+  - KV `~/.claude` `628f5e9` (KN-S17 x4).
+  - Recall returns the new ids on topic queries; the control returns 0. GEX44's UKDL is NOT synced; that is a live-clone deploy and needs the Owner.
+- S18:
+  - gen3 `fbc25945`: S18-BRIEF-VERBATIM.md (plan + Owner approval verbatim + launch facts), S18-PHASES.md, ASCENSION-PLAN section; S17 milestone archived to `.planning/milestones/s17-closed-40cert-*`; 3-phase milestone 0/3. Trap: `ensure` returns `none` while GSD reads the old milestone as OK, so archive it first.
+  - Retarget 959178ac -> 71ffe228 (`/tmp/s18_command.txt`), checkpoint cleared, hold None.
+  - The S18 prompt was delivered to worker **54e19d1a** at 16:53:11Z. Mission spend before S18: 16.4M of 40M.
+- NEXT: watch S18 (W5 IMPROVED compounding first). At its checkpoint, judge it and land promotions.
+
+**Earlier — 2026-11-07 ~14:30 UTC (session 280f506f, successor of 6451ca22): Owner "y" to the W2-only pilot; S17 RUNNING again.**
 - Owner answered "Yes, run W2 pilot" (AskUserQuestion, session 280f506f).
 - Prompt: GEX44 `/tmp/s17_w2_command.txt`, sha 959178ac. P1 freezes 20 REG_ONLY (excluding H2, SDA, certified) in t1 `evidence/ascension/s17/w2_pilot_cohort.json` before any model call. P2 runs llm_fix. K3 0/20 means stop. >=2/20 scales to REG_ONLY, then an INSERT_DELETE pilot if the yield is >=1/10M. Then re-sweep and update the closeout. Gate: `tools/test_s17_w2.py`.
 - `retarget` rc=0 (361fb627 -> 959178ac, retargets=1). `checkpoint --clear` rc=0 (waited 2226 s); hold None, seq 22. `release` was not needed.
