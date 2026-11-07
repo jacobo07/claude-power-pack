@@ -5,7 +5,18 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-07 ~20:05 UTC (session d45b2056): Owner chose "S19 IC-only pilot" + "Yes, sync". S19 RUNNING; UKDL synced to GEX44.**
+**CURRENT — 2026-11-07 ~20:35 UTC (session d45b2056): S19 at CHECKPOINT_COMPLETE, judged (AGREE, 1 MEDIUM provenance defect). By the Owner's S19 terms the programme closes; the terminal close needs an Owner turn (OPEN).**
+- t1 `b227d063`, checkpoint hold "S19 W8/W9 done ... programme closes". Spend 34.9M of 40M.
+- W8 result: 20/20 judged, 1/20 certified (fn_801BCE3C), 19 IMPROVED, 1.91M fresh / 28.0M gross, notional 23.99 USD. K3 = no scale. IC over both pilots: 2/40. Frontier delta +1, FRONTIER_CHECK OK.
+- Coordinator re-ran on GEX44: FRONTIER_CHECK OK, S19_W8_PASS (rc 0). The S19 commits touch none of the t1 residue.
+- **Certifier change judged:** b227d063 adds an A2 partner chain in `llm_fix.py` certify-solved.
+  - The first certification correctly REFUSED: negative n=0, excluded 1, INSTRUMENT, because the pinned partner fn_801BD194 rename did not compile.
+  - The chain stops at the first non-None outcome, whatever it says, so it cannot shop for a pass. The second run: n=1, match 0, healthy. The certification is SOUND.
+  - **Defect (MEDIUM):** `llm_fix.py:1081` writes `neg_partner: pairs.get(fn)` (the pinned fn_801BD194) and not the partner that answered, so the receipt cannot be replayed. Not fixed; Owner question.
+- Landed: UKDL `eca3a71d` (T-FALLBACK-CHAIN-MUST-RECORD-THE-LINK-THAT-ANSWERED-001; foreign hunk unchanged 4129/40), KV `b16b665` (KN-S19 x2). Recall topic 2, control 0. Not on GEX44 (live is 00022d52).
+- OPEN Owner: (a) the terminal close of m-6d8ccba44d39 (`close --outcome COMPLETED --owner-turn`; copy this transcript to GEX44 `~/.claude/projects/laptop-coordinator-d45b2056/`); (b) fix the receipt field before closing?; (c) sync eca3a71d to GEX44?
+
+**Earlier — 2026-11-07 ~20:05 UTC (session d45b2056): Owner chose "S19 IC-only pilot" + "Yes, sync". S19 RUNNING; UKDL synced to GEX44.**
 - Owner answers (AskUserQuestion, session d45b2056, ~19:10Z): "S19 IC-only pilot (Recommended)" and "Yes, sync (Recommended)".
 - S19 setup:
   - gen3 `b7bef52d`: S19-BRIEF-VERBATIM.md (question + chosen option verbatim, sha 7f2a1389), S19-PHASES.md, ASCENSION-PLAN section. S18 milestone archived as `s18-closed-1cert-*`; a 2-phase milestone (W8, W9) scaffolded 0/2.
