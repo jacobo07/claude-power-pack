@@ -5,6 +5,12 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**UPDATE — 2026-11-07 ~22:40 UTC (session d45b2056): Owner "update the code of the public repo" + transcripts; AskUserQuestion "Both (Recommended)".**
+- Transcripts S17-S19 in `~/Downloads/Ascension-S17-S19-transcripts/` (README.md there): 3 coordinator + 6 worker sessions raw and rendered, plus 319 llm_fix model-call sessions as tar.gz. Secret scan 0 (control 1).
+- PRIVATE `gsdx-reconstruction-factory-private` ff with lease: t1/campaign 2dcc6095 -> **369509ac** (38), mission/gen3 1b0604b3 -> **57bb3228** (25). Added-line secret scan 0 (control 1). Visibility PRIVATE.
+- PUBLIC PR **#15** (`export/pgrep-self-match-guard` a2654ea8 off main abc63bb9): pgrep guard hook + test + spec, scrubbed. V-PGREP 23/23, recon_public_gate CLEAN. Not merged (Owner reviews). The mission tooling (close, arm, gate, recall, tower) is not exportable without the private lineage: gsd_mission.py differs from main by ~7k lines, and 8 of 9 patches do not apply.
+- Close of m-6d8ccba44d39 still needs a typed Owner message that says close.
+
 **CURRENT — 2026-11-07 ~20:37 UTC (session d45b2056): Owner (AskUserQuestion) chose "Close: COMPLETED", "Fix + amend receipt", "Yes, sync". Fix and sync DONE. Close BLOCKED until the Owner types one message.**
 - Receipt fix: t1 **`369509ac`**.
   - `neg_partner` is now the partner that answered; the pinned one is kept in `neg_partner_pinned`.
