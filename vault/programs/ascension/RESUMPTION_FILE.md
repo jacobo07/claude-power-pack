@@ -5,7 +5,21 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-07 ~12:20 UTC (session 6451ca22): PROGRAMME CLOSED (Owner "all rec", uuid 552ad9aa, 12:05:13Z).**
+**CURRENT — 2026-11-07 ~13:10 UTC (session 6451ca22): PROGRAMME REOPENED, Generation S17 "Yield First" RUNNING.**
+- Owner, verbatim: "y to both, and infinite capital for the model, because it'd all be spent on CLI subscription tokens" (uuid 69ae6e27, 12:56:58Z).
+- Premise verified: llm_fix runs `claude -p`, and GEX44 has no ANTHROPIC_API_KEY. Its USD is the notional figure on the subscription. K3 and the yield stop rule still bind.
+- gen3:
+  - `ec927034`: S17-BRIEF-VERBATIM.md (the laptop proposal e6d7e0c9 plus the Owner amendment, sha f5efb538), S17-PHASES.md, S17-COORDINATOR-NOTES.md, ASCENSION-PLAN S17 section; S16 milestone archived as s16-closed-unmet-*.
+  - `90875158`: the 5-phase milestone, scaffolded by arm `--milestone-from` (the new path; no hand `ensure`).
+- Mission **m-6d8ccba44d39**:
+  - authority 40M (owner turn verified), 12 cycles / 24 h, workset t1 product;
+  - launched by the sweep 13:03:09Z, worker e07df470;
+  - at 13:08Z: spend 2.0M, transcript growing.
+- Benign events: `worker_marker_refused`, and host metadata lines appended to the old S16 transcript 3fd916cb at 13:03:10Z (no turns, no process).
+- Watch: `topology --mission m-6d8ccba44d39`; K1 at the W0 census; the yield table in t1 evidence/ascension/s17/closeout.md. At its checkpoint: judge it, then land promotions.
+- Risk: the model pool and the worker share the Owner's subscription usage windows.
+
+**Earlier 2026-11-07 ~12:20 UTC (session 6451ca22): PROGRAMME CLOSED (Owner "all rec", uuid 552ad9aa, 12:05:13Z).**
 - Owner took all four recommendations:
   - the programme is closed, with no S17;
   - the SDA NO of 2026-11-02 stands;
