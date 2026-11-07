@@ -5,7 +5,22 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-07 ~20:35 UTC (session d45b2056): S19 at CHECKPOINT_COMPLETE, judged (AGREE, 1 MEDIUM provenance defect). By the Owner's S19 terms the programme closes; the terminal close needs an Owner turn (OPEN).**
+**CURRENT — 2026-11-07 ~20:37 UTC (session d45b2056): Owner (AskUserQuestion) chose "Close: COMPLETED", "Fix + amend receipt", "Yes, sync". Fix and sync DONE. Close BLOCKED until the Owner types one message.**
+- Receipt fix: t1 **`369509ac`**.
+  - `neg_partner` is now the partner that answered; the pinned one is kept in `neg_partner_pinned`.
+  - Re-ran certify-solved on the S19 run, with no model call: same batch af540882, controls OK, n=1 match 0. The fn_801BCE3C receipt now names fn_801BD40C (pinned fn_801BD194).
+  - Gate `tools/test_s19_receipt.py`: RED 3 fails on the b227d063 receipt, GREEN 6/6 (it re-judges both partners on its own). S19_W8_PASS, FRONTIER_CHECK OK. Residue untouched.
+  - Note: the receipts file is rebuilt as a map by design, so the row was replaced. It was not "appended", as the option text said; the old row is in b227d063.
+- UKDL synced: live PP `00022d52` -> **`28e24cf6`** at 20:33:45Z (+6/-0).
+  - Canary donegate 18/18, recall 34/34, sources 8/8, eval 11/11; topic 2, control 0; shared index untouched. The predicate caught its control (1), then read 0.
+  - Live recall: topic 2, control 0. Rollback: `git reset --keep 00022d52`.
+  - Post-deploy supervise_error is UNOBSERVED (no pass since the ff at 20:36Z). The first deploy's pass at 20:05:38Z was 0 of 4 rows.
+- **Close blocked:** `verify_owner_turn` (gsd_mission.py:3396) refuses tool results by design, so the AskUserQuestion answer cannot authorise it. NEXT, on a typed Owner message:
+  1. copy this session's transcript to GEX44 `~/.claude/projects/laptop-coordinator-d45b2056/`;
+  2. run `gsd_mission.py close --mission m-6d8ccba44d39 --outcome COMPLETED --owner-turn d45b2056-de6c-4412-93c7-fcb71d08cf6b:<ts> --reason "..."`;
+  3. add the gen3 ASCENSION-PLAN "PROGRAMME CLOSED" section.
+
+**Earlier — 2026-11-07 ~20:35 UTC (session d45b2056): S19 at CHECKPOINT_COMPLETE, judged (AGREE, 1 MEDIUM provenance defect).**
 - t1 `b227d063`, checkpoint hold "S19 W8/W9 done ... programme closes". Spend 34.9M of 40M.
 - W8 result: 20/20 judged, 1/20 certified (fn_801BCE3C), 19 IMPROVED, 1.91M fresh / 28.0M gross, notional 23.99 USD. K3 = no scale. IC over both pilots: 2/40. Frontier delta +1, FRONTIER_CHECK OK.
 - Coordinator re-ran on GEX44: FRONTIER_CHECK OK, S19_W8_PASS (rc 0). The S19 commits touch none of the t1 residue.
