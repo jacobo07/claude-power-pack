@@ -75,8 +75,29 @@ _FRONT = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
 _WORD = re.compile(r"[^\W_]+", re.U)
 
 
+def _is_canonical_install() -> bool:
+    """True when this module runs from the installed Power Pack, not a worktree or canary.
+    The index is keyed by source path, so a copy elsewhere would re-key the shared index onto
+    its own files and drop the installed ones (measured 2026-11-07 on GEX44: a canary query
+    left the live clone at 0 hits until a refresh reported changed 317 / removed 317)."""
+    try:
+        return PP_ROOT.resolve() == (HOME / ".claude" / "skills" / "claude-power-pack").resolve()
+    except OSError:
+        return False
+
+
 def state_dir() -> Path:
-    d = Path(os.environ.get("CPP_RECALL_DIR") or (HOME / ".claude" / "state" / "recall"))
+    """CPP_RECALL_DIR wins. Otherwise the installed Power Pack uses the shared index, and any
+    other copy gets its own index under recall-worktrees/<root hash>, never the shared one."""
+    env = os.environ.get("CPP_RECALL_DIR")
+    if env:
+        d = Path(env)
+    elif _is_canonical_install():
+        d = HOME / ".claude" / "state" / "recall"
+    else:
+        import hashlib
+        key = hashlib.sha256(str(PP_ROOT.resolve()).encode("utf-8")).hexdigest()[:12]
+        d = HOME / ".claude" / "state" / "recall-worktrees" / key
     d.mkdir(parents=True, exist_ok=True)
     return d
 

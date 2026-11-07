@@ -63,6 +63,31 @@ def main() -> int:
         hr = [p for p, _ in by_kind.get("hard-rules-pp", [])]
         check("V-RECALL-SRC-HARD-RULES", [p.name for p in hr] == ["HARD_RULES.md"]
               and hr[0].parent.name == "hard_rules", f"hard-rules-pp={[str(p) for p in hr]}")
+        # State isolation: a worktree/canary copy must never write the installed copy's index.
+        saved_dir = os.environ.pop("CPP_RECALL_DIR", None)
+        try:
+            home = d / "home"
+            canon = home / ".claude" / "skills" / "claude-power-pack"
+            canon.mkdir(parents=True)
+            shared = home / ".claude" / "state" / "recall"
+            recall.HOME = home
+            recall.PP_ROOT = canon
+            check("V-RECALL-STATE-CANONICAL-SHARED", recall.state_dir() == shared, str(recall.state_dir()))
+            recall.PP_ROOT = pp
+            wt1 = recall.state_dir()
+            check("V-RECALL-STATE-WORKTREE-ISOLATED", wt1 != shared and wt1.parent.name == "recall-worktrees",
+                  str(wt1))
+            other = d / "pp2"
+            other.mkdir()
+            recall.PP_ROOT = other
+            check("V-RECALL-STATE-WORKTREES-DISTINCT", recall.state_dir() not in (wt1, shared),
+                  str(recall.state_dir()))
+            os.environ["CPP_RECALL_DIR"] = str(d / "explicit")
+            check("V-RECALL-STATE-ENV-WINS", recall.state_dir() == d / "explicit", str(recall.state_dir()))
+        finally:
+            os.environ.pop("CPP_RECALL_DIR", None)
+            if saved_dir is not None:
+                os.environ["CPP_RECALL_DIR"] = saved_dir
     finally:
         recall.PP_ROOT, recall.HOME = old[0], old[1]
         if old[2] is None:
