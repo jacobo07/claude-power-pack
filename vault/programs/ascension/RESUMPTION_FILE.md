@@ -5,6 +5,19 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**CURRENT — 2026-11-08 ~11:30 UTC (session d45b2056): Generation S20 RUNNING (Owner "y", uuid 99379881, 11:17:58Z).**
+- Brief: the Owner's pasted /cpp-gsd-long "Natural Exact-Tail Intelligence", stored byte-exact in gen3 `S20-BRIEF-VERBATIM.md` (body sha 1d980c1d). Its header binds 3 corrections:
+  - certify.py (C lane) and cert_cxx are both authorities with the same control contract;
+  - the S17 trajectories are on disk (t1 .local/llm-fix/<run>/<fn>/start.c etc.);
+  - the breaker counts worker tokens only.
+- m-6d8ccba44d39 CLOSED COMPLETED, 11:22:01Z (owner turn verified, transcript on GEX44 `~/.claude/projects/laptop-coordinator-d45b2056/`, backup `~/.claude/state/mission-backup-close-20261108/`).
+- **Mission m-3819640f654a**: 20M worker authority (owner-turn receipt), 0 top-ups, 6 cycles / 12 h, workset gen3 + t1 product. llm_fix child cap 6M fresh, enforced by the brief and the coordinator.
+  - gen3 `74bc5724`: brief, phases, ASCENSION-PLAN section; S19 archived `s19-closed-1cert-20261108T112348`; 6-phase milestone 0/6.
+  - Worker fb19cccb launched 11:24:09Z.
+- Trap (mine): arm `--milestone-from` did NOT replace the ALL-done S19 roadmap, because I had COPIED it to the archive instead of moving it. The worker read the S19 ROADMAP at 11:24:28Z; the S20 one was scaffolded at 11:24:36Z (`ensure --wu-packet`, after cmp-verified removal). A directive tells the worker to re-read it.
+- W0 DONE at 11:28Z: t1 `a8ece230`. My re-run: S20_W0_PASS (5 mutants killed), FRONTIER_CHECK OK. Worker spend 4.27M.
+- NEXT: watch W1 (S17 autopsy, no model calls) and the llm_fix child budget (evidence/ascension/s20/budget.md). At the checkpoint: judge, land promotions, then fast-forward the private repo.
+
 **UPDATE — 2026-11-07 ~22:40 UTC (session d45b2056): Owner "update the code of the public repo" + transcripts; AskUserQuestion "Both (Recommended)".**
 - Transcripts S17-S19 in `~/Downloads/Ascension-S17-S19-transcripts/` (README.md there): 3 coordinator + 6 worker sessions raw and rendered, plus 319 llm_fix model-call sessions as tar.gz. Secret scan 0 (control 1).
 - PRIVATE `gsdx-reconstruction-factory-private` ff with lease: t1/campaign 2dcc6095 -> **369509ac** (38), mission/gen3 1b0604b3 -> **57bb3228** (25). Added-line secret scan 0 (control 1). Visibility PRIVATE.
