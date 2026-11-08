@@ -5,7 +5,14 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-08 ~16:01 UTC (session d45b2056): S20 CLOSED, GSDX-CME mission m-cb596e3c2d6e RUNNING (Owner "y" uuid 2b4d1919, 15:47:49Z).**
+**CURRENT — 2026-11-08 ~17:05 UTC (session d45b2056): GSDX-CME CLOSED, S21 m-6302235f0a6c RUNNING (Owner "go ahead and then continue with S21", uuid c8c1d2de, 16:47:11Z).**
+- GSDX-CME m-cb596e3c2d6e CLOSED COMPLETED. Judged: gates w0-w8 rc 0, AMCR 38/38; MC 241/242 is pre-existing (base 28e24cf6 fails the same V-MC-PLAN-FACTS-REFUSES-OVERLAP: GEX44 node v18 < 22). The worker closeout misreported 242/242. Policy CME-B1 ADVISORY_NOT_PROVEN.
+- Deployed ONLY the domain-neutral lesson `vault/lessons/METHOD-OUTCOME-RULE-two-failures.md`: live GEX44 PP d23f6d8c (recall hit verified), laptop ca168b70. The pivot_decision gate is NOT deployed.
+- Private repo: mission/gen3 089983fd, new branch gsdx-cme 5649cb56 (full PP history bundle, 36.5 MB; secret scan 0).
+- S21 brief (coordinator-written, at the S20 envelope): gen3 3755b8de `S21-BRIEF.md`/`S21-PHASES.md`. FIELD_RETYPE_SINGLE is retired (CME W5 0/20). Arms: R1 diff-shape llm_fix on COMPILES_NO_MATCH (the S17 definition), R2 shared-blocker class fix on NO_COMPILE. 20M worker, llm_fix <= 6M fresh, 6 cycles / 12 h. Worker aec8949b launched 17:03Z.
+- NEXT: watch W0-W1 (no model calls, freezes before runs), budget.md; judge at checkpoint; ff private repo.
+
+**PREVIOUS — 2026-11-08 ~16:01 UTC (session d45b2056): S20 CLOSED, GSDX-CME mission m-cb596e3c2d6e RUNNING (Owner "y" uuid 2b4d1919, 15:47:49Z).**
 - S20 m-3819640f654a CLOSED COMPLETED (0 certs, const-extern standalone retired, frontier 1198/1797; backup `~/.claude/state/mission-backup-close-20261108b/`).
 - Private repo ff: t1 4b62acbb, gen3 59afeb8b, plus branch `transcripts/gex44-all-20261108` 8a310f6 (all GEX44 transcripts, 2,768 jsonl, zstd 4 parts, 2 PEM test-key bodies redacted).
 - GSDX-CME (Cognitive Method Evolution): brief verbatim in gen3 `vault/programs/gsdx-cme/` (body sha 80857b07); plan `vault/plans/gsdx-cme-20261108.md` (laptop). 20M fresh ceiling (target 12M), 0 top-ups, 12 cycles / 24 h, paid USD 0.
