@@ -18,7 +18,8 @@ import numpy as np
 from . import easing
 from .deps import available
 
-EPS = {"x": 0.4, "y": 0.4, "scale": 0.008, "opacity": 0.01, "rotation": 0.25}  # "still" thresholds per property
+# "still" thresholds per property
+EPS = {"x": 0.4, "y": 0.4, "scale": 0.008, "opacity": 0.01, "rotation": 0.25}
 MIN_AMP = {"x": 1.0, "y": 1.0, "scale": 0.03, "opacity": 0.05, "rotation": 1.5}  # smaller total change is jitter, not motion
 
 
@@ -265,26 +266,36 @@ def reveal_events(track: Track, *, min_step_frac: float = 0.12) -> list[dict]:
 
 # ---------------------------------------------------------------- rows
 
-def _fit_extended(fr: np.ndarray, val: np.ndarray, a: int, b: int, fps: float, eps: float, limit: int):
+def _fit_extended(fr: np.ndarray, val: np.ndarray, a: int, b: int, fps: float, eps: float, limit: int,
+                  floor: int = 0):
     """split_motion ends a segment where the change drops below `eps`, which truncates the slow tail of an
-    ease-out. Try ending the segment up to 12 samples later (while the series stays inside the hold) and keep
-    the best named/spring fit, so a truncated tail does not turn a standard family into a free bezier."""
+    ease-out and the slow start of an ease-in. Try starting up to 12 samples earlier and ending up to 12 later
+    (while the series stays inside the hold) and keep the best named/spring fit, so a truncated tail does not
+    turn a standard family into a free bezier."""
     best = None
-    for e in range(b, min(limit, b + 12) + 1):
-        if e > b and abs(val[e] - val[b]) > 3 * eps * (e - b) + 4 * eps:
+    starts = [a]
+    for s in range(a - 1, max(floor, a - 12) - 1, -1):
+        if abs(val[s] - val[a]) > 3 * eps * (a - s) + 4 * eps:
             break
-        fit = easing.fit_segment(fr[a:e + 1], val[a:e + 1], fps)
-        if fit is None:
-            continue
-        named = fit.family != "bezier"
-        score = fit.rmse - (0.004 if named else 0.0)
-        if best is None or score < best[0]:
-            best = (score, fit)
+        starts.append(s)
+    for s in starts:
+        for e in range(b, min(limit, b + 12) + 1):
+            if e > b and abs(val[e] - val[b]) > 3 * eps * (e - b) + 4 * eps:
+                break
+            fit = easing.fit_segment(fr[s:e + 1], val[s:e + 1], fps)
+            if fit is None:
+                continue
+            named = fit.family != "bezier"
+            score = fit.rmse - (0.004 if named else 0.0)
+            if best is None or score < best[0]:
+                best = (score, fit)
     return best[1] if best else None
 
 
-def rows_from_series(el: str, ser: dict[str, tuple[np.ndarray, np.ndarray]], fps: float, source: str) -> list[dict]:
+def rows_from_series(el: str, ser: dict[str, tuple[np.ndarray, np.ndarray]], fps: float, source: str,
+                     min_amp: dict[str, float] | None = None) -> list[dict]:
     """Spec rows from per-property (frames, values) series: one row per moving segment."""
+    amp = {**MIN_AMP, **(min_amp or {})}
     rows: list[dict] = []
     for prop, (fr, val) in ser.items():
         if len(fr) != int(fr[-1] - fr[0]) + 1:  # gaps: interpolate to the frame grid for the fit
@@ -293,8 +304,9 @@ def rows_from_series(el: str, ser: dict[str, tuple[np.ndarray, np.ndarray]], fps
         segs = easing.split_motion(fr, val, EPS[prop])
         for i, (a, b) in enumerate(segs):
             limit = segs[i + 1][0] - 1 if i + 1 < len(segs) else len(fr) - 1
-            fit = _fit_extended(fr, val, a, b, fps, EPS[prop], max(b, limit))
-            if fit is None or abs(fit.to_value - fit.from_value) < MIN_AMP[prop]:
+            floor = segs[i - 1][1] + 1 if i else 0
+            fit = _fit_extended(fr, val, a, b, fps, EPS[prop], max(b, limit), floor)
+            if fit is None or abs(fit.to_value - fit.from_value) < amp[prop]:
                 continue
             rows.append({"element": el, "property": prop, "start": fit.start_frame,
                          "duration": fit.end_frame - fit.start_frame, "from": round(fit.from_value, 3),
