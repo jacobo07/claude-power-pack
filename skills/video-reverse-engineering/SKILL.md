@@ -67,10 +67,10 @@ Heavy engines (SAM 2, whisperX, PaddleOCR on GPU) belong on a GPU host. Everythi
 | Wave | Content | State |
 |---|---|---|
 | W1 | probe/orientation, cuts/fades, palette roles, audio onsets/words/beats, easing+spring fit, spec, ledger | built, 16 tests on a synthetic clip with known truth |
-| W2 | text tracks (PaddleOCR), layer tracks (SAM 2 / gated SAM 3), flow (RAFT), rows from tracks (`vre track`) | built, synthetic-proven with negative controls; real-footage gate in progress |
-| W3 | spec -> Remotion TSX codegen (`vre generate`) | built, 4 tests, tsc-checked when `VRE_TSC_DIR` is set; render round trip not yet run |
+| W2 | text tracks (PaddleOCR), layer tracks (SAM 2 / gated SAM 3), flow (RAFT), rows from tracks (`vre track`) | built, synthetic-proven with negative controls (`--ocr-stride N` for slow OCR); real-footage gate in progress |
+| W3 | spec -> Remotion TSX codegen (`vre generate`) | built, 4 tests, tsc-checked when `VRE_TSC_DIR` is set; a real Remotion render round trip of a synthetic clip passes the judge (LOCAL_RENDER evidence) |
 | W3 | judge (`vre/judge.py`: frozen tolerances, 8 dimensions, A/A + negative controls) | built, 13 tests |
-| W3 | fix loop (`vre oneshot`: render, judge, shift row starts, capped 2-5 rounds, stops and reports on unfixable defects) | built, 3 tests with an injected pure-Python renderer; real Remotion render check pending |
+| W3 | fix loop (`vre oneshot`: render, judge, shift row starts, capped 2-5 rounds, stops and reports on unfixable defects) | built, tests with an injected pure-Python renderer plus one real Remotion render of a synthetic clip converging in round 1 (LOCAL_RENDER evidence, not a claim about real footage) |
 
 Tests: `python -m pytest tests -q` (set `VRE_TEST_CACHE=<dir>` to reuse the synthetic clip).
 Sources, licences and what was absorbed from each: `references/sources.md`.
