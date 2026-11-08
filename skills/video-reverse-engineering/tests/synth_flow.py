@@ -18,7 +18,7 @@ def texture(seed: int = 3) -> np.ndarray:
 
 
 def clip(kind: str, amount: float, seed: int = 3) -> np.ndarray:
-    """kind: translate (content moves by -amount px/frame in x, -0.5*amount in y), rotate (deg/frame), zoom (scale/frame)."""
+    """kind: translate (moves -amount px/frame in x, -0.5*amount in y), rotate (deg/frame), zoom (scale/frame)."""
     tex = texture(seed)
     out = []
     for f in range(N):

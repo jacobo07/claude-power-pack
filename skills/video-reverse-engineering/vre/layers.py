@@ -125,6 +125,35 @@ def default_provider(checkpoint: str | None = None) -> MaskProvider:
     return ColorProvider()
 
 
+def shot_prompts(frame: np.ndarray, text_boxes: list[tuple[float, float, float, float]] | None = None, *,
+                 min_area_frac: float = 0.002, max_frac: float = 0.6, limit: int = 8, first_obj: int = 0) -> list[Prompt]:
+    """Prompt boxes from a shot-start frame: connected non-background components that are not text and not the
+    backdrop. Components inside an OCR/ink text box are skipped (text is tracked by its own stage)."""
+    d, _ = text.coverage(frame)
+    mask = (d > 40.0).astype(np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5)))
+    n, _, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    h, w = mask.shape
+    out = []
+    for i in range(1, n):
+        x, y, bw, bh, area = (int(v) for v in stats[i])
+        if area < min_area_frac * h * w or bw * bh > max_frac * h * w:
+            continue
+        box = (float(x), float(y), float(x + bw), float(y + bh))
+        if any(_contains(tb, box) for tb in (text_boxes or [])):
+            continue
+        out.append((area, box))
+    out.sort(key=lambda t: -t[0])
+    return [Prompt(first_obj + k, 0, b) for k, (_, b) in enumerate(out[:limit])]
+
+
+def _contains(outer, inner, frac: float = 0.7) -> bool:
+    ix0, iy0 = max(outer[0], inner[0]), max(outer[1], inner[1])
+    ix1, iy1 = min(outer[2], inner[2]), min(outer[3], inner[3])
+    inter = max(0.0, ix1 - ix0) * max(0.0, iy1 - iy0)
+    return inter >= frac * max(1e-6, (inner[2] - inner[0]) * (inner[3] - inner[1]))
+
+
 # ---------------------------------------------------------------- measurement
 
 def _orientation(mask: np.ndarray) -> tuple[float, float] | None:

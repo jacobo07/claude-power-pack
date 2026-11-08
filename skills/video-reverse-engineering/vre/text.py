@@ -20,7 +20,7 @@ from .deps import available
 
 # "still" thresholds per property
 EPS = {"x": 0.4, "y": 0.4, "scale": 0.008, "opacity": 0.01, "rotation": 0.25}
-MIN_AMP = {"x": 1.0, "y": 1.0, "scale": 0.03, "opacity": 0.05, "rotation": 1.5}  # smaller total change is jitter, not motion
+MIN_AMP = {"x": 1.0, "y": 1.0, "scale": 0.03, "opacity": 0.05, "rotation": 1.5}  # smaller total change is jitter
 
 
 @dataclass
@@ -357,5 +357,5 @@ def track_text(frames_rgb, fps: float, *, detector=None) -> dict:
         measure_opacity(t, frames_rgb)
         rows += track_rows(t, fps)
     return {"engine": engine, "status": "OK" if engine == "paddleocr" else "DEGRADED_NO_OCR",
-            "tracks": [{"id": t.id, "first": t.dets[0].frame, "last": t.dets[-1].frame, "frames": len(t.dets)}
-                       for t in tracks], "rows": rows}
+            "tracks": [{"id": t.id, "first": t.dets[0].frame, "last": t.dets[-1].frame, "frames": len(t.dets),
+                        "box": [round(float(v), 1) for v in t.dets[0].box]} for t in tracks], "rows": rows}
