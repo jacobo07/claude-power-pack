@@ -87,6 +87,9 @@ def _runs(mask: np.ndarray, min_len: int) -> list[tuple[int, int]]:
     return runs
 
 
+FADE_RAMP = 6.0  # luma levels between the 4 frames before and after a fade edge
+
+
 def detect(hist: np.ndarray, grid: np.ndarray, luma: np.ndarray, fps: float, *, ratio: float = 3.0,
            floor: float = 0.12, min_shot: int = 4, black: float = 14.0, white: float = 242.0
            ) -> tuple[list[Cut], list[Shot], list[dict]]:
@@ -111,7 +114,9 @@ def detect(hist: np.ndarray, grid: np.ndarray, luma: np.ndarray, fps: float, *, 
     for kind, mask in (("fade_black", luma <= black), ("fade_white", luma >= white)):
         for a, b in _runs(mask, 2):
             for edge in (a, b + 1):
-                if 0 < edge < n and not any(abs(c.frame - edge) <= 2 for c in cuts):
+                # a real fade has a luma ramp at its edge; a bright shot whose mean hovers at the threshold does not
+                ramp = abs(float(luma[max(0, edge - 4):edge].mean()) - float(luma[edge:edge + 4].mean()))
+                if 0 < edge < n and ramp >= FADE_RAMP and not any(abs(c.frame - edge) <= 2 for c in cuts):
                     cuts.append(Cut(edge, kind, round(float(score[edge]), 4), 0.0, "medium",
                                     round(float(luma[edge - 1]), 1), round(float(luma[edge]), 1)))
     cuts.sort(key=lambda c: c.frame)
