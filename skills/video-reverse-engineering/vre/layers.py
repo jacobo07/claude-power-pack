@@ -220,6 +220,9 @@ def track_layers(frames: np.ndarray, fps: float, prompts: list[Prompt], provider
         el = f"layer#{p.obj}"
         first = int(np.nonzero(m.reshape(len(m), -1).sum(axis=1) >= 12)[0][0])
         last = int(np.nonzero(m.reshape(len(m), -1).sum(axis=1) >= 12)[0][-1])
-        objects.append({"element": el, "status": "OK", "frames": n_on, "first": first, "last": last})
+        core = m[first].astype(bool)
+        rgb0 = np.median(frames[first][core], axis=0) if core.any() else np.zeros(3)
+        objects.append({"element": el, "status": "OK", "frames": n_on, "first": first, "last": last,
+                        "box": [round(float(v), 1) for v in p.box], "rgb": [int(round(float(v))) for v in rgb0]})
         rows += text.rows_from_series(el, ser, fps, "layer", LAYER_MIN_AMP)
     return {"engine": provider.name, "status": "OK", "objects": objects, "rows": rows}

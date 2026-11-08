@@ -21,6 +21,16 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("spec_dir")
     t.add_argument("--video", help="override the video path stored in the spec")
     t.add_argument("--width", type=int, default=360)
+    t.add_argument("--no-text", action="store_true")
+    t.add_argument("--no-layers", action="store_true")
+    t.add_argument("--no-flow", action="store_true")
+    t.add_argument("--sam2", help="SAM 2 checkpoint (.pt); without it the model-free colour follower runs")
+    g = sub.add_parser("generate", help="spec + brand + copy -> Remotion composition (TSX)")
+    g.add_argument("spec_dir")
+    g.add_argument("--brand", help="brand JSON {font, light:{...}, dark:{...}}")
+    g.add_argument("--copy", help="copy JSON {element id: text}; the reference's text is never used")
+    g.add_argument("--out", required=True)
+    g.add_argument("--strict", action="store_true", help="fail when a text slot has no copy")
     sub.add_parser("deps", help="optional engines, licences and their state")
     args = ap.parse_args(argv)
     if args.cmd == "deps":
@@ -29,11 +39,23 @@ def main(argv: list[str] | None = None) -> int:
         for row in status():
             print(f"{row['name']:<20} {row['state']:<12} {row.get('licence', row.get('reason', ''))}")
         return 0
+    if args.cmd == "generate":
+        from .generate import generate
+
+        rep = generate(args.spec_dir, args.out, brand=args.brand, copy=args.copy, strict=args.strict)
+        print(f"{rep['shots']} shots, {rep['rows']} rows, unfilled text slots "
+              f"{len(rep['unfilled_text'])} -> {args.out}")
+        return 0
     if args.cmd == "track":
         from .track import track
 
-        tt = track(args.spec_dir, video=args.video, width=args.width)
-        print(f"text: {tt['engine']} {tt['status']}, {len(tt['tracks'])} tracks -> {args.spec_dir}/spec.json")
+        from .layers import default_provider
+
+        tt = track(args.spec_dir, video=args.video, width=args.width, text_on=not args.no_text,
+                   layers_on=not args.no_layers, flow_on=not args.no_flow,
+                   provider=default_provider(args.sam2) if not args.no_layers else None)
+        print(f"text: {tt.get('engine')} {tt.get('status')}, {len(tt.get('tracks', []))} tracks -> "
+              f"{args.spec_dir}/spec.json")
         return 0
     from .pipeline import analyze
 
