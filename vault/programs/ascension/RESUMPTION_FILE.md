@@ -5,7 +5,17 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-08 ~11:30 UTC (session d45b2056): Generation S20 RUNNING (Owner "y", uuid 99379881, 11:17:58Z).**
+**CURRENT — 2026-11-08 ~16:01 UTC (session d45b2056): S20 CLOSED, GSDX-CME mission m-cb596e3c2d6e RUNNING (Owner "y" uuid 2b4d1919, 15:47:49Z).**
+- S20 m-3819640f654a CLOSED COMPLETED (0 certs, const-extern standalone retired, frontier 1198/1797; backup `~/.claude/state/mission-backup-close-20261108b/`).
+- Private repo ff: t1 4b62acbb, gen3 59afeb8b, plus branch `transcripts/gex44-all-20261108` 8a310f6 (all GEX44 transcripts, 2,768 jsonl, zstd 4 parts, 2 PEM test-key bodies redacted).
+- GSDX-CME (Cognitive Method Evolution): brief verbatim in gen3 `vault/programs/gsdx-cme/` (body sha 80857b07); plan `vault/plans/gsdx-cme-20261108.md` (laptop). 20M fresh ceiling (target 12M), 0 top-ups, 12 cycles / 24 h, paid USD 0.
+  - Control: gen3 (mission/gen3 de022e65, 9-phase milestone; S20 archived `s20-closed-0cert-20261108T155408`). Product: PP worktree `/home/kobii/missions/gsdx-cme` (branch gsdx-cme off live 28e24cf6). t1 read-only lab.
+  - Trap (mine, twice): packet lines `## Phase N:` are NOT parsed by `_PHASE_LINE` (gsd_milestone_scaffold.py:26), giving a 1-phase roadmap; lines must start `Phase N:`. Fixed before launch.
+  - Trust is exact-path, so a fresh worktree cannot be the mission cwd and the agent may not write hasTrustDialogAccepted; launch in trusted gen3, product via workset.
+  - Worker b5966b9e launched 15:57:42Z, read brief/plan/roadmap first, W0 gates.md committed by 16:00Z.
+- NEXT: watch W0-W2 (corpora must be frozen before slice code), budget.md running total; at checkpoint judge, then ask the Owner about deploying to the live PP clones (not pre-approved).
+
+**PREVIOUS — 2026-11-08 ~11:30 UTC (session d45b2056): Generation S20 RUNNING (Owner "y", uuid 99379881, 11:17:58Z).**
 - Brief: the Owner's pasted /cpp-gsd-long "Natural Exact-Tail Intelligence", stored byte-exact in gen3 `S20-BRIEF-VERBATIM.md` (body sha 1d980c1d). Its header binds 3 corrections:
   - certify.py (C lane) and cert_cxx are both authorities with the same control contract;
   - the S17 trajectories are on disk (t1 .local/llm-fix/<run>/<fn>/start.c etc.);
