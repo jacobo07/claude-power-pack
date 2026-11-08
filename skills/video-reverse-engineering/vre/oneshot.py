@@ -81,15 +81,22 @@ def corrections(verdict: dict, gen_rows: list[dict]) -> list[dict]:
 
 def oneshot(video: str, out_dir: str, *, brand: str | None = None, copy_file: str | None = None,
             renderer: Renderer, tolerances: str, rounds: int = 3, width: int = 360, detector=None,
-            provider=None, text_on: bool = True, rebrand: bool = False, flow_on: bool = False) -> dict:
+            provider=None, text_on: bool = True, rebrand: bool = False, flow_on: bool = False,
+            ocr_stride: int = 1, reference_spec: str | None = None) -> dict:
     """Run the loop. `rounds` is clamped to 2..5. Returns the report (also written to delta_report.json)."""
     rounds = max(2, min(5, rounds))
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     tol = judge.load_tolerances(tolerances)
     ref_dir = out / "reference"
-    analyze(video, str(ref_dir), width=144)
-    track(str(ref_dir), width=width, detector=detector, provider=provider, text_on=text_on, flow_on=flow_on)
+    if reference_spec:  # an already tracked reference (slow engines ran once): copied, never re-measured
+        if not (Path(reference_spec) / "spec.json").exists():
+            raise FileNotFoundError(f"reference_spec {reference_spec}: spec.json missing")
+        shutil.copytree(reference_spec, ref_dir, dirs_exist_ok=True)
+    else:
+        analyze(video, str(ref_dir), width=144)
+        track(str(ref_dir), width=width, detector=detector, provider=provider, text_on=text_on, flow_on=flow_on,
+              ocr_stride=ocr_stride)
     ref_spec = json.loads((ref_dir / "spec.json").read_text(encoding="utf-8"))
     ref_probe, ref_gray = judge.gray_frames(video, 96)
     gen_dir = out / "gen_spec"
@@ -108,7 +115,8 @@ def oneshot(video: str, out_dir: str, *, brand: str | None = None, copy_file: st
         cand = renderer(rd / "tsx", data, rd / "candidate.mp4")
         cand_dir = rd / "measure"
         analyze(str(cand), str(cand_dir), width=144, words=False, beats=False)
-        track(str(cand_dir), width=width, detector=detector, provider=provider, text_on=text_on, flow_on=flow_on)
+        track(str(cand_dir), width=width, detector=detector, provider=provider, text_on=text_on, flow_on=flow_on,
+              ocr_stride=ocr_stride)
         cand_spec = json.loads((cand_dir / "spec.json").read_text(encoding="utf-8"))
         _, cand_gray = judge.gray_frames(str(cand), 96)
         verdict = judge.judge(ref_spec, cand_spec, ref_gray, cand_gray, tol, rebrand=rebrand)

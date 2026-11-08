@@ -96,3 +96,22 @@ def test_unfixable_defect_stops_early_and_reports(world):
     assert rep["rounds_run"] < 5
     assert "missing_objects" in rep["critical_failures"]
     assert json.loads((world[0] / "gone" / "delta_report.json").read_text())["final_level"] == "FAIL"
+
+
+def test_reference_spec_is_reused_not_remeasured(world, tmp_path):
+    base, ref, _ = world
+    first = run(world, "late_src", make_renderer(), rounds=2)
+    assert first["final_level"] in ("MOVES-SAME", "LOOKS-SAME")
+    calls: list = []
+
+    def boom(*_a, **_k):  # a detector reached for the reference would be a re-measure
+        calls.append(1)
+        return []
+
+    rep = oneshot.oneshot(str(ref), str(tmp_path / "re"), renderer=make_renderer(), tolerances=str(base / "tol.json"),
+                          rounds=2, width=sj.W, text_on=False, rebrand=True, detector=boom,
+                          reference_spec=str(base / "late_src" / "reference"))
+    assert rep["final_level"] in ("MOVES-SAME", "LOOKS-SAME") and not calls
+    with pytest.raises(FileNotFoundError):  # negative control: a dir without a spec is refused, not guessed
+        oneshot.oneshot(str(ref), str(tmp_path / "bad"), renderer=make_renderer(), tolerances=str(base / "tol.json"),
+                        width=sj.W, text_on=False, rebrand=True, reference_spec=str(tmp_path))

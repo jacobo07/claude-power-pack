@@ -41,6 +41,9 @@ def main(argv: list[str] | None = None) -> int:
     o.add_argument("--copy")
     o.add_argument("--rounds", type=int, default=3)
     o.add_argument("--scale", type=float, default=1.0, help="Remotion render scale")
+    o.add_argument("--reference-spec", help="spec dir of an already tracked reference (reused, not re-measured)")
+    o.add_argument("--ocr-stride", type=int, default=1)
+    o.add_argument("--sam2", help="SAM 2 checkpoint for layer tracking of reference and candidates")
     o.add_argument("--rebrand", action="store_true", help="new brand/copy: judge moves and layout, skip pixels")
     sub.add_parser("deps", help="optional engines, licences and their state")
     args = ap.parse_args(argv)
@@ -67,7 +70,8 @@ def main(argv: list[str] | None = None) -> int:
         out.mkdir(parents=True, exist_ok=True)
         rep = oneshot(args.video, args.out, brand=args.brand, copy_file=args.copy, tolerances=args.tolerances,
                       renderer=remotion_renderer(args.project, out, scale=args.scale), rounds=args.rounds,
-                      provider=default_provider(None), rebrand=args.rebrand)
+                      provider=default_provider(args.sam2), rebrand=args.rebrand,
+                      ocr_stride=args.ocr_stride, reference_spec=args.reference_spec)
         last = out / f"round{rep['rounds_run']}" / "candidate.mp4"
         side_by_side(args.video, str(last), str(out / "side_by_side.mp4"))
         print(f"{rep['final_level']} after {rep['rounds_run']}/{rep['cap']} rounds, critical {rep['critical_failures']}"
