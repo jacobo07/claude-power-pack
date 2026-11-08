@@ -26,7 +26,7 @@ def _shot_ranges(spec: dict) -> list[tuple[int, int, int]]:
     return [(s["index"], s["start"], s["end"]) for s in spec["shots"]]
 
 
-def track_text_spec(spec: dict, frames, fps: float, *, detector=None) -> dict:
+def track_text_spec(spec: dict, frames, fps: float, *, detector=None, stride: int = 1) -> dict:
     """Run text tracking shot by shot over an iterator of display-orientation RGB frames (decode order).
     Returns {engine, status, tracks, rows}; row frames are absolute, elements are `s<shot>.text#<id>`."""
     ranges = _shot_ranges(spec)
@@ -43,7 +43,7 @@ def track_text_spec(spec: dict, frames, fps: float, *, detector=None) -> dict:
         if not buf:
             break
         t0 = time.time()
-        res = text.track_text(buf, fps, detector=detector)
+        res = text.track_text(buf, fps, detector=detector, stride=stride)
         print(f"[vre track] text shot {shot} frames {a}-{b} tracks {len(res['tracks'])} {time.time() - t0:.0f}s",
               file=sys.stderr, flush=True)
         engine, status = res["engine"], res["status"] if status == "OK" else status
@@ -88,7 +88,7 @@ def track_layers_and_flow(spec: dict, frames, fps: float, *, provider=None, do_f
 
 
 def track(spec_dir: str, *, video: str | None = None, width: int = 360, detector=None, provider=None,
-          layers_on: bool = True, flow_on: bool = True, text_on: bool = True) -> dict:
+          layers_on: bool = True, flow_on: bool = True, text_on: bool = True, ocr_stride: int = 1) -> dict:
     """Read `<spec_dir>/spec.json`, track text, layers and flow over the video, write rows + blocks back.
     Each stage replaces only the rows it owns (`source` text / layer), so re-runs give the same file."""
     path = Path(spec_dir) / "spec.json"
@@ -100,10 +100,10 @@ def track(spec_dir: str, *, video: str | None = None, width: int = 360, detector
     kept = [r for r in spec.get("rows", []) if r.get("source") not in OWNED_SOURCES]
     new_rows: list[dict] = []
     if text_on:
-        res = track_text_spec(spec, media.iter_frames(p, width), p.fps, detector=detector)
+        res = track_text_spec(spec, media.iter_frames(p, width), p.fps, detector=detector, stride=ocr_stride)
         new_rows += res["rows"]
         spec["text_tracks"] = {"engine": res["engine"], "status": res["status"], "width": width, "ocr": use_ocr,
-                               "tracks": res["tracks"]}
+                               "stride": ocr_stride, "tracks": res["tracks"]}
     else:
         new_rows += [r for r in spec.get("rows", []) if r.get("source") == TEXT_SOURCE]
     if layers_on or flow_on:

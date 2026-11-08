@@ -21,6 +21,7 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("spec_dir")
     t.add_argument("--video", help="override the video path stored in the spec")
     t.add_argument("--width", type=int, default=360)
+    t.add_argument("--ocr-stride", type=int, default=1, help="OCR every Nth frame (slow OCR); timing is then N-frame")
     t.add_argument("--no-text", action="store_true")
     t.add_argument("--no-layers", action="store_true")
     t.add_argument("--no-flow", action="store_true")
@@ -78,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         from .layers import default_provider
 
         tt = track(args.spec_dir, video=args.video, width=args.width, text_on=not args.no_text,
-                   layers_on=not args.no_layers, flow_on=not args.no_flow,
+                   ocr_stride=args.ocr_stride, layers_on=not args.no_layers, flow_on=not args.no_flow,
                    provider=default_provider(args.sam2) if not args.no_layers else None)
         print(f"text: {tt.get('engine')} {tt.get('status')}, {len(tt.get('tracks', []))} tracks -> "
               f"{args.spec_dir}/spec.json")

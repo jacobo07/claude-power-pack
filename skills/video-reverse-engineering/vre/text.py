@@ -353,17 +353,19 @@ def align_reveals_to_words(rows: list[dict], asr_words: list[dict], fps: float, 
     return out
 
 
-def track_text(frames_rgb, fps: float, *, detector=None) -> dict:
+def track_text(frames_rgb, fps: float, *, detector=None, stride: int = 1) -> dict:
     """Detect -> link -> measure -> rows over decoded display-orientation RGB frames.
-    Returns {engine, status, tracks:[{id, first, last, frames}], rows}. Engine and its state are explicit."""
+    `stride` > 1 runs the detector on every stride-th frame only (slow OCR); timing then resolves to `stride`
+    frames, and the result says so. Returns {engine, status, stride, tracks, rows}."""
     engine = "paddleocr" if detector is None and ocr_available() else "ink"
     det = detector or (make_ocr_detector() if engine == "paddleocr" else detect_ink)
-    per_frame = [det(f, i) for i, f in enumerate(frames_rgb)]
-    tracks = [t for t in link(per_frame) if len(t.dets) >= 3]
+    n = len(frames_rgb)
+    per_frame = [det(f, i) if i % stride == 0 or i == n - 1 else [] for i, f in enumerate(frames_rgb)]
+    tracks = [t for t in link(per_frame, max_gap=max(3, stride)) if len(t.dets) >= 3]
     rows = []
     for t in tracks:
         measure_opacity(t, frames_rgb)
         rows += track_rows(t, fps)
-    return {"engine": engine, "status": "OK" if engine == "paddleocr" else "DEGRADED_NO_OCR",
+    return {"engine": engine, "status": "OK" if engine == "paddleocr" else "DEGRADED_NO_OCR", "stride": stride,
             "tracks": [{"id": t.id, "first": t.dets[0].frame, "last": t.dets[-1].frame, "frames": len(t.dets),
                         "box": [round(float(v), 1) for v in t.dets[0].box]} for t in tracks], "rows": rows}
