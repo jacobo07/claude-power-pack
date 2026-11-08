@@ -17,6 +17,10 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--brand", help="brand roles JSON {light:{...}, dark:{...}}")
     a.add_argument("--no-words", action="store_true")
     a.add_argument("--no-beats", action="store_true")
+    t = sub.add_parser("track", help="fill spec.json rows from the video (text tracks)")
+    t.add_argument("spec_dir")
+    t.add_argument("--video", help="override the video path stored in the spec")
+    t.add_argument("--width", type=int, default=360)
     sub.add_parser("deps", help="optional engines, licences and their state")
     args = ap.parse_args(argv)
     if args.cmd == "deps":
@@ -24,6 +28,12 @@ def main(argv: list[str] | None = None) -> int:
 
         for row in status():
             print(f"{row['name']:<20} {row['state']:<12} {row.get('licence', row.get('reason', ''))}")
+        return 0
+    if args.cmd == "track":
+        from .track import track
+
+        tt = track(args.spec_dir, video=args.video, width=args.width)
+        print(f"text: {tt['engine']} {tt['status']}, {len(tt['tracks'])} tracks -> {args.spec_dir}/spec.json")
         return 0
     from .pipeline import analyze
 
