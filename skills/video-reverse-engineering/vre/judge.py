@@ -118,8 +118,19 @@ def d_blank(ref_gray: np.ndarray, cand_gray: np.ndarray, tol: dict) -> dict:
     return _dim("PASS" if not bad else "FAIL", frames=bad[:20], count=len(bad), tol=thr)
 
 
-def family_class(name: str) -> str:
+def _bez_mid(x1: float, y1: float, x2: float, y2: float) -> float:
+    from .easing import bezier as _bz
+
+    return _bz(np.array([0.5]), x1, y1, x2, y2)[0]
+
+
+def family_class(name: str, bezier=None) -> str:
+    """Direction class of an easing. A free-fit `bezier` is classed by its progress at u=0.5 (the tracker's fit
+    of a named curve can land on a free bezier by one pixel of noise): >0.62 out, <0.38 in, else linear/inout."""
     n = (name or "").lower()
+    if n == "bezier" and bezier:
+        mid = float(_bez_mid(*bezier))
+        return "out" if mid > 0.62 else "in" if mid < 0.38 else "linear" if abs(mid - 0.5) < 0.06 else "inout"
     if n in ("linear", "step", "spring", "bezier"):
         return n
     if n.startswith("easeinout"):
@@ -171,7 +182,7 @@ def d_rows(ref: dict, cand: dict, tol: dict) -> dict[str, dict]:
             for r, c in pairs if abs(r["start"] - c["start"]) > tol["row_start_frames"]]
     badease = [{"element": r["element"], "ref": r["easing"], "cand": c["easing"]}
                for r, c in pairs if r.get("easing") not in (None, "?") and c.get("easing") not in (None, "?")
-               and family_class(r["easing"]) != family_class(c["easing"])]
+               and family_class(r["easing"], r.get("bezier")) != family_class(c["easing"], c.get("bezier"))]
     return {
         "row_timing": _dim("PASS" if not late else "FAIL", matched=len(pairs), off=late, tol=tol["row_start_frames"]),
         "row_easing": _dim("PASS" if not badease else "FAIL", compared=len(pairs), off=badease,

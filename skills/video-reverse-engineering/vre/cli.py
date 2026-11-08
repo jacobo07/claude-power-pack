@@ -31,6 +31,16 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--copy", help="copy JSON {element id: text}; the reference's text is never used")
     g.add_argument("--out", required=True)
     g.add_argument("--strict", action="store_true", help="fail when a text slot has no copy")
+    o = sub.add_parser("oneshot", help="analyze -> track -> generate -> render -> judge -> fix, 2-5 rounds")
+    o.add_argument("video")
+    o.add_argument("--out", required=True)
+    o.add_argument("--project", required=True, help="Remotion project dir with node_modules (scratch copy is rendered)")
+    o.add_argument("--tolerances", required=True, help="frozen tolerances JSON from vre.judge.freeze; never defaulted")
+    o.add_argument("--brand")
+    o.add_argument("--copy")
+    o.add_argument("--rounds", type=int, default=3)
+    o.add_argument("--scale", type=float, default=1.0, help="Remotion render scale")
+    o.add_argument("--rebrand", action="store_true", help="new brand/copy: judge moves and layout, skip pixels")
     sub.add_parser("deps", help="optional engines, licences and their state")
     args = ap.parse_args(argv)
     if args.cmd == "deps":
@@ -46,6 +56,22 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{rep['shots']} shots, {rep['rows']} rows, unfilled text slots "
               f"{len(rep['unfilled_text'])} -> {args.out}")
         return 0
+    if args.cmd == "oneshot":
+        from pathlib import Path
+
+        from .layers import default_provider
+        from .oneshot import oneshot, remotion_renderer, side_by_side
+
+        out = Path(args.out)
+        out.mkdir(parents=True, exist_ok=True)
+        rep = oneshot(args.video, args.out, brand=args.brand, copy_file=args.copy, tolerances=args.tolerances,
+                      renderer=remotion_renderer(args.project, out, scale=args.scale), rounds=args.rounds,
+                      provider=default_provider(None), rebrand=args.rebrand)
+        last = out / f"round{rep['rounds_run']}" / "candidate.mp4"
+        side_by_side(args.video, str(last), str(out / "side_by_side.mp4"))
+        print(f"{rep['final_level']} after {rep['rounds_run']}/{rep['cap']} rounds, critical {rep['critical_failures']}"
+              f" -> {out}/delta_report.json, side_by_side.mp4")
+        return 0 if rep["final_level"] != "FAIL" else 2
     if args.cmd == "track":
         from .track import track
 
