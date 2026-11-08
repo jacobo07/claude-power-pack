@@ -1,0 +1,154 @@
+{
+ "contract": "ctx-rent-x-phase5-v1",
+ "spec": "vault/specs/ccr-safe-to-forget-main.md",
+ "plane": "DESKTOP-PMT5BS8",
+ "cwd": "C:\\Users\\dev\\.claude\\skills\\claude-power-pack",
+ "runs": [
+  {
+   "session": "8433d38b-ed4e-41ea-a556-024349e96953",
+   "arm": "F",
+   "key": "k00",
+   "finished": true,
+   "calls": 3,
+   "processed": 281911,
+   "final": "CODE A11A79",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-9bdf5998",
+     "compatible": false,
+     "interactive": true,
+     "canary": "shadow",
+     "unit": null
+    },
+    "project": [],
+    "faults": 0
+   }
+  },
+  {
+   "session": "4920ce78-3c34-4f69-ad6d-e4e16f055815",
+   "arm": "N",
+   "key": "k01",
+   "finished": true,
+   "calls": 3,
+   "processed": 301339,
+   "final": "CODE D3E246",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-9bdf5998",
+     "compatible": false,
+     "interactive": true,
+     "canary": "shadow",
+     "unit": null
+    },
+    "project": [],
+    "faults": 0
+   }
+  },
+  {
+   "session": "a08e958e-c296-4bcd-81e3-03ea39d3a356",
+   "arm": "N",
+   "key": "k02",
+   "finished": true,
+   "calls": 3,
+   "processed": 287469,
+   "final": "CODE 081AF5",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-9bdf5998",
+     "compatible": false,
+     "interactive": true,
+     "canary": "shadow",
+     "unit": null
+    },
+    "project": [],
+    "faults": 0
+   }
+  },
+  {
+   "session": "c08b7e42-d082-46af-bfeb-9d27ccd73b88",
+   "arm": "F",
+   "key": "k03",
+   "finished": true,
+   "calls": 3,
+   "processed": 285627,
+   "final": "CODE 8F752B",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-9bdf5998",
+     "compatible": false,
+     "interactive": true,
+     "canary": "shadow",
+     "unit": null
+    },
+    "project": [],
+    "faults": 0
+   }
+  },
+  {
+   "session": "104358cc-f40d-4b66-93e9-6d4a7ec2371b",
+   "arm": "F",
+   "key": "k04",
+   "finished": true,
+   "calls": 3,
+   "processed": 289909,
+   "final": "CODE A2A761",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-9bdf5998",
+     "compatible": false,
+     "interactive": true,
+     "canary": "shadow",
+     "unit": null
+    },
+    "project": [],
+    "faults": 0
+   }
+  },
+  {
+   "session": "bc030779-6947-4e49-89a3-9d772b691a02",
+   "arm": "N",
+   "key": "k05",
+   "finished": true,
+   "calls": 3,
+   "processed": 284468,
+   "final": "CODE 5BC0CB",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-9bdf5998",
+     "compatible": false,
+     "interactive": true,
+     "canary": "shadow",
+     "unit": null
+    },
+    "project": [],
+    "faults": 0
+   }
+  }
+ ],
+ "summary": {
+  "F": {
+   "n": 3,
+   "correct": 3,
+   "processed": [
+    281911,
+    285627,
+    289909
+   ]
+  },
+  "N": {
+   "n": 3,
+   "correct": 3,
+   "processed": [
+    301339,
+    287469,
+    284468
+   ]
+  }
+ }
+}

@@ -1,0 +1,159 @@
+{
+ "contract": "GPF-L2-laptop-v1",
+ "plane": "DESKTOP-PMT5BS8",
+ "cwd": "C:\\Users\\dev\\.claude\\skills\\claude-power-pack",
+ "backup": "C:\\Users\\dev\\.claude\\backups\\gpf-20261102T155400",
+ "orig_sha": {
+  "C:\\Users\\dev\\.claude\\CLAUDE.md": "ca35ff8179051dadf96639ffcaea14e20db836364d8cfaef924fea52955eceb7",
+  "C:\\Users\\dev\\.claude\\rules\\common\\code-review.md": "befb119ebee31c378acad1a8fa8e815c600073c1d7924462f430ec01775b8002",
+  "C:\\Users\\dev\\.claude\\rules\\python\\testing.md": "2ae141c9eaf5543034127fc33ec057efde849ea3151bf47ec85e4563f9f897bf"
+ },
+ "diet_sha": {
+  "C:\\Users\\dev\\.claude\\CLAUDE.md": "32cc4fefc586c43795ccd41546d44811bd6779a4bb3eb4623be8fca3f035bbfe",
+  "C:\\Users\\dev\\.claude\\rules\\common\\code-review.md": "bf2d8c52c562cd76db301a21649f70dbb2ec46b04ca73be62ee28f82fbcf6723",
+  "C:\\Users\\dev\\.claude\\rules\\python\\testing.md": "777800cfcf0627d9eee3f0c9053dbaf64272fe2828fbf0ae8ccbdabc204d2073"
+ },
+ "probes": [
+  {
+   "arm": "C",
+   "call1": 78236,
+   "session": "d191c5fc-0e95-436e-bd6c-10e3eeeeac57",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A0"
+  },
+  {
+   "arm": "T",
+   "call1": 71723,
+   "session": "054b7c54-a25d-4e3a-bbd7-ef817c414e77",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A1"
+  },
+  {
+   "arm": "C",
+   "call1": 78231,
+   "session": "6b491824-0e62-47db-8242-53224bdd7c76",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A2"
+  },
+  {
+   "arm": "T",
+   "call1": 72007,
+   "session": "886acdeb-404c-4825-8837-717b39b851c4",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A3"
+  },
+  {
+   "arm": "T",
+   "call1": 72008,
+   "session": "219393de-1feb-4236-93aa-0cb5e4429351",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "B0"
+  },
+  {
+   "arm": "C",
+   "call1": 78530,
+   "session": "5169aeaa-34da-4732-8cd7-47ac40004c82",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "B1"
+  },
+  {
+   "arm": "T",
+   "call1": 72053,
+   "session": "c9964adf-8a2b-4ca3-8bd6-8378bf00de19",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "B2"
+  },
+  {
+   "arm": "C",
+   "call1": 78571,
+   "session": "53793d19-9fdd-4444-80b6-10df98ad67f3",
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "B3"
+  }
+ ],
+ "restored_original": true,
+ "summary": {
+  "control": [
+   78236,
+   78231,
+   78530,
+   78571
+  ],
+  "treatment": [
+   71723,
+   72007,
+   72008,
+   72053
+  ],
+  "control_spread": 0.0043,
+  "delta_mean": 6444,
+  "n": [
+   4,
+   4
+  ]
+ }
+}

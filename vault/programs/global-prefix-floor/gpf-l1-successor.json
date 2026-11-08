@@ -1,0 +1,310 @@
+{
+ "contract": "GPF-L1-successor-v1",
+ "plane": "DESKTOP-PMT5BS8",
+ "runs": [
+  {
+   "label": "S1",
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-zv55ihno",
+   "predecessor": "eac88636-cb69-4a78-bbed-cf2a74ff5522",
+   "goal": "GPF successor smoke S1",
+   "predecessor_metrics": {
+    "call1": 70970,
+    "calls": 1,
+    "processed": 70970,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "OK"
+   },
+   "seal": {
+    "rc": 3,
+    "out": "capsule   C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-zv55ihno\\capsules\\eac88636-cb69-4a78-bbed-cf2a74ff5522.json  sealed=True  sha=4b02c773e04f\nverdict   REFUSED\n  missing  goal: named goal GPF successor smoke S1 does not exist\n  missing  handoff: written by session c3e68525, not this one -- run /kclear\n  note     70 dirty tracked paths survive on disk, not in context\n",
+    "err": ""
+   },
+   "state_files": [
+    "capsules\\eac88636-cb69-4a78-bbed-cf2a74ff5522.json",
+    "latest\\576459d4.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "seconds_to_turn_end": 362
+  },
+  {
+   "label": "S3-fix-39151f03",
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-u409m8uw",
+   "predecessor": "6988bac6-1ff2-4db5-bf8f-058a7526ece5",
+   "goal": "GPF successor smoke S3-fix-39151f03",
+   "predecessor_metrics": {
+    "call1": 71501,
+    "calls": 1,
+    "processed": 71501,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "OK"
+   },
+   "seal": {
+    "rc": 3,
+    "out": "capsule   C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-u409m8uw\\capsules\\6988bac6-1ff2-4db5-bf8f-058a7526ece5.json  sealed=True  sha=cd9add4eb431\nverdict   REFUSED\n  missing  goal: named goal GPF successor smoke S3-fix-39151f03 does not exist\n  missing  handoff: written by session c3e68525, not this one -- run /kclear\n  note     71 dirty tracked paths survive on disk, not in context\n",
+    "err": ""
+   },
+   "state_files": [
+    "capsules\\6988bac6-1ff2-4db5-bf8f-058a7526ece5.json",
+    "latest\\576459d4.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "seconds_to_turn_end": 362,
+   "successor": "1a16ffc5-9cfc-4527-ac8e-ff57cc699d6e",
+   "successor_first_prompt": "<command-message>kresume</command-message>\n<command-name>/kresume</command-name>",
+   "successor_metrics": {
+    "call1": 75215,
+    "calls": 1,
+    "processed": 75215,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "Plan mode is on, and `/kresume` step 1 claims the capsule, which writes state. I'm writing the plan now and will run the steps after you approve."
+   },
+   "goal_named": false,
+   "receipts": [
+    {
+     "ev": "start",
+     "releaseId": "0.1.0-39151f03",
+     "canary": "enforce",
+     "marker": null,
+     "mode": null,
+     "frontier": null,
+     "bytes": null
+    },
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": false,
+     "mode": "off",
+     "frontier": null,
+     "bytes": null
+    }
+   ],
+   "frontier_basis": null,
+   "terminate_error": "PermissionError: [WinError 5] Acceso denegado"
+  },
+  {
+   "label": "S4-debug",
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-wi584tie",
+   "predecessor": "e2f0734c-e770-49f1-b57d-6c5ef4642220",
+   "goal": "GPF successor smoke S4-debug",
+   "debug_file": "C:\\Users\\dev\\AppData\\Local\\Temp\\claude\\C--Users-dev--claude-skills-claude-power-pack\\1d97bc4c-c292-45ae-81f0-d9124cc72917\\scratchpad\\s4-debug.log",
+   "predecessor_metrics": {
+    "call1": 70012,
+    "calls": 1,
+    "processed": 70012,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "OK"
+   },
+   "seal": {
+    "rc": 3,
+    "out": "capsule   C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-wi584tie\\capsules\\e2f0734c-e770-49f1-b57d-6c5ef4642220.json  sealed=True  sha=b876e0f355b2\nverdict   REFUSED\n  missing  goal: named goal GPF successor smoke S4-debug does not exist\n  missing  handoff: written by session c3e68525, not this one -- run /kclear\n  note     72 dirty tracked paths survive on disk, not in context\n",
+    "err": ""
+   },
+   "state_files": [
+    "capsules\\e2f0734c-e770-49f1-b57d-6c5ef4642220.json",
+    "latest\\576459d4.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "seconds_to_turn_end": 362,
+   "successor": "68ddf66b-7824-4568-acd8-73c0a8f6a66a",
+   "successor_first_prompt": "<command-message>kresume</command-message>\n<command-name>/kresume</command-name>",
+   "successor_metrics": {
+    "call1": 75296,
+    "calls": 2,
+    "processed": 152427,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": ""
+   },
+   "goal_named": false,
+   "receipts": [
+    {
+     "ev": "start",
+     "releaseId": "0.1.0-265d3d55",
+     "canary": "enforce",
+     "marker": null,
+     "mode": null,
+     "frontier": null,
+     "bytes": null
+    },
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": false,
+     "mode": "off",
+     "frontier": null,
+     "bytes": null
+    }
+   ],
+   "frontier_basis": null
+  },
+  {
+   "label": "S5-old-265d3d55",
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-nqqdyuky",
+   "predecessor": "c8fc8931-4cd8-4225-a3eb-416c4692b9d9",
+   "goal": "GPF successor smoke S5-old-265d3d55",
+   "predecessor_metrics": {
+    "call1": 72392,
+    "calls": 1,
+    "processed": 72392,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "OK"
+   },
+   "seal": {
+    "rc": 3,
+    "out": "capsule   C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-nqqdyuky\\capsules\\c8fc8931-4cd8-4225-a3eb-416c4692b9d9.json  sealed=True  sha=80fd16ebec31\nverdict   REFUSED\n  missing  goal: named goal GPF successor smoke S5-old-265d3d55 does not exist\n  missing  handoff: written by session c3e68525, not this one -- run /kclear\n  note     73 dirty tracked paths survive on disk, not in context\n",
+    "err": ""
+   },
+   "state_files": [
+    "capsules\\c8fc8931-4cd8-4225-a3eb-416c4692b9d9.json",
+    "latest\\576459d4.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "turn_completed": true,
+   "seconds_to_turn_end": 19,
+   "successor": "17d80b6a-b895-4e08-a4b5-d8441b85babd",
+   "successor_first_prompt": "<command-message>kresume</command-message>\n<command-name>/kresume</command-name>",
+   "successor_metrics": {
+    "call1": 73734,
+    "calls": 2,
+    "processed": 148180,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "aunches the missing panes, and `python modules/session_resilience/epoch.py --dismiss` closes the interruption.\n- 26 compound-learning files are pending consolidation. Auto-invoke is suppressed after 24 failed attempts, so `/cpp-compound` needs a manual run.\n\nWhat do you want to work on this session?"
+   },
+   "goal_named": false,
+   "receipts": [
+    {
+     "ev": "start",
+     "releaseId": "0.1.0-265d3d55",
+     "canary": "enforce",
+     "marker": null,
+     "mode": null,
+     "frontier": null,
+     "bytes": null
+    },
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": false,
+     "mode": "off",
+     "frontier": null,
+     "bytes": null
+    }
+   ],
+   "frontier_basis": null
+  },
+  {
+   "label": "S6-fix-39151f03",
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-bbqwcgt5",
+   "predecessor": "f9e6e9e1-5c0c-4dab-8238-00d2e5b385df",
+   "goal": "GPF successor smoke S6-fix-39151f03",
+   "predecessor_metrics": {
+    "call1": 68986,
+    "calls": 1,
+    "processed": 68986,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "OK"
+   },
+   "seal": {
+    "rc": 3,
+    "out": "capsule   C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-bbqwcgt5\\capsules\\f9e6e9e1-5c0c-4dab-8238-00d2e5b385df.json  sealed=True  sha=60b039fba19a\nverdict   REFUSED\n  missing  goal: named goal GPF successor smoke S6-fix-39151f03 does not exist\n  missing  handoff: written by session c3e68525, not this one -- run /kclear\n  note     73 dirty tracked paths survive on disk, not in context\n",
+    "err": ""
+   },
+   "state_files": [
+    "capsules\\f9e6e9e1-5c0c-4dab-8238-00d2e5b385df.json",
+    "latest\\576459d4.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "turn_completed": true,
+   "seconds_to_turn_end": 31,
+   "successor": "b2992c2f-759e-417b-a57a-0e90f6ecd6b7",
+   "successor_first_prompt": "<command-message>kresume</command-message>\n<command-name>/kresume</command-name>",
+   "successor_metrics": {
+    "call1": 73660,
+    "calls": 2,
+    "processed": 147980,
+    "reads": 0,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "ed in it. I haven't claimed it, certified anything, or changed any files.\n\nSince there is no capsule, there is no obligation to continue. What should I work on? If you expected a capsule from an earlier session, I can look at `f9e6e9e1-5c0c-4dab-8238-00d2e5b385df` to see why it has no goal recorded."
+   },
+   "goal_named": false,
+   "receipts": [
+    {
+     "ev": "start",
+     "releaseId": "0.1.0-39151f03",
+     "canary": "enforce",
+     "marker": null,
+     "mode": null,
+     "frontier": null,
+     "bytes": null
+    },
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": false,
+     "mode": "off",
+     "frontier": null,
+     "bytes": null
+    },
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": true,
+     "mode": "enforce",
+     "frontier": null,
+     "bytes": null
+    },
+    {
+     "ev": "frontier",
+     "releaseId": null,
+     "canary": null,
+     "marker": null,
+     "mode": null,
+     "frontier": {
+      "capsule": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-bbqwcgt5\\capsules\\f9e6e9e1-5c0c-4dab-8238-00d2e5b385df.json",
+      "sha": "60b039fba19a75570be4a7dac3f12048041e38d7ad2b974e8c25376b453bcbe5",
+      "basis": "capsule"
+     },
+     "bytes": 33
+    }
+   ],
+   "frontier_basis": "capsule",
+   "successor_decision": [
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": true,
+     "mode": "enforce",
+     "frontier": null,
+     "bytes": null
+    }
+   ]
+  }
+ ]
+}

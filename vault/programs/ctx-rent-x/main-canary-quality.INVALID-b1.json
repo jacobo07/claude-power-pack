@@ -1,0 +1,61 @@
+{
+ "contract": "P3-main-canary-v1",
+ "prompt": "Use the subagent type best suited for read-only codebase search to find which file in this repo defines DEFAULT_MODES, and what the default mode of `main` is there. Reply with exactly one final line: <repo-relative path> <mode>",
+ "runs": [
+  {
+   "arm": "S",
+   "session": "23060e3d-4272-4bc2-a2cd-b3362729d440",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "off",
+    "policyGen": "271dcb3e9d8c",
+    "version": "2.1.316"
+   },
+   "finished": true,
+   "calls": 3,
+   "processed": 209499,
+   "weighted": 127678,
+   "tools": [
+    "Agent:Explore",
+    "Grep"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "The Explore agent is still searching for the `DEFAULT_MODES` definition and the default mode for `main`. I'll give you the one-line answer when its result comes",
+   "correct": false,
+   "receipt_matches_arm": true,
+   "seq": "b10"
+  },
+  {
+   "arm": "E",
+   "session": "76678e0d-3c59-48fc-9334-363d214d3d85",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "finished": true,
+   "calls": 4,
+   "processed": 209594,
+   "weighted": 71517,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Read"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "The Explore agent is searching the repo for the `DEFAULT_MODES` definition and the default for `main`. I'll report its result when it finishes.",
+   "correct": false,
+   "receipt_matches_arm": true,
+   "seq": "b11"
+  }
+ ]
+}

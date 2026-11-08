@@ -118,7 +118,7 @@ def _fold(events: list) -> list:
                     "id": rid, "created": ev.get("created", ""),
                     "action": ev.get("action", ""), "command": ev.get("command", ""),
                     "unblocks": ev.get("unblocks", ""), "component": ev.get("component"),
-                    "source": ev.get("source"),
+                    "source": ev.get("source"), "urgent": bool(ev.get("urgent")),
                     "status": "pending", "completed": None, "by": None,
                 }
             else:
@@ -163,15 +163,16 @@ def _materialize(state_dir=None) -> None:
 
 
 def append(action: str, command: str, *, unblocks: str = "", component=None,
-           source=None, state_dir=None, now=None, row_id: str | None = None) -> str:
-    """Add a pending residual (idempotent by id). Returns the row id. Fail-open."""
+           source=None, state_dir=None, now=None, row_id: str | None = None, urgent: bool = False) -> str:
+    """Add a pending residual (idempotent by id). Returns the row id. Fail-open.
+    `urgent` rows (a capital wait, a security boundary) skip the grace window: the next SessionStart shows them."""
     try:
         rid = row_id or _mk_id(action, command)
         if rid in {r["id"] for r in load(state_dir)}:
             return rid  # idempotent -- a backfill re-run does not duplicate
         _append_event({"op": "add", "id": rid, "created": _now(now).isoformat(),
                        "action": action, "command": command, "unblocks": unblocks,
-                       "component": component, "source": source}, state_dir)
+                       "component": component, "source": source, "urgent": bool(urgent)}, state_dir)
         _materialize(state_dir)
         return rid
     except Exception:  # noqa: BLE001 -- fail-open
@@ -280,7 +281,7 @@ def pending(state_dir=None, *, min_age_h: float = 0.0, now=None) -> list:
         for r in load(state_dir):
             if r["status"] != "pending":
                 continue
-            if min_age_h > 0:
+            if min_age_h > 0 and not r.get("urgent"):
                 try:
                     t = datetime.fromisoformat(r["created"])
                     if t.tzinfo is None:

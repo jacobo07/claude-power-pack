@@ -327,11 +327,17 @@ def seal_capsule(payload: dict, session_id: str) -> str:
                                        goal=payload.get("goal"), next_items=items,
                                        summary=payload.get("summary") or "")
         receipt, comp = rollover.seal(cap), rollover.completeness(cap)
+        # The successor's CCR finds its capsule only through latest/<repo-key>.json. Only the
+        # `rollover.py seal` CLI wrote it, so every real /kclear capsule read as frontier
+        # `unreadable` (K4, 2026-11-02). Same order as the CLI: pointer, then verdict + ledger.
+        rollover.write_latest_pointer(cap, receipt)
         verdict = rollover.safe_to_forget(receipt, comp)
-        rollover.ledger("capsule_sealed", session_id=sid, cwd=str(Path.cwd()), via="kclear",
-                        capsule=receipt, safe_to_forget=verdict["verdict"], refusals=verdict["reasons"])
+        recorded = rollover.ledger("capsule_sealed", session_id=sid, cwd=str(Path.cwd()), via="kclear",
+                                   capsule=receipt, safe_to_forget=verdict["verdict"], refusals=verdict["reasons"])
     except Exception as exc:  # noqa: BLE001 -- the checkpoint above already succeeded
         return f"[capsule] UNKNOWN -- capsule step failed ({exc.__class__.__name__}); do not /clear yet"
+    if recorded is False:   # the gate reads this row: without it /clear would meet NO_CAPSULE (ccp-s16 W1)
+        return "[capsule] UNKNOWN -- the seal record was not written (ledger busy); run /kclear again before /clear"
     if verdict["verdict"] == "SAFE_TO_FORGET":
         return f"[capsule] SAFE_TO_FORGET -> {receipt['path']} -- /clear, then /kresume"
     return "[capsule] REFUSED -- " + "; ".join(verdict["reasons"]) + " -- fix before /clear"

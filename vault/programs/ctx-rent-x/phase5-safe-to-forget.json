@@ -1,0 +1,256 @@
+{
+ "contract": "ctx-rent-x-phase5-v1",
+ "spec": "vault/specs/ccr-safe-to-forget-main.md",
+ "plane": "DESKTOP-PMT5BS8",
+ "cwd": "C:\\Users\\dev\\.claude\\skills\\claude-power-pack",
+ "runs": [
+  {
+   "session": "cf9c5a5d-6038-44ff-8b3a-a9a473666bb9",
+   "arm": "F",
+   "key": "k00",
+   "finished": true,
+   "calls": 2,
+   "processed": 142212,
+   "final": "CODE A11A79",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-a2116a3b",
+     "compatible": true,
+     "interactive": true,
+     "canary": "enforce",
+     "unit": null
+    },
+    "project": [
+     {
+      "tool": "PowerShell",
+      "agent": null,
+      "bytes": 18733,
+      "out": 7831,
+      "applied": false,
+      "forget": {
+       "verdict": "FORGET",
+       "reason": "safe-hoisted",
+       "hoisted": 1,
+       "named": []
+      },
+      "durable": null,
+      "mainProject": null
+     }
+    ],
+    "faults": 0
+   },
+   "invalid": null
+  },
+  {
+   "session": "ff9ffc00-c549-47ed-817e-d8a2aaa12791",
+   "arm": "N",
+   "key": "k01",
+   "finished": true,
+   "calls": 2,
+   "processed": 139397,
+   "final": "CODE D3E246",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-a2116a3b",
+     "compatible": true,
+     "interactive": true,
+     "canary": "enforce",
+     "unit": null
+    },
+    "project": [
+     {
+      "tool": "PowerShell",
+      "agent": null,
+      "bytes": 18733,
+      "out": 7963,
+      "applied": true,
+      "forget": {
+       "verdict": "FORGET",
+       "reason": "safe-hoisted",
+       "hoisted": 1,
+       "named": []
+      },
+      "durable": true,
+      "mainProject": true
+     }
+    ],
+    "faults": 0
+   },
+   "invalid": null
+  },
+  {
+   "session": "be673670-442b-4042-a6bf-e3ee1d630b07",
+   "arm": "N",
+   "key": "k02",
+   "finished": true,
+   "calls": 2,
+   "processed": 139387,
+   "final": "CODE 081AF5",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-a2116a3b",
+     "compatible": true,
+     "interactive": true,
+     "canary": "enforce",
+     "unit": null
+    },
+    "project": [
+     {
+      "tool": "PowerShell",
+      "agent": null,
+      "bytes": 18733,
+      "out": 7963,
+      "applied": true,
+      "forget": {
+       "verdict": "FORGET",
+       "reason": "safe-hoisted",
+       "hoisted": 1,
+       "named": []
+      },
+      "durable": true,
+      "mainProject": true
+     }
+    ],
+    "faults": 0
+   },
+   "invalid": null
+  },
+  {
+   "session": "660eb70e-9f40-4ead-92ef-b2b3305492f8",
+   "arm": "F",
+   "key": "k03",
+   "finished": true,
+   "calls": 2,
+   "processed": 142279,
+   "final": "CODE 8F752B",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-a2116a3b",
+     "compatible": true,
+     "interactive": true,
+     "canary": "enforce",
+     "unit": null
+    },
+    "project": [
+     {
+      "tool": "PowerShell",
+      "agent": null,
+      "bytes": 18733,
+      "out": 7831,
+      "applied": false,
+      "forget": {
+       "verdict": "FORGET",
+       "reason": "safe-hoisted",
+       "hoisted": 1,
+       "named": []
+      },
+      "durable": null,
+      "mainProject": null
+     }
+    ],
+    "faults": 0
+   },
+   "invalid": null
+  },
+  {
+   "session": "d2fe1b21-4a81-4ca1-b56f-446365ff8873",
+   "arm": "F",
+   "key": "k04",
+   "finished": true,
+   "calls": 2,
+   "processed": 142610,
+   "final": "CODE A2A761",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-a2116a3b",
+     "compatible": true,
+     "interactive": true,
+     "canary": "enforce",
+     "unit": null
+    },
+    "project": [
+     {
+      "tool": "PowerShell",
+      "agent": null,
+      "bytes": 18733,
+      "out": 7831,
+      "applied": false,
+      "forget": {
+       "verdict": "FORGET",
+       "reason": "safe-hoisted",
+       "hoisted": 1,
+       "named": []
+      },
+      "durable": null,
+      "mainProject": null
+     }
+    ],
+    "faults": 0
+   },
+   "invalid": null
+  },
+  {
+   "session": "9d4926f0-36a0-4a4b-84bd-36330f1aa29d",
+   "arm": "N",
+   "key": "k05",
+   "finished": true,
+   "calls": 2,
+   "processed": 139488,
+   "final": "CODE 5BC0CB",
+   "correct": true,
+   "receipts": {
+    "start": {
+     "releaseId": "0.1.0-a2116a3b",
+     "compatible": true,
+     "interactive": true,
+     "canary": "enforce",
+     "unit": null
+    },
+    "project": [
+     {
+      "tool": "PowerShell",
+      "agent": null,
+      "bytes": 18733,
+      "out": 7963,
+      "applied": true,
+      "forget": {
+       "verdict": "FORGET",
+       "reason": "safe-hoisted",
+       "hoisted": 1,
+       "named": []
+      },
+      "durable": true,
+      "mainProject": true
+     }
+    ],
+    "faults": 0
+   },
+   "invalid": null
+  }
+ ],
+ "summary": {
+  "F": {
+   "n": 3,
+   "correct": 3,
+   "processed": [
+    142212,
+    142279,
+    142610
+   ]
+  },
+  "N": {
+   "n": 3,
+   "correct": 3,
+   "processed": [
+    139397,
+    139387,
+    139488
+   ]
+  }
+ }
+}

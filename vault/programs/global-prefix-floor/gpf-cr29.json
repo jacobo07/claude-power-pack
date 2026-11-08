@@ -1,0 +1,155 @@
+{
+ "contract": "GPF-CR29-kclear-v1",
+ "plane": "DESKTOP-PMT5BS8",
+ "runs": [
+  {
+   "label": "K1",
+   "root": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-cr29-0v2ou6m6",
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-ws79s1kh",
+   "predecessor": "723258b8-0493-4414-813f-a33c685f3299",
+   "token": "RESUMED-K1-ebabaa",
+   "aborted": "trust dialog shown; not typing into it"
+  },
+  {
+   "label": "K2",
+   "root": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-cr29-a9rwlly5",
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-lhmbc_cr",
+   "predecessor": "1ef71a96-3168-41bb-b9c9-6ecaa16eefdd",
+   "token": "RESUMED-K2-328c74",
+   "aborted": "trust dialog shown; not typing into it",
+   "screen_tail": ""
+  },
+  {
+   "label": "K3",
+   "root": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-cr29-jks9iq71",
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-j8sk4_5j",
+   "predecessor": "e7feb674-07ac-4eb6-b3af-6b4c66ce09e9",
+   "token": "RESUMED-K3-a019bb",
+   "aborted": "trust dialog shown; not typing into it",
+   "screen_tail": "",
+   "screen_raw_len": 1216,
+   "screen_raw_at_trust": "\"ject,\\x1b[125Gor\\x1b[128Gwork\\x1b[133Gfrom\\x1b[138Gyour\\x1b[143Gteam).\\x1b[150GIf\\x1b[153Gnot,\\x1b[158Gtake\\x1b[163Ga\\x1b[165Gmoment\\x1b[172Gto\\x1b[175Greview\\x1b[182Gwhat's\\x1b[189Gin\\x1b[192Gthis\\r\\n\\x1b[2Gfolder\\x1b[9Gfirst.\\r\\n\\r\\n\\x1b[2GClaude\\x1b[9GCode'll\\x1b[17Gbe\\x1b[20Gable\\x1b[25Gto\\x1b[28Gread,\\x1b[34Gedit,\\x1b[40Gand\\x1b[44Gexecute\\x1b[52Gfiles\\x1b[58Ghere.\\r\\n\\r\\n\\x1b[2G\\x1b[38;2;153;153;153mSecurity\\x1b[11Gguide\\x1b[39m\\r\\n\\r\\n\\x1b[2G\\x1b[38;2;177;185;249m\u276f\\x1b[4GNo,\\x1b[8Gexit\\x1b[39m\\r\\n\\x1b[4GYes,\\x1b[9GI\\x1b[11Gtrust\\x1b[17Gthis\\x1b[22Gfolder\\r\\n\\r\\n\\x1b[2G\\x1b[38;2;153;153;153mEnter\\x1b[8Gto\\x1b[11Gconfirm\\x1b[19G\u00b7\\x1b[21GEsc\\x1b[25Gto\\x1b[28Gcancel\\x1b[39m\\r\\n\\x1b[1C\\x1b[4A\\x1b[?2026l\\x1b[>0q\\x1b[?u\\x1b]7501;?\\x07\\x1b[c\""
+  },
+  {
+   "label": "K4",
+   "root": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-cr29-probe",
+   "fixed_root": true,
+   "memory_preexisting": [],
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-gpm026gm",
+   "predecessor": "3b06bfd9-b4f5-439c-b724-5030d7353898",
+   "token": "RESUMED-K4-6186fd",
+   "turn1_done": true,
+   "kclear_done": true,
+   "kclear_tail": "_TO_FORGET -> C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-gpm026gm\\capsules\\3b06bfd9-b4f5-439c-b724-5030d7353898.json -- /clear, then /kresume\n\nOpen item: the RESUMPTION_FILE.md next steps (create `done.txt` with the RESUMED token, then reply) have not been run. They wait on your go-ahead.\n\n/clear",
+   "capsule_verdict": null,
+   "state_files": [
+    "capsules\\3b06bfd9-b4f5-439c-b724-5030d7353898.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "first_correct_action": true,
+   "seconds_to_first_correct_action": 91,
+   "successor_turn_done": true,
+   "successor": "7aa6cd09-43ef-4a38-9ce0-ecb3864ece24",
+   "successor_metrics": {
+    "call1": 62073,
+    "calls": 12,
+    "processed": 813369,
+    "reads": 4,
+    "rereads": 1,
+    "page_faults": 0,
+    "final": "pe. The capsule's sealed obligation came from the handoff, which says `RESUMED-K4`. The goal file says `RESUMED-K4-6186fd`. The exam matched the handoff's wording, so that is what certified.\n- I created `done.txt` with the goal file's full token. It is a new untracked file and nothing was committed."
+   },
+   "token_named": true,
+   "frontier": [
+    {
+     "capsule": null,
+     "sha": null,
+     "basis": "unreadable"
+    }
+   ],
+   "successor_decision": [
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": true,
+     "mode": "enforce",
+     "frontier": null,
+     "bytes": null
+    }
+   ],
+   "done_txt": "RESUMED-K4-6186fd",
+   "ledger_verdict": "SAFE_TO_FORGET",
+   "resume_failed": 3,
+   "resume_failed_wrong": [
+    "next"
+   ],
+   "resume_certified": true,
+   "ledger_backfill": "K4 ledger fields added post-run from state_dir ledger (driver fix landed after K4)",
+   "capsule_obligations": [
+    "Owner go-ahead to execute RESUMPTION_FILE.md next steps: create done.txt in project root with the RESUMED-K4 token, then reply with goal and token"
+   ]
+  },
+  {
+   "label": "K5",
+   "root": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-cr29-probe",
+   "fixed_root": true,
+   "memory_preexisting": [
+    "MEMORY.md",
+    "handoffs",
+    "project_session_handoff.md"
+   ],
+   "state_dir": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-kpk4koh9",
+   "predecessor": "1f6b1008-ba61-4b86-a728-b5473180591f",
+   "token": "RESUMED-K5-8a40e5",
+   "turn1_done": true,
+   "kclear_done": true,
+   "kclear_tail": "recorded with the open obligations: create `done.txt` in the probe root with `RESUMED-K5-8a40e5`, then reply with the goal and token. Neither has run yet, since you asked me to hold the work.\n\nThe first attempt was blocked by the Bash guard, so I wrote the payload through PowerShell instead.\n\n/clear",
+   "capsule_verdict": null,
+   "state_files": [
+    "capsules\\1f6b1008-ba61-4b86-a728-b5473180591f.json",
+    "latest\\e182506e.json",
+    "rollover-ledger.jsonl",
+    "rollover-ledger.lock"
+   ],
+   "first_correct_action": true,
+   "seconds_to_first_correct_action": 51,
+   "successor_turn_done": true,
+   "successor": "336005be-7f32-47d1-b773-ebbd44f4952a",
+   "successor_metrics": {
+    "call1": 60927,
+    "calls": 6,
+    "processed": 378691,
+    "reads": 1,
+    "rereads": 0,
+    "page_faults": 0,
+    "final": "Goal: prove a fresh successor resumes from the compiled capsule alone. Token written: `RESUMED-K5-8a40e5` (in `done.txt` at the project root)."
+   },
+   "token_named": true,
+   "frontier": [
+    {
+     "capsule": "C:\\Users\\dev\\AppData\\Local\\Temp\\gpf-rollover-kpk4koh9\\capsules\\1f6b1008-ba61-4b86-a728-b5473180591f.json",
+     "sha": "46b9b6dc14a4f83f507e5b7ff0128997244e5fd6bebdd3c4bfee8b26b8deb06c",
+     "basis": "capsule"
+    }
+   ],
+   "successor_decision": [
+    {
+     "ev": "successor",
+     "releaseId": null,
+     "canary": "enforce",
+     "marker": true,
+     "mode": "enforce",
+     "frontier": null,
+     "bytes": null
+    }
+   ],
+   "done_txt": "RESUMED-K5-8a40e5",
+   "ledger_verdict": "SAFE_TO_FORGET",
+   "resume_failed": 0,
+   "resume_failed_wrong": [],
+   "resume_certified": true
+  }
+ ]
+}

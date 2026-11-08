@@ -134,9 +134,9 @@ def main() -> int:
     check("V-MPOL-GATE-NO-POLICY", mp.gate_question(INCIDENT_JOB["needs"], {})["result"] == "RESOLVE_BY_DEFAULT",
           "worktree question with no stated policy: not an Owner class either")
 
-    # S11 A1: a certification/truth-contract change is the Owner's. Incident 2026-11-02 (S10, mission
+    # S11 A1: a certification/truth-contract change is the Owner's. Incident 2026-11-02 (Game-A S10, mission
     # m-e6e0340e743d): the sweep answered this exact question RESOLVE_BY_DEFAULT.
-    sd8 = ("Decide whether cert-cxx may admit an sd8 variant (fn_00000B02 is the case in question); then a new S10-1 "
+    sd8 = ("Decide whether cert-cxx may admit an sd8 variant (fn_00000A01 is the case in question); then a new S10-1 "
            "plan can be written")
     g = mp.gate_question(sd8, pv)
     check("V-MPOL-GATE-TRUTH-SD8", g["result"] == "OWNER_REQUIRED" and g.get("owner_class") == "TRUTH_CONTRACT",
@@ -160,19 +160,19 @@ def main() -> int:
                                               f"wrongly escalated={tbadn}")
     # S11 D3: incident 2026-11-02 23:31Z (m-f0b595fd509f epoch 12) -- waiving a held-out release control was answered
     # RESOLVE_BY_DEFAULT. A positive/negative control or a release/kill gate is part of the truth contract.
-    waive = "Waive fn_00000A01 for OM-PR1, or authorize a new source-shape approach beyond declaration order"
+    waive = "Waive fn_00000A02 for OM-PR1, or authorize a new source-shape approach beyond declaration order"
     g = mp.gate_question(waive, pv)
     wsynth = [waive, "Can we waive the positive control that still fails?", "Drop one negative control from the release set?",
               "Relax the kill gate K5 for this wave?", "Treat OM-PR1 as passed at 2/3?",
               # 2026-11-03 05:33Z, same mission, still RESOLVE_BY_DEFAULT after the D3 fix (no control noun in it):
-              "Owner to waive fn_00000A01, or supply a donor with the same two-block lookup"]
+              "Owner to waive fn_00000A02, or supply a donor with the same two-block lookup"]
     wbad = [s for s in wsynth if mp.gate_question(s, pv).get("owner_class") != "TRUTH_CONTRACT"]
     check("V-MPOL-GATE-TRUTH-CONTROL-WAIVER", not wbad, f"{len(wsynth) - len(wbad)}/{len(wsynth)} control waivers -> "
                                                         f"TRUTH_CONTRACT; missed={wbad}")
     # S11 D2: incident 2026-11-03 (same mission): the checkpoint reason "in-scope routes falsified" read as PRODUCT_SCOPE,
     # which would have parked an engineering pivot for the Owner. A descriptive in-scope adjective is not a scope question;
     # a question ABOUT scope still is.
-    reason = ("OM-PR1 2/3: fn_00000A01 98.9 (mwcc reg priority), in-scope routes falsified; "
+    reason = ("OM-PR1 2/3: fn_00000A02 98.9 (mwcc reg priority), in-scope routes falsified; "
               "6 dev registry-attributable CXX")
     sneg = [reason, "All in-scope methods exhausted for the residual; next route is the ctor hint generator"]
     sbad = [s for s in sneg if mp.gate_question(s, pv)["result"] != "RESOLVE_BY_DEFAULT"]
@@ -181,6 +181,26 @@ def main() -> int:
     sbadp = [s for s in spos if mp.gate_question(s, pv).get("owner_class") != "PRODUCT_SCOPE"]
     check("V-MPOL-GATE-SCOPE-DESCRIPTIVE", not sbad and not sbadp,
           f"descriptive stays default (wrongly escalated={sbad}); scope questions stay PRODUCT_SCOPE (missed={sbadp})")
+
+    # Spec capsule-seal-on-question-end D2: incident m-81b9650c6ff2 2026-11-03 15:47Z -- a request to switch a guard off
+    # was answered RESOLVE_BY_DEFAULT. Switching a guard off is the Owner's call.
+    gd_inc = "set CPP_SEM_BREAKER=off (or clear the breaker) so WU-FE2 Phase 1 judging can resume"
+    gpos = [gd_inc, "CPP_SEM_BREAKER=off", "Clear the breaker so judging can resume?", "Disable the write-gate hook for this run?",
+            "Turn off the popup firewall for one run?", "Should I bypass the console-popup guard?",
+            "Set the kill switch off and continue?"]
+    gbad = [s for s in gpos if mp.gate_question(s, pv).get("owner_class") != "GUARD_DISABLE"]
+    gneg = ["Should I run the gate before the suite?", "The breaker receipt says GOOD_PROGRESS; next phase?",
+            "Which gate order, A then B?", "Skip the docs, then run the gate?", "Should I add a hook test for the stop chain?",
+            "Clear the scratch dir before the next render?",
+            # review F2: status sentences, the adjective and "kick off" are descriptions (checkpoint reasons are gated too)
+            "kill gate K5 cleared at 3/3; next route is ctor hints", "The breaker reset overnight; resume?",
+            "It's not clear which gate applies, A or B?", "Kick off the gate suite now?", "the gate cleared"]
+    gbadn = [s for s in gneg if mp.gate_question(s, pv)["result"] != "RESOLVE_BY_DEFAULT"]
+    check("V-MPOL-GATE-GUARD-DISABLE", not gbad and not gbadn,
+          f"{len(gpos) - len(gbad)}/{len(gpos)} guard switch-offs -> GUARD_DISABLE (missed={gbad}); "
+          f"{len(gneg) - len(gbadn)}/{len(gneg)} ordinary stay default (wrongly escalated={gbadn})")
+    gb = mp.classify_blocked({"state": "blocked", "needs": gd_inc}, pv)
+    check("V-MPOL-BLOCKED-GUARD-DISABLE-OWNER", gb["class"] == "QUESTION_OWNER", str(gb["class"]))
 
     # 14-01 W2a: done-gate / overrun / deviation Owner class (addendum section 3), kill switch CPP_MISSION_OWNER_GATES.
     saved_ks = os.environ.pop(KILL_SWITCH, None)
@@ -318,6 +338,7 @@ DRILLS = (
      "if False:", "V-MPOL-BLOCKED-LIFECYCLE-NOT-QUESTION"),
     ("M6 descriptive-scope neutraliser bypassed", "t_scope = _DESCRIPTIVE_SCOPE_RX.sub(\" \", t)", "t_scope = t",
      "V-MPOL-GATE-SCOPE-DESCRIPTIVE"),
+    ("M9 guard-disable class removed", '    ("GUARD_DISABLE", GUARD_DISABLE_RX),\n', "", "V-MPOL-GATE-GUARD-DISABLE"),
 )
 
 

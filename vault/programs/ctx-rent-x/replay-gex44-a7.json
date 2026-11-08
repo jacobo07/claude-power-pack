@@ -1,0 +1,73 @@
+{
+ "plane": "kobicraft-gex44",
+ "label": "ESTIMATE (counterfactual)",
+ "lever": "A7 main-lean floor, interactive top-level only",
+ "delta_per_call": 20795,
+ "delta_source": "MEASURED laptop L5 call-1, applied here as an assumption",
+ "since": "2026-10-25T00:00:00",
+ "until": "2026-11-01T00:00:00",
+ "classes": {
+  "mission_worker": {
+   "sessions": 13,
+   "calls": 703,
+   "X": 111466075,
+   "X_prime": 111466075,
+   "interactive": false,
+   "saving_pct": 0.0,
+   "quality": "UNKNOWN (counterfactual, nothing re-run)"
+  },
+  "kresume_successor": {
+   "sessions": 24,
+   "calls": 135,
+   "X": 11905411,
+   "X_prime": 9098086,
+   "interactive": true,
+   "saving_pct": 23.58,
+   "quality": "UNKNOWN (counterfactual, nothing re-run)"
+  },
+  "debugging": {
+   "sessions": 101,
+   "calls": 1110,
+   "X": 104307292,
+   "X_prime": 81381597,
+   "interactive": true,
+   "saving_pct": 21.98,
+   "quality": "UNKNOWN (counterfactual, nothing re-run)"
+  },
+  "sparse": {
+   "sessions": 416,
+   "calls": 1666,
+   "X": 121632384,
+   "X_prime": 90315783,
+   "interactive": true,
+   "saving_pct": 25.75,
+   "quality": "UNKNOWN (counterfactual, nothing re-run)"
+  },
+  "other": {
+   "sessions": 487,
+   "calls": 12949,
+   "X": 1256435445,
+   "X_prime": 989919666,
+   "interactive": true,
+   "saving_pct": 21.21,
+   "quality": "UNKNOWN (counterfactual, nothing re-run)"
+  },
+  "subagent": {
+   "sessions": 37,
+   "calls": 1120,
+   "X": 161631094,
+   "X_prime": 161631094,
+   "interactive": false,
+   "saving_pct": 0.0,
+   "quality": "UNKNOWN (counterfactual, nothing re-run)"
+  }
+ },
+ "total": {
+  "X": 1767377701,
+  "X_prime": 1443812301,
+  "calls": 17683,
+  "sessions": 1078,
+  "saving_pct": 18.31
+ },
+ "caveat": "class by first-user-text heuristic (APPROX); other-host delta; cache pricing ignored (processed tokens only)"
+}

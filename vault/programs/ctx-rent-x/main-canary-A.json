@@ -1,0 +1,82 @@
+{
+ "contract": "P3-main-canary (existing v4 A7 CCR_MAIN_CANARY=1, live release)",
+ "cwd": "C:\\Users\\dev\\.claude\\skills\\claude-power-pack",
+ "probes": [
+  {
+   "arm": "C",
+   "call1": 93239,
+   "session": "881da37c-0036-4432-b1d0-8dab1a4edc90",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "off",
+    "policyGen": "271dcb3e9d8c",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A0"
+  },
+  {
+   "arm": "T",
+   "call1": 71053,
+   "session": "c7e2c7e3-61ba-4d9e-a9ae-f845c049fefb",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A1"
+  },
+  {
+   "arm": "C",
+   "call1": 92943,
+   "session": "457f644d-8bd5-49f3-8f9b-4b37a726c219",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "off",
+    "policyGen": "271dcb3e9d8c",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A2"
+  },
+  {
+   "arm": "T",
+   "call1": 72621,
+   "session": "10031bc8-3887-4b72-8640-144c2ccee8cc",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A3"
+  }
+ ],
+ "summary": {
+  "control": [
+   93239,
+   92943
+  ],
+  "treatment": [
+   71053,
+   72621
+  ],
+  "control_spread": 0.0032,
+  "delta_mean": 21254,
+  "n": [
+   2,
+   2
+  ]
+ }
+}

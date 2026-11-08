@@ -21,7 +21,13 @@ paid the bootstrap and did nothing is not a transient.
 
 Clearing: `python tools/provider_breaker.py clear --mission <id>` writes a `provider_cleared`
 ledger row; a quarantine whose evidence is OLDER than the latest clear is not enforced.
-Kill switch: CPP_PROVIDER_BREAKER=off -> quota_hold only (the pre-breaker behaviour).
+An AUTH quarantine is also released by a RE-LOGIN: the credentials file rewritten AFTER the refusal
+with an access token that is usable (unexpired, or lapsed but still refreshable) is the qualifying
+precondition change; the release is ledgered as `provider_released`. An unchanged, unreadable or
+still-expired (expiresAt 0) credentials file keeps the park. Only mtime, expiresAt,
+refreshTokenExpiresAt and the presence of a refresh token are ever read -- never a token value.
+Kill switches: CPP_PROVIDER_BREAKER=off -> quota_hold only (the pre-breaker behaviour);
+CPP_BREAKER_CRED_RELEASE=off -> a re-login no longer releases (only `clear` does).
 
     python tools/provider_breaker.py status --mission <id>
     python tools/provider_breaker.py clear  --mission <id> [--note "..."]
@@ -44,6 +50,7 @@ BACKOFF_BASE_S = 300
 BACKOFF_CAP_S = 3600
 QUARANTINE_AFTER = 4
 STREAK_WINDOW = 8
+MAX_LINEAGE_HOPS = 4
 AUTH_RE = re.compile(r"invalid api key|please run /login|not logged in|oauth token (?:has )?expired|"
                      r"authentication[_ ](?:error|failed)|\b401\b|unauthori[sz]ed|credit balance is too low", re.I)
 
@@ -115,9 +122,93 @@ def last_clear(mission_id: str) -> float | None:
     return max(ts) if ts else None
 
 
+def _secs(value) -> float | None:
+    """Credentials instants are epoch milliseconds; 0 is kept as 0.0 (the measured mark of an
+    invalidated login). Anything that is not a number is unmeasured."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if value == 0:
+        return 0.0
+    return value / 1000.0 if value > 1e11 else float(value)
+
+
+def credentials_state(home=None) -> dict:
+    """Shape of ~/.claude/.credentials.json, never its secrets: the seven keys below and nothing else.
+    expires_at / refresh_expires_at are epoch SECONDS (the file stores milliseconds); refresh_token
+    is only whether the key is present."""
+    path = (Path(home) if home else Path.home()) / ".claude" / ".credentials.json"
+    out = {"path": str(path), "readable": False, "mtime": None, "expires_at": None,
+           "refresh_token": False, "refresh_expires_at": None, "why": ""}
+    try:
+        out["mtime"] = path.stat().st_mtime
+    except FileNotFoundError:
+        out["why"] = "missing"
+        return out
+    except OSError as exc:
+        out["why"] = exc.__class__.__name__
+        return out
+    try:
+        oauth = json.loads(path.read_text(encoding="utf-8"))["claudeAiOauth"]
+        if not isinstance(oauth, dict):
+            raise TypeError("claudeAiOauth is not an object")
+        out["expires_at"] = _secs(oauth.get("expiresAt"))
+        out["refresh_expires_at"] = _secs(oauth.get("refreshTokenExpiresAt"))
+        out["refresh_token"] = "refreshToken" in oauth
+        out["readable"] = True
+    except Exception as exc:  # noqa: BLE001 -- the class name only: a message could quote file content
+        out["why"] = exc.__class__.__name__
+    return out
+
+
+def credentials_expired(cred: dict, now: float) -> bool | None:
+    """True / False when the login can be judged, None when it cannot (unreadable, no expiresAt, or a lapsed
+    access token whose refresh token carries no known expiry).
+    The access token lapses every few hours and the CLI refreshes it with the refresh token, so a
+    past expiresAt alone is NOT expired (a preflight refusing it would deadlock an idle env);
+    expiresAt 0 is the measured a7 mark of an invalidated login."""
+    if not cred or not cred.get("readable"):
+        return None
+    exp = cred.get("expires_at")
+    if exp is None:
+        return None
+    if exp <= 0:
+        return True
+    if exp > now:
+        return False
+    if not cred.get("refresh_token"):
+        return True
+    rexp = cred.get("refresh_expires_at")
+    if rexp is None:
+        return None          # lapsed access token + refresh token of unknown validity: cannot judge, never "usable"
+    return rexp <= now
+
+
+def _iso(ts: float) -> str:
+    import datetime as _dt
+    return _dt.datetime.fromtimestamp(ts, _dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def auth_released(evidence_at: float, cred: dict, now: float) -> str | None:
+    """A one-line reason when a re-login qualifies as the precondition change for an AUTH quarantine:
+    credentials rewritten strictly AFTER the refusal and still usable. Everything else keeps the park
+    (unmeasurable included: churn is the harm being prevented, and `clear` remains)."""
+    if os.environ.get("CPP_BREAKER_CRED_RELEASE", "").lower() == "off":
+        return None
+    if not cred or not cred.get("readable"):
+        return None
+    mtime = cred.get("mtime")
+    if mtime is None or not mtime > evidence_at:
+        return None
+    if credentials_expired(cred, now) is not False:
+        return None
+    return f"credentials rewritten {_iso(mtime)} after the refusal at {_iso(evidence_at)}; access token usable"
+
+
 def decide(mission_id: str, owner_sid: str, now: float, *, workers=None, outcome=worker_outcome,
-           cleared_at=None) -> dict | None:
-    """The hold for this mission's next successor, or None. Pure over its injected readers."""
+           cleared_at=None, credentials=None, trace=None) -> dict | None:
+    """The hold for this mission's next successor, or None. Pure over its injected readers.
+    `credentials` is a callable returning a credentials_state() dict; `trace`, when a dict, receives
+    {"released": reason} if a re-login released an AUTH quarantine."""
     first = outcome(owner_sid)
     cls = first.get("class")
     if cls is None:
@@ -140,6 +231,12 @@ def decide(mission_id: str, owner_sid: str, now: float, *, workers=None, outcome
     evidence_at = float(first.get("at") or now)
     if clear and clear >= evidence_at:
         return None  # an operator cleared the breaker after this evidence was written
+    if cls == AUTH:
+        released = auth_released(evidence_at, (credentials or credentials_state)(), now)
+        if released:
+            if isinstance(trace, dict):
+                trace["released"] = released
+            return None  # a re-login after the refusal: the qualifying precondition change
     reason = f"{cls}: {first.get('text', '')}"[:220]
     if cls == AUTH or streak >= QUARANTINE_AFTER:
         why = "credentials" if cls == AUTH else f"{streak} consecutive workers ended in provider failure"
@@ -152,8 +249,10 @@ def decide(mission_id: str, owner_sid: str, now: float, *, workers=None, outcome
     return {"until": until, "reason": reason, "class": cls, "streak": streak, "quarantine": False}
 
 
-def hold_for(rec: dict, now: float) -> dict | None:
-    """Entry point for gsd_mission's supervisor. Falls back to quota_hold when disabled."""
+def hold_for(rec: dict, now: float, cleared_at=None) -> dict | None:
+    """Entry point for gsd_mission's supervisor. Falls back to quota_hold when disabled. `cleared_at` overrides
+    the instant of the last operator clear (lineage_hold passes the later of the successor's and the
+    predecessor's)."""
     gm = _gm()
     sid = (rec.get("owner") or {}).get("session_id")
     if not sid:
@@ -165,7 +264,53 @@ def hold_for(rec: dict, now: float) -> dict | None:
         return {**h, "class": QUOTA, "streak": 1, "quarantine": False}
     if not enabled():
         return None
-    return decide(rec.get("mission_id"), sid, now)
+    trace: dict = {}
+    hold = decide(rec.get("mission_id"), sid, now, cleared_at=cleared_at, trace=trace)
+    if trace.get("released"):
+        lr.ledger_append(rec.get("mission_id"), "provider_released", mission_id=rec.get("mission_id"),
+                         reason=trace["released"])
+    return hold
+
+
+def lineage_hold(rec: dict, now: float, load=None) -> dict | None:
+    """The hold a RENEWED successor inherits from the lineage it continues, or None.
+
+    hold_for needs an owner, and a PREPARED successor has none: its `launch` action never reaches
+    the relay-only provider hold. Measured on the a7 install: the lineage was renewed after its dead
+    iterations -- plan_next halts a mission at its hours budget before any provider hold is read,
+    GSD answers OK, the renewal is permitted, and each fresh successor launched one worker into the
+    same `Login expired` refusal. A budget renewal must not launder a quarantine.
+
+    The NEAREST predecessor (walking `renewed_from`) that has an owner decides, through hold_for, so a
+    healthy nearest predecessor means nothing to inherit and a re-login after the refusal still
+    releases. The walk is bounded: a seen-set and at most MAX_LINEAGE_HOPS records, so records that
+    point at each other, or a missing or unreadable one, end it with None (an unmeasured lineage is
+    not a quarantine; the relay path stays the backstop). A record that has an owner is the relay
+    path's case, and a disabled breaker inherits nothing."""
+    if not enabled() or rec.get("owner"):
+        return None
+    load = load or _gm().load
+    seen = {rec.get("mission_id")}
+    cur = rec
+    for _ in range(MAX_LINEAGE_HOPS):
+        pid = cur.get("renewed_from")
+        if not pid or pid in seen:
+            return None
+        seen.add(pid)
+        try:
+            pred = load(pid)
+        except Exception:  # noqa: BLE001 -- an unreadable record is unmeasured, not a hold
+            return None
+        if not isinstance(pred, dict):
+            return None
+        if pred.get("owner"):
+            # An operator clears the id the supervisor row and the logs show, which is the SUCCESSOR's; the hold
+            # itself is keyed by the predecessor's. A clear on either releases it.
+            clears = [t for t in (last_clear(rec.get("mission_id")), last_clear(pred.get("mission_id") or pid)) if t]
+            h = hold_for(pred, now, cleared_at=max(clears) if clears else None)
+            return None if h is None else {**h, "inherited_from": pred.get("mission_id") or pid}
+        cur = pred
+    return None
 
 
 def _cli(argv=None) -> int:
@@ -186,7 +331,9 @@ def _cli(argv=None) -> int:
     if not rec:
         print(json.dumps({"mission": a.mission, "error": "mission record not found"}))
         return 3
-    print(json.dumps({"mission": a.mission, "hold": hold_for(rec, time.time())}, indent=1))
+    now = time.time()
+    # a PREPARED renewal successor has no owner, so hold_for is None for it while the gate refuses its launch
+    print(json.dumps({"mission": a.mission, "hold": hold_for(rec, now) or lineage_hold(rec, now)}, indent=1))
     return 0
 
 

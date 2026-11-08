@@ -1,0 +1,156 @@
+"""V-PRE-* gates for gsd_mission.arm_preflight (flow-compression S2). Injected readers; no launch, no host state."""
+from __future__ import annotations
+
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+os.environ["GSD_LONG_RUN_STATE_DIR"] = tempfile.mkdtemp(prefix="arm-preflight-")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import gsd_mission as gm  # noqa: E402
+
+
+class Reached(Exception):
+    """create() reached: the preflight let the arm through."""
+
+
+def _reached(*a, **k):
+    raise Reached()
+
+
+gm.create = _reached   # no test here may write a mission record
+
+passes = fails = 0
+
+
+def check(name, cond, detail=""):
+    global passes, fails
+    if cond:
+        passes += 1
+        print(f"PASS {name} {detail}")
+    else:
+        fails += 1
+        print(f"FAIL {name} {detail}")
+
+
+def status(outcome, reason="r"):
+    return lambda c, w: {"outcome": outcome, "reason": reason}
+
+
+def mem(mb):
+    return lambda: {"available_mb": mb, "source": "test"}
+
+
+def pre(cmd="/gsd-autonomous --ws x", **kw):
+    kw.setdefault("status_reader", status("OK"))
+    kw.setdefault("memory_reader", mem(60000))
+    return gm.arm_preflight("/tmp/x", cmd, workstream="x", **kw)
+
+
+def by(res, name):
+    return next(c for c in res["checks"] if c["check"] == name)
+
+
+def main():
+    os.environ.pop("CPP_ARM_PREFLIGHT", None)
+    os.environ.pop("CPP_RESOURCE_ADMISSION", None)
+
+    r = pre(authority_tokens=1000)
+    check("V-PRE-HAPPY", r["ok"] and r["refusal"] is None, str(r["checks"]))
+    for oc in ("NO_PHASES", "ALL_COMPLETE"):
+        r = pre(status_reader=status(oc))
+        check(f"V-PRE-REFUSE-{oc}", not r["ok"] and oc in r["refusal"], r["refusal"])
+    r = pre(status_reader=status("UNAVAILABLE"))
+    check("V-PRE-UNAVAILABLE-IS-UNMEASURED", r["ok"] and by(r, "gsd_status")["status"] == "unmeasured")
+    r = pre(status_reader=lambda c, w: 1 / 0)
+    check("V-PRE-RAISING-READER-IS-UNMEASURED", r["ok"] and by(r, "gsd_status")["status"] == "unmeasured")
+    # GSD X universal (spec gsd-x-universal-mission.md): a non-/gsd- route is judged too, both poles
+    r = pre("python tool.py", status_reader=status("NO_PHASES"))
+    check("V-PRE-GSDX-NON-GSD-ROUTE-REFUSES", not r["ok"] and "gsd_status" in r["refusal"]
+          and "capsule could not seal" in r["refusal"], r["refusal"])
+    r = pre("python tool.py", status_reader=status("OK"))
+    check("V-PRE-GSDX-NON-GSD-ROUTE-OK-PASSES", r["ok"] and by(r, "gsd_status")["status"] == "ok", str(r["checks"]))
+    # gsd-tools exits 1 "No ROADMAP.md found" on a repo with no milestone: a measured absence, it must refuse
+    r = pre("python tool.py", status_reader=lambda c, w: {"outcome": "UNAVAILABLE",
+                                                          "reason": "gsd-tools rc=1: Error: No ROADMAP.md found. Run /gsd-new-milestone first."})
+    check("V-PRE-GSDX-ABSENT-ROADMAP-REFUSES", not r["ok"] and "gsd_status" in (r["refusal"] or ""), str(r["refusal"]))
+    os.environ["CPP_GSD_X_OPTOUT"] = "throwaway smoke, no rollover"
+    r = pre("python tool.py", status_reader=status("NO_PHASES"))
+    check("V-PRE-GSDX-OPTOUT-WARNS", r["ok"] and by(r, "gsd_status")["status"] == "warn"
+          and "throwaway smoke" in by(r, "gsd_status")["why"], str(r["checks"]))
+    os.environ["CPP_GSD_X_OPTOUT"] = "   "
+    r = pre("python tool.py", status_reader=status("NO_PHASES"))
+    check("V-PRE-GSDX-EMPTY-OPTOUT-REFUSES", not r["ok"], str(r["refusal"]))
+    os.environ.pop("CPP_GSD_X_OPTOUT")
+    r = pre(memory_reader=mem(100))
+    check("V-PRE-REFUSE-LOW-MEMORY", not r["ok"] and "resource_admission" in r["refusal"], r["refusal"])
+    r = pre(memory_reader=mem(100), launch=False)
+    check("V-PRE-NO-LAUNCH-NO-MEMORY-CHECK", r["ok"])
+    r = pre(memory_reader=lambda: {"available_mb": None})
+    check("V-PRE-UNREADABLE-MEMORY-IS-UNMEASURED", r["ok"] and by(r, "resource_admission")["status"] == "unmeasured")
+    r = pre()
+    check("V-PRE-NO-AUTHORITY-WARNS-NOT-REFUSES", r["ok"] and by(r, "authority")["status"] == "warn")
+    r = pre(autocompact=1_000_000, continue_max_tokens=900_000)
+    check("V-PRE-ROTATION-REPAIR-REPORTED", r["ok"] and by(r, "rotation_invariant")["status"] == "warn")
+    check("V-PRE-IDEMPOTENT", pre(status_reader=status("NO_PHASES")) == pre(status_reader=status("NO_PHASES")))
+
+    os.environ["CPP_ARM_PREFLIGHT"] = "off"
+    r = pre(status_reader=status("NO_PHASES"))
+    check("V-PRE-KILL-SWITCH", r["ok"] and r.get("off"))
+    os.environ.pop("CPP_ARM_PREFLIGHT")
+
+    # wiring: arm() refuses through the real call path, before any record exists
+    os.environ["_TEST_GSD_STATUS"] = '{"outcome": "NO_PHASES", "reason": "forced"}'
+    os.environ["CPP_RESOURCE_ADMISSION"] = "off"
+    try:
+        gm.arm("/tmp/x-nonexistent", "/gsd-autonomous --ws x", launch=True)
+        check("V-PRE-ARM-WIRED", False, "arm did not refuse")
+    except gm.MissionError as exc:
+        check("V-PRE-ARM-WIRED", "preflight" in str(exc) and "NO_PHASES" in str(exc), str(exc)[:120])
+    # GSD X universal: the P52a/b packet warn is retired -- a packet unit on NO_PHASES refuses (its capsule cannot seal)
+    r = pre(status_reader=status("NO_PHASES"), wu_packet="p.md")
+    check("V-PRE-GSDX-PACKET-NO-PHASES-REFUSES", not r["ok"] and "capsule could not seal" in r["refusal"], str(r["refusal"]))
+    r = pre(status_reader=status("OK"), wu_packet="p.md")
+    check("V-PRE-GSDX-PACKET-OK-PASSES", r["ok"] and by(r, "gsd_status")["status"] == "ok", str(r["checks"]))
+    try:
+        res = gm.arm_chain("/tmp/x-nonexistent", "Execute the work unit in the wu_packet", wu_packet="p",
+                           token_estimate=1, route="r")
+        refused = res.get("ok") is False and not res.get("mission_id") and "NO_PHASES" in res.get("why", "")
+    except Reached:
+        refused = False
+    check("V-PRE-GSDX-ARM-CHAIN-PACKET-REFUSES", refused, "arm_chain must not reach create() on NO_PHASES with a packet")
+    os.environ.pop("_TEST_GSD_STATUS")
+    # wiring: arm_chain consults the preflight with its packet and returns its refusal unarmed
+    real, seen = gm.arm_preflight, {}
+    gm.arm_preflight = lambda *a, **k: (seen.update(k), {"ok": False, "checks": [], "refusal": "spy: refused"})[1]
+    try:
+        res = gm.arm_chain("/tmp/x-nonexistent", "/gsd-autonomous --ws x", wu_packet="p", token_estimate=1, route="r")
+    finally:
+        gm.arm_preflight = real
+    check("V-PRE-ARM-CHAIN-WIRED", res["ok"] is False and not res.get("mission_id") and "preflight" in res["why"]
+          and seen.get("wu_packet") == "p", res.get("why", "")[:100])
+
+    # mutation drill: an always-pass preflight must turn the refusal gates red
+    real = gm.arm_preflight
+    gm.arm_preflight = lambda *a, **k: {"ok": True, "checks": [], "refusal": None}
+    try:
+        os.environ["_TEST_GSD_STATUS"] = '{"outcome": "NO_PHASES", "reason": "forced"}'
+        try:
+            gm.arm("/tmp/x-nonexistent", "/gsd-autonomous --ws x", launch=True)
+            refused = False
+        except gm.MissionError as exc:
+            refused = "preflight" in str(exc)
+        except Reached:
+            refused = False
+        check("V-PRE-MUTANT-ALWAYS-PASS-GOES-RED", not refused, "mutant did not refuse, so the wired gate detects it")
+    finally:
+        gm.arm_preflight = real
+        os.environ.pop("_TEST_GSD_STATUS", None)
+
+    print(f"PRE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
+    return 0 if fails == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

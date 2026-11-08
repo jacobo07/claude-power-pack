@@ -1,0 +1,5 @@
+{
+  "unit": "MB of available memory required to admit a worker launch, by worker profile",
+  "default": 3000,
+  "profiles": {"slim-t1": 1500, "slim-t2": 1500, "top-level-worker": 3000}
+}

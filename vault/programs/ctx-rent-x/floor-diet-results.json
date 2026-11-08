@@ -1,0 +1,235 @@
+{
+ "contract": "P2-floor-diet-v1",
+ "tree_hash_before": "2a73eb6375e4059d1cdafc8c0166079c1f94b0bf3742704e9b7d26396b689a76",
+ "rows": {
+  "agents_park": {
+   "control": [
+    74083,
+    74099,
+    74099,
+    73953
+   ],
+   "treatment": [
+    64310,
+    64318,
+    64318,
+    64631
+   ],
+   "control_spread": 0.002,
+   "control_within_1pct": true,
+   "delta_mean": 9664,
+   "n": [
+    4,
+    4
+   ]
+  },
+  "rules_to_skills": {
+   "control": [
+    74573,
+    74469,
+    74116,
+    74137
+   ],
+   "treatment": [
+    69662,
+    69677,
+    69677,
+    69698
+   ],
+   "control_spread": 0.0061,
+   "control_within_1pct": true,
+   "delta_mean": 4645,
+   "n": [
+    4,
+    4
+   ]
+  }
+ },
+ "probes": [
+  {
+   "row": "agents_park",
+   "arm": "C",
+   "ok": true,
+   "call1": 74083,
+   "turns": 1,
+   "answer": "OK",
+   "session": "90f0ef1e-8a67-47ba-ba76-13d8431c827f",
+   "secs": 93.2,
+   "seq": "A0"
+  },
+  {
+   "row": "agents_park",
+   "arm": "T",
+   "backup": "C:\\Users\\dev\\.claude\\backups\\ctx-rent-x-1793461390-agents_park-A1",
+   "ok": true,
+   "call1": 64310,
+   "turns": 1,
+   "answer": "OK",
+   "session": "7de801e4-f1ca-4fcc-b1b3-72a51b304d99",
+   "secs": 71.1,
+   "seq": "A1"
+  },
+  {
+   "row": "agents_park",
+   "arm": "C",
+   "ok": true,
+   "call1": 74099,
+   "turns": 1,
+   "answer": "OK",
+   "session": "d4c5794e-80c8-4d5e-8068-5e24eb88e5fd",
+   "secs": 63.4,
+   "seq": "A2"
+  },
+  {
+   "row": "agents_park",
+   "arm": "T",
+   "backup": "C:\\Users\\dev\\.claude\\backups\\ctx-rent-x-1793461529-agents_park-A3",
+   "ok": true,
+   "call1": 64318,
+   "turns": 1,
+   "answer": "OK",
+   "session": "b6e225a2-e785-4dea-8172-2cfed62e36c7",
+   "secs": 63.5,
+   "seq": "A3"
+  },
+  {
+   "row": "agents_park",
+   "arm": "T",
+   "backup": "C:\\Users\\dev\\.claude\\backups\\ctx-rent-x-1793461596-agents_park-B0",
+   "ok": true,
+   "call1": 64318,
+   "turns": 1,
+   "answer": "OK",
+   "session": "4590ff92-c0a3-431c-b6d0-06f02c661808",
+   "secs": 56.6,
+   "seq": "B0"
+  },
+  {
+   "row": "agents_park",
+   "arm": "C",
+   "ok": true,
+   "call1": 74099,
+   "turns": 1,
+   "answer": "OK",
+   "session": "0435b622-0031-48b5-87e7-dc2b86acc850",
+   "secs": 52.9,
+   "seq": "B1"
+  },
+  {
+   "row": "agents_park",
+   "arm": "T",
+   "backup": "C:\\Users\\dev\\.claude\\backups\\ctx-rent-x-1793461709-agents_park-B2",
+   "ok": true,
+   "call1": 64631,
+   "turns": 1,
+   "answer": "OK",
+   "session": "a83c5e5d-26eb-4c07-bd84-850bb4a6d3f8",
+   "secs": 72.7,
+   "seq": "B2"
+  },
+  {
+   "row": "agents_park",
+   "arm": "C",
+   "ok": true,
+   "call1": 73953,
+   "turns": 1,
+   "answer": "OK",
+   "session": "5b766384-17a5-4c07-bede-b5f2fbf7b133",
+   "secs": 85.5,
+   "seq": "B3"
+  },
+  {
+   "row": "rules_to_skills",
+   "arm": "C",
+   "ok": true,
+   "call1": 74573,
+   "turns": 1,
+   "answer": "OK",
+   "session": "01987ca4-2872-4bc1-a992-043789c155eb",
+   "secs": 47.2,
+   "seq": "A0"
+  },
+  {
+   "row": "rules_to_skills",
+   "arm": "T",
+   "backup": "C:\\Users\\dev\\.claude\\backups\\ctx-rent-x-1793461919-rules_to_skills-A1",
+   "ok": true,
+   "call1": 69662,
+   "turns": 1,
+   "answer": "OK",
+   "session": "3b693a8c-8fcc-413e-a74a-4b84ed582015",
+   "secs": 56.9,
+   "seq": "A1"
+  },
+  {
+   "row": "rules_to_skills",
+   "arm": "C",
+   "ok": true,
+   "call1": 74469,
+   "turns": 1,
+   "answer": "OK",
+   "session": "941662ee-c3e8-46ee-8a05-ed79ffbc5b31",
+   "secs": 45.1,
+   "seq": "A2"
+  },
+  {
+   "row": "rules_to_skills",
+   "arm": "T",
+   "backup": "C:\\Users\\dev\\.claude\\backups\\ctx-rent-x-1793462021-rules_to_skills-A3",
+   "ok": true,
+   "call1": 69677,
+   "turns": 1,
+   "answer": "OK",
+   "session": "7963754c-7db4-4d9a-8f67-8f5cc20c5ec9",
+   "secs": 55.5,
+   "seq": "A3"
+  },
+  {
+   "row": "rules_to_skills",
+   "arm": "T",
+   "backup": "C:\\Users\\dev\\.claude\\backups\\ctx-rent-x-1793462077-rules_to_skills-B0",
+   "ok": true,
+   "call1": 69677,
+   "turns": 1,
+   "answer": "OK",
+   "session": "dc13a957-cb66-44eb-9482-561c8edca05e",
+   "secs": 54.9,
+   "seq": "B0"
+  },
+  {
+   "row": "rules_to_skills",
+   "arm": "C",
+   "ok": true,
+   "call1": 74116,
+   "turns": 1,
+   "answer": "OK",
+   "session": "e5df9a6c-8e51-49e8-a0a6-574a0e811ba7",
+   "secs": 62.2,
+   "seq": "B1"
+  },
+  {
+   "row": "rules_to_skills",
+   "arm": "T",
+   "backup": "C:\\Users\\dev\\.claude\\backups\\ctx-rent-x-1793462194-rules_to_skills-B2",
+   "ok": true,
+   "call1": 69698,
+   "turns": 1,
+   "answer": "OK",
+   "session": "f9e56bb1-c8bd-4f87-bf9b-ed91d9abc329",
+   "secs": 56.0,
+   "seq": "B2"
+  },
+  {
+   "row": "rules_to_skills",
+   "arm": "C",
+   "ok": true,
+   "call1": 74137,
+   "turns": 1,
+   "answer": "OK",
+   "session": "30925b5c-e267-4044-a342-28aea9631a55",
+   "secs": 56.3,
+   "seq": "B3"
+  }
+ ],
+ "tree_hash_after": "2a73eb6375e4059d1cdafc8c0166079c1f94b0bf3742704e9b7d26396b689a76"
+}

@@ -1,0 +1,100 @@
+{
+ "plane": "GEX44",
+ "claude": "2.1.316",
+ "driver": "gpf_floor_decomp.py (extends l5_canary_driver; pexpect pty; isolated CLAUDE_CONFIG_DIR per arm, transcripts under arm dir)",
+ "cwd": "/home/dev/missions/global-prefix-floor",
+ "model": "haiku",
+ "prompt": "reply OK",
+ "order": "interleaved, rotated per round",
+ "arms": {
+  "full": {
+   "call1": [
+    131902,
+    131902,
+    131901
+   ],
+   "mean": 131902,
+   "spread_pct": 0.001,
+   "delta_vs_full": 0,
+   "label": "MEASURED",
+   "n": 3
+  },
+  "no_claudemd": {
+   "call1": [
+    104551,
+    104558,
+    104555
+   ],
+   "mean": 104555,
+   "spread_pct": 0.007,
+   "delta_vs_full": 27347,
+   "label": "MEASURED",
+   "n": 3
+  },
+  "no_rules": {
+   "call1": [
+    117992,
+    117992,
+    117990
+   ],
+   "mean": 117991,
+   "spread_pct": 0.002,
+   "delta_vs_full": 13910,
+   "label": "MEASURED",
+   "n": 3
+  },
+  "no_memory": {
+   "call1": [
+    131274,
+    131276,
+    131274
+   ],
+   "mean": 131275,
+   "spread_pct": 0.002,
+   "delta_vs_full": 627,
+   "label": "MEASURED",
+   "n": 3
+  },
+  "no_sessionstart": {
+   "call1": [
+    128750,
+    128751,
+    128968
+   ],
+   "mean": 128823,
+   "spread_pct": 0.169,
+   "delta_vs_full": 3079,
+   "label": "MEASURED",
+   "n": 3,
+   "note": "round 2 = 128968 (+218 vs rounds 0-1); only arm with non-trivial variance"
+  },
+  "no_mcp": {
+   "call1": [
+    129291,
+    129293,
+    129295
+   ],
+   "mean": 129293,
+   "spread_pct": 0.003,
+   "delta_vs_full": 2609,
+   "label": "MEASURED",
+   "n": 3
+  }
+ },
+ "decomposition": {
+  "full_call1": 131902,
+  "claude_md_chain": 27347,
+  "rules": 13910,
+  "sessionstart_injections": 3079,
+  "mcp": 2609,
+  "memory": 627,
+  "sum_of_single_variable_deltas": 47572,
+  "provider_residual_ESTIMATE": 84330,
+  "label": "deltas MEASURED; residual ESTIMATE (assumes additivity, not tested jointly; skills/agent listings, plugins, hooks other than SessionStart remain inside residual)"
+ },
+ "caveats": [
+  "no_claudemd arm also excludes the repo CLAUDE.md via claudeMdExcludes (chain = ~/.claude/CLAUDE.md + repo CLAUDE.md)",
+  "hooks in arms rewritten to arm dir; mission_hold_gate/mission_wall hooks still live",
+  "laptop baseline 72,343 is a different plane; not comparable"
+ ]
+}

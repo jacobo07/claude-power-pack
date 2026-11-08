@@ -34,6 +34,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -63,25 +64,75 @@ def _default_proj_base() -> Path:
 # --------------------------------------------------------------------------- #
 # Producer-side signal sink (opus-avoided, and any future producer signal).
 # --------------------------------------------------------------------------- #
+SIGNAL_LOCK_TIMEOUT_S = 2.0   # bounded: hook producers call this; a stuck holder costs a row, never a hang
+
+
+def _lock_try(fd: int) -> bool:
+    try:
+        if sys.platform == "win32":
+            import msvcrt
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
 def record_signal(kind: str, payload: dict, *, state_dir=None,
                   now: datetime | None = None) -> bool:
-    """Append one telemetry signal as a JSONL line. Fail-open -> False on any
-    error (the caller's work must never break on a telemetry write)."""
+    """Append one telemetry signal as a JSONL line, under an exclusive lock. Fail-open -> False
+    on any error (the caller's work must never break on a telemetry write).
+
+    Measured 2026-10-03 (ACV C5): the unlocked open("a") append lost 214 of 900 rows to six
+    concurrent writers on Windows (append = seek-to-end + write, so writers overwrite each other)
+    and the live file already held 7 fragments. The lock is a sidecar file, never deleted and
+    released by the OS if the holder dies; signals.jsonl itself is not locked, because Windows
+    locks are mandatory and would block load_signals readers (idiom of tools/rollover.py ledger).
+    A row that cannot get the lock in SIGNAL_LOCK_TIMEOUT_S is dropped and the call returns False:
+    never written torn, never raised, nothing printed (hook callers may parse stderr)."""
+    fd, locked = None, False
     try:
         now = now or datetime.now(timezone.utc)
         d = Path(state_dir) if state_dir else _default_state_dir()
         d.mkdir(parents=True, exist_ok=True)
         rec = {"kind": str(kind), "ts": now.isoformat()}
         rec.update(payload or {})
-        with (d / "signals.jsonl").open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        data = (json.dumps(rec, ensure_ascii=False) + "\n").encode("utf-8")
+        fd = os.open(d / "signals.lock", os.O_RDWR | os.O_CREAT)
+        deadline = time.monotonic() + SIGNAL_LOCK_TIMEOUT_S
+        while not _lock_try(fd):
+            if time.monotonic() > deadline:
+                return False
+            time.sleep(0.005)
+        locked = True
+        with (d / "signals.jsonl").open("ab") as fh:
+            fh.write(data)
         return True
     except Exception:  # noqa: BLE001 -- fail-open ABSOLUTE
         return False
+    finally:
+        if fd is not None:
+            try:
+                if locked and sys.platform == "win32":
+                    import msvcrt
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)   # explicit: close-release can lag
+            except OSError:
+                pass
+            os.close(fd)                                      # closing releases the lock everywhere
 
 
-def load_signals(*, state_dir=None) -> list:
-    """All recorded signals (fail-open -> [])."""
+def load_signals(*, state_dir=None, strict: bool = False, stats: dict | None = None) -> list:
+    """All recorded signals (fail-open -> []).
+
+    strict=True is for readers that must not report UNREADABLE as EMPTY (ACV C5): an absent file
+    is still [] (nothing recorded), but a file that exists and cannot be read raises OSError.
+    `stats`, when given, receives {"unparseable": n} -- torn or invalid lines are skipped either
+    way, and a reader that counts rows can now say how many it could not count."""
+    unparseable = 0
     try:
         p = (Path(state_dir) if state_dir else _default_state_dir()) / "signals.jsonl"
         if not p.is_file():
@@ -94,10 +145,15 @@ def load_signals(*, state_dir=None) -> list:
             try:
                 out.append(json.loads(line))
             except (json.JSONDecodeError, ValueError):
-                continue
+                unparseable += 1
         return out
     except OSError:
+        if strict:
+            raise
         return []
+    finally:
+        if stats is not None:
+            stats["unparseable"] = unparseable
 
 
 # --------------------------------------------------------------------------- #
@@ -181,7 +237,10 @@ def loop_boundedness(proj_base=None, *,
             return {"sessions": 0, "bounded": 0, "unbounded": 0,
                     "threshold": threshold, "top_unbounded": [],
                     "note": "no projects dir"}
-        rows = []
+        # One row per SESSION id: a junction alias (2,275 rows for 2,123 ids on
+        # 2026-10-02) or a session recorded under two project dirs would count
+        # twice. The longer copy is the more complete one.
+        by_sid: dict[str, int] = {}
         for sub in base.iterdir():
             if not sub.is_dir():
                 continue
@@ -190,7 +249,8 @@ def loop_boundedness(proj_base=None, *,
                     continue
                 if not _SID_RE.match(jf.stem):
                     continue  # only real session transcripts (uuid-like stem)
-                rows.append((jf.stem, _count_entries(jf)))
+                by_sid[jf.stem] = max(by_sid.get(jf.stem, 0), _count_entries(jf))
+        rows = list(by_sid.items())
         unbounded = [(sid, n) for sid, n in rows if n > threshold]
         unbounded.sort(key=lambda r: r[1], reverse=True)
         return {
@@ -302,6 +362,13 @@ def readiness_report(proj_base=None, *, state_dir=None) -> dict:
         recall = {"kb_injection_count": 0, "distinct_lessons": 0,
                   "ceps_recurrent_concepts": 0, "measured": False,
                   "status": "instrument-pending"}
+    # ACV C5 resolver telemetry. Lazy import (agent_telemetry imports this module). Unlike the
+    # fallbacks above, a failure here carries NO counts: an error must not read as 0 resolutions.
+    try:
+        from modules.capability_runtime import agent_telemetry as _agent_tel
+        agent_resolution = _agent_tel.agent_metrics(state_dir=state_dir)
+    except Exception as e:  # noqa: BLE001 -- fail-open, but never a fabricated zero
+        agent_resolution = {"measured": False, "status": "error", "reason": type(e).__name__}
     pending = ["dedup_hit"]
     if not fd.get("measured"):
         pending.append("fd_distillation")
@@ -313,6 +380,7 @@ def readiness_report(proj_base=None, *, state_dir=None) -> dict:
         "cdio": cdio,                      # REAL data once reviews record
         "fd_distillation": fd,             # REAL data once the FD loop runs live
         "recall_roi": recall,              # REAL data from the JIT usage log (D3)
+        "agent_resolution": agent_resolution,  # resolver telemetry (ACV C5); measured=False on error
         "dedup_hit": {"status": "instrument-pending",
                       "reason": "PM-03 consume wired (Hook 13, C73); "
                                 "RedundancyTax hit-producer is agent-driven, "
@@ -346,6 +414,28 @@ def main(argv=None) -> int:
             print(f"opus-avoided: {oa['opus_avoided']}/{oa['opportunities']} "
                   f"({oa['status']})")
             print(f"dedup-hit: {out['dedup_hit']['status']}")
+        if "agent_resolution" in out:
+            ar = out["agent_resolution"]
+            if not ar.get("measured"):
+                print(f"agent-resolution: NOT MEASURED ({ar.get('status')}: {ar.get('reason')})")
+            else:
+                print(f"agent-resolution: {ar['resolutions']} resolutions ({ar['status']}): "
+                      f"{ar['fresh']} computed fresh, {ar['cached']} cache reuses, "
+                      f"{ar['cache_unknown']} with an unknown cache value, "
+                      f"{ar['distinct_fresh_observations']} distinct fresh observations; "
+                      f"schemas {ar['schemas_seen']}; "
+                      f"{ar['unparseable_lines']} unparseable signal lines not counted")
+                for miss, c in sorted(ar["by_miss"].items()):
+                    print(f"  {miss}: {c['fresh']} fresh, {c['cached']} cached")
+                ru = ar.get("runs") or {}
+                # Resources consumed, not value: consumption and outcome joins do not exist yet.
+                print(f"agent-runs: {ru.get('runs', 0)} runs ({ru.get('linked', 0)} linked to a resolution, "
+                      f"{ru.get('unlinked', 0)} unlinked, {ru.get('dangling', 0)} dangling); usage "
+                      f"{ru.get('usage_state', {})}; carrier share {ru.get('carrier_share', {})}; "
+                      f"by purpose {ru.get('by_purpose', {})}; executor {ru.get('by_executor_status', {})}; "
+                      f"{ru.get('resolutions_with_zero_runs', 0)} resolutions with zero runs")
+                for mdl, toks in sorted((ru.get("measured_tokens") or {}).items()):
+                    print(f"  {mdl}: {toks} ({ru.get('measured_tokens_scope')})")
     return 0
 
 

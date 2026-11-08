@@ -128,6 +128,37 @@ def context_tokens(session_id: str) -> int | None:
     return None
 
 
+def last_compaction(session_id: str) -> dict | None:
+    """The host's own record of the worker's last compaction (`compact_boundary` metadata):
+    trigger, tokens before and after, duration. None when the transcript does not show one."""
+    path = _transcript(session_id)
+    if not path:
+        return None
+    for row in reversed(lr._tail_rows(path)):
+        if row.get("type") == "system" and row.get("subtype") == "compact_boundary":
+            m = row.get("compactMetadata") or {}
+            return {"trigger": m.get("trigger"), "pre_tokens": m.get("preTokens"),
+                    "post_tokens": m.get("postTokens"), "duration_ms": m.get("durationMs")}
+    return None
+
+
+def compaction_evidence(rec: dict, comp: dict | None) -> dict:
+    """Why this compaction was not a rotation: the predicates in force against the tokens it fired at."""
+    wall = rec.get("wall") or {}
+    ceiling = rec.get("continue_max_tokens")
+    adv = wall.get("advisory_tokens")
+    out = {"autocompact": rec.get("autocompact"), "continue_max_tokens": ceiling,
+           "wall_advisory_pct": wall.get("advisory"), "wall_advisory_tokens": adv, **(comp or {})}
+    pre = (comp or {}).get("pre_tokens")
+    if not isinstance(pre, int):
+        out["rotation_verdict"] = "UNMEASURED"
+    elif (adv and int(adv) <= pre) or (ceiling and int(ceiling) <= pre):
+        out["rotation_verdict"] = "REACHABLE_NOT_TAKEN"   # a predicate was at or below it: the hand-off lost
+    else:
+        out["rotation_verdict"] = "UNREACHABLE"     # no rotation predicate at or below the tokens it fired at
+    return out
+
+
 def last_assistant_at(session_id: str) -> float | None:
     """Timestamp of the worker's last assistant row: proof that a turn actually ran."""
     path = _transcript(session_id)
@@ -228,10 +259,45 @@ def wall_overdue(rec: dict, now: float | None = None) -> dict | None:
             "notices": data.get("n", 1) if isinstance(data, dict) else 1}
 
 
+COST_HOLD_GRACE_S = 600   # first COST HOLD notice -> the supervisor stops a worker still in its turn
+                          # (per mission: wall.cost_hold_grace_s; flag written by hooks/mission_wall.js)
+
+
+def cost_hold_overdue(rec: dict, now: float | None = None) -> dict | None:
+    """spec mission-cost-hold-stops-worker: the cost hold has stood past the grace and the worker is
+    still in its turn. The clock is the FIRST notice's `asked_at` (ms) in `mission-costhold-<sid>.flag`;
+    with no notice for THIS hold it is the hold's own `set_at` (clock="hold_set_at"). Measured 2026-10-23
+    (T1 m-260aa89142c8, GEX44): that host's mission_wall predates the notice, no flag was ever written, and
+    the worker was never stopped through 3 h and 145.85M under a cost hold. None within grace or with no hold."""
+    now = time.time() if now is None else now
+    sid = (rec.get("owner") or {}).get("session_id")
+    if not sid or rec.get("state") != "RUNNING":
+        return None
+    set_at = (rec.get("owner_hold") or {}).get("set_at")
+    data, clock = {}, "notice"
+    try:
+        data = json.loads((_marker_dir() / f"mission-costhold-{sid}.flag").read_text(encoding="utf-8"))
+        asked = float(data["asked_at"]) / 1000.0
+        if data.get("hold_set_at") != set_at:
+            raise ValueError("a notice for an earlier hold")
+    except (OSError, ValueError, KeyError, TypeError):
+        try:
+            asked, data, clock = float(set_at), {}, "hold_set_at"
+        except (TypeError, ValueError):
+            return None
+
+    grace = float((rec.get("wall") or {}).get("cost_hold_grace_s") or COST_HOLD_GRACE_S)
+    if now - asked < grace:
+        return None
+    return {"asked_at": asked, "overdue_s": int(now - asked - grace), "grace_s": int(grace),
+            "notices": int(data.get("n", 1)) if data else 0, "clock": clock}
+
+
 # ------------------------------------------------------------------------ G6 child work
 _NOTE_RE = re.compile(r"<tool-use-id>(toolu_[A-Za-z0-9_]+)</tool-use-id>.*?<status>([a-z_]+)</status>", re.S)
 _BG_RESULT_RE = re.compile(r"running in (?:the )?background|async agent|launched in the background|"
                            r"agent (?:is )?running|backgrounded", re.I)
+_TASK_ID_RE = re.compile(r"background with ID: ([A-Za-z0-9_-]+)")
 
 
 def _content_text(content) -> str:
@@ -267,6 +333,11 @@ def child_work(session_id: str, now: float | None = None, wait_s: float = CHILD_
     agent_calls: dict[str, dict] = {}
     finished: set[str] = set()
     queued: dict[str, float | None] = {}
+    # A task stopped with TaskStop never emits a <task-notification> (measured 2026-10-06,
+    # e5c665bb), so a successful stop is its report. Linked by the host's task id, which only the
+    # launch's own result carries.
+    task_of: dict[str, str] = {}      # host task id -> launching tool_use id
+    stops: dict[str, str] = {}        # TaskStop tool_use id -> host task id
     for f in files:
         for row in _rows(f):
             kind = row.get("type")
@@ -292,6 +363,15 @@ def child_work(session_id: str, now: float | None = None, wait_s: float = CHILD_
                 for b in content if isinstance(content, list) else []:
                     if isinstance(b, dict) and b.get("type") == "tool_result":
                         tid = b.get("tool_use_id")
+                        text_b = _content_text(b.get("content"))
+                        if tid in launches:
+                            m = _TASK_ID_RE.search(text_b)
+                            if m:
+                                task_of[m.group(1)] = tid
+                        if tid in stops and not b.get("is_error") and "successfully stopped" in text_b.lower():
+                            launched = task_of.get(stops[tid])
+                            if launched:
+                                finished.add(launched)
                         if tid in launches and tid not in agent_calls and (
                                 b.get("is_error")
                                 or not _BG_RESULT_RE.search(_content_text(b.get("content")))):
@@ -313,6 +393,8 @@ def child_work(session_id: str, now: float | None = None, wait_s: float = CHILD_
                 entry = {"tool_use_id": b.get("id"), "tool": b.get("name"),
                          "what": str(inp.get("description") or inp.get("command") or "")[:120],
                          "at": _ts(row.get("timestamp")), "file": f.name}
+                if b.get("name") == "TaskStop" and (inp.get("task_id") or inp.get("shell_id")):
+                    stops[b.get("id")] = str(inp.get("task_id") or inp.get("shell_id"))
                 if inp.get("run_in_background") is True:
                     launches[b.get("id")] = entry
                 elif b.get("name") in ("Agent", "Task"):
@@ -349,6 +431,12 @@ def budget_evidence(sid: str | None, n: int | None, ceiling: int, kids: dict | N
                              session_age_s=age, pending_children=pending)
     except Exception as exc:  # noqa: BLE001 -- evidence only: an unreadable meter is recorded, not raised
         return {"state": "UNMEASURED", "pressure": None, "reason": f"{exc.__class__.__name__}: {exc}"[:200]}
+
+
+def stalled_fresh_enabled() -> bool:
+    """A continuation that changed nothing is followed by a fresh worker (gsd_mission.supervise).
+    Kill switch: CPP_STALLED_CONTINUATION_FRESH=off restores resuming the same session."""
+    return (os.environ.get("CPP_STALLED_CONTINUATION_FRESH") or "").strip().lower() != "off"
 
 
 def decide_turn_end(rec: dict, now: float | None = None, *, events: list[dict] | None = None,
@@ -398,6 +486,17 @@ def decide_turn_end(rec: dict, now: float | None = None, *, events: list[dict] |
                                   f"within {CONTINUATION_DEADLINE_S} s", "evidence": ev}
             return {"decision": HOLD, "cause": None, "mechanism": None, "evidence": ev,
                     "reason": "continuation in flight: its turn has not appeared in the transcript yet"}
+    # A packet set at an epoch >= the owner's is a work unit the owner predates (a worker launched for
+    # it bumps the epoch past it). Its context carries none of the new unit's working set; resuming only
+    # pays it on every call (C23b: m-3a1a8b1f7fed resumed a 256k WU-A session for WU-C under the ceiling).
+    pkt_epoch, own_epoch = rec.get("wu_packet_epoch"), owner.get("epoch")
+    if rec.get("wu_packet") and pkt_epoch is not None and own_epoch is not None \
+            and int(pkt_epoch) >= int(own_epoch):
+        return {"decision": ROTATE, "cause": TURN_CONTINUATION, "mechanism": FRESH,
+                "reason": f"new work unit: fresh worker (packet set at epoch {pkt_epoch}, "
+                          f"owner epoch {own_epoch})",
+                "evidence": {**ev, "trigger": "new_work_unit", "wu_packet_epoch": pkt_epoch,
+                             "owner_epoch": own_epoch}}
     n = tokens(sid) if sid else None
     ev["context_tokens"] = n
     ceiling = int(rec.get("continue_max_tokens") or CONTINUE_MAX_TOKENS)
@@ -587,7 +686,8 @@ def on_session_start(rec: dict, session_id: str, source: str, session_cwd: str |
     if (source or "").lower() == "compact":
         lr.ledger_append(rec["mission_id"], "epoch_compacted", mission_id=rec["mission_id"],
                          epoch=rec.get("epoch"), worker=session_id, requested=False,
-                         observed="SessionStart source=compact")
+                         observed="SessionStart source=compact",
+                         **compaction_evidence(rec, last_compaction(session_id)))
     if first:
         ident = identity_check(rec, session_id, session_cwd)
         if ident["verdict"] == "MISMATCH":
@@ -627,6 +727,17 @@ def classify_launch(row: dict, prev_owner: str | None, prev_epoch, events: list[
     return UNKNOWN, "reason unrecognised"
 
 
+_TERMINAL_STATES = ("COMPLETED", "HALTED", "ORPHANED")
+
+
+def is_terminal_row(e: dict) -> bool:
+    """A ledger row that ends a mission: the two legacy events, or a transition row (it carries a
+    `seq`) whose state is terminal. A row that merely mentions a state is not a transition."""
+    if e.get("event") in ("mission_halted", "mission_completed"):
+        return True
+    return e.get("state") in _TERMINAL_STATES and e.get("seq") is not None
+
+
 def epochs(mission_id: str, events: list[dict] | None = None) -> list[dict]:
     """One row per CONTEXT EPOCH of a mission (a fresh worker session), with the turns it carried."""
     events = lr.ledger_events() if events is None else events
@@ -647,12 +758,14 @@ def epochs(mission_id: str, events: list[dict] | None = None) -> list[dict]:
             rec_cause = causes.get(e.get("epoch"))
             cause, basis = classify_launch({**e, **({"cause": rec_cause["cause"]} if rec_cause else {})},
                                            prev_owner, prev_epoch, events, renewed)
-            if cur:
+            if cur and cur["end"] is None:
+                # a terminal end already recorded is never rewritten by the next launch
                 cur["end"] = e.get("ts")
                 cur["end_cause"] = cause
             cur = {"epoch": e.get("epoch"), "start": e.get("ts"), "start_cause": cause,
                    "basis": basis, "reason": e.get("reason"), "session": None, "turns": 0,
-                   "continuations": 0, "compactions": 0, "wall": False, "end": None, "end_cause": None}
+                   "continuations": 0, "compactions": 0, "wall": False, "end": None, "end_cause": None,
+                   "end_event": None}
             out.append(cur)
         elif cur is None:
             continue
@@ -669,8 +782,11 @@ def epochs(mission_id: str, events: list[dict] | None = None) -> list[dict]:
             cur["session"] = cur["session"] or e.get("worker")
         elif ev == "epoch_compacted":
             cur["compactions"] += 1
-        elif ev in ("mission_halted", "mission_completed"):
-            cur["end"], cur["end_cause"] = e.get("ts"), ev.replace("mission_", "").upper()
+        elif is_terminal_row(e) and cur["end"] is None:
+            # first terminal row wins; any event name that carries a transition into a terminal state closes
+            cur["end"] = e.get("ts")
+            cur["end_cause"] = e.get("state") or ev.replace("mission_", "").upper()
+            cur["end_event"] = ev
     for c in out:
         if c["session"] and wall_evidence(c["session"], c["epoch"], events):
             c["wall"] = True
@@ -844,6 +960,42 @@ def certify(mission_id: str, events: list[dict] | None = None, commits=_commits_
     return out
 
 
+# ------------------------------------------------------------------ rollover breakeven (advisory)
+def breakeven_advisory(context_tokens: int | None, expected_calls: int | None, *, successor_floor: int | None,
+                       bootstrap_tokens: int | None, page_in_tokens: int = 0, growth_per_call: int = 0,
+                       at_boundary: bool = False) -> dict:
+    """Advisory only: would a successor pane cost fewer processed tokens than continuing?
+
+    continue  = sum_{i<E} (C + g*i)               (every call re-carries the whole context)
+    successor = B + P + sum_{i<E} (F + g*i)        (bootstrap + page-ins, then a lean floor)
+    An input that is None makes the verdict UNMEASURED, never ROTATE. ROTATE_ADVISED needs a
+    semantic boundary and a saving; it never rotates a pane, it only names the numbers.
+    """
+    need = {"context_tokens": context_tokens, "expected_calls": expected_calls,
+            "successor_floor": successor_floor, "bootstrap_tokens": bootstrap_tokens}
+    missing = [k for k, v in need.items() if v is None]
+    if missing:
+        return {"verdict": "UNMEASURED", "missing": missing, "advisory_only": True}
+    e = max(0, int(expected_calls))
+    ramp = growth_per_call * (e * (e - 1) // 2)
+    cont = e * context_tokens + ramp
+    succ = bootstrap_tokens + page_in_tokens + e * successor_floor + ramp
+    saving = cont - succ
+    if saving <= 0:
+        verdict = "CONTINUE"
+    elif not at_boundary:
+        verdict = "HOLD_UNTIL_BOUNDARY"
+    else:
+        verdict = "ROTATE_ADVISED"
+    be = None
+    per_call_gain = context_tokens - successor_floor
+    if per_call_gain > 0:
+        be = -(-(bootstrap_tokens + page_in_tokens) // per_call_gain)
+    return {"verdict": verdict, "continue_tokens": cont, "successor_tokens": succ,
+            "saving_tokens": saving, "breakeven_calls": be, "at_boundary": bool(at_boundary),
+            "advisory_only": True}
+
+
 def _cli(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="context epochs of GSD missions")
@@ -857,6 +1009,12 @@ def _cli(argv=None) -> int:
     t.add_argument("--session", required=True)
     f = sub.add_parser("certify")
     f.add_argument("--mission", required=True)
+    b = sub.add_parser("breakeven")
+    for k in ("context", "calls", "floor", "bootstrap"):
+        b.add_argument("--" + k, type=int, required=True)
+    b.add_argument("--page-in", type=int, default=0)
+    b.add_argument("--growth", type=int, default=0)
+    b.add_argument("--boundary", action="store_true")
     w = sub.add_parser("watch")
     w.add_argument("--mission", required=True)
     w.add_argument("--every", type=int, default=180)
@@ -866,7 +1024,10 @@ def _cli(argv=None) -> int:
         print(json.dumps({"samples": watch(a.mission, a.every, int(a.max_hours * 3600)),
                           "log": str(owners_log(a.mission))}))
         return 0
-    if a.cmd == "certify":
+    if a.cmd == "breakeven":
+        out = breakeven_advisory(a.context, a.calls, successor_floor=a.floor, bootstrap_tokens=a.bootstrap,
+                                 page_in_tokens=a.page_in, growth_per_call=a.growth, at_boundary=a.boundary)
+    elif a.cmd == "certify":
         out = certify(a.mission)
     elif a.cmd == "census":
         out = census()
