@@ -8,6 +8,8 @@ once, streamed, and only one shot is held in memory. Re-running replaces the row
 from __future__ import annotations
 
 import json
+import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -40,7 +42,10 @@ def track_text_spec(spec: dict, frames, fps: float, *, detector=None) -> dict:
             status = "SHORT_DECODE"
         if not buf:
             break
+        t0 = time.time()
         res = text.track_text(buf, fps, detector=detector)
+        print(f"[vre track] text shot {shot} frames {a}-{b} tracks {len(res['tracks'])} {time.time() - t0:.0f}s",
+              file=sys.stderr, flush=True)
         engine, status = res["engine"], res["status"] if status == "OK" else status
         for r in res["rows"]:
             r = {**r, "element": f"s{shot}.{r['element']}", "start": r["start"] + a, "shot": shot}
