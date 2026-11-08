@@ -37,3 +37,10 @@ def test_same_source_still_pairs():
     cand = [{"element": "s0.layer#3", "property": "x", "start": 37, "source": "layer"}]
     pairs, missing = match_rows(ref, cand, SHOTS, 12)
     assert len(pairs) == 1 and not missing
+
+
+def test_oversized_box_is_artwork_not_a_text_line():
+    from vre.text import is_text_sized
+    assert is_text_sized((50, 80, 310, 110), 640)          # a headline line
+    assert is_text_sized((50, 80, 310, 300), 640)          # big display text, 34% of the frame
+    assert not is_text_sized((51, 140, 312, 465), 640)     # a 325 px box over an illustration

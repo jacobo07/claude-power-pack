@@ -128,6 +128,14 @@ def is_readable(text_: str | None) -> bool:
     return bool(text_) and any(ch.isalnum() for ch in text_)
 
 
+MAX_TEXT_HEIGHT_FRAC = 0.35
+
+
+def is_text_sized(box: Box, frame_h: float, max_frac: float = MAX_TEXT_HEIGHT_FRAC) -> bool:
+    """A text line is never a third of the frame tall; OCR boxes that large sit on artwork, not on text."""
+    return (box[3] - box[1]) <= max_frac * frame_h
+
+
 def make_ocr_detector(lang: str = "en"):
     """PaddleOCR detector (boxes + text). Raises if the engine is missing: callers check `available`."""
     from paddleocr import PaddleOCR  # type: ignore
@@ -145,6 +153,8 @@ def make_ocr_detector(lang: str = "en"):
                 pts = np.asarray(poly, dtype=np.float32)
                 lo, hi = pts.min(axis=0), pts.max(axis=0)
                 coarse = (float(lo[0]), float(lo[1]), float(hi[0]), float(hi[1]))
+                if not is_text_sized(coarse, rgb.shape[0]):
+                    continue
                 out.append(Detection(frame, refine_box(rgb, coarse), str(text), float(conf)))
         return sorted(out, key=lambda t: (t.box[1], t.box[0]))
 
