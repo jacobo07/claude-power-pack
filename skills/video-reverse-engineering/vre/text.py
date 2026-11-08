@@ -122,6 +122,12 @@ def refine_box(rgb: np.ndarray, box: Box, pad: int = 6) -> Box:
     return (x0 + ex[0], y0 + ey[0], x0 + ex[1], y0 + ey[1])
 
 
+def is_readable(text_: str | None) -> bool:
+    """OCR also "reads" solid shapes as block glyphs (a filled square comes back as a full-block character).
+    A detection with no letter or digit is a shape, not text, and must not become a text track."""
+    return bool(text_) and any(ch.isalnum() for ch in text_)
+
+
 def make_ocr_detector(lang: str = "en"):
     """PaddleOCR detector (boxes + text). Raises if the engine is missing: callers check `available`."""
     from paddleocr import PaddleOCR  # type: ignore
@@ -134,6 +140,8 @@ def make_ocr_detector(lang: str = "en"):
         out = []
         for r in res:
             for poly, text, conf in zip(r["rec_polys"], r["rec_texts"], r["rec_scores"]):
+                if not is_readable(str(text)):
+                    continue
                 pts = np.asarray(poly, dtype=np.float32)
                 lo, hi = pts.min(axis=0), pts.max(axis=0)
                 coarse = (float(lo[0]), float(lo[1]), float(hi[0]), float(hi[1]))

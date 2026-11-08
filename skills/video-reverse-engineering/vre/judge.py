@@ -150,7 +150,8 @@ def _shot_of(ref: dict, frame: int) -> int:
 
 
 def match_rows(ref_rows: list[dict], cand_rows: list[dict], shots: list[dict], window: int) -> tuple:
-    """Pair reference rows with candidate rows by (shot, property), nearest start inside `window` frames."""
+    """Pair reference rows with candidate rows by (shot, source, property), nearest start inside `window` frames.
+    The source (text / layer) is part of the key: a stray text row must never stand in for a missing layer."""
     def shot(frame):
         for s in shots:
             if s["start"] <= frame <= s["end"]:
@@ -161,6 +162,7 @@ def match_rows(ref_rows: list[dict], cand_rows: list[dict], shots: list[dict], w
     pairs, missing = [], []
     for r in sorted(ref_rows, key=lambda x: x["start"]):
         opts = [j for j in free if cand_rows[j].get("property") == r.get("property")
+                and cand_rows[j].get("source") == r.get("source")
                 and shot(cand_rows[j]["start"]) == shot(r["start"])
                 and abs(cand_rows[j]["start"] - r["start"]) <= window]
         if not opts:
