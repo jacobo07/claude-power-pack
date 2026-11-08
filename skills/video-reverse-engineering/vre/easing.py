@@ -106,7 +106,7 @@ def fit_segment(frames: np.ndarray, values: np.ndarray, fps: float, settle_tol: 
     free_q = tuple(round(float(v), 4) for v in free.x)
     free_rmse = _rmse(bezier(u, *free_q), p)
     family, bz, rmse, spring_cfg = best_name, NAMED[best_name], best_rmse, None
-    if free_rmse < 0.9 * best_rmse:  # a named family is preferred unless clearly worse
+    if free_rmse < 0.9 * best_rmse and best_rmse - free_rmse > 0.004:  # a named family wins unless clearly worse
         family, bz, rmse = "bezier", free_q, free_rmse
     if overshoot > 0.02:  # a visible overshoot: test a spring against the best curve
         t_s = (frames - f0) / fps
