@@ -126,7 +126,8 @@ def default_provider(checkpoint: str | None = None) -> MaskProvider:
 
 
 def shot_prompts(frame: np.ndarray, text_boxes: list[tuple[float, float, float, float]] | None = None, *,
-                 min_area_frac: float = 0.002, max_frac: float = 0.6, limit: int = 8, first_obj: int = 0) -> list[Prompt]:
+                 min_area_frac: float = 0.002, max_frac: float = 0.6, limit: int = 8,
+                 first_obj: int = 0) -> list[Prompt]:
     """Prompt boxes from a shot-start frame: connected non-background components that are not text and not the
     backdrop. Components inside an OCR/ink text box are skipped (text is tracked by its own stage)."""
     d, _ = text.coverage(frame)
