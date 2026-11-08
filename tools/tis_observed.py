@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import statistics
 import sys
@@ -113,11 +114,61 @@ def _calls_in(path: Path) -> tuple[list[dict], int, int, int]:
             if key not in calls:
                 order.append(key)
             calls[key] = {"model": msg.get("model") or "", "usage": msg["usage"],
-                          "ts": obj.get("timestamp")}
+                          "ts": obj.get("timestamp"), "key": key}
     ordered = [calls[k] for k in order]
     for c in ordered:
         c["entrypoint"] = entrypoint
     return ordered, usage_lines, synthetic, bad
+
+
+def calls_from(path: Path, offset: int = 0,
+               on_line=None) -> tuple[list[dict], int, Optional[str]]:
+    """Incremental twin of _calls_in: real calls in the COMPLETE lines after `offset`.
+
+    Same filters and identity as _calls_in (synthetic skipped, last copy of a
+    (message.id, requestId) wins). Returns (calls, end_offset, entrypoint): the
+    end offset stops before a trailing line with no newline yet, so a line the
+    harness is still writing is read whole on the next pass, never half. An
+    identity-less call is keyed by its byte offset, which is stable across passes
+    where _calls_in's line counter is not. Used by tools/usage_index.py; the
+    agreement of both readers is pinned in tools/test_usage_index.py.
+
+    `on_line(obj, start_offset)` sees every parsed JSON line in file order, so an
+    indexer can read ancestry (promptId, origin, quotaLimits) in the same pass."""
+    calls: dict = {}
+    order: list = []
+    entrypoint = None
+    pos = offset
+    with open(path, "rb") as fh:
+        fh.seek(offset)
+        for raw in fh:
+            if not raw.endswith(b"\n"):
+                break
+            start, pos = pos, pos + len(raw)
+            text = raw.decode("utf-8", errors="replace").lstrip("\ufeff").strip()
+            if not text:
+                continue
+            try:
+                obj = json.loads(text)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict) and entrypoint is None and obj.get("entrypoint"):
+                entrypoint = obj["entrypoint"]
+            if on_line is not None and isinstance(obj, dict):
+                on_line(obj, start)
+            msg = obj.get("message") if isinstance(obj, dict) else None
+            if not isinstance(msg, dict) or not isinstance(msg.get("usage"), dict):
+                continue
+            if msg.get("model") == SYNTHETIC_MODEL:
+                continue
+            key = (msg.get("id"), obj.get("requestId"))
+            if key == (None, None):
+                key = ("off", start)
+            if key not in calls:
+                order.append(key)
+            calls[key] = {"model": msg.get("model") or "", "usage": msg["usage"],
+                          "ts": obj.get("timestamp"), "key": key}
+    return [calls[k] for k in order], pos, entrypoint
 
 
 def iter_calls(project_dirs: Iterable[Path], include_subagents: bool = True,
@@ -295,11 +346,42 @@ def project_key(path: Path) -> str:
     return re.sub(r"[^A-Za-z0-9]", "-", str(path))
 
 
+def store_identity(base=None) -> tuple[list[Path], dict[str, str]]:
+    """(each transcript store under `base` once, {listed spelling: resolved path}).
+
+    THE producer of store identity; `store_dirs` is its first half. A directory
+    junction aliases a project dir (projects/C--Users-dev-Apps-mcp-video-analyzer
+    -> the PP dir): walked as listed, 152 transcripts were read twice on
+    2026-10-02. Identity is the RESOLVED path, so it never depends on listing
+    order. A junction to a dir OUTSIDE `base` is a distinct store, kept under its
+    resolved path, and its listed spelling is an alias of that path too. The
+    alias map is what a path-keyed consumer (usage_index) needs to move rows
+    recorded under a link spelling onto the store's identity. This is STORE
+    identity: a reader that counts sessions dedupes by session id instead."""
+    base = Path(base or PROJECTS_DIR)
+    if not base.is_dir():
+        return [], {}
+    seen: dict[str, Path] = {}
+    aliases: dict[str, str] = {}
+    for sub in sorted(base.iterdir()):
+        if sub.is_dir():
+            real = Path(os.path.realpath(sub))
+            seen.setdefault(os.path.normcase(str(real)), real)
+            if os.path.normcase(str(sub)) != os.path.normcase(str(real)):
+                aliases[str(sub)] = str(real)
+    return list(seen.values()), aliases
+
+
+def store_dirs(base=None) -> list[Path]:
+    """Each transcript store under `base` once, by resolved path (store_identity)."""
+    return store_identity(base)[0]
+
+
 def _project_dirs(args) -> list[Path]:
     if args.project_dir:
         return [Path(p) for p in args.project_dir]
     if args.all_projects:
-        return sorted(p for p in PROJECTS_DIR.iterdir() if p.is_dir())
+        return store_dirs()
     return [PROJECTS_DIR / project_key(Path.cwd().resolve())]
 
 

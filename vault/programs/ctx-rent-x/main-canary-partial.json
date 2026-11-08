@@ -1,0 +1,21 @@
+{
+ "contract": "P3-main-canary (existing v4 A7 CCR_MAIN_CANARY=1, live release)",
+ "cwd": "C:\\Users\\dev\\.claude\\skills\\claude-power-pack",
+ "probes": [
+  {
+   "arm": "C",
+   "call1": 93396,
+   "session": "be61ffd8-deaa-4446-9e5e-c49eb120842b",
+   "receipt": {
+    "releaseId": "0.1.0-b15bfc3d",
+    "compatible": true,
+    "interactive": true,
+    "canary": "off",
+    "policyGen": "271dcb3e9d8c",
+    "version": "2.1.316"
+   },
+   "screen_tail": null,
+   "seq": "A0"
+  }
+ ]
+}

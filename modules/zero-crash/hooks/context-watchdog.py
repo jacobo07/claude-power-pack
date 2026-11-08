@@ -242,7 +242,22 @@ ADVISORY_FLAG = "claude-ctxwd-adv-{session_id}.flag"
 ROLLOVER_ASK_FLAG = "claude-ctxwd-rollask-{session_id}.flag"
 ROLLOVER_CLEAR_FLAG = "claude-ctxwd-rollclear-{session_id}.flag"
 ROLLOVER_WAIT_FLAG = "claude-ctxwd-rollwait-{session_id}.flag"
+# Set ONLY when `/clear` was actually dispatched (not on the compact fallback, which also sets
+# CLEAR and needs the tier-2 path). While it stands, later Stops of the cycle stay quiet: measured
+# 2026-10-06 (eab8a573) the tier-2 block on the Stop after the dispatch re-opened the turn, the
+# inbox daemon saw the last line change and WITHDREW the /clear, and nothing re-dispatched it.
+ROLLOVER_INFLIGHT_FLAG = "claude-ctxwd-rollinflight-{session_id}.flag"
 ROLLOVER_MAX_WAIT = 3
+# Self-sealed crossing (_self_sealed_step): the capsule mtime already acted on. Never cleared by
+# the rearm, so one seal is acted on at most once.
+ROLLOVER_SELF_SEAL_FLAG = "claude-ctxwd-rollself-{session_id}.flag"
+# Economic trigger (spec vault/specs/economic-rollover-trigger.md): set beside ASK when the ask
+# came from the break-even decider rather than the wall, so a capsule that never arrives
+# withdraws the ask instead of falling back to /compact at 25 %. Per-session state (start
+# head, last evaluated head, declined head) lives in ROLLOVER_ECON_STATE.
+ROLLOVER_ECON_FLAG = "claude-ctxwd-rollecon-{session_id}.flag"
+ROLLOVER_ECON_STATE = "claude-ctxwd-rollecon-{session_id}.json"
+ROLLOVER_ECON_PCT_DEFAULT = 20.0
 
 
 def _import_atomic_write():
@@ -295,6 +310,63 @@ def _set_flag(session_id: str, template: str) -> None:
         flag.write_text("1", encoding="utf-8")
     except Exception:
         pass
+
+
+#: = the inbox daemon's ttl (auto-compact-sendkeys-daemon: "ttl=600s"): past it the line is not
+#: being typed any more, so the wall may speak again.
+ROLLOVER_INFLIGHT_MAX_AGE_S = 600
+
+
+#: Outcomes the inbox daemon ledgers when a request is over (Write-LedgerRow in
+#: auto-compact-sendkeys-daemon.ps1): nothing will be typed for it any more.
+INBOX_OUTCOME_EVENTS = ("withdrawn", "refused", "compact_dispatched")
+INBOX_LEDGER_TAIL_BYTES = 262144
+
+
+def _inbox_request_ended(session_id: str, since_ts: float) -> bool:
+    """True only on POSITIVE evidence: the daemon ledgered an outcome for THIS session after
+    `since_ts`. Not "req.json is absent": the daemon writes that file only once the transcript ends
+    on the line, i.e. after the model's reply and the Stop chain, so its absence also means "not
+    picked up yet". An unreadable ledger is unknown, and unknown keeps the request in flight (the
+    600 s bound still applies). Never raises.
+
+    The daemon stamps whole seconds, so a row in the dispatch's own second is ambiguous (it may
+    be the PREVIOUS request's outcome) and counts as not-ended. A real outcome cannot land there:
+    it follows the model's reply to the dispatching block."""
+    base = os.environ.get("GSD_LONG_RUN_STATE_DIR") or (Path.home() / ".claude" / "state")
+    try:
+        with open(Path(base) / "gsd-autorun-ledger.jsonl", "rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            fh.seek(max(0, fh.tell() - INBOX_LEDGER_TAIL_BYTES))
+            tail = fh.read().decode("utf-8", "replace")
+    except OSError:
+        return False
+    for line in reversed(tail.splitlines()):
+        if session_id not in line:
+            continue
+        try:
+            row = json.loads(line)
+            if row.get("session_id") != session_id or row.get("event") not in INBOX_OUTCOME_EVENTS:
+                continue
+            ts = _dt.datetime.fromisoformat(str(row.get("ts")).replace("Z", "+00:00")).timestamp()
+        except Exception:
+            continue
+        if ts > since_ts:
+            return True
+    return False
+
+
+def _clear_in_flight(session_id: str) -> bool:
+    """A dispatched `/clear` is live until the daemon says it is over, bounded by its window.
+    Measured 2026-10-06 (1a9ec524): age alone kept a WITHDRAWN request "in flight" for 10 min."""
+    flag = Path(tempfile.gettempdir()) / ROLLOVER_INFLIGHT_FLAG.format(session_id=session_id)
+    try:
+        since = flag.stat().st_mtime
+    except OSError:
+        return False
+    if (_now_ts() - since) > ROLLOVER_INFLIGHT_MAX_AGE_S:
+        return False
+    return not _inbox_request_ended(session_id, since)
 
 
 def _append_progress_md(atomic_write, session_id: str, used_pct: float, remaining_pct, cwd: str, transcript_path: str) -> None:
@@ -691,7 +763,7 @@ def _dispatch_continuation(session_id: str, kind: str, *, transcript: str, cwd: 
 
     Before 2026-09-18 both call sites dropped a flag for a SendKeys daemon that
     typed into whichever Cursor window had focus; it typed `/d1-continue` and
-    `/absw2-continue` into sessions that were not theirs. Now each route is
+    `/<programme>-continue` into sessions that were not theirs. Now each route is
     exact or refuses: Orca's own terminal, or the terminal-inbox owner of the
     session's terminal (the daemon refuses by default when nobody answers; its
     foreground fallback needs CPP_LEGACY_FOREGROUND_SENDKEYS=1).
@@ -1033,10 +1105,17 @@ def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict
     wall a turn earlier, which would authorise forgetting whatever the model did in between.
     """
     if _flag_exists(session_id, ROLLOVER_CLEAR_FLAG):
-        return None
+        if not _resealed_since_clear(session_id):
+            return None
+        # A /kclear sealed after this cycle's /clear, which is no longer in flight: a new request
+        # to cross. Re-open step 2 for it; the gate below judges the new seal as it did the first.
+        for _rf in (ROLLOVER_CLEAR_FLAG, ROLLOVER_INFLIGHT_FLAG, ROLLOVER_WAIT_FLAG):
+            _clear_flag(session_id, _rf)
+        _ledger(session_id, "rollover_reseal_rearmed")
     g = _rollover_gate(session_id)
     if g["verdict"] == "SAFE_TO_FORGET":
         _set_flag(session_id, ROLLOVER_CLEAR_FLAG)   # before the dispatch: never re-entrant
+        _set_flag(session_id, ROLLOVER_INFLIGHT_FLAG)
         route = _dispatch_continuation(
             session_id, "clear", transcript=transcript, cwd=cwd, used_pct=used_pct,
             cid=f"{session_id}:clear:{int(_now_ts())}",
@@ -1057,12 +1136,95 @@ def _rollover_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict
             reasons=g["reasons"][:4], waits=waits)
     if waits < ROLLOVER_MAX_WAIT:
         return None                                  # /kclear has not landed yet; wait
+    if _flag_exists(session_id, ROLLOVER_ECON_FLAG):
+        # An economic ask is an offer, not a wall: compacting at 25 % would discard context for
+        # nothing. Withdraw, remember the head so it is not re-asked before the next commit,
+        # and leave ADVISORY/CLEAR alone so the wall still fires exactly as before.
+        st = _econ_state(session_id)
+        st["declined_head"] = st.get("asked_head") or st.get("eval_head")
+        _econ_save(session_id, st)
+        for _rf in (ROLLOVER_ASK_FLAG, ROLLOVER_WAIT_FLAG, ROLLOVER_ECON_FLAG):
+            _clear_flag(session_id, _rf)
+        _ledger(session_id, "rollover_econ_withdrawn", verdict=g["verdict"], waits=waits,
+                head=st.get("declined_head"))
+        return None
     # The capsule never arrived. Rollover must not leave a session worse off than the
     # /compact it replaced, so hand the crossing back to the compact path exactly once.
     _set_flag(session_id, ROLLOVER_CLEAR_FLAG)
     _clear_flag(session_id, ADVISORY_FLAG)
     _ledger(session_id, "rollover_fell_back_to_compact", verdict=g["verdict"], waits=waits)
     return None
+
+
+ROLLOVER_SELF_SEAL_MAX_AGE_S = 30 * 60   # = rollover.RESET_MAX_AGE_S (pinned by the gate)
+
+
+def _own_capsule(session_id: str) -> Path:
+    """Spelled like rollover.capsule_path (pinned by the gate) so an ordinary Stop costs one
+    stat, not an import of rollover.py."""
+    root = Path(os.environ.get("CPP_ROLLOVER_STATE_DIR")
+                or (Path.home() / ".claude" / "state" / "rollover"))
+    return root / "capsules" / f"{re.sub(r'[^A-Za-z0-9_.-]', '_', session_id)}.json"
+
+
+def _resealed_since_clear(session_id: str) -> bool:
+    """Did a /kclear seal this session's capsule AFTER this cycle's `/clear` step closed, with no
+    `/clear` still in flight? Only write_capsule touches the capsule file (claim and certify use
+    sidecars), so its mtime is the seal time. The same seal never qualifies, so a /clear that
+    fails to land is retried only by a NEW /kclear -- never by the next Stop, which would loop."""
+    if _clear_in_flight(session_id):
+        return False
+    cap = _own_capsule(session_id)
+    try:
+        sealed = cap.stat().st_mtime
+        closed = (Path(tempfile.gettempdir())
+                  / ROLLOVER_CLEAR_FLAG.format(session_id=session_id)).stat().st_mtime
+    except OSError:
+        return False
+    return sealed > closed and not cap.with_suffix(".certified").exists()
+
+
+def _self_sealed_step(session_id: str, cwd: str, transcript: str, used_pct) -> dict | None:
+    """A capsule this session sealed WITHOUT the wall asking -- a /kclear the Owner or the model
+    ran, or the one the session-budget breaker tells the model to run -- is the same request
+    to cross. Measured 2026-10-06 (d64f90b2): /kclear sealed SAFE_TO_FORGET and nothing typed
+    /clear, because step 2 was reachable only through ROLLOVER_ASK_FLAG, which only the wall
+    and the economic trigger set; the crossing ended as a sentence asking the Owner to type it.
+    Here: set the ask and run the same step 2, so rollover.py's gate stays the only authority
+    over /clear and the same courier arms /kresume. A certified or stale capsule is not a
+    request (the gate would refuse it anyway). Kill switch: CPP_ROLLOVER_ACTIVE=0.
+
+    ONE act per seal, keyed by the capsule's mtime in a flag the rearm never clears: the rearm
+    wipes ASK/CLEAR at a low reading, so without this a /clear whose typing failed would be
+    re-dispatched on every later Stop -- a block loop. A REFUSED seal is not retried either;
+    sealing again (a new /kclear) is a new seal and is acted on."""
+    if _flag_exists(session_id, ROLLOVER_ASK_FLAG):
+        return None                                  # step 2 already runs on the ASK branch
+    if _flag_exists(session_id, ROLLOVER_CLEAR_FLAG) and not _resealed_since_clear(session_id):
+        return None                                  # a closed step re-opens only for a NEW seal
+    cap = _own_capsule(session_id)
+    try:
+        st = cap.stat()
+    except OSError:
+        return None                                  # nothing sealed here: the common case
+    age = _now_ts() - st.st_mtime
+    if age > ROLLOVER_SELF_SEAL_MAX_AGE_S or cap.with_suffix(".certified").exists():
+        return None
+    done = Path(tempfile.gettempdir()) / ROLLOVER_SELF_SEAL_FLAG.format(session_id=session_id)
+    try:
+        if done.read_text(encoding="utf-8").strip() == str(st.st_mtime_ns):
+            return None                              # this seal was already acted on
+    except OSError:
+        pass
+    if (_read_autorun_marker(session_id) or {}).get("mission_id"):
+        return None                                  # mission workers rotate under gsd_mission
+    try:
+        done.write_text(str(st.st_mtime_ns), encoding="utf-8")   # before acting: never re-entrant
+    except OSError:
+        return None                                  # an act that cannot be debounced would loop
+    _set_flag(session_id, ROLLOVER_ASK_FLAG)
+    _ledger(session_id, "rollover_self_sealed", age_s=int(age), used_pct=used_pct)
+    return _rollover_step(session_id, cwd, transcript, used_pct)
 
 
 def _shadow_rollover(session_id: str, cwd: str, transcript_path: str, used_pct, tier: str) -> bool:
@@ -1100,6 +1262,197 @@ def _shadow_rollover(session_id: str, cwd: str, transcript_path: str, used_pct, 
     except Exception:
         pass
     return False
+
+
+# ------------------------------------------------- economic rollover trigger
+# Spec vault/specs/economic-rollover-trigger.md. Measured 2026-10-02: active rollover was
+# asked only at the 45 % wall (~450k of 1M), and the break-even decider ran once in shadow
+# without a start head, so 110 of 126 decisions read "worth it, but not at a work boundary".
+# Here: record the session's start head, evaluate once per commit above the floor (detached,
+# tools/rollover_econ.py), and ask for /kclear when that evaluation says the crossing pays at
+# the current head. The gate in _rollover_step stays the only authority over /clear.
+
+def _econ_enabled() -> bool:
+    return (_rollover_active() and (os.environ.get("CPP_ROLLOVER_ECONOMIC") or "")
+            .strip().lower() not in ("0", "off", "false"))
+
+
+def _econ_floor() -> float:
+    try:
+        return float(os.environ.get("CPP_ROLLOVER_ECON_PCT") or ROLLOVER_ECON_PCT_DEFAULT)
+    except ValueError:
+        return ROLLOVER_ECON_PCT_DEFAULT
+
+
+def _econ_state(session_id: str) -> dict:
+    p = Path(tempfile.gettempdir()) / ROLLOVER_ECON_STATE.format(session_id=session_id)
+    try:
+        st = json.loads(p.read_text(encoding="utf-8"))
+        return st if isinstance(st, dict) else {}
+    except Exception:
+        return {}
+
+
+def _econ_save(session_id: str, st: dict) -> None:
+    p = Path(tempfile.gettempdir()) / ROLLOVER_ECON_STATE.format(session_id=session_id)
+    try:
+        p.write_text(json.dumps(st), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _git_head(cwd: str):
+    """HEAD sha read from the .git files, no process: this runs on every Stop above the floor,
+    and a git spawn on a starved host is what eats a hook's budget. Worktrees (a `.git` file
+    naming the gitdir, refs in `commondir`) and packed refs are followed. None when unknown."""
+    try:
+        start = Path(cwd or os.getcwd()).resolve()
+        gitdir = None
+        for d in (start, *start.parents):
+            g = d / ".git"
+            if g.is_dir():
+                gitdir = g
+                break
+            if g.is_file():
+                line = g.read_text(encoding="utf-8").strip()
+                if line.startswith("gitdir:"):
+                    gitdir = (d / line[7:].strip()).resolve()
+                break
+        if gitdir is None:
+            return None
+        head = (gitdir / "HEAD").read_text(encoding="utf-8").strip()
+        if not head.startswith("ref:"):
+            return head or None
+        ref = head[4:].strip()
+        common = gitdir
+        cd = gitdir / "commondir"
+        if cd.is_file():
+            common = (gitdir / cd.read_text(encoding="utf-8").strip()).resolve()
+        for base in (gitdir, common):
+            rf = base / ref
+            if rf.is_file():
+                return rf.read_text(encoding="utf-8").strip() or None
+        packed = common / "packed-refs"
+        if packed.is_file():
+            for ln in packed.read_text(encoding="utf-8").splitlines():
+                parts = ln.split()
+                if len(parts) == 2 and parts[1] == ref:
+                    return parts[0]
+    except Exception:
+        return None
+    return None
+
+
+def _econ_decision(session_id: str) -> dict:
+    """The decision tools/rollover_econ.py wrote, or {}. Same path spelling as its
+    decision_path(): CPP_ROLLOVER_STATE_DIR or ~/.claude/state/rollover, then decisions/."""
+    base = Path(os.environ.get("CPP_ROLLOVER_STATE_DIR")
+                or (Path.home() / ".claude" / "state" / "rollover"))
+    try:
+        d = json.loads((base / "decisions" / f"{session_id}.json").read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _econ_spawn(session_id: str, cwd: str, transcript_path: str, used_pct, start_head: str) -> bool:
+    """Detached tools/rollover_econ.py, same spawn discipline as _shadow_rollover."""
+    try:
+        import subprocess
+        tool = _rollover_tool().with_name("rollover_econ.py")
+        pyw = Path(sys.executable).with_name("pythonw.exe")
+        if not tool.is_file() or not pyw.is_file():
+            _ledger(session_id, "rollover_econ_skipped", why="rollover_econ.py or pythonw.exe absent")
+            return False
+        argv = [str(pyw), str(tool), "--session", session_id, "--cwd", cwd or os.getcwd(),
+                "--used-pct", str(used_pct), "--start-head", start_head]
+        if transcript_path:
+            argv += ["--transcript", transcript_path]
+        base = 0x00000008 | 0x00000200
+        for flags in (base | 0x01000000, base):
+            try:
+                subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, creationflags=flags, close_fds=True)
+                return True
+            except OSError:
+                continue
+    except Exception:
+        pass
+    return False
+
+
+def _mission_owner(session_id: str) -> bool:
+    """True when this session owns a gsd-mission-*.json. A Ralph worker launched by `claude
+    --bg` carries no autorun marker -- measured 2026-10-02, session 4ec01521 owning mission
+    m-129ddae5ccf3 (mode ralph) -- so the marker check alone let the economic trigger reach
+    it. Unknown (unreadable dir) counts as owner: refusing an offer costs nothing."""
+    try:
+        for p in Path(mk_state_dir()).glob("gsd-mission-*.json"):
+            try:
+                m = json.loads(p.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if isinstance(m, dict) and (m.get("owner") or {}).get("session_id") == session_id:
+                return True
+    except Exception:
+        return True
+    return False
+
+
+def _econ_rollover(session_id: str, cwd: str, transcript_path: str, used_pct) -> dict | None:
+    """One Stop of the economic trigger. Returns the /kclear block, or None. Never raises.
+    Mission ownership is checked only before a spawn or an ask -- rare events -- not per Stop."""
+    try:
+        if not _econ_enabled() or _flag_exists(session_id, ROLLOVER_ASK_FLAG):
+            return None
+        if (_read_autorun_marker(session_id) or {}).get("mission_id"):
+            return None                      # mission workers rotate under gsd_epoch
+        head = _git_head(cwd)
+        if not head:
+            return None
+        st = _econ_state(session_id)
+        if not st.get("start_head"):
+            st.update(start_head=head, eval_head=head)
+            _econ_save(session_id, st)
+            return None
+        if used_pct is None or float(used_pct) < _econ_floor() or head == st.get("declined_head"):
+            return None
+        if head == st.get("asked_head"):
+            # 2026-11-06 block loop (Owner-approved fix): between the econ floor and THRESHOLD_REARM_PCT
+            # the rearm clears ROLLOVER_ASK_FLAG on every Stop, so the same head was re-asked each turn
+            # (10x observed). One ask per head; a new commit re-asks.
+            return None
+        dec = _econ_decision(session_id)
+        if head != st.get("eval_head") or (dec.get("head") == head and
+                                           (dec.get("decision") or {}).get("would_rollover") is True):
+            if _mission_owner(session_id):
+                return None                  # Ralph worker without a marker: Owner's run, untouched
+        if dec.get("head") == head and (dec.get("decision") or {}).get("would_rollover") is True:
+            st.update(asked_head=head, eval_head=head)   # a withdrawal declines THIS head
+            _econ_save(session_id, st)
+            _set_flag(session_id, ROLLOVER_ASK_FLAG)
+            _set_flag(session_id, ROLLOVER_ECON_FLAG)
+            d = dec["decision"]
+            _ledger(session_id, "rollover_kclear_asked", used_pct=used_pct, route="economic",
+                    head=head, resident=d.get("resident"), breakeven_calls=d.get("breakeven_calls"))
+            return {"decision": "block", "reason": (
+                f"ROLLOVER PAYS NOW — {used_pct}% used, ~{(d.get('resident') or 0) // 1000}k "
+                f"tokens resident, of which ~{(d.get('growth_above_fresh') or 0) // 1000}k is "
+                "history a fresh session would not re-read on every call (break-even "
+                f"{d.get('breakeven_calls')} calls). A commit has just landed, so this is a "
+                "work boundary. Seal the capsule YOURSELF in your next response: invoke the "
+                "`kclear` skill (Skill tool) and follow it -- it prints a [capsule] verdict. "
+                "ONLY if the verdict is SAFE_TO_FORGET is `/clear` requested on the next Stop; "
+                "if the capsule is refused nothing is cleared and you keep working.")}
+        if head != st.get("eval_head"):
+            st["eval_head"] = head
+            _econ_save(session_id, st)
+            spawned = _econ_spawn(session_id, cwd, transcript_path, used_pct, st["start_head"])
+            _ledger(session_id, "rollover_econ_evaluating", used_pct=used_pct, head=head,
+                    spawned=spawned)
+    except Exception:
+        return None
+    return None
 
 
 def _spawn_daemon() -> bool:
@@ -1349,14 +1702,22 @@ def _run_inner(event: dict) -> dict:
     # its own. Fail-open is preserved -- an overlay that raises leaves the
     # continuation path exactly as it was.
     # Pinned by tools/test_watchdog_overlay_precedence.py (both poles).
-    try:
-        overlay = _orchestrator_overlay(event)
-        if overlay:
-            if not _read_autorun_marker(session_id):
-                return overlay
-            _LAST["overlay"] = overlay
-    except Exception:
-        pass
+    #
+    # Called BELOW the rollover step since 2026-10-06 (e0332e3a): run first, the overlay's
+    # multi-second orchestrate() took the first Stop after a manual /kclear, the dispatcher
+    # killed the hook at 20 s, and /clear was never typed. A pending crossing costs one stat
+    # and outranks an advisory; the overlay keeps every other Stop exactly as before.
+    # Pinned by V-ROLLACT-SELF-CROSSES-AHEAD-OF-OVERLAY.
+    def _overlay_first():
+        try:
+            overlay = _orchestrator_overlay(event)
+            if overlay:
+                if not _read_autorun_marker(session_id):
+                    return overlay
+                _LAST["overlay"] = overlay
+        except Exception:
+            pass
+        return None
 
     # Empirical-test override (Owner DONE-gate 6a, 2026-05-20):
     # `_TEST_CONTEXT_PCT=<n>` forces a used_pct value so a synthetic Stop
@@ -1377,11 +1738,11 @@ def _run_inner(event: dict) -> dict:
     else:
         metrics = _read_metrics(session_id)
     if not metrics:
-        return {}
+        return _overlay_first() or {}
 
     used_pct = metrics.get("used_pct")
     if not isinstance(used_pct, (int, float)):
-        return {}
+        return _overlay_first() or {}
     # Stashed for the heartbeat. Without the percentage the line can say the
     # hook ran and not whether it SHOULD have fired, which is half an answer:
     # a `pass` at 74% and a `pass` at 12% are different facts about this chain.
@@ -1415,13 +1776,32 @@ def _run_inner(event: dict) -> dict:
                                event.get("transcript_path") or "", used_pct)
         if reply is not None:
             return reply
+    elif _rollover_active():
+        # Step 2 for a capsule sealed without the wall asking (a manual or breaker /kclear).
+        # Must sit ahead of the rearm below, which clears ASK/CLEAR at a low reading.
+        reply = _self_sealed_step(session_id, event.get("cwd") or os.getcwd(),
+                                  event.get("transcript_path") or "", used_pct)
+        if reply is not None:
+            return reply
+
+    # A `/clear` is being typed for this cycle: stay quiet, or a block here re-opens the turn and
+    # the inbox daemon withdraws the line it was about to type (ROLLOVER_INFLIGHT_FLAG). Bounded by
+    # the daemon's own delivery window, so a /clear that never lands cannot mute the wall forever.
+    if _rollover_active() and _clear_in_flight(session_id):
+        _ledger(session_id, "rollover_stop_quiet_inflight", used_pct=used_pct)
+        return {}
+
+    early = _overlay_first()
+    if early:
+        _LAST.pop("used_pct", None)   # heartbeat as before the move: legacy path never reached
+        return early
 
     snap_pct, adv_pct, rearm_pct = _thresholds(session_id)
     if used_pct < rearm_pct:
         _clear_flag(session_id, ADVISORY_FLAG)
         # A new cycle: the rollover chain re-arms with it, or one crossing per session
         # would be the most this could ever do.
-        for _rf in (ROLLOVER_ASK_FLAG, ROLLOVER_CLEAR_FLAG, ROLLOVER_WAIT_FLAG):
+        for _rf in (ROLLOVER_ASK_FLAG, ROLLOVER_CLEAR_FLAG, ROLLOVER_WAIT_FLAG, ROLLOVER_INFLIGHT_FLAG):
             _clear_flag(session_id, _rf)
 
         # Post-compaction resume (gap C). Same low-context window as the rearm,
@@ -1459,6 +1839,15 @@ def _run_inner(event: dict) -> dict:
                         command=marker.get("resume_command"), route=route.get("route"),
                         why=route.get("why"))
                 return {}
+
+    # Economic rollover (spec economic-rollover-trigger.md): below the wall, cross when it
+    # pays at a commit boundary. Ahead of the snapshot return because its floor (20 %) is
+    # under the snapshot tier (40 %); it never acts at the wall, where ASK is already set.
+    econ = (_econ_rollover(session_id, event.get("cwd") or os.getcwd(),
+                           event.get("transcript_path") or "", used_pct)
+            if used_pct < adv_pct else None)   # at the wall, the wall path owns the crossing
+    if econ:
+        return econ
 
     if used_pct < snap_pct:
         return {}

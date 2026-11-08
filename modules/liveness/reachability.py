@@ -33,6 +33,7 @@ Three design constraints, each paid for by a real bug:
 """
 from __future__ import annotations
 
+import html
 import json
 import re
 import subprocess
@@ -53,7 +54,23 @@ LIBRARY = "LIBRARY"        # imported by siblings only; never an entrypoint
 DEPRECATED = "DEPRECATED"  # dead on purpose, retained for history
 PLANNED = "PLANNED"        # wiring pending; MUST carry an OWNER_QUEUE row
 SCHEDULED = "SCHEDULED"    # driven by a scheduled task, not by the harness
-VALID_CLASSES = (LIBRARY, DEPRECATED, PLANNED, SCHEDULED)
+DORMANT = "DORMANT"        # tested, kept on purpose, no live caller; note names its test
+VALID_CLASSES = (LIBRARY, DEPRECATED, PLANNED, SCHEDULED, DORMANT)
+
+# A DORMANT declaration is only honest while the test that keeps the module alive
+# exists; a note naming none, or naming a deleted one, is not an exemption.
+_DORMANT_TEST = re.compile(r"\btools/test_\w+\.py\b")
+
+
+def _declared_class(entry: dict | None, root: Path) -> str | None:
+    """The exemption class a registry entry really grants, or None."""
+    klass = (entry or {}).get("class")
+    if klass not in VALID_CLASSES:
+        return None  # a malformed exemption is not an exemption
+    if klass == DORMANT and not any(
+            (root / t).is_file() for t in _DORMANT_TEST.findall((entry or {}).get("note", ""))):
+        return None
+    return klass
 
 REGISTRY_REL = "vault/liveness/reachability_registry.json"
 
@@ -86,7 +103,7 @@ def live_root() -> Path:
 _DISPATCHER_NAME = "hook-dispatcher.js"
 # Broad by design: ANY quoted string ending .js, relative or absolute. Narrowing to
 # `./`/`../`-prefixed refs (the dispatcher's own idiom) missed settings.json's direct
-# registrations, which use absolute paths ("C:/Users/User/.claude/skills/.../foo.js")
+# registrations, which use absolute paths ("C:/Users/dev/.claude/skills/.../foo.js")
 # -- session_start_hub.js (SessionStart event) is registered THIS way, not through
 # the dispatcher at all. Only the basename is ever extracted, so a broader match
 # carries negligible false-whitelist risk. The optional leading/trailing `\\?`:
@@ -394,11 +411,16 @@ def _unit_path(repo_root: Path, unit: str) -> Path:
 _TASK_SPLIT = "<Task "
 _TASK_DISABLED = "<Enabled>false</Enabled>"
 _TASK_CMD_RE = re.compile(r"<(?:Command|Arguments)>([^<]*)</(?:Command|Arguments)>")
-# A drive-anchored path ending in a script extension. Quotes are not required: inside
-# <Arguments> they arrive XML-escaped (&quot;), so a quote-delimited pattern matches
-# nothing. Non-greedy, so the shortest path ending in an extension wins and a match
-# cannot run past its own filename into the next argument.
-_TASK_SCRIPT_RE = re.compile(r"[A-Za-z]:[\\/][^\"'<>|]+?\.(?:py|ps1|js|cmd|bat)")
+# A drive-anchored path ending in a script extension. Each field is XML-UNESCAPED before
+# matching, so `&quot;` becomes a real quote, which the character class refuses: a match
+# cannot run past a quoted argument into the next one, whatever extension that argument
+# has. Unquoted paths still match. Non-greedy, so the shortest path ending in an extension
+# wins. `vbs` is listed because every PP task launches through `wscript.exe //B //Nologo
+# "<tools/hidden_launch.vbs>" "<script>"` (zero-flash). Before both fixes the non-greedy
+# match started at the .vbs, could not stop on an unknown extension, crossed `&quot; &quot;`
+# and returned one unresolvable path, so every scheduled edge in the estate read as absent
+# (2026-10-04: PP-Hibernation firing every 5 min, rc 0, hibernate_runner ORPHAN).
+_TASK_SCRIPT_RE = re.compile(r"[A-Za-z]:[\\/][^\"'<>|]+?\.(?:py|ps1|js|cmd|bat|vbs)")
 _XML_MEMO: list = []   # single slot: [] = never queried, [x] = queried (x may be None)
 
 
@@ -420,16 +442,31 @@ def _schtasks_xml(*, timeout: float = 20.0) -> str | None:
     except (OSError, subprocess.SubprocessError):
         proc = None
     if proc is not None and proc.returncode == 0 and proc.stdout:
-        for enc in ("utf-16", "utf-8-sig", "utf-8"):
-            try:
-                candidate = proc.stdout.decode(enc)
-            except (UnicodeDecodeError, LookupError):
-                continue
-            if _TASK_SPLIT in candidate:
-                text = candidate
-                break
+        text = decode_schtasks(proc.stdout)
     _XML_MEMO.append(text)
     return text
+
+
+def decode_schtasks(raw: bytes) -> str | None:
+    """The schtasks XML as text, or None when no encoding yields a `<Task ` element.
+
+    The stream is UTF-16 on some hosts and the ANSI code page on others. Measured
+    2026-10-04 on a Spanish-locale Windows 11: 387 KB of cp1252, on which utf-16 decodes
+    to garbage without error and utf-8 raises on the first accented byte, so a probe
+    list without the locale code page returned None and the scanner saw ZERO scheduled
+    tasks (232 registered). Every decode is judged by finding a `<Task ` element, never
+    by the absence of an exception, because utf-16 accepts almost any even-length input.
+    """
+    import locale
+    encodings = ["utf-16", "utf-8-sig", "utf-8", locale.getpreferredencoding(False), "mbcs", "cp1252"]
+    for enc in dict.fromkeys(e for e in encodings if e):
+        try:
+            candidate = raw.decode(enc)
+        except (UnicodeDecodeError, LookupError):
+            continue
+        if _TASK_SPLIT in candidate:
+            return candidate
+    return None
 
 
 def scheduled_task_seeds(repo_root: Path | None = None,
@@ -455,7 +492,7 @@ def scheduled_task_seeds(repo_root: Path | None = None,
         if _TASK_DISABLED in chunk:
             continue
         for field in _TASK_CMD_RE.findall(chunk):
-            for raw in _TASK_SCRIPT_RE.findall(field):
+            for raw in _TASK_SCRIPT_RE.findall(html.unescape(field)):
                 path = Path(raw.strip())
                 try:
                     inside = any(path.is_relative_to(r) for r in roots)
@@ -556,9 +593,7 @@ def scan(repo_root: Path | None = None, registry: dict | None = None) -> list[di
     rows: list[dict] = []
     for unit in sorted(known):
         declared = reg["modules"].get(unit) or {}
-        klass = declared.get("class")
-        if klass is not None and klass not in VALID_CLASSES:
-            klass = None  # a malformed exemption is not an exemption
+        klass = _declared_class(declared, root)
         if unit in via:
             status = REACHABLE
         elif not _unit_path(root, unit).is_file():
@@ -587,19 +622,21 @@ def offenders(rows: list[dict], registry: dict | None = None,
     reg = registry if registry is not None else load_registry(repo_root)
     baseline = set(reg.get("known_orphans", []))
     declared = reg.get("modules", {})
+    root = Path(repo_root or _repo_root())
 
     def _klass(r: dict) -> str | None:
         """The registry HANDED TO THIS CALL wins over whatever scan() baked into the row.
         Otherwise passing a registry here would silently do half the job -- exemptions
         ignored, debt honoured -- and a caller would never see the difference."""
-        k = (declared.get(r["unit"]) or {}).get("class", r["klass"])
-        return k if k in VALID_CLASSES else None
+        entry = declared.get(r["unit"])
+        return _declared_class(entry, root) if entry is not None else r["klass"]
 
+    # A DORMANT module that became reachable carries a stale declaration: the registry
+    # now says something false about it, so it fails the gate until the row is removed.
     return [
         r for r in rows
-        if r["status"] != REACHABLE
-        and _klass(r) is None
-        and r["unit"] not in baseline
+        if (r["status"] != REACHABLE and _klass(r) is None and r["unit"] not in baseline)
+        or (r["status"] == REACHABLE and _klass(r) == DORMANT)
     ]
 
 
@@ -658,6 +695,10 @@ def _report_md(rows: list[dict], offs: list[dict]) -> str:
         "|---|---|---|",
     ]
     lines += [f"| {r['unit']} | {r['status']} | {r['via'] or '-'} |" for r in dead]
+    stale = [r for r in offs if r["status"] == REACHABLE]
+    if stale:
+        lines += ["", "## Stale DORMANT declarations (now reachable: remove the row)", ""]
+        lines += [f"- {r['unit']} via {r['via']}" for r in stale]
     return "\n".join(lines) + "\n"
 
 

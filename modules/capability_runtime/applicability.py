@@ -94,14 +94,38 @@ def _norm(items) -> set:
     return {str(x).strip().lower() for x in (items or []) if str(x).strip()}
 
 
+# Technical names whose identity lives in a symbol (ACV S5a, measured 2026-10-03): `\b` needs a
+# word character on one side, so "c++", "c#", "f#" and ".net" could never match, and the
+# resolver's [a-z0-9]+ tokenizer turned "C++" into nothing. Each entry carries its own edges so
+# ordinary text is untouched ("example.network", "asp.net", "c++11" stay as they are), and no
+# output contains an input, so applying it twice changes nothing.
+_LEXICON = (
+    (re.compile(r"(?<!\w)c\+\+(?![\w+])", re.I), "cpp"),
+    (re.compile(r"(?<!\w)c#(?![\w#])", re.I), "csharp"),
+    (re.compile(r"(?<!\w)f#(?![\w#])", re.I), "fsharp"),
+    (re.compile(r"(?<![\w.])\.net(?![\w.])", re.I), "dotnet"),
+)
+
+
+def canonical_text(text) -> str:
+    """Rewrite symbol-bearing technical names to their word form; everything else unchanged."""
+    s = str(text or "")
+    for rx, word in _LEXICON:
+        s = rx.sub(word, s)
+    return s
+
+
 def _hits(text: str, phrases) -> list:
-    """Word-boundary-anchored phrase presence. A naive substring test makes
-    short tokens match unrelated words and destroys precision."""
-    t = (text or "").lower()
+    """Phrase presence anchored on non-word edges. A naive substring test makes short tokens
+    match unrelated words and destroys precision. `(?<!\\w)`/`(?!\\w)` equal `\\b` for a phrase
+    that starts and ends with a word character, and still work when it starts or ends with a
+    symbol. Text and phrase pass through the same lexicon; the ORIGINAL phrase is returned, so
+    callers' hit lists and reason strings do not change."""
+    t = canonical_text(text).lower()
     out = []
     for p in phrases or []:
         p = str(p).strip().lower()
-        if p and re.search(r"\b" + re.escape(p) + r"\b", t):
+        if p and re.search(r"(?<!\w)" + re.escape(canonical_text(p)) + r"(?!\w)", t):
             out.append(p)
     return out
 

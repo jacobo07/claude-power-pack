@@ -1,0 +1,2895 @@
+{
+ "caveats": [
+  "skill_listing is bounded by the harness listing budget (30,000 chars on both GEX44 sessions and the laptop champion row): at the budget a new skill displaces descriptions instead of adding chars, so entries and skill_count are reported beside chars",
+  "prompt-driven rows (user rows, file attachments) are excluded from the floor",
+  "tokens are comparable only when the excluded prompt digests are equal",
+  "scopes are computed on the measuring host, at measure time, from the settings files and skill / agent files present then; deltas are per source, so a later relabel of the same chars (a settings file added after the reference) costs nothing",
+  "a plugin `ns:name` skill or agent with no file under the project is filed universal (the stricter side of the 1,000-char rule); a project-scoped plugin is therefore over-reported, never under-reported",
+  "system prompt parts are compared by digest: a reference and a check of different session kinds (an interactive session against a mission worker whose launcher appends a prompt) differ by that part and go red unless explained"
+ ],
+ "components": [
+  {
+   "chars": 4824,
+   "layer": "hook_context:SessionStart:SessionStart",
+   "scope": "universal",
+   "scope_basis": "user_settings",
+   "source": "hook:89ad43afb4eafffa:hook-dispatcher.js"
+  },
+  {
+   "chars": 3405,
+   "layer": "hook_context:SessionStart:SessionStart",
+   "scope": "universal",
+   "scope_basis": "plugin",
+   "source": "hook:12d079e1117bd6db:run-hook.cmd"
+  },
+  {
+   "chars": 551,
+   "layer": "other:environment",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "environment"
+  },
+  {
+   "chars": 233,
+   "layer": "other:model",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "model"
+  },
+  {
+   "chars": 45603,
+   "layer": "other:deferred_tools_delta",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "deferred_tools_delta"
+  },
+  {
+   "chars": 914,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cdio-core"
+  },
+  {
+   "chars": 844,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cdio-reviewer"
+  },
+  {
+   "chars": 637,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cdio-standards-librarian"
+  },
+  {
+   "chars": 132,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "claude"
+  },
+  {
+   "chars": 1072,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "claude-code-guide"
+  },
+  {
+   "chars": 124,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "code-reviewer"
+  },
+  {
+   "chars": 231,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-carrier-investigator"
+  },
+  {
+   "chars": 249,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-carrier-verifier"
+  },
+  {
+   "chars": 257,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-carrier-writer"
+  },
+  {
+   "chars": 539,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "Explore"
+  },
+  {
+   "chars": 606,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "garyvee"
+  },
+  {
+   "chars": 309,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "general-purpose"
+  },
+  {
+   "chars": 792,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "graphify-librarian"
+  },
+  {
+   "chars": 672,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "graphify-route-governor"
+  },
+  {
+   "chars": 784,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "graphify-writeback"
+  },
+  {
+   "chars": 273,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-advisor-researcher"
+  },
+  {
+   "chars": 459,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ai-researcher"
+  },
+  {
+   "chars": 196,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-assumptions-analyzer"
+  },
+  {
+   "chars": 238,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-code-fixer"
+  },
+  {
+   "chars": 235,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-code-reviewer"
+  },
+  {
+   "chars": 266,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-codebase-mapper"
+  },
+  {
+   "chars": 368,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-debug-session-manager"
+  },
+  {
+   "chars": 202,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-debugger"
+  },
+  {
+   "chars": 293,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-doc-classifier"
+  },
+  {
+   "chars": 362,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-doc-synthesizer"
+  },
+  {
+   "chars": 160,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-doc-verifier"
+  },
+  {
+   "chars": 222,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-doc-writer"
+  },
+  {
+   "chars": 315,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-dom-verifier"
+  },
+  {
+   "chars": 505,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-domain-researcher"
+  },
+  {
+   "chars": 372,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-eval-auditor"
+  },
+  {
+   "chars": 414,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-eval-planner"
+  },
+  {
+   "chars": 286,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-executor"
+  },
+  {
+   "chars": 324,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-framework-selector"
+  },
+  {
+   "chars": 189,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-integration-checker"
+  },
+  {
+   "chars": 132,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-intel-updater"
+  },
+  {
+   "chars": 288,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-mempalace-curator"
+  },
+  {
+   "chars": 170,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-nyquist-auditor"
+  },
+  {
+   "chars": 248,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-pattern-mapper"
+  },
+  {
+   "chars": 383,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-phase-researcher"
+  },
+  {
+   "chars": 196,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-plan-checker"
+  },
+  {
+   "chars": 274,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-planner"
+  },
+  {
+   "chars": 429,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-project-researcher"
+  },
+  {
+   "chars": 203,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-research-synthesizer"
+  },
+  {
+   "chars": 227,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-roadmapper"
+  },
+  {
+   "chars": 246,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-security-auditor"
+  },
+  {
+   "chars": 197,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ui-auditor"
+  },
+  {
+   "chars": 198,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ui-checker"
+  },
+  {
+   "chars": 403,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ui-researcher"
+  },
+  {
+   "chars": 220,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-user-profiler"
+  },
+  {
+   "chars": 234,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-verifier"
+  },
+  {
+   "chars": 763,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "hawkins"
+  },
+  {
+   "chars": 678,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "musk"
+  },
+  {
+   "chars": 508,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "omni-singularity"
+  },
+  {
+   "chars": 741,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "oneshot-architect-auditor"
+  },
+  {
+   "chars": 364,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "Plan"
+  },
+  {
+   "chars": 407,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-cascade-guard"
+  },
+  {
+   "chars": 424,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-ceps-analyst"
+  },
+  {
+   "chars": 558,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-code-reviewer"
+  },
+  {
+   "chars": 408,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-error-analyst"
+  },
+  {
+   "chars": 379,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-monitor"
+  },
+  {
+   "chars": 420,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-never-again"
+  },
+  {
+   "chars": 447,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-premise-guardian"
+  },
+  {
+   "chars": 423,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-spec-guardian"
+  },
+  {
+   "chars": 373,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-tco-advisor"
+  },
+  {
+   "chars": 425,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-token-auditor"
+  },
+  {
+   "chars": 401,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pp-uqf-auditor"
+  },
+  {
+   "chars": 149,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "rtk-testing-specialist"
+  },
+  {
+   "chars": 159,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "rust-rtk"
+  },
+  {
+   "chars": 111,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "statusline-setup"
+  },
+  {
+   "chars": 516,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "steve-jobs"
+  },
+  {
+   "chars": 525,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "woz"
+  },
+  {
+   "chars": 8975,
+   "layer": "other:mcp_instructions_delta",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "mcp_instructions_delta"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "adversarial-longevity"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "agent-reach"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "android-reverse-engineering"
+  },
+  {
+   "chars": 761,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "anydesign"
+  },
+  {
+   "chars": 20,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "artifacts-builder"
+  },
+  {
+   "chars": 10,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "autofix"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "autoresearch"
+  },
+  {
+   "chars": 19,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "brand-guidelines"
+  },
+  {
+   "chars": 28,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "building-ai-saas-products"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "canvas-design"
+  },
+  {
+   "chars": 573,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "capability-preserving-compaction"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl-manager"
+  },
+  {
+   "chars": 858,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "claude-power-pack"
+  },
+  {
+   "chars": 34,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "claude-power-pack-wt-founder-os"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "code-auditor"
+  },
+  {
+   "chars": 375,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "code-review"
+  },
+  {
+   "chars": 62,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "code-reviewer"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "composition-patterns"
+  },
+  {
+   "chars": 644,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "compound-learnings"
+  },
+  {
+   "chars": 772,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "concurrent-writers-shared-tree"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "copywriting"
+  },
+  {
+   "chars": 10,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-pro"
+  },
+  {
+   "chars": 19,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "debugging-wizard"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "design-taste-frontend"
+  },
+  {
+   "chars": 830,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "destructive-state-authorization"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "develop-here-prove-there"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "personal-skill-3"
+  },
+  {
+   "chars": 43,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "documented-capability-must-be-executable"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "durable-exit-transaction"
+  },
+  {
+   "chars": 37,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "effect-authority-across-transports"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "elevenlabs-music-generation"
+  },
+  {
+   "chars": 349,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "elixir-phoenix-patterns"
+  },
+  {
+   "chars": 75,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "embedded-systems"
+  },
+  {
+   "chars": 658,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "evaluation-corpus-governance"
+  },
+  {
+   "chars": 53,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "fix"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "frontend-design"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "game-feel-codex"
+  },
+  {
+   "chars": 43,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "generated-content-needs-an-evidence-gate"
+  },
+  {
+   "chars": 651,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gex44-run-ops"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "github-actions-templates"
+  },
+  {
+   "chars": 336,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "governance-overlay"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-add-tests"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ai-integration-phase"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-audit-fix"
+  },
+  {
+   "chars": 91,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-audit-milestone"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-audit-uat"
+  },
+  {
+   "chars": 89,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-autonomous"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-capture"
+  },
+  {
+   "chars": 79,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-cleanup"
+  },
+  {
+   "chars": 115,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-code-review"
+  },
+  {
+   "chars": 83,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-complete-milestone"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-config"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-debug"
+  },
+  {
+   "chars": 88,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-discuss-phase"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-docs-update"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-eval-review"
+  },
+  {
+   "chars": 115,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-execute-phase"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-explore"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-extract-learnings"
+  },
+  {
+   "chars": 11,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-fast"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-forensics"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-graphify"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-health"
+  },
+  {
+   "chars": 11,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-help"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-import"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-inbox"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ingest-docs"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-manager"
+  },
+  {
+   "chars": 19,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-map-codebase"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-mempalace-capture"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-mempalace-recall"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-milestone-summary"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-mvp-phase"
+  },
+  {
+   "chars": 20,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-new-milestone"
+  },
+  {
+   "chars": 87,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-new-project"
+  },
+  {
+   "chars": 11,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-next"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ns-context"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ns-ideate"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ns-manage"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ns-project"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ns-review"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ns-workflow"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-onboard"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-pause-work"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-phase"
+  },
+  {
+   "chars": 78,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-plan-phase"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-plan-review-convergence"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-pr-branch"
+  },
+  {
+   "chars": 19,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-profile-user"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-progress"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-quick"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-quick-batch"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-resume-work"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-review"
+  },
+  {
+   "chars": 21,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-review-backlog"
+  },
+  {
+   "chars": 19,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-secure-phase"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-settings"
+  },
+  {
+   "chars": 11,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ship"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-sketch"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-spec-phase"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-spike"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-stats"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-surface"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-thread"
+  },
+  {
+   "chars": 77,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ui-phase"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ui-review"
+  },
+  {
+   "chars": 22,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-ultraplan-phase"
+  },
+  {
+   "chars": 11,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-undo"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-update"
+  },
+  {
+   "chars": 21,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-validate-phase"
+  },
+  {
+   "chars": 70,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-verify-work"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-workspace"
+  },
+  {
+   "chars": 110,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "gsd-workstreams"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "guard-event-reachability"
+  },
+  {
+   "chars": 556,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "human-facing-external-effects"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "humanizer"
+  },
+  {
+   "chars": 231,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "image-calco"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "image-to-video"
+  },
+  {
+   "chars": 638,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "instrument-before-claim"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "java-architect"
+  },
+  {
+   "chars": 85,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiicraft-debug"
+  },
+  {
+   "chars": 89,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiicraft-dev"
+  },
+  {
+   "chars": 95,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiicraft-execution"
+  },
+  {
+   "chars": 79,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiicraft-ops"
+  },
+  {
+   "chars": 80,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiicraft-prd"
+  },
+  {
+   "chars": 21,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiicraft-product"
+  },
+  {
+   "chars": 92,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiicraft-review"
+  },
+  {
+   "chars": 257,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiicraft-testing"
+  },
+  {
+   "chars": 28,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kobiimii-character-artist"
+  },
+  {
+   "chars": 625,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "lateral-thinking"
+  },
+  {
+   "chars": 20,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "leverage-research"
+  },
+  {
+   "chars": 25,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "managing-sleepy-skills"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "marketing-psychology"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "mcp-builder"
+  },
+  {
+   "chars": 35,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "minecraft-android-renderer-stack"
+  },
+  {
+   "chars": 28,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "minecraft-mod-jar-patcher"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "mobile-app-ui-design"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "mobile-game-wii-port"
+  },
+  {
+   "chars": 590,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "monetary-quantity-integrity"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "motion-promo"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "on-device-verification-loop"
+  },
+  {
+   "chars": 32,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "pojavlauncher-headless-driver"
+  },
+  {
+   "chars": 29,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "post-effect-resource-truth"
+  },
+  {
+   "chars": 40,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "powershell-51-native-cli-orchestrator"
+  },
+  {
+   "chars": 28,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "presence-is-not-residency"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "project-bootstrapper"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "project-pulse"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "prompt-engineering-patterns"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "python-best-practices"
+  },
+  {
+   "chars": 60,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "python-pro"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "react-best-practices"
+  },
+  {
+   "chars": 28,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "real-context-reachability"
+  },
+  {
+   "chars": 29,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "recurring-work-cardinality"
+  },
+  {
+   "chars": 26,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "remotion-best-practices"
+  },
+  {
+   "chars": 26,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "remotion-discovery-trap"
+  },
+  {
+   "chars": 22,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "remotion-foundation"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "remotion-kobii-templates"
+  },
+  {
+   "chars": 330,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "reverse-engineer-anything"
+  },
+  {
+   "chars": 557,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "scoped-side-effect-authority"
+  },
+  {
+   "chars": 21,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "secrets-management"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "session-handoff-protocol"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "skill-creator"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "skill-prompt-efficiency-001"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "sleepy-skills"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "social-content"
+  },
+  {
+   "chars": 26,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "software-best-practices"
+  },
+  {
+   "chars": 19,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "spanish-mc-menus"
+  },
+  {
+   "chars": 33,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "state-lifetime-and-incarnation"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "stripe-best-practices"
+  },
+  {
+   "chars": 37,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "technical-failure-to-product-state"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "test-master"
+  },
+  {
+   "chars": 36,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "validation-planes-do-not-transfer"
+  },
+  {
+   "chars": 285,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "video-analyzer"
+  },
+  {
+   "chars": 355,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "vision-video"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "voice-spec-lock"
+  },
+  {
+   "chars": 210,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "web-design-guidelines"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "webapp-testing"
+  },
+  {
+   "chars": 22,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "wii-asset-authoring"
+  },
+  {
+   "chars": 655,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "wii-dev-best-practices"
+  },
+  {
+   "chars": 26,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "wii-disc-reconstruction"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "wii-memory-and-frame-budget"
+  },
+  {
+   "chars": 824,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "wii-power-pack"
+  },
+  {
+   "chars": 118,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "programme-continue"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "audit-all"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "autoupdate"
+  },
+  {
+   "chars": 20,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:architecture"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:brainstorm"
+  },
+  {
+   "chars": 20,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:create-agent"
+  },
+  {
+   "chars": 20,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:create-story"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:create-ux-design"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:create-workflow"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:dev-story"
+  },
+  {
+   "chars": 11,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:prd"
+  },
+  {
+   "chars": 21,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:product-brief"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:research"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:solutioning-gate-check"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:sprint-planning"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:tech-spec"
+  },
+  {
+   "chars": 21,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:workflow-init"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "bmad:workflow-status"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:manager"
+  },
+  {
+   "chars": 22,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:tasks:add-rule"
+  },
+  {
+   "chars": 28,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:tasks:create-command"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:tasks:create-domain"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:tasks:edit-rule"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:tasks:toggle-domain"
+  },
+  {
+   "chars": 33,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:templates:domain-template"
+  },
+  {
+   "chars": 34,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:templates:manifest-entries"
+  },
+  {
+   "chars": 29,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "carl:utils:manifest-parser"
+  },
+  {
+   "chars": 20,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "coderabbit-review"
+  },
+  {
+   "chars": 464,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-compound"
+  },
+  {
+   "chars": 272,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-founder-round"
+  },
+  {
+   "chars": 361,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-gsd-long"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "cpp-resume-sovereign"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "customclaw"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "design-md"
+  },
+  {
+   "chars": 22,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "evaluate-repository"
+  },
+  {
+   "chars": 25,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "investment-ready-audit"
+  },
+  {
+   "chars": 6,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "ira"
+  },
+  {
+   "chars": 71,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kclear"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "knowledge"
+  },
+  {
+   "chars": 172,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "kresume"
+  },
+  {
+   "chars": 10,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "lazarus"
+  },
+  {
+   "chars": 17,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "obsidian-setup"
+  },
+  {
+   "chars": 33,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "omni-verification-oracle-audit"
+  },
+  {
+   "chars": 6,
+   "layer": "skill_listing",
+   "scope": "project",
+   "scope_basis": "project_file",
+   "source": "osa"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "ovo-audit"
+  },
+  {
+   "chars": 210,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "personal-skill-1"
+  },
+  {
+   "chars": 87,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "research-youtube"
+  },
+  {
+   "chars": 209,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "restart"
+  },
+  {
+   "chars": 15,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "resume-clean"
+  },
+  {
+   "chars": 20,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "saas_system_audit"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "saas-continue"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "saas-launch"
+  },
+  {
+   "chars": 16,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "security-scan"
+  },
+  {
+   "chars": 12,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "test-gaps"
+  },
+  {
+   "chars": 217,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "personal-skill-2"
+  },
+  {
+   "chars": 164,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "ultra"
+  },
+  {
+   "chars": 9,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "update"
+  },
+  {
+   "chars": 14,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "vault-setup"
+  },
+  {
+   "chars": 13,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "install_file",
+   "source": "vault-sync"
+  },
+  {
+   "chars": 26,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "code-review:code-review"
+  },
+  {
+   "chars": 243,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:brainstorming"
+  },
+  {
+   "chars": 37,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:diagnosing-superpowers"
+  },
+  {
+   "chars": 42,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:dispatching-parallel-agents"
+  },
+  {
+   "chars": 202,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:executing-plans"
+  },
+  {
+   "chars": 148,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:finishing-a-development-branch"
+  },
+  {
+   "chars": 36,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:receiving-code-review"
+  },
+  {
+   "chars": 37,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:requesting-code-review"
+  },
+  {
+   "chars": 129,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:subagent-driven-development"
+  },
+  {
+   "chars": 128,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:systematic-debugging"
+  },
+  {
+   "chars": 119,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:test-driven-development"
+  },
+  {
+   "chars": 34,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:using-git-worktrees"
+  },
+  {
+   "chars": 188,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:using-superpowers"
+  },
+  {
+   "chars": 272,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:verification-before-completion"
+  },
+  {
+   "chars": 114,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:writing-plans"
+  },
+  {
+   "chars": 128,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "superpowers:writing-skills"
+  },
+  {
+   "chars": 240,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "frontend-design:frontend-design"
+  },
+  {
+   "chars": 30,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "ui-ux-pro-max:ui-ux-pro-max"
+  },
+  {
+   "chars": 45,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "andrej-karpathy-skills:karpathy-guidelines"
+  },
+  {
+   "chars": 50,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "claude-code-setup:claude-automation-recommender"
+  },
+  {
+   "chars": 1448,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "dataviz"
+  },
+  {
+   "chars": 708,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "update-config"
+  },
+  {
+   "chars": 249,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "keybindings-help"
+  },
+  {
+   "chars": 189,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "simplify"
+  },
+  {
+   "chars": 192,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "fewer-permission-prompts"
+  },
+  {
+   "chars": 345,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "loop"
+  },
+  {
+   "chars": 382,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "schedule"
+  },
+  {
+   "chars": 1083,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "claude-api"
+  },
+  {
+   "chars": 253,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "workflow-authoring"
+  },
+  {
+   "chars": 369,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "run"
+  },
+  {
+   "chars": 267,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "plugin-authoring"
+  },
+  {
+   "chars": 7,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "init"
+  },
+  {
+   "chars": 18,
+   "layer": "skill_listing",
+   "scope": "unattributed",
+   "scope_basis": "no_file",
+   "source": "security-review"
+  },
+  {
+   "chars": 36,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:built-in-browser"
+  },
+  {
+   "chars": 787,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:chrome-browser"
+  },
+  {
+   "chars": 32,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:computer-use"
+  },
+  {
+   "chars": 33,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:deep-research"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:docs"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:docx"
+  },
+  {
+   "chars": 33,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:import-memory"
+  },
+  {
+   "chars": 27,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:morning"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:pdf"
+  },
+  {
+   "chars": 24,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:pptx"
+  },
+  {
+   "chars": 354,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:skill-creator"
+  },
+  {
+   "chars": 23,
+   "layer": "skill_listing",
+   "scope": "universal",
+   "scope_basis": "plugin_namespace",
+   "source": "anthropic-skills:xlsx"
+  },
+  {
+   "chars": 131,
+   "layer": "other:auto_mode",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "auto_mode"
+  },
+  {
+   "chars": 45,
+   "layer": "other:command_permissions",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "command_permissions"
+  },
+  {
+   "chars": 2267,
+   "layer": "hook_context:UserPromptSubmit:UserPromptSubmit",
+   "scope": "unattributed",
+   "scope_basis": "event_uncorrelated",
+   "source": "event:UserPromptSubmit"
+  },
+  {
+   "chars": 7871,
+   "layer": "memory_global",
+   "scope": "universal",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\.claude\\CLAUDE.md"
+  },
+  {
+   "chars": 171,
+   "layer": "rules",
+   "scope": "universal",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\.claude\\rules\\common\\code-review.md"
+  },
+  {
+   "chars": 170,
+   "layer": "rules",
+   "scope": "universal",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\.claude\\rules\\python\\testing.md"
+  },
+  {
+   "chars": 1226,
+   "layer": "rules",
+   "scope": "universal",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\.claude\\rules\\seo-geo-corpus-methodology.md"
+  },
+  {
+   "chars": 5457,
+   "layer": "rules",
+   "scope": "universal",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\.claude\\rules\\skill-rule-index.md"
+  },
+  {
+   "chars": 1215,
+   "layer": "rules",
+   "scope": "universal",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\.claude\\rules\\test-plan-against-facts-in-hand.md"
+  },
+  {
+   "chars": 5956,
+   "layer": "memory_project",
+   "scope": "project",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\CLAUDE.md"
+  },
+  {
+   "chars": 22861,
+   "layer": "memory_project",
+   "scope": "project",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\.claude\\skills\\claude-power-pack\\CLAUDE.md"
+  },
+  {
+   "chars": 2747,
+   "layer": "other:instructions",
+   "scope": "unattributed",
+   "scope_basis": "file_type",
+   "source": "C:\\Users\\dev\\.claude\\projects\\C--Users-dev--claude-skills-claude-power-pack\\memory\\MEMORY.md"
+  },
+  {
+   "chars": 3308,
+   "layer": "other:session_context",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "session_context"
+  },
+  {
+   "chars": 21,
+   "layer": "other:date",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "date"
+  },
+  {
+   "chars": 59,
+   "layer": "other:credential_org",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "credential_org"
+  },
+  {
+   "chars": 214,
+   "layer": "other:remote_session_change",
+   "scope": "harness",
+   "scope_basis": "harness_type",
+   "source": "remote_session_change"
+  },
+  {
+   "chars": 2025,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:469950f24f45"
+  },
+  {
+   "chars": 34,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:26490c16e8c5"
+  },
+  {
+   "chars": 357,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:3fcd2b200896"
+  },
+  {
+   "chars": 520,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:972441535793"
+  },
+  {
+   "chars": 921,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:5db7179f598c"
+  },
+  {
+   "chars": 2102,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:ba433ddd54ac"
+  },
+  {
+   "chars": 579,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:c34f6aeb8af3"
+  },
+  {
+   "chars": 280,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:9856a95edb9c"
+  },
+  {
+   "chars": 277,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:4e4e48fb23ce"
+  },
+  {
+   "chars": 188,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:8747e6877311"
+  },
+  {
+   "chars": 231,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:46a24a6f7d26"
+  },
+  {
+   "chars": 423,
+   "layer": "system_prompt",
+   "scope": "unattributed",
+   "scope_basis": "origin_unprovable",
+   "source": "part:41631e7eb968"
+  }
+ ],
+ "excluded": {
+  "file_chars": 0,
+  "hook_success_rows": 2,
+  "prompt_chars": 3730
+ },
+ "explanations": [],
+ "layers": [
+  {
+   "chars": 8229,
+   "layer": "hook_context:SessionStart:SessionStart",
+   "scope": "universal"
+  },
+  {
+   "chars": 2267,
+   "layer": "hook_context:UserPromptSubmit:UserPromptSubmit",
+   "scope": "unattributed"
+  },
+  {
+   "chars": 7871,
+   "layer": "memory_global",
+   "scope": "universal"
+  },
+  {
+   "chars": 28817,
+   "layer": "memory_project",
+   "scope": "project"
+  },
+  {
+   "chars": 2651,
+   "layer": "other:agent_listing_delta",
+   "scope": "unattributed"
+  },
+  {
+   "chars": 24417,
+   "layer": "other:agent_listing_delta",
+   "scope": "universal"
+  },
+  {
+   "chars": 131,
+   "layer": "other:auto_mode",
+   "scope": "harness"
+  },
+  {
+   "chars": 45,
+   "layer": "other:command_permissions",
+   "scope": "harness"
+  },
+  {
+   "chars": 59,
+   "layer": "other:credential_org",
+   "scope": "harness"
+  },
+  {
+   "chars": 21,
+   "layer": "other:date",
+   "scope": "harness"
+  },
+  {
+   "chars": 45603,
+   "layer": "other:deferred_tools_delta",
+   "scope": "unattributed"
+  },
+  {
+   "chars": 551,
+   "layer": "other:environment",
+   "scope": "harness"
+  },
+  {
+   "chars": 2747,
+   "layer": "other:instructions",
+   "scope": "unattributed"
+  },
+  {
+   "chars": 8975,
+   "layer": "other:mcp_instructions_delta",
+   "scope": "unattributed"
+  },
+  {
+   "chars": 233,
+   "layer": "other:model",
+   "scope": "harness"
+  },
+  {
+   "chars": 214,
+   "layer": "other:remote_session_change",
+   "scope": "harness"
+  },
+  {
+   "chars": 3308,
+   "layer": "other:session_context",
+   "scope": "harness"
+  },
+  {
+   "chars": 8239,
+   "layer": "rules",
+   "scope": "universal"
+  },
+  {
+   "chars": 6,
+   "layer": "skill_listing",
+   "scope": "project"
+  },
+  {
+   "chars": 5510,
+   "layer": "skill_listing",
+   "scope": "unattributed"
+  },
+  {
+   "chars": 24472,
+   "layer": "skill_listing",
+   "scope": "universal"
+  },
+  {
+   "chars": 7937,
+   "layer": "system_prompt",
+   "scope": "unattributed"
+  }
+ ],
+ "provenance": {
+  "command": "python.exe tools/floor_regression_gate.py --write-reference vault/programs/incremental-cognition/floor/reference.json --session bcf0a0bc-e334-41d4-a16e-772b5edf21b5 --replace",
+  "cwd": "C:\\Users\\dev\\.claude\\skills\\claude-power-pack",
+  "first_call_at": "2026-11-02T19:33:25.146Z",
+  "install_commit": "03b77e4057aba4d8f6b6fd7df76ce067993ac303",
+  "install_home": "C:\\Users\\dev",
+  "measured_at": "2026-11-03T05:15:19Z",
+  "plane": "DESKTOP-PMT5BS8",
+  "platform": "win32",
+  "repo_commit": "03b77e4057aba4d8f6b6fd7df76ce067993ac303",
+  "session_id": "bcf0a0bc-e334-41d4-a16e-772b5edf21b5",
+  "source": "session",
+  "transcript": "C:\\Users\\dev\\.claude\\projects\\C--Users-dev--claude-skills-claude-power-pack\\bcf0a0bc-e334-41d4-a16e-772b5edf21b5.jsonl",
+  "window_rows": 48,
+  "window_sha256": "48df4608800e2c2b22205b4262ebade6977ce5de5097363984fcc174a2333bf9"
+ },
+ "schema": "floor-reference/1",
+ "skill_listing": {
+  "chars": 29988,
+  "entries": 286,
+  "skill_count": 286
+ },
+ "tokens": {
+  "first_call_total": 71883,
+  "prompt_digest": "c538b295a90e977fc9ed7e6446168fe41873618f5d5bb7de66f86c91c8b982c3",
+  "status": "measured"
+ },
+ "total_chars": 182303
+}

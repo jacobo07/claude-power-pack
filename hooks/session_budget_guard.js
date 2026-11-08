@@ -1,0 +1,578 @@
+// session_budget_guard.js -- the SESSION cost breaker, judged before every tool call (PreToolUse).
+//
+// tools/mission_spend.py only ever judged MISSIONS (gsd autorun). An ordinary interactive session
+// had no envelope at all: the skyparty-spawn closeout (transcript b9dbdfe2, 2026-10-05) was
+// estimated far below what it burned, ran 131 calls to 35.45M processed tokens with the context
+// growing ~90K -> 349K, and nothing measured it until a person did.
+//
+// OPT-IN. Inert unless `<state>/session-budget-<sid>.json` exists (written by
+// `python tools/mission_spend.py session-declare ...`). Without it the cost is one failed read.
+// Unit = mission_spend's: input + cache_write + cache_read + output, deduplicated by message id,
+// synthetic rows excluded. Pinned for parity by tools/test_session_budget_guard.py.
+//
+// Breakers (each a DENY that names its number and the way out):
+//   tokens      processed > stop                              (> warn = advisory only)
+//   divergence  tool calls > call_ratio x calls_estimate      (when an estimate is declared)
+//   context     last turn's context > context_ceiling         -> rotate with /kclear
+//   no-progress K calls with no Edit/Write/MultiEdit/NotebookEdit and no `commit` command
+// Accounting that cannot be read (no transcript_path, unreadable file, corrupt budget, state that
+// cannot be written) gets ONE grace call, then denies: an envelope nobody can measure is not
+// silently treated as a zero spend.
+//
+// Never denied, so a tripped session can still rotate or lift its own envelope: a Bash/PowerShell
+// command naming rollover.py, mission_spend.py or session-budget-. Kill switch:
+// CPP_SESSION_BUDGET=off, or delete the budget file.
+//
+// Incremental: the state file keeps a byte offset; each call reads only the complete lines
+// appended since. Coverage is the dispatcher's PreToolUse lanes (Bash, PowerShell, Write, Edit,
+// MultiEdit, NotebookEdit, Read, Grep); Agent/WebFetch calls are COUNTED (they are in the
+// transcript) but not themselves gated -- the next gated call is. In GOAL mode (below) an Agent
+// call is gated before launch once the dispatcher's PreToolUse-Agent lane is registered.
+'use strict';
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { spawnSync } = require('child_process');
+
+const SID_RE = /^[A-Za-z0-9._-]{1,128}$/;
+const UK = ['input_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens', 'output_tokens'];
+const PROGRESS_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
+const EXEMPT_CMD = /rollover\.py|mission_spend\.py|session-budget-/;
+const MAX_IDS = 20000;
+const DEFAULT_CALL_RATIO = 1.5;
+// ce-a5 U7: 14 = smallest K whose false-trip rate (gaps between mutations > K) is <= 5% on the DWS corpus
+// (A/STALL.md). Env CPP_NOPROGRESS_K overrides; a per-session budget.noprogress_calls outranks both.
+const DEFAULT_NOPROGRESS = 14;
+function defaultNoprogress() {
+  const e = Number(process.env.CPP_NOPROGRESS_K);
+  return Number.isFinite(e) && e >= 1 ? Math.floor(e) : DEFAULT_NOPROGRESS;
+}
+
+function stateDir() {
+  return process.env.GSD_LONG_RUN_STATE_DIR || path.join(os.homedir(), '.claude', 'state');
+}
+
+function readJson(p) {
+  try { return JSON.parse(fs.readFileSync(p, 'utf8').replace(/^﻿/, '')); } catch (e) { return null; }
+}
+
+function fresh(since) {
+  return { since: since || null, offset: 0, tokens: 0, calls: 0, context: 0, progress_at: 0, ids: [], grace: false, recent: [] };
+}
+
+// Fold the complete lines appended since st.offset into st. Mirrors mission_spend.session_tokens.
+function advance(st, transcript) {
+  const size = fs.statSync(transcript).size;
+  if (size < st.offset) Object.assign(st, fresh(st.since), { grace: st.grace });   // truncated/rotated
+  if (size === st.offset) return;
+  const fd = fs.openSync(transcript, 'r');
+  let buf;
+  try {
+    buf = Buffer.alloc(size - st.offset);
+    fs.readSync(fd, buf, 0, buf.length, st.offset);
+  } finally { fs.closeSync(fd); }
+  const end = buf.lastIndexOf(0x0a);
+  if (end < 0) return;                       // only a partial line so far
+  st.offset += end + 1;
+  const seen = new Set(st.ids);
+  for (const line of buf.subarray(0, end).toString('utf8').split('\n')) {
+    if (!line) continue;
+    let r;
+    try { r = JSON.parse(line); } catch (e) { continue; }
+    if (!r || typeof r !== 'object') continue;
+    if (st.since && String(r.timestamp || '') < st.since) continue;
+    const m = r.message;
+    if (!m || typeof m !== 'object') continue;
+    if (r.type === 'assistant' && Array.isArray(m.content)) {
+      for (const b of m.content) {
+        if (!b || b.type !== 'tool_use') continue;
+        st.calls += 1;
+        const cmd = b.input && typeof b.input.command === 'string' ? b.input.command : '';
+        if (PROGRESS_TOOLS.has(b.name) || /\bcommit\b/.test(cmd)) st.progress_at = st.calls;
+      }
+    }
+    const u = m.usage;
+    if (!u || m.model === '<synthetic>') continue;
+    const mid = m.id || r.uuid;
+    if (seen.has(mid)) continue;
+    seen.add(mid);
+    st.ids.push(mid);
+    st.tokens += UK.reduce((s, k) => s + (Number(u[k]) || 0), 0);
+    st.context = UK.slice(0, 3).reduce((s, k) => s + (Number(u[k]) || 0), 0);
+    st.recent = (Array.isArray(st.recent) ? st.recent : []).concat(UK.reduce((s, k) => s + (Number(u[k]) || 0), 0)).slice(-3);
+  }
+  if (st.ids.length > MAX_IDS) st.ids = st.ids.slice(-MAX_IDS);
+}
+
+function fmt(n) { return Number(n).toLocaleString('en-US'); }
+
+function deny(reason) {
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
+    permissionDecisionReason: `SESSION BUDGET BREAKER -- ${reason} Way out: end this turn with a status ` +
+      'and the next exact action, then /kclear (rotate). The Owner lifts or raises the envelope with ' +
+      '`python tools/mission_spend.py session-declare ...` or by deleting the session-budget file.' } };
+}
+
+function advise(text) {
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: text } };
+}
+
+// Size of the call about to be admitted: the larger of the last counted call and the mean of the last three.
+function nextCall(st) {
+  const r = Array.isArray(st.recent) ? st.recent : [];
+  if (!r.length) return 0;
+  const tail = r.slice(-3);
+  return Math.max(r[r.length - 1], tail.reduce((s, v) => s + v, 0) / tail.length);
+}
+
+function judge(budget, st) {
+  if (st.tokens > budget.stop) {
+    return deny(`processed ${fmt(st.tokens)} > stop ${fmt(budget.stop)} (target ${fmt(budget.target)}).`);
+  }
+  // Pre-boundary ceiling (WU-H012): the call that crosses stop used to be admitted (3M envelope, 4.31M spent).
+  // Deny once processed + the next call + the closeout reserve (paid INSIDE stop) would cross it.
+  if (String(process.env.CPP_PREBOUNDARY || '').trim().toLowerCase() !== 'off') {
+    const next = nextCall(st);
+    const declared = Number(budget.closeout_calls);
+    const reserve = (Number.isFinite(declared) && declared >= 0 ? declared : DEFAULT_CLOSEOUT) * next;
+    if (next > 0 && st.tokens + next + reserve > budget.stop) {
+      return deny(`processed ${fmt(st.tokens)} + next call ~${fmt(Math.round(next))} + closeout reserve ${fmt(Math.round(reserve))} ` +
+        `would cross stop ${fmt(budget.stop)} (target ${fmt(budget.target)}).`);
+    }
+  }
+  const est = Number(budget.calls_estimate) || 0;
+  const ratio = Number(budget.call_ratio) || DEFAULT_CALL_RATIO;
+  if (est > 0 && st.calls > ratio * est) {
+    return deny(`${st.calls} tool calls > ${ratio} x estimate ${est}: the plan diverged; recompute the remaining work.`);
+  }
+  const ceil = Number(budget.context_ceiling) || 0;
+  if (ceil > 0 && st.context > ceil) {
+    return deny(`context ${fmt(st.context)} > ceiling ${fmt(ceil)}: every further call re-reads it.`);
+  }
+  const k = Number(budget.noprogress_calls) || defaultNoprogress();
+  if (st.calls - st.progress_at > k) {
+    return deny(`${st.calls - st.progress_at} calls since the last edit or commit (limit ${k}): spend without progress.`);
+  }
+  // Predictive lease edge (WU-S4): WU-S3 tripped at 975K vs stop 950K, so the breaker was the first signal.
+  // Fires strictly before the stop deny: the remaining lease holds about `reserve` calls at the mean cost so far.
+  if (String(process.env.CPP_LEASE_EDGE || '').trim().toLowerCase() !== 'off') {
+    const per = st.tokens / Math.max(st.calls, 1);
+    const reserve = Number(budget.closeout_reserve_calls) || 3;
+    if (st.tokens + per * reserve > budget.stop) {
+      return advise(`LEASE EDGE: the remaining lease holds about ${reserve} calls. Do no new substantive work. ` +
+        'Now: commit what is green (pathspec, -F), write the receipt with Status: PARTIAL and the exact next step, end with HANDOFF NOTE.');
+    }
+  }
+  if (st.tokens > budget.warn) {
+    return advise(`SESSION BUDGET: processed ${fmt(st.tokens)} is past warn ${fmt(budget.warn)} ` +
+      `(stop ${fmt(budget.stop)}). Finish the unit in hand; start nothing new.`);
+  }
+  return null;
+}
+
+// Closeout allowance. A tripped breaker denied EVERYTHING, Read included, so the pane could neither
+// record its spend row nor write a handoff: measured 2026-10-06, session 1fd598fe tripped at 922K
+// against stop 800K and every later call (a plain Read too) was denied. A tripped session now gets
+// `closeout_calls` (default 4) calls that are read-only or write a closeout file; nothing else.
+const READ_ONLY = new Set(['Read', 'Grep', 'Glob']);
+const CLOSEOUT_PATH = /(^|[\\/])(vault[\\/]plans[\\/][^\\/]+\.md|memory[\\/]handoffs[\\/][^\\/]+\.md|RESUMPTION_FILE\.md|[^\\/]+-receipt\.md)$/;   // F3: a work-unit receipt is a closeout file
+const DEFAULT_CLOSEOUT = 4;
+// A tripped worker commits what is green: one pathspec `git add|commit ... -- <paths>`, nothing chained after it.
+// gsdx-factory-2 H012 (2026-10-25) tripped the calls wall with H0 GREEN 9/9 and could not commit it.
+const SHELL_TOOLS = new Set(['Bash', 'PowerShell']);
+const CLOSEOUT_COMMIT = new RegExp(String.raw`^\s*(?:&\s*)?(?:'[^']*git(?:\.exe)?'|"[^"]*git(?:\.exe)?"|\S*git(?:\.exe)?)` +
+  String.raw`\s+(?:-C\s+\S+\s+)?(?:add|commit)\b[^;&|\r\n]*\s--\s+[^;&|\r\n]+$`);
+
+// Goal mode passes `goal`: one handoff write, no reads. The live canary of 2026-10-07 (CANARY.md,
+// 51e46273) refused at 3,005,579 against a 3M cap, then admitted 4 Reads per pane at ~100K each:
+// 793K of a 1.17M overshoot. A Read does not write a handoff, it only spends.
+function closeout(budget, st, event, verdict, goal = false) {
+  const d = verdict && verdict.hookSpecificOutput;
+  if (!d || d.permissionDecision !== 'deny') return verdict;
+  const declared = Number(budget.closeout_calls);
+  const limit = goal ? 1 : (Number.isFinite(declared) && declared >= 0 ? declared : DEFAULT_CLOSEOUT);
+  const tool = String(event.tool_name || '');
+  const fp = event.tool_input && typeof event.tool_input.file_path === 'string' ? event.tool_input.file_path : '';
+  const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
+  const eligible = (!goal && READ_ONLY.has(tool)) || (PROGRESS_TOOLS.has(tool) && CLOSEOUT_PATH.test(fp)) ||
+    (SHELL_TOOLS.has(tool) && CLOSEOUT_COMMIT.test(cmd));
+  const used = Number(st.closeout) || 0;
+  if (!eligible || used >= limit) {
+    d.permissionDecisionReason += ` Closeout allowance ${used}/${limit} used; only ` +
+      (goal ? '' : 'Read/Grep/Glob and ') + 'writes to vault/plans/*.md, memory/handoffs/*.md, RESUMPTION_FILE.md or *-receipt.md, and one ' +
+      'pathspec `git add|commit ... -- <paths>`, qualify.';
+    return verdict;
+  }
+  st.closeout = used + 1;
+  const why = d.permissionDecisionReason.split(' Way out')[0].replace('SESSION BUDGET BREAKER -- ', '');
+  return advise(`SESSION BUDGET TRIPPED (${why}) -- closeout call ${st.closeout}/${limit} allowed: ` +
+    'record the spend row and the handoff, then stop.');
+}
+
+// --- Goal mode (A1 incident 2026-10-07, vault/specs/goal-budget-admission.md) ----------------------
+// A session envelope judged one pane. A1's 42.3M was spent by two undeclared coordinator panes and
+// their subagents against one 20M cap that nothing checked before a call. In goal mode a session is
+// BOUND to a goal (env CPP_GOAL > cwd under a goal's roots > `goal` in its budget file), measured
+// over its own transcript AND <sid>/subagents/*.jsonl (subagent tool calls fire this hook with the
+// parent's session id, but their usage is written there), and admitted against a lease reserved from
+// the goal's GoalLedger. When the lease is spent, `mission_spend.py goal-renew` settles the measured
+// total and reserves the next one, or refuses. Unlike the session envelope, goal mode fails CLOSED:
+// an unknown goal, a host outside the goal, an unreadable transcript or a renew that fails is a deny.
+// The deny is a plain permissionDecision, never {continue:false} (dispatcher:423-433, dead screen).
+const PY = process.env.PYTHON_BIN || (process.platform === 'win32'
+  ? 'C:\\Users\\dev\\AppData\\Local\\Programs\\Python\\Python312\\python.exe' : 'python3');
+const MISSION_SPEND = path.join(__dirname, '..', 'tools', 'mission_spend.py');
+const RENEW_TIMEOUT_MS = 8000;              // below the Read chain's 20 s, so a slow renew is a deny, not a kill
+
+const { goalBinding, fenceFor, readBinding } = require('./lib/goal_binding');
+const missionGate = require('./lib/mission_gate');
+
+// Only a bare status read is exempt in goal mode, anchored on the WHOLE command: python, then
+// mission_spend.py, then goal-status --goal <id>, then nothing. A substring match (audit gap 4) and
+// an unanchored token match (review H2: `python heavy_job.py --tag mission_spend.py goal-status`)
+// both let another program run unjudged.
+const GOAL_STATUS_ONLY = /^\s*(?:&\s*)?(?:(['"])(?:[^'"]*[\\/])?(?:python3?|py)(?:\.exe)?\1|(?:[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?)\s+(['"]?)(?:[^\s'"]*[\\/])?mission_spend\.py\2\s+goal-status\s+--goal\s+[A-Za-z0-9._-]+\s*$/i;
+// The recovery plane (econ-contain WS-D): status and detach must not depend on the exhausted goal's
+// remaining authority. They never edit product paths, and a detach fences the left goal's workspace
+// (goal_binding.fenceFor), so admitting them is not a budget bypass. Anchored like GOAL_STATUS_ONLY.
+const ECON_RECOVERY = /^\s*(?:&\s*)?(?:(['"])(?:[^'"]*[\\/])?(?:python3?|py)(?:\.exe)?\1|(?:[^\s'"]*[\\/])?(?:python3?|py)(?:\.exe)?)\s+(['"]?)(?:[^\s'"]*[\\/])?econ_plane\.py\2\s+(?:status|detach)\s+--session\s+[A-Za-z0-9._-]+(?:\s+--(?:reason\s+[A-Za-z0-9._-]+|text))?\s*$/i;
+function goalExempt(cmd) {
+  return GOAL_STATUS_ONLY.test(String(cmd)) || ECON_RECOVERY.test(String(cmd));
+}
+
+// The state a bound session must not write: the goal ledger and index, its own guard state and
+// budget file (a forged lease or a dropped `goal` field un-binds it), and the goal CLI's mutating
+// verbs. Same OS user, so this defeats the casual and accidental path, not an agent that edits this
+// hook -- see the spec's trust boundary (review H1).
+const GOAL_STATE = /goal-budget|goal-binding|session-budget-|mission_spend\.py['"]?\s+goal-(?:declare|renew|spawn)\b/i;
+function touchesGoalState(event) {
+  const ti = event.tool_input || {};
+  return GOAL_STATE.test(String(ti.command || '') + ' ' + String(ti.file_path || '') + ' ' + String(ti.path || ''));
+}
+
+// This sid's OPEN lease, read from the journal: a lease reserve not yet named by a settle's `closes`
+// or by a leak. Exactly one, or null. The journal is the authority and the local state file never
+// is (review H1a: a forged {amount: 1e15} matches nothing here). Reading it instead of trusting the
+// cache also stops renewal churn: parallel tool calls run this guard concurrently from one stale
+// cache, and each used to spawn goal-renew and close the lease its sibling had just reserved
+// (canary #1 journal rows 39-46). A racer now adopts that lease.
+function journalLease(goal, sid) {
+  let text;
+  try { text = fs.readFileSync(path.join(stateDir(), 'goal-budget', goal, 'spend.journal.jsonl'), 'utf8'); } catch (e) { return null; }
+  const open = new Map();
+  for (const line of text.split('\n')) {
+    if (!line || line.indexOf(sid) < 0) continue;   // a lease id embeds its sid, so closes rows pass too
+    let r;
+    try { r = JSON.parse(line); } catch (e) { continue; }
+    if (r.op === 'reserve' && r.kind === 'lease' && r.sid === sid) open.set(r.id, { id: r.id, amount: r.amount, base: r.base });
+    else if (r.op === 'settle' && Array.isArray(r.closes)) for (const id of r.closes) open.delete(id);
+    else if (r.op === 'leak') open.delete(r.id);
+  }
+  return open.size === 1 ? open.values().next().value : null;
+}
+
+function goalDeny(goal, reason) {
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
+    permissionDecisionReason: `GOAL BUDGET (${goal}) -- ${reason} Way out: end this turn now with ONE ` +
+      'status line; do not probe, retry, cd or try another shell (each attempt is a billed model ' +
+      'boundary). The Owner\'s next message is answered by the control plane WITHOUT a model call: ' +
+      '`econ status` shows the ledger, `econ detach` frees this pane (the goal\'s workspace stays fenced), ' +
+      '`/clear` starts a fresh session here. A crossed cap is never raised; a successor lease or a new ' +
+      'goal id is.' } };
+}
+
+function fenceDeny(f) {
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
+    permissionDecisionReason: `ECONOMIC FENCE (${f.goal}) -- this call would change that goal's workspace, ` +
+      `and ${f.why}. Changing directory, detaching or opening a fresh pane does not reopen an exhausted ` +
+      'goal; only a successor lease does. Reads stay free. End the turn with one status line.' } };
+}
+
+function foldFile(gs, file, isMain) {
+  let size;
+  try { size = fs.statSync(file).size; } catch (e) { if (isMain) throw e; return; }
+  let off = gs.files[file] || 0;
+  if (size < off) off = 0;                    // truncated: message ids keep the re-read from double counting
+  if (size === off) return;
+  const fd = fs.openSync(file, 'r');
+  let buf;
+  try {
+    buf = Buffer.alloc(size - off);
+    fs.readSync(fd, buf, 0, buf.length, off);
+  } finally { fs.closeSync(fd); }
+  const end = buf.lastIndexOf(0x0a);
+  if (end < 0) return;
+  gs.files[file] = off + end + 1;
+  const seen = new Set(gs.ids);
+  for (const line of buf.subarray(0, end).toString('utf8').split('\n')) {
+    if (!line) continue;
+    let r;
+    try { r = JSON.parse(line); } catch (e) { continue; }
+    if (!r || typeof r !== 'object') continue;
+    const ts = String(r.timestamp || '');
+    // gs.since = max(goal.since, binding.since_ts). A row from the goal's window but before this
+    // session was bound is PRE_BINDING: counted in gs.prebind, never in gs.tokens (see decideGoal).
+    const pre = !!(gs.since && ts < gs.since);
+    if (pre && !(gs.goalSince && ts >= gs.goalSince && gs.prospective)) continue;
+    const m = r.message;
+    if (!m || typeof m !== 'object' || !m.usage || m.model === '<synthetic>') continue;
+    // Every tool_use id written so far, before the message-id dedupe: one message's parallel tool
+    // calls arrive as several rows sharing an id. decideGoal uses this to see whether the request
+    // that issued the call being judged has reached the transcript yet (see `pending`).
+    if (Array.isArray(m.content)) {
+      for (const b of m.content) {
+        if (b && b.type === 'tool_use' && typeof b.id === 'string') gs.toolIds = (gs.toolIds || []).concat(b.id).slice(-MAX_TOOL_IDS);
+      }
+    }
+    const mid = m.id || r.uuid;
+    if (seen.has(mid)) continue;
+    seen.add(mid);
+    gs.ids.push(mid);
+    if (pre) {
+      gs.prebind = (gs.prebind || 0) + UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+      continue;
+    }
+    gs.tokens += UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+    if (isMain) {
+      gs.context = UK.slice(0, 3).reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+      // The next request re-reads this one's context AND its output, plus whatever the turn appends.
+      // Canary #3 reserved the context alone and each final reply came in 831-1,230 over it.
+      const total = UK.reduce((s, k) => s + (Number(m.usage[k]) || 0), 0);
+      if (gs.lastTotal > 0 && total > gs.lastTotal) gs.deltas = (gs.deltas || []).concat(total - gs.lastTotal).slice(-GROWTH_WINDOW);
+      gs.lastTotal = total;
+    }
+  }
+  if (gs.ids.length > MAX_IDS) gs.ids = gs.ids.slice(-MAX_IDS);
+}
+
+// Size of the pane's next request: the last main request's full total (context + output) plus the
+// largest growth between consecutive main requests in the last GROWTH_WINDOW. This is the per-call
+// the ledger reserves as the pane's final reply, so it errs high: one spike stays for 5 requests.
+const GROWTH_WINDOW = 5;
+const MAX_TOOL_IDS = 500;   // recent tool_use ids kept to recognise an unwritten issuing request
+function nextRequest(gs) {
+  const last = gs.lastTotal > 0 ? gs.lastTotal : (gs.context || 0);
+  return last + Math.max(0, ...(Array.isArray(gs.deltas) ? gs.deltas : []));
+}
+
+function measureGoal(gs, transcript) {
+  foldFile(gs, transcript, true);
+  const subDir = path.join(path.dirname(transcript), path.basename(transcript, '.jsonl'), 'subagents');
+  let names = [];
+  try { names = fs.readdirSync(subDir).filter(n => n.endsWith('.jsonl')).sort(); } catch (e) { names = []; }
+  for (const n of names) foldFile(gs, path.join(subDir, n), false);
+}
+
+function callGoal(args) {
+  const r = spawnSync(PY, [MISSION_SPEND, ...args],
+    { encoding: 'utf8', timeout: RENEW_TIMEOUT_MS, windowsHide: true });
+  if (r.error || (r.status !== 0 && r.status !== 3)) {
+    return { failed: `${args[0]} did not answer (${r.error ? (r.error.code || r.error.message) : 'exit ' + r.status})` };
+  }
+  const line = String(r.stdout || '').trim().split('\n').pop();
+  try {
+    const out = JSON.parse(line);
+    return out && typeof out === 'object' ? out : { failed: `${args[0]} answered no object` };
+  } catch (e) { return { failed: `${args[0]} answered unparseable output` }; }
+}
+
+// Predictive DRAIN (dgl W4). A lease should end by choice, not at the cap: when the lease in hand holds fewer than
+// `drain_calls` (goal entry, default 3) calls of this sid's measured per-call cost AND the goal holds no more than
+// that beyond it (so renewal cannot extend it), a new Agent or background spawn is denied. Only spawns: the
+// closeout / settle path is never denied here. Unmeasurable cost or room -> no drain (fail-open). CPP_DRAIN=off.
+const DEFAULT_DRAIN_CALLS = 3;
+function isSpawn(event) {
+  const tool = String(event.tool_name || '');
+  return tool === 'Agent' || tool === 'Task' || !!(event.tool_input && event.tool_input.run_in_background === true);
+}
+function drainEdge(entry, gs, measured, next) {
+  if (String(process.env.CPP_DRAIN || '').trim().toLowerCase() === 'off') return null;
+  if (!gs.lease || !(next > 0) || !Number.isFinite(gs.tail) || !Number.isFinite(Number(gs.lease.amount))) return null;
+  const calls = Number(entry && entry.drain_calls) || DEFAULT_DRAIN_CALLS;
+  const leaseRoom = Number(gs.lease.amount) - (measured - Number(gs.lease.base || 0));
+  if (leaseRoom < calls * next && gs.tail < calls * next) return { leaseRoom: Math.max(leaseRoom, 0), tail: Math.max(gs.tail, 0), calls };
+  return null;
+}
+
+function decideGoal(event, sid, bind) {
+  const { goal, entry } = bind;
+  const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
+  if (cmd && goalExempt(cmd)) return null;
+  if (!entry) return goalDeny(goal, `UNKNOWN: goal ${goal} is not declared on this host; unknown is never admitted.`);
+  if (touchesGoalState(event)) return goalDeny(goal, 'a call that touches goal-budget state is not admitted from a bound session.');
+  if (bind.lease) {                           // (W2) a registry holder on a closed lease is FENCED, not unknown-free
+    const lin = callGoal(['goal-lineage', '--goal', goal]);
+    if (lin.failed) return goalDeny(goal, `UNKNOWN: ${lin.failed}; a registry holder fails closed.`);
+    const ls = (Array.isArray(lin.leases) ? lin.leases : []).find(x => x.id === bind.lease);
+    if (!ls || ls.closed) return goalDeny(goal, `FENCED: workspace holder lease ${bind.lease} is ${ls ? 'closed' : 'unknown'}; its authority is revoked.`);
+  }
+  const gPath = path.join(stateDir(), `session-budget-${sid}.goal.json`);
+  let gs = readJson(gPath);
+  const goalSince = entry.since ? String(entry.since) : null;
+  // Prospective measure: a session counts only from the moment it was bound (max of both).
+  const bindTs = bind.sinceTs ? String(bind.sinceTs) : null;
+  const since = bindTs && (!goalSince || bindTs > goalSince) ? bindTs : goalSince;
+  const prosp = !!(bindTs && bind.record !== undefined);
+  if (!gs || gs.goal !== goal || gs.since !== since || !gs.files || !Array.isArray(gs.ids)) {
+    gs = { goal, since, goalSince, prospective: prosp, files: {}, ids: [], tokens: 0, prebind: 0,
+      prebindWritten: false, context: 0, lease: null, closeout: 0 };
+  }
+  let verdict = null;
+  if (!event.transcript_path) verdict = goalDeny(goal, 'UNKNOWN: the event carries no transcript_path.');
+  else {
+    try { measureGoal(gs, event.transcript_path); } catch (e) {
+      verdict = goalDeny(goal, `UNKNOWN: the transcript cannot be read (${e.code || e.message}).`);
+    }
+  }
+  // Pre-binding spend is booked once as a journal op (PRE_BINDING_PROGRAM_CAPEX), never in `used`.
+  if (!verdict && gs.prospective && !bind.provisional && gs.prebind > 0 && !gs.prebindWritten) {
+    const pr = callGoal(['goal-prebind', '--goal', goal, '--session', sid, '--measured', String(gs.prebind)]);
+    if (!pr.failed) gs.prebindWritten = true;   // a failed write retries on the next call
+  }
+  const next = nextRequest(gs);
+  // The request that issued this call may not be in the transcript yet (canary #5: the first of 3
+  // parallel Reads measured without it, its final hold was eaten by it, the reply overshot 36,183).
+  // When the payload's tool_use_id has not been written, count that request as one `next`. The
+  // watermark keeps the higher of this estimate and the real total once it lands.
+  const tuid = typeof event.tool_use_id === 'string' ? event.tool_use_id : '';
+  const pending = tuid && !(gs.toolIds || []).includes(tuid) ? next : 0;
+  const measured = gs.tokens + pending;
+  const base = ['--goal', goal, '--session', sid, '--per-call', String(next), '--measured', String(measured)];
+  // Renew BEFORE the call whose next request would cross the lease: an admitted call is paid by the
+  // request that follows it (`next`), so the lease must still hold that much.
+  if (!verdict) gs.lease = journalLease(goal, sid);
+  const crossing = gs.lease && measured - gs.lease.base + next > gs.lease.amount;
+  if (!verdict && (!gs.lease || crossing)) {
+    const r = callGoal(['goal-renew', ...base]);
+    if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}.`);
+    else if (!r.ok) {
+      gs.lease = null;
+      verdict = closeout(entry, gs, event, goalDeny(goal, `refused: ${r.reason}.`), true);
+    } else {
+      gs.lease = r.lease;
+      gs.tail = typeof r.remaining === 'number' ? r.remaining : null;   // goal room beyond this lease, for DRAIN
+    }
+  }
+  const tool = String(event.tool_name || '');
+  if (!verdict && isSpawn(event)) {
+    const edge = drainEdge(entry, gs, measured, next);
+    if (edge) {
+      verdict = goalDeny(goal, `DRAIN: the lease holds ${fmt(edge.leaseRoom)} (< ${edge.calls} calls of ${fmt(next)}) and the goal ` +
+        `holds ${fmt(edge.tail)} beyond it, so this lease ends here by choice. No new Agent or background spawn; ` +
+        'commit what is green, write the receipt and end with HANDOFF NOTE (the closeout path stays open).');
+    }
+  }
+  if (!verdict && (tool === 'Agent' || tool === 'Task')) {
+    const r = callGoal(['goal-spawn', ...base]);
+    if (r.failed) verdict = goalDeny(goal, `UNKNOWN: ${r.failed}; no child starts on an unmeasured goal.`);
+    else if (!r.ok) verdict = goalDeny(goal, `child refused before launch: ${r.reason}.`);
+  }
+  const tmp = `${gPath}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(gs));
+    fs.renameSync(tmp, gPath);
+  } catch (e) {
+    try { fs.unlinkSync(tmp); } catch (_) { /* nothing to clean */ }
+    // The journal is the authority; a lost local write only means the next call renews early.
+  }
+  return verdict;
+}
+
+// Capital is raised by the Owner's typed `subelo N [goal]` only (hooks/econ_admission.js starts econ_plane.py as a
+// child process, which is not a tool call and never reaches this guard). A shell tool call that runs the CLI's `raise`
+// verb, or calls its raise functions, is the model raising its own budget: denied for EVERY session, bound or neutral,
+// and before the CPP_SESSION_BUDGET switch. Same trust boundary as GOAL_STATE: it stops the direct call, not an agent
+// that writes a script or edits this hook. Pure regex, no I/O: a throw here would fail open in run().
+const RAISE_VERB = /econ_plane(?:\.py)?['"]?\s+['"]?raise\b|\braise_(?:goal|capital)\b|\b_bootstrap_envelope\b/i;
+function raiseDeny(event) {
+  const tool = String(event.tool_name || '');
+  if (tool !== 'Bash' && tool !== 'PowerShell') return null;
+  const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
+  if (!cmd || !RAISE_VERB.test(cmd)) return null;
+  return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny',
+    permissionDecisionReason: 'OWNER-ONLY -- raising a budget is the Owner\'s typed message (`subelo N <goal>`), answered by ' +
+      'the control plane without a model call. A tool call never raises capital. Ask the Owner to type it.' } };
+}
+
+function decide(event) {
+  const rd = event && typeof event === 'object' ? raiseDeny(event) : null;
+  if (rd) return rd;
+  const sid = event && event.session_id;
+  if (!sid || !SID_RE.test(sid)) return null;
+  // Mission authority first (CCR v5 A3/A4): a cost-held worker, a write to its own record, or a subagent past its
+  // cap is refused before any budget arithmetic. Inert for every session that is not a mission worker.
+  const mg = missionGate.run(event);
+  if (mg) return mg;
+  const sw = String(process.env.CPP_SESSION_BUDGET || '').trim().toLowerCase();
+  if (sw === '0' || sw === 'off' || sw === 'false') return null;
+  const bind = goalBinding(event, sid);
+  // Fence first (econ-contain WS-E): the subject of a mutating call decides, whatever this session is
+  // bound to. A quarantined session (cwd inside an exhausted goal, never bound to it) is judged ONLY
+  // here: reads pass uncharged, no renew is bought, mutation of that workspace is refused.
+  try {
+    const skip = bind && !bind.quarantine ? bind.goal : null;
+    const f = fenceFor(event, sid, (bind && bind.record) || readBinding(sid), skip);
+    if (f) return fenceDeny(f);
+  } catch (e) { if (bind && !bind.quarantine) return goalDeny(bind.goal, `UNKNOWN: the fence check failed (${e.code || e.message}).`); }
+  if (bind && bind.quarantine) {
+    // Inside an exhausted goal's workspace the ledger, index and binding records stay out of reach,
+    // exactly as for a bound session (a forged lease or a fresh record would reopen the goal).
+    return touchesGoalState(event) ? goalDeny(bind.goal, 'a call that touches goal-budget state is not admitted from inside an exhausted goal.') : null;
+  }
+  if (bind) {
+    let gv;
+    try { gv = decideGoal(event, sid, bind); } catch (e) {
+      gv = goalDeny(bind.goal, `UNKNOWN: the goal check itself failed (${e.code || e.message}); a bound session fails closed.`);
+    }
+    if (gv) return gv;
+  }
+  const bPath = path.join(stateDir(), `session-budget-${sid}.json`);
+  if (!fs.existsSync(bPath)) return null;                     // the opt-in: no envelope, no guard
+  const cmd = event.tool_input && typeof event.tool_input.command === 'string' ? event.tool_input.command : '';
+  if (cmd && EXEMPT_CMD.test(cmd)) return null;               // rotation / lifting stays reachable
+  const sPath = path.join(stateDir(), `session-budget-${sid}.state.json`);
+  const budget = readJson(bPath);
+  const prev = readJson(sPath);
+  let st = prev && typeof prev === 'object' && Array.isArray(prev.ids) ? prev : null;
+  const since = budget && budget.since ? String(budget.since) : null;
+  if (!st || st.since !== since) st = Object.assign(fresh(since), { grace: !!(st && st.grace) });
+
+  let unreadable = null;
+  const okBudget = budget && [budget.target, budget.warn, budget.stop].every(v => Number.isFinite(Number(v)) && Number(v) > 0);
+  if (!okBudget) unreadable = 'the budget file is unreadable or incomplete';
+  else if (!event.transcript_path) unreadable = 'the event carries no transcript_path';
+  else {
+    try { advance(st, event.transcript_path); } catch (e) { unreadable = `the transcript cannot be read (${e.code || e.message})`; }
+  }
+  let verdict;
+  if (unreadable) {
+    if (st.grace) verdict = deny(`accounting unreadable: ${unreadable}; the one grace call is spent.`);
+    else {
+      st.grace = true;
+      verdict = advise(`SESSION BUDGET: accounting unreadable (${unreadable}). ONE grace call allowed; the next one is denied.`);
+    }
+  } else {
+    st.grace = false;
+    verdict = closeout(budget, st, event, judge(budget, st));
+  }
+  // Per-process temp name: parallel tool calls run the guard concurrently, and on Windows two
+  // renames onto one target race to EPERM (measured 2026-10-05: a parallel Read pair was denied).
+  const tmp = `${sPath}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(st));
+    fs.renameSync(tmp, sPath);
+  } catch (e) {
+    try { fs.unlinkSync(tmp); } catch (_) { /* nothing to clean */ }
+    // The verdict was computed from a readable transcript; a lost write only means the next call
+    // re-reads from the older offset (same totals). Only the grace record must persist, so the
+    // unreadable path still fails closed.
+    if (unreadable) return deny(`accounting unreadable and the grace record cannot be written (${e.code || e.message}).`);
+  }
+  return verdict;
+}
+
+async function run(event) {
+  try { return decide(event); } catch (e) { return null; }  // a bug in the guard never breaks a tool call
+}
+
+module.exports = { run, decide, advance, fresh, judge, DEFAULT_CALL_RATIO, DEFAULT_NOPROGRESS };

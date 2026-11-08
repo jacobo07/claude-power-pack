@@ -1,0 +1,216 @@
+{
+ "contract": "GPF-L2-laptop-v1",
+ "plane": "DESKTOP-PMT5BS8",
+ "cwd": "C:\\Users\\dev\\.claude\\skills\\claude-power-pack",
+ "backup": "C:\\Users\\dev\\.claude\\backups\\gpf-20261102T160311",
+ "orig_sha": {
+  "C:\\Users\\dev\\.claude\\CLAUDE.md": "ca35ff8179051dadf96639ffcaea14e20db836364d8cfaef924fea52955eceb7",
+  "C:\\Users\\dev\\.claude\\rules\\common\\code-review.md": "befb119ebee31c378acad1a8fa8e815c600073c1d7924462f430ec01775b8002",
+  "C:\\Users\\dev\\.claude\\rules\\python\\testing.md": "2ae141c9eaf5543034127fc33ec057efde849ea3151bf47ec85e4563f9f897bf"
+ },
+ "diet_sha": {
+  "C:\\Users\\dev\\.claude\\CLAUDE.md": "32cc4fefc586c43795ccd41546d44811bd6779a4bb3eb4623be8fca3f035bbfe",
+  "C:\\Users\\dev\\.claude\\rules\\common\\code-review.md": "bf2d8c52c562cd76db301a21649f70dbb2ec46b04ca73be62ee28f82fbcf6723",
+  "C:\\Users\\dev\\.claude\\rules\\python\\testing.md": "777800cfcf0627d9eee3f0c9053dbaf64272fe2828fbf0ae8ccbdabc204d2073"
+ },
+ "probes": [
+  {
+   "session": "99fba493-0543-40c6-b686-7bca90c25f49",
+   "finished": true,
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "calls": 7,
+   "processed": 402793,
+   "weighted": 147729,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "Read",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "arm": "C",
+   "seq": "QA0"
+  },
+  {
+   "session": "69f8bf0f-a516-4182-b010-e8755cb0fcee",
+   "finished": true,
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "calls": 6,
+   "processed": 348467,
+   "weighted": 124316,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "arm": "T",
+   "seq": "QA1"
+  },
+  {
+   "session": "11417ed1-2f95-47da-b9a6-3310d874af4c",
+   "finished": true,
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "calls": 7,
+   "processed": 401956,
+   "weighted": 101146,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "Read",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods\\cpp-cognitive-runtime\\hooks\\policy.ts shadow",
+   "correct": true,
+   "arm": "C",
+   "seq": "QA2"
+  },
+  {
+   "session": "daf33276-93fe-47f5-a102-1f22861f08c4",
+   "finished": true,
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "calls": 8,
+   "processed": 407769,
+   "weighted": 106687,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "Grep",
+    "Read",
+    "Grep",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "arm": "T",
+   "seq": "QB0"
+  },
+  {
+   "session": "bbf91d65-a56d-43bf-9a18-54b2ac52570d",
+   "finished": true,
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "calls": 7,
+   "processed": 407291,
+   "weighted": 110201,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "Grep",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "arm": "C",
+   "seq": "QB1"
+  },
+  {
+   "session": "f443e46d-e26d-4a08-939a-06bd0acff598",
+   "finished": true,
+   "receipt": {
+    "releaseId": "0.1.0-265d3d55",
+    "compatible": true,
+    "interactive": true,
+    "canary": "enforce",
+    "policyGen": "ab131b607542",
+    "version": "2.1.316"
+   },
+   "calls": 6,
+   "processed": 347817,
+   "weighted": 97883,
+   "tools": [
+    "Agent:Explore",
+    "Grep",
+    "Grep",
+    "SubagentHandback"
+   ],
+   "page_faults": 0,
+   "rereads": 0,
+   "repairs": 0,
+   "final": "mods/cpp-cognitive-runtime/hooks/policy.ts shadow",
+   "correct": true,
+   "arm": "T",
+   "seq": "QB2"
+  }
+ ],
+ "restored_original": true,
+ "summary": {
+  "metric": "processed",
+  "control": [
+   402793,
+   401956,
+   407291
+  ],
+  "treatment": [
+   348467,
+   407769,
+   347817
+  ],
+  "control_spread": 0.0131,
+  "delta_mean": 35996,
+  "n": [
+   3,
+   3
+  ]
+ },
+ "correct": {
+  "C": 3,
+  "T": 3
+ }
+}

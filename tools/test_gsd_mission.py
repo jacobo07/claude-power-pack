@@ -20,6 +20,9 @@ TMP = tempfile.mkdtemp(prefix="gsd-mission-test-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP  # adopt/ack write markers: never in the real dir
+os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")      # host job files: never the real ones
+os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")  # transcripts: never the real ones
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"  # RAM floor reads host memory; covered by test_a5_u6
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
 
@@ -247,6 +250,14 @@ def main() -> int:
     hb.write_text(json.dumps({"outcome": "ran", "stages": [{"name": "v2", "timed_out": True}]}),
                   encoding="utf-8")
     check("V-MC-SWEEP-TIMEOUT-DEGRADED", v_() == "DEGRADED")
+    # GEX44 2026-10-07: 264 passes ran on time with the mission stage at rc=1 and read OK.
+    hb.write_text(json.dumps({"outcome": "ran", "fail_streak": 264,
+                              "stages": [{"name": "mission", "rc": 1, "timed_out": False}]}), encoding="utf-8")
+    h_ = gm.sweep_health()
+    check("V-MC-SWEEP-STAGE-RC-FAILING", h_["verdict"] == "FAILING" and "264 consecutive" in h_["detail"], str(h_))
+    hb.write_text(json.dumps({"outcome": "ran", "stages": [{"name": "mission", "rc": 0, "timed_out": False}]}),
+                  encoding="utf-8")
+    check("V-MC-SWEEP-STAGE-RC0-CONTROL-OK", v_() == "OK")
     old_t = time.time() - 3600
     os.utime(hb, (old_t, old_t))
     check("V-MC-SWEEP-OLD-STALE", v_() == "STALE")
@@ -436,6 +447,20 @@ def main() -> int:
     check("V-MC-WS-INFERRED-FROM-COMMAND", rec["workstream"] == "ub", rec["workstream"])
     rec = gm.create(TMP, "/mc-task --ws ub", mission_id="m-ws-non-gsd", now=NOW)
     check("V-MC-WS-NOT-INFERRED-NON-GSD", rec["workstream"] is None, rec["workstream"])
+    # 2026-10-11 m-cec849fc02b2: armed with `--workstream worker` (the long form /gsd-* accepts);
+    # only `--ws` was parsed, so the record again kept no workstream.
+    rec = gm.create(TMP, "/gsd-autonomous --workstream ub", mission_id="m-ws-long", now=NOW)
+    check("V-MC-WS-LONG-FLAG-INFERRED", rec["workstream"] == "ub"
+          and rec["resume_command"] == "/gsd-autonomous --workstream ub",
+          (rec["workstream"], rec["resume_command"]))
+    rec = gm.create(TMP, "/gsd-autonomous --workstream=ub", mission_id="m-ws-long-eq", now=NOW)
+    check("V-MC-WS-LONG-FLAG-EQ-INFERRED", rec["workstream"] == "ub", rec["workstream"])
+    try:
+        gm.create(TMP, "/gsd-autonomous --workstream other", mission_id="m-ws-long-bad",
+                  workstream="ub", now=NOW)
+        _fail("V-MC-WS-LONG-CONFLICT-REFUSED", "a --workstream naming another workstream was accepted")
+    except gm.MissionError:
+        _ok("V-MC-WS-LONG-CONFLICT-REFUSED")
     # A record armed BEFORE the fix holds the bare command: the launch itself must bind it.
     legacy = gm.create(TMP, "/gsd-autonomous", mission_id="m-ws-legacy", now=NOW)
     legacy["workstream"] = "lobby-ws"
@@ -538,8 +563,15 @@ def main() -> int:
     busy_row = [{"sessionId": "b-1", "status": "busy", "state": "working", "kind": "background"}]
     check("V-MC-BG-TURN-ENDED-RELAY",
           gm.plan_next({**base, "owner": bg}, NOW, idle_row, alive)["action"] == "relay")
-    check("V-MC-BG-BLOCKED-NO-WAITING-RELAY",
-          gm.plan_next({**base, "owner": bg}, NOW, ended_row, alive)["action"] == "relay")
+    # Inverted 2026-09-28 (was V-MC-BG-BLOCKED-NO-WAITING-RELAY). A bare `state:"blocked"` is
+    # the host saying the session NEEDS something (login, an answer, a startup approval) -- a
+    # finished turn reads `done` or `status:"idle"`. Relaying it launched 48 workers that each
+    # sat on the same block (m-66ebaaa0324e lineage, zero transcripts).
+    check("V-MC-BG-BLOCKED-NO-WAITING-IS-BLOCKED",
+          gm.plan_next({**base, "owner": bg}, NOW, ended_row, alive)["action"] == "surface_blocked",
+          str(gm.plan_next({**base, "owner": bg}, NOW, ended_row, alive)))
+    check("V-MC-LIVE-BLOCKED-NO-WAITING-IS-BLOCKED", v(bg, ended_row) == gm.WAITING_HUMAN)
+    check("V-MC-BG-BLOCKED-NEVER-IDLE", gm.owner_idle(bg, ended_row) is False)
     check("V-MC-BG-BUSY-NO-RELAY",
           gm.plan_next({**base, "owner": bg}, NOW, busy_row, alive)["action"] == "none")
 
@@ -630,7 +662,14 @@ def main() -> int:
     r3 = gm.load("m-nophase")
     check("V-MC-GSD-BLOCK-STAYS-WHILE-NOT-OK",
           r3["state"] == gm.BLOCKED and r3["gsd_hold"]["n"] == 3 and len(launches) == nb, str(r3.get("gsd_hold")))
+    # S3: inside the backoff window GSD is not asked at all (an OK there is not observed); past it, OK clears.
+    nh = len(hs)
     gm.supervise(now=NOW + 900, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    rb = gm.load("m-nophase")
+    check("V-S3-BACKOFF-SKIPS-ASK-INSIDE-WINDOW", rb["state"] == gm.BLOCKED and rb["gsd_hold"]["n"] == 3
+          and float(rb["gsd_hold"]["next_check"]) > NOW + 900, str(rb.get("gsd_hold")))
+    gm.supervise(now=NOW + 1300, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
                  stop_runner=stop_run, pid_alive=gone)
     r4 = gm.load("m-nophase")
     check("V-MC-GSD-BLOCK-CLEARS-ON-OK-AND-PROCEEDS",
@@ -655,10 +694,72 @@ def main() -> int:
     rf = gm.load("m-flip")
     check("V-MC-GSD-HOLD-COUNTS-CONSECUTIVE-SAME-OUTCOME",
           rf["state"] == gm.RUNNING and rf["gsd_hold"]["n"] == 1, str(rf.get("gsd_hold")))
+    # 2026-09-28 (m-66ebaaa0324e): the host lists the worker `state:"blocked"` with no status and
+    # no waitingFor. The mission parks BLOCKED with the host's own reason, nothing is stopped and
+    # nothing launched -- on this pass or the next.
+    hs = fresh("m-hblk")
+    hs[0].pop("status", None)
+    hs[0]["state"] = "blocked"
+    jdir = Path(os.environ["CPP_CLAUDE_JOBS_DIR"]) / "s-m-hblk"[:8]
+    jdir.mkdir(parents=True, exist_ok=True)
+    (jdir / "state.json").write_text(json.dumps({"state": "blocked",
+                                                 "needs": "login required — run /login"}),
+                                     encoding="utf-8")
+    n_l, n_s = len(launches), len(stops)
+    for _ in range(2):
+        rows = gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                            stop_runner=stop_run, pid_alive=gone)
+    hb = gm.load("m-hblk")
+    blk = [e for e in gm.lr.ledger_events("m-hblk") if e.get("event") == "mission_blocked"]
+    check("V-MC-SUP-HOST-BLOCKED-PARKS-NOT-REPLACED",
+          hb["state"] == gm.BLOCKED and hb["epoch"] == 1 and len(launches) == n_l
+          and len(stops) == n_s, f"{hb['state']} e{hb['epoch']} rows={rows}")
+    check("V-MC-SUP-HOST-BLOCKED-REASON-IS-HOSTS",
+          len(blk) == 1 and "login required" in (blk[0].get("reason") or ""), str(blk))
+    # control: a worker the host lists `stopped` is still replaced
+    hs = fresh("m-hstop")
+    hs[0].pop("status", None)
+    hs[0]["state"] = "stopped"
+    n_l = len(launches)
+    gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    check("V-MC-SUP-CONTROL-STOPPED-STILL-REPLACED",
+          len(launches) == n_l + 1 and gm.load("m-hstop")["epoch"] == 2, gm.load("m-hstop")["state"])
+
     hs = fresh("m-stuck")
     ok, why = gm.stop_owner({**bg, "session_id": "s-m-stuck"}, hs, pid_alive=alive,
                             runner=stop_run, wait_s=0)
     check("V-MC-STOP-WAITS-FOR-PID", ok is False and "still alive" in why, why)
+
+    # 2026-10-17 (GEX44 m-80fd126a23cc): the host lists an idle worker `state: done` with NO pid while
+    # `status: idle` says it is alive. The old code skipped `claude stop` and resumed at once, so the host
+    # started a COPY ("already running in the background"). Alive is `status`, not `state`.
+    live_idle_row = {"sessionId": "s-idle", "id": "s-idle", "kind": "background", "state": "done", "status": "idle"}
+    idle_owner = {**bg, "session_id": "s-idle"}
+
+    def idle_case(release_after, wait_s, row=live_idle_row):
+        stopped, polls = [], []
+
+        def fetch():
+            polls.append(1)
+            if len(polls) > release_after:
+                return [{**row, "status": None, "state": "stopped"}]
+            return [dict(row)]
+        ok_, why_ = gm.stop_owner(idle_owner, [dict(row)], pid_alive=gone,
+                                  runner=lambda argv: stopped.append(argv), wait_s=wait_s, host_fetch=fetch)
+        return ok_, why_, stopped, polls
+    ok, why, stopped, polls = idle_case(release_after=1, wait_s=5)
+    check("V-MC-STOP-IDLE-NOPID-STOPS-AND-WAITS",
+          ok is True and len(stopped) == 1 and stopped[0][-2:] == ["stop", "s-idle"] and len(polls) >= 2
+          and "no longer lists" in why, f"{ok} {why} stops={stopped} polls={len(polls)}")
+    ok, why, stopped, polls = idle_case(release_after=99, wait_s=0)
+    check("V-MC-STOP-IDLE-NOPID-UNRELEASED-REFUSES",
+          ok is False and len(stopped) == 1 and "still lists" in why, f"{ok} {why}")
+    # negative control: a session the host truly shows gone (no live status, no pid) is NOT stopped again
+    gone_row = {**live_idle_row, "status": None}
+    ok, why, stopped, polls = idle_case(release_after=0, wait_s=0, row=gone_row)
+    check("V-MC-STOP-GONE-NOPID-NO-EXTRA-STOP",
+          ok is True and stopped == [] and polls == [] and "no pid to wait on" in why, f"{ok} {why} stops={stopped}")
 
     # 2026-09-25 (m-3aaa15177f2b): host says `done`, the pid lingers for hours. Terminate it
     # only when the argv proves it is THIS worker; every other shape keeps the refusal.
@@ -682,6 +783,20 @@ def main() -> int:
     check("V-MC-STOP-LINGER-LIVE-VERDICT-SPARED", ok is False and killed == [], why)
     ok, why, killed = linger("done", "claude.exe --session-id s-linger", dies=False)
     check("V-MC-STOP-LINGER-SURVIVOR-REPORTED", ok is False and "survived" in why, why)
+    # 2026-10-05 (GEX44 m-f011d7fdebc9, gen2 W2b): the daemon hosts background sessions in pooled
+    # `claude bg-spare` processes; after host `done` the pid stays alive as a spare with no
+    # --session-id. It is the daemon's, so it is never killed -- and the worker is released.
+    spare = "/home/u/.local/bin/claude bg-spare --bg-spare /tmp/cc-daemon-1000/38442ce8/spare/b28b1b24.claim.sock"
+    ok, why, killed = linger("done", spare)
+    check("V-MC-STOP-POOLED-SPARE-RELEASED", ok is True and killed == [] and "released" in why, why)
+    ok, why, killed = linger("exited", "claude bg-pty-host --socket /tmp/cc-daemon-1000/x.sock")
+    check("V-MC-STOP-POOLED-PTY-HOST-RELEASED", ok is True and killed == [] and "released" in why, why)
+    ok, why, killed = linger("running", spare)
+    check("V-MC-STOP-POOLED-LIVE-VERDICT-SPARED", ok is False and killed == [], why)
+    ok, why, killed = linger("done", "claude bg-spare --session-id s-linger")
+    check("V-MC-STOP-POOLED-CARRYING-US-TERMINATED", ok is True and killed == [4242] and "terminated" in why, why)
+    ok, why, killed = linger("done", "claude.exe --session-id someone-else --resume bg-spare")
+    check("V-MC-STOP-POOLED-WORD-ELSEWHERE-SPARED", ok is False and killed == [] and "not this worker" in why, why)
 
     # --- renewal on budget halt (spec gex44-mission-plane.md, A) ---------------------------
     LATE = NOW + 25 * 3600   # past the default 24 h budget
@@ -1045,6 +1160,78 @@ def main() -> int:
     check("V-MC-ADOPT-LATE-ACK-HEARTBEATS", gm.load("m-ad")["iterations"] == before_iter
           and gm.load("m-ad")["state"] == gm.RUNNING)
 
+    # S9-8 (canary m-514bd00df395, 2026-11-01): a worker that finishes its turn before the next sweep pass
+    # is listed `done`. It RAN; it is adopted and its turn end judged, never waited out and relaunched
+    # (LAUNCH_RETRY, one wasted boot per retry). A `failed` row still counts as a failed launch.
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-ff", now=NOW)
+    gm.transition("m-ff", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.LAUNCHING, epoch=1,
+                  pending={"kind": "worker_start", "bg_id": "ff0ff0ff", "deadline": NOW + 300})
+    done_row = [{"id": "ff0ff0ff", "sessionId": "ff0ff0ff-1111-2222", "kind": "background", "state": "done"}]
+    failed_row = [{**done_row[0], "state": "failed"}]
+    ff = gm.load("m-ff")
+    check("V-MC-ADOPT-FAST-FINISHER-IN-DEADLINE", gm.plan_next(ff, NOW + 10, done_row, gone)["action"] == "adopt",
+          str(gm.plan_next(ff, NOW + 10, done_row, gone)))
+    check("V-MC-ADOPT-FAST-FINISHER-OVERDUE", gm.plan_next(ff, NOW + 400, done_row, gone)["action"] == "adopt",
+          str(gm.plan_next(ff, NOW + 400, done_row, gone)))
+    check("V-MC-FAILED-LAUNCH-STILL-REPLACES", gm.plan_next(ff, NOW + 400, failed_row, gone)["action"] == "replace",
+          str(gm.plan_next(ff, NOW + 400, failed_row, gone)))
+    cont = {**ff, "pending": {**ff["pending"], "kind": "turn_continuation"}}
+    check("V-MC-CONTINUATION-DONE-ROW-NOT-ADOPTED",
+          gm.plan_next(cont, NOW + 10, done_row, gone)["action"] != "adopt",
+          "a --resume continuation reuses the old id: its `done` row is the previous turn")
+    os.environ["CPP_ADOPT_FINISHED"] = "off"
+    try:
+        check("V-MC-ADOPT-FINISHED-KILL-SWITCH",
+              gm.plan_next(ff, NOW + 400, done_row, gone)["action"] == "replace")
+    finally:
+        os.environ.pop("CPP_ADOPT_FINISHED", None)
+    n_l = len(launches)
+    gm.supervise(now=NOW + 10, sessions=done_row, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    ff = gm.load("m-ff")
+    check("V-MC-ADOPT-FAST-FINISHER-RUNNING", ff["state"] == gm.RUNNING and ff["epoch"] == 1
+          and ff["owner"]["session_id"] == "ff0ff0ff-1111-2222" and ff["iterations"] == 1
+          and ff.get("failed_launches", 0) == 0 and len(launches) == n_l, json.dumps(
+              {k: ff.get(k) for k in ("state", "epoch", "iterations", "failed_launches")}))
+    # S9-8 canary (m-8cd4f6e1a7f3): the adopt path armed a marker for a non-`/` command and raised MarkerError after
+    # the record was RUNNING, failing the sweep pass. The refusal is a ledger row; the adoption stands.
+    gm.create(TMP, "Canary: reply OK and end your turn", mission_id="m-ffm", now=NOW)
+    gm.transition("m-ffm", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.LAUNCHING, epoch=1,
+                  pending={"kind": "worker_start", "bg_id": "fa0fa0fa", "deadline": NOW + 300})
+    fm_row = [{"id": "fa0fa0fa", "sessionId": "fa0fa0fa-1111-2222", "kind": "background", "state": "done"}]
+    fm_rows = gm.supervise(now=NOW + 10, sessions=fm_row, gsd_status=gsd("OK"), runner=launch_run,
+                           stop_runner=stop_run, pid_alive=gone)
+    fm = next((r for r in fm_rows if r["mission_id"] == "m-ffm"), {})
+    refused = [e for e in gm.lr.ledger_events("fa0fa0fa-1111-2222") + gm.lr.ledger_events("m-ffm")
+               if e.get("event") == "worker_marker_refused"]
+    check("V-MC-ADOPT-MARKER-REFUSAL-NOT-A-PASS-ERROR", not fm.get("error") and gm.load("m-ffm")["state"] == gm.RUNNING
+          and refused, {"row": {k: fm.get(k) for k in ("action", "error")}, "refused": len(refused)})
+    nxt = gm.plan_next(ff, NOW + 20, done_row, gone)
+    check("V-MC-ADOPT-FAST-FINISHER-TURN-JUDGED", nxt["action"] == "replace" and "owner dead" in nxt["reason"],
+          str(nxt))
+
+    # 2026-09-28 (m-66ebaaa0324e): the launched worker is listed but already blocked before its
+    # first turn. The FIRST pass that sees it parks the mission BLOCKED with the host's reason.
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-adblk", now=NOW)
+    gm.transition("m-adblk", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.LAUNCHING, epoch=1,
+                  pending={"kind": "worker_start", "bg_id": "b10cb10c", "deadline": NOW + 300})
+    jb = Path(os.environ["CPP_CLAUDE_JOBS_DIR"]) / "b10cb10c"
+    jb.mkdir(parents=True, exist_ok=True)
+    (jb / "state.json").write_text(json.dumps({"state": "blocked", "needs": "approve MCP servers"}),
+                                   encoding="utf-8")
+    blocked_listed = [{"id": "b10cb10c", "sessionId": "b10cb10c-1111-2222", "kind": "background",
+                       "state": "blocked"}]
+    n_l = len(launches)
+    rows = gm.supervise(now=NOW, sessions=blocked_listed, gsd_status=gsd("OK"), runner=launch_run,
+                        stop_runner=stop_run, pid_alive=alive)
+    ab = gm.load("m-adblk")
+    check("V-MC-ADOPT-BLOCKED-SURFACED-FIRST-PASS",
+          ab["state"] == gm.BLOCKED and "approve MCP servers" in (ab.get("reason") or "")
+          and len(launches) == n_l, f"{ab['state']} {ab.get('reason')} {rows}")
+
     # --- orphans: the W8 contamination, replayed -------------------------------------------
     for p in Path(TMP).glob("gsd-mission-*.json"):
         p.unlink()
@@ -1154,8 +1341,25 @@ def main() -> int:
           plan(busy_row, owner=bg, iterations=999)["action"] == "none", "control")
     # ... and an owner UNKNOWN for longer than the stale bound is made visible, not replaced.
     stale = plan([], gone, owner=bg, updated_at=NOW - gm.HEARTBEAT_STALE_S - 10)
-    check("V-MC-UNKNOWN-STALE-SURFACED", stale["action"] == "surface_blocked", stale["reason"])
+    # Inverted 2026-09-28 (m-bcaf08f8d856): surfaced as UNKNOWN, never as BLOCKED -- "could not
+    # ask the host" is not "the worker needs a human".
+    check("V-MC-UNKNOWN-STALE-SURFACED-NOT-BLOCKED", stale["action"] == "surface_unknown", str(stale))
     check("V-MC-UNKNOWN-FRESH-QUIET", plan([], gone, owner=bg, updated_at=NOW)["action"] == "none")
+    hs = fresh("m-hunk")
+    real_host = gm.host_sessions
+    gm.host_sessions = lambda *a, **k: None      # the host could not be asked
+    try:
+        n_l = len(launches)
+        for _ in range(2):
+            rows = gm.supervise(now=NOW + gm.HEARTBEAT_STALE_S + 60, gsd_status=gsd("OK"),
+                                runner=launch_run, stop_runner=stop_run, pid_alive=gone)
+    finally:
+        gm.host_sessions = real_host
+    hu = gm.load("m-hunk")
+    ev = [e for e in gm.lr.ledger_events("m-hunk") if e.get("event") == "owner_unknown"]
+    check("V-MC-SUP-HOST-UNANSWERED-NOT-BLOCKED",
+          hu["state"] == gm.RUNNING and hu["epoch"] == 1 and len(launches) == n_l and len(ev) == 1,
+          f"{hu['state']} ledger={len(ev)} rows={rows}")
 
     # H2: the claim moves the lease; the old owner cannot claim the new epoch.
     hs = fresh("m-h2")

@@ -1,0 +1,6 @@
+{
+  "name": "cpp-cognitive-runtime",
+  "version": "0.1.0",
+  "description": "CPP Cognitive Runtime: links prompt attachments to each boundary's working set, with receipts, page faults, a version gate and a kill switch",
+  "author": { "name": "Claude Power Pack" }
+}
