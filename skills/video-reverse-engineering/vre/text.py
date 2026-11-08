@@ -18,8 +18,8 @@ import numpy as np
 from . import easing
 from .deps import available
 
-EPS = {"x": 0.4, "y": 0.4, "scale": 0.008, "opacity": 0.01}  # "still" thresholds per property
-MIN_AMP = {"x": 1.0, "y": 1.0, "scale": 0.03, "opacity": 0.05}  # smaller total change is jitter, not motion
+EPS = {"x": 0.4, "y": 0.4, "scale": 0.008, "opacity": 0.01, "rotation": 0.25}  # "still" thresholds per property
+MIN_AMP = {"x": 1.0, "y": 1.0, "scale": 0.03, "opacity": 0.05, "rotation": 1.5}  # smaller total change is jitter, not motion
 
 
 @dataclass
@@ -283,11 +283,10 @@ def _fit_extended(fr: np.ndarray, val: np.ndarray, a: int, b: int, fps: float, e
     return best[1] if best else None
 
 
-def track_rows(track: Track, fps: float, element: str | None = None) -> list[dict]:
-    """Spec rows for one track: a row per moving segment of x/y/scale/opacity, plus reveal rows."""
-    el = element or f"text#{track.id}"
+def rows_from_series(el: str, ser: dict[str, tuple[np.ndarray, np.ndarray]], fps: float, source: str) -> list[dict]:
+    """Spec rows from per-property (frames, values) series: one row per moving segment."""
     rows: list[dict] = []
-    for prop, (fr, val) in series(track).items():
+    for prop, (fr, val) in ser.items():
         if len(fr) != int(fr[-1] - fr[0]) + 1:  # gaps: interpolate to the frame grid for the fit
             grid = np.arange(int(fr[0]), int(fr[-1]) + 1, dtype=np.float64)
             val, fr = np.interp(grid, fr, val), grid
@@ -302,7 +301,14 @@ def track_rows(track: Track, fps: float, element: str | None = None) -> list[dic
                          "to": round(fit.to_value, 3), "easing": fit.family,
                          "bezier": list(fit.bezier) if fit.bezier else None, "spring": fit.spring,
                          "rmse": fit.rmse, "overshoot": fit.overshoot, "evidence": fit.evidence,
-                         "source": "text"})
+                         "source": source})
+    return rows
+
+
+def track_rows(track: Track, fps: float, element: str | None = None) -> list[dict]:
+    """Spec rows for one track: a row per moving segment of x/y/scale/opacity, plus reveal rows."""
+    el = element or f"text#{track.id}"
+    rows = rows_from_series(el, series(track), fps, "text")
     for i, ev in enumerate(reveal_events(track)):
         rows.append({"element": el, "property": "reveal", "start": ev["frame"], "duration": 0, "from": i,
                      "to": i + 1, "easing": "step", "bezier": None, "spring": None, "rmse": 0.0,

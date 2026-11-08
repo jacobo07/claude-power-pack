@@ -23,7 +23,8 @@ NAMED: dict[str, tuple[float, float, float, float]] = {
     "easeInQuint": (0.64, 0, 0.78, 0), "easeOutQuint": (0.22, 1, 0.36, 1), "easeInOutQuint": (0.83, 0, 0.17, 1),
     "easeInExpo": (0.7, 0, 0.84, 0), "easeOutExpo": (0.16, 1, 0.3, 1), "easeInOutExpo": (0.87, 0, 0.13, 1),
     "easeInCirc": (0.55, 0, 1, 0.45), "easeOutCirc": (0, 0.55, 0.45, 1), "easeInOutCirc": (0.85, 0, 0.15, 1),
-    "easeInBack": (0.36, 0, 0.66, -0.56), "easeOutBack": (0.34, 1.56, 0.64, 1), "easeInOutBack": (0.68, -0.6, 0.32, 1.6),
+    "easeInBack": (0.36, 0, 0.66, -0.56), "easeOutBack": (0.34, 1.56, 0.64, 1),
+    "easeInOutBack": (0.68, -0.6, 0.32, 1.6),
 }
 
 
@@ -74,7 +75,8 @@ class EasingFit:
     def remotion(self) -> str:
         if self.family == "spring" and self.spring:
             s = self.spring
-            return f"spring({{frame, fps, config: {{mass: {s['mass']}, damping: {s['damping']}, stiffness: {s['stiffness']}}}}})"
+            cfg = f"mass: {s['mass']}, damping: {s['damping']}, stiffness: {s['stiffness']}"
+            return f"spring({{frame, fps, config: {{{cfg}}}}})"
         x1, y1, x2, y2 = self.bezier or NAMED["linear"]
         return f"Easing.bezier({x1:.3f}, {y1:.3f}, {x2:.3f}, {y2:.3f})"
 

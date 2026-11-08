@@ -58,7 +58,8 @@ def onsets(y: np.ndarray, sr: int, hop: int = 256, n_fft: int = 1024, min_gap_s:
     win = max(3, int(0.25 * sr / hop))
     pad = np.pad(env, (win, win), mode="edge")
     local_mean = np.convolve(pad, np.ones(2 * win + 1) / (2 * win + 1), mode="same")[win:-win]
-    local_std = np.sqrt(np.maximum(0.0, np.convolve(pad ** 2, np.ones(2 * win + 1) / (2 * win + 1), mode="same")[win:-win]
+    local_std = np.sqrt(np.maximum(0.0, np.convolve(pad ** 2, np.ones(2 * win + 1) / (2 * win + 1),
+                                                      mode="same")[win:-win]
                                    - local_mean ** 2))
     thresh = local_mean + k * local_std + 0.05 * env.max()
     gap = max(1, int(min_gap_s * sr / hop))
