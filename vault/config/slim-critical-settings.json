@@ -6,9 +6,9 @@
                                          "hooks":  [
                                                        {
                                                            "type":  "command",
-                                                           "command":  "C:/Program Files/nodejs/node.exe",
+                                                           "command":  "{NODE}",
                                                            "args":  [
-                                                                        "C:/Users/User/.claude/hooks/hook-dispatcher.js",
+                                                                        "{CLAUDE_HOME}/hooks/hook-dispatcher.js",
                                                                         "--event=PreToolUse-Bash-chain"
                                                                     ],
                                                            "timeout":  60
@@ -20,9 +20,9 @@
                                          "hooks":  [
                                                        {
                                                            "type":  "command",
-                                                           "command":  "C:/Program Files/nodejs/node.exe",
+                                                           "command":  "{NODE}",
                                                            "args":  [
-                                                                        "C:/Users/User/.claude/hooks/hook-dispatcher.js",
+                                                                        "{CLAUDE_HOME}/hooks/hook-dispatcher.js",
                                                                         "--event=PreToolUse-Edit-chain"
                                                                     ],
                                                            "timeout":  60
@@ -34,9 +34,9 @@
                                          "hooks":  [
                                                        {
                                                            "type":  "command",
-                                                           "command":  "C:/Program Files/nodejs/node.exe",
+                                                           "command":  "{NODE}",
                                                            "args":  [
-                                                                        "C:/Users/User/.claude/hooks/hook-dispatcher.js",
+                                                                        "{CLAUDE_HOME}/hooks/hook-dispatcher.js",
                                                                         "--event=PreToolUse-Read-chain"
                                                                     ],
                                                            "timeout":  20

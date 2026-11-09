@@ -35,7 +35,7 @@ const MARKER_MAX_AGE_MS = FRESHNESS_MINUTES * MS_PER_MINUTE;
 const ISO_SECONDS_LEN = 19;  // length of "YYYY-MM-DDTHH:MM:SS"
 const UTF8_BOM_CHARCODE = 0xFEFF;
 
-const PYTHON_EXE = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+const PYTHON_EXE = require('./lib/python_exe').pythonExe();
 
 // Same log file as the hub, so one session start stays one readable story.
 function note(msg, err) {

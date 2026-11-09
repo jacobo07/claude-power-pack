@@ -275,8 +275,10 @@ def unresolved(mission_id: str) -> list[str]:
 
 
 # --- delivery: a receipt travels as a verified bundle; the consumer applies and wakes, no model in between -------
-HOSTS = {"gex44": {"ssh": "gex44", "pp": "/home/kobii/.claude/skills/claude-power-pack",
-                   "env": "CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude"}}
+# `pp` and `env` are expanded by the REMOTE shell (the ssh command string runs under the remote user's sh), so
+# `~` / `$HOME` name the consumer host's own home; no local user path is baked in.
+HOSTS = {"gex44": {"ssh": "gex44", "pp": "~/.claude/skills/claude-power-pack",
+                   "env": "CPP_CLAUDE_EXE=$HOME/.local/bin/claude"}}
 
 
 def consumer_hosts() -> dict:

@@ -219,8 +219,7 @@ function closeout(budget, st, event, verdict, goal = false) {
 // total and reserves the next one, or refuses. Unlike the session envelope, goal mode fails CLOSED:
 // an unknown goal, a host outside the goal, an unreadable transcript or a renew that fails is a deny.
 // The deny is a plain permissionDecision, never {continue:false} (dispatcher:423-433, dead screen).
-const PY = process.env.PYTHON_BIN || (process.platform === 'win32'
-  ? 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe' : 'python3');
+const PY = require('./lib/python_exe').pythonExe();
 const MISSION_SPEND = path.join(__dirname, '..', 'tools', 'mission_spend.py');
 const RENEW_TIMEOUT_MS = 8000;              // below the Read chain's 20 s, so a slow renew is a deny, not a kill
 

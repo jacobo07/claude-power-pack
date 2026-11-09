@@ -37,7 +37,11 @@ def delta_ok(summary):
     return (P if d > 0 else F), "call-1 delta_mean=%d n=%d/%d spread=%.4f" % (d, len(c), len(t), spread)
 
 
-PP_PROJECT_DIR = os.path.join(os.path.expanduser("~"), ".claude", "projects", "C--Users-User--claude-skills-claude-power-pack")
+# Claude Code's project-dir slug: every non-alphanumeric char of the cwd becomes '-'. The cwd is the PP install
+# (~/.claude/skills/claude-power-pack), derived per host instead of one machine's literal slug.
+_PP_INSTALL = os.path.join(os.path.expanduser("~"), ".claude", "skills", "claude-power-pack")
+PP_PROJECT_DIR = os.path.join(os.path.expanduser("~"), ".claude", "projects",
+                              "".join(ch if ch.isalnum() else "-" for ch in _PP_INSTALL))
 _BUDGET_RUNS = {}
 
 
