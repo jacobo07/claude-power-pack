@@ -288,6 +288,19 @@ def main() -> int:
                              NOW + 60, _row(mid, "running"), gone, measure=m29, launcher=fake_launch)
         check(f"V-COST-CLOSEOUT-CONTROL-{label}", len(launches) == n0 and not r.get("closeout_lease"),
               str(r.get("closeout_lease")))
+    # S22 m-4a5a719551ae (2026-11-09): the authority trip found a background worker the host no longer listed, so
+    # liveness was UNKNOWN, the stop branch (LIVE only) never ran and worker_stopped_at stayed unset: the reserve was
+    # unreachable for 2.5 h. An unlisted background owner on a READ host list is settled through the host stop path.
+    n0 = len(launches)
+    r = gm.closeout_gate(held("m-c10a10", stopped=False), NOW + 60, [], gone, measure=m29, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-UNLISTED-BACKGROUND-LAUNCHES", len(launches) == n0 + 1
+          and (r.get("closeout_lease") or {}).get("state") == gm.CL_LAUNCHED
+          and bool((gm.load("m-c10a10").get("owner_hold") or {}).get("worker_stopped_at")),
+          f"n={len(launches) - n0} lease={r.get('closeout_lease')}")
+    n0 = len(launches)
+    r = gm.closeout_gate(held("m-c10a11", stopped=False), NOW + 60, None, gone, measure=m29, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-CONTROL-HOST-LIST-UNAVAILABLE", len(launches) == n0 and not r.get("closeout_lease"),
+          "sessions=None: the host could not be asked, so nothing is settled")
     os.environ["CPP_MISSION_CLOSEOUT_LAUNCH"] = "off"
     n0 = len(launches)
     r = gm.closeout_gate(held("m-c10a05"), NOW + 60, [], gone, measure=m29, launcher=fake_launch)

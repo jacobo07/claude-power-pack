@@ -2478,6 +2478,22 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
     if not is_authority_hold(hold) or rec.get("state") not in (RUNNING, BLOCKED):
         return rec
     owner = rec.get("owner")
+    if (owner and not hold.get("worker_stopped_at") and sessions is not None
+            and owner.get("kind") == "background" and _host_row(owner.get("session_id"), sessions) is None):
+        # S22 m-4a5a719551ae (2026-11-09): a background owner the host no longer lists is UNKNOWN to liveness (the host
+        # owns its restarts), and the sweep's stop branch only stops LIVE owners, so worker_stopped_at was never set and
+        # the reserve stayed unreachable. Settle it through the same host stop path a close uses, and record the stop.
+        ok, how = stop_owner(owner, sessions, pid_alive=pid_alive, runner=stop_runner)
+        if not ok:
+            return rec
+        try:
+            rec = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"], now=now,
+                             expect_seq=rec.get("seq"), event="authority_worker_stopped",
+                             reason=f"authority hold: unlisted background worker settled ({how})",
+                             owner_hold={**hold, "worker_stopped_at": now, "stop": how})
+        except CasConflict:
+            return load(rec["mission_id"]) or rec
+        hold = rec.get("owner_hold") or {}
     if not (hold.get("worker_stopped_at") or not owner or liveness(owner, sessions, pid_alive)[0] == DEAD):
         return rec   # the stop branch acts first: a live implementation worker never shares the closeout
     import mission_spend as ms

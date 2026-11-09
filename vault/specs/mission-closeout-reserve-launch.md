@@ -85,3 +85,16 @@ persisted by the closeout worker) -> mission parked. A stopped worker plus a hol
   - the AUTHORIZED branch dropped: 2 red.
 - **Residual:** metering is post-hoc, so the lease can be passed by about one call. With no transcript path the lease
   session is admitted unmetered (the same rule as the exposure check).
+
+## Amendment 2026-11-09 -- unlisted background owner (S22 m-4a5a719551ae)
+- **Defect (measured):** the authority trip at 14:01:38Z found worker f271b7bd already gone and no longer listed by the
+  host. `liveness` returns UNKNOWN for an unlisted background owner (the host owns its restarts), the sweep's stop
+  branch stops LIVE owners only, so `worker_stopped_at` was never set and `closeout_gate` (DEAD or stopped only)
+  never leased the 400k reserve. Observed 2.5 h with `closeout_lease: null`.
+- **Rule:** on an authority hold, a background owner absent from a host list that WAS read is settled through
+  `stop_owner` (the same host path `close` uses) and recorded as the hold's `worker_stopped_at`; the gate then
+  proceeds. `sessions is None` (host not asked) settles nothing. A listed owner is untouched (LIVE stays excluded).
+- **Gates:** V-COST-CLOSEOUT-UNLISTED-BACKGROUND-LAUNCHES (red before the fix, green after),
+  V-COST-CLOSEOUT-CONTROL-HOST-LIST-UNAVAILABLE, V-COST-CLOSEOUT-CONTROL-LIVE-WORKER unchanged. COST_HOLD 61/61, MC 242/242.
+- **Residual:** an unlisted owner the host later revives would overlap the closeout worker; the same exposure `close`
+  already accepts.
