@@ -34,6 +34,19 @@ ExitPlanMode; the authority was typed as "do it yourself" (turn 9546fcd7, sessio
 - STOP RULE (Owner): if tranche 2 ends with no commit outside `.planning/`, the programme stops as
   BUDGET_EXHAUSTED. No tranche 3.
 
+**UPDATE — 2026-11-09 09:55Z: tranche 3, option b.**
+- Tranche 2 (6.8M) delivered W0 and W1:
+  - W0: a967e1e6, dffdd676, c2ab819c. W1: 73f0c30c. Closeout: e3c1bac9.
+  - Coordinator re-ran both gates: CI_W0_PASS and CI_W1_PASS, rc 0.
+  - Defect: the `register.json` states were left OPEN.
+- Trap (mine): an owner turn authorises ONE act. Reusing 9546fcd7 for tranche 3 was refused. The hold had already
+  been released with a `replace` queued, so I re-held it within 27 s; no launch.
+- The Owner chose **b** (turn 73f24f30, 2026-11-09T09:49:08Z): authority 40M to finish all 9 phases.
+- Retarget #3 (`.planning/retarget-tranche3.txt`): fix `register.json`, then Phases 3-9 inline, no subagents.
+- Released. Worker aa0eccf4 resumed at 09:54:40Z; its first turn carries the new prompt (verified in its
+  transcript).
+- Limits: max_hours 24 from 2026-11-08 17:29Z, so the run must end by ~2026-11-09 17:29Z.
+
 **NEXT.**
 1. Watch W0/W1: `register.json`, and the frozen corpora committed before any slice code.
 2. Watch `evidence/gsdx-ci/budget.md`.
