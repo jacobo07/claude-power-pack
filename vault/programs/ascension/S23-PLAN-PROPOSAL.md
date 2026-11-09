@@ -43,6 +43,14 @@ Status: PROPOSED, not armed. Brief: Owner /cpp-gsd-long paste "GSD X RECONSTRUCT
   and (b) a non-monotone k-best frontier instead of strict-rise best.c. Train on S17 trajectories only; dev cohort =
   COMPILES_NO_MATCH residue minus H2, family-disjoint from train, frozen by commit before any run; a separate heldout.
   First value = one exact certificate via certify.py on a function not used to build the mechanism.
+  External priors for the WU4 operator vocabulary (research_notes/Herramientas decomp Wii en GitHub/
+  mwcc_near_miss_causes.md, community sources, hypotheses until measured here): register colouring moves with value
+  lifetimes (temp vs local, inline helpers, `&x` lifetime split), not with declaration order; function-scoped pragmas
+  (scheduling, opt_propagation, opt_common_subs) are fakematch-risk operators and must be labelled as such;
+  `-inline deferred` emits a file's functions in reverse source order. decomp-permuter (PPC) added if/else reversal
+  and variable merge in 2026 -- candidate operators. Triage the 158 by diff kind, not by percentage.
+- WU4b E05 for the NO_COMPILE residue: per-file generated context (dtk-template decompctx pattern) plus m2c
+  `--valid-syntax` (M2C_FIELD) to move NO_COMPILE into the near-miss queue; measured as COMPILES moves, never certs.
 - WU5 E04+E05 versioned context variants: immutable ctx variants with provenance (R2, C1 first), evaluated beside the
   canonical ctx, never replacing it; production use is an Owner gate (new certificate contract).
 - WU6 E08/E12 cross-title transfer: apply the WU4 mechanism to the KSR (WSR) frontier (t1 evidence/ksr-frontier:
