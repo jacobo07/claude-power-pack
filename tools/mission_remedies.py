@@ -96,8 +96,8 @@ def trust_roots() -> list[str]:
         return []
     out = []
     for r in data.get("trust_roots", []) if isinstance(data, dict) else []:
-        if not isinstance(r, str) or not r.strip():
-            continue
+        if not isinstance(r, str) or not r.strip() or not os.path.isabs(r.strip()):
+            continue   # a relative entry (on Linux `C:\` is one) would resolve under whatever cwd the sweep has
         n = _norm(r)
         if n and n.count("/") >= 2 and not (len(n) <= 3 and n.endswith(":")):
             out.append(n)
