@@ -1,5 +1,14 @@
 # Curated public export: CCR + mission runtime + floor gate + ICC to `main` (2026-11-06)
 
+**STATUS: DONE 2026-11-08.** PR #16 (`export/ccr-mission-icc` 73cb7a04, from feature a39ce0fc) merged into `main`
+as 80505467, with Owner "y". X1-X4 receipts are in the PR body:
+- 186 files; scrub verified on `origin/main` (0 hits per pattern, `import` control 131 files);
+- CCR plugin 39/0; 51/55 exported suites green, and the 4 reds fail identically on a39ce0fc;
+- liveness: 0 new offenders, 8 fewer;
+- pp-code-reviewer APPROVE.
+
+Follow-ups: host-derived config paths on `main` (PR "Known not portable"); pre-existing user paths on `main`.
+
 Source: pane bcf0a0bc (ICC coordinator). Owner decision 2026-11-06 ("1 y 3 al backlog"): `main` stays as it is now;
 the large curated export below is backlog. Nothing below is started.
 
