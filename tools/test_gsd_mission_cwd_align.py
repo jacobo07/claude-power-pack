@@ -207,7 +207,12 @@ def main() -> int:
 
     # 9 structural: supervise aligns the cwd BEFORE it launches a worker
     src = Path(gm.__file__).read_text(encoding="utf-8")
-    sup = src[src.index("def supervise("):]
+    # supervise() became a thin wrapper over _supervise_core(), where the pass body (align, then launch) now lives;
+    # searching after `def supervise(` found neither call (-1/-1) once the body moved above the wrapper.
+    body = "def _supervise_core(" if "def _supervise_core(" in src else "def supervise("
+    sup = src[src.index(body):]
+    nxt = sup.find("\ndef ", 1)
+    sup = sup if nxt < 0 else sup[:nxt]       # this function only, so a later caller cannot satisfy the order
     a, l = sup.find('align_cwd(rec["cwd"]'), sup.find('row["launch"] = launch_worker(')
     check("V-MCA-SUPERVISE-ORDER", 0 <= a < l, f"align at {a}, launch at {l}")
 

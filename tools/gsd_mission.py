@@ -887,6 +887,25 @@ def worker_mcp_verdict(now: float | None = None) -> str:
 WORKER_MCP_MODES = ("inherit", "none")
 SLIM_PROFILES = ("slim-t1", "slim-t2")
 SLIM_SETTINGS = Path(__file__).resolve().parent.parent / "vault" / "config" / "slim-critical-settings.json"
+
+
+def slim_settings_file() -> Path:
+    """The slim-t2 `--settings` file rendered for THIS host. The repo file is a template: `{NODE}` becomes the
+    resolved node executable and `{CLAUDE_HOME}` becomes the install home (`~/.claude`). A hardcoded
+    `C:/Users/<name>/...` dispatcher path exists on one machine only; elsewhere node exits 1, a non-2 hook exit
+    does not block, and a slim worker silently runs without its guards (review M3 of PR #16, 2026-11-08).
+    Raises when node cannot be resolved: a slim-t2 worker must not launch unguarded."""
+    node = resolve_exe("node")
+    if not node:
+        raise RuntimeError("slim-t2 settings: node not resolvable (set CPP_EXE_NODE); refusing an unguarded worker")
+    text = SLIM_SETTINGS.read_text(encoding="utf-8")
+    text = (text.replace("{NODE}", Path(node).as_posix())
+                .replace("{CLAUDE_HOME}", (Path.home() / ".claude").as_posix()))
+    json.loads(text)  # the rendered file must still be valid JSON
+    out = lr.state_dir() / SLIM_SETTINGS.name
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8")
+    return out
 # PowerShell on Windows: the critical lane's bash-bridge guard blocks git through Bash, and a worker with
 # no PowerShell tool edited but could not commit (e2e 2026-10-07, .scratch/e2e_edit.py arm `auto`).
 SLIM_DEFAULT_TOOLS = ("Read", "Grep", "Glob", "Bash", "Edit", "Write") + (("PowerShell",) if os.name == "nt" else ())
@@ -922,7 +941,7 @@ def slim_argv(rec: dict, prompt: str, exe: str, profile: str, session_id: str | 
     if profile == "slim-t1":
         argv.append("--no-session-persistence")
     else:
-        argv.append(f"--settings={SLIM_SETTINGS}")
+        argv.append(f"--settings={slim_settings_file()}")
     argv.append(f"--model={rec.get('model') or 'sonnet'}")
     if session_id:
         argv.append(f"--session-id={session_id}")   # the id is OURS: no stdout to parse, budget file keyed to it

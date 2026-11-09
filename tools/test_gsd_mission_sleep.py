@@ -28,7 +28,11 @@ import gsd_mission as gm  # noqa: E402
 import mission_launch_gate as mlg  # noqa: E402
 import mission_sleep as ms  # noqa: E402
 
-gm.progress_fingerprint = lambda work_dir: None   # hermetic: no git in TMP
+# Hermetic (no git in TMP) AND measurable: a constant fingerprint is "no progress", which is what a held mission
+# shows. Returning None here meant "progress unmeasurable" once the breaker learned that absent is not zero: each
+# pass then wrote breaker_receipt + progress_unknown (and an incident at pass 3), so the record moved on every
+# pass and V-SLEEP-ONE-ROW-PER-HOLD measured the stub, not the sleep (diagnosed 2026-11-09: seq_delta 7, 3 rows).
+gm.progress_fingerprint = lambda work_dir: "fp-hermetic-no-progress"
 
 NOW = 1_800_000_000.0
 gone = lambda pid: False   # noqa: E731
@@ -121,8 +125,10 @@ def drive(answers: list, passes: int, *, mid: str, between=None) -> dict:
                  "id": bg["session_id"][:8], "pid": 999}]
     with world(answers):
         gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
+        # token_estimate given up front: otherwise the first pass writes `envelope_auto_assigned` (a one-time
+        # write added after this gate) and record_writes counts the envelope, not the hold.
         gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
-                      state=gm.RUNNING, epoch=1, owner=bg)
+                      state=gm.RUNNING, epoch=1, owner=bg, token_estimate=8_000_000)
         seq0 = gm.load(mid)["seq"]
         for i in range(passes):
             rows = gm.supervise(now=NOW + i, sessions=sessions, gsd_status=lambda c, workstream=None:

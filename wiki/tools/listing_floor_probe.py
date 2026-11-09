@@ -18,9 +18,11 @@ UNDECIDED with a reason and cpp_added None, never 0. Costs two sessions.
 
   python listing_floor_probe.py --label s1 --prompt "Reply with the single word OK." --pair --off-settings off.json
 """
-import argparse, glob, json, os, subprocess, sys, time
+import argparse, glob, json, os, shutil, subprocess, sys, time
 
-CLAUDE = r"C:\Users\dev\.local\bin\claude.exe"
+# The claude CLI on PATH, else the per-user install under the CURRENT home (never a hardcoded user path).
+CLAUDE = shutil.which("claude") or os.path.expanduser(
+    os.path.join("~", ".local", "bin", "claude.exe" if os.name == "nt" else "claude"))
 MODEL = "claude-opus-5-5"
 REPO = os.path.expanduser("~/.claude/skills/claude-power-pack")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "listing_floor_probe.results.jsonl")
