@@ -5,7 +5,13 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-08 ~17:05 UTC (session d45b2056): GSDX-CME CLOSED, S21 m-6302235f0a6c RUNNING (Owner "go ahead and then continue with S21", uuid c8c1d2de, 16:47:11Z).**
+**CURRENT — 2026-11-09 ~13:40 UTC (session 978a21cc): S21 CLOSED COMPLETED, S22 m-4a5a719551ae RUNNING (Owner typed "close S21 COMPLETED and arm S22 with the 8M envelope", uuid 6ceeea1a, 13:33:39Z).**
+- S21 m-6302235f0a6c: `close --outcome COMPLETED`, owner turn verified (transcript on GEX44 `~/.claude/projects/laptop-coordinator-978a21cc/`), ledger `mission_closed` 13:36:01Z. Backup `~/.claude/state/mission-backup-close-20261109/`. The `worker_settled` row reads used 56,211,135, against a 20M authority (not judged; the S21 closeout counted 32.4M gross for llm_fix).
+- gen3 `291443d0`: S22-BRIEF.md (the approved laptop proposal efa9e492), S22-PHASES.md, ASCENSION-PLAN section; S21 milestone MOVED (git mv) to `.planning/milestones/s21-closed-0cert-20261109T133624`; 6-phase S22 roadmap scaffolded by `arm --milestone-from`.
+- Mission **m-4a5a719551ae**: authority 8M (receipt bound to 6ceeea1a), 0 top-ups, 4 cycles / 8 h, workset t1 product, add-dirs t1 + gsdx-cme. llm_fix <= 1M fresh, W4 only (brief-enforced). Launched by the sweep 13:39:39Z, worker 77b1017b.
+- NEXT: watch W0-W1 (W1 lands the R2 patch canonically; any regression = rollback), budget.md; judge at checkpoint; ff private repo. Stop rule: W1-W3 move 0 -> recommend closing Tennis at 1198/1797.
+
+**PREVIOUS — 2026-11-08 ~17:05 UTC (session d45b2056): GSDX-CME CLOSED, S21 m-6302235f0a6c RUNNING (Owner "go ahead and then continue with S21", uuid c8c1d2de, 16:47:11Z).**
 - GSDX-CME m-cb596e3c2d6e CLOSED COMPLETED. Judged: gates w0-w8 rc 0, AMCR 38/38; MC 241/242 is pre-existing (base 28e24cf6 fails the same V-MC-PLAN-FACTS-REFUSES-OVERLAP: GEX44 node v18 < 22). The worker closeout misreported 242/242. Policy CME-B1 ADVISORY_NOT_PROVEN.
 - Deployed ONLY the domain-neutral lesson `vault/lessons/METHOD-OUTCOME-RULE-two-failures.md`: live GEX44 PP d23f6d8c (recall hit verified), laptop ca168b70. The pivot_decision gate is NOT deployed.
 - Private repo: mission/gen3 089983fd, new branch gsdx-cme 5649cb56 (full PP history bundle, 36.5 MB; secret scan 0).
