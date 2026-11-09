@@ -3,7 +3,7 @@ own materiality predicate (imported, not re-implemented) over ONE git log call."
 import collections, json, re, subprocess, sys
 from pathlib import Path
 
-PP = Path(r"C:\Users\User\.claude\skills\claude-power-pack")
+PP = Path(r"C:\Users\dev\.claude\skills\claude-power-pack")
 sys.path.insert(0, str(PP / "tools"))
 import gsd_x_claim_reconcile as rc  # noqa: E402
 

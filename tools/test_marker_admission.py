@@ -84,7 +84,7 @@ def good_marker(sid: str):
     # resume_command deliberately NOT /gsd-autonomous, so the sweep never asks
     # GSD about a project and this gate stays a unit test.
     write(f"gsd-autorun-{sid}.json", json.dumps({
-        "session_id": sid, "resume_command": "/absw2-continue", "cwd": "", "cycles": 0}))
+        "session_id": sid, "resume_command": "/<programme>-continue", "cwd": "", "cycles": 0}))
 
 
 def rows(acts, kind):

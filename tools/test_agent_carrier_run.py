@@ -100,8 +100,8 @@ def main():
     syn = A.AgentSpec(json.loads(json.dumps(ho.raw)), ho.dir)      # synthetic writer, unprotected surface
     syn.permission_class = "writer"
     syn.contract.write_surfaces = ["docs/", "notes.md"]
-    g = R.write_grant(syn, "/home/kobii/t/")
-    check("V-ACR-GRANT-POSIX", g == ["Edit(//home/kobii/t/docs/**)", "Edit(//home/kobii/t/notes.md)"], f"{g}")
+    g = R.write_grant(syn, "/home/dev/t/")
+    check("V-ACR-GRANT-POSIX", g == ["Edit(//home/dev/t/docs/**)", "Edit(//home/dev/t/notes.md)"], f"{g}")
     g = R.write_grant(syn, r"C:\Users\U\target")
     check("V-ACR-GRANT-WINDOWS", g[0] == "Edit(//c/Users/U/target/docs/**)", f"{g}")
     check("V-ACR-GRANT-NONE-WITHOUT-ROOT", R.write_grant(syn, None) == [], "no target root -> no grant")
@@ -146,10 +146,10 @@ def main():
     check("V-ACR-GRANT-REFUSES-ABSOLUTE", refused(esc, "/t") == "SURFACE_ESCAPES_ROOT", "absolute surface refused")
 
     # Writes observed against the granted surface (independent of what the runtime allowed).
-    w = R.writes_outside("/home/kobii/t", [".claude/settings.json", ".claude/hooks/"],
-                         ["/home/kobii/t/.claude/settings.json", "/home/kobii/t/src/app.py",
-                          "/home/kobii/t/.claude/hooks/x.sh"])
-    check("V-ACR-WRITES-OUTSIDE", w == ["/home/kobii/t/src/app.py"], f"{w}")
+    w = R.writes_outside("/home/dev/t", [".claude/settings.json", ".claude/hooks/"],
+                         ["/home/dev/t/.claude/settings.json", "/home/dev/t/src/app.py",
+                          "/home/dev/t/.claude/hooks/x.sh"])
+    check("V-ACR-WRITES-OUTSIDE", w == ["/home/dev/t/src/app.py"], f"{w}")
 
     total = passes + fails
     print(f"ACR_PASS={passes}/{total}  threshold={total}/{total}")
