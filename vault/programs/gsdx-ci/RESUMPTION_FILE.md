@@ -47,6 +47,29 @@ ExitPlanMode; the authority was typed as "do it yourself" (turn 9546fcd7, sessio
   transcript).
 - Limits: max_hours 24 from 2026-11-08 17:29Z, so the run must end by ~2026-11-09 17:29Z.
 
+**UPDATE — 2026-11-09 ~16:15Z: PROGRAMME CLOSED PARTIAL.**
+- GEX44 gsdx-ci HEAD is 2459f6ac. All 9 ROADMAP phases are ticked. Result: PARTIAL, not COMPLETE.
+- Register: 7 CERTIFIED, 6 BUILT, 1 CONNECTED, 1 DEFER.
+- Named gaps:
+  - Lab C transfer NOT_SUPPORTED: B-A = 0.125 < 0.25, near-ceiling prompts.
+  - Fresh-agent RECALLED_AND_ACTED, but n=1 per arm.
+  - `evaluate_transition` has no real caller.
+  - 0/161 lessons carry `invalidated_when`.
+  - The causal probe passes at 0.5063, which is fragile.
+- Coordinator re-ran everything:
+  - Gates w0-w8: all PASS.
+  - AMCR 38/38.
+  - MC 242/242. With my shell's node v18 it shows 241/242 (the V-MC-PLAN-FACTS bridge needs node ^22/^24);
+    with /opt/node-v24.14.0 it is 242/242. This is environmental, not a regression.
+- No diff to judge.py or to the protected suites.
+- Spend: ~33M of 40M. Model child calls: 30, ~0.27M tokens.
+- The mission hit max_cycles (13 >= 12), so the supervisor halts it. The work was finished first.
+- D1, D2 and D3 were coordinator decisions:
+  - D1: the context wall is not authority exhaustion.
+  - D2: bounded `claude -p` calls are allowed.
+  - D3: the XLII questions were supplied, because the brief was never stored in the packet. That was my gap.
+- NOT DONE (Owner-reserved): merge or deploy the branch gsdx-ci (17 product files) to the live PP clones.
+
 **NEXT.**
 1. Watch W0/W1: `register.json`, and the frozen corpora committed before any slice code.
 2. Watch `evidence/gsdx-ci/budget.md`.
