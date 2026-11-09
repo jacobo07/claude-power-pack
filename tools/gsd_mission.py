@@ -1494,6 +1494,12 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     run = runner or (lambda argv, cwd: subprocess.run(
         argv, cwd=cwd, capture_output=True, text=True, encoding="utf-8",
         errors="replace", timeout=180))
+    if runner is None:
+        # Self-heal (spec mission-self-heal): trust and unrunnable MCP servers are host setup a headless worker
+        # cannot answer. Measured 2026-11-08: m-df9b41d13eb3 HALTED on "Workspace not trusted"; m-9444639a3c78
+        # blocked 3 epochs on an approval dialog for a Windows-only MCP server. Never raises.
+        import mission_remedies as mr
+        mr.preflight(rec)
     try:
         r = run(worker_argv(rec, prompt), rec["cwd"])
         out = (r.stdout or "") + "\n" + (r.stderr or "")
@@ -2389,10 +2395,19 @@ def _settle_completed_phase(rec: dict, now: float, measure=None, phase_fn=None) 
 def _note_liveness_incident(mid: str, key: str, why: str) -> bool:
     """M4 B: one `liveness_incident` row per blocking condition (key), so a dead worker that cannot be replaced is
     visible where status reads, and an unchanged blocker costs no further rows. True when a row was written."""
-    if _ledger_has(mid, "liveness_incident", key=key):
-        return False
-    lr.ledger_append(mid, "liveness_incident", mission_id=mid, key=key, why=why[:300])
-    return True
+    wrote = not _ledger_has(mid, "liveness_incident", key=key)
+    if wrote:
+        lr.ledger_append(mid, "liveness_incident", mission_id=mid, key=key, why=why[:300])
+    # Self-heal (spec mission-self-heal): a recorded incident nobody hears about held m-9444639a3c78 for 21 h.
+    # Called on every pass while the condition holds: notify_incident delivers once and retries a failed channel
+    # a bounded number of times, so an unchanged blocker still costs no rows once delivered.
+    try:
+        import mission_remedies as mr
+        cwd = (load(mid) or {}).get("cwd", "")
+        mr.notify_incident(mid, key, f"{why[:300]} (cwd {cwd})")
+    except Exception as exc:  # noqa: BLE001 -- the incident row above is already durable
+        lr.ledger_append(mid, "remedy_error", mission_id=mid, kind="notify", why=f"{type(exc).__name__}: {exc}"[:300])
+    return wrote
 
 
 def _dead_worker_open(rec: dict, sessions, pid_alive) -> bool:
@@ -4824,6 +4839,15 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
                 return {"status": "behind_followed", "detail": f"cwd {hc[:12]} is behind work_dir"
                         f" {hw[:12]} and dirty, but the work_dir is a proven worktree carrying"
                         f" {proven_workstream}'s latest roadmap; following it, nothing moved", **facts}
+            # Self-heal (spec mission-self-heal): line-ending-only dirt the fast-forward does not touch is not a
+            # change anyone made. Measured 2026-11-09 (m-9444639a3c78): held 21 h on such a file.
+            import mission_remedies as mr
+            phantom = mr.phantom_dirty(git, cwd, hc, hw) if mr.enabled() else None
+            if phantom:
+                ff = git(cwd, "merge", "--ff-only", hw)
+                if ff.returncode == 0:
+                    return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}; left alone"
+                            f" line-ending-only paths {phantom[:5]}", "phantom": phantom, **facts}
             return {"status": "behind_dirty", "detail": f"cwd {hc[:12]} is behind work_dir {hw[:12]}"
                     " but has uncommitted tracked changes; not fast-forwarding over them", **facts}
         ff = git(cwd, "merge", "--ff-only", hw)
