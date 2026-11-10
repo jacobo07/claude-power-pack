@@ -30,7 +30,21 @@
   untouched.
 - Child calls 106/150, ~132k tokens. Paid USD 0. Nothing deployed, merged or pushed.
 
-**NEXT (Owner).**
-1. Canary: (a) G3 only [recommended], (b) G3+G4, (c) none. Packet: `evidence/gsdx-mil/p6/CANARY-REQUEST.md`.
-2. Lesson backfill: allow the one-line W5 harness edit, or leave it as a gap.
-3. Next mission: the largest waste class (idle while BLOCKED with authority remaining, 2,276 h) has no guard.
+**UPDATE — 2026-11-10 ~13:10Z: Owner "go ahead and rec on all".**
+1. Canary G3 DEPLOYED to the GEX44 live clone: commit **3f6577d9** on feature/knowledge-acquisition (on top of
+   aba6356c), not pushed.
+   - Patch: `evidence/gsdx-mil/p6/canary-g3.patch` (branch db70afa6). It is the P6 patch minus the P4 immunity
+     hunk: immunity is default-on and writes into the recall-indexed vault, which is outside "G3 only".
+   - G1/G2/G4/G5 are present but opt-in.
+   - Smoke in the live clone, before == after: MC 242/242, self_heal 19/19, goal_control 27/27.
+     G3_LIVE_SMOKE_PASS (`smoke_g3_live.py`).
+   - Kill: CPP_MIL_G3=off. Rollback: `git revert 3f6577d9`.
+2. Lesson backfill: option B, keep the gap. One shared condition, of low value, against breaking the frozen
+   GSDX-CI W5 harness.
+3. Next mission NOT launched. The miner miscounts (see memory feedback_mission_waste_miner_counts_planned_spend):
+   - 390M of the 583M is authority reached, not waste.
+   - 1,940 h of the 2,276 h are designed Owner gates.
+   - The fixable part (875 h of host prompts) belongs to mission-self-heal v2.
+
+**NEXT.** Measure G3 prospectively with the next K>=5 missions that autocompact (`directive_redelivered` in the
+ledger). If a mission is wanted, it should first fix the miner by splitting classes by reason.
