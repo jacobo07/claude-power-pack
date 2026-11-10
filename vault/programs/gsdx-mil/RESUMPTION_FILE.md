@@ -46,5 +46,21 @@
    - 1,940 h of the 2,276 h are designed Owner gates.
    - The fixable part (875 h of host prompts) belongs to mission-self-heal v2.
 
-**NEXT.** Measure G3 prospectively with the next K>=5 missions that autocompact (`directive_redelivered` in the
-ledger). If a mission is wanted, it should first fix the miner by splitting classes by reason.
+**UPDATE — 2026-11-10 ~14:00Z: Owner "go ahead". Miner corrected inline, with no mission (P8).**
+- `mission_waste.by_cause()` + `--by-cause` (76f91dd7). The P1 classes stay frozen.
+- Gate `--wave p8`: 3 checks, 10 mutants. Result `evidence/gsdx-mil/p8/result.json`, a post-hoc correction with no
+  prediction.
+- Train:
+  - Waste: stall 57.2M tokens (it used to show 583M), host prompts 875 h, breaker holds 840 h.
+  - Not waste: authority spent 383M, designed gates 1,084 h.
+  - Unjudged: over-estimate 76.5M.
+  - waste_tokens_eq 274.6M.
+- Holdout: 1.7M eq (13.6 h of breaker holds; 0 host prompts).
+- The P6 gate is updated to reality (01a8a616): the live copy is valid only with OWNER-GO.json and a byte-identical
+  file, with 2 new mutants. guards.patch regenerated (7698f828).
+- All gates green: MIL p0-p8 and CI w0-w8.
+
+**NEXT.**
+- The fixable hours in train do not reappear in the holdout (0 h and 13.6 h). There is no measured class today that
+  justifies a new mission.
+- Measure G3 prospectively with the next K>=5 missions that autocompact (`directive_redelivered` in the ledger).
