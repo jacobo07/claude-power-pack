@@ -7541,6 +7541,14 @@ def supervise(*args, **kw) -> list[dict]:
         except Exception as exc:  # noqa: BLE001
             rows = rows + [{"mission_id": "advance", "action": "advance", "status": "ERROR",
                             "error": f"{type(exc).__name__}: {exc}"[:300]}]
+        try:
+            # spec mission-autoresume: a mission stopped >= 5 min on a plane mechanism renews under the Owner's
+            # unchanged ceilings; every other stop is ledgered and notified (m-f27c61b9e75c sat 3 h 46 min unheard).
+            import mission_autoresume as mar
+            rows = rows + mar.autoresume_pass()
+        except Exception as exc:  # noqa: BLE001
+            rows = rows + [{"mission_id": "autoresume", "action": "autoresume", "status": "ERROR",
+                            "error": f"{type(exc).__name__}: {exc}"[:300]}]
         if before is not None:
             try:
                 stewarded = {r.get("mission_id") for r in rows if r.get("rule") == "R1"
