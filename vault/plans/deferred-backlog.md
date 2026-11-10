@@ -1582,6 +1582,7 @@ acting on one, read the file and check its state against the repo.
 - `2026-10-25_uek-phase13-e4-canary.md` -- UEK Phase 13 (E4 canary, goal ccr). Chain unparked in ccr/v5 `b6bfc54a`;
   E4b2 auto-arms at >=4.5 GB free on two samples (1.7 GB at 10:21 on 2026-10-26). Pending list in the file.
 - `2026-10-26_ccr-a2-laptop-closeout.md` -- CCR-NEXT A2 laptop close-out, waiting on RAM.
+- `2026-10-27_ccr-a2-landing-remaining.md` -- CCR-NEXT A2: everything still open after the first two landings. 112 commits of the CCR line resolved on scratch branch `ccr-land-scratch` (0409d7ee3), regression not finished (2 suites red, 8 never ran), release smoke (HR-2), accounting checks. Supersedes the step list of the 10-26 close-out above.
 - `2026-10-26_gsdx-factory-2-ram-gated.md` -- GSDX factory-2 work gated on free RAM.
 
 **Missions and programmes (remaining work):**
