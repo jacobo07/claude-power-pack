@@ -242,6 +242,38 @@ POLICY_RESOLVABLE = (
 )
 
 
+# Non-destructive mentions (Owner 2026-11-10, "que se reactiven de forma inteligente si no es destructivo"). Measured:
+# GEX44 m-b445113a40fc parked 9 h on "provide production-identical GriefPrevention jar ... via laptop bundle" -- the word
+# "production" DESCRIBED an artifact to copy, nothing was to be written anywhere. Only explicitly read-framed mentions are
+# exempt; a write verb aimed at production keeps the Owner class, whatever else the text says.
+_PROD = r"(?:prod(?:uction)?|producci[oó]n)"
+READ_FRAMED_PROD_RX = re.compile(
+    r"\b" + _PROD + r"[- ](?:identical|equivalent|matching|parity)\b|"
+    r"\b(?:identical|equal|matching|equivalent|same\s+as)\s+(?:to\s+)?(?:the\s+)?(?:\w+\s+){0,2}?"
+    r"(?:running|deployed|observed|used)?\s*(?:in|on|to)\s+(?:the\s+)?" + _PROD + r"\b|"
+    r"\b(?:from|read(?:ing)?\s+from|download(?:ed|ing)?\s+from|fetch(?:ed|ing)?\s+from|copied\s+from|"
+    r"observed\s+(?:on|in)|running\s+(?:on|in)|as\s+(?:running|deployed)\s+(?:on|in))\s+(?:the\s+)?(?:jar\s+)?"
+    r"(?:running\s+)?(?:in\s+|on\s+)?" + _PROD + r"\b|"
+    r"\bid[eé]ntic[oa]s?\s+(?:al?\s+|a\s+la\s+)?(?:de\s+)?" + _PROD + r"\b", re.I)
+WRITE_TO_PROD_RX = re.compile(
+    r"\b(?:deploy\w*|upload\w*|restart\w*|reboot\w*|stop|start|apply|install\w*|paste|writ\w*|replac\w*|overwrit\w*|"
+    r"delet\w*|remov\w*|wip\w*|reset|roll\s*back|push\w*|power\w*|modif\w*|edit\w*|chang\w*|migrat\w*|updat\w*|"
+    r"copy|copie\w*|send|ship\w*|mov\w*|transfer\w*|"
+    r"subir|reinici\w*|borr\w*|escrib\w*|cambi\w*|aplic\w*|instal\w*)\b(?:(?!\bfrom\b)[^.?]){0,40}?\b"
+    r"(?:to|into|onto|on|in|en|a)\s+(?:the\s+|la\s+)?" + _PROD + r"\b|"
+    # a direction INTO production is a write whatever the verb (read-framed "identical to production" is removed first)
+    r"\b(?:to|into|onto)\s+(?:the\s+)?" + _PROD + r"\b", re.I)
+# Push questions where pushing is off by host policy: CPP_MISSION_PUSH=never (GEX44 has no GitHub credential; commits
+# travel by bundle). A force-push stays IRREVERSIBLE; a push that also deploys stays DEPLOY_OR_LIVE_WRITE.
+PUSH_PHRASE_RX = re.compile(
+    r"\b(?:provide\s+|need\s+|a\s+)?(?:git\s+|github\s+)?credentials?\s+(?:to|for)\s+push\w*(?:\s+(?:the\s+)?branch)?"
+    r"(?:\s+[\w./-]+)?|(?<!force[- ])(?<!force\s)\bpush(?:ed|ing|es)?\b(?:\s+(?:the\s+)?branch)?(?:\s+[\w./-]+)?", re.I)
+
+
+def _push_policy_never() -> bool:
+    return (os.environ.get("CPP_MISSION_PUSH") or "").strip().lower() in ("never", "off", "no", "false", "0")
+
+
 def gate_question(text: str, policy_values: dict | None = None) -> dict:
     """Classify a worker's question. {"result", "owner_class"?, "resolution"}.
 
@@ -252,14 +284,29 @@ def gate_question(text: str, policy_values: dict | None = None) -> dict:
     t = text or ""
     pv = policy_values or {}
     gates_off = os.environ.get("CPP_MISSION_OWNER_GATES", "").lower() == "off"
-    t_scope = _DESCRIPTIVE_SCOPE_RX.sub(" ", t)
+    smart_off = os.environ.get("CPP_MISSION_SMART_RESUME", "").strip().lower() == "off"
+    t_eval, push_stripped = t, False
+    if not smart_off:
+        # A write aimed at production, judged on the ORIGINAL text, keeps every mention (the test caught "replace the
+        # jar running in production" leaking when the read frame was stripped first).
+        if not WRITE_TO_PROD_RX.search(t):
+            t_eval = READ_FRAMED_PROD_RX.sub(" ", t)
+        if _push_policy_never():
+            stripped = PUSH_PHRASE_RX.sub(" ", t_eval)
+            push_stripped, t_eval = stripped != t_eval, stripped
+    t_scope = _DESCRIPTIVE_SCOPE_RX.sub(" ", t_eval)
     for cls, rx in OWNER_CLASSES:
         if cls == "DONE_GATE_OR_DEVIATION" and gates_off:
             continue
-        if rx.search(t_scope if cls == "PRODUCT_SCOPE" else t):
+        if rx.search(t_scope if cls == "PRODUCT_SCOPE" else t_eval):
             return {"result": "OWNER_REQUIRED", "owner_class": cls,
                     "resolution": "Record an `OWNER DECISION NEEDED:` line in the mission STATE and continue every "
                                   "obligation that does not depend on it."}
+    if push_stripped:
+        return {"result": "RESOLVE_BY_POLICY", "key": "push",
+                "resolution": "Host policy CPP_MISSION_PUSH=never: do NOT push and do not ask for a credential. Commits "
+                              "stay local; they travel by git bundle. Treat the push as done by other means and "
+                              "continue every obligation that does not need it."}
     for key, rx in POLICY_RESOLVABLE:
         if rx.search(t) and key in pv and pv[key] is not None:
             if key == "use_worktrees" and pv[key] is False:

@@ -134,6 +134,50 @@ def main() -> int:
     check("V-MPOL-GATE-NO-POLICY", mp.gate_question(INCIDENT_JOB["needs"], {})["result"] == "RESOLVE_BY_DEFAULT",
           "worktree question with no stated policy: not an Owner class either")
 
+    # Smart resume (Owner 2026-11-10): non-destructive mentions of production / a push the host forbids resume; every
+    # destructive form still reaches the Owner. Real incident texts first (GEX44 m-b445113a40fc, 2026-11-09/10).
+    saved_push = os.environ.pop("CPP_MISSION_PUSH", None)
+    saved_smart = os.environ.pop("CPP_MISSION_SMART_RESUME", None)
+    try:
+        jar_inc = ("provide production-identical GriefPrevention jar and kobicore 2.7.1 via laptop bundle "
+                   "(D-A1-P14-04a option (i)) to unblock artifact-identity and g2-certification phases")
+        push_inc = "provide git credential to push branch arena1/support-masses-gex44"
+        resume = [jar_inc,
+                  "Install GriefPrevention from the JAR running in production into ~/.m2?",
+                  "Is the laptop jar identical to the one running on production?",
+                  "Fetch the plugin list from production read-only and compare hashes?",
+                  "Build against the jar observed on production SurvivalSMP?"]
+        rbad = [s for s in resume if mp.gate_question(s, pv)["result"] == "OWNER_REQUIRED"]
+        destructive = ["Shall I push to main and deploy?", "Upload the new jar to production?",
+                       "Restart the production server to load the plugin?", "Copy the jar from staging to production?",
+                       "Replace the jar running in production with the new build?", "Deploy the jar identical to production?",
+                       "Write the config into production now?", "Should I reiniciar el servidor en producción?",
+                       "Apply HR-04 phrase and paste the schematic?", "force-push the branch to origin?"]
+        dbad = [s for s in destructive if mp.gate_question(s, pv)["result"] != "OWNER_REQUIRED"]
+        check("V-MPOL-GATE-SMART-PROD", not rbad and not dbad,
+              f"{len(resume) - len(rbad)}/{len(resume)} read-framed resume (wrongly held={rbad}); "
+              f"{len(destructive) - len(dbad)}/{len(destructive)} destructive stay Owner (leaked={dbad})")
+        held = mp.gate_question(push_inc, pv)["result"]
+        os.environ["CPP_MISSION_PUSH"] = "never"
+        g = mp.gate_question(push_inc, pv)
+        keep = [s for s in ("Shall I push to main and deploy?", "force-push the branch to origin?",
+                            "Push the branch and upload the jar to production?", "provide the GitHub API token")
+                if mp.gate_question(s, pv)["result"] != "OWNER_REQUIRED"]
+        check("V-MPOL-GATE-SMART-PUSH-POLICY",
+              held == "OWNER_REQUIRED" and g["result"] == "RESOLVE_BY_POLICY" and g.get("key") == "push" and not keep,
+              f"no policy: {held}; CPP_MISSION_PUSH=never: {g['result']}; push+deploy/force/token leaked={keep}")
+        os.environ["CPP_MISSION_SMART_RESUME"] = "off"
+        off = (mp.gate_question(jar_inc, pv)["result"], mp.gate_question(push_inc, pv)["result"])
+        check("V-MPOL-GATE-SMART-KILL-SWITCH", off == ("OWNER_REQUIRED", "OWNER_REQUIRED"),
+              f"CPP_MISSION_SMART_RESUME=off restores the old gate: {off}")
+    finally:
+        os.environ.pop("CPP_MISSION_PUSH", None)
+        os.environ.pop("CPP_MISSION_SMART_RESUME", None)
+        if saved_push is not None:
+            os.environ["CPP_MISSION_PUSH"] = saved_push
+        if saved_smart is not None:
+            os.environ["CPP_MISSION_SMART_RESUME"] = saved_smart
+
     # S11 A1: a certification/truth-contract change is the Owner's. Incident 2026-11-02 (Tennis S10, mission
     # m-e6e0340e743d): the sweep answered this exact question RESOLVE_BY_DEFAULT.
     sd8 = ("Decide whether cert-cxx may admit an sd8 variant (fn_80222ED8 is the case in question); then a new S10-1 "
