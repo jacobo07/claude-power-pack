@@ -201,3 +201,34 @@ Each atomic task must have a proven producer/consumer seam, actual host or runti
 **Primary success measures:** percentage of approved tasks completed without routine Owner turns; correct recovery from process failure; false-DONE/false-PASS incidence; independent valid-result rate; research hypothesis discriminations per full cost; ROI of auto-improvement; transfer to novel tasks; violations of authority (must remain zero). Measure distribution by task class, not ungrounded universal "100% autonomy."
 
 **Final law:** An autonomous agent that works endlessly is not useful. An agent that works without supervision, knows when to test or pivot, reports when it is blocked by genuine authority, preserves the truth of its evidence, and makes future work measurably cheaper is the goal.
+
+
+## 11. Orca X Mobile mission-control integration (Owner request 2026-11-10)
+
+**Goal:** from one authenticated mobile message, execute a full CPP mission with research, experiments, bounded coding, real tests, independent verification, durable recovery and cumulative learning, while the phone is closed. Owner approval may be persisted as a scoped autonomy profile; ordinary technical choices are self-resolved, but new permissions, higher spend, certifier/security changes or external irreversible effects are NOT self-granted.
+
+**Canonical product implementation owner:** Orca X private Mission Control issue and architecture spec, **not** this CPP backlog. Its design deliberately reuses Orca's conversation and agent/project host binding, host-owned \`orchestration\` worker/fleet, \`orca serve\`, device pairing and relay, mobile drafts, task/mission state projection. No second agent OS or raw terminal from mobile.
+
+**Architecture:** 
+- Mobile is an authenticated **control/presentation node**, never the owner of the running process. Explicit Mission intent, separate from ordinary chat, with exact subject and idempotency.
+- Orca host accepts or refuses durable intent. No client-selected \`cwd\` or spoofed coordinator handle; never open all \`orchestration.*\` RPCs to mobile.
+- CPP **owns** Mission ID / goal / budget / obligations / DONE authority where CPP governs. Orca owns agent execution, PTY, fleet/placement and mobile UI, with a durable exact ID binding, no copied or conflicting mission truth.
+- Only the host can call host-local coordinator-bound placement / dispatch, after policy/grant and exact worktree identity checks. GEX44 or another worker host is eligible only when connected, paired, capability-compatible, authorized and a true matching workspace materialization exists.
+- Delivery ladder prevents lying: phone outbox != transport ACK != host durable admission != scheduled != running != verified DONE. Unknown ACK is reconciled by operation ID; no blind retry.
+- Progress, spend, tool results, tests, commits, blockers, authorization requests and cross-host execution are returned to the phone via existing runtime observations, never model-produced status fiction.
+- The host supervisor survives mobile teardown; hard-worker-death and duplicate-fencing are proven with actual process evidence. Computer power off cannot run work without another available host.
+- Connection to CPP-ZTA scientific evolution: ideas → discriminating experiments → actual implementations → independent challenger gates → knowledge distillation → scoped Constitutive Baseline Ratchet. Routine work is autonomous; self-improvement remains governed.
+
+**Linked work-unit IDs (do not create a second task DAG):**
+- ORCA-ZTA-01 closes ZTA-L01/L02: explicit one-message durable and idempotent mission admission with authorized caller/target.
+- ORCA-ZTA-02 closes ZTA-L03/L05/L08: real headless process supervision and no duplicate side effects after disconnect/kills.
+- ORCA-ZTA-03 closes ZTA-L04/L09: ready-task DAG, dependency gating, autonomous alternative work when a task needs Owner authority.
+- ORCA-ZTA-04 closes ZTA-R03–R07 and Q03/Q06: actual research/hypothesis/experiment/code/test path with frozen evaluator and real proof receipts.
+- ORCA-ZTA-05 closes ZTA-M01–M06: observed usage, challenger method evolution, separate promotion authority.
+- ORCA-ZTA-06 closes ZTA-X01/X02/X03/X09/X11: real phone, remote host, permission, duplicate/revocation, bad relay/401 and fresh-agent Product Reality with mutants.
+
+**Admission-first rollout:** 1) reality scan and high-risk Mobile #9 blockers; 2) single-host accepted Mission ID via authenticated message; 3) real code/test worker with app closed; 4) multi-host placement and distributed execution; 5) mobile control/progress; 6) research and self-evolution. Do not ship any placeholder Mission button before its effect, tests and status projection work.
+
+**First value:** phone message → CPP mission admission → real independent code/test action → proper gate/commit receipt → phone reconnection to same mission. A backlog entry, registered hook, design/spec or mocked result does **not** pass. Compare the new workflow against the existing autonomous PP baseline; instrument full costs and false-claim rates.
+
+**State:** SPECIFIED IN ORCA PRODUCT / NOT IMPLEMENTED / NOT DEPLOYED. The repo-specific architecture and real-device gates belong to its private canonical product owner; do not copy private host or game infrastructure into public CPP.
