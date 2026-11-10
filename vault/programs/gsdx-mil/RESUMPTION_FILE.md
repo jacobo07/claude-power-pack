@@ -60,7 +60,25 @@
   file, with 2 new mutants. guards.patch regenerated (7698f828).
 - All gates green: MIL p0-p8 and CI w0-w8.
 
+**UPDATE — 2026-11-10 ~16:16Z: Owner go (15:55:34Z): merge, push, "G4 o la inmunidad".**
+- P9 before the merge: a dry run showed the immunity's first pass would write 68 recall lessons from the P1 classes
+  (planned spend as stall, Owner checkpoints as idle). Fixed: by-cause classes and forward-only from the go time.
+  - Commits 5fe0d008 and c72f575a; gate p9 has 2 checks and 7 mutants.
+  - A backfill would now write 35, not 68; it is not done.
+- P6 gate now compares against the gsdx-mil branch, not HEAD (70c63500). OWNER-GO-MERGE.json is 592d438c.
+- MERGED into the GEX44 live clone: 7bf9eb89, plus 7bbaeb50.
+  - Smoke, before == after: MC 242, self_heal 19, recovery 69, autoresume 15, goal_control 27.
+  - From the live clone: MIL p0-p9 and CI w0-w8 PASS.
+- PUSHED to GEX44 origin (bare `/home/kobii/repos/claude-power-pack.git`): ff 4a5a1594..7bbaeb50. GitHub is not
+  touched, because the laptop branch is a separate history.
+- IMMUNITY ON (kill `CPP_MIL_IMMUNITY=off`). First real sweep pass: 105 markers, all skipped, 0 written, no errors.
+  - My own scan5 dry run had written 105 false markers into the real state. They were moved to
+    `~/.claude/state/mil-immunity-dryrun-backup-20261110`.
+- G4 stays opt-in: default-on breaks PNG 14/17, its saving is unmeasured, and gate p2 pins it.
+
 **NEXT.**
 - The fixable hours in train do not reappear in the holdout (0 h and 13.6 h). There is no measured class today that
   justifies a new mission.
-- Measure G3 prospectively with the next K>=5 missions that autocompact (`directive_redelivered` in the ledger).
+- G3: count compactions WITH a pending directive (K>=5). The 3 compactions of m-48063879443e had 0 directives.
+- Immunity: the first candidate in `vault/trap-candidates/` comes from a mission that closes after 15:55:34Z.
+  Review it before any promotion.
