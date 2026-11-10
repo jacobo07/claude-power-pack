@@ -203,19 +203,26 @@ def preflight(rec: dict, ledger=None, notifier=None) -> list[dict]:
         mcp_file = Path(cwd) / ".mcp.json"
         if mcp_file.is_file():
             servers = (json.loads(mcp_file.read_text(encoding="utf-8")).get("mcpServers") or {})
-            decided = set(proj.get("enabledMcpjsonServers") or []) | set(proj.get("disabledMcpjsonServers") or [])
+            local = Path(cwd) / ".claude" / "settings.local.json"
+            loc = json.loads(local.read_text(encoding="utf-8")) if local.is_file() else {}
+            decided = (set(proj.get("enabledMcpjsonServers") or []) | set(proj.get("disabledMcpjsonServers") or [])
+                       | set(loc.get("enabledMcpjsonServers") or []) | set(loc.get("disabledMcpjsonServers") or []))
             pending = {n: s for n, s in servers.items() if n not in decided}
             dead = [n for n, s in pending.items() if _unrunnable_stdio(s, cwd)]
             live = [n for n in pending if n not in dead]
             if dead:
+                # The project's local settings, not ~/.claude.json: a running CLI rewrites ~/.claude.json from its
+                # in-memory copy and dropped this key three times in one evening (2026-11-09, m-9444639a3c78).
+                local.parent.mkdir(parents=True, exist_ok=True)
+                if not local.is_file():
+                    local.write_text("{}\n", encoding="utf-8")
+
                 def disable(c):
-                    p = c.setdefault("projects", {}).setdefault(key, {})
-                    p["disabledMcpjsonServers"] = sorted(set(p.get("disabledMcpjsonServers") or []) | set(dead))
-                    p.setdefault("enabledMcpjsonServers", [])
-                back = _write_merged(path, disable)
-                got = set((back.get("projects") or {}).get(key, {}).get("disabledMcpjsonServers") or [])
+                    c["disabledMcpjsonServers"] = sorted(set(c.get("disabledMcpjsonServers") or []) | set(dead))
+                back = _write_merged(local, disable)
+                got = set(back.get("disabledMcpjsonServers") or [])
                 row("remedy_applied" if set(dead) <= got else "remedy_error", kind="mcp", disabled=dead,
-                    why="stdio command does not resolve on this host")
+                    where=str(local), why="stdio command does not resolve on this host")
             if live:
                 why = f"project .mcp.json servers awaiting approval (may run here, never auto-approved): {live}"
                 row("remedy_refused", kind="mcp", servers=live, why=why)

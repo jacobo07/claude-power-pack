@@ -188,12 +188,20 @@ roots.write_text(json.dumps({"trust_roots": [str(missions)]}), encoding="utf-8")
 rows.clear()
 sent: list[str] = []
 mr.preflight({"mission_id": "m-t4", "cwd": str(inside)}, ledger=led, notifier=lambda t: sent.append(t) or "sent")
-_, p = proj(inside)
+local_settings = inside / ".claude" / "settings.local.json"
+loc = json.loads(local_settings.read_text(encoding="utf-8")) if local_settings.is_file() else {}
 refused = [k for e, k in rows if e == "remedy_refused" and k["kind"] == "mcp"]
-check("V-MSH-MCP", p.get("disabledMcpjsonServers") == ["codex"] and not (p.get("enabledMcpjsonServers") or [])
+check("V-MSH-MCP", loc.get("disabledMcpjsonServers") == ["codex"]
       and bool(refused) and sorted(refused[0]["servers"]) == ["expanded", "py", "remote"] and len(sent) == 1,
-      f"disabled={p.get('disabledMcpjsonServers')} awaiting={refused[0]['servers'] if refused else None} "
+      f"local disabled={loc.get('disabledMcpjsonServers')} awaiting={refused[0]['servers'] if refused else None} "
       f"notified={len(sent)} (URL and ${{...}} servers never rejected)")
+
+# The CLI rewrites ~/.claude.json from memory (measured 3x on GEX44): the decision must survive that.
+claude_json.write_text(json.dumps(BASE), encoding="utf-8")
+rows.clear()
+mr.preflight({"mission_id": "m-t4b", "cwd": str(inside)}, ledger=led, notifier=lambda t: "sent")
+check("V-MSH-MCP-DURABLE", not [k for e, k in rows if e == "remedy_applied" and k["kind"] == "mcp"],
+      "after ~/.claude.json is clobbered, the local-settings decision stands: no re-apply")
 
 os.environ["CPP_MISSION_SELF_HEAL"] = "off"
 reset_cfg()

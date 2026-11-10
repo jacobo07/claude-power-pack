@@ -66,3 +66,12 @@ Kill switch, or revert the commit. The host-local roots file is the only state; 
   `_note_liveness_incident` now calls the notifier on every pass while the condition holds (delivery dedups).
 - L3 empty and filesystem-root entries in `trust_roots` are ignored.
 - Gates: tools/test_mission_self_heal.py 18/18; test_gsd_mission 242/242, cwd_align 18/18, liveness_incident 7/7.
+
+## Field findings and v2 (2026-11-10, Owner "Sí, los dos")
+- The MCP decision was re-applied on 3 of 9 launches: a running CLI rewrites `~/.claude.json` from its in-memory copy
+  and drops `disabledMcpjsonServers`. It is now written to `<cwd>/.claude/settings.local.json`, which the CLI does not
+  rewrite; "already decided" reads both. Gate V-MSH-MCP-DURABLE.
+- An Owner question (`blocked_intent` action ESCALATE_OWNER) is not a liveness incident, so m-9444639a3c78 sat
+  BLOCKED on an evidence request with no notification. supervise now notifies once per epoch and question.
+  Gate V-BI-SUPERVISE-NOTIFIES-OWNER (test_blocked_intent 17/17).
+- Delivery needs TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID in the sweep's environment (host-local EnvironmentFile).

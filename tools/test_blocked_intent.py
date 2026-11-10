@@ -99,6 +99,10 @@ def main() -> int:
           and (rd.get("blocked_intent") or {}).get("action") == "ESCALATE_OWNER", str(rd.get("blocked_intent"))[:120])
     check("V-BI-SUPERVISE-LEDGERS-IT", any(e.get("event") == "blocked_intent" and e.get("kind") == bi.DECISION
                                            for e in gm.lr.ledger_events("m-bi")))
+    # spec mission-self-heal: an Owner question is announced, not only ledgered (delivered or a recorded failure).
+    told = [e for e in gm.lr.ledger_events("m-bi") if e.get("event") in ("incident_notified", "incident_notify_failed")
+            and str(e.get("key", "")).startswith("owner:")]
+    check("V-BI-SUPERVISE-NOTIFIES-OWNER", len(told) == 1, f"owner notification rows={len(told)}")
     check("V-BI-SUPERVISE-NEVER-ANSWERS-A-DECISION", not (rd.get("directives") or []) and not rd.get("wake_expect"),
           "no directive, no wake stamp")
     rc = supervised_block("m-bc", COMMAND)

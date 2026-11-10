@@ -6520,6 +6520,17 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                 pid_alive=pid_alive, host_fetch=None, now=now)
                         except Exception as exc:  # noqa: BLE001 -- the BLOCKED row stands; the failure is on it
                             row["standing_answer"] = f"{type(exc).__name__}: {exc}"[:200]
+                    elif bi_["action"] == "ESCALATE_OWNER":
+                        # Self-heal (spec mission-self-heal): a question only the Owner can answer is not a stall
+                        # to repair, but nobody reads the ledger. Measured 2026-11-09: m-9444639a3c78 BLOCKED on an
+                        # evidence request with no notification. Once per epoch and question.
+                        try:
+                            import mission_remedies as mr
+                            row["owner_notified"] = mr.notify_incident(
+                                mid, f"owner:{rec['epoch']}:{bi_['kind']}:{reason[:60]}",
+                                f"waiting for YOUR decision ({bi_['kind']}): {reason[:600]} (cwd {rec.get('cwd', '')})")
+                        except Exception as exc:  # noqa: BLE001 -- the BLOCKED row stands
+                            row["owner_notified"] = f"{type(exc).__name__}: {exc}"[:200]
             elif act == "surface_unknown":
                 # Once per epoch: every 5-minute pass would otherwise add the same row.
                 if not any(e.get("event") == "owner_unknown" and e.get("epoch") == rec["epoch"]
