@@ -43,7 +43,11 @@ Progress class expected: INFORMATION (criteria file frozen in a commit before th
   unchanged certify.decide only if applicability >= 10%. Expand when held-out certified >= 3% at <= 300K tokens per
   certificate; stop at < 1% or when certify.decide rejects claimed exacts. Cap 8M.
 - C1: pair NO_COMPILE->COMPILES fns from S27/D3 with fwidth (does compile movement become bytes?). Cap 6M, after B1.
-- Tennis lane: only the Tennis part of B1 (information); otherwise it stays parked.
+- Tennis lane (Owner-approved 2026-11-11): the ONLY admitted Tennis generation is B1-T, cap 5M total: a deterministic
+  float-evidence scan of the 164 Tennis COMPILES_NO_MATCH (target stfs/lfs/psq vs ours stfd/fctiwz), criteria file
+  frozen in a commit before the scan; only if applicability >= 10%, a frozen held-out pilot of the S28K fwidth operator
+  under the unchanged certify.decide of an EXISTING Tennis profile (no new profile in B1-T). Below 10%: record the
+  refuted hypothesis as a json result and a negative row. Nothing else is planned for Tennis.
 
 ## Boundaries (unchanged)
 Existing profiles and certify.decide untouched; receipts and canonical context untouched; additive profiles only under all
