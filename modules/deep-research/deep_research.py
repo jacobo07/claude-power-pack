@@ -1018,6 +1018,72 @@ from source_guard import (  # noqa: E402
 # stored once). Each ledger names this directory, so --out runs still resolve.
 SNAPSHOT_DIR = RESEARCH_DIR / "snapshots"
 
+# --- Checkpoint / resume (DRX U3) ------------------------------------------
+#
+# A run that dies at query 9 of 12 used to lose all 9: the query plan, every
+# extraction and the budget already spent. The checkpoint is written after each
+# level's plan and after each finished query; `--resume RUN_ID` replays it:
+#   * a level's plan is reused, never regenerated (no new decomposition call);
+#   * a finished query is restored, not re-searched or re-extracted;
+#   * the query budget and the evidence ledger continue from the saved state,
+#     so a resume can neither double-spend nor duplicate claims.
+# A checkpoint is bound to (prompt, depth, breadth); a resume that does not
+# match is refused rather than silently mixing two different runs.
+
+CHECKPOINT_DIR = RESEARCH_DIR / ".checkpoints"
+
+
+class CheckpointMismatch(Exception):
+    """--resume named a checkpoint that does not exist or does not match."""
+
+
+def _sha16(text: str) -> str:
+    import hashlib
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
+def _ckpt_level_key(prompt: str, depth: int) -> str:
+    return _sha16(f"{depth}\n{prompt}")
+
+
+def _ckpt_query_key(level_key: str, query: str) -> str:
+    return _sha16(f"{level_key}\n{query}")
+
+
+def checkpoint_path(run_id: str) -> Path:
+    return CHECKPOINT_DIR / f"{run_id}.json"
+
+
+def load_checkpoint(run_id: str) -> dict[str, Any] | None:
+    path = checkpoint_path(run_id)
+    if not path.exists():
+        return None
+    return _json.loads(path.read_text(encoding="utf-8"))
+
+
+def _ckpt_write(state: dict[str, Any]) -> None:
+    ck = state["ckpt"]
+    data = {
+        "schema": "drx-checkpoint/1",
+        "module_version": __version__,
+        "run_id": ck["run_id"],
+        "prompt": ck["prompt"],
+        "depth": ck["depth"],
+        "breadth": ck["breadth"],
+        "complete": ck["complete"],
+        "plans": ck["plans"],
+        "done": ck["done"],
+        "queries_used": state["queries_used"],
+        "all_search_queries": state["all_search_queries"],
+        "ledger": state["ledger"].to_dict(),
+        "written_at": iso_now(),
+    }
+    path = checkpoint_path(ck["run_id"])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(f".tmp.{os.getpid()}")
+    tmp.write_text(_json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, path)
+
 # Every learning a gate throws away is appended here, with the reason. A gate
 # that discards silently is indistinguishable from a bug; this file is how the
 # Owner tunes the gates instead of guessing at them.
@@ -1491,6 +1557,20 @@ def _detect_contradictions(learnings: list[str],
     _state["layers_fired"]["llm"].add("claude.exe")
 
 
+def _research_followups(goal: str, followups: list[str], depth: int,
+                        breadth: int, learnings: list[str], urls: list[str],
+                        state: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """One recursion path for fresh and restored queries alike."""
+    sub_prompt = (
+        f"Previous research goal: {goal}\n"
+        f"Follow-up research directions: " + "\n".join(followups)
+    )
+    sub = deep_research(sub_prompt, depth=depth - 1,
+                        breadth=max(1, breadth // 2), learnings=learnings,
+                        urls=urls, _state=state)
+    return sub["learnings"], sub["urls"]
+
+
 def deep_research(
     prompt: str,
     depth: int = 2,
@@ -1499,8 +1579,15 @@ def deep_research(
     urls: list[str] | None = None,
     operator_context: str | None = None,
     _state: dict[str, Any] | None = None,
+    run_id: str | None = None,
+    resume: bool = False,
 ) -> ResearchResult:
     """Run the recursive research algorithm. Returns a ResearchResult.
+
+    `run_id` names the checkpoint (default: timestamp + slug). With
+    `resume=True` the checkpoint for `run_id` must exist and match
+    (prompt, depth, breadth), else CheckpointMismatch is raised before any
+    lock, search or LLM call.
 
     Top-level invocation (no `_state` passed) acquires the single-instance
     lock, initialises run accounting, and is the only level that calls
@@ -1520,6 +1607,15 @@ def deep_research(
                 "learnings": [], "urls": [],
                 "metadata": {"verdict": "disabled-by-env"},
             }
+        run_id = run_id or f"{now_ts()}_{slugify(prompt)}"
+        saved = load_checkpoint(run_id) if resume else None
+        if resume:
+            if saved is None:
+                raise CheckpointMismatch(f"no checkpoint for run '{run_id}'")
+            if (saved["prompt"], saved["depth"], saved["breadth"]) != (prompt, depth, breadth):
+                raise CheckpointMismatch(
+                    f"checkpoint '{run_id}' was written for a different "
+                    f"(prompt, depth, breadth)")
         lock = acquire_lock()
         if lock == "held":
             return {
@@ -1573,18 +1669,33 @@ def deep_research(
             "relevance_verdict": "rated",
             # DRX evidence ledger: shared by every recursion level, like the
             # counters above, so a claim found at depth 2 is in the same ledger.
-            "ledger": EvidenceLedger(f"{now_ts()}_{slugify(prompt)}",
-                                     SNAPSHOT_DIR),
+            "ledger": (EvidenceLedger.from_dict(saved["ledger"]) if saved
+                       else EvidenceLedger(run_id, SNAPSHOT_DIR)),
+            "ckpt": {"run_id": run_id, "prompt": prompt, "depth": depth,
+                     "breadth": breadth, "complete": False,
+                     "plans": dict(saved["plans"]) if saved else {},
+                     "done": dict(saved["done"]) if saved else {}},
+            "resumed_queries": 0,
         }
+        if saved:
+            _state["queries_used"] = int(saved["queries_used"])
+            _state["all_search_queries"] = list(saved["all_search_queries"])
 
     try:
-        # Generate this level's research questions.
-        try:
-            queries = generate_serp_queries(prompt, breadth, learnings,
-                                             _state=_state)
-        except (LayerError, NoLLMAvailable) as e:
-            _state["errors"].append(f"generate_serp_queries: {e}")
-            queries = []
+        # Generate this level's research questions -- or reuse the plan a
+        # checkpoint already holds for this exact (prompt, depth).
+        level_key = _ckpt_level_key(prompt, depth)
+        queries = _state["ckpt"]["plans"].get(level_key)
+        if queries is None:
+            try:
+                queries = generate_serp_queries(prompt, breadth, learnings,
+                                                 _state=_state)
+            except (LayerError, NoLLMAvailable) as e:
+                _state["errors"].append(f"generate_serp_queries: {e}")
+                queries = []
+            if queries:
+                _state["ckpt"]["plans"][level_key] = queries
+                _ckpt_write(_state)
         if not queries:
             # If we can't even ask the first set of queries, log + return
             # whatever we have. At top level this becomes INSUFFICIENT
@@ -1592,6 +1703,21 @@ def deep_research(
             _state["errors"].append("no SERP queries generated")
 
         for q in queries:
+            qkey = _ckpt_query_key(level_key, q["query"])
+            done = _state["ckpt"]["done"].get(qkey)
+            if done is not None:
+                # Restored from the checkpoint: no search, no fetch, no LLM,
+                # no budget. Only its subtree is resumed.
+                _state["resumed_queries"] += 1
+                learnings.extend(done["learnings"])
+                urls.extend(done["urls"])
+                _state["records"].extend(done["records"])
+                if depth > 1 and done["followups"]:
+                    learnings, urls = _research_followups(
+                        done["goal"], done["followups"], depth, breadth,
+                        learnings, urls, _state)
+                continue
+
             # Check guardrails BEFORE each query (cheapest abort point).
             if _state["queries_used"] >= _state["max_queries"]:
                 _state["errors"].append(
@@ -1709,6 +1835,10 @@ def deep_research(
                     f"{coverage['source_count']} source(s), families "
                     f"{', '.join(coverage['families'])}; extraction skipped"
                 )
+                _state["ckpt"]["done"][qkey] = {
+                    "learnings": [], "urls": [], "records": [],
+                    "followups": [], "goal": q["researchGoal"]}
+                _ckpt_write(_state)
                 continue
 
             if not markdowns:
@@ -1757,25 +1887,22 @@ def deep_research(
             if relevant:
                 urls.extend(new_urls)
 
+            # Checkpoint BEFORE recursing: the subtree checkpoints itself.
+            _state["ckpt"]["done"][qkey] = {
+                "learnings": list(relevant),
+                "urls": list(new_urls) if relevant else [],
+                "records": [r for r in extracted["records"]
+                            if format_labeled_learning(r) in survived],
+                "followups": list(extracted["followUpQuestions"]),
+                "goal": q["researchGoal"],
+            }
+            _ckpt_write(_state)
+
             # Recurse if depth > 1 (matching spec §2 termination).
             if depth > 1 and extracted["followUpQuestions"]:
-                sub_prompt = (
-                    f"Previous research goal: {q['researchGoal']}\n"
-                    f"Follow-up research directions: "
-                    + "\n".join(extracted["followUpQuestions"])
-                )
-                sub_result = deep_research(
-                    sub_prompt,
-                    depth=depth - 1,
-                    breadth=max(1, breadth // 2),
-                    learnings=learnings,
-                    urls=urls,
-                    _state=_state,
-                )
-                # Sub-result already mutated learnings/urls in-place via
-                # the shared lists; pull them back to canonical refs.
-                learnings = sub_result["learnings"]
-                urls = sub_result["urls"]
+                learnings, urls = _research_followups(
+                    q["researchGoal"], extracted["followUpQuestions"], depth,
+                    breadth, learnings, urls, _state)
 
         if is_top_level:
             # ENGINE 4 — run BEFORE synthesis, so the report writer sees the
@@ -1809,6 +1936,8 @@ def deep_research(
                                 "learnings_collected": len(learnings)})
 
             duration = time.time() - _state["started_at"]
+            _state["ckpt"]["complete"] = True
+            _ckpt_write(_state)
             return {
                 "report_md": report_md,
                 "learnings": learnings,
@@ -1855,6 +1984,8 @@ def deep_research(
                     "contradictions": _state["contradictions"],
                     "contradiction_verdict": _state["contradiction_verdict"],
                     "ledger": _state["ledger"].summary(),
+                    "run_id": _state["ckpt"]["run_id"],
+                    "resumed_queries": _state["resumed_queries"],
                 },
                 "ledger": _state["ledger"],
             }
@@ -2135,6 +2266,10 @@ def _build_argparser() -> "argparse.ArgumentParser":
                           "then to a generic founder/operator.")
     ap.add_argument("--out", default=None,
                      help="output directory (default vault/research/)")
+    ap.add_argument("--resume", default=None, metavar="RUN_ID",
+                     help="continue the run whose checkpoint is "
+                          "vault/research/.checkpoints/RUN_ID.json; prompt, "
+                          "depth and breadth come from the checkpoint")
     ap.add_argument("--quiet", action="store_true",
                      help="suppress progress chatter on stdout")
     return ap
@@ -2142,6 +2277,14 @@ def _build_argparser() -> "argparse.ArgumentParser":
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_argparser().parse_args(argv)
+    if args.resume:
+        saved = load_checkpoint(args.resume)
+        if saved is None:
+            print(f"deep_research: no checkpoint for run '{args.resume}'",
+                  file=sys.stderr)
+            return 2
+        args.prompt = saved["prompt"]
+        args.depth, args.breadth = saved["depth"], saved["breadth"]
     if not args.prompt:
         # No prompt -> self-test (matches Paso 1.1 spec).
         return _self_test()
@@ -2196,7 +2339,8 @@ def main(argv: list[str] | None = None) -> int:
 
     result = deep_research(args.prompt, depth=args.depth,
                             breadth=args.breadth,
-                            operator_context=args.operator_context)
+                            operator_context=args.operator_context,
+                            run_id=args.resume, resume=bool(args.resume))
     paths = write_research_artifacts(args.prompt, result, out_dir)
 
     # A run that persisted nothing is not a success, whatever the reason
