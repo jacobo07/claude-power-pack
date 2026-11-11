@@ -1,0 +1,429 @@
+OpenAI Codex v0.153.4
+--------
+[1mworkdir:[0m C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research
+[1mmodel:[0m gpt-6-astra
+[1mprovider:[0m openai
+[1mapproval:[0m never
+[1msandbox:[0m read-only
+[1mreasoning effort:[0m high
+[1mreasoning summaries:[0m none
+[1msession id:[0m 01a1cc85-dbb8-71a2-b9f6-b21595197504
+--------
+[36muser[0m
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. En Wii Sports Resort tengo 3,447 funciones en estado FLAGS_SPLIT: compilan, pero solo casan con otra versión del compilador u otros flags que el resto de su objeto. Necesito saber, desde el binario solo, qué build de mwcc y qué flags compiló cada unidad de traducción (TU) y cada función.
+
+Investiga a fondo:
+1. Cómo identifican los proyectos de decomp de GameCube/Wii la versión de CodeWarrior (GC 1.x/2.x/3.x, Wii 1.0-1.7, etc.) de cada TU: huellas de codegen, tablas de mwcc_version en dtk-template/configure.py, discusiones e issues donde se decidió.
+2. Huellas que discriminan flags: -O4,p frente a -O4,s; -inline auto/deferred/off; -fp_contract; umbrales -sdata/-sdata2; -schedule; -use_lmw_stmw; -enum int/min; -str pool/readonly; -RTTI; #pragma por función (optimization_level, scheduling, peephole). Para cada una: forma de prólogo/epílogo, uso de lmw/stmw, orden de guardado de registros, scheduling, colocación de constantes float, pooling de cadenas.
+3. Cómo registra la respuesta un configure.py de dtk (mw_version, cflags por objeto, objetos con flags distintos dentro de una librería) y cómo resuelven los proyectos una TU donde funciones distintas piden flags distintos.
+4. Ejemplos concretos en repos públicos (zeldaret/tp, ss, mkw, prime, petari/smg, etc.) con ruta de fichero y línea.
+
+Expresa cada afirmación como predicción falsable: "con X, mwcc emite Y; con X', emite Y'".
+
+Investiga con búsqueda web real y abre cada página que cites; lee el código fuente en GitHub (configure.py, issues, PRs) cuando exista. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 2000 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G28","id":"G28-001","claim":"","compiler_build_or_flag":"","binary_fingerprint":"","prediction":"","dtk_config_field":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G28. evidence_grade solo puede ser E1, E2 o E3.
+
+[2m2026-11-11T21:31:30.378536Z[0m [31mERROR[0m [2mrmcp::transport::worker[0m[2m:[0m worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer realm=\"OAuth\", resource_metadata=\"https://mcp.notion.com/.well-known/oauth-protected-resource/mcp\", scope=\"default\"" })
+[35m[3mcodex[0m[0m
+Voy a contrastar configuraciones reales, código y discusiones de los proyectos, distinguiendo las huellas documentadas de las hipótesis que necesitarían pruebas con mwcc. Solo citaré páginas que haya abierto y leído.
+
+[1mweb search:[0m 
+[1mweb search:[0m github decompals dtk-template configure.py mw_version ...
+[1mweb search:[0m 
+[1mweb search:[0m https://github.com/encounter/dtk-template/blob/main/configure.py
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m 'fp_contract'
+[35m[3mcodex[0m[0m
+La configuración de Twilight Princess Wii ya muestra una limitación importante: usa un GC/3.0a3 parcheado porque los autores no disponen del compilador exacto, y aún documenta dudas sobre inlining. Separaré la receta que permite hacer matching de la atribución histórica del compilador.
+
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m site:github.com "mwcc" "compiler" "version" "prologue" ...
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m site:github.com/riidefi/mkw "compiler" "1.2" ...
+[1mweb search:[0m 
+[1mweb search:[0m site:github.com/zeldaret/tp/pull compiler ...
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2mstarted[0m
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m "Metroid Prime" "configure.py" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m github metroid prime decompilation compiler version 1.2.5 1.3.2 ...
+[35m[3mcodex[0m[0m
+He encontrado ejemplos de pragmas dentro de una misma TU y un PR de Petari donde se cambió de compilador comparando el porcentaje de matching. También hay casos donde mover una constante cambia su acceso mediante un pool: esa diferencia puede venir del código fuente y confundirse con un flag.
+
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m https://github.com/PrimeDecomp/prime/blob/main/configure.py
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m 'sdata2'
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m 'small data threshold'
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mweb search:[0m CodeWarrior PowerPC compiler reference "fp_contract" "pdf" ...
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m https://picture.iczhiku.com/resource/eetop/WhidAIWdoswLhBVN.pdf
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m '11.5.24 -sdatathreshold'
+[35m[3mcodex[0m[0m
+La evidencia más concreta es el PR #2145 de Petari: cambiar KPAD de Wii/1.0 a GC/3.0a3 produjo 21 funciones con matching del 100 % según el informe del PR. Sigue siendo E3: no lo he reproducido. La tabla de builds está en `tools/project.py`; es un mapa de nombres para decomp.me, no un detector del binario.
+
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m https://manualzz.com/doc/o/1ewkwj/metrowerks-3.2-c-compilers-reference-manual-introduction
+[1mweb search:[0m 
+[1mweb search:[0m "C Compilers Reference" "fp_contract" Metrowerks pdf 3.2 ...
+[1mweb search:[0m 
+[1mweb search:[0m https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mweb search:[0m 'Multiply'
+[1mweb search:[0m 
+[1mweb search:[0m 'Pooling'
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mweb search:[0m '4.8 -RTTI'
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[35m[3mcodex[0m[0m
+(1) **El binario permite descartar configuraciones, pero no garantiza identificar un único build y todos sus flags por función.** Predicción falsable **E1**: manteniendo el resto fijo, `int f(){return 7;}` producirá los mismos bytes con `-fp_contract on` y `off`. Por tanto, incluso un matching perfecto puede admitir varias configuraciones. Tus 3.447 `FLAGS_SPLIT` no demuestran, por sí solas, que el original mezclara compiladores dentro de cada TU.
+
+Uso tu escala: **E1** = sin fuente o inferencia propia; **E2** = fuente secundaria; **E3** = fuente primaria abierta y leída; **E4** = reproducido compilando con mwcc. No asigno E4. Los resultados de CI ajenos siguen siendo E3. Las extrapolaciones desde manuales PowerPC generales a builds concretos GC/Wii quedan expresamente como E1.
+
+**Qué identifican realmente los proyectos.** Si consultas la plantilla actual, encontrarás `mw_version` en la configuración y `COMPILER_MAP` en `tools/project.py:1602–1633`; no una tabla de huellas denominada `mwcc_version`. Si seleccionas las siguientes etiquetas, el generador escogerá estos identificadores de decomp.me: **E3**. [Código de la tabla](https://github.com/encounter/dtk-template/blob/main/tools/project.py)
+
+| Etiqueta dtk | Identificador de decomp.me |
+|---|---|
+| GC/1.0; GC/1.1; GC/1.2.5 | `mwcc_233_144`; `mwcc_233_159`; `mwcc_233_163` |
+| GC/1.3; GC/1.3.2 | `mwcc_242_53`; `mwcc_242_81` |
+| GC/2.0; GC/2.5; GC/2.6; GC/2.7 | `mwcc_247_92`; `mwcc_247_105`; `mwcc_247_107`; `mwcc_247_108` |
+| GC/3.0a3; a3.2; a3.3; a3.4 | `mwcc_41_51213`; `mwcc_41_60126`; `mwcc_41_60209`; `mwcc_42_60308` |
+| GC/3.0a5; GC/3.0a5.2 | `mwcc_42_60422`; `mwcc_41_60831` |
+| Wii/1.0RC1; Wii/1.0a; Wii/1.0 | `mwcc_42_140`; `mwcc_42_142`; `mwcc_43_145` |
+| Wii/1.1; Wii/1.3; Wii/1.5; Wii/1.6; Wii/1.7 | `mwcc_43_151`; `mwcc_43_172`; `mwcc_43_188`; `mwcc_43_202`; `mwcc_43_213` |
+
+Si interpretas `Wii/0x4201_127` como prueba de «build 127», obtendrás una atribución problemática: la tabla lo traduce a `mwcc_42_142`; decomp.me distingue además `mwcc_42_127`, descrito como un 142 parcheado. Predicción: comparar etiquetas sin comprobar ejecutables puede colapsar identidades diferentes. Guarda SHA-256 del compilador, además del nombre. La discrepancia nominal es **E3**; la recomendación es **E1**. [Catálogo de decomp.me, líneas 173–181](https://github.com/decompme/decomp.me/blob/main/frontend/src/lib/i18n/locales/en/compilers.json)
+
+**Metadatos frente a huellas.** Si conservas un `.o` original, su `.comment` puede aportar versión interna y propiedades de generación. Predicción **E3**: encontrarás el identificador interno en `+0xC`, pero no necesariamente el build mostrado por el ejecutable; la documentación muestra precisamente esa divergencia. Los valores de formato `8`, `10`, `11/12`, `14/15` delimitan familias, no builds únicos. [Formato `.comment`, líneas 34–76](https://github.com/encounter/dtk-template/blob/main/docs/comment_section.md)
+
+Si solo conservas un DOL convencional, no esperes recuperar automáticamente esos metadatos: el conversor de dtk selecciona secciones asignables y su cabecera no contiene identidad del compilador. **E3**. Si activas `mw_comment_version`, generarás metadatos para los objetos reconstruidos; leerlos después no descubre información histórica. **E3**. [Conversor, líneas 39–125](https://github.com/encounter/decomp-toolkit/blob/main/src/cmd/elf2dol.rs), [configuración, líneas 44–52](https://github.com/encounter/dtk-template/blob/main/config/GAMEID/config.example.yml)
+
+Los casos públicos permiten predicciones más concretas:
+
+| Caso | Predicción comprobable y límite |
+|---|---|
+| **TP Wii** | Con la configuración actual se invocará `GC/3.0a3p1` y se enlazará con `GC/3.0a5`. El comentario reconoce que falta el compilador histórico exacto. **E3**. [configure.py:450–467](https://github.com/zeldaret/tp/blob/main/configure.py) |
+| **Decisión de TP** | Al repetir los ensayos del PR #2505 debería reaparecer la ventaja parcial de GC/3.0a3 y el comportamiento contradictorio de `deferred,auto` frente a `noauto`. Es una observación provisional de sus autores, no una identificación definitiva. **E3**. [PR #2505](https://github.com/zeldaret/tp/pull/2505) |
+| **Petari KPAD** | Cambiar Wii/1.0 por GC/3.0a3, conservando `cflags_sdk`, debería recuperar las 21 funciones que el informe del PR marca al 100 % en JPN/USA. `.sdata2` seguía incompleta. **E3**. [PR #2145 y resultado](https://github.com/SMGCommunity/Petari/pull/2145) |
+| **Skyward Sword** | El generador elegirá Wii/1.5 para juego, Wii/1.3 como base NW4R y Wii/1.6 para `snd`. El comentario de NW4R admite incertidumbre. **E3**. [configure.py:363–366, 410, 1204](https://github.com/zeldaret/ss/blob/main/configure.py) |
+| **Mario Kart Wii** | `HostSys` usará `Wii/0x4201_127`; `TRK` y `arc`, `GC/3.0a5.2`. **E3**. [configure.py:379–409](https://github.com/doldecomp/mkw/blob/main/configure.py) |
+
+La metodología observable es **comparar reconstrucciones y revisar decisiones**, no aplicar una firma universal. Por ejemplo, el PR #172 de Petari propuso GC/3.0a5 por DWARF y una mejora pequeña de matching; quedó sin fusionar. Su resultado no permite atribuir todo SMG a ese compilador. **E3**. [PR #172](https://github.com/SMGCommunity/Petari/pull/172)
+
+No pude abrir el `configure.py` de Prime: devolvió 404 tanto por GitHub como por la API. No lo utilizo como evidencia.
+
+**Qué medir para discriminar flags.** Las predicciones exactas y sus pruebas están en G28-012–G28-028 del JSONL. Los manuales consultados documentan las opciones; no reproducen tus builds Wii.
+
+| Variable | Contraste que debe buscar el ensayo |
+|---|---|
+| `-O4,p` / `-O4,s` | Velocidad/tamaño; comprobar llamadas a helpers de salvado frente a secuencias locales, sin asumir que toda función cambia. |
+| Inlining | Llamada conservada frente a cuerpo integrado; variar también el orden de definición para probar `deferred`. |
+| `-fp_contract` | Multiplicación y suma separadas frente a operación fusionada. |
+| `-sdata`, `-sdata2` | Referencias mediante r13/r2 frente a materialización de dirección; medir tamaños alrededor del umbral. |
+| `-schedule`, `-use_lmw_stmw` | Orden de instrucciones independientes; salvados individuales frente a múltiples. |
+| `-enum`, `-str`, `-RTTI` | Anchura/layout, agrupación y ubicación de cadenas, y metadatos de tipos. |
+
+Estas son hipótesis de trabajo **E1**, sustentadas en las opciones descritas por el fabricante: [Power Architecture, 2012](https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf), [MPC5xx, 2004, apéndice C](https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf), [Embedded PowerPC, 2005, pp. 152–153](https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf), [Power Architecture, 2014, capítulos 4 y 9](https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf).
+
+No encontré una matriz primaria que demuestre que un orden fijo `stwu/mflr/stw`, un tamaño de frame o una secuencia de salvado identifica inequívocamente cada GC/Wii. Predicción **E1**: cambiar presión de registros, llamadas o código inline puede modificar esos rasgos sin cambiar compilador. Para flags sin efecto directo sobre el prólogo, exigir una huella de prólogo produciría falsos positivos.
+
+Tampoco atribuyas automáticamente los pools de floats a flags. Predicción **E3**, específica del caso documentado: en SS, mover las constantes de `d_t_drum` a miembros estáticos definidos al final evita que `actorExecute` las acceda mediante una base de pool `.rodata`. [PR #351](https://github.com/zeldaret/ss/pull/351)
+
+**Cómo registrar una solución.** Si especificas `Object(..., mw_version=..., cflags=...)`, sustituirás los valores heredados de la biblioteca. Si usas `extra_cflags`, se concatenarán después de `cflags`. El generador producirá una invocación de mwcc por objeto, no por función. **E3**. [tools/project.py:51–99, 1008–1034](https://github.com/encounter/dtk-template/blob/main/tools/project.py)
+
+Predicciones verificables de configuraciones reales:
+
+- En Petari, `Game/Animation/BckCtrl.cpp` seleccionará `GC/3.0a5` dentro de `Animation`, mientras el helper general Wii selecciona `GC/3.0a3`. **E3**. [configure.py:506, 776–783](https://github.com/SMGCommunity/Petari/blob/main/configure.py)
+- En SS, `toBeSorted/d_scn_callback.cpp` añadirá `-opt noloop`, conservando la biblioteca `game_code`. **E3**. [configure.py:408–428](https://github.com/zeldaret/ss/blob/main/configure.py)
+- En TP, `dolphin/gx/GXInit.c` añadirá `-opt nopeephole`; los objetos vecinos no reciben ese añadido. **E3**. [configure.py:1643–1646](https://github.com/zeldaret/tp/blob/main/configure.py)
+
+Para diferencias intrafichero, hay precedentes explícitos. En `d_a_movie_player.cpp`, la configuración local parte de nivel 4, pero `daMP_MixAudio` queda entre `push`, nivel 3 y `pop`; el propio comentario reconoce incertidumbre. **E3**. [líneas 8–15 y 3213–3300](https://github.com/zeldaret/tp/blob/main/src/d/actor/d_a_movie_player.cpp). Petari aplica nivel 3 únicamente alrededor de `Sandstorm::updateBindActorMtx`. **E3**. [líneas 412–454](https://github.com/SMGCommunity/Petari/blob/main/src/Game/MapObj/Sandstorm.cpp)
+
+Predicción **E1**: si el problema es un pragma local, conservar una sola invocación y reproducir su alcance resolverá el conflicto; si realmente necesitas dos ejecutables, ningún pragma cambiará el build del compilador. Separar artificialmente funciones puede conseguir bytes, pero no prueba los límites históricos de TU y puede alterar pools, estáticos e instancias débiles.
+
+Para tus `FLAGS_SPLIT`, propongo estas pruebas **E1**:
+
+1. Congelar fuente, cabeceras, macros, orden y SHA del compilador antes del barrido.
+2. Guardar por función **el conjunto** de configuraciones que casan, incluyendo relocalizaciones y datos referenciados.
+3. Intersectar esos conjuntos por TU y verificar la TU completa. Un empate conserva varias explicaciones.
+4. Si la intersección queda vacía, ensayar pragmas locales y revisar splits, tipos, inlining y pools antes de atribuir múltiples compiladores.
+5. Validar la configuración elegida en funciones de esa TU que no participaron en la selección y finalmente en el enlace completo.
+
+Si una receta solo funciona para la función aislada, pero falla al reintegrarla con sus datos y vecinas, la clasificación `FLAGS_SPLIT` estará señalando dependencia del contexto, no necesariamente flags históricos distintos.
+
+(2)
+
+```jsonl
+{"gap":"G28","id":"G28-001","claim":"La configuración histórica no siempre es identificable de forma única desde los bytes.","compiler_build_or_flag":"-fp_contract on/off","binary_fingerprint":"Una función exclusivamente entera puede ser idéntica con ambas opciones.","prediction":"Con int f(){return 7;} y el resto fijo, on y off producirán los mismos bytes de función.","dtk_config_field":"cflags","source_url":"","evidence_grade":"E1","test":"Compilar ambas variantes y comparar bytes; un empate impide identificar este flag en esa función."}
+{"gap":"G28","id":"G28-002","claim":"La conversión ELF a DOL de dtk no conserva automáticamente metadatos ELF no asignables.","compiler_build_or_flag":"Cualquier mwcc","binary_fingerprint":"Cabecera DOL con secciones, BSS y entrada, sin identidad de compilador.","prediction":"Una .comment no asignable del ELF no aparecerá como sección conservada por elf2dol.","dtk_config_field":"Ninguno; formato del ejecutable","source_url":"https://github.com/encounter/decomp-toolkit/blob/main/src/cmd/elf2dol.rs","evidence_grade":"E3","test":"Inspeccionar líneas 39–125 y convertir un ELF de prueba que contenga .comment."}
+{"gap":"G28","id":"G28-003","claim":"Una .comment original informa de versión interna; una generada por dtk refleja configuración reconstruida.","compiler_build_or_flag":"Formato .comment de CodeWarrior","binary_fingerprint":"Magic CodeWarrior; formato en +0xB; versión interna y productor en +0xC.","prediction":"Cambiar mw_comment_version cambiará la sección sintetizada sin revelar un nuevo dato del DOL original.","dtk_config_field":"config.yml: mw_comment_version; splits.txt: comment","source_url":"https://github.com/encounter/dtk-template/blob/main/docs/comment_section.md","evidence_grade":"E3","test":"Leer offsets del objeto original, si existe, y distinguirlo explícitamente del objeto producido por dtk split."}
+{"gap":"G28","id":"G28-004","claim":"COMPILER_MAP traduce etiquetas GC a identificadores de decomp.me; no analiza instrucciones.","compiler_build_or_flag":"GC/1.x, GC/2.x, GC/3.x","binary_fingerprint":"Ninguna: es una tabla de configuración.","prediction":"GC/2.7 seleccionará mwcc_247_108; GC/3.0a3 seleccionará mwcc_41_51213.","dtk_config_field":"mw_version; objdiff.json: scratch.compiler","source_url":"https://github.com/encounter/dtk-template/blob/main/tools/project.py","evidence_grade":"E3","test":"Inspeccionar líneas 1602–1633 y regenerar objdiff.json con ambas etiquetas."}
+{"gap":"G28","id":"G28-005","claim":"Los nombres Wii requieren normalización; no equivalen necesariamente al número aparente del directorio.","compiler_build_or_flag":"Wii/0x4201_127; Wii/1.0–1.7","binary_fingerprint":"Ninguna firma de código demostrada por este catálogo.","prediction":"Wii/0x4201_127 se traducirá a mwcc_42_142; Wii/1.7, a mwcc_43_213.","dtk_config_field":"mw_version; scratch.compiler","source_url":"https://github.com/encounter/dtk-template/blob/main/tools/project.py","evidence_grade":"E3","test":"Comprobar COMPILER_MAP y registrar por separado el SHA-256 del ejecutable utilizado."}
+{"gap":"G28","id":"G28-006","claim":"Las opciones de objeto prevalecen sobre las de biblioteca y extra_cflags se añade al final.","compiler_build_or_flag":"Cualquier build configurado","binary_fingerprint":"No aplicable; determina la invocación que debe contrastarse.","prediction":"Object(..., mw_version=X, cflags=F, extra_cflags=E) utilizará X y la concatenación F+E.","dtk_config_field":"Object.mw_version; Object.cflags; Object.extra_cflags","source_url":"https://github.com/encounter/dtk-template/blob/main/tools/project.py","evidence_grade":"E3","test":"Inspeccionar Object.resolve y la generación de all_cflags; revisar el comando Ninja resultante."}
+{"gap":"G28","id":"G28-007","claim":"TP documenta una atribución provisional del compilador Wii basada en ensayos de matching.","compiler_build_or_flag":"GC/3.0a3 frente a compiladores Wii; -inline deferred,auto/noauto","binary_fingerprint":"Diferencias de matching entre funciones, sin firma universal publicada.","prediction":"Repetir los casos del PR debería mostrar funciones favorecidas por GC/3.0a3 y resultados distintos según inlining.","dtk_config_field":"mw_version; cflags_framework","source_url":"https://github.com/zeldaret/tp/pull/2505","evidence_grade":"E3","test":"Recuperar la revisión del PR y repetir comparaciones; no convertir sus observaciones provisionales en una identidad exacta."}
+{"gap":"G28","id":"G28-008","claim":"Petari cambió KPAD de Wii/1.0 a GC/3.0a3 conservando cflags_sdk; el informe registra 21 nuevos matches.","compiler_build_or_flag":"Wii/1.0 frente a GC/3.0a3","binary_fingerprint":"21 funciones KPAD al 100% en JPN/USA; .sdata2 todavía incompleta.","prediction":"Repetir las revisiones 51caa49 y d59970a reproducirá los nuevos matches comunicados, si se conserva el entorno.","dtk_config_field":"SDKLib_KPAD: mw_version","source_url":"https://github.com/SMGCommunity/Petari/pull/2145","evidence_grade":"E3","test":"Comparar ambas revisiones, con fuente y flags constantes, y verificar también .sdata2; resultado ajeno no reproducido aquí."}
+{"gap":"G28","id":"G28-009","claim":"SS configura familias de bibliotecas con compiladores diferentes.","compiler_build_or_flag":"Wii/1.5; Wii/1.3; Wii/1.6","binary_fingerprint":"No se publica en configure.py una firma discriminante.","prediction":"El generador usará Wii/1.5 para game_code, Wii/1.3 para NW4R por defecto y Wii/1.6 para snd.","dtk_config_field":"config.libs[].mw_version; nw4rLib(mw_version=...)","source_url":"https://github.com/zeldaret/ss/blob/main/configure.py","evidence_grade":"E3","test":"Examinar líneas 363–366, 410 y 1204 y los comandos generados; separar configuración declarada de atribución histórica."}
+{"gap":"G28","id":"G28-010","claim":"MKW configura compiladores distintos para HostSys y bibliotecas como TRK o arc.","compiler_build_or_flag":"Wii/0x4201_127 frente a GC/3.0a5.2","binary_fingerprint":"Ninguna firma universal especificada.","prediction":"HostSys invocará Wii/0x4201_127 y arc invocará GC/3.0a5.2.","dtk_config_field":"config.libs[].mw_version","source_url":"https://github.com/doldecomp/mkw/blob/main/configure.py","evidence_grade":"E3","test":"Revisar líneas 379–409 y las rutas de mwcceppc en Ninja."}
+{"gap":"G28","id":"G28-011","claim":"Petari permite un compilador diferente para un objeto dentro de una biblioteca.","compiler_build_or_flag":"GC/3.0a5 para Game/Animation/BckCtrl.cpp","binary_fingerprint":"La configuración por sí sola no demuestra matching.","prediction":"BckCtrl.cpp usará GC/3.0a5 aunque GameLib seleccione GC/3.0a3 para Wii.","dtk_config_field":"Object(..., mw_version=...)","source_url":"https://github.com/SMGCommunity/Petari/blob/main/configure.py","evidence_grade":"E3","test":"Revisar líneas 506 y 780; comprobar comando y estado del objeto, sin interpretar el override como match demostrado."}
+{"gap":"G28","id":"G28-012","claim":"Hipótesis para GC/Wii: optimizar por tamaño puede favorecer helpers de prólogo y epílogo.","compiler_build_or_flag":"-O4,s frente a -O4,p","binary_fingerprint":"Saltos o llamadas a helpers frente a salvados/restauraciones locales.","prediction":"En una función con suficientes registros preservados, s emitirá helpers donde p emitirá secuencias locales; pendiente de verificar por build.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf","evidence_grade":"E1","test":"Barrer presión de registros con helpers sin overrides; contrastar pp. 99 y 515/521. No exigir diferencia en funciones triviales."}
+{"gap":"G28","id":"G28-013","claim":"Hipótesis: auto permite integrar llamadas pequeñas que off conserva.","compiler_build_or_flag":"-inline auto frente a -inline off","binary_fingerprint":"Cuerpo integrado frente a bl o tail-call.","prediction":"Un helper pequeño con resultado utilizado se integrará con auto y permanecerá como llamada con off, si no hay otros controles.","dtk_config_field":"cflags; pragmas en fuente","source_url":"https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf","evidence_grade":"E1","test":"Ensayar un helper no declarado inline; impedir eliminación de la llamada y revisar también cambios de frame."}
+{"gap":"G28","id":"G28-014","claim":"Hipótesis: deferred permite inlining hacia definiciones posteriores; no es el opuesto de auto.","compiler_build_or_flag":"-inline deferred,auto frente a nodeferred,auto","binary_fingerprint":"Llamada a definición posterior conservada o integrada.","prediction":"Con deferred el helper posterior podrá integrarse; sin deferred permanecerá la llamada en un caso sensible al orden.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf","evidence_grade":"E1","test":"Intercambiar posiciones del helper y caller; mantener IPA fijo. Verificar que el build reconoce nodeferred."}
+{"gap":"G28","id":"G28-015","claim":"Hipótesis específica comprobable: fp_contract controla la fusión de una expresión multiplicación-suma ordinaria.","compiler_build_or_flag":"-fp_contract on/off; -fp hardware","binary_fingerprint":"fmadds frente a fmuls seguido de fadds.","prediction":"float f(float a,float b,float c){return a*b+c;} emitirá fmadds con on y operaciones separadas con off.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf","evidence_grade":"E1","test":"Compilar la expresión sin intrínsecos, asm ni pragmas; repetir en cada build candidato."}
+{"gap":"G28","id":"G28-016","claim":"Hipótesis: el umbral sdata cambia el acceso a un objeto mutable de tamaño conocido.","compiler_build_or_flag":"-sdata 8 frente a -sdata 0","binary_fingerprint":"lwz mediante r13 frente a dirección materializada.","prediction":"Un int global leído externamente usará SDA con 8 y acceso no-SDA con 0, sin atributos de sección.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf","evidence_grade":"E1","test":"Barrer objetos de 1,2,4,8,9,16 bytes; fijar pooling y comparar secciones y relocalizaciones."}
+{"gap":"G28","id":"G28-017","claim":"Hipótesis: sdata2 controla el direccionamiento de constantes pequeñas elegibles.","compiler_build_or_flag":"-sdata2 8 frente a -sdata2 0","binary_fingerprint":"lfs/lfd mediante r2 frente a carga con base materializada.","prediction":"Una constante float materializada elegible pasará de SDA2 a acceso no-SDA2 al bajar el umbral a cero.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf","evidence_grade":"E1","test":"Usar constantes cuya carga sobreviva; inspeccionar .sdata2/.rodata y excluir folding o sección forzada."}
+{"gap":"G28","id":"G28-018","claim":"Hipótesis: scheduling cambia órdenes legales para ocultar latencias.","compiler_build_or_flag":"-schedule on/off","binary_fingerprint":"Instrucciones independientes intercaladas entre carga y consumidor.","prediction":"En un probe sensible, on separará carga y uso donde off los deja próximos; no implica conservar el orden del C.","dtk_config_field":"cflags; pragma scheduling","source_url":"https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf","evidence_grade":"E1","test":"Fijar procesador, aliasing y build; usar varias cargas independientes y comparar órdenes."}
+{"gap":"G28","id":"G28-019","claim":"Hipótesis: use_lmw_stmw permite salvados múltiples cuando la función los necesita.","compiler_build_or_flag":"-use_lmw_stmw on/off","binary_fingerprint":"stmw/lmw frente a secuencias stw/lwz en prólogo/epílogo.","prediction":"Con suficientes GPR preservados y helpers desactivados, on emitirá múltiples; off emitirá salvados individuales.","dtk_config_field":"cflags; pragma use_lmw_stmw","source_url":"https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf","evidence_grade":"E1","test":"Forzar valores vivos a través de una llamada; excluir asm. Una función sin salvados puede ser idéntica."}
+{"gap":"G28","id":"G28-020","claim":"No está verificada una correspondencia única entre orden de salvado y build GC/Wii.","compiler_build_or_flag":"Cualquier build; presión de registros; inlining; scheduling","binary_fingerprint":"Orden stwu/mflr/stw, registros salvados y tamaño del frame.","prediction":"Con el mismo compilador y flags, cambiar valores vivos a través de llamadas modificará al menos algunos frames y salvados.","dtk_config_field":"Ninguno adicional; conservar configuración del ensayo","source_url":"","evidence_grade":"E1","test":"Construir una familia de funciones con presión creciente; buscar colisiones de huella entre builds y variaciones dentro de uno."}
+{"gap":"G28","id":"G28-021","claim":"Hipótesis: enum int/min discrimina almacenamiento cuando el rango cabe en un byte.","compiler_build_or_flag":"-enum int/min","binary_fingerprint":"lwz/stw frente a lbz/stb; cambios de sizeof y offsets.","prediction":"Para enum E{A=0,B=1}, int ocupará cuatro bytes; min podrá ocupar uno con el mínimo correspondiente.","dtk_config_field":"cflags","source_url":"https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf","evidence_grade":"E1","test":"Emitir sizeof(E) y leer un E volatile; fijar min_enum_size y alineación."}
+{"gap":"G28","id":"G28-022","claim":"Hipótesis: reuse, pool y readonly dejan huellas distintas.","compiler_build_or_flag":"-str reuse/noreuse,pool/nopool,readonly/noreadonly","binary_fingerprint":"Identidad de direcciones, agrupación y sección de cadenas.","prediction":"reuse compartirá literales iguales; pool agrupará distintos; readonly cambiará su ubicación respecto a noreadonly.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf","evidence_grade":"E1","test":"Comparar ocho combinaciones con tres literales, dos iguales; usar el .o para excluir merging del linker."}
+{"gap":"G28","id":"G28-023","claim":"Hipótesis: RTTI se discrimina mejor con tipos polimórficos que mediante prólogos.","compiler_build_or_flag":"-RTTI on/off","binary_fingerprint":"Descriptores de tipos y referencias desde estructuras C++.","prediction":"Una clase polimórfica materializada tendrá metadatos RTTI con on que faltarán con off; un downcast dinámico puede ser rechazado con off.","dtk_config_field":"cflags; pragma RTTI","source_url":"https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf","evidence_grade":"E1","test":"Conservar instancia y vtable; comparar datos y relocalizaciones antes del deadstripping."}
+{"gap":"G28","id":"G28-024","claim":"SS documenta que la forma y ubicación de definiciones float cambia el acceso al pool.","compiler_build_or_flag":"Configuración del PR #351; fuente variable","binary_fingerprint":"Base de pool .rodata frente a acceso a miembros estáticos.","prediction":"En d_t_drum, restaurar la forma anterior volverá a introducir el acceso mediante base del pool comunicado por el autor.","dtk_config_field":"Sin cambio requerido de flags","source_url":"https://github.com/zeldaret/ss/pull/351","evidence_grade":"E3","test":"Comparar padre y revisión del PR, aislando la modificación de constantes; no generalizar a todas las TUs."}
+{"gap":"G28","id":"G28-025","claim":"TP representa niveles de optimización diferentes dentro de una sola TU mediante pragmas.","compiler_build_or_flag":"optimization_level 4 y 3; dont_inline on","binary_fingerprint":"No se documenta una secuencia universal; el alcance está explícito en fuente.","prediction":"daMP_MixAudio se compilará bajo nivel 3 y el pop restaurará el estado previo de d_a_movie_player.cpp.","dtk_config_field":"Pragmas en fuente; una sola configuración Object","source_url":"https://github.com/zeldaret/tp/blob/main/src/d/actor/d_a_movie_player.cpp","evidence_grade":"E3","test":"Inspeccionar líneas 8–15 y 3213–3300; retirar solo el bloque de pragmas y comparar la TU completa."}
+{"gap":"G28","id":"G28-026","claim":"TP contiene overrides de scheduling limitados a funciones.","compiler_build_or_flag":"#pragma scheduling off/reset","binary_fingerprint":"Orden local potencialmente distinto, sin cambiar ejecutable de compilador.","prediction":"GXReadGPMetric queda bajo scheduling off; tras reset se recupera el estado anterior.","dtk_config_field":"Pragmas en libs/dolphin/src/gx/GXPerf.c","source_url":"https://github.com/zeldaret/tp/blob/main/libs/dolphin/src/gx/GXPerf.c","evidence_grade":"E3","test":"Revisar líneas 182–286 y comparar con una variante sin ese override."}
+{"gap":"G28","id":"G28-027","claim":"Hipótesis: peephole elimina ciertas comparaciones o simplifica secuencias locales.","compiler_build_or_flag":"-opt peephole/nopeephole; #pragma peephole","binary_fingerprint":"Comparación separada frente a resultado que ya establece condición.","prediction":"En un probe sensible, on eliminará un cmp redundante que off conserva; la regla exacta depende del build.","dtk_config_field":"extra_cflags; pragma peephole","source_url":"https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf","evidence_grade":"E1","test":"Probar operación entera seguida de comparación con cero; rechazar el probe si ambos modos coinciden."}
+{"gap":"G28","id":"G28-028","claim":"TP utiliza peephole off/reset alrededor de __init_cpp.","compiler_build_or_flag":"#pragma peephole off/reset","binary_fingerprint":"El cambio de política se limita al tramo indicado.","prediction":"__init_cpp se procesará con peephole desactivado y _ExitProcess recuperará el estado previo.","dtk_config_field":"Pragmas en fuente","source_url":"https://github.com/zeldaret/tp/blob/main/libs/dolphin/src/os/__ppc_eabi_init.cpp","evidence_grade":"E3","test":"Inspeccionar líneas 22–34 y comparar generación al retirar exclusivamente los pragmas."}
+{"gap":"G28","id":"G28-029","claim":"SS registra una excepción de flags por objeto sin crear otra biblioteca.","compiler_build_or_flag":"-opt noloop","binary_fingerprint":"La configuración no especifica una firma universal.","prediction":"toBeSorted/d_scn_callback.cpp recibirá -opt noloop además de los flags de game_code.","dtk_config_field":"Object.extra_cflags","source_url":"https://github.com/zeldaret/ss/blob/main/configure.py","evidence_grade":"E3","test":"Revisar líneas 408–428 y comparar su invocación con la de un objeto vecino."}
+{"gap":"G28","id":"G28-030","claim":"La intersección de configuraciones por TU distingue compatibilidad conjunta de matches aislados.","compiler_build_or_flag":"Matriz build × flags × pragmas","binary_fingerprint":"Bytes, relocalizaciones y datos concordantes simultáneamente.","prediction":"Una configuración válida para toda la TU mantendrá los matches al reintegrar funciones; una dependiente del contexto podrá perderlos.","dtk_config_field":"mw_version y cflags por objeto; pragmas locales cuando proceda","source_url":"","evidence_grade":"E1","test":"Congelar fuente y entorno, conservar todos los candidatos, intersectar por TU y validar funciones reservadas y enlace final. Un conjunto vacío no prueba múltiples compiladores."}
+```
+[2mtokens used[0m
+214.480
+(1) **El binario permite descartar configuraciones, pero no garantiza identificar un único build y todos sus flags por función.** Predicción falsable **E1**: manteniendo el resto fijo, `int f(){return 7;}` producirá los mismos bytes con `-fp_contract on` y `off`. Por tanto, incluso un matching perfecto puede admitir varias configuraciones. Tus 3.447 `FLAGS_SPLIT` no demuestran, por sí solas, que el original mezclara compiladores dentro de cada TU.
+
+Uso tu escala: **E1** = sin fuente o inferencia propia; **E2** = fuente secundaria; **E3** = fuente primaria abierta y leída; **E4** = reproducido compilando con mwcc. No asigno E4. Los resultados de CI ajenos siguen siendo E3. Las extrapolaciones desde manuales PowerPC generales a builds concretos GC/Wii quedan expresamente como E1.
+
+**Qué identifican realmente los proyectos.** Si consultas la plantilla actual, encontrarás `mw_version` en la configuración y `COMPILER_MAP` en `tools/project.py:1602–1633`; no una tabla de huellas denominada `mwcc_version`. Si seleccionas las siguientes etiquetas, el generador escogerá estos identificadores de decomp.me: **E3**. [Código de la tabla](https://github.com/encounter/dtk-template/blob/main/tools/project.py)
+
+| Etiqueta dtk | Identificador de decomp.me |
+|---|---|
+| GC/1.0; GC/1.1; GC/1.2.5 | `mwcc_233_144`; `mwcc_233_159`; `mwcc_233_163` |
+| GC/1.3; GC/1.3.2 | `mwcc_242_53`; `mwcc_242_81` |
+| GC/2.0; GC/2.5; GC/2.6; GC/2.7 | `mwcc_247_92`; `mwcc_247_105`; `mwcc_247_107`; `mwcc_247_108` |
+| GC/3.0a3; a3.2; a3.3; a3.4 | `mwcc_41_51213`; `mwcc_41_60126`; `mwcc_41_60209`; `mwcc_42_60308` |
+| GC/3.0a5; GC/3.0a5.2 | `mwcc_42_60422`; `mwcc_41_60831` |
+| Wii/1.0RC1; Wii/1.0a; Wii/1.0 | `mwcc_42_140`; `mwcc_42_142`; `mwcc_43_145` |
+| Wii/1.1; Wii/1.3; Wii/1.5; Wii/1.6; Wii/1.7 | `mwcc_43_151`; `mwcc_43_172`; `mwcc_43_188`; `mwcc_43_202`; `mwcc_43_213` |
+
+Si interpretas `Wii/0x4201_127` como prueba de «build 127», obtendrás una atribución problemática: la tabla lo traduce a `mwcc_42_142`; decomp.me distingue además `mwcc_42_127`, descrito como un 142 parcheado. Predicción: comparar etiquetas sin comprobar ejecutables puede colapsar identidades diferentes. Guarda SHA-256 del compilador, además del nombre. La discrepancia nominal es **E3**; la recomendación es **E1**. [Catálogo de decomp.me, líneas 173–181](https://github.com/decompme/decomp.me/blob/main/frontend/src/lib/i18n/locales/en/compilers.json)
+
+**Metadatos frente a huellas.** Si conservas un `.o` original, su `.comment` puede aportar versión interna y propiedades de generación. Predicción **E3**: encontrarás el identificador interno en `+0xC`, pero no necesariamente el build mostrado por el ejecutable; la documentación muestra precisamente esa divergencia. Los valores de formato `8`, `10`, `11/12`, `14/15` delimitan familias, no builds únicos. [Formato `.comment`, líneas 34–76](https://github.com/encounter/dtk-template/blob/main/docs/comment_section.md)
+
+Si solo conservas un DOL convencional, no esperes recuperar automáticamente esos metadatos: el conversor de dtk selecciona secciones asignables y su cabecera no contiene identidad del compilador. **E3**. Si activas `mw_comment_version`, generarás metadatos para los objetos reconstruidos; leerlos después no descubre información histórica. **E3**. [Conversor, líneas 39–125](https://github.com/encounter/decomp-toolkit/blob/main/src/cmd/elf2dol.rs), [configuración, líneas 44–52](https://github.com/encounter/dtk-template/blob/main/config/GAMEID/config.example.yml)
+
+Los casos públicos permiten predicciones más concretas:
+
+| Caso | Predicción comprobable y límite |
+|---|---|
+| **TP Wii** | Con la configuración actual se invocará `GC/3.0a3p1` y se enlazará con `GC/3.0a5`. El comentario reconoce que falta el compilador histórico exacto. **E3**. [configure.py:450–467](https://github.com/zeldaret/tp/blob/main/configure.py) |
+| **Decisión de TP** | Al repetir los ensayos del PR #2505 debería reaparecer la ventaja parcial de GC/3.0a3 y el comportamiento contradictorio de `deferred,auto` frente a `noauto`. Es una observación provisional de sus autores, no una identificación definitiva. **E3**. [PR #2505](https://github.com/zeldaret/tp/pull/2505) |
+| **Petari KPAD** | Cambiar Wii/1.0 por GC/3.0a3, conservando `cflags_sdk`, debería recuperar las 21 funciones que el informe del PR marca al 100 % en JPN/USA. `.sdata2` seguía incompleta. **E3**. [PR #2145 y resultado](https://github.com/SMGCommunity/Petari/pull/2145) |
+| **Skyward Sword** | El generador elegirá Wii/1.5 para juego, Wii/1.3 como base NW4R y Wii/1.6 para `snd`. El comentario de NW4R admite incertidumbre. **E3**. [configure.py:363–366, 410, 1204](https://github.com/zeldaret/ss/blob/main/configure.py) |
+| **Mario Kart Wii** | `HostSys` usará `Wii/0x4201_127`; `TRK` y `arc`, `GC/3.0a5.2`. **E3**. [configure.py:379–409](https://github.com/doldecomp/mkw/blob/main/configure.py) |
+
+La metodología observable es **comparar reconstrucciones y revisar decisiones**, no aplicar una firma universal. Por ejemplo, el PR #172 de Petari propuso GC/3.0a5 por DWARF y una mejora pequeña de matching; quedó sin fusionar. Su resultado no permite atribuir todo SMG a ese compilador. **E3**. [PR #172](https://github.com/SMGCommunity/Petari/pull/172)
+
+No pude abrir el `configure.py` de Prime: devolvió 404 tanto por GitHub como por la API. No lo utilizo como evidencia.
+
+**Qué medir para discriminar flags.** Las predicciones exactas y sus pruebas están en G28-012–G28-028 del JSONL. Los manuales consultados documentan las opciones; no reproducen tus builds Wii.
+
+| Variable | Contraste que debe buscar el ensayo |
+|---|---|
+| `-O4,p` / `-O4,s` | Velocidad/tamaño; comprobar llamadas a helpers de salvado frente a secuencias locales, sin asumir que toda función cambia. |
+| Inlining | Llamada conservada frente a cuerpo integrado; variar también el orden de definición para probar `deferred`. |
+| `-fp_contract` | Multiplicación y suma separadas frente a operación fusionada. |
+| `-sdata`, `-sdata2` | Referencias mediante r13/r2 frente a materialización de dirección; medir tamaños alrededor del umbral. |
+| `-schedule`, `-use_lmw_stmw` | Orden de instrucciones independientes; salvados individuales frente a múltiples. |
+| `-enum`, `-str`, `-RTTI` | Anchura/layout, agrupación y ubicación de cadenas, y metadatos de tipos. |
+
+Estas son hipótesis de trabajo **E1**, sustentadas en las opciones descritas por el fabricante: [Power Architecture, 2012](https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf), [MPC5xx, 2004, apéndice C](https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf), [Embedded PowerPC, 2005, pp. 152–153](https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf), [Power Architecture, 2014, capítulos 4 y 9](https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf).
+
+No encontré una matriz primaria que demuestre que un orden fijo `stwu/mflr/stw`, un tamaño de frame o una secuencia de salvado identifica inequívocamente cada GC/Wii. Predicción **E1**: cambiar presión de registros, llamadas o código inline puede modificar esos rasgos sin cambiar compilador. Para flags sin efecto directo sobre el prólogo, exigir una huella de prólogo produciría falsos positivos.
+
+Tampoco atribuyas automáticamente los pools de floats a flags. Predicción **E3**, específica del caso documentado: en SS, mover las constantes de `d_t_drum` a miembros estáticos definidos al final evita que `actorExecute` las acceda mediante una base de pool `.rodata`. [PR #351](https://github.com/zeldaret/ss/pull/351)
+
+**Cómo registrar una solución.** Si especificas `Object(..., mw_version=..., cflags=...)`, sustituirás los valores heredados de la biblioteca. Si usas `extra_cflags`, se concatenarán después de `cflags`. El generador producirá una invocación de mwcc por objeto, no por función. **E3**. [tools/project.py:51–99, 1008–1034](https://github.com/encounter/dtk-template/blob/main/tools/project.py)
+
+Predicciones verificables de configuraciones reales:
+
+- En Petari, `Game/Animation/BckCtrl.cpp` seleccionará `GC/3.0a5` dentro de `Animation`, mientras el helper general Wii selecciona `GC/3.0a3`. **E3**. [configure.py:506, 776–783](https://github.com/SMGCommunity/Petari/blob/main/configure.py)
+- En SS, `toBeSorted/d_scn_callback.cpp` añadirá `-opt noloop`, conservando la biblioteca `game_code`. **E3**. [configure.py:408–428](https://github.com/zeldaret/ss/blob/main/configure.py)
+- En TP, `dolphin/gx/GXInit.c` añadirá `-opt nopeephole`; los objetos vecinos no reciben ese añadido. **E3**. [configure.py:1643–1646](https://github.com/zeldaret/tp/blob/main/configure.py)
+
+Para diferencias intrafichero, hay precedentes explícitos. En `d_a_movie_player.cpp`, la configuración local parte de nivel 4, pero `daMP_MixAudio` queda entre `push`, nivel 3 y `pop`; el propio comentario reconoce incertidumbre. **E3**. [líneas 8–15 y 3213–3300](https://github.com/zeldaret/tp/blob/main/src/d/actor/d_a_movie_player.cpp). Petari aplica nivel 3 únicamente alrededor de `Sandstorm::updateBindActorMtx`. **E3**. [líneas 412–454](https://github.com/SMGCommunity/Petari/blob/main/src/Game/MapObj/Sandstorm.cpp)
+
+Predicción **E1**: si el problema es un pragma local, conservar una sola invocación y reproducir su alcance resolverá el conflicto; si realmente necesitas dos ejecutables, ningún pragma cambiará el build del compilador. Separar artificialmente funciones puede conseguir bytes, pero no prueba los límites históricos de TU y puede alterar pools, estáticos e instancias débiles.
+
+Para tus `FLAGS_SPLIT`, propongo estas pruebas **E1**:
+
+1. Congelar fuente, cabeceras, macros, orden y SHA del compilador antes del barrido.
+2. Guardar por función **el conjunto** de configuraciones que casan, incluyendo relocalizaciones y datos referenciados.
+3. Intersectar esos conjuntos por TU y verificar la TU completa. Un empate conserva varias explicaciones.
+4. Si la intersección queda vacía, ensayar pragmas locales y revisar splits, tipos, inlining y pools antes de atribuir múltiples compiladores.
+5. Validar la configuración elegida en funciones de esa TU que no participaron en la selección y finalmente en el enlace completo.
+
+Si una receta solo funciona para la función aislada, pero falla al reintegrarla con sus datos y vecinas, la clasificación `FLAGS_SPLIT` estará señalando dependencia del contexto, no necesariamente flags históricos distintos.
+
+(2)
+
+```jsonl
+{"gap":"G28","id":"G28-001","claim":"La configuración histórica no siempre es identificable de forma única desde los bytes.","compiler_build_or_flag":"-fp_contract on/off","binary_fingerprint":"Una función exclusivamente entera puede ser idéntica con ambas opciones.","prediction":"Con int f(){return 7;} y el resto fijo, on y off producirán los mismos bytes de función.","dtk_config_field":"cflags","source_url":"","evidence_grade":"E1","test":"Compilar ambas variantes y comparar bytes; un empate impide identificar este flag en esa función."}
+{"gap":"G28","id":"G28-002","claim":"La conversión ELF a DOL de dtk no conserva automáticamente metadatos ELF no asignables.","compiler_build_or_flag":"Cualquier mwcc","binary_fingerprint":"Cabecera DOL con secciones, BSS y entrada, sin identidad de compilador.","prediction":"Una .comment no asignable del ELF no aparecerá como sección conservada por elf2dol.","dtk_config_field":"Ninguno; formato del ejecutable","source_url":"https://github.com/encounter/decomp-toolkit/blob/main/src/cmd/elf2dol.rs","evidence_grade":"E3","test":"Inspeccionar líneas 39–125 y convertir un ELF de prueba que contenga .comment."}
+{"gap":"G28","id":"G28-003","claim":"Una .comment original informa de versión interna; una generada por dtk refleja configuración reconstruida.","compiler_build_or_flag":"Formato .comment de CodeWarrior","binary_fingerprint":"Magic CodeWarrior; formato en +0xB; versión interna y productor en +0xC.","prediction":"Cambiar mw_comment_version cambiará la sección sintetizada sin revelar un nuevo dato del DOL original.","dtk_config_field":"config.yml: mw_comment_version; splits.txt: comment","source_url":"https://github.com/encounter/dtk-template/blob/main/docs/comment_section.md","evidence_grade":"E3","test":"Leer offsets del objeto original, si existe, y distinguirlo explícitamente del objeto producido por dtk split."}
+{"gap":"G28","id":"G28-004","claim":"COMPILER_MAP traduce etiquetas GC a identificadores de decomp.me; no analiza instrucciones.","compiler_build_or_flag":"GC/1.x, GC/2.x, GC/3.x","binary_fingerprint":"Ninguna: es una tabla de configuración.","prediction":"GC/2.7 seleccionará mwcc_247_108; GC/3.0a3 seleccionará mwcc_41_51213.","dtk_config_field":"mw_version; objdiff.json: scratch.compiler","source_url":"https://github.com/encounter/dtk-template/blob/main/tools/project.py","evidence_grade":"E3","test":"Inspeccionar líneas 1602–1633 y regenerar objdiff.json con ambas etiquetas."}
+{"gap":"G28","id":"G28-005","claim":"Los nombres Wii requieren normalización; no equivalen necesariamente al número aparente del directorio.","compiler_build_or_flag":"Wii/0x4201_127; Wii/1.0–1.7","binary_fingerprint":"Ninguna firma de código demostrada por este catálogo.","prediction":"Wii/0x4201_127 se traducirá a mwcc_42_142; Wii/1.7, a mwcc_43_213.","dtk_config_field":"mw_version; scratch.compiler","source_url":"https://github.com/encounter/dtk-template/blob/main/tools/project.py","evidence_grade":"E3","test":"Comprobar COMPILER_MAP y registrar por separado el SHA-256 del ejecutable utilizado."}
+{"gap":"G28","id":"G28-006","claim":"Las opciones de objeto prevalecen sobre las de biblioteca y extra_cflags se añade al final.","compiler_build_or_flag":"Cualquier build configurado","binary_fingerprint":"No aplicable; determina la invocación que debe contrastarse.","prediction":"Object(..., mw_version=X, cflags=F, extra_cflags=E) utilizará X y la concatenación F+E.","dtk_config_field":"Object.mw_version; Object.cflags; Object.extra_cflags","source_url":"https://github.com/encounter/dtk-template/blob/main/tools/project.py","evidence_grade":"E3","test":"Inspeccionar Object.resolve y la generación de all_cflags; revisar el comando Ninja resultante."}
+{"gap":"G28","id":"G28-007","claim":"TP documenta una atribución provisional del compilador Wii basada en ensayos de matching.","compiler_build_or_flag":"GC/3.0a3 frente a compiladores Wii; -inline deferred,auto/noauto","binary_fingerprint":"Diferencias de matching entre funciones, sin firma universal publicada.","prediction":"Repetir los casos del PR debería mostrar funciones favorecidas por GC/3.0a3 y resultados distintos según inlining.","dtk_config_field":"mw_version; cflags_framework","source_url":"https://github.com/zeldaret/tp/pull/2505","evidence_grade":"E3","test":"Recuperar la revisión del PR y repetir comparaciones; no convertir sus observaciones provisionales en una identidad exacta."}
+{"gap":"G28","id":"G28-008","claim":"Petari cambió KPAD de Wii/1.0 a GC/3.0a3 conservando cflags_sdk; el informe registra 21 nuevos matches.","compiler_build_or_flag":"Wii/1.0 frente a GC/3.0a3","binary_fingerprint":"21 funciones KPAD al 100% en JPN/USA; .sdata2 todavía incompleta.","prediction":"Repetir las revisiones 51caa49 y d59970a reproducirá los nuevos matches comunicados, si se conserva el entorno.","dtk_config_field":"SDKLib_KPAD: mw_version","source_url":"https://github.com/SMGCommunity/Petari/pull/2145","evidence_grade":"E3","test":"Comparar ambas revisiones, con fuente y flags constantes, y verificar también .sdata2; resultado ajeno no reproducido aquí."}
+{"gap":"G28","id":"G28-009","claim":"SS configura familias de bibliotecas con compiladores diferentes.","compiler_build_or_flag":"Wii/1.5; Wii/1.3; Wii/1.6","binary_fingerprint":"No se publica en configure.py una firma discriminante.","prediction":"El generador usará Wii/1.5 para game_code, Wii/1.3 para NW4R por defecto y Wii/1.6 para snd.","dtk_config_field":"config.libs[].mw_version; nw4rLib(mw_version=...)","source_url":"https://github.com/zeldaret/ss/blob/main/configure.py","evidence_grade":"E3","test":"Examinar líneas 363–366, 410 y 1204 y los comandos generados; separar configuración declarada de atribución histórica."}
+{"gap":"G28","id":"G28-010","claim":"MKW configura compiladores distintos para HostSys y bibliotecas como TRK o arc.","compiler_build_or_flag":"Wii/0x4201_127 frente a GC/3.0a5.2","binary_fingerprint":"Ninguna firma universal especificada.","prediction":"HostSys invocará Wii/0x4201_127 y arc invocará GC/3.0a5.2.","dtk_config_field":"config.libs[].mw_version","source_url":"https://github.com/doldecomp/mkw/blob/main/configure.py","evidence_grade":"E3","test":"Revisar líneas 379–409 y las rutas de mwcceppc en Ninja."}
+{"gap":"G28","id":"G28-011","claim":"Petari permite un compilador diferente para un objeto dentro de una biblioteca.","compiler_build_or_flag":"GC/3.0a5 para Game/Animation/BckCtrl.cpp","binary_fingerprint":"La configuración por sí sola no demuestra matching.","prediction":"BckCtrl.cpp usará GC/3.0a5 aunque GameLib seleccione GC/3.0a3 para Wii.","dtk_config_field":"Object(..., mw_version=...)","source_url":"https://github.com/SMGCommunity/Petari/blob/main/configure.py","evidence_grade":"E3","test":"Revisar líneas 506 y 780; comprobar comando y estado del objeto, sin interpretar el override como match demostrado."}
+{"gap":"G28","id":"G28-012","claim":"Hipótesis para GC/Wii: optimizar por tamaño puede favorecer helpers de prólogo y epílogo.","compiler_build_or_flag":"-O4,s frente a -O4,p","binary_fingerprint":"Saltos o llamadas a helpers frente a salvados/restauraciones locales.","prediction":"En una función con suficientes registros preservados, s emitirá helpers donde p emitirá secuencias locales; pendiente de verificar por build.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf","evidence_grade":"E1","test":"Barrer presión de registros con helpers sin overrides; contrastar pp. 99 y 515/521. No exigir diferencia en funciones triviales."}
+{"gap":"G28","id":"G28-013","claim":"Hipótesis: auto permite integrar llamadas pequeñas que off conserva.","compiler_build_or_flag":"-inline auto frente a -inline off","binary_fingerprint":"Cuerpo integrado frente a bl o tail-call.","prediction":"Un helper pequeño con resultado utilizado se integrará con auto y permanecerá como llamada con off, si no hay otros controles.","dtk_config_field":"cflags; pragmas en fuente","source_url":"https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf","evidence_grade":"E1","test":"Ensayar un helper no declarado inline; impedir eliminación de la llamada y revisar también cambios de frame."}
+{"gap":"G28","id":"G28-014","claim":"Hipótesis: deferred permite inlining hacia definiciones posteriores; no es el opuesto de auto.","compiler_build_or_flag":"-inline deferred,auto frente a nodeferred,auto","binary_fingerprint":"Llamada a definición posterior conservada o integrada.","prediction":"Con deferred el helper posterior podrá integrarse; sin deferred permanecerá la llamada en un caso sensible al orden.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf","evidence_grade":"E1","test":"Intercambiar posiciones del helper y caller; mantener IPA fijo. Verificar que el build reconoce nodeferred."}
+{"gap":"G28","id":"G28-015","claim":"Hipótesis específica comprobable: fp_contract controla la fusión de una expresión multiplicación-suma ordinaria.","compiler_build_or_flag":"-fp_contract on/off; -fp hardware","binary_fingerprint":"fmadds frente a fmuls seguido de fadds.","prediction":"float f(float a,float b,float c){return a*b+c;} emitirá fmadds con on y operaciones separadas con off.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf","evidence_grade":"E1","test":"Compilar la expresión sin intrínsecos, asm ni pragmas; repetir en cada build candidato."}
+{"gap":"G28","id":"G28-016","claim":"Hipótesis: el umbral sdata cambia el acceso a un objeto mutable de tamaño conocido.","compiler_build_or_flag":"-sdata 8 frente a -sdata 0","binary_fingerprint":"lwz mediante r13 frente a dirección materializada.","prediction":"Un int global leído externamente usará SDA con 8 y acceso no-SDA con 0, sin atributos de sección.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf","evidence_grade":"E1","test":"Barrer objetos de 1,2,4,8,9,16 bytes; fijar pooling y comparar secciones y relocalizaciones."}
+{"gap":"G28","id":"G28-017","claim":"Hipótesis: sdata2 controla el direccionamiento de constantes pequeñas elegibles.","compiler_build_or_flag":"-sdata2 8 frente a -sdata2 0","binary_fingerprint":"lfs/lfd mediante r2 frente a carga con base materializada.","prediction":"Una constante float materializada elegible pasará de SDA2 a acceso no-SDA2 al bajar el umbral a cero.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf","evidence_grade":"E1","test":"Usar constantes cuya carga sobreviva; inspeccionar .sdata2/.rodata y excluir folding o sección forzada."}
+{"gap":"G28","id":"G28-018","claim":"Hipótesis: scheduling cambia órdenes legales para ocultar latencias.","compiler_build_or_flag":"-schedule on/off","binary_fingerprint":"Instrucciones independientes intercaladas entre carga y consumidor.","prediction":"En un probe sensible, on separará carga y uso donde off los deja próximos; no implica conservar el orden del C.","dtk_config_field":"cflags; pragma scheduling","source_url":"https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf","evidence_grade":"E1","test":"Fijar procesador, aliasing y build; usar varias cargas independientes y comparar órdenes."}
+{"gap":"G28","id":"G28-019","claim":"Hipótesis: use_lmw_stmw permite salvados múltiples cuando la función los necesita.","compiler_build_or_flag":"-use_lmw_stmw on/off","binary_fingerprint":"stmw/lmw frente a secuencias stw/lwz en prólogo/epílogo.","prediction":"Con suficientes GPR preservados y helpers desactivados, on emitirá múltiples; off emitirá salvados individuales.","dtk_config_field":"cflags; pragma use_lmw_stmw","source_url":"https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf","evidence_grade":"E1","test":"Forzar valores vivos a través de una llamada; excluir asm. Una función sin salvados puede ser idéntica."}
+{"gap":"G28","id":"G28-020","claim":"No está verificada una correspondencia única entre orden de salvado y build GC/Wii.","compiler_build_or_flag":"Cualquier build; presión de registros; inlining; scheduling","binary_fingerprint":"Orden stwu/mflr/stw, registros salvados y tamaño del frame.","prediction":"Con el mismo compilador y flags, cambiar valores vivos a través de llamadas modificará al menos algunos frames y salvados.","dtk_config_field":"Ninguno adicional; conservar configuración del ensayo","source_url":"","evidence_grade":"E1","test":"Construir una familia de funciones con presión creciente; buscar colisiones de huella entre builds y variaciones dentro de uno."}
+{"gap":"G28","id":"G28-021","claim":"Hipótesis: enum int/min discrimina almacenamiento cuando el rango cabe en un byte.","compiler_build_or_flag":"-enum int/min","binary_fingerprint":"lwz/stw frente a lbz/stb; cambios de sizeof y offsets.","prediction":"Para enum E{A=0,B=1}, int ocupará cuatro bytes; min podrá ocupar uno con el mínimo correspondiente.","dtk_config_field":"cflags","source_url":"https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf","evidence_grade":"E1","test":"Emitir sizeof(E) y leer un E volatile; fijar min_enum_size y alineación."}
+{"gap":"G28","id":"G28-022","claim":"Hipótesis: reuse, pool y readonly dejan huellas distintas.","compiler_build_or_flag":"-str reuse/noreuse,pool/nopool,readonly/noreadonly","binary_fingerprint":"Identidad de direcciones, agrupación y sección de cadenas.","prediction":"reuse compartirá literales iguales; pool agrupará distintos; readonly cambiará su ubicación respecto a noreadonly.","dtk_config_field":"cflags; extra_cflags","source_url":"https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf","evidence_grade":"E1","test":"Comparar ocho combinaciones con tres literales, dos iguales; usar el .o para excluir merging del linker."}
+{"gap":"G28","id":"G28-023","claim":"Hipótesis: RTTI se discrimina mejor con tipos polimórficos que mediante prólogos.","compiler_build_or_flag":"-RTTI on/off","binary_fingerprint":"Descriptores de tipos y referencias desde estructuras C++.","prediction":"Una clase polimórfica materializada tendrá metadatos RTTI con on que faltarán con off; un downcast dinámico puede ser rechazado con off.","dtk_config_field":"cflags; pragma RTTI","source_url":"https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf","evidence_grade":"E1","test":"Conservar instancia y vtable; comparar datos y relocalizaciones antes del deadstripping."}
+{"gap":"G28","id":"G28-024","claim":"SS documenta que la forma y ubicación de definiciones float cambia el acceso al pool.","compiler_build_or_flag":"Configuración del PR #351; fuente variable","binary_fingerprint":"Base de pool .rodata frente a acceso a miembros estáticos.","prediction":"En d_t_drum, restaurar la forma anterior volverá a introducir el acceso mediante base del pool comunicado por el autor.","dtk_config_field":"Sin cambio requerido de flags","source_url":"https://github.com/zeldaret/ss/pull/351","evidence_grade":"E3","test":"Comparar padre y revisión del PR, aislando la modificación de constantes; no generalizar a todas las TUs."}
+{"gap":"G28","id":"G28-025","claim":"TP representa niveles de optimización diferentes dentro de una sola TU mediante pragmas.","compiler_build_or_flag":"optimization_level 4 y 3; dont_inline on","binary_fingerprint":"No se documenta una secuencia universal; el alcance está explícito en fuente.","prediction":"daMP_MixAudio se compilará bajo nivel 3 y el pop restaurará el estado previo de d_a_movie_player.cpp.","dtk_config_field":"Pragmas en fuente; una sola configuración Object","source_url":"https://github.com/zeldaret/tp/blob/main/src/d/actor/d_a_movie_player.cpp","evidence_grade":"E3","test":"Inspeccionar líneas 8–15 y 3213–3300; retirar solo el bloque de pragmas y comparar la TU completa."}
+{"gap":"G28","id":"G28-026","claim":"TP contiene overrides de scheduling limitados a funciones.","compiler_build_or_flag":"#pragma scheduling off/reset","binary_fingerprint":"Orden local potencialmente distinto, sin cambiar ejecutable de compilador.","prediction":"GXReadGPMetric queda bajo scheduling off; tras reset se recupera el estado anterior.","dtk_config_field":"Pragmas en libs/dolphin/src/gx/GXPerf.c","source_url":"https://github.com/zeldaret/tp/blob/main/libs/dolphin/src/gx/GXPerf.c","evidence_grade":"E3","test":"Revisar líneas 182–286 y comparar con una variante sin ese override."}
+{"gap":"G28","id":"G28-027","claim":"Hipótesis: peephole elimina ciertas comparaciones o simplifica secuencias locales.","compiler_build_or_flag":"-opt peephole/nopeephole; #pragma peephole","binary_fingerprint":"Comparación separada frente a resultado que ya establece condición.","prediction":"En un probe sensible, on eliminará un cmp redundante que off conserva; la regla exacta depende del build.","dtk_config_field":"extra_cflags; pragma peephole","source_url":"https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf","evidence_grade":"E1","test":"Probar operación entera seguida de comparación con cero; rechazar el probe si ambos modos coinciden."}
+{"gap":"G28","id":"G28-028","claim":"TP utiliza peephole off/reset alrededor de __init_cpp.","compiler_build_or_flag":"#pragma peephole off/reset","binary_fingerprint":"El cambio de política se limita al tramo indicado.","prediction":"__init_cpp se procesará con peephole desactivado y _ExitProcess recuperará el estado previo.","dtk_config_field":"Pragmas en fuente","source_url":"https://github.com/zeldaret/tp/blob/main/libs/dolphin/src/os/__ppc_eabi_init.cpp","evidence_grade":"E3","test":"Inspeccionar líneas 22–34 y comparar generación al retirar exclusivamente los pragmas."}
+{"gap":"G28","id":"G28-029","claim":"SS registra una excepción de flags por objeto sin crear otra biblioteca.","compiler_build_or_flag":"-opt noloop","binary_fingerprint":"La configuración no especifica una firma universal.","prediction":"toBeSorted/d_scn_callback.cpp recibirá -opt noloop además de los flags de game_code.","dtk_config_field":"Object.extra_cflags","source_url":"https://github.com/zeldaret/ss/blob/main/configure.py","evidence_grade":"E3","test":"Revisar líneas 408–428 y comparar su invocación con la de un objeto vecino."}
+{"gap":"G28","id":"G28-030","claim":"La intersección de configuraciones por TU distingue compatibilidad conjunta de matches aislados.","compiler_build_or_flag":"Matriz build × flags × pragmas","binary_fingerprint":"Bytes, relocalizaciones y datos concordantes simultáneamente.","prediction":"Una configuración válida para toda la TU mantendrá los matches al reintegrar funciones; una dependiente del contexto podrá perderlos.","dtk_config_field":"mw_version y cflags por objeto; pragmas locales cuando proceda","source_url":"","evidence_grade":"E1","test":"Congelar fuente y entorno, conservar todos los candidatos, intersectar por TU y validar funciones reservadas y enlace final. Un conjunto vacío no prueba múltiples compiladores."}
+```

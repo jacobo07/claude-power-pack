@@ -1,0 +1,16 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. En Wii Sports Resort tengo 3,447 funciones en estado FLAGS_SPLIT: compilan, pero solo casan con otra versión del compilador u otros flags que el resto de su objeto. Necesito saber, desde el binario solo, qué build de mwcc y qué flags compiló cada unidad de traducción (TU) y cada función.
+
+Investiga a fondo:
+1. Cómo identifican los proyectos de decomp de GameCube/Wii la versión de CodeWarrior (GC 1.x/2.x/3.x, Wii 1.0-1.7, etc.) de cada TU: huellas de codegen, tablas de mwcc_version en dtk-template/configure.py, discusiones e issues donde se decidió.
+2. Huellas que discriminan flags: -O4,p frente a -O4,s; -inline auto/deferred/off; -fp_contract; umbrales -sdata/-sdata2; -schedule; -use_lmw_stmw; -enum int/min; -str pool/readonly; -RTTI; #pragma por función (optimization_level, scheduling, peephole). Para cada una: forma de prólogo/epílogo, uso de lmw/stmw, orden de guardado de registros, scheduling, colocación de constantes float, pooling de cadenas.
+3. Cómo registra la respuesta un configure.py de dtk (mw_version, cflags por objeto, objetos con flags distintos dentro de una librería) y cómo resuelven los proyectos una TU donde funciones distintas piden flags distintos.
+4. Ejemplos concretos en repos públicos (zeldaret/tp, ss, mkw, prime, petari/smg, etc.) con ruta de fichero y línea.
+
+Expresa cada afirmación como predicción falsable: "con X, mwcc emite Y; con X', emite Y'".
+
+Investiga con búsqueda web real y abre cada página que cites; lee el código fuente en GitHub (configure.py, issues, PRs) cuando exista. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 2000 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G28","id":"G28-001","claim":"","compiler_build_or_flag":"","binary_fingerprint":"","prediction":"","dtk_config_field":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G28. evidence_grade solo puede ser E1, E2 o E3.

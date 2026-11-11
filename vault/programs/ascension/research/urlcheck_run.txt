@@ -1,0 +1,6 @@
+﻿distinct urls 105, 200 OK 100, other 5
+  404 https://github.com/SMGCommunity/Petari/blob/main/configure.py rows=G28-011
+  404 https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf rows=G28-021,G28-022,G28-023
+  404 https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf rows=G28-012,G28-013,G28-014,G29-016
+  404 https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf rows=G28-018,G28-019,G28-027
+  404 https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf rows=G28-015,G28-016,G28-017

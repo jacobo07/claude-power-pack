@@ -1,0 +1,461 @@
+{
+ "status": {
+  "https://docs.hex-rays.com/8.4/user-guide/signatures/flirt/ida-f.l.i.r.t.-technology-in-depth": "200",
+  "https://ftp.gwdg.de/pub/linux/sources.redhat.com/binutils/ppc-docs/ppc-sysv-1995-09.pdf": "200",
+  "https://github.com/MarkMcCaskey/decomp-scripts/blob/main/mwcc-compiler-notes.md": "200",
+  "https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/FunctionID/src/main/doc/fid.xml": "200",
+  "https://github.com/SMGCommunity/Petari/blob/main/configure.py": "404",
+  "https://github.com/SMGCommunity/Petari/blob/master/config/RMGE01/splits.txt": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/configure.py": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/src/MetroTRK/debugger/embedded/MetroTRK/Portable/nubinit.c": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/gx/GXInit.c": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/kpad/KPAD.c": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/os/OS.c": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/vi/vi.c": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/wpad/WPAD.c": "200",
+  "https://github.com/SMGCommunity/Petari/commit/3b7761dc9c8ef5ea95d0df4e7070cec24b15e407": "200",
+  "https://github.com/SMGCommunity/Petari/commit/a24dc3d1b8cb3af4f3666677b9544e46b1139749": "200",
+  "https://github.com/SMGCommunity/Petari/pull/2145": "200",
+  "https://github.com/Swiftshine/kdc/blob/main/configure.py": "200",
+  "https://github.com/cadmic/mwcc-debugger/blob/main/mwcc_debugger.py": "200",
+  "https://github.com/doldecomp/mkw/blob/main/configure.py": "200",
+  "https://github.com/doldecomp/ogws/blob/master/config/RSPE01_01/splits.txt": "200",
+  "https://github.com/doldecomp/ogws/blob/master/configure.py": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/homebuttonMiniLib/HBMBase.cpp": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/nw4r/ef/ef_effectsystem.cpp": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/nw4r/g3d/g3d_init.cpp": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/nw4r/lyt/lyt_init.cpp": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/nw4r/snd/snd_SoundSystem.cpp": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/AX/AX.c": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/DVD/dvd.c": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/NAND/NANDCore.c": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/OS/OS.c": "200",
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/SC/scsystem.c": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/main/src/cmd/elf2dol.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/main/src/util/signatures.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/README.md": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/analysis/cfa.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/analysis/slices.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/analysis/tracker.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/cmd/dol.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/obj/splits.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/util/dol.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/util/map.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/util/split.rs": "200",
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.1": "200",
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.2": "200",
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.3": "200",
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.4": "200",
+  "https://github.com/encounter/dtk-template/blob/main/config/GAMEID/config.example.yml": "200",
+  "https://github.com/encounter/dtk-template/blob/main/configure.py": "200",
+  "https://github.com/encounter/dtk-template/blob/main/docs/comment_section.md": "200",
+  "https://github.com/encounter/dtk-template/blob/main/docs/common_bss.md": "200",
+  "https://github.com/encounter/dtk-template/blob/main/docs/getting_started.md": "200",
+  "https://github.com/encounter/dtk-template/blob/main/docs/symbols.md": "200",
+  "https://github.com/encounter/dtk-template/blob/main/tools/project.py": "200",
+  "https://github.com/koopthekoopa/RFL/blob/main/README.md": "200",
+  "https://github.com/pbr-ret/pbr-decomp/blob/main/CONTRIBUTING.md": "200",
+  "https://github.com/pbr-ret/pbr-decomp/blob/main/docs/matching-notes.md": "200",
+  "https://github.com/pbr-ret/pbr-decomp/blob/main/tools/qa/check.py": "200",
+  "https://github.com/rayanht/mwcc/blob/main/src/backend/Coloring.c": "200",
+  "https://github.com/rayanht/mwcc/blob/main/src/backend/InterferenceGraph.c": "200",
+  "https://github.com/rayanht/mwcc/blob/main/src/backend/Registers.c": "200",
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/README.md": "200",
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/default_weights.toml": "200",
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/example_settings.toml": "200",
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/src/objdump.py": "200",
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/src/randomizer.py": "200",
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/src/scorer.py": "200",
+  "https://github.com/vabold/EGG/blob/main/configure.py": "200",
+  "https://github.com/vabold/sdk_2009-12-11/blob/main/configure.py": "200",
+  "https://github.com/vabold/sdk_2009-12-11/blob/main/source/kpad/KPAD.c": "200",
+  "https://github.com/vabold/sdk_2009-12-11/blob/main/source/wpad/WPAD.c": "200",
+  "https://github.com/zeldaret/ss/blob/main/config/SOUE01/splits.txt": "200",
+  "https://github.com/zeldaret/ss/blob/main/configure.py": "200",
+  "https://github.com/zeldaret/ss/blob/main/src/nw4r/g3d/g3d_init.cpp": "200",
+  "https://github.com/zeldaret/ss/blob/main/src/nw4r/lyt/lyt_init.cpp": "200",
+  "https://github.com/zeldaret/ss/blob/main/src/nw4r/snd/snd_SoundSystem.cpp": "200",
+  "https://github.com/zeldaret/ss/commit/5477b7b547b02dbc83541a2177709dbc75288d0e": "200",
+  "https://github.com/zeldaret/ss/commit/bed178f1e6fbba9ebb9eb23f182d920c3afbdaae": "200",
+  "https://github.com/zeldaret/ss/commit/f50222e997df9b8f4e7511fda7b2cac9b7a7edb9": "200",
+  "https://github.com/zeldaret/ss/pull/351": "200",
+  "https://github.com/zeldaret/tp/blob/main/libs/dolphin/src/gx/GXPerf.c": "200",
+  "https://github.com/zeldaret/tp/blob/main/libs/dolphin/src/os/__ppc_eabi_init.cpp": "200",
+  "https://github.com/zeldaret/tp/blob/main/src/d/actor/d_a_movie_player.cpp": "200",
+  "https://github.com/zeldaret/tp/blob/main/tools/utilities/weak_order_diff.py": "200",
+  "https://github.com/zeldaret/tp/pull/2505": "200",
+  "https://powerpc.dev/general/powerpc-cwg.pdf": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/CMachine.c": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/CodeGen.c": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/InstrSelection.c": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/Intrinsics.c": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/Operands.c": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/StackFrame.c": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/Switch.c": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/optimizer/FunctionCalls.c": "200",
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/optimizer/StructMoves.c": "200",
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/gcc-division/mwcc-o4p.s": "200",
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/gcc-division/mwcc27-o4p.s": "200",
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/rlwimi/mwcc-o4p.s": "200",
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/struct-copy/mwcc-o4p.s": "200",
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/struct-copy2/mwcc-o4p.s": "200",
+  "https://raw.githubusercontent.com/rayanht/mwcc/main/src/backend/InstrSelection.c": "200",
+  "https://raw.githubusercontent.com/rayanht/mwcc/main/src/backend/Switch.c": "200",
+  "https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf": "404",
+  "https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf": "404",
+  "https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf": "404",
+  "https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf": "404"
+ },
+ "rows": {
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/cmd/dol.rs": [
+   "G12-002"
+  ],
+  "https://github.com/encounter/dtk-template/blob/main/config/GAMEID/config.example.yml": [
+   "G12-003",
+   "G12-014",
+   "G12-028"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/obj/splits.rs": [
+   "G12-004"
+  ],
+  "https://github.com/encounter/dtk-template/blob/main/docs/symbols.md": [
+   "G12-005"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/analysis/cfa.rs": [
+   "G12-006"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/analysis/slices.rs": [
+   "G12-007"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/util/dol.rs": [
+   "G12-008"
+  ],
+  "https://github.com/encounter/dtk-template/blob/main/docs/getting_started.md": [
+   "G12-009"
+  ],
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.2": [
+   "G12-010"
+  ],
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.3": [
+   "G12-011"
+  ],
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.4": [
+   "G12-012"
+  ],
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.1": [
+   "G12-013"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/util/map.rs": [
+   "G12-015"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/README.md": [
+   "G12-016"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/analysis/tracker.rs": [
+   "G12-018"
+  ],
+  "https://github.com/encounter/dtk-template/blob/main/docs/common_bss.md": [
+   "G12-020"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/v1.8.4/src/util/split.rs": [
+   "G12-021"
+  ],
+  "https://github.com/encounter/dtk-template/blob/main/configure.py": [
+   "G12-022"
+  ],
+  "https://github.com/encounter/dtk-template/blob/main/tools/project.py": [
+   "G12-023",
+   "G28-004",
+   "G28-005",
+   "G28-006"
+  ],
+  "https://github.com/pbr-ret/pbr-decomp/blob/main/docs/matching-notes.md": [
+   "G12-024"
+  ],
+  "https://github.com/pbr-ret/pbr-decomp/blob/main/tools/qa/check.py": [
+   "G12-025"
+  ],
+  "https://github.com/zeldaret/tp/blob/main/tools/utilities/weak_order_diff.py": [
+   "G12-026"
+  ],
+  "https://github.com/pbr-ret/pbr-decomp/blob/main/CONTRIBUTING.md": [
+   "G12-027"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/AX/AX.c": [
+   "G19-001",
+   "G19-004"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/DVD/dvd.c": [
+   "G19-002",
+   "G19-005"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/OS/OS.c": [
+   "G19-003"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/SC/scsystem.c": [
+   "G19-006",
+   "G19-007"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/revolution/NAND/NANDCore.c": [
+   "G19-008"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/os/OS.c": [
+   "G19-009",
+   "G19-010"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/gx/GXInit.c": [
+   "G19-011",
+   "G19-012"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/vi/vi.c": [
+   "G19-013"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/configure.py": [
+   "G19-014",
+   "G19-031",
+   "G19-032"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/wpad/WPAD.c": [
+   "G19-015"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/kpad/KPAD.c": [
+   "G19-016",
+   "G19-017"
+  ],
+  "https://github.com/vabold/sdk_2009-12-11/blob/main/source/kpad/KPAD.c": [
+   "G19-018"
+  ],
+  "https://github.com/vabold/sdk_2009-12-11/blob/main/source/wpad/WPAD.c": [
+   "G19-019"
+  ],
+  "https://github.com/vabold/sdk_2009-12-11/blob/main/configure.py": [
+   "G19-020"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/nw4r/g3d/g3d_init.cpp": [
+   "G19-021"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/nw4r/lyt/lyt_init.cpp": [
+   "G19-022"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/nw4r/snd/snd_SoundSystem.cpp": [
+   "G19-023"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/nw4r/ef/ef_effectsystem.cpp": [
+   "G19-024"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/configure.py": [
+   "G19-025",
+   "G19-026"
+  ],
+  "https://github.com/zeldaret/ss/blob/main/src/nw4r/g3d/g3d_init.cpp": [
+   "G19-027"
+  ],
+  "https://github.com/zeldaret/ss/blob/main/src/nw4r/lyt/lyt_init.cpp": [
+   "G19-028"
+  ],
+  "https://github.com/zeldaret/ss/blob/main/src/nw4r/snd/snd_SoundSystem.cpp": [
+   "G19-029"
+  ],
+  "https://github.com/vabold/EGG/blob/main/configure.py": [
+   "G19-030"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/src/MetroTRK/debugger/embedded/MetroTRK/Portable/nubinit.c": [
+   "G19-033"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/src/homebuttonMiniLib/HBMBase.cpp": [
+   "G19-034"
+  ],
+  "https://github.com/koopthekoopa/RFL/blob/main/README.md": [
+   "G19-035",
+   "G19-036",
+   "G19-037"
+  ],
+  "https://github.com/Swiftshine/kdc/blob/main/configure.py": [
+   "G19-038"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/main/src/util/signatures.rs": [
+   "G19-040"
+  ],
+  "https://docs.hex-rays.com/8.4/user-guide/signatures/flirt/ida-f.l.i.r.t.-technology-in-depth": [
+   "G19-041"
+  ],
+  "https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/FunctionID/src/main/doc/fid.xml": [
+   "G19-042"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/config/RMGE01/splits.txt": [
+   "G19-043"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/config/RSPE01_01/splits.txt": [
+   "G19-044"
+  ],
+  "https://github.com/zeldaret/ss/blob/main/config/SOUE01/splits.txt": [
+   "G19-045"
+  ],
+  "https://raw.githubusercontent.com/rayanht/mwcc/main/src/backend/Switch.c": [
+   "G26-001"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/Switch.c": [
+   "G26-002",
+   "G26-003"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/Operands.c": [
+   "G26-004",
+   "G26-005"
+  ],
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/rlwimi/mwcc-o4p.s": [
+   "G26-006"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/CMachine.c": [
+   "G26-007",
+   "G26-015"
+  ],
+  "https://ftp.gwdg.de/pub/linux/sources.redhat.com/binutils/ppc-docs/ppc-sysv-1995-09.pdf": [
+   "G26-008",
+   "G26-014"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/StackFrame.c": [
+   "G26-009"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/Intrinsics.c": [
+   "G26-010"
+  ],
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/struct-copy2/mwcc-o4p.s": [
+   "G26-011"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/optimizer/StructMoves.c": [
+   "G26-012"
+  ],
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/struct-copy/mwcc-o4p.s": [
+   "G26-013"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/optimizer/FunctionCalls.c": [
+   "G26-016"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/InstrSelection.c": [
+   "G26-017",
+   "G26-024"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/mweppc/919828d97d33d236da675824d43c5d57332afe74/src/compiler/backend/CodeGen.c": [
+   "G26-018"
+  ],
+  "https://raw.githubusercontent.com/rayanht/mwcc/main/src/backend/InstrSelection.c": [
+   "G26-019",
+   "G26-023"
+  ],
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/gcc-division/mwcc27-o4p.s": [
+   "G26-020"
+  ],
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/tests/end_to_end/gcc-division/mwcc-o4p.s": [
+   "G26-021"
+  ],
+  "https://powerpc.dev/general/powerpc-cwg.pdf": [
+   "G26-022"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/main/src/cmd/elf2dol.rs": [
+   "G28-002"
+  ],
+  "https://github.com/encounter/dtk-template/blob/main/docs/comment_section.md": [
+   "G28-003"
+  ],
+  "https://github.com/zeldaret/tp/pull/2505": [
+   "G28-007"
+  ],
+  "https://github.com/SMGCommunity/Petari/pull/2145": [
+   "G28-008"
+  ],
+  "https://github.com/zeldaret/ss/blob/main/configure.py": [
+   "G28-009",
+   "G28-029"
+  ],
+  "https://github.com/doldecomp/mkw/blob/main/configure.py": [
+   "G28-010"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/main/configure.py": [
+   "G28-011"
+  ],
+  "https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf": [
+   "G28-012",
+   "G28-013",
+   "G28-014",
+   "G29-016"
+  ],
+  "https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf": [
+   "G28-015",
+   "G28-016",
+   "G28-017"
+  ],
+  "https://www.nxp.com/docs/en/user-guide/EPPCUG.pdf": [
+   "G28-018",
+   "G28-019",
+   "G28-027"
+  ],
+  "https://www.nxp.com/docs/en/reference-manual/CWMCUPABTR.pdf": [
+   "G28-021",
+   "G28-022",
+   "G28-023"
+  ],
+  "https://github.com/zeldaret/ss/pull/351": [
+   "G28-024"
+  ],
+  "https://github.com/zeldaret/tp/blob/main/src/d/actor/d_a_movie_player.cpp": [
+   "G28-025"
+  ],
+  "https://github.com/zeldaret/tp/blob/main/libs/dolphin/src/gx/GXPerf.c": [
+   "G28-026"
+  ],
+  "https://github.com/zeldaret/tp/blob/main/libs/dolphin/src/os/__ppc_eabi_init.cpp": [
+   "G28-028"
+  ],
+  "https://github.com/rayanht/mwcc/blob/main/src/backend/Coloring.c": [
+   "G29-001"
+  ],
+  "https://github.com/rayanht/mwcc/blob/main/src/backend/Registers.c": [
+   "G29-002",
+   "G29-003"
+  ],
+  "https://github.com/rayanht/mwcc/blob/main/src/backend/InterferenceGraph.c": [
+   "G29-004",
+   "G29-005"
+  ],
+  "https://github.com/MarkMcCaskey/decomp-scripts/blob/main/mwcc-compiler-notes.md": [
+   "G29-008",
+   "G29-015"
+  ],
+  "https://github.com/zeldaret/ss/commit/f50222e997df9b8f4e7511fda7b2cac9b7a7edb9": [
+   "G29-010"
+  ],
+  "https://github.com/SMGCommunity/Petari/commit/a24dc3d1b8cb3af4f3666677b9544e46b1139749": [
+   "G29-011"
+  ],
+  "https://github.com/zeldaret/ss/commit/bed178f1e6fbba9ebb9eb23f182d920c3afbdaae": [
+   "G29-012"
+  ],
+  "https://github.com/zeldaret/ss/commit/5477b7b547b02dbc83541a2177709dbc75288d0e": [
+   "G29-013"
+  ],
+  "https://github.com/SMGCommunity/Petari/commit/3b7761dc9c8ef5ea95d0df4e7070cec24b15e407": [
+   "G29-014"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/example_settings.toml": [
+   "G29-018"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/default_weights.toml": [
+   "G29-019"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/src/randomizer.py": [
+   "G29-020"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/README.md": [
+   "G29-021"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/src/objdump.py": [
+   "G29-022"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/src/scorer.py": [
+   "G29-023"
+  ],
+  "https://github.com/cadmic/mwcc-debugger/blob/main/mwcc_debugger.py": [
+   "G29-024"
+  ]
+ }
+}

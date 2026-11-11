@@ -1,0 +1,6 @@
+﻿model=gpt-6-astra effort=high todo=['G28', 'G29', 'G19', 'G26', 'G12']
+G28: OK 30 rows, 0 unparsable lines
+G29: OK 25 rows, 0 unparsable lines
+G19: OK 45 rows, 0 unparsable lines
+G26: OK 24 rows, 0 unparsable lines
+G12: OK 29 rows, 0 unparsable lines

@@ -1,0 +1,497 @@
+OpenAI Codex v0.153.4
+--------
+[1mworkdir:[0m C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research
+[1mmodel:[0m gpt-6-astra
+[1mprovider:[0m openai
+[1mapproval:[0m never
+[1msandbox:[0m read-only
+[1mreasoning effort:[0m high
+[1mreasoning summaries:[0m none
+[1msession id:[0m 01a1cc95-5a0c-7303-85a7-1897bd57d2ae
+--------
+[36muser[0m
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Una gran parte del DOL es código de librería (RVL SDK: OS, GX, VI, PAD, WPAD, KPAD, DVD, NAND, AX, SC, WENC; NW4R: g3d, lyt, snd, ut, math, ef; EGG; MSL_C; Runtime.PPCEABI.H; MetroTRK; HomeButtonMenu; RVLFaceLib). Quiero restar esa masa conocida antes de gastar esfuerzo en código de juego.
+
+Investiga a fondo:
+1. Versiones de cada librería distribuidas a lo largo de la vida de la Wii (2006-2012), cómo se identifica la versión desde cadenas embebidas en el DOL (p. ej. "<< RVL_SDK - OS release build: ... >>") y qué juegos usan cuál.
+2. Qué proyectos públicos clean-room tienen matcheadas esas librerías y en qué versión.
+3. Herramientas para detectar librerías por firma (dtk signatures, FLIRT-like, Ghidra FID) y su precisión.
+4. Estimación de qué fracción típica del .text de un juego Wii es librería.
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1800 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G19","id":"G19-001","library":"","module":"","version_string":"","games":[],"matched_in_project":"","detection_method":"","source_url":"","evidence_grade":""}. Todos los ids deben empezar por G19. evidence_grade solo puede ser E1, E2 o E3.
+
+[2m2026-11-11T21:48:30.047209Z[0m [31mERROR[0m [2mrmcp::transport::worker[0m[2m:[0m worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer realm=\"OAuth\", resource_metadata=\"https://mcp.notion.com/.well-known/oauth-protected-resource/mcp\", scope=\"default\"" })
+[35m[3mcodex[0m[0m
+Voy a contrastar repositorios públicos y documentación de herramientas, separando las versiones identificadas por cadenas de las que tienen evidencia de matching. También comprobaré si hay datos para estimar el peso de las librerías en `.text`; marcaré las lagunas como no verificadas.
+
+[1mweb search:[0m 
+[1mweb search:[0m github doldecomp RVL SDK OS release build Wii ...
+[1mweb search:[0m 
+[1mweb search:[0m site:github.com "RVL_SDK" "release build" "OS" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m site:github.com NW4R "1.2" decompilation ...
+[35m[3mcodex[0m[0m
+Las fuentes ya muestran dos precauciones importantes: Wii Sports tiene revisiones con builds distintas, y `dtk` reconoce un conjunto concreto de funciones SDK/Metrowerks, no todas las librerías. Estoy cruzando las cadenas de versión con los archivos marcados como matching para no confundir «identificado» con «reconstruido».
+
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m "RVL_SDK" "release build" "2010" github ...
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m "Wii" "decompilation" "SDK" "version" "4.3" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m https://docs.hex-rays.com/8.4/user-guide/signatures/flirt/ida-f.l.i.r.t.-technology-in-depth
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[35m[3mcodex[0m[0m
+He confirmado que la versión debe registrarse por módulo y región: en Galaxy cambian OS, GX y KPAD entre las ediciones occidentales y la coreana. El campo hexadecimal de la cadena corresponde al compilador, no al número de versión del SDK. También he encontrado un proyecto EGG que abarca varios juegos; ahora estoy sumando rangos de `.text` de los mapas públicos para obtener una estimación trazable.
+
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m "RVL_SDK" "3.1" decomp ...
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m site:github.com/NationalSecurityAgency/ghidra "functionID.xml" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m ghidra Function ID full hash specific hash false positives official documentation
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m "hbm_2009-12-10" github -site:githubhelp.com -site:ghe.derekchia.com ...
+[1mweb search:[0m 
+[1mweb search:[0m https://hex-rays.com/blog/ida-9.5-release
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m 'FLIRT 2.0 signatures also' in https://hex-rays.com/blog/ida-9.5-release
+[35m[3mcodex[0m[0m
+Los mapas examinados atribuyen a las familias de librerías solicitadas aproximadamente el 16,4 % de `.text` en Galaxy, el 44,9 % en Wii Sports y el 27,8 % en Skyward Sword. Son cálculos sobre mapas públicos, no porcentajes de C ya matcheado ni una media representativa de Wii. También encontré reconstrucciones de KPAD/WPAD de diciembre de 2009 y de RFL basadas en objetos distribuidos dentro de un juego comercial.
+
+[35m[3mcodex[0m[0m
+**Puedes apartar una masa considerable de código de librería, pero conviene mantener dos contadores: bytes identificados como librería y bytes reconstruidos mediante C/C++ matching.** Las firmas permiten avanzar en el primero; únicamente tu compilación y comparación permiten incrementar el segundo.
+
+Escala aplicada: **E1 = sin fuente o inferencia propia; E2 = fuente secundaria; E3 = fuente primaria abierta y leída; E4 = reproducido compilando con mwcc.** No asigno E4. Los estados de matching siguientes son declaraciones de los proyectos y sus configuraciones, no compilaciones realizadas por mí.
+
+No he consultado ni enlazado código filtrado del SDK. **No he podido verificar un catálogo exhaustivo de todas las distribuciones de 2006–2012**: lo recuperable públicamente es un conjunto de builds por módulo, juego y revisión. Convertirlo en una cronología completa de versiones comerciales sería inventar información.
+
+Para identificar versiones, conserva la cadena completa y extrae separadamente familia, módulo, modalidad, fecha, hora y compilador. Los formatos documentados por las reconstrucciones son `<< RVL_SDK - … release build: … >>` y `<< NW4R … final … build: … >>`. El sufijo hexadecimal procede de `__CWCC__` y `__CWBUILD__`; **no es la versión del SDK**. [Formato RVL](https://github.com/doldecomp/ogws/blob/master/include/revolution/version.h), [formato NW4R](https://github.com/doldecomp/ogws/blob/master/include/nw4r/types_nw4r.h), [macros del compilador en WPAD](https://github.com/vabold/sdk_2009-12-11/blob/main/source/wpad/WPAD.c). **E3.**
+
+Como procedimiento **E1**, busca cadenas ASCII con un patrón tolerante a espacios y tabuladores, por ejemplo `<<[^\r\n<>]*(RVL_SDK|NW4R)[^\r\n<>]*>>`, y sigue sus referencias hasta inicializadores y `OSRegisterVersion`. Registra también región, revisión y hash del ejecutable. Una cadena identifica un build declarado; no demuestra por sí sola la versión de todos los objetos enlazados.
+
+Hay además una limitación importante: el proyecto Wii Menu indica que sus fechas SDK reflejan recompilaciones del programa. Su atribución a un SDK de principios de 2008 es expresamente una conjetura. Por tanto, fecha del banner, fecha de distribución y revisión del código fuente deben permanecer separadas. [README del SDK de Wii Menu](https://github.com/koopthekoopa/wii-ipl/blob/main/libs/RVL_SDK/README.md). **E3 para la declaración; E1 para esa atribución histórica.**
+
+Los puntos cronológicos mejor sustentados son:
+
+| Periodo | Evidencia recuperada |
+|---|---|
+| 2006 | Wii Sports distingue AX de octubre de 2006 y DVD de septiembre de 2006 en `RSPE01_00`. [AX](https://github.com/doldecomp/ogws/blob/master/src/revolution/AX/AX.c), [DVD](https://github.com/doldecomp/ogws/blob/master/src/revolution/DVD/dvd.c). **E3** |
+| 2007 | Wii Sports revisión 1 combina builds de distintos meses; no tiene una única fecha SDK. Galaxy occidental declara OS de agosto de 2007. [OS de Sports](https://github.com/doldecomp/ogws/blob/master/src/revolution/OS/OS.c), [OS de Galaxy](https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/os/OS.c). **E3** |
+| 2008 | Galaxy coreano cambia OS a enero de 2008 y KPAD a junio; las regiones occidentales conservan builds anteriores. [KPAD](https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/kpad/KPAD.c). **E3** |
+| 2009 | Existe una reconstrucción del SDK de **11-12-2009**, contrastada por el proyecto con archivos Debug/Release incluidos en *Challenge Me: Word Puzzles*, `SC5PGN`. [Procedencia y construcción](https://github.com/vabold/sdk_2009-12-11/blob/main/README.md). **E3** |
+| 2010–2011 | Skyward Sword declara NW4R G3D de diciembre de 2009 y LYT de marzo de 2010. SND contiene una fecha de septiembre de 2011, aunque la llamada de registro está comentada: no la doy por verificada en el DOL. [G3D](https://github.com/zeldaret/ss/blob/main/src/nw4r/g3d/g3d_init.cpp), [LYT](https://github.com/zeldaret/ss/blob/main/src/nw4r/lyt/lyt_init.cpp), [SND](https://github.com/zeldaret/ss/blob/main/src/nw4r/snd/snd_SoundSystem.cpp). **E3 sobre los archivos** |
+| 2012 | KDC contiene candidatos de builds anteriores, pero su configuración deja OS como `NonMatching` comentado. No acredita una nueva distribución SDK de 2012. [Configuración](https://github.com/Swiftshine/kdc/blob/main/configure.py). **E3; atribución al binario no verificada** |
+
+Para reutilizar trabajo, priorizaría estos proyectos:
+
+| Proyecto | Alcance comprobado y límites |
+|---|---|
+| **doldecomp/ogws** | Política explícita contra filtraciones. Objetos matching de OS, PAD, NAND, AX, DVD, SC, WENC, NW4R, EGG, HBM y RFL; otros siguen pendientes y algunos dependen de revisión. [Política](https://github.com/doldecomp/ogws/blob/master/README.md), [estados por objeto](https://github.com/doldecomp/ogws/blob/master/configure.py). **E3** |
+| **SMGCommunity/Petari** | Particularmente útil para RVL 2007/2008, MSL_C, Runtime y MetroTRK. OS/GX/VI están marcados matching para las versiones Wii; KPAD y WPAD tienen restricciones regionales. [Configuración](https://github.com/SMGCommunity/Petari/blob/master/configure.py). **E3** |
+| **vabold/sdk_2009-12-11** | KPAD, componentes MotionPlus, WENC y varios objetos WPAD aparecen matching en Debug y Release. No significa SDK completo: muchas entradas permanecen `NonMatching`. [Configuración](https://github.com/vabold/sdk_2009-12-11/blob/main/configure.py). **E3** |
+| **koopthekoopa/RFL** | Declara release plenamente matching; contempla `20070609`, `20080216` y `20080306`, pero solo admite construir esta última. Debug conserva dos funciones pendientes. [README](https://github.com/koopthekoopa/RFL/blob/main/README.md). **E3** |
+| **zeldaret/ss** | Objetos matching de NW4R y EGG para `SOUE01`; no asumir RVL completo: inicializadores SDK importantes siguen `NonMatching`. [Configuración](https://github.com/zeldaret/ss/blob/main/configure.py). **E3** |
+| **vabold/EGG** | Soporta trece variantes de juegos, pero la configuración examinada solo marca explícitamente `eggDisposer.cpp` como matching de EGG. Sus valores `EGG_VERSION` son etiquetas del proyecto basadas en fechas, no banners oficiales. [Juegos](https://github.com/vabold/EGG/blob/main/README.md), [configuración](https://github.com/vabold/EGG/blob/main/configure.py). **E3** |
+| **kiwi515/open_rvl** | Política explícita contra filtraciones; compara hashes de código/datos sin resolver referencias externas mediante enlace. Útil como antecedente, insuficiente para acreditar identidad final del DOL. [README](https://github.com/kiwi515/open_rvl/blob/master/README.md). **E3** |
+
+La procedencia clean-room está declarada explícitamente en ogws/open_rvl. Para los demás, he comprobado documentación de reconstrucción y estados de matching; **no he auditado toda su historia de contribuciones**.
+
+En detección:
+
+| Herramienta | Capacidad y precisión comprobables |
+|---|---|
+| **dtk** | Integra firmas de funciones/objetos comunes SDK y Metrowerks. Compara palabras de instrucciones con máscaras y puede aplicar símbolos, referencias y splits. Úsalo mediante su análisis normal, por ejemplo `dtk dol info`; no presupongas un catálogo exhaustivo llamado `dtk signatures`. [Documentación](https://github.com/encounter/decomp-toolkit/blob/main/README.md), [implementación](https://github.com/encounter/decomp-toolkit/blob/main/src/util/signatures.rs). **E3** |
+| **FLIRT** | El algoritmo clásico combina patrones, bytes variables, CRC y desambiguación; reconoce limitaciones con funciones pequeñas o idénticas. `makesig` permite crear firmas y gestionar colisiones. [Algoritmo](https://docs.hex-rays.com/8.4/user-guide/signatures/flirt/ida-f.l.i.r.t.-technology-in-depth), [generación](https://docs.hex-rays.com/9.0/user-guide/signatures/flirt/generate-flirt-signature-file). **E3** |
+| **Ghidra FID** | Usa dos hashes de 64 bits y relaciones entre funciones. Tolera relocación, pero cambios de compilación pueden impedir reconocimiento. Puede identificar nombre sin distinguir versión. Las bases predeterminadas documentadas son Visual Studio/x86: necesitas un corpus adecuado para Broadway. [Manual oficial](https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/FunctionID/src/main/doc/fid.xml). **E3** |
+
+**No encontré un benchmark Wii/mwcc que permita asignar porcentajes de precisión o cobertura a estas herramientas.** Tampoco verifiqué una base pública completa, con procedencia limpia, de todas las versiones solicitadas. **E1: lagunas de esta investigación.**
+
+Mi recomendación **E1** es construir firmas desde objetos de reconstrucciones verificadas o material de depuración distribuido en juegos, conservar variantes de compilador/flags y exigir coherencia de llamadas y datos. Una coincidencia con operandos enmascarados nunca sustituye la comparación final enlazada.
+
+Para estimar volumen, sumé intervalos `.text` atribuidos a las familias solicitadas en tres `splits.txt`, sin solapamientos. El denominador es su extensión completa cartografiada; incluye huecos de alineación. **Son cálculos propios E1 sobre fuentes E3**, no mediciones de matching:
+
+| Juego | Bytes atribuidos / extensión `.text` | Fracción |
+|---|---:|---:|
+| Galaxy, `RMGE01` | 885.944 / 5.398.992 | **16,4 %** |
+| Wii Sports, `RSPE01_01` | 1.556.600 / 3.463.580 | **44,9 %** |
+| Skyward Sword, `SOUE01` | 1.409.992 / 5.065.240 | **27,8 %** |
+
+Fuentes abiertas: [Galaxy](https://github.com/SMGCommunity/Petari/blob/master/config/RMGE01/splits.txt), [Wii Sports](https://github.com/doldecomp/ogws/blob/master/config/RSPE01_01/splits.txt), [Skyward Sword](https://github.com/zeldaret/ss/blob/main/config/SOUE01/splits.txt).
+
+Incluí los directorios SDK completos, NW4R, EGG, HBM/RFL y soporte Metrowerks donde aparecen; excluí JSystem y otras bibliotecas ajenas a la lista. Excluí REL y datos. Por ello, **15–45 % sirve como intervalo provisional para presupuestar estos casos, no como media poblacional de Wii**. La organización DOL/REL puede alterar mucho el resultado. Para tu juego, calcula la unión de intervalos identificados y publica aparte la fracción realmente reconstruida.
+
+En el JSONL, `version_string` contiene un fragmento literal identificador cuando existe; vacío significa que no verifiqué una cadena. Las fechas numéricas de RFL son identificadores publicados por su proyecto. “Matching” siempre significa **declarado por el proyecto para el objeto o alcance indicado**.
+
+```jsonl
+{"gap":"G19","id":"G19-001","library":"RVL SDK","module":"AX","version_string":"Oct  1 2006 03:26:07 (0x4200_60422)","games":["Wii Sports RSPE01_00"],"matched_in_project":"doldecomp/ogws: AX.c marcado Matching","detection_method":"Cadena condicionada por VERSION_RSPE01_00; estado contrastado con configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/AX/AX.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-002","library":"RVL SDK","module":"DVD","version_string":"Sep 28 2006 18:57:56 (0x4200_60422)","games":["Wii Sports RSPE01_00"],"matched_in_project":"doldecomp/ogws: dvd.c no marcado matching para esta revisión","detection_method":"Cadena condicionada por revisión; no implica matching del objeto","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/DVD/dvd.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-003","library":"RVL SDK","module":"OS","version_string":"Apr 24 2007 11:50:47 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: OS.c marcado Matching","detection_method":"Cadena __OSVersion; estado contrastado con configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/OS/OS.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-004","library":"RVL SDK","module":"AX","version_string":"Dec 18 2006 15:43:48 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: AX.c marcado Matching","detection_method":"Cadena condicionada por VERSION_RSPE01_01","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/AX/AX.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-005","library":"RVL SDK","module":"DVD","version_string":"Apr 24 2007 11:44:29 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: dvd.c marcado matching para revisión 1","detection_method":"Cadena y condición de matching por revisión","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/DVD/dvd.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-006","library":"RVL SDK","module":"SC","version_string":"Sep  7 2006 07:22:06 (0x4200_60422)","games":["Wii Sports RSPE01_00"],"matched_in_project":"doldecomp/ogws: scsystem.c no marcado matching para revisión 0","detection_method":"Cadena __SCVersion condicionada por revisión","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/SC/scsystem.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-007","library":"RVL SDK","module":"SC","version_string":"Nov 30 2006 03:33:00 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: scsystem.c marcado matching para revisión 1","detection_method":"Cadena __SCVersion y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/SC/scsystem.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-008","library":"RVL SDK","module":"NAND","version_string":"Nov 30 2006 03:32:57 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: NANDCore.c y nand.c marcados Matching","detection_method":"Cadena __NANDVersion y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/NAND/NANDCore.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-009","library":"RVL SDK","module":"OS","version_string":"Aug  8 2007 02:06:24 (0x4199_60831)","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01"],"matched_in_project":"SMGCommunity/Petari: OS.c marcado matching para todas las versiones Wii","detection_method":"Condicionales regionales de __OSVersion y configure.py","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/os/OS.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-010","library":"RVL SDK","module":"OS","version_string":"Jan 30 2008 01:38:43 (0x4199_60831)","games":["Super Mario Galaxy RMGK01"],"matched_in_project":"SMGCommunity/Petari: OS.c marcado matching","detection_method":"Condicional regional; se excluye SHIELD del alcance Wii","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/os/OS.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-011","library":"RVL SDK","module":"GX","version_string":"Aug  8 2007 02:05:28 (0x4199_60831)","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01"],"matched_in_project":"SMGCommunity/Petari: GXInit.c marcado matching","detection_method":"Cadena __GXVersion condicionada por región","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/gx/GXInit.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-012","library":"RVL SDK","module":"GX","version_string":"Dec 11 2007 01:34:15 (0x4199_60831)","games":["Super Mario Galaxy RMGK01"],"matched_in_project":"SMGCommunity/Petari: GXInit.c marcado matching","detection_method":"Cadena __GXVersion condicionada por región","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/gx/GXInit.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-013","library":"RVL SDK","module":"VI","version_string":"Aug  8 2007 02:07:17 (0x4199_60831)","games":["Super Mario Galaxy RMGE01"],"matched_in_project":"SMGCommunity/Petari: vi.c marcado matching para todas las versiones Wii","detection_method":"Cadena __VIVersion; configure.py selecciona GC/3.0a5.2 para este objeto","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/vi/vi.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-014","library":"RVL SDK","module":"PAD","version_string":"","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01","Super Mario Galaxy RMGK01"],"matched_in_project":"SMGCommunity/Petari: Pad.c marcado matching para todas las versiones Wii","detection_method":"Estado por objeto; cadena y versión comercial de PAD no verificadas","source_url":"https://github.com/SMGCommunity/Petari/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-015","library":"RVL SDK","module":"WPAD","version_string":"Aug  8 2007 02:07:23 (0x4199_60831)","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01"],"matched_in_project":"SMGCommunity/Petari: WPAD.c marcado matching para PAL entre estas variantes","detection_method":"Cadena regional; no extender el estado matching a JPN/USA","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/wpad/WPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-016","library":"RVL SDK","module":"KPAD","version_string":"Aug 29 2007 11:54:56 (0x4200_60422)","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01"],"matched_in_project":"SMGCommunity/Petari: KPAD.c marcado matching para JPN/PAL entre estas variantes","detection_method":"Cadena regional y estados de configure.py; USA no marcado matching","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/kpad/KPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-017","library":"RVL SDK","module":"KPAD","version_string":"Jun  3 2008 11:53:11 (0x4201_134)","games":["Super Mario Galaxy RMGK01"],"matched_in_project":"SMGCommunity/Petari: KPAD.c marcado matching para KOR","detection_method":"Cadena condicionada por región; compilador distinto del KPAD occidental","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/kpad/KPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-018","library":"RVL SDK","module":"KPAD","version_string":"release build: Dec 11 2009 15:58:25","games":["Challenge Me: Word Puzzles SC5PGN; archivos de librería distribuidos en el disco"],"matched_in_project":"vabold/sdk_2009-12-11: KPAD.c marcado matching Debug/Release","detection_method":"Banner en reconstrucción; sufijo generado con macros del compilador; no se afirma que todos los objetos estén enlazados en el DOL","source_url":"https://github.com/vabold/sdk_2009-12-11/blob/main/source/kpad/KPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-019","library":"RVL SDK","module":"WPAD","version_string":"release build: Dec 11 2009 15:59:48","games":["Challenge Me: Word Puzzles SC5PGN; archivos de librería distribuidos en el disco"],"matched_in_project":"vabold/sdk_2009-12-11: WPAD.c marcado matching Debug/Release; lint.c solo Debug","detection_method":"Banner y estados por objeto; sufijo del compilador no expandido aquí","source_url":"https://github.com/vabold/sdk_2009-12-11/blob/main/source/wpad/WPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-020","library":"RVL SDK","module":"WENC","version_string":"","games":["Challenge Me: Word Puzzles SC5PGN; archivos de librería distribuidos en el disco"],"matched_in_project":"vabold/sdk_2009-12-11: wenc.c marcado matching Debug/Release","detection_method":"Pertenencia al corpus SDK 2009-12-11 y estado en configure.py; banner propio no verificado","source_url":"https://github.com/vabold/sdk_2009-12-11/blob/main/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-021","library":"NW4R","module":"g3d","version_string":"Jun  8 2007 11:16:25 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: g3d_init.cpp marcado Matching; no afirma totalidad de g3d","detection_method":"NW4R_LIB_VERSION y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/nw4r/g3d/g3d_init.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-022","library":"NW4R","module":"lyt","version_string":"Jun  8 2007 11:17:26 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: lyt_init.cpp marcado Matching","detection_method":"NW4R_LIB_VERSION y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/nw4r/lyt/lyt_init.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-023","library":"NW4R","module":"snd","version_string":"Jun  8 2007 11:17:15 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: snd_SoundSystem.cpp marcado Matching","detection_method":"NW4R_LIB_VERSION y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/nw4r/snd/snd_SoundSystem.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-024","library":"NW4R","module":"ef","version_string":"Jun  8 2007 11:16:29 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: ef_effectsystem.cpp matching para revisión 1; otros objetos EF pendientes","detection_method":"Banner y registro condicionado por revisión; estado por objeto","source_url":"https://github.com/doldecomp/ogws/blob/master/src/nw4r/ef/ef_effectsystem.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-025","library":"NW4R","module":"ut","version_string":"","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: objetos UT listados marcados matching para revisión 1","detection_method":"configure.py; versión comercial y banner independiente no verificados","source_url":"https://github.com/doldecomp/ogws/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-026","library":"NW4R","module":"math","version_string":"","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: math_arithmetic, math_triangular, math_types y math_geometry marcados Matching","detection_method":"configure.py; no deducir versión de la biblioteca a partir de versiones de formatos de recursos","source_url":"https://github.com/doldecomp/ogws/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-027","library":"NW4R","module":"g3d","version_string":"Dec 22 2009 02:11:33 (0x4302_158)","games":["The Legend of Zelda: Skyward Sword SOUE01"],"matched_in_project":"zeldaret/ss: g3d_init.cpp marcado Matching","detection_method":"NW4R_LIB_VERSION y configure.py","source_url":"https://github.com/zeldaret/ss/blob/main/src/nw4r/g3d/g3d_init.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-028","library":"NW4R","module":"lyt","version_string":"Mar 15 2010 02:17:33 (0x4302_158)","games":["The Legend of Zelda: Skyward Sword SOUE01"],"matched_in_project":"zeldaret/ss: lyt_init.cpp marcado Matching","detection_method":"Cadena NW4R_LYT_Version_ y configure.py","source_url":"https://github.com/zeldaret/ss/blob/main/src/nw4r/lyt/lyt_init.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-029","library":"NW4R","module":"snd","version_string":"Sep 25 2011","games":["The Legend of Zelda: Skyward Sword SOUE01"],"matched_in_project":"zeldaret/ss: snd_SoundSystem.cpp marcado Matching; banner no verificado en el DOL","detection_method":"BUILDSTAMP_DATE del código reconstruido; llamada OSRegisterVersion comentada","source_url":"https://github.com/zeldaret/ss/blob/main/src/nw4r/snd/snd_SoundSystem.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-030","library":"EGG","module":"core y variantes por juego","version_string":"","games":["Wii Sports RSPE01 rev.1","Wii Play RHAE01 rev.1","Big Brain Academy: Wii Degree RYWE01","Mario Kart Wii RMCP01","Wii Fit RFNE01 rev.1","Wii Music R64E01","Animal Crossing: City Folk RUUE01 rev.0","New Play Control! Pikmin R9IE01","New Play Control! Pikmin 2 R92E01","Wii Fit Plus RFPE01","New Super Mario Bros. Wii SMNP01 rev.1","Wii Sports Resort RZTE01 rev.1","The Legend of Zelda: Skyward Sword SOUE01 rev.0"],"matched_in_project":"vabold/EGG: eggDisposer.cpp marcado Matching; soporte multijuego no equivale a biblioteca completa","detection_method":"EGG_VERSION usa etiquetas internas 200611L, 200702L, 200704L, 200804L, 200805L, 200810L, 200811L, 200903L, 200910L, 200911L, 201006L y 201111L; no son cadenas oficiales","source_url":"https://github.com/vabold/EGG/blob/main/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-031","library":"MSL_C","module":"biblioteca C","version_string":"","games":["Super Mario Galaxy; variantes Wii"],"matched_in_project":"SMGCommunity/Petari: numerosos objetos matching, incluidos printf, memoria y E/S; locale.c no marcado matching","detection_method":"Estados por objeto y selección de compilador; versión semántica de MSL no verificada","source_url":"https://github.com/SMGCommunity/Petari/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-032","library":"Runtime.PPCEABI.H","module":"runtime y excepciones","version_string":"","games":["Super Mario Galaxy; variantes Wii"],"matched_in_project":"SMGCommunity/Petari: __mem, __va_arg, ptmf, runtime y global_destructor_chain matching; excepciones con restricciones regionales","detection_method":"configure.py; Runtime.PPCEABI.H es nombre de biblioteca, no identificación suficiente de versión","source_url":"https://github.com/SMGCommunity/Petari/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-033","library":"MetroTRK","module":"nubinit","version_string":"MetroTRK for Revolution v0.1","games":["Super Mario Galaxy; variantes Wii"],"matched_in_project":"SMGCommunity/Petari: nubinit.c marcado matching para todas las versiones Wii","detection_method":"Cadena TRKNubWelcome; no distingue necesariamente todas las revisiones de MetroTRK","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/MetroTRK/debugger/embedded/MetroTRK/Portable/nubinit.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-034","library":"HomeButtonMenu","module":"homebuttonMiniLib/HBM","version_string":"May  7 2007 18:28:39 (0x4199_60726)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: HBMBase.cpp marcado Matching","detection_method":"RVL_LIB_VERSION(HBM); no extrapolar a otras generaciones HBM/NW4HBM","source_url":"https://github.com/doldecomp/ogws/blob/master/src/homebuttonMiniLib/HBMBase.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-035","library":"RVLFaceLib","module":"RFL","version_string":"20070609","games":["Wii Sports USA rev.1"],"matched_in_project":"koopthekoopa/RFL: variante soportada declarada; construcción independiente solo habilitada para 20080306","detection_method":"Identificador fechado publicado por el proyecto, no cadena completa del DOL","source_url":"https://github.com/koopthekoopa/RFL/blob/main/README.md","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-036","library":"RVLFaceLib","module":"RFL","version_string":"20080216","games":["Wii Menu 4.3; aplicación del sistema"],"matched_in_project":"koopthekoopa/RFL: variante soportada declarada; construcción independiente solo habilitada para 20080306","detection_method":"Identificador de variante publicado por el proyecto","source_url":"https://github.com/koopthekoopa/RFL/blob/main/README.md","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-037","library":"RVLFaceLib","module":"RFL","version_string":"20080306","games":["Challenge Me: Word Puzzles SC5PGN"],"matched_in_project":"koopthekoopa/RFL: release declarado plenamente matching; debug mantiene RFLiMakeTexture y RFLiInitShapeRes pendientes","detection_method":"README con procedencia, variantes y límites de construcción","source_url":"https://github.com/koopthekoopa/RFL/blob/main/README.md","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-038","library":"RVL SDK","module":"OS; candidato tardío no confirmado","version_string":"","games":["Kirby's Dream Collection S72E01"],"matched_in_project":"Swiftshine/kdc: OS.c aparece comentado y NonMatching","detection_method":"La macro de versión propone Aug 23 2010 y OS.c propone 17:33:06; atribución al DOL no verificada y no prueba una distribución SDK de 2012","source_url":"https://github.com/Swiftshine/kdc/blob/main/configure.py","evidence_grade":"E1"}
+{"gap":"G19","id":"G19-039","library":"Todas las familias solicitadas","module":"cronología 2006-2012","version_string":"","games":[],"matched_in_project":"","detection_method":"No se verificó un catálogo exhaustivo de distribuciones, versiones comerciales y juegos; los builds documentados no permiten completar los huecos por inferencia","source_url":"","evidence_grade":"E1"}
+{"gap":"G19","id":"G19-040","library":"RVL SDK y Metrowerks","module":"detección con decomp-toolkit","version_string":"","games":[],"matched_in_project":"","detection_method":"Base integrada de firmas; comparación de instrucciones con máscaras, aplicación de símbolos y relocaciones; identificación no equivale a matching C","source_url":"https://github.com/encounter/decomp-toolkit/blob/main/src/util/signatures.rs","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-041","library":"Bibliotecas estáticas","module":"detección con FLIRT","version_string":"","games":[],"matched_in_project":"","detection_method":"Patrones con bytes variables, CRC y desambiguación; colisiones y funciones pequeñas limitan identificación; sin benchmark Wii verificado","source_url":"https://docs.hex-rays.com/8.4/user-guide/signatures/flirt/ida-f.l.i.r.t.-technology-in-depth","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-042","library":"Bibliotecas estáticas","module":"detección con Ghidra FID","version_string":"","games":[],"matched_in_project":"","detection_method":"Hashes full/specific de 64 bits, relaciones entre funciones y umbrales; variantes de compilación pueden impedir coincidencias y versiones pueden resultar indistinguibles","source_url":"https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/FunctionID/src/main/doc/fid.xml","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-043","library":"RVL SDK, NW4R, RVLFaceLib, MSL_C, Runtime y MetroTRK","module":".text del DOL","version_string":"","games":["Super Mario Galaxy RMGE01"],"matched_in_project":"No es porcentaje de matching","detection_method":"Cálculo propio sobre splits: 885944 bytes atribuidos / 5398992 bytes de extensión .text = 16.4094%; excluye JSystem, NDEV y datos","source_url":"https://github.com/SMGCommunity/Petari/blob/master/config/RMGE01/splits.txt","evidence_grade":"E1"}
+{"gap":"G19","id":"G19-044","library":"RVL SDK, NW4R, EGG, RVLFaceLib, HBM, MSL, Runtime y MetroTRK","module":".text del DOL","version_string":"","games":["Wii Sports RSPE01_01"],"matched_in_project":"No es porcentaje de matching","detection_method":"Cálculo propio sobre splits: 1556600 bytes atribuidos / 3463580 bytes de extensión .text = 44.9419%; excluye Pack y datos","source_url":"https://github.com/doldecomp/ogws/blob/master/config/RSPE01_01/splits.txt","evidence_grade":"E1"}
+{"gap":"G19","id":"G19-045","library":"RVL SDK, NW4R, EGG, HBM y soporte Metrowerks","module":".text del DOL","version_string":"","games":["The Legend of Zelda: Skyward Sword SOUE01"],"matched_in_project":"No es porcentaje de matching","detection_method":"Cálculo propio sobre splits: 1409992 bytes atribuidos / 5065240 bytes de extensión .text = 27.8366%; excluye REL, JSystem, THPPlayer, otros componentes y datos","source_url":"https://github.com/zeldaret/ss/blob/main/config/SOUE01/splits.txt","evidence_grade":"E1"}
+```
+[2mtokens used[0m
+172.688
+**Puedes apartar una masa considerable de código de librería, pero conviene mantener dos contadores: bytes identificados como librería y bytes reconstruidos mediante C/C++ matching.** Las firmas permiten avanzar en el primero; únicamente tu compilación y comparación permiten incrementar el segundo.
+
+Escala aplicada: **E1 = sin fuente o inferencia propia; E2 = fuente secundaria; E3 = fuente primaria abierta y leída; E4 = reproducido compilando con mwcc.** No asigno E4. Los estados de matching siguientes son declaraciones de los proyectos y sus configuraciones, no compilaciones realizadas por mí.
+
+No he consultado ni enlazado código filtrado del SDK. **No he podido verificar un catálogo exhaustivo de todas las distribuciones de 2006–2012**: lo recuperable públicamente es un conjunto de builds por módulo, juego y revisión. Convertirlo en una cronología completa de versiones comerciales sería inventar información.
+
+Para identificar versiones, conserva la cadena completa y extrae separadamente familia, módulo, modalidad, fecha, hora y compilador. Los formatos documentados por las reconstrucciones son `<< RVL_SDK - … release build: … >>` y `<< NW4R … final … build: … >>`. El sufijo hexadecimal procede de `__CWCC__` y `__CWBUILD__`; **no es la versión del SDK**. [Formato RVL](https://github.com/doldecomp/ogws/blob/master/include/revolution/version.h), [formato NW4R](https://github.com/doldecomp/ogws/blob/master/include/nw4r/types_nw4r.h), [macros del compilador en WPAD](https://github.com/vabold/sdk_2009-12-11/blob/main/source/wpad/WPAD.c). **E3.**
+
+Como procedimiento **E1**, busca cadenas ASCII con un patrón tolerante a espacios y tabuladores, por ejemplo `<<[^\r\n<>]*(RVL_SDK|NW4R)[^\r\n<>]*>>`, y sigue sus referencias hasta inicializadores y `OSRegisterVersion`. Registra también región, revisión y hash del ejecutable. Una cadena identifica un build declarado; no demuestra por sí sola la versión de todos los objetos enlazados.
+
+Hay además una limitación importante: el proyecto Wii Menu indica que sus fechas SDK reflejan recompilaciones del programa. Su atribución a un SDK de principios de 2008 es expresamente una conjetura. Por tanto, fecha del banner, fecha de distribución y revisión del código fuente deben permanecer separadas. [README del SDK de Wii Menu](https://github.com/koopthekoopa/wii-ipl/blob/main/libs/RVL_SDK/README.md). **E3 para la declaración; E1 para esa atribución histórica.**
+
+Los puntos cronológicos mejor sustentados son:
+
+| Periodo | Evidencia recuperada |
+|---|---|
+| 2006 | Wii Sports distingue AX de octubre de 2006 y DVD de septiembre de 2006 en `RSPE01_00`. [AX](https://github.com/doldecomp/ogws/blob/master/src/revolution/AX/AX.c), [DVD](https://github.com/doldecomp/ogws/blob/master/src/revolution/DVD/dvd.c). **E3** |
+| 2007 | Wii Sports revisión 1 combina builds de distintos meses; no tiene una única fecha SDK. Galaxy occidental declara OS de agosto de 2007. [OS de Sports](https://github.com/doldecomp/ogws/blob/master/src/revolution/OS/OS.c), [OS de Galaxy](https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/os/OS.c). **E3** |
+| 2008 | Galaxy coreano cambia OS a enero de 2008 y KPAD a junio; las regiones occidentales conservan builds anteriores. [KPAD](https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/kpad/KPAD.c). **E3** |
+| 2009 | Existe una reconstrucción del SDK de **11-12-2009**, contrastada por el proyecto con archivos Debug/Release incluidos en *Challenge Me: Word Puzzles*, `SC5PGN`. [Procedencia y construcción](https://github.com/vabold/sdk_2009-12-11/blob/main/README.md). **E3** |
+| 2010–2011 | Skyward Sword declara NW4R G3D de diciembre de 2009 y LYT de marzo de 2010. SND contiene una fecha de septiembre de 2011, aunque la llamada de registro está comentada: no la doy por verificada en el DOL. [G3D](https://github.com/zeldaret/ss/blob/main/src/nw4r/g3d/g3d_init.cpp), [LYT](https://github.com/zeldaret/ss/blob/main/src/nw4r/lyt/lyt_init.cpp), [SND](https://github.com/zeldaret/ss/blob/main/src/nw4r/snd/snd_SoundSystem.cpp). **E3 sobre los archivos** |
+| 2012 | KDC contiene candidatos de builds anteriores, pero su configuración deja OS como `NonMatching` comentado. No acredita una nueva distribución SDK de 2012. [Configuración](https://github.com/Swiftshine/kdc/blob/main/configure.py). **E3; atribución al binario no verificada** |
+
+Para reutilizar trabajo, priorizaría estos proyectos:
+
+| Proyecto | Alcance comprobado y límites |
+|---|---|
+| **doldecomp/ogws** | Política explícita contra filtraciones. Objetos matching de OS, PAD, NAND, AX, DVD, SC, WENC, NW4R, EGG, HBM y RFL; otros siguen pendientes y algunos dependen de revisión. [Política](https://github.com/doldecomp/ogws/blob/master/README.md), [estados por objeto](https://github.com/doldecomp/ogws/blob/master/configure.py). **E3** |
+| **SMGCommunity/Petari** | Particularmente útil para RVL 2007/2008, MSL_C, Runtime y MetroTRK. OS/GX/VI están marcados matching para las versiones Wii; KPAD y WPAD tienen restricciones regionales. [Configuración](https://github.com/SMGCommunity/Petari/blob/master/configure.py). **E3** |
+| **vabold/sdk_2009-12-11** | KPAD, componentes MotionPlus, WENC y varios objetos WPAD aparecen matching en Debug y Release. No significa SDK completo: muchas entradas permanecen `NonMatching`. [Configuración](https://github.com/vabold/sdk_2009-12-11/blob/main/configure.py). **E3** |
+| **koopthekoopa/RFL** | Declara release plenamente matching; contempla `20070609`, `20080216` y `20080306`, pero solo admite construir esta última. Debug conserva dos funciones pendientes. [README](https://github.com/koopthekoopa/RFL/blob/main/README.md). **E3** |
+| **zeldaret/ss** | Objetos matching de NW4R y EGG para `SOUE01`; no asumir RVL completo: inicializadores SDK importantes siguen `NonMatching`. [Configuración](https://github.com/zeldaret/ss/blob/main/configure.py). **E3** |
+| **vabold/EGG** | Soporta trece variantes de juegos, pero la configuración examinada solo marca explícitamente `eggDisposer.cpp` como matching de EGG. Sus valores `EGG_VERSION` son etiquetas del proyecto basadas en fechas, no banners oficiales. [Juegos](https://github.com/vabold/EGG/blob/main/README.md), [configuración](https://github.com/vabold/EGG/blob/main/configure.py). **E3** |
+| **kiwi515/open_rvl** | Política explícita contra filtraciones; compara hashes de código/datos sin resolver referencias externas mediante enlace. Útil como antecedente, insuficiente para acreditar identidad final del DOL. [README](https://github.com/kiwi515/open_rvl/blob/master/README.md). **E3** |
+
+La procedencia clean-room está declarada explícitamente en ogws/open_rvl. Para los demás, he comprobado documentación de reconstrucción y estados de matching; **no he auditado toda su historia de contribuciones**.
+
+En detección:
+
+| Herramienta | Capacidad y precisión comprobables |
+|---|---|
+| **dtk** | Integra firmas de funciones/objetos comunes SDK y Metrowerks. Compara palabras de instrucciones con máscaras y puede aplicar símbolos, referencias y splits. Úsalo mediante su análisis normal, por ejemplo `dtk dol info`; no presupongas un catálogo exhaustivo llamado `dtk signatures`. [Documentación](https://github.com/encounter/decomp-toolkit/blob/main/README.md), [implementación](https://github.com/encounter/decomp-toolkit/blob/main/src/util/signatures.rs). **E3** |
+| **FLIRT** | El algoritmo clásico combina patrones, bytes variables, CRC y desambiguación; reconoce limitaciones con funciones pequeñas o idénticas. `makesig` permite crear firmas y gestionar colisiones. [Algoritmo](https://docs.hex-rays.com/8.4/user-guide/signatures/flirt/ida-f.l.i.r.t.-technology-in-depth), [generación](https://docs.hex-rays.com/9.0/user-guide/signatures/flirt/generate-flirt-signature-file). **E3** |
+| **Ghidra FID** | Usa dos hashes de 64 bits y relaciones entre funciones. Tolera relocación, pero cambios de compilación pueden impedir reconocimiento. Puede identificar nombre sin distinguir versión. Las bases predeterminadas documentadas son Visual Studio/x86: necesitas un corpus adecuado para Broadway. [Manual oficial](https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/FunctionID/src/main/doc/fid.xml). **E3** |
+
+**No encontré un benchmark Wii/mwcc que permita asignar porcentajes de precisión o cobertura a estas herramientas.** Tampoco verifiqué una base pública completa, con procedencia limpia, de todas las versiones solicitadas. **E1: lagunas de esta investigación.**
+
+Mi recomendación **E1** es construir firmas desde objetos de reconstrucciones verificadas o material de depuración distribuido en juegos, conservar variantes de compilador/flags y exigir coherencia de llamadas y datos. Una coincidencia con operandos enmascarados nunca sustituye la comparación final enlazada.
+
+Para estimar volumen, sumé intervalos `.text` atribuidos a las familias solicitadas en tres `splits.txt`, sin solapamientos. El denominador es su extensión completa cartografiada; incluye huecos de alineación. **Son cálculos propios E1 sobre fuentes E3**, no mediciones de matching:
+
+| Juego | Bytes atribuidos / extensión `.text` | Fracción |
+|---|---:|---:|
+| Galaxy, `RMGE01` | 885.944 / 5.398.992 | **16,4 %** |
+| Wii Sports, `RSPE01_01` | 1.556.600 / 3.463.580 | **44,9 %** |
+| Skyward Sword, `SOUE01` | 1.409.992 / 5.065.240 | **27,8 %** |
+
+Fuentes abiertas: [Galaxy](https://github.com/SMGCommunity/Petari/blob/master/config/RMGE01/splits.txt), [Wii Sports](https://github.com/doldecomp/ogws/blob/master/config/RSPE01_01/splits.txt), [Skyward Sword](https://github.com/zeldaret/ss/blob/main/config/SOUE01/splits.txt).
+
+Incluí los directorios SDK completos, NW4R, EGG, HBM/RFL y soporte Metrowerks donde aparecen; excluí JSystem y otras bibliotecas ajenas a la lista. Excluí REL y datos. Por ello, **15–45 % sirve como intervalo provisional para presupuestar estos casos, no como media poblacional de Wii**. La organización DOL/REL puede alterar mucho el resultado. Para tu juego, calcula la unión de intervalos identificados y publica aparte la fracción realmente reconstruida.
+
+En el JSONL, `version_string` contiene un fragmento literal identificador cuando existe; vacío significa que no verifiqué una cadena. Las fechas numéricas de RFL son identificadores publicados por su proyecto. “Matching” siempre significa **declarado por el proyecto para el objeto o alcance indicado**.
+
+```jsonl
+{"gap":"G19","id":"G19-001","library":"RVL SDK","module":"AX","version_string":"Oct  1 2006 03:26:07 (0x4200_60422)","games":["Wii Sports RSPE01_00"],"matched_in_project":"doldecomp/ogws: AX.c marcado Matching","detection_method":"Cadena condicionada por VERSION_RSPE01_00; estado contrastado con configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/AX/AX.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-002","library":"RVL SDK","module":"DVD","version_string":"Sep 28 2006 18:57:56 (0x4200_60422)","games":["Wii Sports RSPE01_00"],"matched_in_project":"doldecomp/ogws: dvd.c no marcado matching para esta revisión","detection_method":"Cadena condicionada por revisión; no implica matching del objeto","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/DVD/dvd.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-003","library":"RVL SDK","module":"OS","version_string":"Apr 24 2007 11:50:47 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: OS.c marcado Matching","detection_method":"Cadena __OSVersion; estado contrastado con configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/OS/OS.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-004","library":"RVL SDK","module":"AX","version_string":"Dec 18 2006 15:43:48 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: AX.c marcado Matching","detection_method":"Cadena condicionada por VERSION_RSPE01_01","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/AX/AX.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-005","library":"RVL SDK","module":"DVD","version_string":"Apr 24 2007 11:44:29 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: dvd.c marcado matching para revisión 1","detection_method":"Cadena y condición de matching por revisión","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/DVD/dvd.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-006","library":"RVL SDK","module":"SC","version_string":"Sep  7 2006 07:22:06 (0x4200_60422)","games":["Wii Sports RSPE01_00"],"matched_in_project":"doldecomp/ogws: scsystem.c no marcado matching para revisión 0","detection_method":"Cadena __SCVersion condicionada por revisión","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/SC/scsystem.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-007","library":"RVL SDK","module":"SC","version_string":"Nov 30 2006 03:33:00 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: scsystem.c marcado matching para revisión 1","detection_method":"Cadena __SCVersion y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/SC/scsystem.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-008","library":"RVL SDK","module":"NAND","version_string":"Nov 30 2006 03:32:57 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: NANDCore.c y nand.c marcados Matching","detection_method":"Cadena __NANDVersion y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/revolution/NAND/NANDCore.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-009","library":"RVL SDK","module":"OS","version_string":"Aug  8 2007 02:06:24 (0x4199_60831)","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01"],"matched_in_project":"SMGCommunity/Petari: OS.c marcado matching para todas las versiones Wii","detection_method":"Condicionales regionales de __OSVersion y configure.py","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/os/OS.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-010","library":"RVL SDK","module":"OS","version_string":"Jan 30 2008 01:38:43 (0x4199_60831)","games":["Super Mario Galaxy RMGK01"],"matched_in_project":"SMGCommunity/Petari: OS.c marcado matching","detection_method":"Condicional regional; se excluye SHIELD del alcance Wii","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/os/OS.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-011","library":"RVL SDK","module":"GX","version_string":"Aug  8 2007 02:05:28 (0x4199_60831)","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01"],"matched_in_project":"SMGCommunity/Petari: GXInit.c marcado matching","detection_method":"Cadena __GXVersion condicionada por región","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/gx/GXInit.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-012","library":"RVL SDK","module":"GX","version_string":"Dec 11 2007 01:34:15 (0x4199_60831)","games":["Super Mario Galaxy RMGK01"],"matched_in_project":"SMGCommunity/Petari: GXInit.c marcado matching","detection_method":"Cadena __GXVersion condicionada por región","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/gx/GXInit.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-013","library":"RVL SDK","module":"VI","version_string":"Aug  8 2007 02:07:17 (0x4199_60831)","games":["Super Mario Galaxy RMGE01"],"matched_in_project":"SMGCommunity/Petari: vi.c marcado matching para todas las versiones Wii","detection_method":"Cadena __VIVersion; configure.py selecciona GC/3.0a5.2 para este objeto","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/vi/vi.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-014","library":"RVL SDK","module":"PAD","version_string":"","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01","Super Mario Galaxy RMGK01"],"matched_in_project":"SMGCommunity/Petari: Pad.c marcado matching para todas las versiones Wii","detection_method":"Estado por objeto; cadena y versión comercial de PAD no verificadas","source_url":"https://github.com/SMGCommunity/Petari/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-015","library":"RVL SDK","module":"WPAD","version_string":"Aug  8 2007 02:07:23 (0x4199_60831)","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01"],"matched_in_project":"SMGCommunity/Petari: WPAD.c marcado matching para PAL entre estas variantes","detection_method":"Cadena regional; no extender el estado matching a JPN/USA","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/wpad/WPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-016","library":"RVL SDK","module":"KPAD","version_string":"Aug 29 2007 11:54:56 (0x4200_60422)","games":["Super Mario Galaxy RMGJ01","Super Mario Galaxy RMGE01","Super Mario Galaxy RMGP01"],"matched_in_project":"SMGCommunity/Petari: KPAD.c marcado matching para JPN/PAL entre estas variantes","detection_method":"Cadena regional y estados de configure.py; USA no marcado matching","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/kpad/KPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-017","library":"RVL SDK","module":"KPAD","version_string":"Jun  3 2008 11:53:11 (0x4201_134)","games":["Super Mario Galaxy RMGK01"],"matched_in_project":"SMGCommunity/Petari: KPAD.c marcado matching para KOR","detection_method":"Cadena condicionada por región; compilador distinto del KPAD occidental","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/RVL_SDK/kpad/KPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-018","library":"RVL SDK","module":"KPAD","version_string":"release build: Dec 11 2009 15:58:25","games":["Challenge Me: Word Puzzles SC5PGN; archivos de librería distribuidos en el disco"],"matched_in_project":"vabold/sdk_2009-12-11: KPAD.c marcado matching Debug/Release","detection_method":"Banner en reconstrucción; sufijo generado con macros del compilador; no se afirma que todos los objetos estén enlazados en el DOL","source_url":"https://github.com/vabold/sdk_2009-12-11/blob/main/source/kpad/KPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-019","library":"RVL SDK","module":"WPAD","version_string":"release build: Dec 11 2009 15:59:48","games":["Challenge Me: Word Puzzles SC5PGN; archivos de librería distribuidos en el disco"],"matched_in_project":"vabold/sdk_2009-12-11: WPAD.c marcado matching Debug/Release; lint.c solo Debug","detection_method":"Banner y estados por objeto; sufijo del compilador no expandido aquí","source_url":"https://github.com/vabold/sdk_2009-12-11/blob/main/source/wpad/WPAD.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-020","library":"RVL SDK","module":"WENC","version_string":"","games":["Challenge Me: Word Puzzles SC5PGN; archivos de librería distribuidos en el disco"],"matched_in_project":"vabold/sdk_2009-12-11: wenc.c marcado matching Debug/Release","detection_method":"Pertenencia al corpus SDK 2009-12-11 y estado en configure.py; banner propio no verificado","source_url":"https://github.com/vabold/sdk_2009-12-11/blob/main/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-021","library":"NW4R","module":"g3d","version_string":"Jun  8 2007 11:16:25 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: g3d_init.cpp marcado Matching; no afirma totalidad de g3d","detection_method":"NW4R_LIB_VERSION y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/nw4r/g3d/g3d_init.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-022","library":"NW4R","module":"lyt","version_string":"Jun  8 2007 11:17:26 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: lyt_init.cpp marcado Matching","detection_method":"NW4R_LIB_VERSION y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/nw4r/lyt/lyt_init.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-023","library":"NW4R","module":"snd","version_string":"Jun  8 2007 11:17:15 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: snd_SoundSystem.cpp marcado Matching","detection_method":"NW4R_LIB_VERSION y configure.py","source_url":"https://github.com/doldecomp/ogws/blob/master/src/nw4r/snd/snd_SoundSystem.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-024","library":"NW4R","module":"ef","version_string":"Jun  8 2007 11:16:29 (0x4199_60831)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: ef_effectsystem.cpp matching para revisión 1; otros objetos EF pendientes","detection_method":"Banner y registro condicionado por revisión; estado por objeto","source_url":"https://github.com/doldecomp/ogws/blob/master/src/nw4r/ef/ef_effectsystem.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-025","library":"NW4R","module":"ut","version_string":"","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: objetos UT listados marcados matching para revisión 1","detection_method":"configure.py; versión comercial y banner independiente no verificados","source_url":"https://github.com/doldecomp/ogws/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-026","library":"NW4R","module":"math","version_string":"","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: math_arithmetic, math_triangular, math_types y math_geometry marcados Matching","detection_method":"configure.py; no deducir versión de la biblioteca a partir de versiones de formatos de recursos","source_url":"https://github.com/doldecomp/ogws/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-027","library":"NW4R","module":"g3d","version_string":"Dec 22 2009 02:11:33 (0x4302_158)","games":["The Legend of Zelda: Skyward Sword SOUE01"],"matched_in_project":"zeldaret/ss: g3d_init.cpp marcado Matching","detection_method":"NW4R_LIB_VERSION y configure.py","source_url":"https://github.com/zeldaret/ss/blob/main/src/nw4r/g3d/g3d_init.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-028","library":"NW4R","module":"lyt","version_string":"Mar 15 2010 02:17:33 (0x4302_158)","games":["The Legend of Zelda: Skyward Sword SOUE01"],"matched_in_project":"zeldaret/ss: lyt_init.cpp marcado Matching","detection_method":"Cadena NW4R_LYT_Version_ y configure.py","source_url":"https://github.com/zeldaret/ss/blob/main/src/nw4r/lyt/lyt_init.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-029","library":"NW4R","module":"snd","version_string":"Sep 25 2011","games":["The Legend of Zelda: Skyward Sword SOUE01"],"matched_in_project":"zeldaret/ss: snd_SoundSystem.cpp marcado Matching; banner no verificado en el DOL","detection_method":"BUILDSTAMP_DATE del código reconstruido; llamada OSRegisterVersion comentada","source_url":"https://github.com/zeldaret/ss/blob/main/src/nw4r/snd/snd_SoundSystem.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-030","library":"EGG","module":"core y variantes por juego","version_string":"","games":["Wii Sports RSPE01 rev.1","Wii Play RHAE01 rev.1","Big Brain Academy: Wii Degree RYWE01","Mario Kart Wii RMCP01","Wii Fit RFNE01 rev.1","Wii Music R64E01","Animal Crossing: City Folk RUUE01 rev.0","New Play Control! Pikmin R9IE01","New Play Control! Pikmin 2 R92E01","Wii Fit Plus RFPE01","New Super Mario Bros. Wii SMNP01 rev.1","Wii Sports Resort RZTE01 rev.1","The Legend of Zelda: Skyward Sword SOUE01 rev.0"],"matched_in_project":"vabold/EGG: eggDisposer.cpp marcado Matching; soporte multijuego no equivale a biblioteca completa","detection_method":"EGG_VERSION usa etiquetas internas 200611L, 200702L, 200704L, 200804L, 200805L, 200810L, 200811L, 200903L, 200910L, 200911L, 201006L y 201111L; no son cadenas oficiales","source_url":"https://github.com/vabold/EGG/blob/main/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-031","library":"MSL_C","module":"biblioteca C","version_string":"","games":["Super Mario Galaxy; variantes Wii"],"matched_in_project":"SMGCommunity/Petari: numerosos objetos matching, incluidos printf, memoria y E/S; locale.c no marcado matching","detection_method":"Estados por objeto y selección de compilador; versión semántica de MSL no verificada","source_url":"https://github.com/SMGCommunity/Petari/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-032","library":"Runtime.PPCEABI.H","module":"runtime y excepciones","version_string":"","games":["Super Mario Galaxy; variantes Wii"],"matched_in_project":"SMGCommunity/Petari: __mem, __va_arg, ptmf, runtime y global_destructor_chain matching; excepciones con restricciones regionales","detection_method":"configure.py; Runtime.PPCEABI.H es nombre de biblioteca, no identificación suficiente de versión","source_url":"https://github.com/SMGCommunity/Petari/blob/master/configure.py","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-033","library":"MetroTRK","module":"nubinit","version_string":"MetroTRK for Revolution v0.1","games":["Super Mario Galaxy; variantes Wii"],"matched_in_project":"SMGCommunity/Petari: nubinit.c marcado matching para todas las versiones Wii","detection_method":"Cadena TRKNubWelcome; no distingue necesariamente todas las revisiones de MetroTRK","source_url":"https://github.com/SMGCommunity/Petari/blob/master/src/MetroTRK/debugger/embedded/MetroTRK/Portable/nubinit.c","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-034","library":"HomeButtonMenu","module":"homebuttonMiniLib/HBM","version_string":"May  7 2007 18:28:39 (0x4199_60726)","games":["Wii Sports RSPE01_01"],"matched_in_project":"doldecomp/ogws: HBMBase.cpp marcado Matching","detection_method":"RVL_LIB_VERSION(HBM); no extrapolar a otras generaciones HBM/NW4HBM","source_url":"https://github.com/doldecomp/ogws/blob/master/src/homebuttonMiniLib/HBMBase.cpp","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-035","library":"RVLFaceLib","module":"RFL","version_string":"20070609","games":["Wii Sports USA rev.1"],"matched_in_project":"koopthekoopa/RFL: variante soportada declarada; construcción independiente solo habilitada para 20080306","detection_method":"Identificador fechado publicado por el proyecto, no cadena completa del DOL","source_url":"https://github.com/koopthekoopa/RFL/blob/main/README.md","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-036","library":"RVLFaceLib","module":"RFL","version_string":"20080216","games":["Wii Menu 4.3; aplicación del sistema"],"matched_in_project":"koopthekoopa/RFL: variante soportada declarada; construcción independiente solo habilitada para 20080306","detection_method":"Identificador de variante publicado por el proyecto","source_url":"https://github.com/koopthekoopa/RFL/blob/main/README.md","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-037","library":"RVLFaceLib","module":"RFL","version_string":"20080306","games":["Challenge Me: Word Puzzles SC5PGN"],"matched_in_project":"koopthekoopa/RFL: release declarado plenamente matching; debug mantiene RFLiMakeTexture y RFLiInitShapeRes pendientes","detection_method":"README con procedencia, variantes y límites de construcción","source_url":"https://github.com/koopthekoopa/RFL/blob/main/README.md","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-038","library":"RVL SDK","module":"OS; candidato tardío no confirmado","version_string":"","games":["Kirby's Dream Collection S72E01"],"matched_in_project":"Swiftshine/kdc: OS.c aparece comentado y NonMatching","detection_method":"La macro de versión propone Aug 23 2010 y OS.c propone 17:33:06; atribución al DOL no verificada y no prueba una distribución SDK de 2012","source_url":"https://github.com/Swiftshine/kdc/blob/main/configure.py","evidence_grade":"E1"}
+{"gap":"G19","id":"G19-039","library":"Todas las familias solicitadas","module":"cronología 2006-2012","version_string":"","games":[],"matched_in_project":"","detection_method":"No se verificó un catálogo exhaustivo de distribuciones, versiones comerciales y juegos; los builds documentados no permiten completar los huecos por inferencia","source_url":"","evidence_grade":"E1"}
+{"gap":"G19","id":"G19-040","library":"RVL SDK y Metrowerks","module":"detección con decomp-toolkit","version_string":"","games":[],"matched_in_project":"","detection_method":"Base integrada de firmas; comparación de instrucciones con máscaras, aplicación de símbolos y relocaciones; identificación no equivale a matching C","source_url":"https://github.com/encounter/decomp-toolkit/blob/main/src/util/signatures.rs","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-041","library":"Bibliotecas estáticas","module":"detección con FLIRT","version_string":"","games":[],"matched_in_project":"","detection_method":"Patrones con bytes variables, CRC y desambiguación; colisiones y funciones pequeñas limitan identificación; sin benchmark Wii verificado","source_url":"https://docs.hex-rays.com/8.4/user-guide/signatures/flirt/ida-f.l.i.r.t.-technology-in-depth","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-042","library":"Bibliotecas estáticas","module":"detección con Ghidra FID","version_string":"","games":[],"matched_in_project":"","detection_method":"Hashes full/specific de 64 bits, relaciones entre funciones y umbrales; variantes de compilación pueden impedir coincidencias y versiones pueden resultar indistinguibles","source_url":"https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/FunctionID/src/main/doc/fid.xml","evidence_grade":"E3"}
+{"gap":"G19","id":"G19-043","library":"RVL SDK, NW4R, RVLFaceLib, MSL_C, Runtime y MetroTRK","module":".text del DOL","version_string":"","games":["Super Mario Galaxy RMGE01"],"matched_in_project":"No es porcentaje de matching","detection_method":"Cálculo propio sobre splits: 885944 bytes atribuidos / 5398992 bytes de extensión .text = 16.4094%; excluye JSystem, NDEV y datos","source_url":"https://github.com/SMGCommunity/Petari/blob/master/config/RMGE01/splits.txt","evidence_grade":"E1"}
+{"gap":"G19","id":"G19-044","library":"RVL SDK, NW4R, EGG, RVLFaceLib, HBM, MSL, Runtime y MetroTRK","module":".text del DOL","version_string":"","games":["Wii Sports RSPE01_01"],"matched_in_project":"No es porcentaje de matching","detection_method":"Cálculo propio sobre splits: 1556600 bytes atribuidos / 3463580 bytes de extensión .text = 44.9419%; excluye Pack y datos","source_url":"https://github.com/doldecomp/ogws/blob/master/config/RSPE01_01/splits.txt","evidence_grade":"E1"}
+{"gap":"G19","id":"G19-045","library":"RVL SDK, NW4R, EGG, HBM y soporte Metrowerks","module":".text del DOL","version_string":"","games":["The Legend of Zelda: Skyward Sword SOUE01"],"matched_in_project":"No es porcentaje de matching","detection_method":"Cálculo propio sobre splits: 1409992 bytes atribuidos / 5065240 bytes de extensión .text = 27.8366%; excluye REL, JSystem, THPPlayer, otros componentes y datos","source_url":"https://github.com/zeldaret/ss/blob/main/config/SOUE01/splits.txt","evidence_grade":"E1"}
+```
