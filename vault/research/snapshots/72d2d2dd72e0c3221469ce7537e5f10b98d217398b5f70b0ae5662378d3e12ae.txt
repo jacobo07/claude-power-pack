@@ -1,0 +1,29 @@
+Scaling laws are power-law relationships between model loss and compute, parameter count, or data size. Kaplan et al. (arXiv:2001.08361, January 2020) established the first clean empirical laws on OpenAI's models and drew the conclusion that parameter count matters most. Chinchilla (Hoffmann et al., arXiv:2203.15556, March 2022) ran IsoFLOP experiments — training multiple model sizes at matched compute budgets — and showed that Kaplan's dataset was training-run-biased: they had held data roughly fixed. The corrected compute-optimal recipe is roughly equal scaling of parameters and tokens, producing the Chinchilla 70B model that outperforms GPT-3 175B at one-quarter the inference cost. Both papers were about pretraining loss. The 2025 reality has introduced a third axis: inference-time compute. o1, DeepSeek-R1, and the chain-of-thought family show that allowing the model to generate intermediate reasoning steps at test time produces quality improvements that no amount of pretraining tokens can substitute for on certain tasks. The clean scaling curves now require a third dimension.
+
+## What Kaplan actually found
+
+Kaplan et al. (arXiv:2001.08361) fit power laws to loss as a function of N (parameters), D (tokens), and C (compute). The headline results: L(N) ~ N^(-0.076) when D is large, L(D) ~ D^(-0.095) when N is large, and L(C) ~ C^(-0.050). These suggest parameters matter slightly more than data in isolation. The prescriptive implication Kaplan drew: for a fixed compute budget, prioritize a larger model over more data. GPT-3 followed this recipe.
+
+The error was methodological: Kaplan's training runs were not held at constant compute when varying N. The 'data is fine' conclusion was an artifact of studying model-size curves along paths that did not control for total training tokens. When you hold C constant and vary N/D — the IsoFLOP experiment — the picture inverts. The optimal N/D ratio is roughly 1:20 (20 tokens per parameter), and GPT-3 was running at roughly 1:1.7 — severely undertrained.
+
+The practical relevance: if you are planning a training run for a custom VLA model on humanoid demonstration data, the Kaplan analysis would suggest maximizing parameter count. The Chinchilla analysis suggests you should instead use a smaller model with more data diversity — which is exactly what SmolVLA-450M's design philosophy reflects.
+
+## Chinchilla's IsoFLOP correction
+
+The IsoFLOP experiment is the methodological contribution. Fix C (training FLOPs), vary N (parameters) from ~70M to ~16B, set D = C / (6N) (the standard FLOP-count approximation for a transformer forward-backward pass). Measure final loss. The resulting U-shaped curve (in loss vs log N) has a clear minimum — the compute-optimal model size. Fitting this across multiple C budgets yields the Chinchilla scaling law: N_opt ~ C^0.5 and D_opt ~ C^0.5.
+
+The practical implication: at C=1e23 FLOPs (roughly the compute for a frontier model), the compute-optimal model is approximately 70B parameters on 1.4T tokens — not 175B on 300B. Chinchilla 70B achieved lower perplexity than GPT-3 175B on every benchmark tested. The broader lesson: the token budget is not a free parameter — it should scale with the parameter count.
+
+## The third scaling axis — inference-time compute
+
+o1 (OpenAI, September 2024) and DeepSeek-R1 (January 2025) demonstrated that allowing the model to generate extended chains of thought at inference time — and to verify, backtrack, and revise — produces quality on mathematical reasoning and code tasks that far exceeds what pretraining alone can achieve. Importantly, this quality scales with the amount of inference compute: longer chain-of-thought sequences consistently improve accuracy on MATH, AIME, and competitive programming benchmarks.
+
+The limits of test-time scaling are real: it helps on tasks with verifiable correct answers (math, code, formal proofs) and helps much less on open-ended generation, factual recall, and multi-modal tasks where there is no clear checking mechanism. For DealLens deal scoring, inference-time reasoning (chain-of-thought over term sheet clauses) is valuable for edge cases but does not substitute for a well-trained base model on routine classification tasks. For the JHU humanoid, inference-time scaling has no direct analog in real-time control — the policy must act within the latency budget, not extend its thinking time.
+
+## Scaling laws as planning tools
+
+For any training run you plan — fine-tuning SmolVLA on humanoid demonstrations, post-training GR00T N1.5 on your task data, or adapting a scoring model for DealLens — scaling laws give you the order-of-magnitude estimates needed to budget compute before running the experiment. A simple IsoFLOP analysis at small scale (5 model sizes, 5 data sizes, C=1e18 FLOPs each) costs under $100 on spot instances and tells you whether to invest in more data or a larger model for your specific task distribution.
+
+The honest caveat: scaling laws fit to pretraining loss may not predict downstream task performance. The loss-downstream divergence is most pronounced when the evaluation task is far from the pretraining distribution. For domain-specific fine-tuning (humanoid manipulation demonstrations, VC memos), always run small-scale ablations rather than trusting pretraining scaling law extrapolations.
+
+Scaling laws predict pretraining loss, not downstream benchmark performance. The relationship between loss improvement and task-specific improvement is nonlinear and task-dependent — a 10% perplexity reduction may improve coding 20% and summarization 3%. Run task-specific evals at each scale, not just loss.

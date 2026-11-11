@@ -1,0 +1,291 @@
+# Journaling Modes Deep Dive [#](https://productionhardening.org#journaling-modes-deep-dive)
+
+Choose the wrong journaling mode and SQLite will still pass every test on your desk — then lose the last minute of writes, or freeze every reader, the first time a field device browns out mid-transaction. Edge deployments, IoT gateways, desktop applications, and Python automation pipelines share one failure surface: non-graceful termination. When voltage sags, the kernel panics, or a supervisor issues `SIGKILL`
+
+, SQLite must reconstruct a consistent database from whatever bytes survived on the storage medium, and the journal mode is the single setting that dictates how that reconstruction happens, how much I/O each commit costs, and whether readers block behind the writer. This is the foundational decision in the [SQLite Architecture & Production Hardening](https://www.productionhardening.org/sqlite-architecture-production-hardening/) discipline: get it right and the database either fails predictably or not at all; get it wrong and no amount of downstream tuning recovers the guarantee. This guide works through both families of modes, the exact PRAGMA sequence to deploy Write-Ahead Logging safely, the thresholds for each hardware class, and the failure codes you must route around.
+
+## Core Mechanism & Crash-Safety Defaults [#](https://productionhardening.org#core-mechanism-crash-safety-defaults)
+
+SQLite offers two families of journaling. Rollback modes (`DELETE`
+
+, `TRUNCATE`
+
+, `PERSIST`
+
+, `MEMORY`
+
+, `OFF`
+
+) guarantee atomicity by first copying the *original* page images into a separate journal, then overwriting pages in the main database file in place. On commit the journal is deleted (`DELETE`
+
+), zero-truncated (`TRUNCATE`
+
+), or its header is zeroed (`PERSIST`
+
+). On a crash, SQLite finds a valid journal on next open and copies those original pages back, unwinding the interrupted transaction. This is provably safe, but it is strictly serial: a writer holds an `EXCLUSIVE`
+
+lock across the entire main file for the duration of the write, so every reader stalls. In multi-threaded desktop apps and high-frequency sensor ingestion loops, that serialization is the dominant source of `SQLITE_BUSY`
+
+contention, inflating tail latency and starving throughput.
+
+Write-Ahead Logging (`WAL`
+
+) inverts the pipeline. Rather than rewriting the main database in place, committed changes are *appended* as frames to a separate `-wal`
+
+file, while a `-shm`
+
+shared-memory file coordinates which frames each connection can see. Readers continue reading a consistent snapshot — the main file plus the WAL frames that existed when their transaction began — so a single writer and many readers proceed concurrently without blocking one another. On flash media this also collapses write amplification: appending sequential frames is far gentler on SD-card and eMMC wear-leveling than the scattered in-place rewrites of a rollback journal.
+
+Crash safety in WAL mode rests on three properties. Every frame carries a 32-bit checksum, and the final frame of each transaction carries a commit marker. If power is lost mid-commit, the partially written trailing transaction fails its checksum and is ignored on the next open; SQLite replays only fully committed, checksum-valid frames. The main file is mutated only later, during a *checkpoint*, when accumulated WAL frames are merged back into the database. This is why checkpoint cadence — governed by [WAL autocheckpoint](https://www.productionhardening.org/wal-optimization-concurrency-tuning/checkpoint-frequency-tuning/optimizing-wal_autocheckpoint-for-continuous-logging/) and the broader mechanics of [checkpoint frequency tuning](https://www.productionhardening.org/wal-optimization-concurrency-tuning/checkpoint-frequency-tuning/) — becomes a first-class tuning parameter rather than a default you inherit.
+
+*Figure — The two journaling data paths. Rollback rewrites the main file in place under an EXCLUSIVE lock and saves original pages aside for unwind; WAL appends new frames aside, fixes durability at the fsync, and leaves readers on a live snapshot until a later checkpoint.*
+
+
+*Figure — A WAL transaction commit and later checkpoint: durability is fixed at the fsync of the WAL, while readers keep serving a consistent snapshot until frames are merged into the main file.*
+
+One property is easy to miss: `journal_mode = WAL`
+
+is *persistent*. SQLite records it in the database header, so a WAL-mode database reopened by any new connection stays in WAL mode. The per-connection `synchronous`
+
+, `busy_timeout`
+
+, and `cache_size`
+
+settings are the opposite — they reset on every new handle. Relying on the persisted header for provisioning is fragile; production code sets the mode explicitly and then verifies it, which is exactly what the sequence below does.
+
+## Step-by-Step Implementation [#](https://productionhardening.org#step-by-step-implementation)
+
+### 1. Verify prerequisites and PRAGMA baselines [#](https://productionhardening.org#1-verify-prerequisites-and-pragma-baselines)
+
+Before switching a live database, confirm three things. First, no other connection holds the file — the mode switch acquires an exclusive lock and silently no-ops (returning the *old* mode) if a reader is attached, so always read back the result. Second, the target filesystem supports POSIX advisory locking; WAL uses shared memory and `mmap`
+
+that network mounts (NFS, SMB, some FUSE overlays) do not implement correctly, which forces the fallback discussed below. Third, the connection factory reapplies per-connection PRAGMAs on every open — this is the same trap that a naïve [connection pool](https://www.productionhardening.org/wal-optimization-concurrency-tuning/connection-pooling-strategies/) falls into, handing out recycled handles that never ran your hardening. Pair the mode with a sensible [busy_timeout](https://www.productionhardening.org/sqlite-architecture-production-hardening/busy-timeout-configuration/) so transient write contention retries instead of failing instantly.
+
+### 2. Select the durability threshold [#](https://productionhardening.org#2-select-the-durability-threshold)
+
+The one decision that changes crash behavior is the `synchronous`
+
+level, because in WAL mode it controls *when* the `fsync()`
+
+barrier fires. Use this table to pick it:
+
+`synchronous` |
+fsync point | Worst case on power loss | Use when |
+|---|---|---|---|
+`FULL` |
+every commit | zero committed data lost | ledgers, audit trails, money, medical |
+`NORMAL` |
+at checkpoint only | last few commits may roll back; DB never corrupts | default for edge/IoT/desktop telemetry |
+`OFF` |
+never (OS-scheduled) | recent commits and integrity at risk |
+throwaway caches only, never production |
+
+For most field workloads `NORMAL`
+
+is correct: it can never corrupt a WAL-mode database, the only exposure is that a handful of transactions committed in the final instant before a power cut are rolled back, and it cuts write latency by roughly 40–60% versus `FULL`
+
+. The full trade-off matrix is worked through in [configuring the synchronous pragma for crash safety](https://www.productionhardening.org/wal-optimization-concurrency-tuning/pragma-optimization-guide/configuring-synchronous-pragma-for-crash-safety/).
+
+### 3. Apply the configuration with read-back verification [#](https://productionhardening.org#3-apply-the-configuration-with-read-back-verification)
+
+The following context manager enables WAL, sets the durability and checkpoint thresholds, then *reads every value back and asserts it* — a mode switch or PRAGMA that silently no-ops is otherwise invisible until a crash exposes it.
+
+```
+import sqlite3
+import logging
+import os
+from contextlib import contextmanager
+logger = logging.getLogger(__name__)
+@contextmanager
+def get_wal_connection(db_path: str, timeout: float = 5.0, wal_limit_pages: int = 1000):
+"""
+Production-safe WAL initialization with explicit PRAGMA tuning and
+mandatory read-back verification. Fails fast on mode mismatch.
+wal_limit_pages: autocheckpoint threshold in pages (4 KiB each by default).
+1000 pages ~= 4 MB; lower it on constrained storage.
+"""
+if not os.path.exists(db_path):
+raise FileNotFoundError(f"Database file not found: {db_path}")
+# connect() timeout is in SECONDS; the busy_timeout PRAGMA below is in ms.
+conn = sqlite3.connect(
+db_path,
+timeout=timeout,
+isolation_level="DEFERRED", # explicit BEGIN control; no implicit commits
+check_same_thread=False, # safe only if access is externally serialized
+)
+conn.row_factory = sqlite3.Row
+try:
+conn.execute("PRAGMA journal_mode=WAL;") # persistent; concurrent readers + 1 writer
+conn.execute("PRAGMA synchronous=NORMAL;") # fsync at checkpoint, not per commit; ~40-60% faster, crash-safe
+conn.execute(f"PRAGMA wal_autocheckpoint={wal_limit_pages};") # cap WAL growth (pages)
+conn.execute("PRAGMA busy_timeout=5000;") # wait up to 5000 ms on a locked write before SQLITE_BUSY
+conn.execute("PRAGMA mmap_size=134217728;") # 128 MB memory-mapped reads; cap on 32-bit targets
+conn.execute("PRAGMA foreign_keys=ON;") # enforce referential integrity (OFF by default)
+# --- Mandatory read-back verification ---------------------------------
+mode = conn.execute("PRAGMA journal_mode;").fetchone()[0]
+sync = conn.execute("PRAGMA synchronous;").fetchone()[0] # 1 == NORMAL
+acp = conn.execute("PRAGMA wal_autocheckpoint;").fetchone()[0]
+if mode.lower() != "wal":
+raise RuntimeError(f"journal_mode did not switch (got {mode!r}); another connection holds the file")
+if sync != 1:
+raise RuntimeError(f"synchronous is {sync}, expected 1 (NORMAL)")
+if acp != wal_limit_pages:
+raise RuntimeError(f"wal_autocheckpoint is {acp}, expected {wal_limit_pages}")
+logger.info("WAL verified: mode=%s synchronous=%s autocheckpoint=%s", mode, sync, acp)
+yield conn
+except sqlite3.DatabaseError:
+logger.exception("WAL initialization failed")
+raise
+finally:
+conn.close()
+```
+
+
+Because the block reads each PRAGMA back and raises on mismatch, provisioning fails loudly at startup instead of silently degrading to rollback-mode serialization or per-commit `fsync`
+
+in the field.
+
+## Workload Profiles & Threshold Reference [#](https://productionhardening.org#workload-profiles-threshold-reference)
+
+There is no universal WAL configuration; the correct thresholds follow the storage media and write pattern. Match your deployment to the closest row, then validate against a real power-cycle test rather than trusting the defaults.
+
+| Deployment | `journal_mode` |
+`synchronous` |
+`wal_autocheckpoint` |
+`mmap_size` |
+Rationale |
+|---|---|---|---|---|---|
+| Embedded eMMC / SD gateway | `WAL` |
+`NORMAL` |
+256 pages (~1 MB) | 16–32 MB | Tight WAL cap protects a small partition from `SQLITE_FULL` ; sequential frames spare flash wear. Pair with
+|
+| Desktop NVMe app | `WAL` |
+`NORMAL` |
+1000 pages (~4 MB) | 256 MB | Ample space and fast fsync; larger checkpoint window maximizes read concurrency for UI threads. |
+| Python automation / batch | `WAL` |
+`NORMAL` |
+2000 pages (~8 MB) | 128 MB | Bursty batch commits amortize checkpoint cost over larger windows; align cap to batch size. |
+| High-write IoT logger | `WAL` |
+`NORMAL` (or `FULL` if each commit must survive) |
+128–256 pages | 16 MB | Frequent small appends need a low cap and disciplined checkpoints to bound WAL between power events. |
+| Network-mounted volume | `PERSIST` / `TRUNCATE` (rollback) |
+`FULL` |
+n/a | 0 | POSIX locking and shared memory are unreliable over NFS/SMB; WAL is unsafe — fall back to a rollback journal. |
+
+On 32-bit targets, keep `mmap_size`
+
+well under the ~2 GB usable address space or reads will fail with `SQLITE_IOERR`
+
+once the mapping cannot be extended; the per-board reasoning lives in [memory-mapped I/O configuration](https://www.productionhardening.org/wal-optimization-concurrency-tuning/memory-mapped-io-configuration/). Index and table layout also shape how many pages each write dirties, so tune journaling alongside [schema design for edge devices](https://www.productionhardening.org/sqlite-architecture-production-hardening/schema-design-for-edge-devices/) rather than in isolation.
+
+## Failure Documentation & Edge Cases [#](https://productionhardening.org#failure-documentation-edge-cases)
+
+### Checkpoint starvation [#](https://productionhardening.org#checkpoint-starvation)
+
+*Trigger:* a long-lived read transaction holds a snapshot, so the checkpointer cannot advance past the oldest frame and the `-wal`
+
+file grows without bound until the partition fills.
+*Diagnosis:* `PRAGMA wal_checkpoint(PASSIVE);`
+
+returns a non-zero `busy`
+
+flag and a `log`
+
+frame count that keeps climbing between calls; the `-wal`
+
+file on disk stays large.
+*Fallback:* bound read-transaction lifetime in the connection factory, then run a scheduled `PRAGMA wal_checkpoint(TRUNCATE)`
+
+in a low-contention window. Never force truncation during active ingestion — it can raise `SQLITE_IOERR`
+
+on concurrent readers. Deeper mitigation is in [handling WAL file bloat on constrained storage](https://www.productionhardening.org/wal-optimization-concurrency-tuning/checkpoint-frequency-tuning/handling-wal-file-bloat-on-constrained-storage/).
+
+```
+def safe_checkpoint(conn: sqlite3.Connection) -> dict:
+"""Passive checkpoint that never blocks writers. Returns a status dict."""
+busy, log_frames, ckpt_frames = conn.execute(
+"PRAGMA wal_checkpoint(PASSIVE);" # PASSIVE never takes the writer lock
+).fetchone()
+if busy:
+logger.warning("checkpoint blocked: %s frames still in WAL", log_frames)
+return {"busy": bool(busy), "log_frames": log_frames, "checkpointed_frames": ckpt_frames}
+```
+
+
+### Silent mode revert on a locked switch [#](https://productionhardening.org#silent-mode-revert-on-a-locked-switch)
+
+*Trigger:* code issues `PRAGMA journal_mode=WAL`
+
+while another connection is attached; the switch cannot take the exclusive lock, so it returns the current mode and leaves the database in rollback mode.
+*Diagnosis:* the return value of `PRAGMA journal_mode`
+
+is not `wal`
+
+— the read-back assertion in the implementation above catches this at startup.
+*Fallback:* quiesce all connections before the switch, or run it as the very first operation the provisioning process performs. The safe migration procedure is detailed in [switching from DELETE to WAL mode safely](https://www.productionhardening.org/sqlite-architecture-production-hardening/journaling-modes-deep-dive/switching-from-delete-to-wal-mode-safely/).
+
+### WAL unsupported by the filesystem [#](https://productionhardening.org#wal-unsupported-by-the-filesystem)
+
+*Trigger:* the database lives on a network mount or a filesystem without shared-memory/`mmap`
+
+support; opening in WAL raises `SQLITE_CANTOPEN`
+
+on the `-shm`
+
+file or degrades to unsafe behavior.
+*Diagnosis:* a `-shm`
+
+file cannot be created, or `PRAGMA journal_mode=WAL`
+
+reports a non-WAL mode on an otherwise-idle database.
+*Fallback:* degrade deterministically to `PERSIST`
+
+or `TRUNCATE`
+
+with `synchronous=FULL`
+
+and reduced concurrency expectations, as covered in [fallback routing strategies](https://www.productionhardening.org/sqlite-architecture-production-hardening/fallback-routing-strategies/).
+
+### Orphaned journal artifacts after unclean shutdown [#](https://productionhardening.org#orphaned-journal-artifacts-after-unclean-shutdown)
+
+*Trigger:* the process is killed mid-checkpoint, leaving stale `-wal`
+
+/`-shm`
+
+files or a truncated WAL.
+*Diagnosis:* `PRAGMA integrity_check;`
+
+returns anything other than `ok`
+
+, or the `-wal`
+
+file is present but its header fails checksum validation.
+*Fallback:* run `PRAGMA integrity_check`
+
+before accepting new writes; on a clean result SQLite auto-replays the WAL on next open. Do not manually delete `-wal`
+
+/`-shm`
+
+while a connection is open — that discards committed, un-checkpointed transactions.
+
+### Backups that capture the `.db`
+
+file alone [#](https://productionhardening.org#backups-that-capture-the-db-file-alone)
+
+*Trigger:* a snapshot copies only the main database while committed pages still live in the WAL, producing an inconsistent restore.
+*Diagnosis:* the restored copy is missing recent transactions or fails `integrity_check`
+
+.
+*Fallback:* run `PRAGMA wal_checkpoint(TRUNCATE)`
+
+immediately before snapshotting, or use SQLite’s online backup API, which reads a transactionally consistent image across the main file and WAL together.
+
+## Production Hardening Checklist [#](https://productionhardening.org#production-hardening-checklist)
+
+## Related Pages [#](https://productionhardening.org#related-pages)
+
+[Switching from DELETE to WAL Mode Safely](https://www.productionhardening.org/sqlite-architecture-production-hardening/journaling-modes-deep-dive/switching-from-delete-to-wal-mode-safely/)— the zero-downtime migration procedure and checksum validation.[Configuring the synchronous PRAGMA for Crash Safety](https://www.productionhardening.org/wal-optimization-concurrency-tuning/pragma-optimization-guide/configuring-synchronous-pragma-for-crash-safety/)— the full NORMAL vs FULL durability matrix.[Checkpoint Frequency Tuning](https://www.productionhardening.org/wal-optimization-concurrency-tuning/checkpoint-frequency-tuning/)— calibrating checkpoint cadence against WAL size and read concurrency.[Handling WAL File Bloat on Constrained Storage](https://www.productionhardening.org/wal-optimization-concurrency-tuning/checkpoint-frequency-tuning/handling-wal-file-bloat-on-constrained-storage/)— capping`-wal`
+
+growth on eMMC and SD media.[Fallback Routing Strategies](https://www.productionhardening.org/sqlite-architecture-production-hardening/fallback-routing-strategies/)— deterministic degradation when WAL is unavailable.
+
+For authoritative reference on WAL internals and PRAGMA behavior, consult the official [SQLite Write-Ahead Logging documentation](https://www.sqlite.org/wal.html) and the [Python sqlite3 module reference](https://docs.python.org/3/library/sqlite3.html).

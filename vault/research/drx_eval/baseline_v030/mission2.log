@@ -1,0 +1,19 @@
+﻿python : deep_research 0.3.0: prompt='How much does HTTP/3 (QUIC) reduce page load time or latency...' depth=2 
+breadth=3
+En C:\Users\User\AppData\Local\Temp\claude\fc13b26181df2fff\d58e4d3c-f3de-442a-bf76-bb1e7ff3e81b\scratchpad\run_drx_mis
+sions.ps1: 17 Carácter: 3
++   python -I "$EngineDir\deep_research.py" --prompt $m --depth 2 --bre ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (deep_research 0...pth=2 breadth=3:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+deep_research: OK
+  report:   C:\Users\User\.claude\skills\claude-power-pack\vault\research\drx_eval\baseline_v030\2026-11-11_171551_how-
+much-does-http-3-quic-reduce-page-load-time-or.md
+  index:    C:\Users\User\.claude\skills\claude-power-pack\vault\research\index.json
+  raw:      C:\Users\User\.claude\skills\claude-power-pack\vault\research\drx_eval\baseline_v030\how-much-does-http-3-q
+uic-reduce-page-load-time-or.raw.jsonl
+  learnings: 0
+  sources:   0
+  duration:  125.1 s

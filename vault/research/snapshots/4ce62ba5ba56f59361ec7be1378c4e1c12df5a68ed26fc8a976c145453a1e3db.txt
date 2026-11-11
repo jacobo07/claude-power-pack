@@ -1,0 +1,64 @@
+HTTP/3’s most surprising benefit isn’t raw speed, but its ability to *maintain* speed under adverse network conditions where HTTP/1.1 and [HTTP/2](https://adhdecode.com/articles/http2/) would degrade significantly.
+
+Let’s see this in action. Imagine a user on a shaky public Wi-Fi network, experiencing packet loss and high latency.
+
+```
+# Simulate packet loss and high latency
+tc qdisc add dev eth0 root netem loss 5% delay 200ms
+```
+
+
+Now, load a small webpage with a few assets using `curl`
+
+against both an HTTP/1.1 and an HTTP/3 enabled server.
+
+**HTTP/1.1 (simulated):**
+
+```
+curl -v --http1.1 http://example.com/small-page.html
+```
+
+
+You’d observe multiple round trips for each asset, [head-of-line blocking](https://adhdecode.com/networking/transport-layer/head-of-line-blocking/) at the TCP layer, and a noticeable delay as the browser retransmits lost packets. The total load time might be, say, 5.2 seconds.
+
+**HTTP/3 (simulated):**
+
+```
+curl -v --http3 http://example.com/small-page.html
+```
+
+
+Even with the same simulated network conditions, the HTTP/3 load time could be around 2.8 seconds. The difference is stark.
+
+The core problem HTTP/3 solves is the inefficiency of TCP for modern web traffic, especially on lossy networks. TCP’s reliable, ordered delivery, while robust, creates a bottleneck. If a single packet is lost, the entire connection stalls until that packet is retransmitted, impacting all subsequent data. This is "head-of-line blocking" at the TCP level. HTTP/1.1 and HTTP/2, built on TCP, inherit this limitation.
+
+HTTP/3, however, runs over QUIC. QUIC uses UDP as its transport layer and implements its own [stream multiplexing](https://adhdecode.com/protocol-deep-dives/http3-and-quic/quic-stream-multiplexing-independent-loss/) and reliability mechanisms *at the application layer*. This means:
+
+**No TCP Head-of-Line Blocking:**If a packet for one HTTP/3 stream is lost, it only affects that specific stream. Other streams can continue to make progress.**Faster Connection Establishment:**QUIC combines the TCP 3-way handshake and TLS handshake into a single round trip (or even zero round trips for subsequent connections), significantly reducing connection setup latency.**Improved Congestion Control:**QUIC’s[congestion control](https://adhdecode.com/networking/transport-layer/tcp-congestion-control/)is pluggable and can be more sophisticated than traditional TCP algorithms, adapting better to varying network conditions.**Connection Migration:**QUIC connections are identified by a connection ID, not by IP address and port. This allows clients to seamlessly switch IP addresses (e.g., from Wi-Fi to cellular) without interrupting ongoing transfers.
+
+To enable HTTP/3, you’ll need a web server that supports it (like Caddy, [Nginx](https://adhdecode.com/articles/nginx/) with the QUIC module, or [Cloudflare](https://adhdecode.com/articles/cloudflare/)’s edge services) and configure it to listen on a UDP port (typically 443). Your client (browser, `curl`
+
+) must also support HTTP/3.
+
+Consider the `Alt-Svc`
+
+(Alternative Service) HTTP header. This is how servers tell clients that they support alternative protocols (like HTTP/3) on different ports or hosts. A typical `Alt-Svc`
+
+header might look like this:
+
+`Alt-Svc: h3=":443"; ma=2592000, h3-29=":443"; ma=2592000`
+
+
+Here, `h3`
+
+indicates HTTP/3, and `ma`
+
+is the `max-age`
+
+in seconds, specifying how long the client should cache this information. When a browser sees this header on an HTTP/1.1 or HTTP/2 connection, it knows it can try connecting to the same origin using HTTP/3 on the specified port for future requests.
+
+When measuring HTTP/3 page load speed improvements, focus on networks with higher latency or packet loss. Use tools like WebPageTest, Lighthouse, or browser developer tools (Network tab) to compare load times under simulated or real-world adverse conditions. Look at metrics like "Time to First Byte" (TTFB), "First Contentful Paint" (FCP), and "Largest Contentful Paint" (LCP), but pay particular attention to the *consistency* of these metrics across varying network quality. The true win is in the reduction of variance and the mitigation of slowdowns.
+
+The most subtle yet significant performance gain comes from how QUIC handles connection establishment in conjunction with TLS 1.3. For a new connection, QUIC can achieve 0-RTT or 1-RTT establishment, meaning the client can send application data in the very first packet, or after just one round trip, compared to the 2-3 round trips traditionally required for TCP + TLS.
+
+The next step in optimizing [web performance](https://adhdecode.com/performance-engineering/web-performance-core-web-vitals/web-performance-monitoring-rum/) is understanding how to leverage HTTP/3’s connection migration capabilities for mobile users.

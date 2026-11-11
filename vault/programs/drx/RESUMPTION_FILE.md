@@ -28,12 +28,15 @@ U0 baseline · U1 ledger · U2 wiring · U3 checkpoint/resume · U4 ratchet regi
   breadth 3): `baseline_v031/` then `v040/`, engines snapshotted in scratchpad `drx_v031`, `drx_v040`.
   v031 mission1: 15 learnings, 20 URLs, number-support 10/11 (0.909), 6 queries, 1518 s.
 
-## 4. Next action
-When both dirs have `ALL_DONE` in summary.txt: `python tools/drx_compare.py vault/research/drx_eval/baseline_v031
-vault/research/drx_eval/v040 --json vault/research/drx_eval/COMPARISON.json`; run `evidence_ledger.py audit` on
-each v040 ledger; read one v040 report's Evidence ledger section by eye. Report wins AND losses (the
-number-support metric is already ~0.9 on v031, so the ledger's value must show in verified-quote rate).
-Then U7 part 2: close-out review + handoff. If the runs died: `--resume RUN_ID` works only for v040+.
+- U6 DONE: `vault/research/drx_eval/RESULTS.md` + `COMPARISON.json`. v0.4.0: 14/15 claims with a verbatim
+  quote, ledgers audit 3/3; BUT yield 36 -> 15 learnings, 1/3 INSUFFICIENT (n=3). Fixes from real runs:
+  `c4030169` CRLF byte-exact snapshots, `290cdd3a` re-point verbatim quotes cited under the wrong id (4/9).
+
+## 4. Next action (slice 2, EXECUTION MODE)
+Yield experiment: hypothesis = quote-bearing extraction output exceeds the 120 s child timeout (2 extraction
+timeouts in v0.4.0, 0 in v0.3.1). Arms: LLM_TIMEOUT_S 120 vs 240, and/or content blocks 25k vs 12k chars;
+n >= 3 per arm on the 3 DEV missions; judge yield AND verified-quote rate together. Only then run the 4
+HELD_OUT cases of EVAL_SET.json once on the frozen winner.
 
 ## 5. Open debt / traps found
 - Mission prompt's UKDL path `knowledge-vault/UKDL/universal-knowledge.md` does not exist (real:

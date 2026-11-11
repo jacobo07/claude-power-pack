@@ -1,0 +1,61 @@
+Also known as: Chinchilla scaling, compute-optimal training, Kaplan laws, Hoffmann scaling laws
+
+TL;DR
+
+Scaling laws are empirical power-law relationships between compute, parameter count, training tokens, and language-model loss. Chinchilla's 2022 result — train roughly 20 tokens per parameter for compute-optimal performance.
+
+Scaling laws are empirical regularities relating an LLM’s training compute, parameter count, and training tokens to its eventual loss. They follow power-law forms over many orders of magnitude, are remarkably consistent across model families, and have been the most reliable forecasting tool in the field. The Chinchilla paper (Hoffmann et al. 2022) is the load-bearing reference: it established that compute-optimal training requires roughly 20 tokens per parameter, which corrected a years-long industry practice of training models too big and too short.
+
+The shape of the laws
+
+The cleanest formulation is from Hoffmann et al. Given training compute , parameter count , and training tokens , language-model loss behaves approximately as:
+
+where , , and is the irreducible loss (entropy of the data). For a fixed compute budget , the optimum is found by Lagrange multiplier — yielding the famous result that and should scale roughly together, at a ratio of about 20 tokens per parameter.
+
+The earlier Kaplan et al. 2020 paper had estimated different exponents, leading to the recommendation to grow faster than . Chinchilla revisited it with better hyperparameter tuning across model sizes and found the previous scaling had been confounded by under-tuned learning rates. Empirically: a 70B-parameter model trained on 1.4T tokens (Chinchilla) outperformed a 175B-parameter model trained on 300B tokens (GPT-3) at the same training compute.
+
+The decomposition assumes the model converges with infinite data (“data-bound term” goes to zero) and the fit converges with infinite parameters (“parameter-bound term” goes to zero). The constant is the Bayes-optimal loss — the entropy you can never reduce because the next-token distribution genuinely has uncertainty. Empirical fits give nats/token for natural text, which sets a floor on how low perplexity can go regardless of compute.
+
+Why “20 tokens per parameter” became the rule
+
+Compute-optimal training balances the two reducible terms in the loss function. If you have FLOPs to spend, the marginal gain from another parameter equals the marginal gain from another token of data exactly when (the factor of 6 is approximate forward+backward passes per parameter per token) and .
+
+In practice the precise ratio depends on the data quality, the architecture, and the loss exponents — different papers fit slightly different numbers. The robust prescription is “more data than the Kaplan rule says; tokens-per-parameter in the ten-to-one-hundred range.” 20:1 is the canonical default.
+
+The pivot to inference-optimal
+
+Compute-optimal training assumes you only care about training cost. Real production cares about training cost plus inference cost over the model’s serving lifetime. A model that’s deployed for billions of requests over years amortizes the training compute trivially, and the binding cost becomes inference per token.
+
+A smaller model trained on more data than compute-optimal reaches the same loss as a larger compute-optimal model — at the cost of more training compute, but with much cheaper inference. This is inference-optimal (or “overtraining”) scaling, and it’s what every frontier and open-weight LLM since 2023 has done.
+
+Llama-2 70B was trained at ~28 tokens/parameter — close to Chinchilla. Llama-3 8B was trained on 15 trillion tokens at 8B params, about 1875 tokens/parameter — almost two orders of magnitude past compute-optimal. The training cost was higher, but the inference economics over hundreds of millions of users justified it.
+
+Compute-optimal is a pretraining-FLOPs minimization, not a deployment recipe. Inference dominates lifetime cost; the right model is smaller and trained longer than Chinchilla suggests.
+
+What scaling laws don’t predict
+
+The laws describe pretraining loss on web text. They do not cleanly predict:
+
+Downstream task accuracy after instruction tuning. Some emergent capabilities appear suddenly with scale and don’t follow the power-law fit.
+
+Reasoning and tool-use quality. Modern post-training pipelines (instruction tuning, RLHF , DPO ) shift quality far more than the pretraining loss gap suggests.
+
+Mixture-of-experts efficiency. MoE models break the simple parameter count = capacity assumption; their effective scaling depends on active parameters per token, not total parameters.
+
+Specialized small models. Rerankers, embeddings, and classifiers have their own scaling regimes — frontier-LLM exponents do not transfer.
+
+What they do predict
+
+Pretraining loss as a function of compute, given a chosen tokens/parameter ratio. That’s enough to plan training runs at frontier scale: a 100x compute scale-up should produce a predictable loss reduction, and most of the time it does. The few times it hasn’t (capability jumps, plateaus from data exhaustion) have been the most-discussed events in the field. Use them to plan; don’t expect them to predict downstream usefulness.
+
+Go further
+
+What did Chinchilla actually change about how we train models?
+
+Before Chinchilla (Hoffmann et al. 2022), the dominant prescription from Kaplan 2020 was that parameters grew faster than data with compute. GPT-3 was trained on ~300B tokens at 175B parameters — under 2 tokens/param. Chinchilla showed compute-optimal is roughly 20 tokens/param. Llama-2 70B trained at ~28 t/p (the 7B variant was much higher), Llama-3 at ~150 t/p, modern frontier models at 1000+ t/p — far past compute-optimal but worthwhile for inference economics.
+
+Compute-optimal minimizes training loss per FLOP of training. But the model is then served for billions of inference FLOPs. A smaller model trained on more data has the same loss but cheaper inference, so the overall lifetime cost — train + serve — is minimized by overtraining smaller models. Llama-3 8B's massive overtraining is the canonical example of inference-optimal scaling.
+
+Do scaling laws hold for fine-tuned and post-trained models?
+
+Less cleanly. The original laws describe pretraining loss on web-scale text; instruction-tuned model quality on downstream benchmarks scales noisily and saturates earlier. Mixture-of-experts, sparse models, and post-training tricks (RLHF, distillation) all break the simple power-law fit. Use scaling laws to plan pretraining budgets; don't extrapolate them to predict end-user model quality.

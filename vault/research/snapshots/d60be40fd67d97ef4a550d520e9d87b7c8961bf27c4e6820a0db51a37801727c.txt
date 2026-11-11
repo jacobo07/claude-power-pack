@@ -1,0 +1,177 @@
+# A Comprehensive Real-World Evaluation of 5G Improvements over 4G in Low- and Mid-Bands Thanks: This research is supported in part by the National Science Foundation under grant number CNS-2128489, 2132700, 2220286, 2220292, 2226437, and 2229387.
+
+###### Abstract
+
+As discussions around 6G begin, it is important to carefully quantify the spectral efficiency gains actually realized by deployed 5G networks as compared to 4G through various enhancements such as higher modulation, beamforming, and MIMO. This will inform the design of future cellular systems, especially in the mid-bands, which provide a good balance between bandwidth and propagation. Similar to 4G, 5G also utilizes low-band (1 GHz) and mid-band spectrum (1 to 6 GHz), and hence comparing the performance of 4G and 5G in these bands will provide insights into how further performance improvements can be attained. In this work, we address a crucial question: is the performance boost in 5G compared to 4G primarily a result of increased bandwidth, or do the other enhancements play significant roles, and if so, under what circumstances? There is extremely limited academic research that addresses this important question. Hence, we conduct city-wide measurements of 4G and 5G cellular networks deployed in low- and mid-bands in Chicago and Minneapolis, and carefully analyze the performance to quantify the contributions of different aspects of 5G advancements to its improved throughput performance. Our analyses show that (i) compared to 4G, the throughput improvement in 5G today is mainly influenced by the wider channel bandwidth, both from single channels and channel aggregation, (ii) in addition to wider channels, improved 5G throughput requires better signal conditions, which can be delivered by denser deployment and/or use of beamforming in mid-bands, (iii) the channel rank in real-world environments rarely supports the full 4 layers of 4x4 MIMO and (iv) advanced features such as MU-MIMO and higher order modulation such as 1024-QAM have yet to be widely deployed. These observations and conclusions lead one to consider designing the next generation of cellular systems to have wider channels, perhaps with improved channel aggregation, a deployment architecture that is dense and uses more beams, thus ensuring uniformly better signal strength over the coverage area and no more than 4 MIMO layers per user.
+
+###### Index Terms:
+
+5G, 4G, mid-band, low-band, C-band, BRS, MIMO, throughput, measurements.## I Introduction
+
+5G New Radio (NR) networks are widely recognized as the cornerstone for emerging next-generation mobile applications such as AR/VR, remote driving, and cloud gaming. Our recent measurement studies [[1](https://arxiv.org#bib.bib1)] reveal that with good coverage, current commercial 5G networks can achieve an average downlink throughput of 700 Mbps (with peak rates reaching 1 Gbps) even while driving in urban environments, far surpassing the performance of 4G Long-Term Evolution (LTE) networks. This substantial improvement may be attributed to the adoption of advanced wireless communication technologies, including but not limited to massive MIMO [[2](https://arxiv.org#bib.bib2)], beamforming [[3](https://arxiv.org#bib.bib3)], higher modulation [[4](https://arxiv.org#bib.bib4)], and increased bandwidth. The mid-band spectrum (1–6 GHz) in particular is deemed crucial for the success of 5G, as it balances coverage with bandwidth [[5](https://arxiv.org#bib.bib5)].
+However, some advanced 5G technologies may still be in the product development phase or skipped altogether due to cost considerations.
+Additionally, due to the phased deployment of commercial 5G, earlier research does not have results on the latest deployment of 5G in the BRS-band (2.5–2.7 GHz) and C-band (3.7–4.2 GHz). It is essential to quantify the spectral utilization of 5G to determine if additional spectrum should be allocated to mobile broadband.
+
+| Mobile Operators | AT&T, T-Mobile, Verizon |
+|---|---|
+| Radio Technologies | 4G, 5G |
+| Measurement Venues | Minneapolis, Chicago |
+| Cumulative Data Traces | 1200+km; Around 14 hours |
+| XCAL Key Perf. Indicators | PCI-Beam idx; Freq.; SCS; RSRP; RSRQ; CQI; RI; BLER; MCS; #RBs; #MIMO layers; MIMO modes; PHY-layer throughput; |
+
+Hence, in this paper we focus on the physical layer of 4G and 5G networks, exploring deployed radio channel characteristics and their impact on throughput performance, with emphasis on the low-band (1 GHz) and mid-band channels, particularly the recent deployments of NR in BRS [[6](https://arxiv.org#bib.bib6)] and C-band [[7](https://arxiv.org#bib.bib7), [8](https://arxiv.org#bib.bib8)]. Specifically, we wish to address the following questions: What are the similarities and differences in the channel resources and radio technologies currently used in 4G and 5G networks? More importantly, is the observed 5G performance boost primarily a result of increased bandwidth, or do other novel enhancements play significant roles? And can we quantify their relationship and contribution to throughput? We believe that addressing these queries can prompt a reevaluation of mobile network evolution, offering valuable insights for the design and deployment of future 6G networks.
+
+To this end, we carried out extensive in-field measurements in two major metropolitan areas in the US, Minneapolis and Chicago, along with the highways connecting them, as shown in Fig. [1](https://arxiv.org#S1.F1).
+We employ commercial smartphones as user equipment (UE) and utilize a professional network analyzer tool to log all network events and key performance indicators (KPIs).
+Our data trajectory spans a driving distance exceeding 1200 km, encompassing both 4G and 5G networks of three major US operators—namely, AT&T (ATT), T-Mobile (TMO), and Verizon (VZW) as shown in Table [I](https://arxiv.org#S1.T1) (see §[III](https://arxiv.org#S3) for details).
+To the best of our knowledge, our work is one of the first to conduct a comprehensive city-wide study spanning two cities, aimed at assessing the enhancements offered by 5G over 4G, with a particular focus on the low- and mid-bands.
+
+With these datasets, we conduct an in-depth data analysis and summarize our conclusions as follows:
+
+(1) Comparison of throughput performance between NR and LTE (§[IV-C](https://arxiv.org#S4.SS3):
+We perform a comparative analysis of throughput over the representative low- and mid-band channels in NR and LTE. As expected, the NR mid-band channels perform exceedingly well in downlink and uplink compared to other NR and LTE channels. However, we further normalize the throughput and demonstrate that the higher channel bandwidth of mid-band 5G is a major factor in the increased throughput, rather than new 5G features. We observe similar results for uplink throughput and hence do not specifically present those results.
+
+(2) Impact of deployment density and beamforming on downlink throughput (§[IV-B](https://arxiv.org#S4.SS2)): We compare the density of base stations (BSs) deployed by the three carriers and beamforming modes used and note that denser deployments along with the use of more beams in the mid-band lead to improved overall signal strength and hence to improved spectral efficiency.
+
+(3) Analysis of the contribution of various 4G and 5G signal parameters to normalized downlink throughput (§[IV-D](https://arxiv.org#S4.SS4)):
+The contribution of various signal parameters such as Reference Signal Received Power (RSRP), Modulation Coding Scheme (MCS), and Channel Quality Indicator (CQI) to the normalized throughput is further analyzed. We demonstrate that these parameters in NR perform similarly to their LTE counterparts. We also note the absence of 1024-QAM modulation, introduced in the latest 3GPP Release 17.
+
+(4) Comparison of Multiple-Input Multiple-Output (MIMO) performance in NR and LTE (§[IV-E](https://arxiv.org#S4.SS5)):
+A comparative analysis of the Rank Indicator (RI) value shows a marginal increase in NR MIMO performance compared to LTE in terms of the actual channel rank and number of layers that the physical channel can support. We also note that Multi-User MIMO (MU-MIMO) has not yet been deployed in the cities we studied.
+
+(5) Comparison of latency performance between NR-SA (Standalone), NR-NSA (Non-Standalone), and LTE networks in low- and mid-bands for T-Mobile (§[IV-C](https://arxiv.org#S4.SS3), §[IV-F](https://arxiv.org#S4.SS6)):
+Since T-Mobile is the only operator with widely deployed NR-SA, we compared the latency performance of NR-SA, NR-NSA, and LTE. Mid-band NR-SA demonstrates the best latency performance due to the combination of lower signaling overhead (compared to NR-NSA) and denser mid-band deployments.
+
+## II Background and Related Work
+
+The current 5G specification incorporates numerous advanced technologies to enhance efficiency, including high-order quadrature amplitude modulation (QAM), massive MIMO, and beamforming.
+High-order QAM enables transmission of more information bits within a symbol interval, and the 3rd Generation Partnership Project (3GPP) introduced 1024-QAM in Release 17 of the 5G specification [[4](https://arxiv.org#bib.bib4)].
+Beamforming optimizes signal direction, concentrating energy on specific users for improved coverage and capacity. NR beamforming is particularly important for mmWave channels [[3](https://arxiv.org#bib.bib3), [9](https://arxiv.org#bib.bib9)], and our prior work [[10](https://arxiv.org#bib.bib10)] studied the deployment of mmWave 5G beamforming in Chicago and the correlation of the number of beam indices to beam width and beam handover performance. Beamforming can also be implemented in low- and mid-band channels, with the standard specifying up to 8 beams in the mid-band TDD spectrum. These beams are identified with their unique Synchronization Signal Block (SSB) index.
+Massive MIMO, or MU-MIMO, utilizes beamforming to achieve a higher degree of spatial multiplexing between multiple users simultaneously, but it is known to suffer from a fundamental problem called “pilot contamination” [[11](https://arxiv.org#bib.bib11), [12](https://arxiv.org#bib.bib12), [2](https://arxiv.org#bib.bib2)]. In 5G, this problem is alleviated using channel estimation from channel state information-reference signal (CSI-RS) in downlink for frequency division duplexing (FDD) systems, and sounding reference signal (SRS) in the uplink for time division duplexing (TDD) systems [[13](https://arxiv.org#bib.bib13), [4](https://arxiv.org#bib.bib4)].
+
+While prior 4G mobile networks mainly operated on the low (1 GHz) and mid (1–6 GHz) frequency bands (collectively referred to as frequency range 1, or FR1 [[14](https://arxiv.org#bib.bib14)]), initial 5G deployments in the US focused on the mmWave bands (24 GHz), also known as FR2.
+The mmWave bands can provide a throughput performance of over 1 Gbps, but performance is limited by propagation loss, body loss, foliage, and thermal effects as shown in our prior analyses [[10](https://arxiv.org#bib.bib10), [15](https://arxiv.org#bib.bib15)].
+The low-band, conversely, offers better coverage but with relatively lower bandwidth and hence throughput.
+Therefore, the mid-band which strikes a balance between coverage and performance has become a focal point for current 5G deployments.
+For instance, TMO is actively advancing its deployment in the BRS band [[6](https://arxiv.org#bib.bib6)], while ATT and VZW are strategically deploying in the C-band [[7](https://arxiv.org#bib.bib7), [8](https://arxiv.org#bib.bib8)]. Simultaneously, VZW also uses the CBRS band (3.55–3.7 GHz) in its 4G network, using both Tier 2 Priority Access License (PAL) and Tier 3 General Authorized Access (GAA) modes [[16](https://arxiv.org#bib.bib16)]. Furthermore, ATT and VZW have further extended their 4G networks to the unlicensed 5 GHz spectrum through LAA [[17](https://arxiv.org#bib.bib17)].
+
+The novel features specified in 5G can theoretically improve throughput performance since network throughput is a function of channel bandwidth, modulation, code rate, and number of MIMO layers [[18](https://arxiv.org#bib.bib18)].
+However, the reality is much more complex and presents numerous challenges. For example, receiver and transmitter hardware may limit the adoption of those new technologies; the regulator will constrain the transmission power in some locations; radio channels located at higher frequencies will further suffer from radio interference and fading; and poor channel quality will significantly reduce the efficiency of higher-order QAM due to increased transmission error.
+Prior real-world deployment studies of commercial 5G did not delve into the fundamental reasons for performance enhancement or contrast the improvements to its 4G counterpart [[1](https://arxiv.org#bib.bib1), [19](https://arxiv.org#bib.bib19), [20](https://arxiv.org#bib.bib20), [21](https://arxiv.org#bib.bib21), [15](https://arxiv.org#bib.bib15)].
+Authors of [[22](https://arxiv.org#bib.bib22)] have highlighted missed throughput potential in deployed 5G and offered possible solutions, but the work did not compare 5G performance with 4G and the analysis was performed at the link layer.
+We believe that the work presented in this paper is the first to comprehensively analyze the contribution of different physical layer techniques on the throughput performance of 5G as compared to 4G.
+
+## III Measurement Settings and Methodology
+
+The data analyzed in this paper was collected over three measurement campaigns. We conducted an initial campaign in Chicago during December 2022, followed by a campaign in Minneapolis during April-May and November 2023, with both focusing on the downlink and uplink throughput performance of the three major US operators (ATT, TMO, and VZW). Additionally, a latency-focused campaign specifically targeting the T-Mobile network was conducted in Minneapolis in March 2024.
+To cover a large area, we conducted data collection while driving. Fig. [1](https://arxiv.org#S1.F1) shows the setup of 5G probes and the driving routes: in Chicago, we measured in the downtown Loop area, Midway airport, and the interstate highway; while in Minneapolis, we surveyed the Downtown, Dinkytown, and the beltway.
+The statistics of the data collected are summarized in Table [I](https://arxiv.org#S1.T1).
+
+All the data were captured using Samsung Galaxy S22+ (Android 12), which can receive 5G signals in the low-band, mid-band, and mmWave channels. At the time, S22+ was the only phone capable of capturing the TMO network’s inter-band 5G Carrier Aggregation (CA). These state-of-the-art devices allowed us to measure the network’s best possible performance.
+Three S22+ phones were used as user equipment (UE), each equipped with ATT, TMO, and VZW SIMs. All SIMs have unlimited data plans with no throttling of data rates.
+The S22+ phones were connected to a Lenovo ThinkPad X1 Carbon laptop running Accuver XCAL [[23](https://arxiv.org#bib.bib23)]. The XCAL application collects various 4G and 5G signal parameters by establishing a low-level interface to the modem chipset.
+To account for differences in parameter sampling intervals, the application processes the data over one-second periods, averaging numerical values and determining the most frequent (mode) for discrete values. Table [I](https://arxiv.org#S1.T1) also summarizes the parameters (key performance indicators) collected by XCAL for our analysis.
+XCAL is also capable of actively creating traffic using iperf [[24](https://arxiv.org#bib.bib24)] tools: we generate full-buffer downlink (iperf server to UE) and uplink (UE to iperf server) transmission to cloud servers in Chicago and Minneapolis, whichever is closest to the measurement location.
+
+| Parameters | Observed 4G | Observed 5G | Rel-16 5G | Rel-17 5G |
+|---|---|---|---|---|
+| Max. Modulation | 256-QAM | 256-QAM | 256-QAM | 1024-QAM |
+| Max. MIMO Layer | 4 | 4 | 8 | 8 |
+| Max. Ch. BW (excl. mmWave) | 20 MHz | 100 MHz | 100* MHz | 100* MHz |
+| Max. #CA | 6 | 4 | 16 | 16 |
+
+*mmWave channels can be up to 400 MHz wide
+
+| Operator-Band | Duplex Mode | DL Band Freq. (MHz) | SCS (kHz) | BW (MHz) |
+| Representative Bands | ||||
+| ATT-n5 | FDD | 850 | 15 | 10 |
+| ATT-n77 | TDD | 3700 | 30 | 40 |
+| TMO-n41 | TDD | 2500 | 30 | 40,100 |
+| TMO-n71 | FDD | 600 | 15 | 20 |
+| VZW-n5 | FDD | 850 | 15 | 10 |
+| VZW-n77 | TDD | 3700 | 30 | 60 |
+| ATT-b2 | FDD | 1900 | 15 | 20 |
+| ATT-b12 | FDD | 700 | 15 | 10 |
+| ATT-b46 | TDD | 5200 | 15 | 20 |
+| TMO-b12 | FDD | 700 | 15 | 5 |
+| TMO-b41 | FDD | 2500 | 15 | 20 |
+| TMO-b66 | FDD | 2100 | 15 | 20 |
+| VZW-b13 | FDD | 700 | 15 | 10 |
+| VZW-b48 | TDD | 3500 | 15 | 10,20 |
+| VZW-b66 | FDD | 2100 | 15 | 20 |
+| Other Bands | ||||
+| ATT-n66 | FDD | 2100 | 15 | 5 |
+| TMO-n25 | FDD | 1900 | 15 | 20 |
+| ATT-b14 | FDD | 700 | 15 | 10 |
+| ATT-b29 | SDL | 700 | 15 | 5 |
+| ATT-b30 | FDD | 2300 | 15 | 5,10 |
+| ATT-b66 | FDD | 2100 | 15 | 5,10,15 |
+| TMO-b2 | FDD | 1900 | 15 | 10 |
+| TMO-b4 | FDD | 2100 | 15 | 20 |
+| TMO-b25 | FDD | 1900 | 15 | 10 |
+| TMO-b46 | TDD | 5200 | 15 | 20 |
+| TMO-b71 | FDD | 600 | 15 | 5 |
+| VZW-b2 | FDD | 1900 | 15 | 10 |
+| VZW-b4 | FDD | 2100 | 15 | 20 |
+| VZW-b5 | FDD | 850 | 15 | 10 |
+| VZW-b46 | TDD | 5200 | 15 | 20 |
+
+## IV Measurement Results and Analyses
+
+(Bands in bold are mid-bands.)
+
+| Operator-Band | data | % data | #SSB Inds. | #unique PCI |
+|---|---|---|---|---|
+| ATT-n77 | 8380 | 34 | 1,6* | 152 |
+| ATT-n5 | 14444 | 58 | 1 | 217 |
+| TMO-n41 | 56606 | 90 | 6 | 464 |
+| TMO-n71 | 1981 | 3 | 1 | 60 |
+| VZW-n77 | 13049 | 96 | 1 | 147 |
+| VZW-n5 | 541 | 3 | 1 | 28 |
+| ATT-b2 | 31480 | 28 | N/A | 378 |
+| ATT-b46 | 7090 | 6 | N/A | 77 |
+| ATT-b12 | 12690 | 11 | N/A | 262 |
+| TMO-b66 | 19334 | 39 | N/A | 330 |
+| TMO-b41 | 7400 | 15 | N/A | 54 |
+| TMO-b12 | 2645 | 5 | N/A | 83 |
+| VZW-b66 | 31742 | 36 | N/A | 379 |
+| VZW-b48 | 8762 | 8 | N/A | 141 |
+| VZW-b13 | 16906 | 19 | N/A | 255 |
+
+*ATT-n77 has 6 SSB indices in Minneapolis, but only 1 in Chicago.
+
+### IV-A Overview of the Observed 4G and 5G Deployments
+
+Table [II](https://arxiv.org#S3.T2) compares the 4G and 5G features we observed to the 3GPP specifications in Release 16 and 17. We believe that most deployments today are at most Release 16.
+Up to 256-QAM is observed in both LTE and NR networks, but not 1024-QAM.
+We also did not observe improvements in the number of MIMO layers/streams for low- and mid-band 5G over the 4G counterparts, even though 3GPP Rel-16 supports up to 8 layers.
+On the other hand, there are improvements in maximum channel bandwidth, as new spectrum has been released.
+This is reflected in the reduced number of aggregated channels: as bandwidth increases, there is less need to increase CA in 5G.
+
+NR has two modes of network deployments: SA which only utilizes the 5G channels and network stack, and NSA which utilizes a combination of 4G and 5G channels and stacks with 4G used as the primary carrier.
+In all campaigns, ATT and VZW deployed only NSA where NR and LTE channels are aggregated, but we did not observe two NR low- or mid-band channels aggregated in their network. On the other hand, TMO deployed both SA and NSA modes, with the SA mode aggregating up to 3 NR channels for a total bandwidth of 160 MHz.
+Table [III](https://arxiv.org#S3.T3) shows the summary of captured NR and LTE bands/channels in the campaign. NR channels have the prefix ”n” and LTE channels have the prefix ”b” in the table. All three operators have deployed NR in low- and mid-bands. Notably, ATT-n66 and TMO-n25 are the newest bands detected only in our April-May 2023 campaign and afterward. AT&T and Verizon have also deployed NR mmWave bands (n260 and n261), but they are out of scope for this analysis.
+Among the NR low- and mid-band channels, all FDD channels are deployed with 15 kHz sub-carrier spacing (SCS) and lower bandwidth (i.e., ATT-n5, ATT-n66, TMO-n25, TMO-n71, VZW-n5), while all TDD bands are deployed with 30 kHz SCS and higher bandwidth (i.e., ATT-n77, TMO-n41, VZW-n77). These deployments suggest that the NR FDD bands are positioned as the “support” bands since the lower bandwidth and frequency result in lower throughput but greater coverage. It should be noted that TMO’s mid-band deployment in 2.5 GHz has a 3.4 dB advantage over ATT and VZW in 3.7 GHz: this will be seen in performance results presented later.
+Most of the deployed LTE channels are FDD, except for the newer b46 (LAA) and b48 (CBRS) which are TDD, and b29 which is a supplementary downlink (SDL) band. The LTE bands are similarly used as the “support” bands to the NR TDD bands when aggregated in the NSA deployments.
+
+### IV-B Comparison of Low- and Mid-band Deployment
+
+Preliminary analysis revealed negligible differences between the datasets collected in Chicago and Minneapolis. Consequently, we combined them for the analyses presented in this paper. For brevity, we selected a representative low-band and mid-band channel for each operator with substantial data points, regardless of their primary or secondary cell/channel designation.
+All mid-band channels are deployed with higher bandwidth compared to low-band channels.
+Table [IV](https://arxiv.org#S4.T4) shows the number of data points and deployment parameters of the selected representative bands. Due to PCI reuse, the number of unique Physical Cell Identifiers (PCIs) is calculated separately between Chicago and Minneapolis.
+For ATT NR, n77 (mid-band) and n5 (low-band) are selected. There are a larger number of data points and unique PCIs on n5, indicating a denser deployment in the low-band: this is in contrast to TMO and VZW which have a higher number of data points and unique PCIs in mid-bands (n41 and n77, respectively) compared to low-bands (n71 and n5, respectively). Moreover, TMO-n41 is very densely deployed with 462 unique PCIs compared to the NR channels from ATT and VZW. As we shall see later, the density of the TMO NR deployment and the lower NR mid-band frequency (2.5 GHz) significantly impact overall superior signal strength, spectral efficiency and throughput compared to ATT and VZW.
+
+Similar to the NR bands, we observe a higher number of data points and unique PCIs on mid-band LTE channels compared to low-band. For ATT, b66 has the largest number of data points for mid-band. However, we chose the second-largest b2 for its wider bandwidth. For TMO, b12 is the only low-band channel beside b71, indicating the very sparse deployment of low-band LTE in TMO: b12 and b71 channels account for 10% of the total LTE data. The proportion of mid-band data in LTE and NR indicates that TMO and VZW have been focusing on mid-band deployments. Lastly, we selected ATT-b46 and VZW-b48 as representatives of the unlicensed/shared mid-band 4G channels. Additionally, TMO-b41 is chosen for comparison with TMO-n41. These bands exhibited fewer data points and unique PCI compared to other channels. This suggests localized deployments using small cells: at least b46 and b48 are limited in the transmit power.
+
+Comparison of low- and mid-band NR beam deployment:
+Table [IV](https://arxiv.org#S4.T4) also shows the number of SSB Indices which denotes the number of beams available for each NR channel.
+We observe only index 0 (i.e., single beam) per PCI for ATT channels in the Chicago campaign. However, we observe 6 SSB indices for ATT-n77 in the later Minneapolis campaign. Fig. [2(a)](https://arxiv.org#S3.F2.sf1) shows the coverage of the various SSB Indices for ATT-n77, PCI 290, in Dinkytown.
+Similarly, Fig. [2(b)](https://arxiv.org#S3.F2.sf2) depicts SSB Indices from 0 to 5 for TMO-n41, PCI 59, in downtown Minneapolis. All low-band NR channels, i.e., n5 and n71, only use one SSB index, and the number of SSB indices did not change between the two campaigns.
+Unlike TMO and ATT, VZW always uses a single SSB index per PCI for all of its NR channels in both cities. Fig. [2(c)](https://arxiv.org#S3.F2.sf3) illustrates the coverage of one of VZW’s n77 channels in downtown Minneapolis. Since more SSBs/PCI means more beams and hence beamforming gain, VZW with only one beam/PCI suffers from lower signal strength overall and poorer spectral efficiency, as will be shown later.
+
+### IV-C Comparison of Throughput Performance Between Low- and Mid-Band Channels
+
+Downlink throughput:
+Fig. [3](https://arxiv.org#S4.F3) shows the comparison of downlink physical layer throughput between low- and mid-band LTE and NR, as reported by XCAL during all of our driving measurements.
+We observe a considerably higher downlink throughput on the mid-band NR channels compared to the low-band counterparts. As discussed in a prior section, this can be explained by the wider bandwidths. The highest median throughput of 218 Mbps is attained by TMO-n41 with a combination of two NR channels of 40 and 100 MHz bandwidth.
+For the LTE bands, we similarly observe higher throughputs on mid-band channels compared to the low-bands. The highest median throughput of 31 Mbps is achieved by ATT-b2 with 20 MHz bandwidth. S

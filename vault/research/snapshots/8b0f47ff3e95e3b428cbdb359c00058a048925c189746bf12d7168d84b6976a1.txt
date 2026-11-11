@@ -1,0 +1,205 @@
+# WAL Optimization & Concurrency Tuning [#](https://productionhardening.org#wal-optimization-concurrency-tuning)
+
+SQLite’s Write-Ahead Logging mode is the journaling mechanism for modern concurrent deployments, yet out-of-the-box configurations rarely survive the concurrency and durability demands of edge telemetry, desktop synchronization engines, Python automation pipelines, or embedded controllers. In production, WAL is not a performance toggle you flip and forget; it is a crash-safety contract that dictates how writes are staged, how readers isolate snapshots, and how the database recovers after abrupt power loss. This reference strips away academic abstractions and delivers hardened tuning strategies, explicit PRAGMA trade-offs, measurable concurrency thresholds, and deterministic fallback routing — the same discipline applied across the companion [SQLite Architecture & Production Hardening](https://www.productionhardening.org/sqlite-architecture-production-hardening/) reference. Every configuration here has been validated against SD-card degradation, eMMC wear leveling, and high-contention desktop workloads, and each section links down to a dedicated page where a single knob is tuned in depth.
+
+## Core Mechanics & Crash-Safety Architecture [#](https://productionhardening.org#core-mechanics-crash-safety-architecture)
+
+WAL operates by appending committed transactions to a separate `-wal`
+
+file before those frames are ever applied to the main database file. Readers bypass the main file’s write locks by reconstructing their snapshot from the WAL, which is what enables true concurrent read/write isolation. A third file, the `-shm`
+
+shared-memory segment, acts as a lock index and WAL page map, coordinating access across every connection and process attached to the database. This architecture eliminates the reader-writer contention that crippled the legacy rollback [journaling modes](https://www.productionhardening.org/sqlite-architecture-production-hardening/journaling-modes-deep-dive/), but it introduces specific failure modes that must be engineered around rather than assumed away.
+
+Crash safety in WAL mode rests on three guarantees: atomic commit, ordered flush, and deterministic recovery. When a transaction commits, SQLite appends its frames to the WAL — each frame carrying a 32-bit checksum and a commit marker — and only migrates those frames into the main database file during a later checkpoint. If power fails mid-commit, the WAL retains the last fully committed transaction and discards any torn trailing frame whose checksum does not validate; SQLite replays the valid prefix on the next open. The main database file is therefore never left half-written.
+
+These guarantees degrade the instant synchronization settings are relaxed or the underlying storage controller reorders writes. Setting `synchronous=OFF`
+
+bypasses `fsync()`
+
+entirely, trading durability for throughput — unacceptable for edge devices subject to brownouts or desktop apps holding financial state. The production baseline is `synchronous=NORMAL`
+
+, which guarantees the database can never corrupt even though commits made in the moments before a power cut may be rolled back. For critical embedded control loops where every acknowledged write must survive power failure, `synchronous=FULL`
+
+remains mandatory despite a 15–30% write-latency penalty. The exact boundary between these levels, and how each interacts with the WAL, is the subject of the [PRAGMA Optimization Guide](https://www.productionhardening.org/wal-optimization-concurrency-tuning/pragma-optimization-guide/).
+
+Checkpoint starvation is the most common production failure of the whole subsystem. A checkpoint can only reclaim WAL frames older than the oldest reader snapshot. If a long-running reader holds a snapshot open while writers keep appending, the WAL cannot be truncated and grows without bound, eventually exhausting the partition and raising `SQLITE_FULL`
+
+. The checkpoint cadence must be explicitly managed — a topic developed fully under [checkpoint frequency tuning](https://www.productionhardening.org/wal-optimization-concurrency-tuning/checkpoint-frequency-tuning/) — never left to default heuristics on constrained hardware.
+
+## Configuration & PRAGMA Baselines [#](https://productionhardening.org#configuration-pragma-baselines)
+
+Production deployments require explicit PRAGMA declarations issued immediately after every connection is opened. Relying on compile-time defaults or implicit behavior introduces non-deterministic performance cliffs under load, because pooling layers and ORMs frequently reset connection state behind your back. The canonical hardened stack for WAL operation is:
+
+```
+PRAGMA journal_mode = WAL; -- concurrent readers + one writer; the whole point
+PRAGMA synchronous = NORMAL; -- fsync at checkpoint, not every commit; crash-safe, ~40-60% faster writes
+PRAGMA wal_autocheckpoint = 1000; -- checkpoint every ~4MB (1000 pages); lower on constrained flash
+PRAGMA cache_size = -64000; -- 64MB page cache; negative value = KiB, positive = page count
+PRAGMA busy_timeout = 5000; -- retry a locked write for 5s before raising SQLITE_BUSY
+PRAGMA temp_store = MEMORY; -- keep temp b-trees off constrained/unencrypted storage
+PRAGMA mmap_size = 268435456; -- 256MB memory-mapped reads; set 0 on 32-bit or unstable-power targets
+PRAGMA foreign_keys = ON; -- enforce referential integrity; off by default for legacy reasons
+```
+
+
+Two of these values carry the most load-bearing trade-offs. `wal_autocheckpoint`
+
+governs how many pages accumulate before SQLite triggers a passive checkpoint; set it too high and the WAL bloats during write bursts, too low and you thrash flash endurance — the balance point is workload-specific and covered under [threshold tuning for high-write workloads](https://www.productionhardening.org/wal-optimization-concurrency-tuning/threshold-tuning-for-high-write-workloads/). `mmap_size`
+
+maps database pages directly into the process address space to eliminate a copy between the OS page cache and SQLite’s own buffers, a significant win for read-heavy workloads but a liability on 32-bit targets and unstable power; the full decision matrix lives under [memory-mapped I/O configuration](https://www.productionhardening.org/wal-optimization-concurrency-tuning/memory-mapped-io-configuration/).
+
+Python automation builders and desktop developers must verify that connection wrappers do not silently override these settings. The [Python sqlite3 documentation](https://docs.python.org/3/library/sqlite3.html) notes that a fresh connection starts from the library’s conservative defaults, and many pooling libraries hand back connections without re-applying your PRAGMA stack. Always wrap initialization in a deterministic setup routine that asserts each PRAGMA state before running application queries — the pattern shown in Implementation Patterns below.
+
+## Failure Mode Documentation [#](https://productionhardening.org#failure-mode-documentation)
+
+Production systems must anticipate and route around SQLite’s failure codes deterministically rather than treating them as fatal. The table below documents the codes you will actually encounter in WAL deployments, the state that triggers them, the symptoms you will observe, and the engineered fallback. Systematic recovery paths for these codes are formalized in the sibling [fallback routing strategies](https://www.productionhardening.org/sqlite-architecture-production-hardening/fallback-routing-strategies/) reference.
+
+| Error Code | Root Cause | Symptoms | Production Fallback |
+|---|---|---|---|
+`SQLITE_BUSY` |
+Writer-lock contention or checkpoint blocked by a long reader | Intermittent write failures under concurrency; latency spikes | Set
+`busy_timeout` |
+
+`SQLITE_FULL`
+
+`-wal`
+
+file far larger than DB`wal_checkpoint(TRUNCATE)`
+
+; rotate to secondary storage if available`SQLITE_IOERR`
+
+`fsync`
+
+failure`dmesg`
+
+`wal_checkpoint(TRUNCATE)`
+
+; emit telemetry and schedule media replacement`SQLITE_CORRUPT`
+
+`mmap`
+
+misalignment`integrity_check`
+
+reports errors; queries return malformed rows`PRAGMA integrity_check`
+
+; restore from last verified snapshot; disable `mmap_size`
+
+until root-caused`SQLITE_PROTOCOL`
+
+`-shm`
+
+contention across too many processes or a stale lock`SQLITE_READONLY`
+
+## Implementation Patterns [#](https://productionhardening.org#implementation-patterns)
+
+The following pattern applies the full baseline in one deterministic routine, verifies every PRAGMA by reading it back, and raises immediately if the applied state does not match intent. This “apply then assert” discipline is what keeps a pooling layer or a rebuilt library from silently degrading your durability guarantees. It is the foundation on which disciplined [connection pooling strategies](https://www.productionhardening.org/wal-optimization-concurrency-tuning/connection-pooling-strategies/) and [async execution patterns](https://www.productionhardening.org/wal-optimization-concurrency-tuning/async-execution-patterns/) are built.
+
+```
+import sqlite3
+# Desired PRAGMA state. Values chosen for a hardened WAL deployment on flash storage.
+PRAGMAS = {
+"journal_mode": "wal", # returned lowercase by SQLite
+"synchronous": 1, # 1 == NORMAL
+"wal_autocheckpoint": 1000, # ~4MB before a passive checkpoint
+"cache_size": -64000, # 64MB page cache (negative = KiB)
+"busy_timeout": 5000, # 5s automatic retry on a locked write
+"foreign_keys": 1, # enforce referential integrity
+"temp_store": 2, # 2 == MEMORY
+}
+def open_hardened(path: str) -> sqlite3.Connection:
+conn = sqlite3.connect(path, timeout=5.0, isolation_level=None) # autocommit; we manage txns
+try:
+conn.execute("PRAGMA journal_mode = WAL")
+conn.execute("PRAGMA synchronous = NORMAL")
+conn.execute("PRAGMA wal_autocheckpoint = 1000")
+conn.execute("PRAGMA cache_size = -64000")
+conn.execute("PRAGMA busy_timeout = 5000")
+conn.execute("PRAGMA foreign_keys = ON")
+conn.execute("PRAGMA temp_store = MEMORY")
+# Verify after apply — never trust that the settings stuck.
+for pragma, expected in PRAGMAS.items():
+got = conn.execute(f"PRAGMA {pragma}").fetchone()[0]
+if str(got).lower() != str(expected).lower():
+raise RuntimeError(
+f"PRAGMA {pragma} = {got!r}, expected {expected!r}; refusing to serve traffic"
+)
+return conn
+except Exception:
+conn.close()
+raise
+def write_with_retry(conn: sqlite3.Connection, sql: str, params=()):
+# busy_timeout handles most contention; catch the residual OperationalError explicitly.
+try:
+conn.execute("BEGIN IMMEDIATE") # take the write lock up front, fail fast if unavailable
+conn.execute(sql, params)
+conn.execute("COMMIT")
+except sqlite3.OperationalError as exc:
+conn.execute("ROLLBACK")
+if "database is locked" in str(exc):
+# Escalate to the application backoff queue rather than blocking the caller.
+raise TimeoutError("write lock unavailable after busy_timeout") from exc
+raise
+```
+
+
+Two details make this pattern production-grade. First, `isolation_level=None`
+
+disables the `sqlite3`
+
+module’s implicit transaction management so that `BEGIN IMMEDIATE`
+
+/`COMMIT`
+
+are explicit and observable. Second, `BEGIN IMMEDIATE`
+
+acquires the write lock at the start of the transaction rather than on first write, which converts a mid-transaction `SQLITE_BUSY`
+
+into an immediate, cleanly-rolled-back failure your retry queue can handle.
+
+## Filesystem & Security Boundaries [#](https://productionhardening.org#filesystem-security-boundaries)
+
+WAL mode is not a single-file abstraction. A WAL database is a set of sibling files — `db`
+
+, `db-wal`
+
+, and `db-shm`
+
+— and SQLite must be able to create and delete the `-wal`
+
+and `-shm`
+
+files in the same directory as the main database. This is the single most common source of `SQLITE_READONLY`
+
+in containerized and hardened deployments: the DB file is mounted read-write but its containing directory is not, so SQLite cannot create the WAL. Grant write permission on the directory, not merely the file. The full ownership and permission model — including running the database process under a dedicated non-root UID and setting `0600`
+
+/`0700`
+
+modes — is detailed under [filesystem permissions & ownership](https://www.productionhardening.org/sqlite-architecture-production-hardening/file-system-permissions-ownership/).
+
+Durability ultimately depends on `fsync()`
+
+honoring your write ordering, which storage controllers and network filesystems do not always guarantee. The [Open Group fsync specification](https://pubs.opengroup.org/onlinepubs/9699919799/functions/fsync.html) defines the durability contract SQLite relies on; when a controller has a volatile write-back cache or a network mount buffers writes,
+
+`synchronous=FULL`
+
+alone cannot save you and you must disable the cache or use battery-backed hardware. Never place a WAL database on an NFS or SMB share: the `-shm`
+
+shared-memory coordination assumes a real POSIX mmap and local locking, and network filesystems violate both, producing `SQLITE_PROTOCOL`
+
+and silent corruption.Because `temp_store=MEMORY`
+
+keeps intermediate b-trees out of `/tmp`
+
+, it also closes an information-disclosure gap on multi-tenant and constrained devices where temp files could leak query contents. The broader access-control model — restricting who can attach to the database and how untrusted input is isolated — is covered under [security boundaries & access control](https://www.productionhardening.org/sqlite-architecture-production-hardening/security-boundaries-access-control/), and safe on-device table layout under [schema design for edge devices](https://www.productionhardening.org/sqlite-architecture-production-hardening/schema-design-for-edge-devices/).
+
+## Production Deployment Checklist [#](https://productionhardening.org#production-deployment-checklist)
+
+Treat every item below as non-negotiable before a WAL database ships to edge, desktop, or embedded hardware.
+
+## Related Pages [#](https://productionhardening.org#related-pages)
+
+[PRAGMA Optimization Guide](https://www.productionhardening.org/wal-optimization-concurrency-tuning/pragma-optimization-guide/)— the full trade-off matrix behind every value in the baseline stack.[Checkpoint Frequency Tuning](https://www.productionhardening.org/wal-optimization-concurrency-tuning/checkpoint-frequency-tuning/)— balancing WAL truncation against flash endurance.[Connection Pooling Strategies](https://www.productionhardening.org/wal-optimization-concurrency-tuning/connection-pooling-strategies/)— enforcing one-writer, many-readers without corrupting the`-shm`
+
+index.[Threshold Tuning for High-Write Workloads](https://www.productionhardening.org/wal-optimization-concurrency-tuning/threshold-tuning-for-high-write-workloads/)— keeping the WAL bounded under burst telemetry.[Memory-Mapped I/O Configuration](https://www.productionhardening.org/wal-optimization-concurrency-tuning/memory-mapped-io-configuration/)— safe`mmap_size`
+
+selection per target architecture.[Async Execution Patterns](https://www.productionhardening.org/wal-optimization-concurrency-tuning/async-execution-patterns/)— serializing writes off the event loop.

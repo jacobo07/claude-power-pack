@@ -1,0 +1,34 @@
+# Measuring HTTP/3 Real-World Performance
+
+**Categories:**
+
+So far in this [series](https://pulse.internetsociety.org/blog/how-quic-helps-you-seamlessly-connect-to-different-networks), I’ve detailed how QUIC and HTTP/3 have overcome the security and privacy issues that plague the Transport Control Protocol (TCP) and HTTP/2 in a future-proof way. In this post, I’ll look at how they compare when it comes to perhaps the most important feature of any protocol: performance.
+
+## Comparing HTTP/3 vs. HTTP/2 Performance
+
+While it is still somewhat early days to definitively answer this question, given most (public) comparisons between HTTP/2 and HTTP/3 are based on lab testing instead of real-world deployments, we have some data points that can shed some light.
+
+Firstly, [Google’s original paper](https://dl.acm.org/doi/pdf/10.1145/3098822.3098842) describing QUIC’s basic mechanisms reported an 8% average reduction in the time it took to load Google search results on desktop and 3.6% on mobile. And for the slowest 1% of Google users, it was up to 16% faster to load. When looking at YouTube video streaming, they found **up to 20% less video stalling** (when the video playback needs to stop to wait for new data to come in) in countries such as India.
+
+These numbers might not seem like huge improvements at first glance. However, at Google’s scale, they can [easily mean millions in additional revenue](https://wpostats.com/), as Web performance is tied to user engagement and visit conversions.
+
+Secondly, [Wix](https://www.wix.com/), a popular and powerful website creation tool, [ran experiments comparing HTTP/2 to HTTP/3](https://twitter.com/alonkochba/status/1424403252284694528?s=20) on their millions of customer websites. Looking primarily at connection setup times, **they found up to 33% improvements in the mean and often more in the 75th percentile** (Figure 1). For some countries, such as the Philippines, this can have a significant impact — more than 250ms. Similarly, when looking at another popular Web performance metric called [Largest Contentful Paint](https://web.dev/optimize-lcp/) (LCP), they found up to 20% improvements at the 75th percentile, often **lowering the LCP value by more than 500ms** (or about a fifth of the 2,500ms Google recommends as a target value). That’s not bad for switching to a new protocol!
+
+Finally, my employer [Akamai](https://www.akamai.com/), the largest Content Delivery Network (CDN) in the world, [has been testing and tuning HTTP/3 for several years](https://www.akamai.com/blog/performance/deliver-fast-reliable-secure-web-experiences-http3). In general, we see similar gains to connection setup speeds. Additionally, we have been looking at average throughput (effective bandwidth usage), which should also be improved by, for example, QUIC’s better packet loss detection and recovery.
+
+For one large Akamai media customer during a European football (soccer) live-streaming event that was also popular in Latin America, **we saw substantially higher throughput on HTTP/3 compared to HTTP/2 **(Table 1). For example, we saw about 69% of HTTP/3 connections reach a throughput of 5 Mbps or more (indicated by Netflix as the minimum threshold for Full HD video streaming), compared to only 56% of HTTP/2 connections. In practice, this means that the video streams will be of a higher visual quality, and/or have fewer stalls over HTTP/3.
+
+| HTTP version | 1mbps | 3mbps | 5mbps | 10mbps | 15mbps | 25mbps | 50mbps |
+|---|---|---|---|---|---|---|---|
+| HTTP/2 | 73.5% | 62.0% | 56.4% | 47.4% | 40.9% | 31.1% | 18.2% |
+| HTTP/3 | 86.2% | 76.5% | 69.7% | 56.7% | 47.7% | 35.0% | 19.2% |
+
+## Getting Robust Performance Measurements from real HTTP/3 Deployments Remains Difficult
+
+Because HTTP/3 requires a bootstrapping process ([using a feature called alt-svc](https://www.smashingmagazine.com/2021/09/http3-practical-deployment-options-part3/#alt-svc)) it can be difficult to make a clean comparison/split between HTTP/2 and HTTP/3. Additionally, many large companies are not keen on sharing raw numbers for business reasons.
+
+Still, the fact that companies such as Google, Meta, Apple, Twitch, and large CDNs such as Akamai, Cloudflare, and Fastly are deploying the protocols at scale should be a good indicator of the practical (performance) benefits they bring. This is true because **QUIC and HTTP/3 are (much) more expensive to host on their platforms**, costing more CPU time and memory than TCP and HTTP/2, due to, for example, their more extensive encryption. This cost is (apparently) sufficiently offset by the protocols’ benefits on their bottom line.
+
+In my next post, I’ll discuss the impact of this expense and other limiting factors when it comes to deploying QUIC and HTTP/3 and whether this will hold them back.
+
+[Robin Marx](https://twitter.com/programmingart) is a Web Protocol and Performance Expert at [Akamai](http://akamai.com).*The views expressed by the authors of this blog are their own and do not necessarily reflect the views of the Internet Society.*

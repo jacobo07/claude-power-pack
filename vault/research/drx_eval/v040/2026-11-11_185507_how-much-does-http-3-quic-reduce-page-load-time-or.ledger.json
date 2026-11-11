@@ -1,0 +1,425 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_184151_how-much-does-http-3-quic-reduce-page-load-time-or",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/html/2409.16267v2",
+   "aliases": [],
+   "sha256": "2b77a56a769b7bec00f378682c3e43535df3cf4cce873e1d10beb461da8078e1",
+   "chars": 25000,
+   "snapshot": "2b77a56a769b7bec00f378682c3e43535df3cf4cce873e1d10beb461da8078e1.txt",
+   "retrieved_at": "2026-11-11T17:42:36+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://arxiv.org/html/2409.16267v3",
+   "aliases": [],
+   "sha256": "93bd58fcc7f0f0def50e507a05c055afa3d5561965e29a5400dcd014b30d5ef7",
+   "chars": 25000,
+   "snapshot": "93bd58fcc7f0f0def50e507a05c055afa3d5561965e29a5400dcd014b30d5ef7.txt",
+   "retrieved_at": "2026-11-11T17:42:36+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://adhdecode.com/articles/http3/http3-page-load-improvements/",
+   "aliases": [],
+   "sha256": "4ce62ba5ba56f59361ec7be1378c4e1c12df5a68ed26fc8a976c145453a1e3db",
+   "chars": 4805,
+   "snapshot": "4ce62ba5ba56f59361ec7be1378c4e1c12df5a68ed26fc8a976c145453a1e3db.txt",
+   "retrieved_at": "2026-11-11T17:42:36+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://pulse.internetsociety.org/en/blog/2023/07/measuring-http-3-real-world-performance/",
+   "aliases": [],
+   "sha256": "4b6d472b5a2380917c60d2d1866af4e61ee372e1fbd682c6ec498630ec38b035",
+   "chars": 5045,
+   "snapshot": "4b6d472b5a2380917c60d2d1866af4e61ee372e1fbd682c6ec498630ec38b035.txt",
+   "retrieved_at": "2026-11-11T17:45:43+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://arxiv.org/html/2312.00957v2",
+   "aliases": [],
+   "sha256": "d60be40fd67d97ef4a550d520e9d87b7c8961bf27c4e6820a0db51a37801727c",
+   "chars": 25000,
+   "snapshot": "d60be40fd67d97ef4a550d520e9d87b7c8961bf27c4e6820a0db51a37801727c.txt",
+   "retrieved_at": "2026-11-11T17:47:17+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.telecomgurukul.com/post/analyzing-latency-in-4g-and-5g-networks-updated-in-2024",
+   "aliases": [],
+   "sha256": "b1a610d0783135f477f8fb258638b8fca9476abd858c4bd23dbc09eb2e1a5881",
+   "chars": 5556,
+   "snapshot": "b1a610d0783135f477f8fb258638b8fca9476abd858c4bd23dbc09eb2e1a5881.txt",
+   "retrieved_at": "2026-11-11T17:47:17+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://arxiv.org/pdf/2310.11000",
+   "aliases": [],
+   "sha256": "69891a863c1be0ac0004950f17c30d77b6e58e9d6b58e150cdd78587964c0de2",
+   "chars": 239,
+   "snapshot": "69891a863c1be0ac0004950f17c30d77b6e58e9d6b58e150cdd78587964c0de2.txt",
+   "retrieved_at": "2026-11-11T17:51:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://link.springer.com/article/10.1007/s11235-025-01265-3",
+   "aliases": [],
+   "sha256": "2ced062c088abe0082c09c8b7cecda93115a2a92388b1331b56f2160c11e9c8b",
+   "chars": 286,
+   "snapshot": "2ced062c088abe0082c09c8b7cecda93115a2a92388b1331b56f2160c11e9c8b.txt",
+   "retrieved_at": "2026-11-11T17:51:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S2",
+   "start": 15912,
+   "end": 16084,
+   "text": "For example, under 4% packet loss and 50ms delay, H2 (wget_h2_resume) took 56.7 seconds to complete the download, whereas H3 needed only 6.6 seconds, an 88.36% improvement.",
+   "sha256": "9d7ce178f4042dc9ad0650926359bf4f6001e877009c620d9492946f6e533e34"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S2",
+   "start": 13846,
+   "end": 13987,
+   "text": "For example, at 12% loss without a proxy, H2 took 113.42 seconds to download, compared to just 20.98 seconds for H3, an improvement of 81.5%.",
+   "sha256": "a7d3be382601776794e7eec8d3972db315e99be85f3493b7a4a30c50d6d5d275"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S1",
+   "start": 23935,
+   "end": 24244,
+   "text": "H3 clients were able to complete the 10 MB file download in about 15 seconds, whereas H2 clients took approximately 106 seconds without a proxy. The introduction of a proxy using the BBR CCA significantly improved H2’s performance, reducing download times to around 10 seconds, representing a 90% improvement.",
+   "sha256": "4eb3b6532c15eb9f9a7d2a8ec0d83e73d523863d43640ad07594797016b8cc29"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S4",
+   "start": 4353,
+   "end": 4627,
+   "text": "QUIC and HTTP/3 are (much) more expensive to host on their platforms**, costing more CPU time and memory than TCP and HTTP/2, due to, for example, their more extensive encryption. This cost is (apparently) sufficiently offset by the protocols’ benefits on their bottom line.",
+   "sha256": "a85c46087e0dba5525159f3b7f8b8ba57df6eee4eff7117750023088c085b471"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S2",
+   "start": 5181,
+   "end": 5259,
+   "text": "In high-speed environments, H2 sometimes outperforms H3 due to QUIC’s overhead",
+   "sha256": "c1a3745a6d5c37622757352ba4f0f43853f529f432f4513fd36f2dc3d98d4fda"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S1",
+   "start": 22644,
+   "end": 22941,
+   "text": "The introduction of a proxy resulted in a minor increase in download time for both protocols, adding roughly 0-1 seconds. This proxy overhead was slightly more pronounced for H3 than for H2, likely due to Envoy Proxy’s experimental support for H3, compared to its mature, optimized support for H2.",
+   "sha256": "e08b7fec8febc59c2860188a106e5eedc705e278c8fcb216399ef5320933ae4c"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S5",
+   "start": 8567,
+   "end": 8728,
+   "text": "Mid-band NR-SA demonstrates the best latency performance due to the combination of lower signaling overhead (compared to NR-NSA) and denser mid-band deployments.",
+   "sha256": "abcecb7fa89e61d4f42de8db651a0427ba975de65e8d8b56383a7a31f488f77b"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S5",
+   "start": 20680,
+   "end": 20864,
+   "text": "Preliminary analysis revealed negligible differences between the datasets collected in Chicago and Minneapolis. Consequently, we combined them for the analyses presented in this paper.",
+   "sha256": "9436e0cba6e17f114e08472598cf817b0b459e9812aab4b7ae4e4405b56151c1"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S5",
+   "start": 8567,
+   "end": 8728,
+   "text": "Mid-band NR-SA demonstrates the best latency performance due to the combination of lower signaling overhead (compared to NR-NSA) and denser mid-band deployments.",
+   "sha256": "abcecb7fa89e61d4f42de8db651a0427ba975de65e8d8b56383a7a31f488f77b"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S5",
+   "start": 21757,
+   "end": 21866,
+   "text": "Moreover, TMO-n41 is very densely deployed with 462 unique PCIs compared to the NR channels from ATT and VZW.",
+   "sha256": "c4dcbb4866eb8af1337db034fad277c728004e157783d69a969f00523821559f"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Under 4% packet loss and 50ms delay, HTTP/3 completed file downloads during IP address changes in 6.6 seconds versus HTTP/2's 56.7 seconds with resume capability, an 88.36% improvement. This eliminates the operational need to implement reconnection logic in application code for users switching between networks.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S1",
+     "quote": "For example, under 4% packet loss and 50ms delay, H2 (wget_h2_resume) took 56.7 seconds to complete the download, whereas H3 needed only 6.6 seconds, an 88.36% improvement.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "What page load time and latency improvements have empirical studies measured when comparing HTTP/3 to HTTP/2 specifically on lossy mobile networks?",
+    "capability": "Stop designing application-level failover logic for mobile network transitions; rely instead on HTTP/3's native connection migration to maintain session continuity across IP changes."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "At 12% packet loss with 20 concurrent streams, HTTP/3 completed downloads in 20.98 seconds versus HTTP/2's 113.42 seconds—an 81.5% improvement—because QUIC's stream architecture prevents head-of-line blocking. A single lost packet affects only one stream, not all concurrent transfers, fundamentally changing how loss impacts real traffic.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 20",
+   "spans": [
+    "E2"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S1",
+     "quote": "For example, at 12% loss without a proxy, H2 took 113.42 seconds to download, compared to just 20.98 seconds for H3, an improvement of 81.5%.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "What page load time and latency improvements have empirical studies measured when comparing HTTP/3 to HTTP/2 specifically on lossy mobile networks?",
+    "capability": "Stop treating multi-stream performance degradation under packet loss as a bandwidth provisioning problem; upgrade protocol support to HTTP/3 where streams fail independently."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "Under severe impairment (4% loss, 50ms delay), HTTP/2 required a reverse proxy with BBR congestion control to improve from 106 seconds to 10 seconds (90% gain), while HTTP/3 achieved 15 seconds without any proxy assistance. This quantifies the infrastructure cost savings and operational complexity reduction by deploying HTTP/3 natively rather than relying on proxy-enhanced HTTP/2.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 50",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S2",
+     "quote": "Under 4% loss and delay (Figure [4(c)]), performance differences widened. H3 completed the download in about 15 seconds, while H2 needed around 106 seconds without a proxy. With a proxy and BBR, H2's ",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "What page load time and latency improvements have empirical studies measured when comparing HTTP/3 to HTTP/2 specifically on lossy mobile networks?",
+    "capability": "Choose between proxy infrastructure complexity for HTTP/2 performance enhancement versus simpler HTTP/3 deployments; HTTP/3 achieves baseline performance without proxy-assisted congestion control."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "HTTP/3 requires materially more CPU time and memory than HTTP/2 per connection, making it costlier to operate at scale. This cost difference is significant enough that companies optimizing for engagement (Google, Akamai) treat it as an explicit tradeoff—they deploy HTTP/3 because engagement gains offset the infrastructure expense. For operators running less performance-sensitive workloads, this cost-benefit calculation may not favor HTTP/3.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "In which real-world deployments or traffic patterns has HTTP/3 failed to outperform HTTP/2, or required additional infrastructure investment to match HTTP/2 with proxy optimization?",
+    "capability": "You can defer HTTP/3 migration where infrastructure budgets are constrained, because the per-connection CPU and memory cost of QUIC exceeds TCP/HTTP/2 significantly enough to factor into deployment economics."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "HTTP/2 sometimes outperforms HTTP/3 in high-bandwidth, low-latency networks because QUIC's per-packet encryption overhead becomes the limiting factor rather than network conditions. This means HTTP/3 is not a universal performance upgrade—its advantages are conditional on network impairment levels, and best-case networks may see regression.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "In which real-world deployments or traffic patterns has HTTP/3 failed to outperform HTTP/2, or required additional infrastructure investment to match HTTP/2 with proxy optimization?",
+    "capability": "You can validate whether HTTP/3 improves end-user performance in your specific network before migrating, rather than assuming HTTP/3 is universally superior, because it underperforms in high-speed, low-latency environments."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "HTTP/3 performance in production proxy environments is currently degraded due to immature implementations. Laboratory testing with Envoy proxy (the standard in CDNs and enterprises) shows HTTP/3 adds 0–1 second connection overhead compared to HTTP/2, explicitly attributed to Envoy's experimental rather than production-grade HTTP/3 support. Deploying HTTP/3 now in proxy-dependent architectures can increase latency until proxy implementations mature.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: spans carry no figure",
+   "spans": [
+    "E6"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S2",
+     "quote": "Introducing a proxy resulted in a minor increase in download time for both protocols, adding roughly 0-1 seconds. This proxy overhead was slightly more pronounced for H3 than for H2, likely due to Env",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "In which real-world deployments or traffic patterns has HTTP/3 failed to outperform HTTP/2, or required additional infrastructure investment to match HTTP/2 with proxy optimization?",
+    "capability": "You can plan HTTP/3 adoption sequencing in proxy-heavy environments by deferring deployment until production-grade proxy support exists, rather than treating HTTP/3 as ready for immediate migration."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "Mid-band NR-SA networks demonstrate superior latency performance compared to NSA due to lower signaling overhead combined with denser deployments, providing a measurable latency advantage for delay-sensitive services. This finding enables operators to make deployment architecture choices that directly reduce end-to-end latency for time-critical applications.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7"
+   ],
+   "source_ids": [
+    "S5"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do the latency improvements measured on 4G networks transfer consistently to 5G networks and across regions with different baseline packet loss rates?",
+    "capability": "You can reduce latency for real-time applications by deploying mid-band NR-SA instead of NSA in metropolitan areas"
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Measurements across Chicago and Minneapolis revealed negligible differences in network performance, indicating that mid-band 5G improvements transfer consistently between metropolitan environments. This consistency suggests operators can replicate deployment and optimization approaches across regions with similar urban infrastructure density rather than customizing per market.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8"
+   ],
+   "source_ids": [
+    "S5"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do the latency improvements measured on 4G networks transfer consistently to 5G networks and across regions with different baseline packet loss rates?",
+    "capability": "You can apply standardized latency optimization strategies across different metropolitan markets without extensive regional re-tuning"
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Mid-band NR-SA's latency advantage derives from two independent sources: the lower signaling overhead inherent to SA architecture, and denser mid-band deployment. T-Mobile's n41 (SA) was deployed with 462 unique cell-site PCIs, compared to AT&T and Verizon NSA mid-band channels with substantially lower PCI counts (AT&T n77: 152; Verizon n77: 147), representing a 3x density differential. This means NSA-only operators can partially reduce latency disadvantage relative to SA competitors through matching deployment density, but remain constrained by NSA's architecturally inherent signaling overhead regardless of deployment depth.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9",
+    "E10"
+   ],
+   "source_ids": [
+    "S5"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do latency performance improvements from mid-band standalone 5G (NR-SA) deployments generalize to networks using only dual-connected non-standalone 5G (NR-NSA)?",
+    "capability": "Separate deployment density investment from SA architecture migration when planning NSA latency improvements."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 8,
+  "lineages": 8,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 9,
+  "claims_with_verified_span": 9,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 14,
+  "quotes_rejected": 4,
+  "ledger_capped": 3,
+  "claims_persisted": 9,
+  "persisted_with_verified_span": 9,
+  "persisted_verified_span_rate": 1.0
+ }
+}

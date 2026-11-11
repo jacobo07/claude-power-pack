@@ -1,0 +1,184 @@
+## The Default Mode and Its Limits
+
+By default, SQLite uses a *rollback journal*. When you write, SQLite copies the original pages into a `-journal`
+
+file, modifies the main database, and deletes the journal on commit. If the process crashes mid-write, the journal is replayed in reverse to undo the partial change.
+
+It's simple and safe, but it has one painful property: writers and readers fight for the same file. While a writer holds the database lock, no reader can start a new transaction. While readers are active, the writer waits. On a busy app - a web server with a few concurrent requests, say - you'll see `SQLITE_BUSY`
+
+errors faster than you'd like.
+
+WAL mode changes that.
+
+## What WAL Actually Does
+
+Write-ahead logging flips the model around. Instead of modifying the main database file in place, the writer *appends* committed pages to a separate file with a `-wal`
+
+suffix. Readers keep reading the main file, but they also peek at the WAL to see any newer versions of pages they need.
+
+The result: a writer and any number of readers can be active at the same moment. Each reader sees a consistent snapshot from when its transaction began, and the writer is busy adding to the WAL without touching what the readers are looking at.
+
+That single pragma switches the database. The mode is persistent - it's stored in the file header, so every future connection picks up WAL automatically. You don't need to run this on every connection, just once when you provision the database (or in your migration runner).
+
+The pragma returns the new mode. If it returns `wal`
+
+, you're set. If it returns something else, the file system probably doesn't support shared memory (more on that below).
+
+## Enabling and Verifying
+
+You can confirm the current mode any time:
+
+The first call enables WAL and returns the new mode. The second call (with no `=`
+
+) just queries it. After this, your `messages.db`
+
+directory will contain three files when there's activity: `messages.db`
+
+, `messages.db-wal`
+
+, and `messages.db-shm`
+
+. The last two appear and disappear depending on whether connections are open.
+
+## The -wal and -shm Files
+
+Two extra files come with WAL, and you should know what they do:
+
+holds committed transactions that haven't yet been merged back into the main database. It grows as writes happen and shrinks (or resets) at checkpoint time.`-wal`
+
+is a shared-memory file. It's an index into the WAL so that all connections agree on which pages live where without scanning the WAL on every query.`-shm`
+
+
+The practical consequence: **never copy a WAL-mode database by copying just the .db file**. The latest data lives in the
+
+`-wal`
+
+, and without it your copy is stale or corrupt. Either copy all three files while no connections are writing, or - much better - use the SQLite backup API (covered in the next chapter).## Concurrency: One Writer, Many Readers
+
+WAL doesn't give you concurrent writes. SQLite still serializes them: at any moment, exactly one transaction holds the write lock. What changed is that writes don't block reads and reads don't block writes.
+
+So a typical web app running on WAL behaves like this:
+
+- Read-heavy endpoints run in parallel without contention.
+- Write endpoints queue briefly behind each other but don't block reads.
+- Long-running readers (analytics queries, exports) don't make writers wait.
+
+If two connections both try to write at the same time, the second one gets `SQLITE_BUSY`
+
+. The fix is usually a sensible busy timeout - tell SQLite to wait a bit before giving up:
+
+`busy_timeout=5000`
+
+means "if a lock is held, wait up to 5 seconds for it before raising an error." Combined with WAL, this handles the contention most apps actually face. The `BEGIN IMMEDIATE`
+
+form takes the write lock at transaction start instead of on the first write, which avoids a class of upgrade deadlocks when multiple connections both intend to write.
+
+## Checkpoints: Folding the WAL Back
+
+The WAL file can't grow forever. *Checkpointing* is the process of taking the committed pages in the WAL and writing them into the main database, then resetting the WAL.
+
+SQLite checkpoints automatically when the WAL passes ~1000 pages (the default `wal_autocheckpoint`
+
+). For most apps you can leave that alone. If you want to tune it or trigger one manually:
+
+The `wal_checkpoint`
+
+pragma takes a mode:
+
+`PASSIVE`
+
+- checkpoint as much as possible without disrupting readers/writers. The default.`FULL`
+
+- wait for active writers to finish, then checkpoint everything committed.`RESTART`
+
+- like FULL, plus block new readers from using the old WAL.`TRUNCATE`
+
+- like RESTART, plus shrink the WAL file back to zero bytes.
+
+Most servers never need to call this manually. If you're shipping a desktop app that wants to keep file sizes tidy on shutdown, a `TRUNCATE`
+
+checkpoint before closing the last connection is a reasonable habit.
+
+## A Few Pragmas That Pair Well With WAL
+
+WAL on its own is good. WAL plus a couple of other settings is typically what production apps use:
+
+A quick tour:
+
+`synchronous=NORMAL`
+
+is the recommended pairing with WAL. It's safe against application crashes and OS crashes; only a power loss at the wrong instant can lose the most recent transactions, and even then the database stays consistent. The default`FULL`
+
+is safer but noticeably slower.`busy_timeout`
+
+we covered above.`foreign_keys=ON`
+
+is unrelated to WAL but worth setting on every connection - SQLite leaves foreign key enforcement off by default for backward compatibility.
+
+These are per-connection (except `journal_mode`
+
+, which sticks). Run them right after opening the connection in your app code.
+
+## When WAL Isn't the Right Choice
+
+WAL is the default recommendation, but a few situations push back:
+
+**Network filesystems.**WAL relies on shared memory (`mmap`
+
+) between processes accessing the database. NFS, SMB, and similar don't support that reliably. If your database lives on a network share, stick with the rollback journal - or, better, don't put SQLite on a network share.**Read-only media.**WAL needs to write the`-wal`
+
+and`-shm`
+
+files. A database on a CD-ROM or similar must use a journal mode that doesn't write (or be opened read-only with`mode=ro`
+
+).**Single-writer batch jobs with no concurrent readers.**WAL won't hurt, but you're not gaining anything either. The default rollback journal is fine.
+
+For 95% of applications - web backends, desktop apps, mobile apps, embedded devices with local storage - WAL is the right call.
+
+## A Realistic Setup
+
+Here's the shape most production SQLite setups take, condensed into runnable pragmas:
+
+`temp_store=MEMORY`
+
+keeps temporary tables and indexes in RAM rather than on disk - a small win that's free if you have memory to spare.
+
+Wire this up once at connection time in your application's database setup, and you've handled the bulk of what a SQLite-backed app needs to behave well under concurrent load.
+
+## Next: Backup and Restore
+
+Now that your database has `-wal`
+
+and `-shm`
+
+companions, copying the file isn't a safe backup strategy anymore. The next chapter covers the right way to back up a live SQLite database - the `.backup`
+
+command, the online backup API, and what to do when you need a consistent snapshot without taking the app offline.
+
+Frequently Asked Questions
+
+## What is WAL mode in SQLite?
+
+WAL stands for write-ahead logging. Instead of writing changes directly into the main database file and using a rollback journal to undo them on failure, SQLite appends changes to a separate `-wal`
+
+file and periodically merges them back. The big payoff is concurrency: readers and a writer can work at the same time without blocking each other.
+
+## How do I enable WAL mode in SQLite?
+
+Run `PRAGMA journal_mode=WAL;`
+
+once. The setting is persistent - it's stored in the database file header, so future connections automatically use WAL too. You don't need to set it on every connection. The pragma returns the new mode (`wal`
+
+) when it succeeds.
+
+## Does WAL mode allow concurrent writes?
+
+No - SQLite still serializes writes. Only one writer can hold the write lock at a time. What WAL does change is that readers no longer block the writer, and the writer no longer blocks readers. For most apps that's the bottleneck that mattered.
+
+## What are the -wal and -shm files?
+
+The `-wal`
+
+file holds committed changes that haven't been merged back into the main database yet. The `-shm`
+
+file is a small shared-memory index that helps connections find pages inside the WAL quickly. Both are recreated automatically - but if you copy a database, you must copy them together or use the backup API.

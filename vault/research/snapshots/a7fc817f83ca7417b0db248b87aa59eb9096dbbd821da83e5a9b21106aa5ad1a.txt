@@ -1,0 +1,103 @@
+A detailed new analysis says SQLite with WAL mode is a legitimate default for single-node read-heavy production APIs, but the single-writer design punishes write-heavy workloads with tail latency spikes and checkpoint storms. The guide offers tuning, backup, and deployment advice to avoid outages.
+
+SQLite’s Write-Ahead Logging mode has turned the embedded database into a serious contender for production APIs, but teams that ignore its single-writer constraint will see p95 latency cliff and `SQLITE_BUSY`
+
+errors just as their product gains traction, according to a new technical deep-dive published by software engineer Kunal Ganglani.
+
+“SQLite in WAL mode is a legitimate default for single-node, read-heavy production APIs,” Ganglani wrote in a post on his blog. “You get absurd deployment simplicity, excellent read latency, and fewer moving parts than the typical Postgres stack. But you do not get to ignore the physics: SQLite still has a single-writer ceiling.”
+
+The analysis, which has drawn attention on DEV Community, lays out where SQLite shines, where it fails, and the exact PRAGMA settings, checkpoint strategies, and backup patterns that separate a boring production database from a weekend-ruining incident.
+
+**WAL mode’s concurrency promise**
+
+WAL mode lets readers and writers operate concurrently because changes are appended to a separate `-wal`
+
+file and later checkpointed back into the main database. Readers see a consistent snapshot, and writers do not block them. But write transactions are still serialized: only one can commit at a time.
+
+“That last bullet is the whole story,” Ganglani wrote. “Everything else is just what shape the pain takes.”
+
+For read-heavy endpoints, the benefit is immediate. Hundreds of concurrent `GET`
+
+requests can run as readers without blocking a writer, avoiding the classic rollback journal faceplant. The limiter becomes CPU, query plans, and disk latency, not locking.
+
+Write-heavy APIs, however, turn concurrency into queueing. If each transaction holds the write lock for 20 ms and 30 writes are queued, the worst-case request approaches 600 ms before any application work. Wrapping validation queries or network calls inside a transaction amplifies the problem.
+
+“If your API regularly has double-digit concurrent write requests to the same hot tables, assume you’re going to have to earn SQLite,” Ganglani said. “If you’re doing hundreds of writes per second sustained, you’re probably shopping for Postgres unless your writes are tiny and your transactions are disciplined.”
+
+**The PRAGMAs that matter**
+
+The guide recommends a baseline set of connection-init PRAGMAs:
+
+`journal_mode=WAL`
+
+`synchronous=NORMAL`
+
+(reduces`fsync()`
+
+pressure while keeping strong durability in WAL)`busy_timeout=5000`
+
+(waits up to 5 seconds for a lock instead of instantly failing with`SQLITE_BUSY`
+
+)`wal_autocheckpoint=1000`
+
+(checkpoints after 1,000 pages to prevent unbounded WAL growth)
+
+These settings turn random errors into bounded latency and keep the WAL file from ballooning. Ganglani stressed that teams should tune them against real write rates and latency SLOs, not guesswork.
+
+**Checkpointing: the production footgun**
+
+Unchecked WAL growth and checkpoint-induced latency spikes are the two failure modes that earn WAL mode its “production sharp edges” reputation. The guide says every production SQLite deployment must graph at least WAL file size, checkpoint frequency and duration, `SQLITE_BUSY`
+
+rate, and p95/p99 write latency.
+
+Practical strategies include using `wal_autocheckpoint`
+
+to cap growth, running `PRAGMA wal_checkpoint(TRUNCATE)`
+
+during low-traffic windows, and scheduling an explicit checkpoint after batch jobs. “Do not checkpoint on every request,” Ganglani wrote. “That’s how you reinvent rollback journal mode with extra steps.”
+
+**Backups are not ‘copy the file’**
+
+In WAL mode, a naive file copy risks corruption because the database spans multiple files and active transactions. The guide outlines three tiers:
+
+**Tier 1:**Use the SQLite shell`.backup`
+
+command for small apps.**Tier 2:**Use the SQLite Online Backup API to take consistent snapshots, combined with scheduled checkpoints and upload to object storage.**Tier 3:**Use Litestream to continuously ship WAL changes to object storage for near-real-time recovery.
+
+Ganglani called restore drills “non-negotiable.” A runbook should restore the latest backup to staging, run `PRAGMA integrity_check`
+
+, and perform application-level sanity checks at least monthly.
+
+**Deployment patterns and the single-writer ceiling**
+
+The analysis draws a bright line between safe and unsafe patterns. Safe: a single VM with local SSD, a container on one node with a real persistent volume, or a primary-writer with read replicas using a coordination layer. Unsafe: NFS, EFS, or any shared network filesystem, because WAL requires shared memory coordination and correct file locking.
+
+For teams that need multi-writer or multi-region writes, Ganglani said the answer is straightforward: “Stop bargaining. Use Postgres/MySQL, or add a coordination layer like LiteFS or a consensus system like rqlite.”
+
+He provided a comparison table that places SQLite (WAL) on one node at the top for read-heavy APIs and local-first backends, with operational complexity rated “very low.” SQLite with Litestream adds restore-based recovery. LiteFS and rqlite add failover and consensus at the cost of higher complexity and write latency. Postgres and MySQL remain the go-to for write-heavy, multi-region workloads.
+
+**Load test before you commit**
+
+The guide includes a language-agnostic load test harness that builds two endpoints—a read-heavy `GET /items/:id`
+
+and a write-heavy `POST /items/:id/increment`
+
+—and runs them with k6 or vegeta under 50 and 200 virtual users. Comparing rollback journal mode against WAL reveals whether the bottleneck is journaling or something else.
+
+“If WAL doesn’t materially improve your p95 on the read-heavy profile, your bottleneck isn’t SQLite journaling,” Ganglani wrote. “If WAL improves reads but your write-heavy profile gets p99 spikes or `SQLITE_BUSY`
+
+, congratulations. You just reproduced the real production failure mode before shipping it.”
+
+**What comes next**
+
+Ganglani predicted that more teams will adopt SQLite in 2026 as economics push toward simpler stacks, but the next wave of incidents will look familiar: tail-latency outages caused by write contention and checkpoint storms in systems that were fine at 10% of their eventual traffic.
+
+“If you want the upside without the pager pain, do two things now,” he said. “Run the load test before you commit. Practice the restore before you trust the backups.”
+
+The full analysis, including code snippets and detailed PRAGMA explanations, is available on Ganglani’s blog.
+
+Source:[dev.to](https://dev.to/kunal_d6a8fea2309e1571ee7/sqlite-production-api-concurrency-wal-mode-limits-2026-1j6d)
+
+## Comments
+
+Please log in or register to join the discussion

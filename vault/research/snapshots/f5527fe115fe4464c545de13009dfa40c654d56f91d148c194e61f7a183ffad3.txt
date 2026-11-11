@@ -1,0 +1,181 @@
+SQLite is often chosen because it keeps deployment simple: an application can get transactional storage without operating a separate database server. As workloads become more concurrent, however, the default rollback journal can make read and write activity interfere more than expected.
+
+Write-ahead logging (WAL) changes that coordination model. Readers can usually continue while a writer commits changes, but WAL does not turn SQLite into a multi-writer database. Correct operation still depends on short transactions, sensible busy handling, and checkpoints that can make progress.
+
+## What WAL mode changes
+
+In the default rollback-journal model, SQLite preserves original database pages in a separate journal before modifying the main database file.
+
+WAL reverses the direction. Changes are appended to a `-wal`
+
+file, and a commit is recorded there. A later **checkpoint** copies committed pages from the WAL back into the main database file.
+
+Enable WAL mode with:
+
+`PRAGMA journal_mode=WAL;`
+
+
+The pragma returns the journal mode that was actually selected. Applications that configure a database during startup should check the result rather than assuming the change succeeded.
+
+WAL mode is persistent for the database file, so it normally does not need to be re-enabled on every connection.
+
+## Understand the concurrency model
+
+The main benefit of WAL is that readers and a writer can usually make progress at the same time.
+
+When a read transaction starts, SQLite records the point in the WAL that represents the reader’s snapshot. New commits may be appended after that point without changing what the existing reader sees.
+
+This gives WAL a useful property:
+
+```
+reader A: sees snapshot at commit 20
+writer: appends commit 21
+reader B: can see commit 21
+reader A: continues to see its original snapshot
+```
+
+
+The important limitation is that **there is still only one writer at a time**. Two write transactions cannot append concurrently to the same WAL.
+
+WAL therefore helps most when an application has many reads mixed with relatively short writes. It does not remove write contention from a write-heavy workload.
+
+## Keep write transactions short
+
+Because only one writer can hold the write position at a time, transaction duration matters.
+
+Avoid holding a write transaction open while doing unrelated work such as:
+
+- waiting for a network request;
+- prompting for user input;
+- performing expensive computation that could happen before the transaction;
+- sleeping or retrying an external service;
+- processing a large batch that could safely be split.
+
+A better pattern is to prepare data first, then keep the database transaction focused:
+
+```
+validate input
+compute derived values
+fetch remote data if required
+begin transaction
+write related database changes
+commit
+```
+
+
+Short transactions reduce the time other writers have to wait and make lock-related latency easier to predict.
+
+## Treat busy handling as bounded contention management
+
+Applications using multiple connections should be prepared for `SQLITE_BUSY`
+
+. WAL reduces common reader-writer conflicts, but it does not eliminate all situations in which a connection may need to wait for another connection or operation.
+
+SQLite provides a busy handler API, and many bindings expose it as a timeout. SQL clients can also configure the connection with:
+
+`PRAGMA busy_timeout = 2000;`
+
+
+The value is in milliseconds.
+
+A busy timeout is not a substitute for fixing long transactions. It is a bounded waiting policy for brief contention. Choose a timeout that fits the application’s latency budget, and handle the eventual busy error if the wait expires.
+
+Also remember that busy configuration belongs to a database connection. If an application opens several independent connections, configure each one through the mechanism provided by its SQLite binding.
+
+## Checkpoints are part of normal WAL operation
+
+Committed data does not remain only in the WAL forever. A checkpoint transfers eligible WAL pages back into the main database.
+
+SQLite normally performs automatic checkpoints, so many applications do not need custom checkpoint code. The default automatic policy is based on the WAL reaching a page threshold.
+
+Checkpointing introduces an important interaction with readers. A checkpoint can copy pages while readers exist, but it cannot pass a point that an active reader still needs for its snapshot.
+
+That means a long-lived read transaction can prevent a checkpoint from fully completing.
+
+## Watch for checkpoint starvation
+
+Consider a service that continuously has at least one old read transaction open. Writers can keep appending new commits, while checkpoints repeatedly stop at the oldest snapshot they must preserve.
+
+The result can be a WAL file that keeps growing.
+
+Common causes include:
+
+- iterators that leave a query open for a long time;
+- forgotten read transactions;
+- application code that begins a transaction and then performs slow non-database work;
+- background reporting jobs that scan data while holding one snapshot;
+- disabled automatic checkpointing without a reliable replacement.
+
+The first fix is usually not a more aggressive checkpoint. Find out why read transactions remain open so long.
+
+## Use manual checkpoints deliberately
+
+Applications with unusual latency or storage requirements may choose to control checkpoints explicitly.
+
+SQLite exposes checkpoint modes with different blocking behavior. For example, a passive checkpoint tries to make progress without waiting for readers or writers that prevent completion, while more aggressive modes can wait for additional locks.
+
+Manual checkpointing can be useful when an application wants to move checkpoint work to a controlled maintenance period or a dedicated execution path. It also adds operational responsibility: the application must ensure checkpoints happen often enough and must understand how they interact with active readers and writers.
+
+Do not add manual checkpoint logic merely because WAL is enabled. Start with SQLite’s automatic behavior, observe the workload, and change the policy only when measurements justify it.
+
+## Do not place a WAL database on an ordinary network filesystem
+
+WAL relies on shared-memory coordination between processes using the database. SQLite’s WAL documentation requires those processes to be on the same host and warns that WAL does not work over a network filesystem in the normal configuration.
+
+This matters for container and cloud deployments. A path that looks like a local mounted directory may actually be backed by network storage.
+
+Before enabling WAL, verify the storage semantics. If several application hosts need to write the same database, SQLite WAL is generally the wrong coordination model; use a database architecture designed for remote multi-host access instead.
+
+## Measure the behavior that matters
+
+Do not judge WAL only by average query latency. Useful operational signals include:
+
+- write transaction duration;
+- frequency of busy errors;
+- time spent waiting for writes;
+- WAL file size over time;
+- checkpoint frequency and completion;
+- age of long-running read transactions;
+- latency around checkpoint activity.
+
+A steadily growing WAL file is especially useful evidence. It can indicate that checkpoints are disabled, cannot complete, or are being outrun by the workload.
+
+## Common pitfalls
+
+### Assuming WAL means multiple concurrent writers
+
+WAL allows readers and a writer to overlap more effectively. It still serializes writers.
+
+### Holding transactions across external I/O
+
+A transaction that waits on a remote service keeps database coordination state open for work that does not require the database.
+
+### Setting a huge busy timeout
+
+Very long waits can hide contention and turn a database problem into request latency. Keep the timeout bounded and observable.
+
+### Forcing checkpoints too frequently
+
+Checkpointing has I/O cost. More frequent checkpoints can keep the WAL smaller, but they may shift work into latency-sensitive paths.
+
+### Ignoring long-lived readers
+
+Readers normally coexist well with writers in WAL mode, yet old read snapshots can stop checkpoints from advancing far enough to recycle the WAL.
+
+### Assuming mounted storage is local
+
+WAL’s shared-memory requirements make ordinary network filesystems an unsafe assumption. Verify the filesystem rather than inferring it from the path.
+
+## A practical adoption sequence
+
+For an existing SQLite application, a conservative rollout looks like this:
+
+- measure current transaction duration and lock errors;
+- verify that the database lives on suitable local storage;
+- enable WAL and confirm the returned journal mode;
+- configure a bounded busy policy on each connection;
+- keep read and write transactions short;
+- monitor WAL growth and busy errors;
+- retain automatic checkpointing unless measurements show a reason to change it.
+
+WAL mode is effective because it changes when database work has to wait, not because it removes coordination. Treat the single-writer rule, transaction lifetime, and checkpoint progress as first-class design constraints. With those constraints visible, SQLite can handle substantial concurrent read traffic while preserving the operational simplicity that made it attractive in the first place.

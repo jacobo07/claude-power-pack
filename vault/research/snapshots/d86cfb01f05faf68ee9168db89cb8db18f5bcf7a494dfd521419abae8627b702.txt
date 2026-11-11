@@ -1,0 +1,254 @@
+# 3.4 Scaling Laws: Kaplan, Chinchilla & Beyond[¶](https://prakashkagitha.github.io#34-scaling-laws-kaplan-chinchilla-beyond)
+
+Suppose your manager hands you a fixed compute budget — say, a cluster-month that works out to roughly \(10^{22}\) floating-point operations (FLOPs) — and asks one question: *“What is the best language model we can train with this?”* You have two main dials to turn. You can make the model **bigger** (more parameters \(N\)), or you can train it on **more data** (more tokens \(D\)). Crank \(N\) too high and you starve the model of data; it never sees enough text to learn the parameters it has. Crank \(D\) too high and you waste compute pushing more tokens through a model too small to absorb them. Somewhere in between is the sweet spot.
+
+Remarkably, this is not guesswork. The relationship between compute, model size, data, and the loss a model achieves turns out to follow clean, predictable **power laws** that hold across more than seven orders of magnitude of compute. These *scaling laws* are arguably the single most consequential empirical discovery in modern LLM engineering: they let you extrapolate from a handful of cheap small-scale runs to predict the loss of a model you have not yet trained, and they tell you exactly how to allocate a budget so that no FLOP is wasted. The entire frontier-model industry — GPT, Gemini, Llama, Claude, DeepSeek — is built on top of these curves.
+
+This chapter develops scaling laws from first principles. We will derive the power-law form, contrast the original **Kaplan et al.** prescription with the corrected **Chinchilla** prescription (and the famous “~20 tokens per parameter” rule), work through real budget-planning arithmetic, write code that *fits* a scaling law from synthetic data, and then confront the messier frontier: inference-aware over-training, the emergent-abilities debate, and where these laws break down. Scaling laws are an interview favorite at every level — by the end you should be able to derive the compute-optimal allocation on a whiteboard.
+
+This chapter builds directly on [The Pretraining Objective & Loss](https://prakashkagitha.github.io/03-pretraining/03-pretraining-objective.html) (what “loss” means here) and [Pretraining Data: Sources, Crawling & The Data Pipeline](https://prakashkagitha.github.io/03-pretraining/01-pretraining-data.html) (where the tokens come from). The compute estimates lean on the FLOP accounting from [GPU Architecture & The Memory Hierarchy](https://prakashkagitha.github.io/01-foundations/08-gpu-architecture.html). And everything here is exercised end to end at a scale you can actually afford in [Mini Scaling Laws: Fit Your Own Law Before Spending the Budget](https://prakashkagitha.github.io/14-capstone/05-mini-scaling-laws.html), where the capstone trains a four-rung ladder of tiny models, fits \(L(N,D)\) on its *own* corpus and tokenizer, and uses the fit to predict Stack-100M’s loss before committing the budget.
+
+## The Shape of the Curve: Power Laws in Loss[¶](https://prakashkagitha.github.io#the-shape-of-the-curve-power-laws-in-loss)
+
+### What we are measuring[¶](https://prakashkagitha.github.io#what-we-are-measuring)
+
+Throughout, “loss” \(L\) means the **cross-entropy of next-token prediction**, in nats per token, on held-out data — the same objective covered in [The Pretraining Objective & Loss](https://prakashkagitha.github.io/03-pretraining/03-pretraining-objective.html). It is the negative log-likelihood the model assigns to the true next token, averaged over the corpus:
+
+Lower is better. A perfect model would achieve the **entropy of the language itself** — the irreducible uncertainty that no model can remove (the actual next word genuinely is not fully determined by the context). We will call that floor \(E\).
+
+### The empirical observation[¶](https://prakashkagitha.github.io#the-empirical-observation)
+
+If you train a family of transformers and plot the loss against model size \(N\) (with data effectively unlimited), against data \(D\) (with the model effectively unlimited), or against compute \(C\), you find something striking: on a **log-log plot, the curve is a straight line**. A straight line on log-log axes is the signature of a **power law**. Concretely, holding everything else non-bottlenecking:
+
+```
+<g class="v-grid" stroke-width="1" opacity="0.55">
+<line x1="92" y1="44" x2="92" y2="330"/>
+<line x1="231" y1="44" x2="231" y2="330"/>
+<line x1="370" y1="44" x2="370" y2="330"/>
+<line x1="509" y1="44" x2="509" y2="330"/>
+<line x1="648" y1="44" x2="648" y2="330"/>
+<line x1="92" y1="92" x2="648" y2="92"/>
+<line x1="92" y1="139" x2="648" y2="139"/>
+<line x1="92" y1="187" x2="648" y2="187"/>
+<line x1="92" y1="234" x2="648" y2="234"/>
+</g>
+<line x1="92" y1="44" x2="92" y2="330" class="v-stroke" stroke="var(--ink-soft)" stroke-width="1.6"/>
+<line x1="92" y1="330" x2="648" y2="330" class="v-stroke" stroke="var(--ink-soft)" stroke-width="1.6"/>
+<text x="92" y="348" text-anchor="middle" class="tk">10¹⁸</text>
+<text x="231" y="348" text-anchor="middle" class="tk">10²⁰</text>
+<text x="370" y="348" text-anchor="middle" class="tk">10²²</text>
+<text x="509" y="348" text-anchor="middle" class="tk">10²⁴</text>
+<text x="648" y="348" text-anchor="middle" class="tk">10²⁶</text>
+<text x="370" y="378" text-anchor="middle" class="ax">compute  C  (FLOPs, log)</text>
+<text x="34" y="187" text-anchor="middle" class="ax" transform="rotate(-90 34 187)">loss  L  (log)</text>
+```
+
+
+```
+<path d="M250 104 L306 104 L306 118" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" stroke-dasharray="3 3" opacity="0.8"/>
+<text x="278" y="94" text-anchor="middle" class="sm">slope = -α (power law)</text>
+```
+
+
+**On log–log axes, loss falls as a straight power-law line — until it meets a floor.**Each point is a training run; over many orders of magnitude of compute the loss
+
+*above the floor*drops with a constant slope
+
+**−α**. But an irreducible term
+
+**E**(the entropy of text itself) means the curve bends and flattens toward that dashed asymptote: returns diminish, yet never quite stop.
+
+where \(N_c, D_c\) are constants with units of parameters and tokens, and \(\alpha_N, \alpha_D\) are small positive exponents (empirically on the order of \(0.05\)–\(0.1\)). The exponents being *small* is the whole story of why training is expensive: in this *floorless* parameterization, halving the loss means multiplying \(N\) by roughly \(2^{1/\alpha_N}\), which for \(\alpha_N \approx 0.07\) is about \(2^{14.3} \approx 2 \times 10^{4}\) times more parameters. (Watch which quantity the exponent applies to: the floored form introduced next puts a *different*, larger exponent — \(\alpha \approx 0.34\) — on the *reducible* term \(A N^{-\alpha}\), so halving what is left above the floor costs only \(2^{1/0.34} \approx 8\times\) more parameters. The two exponents are not interchangeable.) Returns diminish, but they never stop.
+
+### The joint form: the Chinchilla parameterization[¶](https://prakashkagitha.github.io#the-joint-form-the-chinchilla-parameterization)
+
+The cleanest and most useful parameterization — popularized by Hoffmann et al. (the Chinchilla paper), following the three-term additive form of Rosenfeld et al. (2020) — treats \(N\) and \(D\) jointly and adds the irreducible floor:
+
+Read this term by term:
+
+- \(E\) — the
+**irreducible loss**, the entropy of natural text. Even an infinitely large model trained on infinite data cannot beat this. Empirically \(E\) is somewhere around \(1.6\)–\(1.7\) nats/token for web text, though the exact value depends entirely on the tokenizer and corpus. - \(\frac{A}{N^{\alpha}}\) — the
+**finite-model penalty**. A model with limited parameters cannot represent the ideal predictor; this term shrinks as you add parameters. - \(\frac{B}{D^{\beta}}\) — the
+**finite-data penalty**. With limited tokens, the model cannot estimate its parameters well (and overfits); this term shrinks as you add data.
+
+The two penalty terms add. That additivity is what makes the math tractable: it says the param bottleneck and the data bottleneck are (approximately) independent, so we can reason about them separately and then trade them off against a shared compute budget.
+
+Why a power law and not something else?
+
+There is no single agreed first-principles derivation, but the leading intuition comes from data manifolds. If the data lives on a manifold of intrinsic dimension \(d\), and a model of size \(N\) effectively tiles that manifold with \(\sim N\) pieces, then each piece has linear size \(s \sim N^{-1/d}\). A piecewise-linear (ReLU) approximant is off by \(\sim s^2\) pointwise on a patch that size, so the loss scales like \(s^4 = N^{-4/d}\) — a power law whose exponent \(\alpha \approx 4/d\) is set by the *intrinsic dimensionality of language*, not by the architecture. Sharma & Kaplan formalized this argument and derived exactly \(\alpha \approx 4/d\) for both squared-error and cross-entropy losses (read backwards, a measured \(\alpha \approx 0.34\) implies \(d \approx 12\)). The practical upshot: the exponents are remarkably architecture-insensitive. Swap GELU for SwiGLU, add RoPE, change the aspect ratio within reason — the *slope* barely moves, even though the *offset* (the constant \(A\)) does.
+
+## Compute, FLOPs, and the \(C \approx 6ND\) Rule[¶](https://prakashkagitha.github.io#compute-flops-and-the-c-approx-6nd-rule)
+
+To trade \(N\) against \(D\) we need a common currency: **compute**, measured in FLOPs. The foundational accounting rule for dense transformers is:
+
+where \(C\) is total training FLOPs, \(N\) is the number of (non-embedding) parameters, and \(D\) is the number of training tokens. This is worth deriving because it shows up in every capacity-planning conversation.
+
+### Deriving the factor of 6[¶](https://prakashkagitha.github.io#deriving-the-factor-of-6)
+
+Consider one parameter in a matrix multiply. Processing one token through it requires:
+
+**Forward pass:**one multiply and one add — that is \(2\) FLOPs per parameter per token. (Every weight in a`Linear`
+
+layer participates in exactly one multiply-accumulate for each token.)**Backward pass:**roughly twice the forward cost — \(4\) FLOPs per parameter per token. The backward pass computes*two*sets of products: the gradient with respect to the inputs (to propagate further back) and the gradient with respect to the weights (to update them). Each is about as expensive as the forward matmul.
+
+Add them: \(2 + 4 = 6\) FLOPs per parameter per token. Multiply by \(N\) parameters and \(D\) tokens:
+
+```
+def training_flops(n_params: int, n_tokens: int) -> float:
+"""Total training FLOPs for a dense transformer (the 6ND rule).
+6 = 2 (forward MAC) + 4 (backward: grad wrt input + grad wrt weight).
+This ignores attention's quadratic term, which is small relative to the
+MLP/projection matmuls until context length is very large. It also ignores
+embeddings (use NON-embedding params for N).
+"""
+return 6.0 * n_params * n_tokens
+# Inference (forward only) is ~2ND -- a useful sanity check:
+def inference_flops(n_params: int, n_tokens: int) -> float:
+return 2.0 * n_params * n_tokens
+```
+
+
+Caveats to 6ND that interviewers love
+
+The \(6ND\) rule counts only the dense matmul FLOPs. Two corrections matter in practice. (1) **Attention** adds a term of order \(12 \cdot L \cdot d \cdot T^2\) per sequence across the whole model — i.e. \(\sim 12 \, d \, T^2\) *per layer* (the \(QK^\top\) and \(AV\) matmuls cost \(4 d T^2\) forward, tripled for forward-plus-backward), summed over the \(L\) layers (\(T\) = sequence length); for short contexts it is negligible, but for very long contexts it dominates and \(6ND\) undercounts — see [Long-Context Pretraining & Context Extension](https://prakashkagitha.github.io/03-pretraining/13-long-context-pretraining.html). (2) For **Mixture-of-Experts** models, \(N\) in the FLOP formula is the *active* (per-token) parameter count, not the *total* parameter count, because each token routes to only a few experts — see [Mixture-of-Experts (MoE) Architectures](https://prakashkagitha.github.io/02-transformer/09-mixture-of-experts.html). MoE breaks the tidy coupling between “model capacity” and “compute,” which is precisely why it is attractive.
+
+### Hardware FLOPs vs. model FLOPs[¶](https://prakashkagitha.github.io#hardware-flops-vs-model-flops)
+
+There is a second, sneaky gap. The \(6ND\) number is **model FLOPs** — useful arithmetic. The FLOPs your GPUs actually *deliver* are lower because of memory stalls, communication, and bubbles. The ratio is the **Model FLOPs Utilization (MFU)**:
+
+A well-tuned large pretraining run lands somewhere in the 0.3–0.55 MFU range on modern accelerators. You need MFU to convert a FLOP budget into a *time* and *dollar* budget. We return to this in the worked example.
+
+### Counting FLOPs for real, not analytically[¶](https://prakashkagitha.github.io#counting-flops-for-real-not-analytically)
+
+You should never *only* trust \(6ND\). PyTorch ships a FLOP counter — `torch.utils.flop_counter.FlopCounterMode`
+
+(PyTorch ≥ 2.1) — which intercepts every dispatched op via `__torch_dispatch__`
+
+and tallies the matmul/conv/attention FLOPs of an actual forward-plus-backward step. Run it once on your real model at your real sequence length and compare against the analytic rule:
+
+```
+import math, torch, torch.nn as nn
+from torch.utils.flop_counter import FlopCounterMode
+class Block(nn.Module):
+"""Toy block with EXPLICIT attention matmuls so every FLOP is visible to the
+counter. (Fused SDPA kernels are also counted on CUDA, but writing the
+matmuls out keeps this snippet backend-independent.)"""
+def __init__(self, d=256, ff=1024, heads=4):
+super().__init__()
+self.h = heads
+self.qkv, self.o = nn.Linear(d, 3 * d), nn.Linear(d, d)
+self.fc1, self.fc2 = nn.Linear(d, ff), nn.Linear(ff, d)
+def forward(self, x):
+B, T, d = x.shape
+q, k, v = (t.view(B, T, self.h, d // self.h).transpose(1, 2)
+for t in self.qkv(x).chunk(3, dim=-1))
+att = (q @ k.transpose(-2, -1)) / math.sqrt(d // self.h)
+att = att.masked_fill(torch.ones(T, T, dtype=torch.bool).triu(1), float("-inf"))
+y = (att.softmax(-1) @ v).transpose(1, 2).reshape(B, T, d)
+x = x + self.o(y)
+return x + self.fc2(torch.nn.functional.gelu(self.fc1(x)))
+model = nn.Sequential(*[Block() for _ in range(4)])
+N = sum(p.numel() for p in model.parameters()) # non-embedding params here
+print(f"N = {N:,} non-embedding params")
+for T in (512, 2048, 8192):
+with FlopCounterMode(display=False) as ctr: # counts fwd + bwd
+model(torch.randn(1, T, 256)).sum().backward()
+measured = ctr.get_total_flops()
+print(f" T={T:5d} measured={measured:.3e} 6ND={6*N*T:.3e} "
+f"ratio={measured/(6*N*T):.2f}")
+```
+
+
+This prints ratios of about `1.31`
+
+, `2.31`
+
+, `6.29`
+
+at \(T = 512, 2048, 8192\): the analytic rule *undercounts*, and worse as context grows, exactly as the caveat above predicts. Do not read those specific numbers as universal — this toy is deliberately narrow (\(d=256\)), so the \(O(T^2)\) attention term overtakes the matmuls at absurdly short contexts; a production-width model at the same \(T\) sits much closer to 1. The lesson is the *method*: measure the ratio once for your own config and carry it as a correction factor, because your FLOP budget, your MFU, and every scaling-law fit downstream inherit that error. At ~100M scale the correction is large enough to matter — the embedding and `lm_head`
+
+matmuls alone are a big fraction of a small model’s work, which is why [the capstone re-derives the full FLOP model rather than using \(6ND\)](https://prakashkagitha.github.io/14-capstone/05-mini-scaling-laws.html). Alternatives if you want per-module attribution: DeepSpeed’s `FlopsProfiler`
+
+(`deepspeed.profiling.flops_profiler`
+
+), or nanoGPT’s hand-rolled `estimate_mfu()`
+
+, which adds the \(12 \cdot L \cdot T \cdot d\) attention term to \(6N\) by hand.
+
+## Kaplan vs. Chinchilla: The Great Correction[¶](https://prakashkagitha.github.io#kaplan-vs-chinchilla-the-great-correction)
+
+**C = 6·N·D**between parameters N and tokens D. Chinchilla found the split scales as N,D ∝ √C at a ratio of ~
+
+**20 tokens per parameter**(adjust the ratio for over-/under-training, e.g. inference-aware training uses more). GPU-hours convert via C = GPU-hrs × 3600 × effective FLOP/s.
+
+### Kaplan et al. (2020): scaling laws are born[¶](https://prakashkagitha.github.io#kaplan-et-al-2020-scaling-laws-are-born)
+
+The first systematic scaling study — Kaplan et al., *Scaling Laws for Neural Language Models* — established the power-law form and, crucially, asked the **compute-optimal allocation** question: given a fixed budget \(C\), how should you split it between \(N\) and \(D\)?
+
+Their answer, derived by fitting \(L(N, D)\) and minimizing under the constraint \(C = 6ND\), was that **most of the budget should go into model size**. As compute grows, you should grow \(N\) fast and \(D\) slowly. Their fitted relationship was roughly \(N_{\text{opt}} \propto C^{0.73}\) and \(D_{\text{opt}} \propto C^{0.27}\) — model size soaking up nearly three-quarters of every additional decade of compute. This is why the models of 2020–2021 (GPT-3 at 175B params trained on ~300B tokens, Gopher at 280B on ~300B tokens, MT-NLG at 530B on ~270B tokens) were **enormous but relatively data-starved**: roughly 0.5–2 tokens per parameter.
+
+### The bug: a confounded learning-rate schedule[¶](https://prakashkagitha.github.io#the-bug-a-confounded-learning-rate-schedule)
+
+Two years later, Hoffmann et al. (the **Chinchilla** paper, *Training Compute-Optimal Large Language Models*) re-ran the analysis far more carefully and reached a dramatically different conclusion. Chinchilla’s own diagnosis of where Kaplan went wrong: **the learning-rate schedule was not matched to the token budget**.
+
+Recall from [Learning Rate Schedules, Warmup, Batch Size & Hyperparameters](https://prakashkagitha.github.io/03-pretraining/10-lr-schedules-hparams.html) that a cosine schedule should decay to its minimum *exactly at the end of training*. Kaplan’s experiments largely reused a single long schedule and read off intermediate losses — so the shorter runs (fewer tokens) were evaluated mid-decay, with their learning rate still too high, making them look worse than they truly were. The argument is that this systematically **understated the value of data**, biasing the optimal allocation toward parameters. Chinchilla retrained every point with a schedule decayed to its own endpoint and used three independent estimation methods that all agreed.
+
+What later replications found: it was mostly the parameter counting
+
+Treat “it was the cosine schedule” as Chinchilla’s *hypothesis*, not a settled fact — two 2024 studies re-ran the comparison end to end and decomposed the gap. Pearce & Song (*Reconciling Kaplan and Chinchilla Scaling Laws*, 2024) attribute most of it to Kaplan fitting and reporting \(N\) as **non-embedding** parameters while Chinchilla used **total** parameters: at Kaplan’s small scales the embedding and output matmuls are a large fraction of the model — exactly the effect the FLOP-counter section above measures — and that accounting choice alone rotates the fitted allocation exponent from \(\approx 0.73\) toward \(\approx 0.5\). Porian et al. (*Resolving Discrepancies in Compute-Optimal Scaling of Language Models*, NeurIPS 2024) reach Chinchilla’s exponents by correcting three factors — last-layer compute, warmup duration, and scale-dependent optimizer tuning — and explicitly report that careful LR decay was *not* essential. The methodological lesson survives intact and gets *broader*: what biases a scaling law is any quantity that is mis-measured differently at different scales, whether that is the schedule, the warmup, or what you count as a parameter.
+
+### The Chinchilla result: scale \(N\) and \(D\) in lockstep[¶](https://prakashkagitha.github.io#the-chinchilla-result-scale-n-and-d-in-lockstep)
+
+Chinchilla found that the compute-optimal exponents are **approximately equal**:
+
+In words: **every time you multiply your compute budget by 10, you should multiply both the model size and the data by roughly \(\sqrt{10} \approx 3.16\).** They grow together. This is the opposite of Kaplan’s “mostly grow the model” prescription, and it implied that essentially every large model trained before 2022 was badly
+
+*undertrained*— too big for the amount of data it saw.
+
+The proof of the pudding: Chinchilla (70B parameters, ~1.4T tokens) **outperformed Gopher (280B parameters, ~300B tokens)** despite being 4× smaller — and using the same compute. A smaller model trained on far more data won. That single result reset the entire field’s defaults.
+
+### The “\(\approx 20\) tokens per parameter” rule[¶](https://prakashkagitha.github.io#the-approx-20-tokens-per-parameter-rule)
+
+Because \(a \approx b\), the optimal **ratio** \(D_{\text{opt}} / N_{\text{opt}}\) is approximately *constant* across compute scales. Chinchilla’s fit puts that constant near **20 tokens per parameter**:
+
+This is the single number most people remember from the entire scaling literature. It is a back-of-the-envelope heuristic, not a law of nature — the precise multiplier depends on the dataset, tokenizer, and exact fitted exponents, and reasonable re-derivations land anywhere from ~15 to ~25. But “20× tokens” is the right order of magnitude and a perfectly defensible interview answer.
+
+Interview Corner
+
+**Q:** Kaplan said “make the model bigger”; Chinchilla said “scale data and params together.” What changed, and what is the practical takeaway?
+
+**A:** Nothing about the underlying power-law *form* changed — both fit \(L(N,D)\) as a sum of power laws. What changed was the *measurement*. Kaplan’s smaller-token runs were evaluated with a learning-rate schedule that hadn’t finished decaying, so they looked artificially under-performing, which made data look less valuable than it is. Chinchilla matched the cosine decay to each run’s actual token count and used three independent methods (fixed-model loss curves, IsoFLOP profiles, and directly fitting the parametric \(L(N,D)\)). All three agreed that the compute-optimal exponents for \(N\) and \(D\) are roughly equal, \(\approx 0.5\) each. The practical heuristic is **about 20 training tokens per parameter** at the compute-optimal point. Concretely: a compute-optimal 70B model wants ~1.4T tokens, not the ~300B that GPT-3-era models used. The deeper lesson is methodological — scaling-law conclusions are extremely sensitive to whether your hyperparameters (especially the LR schedule and batch size) are tuned *at each scale*, so always validate the experimental setup before trusting the slope. A strong extra signal: note that 2024 replications (Pearce & Song; Porian et al.) found the LR schedule was only part of the story, and that Kaplan’s use of *non-embedding* parameter counts at small scale explains more of the gap.
+
+## Deriving the Compute-Optimal Allocation[¶](https://prakashkagitha.github.io#deriving-the-compute-optimal-allocation)
+
+Let us actually do the optimization Chinchilla did, because it is a clean Lagrange-multiplier problem and a very common whiteboard exercise. We want to minimize the loss subject to a fixed compute budget.
+
+**Problem.** Minimize \(L(N,D) = E + A N^{-\alpha} + B D^{-\beta}\) subject to \(C = 6 N D\) (fixed).
+
+Since \(E\) is constant, drop it. Substitute the constraint \(D = C / (6N)\) into the loss:
+
+Take the derivative with respect to \(N\) and set it to zero:
+
+Rearranging gives the balance condition: at the optimum, the **marginal loss reduction per FLOP is equal** for parameters and for data. Solving for \(N\):
+
+and by the constraint \(D_{\text{opt}} = \frac{C}{6 N_{\text{opt}}} \propto C^{\frac{\alpha}{\alpha+\beta}}\). So the exponents are:
+
+The two exponents must sum to 1 (because \(C = 6ND\) forces it), and they are *equal* exactly when \(\alpha = \beta\). Chinchilla’s fitted \(\alpha\) and \(\beta\) came out close to each other, which is *why* \(a \approx b \approx 0.5\) and *why* the token-per-parameter ratio is roughly constant across scales. Be precise about what \(\alpha \approx \beta\) buys you, though: dividing the two boxed solutions gives
+
+so \(\alpha \approx \beta\) makes the ratio **scale-invariant**, while its *numerical value* is set by the fitted coefficient ratio \(B/A\). The “20× rule” is therefore “constant” because of the exponents and “20” because of the coefficients — both halves come from the fit.
+
+```
+import numpy as np
+def chinchilla_optimal(C, A, B, alpha, beta, E=1.69):
+"""Compute-optimal (N*, D*) for budget C given fitted scaling-law params.
+Minimizes L(N,D) = E + A*N^-alpha + B*D^-beta s.t. C = 6*N*D.
+Returns the optimal params, tokens, predicted loss, and tokens/param.
+"""
+exp = beta / (alpha + beta) # exponent on C for N
+coef = (alpha * A / (beta * B)) ** (1.0 / (alpha + beta))
+N_opt = coef * (C / 6.0) ** exp
+D_opt = C / (6.0 * N_opt)
+L_opt = E + A * N_opt ** (-alpha) + B * D_opt ** (-beta)
+return {
+"N": N_opt, "D": D_opt, "loss": L_opt,
+"tokens_per_p

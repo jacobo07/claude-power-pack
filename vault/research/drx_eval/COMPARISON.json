@@ -1,0 +1,162 @@
+{
+ "vault\\research\\drx_eval\\baseline_v031": {
+  "runs": [
+   {
+    "report": "2026-11-11_175823_what-did-the-chinchilla-paper-hoffmann-et-al-2022-.md",
+    "queries_used": 6,
+    "duration_s": 1517.6,
+    "insufficient": false,
+    "learnings": 15,
+    "cited_urls": 20,
+    "urls_unreadable_now": 0,
+    "number_supported": 10,
+    "number_unsupported": 1,
+    "no_number": 4,
+    "number_support_rate": 0.909,
+    "ledger": null
+   },
+   {
+    "report": "2026-11-11_181937_how-much-does-http-3-quic-reduce-page-load-time-or.md",
+    "queries_used": 6,
+    "duration_s": 1274.1,
+    "insufficient": false,
+    "learnings": 16,
+    "cited_urls": 23,
+    "urls_unreadable_now": 0,
+    "number_supported": 13,
+    "number_unsupported": 0,
+    "no_number": 3,
+    "number_support_rate": 1.0,
+    "ledger": null
+   },
+   {
+    "report": "2026-11-11_183231_what-is-the-measured-effect-of-sqlite-wal-mode-on-.md",
+    "queries_used": 5,
+    "duration_s": 773.4,
+    "insufficient": false,
+    "learnings": 5,
+    "cited_urls": 12,
+    "urls_unreadable_now": 0,
+    "number_supported": 1,
+    "number_unsupported": 0,
+    "no_number": 4,
+    "number_support_rate": 1.0,
+    "ledger": null
+   }
+  ],
+  "total": {
+   "learnings": 36,
+   "cited_urls": 55,
+   "urls_unreadable_now": 0,
+   "number_supported": 24,
+   "number_unsupported": 1,
+   "no_number": 11,
+   "queries_used": 17,
+   "number_support_rate": 0.96,
+   "runs": 3,
+   "insufficient_runs": 0,
+   "duration_s": 3565.1
+  }
+ },
+ "vault\\research\\drx_eval\\v040": {
+  "runs": [
+   {
+    "report": "2026-11-11_184150_what-did-the-chinchilla-paper-hoffmann-et-al-2022-.md",
+    "queries_used": 4,
+    "duration_s": 558.2,
+    "insufficient": false,
+    "learnings": 6,
+    "cited_urls": 7,
+    "urls_unreadable_now": 0,
+    "number_supported": 5,
+    "number_unsupported": 1,
+    "no_number": 0,
+    "number_support_rate": 0.833,
+    "ledger": {
+     "sources": 11,
+     "lineages": 11,
+     "duplicate_url_aliases": 0,
+     "sources_with_injection_flags": 0,
+     "claims": 6,
+     "claims_with_verified_span": 5,
+     "verified_span_rate": 0.833,
+     "quotes_offered": 12,
+     "quotes_rejected": 5,
+     "ledger_capped": 5,
+     "claims_persisted": 6,
+     "persisted_with_verified_span": 5,
+     "persisted_verified_span_rate": 0.833
+    }
+   },
+   {
+    "report": "2026-11-11_185507_how-much-does-http-3-quic-reduce-page-load-time-or.md",
+    "queries_used": 5,
+    "duration_s": 795.9,
+    "insufficient": false,
+    "learnings": 9,
+    "cited_urls": 8,
+    "urls_unreadable_now": 0,
+    "number_supported": 4,
+    "number_unsupported": 0,
+    "no_number": 5,
+    "number_support_rate": 1.0,
+    "ledger": {
+     "sources": 8,
+     "lineages": 8,
+     "duplicate_url_aliases": 0,
+     "sources_with_injection_flags": 0,
+     "claims": 9,
+     "claims_with_verified_span": 9,
+     "verified_span_rate": 1.0,
+     "quotes_offered": 14,
+     "quotes_rejected": 4,
+     "ledger_capped": 3,
+     "claims_persisted": 9,
+     "persisted_with_verified_span": 9,
+     "persisted_verified_span_rate": 1.0
+    }
+   },
+   {
+    "report": "2026-11-11_190009_what-is-the-measured-effect-of-sqlite-wal-mode-on-.md",
+    "queries_used": 3,
+    "duration_s": 301.9,
+    "insufficient": true,
+    "learnings": 0,
+    "cited_urls": 0,
+    "urls_unreadable_now": 0,
+    "number_supported": 0,
+    "number_unsupported": 0,
+    "no_number": 0,
+    "number_support_rate": null,
+    "ledger": {
+     "sources": 7,
+     "lineages": 7,
+     "duplicate_url_aliases": 0,
+     "sources_with_injection_flags": 0,
+     "claims": 0,
+     "claims_with_verified_span": 0,
+     "verified_span_rate": null,
+     "quotes_offered": 0,
+     "quotes_rejected": 0,
+     "ledger_capped": 0,
+     "claims_persisted": 0,
+     "persisted_with_verified_span": 0,
+     "persisted_verified_span_rate": null
+    }
+   }
+  ],
+  "total": {
+   "learnings": 15,
+   "cited_urls": 15,
+   "urls_unreadable_now": 0,
+   "number_supported": 9,
+   "number_unsupported": 1,
+   "no_number": 5,
+   "queries_used": 12,
+   "number_support_rate": 0.9,
+   "runs": 3,
+   "insufficient_runs": 1,
+   "duration_s": 1656.0
+  }
+ }
+}

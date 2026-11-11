@@ -1,0 +1,379 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_183232_what-did-the-chinchilla-paper-hoffmann-et-al-2022-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/abs/2605.08541",
+   "aliases": [],
+   "sha256": "6b7ac512cca2e48309596b8d4747503acf847b93cb91269142fce0f21be302f0",
+   "chars": 3950,
+   "snapshot": "6b7ac512cca2e48309596b8d4747503acf847b93cb91269142fce0f21be302f0.txt",
+   "retrieved_at": "2026-11-11T17:33:39+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://arxiv.org/pdf/2406.19146v4",
+   "aliases": [],
+   "sha256": "5d9b88119ca428fd9ce680cf53e833f3a9c31c7fbbae9155e7f32c4083a90971",
+   "chars": 1463,
+   "snapshot": "5d9b88119ca428fd9ce680cf53e833f3a9c31c7fbbae9155e7f32c4083a90971.txt",
+   "retrieved_at": "2026-11-11T17:33:39+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://www.emergentmind.com/topics/token-to-parameter-ratio",
+   "aliases": [],
+   "sha256": "53322aba15df48b41a02b6282e3d42418c87ff6a1fad7407a939ae0cdbdfde3d",
+   "chars": 5996,
+   "snapshot": "53322aba15df48b41a02b6282e3d42418c87ff6a1fad7407a939ae0cdbdfde3d.txt",
+   "retrieved_at": "2026-11-11T17:33:39+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://www.emergentmind.com/topics/tokens-per-parameter-tpp",
+   "aliases": [],
+   "sha256": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570",
+   "chars": 10744,
+   "snapshot": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570.txt",
+   "retrieved_at": "2026-11-11T17:33:39+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://arxiv.org/html/2404.10102v1",
+   "aliases": [],
+   "sha256": "cb26b5c70a3b385cea57802f4cfd52f162be07c252f4aefa989f3ed20bad5c7f",
+   "chars": 25000,
+   "snapshot": "cb26b5c70a3b385cea57802f4cfd52f162be07c252f4aefa989f3ed20bad5c7f.txt",
+   "retrieved_at": "2026-11-11T17:35:03+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.emergentmind.com/topics/chinchilla-s-scaling-laws",
+   "aliases": [],
+   "sha256": "e7d0f359997366542c8745486ed8ff1df5d1da404391d86a63270e93fa123010",
+   "chars": 9365,
+   "snapshot": "e7d0f359997366542c8745486ed8ff1df5d1da404391d86a63270e93fa123010.txt",
+   "retrieved_at": "2026-11-11T17:35:03+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.geeksforgeeks.org/artificial-intelligence/chinchilla-scaling-laws/",
+   "aliases": [],
+   "sha256": "86b105aeec91daec1b892c2a9fc814f4d670c9a6d064ec6f040326122d365cab",
+   "chars": 5462,
+   "snapshot": "86b105aeec91daec1b892c2a9fc814f4d670c9a6d064ec6f040326122d365cab.txt",
+   "retrieved_at": "2026-11-11T17:35:03+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://prakashkagitha.github.io/llm-stack-book/03-pretraining/04-scaling-laws.html",
+   "aliases": [],
+   "sha256": "d86cfb01f05faf68ee9168db89cb8db18f5bcf7a494dfd521419abae8627b702",
+   "chars": 25000,
+   "snapshot": "d86cfb01f05faf68ee9168db89cb8db18f5bcf7a494dfd521419abae8627b702.txt",
+   "retrieved_at": "2026-11-11T17:35:03+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://arxiv.org/pdf/2401.00448",
+   "aliases": [],
+   "sha256": "065732acbaaacb38eef937999c3e47e42a035d984dea70d44028cd030b7bcefa",
+   "chars": 1627,
+   "snapshot": "065732acbaaacb38eef937999c3e47e42a035d984dea70d44028cd030b7bcefa.txt",
+   "retrieved_at": "2026-11-11T17:38:54+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://regantih.github.io/reports-lab/tokens-to-embodied-minds/chapters/09-scaling-laws.html",
+   "aliases": [],
+   "sha256": "72d2d2dd72e0c3221469ce7537e5f10b98d217398b5f70b0ae5662378d3e12ae",
+   "chars": 5640,
+   "snapshot": "72d2d2dd72e0c3221469ce7537e5f10b98d217398b5f70b0ae5662378d3e12ae.txt",
+   "retrieved_at": "2026-11-11T17:38:54+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://www.zeroentropy.dev/concepts/scaling-laws/",
+   "aliases": [],
+   "sha256": "4d2424d27691663a189ee3c1aa9c68a3a4d09119b78b5cfb334888ba7ef47b48",
+   "chars": 6612,
+   "snapshot": "4d2424d27691663a189ee3c1aa9c68a3a4d09119b78b5cfb334888ba7ef47b48.txt",
+   "retrieved_at": "2026-11-11T17:38:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S5",
+   "start": 13232,
+   "end": 13539,
+   "text": "Based on Hoffmann et al.’s report of having “over 400” observations, we interpret this to mean they likely had between 400 and 500 data points. If, as they claimed, they used only the final loss values for each trained model, it seems unlikely that they would have had hundreds of thousands of observations.",
+   "sha256": "8a84bbe0ef57f61376fbedc5437dd354107162303fe29cd6ea85f4bfa689b5fd"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S5",
+   "start": 14528,
+   "end": 14827,
+   "text": "Second, the scaling policy derived from Hoffmann et al.’s estimated parameters suggests using approximately 70 tokens per parameter for optimal performance. This prescription is inconsistent with the 20 tokens-per-parameter ratio actually used by Hoffmann et al. to train their 70B Chinchilla model.",
+   "sha256": "6310bb886b8b15d7a5d2d2915233ddf16fa931870a0a9e600ef200c58c2e300e"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S5",
+   "start": 6998,
+   "end": 7273,
+   "text": "A few datapoints stand out. There is a column of points with training FLOP around where some of the larger models obtain high loss values (up to 70% higher compared to models with similar compute budgets). These correspond to the lowest ratio of training tokens to parameters",
+   "sha256": "93cf232409f5c245531300271a62dd61254b0fc4b8d8906594176fa2a8441664"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S6",
+   "start": 6517,
+   "end": 6664,
+   "text": "Farseer demonstrates a fourfold reduction in relative prediction error compared to Chinchilla at large scale (0.50% versus 2.68% at 25B parameters)",
+   "sha256": "9c293b0ce121d172e249ff9bf626f017c50b00de0edf81b5a6e392dd41b9e7a9"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S6",
+   "start": 6742,
+   "end": 6979,
+   "text": "Farseer predicts that the optimal tokens-per-parameter ratio grows with compute, matching observed behavior in recent LLMs (e.g., Llama 3, Qwen3), and offers a robust proxy for evaluating new architecture and data recipes at small scale.",
+   "sha256": "a4db2d93f50c67c163d2b3378831bf1fa253ca1af385a1c964471be0faf2c265"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S5",
+   "start": 14536,
+   "end": 14827,
+   "text": "the scaling policy derived from Hoffmann et al.’s estimated parameters suggests using approximately 70 tokens per parameter for optimal performance. This prescription is inconsistent with the 20 tokens-per-parameter ratio actually used by Hoffmann et al. to train their 70B Chinchilla model.",
+   "sha256": "3afd4ee36291aa504512324b75c6fe94ddcae6c8308b9ea262a47f7f5e596fd7"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S10",
+   "start": 4937,
+   "end": 5154,
+   "text": "The honest caveat: scaling laws fit to pretraining loss may not predict downstream task performance. The loss-downstream divergence is most pronounced when the evaluation task is far from the pretraining distribution.",
+   "sha256": "d563cb07d071c72e02a291e6eb7f5622ae761f3fbde59e52a46f7ee61ae68b00"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "The Hoffmann et al. published Chinchilla scaling law coefficients have confidence intervals approximately 50-fold narrower than the ~400 data points would statistically justify; replication studies estimate 80% confidence intervals of ±0.09 compared to the reported ±0.002, suggesting the true optimal token-per-parameter ratio spans from roughly 4 to 40 across reasonable regimes rather than being precisely 20. This uncertainty directly affects capex planning—a 70B model budget could validly support anywhere from 280B to 2.8T tokens.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 0.002, 0.09, 2.8, 280, 40, 50, 80%",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S5"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what model scales, data qualities, architectural choices, or training algorithms does the Chinchilla token-to-parameter relationship begin producing suboptimal or inaccurate efficiency predictions?",
+    "capability": "Stop treating published Chinchilla scaling coefficients as fixed and rebuild your capacity plans around a 4-40 tokens-per-parameter range instead of assuming ~20 is optimal"
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "The optimal token-per-parameter ratio depends materially on training data quality: higher-quality or filtered datasets achieve identical loss improvements at ratios below 20× (Bi et al. 2024 found lower ratios optimal for higher-quality data), meaning investments in data curation deliver compounding returns across your model portfolio proportional to model size. This explains divergence between Chinchilla's three independent estimation methods—they implicitly used different data quality controls.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S5"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S6",
+     "quote": "Bi et al., (2024) find that training tokens and model parameters should be scaled roughly proportionally, but finds that this is sensitive to the quality of the data, and that a lower token-per-parame",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "At what model scales, data qualities, architectural choices, or training algorithms does the Chinchilla token-to-parameter relationship begin producing suboptimal or inaccurate efficiency predictions?",
+    "capability": "Prioritize training data curation and quality improvement over raw tokenization volume, since data quality directly reduces required token-per-parameter ratios"
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The Chinchilla parametric form assumes a constant token-per-parameter ratio across scales, but Farseer parameterizes the scaling exponent as a function of model size, achieving 0.50% versus 2.68% relative prediction error at 25B parameters (4× improvement) and correctly predicting the optimal ratio grows with compute—matching observed behavior in Llama 3 and Qwen 3. For frontier-scale models, Chinchilla extrapolation introduces 2%+ systematic error that cascades across multi-model roadmaps.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4",
+    "E5"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what model scales, data qualities, architectural choices, or training algorithms does the Chinchilla token-to-parameter relationship begin producing suboptimal or inaccurate efficiency predictions?",
+    "capability": "Switch to Farseer scaling law for models 50B+ to reduce capacity-forecasting error by 75% and capture scale-dependent efficiency gains"
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "The Hoffmann et al. paper reports 80% confidence intervals of ±0.001 for the optimal token-per-parameter scaling exponent, but bootstrap reanalysis shows standard errors 50 times wider (±0.018). Obtaining intervals that tight would require nearly 600,000 experiments; the authors likely ran only 400–500. Their Approach 3 fit is statistically rejected against their own data (p < 0.001) and contradicts their Approaches 1 & 2—Approach 3 prescribes ~70 tokens per parameter, while their actual Chinchilla model trains at 20 and Approaches 1 & 2 support ~20.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 0.001, 0.018, 400, 50, 500, 600000, 80%",
+   "spans": [
+    "E6"
+   ],
+   "source_ids": [
+    "S5"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S5",
+     "quote": "we estimate a standard error of 0.018 for . This would correspond to a width of the 80% confidence interval of . Hence our 80% confidence interval is 50-fold wider than that reported by Hoffmann et al",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "At what token-per-parameter ratio does training loss diverge from the Chinchilla prediction by more than 10%, and what diagnostic signals from the first 10% of training indicate that misalignment has occurred?",
+    "capability": "Establish your own token-per-parameter ratio through small-scale experiments rather than treating Chinchilla's published guidance as fixed, because the original paper's confidence intervals are unreliable."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Llama-3 8B trained at ~1875 tokens-per-parameter and frontier models in 2025 train at 1000+ tokens-per-parameter—roughly 50–100× above Chinchilla's compute-optimal ratio of 20. This inference-optimal strategy costs more in training but reduces per-token serving cost; at billion-request scale, training amortizes to <1% of total lifetime cost. Smaller models with longer training reach identical loss as larger compute-optimal models but at much lower inference cost, making the overtraining tradeoff economically rational for any production deployment with >100 million requests.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S11",
+     "quote": "Llama-3 8B was trained on 15 trillion tokens at 8B params, about 1875 tokens/parameter—almost two orders of magnitude past compute-optimal.",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S10",
+     "quote": "Compute-optimal is a pretraining-FLOPs minimization, not a deployment recipe. Inference dominates lifetime cost; the right model is smaller and trained longer than Chinchilla suggests.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "At what token-per-parameter ratio does training loss diverge from the Chinchilla prediction by more than 10%, and what diagnostic signals from the first 10% of training indicate that misalignment has occurred?",
+    "capability": "Deploy smaller models trained 10–100× longer than Chinchilla-optimal instead of balancing parameters against training tokens, because inference cost dominates lifetime economics at production scale."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Scaling laws predict pretraining loss on web text but not instruction-tuned downstream accuracy, which saturates earlier and scales noisily. A 10% perplexity reduction may improve coding accuracy 20% but summarization only 3%. MoE models, fine-tuned models, and specialized architectures (rerankers, embeddings) break the simple power-law fit entirely. Loss-downstream divergence is most pronounced when the evaluation task lies far from the pretraining distribution.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 10%, 20%",
+   "spans": [
+    "E7"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S11",
+     "quote": "Scaling laws predict pretraining loss, not downstream benchmark performance. The relationship between loss improvement and task-specific improvement is nonlinear and task-dependent — a 10% perplexity ",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "At what token-per-parameter ratio does training loss diverge from the Chinchilla prediction by more than 10%, and what diagnostic signals from the first 10% of training indicate that misalignment has occurred?",
+    "capability": "Stop using pretraining loss scaling curves to forecast downstream task performance; instead run task-specific ablations at multiple scales before committing a training budget."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 11,
+  "lineages": 11,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 6,
+  "claims_with_verified_span": 5,
+  "verified_span_rate": 0.833,
+  "quotes_offered": 12,
+  "quotes_rejected": 5,
+  "ledger_capped": 5,
+  "claims_persisted": 6,
+  "persisted_with_verified_span": 5,
+  "persisted_verified_span_rate": 0.833
+ }
+}

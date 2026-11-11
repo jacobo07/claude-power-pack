@@ -1,0 +1,52 @@
+# Token-to-Parameter Ratio in LLM Efficiency
+
+- Token-to-Parameter Ratio is defined as the product of token efficiency and parameter efficiency, quantifying the overall inference cost in LLMs.
+- The DiSC-AMC pipeline achieves a 55% token reduction and an 84% parameter reduction, resulting in a combined inference-cost speedup of approximately 14× while maintaining competitive accuracy.
+- This metric informs prompt optimization and model design by balancing prompt length, model size, and performance, making it critical for resource-constrained deployments.
+
+The token-to-parameter ratio quantifies the interplay between prompt/context length (measured in input and output tokens) and model parameter count in the inference efficiency of LLM pipelines. In the context of modern [in-context learning](https://www.emergentmind.com/topics/in-context-learning-icl) systems for tasks such as automatic modulation classification (AMC), reducing both the number of tokens and the parameter size is critical for practical deployment, particularly in resource-constrained or real-time environments. The metric serves as a foundation for evaluating and comparing strategies that trade prompt brevity against model size, with implications for cost, latency, and energy consumption ([Rostami et al., 30 Sep 2025](https://www.emergentmind.com/papers/2510.00316)).
+
+## 1. Formal Definitions and Efficiency Metrics
+
+Let and denote the prompt/input token counts for a baseline and a more efficient variant, respectively, and and represent their corresponding model parameter counts. Token-efficiency and parameter-efficiency are then defined as the fractions
+
+
+A combined inference cost ratio, assuming cost is proportional to the product of token and parameter counts, is given by
+
+
+Cost savings may also be expressed as (token savings), (parameter savings), and speedup factors , , with total speedup 0.
+
+This approach enables rigorous quantification of efficiency-improving interventions at both the prompt and model architecture level ([Rostami et al., 30 Sep 2025](https://www.emergentmind.com/papers/2510.00316)).
+
+## 2. Discretization and Token Efficiency in Practice
+
+To achieve a lower token-to-parameter product, the [DiSC-AMC](https://www.emergentmind.com/topics/disc-amc) (Discretized Statistics In-Context Automatic Modulation Classification) pipeline introduces formal discretization of higher-order statistics. The system computes 21 raw features (including moments and cumulants) from each in-phase/quadrature (I/Q) input [segment](https://www.emergentmind.com/topics/segment). Instead of serializing real-valued floats (which expand to 3–5 tokens per value in standard GPT tokenizers), each scalar feature 1 is quantized via binning: 2
+and mapped to a single symbolic token. Low-impact features are dropped, retaining 17 symbolic tokens per exemplar plus an [SNR](https://www.emergentmind.com/topics/signal-to-noise-ratio-snr-model) token.
+
+For 3 exemplars, this discretization reduces average prompt length from 4 tokens (baseline) to 5 tokens, yielding 6—a 55% token reduction ([Rostami et al., 30 Sep 2025](https://www.emergentmind.com/papers/2510.00316)).
+
+## 3. Parameter Footprint and Model Size Adjustments
+
+Parallel to token reduction, the parameter footprint is addressed by replacing the baseline model with a smaller, efficient variant. The baseline “plug-and-play” AMC uses a distilled [Qwen model](https://www.emergentmind.com/topics/qwen-model) at 7 billion (B) parameters. DiSC-AMC employs the “Flash” variant of Gemini-2.5 with 8B parameters, which is internally quantized and optimized for inference.
+
+This leads to a parameter-efficiency of 9, representing an 84% reduction in parameter count relative to the largest baseline ([Rostami et al., 30 Sep 2025](https://www.emergentmind.com/papers/2510.00316)).
+
+## 4. Numerical Trade-offs: Combined Cost, Accuracy, and Table
+
+A key illustration is the numerical comparison between baseline and DiSC-AMC configurations, as summarized below:
+
+| Model | Params (B) | Prompt Tokens | Accuracy (%) | 0 | 1 | 2 |
+|---|---|---|---|---|---|---|
+| Baseline (Qwen-32B) | 32 | 2,900 | 47.8 | – | – | – |
+| DiSC-AMC (Flash-5B) | 5 | 1,315 | 45.5 | 0.45 | 0.156 | 0.07 |
+
+Speedup factors are 3 (tokens), 4 (parameters), with combined inference-cost speedup 5. The token·parameter cost drops from 6K·7B to 8K·9B (0 baseline), with accuracy remaining competitive (47.8% to 45.5%) ([Rostami et al., 30 Sep 2025](https://www.emergentmind.com/papers/2510.00316)).
+
+## 5. Inference Cost Quantification
+
+The token-to-parameter ratio encapsulates the core efficiency principle: 1
+This formalism quantifies the aggregate impact of both token and parameter compression—yielding an order-of-magnitude reduction in inference cost compared to the baseline. It demonstrates that simultaneous token and parameter reduction yields multiplicative efficiency improvements, far exceeding the effect of reducing either dimension in isolation ([Rostami et al., 30 Sep 2025](https://www.emergentmind.com/papers/2510.00316)).
+
+## 6. Implications for Prompt-Based Model Design
+
+The empirical results motivate prompt- and parameter-efficient engineering for in-context systems. DiSC-AMC’s discretization and [pruning strategies](https://www.emergentmind.com/topics/pruning-strategies) illustrate how compressing floating-point features and careful context selection halve prompt length while allowing for a much smaller, optimized model. A plausible implication is that for domains such as AMC, structured discretization and [prompt optimization](https://www.emergentmind.com/topics/prompt-optimization-vpo) synergistically maximize efficiency under a constrained inference budget. Retaining competitive task accuracy with a 14× reduction in the practical inference-cost product demonstrates the viability of this approach for in-the-loop deployment and resource-aware LLM applications ([Rostami et al., 30 Sep 2025](https://www.emergentmind.com/papers/2510.00316)).
