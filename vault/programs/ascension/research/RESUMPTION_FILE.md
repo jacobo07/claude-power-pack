@@ -27,4 +27,6 @@
 
 **S30T ARMED (Owner approved the plan inline 2026-11-12).** Mission m-2e14179c5b6a on GEX44, control clone /home/kobii/missions/s30t-pp (branch mission/s30t, scaffold e3e0756e), product t1-campaign, packet vault/programs/gsdx-factory-2/S30T-PHASES.md (6 phases, caps 25.5M), budget 20M + 2x4M top-ups, 0 fresh, 12 cycles, 24 h. Plan backup PP 8b774d18. Concurrent writer S30K (autopilot m-9ada5ab136c0, fwidth) in the same product: disjoint paths. Certification under the new profile = Owner decision at the S30T checkpoint. Status: `CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude python3 ~/.claude/skills/claude-power-pack/tools/gsd_mission.py status` on GEX44.
 
+**cmpswap_full DONE (t1 489622a5).** 9,941 CNM x 7 mwcc, 3,243 s. U = 38 at objdiff 100 + reloc_oracle CONSISTENT under a non-baseline compiler (pane predicted ~100, range 60-150: WRONG, low; inside pre-registered 20-290). Groups: GC/1.3-2.7 only 15, GC/1.0-2.7 8, GC/1.0 only 7, GC/3.0a* 4, all-but-Wii/1.7 4. 22 objects (top 5/4/3), weak clustering. 4 GC/1.0 objdiff-100 refused by reloc_oracle as RELOC_SHAPE SDA21 +0 vs +2: likely a reloc-encoding convention difference (oracle over-strict), not counted. Compiler swap ~0.4% of CNM: minor lever.
+
 **Bigger levers (Owner decisions, from S25):** certify the 582 BINARY_EXACT on stage ksrmb-s25; FLAGS_SPLIT per-fn arm rule; `?` repair fallback policy.
