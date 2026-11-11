@@ -68,8 +68,29 @@ MAX_QUERIES_DEFAULT = 30
 TOTAL_TIMEOUT_S_DEFAULT = 2 * 60 * 60  # 2 h wall-clock
 SERP_TIMEOUT_S = 30
 PAGE_TIMEOUT_S = 60
-LLM_TIMEOUT_S = 120
-MARKDOWN_MAX_CHARS = 25_000
+
+
+def _env_positive_int(name: str, default: int) -> int:
+    """Experiment knob: a positive int from env, else the default. A bad value
+    is reported on stderr and ignored, never silently turned into 0."""
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        val = int(raw)
+        if val > 0:
+            return val
+    except ValueError:
+        pass
+    print(f"deep_research: ignoring {name}={raw!r}; using {default}",
+          file=sys.stderr)
+    return default
+
+
+# Experiment knobs since 2026-11-11 (DRX yield experiment), read once at
+# import: one process runs one configuration end to end.
+LLM_TIMEOUT_S = _env_positive_int("CLAUDEPP_RESEARCH_LLM_TIMEOUT_S", 120)
+MARKDOWN_MAX_CHARS = _env_positive_int("CLAUDEPP_RESEARCH_MAX_CHARS", 25_000)
 # Exit code of a run that persisted zero learnings (see main()).
 EXIT_INSUFFICIENT = 3
 
@@ -728,13 +749,47 @@ def call_llm(system: str, user: str, schema: dict | None = None,
         ("anthropic-sdk", _llm_anthropic_sdk),
     )
     errors: list[str] = []
+    started = time.time()
     for _name, fn in layers:
         try:
-            return fn(system, user, schema, timeout)
+            out = fn(system, user, schema, timeout)
+            _log_llm_call(schema, started, user, True, "")
+            return out
         except LayerError as e:
             errors.append(str(e))
             continue
+    _log_llm_call(schema, started, user, False, "; ".join(errors))
     raise NoLLMAvailable("; ".join(errors))
+
+
+# One row per LLM call of the current top-level run (reset there). The yield
+# experiment needs the mechanism, not only the outcome: which call kind timed
+# out, after how long, on how much input. The report's error list is
+# truncated at 20; this log is not.
+LLM_CALLS: list[dict[str, Any]] = []
+
+
+def _schema_kind(schema: dict | None) -> str:
+    if schema is None:
+        return "report"
+    for name, kind in (("LEARNING_RECORD_SCHEMA", "extract"),
+                       ("DECOMPOSITION_SCHEMA", "decompose"),
+                       ("RELEVANCE_SCHEMA", "relevance"),
+                       ("CONTRADICTION_SCHEMA", "contradiction")):
+        if schema is globals().get(name):
+            return kind
+    return "other"
+
+
+def _log_llm_call(schema: dict | None, started: float, user: str, ok: bool,
+                  error: str) -> None:
+    LLM_CALLS.append({
+        "kind": _schema_kind(schema),
+        "secs": round(time.time() - started, 1),
+        "ok": ok,
+        "timeout": (not ok) and "timed out" in error,
+        "input_chars": len(user),
+    })
 
 
 def _parse_json_response(text: str) -> dict[str, Any]:
@@ -1627,6 +1682,7 @@ def deep_research(
                 "metadata": {"verdict": "lock-held"},
             }
         priority_verdict = lower_priority()
+        LLM_CALLS.clear()
         max_queries = env_int("CLAUDEPP_DEEPRESEARCH_MAX_QUERIES",
                                 MAX_QUERIES_DEFAULT)
         total_timeout = env_int("CLAUDEPP_DEEPRESEARCH_TIMEOUT_S",
@@ -1985,6 +2041,10 @@ def deep_research(
                     "contradiction_verdict": _state["contradiction_verdict"],
                     "ledger": _state["ledger"].summary(),
                     "run_id": _state["ckpt"]["run_id"],
+                    "config": {"llm_timeout_s": LLM_TIMEOUT_S,
+                               "max_chars": MARKDOWN_MAX_CHARS,
+                               "version": __version__},
+                    "llm_calls": list(LLM_CALLS),
                     "resumed_queries": _state["resumed_queries"],
                 },
                 "ledger": _state["ledger"],
@@ -2205,6 +2265,18 @@ def write_research_artifacts(
             f.write(_json.dumps(
                 {"type": "source", "ts": meta.get("started_at"), **s},
                 ensure_ascii=False) + "\n")
+        # Untruncated: the report shows the first 20 errors only.
+        for c in meta.get("llm_calls", []):
+            f.write(_json.dumps(
+                {"type": "llm_call", "ts": meta.get("started_at"), **c},
+                ensure_ascii=False) + "\n")
+        for e in meta.get("errors", []):
+            f.write(_json.dumps(
+                {"type": "error", "ts": meta.get("started_at"), "error": e},
+                ensure_ascii=False) + "\n")
+        f.write(_json.dumps(
+            {"type": "config", "ts": meta.get("started_at"),
+             **(meta.get("config") or {})}, ensure_ascii=False) + "\n")
 
     # Index row — small JSON shape suitable for SessionStart auto-discovery.
     index_row = {

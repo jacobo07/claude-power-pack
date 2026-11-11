@@ -546,6 +546,47 @@ _real_ckpt_after = set(_REAL_CKPT.glob("*")) if _REAL_CKPT.exists() else set()
 gate("V-DRX-TEST-HERMETIC", _real_ckpt_after == _real_ckpt_before,
      "the suite wrote no checkpoint into the real vault")
 
+# --- yield-experiment instrumentation --------------------------------------
+
+import os as _os  # noqa: E402
+
+_probe = ("import sys; sys.path.insert(0, r'%s'); import deep_research as d; "
+          "print(d.LLM_TIMEOUT_S, d.MARKDOWN_MAX_CHARS)" % DR)
+knob_out = {}
+for label, env in (("set", {"CLAUDEPP_RESEARCH_LLM_TIMEOUT_S": "240", "CLAUDEPP_RESEARCH_MAX_CHARS": "12000"}),
+                   ("bad", {"CLAUDEPP_RESEARCH_LLM_TIMEOUT_S": "0", "CLAUDEPP_RESEARCH_MAX_CHARS": "abc"}),
+                   ("unset", {})):
+    e = {k: v for k, v in _os.environ.items() if not k.startswith("CLAUDEPP_RESEARCH_")}
+    e.update(env)
+    knob_out[label] = _sp.run([sys.executable, "-c", _probe], capture_output=True, text=True,
+                              env=e).stdout.strip()
+gate("V-DRX-EXPERIMENT-KNOBS",
+     knob_out == {"set": "240 12000", "bad": "120 25000", "unset": "120 25000"},
+     f"env knobs apply; 0/'abc' fall back to defaults, never to 0: {knob_out}")
+
+_real_cli = dr._llm_claude_cli
+dr.LLM_CALLS.clear()
+
+
+def _timing_out_cli(system, user, schema, timeout):
+    raise dr.LayerError("claude.exe", f"subprocess failed: timed out after {timeout} seconds")
+
+
+dr._llm_claude_cli = _timing_out_cli
+try:
+    try:
+        dr.call_llm("s", "x" * 1234, dr.LEARNING_RECORD_SCHEMA)
+    except dr.NoLLMAvailable:
+        pass
+    dr._llm_claude_cli = lambda system, user, schema, timeout: {"questions": []}
+    dr.call_llm("s", "y" * 10, dr.DECOMPOSITION_SCHEMA)
+finally:
+    dr._llm_claude_cli = _real_cli
+calls_seen = [(c["kind"], c["ok"], c["timeout"], c["input_chars"]) for c in dr.LLM_CALLS]
+gate("V-DRX-LLM-CALL-LOG",
+     calls_seen == [("extract", False, True, 1234), ("decompose", True, False, 10)],
+     f"each LLM call is logged with kind, outcome, timeout flag and input size: {calls_seen}")
+
 # --- report ----------------------------------------------------------------
 
 passed = sum(1 for _, ok, _ in _results if ok)
