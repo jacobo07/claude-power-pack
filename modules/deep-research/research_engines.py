@@ -723,8 +723,20 @@ LEARNING_RECORD_SCHEMA: dict[str, Any] = {
                                   "enum": list(EPISTEMIC_LEVELS)},
                     "evidence": {"type": "string"},
                     "supporting_sources": {"type": "integer"},
+                    "quotes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "source_id": {"type": "string"},
+                                "quote": {"type": "string"},
+                            },
+                            "required": ["source_id", "quote"],
+                        },
+                    },
                 },
-                "required": ["capability", "learning", "epistemic", "evidence"],
+                "required": ["capability", "learning", "epistemic", "evidence",
+                             "quotes"],
             },
         },
         "followUpQuestions": {
@@ -784,6 +796,14 @@ One sentence. If you cannot write this sentence, lower the epistemic label.
 
   supporting_sources — an integer: how many of the supplied contents \
 independently support this learning.
+
+  quotes — 1 to 3 objects {{"source_id": "S3", "quote": "..."}}. Each quote is \
+a passage COPIED EXACTLY, character for character, from the <content> block \
+whose id you name: one contiguous run of 1 to 3 sentences, no ellipses, no \
+paraphrase, no merging of two places. An automated checker searches for every \
+quote verbatim in that exact block; a quote it cannot find counts as no \
+evidence and the learning is demoted to HYPOTHESIS. If no passage states what \
+the learning says, return an empty list and label it DERIVED or HYPOTHESIS.
 
 FORBIDDEN IN THE `learning` AND `capability` FIELDS (an automated gate discards \
 these, so writing one wastes the slot):
@@ -914,6 +934,11 @@ def format_labeled_learning(record: dict[str, Any]) -> str:
         parts.append(f"Capacidad: {capability}")
     if evidence:
         parts.append(f"Evidencia: {evidence}")
+    claim_id = str(record.get("claim_id") or "").strip()
+    if claim_id:
+        sids = record.get("source_ids") or []
+        parts.append(f"Ledger: {claim_id} ("
+                     + (", ".join(sids) if sids else "sin cita verificada") + ")")
     return " — ".join(parts)
 
 
@@ -954,10 +979,12 @@ def parse_learning_records(response: dict[str, Any],
         final, cap_reason = cap_epistemic(
             claimed, learning, evidence, supporting, cov_verdict
         )
+        quotes = raw.get("quotes")
         out.append({
             "capability": capability,
             "learning": learning,
             "evidence": evidence,
+            "quotes": quotes if isinstance(quotes, list) else [],
             "epistemic_claimed": claimed,
             "epistemic": final,
             "capped": bool(cap_reason),

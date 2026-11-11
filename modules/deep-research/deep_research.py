@@ -607,9 +607,15 @@ def fetch_page(url: str, timeout: int = PAGE_TIMEOUT_S) -> dict[str, Any]:
     network failure so the orchestrator can decide whether to skip the
     URL (continue to the next SERP hit) or abort.
     """
+    # DRX: SSRF boundary on the first URL and, via the opener, on every
+    # redirect hop (source_guard). A refused URL is a failed fetch, logged.
+    try:
+        check_url(url)
+    except UnsafeURL as e:
+        raise LayerError("page-fetch", f"{url}: refused by source guard: {e}")
     req = _ur.Request(url, headers={"User-Agent": _DDG_UA})
     try:
-        with _ur.urlopen(req, timeout=timeout) as r:
+        with guarded_opener().open(req, timeout=timeout) as r:
             ctype = r.headers.get("Content-Type", "")
             raw = r.read(5 * 1024 * 1024)  # 5 MiB cap
             charset = "utf-8"
@@ -625,7 +631,7 @@ def fetch_page(url: str, timeout: int = PAGE_TIMEOUT_S) -> dict[str, Any]:
                 "final_url": r.url,
                 "content_type": ctype,
             }
-    except (_ue.URLError, _ue.HTTPError, TimeoutError, OSError) as e:
+    except (_ue.URLError, _ue.HTTPError, TimeoutError, OSError, UnsafeURL) as e:
         raise LayerError("page-fetch", f"{url}: {e}")
 
 
@@ -999,6 +1005,18 @@ from research_engines import (  # noqa: E402
     propagate_vendor_hosts,
     rank_sources_for_extraction,
 )
+from evidence_ledger import EvidenceLedger, render_evidence_md  # noqa: E402
+from source_guard import (  # noqa: E402
+    UNTRUSTED_PREAMBLE,
+    UnsafeURL,
+    check_url,
+    guarded_opener,
+    scan_injection,
+)
+
+# Content-addressed page snapshots shared by every run (identical text is
+# stored once). Each ledger names this directory, so --out runs still resolve.
+SNAPSHOT_DIR = RESEARCH_DIR / "snapshots"
 
 # Every learning a gate throws away is appended here, with the reason. A gate
 # that discards silently is indistinguishable from a bug; this file is how the
@@ -1124,6 +1142,7 @@ def extract_learnings(query: str,
                        markdowns: list[str],
                        coverage: dict[str, Any] | None = None,
                        _state: dict[str, Any] | None = None,
+                       source_ids: list[str] | None = None,
                        ) -> ExtractedLearnings:
     """ENGINE 3 — extract CAPABILITIES with an epistemic level, not prose facts.
 
@@ -1152,9 +1171,16 @@ def extract_learnings(query: str,
     if not markdowns:
         return {"learnings": [], "followUpQuestions": [], "records": []}
 
-    contents_block = "\n".join(
-        f"<content>\n{md[:MARKDOWN_MAX_CHARS]}\n</content>"
-        for md in markdowns
+    # DRX: every block carries the id the ledger registered it under, so a
+    # quote names the exact text it must be found in. Without ledger ids the
+    # blocks get local ids and no quote can be verified (labels then cap at
+    # HYPOTHESIS only when a ledger is present -- see below).
+    ids = list(source_ids or [])
+    if len(ids) != len(markdowns):
+        ids = [f"S{i + 1}" for i in range(len(markdowns))]
+    contents_block = UNTRUSTED_PREAMBLE + "\n" + "\n".join(
+        f'<content id="{sid}">\n{md[:MARKDOWN_MAX_CHARS]}\n</content>'
+        for sid, md in zip(ids, markdowns)
     )
 
     user_msg = build_capability_learnings_prompt(query, contents_block)
@@ -1163,6 +1189,27 @@ def extract_learnings(query: str,
         raise LayerError("extract_learnings", "non-dict response")
 
     records = parse_learning_records(result, coverage)
+
+    # DRX: the ledger re-checks every label against verbatim quotes of the
+    # snapshots, degrade-only. Runs AFTER cap_epistemic so the two layers
+    # compose: the caps judge the self-report, the ledger judges the text.
+    ledger = (_state or {}).get("ledger") if source_ids else None
+    if ledger is not None:
+        for rec in records:
+            if rec["epistemic"] == EPI_REJECTED:
+                continue
+            claim = ledger.verify_claim(
+                rec["learning"], rec["epistemic"], rec.get("quotes"),
+                meta={"query": query, "capability": rec["capability"]},
+            )
+            if claim["ledger_capped"]:
+                rec["capped"] = True
+                rec["cap_reason"] = "; ".join(
+                    x for x in (rec["cap_reason"],
+                                "ledger: " + claim["ledger_reason"]) if x)
+            rec["epistemic"] = claim["epistemic"]
+            rec["claim_id"] = claim["claim_id"]
+            rec["source_ids"] = claim["source_ids"]
 
     kept: list[str] = []
     kept_records: list[dict[str, Any]] = []
@@ -1524,6 +1571,10 @@ def deep_research(
             "contradictions": [],           # E4 — unresolved conflicts found
             "contradiction_verdict": "not-run",
             "relevance_verdict": "rated",
+            # DRX evidence ledger: shared by every recursion level, like the
+            # counters above, so a claim found at depth 2 is in the same ledger.
+            "ledger": EvidenceLedger(f"{now_ts()}_{slugify(prompt)}",
+                                     SNAPSHOT_DIR),
         }
 
     try:
@@ -1603,6 +1654,22 @@ def deep_research(
             # return first.
             fetched = propagate_vendor_hosts(fetched)
             fetched = rank_sources_for_extraction(fetched)
+            # DRX: register the EXACT text the extractor will read, after the
+            # family is final. Instruction-shaped text is recorded, never
+            # obeyed and never silently deleted (source_guard docstring).
+            source_ids: list[str] = []
+            for c in fetched:
+                text = c["markdown"][:MARKDOWN_MAX_CHARS]
+                flags = scan_injection(text)
+                if flags:
+                    _state["errors"].append(
+                        f"source {c['url'][:60]} carries instruction-like "
+                        f"text {flags}; treated as data"
+                    )
+                source_ids.append(_state["ledger"].add_source(
+                    c["url"], text, c.get("family", "UNKNOWN"),
+                    c.get("quality", "LOW"), injection_flags=flags,
+                ))
             markdowns = [c["markdown"] for c in fetched]
             new_urls = [c["url"] for c in fetched]
 
@@ -1653,7 +1720,8 @@ def deep_research(
             try:
                 extracted = extract_learnings(q["query"], markdowns,
                                                coverage=coverage,
-                                               _state=_state)
+                                               _state=_state,
+                                               source_ids=source_ids)
             except (LayerError, NoLLMAvailable) as e:
                 _state["errors"].append(f"extract_learnings: {e}")
                 continue
@@ -1677,6 +1745,10 @@ def deep_research(
                 r for r in extracted["records"]
                 if format_labeled_learning(r) in survived
             )
+            for r in extracted["records"]:
+                if r.get("claim_id"):
+                    _state["ledger"].mark_persisted(
+                        r["claim_id"], format_labeled_learning(r) in survived)
 
             learnings.extend(relevant)
             # Only cite pages that actually produced a surviving learning.
@@ -1782,7 +1854,9 @@ def deep_research(
                         epistemic_distribution(_state["records"]),
                     "contradictions": _state["contradictions"],
                     "contradiction_verdict": _state["contradiction_verdict"],
+                    "ledger": _state["ledger"].summary(),
                 },
+                "ledger": _state["ledger"],
             }
 
         # Recursive level — return shared state references so parent
@@ -1958,12 +2032,18 @@ def write_research_artifacts(
             meta_md += f"- `{err}`\n"
         meta_md += "\n</details>\n"
 
+    # DRX: the ledger is written next to the report and its evidence section
+    # is rendered deterministically from it -- no LLM touches that text.
+    ledger = result.get("ledger")
+    ledger_path = (ledger.save(output_dir / f"{ts}_{slug}.ledger.json")
+                   if ledger is not None else None)
     composite = (
         result["report_md"].rstrip()
         + "\n\n"
         + sources_md
         + "\n\n"
         + meta_md
+        + ("\n\n" + render_evidence_md(ledger) if ledger is not None else "")
     )
     _atomic_write_text(report_path, composite)
 
@@ -2022,10 +2102,13 @@ def write_research_artifacts(
         "epistemic_capped": meta.get("epistemic_capped", 0),
         "contradictions": len(meta.get("contradictions") or []),
         "contradiction_verdict": meta.get("contradiction_verdict", "?"),
+        "ledger": meta.get("ledger"),
+        "ledger_path": str(ledger_path) if ledger_path else None,
     }
     _append_index(index_row)
 
-    return {"report": report_path, "index": INDEX_PATH, "raw": raw_path}
+    return {"report": report_path, "index": INDEX_PATH, "raw": raw_path,
+            "ledger": ledger_path}
 
 
 def _build_argparser() -> "argparse.ArgumentParser":

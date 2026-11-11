@@ -382,17 +382,30 @@ class EvidenceLedger:
                                  key=lambda s: int(s[1:])),
             "independent_lineages": len(roots),
             "rejected_quotes": rejected,
+            # None until the caller says whether the claim entered the corpus
+            # (the relevance gate and the 3-per-query cap drop some after
+            # verification). Unknown is reported as unknown, never as kept.
+            "persisted": None,
         }
         if meta:
             record["meta"] = meta
         self.claims.append(record)
         return record
 
+    def mark_persisted(self, claim_id: str, persisted: bool) -> None:
+        for c in self.claims:
+            if c["claim_id"] == claim_id:
+                c["persisted"] = bool(persisted)
+                return
+        raise KeyError(claim_id)
+
     # -- reporting / persistence ----------------------------------------------
 
     def summary(self) -> dict[str, Any]:
         total = len(self.claims)
         with_span = sum(1 for c in self.claims if c["spans"])
+        kept = [c for c in self.claims if c.get("persisted") is True]
+        kept_span = sum(1 for c in kept if c["spans"])
         quotes_offered = sum(len(c["spans"]) + len(c["rejected_quotes"]) for c in self.claims)
         quotes_rejected = sum(len(c["rejected_quotes"]) for c in self.claims)
         lineage = self.lineages()
@@ -408,6 +421,9 @@ class EvidenceLedger:
             "quotes_offered": quotes_offered,
             "quotes_rejected": quotes_rejected,
             "ledger_capped": sum(1 for c in self.claims if c["ledger_capped"]),
+            "claims_persisted": len(kept),
+            "persisted_with_verified_span": kept_span,
+            "persisted_verified_span_rate": round(kept_span / len(kept), 3) if kept else None,
         }
 
     def to_dict(self) -> dict[str, Any]:
