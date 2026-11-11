@@ -34,7 +34,8 @@ Budget ledger (`ledger.jsonl`, append-only): per generation the AUTHORITY GRANTE
 refunded if the arm fails before authority) + judge/planner usage from `claude -p --output-format json` (an unmeasured
 call books a 2M reserve, never 0) + any measured overrun past a generation's authority at close. So the 80M/day cap
 bounds what is granted per UTC day, not a worker's processing after midnight inside authority granted the day before
-(review M5, 2026-11-11). Caps: 80M per UTC day (a lane waits for the next day), 400M total, wall 2026-11-30T23:59Z,
+(review M5, 2026-11-11). Owner 2026-11-11 (pane fa41bae9): S27's 200M authority (m-10566700b1fe) "adds to" the 400M,
+so it is booked against the total (PRIOR_AUTHORITY), not against a day: the autopilot itself has <= 200M. Caps: 80M per UTC day (a lane waits for the next day), 400M total, wall 2026-11-30T23:59Z,
 <= 25M per generation. Fresh llm_fix tokens 0 unless a packet's pre-registered experiment names them (<= 1M/gen).
 Stops (per lane): 3 consecutive generations with no new canonical certificate AND no newly validated capability (judge
 field); judge not AGREE; policy fail; 2 failed arms. Global: kill switch file `OFF`, total/wall exhausted.

@@ -39,6 +39,9 @@ DAY_CAP = 80_000_000
 GEN_CAP = 25_000_000
 FRESH_GEN_CAP = 1_000_000
 CALL_RESERVE = 2_000_000  # booked for a judge/planner call whose usage could not be measured (never 0)
+# Authority granted before the autopilot existed that the Owner counts inside TOTAL_CAP (not inside a day's cap:
+# it was not granted by the autopilot). Owner 2026-11-11 (pane fa41bae9): "S27's 200M ... it adds to that".
+PRIOR_AUTHORITY = (("m-10566700b1fe", "S27", 200_000_000),)
 WALL = dt.datetime(2026, 11, 30, 23, 59, tzinfo=dt.timezone.utc)
 BLANK_STOP = 3
 MAX_ARM_FAILS = 2
@@ -188,7 +191,7 @@ def ledger_add(**row) -> None:
 
 
 def spend_totals(rows: list[dict], now: float) -> tuple[int, int]:
-    total = sum(int(r.get("tokens") or 0) for r in rows)
+    total = sum(int(r.get("tokens") or 0) for r in rows) + sum(t for _, _, t in PRIOR_AUTHORITY)
     today = sum(int(r.get("tokens") or 0) for r in rows if _day(float(r["ts"])) == _day(now))
     return total, today
 

@@ -106,6 +106,12 @@ def run_all(ap):
     check("V-AP-BUDGET-NEXT-DAY-ADMITS", ap.budget_admits(day, now + 86400, 25_000_000) is None)
     many = [{"ts": now - 86400 * k, "tokens": 79_000_000} for k in range(1, 6)]  # 395M on earlier days
     check("V-AP-BUDGET-TOTAL-REFUSES", ap.budget_admits(many, now, 25_000_000) is not None)
+    # Owner 2026-11-11: S27's 200M counts inside the 400M total (not the day cap): 180M of autopilot grants on
+    # earlier days + 200M prior + 25M > 400M must refuse; 150M + 200M + 25M fits.
+    prior = [{"ts": now - 86400 * k, "tokens": 60_000_000} for k in range(1, 4)]  # 180M
+    check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(prior, now, 25_000_000) is not None
+          and ap.budget_admits(prior[:2] + [{"ts": now - 86400 * 3, "tokens": 30_000_000}], now, 25_000_000) is None)
+    check("V-AP-BUDGET-PRIOR-NOT-IN-DAY", ap.spend_totals([], now) == (200_000_000, 0))
     check("V-AP-BUDGET-WALL-REFUSES", ap.budget_admits([], 1796083200.0, 1) is not None)  # 2026-12-01
     check("V-AP-UNMEASURED-CALL-BOOKS-RESERVE", ap.call_tokens(None) == (2_000_000, False)
           and ap.call_tokens(1234) == (1234, True))
@@ -292,6 +298,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "agree_unchecked": lambda m: setattr(m, "agree_supported", lambda v: True),
          "protected_off": lambda m: setattr(m, "protected_check", lambda lane: None),
          "reserve_zero": lambda m: setattr(m, "CALL_RESERVE", 0),
+         "prior_ignored": lambda m: setattr(m, "PRIOR_AUTHORITY", ()),
          "off_guard_removed": lambda m: setattr(m, "killed", lambda: False),
          "dry_writes_real": lambda m: setattr(m, "tempfile", _SameDir)}
 survivors = []
