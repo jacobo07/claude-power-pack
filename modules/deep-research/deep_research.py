@@ -43,7 +43,7 @@ import time
 from pathlib import Path
 from typing import Any, TypedDict
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 
 # --- Paths ----------------------------------------------------------------
@@ -54,6 +54,11 @@ RESEARCH_DIR = PP_REPO / "vault" / "research"
 LOCK_PATH = RESEARCH_DIR / ".deep-research.lock"
 CACHE_HINTS_DIR = PP_REPO / "vault" / "cache_hints"
 INDEX_PATH = RESEARCH_DIR / "index.json"
+# Working directory of the claude.exe child: empty and OUTSIDE the repo on
+# purpose, so no repo-local .claude/settings.local.json can re-attach a hook and
+# CLAUDE.md discovery (which walks parent directories) does not load the PP
+# project CLAUDE.md into every extraction call (see _llm_claude_cli ISOLATION).
+LLM_CWD = Path(os.environ.get("TEMP") or os.environ.get("TMPDIR") or "/tmp") / "claudepp-drx-llm"
 
 
 # --- Governance constants (mirror spec §7.3 + heavy-io lesson) -----------
@@ -65,6 +70,8 @@ SERP_TIMEOUT_S = 30
 PAGE_TIMEOUT_S = 60
 LLM_TIMEOUT_S = 120
 MARKDOWN_MAX_CHARS = 25_000
+# Exit code of a run that persisted zero learnings (see main()).
+EXIT_INSUFFICIENT = 3
 
 
 # --- Env-var resolution ---------------------------------------------------
@@ -792,13 +799,25 @@ def _llm_claude_cli(system: str, user: str, schema: dict | None,
     # 2026-05-23 at Paso 1.8 first-run: WinError 206 "filename or extension
     # too long" when the markdown payload blew argv. claude.exe -p reads
     # stdin when no positional prompt is provided.
+    # ISOLATION (v0.3.1, DRX 2026-11-11). Until v0.3.0 this docstring said
+    # hooks were disabled; only TOOLS were. The child loaded every user/project
+    # hook and every MCP server: measured 61.5 s to answer "pong" on this host,
+    # so the first real prompt crossed LLM_TIMEOUT_S and every run since ended
+    # INSUFFICIENT DATA with exit 0. `--setting-sources local` drops the
+    # user/project settings that carry hooks while keeping keychain OAuth
+    # (`--bare` would skip hooks too but never reads OAuth); `--strict-mcp-config`
+    # with no --mcp-config loads no MCP server. Measured 5.0 s. The child runs in
+    # an empty directory so no repo-local settings file can re-add a hook.
     args: list[str] = [
         str(cmd_path),
         "-p",
         "--disable-slash-commands",
         "--disallowed-tools", "*",
+        "--setting-sources", "local",
+        "--strict-mcp-config",
         "--append-system-prompt", system,
     ]
+    LLM_CWD.mkdir(parents=True, exist_ok=True)
 
     # Always pin a model: without --model the child inherits the session
     # default (Opus), which is the most expensive way to write SERP queries.
@@ -821,6 +840,7 @@ def _llm_claude_cli(system: str, user: str, schema: dict | None,
             timeout=timeout, encoding="utf-8", errors="replace",
             input=augmented_user,
             env=sub_env,
+            cwd=str(LLM_CWD),
         )
     except (subprocess.TimeoutExpired, OSError) as e:
         raise LayerError("claude.exe", f"subprocess failed: {e}")
@@ -2096,8 +2116,15 @@ def main(argv: list[str] | None = None) -> int:
                             operator_context=args.operator_context)
     paths = write_research_artifacts(args.prompt, result, out_dir)
 
+    # A run that persisted nothing is not a success, whatever the reason
+    # (LLM down, every fetch failed, every landscape vendor-only). Until
+    # v0.3.1 it printed "OK" and exited 0, so three consecutive runs that never
+    # issued a single search looked identical to working runs to every caller.
+    verdict = "OK" if result["learnings"] else "INSUFFICIENT"
+    rc = 0 if result["learnings"] else EXIT_INSUFFICIENT
+
     if not args.quiet:
-        print(f"\ndeep_research: OK", file=sys.stderr)
+        print(f"\ndeep_research: {verdict}", file=sys.stderr)
         print(f"  report:   {paths['report']}", file=sys.stderr)
         print(f"  index:    {paths['index']}", file=sys.stderr)
         print(f"  raw:      {paths['raw']}", file=sys.stderr)
@@ -2105,7 +2132,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  sources:   {len(set(result['urls']))}", file=sys.stderr)
         print(f"  duration:  {result['metadata'].get('duration_s', '?')} s",
               file=sys.stderr)
-    return 0
+    return rc
 
 
 # --- Module self-test (--version + import sanity) ------------------------

@@ -228,6 +228,51 @@ gate("V-DRX-INJECTION-SCAN",
      and sg.scan_injection(benign) == [],
      f"planted text flags {flags}; benign technical text flags nothing")
 
+# --- engine wiring: LLM child isolation + honest exit code ----------------
+
+import subprocess as _sp  # noqa: E402
+
+import deep_research as dr  # noqa: E402
+
+_captured: dict = {}
+_real_run = _sp.run
+
+
+def _fake_run(args, **kw):
+    _captured["args"], _captured["cwd"] = list(args), kw.get("cwd")
+    return _sp.CompletedProcess(args, 0, stdout="pong", stderr="")
+
+
+_sp.run = _fake_run
+try:
+    out = dr._llm_claude_cli("sys", "hi", None, 5)
+finally:
+    _sp.run = _real_run
+argv = _captured.get("args", [])
+iso_ok = ("--setting-sources" in argv and argv[argv.index("--setting-sources") + 1] == "local"
+          and "--strict-mcp-config" in argv and "--mcp-config" not in argv
+          and "--disallowed-tools" in argv and "--bare" not in argv
+          and _captured.get("cwd") and PP.resolve() not in Path(_captured["cwd"]).resolve().parents
+          and Path(_captured["cwd"]).resolve() != PP.resolve()
+          and out == "pong")
+gate("V-DRX-LLM-CHILD-ISOLATED", iso_ok,
+     "child claude.exe drops user/project settings (hooks) and MCP, keeps OAuth (no --bare), "
+     f"runs outside the repo (cwd={_captured.get('cwd')})")
+
+_real_dr, _real_write = dr.deep_research, dr.write_research_artifacts
+codes = {}
+for label, learn in (("empty", []), ("one", ["[OBSERVED][HIGH] x"])):
+    dr.deep_research = lambda *a, _l=learn, **k: {"report_md": "", "learnings": _l, "urls": [],
+                                                  "metadata": {}}
+    dr.write_research_artifacts = lambda *a, **k: {"report": "r", "index": "i", "raw": "w"}
+    try:
+        codes[label] = dr.main(["--prompt", "probe", "--quiet"])
+    finally:
+        dr.deep_research, dr.write_research_artifacts = _real_dr, _real_write
+gate("V-DRX-EMPTY-RUN-IS-NOT-OK",
+     codes == {"empty": dr.EXIT_INSUFFICIENT, "one": 0} and dr.EXIT_INSUFFICIENT != 0,
+     f"zero learnings -> rc {codes.get('empty')}; one learning (control) -> rc {codes.get('one')}")
+
 # --- report ----------------------------------------------------------------
 
 passed = sum(1 for _, ok, _ in _results if ok)
