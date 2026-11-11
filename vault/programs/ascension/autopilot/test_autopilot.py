@@ -12,7 +12,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 tmp = Path(tempfile.mkdtemp(prefix="ap-test-"))
 os.environ.update(AP_HOME=str(tmp / "home"), AP_STATE_DIR=str(tmp / "state"), AP_OWNER_TS="2026-11-11T00:00:00.000Z",
-                  AP_PP=str(HERE.parents[3]))
+                  AP_PP=os.environ.get("AP_PP") or str(HERE.parents[3]))  # GEX44 install: AP_PP = the PP clone
 (tmp / "home").mkdir()
 (tmp / "state").mkdir()
 (tmp / "cwd").mkdir()
