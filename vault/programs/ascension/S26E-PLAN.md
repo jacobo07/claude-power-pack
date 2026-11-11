@@ -1,6 +1,7 @@
 # S26E plan: compounding self-evolution for certification -- PROPOSED 2026-11-11, needs Owner approval
 
-Status: PROPOSED. Nothing below is executed. Author: pane e31c61e1 (recon research). Owner ask (2026-11-11):
+Status: APPROVED (Owner "apruebo ambos", 2026-11-11, session e31c61e1): (1) S26E at 9M / 0 fresh / USD 0, armed after
+S26D CHECKPOINT_COMPLETE; (2) E0 (read-only reloc oracle) may run BEFORE S26D D1. Was PROPOSED at 3949788a. Author: pane e31c61e1 (recon research). Owner ask (2026-11-11):
 "una capa fortisima de autoevolucion que cada vez sea mas fuerte y eficiente y efectiva" + "llevalo mas alla".
 Not a new system (HR-NOVELTY-001): it completes S26 (`S26-PLAN.md`: method escape, independent oracle, held-out,
 negative knowledge, baseline ratchet) with the parts that make it COMPOUND. It does not edit S26D, which is approved
@@ -17,6 +18,32 @@ negative knowledge, baseline ratchet) with the parts that make it COMPOUND. It d
 | NO_COMPILE collapses to 7 type classes (~5,968 fns) repeating per TU | OBSERVED | s25/nocompile/clusters.json |
 | Research corpus: recon-research.jsonl 135 rows, all HYPOTHESIS, none executed on KSR; Codex route works (G07) | OBSERVED | research/RESUMPTION_FILE.md |
 | DRX deep_research has an evidence ledger + checkpoint/resume (PP 1c68ddd8..0de91ea6) | OBSERVED | git log |
+
+## 1b. E0 findings (measured 2026-11-11 ~17:20-17:40Z on GEX44, pinned toolchain objdiff-cli 3.8.1)
+The blind spot is WIDER than #393 and NARROWER in practice than feared:
+| mutant (target vs candidate, fn `f`) | objdiff match_percent |
+|---|---|
+| same source (control) | 100 |
+| defined `int a=1` vs defined `int b=2` (different name AND value) | **100** |
+| defined `int a=1` vs `int a=2` (same name, different value) | **100** |
+| string literal "abc" vs "xyz" | **100** |
+| float literal 2.5f vs 3.5f | **100** |
+| undefined extern `a` vs `b` | 96.7 (caught) |
+| call `g()` vs `h()` (extern) | 95 (caught) |
+| target extern float vs candidate inline literal | 95 (caught) |
+| target extern vs candidate other extern | 97.5 (caught) |
+match_percent covers the function's .text; a datum DEFINED in the object is compared by address only, never by name or bytes.
+Exposure census over all 9,269 certified (8,687 ksr-v5r + 582 s25stage), from the TARGET objects: 3,944 have no relocation; 1,207 reference
+data only as named externs (caught by name); 10 reference a symbol defined in their own target object -- all 10 are address-taken SAME-TU
+FUNCTIONS (`fn_*`), not data; 0 reference literals. Why: KSR targets are dtk `*_text.o` splits, so data lives in other objects.
+The 10 were rebuilt with their receipt sha and every relocation names the same symbol with the same addend.
+Gate: t1 `tools/test_s26e_e0.py` S26E_E0_PASS (4 blind mutants scored 100 by objdiff and refused by the oracle, 5th extern mutant refused,
+4 positive controls, byte-blind drill misses 2 value mutants, a real cert rebuilt sha-exact and CONSISTENT over 6 relocs).
+Oracle: t1 `modules/recon_fabric/reloc_oracle.py`. Full sweep (rebuild + sha + oracle, all 9,269): `tools/s26e_e0_sweep.py` ->
+`evidence/ascension/s26e/e0/`. RESULT (18:18Z, 79.4 s, 8 threads, nice 10; t1 2ae98cc5): **9,269/9,269 CONSISTENT** (8,687
+ksr-v5r + 582 s25stage), 0 contradictions, 0 UNKNOWN (every object rebuilt with its receipt replay sha). oracle sha 2a3e6f48, results sha
+81c640db. E0 DONE. S26D D1 keeps its own scope (declarations), not relocations. Consequence for E4: these 4 blind classes are the first pinned mutants; they become live risk the day a
+stage puts data in the same object as code (G14 full-object matching), so the oracle must sit in certify.decide BEFORE that happens.
 
 ## 2. Design: four levels, each with its own ratchet
 The system improves at four levels. Each level has ONE receipt-backed measure, an independent judge, and a ratchet
