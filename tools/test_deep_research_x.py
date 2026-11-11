@@ -190,10 +190,12 @@ inflated["claims"][0]["epistemic"] = "VERIFIED"
 ip = TMP / "quotes" / "ledger_inflated.json"
 ip.write_text(json.dumps(inflated), encoding="utf-8")
 snap = TMP / "quotes" / "snapshots" / led.sources[s1]["snapshot"]
-orig = snap.read_text(encoding="utf-8")
-snap.write_text(orig + " edited", encoding="utf-8")
+# Bytes, not text: write_text() on Windows turns \n into \r\n, so a text-mode "restore" is
+# itself a tamper (masked until the ledger started reading snapshots byte-exactly).
+orig = snap.read_bytes()
+snap.write_bytes(orig + b" edited")
 audit_snap = el.audit_ledger(lp)
-snap.write_text(orig, encoding="utf-8")
+snap.write_bytes(orig)
 hashonly = json.loads(lp.read_text(encoding="utf-8"))
 hashonly["spans"][0]["sha256"] = "0" * 64   # text and offsets untouched: only the recorded hash lies
 hp = TMP / "quotes" / "ledger_hashonly.json"
@@ -205,6 +207,20 @@ gate("V-DRX-AUDIT-CATCHES-TAMPERING",
      f"moved offsets, a span-less VERIFIED label, an edited snapshot and a forged span hash all fail; "
      f"restored file passes ({len(a_t['failures'])}/{len(a_i['failures'])}/"
      f"{len(audit_snap['failures'])}/{len(a_h['failures'])} failures)")
+
+# CRLF: page text with \r\n must round-trip byte-exactly. Found on the first real v0.4.0 runs:
+# read_text() translated \r\n -> \n, so 3 real snapshots failed their own hash on audit and a
+# resumed run would have re-located spans at shifted offsets.
+cr = _ledger("crlf")
+cr_text = "Line one of the page.\r\nThe measured gain was 37% on lossy links.\r\nEnd.\r\n"
+cr_s = cr.add_source("https://crlf.example/p", cr_text)
+cr_c = cr.verify_claim("Gain was 37% on lossy links.", "OBSERVED",
+                       [{"source_id": cr_s, "quote": "The measured gain was 37% on lossy links."}])
+cr_p = cr.save(TMP / "crlf" / "ledger.json")
+cr_re = el.EvidenceLedger.load(cr_p)
+gate("V-DRX-CRLF-SNAPSHOT-ROUNDTRIP",
+     el.audit_ledger(cr_p)["ok"] and cr_re.source_text(cr_s) == cr_text and cr_c["spans"],
+     "a snapshot with \\r\\n audits clean and reloads byte-identical (offsets stay valid on resume)")
 
 pm = _ledger("persist")
 pm_s = pm.add_source("https://a.example/p", PAPER)

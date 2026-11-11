@@ -93,6 +93,12 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _read_exact(path: Path) -> str:
+    """Read a snapshot without newline translation (the inverse of the write)."""
+    with open(path, encoding="utf-8", newline="") as fh:
+        return fh.read()
+
+
 def normalize_with_map(text: str) -> tuple[str, list[int]]:
     """Normalise `text` for matching and return (normalised, index_map).
 
@@ -239,8 +245,9 @@ class EvidenceLedger:
     def source_text(self, sid: str) -> str:
         if sid not in self._text_cache:
             src = self.sources[sid]
-            self._text_cache[sid] = (self.snapshot_dir / src["snapshot"]).read_text(
-                encoding="utf-8")
+            # newline="" : snapshots are byte-exact; read_text() would turn \r\n
+            # into \n, break the SHA-256 and shift every span offset on resume.
+            self._text_cache[sid] = _read_exact(self.snapshot_dir / src["snapshot"])
         return self._text_cache[sid]
 
     # -- lineage --------------------------------------------------------------
@@ -484,7 +491,7 @@ def audit_ledger(path: Path) -> dict[str, Any]:
         if not p.exists():
             failures.append(f"{s['source_id']}: snapshot missing ({p.name})")
             continue
-        t = p.read_text(encoding="utf-8")
+        t = _read_exact(p)
         if sha256_text(t) != s["sha256"]:
             failures.append(f"{s['source_id']}: snapshot hash mismatch")
             continue
