@@ -1,0 +1,100 @@
+{
+  "package_id": "cdio-elite-web-experience-agent-pack",
+  "version": "1.0.0",
+  "release_date": "2026-11-11",
+  "language": "es",
+  "purpose": "Portable role prompts and autonomous website quality protocols for integration into existing CDIO in Claude Power Pack",
+  "deployment_status": "NOT_INSTALLED_REQUIRES_REPO_REALITY_SCAN",
+  "roles_count": 9,
+  "orchestrator": "existing CDIO; overlays only",
+  "system_of_record": "verified existing DESIGN.md, not a new authority",
+  "role_definitions": [
+    {
+      "id": "A",
+      "name": "Director de UX y experiencia de producto",
+      "slug": "experience-director",
+      "system_prompt": "01_agents/A_experience-director/SYSTEM.md",
+      "role_prompt": "01_agents/A_experience-director/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-experience-director.md"
+    },
+    {
+      "id": "B",
+      "name": "Especialista CRO y embudos de conversión",
+      "slug": "conversion-strategist",
+      "system_prompt": "01_agents/B_conversion-strategist/SYSTEM.md",
+      "role_prompt": "01_agents/B_conversion-strategist/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-conversion-strategist.md"
+    },
+    {
+      "id": "C",
+      "name": "Psicólogo del consumidor y comportamiento digital",
+      "slug": "consumer-psychologist",
+      "system_prompt": "01_agents/C_consumer-psychologist/SYSTEM.md",
+      "role_prompt": "01_agents/C_consumer-psychologist/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-consumer-psychologist.md"
+    },
+    {
+      "id": "D",
+      "name": "Director de arte y sistemas visuales digitales",
+      "slug": "art-director",
+      "system_prompt": "01_agents/D_art-director/SYSTEM.md",
+      "role_prompt": "01_agents/D_art-director/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-art-director.md"
+    },
+    {
+      "id": "E",
+      "name": "Especialista de motion design y microinteracciones",
+      "slug": "motion-interaction-designer",
+      "system_prompt": "01_agents/E_motion-interaction-designer/SYSTEM.md",
+      "role_prompt": "01_agents/E_motion-interaction-designer/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-motion-interaction-designer.md"
+    },
+    {
+      "id": "F",
+      "name": "Arquitecto de información y navegación",
+      "slug": "information-architect",
+      "system_prompt": "01_agents/F_information-architect/SYSTEM.md",
+      "role_prompt": "01_agents/F_information-architect/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-information-architect.md"
+    },
+    {
+      "id": "G",
+      "name": "Ingeniero frontend de UX, rendimiento y accesibilidad",
+      "slug": "frontend-experience-engineer",
+      "system_prompt": "01_agents/G_frontend-experience-engineer/SYSTEM.md",
+      "role_prompt": "01_agents/G_frontend-experience-engineer/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-frontend-experience-engineer.md"
+    },
+    {
+      "id": "H",
+      "name": "Estratega de marca, gastronomía y hospitalidad",
+      "slug": "hospitality-brand-strategist",
+      "system_prompt": "01_agents/H_hospitality-brand-strategist/SYSTEM.md",
+      "role_prompt": "01_agents/H_hospitality-brand-strategist/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-hospitality-brand-strategist.md"
+    },
+    {
+      "id": "I",
+      "name": "Investigador UX, analítica y experimentación",
+      "slug": "ux-research-experimentation",
+      "system_prompt": "01_agents/I_ux-research-experimentation/SYSTEM.md",
+      "role_prompt": "01_agents/I_ux-research-experimentation/ROLE.md",
+      "claude_code_optional": "04_claude_code_ready/.claude/agents/cdio-ux-research-experimentation.md"
+    }
+  ],
+  "read_first": [
+    "README.md",
+    "06_INTEGRATION/QUICK_START.md",
+    "06_INTEGRATION/INTEGRATION_MAP.md",
+    "06_INTEGRATION/CLAUDE_CODE_INSTALL_PROMPT.md"
+  ],
+  "source_documentation": [
+    "https://code.claude.com/docs/en/sub-agents",
+    "https://code.claude.com/docs/en/agent-teams"
+  ],
+  "claims": {
+    "runtime_verified": false,
+    "repo_modified": false,
+    "local_pack_validated": true
+  }
+}
