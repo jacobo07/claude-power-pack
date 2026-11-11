@@ -314,6 +314,7 @@ class EvidenceLedger:
         """
         verified: list[str] = []
         rejected: list[dict[str, str]] = []
+        reattributed: list[dict[str, str]] = []
         for q in quotes or []:
             if not isinstance(q, dict):
                 rejected.append({"quote": str(q)[:200], "reason": "malformed quote entry"})
@@ -335,9 +336,21 @@ class EvidenceLedger:
                 continue
             loc = locate_quote(self.source_text(sid), quote)
             if loc is None:
-                rejected.append({"source_id": sid, "quote": quote[:200],
-                                 "reason": "not found verbatim in snapshot"})
-                continue
+                # RE-ATTRIBUTION (2026-11-11, first real runs: 6 of 9 rejected
+                # quotes were verbatim in ANOTHER snapshot of the same run, 0 were
+                # absent from all). The quote is still required verbatim in a
+                # hashed snapshot; only the pointer the extractor named is
+                # corrected, and the correction is recorded, so the report cites
+                # the page that actually says it instead of the wrong URL.
+                found = self._find_elsewhere(quote, exclude=sid)
+                if found is None:
+                    rejected.append({"source_id": sid, "quote": quote[:200],
+                                     "reason": "not found verbatim in snapshot"})
+                    continue
+                other, loc = found
+                reattributed.append({"cited": sid, "found": other,
+                                     "quote": quote[:200]})
+                sid = other
             verified.append(self._add_span(sid, *loc))
 
         lineage = self.lineages()
@@ -389,6 +402,7 @@ class EvidenceLedger:
                                  key=lambda s: int(s[1:])),
             "independent_lineages": len(roots),
             "rejected_quotes": rejected,
+            "reattributed_quotes": reattributed,
             # None until the caller says whether the claim entered the corpus
             # (the relevance gate and the 3-per-query cap drop some after
             # verification). Unknown is reported as unknown, never as kept.
@@ -398,6 +412,16 @@ class EvidenceLedger:
             record["meta"] = meta
         self.claims.append(record)
         return record
+
+    def _find_elsewhere(self, quote: str, exclude: str) -> tuple[str, tuple[int, int]] | None:
+        """First other snapshot (by id) that contains `quote` verbatim, or None."""
+        for sid in sorted(self.sources, key=lambda x: int(x[1:])):
+            if sid == exclude:
+                continue
+            loc = locate_quote(self.source_text(sid), quote)
+            if loc is not None:
+                return sid, loc
+        return None
 
     def mark_persisted(self, claim_id: str, persisted: bool) -> None:
         for c in self.claims:
@@ -428,6 +452,8 @@ class EvidenceLedger:
             "quotes_offered": quotes_offered,
             "quotes_rejected": quotes_rejected,
             "ledger_capped": sum(1 for c in self.claims if c["ledger_capped"]),
+            "quotes_reattributed": sum(len(c.get("reattributed_quotes", []))
+                                       for c in self.claims),
             "claims_persisted": len(kept),
             "persisted_with_verified_span": kept_span,
             "persisted_verified_span_rate": round(kept_span / len(kept), 3) if kept else None,
@@ -547,6 +573,9 @@ def render_evidence_md(ledger: EvidenceLedger, max_claims: int = 60) -> str:
                          f"{sp['start']}-{sp['end']}: \"{quote}\"")
         if not c["spans"]:
             lines.append("  - _no verified quote_")
+        for ra in c.get("reattributed_quotes", []):
+            lines.append(f"  - _extractor cited {ra['cited']}; quote found verbatim in "
+                         f"{ra['found']} (citation corrected)_")
         if c["ledger_reason"]:
             lines.append(f"  - _ledger: {c['ledger_reason']}_")
         lines.append("")

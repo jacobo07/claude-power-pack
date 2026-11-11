@@ -233,6 +233,23 @@ try:
     pm.mark_persisted("C9", True)
 except KeyError:
     missing_raises = True
+
+ra = _ledger("reattr")
+ra_paper = ra.add_source("https://arxiv.org/abs/2203.15556", PAPER)
+ra_rep = ra.add_source("https://arxiv.org/abs/2404.10102", REPLICATION)
+ra_mis = ra.verify_claim("The re-fit implies about 20 tokens per parameter.", "OBSERVED",
+                         [{"source_id": ra_paper,   # wrong pointer: the words are in the replication
+                           "quote": "their re-estimate implies roughly 20 tokens per parameter"}])
+ra_none = ra.verify_claim("Chinchilla used 3 trillion tokens.", "OBSERVED",
+                          [{"source_id": ra_paper, "quote": "Chinchilla was trained on 3 trillion tokens of web text"}])
+gate("V-DRX-MISATTRIBUTED-QUOTE-REPOINTED",
+     ra_mis["source_ids"] == [ra_rep] and ra_mis["epistemic"] == "OBSERVED"
+     and ra_mis["reattributed_quotes"] == [{"cited": ra_paper, "found": ra_rep,
+                                            "quote": "their re-estimate implies roughly 20 tokens per parameter"}]
+     and not ra_none["spans"] and ra_none["epistemic"] == "HYPOTHESIS"
+     and ra.summary()["quotes_reattributed"] == 1 and "citation corrected" in el.render_evidence_md(ra),
+     f"verbatim quote under the wrong id -> bound to {ra_mis['source_ids']} and recorded; "
+     f"quote in no snapshot (control) -> {ra_none['epistemic']}")
 gate("V-DRX-PERSISTED-MARKS-THE-NAMED-CLAIM",
      [c["persisted"] for c in pm.claims] == [None, True, False] and missing_raises
      and pm.summary()["claims_persisted"] == 1,
