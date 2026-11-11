@@ -52,6 +52,7 @@ BLANK_STOP = 3          # consecutive NONE generations (no verified progress of 
 INFO_PARK = 2           # consecutive INFORMATION generations without CERT/CAPABILITY park the lane for an Owner look
 NO_CONVERSION_PARK = 3  # the original 3-generation rule: 3 in a row without CERT or CAPABILITY park the lane
 GIT = os.environ.get("CPP_GIT_EXE") or "git"
+PARK_REASONS = ("FROZEN", "total", "wall")  # budget refusals that only the Owner can lift (the day cap is a wait)
 MAX_ARM_FAILS = 2
 TERMINAL = {"COMPLETED", "HALTED", "ORPHANED"}
 
@@ -358,32 +359,53 @@ def last_json(text: str) -> dict | None:
 # Owner 2026-11-11: separate certifications, useful new information, verified instrumental capabilities and work without
 # progress; none of them may be faked by documentation or effect-less commits. The judge REPORTS evidence pointers; this
 # code checks them in git (ancestry, file presence per commit, non-prose effects) and re-runs a claimed gate itself.
-PROSE = re.compile(r"\.(md|markdown|txt|rst)$", re.I)
+# Woz review 2026-11-11 (VETO, fixed here): every pointer must be anchored to THIS generation's commit window
+# (base..HEAD, base = product HEAD recorded at arm); "exists in git" is history, not progress. Effects are an ALLOWLIST
+# of data/code extensions; CERT counts distinct CERTIFIED rows ADDED since base; the gate that runs must be the cited blob.
+DATA = re.compile(r"\.(json|jsonl|csv|tsv)$", re.I)
+CODE = re.compile(r"\.py$")
 SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 
 
 def _git(product: str, *args) -> tuple[int, str]:
-    return sh([GIT, "-C", product, *args], timeout=120)
+    return sh([GIT, "-c", "core.quotePath=false", "-C", product, *args], timeout=120)
 
 
-def _in_commit(product: str, commit, path) -> bool:
-    return (bool(SHA_RE.match(str(commit or ""))) and bool(path)
-            and _git(product, "cat-file", "-e", f"{commit}:{path}")[0] == 0)
+def _sha(product: str, ref) -> str | None:
+    ref = str(ref or "")
+    if ref != "HEAD" and not SHA_RE.match(ref):
+        return None
+    rc, out = _git(product, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
+    out = out.strip()
+    return out if rc == 0 and SHA_RE.match(out) else None
 
 
-def _effect_files(product: str, commit) -> list[str]:
-    """Non-prose files the commit touched. Empty = docs-only, empty or unreadable commit."""
-    if not SHA_RE.match(str(commit or "")):
+def in_window(product: str, base, commit) -> bool:
+    """commit is strictly after this generation's base and reachable from HEAD."""
+    b, c = _sha(product, base), _sha(product, commit)
+    return bool(b and c and b != c and _git(product, "merge-base", "--is-ancestor", b, c)[0] == 0
+                and _git(product, "merge-base", "--is-ancestor", c, "HEAD")[0] == 0)
+
+
+def _changed(product: str, commit) -> list[str]:
+    """Files the commit changed against its first parent (merge commits included)."""
+    c = _sha(product, commit)
+    if not c:
         return []
-    rc, out = _git(product, "show", "--name-only", "--format=", str(commit))
-    return [] if rc != 0 else [f.strip() for f in out.splitlines() if f.strip() and not PROSE.search(f.strip())]
+    rc, out = _git(product, "diff", "--name-only", f"{c}^1", c)
+    return [] if rc != 0 else [f.strip() for f in out.splitlines() if f.strip()]
+
+
+def _blob(product: str, ref: str, path: str) -> str | None:
+    rc, out = _git(product, "rev-parse", "--verify", "--quiet", f"{ref}:{path}")
+    return out.strip() if rc == 0 and out.strip() else None
 
 
 def _num(x) -> bool:
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
-def verify_cert(v: dict, product: str):
+def verify_cert(v: dict, product: str, base):
     """None = not claimed; True = verified; str = claimed but refused."""
     n = v.get("new_canonical_certs")
     if type(n) is not int or n <= 0:
@@ -391,25 +413,40 @@ def verify_cert(v: dict, product: str):
     recs = v.get("cert_receipts")
     if not isinstance(recs, list) or not recs:
         return "certificates claimed without cert_receipts [{path, commit}]"
-    rows = 0
+    ids: set[str] = set()
     for r in recs:
         path, commit = (str(r.get("path") or ""), str(r.get("commit") or "")) if isinstance(r, dict) else ("", "")
-        if PROSE.search(path) or not _in_commit(product, commit, path) or path not in _effect_files(product, commit):
-            return f"receipts {path}@{commit} is not a data file written by that commit"
-        rows += sum(1 for l in _git(product, "show", f"{commit}:{path}")[1].splitlines() if "CERTIFIED" in l)
-    return True if rows >= n else f"counted {rows} CERTIFIED rows < claimed {n}"
+        if not DATA.search(path) or not in_window(product, base, commit) or path not in _changed(product, commit):
+            return f"receipts {path}@{commit} is not a data file changed by a commit of this generation"
+        rc, diff = _git(product, "diff", "-U0", _sha(product, base), _sha(product, commit), "--", path)
+        for line in diff.splitlines() if rc == 0 else []:
+            if not line.startswith("+") or line.startswith("+++"):
+                continue
+            try:
+                row = json.loads(line[1:])
+            except Exception:  # noqa: BLE001 -- a non-JSON added line is not a receipt
+                continue
+            if isinstance(row, dict) and "CERTIFIED" in [x for x in row.values() if isinstance(x, str)]:
+                ids.add(str(row.get("id") or line[1:]))
+    return True if len(ids) >= n else f"{len(ids)} distinct CERTIFIED rows added since the base < claimed {n}"
 
 
-def verify_capability(v: dict, product: str):
+def verify_capability(v: dict, product: str, base):
     c = v.get("capability")
     if v.get("validated_capability") is not True:
         return None
     if not isinstance(c, dict):
-        return "capability claimed without {gate, commit, mutant_rc, heldout_before, heldout_after}"
-    gate, commit = str(c.get("gate") or ""), str(c.get("commit") or "")
-    if not gate.endswith(".py") or not _in_commit(product, commit, gate) or not _effect_files(product, commit):
-        return f"gate {gate}@{commit} is not code in an effectful commit"
-    if type(c.get("mutant_rc")) is not int or c["mutant_rc"] == 0:
+        return "capability claimed without {gate, commit, heldout_file, mutant_rc, heldout_before, heldout_after}"
+    gate, commit, hf = str(c.get("gate") or ""), str(c.get("commit") or ""), str(c.get("heldout_file") or "")
+    if not CODE.search(gate) or not in_window(product, base, commit) or gate not in _changed(product, commit):
+        return f"gate {gate}@{commit} is not code changed by a commit of this generation"
+    blob = _blob(product, commit, gate)
+    if not blob or blob != _blob(product, "HEAD", gate) or blob != _git(product, "hash-object", gate)[1].strip():
+        return "the gate that would run (HEAD / working tree) is not the cited one"
+    if not DATA.search(hf) or _blob(product, "HEAD", hf) is None \
+            or not _git(product, "diff", "--name-only", _sha(product, base), "HEAD", "--", hf)[1].strip():
+        return f"held-out measure {hf} is not a data file written in this generation"
+    if type(c.get("mutant_rc")) is not int or c["mutant_rc"] == 0:  # judge-attested
         return "no planted mutant turned the gate red"
     if not (_num(c.get("heldout_before")) and _num(c.get("heldout_after"))) or c["heldout_before"] == c["heldout_after"]:
         return "no measured change on a frozen held-out cohort"
@@ -417,7 +454,18 @@ def verify_capability(v: dict, product: str):
     return True if rc == 0 else f"gate re-run by the autopilot rc={rc}"
 
 
-def verify_information(v: dict, product: str):
+def _data_nonempty(body: str, path: str) -> bool:
+    try:
+        if path.lower().endswith(".json"):
+            return bool(json.loads(body))
+        if path.lower().endswith(".jsonl"):
+            return any(json.loads(l) for l in body.splitlines() if l.strip())
+    except Exception:  # noqa: BLE001 -- unparsable data is not a result
+        return False
+    return len([l for l in body.splitlines() if l.strip()]) >= 2  # csv/tsv: header + a row
+
+
+def verify_information(v: dict, product: str, base):
     i = v.get("information")
     if not isinstance(i, dict):
         return None
@@ -427,21 +475,23 @@ def verify_information(v: dict, product: str):
         return f"hypothesis not resolved ({i.get('verdict')})"
     if i.get("positive_control") is not True:
         return "positive control not seen"
-    if not (SHA_RE.match(fz) and SHA_RE.match(rs)) or fz == rs or _git(product, "merge-base", "--is-ancestor", fz, rs)[0] != 0:
-        return "freeze commit is not a strict ancestor of the result commit"
-    if not _in_commit(product, fz, hyp):
-        return f"hypothesis {hyp} absent at the freeze commit"
-    if PROSE.search(res) or not _in_commit(product, rs, res) or _in_commit(product, fz, res) \
-            or res not in _effect_files(product, rs):
+    if not (in_window(product, base, fz) and in_window(product, base, rs) and in_window(product, fz, rs)):
+        return "freeze and result must be commits of this generation, the freeze strictly first"
+    if hyp not in _changed(product, fz):
+        return f"hypothesis {hyp} was not written by the freeze commit"
+    if not DATA.search(res) or res not in _changed(product, rs) or _blob(product, fz, res) is not None:
         return f"result {res} is not a data file first written after the freeze"
+    if not _data_nonempty(_git(product, "show", f"{_sha(product, rs)}:{res}")[1], res):
+        return f"result {res} holds no data"
     return True
 
 
-def classify_progress(v: dict, product: str) -> tuple[str, str]:
-    """CERT > CAPABILITY > INFORMATION > NONE; the first class whose evidence verifies. Notes say why claims failed."""
-    notes = []
+def classify_progress(v: dict, product: str, base=None) -> tuple[str, str]:
+    """CERT > CAPABILITY > INFORMATION > NONE; the first class whose evidence verifies inside base..HEAD.
+    No base recorded = nothing can be anchored = NONE. Notes say why claims failed."""
+    notes = [] if base else ["no generation base recorded: no pointer can be anchored"]
     for cls, fn in (("CERT", verify_cert), ("CAPABILITY", verify_capability), ("INFORMATION", verify_information)):
-        r = fn(v, product)
+        r = fn(v, product, base)
         if r is True:
             return cls, "; ".join(notes)
         if isinstance(r, str):
@@ -596,8 +646,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     why = budget_admits(ledger_rows(), _now(), GEN_CAP + 2 * CALL_RESERVE)
     if why:
         ls["judged_for"] = None
-        if why.startswith("FROZEN"):
-            return _park(st, ls, lane["name"], f"value gate: {why}", f"PARKED at the unlocked ceiling: {why}")
+        if why.startswith(PARK_REASONS):  # only the day cap is a wait; frozen/total/wall need the Owner
+            return _park(st, ls, lane["name"], f"budget gate: {why}", f"PARKED at a budget gate: {why}")
         save_state(st)
         log(f"{lane['name']}: budget wait: {why}")
         return
@@ -617,7 +667,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
                          f"capability {v.get('validated_capability')}. {str(v.get('notes', ''))[:600]}")
     if v.get("verdict") != "AGREE":
         return _park(st, ls, lane["name"], f"judge {v.get('verdict')} on {checkpoint}: {str(v.get('notes', ''))[:300]}")
-    cls, cnotes = classify_progress(v, product)
+    snap = {k: ls.get(k, 0) for k in ("blank", "info_streak", "no_conversion")}  # restored if this judgment is redone
+    cls, cnotes = classify_progress(v, product, ls.get("base"))
     conv = cls in ("CERT", "CAPABILITY")
     ls["blank"] = ls.get("blank", 0) + 1 if cls == "NONE" else 0
     ls["info_streak"] = ls.get("info_streak", 0) + 1 if cls == "INFORMATION" else 0
@@ -630,12 +681,13 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         digest(lane["name"], "STOPPED: no-progress rule")
         save_state(st)
         return
-    if ls["info_streak"] >= INFO_PARK:
-        return _park(st, ls, lane["name"], f"{INFO_PARK} consecutive INFORMATION generations without a certificate or "
-                                           "capability: research without conversion; Owner look before the next one")
-    if ls["no_conversion"] >= NO_CONVERSION_PARK:
-        return _park(st, ls, lane["name"], f"{NO_CONVERSION_PARK} consecutive generations without a certificate or "
-                                           "capability; Owner look before the next one")
+    if ls["info_streak"] >= INFO_PARK or ls["no_conversion"] >= NO_CONVERSION_PARK:
+        why = (f"{INFO_PARK} consecutive INFORMATION generations without a certificate or capability: research without "
+               "conversion" if ls["info_streak"] >= INFO_PARK else
+               f"{NO_CONVERSION_PARK} consecutive generations without a certificate or capability")
+        # An Owner un-park starts a fresh window: the checkpoint is planned again, the streaks begin at 0.
+        ls.update(info_streak=0, no_conversion=0, judged_for=None)
+        return _park(st, ls, lane["name"], f"{why}; Owner look before the next one")
     st["next_gen"] = int(st.get("next_gen") or 28)
     name = f"S{st['next_gen']}{lane['letter']}"
     p = ({"title": "dry", "facts": ["dry"], "phases": ["Phase 1: x (cap 1M)", "Phase 2: y (cap 1M)"], "_tokens": 0}
@@ -662,9 +714,10 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     why = budget_admits(ledger_rows(), _now(), caps)
     if why:
         ls["judged_for"] = None
-        if why.startswith("FROZEN"):
-            return _park(st, ls, lane["name"], f"value gate before arming {name}: {why}",
-                         f"PARKED at the unlocked ceiling before arming {name}: {why}")
+        ls.update(snap)  # this checkpoint will be judged again: its class must not be counted twice
+        if why.startswith(PARK_REASONS):
+            return _park(st, ls, lane["name"], f"budget gate before arming {name}: {why}",
+                         f"PARKED at a budget gate before arming {name}: {why}")
         save_state(st)
         log(f"{lane['name']}: budget wait before arming {name}: {why}")
         return
@@ -768,10 +821,13 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
     step("scaffold_commit", new=new)
     sh(["git", "-C", cwd, "add", ".planning/PROJECT.md", ".planning/ROADMAP.md", ".planning/STATE.md"], dry=dry)
     sh(["git", "-C", cwd, "commit", "-q", "-m", f"{name}: scaffold milestone (mission {new}, authority {caps:,})"], dry=dry)
+    base = None if dry else _sha(lane["product"], "HEAD")  # the window this generation's evidence must fall in
+    if not base and not dry:
+        log(f"{ln}: product HEAD unreadable at arm; {name}'s progress will classify NONE")
     rc, out = gm("release", "--mission", new, dry=dry)
     if rc != 0:
         return park(f"release of {new} failed (armed with authority, still held): {out[-300:]}")
-    ls["mission"], ls["authority"] = new, caps
+    ls["mission"], ls["authority"], ls["base"] = new, caps, base
     ls.pop("pending_arm", None)
     ledger_add(lane=ln, kind="generation_armed", mission=new, gen=name, tokens=0, authority=caps)
     digest(ln, f"ARMED {name} as {new}, authority {caps:,}. Phases:\n" + "\n".join(f"  {l[:200]}" for l in phases))

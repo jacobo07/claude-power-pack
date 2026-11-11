@@ -36,7 +36,9 @@ results = []
 
 
 def _scratch_repo() -> dict:
-    """c1 freezes a criteria file; c2 writes data (result json, receipts, gates); c3 is docs-only."""
+    """c0 = history before the generation (the base): an old criteria file, old receipts (5 CERTIFIED), an old gate and
+    an old result. c1 freezes a criteria file; c2 writes data (result json, receipts, gates, held-out); c3 is docs-only
+    (.md and .html); c4 re-touches the old result file only."""
     import subprocess
     d = tmp / "prod"
     (d / "tools").mkdir(parents=True)
@@ -46,24 +48,40 @@ def _scratch_repo() -> dict:
         r = subprocess.run([git, "-C", str(d), *a], capture_output=True, text=True)
         assert r.returncode == 0, r.stderr
         return r.stdout.strip()
+
+    def commit(msg):
+        g("add", "-A")
+        g("commit", "-qm", msg)
+        return g("rev-parse", "HEAD")
     g("init", "-q")
     g("config", "user.email", "t@example.invalid")
     g("config", "user.name", "t")
     g("config", "commit.gpgsign", "false")
+    (d / "old_crit.md").write_text("H: old hypothesis\n")
+    (d / "old_rec.jsonl").write_text("".join(f'{{"id": "o{i}", "verdict": "CERTIFIED"}}\n' for i in range(5)))
+    (d / "old_result.json").write_text('{"verdict": "REFUTED"}\n')
+    (d / "tools" / "test_old.py").write_text("import sys\nsys.exit(0)\n")
+    c0 = commit("history")
     (d / "crit.md").write_text("H: segments are contiguous; rule frozen\n")
-    g("add", "-A")
-    g("commit", "-qm", "freeze")
+    c1 = commit("freeze")
     (d / "result.json").write_text('{"verdict": "SUPPORTED"}\n')
-    (d / "rec.jsonl").write_text("".join(f'{{"id": "f{i}", "verdict": "CERTIFIED"}}\n' for i in range(3)))
+    (d / "empty.json").write_text("{}\n")
+    rows = [f'{{"id": "f{i}", "verdict": "CERTIFIED"}}' for i in range(3)]
+    rows += ['{"id": "f0", "verdict": "CERTIFIED"}', '{"id": "u1", "verdict": "UNCERTIFIED"}', "# CERTIFIED header"]
+    (d / "rec.jsonl").write_text("\n".join(rows) + "\n")
+    with open(d / "old_rec.jsonl", "a") as f:
+        f.write('{"id": "o9", "verdict": "CERTIFIED"}\n')
+    (d / "heldout.json").write_text('{"exact": 12}\n')
     (d / "tools" / "test_g.py").write_text("import sys\nsys.exit(0)\n")
     (d / "tools" / "test_red.py").write_text("import sys\nsys.exit(1)\n")
-    g("add", "-A")
-    g("commit", "-qm", "result")
-    (d / "notes.md").write_text("we learned a lot\n")
-    g("add", "-A")
-    g("commit", "-qm", "docs")
-    shas = g("log", "--format=%H").split()
-    return {"dir": d, "c3": shas[0], "c2": shas[1], "c1": shas[2]}
+    c2 = commit("result")
+    # multi-line, so only the data/code allowlist (not the emptiness check) can refuse these as results
+    (d / "notes.md").write_text("verdict, SUPPORTED\nwe learned a lot, really\n")
+    (d / "report.html").write_text("<p>verdict SUPPORTED</p>\n<p>we learned a lot</p>\n")
+    c3 = commit("docs")
+    (d / "old_result.json").write_text('{"verdict": "REFUTED", "again": 1}\n')
+    c4 = commit("retouch old result")
+    return {"dir": d, "c0": c0, "c1": c1, "c2": c2, "c3": c3, "c4": c4}
 
 
 REPO = _scratch_repo()
@@ -180,33 +198,59 @@ def run_all(ap):
           is not None)
 
     # ---- progress taxonomy: verified in a real scratch git repo, never taken from the judge's text
+    # base = c0: everything in c0 is history (Woz veto 2026-11-11: history is not progress).
     P, prod = REPO, str(REPO["dir"])
     inf = {"hypothesis_file": "crit.md", "freeze_commit": P["c1"], "result_file": "result.json",
            "result_commit": P["c2"], "verdict": "SUPPORTED", "positive_control": True}
-    cls = lambda v: ap.classify_progress(v, prod)[0]  # noqa: E731
-    check("V-AP-PROGRESS-INFO-VERIFIED", cls({"information": inf}) == "INFORMATION")
-    check("V-AP-PROGRESS-INFO-RESULT-BEFORE-FREEZE",
-          cls({"information": dict(inf, freeze_commit=P["c2"], result_commit=P["c1"])}) == "NONE")
+    cls = lambda v, base=P["c0"]: ap.classify_progress(v, prod, base)[0]  # noqa: E731
+    info = lambda **k: {"information": dict(inf, **k)}  # noqa: E731
+    check("V-AP-PROGRESS-INFO-VERIFIED", cls(info()) == "INFORMATION")
+    check("V-AP-PROGRESS-INFO-SHORT-SHAS", cls(info(freeze_commit=P["c1"][:8], result_commit=P["c2"][:8])) == "INFORMATION")
+    check("V-AP-PROGRESS-INFO-RESULT-BEFORE-FREEZE", cls(info(freeze_commit=P["c2"], result_commit=P["c1"])) == "NONE")
     check("V-AP-PROGRESS-INFO-RESULT-ALREADY-AT-FREEZE",
-          cls({"information": dict(inf, freeze_commit=P["c2"], result_commit=P["c3"])}) == "NONE")
-    check("V-AP-PROGRESS-INFO-DOCS-ONLY",
-          cls({"information": dict(inf, result_file="notes.md", result_commit=P["c3"])}) == "NONE")
-    check("V-AP-PROGRESS-INFO-UNDETERMINED", cls({"information": dict(inf, verdict="UNDETERMINED")}) == "NONE")
-    check("V-AP-PROGRESS-INFO-NO-CONTROL", cls({"information": dict(inf, positive_control=False)}) == "NONE")
+          cls(info(freeze_commit=P["c2"], result_commit=P["c3"])) == "NONE")
+    check("V-AP-PROGRESS-INFO-DOCS-ONLY", cls(info(result_file="notes.md", result_commit=P["c3"])) == "NONE"
+          and cls(info(result_file="report.html", result_commit=P["c3"])) == "NONE")
+    check("V-AP-PROGRESS-INFO-UNDETERMINED", cls(info(verdict="UNDETERMINED")) == "NONE")
+    check("V-AP-PROGRESS-INFO-NO-CONTROL", cls(info(positive_control=False)) == "NONE")
+    check("V-AP-PROGRESS-INFO-OLD-HYPOTHESIS", cls(info(hypothesis_file="old_crit.md")) == "NONE")
+    check("V-AP-PROGRESS-INFO-FREEZE-BEFORE-WINDOW", cls(info(freeze_commit=P["c0"])) == "NONE")
+    check("V-AP-PROGRESS-INFO-EMPTY-RESULT", cls(info(result_file="empty.json")) == "NONE")
+    check("V-AP-PROGRESS-INFO-OLD-RESULT-RETOUCHED",
+          cls(info(hypothesis_file="notes.md", freeze_commit=P["c3"], result_file="old_result.json",
+                   result_commit=P["c4"])) == "NONE")
+    check("V-AP-PROGRESS-INFO-STALE-WINDOW", cls(info(), base=P["c2"]) == "NONE")
+    check("V-AP-PROGRESS-NO-BASE-IS-NONE", ap.classify_progress(info(), prod, None)[0] == "NONE")
     rec = [{"path": "rec.jsonl", "commit": P["c2"]}]
-    check("V-AP-PROGRESS-CERT-VERIFIED", cls({"new_canonical_certs": 3, "cert_receipts": rec}) == "CERT")
-    check("V-AP-PROGRESS-CERT-OVERCLAIM", cls({"new_canonical_certs": 4, "cert_receipts": rec}) == "NONE")
+    certv = lambda n, r=rec: {"new_canonical_certs": n, "cert_receipts": r}  # noqa: E731
+    check("V-AP-PROGRESS-CERT-VERIFIED", cls(certv(3)) == "CERT")
+    check("V-AP-PROGRESS-CERT-DUP-UNCERTIFIED-HEADER-NOT-COUNTED", cls(certv(4)) == "NONE")
+    check("V-AP-PROGRESS-CERT-DUPLICATE-POINTER-NOT-COUNTED", cls(certv(4, rec + rec)) == "NONE")
+    old = [{"path": "old_rec.jsonl", "commit": P["c2"]}]
+    check("V-AP-PROGRESS-CERT-COUNTS-ADDED-ROWS-ONLY", cls(certv(1, old)) == "CERT" and cls(certv(2, old)) == "NONE")
+    check("V-AP-PROGRESS-CERT-STALE-WINDOW", cls(certv(3), base=P["c2"]) == "NONE")
     check("V-AP-PROGRESS-CERT-NO-RECEIPTS", cls({"new_canonical_certs": 3}) == "NONE")
-    check("V-AP-PROGRESS-CERT-PROSE-RECEIPTS",
-          cls({"new_canonical_certs": 1, "cert_receipts": [{"path": "notes.md", "commit": P["c3"]}]}) == "NONE")
-    cap = {"gate": "tools/test_g.py", "commit": P["c2"], "mutant_rc": 1, "heldout_before": 10, "heldout_after": 12}
+    check("V-AP-PROGRESS-CERT-PROSE-RECEIPTS", cls(certv(1, [{"path": "notes.md", "commit": P["c3"]}])) == "NONE")
+    cap = {"gate": "tools/test_g.py", "commit": P["c2"], "heldout_file": "heldout.json", "mutant_rc": 1,
+           "heldout_before": 10, "heldout_after": 12}
     capv = lambda **k: {"validated_capability": True, "capability": dict(cap, **k)}  # noqa: E731
     check("V-AP-PROGRESS-CAPABILITY-VERIFIED", cls(capv()) == "CAPABILITY")
+    check("V-AP-PROGRESS-CAPABILITY-OLD-GATE", cls(capv(gate="tools/test_old.py")) == "NONE")
+    check("V-AP-PROGRESS-CAPABILITY-STALE-WINDOW", cls(capv(), base=P["c2"]) == "NONE")
+    check("V-AP-PROGRESS-CAPABILITY-NO-HELDOUT-DATA", cls(capv(heldout_file="")) == "NONE"
+          and cls(capv(heldout_file="old_crit.md")) == "NONE")
     check("V-AP-PROGRESS-CAPABILITY-MUTANT-GREEN", cls(capv(mutant_rc=0)) == "NONE")
     check("V-AP-PROGRESS-CAPABILITY-NO-CHANGE", cls(capv(heldout_after=10)) == "NONE")
     check("V-AP-PROGRESS-CAPABILITY-GATE-RED-ON-RERUN", cls(capv(gate="tools/test_red.py")) == "NONE")
     check("V-AP-PROGRESS-CAPABILITY-DOCS-COMMIT", cls(capv(gate="notes.md", commit=P["c3"])) == "NONE")
-    check("V-AP-PROGRESS-NOTHING-CLAIMED", ap.classify_progress({}, prod) == ("NONE", ""))
+    gpath = P["dir"] / "tools" / "test_g.py"
+    keep_gate = gpath.read_bytes()
+    try:
+        gpath.write_text("import sys\nsys.exit(0)  # edited after the cited commit\n")
+        check("V-AP-PROGRESS-CAPABILITY-RUNS-CITED-BLOB-ONLY", cls(capv()) == "NONE")
+    finally:
+        gpath.write_bytes(keep_gate)
+    check("V-AP-PROGRESS-NOTHING-CLAIMED", ap.classify_progress({}, prod, P["c0"]) == ("NONE", ""))
 
     # ---- lane transitions with stubs
     lanes = [dict(lane0, mission="m-aaaaaaaaaaaa")]
@@ -315,7 +359,7 @@ def run_all(ap):
             ls = st.setdefault("lanes", {}).setdefault("L", {})
             if ls.get("status") in ("PARKED", "STOPPED"):
                 break
-            ap.classify_progress = (lambda c: (lambda v, p: (c, "")))(c)
+            ap.classify_progress = (lambda c: (lambda v, p, b=None: (c, "")))(c)
             ls.update(judged_for=None, status="WAITING", mission="m-aaaaaaaaaaaa")
             (tmp / "home" / "ledger.jsonl").unlink(missing_ok=True)  # the day cap is tested elsewhere
             rec["owner_hold"]["set_at"] = base * 100 + k
@@ -326,6 +370,19 @@ def run_all(ap):
         return st["lanes"]["L"], (q.read_text() if q.exists() else "")
     ls, q = seq(["INFORMATION", "INFORMATION"], 200)
     check("V-AP-INFO-TWICE-PARKS", ls["status"] == "PARKED" and "research without conversion" in q)
+    check("V-AP-PARK-STARTS-FRESH-WINDOW", ls.get("info_streak") == 0 and ls.get("no_conversion") == 0
+          and ls.get("judged_for") is None)
+    # a checkpoint whose arm waits for the next day is judged again: its class must not be counted twice
+    st = fresh(205)
+    import time as _t
+    (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": _t.time(), "tokens": 50_000_000}) + "\n")
+    ap.judge = lambda *a: dict(full, _tokens=20_000_000)
+    ap.classify_progress = lambda v, p, b=None: ("INFORMATION", "")
+    ap.lane_tick(st, lanes[0], False)
+    ap.classify_progress = orig_cls
+    lsd = st["lanes"]["L"]
+    check("V-AP-DAY-WAIT-DOES-NOT-DOUBLE-COUNT", lsd.get("status") != "PARKED" and lsd.get("judged_for") is None
+          and lsd.get("info_streak", 0) == 0 and not any(c[0] == "arm" for c in calls))
     ls, q = seq(["INFORMATION", "NONE", "INFORMATION"], 201)
     check("V-AP-NO-CONVERSION-PARKS", ls["status"] == "PARKED" and "without a certificate or capability" in q)
     ls, q = seq(["NONE", "NONE", "CERT", "NONE", "NONE"], 202)
@@ -389,6 +446,12 @@ def _ignore_extra(m):
 
 
 # mutation drill: disabling each guard must make the suite fail
+def _worktree_unchecked(m):
+    """The working-tree gate is reported as the HEAD blob, i.e. what runs is never compared with what was cited."""
+    orig = m._git
+    m._git = lambda p, *a: ((0, m._blob(p, "HEAD", a[-1]) or "") if a and a[0] == "hash-object" else orig(p, *a))
+
+
 drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "policy_ignores_facts": _ignore_extra,
          "budget_off": lambda m: setattr(m, "budget_admits", lambda *a, **k: None),
@@ -405,13 +468,19 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "frozen_off": lambda m: setattr(m, "UNLOCKED_CAP", m.TOTAL_CAP),
          "info_park_off": lambda m: setattr(m, "INFO_PARK", 99),
          "no_conversion_park_off": lambda m: setattr(m, "NO_CONVERSION_PARK", 99),
-         "prose_counts": lambda m: setattr(m, "PROSE", __import__("re").compile(r"(?!x)x")),
-         "ancestry_trusted": lambda m: setattr(m, "verify_information",
-                                               lambda v, p: True if isinstance(v.get("information"), dict) else None),
-         "cert_count_trusted": lambda m: setattr(m, "verify_cert",
-                                                 lambda v, p: True if (v.get("new_canonical_certs") or 0) > 0 else None),
-         "capability_trusted": lambda m: setattr(m, "verify_capability",
-                                                 lambda v, p: True if v.get("validated_capability") is True else None)}
+         "data_allowlist_off": lambda m: setattr(m, "DATA", __import__("re").compile(r".")),
+         "window_off": lambda m: setattr(m, "in_window", lambda p, b, c: bool(m._sha(p, c))),
+         "cert_whole_file": lambda m: setattr(m, "verify_cert", lambda v, p, b=None: (
+             True if (v.get("new_canonical_certs") or 0) > 0 and v.get("cert_receipts") and sum(
+                 m._git(p, "show", f"{r['commit']}:{r['path']}")[1].count("CERTIFIED") for r in v["cert_receipts"])
+             >= v["new_canonical_certs"] else None)),
+         "worktree_gate_unchecked": _worktree_unchecked,
+         "ancestry_trusted": lambda m: setattr(m, "verify_information", lambda v, p, b=None: (
+             True if isinstance(v.get("information"), dict) else None)),
+         "cert_count_trusted": lambda m: setattr(m, "verify_cert", lambda v, p, b=None: (
+             True if (v.get("new_canonical_certs") or 0) > 0 else None)),
+         "capability_trusted": lambda m: setattr(m, "verify_capability", lambda v, p, b=None: (
+             True if v.get("validated_capability") is True else None))}
 survivors = []
 for name, mut in drill.items():
     m = load()

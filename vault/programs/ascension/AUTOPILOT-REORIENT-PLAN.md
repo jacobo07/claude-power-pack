@@ -126,6 +126,30 @@ file re-proved byte-identical at each checkpoint; certifier, canonical ctx, head
 Not authorised by this plan: certification authority changes, re-split stage certification, budget beyond 60M,
 canonical context, deploy, push, headline merges.
 
+## 9. Execution log (Owner "y", 2026-11-11)
+- a3486421 autopilot.py + test_autopilot.py: progress classes verified in git by code (receipts data files per commit,
+  gate re-run + mutant rc + held-out change, freeze strictly before result with the result a data file first written
+  after the freeze), UNLOCKED_CAP 285,261,779 with FROZEN park, INFO_PARK 2, NO_CONVERSION_PARK 3. Gate 101/101,
+  mutants 20/20 killed, laptop and GEX44 (real PP clone).
+- dadafe4d judge_prompt (evidence pointers), planner_prompt ({BRIEF}, exploit/explore rule, MethodGraph/Genome reuse),
+  brief.md (A1 + A2 next on KSR).
+- GEX44 install 21:52Z, backup bak-20261111T215214Z; OFF kept.
+- Production probe: real judge on S28K checkpoint (815dfe22): AGREE, 15 certs (s28k/receipts.jsonl@32e5a9a8),
+  INFORMATION proto REFUTED (freeze e0285735 -> result 61d1627e), capability pointer honestly omitted; autopilot's own
+  classification CERT. 927,230 tokens measured, booked as judge_probe. Ledger booked 226,189,009; unlocked left ~59.07M.
+- Blind woz review of a3486421: VETO. HIGH: no freshness anchor (old pointers re-citable forever), CERT counted the
+  whole receipts file by substring, CAPABILITY trusted judge numbers and an untouched/working-tree gate. MEDIUM: INFO
+  accepted old hypotheses/empty data, prose blocklist, counters double-counted on a post-plan budget wait. All fixed:
+  base = product HEAD recorded at arm; every pointer must be a commit in base..HEAD that changed the cited file;
+  data/code ALLOWLIST; CERT = distinct ids of rows added since base whose value is exactly CERTIFIED; the gate that runs
+  must equal the cited blob at HEAD and in the working tree, plus an in-window held-out data file; INFO hypothesis
+  written by the freeze commit, result non-empty data; counters snapshot/restored on budget waits; streaks reset on
+  park; total/wall park like FROZEN; core.quotePath off; merge commits via first parent. Residual (DEBT): the autopilot
+  and the judge execute worker-written gates as the same user; mutant_rc and held-out numbers stay judge-attested.
+  Gate 117/117, mutants 23/23 killed (GEX44, real PP clone; a surviving data_allowlist_off mutant exposed a weak
+  fixture first, fixed). S28K base recorded in state: 6d3ca97d (last t1 commit before its arm); its real verdict
+  re-classifies CERT with the base, NONE without. GEX44 backups bak-20261111T221700Z.
+
 ## 8. Owner decisions
 1. Approve this plan (integration + the 60M ceiling as written)?
 2. A1 as the first generation after S28K's checkpoint?

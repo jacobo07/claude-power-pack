@@ -17,12 +17,15 @@ Do this:
    distinct, carry verdict CERTIFIED, and do not overlap an earlier receipts file. Report the number YOU counted.
 5. Decide whether the generation produced a VALIDATED new capability (an instrument, method or stage that a gate with
    planted mutants proves and that changed a measured state on a frozen held-out cohort) - not merely a report.
-6. Report the EVIDENCE POINTERS for the progress classes. The autopilot re-checks every pointer in git itself (file present
-   at that commit, data not prose, freeze commit an ancestor of the result commit) and re-runs a claimed gate; a pointer
-   you cannot find is omitted, never guessed. Prose files (.md/.txt) never count as receipts, gates or results.
-   - cert_receipts: each receipts data file holding the new certificates, with the commit that wrote it.
-   - capability: the gate path (tools/test_<x>.py), the commit that added it, the rc you saw when its planted mutant
-     ran (non-zero), and the held-out measure before and after (numbers, from the evidence files).
+6. Report the EVIDENCE POINTERS for the progress classes. Cite only commits made BY THIS GENERATION (after it was armed);
+   anything older is history and is refused. The autopilot re-checks every pointer in git itself (commit inside this
+   generation's window, file changed by that commit, data files .json/.jsonl/.csv/.tsv or code .py only, receipts counted
+   as distinct CERTIFIED rows added in the window, freeze commit strictly before the result commit) and re-runs a claimed
+   gate; a pointer you cannot find is omitted, never guessed.
+   - cert_receipts: each receipts data file holding the new certificates, with the commit that wrote them.
+   - capability: the gate path (tools/test_<x>.py), the commit that added or changed it, the held-out data file
+     (heldout_file) this generation wrote, the rc you saw when its planted mutant ran (non-zero), and the held-out
+     measure before and after (numbers, from that file).
    - information: a pre-registered hypothesis resolved in this generation: the hypothesis/criteria file and the commit
      that froze it, the result DATA file (json/jsonl) and the commit that wrote it, the verdict (SUPPORTED, REFUTED or
      UNDETERMINED) and whether its positive control was seen.
