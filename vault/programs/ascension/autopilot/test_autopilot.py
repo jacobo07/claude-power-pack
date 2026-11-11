@@ -35,6 +35,40 @@ PROFILE_OK = ["Phase 1: P1 new additive profile (cap 5M): independent target ora
 results = []
 
 
+def _scratch_repo() -> dict:
+    """c1 freezes a criteria file; c2 writes data (result json, receipts, gates); c3 is docs-only."""
+    import subprocess
+    d = tmp / "prod"
+    (d / "tools").mkdir(parents=True)
+    git = os.environ.get("CPP_GIT_EXE") or "git"
+
+    def g(*a):
+        r = subprocess.run([git, "-C", str(d), *a], capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+        return r.stdout.strip()
+    g("init", "-q")
+    g("config", "user.email", "t@example.invalid")
+    g("config", "user.name", "t")
+    g("config", "commit.gpgsign", "false")
+    (d / "crit.md").write_text("H: segments are contiguous; rule frozen\n")
+    g("add", "-A")
+    g("commit", "-qm", "freeze")
+    (d / "result.json").write_text('{"verdict": "SUPPORTED"}\n')
+    (d / "rec.jsonl").write_text("".join(f'{{"id": "f{i}", "verdict": "CERTIFIED"}}\n' for i in range(3)))
+    (d / "tools" / "test_g.py").write_text("import sys\nsys.exit(0)\n")
+    (d / "tools" / "test_red.py").write_text("import sys\nsys.exit(1)\n")
+    g("add", "-A")
+    g("commit", "-qm", "result")
+    (d / "notes.md").write_text("we learned a lot\n")
+    g("add", "-A")
+    g("commit", "-qm", "docs")
+    shas = g("log", "--format=%H").split()
+    return {"dir": d, "c3": shas[0], "c2": shas[1], "c1": shas[2]}
+
+
+REPO = _scratch_repo()
+
+
 def check(name, cond):
     results.append((name, bool(cond)))
 
@@ -106,12 +140,18 @@ def run_all(ap):
     check("V-AP-BUDGET-NEXT-DAY-ADMITS", ap.budget_admits(day, now + 86400, 25_000_000) is None)
     many = [{"ts": now - 86400 * k, "tokens": 79_000_000} for k in range(1, 6)]  # 395M on earlier days
     check("V-AP-BUDGET-TOTAL-REFUSES", ap.budget_admits(many, now, 25_000_000) is not None)
-    # Owner 2026-11-11: S27's 200M counts inside the 400M total (not the day cap): 180M of autopilot grants on
-    # earlier days + 200M prior + 25M > 400M must refuse; 150M + 200M + 25M fits.
-    prior = [{"ts": now - 86400 * k, "tokens": 60_000_000} for k in range(1, 4)]  # 180M
-    check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(prior, now, 25_000_000) is not None
-          and ap.budget_admits(prior[:2] + [{"ts": now - 86400 * 3, "tokens": 30_000_000}], now, 25_000_000) is None)
+    # Owner 2026-11-11: S27's 200M counts inside the totals (not the day cap). With the reorientation ceiling
+    # (UNLOCKED_CAP 285,261,779): 60M of earlier grants + 200M prior + 25M fits; 61M + 200M + 25M is FROZEN.
+    early = lambda t: [{"ts": now - 86400, "tokens": t}]  # noqa: E731
+    check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(early(60_000_000), now, 25_000_000) is None
+          and str(ap.budget_admits(early(61_000_000), now, 25_000_000)).startswith("FROZEN"))
     check("V-AP-BUDGET-PRIOR-NOT-IN-DAY", ap.spend_totals([], now) == (200_000_000, 0))
+    check("V-AP-BUDGET-FROZEN-IS-OWNERS", "only the Owner releases" in str(ap.budget_admits(early(61_000_000), now,
+                                                                                         25_000_000)))
+    keep = ap.UNLOCKED_CAP
+    ap.UNLOCKED_CAP = 10 ** 12  # the 400M total must still bind on its own
+    check("V-AP-BUDGET-TOTAL-BINDS-ABOVE-UNLOCK", str(ap.budget_admits(many, now, 25_000_000)).startswith("total"))
+    ap.UNLOCKED_CAP = keep
     check("V-AP-BUDGET-WALL-REFUSES", ap.budget_admits([], 1796083200.0, 1) is not None)  # 2026-12-01
     check("V-AP-UNMEASURED-CALL-BOOKS-RESERVE", ap.call_tokens(None) == (2_000_000, False)
           and ap.call_tokens(1234) == (1234, True))
@@ -138,6 +178,35 @@ def run_all(ap):
           is not None)
     check("V-AP-PROTECTED-MISSING", ap.protected_check({"protected": [{"path": str(tmp / "nope"), "sha256_prefix": h}]})
           is not None)
+
+    # ---- progress taxonomy: verified in a real scratch git repo, never taken from the judge's text
+    P, prod = REPO, str(REPO["dir"])
+    inf = {"hypothesis_file": "crit.md", "freeze_commit": P["c1"], "result_file": "result.json",
+           "result_commit": P["c2"], "verdict": "SUPPORTED", "positive_control": True}
+    cls = lambda v: ap.classify_progress(v, prod)[0]  # noqa: E731
+    check("V-AP-PROGRESS-INFO-VERIFIED", cls({"information": inf}) == "INFORMATION")
+    check("V-AP-PROGRESS-INFO-RESULT-BEFORE-FREEZE",
+          cls({"information": dict(inf, freeze_commit=P["c2"], result_commit=P["c1"])}) == "NONE")
+    check("V-AP-PROGRESS-INFO-RESULT-ALREADY-AT-FREEZE",
+          cls({"information": dict(inf, freeze_commit=P["c2"], result_commit=P["c3"])}) == "NONE")
+    check("V-AP-PROGRESS-INFO-DOCS-ONLY",
+          cls({"information": dict(inf, result_file="notes.md", result_commit=P["c3"])}) == "NONE")
+    check("V-AP-PROGRESS-INFO-UNDETERMINED", cls({"information": dict(inf, verdict="UNDETERMINED")}) == "NONE")
+    check("V-AP-PROGRESS-INFO-NO-CONTROL", cls({"information": dict(inf, positive_control=False)}) == "NONE")
+    rec = [{"path": "rec.jsonl", "commit": P["c2"]}]
+    check("V-AP-PROGRESS-CERT-VERIFIED", cls({"new_canonical_certs": 3, "cert_receipts": rec}) == "CERT")
+    check("V-AP-PROGRESS-CERT-OVERCLAIM", cls({"new_canonical_certs": 4, "cert_receipts": rec}) == "NONE")
+    check("V-AP-PROGRESS-CERT-NO-RECEIPTS", cls({"new_canonical_certs": 3}) == "NONE")
+    check("V-AP-PROGRESS-CERT-PROSE-RECEIPTS",
+          cls({"new_canonical_certs": 1, "cert_receipts": [{"path": "notes.md", "commit": P["c3"]}]}) == "NONE")
+    cap = {"gate": "tools/test_g.py", "commit": P["c2"], "mutant_rc": 1, "heldout_before": 10, "heldout_after": 12}
+    capv = lambda **k: {"validated_capability": True, "capability": dict(cap, **k)}  # noqa: E731
+    check("V-AP-PROGRESS-CAPABILITY-VERIFIED", cls(capv()) == "CAPABILITY")
+    check("V-AP-PROGRESS-CAPABILITY-MUTANT-GREEN", cls(capv(mutant_rc=0)) == "NONE")
+    check("V-AP-PROGRESS-CAPABILITY-NO-CHANGE", cls(capv(heldout_after=10)) == "NONE")
+    check("V-AP-PROGRESS-CAPABILITY-GATE-RED-ON-RERUN", cls(capv(gate="tools/test_red.py")) == "NONE")
+    check("V-AP-PROGRESS-CAPABILITY-DOCS-COMMIT", cls(capv(gate="notes.md", commit=P["c3"])) == "NONE")
+    check("V-AP-PROGRESS-NOTHING-CLAIMED", ap.classify_progress({}, prod) == ("NONE", ""))
 
     # ---- lane transitions with stubs
     lanes = [dict(lane0, mission="m-aaaaaaaaaaaa")]
@@ -237,6 +306,38 @@ def run_all(ap):
     st = fresh(105)
     ap.lane_tick(st, dict(lanes[0], protected=[{"path": str(pf), "sha256_prefix": "00000000"}]), False)
     check("V-AP-PROTECTED-OVERRULES-AGREE", st["lanes"]["L"]["status"] == "PARKED" and not calls)
+    # ---- progress rules on the lane (classification stubbed here; the classes themselves are tested above)
+    orig_cls = ap.classify_progress
+
+    def seq(classes, base):
+        st = fresh(base)
+        for k, c in enumerate(classes):
+            ls = st.setdefault("lanes", {}).setdefault("L", {})
+            if ls.get("status") in ("PARKED", "STOPPED"):
+                break
+            ap.classify_progress = (lambda c: (lambda v, p: (c, "")))(c)
+            ls.update(judged_for=None, status="WAITING", mission="m-aaaaaaaaaaaa")
+            (tmp / "home" / "ledger.jsonl").unlink(missing_ok=True)  # the day cap is tested elsewhere
+            rec["owner_hold"]["set_at"] = base * 100 + k
+            recp.write_text(json.dumps(rec))
+            ap.lane_tick(st, lanes[0], False)
+        ap.classify_progress = orig_cls
+        q = tmp / "home" / "owner_queue.md"
+        return st["lanes"]["L"], (q.read_text() if q.exists() else "")
+    ls, q = seq(["INFORMATION", "INFORMATION"], 200)
+    check("V-AP-INFO-TWICE-PARKS", ls["status"] == "PARKED" and "research without conversion" in q)
+    ls, q = seq(["INFORMATION", "NONE", "INFORMATION"], 201)
+    check("V-AP-NO-CONVERSION-PARKS", ls["status"] == "PARKED" and "without a certificate or capability" in q)
+    ls, q = seq(["NONE", "NONE", "CERT", "NONE", "NONE"], 202)
+    check("V-AP-CERT-RESETS-STREAKS", ls["status"] == "RUNNING" and not q)
+    ls, q = seq(["INFORMATION", "CAPABILITY", "INFORMATION"], 203)
+    check("V-AP-INFO-AFTER-CAPABILITY-CONTINUES", ls["status"] == "RUNNING" and not q)
+    st = fresh(204)
+    (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": now - 86400, "tokens": 70_000_000}) + "\n")
+    judged = []
+    ap.judge = lambda *a: judged.append(a) or dict(full, _tokens=1)
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-FROZEN-PARKS-BEFORE-JUDGE", st["lanes"]["L"]["status"] == "PARKED" and not judged and not calls)
     # ---- kill switch: the judge must not even be called
     st = fresh(106)
     (tmp / "home" / "OFF").write_text("")
@@ -300,7 +401,17 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "reserve_zero": lambda m: setattr(m, "CALL_RESERVE", 0),
          "prior_ignored": lambda m: setattr(m, "PRIOR_AUTHORITY", ()),
          "off_guard_removed": lambda m: setattr(m, "killed", lambda: False),
-         "dry_writes_real": lambda m: setattr(m, "tempfile", _SameDir)}
+         "dry_writes_real": lambda m: setattr(m, "tempfile", _SameDir),
+         "frozen_off": lambda m: setattr(m, "UNLOCKED_CAP", m.TOTAL_CAP),
+         "info_park_off": lambda m: setattr(m, "INFO_PARK", 99),
+         "no_conversion_park_off": lambda m: setattr(m, "NO_CONVERSION_PARK", 99),
+         "prose_counts": lambda m: setattr(m, "PROSE", __import__("re").compile(r"(?!x)x")),
+         "ancestry_trusted": lambda m: setattr(m, "verify_information",
+                                               lambda v, p: True if isinstance(v.get("information"), dict) else None),
+         "cert_count_trusted": lambda m: setattr(m, "verify_cert",
+                                                 lambda v, p: True if (v.get("new_canonical_certs") or 0) > 0 else None),
+         "capability_trusted": lambda m: setattr(m, "verify_capability",
+                                                 lambda v, p: True if v.get("validated_capability") is True else None)}
 survivors = []
 for name, mut in drill.items():
     m = load()
