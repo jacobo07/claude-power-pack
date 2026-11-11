@@ -11,7 +11,18 @@ Inputs:
 - Owner briefs (constitutional laws, authority boundaries): /home/kobii/missions/gen3-pp/vault/programs/gsdx-factory-2/
   S26-BRIEF-VERBATIM.md and S26D-BRIEF-VERBATIM.md
 
-Choose the next generation by EXPECTED NEW CANONICAL CERTIFICATES per processed token, from MEASURED evidence:
+Read the Owner-approved reorientation brief FIRST and follow it: {BRIEF}. It holds the causal portfolio of shared
+blockers, the ranked structural opportunities, their discriminating experiments and the mode rule:
+- EXPLOIT a mechanism that already has certificates on a held-out cohort through the unchanged certify.decide, while its
+  expansion condition in the brief holds; otherwise EXPLORE: the highest-ranked discriminating experiment in the brief
+  whose prerequisites are met. Never repeat a generation shape that ended with no verified progress.
+- Every generation must be able to end in one VERIFIABLE progress class; prose and commits without data never count.
+  CERT = receipts data files committed. CAPABILITY = a new gate tools/test_<x>.py whose planted mutant turns it red AND a
+  measured change on a frozen held-out cohort. INFORMATION = a hypothesis/criteria file committed BEFORE the run, resolved
+  SUPPORTED or REFUTED with its positive control seen, the result written as a json/jsonl data file in a LATER commit.
+  UNDETERMINED and INSTRUMENT_FAIL are no progress. Name the hypothesis file and the result data file in the phase text.
+- When a phase searches operator orderings, use the existing MethodGraph / Strategy Genome
+  (recon-general modules/reconstruction_factory/method_graph.py and genome.py) as the prior; never build a parallel one.
 - Prefer shared-blocker infrastructure that unlocks many functions over per-function attempts.
 - Never re-run a lever that a recorded negative result retired unless its written reopen condition is now satisfied (cite it).
 - Freeze cohorts in a commit before anything judged on them; pre-register every decision rule in the phase text.
