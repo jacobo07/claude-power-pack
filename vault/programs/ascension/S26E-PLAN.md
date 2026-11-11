@@ -45,6 +45,19 @@ ksr-v5r + 582 s25stage), 0 contradictions, 0 UNKNOWN (every object rebuilt with 
 81c640db. E0 DONE. S26D D1 keeps its own scope (declarations), not relocations. Consequence for E4: these 4 blind classes are the first pinned mutants; they become live risk the day a
 stage puts data in the same object as code (G14 full-object matching), so the oracle must sit in certify.decide BEFORE that happens.
 
+## 1c. E2/E4 first loop closed (2026-11-11 ~18:40-19:30Z)
+- Research: Codex gpt-6-astra --search on G08 G09 G10 G13 G15 G17 (Owner "y"): 149 rows, 0 unparsable. Prompts G08/G13 were corrected
+  first with measured facts (E7 by hand: refuted `--struct` premise; E0 result). recon-research.jsonl = 284 rows. Links: 221 OK,
+  32 UNCONFIRMED (nxp.com/.jp PDFs 404 + 1 manuals.plus 403), 31 without URL (OPEN_QUESTION).
+- Write-back: `research/verdicts.jsonl` + `urlcheck_*.json`, merged by ingest.py on every run (E4 only with `reproduced`).
+- G13-002 -> CONFIRMED E4: objdiff `-c functionRelocDiffs=data_value` (and `all`) refuses the 4 blind classes (98.3/98.3/96.7/98.75),
+  control 100; default/none/name_address score 100. Re-judging all 9,269 certified under data_value: **9,269 STILL_100**, 0 below,
+  0 unknown (t1 767709a9, evidence/ascension/s26e/e4). G05-011 -> CONFIRMED E4 (E0).
+- E4 PROPOSAL (needs the armed mission, not done here): certify path passes `-c functionRelocDiffs=data_value` to objdiff
+  (cv1.objdiff_pct) AND keeps reloc_oracle as the independent second judge. Gate before landing: the 4 pinned mutants refused
+  under the new judge + a frozen sample re-judged identically (already measured on the full 9,269).
+- Yield of this research cycle (E1 seed): 1 judge fix found by 1 Codex row, measured, 0 certificates lost.
+
 ## 2. Design: four levels, each with its own ratchet
 The system improves at four levels. Each level has ONE receipt-backed measure, an independent judge, and a ratchet
 that only moves the baseline up. No level judges itself.
