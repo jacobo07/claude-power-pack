@@ -1,0 +1,12 @@
+{
+ "q": "Q3",
+ "gap": "G26",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 429.6,
+ "artifacts": [
+  "2026-11-11_202029_which-c-source-idioms-make-mwcceppc-codewarrior-fo.ledger.json",
+  "2026-11-11_202029_which-c-source-idioms-make-mwcceppc-codewarrior-fo.md",
+  "which-c-source-idioms-make-mwcceppc-codewarrior-fo.raw.jsonl"
+ ]
+}

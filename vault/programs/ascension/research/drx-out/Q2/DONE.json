@@ -1,0 +1,12 @@
+{
+ "q": "Q2",
+ "gap": "G19",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 772.9,
+ "artifacts": [
+  "2026-11-11_201319_which-libraries-linked-into-nintendo-wii-games-rvl.ledger.json",
+  "2026-11-11_201319_which-libraries-linked-into-nintendo-wii-games-rvl.md",
+  "which-libraries-linked-into-nintendo-wii-games-rvl.raw.jsonl"
+ ]
+}

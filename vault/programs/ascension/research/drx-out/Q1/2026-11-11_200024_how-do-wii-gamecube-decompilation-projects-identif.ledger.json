@@ -1,0 +1,25 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_195819_how-do-wii-gamecube-decompilation-projects-identif",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [],
+ "spans": [],
+ "claims": [],
+ "summary": {
+  "sources": 0,
+  "lineages": 0,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 0,
+  "claims_with_verified_span": 0,
+  "verified_span_rate": null,
+  "quotes_offered": 0,
+  "quotes_rejected": 0,
+  "ledger_capped": 0,
+  "quotes_reattributed": 0,
+  "claims_persisted": 0,
+  "persisted_with_verified_span": 0,
+  "persisted_verified_span_rate": null
+ }
+}

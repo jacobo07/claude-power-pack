@@ -1,0 +1,1125 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_202030_how-does-the-metrowerks-codewarrior-powerpc-compil",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://github.com/encounter/decomp-toolkit",
+   "aliases": [],
+   "sha256": "4f2d987de92ec88579d9da9d33bcf4004af13d0594088db99a60237f1738def0",
+   "chars": 14946,
+   "snapshot": "4f2d987de92ec88579d9da9d33bcf4004af13d0594088db99a60237f1738def0.txt",
+   "retrieved_at": "2026-11-11T19:21:22+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/gamecube-wii/",
+   "aliases": [],
+   "sha256": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f",
+   "chars": 22525,
+   "snapshot": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f.txt",
+   "retrieved_at": "2026-11-11T19:21:22+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://pages.cs.wisc.edu/~horwitz/CS701-NOTES/5.REGISTER-ALLOCATION.html",
+   "aliases": [],
+   "sha256": "4dca2620e54c3bf3ab6d02df1269414a0d5cef1d5c2a4bdf1abc1770be3fc4f9",
+   "chars": 21892,
+   "snapshot": "4dca2620e54c3bf3ab6d02df1269414a0d5cef1d5c2a4bdf1abc1770be3fc4f9.txt",
+   "retrieved_at": "2026-11-11T19:23:39+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://en.wikipedia.org/wiki/Register_allocation",
+   "aliases": [],
+   "sha256": "a29750e6412bf8afd08807248f997c6545da1484cce459cc1ad5484a64268d18",
+   "chars": 25000,
+   "snapshot": "a29750e6412bf8afd08807248f997c6545da1484cce459cc1ad5484a64268d18.txt",
+   "retrieved_at": "2026-11-11T19:23:39+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://www.tutorialspoint.com/compiler_design/compiler_design_register_allocation.htm",
+   "aliases": [],
+   "sha256": "b96bdf6892b7904196fe0dac506b3eac3f802bcb1892e919d4d492d0da9db528",
+   "chars": 8164,
+   "snapshot": "b96bdf6892b7904196fe0dac506b3eac3f802bcb1892e919d4d492d0da9db528.txt",
+   "retrieved_at": "2026-11-11T19:23:39+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.cs.cmu.edu/afs/cs/academic/class/15411-s25/www/lectures/02-regalloc.pdf",
+   "aliases": [],
+   "sha256": "5c0c50a7155494a3625aa8dc6f2abfee23fd1e941e79fbc2a8342e670414e3eb",
+   "chars": 25000,
+   "snapshot": "5c0c50a7155494a3625aa8dc6f2abfee23fd1e941e79fbc2a8342e670414e3eb.txt",
+   "retrieved_at": "2026-11-11T19:24:27+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://course.ccs.neu.edu/cs4410sp24/lec_register-alloc_notes.html",
+   "aliases": [],
+   "sha256": "cb9fdbeaed501471a85c3dd0c4a9f2f6f4eef3762a8a6495501d5715f26e0692",
+   "chars": 11043,
+   "snapshot": "cb9fdbeaed501471a85c3dd0c4a9f2f6f4eef3762a8a6495501d5715f26e0692.txt",
+   "retrieved_at": "2026-11-11T19:24:27+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://www.cse.iitm.ac.in/~krishna/courses/2017/even-cs6013/lecture9.pdf",
+   "aliases": [],
+   "sha256": "bc6796a9f6a383e6639eff2534e973d91f549d44bb8872ad1cc8bf4c0b8b5912",
+   "chars": 25000,
+   "snapshot": "bc6796a9f6a383e6639eff2534e973d91f549d44bb8872ad1cc8bf4c0b8b5912.txt",
+   "retrieved_at": "2026-11-11T19:24:27+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://csg.csail.mit.edu/6.823S21/Lectures/L09handout.pdf",
+   "aliases": [],
+   "sha256": "43da2c1050729b85ad906af104b73c41a4e8b1018f9e74ddbebf5b0622c9b5a1",
+   "chars": 25000,
+   "snapshot": "43da2c1050729b85ad906af104b73c41a4e8b1018f9e74ddbebf5b0622c9b5a1.txt",
+   "retrieved_at": "2026-11-11T19:25:24+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://www.cs.virginia.edu/~cr4bd/3130/F2024/readings/processors.html",
+   "aliases": [],
+   "sha256": "efa09bcc838f865c16e56eb7127ab5001f6eeb37fbe8534f84256319a5364aee",
+   "chars": 18740,
+   "snapshot": "efa09bcc838f865c16e56eb7127ab5001f6eeb37fbe8534f84256319a5364aee.txt",
+   "retrieved_at": "2026-11-11T19:25:24+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://csg.csail.mit.edu/6.823F21/Lectures/L07handout.pdf",
+   "aliases": [],
+   "sha256": "5ff0fd1bb214ad94853f9fbd00d096589c80f47d144adfaa01d22c96014f16d1",
+   "chars": 25000,
+   "snapshot": "5ff0fd1bb214ad94853f9fbd00d096589c80f47d144adfaa01d22c96014f16d1.txt",
+   "retrieved_at": "2026-11-11T19:25:24+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://eigenform.github.io/zno/mid/rename.html",
+   "aliases": [],
+   "sha256": "c1961d11c9dc3db6ab54f8372dff8a240836f5c01bfcc637bcb23b7e24f0bec3",
+   "chars": 5812,
+   "snapshot": "c1961d11c9dc3db6ab54f8372dff8a240836f5c01bfcc637bcb23b7e24f0bec3.txt",
+   "retrieved_at": "2026-11-11T19:25:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://www.geeksforgeeks.org/computer-organization-architecture/register-allocations-in-code-generation/",
+   "aliases": [],
+   "sha256": "2541d2fb5fdb84ad6944d156a7e169cdde0b29a5934227935214eb37470caffd",
+   "chars": 9530,
+   "snapshot": "2541d2fb5fdb84ad6944d156a7e169cdde0b29a5934227935214eb37470caffd.txt",
+   "retrieved_at": "2026-11-11T19:26:35+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://www.brainkart.com/article/Register-Allocation-and-Assignment_8186/",
+   "aliases": [],
+   "sha256": "8eeeee0b803fc8aa11c00a9f6770076bbcb512499b867ad2d2b325a1120693d0",
+   "chars": 12614,
+   "snapshot": "8eeeee0b803fc8aa11c00a9f6770076bbcb512499b867ad2d2b325a1120693d0.txt",
+   "retrieved_at": "2026-11-11T19:26:36+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://www.brainkart.com/article/Register-Allocation-and-Assignment_8105/",
+   "aliases": [],
+   "sha256": "b33933a20e1fdefdaec857f7f93ab669414fd33c08f8383f5664fd33869e673b",
+   "chars": 2899,
+   "snapshot": "b33933a20e1fdefdaec857f7f93ab669414fd33c08f8383f5664fd33869e673b.txt",
+   "retrieved_at": "2026-11-11T19:26:36+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "http://compilers.cs.ucla.edu/fernando/projects/ralf_alloc/",
+   "aliases": [],
+   "sha256": "285e0f2920ecb98a0e81daf770e749c74dc17204598305f9d5191fce3646ec75",
+   "chars": 11171,
+   "snapshot": "285e0f2920ecb98a0e81daf770e749c74dc17204598305f9d5191fce3646ec75.txt",
+   "retrieved_at": "2026-11-11T19:27:02+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://link.springer.com/chapter/10.1007/11823230_19",
+   "aliases": [],
+   "sha256": "06654090dba376263b029c653b95444a99222a2033fea4f6ce984c0772e67fa8",
+   "chars": 238,
+   "snapshot": "06654090dba376263b029c653b95444a99222a2033fea4f6ce984c0772e67fa8.txt",
+   "retrieved_at": "2026-11-11T19:27:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://opencourse.inf.ed.ac.uk/sites/default/files/2026-03/lecture_18_-_register_allocation.pdf",
+   "aliases": [],
+   "sha256": "c241a21aca0f1ee30fd2b6d84bba79d1dc1abcf16bfd5a5447f04a6a7c25c64c",
+   "chars": 25000,
+   "snapshot": "c241a21aca0f1ee30fd2b6d84bba79d1dc1abcf16bfd5a5447f04a6a7c25c64c.txt",
+   "retrieved_at": "2026-11-11T19:27:46+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://www.codermusings.com/register-allocation-compiler-guide/",
+   "aliases": [],
+   "sha256": "da4a18c19058463edaf986291a8943b75664e1f32b8d1f240399676d52701031",
+   "chars": 17013,
+   "snapshot": "da4a18c19058463edaf986291a8943b75664e1f32b8d1f240399676d52701031.txt",
+   "retrieved_at": "2026-11-11T19:27:46+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://github.com/SamidyFR/Game-Decompilations",
+   "aliases": [],
+   "sha256": "902971f3b45b6923245a642fb4a1cfb9450adb0929e2bf6bfd04462ff3d928ed",
+   "chars": 16984,
+   "snapshot": "902971f3b45b6923245a642fb4a1cfb9450adb0929e2bf6bfd04462ff3d928ed.txt",
+   "retrieved_at": "2026-11-11T19:28:16+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://mathisto.github.io/sotn-wiki/decomp/register-mismatch-tricks/",
+   "aliases": [],
+   "sha256": "b5a64e0c9e0a2feb330f0444b1a5d50c59144b83dadd24500a5b456e932ab34d",
+   "chars": 4368,
+   "snapshot": "b5a64e0c9e0a2feb330f0444b1a5d50c59144b83dadd24500a5b456e932ab34d.txt",
+   "retrieved_at": "2026-11-11T19:28:16+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://www.pcgamingwiki.com/wiki/List_of_unofficial_ports",
+   "aliases": [],
+   "sha256": "982b7631c079c742389825932b0b02b3ef80488ca79bb0494cb268f45e7f17e8",
+   "chars": 25000,
+   "snapshot": "982b7631c079c742389825932b0b02b3ef80488ca79bb0494cb268f45e7f17e8.txt",
+   "retrieved_at": "2026-11-11T19:28:16+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://en.wikipedia.org/wiki/Decompiler",
+   "aliases": [],
+   "sha256": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d",
+   "chars": 15862,
+   "snapshot": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d.txt",
+   "retrieved_at": "2026-11-11T19:28:16+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://wal.sh/research/code-decomp/",
+   "aliases": [],
+   "sha256": "f7cef6250a02616de0e9071c86d6fa25ba4d1a0d515d157fdcb3070713b52866",
+   "chars": 4044,
+   "snapshot": "f7cef6250a02616de0e9071c86d6fa25ba4d1a0d515d157fdcb3070713b52866.txt",
+   "retrieved_at": "2026-11-11T19:28:16+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S24"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S2",
+   "start": 4676,
+   "end": 4793,
+   "text": "Matching C for CodeWarrior is harder than for GCC because the compiler's optimization decisions are less predictable.",
+   "sha256": "207ead6bbccbbb7cffe00a02c57bacf8f7c1afeae3217980a0da8a0a2df04048"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S2",
+   "start": 20921,
+   "end": 20942,
+   "text": "Cap the build budget.",
+   "sha256": "62a522357d9a0ffe0607b9056b527a36a54915b03d7eb95aa1bd8f454c764bb9"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S2",
+   "start": 15802,
+   "end": 15860,
+   "text": "Iterate until score 100 or until you have tried 25 builds.",
+   "sha256": "e4e3030f98285aba0959d37e3106d4f993895fd8a982bdd05e58e7fb4fca7166"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S2",
+   "start": 15927,
+   "end": 16019,
+   "text": "CodeWarrior's codegen is version-specific. A flag mismatch makes every function unmatchable.",
+   "sha256": "6e08eb38c2a4200bf4b53b10a2324da3173516802873cc99dc71ea65777f006a"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S2",
+   "start": 3965,
+   "end": 4054,
+   "text": "The versions used across titles range from 1.0 through 1.7, per decomp.wtf documentation.",
+   "sha256": "d77f4d7f0627046efda483fcf173e4f3da61183eb0a06f991e2d3b0873099fb3"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S3",
+   "start": 11464,
+   "end": 11624,
+   "text": "Note also that for non-straight-line code,\ndifferent linear representations can lead to different\nlive ranges (some of which may have more overlap than others).",
+   "sha256": "be4adb8fe501a6e95994e0b669080dfb89df4615698d63b1ef6dbba7e871e225"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S3",
+   "start": 9424,
+   "end": 9469,
+   "text": "Choose the R values with the highest savings.",
+   "sha256": "d1612395d64a734f52fa4ba98f729d8087aef2620ea41cf608500fbcf2309a50"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S4",
+   "start": 7659,
+   "end": 7804,
+   "text": "Spill cost\n: compute the spill cost of each variable. This assesses the impact of mapping a variable to memory on the speed of the final program.",
+   "sha256": "0eec583c3ce8cb909d4a192e10582a08e2be5de96ccbb0a71fa4a8f0cb8d81ed"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S3",
+   "start": 19515,
+   "end": 19547,
+   "text": "Note: This is an NP hard problem",
+   "sha256": "88677dc226a2c84672dd5f5d58537527ced846743891ae87775d6569d6297209"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S4",
+   "start": 8337,
+   "end": 8494,
+   "text": "When none remain, a variable is chosen to be removed (making it a\nspill candidate) and hopefully increasing the number of variables with degree\nless than\nr\n.",
+   "sha256": "adfa04b54b861d38c8dc48b7f7e3088af579809b0960a5819254c15bea874e36"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S7",
+   "start": 10567,
+   "end": 10792,
+   "text": "Iterate over every function in the now-annotated program.  For\neach function, iterate over every expression within it and\nbuild an\ninterference graph\nwhose nodes are variable names and\nwhose edges are each pair of variables (",
+   "sha256": "bb4583c2c829f12f3c62b547021625b547ba7d0859c7a1c61b24c0bbfe2a4496"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S4",
+   "start": 538,
+   "end": 653,
+   "text": "When done per function/procedure the\ncalling convention\nmay require insertion of save/restore around each\ncall-site",
+   "sha256": "878753304042b4742d08a62c5cc62d81735cd72969e2d5074485d174810eb680"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S3",
+   "start": 19515,
+   "end": 19547,
+   "text": "Note: This is an NP hard problem",
+   "sha256": "88677dc226a2c84672dd5f5d58537527ced846743891ae87775d6569d6297209"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S3",
+   "start": 11464,
+   "end": 11624,
+   "text": "Note also that for non-straight-line code,\ndifferent linear representations can lead to different\nlive ranges (some of which may have more overlap than others).",
+   "sha256": "be4adb8fe501a6e95994e0b669080dfb89df4615698d63b1ef6dbba7e871e225"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S7",
+   "start": 1067,
+   "end": 1199,
+   "text": "if two\nvariables are never needed simultaneously, then they can share the\nsame location (whether that’s a stack slot or a register).",
+   "sha256": "233d7fd08dd95170232b7b4a2e39d10a5498cee1f2ea715b0fb3fce87c426186"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S4",
+   "start": 1739,
+   "end": 1866,
+   "text": "However, two variables in use at the\nsame\ntime cannot be assigned to the same register without corrupting one of the variables.",
+   "sha256": "f7cc05684dfb2a905ff76711c5fc6679c0508e719c6f0a9b2e20ab40a2b73921"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S4",
+   "start": 5291,
+   "end": 5372,
+   "text": "Chaitin et al. showed that optimal register allocation is an\nNP-complete\nproblem.",
+   "sha256": "e34da47b1810608c91f1cf0f91d11222b6c00667d5624781be29e803d8b0dc45"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S7",
+   "start": 9833,
+   "end": 9993,
+   "text": "The key idea behind register allocation is to preserve the invariant\nthat\nno two variables that are live at the same time can be\nallocated to the same location.",
+   "sha256": "8a20786b99f9e51bd1d00c9516109c7ac5720a22c8e9ee139c7ba7a81033b14f"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S15",
+   "start": 1137,
+   "end": 1204,
+   "text": "Cost of spilling will depend on frequencies and\r\nlocations of uses.",
+   "sha256": "67a6f303cb779db0b8ed9803927dc4fff2e8d2b1e099232683247984b1537cb2"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S14",
+   "start": 11196,
+   "end": 11264,
+   "text": "A general rule is to avoid introducing spill code into inner\r\nloops.",
+   "sha256": "727e550016d767ff61b7413b1cd38cb3c5e72e8fcb0680eccf40a64e6da9f35d"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S4",
+   "start": 22581,
+   "end": 22651,
+   "text": "Besides, a spilled variable will stay spilled for its entire lifetime.",
+   "sha256": "f1c42fbc6174c219c02e08cbb9baebb12872d0afca400091d81de1e7802784a1"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S4",
+   "start": 21182,
+   "end": 21252,
+   "text": "The\nHotspot server compiler\nuses graph coloring for its superior code.",
+   "sha256": "b07247eedcee78b42fd510533e371b57756e040a1560b926a351bc4730a0df3b"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S4",
+   "start": 17038,
+   "end": 17167,
+   "text": "The heuristics used for ordering\nof RN reduction, and modification of cost have a significant effect on the\nresulting allocation.",
+   "sha256": "15316f4c9880205043235255cb38285316ccd79cd3a4503bfdb2e5ec75b20614"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S19",
+   "start": 9029,
+   "end": 9191,
+   "text": "If the current interval has a higher spill weight than the occupant of a desired register, the allocator kicks out the lower-priority interval and re-enqueues it.",
+   "sha256": "e6322b2d813f9c36fd42cdeecb5ba57df78b682baffce8566e2f8611fd7605bb"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S13",
+   "start": 7485,
+   "end": 7615,
+   "text": "Top-Down uses priority ranking to order all the constrained nodes. (However, it colors the unconstrained nodes in arbitrary order)",
+   "sha256": "087d65bd5f2cca210251f8d702de202cf0b54532510064cc37f02dd3cc947b3c"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S4",
+   "start": 17038,
+   "end": 17167,
+   "text": "The heuristics used for ordering\nof RN reduction, and modification of cost have a significant effect on the\nresulting allocation.",
+   "sha256": "15316f4c9880205043235255cb38285316ccd79cd3a4503bfdb2e5ec75b20614"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S4",
+   "start": 24464,
+   "end": 24573,
+   "text": "Doing coalescing might have both positive and negative impacts on the colorability of the interference graph.",
+   "sha256": "6791e2db9e62a8e97ea8d8c795033ea4c76df24b8c87540500c3ae76af1b00dd"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S19",
+   "start": 16054,
+   "end": 16191,
+   "text": "Unless profiling reveals spilling in hot loops, the allocator is almost certainly making better decisions than manual intervention would.",
+   "sha256": "3048c7c07a9a23f372c360e0743758efe6eb15e51282a6ae739506d9948ac8f4"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S13",
+   "start": 627,
+   "end": 724,
+   "text": "Therefore a good register allocator computes an effective approximate solution to a hard problem.",
+   "sha256": "890ba3a5161dd546a2bb8c4a160078749fab3b3714d6dd27360b96bc65ee8523"
+  },
+  {
+   "span_id": "E30",
+   "source_id": "S21",
+   "start": 1894,
+   "end": 2017,
+   "text": "This gets compiled out of the code on PSX, so you won't see it there, but it can cause a lot of register mismatches in PSP.",
+   "sha256": "208ac12cae6061e7ef87bea33862210798e878540f307645b8611efdba55bb7d"
+  },
+  {
+   "span_id": "E31",
+   "source_id": "S21",
+   "start": 711,
+   "end": 754,
+   "text": "This is a harder one to find in PSX vs PSP.",
+   "sha256": "5dda381f73e22ad70eeaa9204d23e8964fa2eb2cb58a0e586fae8af0771216bb"
+  },
+  {
+   "span_id": "E32",
+   "source_id": "S21",
+   "start": 1465,
+   "end": 1569,
+   "text": "The \"tell\" on this situation is that we are loading\n0x80\ninto\nv0\non PSP, but not doing anything with it.",
+   "sha256": "146291d3c5b543b520771fa97ec6bc42e45d0b01573831cf164e8f5d53f701b3"
+  },
+  {
+   "span_id": "E33",
+   "source_id": "S21",
+   "start": 2813,
+   "end": 2885,
+   "text": "In a lot of cases, this also resolves a lot of a0/v0 mismatches as well.",
+   "sha256": "5e20999d5d6edc103acd0df73e1062029dfdfc1ca488e5c6ed009fb3330c7eb0"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Neither source contains before-and-after measurements linking particular source edits to Metrowerks register choices, and neither names anyone who recorded such results. They describe the workflow (write code, compile, compare, repeat) and say the compiler's optimization decisions are 'less predictable', but offer no measured edit-to-register effects.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured evidence do decompilation projects for GameCube and Wii games give about which source-level edits reliably change which registers the Metrowerks PowerPC compiler picks, and who recorded those before-and-after results?",
+    "capability": "You can stop expecting a documented catalogue of source edits and register outcomes from these sources, and plan to build or find that evidence yourself rather than assuming the community has already recorded it."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "The only quantified practice is a cap of 25 builds per function, cited as the Retrobench standard, with the diff output fed back each round. This implies that edit-to-register effects are discovered empirically per function, not applied from a known rulebook, and that uncapped agents thrash.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E2",
+    "E3"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What measured evidence do decompilation projects for GameCube and Wii games give about which source-level edits reliably change which registers the Metrowerks PowerPC compiler picks, and who recorded those before-and-after results?",
+    "capability": "You can budget decompilation effort around trial-and-compare iteration with a hard cap per function, instead of assuming a known recipe of edits will reliably steer the compiler."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "Codegen is version-specific, and a flag mismatch makes every function unmatchable. Compiler versions across titles range from 1.0 through 1.7, so any claim that an edit reliably changes register choice only holds within the same version and flag set.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4",
+    "E5"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What measured evidence do decompilation projects for GameCube and Wii games give about which source-level edits reliably change which registers the Metrowerks PowerPC compiler picks, and who recorded those before-and-after results?",
+    "capability": "You can treat exact compiler version and flags as a precondition for any register-level result and refuse to compare outcomes across projects that differ in them."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Allocators such as linear scan operate on a linear ordering of the program, and different orderings of the same control flow produce different live intervals with more or less overlap. Textual order versus depth-first order of the flow graph can therefore yield different register assignments for logically identical code, which is why reshuffled but equivalent source can change which registers locals receive.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the order in which a compiler assigns registers to local variables change when the source is rewritten in ways that look semantically identical, and which internal steps of the old Metrowerks compiler cause that?",
+    "capability": "You can stop treating register-assignment differences between equivalent source rewrites as random compiler noise and instead attribute them to the order in which the allocator walks its inputs."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Usage-weighted allocators rank variables by estimated savings, scaled by loop nesting depth, and give registers to the highest scorers. Moving a use or definition in or out of a loop, or adding a use, changes the ranking and so changes which variables get registers and in what order. Chaitin-style graph coloring also picks spill candidates by a cost function that includes loop nesting and neighbor counts.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7",
+    "E8"
+   ],
+   "source_ids": [
+    "S3",
+    "S4"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the order in which a compiler assigns registers to local variables change when the source is rewritten in ways that look semantically identical, and which internal steps of the old Metrowerks compiler cause that?",
+    "capability": "You can expect that small source changes shifting how heavily a variable is used, or how deeply nested its uses are, will reorder which variables win registers, rather than assuming the compiler ranks them by declaration order."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Graph coloring is NP-hard, so allocators use heuristics that remove easy nodes onto a stack and then pop and color them in reverse order. Which node is pushed first, and which is chosen when none are easy, determines the final color assignment, and in the worked example one live range is left with no register at all. Anything that changes the graph, such as live-range structure, changes this order and the resulting assignment.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9",
+    "E10"
+   ],
+   "source_ids": [
+    "S3",
+    "S4"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the order in which a compiler assigns registers to local variables change when the source is rewritten in ways that look semantically identical, and which internal steps of the old Metrowerks compiler cause that?",
+    "capability": "You can stop assuming that a heuristic graph-coloring allocator will give the same answer for equivalent programs, and anticipate that node-removal order shapes the final register mapping."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "Allocation is computed per function (or per loop within it): liveness, interference graphs and coloring are built function by function, so a source edit that changes one function's allocation should not directly alter a neighbor's register assignment. Spillover to neighbors or the whole file must therefore come from shared factors such as calling conventions, stack layout or inlining, not from the allocator itself.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11",
+    "E12"
+   ],
+   "source_ids": [
+    "S4",
+    "S7"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a contributor fixes register allocation in one function with a source edit and that same fix makes a neighboring function or the whole file stop matching, and how often is this reported?",
+    "capability": "You can stop assuming a register-allocation fix in one function stays contained, and instead expect that edits to one function's variable lifetimes can change how it is compiled in ways that ripple outward only through specific, limited channels."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Register assignment depends on heuristics (spill-cost choices, node ordering during coloring, linear ordering of blocks), so a minor edit can change which live range is spilled or which color each receives. Because the exact outcome is heuristic and the problem is NP-hard, a fix that makes one function match can plausibly alter results elsewhere, which means contributors should re-verify the whole file after each such edit.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13",
+    "E14"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a contributor fixes register allocation in one function with a source edit and that same fix makes a neighboring function or the whole file stop matching, and how often is this reported?",
+    "capability": "You can treat a matching-decompilation register fix as inherently fragile and budget extra review time for it, because small source changes legitimately reshuffle which variables get registers."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "None of the retrieved material measures or reports how frequently an allocation fix in one function breaks a neighbor or the whole file; it covers compiler theory only (liveness, interference graphs, linear scan, graph coloring). The frequency question is unanswered here and needs project-level data.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a contributor fixes register allocation in one function with a source edit and that same fix makes a neighboring function or the whole file stop matching, and how often is this reported?",
+    "capability": "You can stop expecting these sources to tell you how often cross-function or whole-file mismatches occur, and look for a different evidence base such as decompilation project issue trackers."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Allocators decide register sharing by liveness (whether a value is still needed later), not by scope or declaration position. Reordering declarations or uses changes which variables are live at the same time, so a variable can lose its register, share one with another, or be spilled to memory where before it had a register.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15",
+    "E16"
+   ],
+   "source_ids": [
+    "S4",
+    "S7"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does changing the order in which local variables are declared or used sometimes shift a different register, or no register at all, in the compiled output of an older compiler?",
+    "capability": "You can stop treating a shifted or vanished register after reordering variable declarations as a compiler bug, and read it as a predictable consequence of when each variable's last use occurs."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "When there are more simultaneously live variables than registers, the allocator spills some to RAM, which is slower. Register pressure is the count of simultaneously live variables at an instruction. A reorder that lengthens one variable's lifetime across others can push the count past the available registers, and x86 has only 8 general registers in 32-bit mode.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "If there are not enough registers to hold all the variables, some variables may be moved to and from RAM.",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S4",
+     "quote": "A high \"Register pressure\" is a technical term that means that more spills and reloads are needed; it is defined by Braun et al. as \"the number of simultaneously live variables at an instruction\".",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does changing the order in which local variables are declared or used sometimes shift a different register, or no register at all, in the compiled output of an older compiler?",
+    "capability": "You can expect that when too many values are live at once, some are pushed to memory, so a tiny source reorder can flip a variable between register and stack."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "Optimal register allocation is NP-complete, so real allocators use heuristics such as graph-coloring with simplify ordering, or greedy linear scan that visits intervals in order of start point. Their outcomes depend on the order in which candidates are processed and on which one is chosen to spill, so small input changes can produce different assignments. Fixed-register constraints (such as parameters in R3-R10 on PowerPC) and aliasing on x86 add further sensitivity.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "When none remain, a variable is chosen to be removed (making it a spill candidate) and hopefully increasing the number of variables with degree less than r.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does changing the order in which local variables are declared or used sometimes shift a different register, or no register at all, in the compiled output of an older compiler?",
+    "capability": "You can attribute register choices on old compilers to heuristic, order-sensitive allocation rather than any optimal assignment, so you should not expect stable results across edits."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "Allocators can only share a register between values that are never needed at the same time, and when more values are live together than there are registers, some are pushed to memory (spilled). In a large function with many simultaneous values or inlined code, this shows up as extra stores and loads and shifted register choices that differ from the target, even when the logic is identical.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E18"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "However, two variables in use at the same time cannot be assigned to the same register without corrupting one of the variables. If there are not enough registers to hold all the variables, some variab",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S4",
+     "quote": "A high \"Register pressure\" is a technical term that means that more spills and reloads are needed; it is defined by Braun et al. as \"the number of simultaneously live variables at an instruction\".",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a function's register assignment when the function is large, holds many simultaneously live values, or contains inlined code, and how does that failure show up in a diff against the target?",
+    "capability": "You can treat a function whose register assignment looks wrong in a diff as a likely overload of simultaneously live values, not a mistake in the surrounding logic, and focus effort on cutting live values rather than hunting for a typo."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "Which value gets spilled is chosen by heuristics based on how constrained each value is and the estimated cost of spilling it, and the choice is global to the function. A small change in the number or lifetime of live values can therefore change which values are evicted and which registers everything else gets, producing widespread diffs from one root cause.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E19",
+    "E20"
+   ],
+   "source_ids": [
+    "S14",
+    "S15"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "When none remain, a variable is chosen to be removed (making it a spill candidate) and hopefully increasing the number of variables with degree less than r.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a function's register assignment when the function is large, holds many simultaneously live values, or contains inlined code, and how does that failure show up in a diff against the target?",
+    "capability": "You can expect that a mismatch in one part of a function may cascade into unrelated-looking differences elsewhere, and so stop judging a fix by whether the first differing line disappears."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "The same code can receive different register assignments depending on the allocation approach: graph coloring gives better code at higher compile cost, while linear scan is faster but greedy, and it ignores gaps in a value's lifetime and keeps spilled values spilled throughout. A mismatch on a large function may therefore reflect the allocator's design differences, not source-level differences.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E21",
+    "E22"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a function's register assignment when the function is large, holds many simultaneously live values, or contains inlined code, and how does that failure show up in a diff against the target?",
+    "capability": "You can stop assuming that a different register assignment means a different algorithm, because the allocator strategy itself changes the result for the same code."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "Register allocation outcomes depend on the allocation strategy and the architecture's constraints. PowerPC fixes ordinary values into pre-colored registers (parameters in R3-R10, return value in R3), and allocators differ in how they spill, coalesce and pick colors. This gives a reason to expect behavior to shift between compiler versions and settings, but nothing here covers GameCube/Wii compilers specifically, so the sameness question remains unanswered by these sources.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E23"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "For example, in PowerPC calling conventions, parameters are commonly passed in R3-R10 and the return value is passed in R3.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Does register allocation behavior and the set of effective fixes stay the same across different compiler versions and build settings used for GameCube and Wii games, and how do automated source-randomizing tools perform on this compiler compared with others?",
+    "capability": "You can stop assuming that a register-allocation fix found for one compiler build will carry over to another, and instead treat the allocator as something to re-test per target."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Allocators decide using heuristic orderings: graph-coloring simplify removes nodes in some order and then picks a spill candidate when stuck, and the greedy allocator processes intervals in a priority queue by spill weight, evicting lower-weight occupants. Because outcomes depend on processing order and on eviction, a change in order or weights can flip which values get registers or spill, so identical source can yield different assignments across versions.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E24",
+    "E25"
+   ],
+   "source_ids": [
+    "S13",
+    "S19"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "When none remain, a variable is chosen to be removed (making it a spill candidate) and hopefully increasing the number of variables with degree less than r.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the same source edit produce different register assignments when the compiler's internal allocation order changes between versions, and what causes a change that fixes one function to break its neighbors?",
+    "capability": "You can stop treating a register-assignment change after a compiler upgrade as a bug in your source edit and instead expect that any change to allocation ordering or tie-breaking will reshuffle outcomes across neighboring functions."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "Heuristic choices in the allocator are not local optimizations: the cost and ordering heuristics have a significant effect on the resulting allocation, and coalescing can both help and hurt colorability of the interference graph. A tweak that relieves pressure for one function can therefore worsen another, which explains fixes that break neighbors.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26",
+    "E27"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the same source edit produce different register assignments when the compiler's internal allocation order changes between versions, and what causes a change that fixes one function to break its neighbors?",
+    "capability": "You can stop expecting a heuristic tweak that fixes one function to be free elsewhere, and instead demand regression checks across neighboring functions before accepting an allocator-affecting change."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "Allocation is NP-complete in general and solved by approximation, and the guidance in the contents is to profile for spilling in hot loops rather than manually restructure code. Manual tuning targets an outcome that heuristic changes can undo.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E28",
+    "E29"
+   ],
+   "source_ids": [
+    "S13",
+    "S19"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the same source edit produce different register assignments when the compiler's internal allocation order changes between versions, and what causes a change that fixes one function to break its neighbors?",
+    "capability": "You can decide not to invest effort hand-tuning source to force specific register outcomes, since the allocator's behavior is not stable across compiler changes, and rely on profiling to find real spills in hot loops instead."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "The SotN decomp wiki documents mismatch tricks that are explicitly platform-specific: a hidden no-op move that appears in PSP output but is compiled out on PSX, and a modulo pattern that is hard to recognise because PSX and PSP compile it differently. A fix that works on one target therefore cannot be assumed to work on another, so teams should expect to rediscover fixes for each compiler/platform combination rather than reuse a playbook wholesale.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E30",
+    "E31"
+   ],
+   "source_ids": [
+    "S21"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which register-mismatch fixes that worked in one game's decompilation were reported to fail or reverse in another game built with a different compiler version, and who documented these cases?",
+    "capability": "You can stop assuming a register-mismatch fix learned on one game's decompilation will transfer to another build, and budget for re-discovering fixes per compiler and platform target."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "On the PSP build of SotN, a stray instruction (a value loaded into a register and never used) signalled that the original code was a modulo, and a redundant self-move was reproduced by adding and then subtracting a non-zero constant. Mismatches can therefore be caused by invisible compiler artifacts rather than by variable choice, and recognising them can resolve many a0/v0 mismatches at once.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E32",
+    "E33"
+   ],
+   "source_ids": [
+    "S21"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which register-mismatch fixes that worked in one game's decompilation were reported to fail or reverse in another game built with a different compiler version, and who documented these cases?",
+    "capability": "You can point a team at a concrete first diagnostic for stubborn register mismatches, which is to check whether the compiler is emitting a no-op or leftover instruction that the source must reproduce."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 24,
+  "lineages": 24,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 21,
+  "claims_with_verified_span": 19,
+  "verified_span_rate": 0.905,
+  "quotes_offered": 41,
+  "quotes_rejected": 8,
+  "ledger_capped": 3,
+  "quotes_reattributed": 0,
+  "claims_persisted": 2,
+  "persisted_with_verified_span": 2,
+  "persisted_verified_span_rate": 1.0
+ }
+}

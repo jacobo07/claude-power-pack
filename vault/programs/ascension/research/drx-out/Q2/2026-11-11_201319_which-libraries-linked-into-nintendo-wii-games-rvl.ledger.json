@@ -1,0 +1,752 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_200027_which-libraries-linked-into-nintendo-wii-games-rvl",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html",
+   "aliases": [],
+   "sha256": "5408a0996b1636ea2192391c80f714dcd87f7c07081762aff8435352a7fde145",
+   "chars": 25000,
+   "snapshot": "5408a0996b1636ea2192391c80f714dcd87f7c07081762aff8435352a7fde145.txt",
+   "retrieved_at": "2026-11-11T19:01:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://eng.libretexts.org/Bookshelves/Computer_Science/Programming_and_Computation_Fundamentals/Computer_Science_from_the_Bottom_Up_(Wienand)/09:_Dynamic_Linking/9.04:_Working_with_libraries_and_the_linker",
+   "aliases": [],
+   "sha256": "264ba9ddac9472378d36ec3c46e7be414d88f04dec836ebb6a67b08bb925ec25",
+   "chars": 18956,
+   "snapshot": "264ba9ddac9472378d36ec3c46e7be414d88f04dec836ebb6a67b08bb925ec25.txt",
+   "retrieved_at": "2026-11-11T19:04:21+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://binary.ninja/2020/03/11/signature-libraries.html",
+   "aliases": [],
+   "sha256": "633bf3d53b1e76bbe2aced19e2ba967dda7f4ab8cb315e49f38fc720664e462b",
+   "chars": 22894,
+   "snapshot": "633bf3d53b1e76bbe2aced19e2ba967dda7f4ab8cb315e49f38fc720664e462b.txt",
+   "retrieved_at": "2026-11-11T19:04:29+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://linuxvox.com/blog/loading-multiple-shared-libraries-with-different-versions/",
+   "aliases": [],
+   "sha256": "4b87e557ed70174f7a2d532a11cfbfa98a1f0f716083238972f1828f61e37ca6",
+   "chars": 15324,
+   "snapshot": "4b87e557ed70174f7a2d532a11cfbfa98a1f0f716083238972f1828f61e37ca6.txt",
+   "retrieved_at": "2026-11-11T19:04:31+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://learn.microsoft.com/en-us/cpp/error-messages/tool-errors/linker-tools-error-lnk2038?view=msvc-170",
+   "aliases": [],
+   "sha256": "cfdc165dc91afd5d3b4c82838e6631bf009c95cc6d2351355a7ba75fe9f567a1",
+   "chars": 3781,
+   "snapshot": "cfdc165dc91afd5d3b4c82838e6631bf009c95cc6d2351355a7ba75fe9f567a1.txt",
+   "retrieved_at": "2026-11-11T19:04:41+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://recompsoftware.com/platforms/wii/",
+   "aliases": [],
+   "sha256": "7ac3eef240e9fa16ee4be75f507f1c1558abe3b5c680671dd20a60166c3d6777",
+   "chars": 6452,
+   "snapshot": "7ac3eef240e9fa16ee4be75f507f1c1558abe3b5c680671dd20a60166c3d6777.txt",
+   "retrieved_at": "2026-11-11T19:08:35+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.nme.com/news/gaming-news/github-connecting-devs-with-legal-resources-as-nintendo-takes-down-8535-projects-3753299",
+   "aliases": [],
+   "sha256": "ec83d1f4cb0cafb46f3b60b81336711611d2b3271561d2d3781821bc9a36e808",
+   "chars": 3606,
+   "snapshot": "ec83d1f4cb0cafb46f3b60b81336711611d2b3271561d2d3781821bc9a36e808.txt",
+   "retrieved_at": "2026-11-11T19:08:35+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://decomp.wiki/platforms/gamecube-wii",
+   "aliases": [],
+   "sha256": "7a1b8ceb03b669603db2a61e4ae94ad01c3701ba6cb1f7a678448d7934296ce0",
+   "chars": 27,
+   "snapshot": "7a1b8ceb03b669603db2a61e4ae94ad01c3701ba6cb1f7a678448d7934296ce0.txt",
+   "retrieved_at": "2026-11-11T19:08:35+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://kingy.ai/blog/ai-video-game-decompilation-legality/",
+   "aliases": [],
+   "sha256": "8887291c7a518aeb0a32a693306ca86227008e887f31859f292ab5e2b9c43bcf",
+   "chars": 21602,
+   "snapshot": "8887291c7a518aeb0a32a693306ca86227008e887f31859f292ab5e2b9c43bcf.txt",
+   "retrieved_at": "2026-11-11T19:08:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/gamecube-wii/",
+   "aliases": [],
+   "sha256": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f",
+   "chars": 22525,
+   "snapshot": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f.txt",
+   "retrieved_at": "2026-11-11T19:08:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://www.tbpndigest.com/story/2026-10-06/ai-powered-game-decompilation-is-going-viral-and-heading-straight-into-copyright-litigation",
+   "aliases": [],
+   "sha256": "40ab8146185923f1037c4b0bbf195634974baf3344b33a8a3906c9b0384bf446",
+   "chars": 4858,
+   "snapshot": "40ab8146185923f1037c4b0bbf195634974baf3344b33a8a3906c9b0384bf446.txt",
+   "retrieved_at": "2026-11-11T19:11:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://gamerant.com/nintendo-switch-emulators-dmca-takedown-notices/",
+   "aliases": [],
+   "sha256": "3e3ad814c688109bc62e0b8dcf09ddddd26b7206017e8f9ca6f105079f5a63ed",
+   "chars": 4658,
+   "snapshot": "3e3ad814c688109bc62e0b8dcf09ddddd26b7206017e8f9ca6f105079f5a63ed.txt",
+   "retrieved_at": "2026-11-11T19:11:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://heldgames.com/guides/emulation-legal-status-2026",
+   "aliases": [],
+   "sha256": "737244846fd3454832d9faef38ea48017a461a726c7448ea0ef27e19dba460f0",
+   "chars": 8136,
+   "snapshot": "737244846fd3454832d9faef38ea48017a461a726c7448ea0ef27e19dba460f0.txt",
+   "retrieved_at": "2026-11-11T19:11:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://www.ign.com/articles/take-two-reverse-engineered-gta-three-vice-city-fan-project-lawsuit",
+   "aliases": [],
+   "sha256": "8640004041aa32c3a44815168d9b82211f8f1a3840a6fefbfae2a21847202437",
+   "chars": 2846,
+   "snapshot": "8640004041aa32c3a44815168d9b82211f8f1a3840a6fefbfae2a21847202437.txt",
+   "retrieved_at": "2026-11-11T19:11:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://shattered.io/claude-game-clone-rule-legit-developers-troubleshooting-false-positives-2026/",
+   "aliases": [],
+   "sha256": "2f2b0bec99906c4d5a63e814e8dbea3938309fe34b8844ddfc7aee04ed164bf7",
+   "chars": 20782,
+   "snapshot": "2f2b0bec99906c4d5a63e814e8dbea3938309fe34b8844ddfc7aee04ed164bf7.txt",
+   "retrieved_at": "2026-11-11T19:11:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "system-prompt-reference"
+   ],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://www.developersdigest.tech/blog/change2task-repo-changes-to-coding-agent-tasks",
+   "aliases": [],
+   "sha256": "f24657c2526f67a6b2129d8c51a303a749bb148b67de89e909a58fd156fc1cf3",
+   "chars": 13298,
+   "snapshot": "f24657c2526f67a6b2129d8c51a303a749bb148b67de89e909a58fd156fc1cf3.txt",
+   "retrieved_at": "2026-11-11T19:11:37+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://www.anthropic.com/research/redesigning-source-control",
+   "aliases": [],
+   "sha256": "ca00f4915be0c6e02c65a8c5546b981d9c8edaec80c58ee4f7bad7b81717fd67",
+   "chars": 23094,
+   "snapshot": "ca00f4915be0c6e02c65a8c5546b981d9c8edaec80c58ee4f7bad7b81717fd67.txt",
+   "retrieved_at": "2026-11-11T19:11:37+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://en.wikipedia.org/wiki/Software_relicensing",
+   "aliases": [],
+   "sha256": "7de2b610083b86ebc064250a3c36029d7abebf8d2a0429e9d74031c3b77e8be7",
+   "chars": 19419,
+   "snapshot": "7de2b610083b86ebc064250a3c36029d7abebf8d2a0429e9d74031c3b77e8be7.txt",
+   "retrieved_at": "2026-11-11T19:11:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://medium.com/@rahulonrails/how-to-safely-clean-up-a-legacy-github-repository-without-losing-historical-code-b14ab3e1e1e2",
+   "aliases": [],
+   "sha256": "c2eb8596b520b7e33f5125172b467dfeaae1478c66299f3b28f25e9637dc2312",
+   "chars": 6673,
+   "snapshot": "c2eb8596b520b7e33f5125172b467dfeaae1478c66299f3b28f25e9637dc2312.txt",
+   "retrieved_at": "2026-11-11T19:11:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 1244,
+   "end": 1396,
+   "text": "Most optimizations are completely disabled at\n-O0\nor if an\n-O\nlevel is not set on the command line, even if individual\noptimization flags are specified.",
+   "sha256": "844be9b949e11e6415e0deadd982ad1df61cd574dfaca82c613635b6bd3219ec"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S1",
+   "start": 3344,
+   "end": 3398,
+   "text": "-O2\nturns on all optimization flags specified by\n-O1\n.",
+   "sha256": "c6a7369a8b69583a19e2301d60457df8168eb1dc1354d2be513a4240cde25352"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S1",
+   "start": 1450,
+   "end": 1599,
+   "text": "Depending on the target and how GCC was configured, a slightly different\nset of optimizations may be enabled at each\n-O\nlevel than\nthose listed here.",
+   "sha256": "6d625775ef844e026a4cd872b533e832ee522fb550c637b760f06497c5afb98c"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S1",
+   "start": 13751,
+   "end": 13914,
+   "text": "If all calls to a given function are integrated, and the function is\ndeclared\nstatic\n, then the function is normally not output as\nassembler code in its own right.",
+   "sha256": "aec198d429b2aea790f88a7d01efa13531b00ae047252bdc12aec84b747c898e"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S1",
+   "start": 16594,
+   "end": 16704,
+   "text": "Attempt to merge identical constants (string constants and floating-point\nconstants) across compilation units.",
+   "sha256": "9fe9330240f19ef41454cec865d5b14222694c7662e5366a92629b0498d7ef53"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S10",
+   "start": 4055,
+   "end": 4107,
+   "text": "The community cannot distribute CodeWarrior legally.",
+   "sha256": "ba533992cb9d7291a931abf40080eb28ca425405334b792e74c78c11a2b1d680"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S10",
+   "start": 17061,
+   "end": 17198,
+   "text": "The Dolphin SDK is shared across games. Once you match the SDK library for one game, you can reuse the matched functions for other games.",
+   "sha256": "fcfaf675a55d9c51d1d749a61c95dfa2279eed73a8c3345eeaafc1d380fee985"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S9",
+   "start": 16517,
+   "end": 16613,
+   "text": "An open-source label can license contributors’ rights; it cannot supply rights they do not hold.",
+   "sha256": "3f4f4fa8458be26a1701320711ab52377c4a62bea8c08b75fb22e32d0d40c0ae"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S6",
+   "start": 6306,
+   "end": 6404,
+   "text": "They publish code only, and the ones that need game data ask you to supply it from a copy you own.",
+   "sha256": "6042852a12fd7cd0ee4a776c7080efb791d981c7f60154d03294f2633beb0b27"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S9",
+   "start": 17994,
+   "end": 18125,
+   "text": "Contribution policies and licence permissions are also separate: permitted downstream reuse does not guarantee acceptance upstream.",
+   "sha256": "747538ffcc23c75d8e932f192cdb959981ee3afa8de1e599d1638cde42865c5d"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S10",
+   "start": 21406,
+   "end": 21466,
+   "text": "Some projects ban AI contributions. Check before submitting.",
+   "sha256": "1bd8dd16f5235ba79998f8cc4e72d602d55bdafdd8b7b6e218d8455aba2d87d7"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S14",
+   "start": 1164,
+   "end": 1396,
+   "text": "This project doesn't contain any Rockstar assets, either, so players that wish to use this reverse-engineered source code will actually need to have their own copy of GTA 3 or Vice City to create a port of the games using this code.",
+   "sha256": "a412b96226599c18e4c116f64f374f16faeee75163f5f4cd7f6cf8508f3eff69"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S14",
+   "start": 322,
+   "end": 450,
+   "text": "Take-Two Interactive is suing the creators of reverse-engineered Grand Theft Auto 3 and Grand Theft Auto Vice City fan projects.",
+   "sha256": "034740c2cf5821766531780d3814ad0d61e49a438f6ec12c53523beb55473eed"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S13",
+   "start": 2219,
+   "end": 2337,
+   "text": "On 17 August 2026, Nintendo filed seven DMCA notices at GitHub in a single day and removed more than 400 repositories.",
+   "sha256": "26365d248f81a5ed2b279ce356e204c847100432d25d5598d31b0cfaab792ed6"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S13",
+   "start": 2646,
+   "end": 2831,
+   "text": "Nintendo is not arguing that emulators infringe copyright. It is making a DMCA anti circumvention argument, claiming these emulators cannot work without defeating Nintendo's encryption.",
+   "sha256": "32c639daba692b3c5c497ea4156727319ee7084f52ce96fbf006360bc0854206"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S13",
+   "start": 2991,
+   "end": 3131,
+   "text": "Eden, Citron and the Ryujinx line do not appear anywhere in the August sweep, because they moved to self hosted repositories after February.",
+   "sha256": "dac1198056844e2dc5031fcb82e68079c1f790ff368d35acd29689e2d9e7e763"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S12",
+   "start": 2235,
+   "end": 2335,
+   "text": "The emulators that were served a takedown notice had only one day to comply with Nintendo's request.",
+   "sha256": "e1613ec0163c971f9ed7ba4032a3b54bf62c99fbd63991ffe1d4d5bfcbf3da25"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S11",
+   "start": 1936,
+   "end": 2023,
+   "text": "That protection evaporates the moment the decompiled code becomes a derivative product.",
+   "sha256": "4f918d6d3815e78369e013203e7f40491451f587d1d86577511a57afc39214d7"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S18",
+   "start": 947,
+   "end": 1142,
+   "text": "While in the\nfree and open-source\ndomain achieving 100% coverage of all authors is often impossible due to the many contributors involved, often it is assumed that a great majority is sufficient.",
+   "sha256": "9ca6adfebf7335298eaf9218f8c81769c8e0f4f4ce1a92616e5d3cd189ed5954"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S18",
+   "start": 5667,
+   "end": 5782,
+   "text": "In August 2016 approx. 90% of the authors could be reached and consented. In October 2017 the switch was finalized.",
+   "sha256": "0011ca5915d05dfd34eb60d4ae17e4fa2cc65cb357e8e57e9aa2263a97431102"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S18",
+   "start": 2517,
+   "end": 2712,
+   "text": "After VLC was removed from\nApple App Store\nat the beginning of 2011, in October 2011 the VLC project re-licensed the VLC library part from the GPLv2 to the LGPLv2 to achieve better compatibility.",
+   "sha256": "c171973c35758b70475b3c0e6818ec316c414ce55efd3d7f6d4e51351c42e477"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S18",
+   "start": 11588,
+   "end": 11620,
+   "text": "Johnston, Casey (July 18, 2013).",
+   "sha256": "fff1f273ad53001592b2e81287dcefdb62abf1fa0126010732a4393838c20fbe"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S19",
+   "start": 913,
+   "end": 1021,
+   "text": "Removing code without a proper baseline can make troubleshooting, audits, and rollback activities difficult.",
+   "sha256": "cab9eb99654e973334a096f04edfb50a6aaa31df7e1fe5351c142296093eb498"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S19",
+   "start": 6217,
+   "end": 6361,
+   "text": "By establishing these safeguards before refactoring, teams can modernize large repositories without losing access to historical implementations.",
+   "sha256": "8768ae323908e45b0a0059c6986e7a8e7cdfb2a53e7b56c49bee49153904d338"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "The compiler's optimization level changes which transformation passes run, so one source file produces materially different instruction sequences at no optimization, at the first optimization level, and at higher levels. Matching a library inside an executable therefore requires knowing, or searching across, the level it was built with, because a mismatch looks like a different library version.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the same library source compile to different bytes depending on the compiler build, optimization flags and SDK revision, and how do decompilation projects use that to tell which exact library version is inside a given game executable?",
+    "capability": "You can stop assuming that identical source code yields identical machine code, and instead treat the compiler's optimization level as a variable that must be pinned before any binary comparison is trusted."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Which optimizations are active at each level depends on the target and how the compiler was configured, and the inlining size limit is measured in an abstract unit whose meaning may change from one release to another. This means that even with identical flags, two compiler releases can inline or lay out code differently, so byte-level differences can separate toolchain generations and thereby narrow down the library revision.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the same library source compile to different bytes depending on the compiler build, optimization flags and SDK revision, and how do decompilation projects use that to tell which exact library version is inside a given game executable?",
+    "capability": "You can expect that a different build of the same compiler will emit different bytes for the same source, so a fingerprint of the compiler build is itself usable evidence of when and with which toolchain a library was built."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "When several files are compiled together, the compiler uses information from all of them, and it can inline functions into their callers and then omit the standalone copy entirely, or merge identical constants across compilation units. A library function may thus be absent as a distinct unit in the final executable, so a version check that relies on finding each function intact can miss or misread it.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4",
+    "E5"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the same library source compile to different bytes depending on the compiler build, optimization flags and SDK revision, and how do decompilation projects use that to tell which exact library version is inside a given game executable?",
+    "capability": "You can judge that matching a library across a whole program is less reliable than matching it in isolation, since the compiler can merge, inline and discard code using cross-file knowledge."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Wii and GameCube games share the Dolphin SDK, and matching it once lets every later game reuse those functions, so only game-specific code remains; the Melee project accelerated this way. But CodeWarrior cannot be legally distributed, so projects each document their own toolchain setup and the community is decompiling the compiler itself (mweppc) to escape the dependency. Sharing reconstructed SDK source across projects is technically encouraged, while the build toolchain stays a per-project legal gray zone.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6",
+    "E7"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What do the licensing terms, contributor rules and takedown history of Wii decompilation projects say about whether reconstructed Nintendo SDK and middleware source can be shared and reused across projects, and where do they disagree?",
+    "capability": "You can plan a reuse strategy around a matched shared SDK layer, accepting that the compiler toolchain it depends on is a separate, legally unresolved dependency."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Legal analysis in the contents says an open-source label can only license rights the contributor holds, requiring users to supply their own disc does not automatically clear a package that distributes translated game code, and AI generation adds no exception. Projects nonetheless rely on exactly these defenses, publishing code only and asking users to supply game data. Settlements such as re3/reVC and Yuzu are not rulings, so no court has settled whether reconstructed source is shareable.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8",
+    "E9"
+   ],
+   "source_ids": [
+    "S6",
+    "S9"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What do the licensing terms, contributor rules and takedown history of Wii decompilation projects say about whether reconstructed Nintendo SDK and middleware source can be shared and reused across projects, and where do they disagree?",
+    "capability": "You can stop assuming that a permissive open-source license or a 'bring your own disc' model makes reconstructed Nintendo code safe to reuse, and instead budget for rights risk at the distribution step."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Projects disagree sharply on AI contributions: N64Recomp prohibits them, RPCS3 permits them with disclosure, and the Wii decomp list shows many projects labeled AI-assisted or AI-generated alongside human-led ones. The GameCube/Wii wiki warns that some projects ban AI contributions, and permitted downstream reuse does not guarantee upstream acceptance. Moving reconstructed code between Wii projects therefore carries a provenance risk that licenses alone do not resolve.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10",
+    "E11"
+   ],
+   "source_ids": [
+    "S9",
+    "S10"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What do the licensing terms, contributor rules and takedown history of Wii decompilation projects say about whether reconstructed Nintendo SDK and middleware source can be shared and reused across projects, and where do they disagree?",
+    "capability": "You can treat contributor policy as a project-by-project gate, since code that one project accepts may be barred upstream at another, and check it before pooling work across projects."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "In the 2021 Take-Two case over the GTA 3 and Vice City reverse-engineering project (re3/ReVC), the project contained no Rockstar assets and users needed their own game copy, yet Take-Two went after the reconstructed code as 'derivative GTA source code'. It escalated from a GitHub takedown to a California lawsuit naming 14 programmers, partly after three of them filed counter-notifications. Filing a counter-notice can therefore turn a takedown into litigation.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happened to game decompilation or reverse-engineering projects that received takedown notices or legal threats from the rights holder, and what exactly did the notices target: the reconstructed source, the build tooling, or the distributed game assets?",
+    "capability": "You can stop assuming a reverse-engineered code project is safe because it ships no copyrighted assets, and instead plan for rights holders to go after the reconstructed code itself."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "On 17 August 2026 Nintendo filed seven DMCA notices at GitHub in one day and removed over 400 repositories. The largest notice covered 311 repositories in the Suyu fork network, because GitHub processes a notice against an entire network once it passes 100 repositories. The theory was anti-circumvention (the emulators cannot work without defeating Nintendo's encryption), not copyright infringement by the code itself. Eden, Citron and Ryujinx escaped because they had moved to self-hosted repositories after February.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14",
+    "E15",
+    "E16"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happened to game decompilation or reverse-engineering projects that received takedown notices or legal threats from the rights holder, and what exactly did the notices target: the reconstructed source, the build tooling, or the distributed game assets?",
+    "capability": "You can judge the exposure of a reverse-engineering or emulation project by its legal theory and hosting platform: anti-circumvention claims reach whole fork networks on GitHub, while self-hosting avoids platform takedowns."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Nintendo's February 2026 notices gave Switch emulator repositories on GitHub (Citron, Eden, Kenji-X) one day to comply or be disabled, and affected only GitHub-hosted copies. A commentary source says viral decompilation-based mods of games such as GTA 5 are removed within hours, while the decompilation act itself is argued to be protected as fair use. The legal exposure sits in shipping a derivative product, not in the analysis.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17",
+    "E18"
+   ],
+   "source_ids": [
+    "S11",
+    "S12"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happened to game decompilation or reverse-engineering projects that received takedown notices or legal threats from the rights holder, and what exactly did the notices target: the reconstructed source, the build tooling, or the distributed game assets?",
+    "capability": "You can expect enforcement to be fast and to hit the distributed artifact rather than the underlying technique, so you can plan for a very short response window and for backups."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Relicensing is a negotiated, slow process, and projects treat near-complete contributor consent as sufficient rather than unanimous. Mozilla reportedly relied on about 95% author coverage, mpv started with 95%+ consent in 2015, reached roughly 90% of authors by August 2016 and only finalized in October 2017, and PoDoFo's April 2026 change took a multi-year effort. So a license change on something you imported is a multi-year, foreseeable event, not a sudden one, and you can watch it coming.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 2015, 2026, 95%",
+   "spans": [
+    "E19",
+    "E20"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a project's own codebase and release history when a matched reconstruction it imported is later removed by a takedown, relicensed, or abandoned by its maintainers?",
+    "capability": "You can stop assuming a relicensing of code you depend on needs everyone's sign-off, and instead judge how exposed you are by how much of the code's authorship has actually consented."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "License incompatibility has blocked real product distribution: VLC was pulled from the Apple App Store in early 2011 and only returned in July 2013, about 30 months later, after relicensing its library and application. Projects that want to stay shippable relicense proactively, so a release channel can be lost for years while a license fix is negotiated.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 30",
+   "spans": [
+    "E21",
+    "E22"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a project's own codebase and release history when a matched reconstruction it imported is later removed by a takedown, relicensed, or abandoned by its maintainers?",
+    "capability": "You can treat a license change on a dependency as a distribution risk you plan around, and stop assuming that a licensing problem will quietly break your shipping channel."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "The practical guard against losing the ability to see or reproduce old code is a permanent snapshot marker plus a separate untouched archive copy created before deletions, with a written rollback plan. This keeps troubleshooting, audits and rollback possible even after the live code has moved on, which matters when a dependency's source or license later changes underneath you.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E23",
+    "E24"
+   ],
+   "source_ids": [
+    "S19"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a project's own codebase and release history when a matched reconstruction it imported is later removed by a takedown, relicensed, or abandoned by its maintainers?",
+    "capability": "You can make your own codebase safe against upstream removal or deletion by freezing a labeled snapshot and an untouched archive copy before any cleanup or replacement, instead of relying on live history."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 19,
+  "lineages": 19,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 3,
+  "claims": 12,
+  "claims_with_verified_span": 12,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 24,
+  "quotes_rejected": 0,
+  "ledger_capped": 2,
+  "quotes_reattributed": 0,
+  "claims_persisted": 9,
+  "persisted_with_verified_span": 9,
+  "persisted_verified_span_rate": 1.0
+ }
+}

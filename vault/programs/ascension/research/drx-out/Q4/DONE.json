@@ -1,0 +1,12 @@
+{
+ "q": "Q4",
+ "gap": "G29",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 528.5,
+ "artifacts": [
+  "2026-11-11_202918_how-does-the-metrowerks-codewarrior-powerpc-compil.ledger.json",
+  "2026-11-11_202918_how-does-the-metrowerks-codewarrior-powerpc-compil.md",
+  "how-does-the-metrowerks-codewarrior-powerpc-compil.raw.jsonl"
+ ]
+}

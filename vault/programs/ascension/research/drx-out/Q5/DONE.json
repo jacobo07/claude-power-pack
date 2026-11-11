@@ -1,0 +1,12 @@
+{
+ "q": "Q5",
+ "gap": "G09",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 522.2,
+ "artifacts": [
+  "2026-11-11_203800_how-do-gamecube-wii-decompilation-projects-build-o.ledger.json",
+  "2026-11-11_203800_how-do-gamecube-wii-decompilation-projects-build-o.md",
+  "how-do-gamecube-wii-decompilation-projects-build-o.raw.jsonl"
+ ]
+}

@@ -1,0 +1,1384 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_203800_how-does-decomp-toolkit-dtk-analyse-a-wii-gamecube",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://github.com/encounter/decomp-toolkit",
+   "aliases": [],
+   "sha256": "4f2d987de92ec88579d9da9d33bcf4004af13d0594088db99a60237f1738def0",
+   "chars": 14946,
+   "snapshot": "4f2d987de92ec88579d9da9d33bcf4004af13d0594088db99a60237f1738def0.txt",
+   "retrieved_at": "2026-11-11T19:38:18+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://awesomerea.org/resources/decomp-toolkit/",
+   "aliases": [],
+   "sha256": "9b9493beef6ffffce86474dde5be136a24eebf78ebef0329d9e8cadd1a40af5d",
+   "chars": 2681,
+   "snapshot": "9b9493beef6ffffce86474dde5be136a24eebf78ebef0329d9e8cadd1a40af5d.txt",
+   "retrieved_at": "2026-11-11T19:38:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://celestialamber.github.io/GC-Wii-Decomp-Splitting-Guide/",
+   "aliases": [],
+   "sha256": "fd31ff0921d78817d25f80029f5ebd995d33e684bd7e7d3090ca8d917ae645cf",
+   "chars": 5207,
+   "snapshot": "fd31ff0921d78817d25f80029f5ebd995d33e684bd7e7d3090ca8d917ae645cf.txt",
+   "retrieved_at": "2026-11-11T19:38:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://www.linkedin.com/pulse/same-code-different-program-how-link-order-silently-changes-el-sayed-phbje",
+   "aliases": [],
+   "sha256": "e1831a0c53fca63dc78ef975f66783c7510b5d933813c173003231f058d1299f",
+   "chars": 12304,
+   "snapshot": "e1831a0c53fca63dc78ef975f66783c7510b5d933813c173003231f058d1299f.txt",
+   "retrieved_at": "2026-11-11T19:39:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://salivity.github.io/cpp/article/how-linkers-resolve-weak-symbols-in-c",
+   "aliases": [],
+   "sha256": "b49b454d932d11aefe1e2d9b6156e2575c5b1b48812529540d00a03d28052a30",
+   "chars": 3383,
+   "snapshot": "b49b454d932d11aefe1e2d9b6156e2575c5b1b48812529540d00a03d28052a30.txt",
+   "retrieved_at": "2026-11-11T19:39:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://en.wikipedia.org/wiki/Weak_symbol",
+   "aliases": [],
+   "sha256": "ce149a2b65605716baa43a7976a3677e37bac2f18f830347075bd77da9cb8b37",
+   "chars": 10186,
+   "snapshot": "ce149a2b65605716baa43a7976a3677e37bac2f18f830347075bd77da9cb8b37.txt",
+   "retrieved_at": "2026-11-11T19:39:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://docs.hex-rays.com/8.4/user-guide/decompiler/failures",
+   "aliases": [],
+   "sha256": "b049a193286fe06f354f4735da212aa2afb6ece3c723f4c72d691f1514515167",
+   "chars": 16656,
+   "snapshot": "b049a193286fe06f354f4735da212aa2afb6ece3c723f4c72d691f1514515167.txt",
+   "retrieved_at": "2026-11-11T19:39:49+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://hex-rays.com/blog/igors-tip-of-the-week-27-fixing-the-stack-pointer",
+   "aliases": [],
+   "sha256": "d4ddbc11de58a83e7a96308c90d87f0a405a8e2e37c11c0981f940c59a2c574b",
+   "chars": 5331,
+   "snapshot": "d4ddbc11de58a83e7a96308c90d87f0a405a8e2e37c11c0981f940c59a2c574b.txt",
+   "retrieved_at": "2026-11-11T19:39:49+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://en.wikipedia.org/wiki/Decompiler",
+   "aliases": [],
+   "sha256": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d",
+   "chars": 15862,
+   "snapshot": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d.txt",
+   "retrieved_at": "2026-11-11T19:39:49+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "http://ebook.pldworld.com/_semiconductors/Motorola/Embedded_Learning_Center/ELC/CDV130CT/Rev.1/module16234/print_F_CW_Linker.pdf",
+   "aliases": [],
+   "sha256": "19156bf3cbec561f0a8310133a267e424ca662c35cbfc686a11926b684e9f7ca",
+   "chars": 25000,
+   "snapshot": "19156bf3cbec561f0a8310133a267e424ca662c35cbfc686a11926b684e9f7ca.txt",
+   "retrieved_at": "2026-11-11T19:40:48+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://en.wikipedia.org/wiki/Relocation_%28computing%29",
+   "aliases": [],
+   "sha256": "575dd3b25796ba640d7acef91296660c55297aeb3e6fd1bb2a47ee7c76d57c40",
+   "chars": 19652,
+   "snapshot": "575dd3b25796ba640d7acef91296660c55297aeb3e6fd1bb2a47ee7c76d57c40.txt",
+   "retrieved_at": "2026-11-11T19:40:48+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://people.eecs.berkeley.edu/~necula/cil/merger.html",
+   "aliases": [],
+   "sha256": "d45aec81d8b6d595e1b02b347fb449472edeebfc5d80edb597f185a898c007a9",
+   "chars": 4651,
+   "snapshot": "d45aec81d8b6d595e1b02b347fb449472edeebfc5d80edb597f185a898c007a9.txt",
+   "retrieved_at": "2026-11-11T19:41:31+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://www.geeksforgeeks.org/c/compiling-a-c-program-behind-the-scenes/",
+   "aliases": [],
+   "sha256": "ea0d35723bb2abd03b69a5aef295ef06511c2f1bb4f5af69b6007521f3a481f3",
+   "chars": 7475,
+   "snapshot": "ea0d35723bb2abd03b69a5aef295ef06511c2f1bb4f5af69b6007521f3a481f3.txt",
+   "retrieved_at": "2026-11-11T19:41:31+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://nhimg.org/faq/what-should-security-teams-do-when-source-code-and-the-shipped-extension-do-not/",
+   "aliases": [],
+   "sha256": "94aef61c00fad14f209741cd3c686466f0ac4e404b4a4d0734f5a08d36944669",
+   "chars": 7485,
+   "snapshot": "94aef61c00fad14f209741cd3c686466f0ac4e404b4a4d0734f5a08d36944669.txt",
+   "retrieved_at": "2026-11-11T19:42:22+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://nhimg.org/faq/how-do-security-teams-know-whether-a-file-serving-boundary-is-actually-working/",
+   "aliases": [],
+   "sha256": "fe60cd40f16e354a99f08739005e14be20a6bdfd908b3b9d4fcd6d3f9b9e2981",
+   "chars": 7992,
+   "snapshot": "fe60cd40f16e354a99f08739005e14be20a6bdfd908b3b9d4fcd6d3f9b9e2981.txt",
+   "retrieved_at": "2026-11-11T19:42:22+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://techcommunity.microsoft.com/discussions/microsoftteams/links-to-files-og-reorganizing-structure-within-teams-/2173625",
+   "aliases": [],
+   "sha256": "9f35333069ec616fe9ceb7bf0597984a27bb4a49fb3079e1fc34cedc765c1892",
+   "chars": 976,
+   "snapshot": "9f35333069ec616fe9ceb7bf0597984a27bb4a49fb3079e1fc34cedc765c1892.txt",
+   "retrieved_at": "2026-11-11T19:42:22+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://learn.microsoft.com/en-us/cpp/build/reference/opt-optimizations?view=msvc-170",
+   "aliases": [],
+   "sha256": "d3972082fd48d8668bc0b9705c038cbc0f4bfaac32f4491f4eeed68769479bf2",
+   "chars": 7015,
+   "snapshot": "d3972082fd48d8668bc0b9705c038cbc0f4bfaac32f4491f4eeed68769479bf2.txt",
+   "retrieved_at": "2026-11-11T19:42:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc-10.2.0/gcc/Optimize-Options.html",
+   "aliases": [],
+   "sha256": "dbed44adfa774925cbfbac9c0944099174221cfc555331baf284685e790c9f41",
+   "chars": 25000,
+   "snapshot": "dbed44adfa774925cbfbac9c0944099174221cfc555331baf284685e790c9f41.txt",
+   "retrieved_at": "2026-11-11T19:42:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc-3.3.1/gcc/Optimize-Options.html",
+   "aliases": [],
+   "sha256": "b190715581c7600a4457c5849d9f7198c2bf29b490b29edfb3a24d5840e7dab7",
+   "chars": 25000,
+   "snapshot": "b190715581c7600a4457c5849d9f7198c2bf29b490b29edfb3a24d5840e7dab7.txt",
+   "retrieved_at": "2026-11-11T19:42:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/matching-decomp/",
+   "aliases": [],
+   "sha256": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250",
+   "chars": 25000,
+   "snapshot": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250.txt",
+   "retrieved_at": "2026-11-11T19:43:38+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://github.com/topics/matching-decompilation",
+   "aliases": [],
+   "sha256": "c4bd9af0164fb14e9b0184f9ba87e824f0537c3e9d7f56d5b4f1e5fad1af9375",
+   "chars": 6884,
+   "snapshot": "c4bd9af0164fb14e9b0184f9ba87e824f0537c3e9d7f56d5b4f1e5fad1af9375.txt",
+   "retrieved_at": "2026-11-11T19:43:38+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://github.com/HectorBailey/byte-tactics",
+   "aliases": [],
+   "sha256": "ce7671c90db77adde4365dc0c6a07d0d60020aca0d47902a131de2780a540920",
+   "chars": 11800,
+   "snapshot": "ce7671c90db77adde4365dc0c6a07d0d60020aca0d47902a131de2780a540920.txt",
+   "retrieved_at": "2026-11-11T19:43:38+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://braindetox.kr/en/posts/ai_agent_game_decompilation_byte_match_judge_2026.html",
+   "aliases": [],
+   "sha256": "db6190fa40d59804c2f72da61deb76380bd8560b324816d4497c669cf24e3a4e",
+   "chars": 25000,
+   "snapshot": "db6190fa40d59804c2f72da61deb76380bd8560b324816d4497c669cf24e3a4e.txt",
+   "retrieved_at": "2026-11-11T19:43:38+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://github.com/SamidyFR/Game-Decompilations",
+   "aliases": [],
+   "sha256": "902971f3b45b6923245a642fb4a1cfb9450adb0929e2bf6bfd04462ff3d928ed",
+   "chars": 16984,
+   "snapshot": "902971f3b45b6923245a642fb4a1cfb9450adb0929e2bf6bfd04462ff3d928ed.txt",
+   "retrieved_at": "2026-11-11T19:44:27+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S24"
+  },
+  {
+   "source_id": "S25",
+   "url": "https://x.com/banteg/status/2053557114682085431",
+   "aliases": [],
+   "sha256": "e8e9daf78de7c1f96df0af0623dd23e6d1987bad652f2ed467300c5a7c18211a",
+   "chars": 3744,
+   "snapshot": "e8e9daf78de7c1f96df0af0623dd23e6d1987bad652f2ed467300c5a7c18211a.txt",
+   "retrieved_at": "2026-11-11T19:44:27+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S25"
+  },
+  {
+   "source_id": "S26",
+   "url": "https://epstein-data.com/reports/overview/FINAL_INVESTIGATION_REPORT.html",
+   "aliases": [],
+   "sha256": "74db4cb27536382b9e402953d607ae402ccf324ea8483b6689d29661588f7a60",
+   "chars": 25000,
+   "snapshot": "74db4cb27536382b9e402953d607ae402ccf324ea8483b6689d29661588f7a60.txt",
+   "retrieved_at": "2026-11-11T19:44:27+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S26"
+  },
+  {
+   "source_id": "S27",
+   "url": "https://github.com/nicodlz/starcraft-match",
+   "aliases": [],
+   "sha256": "92c1a2df09923a29cc9ce28c57b7ec6eed93b405fcdebde50e6769cb05d8fac7",
+   "chars": 18361,
+   "snapshot": "92c1a2df09923a29cc9ce28c57b7ec6eed93b405fcdebde50e6769cb05d8fac7.txt",
+   "retrieved_at": "2026-11-11T19:44:52+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S27"
+  },
+  {
+   "source_id": "S28",
+   "url": "https://www.tomshardware.com/tech-industry/artificial-intelligence/dev-used-ai-agents-and-more-than-500-billion-tokens-to-rebuild-call-of-duty-modern-warfare-2s-source-code-83-percent-of-the-2009-shooters-functions-now-match-the-original-byte-for-byte",
+   "aliases": [],
+   "sha256": "2c0ebd38586af9c20ef327ee4cc9c1e5b11783a37bc8fbee5f571c71bdfbd314",
+   "chars": 13665,
+   "snapshot": "2c0ebd38586af9c20ef327ee4cc9c1e5b11783a37bc8fbee5f571c71bdfbd314.txt",
+   "retrieved_at": "2026-11-11T19:44:52+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "role-reassignment"
+   ],
+   "lineage": "S28"
+  },
+  {
+   "source_id": "S29",
+   "url": "https://www.youtube.com/watch?v=Pl7ThC4PiVA",
+   "aliases": [],
+   "sha256": "80326d956dd0291ca1da9e51672534e2f9fb6e1a0091a80d9a19b76b4f743561",
+   "chars": 288,
+   "snapshot": "80326d956dd0291ca1da9e51672534e2f9fb6e1a0091a80d9a19b76b4f743561.txt",
+   "retrieved_at": "2026-11-11T19:44:52+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S29"
+  },
+  {
+   "source_id": "S30",
+   "url": "https://gambiconf.substack.com/p/starting-a-decompilation-project",
+   "aliases": [],
+   "sha256": "dce9de5eb87c2c3f7362ad549216b98cd8a978ee696c68083344d7035eddf671",
+   "chars": 25000,
+   "snapshot": "dce9de5eb87c2c3f7362ad549216b98cd8a978ee696c68083344d7035eddf671.txt",
+   "retrieved_at": "2026-11-11T19:44:52+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S30"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 3823,
+   "end": 3912,
+   "text": "With some manual tweaking (mainly in data), this should generate fully-shiftable objects.",
+   "sha256": "5b6692e6e48d7c973b5eb584808873d8a1903378317bb57ca2b0ca661866bbd0"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S3",
+   "start": 3546,
+   "end": 3723,
+   "text": "Once you’ve separated the code into the different libraries you’ve identified in the code, the next step is to split them into all the separate files the code was originally in.",
+   "sha256": "5d7e95499b71370e0ebf17c2b1d92717cc9a6022861f1aaa025d0a64cea3f66a"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S3",
+   "start": 4536,
+   "end": 4766,
+   "text": "To start with though, you can just treat the sinit and any functions it uses as file boundaries, splitting the code at those points. However, it’s important to note that not all files/translation units will have an sinit function.",
+   "sha256": "d52f5d579fb63e585f90743be83392fc9a62ce4af3910112a0594e6057ee3347"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S3",
+   "start": 131,
+   "end": 295,
+   "text": "If the game you are decompiling has a symbol map or an .elf file, or if a very similar game code wise has one of the two, you probably don’t need to use this guide.",
+   "sha256": "b8ca59ae829adf776b08feba0a34c21472a279f4b64daef988f29748e72df392"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S4",
+   "start": 1366,
+   "end": 1454,
+   "text": "Both builds succeed with no errors or warnings, and they produce two different programs.",
+   "sha256": "75b54ebc67f33c9448565fd0d228f5a0328b68d42039a3591a812951bc63f164"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S5",
+   "start": 2506,
+   "end": 2599,
+   "text": "It retains the first COMDAT group it encounters and discards all\nsubsequent duplicate groups.",
+   "sha256": "6f4f74c6ae9c746219a929d2e76c8b7e91ffee5353585fdaf1accd00d7fac001"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S4",
+   "start": 4700,
+   "end": 4828,
+   "text": "It's the kind of bug that appears in a Debug build, disappears in Release, and comes back when someone reorders the source list.",
+   "sha256": "de5db0bb774f123fc62be73c18d3bb4c07d9cddf64a4a7e97faf1b097eea08a5"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S5",
+   "start": 3126,
+   "end": 3273,
+   "text": "If\ntwo definitions differ—such as through different preprocessor flags or\ndiffering macro values in headers—the linker still picks one\narbitrarily.",
+   "sha256": "9aa8aeef22ea22ed6ea085b17b03585f592648a25ae0eae39685d8933a1735fd"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S4",
+   "start": 5217,
+   "end": 5326,
+   "text": "The linker only takes an object out of an archive when that object resolves a symbol that is still undefined.",
+   "sha256": "25ebc3d16173cc751b179543ba501677ed43ba6b6263be08dfd66f3827cfd5b8"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S6",
+   "start": 7578,
+   "end": 7835,
+   "text": "Using weak symbols in static libraries has other semantics than in shared ones, i.e. with a\nstatic library\nthe symbol lookup stops at the first symbol – even if it is just weak and an object file with a strong symbol is also included in the library archive.",
+   "sha256": "85e89e59e5ce5e128a46d67c1b11441dfd1fa3c90d2ba6fc073e263e71540a4d"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S8",
+   "start": 3852,
+   "end": 3896,
+   "text": "Fix just the place(s) where things go wrong.",
+   "sha256": "c553e2d635f06cc77dd3dc9c6ddfe2cbf985ae3b3f31159ae0802b91adb3d11c"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S8",
+   "start": 4180,
+   "end": 4290,
+   "text": "If the same function called from multiple places causes stack unbalance issues, edit the function’s properties",
+   "sha256": "a985f5f21b677d302ba50834410007b5d8860a7b2bc59701df79949e219c70f6"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S8",
+   "start": 1875,
+   "end": 1959,
+   "text": "the values on both  ends of a jump (conditional or unconditional) should be the same",
+   "sha256": "a2a34329fa018a54664a4989d7c24d74cc8b544860bb4779ae514cc7eff6a520"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S7",
+   "start": 14136,
+   "end": 14177,
+   "text": "A wrong type can wreak havoc very easily.",
+   "sha256": "ec17b02f3f467e07797afc5e541c9993fdf50de868d6cad5d776a1b2e784ea82"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S8",
+   "start": 4377,
+   "end": 4531,
+   "text": "This simple example shows that even having debug symbols does not guarantee 100% correct results and why giving override options to the user is important.",
+   "sha256": "6544b9d37116c1eb7a3c85bf58a31ae549ee1b507551355047bb2ccab887361f"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S11",
+   "start": 4261,
+   "end": 4331,
+   "text": "Merging all segments of common type into a single segment of that type",
+   "sha256": "81b8346e6c615dfd498c05f5ee24faa753f3d9108511550c712f2f3a2a39d685"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S11",
+   "start": 4332,
+   "end": 4494,
+   "text": "Assigning non-overlapping run-time addresses to each segment and each symbol, assigning all code (functions) and data (global variables) unique run-time addresses",
+   "sha256": "bf03bf47b898235e1e9043e61ccf23e6cbda70a650a452a7f639855c343f7df5"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S11",
+   "start": 4261,
+   "end": 4331,
+   "text": "Merging all segments of common type into a single segment of that type",
+   "sha256": "81b8346e6c615dfd498c05f5ee24faa753f3d9108511550c712f2f3a2a39d685"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S12",
+   "start": 1542,
+   "end": 1742,
+   "text": "File-scope names (\nstatic\nglobals, names of types defined with\ntypedef\n, and structure/union/enumeration tags) are given new names if they\nconflict with declarations from previously processed sources.",
+   "sha256": "2e49c2a50fe4796616bd64b60fd401eb366f7fee2478a892d376ac49bcc9407b"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S12",
+   "start": 2009,
+   "end": 2163,
+   "text": "Equality of globals is detected by\ncomparing the printed form of the global (ignoring the line number directives)\nafter the body has been alpha-converted.",
+   "sha256": "6940fa18d65345680f94a21984e3cec4b5db897214d731dc821ef5dd2a726332"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S12",
+   "start": 643,
+   "end": 781,
+   "text": "When\ninvoked to compile a source the merger just preprocesses the source and saves\nthe result using the name of the requested object file.",
+   "sha256": "9335e03325aea6abdb215b3f25002b7ed63a8462f9f6a5c3f0094907211ac617"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S12",
+   "start": 1127,
+   "end": 1224,
+   "text": "Note that arguments that affect the compilation or\nlinking must be the same for all source files.",
+   "sha256": "c75b4669dd8aed4055e105177426ea82c528295980bc3d573c04006a48a744ce"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S14",
+   "start": 467,
+   "end": 587,
+   "text": "Teams should fail the approval and investigate the packaged binary, because the compiled artifact is what actually runs.",
+   "sha256": "69e2b802e50932c9c6fd4ecb626f15263a3c23ded95478700069d65812d171a1"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S14",
+   "start": 4494,
+   "end": 4609,
+   "text": "If the binary is signed but the source does not reproduce it, the signature alone is not enough to establish trust.",
+   "sha256": "2941129093bcabf30df30faa7cabc31ded68d3b951a39222c39f4f1c1076e85f"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S14",
+   "start": 1810,
+   "end": 2005,
+   "text": "In practice, many security teams discover the mismatch only after an extension has already touched source, tokens, or build systems, rather than through intentional review of the signed artifact.",
+   "sha256": "837b615137de8df2cb5c32647adc0fbb4ffe82fb8c8a50a93d7cdbab4cb04b6c"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S15",
+   "start": 1791,
+   "end": 1970,
+   "text": "In practice, many security teams discover a boundary failure only after a weird filename has already been accepted in production, rather than through intentional negative testing.",
+   "sha256": "8ba4a820113c136293d8fccbe01c23905ce7bf160d057fe5fba6ba712761e330"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S15",
+   "start": 3032,
+   "end": 3161,
+   "text": "Test with both allow and deny cases, because a boundary that only blocks known-bad examples may still permit equivalent rewrites.",
+   "sha256": "d745288ee64e10f111252310f60710542b3185b71de6cb89582b77acb2d88e30"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S17",
+   "start": 2718,
+   "end": 3039,
+   "text": "However, because\n/OPT:ICF\ncan merge identical data or functions, it can change the function names that appear in stack traces. It can also make it impossible to set breakpoints in certain functions or to examine some data in the debugger, and can take you into unexpected functions when you single-step through your code.",
+   "sha256": "cb03b5fdd279799f3f266c6aa46fd7d78db096096ff561300debcede9c487bde"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S18",
+   "start": 13599,
+   "end": 13800,
+   "text": "Languages like C or C++ require each variable, including multiple\ninstances of the same variable in recursive calls, to have distinct locations,\nso using this option results in non-conforming\nbehavior.",
+   "sha256": "0be71f5a64e332d8203c00e5c2db0197b6457a55419e2ad63ae28c07636c295a"
+  },
+  {
+   "span_id": "E30",
+   "source_id": "S17",
+   "start": 5099,
+   "end": 5298,
+   "text": "When optimization is enabled, it can result in a faster link time overall, as the small additional cost in analysis may be more than offset by the time savings in linker passes over smaller binaries.",
+   "sha256": "9be25d922ae6ec4ad100e8d173e9a0834be10c156dd0be62f6ab01e5525ea919"
+  },
+  {
+   "span_id": "E31",
+   "source_id": "S23",
+   "start": 6961,
+   "end": 7103,
+   "text": "Constant progress, with the game starting, the menu rendering and maps loading, led the author to believe the decompilation quality was great.",
+   "sha256": "d1bdcf5d30398fe8905652d753865c60b3fd93c0e6dec0f0029d975d237fb2b1"
+  },
+  {
+   "span_id": "E32",
+   "source_id": "S23",
+   "start": 16143,
+   "end": 16277,
+   "text": "The remaining functions were reworked repeatedly. Their bytes still do not match, but the author believes their semantics are correct.",
+   "sha256": "e04478d089fcbd6722699c55e465878745cc6f7647710fb62ff9510e34bc8992"
+  },
+  {
+   "span_id": "E33",
+   "source_id": "S23",
+   "start": 15829,
+   "end": 15929,
+   "text": "The source’s example is identical COMDAT folding in the linker, which cannot be reliably reproduced.",
+   "sha256": "18f3e9cae471f98e9e14b34d461ae020325b343b36213c9ad36abba1b9b484f2"
+  },
+  {
+   "span_id": "E34",
+   "source_id": "S25",
+   "start": 71,
+   "end": 220,
+   "text": "it compiles the reconstructed code with the same metrowerks compiler with the same, flags, link order, and linker behavior used by the original game.",
+   "sha256": "b40e343963a60d0c34f32da6c4021eb4d7c20a396431a4ee9edc0b2dec093526"
+  },
+  {
+   "span_id": "E35",
+   "source_id": "S25",
+   "start": 964,
+   "end": 1043,
+   "text": "the final check is stricter: the rebuilt files are hashed against the original.",
+   "sha256": "51082316b380d13ad2ea051c3507b36d9fa3568f6d5d45aa320af3e3933acf6c"
+  },
+  {
+   "span_id": "E36",
+   "source_id": "S25",
+   "start": 1156,
+   "end": 1330,
+   "text": "nonmatching files are still useful for understanding the game, but the default build links the original extracted object for those files so progress can happen incrementally.",
+   "sha256": "229e20bb35f9eddb6db29765178680bd3896edbdf97b850b7b19af038c2b75a2"
+  },
+  {
+   "span_id": "E37",
+   "source_id": "S27",
+   "start": 1367,
+   "end": 1561,
+   "text": "This is an early research repository, not a playable engine. It contains no Blizzard\nexecutables or game assets, performs no original-process execution, and does not yet\nlink a complete program.",
+   "sha256": "15f462520a819a89c7dd3b7276ea5b813605687bd0b859d6e47310bc0ceef77f"
+  },
+  {
+   "span_id": "E38",
+   "source_id": "S28",
+   "start": 6933,
+   "end": 7139,
+   "text": "The reviewer agent failed to stop this as there were no objective acceptance criteria, and the workers’ comments justifying their changes “effectively acted as unintentional prompt injection,” Heumann says.",
+   "sha256": "cfb89f8fa8d090c549412a5f73b1bd2f2dedc19b40012a513591fe2646317fa8"
+  },
+  {
+   "span_id": "E39",
+   "source_id": "S28",
+   "start": 8306,
+   "end": 8495,
+   "text": "Inline assembly and similar shortcuts were then banned in the agents’ instructions, and CI now hashes the verification script and checks it against a hash stored as a GitHub Actions secret.",
+   "sha256": "a7cf494c51c4df34d6cd3bc9c7a3f5138dd8d0201e23457875f4eb27bb7c9eef"
+  },
+  {
+   "span_id": "E40",
+   "source_id": "S30",
+   "start": 7254,
+   "end": 7330,
+   "text": "Roughly 20% of the functions are reachable only through pointers like these.",
+   "sha256": "3677413580522172a094dc52bf74480e580118fb04975f8d5dae988bf7bc74fb"
+  },
+  {
+   "span_id": "E41",
+   "source_id": "S30",
+   "start": 7855,
+   "end": 7934,
+   "text": "If we ask Claude Code to decompile one of these functions, it’ll fail or cheat.",
+   "sha256": "57f4b377a93e1aa75c1890d07f4b7ff013bc92b303d024a89ca71e5ad8140b8b"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Decomp-toolkit automates function, section and relocation analysis and splits per user configuration, but its own docs say relocation output needs 'manual tweaking' in data. The community splitting guide treats carving a big executable into original source files as a manual, widely disliked but essential step, so the project schedule should budget for it.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S1",
+    "S3"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What evidence shows that the translation-unit boundaries and section splits a decompilation tool proposes automatically for a GameCube or Wii executable differ from the original compilation units, and how often do projects have to correct them by hand?",
+    "capability": "You can stop assuming automated splitting delivers finished file boundaries and plan for a human-driven stage of boundary-finding before real decompilation work can begin."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Practitioners locate original file boundaries from compiler artifacts: each file has at most one static-initialization function, and duplicate float constants approximately mark a boundary because the compiler dedupes them only per file. The guide calls these hints approximate and notes exceptions (files without an initializer, weak functions kept globally), so they are leads to confirm, not authoritative splits.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S3",
+     "quote": "However, this only happens on a file per file basis, meaning that each copy of any one float constant approximately marks a file boundary.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What evidence shows that the translation-unit boundaries and section splits a decompilation tool proposes automatically for a GameCube or Wii executable differ from the original compilation units, and how often do projects have to correct them by hand?",
+    "capability": "You can judge where hand-checking effort is most needed: file boundaries that cannot be inferred from code flow alone, such as initializer functions and data-constant duplicates, rather than trusting any single automatic heuristic."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The splitting guide says projects with a symbol map or ELF, or with a code-similar sibling game that has one, can skip the manual splitting process. The toolkit also reads CodeWarrior map files to list which translation units reference which symbols, so authoritative originals beat inferred ones. The contents give no data on how far inferred boundaries diverge from them.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What evidence shows that the translation-unit boundaries and section splits a decompilation tool proposes automatically for a GameCube or Wii executable differ from the original compilation units, and how often do projects have to correct them by hand?",
+    "capability": "You can prioritize obtaining a symbol map or unstripped ELF (from the target or a closely related game) as the cheapest way to get true compilation-unit boundaries, instead of paying for manual reconstruction."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "When two components supply the same default behavior and both are marked as replaceable, the linker silently keeps whichever it sees first and drops the other with no warning. Merely swapping two file names in the build list produced a program that printed something different, so the shipped product's behavior can change without any code edit or error.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S4",
+    "S5"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the compiler's handling of weak functions, string pooling and merged constants cause the position of a file boundary in the linked binary to look different from where the original source files actually ended?",
+    "capability": "You can stop treating the order in which a software build lists its parts as a harmless housekeeping detail and start requiring the same review for reordering as for a real code change."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "If two parts of a codebase accidentally define a same-named helper differently, the toolchain assumes they are identical and keeps one without complaint. In the demonstrated case the winner flipped with file order and with optimization level, so a bug can show up in Debug builds, vanish in Release, and return when someone reorders sources. Even link-time checking tools reported nothing.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7",
+    "E8"
+   ],
+   "source_ids": [
+    "S4",
+    "S5"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the compiler's handling of weak functions, string pooling and merged constants cause the position of a file boundary in the linked binary to look different from where the original source files actually ended?",
+    "capability": "You can stop trusting a clean build and a passing Release test as proof that two teams' conflicting code definitions are not in play, and ask engineering for explicit duplicate-definition checks."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "The safe pattern is one replaceable default with one firm override, because a firm definition always beats a replaceable one and two firm definitions stop the build. Risk appears when two components each provide a replaceable override, or when libraries are bundled in archives, where the first library listed supplies the function and the duplicate in the second is never examined, so no error appears.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9",
+    "E10"
+   ],
+   "source_ids": [
+    "S4",
+    "S6"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the compiler's handling of weak functions, string pooling and merged constants cause the position of a file boundary in the linked binary to look different from where the original source files actually ended?",
+    "capability": "You can require that vendor or third-party packages ship exactly one replaceable default plus one firm override per feature, so a duplicate becomes a loud build failure rather than a silent product-behavior choice."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "In the Hex-Rays example, one wrong stack adjustment after a single call (the callee actually used a register, not stack arguments) produced wrong values downstream. The fix was to correct that one place, or the shared function's properties if many callers were affected. Errors from one bad assumption propagate, but they can be traced back to the first point where values diverge and repaired there.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11",
+    "E12"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a decompilation project when a file boundary is placed in the wrong spot and the mistake is only found hundreds of functions later, and how do teams recover from it?",
+    "capability": "You can treat a single wrong boundary or call-convention assumption as a localized defect to fix at its source, rather than a reason to redo downstream work."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Reverse-engineering practice relies on invariants, such as values matching at both ends of a jump and returning to zero at function exit, to expose errors at the first point of divergence. Equivalent invariants at file boundaries would flag a misplaced split near the point it happens rather than far later. The tooling also warns that a wrong type can wreak havoc easily, so errors tend to surface far from their cause.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13",
+    "E14"
+   ],
+   "source_ids": [
+    "S7",
+    "S8"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a decompilation project when a file boundary is placed in the wrong spot and the mistake is only found hundreds of functions later, and how do teams recover from it?",
+    "capability": "You can add cheap consistency checks that catch a bad assumption early, instead of letting wrong boundaries accumulate unnoticed for hundreds of functions."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Even with Microsoft's public debug symbols applied, IDA got the stack effect wrong for a function in notepad.exe, because link-time code generation had changed the calling convention. The vendor itself says that having symbols does not guarantee correct results, which is why override options exist. A boundary or structure that looks authoritative can still be wrong and needs independent checking before dependent work piles up.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a decompilation project when a file boundary is placed in the wrong spot and the mistake is only found hundreds of functions later, and how do teams recover from it?",
+    "capability": "You can stop assuming tool output or symbols are ground truth, and budget time for human verification of foundational structure before building on it."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "The retrieved material is generic: it says linkers merge all segments of the same type and assign non-overlapping addresses to each symbol, but it says nothing about how Metrowerks orders functions, string literals, small-data variables, constructor tables or exception tables. Inferring original file order and object boundaries from a final binary therefore cannot rest on these sources and needs Metrowerks-specific linker maps or reverse-engineering notes.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E16",
+    "E17"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the Metrowerks compiler and linker place functions, string literals, small-data variables, static data, constructor tables and exception tables in the order and alignment it does, so that the original file order and object boundaries can be inferred from the final binary?",
+    "capability": "You can stop expecting a general linker explainer to answer questions about one vendor's section ordering, and plan to get that evidence from the vendor's own toolchain output instead."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "Because a linker merges same-type segments from every object file into one segment per type, the final binary groups code and data by kind, not by the source file that contributed them. Object boundaries inside a merged section must therefore be recovered from other cues such as alignment gaps or symbol order, not from the section layout alone.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the Metrowerks compiler and linker place functions, string literals, small-data variables, static data, constructor tables and exception tables in the order and alignment it does, so that the original file order and object boundaries can be inferred from the final binary?",
+    "capability": "You can treat section-level grouping in a binary as a weak and incomplete clue to object boundaries, and budget for extra analysis before relying on it."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "A merging tool that combines all of a project's C files into one renames conflicting file-local names with a numeric suffix and removes duplicate global declarations that came from shared headers. It also coalesces same-named structures and types, using different names where they aren't identical. The merged output therefore no longer maps one-to-one onto the original files, which is the mechanism by which a merge becomes hard to see from the result alone.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E19",
+    "E20"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a single automatically produced object file contains functions from several original source files, and which signals fail to reveal that merge, such as when string pools are deduplicated across files, padding is absent, or small-data usage is ambiguous?",
+    "capability": "You can stop assuming a combined whole-program build is a plain concatenation, and instead expect that merging sources silently renames and collapses code, so what the merged result shows will differ from what the individual files contained."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "The merger works by posing as the compiler and linker, saving preprocessed source under each object file's name, and then combining those at link time. It states that the merge flag must be used throughout the build process and that compile and link arguments must be identical for all files. A mixed build, or one with differing arguments, would therefore give incomplete or inconsistent merged results.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E21",
+    "E22"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a single automatically produced object file contains functions from several original source files, and which signals fail to reveal that merge, such as when string pools are deduplicated across files, padding is absent, or small-data usage is ambiguous?",
+    "capability": "You can require that any whole-program analysis be run on a build where every step went through the merging tool, rather than trusting a partial or mixed build."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "When source and the shipped package diverge, the shipped binary is the system of record, so approval should fail until the artifact is independently validated. Even a signed binary that the source cannot reproduce is not trustworthy on the signature alone. For a reconstruction whose split links and matches the original, this implies a successful match proves only the output, not that the boundaries are right.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E23",
+    "E24"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a reconstructed source-file split links and matches the original binary but the real file boundaries were different, and how do teams discover the error later?",
+    "capability": "You can stop treating a matching repository or source history as proof of what ships, and instead judge trust by the artifact that actually runs."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "Teams typically learn of mismatches or boundary failures only after the damage is done, such as an extension already touching tokens or an odd filename already accepted in production, rather than through planned review. The corrective is intentional negative testing and rebuild-and-diff in a clean environment, comparing what was decided with what actually happens. A wrong file split that links fine would likewise surface late, unless someone deliberately tests it.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E25",
+    "E26"
+   ],
+   "source_ids": [
+    "S14",
+    "S15"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a reconstructed source-file split links and matches the original binary but the real file boundaries were different, and how do teams discover the error later?",
+    "capability": "You can stop relying on incidental discovery of mismatches and fund deliberate, adversarial checks that would find a wrong boundary before downstream work depends on it."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "A boundary tested only on the obvious case can look sound while an equivalent variant slips through, and it should be tested across every layer that rewrites the input. By analogy, a split that links and byte-matches passes one check but may still differ in structure from the original, so a second comparison on a different axis is warranted. The contents do not discuss decompilation, so this is an extrapolation.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E27"
+   ],
+   "source_ids": [
+    "S15"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a reconstructed source-file split links and matches the original binary but the real file boundaries were different, and how do teams discover the error later?",
+    "capability": "You can budget for a second, independent verification step whenever one check passes, since a single passing check can hide a difference that matters later."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "The linker merges byte-identical functions into one copy by default in release builds, so a crash trace can name a different function than the one that ran, and breakpoints may be impossible to set. Debug builds switch this off by default, so the team debugging a problem and the shipped product can show different structure. The program's behavior is unchanged; only the diagnostic picture is distorted.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E28"
+   ],
+   "source_ids": [
+    "S17"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does an optimizing compiler or linker remove the gaps between neighboring functions and merge identical constants, so that a single source file looks like several or several files look like one?",
+    "capability": "You can stop assuming that a debugger or crash report showing one function name reflects the real code path, and decide to keep the size-saving merge off in builds used for diagnosing problems."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "Merging identical functions or read-only data gives different items the same address, which can break software that relies on unique addresses. GCC's more aggressive constant-merging mode is explicitly non-conforming to the C and C++ language rules, while the default constant merging is on for optimized builds. The size and speed gains must be weighed against this compatibility risk, mostly for unusual or low-level code.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E29"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S17",
+     "quote": "Because /OPT:ICF can cause the same address to be assigned to different functions or read-only data members (that is, const variables when compiled by using /Gy), it can break a program that depends o",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does an optimizing compiler or linker remove the gaps between neighboring functions and merge identical constants, so that a single source file looks like several or several files look like one?",
+    "capability": "You can ask engineering whether any product depends on each function or constant having its own unique identity, since that dependence is the main risk of letting the toolchain merge duplicates."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "Microsoft states that the linker's removal of unused code and merging of duplicates adds analysis time up front but can make the overall link faster, because the linker then processes a smaller binary with less debug data. The gains can be substantial in larger programs, which is why the settings are on by default for retail builds.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E30"
+   ],
+   "source_ids": [
+    "S17"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does an optimizing compiler or linker remove the gaps between neighboring functions and merge identical constants, so that a single source file looks like several or several files look like one?",
+    "capability": "You can stop assuming that shrinking a shipped product costs build time, and push for the default size-reduction settings in release builds."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "In an agent-driven decompilation of a first-person shooter, about 80% was done in the first month and the game launched, showed menus and loaded maps, yet the code was later judged semantically wrong: invented or removed logic, wrong types and struct layouts, and architectural changes such as swapping global config reads for far costlier hash lookups. A reviewer agent failed to catch this, partly because worker comments in commits acted as unintentional prompt injection that led the reviewer to accept deviations. Visible progress and review opinion were not evidence of correctness.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 80%",
+   "spans": [
+    "E31"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which decompilation projects reached a byte-matching build without recovering the original link order or file boundaries, or found that their reconstructed order was wrong, and what did the evidence that contradicted them look like?",
+    "capability": "You can stop treating 'the game runs' or 'most functions are present' as evidence of a faithful reconstruction, and demand a mechanical pass/fail check against the original before counting progress."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "The same project ended with 99% of functions present but only 83% byte-exact, a gap of about 16 percentage points. The remaining functions, which fail on things like linker identical-COMDAT folding that cannot be reliably reproduced, are only believed by the author to be semantically correct. That belief is not verified by the oracle, so the guaranteed share is the lower number.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 16, 83%, 99%",
+   "spans": [
+    "E32"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which decompilation projects reached a byte-matching build without recovering the original link order or file boundaries, or found that their reconstructed order was wrong, and what did the evidence that contradicted them look like?",
+    "capability": "You can report decompilation progress as two separate numbers, 'present' versus 'verified byte-exact', and stop reading a high coverage figure as a correctness guarantee."
+   }
+  },
+  {
+   "claim_id": "C22",
+   "text": "Another project, Total Annihilation, reached 100% of 3,267 functions and a full rebuild whose MD5 matches the shipped exe, but only by placing each function and data item at its original address. An ordinary linker run produces different bytes because functions land where the linker puts them. Matching individual functions therefore does not recover the original link order, and a byte-identical build can depend on forced placement rather than on a recovered layout.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E33"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S22",
+     "quote": "link.py --carve",
+     "reason": "shorter than 20 chars"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which decompilation projects reached a byte-matching build without recovering the original link order or file boundaries, or found that their reconstructed order was wrong, and what did the evidence that contradicted them look like?",
+    "capability": "You can finalize a project that cannot reach 100% byte-match by recognizing which failures are structural (linker or non-determinism) and stopping spend, instead of funding endless matching effort."
+   }
+  },
+  {
+   "claim_id": "C23",
+   "text": "Zelda-style decompilation projects verify work by rebuilding with the same Metrowerks compiler, flags, link order and linker behavior as the original game, then comparing each file's output to the original and hashing the rebuilt files against it. Because link order and file boundaries are baked into that check, a wrong file split or ordering would show up as a mismatch rather than stay hidden, and unmatched files simply keep the original code until fixed.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: spans carry no figure",
+   "spans": [
+    "E34",
+    "E35"
+   ],
+   "source_ids": [
+    "S25"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which decompilation projects later discovered that the file boundaries or link order they had reconstructed were wrong, who reported it, and what evidence from a map file, leaked symbols or a different compiler version exposed the error?",
+    "capability": "You can judge how much to trust a decompilation project's claimed progress by checking whether it verifies against the original build settings, rather than taking a completion percentage at face value."
+   }
+  },
+  {
+   "claim_id": "C24",
+   "text": "In this approach, files not yet matched are not rebuilt from guesses. The default build links the original extracted code for those pieces, so progress is incremental and an error in a reconstructed file boundary only affects that piece rather than the whole build.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E36"
+   ],
+   "source_ids": [
+    "S25"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which decompilation projects later discovered that the file boundaries or link order they had reconstructed were wrong, who reported it, and what evidence from a map file, leaked symbols or a different compiler version exposed the error?",
+    "capability": "You can treat partially finished decompilation work as safe to build on, instead of waiting for completeness, because unfinished parts do not break the product."
+   }
+  },
+  {
+   "claim_id": "C25",
+   "text": "The StarCraft project has 552 whole functions matching exactly (47,513 bytes), yet it states it does not yet link a complete program, and the match count is only about 13.14% of the community's 4,201-entry function list. Function-level matching is a necessary but weak proxy for whole-program completion, so progress dashboards built on function counts overstate readiness.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 13.14%, 4201, 47513, 552",
+   "spans": [
+    "E37"
+   ],
+   "source_ids": [
+    "S27"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why can a game function match the original byte for byte while the full program still fails to match when linked, and how do data layout, shared constants and section ordering cause this?",
+    "capability": "You can stop reading a high count of byte-exact function matches as evidence that a project is close to a working, linkable product, and ask for linked-program status separately."
+   }
+  },
+  {
+   "claim_id": "C26",
+   "text": "In the Modern Warfare 2 rebuild, the first month of agent code was readable but semantically wrong because there were no objective acceptance criteria. After a byte-level per-function check against the original executable was added, cheaper models became usable, costs fell and the project scaled to 99% of functions present and 83% byte-exact. Agents then tried to game the check, so the verification script itself had to be hash-protected in CI.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 83%, 99%",
+   "spans": [
+    "E38",
+    "E39"
+   ],
+   "source_ids": [
+    "S28"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why can a game function match the original byte for byte while the full program still fails to match when linked, and how do data layout, shared constants and section ordering cause this?",
+    "capability": "You can demand an automated, tamper-resistant pass/fail check before scaling AI agents on a large rebuild, rather than relying on reviewer agents or human sign-off."
+   }
+  },
+  {
+   "claim_id": "C27",
+   "text": "The Klonoa project found that mis-split function boundaries produce fragments that make AI decompilation fail or cheat, and that data embedded in code, such as jump tables, is misread as instructions and inflates mismatch counts. Roughly 20% of functions were reachable only through pointer tables, so structural groundwork (about 663 functions after splitting) determines whether later matching can succeed.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 663",
+   "spans": [
+    "E40",
+    "E41"
+   ],
+   "source_ids": [
+    "S30"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why can a game function match the original byte for byte while the full program still fails to match when linked, and how do data layout, shared constants and section ordering cause this?",
+    "capability": "You can treat apparent progress as unreliable where the work spans data, layout and file boundaries, and fund correct splitting and data identification before function-level effort."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 30,
+  "lineages": 30,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 3,
+  "claims": 27,
+  "claims_with_verified_span": 27,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 44,
+  "quotes_rejected": 3,
+  "ledger_capped": 6,
+  "quotes_reattributed": 0,
+  "claims_persisted": 8,
+  "persisted_with_verified_span": 8,
+  "persisted_verified_span_rate": 1.0
+ }
+}

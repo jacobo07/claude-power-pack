@@ -1,0 +1,9 @@
+deep_research 0.4.1: prompt='How do Wii/GameCube decompilation projects identify, from th...' depth=2 breadth=4
+
+deep_research: INSUFFICIENT
+  report:   C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research\drx-out\Q1\2026-11-11_204723_how-do-wii-gamecube-decompilation-projects-identif.md
+  index:    C:\Users\User\.claude\skills\claude-power-pack\vault\research\index.json
+  raw:      C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research\drx-out\Q1\how-do-wii-gamecube-decompilation-projects-identif.raw.jsonl
+  learnings: 0
+  sources:   0
+  duration:  12.7 s

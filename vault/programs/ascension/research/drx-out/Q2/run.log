@@ -1,0 +1,47 @@
+deep_research 0.4.0: prompt='Which libraries linked into Nintendo Wii games (RVL SDK: OS,...' depth=2 breadth=4
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+
+deep_research: OK
+  report:   C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research\drx-out\Q2\2026-11-11_201319_which-libraries-linked-into-nintendo-wii-games-rvl.md
+  index:    C:\Users\User\.claude\skills\claude-power-pack\vault\research\index.json
+  raw:      C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research\drx-out\Q2\which-libraries-linked-into-nintendo-wii-games-rvl.raw.jsonl
+  learnings: 9
+  sources:   11
+  duration:  771.9 s

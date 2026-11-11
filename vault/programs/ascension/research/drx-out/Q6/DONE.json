@@ -1,0 +1,12 @@
+{
+ "q": "Q6",
+ "gap": "G12",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 525.0,
+ "artifacts": [
+  "2026-11-11_204645_how-does-decomp-toolkit-dtk-analyse-a-wii-gamecube.ledger.json",
+  "2026-11-11_204645_how-does-decomp-toolkit-dtk-analyse-a-wii-gamecube.md",
+  "how-does-decomp-toolkit-dtk-analyse-a-wii-gamecube.raw.jsonl"
+ ]
+}

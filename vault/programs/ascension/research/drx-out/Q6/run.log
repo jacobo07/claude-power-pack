@@ -1,0 +1,71 @@
+deep_research 0.4.1: prompt='How does decomp-toolkit (dtk) analyse a Wii/GameCube DOL/REL...' depth=2 breadth=4
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+
+deep_research: OK
+  report:   C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research\drx-out\Q6\2026-11-11_204645_how-does-decomp-toolkit-dtk-analyse-a-wii-gamecube.md
+  index:    C:\Users\User\.claude\skills\claude-power-pack\vault\research\index.json
+  raw:      C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research\drx-out\Q6\how-does-decomp-toolkit-dtk-analyse-a-wii-gamecube.raw.jsonl
+  learnings: 8
+  sources:   14
+  duration:  524.5 s

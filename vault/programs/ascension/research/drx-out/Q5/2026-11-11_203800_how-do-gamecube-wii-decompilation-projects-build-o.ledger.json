@@ -1,0 +1,1884 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_202918_how-do-gamecube-wii-decompilation-projects-build-o",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://github.com/doldecomp",
+   "aliases": [],
+   "sha256": "e6bf08293fac53de28becf4246ac978e0775ada6213b42bd88d310e6397bec44",
+   "chars": 2829,
+   "snapshot": "e6bf08293fac53de28becf4246ac978e0775ada6213b42bd88d310e6397bec44.txt",
+   "retrieved_at": "2026-11-11T19:29:35+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://github.com/orgs/doldecomp/repositories",
+   "aliases": [],
+   "sha256": "9c9a0900041f8757aa19d1235caa0e2eb34205f0fcde9d8b4c284460695b2c6e",
+   "chars": 7993,
+   "snapshot": "9c9a0900041f8757aa19d1235caa0e2eb34205f0fcde9d8b4c284460695b2c6e.txt",
+   "retrieved_at": "2026-11-11T19:29:35+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/gamecube-wii/",
+   "aliases": [],
+   "sha256": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f",
+   "chars": 22525,
+   "snapshot": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f.txt",
+   "retrieved_at": "2026-11-11T19:29:35+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://github.com/HectorBailey/byte-tactics/issues/4863",
+   "aliases": [],
+   "sha256": "95484f7bdf1ed5402a3340e262cd80addab60934f010f100085bd0836bf39d6b",
+   "chars": 2177,
+   "snapshot": "95484f7bdf1ed5402a3340e262cd80addab60934f010f100085bd0836bf39d6b.txt",
+   "retrieved_at": "2026-11-11T19:30:24+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://github.com/HectorBailey/byte-tactics/issues/3419",
+   "aliases": [],
+   "sha256": "bf16ab2b5cf03b8a5994b242c907bd1cd13f03227d2119ce65965fe265f9c7d0",
+   "chars": 1873,
+   "snapshot": "bf16ab2b5cf03b8a5994b242c907bd1cd13f03227d2119ce65965fe265f9c7d0.txt",
+   "retrieved_at": "2026-11-11T19:30:24+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.retroreversing.com/decompilers",
+   "aliases": [],
+   "sha256": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b",
+   "chars": 25000,
+   "snapshot": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b.txt",
+   "retrieved_at": "2026-11-11T19:30:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://en.wikipedia.org/wiki/Decompiler",
+   "aliases": [],
+   "sha256": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d",
+   "chars": 15862,
+   "snapshot": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d.txt",
+   "retrieved_at": "2026-11-11T19:30:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://ones.com/blog/which-model-works-best-centralized-vs-team-owned-process-maintenance-after-a-standardized-project-process-rollout/",
+   "aliases": [],
+   "sha256": "bcc92dbe99171743a7b8d0e7bb8ac354d8aa1323dcb347b16b670c1a72883cf1",
+   "chars": 17072,
+   "snapshot": "bcc92dbe99171743a7b8d0e7bb8ac354d8aa1323dcb347b16b670c1a72883cf1.txt",
+   "retrieved_at": "2026-11-11T19:30:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://www.geeksforgeeks.org/git/version-control-systems/",
+   "aliases": [],
+   "sha256": "5a62d038453e9f0755d536048873697a8d6edfae343658f939459cdc4a0f2ff1",
+   "chars": 11211,
+   "snapshot": "5a62d038453e9f0755d536048873697a8d6edfae343658f939459cdc4a0f2ff1.txt",
+   "retrieved_at": "2026-11-11T19:30:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://vsra-community.org/2025/12/08/the-organizational-pendulum-why-software-teams-swing-between-centralization-and-decentralization/",
+   "aliases": [],
+   "sha256": "f40ded2e25e8beaf0d327f79091374dcf1e5dc3d1a28781cc871c17de354d95c",
+   "chars": 8823,
+   "snapshot": "f40ded2e25e8beaf0d327f79091374dcf1e5dc3d1a28781cc871c17de354d95c.txt",
+   "retrieved_at": "2026-11-11T19:30:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://www.atlassian.com/git/tutorials/source-code-management",
+   "aliases": [],
+   "sha256": "2c27af7326b9ece73157c2018d176e60b8061fb725cbe8c93e138d1bb1181043",
+   "chars": 6366,
+   "snapshot": "2c27af7326b9ece73157c2018d176e60b8061fb725cbe8c93e138d1bb1181043.txt",
+   "retrieved_at": "2026-11-11T19:30:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://github.com/angr/angr/issues/6687",
+   "aliases": [],
+   "sha256": "ffab3221b1894872e75ccad0e8c0ca2a12661a10764e8ebbf1fec2a73dd8f1fc",
+   "chars": 5323,
+   "snapshot": "ffab3221b1894872e75ccad0e8c0ca2a12661a10764e8ebbf1fec2a73dd8f1fc.txt",
+   "retrieved_at": "2026-11-11T19:31:18+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://www.reddit.com/r/ghidra/comments/11jj03e/why_is_this_decompiled_code_showing_a_different/",
+   "aliases": [
+    "https://www.reddit.com/r/ReverseEngineering/comments/1chtr5f/the_decompilation_wiki/"
+   ],
+   "sha256": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf",
+   "chars": 6,
+   "snapshot": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf.txt",
+   "retrieved_at": "2026-11-11T19:31:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://hex-rays.com/blog/igors-tip-of-the-week-138-pointer-math-in-the-decompiler",
+   "aliases": [],
+   "sha256": "2b2996f90090ce25ea497d77fab73b04d60d26691f8d80270e5a94ec9479b8f4",
+   "chars": 2169,
+   "snapshot": "2b2996f90090ce25ea497d77fab73b04d60d26691f8d80270e5a94ec9479b8f4.txt",
+   "retrieved_at": "2026-11-11T19:31:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://lazyhackers.com/article/asm-decompiler-output-mastery",
+   "aliases": [],
+   "sha256": "41d5bd27a5935678a2411ca216142bbaab9a6d3fc5e829148a127942a40819cf",
+   "chars": 14259,
+   "snapshot": "41d5bd27a5935678a2411ca216142bbaab9a6d3fc5e829148a127942a40819cf.txt",
+   "retrieved_at": "2026-11-11T19:31:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://hackblue.org/learn/ghidra-data-types",
+   "aliases": [],
+   "sha256": "392a65f558541c427f7fb6bfe9283c5a1abe09eb581ce07d6317d7afae835e82",
+   "chars": 6466,
+   "snapshot": "392a65f558541c427f7fb6bfe9283c5a1abe09eb581ce07d6317d7afae835e82.txt",
+   "retrieved_at": "2026-11-11T19:31:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://arxiv.org/pdf/2505.11340",
+   "aliases": [],
+   "sha256": "c96d445b4ad396536b3c3bd70bc2bb413220b179a4bf0260322fae8c5b7cebd1",
+   "chars": 25000,
+   "snapshot": "c96d445b4ad396536b3c3bd70bc2bb413220b179a4bf0260322fae8c5b7cebd1.txt",
+   "retrieved_at": "2026-11-11T19:32:06+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://arxiv.org/html/2505.11340v1",
+   "aliases": [],
+   "sha256": "423ceaf6f35840ca2a7e297c39789cd52057c45121a5760c85230d6c93136f83",
+   "chars": 25000,
+   "snapshot": "423ceaf6f35840ca2a7e297c39789cd52057c45121a5760c85230d6c93136f83.txt",
+   "retrieved_at": "2026-11-11T19:32:06+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DvZ7fJntf0a",
+   "aliases": [],
+   "sha256": "682c29a6e12b01fbbd344a6c8343e014ed6612625815ec1f1b64373b9087c561",
+   "chars": 205,
+   "snapshot": "682c29a6e12b01fbbd344a6c8343e014ed6612625815ec1f1b64373b9087c561.txt",
+   "retrieved_at": "2026-11-11T19:32:06+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://www.cs.purdue.edu/homes/rompf/pmca/vol1/type-checkinginference.html",
+   "aliases": [],
+   "sha256": "aef0a6a3d38c3c384d6654a6dfe40b52ebc2ba526a9a872c338150d616092a63",
+   "chars": 15668,
+   "snapshot": "aef0a6a3d38c3c384d6654a6dfe40b52ebc2ba526a9a872c338150d616092a63.txt",
+   "retrieved_at": "2026-11-11T19:32:37+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://www.geeksforgeeks.org/compiler-design/type-checking-in-compiler-design/",
+   "aliases": [],
+   "sha256": "a960d21130ab8f093abb81ddee2c5c39a7966b6239d0cd748278ddcd7ecf1872",
+   "chars": 9822,
+   "snapshot": "a960d21130ab8f093abb81ddee2c5c39a7966b6239d0cd748278ddcd7ecf1872.txt",
+   "retrieved_at": "2026-11-11T19:32:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://en.wikipedia.org/wiki/Type_system",
+   "aliases": [],
+   "sha256": "b1acb7ab14244dbf368b1de769d2ef93175e11550397a9dad8ffba1d0777e537",
+   "chars": 25000,
+   "snapshot": "b1acb7ab14244dbf368b1de769d2ef93175e11550397a9dad8ffba1d0777e537.txt",
+   "retrieved_at": "2026-11-11T19:32:38+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://learn.microsoft.com/en-us/cpp/c-language/function-prototypes?view=msvc-170",
+   "aliases": [],
+   "sha256": "0ce6f5955958503d5cb9db1e305ade733ef5b5374b31e45e5cb4baab9ea33aaa",
+   "chars": 4697,
+   "snapshot": "0ce6f5955958503d5cb9db1e305ade733ef5b5374b31e45e5cb4baab9ea33aaa.txt",
+   "retrieved_at": "2026-11-11T19:32:38+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://en.wikipedia.org/wiki/Type_safety",
+   "aliases": [],
+   "sha256": "fd259ace5c400fb415a303e74d6d8809935e3b2294dbc5fd6b00849b23a8f4ed",
+   "chars": 25000,
+   "snapshot": "fd259ace5c400fb415a303e74d6d8809935e3b2294dbc5fd6b00849b23a8f4ed.txt",
+   "retrieved_at": "2026-11-11T19:32:38+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S24"
+  },
+  {
+   "source_id": "S25",
+   "url": "https://en.wikipedia.org/wiki/List_of_HTTP_status_codes",
+   "aliases": [],
+   "sha256": "02ed2b9c9340b6522967b0b448b80177dab99de3b4d0f8ae319a0ce91616d8a1",
+   "chars": 25000,
+   "snapshot": "02ed2b9c9340b6522967b0b448b80177dab99de3b4d0f8ae319a0ce91616d8a1.txt",
+   "retrieved_at": "2026-11-11T19:33:10+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S25"
+  },
+  {
+   "source_id": "S26",
+   "url": "https://www.geeksforgeeks.org/compiler-design/error-handling-compiler-design/",
+   "aliases": [],
+   "sha256": "688fa2b7d8fbde77f5f1a4ed45224ad7794a5496faa91321206c7d4d61062d5b",
+   "chars": 4928,
+   "snapshot": "688fa2b7d8fbde77f5f1a4ed45224ad7794a5496faa91321206c7d4d61062d5b.txt",
+   "retrieved_at": "2026-11-11T19:33:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S26"
+  },
+  {
+   "source_id": "S27",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc-9.2.0/gcc/Warning-Options.html",
+   "aliases": [],
+   "sha256": "ac417b5e29ad5fb1535b1c0e15966bd4f07706998fde788992c0adc17e125600",
+   "chars": 25000,
+   "snapshot": "ac417b5e29ad5fb1535b1c0e15966bd4f07706998fde788992c0adc17e125600.txt",
+   "retrieved_at": "2026-11-11T19:33:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S27"
+  },
+  {
+   "source_id": "S28",
+   "url": "https://learn.microsoft.com/en-us/cpp/c-language/storage-and-alignment-of-structures?view=msvc-170",
+   "aliases": [],
+   "sha256": "05bff01f74eabfeda927f05638dcc528a2f72631b9ec543bdf7a5e3ae4eaa1bf",
+   "chars": 2546,
+   "snapshot": "05bff01f74eabfeda927f05638dcc528a2f72631b9ec543bdf7a5e3ae4eaa1bf.txt",
+   "retrieved_at": "2026-11-11T19:33:57+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S28"
+  },
+  {
+   "source_id": "S29",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc/Structure-Layout-Pragmas.html",
+   "aliases": [],
+   "sha256": "b6251f7120721ce377a4a4b230d0c40f3960dfb8f3225694b81070a03d470e39",
+   "chars": 2722,
+   "snapshot": "b6251f7120721ce377a4a4b230d0c40f3960dfb8f3225694b81070a03d470e39.txt",
+   "retrieved_at": "2026-11-11T19:33:57+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S29"
+  },
+  {
+   "source_id": "S30",
+   "url": "https://www.geeksforgeeks.org/c/structure-member-alignment-padding-and-data-packing/",
+   "aliases": [],
+   "sha256": "ea2bc2aa02cbe962592c4929295b3d1810b12e4b72d24e2c5b4360eacc472c34",
+   "chars": 7205,
+   "snapshot": "ea2bc2aa02cbe962592c4929295b3d1810b12e4b72d24e2c5b4360eacc472c34.txt",
+   "retrieved_at": "2026-11-11T19:33:57+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S30"
+  },
+  {
+   "source_id": "S31",
+   "url": "https://github.com/frankbria/codeframe/issues/53",
+   "aliases": [],
+   "sha256": "3ea7a95fd07518965406dabf7f90960cf49a3c0413ddd85d341d0aaa49fd84a9",
+   "chars": 16830,
+   "snapshot": "3ea7a95fd07518965406dabf7f90960cf49a3c0413ddd85d341d0aaa49fd84a9.txt",
+   "retrieved_at": "2026-11-11T19:34:26+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S31"
+  },
+  {
+   "source_id": "S32",
+   "url": "https://dev.to/aoda-zhang/making-a-typescript-shared-package-work-across-frontend-and-backend-in-a-monorepo-1k23/",
+   "aliases": [],
+   "sha256": "6893825da0a12cffe7af8d405730c76b71d4dfc3c0000427c671c8439ea53fc9",
+   "chars": 5447,
+   "snapshot": "6893825da0a12cffe7af8d405730c76b71d4dfc3c0000427c671c8439ea53fc9.txt",
+   "retrieved_at": "2026-11-11T19:34:26+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S32"
+  },
+  {
+   "source_id": "S33",
+   "url": "https://shivekkhurana.com/blog/share-types-between-projects/",
+   "aliases": [],
+   "sha256": "cec2fd4c4b7880f2a6cf5d3683421b67ebd6d66efa02d49e0d5c8fdae7d35751",
+   "chars": 5404,
+   "snapshot": "cec2fd4c4b7880f2a6cf5d3683421b67ebd6d66efa02d49e0d5c8fdae7d35751.txt",
+   "retrieved_at": "2026-11-11T19:34:26+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S33"
+  },
+  {
+   "source_id": "S34",
+   "url": "https://github.com/ethteck/splat",
+   "aliases": [],
+   "sha256": "d580fec98ff04c30f19cbe0f80a70b15cbdd3829dd26e7dc6402bfc21b92e943",
+   "chars": 2197,
+   "snapshot": "d580fec98ff04c30f19cbe0f80a70b15cbdd3829dd26e7dc6402bfc21b92e943.txt",
+   "retrieved_at": "2026-11-11T19:34:55+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S34"
+  },
+  {
+   "source_id": "S35",
+   "url": "https://github.com/RetroReversing/retroReversing/blob/master/pages/SourceCode/DecompiledRetailConsoleGames.md",
+   "aliases": [],
+   "sha256": "7c15979d183cc86342d01eb39d103de1b4e5207e6eda64611a1022524d6eb887",
+   "chars": 20938,
+   "snapshot": "7c15979d183cc86342d01eb39d103de1b4e5207e6eda64611a1022524d6eb887.txt",
+   "retrieved_at": "2026-11-11T19:34:55+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S35"
+  },
+  {
+   "source_id": "S36",
+   "url": "https://tanepiper.github.io/game-frame/consoles/matching-decomp",
+   "aliases": [],
+   "sha256": "a7ba4dd49cd6380fa1b2c7dff87a5f7f6550a7feeaa50ea117a37203d9a5ca26",
+   "chars": 3724,
+   "snapshot": "a7ba4dd49cd6380fa1b2c7dff87a5f7f6550a7feeaa50ea117a37203d9a5ca26.txt",
+   "retrieved_at": "2026-11-11T19:34:55+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S36"
+  },
+  {
+   "source_id": "S37",
+   "url": "https://decomps.net/tools",
+   "aliases": [],
+   "sha256": "8873bfa50af3ae3b0026bd59153700d176a45b28762682a65067f8a455ed20b4",
+   "chars": 5224,
+   "snapshot": "8873bfa50af3ae3b0026bd59153700d176a45b28762682a65067f8a455ed20b4.txt",
+   "retrieved_at": "2026-11-11T19:34:55+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S37"
+  },
+  {
+   "source_id": "S38",
+   "url": "https://decomphub.com/guides/finding-decompilation-projects",
+   "aliases": [],
+   "sha256": "d4af81e157550462628543255e339042e0ca6915c071bbaa71680f6424dac3ad",
+   "chars": 5238,
+   "snapshot": "d4af81e157550462628543255e339042e0ca6915c071bbaa71680f6424dac3ad.txt",
+   "retrieved_at": "2026-11-11T19:34:55+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S38"
+  },
+  {
+   "source_id": "S39",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/matching-decomp/",
+   "aliases": [],
+   "sha256": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250",
+   "chars": 25000,
+   "snapshot": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250.txt",
+   "retrieved_at": "2026-11-11T19:35:51+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S39"
+  },
+  {
+   "source_id": "S40",
+   "url": "https://github.com/mahaloz/decompilation-wiki",
+   "aliases": [],
+   "sha256": "07cddad0f76b71fde00f2178790e5e3bcfb98b8dedb85bf7a95330e45091b243",
+   "chars": 4088,
+   "snapshot": "07cddad0f76b71fde00f2178790e5e3bcfb98b8dedb85bf7a95330e45091b243.txt",
+   "retrieved_at": "2026-11-11T19:36:17+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S40"
+  },
+  {
+   "source_id": "S41",
+   "url": "https://dev.to/tamizuddin/deconstructing-modern-games-the-power-of-reverse-engineering-and-decompilation-58d4",
+   "aliases": [],
+   "sha256": "122a1cc51438d32cdc0c414555b7184fa6acbb449016d65ebd6d39e625074e11",
+   "chars": 5416,
+   "snapshot": "122a1cc51438d32cdc0c414555b7184fa6acbb449016d65ebd6d39e625074e11.txt",
+   "retrieved_at": "2026-11-11T19:36:17+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S41"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S3",
+   "start": 5533,
+   "end": 5653,
+   "text": "Once the SDK library is decompiled and matched, every new game's non-matched functions become mostly game-specific code.",
+   "sha256": "a5a993792b0466ea981ccd2131705fed9995f2a078ea99e702ecf2f67527148b"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S2",
+   "start": 5424,
+   "end": 5494,
+   "text": "A decompilation of the 4-20-2004 version of the Dolphin SDK Libraries.",
+   "sha256": "9b8c2663d5a765b8f0fea6a878f1d2d497c3d9518452eff019401bc2cc4351c3"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S3",
+   "start": 15861,
+   "end": 16019,
+   "text": "The key is giving the agent the exact compiler version and flags. CodeWarrior's codegen is version-specific. A flag mismatch makes every function unmatchable.",
+   "sha256": "d2dfd218c571df3c645f8f86b993f16ef6d60153376f7ae9535984337ff08629"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S3",
+   "start": 20943,
+   "end": 21023,
+   "text": "25 builds per function is the Retrobench standard. Without a cap, agents thrash.",
+   "sha256": "0d06b1eab6c69a973972dcc46b410db9cd6bcaba76714d1dbf2447f79b1885c7"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S6",
+   "start": 17178,
+   "end": 17295,
+   "text": "The\nmatching workflow guide\nrecommends resolving instruction structure before operands, then register allocation\n12\n.",
+   "sha256": "acfc083fb137e6930875b2df601abaa2be148be5a730fc0911effa5471cbc70f"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S6",
+   "start": 17391,
+   "end": 17448,
+   "text": "These symptoms suggest experiments, not unique diagnoses:",
+   "sha256": "429aa1bd3b105a598bb2d2b9b02c4d38b9aa98fa28015143f3480365b53c9f02"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S6",
+   "start": 19812,
+   "end": 19877,
+   "text": "Do not infer a complete rebuild from a function similarity score.",
+   "sha256": "a3016b488092735f919a4bfc926a5ad8a8ff7c537a1fb14a22c199ccb361d66d"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S6",
+   "start": 18343,
+   "end": 18421,
+   "text": "A function is compiled in the context of its source file and included headers.",
+   "sha256": "117dd329d98e8aaeae4d82d69be82fb23b44134edf2f092b5c85327503260949"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S4",
+   "start": 1040,
+   "end": 1174,
+   "text": "a conclusion reached on one usually holds for the rest, though check which local owns the stack slot before copying a sibling's shape.",
+   "sha256": "dceda1102dfcf6b312530606d564d24116c8c11387c0b01cb654ae2d6782e5b6"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S8",
+   "start": 5280,
+   "end": 5399,
+   "text": "Centralize decisions that affect multiple teams; keep decisions local when their effects remain within one team’s work.",
+   "sha256": "83077203c34a7f4ddeee9107c2d40356d111baf0144e3f7161ab080e81c21e7c"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S10",
+   "start": 6998,
+   "end": 7090,
+   "text": "Consistency is critical (brand, accessibility, security, compliance) and variation is costly",
+   "sha256": "eff2470045101187bf09d4ebcacee41f0182dacce48d291ab319e5d91b855101"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S8",
+   "start": 15680,
+   "end": 15832,
+   "text": "Look for repeated delays awaiting routine approval, recurring requests for the same exception, or handoff problems caused by inconsistent local changes.",
+   "sha256": "51a231638c5c13387f471efb4c52a1e7cbf348b7f3a671e9a8a07645b7477ed7"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S10",
+   "start": 7983,
+   "end": 8032,
+   "text": "Dependency health (queue length for shared teams)",
+   "sha256": "2f94301e03f27e2f38791cd613f9a37f74629b4e5293f0afa3ae7b95dfe66413"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S10",
+   "start": 5030,
+   "end": 5202,
+   "text": "If the UX team tries to do all the design work for every feature team, work will pile up, queues will grow, and the UX team will become a bottleneck under extreme pressure.",
+   "sha256": "3bcdc56a5f2c1129f28412510b459847887a7ffda42a46c149237a7783f5d90e"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S10",
+   "start": 7849,
+   "end": 7911,
+   "text": "Autonomy signals (% features delivered without direct UX help)",
+   "sha256": "a7e740e2b49ffa1172f0adef5d60c4ceee496b07d685f2419b868e7a5daf3a77"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S16",
+   "start": 109,
+   "end": 164,
+   "text": "Until you say otherwise, Ghidra labels values by width.",
+   "sha256": "e288a4399391d5de2cdfcc1cb130b867200ab0811c8f8a6a35aa3bb14f45032c"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S15",
+   "start": 13754,
+   "end": 13826,
+   "text": "The assembly is ground truth. The pseudocode is a guess layered over it.",
+   "sha256": "36bfd808bb80ea5ff1f2cbc8c413ac0cc2b0b25c94f59646ed9962b8d04f8d62"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S12",
+   "start": 3809,
+   "end": 3911,
+   "text": "anetResolve\nshows that the pointer type is sometimes recovered and sometimes not within one signature:",
+   "sha256": "bdc274d662e0467b6282e1b6b6e5e10762d2c722c1a755bf90ab2a0d2e698e57"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S12",
+   "start": 4598,
+   "end": 4703,
+   "text": "Decompiling several functions in one session changes what is recovered for the functions decompiled later",
+   "sha256": "b22852a1d54f7e9a6a7401c01b33fe3f4746b58c8102ab63d8dfa43dbc7e4bca"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S15",
+   "start": 3496,
+   "end": 3573,
+   "text": "Loading type information is the single step that changes the output the most.",
+   "sha256": "29aae1f0a7df784104ae2a45dac9e0e627996dff441d9d5b7c74b21ef1a21d95"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S16",
+   "start": 1037,
+   "end": 1071,
+   "text": "Let the instruction pick the type.",
+   "sha256": "bd70f0cc90ce5db9203b89e9f33a69b2eb7f5bbe8f5b8087d94f985e799b3f56"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S18",
+   "start": 23648,
+   "end": 23854,
+   "text": "Hex-Rays is recognized as the leading traditional decompiler, achieving the highest single optimization-level RSR of 0.706 at\n-O0\n, and excelling in averaged metrics with an RSR of 0.583 and a CER of 0.417.",
+   "sha256": "00f41a395a5e5d9a6225e499343b11fee2ed9825b0abced49a42b6c28719c433"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S18",
+   "start": 24269,
+   "end": 24409,
+   "text": "However, these LLM-enhanced results still fall short of Hex-Rays’ original metrics, with RSR lower by 0.2-45.3% and CER lower by 17.2-52.2%.",
+   "sha256": "f2987e04e0f4b8b57ee45983d3efda7d8ef0471ea2130fc4698f963757d59dfa"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S18",
+   "start": 8166,
+   "end": 8353,
+   "text": "Our key findings contain Hex-Rays’ 36.11% functionality correctness drop under\n-O3\noptimizations, LLM’s significant readability improvement over Hexrays despite lower recompilation rates.",
+   "sha256": "8dc9dde1000867efc0a6b2083e0825549fa3a817c3e5c12ff61978f666b76252"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S18",
+   "start": 7201,
+   "end": 7443,
+   "text": "This automated approach, validated against expert ratings with\nκ\n\\kappa\n=0.778 agreement, not only ranks decompilers but predicts their effectiveness for specific aspects in aiding the real-world reverse engineering tasks for reverse experts.",
+   "sha256": "f2afec9226fa3e067de1819f412319e8e7c913760559bd59a7030ec70d4f729c"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S23",
+   "start": 1848,
+   "end": 2002,
+   "text": "Without complete prototypes, standard conversions are made, but no attempt is made to check the type or number of arguments with the number of parameters.",
+   "sha256": "2021e70db8cb6a31d7e4efdb8bd310617ec567f3b5061514ceddfe45e32d07e1"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S23",
+   "start": 2344,
+   "end": 2454,
+   "text": "A type mismatch between an argument and a parameter may cause the arguments on the stack to be misinterpreted.",
+   "sha256": "d9666a2cf74fb93fc415e40f78a65d9f0eda1b24c399edeacb920d6531f23d4e"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S23",
+   "start": 3982,
+   "end": 4100,
+   "text": "If you declare a\nstruct\nor\nunion\ntag within a prototype, the tag is entered at that scope rather than at global scope.",
+   "sha256": "25b91a747a480b002f5edad4e77b83199f64d81c2430c27b5404173dd3f7d0a0"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S23",
+   "start": 4258,
+   "end": 4364,
+   "text": "To correct your code, define or declare the\nstruct\nor\nunion\nat global scope before the function prototype:",
+   "sha256": "43acf8dff9eed011c53e5d171d0674b298c026686fefc168852c5e7d84bf86bf"
+  },
+  {
+   "span_id": "E30",
+   "source_id": "S22",
+   "start": 10668,
+   "end": 10785,
+   "text": "In a\ntype system\nwith automated type checking, a program may prove to run incorrectly yet produce no compiler errors.",
+   "sha256": "91fad6d3d60ce4dcb76028d740c51785603a5ab2b6b023977d4a0d01fdce0e85"
+  },
+  {
+   "span_id": "E31",
+   "source_id": "S22",
+   "start": 12597,
+   "end": 12675,
+   "text": "Static type checking for\nTuring-complete\nlanguages is inherently conservative.",
+   "sha256": "194acb21276b1fc5602576360ee05618563b5eb2d8375d83fb4fdba0c113964d"
+  },
+  {
+   "span_id": "E32",
+   "source_id": "S27",
+   "start": 9811,
+   "end": 9980,
+   "text": "Disabling the error for this warning can result in\npoorly optimized code and is useful only in the\ncase of very minor changes such as bug fixes to an existing code-base.",
+   "sha256": "ed84bf575fc7df8fd00ec7dee6dc460830a1dac14725a8aeaec81d88b723b1ad"
+  },
+  {
+   "span_id": "E33",
+   "source_id": "S26",
+   "start": 1001,
+   "end": 1095,
+   "text": "For example, using an undeclared identifier can result in a missing entry in the symbol table.",
+   "sha256": "8d4ef23b9dfa35237e473e8901197834973db55b940d6401f40149b5fe16cf89"
+  },
+  {
+   "span_id": "E34",
+   "source_id": "S27",
+   "start": 1772,
+   "end": 1922,
+   "text": "This option causes the compiler to abort compilation on the first error\noccurred rather than trying to keep going and printing further error\nmessages.",
+   "sha256": "8a88bb7f97d9238aeabfcdc079e236c72c68a11ef14c7dd2af1ceed8e493176f"
+  },
+  {
+   "span_id": "E35",
+   "source_id": "S27",
+   "start": 216,
+   "end": 368,
+   "text": "Warnings are diagnostic messages that report constructions that\nare not inherently erroneous but that are risky or suggest there\nmay have been an error.",
+   "sha256": "bb2b3a3e6cb80070118735aa5ca44d7a41619fc9c7a15ef0070440611fd55c90"
+  },
+  {
+   "span_id": "E36",
+   "source_id": "S27",
+   "start": 960,
+   "end": 990,
+   "text": "Make all warnings into errors.",
+   "sha256": "6e965090838fce133ad2b4d70837bc1d26a0b2b302fac274f4343ea662d75d52"
+  },
+  {
+   "span_id": "E37",
+   "source_id": "S30",
+   "start": 4740,
+   "end": 4849,
+   "text": "Structure D is a good example, where reordering members reduces the structure size from 24 bytes to 16 bytes.",
+   "sha256": "6d0448544543ec5bdf9d56d74cc622b4a872a8b1d4ddcc2edf660959f8bef50f"
+  },
+  {
+   "span_id": "E38",
+   "source_id": "S30",
+   "start": 6132,
+   "end": 6229,
+   "text": "Since padding is disabled, the structure size becomes the direct sum of the sizes of its members.",
+   "sha256": "6d802ad20dc1fe661602a8b0d0e903b2d14ab22bc4b5de3fbe705201f6420fd9"
+  },
+  {
+   "span_id": "E39",
+   "source_id": "S28",
+   "start": 1731,
+   "end": 1764,
+   "text": "The default packing size is /Zp8.",
+   "sha256": "c22f93a3b842f9b3445c51f413b97931602285f78d05ebeda0965e620a00b25f"
+  },
+  {
+   "span_id": "E40",
+   "source_id": "S30",
+   "start": 4868,
+   "end": 5019,
+   "text": "Sometimes, structures must exactly match the layout of external data, such as file headers or network packets. In such cases, padding must be disabled.",
+   "sha256": "4405a44d89e031fd5d73fbd5a3ffc92b1317e6172fc8fefcf9dc24f08552942e"
+  },
+  {
+   "span_id": "E41",
+   "source_id": "S31",
+   "start": 15362,
+   "end": 15403,
+   "text": "Two distinct Task types remain by design:",
+   "sha256": "9c5d452bbf7ce7ff3e238e0d2af7c0b2ba0f40564539723303b2d76bdce7c0f2"
+  },
+  {
+   "span_id": "E42",
+   "source_id": "S31",
+   "start": 15595,
+   "end": 15665,
+   "text": "These serve different architectural purposes and should not be merged.",
+   "sha256": "32f1c3a563dc5590f8f06018491d1de63602005b0c6f73f3bd0a7c930479d67e"
+  },
+  {
+   "span_id": "E43",
+   "source_id": "S31",
+   "start": 2570,
+   "end": 2641,
+   "text": "These are not true duplicates but distinct types for different domains.",
+   "sha256": "7b0c0dfb2ccded9b315c00a53b1b58bfe9b2703c837a04ba46ffb7a1d69bcaee"
+  },
+  {
+   "span_id": "E44",
+   "source_id": "S32",
+   "start": 1407,
+   "end": 1467,
+   "text": "After nearly three days of trial and error, it became clear:",
+   "sha256": "92fa896238e810c6146fee795c57fb8b759d6abde7d456d351fa549964fe4805"
+  },
+  {
+   "span_id": "E45",
+   "source_id": "S32",
+   "start": 5023,
+   "end": 5096,
+   "text": "Trying to fit all environments into a single artifact leads to conflicts.",
+   "sha256": "52100e95841178f6d5faca65d543ffb0fa76a4aa04e89cbb78ced6f1d5ebaeec"
+  },
+  {
+   "span_id": "E46",
+   "source_id": "S34",
+   "start": 1048,
+   "end": 1109,
+   "text": "Currently, only N64, PSX, PS2 and PSP binaries are supported.",
+   "sha256": "e6e9d7de65df47ef9fe4b84f210c4fd1fc80ebeff5d90bfddd0379d130636211"
+  },
+  {
+   "span_id": "E47",
+   "source_id": "S34",
+   "start": 1852,
+   "end": 1884,
+   "text": "For Gamecube / Wii projects, see",
+   "sha256": "7372506e3732153179da80929f6a05e4b0fb47d186fc908401eb089cc623190c"
+  },
+  {
+   "span_id": "E48",
+   "source_id": "S36",
+   "start": 670,
+   "end": 901,
+   "text": "Find the exact compiler and version the game was built with: SGI IDO 5.3 or 7.1 for many N64 games, GCC 2.x versions from the PsyQ SDK for the PlayStation, Metrowerks CodeWarrior versions for the GameCube, Microsoft's for the Xbox.",
+   "sha256": "b89e170ae5b65c545b475ddd9eb5c6a999bb3c80351bc26b7846d03e19c8fed3"
+  },
+  {
+   "span_id": "E49",
+   "source_id": "S36",
+   "start": 1694,
+   "end": 1825,
+   "text": "Matching code starts with generic names. The project then names variables, structures and functions, as in any reverse engineering.",
+   "sha256": "9ea405c303209f464b539a2a70604801ad2e612572ef0ce4e86fb2e75bbc6818"
+  },
+  {
+   "span_id": "E50",
+   "source_id": "S37",
+   "start": 1018,
+   "end": 1072,
+   "text": "A decompiler targeting MIPS, PowerPC, ARM, and SuperH.",
+   "sha256": "a8a683d5b37aba89e40ec6357a1969e18cb4eb809a157c3a461acb483bbb5084"
+  },
+  {
+   "span_id": "E51",
+   "source_id": "S36",
+   "start": 1331,
+   "end": 1453,
+   "text": "Tools give a first draft (m2c), and decomp.me lets many people try candidate C against the original compiler in a browser.",
+   "sha256": "358391f43b9b8b1d8b36158c9916afa99fd0ce2ab2a272f8ad76a8bc46e0e916"
+  },
+  {
+   "span_id": "E52",
+   "source_id": "S39",
+   "start": 7601,
+   "end": 7710,
+   "text": "Do not guess flags blindly. A flag mismatch makes every function unmatchable and looks like a source problem.",
+   "sha256": "bae8bfa363ce25c2103481a3e71f3e0cdc484d066b6f29711a4e9c317251352f"
+  },
+  {
+   "span_id": "E53",
+   "source_id": "S39",
+   "start": 3264,
+   "end": 3415,
+   "text": "A project can sit at 90 percent function coverage and still fail to link the final ROM because of data layout, literal pools, or one stubborn function.",
+   "sha256": "4fcb2dd115f31b71ec9b22dd4861c4a1030d8f5bb57943a7de15da50ca94090c"
+  },
+  {
+   "span_id": "E54",
+   "source_id": "S39",
+   "start": 20345,
+   "end": 20413,
+   "text": "Matching is harder than N64 because C++ codegen is less predictable.",
+   "sha256": "60d0537403e8281bcb818dfa39d1cce87cf96b6087a4a642e3204fb02d47f0df"
+  },
+  {
+   "span_id": "E55",
+   "source_id": "S36",
+   "start": 2181,
+   "end": 2338,
+   "text": "Compilers of the time are sensitive to the order of statements, the types of temporary variables and the use of registers. Some functions take days to match.",
+   "sha256": "1ec7f61a2e863dfbfd3432a14ba091864f865e76c6064862f03b2ccafc42a2b2"
+  },
+  {
+   "span_id": "E56",
+   "source_id": "S6",
+   "start": 21620,
+   "end": 21728,
+   "text": "After changing shared types or prototypes, rebuild affected code and verify previously matched functions too",
+   "sha256": "936f0638782e2baa73afda98472b07c9c8bb9c87c50f96df75fb8d14b774cd3a"
+  },
+  {
+   "span_id": "E57",
+   "source_id": "S6",
+   "start": 18907,
+   "end": 18961,
+   "text": "These are compiler- and version-dependent experiments.",
+   "sha256": "77b4c02c4c0ba57c8e53179753ba342d58c16d2b63312f4e5cafcdb333192ab4"
+  },
+  {
+   "span_id": "E58",
+   "source_id": "S6",
+   "start": 18422,
+   "end": 18532,
+   "text": "The\nCodeWarrior guide\nhighlights inline helpers, local declarations and per-file pragmas as matching variables",
+   "sha256": "7c766966f399bd17b52c18eed262065523b0fe2e873993b980c43a1b8d44e932"
+  },
+  {
+   "span_id": "E59",
+   "source_id": "S6",
+   "start": 8879,
+   "end": 8906,
+   "text": "Type recovery is heuristic.",
+   "sha256": "bf02da965086620245be71dcc7d4b654470b4c4967c3cbf5e8179c0b77426397"
+  },
+  {
+   "span_id": "E60",
+   "source_id": "S6",
+   "start": 15289,
+   "end": 15339,
+   "text": "Treat decompiler output as an editable hypothesis.",
+   "sha256": "78836025f119ce66b75412afd5da9cd6b87cebdd6b0d366a0fad4d94176e8ac2"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "The Dolphin SDK is statically linked into every GameCube and Wii game, so once its functions are matched the remaining unmatched work in a new game is mostly game-specific code. The community already runs separate SDK decompilations for the 2001 and 2004 versions, which implies version-specific shared code is a recognised unit of reuse, though the sources give no measure of how much time it saves.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S2",
+    "S3"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What do GameCube and Wii decompilation repositories actually contain in their shared headers and context files, and how often do matching functions still fail to compile because the types were guessed wrong from the binary?",
+    "capability": "You can stop assuming that matching a game's shared SDK code is a one-off cost per title, and instead plan on a reusable base that makes each later game cheaper to decompile."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Matching depends on reproducing the exact CodeWarrior compiler version and flags used originally, and a flag mismatch makes every function unmatchable. Compiler versions across titles range from 1.0 to 1.7, so a project that has not pinned its toolchain will produce failures that look like wrong type guesses but are really toolchain errors.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What do GameCube and Wii decompilation repositories actually contain in their shared headers and context files, and how often do matching functions still fail to compile because the types were guessed wrong from the binary?",
+    "capability": "You can judge a decompilation effort's reliability by whether the exact compiler version and flags are pinned, rather than by how clever the person or AI doing the matching is."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "None of the retrieved material describes the contents of the shared headers or context files, nor how often wrongly guessed types break a match. The sources show only repository listings and an AI-oriented overview, with a 25-build cap per function as a working convention, so the central question is unanswered. Open issue counts are small (melee 17, mkdd 2, sms 1), which suggests type problems are handled in pull requests and commits rather than tracked as issues.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What do GameCube and Wii decompilation repositories actually contain in their shared headers and context files, and how often do matching functions still fail to compile because the types were guessed wrong from the binary?",
+    "capability": "You can stop expecting public data to tell you how often type guesses cause failed matches, and instead budget for gathering that evidence directly from project issue trackers and commit histories."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Remaining byte differences fall into distinct categories that point to different causes: missing or extra instructions suggest branch or loop shape, wrong offsets suggest field layout or element size, and the same operations with different registers suggest declaration order or how long temporaries stay live. Different stack offsets or frame size point to local types, temporary structures or inlined helpers, so correct struct layouts do not rule out a mismatch. The guidance is to resolve instruction structure before operands, then register allocation, and not to rely on a percentage score alone.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do some functions in a decompilation project stay unmatched even after the struct layouts and types look correct, and what causes the remaining byte-level differences in the compiled output?",
+    "capability": "You can stop reading a remaining mismatch as one undifferentiated problem and instead sort it by type first, so effort goes to the right kind of fix."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "A function can still differ from the original because of things outside its own body: inline helpers, per-file pragmas, compiler version and flags, literal pools, string and constant layout, and section placement. Function-level similarity does not establish that the rebuilt file or final image matches, so full-binary comparison is the real completion test. Instruction-only checkers can also miss data differences.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7",
+    "E8"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do some functions in a decompilation project stay unmatched even after the struct layouts and types look correct, and what causes the remaining byte-level differences in the compiled output?",
+    "capability": "You can treat a function reported as matched, or a high similarity score, as unfinished until the surrounding file context and data are also checked, instead of counting it as done."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "The project's issue tracker lists sibling functions with similarity percentages, such as 78.9% and 66.6% between two large functions of 1082 and 2047 bytes, and tells workers that a conclusion reached on one usually holds for the rest. It adds the caveat to check which local owns the stack slot before copying a sibling's shape. This shows that unmatched leftovers are often tackled in families, and that retries of earlier failed attempts are queued with notes on what still differs.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 1082, 2047, 66.6%, 78.9%",
+   "spans": [
+    "E9"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do some functions in a decompilation project stay unmatched even after the struct layouts and types look correct, and what causes the remaining byte-level differences in the compiled output?",
+    "capability": "You can route work on groups of near-duplicate unmatched functions so that a solved sibling is reused as a starting point, while still guarding against copying the wrong shape."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "The contents converge on one dividing line: centralize decisions that affect multiple teams (shared handoffs, controls, reporting, completion definitions) and leave local what stays within one team's work. A shared baseline with bounded local additions avoids both a central bottleneck and silent erosion of standards, which is the same risk as one fix breaking pieces others already rely on.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10",
+    "E11"
+   ],
+   "source_ids": [
+    "S8",
+    "S10"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what point does a shared, centrally maintained type model start slowing contributors down or causing regressions, for example when a struct fix breaks functions that had already matched?",
+    "capability": "You can decide which shared rules stay under one owner and which teams may change on their own, using whether a change's consequences reach beyond a single team as the test."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Three distinct symptoms point to three different fixes: repeated waits for routine approval means streamline review; the same exception requested again and again means formalize a permitted local option; and handoff problems from inconsistent local changes mean tighten the shared boundary. Tracking queue length for shared teams is proposed as a standing health measure.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S8",
+    "S10"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what point does a shared, centrally maintained type model start slowing contributors down or causing regressions, for example when a struct fix breaks functions that had already matched?",
+    "capability": "You can spot that a shared model has become a drag by watching for specific symptoms, and respond differently to each, instead of reacting to a vague feeling that the process is slow."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "When a central specialist team (the example is UX) does all work for every feature team, queues grow and it becomes a bottleneck. The proposed alternative is for the central team to maintain reusable patterns, coach other teams, and join temporarily only on novel work, with autonomy measured as the share of work delivered without its direct help.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14",
+    "E15"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what point does a shared, centrally maintained type model start slowing contributors down or causing regressions, for example when a struct fix breaks functions that had already matched?",
+    "capability": "You can stop expecting a central team to do all the work for everyone and instead fund it to teach and productize reusable patterns, so its queue does not become the bottleneck."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Decompilers label values by width only until told otherwise, so a pointer, an int and a float all appear as the same raw integer. Analysts who read these as real behavior end up describing bugs that are only the missing type. The decompiler's own signals (a pointer used as an integer for no reason) should trigger a check against the assembly, not a conclusion.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E16",
+    "E17"
+   ],
+   "source_ids": [
+    "S15",
+    "S16"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the decompiler's output keep guessing plain integers for values that are really pointers or structs, and what has to be known about each value for a type to be chosen consistently in every source file?",
+    "capability": "You can stop reading integer-typed values in decompiled output as evidence about what the program does, and treat them as a missing-type problem to fix before drawing conclusions."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "An angr bug report found many functions across two stripped binaries (Redis 7.4.2 and Lua 5.4.7) where pointer parameters came out as 64-bit integers, even when the body passed them to memset or strlen. Recovery was inconsistent even within one signature: in anetResolve, two char pointers were recovered correctly while an identically declared third was not. Results also changed depending on what else had been decompiled earlier in the session.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18",
+    "E19"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the decompiler's output keep guessing plain integers for values that are really pointers or structs, and what has to be known about each value for a type to be chosen consistently in every source file?",
+    "capability": "You can budget for the fact that automated type recovery is unreliable on pointers, and plan human review time for function signatures rather than assuming the tool's first pass is consistent."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "Fixing a type in one place propagates outward: correcting a recognized library call's signature fixes parameter types in every caller, and retyping a wrapper's return as a struct pointer lets callers be retyped from it. Loading shipped type archives is described as the single step that changes output the most. What must be known per value is the evidence from the instructions that touch it (how it is passed, which offsets and widths are accessed), so consistency comes from recording that decision once, not per file.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E20",
+    "E21"
+   ],
+   "source_ids": [
+    "S15",
+    "S16"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the decompiler's output keep guessing plain integers for values that are really pointers or structs, and what has to be known about each value for a type to be chosen consistently in every source file?",
+    "capability": "You can invest in a shared, team-wide library of confirmed types and signatures, because one correct type fixes every caller and every file instead of being re-guessed each time."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "On DecompileBench (23,400 functions from 130 OSS-Fuzz programs), each function was extracted and compiled in isolation, then decompiled. Hex-Rays led with an average recompile success of 0.583 and coverage equivalence of 0.418. LLM-refined outputs trailed it, with coverage equivalence lower by 17.2-52.2%, because the LLMs favour readability over strict compiler compatibility. This is an aggregate correctness measure and does not break out pointer-versus-integer or struct-versus-scalar type errors.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 0.418, 130, 23400",
+   "spans": [
+    "E22",
+    "E23"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured error rates do decompilation projects and published studies report for pointer-versus-integer and struct-versus-scalar type decisions when each function or source file is analysed in isolation, and who measured them?",
+    "capability": "You can pick a decompiler for real-world binaries by how much its output survives recompilation and behaves like the original, and stop assuming a more readable or AI-polished tool is also a more correct one."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "Every decompiler's correctness fell as compiler optimization rose. Hex-Rays' coverage equivalence went from 0.523 at -O0 to 0.361 at -O3, and its recompile success from 0.706 to 0.513. The authors highlight a 36.11% functionality correctness drop for Hex-Rays under -O3.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 0.361, 0.513, 0.523, 0.706",
+   "spans": [
+    "E24"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured error rates do decompilation projects and published studies report for pointer-versus-integer and struct-versus-scalar type decisions when each function or source file is analysed in isolation, and who measured them?",
+    "capability": "You can expect decompiler reliability to drop on optimized production builds and budget extra verification for them, rather than trusting results validated on unoptimized code."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "The only substantive source retrieved, DecompileBench from Tsinghua (Zeyu Gao, Chao Zhang et al., 2025), scores type problems only qualitatively. It uses an LLM judge with 'Typecast Correctness' and 'Memory Layout' (failed type inference) criteria, validated against human raters at kappa 0.778. It reports no error rates for these specific type decisions. The other retrieved sources were unreadable (a raw PDF stream and a bot-check page).",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E25"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured error rates do decompilation projects and published studies report for pointer-versus-integer and struct-versus-scalar type decisions when each function or source file is analysed in isolation, and who measured them?",
+    "capability": "You can stop expecting this literature to give you a ready error rate for pointer-versus-integer or struct-versus-scalar mistakes, and plan to measure that on your own binaries or search elsewhere."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "Without complete prototypes, the compiler applies default conversions and makes no attempt to check argument types or counts. A mismatch can cause arguments on the stack to be misread, corrupting not only the mismatched parameter but all subsequent ones. So partial type information does not just leave errors unreported; it lets wrong code compile and misbehave at runtime.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26",
+    "E27"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what point does supplying more type information, such as struct definitions, function prototypes and symbol sizes, stop removing compiler errors and start introducing new mismatches in the generated code?",
+    "capability": "You can treat missing or partial function declarations as a source of silent wrong-code risk, and require complete declarations before trusting a decompiled or recovered codebase to behave correctly."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Declaring a struct inside a function prototype makes the compiler scope it locally under strict ANSI mode, so the function can never be called without a type mismatch error. The fix is to declare the struct at global scope before the prototype. More type information therefore creates new mismatches when it is supplied in the wrong place or order, not only when it is wrong.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E28",
+    "E29"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what point does supplying more type information, such as struct definitions, function prototypes and symbol sizes, stop removing compiler errors and start introducing new mismatches in the generated code?",
+    "capability": "You can expect that adding type declarations in the wrong scope or order will create new compile errors, and so sequence the work so that foundational definitions come before the declarations that depend on them."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "A sound and decidable static checker must be incomplete, meaning it will reject some correct programs. Conversely, a program can pass the type checker and still fail at runtime, for example through division by zero. Reaching zero compiler errors is therefore a weak completion signal for reconstructed code, and the remaining defects must be found by testing or other analysis.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E30",
+    "E31"
+   ],
+   "source_ids": [
+    "S22"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what point does supplying more type information, such as struct definitions, function prototypes and symbol sizes, stop removing compiler errors and start introducing new mismatches in the generated code?",
+    "capability": "You can set expectations that a type checker's silence is not proof of correctness, and so keep runtime testing in the plan even after the compiler errors are gone."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "GCC's feedback-profile mismatch check shows the tradeoff: when source files change between profiling and the final build, the compiler cannot use the profile. By default this is an error, but it can be downgraded, which risks poorly optimized code. The maintainers say this is acceptable only for very minor changes such as bug fixes, and that disabling the warning completely is not recommended, so stale shared data is tolerable only in a narrow band.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E32"
+   ],
+   "source_ids": [
+    "S27"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S27",
+     "quote": "If a source file is changed between compiling with -fprofile-generate and with -fprofile-use, the files with the profile feedback can fail to match the source file and GCC cannot use the profile feedb",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to compile errors and to byte-for-byte matching when the shared type definitions are wrong, incomplete or contradict each other across source files, and at what point does a shared model make things worse than per-file guesses?",
+    "capability": "You can stop assuming a mismatch between a build's inputs and its saved reference data will fail loudly, and instead decide up front whether stale reference data should block a release or merely degrade quality."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "Compilers detect errors, report them, and then try to recover so they can keep processing, and an undeclared identifier shows up as a missing symbol-table entry. A single missing shared definition therefore becomes an error in every file that uses it, and later errors may be recovery artifacts. GCC offers a limit on error count and an abort-on-first-error mode, which reflects that cascades are common enough to need controls.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E33",
+    "E34"
+   ],
+   "source_ids": [
+    "S26",
+    "S27"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to compile errors and to byte-for-byte matching when the shared type definitions are wrong, incomplete or contradict each other across source files, and at what point does a shared model make things worse than per-file guesses?",
+    "capability": "You can expect that one wrong or missing shared definition produces a pile of follow-on errors, and so judge the health of a shared model by its first error rather than by total error count."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "GCC separates warnings, which flag constructions that are not inherently erroneous but risky, from errors, and a warning does not stop the build unless it is promoted. Shared type definitions that are incomplete or contradictory may therefore compile cleanly while producing different behavior, so exact-match goals need a stricter bar than passing the build.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E35",
+    "E36"
+   ],
+   "source_ids": [
+    "S27"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to compile errors and to byte-for-byte matching when the shared type definitions are wrong, incomplete or contradict each other across source files, and at what point does a shared model make things worse than per-file guesses?",
+    "capability": "You can stop treating a clean compile as proof that code matches its source of truth, since compilers pass code that is risky or wrong as long as it is not strictly invalid."
+   }
+  },
+  {
+   "claim_id": "C22",
+   "text": "Padding is inserted automatically to satisfy alignment, so the total size of a structure is not the sum of its members. For the same members, reordering changes size from 24 bytes to 16 bytes, and turning padding off changes sizes from 4/8/24/16 to 3/7/13/13. A wrong width or padding assumption therefore compiles cleanly but yields a differently sized and shifted structure, which shows up as output or size differences rather than errors.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E37",
+    "E38"
+   ],
+   "source_ids": [
+    "S30"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a reconstructed program when one shared struct definition has the wrong field width or padding, and how do those errors show up as compiler output differences rather than compile errors?",
+    "capability": "You can stop assuming a single wrong field width or padding choice in a shared definition will be caught at build time, and instead expect it to silently change the size and layout of every program that uses it."
+   }
+  },
+  {
+   "claim_id": "C23",
+   "text": "Layout depends on the compiler's packing setting, which defaults to 8-byte packing in Microsoft's compiler and can be overridden per structure by directives. GCC also offers a Microsoft-compatible layout mode, and mixing its packing directive with its packed attribute may cause spurious warnings or unexpected behavior. Identical source can therefore produce different binaries depending on settings, so differences may come from build configuration rather than a reconstruction error.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E39"
+   ],
+   "source_ids": [
+    "S28"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S29",
+     "quote": "However, the packed attribute interferes with #pragma pack, and attempting to use them together may cause spurious warnings or unexpected behavior.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a reconstructed program when one shared struct definition has the wrong field width or padding, and how do those errors show up as compiler output differences rather than compile errors?",
+    "capability": "You can treat the compiler and its settings as part of the specification when judging whether a reconstructed program matches the original, rather than comparing source text alone."
+   }
+  },
+  {
+   "claim_id": "C24",
+   "text": "Structures that must match external layouts need padding disabled to match exactly, so a reconstruction that leaves default padding in place will misread or misplace fields. Elsewhere a padding error mostly changes size and performance; here it corrupts data interpretation.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E40"
+   ],
+   "source_ids": [
+    "S30"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a reconstructed program when one shared struct definition has the wrong field width or padding, and how do those errors show up as compiler output differences rather than compile errors?",
+    "capability": "You can prioritise checking structures that mirror external data (file headers, network packets, hardware registers) first when a reconstruction behaves differently, because these are where a padding error does the most damage."
+   }
+  },
+  {
+   "claim_id": "C25",
+   "text": "In a real codebase cleanup, a 'duplicate' Task type turned out to be two distinct types with different identifiers (text versus numeric), different extra fields, and different jobs: one for the external data contract and one for internal live state. The team deliberately kept both, deleted only the unused legacy third copy, and documented the split, with 1096 of 1096 tests passing. Forcing a merge would have created mismatches between what the outside world sends and what the internal system tracks.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E41",
+    "E42"
+   ],
+   "source_ids": [
+    "S31"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what point does sharing one type definition across all files in a reconstructed codebase start causing more mismatches than it fixes, and what do the failures look like?",
+    "capability": "You can stop pushing for one merged definition of a shared concept when two parts of the system legitimately describe it differently, and instead decide to keep them separate and label each clearly."
+   }
+  },
+  {
+   "claim_id": "C26",
+   "text": "The failure that prompted the Task cleanup was not the duplicate definitions themselves but one file pulling the Task type from the legacy location even though it defined its own, which created confusion about which version was authoritative. Consolidation effort is best aimed at finding such wrong-source usage rather than at collapsing every similar-looking definition.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E43"
+   ],
+   "source_ids": [
+    "S31"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what point does sharing one type definition across all files in a reconstructed codebase start causing more mismatches than it fixes, and what do the failures look like?",
+    "capability": "You can treat an incorrect or stray import of the shared definition as the main failure signal, and ask engineers to audit who imports which version before approving any consolidation work."
+   }
+  },
+  {
+   "claim_id": "C27",
+   "text": "One engineer lost nearly three days trying to make a single shared build work for both the browser frontend and the Node backend, producing errors that looked random: runtime export-syntax failures, missing modules, and builds that passed but broke at runtime. The fix was one source of truth with separate builds per environment, so sharing works when the shared source is single but its delivery is split.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E44",
+    "E45"
+   ],
+   "source_ids": [
+    "S32"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what point does sharing one type definition across all files in a reconstructed codebase start causing more mismatches than it fixes, and what do the failures look like?",
+    "capability": "You can stop expecting a single shared package to serve every environment and budget for separate outputs per consumer, treating a single-artifact attempt as a known time sink."
+   }
+  },
+  {
+   "claim_id": "C28",
+   "text": "The general-purpose binary splitter used for N64, PS1, PS2 and PSP projects explicitly does not cover GameCube/Wii and redirects those projects to a separate dedicated toolkit. A GameCube/Wii effort therefore cannot reuse the N64/PS2 splitting workflow and its type and symbol configuration directly; it needs the GameCube/Wii-specific toolkit and its project template.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E46",
+    "E47"
+   ],
+   "source_ids": [
+    "S34"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Do decompilation projects for other consoles or other compilers, such as those for the N64, PS2 or GBA, build and maintain their shared type model differently, and would their methods work for GameCube and Wii code built with the Metrowerks compiler?",
+    "capability": "You can stop assuming one shared toolchain covers N64, PS2 and GameCube/Wii work, and plan GameCube/Wii decompilation staffing and tooling around its own dedicated stack."
+   }
+  },
+  {
+   "claim_id": "C29",
+   "text": "The matching-decompilation process is the same across consoles; what changes per platform is the compiler to reproduce, with Metrowerks CodeWarrior versions named for GameCube versus SGI IDO for many N64 titles and GCC from PsyQ for PlayStation. Type and structure naming happens after matching begins, so the shared type model grows incrementally from generic names rather than being imported up front, and the compiler's sensitivity to statement order and register use is what makes it slow.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E48",
+    "E49"
+   ],
+   "source_ids": [
+    "S36"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Do decompilation projects for other consoles or other compilers, such as those for the N64, PS2 or GBA, build and maintain their shared type model differently, and would their methods work for GameCube and Wii code built with the Metrowerks compiler?",
+    "capability": "You can assume the matching workflow (identify compiler, split, match function by function, document types) transfers to Metrowerks-built GameCube/Wii code, and budget for compiler-specific effort rather than a new method."
+   }
+  },
+  {
+   "claim_id": "C30",
+   "text": "The first-draft C generator used in matching projects targets MIPS and PowerPC (plus ARM and SuperH), so N64/PS2 and GameCube/Wii efforts can share that stage even though their splitters differ. The shared layer is therefore the draft decompiler, diffing and browser-matching tools, not the splitter or type configuration.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E50",
+    "E51"
+   ],
+   "source_ids": [
+    "S36",
+    "S37"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Do decompilation projects for other consoles or other compilers, such as those for the N64, PS2 or GBA, build and maintain their shared type model differently, and would their methods work for GameCube and Wii code built with the Metrowerks compiler?",
+    "capability": "You can avoid assuming that a draft-generation decompiler is console-specific, and expect the same first-draft tool to serve both MIPS-era and PowerPC GameCube/Wii work."
+   }
+  },
+  {
+   "claim_id": "C31",
+   "text": "A flag mismatch makes every function unmatchable and looks like a source-code problem, so a stalled project may be a configuration problem rather than a talent or effort problem. Checking the build against one already-matched function is the cheap diagnostic before blaming the people or the code.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E52"
+   ],
+   "source_ids": [
+    "S39"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to a matching decompilation project when types exported automatically from a reverse-engineering database are compiled with an old Metrowerks compiler, and which constructs in those generated headers cause the compiled output to stop matching the original?",
+    "capability": "You can stop treating a project's compiler flags as a minor setup detail and recognize that a wrong flag setting makes every function look unfixable, so effort should be spent verifying the build settings before judging team progress."
+   }
+  },
+  {
+   "claim_id": "C32",
+   "text": "A project can reach 90 percent function coverage and still fail to rebuild the final ROM because of data layout, literal pools, or one stubborn function. For GameCube and Wii work with Metrowerks CodeWarrior, matching is harder than on N64 because C++ code generation is less predictable, so the 'linked' milestone is the honest completion measure.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E53",
+    "E54"
+   ],
+   "source_ids": [
+    "S39"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to a matching decompilation project when types exported automatically from a reverse-engineering database are compiled with an old Metrowerks compiler, and which constructs in those generated headers cause the compiled output to stop matching the original?",
+    "capability": "You can stop reading a high function-coverage figure as proof that a decompilation project is nearly finished, and ask instead whether the whole build links to identical bytes."
+   }
+  },
+  {
+   "claim_id": "C33",
+   "text": "Compilers of that era are sensitive to statement order, temporary variable types and register use, and some functions take days to match. Automated type exports are therefore a first draft that still needs manual tuning, not a finished input. Neither source describes the specific header constructs that break matching, so the question as posed remains unanswered here.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E55"
+   ],
+   "source_ids": [
+    "S36"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a matching decompilation project when types exported automatically from a reverse-engineering database are compiled with an old Metrowerks compiler, and which constructs in those generated headers cause the compiled output to stop matching the original?",
+    "capability": "You can budget for slow, expert-driven work on old-compiler projects instead of expecting automated or generated code to match quickly."
+   }
+  },
+  {
+   "claim_id": "C34",
+   "text": "In matching decompilation, a header change ripples into every function compiled against it, so a edit that fixes one function can silently break previously matched code. This coupling is the concrete mechanism that makes one shared header costly to keep across several versions or titles, and it pushes contributors toward private copies where changes cannot break others.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E56"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do some decompilation projects that share type definitions across several game versions or titles end up forking or copying their headers instead of keeping one shared source, and what went wrong for them?",
+    "capability": "You can stop assuming a shared type header is safe to edit and instead require that any change to shared types or prototypes triggers a rebuild and re-verification of everything already matched."
+   }
+  },
+  {
+   "claim_id": "C35",
+   "text": "Matching results depend on the compiler, flags, per-file pragmas and inline helpers, so the same type definition can need different treatment in different builds. A shared header that must satisfy several toolchains and versions accumulates conflicts, which is a plausible reason projects copy headers instead of sharing them.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E57",
+    "E58"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do some decompilation projects that share type definitions across several game versions or titles end up forking or copying their headers instead of keeping one shared source, and what went wrong for them?",
+    "capability": "You can budget for per-version and per-compiler divergence up front, rather than expecting one set of type definitions to serve every game version or title."
+   }
+  },
+  {
+   "claim_id": "C36",
+   "text": "Types are lost in compilation and recovered by heuristics, so struct layouts in a project's headers are educated guesses that get revised as work continues. A shared header encoding guesses made for one title can be wrong for another, so each project tends to correct its own copy.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E59",
+    "E60"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do some decompilation projects that share type definitions across several game versions or titles end up forking or copying their headers instead of keeping one shared source, and what went wrong for them?",
+    "capability": "You can treat recovered type definitions as provisional hypotheses and stop relying on them as a stable foundation to share across projects."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 41,
+  "lineages": 41,
+  "duplicate_url_aliases": 1,
+  "sources_with_injection_flags": 3,
+  "claims": 36,
+  "claims_with_verified_span": 36,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 62,
+  "quotes_rejected": 2,
+  "ledger_capped": 5,
+  "quotes_reattributed": 0,
+  "claims_persisted": 7,
+  "persisted_with_verified_span": 7,
+  "persisted_verified_span_rate": 1.0
+ }
+}

@@ -1,0 +1,635 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_201320_which-c-source-idioms-make-mwcceppc-codewarrior-fo",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://docs.nxp.com/bundle/GUID-9FAC1C79-3809-474F-B8DF-82BEB5B88419/page/GUID-54D3869F-313F-45D2-82B3-0F78D6CECAFD.html",
+   "aliases": [],
+   "sha256": "d3c7302bea7eb4269b20f26ab743d43b81a4ba1db10baf8df5a7a08c006e9ea8",
+   "chars": 232,
+   "snapshot": "d3c7302bea7eb4269b20f26ab743d43b81a4ba1db10baf8df5a7a08c006e9ea8.txt",
+   "retrieved_at": "2026-11-11T19:13:38+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/matching-decomp/",
+   "aliases": [],
+   "sha256": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250",
+   "chars": 25000,
+   "snapshot": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250.txt",
+   "retrieved_at": "2026-11-11T19:14:19+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://github.com/Raikaru/MWCCPS2-Matching-Techniques",
+   "aliases": [],
+   "sha256": "9181f3d7cb16f1c1a960a38f0f9bafa842bb90b9b4c067b593c11fc56d9993ce",
+   "chars": 3876,
+   "snapshot": "9181f3d7cb16f1c1a960a38f0f9bafa842bb90b9b4c067b593c11fc56d9993ce.txt",
+   "retrieved_at": "2026-11-11T19:14:19+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://www.cs.rutgers.edu/courses/415/classes/spring_2016_zhang/lectures/lec02.pdf",
+   "aliases": [],
+   "sha256": "27fc799877c8d2e4ffb5cfa7460770784bf9db21d214c5389ddd09b193859839",
+   "chars": 25000,
+   "snapshot": "27fc799877c8d2e4ffb5cfa7460770784bf9db21d214c5389ddd09b193859839.txt",
+   "retrieved_at": "2026-11-11T19:16:13+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://courses.cs.washington.edu/courses/csep501/23au/lectures/N-backend.pdf",
+   "aliases": [],
+   "sha256": "5a1be031e141c4f7b41bd5080c8db4f8f157ae5e341b0ef69fc1e867d2cbf284",
+   "chars": 25000,
+   "snapshot": "5a1be031e141c4f7b41bd5080c8db4f8f157ae5e341b0ef69fc1e867d2cbf284.txt",
+   "retrieved_at": "2026-11-11T19:16:13+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.cosmiclearn.com/compilerdesign/instruction-scheduling.php",
+   "aliases": [],
+   "sha256": "ff20e5dbfc633d1da1001fbaf16ce6b26edbcaf2e8c9746ab5305bf2a0fb9fd9",
+   "chars": 25000,
+   "snapshot": "ff20e5dbfc633d1da1001fbaf16ce6b26edbcaf2e8c9746ab5305bf2a0fb9fd9.txt",
+   "retrieved_at": "2026-11-11T19:16:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://en.wikipedia.org/wiki/Register_allocation",
+   "aliases": [],
+   "sha256": "a29750e6412bf8afd08807248f997c6545da1484cce459cc1ad5484a64268d18",
+   "chars": 25000,
+   "snapshot": "a29750e6412bf8afd08807248f997c6545da1484cce459cc1ad5484a64268d18.txt",
+   "retrieved_at": "2026-11-11T19:16:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://support.novell.com/techcenter/articles/dnd19990101.html",
+   "aliases": [],
+   "sha256": "8a8a588d5c1b61b785100b9d5590b6b44cecc1326cbbe6702a0e8c79fa2e1358",
+   "chars": 19216,
+   "snapshot": "8a8a588d5c1b61b785100b9d5590b6b44cecc1326cbbe6702a0e8c79fa2e1358.txt",
+   "retrieved_at": "2026-11-11T19:16:45+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://dev.to/sachin_tolay_052a7e539e57/instruction-reordering-your-code-doesnt-always-run-in-the-order-you-wrote-it-bb8",
+   "aliases": [],
+   "sha256": "4e2927f1636be5235e4069a8b9e8d5e09f13c27b892425df839cd5335ad5d847",
+   "chars": 7306,
+   "snapshot": "4e2927f1636be5235e4069a8b9e8d5e09f13c27b892425df839cd5335ad5d847.txt",
+   "retrieved_at": "2026-11-11T19:17:31+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://learn.padho.ai/wiki/instruction-reordering-by-cpu-and-compiler",
+   "aliases": [],
+   "sha256": "d0ef2a5b6523a2dd5dbf4b153b479ff248a7d912a6dbf2cf0d9c080eec2f82f6",
+   "chars": 25000,
+   "snapshot": "d0ef2a5b6523a2dd5dbf4b153b479ff248a7d912a6dbf2cf0d9c080eec2f82f6.txt",
+   "retrieved_at": "2026-11-11T19:17:31+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://wendajiang.github.io/area/blog/memory_ordering_at_compile_time",
+   "aliases": [],
+   "sha256": "8af95aeb9e137d1d826ad383254ca5ff59fc55c68c57a7584409628e57bccddf",
+   "chars": 5509,
+   "snapshot": "8af95aeb9e137d1d826ad383254ca5ff59fc55c68c57a7584409628e57bccddf.txt",
+   "retrieved_at": "2026-11-11T19:17:31+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://decomp-academy.dev/courses/gba/lesson/gba-foundations-what-is-matching",
+   "aliases": [],
+   "sha256": "1bcd08a62c01f6252c9bff7ad4682a358b819beaac06b098dd7467c86a9f5d26",
+   "chars": 3130,
+   "snapshot": "1bcd08a62c01f6252c9bff7ad4682a358b819beaac06b098dd7467c86a9f5d26.txt",
+   "retrieved_at": "2026-11-11T19:18:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://decomp-academy.dev/courses/n64-c/lesson/foundations-what-is-matching",
+   "aliases": [],
+   "sha256": "ccca744fe8f18f14d44f7a744fb6468ace9c1581338a61a47eec8ba1c91148a3",
+   "chars": 3043,
+   "snapshot": "ccca744fe8f18f14d44f7a744fb6468ace9c1581338a61a47eec8ba1c91148a3.txt",
+   "retrieved_at": "2026-11-11T19:18:22+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://www.charles.systems/teaching/Decompilation_Shmecompilation.pdf",
+   "aliases": [],
+   "sha256": "abef74273d67e4c1c82745787d0538e3acb5572935e9b4b9c1bd040c26c14b45",
+   "chars": 25000,
+   "snapshot": "abef74273d67e4c1c82745787d0538e3acb5572935e9b4b9c1bd040c26c14b45.txt",
+   "retrieved_at": "2026-11-11T19:18:23+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://grokipedia.com/page/Matching_Decompilation",
+   "aliases": [],
+   "sha256": "3faa696dae98b783fcb2ec52b6fab2809202d195610adbf1706188378cddc16e",
+   "chars": 25000,
+   "snapshot": "3faa696dae98b783fcb2ec52b6fab2809202d195610adbf1706188378cddc16e.txt",
+   "retrieved_at": "2026-11-11T19:18:23+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S15"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S2",
+   "start": 10898,
+   "end": 11052,
+   "text": "Cap the attempts. Retrobench uses 25 builds per function as a budget. Human decompers often allow more for hard functions, but diminishing returns set in.",
+   "sha256": "2d285e97588f5cc73b5792cf252f9cc648fb56ec664c529108f3b296e373260c"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S3",
+   "start": 3432,
+   "end": 3515,
+   "text": "Current project instructions and actual per-unit compiler\nsettings take precedence.",
+   "sha256": "4b8f433e5a2e2ca9f811a3702b778fc0ced444d369403ccf985281153362815c"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S3",
+   "start": 3246,
+   "end": 3356,
+   "text": "No historical compiler experiment, C consumer, retail-image build or PS2 execution\nwas rerun for this edition.",
+   "sha256": "26951cd4c41533e6ad54ae4f44f2d3964a3375f4b2d4242d88177b6f40ce14d7"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S2",
+   "start": 7601,
+   "end": 7710,
+   "text": "Do not guess flags blindly. A flag mismatch makes every function unmatchable and looks like a source problem.",
+   "sha256": "bae8bfa363ce25c2103481a3e71f3e0cdc484d066b6f29711a4e9c317251352f"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S6",
+   "start": 8894,
+   "end": 9008,
+   "text": "Unlike RAW dependencies, WAR dependencies are not fundamental to the math. They are an artifact of register reuse.",
+   "sha256": "3a69ad559322faff954d1872dc9423d66cd6cd9070613b7192ca46934f1fbbff"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S7",
+   "start": 5291,
+   "end": 5372,
+   "text": "Chaitin et al. showed that optimal register allocation is an\nNP-complete\nproblem.",
+   "sha256": "e34da47b1810608c91f1cf0f91d11222b6c00667d5624781be29e803d8b0dc45"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S6",
+   "start": 12943,
+   "end": 13040,
+   "text": "Finding the absolute mathematically optimal schedule for a basic block is an\nNP-Complete\nproblem.",
+   "sha256": "539b6d0d09ead1d2dbc91eae7ce61b13f4d5e1819988fbed9fd8597c2f7876d5"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S11",
+   "start": 1079,
+   "end": 1143,
+   "text": "Thou shalt not modify the behavior of a single-threaded program.",
+   "sha256": "41bafed95959e56d01f81046dca174804b0213a160342fad48dfa78d4695d42d"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S11",
+   "start": 4407,
+   "end": 4464,
+   "text": "A compiler barrier is not enough on any CPU architecture.",
+   "sha256": "9c1a08c5d06ced76ffdfc0a5fd35226362308943eeb70a9ec3a67c1e91493f4f"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S10",
+   "start": 1955,
+   "end": 2125,
+   "text": "volatile\nonly stops the compiler half, fences only stop the CPU half, and\nstd::atomic\n(or equivalent in your language) is the only construct that constrains both at once.",
+   "sha256": "850ff4ec27126b102c65677001dd19d3db238f76c283f2115508defe981393f1"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S2",
+   "start": 10898,
+   "end": 11052,
+   "text": "Cap the attempts. Retrobench uses 25 builds per function as a budget. Human decompers often allow more for hard functions, but diminishing returns set in.",
+   "sha256": "2d285e97588f5cc73b5792cf252f9cc648fb56ec664c529108f3b296e373260c"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S15",
+   "start": 15869,
+   "end": 15965,
+   "text": "Unmatched functions commonly remain as included assembly so the rest of the program still links,",
+   "sha256": "23ec0a5b39cf7ee5e95f905e5b06aaf41b96b0bd36beca821dad15db7b4cda0d"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S2",
+   "start": 3264,
+   "end": 3415,
+   "text": "A project can sit at 90 percent function coverage and still fail to link the final ROM because of data layout, literal pools, or one stubborn function.",
+   "sha256": "4fcb2dd115f31b71ec9b22dd4861c4a1030d8f5bb57943a7de15da50ca94090c"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S15",
+   "start": 4597,
+   "end": 4715,
+   "text": "Near-finished projects have included functions that were not byte-for-byte identical yet were \"functionally the same.\"",
+   "sha256": "5cf688e3f4b24de343d5aaffa1c435559d0e892a154de5ea4f4cfdabc6b50e69"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S2",
+   "start": 2814,
+   "end": 2907,
+   "text": "The function matches under a relaxed comparison, for example with different register choices.",
+   "sha256": "6fb1e2e42420f272251533dccf4514845840828843e7003bbd6be24a0e74d966"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "The only stated measurement tied to attempts is a budget: the Retrobench benchmark allows 25 builds per function, and human decompilers allow more for hard functions but see diminishing returns. No source publishes how often a given rewrite changes the emitted PowerPC instructions, so the per-rewrite effect rate is effectively unmeasured in this material and the real control lever is the attempt cap.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured evidence do matching-decompilation teams have on how often a given source rewrite actually changes the emitted PowerPC instructions, and how do they record which rewrites worked across different compiler versions?",
+    "capability": "You can stop assuming that a source rewrite's effect is a known quantity and instead budget matching work around a hard per-function attempt cap, because the field's own measured practice is a bounded build count rather than a hit-rate for any rewrite."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "One public repository for the PS2 CodeWarrior compiler records its rewrite knowledge as a ledger of 24 public source revisions with technical contrasts and caveats, plus allocation worksheets and evidence templates. It explicitly says current project instructions and actual per-unit compiler settings take precedence over the recipes, and that no historical experiment was rerun, so the recipes are not guaranteed to transfer across compiler versions.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E2",
+    "E3"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What measured evidence do matching-decompilation teams have on how often a given source rewrite actually changes the emitted PowerPC instructions, and how do they record which rewrites worked across different compiler versions?",
+    "capability": "You can require that any knowledge about which rewrites worked be stored together with its compiler version and per-unit settings, instead of treating a rewrite recipe as universally valid."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The community guidance is that a flag mismatch makes every function unmatchable and looks like a source problem, so the compiler and flags must be confirmed on a known-matched function before attributing a failure to a rewrite. This means a low success rate for rewrites can reflect configuration, not the rewrites themselves.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What measured evidence do matching-decompilation teams have on how often a given source rewrite actually changes the emitted PowerPC instructions, and how do they record which rewrites worked across different compiler versions?",
+    "capability": "You can judge whether a matching result is trustworthy by checking that the flags and compiler were fixed first, since a setup error is indistinguishable from a bad rewrite and wastes effort on every function."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Register reuse creates artificial ordering constraints (write-after-read and write-after-write) that disappear if different registers are chosen, so whichever allocation the compiler lands on directly limits how instructions can be reordered. A change that shifts register assignment in one place therefore changes what the scheduler is allowed to move in another, and the reverse also holds.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the order in which a compiler assigns registers and schedules instructions make a small change in one part of a function alter register choices, branch layout and loop shape somewhere else?",
+    "capability": "You can stop treating a small code change as a local event and expect it to ripple into register choices elsewhere, because the compiler's allocation and scheduling decisions are coupled through shared constraints."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Optimal register allocation is NP-complete, and optimal basic-block scheduling is also NP-complete, so compilers use greedy heuristics (graph coloring with spill candidates, list scheduling with priority picks). In the scheduling walkthrough, a priority tie between two ready instructions is broken arbitrarily, so a small upstream change can reorder the whole result.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6",
+    "E7"
+   ],
+   "source_ids": [
+    "S6",
+    "S7"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the order in which a compiler assigns registers and schedules instructions make a small change in one part of a function alter register choices, branch layout and loop shape somewhere else?",
+    "capability": "You can expect that fixes and optimizations in compiled code produce unstable, hard-to-predict performance shifts, since the compiler uses greedy heuristics rather than optimal solutions, and small input changes can flip tie-breaks."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Global schedulers pick a hot trace and treat it as one block, duplicating tails so control never enters mid-trace, and they insert compensation code on exits. Software pipelining restructures a loop into prologue, kernel and epilogue with an initiation interval set by the larger of resource and recurrence bounds. So changing a hot path or one loop dependency can alter block layout and loop shape well away from the edit.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S6",
+     "quote": "To create a Superblock, the compiler uses a technique called Tail Duplication.",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S6",
+     "quote": "The Prologue",
+     "reason": "shorter than 20 chars"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the order in which a compiler assigns registers and schedules instructions make a small change in one part of a function alter register choices, branch layout and loop shape somewhere else?",
+    "capability": "You can expect that branch layout and loop shape in one region change when a nearby region changes, because the compiler duplicates and restructures code around hot paths based on profile and structure."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "Compilers are only obliged to preserve single-threaded behavior, so a build change can alter instruction order or cache a value in a register without any source change. In the cited scenario, a team upgraded GCC from 11.4 to 13.2 with no source or CPU change, and code that had run in production for nine months began reading stale data. The right response is to audit for unsynchronized shared state rather than blame the new compiler.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S10",
+     "quote": "On a Friday afternoon the team upgrades GCC from 11.4 to 13.2, recompiles with `-O3`, and the consumer starts reading `order` fields that are still zero.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does changing a single line of C source, like reordering a local variable declaration or adding a temporary, change which registers the compiler picks and how the stack frame is laid out?",
+    "capability": "You can stop treating a bug that appears only after a compiler upgrade or optimization-level change as a mysterious regression, and instead treat it as a sign of a latent flaw in the code that the new compiler merely exposed."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Code that ran 14 hours without anomalies on x86 servers began corrupting data within 90 seconds on ARM-based Graviton2 production machines, because x86 hides ordering bugs that ARM exposes. A similar contrast was reported for a litmus test: roughly 4.9% anomalies on ARM versus 0.15% on x86. Test results on one processor family say little about another.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S10",
+     "quote": "The lesson: passing on x86 is not evidence. The architecture hides bugs the source contains.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does changing a single line of C source, like reordering a local variable declaration or adding a temporary, change which registers the compiler picks and how the stack frame is laid out?",
+    "capability": "You can stop accepting \"it passed stress testing on our servers\" as proof that concurrent code is correct, and require testing on the weaker-ordered processor types you actually deploy to."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Compiler barriers and volatile only constrain the compiler, not the processor, so they are insufficient on multicore machines. Atomic types constrain both layers at once, which is why they are the correct construct for cross-thread synchronization. Choosing atomics up front avoids a costly diagnosis later.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9",
+    "E10"
+   ],
+   "source_ids": [
+    "S10",
+    "S11"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does changing a single line of C source, like reordering a local variable declaration or adding a temporary, change which registers the compiler picks and how the stack frame is laid out?",
+    "capability": "You can reject the common shortcut of marking shared variables as volatile or adding a compiler barrier and calling concurrent code safe, and instead insist on proper atomic types."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Agent-driven matching workflows cap attempts per function (one benchmark uses 25 builds), and the guidance notes that human decompilers allow more for hard functions but hit diminishing returns. The practical consequence is that the stop decision is made by a pre-set budget, with the best-scoring partial result kept, rather than by feel.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to a matching decompilation effort when a function stays a few instructions off after dozens of attempts, and how do projects decide to stop and use inline assembly or leave it unmatched?",
+    "capability": "You can set a hard attempt budget per function and stop open-ended effort on stubborn near-misses, instead of letting a few instructions of mismatch absorb unlimited time."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "Projects leave unmatched functions as included assembly so the rest of the program still links and builds, and they track function-level progress separately from the fully linked result. A project can sit at 90 percent function coverage and still fail to link the final ROM because of one stubborn function, so the unmatched remainder is a visible, bounded debt rather than a stall.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S2",
+    "S15"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to a matching decompilation effort when a function stays a few instructions off after dozens of attempts, and how do projects decide to stop and use inline assembly or leave it unmatched?",
+    "capability": "You can park a stubborn function as assembly and keep the project shippable, instead of treating one unmatched function as a blocker for the whole effort."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "Some projects accept relaxed matches (equivalent under a looser comparison) and near-finished projects have included functions that were functionally the same but not byte-identical. Tooling also exists specifically for the plateau after 99 percent, such as classifying the mismatch and injecting outside leads rather than letting the agent random-walk, and permutation search is described as most useful once only register allocation remains. This implies the last few instructions need a different method, not just more iterations.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14",
+    "E15"
+   ],
+   "source_ids": [
+    "S2",
+    "S15"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a matching decompilation effort when a function stays a few instructions off after dozens of attempts, and how do projects decide to stop and use inline assembly or leave it unmatched?",
+    "capability": "You can decide that a near-miss function is acceptable as functionally equivalent or deliberately deferred, and plan a distinct late-stage effort for the plateau after 99 percent rather than assuming more of the same attempts will work."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 15,
+  "lineages": 15,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 2,
+  "claims": 12,
+  "claims_with_verified_span": 10,
+  "verified_span_rate": 0.833,
+  "quotes_offered": 19,
+  "quotes_rejected": 4,
+  "ledger_capped": 2,
+  "quotes_reattributed": 0,
+  "claims_persisted": 4,
+  "persisted_with_verified_span": 4,
+  "persisted_verified_span_rate": 1.0
+ }
+}
