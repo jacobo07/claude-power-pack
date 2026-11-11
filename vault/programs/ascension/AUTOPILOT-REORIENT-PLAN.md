@@ -149,6 +149,11 @@ canonical context, deploy, push, headline merges.
   Gate 117/117, mutants 23/23 killed (GEX44, real PP clone; a surviving data_allowlist_off mutant exposed a weak
   fixture first, fixed). S28K base recorded in state: 6d3ca97d (last t1 commit before its arm); its real verdict
   re-classifies CERT with the base, NONE without. GEX44 backups bak-20261111T221700Z.
+- Live run (pane c26eafbf): S28K judged AGREE, autopilot CERT (15 certs); S29K (A1+A2, 6.5M) armed 22:34Z, came back
+  all 6 objects INSTRUMENT_FAIL (pc_sd0 false on every object = D2's earlier failure mode) -> NONE; S30K (B1 KSR, 8M)
+  armed 23:02Z. Tennis S30T (B1-T) refused 22:38Z by a policy false positive ("no new profile" read as a trigger); fixed
+  a04633d8 (TRIGGER_NEGATED), gate 119/119, mutants 25/25 on GEX44 (scratch copy and live dir). Owner "y": installed
+  23:10Z, backup bak-20261111T231049Z, Tennis un-parked; S31T (B1-T, 5.0M) armed 23:19Z as m-774ba9b21e19.
 
 ## 8. Owner decisions
 1. Approve this plan (integration + the 60M ceiling as written)?
