@@ -1,0 +1,13 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Hoy certifico por función (.text). Quiero llegar a match de objeto completo, incluyendo .data, .rodata, .sdata, .sdata2, .bss, strings y tablas de salto.
+
+Investiga a fondo:
+1. Cómo emite mwcceppc tablas de switch (jumptable en .data), strings (pooling, @stringBase0), constantes float y arrays const.
+2. Orden de los datos dentro de la sección según orden de declaración, uso o inicialización; efecto de static vs global.
+3. Cómo verifican los proyectos decomp el match de datos (objdiff data diff, sha1 del DOL final) y qué trucos usan (#pragma section, __declspec(section)).
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G14","id":"G14-001","section":"","c_pattern":"","emission_rule":"","verification":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G14. evidence_grade solo puede ser E1, E2 o E3.

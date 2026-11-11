@@ -1,0 +1,321 @@
+OpenAI Codex v0.153.4
+--------
+[1mworkdir:[0m C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research
+[1mmodel:[0m gpt-6-astra
+[1mprovider:[0m openai
+[1mapproval:[0m never
+[1msandbox:[0m read-only
+[1mreasoning effort:[0m high
+[1mreasoning summaries:[0m none
+[1msession id:[0m 01a1cba5-ff56-77e2-8d18-5bf81fa7825f
+--------
+[36muser[0m
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Compilo salida de m2c con mwcceppc y obtengo errores agrupados en 7 clases: "pointer expected" sobre long, conversión implícita void*->long, "not a struct/union", operandos ilegales void*+long y void*+int, identificador no definido, declaración de tipo desconocido. Editar función por función con un LLM tuvo un éxito de 0-2%.
+
+Investiga a fondo:
+1. Texto exacto y significado de estos mensajes de error de mwcceppc (y sus códigos), y qué construcciones de C los disparan.
+2. Para cada clase, la reparación que preserva el codegen original (cast explícito, typedef de puntero, struct mínimo con campos en sus offsets, extern con prototipo) y cuáles cambian el asm.
+3. Defectos conocidos de m2c que producen estas clases (issues del repo matt-kempster/m2c) y opciones de m2c que los evitan. Verifica cada flag contra el código o el --help actual de m2c antes de citarlo: una investigación previa confirmó que `--struct` NO existe y que sí existen --context, --stack-structs y --dump-typemap. No cites un flag que no hayas visto en el repo.
+4. Si los proyectos decomp usan un fichero de contexto compartido (ctx.c, headers por TU) y cómo lo generan.
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G08","id":"G08-001","error_class":"","error_text":"","trigger_c":"","fix_c":"","codegen_preserved":true,"m2c_cause":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G08. evidence_grade solo puede ser E1, E2 o E3.
+
+[2m2026-11-11T17:26:58.160868Z[0m [31mERROR[0m [2mrmcp::transport::worker[0m[2m:[0m worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer realm=\"OAuth\", resource_metadata=\"https://mcp.notion.com/.well-known/oauth-protected-resource/mcp\", scope=\"default\"" })
+[35m[3mcodex[0m[0m
+Voy a contrastar los diagnósticos con documentación pública de CodeWarrior, revisar el código y los issues de m2c, y buscar ejemplos de generación de contexto en proyectos de decompilación. Separaré lo documentado de las reparaciones cuyo efecto sobre el ensamblador requiere comprobarse con tu compilador.
+
+[1mweb search:[0m 
+[1mweb search:[0m CodeWarrior compiler "pointer expected" error ...
+[1mweb search:[0m 
+[1mweb search:[0m site:nxp.com "pointer expected" CodeWarrior ...
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 'pointer expected' in https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m "CodeWarrior" "pointer expected" "long" ...
+[35m[3mcodex[0m[0m
+He encontrado un manual público de Freescale con varios textos y códigos de diagnóstico, pero aún no está verificado que esos números coincidan con tu versión de mwcceppc. También aparece una distinción clave en m2c: su salida habitual puede contener pseudocódigo; `--valid-syntax` intenta hacerlo compilable, sin garantizar matching.
+
+[1mweb search:[0m 
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf
+[1mweb search:[0m ""pointer" expected" "CodeWarrior" ...
+[1mweb search:[0m 
+[1mweb search:[0m 'unknown type' in https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m "mwcceppc" "type" "declaration" "Error" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m site:github.com "m2ctx.py" "riidefi" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[35m[3mcodex[0m[0m
+Hay un caso documentado de m2c en PowerPC que usa una variable de pila sin declararla (#261), y otro sobre la discrepancia entre `s32`, `int` y `long` (#238). Estoy comprobando las mitigaciones en el código actual: varias macros de `--valid-syntax` son marcadores provisionales, así que conseguir que compile no basta para preservar el comportamiento ni los bytes.
+
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m "m2ctx.py" "Mario" Wii ...
+[1mweb search:[0m 
+[1mweb search:[0m https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf
+[1mweb search:[0m 
+[1mweb search:[0m "CodeWarrior" "declaration" "unknown" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([31mfailed[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m site:github.com/encounter/dtk-template context ...
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_file[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf
+[1mweb search:[0m 
+[1mweb search:[0m https://github.com/matt-kempster/m2c/blob/master/m2c/main.py
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[35m[3mcodex[0m[0m
+La evidencia favorece corregir primero el contexto compartido: tipos de símbolos, prototipos y layouts de pila. También confirmé dos métodos distintos de generarlo: Melee preprocesa headers agregados; la plantilla de dtk expande includes, pero deja macros pendientes. Esa diferencia importa al pasar el resultado a `--context`.
+
+[1mweb search:[0m 
+[1mweb search:[0m https://github.com/matt-kempster/m2c/issues/80
+[1mweb search:[0m 
+[1mweb search:[0m https://raw.githubusercontent.com/doldecomp/mweppc/main/src/compiler/driver/cc-eabi-ppc.r
+[35m[3mcodex[0m[0m
+La vía más sólida es **reconstruir tipos y contexto compartido antes de regenerar las funciones**, y evaluar por separado «compila» y «produce bytes idénticos». Es una recomendación **E1**, no una mejora de matching demostrada.
+
+Escala aplicada: **E1 = sin fuente o inferencia propia; E2 = fuente secundaria; E3 = fuente primaria abierta y leída; E4 = reproducido compilando con mwcc.** No asigno E4. Consulté documentación pública y repositorios; no utilicé código filtrado del SDK.
+
+**1. Diagnósticos: textos, códigos y límites**
+
+El manual público *Build Tools Message Reference*, revisión 10.9.0, documenta los códigos siguientes. **Eso verifica el catálogo E3, pero no su correspondencia exacta con tu versión de mwcceppc para Wii.** La reconstrucción pública de CodeWarrior GC también conserva las plantillas de conversión, operandos y miembros. [Manual Freescale](https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf), [catálogo reconstruido de mweppc](https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r).
+
+| Clase | Texto y código documentado | Construcción que explica el error |
+|---|---|---|
+| Puntero esperado sobre `long` | **Literal comunicado no verificado.** El catálogo contiene **10499**, «A pointer/array type was expected for this operation instead of typename»; **10148** corresponde a `pointer/array required`. | `long a; *a;` o `a[0]`: un entero contiene quizá una dirección, pero su tipo no permite desreferenciarlo. No atribuir ambos ejemplos automáticamente al mismo código. |
+| `void* → long` | **10209**; plantilla reconstruida: `illegal implicit conversion from '%t' to\n'%t'`. | `long x = p;`, pasar `p` a un parámetro `long` o devolverlo desde una función `long`. |
+| No es struct/union | **10149**, `not a struct/union/class`. | `long x; x.field;`, o acceso a miembros sobre un tipo que no representa el objeto. |
+| `void* + long` | **10377**; plantilla reconstruida: `illegal operands '%t' %u '%t'`. | `void *p; long n; p+n;`: falta un tamaño de elemento utilizable. |
+| `void* + int` | **10377**, misma plantilla. | `void *p; p+4;`: misma causa; el tipo del desplazamiento no crea una clase semántica distinta. |
+| Identificador indefinido | **10140**, `undefined identifier '%u'`. | Uso de un nombre sin declaración visible, o declaración previa que no llegó a analizarse. |
+| Declaración de tipo desconocido | **Literal y código específico no verificados.** Existe **10121**, `declaration syntax error`, pero no equivale universalmente a esta clase. | `MissingType x;`, typedef ausente, orden incorrecto o marcador `?` emitido por m2c. |
+
+Los ejemplos son **E1** como reproducciones propuestas: no los compilé. Para obtener el número real, el manual de Power Architecture documenta `#pragma showmessagenumber on`; su disponibilidad en tu ejecutable concreto queda pendiente. [Manual Power Architecture, p. 435](https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf).
+
+**2. Reparaciones y efectos sobre codegen**
+
+Todas las predicciones de matching siguientes son **E1**:
+
+- **Dirección almacenada en `long`:** probar `*(long *)addr`. Si la variable representa consistentemente un puntero, corregir su declaración o introducir `typedef long *LongPtr`. Un typedef conserva el tipo que nombra; cambiar `long` por `LongPtr` sí cambia las reglas de las expresiones. No redefinir globalmente `s32` como puntero.
+- **Conversión `void* → long`:** `(long)p` hace explícita una conversión de dirección a entero; es candidato a no introducir instrucciones cuando ambas representaciones son de 32 bits. Si realmente se quería un puntero, corregir el destino resulta más coherente. **`*(long *)p` sería otra operación: añade una lectura.**
+- **Miembros:** reconstruir un struct con padding explícito y campos de ancho correcto. Por ejemplo, padding de `0x20` seguido de `long value`. Comprobar `offsetof`; conocer un campo no determina el tamaño total. Un struct mínimo puede servir para acceder mediante puntero, pero resultar incorrecto para arrays, copias o paso por valor.
+- **Ambas sumas sobre `void*`:** si el desplazamiento está en bytes, usar `(unsigned char *)p + n`. El cast debe preceder a la suma. `(long *)p + n` escala por `sizeof(long)` y cambia la dirección calculada.
+- **Nombre indefinido:** distinguir función, global, macro y local. Para una función, declarar el prototipo real; para un global, `extern` con su tipo real. Declarar cualquier nombre como `extern int` puede transformar un acceso local en una referencia global.
+- **Tipo desconocido:** restaurar el header/typedef y su orden. Una declaración adelantada permite punteros opacos, pero no acceder a campos ni almacenar objetos incompletos por valor.
+
+Incluso sin instrucciones de conversión, cambiar tipos puede modificar aliasing, comparaciones, promociones, selección de cargas, registros o ABI. En particular, cambiar signedness, anchura, `volatile`, packing o prototipos no constituye una reparación neutra.
+
+**3. m2c: causas documentadas y flags verificados**
+
+Revisé el parser actual de argumentos, cuyo `master` resolvía a `c632946b8cfbe8fce442b522dba92dfa72f1f317`.
+
+- **E3:** m2c emite accesos ficticios a campos cuando no conoce su layout; con `--valid-syntax` puede convertirlos en `M2C_FIELD`, que realiza aritmética por bytes y un acceso tipado. Esto explica parte de los errores sobre miembros sin exigir un bug independiente. [Implementación](https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py).
+- **E3:** los tipos desconocidos se imprimen como `?` o `M2C_UNK`, según el modo. [Sistema de tipos](https://github.com/matt-kempster/m2c/blob/master/m2c/types.py).
+- **E3, #238:** documenta la pérdida de distinción entre `int`/`long` al emitir `s32`. Los comentarios aclaran que cambiar únicamente los typedefs de entrada no resuelve necesariamente la identidad del tipo de salida. No demuestra por sí solo la causa de una desreferencia de `long`. [Issue #238](https://github.com/matt-kempster/m2c/issues/238).
+- **E3, #261, PowerPC:** se emite `sp9` sin declaración. La discusión identifica bytes de arrays de pila inferidos como escalares; reconstruir esos arrays es más justificable que añadir una local independiente. [Issue #261](https://github.com/matt-kempster/m2c/issues/261).
+- **E3, antecedentes:** #80 documenta accesos mediante `void*`; #61 documentaba unificación incorrecta por reutilización de registros, pero está **cerrado**, por lo que no debe presentarse como defecto actual confirmado. [#80](https://github.com/matt-kempster/m2c/issues/80), [#61](https://github.com/matt-kempster/m2c/issues/61).
+- **E3, #213:** documenta sensibilidad al orden de definiciones del contexto; definir primero las estructuras contenidas por valor evita ese caso. Es un problema de lectura del contexto, no evidencia directa de un diagnóstico mwcc posterior. [#213](https://github.com/matt-kempster/m2c/issues/213).
+
+Opciones **verificadas en código, E3**:
+
+| Opción | Utilidad concreta |
+|---|---|
+| `--context archivo` | Lee tipos, structs y firmas; repetible; requiere contexto preprocesado. |
+| `--stack-structs` | Emite plantillas de pila editables para reintroducir mediante contexto. |
+| `--dump-typemap` | Inspecciona lo interpretado; no repara automáticamente. |
+| `--valid-syntax` | Sustituye ciertas construcciones incompletas por macros. |
+| `--globals=used` | Emite declaraciones necesarias que no están en contexto; es el valor predeterminado. |
+| `--no-casts` | Elimina casts: evitarlo al intentar resolver estas clases. |
+| `--no-unk-inference` | Desactiva inferencia de regiones desconocidas; útil para contrastar hipótesis, no para recuperar tipos. |
+
+**`--struct` no está registrado.** [Parser de argumentos](https://github.com/matt-kempster/m2c/blob/master/m2c/main.py).
+
+Para salida C, especificar `-t ppc-mwcc-c`: el target abreviado PPC elige MWCC y, por defecto, C++. [Selección del target](https://github.com/matt-kempster/m2c/blob/master/m2c/options.py).
+
+**Compilable no significa correcto:** `m2c_macros.h` contiene operaciones provisionales que se expanden a cero, y `M2C_BITWISE` usa un cast ordinario. No aceptarlas como implementaciones preservadoras. [Macros oficiales](https://github.com/matt-kempster/m2c/blob/master/m2c_macros.h).
+
+**4. Contexto compartido y generación**
+
+Sí, existen ambos modelos:
+
+- **E3, Melee:** agrega headers de `src` en `build/ctx.h`; normalmente ejecuta MWCC con preprocesado y escribe `build/ctx.c`. También dispone de una ruta con `pcpp`. [Generador](https://github.com/doldecomp/melee/blob/master/tools/m2ctx/m2ctx.py).
+- **E3, plantilla dtk:** `decompctx.py` parte de una TU, expande includes recursivamente y genera `ctx.c`; conserva otras directivas, por lo que **no realiza un preprocesado completo**. [Generador](https://github.com/encounter/dtk-template/blob/main/tools/decompctx.py).
+- **E3:** m2c también documenta contexto universal agregando headers. [README](https://github.com/matt-kempster/m2c/blob/master/README.md).
+
+Mi propuesta **E1**: mantener tipos comunes versionados y generar contexto por TU con sus defines/includes; regenerar todas las funciones afectadas por una corrección. Comparar cada candidato contra el ensamblador original con idéntico compilador y opciones, incluyendo relocaciones y datos relevantes. Medir separadamente errores eliminados y funciones con matching completo.
+
+En el JSONL, `codegen_preserved: null` significa **no verificado**. El grado E3 acredita el diagnóstico o antecedente citado; las predicciones de compilación/matching indicadas en `test` siguen siendo E1.
+
+```jsonl
+{"gap":"G08","id":"G08-001","error_class":"pointer_expected_long","error_text":"pointer expected: literal y código de mwcceppc Wii no verificados; diagnósticos relacionados del catálogo: 10499 y 10148","trigger_c":"long read_word(long addr) { return *addr; }","fix_c":"long read_word(long addr) { return *(long *)addr; }","codegen_preserved":null,"m2c_cause":"E1: una dirección quedó tipada como entero; no se identificó un issue que pruebe esta causa para el caso del usuario.","source_url":"https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf","evidence_grade":"E1","test":"Pendiente: compilar trigger y reparación con el mwcceppc original y showmessagenumber, si está soportado. Comparar la reparación contra el asm objetivo; comprobar carga de 32 bits, dirección efectiva y registros. Alternativa: typedef long *LongPtr si todos los usos son de puntero."}
+{"gap":"G08","id":"G08-002","error_class":"implicit_void_pointer_to_long","error_text":"10209: illegal implicit conversion from '%t' to\\n'%t'; sustitución esperada void * -> long, no reproducida","trigger_c":"long address_value(void *p) { long value = p; return value; }","fix_c":"long address_value(void *p) { long value = (long)p; return value; }","codegen_preserved":null,"m2c_cause":"E1: desacuerdo entre tipo inferido del valor y destino o prototipo; comprobar contexto y casts omitidos. #238 sobre int/long no demuestra por sí solo esta causa.","source_url":"https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r","evidence_grade":"E3","test":"Reparación E1, pendiente de compilación. Confirmar representaciones de 32 bits y comparar bytes. No sustituir por *(long *)p: introduciría una lectura de memoria. El catálogo reconstruido corresponde a GC, no verifica la versión Wii."}
+{"gap":"G08","id":"G08-003","error_class":"not_struct_union","error_text":"10149: not a struct/union/class","trigger_c":"long read_field(void *p) { return p->value; }","fix_c":"typedef struct Object { unsigned char pad[0x20]; long value; } Object; long read_field(void *p) { return ((Object *)p)->value; }","codegen_preserved":null,"m2c_cause":"E3: StructAccess puede emitir nombres de campos desconocidos; --valid-syntax dispone de M2C_FIELD. E1: el offset 0x20 del ejemplo debe obtenerse del asm real.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py","evidence_grade":"E3","test":"Reparación E1. Verificar offsetof(Object,value)==0x20, anchura, alineación y carga correspondiente. Comparar con *(long *)((unsigned char *)p+0x20). No asumir que sizeof(Object) sea el stride real de un array."}
+{"gap":"G08","id":"G08-004","error_class":"illegal_void_pointer_plus_long","error_text":"10377: illegal operands '%t' %u '%t'; instanciación esperada 'void *' + 'long', no reproducida","trigger_c":"void *advance(void *p, long n) { return p + n; }","fix_c":"void *advance(void *p, long n) { return (unsigned char *)p + n; }","codegen_preserved":null,"m2c_cause":"E1: desplazamiento en bytes representado con un puntero sin tipo de elemento; no se verificó un issue específico para esta instanciación.","source_url":"https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r","evidence_grade":"E3","test":"Reparación E1. Confirmar en el asm que n expresa bytes. Comparar dirección efectiva y bytes completos. (long *)p+n multiplicaría el desplazamiento por sizeof(long); castear únicamente el resultado deja la suma inválida."}
+{"gap":"G08","id":"G08-005","error_class":"illegal_void_pointer_plus_int","error_text":"10377: illegal operands '%t' %u '%t'; instanciación esperada 'void *' + 'int', no reproducida","trigger_c":"void *advance4(void *p) { return p + 4; }","fix_c":"void *advance4(void *p) { return (unsigned char *)p + 4; }","codegen_preserved":null,"m2c_cause":"E1: misma carencia de tipo de elemento que en void*+long; el literal 4 tiene tipo int.","source_url":"https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r","evidence_grade":"E3","test":"Reparación E1. Confirmar desplazamiento objetivo de cuatro bytes. Contrastar con (long *)p+4, que calcularía dieciséis bytes si sizeof(long)==4. Verificar también si el destino necesita un cast adicional."}
+{"gap":"G08","id":"G08-006","error_class":"undefined_identifier","error_text":"10140: undefined identifier '%u'","trigger_c":"long read_counter(void) { return counter; }","fix_c":"extern long counter; long read_counter(void) { return counter; }","codegen_preserved":null,"m2c_cause":"E1: declaración ausente, contexto no incorporado a la compilación o declaraciones globales omitidas. No asumir que todos los nombres ausentes son globales.","source_url":"https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf","evidence_grade":"E3","test":"Reparación E1. Verificar símbolo, sección, tamaño y relocación. Si el ausente es una función, usar su firma real, por ejemplo extern long query(void *);; comprobar ABI y enlace C/C++. No usar un prototipo vacío como sustituto universal."}
+{"gap":"G08","id":"G08-007","error_class":"unknown_type_declaration","error_text":"Literal y código específico no verificados; 10121 declaration syntax error es una posibilidad, no una equivalencia demostrada","trigger_c":"s32 identity(s32 x) { return x; } /* sin typedef visible */","fix_c":"typedef signed long s32; s32 identity(s32 x) { return x; } /* solo si esta es la definición del proyecto */","codegen_preserved":null,"m2c_cause":"E3: m2c usa nombres de tipos propios y puede emitir ? o M2C_UNK. E1: falta de typedef en la TU compilada como explicación de este ejemplo.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/types.py","evidence_grade":"E1","test":"Pendiente: registrar el diagnóstico real; incorporar el header compartido correcto en vez de inventar typedefs por función. Verificar tamaño, signo y compatibilidad de firmas. Para structs, distinguir declaración adelantada de definición completa."}
+{"gap":"G08","id":"G08-008","error_class":"undefined_identifier_stack_member","error_text":"sp9 usado sin declaración en el issue PowerPC #261; diagnóstico mwcc no reproducido aquí","trigger_c":"unsigned long combine(void) { unsigned char sp8; return (sp8 << 8) | sp9; }","fix_c":"unsigned long combine(const unsigned char *src) { unsigned char buf[4]; unsigned int i; for (i=0; i<4; ++i) buf[i]=src[i]; return ((unsigned long)buf[0] << 8) | buf[1]; }","codegen_preserved":null,"m2c_cause":"#261: accesos a bytes de objetos de pila inferidos como escalares. La discusión propone reconstruir arrays; no declarar sp9 como global.","source_url":"https://github.com/matt-kempster/m2c/issues/261","evidence_grade":"E3","test":"El fix ilustra el modelo de memoria, no una función matching. En el caso real conservar la copia original, reconstruir arrays y alimentar la plantilla de --stack-structs mediante --context. Comparar frame, offsets, cargas y llamadas."}
+```
+[2mtokens used[0m
+180.539
+La vía más sólida es **reconstruir tipos y contexto compartido antes de regenerar las funciones**, y evaluar por separado «compila» y «produce bytes idénticos». Es una recomendación **E1**, no una mejora de matching demostrada.
+
+Escala aplicada: **E1 = sin fuente o inferencia propia; E2 = fuente secundaria; E3 = fuente primaria abierta y leída; E4 = reproducido compilando con mwcc.** No asigno E4. Consulté documentación pública y repositorios; no utilicé código filtrado del SDK.
+
+**1. Diagnósticos: textos, códigos y límites**
+
+El manual público *Build Tools Message Reference*, revisión 10.9.0, documenta los códigos siguientes. **Eso verifica el catálogo E3, pero no su correspondencia exacta con tu versión de mwcceppc para Wii.** La reconstrucción pública de CodeWarrior GC también conserva las plantillas de conversión, operandos y miembros. [Manual Freescale](https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf), [catálogo reconstruido de mweppc](https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r).
+
+| Clase | Texto y código documentado | Construcción que explica el error |
+|---|---|---|
+| Puntero esperado sobre `long` | **Literal comunicado no verificado.** El catálogo contiene **10499**, «A pointer/array type was expected for this operation instead of typename»; **10148** corresponde a `pointer/array required`. | `long a; *a;` o `a[0]`: un entero contiene quizá una dirección, pero su tipo no permite desreferenciarlo. No atribuir ambos ejemplos automáticamente al mismo código. |
+| `void* → long` | **10209**; plantilla reconstruida: `illegal implicit conversion from '%t' to\n'%t'`. | `long x = p;`, pasar `p` a un parámetro `long` o devolverlo desde una función `long`. |
+| No es struct/union | **10149**, `not a struct/union/class`. | `long x; x.field;`, o acceso a miembros sobre un tipo que no representa el objeto. |
+| `void* + long` | **10377**; plantilla reconstruida: `illegal operands '%t' %u '%t'`. | `void *p; long n; p+n;`: falta un tamaño de elemento utilizable. |
+| `void* + int` | **10377**, misma plantilla. | `void *p; p+4;`: misma causa; el tipo del desplazamiento no crea una clase semántica distinta. |
+| Identificador indefinido | **10140**, `undefined identifier '%u'`. | Uso de un nombre sin declaración visible, o declaración previa que no llegó a analizarse. |
+| Declaración de tipo desconocido | **Literal y código específico no verificados.** Existe **10121**, `declaration syntax error`, pero no equivale universalmente a esta clase. | `MissingType x;`, typedef ausente, orden incorrecto o marcador `?` emitido por m2c. |
+
+Los ejemplos son **E1** como reproducciones propuestas: no los compilé. Para obtener el número real, el manual de Power Architecture documenta `#pragma showmessagenumber on`; su disponibilidad en tu ejecutable concreto queda pendiente. [Manual Power Architecture, p. 435](https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf).
+
+**2. Reparaciones y efectos sobre codegen**
+
+Todas las predicciones de matching siguientes son **E1**:
+
+- **Dirección almacenada en `long`:** probar `*(long *)addr`. Si la variable representa consistentemente un puntero, corregir su declaración o introducir `typedef long *LongPtr`. Un typedef conserva el tipo que nombra; cambiar `long` por `LongPtr` sí cambia las reglas de las expresiones. No redefinir globalmente `s32` como puntero.
+- **Conversión `void* → long`:** `(long)p` hace explícita una conversión de dirección a entero; es candidato a no introducir instrucciones cuando ambas representaciones son de 32 bits. Si realmente se quería un puntero, corregir el destino resulta más coherente. **`*(long *)p` sería otra operación: añade una lectura.**
+- **Miembros:** reconstruir un struct con padding explícito y campos de ancho correcto. Por ejemplo, padding de `0x20` seguido de `long value`. Comprobar `offsetof`; conocer un campo no determina el tamaño total. Un struct mínimo puede servir para acceder mediante puntero, pero resultar incorrecto para arrays, copias o paso por valor.
+- **Ambas sumas sobre `void*`:** si el desplazamiento está en bytes, usar `(unsigned char *)p + n`. El cast debe preceder a la suma. `(long *)p + n` escala por `sizeof(long)` y cambia la dirección calculada.
+- **Nombre indefinido:** distinguir función, global, macro y local. Para una función, declarar el prototipo real; para un global, `extern` con su tipo real. Declarar cualquier nombre como `extern int` puede transformar un acceso local en una referencia global.
+- **Tipo desconocido:** restaurar el header/typedef y su orden. Una declaración adelantada permite punteros opacos, pero no acceder a campos ni almacenar objetos incompletos por valor.
+
+Incluso sin instrucciones de conversión, cambiar tipos puede modificar aliasing, comparaciones, promociones, selección de cargas, registros o ABI. En particular, cambiar signedness, anchura, `volatile`, packing o prototipos no constituye una reparación neutra.
+
+**3. m2c: causas documentadas y flags verificados**
+
+Revisé el parser actual de argumentos, cuyo `master` resolvía a `c632946b8cfbe8fce442b522dba92dfa72f1f317`.
+
+- **E3:** m2c emite accesos ficticios a campos cuando no conoce su layout; con `--valid-syntax` puede convertirlos en `M2C_FIELD`, que realiza aritmética por bytes y un acceso tipado. Esto explica parte de los errores sobre miembros sin exigir un bug independiente. [Implementación](https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py).
+- **E3:** los tipos desconocidos se imprimen como `?` o `M2C_UNK`, según el modo. [Sistema de tipos](https://github.com/matt-kempster/m2c/blob/master/m2c/types.py).
+- **E3, #238:** documenta la pérdida de distinción entre `int`/`long` al emitir `s32`. Los comentarios aclaran que cambiar únicamente los typedefs de entrada no resuelve necesariamente la identidad del tipo de salida. No demuestra por sí solo la causa de una desreferencia de `long`. [Issue #238](https://github.com/matt-kempster/m2c/issues/238).
+- **E3, #261, PowerPC:** se emite `sp9` sin declaración. La discusión identifica bytes de arrays de pila inferidos como escalares; reconstruir esos arrays es más justificable que añadir una local independiente. [Issue #261](https://github.com/matt-kempster/m2c/issues/261).
+- **E3, antecedentes:** #80 documenta accesos mediante `void*`; #61 documentaba unificación incorrecta por reutilización de registros, pero está **cerrado**, por lo que no debe presentarse como defecto actual confirmado. [#80](https://github.com/matt-kempster/m2c/issues/80), [#61](https://github.com/matt-kempster/m2c/issues/61).
+- **E3, #213:** documenta sensibilidad al orden de definiciones del contexto; definir primero las estructuras contenidas por valor evita ese caso. Es un problema de lectura del contexto, no evidencia directa de un diagnóstico mwcc posterior. [#213](https://github.com/matt-kempster/m2c/issues/213).
+
+Opciones **verificadas en código, E3**:
+
+| Opción | Utilidad concreta |
+|---|---|
+| `--context archivo` | Lee tipos, structs y firmas; repetible; requiere contexto preprocesado. |
+| `--stack-structs` | Emite plantillas de pila editables para reintroducir mediante contexto. |
+| `--dump-typemap` | Inspecciona lo interpretado; no repara automáticamente. |
+| `--valid-syntax` | Sustituye ciertas construcciones incompletas por macros. |
+| `--globals=used` | Emite declaraciones necesarias que no están en contexto; es el valor predeterminado. |
+| `--no-casts` | Elimina casts: evitarlo al intentar resolver estas clases. |
+| `--no-unk-inference` | Desactiva inferencia de regiones desconocidas; útil para contrastar hipótesis, no para recuperar tipos. |
+
+**`--struct` no está registrado.** [Parser de argumentos](https://github.com/matt-kempster/m2c/blob/master/m2c/main.py).
+
+Para salida C, especificar `-t ppc-mwcc-c`: el target abreviado PPC elige MWCC y, por defecto, C++. [Selección del target](https://github.com/matt-kempster/m2c/blob/master/m2c/options.py).
+
+**Compilable no significa correcto:** `m2c_macros.h` contiene operaciones provisionales que se expanden a cero, y `M2C_BITWISE` usa un cast ordinario. No aceptarlas como implementaciones preservadoras. [Macros oficiales](https://github.com/matt-kempster/m2c/blob/master/m2c_macros.h).
+
+**4. Contexto compartido y generación**
+
+Sí, existen ambos modelos:
+
+- **E3, Melee:** agrega headers de `src` en `build/ctx.h`; normalmente ejecuta MWCC con preprocesado y escribe `build/ctx.c`. También dispone de una ruta con `pcpp`. [Generador](https://github.com/doldecomp/melee/blob/master/tools/m2ctx/m2ctx.py).
+- **E3, plantilla dtk:** `decompctx.py` parte de una TU, expande includes recursivamente y genera `ctx.c`; conserva otras directivas, por lo que **no realiza un preprocesado completo**. [Generador](https://github.com/encounter/dtk-template/blob/main/tools/decompctx.py).
+- **E3:** m2c también documenta contexto universal agregando headers. [README](https://github.com/matt-kempster/m2c/blob/master/README.md).
+
+Mi propuesta **E1**: mantener tipos comunes versionados y generar contexto por TU con sus defines/includes; regenerar todas las funciones afectadas por una corrección. Comparar cada candidato contra el ensamblador original con idéntico compilador y opciones, incluyendo relocaciones y datos relevantes. Medir separadamente errores eliminados y funciones con matching completo.
+
+En el JSONL, `codegen_preserved: null` significa **no verificado**. El grado E3 acredita el diagnóstico o antecedente citado; las predicciones de compilación/matching indicadas en `test` siguen siendo E1.
+
+```jsonl
+{"gap":"G08","id":"G08-001","error_class":"pointer_expected_long","error_text":"pointer expected: literal y código de mwcceppc Wii no verificados; diagnósticos relacionados del catálogo: 10499 y 10148","trigger_c":"long read_word(long addr) { return *addr; }","fix_c":"long read_word(long addr) { return *(long *)addr; }","codegen_preserved":null,"m2c_cause":"E1: una dirección quedó tipada como entero; no se identificó un issue que pruebe esta causa para el caso del usuario.","source_url":"https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf","evidence_grade":"E1","test":"Pendiente: compilar trigger y reparación con el mwcceppc original y showmessagenumber, si está soportado. Comparar la reparación contra el asm objetivo; comprobar carga de 32 bits, dirección efectiva y registros. Alternativa: typedef long *LongPtr si todos los usos son de puntero."}
+{"gap":"G08","id":"G08-002","error_class":"implicit_void_pointer_to_long","error_text":"10209: illegal implicit conversion from '%t' to\\n'%t'; sustitución esperada void * -> long, no reproducida","trigger_c":"long address_value(void *p) { long value = p; return value; }","fix_c":"long address_value(void *p) { long value = (long)p; return value; }","codegen_preserved":null,"m2c_cause":"E1: desacuerdo entre tipo inferido del valor y destino o prototipo; comprobar contexto y casts omitidos. #238 sobre int/long no demuestra por sí solo esta causa.","source_url":"https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r","evidence_grade":"E3","test":"Reparación E1, pendiente de compilación. Confirmar representaciones de 32 bits y comparar bytes. No sustituir por *(long *)p: introduciría una lectura de memoria. El catálogo reconstruido corresponde a GC, no verifica la versión Wii."}
+{"gap":"G08","id":"G08-003","error_class":"not_struct_union","error_text":"10149: not a struct/union/class","trigger_c":"long read_field(void *p) { return p->value; }","fix_c":"typedef struct Object { unsigned char pad[0x20]; long value; } Object; long read_field(void *p) { return ((Object *)p)->value; }","codegen_preserved":null,"m2c_cause":"E3: StructAccess puede emitir nombres de campos desconocidos; --valid-syntax dispone de M2C_FIELD. E1: el offset 0x20 del ejemplo debe obtenerse del asm real.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py","evidence_grade":"E3","test":"Reparación E1. Verificar offsetof(Object,value)==0x20, anchura, alineación y carga correspondiente. Comparar con *(long *)((unsigned char *)p+0x20). No asumir que sizeof(Object) sea el stride real de un array."}
+{"gap":"G08","id":"G08-004","error_class":"illegal_void_pointer_plus_long","error_text":"10377: illegal operands '%t' %u '%t'; instanciación esperada 'void *' + 'long', no reproducida","trigger_c":"void *advance(void *p, long n) { return p + n; }","fix_c":"void *advance(void *p, long n) { return (unsigned char *)p + n; }","codegen_preserved":null,"m2c_cause":"E1: desplazamiento en bytes representado con un puntero sin tipo de elemento; no se verificó un issue específico para esta instanciación.","source_url":"https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r","evidence_grade":"E3","test":"Reparación E1. Confirmar en el asm que n expresa bytes. Comparar dirección efectiva y bytes completos. (long *)p+n multiplicaría el desplazamiento por sizeof(long); castear únicamente el resultado deja la suma inválida."}
+{"gap":"G08","id":"G08-005","error_class":"illegal_void_pointer_plus_int","error_text":"10377: illegal operands '%t' %u '%t'; instanciación esperada 'void *' + 'int', no reproducida","trigger_c":"void *advance4(void *p) { return p + 4; }","fix_c":"void *advance4(void *p) { return (unsigned char *)p + 4; }","codegen_preserved":null,"m2c_cause":"E1: misma carencia de tipo de elemento que en void*+long; el literal 4 tiene tipo int.","source_url":"https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r","evidence_grade":"E3","test":"Reparación E1. Confirmar desplazamiento objetivo de cuatro bytes. Contrastar con (long *)p+4, que calcularía dieciséis bytes si sizeof(long)==4. Verificar también si el destino necesita un cast adicional."}
+{"gap":"G08","id":"G08-006","error_class":"undefined_identifier","error_text":"10140: undefined identifier '%u'","trigger_c":"long read_counter(void) { return counter; }","fix_c":"extern long counter; long read_counter(void) { return counter; }","codegen_preserved":null,"m2c_cause":"E1: declaración ausente, contexto no incorporado a la compilación o declaraciones globales omitidas. No asumir que todos los nombres ausentes son globales.","source_url":"https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf","evidence_grade":"E3","test":"Reparación E1. Verificar símbolo, sección, tamaño y relocación. Si el ausente es una función, usar su firma real, por ejemplo extern long query(void *);; comprobar ABI y enlace C/C++. No usar un prototipo vacío como sustituto universal."}
+{"gap":"G08","id":"G08-007","error_class":"unknown_type_declaration","error_text":"Literal y código específico no verificados; 10121 declaration syntax error es una posibilidad, no una equivalencia demostrada","trigger_c":"s32 identity(s32 x) { return x; } /* sin typedef visible */","fix_c":"typedef signed long s32; s32 identity(s32 x) { return x; } /* solo si esta es la definición del proyecto */","codegen_preserved":null,"m2c_cause":"E3: m2c usa nombres de tipos propios y puede emitir ? o M2C_UNK. E1: falta de typedef en la TU compilada como explicación de este ejemplo.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/types.py","evidence_grade":"E1","test":"Pendiente: registrar el diagnóstico real; incorporar el header compartido correcto en vez de inventar typedefs por función. Verificar tamaño, signo y compatibilidad de firmas. Para structs, distinguir declaración adelantada de definición completa."}
+{"gap":"G08","id":"G08-008","error_class":"undefined_identifier_stack_member","error_text":"sp9 usado sin declaración en el issue PowerPC #261; diagnóstico mwcc no reproducido aquí","trigger_c":"unsigned long combine(void) { unsigned char sp8; return (sp8 << 8) | sp9; }","fix_c":"unsigned long combine(const unsigned char *src) { unsigned char buf[4]; unsigned int i; for (i=0; i<4; ++i) buf[i]=src[i]; return ((unsigned long)buf[0] << 8) | buf[1]; }","codegen_preserved":null,"m2c_cause":"#261: accesos a bytes de objetos de pila inferidos como escalares. La discusión propone reconstruir arrays; no declarar sp9 como global.","source_url":"https://github.com/matt-kempster/m2c/issues/261","evidence_grade":"E3","test":"El fix ilustra el modelo de memoria, no una función matching. En el caso real conservar la copia original, reconstruir arrays y alimentar la plantilla de --stack-structs mediante --context. Comparar frame, offsets, cargas y llamadas."}
+```

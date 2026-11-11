@@ -1,0 +1,13 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. En 55 funciones mi motor no encuentra ningún operador aplicable o el camino nunca se alcanza: el asm original sugiere una forma de fuente que mi gramática no genera.
+
+Investiga a fondo:
+1. Construcciones de C/C++ que producen asm característico en mwcceppc y que un decompilador no suele emitir: inline asm (asm{} y asm functions), volatile, goto, comma operator, do{}while(0), asignación dentro de condición, ternarios anidados, macros con efectos, bool vs int, enums de 8 bits, struct copy, alloca, __builtin, intrínsecas (__fabs, __frsqrte, __cntlzw, __lhbrx).
+2. Para cada una: patrón de asm que la delata y fuente que lo reproduce.
+3. Funciones "asm" escritas a mano en el SDK y librerías: cómo reconocerlas y cómo las tratan los proyectos (asm functions en C, .s).
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G17","id":"G17-001","construct":"","asm_signature":"","c_reproduction":"","compiler":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G17. evidence_grade solo puede ser E1, E2 o E3.

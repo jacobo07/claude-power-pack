@@ -1,0 +1,352 @@
+{
+ "status": {
+  "https://arxiv.org/abs/1603.05495": "200",
+  "https://arxiv.org/abs/2108.06363": "200",
+  "https://bitsavers.trailing-edge.com/components/motorola/PowerPC/2001_MPCFPE32B_PowerPC_Programming_Environments_Manual_Rev_2.pdf": "200",
+  "https://class.ece.iastate.edu/arun/Cpre381_Sp06/lab/labw12a/eabi_app.pdf": "200",
+  "https://community.nxp.com/pwmxy87654/attachments/pwmxy87654/cw-development-tools/8896/1/Power%20Arch%20Build%20Tools%20Reference.pdf": "200",
+  "https://community.nxp.com/t5/CodeWarrior-Development-Tools/Relocation-without-declspec-keyword/m-p/297883": "200",
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/abi-tail-call": "200",
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/advanced-volatile-cse": "200",
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/floats-frsp-highlight": "200",
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/optimization-peephole-off": "200",
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/types-explicit-cast": "200",
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/types-u8-not-char": "200",
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/types-widen-zero-vs-sign": "200",
+  "https://docs.hex-rays.com/8.4/user-guide/decompiler/interactive/cmd_settype": "200",
+  "https://eel.is/c++draft/basic.link": "200",
+  "https://eel.is/c++draft/dcl.inline": "200",
+  "https://gist.github.com/CelestialAmber/7c9ce7c6e785ad9077f98e1896a1da8b": "200",
+  "https://github.com/MarkMcCaskey/decomp-scripts/blob/main/mwcc-compiler-notes.md": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/configure.py#L218": "200",
+  "https://github.com/SMGCommunity/Petari/blob/master/configure.py#L500": "200",
+  "https://github.com/SeekyCt/spm-decomp/blob/master/configure.py#L238": "200",
+  "https://github.com/SeekyCt/spm-decomp/blob/master/configure.py#L248": "200",
+  "https://github.com/cadmic/mwcc-debugger": "200",
+  "https://github.com/chasem-dev/sms-english/blob/main/docs/AGENT_MATCHING_TIPS.md": "200",
+  "https://github.com/decompme/compilers/blob/main/values.yaml": "200",
+  "https://github.com/doldecomp/melee/blob/master/configure.py": "200",
+  "https://github.com/doldecomp/melee/blob/master/configure.py#L461": "200",
+  "https://github.com/doldecomp/melee/blob/master/configure.py#L505": "200",
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L199": "200",
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L247": "200",
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L289": "200",
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L317": "200",
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L388": "200",
+  "https://github.com/doldecomp/ogws/blob/master/configure.py#L298": "200",
+  "https://github.com/doldecomp/ogws/blob/master/configure.py#L422": "200",
+  "https://github.com/doldecomp/ogws/blob/master/configure.py#L817": "200",
+  "https://github.com/doldecomp/ogws/blob/master/configure.py#L903": "200",
+  "https://github.com/electronicarts/EASTL/blob/master/doc/FAQ.md": "200",
+  "https://github.com/encounter/decomp-toolkit": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/main/README.md": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/main/docs/terminology.md": "200",
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.2": "200",
+  "https://github.com/encounter/dtk-template": "200",
+  "https://github.com/encounter/objdiff/issues/393": "200",
+  "https://github.com/kiwi515/open_rvl/blob/master/README.md": "200",
+  "https://github.com/mariopartyrd/marioparty4/blob/main/configure.py": "200",
+  "https://github.com/matt-kempster/m2c": "200",
+  "https://github.com/projectPiki/pikmin2/blob/main/configure.py#L627": "200",
+  "https://github.com/projectPiki/pikmin2/blob/main/configure.py#L699": "200",
+  "https://github.com/simonlindholm/decomp-permuter": "200",
+  "https://github.com/zcanann/FFCC-Decomp": "200",
+  "https://github.com/zeldaret/tp/blob/main/configure.py": "200",
+  "https://github.com/zeldaret/tp/blob/main/configure.py#L2014": "200",
+  "https://github.com/zeldaret/tp/blob/main/configure.py#L450": "200",
+  "https://github.com/zeldaret/tp/blob/main/configure.py#L484": "200",
+  "https://github.com/zeldaret/tww/blob/main/docs/decompiling.md": "200",
+  "https://github.com/zeldaret/tww/blob/main/docs/regalloc.md": "200",
+  "https://github.com/zeldaret/tww/blob/main/docs/tww_class_to_cpp.py": "200",
+  "https://noobone123.github.io/papers/typeforge-sp25.pdf": "200",
+  "https://raw.githubusercontent.com/NationalSecurityAgency/ghidra/Ghidra_11.3_build/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc": "200",
+  "https://raw.githubusercontent.com/NationalSecurityAgency/ghidra/master/Ghidra/Features/Decompiler/src/main/java/ghidra/app/decompiler/util/FillOutStructureHelper.java": "200",
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/m2c/arch_ppc.py": "200",
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/m2c/main.py": "200",
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/m2c/types.py": "200",
+  "https://raw.githubusercontent.com/zeldaret/tww/main/docs/decompiling.md": "200",
+  "https://user.eng.umd.edu/~barua/pldi-2013.pdf": "200",
+  "https://users.ece.cmu.edu/~dbrumley/pdf/Lee%2C%20Avgerinos%2C%20Brumley_2011_TIE%20Principled%20Reverse%20Engineering%20of%20Types%20in%20Binary%20Programs.pdf": "200",
+  "https://www.cs.purdue.edu/homes/lintan/publications/resym-ccs24.pdf": "200",
+  "https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf": "404",
+  "https://www.nxp.com/docs/en/user-guide/CWPABTR.pdf": "404",
+  "https://www.nxp.jp/docs/en/application-note/PPCEABI.pdf": "404",
+  "https://www.nxp.jp/docs/en/reference-manual/CWMCUPABTR.pdf": "404",
+  "https://www.nxp.jp/docs/en/reference-manual/MPC750UM.pdf": "404",
+  "https://www.nxp.jp/docs/en/user-guide/MPC5xxUG.pdf": "404",
+  "https://www.youwei.site/papers/SP2021a.pdf": "200"
+ },
+ "rows": {
+  "https://github.com/cadmic/mwcc-debugger": [
+   "G01-001",
+   "G01-002",
+   "G01-003"
+  ],
+  "https://github.com/MarkMcCaskey/decomp-scripts/blob/main/mwcc-compiler-notes.md": [
+   "G01-004",
+   "G01-005",
+   "G01-012",
+   "G01-013"
+  ],
+  "https://github.com/zeldaret/tww/blob/main/docs/regalloc.md": [
+   "G01-006",
+   "G01-007",
+   "G01-008",
+   "G01-009",
+   "G01-010"
+  ],
+  "https://github.com/zeldaret/tww/blob/main/docs/decompiling.md": [
+   "G01-011",
+   "G02-007",
+   "G02-008",
+   "G02-009",
+   "G02-010",
+   "G05-005",
+   "G05-006",
+   "G05-010",
+   "G06-007",
+   "G06-011"
+  ],
+  "https://gist.github.com/CelestialAmber/7c9ce7c6e785ad9077f98e1896a1da8b": [
+   "G01-016",
+   "G02-017",
+   "G06-001",
+   "G06-002",
+   "G06-003"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter": [
+   "G01-018"
+  ],
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/types-u8-not-char": [
+   "G02-001"
+  ],
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/types-explicit-cast": [
+   "G02-002",
+   "G02-003"
+  ],
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/types-widen-zero-vs-sign": [
+   "G02-004"
+  ],
+  "https://github.com/chasem-dev/sms-english/blob/main/docs/AGENT_MATCHING_TIPS.md": [
+   "G02-005",
+   "G02-006"
+  ],
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/floats-frsp-highlight": [
+   "G02-011"
+  ],
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/optimization-peephole-off": [
+   "G02-012"
+  ],
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/advanced-volatile-cse": [
+   "G02-013"
+  ],
+  "https://decomp-academy.dev/courses/gamecube-c/lesson/abi-tail-call": [
+   "G02-015"
+  ],
+  "https://community.nxp.com/pwmxy87654/attachments/pwmxy87654/cw-development-tools/8896/1/Power%20Arch%20Build%20Tools%20Reference.pdf": [
+   "G03-001",
+   "G03-002",
+   "G03-005",
+   "G03-006",
+   "G03-010",
+   "G03-015"
+  ],
+  "https://github.com/zeldaret/tp/blob/main/configure.py": [
+   "G03-003",
+   "G03-007",
+   "G03-012"
+  ],
+  "https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf": [
+   "G03-004",
+   "G03-008",
+   "G03-009",
+   "G03-013"
+  ],
+  "https://community.nxp.com/t5/CodeWarrior-Development-Tools/Relocation-without-declspec-keyword/m-p/297883": [
+   "G03-014"
+  ],
+  "https://github.com/encounter/dtk-template": [
+   "G03-017"
+  ],
+  "https://github.com/decompme/compilers/blob/main/values.yaml": [
+   "G04-001",
+   "G04-002",
+   "G04-003",
+   "G04-004",
+   "G04-030"
+  ],
+  "https://github.com/kiwi515/open_rvl/blob/master/README.md": [
+   "G04-005"
+  ],
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L199": [
+   "G04-006"
+  ],
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L317": [
+   "G04-007"
+  ],
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L388": [
+   "G04-008"
+  ],
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L289": [
+   "G04-009"
+  ],
+  "https://github.com/doldecomp/mkw/blob/main/configure.py#L247": [
+   "G04-010"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/configure.py#L422": [
+   "G04-011"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/configure.py#L298": [
+   "G04-012"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/configure.py#L817": [
+   "G04-013"
+  ],
+  "https://github.com/doldecomp/ogws/blob/master/configure.py#L903": [
+   "G04-014"
+  ],
+  "https://github.com/SeekyCt/spm-decomp/blob/master/configure.py#L248": [
+   "G04-015"
+  ],
+  "https://github.com/SeekyCt/spm-decomp/blob/master/configure.py#L238": [
+   "G04-016"
+  ],
+  "https://github.com/zeldaret/tp/blob/main/configure.py#L450": [
+   "G04-017"
+  ],
+  "https://github.com/zeldaret/tp/blob/main/configure.py#L484": [
+   "G04-018"
+  ],
+  "https://github.com/zeldaret/tp/blob/main/configure.py#L2014": [
+   "G04-019"
+  ],
+  "https://github.com/doldecomp/melee/blob/master/configure.py#L461": [
+   "G04-020"
+  ],
+  "https://github.com/doldecomp/melee/blob/master/configure.py#L505": [
+   "G04-021"
+  ],
+  "https://github.com/projectPiki/pikmin2/blob/main/configure.py#L627": [
+   "G04-022"
+  ],
+  "https://github.com/projectPiki/pikmin2/blob/main/configure.py#L699": [
+   "G04-023"
+  ],
+  "https://github.com/mariopartyrd/marioparty4/blob/main/configure.py": [
+   "G04-024",
+   "G04-025"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/configure.py#L218": [
+   "G04-026"
+  ],
+  "https://github.com/SMGCommunity/Petari/blob/master/configure.py#L500": [
+   "G04-027"
+  ],
+  "https://github.com/encounter/decomp-toolkit/releases/tag/v1.8.2": [
+   "G04-028"
+  ],
+  "https://github.com/doldecomp/melee/blob/master/configure.py": [
+   "G04-029"
+  ],
+  "https://www.nxp.jp/docs/en/user-guide/MPC5xxUG.pdf": [
+   "G05-001",
+   "G05-003",
+   "G05-004",
+   "G05-007",
+   "G05-008"
+  ],
+  "https://www.nxp.com/docs/en/user-guide/CWPABTR.pdf": [
+   "G05-002"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/main/docs/terminology.md": [
+   "G05-009"
+  ],
+  "https://github.com/encounter/objdiff/issues/393": [
+   "G05-011"
+  ],
+  "https://github.com/electronicarts/EASTL/blob/master/doc/FAQ.md": [
+   "G06-004"
+  ],
+  "https://www.nxp.jp/docs/en/reference-manual/CWMCUPABTR.pdf": [
+   "G06-005"
+  ],
+  "https://github.com/zcanann/FFCC-Decomp": [
+   "G06-006"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/main/README.md": [
+   "G06-008"
+  ],
+  "https://eel.is/c++draft/basic.link": [
+   "G06-009"
+  ],
+  "https://eel.is/c++draft/dcl.inline": [
+   "G06-010"
+  ],
+  "https://users.ece.cmu.edu/~dbrumley/pdf/Lee%2C%20Avgerinos%2C%20Brumley_2011_TIE%20Principled%20Reverse%20Engineering%20of%20Types%20in%20Binary%20Programs.pdf": [
+   "G07-001"
+  ],
+  "https://arxiv.org/abs/1603.05495": [
+   "G07-002"
+  ],
+  "https://user.eng.umd.edu/~barua/pldi-2013.pdf": [
+   "G07-003"
+  ],
+  "https://www.youwei.site/papers/SP2021a.pdf": [
+   "G07-004"
+  ],
+  "https://arxiv.org/abs/2108.06363": [
+   "G07-005"
+  ],
+  "https://www.cs.purdue.edu/homes/lintan/publications/resym-ccs24.pdf": [
+   "G07-006"
+  ],
+  "https://noobone123.github.io/papers/typeforge-sp25.pdf": [
+   "G07-007"
+  ],
+  "https://raw.githubusercontent.com/NationalSecurityAgency/ghidra/Ghidra_11.3_build/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc": [
+   "G07-008"
+  ],
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/m2c/types.py": [
+   "G07-009"
+  ],
+  "https://docs.hex-rays.com/8.4/user-guide/decompiler/interactive/cmd_settype": [
+   "G07-010"
+  ],
+  "https://raw.githubusercontent.com/zeldaret/tww/main/docs/decompiling.md": [
+   "G07-011"
+  ],
+  "https://github.com/zeldaret/tww/blob/main/docs/tww_class_to_cpp.py": [
+   "G07-012"
+  ],
+  "https://raw.githubusercontent.com/NationalSecurityAgency/ghidra/master/Ghidra/Features/Decompiler/src/main/java/ghidra/app/decompiler/util/FillOutStructureHelper.java": [
+   "G07-013"
+  ],
+  "https://github.com/encounter/decomp-toolkit": [
+   "G07-014"
+  ],
+  "https://github.com/matt-kempster/m2c": [
+   "G07-015"
+  ],
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/m2c/main.py": [
+   "G07-016"
+  ],
+  "https://class.ece.iastate.edu/arun/Cpre381_Sp06/lab/labw12a/eabi_app.pdf": [
+   "G07-017"
+  ],
+  "https://www.nxp.jp/docs/en/reference-manual/MPC750UM.pdf": [
+   "G07-018",
+   "G07-020"
+  ],
+  "https://bitsavers.trailing-edge.com/components/motorola/PowerPC/2001_MPCFPE32B_PowerPC_Programming_Environments_Manual_Rev_2.pdf": [
+   "G07-019",
+   "G07-022",
+   "G07-024"
+  ],
+  "https://raw.githubusercontent.com/matt-kempster/m2c/master/m2c/arch_ppc.py": [
+   "G07-021"
+  ],
+  "https://www.nxp.jp/docs/en/application-note/PPCEABI.pdf": [
+   "G07-026"
+  ]
+ }
+}

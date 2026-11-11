@@ -1,0 +1,13 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Reconstruyo de forma clean-room funciones de Wii Sports Resort (Tennis y otros deportes). Necesito un mapa de módulos y librerías internas para agrupar funciones por subsistema.
+
+Investiga a fondo:
+1. Qué se sabe públicamente de la arquitectura de Wii Sports, Wii Sports Resort, Wii Play y Wii Fit: librerías internas (EGG, prefijos RP*, Sp*), nombres de clases visibles en símbolos o RTTI, formatos de recursos (BRRES, BRLYT, BRSAR, archivos .arc/.szs). Incluye el proyecto doldecomp/ogws (Wii Sports).
+2. Proyectos públicos de decompilación o modding de esos juegos (repos, wikis, Tockdom, Custom Mario Kart wiki para formatos compartidos) y su estado.
+3. Qué subsistemas comparten los deportes (escena, cámara, Mii, input/MotionPlus, física de pelota, IA).
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G21","id":"G21-001","game":"","subsystem":"","evidence":"símbolo|rtti|formato|doc","claim":"","source_url":"","evidence_grade":""}. Todos los ids deben empezar por G21. evidence_grade solo puede ser E1, E2 o E3.

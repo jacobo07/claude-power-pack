@@ -1,0 +1,306 @@
+{
+ "status": {
+  "https://arxiv.org/html/2409.01841v1": "200",
+  "https://arxiv.org/html/2609.18706v1": "200",
+  "https://arxiv.org/pdf/1603.05495": "200",
+  "https://eel.is/c++draft/basic.def.odr": "200",
+  "https://gabi.xinuos.com/elf/03-sheader.html": "200",
+  "https://gabi.xinuos.com/elf/05-symtab.html": "200",
+  "https://github.com/InusualZ/mhtri-decomp/": "200",
+  "https://github.com/MarkMcCaskey/decomp-scripts/blob/main/mwcc-compiler-notes.md": "200",
+  "https://github.com/adonis-singh/re4/blob/master/docs/naming.md": "200",
+  "https://github.com/chasem-dev/sms-english/blob/main/docs/AGENT_MATCHING_TIPS.md": "200",
+  "https://github.com/doldecomp/melee/blob/master/src/melee/ft/kinds/ftCommon/ftCo_0A01.c": "200",
+  "https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r": "200",
+  "https://github.com/encounter/decomp-toolkit": "200",
+  "https://github.com/encounter/decomp-toolkit/blob/main/README.md": "200",
+  "https://github.com/encounter/objdiff": "200",
+  "https://github.com/encounter/objdiff/issues/393": "200",
+  "https://github.com/encounter/objdiff/pulls": "200",
+  "https://github.com/encounter/objdiff/releases": "200",
+  "https://github.com/matt-kempster/m2c": "200",
+  "https://github.com/matt-kempster/m2c/blob/master/README.md": "200",
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/arch_ppc.py": "200",
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/c_types.py": "200",
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/main.py": "200",
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py": "200",
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/types.py": "200",
+  "https://github.com/matt-kempster/m2c/blob/master/m2c_macros.h": "200",
+  "https://github.com/matt-kempster/m2c/issues/238": "200",
+  "https://github.com/matt-kempster/m2c/issues/261": "200",
+  "https://github.com/matt-kempster/m2c/issues/80": "200",
+  "https://github.com/matt-kempster/m2c/pull/171": "200",
+  "https://github.com/matt-kempster/m2c/pull/284": "200",
+  "https://github.com/matt-kempster/m2c/pull/301": "200",
+  "https://github.com/matt-kempster/m2c/pull/302": "200",
+  "https://github.com/simonlindholm/decomp-permuter": "200",
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/src/randomizer.py": "200",
+  "https://manuals.plus/m/332c2557e04e26e335ea9f034037bc5cbda565e1eaa19367778f3efc6ff1fc6d.pdf": "403",
+  "https://raw.githubusercontent.com/doldecomp/melee/master/src/melee/ft/forward.h": "200",
+  "https://raw.githubusercontent.com/doldecomp/melee/master/src/melee/ft/types.h": "200",
+  "https://raw.githubusercontent.com/encounter/dtk-template/main/tools/project.py": "200",
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-cli/src/cmd/report.rs": "200",
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-core/config-schema.json": "200",
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-core/src/diff/code.rs": "200",
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-core/src/diff/data.rs": "200",
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-core/src/obj/read.rs": "200",
+  "https://raw.githubusercontent.com/projectPiki/pikmin2/main/include/Game/EnemyBase.h": "200",
+  "https://raw.githubusercontent.com/projectPiki/pikmin2/main/include/Game/Navi.h": "200",
+  "https://raw.githubusercontent.com/snailspeed3/mkw/master/src/system/KPadDirector.hpp": "200",
+  "https://raw.githubusercontent.com/zeldaret/tp/main/include/f_op/f_op_actor.h": "200",
+  "https://sourceware.org/binutils/docs/ld/Assignments.html": "200",
+  "https://users.ece.cmu.edu/~aavgerin/papers/tie-ndss-2011.pdf": "200",
+  "https://www.nxp.com/docs/en/reference-manual/MPC604EUM.pdf": "404",
+  "https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf": "404",
+  "https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf": "404",
+  "https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf": "404",
+  "https://www.nxp.com/docs/en/user-guide/POWERQUICCIIIUG.pdf": "404",
+  "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf": "200"
+ },
+ "rows": {
+  "https://www.nxp.com/docs/en/reference-manual/SC_BUILD_TOOLS_MESSAGE_RM.pdf": [
+   "G08-001",
+   "G08-006"
+  ],
+  "https://github.com/doldecomp/mweppc/blob/main/src/compiler/driver/cc-eabi-ppc.r": [
+   "G08-002",
+   "G08-004",
+   "G08-005"
+  ],
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py": [
+   "G08-003",
+   "G10-010"
+  ],
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/types.py": [
+   "G08-007",
+   "G10-001"
+  ],
+  "https://github.com/matt-kempster/m2c/issues/261": [
+   "G08-008"
+  ],
+  "https://raw.githubusercontent.com/zeldaret/tp/main/include/f_op/f_op_actor.h": [
+   "G09-001"
+  ],
+  "https://raw.githubusercontent.com/snailspeed3/mkw/master/src/system/KPadDirector.hpp": [
+   "G09-002"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/melee/master/src/melee/ft/forward.h": [
+   "G09-003"
+  ],
+  "https://raw.githubusercontent.com/doldecomp/melee/master/src/melee/ft/types.h": [
+   "G09-004",
+   "G09-005"
+  ],
+  "https://raw.githubusercontent.com/projectPiki/pikmin2/main/include/Game/Navi.h": [
+   "G09-006"
+  ],
+  "https://raw.githubusercontent.com/projectPiki/pikmin2/main/include/Game/EnemyBase.h": [
+   "G09-007"
+  ],
+  "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf": [
+   "G09-008",
+   "G17-006",
+   "G17-007",
+   "G17-008",
+   "G17-009"
+  ],
+  "https://eel.is/c++draft/basic.def.odr": [
+   "G09-009"
+  ],
+  "https://www.nxp.com/docs/en/reference-manual/PA_Build_RM.pdf": [
+   "G09-010",
+   "G13-012"
+  ],
+  "https://users.ece.cmu.edu/~aavgerin/papers/tie-ndss-2011.pdf": [
+   "G09-017"
+  ],
+  "https://arxiv.org/pdf/1603.05495": [
+   "G09-018"
+  ],
+  "https://arxiv.org/html/2409.01841v1": [
+   "G09-019"
+  ],
+  "https://github.com/matt-kempster/m2c": [
+   "G09-021"
+  ],
+  "https://github.com/encounter/objdiff": [
+   "G09-022"
+  ],
+  "https://github.com/encounter/decomp-toolkit": [
+   "G09-023"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter": [
+   "G09-024",
+   "G15-044"
+  ],
+  "https://github.com/matt-kempster/m2c/blob/master/m2c_macros.h": [
+   "G10-002"
+  ],
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/main.py": [
+   "G10-003",
+   "G10-004"
+  ],
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/c_types.py": [
+   "G10-005"
+  ],
+  "https://github.com/matt-kempster/m2c/blob/master/README.md": [
+   "G10-006",
+   "G17-005"
+  ],
+  "https://github.com/matt-kempster/m2c/blob/master/m2c/arch_ppc.py": [
+   "G10-007",
+   "G10-009"
+  ],
+  "https://github.com/matt-kempster/m2c/issues/80": [
+   "G10-008"
+  ],
+  "https://github.com/matt-kempster/m2c/pull/171": [
+   "G10-011"
+  ],
+  "https://github.com/matt-kempster/m2c/pull/301": [
+   "G10-012"
+  ],
+  "https://github.com/matt-kempster/m2c/pull/302": [
+   "G10-013"
+  ],
+  "https://github.com/matt-kempster/m2c/pull/284": [
+   "G10-014"
+  ],
+  "https://github.com/matt-kempster/m2c/issues/238": [
+   "G10-015"
+  ],
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-core/config-schema.json": [
+   "G13-002"
+  ],
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-core/src/diff/code.rs": [
+   "G13-003"
+  ],
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-cli/src/cmd/report.rs": [
+   "G13-004"
+  ],
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-core/src/diff/data.rs": [
+   "G13-005"
+  ],
+  "https://github.com/encounter/objdiff/releases": [
+   "G13-006"
+  ],
+  "https://github.com/encounter/objdiff/issues/393": [
+   "G13-007"
+  ],
+  "https://github.com/encounter/objdiff/pulls": [
+   "G13-008"
+  ],
+  "https://sourceware.org/binutils/docs/ld/Assignments.html": [
+   "G13-009"
+  ],
+  "https://gabi.xinuos.com/elf/05-symtab.html": [
+   "G13-010"
+  ],
+  "https://gabi.xinuos.com/elf/03-sheader.html": [
+   "G13-011"
+  ],
+  "https://raw.githubusercontent.com/encounter/dtk-template/main/tools/project.py": [
+   "G13-013"
+  ],
+  "https://github.com/adonis-singh/re4/blob/master/docs/naming.md": [
+   "G13-014"
+  ],
+  "https://github.com/InusualZ/mhtri-decomp/": [
+   "G13-015"
+  ],
+  "https://raw.githubusercontent.com/encounter/objdiff/main/objdiff-core/src/obj/read.rs": [
+   "G13-016"
+  ],
+  "https://github.com/simonlindholm/decomp-permuter/blob/main/src/randomizer.py": [
+   "G15-001",
+   "G15-002",
+   "G15-003",
+   "G15-004",
+   "G15-005",
+   "G15-006",
+   "G15-007",
+   "G15-008",
+   "G15-009",
+   "G15-010",
+   "G15-011",
+   "G15-012",
+   "G15-013",
+   "G15-014",
+   "G15-015",
+   "G15-016",
+   "G15-017",
+   "G15-018",
+   "G15-019",
+   "G15-020",
+   "G15-021",
+   "G15-022",
+   "G15-023",
+   "G15-024",
+   "G15-025",
+   "G15-026",
+   "G15-027",
+   "G15-028",
+   "G15-029",
+   "G15-030",
+   "G15-031",
+   "G15-032",
+   "G15-033",
+   "G15-034",
+   "G15-035",
+   "G15-036",
+   "G15-037"
+  ],
+  "https://arxiv.org/html/2609.18706v1": [
+   "G15-038",
+   "G15-039",
+   "G15-040",
+   "G15-041",
+   "G15-042",
+   "G15-043"
+  ],
+  "https://www.nxp.com/docs/en/reference-manual/MPC604EUM.pdf": [
+   "G15-048",
+   "G15-060",
+   "G15-061"
+  ],
+  "https://github.com/chasem-dev/sms-english/blob/main/docs/AGENT_MATCHING_TIPS.md": [
+   "G15-049",
+   "G15-052",
+   "G15-053",
+   "G15-054",
+   "G15-055",
+   "G15-056",
+   "G15-057",
+   "G15-058",
+   "G15-059"
+  ],
+  "https://github.com/MarkMcCaskey/decomp-scripts/blob/main/mwcc-compiler-notes.md": [
+   "G15-050",
+   "G15-051"
+  ],
+  "https://www.nxp.com/docs/en/user-guide/POWERQUICCIIIUG.pdf": [
+   "G17-001",
+   "G17-002",
+   "G17-014",
+   "G17-020",
+   "G17-021"
+  ],
+  "https://manuals.plus/m/332c2557e04e26e335ea9f034037bc5cbda565e1eaa19367778f3efc6ff1fc6d.pdf": [
+   "G17-003",
+   "G17-012"
+  ],
+  "https://github.com/doldecomp/melee/blob/master/src/melee/ft/kinds/ftCommon/ftCo_0A01.c": [
+   "G17-004",
+   "G17-017"
+  ],
+  "https://www.nxp.com/docs/en/user-guide/MPC5xxUG.pdf": [
+   "G17-011",
+   "G17-016",
+   "G17-018",
+   "G17-019"
+  ],
+  "https://github.com/encounter/decomp-toolkit/blob/main/README.md": [
+   "G17-023"
+  ]
+ }
+}

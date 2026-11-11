@@ -1,0 +1,14 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Reconstruyo de forma clean-room las ~50 funciones de movimiento de un juego deportivo de Wii que usa Wii MotionPlus. Necesito entender la semántica para nombrar tipos y validar hipótesis, no copiar código.
+
+Investiga a fondo:
+1. Datos que entregan el Wii Remote y MotionPlus: acelerómetro (ejes, rango, calibración), giroscopio (tasas, modos lento/rápido, escalas), formato de reportes, según documentación pública (WiiBrew, Dolphin, wiiuse, papers).
+2. Algoritmos típicos de fusión y orientación con esos sensores (integración de giróscopo, corrección por gravedad, cuaterniones, filtros complementarios) y su firma numérica en código (constantes, normalizaciones).
+3. Detección de gestos de swing (fase, impacto, velocidad angular) en la literatura.
+4. Cómo emula Dolphin MotionPlus (para generar trazas de prueba).
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G27","id":"G27-001","quantity":"","units_or_range":"","algorithm":"","numeric_signature":"","source_url":"","evidence_grade":""}. Todos los ids deben empezar por G27. evidence_grade solo puede ser E1, E2 o E3.

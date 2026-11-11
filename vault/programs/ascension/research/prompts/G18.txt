@@ -1,0 +1,14 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Construyo un índice de donantes cross-title: si una función de librería o motor ya está matcheada en un proyecto público clean-room, quiero reutilizar esa fuente (con su licencia y procedencia) en otro juego.
+
+Investiga a fondo:
+1. Inventario de proyectos de decompilación públicos de Wii y GameCube (doldecomp, zeldaret, decomp.dev y otros): nombre, repo, juego, región/versión, % de progreso, licencia, compilador, librerías incluidas (RVL SDK, NW4R, EGG, MSL, Runtime, TRK, HBM, JSystem).
+2. Cuáles comparten librerías con Wii Sports / Wii Sports Resort / Wii Play / Wii Fit (EGG, NW4R, RP*).
+3. Política legal de cada proyecto sobre reutilizar su código y sobre fuentes del SDK.
+4. Recursos agregados (decomp.dev, decomp.me presets) que listen compilador y flags por proyecto.
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G18","id":"G18-001","project":"","repo_url":"","game":"","platform":"wii|gc","version":"","progress_pct":null,"license":"","compiler":"","libraries":[],"reuse_policy":"","source_url":"","evidence_grade":""}. Todos los ids deben empezar por G18. evidence_grade solo puede ser E1, E2 o E3.

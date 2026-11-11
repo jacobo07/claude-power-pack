@@ -1,0 +1,14 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Compilo salida de m2c con mwcceppc y obtengo errores agrupados en 7 clases: "pointer expected" sobre long, conversión implícita void*->long, "not a struct/union", operandos ilegales void*+long y void*+int, identificador no definido, declaración de tipo desconocido. Editar función por función con un LLM tuvo un éxito de 0-2%.
+
+Investiga a fondo:
+1. Texto exacto y significado de estos mensajes de error de mwcceppc (y sus códigos), y qué construcciones de C los disparan.
+2. Para cada clase, la reparación que preserva el codegen original (cast explícito, typedef de puntero, struct mínimo con campos en sus offsets, extern con prototipo) y cuáles cambian el asm.
+3. Defectos conocidos de m2c que producen estas clases (issues del repo matt-kempster/m2c) y opciones de m2c que los evitan. Verifica cada flag contra el código o el --help actual de m2c antes de citarlo: una investigación previa confirmó que `--struct` NO existe y que sí existen --context, --stack-structs y --dump-typemap. No cites un flag que no hayas visto en el repo.
+4. Si los proyectos decomp usan un fichero de contexto compartido (ctx.c, headers por TU) y cómo lo generan.
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G08","id":"G08-001","error_class":"","error_text":"","trigger_c":"","fix_c":"","codegen_preserved":true,"m2c_cause":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G08. evidence_grade solo puede ser E1, E2 o E3.

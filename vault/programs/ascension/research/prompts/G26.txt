@@ -1,0 +1,16 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Necesito el patrón de fuente exacto para construcciones con codegen poco obvio.
+
+Investiga a fondo, para cada una: asm generado, fuente que lo reproduce y variantes por versión/flags:
+1. switch: umbral de jumptable vs cadena de comparaciones vs búsqueda binaria.
+2. bitfields: orden de bits en PPC big-endian, rlwinm/rlwimi.
+3. varargs: va_list, __va_arg, guardado de registros.
+4. copia y retorno de structs por valor (lwz/stw en bloque, memcpy implícito).
+5. long long: __shl2i, __shr2i, __div2i, __mod2u y similares del runtime.
+6. división y módulo por constante (mulhw + constante mágica, srawi + addze).
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1800 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G26","id":"G26-001","construct":"","c_pattern":"","asm_signature":"","threshold_or_rule":"","compiler":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G26. evidence_grade solo puede ser E1, E2 o E3.

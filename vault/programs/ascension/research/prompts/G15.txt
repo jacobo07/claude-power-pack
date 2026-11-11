@@ -1,0 +1,14 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Tengo un motor de búsqueda con 11 operadores de reescritura de C (swap if/else, invertir comparación, conmutar operandos...) a profundidad 3. En la mitad de los casos agota el espacio sin ganancia. Necesito ampliar el vocabulario de operadores, no reordenar la búsqueda.
+
+Investiga a fondo:
+1. Lista completa de transformaciones de decomp-permuter (simonlindholm/decomp-permuter): cada randomización, su peso y su efecto típico; cómo puntúa candidatos. Lee el código de los randomizers.
+2. Transformaciones manuales que los matchers aplican y no están en el permuter (introducir temporales, mover declaraciones, cambiar tipo de índice, for<->while, do{}while(0), casts de signo, reordenar campos de expresión, macros inline).
+3. Trabajo académico relacionado: síntesis guiada por contraejemplo, superoptimización, equality saturation (egg) aplicada a matching.
+4. Qué operadores son específicos de PPC/mwcc frente a IDO/GCC.
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 2000 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G15","id":"G15-001","operator":"","c_before":"","c_after":"","targets_residual":"regalloc|order|insert_delete|branch|type","in_permuter":true,"compiler_specific":"","source_url":"","evidence_grade":""}. Todos los ids deben empezar por G15. evidence_grade solo puede ser E1, E2 o E3.

@@ -1,0 +1,14 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Puedo lograr bytes idénticos cambiando declaraciones (aridad de un prototipo extern, retipar un campo de struct local) en vez de la función. Sospecho que muchos son fake matches.
+
+Investiga a fondo:
+1. Definición de "fake match" en la comunidad decomp (N64, GC, Wii) y ejemplos concretos.
+2. Técnicas de fake match conocidas (casts absurdos, variables dummy, uniones, prototipos incorrectos, `register`, inline asm) y cómo se detectan en revisión.
+3. Políticas de proyectos (marcadores // FAKEMATCH, // fake, tags) y si cuentan en el progreso.
+4. Criterios automáticos para distinguir un fix de declaración legítimo de un fake match (consistencia con otras TUs, con los callers, con la semántica).
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G23","id":"G23-001","technique":"","example":"","detection_rule":"","community_policy":"","source_url":"","evidence_grade":""}. Todos los ids deben empezar por G23. evidence_grade solo puede ser E1, E2 o E3.

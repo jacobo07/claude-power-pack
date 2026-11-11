@@ -1,0 +1,14 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Las funciones matemáticas (física, cámara, movimiento) tienen residuos en código de coma flotante.
+
+Investiga a fondo:
+1. Cómo genera mwcceppc: conversiones int<->float (constante mágica 0x4330000080000000, xoris, __cvt_fp2unsigned), frsp, fmadds/fmsubs (contracción, #pragma fp_contract), fabs/fneg, comparaciones fcmpu/fcmpo.
+2. Paired singles (ps_*, psq_l/psq_st, GQR): cuándo los emite el compilador y cuándo son asm manual (PSVEC/PSMTX, nw4r math).
+3. float vs double en literales y parámetros, y cómo afecta al match.
+4. Guías de proyectos decomp para matchear código de vectores/matrices.
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G25","id":"G25-001","c_pattern":"","asm_signature":"","pragma_or_flag":"","compiler":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G25. evidence_grade solo puede ser E1, E2 o E3.

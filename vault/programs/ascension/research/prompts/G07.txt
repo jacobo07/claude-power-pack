@@ -1,0 +1,13 @@
+Contexto: matching decompilation Wii (mwcceppc, PowerPC). Unas 6,000 funciones no compilan porque m2c emite punteros y structs como `long`/`s32`, y el error se repite en todas las funciones de la misma TU. Quiero inferir tipos una vez por TU desde cómo el binario usa cada valor (lwz/stw con offset = campo de struct; carga a través del valor = puntero; ancho y signo de la carga = tipo del campo).
+
+Investiga a fondo con búsqueda web real (abre cada página que cites):
+1. Estado del arte en inferencia de tipos desde binarios: TIE, Retypd, SecondWrite, OSPREY, DIRTY, ReSym, TypeForge, el propagador de tipos de Ghidra, el sistema de tipos de m2c y de IDA/Hex-Rays. Qué invariante aporta cada uno.
+2. Cómo reconstruyen layouts de struct (offsets, tamaño, padding, alineación PPC) los proyectos decomp Wii/GC y qué herramientas usan (ghidra scripts, dtk, m2c --struct, ctx de decomp.me).
+3. Cómo propagar un hecho de tipo probado a otras funciones de la misma TU sin romper funciones ya matcheadas.
+4. Qué señales del binario son fiables en PPC32 (lbz vs lha signedness, lfs/lfd, rlwinm como acceso a bitfield, mulli como sizeof de elemento de array).
+
+Restricciones: fuentes primarias (papers con DOI/arXiv, repos); nunca código filtrado del SDK; marca lo no verificado. No inventes URLs: si no abriste la página, no la cites.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 2,000 palabras; (2) un único bloque ```jsonl con un objeto por línea: {"gap":"G07","id":"G07-001","technique":"","binary_signal":"","inferred_fact":"","ppc_instruction_pattern":"","scope":"function|tu|program","failure_mode":"","tool_or_paper":"","source_url":"","evidence_grade":"E1|E2|E3","test":""}. Todos los ids deben empezar por G07.

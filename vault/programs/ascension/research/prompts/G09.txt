@@ -1,0 +1,14 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Cuando arreglo el tipo de un campo en una TU para que una función matchee, otra TU que usa el mismo struct deja de compilar o de matchear (112 conflictos). Necesito un modelo único de tipos para todo el programa.
+
+Investiga a fondo:
+1. Cómo gestionan los proyectos decomp grandes (tp, mkw, ssbm, pikmin2) los headers compartidos y las definiciones provisionales de structs (unk_0x10, pad[]).
+2. Patrones legítimos para que un struct parcialmente conocido sirva a varias TUs (campos unk, unions, tipos opacos, forward declarations).
+3. Cuándo un conflicto de tipos entre TUs indica que son dos structs distintos y no uno (herencia C++, versiones de un mismo struct, structs locales a una TU).
+4. Algoritmos para fusionar evidencias de layout de muchas funciones en un solo struct (unificación, lattice de tipos).
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1500 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G09","id":"G09-001","claim":"","pattern":"","conflict_signal":"","resolution":"","example_project_file":"","source_url":"","evidence_grade":""}. Todos los ids deben empezar por G09. evidence_grade solo puede ser E1, E2 o E3.

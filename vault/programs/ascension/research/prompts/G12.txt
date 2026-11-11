@@ -1,0 +1,14 @@
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. Uso dtk v1.8.x. Mi stage de build fijado solo incluía 304 de los 877 objetos que dtk genera, y 2,837 funciones quedaron sin objeto objetivo. Quiero dominar el splitting para cualquier juego de Wii.
+
+Investiga a fondo:
+1. Cómo funciona el análisis y splitting de dtk: config.yml, splits.txt, symbols.txt, detección de límites de función y de TU, .init, .ctors/.dtors, extab, REL modules.
+2. Cómo inferir límites de TU y orden de enlace desde el binario (alineación, padding, cambio de pools de constantes, orden de .sdata2, cadenas del linker map si existe).
+3. Flujo de dtk-template (configure.py, objetos Matching/NonMatching, progress) y cómo añadir objetos sin romper los ya matcheados.
+4. Errores comunes de splitting y cómo los detectan otros proyectos (huecos, funciones partidas, data mal asignada).
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 2000 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G12","id":"G12-001","claim":"","dtk_feature_or_file":"","binary_signal":"","failure_mode":"","fix":"","dtk_version":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G12. evidence_grade solo puede ser E1, E2 o E3.

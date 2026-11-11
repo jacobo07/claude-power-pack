@@ -1,0 +1,220 @@
+OpenAI Codex v0.153.4
+--------
+[1mworkdir:[0m C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research
+[1mmodel:[0m gpt-6-astra
+[1mprovider:[0m openai
+[1mapproval:[0m never
+[1msandbox:[0m read-only
+[1mreasoning effort:[0m high
+[1mreasoning summaries:[0m none
+[1msession id:[0m 01a1cbb0-ec5f-7153-a2e7-a33908af2b78
+--------
+[36muser[0m
+Contexto: hago matching decompilation clean-room de juegos de Wii compilados con Metrowerks CodeWarrior (mwcceppc, PowerPC Broadway). Herramientas: decomp-toolkit (dtk), objdiff, m2c, decomp-permuter. Una función solo cuenta si mi C compila a bytes idénticos. m2c deja tipos `?` (desconocidos) en su salida. Una reescritura global de `?` hace compilar 253 de 336 funciones, pero altera 178 funciones que ya matcheaban, así que solo puedo usarla función por función.
+
+Investiga a fondo:
+1. Qué significa exactamente `?` en m2c, en qué casos lo emite y qué opciones o contexto lo reducen.
+2. Estrategias publicadas para resolver `?` (contexto de tipos, --globals, inferencia de struct, preferencia por s32/void*/f32 según uso).
+3. Cómo aplicar una reparación de forma local (scope de función, casts) sin cambiar declaraciones compartidas.
+4. Issues y PRs relevantes del repo de m2c.
+
+Investiga con búsqueda web real y abre cada página que cites. No inventes URLs: si no abriste la página, no la cites.
+Restricciones: solo fuentes primarias cuando existan; nunca código filtrado del SDK de Nintendo ni enlaces a él; marca lo no verificado.
+
+ESCALA DE EVIDENCIA (obligatoria, no uses otra): E1 = sin fuente o inferencia propia; E2 = fuente secundaria (blog, foro, curso, gist, resumen); E3 = fuente primaria abierta y leída (paper, repo oficial, manual del fabricante); E4 = reproducido compilando con mwcc. Tú nunca puedes poner E4.
+
+FORMATO DE SALIDA: (1) informe de máx. 1200 palabras; (2) un único bloque ```jsonl con un objeto por línea con estos campos: {"gap":"G10","id":"G10-001","m2c_case":"","binary_signal":"","local_fix":"","global_side_effect":"","source_url":"","evidence_grade":"","test":""}. Todos los ids deben empezar por G10. evidence_grade solo puede ser E1, E2 o E3.
+
+[2m2026-11-11T17:38:52.898445Z[0m [31mERROR[0m [2mrmcp::transport::worker[0m[2m:[0m worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer realm=\"OAuth\", resource_metadata=\"https://mcp.notion.com/.well-known/oauth-protected-resource/mcp\", scope=\"default\"" })
+[35m[3mcodex[0m[0m
+Voy a revisar el código, la documentación y los issues de m2c, y distinguiré lo que esas fuentes demuestran de las propuestas de reparación local que aún necesitarían validarse con mwcc.
+
+[1mweb search:[0m 
+[1mweb search:[0m m2c decompiler github unknown type ? --globals context
+[1mweb search:[0m 
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[1mweb search:[0m site:github.com/matt-kempster/m2c "unknown" "type" "issues" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m https://github.com/matt-kempster/m2c/blob/master/README.md
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([31mfailed[0m)[0m
+[35m[3mcodex[0m[0m
+La distinción clave está en el código: `?` es un marcador de salida, pero m2c también representa ciertas incertidumbres como `s32` o `void*`. Por tanto, eliminar los signos `?` no basta para resolver los tipos. También estoy comprobando qué opciones solo cambian la salida y cuáles afectan a la inferencia.
+
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mweb search:[0m 
+[1mweb search:[0m site:github.com/matt-kempster/m2c/issues "type" ...
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.search_issues[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.search_prs[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue_comments[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2mstarted[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue_comments[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_issue[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2m([32mcompleted[0m)[0m
+[1mmcp:[0m [36mcodex_apps/github.fetch_pr[0m [2m([32mcompleted[0m)[0m
+[35m[3mcodex[0m[0m
+He encontrado propuestas directamente relacionadas con el aislamiento por función: `--void-var-type` sigue en una PR abierta, mientras que `--union-field` ya está integrado. Los mantenedores también contemplan usar un contexto de análisis con tipos ajustados y añadir casts en el C final. `--globals=none` evita emitir declaraciones globales, pero no desactiva la inferencia que las utiliza.
+
+[1mweb search:[0m 
+[1mweb search:[0m https://github.com/matt-kempster/m2c/blob/master/m2c/types.py
+[1mweb search:[0m 
+[1mweb search:[0m https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py
+[35m[3mcodex[0m[0m
+**La reparación debe decidirse por uso y limitarse a cada función.** `?` no significa automáticamente `s32`, `void*` ni `void`. Tus cifras —253/336 compilables y 178 matches alterados— son datos aportados, no reproducidos aquí (**E1**).
+
+Escala aplicada: **E1** = sin fuente o inferencia propia; **E2** = fuente secundaria; **E3** = fuente primaria abierta y leída; **E4** = reproducido compilando con mwcc. No atribuyo E4. Consulté código, documentación y discusiones mediante web y el conector de GitHub; no utilicé código filtrado del SDK.
+
+**Qué significa `?`.** En `Type._to_ctype`, aparece cuando siguen siendo posibles las categorías entero, puntero y flotante, sin una preferencia suficiente entre entero y flotante. Si conoce la anchura, puede imprimir `?32`; también usa `?` como protección al encontrar recursión durante la conversión del tipo. La incertidumbre puede aparecer dentro de declaraciones compuestas. En cambio, un puntero sin tipo de destino se imprime como `void*`; otras ambigüedades terminan representadas como enteros, normalmente con signo si este sigue indeterminado. Por ello, una salida sin interrogantes tampoco demuestra tipos resueltos. **E3:** [implementación de tipos](https://github.com/matt-kempster/m2c/blob/master/m2c/types.py).
+
+Los argumentos, temporales y símbolos pueden comenzar con tipos amplios que se refinan mediante sus usos. Una llamada sin prototipo aporta información incompleta; un retorno no consumido puede seguir desconocido. Además, sin firma conocida, m2c supone argumentos simples, una limitación relevante para agregados y ABI. **E3:** [traducción e inferencia](https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py). **E1:** ignorar un retorno no demuestra que la función sea `void`.
+
+**Opciones y contexto que ayudan.**
+
+- Usa explícitamente `-t ppc-mwcc-c`, o `ppc-mwcc-c++` cuando corresponda. `--context` admite varios archivos y espera contexto preprocesado: prototipos completos, globales, typedefs y layouts. `--passes` vale 2 por defecto; `--void` fuerza el retorno de la función decompilada. **E3:** [CLI](https://github.com/matt-kempster/m2c/blob/master/m2c/main.py).
+- Decompilar conjuntamente funciones relacionadas permite cierta inferencia entre ellas. Para la pila, `--stack-structs` genera una plantilla `_m2c_stack_<función>` editable y reutilizable como contexto; su tamaño debe coincidir exactamente con el frame detectado. **E3:** [README](https://github.com/matt-kempster/m2c/blob/master/README.md).
+- `--globals=used` emite símbolos utilizados; `all` incorpora también datos no referenciados; `none` suprime declaraciones globales. **No es aislamiento de la inferencia:** el código sigue procesando símbolos y emite declaraciones de tipos por separado. No pegues automáticamente toda la salida en producción. **E3:** [main.py](https://github.com/matt-kempster/m2c/blob/master/m2c/main.py), [translate.py](https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py).
+- La inferencia de campos reconoce arrays `char` llamados `unk_…`; el código actual también reconoce `pad…`, y typedefs `UNK_…`/`M2C_UNK…`. `--no-unk-inference` desactiva la inferencia sobre campos y globales desconocidos; puede servir para comparar hipótesis, pero no resuelve tipos. El README documenta limitaciones con bitfields y uniones anónimas. **E3:** [detector](https://github.com/matt-kempster/m2c/blob/master/m2c/c_types.py), [README](https://github.com/matt-kempster/m2c/blob/master/README.md).
+
+`--valid-syntax` transforma los marcadores en `M2C_UNK…`. El header suministrado asigna `M2C_UNK` a `s32` y proporciona variantes por anchura. Es una estrategia publicada para obtener sintaxis compilable, no recuperación del tipo original. Contiene también macros provisionales, algunas reducidas a cero, y una macro denominada bitwise implementada como cast ordinario. **E3:** [m2c_macros.h](https://github.com/matt-kempster/m2c/blob/master/m2c_macros.h).
+
+**Cómo elegir candidatos.** El backend PPC distingue cargas/almacenamientos flotantes de 32 y 64 bits, comparaciones con/sin signo y desplazamientos aritméticos/lógicos. Sin embargo, `lwz` recibe un tipo amplio de 32 bits con preferencia no flotante: no prueba `s32`. **E3:** [backend PPC](https://github.com/matt-kempster/m2c/blob/master/m2c/arch_ppc.py).
+
+Como criterio de reparación **E1**, prueba `s32` cuando el flujo exige aritmética con signo; `u32` para operaciones unsigned; `void*` para direcciones opacas y `T*` cuando conoces el objeto. Para campos accedidos mediante `lfs/stfs`, prueba `f32`; con `lfd/stfd`, examina `f64`. Sigue todo el flujo: copias y spills no identifican por sí solos el tipo original. No encontré una regla primaria que legitime sustituir universalmente `?` por alguno de esos tipos.
+
+**Reparación local propuesta —E1, no verificada con mwcc—:**
+
+1. Conserva baseline, revisión de m2c, compilador, flags y declaraciones compartidas. Trabaja con `-f objetivo` y un contexto desechable específico; modifica allí la declaración existente, sin añadir otra incompatible.
+2. Traslada únicamente los cambios necesarios al cuerpo. Ejemplo: `T *p = (T *)obj->opaque;`. Si el layout completo es desconocido, un acceso como `*(f32 *)((unsigned char *)base + 0x20)` permite probar un offset local, sujeto a alineación, aliasing y validación.
+3. Coloca casts donde se necesita una conversión. Un cast numérico entero→float no conserva los bits. Evita cambiar typedefs comunes o introducir prototipos locales incompatibles: si el prototipo compartido impone una ABI incorrecta, un cast sobre el resultado no lo corrige.
+4. Automatiza sobre declaraciones y límites de función, no mediante sustitución textual indiscriminada: `?` también puede ser el operador ternario.
+5. Compila la TU real, inspecciona objdiff y verifica bytes, datos y relocaciones relevantes. Acepta únicamente si la función matchea y los 178 matches previos permanecen intactos. Una edición local todavía puede alterar inlining o decisiones del compilador.
+
+**Issues y PRs relevantes, leídos:**
+
+- **[#171](https://github.com/matt-kempster/m2c/pull/171), integrado:** introduce pases múltiples; reporta también inferencias de structs incorrectas. Más pases no garantizan mejora.
+- **[#301](https://github.com/matt-kempster/m2c/pull/301), integrado:** `--union-field Unión:miembro`. Su ejemplo mezcla una opción de otra PR; no implica que ambas estén integradas.
+- **[#302](https://github.com/matt-kempster/m2c/pull/302), abierto:** propone `--void-var-type`. La discusión recomienda ajustar contexto y contempla casts por campo; advierte limitaciones cuando no existe temporal intermedio.
+- **[#284](https://github.com/matt-kempster/m2c/pull/284), abierto:** propone tipos para registros mediante `_m2c_reg_<función>`. **[#235](https://github.com/matt-kempster/m2c/pull/235), abierto:** aborda locales de pila omitidos. Son propuestas, no capacidades upstream garantizadas.
+- **[#80](https://github.com/matt-kempster/m2c/issues/80), abierto:** explica por qué inferir `f32*` desde un acceso puede confundir un escalar con un campo de struct.
+- **[#238](https://github.com/matt-kempster/m2c/issues/238), abierto:** la discusión distingue typedefs de entrada y normalización de salida; `int`/`long` pueden acabar como `s32`. Preservar firmas exige revisión explícita.
+
+Todo este último listado es **E3 sobre lo publicado**, no validación de matching. En JSONL, los tests son pendientes; E1 identifica reparaciones propuestas.
+
+```jsonl
+{"gap":"G10","id":"G10-001","m2c_case":"? o ?32 por categorías de tipo todavía ambiguas; también existe protección contra recursión al imprimir.","binary_signal":"No hay una instrucción única que corresponda al marcador.","local_fix":"Aportar contexto y revisar el uso completo; el marcador no prescribe un tipo concreto.","global_side_effect":"Una sustitución uniforme elimina distinciones entre incógnitas independientes.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/types.py","evidence_grade":"E3","test":"Pendiente: comparar declaraciones con contexto mínimo y completo, manteniendo fija la revisión de m2c."}
+{"gap":"G10","id":"G10-002","m2c_case":"Salida con marcadores que impiden compilar.","binary_signal":"La anchura conocida puede aparecer en el nombre del marcador.","local_fix":"--valid-syntax usa M2C_UNK y variantes; el header oficial proporciona typedefs enteros provisionales.","global_side_effect":"El header también contiene macros provisionales; no demuestra equivalencia semántica ni matching.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c_macros.h","evidence_grade":"E3","test":"Pendiente: inventariar cada macro emitida y validar la función con mwcc y comparación binaria."}
+{"gap":"G10","id":"G10-003","m2c_case":"Firma o tipos insuficientes en la función objetivo.","binary_signal":"Argumentos, retornos y accesos cuyo significado depende del contexto.","local_fix":"Usar target explícito y --context preprocesado con prototipos, globales y structs.","global_side_effect":"Un contexto equivocado puede propagar inferencias equivocadas dentro de la ejecución.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/main.py","evidence_grade":"E3","test":"Pendiente: ejecutar -f objetivo con contexto específico y comparar con la salida original."}
+{"gap":"G10","id":"G10-004","m2c_case":"Declaraciones globales desconocidas en la salida.","binary_signal":"Referencias a símbolos y secciones de datos.","local_fix":"--globals=none suprime declaraciones globales; las declaraciones de tipos se gestionan por separado.","global_side_effect":"No desactiva el procesamiento ni la inferencia de símbolos compartidos.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/main.py","evidence_grade":"E3","test":"Pendiente: comparar used, all y none, incluyendo los cuerpos y tipos emitidos."}
+{"gap":"G10","id":"G10-005","m2c_case":"Campos desconocidos o padding susceptible de inferencia.","binary_signal":"Accesos repetidos a offsets y anchuras concretos.","local_fix":"El detector reconoce char unk_*, char pad* y typedefs UNK_* o M2C_UNK* como espacio desconocido.","global_side_effect":"Aceptar automáticamente el layout inferido como declaración compartida amplía el alcance del cambio.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/c_types.py","evidence_grade":"E3","test":"Pendiente: contrastar offsets, tamaños y accesos solapados; comparar con --no-unk-inference."}
+{"gap":"G10","id":"G10-006","m2c_case":"Locales de pila con tipos o agrupaciones incorrectos.","binary_signal":"Offsets respecto de r1 y tamaño del frame.","local_fix":"Generar --stack-structs y proporcionar _m2c_stack_<función> corregida mediante contexto.","global_side_effect":"La plantilla es específica de la función; el contexto restante puede seguir aportando tipos compartidos.","source_url":"https://github.com/matt-kempster/m2c/blob/master/README.md","evidence_grade":"E3","test":"Pendiente: exigir tamaño exacto del frame y comprobar el código generado después de reconstruir los locales."}
+{"gap":"G10","id":"G10-007","m2c_case":"Incógnita escalar en flujo entero.","binary_signal":"cmpw y desplazamientos aritméticos sugieren operaciones signed; cmplw y desplazamientos lógicos sugieren unsigned; lwz solo no decide.","local_fix":"Propuesta: probar s32 o u32 en el local o cast pertinente, siguiendo todos sus usos.","global_side_effect":"Cambiar signedness compartida puede alterar comparaciones, promociones y extensiones.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/arch_ppc.py","evidence_grade":"E1","test":"Pendiente: compilar ambas hipótesis y comparar instrucciones, registros y bytes con el objetivo."}
+{"gap":"G10","id":"G10-008","m2c_case":"Dirección opaca o acceso a través de void*.","binary_signal":"Valor utilizado como base de accesos a memoria.","local_fix":"Propuesta: conservar el miembro compartido y añadir T *p = (T *)obj->opaque dentro de la función.","global_side_effect":"No cambia la declaración compartida; el cast puede cambiar aliasing y optimización local.","source_url":"https://github.com/matt-kempster/m2c/issues/80","evidence_grade":"E1","test":"Pendiente: validar layout y comparar la variante con temporal frente al cast en la expresión."}
+{"gap":"G10","id":"G10-009","m2c_case":"Incógnita usada en operaciones flotantes.","binary_signal":"lfs/stfs frente a lfd/stfd; seguir conversiones y usos aritméticos.","local_fix":"Propuesta: ensayar f32 o f64 según almacenamiento y operaciones; distinguir conversión numérica de reinterpretación.","global_side_effect":"Un tipo flotante compartido incorrecto puede cambiar anchura, redondeo y ABI de llamadas.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/arch_ppc.py","evidence_grade":"E1","test":"Pendiente: revisar cargas, stores, conversiones y constantes con mwcc antes de aceptar bytes."}
+{"gap":"G10","id":"G10-010","m2c_case":"? en el retorno de una función llamada sin firma suficiente.","binary_signal":"Retorno ignorado o uso posterior del registro de resultado.","local_fix":"Propuesta: recuperar el prototipo del contexto y del análisis del callee; no deducir void solo porque se ignora el resultado.","global_side_effect":"Un prototipo incompatible afecta a todos los callers; un cast del resultado no repara una ABI incorrecta.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py","evidence_grade":"E1","test":"Pendiente: inspeccionar callee y callers, después verificar la secuencia de llamada compilada."}
+{"gap":"G10","id":"G10-011","m2c_case":"Inferencia incompleta tras una pasada.","binary_signal":"Relaciones entre llamadas y tipos que se propagan entre pases.","local_fix":"PR #171 integrada: --passes permite pases múltiples; dos son el valor predeterminado.","global_side_effect":"La propia PR documenta inferencias de structs que empeoran algunos resultados.","source_url":"https://github.com/matt-kempster/m2c/pull/171","evidence_grade":"E3","test":"Pendiente: comparar 1, 2 y 3 pases sin asumir que menos interrogantes equivale a mejor matching."}
+{"gap":"G10","id":"G10-012","m2c_case":"Selección incorrecta de miembro de unión.","binary_signal":"Un mismo offset admite varios miembros compatibles.","local_fix":"PR #301 integrada: seleccionar --union-field Unión:miembro para la ejecución de análisis.","global_side_effect":"La selección afecta a los usos de esa unión en la ejecución; limitar funciones analizadas.","source_url":"https://github.com/matt-kempster/m2c/pull/301","evidence_grade":"E3","test":"Pendiente: comprobar el miembro seleccionado y validar el cuerpo final contra la declaración original."}
+{"gap":"G10","id":"G10-013","m2c_case":"Temporal void* que necesita un tipo de objeto concreto.","binary_signal":"Accesos a campos a través del temporal; puede no existir temporal intermedio.","local_fix":"PR #302 abierta propone --void-var-type; su discusión contempla contexto modificado y casts por campo.","global_side_effect":"Los nombres temporales pueden cambiar con la inferencia; la opción no está garantizada en upstream.","source_url":"https://github.com/matt-kempster/m2c/pull/302","evidence_grade":"E3","test":"Pendiente: comprobar disponibilidad en la revisión instalada y validar cada uso antes de compilar."}
+{"gap":"G10","id":"G10-014","m2c_case":"Variable asociada a registro guardado con tipo insuficiente.","binary_signal":"Puntero especializado mantenido en un registro no volátil.","local_fix":"PR #284 abierta propone _m2c_reg_<función> para proporcionar tipos de registros.","global_side_effect":"Su efecto en código optimizado requiere validación; no es una capacidad upstream garantizada.","source_url":"https://github.com/matt-kempster/m2c/pull/284","evidence_grade":"E3","test":"Pendiente: verificar soporte real y comparar asignación de registros y spills."}
+{"gap":"G10","id":"G10-015","m2c_case":"Normalización de int o long a s32.","binary_signal":"La anchura binaria no conserva necesariamente la identidad del tipo C original.","local_fix":"Propuesta: preservar la firma compartida existente y adaptar solo el cuerpo; revisar explícitamente los tipos emitidos.","global_side_effect":"Cambiar el typedef s32 del proyecto puede afectar muchas declaraciones y funciones.","source_url":"https://github.com/matt-kempster/m2c/issues/238","evidence_grade":"E1","test":"Pendiente: comparar firmas y recompilar la TU con sus typedefs originales."}
+{"gap":"G10","id":"G10-016","m2c_case":"Reescritura global que compila más funciones pero altera matches previos.","binary_signal":"Regresiones binarias reportadas por el usuario; no reproducidas aquí.","local_fix":"Propuesta: editar únicamente declaraciones y expresiones de la función seleccionada, preservando firmas, headers y configuración.","global_side_effect":"Incluso una edición local puede afectar otras funciones mediante inlining o decisiones de compilación.","source_url":"","evidence_grade":"E1","test":"Pendiente: exigir bytes idénticos en la candidata y ausencia de regresiones en las 178 funciones previamente coincidentes."}
+```
+[2mtokens used[0m
+116.458
+**La reparación debe decidirse por uso y limitarse a cada función.** `?` no significa automáticamente `s32`, `void*` ni `void`. Tus cifras —253/336 compilables y 178 matches alterados— son datos aportados, no reproducidos aquí (**E1**).
+
+Escala aplicada: **E1** = sin fuente o inferencia propia; **E2** = fuente secundaria; **E3** = fuente primaria abierta y leída; **E4** = reproducido compilando con mwcc. No atribuyo E4. Consulté código, documentación y discusiones mediante web y el conector de GitHub; no utilicé código filtrado del SDK.
+
+**Qué significa `?`.** En `Type._to_ctype`, aparece cuando siguen siendo posibles las categorías entero, puntero y flotante, sin una preferencia suficiente entre entero y flotante. Si conoce la anchura, puede imprimir `?32`; también usa `?` como protección al encontrar recursión durante la conversión del tipo. La incertidumbre puede aparecer dentro de declaraciones compuestas. En cambio, un puntero sin tipo de destino se imprime como `void*`; otras ambigüedades terminan representadas como enteros, normalmente con signo si este sigue indeterminado. Por ello, una salida sin interrogantes tampoco demuestra tipos resueltos. **E3:** [implementación de tipos](https://github.com/matt-kempster/m2c/blob/master/m2c/types.py).
+
+Los argumentos, temporales y símbolos pueden comenzar con tipos amplios que se refinan mediante sus usos. Una llamada sin prototipo aporta información incompleta; un retorno no consumido puede seguir desconocido. Además, sin firma conocida, m2c supone argumentos simples, una limitación relevante para agregados y ABI. **E3:** [traducción e inferencia](https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py). **E1:** ignorar un retorno no demuestra que la función sea `void`.
+
+**Opciones y contexto que ayudan.**
+
+- Usa explícitamente `-t ppc-mwcc-c`, o `ppc-mwcc-c++` cuando corresponda. `--context` admite varios archivos y espera contexto preprocesado: prototipos completos, globales, typedefs y layouts. `--passes` vale 2 por defecto; `--void` fuerza el retorno de la función decompilada. **E3:** [CLI](https://github.com/matt-kempster/m2c/blob/master/m2c/main.py).
+- Decompilar conjuntamente funciones relacionadas permite cierta inferencia entre ellas. Para la pila, `--stack-structs` genera una plantilla `_m2c_stack_<función>` editable y reutilizable como contexto; su tamaño debe coincidir exactamente con el frame detectado. **E3:** [README](https://github.com/matt-kempster/m2c/blob/master/README.md).
+- `--globals=used` emite símbolos utilizados; `all` incorpora también datos no referenciados; `none` suprime declaraciones globales. **No es aislamiento de la inferencia:** el código sigue procesando símbolos y emite declaraciones de tipos por separado. No pegues automáticamente toda la salida en producción. **E3:** [main.py](https://github.com/matt-kempster/m2c/blob/master/m2c/main.py), [translate.py](https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py).
+- La inferencia de campos reconoce arrays `char` llamados `unk_…`; el código actual también reconoce `pad…`, y typedefs `UNK_…`/`M2C_UNK…`. `--no-unk-inference` desactiva la inferencia sobre campos y globales desconocidos; puede servir para comparar hipótesis, pero no resuelve tipos. El README documenta limitaciones con bitfields y uniones anónimas. **E3:** [detector](https://github.com/matt-kempster/m2c/blob/master/m2c/c_types.py), [README](https://github.com/matt-kempster/m2c/blob/master/README.md).
+
+`--valid-syntax` transforma los marcadores en `M2C_UNK…`. El header suministrado asigna `M2C_UNK` a `s32` y proporciona variantes por anchura. Es una estrategia publicada para obtener sintaxis compilable, no recuperación del tipo original. Contiene también macros provisionales, algunas reducidas a cero, y una macro denominada bitwise implementada como cast ordinario. **E3:** [m2c_macros.h](https://github.com/matt-kempster/m2c/blob/master/m2c_macros.h).
+
+**Cómo elegir candidatos.** El backend PPC distingue cargas/almacenamientos flotantes de 32 y 64 bits, comparaciones con/sin signo y desplazamientos aritméticos/lógicos. Sin embargo, `lwz` recibe un tipo amplio de 32 bits con preferencia no flotante: no prueba `s32`. **E3:** [backend PPC](https://github.com/matt-kempster/m2c/blob/master/m2c/arch_ppc.py).
+
+Como criterio de reparación **E1**, prueba `s32` cuando el flujo exige aritmética con signo; `u32` para operaciones unsigned; `void*` para direcciones opacas y `T*` cuando conoces el objeto. Para campos accedidos mediante `lfs/stfs`, prueba `f32`; con `lfd/stfd`, examina `f64`. Sigue todo el flujo: copias y spills no identifican por sí solos el tipo original. No encontré una regla primaria que legitime sustituir universalmente `?` por alguno de esos tipos.
+
+**Reparación local propuesta —E1, no verificada con mwcc—:**
+
+1. Conserva baseline, revisión de m2c, compilador, flags y declaraciones compartidas. Trabaja con `-f objetivo` y un contexto desechable específico; modifica allí la declaración existente, sin añadir otra incompatible.
+2. Traslada únicamente los cambios necesarios al cuerpo. Ejemplo: `T *p = (T *)obj->opaque;`. Si el layout completo es desconocido, un acceso como `*(f32 *)((unsigned char *)base + 0x20)` permite probar un offset local, sujeto a alineación, aliasing y validación.
+3. Coloca casts donde se necesita una conversión. Un cast numérico entero→float no conserva los bits. Evita cambiar typedefs comunes o introducir prototipos locales incompatibles: si el prototipo compartido impone una ABI incorrecta, un cast sobre el resultado no lo corrige.
+4. Automatiza sobre declaraciones y límites de función, no mediante sustitución textual indiscriminada: `?` también puede ser el operador ternario.
+5. Compila la TU real, inspecciona objdiff y verifica bytes, datos y relocaciones relevantes. Acepta únicamente si la función matchea y los 178 matches previos permanecen intactos. Una edición local todavía puede alterar inlining o decisiones del compilador.
+
+**Issues y PRs relevantes, leídos:**
+
+- **[#171](https://github.com/matt-kempster/m2c/pull/171), integrado:** introduce pases múltiples; reporta también inferencias de structs incorrectas. Más pases no garantizan mejora.
+- **[#301](https://github.com/matt-kempster/m2c/pull/301), integrado:** `--union-field Unión:miembro`. Su ejemplo mezcla una opción de otra PR; no implica que ambas estén integradas.
+- **[#302](https://github.com/matt-kempster/m2c/pull/302), abierto:** propone `--void-var-type`. La discusión recomienda ajustar contexto y contempla casts por campo; advierte limitaciones cuando no existe temporal intermedio.
+- **[#284](https://github.com/matt-kempster/m2c/pull/284), abierto:** propone tipos para registros mediante `_m2c_reg_<función>`. **[#235](https://github.com/matt-kempster/m2c/pull/235), abierto:** aborda locales de pila omitidos. Son propuestas, no capacidades upstream garantizadas.
+- **[#80](https://github.com/matt-kempster/m2c/issues/80), abierto:** explica por qué inferir `f32*` desde un acceso puede confundir un escalar con un campo de struct.
+- **[#238](https://github.com/matt-kempster/m2c/issues/238), abierto:** la discusión distingue typedefs de entrada y normalización de salida; `int`/`long` pueden acabar como `s32`. Preservar firmas exige revisión explícita.
+
+Todo este último listado es **E3 sobre lo publicado**, no validación de matching. En JSONL, los tests son pendientes; E1 identifica reparaciones propuestas.
+
+```jsonl
+{"gap":"G10","id":"G10-001","m2c_case":"? o ?32 por categorías de tipo todavía ambiguas; también existe protección contra recursión al imprimir.","binary_signal":"No hay una instrucción única que corresponda al marcador.","local_fix":"Aportar contexto y revisar el uso completo; el marcador no prescribe un tipo concreto.","global_side_effect":"Una sustitución uniforme elimina distinciones entre incógnitas independientes.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/types.py","evidence_grade":"E3","test":"Pendiente: comparar declaraciones con contexto mínimo y completo, manteniendo fija la revisión de m2c."}
+{"gap":"G10","id":"G10-002","m2c_case":"Salida con marcadores que impiden compilar.","binary_signal":"La anchura conocida puede aparecer en el nombre del marcador.","local_fix":"--valid-syntax usa M2C_UNK y variantes; el header oficial proporciona typedefs enteros provisionales.","global_side_effect":"El header también contiene macros provisionales; no demuestra equivalencia semántica ni matching.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c_macros.h","evidence_grade":"E3","test":"Pendiente: inventariar cada macro emitida y validar la función con mwcc y comparación binaria."}
+{"gap":"G10","id":"G10-003","m2c_case":"Firma o tipos insuficientes en la función objetivo.","binary_signal":"Argumentos, retornos y accesos cuyo significado depende del contexto.","local_fix":"Usar target explícito y --context preprocesado con prototipos, globales y structs.","global_side_effect":"Un contexto equivocado puede propagar inferencias equivocadas dentro de la ejecución.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/main.py","evidence_grade":"E3","test":"Pendiente: ejecutar -f objetivo con contexto específico y comparar con la salida original."}
+{"gap":"G10","id":"G10-004","m2c_case":"Declaraciones globales desconocidas en la salida.","binary_signal":"Referencias a símbolos y secciones de datos.","local_fix":"--globals=none suprime declaraciones globales; las declaraciones de tipos se gestionan por separado.","global_side_effect":"No desactiva el procesamiento ni la inferencia de símbolos compartidos.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/main.py","evidence_grade":"E3","test":"Pendiente: comparar used, all y none, incluyendo los cuerpos y tipos emitidos."}
+{"gap":"G10","id":"G10-005","m2c_case":"Campos desconocidos o padding susceptible de inferencia.","binary_signal":"Accesos repetidos a offsets y anchuras concretos.","local_fix":"El detector reconoce char unk_*, char pad* y typedefs UNK_* o M2C_UNK* como espacio desconocido.","global_side_effect":"Aceptar automáticamente el layout inferido como declaración compartida amplía el alcance del cambio.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/c_types.py","evidence_grade":"E3","test":"Pendiente: contrastar offsets, tamaños y accesos solapados; comparar con --no-unk-inference."}
+{"gap":"G10","id":"G10-006","m2c_case":"Locales de pila con tipos o agrupaciones incorrectos.","binary_signal":"Offsets respecto de r1 y tamaño del frame.","local_fix":"Generar --stack-structs y proporcionar _m2c_stack_<función> corregida mediante contexto.","global_side_effect":"La plantilla es específica de la función; el contexto restante puede seguir aportando tipos compartidos.","source_url":"https://github.com/matt-kempster/m2c/blob/master/README.md","evidence_grade":"E3","test":"Pendiente: exigir tamaño exacto del frame y comprobar el código generado después de reconstruir los locales."}
+{"gap":"G10","id":"G10-007","m2c_case":"Incógnita escalar en flujo entero.","binary_signal":"cmpw y desplazamientos aritméticos sugieren operaciones signed; cmplw y desplazamientos lógicos sugieren unsigned; lwz solo no decide.","local_fix":"Propuesta: probar s32 o u32 en el local o cast pertinente, siguiendo todos sus usos.","global_side_effect":"Cambiar signedness compartida puede alterar comparaciones, promociones y extensiones.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/arch_ppc.py","evidence_grade":"E1","test":"Pendiente: compilar ambas hipótesis y comparar instrucciones, registros y bytes con el objetivo."}
+{"gap":"G10","id":"G10-008","m2c_case":"Dirección opaca o acceso a través de void*.","binary_signal":"Valor utilizado como base de accesos a memoria.","local_fix":"Propuesta: conservar el miembro compartido y añadir T *p = (T *)obj->opaque dentro de la función.","global_side_effect":"No cambia la declaración compartida; el cast puede cambiar aliasing y optimización local.","source_url":"https://github.com/matt-kempster/m2c/issues/80","evidence_grade":"E1","test":"Pendiente: validar layout y comparar la variante con temporal frente al cast en la expresión."}
+{"gap":"G10","id":"G10-009","m2c_case":"Incógnita usada en operaciones flotantes.","binary_signal":"lfs/stfs frente a lfd/stfd; seguir conversiones y usos aritméticos.","local_fix":"Propuesta: ensayar f32 o f64 según almacenamiento y operaciones; distinguir conversión numérica de reinterpretación.","global_side_effect":"Un tipo flotante compartido incorrecto puede cambiar anchura, redondeo y ABI de llamadas.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/arch_ppc.py","evidence_grade":"E1","test":"Pendiente: revisar cargas, stores, conversiones y constantes con mwcc antes de aceptar bytes."}
+{"gap":"G10","id":"G10-010","m2c_case":"? en el retorno de una función llamada sin firma suficiente.","binary_signal":"Retorno ignorado o uso posterior del registro de resultado.","local_fix":"Propuesta: recuperar el prototipo del contexto y del análisis del callee; no deducir void solo porque se ignora el resultado.","global_side_effect":"Un prototipo incompatible afecta a todos los callers; un cast del resultado no repara una ABI incorrecta.","source_url":"https://github.com/matt-kempster/m2c/blob/master/m2c/translate.py","evidence_grade":"E1","test":"Pendiente: inspeccionar callee y callers, después verificar la secuencia de llamada compilada."}
+{"gap":"G10","id":"G10-011","m2c_case":"Inferencia incompleta tras una pasada.","binary_signal":"Relaciones entre llamadas y tipos que se propagan entre pases.","local_fix":"PR #171 integrada: --passes permite pases múltiples; dos son el valor predeterminado.","global_side_effect":"La propia PR documenta inferencias de structs que empeoran algunos resultados.","source_url":"https://github.com/matt-kempster/m2c/pull/171","evidence_grade":"E3","test":"Pendiente: comparar 1, 2 y 3 pases sin asumir que menos interrogantes equivale a mejor matching."}
+{"gap":"G10","id":"G10-012","m2c_case":"Selección incorrecta de miembro de unión.","binary_signal":"Un mismo offset admite varios miembros compatibles.","local_fix":"PR #301 integrada: seleccionar --union-field Unión:miembro para la ejecución de análisis.","global_side_effect":"La selección afecta a los usos de esa unión en la ejecución; limitar funciones analizadas.","source_url":"https://github.com/matt-kempster/m2c/pull/301","evidence_grade":"E3","test":"Pendiente: comprobar el miembro seleccionado y validar el cuerpo final contra la declaración original."}
+{"gap":"G10","id":"G10-013","m2c_case":"Temporal void* que necesita un tipo de objeto concreto.","binary_signal":"Accesos a campos a través del temporal; puede no existir temporal intermedio.","local_fix":"PR #302 abierta propone --void-var-type; su discusión contempla contexto modificado y casts por campo.","global_side_effect":"Los nombres temporales pueden cambiar con la inferencia; la opción no está garantizada en upstream.","source_url":"https://github.com/matt-kempster/m2c/pull/302","evidence_grade":"E3","test":"Pendiente: comprobar disponibilidad en la revisión instalada y validar cada uso antes de compilar."}
+{"gap":"G10","id":"G10-014","m2c_case":"Variable asociada a registro guardado con tipo insuficiente.","binary_signal":"Puntero especializado mantenido en un registro no volátil.","local_fix":"PR #284 abierta propone _m2c_reg_<función> para proporcionar tipos de registros.","global_side_effect":"Su efecto en código optimizado requiere validación; no es una capacidad upstream garantizada.","source_url":"https://github.com/matt-kempster/m2c/pull/284","evidence_grade":"E3","test":"Pendiente: verificar soporte real y comparar asignación de registros y spills."}
+{"gap":"G10","id":"G10-015","m2c_case":"Normalización de int o long a s32.","binary_signal":"La anchura binaria no conserva necesariamente la identidad del tipo C original.","local_fix":"Propuesta: preservar la firma compartida existente y adaptar solo el cuerpo; revisar explícitamente los tipos emitidos.","global_side_effect":"Cambiar el typedef s32 del proyecto puede afectar muchas declaraciones y funciones.","source_url":"https://github.com/matt-kempster/m2c/issues/238","evidence_grade":"E1","test":"Pendiente: comparar firmas y recompilar la TU con sus typedefs originales."}
+{"gap":"G10","id":"G10-016","m2c_case":"Reescritura global que compila más funciones pero altera matches previos.","binary_signal":"Regresiones binarias reportadas por el usuario; no reproducidas aquí.","local_fix":"Propuesta: editar únicamente declaraciones y expresiones de la función seleccionada, preservando firmas, headers y configuración.","global_side_effect":"Incluso una edición local puede afectar otras funciones mediante inlining o decisiones de compilación.","source_url":"","evidence_grade":"E1","test":"Pendiente: exigir bytes idénticos en la candidata y ausencia de regresiones en las 178 funciones previamente coincidentes."}
+```
