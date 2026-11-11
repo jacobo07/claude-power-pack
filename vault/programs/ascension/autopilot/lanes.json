@@ -2,11 +2,13 @@
  {"name": "KSR", "letter": "K", "cwd": "/home/kobii/missions/gen3-pp", "product": "/home/kobii/missions/t1-campaign",
   "packet_dir": "vault/programs/gsdx-factory-2", "add_dirs": ["/home/kobii/missions/t1-campaign", "/home/kobii/missions/recon-general"],
   "mission": "m-10566700b1fe",
+  "protected": [{"path": "/home/kobii/missions/t1-campaign/evidence/cert1-ksr/receipts.jsonl", "sha256_prefix": "02c80ae3", "lines": 8687}],
   "ready_file": {"path": "/home/kobii/.claude/state/s26d-autoarm.done", "content": "ARMED"}},
  {"name": "TENNIS", "letter": "T", "cwd": "/home/kobii/missions/tennis-all-match", "product": "/home/kobii/missions/tennis-all-match",
   "packet_dir": "vault/programs/ascension-autopilot", "add_dirs": [],
   "mission": null, "ff_from": "t1/campaign",
   "bootstrap_checkpoint": "/home/kobii/missions/t1-campaign/evidence/ascension/s27/checkpoint*.md",
   "bootstrap_product": "/home/kobii/missions/t1-campaign",
+  "protected": [{"path": "/home/kobii/missions/t1-campaign/evidence/cert1-ksr/receipts.jsonl", "sha256_prefix": "02c80ae3", "lines": 8687}],
   "ready_file": {"path": "/home/kobii/.claude/state/s26d-autoarm.done", "content": "ARMED"}}
 ]

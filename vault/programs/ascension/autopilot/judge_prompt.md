@@ -7,8 +7,9 @@ Product repository (run gates from here): {PRODUCT}
 
 Do this:
 1. Read the checkpoint file in full. List every gate/test command it claims passed and every number it claims.
-2. Re-run each named gate yourself (python3 tools/<gate>.py, with `timeout 600`) and record its exit code and last line.
-   A gate you cannot run is INCONCLUSIVE for that gate, never a pass.
+2. Re-run each named gate yourself, exactly as `timeout 600 python3 tools/<gate>.py` from the product repository (no other
+   command form is permitted), and record its exit code and last line. A gate you cannot run gets "rc": null and makes the
+   verdict INCONCLUSIVE, never a pass. AGREE requires "protected_ok": true and at least one gate, every one with rc 0.
 3. Verify the protected identities: `sha256sum evidence/cert1-ksr/receipts.jsonl` must start with 02c80ae3 and
    `wc -l` must be 8687 (when that file exists in this repository); FRONTIER_CHECK / KSR_FRONTIER_CHECK if the checkpoint
    names them. Any change = DISAGREE.

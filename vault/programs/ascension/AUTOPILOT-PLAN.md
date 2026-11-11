@@ -30,8 +30,11 @@ On a lane whose mission holds CHECKPOINT_COMPLETE and whose generation is not ye
    counters). Fail -> lane PARKED + owner_queue.md entry.
 4. ARM (same CLI path as the watcher): archive milestone, add packet, scaffold, retarget, authority = spend + gen cap
    (owner-turn = the typed Owner message), --extend-hours, checkpoint --clear; verify worker_acked on the next tick.
-Budget ledger (`ledger.jsonl`, append-only): per generation the mission spend delta + judge/planner usage from `claude -p
---output-format json`. Caps: 80M per UTC day (a lane waits for the next day), 400M total, wall 2026-11-30T23:59Z,
+Budget ledger (`ledger.jsonl`, append-only): per generation the AUTHORITY GRANTED (phase caps, reserved before the arm,
+refunded if the arm fails before authority) + judge/planner usage from `claude -p --output-format json` (an unmeasured
+call books a 2M reserve, never 0) + any measured overrun past a generation's authority at close. So the 80M/day cap
+bounds what is granted per UTC day, not a worker's processing after midnight inside authority granted the day before
+(review M5, 2026-11-11). Caps: 80M per UTC day (a lane waits for the next day), 400M total, wall 2026-11-30T23:59Z,
 <= 25M per generation. Fresh llm_fix tokens 0 unless a packet's pre-registered experiment names them (<= 1M/gen).
 Stops (per lane): 3 consecutive generations with no new canonical certificate AND no newly validated capability (judge
 field); judge not AGREE; policy fail; 2 failed arms. Global: kill switch file `OFF`, total/wall exhausted.

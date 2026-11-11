@@ -19,8 +19,11 @@ Choose the next generation by EXPECTED NEW CANONICAL CERTIFICATES per processed 
 - Certificates only through the UNCHANGED certifier (certify.decide) of an existing profile, or of a NEW ADDITIVE profile
   that meets ALL S26C conditions (independent target oracle on original DOL bytes; frozen pilot committed before the draw;
   pre/post controls; A2 negatives; historical receipts byte-identical; separate counters) - name each condition in the phase.
-- In phase lines and notes do NOT propose or mention: push, revoking, merging counters into a headline, R2, H2, editing the
-  certifier / canonical context / headers / receipts, paid or cloud usage, or any budget change. Those belong to the Owner.
+- In the title, facts, phase lines and notes do NOT propose or mention: push, revoking, merging counters into a headline,
+  R2, H2, editing the certifier / canonical context / headers / receipts, paid or cloud usage, or any budget change. Those
+  belong to the Owner; a mention anywhere (even "not pushed") parks the lane. Plain ASCII only, one line per string.
+- A new profile names ALL six S26C conditions IN ITS OWN phase line, each stated positively (a negated or deferred
+  condition does not count).
 - Budget: phase caps must sum to <= 25M processed (include ~1.5M closeout in the last phase); fresh model tokens 0 unless a
   pre-registered experiment needs them (<= 1M total, stated as "fresh 0.5M" in that phase).
 - 2 to 8 phases. Each line: "Phase N: <ID> <title> (cap <X>M): <what, cohort freeze, decision rule, gate tools/test_<name>.py
