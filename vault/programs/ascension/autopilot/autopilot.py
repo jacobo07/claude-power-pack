@@ -93,6 +93,11 @@ PROFILE_CONDITIONS = {
 }
 NEGATION = re.compile(r"\b(no|not|non|without|skip\w*|never|later|unknown|tbd|omit\w*|absent|missing|none|deferred|"
                       r"n/a)\b|\?", re.I)
+# A profile trigger is negated only when a negation word stands at most 5 plain words before "profile", with no
+# punctuation between (applied to the text up to the trigger's end). "no new profile, then add another profile" still
+# triggers on the second. S30T (2026-11-11) was refused for a fact ending "no new profile".
+TRIGGER_NEGATED = re.compile(r"\b(no|not|never|without|nor|neither|excludes?|excluding|forbids?|rules?\s+out|ruled\s+out)"
+                             r"\s+(\w+\s+){0,5}profiles?$", re.I)
 PHASE_RE = re.compile(r"^Phase (\d+): (.+)$")
 CAP_RE = re.compile(r"\bcap\s+(\d+(?:\.\d+)?)\s*M\b", re.I)
 FRESH_RE = re.compile(r"\bfresh\b[^.;]{0,30}?(\d[\d,]*(?:\.\d+)?)\s*([MmKk]\b)?")
@@ -149,8 +154,9 @@ def policy_check(phase_lines: list[str], command: str, extra: list[str] | tuple 
         if re.search(pat, text, re.I) and f"forbidden act: {label}" not in bad:
             bad.append(f"forbidden act: {label}")
     for line in text.splitlines():
-        if not re.search(PROFILE_TRIGGER, line, re.I):
-            continue
+        if not any(not TRIGGER_NEGATED.search(line[:m.start()] + m.group(0))
+                   for m in re.finditer(PROFILE_TRIGGER, line, re.I)):
+            continue  # no trigger, or every trigger negated ("no new profile", "rules out a new profile")
         clauses = re.split(r"[;,]", line)
         for name, pat in PROFILE_CONDITIONS.items():
             if not any(re.search(pat, c, re.I) and not NEGATION.search(c) for c in clauses):

@@ -144,6 +144,13 @@ def run_all(ap):
              "Phase 2: P8 (cap 2M): frozen pilot committed before the draw; pre/post controls; A2 negatives; "
              "historical receipts byte-identical; separate counters"]
     check("V-AP-PROFILE-CONDITIONS-SAME-LINE", refuses(ap, split, "S26C"))
+    # a NEGATED trigger is not a profile proposal (S30T, 2026-11-11: refused for "..., no new profile" in a fact)
+    s30t = ("Brief brief.md: the only admitted Tennis generation is B1-T, cap 5M, float-evidence scan of the Tennis "
+            "COMPILES_NO_MATCH, pilot only if applicability >= 10%, no new profile")
+    check("V-AP-PROFILE-NEGATED-TRIGGER-ADMITS", ap.policy_check(GOOD, "", ["Title", s30t,
+                                                                         "The brief rules out a new profile in B1-T."]) == [])
+    check("V-AP-PROFILE-NEGATED-THEN-REAL-REFUSED", refuses(
+        ap, ["Phase 1: P9 (cap 5M): no new profile here, then add another profile P9", PROFILE_OK[1]], "S26C"))
     # ---- packet: the scaffolder must see exactly the checked phases
     lane0 = {"name": "L", "letter": "K", "cwd": str(tmp / "cwd"), "product": str(tmp / "cwd"), "packet_dir": "v"}
     pk = {"title": "t", "facts": ["W3b-2 sealed", "Phase 4: something", "P1 profile pinned"], "phases": GOOD}
@@ -458,6 +465,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "blank_off": lambda m: setattr(m, "BLANK_STOP", 99),
          "profile_off": lambda m: setattr(m, "PROFILE_CONDITIONS", {}),
          "negation_off": lambda m: setattr(m, "NEGATION", __import__("re").compile(r"(?!x)x")),
+         "trigger_negation_off": lambda m: setattr(m, "TRIGGER_NEGATED", __import__("re").compile(r"(?!x)x")),
+         "trigger_negation_all": lambda m: setattr(m, "TRIGGER_NEGATED", __import__("re").compile(r"")),
          "drift_off": lambda m: setattr(m, "packet_phase_drift", lambda *a: None),
          "agree_unchecked": lambda m: setattr(m, "agree_supported", lambda v: True),
          "protected_off": lambda m: setattr(m, "protected_check", lambda lane: None),
