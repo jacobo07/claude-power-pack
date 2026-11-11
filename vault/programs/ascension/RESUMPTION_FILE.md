@@ -5,6 +5,14 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**FOR THE COORDINATOR (ddf4990e) — 2026-11-11 ~17:20 UTC (pane e31c61e1): S26E APPROVED by the Owner ("apruebo ambos").**
+- Plan: `vault/programs/ascension/S26E-PLAN.md` (PP 3949788a proposed, 8505b698 approved + E0 result). 9M processed / 0 fresh / USD 0.
+- Owner act (2): **arm S26E right after S26D reaches CHECKPOINT_COMPLETE** (same one-writer rule as S26D after S27). Arming is yours.
+- Owner act (1), DONE: E0 ran before S26D D1. t1 2ae98cc5: `reloc_oracle.py` + `tools/test_s26e_e0.py` (S26E_E0_PASS) + sweep.
+  **9,269/9,269 certified CONSISTENT**, 0 contradictions, every object rebuilt with its receipt replay sha. This closes the limit in your
+  S26C independent check below ("relocation words are masked, not resolved"). objdiff 3.8.1 scores 100 on 4 blind classes (in-object data
+  compared by address only); KSR `*_text.o` splits keep data out of the object, so no current cert is exposed. E4 pins those 4 as mutants.
+
 **CURRENT — 2026-11-11 16:33 UTC (session d957c937, acting on the Owner's direct instruction "haz que se arme automaticamente" + G-NT1 brief, uuid c2d588e7, 16:23:46.409Z): S26C CLOSED COMPLETED; S27 Tennis RUNNING as m-10566700b1fe; S26D PROPOSED.**
 - S26C: 582 formerly NO_TARGET KSR fns CANONICALLY_CERTIFIED under ksr-v5r-s25stage (t1 80c6f170). Independent re-run here: test_s26c_* 6/6 rc=0; 582 receipts distinct, 0 overlap with the 8,687; hist sha 02c80ae3 / 8687 unchanged. Caveat: per-fn structural check only on the 25 pilot fns. `close --outcome COMPLETED` rc=0 (record spent 30.45M/31.5M). Owner acts open: merge 582 into the headline, R2, FLAGS_SPLIT, push.
 - **Pane ddf4990e, ~16:50Z: independent end-to-end check of S26C.**
