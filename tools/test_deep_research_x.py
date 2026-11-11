@@ -120,6 +120,25 @@ gate("V-DRX-NUMBERS-PARSER",
      el.numbers_in("37% across 12 sites, 1,400 runs, 3 teams, 0.5 ratio") == {"37%", "12", "1400", "0.5"},
      f"informative numbers only: {sorted(el.numbers_in('37% across 12 sites, 1,400 runs, 3 teams, 0.5 ratio'))}")
 
+gate("V-DRX-NUMBERS-BOUNDARY-AND-TRIM",
+     el.numbers_in("10 runs and 9 teams") == {"10"} and el.normalize("  Mixed  Case \n ") == "mixed case",
+     "10 is the first informative integer (9 is not); normalisation trims both ends")
+
+# The summary feeds the U6 comparison, so its numbers are pinned exactly, not just "present".
+_sum = led.summary()
+_exp = {"claims": len(led.claims),
+        "claims_with_verified_span": sum(1 for c in led.claims if c["spans"]),
+        "quotes_rejected": sum(len(c["rejected_quotes"]) for c in led.claims),
+        "sources": 1, "lineages": 1}
+gate("V-DRX-LEDGER-SUMMARY-EXACT",
+     # hand count of the claims above: fab, ok, unknown, short, hyp, num_bad, num_ok = 7;
+     # spans on ok, hyp, num_bad, num_ok = 4; rejected quotes on fab, unknown, short = 3.
+     all(_sum[k] == v for k, v in _exp.items()) and _exp["claims"] == 7
+     and _exp["claims_with_verified_span"] == 4 and _exp["quotes_rejected"] == 3
+     and _sum["verified_span_rate"] == 0.571,
+     f"summary {{claims 7, with span 4, rejected 3, rate 0.571}} == {{{_sum['claims']}, "
+     f"{_sum['claims_with_verified_span']}, {_sum['quotes_rejected']}, {_sum['verified_span_rate']}}}")
+
 # --- ledger: lineage / independence ---------------------------------------
 
 lin = _ledger("lineage")
@@ -175,11 +194,33 @@ orig = snap.read_text(encoding="utf-8")
 snap.write_text(orig + " edited", encoding="utf-8")
 audit_snap = el.audit_ledger(lp)
 snap.write_text(orig, encoding="utf-8")
-a_t, a_i = el.audit_ledger(tp), el.audit_ledger(ip)
+hashonly = json.loads(lp.read_text(encoding="utf-8"))
+hashonly["spans"][0]["sha256"] = "0" * 64   # text and offsets untouched: only the recorded hash lies
+hp = TMP / "quotes" / "ledger_hashonly.json"
+hp.write_text(json.dumps(hashonly), encoding="utf-8")
+a_t, a_i, a_h = el.audit_ledger(tp), el.audit_ledger(ip), el.audit_ledger(hp)
 gate("V-DRX-AUDIT-CATCHES-TAMPERING",
-     not a_t["ok"] and not a_i["ok"] and not audit_snap["ok"] and el.audit_ledger(lp)["ok"],
-     f"moved offsets, a span-less VERIFIED label and an edited snapshot all fail; restored file passes "
-     f"({len(a_t['failures'])}/{len(a_i['failures'])}/{len(audit_snap['failures'])} failures)")
+     not a_t["ok"] and not a_i["ok"] and not audit_snap["ok"] and not a_h["ok"]
+     and el.audit_ledger(lp)["ok"],
+     f"moved offsets, a span-less VERIFIED label, an edited snapshot and a forged span hash all fail; "
+     f"restored file passes ({len(a_t['failures'])}/{len(a_i['failures'])}/"
+     f"{len(audit_snap['failures'])}/{len(a_h['failures'])} failures)")
+
+pm = _ledger("persist")
+pm_s = pm.add_source("https://a.example/p", PAPER)
+for _ in range(3):
+    pm.verify_claim("c", "DERIVED", [{"source_id": pm_s, "quote": "Chinchilla uses the same compute budget"}])
+pm.mark_persisted("C2", True)
+pm.mark_persisted("C3", False)
+missing_raises = False
+try:
+    pm.mark_persisted("C9", True)
+except KeyError:
+    missing_raises = True
+gate("V-DRX-PERSISTED-MARKS-THE-NAMED-CLAIM",
+     [c["persisted"] for c in pm.claims] == [None, True, False] and missing_raises
+     and pm.summary()["claims_persisted"] == 1,
+     f"marks land on the named claim only: {[c['persisted'] for c in pm.claims]}; unknown id raises")
 
 # --- source guard: SSRF ----------------------------------------------------
 
@@ -382,7 +423,8 @@ gate("V-DRX-E2E-COPIES-NOT-CORROBORATION",
      wire and all(c["independent_lineages"] == 1 and c["epistemic"] != "VERIFIED" for c in wire),
      f"2 syndicated copies cited as VERIFIED -> {[c['epistemic'] for c in wire][:1]}, lineages 1")
 gate("V-DRX-E2E-INJECTION-IS-DATA",
-     inj_src and inj_src[0]["injection_flags"] and _captured.get("untrusted_preamble"),
+     inj_src and inj_src[0]["injection_flags"] and _captured.get("untrusted_preamble")
+     and ledger_obj.summary()["sources_with_injection_flags"] == 1,
      f"instruction-shaped page flagged {inj_src[0]['injection_flags'] if inj_src else None} and "
      "fenced as untrusted in the extraction prompt (the stubbed synthesis cannot test obedience; "
      "the ledger's verbatim rule is what bounds an obeyed injection)")

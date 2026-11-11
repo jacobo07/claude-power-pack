@@ -93,6 +93,21 @@
    "sampled": 6,
    "module_hash": "4d753f23567ac5e9",
    "measured_at": "2026-10-01T12:29:47Z"
+  },
+  "tools/test_deep_research_x.py::modules/deep-research/evidence_ledger.py": {
+   "tier": "push",
+   "min_kill": 3,
+   "sampled": 6,
+   "module_hash": "ca514b6477bbfa0c",
+   "measured_at": "2026-11-11T16:59:44Z",
+   "_note": "3/6 is the measured ceiling of this sample, not slack: the survivors are line 50 (sys.path guard, equivalent when the dir is already on the path), line 326 (rejected-quote display truncation 200->201, cosmetic) and line 255 (union-find loop, reported TIMEOUT = detected but not counted as a kill). Raised from 1/6 on 2026-11-11 by pinning summary(), mark_persisted and a forged-span-hash audit."
+  },
+  "tools/test_deep_research_x.py::modules/deep-research/source_guard.py": {
+   "tier": "push",
+   "min_kill": 4,
+   "sampled": 6,
+   "module_hash": "e928e132f5a49c20",
+   "measured_at": "2026-11-11T16:44:56Z"
   }
  }
 }
