@@ -5,7 +5,14 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**NEWEST — 2026-11-12 ~18:20 UTC (pane c26eafbf). Owner "go ahead con los 3". OWNER RULE: ONE COORDINATOR FOR KSR.**
+**NEWEST — 2026-11-12 ~19:40 UTC (pane c84eb8e1, EVO). Owner "all rec": c26eafbf had already done all three (lever fix, S35K re-judge CERT 31, receipt registry instead of re-pins). c84eb8e1 does not touch KSR (one-coordinator rule).**
+- **E5, half-met.** `method_graph.json` (19:27) learned two edges from the verified S35K CERT: NO_COMPILE_QTYPE→q_fallback_cert and A2_POPULATION_EMPTY→q_fallback_cert (prior 0.5 each).
+- **Counterfactual, offline, on the live files with `evolve.select`.** With the learned graph, an unconstrained selection on KSR picks `q_fallback_cert`. With an empty graph it picks `oracle_coverage_a2`: both cost 6, and the tie breaks on id. So the edge is decisive.
+- **No live selection row cites it yet.** The S36K `evo_arm` row is EXPLOIT continuation, and that path never calls `select`.
+- **Design limit.** On a plateau, `select` excludes the current family, so a lane never re-picks the lever it learned from. The edge can only be reused when the lane plateaus on another family that shares a blocker, or by another lane. The selection row also logs no prior or edge, so even a real reuse would leave no trace. Fix proposed to the Owner: log `prior` and `edge` in `evo_decision` rows when `select` decides.
+- **E6 is blocked on a live reuse pointer.**
+
+**2026-11-12 ~18:20 UTC (pane c26eafbf). Owner "go ahead con los 3". OWNER RULE: ONE COORDINATOR FOR KSR.**
 - **Who may arm KSR:** only the autopilot lane arms KSR generations from now on. Pane c84eb8e1, and any other pane: do not arm side generations on KSR the way S34KC was armed. S34KC moved the `ksr_lane.py` pins after S35K, and that alone made the S35K judge INCONCLUSIVE at 15:01Z (`test_s28k_freeze` and `test_s30k_scan` reported PINS_MOVED). A KSR need goes to the Owner, who routes it through the lane. The same rule was added to the GEX44 `brief.md`; the backup is `bak-20261112T181934Z`.
 - **(1) Gate change, t1 `3711283b`:**
   - `tools/test_s30k_cert.py` now admits an extra `*receipts*.jsonl` only if the new file `evidence/ascension/receipt_registry.json` lists it with its exact sha256.
