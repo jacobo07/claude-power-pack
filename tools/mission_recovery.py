@@ -263,6 +263,21 @@ def _phase_glob(num: str) -> str:
     return f"{int(whole):02d}{'.' + frac if frac else ''}-*"
 
 
+_HUMAN_NEEDED = re.compile(r"^status:\s*\"?human_needed\b", re.MULTILINE)
+
+
+def _awaiting_human(base: Path, num) -> bool:
+    """True when the phase's VERIFICATION.md records `status: human_needed` (GSD's verifier wrote it after
+    execution): only a person can close it. Unreadable or absent = False (the phase stays a candidate)."""
+    if num is None:
+        return False
+    try:
+        pdir = next((d for d in sorted((base / "phases").glob(_phase_glob(num))) if d.is_dir()), None)
+    except (ValueError, OSError):
+        return False
+    return bool(pdir and any(_HUMAN_NEEDED.search(_read(v)) for v in pdir.glob("*-VERIFICATION.md")))
+
+
 def _research_required(base: Path) -> bool:
     try:
         cfg = json.loads(_read(base / "config.json") or "{}")
@@ -299,9 +314,13 @@ def gsd_unit(work_dir: str, workstream: str | None, manager=None) -> dict:
     if fm:
         num = fm.group(1).lstrip("0") or "0"
     elif phases:
-        cur = next((ph for ph in phases if not ph.get("phase_complete")), None)
-        if cur is None:
+        open_ = [ph for ph in phases if not ph.get("phase_complete")]
+        if not open_:
             return {}
+        # Spec mission-autoresolve R2: a phase whose execution is done and whose VERIFICATION waits on a human is
+        # not the agent's next unit while a later phase is open. Measured 2026-11-12 (m-6043c9b8e6c4): with no
+        # `current_phase:` the recovery re-proved human_needed Phase 1 at epochs 3, 5 and 7, then parked.
+        cur = next((ph for ph in open_ if not _awaiting_human(base, ph.get("number"))), open_[0])
         num, name = str(cur.get("number")), cur.get("name")
     else:
         m = next((rx.search(state) for rx in _PHASE_RES[1:] if rx.search(state)), None)

@@ -502,7 +502,7 @@ def host_sessions(timeout_s: int = 90) -> list[dict] | None:
     read every owner as gone.
     """
     import subprocess
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    exe = claude_exe()
     try:
         r = subprocess.run([exe, "agents", "--json", "--all"], capture_output=True, text=True,
                            encoding="utf-8", errors="replace", timeout=timeout_s)
@@ -1014,7 +1014,7 @@ def worker_argv(rec: dict, prompt: str, session_id: str | None = None) -> list[s
     started idle (W8, measured). So the variadic options come first and a non-variadic
     option (`--autocompact N`) sits between them and the prompt -- the exact shape W0
     launched successfully."""
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    exe = claude_exe()
     slim = slim_profile(rec)
     if slim:
         return slim_argv(rec, prompt, exe, slim, session_id)
@@ -1517,7 +1517,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
             # holds no RAM and can never be mistaken for the run.
             try:
                 (stop_runner or (lambda a: subprocess.run(a, capture_output=True, timeout=120)))(
-                    [os.environ.get("CPP_CLAUDE_EXE") or "claude", "stop", bg_id])
+                    [claude_exe(), "stop", bg_id])
             except Exception:
                 pass
         return {"ok": False, "epoch": epoch, "bg_id": bg_id, "why": why, "detail": detail}
@@ -4399,6 +4399,13 @@ def admit_route(mission_id: str, route_path: str, *, floors_path: str | None = N
         if spent is not None:
             ratio = float(rec.get("token_trip_ratio") or ms.DEFAULT_TRIP_RATIO)
             remaining = int(ratio * int(rec["token_estimate"])) - spent
+            if rec.get("authority_tokens") and rec.get("token_estimate_src") in ("auto", "amr"):
+                # Spec mission-autoresolve R1: a machine-set estimate (auto envelope, AMR lease) is bounded BY the
+                # Owner authority -- the ceiling the auto envelope (auto_headroom) and AMR lease pricing already
+                # use -- so it may not halt the mission below it. Measured 2026-11-12 (m-6043c9b8e6c4): 2 x an
+                # AMR estimate of 25.2M left 0.76M, DEFER halted it at 49.7M of a 320M authority, and no
+                # steward or chain existed to continue it (4.5 h lost). An operator-set estimate keeps its ratio.
+                remaining = int(rec["authority_tokens"]) - ms.closeout_reserve(rec) - spent
     # WU-ADV2a: the mission's spend goal bounds admission too. No goal / unmeasurable keeps the above.
     goal_rem = halt_authority(rec)
     if goal_rem is not None:
@@ -4834,6 +4841,16 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
                 return {"status": "diverged_followed", "detail": f"cwd {hc[:12]} and work_dir {hw[:12]}"
                         f" have diverged, but the work_dir is a proven worktree carrying"
                         f" {proven_workstream}'s latest roadmap; following it, nothing moved", **facts}
+            # Spec mission-autoresolve R3: the work_dir's own commits touch only `.planning/` while the cwd moved
+            # on -> the work_dir is a stranded planning note, not the work. The caller rebinds to the cwd (nothing
+            # moved, the stranded head is named). Measured 2026-11-12 (m-6043c9b8e6c4): held 2 h 15 m on a
+            # worktree whose one extra commit was a STATE.md note while Phase 5 merged into the main tree.
+            base = git(cwd, "merge-base", hc, hw).stdout.strip()
+            names = git(cwd, "diff", "--name-only", base, hw).stdout.split() if base else []
+            if names and all(n.replace("\\", "/").startswith(".planning/") for n in names):
+                return {"status": "diverged_planning_only", "detail": f"work_dir {hw[:12]} adds only"
+                        f" {len(names)} .planning/ path(s) since {base[:12]}; cwd {hc[:12]} carries the work;"
+                        f" rebinding to the cwd, stranded head {hw[:12]} left in place", "stranded": hw, **facts}
             return {"status": "diverged", "detail": f"cwd {hc[:12]} and work_dir {hw[:12]} have diverged;"
                     " a worker launched here would branch from a lineage without the work", **facts}
         dirty = git(cwd, "status", "--porcelain", "--untracked-files=no").stdout.strip()
@@ -5044,7 +5061,7 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
     # precondition (it was only ever seen in fixtures).
     if "background" not in (row.get("kind"), owner.get("kind")):
         return True, "interactive owner left running; lease moves"
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    exe = claude_exe()
     run = runner or (lambda argv: subprocess.run(argv, capture_output=True, text=True, timeout=120))
     live = row.get("status") in HOST_LIVE_STATUSES
     if row.get("state") not in ("stopped", "done", "exited", "failed") or live:
@@ -5346,6 +5363,21 @@ HALT_CONTINUE_MAX_RENEWAL = 2
 
 def halt_continue_on() -> bool:
     return os.environ.get("CPP_HALT_CONTINUE", "").lower() != "off"
+
+
+def claude_exe() -> str:
+    """The `claude` the host's background jobs run under (spec mission-autoresolve R4). CPP_CLAUDE_EXE wins; else,
+    off Windows, the per-user install the sweep unit pins (~/.local/bin/claude), before PATH. Measured 2026-11-12
+    (GEX44, m-6043c9b8e6c4): an ssh shell resolved /usr/local/bin/claude 2.1.113 (no --bg), so `decide` recorded
+    the answer but answered woke=False and the worker stayed parked."""
+    env = os.environ.get("CPP_CLAUDE_EXE")
+    if env:
+        return env
+    if os.name != "nt":
+        local = Path.home() / ".local" / "bin" / "claude"
+        if local.is_file() and os.access(local, os.X_OK):
+            return str(local)
+    return "claude"
 
 
 def resolve_exe(name: str) -> str | None:
@@ -6253,7 +6285,7 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
     if sessions is None:
         sessions = host_sessions()
     stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    exe = claude_exe()
 
     def reap(rec: dict, row: dict) -> None:
         # Judge against the record as it is NOW, not as this pass first read it: the host
@@ -6892,6 +6924,20 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 elif aligned["status"] in ("diverged_followed", "behind_followed"):
                     lr.ledger_append(mid, f"cwd_{aligned['status']}", mission_id=mid, epoch=rec["epoch"],
                                      detail=aligned["detail"])
+                elif aligned["status"] == "diverged_planning_only":
+                    # Spec mission-autoresolve R3: follow the tree that carries the work. A refused rebind is held
+                    # like any other misalignment and re-judged on the next pass.
+                    try:
+                        rec = bind_mission(mid, rec["cwd"], cause="planning_only_divergence", now=now)
+                        work_dir = mb.execution_root(rec)
+                        lr.ledger_append(mid, "cwd_planning_only_rebound", mission_id=mid, epoch=rec["epoch"],
+                                         detail=aligned["detail"], stranded=aligned.get("stranded"))
+                    except MissionError as exc:
+                        why = f"launch held: planning-only divergence, rebind refused: {exc}"
+                        lr.ledger_append(mid, "launch_held_cwd", mission_id=mid, epoch=rec["epoch"],
+                                         status=aligned["status"], detail=why[:300])
+                        row["held"] = why
+                        continue
                 elif aligned["status"] in CWD_ALIGN_BLOCKING:
                     why = f"launch held: cwd not aligned with work_dir ({aligned['status']}): {aligned['detail']}"
                     wake = {"kind": "cwd_aligned", "cwd": rec["cwd"], "work_dir": work_dir or rec.get("work_dir"),
@@ -6955,10 +7001,16 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         # The unit's own lease cannot fund another epoch of its route, and no pass will change that:
                         # retrying refused 17 launches in 85 min with the record RUNNING (gsdx-factory-2 H012,
                         # 2026-10-25), so neither the steward (HALTED only) nor the chain's residual could act.
+                        # Spec mission-autoresolve R1b: say who continues it. A mission with no CE goal has no
+                        # steward, and HALTED is terminal for renewal, so the old text promised a continuation
+                        # that never came (m-6043c9b8e6c4, 2026-11-12).
+                        heir = ("the steward and the chain residual continue it" if spend_goal(rec)
+                                else "no steward goal owns this mission: raise its authority "
+                                     "(gsd_mission.py authority) and arm a successor")
                         halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                             event="unit_lease_exhausted", now=now, state=HALTED, pending=None,
                                             reason=f"relay re-admission {adm_v}: the unit lease cannot fund another "
-                                                   f"epoch; the steward and the chain residual continue it")
+                                                   f"epoch; {heir}")
                         reap(halted, row)
                         row["action"] = "halted"
                         continue
