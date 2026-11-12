@@ -11,6 +11,14 @@
 - **No live selection row cites it yet.** The S36K `evo_arm` row is EXPLOIT continuation, and that path never calls `select`.
 - **Design limit.** On a plateau, `select` excludes the current family, so a lane never re-picks the lever it learned from. The edge can only be reused when the lane plateaus on another family that shares a blocker, or by another lane. The selection row also logs no prior or edge, so even a real reuse would leave no trace. Fix proposed to the Owner: log `prior` and `edge` in `evo_decision` rows when `select` decides.
 - **E6 is blocked on a live reuse pointer.**
+- **DEPLOYED 19:51Z (Owner "y").** `evo_decision` rows now carry `selection: {prior, edges: [[blocker, lever, prior], ...]}` whenever `select` decides (after a judgment, or after a planner stop). `edges == []` means the pick came from cost or id alone. The function is `evolve.selection_evidence`.
+  - Gates: V-EVO-SELECTION-CITES-LEARNED-EDGE and V-EVO-SELECTION-NO-EDGE-WITHOUT-GRAPH, plus 2 mutants (one blanks the evidence, one claims an edge). Result: 38/38 killed.
+  - Also fixed a pre-existing red: V-AP-DAY-WAIT-DOES-NOT-DOUBLE-COUNT. Its fixture was a literal 50M tuned to the 80M cap, so after DAY_CAP 90M (460f3214) it never waited. It is now `DAY_CAP - 30M`.
+  - The unchanged baseline is red in scratch; the new files are green both in scratch and live. The live sha check confirmed the files still matched HEAD before the swap, and they were copied in under `cron.lock`.
+  - Backup: `bak-c84eb8e1-e5sel-20261112T195111Z`.
+  - Live shas: autopilot 30b1f9be, evolve cd73a992, test a87c73de.
+  - The gate needs `AP_PP=/home/kobii/.claude/skills/claude-power-pack`, or it fails 2 scaffold gates.
+- **E5 pointer, from now on:** a ledger row with `kind == "evo_decision"` and a non-empty `selection.edges` (`grep '"edges": \[\[' ledger.jsonl`). E6 cites that row.
 
 **2026-11-12 ~18:20 UTC (pane c26eafbf). Owner "go ahead con los 3". OWNER RULE: ONE COORDINATOR FOR KSR.**
 - **Who may arm KSR:** only the autopilot lane arms KSR generations from now on. Pane c84eb8e1, and any other pane: do not arm side generations on KSR the way S34KC was armed. S34KC moved the `ksr_lane.py` pins after S35K, and that alone made the S35K judge INCONCLUSIVE at 15:01Z (`test_s28k_freeze` and `test_s30k_scan` reported PINS_MOVED). A KSR need goes to the Owner, who routes it through the lane. The same rule was added to the GEX44 `brief.md`; the backup is `bak-20261112T181934Z`.

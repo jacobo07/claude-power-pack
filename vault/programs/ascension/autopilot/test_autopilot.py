@@ -388,7 +388,8 @@ def run_all(ap):
     # a checkpoint whose arm waits for the next day is judged again: its class must not be counted twice
     st = fresh(205)
     import time as _t
-    (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": _t.time(), "tokens": 50_000_000}) + "\n")
+    # 30M of day headroom whatever the cap (was a literal 50M, tuned to the 80M cap; DAY_CAP 90M left it never waiting)
+    (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": _t.time(), "tokens": ap.DAY_CAP - 30_000_000}) + "\n")
     ap.judge = lambda *a: dict(full, _tokens=20_000_000)
     ap.classify_progress = lambda v, p, b=None: ("INFORMATION", "")
     ap.lane_tick(st, lanes[0], False)
@@ -514,6 +515,24 @@ def run_all(ap):
     ls, q = evo_run(evo_fresh([LA, LB, LC, LX, LR], {"lever": "lev_a"}, (GOODP, RES)), ["INFORMATION", "INFORMATION"])
     check("V-EVO-PLATEAU-ENTERS-RESEARCH", ls["status"] == "RUNNING" and ls.get("mode") == "RESEARCH" and ls.get("lever") == "lev_b"
           and int(ls.get("research_spent") or 0) == 5_000_000)
+    # E5 (2026-11-12): a selection decided by a learned edge must say so in its ledger row, and one decided by cost/id
+    # alone must not claim an edge. lev_b2 costs more than lev_b, so only the learned edge B1 -> lev_b2 can pick it.
+    LB2 = {"id": "lev_b2", "family": "F4", "blockers": ["B1"], "requires": [], "cost": 9, "status": "open", "what": "b2"}
+
+    def sel_row():
+        rows = [json.loads(x) for x in (tmp / "home" / "ledger.jsonl").read_text().splitlines() if x.strip()]
+        return next((r for r in reversed(rows) if r.get("kind") == "evo_decision" and r.get("lever")), {})
+    st_g = evo_fresh([LA, LB, LB2], {"lever": "lev_a"}, (RES,))
+    (tmp / "home" / "method_graph.json").write_text(json.dumps({"paths": [["B1", ["lev_b2"]]]}))
+    evo_run(st_g, ["INFORMATION", "INFORMATION"])
+    r = sel_row()
+    sel = r.get("selection") or {}
+    check("V-EVO-SELECTION-CITES-LEARNED-EDGE", r.get("lever") == "lev_b2" and sel.get("prior", 0) > 0
+          and [e[:2] for e in sel.get("edges", [])] == [["B1", "lev_b2"]])
+    evo_run(evo_fresh([LA, LB, LB2], {"lever": "lev_a"}, (RES,)), ["INFORMATION", "INFORMATION"])
+    r = sel_row()
+    check("V-EVO-SELECTION-NO-EDGE-WITHOUT-GRAPH", r.get("lever") == "lev_b"
+          and r.get("selection") == {"prior": 0.0, "edges": []})
     ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
     check("V-EVO-SAME-FAMILY-NEVER-CHOSEN", ls["status"] == "PARKED" and "another family" in q)
     ls, q = evo_run(evo_fresh([LA, LX], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
@@ -713,6 +732,9 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_research_never_stops": _evo_mut(RESEARCH_FAIL_STOP=99),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
          "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),
+         "evo_selection_evidence_blank": _evo_mut(selection_evidence=lambda lv, g: {"prior": 0.0, "edges": []} if lv else None),
+         "evo_selection_evidence_claims_edge": _evo_mut(selection_evidence=lambda lv, g: (
+             {"prior": 1.0, "edges": [[b, lv["id"], 1.0] for b in lv.get("blockers", [])]} if lv else None)),
          "evo_pivot_rule_bypassed": _evo_mut(_pivot=lambda *a, **k: {"action": "pivot", "streak": 1, "why": "bypass"}),
          "evo_budget_resume_always": _evo_mut(budget_resume=lambda ls, why: ls.get("status") == "PARKED"),
          "evo_budget_never_resumes": _evo_mut(budget_resume=lambda ls, why: False),

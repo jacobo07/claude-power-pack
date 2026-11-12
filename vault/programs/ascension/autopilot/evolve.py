@@ -135,6 +135,17 @@ def select(levers: dict, lane: str, ls: dict, product: str, graph, family_not=No
     return cands[0][3] if cands else None
 
 
+def selection_evidence(lever, graph) -> dict | None:
+    """What the MethodGraph contributed to selecting `lever`: its prior and every learned edge (blocker -> lever) with a
+    positive prior. The graph learns only from verified CERT/CAPABILITY, so a non-empty `edges` is the reuse pointer
+    (E5); `edges == []` says the pick came from cost/id alone. None when no lever was selected."""
+    if not lever:
+        return None
+    edges = [[b, lever["id"], round(p, 4)] for b in lever.get("blockers", [])
+             if (p := graph.prior(b).get(lever["id"], 0.0)) > 0]
+    return {"prior": max([e[2] for e in edges] or [0.0]), "edges": edges}
+
+
 def directive(lever: dict, mode: str, instrument: str | None = None) -> str:
     if mode == "REPAIR":
         return (f"EVO MODE REPAIR (instrument {instrument}, attempt counted by the autopilot). The previous generation's "

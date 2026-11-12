@@ -710,7 +710,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             evolve.save_graph(HOME, graph)
         ls["last_progress"] = cls
         ledger_add(lane=lane["name"], kind="evo_decision", tokens=0, cls=cls, instruments=instruments,
-                   action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"))
+                   action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"),
+                   selection=evolve.selection_evidence(d.get("lever"), graph))
         digest(lane["name"], f"PROGRESS {cls} (verified by the autopilot). {cnotes[:400]} EVO: {d['action']}: {d['why'][:300]}")
         if d["action"] == "stop":
             ls["status"] = "STOPPED"
@@ -751,10 +752,12 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
     if p.get("stop") and evo and ls.get("mode") not in ("RESEARCH", "REPAIR"):
         cur = evolve.lever_by_id(evolve.load_levers(HOME), lane["name"], ls.get("lever"))
-        d = evolve.plateau(ls, evolve.load_levers(HOME), lane["name"], product, evolve.load_graph(HOME),
+        pgraph = evolve.load_graph(HOME)
+        d = evolve.plateau(ls, evolve.load_levers(HOME), lane["name"], product, pgraph,
                            (cur or {}).get("family") or "UNREGISTERED", False)
         ledger_add(lane=lane["name"], kind="evo_decision", tokens=0, cls="PLANNER_STOP", instruments=[],
-                   action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"))
+                   action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"),
+                   selection=evolve.selection_evidence(d.get("lever"), pgraph))
         digest(lane["name"], f"EVO after planner stop: {d['action']}: {d['why'][:300]}")
         if d["action"] == "research" and not dry:
             ls["next_lever"] = d["lever"]["id"]
