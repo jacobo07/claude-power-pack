@@ -292,6 +292,7 @@ def run_all(ap):
         rec["state"] = "RUNNING"
         recp.write_text(json.dumps(rec))
         ap.judge, ap.plan = good_judge, good_plan
+        (tmp / "home" / "EVO_OFF").write_text("")  # the pre-EVO suite runs with EVO off; the EVO section turns it on
         return {}
 
     def ledger():
@@ -432,6 +433,156 @@ def run_all(ap):
     scratch = json.loads((m2.OUT / "state.json").read_text()) if (m2.OUT / "state.json").exists() else {}
     check("V-AP-DRY-TICK-WRITES-NOTHING-REAL", before == after and m2.OUT != m2.HOME
           and scratch.get("lanes", {}).get("L", {}).get("status") == "RUNNING")
+
+    # ---- EVO (Owner "y" 2026-11-12): instrument failure, stagnation -> research, continuity
+    E = ap.evolve
+    orig_vif = E.verify_instrument_failures
+    import subprocess as _sp
+    os.environ.update(GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+
+    def git(d, *a):
+        return _sp.run(["git", "-C", str(d), *a], capture_output=True, text=True).stdout.strip()
+
+    def mkrepo(name):
+        d = tmp / name
+        d.mkdir()
+        git(d, "init", "-q", "-b", "main")
+        (d / "a.txt").write_text("a\n")
+        git(d, "add", "-A"); git(d, "commit", "-q", "-m", "c0")
+        return d
+    # instrument failures are verified in git (window, file changed by the commit, data file, INSTRUMENT_FAIL in its body)
+    ir = mkrepo("evo_instr")
+    c0 = git(ir, "rev-parse", "HEAD")
+    (ir / "neg.jsonl").write_text('{"verdict": "INSTRUMENT_FAIL (positive control failed)"}\n')
+    (ir / "ok.jsonl").write_text('{"verdict": "REFUTED"}\n')
+    git(ir, "add", "-A"); git(ir, "commit", "-q", "-m", "c1")
+    c1 = git(ir, "rev-parse", "HEAD")
+    claim = lambda f, c: {"instrument_failures": [{"instrument": "ctl", "file": f, "commit": c}]}  # noqa: E731
+    apr = load()  # the git helpers unstubbed (this run's ap.sh is a stub)
+    check("V-EVO-INSTRUMENT-VERIFIED", orig_vif(claim("neg.jsonl", c1), str(ir), c0, apr) == ["ctl"])
+    check("V-EVO-INSTRUMENT-OUTSIDE-WINDOW", orig_vif(claim("neg.jsonl", c1), str(ir), c1, apr) == [])
+    check("V-EVO-INSTRUMENT-NOT-A-FAILURE", orig_vif(claim("ok.jsonl", c1), str(ir), c0, apr) == [])
+    check("V-EVO-CLASSIFY", E.classify("NONE", ["ctl"]) == "INSTRUMENT_FAIL" and E.classify("INFORMATION", ["ctl"]) == "INFORMATION"
+          and E.classify("NONE", []) == "NONE")
+
+    LA = {"id": "lev_a", "family": "F1", "blockers": ["B1"], "requires": [], "cost": 1, "status": "open", "what": "a"}
+    LB = {"id": "lev_b", "family": "F2", "blockers": ["B1"], "requires": [], "cost": 5, "status": "open", "what": "b"}
+    LC = {"id": "lev_c", "family": "F1", "blockers": ["B1"], "requires": [], "cost": 0, "status": "open", "what": "c"}
+    LX = {"id": "lev_x", "family": "F3", "blockers": ["B1"], "requires": ["missing/x.json"], "cost": 0, "status": "open"}
+    LR = {"id": "lev_r", "family": "REPAIR", "kind": "repair", "blockers": ["CTL"], "requires": [], "cost": 1, "status": "open"}
+    RES = {"title": "r", "facts": [], "phases": [
+        "Phase 1: X1 lev_b discriminating test (cap 3M): rival hypotheses A and B, positive control, decision rule frozen "
+        "in a commit before any run; gate tools/test_x1.py with planted mutants",
+        "Phase 2: X2 checkpoint (cap 2M): re-run gates, write the checkpoint file stating new canonical certificates per "
+        "profile by function identity, CHECKPOINT_COMPLETE"]}
+    REP = {"title": "p", "facts": [], "phases": [
+        "Phase 1: F1 lev_r repaired instrument (cap 3M): positive control demonstrated at freeze, thresholds unchanged; "
+        "gate tools/test_f1.py with planted mutants",
+        "Phase 2: F2 checkpoint (cap 2M): re-run gates, write the checkpoint file stating new canonical certificates per "
+        "profile by function identity, CHECKPOINT_COMPLETE"]}
+    GOODP = {"title": "g", "facts": [], "phases": GOOD}
+    ctr = [0]
+
+    def evo_fresh(levers, lane_state=None, plans=(GOODP,)):
+        fresh(7000 + ctr[0])
+        for f in ("EVO_OFF", "method_graph.json"):
+            (tmp / "home" / f).unlink(missing_ok=True)
+        (tmp / "home" / "levers.json").write_text(json.dumps({"L": levers}))
+        seqp = list(plans)
+        ap.plan = lambda *a: dict(seqp.pop(0) if len(seqp) > 1 else seqp[0], _tokens=1)
+        return {"lanes": {"L": dict({"status": "WAITING", "mission": "m-aaaaaaaaaaaa", "blank": 0, "arm_fails": 0},
+                                    **(lane_state or {}))}}
+
+    def evo_run(st, classes, instr=()):
+        E.verify_instrument_failures = lambda *a: list(instr)
+        for c in classes:
+            ls = st["lanes"]["L"]
+            if ls.get("status") in ("PARKED", "STOPPED"):
+                break
+            ctr[0] += 1
+            ap.classify_progress = (lambda c: (lambda v, p, b=None: (c, "")))(c)
+            ls.update(judged_for=None, status="WAITING", mission="m-aaaaaaaaaaaa")
+            (tmp / "home" / "ledger.jsonl").unlink(missing_ok=True)
+            rec["owner_hold"]["set_at"] = 7000 + ctr[0]
+            recp.write_text(json.dumps(rec))
+            ap.lane_tick(st, lanes[0], False)
+        ap.classify_progress = orig_cls
+        E.verify_instrument_failures = orig_vif
+        q = tmp / "home" / "owner_queue.md"
+        return st["lanes"]["L"], (q.read_text() if q.exists() else "")
+
+    ls, q = evo_run(evo_fresh([LA, LB, LC, LX, LR], {"lever": "lev_a"}, (GOODP, RES)), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-PLATEAU-ENTERS-RESEARCH", ls["status"] == "RUNNING" and ls.get("mode") == "RESEARCH" and ls.get("lever") == "lev_b"
+          and int(ls.get("research_spent") or 0) == 5_000_000)
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-SAME-FAMILY-NEVER-CHOSEN", ls["status"] == "PARKED" and "another family" in q)
+    ls, q = evo_run(evo_fresh([LA, LX], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-PRECONDITION-REQUIRED", ls["status"] == "PARKED" and "another family" in q)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-RESEARCH-PACKET-NEEDS-DISCRIMINATING-TEST", ls["status"] == "PARKED" and "no 'rival'" in q)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, (RES,)), ["NONE", "NONE"])
+    check("V-EVO-RESEARCH-STOP-RULE", ls["status"] == "PARKED" and "research stop rule" in q)
+    ls, q = evo_run(evo_fresh([LA, LR], {"lever": "lev_a"}, (REP,)), ["NONE", "NONE"], ["ctl_pool"])
+    check("V-EVO-INSTRUMENT-FAIL-NOT-NEGATIVE", ls["status"] == "RUNNING" and ls.get("mode") == "REPAIR"
+          and ls.get("blank") == 0 and ls.get("no_conversion", 0) == 0 and ls.get("repair") == {"ctl_pool": 2})
+    st_rep = {"lanes": {"L": ls}}
+    ls, q = evo_run(st_rep, ["NONE"], ["ctl_pool"])
+    check("V-EVO-REPAIR-CAP-PARKS", ls["status"] == "PARKED" and "repair cap" in q)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH", "info_streak": 1}), ["CERT"])
+    check("V-EVO-CERT-RETURNS-TO-EXPLOIT", ls["status"] == "RUNNING" and ls.get("mode") == "EXPLOIT")
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,
+                                         "pivot_history": [{"method_class": "F1", "evidence_delta": False}]}), ["NONE"])
+    check("V-EVO-PIVOT-RULE-REUSED", ls["status"] == "PARKED" and "zero evidence delta twice" in q)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a"}, ({"stop": "nothing admissible"}, RES)), ["INFORMATION"])
+    check("V-EVO-PLANNER-STOP-BECOMES-RESEARCH", ls["status"] == "RUNNING" and ls.get("lever") == "lev_b"
+          and ls.get("mode") == "RESEARCH")
+    # budget park: resumes when the ledger admits (an Owner release), holds otherwise; other parks never self-resume
+    st = evo_fresh([LA], {"status": "PARKED", "park_kind": "budget", "lever": "lev_a"})
+    ap.classify_progress = lambda v, p, b=None: ("INFORMATION", "")
+    rec["owner_hold"]["set_at"] = 7900; recp.write_text(json.dumps(rec))
+    ap.lane_tick(st, lanes[0], False)
+    check("V-EVO-BUDGET-PARK-RESUMES", st["lanes"]["L"]["status"] == "RUNNING")
+    st = evo_fresh([LA], {"status": "PARKED", "park_kind": "budget", "lever": "lev_a"})
+    (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": now - 86400, "tokens": 70_000_000}) + "\n")
+    judged = []
+    ap.judge = lambda *a: judged.append(a) or dict(full, _tokens=1)
+    _keep_u = ap.UNLOCKED_CAP; ap.UNLOCKED_CAP = 285_261_779
+    rec["owner_hold"]["set_at"] = 7901; recp.write_text(json.dumps(rec))
+    ap.lane_tick(st, lanes[0], False)
+    ap.UNLOCKED_CAP = _keep_u
+    check("V-EVO-BUDGET-PARK-HOLDS-WITHOUT-RELEASE", st["lanes"]["L"]["status"] == "PARKED" and not judged)
+    st = evo_fresh([LA], {"status": "PARKED", "park_kind": "evo", "lever": "lev_a"})
+    rec["owner_hold"]["set_at"] = 7902; recp.write_text(json.dumps(rec))
+    ap.lane_tick(st, lanes[0], False)
+    check("V-EVO-OTHER-PARK-HOLDS", st["lanes"]["L"]["status"] == "PARKED")
+    ap.classify_progress = orig_cls
+    # checkpoint discovery across worktree branches: fast-forward only, from a clean tree, exactly one holder
+    pr = mkrepo("evo_prod")
+    wt = tmp / "evo_wt"
+    git(pr, "worktree", "add", "-q", "-b", "gen", str(wt))
+    (wt / "ck.md").write_text("checkpoint\n")
+    git(wt, "add", "-A"); git(wt, "commit", "-q", "-m", "ck")
+    how, note = E.discover_checkpoint(str(pr), "ck.md")
+    check("V-EVO-CHECKPOINT-FF", how == "FF" and (pr / "ck.md").exists() and git(pr, "rev-parse", "HEAD") == git(wt, "rev-parse", "HEAD"))
+    check("V-EVO-CHECKPOINT-OK-IN-PRODUCT", E.discover_checkpoint(str(pr), "ck.md")[0] == "OK")
+    pr2 = mkrepo("evo_prod2")
+    wt2 = tmp / "evo_wt2"
+    git(pr2, "worktree", "add", "-q", "-b", "gen", str(wt2))
+    (wt2 / "ck.md").write_text("checkpoint\n"); git(wt2, "add", "-A"); git(wt2, "commit", "-q", "-m", "ck")
+    (pr2 / "b.txt").write_text("b\n"); git(pr2, "add", "-A"); git(pr2, "commit", "-q", "-m", "diverge")
+    head2 = git(pr2, "rev-parse", "HEAD")
+    how, note = E.discover_checkpoint(str(pr2), "ck.md")
+    check("V-EVO-CHECKPOINT-NON-FF-PARKS", how == "PARK" and git(pr2, "rev-parse", "HEAD") == head2 and not (pr2 / "ck.md").exists())
+    pr3 = mkrepo("evo_prod3")
+    wt3 = tmp / "evo_wt3"
+    git(pr3, "worktree", "add", "-q", "-b", "gen", str(wt3))
+    (wt3 / "ck.md").write_text("checkpoint\n"); git(wt3, "add", "-A"); git(wt3, "commit", "-q", "-m", "ck")
+    (pr3 / "a.txt").write_text("dirty\n")
+    head3 = git(pr3, "rev-parse", "HEAD")
+    how, note = E.discover_checkpoint(str(pr3), "ck.md")
+    check("V-EVO-CHECKPOINT-DIRTY-PARKS", how == "PARK" and git(pr3, "rev-parse", "HEAD") == head3)
+    check("V-EVO-CHECKPOINT-ABSENT-PARKS", E.discover_checkpoint(str(pr3), "none.md")[0] == "PARK")
+    check("V-EVO-CHECKPOINT-OUTSIDE-PRODUCT-UNTOUCHED", E.discover_checkpoint(str(pr3), str(tmp / "elsewhere.md"))[0] == "OK")
     return [n for n, ok in results if not ok]
 
 
@@ -452,6 +603,51 @@ class _SameDir:
     @staticmethod
     def mkdtemp(prefix=""):
         return os.environ["AP_HOME"]
+
+
+def _evo_copy(m, **attrs):
+    """A private copy of evolve.py for one mutant (the shared module must never carry a mutation into the next run)."""
+    spec = importlib.util.spec_from_file_location("evolve_mut", HERE / "evolve.py")
+    e = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(e)
+    for k, v in attrs.items():
+        setattr(e, k, v(e) if callable(v) and k.startswith("_wrap_") is False and getattr(v, "_wrap", False) else v)
+    m.evolve = e
+    return e
+
+
+def _evo_mut(**attrs):
+    def f(m):
+        e = _evo_copy(m)
+        for k, v in attrs.items():
+            setattr(e, k, v(e) if getattr(v, "_wrap", False) else v)
+    return f
+
+
+def _wrap(fn):
+    fn._wrap = True
+    return fn
+
+
+def _git_unsafe(e):
+    real = e._git
+
+    def g(cwd, *args):
+        if args[:1] == ("merge-base",) or args[:1] == ("status",):
+            return 0, ""
+        return real(cwd, *[a for a in args if a != "--ff-only"])
+    return g
+
+
+def _evo_copy_select(e, levers, lane, ls, product, graph, family_not=None, kind=None):
+    return _SEL_ORIG(e)(levers, lane, ls, product, graph, None, kind)
+
+
+def _SEL_ORIG(e):
+    spec = importlib.util.spec_from_file_location("evolve_sel", HERE / "evolve.py")
+    x = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(x)
+    return x.select
 
 
 def _ignore_extra(m):
@@ -497,7 +693,16 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "cert_count_trusted": lambda m: setattr(m, "verify_cert", lambda v, p, b=None: (
              True if (v.get("new_canonical_certs") or 0) > 0 else None)),
          "capability_trusted": lambda m: setattr(m, "verify_capability", lambda v, p, b=None: (
-             True if v.get("validated_capability") is True else None))}
+             True if v.get("validated_capability") is True else None)),
+         "evo_instrument_fail_as_none": _evo_mut(classify=lambda cls, instr: cls),
+         "evo_same_family_allowed": _evo_mut(select=_wrap(lambda e: (lambda *a, **k: _evo_copy_select(e, *a, **k)))),
+         "evo_no_packet_check": _evo_mut(packet_problems=lambda *a, **k: []),
+         "evo_research_never_stops": _evo_mut(RESEARCH_FAIL_STOP=99),
+         "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
+         "evo_pivot_rule_bypassed": _evo_mut(_pivot=lambda *a, **k: {"action": "pivot", "streak": 1, "why": "bypass"}),
+         "evo_budget_resume_always": _evo_mut(budget_resume=lambda ls, why: ls.get("status") == "PARKED"),
+         "evo_budget_never_resumes": _evo_mut(budget_resume=lambda ls, why: False),
+         "evo_unsafe_merge": _evo_mut(_git=_wrap(_git_unsafe))}
 survivors = []
 for name, mut in drill.items():
     m = load()

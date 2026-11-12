@@ -41,4 +41,10 @@ End your reply with exactly one JSON object and nothing after it (omit a pointer
  "capability": {"gate": "tools/test_x.py", "commit": "<sha>", "mutant_rc": <int>, "heldout_before": <num>,
                 "heldout_after": <num>},
  "information": {"hypothesis_file": "<path>", "freeze_commit": "<sha>", "result_file": "<path>", "result_commit": "<sha>",
-                 "verdict": "SUPPORTED|REFUTED|UNDETERMINED", "positive_control": true|false}}
+                 "verdict": "SUPPORTED|REFUTED|UNDETERMINED", "positive_control": true|false},
+ "instrument_failures": [{"instrument": "<short name of the instrument/control>", "file": "<repo-relative data file
+                          (json/jsonl) written by this generation that records INSTRUMENT_FAIL>", "commit": "<sha>"}]}
+
+INSTRUMENT_FAILURES (EVO): list every pre-registered instrument whose positive control FAILED in this generation, so its
+hypothesis was not tested. Such a failure is not a negative result. Cite the data file that records the failure (a negative.jsonl
+or result json whose text says INSTRUMENT_FAIL) and the commit of this generation that wrote it; omit what you cannot find.

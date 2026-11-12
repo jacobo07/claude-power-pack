@@ -24,9 +24,13 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 import time
 import unicodedata
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import evolve  # noqa: E402  (EVO, Owner "y" 2026-11-12)
 
 HOME = Path(os.environ.get("AP_HOME", "/home/kobii/agora/ascension-autopilot"))
 OUT = HOME  # where state/ledger/log/digest/owner_queue are written; a scratch dir in dry-tick
@@ -531,11 +535,12 @@ def judge(lane: dict, checkpoint: str, product: str) -> dict:
     return v
 
 
-def plan(lane: dict, name: str, checkpoint: str, product: str, verdict: dict) -> dict:
+def plan(lane: dict, name: str, checkpoint: str, product: str, verdict: dict, evo_directive: str = "") -> dict:
     prompt = ((HOME / "planner_prompt.md").read_text().replace("{NAME}", name).replace("{LANE}", lane["name"])
               .replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product)
               .replace("{VERDICT}", json.dumps({k: v for k, v in verdict.items() if not k.startswith("_")})[:3000])
-              .replace("{DIGEST}", str(OUT / "digest.md")).replace("{BRIEF}", str(HOME / "brief.md")))
+              .replace("{DIGEST}", str(OUT / "digest.md")).replace("{BRIEF}", str(HOME / "brief.md"))
+              .replace("{EVOLUTION}", evo_directive or "EVO: no method transition this generation."))
     r = run_claude(prompt, cwd=product, tools=["Read", "Grep", "Glob", "Bash(git log:*)", "Bash(ls:*)"],
                    add_dirs=[lane["cwd"], "/home/kobii/missions/gen3-pp", "/home/kobii/missions/recon-general", str(HOME)],
                    max_turns=50, timeout=3600)
@@ -604,8 +609,9 @@ def command_text(lane: dict, name: str, packet: Path, notes: str) -> str:
             "profile, by function identity) and validated capabilities.")
 
 
-def _park(st: dict, ls: dict, lane: str, queue: str, dig: str | None = None) -> None:
+def _park(st: dict, ls: dict, lane: str, queue: str, dig: str | None = None, kind: str | None = None) -> None:
     ls["status"] = "PARKED"
+    ls["park_kind"] = kind
     owner_queue(lane, queue)
     if dig:
         digest(lane, dig)
@@ -615,6 +621,15 @@ def _park(st: dict, ls: dict, lane: str, queue: str, dig: str | None = None) -> 
 # ---------------------------------------------------------------- the per-lane transition
 def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     ls = st.setdefault("lanes", {}).setdefault(lane["name"], {"status": "WAITING", "blank": 0, "arm_fails": 0, "gen": None})
+    evo = evolve.enabled(HOME)
+    if evo and ls.get("status") == "PARKED" and ls.get("park_kind") == "budget":
+        # EVO continuity: a budget park is lifted by an Owner release, which the ledger shows; nothing else is assumed
+        if evolve.budget_resume(ls, budget_admits(ledger_rows(), _now(), GEN_CAP + 2 * CALL_RESERVE)):
+            ls.update(status="WAITING", park_kind=None, judged_for=None)
+            log(f"{lane['name']}: budget admits again (Owner release): lane resumed")
+            save_state(st)
+        else:
+            return
     if ls.get("status") in ("PARKED", "STOPPED"):
         return
     if ls.get("pending_arm"):
@@ -640,6 +655,12 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         checkpoint = hold.get("evidence") or ""
         if ls.get("judged_for") == f"{mid}:{hold.get('set_at')}":
             return
+        if evo and checkpoint:
+            how, note = evolve.discover_checkpoint(product, checkpoint, dry)
+            if how == "PARK":
+                return _park(st, ls, lane["name"], note, f"PARKED: {note}", kind="branch")
+            if how == "FF":
+                log(f"{lane['name']}: {note}")
         ls["judged_for"] = f"{mid}:{hold.get('set_at')}"
     else:
         pat, product = lane["bootstrap_checkpoint"], lane.get("bootstrap_product", lane["product"])
@@ -655,7 +676,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if why:
         ls["judged_for"] = None
         if why.startswith(PARK_REASONS):  # only the day cap is a wait; frozen/total/wall need the Owner
-            return _park(st, ls, lane["name"], f"budget gate: {why}", f"PARKED at a budget gate: {why}")
+            return _park(st, ls, lane["name"], f"budget gate: {why}", f"PARKED at a budget gate: {why}", kind="budget")
         save_state(st)
         log(f"{lane['name']}: budget wait: {why}")
         return
@@ -677,19 +698,45 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         return _park(st, ls, lane["name"], f"judge {v.get('verdict')} on {checkpoint}: {str(v.get('notes', ''))[:300]}")
     snap = {k: ls.get(k, 0) for k in ("blank", "info_streak", "no_conversion")}  # restored if this judgment is redone
     cls, cnotes = classify_progress(v, product, ls.get("base"))
+    evo_dir = ""
+    if evo:
+        helpers = types.SimpleNamespace(in_window=in_window, _changed=_changed, DATA=DATA, _git=_git, _sha=_sha)
+        instruments = evolve.verify_instrument_failures(v, product, ls.get("base"), helpers)
+        cls = evolve.classify(cls, instruments)
+        graph, levers = evolve.load_graph(HOME), evolve.load_levers(HOME)
+        d = evolve.after_judgment(ls, cls, instruments, levers, lane["name"], product, graph,
+                                  (BLANK_STOP, INFO_PARK, NO_CONVERSION_PARK))
+        if not dry:
+            evolve.save_graph(HOME, graph)
+        ls["last_progress"] = cls
+        ledger_add(lane=lane["name"], kind="evo_decision", tokens=0, cls=cls, instruments=instruments,
+                   action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"))
+        digest(lane["name"], f"PROGRESS {cls} (verified by the autopilot). {cnotes[:400]} EVO: {d['action']}: {d['why'][:300]}")
+        if d["action"] == "stop":
+            ls["status"] = "STOPPED"
+            owner_queue(lane["name"], d["why"] + "; lane stopped")
+            save_state(st)
+            return
+        if d["action"] == "park":
+            ls["judged_for"] = None
+            return _park(st, ls, lane["name"], f"EVO: {d['why']}; Owner look before the next one", kind="evo")
+        if d.get("lever"):
+            ls["next_lever"] = d["lever"]["id"]
+        evo_dir = d.get("directive", "")
     conv = cls in ("CERT", "CAPABILITY")
-    ls["blank"] = ls.get("blank", 0) + 1 if cls == "NONE" else 0
-    ls["info_streak"] = ls.get("info_streak", 0) + 1 if cls == "INFORMATION" else 0
-    ls["no_conversion"] = 0 if conv else ls.get("no_conversion", 0) + 1
-    ls["last_progress"] = cls
-    digest(lane["name"], f"PROGRESS {cls} (verified by the autopilot). {cnotes[:500]}")
-    if ls["blank"] >= BLANK_STOP:
+    if not evo:
+        ls["blank"] = ls.get("blank", 0) + 1 if cls == "NONE" else 0
+        ls["info_streak"] = ls.get("info_streak", 0) + 1 if cls == "INFORMATION" else 0
+        ls["no_conversion"] = 0 if conv else ls.get("no_conversion", 0) + 1
+        ls["last_progress"] = cls
+        digest(lane["name"], f"PROGRESS {cls} (verified by the autopilot). {cnotes[:500]}")
+    if not evo and ls["blank"] >= BLANK_STOP:
         ls["status"] = "STOPPED"
         owner_queue(lane["name"], f"{BLANK_STOP} consecutive generations with no verified progress of any class; lane stopped")
         digest(lane["name"], "STOPPED: no-progress rule")
         save_state(st)
         return
-    if ls["info_streak"] >= INFO_PARK or ls["no_conversion"] >= NO_CONVERSION_PARK:
+    if not evo and (ls["info_streak"] >= INFO_PARK or ls["no_conversion"] >= NO_CONVERSION_PARK):
         why = (f"{INFO_PARK} consecutive INFORMATION generations without a certificate or capability: research without "
                "conversion" if ls["info_streak"] >= INFO_PARK else
                f"{NO_CONVERSION_PARK} consecutive generations without a certificate or capability")
@@ -699,9 +746,21 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     st["next_gen"] = int(st.get("next_gen") or 28)
     name = f"S{st['next_gen']}{lane['letter']}"
     p = ({"title": "dry", "facts": ["dry"], "phases": ["Phase 1: x (cap 1M)", "Phase 2: y (cap 1M)"], "_tokens": 0}
-         if dry else plan(lane, name, checkpoint, product, v))
+         if dry else plan(lane, name, checkpoint, product, v, evo_dir))
     tok, measured = call_tokens(p.get("_tokens"))
     ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
+    if p.get("stop") and evo and ls.get("mode") not in ("RESEARCH", "REPAIR"):
+        cur = evolve.lever_by_id(evolve.load_levers(HOME), lane["name"], ls.get("lever"))
+        d = evolve.plateau(ls, evolve.load_levers(HOME), lane["name"], product, evolve.load_graph(HOME),
+                           (cur or {}).get("family") or "UNREGISTERED", False)
+        ledger_add(lane=lane["name"], kind="evo_decision", tokens=0, cls="PLANNER_STOP", instruments=[],
+                   action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"))
+        digest(lane["name"], f"EVO after planner stop: {d['action']}: {d['why'][:300]}")
+        if d["action"] == "research" and not dry:
+            ls["next_lever"] = d["lever"]["id"]
+            p = plan(lane, name, checkpoint, product, v, d["directive"])
+            tok, measured = call_tokens(p.get("_tokens"))
+            ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
     if p.get("stop"):
         ls["status"] = "STOPPED"
         owner_queue(lane["name"], f"planner found no admissible next lever: {str(p.get('stop'))[:300]}")
@@ -719,13 +778,18 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         return _park(st, ls, lane["name"], f"policy refused {name}: {'; '.join(bad)[:400]}",
                      f"POLICY REFUSED {name}: {'; '.join(bad)[:400]}")
     caps = int(sum(float(CAP_RE.findall(l)[0]) for l in phases) * 1_000_000)
+    if evo:
+        ebad = evolve.packet_problems(ls.get("mode") or "EXPLOIT", ls.get("next_lever"), phases, caps, ls)
+        if ebad:
+            return _park(st, ls, lane["name"], f"EVO policy refused {name}: {'; '.join(ebad)[:400]}",
+                         f"EVO POLICY REFUSED {name}: {'; '.join(ebad)[:400]}", kind="evo")
     why = budget_admits(ledger_rows(), _now(), caps)
     if why:
         ls["judged_for"] = None
         ls.update(snap)  # this checkpoint will be judged again: its class must not be counted twice
         if why.startswith(PARK_REASONS):
             return _park(st, ls, lane["name"], f"budget gate before arming {name}: {why}",
-                         f"PARKED at a budget gate before arming {name}: {why}")
+                         f"PARKED at a budget gate before arming {name}: {why}", kind="budget")
         save_state(st)
         log(f"{lane['name']}: budget wait before arming {name}: {why}")
         return
@@ -733,6 +797,12 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if res == "OK":
         st["next_gen"] += 1
         ls.update(status="RUNNING", gen=name, arm_fails=0)
+        if evo:
+            ls["lever"] = ls.pop("next_lever", None) or ls.get("lever")
+            if ls.get("mode") == "RESEARCH":
+                ls["research_spent"] = int(ls.get("research_spent") or 0) + caps
+            ledger_add(lane=lane["name"], kind="evo_arm", tokens=0, gen=name, mode=ls.get("mode") or "EXPLOIT",
+                       lever=ls.get("lever"))
     elif res == "RETRY":
         ls["arm_fails"] = ls.get("arm_fails", 0) + 1
         ls["judged_for"] = None

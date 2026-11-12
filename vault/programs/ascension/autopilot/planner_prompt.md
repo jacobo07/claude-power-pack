@@ -41,6 +41,11 @@ blockers, the ranked structural opportunities, their discriminating experiments 
   with planted mutants>". The last phase re-runs all gates, writes the checkpoint file stating new canonical certificates
   per profile by function identity and validated capabilities, then gsd_mission.py checkpoint CHECKPOINT_COMPLETE.
 
+Method evolution (EVO, decided by the autopilot's deterministic policy before you were called; it binds):
+{EVOLUTION}
+In RESEARCH or REPAIR mode a deterministic filter refuses your packet unless the phases name the selected lever id and
+carry the words it asks for. Instrument failures are repaired, never reported as refutations.
+
 If no admissible lever has positive expected value (everything remaining needs an Owner act or is retired without a reopen
 condition), say so instead of inventing work.
 
