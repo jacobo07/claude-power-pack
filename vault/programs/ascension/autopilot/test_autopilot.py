@@ -163,15 +163,16 @@ def run_all(ap):
     check("V-AP-BUDGET-DAY-REFUSES", ap.budget_admits(day, now, 25_000_000) is not None)
     check("V-AP-BUDGET-DAY-ADMITS", ap.budget_admits(day, now, 20_000_000) is None)
     check("V-AP-BUDGET-NEXT-DAY-ADMITS", ap.budget_admits(day, now + 86400, 25_000_000) is None)
-    many = [{"ts": now - 86400 * k, "tokens": 79_000_000} for k in range(1, 6)]  # 395M on earlier days
+    many = [{"ts": now - 86400 * k, "tokens": (ap.TOTAL_CAP - 220_000_000) // 5} for k in range(1, 6)]  # + 200M prior = cap - 20M
     check("V-AP-BUDGET-TOTAL-REFUSES", ap.budget_admits(many, now, 25_000_000) is not None)
     # Owner 2026-11-11: S27's 200M counts inside the totals (not the day cap). With the reorientation ceiling
     # (UNLOCKED_CAP 285,261,779): 60M of earlier grants + 200M prior + 25M fits; 61M + 200M + 25M is FROZEN.
     early = lambda t: [{"ts": now - 86400, "tokens": t}]  # noqa: E731
     # Owner 2026-11-12 released +120M: unlocked = total = 405,261,779. 180M + 200M prior + 25M fits; 181M does not.
-    check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(early(180_000_000), now, 25_000_000) is None
-          and ap.budget_admits(early(181_000_000), now, 25_000_000) is not None)
-    check("V-AP-BUDGET-OWNER-120M-RELEASED", ap.UNLOCKED_CAP == 405_261_779 and ap.TOTAL_CAP == 405_261_779)
+    _fit = ap.UNLOCKED_CAP - 200_000_000 - 25_000_000  # the 200M prior counts: exactly this much earlier spend still fits
+    check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(early(_fit), now, 25_000_000) is None
+          and ap.budget_admits(early(_fit + 1), now, 25_000_000) is not None)
+    check("V-AP-BUDGET-OWNER-900M", ap.UNLOCKED_CAP == 900_000_000 and ap.TOTAL_CAP == 900_000_000)  # Owner 2026-11-12
     _keep_u = ap.UNLOCKED_CAP; ap.UNLOCKED_CAP = 285_261_779  # the FROZEN mechanism itself still works
     check("V-AP-BUDGET-FROZEN-MECHANISM", str(ap.budget_admits(early(61_000_000), now, 25_000_000)).startswith("FROZEN"))
     check("V-AP-BUDGET-PRIOR-NOT-IN-DAY", ap.spend_totals([], now) == (200_000_000, 0))
