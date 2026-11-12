@@ -35,6 +35,12 @@
   - EVO decided `continue: exploit`.
 - **S36K armed 18:29:46Z as m-b79945360e06, authority 21.5M:** a 5-phase sweep, QF/TL/FW/CNM over about 21,020 uncertified functions. It was LAUNCHING at 18:33Z (epoch 1).
 - **The headline is still 9,308.** The S35K 31 and S34KC 16 are separate counters until someone pins them as headline components.
+- **~19:45Z, Owner "y to all":**
+  - **(a) Pin gates, t1 `bfae3fc9`:** new `tools/pin_additive.py`. Only `ksr_lane.py` and `receipt_registry.json` may move, and only additively (checked against the pinned bytes found in git history by sha256). It is wired into `test_s28k_freeze`, `test_s30k_scan` and `test_s36k_sweep`, which are all green again. An independent review came back WARNING (2 HIGH, 3 MEDIUM, 4 LOW); every finding is fixed and has a mutant (25 in total). A worktree control proves the gates still go red.
+  - **(b) Headline, t1 `92a16fcf`:** 9,355 / 30,388 (30.79%), adding S35K 31 and S34KC 16.
+  - **(c) Sweep remainder:** S36K's own pivots already did it. S36KX (QF remainder) gave 0 of 2,669, REFUTED. S36KXC (CNM remainder) gave 31 of 8,875, certified under `-s36xc`.
+  - **Next:** the S36K judge runs at 00:00Z. If AGREE, pin S36K's 292 and S36KXC's 31 into the headline, for about 9,678.
+  - **DEBT:** profile `-s36xc` reuses the `-s36x` partial path in `ksr_lane.py`.
 - **Daily cap:** `DAY_CAP` is now 90M, both live and on the laptop (`460f3214`).
 - **Pre-existing reds:** `V-AP-PACKET-FACTS-ARE-NOT-PHASES` and `V-AP-ARM-SEQUENCE` are red at 80M too (2 of 2 runs). The arm path may be affected by the mission-tool change in 24f0489b; not investigated yet.
 
