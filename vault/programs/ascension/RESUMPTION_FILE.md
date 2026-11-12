@@ -5,7 +5,13 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-12 ~09:35 UTC (session ddf4990e): EVO approved (Owner "y" to vault/programs/ascension/EVO-PLAN.md) — E0-E2 deployed LIVE, E6 gate built; E3 blocked on a policy refusal.**
+**CURRENT — 2026-11-12 ~09:45 UTC (session c84eb8e1, /kresume of ddf4990e, RESUME_CERTIFIED): lever reworded + KSR lane reset.**
+- levers.json: oracle_coverage_a2 `what` now says "certify through the UNCHANGED certify.decide of profile ksr-v5r-s25stage ... If that profile cannot read the extended oracle unchanged, stop and report INSTRUMENT_FAIL: a profile change is an Owner act." The same conditional sentence was also removed from compiler_swap_selected. policy_check over all 9 lever texts: 0 profile violations; control (the old sentence alone) gives 7.
+- GEX44 live levers.json was content-identical to laptop HEAD (canonical JSON sha 1064b650) before the copy. Deployed under cron.lock, backup `levers.json.bak-c84eb8e1-20261112T094057Z`, live sha 1a9efeba = laptop.
+- KSR lane reset under cron.lock (backup `state.json.bak-c84eb8e1-ksrreset-20261112T094212Z`) to its pre-S32K-judgment state: WAITING, judged_for None, mode EXPLOIT, lever fwidth_heldout_cert, info_streak 1, no_conversion 2, blank 0. Removed what that judgment appended: next_lever, lever_history, pivot_history, pivot_streak, research_fail, repair. next_gen 34, so the KSR generation will be **S34K** (S33T took 33).
+- TENNIS: EVO decision read = REPAIR tennis_control_pool_widened (INSTRUMENT_FAIL, H-T1a n=2<22); S33T armed 09:33:45Z as m-ec16ddac3b13 (5M). Obligation 3 is satisfied.
+
+**PREVIOUS — 2026-11-12 ~09:35 UTC (session ddf4990e): EVO approved (Owner "y" to vault/programs/ascension/EVO-PLAN.md) — E0-E2 deployed LIVE, E6 gate built; E3 blocked on a policy refusal.**
 - Code (laptop 8a0a0aa2): autopilot/evolve.py with INSTRUMENT_FAIL class, plateau -> research via the reused gsd_mission.pivot_decision, MethodGraph lever ranking, levers.json, budget-park resume and ff-only checkpoint discovery; kill switch EVO_OFF.
   - Gate 144/144 with 35/35 mutants, on staging and live (`AP_PP=<pp> python3 test_autopilot.py`).
   - Deployed 09:21Z under cron.lock; backup `bak-ddf4990e-evo-20261112T092148Z`; E0 snapshot `evo-e0-20261112T0905Z`.
