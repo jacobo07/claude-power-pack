@@ -332,3 +332,8 @@ Public sources inspected:
 - [Kitbitz](https://kitbitz.art/), [3dicons](https://3dicons.co/) and [CC0 initial release statement](https://3dicons.co/about)
 
 All external facts are **time-bounded**; marketing figures, access, code license and website labels may change. Reconfirm in the implementing session. A link in this document is a research reference and never authorization for automatic fetching, installation, mirroring or redistribution.
+
+
+## New Astryx-specific intake (2026-11-12)
+
+The owner requested **complete Astryx design-system and agent-tooling ingestion** from https://github.com/meta/astryx and https://astryx.atmeta.com/components/. Its [dedicated 2026-11-12 backlog](2026-11-12_meta-astryx-complete-cdio-absorption.md) is the canonical Astryx-specific work plan: 16 source domains, 11 public component families, all source-derived exports/templates/themes/agent APIs, 68 implementation and knowledge tasks, 40 proposed adversarial tests, stable-vs-canary/rights boundaries, CDIO/CDICF ownership, and a frozen source snapshot. **Do not duplicate its tasks** in this 21-source intake. This legacy backlog retains general cross-source coverage and common selection principles. No Astryx components are marked as implemented from filing the backlog alone.
