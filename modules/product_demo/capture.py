@@ -323,8 +323,12 @@ class Capture:
                   "outcome": "ok", "refusal": None}
         allowed = self.spec.allow_http_errors
         with sync_playwright() as pw:
+            # SwiftShader: WebGL products (3D viewers, maps, charts on canvas) otherwise film as an
+            # empty canvas on GPU-less capture hosts while the UI around them reports "ready".
+            # Software GL is also deterministic across machines. Measured 2026-11-12 (Landcaster).
             browser = pw.chromium.launch(args=["--force-color-profile=srgb", "--hide-scrollbars",
-                                               "--disable-lcd-text"])
+                                               "--disable-lcd-text", "--use-angle=swiftshader",
+                                               "--enable-unsafe-swiftshader"])
             try:
                 ctx = browser.new_context(
                     viewport={"width": self.vp.width, "height": self.vp.height},
