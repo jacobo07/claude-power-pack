@@ -7,6 +7,10 @@
 
 **CURRENT — 2026-11-12 07:12 UTC (session ddf4990e): Owner "go ahead, y subeles el tope de coste a todos" (uuid cfd7947e, 07:07:08.169Z).**
 - Cost-held autopilot generations raised: S32K KSR m-a402d24328de 7.5M -> 12.5M (spent_at_set 7,293,306) and S31T Tennis m-774ba9b21e19 5M -> 12.5M (spent_at_set 5,359,440). Owner holds released at 07:10Z; the worker relaunch is left to the sweep and NOT yet observed. Both were done under the autopilot cron.lock. Each is booked in the autopilot ledger.jsonl as kind owner_topup (+5M / +7.5M), and state.json lane authority is updated, so close-time overrun is not double counted (backup state.json.bak-ddf4990e-*). Autopilot status after: total 275,250,928 / UNLOCKED 285,261,779 / 400M; today 22.4M / 80M.
+- After release, both missions went BLOCKED again on their worker's last ask. Decisions sent at 07:15Z:
+  - S32K OWNER-TOPUP-12M5: finish Phase 4 as planned. Its first wake was run inside a `bash -s` script, so the relaunch may have read the rest of that script on stdin; check the S32K worker's first turn. Use `</dev/null` next time.
+  - S31T S31T-CTL-POOL-A: option (a). INSTRUMENT_FAIL, because the frozen control rule yields n=2 < 22; no pool widening after the freeze; skip P3-P4, then P5 checkpoint; the widened rule is only a proposal for the next generation.
+  - States after: S32K RUNNING, epoch 2; S31T LAUNCHING, epoch 1.
 - **The next autopilot arm asks for GEN_CAP 25M and will park FROZEN (275.25M + 25M > 285.26M). Releasing a frozen tranche is an Owner act.**
 - S30T m-2e14179c5b6a is not cost-held (CHECKPOINT_COMPLETE, 17.65M / 20M, REFUTED), so it was not raised.
 - The 39 new certificates are found and independently re-checked: S26D nocompile 23 + cnm 1 (evidence/ascension/s26d/*/receipts.jsonl) and S28K 15 (evidence/ascension/s28k/receipts.jsonl), all ksr-v5r-s25stage, separate files, in no headline.
