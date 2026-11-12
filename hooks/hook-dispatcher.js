@@ -130,17 +130,35 @@ const EVENT_MAP = {
 // authored inconsistently in settings.json; canonicalised here).
 const NODE_EXE = process.execPath; // the very node.exe running this — Win path, no bash
 // Portable Python fallback (gap 2 fix, audit 2026-05-19): the prior
-// `C:/Users/User/AppData/Local/...` literal broke every host whose
+// `C:/Users/Jacobo/AppData/Local/...` literal broke every host whose
 // Windows username is not "User" and every POSIX host. Honest contract:
 // derive from os.homedir() if a Windows-style Python install is present;
 // otherwise fall back to the PATH-resolved `python3`/`python` so the
 // hook fails at registration (settings_merger checks isfile) rather
 // than silently at runtime. Explicit CLAUDE_PY_EXE always wins.
+// 2026-11-12: the old resolver pinned Python312 and otherwise returned a BARE name, which the
+// existsSync() check in the runner treats as a relative path -> "interpreter missing" for every
+// Python step on any host without 3.12 (measured: context-watchdog never ran, so the automatic
+// /kclear rollover at the context wall never fired). One authority now: lib/python_exe.js. The
+// inline copy runs only if lib/ was not deployed beside this file, so a partial deploy cannot
+// take the whole dispatcher down.
 const PY_EXE = process.env.CLAUDE_PY_EXE || (function () {
-  const winFallback = path.join(os.homedir(), 'AppData', 'Local',
-    'Programs', 'Python', 'Python312', 'python.exe');
-  try { fs.accessSync(winFallback, fs.constants.X_OK); return winFallback; }
-  catch (_) { /* not present — defer to PATH-resolved interpreter */ }
+  try { return require('./lib/python_exe').pythonExe(); }
+  catch (e) { process.stderr.write('[hook-dispatcher] lib/python_exe.js unavailable, inline resolver: ' + e.message + '\n'); }
+  if (process.platform === 'win32') {
+    const base = path.join(os.homedir(), 'AppData', 'Local', 'Programs', 'Python');
+    let names = [];
+    try { names = fs.readdirSync(base); } catch (_) { names = []; }
+    const hit = names.filter(n => /^Python3\d+$/.test(n))
+      .sort((a, b) => Number(b.slice(7)) - Number(a.slice(7)))
+      .map(n => path.join(base, n, 'python.exe')).find(p => fs.existsSync(p));
+    if (hit) return hit;
+  }
+  for (const dir of String(process.env.PATH || process.env.Path || '').split(path.delimiter)) {
+    if (!dir || /[\\/]WindowsApps[\\/]?$/i.test(dir)) continue;
+    const p = path.join(dir, process.platform === 'win32' ? 'python.exe' : 'python3');
+    if (fs.existsSync(p)) return p;
+  }
   return process.platform === 'win32' ? 'python.exe' : 'python3';
 })();
 
