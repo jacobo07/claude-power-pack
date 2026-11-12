@@ -159,7 +159,7 @@ def run_all(ap):
     check("V-AP-PACKET-DRIFT-DETECTED", ap.packet_phase_drift(text + "W9 smuggled extra phase line\n", GOOD) is not None)
     # ---- budget
     now = 1794400000.0  # 2026-11-11
-    day = [{"ts": now, "tokens": 60_000_000}]
+    day = [{"ts": now, "tokens": ap.DAY_CAP - 20_000_000}]  # 20M of headroom, whatever the cap
     check("V-AP-BUDGET-DAY-REFUSES", ap.budget_admits(day, now, 25_000_000) is not None)
     check("V-AP-BUDGET-DAY-ADMITS", ap.budget_admits(day, now, 20_000_000) is None)
     check("V-AP-BUDGET-NEXT-DAY-ADMITS", ap.budget_admits(day, now + 86400, 25_000_000) is None)

@@ -41,7 +41,7 @@ OWNER_TURN = "d957c937-f56d-4447-9386-5d8002fe0b90:" + os.environ.get("AP_OWNER_
 # Owner 2026-11-12 (laptop pane ddf4990e, uuid of "1. 120M"): release a 120M tranche. 285,261,779 + 120M =
 # 405,261,779 unlocked; the total moves 400M -> 405,261,779 so the full 120M is usable (nothing left frozen).
 TOTAL_CAP = 405_261_779
-DAY_CAP = 80_000_000
+DAY_CAP = 90_000_000  # Owner 2026-11-12 (pane c26eafbf): raised from 80M so S35K is judged today
 GEN_CAP = 25_000_000
 FRESH_GEN_CAP = 1_000_000
 CALL_RESERVE = 2_000_000  # booked for a judge/planner call whose usage could not be measured (never 0)
