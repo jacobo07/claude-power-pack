@@ -21,6 +21,13 @@
   - Population: every uncertified main function.
   - Routes: only those that have already certified something (q_fallback, fwidth, typelift, nocompile/cnm), each with its existing tool and certify.decide unchanged.
   - Deliverable: the funnel per route, plus the ids that no route reaches.
+- **RESULT 18:27:41Z: S35K judge AGREE, PROGRESS CERT.**
+  - 31 new certificates under ksr-v5r-s25stage.
+  - The judge verified the 8437d040 amendment and the registry sha 36074457.
+  - The protected file 02c80ae3 / 8,687 is unchanged.
+  - EVO decided `continue: exploit`.
+- **S36K armed 18:29:46Z as m-b79945360e06, authority 21.5M:** a 5-phase sweep, QF/TL/FW/CNM over about 21,020 uncertified functions. It was LAUNCHING at 18:33Z (epoch 1).
+- **The headline is still 9,308.** The S35K 31 and S34KC 16 are separate counters until someone pins them as headline components.
 - **Daily cap:** `DAY_CAP` is now 90M, both live and on the laptop (`460f3214`).
 - **Pre-existing reds:** `V-AP-PACKET-FACTS-ARE-NOT-PHASES` and `V-AP-ARM-SEQUENCE` are red at 80M too (2 of 2 runs). The arm path may be affected by the mission-tool change in 24f0489b; not investigated yet.
 
