@@ -37,7 +37,10 @@ runs the scheduled task — the script then exits 0 with a single
 Modes:
   --dry-run   list what would be archived + the target path + the
               would-rotate list. Mutate nothing.
-  (default)   write the zip, rotate older snapshots beyond N=14.
+  (default)   write the zip, rotate older snapshots beyond N=3. Before a
+              rotated zip is deleted, every .jsonl it alone held is carried
+              into an append-only sessions-orphans-archive-*.zip segment
+              (never rotated); a failed carry keeps the zip.
 
 Exit codes:
   0 = success, OR opt-out, OR dry-run
@@ -73,9 +76,15 @@ BACKUP_ROOT = HOME / ".claude" / "backups"
 LOCK_PATH = BACKUP_ROOT / ".session-snapshot.lock"
 LOCK_STALE_SECONDS = 30 * 60  # any lock older than 30 min is presumed crashed
 DISK_FREE_HEADROOM = 1.5  # need at least 1.5x source size free
-RETENTION = 14  # rolling days
+# 14 -> 3 on 2026-11-12 (Owner): 14 full ~5 GB zips filled C: to 0.13 GB and the
+# 03:00 run then failed its own precheck (exit 6). Safe only because _carry_forward
+# below preserves every transcript a rotated zip held alone: Claude Code deletes
+# transcripts older than cleanupPeriodDays (default 30), and on 2026-11-12 the 9
+# oldest zips were the ONLY copy of 3938 .jsonl (2439 sessions, 8.6 GB raw).
+RETENTION = 3  # rolling snapshots
 COMPRESS_LEVEL = 1  # 1 = fast, 6 = default, 9 = slow (was 6 pre-2026-05-22)
 ZIP_PREFIX = "projects-snapshot-"
+ORPHAN_PREFIX = "sessions-orphans-archive"  # append-only segments, never rotated
 TODAY_STAMP = time.strftime("%Y-%m-%d")  # same-day collision key
 FULL_STAMP = time.strftime("%Y-%m-%d_%H%M%S")
 
@@ -235,7 +244,9 @@ def _sweep_orphan_tmps(dry_run: bool) -> list[Path]:
     holding the lock; a tmp whose pid is alive (or unknown) is kept.
     """
     victims = []
-    for tmp in BACKUP_ROOT.glob(f"{ZIP_PREFIX}*.zip.tmp.*"):
+    tmps = [*BACKUP_ROOT.glob(f"{ZIP_PREFIX}*.zip.tmp.*"),
+            *BACKUP_ROOT.glob(f"{ORPHAN_PREFIX}*.zip.tmp.*")]
+    for tmp in tmps:
         try:
             pid = int(tmp.name.rsplit(".", 1)[1])
         except ValueError:
@@ -307,14 +318,73 @@ def _existing_snapshots() -> list[Path]:
     )
 
 
+def _jsonl_members(zp: Path) -> dict[str, zipfile.ZipInfo]:
+    """.jsonl members of a zip keyed by their path under ~/.claude."""
+    with zipfile.ZipFile(zp) as zf:
+        return {i.filename.replace("\\", "/"): i for i in zf.infolist()
+                if i.filename.endswith(".jsonl")}
+
+
+def _carry_forward(victim: Path, survivors: list[Path]) -> int:
+    """Copy every .jsonl that exists ONLY in `victim` (not on disk under
+    SOURCE, not in a surviving snapshot, not already archived) into a new
+    append-only segment <ORPHAN_PREFIX>-<stamp>.zip, verified by CRC.
+
+    Returns the number carried (0 = nothing unique), or -1 on any failure,
+    in which case the caller MUST NOT delete the victim. Each segment is
+    written to a tmp name and os.replace()d, so a killed run never damages
+    an existing segment.
+    """
+    try:
+        known: set[str] = set()
+        for s in survivors:
+            known |= set(_jsonl_members(s))
+        for seg in BACKUP_ROOT.glob(f"{ORPHAN_PREFIX}*.zip"):
+            known |= set(_jsonl_members(seg))
+        unique = {n: i for n, i in _jsonl_members(victim).items()
+                  if n not in known
+                  and not (HOME / ".claude" / n).is_file()}
+        if not unique:
+            return 0
+        seg = BACKUP_ROOT / f"{ORPHAN_PREFIX}-{victim.stem[len(ZIP_PREFIX):]}.zip"
+        tmp = seg.with_suffix(f".zip.tmp.{os.getpid()}")
+        with zipfile.ZipFile(victim) as src, \
+                zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as out:
+            for n, info in unique.items():
+                with src.open(info) as fh:
+                    out.writestr(n, fh.read())
+        with zipfile.ZipFile(tmp) as chk:
+            got = {i.filename: (i.CRC, i.file_size) for i in chk.infolist()}
+        if any(got.get(n) != (i.CRC, i.file_size) for n, i in unique.items()):
+            tmp.unlink()
+            return -1
+        os.replace(tmp, seg)
+        return len(unique)
+    except (OSError, zipfile.BadZipFile, KeyError) as e:
+        print(f"session-snapshot: carry-forward failed for {victim.name}: {e}",
+              file=sys.stderr)
+        return -1
+
+
 def _rotate(existing: list[Path], dry_run: bool) -> list[Path]:
-    """Keep at most RETENTION zips. Return list of deletion victims."""
+    """Keep at most RETENTION zips. Return list of deletion victims.
+    A victim is deleted only after its unique transcripts are carried
+    forward; a failed carry keeps it (data over disk)."""
     if len(existing) <= RETENTION:
         return []
     victims = existing[: len(existing) - RETENTION]
     if dry_run:
         return victims
+    survivors = existing[len(existing) - RETENTION:]
     for v in victims:
+        carried = _carry_forward(v, survivors)
+        if carried < 0:
+            print(f"session-snapshot: KEEPING {v.name} (carry-forward failed)",
+                  file=sys.stderr)
+            continue
+        if carried:
+            print(f"session-snapshot: carried   {carried} transcript(s) "
+                  f"from {v.name} to {ORPHAN_PREFIX}-*.zip")
         try:
             v.unlink()
         except OSError as e:

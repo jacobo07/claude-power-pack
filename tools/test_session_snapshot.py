@@ -145,9 +145,72 @@ def gate_concurrent(root: Path) -> None:
         _fail("V-SNAPSHOT-LOCK-RACE", f"verdicts={verdicts}")
 
 
+def _mkzip(path: Path, members: dict[str, bytes]) -> Path:
+    import zipfile
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        for n, b in members.items():
+            z.writestr(n, b)
+    return path
+
+
+def gate_carry_forward(root: Path) -> None:
+    """Origin 2026-11-12: Claude Code deletes transcripts older than 30 days, so
+    the oldest snapshots were the ONLY copy of 2439 sessions. Rotation must carry
+    a victim's unique .jsonl forward before deleting it, and keep it on failure."""
+    import zipfile
+    # Arrange: fake HOME so the on-disk check never sees the real ~/.claude
+    mod = _load(root)
+    home = root / "home"
+    (home / ".claude" / "projects" / "p").mkdir(parents=True)
+    (home / ".claude" / "projects" / "p" / "ondisk.jsonl").write_bytes(b"d")
+    mod.HOME = home
+    only = b'{"only":"in the victim"}\n' * 50
+    victim = _mkzip(root / "projects-snapshot-2026-10-01_030000.zip", {
+        "projects/p/only.jsonl": only,           # unique -> must be carried
+        "projects/p/kept.jsonl": b"k",           # also in survivor -> skip
+        "projects/p/ondisk.jsonl": b"d",         # still on disk -> skip
+        "projects/p/tool-results/x.txt": b"t",   # not a transcript -> skip
+    })
+    survivor = _mkzip(root / "projects-snapshot-2026-10-02_030000.zip",
+                      {"projects/p/kept.jsonl": b"k"})
+    mod.RETENTION = 1
+    # Act
+    mod._rotate([victim, survivor], dry_run=False)
+    segs = sorted(root.glob("sessions-orphans-archive*.zip"))
+    got = {}
+    for s in segs:
+        with zipfile.ZipFile(s) as z:
+            got.update({n: z.read(n) for n in z.namelist()})
+    # Assert
+    if not victim.exists() and got == {"projects/p/only.jsonl": only}:
+        _ok("V-SNAPSHOT-CARRY-UNIQUE", "only the victim-unique transcript carried, byte-identical; victim deleted")
+    else:
+        _fail("V-SNAPSHOT-CARRY-UNIQUE", f"victim_exists={victim.exists()} carried={sorted(got)}")
+
+    # Idempotence: same transcript in a new victim is already archived -> no new segment
+    victim2 = _mkzip(root / "projects-snapshot-2026-10-03_030000.zip",
+                     {"projects/p/only.jsonl": only})
+    n_before = len(list(root.glob("sessions-orphans-archive*.zip")))
+    carried = mod._carry_forward(victim2, [survivor])
+    n_after = len(list(root.glob("sessions-orphans-archive*.zip")))
+    if carried == 0 and n_before == n_after:
+        _ok("V-SNAPSHOT-CARRY-IDEMPOTENT", "already-archived transcript not re-archived")
+    else:
+        _fail("V-SNAPSHOT-CARRY-IDEMPOTENT", f"carried={carried} segs {n_before}->{n_after}")
+
+    # Failure keeps the victim: an unreadable zip must not be deleted
+    bad = root / "projects-snapshot-2026-09-01_030000.zip"
+    bad.write_bytes(b"not a zip")
+    mod._rotate([bad, survivor], dry_run=False)
+    if bad.exists():
+        _ok("V-SNAPSHOT-CARRY-FAIL-KEEPS", "unreadable victim kept (data over disk)")
+    else:
+        _fail("V-SNAPSHOT-CARRY-FAIL-KEEPS", "unreadable victim was deleted")
+
+
 def main() -> int:
     print("session-snapshot gates")
-    for gate in (gate_sweep, gate_lock_states, gate_concurrent):
+    for gate in (gate_sweep, gate_lock_states, gate_concurrent, gate_carry_forward):
         with tempfile.TemporaryDirectory() as td:
             gate(Path(td))
     total = _passes + _fails
