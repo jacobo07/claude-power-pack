@@ -154,6 +154,12 @@ canonical context, deploy, push, headline merges.
   armed 23:02Z. Tennis S30T (B1-T) refused 22:38Z by a policy false positive ("no new profile" read as a trigger); fixed
   a04633d8 (TRIGGER_NEGATED), gate 119/119, mutants 25/25 on GEX44 (scratch copy and live dir). Owner "y": installed
   23:10Z, backup bak-20261111T231049Z, Tennis un-parked; S31T (B1-T, 5.0M) armed 23:19Z as m-774ba9b21e19.
+- 2026-11-12 (pane c26eafbf, under EVO): S35K (31 uncertified S26C fallback exacts, unchanged certify.decide) refused
+  10:10Z as "certifier/canonical/receipt change" for a mutant description ("M2 receipts written to a historical
+  receipts path"). Regex NOT relaxed (a mutant carve-out would hide real acts); GEX44 brief.md gained a mutant-wording
+  rule instead (backup bak-20261112T115347Z). KSR un-parked with the S34K counters restored first (info_streak 0,
+  no_conversion 0, last lever_history row and certify-path repair count removed), so the re-judge counted S34K once.
+  S35K armed 12:01:54Z as m-faec88e7a5a1 (8.0M).
 
 ## 8. Owner decisions
 1. Approve this plan (integration + the 60M ceiling as written)?
