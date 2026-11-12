@@ -168,11 +168,16 @@ def run_all(ap):
     # Owner 2026-11-11: S27's 200M counts inside the totals (not the day cap). With the reorientation ceiling
     # (UNLOCKED_CAP 285,261,779): 60M of earlier grants + 200M prior + 25M fits; 61M + 200M + 25M is FROZEN.
     early = lambda t: [{"ts": now - 86400, "tokens": t}]  # noqa: E731
-    check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(early(60_000_000), now, 25_000_000) is None
-          and str(ap.budget_admits(early(61_000_000), now, 25_000_000)).startswith("FROZEN"))
+    # Owner 2026-11-12 released +120M: unlocked = total = 405,261,779. 180M + 200M prior + 25M fits; 181M does not.
+    check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(early(180_000_000), now, 25_000_000) is None
+          and ap.budget_admits(early(181_000_000), now, 25_000_000) is not None)
+    check("V-AP-BUDGET-OWNER-120M-RELEASED", ap.UNLOCKED_CAP == 405_261_779 and ap.TOTAL_CAP == 405_261_779)
+    _keep_u = ap.UNLOCKED_CAP; ap.UNLOCKED_CAP = 285_261_779  # the FROZEN mechanism itself still works
+    check("V-AP-BUDGET-FROZEN-MECHANISM", str(ap.budget_admits(early(61_000_000), now, 25_000_000)).startswith("FROZEN"))
     check("V-AP-BUDGET-PRIOR-NOT-IN-DAY", ap.spend_totals([], now) == (200_000_000, 0))
     check("V-AP-BUDGET-FROZEN-IS-OWNERS", "only the Owner releases" in str(ap.budget_admits(early(61_000_000), now,
                                                                                          25_000_000)))
+    ap.UNLOCKED_CAP = _keep_u
     keep = ap.UNLOCKED_CAP
     ap.UNLOCKED_CAP = 10 ** 12  # the 400M total must still bind on its own
     check("V-AP-BUDGET-TOTAL-BINDS-ABOVE-UNLOCK", str(ap.budget_admits(many, now, 25_000_000)).startswith("total"))
@@ -400,7 +405,9 @@ def run_all(ap):
     (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": now - 86400, "tokens": 70_000_000}) + "\n")
     judged = []
     ap.judge = lambda *a: judged.append(a) or dict(full, _tokens=1)
+    _keep_u = ap.UNLOCKED_CAP; ap.UNLOCKED_CAP = 285_261_779  # Owner released all frozen 2026-11-12; test the mechanism
     ap.lane_tick(st, lanes[0], False)
+    ap.UNLOCKED_CAP = _keep_u
     check("V-AP-FROZEN-PARKS-BEFORE-JUDGE", st["lanes"]["L"]["status"] == "PARKED" and not judged and not calls)
     # ---- kill switch: the judge must not even be called
     st = fresh(106)
@@ -474,7 +481,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "prior_ignored": lambda m: setattr(m, "PRIOR_AUTHORITY", ()),
          "off_guard_removed": lambda m: setattr(m, "killed", lambda: False),
          "dry_writes_real": lambda m: setattr(m, "tempfile", _SameDir),
-         "frozen_off": lambda m: setattr(m, "UNLOCKED_CAP", m.TOTAL_CAP),
+         "tranche_not_released": lambda m: setattr(m, "UNLOCKED_CAP", 285_261_779),
+         "total_not_raised": lambda m: setattr(m, "TOTAL_CAP", 400_000_000),
          "info_park_off": lambda m: setattr(m, "INFO_PARK", 99),
          "no_conversion_park_off": lambda m: setattr(m, "NO_CONVERSION_PARK", 99),
          "data_allowlist_off": lambda m: setattr(m, "DATA", __import__("re").compile(r".")),

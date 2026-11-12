@@ -52,3 +52,21 @@ Progress class expected: INFORMATION (criteria file frozen in a commit before th
 ## Boundaries (unchanged)
 Existing profiles and certify.decide untouched; receipts and canonical context untouched; additive profiles only under all
 six S26C conditions; the autopilot's unlocked ceiling is fixed by the Owner and is not a planner topic.
+
+## Owner decisions 2026-11-12 (laptop pane ddf4990e; Owner "1. 120M 2. rec 3. hazlo todo y rec")
+- Budget: unlocked ceiling raised by 120M (unlocked = total = 405,261,779; nothing frozen). Not a planner topic.
+- Headline: t1 tools/ksr_headline.py (gate test_ksr_headline) derives KSR main CERTIFIED 9,308 / 30,388 =
+  ksr-v5r 8,687 + ksr-v5r-s25stage 582 verbatim + 39 transformed_source (S26D 24, S28K 15), labelled apart. The lane
+  frontier and its counters stay 8,687; receipts untouched. New certificate files of profile ksr-v5r-s25stage enter
+  the headline only by adding a pinned component to that tool (with its gate), never by editing receipts or counters.
+- S26C `?` fallback defect fixed (t1 8057ec26): re-measured 869 -> 100 compile -> 45 BINARY_EXACT experimental
+  (evidence/ascension/s26c/fallback_fix/summary.json), 0 control bytes changed by the policy. These 45 are an admitted
+  certification candidate set through the UNCHANGED certify.decide of the existing profile ksr-v5r-s25stage, with the
+  S26D controls (pre/post, A2 negatives, historical receipts byte-identical), only after excluding ids already
+  certified anywhere (they may overlap S26D's 23).
+- Per-function arm rule for FLAGS_SPLIT objects: NOT adopted. Two measurements of the TU-boundary signal ended
+  INSTRUMENT_FAIL (S29K A1, S32K T2), so choosing an arm per function would be fitting flags to bytes. The 3,447 stay
+  uncertified. Reopen condition: a second independent TU-boundary signal whose positive control passes.
+- The alternative-ctx certificate identity (ctx 9907081b, S23 E01: 6/6 units byte-identical, no certificate gained):
+  not promoted; no new certificate identity. Reopen condition: a function set that certifies under that ctx and not
+  under the canonical one.

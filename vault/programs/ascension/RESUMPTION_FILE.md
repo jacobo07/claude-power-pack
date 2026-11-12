@@ -5,7 +5,18 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-12 07:12 UTC (session ddf4990e): Owner "go ahead, y subeles el tope de coste a todos" (uuid cfd7947e, 07:07:08.169Z).**
+**CURRENT — 2026-11-12 ~07:45 UTC (session ddf4990e): Owner "1. 120M 2. rec 3. hazlo todo y rec" — all open Owner acts executed per coordinator recommendation.**
+- Tranche: autopilot UNLOCKED 285,261,779 -> 405,261,779, TOTAL 400M -> 405,261,779 (nothing frozen). Gate `AP_PP=<pp> python3 test_autopilot.py` 121/121, mutants 26/26 (frozen_off replaced by tranche_not_released + total_not_raised; the FROZEN mechanism is still tested with a temporarily lowered cap). Without AP_PP the gate breaks on its own path guess, which is not a regression. Backup in bak-ddf4990e-*; synced to laptop autopilot/.
+- Headline (merge 582 + transformed rec): t1 71bdc989 tools/ksr_headline.py + test_ksr_headline (KSR_HEADLINE_PASS, 5 mutants refused). KSR main CERTIFIED **9,308 / 30,388 (30.63%)** = 8,687 ksr-v5r + 582 s25stage verbatim + 39 transformed_source, labelled apart. The lane frontier stays 8,687 and receipts 02c80ae3 are untouched; KSR_FRONTIER_CHECK OK.
+- test_ksr_override: re-pinned, not reverted. t1 40ea8525 pins cmd_certify to a94b9c66 (S26C); the other functions stay on f2530caf. A mutant on cmd_certify is still red. S23_O0_PASS, override rc=0.
+- S26C fallback defect: t1 8057ec26. The path is fixed, and a missing target now raises. Re-measure: 869 -> 100 compile -> **45 BINARY_EXACT** (was an unmeasured 0); controls 0/282 changed by the policy. Admitted in the brief as a certification candidate set through the unchanged decide of s25stage.
+- FLAGS_SPLIT per-fn arm: NOT adopted (S29K A1 + S32K T2 both INSTRUMENT_FAIL). Reopen condition: a second independent TU-boundary signal.
+- R2 (alt-ctx 9907081b identity): NOT promoted, since no certificate was gained. Reopen condition: a function set that certifies only under it.
+- Push: t1 + gen3 pushed to the GEX44 local bare repos. Laptop -> PUBLIC GitHub after a W4 scan of @{u}..HEAD: 0 secret patterns, 0 binaries or C sources, 0 hex dumps, 0 fn addresses, 0 IPs.
+- W4 policy (rec): the public PP repo may carry programme metadata (counts, hashes, verdicts), never game bytes, decompiled source, assets or secrets. The scan runs before every push.
+- Seen: S32K reached its checkpoint (t1 b2531eb9, 0 certs) and goes to the autopilot judge.
+
+**PREVIOUS — 2026-11-12 07:12 UTC (session ddf4990e): Owner "go ahead, y subeles el tope de coste a todos" (uuid cfd7947e, 07:07:08.169Z).**
 - Cost-held autopilot generations raised: S32K KSR m-a402d24328de 7.5M -> 12.5M (spent_at_set 7,293,306) and S31T Tennis m-774ba9b21e19 5M -> 12.5M (spent_at_set 5,359,440). Owner holds released at 07:10Z; the worker relaunch is left to the sweep and NOT yet observed. Both were done under the autopilot cron.lock. Each is booked in the autopilot ledger.jsonl as kind owner_topup (+5M / +7.5M), and state.json lane authority is updated, so close-time overrun is not double counted (backup state.json.bak-ddf4990e-*). Autopilot status after: total 275,250,928 / UNLOCKED 285,261,779 / 400M; today 22.4M / 80M.
 - After release, both missions went BLOCKED again on their worker's last ask. Decisions sent at 07:15Z:
   - S32K OWNER-TOPUP-12M5: finish Phase 4 as planned. Its first wake was run inside a `bash -s` script, so the relaunch may have read the rest of that script on stdin; check the S32K worker's first turn. Use `</dev/null` next time.

@@ -34,7 +34,9 @@ PP = Path(os.environ.get("AP_PP", "/home/kobii/.claude/skills/claude-power-pack"
 STATE_DIR = Path(os.environ.get("AP_STATE_DIR", "/home/kobii/.claude/state"))
 CLAUDE = os.environ.get("AP_CLAUDE", "/usr/local/bin/claude")
 OWNER_TURN = "d957c937-f56d-4447-9386-5d8002fe0b90:" + os.environ.get("AP_OWNER_TS", "")
-TOTAL_CAP = 400_000_000
+# Owner 2026-11-12 (laptop pane ddf4990e, uuid of "1. 120M"): release a 120M tranche. 285,261,779 + 120M =
+# 405,261,779 unlocked; the total moves 400M -> 405,261,779 so the full 120M is usable (nothing left frozen).
+TOTAL_CAP = 405_261_779
 DAY_CAP = 80_000_000
 GEN_CAP = 25_000_000
 FRESH_GEN_CAP = 1_000_000
@@ -46,7 +48,7 @@ PRIOR_AUTHORITY = (("m-10566700b1fe", "S27", 200_000_000),)
 # and integration on top of what was booked at approval: 225,261,779 = PRIOR 200M + ledger 25,261,779 (judge/planner
 # 4,761,779 + S28K's 20.5M). Everything between UNLOCKED_CAP and TOTAL_CAP is FROZEN behind value gates: the autopilot
 # can only ask for it (owner_queue), never release it.
-UNLOCKED_CAP = 285_261_779
+UNLOCKED_CAP = 405_261_779  # was 285_261_779; +120M Owner 2026-11-12 (see TOTAL_CAP)
 WALL = dt.datetime(2026, 11, 30, 23, 59, tzinfo=dt.timezone.utc)
 BLANK_STOP = 3          # consecutive NONE generations (no verified progress of any class) stop the lane
 INFO_PARK = 2           # consecutive INFORMATION generations without CERT/CAPABILITY park the lane for an Owner look
