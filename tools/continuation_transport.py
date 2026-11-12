@@ -49,8 +49,21 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_long_run as lr  # noqa: E402  (ledger, transcript readers, state dir)
 
-ORCA_CLI_DEFAULT = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "OrcaX" / "resources" \
-    / "app.asar.unpacked" / "out" / "cli" / "index.js"
+# The installer folder name is not stable across Orca builds: this host has
+# `Programs\orca`, while the original default named `Programs\OrcaX`, which does
+# not exist here (2026-11-12). Every delivery then failed as cli_unparseable /
+# TARGET_NOT_FOUND. Probe the known names; the first that exists wins.
+ORCA_INSTALL_DIRS = ("orca", "OrcaX")
+_ORCA_CLI_TAIL = Path("resources") / "app.asar.unpacked" / "out" / "cli" / "index.js"
+
+
+def _default_orca_cli() -> Path:
+    programs = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs"
+    candidates = [programs / name / _ORCA_CLI_TAIL for name in ORCA_INSTALL_DIRS]
+    return next((c for c in candidates if c.is_file()), candidates[0])
+
+
+ORCA_CLI_DEFAULT = _default_orca_cli()
 NODE_DEFAULT = Path(r"C:\Program Files\nodejs\node.exe")
 
 CLI_TIMEOUT_S = 45
@@ -368,9 +381,18 @@ def write_job(session_id: str, kind: str, text: str | None, expect_prefix: str |
 
 
 def run_job(path: Path) -> dict:
-    job = json.loads(Path(path).read_text(encoding="utf-8"))
-    out = deliver(job["session_id"], job["kind"], job.get("text"), job.get("expect_prefix"),
-                  job.get("transcript") or "", cid=job["cid"], requested_at=job.get("requested_at"))
+    """A crash here runs in a detached worker nobody watches: ledger it, then re-raise."""
+    job: dict = {}
+    try:
+        job = json.loads(Path(path).read_text(encoding="utf-8"))
+        out = deliver(job["session_id"], job["kind"], job.get("text"), job.get("expect_prefix"),
+                      job.get("transcript") or "", cid=job["cid"],
+                      requested_at=job.get("requested_at"))
+    except Exception as exc:
+        lr.ledger_append(str(job.get("session_id") or "unknown"), "delivery_job_crashed",
+                         job=str(path), cid=job.get("cid"),
+                         error=f"{type(exc).__name__}: {exc}"[:300])
+        raise
     if out.get("outcome") in (DELIVERED, ALREADY, ACCEPTED_UNCONFIRMED):
         Path(path).unlink(missing_ok=True)
     return out
@@ -392,12 +414,17 @@ def spawn_delivery(session_id: str, kind: str, text: str | None, expect_prefix: 
     if os.environ.get("GSD_LONG_RUN_NO_SPAWN") == "1":
         return False
     try:
-        subprocess.Popen(["cmd.exe", "/c", "start", "", "/B", sys.executable,
-                          str(Path(__file__).resolve()), "run-job", "--job", str(path)],
-                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL, creationflags=0x08000000)
+        # stderr goes to a log, not DEVNULL: a traceback in the detached worker
+        # (one that dies before run_job's own ledger row) must leave a trace.
+        with open(path.parent / "run-job.stderr.log", "ab") as err_log:
+            subprocess.Popen(["cmd.exe", "/c", "start", "", "/B", sys.executable,
+                              str(Path(__file__).resolve()), "run-job", "--job", str(path)],
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=err_log, creationflags=0x08000000)
         return True
-    except Exception:
+    except Exception as exc:
+        lr.ledger_append(session_id, "delivery_spawn_failed", cid=cid,
+                         error=f"{type(exc).__name__}: {exc}"[:300])
         return False
 
 

@@ -69,8 +69,12 @@ def find_project_root(start: Path) -> Path:
 
 
 def claude_project_slug(root: Path) -> str:
-    """Reproduce Claude Code's project-dir slug: every [:\\/.]  -> '-'."""
-    return re.sub(r"[:\\/.]", "-", str(root.resolve()))
+    """Reproduce Claude Code's project-dir slug: every non-alphanumeric char -> '-'.
+
+    Spaces included: "Cursor Projects" is "Cursor-Projects" on disk. The old
+    [:\\/.] class kept the space and wrote handoffs to a directory Claude never reads.
+    """
+    return re.sub(r"[^A-Za-z0-9]", "-", str(root.resolve()))
 
 
 def get_memory_dir(root: Path) -> Path:
