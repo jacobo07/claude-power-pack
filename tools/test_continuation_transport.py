@@ -265,8 +265,10 @@ def gates_delivery() -> None:
     check("V-CXT-BUSY-NOT-SENT", out.get("outcome") == ct.BUSY and not sends(log), f"{out}")
 
     # Runtime refuses (no agent in that pane).
+    # Own transcript: `ta` carries case 1's consumed row, stamped now+1 s by the fake, and run()
+    # asks from now-1 s, so on a fast host it reconciled as ALREADY_CONSUMED (flaky 1 in 3).
     log = world([A, B], refuse="no-agent")
-    out = run(s4, ta, cid=f"{s4}:refused")
+    out = run(s4, transcript_file(), cid=f"{s4}:refused")
     check("V-CXT-REFUSAL-REPORTED", out.get("outcome") == ct.REJECTED and out.get("refused") == "no-agent", f"{out}")
 
     # Already consumed before we send (the Owner typed it): reconcile, do not send.

@@ -105,6 +105,7 @@ BUSY = "TARGET_NOT_IDLE"
 REJECTED = "DELIVERY_REJECTED"
 NO_LINE = "EXPECTED_LINE_MISSING"
 EXHAUSTED = "ATTEMPTS_EXHAUSTED"
+USED = "TARGET_ALREADY_USED"
 
 
 # --------------------------------------------------------------------------- endpoint
@@ -261,7 +262,7 @@ def _block(session_id: str, cid: str, outcome: str, **why) -> dict:
 
 def deliver(session_id: str, kind: str, text: str | None = None, expect_prefix: str | None = None,
             transcript: str = "", cid: str | None = None, requested_at: float | None = None,
-            sleep=time.sleep, now=time.time) -> dict:
+            sleep=time.sleep, now=time.time, fresh_only: bool = False) -> dict:
     """Deliver one continuation to the session's own terminal, with a receipt.
 
     Order matters and is the whole point: capture-time endpoint -> resolve ->
@@ -339,6 +340,11 @@ def deliver(session_id: str, kind: str, text: str | None = None, expect_prefix: 
                 pass  # fail-open: an unrecorded intent must not block the compaction
     if not text:
         return _block(session_id, cid, NO_LINE, expected="a resume command")
+    # A rollover /kresume belongs to a session nobody has used yet. Once an assistant turn
+    # exists, typing would land inside work somebody started (same rule as the sendkeys
+    # daemon's fresh_line). Checked after the idle wait, immediately before the send.
+    if fresh_only and transcript and lr.last_assistant_text(Path(transcript)) is not None:
+        return _block(session_id, cid, USED, handle=handle)
     if _consumed(transcript, text, requested_at):
         _ledger(session_id, "delivery_reconciled", cid=cid, outcome=ALREADY)
         return {"outcome": ALREADY}
@@ -368,12 +374,13 @@ def job_path(cid: str) -> Path:
 
 
 def write_job(session_id: str, kind: str, text: str | None, expect_prefix: str | None,
-              transcript: str, cid: str) -> Path:
+              transcript: str, cid: str, fresh_only: bool = False) -> Path:
     """The pending continuation, durable. It survives a worker that never starts."""
     path = job_path(cid)
     path.parent.mkdir(parents=True, exist_ok=True)
     job = {"session_id": session_id, "kind": kind, "text": text, "expect_prefix": expect_prefix,
-           "transcript": transcript or "", "cid": cid, "requested_at": time.time()}
+           "transcript": transcript or "", "cid": cid, "requested_at": time.time(),
+           "fresh_only": bool(fresh_only)}
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(job), encoding="utf-8")
     tmp.replace(path)
@@ -387,19 +394,41 @@ def run_job(path: Path) -> dict:
         job = json.loads(Path(path).read_text(encoding="utf-8"))
         out = deliver(job["session_id"], job["kind"], job.get("text"), job.get("expect_prefix"),
                       job.get("transcript") or "", cid=job["cid"],
-                      requested_at=job.get("requested_at"))
+                      requested_at=job.get("requested_at"),
+                      fresh_only=bool(job.get("fresh_only")))
     except Exception as exc:
         lr.ledger_append(str(job.get("session_id") or "unknown"), "delivery_job_crashed",
                          job=str(path), cid=job.get("cid"),
                          error=f"{type(exc).__name__}: {exc}"[:300])
         raise
-    if out.get("outcome") in (DELIVERED, ALREADY, ACCEPTED_UNCONFIRMED):
+    # TARGET_ALREADY_USED is final too: that session will never be fresh again.
+    if out.get("outcome") in (DELIVERED, ALREADY, ACCEPTED_UNCONFIRMED, USED):
         Path(path).unlink(missing_ok=True)
     return out
 
 
+def arm_resume(session_id: str, transcript: str, text: str, env=None, spawn=None) -> dict:
+    """Queue `/kresume ...` for a rollover successor that lives in an Orca pane.
+
+    Called by hooks/session_start_hub.js armKresumeAutotype, a child of the successor's own
+    Claude process, so ORCA_PANE_KEY names the successor's pane. The sendkeys daemon only
+    reaches Cursor (PP Sessions extension); in Orca it can never deliver. Measured
+    2026-11-12 (8501f0bd): flag armed, daemon REFUSED, the Owner had to type /kresume.
+    """
+    rec = capture_endpoint(session_id, env)
+    if rec.get("host") != "orca":
+        return {"armed": False, "why": "not an Orca pane"}
+    if not (text or "").startswith("/kresume"):
+        return {"armed": False, "why": "only /kresume is armed here"}
+    cid = f"{session_id}:kresume"
+    ok = (spawn or spawn_delivery)(session_id, "resume", text, None, transcript, cid, fresh_only=True)
+    _ledger(session_id, "kresume_orca_armed" if ok else "kresume_orca_arm_failed", cid=cid,
+            pane_key=rec.get("pane_key"))
+    return {"armed": bool(ok), "cid": cid, "pane_key": rec.get("pane_key")}
+
+
 def spawn_delivery(session_id: str, kind: str, text: str | None, expect_prefix: str | None,
-                   transcript: str, cid: str) -> bool:
+                   transcript: str, cid: str, fresh_only: bool = False) -> bool:
     """Persist the job, then run it detached (the Orca CLI costs seconds; a Stop hook has a budget).
 
     The spawn is `cmd /c start "" /B` because a detached Popen straight from a
@@ -408,8 +437,10 @@ def spawn_delivery(session_id: str, kind: str, text: str | None, expect_prefix: 
     paths ("Cursor Projects") and command text are not, and cmd would re-split them.
     """
     try:
-        path = write_job(session_id, kind, text, expect_prefix, transcript, cid)
-    except Exception:
+        path = write_job(session_id, kind, text, expect_prefix, transcript, cid, fresh_only)
+    except Exception as exc:
+        lr.ledger_append(session_id, "delivery_job_write_failed", cid=cid,
+                         error=f"{type(exc).__name__}: {exc}"[:300])
         return False
     if os.environ.get("GSD_LONG_RUN_NO_SPAWN") == "1":
         return False
@@ -440,7 +471,15 @@ def main(argv=None) -> int:
     d.add_argument("--cid", default=None)
     j = sub.add_parser("run-job")
     j.add_argument("--job", required=True)
+    a = sub.add_parser("arm-resume")
+    a.add_argument("--session", required=True)
+    a.add_argument("--transcript", default="")
+    a.add_argument("--text", required=True)
     args = ap.parse_args(argv)
+    if args.cmd == "arm-resume":
+        out = arm_resume(args.session, args.transcript, args.text)
+        print(json.dumps(out))
+        return 0
     if args.cmd == "run-job":
         out = run_job(Path(args.job))
     else:

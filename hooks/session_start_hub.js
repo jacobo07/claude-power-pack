@@ -221,6 +221,42 @@ function kresumeArmedMarker(hooksDir, safeSid) {
   return path.join(hooksDir, 'kresume-armed-' + safeSid + '.marker');
 }
 
+// Orca exact delivery for the /kresume line (2026-11-12, 8501f0bd). The sendkeys daemon types
+// only through the PP Sessions extension, which lives in Cursor; in an Orca pane its inbox
+// request is never answered and the flag is REFUSED, so the successor sat waiting for the Owner.
+// This hook is a child of the successor's own Claude process, so ORCA_PANE_KEY names its pane;
+// continuation_transport.py arm-resume records that endpoint and queues a detached delivery
+// (`orca terminal send --terminal <handle>`), fresh-only. Outside Orca it is a no-op.
+// Kill switch: CPP_CONTINUATION_TRANSPORT=off (checked by the transport).
+const CONTINUATION_TRANSPORT_PY = path.join(PP_PATH, 'tools', 'continuation_transport.py');
+const ORCA_ARM_TIMEOUT_MS = 8000;
+
+function pythonExe() {
+  const local = process.env.LOCALAPPDATA || path.join(HOME, 'AppData', 'Local');
+  for (const v of ['Python313', 'Python312']) {
+    const p = path.join(local, 'Programs', 'Python', v, 'python.exe');
+    if (fs.existsSync(p)) return p;
+  }
+  return 'python';
+}
+
+function armKresumeOrca(sessionId, transcriptPath, line) {
+  if (!process.env.ORCA_PANE_KEY) return null;
+  try {
+    const out = require('child_process').execFileSync(
+      pythonExe(),
+      [CONTINUATION_TRANSPORT_PY, 'arm-resume', '--session', String(sessionId),
+       '--transcript', transcriptPath || '', '--text', line],
+      { encoding: 'utf8', timeout: ORCA_ARM_TIMEOUT_MS, windowsHide: true,
+        stdio: ['ignore', 'pipe', 'pipe'] });
+    note('kresume orca arm: ' + String(out).trim().slice(0, 200));
+    return out;
+  } catch (err) {
+    note('kresume orca arm failed', err);
+    return null;
+  }
+}
+
 // Outcome of the last arm in this process, for callers that report it (rollover_autotype.js).
 let LAST_KRESUME_ARM = null;
 function lastKresumeArm() {
@@ -271,6 +307,8 @@ function armKresumeAutotype(sessionId, cwd, transcriptPath, focus, caller) {
     fs.writeFileSync(tmp, JSON.stringify(body) + '\n', 'utf8');
     fs.renameSync(tmp, flag);
     flagWritten = true;
+    // Orca leg first, independent of the daemon below: the daemon only reaches Cursor.
+    armKresumeOrca(sessionId, transcriptPath, body.fresh_line);
     // Launched NOW, never queued. Measured 2026-09-29 (435014d6): on a starved host the
     // SessionStart chain abandoned the hub 0.8 s after it armed, before flushSpawns(), so
     // the queued daemon launch died with it; the flag sat until an unrelated daemon run

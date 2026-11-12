@@ -32,6 +32,13 @@ sys.path.insert(0, str(HERE))
 # is deployed from it. A mutation drill points this elsewhere.
 os.environ.setdefault("AC_TEST_DAEMON", str(HERE.parent / "hooks" / "auto-compact-sendkeys-daemon.ps1"))
 import test_autocompact_per_session as acps  # noqa: E402
+import continuation_transport as ct  # noqa: E402
+
+# Every child below copies os.environ. Run from inside Orca, the real ORCA_PANE_KEY would make
+# the hub's Orca arm queue a real delivery and type /kresume into the pane running this suite.
+# Gates that need a pane key pass a fake one explicitly.
+os.environ.pop("ORCA_PANE_KEY", None)
+FAKE_PANE = "tab-kra:11111111-2222-3333-4444-555555555555"
 
 HUB = Path(os.environ.get("KRA_TEST_HUB") or HERE.parent / "hooks" / "session_start_hub.js")
 AUTOTYPE_HOOK = HUB.parent / "rollover_autotype.js"
@@ -339,6 +346,78 @@ def hub_gates():
     got = spawns_at_arm({"CPP_KRESUME_AUTOTYPE": "off"})
     check("V-KRA-HUB-KILL-SWITCH-NO-LAUNCH",
           "calls" in got and not got.get("armed") and got["calls"] == [], f"got={got}")
+
+    # --- Orca leg (2026-11-12, 8501f0bd): the daemon cannot reach an Orca pane, so the hub also
+    # queues an exact delivery. Driven through the real hub; NO_SPAWN keeps the job on disk.
+    def orca_arm(pane_key):
+        state = fresh()
+        env = {"GSD_LONG_RUN_STATE_DIR": str(state), "GSD_LONG_RUN_NO_SPAWN": "1"}
+        if pane_key:
+            env["ORCA_PANE_KEY"] = pane_key
+        got = spawns_at_arm(env)
+        jobs = list((state / "continuation-jobs").glob("*.json"))
+        job = json.loads(jobs[0].read_text(encoding="utf-8")) if len(jobs) == 1 else {}
+        return got, jobs, job, ct_endpoint(state)
+
+    def ct_endpoint(state):
+        p = state / "continuation-endpoint-succ-2222.json"
+        return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+
+    got, jobs, job, ep = orca_arm(FAKE_PANE)
+    check("V-KRA-ORCA-ARM-QUEUES-FRESH-JOB",
+          got.get("armed") and len(jobs) == 1 and job.get("kind") == "resume"
+          and job.get("fresh_only") is True and str(job.get("text", "")).startswith("/kresume")
+          and ep.get("host") == "orca" and ep.get("pane_key") == FAKE_PANE,
+          f"jobs={len(jobs)} job={job} endpoint={ep}")
+    got, jobs, job, ep = orca_arm(None)
+    check("V-KRA-ORCA-NO-PANE-NO-JOB", got.get("armed") and not jobs and not ep,
+          f"outside Orca: jobs={len(jobs)} endpoint={ep}")
+    orca_fresh_guard_gates()
+
+
+def orca_fresh_guard_gates():
+    """deliver(fresh_only) must refuse a used session and send to a fresh one (the control)."""
+    tab, leaf = FAKE_PANE.split(":")
+    terms = [{"tabId": tab, "leafId": leaf, "connected": True, "writable": True,
+              "handle": "h1", "incarnationId": "i1"}]
+
+    def run(rows):
+        state = fresh()
+        os.environ["GSD_LONG_RUN_STATE_DIR"] = str(state)
+        tr = state / "t.jsonl"
+        tr.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+        ct.capture_endpoint("succ-9", {"ORCA_PANE_KEY": FAKE_PANE})
+        sent = []
+
+        def fake_orca(args, timeout=None):
+            if args[:2] == ["terminal", "wait"]:
+                return {"ok": True, "result": {"wait": {"satisfied": True}}}
+            sent.append(args)
+            return {"ok": True, "result": {"send": {"accepted": True, "bytesWritten": 9}}}
+
+        clock = iter(range(1_000_000, 2_000_000, 60))
+        orig = (ct.orca, ct.list_terminals)
+        ct.orca, ct.list_terminals = fake_orca, (lambda: ("OK", terms))
+        try:
+            out = ct.deliver("succ-9", "resume", "/kresume", transcript=str(tr), requested_at=0,
+                             sleep=lambda s: None, now=lambda: next(clock), fresh_only=True)
+        finally:
+            ct.orca, ct.list_terminals = orig
+            os.environ.pop("GSD_LONG_RUN_STATE_DIR", None)
+        return out, sent
+
+    user = {"type": "user", "timestamp": "2026-11-12T00:00:00Z",
+            "message": {"role": "user", "content": "hello"}}
+    asst = {"type": "assistant", "message": {"role": "assistant",
+                                             "content": [{"type": "text", "text": "working"}]}}
+    out, sent = run([user, asst])
+    check("V-KRA-ORCA-USED-SESSION-REFUSED",
+          out.get("outcome") == ct.USED and not sent, f"out={out} sends={len(sent)}")
+    out, sent = run([])
+    check("V-KRA-ORCA-FRESH-SESSION-SENT",
+          len(sent) == 1 and "--terminal" in sent[0] and "/kresume" in sent[0]
+          and out.get("outcome") in (ct.ACCEPTED_UNCONFIRMED, ct.DELIVERED),
+          f"out={out} sends={sent}")
 
 
 
