@@ -5,7 +5,19 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**CURRENT — 2026-11-12 ~07:45 UTC (session ddf4990e): Owner "1. 120M 2. rec 3. hazlo todo y rec" — all open Owner acts executed per coordinator recommendation.**
+**CURRENT — 2026-11-12 ~09:35 UTC (session ddf4990e): EVO approved (Owner "y" to vault/programs/ascension/EVO-PLAN.md) — E0-E2 deployed LIVE, E6 gate built; E3 blocked on a policy refusal.**
+- Code (laptop 8a0a0aa2): autopilot/evolve.py with INSTRUMENT_FAIL class, plateau -> research via the reused gsd_mission.pivot_decision, MethodGraph lever ranking, levers.json, budget-park resume and ff-only checkpoint discovery; kill switch EVO_OFF.
+  - Gate 144/144 with 35/35 mutants, on staging and live (`AP_PP=<pp> python3 test_autopilot.py`).
+  - Deployed 09:21Z under cron.lock; backup `bak-ddf4990e-evo-20261112T092148Z`; E0 snapshot `evo-e0-20261112T0905Z`.
+- E6 (laptop 3b5f9807): `ratchet.promote_with_evidence` + tools/test_ratchet_evidence.py (RATCHET_EVIDENCE_PASS=11/11, 4/4 mutants). Nothing promoted yet.
+- Lanes were reconciled to re-judge S32K and S31T under EVO.
+  - KSR: S32K judged INFORMATION with the H-TU2 instrument failure verified. The reused pivot rule produced EVO action research with lever **oracle_coverage_a2** (TARGET_ORACLE).
+  - **KSR: the planner's S33K packet was POLICY REFUSED** (09:29:59Z). It said "new profile" without all six S26C conditions in the same line; it likely copied the conditional profile sentence in the levers.json `what` of oracle_coverage_a2. KSR is PARKED with park_kind None.
+  - TENNIS: re-judge of S31T started 09:29:59Z; result not yet read.
+- NEXT: reword the oracle_coverage_a2 `what` in levers.json (laptop + GEX44 live): drop the conditional "new additive profile" sentence, or state all six conditions positively in one line. Then reset KSR (status WAITING, judged_for None, mode EXPLOIT, lever fwidth_heldout_cert, info_streak 1, no_conversion 2) so S32K -> research re-runs, and confirm S33K arms. Then read the TENNIS EVO decision (expect REPAIR with tennis_control_pool_widened).
+- Then: E3/E4 checkpoints -> independent check; E5 reuse; E6 promotion with evidence; UKDL (hard rule / process rule / trap).
+
+**PREVIOUS — 2026-11-12 ~07:45 UTC (session ddf4990e): Owner "1. 120M 2. rec 3. hazlo todo y rec" — all open Owner acts executed per coordinator recommendation.**
 - Tranche: autopilot UNLOCKED 285,261,779 -> 405,261,779, TOTAL 400M -> 405,261,779 (nothing frozen). Gate `AP_PP=<pp> python3 test_autopilot.py` 121/121, mutants 26/26 (frozen_off replaced by tranche_not_released + total_not_raised; the FROZEN mechanism is still tested with a temporarily lowered cap). Without AP_PP the gate breaks on its own path guess, which is not a regression. Backup in bak-ddf4990e-*; synced to laptop autopilot/.
 - Headline (merge 582 + transformed rec): t1 71bdc989 tools/ksr_headline.py + test_ksr_headline (KSR_HEADLINE_PASS, 5 mutants refused). KSR main CERTIFIED **9,308 / 30,388 (30.63%)** = 8,687 ksr-v5r + 582 s25stage verbatim + 39 transformed_source, labelled apart. The lane frontier stays 8,687 and receipts 02c80ae3 are untouched; KSR_FRONTIER_CHECK OK.
 - test_ksr_override: re-pinned, not reverted. t1 40ea8525 pins cmd_certify to a94b9c66 (S26C); the other functions stay on f2530caf. A mutant on cmd_certify is still red. S23_O0_PASS, override rc=0.
