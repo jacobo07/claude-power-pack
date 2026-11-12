@@ -24,11 +24,15 @@
    "what": "Global type context from lifted signatures (S30T REFUTED: gain came from having prototypes, not true types; 33 certified regressions)."}
  ],
  "TENNIS": [
-  {"id": "fwidth_tennis_b1t", "family": "OPERATOR_SCAN", "kind": "exploit", "blockers": ["FLOAT_WIDTH"], "cost": 5, "status": "open",
+  {"id": "fwidth_tennis_b1t", "family": "OPERATOR_SCAN", "kind": "exploit", "blockers": ["FLOAT_WIDTH"], "cost": 5, "status": "retired",
    "requires": ["evidence/ascension/s31t/b1t/criteria.json"],
+   "retired_by": "S33T-P1-CONTROL-POOL-N12 (worktree-s33t e103a62f: widened pool n=12 < 22; S31T frozen rule n=2): the B1-T planted-positive control cannot be built",
+   "reopen": "a planted-positive control pool proven >= 22 at freeze: a synthetic-control rule (plant f32 into non-certified fns whose objdiff shows no float) approved as a new pre-registration, or a larger certified plantable population",
    "what": "B1-T: deterministic float-evidence scan of the Tennis COMPILES_NO_MATCH set; held-out fwidth pilot under the existing Tennis profile only if applicability >= 10 pct."},
-  {"id": "tennis_control_pool_widened", "family": "INSTRUMENT_REPAIR", "kind": "repair", "blockers": ["CONTROL_POOL"], "cost": 5, "status": "open",
+  {"id": "tennis_control_pool_widened", "family": "INSTRUMENT_REPAIR", "kind": "repair", "blockers": ["CONTROL_POOL"], "cost": 5, "status": "retired",
    "requires": ["evidence/ascension/s31t/checkpoint_s31t.md"],
+   "retired_by": "S33T-P1-CONTROL-POOL-N12 (worktree-s33t e103a62f): the widened any-lane rule yields n=12 < 22 at freeze; 2nd INSTRUMENT_FAIL of H-T1a (EVO-PLAN E4 stop rule: park Tennis)",
+   "reopen": "same as fwidth_tennis_b1t: a control-pool rule proven >= 22 at freeze, pre-registered and Owner-approved",
    "what": "S31T proposal: draw the planted-positive controls from certified Tennis fns of ANY lane whose base_body holds a plantable f32, compiled at that lane's own flags, requiring planted != exact and unplanted == exact at that same arm; demonstrate the frozen pool is >= 22 at freeze time; keep the 22/22, 0/22 and 2 pct thresholds unchanged; then re-run B1-T (H-T1a) unchanged."}
  ]
 }
