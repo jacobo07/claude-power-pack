@@ -1,6 +1,6 @@
 # Ingest report
 
-rows: 284  problems: 0  duplicates: 0  reassigned ids: 14
+rows: 437  problems: 0  duplicates: 0  reassigned ids: 14
 
 | gap | rows | E1 | E2 | E3 | E4 |
 |---|---|---|---|---|---|
@@ -14,9 +14,14 @@ rows: 284  problems: 0  duplicates: 0  reassigned ids: 14
 | G08 | 8 | 2 | 0 | 6 | 0 |
 | G09 | 24 | 7 | 0 | 17 | 0 |
 | G10 | 16 | 6 | 0 | 10 | 0 |
+| G12 | 29 | 4 | 0 | 25 | 0 |
 | G13 | 16 | 2 | 0 | 13 | 1 |
 | G15 | 62 | 7 | 0 | 55 | 0 |
 | G17 | 23 | 15 | 0 | 8 | 0 |
+| G19 | 45 | 5 | 0 | 40 | 0 |
+| G26 | 24 | 2 | 0 | 22 | 0 |
+| G28 | 30 | 15 | 0 | 14 | 1 |
+| G29 | 25 | 6 | 0 | 19 | 0 |
 
 ## Reassigned ids
 - G02-001 -> G01-006
