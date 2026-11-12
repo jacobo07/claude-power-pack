@@ -115,7 +115,7 @@ human, or it does not move.
 
 ## Windows execution note
 
-Run python via `C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe`
+Run python via the interpreter `(Get-Command python).Source` resolves on this host (never a hardcoded user dir -- E11)
 with `$env:PYTHONIOENCODING='utf-8'`; prefer a single bounded command over
 chained pipes (the MSYS2 Bash bridge is fragile on this host).
 

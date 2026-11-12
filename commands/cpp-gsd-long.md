@@ -35,8 +35,8 @@ instead of compacting — a fresh process frees the RAM a long-lived one accumul
 worker measured at ~660 MB working set). The mission, not the session, owns the work.
 
 ```powershell
-$py = 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe'
-$pp = 'C:\Users\User\.claude\skills\claude-power-pack'
+$py = (Get-Command python).Source   # resolve the host's interpreter; never hardcode a user dir (E11)
+$pp = Join-Path $env:USERPROFILE '.claude\skills\claude-power-pack'
 # from the project root (it must be a TRUSTED workspace -- `claude --bg` refuses otherwise):
 & $py "$pp\tools\gsd_mission.py" arm --cwd . --command "/gsd-autonomous" --max-cycles 12 --max-hours 24
 & $py "$pp\tools\gsd_mission.py" status
