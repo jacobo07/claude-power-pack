@@ -290,6 +290,12 @@ def main() -> int:
     check("V-PIVOT-CARD-TEACHES-RECEIPT", "--receipt" in on_card and "method_class" in on_card
           and "--receipt" not in off_card, "opted-in card names --receipt; a mission without pivot autonomy does not")
 
+    # spec mission-checkpoint-autonomy C3: arm turns pivot autonomy on before the first launch; --no-pivot opts out.
+    on = gm.arm(TMP, "/gsd-autonomous", launch=False, preflighted=True, mission_id="m-arm-on")["mission"]
+    off = gm.arm(TMP, "/gsd-autonomous", launch=False, preflighted=True, pivot=False, mission_id="m-arm-off")["mission"]
+    check("V-ARM-PIVOT-DEFAULT", gm.load(on["mission_id"]).get("pivot_autonomy") is True, on["mission_id"])
+    check("V-ARM-NO-PIVOT", not gm.load(off["mission_id"]).get("pivot_autonomy"), off["mission_id"])
+
     print(f"PIVOT_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
@@ -330,6 +336,7 @@ DRILLS = (
      'PIVOT_STATES = ("METHOD_PIVOT_REQUIRED", "NEXT_PLAN_REQUIRED")', "V-PIV-CC-PIVOTS"),
     ("D17 evidence fallback removed", 'return hold.get("residual") or hold.get("evidence") or None',
      'return hold.get("residual") or None', "V-PIV-CC-PIVOTS"),
+    ("D18 arm default off", "    if pivot and pivot_autonomy_on():\n", "    if False:\n", "V-ARM-PIVOT-DEFAULT"),
 )
 
 

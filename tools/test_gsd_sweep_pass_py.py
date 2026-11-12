@@ -69,6 +69,7 @@ def main() -> int:
         f"    open(r'{root / 'worker.pid'}', 'w').write(str(w.pid))\n"
         "print('[{\"mission_id\": \"m-fake\", \"action\": \"relay\"}]')\n"
         "sys.exit(int(os.environ.get('FAKE_MISSION_RC', '0')))\n", encoding="utf-8")
+    (tools / "mission_topup.py").write_text("print('TOPUP m-fake grant: fake')\n", encoding="utf-8")
     (tools / "gsd_long_run.py").write_text(
         "import subprocess, sys, time, os\n"
         "c = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(120)'])\n"
@@ -88,7 +89,9 @@ def main() -> int:
     b = read_beat()
     st = {s["name"]: s for s in b.get("stages", [])}
     check("V-SWEEPPY-PASS-RAN", r.returncode == 0 and b.get("outcome") == "ran", f"rc={r.returncode} {b} {r.stderr[-300:]}")
-    check("V-SWEEPPY-MISSION-FIRST-AND-OK", list(st) == ["mission", "v2"] and st["mission"]["rc"] == 0, str(b.get("stages")))
+    check("V-SWEEPPY-MISSION-FIRST-AND-OK", list(st) == ["mission", "topup", "v2"] and st["mission"]["rc"] == 0, str(b.get("stages")))
+    # spec mission-auto-topup parity (2026-11-12): the default pass runs the top-up stage after mission, like the .ps1.
+    check("V-SWEEPPY-TOPUP-STAGE-RUNS", st.get("topup", {}).get("rc") == 0, str(st.get("topup")))
     check("V-SWEEPPY-STAGE-DEADLINE", st.get("v2", {}).get("timed_out") is True and st["v2"]["secs"] < 30, str(st.get("v2")))
     gpid = int((root / "grandchild.pid").read_text())
     check("V-SWEEPPY-TREE-REAPED", wait_for(lambda: not pid_alive(gpid), 5), f"grandchild {gpid}")

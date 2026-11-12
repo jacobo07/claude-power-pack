@@ -1,205 +1,211 @@
 #!/usr/bin/env python
-"""V-TOPUP-* / V-ARM-PIVOT-* gates: spec vault/specs/mission-checkpoint-autonomy.md (C2, C3).
+"""V-TOPUP-* gates for tools/mission_topup.py (spec vault/specs/mission-auto-topup.md).
 
-Origin (2026-11-12, GEX44 S30T m-2e14179c5b6a): the arm granted "20M + 2x4M top-ups" as text only; at 1.35M room after
-the reserve the next wave would have parked for the Owner although the capital was already granted. Hermetic: state in a
-temp dir before import, spend injected, nothing launched, no channel reached (notifier injected).
-`--drills`: each mutant of gsd_mission.py must turn the named gate red.
+Hermetic: state goes to a temp dir before import; progress is judged on a real throw-away git repo; the worker
+wake and the notification are injected. Every refusal has a paired control that grants.
 """
 from __future__ import annotations
 
-import json
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-TMP = tempfile.mkdtemp(prefix="gsd-mission-topup-test-")
+TMP = tempfile.mkdtemp(prefix="mission-topup-test-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
-os.environ["CPP_MISSION_RECOVERY"] = "off"
-for k in ("CPP_MISSION_TOPUP", "CPP_PIVOT_AUTONOMY"):
-    os.environ.pop(k, None)
+os.environ["CPP_RESOURCE_ADMISSION"] = "off"
+os.environ.pop("CPP_MISSION_AUTO_TOPUP", None)
+os.environ.pop("TELEGRAM_BOT_TOKEN", None)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-if os.environ.get("GSD_MISSION_DRILL_DIR"):
-    sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])
 import gsd_mission as gm  # noqa: E402
-import mission_spend as ms  # noqa: E402
+import mission_topup as mt  # noqa: E402
 
-gm.host_sessions = lambda *a, **k: None
 passes = fails = 0
 NOW = 1_800_000_000.0
-SID = "0wnerTurn-1234-5678"
-TS = "2026-11-12T11:59:12"
+TRIP = "cost breaker (mission authority): processed 119,000,000 >= authority 120,000,000 minus closeout reserve"
 
 
 def check(gate, cond, ev=""):
     global passes, fails
-    passes, fails = (passes + 1, fails) if cond else (passes, fails + 1)
-    print(f"{'PASS' if cond else 'FAIL'} {gate} {ev}")
+    if cond:
+        passes += 1
+        print(f"PASS {gate} {ev}")
+    else:
+        fails += 1
+        print(f"FAIL {gate} {ev}")
 
 
-TRANSCRIPT = Path(TMP) / f"{SID}.jsonl"
-TRANSCRIPT.write_text(json.dumps({"type": "user", "timestamp": TS + ".172Z", "uuid": "turn-uuid-1",
-                                  "message": {"content": "recarga y si no sale cambia de estrategia"}}) + "\n",
-                      encoding="utf-8")
-FINDER = lambda sid: TRANSCRIPT if sid == SID else None   # noqa: E731
+GIT = gm.resolve_exe("git") or "git"
 
 
-def _mission(mid: str, authority: int = 20_000_000, topups: int | None = 2, hold=None, state=None) -> dict:
-    gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
-    gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t_setup", now=NOW, state=state or gm.RUNNING,
-                  epoch=1, authority_tokens=authority, owner_hold=hold)
-    if topups is not None:
-        gm.set_topups(mid, topups, "4M", f"{SID}:{TS}", finder=FINDER, now=NOW)
-    return gm.load(mid)
+def git(repo, *args):
+    subprocess.run([GIT, "-C", repo, *args], check=True, capture_output=True)
 
 
-def _spent_for_room(rec: dict, room: int) -> int:
-    return int(rec["authority_tokens"]) - int(ms.closeout_reserve(rec) or 0) - room
+def new_repo(name):
+    repo = Path(TMP) / name
+    repo.mkdir()
+    git(repo, "init", "-q")
+    git(repo, "config", "user.email", "t@t")
+    git(repo, "config", "user.name", "t")
+    commit(repo, "README.md", "x")
+    return str(repo)
+
+
+def commit(repo, rel, text):
+    p = Path(repo) / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding="utf-8")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", f"edit {rel}")
+
+
+woken = []
+
+
+def decide(mid, text, decision_id=None):
+    woken.append((mid, decision_id, text))
+    return {"woke": True}
+
+
+sent = []
+
+
+def sender(text):
+    sent.append(text)
+    return "sent"
+
+
+def mission(name, hold_reason=TRIP, kind="cost"):
+    repo = new_repo(name)
+    mid = f"m-{name}"
+    gm.create(repo, "/gsd-autonomous", mission_id=mid, now=NOW)
+    mt.budget(mid, "120M", 3, "40M", reason="test", now=NOW)
+    return mid, repo
+
+
+def trip(mid, reason=TRIP, kind="cost", at=None):
+    gm.set_owner_hold(mid, reason, now=at or NOW + len(woken) + len(sent) + 10, kind=kind)
 
 
 def main() -> int:
-    seen = []
-    note = lambda mid, key, why: seen.append((mid, key, why))   # noqa: E731
-
-    r = _mission("m-due")
-    spent = _spent_for_room(r, 1_300_000)
-    row = gm.apply_topup(r, NOW + 60, measure=lambda rec: spent, notifier=note)
-    a = gm.load("m-due")
-    last = (a.get("authority_receipts") or [{}])[-1]
-    check("V-TOPUP-APPLIES", row and a["authority_tokens"] == 24_000_000 and a["topups"]["left"] == 1
-          and last.get("actor") == "sweep:topup" and (last.get("owner_turn") or {}).get("uuid") == "turn-uuid-1"
-          and last.get("spent_at_set") == spent,
-          f"row={row} auth={a.get('authority_tokens')} topups={a.get('topups', {}).get('left')} last={last.get('actor')}")
-    ev = [e.get("event") for e in gm.lr.ledger_events("m-due")]
-    check("V-TOPUP-LEDGERED", "topup_applied" in ev and "topups_set" in ev, str(ev[-4:]))
-    check("V-TOPUP-NOTIFIED", len(seen) == 1 and seen[0][1] == "topup:m-due:1", str(seen))
-    again = gm.apply_topup(gm.load("m-due"), NOW + 120, measure=lambda rec: spent, notifier=note)
-    check("V-TOPUP-ONCE", again is None and gm.load("m-due")["authority_tokens"] == 24_000_000,
-          f"second pass at room ~5.3M: {again}")
-
-    # Review 2026-11-12 (HIGH): after one top-up was spent, re-running the same Owner turn must not reset `left`.
-    replay = gm.set_topups("m-due", 2, "4M", f"{SID}:{TS}", finder=FINDER, now=NOW + 200)
-    other = ""
+    # parse
+    check("V-TOPUP-PARSE", mt.parse_tokens("40M") == 40_000_000 and mt.parse_tokens("1.5m") == 1_500_000
+          and mt.parse_tokens("800K") == 800_000, "40M/1.5m/800K")
     try:
-        gm.set_topups("m-due", 5, "4M", f"{SID}:{TS}", finder=FINDER, now=NOW + 200)
-    except gm.MissionError as exc:
-        other = str(exc)
-    check("V-TOPUP-REPLAY-NOOP", replay["topups"]["left"] == 1 and gm.load("m-due")["topups"]["left"] == 1
-          and "already granted" in other, f"left={gm.load('m-due')['topups'].get('left')} other={other[:90]}")
+        mt.parse_tokens("lots")
+        check("V-TOPUP-PARSE-REFUSE", False, "accepted 'lots'")
+    except ValueError:
+        check("V-TOPUP-PARSE-REFUSE", True)
 
-    r = _mission("m-room")
-    check("V-TOPUP-ROOM", gm.apply_topup(r, NOW, measure=lambda rec: _spent_for_room(r, 5_000_000)) is None
-          and gm.load("m-room")["authority_tokens"] == 20_000_000, "room 5M >= 3M trigger")
+    # budget sets the Owner authority and the policy
+    mid, repo = mission("grant")
+    rec = gm.load(mid)
+    pol = mt.load_policy(mid)
+    check("V-TOPUP-BUDGET", rec.get("authority_tokens") == 120_000_000 and pol["max_topups"] == 3
+          and pol["step"] == 40_000_000 and pol["last_head"], f"auth={rec.get('authority_tokens')}")
 
-    r = _mission("m-none", topups=0)
-    check("V-TOPUP-NONE-LEFT", gm.apply_topup(r, NOW, measure=lambda rec: _spent_for_room(r, 100)) is None, "left 0")
-    r = _mission("m-nogrant", topups=None)
-    check("V-TOPUP-NO-GRANT", gm.apply_topup(r, NOW, measure=lambda rec: _spent_for_room(r, 100)) is None,
-          "authority without a typed top-up grant")
+    # control: progress since base -> grant, release, wake
+    commit(repo, "src/a.ts", "a")
+    trip(mid)
+    r = mt.sweep_one(mid, now=NOW + 100, decide_fn=decide, sender=sender)
+    rec = gm.load(mid)
+    check("V-TOPUP-GRANT", r["action"] == "grant" and rec.get("authority_tokens") == 160_000_000
+          and not rec.get("owner_hold") and woken and woken[-1][1] == "TOPUP1", f"{r} auth={rec.get('authority_tokens')}")
 
-    r = _mission("m-unm")
-    boom = lambda rec: (_ for _ in ()).throw(OSError("no transcript"))   # noqa: E731
-    check("V-TOPUP-UNMEASURED", gm.apply_topup(r, NOW, measure=boom) is None
-          and gm.apply_topup(r, NOW, measure=lambda rec: None) is None
-          and gm.load("m-unm")["authority_tokens"] == 20_000_000, "raising and None spend both refuse")
+    # refusal: tripped again with no commit since the grant -> held, notified once
+    trip(mid)
+    n_woken = len(woken)
+    r = mt.sweep_one(mid, now=NOW + 200, decide_fn=decide, sender=sender)
+    rec = gm.load(mid)
+    check("V-TOPUP-NO-PROGRESS", r["action"] == "refuse" and rec.get("owner_hold")
+          and rec.get("authority_tokens") == 160_000_000 and len(woken) == n_woken and len(sent) == 1, r["why"])
+    mt.sweep_one(mid, now=NOW + 300, decide_fn=decide, sender=sender)
+    check("V-TOPUP-NOTIFY-ONCE", len(sent) == 1, f"sent={len(sent)}")
 
-    r = _mission("m-cost", hold={"kind": "cost", "reason": "cost breaker (mission authority): spent", "set_at": NOW})
-    check("V-TOPUP-OWNER-HOLD", gm.apply_topup(r, NOW, measure=lambda rec: _spent_for_room(r, 100)) is None,
-          "a tripped breaker stays the Owner path")
-    r = _mission("m-own", hold={"kind": "owner", "reason": "Owner hold", "set_at": NOW})
-    check("V-TOPUP-OWNER-HOLD-2", gm.apply_topup(r, NOW, measure=lambda rec: _spent_for_room(r, 100)) is None, "")
-    r = _mission("m-cp", hold={"kind": gm.CHECKPOINT_KIND, "reason": "NEXT_PLAN_REQUIRED: x", "set_at": NOW})
-    check("V-TOPUP-CHECKPOINT-OK", gm.apply_topup(r, NOW, measure=lambda rec: _spent_for_room(r, 100),
-                                                  notifier=note) is not None, "a checkpoint wait may be topped up")
-    r = _mission("m-term", state=gm.HALTED)
-    check("V-TOPUP-TERMINAL", gm.apply_topup(r, NOW, measure=lambda rec: _spent_for_room(r, 100)) is None, "")
+    # refusal: bookkeeping-only commit is not progress
+    commit(repo, ".planning/STATE.md", "moved")
+    r = mt.sweep_one(mid, now=NOW + 400, decide_fn=decide, sender=sender)
+    check("V-TOPUP-BOOKKEEPING", r["action"] == "refuse" and gm.load(mid).get("owner_hold"), r["why"])
 
-    refused = ""
+    # control for the same hold: real work now -> grant 2
+    commit(repo, "src/b.ts", "b")
+    r = mt.sweep_one(mid, now=NOW + 500, decide_fn=decide, sender=sender)
+    check("V-TOPUP-GRANT-2", r["action"] == "grant" and gm.load(mid).get("authority_tokens") == 200_000_000, r["why"])
+
+    # exhaustion: grant 3, then a 4th trip with progress is refused
+    commit(repo, "src/c.ts", "c")
+    trip(mid)
+    mt.sweep_one(mid, now=NOW + 600, decide_fn=decide, sender=sender)
+    commit(repo, "src/d.ts", "d")
+    trip(mid)
+    r = mt.sweep_one(mid, now=NOW + 700, decide_fn=decide, sender=sender)
+    check("V-TOPUP-EXHAUSTED", r["action"] == "refuse" and "exhausted" in r["why"]
+          and gm.load(mid).get("authority_tokens") == 240_000_000, r["why"])
+
+    # holds this module does not own are untouched, even with progress
+    for gate, reason, kind in (
+            ("V-TOPUP-IGNORE-DEFAULT-CEILING", "cost breaker: processed 17,058,129 > default policy ceiling", "cost"),
+            ("V-TOPUP-IGNORE-STALL", "cost breaker: 9,000,000 processed since the work tree last changed", "cost"),
+            ("V-TOPUP-IGNORE-OWNER-PAUSE", TRIP, "owner_stop")):
+        m2, repo2 = mission(gate.lower().replace("_", "-")[8:])
+        commit(repo2, "src/x.ts", "x")
+        trip(m2, reason, kind)
+        r = mt.sweep_one(m2, now=NOW + 800, decide_fn=decide, sender=sender)
+        check(gate, r["action"] == "none" and gm.load(m2).get("owner_hold")
+              and gm.load(m2).get("authority_tokens") == 120_000_000, r["why"])
+
+    # no double grant: a pass that died after writing the grant is completed, never re-granted
+    m3, repo3 = mission("crash")
+    commit(repo3, "src/y.ts", "y")
+    trip(m3)
+    real_complete = mt._complete
+    mt._complete = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("died mid-effect"))
     try:
-        gm.set_topups("m-room", 1, "4M", None, finder=FINDER)
-    except gm.MissionError as exc:
-        refused = str(exc)
-    bad_turn = ""
-    try:
-        gm.set_topups("m-room", 1, "4M", f"{SID}:2001-01-01T00:00:00", finder=FINDER)
-    except gm.MissionError as exc:
-        bad_turn = str(exc)
-    check("V-TOPUP-SET-NEEDS-TURN", "owner-turn" in refused and "0 Owner message" in bad_turn, f"{refused} | {bad_turn}")
+        mt.sweep_one(m3, now=NOW + 900, decide_fn=decide, sender=sender)
+    except RuntimeError:
+        pass
+    mt._complete = real_complete
+    commit(repo3, "src/y2.ts", "work landed between the dead pass and the next one")
+    r = mt.sweep_one(m3, now=NOW + 950, decide_fn=decide, sender=sender)
+    pol3 = mt.load_policy(m3)
+    check("V-TOPUP-NO-DOUBLE-GRANT", r["action"] == "resume" and len(pol3["grants"]) == 1
+          and gm.load(m3).get("authority_tokens") == 160_000_000 and not gm.load(m3).get("owner_hold"), r["why"])
 
-    r = _mission("m-off")
-    os.environ["CPP_MISSION_TOPUP"] = "off"
-    off_rows = gm.topup_pass(NOW, measure=lambda rec: _spent_for_room(rec, 100))   # due if the switch were ignored
-    os.environ.pop("CPP_MISSION_TOPUP")
-    check("V-TOPUP-OFF", off_rows == [] and gm.load("m-off")["authority_tokens"] == 20_000_000, str(off_rows))
+    # kill switch
+    m4, repo4 = mission("kill")
+    commit(repo4, "src/z.ts", "z")
+    trip(m4)
+    os.environ["CPP_MISSION_AUTO_TOPUP"] = "off"
+    res = mt.sweep(now=NOW + 1000, decide_fn=decide, sender=sender)
+    os.environ.pop("CPP_MISSION_AUTO_TOPUP")
+    check("V-TOPUP-KILL-SWITCH", res[0]["why"] == "CPP_MISSION_AUTO_TOPUP=off" and gm.load(m4).get("owner_hold"))
+    res = mt.sweep(now=NOW + 1100, decide_fn=decide, sender=sender)
+    check("V-TOPUP-KILL-SWITCH-CONTROL", any(x.get("mission") == m4 and x["action"] == "grant" for x in res),
+          str([x.get("action") for x in res]))
 
-    called = []
-    real = gm.topup_pass
-    gm.topup_pass = lambda *a, **k: called.append(1) or []
-    try:
-        gm.supervise()
-    except Exception as exc:  # noqa: BLE001 -- the wiring question is whether the pass was reached
-        print(f"  (supervise raised {type(exc).__name__}: {exc})")
-    gm.topup_pass = real
-    check("V-TOPUP-WIRED", called == [1], f"supervise reached topup_pass {len(called)} time(s)")
-    called.clear()
-    gm.topup_pass = lambda *a, **k: called.append(1) or []
-    gm.supervise(None, True)
-    gm.topup_pass = real
-    check("V-TOPUP-NOT-IN-DRY-RUN", called == [], f"dry run reached topup_pass {len(called)} time(s)")
+    # no channel: refusal says so instead of pretending
+    check("V-TOPUP-NO-CHANNEL", mt.notify("x") == "no channel configured")
 
-    on = gm.arm(TMP, "/gsd-autonomous", launch=False, preflighted=True, mission_id="m-arm-on")["mission"]
-    off = gm.arm(TMP, "/gsd-autonomous", launch=False, preflighted=True, pivot=False, mission_id="m-arm-off")["mission"]
-    check("V-ARM-PIVOT-DEFAULT", gm.load(on["mission_id"]).get("pivot_autonomy") is True, on["mission_id"])
-    check("V-ARM-NO-PIVOT", not gm.load(off["mission_id"]).get("pivot_autonomy"), off["mission_id"])
+    # suggest: open phases x rate
+    sr = Path(TMP) / "sugg"
+    (sr / ".planning").mkdir(parents=True)
+    (sr / ".planning" / "ROADMAP.md").write_text(
+        "- [x] **Phase 5: drift**\n- [ ] **Phase 6: history**\n- [ ] **Phase 7: quality**\n- [ ] Phase 8: crc\n",
+        encoding="utf-8")
+    s = mt.suggest(str(sr))
+    check("V-TOPUP-SUGGEST", s["phases"] == 3 and s["authority"] == 120_000_000, str(s))
+    s2 = mt.suggest(str(Path(TMP) / "nowhere"))
+    check("V-TOPUP-SUGGEST-NO-ROADMAP", s2["phases"] == 3 and "assumed" in s2["basis"], s2["basis"])
 
-    print(f"TOPUP_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
+    print(f"TOPUP_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 
 
-DRILLS = (
-    ("T1 trigger ignored", "    if room >= TOPUP_TRIGGER_TOKENS:\n", "    if False:\n", "V-TOPUP-ROOM"),
-    ("T2 owner/cost hold ignored", "    if hold and hold.get(\"kind\") not in WAIT_HOLD_KINDS:\n        return False, f\"under",
-     "    if False:\n        return False, f\"under", "V-TOPUP-OWNER-HOLD"),
-    # Reading unmeasured as ZERO is fail-safe here (huge room, no top-up), so that mutant is equivalent; the harmful
-    # direction is unmeasured read as EXHAUSTED, which would spend capital nobody measured.
-    ("T3 unmeasured read as exhausted", "    if spent is None:\n        return False, \"spend unmeasurable\", {}\n",
-     "    if spent is None:\n        spent = int(rec[\"authority_tokens\"])\n", "V-TOPUP-UNMEASURED"),
-    ("T4 left not decremented", "t.update(left=int(t[\"left\"]) - 1, used=n)", "t.update(used=n)", "V-TOPUP-APPLIES"),
-    ("T5 pass unwired", "            rows = rows + topup_pass()\n", "            rows = rows\n", "V-TOPUP-WIRED"),
-    ("T6 kill switch ignored", "    if not topup_on():\n        return []\n", "", "V-TOPUP-OFF"),
-    ("T7 turn not required", "    if not owner_turn:\n        raise MissionError(\"refused: top-ups are capital",
-     "    if False:\n        raise MissionError(\"refused: top-ups are capital", "V-TOPUP-SET-NEEDS-TURN"),
-    ("T9 owner turn replay resets the grant",
-     '    if old_turn.get("uuid") == turn["uuid"] and old_turn.get("session") == turn["session"]:',
-     "    if False:", "V-TOPUP-REPLAY-NOOP"),
-    ("T8 arm default off", "    if pivot and pivot_autonomy_on():\n", "    if False:\n", "V-ARM-PIVOT-DEFAULT"),
-)
-
-
-def drills() -> int:
-    import subprocess
-    here = Path(__file__).resolve().parent
-    src = (here / "gsd_mission.py").read_text(encoding="utf-8")
-    ok = 0
-    for name, needle, repl, gate in DRILLS:
-        if needle not in src:
-            print(f"DRILL-FAIL {name}: needle absent from tools/gsd_mission.py")
-            continue
-        with tempfile.TemporaryDirectory() as td:
-            (Path(td) / "gsd_mission.py").write_text(src.replace(needle, repl, 1), encoding="utf-8")
-            r = subprocess.run([sys.executable, "-B", str(Path(__file__).resolve())], capture_output=True, text=True,
-                               env={**os.environ, "GSD_MISSION_DRILL_DIR": td}, timeout=300)
-        red = f"FAIL {gate}" in r.stdout
-        print(f"{'DRILL-PASS' if red else 'DRILL-FAIL'} {name}: expected 'FAIL {gate}' -> {'seen' if red else 'NOT seen'}")
-        ok += int(red)
-    print(f"TOPUP_DRILLS_PASS={ok}/{len(DRILLS)}")
-    return 0 if ok == len(DRILLS) else 1
-
-
 if __name__ == "__main__":
-    sys.exit(drills() if "--drills" in sys.argv[1:] else main())
+    sys.exit(main())

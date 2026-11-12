@@ -38,6 +38,9 @@ from pathlib import Path
 
 STAGES = {
     "mission": ("gsd_mission.py", ["supervise", "--actions-only"], "CPP_SWEEP_MISSION_TIMEOUT_S", 600),
+    # spec mission-auto-topup, parity with gsd_long_run_sweep.ps1 (mission -> topup -> v2). Measured 2026-11-12: the
+    # GEX44 port had no topup stage, so a pre-authorised step was never granted there (S30T m-2e14179c5b6a).
+    "topup": ("mission_topup.py", ["sweep"], "CPP_SWEEP_TOPUP_TIMEOUT_S", 120),
     "v2": ("gsd_long_run.py", ["sweep"], "CPP_SWEEP_V2_TIMEOUT_S", 240),
 }
 
@@ -112,7 +115,7 @@ def _log(log: Path, prefix: str, text: str) -> None:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--stages", default="mission,v2",
+    ap.add_argument("--stages", default="mission,topup,v2",
                     help="comma list, run in order; mission must come first when present")
     a = ap.parse_args(argv)
     stages = [s for s in a.stages.split(",") if s]
