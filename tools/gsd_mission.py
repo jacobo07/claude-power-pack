@@ -3244,8 +3244,16 @@ def _blocked_after_checkpoint(rec: dict, hold: dict, sessions, now: float) -> bo
 # (`pivot-autonomy --on`), a METHOD_PIVOT_REQUIRED / NEXT_PLAN_REQUIRED checkpoint that names its residual is turned
 # into a directive and the relay continues -- unless the reason is an Owner class (mission_policy.gate_question, which
 # carries TRUTH_CONTRACT since A1) or the streak cap is reached. Missions without the flag keep the park unchanged.
-PIVOT_STATES = ("METHOD_PIVOT_REQUIRED", "NEXT_PLAN_REQUIRED")
+# spec mission-checkpoint-autonomy C1 (measured 2026-11-12, S30T m-2e14179c5b6a parked 10.8 h): CHECKPOINT_COMPLETE is
+# "the wave's obligations are closed and the Goal is not" -- the same next step as NEXT_PLAN_REQUIRED, so an opted-in
+# mission pivots on it too. Every guard in pivot_decision (authority net, streak caps, kill switch) still runs first.
+PIVOT_STATES = ("METHOD_PIVOT_REQUIRED", "NEXT_PLAN_REQUIRED", "CHECKPOINT_COMPLETE")
 PIVOT_MAX_STREAK = 3
+
+
+def _pivot_residual(hold: dict) -> str | None:
+    """The pivot's input: the declared residual, else the checkpoint's own evidence (C1). Neither = None (park)."""
+    return hold.get("residual") or hold.get("evidence") or None
 
 
 def pivot_autonomy_on() -> bool:
@@ -3328,8 +3336,8 @@ def pivot_decision(rec: dict, hold: dict) -> dict:
     if objs:
         why = "authority object(s) " + ", ".join(str(o) for o in objs)
         return {"action": "owner", "why": why, "owner_question": _owner_question(hold, r, why, objs)}
-    if not hold.get("residual"):
-        return {"action": "park", "why": "no residual declared (checkpoint --residual)"}
+    if not _pivot_residual(hold):
+        return {"action": "park", "why": "no residual declared (checkpoint --residual or --evidence)"}
     streak = 0 if hold.get("gain") else int(rec.get("pivot_streak") or 0)
     if not r:
         if streak >= PIVOT_MAX_STREAK:
@@ -3363,7 +3371,7 @@ def pivot_decision(rec: dict, hold: dict) -> dict:
 
 def _pivot_directive(hold: dict, streak: int) -> str:
     return (f"AUTO METHOD PIVOT {streak}/{PIVOT_MAX_STREAK} (Owner-approved pivot autonomy). The previous worker "
-            f"declared {hold.get('reason')}. Residual: {hold.get('residual')}. Read it and the method graph, mark the "
+            f"declared {hold.get('reason')}. Residual: {_pivot_residual(hold)}. Read it and the method graph, mark the "
             "falsified route, choose the next evidence-supported route inside the approved plan, truth contract and "
             "budget, and run it shadow then canary. If that route needs a truth-contract, held-out, capital or scope "
             "change, declare a checkpoint naming that question instead (it reaches the Owner). Pass --gain to the "
@@ -3382,7 +3390,7 @@ def pivot_gate(rec: dict, now: float, sessions=None, pid_alive=lr._pid_alive) ->
     mid = rec["mission_id"]
     d = pivot_decision(rec, hold)
     lr.ledger_append(mid, f"pivot_{d['action']}", mission_id=mid, checkpoint=hold.get("checkpoint"), why=d["why"],
-                     streak=d.get("streak"), residual=hold.get("residual"))
+                     streak=d.get("streak"), residual=_pivot_residual(hold))
     if d["action"] != "pivot":
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event=f"pivot_{d['action']}",
                           now=now, touch=False, owner_hold={**hold, "pivot": d})
@@ -3550,6 +3558,111 @@ def set_authority(mission_id: str, tokens=None, extend_hours: float | None = Non
     return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=expected_seq,
                       event="authority_set", now=now, reason=f"authority: {fields} ({reason[:200]})",
                       authority_receipts=(receipts + [entry])[-20:], ledger_extra={"receipt": entry}, **fields)
+
+
+# --------------------------------------------------------------------------- spec mission-checkpoint-autonomy C2
+# Measured 2026-11-12 (S30T m-2e14179c5b6a): the arm granted "20M + 2x4M top-ups" as text only, so nothing could spend
+# them and the next wave would have parked for the Owner at 1.35M room. A top-up is now a typed Owner grant
+# (`authority --topups N --topup-size S --owner-turn ...`) that the sweep spends one at a time, only before a breaker trips.
+TOPUP_TRIGGER_TOKENS = 3_000_000   # ~one measured epoch (same figure as PIVOT_LEASE_MIN_TOKENS)
+
+
+def topup_on() -> bool:
+    """Kill switch CPP_MISSION_TOPUP=off: pre-authorized top-ups are recorded but never spent."""
+    return (os.environ.get("CPP_MISSION_TOPUP") or "").strip().lower() not in ("0", "off", "false")
+
+
+def set_topups(mission_id: str, count: int, size, owner_turn: str | None, finder=None,
+               now: float | None = None) -> dict:
+    """Record N pre-authorized top-ups of `size` tokens. Capital: always needs a verified Owner turn."""
+    if not owner_turn:
+        raise MissionError("refused: top-ups are capital; give --owner-turn <session>:<timestamp>")
+    if int(count) < 0:
+        raise MissionError("refused: --topups must be >= 0")
+    turn = verify_owner_turn(owner_turn, finder)
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    size_n = _token_count("topup", size)
+    old = rec.get("topups") or {}
+    old_turn = old.get("owner_turn") or {}
+    if old_turn.get("uuid") == turn["uuid"] and old_turn.get("session") == turn["session"]:
+        # Review 2026-11-12 (HIGH): one Owner turn grants ONCE. Re-running it (a retry) must not reset `left` after
+        # the sweep spent some, or the same message would buy the capital again.
+        if int(old.get("granted") or 0) == int(count) and int(old.get("size") or 0) == size_n:
+            lr.ledger_append(mission_id, "topups_replay_noop", mission_id=mission_id, owner_turn=turn["uuid"])
+            return rec
+        raise MissionError(f"owner turn {owner_turn!r} already granted {old.get('granted')} x {old.get('size'):,} "
+                           f"top-ups on {mission_id}; a different grant needs a new Owner turn")
+    topups = {"left": int(count), "granted": int(count), "size": size_n, "owner_turn": turn,
+              "granted_at": time.time() if now is None else now}
+    return transition(mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="topups_set", now=now,
+                      touch=False, topups=topups, reason=f"topups: {count} x {topups['size']:,}")
+
+
+def _topup_due(rec: dict, measure=None) -> tuple[bool, str, dict]:
+    import mission_spend as ms
+    t = rec.get("topups") or {}
+    hold = rec.get("owner_hold")
+    if rec.get("state") in TERMINAL or int(t.get("left") or 0) <= 0 or not rec.get("authority_tokens"):
+        return False, "no top-up applicable", {}
+    if hold and hold.get("kind") not in WAIT_HOLD_KINDS:
+        return False, f"under a {hold.get('kind') or 'owner'} hold: the Owner path wins", {}
+    try:
+        spent = (measure or ms.processed_tokens)(rec)
+    except Exception as exc:  # noqa: BLE001 -- unmeasured never spends capital
+        return False, f"spend unmeasurable: {type(exc).__name__}", {}
+    if spent is None:
+        return False, "spend unmeasurable", {}
+    room = int(rec["authority_tokens"]) - int(ms.closeout_reserve(rec) or 0) - int(spent)
+    if room >= TOPUP_TRIGGER_TOKENS:
+        return False, f"room {room:,} >= trigger", {"spent": spent, "room": room}
+    return True, f"room {room:,} < {TOPUP_TRIGGER_TOKENS:,}", {"spent": spent, "room": room}
+
+
+def apply_topup(rec: dict, now: float, measure=None, notifier=None) -> dict | None:
+    """Spend ONE pre-authorized top-up when due. Returns the row it acted on, or None."""
+    due, why, m = _topup_due(rec, measure)
+    if not due:
+        return None
+    mid = rec["mission_id"]
+    t = dict(rec["topups"])
+    n = int(t.get("used") or 0) + 1
+    new = int(rec["authority_tokens"]) + int(t["size"])
+    entry = {"at": now, "prev": rec["authority_tokens"], "new": new, "extend_hours": None,
+             "owner_turn": t.get("owner_turn"), "actor": "sweep:topup", "expected_seq": rec.get("seq"),
+             "seq_before": rec.get("seq"), "spent_at_set": m["spent"], "recognize_overrun": False,
+             "stage": ((rec.get("authority_receipts") or [{}])[-1]).get("stage"), "stage_opened": False, "topup": n}
+    t.update(left=int(t["left"]) - 1, used=n)
+    transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], expect_seq=rec.get("seq"),
+               event="topup_applied", now=now, touch=False, authority_tokens=new, topups=t,
+               authority_receipts=(list(rec.get("authority_receipts") or []) + [entry])[-20:],
+               ledger_extra={"receipt": entry}, reason=f"pre-authorized top-up {n}: {why}; authority {new:,}")
+    msg = (f"{mid}: pre-authorized top-up {n} applied ({why}); authority now {new:,}, {t['left']} left")
+    try:
+        import mission_remedies as mrem
+        (notifier or mrem.notify_incident)(mid, f"topup:{mid}:{n}", msg)
+    except Exception:  # noqa: BLE001 -- a notice never undoes the grant the Owner already made
+        pass
+    return {"mission_id": mid, "action": "topup_applied", "topup": n, "authority": new, "left": t["left"],
+            "room_before": m["room"]}
+
+
+def topup_pass(now: float | None = None, measure=None, notifier=None) -> list[dict]:
+    """One step of supervise (never in a dry run). Never raises: an error is a row."""
+    if not topup_on():
+        return []
+    now = time.time() if now is None else now
+    rows = []
+    for rec in all_missions():
+        try:
+            r = apply_topup(rec, now, measure, notifier)
+        except Exception as exc:  # noqa: BLE001
+            r = {"mission_id": rec.get("mission_id"), "action": "topup", "status": "ERROR",
+                 "error": f"{type(exc).__name__}: {exc}"[:300]}
+        if r:
+            rows.append(r)
+    return rows
 
 
 def _amr_transcript(rec: dict, sid: str | None) -> Path | None:
@@ -7236,7 +7349,7 @@ def batch_foreseeable_decisions(rec: dict, cwd: str, workstream: str | None) -> 
 
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
         authority: str | None = None, parallel_unit: str | None = None, goal: str | None = None,
-        milestone_from: str | None = None, preflighted: bool = False, **kw) -> dict:
+        milestone_from: str | None = None, preflighted: bool = False, pivot: bool = True, **kw) -> dict:
     ws = kw.get("workstream")
     if ws is None and resume_command.startswith("/gsd-"):
         m = _WS_FLAG.search(resume_command)
@@ -7310,6 +7423,10 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         transition(supersedes, expect_epoch=old["epoch"], expect_state=old["state"],
                    event="mission_superseded", state=HALTED, pending=None,
                    reason=f"superseded by {rec['mission_id']}: {authority.strip()[:300]}")
+    if pivot and pivot_autonomy_on():
+        # spec mission-checkpoint-autonomy C3: on before the first launch, so the first worker's card teaches the
+        # typed checkpoint. `--no-pivot` keeps the park-for-Owner behaviour (S30T parked 10.8 h without it).
+        rec = set_pivot_autonomy(rec["mission_id"], True)
     if not launch:
         return {"mission": rec}
     # The origin is the tree BEFORE epoch 1 works (review F6): measured here, at arm, it makes
@@ -7548,6 +7665,12 @@ def supervise(*args, **kw) -> list[dict]:
             rows = rows + mar.autoresume_pass()
         except Exception as exc:  # noqa: BLE001
             rows = rows + [{"mission_id": "autoresume", "action": "autoresume", "status": "ERROR",
+                            "error": f"{type(exc).__name__}: {exc}"[:300]}]
+        try:
+            # spec mission-checkpoint-autonomy C2: spend one pre-authorized top-up before a breaker would trip.
+            rows = rows + topup_pass()
+        except Exception as exc:  # noqa: BLE001
+            rows = rows + [{"mission_id": "topup", "action": "topup", "status": "ERROR",
                             "error": f"{type(exc).__name__}: {exc}"[:300]}]
         if before is not None:
             try:
@@ -8229,6 +8352,8 @@ def _cli(argv=None) -> int:
     a.add_argument("--parallel-unit", help="a named work unit that may run beside other named units "
                                            "of the same goal")
     a.add_argument("--goal", help="bind the worker's session to this goal at launch (launcher binding record)")
+    a.add_argument("--no-pivot", action="store_true",
+                   help="leave method-pivot autonomy off: every checkpoint parks for the Owner (pre-2026-11-12 default)")
     ac =sub.add_parser("arm-chain", help="atomic arm: --no-launch + envelope + admit; hold on any failure")
     ac.add_argument("--cwd", required=True)
     ac.add_argument("--command", required=True)
@@ -8339,6 +8464,9 @@ def _cli(argv=None) -> int:
     au.add_argument("--recognize-overrun", action="store_true",
                     help="admit a ceiling at or below live spend (recognises spend already made)")
     au.add_argument("--stage", help="named programme stage; opening a different stage needs --owner-turn")
+    au.add_argument("--topups", type=int, help="number of pre-authorized top-ups the sweep may spend, one at a time, "
+                                                "when room after the reserve falls below 3M (spec mission-checkpoint-autonomy)")
+    au.add_argument("--topup-size", help="tokens per top-up, e.g. 4M (required with --topups)")
     pr = sub.add_parser("protocol", help="set the rollover protocol on an existing mission "
                                          "(held or owner-less only; same permission-mode rule as arm)")
     pr.add_argument("--mission", required=True)
@@ -8397,7 +8525,7 @@ def _cli(argv=None) -> int:
                   permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
                   add_dirs=args.add_dir, wall=wall, rollover_protocol=args.rollover_protocol,
                   supersedes=args.supersedes, authority=args.authority, parallel_unit=args.parallel_unit,
-                  goal=args.goal, milestone_from=args.milestone_from)
+                  goal=args.goal, milestone_from=args.milestone_from, pivot=not args.no_pivot)
         mid = (res.get("mission") or res).get("mission_id")
         if mid:
             lr.ledger_append(mid, "planning_gate", mission_id=mid, gate=adm["gate"], override=adm.get("override"),
@@ -8518,18 +8646,27 @@ def _cli(argv=None) -> int:
             print("AUTHORITY REFUSED: --owner-turn <session>:<timestamp> is required (the Owner's own message "
                   "authorizing this act; it is verified in that session's transcript)", file=sys.stderr)
             return 2
+        if args.topups is not None and not args.topup_size:
+            print("AUTHORITY REFUSED: --topups needs --topup-size (e.g. 4M)", file=sys.stderr)
+            return 2
         try:
-            rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason,
-                                owner_turn=args.owner_turn, expected_seq=args.expected_seq,
-                                actor=args.actor or os.environ.get("CLAUDE_CODE_SESSION_ID"),
-                                recognize_overrun=args.recognize_overrun, stage=args.stage)
+            if args.tokens is not None or args.extend_hours or args.topups is None:
+                rec = set_authority(args.mission, args.tokens, args.extend_hours, reason=args.reason,
+                                    owner_turn=args.owner_turn, expected_seq=args.expected_seq,
+                                    actor=args.actor or os.environ.get("CLAUDE_CODE_SESSION_ID"),
+                                    recognize_overrun=args.recognize_overrun, stage=args.stage)
+                last = (rec.get("authority_receipts") or [{}])[-1]
+                print(f"AUTHORITY SET mission={rec['mission_id']} authority_tokens={rec.get('authority_tokens')} "
+                      f"max_hours={rec.get('max_hours')} owner_turn={(last.get('owner_turn') or {}).get('uuid')} "
+                      f"spent_at_set={last.get('spent_at_set')} stage={last.get('stage')}")
+            if args.topups is not None:
+                rec = set_topups(args.mission, args.topups, args.topup_size, args.owner_turn)
+                t = rec.get("topups") or {}
+                print(f"TOPUPS SET mission={rec['mission_id']} left={t.get('left')} size={t.get('size')} "
+                      f"owner_turn={(t.get('owner_turn') or {}).get('uuid')}")
         except MissionError as exc:
             print(f"AUTHORITY REFUSED: {exc}", file=sys.stderr)
             return 3
-        last = (rec.get("authority_receipts") or [{}])[-1]
-        print(f"AUTHORITY SET mission={rec['mission_id']} authority_tokens={rec.get('authority_tokens')} "
-              f"max_hours={rec.get('max_hours')} owner_turn={(last.get('owner_turn') or {}).get('uuid')} "
-              f"spent_at_set={last.get('spent_at_set')} stage={last.get('stage')}")
         return 0
     if args.cmd == "bind":
         rec = bind_mission(args.mission, args.path, args.cause)

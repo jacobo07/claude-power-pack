@@ -11,7 +11,8 @@ MA-PR replays, hermetic (state in a temp dir before import, host rows injected, 
   MA-PR4      the sd8 truth-contract question as the checkpoint reason -> stays parked, owner boundary recorded
   MA-PR5      a HOW-only reason pivots; the same mission without opt-in keeps today's park (control)
 Paired controls: no residual parks; streak cap parks; --gain resets the streak; a busy worker is never pivoted;
-CHECKPOINT_COMPLETE never pivots; kill switch CPP_PIVOT_AUTONOMY=off restores the park.
+CHECKPOINT_COMPLETE pivots on an opted-in mission (evidence stands in for a residual; spec mission-checkpoint-autonomy,
+2026-11-12; before that it always parked); kill switch CPP_PIVOT_AUTONOMY=off restores the park.
 """
 from __future__ import annotations
 
@@ -101,11 +102,32 @@ def main() -> int:
     n = _gate("m-nores")
     check("V-PIVOT-NEEDS-RESIDUAL", (n.get("owner_hold") or {}).get("pivot", {}).get("action") == "park",
           str((n.get("owner_hold") or {}).get("pivot")))
+    # spec mission-checkpoint-autonomy C1 (replaces V-PIVOT-COMPLETE-NEVER, 2026-11-12): CHECKPOINT_COMPLETE = wave
+    # closed, Goal open -> an opted-in mission pivots on it; its --evidence stands in for a missing --residual.
     _mission("m-done", True)
-    gm.set_checkpoint("m-done", "CHECKPOINT_COMPLETE", "ready for H2 preflight", residual="r.md", now=NOW)
+    gm.set_checkpoint("m-done", "CHECKPOINT_COMPLETE", "S30T: P1 REFUTED (verified), 0 certificates",
+                      evidence="t1 4639befc", now=NOW)
     c = _gate("m-done")
-    check("V-PIVOT-COMPLETE-NEVER", (c.get("owner_hold") or {}).get("kind") == gm.CHECKPOINT_KIND
-          and (c.get("owner_hold") or {}).get("pivot", {}).get("action") == "park", str((c.get("owner_hold") or {}).get("pivot")))
+    check("V-PIV-CC-PIVOTS", c.get("owner_hold") is None and c.get("pivot_streak") == 1
+          and any("AUTO METHOD PIVOT 1/" in d and "t1 4639befc" in d for d in c.get("directives") or []),
+          f"hold={c.get('owner_hold')} dirs={str(c.get('directives'))[-160:]}")
+    _mission("m-done-bare", True)
+    gm.set_checkpoint("m-done-bare", "CHECKPOINT_COMPLETE", "wave closed", now=NOW)
+    cb = _gate("m-done-bare")
+    check("V-PIV-CC-NO-RESIDUAL", ((cb.get("owner_hold") or {}).get("pivot") or {}).get("action") == "park",
+          str((cb.get("owner_hold") or {}).get("pivot")))
+    _mission("m-done-own", True)
+    gm.set_checkpoint("m-done-own", "CHECKPOINT_COMPLETE", "wave closed", evidence="e.md", now=NOW,
+                      receipt={"failure_class": "METHOD_PLATEAU", "method_class": "type-model", "evidence_delta": False,
+                               "authority_objects": ["CERTIFICATION_RULE"]})
+    co = _gate("m-done-own")
+    check("V-PIV-CC-OWNER", ((co.get("owner_hold") or {}).get("pivot") or {}).get("action") == "owner"
+          and not co.get("directives"), str((co.get("owner_hold") or {}).get("pivot"))[:200])
+    _mission("m-done-off", False)
+    gm.set_checkpoint("m-done-off", "CHECKPOINT_COMPLETE", "wave closed", evidence="e.md", now=NOW)
+    cf = _gate("m-done-off")
+    check("V-PIV-CC-OPTOUT", (cf.get("owner_hold") or {}).get("kind") == gm.CHECKPOINT_KIND
+          and "pivot" not in (cf.get("owner_hold") or {}) and not cf.get("directives"), str(cf.get("owner_hold"))[:200])
     _mission("m-busy", True)
     gm.set_checkpoint("m-busy", "METHOD_PIVOT_REQUIRED", S10B, residual="r.md", now=NOW)
     b = _gate("m-busy", status="busy")
@@ -303,6 +325,11 @@ DRILLS = (
      "V-PIVOT-CARD-TEACHES-RECEIPT"),
     ("D15 receipt validation bypassed", "        receipt = validate_receipt(receipt)\n", "        receipt = receipt\n",
      "V-PIVOT-RECEIPT-INVALID-REFUSED"),
+    ("D16 CHECKPOINT_COMPLETE dropped from pivot states",
+     'PIVOT_STATES = ("METHOD_PIVOT_REQUIRED", "NEXT_PLAN_REQUIRED", "CHECKPOINT_COMPLETE")',
+     'PIVOT_STATES = ("METHOD_PIVOT_REQUIRED", "NEXT_PLAN_REQUIRED")', "V-PIV-CC-PIVOTS"),
+    ("D17 evidence fallback removed", 'return hold.get("residual") or hold.get("evidence") or None',
+     'return hold.get("residual") or None', "V-PIV-CC-PIVOTS"),
 )
 
 
