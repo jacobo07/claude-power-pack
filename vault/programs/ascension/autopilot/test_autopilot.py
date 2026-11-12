@@ -528,6 +528,19 @@ def run_all(ap):
     st_rep = {"lanes": {"L": ls}}
     ls, q = evo_run(st_rep, ["NONE"], ["ctl_pool"])
     check("V-EVO-REPAIR-CAP-PARKS", ls["status"] == "PARKED" and "repair cap" in q)
+    # S31T -> S33T (2026-11-12): the judge's instrument names embed the measurement; a repeat failure with another n
+    # must count against the SAME instrument, and two names of one instrument in one judgment are one failure
+    st_k = evo_fresh([LA, LR], {"lever": "lev_a"}, (REP,))
+    for n in ("2", "12", "5"):
+        ls, q = evo_run(st_k, ["NONE"], [f"H-X1 control pool (frozen rule, n={n}<22)"])
+    check("V-EVO-REPAIR-KEY-IGNORES-MEASUREMENT", ls["status"] == "PARKED" and "repair cap" in q and "H-X1" in q)
+    ls, q = evo_run(evo_fresh([LA, LR], {"lever": "lev_a"}, (REP,)), ["NONE"],
+                    ["H-X1 control pool (n=2<22)", "H-X1 negative row (INSTRUMENT_FAIL)"])
+    check("V-EVO-REPAIR-ONE-COUNT-PER-JUDGMENT", ls.get("repair") == {"H-X1": 1} and ls.get("mode") == "REPAIR")
+    ls, q = evo_run(evo_fresh([LA, LR], {"lever": "lev_a", "repair": {"H-X1 control pool (n=2<22)": 1,
+                                                                     "H-X1 negative row (INSTRUMENT_FAIL)": 1}}, (REP,)),
+                    ["NONE"], ["H-X1 control pool (n=12<22)"])
+    check("V-EVO-REPAIR-LEGACY-KEYS-FOLD", ls.get("repair") == {"H-X1": 2})
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH", "info_streak": 1}), ["CERT"])
     check("V-EVO-CERT-RETURNS-TO-EXPLOIT", ls["status"] == "RUNNING" and ls.get("mode") == "EXPLOIT")
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,
@@ -699,6 +712,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_no_packet_check": _evo_mut(packet_problems=lambda *a, **k: []),
          "evo_research_never_stops": _evo_mut(RESEARCH_FAIL_STOP=99),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
+         "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),
          "evo_pivot_rule_bypassed": _evo_mut(_pivot=lambda *a, **k: {"action": "pivot", "streak": 1, "why": "bypass"}),
          "evo_budget_resume_always": _evo_mut(budget_resume=lambda ls, why: ls.get("status") == "PARKED"),
          "evo_budget_never_resumes": _evo_mut(budget_resume=lambda ls, why: False),

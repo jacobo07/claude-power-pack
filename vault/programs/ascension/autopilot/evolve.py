@@ -16,10 +16,27 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 
 MAX_REPAIR = 2               # attempts per instrument; the next failure parks the lane with the instrument named
+_HYP_ID = re.compile(r"^(H-[A-Za-z0-9]+)\b")
+_MEASURED = re.compile(r"\s*\([^)]*\)")
+
+
+def instrument_key(name: str) -> str:
+    """The identity a repair is counted under. The judge's instrument names embed measurements ("... (frozen rule,
+    n=2<22)"), so a repeat failure with another n was a NEW key and MAX_REPAIR never tripped (S31T -> S33T, 2026-11-12).
+    A leading hypothesis id (H-T1a) is the identity; otherwise the name without parenthesised parts, case-folded
+    (or the whole name case-folded when nothing is left, so "(n=2)" and "(x)" never share one empty key)."""
+    s = " ".join(str(name).split())
+    m = _HYP_ID.match(s)
+    if m:
+        return m.group(1)
+    return " ".join(_MEASURED.sub("", s).split()).lower() or s.lower()
+
+
 RESEARCH_FAIL_STOP = 2       # consecutive research generations without verified INFORMATION/CAPABILITY park the lane
 RESEARCH_GEN_CAP = 10_000_000
 RESEARCH_LANE_CAP = 40_000_000
@@ -181,11 +198,18 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
         zero = [h for h in hist if h["lever"] == cur["id"] and h["cls"] == "NONE"]
         if len(zero) >= 2 and cur["id"] not in ls.setdefault("retired", []):
             ls["retired"].append(cur["id"])
-    for name in instruments:
-        rep = ls.setdefault("repair", {})
-        rep[name] = int(rep.get(name, 0)) + 1
-        if rep[name] > MAX_REPAIR:
-            return {"action": "park", "why": f"instrument {name} failed its positive control {rep[name]} times "
+    # one count per instrument per judgment; legacy free-text keys fold onto their identity (max, not sum: the old
+    # code wrote one key per name, and two names of one instrument in one judgment were one failure)
+    rep: dict = {}
+    for k, v in (ls.get("repair") or {}).items():
+        kk = instrument_key(k)
+        rep[kk] = max(rep.get(kk, 0), int(v))
+    if instruments or ls.get("repair") is not None:
+        ls["repair"] = rep
+    for key in dict.fromkeys(instrument_key(n) for n in instruments):
+        rep[key] = rep.get(key, 0) + 1
+        if rep[key] > MAX_REPAIR:
+            return {"action": "park", "why": f"instrument {key} failed its positive control {rep[key]} times "
                                              f"(repair cap {MAX_REPAIR}); a new instrument needs a new idea"}
     if cls == "CERT":
         ls.update(mode="EXPLOIT", blank=0, info_streak=0, no_conversion=0, research_fail=0, pivot_streak=0)
