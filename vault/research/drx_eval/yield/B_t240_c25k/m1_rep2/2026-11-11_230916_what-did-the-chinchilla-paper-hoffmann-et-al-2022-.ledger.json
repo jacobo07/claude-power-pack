@@ -1,0 +1,743 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_223324_what-did-the-chinchilla-paper-hoffmann-et-al-2022-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/abs/2203.15556",
+   "aliases": [],
+   "sha256": "a39e5fd79dbc3fc788b5dd4ded1ab672947900db55cd89f6a5bdec83f26b85a2",
+   "chars": 3367,
+   "snapshot": "a39e5fd79dbc3fc788b5dd4ded1ab672947900db55cd89f6a5bdec83f26b85a2.txt",
+   "retrieved_at": "2026-11-11T21:37:28+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://ai.towerofrecords.com/ai/chinchilla-scaling",
+   "aliases": [],
+   "sha256": "0262dc310dd979429a646ace01971134850fb8c2aed1a164dc76e5ff19058e2b",
+   "chars": 5286,
+   "snapshot": "0262dc310dd979429a646ace01971134850fb8c2aed1a164dc76e5ff19058e2b.txt",
+   "retrieved_at": "2026-11-11T21:37:28+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://proceedings.neurips.cc/paper_files/paper/2022/file/c1e2faff6f588870935f114ebe04a3e5-Paper-Conference.pdf",
+   "aliases": [],
+   "sha256": "61b6b4c049adadb3b685bc724b2b83aa82dd586a6e2d7c04c124fcfeed9851f6",
+   "chars": 2536,
+   "snapshot": "61b6b4c049adadb3b685bc724b2b83aa82dd586a6e2d7c04c124fcfeed9851f6.txt",
+   "retrieved_at": "2026-11-11T21:37:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://www.educatingsilicon.com/2024/04/29/revised-chinchilla-scaling-laws-impact-on-llm-compute-and-token-requirements/",
+   "aliases": [],
+   "sha256": "67b6043af69f0c6e697302e5eea85caff0cb854468dc42b9f97046a389fe7653",
+   "chars": 5815,
+   "snapshot": "67b6043af69f0c6e697302e5eea85caff0cb854468dc42b9f97046a389fe7653.txt",
+   "retrieved_at": "2026-11-11T21:37:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://www.emergentmind.com/topics/chinchilla-scaling-law",
+   "aliases": [],
+   "sha256": "c0fae820ac83252f936a367ba5f06edf6619facaa834514e74ccb15c1e5f26c2",
+   "chars": 11031,
+   "snapshot": "c0fae820ac83252f936a367ba5f06edf6619facaa834514e74ccb15c1e5f26c2.txt",
+   "retrieved_at": "2026-11-11T21:47:23+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://en.wikipedia.org/wiki/Neural_scaling_law",
+   "aliases": [],
+   "sha256": "c6359ffd27e9c538920f93591a182a0b208c688de8f1f233f11753e1d0efb9bc",
+   "chars": 25000,
+   "snapshot": "c6359ffd27e9c538920f93591a182a0b208c688de8f1f233f11753e1d0efb9bc.txt",
+   "retrieved_at": "2026-11-11T21:47:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.emergentmind.com/topics/tokens-per-parameter-tpp",
+   "aliases": [],
+   "sha256": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570",
+   "chars": 10744,
+   "snapshot": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570.txt",
+   "retrieved_at": "2026-11-11T21:47:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://www.geeksforgeeks.org/artificial-intelligence/chinchilla-scaling-laws/",
+   "aliases": [],
+   "sha256": "86b105aeec91daec1b892c2a9fc814f4d670c9a6d064ec6f040326122d365cab",
+   "chars": 5462,
+   "snapshot": "86b105aeec91daec1b892c2a9fc814f4d670c9a6d064ec6f040326122d365cab.txt",
+   "retrieved_at": "2026-11-11T21:47:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://arxiv.org/html/2401.00448",
+   "aliases": [],
+   "sha256": "fba194384ef77246ab34c2450d6d98a00f66badbbf79403684697ce6d2850557",
+   "chars": 25000,
+   "snapshot": "fba194384ef77246ab34c2450d6d98a00f66badbbf79403684697ce6d2850557.txt",
+   "retrieved_at": "2026-11-11T21:51:59+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://arxiv.org/abs/2401.00448",
+   "aliases": [],
+   "sha256": "8a441cda80393afd6fe97eb6d18aaf53cd002c34891a8113b882bea80f5b9826",
+   "chars": 3719,
+   "snapshot": "8a441cda80393afd6fe97eb6d18aaf53cd002c34891a8113b882bea80f5b9826.txt",
+   "retrieved_at": "2026-11-11T21:51:59+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://arxiv.org/html/2601.22362v1",
+   "aliases": [],
+   "sha256": "d58747ae6dc597e0b70e99c597aee6e14f7f8a4a2f612d008d2408435988b430",
+   "chars": 25000,
+   "snapshot": "d58747ae6dc597e0b70e99c597aee6e14f7f8a4a2f612d008d2408435988b430.txt",
+   "retrieved_at": "2026-11-11T21:56:39+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/",
+   "aliases": [],
+   "sha256": "a83b0cc614f7d72b1a942a3e667b548a3f5409ed901cc5c9a6ec5cf64339d483",
+   "chars": 25000,
+   "snapshot": "a83b0cc614f7d72b1a942a3e667b548a3f5409ed901cc5c9a6ec5cf64339d483.txt",
+   "retrieved_at": "2026-11-11T21:56:39+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://ailearningguides.com/llm-inference-optimization-2026-serving-batching-kv-cache/",
+   "aliases": [],
+   "sha256": "db59a752fe0c6ecd28bbb731455982b7179e1ad9562b06016a9825ada0474871",
+   "chars": 25000,
+   "snapshot": "db59a752fe0c6ecd28bbb731455982b7179e1ad9562b06016a9825ada0474871.txt",
+   "retrieved_at": "2026-11-11T21:56:39+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [
+    "system-prompt-reference",
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://myengineeringpath.dev/genai-engineer/inference-optimization/",
+   "aliases": [],
+   "sha256": "114a4dfdb4bb6557713b917838d1a988277f830dd66068834830846036ce883c",
+   "chars": 25000,
+   "snapshot": "114a4dfdb4bb6557713b917838d1a988277f830dd66068834830846036ce883c.txt",
+   "retrieved_at": "2026-11-11T21:56:39+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [
+    "system-prompt-reference"
+   ],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://ehga.org/chinchilla-scaling-laws-the-compute-optimal-ratio-for-llm-training",
+   "aliases": [],
+   "sha256": "ff2a76f58ccd804e3b84a8cd4725c769d3613535b69bd5eeb0884ff0da5047ca",
+   "chars": 14596,
+   "snapshot": "ff2a76f58ccd804e3b84a8cd4725c769d3613535b69bd5eeb0884ff0da5047ca.txt",
+   "retrieved_at": "2026-11-11T21:58:31+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://arxiv.org/html/2404.10102v1",
+   "aliases": [],
+   "sha256": "cb26b5c70a3b385cea57802f4cfd52f162be07c252f4aefa989f3ed20bad5c7f",
+   "chars": 25000,
+   "snapshot": "cb26b5c70a3b385cea57802f4cfd52f162be07c252f4aefa989f3ed20bad5c7f.txt",
+   "retrieved_at": "2026-11-11T21:58:31+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://spawn08.github.io/llmbase/06_research_papers/11_chinchilla/",
+   "aliases": [],
+   "sha256": "b38411acfd5ad5826136f6524f90e84c183c9caf4417361231946f59c23af59c",
+   "chars": 11155,
+   "snapshot": "b38411acfd5ad5826136f6524f90e84c183c9caf4417361231946f59c23af59c.txt",
+   "retrieved_at": "2026-11-11T21:58:31+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 685,
+   "end": 889,
+   "text": "we find that for compute-optimal training, the model size and the number of training tokens should be scaled equally: for every doubling of model size the number of training tokens should also be doubled.",
+   "sha256": "2bd28c4f39e875ef96736d4582443c02b4ea18e5c164f713ac606acc8842dcfb"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S2",
+   "start": 2507,
+   "end": 2640,
+   "text": "Chinchilla achieves the best performance using the same compute as Gopher but with 4× fewer parameters and 4.7× more training tokens.",
+   "sha256": "be667bb98c3052ea1aa4e0bfc61c3c4d363c7522ae586778939ca038a46ad1d1"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S4",
+   "start": 3232,
+   "end": 3468,
+   "text": "Llama 3 8B goes further still, at 75x the tokens per parameter. These models require about 10x-15x the training compute, but only ~20% of the parameters (and thus get 5x inference performance) of the equivalent Chinchilla optimal model.",
+   "sha256": "2c013b4ed743c268e180d10b6a62e5dc26db30e226927f399b6b3c74dfe8e9d8"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S4",
+   "start": 2064,
+   "end": 2283,
+   "text": "The way to read this table is that, for example, if you limit your model to 50% of the parameters of the Chinchilla point model, it will achieve the same loss with 26% more training compute and 2.5x the training tokens.",
+   "sha256": "13a4a946365dc5f36b2e9857310cea986dae8519cbbf93b0f3e0ada67ebc2094"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S2",
+   "start": 385,
+   "end": 519,
+   "text": "Compute-optimal tokens per parameter | ~20 | tokens/parameter | Derived from 400+ training runs; N_opt and D_opt both scale as C^{0.5}",
+   "sha256": "e34813a1998bee553db0be01dde49b8e36bc44f6dd78710ef957359e48096adc"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S2",
+   "start": 2507,
+   "end": 2640,
+   "text": "Chinchilla achieves the best performance using the same compute as Gopher but with 4× fewer parameters and 4.7× more training tokens.",
+   "sha256": "be667bb98c3052ea1aa4e0bfc61c3c4d363c7522ae586778939ca038a46ad1d1"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S9",
+   "start": 11556,
+   "end": 12100,
+   "text": "For a 7B-Chinchilla-quality model with an inference demand of tokens, our formula suggests the compute-optimal method is to train a 6B parameter model on 1.18 the original (Chinchilla-prescribed) amount of data. For higher quality models (i.e. models that are larger and/or trained for longer), the volume of inference demand required to shift the scaling law increases: An LLM developer that expects a 30B-Chinchilla-quality model will see tokens during inference can reduce their total FLOPs by 28% by training a 13.6B model on 2.84 the data.",
+   "sha256": "3eefa207dd88b006f4e34c0e503ac0c2c97cb0dc878b3eec67ce5b21631fc91d"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S9",
+   "start": 22081,
+   "end": 22458,
+   "text": "First, we see that our parameteric curves follow a consistent trend—as we use more extreme data in our fitting procedure, our scaling curves become flatter. This trend suggests that if we only use data from typical token ratios to determine our scaling law coefficients, we will overestimate the impact of additional training data as we move towards the long-data-ratio regime.",
+   "sha256": "e97fd1707b0bfc693580a3ea7f87b21218e44329416abf0300dfc857863ff594"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S13",
+   "start": 2907,
+   "end": 3140,
+   "text": "The same model on the same hardware with a properly tuned vLLM deployment serves 30-40 concurrent users at sustained throughput of 3,000-5,000 tokens per second aggregate. That’s a 10-50x throughput improvement on identical hardware.",
+   "sha256": "14e9edb127b9a12b23ccb0b1fa426a28bf105006f2f4d5a7bab42af7f69d8199"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S13",
+   "start": 3141,
+   "end": 3296,
+   "text": "The per-token cost difference is proportional. A team that ships the naive version pays 10-50x more per token than a team that ships the optimized version.",
+   "sha256": "d02e7250b1fabaafc3ce4dd9b9ab25e1d2334b3cfc748cb477b5da88e1d523b0"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S14",
+   "start": 8556,
+   "end": 8763,
+   "text": "verifying N tokens in one forward pass costs roughly the same as generating 1 token, because the attention computation over existing context dominates the cost regardless of how many new tokens you evaluate.",
+   "sha256": "77a22b858202583c5585384ff79d704be82f77a4f4ec9e96a7754c0927ba1ded"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S16",
+   "start": 12787,
+   "end": 12869,
+   "text": "our 80% confidence interval is 50-fold wider than that reported by Hoffmann et al.",
+   "sha256": "16698b32d8cd9c39791efe48df65e65e01c14fe8ff01d90a6aabdb915f69236d"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S16",
+   "start": 17934,
+   "end": 18018,
+   "text": "our fitted model is consistent with a ratio of tokens to parameters between 4 and 40",
+   "sha256": "7b51fc99b1c323173acf149eb620f50a049203938d223c8b2fbcffc579f1a2a6"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S15",
+   "start": 7838,
+   "end": 8083,
+   "text": "In an MoE architecture, not all parameters are active for every token. Does the 20:1 ratio apply to total parameters or active parameters? Early evidence suggests it applies closer to active parameters, but this remains an area of active debate.",
+   "sha256": "aef5e18156774d355174a4c32991a7fff5dcc97d2e791cc2de4c1d8adee86c8f"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Hoffmann et al. trained 400+ language models and found that for compute-optimal training, model size and training tokens should be scaled equally at roughly 20 tokens per parameter. Chinchilla (70B parameters, 1.4 trillion tokens) outperformed Gopher (280B parameters) and other larger models on identical compute budgets, proving prior scaling practices that maximized parameters while limiting data were severely suboptimal.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S1",
+    "S2"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What specific numerical token-to-parameter ratios did Hoffmann et al. report as compute-optimal across different model sizes and training configurations?",
+    "capability": "Allocate compute between model parameters and training tokens using a quantified formula instead of defaulting to parameter maximization."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Training tokens can be increased 10x–75x beyond the standard 20-token Chinchilla point to create smaller, cheaper-to-deploy models with competitive capability. Llama 3 70B trained on 200 tokens per parameter achieves performance equivalent to a Chinchilla-optimal 260B model while costing 3.7x less to run inference; Llama 3 8B extends this further to 75x Chinchilla tokens, delivering 5x inference savings, enabling teams to trade training compute for dramatic deployment cost reduction.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "Meta's recent Llama3 70B model was trained with about 200 tokens per parameter, which is about 10x the Chinchilla point. Reading down the right column above, you can see that Llama 3 70B should theref",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What specific numerical token-to-parameter ratios did Hoffmann et al. report as compute-optimal across different model sizes and training configurations?",
+    "capability": "Design smaller, inference-efficient models by training them far beyond the compute-optimal point, with exact performance equivalences now quantified."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The original Chinchilla formula systematically underestimated training compute requirements for models below 100B parameters. A 2024 correction shows that a 50%-scale model requires 26% more training compute and 2.5× more tokens than the original formula projected—substantially higher than expected—affecting any team training in the 8B–70B range where every prior budget estimate becomes optimistic by over one quarter.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 100, 2024, 70",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "A new paper shows that the original Chinchilla scaling laws (from Hoffmann et al.) have a mistake in the key parameters. So below I've recalculated some scaling curves based on the corrected formulas.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What specific numerical token-to-parameter ratios did Hoffmann et al. report as compute-optimal across different model sizes and training configurations?",
+    "capability": "Correct training cost projections for smaller models using revised scaling formulas, avoiding systematic underestimation in the 8B–70B parameter range."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "For dense transformers trained for one epoch on language data, the optimal training token count scales linearly with model parameters at approximately 20 tokens per parameter. This ratio has proven empirically invariant across scales from billions to trillions of parameters, meaning you can calculate dataset requirements from any model size without iteration.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S5",
+     "quote": "In the original Chinchilla context, a ratio near 20 is optimal for large models, as supported by both direct estimation and replication efforts",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the optimal training token count scale linearly with model parameters—what fundamental property of neural networks makes the 20:1 ratio approximately invariant across different scales?",
+    "capability": "You can predict your dataset size requirement directly from desired model size, eliminating empirical search."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Prior scaling laws optimized for maximum parameters under fixed compute, creating undertrained large models. Chinchilla demonstrated that for identical compute budgets, a 70-billion-parameter model trained on 1.4 trillion tokens outperforms a 280-billion-parameter model trained on only 300 billion tokens, proving that token scarcity—not model size—is the efficiency bottleneck when the 20:1 ratio is violated.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 1.4, 20, 280, 300, 70",
+   "spans": [
+    "E6"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the optimal training token count scale linearly with model parameters—what fundamental property of neural networks makes the 20:1 ratio approximately invariant across different scales?",
+    "capability": "You can stop attributing model underperformance to architecture and diagnose whether you're under-training relative to your parameter count."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "The 20:1 ratio is not invariant across all task types and architectures. Memorization-heavy tasks are best served with lower token-to-parameter ratios (more parameters, less data), while reasoning tasks achieve peak accuracy at the canonical 20:1 ratio. Sparse models, inference-heavy deployments, and multi-epoch training scenarios require recalibration; applying the baseline ratio to non-standard workloads wastes compute.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S7",
+     "quote": "A key principle: memorization tasks benefit from lower TPP (more parameters per unit data), while reasoning tasks find maximal accuracy at a specific \"sweet spot\" of TPP, typically near 20. This non-m",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the optimal training token count scale linearly with model parameters—what fundamental property of neural networks makes the 20:1 ratio approximately invariant across different scales?",
+    "capability": "You must validate the 20:1 ratio for your specific workload before allocating compute, rather than assuming it applies universally."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "When you expect significant inference demand (approximately 1 billion requests), the optimal parameter-to-token allocation diverges sharply from Chinchilla: a 7B-parameter-quality model should instead be trained with 6B parameters on 1.18 times the originally-recommended data; a 30B-quality model should use 13.6B parameters trained on 2.84 times more data and saves 28 percent of total compute costs. This divergence exists because Chinchilla optimized only for training compute, ignoring the inference costs that can dominate total cost of ownership over a model's lifetime.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 28",
+   "spans": [
+    "E7"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which research papers published compute-optimal token-to-parameter ratios substantially different from Chinchilla's findings, and what experimental or architectural differences explained those divergences?",
+    "capability": "Stop planning model training based on Chinchilla-optimal parameter allocation and recalculate using your expected inference volume."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "The authors trained 47 models ranging from 150M to 6B parameters at extreme token-to-parameter ratios up to 10,000 and found model quality continued improving with no saturation point, empirically validating the inference-adjusted formula. This contradicts earlier theoretical claims that below a critical model size, additional training data could not recover quality; instead, smaller models trained substantially longer achieve quality parity with larger models.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S9",
+     "quote": "we train 47 models ranging from 150M to 6B parameters, on various data budgets from 10 to 10,000 tokens per parameter. We find that model quality continues to improve as we scale token ratios. We do n",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which research papers published compute-optimal token-to-parameter ratios substantially different from Chinchilla's findings, and what experimental or architectural differences explained those divergences?",
+    "capability": "Allocate additional compute budget to training tokens rather than model parameters when you expect heavy model serving load."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "The Chinchilla scaling law coefficients were fitted using data primarily from ~100 tokens-per-parameter runs—the training efficiency sweet spot. When the authors re-fitted the same parametric form using data including extreme ratios (500+ tokens per parameter), the coefficients changed significantly and the curves flattened, indicating Chinchilla systematically overestimates how much benefit additional training provides at high token ratios. Your scaling-law predictions are miscalibrated if your use case requires extended training.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which research papers published compute-optimal token-to-parameter ratios substantially different from Chinchilla's findings, and what experimental or architectural differences explained those divergences?",
+    "capability": "Recalibrate published scaling laws for your inference profile instead of applying generic recommendations directly."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Continuous batching and PagedAttention enable 10-50x throughput improvement on identical hardware. Concrete example: Llama-3.1-70B on a single H100 serves 30-40 concurrent users at 3,000-5,000 tokens/second sustained, versus 100-300 tokens/second with naive serving. This converts a binary 'buy another GPU or don't' decision into a marginal-cost calculation: you can now economically serve additional concurrent users by optimizing the batch without new hardware, as long as inference throughput remains your bottleneck.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 100, 3.1, 300, 70",
+   "spans": [
+    "E9",
+    "E10"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When you reduce the marginal cost of serving inference through infrastructure improvements like batching optimization or specialized hardware rather than just model size, does the optimal parameter-to-token allocation shift, and if so, by how much?",
+    "capability": "Stop treating GPU concurrency as a fixed capacity constraint and start modeling concurrent-user limits as an economics problem."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "INT8 quantization halves inference memory and cost with <1% quality loss; INT4 (AWQ) reduces cost 75% with 2-5% benchmark degradation, though task-specific evaluation shows <1% loss on non-reasoning tasks. Concrete: Llama 3 70B in FP16 costs $9,600/month (140GB across 2x A100), INT8 costs $4,800/month (70GB on 1x A100), INT4 also costs $4,800/month (35GB on 1x A100). This flips the traditional model-selection decision: instead of 'pick the smallest model meeting quality needs,' you can now afford to deploy a larger model at lower total cost by quantizing, whereas hardware constraints would previously have forced you to choose a smaller model.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S14",
+     "quote": "| Metric | FP16 (baseline) | INT8 | INT4 (AWQ) | GPU memory | 140GB (2x A100) | 70GB (1x A100) | 35GB (1x A100) | Throughput (tokens/sec) | 45 | 78 | 142 | Monthly cost (on-demand A100) | $9,600 (2 GP",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S14",
+     "quote": "INT8 is nearly free in quality terms and halves GPU cost immediately. INT4 (AWQ) triples throughput on the same GPU, but code generation tasks show meaningful degradation. For chat and summarization t",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When you reduce the marginal cost of serving inference through infrastructure improvements like batching optimization or specialized hardware rather than just model size, does the optimal parameter-to-token allocation shift, and if so, by how much?",
+    "capability": "Decouple model size from quality target and treat model size as a cost-optimization lever independent from output quality."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "Speculative decoding with a small draft model achieves 2-3x latency reduction with mathematically identical output quality (zero quality loss). Example: Llama 3 70B (target) + Llama 3 8B (draft) with 5 speculative tokens at 78% token acceptance rate reduces 512-token response latency from 11.4 seconds to 4.6 seconds. This eliminates the traditional cost penalty of latency requirements: previously, meeting tight latency SLOs required either batch-size reduction (degrading throughput efficiency) or reserved expensive capacity. Speculative decoding allows simultaneous optimization of both latency and throughput on the same serving stack.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 11.4, 4.6, 512, 70, 78%",
+   "spans": [
+    "E11"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S14",
+     "quote": "| Metric | Standard decoding | Speculative decoding | Tokens per second | 45 | 112 | Latency (512-token response) | 11.4s | 4.6s | Token acceptance rate | N/A | 78% | Output quality | Baseline | Ident",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [
+    {
+     "cited": "S13",
+     "found": "S14",
+     "quote": "verifying N tokens in one forward pass costs roughly the same as generating 1 token, because the attention computation over existing context dominates the cost regardless of how many new tokens you ev"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "When you reduce the marginal cost of serving inference through infrastructure improvements like batching optimization or specialized hardware rather than just model size, does the optimal parameter-to-token allocation shift, and if so, by how much?",
+    "capability": "Stop over-provisioning capacity for latency SLOs and treat latency-critical workloads as economically equivalent to throughput-optimized workloads."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "High-quality deduplicated data reaches compute-optimal training at approximately 15 tokens per parameter, compared to 20 tokens per parameter for mixed-quality web-scraped data. This means aggressive data curation yields equivalent model performance at lower total token volume, freeing compute budget for other initiatives.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S15",
+     "quote": "High-quality, deduplicated data may require fewer tokens per parameter (closer to 15:1). Curate aggressively; don't just dump raw web scrapes.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what model scales, architectures, or training conditions does the Chinchilla compute-optimal ratio stop reliably predicting efficient compute allocation?",
+    "capability": "You can reallocate spending from data volume scraping to quality curation, shifting the scaling optimum from 20:1 toward 15:1 and reducing data acquisition costs without sacrificing model performance."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "A 2026 replication of the original Chinchilla paper found the published confidence intervals are implausibly narrow—obtaining such tight intervals would require approximately 600,000 experiments, yet only 400-500 were likely conducted. The replication's corrected model yields a practical operating range of 4-40 tokens per parameter at standard compute scales, with 50× wider confidence intervals than originally reported.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 2026, 400, 500, 600000",
+   "spans": [
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what model scales, architectures, or training conditions does the Chinchilla compute-optimal ratio stop reliably predicting efficient compute allocation?",
+    "capability": "You can stop treating the 20:1 ratio as a precise allocation rule and instead plan with a 4-40 tokens-per-parameter operating range to account for measurement uncertainty in scaling decisions."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "In Mixture-of-Experts architectures, only a fraction of total parameters activate per token, which changes how the compute-optimal ratio applies. Early evidence suggests the 20:1 ratio should reference active parameters per token rather than total model size, though this remains an open research question, meaning MoE models may operate within identical budgets as smaller dense models.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S15"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what model scales, architectures, or training conditions does the Chinchilla compute-optimal ratio stop reliably predicting efficient compute allocation?",
+    "capability": "You can evaluate Mixture-of-Experts models more fairly by calculating tokens-per-parameter against active parameters per token rather than total model parameters, potentially justifying MoE adoption under equivalent compute budgets."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 17,
+  "lineages": 17,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 2,
+  "claims": 15,
+  "claims_with_verified_span": 11,
+  "verified_span_rate": 0.733,
+  "quotes_offered": 23,
+  "quotes_rejected": 9,
+  "ledger_capped": 10,
+  "quotes_reattributed": 1,
+  "claims_persisted": 15,
+  "persisted_with_verified_span": 11,
+  "persisted_verified_span_rate": 0.733
+ }
+}

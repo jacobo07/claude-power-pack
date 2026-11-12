@@ -1,0 +1,855 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-12_024133_what-is-the-measured-effect-of-sqlite-wal-mode-on-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://sesamedisk.com/sqlite-performance-tuning-high-throughput/",
+   "aliases": [],
+   "sha256": "b3fd613e16f6f7ae01f03fa3c2d6410021f338b9db3cdc8682162c34d410d943",
+   "chars": 25000,
+   "snapshot": "b3fd613e16f6f7ae01f03fa3c2d6410021f338b9db3cdc8682162c34d410d943.txt",
+   "retrieved_at": "2026-11-12T01:42:13+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://sqlite.org/wal.html",
+   "aliases": [],
+   "sha256": "1eb27a16594bb13e47ad305233d200b4dd740f564ba158be59d736710074cb22",
+   "chars": 25000,
+   "snapshot": "1eb27a16594bb13e47ad305233d200b4dd740f564ba158be59d736710074cb22.txt",
+   "retrieved_at": "2026-11-12T01:42:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://databaseschool.com/series/high-performance-sqlite/videos/27",
+   "aliases": [],
+   "sha256": "75f0e665a3b3f06d7b92d3c56124f88e5a45dadd95a846a6963194d3a98d6196",
+   "chars": 15,
+   "snapshot": "75f0e665a3b3f06d7b92d3c56124f88e5a45dadd95a846a6963194d3a98d6196.txt",
+   "retrieved_at": "2026-11-12T01:42:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://www.shoppercove.com/blog/sqlite-wal-vs-delete-journal-localhost-lab",
+   "aliases": [],
+   "sha256": "605c35e28cc6688b0e78c9f545c6cd570fc710847f2baca0225676b5a2391ef8",
+   "chars": 5188,
+   "snapshot": "605c35e28cc6688b0e78c9f545c6cd570fc710847f2baca0225676b5a2391ef8.txt",
+   "retrieved_at": "2026-11-12T01:42:13+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://dev.to/blakcodes/sqlite-wal-on-network-filesystems-the-shared-memory-trap-most-deployments-miss-24lb",
+   "aliases": [],
+   "sha256": "5922ca0333eb66b1926b0aa78110714be884e17663d45515ae39fbf482e67ac3",
+   "chars": 25000,
+   "snapshot": "5922ca0333eb66b1926b0aa78110714be884e17663d45515ae39fbf482e67ac3.txt",
+   "retrieved_at": "2026-11-12T01:44:50+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://sqlite.org/forum/info/e90fd84ee89d028c",
+   "aliases": [],
+   "sha256": "0eb6f1488573c6c5847004eb57fd73b55de1bddd9b7530c0df58abc98f2ce1ad",
+   "chars": 19005,
+   "snapshot": "0eb6f1488573c6c5847004eb57fd73b55de1bddd9b7530c0df58abc98f2ce1ad.txt",
+   "retrieved_at": "2026-11-12T01:44:50+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://woitzik.dev/blog/nfs-vs-local-path-sqlite-trap/",
+   "aliases": [],
+   "sha256": "131ac608ad5a24d6ca3ef13b175e3844cad1db24f49f721f6d6ac7a6c281d98a",
+   "chars": 9472,
+   "snapshot": "131ac608ad5a24d6ca3ef13b175e3844cad1db24f49f721f6d6ac7a6c281d98a.txt",
+   "retrieved_at": "2026-11-12T01:44:50+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://docs.gotosocial.org/en/stable/advanced/sqlite-networked-storage/",
+   "aliases": [],
+   "sha256": "8098c54de2a0808640a354ec1aba3cbbba18e909bb67cd7713143d9adf850552",
+   "chars": 2821,
+   "snapshot": "8098c54de2a0808640a354ec1aba3cbbba18e909bb67cd7713143d9adf850552.txt",
+   "retrieved_at": "2026-11-12T01:44:50+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://formats.jarhalab.com/comparisons/sqlite-wal-vs-sqlite-journal",
+   "aliases": [],
+   "sha256": "c38bf5603305c308877e1990a8e0caac570f51737708bf2e361ebc1bdeb93c23",
+   "chars": 5250,
+   "snapshot": "c38bf5603305c308877e1990a8e0caac570f51737708bf2e361ebc1bdeb93c23.txt",
+   "retrieved_at": "2026-11-12T01:46:57+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://support.checkpoint.com/results/sk/sk105119",
+   "aliases": [],
+   "sha256": "4448af7f80a1d88aa5f0efade931f48df65fce7187fe0e6baca4c81e8bac6d79",
+   "chars": 43,
+   "snapshot": "4448af7f80a1d88aa5f0efade931f48df65fce7187fe0e6baca4c81e8bac6d79.txt",
+   "retrieved_at": "2026-11-12T01:50:34+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://sc1.checkpoint.com/documents/R81/WebAdminGuides/EN/CP_R81_NextGenSecurityGateway_Guide/Topics-FWG/CoreXL.htm",
+   "aliases": [],
+   "sha256": "5655a1c23b59b529c2f6fd439fdf9c6aa46b7fcb50289e28ffbdb38dd22c785f",
+   "chars": 1754,
+   "snapshot": "5655a1c23b59b529c2f6fd439fdf9c6aa46b7fcb50289e28ffbdb38dd22c785f.txt",
+   "retrieved_at": "2026-11-12T01:50:34+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://sc1.checkpoint.com/documents/R81/WebAdminGuides/EN/CP_R81_PerformanceTuning_AdminGuide/Topics-PTG/CoreXL-Allocation-of-Processing-CPU-Cores.htm",
+   "aliases": [],
+   "sha256": "efa9312f7b3078c81ce4925f0bdf0baddb4e4d8ba6181c50afbad25e7f1dec6e",
+   "chars": 3135,
+   "snapshot": "efa9312f7b3078c81ce4925f0bdf0baddb4e4d8ba6181c50afbad25e7f1dec6e.txt",
+   "retrieved_at": "2026-11-12T01:50:34+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://support.checkpoint.com/results/sk/sk98348",
+   "aliases": [],
+   "sha256": "a226764d9b2a97a49539eca8fba91b90d5ff009f878170c0af9bad26ecfbf149",
+   "chars": 55,
+   "snapshot": "a226764d9b2a97a49539eca8fba91b90d5ff009f878170c0af9bad26ecfbf149.txt",
+   "retrieved_at": "2026-11-12T01:50:34+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://martinuke0.github.io/posts/2026-05-15-optimizing-write-ahead-logs-for-high-throughput-databases/",
+   "aliases": [],
+   "sha256": "754ca29e30e6cbba6923da713f95b0acb029c659af1e43669046ee0e390efdf6",
+   "chars": 9912,
+   "snapshot": "754ca29e30e6cbba6923da713f95b0acb029c659af1e43669046ee0e390efdf6.txt",
+   "retrieved_at": "2026-11-12T01:52:15+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://nowletus.com/news/sqlite-in-production-optimizing-wal-mode-concurrency-and-vfs-layers-now8706.html",
+   "aliases": [],
+   "sha256": "1467cf5df9eb11d081855eebc2abbc3c2a3b83d67127c459f2d4f8b601482fc7",
+   "chars": 8301,
+   "snapshot": "1467cf5df9eb11d081855eebc2abbc3c2a3b83d67127c459f2d4f8b601482fc7.txt",
+   "retrieved_at": "2026-11-12T01:52:15+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://news.ycombinator.com/item?id=36610595",
+   "aliases": [],
+   "sha256": "28b611efb384581a517e43255df72328e11b5e83cf447ce99eb25908962723c5",
+   "chars": 25000,
+   "snapshot": "28b611efb384581a517e43255df72328e11b5e83cf447ce99eb25908962723c5.txt",
+   "retrieved_at": "2026-11-12T01:55:20+00:00",
+   "family": "A_MEASURED",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://www.acaciafund.org/data/research/sqlite-in-production-optimizing-wal-mode-concurrency-and-vfs/",
+   "aliases": [],
+   "sha256": "8193b8eb290343521b14d6c16a9a56a634beb671336e64e68dfc451b4e176834",
+   "chars": 3770,
+   "snapshot": "8193b8eb290343521b14d6c16a9a56a634beb671336e64e68dfc451b4e176834.txt",
+   "retrieved_at": "2026-11-12T01:55:20+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S17"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 15777,
+   "end": 15993,
+   "text": "For a high-write server you should manage checkpointing explicitly in a background thread or separate process with `PASSIVE`\n\nor `RESTART`\n\nscheduled during idle windows, rather than relying on the default heuristic.",
+   "sha256": "6a8725726e7175c930b68aad67d4230158ae3eda7db67ba3cd091de1e94ebf0e"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S4",
+   "start": 3047,
+   "end": 3185,
+   "text": "Moving from commit-every-1 to commit-every-50 multiplied DELETE insert RPS from ~**2.3k** to ~**74k** and WAL from ~**8.5k** to ~**159k**.",
+   "sha256": "c59073b5d9db1174fa65052fc924e63e3b8b606812e1bd6b50dae58c5b19a3c2"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S1",
+   "start": 12126,
+   "end": 12263,
+   "text": "A bulk load that runs as a loop of single-row commits can be tens of thousands of times slower than the same rows inside one transaction.",
+   "sha256": "18e4e50ae62a3446e734e0b6380fa1a3c286028f1c8d6ab891f31155ad9a64f1"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S5",
+   "start": 10921,
+   "end": 11034,
+   "text": "The most dangerous result is not an immediate failure. It is a successful test that establishes false confidence.",
+   "sha256": "81c354749397e841414a84e6adfb8e6467f20a5c812e4f0ab2fdf3f68b35bbc2"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S7",
+   "start": 750,
+   "end": 862,
+   "text": "The corruption showed up while a Velero backup and a Terraform state write were hitting Garage at the same time.",
+   "sha256": "010ae4c0844b67ebd704cf3bbb6e48d511d503013f37177dae39b406c6b0acc8"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S5",
+   "start": 15392,
+   "end": 15485,
+   "text": "You cannot remove the architecture’s shared-memory requirement by adding a flag to the mount.",
+   "sha256": "aec76849acbf695e1ce32c2ff3038ad58c3b37f018427efb25d725d1b7749e7a"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S7",
+   "start": 6719,
+   "end": 6824,
+   "text": "The data was back, but nothing had changed about the conditions that corrupted it. It would happen again.",
+   "sha256": "50caa3a13f470c760cbd205ab1b132d09620a3f535eec3c5a6be3db3912c0af0"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S7",
+   "start": 8379,
+   "end": 8528,
+   "text": "The principle: **if the application is an embedded database that relies on file locks or shared memory (SQLite, BoltDB, LMDB), it goes on local-path.",
+   "sha256": "893e2ba2c3ac02bb095ae659ebcb01a347ad6bb6198b56a3e6b7ff8439a84752"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S8",
+   "start": 1502,
+   "end": 1624,
+   "text": "If you're going to access your database over the network, it's better to use a database with a client-server architecture.",
+   "sha256": "ddc6acb940936494f38fd13bfa03cf6513107b213a409e4b280c551bd93f64b2"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S1",
+   "start": 3572,
+   "end": 3677,
+   "text": "WAL can be 1 to 2 percent slower than rollback journal in applications that mostly read and rarely write.",
+   "sha256": "9a6b89bc54230395332ff3f675f0a996d0f48af1f72702ee5220d675eccf6617"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S1",
+   "start": 4341,
+   "end": 4515,
+   "text": "The edge cases where DELETE or another rollback mode wins are narrow: single-writer, read-mostly workloads where the overhead of the WAL and its checkpointing is not worth it",
+   "sha256": "803c8f0c22941ac05881d4e9c6df1da3c2246cc2e616622f98cf4e8c5fc48e39"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S9",
+   "start": 2282,
+   "end": 2410,
+   "text": "Checkpointing under WAL merges frames back into the main database, so checkpoint discipline becomes part of everyday operations.",
+   "sha256": "9d4eb4d486ddd8cc1666591c506d3dfc279d44cbc6c636aa005ac358a1c89455"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S1",
+   "start": 4411,
+   "end": 4515,
+   "text": "single-writer, read-mostly workloads where the overhead of the WAL and its checkpointing is not worth it",
+   "sha256": "d913d2f7504e13100a582746cc262bd0d929de600b9ad6cce1ec7b3a22e35ff2"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S11",
+   "start": 615,
+   "end": 828,
+   "text": "CoreXL provides almost linear scalability of performance, according to the number of processing cores on a single machine. The increase in performance does not require changes to management or to network topology.",
+   "sha256": "971ac29140b3a59e44aacfcc5a1b5b2e17299ca4bda063062e501feef9c13bfc"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S12",
+   "start": 1499,
+   "end": 1663,
+   "text": "Automatic affinity means that if SecureXL is enabled, the affinity for each interface is changed at specific intervals and balanced between the available CPU cores.",
+   "sha256": "9ec92055357c03f9b524c5c61d6bd6d6bb1352aa1198e75dd3788c48589a6e33"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S12",
+   "start": 2208,
+   "end": 2299,
+   "text": "To do so, you change the affinities of different NICs (interfaces) or user space processes.",
+   "sha256": "52f6627f186e0af3f7e598d3769600ce0e2568411b655d6fcd059e9b0acacb2f"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S2",
+   "start": 3921,
+   "end": 4086,
+   "text": "the use of shared memory means that all readers must exist on the same machine. This is why the write-ahead log implementation will not work on a network filesystem.",
+   "sha256": "fed934a37534e3089cff2c27f79def19ebb90fc2e4a92d85cc368bcc29e8fece"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S14",
+   "start": 4986,
+   "end": 5107,
+   "text": "Aim for at least 2 GB/s sequential write bandwidth for the WAL volume when targeting >100k TPS (transactions per second).",
+   "sha256": "b5eaacb973476e1f13cf9691b574dbe26cc69d973ae69b1baf04344d65257bc0"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S15",
+   "start": 1292,
+   "end": 1414,
+   "text": "By running SQLite directly within the application process on the same server, you eliminate the network overhead entirely.",
+   "sha256": "8ca265167906e94eb271de0d420755968660eede59d2ac9ff52bf51350730fd2"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S2",
+   "start": 3858,
+   "end": 4000,
+   "text": "The wal-index greatly improves the performance of readers, but the use of shared memory means that all readers must exist on the same machine.",
+   "sha256": "9f2ff564207f02527189667f7c38abb0369dfa3ed5a434ec5b3a6d2c88038992"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S16",
+   "start": 18712,
+   "end": 18954,
+   "text": "On the S3 side, you need to factor in Intelligent Tiering. We're not paying S3 Standard prices for this--recall that this is a mix of mostly cold data. It's a 10x difference per GB on average between EBS and our mix of S3 Intelligent Tiering.",
+   "sha256": "d1bb911c80facb1f4199aeb9fc905e892d5a77d8d75f91b2f8eecd9d5349071d"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S16",
+   "start": 19830,
+   "end": 19895,
+   "text": "$500/month for 1TB of cold data? We were never going to pay that.",
+   "sha256": "c7191b4addcd96adb384a929473c258fba8ddd438e2c0e35c75bb55c3c62e604"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S16",
+   "start": 2141,
+   "end": 2292,
+   "text": "sql.js-httpvfs is a read-only solution. The point is to be able to put up pre-baked datasets on any random web server w/range support, or a blob store.",
+   "sha256": "f49a4f28d601820aff8e9f52ed06e69aeb4afc537d5dc89417bb4523245b6c29"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S16",
+   "start": 8421,
+   "end": 8606,
+   "text": "It's difficult to implement correctly if there's more than one client. There is no single source-of-truth to manage any conflicts. Might be ok if the clients have only read-only access.",
+   "sha256": "ec87a2c584e5e6d2fb390a8aa32c18f5290163f080728aa8d5e3556d71518bd4"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S16",
+   "start": 22168,
+   "end": 22404,
+   "text": "your tables should all be WITHOUT ROWID tables. Otherwise SQLite sprays rows all over the place based on its internal rowids, ruining locality when you attempt to read rows that you thought would be consecutive based on the primary key.",
+   "sha256": "900b6329d49945a958d84b7854e84ca8a9efe2c8799c5c975228353220821d5e"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "The default SQLite configuration (DELETE journal + FULL sync) achieves approximately 279 inserts per second, while the same hardware with WAL mode and NORMAL sync reaches 33,135 inserts per second—a 100x improvement. The throughput ceiling is set by PRAGMA settings, not hardware limits, making this a pure configuration fix requiring no infrastructure investment.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S1",
+     "quote": "a single experiment that logged roughly 279 inserts per second jumps to about 33,135 inserts per second on the same drive. That 100x swing is documented by Travis Horn in a hands-on production benchma",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What throughput improvements do published benchmarks show when switching from rollback journal to WAL mode?",
+    "capability": "You can identify a single-writer SQLite experiencing low throughput as a configuration issue with achievable remediation, rather than an architectural limit requiring database migration."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Long-running readers block checkpoint completion in WAL mode, causing the WAL file to grow without bound until disk space exhaustion raises SQLITE_FULL. In services with continuous concurrent readers, the WAL grows indefinitely unless explicitly managed. Multiple production guides prescribe the solution: schedule checkpoints in a separate thread with PASSIVE or RESTART modes during idle windows rather than trusting default auto-checkpoint.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S2",
+     "quote": "A checkpoint can only run to completion, and reset the WAL file, if there are no other database connections using the WAL file.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What throughput improvements do published benchmarks show when switching from rollback journal to WAL mode?",
+    "capability": "You can prevent unbounded WAL file growth and read performance degradation by scheduling explicit checkpoints during low-traffic windows instead of relying on automatic checkpointing."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "Moving from commit-every-1 to commit-every-50 increases DELETE throughput from approximately 2,300 to 74,000 RPS and WAL from 8,500 to 159,000 RPS—approximately 30× and 18× improvements respectively. The bottleneck is lock acquisition and journal fsync overhead per commit, not the database itself; batching amortizes this overhead across many rows with zero infrastructure cost.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 159000, 18, 2300, 30, 74000, 8500",
+   "spans": [
+    "E2",
+    "E3"
+   ],
+   "source_ids": [
+    "S1",
+    "S4"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What throughput improvements do published benchmarks show when switching from rollback journal to WAL mode?",
+    "capability": "You can multiply single-writer write throughput by 20-30x by restructuring commits from per-row to batch, a discipline change requiring no new hardware or database migration."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Database corruption on network-backed SQLite WAL is timing-dependent and only emerges under specific concurrent load patterns—a test suite running with single-host access can pass for weeks while production fails when Velero backups, Terraform state writes, or other processes hit the database simultaneously. Local testing establishes false confidence; corruption only surfaces when readers and checkpointers coordinate poorly due to shared-memory violations on the network filesystem.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4",
+    "E5"
+   ],
+   "source_ids": [
+    "S5",
+    "S7"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does SQLite WAL mode function correctly over network-attached storage like NFS and cloud block storage, or do fsync semantics differ in ways that cause data corruption or unbounded WAL growth?",
+    "capability": "Stop treating passing tests as evidence that SQLite WAL is safe on network storage; move it to local storage in production deployments."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "SQLite WAL on network filesystems fails through three independent coordination contracts: lock ownership consistency, fsync() ordering guarantees, and shared-memory coherence of the wal-index. Fixing one (like improving NFSv4 lock behavior) leaves the others broken. The wal-index shared-memory requirement specifically cannot be remedied by mount options—shared memory cannot exist across host boundaries.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6",
+    "E7"
+   ],
+   "source_ids": [
+    "S5",
+    "S7"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does SQLite WAL mode function correctly over network-attached storage like NFS and cloud block storage, or do fsync semantics differ in ways that cause data corruption or unbounded WAL growth?",
+    "capability": "When diagnosing WAL unbounded growth or corruption on networked storage, stop tuning checkpoint parameters and recognize this as an architectural failure requiring local storage—not a configuration problem."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Embedded databases (SQLite, BoltDB, LMDB) require colocated processes and local storage because they depend on kernel-enforced file locks and shared-memory coordination that cannot traverse networks. Client-server databases route all access through a single server process, eliminating cross-host coordination requirements. A Kubernetes PVC that visually resembles local storage but is actually SMB or NFS can be mounted by multiple nodes and still corrupt embedded databases—the visual appearance of a filesystem mount is irrelevant to the coordination requirements.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8",
+    "E9"
+   ],
+   "source_ids": [
+    "S7",
+    "S8"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does SQLite WAL mode function correctly over network-attached storage like NFS and cloud block storage, or do fsync semantics differ in ways that cause data corruption or unbounded WAL growth?",
+    "capability": "Select your database by deployment architecture: embedded databases on local kernel-controlled block storage, client-server databases with replication at the app layer for remote scenarios."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "Single-writer, read-mostly workloads experience only 1-2% performance degradation with rollback journal compared to WAL, while eliminating checkpoint management and multi-file backup requirements; rollback journal is the right choice when the workload lacks concurrent write contention that WAL is designed to handle.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: spans carry no figure",
+   "spans": [
+    "E10",
+    "E11"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which applications or workloads have reported that rollback journal mode actually delivered better concurrent throughput than WAL mode?",
+    "capability": "You can make a mode choice based on whether concurrent readers and writers actually exist in your deployment."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "SQLite's own documentation states that rollback journal modes will likely be faster for transactions larger than approximately 100 megabytes, because the WAL write-ahead overhead and checkpoint costs outweigh the benefit of concurrent-read availability during large atomic operations.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S1",
+     "quote": "or transactions larger than about 100 megabytes, where the SQLite documentation notes rollback journal modes will likely be faster.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which applications or workloads have reported that rollback journal mode actually delivered better concurrent throughput than WAL mode?",
+    "capability": "You can reevaluate database mode choice if your typical transaction size exceeds 100 megabytes."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "WAL adds checkpoint management as a required operational task that developers must actively manage, while rollback journal handles this transparently; in single-writer or portable deployments where readers and writers don't overlap, avoiding checkpoint discipline justifies accepting 1-2% slower read performance and simplifies backups from three files (-db, -wal, -shm) to a single-file copy.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S1",
+    "S9"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which applications or workloads have reported that rollback journal mode actually delivered better concurrent throughput than WAL mode?",
+    "capability": "You can identify rollback journal as the appropriate mode choice when operational simplicity outweighs marginal throughput loss in your deployment model."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "CoreXL delivers almost linear performance scaling with additional CPU cores and requires no changes to management or network topology, allowing capacity growth through hardware addition rather than architectural redesign.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "How does checkpoint performance and frequency differ between single-core embedded hardware and multi-core datacenter hardware, and does this change which checkpoint management strategies remain practical?",
+    "capability": "You can add CPU cores to scale firewall performance without redesigning your management infrastructure or redeploying security policies."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "The Secure Network Distributor can automatically rebalance traffic across cores at regular intervals, or you can manually configure interface affinity to direct specific traffic to designated cores; this fine-grained control allows tuning performance to specific traffic characteristics without infrastructure changes.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15",
+    "E16"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "How does checkpoint performance and frequency differ between single-core embedded hardware and multi-core datacenter hardware, and does this change which checkpoint management strategies remain practical?",
+    "capability": "You can optimize firewall throughput for specific traffic patterns by configuring which network interfaces use which CPU cores, instead of accepting default distribution."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "WAL mode relies on a shared-memory wal-index to help readers locate pages in the write-ahead log. This shared-memory mechanism requires all readers to exist on the same machine; network filesystems cannot provide the required shared-memory primitives, making WAL fundamentally incompatible with network storage regardless of throughput considerations.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does WAL mode's throughput advantage persist when the database runs on network storage or cloud object stores instead of local fast storage?",
+    "capability": "You should not attempt to deploy WAL-mode databases on network storage or cloud object stores due to architectural incompatibility."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "WAL's documented 2-3x throughput advantage requires at least 2 GB/s sequential write bandwidth and sub-millisecond fsync latencies, achieved through NVMe hardware with battery-backed write caches. Network storage and cloud object stores cannot provide these latency characteristics, making the tuning strategies that generate WAL's throughput gains inapplicable to distributed storage environments.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does WAL mode's throughput advantage persist when the database runs on network storage or cloud object stores instead of local fast storage?",
+    "capability": "You can eliminate WAL as a performance solution if your database storage is network-based or cloud object storage."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "All performance guidance and design patterns for WAL presuppose co-located compute and storage on a single machine. The production deployment model described is running SQLite in-process on the same server to eliminate network overhead, and WAL's architectural constraints reinforce this pattern—WAL is optimized to solve client-server network latency, not distributed storage latency.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E19",
+    "E20"
+   ],
+   "source_ids": [
+    "S2",
+    "S15"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does WAL mode's throughput advantage persist when the database runs on network storage or cloud object stores instead of local fast storage?",
+    "capability": "You should plan SQLite with WAL only for single-server deployments with local storage, not for multi-server or cloud-resident database scenarios."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "Production deployments show S3 Intelligent Tiering costs 10x less per GB than EBS storage for cold data; when paired with cloud-backed SQLite VFS implementations that fetch only required pages via HTTP range requests, a company moved petabyte-scale datasets out of RDS ($500+/month per TB) to S3, eliminating compute costs entirely.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E21",
+    "E22"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What custom VFS implementations or middleware layers have been documented attempting to bypass SQLite's shared-memory requirement for cloud storage, and what specific limitations or failures did they encounter?",
+    "capability": "You can move large read-only datasets from RDS to S3-backed SQLite, reducing per-terabyte storage costs by 10 times."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "Custom VFS implementations for cloud-backed SQLite (S3 VFS, sql.js-httpvfs) support only read-only concurrent access; attempts to enable multi-client writes fail because the VFS layer has no mechanism to resolve conflicting writes across clients and no distributed transaction log to maintain a single source of truth, forcing a choice between single-writer architectures or reverting to traditional RDBMSes.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E23",
+    "E24"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": null,
+   "meta": {
+    "query": "What custom VFS implementations or middleware layers have been documented attempting to bypass SQLite's shared-memory requirement for cloud storage, and what specific limitations or failures did they encounter?",
+    "capability": "You can determine whether cloud-backed SQLite is viable based on write concurrency: read-only is feasible, multi-client writes are not."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Cloud-backed SQLite requires WITHOUT ROWID primary keys and manual row clustering before implementation; SQLite's default structure randomizes row placement by internal rowid, and when each page fetch is an expensive HTTP request to S3, poor schema choices cause excessive seeks that multiply query costs—a penalty negligible in traditional databases.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E25"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S16",
+     "quote": "Spatial locality matters bigtime since 'seeks' are so expensive (additional S3 requests), when in a traditional db it matters much less.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What custom VFS implementations or middleware layers have been documented attempting to bypass SQLite's shared-memory requirement for cloud storage, and what specific limitations or failures did they encounter?",
+    "capability": "You can budget database schema redesign as prerequisite work before launch rather than planning it as post-launch optimization for cloud-backed SQLite."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 17,
+  "lineages": 17,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 17,
+  "claims_with_verified_span": 15,
+  "verified_span_rate": 0.882,
+  "quotes_offered": 29,
+  "quotes_rejected": 4,
+  "ledger_capped": 5,
+  "quotes_reattributed": 0,
+  "claims_persisted": 14,
+  "persisted_with_verified_span": 12,
+  "persisted_verified_span_rate": 0.857
+ }
+}

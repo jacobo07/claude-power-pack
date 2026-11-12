@@ -24,7 +24,12 @@ Evidence commits on `feature/knowledge-acquisition`: `1c68ddd8` `0c88da6f` `e4cf
 | E10 | 3 of 26 real snapshots failed `audit_ledger` (hash mismatch) | bytes intact; `read_text()` translated CRLF -> LF, so audit hash and resumed span offsets used different text. The tamper test's text-mode "restore" was itself a tamper, masked by the same bug | read with `newline=""`; test restores bytes | V-DRX-CRLF-SNAPSHOT-ROUNDTRIP (failed before fix) | 1 |
 | E11 | My triage said 6/9 rejected quotes were misattributed | I classified by >= 40% overlap; a replay of the actual rule found 4 exact | reported 4/9; RESULTS.md carries the corrected numbers | replay script against the real ledgers | 5 (instrument looser than the claim) |
 | E12 | Two Edits on one file in one batch, twice (anti-thrash block) | ignoring a known batch cap under momentum | one Edit per file per batch, Read between | anti-thrash hook (worked as designed) | recurring |
-| E13 | v0.4.0 yield fell 36 -> 15 learnings, 1 INSUFFICIENT run | HYPOTHESIS: verbatim quotes lengthen extraction output past the 120 s child timeout (2 extraction timeouts in v0.4.0, 0 in v0.3.1; n=3) | not fixed; next experiment in `vault/research/drx_eval/RESULTS.md` | - | open |
+| E13 | v0.4.0 yield fell 36 -> 15 learnings, 1 INSUFFICIENT run | H1 (verbatim quotes push EXTRACTION past 120 s) NOT SUPPORTED by the pre-registered 27-run test: extraction timeouts A 1 / B 1. The 120 s limit kills QUERY GENERATION (`decompose`: A 5 timeouts, B 0) during slow `claude -p` windows (one call took 233 s); 3/9 A runs died at their first call. 240 s arm adoptable (+6.89 vs 2·SE 4.56) at 2.5x wall time | not changed yet; per-kind timeout / decompose retry is a NEW hypothesis needing its own pre-registration | `vault/research/drx_eval/yield/RESULTS.md` | closed (mechanism renamed) |
+| E14 | `dcb842e7` claimed v0.4.1; the version bump had failed | the bump ran inside a chained shell command whose failure did not stop the following `git commit` | `04aceae9` set it; commit subject says so | read the committed file, not the command's exit | 5 (success without work) |
+| E15 | First yield launch: 27 runs "done", every one rc=3 in 1-2 s | a foreign deep_research run held the shared lock; the runner recorded lock refusals as INSUFFICIENT runs | data renamed `yield_INVALID_lock_*`; runner v2 waits (bounded) on a live holder and sets aside a lock-held run as INFRA | detector driven on both poles against the real lock report | 5 (refusal counted as result) |
+| E16 | 23 cells failed at import in 7 s mid-experiment | the frozen engine lived in the ENDED prior session's scratchpad; `research_quality.py` vanished from it (its `.pyc` proves it was imported at 20:01) | re-froze into the live session's scratchpad from the repo, hash-checked the survivors; runner v3 resumes and aborts on an engine fast-fail | runner v3 fast-fail branch | 2 (environment premise) |
+| E17 | Lock detector returned True on a clean folder | `Get-ChildItem | Select-String -Quiet` emits one bool per file; `[bool]@($false,$false)` is True | count matches instead | tested on lock report / clean dir / missing dir | 1 (assumed API semantics) |
+| E18 | The analysis regex also matched the runner's `INFRA lock_held ... rc=3` lines | `_PROG.search` is unanchored; a retried-out cell would have been scored INSUFFICIENT | `drx_yield_analysis.py` skips INFRA lines | synthetic progress file, both poles | 5 |
 | E9 | Minor tool errors: `Set-Content -Encoding utf8NoBOM` on PS 5.1; PowerShell backtick-n inside a Python literal; two Edits on one file in one batch | known PS 5.1 / batch-cap classes | Copy-Item / Edit tool / one edit per batch | - | 4 |
 
 ## Distilled rules
@@ -73,6 +78,22 @@ every survivor as gap / equivalent / cosmetic in writing.
 PROVEN (E8, E7). A plan that names an integration point (a ratchet, a path, a registry) names a
 premise. Read the target's contract before the plan is approved, or mark the point "to be
 verified" in the plan; changing it later is allowed only with the reason stated.
+
+### PR-EXPERIMENT-INFRA-LOSS-IS-NOT-DATA-001  #CROSS-PROJECT
+
+PROVEN (E15, E16, E18). In an experiment runner, three things look like results and are not: a run
+refused by a shared lock, a run whose engine never started, and a log line that merely shares the
+result format. Before each run, wait (bounded) on a live lock holder; after it, classify "non-zero
+in seconds with no report" as INFRA, set it aside under a distinct name and stop rather than burn
+the queue; and make the analysis ignore INFRA lines by construction. Frozen engines live where the
+run's own session can guarantee them, never in another session's scratchpad.
+
+### PR-NAME-THE-MECHANISM-NOT-JUST-THE-WINNER-001  #CROSS-PROJECT
+
+PROVEN (E13). A pre-registered arm can win for a reason other than the hypothesis that motivated it:
+the 240 s timeout won, but by saving query generation, not extraction. Pre-register a mechanism
+test alongside the winner test, and when it fails, name the real mechanism from the per-call log
+(post-hoc, labelled) and carry it forward as a NEW hypothesis rather than adopting the blunt arm.
 
 ### HR candidate (not promoted): claims need a locatable quote
 

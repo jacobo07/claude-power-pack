@@ -1,0 +1,881 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_204742_what-did-the-chinchilla-paper-hoffmann-et-al-2022-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/abs/2203.15556",
+   "aliases": [],
+   "sha256": "a39e5fd79dbc3fc788b5dd4ded1ab672947900db55cd89f6a5bdec83f26b85a2",
+   "chars": 3367,
+   "snapshot": "a39e5fd79dbc3fc788b5dd4ded1ab672947900db55cd89f6a5bdec83f26b85a2.txt",
+   "retrieved_at": "2026-11-11T19:48:11+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://proceedings.neurips.cc/paper_files/paper/2022/file/c1e2faff6f588870935f114ebe04a3e5-Paper-Conference.pdf",
+   "aliases": [],
+   "sha256": "61b6b4c049adadb3b685bc724b2b83aa82dd586a6e2d7c04c124fcfeed9851f6",
+   "chars": 2536,
+   "snapshot": "61b6b4c049adadb3b685bc724b2b83aa82dd586a6e2d7c04c124fcfeed9851f6.txt",
+   "retrieved_at": "2026-11-11T19:48:11+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://theorempath.com/papers/chinchilla",
+   "aliases": [],
+   "sha256": "7c92f0b3282ee94a17ab68502d2eba96d2e882d63fb866a1f881ac264aad67a3",
+   "chars": 12448,
+   "snapshot": "7c92f0b3282ee94a17ab68502d2eba96d2e882d63fb866a1f881ac264aad67a3.txt",
+   "retrieved_at": "2026-11-11T19:48:11+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://huggingface.co/papers/2203.15556",
+   "aliases": [],
+   "sha256": "9f814bcc4d9de7542755c327f3aae277912afcca48dc786e0ae0f61eb2aca504",
+   "chars": 4639,
+   "snapshot": "9f814bcc4d9de7542755c327f3aae277912afcca48dc786e0ae0f61eb2aca504.txt",
+   "retrieved_at": "2026-11-11T19:48:11+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://arxiv.org/abs/2608.14071",
+   "aliases": [],
+   "sha256": "159f958bf1bd38a12c874af359e7c02144771bf1a2c93d76319bb80f304c91ec",
+   "chars": 3099,
+   "snapshot": "159f958bf1bd38a12c874af359e7c02144771bf1a2c93d76319bb80f304c91ec.txt",
+   "retrieved_at": "2026-11-11T19:51:48+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://mbrenndoerfer.com/writing/compute-optimal-training-chinchilla-scaling-llm",
+   "aliases": [],
+   "sha256": "f591db4a1d5ba97429a30a67d5c74781e99fa37ed0b5ae4f3e261599c8217f96",
+   "chars": 25000,
+   "snapshot": "f591db4a1d5ba97429a30a67d5c74781e99fa37ed0b5ae4f3e261599c8217f96.txt",
+   "retrieved_at": "2026-11-11T19:51:48+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.emergentmind.com/topics/tokens-per-parameter-tpp",
+   "aliases": [],
+   "sha256": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570",
+   "chars": 10744,
+   "snapshot": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570.txt",
+   "retrieved_at": "2026-11-11T19:51:48+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://arxiviq.substack.com/p/compute-optimal-tokenization",
+   "aliases": [],
+   "sha256": "6f7ed928a5d18f254601073eefe0870c6d0bfc7263d749b02ee223eb5b0311bb",
+   "chars": 2355,
+   "snapshot": "6f7ed928a5d18f254601073eefe0870c6d0bfc7263d749b02ee223eb5b0311bb.txt",
+   "retrieved_at": "2026-11-11T19:51:48+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://arxiv.org/abs/2401.00448",
+   "aliases": [],
+   "sha256": "8a441cda80393afd6fe97eb6d18aaf53cd002c34891a8113b882bea80f5b9826",
+   "chars": 3719,
+   "snapshot": "8a441cda80393afd6fe97eb6d18aaf53cd002c34891a8113b882bea80f5b9826.txt",
+   "retrieved_at": "2026-11-11T19:53:24+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://vinayakajyothi.com/blog/2026-01-15-scaling-laws-revisited-chinchilla/",
+   "aliases": [],
+   "sha256": "9ce344fc1baeabac2c63c94e721a0bfc463dde7da9f161d61036d66212f0636a",
+   "chars": 8631,
+   "snapshot": "9ce344fc1baeabac2c63c94e721a0bfc463dde7da9f161d61036d66212f0636a.txt",
+   "retrieved_at": "2026-11-11T19:53:24+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://promptingindex.com/blog/chinchilla-scaling-laws-compute-optimal-llm-training",
+   "aliases": [],
+   "sha256": "af5c3ea94f9a9d19a0f6b187416b1ab5262925c5fee8e1c7cc42abf08d49ee12",
+   "chars": 7437,
+   "snapshot": "af5c3ea94f9a9d19a0f6b187416b1ab5262925c5fee8e1c7cc42abf08d49ee12.txt",
+   "retrieved_at": "2026-11-11T19:53:24+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://arxiv.org/html/2401.00448",
+   "aliases": [],
+   "sha256": "fba194384ef77246ab34c2450d6d98a00f66badbbf79403684697ce6d2850557",
+   "chars": 25000,
+   "snapshot": "fba194384ef77246ab34c2450d6d98a00f66badbbf79403684697ce6d2850557.txt",
+   "retrieved_at": "2026-11-11T19:56:27+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://aldeiadaponte.com/tokens-per-parameter-the-scaling-laws-behind-llm-data-needs",
+   "aliases": [],
+   "sha256": "ea7895ddfdcd287341d70a8394ff34b454439550938dee54eeb450a5cb5d8f77",
+   "chars": 10160,
+   "snapshot": "ea7895ddfdcd287341d70a8394ff34b454439550938dee54eeb450a5cb5d8f77.txt",
+   "retrieved_at": "2026-11-11T19:56:27+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://salivity.github.io/ai/article/chinchilla-scaling-laws-and-the-optimal-token-to-parameter-ratio",
+   "aliases": [],
+   "sha256": "5c32ca04120974b539952f0258e90521377486be5ff4cc4538f1fe805d5db8fc",
+   "chars": 3217,
+   "snapshot": "5c32ca04120974b539952f0258e90521377486be5ff4cc4538f1fe805d5db8fc.txt",
+   "retrieved_at": "2026-11-11T19:56:27+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://arxiv.org/abs/2605.08541",
+   "aliases": [],
+   "sha256": "6b7ac512cca2e48309596b8d4747503acf847b93cb91269142fce0f21be302f0",
+   "chars": 3950,
+   "snapshot": "6b7ac512cca2e48309596b8d4747503acf847b93cb91269142fce0f21be302f0.txt",
+   "retrieved_at": "2026-11-11T19:58:45+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://arxiv.org/html/2605.01188v1",
+   "aliases": [],
+   "sha256": "44c7a58a0b6ed1d29f5aa4c9367602c69fdd801a52eaae384cd0324b265d4ea6",
+   "chars": 25000,
+   "snapshot": "44c7a58a0b6ed1d29f5aa4c9367602c69fdd801a52eaae384cd0324b265d4ea6.txt",
+   "retrieved_at": "2026-11-11T19:58:45+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://www.emergentmind.com/topics/token-to-parameter-ratio",
+   "aliases": [],
+   "sha256": "53322aba15df48b41a02b6282e3d42418c87ff6a1fad7407a939ae0cdbdfde3d",
+   "chars": 5996,
+   "snapshot": "53322aba15df48b41a02b6282e3d42418c87ff6a1fad7407a939ae0cdbdfde3d.txt",
+   "retrieved_at": "2026-11-11T19:58:45+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://arxiv.org/abs/2508.18672",
+   "aliases": [],
+   "sha256": "4ae3c4896158806e342426fe1742ef93bf42e7c35bb3fe506b80f25334827266",
+   "chars": 3753,
+   "snapshot": "4ae3c4896158806e342426fe1742ef93bf42e7c35bb3fe506b80f25334827266.txt",
+   "retrieved_at": "2026-11-11T20:02:54+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://openreview.net/challenge?redirect=%2Fforum%3Fid%3DXFw2EPRUUR",
+   "aliases": [],
+   "sha256": "d7165e7d0e874eb14e4b0055cb708564d66ebdc739cce6d63d2f3a427e91d501",
+   "chars": 411,
+   "snapshot": "d7165e7d0e874eb14e4b0055cb708564d66ebdc739cce6d63d2f3a427e91d501.txt",
+   "retrieved_at": "2026-11-11T20:02:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://aclanthology.org/2025.findings-acl.1111/",
+   "aliases": [],
+   "sha256": "56cced858fc1be6dc7a5f8a7ad06f26496aae8592e719ca6e05790c0af84ed6d",
+   "chars": 8108,
+   "snapshot": "56cced858fc1be6dc7a5f8a7ad06f26496aae8592e719ca6e05790c0af84ed6d.txt",
+   "retrieved_at": "2026-11-11T20:02:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://liner.com/review/optimal-sparsity-of-mixtureofexperts-language-models-for-reasoning-tasks",
+   "aliases": [],
+   "sha256": "46cb125e74ae5dc5e035b57339c43582542d504bc8c5957cc3b1c7f646058077",
+   "chars": 6542,
+   "snapshot": "46cb125e74ae5dc5e035b57339c43582542d504bc8c5957cc3b1c7f646058077.txt",
+   "retrieved_at": "2026-11-11T20:02:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S21"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S3",
+   "start": 991,
+   "end": 1338,
+   "text": "Trained at the same FLOP budget as DeepMind's earlier 280B Gopher, but with 70B parameters and 1.4T tokens (instead of 280B parameters and 300B tokens), Chinchilla outperforms Gopher on every benchmark in the paper — MMLU, BIG-bench, the closed-book QA suite, the LM Evaluation Harness — by margins large enough that the comparison is unambiguous.",
+   "sha256": "b2578a79fe3dfbd415b5ad23fd14c34a4baad569de83a41d08da8c854bdefe63"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S4",
+   "start": 2024,
+   "end": 2095,
+   "text": "67.5%\non the MMLU benchmark, greater than a 7% improvement over Gopher.",
+   "sha256": "7ffe39eeb778e9574981e8c3ebf80ca936cd49e844d60221ce9f62d15b5aa99e"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S3",
+   "start": 1339,
+   "end": 1467,
+   "text": "The mechanism is that Gopher was undertrained: 300B tokens for 280B parameters is far below the compute-optimal data allocation.",
+   "sha256": "9b4b223fb3d97b3bf9c5fe02a3cd9736310484f5c41e6258cb2ec4cecd7a7745"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S3",
+   "start": 4392,
+   "end": 4740,
+   "text": "Kaplan et al. trained models with a fixed cosine learning-rate schedule whose total length was set to the longest run in their sweep. For shorter runs, the schedule decays slowly relative to the run length, leaving the small models effectively under-converged. Chinchilla retunes the cosine length to match the actual training-token budget per run.",
+   "sha256": "f102e40b2228d6b6953971bb051561758623e8d4b8891e76302d68c5c9a0dc7e"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S3",
+   "start": 4830,
+   "end": 4990,
+   "text": "When Kaplan-style schedules are reapplied to Chinchilla's data, the parameter exponent inflates and the data exponent collapses, recovering Kaplan's allocation.",
+   "sha256": "cc0d0e5484f20df2970541b3a7962df06388ac2f805bb75337d38d606d8f7a6d"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S8",
+   "start": 563,
+   "end": 683,
+   "text": "the widely accepted heuristic of scaling models by 20 tokens per parameter is an artifact of specific subword tokenizers",
+   "sha256": "4a9d0064409a191a14a1aca5852b2a079ff8ad72f0a218d17b42dd2d2da775b1"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S9",
+   "start": 1072,
+   "end": 1267,
+   "text": "we train 47 models of varying sizes and parameter counts to validate our formula and find that model quality continues to improve as we scale tokens per parameter to extreme ranges (up to 10,000)",
+   "sha256": "40729883d8f26f320b347967ec6b89264d9546a87ffc57a16e6f3c7e8fc597a7"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S10",
+   "start": 2413,
+   "end": 2548,
+   "text": "Llama 3 70B was trained on over 15 trillion tokens — roughly 200 tokens per parameter, versus Chinchilla's recommendation of around 20.",
+   "sha256": "36c9f65ce9c774456231fddac0b254a4c70277d91a30c40868087d2e392682ce"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S11",
+   "start": 5121,
+   "end": 5315,
+   "text": "LLaMA-2 pushed this further: the 7B and 13B variants trained on 2 trillion tokens, exceeding even the Chinchilla-optimal amount on the grounds that inference cost savings justify extra training.",
+   "sha256": "531b365cff8c9e7fd245e848a343eae5a5f03be89fc33b9bdfd84871f006951f"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S10",
+   "start": 2041,
+   "end": 2147,
+   "text": "If you are going to serve a model to millions of users, a smaller model is dramatically cheaper per query.",
+   "sha256": "be94cee1db27135747b7ea0183d691854b6845ba99fe4bf5e1aad0ce17fb6a9e"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S10",
+   "start": 6803,
+   "end": 7013,
+   "text": "data quality dominates quantity at the frontier. A model trained on 3 trillion carefully filtered, diverse tokens will likely outperform one trained on 10 trillion tokens of indiscriminately collected web text.",
+   "sha256": "cee711f4bd5ef31f10e0ef894d792eafcdb4e0fe207495f09f8d35a0d91bfe32"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S10",
+   "start": 3991,
+   "end": 4140,
+   "text": "DeepSeek's R1 paper demonstrated that models trained heavily on synthetic chain-of-thought data can develop remarkably strong reasoning capabilities.",
+   "sha256": "1c6f703b31a8cd11a2c4ee30290bdbeac7bb39a406a524681ba0b8e3b4b2bc05"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S12",
+   "start": 11927,
+   "end": 12100,
+   "text": "An LLM developer that expects a 30B-Chinchilla-quality model will see tokens during inference can reduce their total FLOPs by 28% by training a 13.6B model on 2.84 the data.",
+   "sha256": "2cf3aabf22eb6746b29231938e5c06f569da721dcde76837a2ff39a1a88f2f55"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S12",
+   "start": 6938,
+   "end": 7145,
+   "text": "Our ablation indicates that when fitting Chinchilla coefficients using only typical token ratio runs, this formula overestimates the impact of additional training data as we move to the extreme ratio regime.",
+   "sha256": "b3719b5ade51a841e74aec44b6ead4285402b8bdf546322b6e375cfae4c66c5e"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S15",
+   "start": 1333,
+   "end": 1546,
+   "text": "Empirically, in controlled experiments with 5M-77M-parameter models, non-collinear designs outperform collinear ones on held-out data with a 97.3% win rate across four laws and five corpora, and 98.7% in bfloat16.",
+   "sha256": "149a55ac050dc0489aa67361025e12ae42aebb10f95c9db69ad1d5aa4d5a124b"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S18",
+   "start": 1171,
+   "end": 1309,
+   "text": "memorization tasks improve with more parameters, while reasoning tasks benefit from optimal TPP, indicating that reasoning is data-hungry.",
+   "sha256": "15228debcac8adf60e2f5960e1ddf1b4a1279f86a8c9a6965fce9ef4d1d4d758"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S18",
+   "start": 1031,
+   "end": 1127,
+   "text": "models with identical training loss but greater active compute achieve higher reasoning accuracy",
+   "sha256": "7a2a0e15294014a57dbca9aac8e442547243206f57a7c3002fa1914342401149"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S21",
+   "start": 5765,
+   "end": 6157,
+   "text": "The observed TPP-performance trade-offs for reasoning tasks are robust across different model depths, as confirmed by ablations on a 32-layer architecture. This consistency suggests that the optimal TPP ratio and the importance of active parameters are fundamental characteristics of how MoE models learn reasoning skills, rather than being artifacts of specific architectural configurations.",
+   "sha256": "854713cc77a1ab4d69e5ecc9d5da50ebf4bb29221c2d00743cb2eed46a81e646"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S18",
+   "start": 1310,
+   "end": 1414,
+   "text": "Neither reinforcement learning post-training (GRPO) nor increased test-time compute alters these trends.",
+   "sha256": "e1e0a00faccfb9e9b106c39ec06b251082bdbf62ea5b66866250f3588f2023e1"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "The optimal allocation of training compute requires equal scaling of model parameters and training tokens, approximately 20 tokens per parameter. Training a 70B-parameter model on 1.4 trillion tokens achieved 67.5% accuracy on MMLU, outperforming a 280B-parameter model trained on 300 billion tokens (60.0% accuracy) while using the same compute budget, demonstrating a 7 percentage point improvement from restructuring the compute allocation rather than increasing total budget.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 20, 60.0%",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S3",
+    "S4"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What were the specific compute budgets, model architectures, and performance metrics that Hoffmann et al. 2022 used to derive the optimal token-to-parameter ratio?",
+    "capability": "You can reallocate your training compute from parameter scaling toward training data volume and recover 7% performance gains on standard benchmarks."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Models with token-to-parameter ratios significantly below the compute-optimal ~20:1 benchmark were trained suboptimally. Gopher's 300 billion tokens paired with 280 billion parameters (approximately 1:1 ratio) was identified as 'far below the compute-optimal data allocation,' proving that its relatively poor performance against Chinchilla was not a capability ceiling but a consequence of misallocated compute within the same budget.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What were the specific compute budgets, model architectures, and performance metrics that Hoffmann et al. 2022 used to derive the optimal token-to-parameter ratio?",
+    "capability": "You can audit existing large models to identify whether they were undertrained, revealing if similar compute spend could have yielded substantially better performance."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The learning-rate schedule chosen during a scaling study can entirely invert its conclusions about optimal parameter-to-token ratios. Hoffmann et al. retunes the cosine learning-rate schedule to match each run's token budget, while Kaplan et al. used a fixed schedule anchored to their largest run. When Kaplan's fixed-schedule methodology is applied to Hoffmann's data, the optimal parameter-to-token exponent reverts from approximately 1:1 back to Kaplan's 0.73:0.27 allocation, proving the papers' contradictory recommendations were artifacts of experimental setup, not differences in the underlying phenomenon.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4",
+    "E5"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What were the specific compute budgets, model architectures, and performance metrics that Hoffmann et al. 2022 used to derive the optimal token-to-parameter ratio?",
+    "capability": "You can discount scaling-law recommendations from external teams if they do not explicitly specify their learning-rate schedule methodology."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Reasoning tasks achieve optimal performance at approximately 20 tokens per parameter, while memorization tasks benefit from significantly lower TPP (meaning more parameters relative to training tokens). This suggests code and multilingual pretraining may have different optimal allocations depending on their reasoning-to-memorization mix, diverging from the universal 20:1 heuristic.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S7",
+     "quote": "memorization tasks benefit from lower TPP (more parameters per unit data), while reasoning tasks find maximal accuracy at a specific \"sweet spot\" of TPP, typically near 20",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio remain approximately 20:1 for code, multilingual, and multimodal pretraining, or do these domains require different allocations?",
+    "capability": "Stop treating all domains as requiring the same 20:1 ratio and instead allocate tokens proportionally based on whether workloads require reasoning or memorization."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "The 20:1 tokens-per-parameter ratio is an artifact of specific subword tokenizers, not a fundamental invariant; bytes-per-parameter is the true scaling-law invariant. Optimal compression rates are compute-dependent, meaning code (with operator-dense syntax) and multilingual models (with script-dependent efficiency) require different token counts but can align on byte-per-parameter scaling.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio remain approximately 20:1 for code, multilingual, and multimodal pretraining, or do these domains require different allocations?",
+    "capability": "Design tokenization strategies specific to each domain instead of forcing all domains to fit a fixed 20-token-per-parameter BPE standard."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Multimodal models reduce frame-level video tokens from thousands to ~32 compact tokens via temporal encoders and redundancy reduction, drastically increasing effective tokens-per-parameter without adding model parameters. This decouples parameter scaling from raw token count and requires a different allocation strategy than dense text models assume.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S7",
+     "quote": "In multimodal models such as xGen-MM-Vid (BLIP-3-Video), temporal encoders and Token Turing Machines are used to compress large sets of frame-level tokens into a compact representation of as few as 32",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio remain approximately 20:1 for code, multilingual, and multimodal pretraining, or do these domains require different allocations?",
+    "capability": "For multimodal pretraining, prioritize token compression and redundancy reduction as a scaling lever instead of treating video frames like text tokens."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "Models trained after 2022 contradict Chinchilla's 20:1 token-to-parameter ratio by training at 100:1-200:1 ratios—Llama 3 70B on 15 trillion tokens at 200:1—while outperforming larger models. This means smaller parameter counts achieve competitive performance through more training data. S9 validated this across 47 models, finding quality continues improving even at extreme 10,000:1 token-to-parameter ratios.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7",
+    "E8"
+   ],
+   "source_ids": [
+    "S9",
+    "S10"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which large language models trained after 2022 contradicted the Chinchilla recommendations by using significantly different token-to-parameter ratios while achieving competitive or superior performance?",
+    "capability": "You can build models that beat larger ones by spending training budget on additional tokens rather than additional parameters, enabling cheaper inference deployment."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Post-2022 practitioners systematically overtrain smaller models beyond Chinchilla recommendations to optimize total deployment cost, not training efficiency. Meta's Llama 2 deliberately trains 7B and 13B variants on 2 trillion tokens—exceeding Chinchilla-optimal by multiples—because inference economics dominate training costs. Serving millions of queries makes a heavily-trained 7B model cheaper per inference than an undertrained 70B at the same quality.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9",
+    "E10"
+   ],
+   "source_ids": [
+    "S10",
+    "S11"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which large language models trained after 2022 contradicted the Chinchilla recommendations by using significantly different token-to-parameter ratios while achieving competitive or superior performance?",
+    "capability": "You can justify spending extra training compute on inference efficiency—smaller models overtrained cost less to deploy at equivalent quality than larger undertrained ones."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Data quality now dominates quantity, making overtraining economically viable: models on 3 trillion carefully filtered tokens outperform those on 10 trillion indiscriminately collected tokens. DeepSeek demonstrated synthetic reasoning data—generated by capable models—can substitute for natural text and achieve frontier reasoning capabilities. This shifts competition from parameter-count armament to data-curation and synthetic-generation investment.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11",
+    "E12"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which large language models trained after 2022 contradicted the Chinchilla recommendations by using significantly different token-to-parameter ratios while achieving competitive or superior performance?",
+    "capability": "You can compete at the frontier through data curation and synthetic data generation rather than raw parameter scaling or compute budgets."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "For models expecting approximately 1 billion inference requests, training a 13.6B parameter model on 2.84 times more data than Chinchilla-optimal achieves equivalent quality to a 30B model while reducing total compute costs by 28%.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what token-to-parameter ratio does continued data investment yield diminishing returns, and what performance degradation curve exists for models trained beyond 200:1?",
+    "capability": "You can reduce total training and inference costs by training smaller models on substantially more data when serving high-volume production workloads, rather than following compute-optimal training guidance."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "Testing 47 models ranging from 150M to 6B parameters trained on 10 to 10,000 tokens per parameter found continuous loss improvement with no saturation plateau, contradicting prior claims of critical model-size thresholds that prevent matching larger models.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S12",
+     "quote": "We do not find evidence of a 'saturation point,' beyond which models do not improve, even with additional data.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what token-to-parameter ratio does continued data investment yield diminishing returns, and what performance degradation curve exists for models trained beyond 200:1?",
+    "capability": "You can commit to long-term data-scaling infrastructure investments without fear of hitting a saturation threshold beyond which additional data stops improving model quality."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "Chinchilla scaling laws fitted on data collected at approximately 100 tokens per parameter overestimate improvements when applied to extreme ratios (250+ tokens per parameter); empirical testing shows models improve more slowly than predicted at extreme ratios, requiring exponentially more tokens for linear quality gains.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what token-to-parameter ratio does continued data investment yield diminishing returns, and what performance degradation curve exists for models trained beyond 200:1?",
+    "capability": "You can adjust engineering timelines and cost projections when teams apply Chinchilla scaling formulas beyond typical data ratios, as these projections overestimate actual improvement rates."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "Across 988+ models varying tokenization (latent and subword methods), compression rates (1.01 to 6.16 bytes/token), and compute budgets spanning multiple orders of magnitude, the optimal bytes-per-parameter ratio remained approximately constant (0.465-0.501). This means data-to-parameter scaling is primarily a function of compute budget, not tokenization choice. When your tokenizer changes compression rates, the relationship between total training bytes and model parameters stays stable.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S16",
+     "quote": "Crucially, both the values of β_c and β_k are close to 0.5, indicating that the optimal byte-per-parameter ratio is close to constant across varying compute budget and compression rates.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio differ when applied across different model architectures, different types of training procedures, or different total compute budgets?",
+    "capability": "You can stop re-optimizing your training data volume when you change tokenization algorithms—the stable metric is bytes-per-parameter, not tokens-per-parameter."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "Token-per-parameter ratio is not a universal constant but varies by task type. Memorization tasks monotonically benefit from lower TPP (allocating more parameters relative to training data), while reasoning tasks peak at TPP≈20 and plateau. This non-monotonic relationship means the Chinchilla recommendation of 20 tokens-per-parameter is task-specific, not optimal across all workloads.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S17",
+     "quote": "A key principle: memorization tasks benefit from lower TPP (more parameters per unit data), while reasoning tasks find maximal accuracy at a specific \"sweet spot\" of TPP, typically near 20.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio differ when applied across different model architectures, different types of training procedures, or different total compute budgets?",
+    "capability": "You can tailor your training data volume to whether your model will be evaluated on reasoning versus memorization tasks, rather than applying a universal tokens-per-parameter ratio."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "Fitting scaling laws from experiments conducted at a single fixed tokens-per-parameter ratio creates mathematical ill-conditioning (condition number grows as inverse square of exponent difference) that makes extrapolations unreliable when applied to different TPP scenarios. Non-collinear designs that vary TPP won 97.3% of the time on held-out test data compared to fixed-TPP designs. The ill-conditioning arises from Jacobian geometry and affects any smooth objective, not just language model loss.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15"
+   ],
+   "source_ids": [
+    "S15"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio differ when applied across different model architectures, different types of training procedures, or different total compute budgets?",
+    "capability": "You can identify whether your scaling law estimates are likely to fail before investing in large experimental runs by checking whether your experimental design varies tokens-per-parameter ratios."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "Reasoning exhibits a U-shaped accuracy curve with TPP, peaking around 20 tokens per parameter and degrading when TPP is either too low or too high. Memorization, by contrast, monotonically improves as TPP decreases (more parameters per token). When combining both tasks in a single model, reasoning becomes the binding constraint: allocating tokens beyond TPP 20 continues improving memorization but actively harms reasoning accuracy.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E16"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S21",
+     "quote": "For memorization tasks like TriviaQA and HellaSwag, performance monotonically improves as TPP decreases, meaning these tasks benefit from more parameters relative to tokens. In contrast, reasoning tas",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When practitioners combine reasoning and memorization tasks in a single model, at what blend ratios does the optimal tokens-per-parameter ratio shift from task-specific extremes toward a single intermediate value?",
+    "capability": "Stop calibrating training data budgets for memorization performance; allocate instead to the reasoning performance ceiling."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Models with identical training loss but higher active compute achieve better reasoning accuracy; at fixed TPP, models with larger top-k values (more active experts) consistently outperform those with lower top-k on reasoning tasks. This decoupling means the sparse architecture's routing decisions operate as an independent performance dial for reasoning. When model size prevents hitting the ideal TPP 20 for reasoning, increasing active expert allocation can partially compensate.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S21",
+     "quote": "Even when TPP is fixed, models with larger top-k values consistently outperform those with smaller top-k values on reasoning tasks.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When practitioners combine reasoning and memorization tasks in a single model, at what blend ratios does the optimal tokens-per-parameter ratio shift from task-specific extremes toward a single intermediate value?",
+    "capability": "Use routing decisions (expert selection per token) as a first-order performance lever for reasoning, not a secondary parameter-tuning exercise."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "Reasoning peaks at TPP approximately 20 and then declines monotonically on both sides, while memorization has no upper bound and improves indefinitely with more parameters. This asymmetry creates a natural convergence point: TPP 20 is where reasoning works optimally and memorization still functions well. Neither reinforcement learning post-training nor test-time compute modifies this fundamental tradeoff, making it a stable target regardless of task blend variations.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18",
+    "E19"
+   ],
+   "source_ids": [
+    "S18",
+    "S21"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When practitioners combine reasoning and memorization tasks in a single model, at what blend ratios does the optimal tokens-per-parameter ratio shift from task-specific extremes toward a single intermediate value?",
+    "capability": "Standardize on TPP ~20 as a single operating point for mixed-task models instead of seeking blend-ratio-specific optima."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 21,
+  "lineages": 21,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 18,
+  "claims_with_verified_span": 13,
+  "verified_span_rate": 0.722,
+  "quotes_offered": 26,
+  "quotes_rejected": 7,
+  "ledger_capped": 6,
+  "quotes_reattributed": 0,
+  "claims_persisted": 17,
+  "persisted_with_verified_span": 13,
+  "persisted_verified_span_rate": 0.765
+ }
+}

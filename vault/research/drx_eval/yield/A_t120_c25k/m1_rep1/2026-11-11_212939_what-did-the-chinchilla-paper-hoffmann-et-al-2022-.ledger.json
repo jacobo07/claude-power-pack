@@ -1,0 +1,346 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_211601_what-did-the-chinchilla-paper-hoffmann-et-al-2022-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/abs/2203.15556",
+   "aliases": [],
+   "sha256": "3e4d7a0b4389ca1304fded43cbfed7390fc94fb8fe3d95ba38e79f63e4afd6ee",
+   "chars": 3342,
+   "snapshot": "3e4d7a0b4389ca1304fded43cbfed7390fc94fb8fe3d95ba38e79f63e4afd6ee.txt",
+   "retrieved_at": "2026-11-11T20:16:53+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://www.emergentmind.com/topics/chinchilla-s-scaling-laws",
+   "aliases": [],
+   "sha256": "e7d0f359997366542c8745486ed8ff1df5d1da404391d86a63270e93fa123010",
+   "chars": 9365,
+   "snapshot": "e7d0f359997366542c8745486ed8ff1df5d1da404391d86a63270e93fa123010.txt",
+   "retrieved_at": "2026-11-11T20:16:53+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://www.llms.blog/posts/chinchilla-scaling-laws-mathematical-foundations-of-compute-optimal-pre-training-isoflop-loss-profiles-parametric-power-laws-and-data-compute-allocation",
+   "aliases": [],
+   "sha256": "2fe464b8c080045658a513fb9818efedadf5b2d054c64cdc25c68ae2eb5fae63",
+   "chars": 23527,
+   "snapshot": "2fe464b8c080045658a513fb9818efedadf5b2d054c64cdc25c68ae2eb5fae63.txt",
+   "retrieved_at": "2026-11-11T20:16:53+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://spawn08.github.io/llmbase/06_research_papers/11_chinchilla/",
+   "aliases": [],
+   "sha256": "b38411acfd5ad5826136f6524f90e84c183c9caf4417361231946f59c23af59c",
+   "chars": 11155,
+   "snapshot": "b38411acfd5ad5826136f6524f90e84c183c9caf4417361231946f59c23af59c.txt",
+   "retrieved_at": "2026-11-11T20:16:53+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://arxiv.org/pdf/2507.17702",
+   "aliases": [],
+   "sha256": "6234e23d20747935d2eca3596c73668f1ab4e01ed4286d0bd401a70cb0b825a2",
+   "chars": 3330,
+   "snapshot": "6234e23d20747935d2eca3596c73668f1ab4e01ed4286d0bd401a70cb0b825a2.txt",
+   "retrieved_at": "2026-11-11T20:22:43+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://aldeiadaponte.com/tokens-per-parameter-the-scaling-laws-behind-llm-data-needs",
+   "aliases": [],
+   "sha256": "ea7895ddfdcd287341d70a8394ff34b454439550938dee54eeb450a5cb5d8f77",
+   "chars": 10160,
+   "snapshot": "ea7895ddfdcd287341d70a8394ff34b454439550938dee54eeb450a5cb5d8f77.txt",
+   "retrieved_at": "2026-11-11T20:22:43+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.emergentmind.com/topics/tokens-per-parameter-tpp",
+   "aliases": [],
+   "sha256": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570",
+   "chars": 10744,
+   "snapshot": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570.txt",
+   "retrieved_at": "2026-11-11T20:22:43+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S2",
+   "start": 5637,
+   "end": 5772,
+   "text": "For 1, the optimal 2 may decrease by 10–28%, with proportionally more tokens, yielding large cost savings without loss in model quality",
+   "sha256": "22dccee4687eeb0f7ba6ff4182c0e8b686feab1dd855a91d818df168f73d648d"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S3",
+   "start": 13381,
+   "end": 13608,
+   "text": "Even after 15 trillion tokens, the cross-entropy loss for Llama 3 8B continued to decline monotonically with zero signs of empirical degradation or overfitting, proving that the parameter capacity floor () was not yet saturated",
+   "sha256": "b7f491e4a2f98a951c5f79562d400b3dbfa89c14b0009eb1f6426a1cb8e1dac6"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S2",
+   "start": 2465,
+   "end": 2618,
+   "text": "Hoffmann et al. fit the law using model suites covering 5 from 6M to 7B parameters, each trained at multiple 8, with nonlinear least-squares optimization",
+   "sha256": "9842b783f128997c285d3e868e4de807c9cd28b7485d3e34c7ee9989493df634"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S3",
+   "start": 9379,
+   "end": 9525,
+   "text": "For each IsoFLOP slice, the loss curve exhibits a distinct U-shape. A parabola was fitted around the minimum to locate the exact empirical optimum",
+   "sha256": "1edda0a984914fe7735f0282781fd567b11166f6f5a699533ab5873ed648eda4"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S6",
+   "start": 3711,
+   "end": 3979,
+   "text": "for specialized domains, like medical or legal text, you might need fewer tokens per parameter because the vocabulary is narrower and the rules are more consistent. Conversely, creative writing tasks may require higher diversity in tokens to capture stylistic nuances.",
+   "sha256": "f5decd1890cebc32b0792ef7fa80ae003c9d3aaf75438e97dc20f3c9ca68fffa"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S6",
+   "start": 6212,
+   "end": 6380,
+   "text": "These designs activate only a subset of parameters for any given token, effectively increasing the useful tokens-per-parameter ratio without exploding the compute cost.",
+   "sha256": "97238fd5ba13fdda60fd26a5fc3057fa9c27de288f27edc5b899c8a6e4ff523a"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Kaplan et al. (2020) reported α=0.73, β=0.27 (models should scale 4.7× larger than data) while Chinchilla (2022) found α≈0.50, β≈0.50 (equal scaling). Later re-analysis by Epoch AI (2024) and Farseer (2025) identified that Kaplan measured loss during training on early tokens before context saturation, excluded embedding parameters, and used fixed learning rate schedules not tailored to model size. When these papers standardized on full-context evaluation and total parameter accounting, they converged on Chinchilla's exponents. Prior 'conflicting' scaling laws were optimizing different objectives.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S3",
+     "quote": "Rigorous retrospective analyses, including studies by Epoch AI (Porian et al., 2024), identified three primary drivers",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S3",
+     "quote": "In agreement across major replications for 3 FLOPs ([Besiroglu et al., 2024], [Pearce et al., 2024])",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S2",
+     "quote": "Current evidence underscores that Chinchilla's (and Farseer's) optimality prescriptions are robust for practical LLM development in the context of compute-budgeted scenarios ([Pearce et al., 2024], [L",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What loss metrics and computational constraints did Chinchilla use to measure 'compute-optimal', and when later papers reported different optimal ratios, did they measure optimality the same way or use different metrics?",
+    "capability": "Stop debating 'what's the optimal ratio' without first comparing measurement methodology—apparent disagreements may reflect different loss evaluation points, not different reality."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "When lifetime inference tokens approach or exceed training data volume, cost-optimal model size may decrease 10–28% compared to training-optimal, with proportionally more training tokens, while maintaining model quality. Meta's Llama 3 8B was trained on 15 trillion tokens (1,875 tokens per parameter) far exceeding Chinchilla's ~20-token-per-parameter baseline; even after 15 trillion tokens, cross-entropy loss continued to decline monotonically with zero signs of degradation, proving smaller models over-trained for inference amortization outperform undertrained large models on total cost.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 1875, 20",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S2",
+    "S3"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [
+    {
+     "cited": "S3",
+     "found": "S2",
+     "quote": "For 1, the optimal 2 may decrease by 10–28%, with proportionally more tokens, yielding large cost savings without loss in model quality"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "What loss metrics and computational constraints did Chinchilla use to measure 'compute-optimal', and when later papers reported different optimal ratios, did they measure optimality the same way or use different metrics?",
+    "capability": "Shift from minimizing training cost to minimizing total lifecycle cost when deploying high-traffic production models."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The Chinchilla parametric loss function decomposes loss into separate capacity bottleneck (A/N^α, where α≈0.34) and data bottleneck (B/D^β, where β≈0.28) terms. Since α > β, capacity diminishing returns decay slower than data returns, meaning you typically exhaust data diversity before exhausting model capacity. By sweeping model size at fixed compute (IsoFLOP methodology), you observe a U-shaped loss curve whose shape indicates which bottleneck dominates—allowing you to choose whether your next budget increase should fund more training tokens or a larger model.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S2",
+    "S3"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [
+    {
+     "cited": "S3",
+     "found": "S2",
+     "quote": "Hoffmann et al. fit the law using model suites covering 5 from 6M to 7B parameters, each trained at multiple 8, with nonlinear least-squares optimization"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "What loss metrics and computational constraints did Chinchilla use to measure 'compute-optimal', and when later papers reported different optimal ratios, did they measure optimality the same way or use different metrics?",
+    "capability": "Diagnose whether your training plateau is caused by model capacity saturation or data diversity exhaustion—and allocate your next compute budget accordingly."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Memorization tasks benefit from lower tokens-per-parameter ratios (more parameters per unit of data), while reasoning tasks achieve peak accuracy at approximately 20 tokens per parameter, requiring fundamentally different compute allocation strategies depending on your model's primary use case.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E5"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S7",
+     "quote": "A key principle: memorization tasks benefit from lower TPP (more parameters per unit data), while reasoning tasks find maximal accuracy at a specific \"sweet spot\" of TPP, typically near 20",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio remain constant across different model architectures like mixture-of-experts or retrieval-augmented systems, different training objectives like reinforcement learning from human feedback, and different training domains like code versus natural language?",
+    "capability": "You can stop applying a universal training budget and instead calibrate tokens-per-parameter ratios separately for different task types to optimize compute spending."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Mixture-of-experts models dramatically increase total parameters while keeping per-token active compute constant by activating only a subset of parameters for each token, effectively improving the tokens-per-parameter ratio without exploding compute costs—enabling a scaling path beyond traditional dense model efficiency limits.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E6"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S7",
+     "quote": "MoE models dramatically increase total (inactive) parameter count while keeping the per-token active compute constant via top- expert selection",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio remain constant across different model architectures like mixture-of-experts or retrieval-augmented systems, different training objectives like reinforcement learning from human feedback, and different training domains like code versus natural language?",
+    "capability": "You can achieve higher compute efficiency by deploying mixture-of-experts architectures instead of scaling dense model parameters proportionally with training data."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Pause tokens—learnable dummy tokens inserted into input sequences—increase internal computations per output token and effectively augment tokens-per-parameter without changing model weights, delivering 18% accuracy improvements on reading comprehension (SQuAD), 8% on common-sense reasoning (CommonSenseQA), and 1% on grade-school mathematics (GSM8K).",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S7",
+     "quote": "Pause tokens, as introduced in decoder-only Transformers, increase internal computations per output token by appending learnable dummy tokens (\"<pause>\") to the input sequence",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S7",
+     "quote": "Empirical evidence shows this results in notable EM score improvements on SQuAD (+18%), CommonSenseQA (+8%), and GSM8K (+1%)",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Does the optimal token-to-parameter ratio remain constant across different model architectures like mixture-of-experts or retrieval-augmented systems, different training objectives like reinforcement learning from human feedback, and different training domains like code versus natural language?",
+    "capability": "You can improve reasoning accuracy on already-trained models by adding pause tokens during inference, providing performance gains without model retraining or expensive fine-tuning."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 7,
+  "lineages": 7,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 6,
+  "claims_with_verified_span": 4,
+  "verified_span_rate": 0.667,
+  "quotes_offered": 13,
+  "quotes_rejected": 7,
+  "ledger_capped": 5,
+  "quotes_reattributed": 2,
+  "claims_persisted": 6,
+  "persisted_with_verified_span": 4,
+  "persisted_verified_span_rate": 0.667
+ }
+}

@@ -1,0 +1,378 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_210727_what-did-the-chinchilla-paper-hoffmann-et-al-2022-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://www.trychroma.com/research/context-rot",
+   "aliases": [],
+   "sha256": "b0ffb10acf5c7b6e5c6a4fc3a7614807c806cde2582388c54703f81c681d681b",
+   "chars": 12000,
+   "snapshot": "b0ffb10acf5c7b6e5c6a4fc3a7614807c806cde2582388c54703f81c681d681b.txt",
+   "retrieved_at": "2026-11-11T20:08:02+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://arxiv.org/pdf/2402.14848",
+   "aliases": [],
+   "sha256": "b2917b71b94881412c7233dcd522770a06e5da0c5ad1eccc58e9629baa286770",
+   "chars": 4871,
+   "snapshot": "b2917b71b94881412c7233dcd522770a06e5da0c5ad1eccc58e9629baa286770.txt",
+   "retrieved_at": "2026-11-11T20:08:02+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://blog.logrocket.com/stop-wasting-ai-tokens-10-ways-to-reduce-usage/",
+   "aliases": [],
+   "sha256": "32033622b85317f50a122f3ed6734c3524fcff7d79ed2d9492aad6138ef139dd",
+   "chars": 12000,
+   "snapshot": "32033622b85317f50a122f3ed6734c3524fcff7d79ed2d9492aad6138ef139dd.txt",
+   "retrieved_at": "2026-11-11T20:08:02+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://codex.danielvaughan.com/2026/04/08/codex-cli-performance-optimization/",
+   "aliases": [],
+   "sha256": "6229a43530d93849b791c030f9cea7daec56bf399243a22475ec48983925bd95",
+   "chars": 12000,
+   "snapshot": "6229a43530d93849b791c030f9cea7daec56bf399243a22475ec48983925bd95.txt",
+   "retrieved_at": "2026-11-11T20:08:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "system-prompt-reference"
+   ],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://arxiv.org/html/2601.11564v1",
+   "aliases": [],
+   "sha256": "319835088f7928308223ba6c0ffc06cce884434eef709402f4f3840b04d72d77",
+   "chars": 12000,
+   "snapshot": "319835088f7928308223ba6c0ffc06cce884434eef709402f4f3840b04d72d77.txt",
+   "retrieved_at": "2026-11-11T20:11:58+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://arxiv.org/pdf/2601.15300",
+   "aliases": [],
+   "sha256": "1bfdaba4957cd4ffee086d487fc985a04a973045bc58d1859a13705efebd6a91",
+   "chars": 3120,
+   "snapshot": "1bfdaba4957cd4ffee086d487fc985a04a973045bc58d1859a13705efebd6a91.txt",
+   "retrieved_at": "2026-11-11T20:11:58+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://upsolve.ai/blog/context-rot",
+   "aliases": [],
+   "sha256": "cac3732e57ba4dbcbd00f57c03de15f83ddd1ac32669b273bbd08d901d7314ec",
+   "chars": 12000,
+   "snapshot": "cac3732e57ba4dbcbd00f57c03de15f83ddd1ac32669b273bbd08d901d7314ec.txt",
+   "retrieved_at": "2026-11-11T20:11:58+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://duncanleung.com/blog/llm-smart-zone-dumb-zone-context-window-degradation/",
+   "aliases": [],
+   "sha256": "48f40106347d46d7c0210138e26766115fb928585330ecd7144517c9494264db",
+   "chars": 12000,
+   "snapshot": "48f40106347d46d7c0210138e26766115fb928585330ecd7144517c9494264db.txt",
+   "retrieved_at": "2026-11-11T20:11:59+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "system-prompt-reference"
+   ],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://www.morphllm.com/context-rot",
+   "aliases": [],
+   "sha256": "fc15ce0d7782dbd1de8852cb821acad7272589403f7c830ab4df81094621c16f",
+   "chars": 12000,
+   "snapshot": "fc15ce0d7782dbd1de8852cb821acad7272589403f7c830ab4df81094621c16f.txt",
+   "retrieved_at": "2026-11-11T20:11:59+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 1323,
+   "end": 1475,
+   "text": "We demonstrate that even under these minimal conditions, model performance degrades as input length increases, often in surprising and non-uniform ways.",
+   "sha256": "ab3380cb083eb85a5b9d3cde80bc79eb782cea10abc04701b7597a5bd7cbe8e4"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S1",
+   "start": 11102,
+   "end": 11187,
+   "text": "Lower similarity needle-question pairs increases the rate of performance degradation.",
+   "sha256": "f4775f6be5349fe9782252cbe25822e6bf3ec6ba1b5aecaa3336ba07a485d5e1"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S8",
+   "start": 4079,
+   "end": 4230,
+   "text": "a 1M-context model at 40% full has consumed 400K tokens, well into the degraded zone.** A 200K model at 40% has consumed only 80K tokens, solidly safe.",
+   "sha256": "01f2e2ff8c1ec4f121962b0709db68ad59ddd75ceb26f75c7a272d19efada9f6"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S8",
+   "start": 2342,
+   "end": 2453,
+   "text": "For 1M-token context window models, the observable effect typically kicks in somewhere around 300K-400K tokens.",
+   "sha256": "b03cef897cc92f1c46451dc72319d25a9000ad536c86868fc717349bf5c44a4c"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S7",
+   "start": 2869,
+   "end": 3038,
+   "text": "Adding distractors, content that is topically related to the question but doesn't answer it, made degradation significantly worse, and the effect compounded with length.",
+   "sha256": "a356ee5d76613d620c7f22e0375acb6d69782b57a87f37ce73cc59b119bcab84"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S7",
+   "start": 7227,
+   "end": 7314,
+   "text": "Every additional passage is another candidate for the model to confuse with the answer.",
+   "sha256": "b4c1153b6da80dade752a854b517f0e66c1767ba178f12fc4fcb100b8f13b136"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S7",
+   "start": 3483,
+   "end": 3619,
+   "text": "models performed better on shuffled haystacks than on logically coherent documents, which was a consistent pattern across all 18 models.",
+   "sha256": "951ae25c6457630933f2ef5ec73367ec03f356478a22df6a244c9301932b5286"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S9",
+   "start": 9171,
+   "end": 9270,
+   "text": "A well-organized codebase is, perversely, harder for an LLM to search than a randomly arranged one.",
+   "sha256": "1933b5110d249c15099b7d70ab36fa04626c920fe3b658ba5dfa36b0c6458010"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Models show non-uniform performance degradation with context length—particularly on semantic matching tasks, where degradation rate depends on needle-question similarity, distractor density, and haystack structure. Semantic tasks degrade non-smoothly even when lexical-retrieval benchmarks pass, meaning real applications can fail at scale despite passing standard benchmarks.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to model performance when you deliberately use more tokens than the recommended ratio or significantly fewer tokens—does performance degrade smoothly or do you encounter failure modes?",
+    "capability": "You can stop assuming high NIAH scores guarantee that semantic tasks like search or summarization will work at long context lengths; instead, test semantic-specific performance before investing in long-context infrastructure."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "A single MCP server with 93 tools consumes approximately 55,000 tokens per turn in overhead before any user input. System prompts add 2,000–5,000 tokens per turn; each tool definition adds 500–1,400 tokens. Heavy configurations with five or more servers consume more than 50,000 tokens before the first prompt. Disabling unused servers and enabling them only when needed immediately reclaims this entire allocation.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "A GitHub MCP server with 93 tools consumes roughly 55,000 tokens per turn. That is before you type a single character.",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S4",
+     "quote": "Heavy configurations with five or more servers can burn more than 50,000 tokens before you type your first prompt.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to model performance when you deliberately use more tokens than the recommended ratio or significantly fewer tokens—does performance degrade smoothly or do you encounter failure modes?",
+    "capability": "You can eliminate 30-50% of token overhead per query by auditing MCP server connections and disabling servers used infrequently."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "Automatic compaction at 95% context usage forces multiple compression cycles, each round discarding detail from earlier exchanges and degrading the model's ability to track early decisions. Manual compaction at 60% context usage produces better results by triggering fewer, more deliberate compressions. After two or three automatic compactions, the model becomes noticeably less accurate.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "Manual compaction at roughly 60 per cent context usage gives better results than waiting for the automatic 95 per cent trigger.",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S4",
+     "quote": "Multiple compactions cause cumulative information loss. Each round discards detail from earlier exchanges. After two or three compactions, the model may lose track of decisions made early in the sessi",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to model performance when you deliberately use more tokens than the recommended ratio or significantly fewer tokens—does performance degrade smoothly or do you encounter failure modes?",
+    "capability": "You can sustain longer, higher-quality sessions by manually compacting at 60% context usage instead of waiting for automatic compaction at 95%, preserving reasoning continuity across turns."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Context degradation thresholds are defined by absolute token counts, not relative context fill—a 1M-token model at 40% capacity has consumed 400K tokens and is deeply degraded, while a 200K model at 40% has consumed only 80K tokens and remains fully functional. Measurable degradation begins around 100K-200K tokens for most models, independent of total window size, with significant quality loss accelerating beyond 200K tokens consumed.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 100",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [
+    {
+     "cited": "S7",
+     "found": "S8",
+     "quote": "For 1M-token context window models, the observable effect typically kicks in somewhere around 300K-400K tokens."
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "At what context length do semantic tasks begin showing measurable performance degradation, and how rapidly does quality decline as context increases beyond that threshold?",
+    "capability": "You can transition from percentage-based context monitoring to absolute-token-based management, triggering compaction and session recovery earlier with measurable confidence."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Distractor interference—semantically related but factually irrelevant content—is a primary driver of context rot distinct from and more damaging than missing information. Chroma's 2025 testing of 18 frontier models found that a single topically adjacent distractor reduces baseline performance, with the effect compounding non-uniformly as distractor count increases. In real coding tasks, this manifests acutely: grepping for a function returns multiple similar implementations from unrelated modules, each a plausible but wrong distractor that actively degrades subsequent reasoning more than if those results had simply not appeared.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [
+    {
+     "cited": "S9",
+     "found": "S7",
+     "quote": "Every additional passage is another candidate for the model to confuse with the answer."
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "At what context length do semantic tasks begin showing measurable performance degradation, and how rapidly does quality decline as context increases beyond that threshold?",
+    "capability": "You can reoptimize retrieval and search pipelines to aggressively filter false positives, because semantically similar wrong answers cause measurably more performance harm than incomplete search results."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Across all 18 frontier models tested by Chroma in 2025, models performed measurably better on shuffled haystacks than on logically coherent documents. Well-organized, consistently-named code creates more semantically plausible distractors because adjacent files share terminology and concepts, making wrong answers more convincing to the attention mechanism. A well-organized codebase is paradoxically harder for an LLM to search accurately than a randomly arranged one.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7",
+    "E8"
+   ],
+   "source_ids": [
+    "S7",
+    "S9"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what context length do semantic tasks begin showing measurable performance degradation, and how rapidly does quality decline as context increases beyond that threshold?",
+    "capability": "You can stop treating code organization quality, naming consistency, and documentation as uniformly positive for AI agent performance, and instead measure their cost as distractor amplification."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 9,
+  "lineages": 9,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 3,
+  "claims": 6,
+  "claims_with_verified_span": 4,
+  "verified_span_rate": 0.667,
+  "quotes_offered": 12,
+  "quotes_rejected": 4,
+  "ledger_capped": 4,
+  "quotes_reattributed": 2,
+  "claims_persisted": 6,
+  "persisted_with_verified_span": 4,
+  "persisted_verified_span_rate": 0.667
+ }
+}

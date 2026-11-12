@@ -36,3 +36,8 @@ v0.4.0 is NOT shown to be a better research engine overall. It is shown to make 
 catch misattributed citations; it currently pays for that with yield. Next experiment (owner of the next
 slice): extraction timeout / content-size sweep, n >= 3 per arm, judged on yield AND verified-quote rate,
 before any HELD_OUT case in `EVAL_SET.json` is run.
+
+## Follow-up (2026-11-12): the sweep ran — see `yield/RESULTS.md`
+27 runs, pre-registered rule. The 240 s timeout arm is adoptable (+6.89 learnings/run vs 2·SE 4.56, 0 vs 3
+INSUFFICIENT, quote rate −0.037). The 12k-content arm is not. The extraction-timeout hypothesis above is NOT
+supported: the 120 s limit was killing query generation during slow `claude -p` windows, not extraction.

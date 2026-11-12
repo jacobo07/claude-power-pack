@@ -1,0 +1,350 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_221538_what-is-the-measured-effect-of-sqlite-wal-mode-on-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://www.sqliteforum.com/p/sqlite-wal-internals-frames-commits",
+   "aliases": [],
+   "sha256": "a23be55c1615e1e796f73e6fee99b95dc2ce94b6f2f8394e2fb8054fa24a3bc9",
+   "chars": 6997,
+   "snapshot": "a23be55c1615e1e796f73e6fee99b95dc2ce94b6f2f8394e2fb8054fa24a3bc9.txt",
+   "retrieved_at": "2026-11-11T21:16:20+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://productionhardening.org/wal-optimization-concurrency-tuning/",
+   "aliases": [],
+   "sha256": "8b0f47ff3e95e3b428cbdb359c00058a048925c189746bf12d7168d84b6976a1",
+   "chars": 15091,
+   "snapshot": "8b0f47ff3e95e3b428cbdb359c00058a048925c189746bf12d7168d84b6976a1.txt",
+   "retrieved_at": "2026-11-11T21:16:20+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://sqlite.org/wal.html",
+   "aliases": [],
+   "sha256": "1eb27a16594bb13e47ad305233d200b4dd740f564ba158be59d736710074cb22",
+   "chars": 25000,
+   "snapshot": "1eb27a16594bb13e47ad305233d200b4dd740f564ba158be59d736710074cb22.txt",
+   "retrieved_at": "2026-11-11T21:16:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://coddy.tech/docs/sqlite/wal-mode-and-concurrency",
+   "aliases": [],
+   "sha256": "45e46be8a592e0917b17caf0bf70ed3934f1acd5e27a9abed077f59fc5a14460",
+   "chars": 8619,
+   "snapshot": "45e46be8a592e0917b17caf0bf70ed3934f1acd5e27a9abed077f59fc5a14460.txt",
+   "retrieved_at": "2026-11-11T21:16:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://malekbenz.com/blog/2026/06/17/demystifying-sqlite-isolation-levels",
+   "aliases": [],
+   "sha256": "00e2554cf03461663b18074e11e71efde50f1332a960aedec626d93922fa4870",
+   "chars": 10162,
+   "snapshot": "00e2554cf03461663b18074e11e71efde50f1332a960aedec626d93922fa4870.txt",
+   "retrieved_at": "2026-11-11T21:16:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.postgresql.org/docs/current/wal-configuration.html",
+   "aliases": [],
+   "sha256": "91fff9ce81a29bc97584917e12a0d46012ae390a7be6d3e942c5bc9d58d68924",
+   "chars": 18792,
+   "snapshot": "91fff9ce81a29bc97584917e12a0d46012ae390a7be6d3e942c5bc9d58d68924.txt",
+   "retrieved_at": "2026-11-11T21:19:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.postgresql.org/docs/current/wal-internals.html",
+   "aliases": [],
+   "sha256": "fcbca1b46e3be1073aaf8847bd220c6657c90ebf40861429b21fb0ffa93b1ddf",
+   "chars": 3765,
+   "snapshot": "fcbca1b46e3be1073aaf8847bd220c6657c90ebf40861429b21fb0ffa93b1ddf.txt",
+   "retrieved_at": "2026-11-11T21:19:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://docs.streamkap.com/monitoring-the-postgresql-wal-log",
+   "aliases": [],
+   "sha256": "78986b9513dcd1b8a06a2007e8641a3c8d1e6a50cff41051b7c3431383573cee",
+   "chars": 5153,
+   "snapshot": "78986b9513dcd1b8a06a2007e8641a3c8d1e6a50cff41051b7c3431383573cee.txt",
+   "retrieved_at": "2026-11-11T21:19:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://lantern.dev/blog/wal-size-experiments",
+   "aliases": [],
+   "sha256": "5171ebfcfdeddfc493e01b61df0e2ff4a826c645e81c96507efb9b413f51d642",
+   "chars": 6056,
+   "snapshot": "5171ebfcfdeddfc493e01b61df0e2ff4a826c645e81c96507efb9b413f51d642.txt",
+   "retrieved_at": "2026-11-11T21:19:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S3",
+   "start": 6142,
+   "end": 6346,
+   "text": "read performance deteriorates as the WAL file grows in size since each reader must check the WAL file for the content and the time needed to check the WAL file is proportional to the size of the WAL file.",
+   "sha256": "e6427adaa1dab8da3ebe38670eb4d2302b3d777cb792279026dc1d1ef48855f5"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S3",
+   "start": 18261,
+   "end": 18464,
+   "text": "However, if a database has many concurrent overlapping readers and there is always at least one active reader, then no checkpoints will be able to complete and hence the WAL file will grow without bound.",
+   "sha256": "d5703438d19c4b3641f184dde244b25e3ff79d6115442914c68e360c7f8bbda1"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S8",
+   "start": 1908,
+   "end": 2030,
+   "text": "Ensure at least 3 days of WAL storage to handle replication delays. Retaining 5+ days is ideal for troubleshooting issues.",
+   "sha256": "325aca22d0d14e8d0f1616d85c0dbe75dd71aa8c2626d9d2e822b8e849dd9857"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S8",
+   "start": 1569,
+   "end": 1608,
+   "text": "Unused or slow slots cause WAL buildup.",
+   "sha256": "21bf3fb4e23396f46e093af287e4288905c786b91613ce2c2b874e9b99d2a780"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S9",
+   "start": 3476,
+   "end": 3624,
+   "text": "Considering that just the column lengths add up to 8 + 32 + 512 = 552 bytes, this means that WAL has only a 17% overhead on row data that we insert.",
+   "sha256": "e40dbe1aeab4274fd07a3e9563a583fe1f18d0ac2cc7d0f290c762e444413170"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S8",
+   "start": 2435,
+   "end": 2532,
+   "text": "Retention Needs**: Multiply average WAL generation by the desired retention period (e.g., 3 days)",
+   "sha256": "cb70ee3ce5cefd13ea8134c3e63e5ef25e910952f9dd49b5883fe79f3fc4b1fe"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "WAL's throughput advantage over rollback journal does not collapse from write concurrency itself—both modes serialize writes through a single-writer lock. WAL's advantage comes from decoupling readers from writers. The throughput advantage collapses when sustained writes combine with concurrent long-running read transactions: the long readers prevent checkpoints, the WAL file grows unbounded, and all readers slow proportionally as they search the growing WAL for pages. Checkpoint starvation is the most common production failure of the whole WAL subsystem, and recognizing it allows targeted fixes like enforcing reader timeouts instead of changing database architecture.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S2",
+     "quote": "Checkpoint starvation is the most common production failure of the whole subsystem. A checkpoint can only reclaim WAL frames older than the oldest reader snapshot. If a long-running reader holds a sna",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what levels of write concurrency or contention does the throughput advantage of SQLite WAL over rollback journal mode diminish or collapse?",
+    "capability": "Stop attributing WAL performance collapse to high write concurrency and instead diagnose it as checkpoint starvation caused by long-running readers."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Both WAL and rollback journal serialize writes through a single-writer lock, so neither mode provides concurrent write throughput over the other. Rollback journal fails immediately under concurrent read-write workloads with SQLITE_BUSY errors because readers block writers. WAL achieves higher read throughput but fails at checkpoint starvation caused by long-running readers, leading to unbounded WAL file growth. The mode choice depends on your reader concurrency pattern, not write volume: use WAL if you have many concurrent short readers; avoid WAL if you have few but long-running queries.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E2"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S4",
+     "quote": "Single-writer batch jobs with no concurrent readers. WAL won't hurt, but you're not gaining anything either.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [
+    {
+     "cited": "S2",
+     "found": "S3",
+     "quote": "However, if a database has many concurrent overlapping readers and there is always at least one active reader, then no checkpoints will be able to complete and hence the WAL file will grow without bou"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "At what levels of write concurrency or contention does the throughput advantage of SQLite WAL over rollback journal mode diminish or collapse?",
+    "capability": "Choose between WAL and rollback journal based on your read pattern, not write volume—because both modes serialize writes but fail at different contention points."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "Production WAL deployments should monitor WAL file size growth and checkpoint frequency as forward-looking signals of checkpoint starvation. Rising WAL file size indicates long-running readers are blocking checkpoints; early detection allows operators to enforce query timeouts, tune wal_autocheckpoint to trigger checkpoints more frequently, or schedule checkpoints during reader gaps—interventions that prevent unbounded WAL growth and the read performance degradation that follows. Without this monitoring, operators discover the problem only after SQLITE_BUSY or SQLITE_FULL errors surface, at which point performance has already collapsed.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S2",
+     "quote": "When working with WAL in production, monitor: WAL file size growth, Checkpoint frequency, Long-running read transactions (can delay checkpointing), Write contention. These factors directly impact perf",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what levels of write concurrency or contention does the throughput advantage of SQLite WAL over rollback journal mode diminish or collapse?",
+    "capability": "Start monitoring WAL file size and checkpoint frequency as leading indicators to intervene in checkpoint starvation before query throughput collapses."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "PostgreSQL generates approximately 3.5 times more WAL when indexes exist during bulk insert operations compared to creating the same indexes after data insertion. This occurs because the database must log every individual index modification as rows arrive, whereas post-insertion indexing writes larger sequential blocks to WAL.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S9",
+     "quote": "This effect is why it is recommended to create indexes after bulk data insertion, not before. For larger data transfers, it is even recommended to drop all indexes, insert data, and recreate indexes.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What WAL file sizes and growth rates do production systems empirically use to trigger monitoring alerts, and does this threshold vary with database schema size or write volume?",
+    "capability": "You can reduce WAL generation during bulk data operations by more than two-thirds by deferring index creation until after data insertion completes."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "PostgreSQL operators should retain 3 to 5 days of WAL; unused replication slots or slow subscribers cause WAL segments to accumulate without limit since old segments cannot be recycled until all active replication slots have consumed them. The restart_lsn metric in pg_replication_slots directly indicates how far back each slot requires WAL to extend.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": null,
+   "meta": {
+    "query": "What WAL file sizes and growth rates do production systems empirically use to trigger monitoring alerts, and does this threshold vary with database schema size or write volume?",
+    "capability": "You can prevent unbounded WAL disk growth by establishing replication slot lag monitoring as a standing operational baseline."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "PostgreSQL WAL typically represents 17% overhead above raw row data size in standard workloads. Disk capacity should be calculated by multiplying measured WAL generation rate by the desired retention period; production recommendations specify 3-5 days of retention, enabling operators to provision storage based on write intensity rather than through trial-and-error.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S8",
+    "S9"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What WAL file sizes and growth rates do production systems empirically use to trigger monitoring alerts, and does this threshold vary with database schema size or write volume?",
+    "capability": "You can calculate required WAL disk capacity from insert volume and transaction characteristics instead of relying solely on default configuration limits."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 9,
+  "lineages": 9,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 6,
+  "claims_with_verified_span": 4,
+  "verified_span_rate": 0.667,
+  "quotes_offered": 10,
+  "quotes_rejected": 4,
+  "ledger_capped": 3,
+  "quotes_reattributed": 1,
+  "claims_persisted": 4,
+  "persisted_with_verified_span": 3,
+  "persisted_verified_span_rate": 0.75
+ }
+}

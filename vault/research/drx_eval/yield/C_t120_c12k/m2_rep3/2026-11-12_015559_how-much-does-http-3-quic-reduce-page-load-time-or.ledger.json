@@ -1,0 +1,798 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-12_013607_how-much-does-http-3-quic-reduce-page-load-time-or",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/html/2409.16267v1",
+   "aliases": [],
+   "sha256": "445ac28b1c258593554b64f98cdef415db3b80d57584f0c7377a6b4f6d0b0917",
+   "chars": 12000,
+   "snapshot": "445ac28b1c258593554b64f98cdef415db3b80d57584f0c7377a6b4f6d0b0917.txt",
+   "retrieved_at": "2026-11-12T00:37:12+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://datatracker.ietf.org/meeting/120/materials/slides-120-maprg-simulated-network-conditions",
+   "aliases": [],
+   "sha256": "7db3fadf0f373091ca0bf9ef6d8a8d4a102cbf09e4362b6996b885201a356a08",
+   "chars": 4271,
+   "snapshot": "7db3fadf0f373091ca0bf9ef6d8a8d4a102cbf09e4362b6996b885201a356a08.txt",
+   "retrieved_at": "2026-11-12T00:37:12+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://arxiv.org/pdf/2102.12358",
+   "aliases": [],
+   "sha256": "b42794820bf3bc01f92907ed8e7aaeb358ecd632282978705a65cf2785d4bc28",
+   "chars": 804,
+   "snapshot": "b42794820bf3bc01f92907ed8e7aaeb358ecd632282978705a65cf2785d4bc28.txt",
+   "retrieved_at": "2026-11-12T00:37:12+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://ieeexplore.ieee.org/abstract/document/11083994",
+   "aliases": [],
+   "sha256": "fc338a54e60a730e77235ab0f5e872f9e62bd934f66e379414bc3d7e05424aa8",
+   "chars": 277,
+   "snapshot": "fc338a54e60a730e77235ab0f5e872f9e62bd934f66e379414bc3d7e05424aa8.txt",
+   "retrieved_at": "2026-11-12T00:37:12+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://arxiv.org/html/2409.16267v3",
+   "aliases": [],
+   "sha256": "c69e2fd09873fce5aa98403d8b9dcde71a6eaf37689c236c6d2e515e96dacb20",
+   "chars": 12000,
+   "snapshot": "c69e2fd09873fce5aa98403d8b9dcde71a6eaf37689c236c6d2e515e96dacb20.txt",
+   "retrieved_at": "2026-11-12T00:41:11+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://arxiv.org/html/2409.16267v2",
+   "aliases": [],
+   "sha256": "1776f0c4446944c37701edae4a06ee39acb7ac755ceefa92a860bc481cf296df",
+   "chars": 12000,
+   "snapshot": "1776f0c4446944c37701edae4a06ee39acb7ac755ceefa92a860bc481cf296df.txt",
+   "retrieved_at": "2026-11-12T00:41:11+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://luminary.blog/techs/http3-vs-http2/",
+   "aliases": [],
+   "sha256": "337190cb0d60db4470f7eb3ca6cd69e47ac6c9cffbfe39e4fbb5b349cd76008a",
+   "chars": 7699,
+   "snapshot": "337190cb0d60db4470f7eb3ca6cd69e47ac6c9cffbfe39e4fbb5b349cd76008a.txt",
+   "retrieved_at": "2026-11-12T00:41:11+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://adhdecode.com/articles/http3/http3-performance-benchmarks/",
+   "aliases": [],
+   "sha256": "ca3d4c369700d6d7941d6e3b56e9f91479f8f3d81f068d8fbb15bccefffad730",
+   "chars": 4470,
+   "snapshot": "ca3d4c369700d6d7941d6e3b56e9f91479f8f3d81f068d8fbb15bccefffad730.txt",
+   "retrieved_at": "2026-11-12T00:41:11+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://www.logicmonitor.com/deep-dive/http3-vs-http2/introduction",
+   "aliases": [],
+   "sha256": "a8ce5545198bb5e8bd23fb9b0ad52cfd69598e74f63f02bd8cf510af3a426219",
+   "chars": 12000,
+   "snapshot": "a8ce5545198bb5e8bd23fb9b0ad52cfd69598e74f63f02bd8cf510af3a426219.txt",
+   "retrieved_at": "2026-11-12T00:41:11+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://thecodeforge.io/cs-fundamentals/http2-http3/",
+   "aliases": [],
+   "sha256": "fb4db0bc4ffa81d8ea8a6b8bc040314354ed1a948d2747955ea4b7ee87659316",
+   "chars": 12000,
+   "snapshot": "fb4db0bc4ffa81d8ea8a6b8bc040314354ed1a948d2747955ea4b7ee87659316.txt",
+   "retrieved_at": "2026-11-12T00:42:31+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://distribute.com.au/2026/09/01/http2-vs-http3/",
+   "aliases": [],
+   "sha256": "1dd942926ec228d4c388ee41c4b32ca8e7ee59852841fb27eb0fea91a21962f4",
+   "chars": 12000,
+   "snapshot": "1dd942926ec228d4c388ee41c4b32ca8e7ee59852841fb27eb0fea91a21962f4.txt",
+   "retrieved_at": "2026-11-12T00:42:31+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://www.dataplugs.com/en/benchmarking-http-3-quic-protocol-on-hosting-platforms/",
+   "aliases": [],
+   "sha256": "a2471bf41107bef0cb8da8c43110779adbff8fa7ab8ad582d51e914f9b19e181",
+   "chars": 8492,
+   "snapshot": "a2471bf41107bef0cb8da8c43110779adbff8fa7ab8ad582d51e914f9b19e181.txt",
+   "retrieved_at": "2026-11-12T00:42:31+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://pulse.internetsociety.org/en/blog/2023/07/measuring-http-3-real-world-performance/",
+   "aliases": [],
+   "sha256": "4b6d472b5a2380917c60d2d1866af4e61ee372e1fbd682c6ec498630ec38b035",
+   "chars": 5045,
+   "snapshot": "4b6d472b5a2380917c60d2d1866af4e61ee372e1fbd682c6ec498630ec38b035.txt",
+   "retrieved_at": "2026-11-12T00:46:04+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://www.osbbd.com/explainers/http3-vs-http2",
+   "aliases": [],
+   "sha256": "439bb742bf6059df4cd9272203149ec4350902289f3f16bd4e112e7c57b98749",
+   "chars": 7272,
+   "snapshot": "439bb742bf6059df4cd9272203149ec4350902289f3f16bd4e112e7c57b98749.txt",
+   "retrieved_at": "2026-11-12T00:46:04+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://blog.apnic.net/2023/10/09/measuring-http-3-real-world-performance/",
+   "aliases": [],
+   "sha256": "8c447601c064ae4b38ee6a0fbf16816098de2d407265182c62bb6bd71d5f9440",
+   "chars": 5298,
+   "snapshot": "8c447601c064ae4b38ee6a0fbf16816098de2d407265182c62bb6bd71d5f9440.txt",
+   "retrieved_at": "2026-11-12T00:47:43+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://www.dev-toolbox.tech/tools/http-protocol-comparison/examples/http3-mobile-performance",
+   "aliases": [],
+   "sha256": "83092932ca22c6bc5ee56d6fe3cf4fc8952f7364465022be6bf23dd5a9b728fc",
+   "chars": 2217,
+   "snapshot": "83092932ca22c6bc5ee56d6fe3cf4fc8952f7364465022be6bf23dd5a9b728fc.txt",
+   "retrieved_at": "2026-11-12T00:47:43+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://slack.engineering/from-custom-to-open-scalable-network-probing-and-http-3-readiness-with-prometheus/",
+   "aliases": [],
+   "sha256": "c9fe6a7d9171d2d22f16f0290df565e5efb4f653917490a0f997f87214565ca4",
+   "chars": 6906,
+   "snapshot": "c9fe6a7d9171d2d22f16f0290df565e5efb4f653917490a0f997f87214565ca4.txt",
+   "retrieved_at": "2026-11-12T00:51:11+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S17"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 642,
+   "end": 798,
+   "text": "Our findings reveal that H3 excels under high loss and latency conditions, significantly benefiting from its connection migration and multiplexing features.",
+   "sha256": "ebad891c0f385aaf47d17f77796df83f69e5e9d7cfe06be935d6bb4a33344906"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S1",
+   "start": 948,
+   "end": 1065,
+   "text": "The proxy has a more neutral impact on H3, while it significantly enhances H2 performance, especially when using BBR.",
+   "sha256": "53296d80e008a14a328487e11b8e1e78f32c0e18cb4809d530e1070518b1ec81"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S1",
+   "start": 1202,
+   "end": 1417,
+   "text": "while H2 with the right congestion control algorithm (CCA) can achieve performance comparable to H3, H3’s performance is more robust, as it is less impacted by network conditions, proxy settings, and CCA variations.",
+   "sha256": "968710c60f0d115d6285980bf2866c6d14b1fa5c534e83116603d8b3e458bcfa"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S7",
+   "start": 3684,
+   "end": 3950,
+   "text": "If your architecture is primarily backend services talking to each other inside a VPC or data center, HTTP/2 is not holding you back. The RTT between services in the same availability zone is sub-millisecond, packet loss is negligible, and connections don’t migrate.",
+   "sha256": "dd1086bc13eb94ab777a56d5d50c88cd67d168bc035a56a0d01973dacc92392c"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S6",
+   "start": 1102,
+   "end": 1334,
+   "text": "proxy has a more neutral impact on H3, while it significantly enhances H2 performance, particularly when paired with BBR, resulting in a 90% improvement in the single-stream file download experiment under severe network impairments.",
+   "sha256": "bbdb5aa68ee0301cefeaf627058ef1317a8d1acfadcd5b0dc36d7c6852b064c3"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S5",
+   "start": 1156,
+   "end": 1317,
+   "text": "While optimized H2 can match H3 in some settings, H3 is more robust overall, showing less sensitivity to proxies, impairments, and congestion control variations.",
+   "sha256": "0126deccf19369d064fd306db6b6fb19b1a95d60e65fd85b698ac2bcf3d29493"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S6",
+   "start": 1471,
+   "end": 1686,
+   "text": "while H2 with the right congestion control algorithm (CCA) can achieve performance comparable to H3, H3’s performance is more robust, as it is less impacted by network conditions, proxy settings, and CCA variations.",
+   "sha256": "968710c60f0d115d6285980bf2866c6d14b1fa5c534e83116603d8b3e458bcfa"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S11",
+   "start": 7926,
+   "end": 8137,
+   "text": "benchmarks run on stable datacentre links routinely understate HTTP/3’s benefit, because Cloudflare notes that mobile and lossy-network conditions are where the protocol’s per-stream loss recovery earns its keep",
+   "sha256": "bc0a635c94aa961601290b5ae303db7a33e813696ccb65d4dea16c088f3773c5"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S11",
+   "start": 8222,
+   "end": 8345,
+   "text": "Test with 2 to 5% packet loss injected, closer to real mobile conditions, and HTTP/3’s advantage typically becomes obvious.",
+   "sha256": "900147c3941ae3994c8e2eed1568214b7b2afb140a096e24554b70294caaa71e"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S10",
+   "start": 11904,
+   "end": 11995,
+   "text": "in zero-loss environments, HTTP/2 (over TCP) can match QUIC because TCP overhead is minimal",
+   "sha256": "9da5e7c63fd9ef26bcf473c116ab9be1cec5538bbb68962768d2b26863437d3d"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S10",
+   "start": 2218,
+   "end": 2318,
+   "text": "on a 2% packet loss link (common on mobile), HTTP/2 throughput can drop by 50-70% compared to HTTP/3",
+   "sha256": "abbdda7e7f0ff9ed3fae94377484b27fcec967f5433f3ac7f7dcc21ba137a751"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S10",
+   "start": 7849,
+   "end": 7964,
+   "text": "Akamai's real-world data shows that for users with 2%–3% packet loss, HTTP/2 can be 1.5× to 2× slower than HTTP/1.1",
+   "sha256": "6fc9505e00b2f18c32f4051a13b56def66c0876428b3c50c6ba1a963d608ae96"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S6",
+   "start": 815,
+   "end": 933,
+   "text": "with improvements of up to 88.36% under high-loss and high-latency conditions, and 81.5% under extreme loss conditions",
+   "sha256": "a3a885d10f0de69ca6a5a73d2afda2a93bbd7efa95c9c372936a6ee608cb0972"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S12",
+   "start": 3845,
+   "end": 4031,
+   "text": "environments using BBR for TCP and CUBIC for QUIC may show HTTP/3 underperforming under early packet loss. This behavior reflects congestion control dynamics rather than protocol design.",
+   "sha256": "61895599e4ff8cf7757717b9266f4d351221dc8446d94de70817a94f7d0fcdb5"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S12",
+   "start": 4032,
+   "end": 4162,
+   "text": "Platforms that align congestion control strategies across TCP and QUIC often show near parity or improved performance with HTTP/3.",
+   "sha256": "a6d1e0d99de4dfb2c76f6a99447aa406d37d2acd6286a6ba11c97bf88269a5d5"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S14",
+   "start": 2631,
+   "end": 2793,
+   "text": "If a packet carrying part of one response is lost, that response waits for recovery. Data that belongs only to other streams can continue to reach the HTTP layer.",
+   "sha256": "6e7e2631da6283f740fad0d6ca2d86aa35e53edec9fa7ea13fb16dc0ab751501"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S13",
+   "start": 3087,
+   "end": 3283,
+   "text": "we saw about 69% of HTTP/3 connections reach a throughput of 5 Mbps or more (indicated by Netflix as the minimum threshold for Full HD video streaming), compared to only 56% of HTTP/2 connections.",
+   "sha256": "91411279dc24578f71cbe00807585d2d6fc2e8beb7036ba80972e47119e5f8a8"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S5",
+   "start": 1206,
+   "end": 1317,
+   "text": "H3 is more robust overall, showing less sensitivity to proxies, impairments, and congestion control variations.",
+   "sha256": "acc0d3e9fcb4c7fc0727a1f9004341149d8de9e0ea7025fbe517a4a0882b447e"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S6",
+   "start": 1471,
+   "end": 1686,
+   "text": "while H2 with the right congestion control algorithm (CCA) can achieve performance comparable to H3, H3’s performance is more robust, as it is less impacted by network conditions, proxy settings, and CCA variations.",
+   "sha256": "968710c60f0d115d6285980bf2866c6d14b1fa5c534e83116603d8b3e458bcfa"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S13",
+   "start": 3074,
+   "end": 3404,
+   "text": "For example, we saw about 69% of HTTP/3 connections reach a throughput of 5 Mbps or more (indicated by Netflix as the minimum threshold for Full HD video streaming), compared to only 56% of HTTP/2 connections. In practice, this means that the video streams will be of a higher visual quality, and/or have fewer stalls over HTTP/3.",
+   "sha256": "52bc30f00ed92a9702e0ce758470f598357bf2fb4780ac6d861ebd10fff4a202"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S13",
+   "start": 1074,
+   "end": 1259,
+   "text": "When looking at YouTube video streaming, they found **up to 20% less video stalling** (when the video playback needs to stop to wait for new data to come in) in countries such as India.",
+   "sha256": "1b17b229322fc6d57a745a84c437767208a871b4da8a794bfb839c9db715386f"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S16",
+   "start": 1538,
+   "end": 1710,
+   "text": "Google reported that YouTube rebuffering decreased by 15-18% after enabling QUIC. Cloudflare observed that HTTP/3 reduced TTFB by 12.4% for mobile users compared to HTTP/2.",
+   "sha256": "7d236176121cd76fcd589e61e1c73b9e56b61276f8b3bb6f38df747de18e3c7a"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "HTTP/3 was tested under simulated packet loss and network delay and demonstrated superior robustness compared to HTTP/2, with connection migration enabling seamless network transitions, allowing cost-effective deployment to mobile users without requiring infrastructure changes to improve performance outcomes.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What network conditions including packet loss rates and latency have researchers simulated in HTTP/3 performance studies, and do these match the characteristics of real 4G and 5G mobile networks?",
+    "capability": "Focus HTTP/3 deployment on mobile networks where connection stability across network transitions is critical to user experience."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "The research tested HTTP/2 and HTTP/3 with and without proxy infrastructure, finding that proxies significantly enhanced HTTP/2 performance (especially with BBR congestion control) but had minimal impact on HTTP/3, meaning operator ROI on proxy optimization depends on the proportion of legacy HTTP/2 traffic.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E2"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What network conditions including packet loss rates and latency have researchers simulated in HTTP/3 performance studies, and do these match the characteristics of real 4G and 5G mobile networks?",
+    "capability": "Reallocate proxy infrastructure spending away from performance optimization for HTTP/3 traffic."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The research tested HTTP/2 across multiple congestion control algorithms (BBR, Cubic, NewReno) and varying network impairments, finding that HTTP/2's performance varied significantly depending on algorithm choice and conditions, while HTTP/3 maintained consistent performance across all tested variations.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What network conditions including packet loss rates and latency have researchers simulated in HTTP/3 performance studies, and do these match the characteristics of real 4G and 5G mobile networks?",
+    "capability": "Prioritize HTTP/3 adoption over further HTTP/2 optimization work, leveraging H3's inherent consistency across network conditions."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "In data-center and VPC environments where services communicate over sub-millisecond latency with negligible packet loss, HTTP/2 and HTTP/3 perform identically. The performance advantages of HTTP/3—connection migration, 0-RTT resumption, independent stream recovery—are irrelevant when connections are long-lived and pooled, making HTTP/2 a mature choice that requires no protocol migration investment.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When does HTTP/3's performance advantage disappear, and what are the network or traffic conditions where HTTP/2 remains competitive?",
+    "capability": "You can stop prioritizing HTTP/3 migration for internal service-to-service communication and redirect that infrastructure budget to user-facing edge deployments."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "A reverse proxy using BBR congestion control can recover 90% of HTTP/2's performance loss under severe impairments (4% packet loss, 50ms latency), allowing HTTP/2 to achieve near-HTTP/3 performance. HTTP/3 shows minimal performance change from proxy placement because its internal mechanisms already handle these conditions, making proxy deployment a cost-effective alternative to protocol migration for operators with existing HTTP/2 infrastructure.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 50",
+   "spans": [
+    "E5"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S5",
+     "quote": "proxies significantly enhance H2 performance, yielding a 90% improvement in single-stream downloads under severe impairments when used with the BBR congestion control algorithm. In contrast, proxies h",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When does HTTP/3's performance advantage disappear, and what are the network or traffic conditions where HTTP/2 remains competitive?",
+    "capability": "You can deploy reverse proxies with BBR as a targeted remediation for HTTP/2 performance in lossy networks, avoiding a full protocol migration to HTTP/3."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "HTTP/2 requires optimization of congestion control algorithms—when paired with a proxy, BBR delivers the 90% performance recovery mentioned above while other CCAs do not. HTTP/3 performs robustly across all CCA variations, making BBR deployment on HTTP/2 a high-return optimization but CCA tuning on HTTP/3 a low-value activity. This asymmetry means optimization engineering effort should flow toward HTTP/2 infrastructure where CCA choice has measurable ROI.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6",
+    "E7"
+   ],
+   "source_ids": [
+    "S5",
+    "S6"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When does HTTP/3's performance advantage disappear, and what are the network or traffic conditions where HTTP/2 remains competitive?",
+    "capability": "You can prioritize congestion-control tuning and BBR deployment for HTTP/2 infrastructure, knowing it yields measurable gains, while deprioritizing similar optimization efforts for HTTP/3."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "HTTP/3's performance advantage over HTTP/2 only manifests under 2–5% packet loss (typical for mobile networks); on clean datacenter links, the two protocols converge to equivalent performance. Benchmarking exclusively on stable infrastructure systematically understates HTTP/3's real-world value and risks deploying a configuration optimized for datacenter conditions rather than the lossy mobile networks where the per-stream loss recovery actually matters.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: spans carry no figure",
+   "spans": [
+    "E8",
+    "E9",
+    "E10"
+   ],
+   "source_ids": [
+    "S10",
+    "S11"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [
+    {
+     "cited": "S12",
+     "found": "S11",
+     "quote": "benchmarks run on stable datacentre links routinely understate HTTP/3's benefit, because Cloudflare notes that mobile and lossy-network conditions are where the protocol's per-stream loss recovery ear"
+    },
+    {
+     "cited": "S12",
+     "found": "S11",
+     "quote": "Test with 2 to 5% packet loss injected, closer to real mobile conditions, and HTTP/3's advantage typically becomes obvious."
+    },
+    {
+     "cited": "S11",
+     "found": "S10",
+     "quote": "in zero-loss environments, HTTP/2 (over TCP) can match QUIC because TCP overhead is minimal"
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "Why does page load time respond differently to packet loss in HTTP/3 compared to HTTP/2, and under what network conditions is this difference most pronounced?",
+    "capability": "Stop benchmarking HTTP/3 on datacenter networks and instead measure performance under realistic user packet loss conditions to make informed deployment decisions."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "At 2% packet loss (common on mobile networks), HTTP/2 throughput drops 50–70% compared to HTTP/3, and HTTP/2 can degrade to 1.5–2x slower than HTTP/1.1 at 2–3% loss. Under extreme loss conditions, HTTP/3 achieves improvements up to 88%. This performance cliff is not continuous—the difference is most pronounced in the 2–5% loss range where mobile users typically operate, making geographic and network-quality-based routing a concrete lever.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 88%",
+   "spans": [
+    "E11",
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S6",
+    "S10"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does page load time respond differently to packet loss in HTTP/3 compared to HTTP/2, and under what network conditions is this difference most pronounced?",
+    "capability": "Route or prioritize HTTP/3 deployment to geographic regions and user segments experiencing >2% packet loss, while maintaining HTTP/2 for stable low-loss networks."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "HTTP/3 performance varies dramatically—sometimes underperforming HTTP/2—not because QUIC is flawed, but because different congestion control algorithms (e.g., BBR versus CUBIC) interact differently with packet loss. When environments use BBR for TCP but CUBIC for QUIC, HTTP/3 can underperform under early packet loss. Aligning congestion control strategies across protocols typically results in HTTP/3 matching or exceeding HTTP/2, meaning performance regressions often reflect tuning rather than fundamental protocol inadequacy.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14",
+    "E15"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does page load time respond differently to packet loss in HTTP/3 compared to HTTP/2, and under what network conditions is this difference most pronounced?",
+    "capability": "Diagnose HTTP/3 performance degradation as a congestion-control misconfiguration rather than a protocol limitation, enabling targeted tuning instead of protocol rollback."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "HTTP/3's independent QUIC streams mean a single lost packet affects only the stream carrying that packet while other streams continue uninterrupted. This architectural difference from HTTP/2's shared TCP stream enables operators to implement granular prioritization and quality-of-service controls without the blanket performance penalties that HTTP/2 applies across all concurrent requests.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E16"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "As packet loss increases beyond 5 percent, how does HTTP/3's throughput advantage over HTTP/2 evolve—does it continue improving, plateau, or degrade?",
+    "capability": "You can eliminate stream-level head-of-line blocking when designing application QoS and prioritization strategies under packet loss, routing critical data preferentially without waiting for unrelated transfers."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "Akamai's production measurement during a live-streaming event showed 69% of HTTP/3 connections sustained the 5 Mbps throughput threshold needed for Full HD video quality, compared to 56% for HTTP/2. Academic testing at extreme packet-loss conditions (8–12%) confirms HTTP/3 delivers up to 81.5% improvement in throughput, indicating the advantage persists as loss increases beyond typical thresholds.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 12%, 81.5%",
+   "spans": [
+    "E17"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S5",
+     "quote": "H3 excels under high loss and high latency conditions, leveraging connection migration and multiplexing to deliver up to 88.36% improvement in migration scenarios and 81.5% in extreme loss cases.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "As packet loss increases beyond 5 percent, how does HTTP/3's throughput advantage over HTTP/2 evolve—does it continue improving, plateau, or degrade?",
+    "capability": "You can deploy HTTP/3 for video streaming in high-packet-loss networks with confidence in measurable quality gains without redesigning application fallback logic."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "HTTP/3 maintains consistent performance advantage across 0–12% packet-loss ranges and multiple congestion control algorithms, whereas HTTP/2's advantage or disadvantage depends heavily on congestion control tuning (BBR vs. Cubic vs. NewReno). This robustness means operators do not need to implement fallback or re-negotiation strategies when packet loss profiles change.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18",
+    "E19"
+   ],
+   "source_ids": [
+    "S5",
+    "S6"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "As packet loss increases beyond 5 percent, how does HTTP/3's throughput advantage over HTTP/2 evolve—does it continue improving, plateau, or degrade?",
+    "capability": "You can adopt HTTP/3 uniformly across variable network conditions without conditional protocol selection logic, as performance improvement is robust rather than algorithm-dependent."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "Akamai's real-world measurement of a European football live-streaming event showed 69% of HTTP/3 connections achieved the 5 Mbps Full HD minimum threshold versus 56% for HTTP/2—a 13-point advantage allowing operators to serve premium bitrate to a larger audience without increasing stalling.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 13",
+   "spans": [
+    "E20"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do the HTTP/3 performance improvements measured in laboratory experiments appear in live 4G and 5G network deployments and across different types of content such as video streaming and APIs?",
+    "capability": "Stop using only bitrate as your levers for video quality optimization; route higher-bitrate streams to HTTP/3 connections based on their proven throughput advantage."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "YouTube rebuffering decreased 15-18% after HTTP/3 enablement, and Cloudflare independently measured 12.4% TTFB reduction for mobile HTTP/3 users—confirming that protocol improvements reliably deliver measurable experience gains in production mobile networks.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E21",
+    "E22"
+   ],
+   "source_ids": [
+    "S13",
+    "S16"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do the HTTP/3 performance improvements measured in laboratory experiments appear in live 4G and 5G network deployments and across different types of content such as video streaming and APIs?",
+    "capability": "Stop accepting mobile video rebuffering as a bitrate-only problem; reduce stalling by 15-18% by prioritizing HTTP/3 deployments without changing content strategy."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "Google's QUIC deployment measurements showed 8% average improvement for desktop search results and 3.6% for mobile, with up to 16% faster loads for the slowest 1% of users; at Google's scale these improvements translate to millions in additional revenue because web performance directly ties to user engagement and conversions.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S13",
+     "quote": "[Google's original paper](https://dl.acm.org/doi/pdf/10.1145/3098822.3098842) describing QUIC's basic mechanisms reported an 8% average reduction in the time it took to load Google search results on d",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do the HTTP/3 performance improvements measured in laboratory experiments appear in live 4G and 5G network deployments and across different types of content such as video streaming and APIs?",
+    "capability": "Stop treating HTTP/3 as optional infrastructure modernization; fund it as a revenue driver with measured ROI on page-load improvements."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 17,
+  "lineages": 15,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 15,
+  "claims_with_verified_span": 14,
+  "verified_span_rate": 0.933,
+  "quotes_offered": 25,
+  "quotes_rejected": 3,
+  "ledger_capped": 6,
+  "quotes_reattributed": 3,
+  "claims_persisted": 15,
+  "persisted_with_verified_span": 14,
+  "persisted_verified_span_rate": 0.933
+ }
+}

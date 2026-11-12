@@ -18,6 +18,10 @@ _PROG = re.compile(r"arm=(\S+) mission=(\d) rep=(\d) rc=(-?\d+) secs=(\d+)")
 def load(root: Path) -> dict[tuple[str, int, int], dict]:
     runs: dict[tuple[str, int, int], dict] = {}
     for line in (root / "progress.txt").read_text(encoding="utf-8-sig").splitlines():
+        # Runner v2 logs lock-held attempts as "... INFRA lock_held arm=.. rc=3 ..." -- a run that never ran
+        # is infrastructure loss (rule 6), never an INSUFFICIENT run, so it must not enter the table.
+        if " INFRA " in f" {line} ":
+            continue
         m = _PROG.search(line)
         if m:
             arm, mi, rep, rc, secs = m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4)), int(m.group(5))

@@ -1,0 +1,12 @@
+﻿python : Traceback (most recent call last):
+En C:\Users\User\AppData\Local\Temp\claude\fc13b26181df2fff\58c37959-807c-4641-86ad-c1346a0ba13a\scratchpad\run_yield.p
+s1: 65 Carácter: 9
++         python "$EngineDir\deep_research.py" --prompt $missions[$m] - ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\User\AppData\Local\Temp\claude\fc13b26181df2fff\d58e4d3c-f3de-442a-bf76-bb1e7ff3e81b\scratchpad\drx_v0
+41\deep_research.py", line 1017, in <module>
+    from research_quality import (  # noqa: E402
+ModuleNotFoundError: No module named 'research_quality'

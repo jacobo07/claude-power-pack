@@ -1,0 +1,167 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_221013_what-is-the-measured-effect-of-sqlite-wal-mode-on-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://productionhardening.org/wal-optimization-concurrency-tuning/",
+   "aliases": [],
+   "sha256": "8b0f47ff3e95e3b428cbdb359c00058a048925c189746bf12d7168d84b6976a1",
+   "chars": 15091,
+   "snapshot": "8b0f47ff3e95e3b428cbdb359c00058a048925c189746bf12d7168d84b6976a1.txt",
+   "retrieved_at": "2026-11-11T21:10:50+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://martinuke0.github.io/posts/2026-05-15-optimizing-write-ahead-logs-for-high-throughput-databases/",
+   "aliases": [],
+   "sha256": "754ca29e30e6cbba6923da713f95b0acb029c659af1e43669046ee0e390efdf6",
+   "chars": 9912,
+   "snapshot": "754ca29e30e6cbba6923da713f95b0acb029c659af1e43669046ee0e390efdf6.txt",
+   "retrieved_at": "2026-11-11T21:10:50+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://sqlite.org/wal.html",
+   "aliases": [],
+   "sha256": "1eb27a16594bb13e47ad305233d200b4dd740f564ba158be59d736710074cb22",
+   "chars": 25000,
+   "snapshot": "1eb27a16594bb13e47ad305233d200b4dd740f564ba158be59d736710074cb22.txt",
+   "retrieved_at": "2026-11-11T21:10:50+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S3",
+   "start": 4150,
+   "end": 4272,
+   "text": "Because writers do nothing that would interfere with the actions of readers, writers and readers can run at the same time.",
+   "sha256": "ef582e58e929bea126cabf3cd9ac032a7488f7dbf60327638f4af349b5e44354"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S1",
+   "start": 1485,
+   "end": 1634,
+   "text": "Readers bypass the main file’s write locks by reconstructing their snapshot from the WAL, which is what enables true concurrent read/write isolation.",
+   "sha256": "a3180fe7240a2deaa29de8ca15875503e148cb59a83450949a14959c502dc885"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S2",
+   "start": 0,
+   "end": 115,
+   "text": "TL;DR— Tuning the write‑ahead log (WAL) can increase transaction throughput by 2‑3× without sacrificing durability.",
+   "sha256": "85a5c2b8f93046754d8bc964eccc8e0b19d5581faa3a0dcd5f4af6342e7b9ca7"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S3",
+   "start": 5536,
+   "end": 5709,
+   "text": "Write transactions are very fast since they only involve writing\nthe content once (versus twice for rollback-journal transactions)\nand because the writes are all sequential.",
+   "sha256": "5f03e37424b29eca021fd567f440d920b356e26734002423788f0d295f3a1522"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "WAL mode allows independent read snapshots to coexist with active writes to the log, eliminating the lock contention that forces readers and writers to serialize through a single file in rollback journaling. This architectural change means your database can sustain more simultaneous users without transaction delays.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S1",
+    "S3"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What concurrent read-write throughput improvements do independent benchmarks measure when using write-ahead logging instead of rollback journaling, and how do these improvements vary across different database sizes and concurrency levels?",
+    "capability": "You can support higher concurrent user loads by enabling simultaneous read and write operations without mutual blocking."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "WAL configurations can achieve 2-3x transaction throughput improvement by optimizing buffer size, sync policy, checkpoint frequency, and hardware settings like memory-mapped I/O, allowing additional capacity extraction from existing infrastructure before provisioning new database nodes. This multiplier applies to the same hardware; configuration changes precede purchasing decisions.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: spans carry no figure",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What concurrent read-write throughput improvements do independent benchmarks measure when using write-ahead logging instead of rollback journaling, and how do these improvements vary across different database sizes and concurrency levels?",
+    "capability": "You can defer infrastructure expansion by extracting 2-3x transaction throughput through configuration tuning rather than hardware upgrades."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "WAL writes committed transactions once sequentially to the log file, whereas rollback journaling writes original page content to the journal then writes changes to the database file. This one-versus-two write architecture reduces per-transaction disk I/O and eliminates the sequential write burden that would be required in dual-pass modes.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What concurrent read-write throughput improvements do independent benchmarks measure when using write-ahead logging instead of rollback journaling, and how do these improvements vary across different database sizes and concurrency levels?",
+    "capability": "You can optimize storage I/O efficiency by shifting to a single-pass write model instead of dual writes per transaction."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 3,
+  "lineages": 3,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 3,
+  "claims_with_verified_span": 3,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 4,
+  "quotes_rejected": 0,
+  "ledger_capped": 1,
+  "quotes_reattributed": 0,
+  "claims_persisted": 3,
+  "persisted_with_verified_span": 3,
+  "persisted_verified_span_rate": 1.0
+ }
+}

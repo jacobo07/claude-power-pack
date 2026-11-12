@@ -1,0 +1,635 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_215636_how-much-does-http-3-quic-reduce-page-load-time-or",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/html/2505.09222v1",
+   "aliases": [],
+   "sha256": "247c499f2bdd78d40b4b2958b543e7fef1278b00fc0313227e8d44c7405891b8",
+   "chars": 25000,
+   "snapshot": "247c499f2bdd78d40b4b2958b543e7fef1278b00fc0313227e8d44c7405891b8.txt",
+   "retrieved_at": "2026-11-11T20:57:20+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://arxiv.org/html/2409.16267v1",
+   "aliases": [],
+   "sha256": "2d6af411273b074eefa16ec8c301f21cdc92155fcbaeb7722d14773ddfc90388",
+   "chars": 25000,
+   "snapshot": "2d6af411273b074eefa16ec8c301f21cdc92155fcbaeb7722d14773ddfc90388.txt",
+   "retrieved_at": "2026-11-11T20:57:20+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://martinuke0.github.io/posts/2026-06-01-deep-dive-into-quic-stream-multiplexing-eliminating-head-of-line-blocking-for-high-performance-networking/",
+   "aliases": [],
+   "sha256": "f37a7d2cb048880d77177f04fdea172895d33ac514304d0bbb3c2f049b5013e2",
+   "chars": 8558,
+   "snapshot": "f37a7d2cb048880d77177f04fdea172895d33ac514304d0bbb3c2f049b5013e2.txt",
+   "retrieved_at": "2026-11-11T20:57:20+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://martinuke0.github.io/posts/2026-05-24-deep-dive-into-quic-stream-multiplexing-eliminating-head-of-line-blocking-for-high-performance-networking/",
+   "aliases": [],
+   "sha256": "2ab75a2620299e670328fe0987959cab4b790aed53ad7305620fc9258e90bcf1",
+   "chars": 8430,
+   "snapshot": "2ab75a2620299e670328fe0987959cab4b790aed53ad7305620fc9258e90bcf1.txt",
+   "retrieved_at": "2026-11-11T20:57:20+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://www.logicmonitor.com/deep-dive/http3-vs-http2/introduction",
+   "aliases": [],
+   "sha256": "3b23ab7c0985556b7eab3b67088e0726589010f09bd813b38d16f76b72994a4f",
+   "chars": 20953,
+   "snapshot": "3b23ab7c0985556b7eab3b67088e0726589010f09bd813b38d16f76b72994a4f.txt",
+   "retrieved_at": "2026-11-11T20:57:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://arxiv.org/html/2310.09423v2",
+   "aliases": [],
+   "sha256": "794fbaecf2c37125b285271601a9ff830db21cd6a9c8c2a3ed5d0779375979bd",
+   "chars": 25000,
+   "snapshot": "794fbaecf2c37125b285271601a9ff830db21cd6a9c8c2a3ed5d0779375979bd.txt",
+   "retrieved_at": "2026-11-11T21:00:19+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://arxiv.org/abs/2310.09423",
+   "aliases": [],
+   "sha256": "bd8161d4ccf1640c4d57db7b46ccdb322247f4f6c8f24d509dd66bea2a9549d7",
+   "chars": 3335,
+   "snapshot": "bd8161d4ccf1640c4d57db7b46ccdb322247f4f6c8f24d509dd66bea2a9549d7.txt",
+   "retrieved_at": "2026-11-11T21:00:19+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://cs.brown.edu/people/tab/papers/QUIC_WWW21.pdf",
+   "aliases": [],
+   "sha256": "8eafd52f0bd2c7ddb2473048d0df744d2252668aca29b1c641dcbbdf654f2bf0",
+   "chars": 4313,
+   "snapshot": "8eafd52f0bd2c7ddb2473048d0df744d2252668aca29b1c641dcbbdf654f2bf0.txt",
+   "retrieved_at": "2026-11-11T21:00:19+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://datatracker.ietf.org/meeting/118/materials/slides-118-maprg-dissecting-performance-of-production-quic",
+   "aliases": [],
+   "sha256": "9a2f0db71371a4fd8d2f34b8ed2aa9c0ea8a8f6839f1c403c76350d75fb51e31",
+   "chars": 1760,
+   "snapshot": "9a2f0db71371a4fd8d2f34b8ed2aa9c0ea8a8f6839f1c403c76350d75fb51e31.txt",
+   "retrieved_at": "2026-11-11T21:00:19+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://arxiv.org/html/2409.16267v2",
+   "aliases": [],
+   "sha256": "2b77a56a769b7bec00f378682c3e43535df3cf4cce873e1d10beb461da8078e1",
+   "chars": 25000,
+   "snapshot": "2b77a56a769b7bec00f378682c3e43535df3cf4cce873e1d10beb461da8078e1.txt",
+   "retrieved_at": "2026-11-11T21:02:28+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://arxiv.org/html/2409.16267v3",
+   "aliases": [],
+   "sha256": "93bd58fcc7f0f0def50e507a05c055afa3d5561965e29a5400dcd014b30d5ef7",
+   "chars": 25000,
+   "snapshot": "93bd58fcc7f0f0def50e507a05c055afa3d5561965e29a5400dcd014b30d5ef7.txt",
+   "retrieved_at": "2026-11-11T21:02:28+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://www.systemoverflow.com/learn/networking-protocols/http-protocols/http3-and-quic-solving-transport-head-of-line-blocking-and-connection-migration",
+   "aliases": [],
+   "sha256": "91fea32b17af0f5d9d95f7acab7a92b9fe3a93c409416d4173bf7ddfa532b7f0",
+   "chars": 3957,
+   "snapshot": "91fea32b17af0f5d9d95f7acab7a92b9fe3a93c409416d4173bf7ddfa532b7f0.txt",
+   "retrieved_at": "2026-11-11T21:02:28+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://medium.com/beyond-localhost/what-actually-happened-when-we-turned-on-http-3-a9cea850a24d",
+   "aliases": [],
+   "sha256": "70d1ea184be81af4141f9a7199454ffbffa7094079170fbff574080882ab8f2d",
+   "chars": 1263,
+   "snapshot": "70d1ea184be81af4141f9a7199454ffbffa7094079170fbff574080882ab8f2d.txt",
+   "retrieved_at": "2026-11-11T21:02:28+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://kiwee.eu/blog/http-3-how-it-performs-compared-to-http-2/",
+   "aliases": [],
+   "sha256": "41f820ea6bfd300cedcd725ec7e911700089d377d05ee2b74e64a2d8cc95aafe",
+   "chars": 734,
+   "snapshot": "41f820ea6bfd300cedcd725ec7e911700089d377d05ee2b74e64a2d8cc95aafe.txt",
+   "retrieved_at": "2026-11-11T21:02:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://blobstreaming.org/notes/http3-and-quic-in-2026/",
+   "aliases": [],
+   "sha256": "8830a6e3fbd47e7917c98497cac1f85c5170240cc26466b0c08dcce42ae53349",
+   "chars": 5641,
+   "snapshot": "8830a6e3fbd47e7917c98497cac1f85c5170240cc26466b0c08dcce42ae53349.txt",
+   "retrieved_at": "2026-11-11T21:06:11+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://mohashari.github.io/http3-quic-backend-performance-challenges/",
+   "aliases": [],
+   "sha256": "cf34fbc4821e58f4bb9e83372b510db0d946e770e8fea6f763f9e31c128b1691",
+   "chars": 8285,
+   "snapshot": "cf34fbc4821e58f4bb9e83372b510db0d946e770e8fea6f763f9e31c128b1691.txt",
+   "retrieved_at": "2026-11-11T21:06:11+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://httptoolkit.com/blog/http3-quic-open-source-support-nowhere/",
+   "aliases": [],
+   "sha256": "4a9249d9d737c4d01fb96cd542a01008710a2ae6f7c8a022335c3f82375027ef",
+   "chars": 22609,
+   "snapshot": "4a9249d9d737c4d01fb96cd542a01008710a2ae6f7c8a022335c3f82375027ef.txt",
+   "retrieved_at": "2026-11-11T21:06:11+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://xplorestaging.ieee.org/document/11083994/",
+   "aliases": [],
+   "sha256": "fc338a54e60a730e77235ab0f5e872f9e62bd934f66e379414bc3d7e05424aa8",
+   "chars": 277,
+   "snapshot": "fc338a54e60a730e77235ab0f5e872f9e62bd934f66e379414bc3d7e05424aa8.txt",
+   "retrieved_at": "2026-11-11T21:06:11+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S18"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S2",
+   "start": 23874,
+   "end": 24018,
+   "text": "H3 clients were able to complete the 10 MB file download in about 15 seconds, whereas H2 clients took approximately 106 seconds without a proxy.",
+   "sha256": "8d1abb91b7020df9e40ef2e623d9c09fa844bb82bbc9c909bf57131f3c0c38f4"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S4",
+   "start": 5077,
+   "end": 5253,
+   "text": "for a 1 % packet loss rate, HTTP/3 (QUIC) maintains a median page load time within 5 % of the loss‑free baseline, whereas HTTP/2 over TCP degrades by 30 %+ due to HoL blocking.",
+   "sha256": "19235c4728cfe27348f67bd97004655f8e35329722456cc5c7ccf680913b7ae3"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S6",
+   "start": 5313,
+   "end": 5386,
+   "text": "When the bandwidth reaches 1 Gbps, QUIC becomes 45.2% slower than HTTP/2.",
+   "sha256": "98ca90bfa04e9efcf553028d785fd14338461904ae4e5f56cfb8afa1594bd281"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S7",
+   "start": 522,
+   "end": 669,
+   "text": "We find that over fast Internet, the UDP+QUIC+HTTP/3 stack suffers a data rate reduction of up to 45.2% compared to the TCP+TLS+HTTP/2 counterpart.",
+   "sha256": "6ba73aea2564968bcda33e11469040c26122740bee91c73651eac54f8d465b4b"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S6",
+   "start": 8132,
+   "end": 8523,
+   "text": "When downloading the same file, the in-kernel UDP stack issues much more packet reads (netif_receive_skb) than TCP, leading to a significantly higher CPU usage. This is because none of the QUIC implementations we examine uses UDP generic receive offload (GRO) where the link layer module combines multiple received UDP datagrams into a mega datagram before passing it to the transport layer.",
+   "sha256": "536fdaa6da3f2405c1a358582ea710fbde8ab82b0355a99032d787d4fc4ec2b9"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S6",
+   "start": 20033,
+   "end": 20211,
+   "text": "as we reduce the CPU frequency, Chrome’s QUIC download throughput further drops to around 200 Mbps while the throughput over HTTP/2 still remains above 900 Mbps even at 1.60 GHz.",
+   "sha256": "0d7fac8c7317369a64eb09125abb89f6ce004dd428b5e57f9aae43008c1043eb"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S6",
+   "start": 6076,
+   "end": 6228,
+   "text": "QUIC’s page load time (PLT) is 3.0% longer than HTTP/2’s, averaged across 100 representative websites, with a long tail of page load time gaps over 50%.",
+   "sha256": "de5a9f4cf0d7b929ba2ad4c2a4c5f32e4669b10d6a69a8717d46e1305d2a6066"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S10",
+   "start": 23578,
+   "end": 23705,
+   "text": "In scenarios with loss only (10 Mbps bandwidth, 2-4% packet loss, 0 ms delay), both H2 and H3 exhibited comparable performance.",
+   "sha256": "6357b5aa65be00aa5c72f9e1ff6fa74fded1a990e87961078125adee6ce79883"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S13",
+   "start": 1199,
+   "end": 1263,
+   "text": "But cellular networks with 2–5% packet loss? Absolute nightmare.",
+   "sha256": "9b719699652ddfc53860e25f17b9f279be2e696a3fdf312d460b3a133bdb2148"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S11",
+   "start": 15912,
+   "end": 16084,
+   "text": "For example, under 4% packet loss and 50ms delay, H2 (wget_h2_resume) took 56.7 seconds to complete the download, whereas H3 needed only 6.6 seconds, an 88.36% improvement.",
+   "sha256": "9d7ce178f4042dc9ad0650926359bf4f6001e877009c620d9492946f6e533e34"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S12",
+   "start": 1794,
+   "end": 1930,
+   "text": "QUIC connections use a connection ID that persists across IP changes. When the network path changes, the connection migrates seamlessly.",
+   "sha256": "9a067b9e2384a6b638d05fa407b855dadfc7786a9ae36aaeaca1fb6a1afcbfb4"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S17",
+   "start": 16794,
+   "end": 16972,
+   "text": "for most major projects it would be an enormous & problematic undertaking to drop support for OpenSSL, which effectively means they still cannot ship built-in QUIC support today.",
+   "sha256": "22b8d8cc305e7776b18f92cb01a03b8522c36a81200fe26ba8ac3b6c65c1c18e"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S16",
+   "start": 5772,
+   "end": 6000,
+   "text": "Due to user-space encryption overhead and lack of mature hardware offloading for QUIC packet processing, servers running HTTP/3 regularly consume **2x to 3x more CPU cycles** than servers handling equivalent traffic over HTTP/2.",
+   "sha256": "cb9ff1996455ee1cb147abc382630398cb83ebb3a0e4c9baa3d2e19742e9f630"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S16",
+   "start": 5483,
+   "end": 5741,
+   "text": "Many corporate and public enterprise firewalls block UDP traffic on port 443 entirely, viewing it as a potential DDoS or data exfiltration vector. To ensure your application works for everyone, you must always maintain a reliable fallback to HTTP/2 over TCP.",
+   "sha256": "cda847c819301b32947662cc1f332803b26508eb77cab43571ad6bb448734a37"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "QUIC multiplexes independent streams that are retransmitted separately when lost, preventing head-of-line blocking. At 1% packet loss, QUIC maintains page load times within 5% of the loss-free baseline, while HTTP/2 degrades 30%+. Under extreme conditions (4% loss and 50ms latency), QUIC completes 10 MB downloads in 15 seconds versus HTTP/2's 106 seconds—a 7× speedup—because QUIC continues transmitting unaffected streams while resending only the lost stream, whereas TCP stalls all pending data until the missing packet arrives.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S2",
+    "S4"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [
+    {
+     "cited": "S3",
+     "found": "S4",
+     "quote": "For a 1 % packet loss rate, HTTP/3 (QUIC) maintains a median page load time within 5 % of the loss‑free baseline, whereas HTTP/2 over TCP degrades by 30 %+ due to HoL blocking."
+    }
+   ],
+   "persisted": true,
+   "meta": {
+    "query": "What specific technical mechanisms in QUIC reduce latency more effectively than HTTP/2 does when networks experience packet loss?",
+    "capability": "You can serve latency-sensitive mixed-workload applications to mobile and satellite networks without infrastructure changes, eliminating the need for connection redundancy strategies."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "QUIC's per-stream retransmission queues maintain throughput as packet loss increases, while TCP's single-connection queue stalls. At 2% packet loss, QUIC delivers 820 Mbps aggregate throughput compared to TCP's 380 Mbps—a 2.16× advantage. This occurs because TCP's single retransmission queue starves the entire pipeline until the missing packet arrives, whereas QUIC resends only affected streams and continues filling the connection window with others.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S3",
+     "quote": "Even at 2 % loss, QUIC retains more than double the throughput of TCP because TCP's single retransmission queue stalls the entire connection, starving the pipeline, while QUIC's per‑stream queues keep",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What specific technical mechanisms in QUIC reduce latency more effectively than HTTP/2 does when networks experience packet loss?",
+    "capability": "You can commit to performance guarantees for sustained throughput applications (video streaming, bulk transfer) on unreliable networks, where HTTP/2 would require either connection pools or SLA degradation."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "QUIC delivers 45.2% lower throughput than HTTP/2 at 1 Gbps across all major browsers (Chrome, Edge, Firefox, Opera), with degradation beginning around 500–600 Mbps. The performance penalty extends beyond file transfers to video streaming (9.8% bitrate reduction) and web page loading (3% longer times on average). This issue is specific to high-speed networks and leaves traditional lower-bandwidth deployments unaffected.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S6",
+    "S7"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [
+    {
+     "source_id": "S6",
+     "quote": "QUIC incurs a video bitrate reduction of up to 9.8% compared to HTTP/2 when delivering DASH video chunks over high-speed Ethernet and 5G.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What production deployments or network configurations have failed to realize QUIC's predicted latency advantages compared to HTTP/2, and what factors prevented the improvement?",
+    "capability": "You can stop treating QUIC as a universal upgrade and make protocol deployment decisions based on measured bandwidth thresholds and application impact."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "QUIC's poor performance on high-bandwidth networks stems from receiver-side processing overhead, not transmission capacity limits. Two root causes are (1) lack of UDP generic receive offload (GRO), causing the kernel to issue significantly more packet reads via netif_receive_skb than TCP does, and (2) user-space ACK generation without delayed-ACK optimization. CPU frequency directly limits QUIC throughput: reducing it from 3.4 GHz to 1.6 GHz drops QUIC to 200 Mbps while HTTP/2 sustains above 900 Mbps.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What production deployments or network configurations have failed to realize QUIC's predicted latency advantages compared to HTTP/2, and what factors prevented the improvement?",
+    "capability": "You can diagnose QUIC performance problems as client-side CPU constraints rather than network congestion, redirecting infrastructure investment away from bandwidth upgrades."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "QUIC's performance penalty manifests universally across file transfers, video streaming, and web browsing, but only at high-speed network tiers—visible on 5G networks (median ~200 Mbps) but hidden on 4G. Video bitrate drops 9.8%, page load times increase 3% on average. This creates a scenario where infrastructure modernization (5G, WiFi 6/7 rollout) directly worsens end-user experience if QUIC remains enabled.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 200, 9.8%",
+   "spans": [
+    "E7"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S6",
+     "quote": "QUIC incurs a video bitrate reduction of up to 9.8% compared to HTTP/2 when delivering DASH video chunks over high-speed Ethernet and 5G. Again, such QoE degradation only exhibits when the underlying ",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What production deployments or network configurations have failed to realize QUIC's predicted latency advantages compared to HTTP/2, and what factors prevented the improvement?",
+    "capability": "You can quantify expected QoE degradation across subscriber use cases to justify QUIC rollback costs or selective deployment by network speed."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "HTTP/3's performance advantage over HTTP/2 emerges around 2-4% packet loss and grows monotonically beyond. At 2-4% loss alone, both protocols perform similarly, but when combined with realistic 50ms mobile latency, the divergence becomes severe: at 4% loss and 50ms delay, HTTP/3 downloads complete in 15 seconds while HTTP/2 requires 106 seconds—a 7-fold penalty. This advantage continues at higher loss rates; at 12% loss, HTTP/3 achieves 81.5% improvement. Since typical mobile networks operate in the 2-5% loss range, HTTP/3 is the baseline requirement, not an exception.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 106, 12%, 15, 50, 81.5%",
+   "spans": [
+    "E8",
+    "E9"
+   ],
+   "source_ids": [
+    "S10",
+    "S13"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [
+    {
+     "source_id": "S10",
+     "quote": "Under severe network conditions (10 Mbps bandwidth, 4% packet loss, and 50 ms delay), the performance differences between H2 and H3 became more pronounced. H3 clients were able to complete the 10 MB f",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what rate of packet loss does HTTP/3's latency advantage over HTTP/2 become negligible or disappear on mobile networks?",
+    "capability": "Stop searching for a packet loss threshold where HTTP/3 becomes viable for mobile and recognize 2-5% loss as the decisive boundary where HTTP/3 is mandatory."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "HTTP/3's mobile advantage is compounded by seamless connection migration across network transitions (Wi-Fi to cellular). During handoffs, HTTP/3 maintains an 88.36% latency advantage at 4% loss and 50ms delay—independent of packet loss rate itself. This migration advantage applies whenever IP addresses change, a routine occurrence for mobile devices. Combined with the observed loss-based advantage that persists across all tested loss rates, operators can segment HTTP/3 rollout by handoff frequency and device mobility patterns rather than by static baseline loss.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10",
+    "E11"
+   ],
+   "source_ids": [
+    "S11",
+    "S12"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what rate of packet loss does HTTP/3's latency advantage over HTTP/2 become negligible or disappear on mobile networks?",
+    "capability": "Prioritize HTTP/3 rollout to user segments experiencing frequent network handoffs rather than uniform deployment based on static packet loss measurements."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Ingress-Nginx, the most popular Kubernetes reverse proxy, has explicitly dropped all plans for HTTP/3 support. This deferral stems from ecosystem fragmentation around OpenSSL, which implemented an incompatible QUIC API compared to existing QUIC implementations. For projects like Ingress-Nginx, supporting both OpenSSL (required for most users) and native QUIC simultaneously is described as an \"enormous & problematic undertaking,\" effectively making it impossible to ship HTTP/3 support today.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12"
+   ],
+   "source_ids": [
+    "S17"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S17",
+     "quote": "Ingress-Nginx (arguably the most popular Kubernetes reverse proxy) has dropped all plans for HTTP/3 support punting everything to a totally new (as yet unreleased) successor project instead.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which network operators have explicitly disabled, limited, or deferred HTTP/3 deployment despite operating in the 2-5% packet loss range, and what were the technical or operational barriers that overrode the measured performance advantages?",
+    "capability": "Recognize that even prominent infrastructure tools are deferring HTTP/3 indefinitely, limiting deployment options regardless of performance benefits."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Servers running HTTP/3 consume 2x to 3x more CPU cycles than servers handling equivalent HTTP/2 traffic, due to user-space encryption overhead and lack of mature hardware offloading for QUIC packet processing. This operational cost could outweigh the measured network performance advantages for operators working with constrained budgets or high-volume traffic where efficiency matters.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which network operators have explicitly disabled, limited, or deferred HTTP/3 deployment despite operating in the 2-5% packet loss range, and what were the technical or operational barriers that overrode the measured performance advantages?",
+    "capability": "Account for 2-3x CPU cost increase when evaluating whether HTTP/3's network performance gains justify deployment in your infrastructure."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Many corporate and public enterprise firewalls block UDP traffic on port 443 entirely, viewing it as a potential DDoS or data exfiltration vector. This means operators cannot assume HTTP/3 will reach all users—they must always maintain HTTP/2 fallback capacity, adding complexity that could discourage HTTP/3 adoption for operators serving corporate customers or restricted networks.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which network operators have explicitly disabled, limited, or deferred HTTP/3 deployment despite operating in the 2-5% packet loss range, and what were the technical or operational barriers that overrode the measured performance advantages?",
+    "capability": "Plan HTTP/3 deployments knowing UDP traffic to your edge will be unavailable for some users, requiring mandatory HTTP/2 fallback."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 18,
+  "lineages": 17,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 10,
+  "claims_with_verified_span": 9,
+  "verified_span_rate": 0.9,
+  "quotes_offered": 19,
+  "quotes_rejected": 5,
+  "ledger_capped": 3,
+  "quotes_reattributed": 1,
+  "claims_persisted": 10,
+  "persisted_with_verified_span": 9,
+  "persisted_verified_span_rate": 0.9
+ }
+}

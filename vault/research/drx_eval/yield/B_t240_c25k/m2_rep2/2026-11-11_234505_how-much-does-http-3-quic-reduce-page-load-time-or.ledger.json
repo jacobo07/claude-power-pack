@@ -1,0 +1,738 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_232159_how-much-does-http-3-quic-reduce-page-load-time-or",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/html/2505.14358v1",
+   "aliases": [],
+   "sha256": "6e60e34247b915133dd65b5ccf79dda392cb684e328ad56c94dd3195af4d9157",
+   "chars": 25000,
+   "snapshot": "6e60e34247b915133dd65b5ccf79dda392cb684e328ad56c94dd3195af4d9157.txt",
+   "retrieved_at": "2026-11-11T22:23:04+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://datatracker.ietf.org/meeting/123/materials/slides-123-maprg-sessb-breaking-through-the-clouds-performance-insights-into-starlinks-latency-and-packet-loss-00",
+   "aliases": [],
+   "sha256": "af869fa3b7c754d9ebb00b1f37e7aa62207d2d877c6a9c6c2dc3598ed3c96295",
+   "chars": 1624,
+   "snapshot": "af869fa3b7c754d9ebb00b1f37e7aa62207d2d877c6a9c6c2dc3598ed3c96295.txt",
+   "retrieved_at": "2026-11-11T22:23:04+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://iotdigitaltwinplm.com/iot-protocol-latency-benchmarks-mqtt-coap-amqp-http3-2026/",
+   "aliases": [],
+   "sha256": "d8f2aa022dec465714e59e931bec8105aa97b290aba5c54b745474657d470f5f",
+   "chars": 25000,
+   "snapshot": "d8f2aa022dec465714e59e931bec8105aa97b290aba5c54b745474657d470f5f.txt",
+   "retrieved_at": "2026-11-11T22:23:04+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://www.cl.cam.ac.uk/~dap53/pubs/popescu-ieee-tnsm-2021.pdf",
+   "aliases": [],
+   "sha256": "3e8de68c0df270c47f4e2f907c31805dcf386bff3df6b24e473ed88d81ee12e4",
+   "chars": 392,
+   "snapshot": "3e8de68c0df270c47f4e2f907c31805dcf386bff3df6b24e473ed88d81ee12e4.txt",
+   "retrieved_at": "2026-11-11T22:23:04+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://docs.thousandeyes.com/product-documentation/connected-devices/connected-devices-tests/network/latency-loss-disconnections-jitter-tests",
+   "aliases": [],
+   "sha256": "21f3e58102808c4ae486b6565f3ae89ac2e5d2cfcf8b0555e08764cbb2a0e2c3",
+   "chars": 12496,
+   "snapshot": "21f3e58102808c4ae486b6565f3ae89ac2e5d2cfcf8b0555e08764cbb2a0e2c3.txt",
+   "retrieved_at": "2026-11-11T22:23:04+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://link.springer.com/article/10.1007/s10922-025-09954-9",
+   "aliases": [
+    "https://link.springer.com/article/10.3103/S0147688225700029"
+   ],
+   "sha256": "2ced062c088abe0082c09c8b7cecda93115a2a92388b1331b56f2160c11e9c8b",
+   "chars": 286,
+   "snapshot": "2ced062c088abe0082c09c8b7cecda93115a2a92388b1331b56f2160c11e9c8b.txt",
+   "retrieved_at": "2026-11-11T22:27:07+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.digitalsamba.com/blog/packet-loss-in-webrtc",
+   "aliases": [],
+   "sha256": "f139da643746c82b50799d846509623fdf75eb0a7bef5a517d92fa7806768800",
+   "chars": 12107,
+   "snapshot": "f139da643746c82b50799d846509623fdf75eb0a7bef5a517d92fa7806768800.txt",
+   "retrieved_at": "2026-11-11T22:27:19+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://www.baeldung.com/cs/tcp-retransmission-rules",
+   "aliases": [],
+   "sha256": "557e21ed5ec7aeb5b4e209baf8f3c79e364883275f7a4f2d1226a321760e5a15",
+   "chars": 4347,
+   "snapshot": "557e21ed5ec7aeb5b4e209baf8f3c79e364883275f7a4f2d1226a321760e5a15.txt",
+   "retrieved_at": "2026-11-11T22:27:19+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://www.baeldung.com/cs/udp-packet-loss",
+   "aliases": [],
+   "sha256": "28d73719d59a96ade4f25e001ee71bb7613f9eb59a12844025d08107a00bd885",
+   "chars": 9826,
+   "snapshot": "28d73719d59a96ade4f25e001ee71bb7613f9eb59a12844025d08107a00bd885.txt",
+   "retrieved_at": "2026-11-11T22:27:19+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://cloudstreet-dev.github.io/Networking-Protocols/tcp/retransmission.html",
+   "aliases": [],
+   "sha256": "9705b2e0c1e77b8e6df4fca1adb3d11449ec7533efd51eeb72eabec5da9f5778",
+   "chars": 10025,
+   "snapshot": "9705b2e0c1e77b8e6df4fca1adb3d11449ec7533efd51eeb72eabec5da9f5778.txt",
+   "retrieved_at": "2026-11-11T22:27:19+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://arxiv.org/html/2410.06066v1",
+   "aliases": [],
+   "sha256": "fc4a4154764fd45df9c1069f092ad5a4c8f9a0a6f8118f8c6f51a77c8d44f45b",
+   "chars": 25000,
+   "snapshot": "fc4a4154764fd45df9c1069f092ad5a4c8f9a0a6f8118f8c6f51a77c8d44f45b.txt",
+   "retrieved_at": "2026-11-11T22:31:01+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://www.rfc-editor.org/rfc/rfc9002.pdf",
+   "aliases": [],
+   "sha256": "db1fde5f1ab70ccf3dfc56b4a38e45aa945a0898523b14527a4ca6be46a51f6e",
+   "chars": 4573,
+   "snapshot": "db1fde5f1ab70ccf3dfc56b4a38e45aa945a0898523b14527a4ca6be46a51f6e.txt",
+   "retrieved_at": "2026-11-11T22:31:01+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://quicwg.org/base-drafts/rfc9002.html",
+   "aliases": [],
+   "sha256": "b06a53369876a72317638b7fb133b99781ed6832012fa15bd41f198d6cff2261",
+   "chars": 25000,
+   "snapshot": "b06a53369876a72317638b7fb133b99781ed6832012fa15bd41f198d6cff2261.txt",
+   "retrieved_at": "2026-11-11T22:31:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://www.toolsku.com/en/blog/http3-quic-0rtt-optimization-2026",
+   "aliases": [],
+   "sha256": "281004dad4ac3a6725cf184608f10a7523f52f36de8e50cce9559f9f5d2debf0",
+   "chars": 3003,
+   "snapshot": "281004dad4ac3a6725cf184608f10a7523f52f36de8e50cce9559f9f5d2debf0.txt",
+   "retrieved_at": "2026-11-11T22:31:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://arxiv.org/pdf/2505.14358",
+   "aliases": [],
+   "sha256": "9b96bd8e58685cf9bbd71dded3b1fda091d591e1b6ce2f80fd97f8e93a893321",
+   "chars": 12836,
+   "snapshot": "9b96bd8e58685cf9bbd71dded3b1fda091d591e1b6ce2f80fd97f8e93a893321.txt",
+   "retrieved_at": "2026-11-11T22:32:29+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://infosecmonkey.com/network-performance-metrics/",
+   "aliases": [],
+   "sha256": "82163ee708074a3714baf2f14994bd407198c64bfb60384fddde92e185e3080a",
+   "chars": 20665,
+   "snapshot": "82163ee708074a3714baf2f14994bd407198c64bfb60384fddde92e185e3080a.txt",
+   "retrieved_at": "2026-11-11T22:32:29+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://starlink.com/public-files/StarlinkLatency.pdf",
+   "aliases": [],
+   "sha256": "11390e7fd14932f0e97b9e5ab003f5b6ac001bb720164dc91bb58ae6eaa433af",
+   "chars": 660,
+   "snapshot": "11390e7fd14932f0e97b9e5ab003f5b6ac001bb720164dc91bb58ae6eaa433af.txt",
+   "retrieved_at": "2026-11-11T22:32:29+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://learn.microsoft.com/en-us/previous-versions/SkypeForBusiness/optimizing-your-network/media-quality-and-network-connectivity-performance",
+   "aliases": [],
+   "sha256": "083eb47fbdaa9b7d24a38d888173feef764c2c6e7f6275d9e1464aa5748b6141",
+   "chars": 25000,
+   "snapshot": "083eb47fbdaa9b7d24a38d888173feef764c2c6e7f6275d9e1464aa5748b6141.txt",
+   "retrieved_at": "2026-11-11T22:32:29+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://oneuptime.com/blog/post/2026-03-20-interpret-ping-output-ttl-rtt/view",
+   "aliases": [],
+   "sha256": "5ca2bcd282527aaded4f42ffb6312150850f74240cf16611357c8359dd3f4e2a",
+   "chars": 4236,
+   "snapshot": "5ca2bcd282527aaded4f42ffb6312150850f74240cf16611357c8359dd3f4e2a.txt",
+   "retrieved_at": "2026-11-11T22:32:29+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://netverge.com/blog/infrastructure-performance-optimization-guide-for-it-teams",
+   "aliases": [],
+   "sha256": "6dee97faa0cc114a9cb3f0a3c039e7a2e4418bac69fc4e842b3116a9500d3d0f",
+   "chars": 14999,
+   "snapshot": "6dee97faa0cc114a9cb3f0a3c039e7a2e4418bac69fc4e842b3116a9500d3d0f.txt",
+   "retrieved_at": "2026-11-11T22:37:07+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://blog.paessler.com/intro-to-qos-and-important-qos-metrics",
+   "aliases": [],
+   "sha256": "14aebe349de2b37426a7298628b3d605ca1e988fc29e045a2073bc89c33661e8",
+   "chars": 15803,
+   "snapshot": "14aebe349de2b37426a7298628b3d605ca1e988fc29e045a2073bc89c33661e8.txt",
+   "retrieved_at": "2026-11-11T22:37:07+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://www.itu.int/epublications/publication/itu-t-j-1630-2024-06-end-to-end-network-characteristics-requirement-for-video-services-over-integrated-broadband-cable-network",
+   "aliases": [],
+   "sha256": "8731d3a250fe7ff64cb8fe2f63c59b5defce5fe6c1bf498ccb378dd982a6c4f3",
+   "chars": 145,
+   "snapshot": "8731d3a250fe7ff64cb8fe2f63c59b5defce5fe6c1bf498ccb378dd982a6c4f3.txt",
+   "retrieved_at": "2026-11-11T22:37:08+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S22"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 10937,
+   "end": 11086,
+   "text": "Across all monitored responses, Pirate achieves a\nmedian relative error of 0.63% relative to the\nresponse latency measured at the client application.",
+   "sha256": "894ec7e5aa2d6e91fb349d69441e40bfe680e46e085236eee7aebe561b2310cc"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S1",
+   "start": 11853,
+   "end": 11997,
+   "text": "Latency-aware Katran cuts\nthe 99th percentile latency in our experimental setup\nby 37% on average across loads, relative to\n(unmodified) Katran.",
+   "sha256": "2c1dccc23fa5ea9f34b40b48294f40b4cd888015f4156b2a27afc9265bfd4ae6"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S3",
+   "start": 14076,
+   "end": 14270,
+   "text": "Now apply illustrative arithmetic. At a 30 ms RTT, a cold MQTT publish takes about 90 to 120 ms before processing, cold AMQP roughly 180 to 240 ms, and a cold unsecured CoAP request about 30 ms.",
+   "sha256": "1ffd253a02da1015ba7fb09cda223783548049859f4cceea9849104d00bc7080"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S10",
+   "start": 3973,
+   "end": 4038,
+   "text": "Both lost packets identified and retransmitted in one round trip!",
+   "sha256": "d9e16c0437a1add49c66c098393e4c1e9fb1cf708211460dc099bfc900af8af5"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S10",
+   "start": 1940,
+   "end": 2025,
+   "text": "Fast retransmit is faster than waiting for timeout—often by hundreds of milliseconds.",
+   "sha256": "93a841e30c1ccb11d4c43a04f42271158936babb3bdfaa1ee4e2fda5a8650ec7"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S7",
+   "start": 4076,
+   "end": 4366,
+   "text": "Stream Control Transmission Protocol (SCTP) is often used by the VoIP community for server-to-server communication. However, when it’s used in WebRTC it’s for peer-to-peer communication with the aim of providing built-in error recovery, congestion control, and multi-streaming capabilities.",
+   "sha256": "6e7faa6e188664e4060a9cdf4852400485556595bf323abb285b56aec90f2ead"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S10",
+   "start": 7461,
+   "end": 7496,
+   "text": "Reduces tail latency significantly.",
+   "sha256": "6369c7a0f7ea6ebe81b22edfd10aed0994dd6fa190231cc120c66bb28ee9e42a"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S11",
+   "start": 24013,
+   "end": 24191,
+   "text": "Out of the 693,461 targets supporting migration in IPv6, it appears that 654,598 are from Hostinger while the other providers seem to offer very little support for the migration.",
+   "sha256": "9e503071861f47faac6056e2cd337d03571aea5db8a236f609c4494f189d731f"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S11",
+   "start": 23579,
+   "end": 23644,
+   "text": "Cloudflare and Google do not seem to support connection migration",
+   "sha256": "e89d7f25cf26de0e93a3caef81d3f4da0043cc773af914212b6f0dce600d6933"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S11",
+   "start": 19384,
+   "end": 19610,
+   "text": "the success rate for the handshake is low with only 5% of the targets able to perform a successful handshake.\nThe addition of SNI from the DNS records allows to drastically increase the success rate of handshakes to almost 70%",
+   "sha256": "65155450ca4502ad95ddaa3092cee3b4dfe2fb8456a3df223d204ab4e7a3d016"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S16",
+   "start": 8030,
+   "end": 8211,
+   "text": "A single TCP flow cannot send more than one window of data per round trip. With a 64 KB window and 100 ms RTT, the ceiling is about 5.2 Mbps no matter how much bandwidth you bought.",
+   "sha256": "56e988ec2814f58148d34218a5a70b3dc8c47f7ef903b9c233cdc3f1cab7de41"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S18",
+   "start": 14917,
+   "end": 15108,
+   "text": "We recommend for you to perform your testing of network performance for a minimum of a week, so that you can see usage patterns for all business days and hours. This will show you peak times.",
+   "sha256": "02a55ab02aacb5fbafc769cf900393d768afef93899829fa306e297ffe6b37b2"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S18",
+   "start": 15180,
+   "end": 15445,
+   "text": "We recommend taking a measurement every 10 minutes from a company site during the entire period of time you are gathering data. For comparing the Microsoft Teams network performance requirements, take the 90th percentile measurement value from this sample data set.",
+   "sha256": "3c60521f26e35b0296734d82a2c0033c79b94e902d72c5c451da691d1b26cc1e"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S16",
+   "start": 12391,
+   "end": 12628,
+   "text": "A link can ping at 15 ms when idle and 300 ms the moment you start an upload, because oversized buffers queue packets instead of dropping them. Test latency while the link is busy, not just when it is quiet, or you will miss it entirely.",
+   "sha256": "fcf61ed622718cb3b901515c72f458138db8171ebec581dbe7ddacaa9fea1be4"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S20",
+   "start": 4052,
+   "end": 4273,
+   "text": "The tier localization step is where most teams go wrong. Engineers often jump straight to database tuning when the real bottleneck is at the edge layer, or they add compute capacity when the problem is an unindexed query.",
+   "sha256": "3e3277f1b7c05cd46652916fed33ff90bef3234662227b78edf2b986ce0623a6"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Pirate measures application-layer response latency (time from request to last byte received) by observing only client-to-server packets at a load balancer, even with encrypted QUIC transport. On a realistic web workload with variable CPU availability, Pirate achieves 0.63% median measurement error relative to client-side latency. When integrated into the Katran layer-4 load balancer, latency-aware routing cuts 99th percentile latencies by 37%, with only 346 nanoseconds per-packet measurement overhead.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 346",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What specific packet loss rates and round-trip times were tested in published measurements comparing protocol latency improvements, and which measurements came from real-world deployments versus laboratory simulations?",
+    "capability": "You can implement latency-aware routing at the load balancer by observing only outbound traffic, without instrumenting clients or requiring bidirectional visibility."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Protocol end-to-end latency is dominated by round-trip count, not wire format. Cold-start requirements are: MQTT 3 RTT (pipelined), CoAP unsecured 1 RTT versus 2–3 RTT with DTLS, AMQP 6–8 RTT, and HTTP/3 2 RTT. At 30 ms RTT these translate to 30–240 ms cold latencies. The April 2026 published IoT protocol latency tables were withdrawn by their author due to inability to trace measurements to reproducible sources, making RFC specification-based analysis a more reliable basis for protocol selection than single-rig benchmarks.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S3",
+     "quote": "The April benchmark tables are withdrawn. The earlier post presented specific latency, throughput and microjoule-per-message figures from an ESP32-S3 rig. I could not tie them to published data or a r",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What specific packet loss rates and round-trip times were tested in published measurements comparing protocol latency improvements, and which measurements came from real-world deployments versus laboratory simulations?",
+    "capability": "Stop relying on published protocol latency benchmarks and instead base device and protocol choices on RFC-derived round-trip counts, which are reproducible constants."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "CoAP's default RFC 7252 retransmission timer (ACK_TIMEOUT 2–3 seconds, doubling on each retry) means a single lost packet incurs 2–3 seconds of latency penalty. This makes CoAP's tail latency worse than MQTT on lossy links despite CoAP's superior p50 latency on clean paths. The protocol specification timer values, not header size or wire format, determine the latency difference between protocols in real-world loss scenarios.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S3",
+     "quote": "CoAP: RFC 7252 sets ACK_TIMEOUT to 2 seconds and ACK_RANDOM_FACTOR to 1.5, so the first retransmission of a Confirmable message waits a random time between 2 and 3 seconds. The timeout doubles on each",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What specific packet loss rates and round-trip times were tested in published measurements comparing protocol latency improvements, and which measurements came from real-world deployments versus laboratory simulations?",
+    "capability": "Account for RFC-specified loss recovery timers when choosing protocols for lossy networks instead of relying on p50 latencies measured on clean paths."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Fast retransmission detects packet loss within hundreds of milliseconds using duplicate ACKs rather than waiting for RTO timeout expiration, and SACK enables identification of multiple concurrent losses in a single acknowledgment enabling retransmission in one round trip instead of sequentially, allowing services to remain responsive during burst packet loss",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4",
+    "E5"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do protocols that recover lost packets independently per stream reduce end-to-end latency compared to protocols that must wait for connection-level retransmission, particularly when packet loss is sustained?",
+    "capability": "Deploy services that sustain higher packet loss rates during congestion without proportional degradation"
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "SCTP provides multi-streaming with independent error recovery per stream, whereas TCP operates at the connection level where packet loss triggers connection-wide retransmission mechanisms, so multi-stream protocols prevent loss on one stream from stalling traffic on unaffected streams",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do protocols that recover lost packets independently per stream reduce end-to-end latency compared to protocols that must wait for connection-level retransmission, particularly when packet loss is sustained?",
+    "capability": "Maintain service availability on unaffected data streams even when some streams experience packet loss"
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Tail Loss Probe detects loss in final segments without waiting for full RTO expiration by probing after 2× smoothed RTT, significantly reducing tail latency in request-response workloads compared to traditional timeout-based detection which must wait for complete RTO intervals",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do protocols that recover lost packets independently per stream reduce end-to-end latency compared to protocols that must wait for connection-level retransmission, particularly when packet loss is sustained?",
+    "capability": "Reduce request-response tail latency by eliminating RTO timeouts on final packet loss"
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "Connection migration support is concentrated in specific providers rather than being a universal QUIC capability. Measurements from May 2024 show 52% of QUIC servers with SNI support migration on IPv4, but among IPv6 servers that do support it, 94% are from a single provider (Hostinger), while major providers like Cloudflare and Google do not support connection migration at all. This means an operator's ability to rely on migration for seamless failover depends entirely on which infrastructure vendor is chosen.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 2024, 52%, 94%",
+   "spans": [
+    "E8",
+    "E9"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what sustained packet loss percentage does QUIC connection migration and 0-RTT recovery fail to maintain application SLA compliance, and how does this threshold compare to SCTP multi-streaming under identical network conditions?",
+    "capability": "You can stop assuming connection migration is available across your infrastructure and start qualifying it as a provider-specific feature that constrains your failover and mobility strategy."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "SNI creates a 14-fold performance gap in QUIC handshake success (4.9% vs 69% for IPv4 in May 2024 scans), but even with SNI support, only 52% of successful handshakes proceed to migration. Infrastructure that cannot support SNI faces severe handshake failures and cannot rely on connection migration as a recovery mechanism, making investment in QUIC for non-SNI environments economically unjustifiable.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 14, 2024, 4.9%, 52%, 69%",
+   "spans": [
+    "E10"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what sustained packet loss percentage does QUIC connection migration and 0-RTT recovery fail to maintain application SLA compliance, and how does this threshold compare to SCTP multi-streaming under identical network conditions?",
+    "capability": "You can deprioritize QUIC deployment for infrastructure that cannot provide SNI and redirect optimization effort to environments where SNI support enables meaningful handshake success."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "TCP throughput is mathematically capped by the bandwidth-delay product formula (Max throughput = TCP_window_size / RTT). A TCP flow with a 64 KB window and 100 ms RTT cannot exceed 5.2 Mbps regardless of physical link bandwidth. Adding network capacity when distance is the bottleneck yields zero user benefit; the fix must address latency, not bandwidth.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Above what packet loss percentages or round-trip time values do the measured latency improvements from protocol upgrades become too small to detect or economically justify deployment?",
+    "capability": "Stop deploying bandwidth upgrades on paths where latency is the bottleneck, and focus on latency reduction instead."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Services like Microsoft Teams define acceptable performance targets (RTT < 60 ms, average packet loss < 0.5%, jitter < 3 ms). Operators can rigorously test existing internet connectivity—minimum one week of sampling every 10 minutes, taking the 90th percentile value—against these thresholds to determine if an upgrade like ExpressRoute is economically justified or unnecessary. Internet that meets the thresholds requires no costly alternative; internet that fails them justifies the investment.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 0.5%, 60",
+   "spans": [
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Above what packet loss percentages or round-trip time values do the measured latency improvements from protocol upgrades become too small to detect or economically justify deployment?",
+    "capability": "Defer costly protocol upgrades or dedicated connectivity by establishing a clear measurement threshold: test under peak load at the 90th percentile over a week, and only upgrade if you miss the target range."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "A network path can show 15 ms latency when idle but 300 ms latency under upload load, due to oversized buffers (bufferbloat) that queue packets instead of dropping them. Testing on quiet links produces false confidence and leads to wasted upgrades; measuring during peak traffic hours reveals the true bottleneck and prevents spending on the wrong fix.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Above what packet loss percentages or round-trip time values do the measured latency improvements from protocol upgrades become too small to detect or economically justify deployment?",
+    "capability": "Avoid deploying link upgrades that fix idle-time performance but miss real-world congestion, by always testing latency under peak-load conditions."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "Performance thresholds vary significantly across application types, not universally. Voice requires latency under 150ms and jitter under 30ms; video conferencing requires latency under 100ms with jitter under 50ms; general data applications tolerate up to 1000ms latency. This means operators must tailor infrastructure standards to their specific application mix rather than applying a single performance target to the entire network.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S21",
+     "quote": "### Voice over IP (VoIP) Apps\n\n**Primary metrics**: Latency, jitter, packet loss, MOS, response time**Critical thresholds**: Latency < 150ms, jitter < 30ms, packet loss < 1%\n\n### Video Conferencing an",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do the performance improvement thresholds that justify protocol or infrastructure upgrades vary across different application types (video conferencing, file transfer, interactive gaming) and network scales (mobile edge, regional ISP, intercontinental backbone), or are thresholds universal?",
+    "capability": "You can stop deploying uniform performance standards and assign upgrade budgets based on the actual performance sensitivity of your application portfolio."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "The first failure point in infrastructure optimization is misidentifying which tier (edge, compute, cache, database, network) actually causes the slowdown. Database teams optimize databases when the edge layer is the bottleneck; network teams reconfigure routing when compute is constrained; compute teams add capacity when an unindexed query is the issue. Starting with incorrect layer selection wastes resources and delays real improvements.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do the performance improvement thresholds that justify protocol or infrastructure upgrades vary across different application types (video conferencing, file transfer, interactive gaming) and network scales (mobile edge, regional ISP, intercontinental backbone), or are thresholds universal?",
+    "capability": "You can avoid wasting upgrade budgets by correctly identifying which network tier is constraining performance before spending on remediation."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 22,
+  "lineages": 22,
+  "duplicate_url_aliases": 1,
+  "sources_with_injection_flags": 1,
+  "claims": 13,
+  "claims_with_verified_span": 11,
+  "verified_span_rate": 0.846,
+  "quotes_offered": 18,
+  "quotes_rejected": 3,
+  "ledger_capped": 6,
+  "quotes_reattributed": 0,
+  "claims_persisted": 10,
+  "persisted_with_verified_span": 8,
+  "persisted_verified_span_rate": 0.8
+ }
+}

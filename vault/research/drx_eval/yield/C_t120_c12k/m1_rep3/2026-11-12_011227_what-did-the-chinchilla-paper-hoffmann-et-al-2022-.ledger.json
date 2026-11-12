@@ -1,0 +1,430 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-12_005452_what-did-the-chinchilla-paper-hoffmann-et-al-2022-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/abs/2605.01188",
+   "aliases": [],
+   "sha256": "8417f7100a23db5c64b0a5f41164d3573af731780df0ea0053d5a0e3d793929b",
+   "chars": 3398,
+   "snapshot": "8417f7100a23db5c64b0a5f41164d3573af731780df0ea0053d5a0e3d793929b.txt",
+   "retrieved_at": "2026-11-11T23:56:37+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://arxiv.org/abs/2605.08541",
+   "aliases": [],
+   "sha256": "6b7ac512cca2e48309596b8d4747503acf847b93cb91269142fce0f21be302f0",
+   "chars": 3950,
+   "snapshot": "6b7ac512cca2e48309596b8d4747503acf847b93cb91269142fce0f21be302f0.txt",
+   "retrieved_at": "2026-11-11T23:56:37+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://www.emergentmind.com/topics/tokens-per-parameter-tpp",
+   "aliases": [],
+   "sha256": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570",
+   "chars": 10744,
+   "snapshot": "1da05b44ede48ada6eb48dfa05bedbd3cdb9e466371344fbc3893ab0112bf570.txt",
+   "retrieved_at": "2026-11-11T23:56:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://arxiv.org/pdf/2601.06649v1",
+   "aliases": [],
+   "sha256": "ea47bb9b3ebc04ce0e23e20dbad48fce94d504ab8cd10d3f3b263ac03dd8bdf4",
+   "chars": 3953,
+   "snapshot": "ea47bb9b3ebc04ce0e23e20dbad48fce94d504ab8cd10d3f3b263ac03dd8bdf4.txt",
+   "retrieved_at": "2026-11-11T23:59:37+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://arxiv.org/abs/2203.15556",
+   "aliases": [],
+   "sha256": "a39e5fd79dbc3fc788b5dd4ded1ab672947900db55cd89f6a5bdec83f26b85a2",
+   "chars": 3367,
+   "snapshot": "a39e5fd79dbc3fc788b5dd4ded1ab672947900db55cd89f6a5bdec83f26b85a2.txt",
+   "retrieved_at": "2026-11-11T23:59:37+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.educatingsilicon.com/2024/04/29/revised-chinchilla-scaling-laws-impact-on-llm-compute-and-token-requirements/",
+   "aliases": [],
+   "sha256": "67b6043af69f0c6e697302e5eea85caff0cb854468dc42b9f97046a389fe7653",
+   "chars": 5815,
+   "snapshot": "67b6043af69f0c6e697302e5eea85caff0cb854468dc42b9f97046a389fe7653.txt",
+   "retrieved_at": "2026-11-11T23:59:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://en.wikipedia.org/wiki/Neural_scaling_law",
+   "aliases": [],
+   "sha256": "77ccdd5080a82d6b385eb4ec3be2e2215d39aebec40583d56198a366f19f9845",
+   "chars": 12000,
+   "snapshot": "77ccdd5080a82d6b385eb4ec3be2e2215d39aebec40583d56198a366f19f9845.txt",
+   "retrieved_at": "2026-11-11T23:59:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://arxiv.org/html/2609.19107v2",
+   "aliases": [],
+   "sha256": "1ec9b230ab34c0679f26489135ee88108d9be4646a4fee89521e81df40270405",
+   "chars": 12000,
+   "snapshot": "1ec9b230ab34c0679f26489135ee88108d9be4646a4fee89521e81df40270405.txt",
+   "retrieved_at": "2026-11-12T00:01:44+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://grasp.study/courses/040e4453-8af1-4878-8fae-1ed4c8c67378/modules/9f10e69a-7481-4111-afe8-4e17f4e2c89d/lessons/c564d728-4d09-4ea6-81e0-a6822d94d484",
+   "aliases": [],
+   "sha256": "300669779003b438751c2f1ddd758f6c03373e9e868008c0538fad787fd81fc6",
+   "chars": 9679,
+   "snapshot": "300669779003b438751c2f1ddd758f6c03373e9e868008c0538fad787fd81fc6.txt",
+   "retrieved_at": "2026-11-12T00:01:44+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://www.emergentmind.com/topics/compute-optimal-dataset-sizes",
+   "aliases": [],
+   "sha256": "50b94c2f53eb3a94ccf40c3db0200cef3980a09701059e55ba9d0ec26815bb3f",
+   "chars": 11156,
+   "snapshot": "50b94c2f53eb3a94ccf40c3db0200cef3980a09701059e55ba9d0ec26815bb3f.txt",
+   "retrieved_at": "2026-11-12T00:01:44+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://www.geeksforgeeks.org/artificial-intelligence/chinchilla-scaling-laws/",
+   "aliases": [],
+   "sha256": "86b105aeec91daec1b892c2a9fc814f4d670c9a6d064ec6f040326122d365cab",
+   "chars": 5462,
+   "snapshot": "86b105aeec91daec1b892c2a9fc814f4d670c9a6d064ec6f040326122d365cab.txt",
+   "retrieved_at": "2026-11-12T00:01:44+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://arxiv.org/html/2607.00913v1",
+   "aliases": [],
+   "sha256": "9029a1ff512e50453daa28e31d9c0cab8510e2f121c760c5e6fb7dbab02483f4",
+   "chars": 12000,
+   "snapshot": "9029a1ff512e50453daa28e31d9c0cab8510e2f121c760c5e6fb7dbab02483f4.txt",
+   "retrieved_at": "2026-11-12T00:07:09+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://mbrenndoerfer.com/writing/chinchilla-scaling-laws-compute-optimal-llm-training",
+   "aliases": [],
+   "sha256": "df63bfcccab07f60c1ef74f8623b8378ec15f7c8b0338b5a0f0ed06f3843dc16",
+   "chars": 12000,
+   "snapshot": "df63bfcccab07f60c1ef74f8623b8378ec15f7c8b0338b5a0f0ed06f3843dc16.txt",
+   "retrieved_at": "2026-11-12T00:07:09+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://www.zeroentropy.dev/concepts/scaling-laws/",
+   "aliases": [],
+   "sha256": "4d2424d27691663a189ee3c1aa9c68a3a4d09119b78b5cfb334888ba7ef47b48",
+   "chars": 6612,
+   "snapshot": "4d2424d27691663a189ee3c1aa9c68a3a4d09119b78b5cfb334888ba7ef47b48.txt",
+   "retrieved_at": "2026-11-12T00:07:09+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://proceedings.neurips.cc/paper_files/paper/2022/file/c1e2faff6f588870935f114ebe04a3e5-Paper-Conference.pdf",
+   "aliases": [],
+   "sha256": "61b6b4c049adadb3b685bc724b2b83aa82dd586a6e2d7c04c124fcfeed9851f6",
+   "chars": 2536,
+   "snapshot": "61b6b4c049adadb3b685bc724b2b83aa82dd586a6e2d7c04c124fcfeed9851f6.txt",
+   "retrieved_at": "2026-11-12T00:07:09+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S15"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S8",
+   "start": 729,
+   "end": 888,
+   "text": "In particular, a 7.4B model growth architecture matches GPT-3 13B on CORE with roughly less compute, and has compute efficiency gains that increase with scale.",
+   "sha256": "30401d35eecd397e70229847dee8294ad4234c5db45795c2eaab58e362312d0c"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S8",
+   "start": 6804,
+   "end": 6935,
+   "text": "Contrary to conventional wisdom, it is possible to change the scaling exponent in pre-training through architectural interventions.",
+   "sha256": "05f47a389517379309135aaa44dd509e063c149913bba770375f3718859017d0"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S9",
+   "start": 5721,
+   "end": 5878,
+   "text": "Kaplan expressed its relationship using **non-embedding parameters** and an associated compute proxy; Chinchilla used **total parameters** and total compute.",
+   "sha256": "af15a9d7d6f6808462d00343e0791b383599118a9b678e018d6a0cbfe6d33a12"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S9",
+   "start": 6139,
+   "end": 6273,
+   "text": "The re-analysis argues that **counting convention combined with model-size coverage** can account for much of the exponent difference.",
+   "sha256": "b852001622b39b4bfcb6241c9f34b184955e608c17d0180d01a961d77e366d82"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S10",
+   "start": 4929,
+   "end": 5040,
+   "text": "For encoder-only pLMs, once a single epoch of unique tokens is seen, further data contributes negligible gains.",
+   "sha256": "baec9ea6646b278ca7d133b2d5e2998c614b5b56b5b382fe80ffd4c9d1cf253c"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S10",
+   "start": 5219,
+   "end": 5298,
+   "text": "Recent work demonstrates that **compute-optimal dataset size is skill dependent",
+   "sha256": "170c76f12a13b786101e177bb6fd6e859d3e6ea8f427ea35231b84aedf5a66c0"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S14",
+   "start": 1604,
+   "end": 1771,
+   "text": "Empirically: a 70B-parameter model trained on 1.4T tokens (Chinchilla) outperformed a 175B-parameter model trained on 300B tokens (GPT-3) at the same training compute.",
+   "sha256": "49da87cf8395882132fbbceae354b629cbf48c5f62f403abc629ed69735e7b77"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S14",
+   "start": 3601,
+   "end": 3742,
+   "text": "Llama-3 8B was trained on 15 trillion tokens at 8B params, about 1875 tokens/parameter — almost two orders of magnitude past compute-optimal.",
+   "sha256": "38ab813c303e04fdedc8452bec02965ac8a785c44629b76fd35f3de924985d55"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "S8 demonstrates that architectural interventions—specifically models that grow depth during training—achieve substantially different compute-optimal allocations than vanilla transformers. A 7.4B parameter model grown during training matches GPT-3 (13B) on the CORE benchmark while using less total compute, showing that the scaling exponent itself changes with architecture choice, not merely the efficiency constant.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which peer-reviewed studies measured compute-optimal allocations that diverged substantially from Chinchilla's recommendations, and what methodological or environmental differences explain the divergence?",
+    "capability": "You can allocate compute differently between parameters and tokens depending on your choice of model architecture, since different architectures achieve different compute-optimal frontiers."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "S9 documents that Kaplan (2020) and Chinchilla (2022) prescribed different optimal allocations—Kaplan favored greater parameter growth while Chinchilla favored equal parameter and token scaling. However, much of this divergence stems from different accounting conventions: Kaplan used non-embedding parameters while Chinchilla used total parameters. Since embedding parameters represent a larger fraction of smaller models, this counting difference significantly affects the fitted scaling exponents when applied to different model-size ranges.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which peer-reviewed studies measured compute-optimal allocations that diverged substantially from Chinchilla's recommendations, and what methodological or environmental differences explain the divergence?",
+    "capability": "You can diagnose whether scaling-law disagreements reflect real differences in compute-optimal allocation or just differences in how parameters are counted."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "S10 documents domain-specific divergences from Chinchilla: protein language models exhibit qualitatively different exponents with a data plateau effect where further training contributes negligible gains once a single epoch of unique tokens is seen, and skill-dependent scaling research (Roberts et al., March 2025) shows that compute-optimal allocation varies by task, with code generation and knowledge QA requiring different token-to-parameter ratios because some tasks are data-hungry while others are capacity-constrained.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which peer-reviewed studies measured compute-optimal allocations that diverged substantially from Chinchilla's recommendations, and what methodological or environmental differences explain the divergence?",
+    "capability": "You can allocate differently between parameters and tokens for specialized domains or task-specific optimization rather than applying Chinchilla's universal 0.5/0.5 scaling across all use cases."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "The Chinchilla scaling laws (Hoffmann et al., March 2022) measured performance divergence empirically across over 400 models (70M to 16B parameters). At identical training compute, a 70-billion-parameter model trained on 1.4 trillion tokens outperformed a 280-billion-parameter model with fewer tokens (Gopher), achieving 67.5% on MMLU—greater than 7% improvement—while enabling cheaper inference. This established that compute-optimal allocation is approximately 20 tokens per parameter, and misaligned ratios produce systematically worse end-state performance.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 16, 20, 2022, 280, 400, 67.5%",
+   "spans": [
+    "E7"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S5",
+     "quote": "Chinchilla uniformly and significantly outperforms Gopher (280B), GPT-3 (175B), Jurassic-1 (178B), and Megatron-Turing NLG (530B) on a large range of downstream evaluation tasks. As a highlight, Chinc",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What measurable performance divergence emerges between models trained with misaligned parameter-to-token ratios compared to compute-matched peers with optimal allocation, and at what point in training does this divergence become detectable?",
+    "capability": "When allocating a fixed compute budget, prioritize achieving the compute-optimal parameter-to-token ratio over maximizing model size alone, as allocation determines your end-state performance against any alternative allocation of identical compute."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Whether misaligned parameter-to-token allocations matter forever depends on the mathematical form of your success metric. For bounded metrics (validation accuracy capped at 100%, code correctness as pass/fail), smaller models trained longer eventually match frontier models despite exponential divergence in compute investment. For unbounded metrics (reasoning depth, task length), frontier models maintain permanent advantages. This means capability domains will bifurcate: some see meek models inherit capability access while others see concentration persist indefinitely.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S12",
+     "quote": "We show that if a metric is bounded, then it is meek. Critically, we also show that subtle differences in utility function over a model's capabilities can produce metrics which change from unbounded t",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measurable performance divergence emerges between models trained with misaligned parameter-to-token ratios compared to compute-matched peers with optimal allocation, and at what point in training does this divergence become detectable?",
+    "capability": "Define your performance metric carefully before forecasting whether frontier-model advantages will persist indefinitely or converge, since bounded metrics guarantee eventual parity while unbounded metrics guarantee permanent gaps."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Modern frontier and open-weight models intentionally misalign beyond compute-optimal allocation for inference economics. Llama-3 8B was trained on 15 trillion tokens at 8 billion parameters (1,875 tokens/parameter), approximately two orders of magnitude higher than Chinchilla's 20 tokens/parameter compute-optimal rate. This reversal from compute-optimal allocation accepts higher training costs because inference cost dominates total lifetime cost once deployed at scale.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What measurable performance divergence emerges between models trained with misaligned parameter-to-token ratios compared to compute-matched peers with optimal allocation, and at what point in training does this divergence become detectable?",
+    "capability": "If your model will serve billions of inference requests at scale, deliberately allocate training compute well beyond the compute-optimal parameter-to-token ratio, accepting higher training costs to minimize lifetime economics."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 15,
+  "lineages": 15,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 6,
+  "claims_with_verified_span": 5,
+  "verified_span_rate": 0.833,
+  "quotes_offered": 10,
+  "quotes_rejected": 2,
+  "ledger_capped": 2,
+  "quotes_reattributed": 0,
+  "claims_persisted": 5,
+  "persisted_with_verified_span": 5,
+  "persisted_verified_span_rate": 1.0
+ }
+}

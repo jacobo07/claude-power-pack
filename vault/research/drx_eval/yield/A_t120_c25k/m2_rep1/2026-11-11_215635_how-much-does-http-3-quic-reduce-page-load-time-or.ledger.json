@@ -1,0 +1,642 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-11_214303_how-much-does-http-3-quic-reduce-page-load-time-or",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://thecodeforge.io/cs-fundamentals/http2-http3/",
+   "aliases": [],
+   "sha256": "278562304dcbff19704a76ca50829b958fb8d531963f867b15604162eebd72a4",
+   "chars": 25000,
+   "snapshot": "278562304dcbff19704a76ca50829b958fb8d531963f867b15604162eebd72a4.txt",
+   "retrieved_at": "2026-11-11T20:44:00+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://martinuke0.github.io/posts/2026-05-16-the-latency-cost-of-http2-head-of-line-blocking/",
+   "aliases": [],
+   "sha256": "1ad6a0b03e648d69850407fef1e93aa443dbc81f51c4abcf0088a69900a01a13",
+   "chars": 11799,
+   "snapshot": "1ad6a0b03e648d69850407fef1e93aa443dbc81f51c4abcf0088a69900a01a13.txt",
+   "retrieved_at": "2026-11-11T20:44:01+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://www.c-sharpcorner.com/article/production-benchmarking-of-http3-vs-http2-in-asp-net-core-11",
+   "aliases": [],
+   "sha256": "862307e42a4b9bc3da6378d850965862fd13932b31e12f19b4d45e8c66490f4a",
+   "chars": 4596,
+   "snapshot": "862307e42a4b9bc3da6378d850965862fd13932b31e12f19b4d45e8c66490f4a.txt",
+   "retrieved_at": "2026-11-11T20:44:01+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://flaviocopes.com/http2-http3/",
+   "aliases": [],
+   "sha256": "783900ca81c26776076cba6699195d299bedc8e60deab12a7521577274b73063",
+   "chars": 25000,
+   "snapshot": "783900ca81c26776076cba6699195d299bedc8e60deab12a7521577274b73063.txt",
+   "retrieved_at": "2026-11-11T20:44:01+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://smartseoaudit.com/guides/http2-and-http3",
+   "aliases": [],
+   "sha256": "f5e3a8d2f701242042b68f9aeb2ed1514dbecee495e2e5c299fd1422e7066c2a",
+   "chars": 6737,
+   "snapshot": "f5e3a8d2f701242042b68f9aeb2ed1514dbecee495e2e5c299fd1422e7066c2a.txt",
+   "retrieved_at": "2026-11-11T20:44:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.logicmonitor.com/deep-dive/http3-vs-http2/nginx-http-3-configurations-troubleshooting-and-best-practices",
+   "aliases": [],
+   "sha256": "7f5c28fec57b6cef80f3e98b0b68a58e38f8627765440b32154ac0c820506a65",
+   "chars": 18687,
+   "snapshot": "7f5c28fec57b6cef80f3e98b0b68a58e38f8627765440b32154ac0c820506a65.txt",
+   "retrieved_at": "2026-11-11T20:47:35+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://dev.to/devcorner/deep-dive-into-http3-the-future-of-the-web-kjg",
+   "aliases": [],
+   "sha256": "a169bcc8d419ad20a380e2943fa196642a69c92806a7cefa8b9494a37f805bba",
+   "chars": 5295,
+   "snapshot": "a169bcc8d419ad20a380e2943fa196642a69c92806a7cefa8b9494a37f805bba.txt",
+   "retrieved_at": "2026-11-11T20:47:35+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://www.smashingmagazine.com/2021/09/http3-practical-deployment-options-part3/",
+   "aliases": [],
+   "sha256": "b49d5334bc828a50389127ca65830c08f6e5e7bfdf64bb8df4ee1bf2270fd3d9",
+   "chars": 25000,
+   "snapshot": "b49d5334bc828a50389127ca65830c08f6e5e7bfdf64bb8df4ee1bf2270fd3d9.txt",
+   "retrieved_at": "2026-11-11T20:47:35+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://arxiv.org/pdf/2102.12358v1",
+   "aliases": [],
+   "sha256": "6d5997d08eb0ba228cb273c208e39e8e3b4ec6c926a39ebf96fd65208ed3ff70",
+   "chars": 2497,
+   "snapshot": "6d5997d08eb0ba228cb273c208e39e8e3b4ec6c926a39ebf96fd65208ed3ff70.txt",
+   "retrieved_at": "2026-11-11T20:49:19+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://www.dataplugs.com/en/benchmarking-http-3-quic-protocol-on-hosting-platforms/",
+   "aliases": [],
+   "sha256": "a2471bf41107bef0cb8da8c43110779adbff8fa7ab8ad582d51e914f9b19e181",
+   "chars": 8492,
+   "snapshot": "a2471bf41107bef0cb8da8c43110779adbff8fa7ab8ad582d51e914f9b19e181.txt",
+   "retrieved_at": "2026-11-11T20:49:19+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://ieeexplore.ieee.org/abstract/document/11083994",
+   "aliases": [],
+   "sha256": "fc338a54e60a730e77235ab0f5e872f9e62bd934f66e379414bc3d7e05424aa8",
+   "chars": 277,
+   "snapshot": "fc338a54e60a730e77235ab0f5e872f9e62bd934f66e379414bc3d7e05424aa8.txt",
+   "retrieved_at": "2026-11-11T20:49:19+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://arxiv.org/pdf/2102.12358",
+   "aliases": [],
+   "sha256": "b42794820bf3bc01f92907ed8e7aaeb358ecd632282978705a65cf2785d4bc28",
+   "chars": 804,
+   "snapshot": "b42794820bf3bc01f92907ed8e7aaeb358ecd632282978705a65cf2785d4bc28.txt",
+   "retrieved_at": "2026-11-11T20:49:19+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://vercel.com/docs/deployments/rollback-production-deployment",
+   "aliases": [],
+   "sha256": "1d9d78f184434c890be87300b93b110f15ac3f0b17660a934b535b3a59646f92",
+   "chars": 5872,
+   "snapshot": "1d9d78f184434c890be87300b93b110f15ac3f0b17660a934b535b3a59646f92.txt",
+   "retrieved_at": "2026-11-11T20:52:42+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://en.wikipedia.org/wiki/HTTP/3",
+   "aliases": [],
+   "sha256": "e79a03ddf04f4dd43203b3558499b6bfd6137b08e397f6d61f3225a30ba192c8",
+   "chars": 24840,
+   "snapshot": "e79a03ddf04f4dd43203b3558499b6bfd6137b08e397f6d61f3225a30ba192c8.txt",
+   "retrieved_at": "2026-11-11T20:52:42+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://thehackernews.com/2026/08/cdn-tsunami-attack-abuses-http3.html",
+   "aliases": [],
+   "sha256": "def0e8c8837f74e7c80fa4bbaa442b92d711c2a000f786e43a5d0f3266f33489",
+   "chars": 9072,
+   "snapshot": "def0e8c8837f74e7c80fa4bbaa442b92d711c2a000f786e43a5d0f3266f33489.txt",
+   "retrieved_at": "2026-11-11T20:52:42+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://developers.cloudflare.com/cloudflare-one/traffic-controls/http-policies/http3/",
+   "aliases": [],
+   "sha256": "5f5938cd6a5ef3fbfb03b2cdec1cb5cfe0c12f7da07286edbdc55abcbf10d05a",
+   "chars": 3106,
+   "snapshot": "5f5938cd6a5ef3fbfb03b2cdec1cb5cfe0c12f7da07286edbdc55abcbf10d05a.txt",
+   "retrieved_at": "2026-11-11T20:52:42+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://community.ibm.com/community/user/blogs/madhusudhan-rajappa/2026/07/08/http3-connection-contamination",
+   "aliases": [],
+   "sha256": "584466cf88fda0e4dd9e2ad0f80f9eb909ee015320b5ebed51f91a9e27bec41e",
+   "chars": 10691,
+   "snapshot": "584466cf88fda0e4dd9e2ad0f80f9eb909ee015320b5ebed51f91a9e27bec41e.txt",
+   "retrieved_at": "2026-11-11T20:52:43+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 2218,
+   "end": 2319,
+   "text": "on a 2% packet loss link (common on mobile), HTTP/2 throughput can drop by 50-70% compared to HTTP/3.",
+   "sha256": "7a2841c82be17eaba425dca724a3643e499272a18e26a65708350041d5b1cb13"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S1",
+   "start": 7849,
+   "end": 8035,
+   "text": "Akamai's real-world data shows that for users with 2%–3% packet loss, HTTP/2 can be 1.5× to 2× slower than HTTP/1.1 (which uses multiple TCP connections, so only one connection starves).",
+   "sha256": "a0e5535745fcf5fde721f80d7ad07d4026d837bcfde431210362e922b3d4b3e6"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S1",
+   "start": 8640,
+   "end": 8745,
+   "text": "Cloudflare observed that HTTP/2 over Qualcomm's LTE modems had 20% higher retransmit rates than HTTP/1.1.",
+   "sha256": "4664aabcfafaed355fcfd530efd86da99c5d265876b98f6d6e94a4d07b6d9558"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S2",
+   "start": 9702,
+   "end": 10169,
+   "text": "A news outlet serving a photo‑heavy article noticed intermittent delays in loading caption text (≈2 KB) when a 5 MB hero image was in the same connection. Using Wireshark, they identified that the server’s HTTP/2 implementation serialized frames for the image, causing HoL blocking. Switching to **nghttp2’s priority‑aware scheduler** and increasing the connection window size resolved the issue, shaving **≈80 ms** off the Time‑to‑First‑Byte (TTFB) for the captions.",
+   "sha256": "8488f8bfe67664113b91424f50fac223f17a3b262bb98d0840a63ebc6645b55f"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S1",
+   "start": 2320,
+   "end": 2402,
+   "text": "Google reported a 30% reduction in YouTube rebuffer rates after switching to QUIC.",
+   "sha256": "07c57ec4fa2470a3e2cfa2da8ed77dafb4ef2c417a982f27c89854ee602c1791"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S1",
+   "start": 2403,
+   "end": 2482,
+   "text": "Cloudflare's data shows HTTP/3 page load times 15-30% faster on 3G/4G networks.",
+   "sha256": "b8b4bb943f1ee9eec62eb1a65547e95bca5586e5970a90fa60afaaf6621a9be3"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S1",
+   "start": 12353,
+   "end": 12535,
+   "text": "At 2% loss, HTTP/2 throughput drops by as much as 50% due to TCP congestion window collapse. HTTP/3 with QUIC's independent streams stays above 80% throughput for the same loss rate.",
+   "sha256": "c85ce3955323d89b7530cda4f9a4a83d8c094a7f72380208a6ced4403ac412f2"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S6",
+   "start": 619,
+   "end": 747,
+   "text": "many enterprise environments block UDP 443 by default, causing clients to fall back silently to HTTP/2 without any visible error",
+   "sha256": "7b414df915257e8ad498f9aa34b74db90563f3f77b87a2a8558a430f0d5548cf"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S6",
+   "start": 538,
+   "end": 616,
+   "text": "UDP port 443 must be open in firewalls and load balancers for QUIC to function",
+   "sha256": "aba99a3c27f5309d3facd0917d8e91d5ccc65a65429261f5c46c490cb85db2e6"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S8",
+   "start": 1737,
+   "end": 1858,
+   "text": "If you’re already on HTTP/2, you probably won’t have to change anything to your pages or resources when moving to HTTP/3!",
+   "sha256": "7f6f613cbed7b67645bd06d4315be08cd0cda78b2e32b6af84afc0d42b113919"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S10",
+   "start": 3192,
+   "end": 3496,
+   "text": "These gains become more pronounced as latency increases or packet loss approaches levels commonly seen on cellular networks. In contrast, on clean low latency links, HTTP3 hosting performance often converges with HTTP/2, reinforcing that QUIC primarily improves resilience rather than maximum throughput.",
+   "sha256": "adce96ffefdd80d00ddba65e47024d91fc51f1d93f31fba0f8cfc1266ff84d41"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S10",
+   "start": 5713,
+   "end": 6162,
+   "text": "Shared environments with aggressive CPU oversubscription, limited UDP buffer tuning, or constrained network queues often dilute QUIC’s advantages. In these setups, benchmark results become inconsistent and difficult to reproduce.\n\nDedicated infrastructure removes many of these variables. With exclusive access to compute, memory, and network resources, QUIC protocol benchmarking reflects actual transport behavior rather than contention artifacts.",
+   "sha256": "b02c2c1973a2f49e81dae2d497083060c50e5f7dd5239b4fb295df668f532669"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S10",
+   "start": 4638,
+   "end": 4986,
+   "text": "Benchmarks consistently show that these improvements are most impactful for short lived connections, API driven applications, and geographically distributed traffic. For long lived sessions and large transfers, handshake savings become less significant relative to total transfer time, highlighting the importance of workload specific benchmarking.",
+   "sha256": "a715febd2785e610d4903e52f90f12bf400a3665f1429308fd7cf6ff58466c2a"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S15",
+   "start": 1373,
+   "end": 1627,
+   "text": "The 350x factor applies only to Alibaba, Baidu, and Tencent. These three providers support the QPACK dynamic table, and it was measured at roughly 64 concurrent streams, with the maximum on Cloudflare, CloudFront, and Fastly ranging from 36.41x to 51.2x.",
+   "sha256": "80226edbcc2c93a463ecfd758f48f64d2c23b27ae380a4e563ce7f84b9cd5304"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S15",
+   "start": 1713,
+   "end": 1894,
+   "text": "While Baidu and Tencent confirmed the reports and deployed the proposed fixes, the researchers say every mitigation proposed is applied at the CDN rather than at the origin website.",
+   "sha256": "a7e6b09d57125f753144f4476559d186396a3a14684224f2b6095ab042e82a39"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S16",
+   "start": 1715,
+   "end": 1884,
+   "text": "If both the UDP proxy and TLS decryption are turned on, Google Chrome will automatically cancel HTTP/3 connections and retry them over HTTP/2, which Gateway can inspect.",
+   "sha256": "1413dba99393d09f32e5bdc4aff246d1bfe16970866017f9685e33af258cd932"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Akamai measured that on 2-3% packet loss (typical for LTE networks), HTTP/2 throughput drops 50-70% compared to HTTP/3 and runs 1.5-2x slower than HTTP/1.1. The cause is TCP's in-order delivery requirement: a single lost packet stalls all multiplexed streams simultaneously, while QUIC isolates each stream independently. Cloudflare observed 20% higher retransmit rates on HTTP/2 over LTE modems versus HTTP/1.1.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E1",
+    "E2",
+    "E3"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why do individual packet losses during page load create larger delays with HTTP/2 than with HTTP/3?",
+    "capability": "You can decide whether to deploy HTTP/2 to mobile-heavy traffic or skip it for HTTP/3, because on lossy networks HTTP/2 can degrade performance below HTTP/1.1."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "HTTP/2 introduces application-layer head-of-line blocking through frame serialization and flow-control stalls. An e-commerce checkout page slowed 200 ms after HTTP/2 deployment because a 3 MB pushed video blocked a 5 KB checkout script. A news site experienced 70+ ms delays on 2 KB caption text when a 5 MB hero image occupied the connection. Both regressions were traced to the server's HTTP/2 scheduler serializing frames instead of prioritizing critical resources; both were fixed by enabling priority-aware scheduling and increasing connection window sizes.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S2"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S2",
+     "quote": "An online retailer observed a 200 ms slowdown on the checkout page after upgrading from HTTP/1.1 to HTTP/2. Investigation revealed that a 3 MB promotional video was being pushed to the client, blockin",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why do individual packet losses during page load create larger delays with HTTP/2 than with HTTP/3?",
+    "capability": "You can detect whether an HTTP/2 migration regressed performance on mobile by monitoring TCP retransmit rates and stream delays as leading indicators before users notice."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "HTTP/3 uses QUIC, which runs independent reliable streams over UDP: a lost packet only stalls its own stream while others continue unaffected. Google reported 30% reduction in YouTube rebuffer rates after switching to QUIC. Cloudflare measured 15-30% faster page load times on 3G/4G networks with HTTP/3. On the same 2% packet loss that degrades HTTP/2 to 50-70% throughput loss, HTTP/3 maintains above 80% throughput.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 50, 70%",
+   "spans": [
+    "E5",
+    "E6",
+    "E7"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why do individual packet losses during page load create larger delays with HTTP/2 than with HTTP/3?",
+    "capability": "You can reallocate HTTP protocol upgrade budget toward HTTP/3 for mobile properties, since QUIC's independent streams eliminate the head-of-line blocking that makes HTTP/2 slower than HTTP/1.1 on lossy networks."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Deployment of HTTP/3 frequently fails silently: UDP 443 blocks on enterprise firewalls cause clients to revert to HTTP/2 without raising errors. Infrastructure problems appear as continued HTTP/2 usage in traffic metrics rather than failed requests, making adoption failure invisible unless you instrument QUIC connection attempts separately.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What are the most common deployment challenges, configuration errors, or incompatibilities that cause performance regressions when implementing HTTP/3, and what percentage of production migrations require application code changes beyond infrastructure configuration?",
+    "capability": "You can now stop treating failed HTTP/3 adoption as a server or browser problem, and investigate firewall configuration as the likely cause"
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "HTTP/3 requires coordinated infrastructure changes across three independent systems—firewall policies must explicitly permit UDP 443, TLS libraries must provide QUIC-specific APIs that many standard deployments (especially OpenSSL-based) still lack, and load balancers must route by QUIC connection IDs rather than TCP 4-tuples. These prerequisites have longer vendor support and procurement lead times than server software and directly block production readiness.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": true,
+   "ledger_reason": "VERIFIED needs 2 independent lineages, verified spans cover 1",
+   "spans": [
+    "E9"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S8",
+     "quote": "TLS libraries have to provide QUIC-specific APIs, which their developers have long been reluctant or slow to do. The issue here especially is OpenSSL, which has postponed QUIC support, but it is also ",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What are the most common deployment challenges, configuration errors, or incompatibilities that cause performance regressions when implementing HTTP/3, and what percentage of production migrations require application code changes beyond infrastructure configuration?",
+    "capability": "You can now front-load network infrastructure planning into the HTTP/3 migration timeline as the binding constraint, not treat it as a secondary concern after server deployment"
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "HTTP/3 maintains full architectural parity with HTTP/2 at the application layer: bundling, inlining, prioritization, and caching optimizations that apply (or fail) on HTTP/2 remain unchanged for HTTP/3. Only deployments still running HTTP/1.1 optimizations require code changes; HTTP/2 to HTTP/3 migration is purely infrastructure work with zero application changes.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What are the most common deployment challenges, configuration errors, or incompatibilities that cause performance regressions when implementing HTTP/3, and what percentage of production migrations require application code changes beyond infrastructure configuration?",
+    "capability": "You can now eliminate application code refactoring from the HTTP/3 migration budget if your deployment already optimizes for HTTP/2"
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "HTTP/3's latency improvements over HTTP/2 materialize primarily in networks with packet loss and congestion—common on cellular and long-distance routes. On clean, low-latency networks, HTTP/3 performance converges with HTTP/2, meaning deployment ROI depends on geographic and network-condition targeting rather than uniform rollout.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do measured latency improvements from HTTP/3 in controlled lab conditions replicate when deployed to production networks with diverse devices, cross-traffic, and geographic variation?",
+    "capability": "You can target HTTP/3 deployment to specific network conditions rather than treating it as universally beneficial."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "HTTP/3's benefits depend heavily on hosting infrastructure choices—CPU allocation, UDP buffer tuning, and network queue management. Shared hosting with aggressive oversubscription typically dilutes QUIC's advantages and produces inconsistent results, while dedicated infrastructure allows the protocol to demonstrate its design benefits. This means performance variance often reflects deployment model, not protocol capability.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do measured latency improvements from HTTP/3 in controlled lab conditions replicate when deployed to production networks with diverse devices, cross-traffic, and geographic variation?",
+    "capability": "You can diagnose HTTP/3 performance problems as infrastructure configuration issues rather than protocol limitations."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "HTTP/3's connection-establishment speed advantage becomes a smaller percentage of total transfer time for long-lived connections and bulk transfers. Handshake savings are most impactful for short-lived API requests and dynamic content delivery, meaning deployment effort should prioritize workload patterns where connection overhead is significant relative to transfer time.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Do measured latency improvements from HTTP/3 in controlled lab conditions replicate when deployed to production networks with diverse devices, cross-traffic, and geographic variation?",
+    "capability": "You can prioritize HTTP/3 deployment by application workload type rather than treating all services uniformly."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "HTTP/3-to-HTTP/1.1 conversion at major CDNs creates exploitable amplification: up to 350x bandwidth amplification through QPACK dynamic table abuse measured at roughly 64 concurrent streams. CDN Tsunami research affected Alibaba, Baidu, Cloudflare, CloudFront, Fastly, and Tencent. Baidu and Tencent deployed mitigations limiting dynamic table entry sizes and backend connection counts per client.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 1.1",
+   "spans": [
+    "E14",
+    "E15"
+   ],
+   "source_ids": [
+    "S15"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which production deployments have rolled back HTTP/3 or restricted it to specific traffic patterns, and what performance or operational problems forced them to do so?",
+    "capability": "You can restrict HTTP/3 dynamic table usage or limit connection multiplexing rates when you discover that your CDN's origin-server conversion enables amplification attacks."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "HTTP/3 traffic bypasses inspection in Cloudflare Gateway unless UDP proxy and TLS decryption are both enabled. Google Chrome automatically cancels HTTP/3 connections and retries them over HTTP/2 when both controls are active, allowing organizations to disable QUIC in browsers as an operational substitute for investing in UDP-layer inspection capability.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E16"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S16",
+     "quote": "To inspect HTTP/3 traffic, you must also turn on the Gateway proxy for UDP.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which production deployments have rolled back HTTP/3 or restricted it to specific traffic patterns, and what performance or operational problems forced them to do so?",
+    "capability": "You can restrict HTTP/3 in your client fleet to preserve inspection coverage when building UDP-aware inspection infrastructure is not feasible."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 17,
+  "lineages": 17,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 11,
+  "claims_with_verified_span": 11,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 19,
+  "quotes_rejected": 3,
+  "ledger_capped": 4,
+  "quotes_reattributed": 0,
+  "claims_persisted": 11,
+  "persisted_with_verified_span": 11,
+  "persisted_verified_span_rate": 1.0
+ }
+}

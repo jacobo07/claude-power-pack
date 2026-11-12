@@ -1,0 +1,359 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-12_002842_what-did-the-chinchilla-paper-hoffmann-et-al-2022-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://theorempath.com/compare/kaplan-vs-chinchilla-scaling",
+   "aliases": [],
+   "sha256": "c57b7ad625a185f92e1da27a386fc6ccd01c5b65ef958d58126651ac1c3e9f4f",
+   "chars": 4318,
+   "snapshot": "c57b7ad625a185f92e1da27a386fc6ccd01c5b65ef958d58126651ac1c3e9f4f.txt",
+   "retrieved_at": "2026-11-11T23:29:42+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://arxiv.org/html/2404.10102v1",
+   "aliases": [],
+   "sha256": "cb26b5c70a3b385cea57802f4cfd52f162be07c252f4aefa989f3ed20bad5c7f",
+   "chars": 25000,
+   "snapshot": "cb26b5c70a3b385cea57802f4cfd52f162be07c252f4aefa989f3ed20bad5c7f.txt",
+   "retrieved_at": "2026-11-11T23:29:43+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://arxiv.org/abs/2509.23963",
+   "aliases": [],
+   "sha256": "3d96c1ed8023da77a7e390d61e0d8a9effbeaf0bcaaea0e39f82c176ef7a5887",
+   "chars": 3599,
+   "snapshot": "3d96c1ed8023da77a7e390d61e0d8a9effbeaf0bcaaea0e39f82c176ef7a5887.txt",
+   "retrieved_at": "2026-11-11T23:29:43+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://vinayakajyothi.com/blog/2026-01-15-scaling-laws-revisited-chinchilla/",
+   "aliases": [],
+   "sha256": "9ce344fc1baeabac2c63c94e721a0bfc463dde7da9f161d61036d66212f0636a",
+   "chars": 8631,
+   "snapshot": "9ce344fc1baeabac2c63c94e721a0bfc463dde7da9f161d61036d66212f0636a.txt",
+   "retrieved_at": "2026-11-11T23:29:43+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://www.aiblogly.com/articles/scaling-laws-kaplan-chinchilla-explained",
+   "aliases": [],
+   "sha256": "6d62390edc857215635ad4965e903e5860738e87bcbfa04e3e78a1e77465a7ce",
+   "chars": 8223,
+   "snapshot": "6d62390edc857215635ad4965e903e5860738e87bcbfa04e3e78a1e77465a7ce.txt",
+   "retrieved_at": "2026-11-11T23:29:43+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://arxiv.org/abs/2505.17646",
+   "aliases": [],
+   "sha256": "39be4bb6be647851c15b9b552ed700be784cf8244c867e1f1172b224baf0a4ed",
+   "chars": 3571,
+   "snapshot": "39be4bb6be647851c15b9b552ed700be784cf8244c867e1f1172b224baf0a4ed.txt",
+   "retrieved_at": "2026-11-11T23:37:28+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://arxiv.org/html/2505.17646v1",
+   "aliases": [],
+   "sha256": "cab4202465a1a9df1038379e5d03104c926bbf7f3b1cbbb0c41457668dd53871",
+   "chars": 25000,
+   "snapshot": "cab4202465a1a9df1038379e5d03104c926bbf7f3b1cbbb0c41457668dd53871.txt",
+   "retrieved_at": "2026-11-11T23:37:28+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://liuyz0.github.io/blog/2026/NSLT/",
+   "aliases": [],
+   "sha256": "c539ac7d220559b4a6954851fa1fd9dd952d1d8173321de443c775b912f4c336",
+   "chars": 25000,
+   "snapshot": "c539ac7d220559b4a6954851fa1fd9dd952d1d8173321de443c775b912f4c336.txt",
+   "retrieved_at": "2026-11-11T23:37:28+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://github.com/huanranchen/LLMLandscape",
+   "aliases": [],
+   "sha256": "f450f0d8b2cefddcd85c3f233bd9db3fe6e648f64d102a012b4026df1fd65670",
+   "chars": 4681,
+   "snapshot": "f450f0d8b2cefddcd85c3f233bd9db3fe6e648f64d102a012b4026df1fd65670.txt",
+   "retrieved_at": "2026-11-11T23:37:28+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://mbrenndoerfer.com/writing/chinchilla-scaling-laws-compute-optimal-llm-training",
+   "aliases": [],
+   "sha256": "74518e5f3d08f07338bd803e834b1fef607730dd23e7b55c5832f2fab12f3254",
+   "chars": 25000,
+   "snapshot": "74518e5f3d08f07338bd803e834b1fef607730dd23e7b55c5832f2fab12f3254.txt",
+   "retrieved_at": "2026-11-11T23:37:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://arxiv.org/html/2203.15556v1",
+   "aliases": [],
+   "sha256": "57251031b80b7ceea3b29a0818b2994b69aa033f4f50a9368c5f52641922b2bc",
+   "chars": 25000,
+   "snapshot": "57251031b80b7ceea3b29a0818b2994b69aa033f4f50a9368c5f52641922b2bc.txt",
+   "retrieved_at": "2026-11-11T23:42:46+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://arxiv.org/abs/2203.15556",
+   "aliases": [],
+   "sha256": "3e4d7a0b4389ca1304fded43cbfed7390fc94fb8fe3d95ba38e79f63e4afd6ee",
+   "chars": 3342,
+   "snapshot": "3e4d7a0b4389ca1304fded43cbfed7390fc94fb8fe3d95ba38e79f63e4afd6ee.txt",
+   "retrieved_at": "2026-11-11T23:42:46+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://michaelc-yu.github.io/blog/2026/compute-optimal-llms/",
+   "aliases": [],
+   "sha256": "0ef92a13d29f39be5ad6d0774458d10afa08fb85ad05f3ec547c588959c41eac",
+   "chars": 5251,
+   "snapshot": "0ef92a13d29f39be5ad6d0774458d10afa08fb85ad05f3ec547c588959c41eac.txt",
+   "retrieved_at": "2026-11-11T23:42:49+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://spawn08.github.io/llmbase/06_research_papers/11_chinchilla/",
+   "aliases": [],
+   "sha256": "b38411acfd5ad5826136f6524f90e84c183c9caf4417361231946f59c23af59c",
+   "chars": 11155,
+   "snapshot": "b38411acfd5ad5826136f6524f90e84c183c9caf4417361231946f59c23af59c.txt",
+   "retrieved_at": "2026-11-11T23:42:49+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 2873,
+   "end": 2968,
+   "text": "Llama 3 (2024): 8B model trained on 15T tokens (massively over-trained by Chinchilla standards)",
+   "sha256": "a42d479bb5dbc8e98a8e3805d42239f52d8855c568d485d1808dd53d7f06cce0"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S4",
+   "start": 2413,
+   "end": 2548,
+   "text": "Llama 3 70B was trained on over 15 trillion tokens — roughly 200 tokens per parameter, versus Chinchilla's recommendation of around 20.",
+   "sha256": "36c9f65ce9c774456231fddac0b254a4c70277d91a30c40868087d2e392682ce"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S2",
+   "start": 14987,
+   "end": 15203,
+   "text": "By contrast, our fitted model implies an optimal ratio of around 20 tokens per parameter, which is consistent with both how the Chinchilla model was trained and the findings from Approaches 1 and 2 in Hoffmann et al.",
+   "sha256": "d7f1000a8c2df8be0ef89b990066fd8cb7d044c73e12e4372a6b76d5420409fa"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S3",
+   "start": 980,
+   "end": 1181,
+   "text": "We find that, perhaps surprisingly, which model parameters are used for the analyses do not meaningfully affect key results: the scaling law estimates and the compute-optimal tokens-to-parameter ratio.",
+   "sha256": "f23e45515b16f1f18794624d12d09f7cea449a60812ebbd0bbf7312e6dc91a87"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S4",
+   "start": 3360,
+   "end": 3582,
+   "text": "Estimates vary, but credible analyses suggest that the total stock of high-quality English text suitable for pretraining — filtered web crawls, books, scientific papers, code — may be in the range of 10-20 trillion tokens.",
+   "sha256": "50b0bacaeca32c7c744335e7234fe7f15823f7009c352758e21ab5600849bddb"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S4",
+   "start": 3991,
+   "end": 4140,
+   "text": "DeepSeek's R1 paper demonstrated that models trained heavily on synthetic chain-of-thought data can develop remarkably strong reasoning capabilities.",
+   "sha256": "1c6f703b31a8cd11a2c4ee30290bdbeac7bb39a406a524681ba0b8e3b4b2bc05"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S8",
+   "start": 18423,
+   "end": 18664,
+   "text": "as long as we can estimate the gradients at each step well, which requires high data quality, high diversity, and a large batch size, the loss can continue to improve by scaling up the number of steps, not necessarily the amount of new data.",
+   "sha256": "d93d71f9621681a2da630562dc3e77bec28af7046dafcda0ba4780c5ea070a29"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Meta's Llama 3 8B model trained on 15 trillion tokens (roughly 200 tokens per parameter) competes seriously with models two to three times its size, whereas Chinchilla recommends approximately 20 tokens per parameter. This demonstrates that overtraining smaller models—accepting higher training compute to reduce per-query serving costs—is now standard practice in production deployments where serving cost dominates training cost.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S1",
+    "S4"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What differences in measured compute budgets and experimental conditions characterize the studies that validated Chinchilla's ratio versus those that later challenged or refined it?",
+    "capability": "You can reduce inference costs per query by overtraining smaller models rather than adhering to Chinchilla's training-optimal ratio."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "Hoffmann et al.'s reported confidence intervals for key parameters are implausibly tight—obtaining them would require 600,000+ experiments when only ~400-500 were conducted—yet independent reanalysis confirms the core 20 tokens-per-parameter recommendation remains consistent across their three different estimation approaches and withstands 15.2% perturbations in model parameters without materially affecting key results.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S2",
+    "S3"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What differences in measured compute budgets and experimental conditions characterize the studies that validated Chinchilla's ratio versus those that later challenged or refined it?",
+    "capability": "You can rely on Chinchilla's 20 tokens-per-parameter guidance even though statistical audits found issues with its derivation."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "High-quality English pretraining text—filtered web crawls, books, scientific papers, code—is estimated at 10-20 trillion tokens total. Frontier models are already consuming multiple trillions with increasing repetition and filtering relaxation. DeepSeek's R1 paper demonstrated that models trained heavily on synthetic chain-of-thought data develop remarkably strong reasoning capabilities, making synthetic data a practical alternative when natural sources deplete.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What differences in measured compute budgets and experimental conditions characterize the studies that validated Chinchilla's ratio versus those that later challenged or refined it?",
+    "capability": "You should plan synthetic data production infrastructure as a scaling lever when approaching natural pretraining text exhaustion."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Scaling law analysis demonstrates that loss improvements depend on training step density and data quality rather than gross token quantity. When data quality and diversity are sufficient with large batch sizes, models achieve substantial performance gains through extended training beyond the Chinchilla-optimal 20-token-per-parameter ratio without requiring model size increases. This means training models 10-20x longer can be computationally efficient if the underlying training signal quality remains high.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What specific changes in parameter utilization, loss landscape properties, or learned representations occur when a model is trained on 10-20x more tokens than Chinchilla-optimal, such that inference performance matches substantially larger models?",
+    "capability": "You can treat extended training allocations as efficient rather than wasteful when data quality is high, rather than treating Chinchilla's 20:1 ratio as a hard limit on training duration."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 14,
+  "lineages": 14,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 0,
+  "claims": 4,
+  "claims_with_verified_span": 4,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 7,
+  "quotes_rejected": 0,
+  "ledger_capped": 0,
+  "quotes_reattributed": 0,
+  "claims_persisted": 4,
+  "persisted_with_verified_span": 4,
+  "persisted_verified_span_rate": 1.0
+ }
+}
