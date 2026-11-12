@@ -93,8 +93,11 @@ function decide(event) {
       `${head} This pane continues in a FRESH session, and that rollover (/kclear -> /clear -> ` +
       '/kresume focus on the next step) can only start when this turn ENDS. Do exactly this: ' +
       '(1) finish ONLY the atomic step in progress and make it durable (commit / save) -- start ' +
-      'nothing new, dispatch no new agents; (2) END this turn with a short status and the next ' +
-      'exact action. Do NOT run /compact or /clear yourself: the Stop that follows handles it.',
+      'nothing new, dispatch no new agents; (2) run /kclear YOURSELF now (Skill tool, skill ' +
+      '"kclear") so the handoff capsule exists even if the Stop-side autotype is refused -- never ' +
+      'hand the rollover back to the Owner; (3) END this turn with a short status, the [capsule] ' +
+      'line and the next exact action. Do NOT run /compact or /clear yourself: the Stop types ' +
+      '/clear -> /kresume.',
   };
 }
 
