@@ -1072,9 +1072,15 @@ async function main() {
   note('DONE elapsed_ms=' + elapsedMs
        + ' additional_context=' + (additionalContext ? 'yes' : 'no'));
 
-  // Emit stdout JSON. Either continuation hint or bare-continue.
+  // Emit stdout JSON. The harness reads SessionStart context ONLY from
+  // hookSpecificOutput.additionalContext; a top-level additionalContext is dropped.
+  // settings.json runs this hub directly (not through the dispatcher, which used to
+  // translate it), so the rollover card never reached the model and a /clear successor
+  // was never told to run /kresume (2026-11-12, a29603cc -> c796cb1c). One field only:
+  // the dispatcher reads both shapes and would push the card twice.
   const payload = additionalContext
-    ? { continue: true, additionalContext: additionalContext }
+    ? { continue: true,
+        hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: additionalContext } }
     : { continue: true };
   try {
     process.stdout.write(JSON.stringify(payload));
