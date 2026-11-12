@@ -161,6 +161,38 @@ def revert(family: str, entry_id: str, reason: str, authority: str,
                                       "authority": authority}}})
 
 
+def evidence_problems(ev) -> list:
+    """Why `ev` cannot back a promotion (empty = it can). EVO 2026-11-12 (Owner "y", ascension EVO-PLAN E6): a mechanism
+    enters a baseline only when it (1) improved a REAL execution (a measured before != after, named run), (2) survived
+    negative controls that really fail (each planted mutant / control rc != 0, at least one), and (3) was REUSED by a
+    later, different run. A field-complete entry without these is a claim, not a baseline."""
+    if not isinstance(ev, dict):
+        return ["evidence must be an object with improvement, negative_controls, reuse"]
+    out = []
+    imp = ev.get("improvement") or {}
+    if not (isinstance(imp, dict) and str(imp.get("run") or "").strip() and str(imp.get("measure") or "").strip()
+            and imp.get("before") is not None and imp.get("after") is not None and imp.get("before") != imp.get("after")):
+        out.append("improvement needs run, measure and a before != after measured on a real execution")
+    neg = ev.get("negative_controls")
+    if not (isinstance(neg, list) and neg and all(isinstance(c, dict) and str(c.get("name") or "").strip()
+                                                  and type(c.get("rc")) is int and c["rc"] != 0 for c in neg)):
+        out.append("negative_controls needs at least one named control whose rc is a non-zero int (it really failed)")
+    reuse = ev.get("reuse") or {}
+    if not (isinstance(reuse, dict) and str(reuse.get("run") or "").strip() and str(reuse.get("pointer") or "").strip()
+            and str(reuse.get("run")).strip() != str(imp.get("run") or "").strip()):
+        out.append("reuse needs a later run (different from the improving run) and a pointer to where it used the mechanism")
+    return out
+
+
+def promote_with_evidence(family: str, new_entries: list, reason: str, authority: str, evidence: dict,
+                          root: str | None = None) -> str:
+    """promote(), refused unless `evidence` passes evidence_problems(); the evidence is written into each entry."""
+    bad = evidence_problems(evidence)
+    if bad:
+        raise RatchetRefusal("promotion refused: " + "; ".join(bad))
+    return promote(family, [dict(e, evidence=evidence) for e in new_entries], reason, authority, root)
+
+
 def promote(family: str, new_entries: list, reason: str, authority: str,
             root: str | None = None) -> str:
     """Write B<n+1> = current entries + `new_entries` (status default `auto`)."""
