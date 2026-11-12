@@ -5,6 +5,25 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**NEWEST — 2026-11-12 ~18:20 UTC (pane c26eafbf). Owner "go ahead con los 3". OWNER RULE: ONE COORDINATOR FOR KSR.**
+- **Who may arm KSR:** only the autopilot lane arms KSR generations from now on. Pane c84eb8e1, and any other pane: do not arm side generations on KSR the way S34KC was armed. S34KC moved the `ksr_lane.py` pins after S35K, and that alone made the S35K judge INCONCLUSIVE at 15:01Z (`test_s28k_freeze` and `test_s30k_scan` reported PINS_MOVED). A KSR need goes to the Owner, who routes it through the lane. The same rule was added to the GEX44 `brief.md`; the backup is `bak-20261112T181934Z`.
+- **(1) Gate change, t1 `3711283b`:**
+  - `tools/test_s30k_cert.py` now admits an extra `*receipts*.jsonl` only if the new file `evidence/ascension/receipt_registry.json` lists it with its exact sha256.
+  - Registered so far: S35K qf (31) and S34KC cert (16).
+  - Pinned files must stay, and `HIST_SHA_DRIFT` is unchanged.
+  - 3 new mutants each turn the gate red, and 1 positive case is admitted.
+  - Control at HEAD: the old gate gives HIST_SET_CHANGED, the new one gives PASS.
+- **Re-judge setup:**
+  - Worktree `/home/kobii/agora/rejudge-s35k`, branch `rejudge/s35k-c26e`: commit 2e0e2a55 plus a cherry-pick of the gate change as 8437d040. All 23 of S35K's regression gates are green there.
+  - DEFECT fixed: the lane `lever` was `oracle_coverage_a2` and is now `q_fallback_cert`, which is what S35K actually ran.
+  - The re-judge driver is `/home/kobii/agora/rejudge-s35k-run/driver.py` (log `run.log`), run under `cron.lock`. It is the unchanged `lane_tick`, with two changes: the judge works in the worktree, and the planner gets the SWEEP directive.
+- **(2) Next KSR generation is a SWEEP:**
+  - Population: every uncertified main function.
+  - Routes: only those that have already certified something (q_fallback, fwidth, typelift, nocompile/cnm), each with its existing tool and certify.decide unchanged.
+  - Deliverable: the funnel per route, plus the ids that no route reaches.
+- **Daily cap:** `DAY_CAP` is now 90M, both live and on the laptop (`460f3214`).
+- **Pre-existing reds:** `V-AP-PACKET-FACTS-ARE-NOT-PHASES` and `V-AP-ARM-SEQUENCE` are red at 80M too (2 of 2 runs). The arm path may be affected by the mission-tool change in 24f0489b; not investigated yet.
+
 **CURRENT — 2026-11-12 ~09:45 UTC (session c84eb8e1, /kresume of ddf4990e, RESUME_CERTIFIED): lever reworded + KSR lane reset.**
 - levers.json: oracle_coverage_a2 `what` now says "certify through the UNCHANGED certify.decide of profile ksr-v5r-s25stage ... If that profile cannot read the extended oracle unchanged, stop and report INSTRUMENT_FAIL: a profile change is an Owner act." The same conditional sentence was also removed from compiler_swap_selected. policy_check over all 9 lever texts: 0 profile violations; control (the old sentence alone) gives 7.
 - GEX44 live levers.json was content-identical to laptop HEAD (canonical JSON sha 1064b650) before the copy. Deployed under cron.lock, backup `levers.json.bak-c84eb8e1-20261112T094057Z`, live sha 1a9efeba = laptop.
