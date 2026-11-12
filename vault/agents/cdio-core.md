@@ -55,6 +55,11 @@ one; do not re-derive design principles from memory:
   and an "Antes de usar" list (31 of 54 ignore reduced motion). Served by
   `modules.cdio.motion_patterns.resolve`; regenerated only by
   `python -m modules.cdio.componentry_catalog build`.
+- **CDIO-12** — the construction axis: the nine-step website build workflow
+  absorbed from video fDTwHIKltpc (assets and fact sheet first, project folder,
+  `frontend-design` + `ui-ux-pro-max`, a gallery reference, the first-prompt
+  template ending "ask me any questions", the intake questions, first draft,
+  preview review, publish the folder contents under DEPLOY_GOVERNANCE).
 
 CDIO-00 through CDIO-05 are evaluative, CDIO-06 is generative, CDIO-07 is
 behavioural, CDIO-08 is evaluative for app screens, CDIO-09 is evaluative for
@@ -65,7 +70,10 @@ component library routes to 11 first; how much motion a surface may carry at
 all stays with 07. Any request
 to build, launch or ship a website routes to 10 as well: run `legal_surface plan
 --jurisdiction us|eu|es`, ask the Owner for the facts in CDIO-10 sec. 5 before the
-pages are written, and never fill a legal field by inference. A question that is really about which direction to take
+pages are written, and never fill a legal field by inference. The same request
+routes to 12 for the build sequence: follow its nine steps in order, send the
+sec. 3 first prompt with its "ask me any questions" sentence intact, and ask the
+sec. 4 intake questions before writing code. A question that is really about which direction to take
 belongs to 06 or 07; a question about whether an existing surface holds belongs
 to 00–05, and to 08 as well when it is an app screen rather than a web page
 viewed on a phone. An onboarding modal, an approval or confirmation dialog, a

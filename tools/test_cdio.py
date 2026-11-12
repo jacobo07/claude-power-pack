@@ -42,11 +42,12 @@ AGENTS = os.path.join(ROOT, "vault", "agents")
 # is tools/test_cdio_focus.py) + CDIO-10 (the legal surface: General-Legal
 # templates, absorbed 2026-10-08; its own gate is tools/test_cdio_legal.py) + CDIO-11
 # (the componentry catalogue, absorbed 2026-10-13; its own gate is
-# tools/test_cdio_componentry.py). An EQUALITY
+# tools/test_cdio_componentry.py) + CDIO-12 (the website build workflow, absorbed
+# 2026-11-12 from video fDTwHIKltpc; its own gate is tools/test_cdio_build.py). An EQUALITY
 # gate on purpose: a dataset silently vanishing must fail just as loudly as an
 # unregistered one appearing. Raise this only alongside a real sealed dataset --
 # never to make a red suite go green.
-EXPECTED_DATASETS = 12
+EXPECTED_DATASETS = 13
 
 # Fragment-assembled so the literals never appear verbatim in this file.
 _SLOP = ["TO" + "DO", "FIX" + "ME", "HA" + "CK", "PLACE" + "HOLDER", "XX" + "X",

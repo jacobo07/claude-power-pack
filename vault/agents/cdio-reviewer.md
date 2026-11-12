@@ -36,6 +36,10 @@ yourself picking a number, stop — you record verdicts, the code scores them.
    equivalence is critical). The entry's signals describe the vendored file, not
    the rendered surface: judge the copy in the product, and mark behaviour not
    assessed unless you drove it. `cmp-contract-cleared` goes with Lens 7.
+   For a website built through the CDIO-12 workflow, also apply its sec. 5
+   criteria (fact-sheet provenance, first viewport, CTA target, real contact
+   data, still equivalent for motion, publish root); `claims-have-source` and
+   `motion-has-still-equivalent` are critical.
 4. **Trust signals** — present, specific, honest, well-placed; no trust leaks?
    For any public website or web app, also apply CDIO-10 §3 (legal surface): run
    `python -m modules.cdio.legal_surface check <site_root> --jurisdiction us|eu|es`
