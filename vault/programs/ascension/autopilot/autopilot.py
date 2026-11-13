@@ -624,6 +624,59 @@ def envelope_admits(lane: dict, rows: list[dict], caps: int) -> str | None:
     return f"{lane['name']} envelope {cap:,} ({env.get('note', '')}): {used:,} booked since it opened + {caps:,} > {cap:,}"
 
 
+# Owner 2026-11-13 ("sí", pane c84eb8e1): S37K sat 2 h 50 min on a cost hold inside the 300M KSR envelope while it was
+# certifying. A cost hold is topped up by the autopilot only inside an Owner envelope that names its Owner turn, only
+# while the generation keeps registering certificates, at most MAX_TOPUPS per generation; otherwise the Owner hears once.
+TOPUP = 6_000_000
+MAX_TOPUPS = 2
+PROGRESS_FILE = "evidence/ascension/receipt_registry.json"  # every new receipts file gets an entry (brief, one coordinator)
+
+
+def certified_since(product: str, base) -> bool:
+    """True when the receipt registry changed in base..HEAD (a new certificate file was registered this generation)."""
+    return bool(base) and _git(product, "diff", "--quiet", str(base), "HEAD", "--", PROGRESS_FILE)[0] == 1
+
+
+def cost_topup(st: dict, lane: dict, ls: dict, mid: str, rec: dict, hold: dict, dry: bool) -> None:
+    key = f"{mid}:{hold.get('set_at')}"
+    if ls.get("topup_for") == key:
+        return
+    env, n, ln = lane.get("envelope") or {}, int(ls.get("topups") or 0), lane["name"]
+    rows = ledger_rows()
+    if not env.get("owner_turn"):
+        why = "the lane has no Owner envelope naming its Owner turn"
+    elif n >= MAX_TOPUPS:
+        why = f"{n} top-ups already in this generation (max {MAX_TOPUPS})"
+    elif not certified_since(lane["product"], ls.get("base")):
+        why = f"no certificate registered since the generation began ({PROGRESS_FILE} unchanged)"
+    else:
+        why = envelope_admits(lane, rows, TOPUP)
+        if not why:
+            why = budget_admits(rows, _now(), TOPUP)
+            if why and not why.startswith(PARK_REASONS):  # the day cap is a wait: decide again on a later tick
+                log(f"{ln}: cost hold on {mid}: top-up waits: {why}")
+                return
+    ls["topup_for"] = key
+    if why:
+        save_state(st)
+        owner_queue(ln, f"cost hold on {mid} not topped up: {why}. Hold: {str(hold.get('reason'))[:200]}")
+        return
+    auth = int(rec.get("authority_tokens") or 0) + TOPUP
+    rc, out = gm("authority", "--mission", mid, "--tokens", str(auth), "--owner-turn", env["owner_turn"], "--reason",
+                 f"Autopilot top-up {n + 1}/{MAX_TOPUPS}: +{TOPUP:,} inside the {ln} envelope ({env.get('note', '')}); "
+                 "certificates registered this generation", dry=dry)
+    if rc != 0:
+        save_state(st)
+        owner_queue(ln, f"top-up of {mid} refused by gsd_mission: {out[-300:]}")
+        return
+    ledger_add(lane=ln, kind="auto_topup", gen=ls.get("gen"), mission=mid, tokens=TOPUP, authority=auth)
+    ls.update(topups=n + 1, authority=auth)
+    save_state(st)
+    rc, out = gm("release", "--mission", mid, dry=dry)
+    log(f"{ln}: cost hold on {mid}: authority -> {auth:,} (top-up {n + 1}/{MAX_TOPUPS}); release rc={rc}")
+    digest(ln, f"TOP-UP {mid}: +{TOPUP:,} -> {auth:,} inside the lane envelope (certificates registered this generation)")
+
+
 def _park(st: dict, ls: dict, lane: str, queue: str, dig: str | None = None, kind: str | None = None) -> None:
     ls["status"] = "PARKED"
     ls["park_kind"] = kind
@@ -671,6 +724,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         hold = rec.get("owner_hold") or {}
         if rec["state"] in TERMINAL:
             return _park(st, ls, lane["name"], f"mission {mid} ended {rec['state']} without a checkpoint hold; lane parked")
+        if hold.get("kind") == "cost" and ls.get("status") == "RUNNING":
+            return cost_topup(st, lane, ls, mid, rec, hold, dry)
         if hold.get("kind") != "checkpoint":
             return
         checkpoint = hold_checkpoint(hold)
@@ -830,7 +885,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     res = arm_generation(st, lane, ls, name, text, notes, phases, caps, dry)
     if res == "OK":
         st["next_gen"] += 1
-        ls.update(status="RUNNING", gen=name, arm_fails=0)
+        ls.update(status="RUNNING", gen=name, arm_fails=0, topups=0)
         if evo:
             ls["lever"] = ls.pop("next_lever", None) or ls.get("lever")
             if ls.get("mode") == "RESEARCH":

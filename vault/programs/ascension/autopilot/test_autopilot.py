@@ -320,6 +320,46 @@ def run_all(ap):
     ap.lane_tick(st, dict(lanes[0], envelope={"tokens": 1, "since": 0, "note": "t"}), False)
     check("V-AP-ENVELOPE-PARKS-BEFORE-ARM", st["lanes"]["L"]["status"] == "PARKED"
           and st["lanes"]["L"].get("park_kind") == "envelope" and not any(c[0] == "arm" for c in calls))
+    # Cost-hold top-up (Owner 2026-11-13 "sí"): inside an envelope naming its Owner turn, only while the generation
+    # registers certificates, at most MAX_TOPUPS per generation, once per hold; otherwise one Owner-queue line.
+    keep_sh2, keep_hold, keep_auth = ap.sh, dict(rec["owner_hold"]), rec.get("authority_tokens")
+    prog = {"rc": 1}
+    ap.sh = lambda cmd, **k: (prog["rc"], "") if "diff" in cmd else (0, sh_out["dirty"] if "status" in cmd else "")
+    envt = {"tokens": 300_000_000, "since": 0, "note": "t", "owner_turn": "s:2026-11-13T11:17"}
+
+    def cost_run(set_at, lane_env=envt, topups=0, rc=1):
+        st = fresh(set_at)
+        prog["rc"] = rc
+        rec["owner_hold"] = {"kind": "cost", "set_at": set_at, "reason": "cost breaker"}
+        rec["authority_tokens"] = 23_500_000
+        recp.write_text(json.dumps(rec))
+        st["lanes"] = {"L": {"status": "RUNNING", "gen": "S37K", "base": "b0", "topups": topups, "blank": 0,
+                             "arm_fails": 0, "mission": "m-aaaaaaaaaaaa"}}
+        ln = dict(lanes[0], envelope=lane_env) if lane_env else lanes[0]
+        ap.lane_tick(st, ln, False)
+        return st, ln
+    auth_calls = lambda: [c for c in calls if c[0] == "authority"]  # noqa: E731
+    q_text = lambda: (tmp / "home" / "owner_queue.md").read_text() if (tmp / "home" / "owner_queue.md").exists() else ""  # noqa: E731
+    st, ln = cost_run(70)
+    a = auth_calls()
+    check("V-AP-TOPUP-INSIDE-ENVELOPE", len(a) == 1 and a[0][a[0].index("--tokens") + 1] == "29500000"
+          and any(c[0] == "release" for c in calls) and st["lanes"]["L"]["topups"] == 1
+          and sum(r["tokens"] for r in ledger() if r["kind"] == "auto_topup") == 6_000_000)
+    calls.clear()
+    ap.lane_tick(st, ln, False)
+    check("V-AP-TOPUP-ONCE-PER-HOLD", not auth_calls())
+    cost_run(71, rc=0)
+    check("V-AP-TOPUP-NEEDS-CERTIFICATES", not auth_calls() and "no certificate registered" in q_text())
+    cost_run(72, topups=2)
+    check("V-AP-TOPUP-CAPPED-PER-GENERATION", not auth_calls() and "max 2" in q_text())
+    cost_run(73, lane_env=dict(envt, tokens=1))
+    check("V-AP-TOPUP-ENVELOPE-FULL", not auth_calls() and "envelope" in q_text())
+    cost_run(74, lane_env=None)
+    check("V-AP-TOPUP-NEEDS-OWNER-ENVELOPE", not auth_calls() and "no Owner envelope" in q_text())
+    ap.sh, rec["owner_hold"], rec["authority_tokens"] = keep_sh2, keep_hold, keep_auth
+    if keep_auth is None:
+        rec.pop("authority_tokens")
+    recp.write_text(json.dumps(rec))
     st = fresh(4)
     ap.judge = lambda *a: dict(full, new_canonical_certs=3, _tokens=None)
     ap.plan = lambda *a: {"title": "t", "facts": [], "phases": GOOD, "_tokens": None}
@@ -737,6 +777,9 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "drift_off": lambda m: setattr(m, "packet_phase_drift", lambda *a: None),
          "agree_unchecked": lambda m: setattr(m, "agree_supported", lambda v: True),
          "protected_off": lambda m: setattr(m, "protected_check", lambda lane: None),
+         "topup_ignores_certificates": lambda m: setattr(m, "certified_since", lambda p, b: True),
+         "topup_unbounded": lambda m: setattr(m, "MAX_TOPUPS", 99),
+         "topup_never": lambda m: setattr(m, "cost_topup", lambda *a, **k: None),
          "reserve_zero": lambda m: setattr(m, "CALL_RESERVE", 0),
          "prior_ignored": lambda m: setattr(m, "PRIOR_AUTHORITY", ()),
          "off_guard_removed": lambda m: setattr(m, "killed", lambda: False),
