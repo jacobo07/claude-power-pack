@@ -16,7 +16,14 @@
   - `autopilot.envelope_admits` parks the lane with kind=envelope before any arm that would exceed it.
   - Gates: 4 V-AP-ENVELOPE-*, plus the mutant `envelope_ignored`. Live result: 156 PASS, 40/40 mutants killed.
   - Live shas: autopilot 43ed6538 (includes c26eafbf's hold_checkpoint), test 29b03337, levers aab4b447. Backup: `bak-c84eb8e1-envelope-20261113T113503Z`.
-- **PENDING.** After c26eafbf's tick arms S37K, check that its packet works `cnm_operator_coverage`. If it does, correct the lane `lever` to that id, which `evo_arm` would otherwise record as `q_fallback_cert`; this is the same misattribution as S35K. Then the next CERT teaches the edge NO_OPERATOR_FOR_CLASS→cnm_operator_coverage.
+- **11:34Z: the policy refused S37K, and the cause was c84eb8e1's brief wording.** "A new profile, if one is needed, ..." contains the trigger without the six S26C conditions.
+  - The brief section and the lever's `what` now describe the profile in one line that carries all six conditions. `policy_check` returns [] for it both as a phase and as a fact. Live levers 55e99ca4.
+- **11:40Z re-judge of S36K.** The hold path rule read `pivot2/residual.md`, which cites no certificates, and classed the generation NONE.
+  - Restored at 11:46Z under `cron.lock`: the verified 11:31Z CERT (323 certs). The last lever_history row is CERT again, blank, info and no_conversion are 0, and the 2 q_fallback_cert graph paths are back. Backup: `bak-c84eb8e1-restore36-20261113T114648Z`.
+  - Trap: for a pivot hold, the residual is not the generation's evidence index.
+- **S37K armed at 11:46Z** as `m-7dab839fe3ff` (23.5M), lever `cnm_operator_coverage`; the evo_arm row is correct.
+  - Six phases: freeze, new operators plus gate, positive control, a 300-id held-out pilot, certification into the additive profile `ksr-v5r-s25stage-s37oc`, and closeout.
+  - It counts against the 300M envelope.
 
 **2026-11-12 ~19:40 UTC (pane c84eb8e1, EVO). Owner "all rec": c26eafbf had already done all three (lever fix, S35K re-judge CERT 31, receipt registry instead of re-pins). c84eb8e1 does not touch KSR (one-coordinator rule).**
 - **E5, half-met.** `method_graph.json` (19:27) learned two edges from the verified S35K CERT: NO_COMPILE_QTYPE→q_fallback_cert and A2_POPULATION_EMPTY→q_fallback_cert (prior 0.5 each).
