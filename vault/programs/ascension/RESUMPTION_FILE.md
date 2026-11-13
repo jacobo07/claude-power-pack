@@ -37,6 +37,12 @@
 
   Otherwise it writes one owner_queue line. Gates: 6 V-AP-TOPUP-* plus 3 mutants. Live result: 162 PASS, 43/43 mutants killed. Live autopilot 790f3080. Backup: `bak-c84eb8e1-topup-20261113T170647Z`.
 - **S37K judged AGREE, CERT, at 15:45Z.** The graph learned NO_OPERATOR_FOR_CLASS→cnm_operator_coverage, the correct attribution.
+- **21:35Z, Owner "reanuda KSR y Tennis" + "y".**
+  - KSR un-parked at 20:16Z. It judged S37K-final (AGREE NONE), armed S38K (24M, cnm), judged S38K-x1 at 21:15Z (AGREE CERT) and armed S39K `m-30611e51365b` (24.5M).
+  - TENNIS: new one-shot `owner_resume=research` (evolve; 3 gates + 1 mutant; live 165 PASS, 44/44). TENNIS levers `q_fallback_cert` and `cnm_operator_coverage` keep the same method ids as KSR, so the learned edges apply; tools are read-only from t1. The policy returns [] on both levers.
+  - TENNIS envelope 50M (owner turn c84eb8e1:2026-11-13T21:25:01.352Z). Brief section "Tennis route transfer".
+  - Offline, select picks `q_fallback_cert`, citing the edges NO_COMPILE_QTYPE and A2_POPULATION_EMPTY (prior 0.67). That will be the E5 pointer.
+  - TENNIS waits on the day cap (86.5M of 90M used today) until 00:00Z. Backup: `bak-c84eb8e1-tennis-20261113T213155Z`.
 - **S38K policy-refused at 15:47Z.** The S26C same-line rule fired again: the planner's profile line lacked the conditions. The refusal text does not name the line. KSR has been PARKED since then. This is the third refusal of its kind, after S35K and S37K.
 
 **2026-11-12 ~19:40 UTC (pane c84eb8e1, EVO). Owner "all rec": c26eafbf had already done all three (lever fix, S35K re-judge CERT 31, receipt registry instead of re-pins). c84eb8e1 does not touch KSR (one-coordinator rule).**
