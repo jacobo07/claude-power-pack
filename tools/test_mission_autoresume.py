@@ -129,6 +129,23 @@ def main() -> int:
     check("V-MAR-WALL", not successors(c["mission_id"]) and gm._ledger_has(c["mission_id"], "autoresume_refused")
           and len(notes) == n0 + 1, f"notes+{len(notes) - n0}")
 
+    # V-MAR-BLOCKED-ITER-RESUMES (2026-11-13, S30T): a worker that ended on a question at the cap is renewed; its
+    # successor re-asks through the Owner Escalation Gate, which parks an Owner-class question nonterminal.
+    e1 = halted("owner BLOCKED and budget: iterations 12 >= max 12")
+    run(halt_at(e1["mission_id"]) + 360)
+    check("V-MAR-BLOCKED-ITER-RESUMES", len(successors(e1["mission_id"])) == 1
+          and gm._ledger_has(e1["mission_id"], "autoresume_renewed"), f"successors={len(successors(e1['mission_id']))}")
+    # negatives: BLOCKED with the wall spent, and BLOCKED on anything but the iteration cap, stay Owner stops
+    # (review LOW 1: each negative pins the refusal CLASS, so deleting either classify branch reds its gate)
+    for gate, why, cls in (("V-MAR-BLOCKED-WALL", "owner BLOCKED and budget: older than 72.0 h", "wall clock is spent"),
+                           ("V-MAR-BLOCKED-NOT-ITER", "owner BLOCKED and budget: hand-off overdue", "waiting on a human")):
+        e2 = halted(why)
+        n0 = len(notes)
+        run(halt_at(e2["mission_id"]) + 360)
+        refused = [e for e in lr.ledger_events(e2["mission_id"]) if e.get("event") == "autoresume_refused"]
+        check(gate, not successors(e2["mission_id"]) and refused and cls in str(refused[-1].get("reason"))
+              and len(notes) == n0 + 1, f"notes+{len(notes) - n0} reason={str(refused[-1].get('reason'))[:60] if refused else None}")
+
     # V-MAR-OWNER-HOLD
     d = halted(hold={"reason": "Owner: CERRAR", "kind": "owner"})
     n0 = len(notes)

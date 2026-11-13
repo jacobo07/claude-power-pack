@@ -29,8 +29,15 @@ no successor yet (no mission with `renewed_from` = it). It decides once per halt
   Less than 15 min left = not resumed.
 - Ledger `autoresume_renewed` (successor id) on the halted mission. The ordinary launch path starts it on the next pass.
 
+Amendment 2026-11-13 (Owner, session 423c9c50, "deberia haber sido autonomo"; S30T m-2e14179c5b6a halted 19:48Z on
+`owner BLOCKED and budget: iterations 12 >= max 12` with ~10.5M of a 36M authority unspent and was refused): a worker
+BLOCKED **at the iteration cap** resumes like the other iteration-cap halts. The cap halted it before the Owner
+Escalation Gate (`blocked_recovery`) judged its question; the successor re-asks there, a resolvable question is
+answered by the runtime and an Owner-class one parks the mission nonterminal (`surface_blocked`) for the Owner.
+Gates: V-MAR-BLOCKED-ITER-RESUMES, V-MAR-BLOCKED-WALL (neg), V-MAR-BLOCKED-NOT-ITER (neg).
+
 **Never resumes** (Owner classes; these are notified instead): an Owner hold or close, Owner authority or wall
-exhausted ("older than N h"), a worker BLOCKED on a human, no_progress / stagnation, launches never acknowledged,
+exhausted ("older than N h"), a worker BLOCKED on a human for any reason but the iteration cap, no_progress / stagnation, launches never acknowledged,
 GSD not answering "work remains", the renewal cap reached, anything unrecognised.
 For each of these: ledger `autoresume_refused` (reason) once and `mission_remedies.notify_incident` with key
 `autoresume:<seq>` (delivered once, failed channel retried at most 3 times).

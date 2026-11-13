@@ -30,10 +30,13 @@ def classify(reason: str) -> str | None:
     r = reason or ""
     if r.startswith("owner:") or r.startswith("Owner"):
         return f"the Owner stopped it: {r[:200]}"
-    if "owner BLOCKED" in r:
-        return f"the worker was waiting on a human: {r[:200]}"
     if "older than" in r:
         return f"the wall clock is spent (Owner ceiling): {r[:200]}"
+    if "owner BLOCKED" in r and not _ITER_RE.search(r):
+        return f"the worker was waiting on a human: {r[:200]}"
+    # "owner BLOCKED and budget: iterations N >= max N" resumes (2026-11-13, S30T m-2e14179c5b6a): the cap halted the
+    # mission BEFORE the Owner Escalation Gate could judge the worker's question. The successor re-asks it there, and
+    # an Owner-class question parks it nonterminal (surface_blocked) instead of leaving it terminal.
     if _ITER_RE.search(r):
         return None
     return f"not a plane-mechanism stop: {r[:200]}"
