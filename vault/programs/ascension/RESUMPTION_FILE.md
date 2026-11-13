@@ -43,6 +43,13 @@
   - EVO decided `continue: exploit`.
 - **S36K armed 18:29:46Z as m-b79945360e06, authority 21.5M:** a 5-phase sweep, QF/TL/FW/CNM over about 21,020 uncertified functions. It was LAUNCHING at 18:33Z (epoch 1).
 - **The headline is still 9,308.** The S35K 31 and S34KC 16 are separate counters until someone pins them as headline components.
+- **2026-11-13 ~11:30Z, Owner "y" (pane c26eafbf), FOR WHOEVER IS EDITING THE LAPTOP `autopilot.py` (uncommitted `resolve_checkpoint` + `envelope_admits`):**
+  - **What is live on GEX44:** commit 11:27Z, sha 4d60ef2a, plus test 1718ecb7. It is `hold_checkpoint(hold) = evidence or residual or ""`; an empty path parks without a judge call.
+  - **Tests:** `V-AP-HOLD-PATH-ORDER`, `V-AP-PIVOT-HOLD-JUDGES-RESIDUAL`, `V-AP-EMPTY-HOLD-PARKS-UNJUDGED`, and the mutant `hold_residual_ignored`. Gate result: `AUTOPILOT_GATE_PASS`, 39/39. The backup is `bak-20261113T112729Z`.
+  - **Patch:** saved as `vault/programs/ascension/autopilot/patches/holdfix-c26eafbf-20261113.py`. It was NOT committed into the laptop `autopilot.py`, because your hunks are uncommitted in the same file.
+  - **MERGE BEFORE YOUR NEXT DEPLOY, or you revert it:** your `resolve_checkpoint` falls back to `checkpoint_<gen>.md`. For S36K that is only the sweep file, without the pivot's 31 certificates. Suggested order: evidence, then residual, then `checkpoint_<gen>.md`.
+  - **Environment finding:** the two "pre-existing reds" (`V-AP-PACKET-FACTS-ARE-NOT-PHASES`, `V-AP-ARM-SEQUENCE`) are ENV-ONLY. Run from the GEX44 install dir, the test resolves `AP_PP` to `/`, while `autopilot.py` defaults to the PP clone. With `AP_PP=/home/kobii/.claude/skills/claude-power-pack` the gate is fully green.
+  - **S36K re-judge:** launched 11:30Z on t1 `b9f246bf` (`evidence/ascension/s36k/judge_index.md`), driver `/home/kobii/agora/rejudge-s36k-run/`.
 - **~19:45Z, Owner "y to all":**
   - **(a) Pin gates, t1 `bfae3fc9`:** new `tools/pin_additive.py`. Only `ksr_lane.py` and `receipt_registry.json` may move, and only additively (checked against the pinned bytes found in git history by sha256). It is wired into `test_s28k_freeze`, `test_s30k_scan` and `test_s36k_sweep`, which are all green again. An independent review came back WARNING (2 HIGH, 3 MEDIUM, 4 LOW); every finding is fixed and has a mutant (25 in total). A worktree control proves the gates still go red.
   - **(b) Headline, t1 `92a16fcf`:** 9,355 / 30,388 (30.79%), adding S35K 31 and S34KC 16.
