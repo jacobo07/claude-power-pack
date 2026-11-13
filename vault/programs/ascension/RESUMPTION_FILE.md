@@ -29,6 +29,15 @@
   - Booked in the autopilot ledger as `owner_topup` 6M. Hold released at epoch 6.
   - The worker is ACTIVE again: spend went from 22.84M to 24.21M within 2 minutes.
   - Gap: the autopilot never acts on a cost hold, only on checkpoint holds. A generation that exhausts its authority waits for a person, even inside an envelope.
+- **17:07Z, gap closed (Owner "sí").** `autopilot.cost_topup` handles a cost hold on a RUNNING lane by raising authority +6M and releasing the hold, only when all of these hold:
+  - the lane envelope names its `owner_turn` (KSR does: c84eb8e1:...11:17:51.184Z);
+  - `receipt_registry.json` changed in base..HEAD;
+  - the top-up fits the envelope and the day and total caps (the day cap only makes it wait);
+  - at most 2 top-ups per generation, once per hold.
+
+  Otherwise it writes one owner_queue line. Gates: 6 V-AP-TOPUP-* plus 3 mutants. Live result: 162 PASS, 43/43 mutants killed. Live autopilot 790f3080. Backup: `bak-c84eb8e1-topup-20261113T170647Z`.
+- **S37K judged AGREE, CERT, at 15:45Z.** The graph learned NO_OPERATOR_FOR_CLASS→cnm_operator_coverage, the correct attribution.
+- **S38K policy-refused at 15:47Z.** The S26C same-line rule fired again: the planner's profile line lacked the conditions. The refusal text does not name the line. KSR has been PARKED since then. This is the third refusal of its kind, after S35K and S37K.
 
 **2026-11-12 ~19:40 UTC (pane c84eb8e1, EVO). Owner "all rec": c26eafbf had already done all three (lever fix, S35K re-judge CERT 31, receipt registry instead of re-pins). c84eb8e1 does not touch KSR (one-coordinator rule).**
 - **E5, half-met.** `method_graph.json` (19:27) learned two edges from the verified S35K CERT: NO_COMPILE_QTYPE→q_fallback_cert and A2_POPULATION_EMPTY→q_fallback_cert (prior 0.5 each).
