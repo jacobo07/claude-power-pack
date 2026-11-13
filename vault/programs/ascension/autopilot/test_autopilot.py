@@ -613,6 +613,16 @@ def run_all(ap):
                                                                      "H-X1 negative row (INSTRUMENT_FAIL)": 1}}, (REP,)),
                     ["NONE"], ["H-X1 control pool (n=12<22)"])
     check("V-EVO-REPAIR-LEGACY-KEYS-FOLD", ls.get("repair") == {"H-X1": 2})
+    # Owner-directed method transition (2026-11-13, TENNIS parked on H-T1a x2): with owner_resume=research the lane
+    # leaves the closed instrument for a lever of another family instead of parking on the repair cap; one-shot.
+    ls, q = evo_run(evo_fresh([LA, LB, LR], {"lever": "lev_a", "repair": {"ctl": 2}, "owner_resume": "research"},
+                              (RES,)), ["NONE"], ["ctl"])
+    check("V-EVO-OWNER-RESUME-RESEARCH", ls["status"] == "RUNNING" and ls.get("mode") == "RESEARCH"
+          and ls.get("lever") == "lev_b" and ls.get("repair") == {} and "owner_resume" not in ls)
+    ls, q = evo_run(evo_fresh([LA, LB, LR], {"lever": "lev_a", "repair": {"ctl": 2}}, (RES,)), ["NONE"], ["ctl"])
+    check("V-EVO-OWNER-RESUME-CONTROL-PARKS", ls["status"] == "PARKED" and "repair cap" in q)
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a", "owner_resume": "research"}, (RES,)), ["NONE"], ["ctl"])
+    check("V-EVO-OWNER-RESUME-SAME-FAMILY-PARKS", ls["status"] == "PARKED" and "Owner resume" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH", "info_streak": 1}), ["CERT"])
     check("V-EVO-CERT-RETURNS-TO-EXPLOIT", ls["status"] == "RUNNING" and ls.get("mode") == "EXPLOIT")
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,
@@ -807,6 +817,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_no_packet_check": _evo_mut(packet_problems=lambda *a, **k: []),
          "evo_research_never_stops": _evo_mut(RESEARCH_FAIL_STOP=99),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
+         "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
          "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),
          "evo_selection_evidence_blank": _evo_mut(selection_evidence=lambda lv, g: {"prior": 0.0, "edges": []} if lv else None),
          "evo_selection_evidence_claims_edge": _evo_mut(selection_evidence=lambda lv, g: (

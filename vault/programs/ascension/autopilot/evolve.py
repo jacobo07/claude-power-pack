@@ -41,6 +41,7 @@ RESEARCH_FAIL_STOP = 2       # consecutive research generations without verified
 RESEARCH_GEN_CAP = 10_000_000
 RESEARCH_LANE_CAP = 40_000_000
 RESEARCH_WORDS = ("rival", "positive control", "decision rule")
+OWNER_RESUME = "owner_resume"  # lane-state key the Owner sets to "research" for a one-shot method transition
 REPAIR_WORDS = ("positive control", "thresholds unchanged")
 RECON = os.environ.get("AP_RECON", "/home/kobii/missions/recon-general")
 
@@ -209,6 +210,19 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
         zero = [h for h in hist if h["lever"] == cur["id"] and h["cls"] == "NONE"]
         if len(zero) >= 2 and cur["id"] not in ls.setdefault("retired", []):
             ls["retired"].append(cur["id"])
+    # Owner-directed method transition, one-shot (Owner 2026-11-13 "y", pane c84eb8e1: TENNIS parked on H-T1a x2 with
+    # every lever retired). The Owner is the pivot authority: no pivot-streak rule and the closed instrument is not
+    # counted again; the lever of another family is still chosen by select (MethodGraph prior, preconditions).
+    if ls.pop(OWNER_RESUME, None) == "research":
+        ls["repair"] = {}
+        lever = select(levers, lane, ls, product, graph, family_not=family)
+        if lever is None:
+            return {"action": "park", "why": f"Owner resume: no open lever of another family than {family} with its "
+                                             "preconditions met"}
+        ls.update(mode="RESEARCH", blank=0, info_streak=0, no_conversion=0, research_fail=0)
+        return {"action": "research", "lever": lever, "why": f"Owner-directed method transition from {family}: "
+                                                             f"research with {lever['id']} ({lever.get('family')})",
+                "directive": directive(lever, "RESEARCH")}
     # one count per instrument per judgment; legacy free-text keys fold onto their identity (max, not sum: the old
     # code wrote one key per name, and two names of one instrument in one judgment were one failure)
     rep: dict = {}
