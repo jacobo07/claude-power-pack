@@ -24,6 +24,11 @@
 - **S37K armed at 11:46Z** as `m-7dab839fe3ff` (23.5M), lever `cnm_operator_coverage`; the evo_arm row is correct.
   - Six phases: freeze, new operators plus gate, positive control, a 300-id held-out pilot, certification into the additive profile `ksr-v5r-s25stage-s37oc`, and closeout.
   - It counts against the 300M envelope.
+- **15:40Z, S37K top-up.** S37K had been on a cost hold since 12:51Z after using its 23.5M authority. It has certified 57 so far: 17 under `-s37oc` and 40 under `-s37oc2`. An R3 wave also found 6 exacts in 57 held-out ids, not yet certified.
+  - Authority raised 23.5M → 29.5M (`gsd_mission authority`), inside the 300M envelope. The owner turn is c84eb8e1:2026-11-13T11:17:51.184Z (uuid 18d5525a), which needed a fresh copy of the transcript in GEX44 `laptop-coordinator-c84eb8e1/`.
+  - Booked in the autopilot ledger as `owner_topup` 6M. Hold released at epoch 6.
+  - The worker is ACTIVE again: spend went from 22.84M to 24.21M within 2 minutes.
+  - Gap: the autopilot never acts on a cost hold, only on checkpoint holds. A generation that exhausts its authority waits for a person, even inside an envelope.
 
 **2026-11-12 ~19:40 UTC (pane c84eb8e1, EVO). Owner "all rec": c26eafbf had already done all three (lever fix, S35K re-judge CERT 31, receipt registry instead of re-pins). c84eb8e1 does not touch KSR (one-coordinator rule).**
 - **E5, half-met.** `method_graph.json` (19:27) learned two edges from the verified S35K CERT: NO_COMPILE_QTYPE→q_fallback_cert and A2_POPULATION_EMPTY→q_fallback_cert (prior 0.5 each).
