@@ -609,6 +609,21 @@ def command_text(lane: dict, name: str, packet: Path, notes: str) -> str:
             "profile, by function identity) and validated capabilities.")
 
 
+def envelope_admits(lane: dict, rows: list[dict], caps: int) -> str | None:
+    """An Owner envelope on one lane (lanes.json "envelope": {"tokens", "since", "note"}): everything the ledger books
+    for this lane since `since` (judge, plan, reserves, overruns, refunds) plus the next generation's caps must fit.
+    None = admitted (or no envelope). Global day/total caps still apply on top (budget_admits)."""
+    env = lane.get("envelope")
+    if not env:
+        return None
+    since, cap = float(env["since"]), int(env["tokens"])
+    used = sum(int(r.get("tokens") or 0) for r in rows
+               if r.get("lane") == lane["name"] and float(r.get("ts") or 0) >= since)
+    if used + caps <= cap:
+        return None
+    return f"{lane['name']} envelope {cap:,} ({env.get('note', '')}): {used:,} booked since it opened + {caps:,} > {cap:,}"
+
+
 def _park(st: dict, ls: dict, lane: str, queue: str, dig: str | None = None, kind: str | None = None) -> None:
     ls["status"] = "PARKED"
     ls["park_kind"] = kind
@@ -616,6 +631,12 @@ def _park(st: dict, ls: dict, lane: str, queue: str, dig: str | None = None, kin
     if dig:
         digest(lane, dig)
     save_state(st)
+
+
+def hold_checkpoint(hold: dict) -> str:
+    """The path a checkpoint hold names: `evidence`, or `residual` for a pivot hold (gsd_mission leaves evidence null
+    there). Owner 2026-11-13 (pane c26eafbf): S36K's METHOD_PIVOT_REQUIRED hold was judged with an empty path."""
+    return hold.get("evidence") or hold.get("residual") or ""
 
 
 # ---------------------------------------------------------------- the per-lane transition
@@ -652,9 +673,13 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             return _park(st, ls, lane["name"], f"mission {mid} ended {rec['state']} without a checkpoint hold; lane parked")
         if hold.get("kind") != "checkpoint":
             return
-        checkpoint = hold.get("evidence") or ""
+        checkpoint = hold_checkpoint(hold)
         if ls.get("judged_for") == f"{mid}:{hold.get('set_at')}":
             return
+        if not checkpoint:  # a judge with no path can only say INCONCLUSIVE: park instead of paying for it
+            ls["judged_for"] = f"{mid}:{hold.get('set_at')}"
+            return _park(st, ls, lane["name"], f"checkpoint hold of {mid} names no evidence or residual path; "
+                                               "not judged")
         if evo and checkpoint:
             how, note = evolve.discover_checkpoint(product, checkpoint, dry)
             if how == "PARK":
@@ -786,6 +811,12 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         if ebad:
             return _park(st, ls, lane["name"], f"EVO policy refused {name}: {'; '.join(ebad)[:400]}",
                          f"EVO POLICY REFUSED {name}: {'; '.join(ebad)[:400]}", kind="evo")
+    ew = envelope_admits(lane, ledger_rows(), caps)
+    if ew:
+        ls["judged_for"] = None
+        ls.update(snap)  # judged again after the Owner's look: its class must not be counted twice
+        return _park(st, ls, lane["name"], f"lane envelope before arming {name}: {ew}",
+                     f"PARKED at the lane envelope before arming {name}: {ew}", kind="envelope")
     why = budget_admits(ledger_rows(), _now(), caps)
     if why:
         ls["judged_for"] = None

@@ -308,6 +308,18 @@ def run_all(ap):
     ap.judge = lambda *a: {"verdict": "AGREE", "new_canonical_certs": 3, "_tokens": 5}  # no gates, no protected_ok
     ap.lane_tick(st, lanes[0], False)
     check("V-AP-UNSUPPORTED-AGREE-PARKS", st["lanes"]["L"]["status"] == "PARKED" and not calls)
+    # Owner envelope on one lane (2026-11-13, 300M for KSR): what the ledger booked for the lane since it opened + the
+    # next caps must fit; other lanes and earlier rows do not count; no envelope = no limit; an exhausted one parks.
+    envl = dict(lanes[0], envelope={"tokens": 300_000_000, "since": 1000, "note": "t"})
+    erows = [{"lane": "L", "ts": 2000, "tokens": 280_000_000}, {"lane": "L", "ts": 500, "tokens": 90_000_000},
+             {"lane": "T", "ts": 2000, "tokens": 90_000_000}]
+    check("V-AP-ENVELOPE-ADMITS-INSIDE", ap.envelope_admits(envl, erows, 20_000_000) is None)
+    check("V-AP-ENVELOPE-REFUSES-OVER", ap.envelope_admits(envl, erows, 20_000_001) is not None)
+    check("V-AP-ENVELOPE-ABSENT-ADMITS", ap.envelope_admits(lanes[0], erows, 10**12) is None)
+    st = fresh(63)
+    ap.lane_tick(st, dict(lanes[0], envelope={"tokens": 1, "since": 0, "note": "t"}), False)
+    check("V-AP-ENVELOPE-PARKS-BEFORE-ARM", st["lanes"]["L"]["status"] == "PARKED"
+          and st["lanes"]["L"].get("park_kind") == "envelope" and not any(c[0] == "arm" for c in calls))
     st = fresh(4)
     ap.judge = lambda *a: dict(full, new_canonical_certs=3, _tokens=None)
     ap.plan = lambda *a: {"title": "t", "facts": [], "phases": GOOD, "_tokens": None}
@@ -588,6 +600,24 @@ def run_all(ap):
     rec["owner_hold"]["set_at"] = 7902; recp.write_text(json.dumps(rec))
     ap.lane_tick(st, lanes[0], False)
     check("V-EVO-OTHER-PARK-HOLDS", st["lanes"]["L"]["status"] == "PARKED")
+    # Owner 2026-11-13 (pane c26eafbf): a pivot hold names its path in `residual` (evidence null): judge that path,
+    # and never call the judge with an empty one
+    check("V-AP-HOLD-PATH-ORDER", ap.hold_checkpoint({"evidence": "/e", "residual": "/r"}) == "/e"
+          and ap.hold_checkpoint({"evidence": None, "residual": "/r"}) == "/r" and ap.hold_checkpoint({}) == "")
+    judged = []
+    st = evo_fresh([LA], {"lever": "lev_a"})  # evo_fresh resets ap.judge: install the recorder after it
+    ap.judge = lambda lane, ck, prod: judged.append(ck) or dict(full, _tokens=1)
+    rec["owner_hold"].update(set_at=7903, evidence=None, residual=str(tmp / "ck.md")); recp.write_text(json.dumps(rec))
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-PIVOT-HOLD-JUDGES-RESIDUAL", judged == [str(tmp / "ck.md")])
+    st = evo_fresh([LA], {"lever": "lev_a"})
+    ap.judge = lambda lane, ck, prod: judged.append(ck) or dict(full, _tokens=1)
+    judged.clear()
+    rec["owner_hold"].update(set_at=7904, evidence=None, residual=None); recp.write_text(json.dumps(rec))
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-EMPTY-HOLD-PARKS-UNJUDGED", not judged and st["lanes"]["L"]["status"] == "PARKED")
+    rec["owner_hold"].update(evidence=str(tmp / "ck.md")); rec["owner_hold"].pop("residual", None)
+    recp.write_text(json.dumps(rec))
     ap.classify_progress = orig_cls
     # checkpoint discovery across worktree branches: fast-forward only, from a clean tree, exactly one holder
     pr = mkrepo("evo_prod")
@@ -702,6 +732,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "profile_off": lambda m: setattr(m, "PROFILE_CONDITIONS", {}),
          "negation_off": lambda m: setattr(m, "NEGATION", __import__("re").compile(r"(?!x)x")),
          "trigger_negation_off": lambda m: setattr(m, "TRIGGER_NEGATED", __import__("re").compile(r"(?!x)x")),
+         "hold_residual_ignored": lambda m: setattr(m, "hold_checkpoint", lambda h: h.get("evidence") or ""),
          "trigger_negation_all": lambda m: setattr(m, "TRIGGER_NEGATED", __import__("re").compile(r"")),
          "drift_off": lambda m: setattr(m, "packet_phase_drift", lambda *a: None),
          "agree_unchecked": lambda m: setattr(m, "agree_supported", lambda v: True),
@@ -712,6 +743,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "dry_writes_real": lambda m: setattr(m, "tempfile", _SameDir),
          "tranche_not_released": lambda m: setattr(m, "UNLOCKED_CAP", 285_261_779),
          "total_not_raised": lambda m: setattr(m, "TOTAL_CAP", 400_000_000),
+         "envelope_ignored": lambda m: setattr(m, "envelope_admits", lambda *a: None),
          "info_park_off": lambda m: setattr(m, "INFO_PARK", 99),
          "no_conversion_park_off": lambda m: setattr(m, "NO_CONVERSION_PARK", 99),
          "data_allowlist_off": lambda m: setattr(m, "DATA", __import__("re").compile(r".")),

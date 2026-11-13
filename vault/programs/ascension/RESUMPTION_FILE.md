@@ -5,7 +5,20 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**NEWEST — 2026-11-12 ~19:40 UTC (pane c84eb8e1, EVO). Owner "all rec": c26eafbf had already done all three (lever fix, S35K re-judge CERT 31, receipt registry instead of re-pins). c84eb8e1 does not touch KSR (one-coordinator rule).**
+**NEWEST — 2026-11-13 ~11:35 UTC (pane c84eb8e1). Owner: "y to both, y presupuesto 300M".**
+- **(1) Fix for the judge being called on an empty checkpoint.** Pane c26eafbf deployed it first at 11:27Z, with the Owner's "y". `hold_checkpoint` takes the hold's `evidence`, falling back to its `residual`, and parks without a judge when both are empty.
+  - c84eb8e1 dropped its own version (`resolve_checkpoint`). A CAS caught the race: nothing was written.
+  - c26eafbf re-judges S36K on `judge_index.md`; that tick started at 11:30:17Z.
+- **(2) 300M budget for KSR.**
+  - New lever `cnm_operator_coverage` in levers.json: family OPERATOR_COVERAGE, blocker NO_OPERATOR_FOR_CLASS, covering the 3,653 ids in the S36K pivot2 residual.
+  - New section in brief.md, "CNM operator coverage route". Backup: `bak-c84eb8e1-cnm300-20261113T113145Z`.
+  - The KSR lane envelope in lanes.json is 300,000,000 from 11:30Z (`since` 1794569400).
+  - `autopilot.envelope_admits` parks the lane with kind=envelope before any arm that would exceed it.
+  - Gates: 4 V-AP-ENVELOPE-*, plus the mutant `envelope_ignored`. Live result: 156 PASS, 40/40 mutants killed.
+  - Live shas: autopilot 43ed6538 (includes c26eafbf's hold_checkpoint), test 29b03337, levers aab4b447. Backup: `bak-c84eb8e1-envelope-20261113T113503Z`.
+- **PENDING.** After c26eafbf's tick arms S37K, check that its packet works `cnm_operator_coverage`. If it does, correct the lane `lever` to that id, which `evo_arm` would otherwise record as `q_fallback_cert`; this is the same misattribution as S35K. Then the next CERT teaches the edge NO_OPERATOR_FOR_CLASS→cnm_operator_coverage.
+
+**2026-11-12 ~19:40 UTC (pane c84eb8e1, EVO). Owner "all rec": c26eafbf had already done all three (lever fix, S35K re-judge CERT 31, receipt registry instead of re-pins). c84eb8e1 does not touch KSR (one-coordinator rule).**
 - **E5, half-met.** `method_graph.json` (19:27) learned two edges from the verified S35K CERT: NO_COMPILE_QTYPE→q_fallback_cert and A2_POPULATION_EMPTY→q_fallback_cert (prior 0.5 each).
 - **Counterfactual, offline, on the live files with `evolve.select`.** With the learned graph, an unconstrained selection on KSR picks `q_fallback_cert`. With an empty graph it picks `oracle_coverage_a2`: both cost 6, and the tie breaks on id. So the edge is decisive.
 - **No live selection row cites it yet.** The S36K `evo_arm` row is EXPLOIT continuation, and that path never calls `select`.
