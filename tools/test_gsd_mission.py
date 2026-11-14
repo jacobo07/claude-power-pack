@@ -1580,6 +1580,23 @@ def main() -> int:
             got = f"unparseable: {exc}: {r.stdout[-200:]} {r.stderr[-200:]}"
         check(f"V-MC-CLI-PERMISSION-{want.upper()}", got == want, repr(got))
 
+    # B1/B2 (GEX44 m-26ea4de62c50, 2026-11-14): every same-session wake failed "unknown option '--bg'"
+    # because resume_argv resolved `claude` from PATH (/usr/local/bin 2.1.113) while fresh launches use
+    # claude_exe() (~/.local/bin 2.1.325). The wake must use the same resolver as the launch.
+    import gsd_epoch as ge
+    real_ce, saved_env = gm.claude_exe, os.environ.pop("CPP_CLAUDE_EXE", None)
+    gm.claude_exe = lambda: "/home/u/.local/bin/claude"
+    try:
+        wake = ge.resume_argv("abcdef12-0000-0000-0000-000000000000", "/gsd-autonomous")
+        stop = ge.stop_argv("abcdef12") if hasattr(ge, "stop_argv") else "no stop_argv: copy-stop argv inline"
+    finally:
+        gm.claude_exe = real_ce
+        if saved_env is not None:
+            os.environ["CPP_CLAUDE_EXE"] = saved_env
+    check("V-MC-WAKE-USES-LAUNCH-EXE", wake[0] == "/home/u/.local/bin/claude" and wake[1:3] == ["--bg", "--resume"],
+          str(wake[:3]))
+    check("V-MC-COPY-STOP-USES-LAUNCH-EXE", stop == ["/home/u/.local/bin/claude", "stop", "abcdef12"], str(stop))
+
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

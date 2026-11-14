@@ -560,10 +560,22 @@ def cause_for(act: str, plan_reason: str | None, rec: dict, decision: dict | Non
     return {"cause": cause, "reason": plan_reason, "evidence": {}}
 
 
+def _claude() -> str:
+    """The same `claude` a fresh launch uses (gm.claude_exe: CPP_CLAUDE_EXE, else ~/.local/bin/claude off
+    Windows, else PATH). Until 2026-11-14 the wake resolved PATH only: on GEX44 an ssh `decide` reached
+    /usr/local/bin/claude 2.1.113, every same-session continuation failed "unknown option '--bg'" and each
+    epoch restarted fresh (m-26ea4de62c50: continuation_failed x3, launch_cause CONTINUATION_FAILED)."""
+    import gsd_mission as gm
+    return gm.claude_exe()
+
+
 def resume_argv(session_id: str, prompt: str) -> list[str]:
     """NO flags besides --bg/--resume: any other flag makes the host start a COPY (measured)."""
-    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
-    return [exe, "--bg", "--resume", session_id, prompt]
+    return [_claude(), "--bg", "--resume", session_id, prompt]
+
+
+def stop_argv(short_id: str) -> list[str]:
+    return [_claude(), "stop", short_id]
 
 
 def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, runner=None,
@@ -619,7 +631,7 @@ def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, 
     if copy and copy.group(1):
         try:  # a copy is a second worker on the same mission: never leave it running
             (stop_runner or (lambda a: subprocess.run(a, capture_output=True, timeout=120)))(
-                [os.environ.get("CPP_CLAUDE_EXE") or "claude", "stop", copy.group(1)])
+                stop_argv(copy.group(1)))
         except Exception:  # noqa: BLE001 -- the orphan reaper finds it by name
             pass
     lr.ledger_append(mission_id, "continuation_failed", mission_id=mission_id, epoch=claimed["epoch"],
