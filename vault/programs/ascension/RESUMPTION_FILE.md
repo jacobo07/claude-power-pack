@@ -26,8 +26,10 @@
 - 13:16Z, hand-off item 4 is closed. t1 `170621d3`: `test_s38k_ox` admits an `_OWN` exclusion only when the file is in `receipt_registry.json` with its exact sha256. It adds 2 mutants, one with an unregistered file and one with a drifted sha. Staged in the scratch worktree at t1 98d37935: GREEN 26/26; the control (unedited) was 23/23. The t1 checkout was also GREEN 26/26. The commit was pathspec-only while the S43K worker was RUNNING.
 - Still open:
   - The TENNIS S42T (`m-ecc36eefeb77`) judgment has not landed. The ledger has only `generation_armed` (10M).
-  - Owner review of the 4 B2 `auto` entries.
-  - Debt: `gate_ukdl_candidates`, and the s36xc path.
+  - Debt: the s36xc path in `ksr_lane.py`, which is pinned additive-only.
+- 13:25Z, Owner "y":
+  - binary_reconstruction B3 sets the 4 E6 entries to `reviewed`. Their origins were re-verified, and the chain is OK [0..3].
+  - EVO-PLAN E6 strikes `gate_ukdl_candidates` and names `verify_origin` instead.
 
 **2026-11-14 12:15Z, pane 4246d04c (Owner "go ahead with both new lanes"): two NEW AUTOPILOT LANES, FIFA (letter F) and WIIPARTY (letter W). Pane 4246d04c owns them; c26eafbf keeps KSR.**
 - **Products, each its own git repo with `orig/` read-only and git-ignored.**
