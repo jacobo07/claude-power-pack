@@ -190,7 +190,7 @@ def packet_phase_drift(packet: str, phases: list[str]) -> str | None:
 
 
 _NEUTRAL = ["Phase 1: a (cap 1M): x", "Phase 2: b (cap 1M): y"]
-POLICY_REPLANS = 1  # re-plans after a policy refusal, each told why (never more than one per checkpoint)
+POLICY_REPLANS = 2  # re-plans after a policy refusal, each told why (S41K: the 1st re-plan fixed the profile line, not a cap)
 
 
 def plan_checks(lane: dict, name: str, p: dict):
@@ -202,8 +202,9 @@ def plan_checks(lane: dict, name: str, p: dict):
         drift = packet_phase_drift(text, phases)
         if drift:
             bad.append(drift)
-    p["_offenders"] = [l for l in [*phases, title, *facts, *str(notes or "").splitlines()]
-                       if l and policy_check(_NEUTRAL, "", [l])]
+    p["_offenders"] = ([l for l in phases if not CAP_RE.search(l)] +
+                       [l for l in [*phases, title, *facts, *str(notes or "").splitlines()]
+                        if l and policy_check(_NEUTRAL, "", [l])])
     return phases, notes, title, facts, bad, text
 
 
@@ -883,13 +884,15 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         save_state(st)
         return
     phases, notes, title, facts, bad, text = plan_checks(lane, name, p)
-    if bad and not dry and POLICY_REPLANS:
-        # 2026-11-14 (S35K, S37K, S38K, S40K, S40T refused; each parked a lane for hours): ONE re-plan that is told
-        # why. The policy is unchanged: the second plan meets the same checks, and a second refusal parks as before.
-        log(f"{lane['name']}: policy refused {name} (first plan): {'; '.join(bad)[:300]}; one re-plan with the reasons")
+    for attempt in range(POLICY_REPLANS if not dry else 0):
+        # 2026-11-14 (S35K, S37K, S38K, S40K, S40T, S41K refused; each parked a lane for hours): bounded re-plans, each
+        # told why. The policy is unchanged: every plan meets the same checks, and the last refusal parks as before.
+        if not bad:
+            break
+        log(f"{lane['name']}: policy refused {name} (plan {attempt + 1}): {'; '.join(bad)[:300]}; re-plan with the reasons")
         p = plan(lane, name, checkpoint, product, v, (pdir + "\n\n" + replan_feedback(bad, p.get("_offenders"))).strip())
         tok, measured = call_tokens(p.get("_tokens"))
-        ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name, replan=True)
+        ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name, replan=attempt + 1)
         if p.get("stop"):
             return _park(st, ls, lane["name"], f"policy refused {name}; the re-plan stopped: {str(p.get('stop'))[:300]}",
                          f"POLICY REFUSED {name}; re-plan stopped")

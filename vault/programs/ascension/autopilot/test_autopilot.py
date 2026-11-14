@@ -376,10 +376,18 @@ def run_all(ap):
           and "AUTOPILOT POLICY REFUSED" in dirs[-1] and "define a new profile P9" in dirs[-1])
     dirs.clear()
     st = fresh(81)
-    ap.plan = seq_plan(BADP, BADP)
+    ap.plan = seq_plan(BADP, BADP, BADP, BADP)
     ap.lane_tick(st, lanes[0], False)
-    check("V-AP-REPLAN-ONCE-THEN-PARKS", st["lanes"]["L"]["status"] == "PARKED" and not any(c[0] == "arm" for c in calls)
-          and len([r for r in ledger() if r["kind"] == "plan"]) == 2 and "| line:" in q_text())
+    check("V-AP-REPLAN-BOUNDED-THEN-PARKS", st["lanes"]["L"]["status"] == "PARKED" and not any(c[0] == "arm" for c in calls)
+          and len([r for r in ledger() if r["kind"] == "plan"]) == 1 + ap.POLICY_REPLANS and "| line:" in q_text())
+    # S41K: the 1st re-plan fixed the profile line but left a phase without a cap; that phase is named to the planner
+    NOCAP = {"title": "t", "facts": [], "phases": [GOOD[0], "Phase 2: K2 closeout: re-run gates and write the checkpoint"]}
+    dirs.clear()
+    st = fresh(82)
+    ap.plan = seq_plan(BADP, NOCAP, {"title": "t", "facts": [], "phases": GOOD})
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-REPLAN-SECOND-FIXES-CAP", any(c[0] == "arm" for c in calls) and len(dirs) == 3
+          and "K2 closeout: re-run gates" in dirs[2])
     st = fresh(4)
     ap.judge = lambda *a: dict(full, new_canonical_certs=3, _tokens=None)
     ap.plan = lambda *a: {"title": "t", "facts": [], "phases": GOOD, "_tokens": None}
