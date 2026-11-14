@@ -388,6 +388,37 @@ def run_all(ap):
     ap.lane_tick(st, lanes[0], False)
     check("V-AP-REPLAN-SECOND-FIXES-CAP", any(c[0] == "arm" for c in calls) and len(dirs) == 3
           and "K2 closeout: re-run gates" in dirs[2])
+    # S39K (2026-11-14, Owner "y"): the un-park after a policy refusal re-plans from the kept judgment; the judge is
+    # not called again, so one result is credited once. A new hold on the lane is judged as always.
+    jn = {"n": 0}
+    st = fresh(84)
+    keep_judge = ap.judge  # fresh() installs the good judge; count its calls
+
+    def count_judge(*a):
+        jn["n"] += 1
+        return keep_judge(*a)
+    ap.judge = count_judge
+    ap.plan = seq_plan(*[BADP] * (1 + ap.POLICY_REPLANS))
+    ap.lane_tick(st, lanes[0], False)
+    kept = st["lanes"]["L"].get("pending_plan") or {}
+    check("V-AP-REFUSAL-KEEPS-JUDGMENT", st["lanes"]["L"]["status"] == "PARKED" and kept.get("for", "").endswith(":84")
+          and kept.get("verdict", {}).get("verdict") == "AGREE" and "_tokens" not in kept.get("verdict", {}))
+    st["lanes"]["L"].update(status="WAITING", judged_for=None)  # the Owner's un-park, as done by hand
+    calls.clear()
+    dirs.clear()
+    ap.plan = seq_plan({"title": "t", "facts": [], "phases": GOOD})
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-UNPARK-REPLANS-WITHOUT-REJUDGE", jn["n"] == 1 and any(c[0] == "arm" for c in calls)
+          and len([r for r in ledger() if r["kind"] == "replan_resume"]) == 1
+          and "AUTOPILOT POLICY REFUSED" in dirs[0] and "pending_plan" not in st["lanes"]["L"])
+    st = fresh(85)
+    ap.judge = count_judge
+    st["lanes"] = {"L": {"status": "WAITING", "blank": 0, "arm_fails": 0, "gen": None,
+                         "pending_plan": dict(kept)}}  # kept for hold 84; the lane now holds 85
+    ap.plan = seq_plan({"title": "t", "facts": [], "phases": GOOD})
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-NEW-HOLD-IS-JUDGED", jn["n"] == 2 and any(c[0] == "arm" for c in calls))
+    ap.judge = keep_judge
     st = fresh(4)
     ap.judge = lambda *a: dict(full, new_canonical_certs=3, _tokens=None)
     ap.plan = lambda *a: {"title": "t", "facts": [], "phases": GOOD, "_tokens": None}
@@ -651,6 +682,16 @@ def run_all(ap):
     check("V-EVO-OWNER-RESUME-CONTROL-PARKS", ls["status"] == "PARKED" and "repair cap" in q)
     ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a", "owner_resume": "research"}, (RES,)), ["NONE"], ["ctl"])
     check("V-EVO-OWNER-RESUME-SAME-FAMILY-PARKS", ls["status"] == "PARKED" and "Owner resume" in q)
+    # owner_resume="research:<id>" (2026-11-14): the named lever wins over a higher-ranked one; a bad name parks
+    LD = dict(LB, id="lev_d", cost=99)
+    RESD = dict(RES, phases=[p.replace("lev_b", "lev_d") for p in RES["phases"]])
+    ls, q = evo_run(evo_fresh([LA, LB, LD], {"lever": "lev_a", "owner_resume": "research:lev_d"}, (RESD,)), ["NONE"])
+    check("V-EVO-OWNER-RESUME-NAMED-LEVER", ls["status"] == "RUNNING" and ls.get("lever") == "lev_d"
+          and ls.get("mode") == "RESEARCH" and "owner_resume" not in ls)
+    ls, q = evo_run(evo_fresh([LA, LB, LC], {"lever": "lev_a", "owner_resume": "research:lev_c"}, (RES,)), ["NONE"])
+    check("V-EVO-OWNER-RESUME-NAMED-SAME-FAMILY-PARKS", ls["status"] == "PARKED" and "lev_c" in q)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "owner_resume": "research:nope"}, (RES,)), ["NONE"])
+    check("V-EVO-OWNER-RESUME-NAMED-UNKNOWN-PARKS", ls["status"] == "PARKED" and "nope" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH", "info_streak": 1}), ["CERT"])
     check("V-EVO-CERT-RETURNS-TO-EXPLOIT", ls["status"] == "RUNNING" and ls.get("mode") == "EXPLOIT")
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,
@@ -820,6 +861,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "topup_never": lambda m: setattr(m, "cost_topup", lambda *a, **k: None),
          "replan_off": lambda m: setattr(m, "POLICY_REPLANS", 0),
          "replan_blind": lambda m: setattr(m, "replan_feedback", lambda bad, off=None: ""),
+         "unpark_rejudges": lambda m: setattr(m, "resumable_plan", lambda ls, key: None),
+         "resume_any_hold": lambda m: setattr(m, "resumable_plan", lambda ls, key: ls.get("pending_plan")),
          "reserve_zero": lambda m: setattr(m, "CALL_RESERVE", 0),
          "prior_ignored": lambda m: setattr(m, "PRIOR_AUTHORITY", ()),
          "off_guard_removed": lambda m: setattr(m, "killed", lambda: False),
@@ -848,6 +891,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_research_never_stops": _evo_mut(RESEARCH_FAIL_STOP=99),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
          "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
+         "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
          "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),
          "evo_selection_evidence_blank": _evo_mut(selection_evidence=lambda lv, g: {"prior": 0.0, "edges": []} if lv else None),
          "evo_selection_evidence_claims_edge": _evo_mut(selection_evidence=lambda lv, g: (

@@ -136,6 +136,15 @@ def select(levers: dict, lane: str, ls: dict, product: str, graph, family_not=No
     return cands[0][3] if cands else None
 
 
+def owner_lever(levers: dict, lane: str, ls: dict, product: str, want: str, family) -> dict | None:
+    """The lever the Owner named in owner_resume="research:<id>", under the same admission as select: open, not retired
+    by this lane, preconditions met, research kind, and of another family than the one the lane leaves. None refuses."""
+    retired = set(ls.get("retired") or [])
+    return next((x for x in levers.get(lane, []) if x.get("id") == want and x.get("status") == "open"
+                 and x["id"] not in retired and _requires_met(x, product) and x.get("kind") != "repair"
+                 and x.get("family") != family), None)
+
+
 def selection_evidence(lever, graph) -> dict | None:
     """What the MethodGraph contributed to selecting `lever`: its prior and every learned edge (blocker -> lever) with a
     positive prior. The graph learns only from verified CERT/CAPABILITY, so a non-empty `edges` is the reuse pointer
@@ -213,12 +222,19 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
     # Owner-directed method transition, one-shot (Owner 2026-11-13 "y", pane c84eb8e1: TENNIS parked on H-T1a x2 with
     # every lever retired). The Owner is the pivot authority: no pivot-streak rule and the closed instrument is not
     # counted again; the lever of another family is still chosen by select (MethodGraph prior, preconditions).
-    if ls.pop(OWNER_RESUME, None) == "research":
+    # 2026-11-14 (Owner "crea las capacidades directamente y pegalas a las misiones", session 423c9c50): the value may
+    # name the lever, "research:<id>"; a new lever has no MethodGraph prior, so select alone would never reach it.
+    ro = ls.pop(OWNER_RESUME, None)
+    if ro == "research" or (isinstance(ro, str) and ro.startswith("research:")):
         ls["repair"] = {}
-        lever = select(levers, lane, ls, product, graph, family_not=family)
+        want = ro.split(":", 1)[1] if ":" in ro else None
+        lever = (owner_lever(levers, lane, ls, product, want, family) if want
+                 else select(levers, lane, ls, product, graph, family_not=family))
         if lever is None:
-            return {"action": "park", "why": f"Owner resume: no open lever of another family than {family} with its "
-                                             "preconditions met"}
+            return {"action": "park", "why": (f"Owner resume: lever {want} is not open, is retired, is of family {family}, "
+                                              "or lacks its preconditions" if want else
+                                              f"Owner resume: no open lever of another family than {family} with its "
+                                              "preconditions met")}
         ls.update(mode="RESEARCH", blank=0, info_streak=0, no_conversion=0, research_fail=0)
         return {"action": "research", "lever": lever, "why": f"Owner-directed method transition from {family}: "
                                                              f"research with {lever['id']} ({lever.get('family')})",

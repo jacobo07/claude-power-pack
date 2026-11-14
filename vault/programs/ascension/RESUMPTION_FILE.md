@@ -5,7 +5,22 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**NEWEST — 2026-11-14 ~10:40 UTC (pane 4246d04c, /kresume of c84eb8e1, RESUME_CERTIFIED). E6 PROMOTED.**
+**NEWEST — 2026-11-14 11:20Z (pane 4246d04c, Owner "y"). DEPLOYED: an un-park after a policy refusal no longer re-judges.**
+- **How it works.** A policy refusal now parks with `ls["pending_plan"]`: the AGREE verdict without `_tokens`, the counter snap, the directive, next_lever, the refusal reasons and the offending lines. The record is keyed `for = <mission>:<hold set_at>`.
+  - An Owner un-park on the same hold (status WAITING; judged_for may be cleared) re-plans from that record. It writes a ledger row `replan_resume`, calls no judge, and the first plan is told the refusal.
+  - A new hold drops the record and is judged as usual. A successful arm also drops it.
+  - Envelope and budget parks still re-judge on purpose, restoring the counters, as before.
+  - Code: `resumable_plan`, `_refused`, and the plan/arm tail moved out to `plan_and_arm`.
+- **Gates.** V-AP-REFUSAL-KEEPS-JUDGMENT, V-AP-UNPARK-REPLANS-WITHOUT-REJUDGE and V-AP-NEW-HOLD-IS-JUDGED, plus the mutants `unpark_rejudges` and `resume_any_hold`. The old autopilot.py fails all 3 gates.
+  - GEX44 results: staging rc 0, 174 PASS, 49/49 mutants; live rc 0, 174 PASS, 49/49.
+  - The swap ran under `flock cron.lock` with a CAS on d76035f7 / d216c8f4 / d6342ed4. Backup: `bak-4246-norejudge-20261114T112013Z`.
+  - Live shas: autopilot 508aa9a7, test 79a2ee26, evolve d6342ed4.
+- **Another writer.** Session 423c9c50 (Owner "crea las capacidades directamente y pegalas a las misiones") deployed `owner_resume="research:<id>"` (`evolve.owner_lever`, 3 V-EVO-OWNER-RESUME-NAMED-* gates and the mutant evo_owner_lever_ignored) at 11:12Z (backup bak-423c-caps-*). It also left both lanes WAITING with judged_for None.
+  - My test hunks were merged onto their live test, and their evolve is untouched. Laptop autopilot/ = live, byte for byte, and that includes 423c's evolve and test changes.
+- **Not changed, same double count.** An arm RETRY (`res == "RETRY"`) clears judged_for and re-judges without restoring the counters.
+- **Next.** Watch the KSR S41K and TENNIS S40T judgments: both lanes were reset at 11:14Z, by 423c presumably.
+
+**2026-11-14 ~10:40 UTC (pane 4246d04c, /kresume of c84eb8e1, RESUME_CERTIFIED). E6 PROMOTED.**
 - **Negative controls on GEX44** (scratch `/home/kobii/agora/e6-negctl-4246`, a copy of the live evolve 13063982 / autopilot d76035f7 / test 7fbb3d45). Unmutated copy: rc 0, 168 PASS, 46/46 mutants. Each mutant was appended to the copy's evolve.py, and each run gave rc 1:
   - `evo_instrument_fail_as_none` (959e31a5) fails V-EVO-CLASSIFY, V-EVO-INSTRUMENT-FAIL-NOT-NEGATIVE and V-EVO-REPAIR-ONE-COUNT-PER-JUDGMENT.
   - `evo_research_never_stops` (fc5350dc) fails V-EVO-RESEARCH-STOP-RULE.

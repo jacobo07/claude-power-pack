@@ -723,6 +723,20 @@ def hold_checkpoint(hold: dict) -> str:
     return hold.get("evidence") or hold.get("residual") or ""
 
 
+def resumable_plan(ls: dict, key: str) -> dict | None:
+    """The judgment a policy refusal parked with, when the lane is un-parked on the SAME checkpoint hold: the re-plan
+    starts from it and the judge is not called again. 2026-11-14 (S39K, Owner "y"): every un-park after a refusal
+    re-judged the checkpoint, so one result added a second lever_history row and a second method-graph credit."""
+    pp = ls.get("pending_plan")
+    return pp if isinstance(pp, dict) and key and pp.get("for") == key and isinstance(pp.get("verdict"), dict) else None
+
+
+def _refused(st: dict, ls: dict, lane: str, pend: dict, queue: str, dig: str, kind: str | None = None) -> None:
+    """Park on a policy refusal, keeping the judgment for the re-plan after the Owner's look."""
+    ls["pending_plan"] = pend
+    return _park(st, ls, lane, queue, dig, kind=kind)
+
+
 # ---------------------------------------------------------------- the per-lane transition
 def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     ls = st.setdefault("lanes", {}).setdefault(lane["name"], {"status": "WAITING", "blank": 0, "arm_fails": 0, "gen": None})
@@ -772,7 +786,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
                 return _park(st, ls, lane["name"], note, f"PARKED: {note}", kind="branch")
             if how == "FF":
                 log(f"{lane['name']}: {note}")
-        ls["judged_for"] = f"{mid}:{hold.get('set_at')}"
+        ls["judged_for"] = key = f"{mid}:{hold.get('set_at')}"
     else:
         pat, product = lane["bootstrap_checkpoint"], lane.get("bootstrap_product", lane["product"])
         if ls.get("judged_for") == "bootstrap":
@@ -781,7 +795,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         if not hits:
             return
         checkpoint = str(hits[-1])
-        ls["judged_for"] = "bootstrap"
+        ls["judged_for"] = key = "bootstrap"
     save_state(st)
     why = budget_admits(ledger_rows(), _now(), GEN_CAP + 2 * CALL_RESERVE)
     if why:
@@ -791,6 +805,20 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         save_state(st)
         log(f"{lane['name']}: budget wait: {why}")
         return
+    pend = resumable_plan(ls, key)
+    if pend:
+        ledger_add(lane=lane["name"], kind="replan_resume", tokens=0, checkpoint=checkpoint,
+                   verdict=pend["verdict"].get("verdict"), gen=pend.get("gen"))
+        log(f"{lane['name']}: un-parked after a policy refusal on {key}: re-plan from the kept judgment, no re-judge")
+        digest(lane["name"], f"RE-PLAN after the Owner's look on {checkpoint}: judgment kept, not re-judged")
+        if pend.get("next_lever"):
+            ls["next_lever"] = pend["next_lever"]
+        d0 = pend.get("directive") or ""
+        if pend.get("bad"):
+            d0 = (d0 + "\n\n" + replan_feedback(pend["bad"], pend.get("offenders"))).strip()
+        return plan_and_arm(st, lane, ls, key, checkpoint, product, dict(pend["verdict"]), d0,
+                            pend.get("snap") or {}, dry)
+    ls.pop("pending_plan", None)  # a new hold: whatever an older refusal kept no longer describes this checkpoint
     log(f"{lane['name']}: checkpoint {checkpoint} -> judge")
     v = ({"verdict": "AGREE", "new_canonical_certs": 0, "validated_capability": False, "protected_ok": True,
           "gates": [{"cmd": "dry", "rc": 0}], "_tokens": 0} if dry else judge(lane, checkpoint, product))
@@ -855,9 +883,19 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         # An Owner un-park starts a fresh window: the checkpoint is planned again, the streaks begin at 0.
         ls.update(info_streak=0, no_conversion=0, judged_for=None)
         return _park(st, ls, lane["name"], f"{why}; Owner look before the next one")
+    return plan_and_arm(st, lane, ls, key, checkpoint, product, v, evo_dir, snap, dry)
+
+
+def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, product: str, v: dict, evo_dir: str,
+                 snap: dict, dry: bool) -> None:
+    """Plan the next generation from an AGREE judgment, apply the policy, arm. A policy refusal keeps the judgment
+    (pending_plan, keyed by the checkpoint hold), so the re-plan after the Owner's look does not re-judge."""
+    evo = evolve.enabled(HOME)
     st["next_gen"] = int(st.get("next_gen") or 28)
     name = f"S{st['next_gen']}{lane['letter']}"
     pdir = evo_dir
+    pend = {"for": key, "gen": name, "verdict": {k: x for k, x in v.items() if k != "_tokens"}, "snap": snap,
+            "directive": evo_dir, "next_lever": ls.get("next_lever")}
     p = ({"title": "dry", "facts": ["dry"], "phases": ["Phase 1: x (cap 1M)", "Phase 2: y (cap 1M)"], "_tokens": 0}
          if dry else plan(lane, name, checkpoint, product, v, pdir))
     tok, measured = call_tokens(p.get("_tokens"))
@@ -894,28 +932,32 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         tok, measured = call_tokens(p.get("_tokens"))
         ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name, replan=attempt + 1)
         if p.get("stop"):
-            return _park(st, ls, lane["name"], f"policy refused {name}; the re-plan stopped: {str(p.get('stop'))[:300]}",
-                         f"POLICY REFUSED {name}; re-plan stopped")
+            return _refused(st, ls, lane["name"], dict(pend, bad=bad, offenders=p.get("_offenders")),
+                            f"policy refused {name}; the re-plan stopped: {str(p.get('stop'))[:300]}",
+                            f"POLICY REFUSED {name}; re-plan stopped")
         phases, notes, title, facts, bad, text = plan_checks(lane, name, p)
     if bad:
         off = "; ".join(l[:200] for l in (p.get("_offenders") or [])[:2])
-        return _park(st, ls, lane["name"], f"policy refused {name}: {'; '.join(bad)[:400]}" + (f" | line: {off}" if off else ""),
-                     f"POLICY REFUSED {name}: {'; '.join(bad)[:400]}")
+        return _refused(st, ls, lane["name"], dict(pend, bad=bad, offenders=p.get("_offenders")),
+                        f"policy refused {name}: {'; '.join(bad)[:400]}" + (f" | line: {off}" if off else ""),
+                        f"POLICY REFUSED {name}: {'; '.join(bad)[:400]}")
     caps = int(sum(float(CAP_RE.findall(l)[0]) for l in phases) * 1_000_000)
     if evo:
         ebad = evolve.packet_problems(ls.get("mode") or "EXPLOIT", ls.get("next_lever"), phases, caps, ls)
         if ebad:
-            return _park(st, ls, lane["name"], f"EVO policy refused {name}: {'; '.join(ebad)[:400]}",
-                         f"EVO POLICY REFUSED {name}: {'; '.join(ebad)[:400]}", kind="evo")
+            return _refused(st, ls, lane["name"], dict(pend, bad=ebad), f"EVO policy refused {name}: {'; '.join(ebad)[:400]}",
+                            f"EVO POLICY REFUSED {name}: {'; '.join(ebad)[:400]}", kind="evo")
     ew = envelope_admits(lane, ledger_rows(), caps)
     if ew:
         ls["judged_for"] = None
+        ls.pop("pending_plan", None)  # this park re-judges on purpose (counters restored below), as before
         ls.update(snap)  # judged again after the Owner's look: its class must not be counted twice
         return _park(st, ls, lane["name"], f"lane envelope before arming {name}: {ew}",
                      f"PARKED at the lane envelope before arming {name}: {ew}", kind="envelope")
     why = budget_admits(ledger_rows(), _now(), caps)
     if why:
         ls["judged_for"] = None
+        ls.pop("pending_plan", None)
         ls.update(snap)  # this checkpoint will be judged again: its class must not be counted twice
         if why.startswith(PARK_REASONS):
             return _park(st, ls, lane["name"], f"budget gate before arming {name}: {why}",
@@ -927,6 +969,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if res == "OK":
         st["next_gen"] += 1
         ls.update(status="RUNNING", gen=name, arm_fails=0, topups=0)
+        ls.pop("pending_plan", None)
         if evo:
             ls["lever"] = ls.pop("next_lever", None) or ls.get("lever")
             if ls.get("mode") == "RESEARCH":
