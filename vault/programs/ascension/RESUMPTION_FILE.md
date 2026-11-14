@@ -5,7 +5,19 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**NEWEST — 2026-11-13 ~11:35 UTC (pane c84eb8e1). Owner: "y to both, y presupuesto 300M".**
+**NEWEST — 2026-11-14 ~10:40 UTC (pane 4246d04c, /kresume of c84eb8e1, RESUME_CERTIFIED). E6 PROMOTED.**
+- **Negative controls on GEX44** (scratch `/home/kobii/agora/e6-negctl-4246`, a copy of the live evolve 13063982 / autopilot d76035f7 / test 7fbb3d45). Unmutated copy: rc 0, 168 PASS, 46/46 mutants. Each mutant was appended to the copy's evolve.py, and each run gave rc 1:
+  - `evo_instrument_fail_as_none` (959e31a5) fails V-EVO-CLASSIFY, V-EVO-INSTRUMENT-FAIL-NOT-NEGATIVE and V-EVO-REPAIR-ONE-COUNT-PER-JUDGMENT.
+  - `evo_research_never_stops` (fc5350dc) fails V-EVO-RESEARCH-STOP-RULE.
+  - `evo_selection_evidence_blank` (9d38ba8d) fails V-EVO-SELECTION-CITES-LEARNED-EDGE.
+- **Improvement.** KSR S37K cnm_operator_coverage went from 0 to 57 CERTIFIED (t1 s37k/oc 17 + oc2 40), judged AGREE at 2026-11-13T15:45:57Z on checkpoint_s37k_r3. **Reuse.** TENNIS evo_decision ts 1794614839.0449 cites [NO_OPERATOR_FOR_CLASS, cnm_operator_coverage, 0.75].
+- **UKDL section "EVO E6 promotions"** has one hard-rule-level entry (HR-EVO-INSTRUMENT-FAIL-IS-NEVER-A-NEGATIVE-001; it lives in UKDL only, not in HARD_RULES.md), the process rule PR-STAGNATION-GOES-TO-RESEARCH-...-001, and the traps T-BUDGET-PARK-NEVER-RESUMES-001 (gate-only plane) and T-CHECKPOINT-ON-ANOTHER-BRANCH-001.
+- **`ratchet.promote_with_evidence` wrote `vault/tower/baselines/binary_reconstruction/B2.json`**: 4 entries, status `auto`, evidence recorded. Results: RATCHET_EVIDENCE_PASS 11/11 with 4/4 mutants; family_baseline review gives chain OK [0,1,2]; all 4 origins pass `verify_origin` as VERIFIED.
+- **Premise gap.** The E6 done-gate named `gate_ukdl_candidates` does not exist in the repo. `verify_origin` = VERIFIED on each cited line was used in its place.
+- **Commit isolation.** The UKDL working tree carries about 4.8k lines of other writers' hunks (S26 section, CEPS hook lines). The commit staged only HEAD's UKDL plus the E6 section, appended at its end, so the line numbers cited in B2 are working-tree lines. The quotes are exact.
+- **Open.** The 4 `auto` entries are waiting for Owner review. No GEX44 CPP deploy happened (that is an Owner gate). The next obligation is UKDL: trap re-judge double count and the trap policy trigger wording.
+
+**2026-11-13 ~11:35 UTC (pane c84eb8e1). Owner: "y to both, y presupuesto 300M".**
 - **(1) Fix for the judge being called on an empty checkpoint.** Pane c26eafbf deployed it first at 11:27Z, with the Owner's "y". `hold_checkpoint` takes the hold's `evidence`, falling back to its `residual`, and parks without a judge when both are empty.
   - c84eb8e1 dropped its own version (`resolve_checkpoint`). A CAS caught the race: nothing was written.
   - c26eafbf re-judges S36K on `judge_index.md`; that tick started at 11:30:17Z.
