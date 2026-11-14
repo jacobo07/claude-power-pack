@@ -5,6 +5,13 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-14 21:24Z, pane f3df357a (Owner "y" twice): KSR S49K FMADD rule + research cap 60M.**
+- The Owner approved the S49K CERTIFICATION_RULE: new additive profile `ksr-v5r-s25stage-s49fm`, `-fp_contract on` for FMADD, all S26C conditions, and a redefined control. The brief section was written by pane 423c9c50.
+- Live `evolve.py` `RESEARCH_LANE_CAP` 40M -> 60M (gate 52/52 AUTOPILOT_GATE_PASS, backup `bak-f3df-rcap60-*`); mirrored here.
+- KSR armed S53K `m-23527159f40b` (4M, lever `fmadd_fp_contract_s49fm`, RESEARCH) via `replan_resume`, with no re-judge. S49K closed at 5.75M of 10M.
+- Slip at 19:59Z: `pending_plan.for` was keyed on a stale `judged_for`, so S49K was re-judged once (399,417 tokens). The duplicate lever_history row was removed (`state.json.bak-f3df-dedup-*`). The key is always `{mission}:{owner_hold.set_at}`, read live.
+- NEXT: read the S53K checkpoint; TENNIS S42T (running since ~11:20Z) still has no checkpoint; MKW cost hold needs an Owner envelope (pane 4de9).
+
 **2026-11-14 13:23Z, pane 4de9b293 (Owner route "a" = build on the public decomp, then "y"; envelope 20M, DAY_CAP left at 90M): NEW AUTOPILOT LANE MKW (letter M), Mario Kart Wii PAL RMCP01. Pane 4de9b293 owns it.**
 - **Product:** `/home/kobii/missions/mkw-decomp`, branch `lane/mkw`. Its base is the public decomp `snailspeed3/mkw` 78572c9 (riidefi/mkw redirects there), licence CC0-1.0 per the GitHub API and LICENSE. F0 commit `304914c` is metadata only.
   - The laptop clone is `Wii Projects\MKW-Decomp`, with `F0_REPORT.md` there. The image is `Downloads\mkw-RMCP01-image\` (WBFS from the No-Intro 7z), and it is hard-linked as `orig/RMCP01/RMCP01.wbfs`.

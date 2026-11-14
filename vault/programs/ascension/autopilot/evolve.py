@@ -39,7 +39,7 @@ def instrument_key(name: str) -> str:
 
 RESEARCH_FAIL_STOP = 2       # consecutive research generations without verified INFORMATION/CAPABILITY park the lane
 RESEARCH_GEN_CAP = 10_000_000
-RESEARCH_LANE_CAP = 40_000_000
+RESEARCH_LANE_CAP = 60_000_000
 RESEARCH_WORDS = ("rival", "positive control", "decision rule")
 OWNER_RESUME = "owner_resume"  # lane-state key the Owner sets to "research" for a one-shot method transition
 REPAIR_WORDS = ("positive control", "thresholds unchanged")
