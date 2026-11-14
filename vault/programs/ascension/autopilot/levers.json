@@ -174,6 +174,20 @@
     "evidence/ascension/s45k/checkpoint_s45k.md"
    ],
    "what": "Owner 2026-11-14 ('y', session 423c9c50): a third TU-boundary SIGNAL, independent of floatdup and sbss: (1) mwcc allocates statics in reverse declaration order, so a reversal of .bss/.sbss address order against function order marks a unit change; (2) mwcc pools equal string literals within a unit, so an equal string present twice marks two units. Primary source, verbatim: PrimeDecomp/mwcc-tools gc2/docs/matching-guide.md L193 and L213 (PP research/drx-out/PRIMARY-VERIFY-Q7-Q12.md, commit 3ec9bd8f). First prove both rules hold under KSR's compiler with planted two-TU and one-TU fixtures (positive and negative controls). It is a signal under test, NEVER a known-boundary source: calibrating with it would be circular (same pooling mechanism as floatdup). Validate it alone on the frozen known set (the S45K 4-family adequacy rule unchanged), before combining with floatdup/sbss. Diagnostic only, no certificate. Rival hypotheses: (a) the signal recalls >= 0.80 of known boundaries at the frozen precision bar; (b) KSR's linker/compiler breaks either rule (fixture control fails) or recall < 0.80."
+  },
+  {
+   "id": "fmadd_fp_contract_s49fm",
+   "family": "FP_CONTRACT_PROFILE",
+   "kind": "research",
+   "blockers": [
+    "NO_OPERATOR_FOR_CLASS"
+   ],
+   "cost": 5,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s49k/checkpoint_s49k.md"
+   ],
+   "what": "Owner 2026-11-14 'y' (session 423c9c50, S49K OWNER QUESTION CERTIFICATION_RULE): AUTHORISED a NEW ADDITIVE profile ksr-v5r-s25stage-s49fm that runs the lane with -fp_contract on for the FMADD class only, under ALL S26C conditions. Control redefined: negative pole = the 40+ certified non-float exact functions must stay byte-identical (any move = profile rejected); positive = every dev exact re-verified by the independent oracle on ORIGINAL DOL bytes (not by certified fma fixtures, which cannot exist). Existing profiles and certificates untouched. Criteria and the dev/held-out split stay as frozen in S49K; held-out 50 is opened once, only after the profile and controls are frozen and committed. No re-cut of the held-out after seeing results; INSTRUMENT_FAIL stays a valid outcome. Rival hypotheses: (a) the profile yields >= 1 held-out BINARY_EXACT FMADD-class function with all 40+ negative controls unmoved; (b) zero held-out exacts, or any control moves (profile rejected)."
   }
  ],
  "TENNIS": [
