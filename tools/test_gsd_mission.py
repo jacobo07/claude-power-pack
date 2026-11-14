@@ -1597,6 +1597,30 @@ def main() -> int:
           str(wake[:3]))
     check("V-MC-COPY-STOP-USES-LAUNCH-EXE", stop == ["/home/u/.local/bin/claude", "stop", "abcdef12"], str(stop))
 
+    # B4 (m-26ea4de62c50): `requires --path inputs/X.md` was stored verbatim and judged from the sweeper's cwd,
+    # so it read absent forever. Absolutised against the mission cwd at set time; refused when that is unknowable.
+    rq_cwd = Path(TMP) / "rq-proj"
+    (rq_cwd / "inputs").mkdir(parents=True, exist_ok=True)
+    gm.create(str(rq_cwd), "/gsd-autonomous", mission_id="m-rq", now=NOW)
+    rq = gm.set_requires("m-rq", "HEAD4", [("path_exists", "inputs/OWNER-DECISION-HEAD4.md")], now=NOW)
+    arg = rq["requires"][0]["arg"]
+    want_arg = os.path.normpath(os.path.join(gm.load("m-rq")["cwd"], "inputs", "OWNER-DECISION-HEAD4.md"))
+    check("V-MC-REQUIRES-RELATIVE-ABSOLUTISED", arg == want_arg and os.path.isabs(arg), f"{arg!r} want {want_arg!r}")
+    (rq_cwd / "inputs" / "OWNER-DECISION-HEAD4.md").write_text("a", encoding="utf-8")
+    ev_rq = gm.mres.evaluate(gm.load("m-rq")["requires"], None)
+    check("V-MC-REQUIRES-RELATIVE-MET-FROM-ANY-CWD", ev_rq["admissible"], str(ev_rq.get("waiting")))
+    absp = str(rq_cwd / "elsewhere.lock")
+    rq = gm.set_requires("m-rq", "GPU", [("path_exists", absp)], now=NOW)
+    check("V-MC-REQUIRES-ABSOLUTE-VERBATIM-CONTROL",
+          [r["arg"] for r in rq["requires"] if r["obligation"] == "GPU"] == [absp], str(rq["requires"]))
+    cur = gm.load("m-rq")
+    gm.transition("m-rq", expect_epoch=cur["epoch"], expect_state=cur["state"], event="t_rel_cwd", now=NOW, cwd=".")
+    try:
+        gm.set_requires("m-rq", "HEAD5", [("path_exists", "inputs/OWNER-DECISION-HEAD5.md")], now=NOW)
+        _fail("V-MC-REQUIRES-RELATIVE-REFUSED-WITHOUT-CWD", "stored a relative path against a relative cwd")
+    except gm.MissionError as exc:
+        _ok("V-MC-REQUIRES-RELATIVE-REFUSED-WITHOUT-CWD", str(exc)[:120])
+
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

@@ -3010,6 +3010,20 @@ def set_requires(mission_id: str, obligation: str, specs: list[tuple[str, object
     if not clear and not specs:
         raise MissionError("give at least one requirement (--ram-free-gb, --path, --no-process) or --clear")
     keep = [r for r in rec.get("requires") or [] if r.get("obligation") != obligation]
+    if not clear:
+        # B4 (m-26ea4de62c50, 2026-11-14): a relative path was stored verbatim and judged later from the
+        # sweeper's cwd, so it read absent forever. Absolutised here against the mission cwd, where the answer
+        # is knowable (as gsd_autorun_marker.resolve_cwd does at arming); refused when it is not.
+        cwd = rec.get("cwd") or ""
+        fixed = []
+        for kind, arg in specs:
+            if kind == "path_exists" and arg is not None and not os.path.isabs(str(arg)):
+                if not cwd or not os.path.isabs(cwd):
+                    raise MissionError(f"relative --path {arg!r} cannot be resolved: mission cwd {cwd!r} is not "
+                                       "absolute; give an absolute path")
+                arg = os.path.normpath(os.path.join(cwd, str(arg)))
+            fixed.append((kind, arg))
+        specs = fixed
     new = [] if clear else [{"id": f"{obligation}-{kind}", "kind": kind, "arg": arg, "obligation": obligation}
                             for kind, arg in specs]
     for r in new:
@@ -6983,7 +6997,6 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                                          decision_recoveries=1 if moved else int(rec.get("decision_recoveries") or 0) + 1,
                                          decision_recovery_fp=fp_now,
                                          ledger_extra={"gate": d["gate"]["result"], "question": d["why"][:200]})
-                        row["decision_recovery"] = d["gate"]["result"]
                     row["note_chars"] = len(note)
                 if (v2 and rec.get("capsule_key") and act in ("relay", "replace", "launch")
                         and not _capsule_arm(rec, row)):
