@@ -10,7 +10,11 @@
 - Gates: V-AP-RETRY-KEEPS-JUDGMENT and V-AP-RETRY-REARMS-WITHOUT-REJUDGE. The staged no-fix control was red.
 - Swap ran under `flock cron.lock` with CAS 92c1f461 / 89cb5449. Live gate (`AP_PP=<PP clone>`): rc 0, AUTOPILOT_GATE_PASS, 49/49 mutants killed. Log `/tmp/retryfix-gate-20261114T131231Z.log`.
 - Backup `bak-c26eafbf-retryfix-20261114T131231Z`. Live shas: autopilot c3ac034e, test 14e53d66, evolve d6342ed4. Laptop autopilot/ = live, byte for byte.
-- Next: `test_s38k_ox` registry tie in t1 (Owner "y").
+- 13:16Z, hand-off item 4 is closed. t1 `170621d3`: `test_s38k_ox` admits an `_OWN` exclusion only when the file is in `receipt_registry.json` with its exact sha256. It adds 2 mutants, one with an unregistered file and one with a drifted sha. Staged in the scratch worktree at t1 98d37935: GREEN 26/26; the control (unedited) was 23/23. The t1 checkout was also GREEN 26/26. The commit was pathspec-only while the S43K worker was RUNNING.
+- Still open:
+  - The TENNIS S42T (`m-ecc36eefeb77`) judgment has not landed. The ledger has only `generation_armed` (10M).
+  - Owner review of the 4 B2 `auto` entries.
+  - Debt: `gate_ukdl_candidates`, and the s36xc path.
 
 **2026-11-14 12:15Z, pane 4246d04c (Owner "go ahead with both new lanes"): two NEW AUTOPILOT LANES, FIFA (letter F) and WIIPARTY (letter W). Pane 4246d04c owns them; c26eafbf keeps KSR.**
 - **Products, each its own git repo with `orig/` read-only and git-ignored.**
