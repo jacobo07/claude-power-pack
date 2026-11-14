@@ -5,6 +5,11 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-14 ~12:15Z, c26eafbf (KSR coordinator per the hand-off below), Owner "y": headline 9,952 / 30,388 (32.75%), t1 `ca198fea`.**
+- Hand-off item 1, KSR part: S41K re-judged AGREE at 12:06:36Z (1 cert). Pinned in t1 `0da1b56d`.
+- S38K OX (35) had never been counted, because the only S38K judgment covered `checkpoint_s38k_x1.md`. I ran the autopilot's own judge on `checkpoint_s38k.md` as an Owner standalone judgment, with a ledger row and a digest line; lane state and EVO were untouched (`/home/kobii/agora/judge-s38kox-run/`). Result: AGREE 35/35, 10 gates rc 0, 580,330 tokens. Then pinned.
+- Still open from the hand-off: TENNIS S42T judgment (item 1), B2.json review (2), RETRY double count (3, needs Owner y), `test_s38k_ox` registry tie (4), `gate_ukdl_candidates` (5).
+
 **HANDOFF 2026-11-14 ~11:40Z — Owner: "asigna a ese pane todo lo pendiente; aquí reconstruimos otro juego (FIFA 11)". Pane 4246d04c leaves Ascension. Everything below now belongs to c26eafbf, the KSR lane coordinator (and to 423c9c50 for its own capabilities):**
 1. Read the KSR S41K re-judge (tick 11:35Z, after t1 a942bfc2) and the TENNIS S42T `m-ecc36eefeb77` judgment when it comes.
 2. Review the 4 `auto` entries in `vault/tower/baselines/binary_reconstruction/B2.json` (EVO E6, evidence recorded). They are waiting on the Owner, and `family_baseline.py review binary_reconstruction` lists them.
