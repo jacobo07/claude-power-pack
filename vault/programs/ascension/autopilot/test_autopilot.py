@@ -360,6 +360,26 @@ def run_all(ap):
     if keep_auth is None:
         rec.pop("authority_tokens")
     recp.write_text(json.dumps(rec))
+    # One re-plan after a policy refusal, told why (2026-11-14: S35K/S37K/S38K/S40K/S40T each parked for hours);
+    # the checks are unchanged and a second refusal parks.
+    BADP = {"title": "t", "facts": [], "phases": ["Phase 1: K1 define a new profile P9 (cap 3M): x", *GOOD[1:]]}
+    dirs = []
+
+    def seq_plan(*plans):
+        q = list(plans)
+        return lambda lane, name, ck, prod, v, d: dirs.append(d) or dict(q.pop(0), _tokens=1)
+    st = fresh(80)
+    ap.plan = seq_plan(BADP, {"title": "t", "facts": [], "phases": GOOD})
+    ap.lane_tick(st, lanes[0], False)
+    prow = [r for r in ledger() if r["kind"] == "plan"]
+    check("V-AP-REPLAN-ADMITS-SECOND", any(c[0] == "arm" for c in calls) and len(prow) == 2 and prow[1].get("replan")
+          and "AUTOPILOT POLICY REFUSED" in dirs[-1] and "define a new profile P9" in dirs[-1])
+    dirs.clear()
+    st = fresh(81)
+    ap.plan = seq_plan(BADP, BADP)
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-REPLAN-ONCE-THEN-PARKS", st["lanes"]["L"]["status"] == "PARKED" and not any(c[0] == "arm" for c in calls)
+          and len([r for r in ledger() if r["kind"] == "plan"]) == 2 and "| line:" in q_text())
     st = fresh(4)
     ap.judge = lambda *a: dict(full, new_canonical_certs=3, _tokens=None)
     ap.plan = lambda *a: {"title": "t", "facts": [], "phases": GOOD, "_tokens": None}
@@ -790,6 +810,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "topup_ignores_certificates": lambda m: setattr(m, "certified_since", lambda p, b: True),
          "topup_unbounded": lambda m: setattr(m, "MAX_TOPUPS", 99),
          "topup_never": lambda m: setattr(m, "cost_topup", lambda *a, **k: None),
+         "replan_off": lambda m: setattr(m, "POLICY_REPLANS", 0),
+         "replan_blind": lambda m: setattr(m, "replan_feedback", lambda bad, off=None: ""),
          "reserve_zero": lambda m: setattr(m, "CALL_RESERVE", 0),
          "prior_ignored": lambda m: setattr(m, "PRIOR_AUTHORITY", ()),
          "off_guard_removed": lambda m: setattr(m, "killed", lambda: False),

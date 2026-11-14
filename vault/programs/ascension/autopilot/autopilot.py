@@ -189,6 +189,36 @@ def packet_phase_drift(packet: str, phases: list[str]) -> str | None:
     return None
 
 
+_NEUTRAL = ["Phase 1: a (cap 1M): x", "Phase 2: b (cap 1M): y"]
+POLICY_REPLANS = 1  # re-plans after a policy refusal, each told why (never more than one per checkpoint)
+
+
+def plan_checks(lane: dict, name: str, p: dict):
+    """-> phases, notes, title, facts, bad (policy + packet drift), packet text ("" when refused)."""
+    phases, notes, title, facts = planner_strings(p)
+    bad = policy_check(phases, notes, [title, *facts])
+    text = packet_text(lane, name, p) if not bad else ""
+    if not bad:
+        drift = packet_phase_drift(text, phases)
+        if drift:
+            bad.append(drift)
+    p["_offenders"] = [l for l in [*phases, title, *facts, *str(notes or "").splitlines()]
+                       if l and policy_check(_NEUTRAL, "", [l])]
+    return phases, notes, title, facts, bad, text
+
+
+def replan_feedback(bad: list[str], offenders: list[str] | None = None) -> str:
+    """What the one re-plan is told: the refusals, the lines that drew them, and the rule they break."""
+    lines = "\n".join(f"  - {l[:300]}" for l in (offenders or [])[:8]) or "  - (see the refusals)"
+    return ("AUTOPILOT POLICY REFUSED YOUR PREVIOUS PLAN. Write a new plan that passes; the checks are unchanged.\n"
+            f"Refusals: {'; '.join(bad)[:1200]}\nLines that drew them:\n{lines}\n"
+            "Rules: every phase line is 'Phase N: <id> <what> (cap <N>M): ...'. A line that names a new or additive "
+            "profile must carry, in that same line and not negated: an independent target oracle on the original DOL "
+            "bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts "
+            "byte-identical; separate counters. Otherwise refer to the profile only by its name (e.g. 'the S38K "
+            "profile'), never as a new one. Planted mutants are described by the check that catches them.")
+
+
 # ---------------------------------------------------------------- budget ledger
 def _now() -> float:
     return float(os.environ.get("AP_NOW") or time.time())
@@ -826,8 +856,9 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         return _park(st, ls, lane["name"], f"{why}; Owner look before the next one")
     st["next_gen"] = int(st.get("next_gen") or 28)
     name = f"S{st['next_gen']}{lane['letter']}"
+    pdir = evo_dir
     p = ({"title": "dry", "facts": ["dry"], "phases": ["Phase 1: x (cap 1M)", "Phase 2: y (cap 1M)"], "_tokens": 0}
-         if dry else plan(lane, name, checkpoint, product, v, evo_dir))
+         if dry else plan(lane, name, checkpoint, product, v, pdir))
     tok, measured = call_tokens(p.get("_tokens"))
     ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
     if p.get("stop") and evo and ls.get("mode") not in ("RESEARCH", "REPAIR"):
@@ -841,7 +872,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         digest(lane["name"], f"EVO after planner stop: {d['action']}: {d['why'][:300]}")
         if d["action"] == "research" and not dry:
             ls["next_lever"] = d["lever"]["id"]
-            p = plan(lane, name, checkpoint, product, v, d["directive"])
+            pdir = d["directive"]
+            p = plan(lane, name, checkpoint, product, v, pdir)
             tok, measured = call_tokens(p.get("_tokens"))
             ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
     if p.get("stop"):
@@ -850,15 +882,21 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         digest(lane["name"], f"STOPPED by planner: {str(p.get('stop'))[:400]}")
         save_state(st)
         return
-    phases, notes, title, facts = planner_strings(p)
-    bad = policy_check(phases, notes, [title, *facts])
-    text = packet_text(lane, name, p) if not bad else ""
-    if not bad:
-        drift = packet_phase_drift(text, phases)
-        if drift:
-            bad.append(drift)
+    phases, notes, title, facts, bad, text = plan_checks(lane, name, p)
+    if bad and not dry and POLICY_REPLANS:
+        # 2026-11-14 (S35K, S37K, S38K, S40K, S40T refused; each parked a lane for hours): ONE re-plan that is told
+        # why. The policy is unchanged: the second plan meets the same checks, and a second refusal parks as before.
+        log(f"{lane['name']}: policy refused {name} (first plan): {'; '.join(bad)[:300]}; one re-plan with the reasons")
+        p = plan(lane, name, checkpoint, product, v, (pdir + "\n\n" + replan_feedback(bad, p.get("_offenders"))).strip())
+        tok, measured = call_tokens(p.get("_tokens"))
+        ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name, replan=True)
+        if p.get("stop"):
+            return _park(st, ls, lane["name"], f"policy refused {name}; the re-plan stopped: {str(p.get('stop'))[:300]}",
+                         f"POLICY REFUSED {name}; re-plan stopped")
+        phases, notes, title, facts, bad, text = plan_checks(lane, name, p)
     if bad:
-        return _park(st, ls, lane["name"], f"policy refused {name}: {'; '.join(bad)[:400]}",
+        off = "; ".join(l[:200] for l in (p.get("_offenders") or [])[:2])
+        return _park(st, ls, lane["name"], f"policy refused {name}: {'; '.join(bad)[:400]}" + (f" | line: {off}" if off else ""),
                      f"POLICY REFUSED {name}: {'; '.join(bad)[:400]}")
     caps = int(sum(float(CAP_RE.findall(l)[0]) for l in phases) * 1_000_000)
     if evo:
