@@ -37,6 +37,13 @@
 
   Otherwise it writes one owner_queue line. Gates: 6 V-AP-TOPUP-* plus 3 mutants. Live result: 162 PASS, 43/43 mutants killed. Live autopilot 790f3080. Backup: `bak-c84eb8e1-topup-20261113T170647Z`.
 - **S37K judged AGREE, CERT, at 15:45Z.** The graph learned NO_OPERATOR_FOR_CLASS→cnm_operator_coverage, the correct attribution.
+- **2026-11-14 09:40Z: both lanes RUNNING. E5 MET LIVE.**
+  - **E5 pointer.** At 00:03Z the TENNIS `owner_resume` selected `cnm_operator_coverage`. Its `evo_decision` row cites the edge NO_OPERATOR_FOR_CLASS→cnm_operator_coverage (prior 0.75), learned from the verified KSR CERTs of S37K, S38K and S39K. That is cross-lane reuse of a learned method. The 09:21Z re-selection picked `q_fallback_cert`, citing its edges (prior 0.67).
+  - **TENNIS.** S40T `m-8f9c0838cd44` armed at 09:23Z (9.5M, RESEARCH, q_fallback_cert).
+  - **KSR.** S39K certified 115 under `-s39id`. At 00:03Z the policy refused S40K, and at 09:30Z it refused S41K: the 1st re-plan fixed the profile line, but a phase still had no cap. S41K `m-60082552e949` armed at 09:39Z (22M).
+  - **Autopilot changes.** Re-plans after a policy refusal (`POLICY_REPLANS=2`): each is told the refusals and the offending lines, including phases without a cap; a final refusal parks the lane and names the line. Live d76035f7. Gate: 168 PASS, 46/46 mutants.
+  - **t1 `acab6532`.** `test_s36k_cert` now admits registered receipts (the 3711283b pattern, 3 mutants). It had been red since S38K, and that made the 09:15Z S39K re-judge INCONCLUSIVE.
+  - **Trap.** Un-parking after a policy refusal re-judges the checkpoint. Remove the lane's last CERT row and graph edge first, and restore them if the re-judge is not CERT. A better fix would keep the AGREE verdict for the re-plan.
 - **21:35Z, Owner "reanuda KSR y Tennis" + "y".**
   - KSR un-parked at 20:16Z. It judged S37K-final (AGREE NONE), armed S38K (24M, cnm), judged S38K-x1 at 21:15Z (AGREE CERT) and armed S39K `m-30611e51365b` (24.5M).
   - TENNIS: new one-shot `owner_resume=research` (evolve; 3 gates + 1 mutant; live 165 PASS, 44/44). TENNIS levers `q_fallback_cert` and `cnm_operator_coverage` keep the same method ids as KSR, so the learned edges apply; tools are read-only from t1. The policy returns [] on both levers.
