@@ -159,6 +159,21 @@
     "evidence/ascension/s41k/pivot_residual_s41k.md"
    ],
    "what": "Owner 2026-11-14: a whole-program KSR type model, not a per-function repair: callee prototypes by majority over EVERY call site of the program, struct layouts unioned per global symbol across all functions, iterated to a fixpoint, emitted as per-function source declarations only (no canonical ctx/header write). Known evidence against: on Tennis P1, P1c, P1d and P1e (call-graph propagation) were REFUTED and type repair gave compile without match; so the pre-registered outcome is BINARY_EXACT, never compile. New route code in a new generation (existing route tools stay frozen); a frozen pilot committed before the draw; an independent oracle on the original DOL; a gate with planted mutants; certification only through the unchanged certify.decide. Its certificates land in an additive profile proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Its receipts file gets a receipt_registry.json entry. Rival hypotheses: (a) whole-program consistency makes a measurable share of NO_COMPILE ids BINARY_EXACT; (b) it moves them to COMPILES_NO_EXACT only (pilot BINARY_EXACT stays 0)."
+  },
+  {
+   "id": "tu_boundary_statics_strpool",
+   "family": "TU_SEGMENTATION_V3",
+   "kind": "research",
+   "blockers": [
+    "FLAGS_SPLIT_ARM",
+    "TU_BOUNDARY_CONTROL"
+   ],
+   "cost": 7,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s45k/checkpoint_s45k.md"
+   ],
+   "what": "Owner 2026-11-14 ('y', session 423c9c50): a third TU-boundary SIGNAL, independent of floatdup and sbss: (1) mwcc allocates statics in reverse declaration order, so a reversal of .bss/.sbss address order against function order marks a unit change; (2) mwcc pools equal string literals within a unit, so an equal string present twice marks two units. Primary source, verbatim: PrimeDecomp/mwcc-tools gc2/docs/matching-guide.md L193 and L213 (PP research/drx-out/PRIMARY-VERIFY-Q7-Q12.md, commit 3ec9bd8f). First prove both rules hold under KSR's compiler with planted two-TU and one-TU fixtures (positive and negative controls). It is a signal under test, NEVER a known-boundary source: calibrating with it would be circular (same pooling mechanism as floatdup). Validate it alone on the frozen known set (the S45K 4-family adequacy rule unchanged), before combining with floatdup/sbss. Diagnostic only, no certificate. Rival hypotheses: (a) the signal recalls >= 0.80 of known boundaries at the frozen precision bar; (b) KSR's linker/compiler breaks either rule (fixture control fails) or recall < 0.80."
   }
  ],
  "TENNIS": [
@@ -235,6 +250,96 @@
    "status": "open",
    "requires": [],
    "what": "Owner 2026-11-14 ('crea las capacidades directamente'): the KSR deterministic source-variant search applied to the 164 Tennis COMPILES_NO_MATCH ids (attacked 1-4 times, 0 certified); tools read-only from t1; each candidate is judged by objdiff 100 plus object sha, never by a permuter score; certification only through the unchanged Tennis certifier, no new profile. Rival hypotheses: (a) a bounded variant search makes a measurable share BINARY_EXACT; (b) the differences are register allocation no source variant reaches (pilot BINARY_EXACT stays 0)."
+  }
+ ],
+ "FIFA": [
+  {
+   "id": "fifa_compiler_matrix",
+   "family": "TOOLCHAIN_ID",
+   "kind": "research",
+   "blockers": [
+    "COMPILER_UNKNOWN"
+   ],
+   "cost": 3,
+   "status": "open",
+   "requires": [
+    "evidence/f0/checkpoint_f0.md"
+   ],
+   "what": "Identify the CodeWarrior version and flags that built fifaf.code.rso (Wii-era prologues: 15,451 stwu-first, 6,458 _savegpr_ calls, 0 stmw; F0). Run the Wii mwcceppc versions over a frozen control set of small functions whose source is fixed by their bytes and names (tools/ea_formats/rso.py, half-word relocation rule) (getters, trivial constructors and destructors, and functions that call _savegpr_*), comparing each compiled function with the target bytes with relocated words masked. Freeze the control set and the comparison tool in a commit before any run. Deliverable: the version and flags that byte-match, a gate that re-runs the match, and planted mutants (a wrong version, a wrong flag, a shifted target) that turn it red. Rival hypotheses: (a) one version and flag set matches every control; (b) the code mixes toolchains (libraries built apart from the game), shown by controls that match only under different versions. orig/ is read-only. Tools are read-only: /home/kobii/wsr-decomp/build/compilers (run through build/tools/wibo), build/tools/dtk, build/tools/objdiff-cli; nothing is written in /home/kobii/wsr-decomp."
+  },
+  {
+   "id": "fifa_rso_target_oracle",
+   "family": "TARGET_ORACLE",
+   "kind": "research",
+   "blockers": [
+    "NO_SPLITTER"
+   ],
+   "cost": 4,
+   "status": "open",
+   "requires": [
+    "evidence/f0/checkpoint_f0.md"
+   ],
+   "what": "Build a per-function target extractor and byte oracle for the split RSO module (tools/ea_formats/rso.py; dtk 1.8.3 cannot read it): for each of the 24,482 named functions, its bytes from orig/ with every relocated word or half-word masked, and a comparison of a compiled object's function against it. Positive controls (each target against itself) and negative controls (a 4-byte shift, one flipped byte) that must not match, plus a census of how many functions extract cleanly. Freeze the extractor before measuring. This generation builds the instrument and certifies nothing. orig/ is read-only. Tools are read-only: /home/kobii/wsr-decomp/build/compilers (run through build/tools/wibo), build/tools/dtk, build/tools/objdiff-cli; nothing is written in /home/kobii/wsr-decomp."
+  }
+ ],
+ "WIIPARTY": [
+  {
+   "id": "wp_dtk_split",
+   "family": "TARGET_ORACLE",
+   "kind": "research",
+   "blockers": [
+    "NO_SPLITTER"
+   ],
+   "cost": 4,
+   "status": "open",
+   "requires": [
+    "evidence/f0/checkpoint_f0.md"
+   ],
+   "what": "Set up a decomp-toolkit project for orig/main.dol (SUPP01) on the layout /home/kobii/wsr-decomp uses, read only. Deliverable: a config whose dtk split rebuilds main.dol byte-identical (sha256 f8f46694), the function count and size distribution of .text, and a gate with planted mutants (a wrong split address, a missing section) that turn it red. SDK, NW4R, MSL and TRK functions are identified by their bytes against code already matched elsewhere, never by name alone. orig/ is read-only. Tools are read-only: /home/kobii/wsr-decomp/build/compilers (run through build/tools/wibo), build/tools/dtk, build/tools/objdiff-cli; nothing is written in /home/kobii/wsr-decomp."
+  },
+  {
+   "id": "wp_compiler_matrix",
+   "family": "TOOLCHAIN_ID",
+   "kind": "research",
+   "blockers": [
+    "COMPILER_UNKNOWN"
+   ],
+   "cost": 3,
+   "status": "open",
+   "requires": [
+    "evidence/f0/checkpoint_f0.md"
+   ],
+   "what": "Identify the CodeWarrior version and flags that built Wii Party main.dol (SDK and NW4R stamps carry builds 0x4302_145 and 0x4302_158; the game code may differ). Run the Wii mwcceppc versions over a frozen control set of small functions whose source is fixed by their bytes (taken from the dtk split) (getters, trivial constructors and destructors, and functions that call _savegpr_*), comparing each compiled function with the target bytes with relocated words masked. Freeze the control set and the comparison tool in a commit before any run. Deliverable: the version and flags that byte-match, a gate that re-runs the match, and planted mutants (a wrong version, a wrong flag, a shifted target) that turn it red. Rival hypotheses: (a) one version and flag set matches every control; (b) the code mixes toolchains (libraries built apart from the game), shown by controls that match only under different versions. orig/ is read-only. Tools are read-only: /home/kobii/wsr-decomp/build/compilers (run through build/tools/wibo), build/tools/dtk, build/tools/objdiff-cli; nothing is written in /home/kobii/wsr-decomp."
+  }
+ ],
+ "MKW": [
+  {
+   "id": "mkw_dol_game_match",
+   "family": "DOL_SOURCE_MATCH",
+   "kind": "research",
+   "blockers": [
+    "UNMATCHED_FUNCTIONS"
+   ],
+   "cost": 4,
+   "status": "open",
+   "requires": [
+    "evidence/f0/checkpoint_f0.md"
+   ],
+   "what": "Write C/C++ source in the existing decomp layout that matches unmatched main.dol functions of the objdiff categories game, egg and nw4r (1,831 game functions, 706 matched at base 78572c9), smallest functions first. Before any edit, freeze in a commit the target list (function, object, size) and the baseline objdiff report (build/RMCP01/report.json). A function counts only when objdiff reports it 100% matched and ninja still ends with build/RMCP01/main.dol: OK and build/RMCP01/StaticR/StaticR.rel: OK from config/RMCP01/build.sha1. Deliverable: the count moved from unmatched to matched against the frozen list, the report diff, and a gate that rebuilds, checks build.sha1 and re-reads the report, with planted mutants (one changed instruction in a newly matched function, one function marked matched that is not) that turn it red. Rival hypotheses: (a) the small functions match with the object's existing compiler and flags; (b) some objects need a different compiler version or flag set than configure.py assigns, shown by functions that match only after that change. orig/ is read-only; upstream history is never rewritten."
+  },
+  {
+   "id": "mkw_rel_match",
+   "family": "REL_SOURCE_MATCH",
+   "kind": "research",
+   "blockers": [
+    "UNMATCHED_FUNCTIONS"
+   ],
+   "cost": 4,
+   "status": "open",
+   "requires": [
+    "evidence/f0/checkpoint_f0.md"
+   ],
+   "what": "Write C/C++ source in the existing decomp layout that matches unmatched StaticR.rel functions (17,232 functions in 547 objects, 687 matched at base 78572c9), starting with the objects that are closest to complete and, inside them, the smallest functions. Before any edit, freeze in a commit the target list (function, object, size) and the baseline objdiff report (build/RMCP01/report.json). A function counts only when objdiff reports it 100% matched and ninja still ends with build/RMCP01/main.dol: OK and build/RMCP01/StaticR/StaticR.rel: OK from config/RMCP01/build.sha1. Deliverable: the count moved from unmatched to matched against the frozen list, the report diff, and a gate that rebuilds, checks build.sha1 and re-reads the report, with planted mutants (one changed instruction in a newly matched function, one function marked matched that is not) that turn it red. Rival hypotheses: (a) the module code matches with the compiler and flags configure.py assigns to StaticR objects; (b) module objects need per-object flag changes, shown by functions that match only after that change. orig/ is read-only; upstream history is never rewritten."
   }
  ]
 }
