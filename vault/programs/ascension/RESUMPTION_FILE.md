@@ -117,6 +117,10 @@
   - EVO decided `continue: exploit`.
 - **S36K armed 18:29:46Z as m-b79945360e06, authority 21.5M:** a 5-phase sweep, QF/TL/FW/CNM over about 21,020 uncertified functions. It was LAUNCHING at 18:33Z (epoch 1).
 - **The headline is still 9,308.** The S35K 31 and S34KC 16 are separate counters until someone pins them as headline components.
+- **2026-11-14 ~11:10Z, Owner "y" (pane c26eafbf): headline 9,916 / 30,388 (32.63%), t1 `48a52185`.**
+  - Pinned the judged-AGREE certificates: S37K 64 (oc 17 + oc2 40 + oc3 7), S38K X1 59, S39K 115. `KSR_HEADLINE_PASS`.
+  - **NOT pinned:** S38K OX (35, `s38k/ox/receipts.jsonl`, profile -s38ox). It has its own `checkpoint_s38k.md`, but the only S38K judgment (21:16Z, on `checkpoint_s38k_x1.md`) counted 59, not 94. It needs a judgment that counts it; then pin.
+  - **NOT pinned:** S41K PX (1), judged INCONCLUSIVE (`test_s38k_ox` red). c84eb8e1 owns that fix.
 - **2026-11-13 ~11:30Z, Owner "y" (pane c26eafbf), FOR WHOEVER IS EDITING THE LAPTOP `autopilot.py` (uncommitted `resolve_checkpoint` + `envelope_admits`):**
   - **What is live on GEX44:** commit 11:27Z, sha 4d60ef2a, plus test 1718ecb7. It is `hold_checkpoint(hold) = evidence or residual or ""`; an empty path parks without a judge call.
   - **Tests:** `V-AP-HOLD-PATH-ORDER`, `V-AP-PIVOT-HOLD-JUDGES-RESIDUAL`, `V-AP-EMPTY-HOLD-PARKS-UNJUDGED`, and the mutant `hold_residual_ignored`. Gate result: `AUTOPILOT_GATE_PASS`, 39/39. The backup is `bak-20261113T112729Z`.
