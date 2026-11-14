@@ -5,7 +5,14 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**NEWEST — 2026-11-14 11:20Z (pane 4246d04c, Owner "y"). DEPLOYED: an un-park after a policy refusal no longer re-judges.**
+**NEWEST — 2026-11-14 11:35Z (pane 4246d04c, Owner "y" to fixing test_s38k_ox and re-judging S41K). Another pane got there first; I changed nothing.**
+- **The defect.** KSR S41K certified 1 (main:803DA500, from the S38K pool). The judge ruled INCONCLUSIVE at 10:06Z and again at 11:16Z because `test_s38k_ox` M4 raised POOL_ID_IN_RECEIPTS.
+- **Another pane fixed it first.** t1 `a942bfc2` (11:33Z) adds `s41k/px/receipts.jsonl` to `_OWN`, following the S39K precedent 7b03d10a. The gate is GREEN, 23/23. The same pane un-parked KSR (WAITING, judged_for None), so the 11:35Z tick re-judges S41K.
+  - Just before it, c26eafbf's `48a52185` pinned the headline at **9,916 / 30,388**.
+  - My identical change was refused by my own CAS (t1 HEAD had moved off c5e97624), so nothing was duplicated.
+- **Proposal, not applied.** Admit an `_OWN` exclusion only when the file is registered with its exact sha256, plus 2 mutants: an unregistered file, and a drifted sha. It is green on c5e97624 (26/26), and the patch is in /tmp/ox_new_4246.py on GEX44. Without it, `_OWN` hides any file listed there, registered or not.
+
+**2026-11-14 11:20Z (pane 4246d04c, Owner "y"). DEPLOYED: an un-park after a policy refusal no longer re-judges.**
 - **How it works.** A policy refusal now parks with `ls["pending_plan"]`: the AGREE verdict without `_tokens`, the counter snap, the directive, next_lever, the refusal reasons and the offending lines. The record is keyed `for = <mission>:<hold set_at>`.
   - An Owner un-park on the same hold (status WAITING; judged_for may be cleared) re-plans from that record. It writes a ledger row `replan_resume`, calls no judge, and the first plan is told the refusal.
   - A new hold drops the record and is judged as usual. A successful arm also drops it.
