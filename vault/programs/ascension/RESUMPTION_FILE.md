@@ -5,6 +5,24 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-14 12:15Z, pane 4246d04c (Owner "go ahead with both new lanes"): two NEW AUTOPILOT LANES, FIFA (letter F) and WIIPARTY (letter W). Pane 4246d04c owns them; c26eafbf keeps KSR.**
+- **Products, each its own git repo with `orig/` read-only and git-ignored.**
+  - FIFA: `/home/kobii/missions/fifa11-decomp` (a9fb53f), FIFA 11 Wii PAL SELX69, 24,482 named fns in a split RSO.
+  - WIIPARTY: `/home/kobii/missions/wiiparty-decomp` (b9107b6), Wii Party PAL SUPP01, a monolithic DOL with no symbols.
+  - The laptop records are `Wii Projects\FIFA 11 Mod\decomp\F0` and `Wii Projects\WiiParty-Decomp`.
+- **Live config** (CAS 0a8adafa/d3000825/38214a16 → 33ce3620/17006db7/6b69005a; backups bak-4246-newlanes-20261114T121212Z and -state-…T121516Z):
+  - Each lane pins `orig/` by sha256 under `protected`.
+  - Each lane has a 20M starter envelope with no owner_turn, so there are no auto top-ups.
+  - Levers: fifa_compiler_matrix and fifa_rso_target_oracle; wp_dtk_split and wp_compiler_matrix. All pass `policy_check` both as a phase and as a fact.
+  - A brief section, "New lanes FIFA and WIIPARTY".
+  - State seeded with `owner_resume=research:<lever>`, so the first judgment selects a named lever. Without it, the bootstrap classes NONE and arms with lever None.
+  - Kill switches: `~/.claude/state/{fifa,wiiparty}-lane.ready`. Delete one to stop that lane.
+- **Verified before going live:**
+  - A live dry-tick: KSR and TENNIS were unaffected, and the new lanes stop at the budget gate (65.9M + 29M > 90M today).
+  - A scratch simulation (AP_HOME=scratch, caps lifted): judge → evo research with the named lever → plan → arm/hold/authority/release.
+  - The EVO packet check refused the dry stub plan, as expected: it names no lever, rival or control.
+- **First real generations come after 00:00Z,** after KSR and TENNIS in tick order. TRAP: a scratch run without `AP_HOME` reads the LIVE config, because HOME defaults to the live dir.
+
 **2026-11-14 ~12:15Z, c26eafbf (KSR coordinator per the hand-off below), Owner "y": headline 9,952 / 30,388 (32.75%), t1 `ca198fea`.**
 - Hand-off item 1, KSR part: S41K re-judged AGREE at 12:06:36Z (1 cert). Pinned in t1 `0da1b56d`.
 - S38K OX (35) had never been counted, because the only S38K judgment covered `checkpoint_s38k_x1.md`. I ran the autopilot's own judge on `checkpoint_s38k.md` as an Owner standalone judgment, with a ledger row and a digest line; lane state and EVO were untouched (`/home/kobii/agora/judge-s38kox-run/`). Result: AGREE 35/35, 10 gates rc 0, 580,330 tokens. Then pinned.
