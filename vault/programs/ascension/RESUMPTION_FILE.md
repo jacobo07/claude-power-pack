@@ -18,6 +18,19 @@
 - **Dry-tick:** rc 0. MKW reaches the budget gate, like KSR, FIFA and WIIPARTY (65.9M + 29M > 90M today). The first real judgment comes after 00:00Z, and MKW ticks last, so 6 lanes now share 90M/day.
 - **Not done:** no full scratch simulation (judge → plan → arm), and no certify route; every count is a measurement.
 
+**2026-11-14 15:30Z, pane f3df357a. Owner: "authorize a 3rd independent boundary source and thus infinitely, I always authorize new ones of that until we reach to reconstruct everything". STANDING AUTHORIZATION: never stop KSR (or ask the Owner) for want of a known-boundary source.**
+- **Why KSR stopped.** At 14:15Z S45K was judged AGREE with class INSTRUMENT_FAIL: known-boundary adequacy n_known 31, but only 3 of 4 families (MSL, nw4r, rvl; runtime absent). At 14:21Z the S46K planner found no admissible lever (NO_DONOR on disk), so the lane went STOPPED.
+- **Donors acquired.** Four public decomps were shallow-cloned into GEX44 `/home/kobii/donors/`, pinned, with no game bytes. Each declares Runtime.PPCEABI.H, MSL, RVL SDK and NW4R in configure.py:
+  - `ss` 96f2dd54 (Skyward Sword)
+  - `xenoblade` ea25691b
+  - `spm` 07e430b7 (Super Paper Mario)
+  - `tp` c8fa8c9e (Twilight Princess)
+- **Brief section added.** "Known-boundary sources: standing Owner authorization": the next generation admits another independent source whenever adequacy fails, and may clone more public decomps at pinned commits. These stay unchanged: n_min 30, 4 families, recall 0.80, the agreement rule, mask_fn and match. Sources are pre-registered before any count. policy_check gives [] on all 7 lines, as a phase and as a fact. Live brief fba98110; the laptop mirror equals live (it was behind by 58 lines of other panes' sections, with no laptop-only lines).
+- **KSR resumed without a re-judge.** Under cron.lock, with backup `bak-f3df-kbsource-20261114T152519Z`:
+  - `pending_plan` is keyed on hold `m-d2c2e4d9922a:1794665646.4988945`, with gen S46K and lever tu_boundary_repair.
+  - Status went STOPPED → WAITING and judged_for was cleared. Ledger row `owner_resume`.
+  - The 15:30Z tick wrote `replan_resume` (no judge row), and the S46K planner was running.
+
 **2026-11-14 13:13Z, pane f3df357a (/kresume of c26eafbf, Owner "y" 12:55Z): RETRY-keeps-judgment DEPLOYED LIVE (hand-off item 3 closed).**
 - An arm RETRY now stores `ls["pending_plan"] = pend`, so the next tick re-plans from the kept judgment (`replan_resume`), with no second judge call and no double count of class or graph credit.
 - Gates: V-AP-RETRY-KEEPS-JUDGMENT and V-AP-RETRY-REARMS-WITHOUT-REJUDGE. The staged no-fix control was red.
