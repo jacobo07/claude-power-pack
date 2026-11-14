@@ -1,0 +1,1531 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-14_141359_how-do-gamecube-wii-projects-recover-per-translati",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://github.com/doldecomp",
+   "aliases": [],
+   "sha256": "a4081e95edd2b01743dd042a90d2527ceae719fd3c033866176304fa14198928",
+   "chars": 3432,
+   "snapshot": "a4081e95edd2b01743dd042a90d2527ceae719fd3c033866176304fa14198928.txt",
+   "retrieved_at": "2026-11-14T13:14:23+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://github.com/encounter/decomp-toolkit",
+   "aliases": [],
+   "sha256": "f644a1fdb1678e68d23889147b841e8d983669f77be91a8d6664a5dda9d5e22d",
+   "chars": 14946,
+   "snapshot": "f644a1fdb1678e68d23889147b841e8d983669f77be91a8d6664a5dda9d5e22d.txt",
+   "retrieved_at": "2026-11-14T13:14:23+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/matching-decomp/",
+   "aliases": [],
+   "sha256": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250",
+   "chars": 25000,
+   "snapshot": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250.txt",
+   "retrieved_at": "2026-11-14T13:14:23+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://decomp.wiki/platforms/gamecube-wii",
+   "aliases": [],
+   "sha256": "7a1b8ceb03b669603db2a61e4ae94ad01c3701ba6cb1f7a678448d7934296ce0",
+   "chars": 27,
+   "snapshot": "7a1b8ceb03b669603db2a61e4ae94ad01c3701ba6cb1f7a678448d7934296ce0.txt",
+   "retrieved_at": "2026-11-14T13:14:23+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc-14.2.0/gcc/Overall-Options.html",
+   "aliases": [],
+   "sha256": "2b014116f1dccb122f70d44a4d770601a26d2acaa7d97c21cd7208a4ce531f48",
+   "chars": 25000,
+   "snapshot": "2b014116f1dccb122f70d44a4d770601a26d2acaa7d97c21cd7208a4ce531f48.txt",
+   "retrieved_at": "2026-11-14T13:15:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Overall-Options.html",
+   "aliases": [],
+   "sha256": "8f017b5c16e641ffa98121565f2b77e9263ee43a3cfc7d69b5e0ab8399704afe",
+   "chars": 7760,
+   "snapshot": "8f017b5c16e641ffa98121565f2b77e9263ee43a3cfc7d69b5e0ab8399704afe.txt",
+   "retrieved_at": "2026-11-14T13:15:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://arxiv.org/abs/2505.12668",
+   "aliases": [],
+   "sha256": "533bd6137461d4fd7c104117b42f04a3dbe0ec4b1aa86b5d382d7091b107aef9",
+   "chars": 4971,
+   "snapshot": "533bd6137461d4fd7c104117b42f04a3dbe0ec4b1aa86b5d382d7091b107aef9.txt",
+   "retrieved_at": "2026-11-14T13:16:16+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://www.usenix.org/system/files/sec22-burk.pdf",
+   "aliases": [],
+   "sha256": "a098533a78e6a056b244afce388dbe5d0663ff871a0956c789d06b0d68582c89",
+   "chars": 25000,
+   "snapshot": "a098533a78e6a056b244afce388dbe5d0663ff871a0956c789d06b0d68582c89.txt",
+   "retrieved_at": "2026-11-14T13:16:16+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://en.wikipedia.org/wiki/Decompiler",
+   "aliases": [],
+   "sha256": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d",
+   "chars": 15862,
+   "snapshot": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d.txt",
+   "retrieved_at": "2026-11-14T13:16:16+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://www.retroreversing.com/decompilers",
+   "aliases": [],
+   "sha256": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b",
+   "chars": 25000,
+   "snapshot": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b.txt",
+   "retrieved_at": "2026-11-14T13:16:16+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://github.com/PrimeDecomp/mwcc-tools/blob/main/gc2/docs/matching-guide.md",
+   "aliases": [],
+   "sha256": "67d69e6388d76649190037b2bd8833bceda4d99129fd8fbdca414f4856f369de",
+   "chars": 25000,
+   "snapshot": "67d69e6388d76649190037b2bd8833bceda4d99129fd8fbdca414f4856f369de.txt",
+   "retrieved_at": "2026-11-14T13:17:02+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://www.razorcat.com/files/files/tessy/matrix/doc/Compiler/022-Metrowerks-Compiler.pdf",
+   "aliases": [],
+   "sha256": "f75fbc2c613daacfad7c70f31a4040fcf0f47ddb8b01a7bf7fe93da35d4100fc",
+   "chars": 25000,
+   "snapshot": "f75fbc2c613daacfad7c70f31a4040fcf0f47ddb8b01a7bf7fe93da35d4100fc.txt",
+   "retrieved_at": "2026-11-14T13:17:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://docs.databricks.com/aws/en/tables/tune-file-size",
+   "aliases": [],
+   "sha256": "910c07c57ec86ecd06925f359bf5ff7b3ea0a7c461b3136010b149dad14dd615",
+   "chars": 11831,
+   "snapshot": "910c07c57ec86ecd06925f359bf5ff7b3ea0a7c461b3136010b149dad14dd615.txt",
+   "retrieved_at": "2026-11-14T13:19:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://learn.microsoft.com/en-us/fabric/data-engineering/table-compaction",
+   "aliases": [],
+   "sha256": "b5299cbe736e3c2c226ad9906dd4d535aebfbc14045e43823c23d62ed1970d68",
+   "chars": 15360,
+   "snapshot": "b5299cbe736e3c2c226ad9906dd4d535aebfbc14045e43823c23d62ed1970d68.txt",
+   "retrieved_at": "2026-11-14T13:19:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://learn.microsoft.com/en-us/fabric/data-engineering/tune-file-size",
+   "aliases": [],
+   "sha256": "c28dcb6dd7e36d37b0f2c3c6e7ddbe6af63654cc5f4af1113c31547b8b639dce",
+   "chars": 11851,
+   "snapshot": "c28dcb6dd7e36d37b0f2c3c6e7ddbe6af63654cc5f4af1113c31547b8b639dce.txt",
+   "retrieved_at": "2026-11-14T13:19:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://community.databricks.com/t5/data-engineering/small-files-persist-after-optimize-with-target-file-size-set-to/td-p/123975",
+   "aliases": [],
+   "sha256": "95620e4e6dc77dd368b75b0fefbc6a564f6434254489540be2d728f456b33a1e",
+   "chars": 7954,
+   "snapshot": "95620e4e6dc77dd368b75b0fefbc6a564f6434254489540be2d728f456b33a1e.txt",
+   "retrieved_at": "2026-11-14T13:19:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://community.databricks.com/t5/data-engineering/small-big-file-problem-how-do-you-fix-it/td-p/13972",
+   "aliases": [],
+   "sha256": "4933e56cbb40262b581805c9fa6d35b05aa381d946d688d8f44d7371509db572",
+   "chars": 6701,
+   "snapshot": "4933e56cbb40262b581805c9fa6d35b05aa381d946d688d8f44d7371509db572.txt",
+   "retrieved_at": "2026-11-14T13:19:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://assets.markallengroup.com/article-images/18847/Introduction%20to%20boundary-scan.pdf",
+   "aliases": [],
+   "sha256": "31b56c720e1d572a3e2d6e6bbdf189a8e3065244437d18ba23a47f1f2e19356f",
+   "chars": 25000,
+   "snapshot": "31b56c720e1d572a3e2d6e6bbdf189a8e3065244437d18ba23a47f1f2e19356f.txt",
+   "retrieved_at": "2026-11-14T13:19:30+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://interrupt.memfault.com/blog/diving-into-jtag-part1",
+   "aliases": [],
+   "sha256": "66cb0fa54294db20dae3b6f041c6a1c8517a90182b39387adfcd8e57d0e75efa",
+   "chars": 14961,
+   "snapshot": "66cb0fa54294db20dae3b6f041c6a1c8517a90182b39387adfcd8e57d0e75efa.txt",
+   "retrieved_at": "2026-11-14T13:19:30+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://interrupt.memfault.com/blog/diving-into-jtag-part-3",
+   "aliases": [],
+   "sha256": "14da90a4f5150c86897b013b512218c4bcde2e7746b0977d16ac1ef460a545d5",
+   "chars": 13992,
+   "snapshot": "14da90a4f5150c86897b013b512218c4bcde2e7746b0977d16ac1ef460a545d5.txt",
+   "retrieved_at": "2026-11-14T13:19:30+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://www2.lauterbach.com/pdf/boundary_scan.pdf",
+   "aliases": [],
+   "sha256": "fe72729578f40015f7e8dec8f86bb67d8d030f656a84c7aaeab4dee0663cffbf",
+   "chars": 25000,
+   "snapshot": "fe72729578f40015f7e8dec8f86bb67d8d030f656a84c7aaeab4dee0663cffbf.txt",
+   "retrieved_at": "2026-11-14T13:19:30+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://en.wikipedia.org/wiki/False_positives_and_false_negatives",
+   "aliases": [],
+   "sha256": "c00b99cdfcb477ff55a6679108aac96595575aa6f7f1a5a9737e34dc14a325f9",
+   "chars": 8425,
+   "snapshot": "c00b99cdfcb477ff55a6679108aac96595575aa6f7f1a5a9737e34dc14a325f9.txt",
+   "retrieved_at": "2026-11-14T13:20:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://en.wikipedia.org/wiki/False_positive_rate",
+   "aliases": [],
+   "sha256": "5d066963c96f1b953dcd8277bb729332ebfa68503935f252b6b61e460c5e7b06",
+   "chars": 6967,
+   "snapshot": "5d066963c96f1b953dcd8277bb729332ebfa68503935f252b6b61e460c5e7b06.txt",
+   "retrieved_at": "2026-11-14T13:20:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://blog.nillsf.com/index.php/2020/05/23/confusion-matrix-accuracy-recall-precision-false-positive-rate-and-f-scores-explained/",
+   "aliases": [],
+   "sha256": "c3ccb1f527d9f04267bf4ec4e4a84188ba8c395760d62d2db672df14a7714b68",
+   "chars": 8347,
+   "snapshot": "c3ccb1f527d9f04267bf4ec4e4a84188ba8c395760d62d2db672df14a7714b68.txt",
+   "retrieved_at": "2026-11-14T13:20:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S24"
+  },
+  {
+   "source_id": "S25",
+   "url": "https://arxiv.org/pdf/2312.13463",
+   "aliases": [],
+   "sha256": "c6200d2f0a059f63d29550811c6de02030b538151b2e4866ef34d073328d76f9",
+   "chars": 25000,
+   "snapshot": "c6200d2f0a059f63d29550811c6de02030b538151b2e4866ef34d073328d76f9.txt",
+   "retrieved_at": "2026-11-14T13:21:04+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S25"
+  },
+  {
+   "source_id": "S26",
+   "url": "https://blog.hpc.qmul.ac.uk/debugging-with-compiler-flags/",
+   "aliases": [],
+   "sha256": "5f06f21fb803ddd5f9c3e69d4b8552cf837ac7fe429afdfe3a42b2a92080e75c",
+   "chars": 11404,
+   "snapshot": "5f06f21fb803ddd5f9c3e69d4b8552cf837ac7fe429afdfe3a42b2a92080e75c.txt",
+   "retrieved_at": "2026-11-14T13:21:04+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S26"
+  },
+  {
+   "source_id": "S27",
+   "url": "https://laptopjudge.com/gcc-documentation/",
+   "aliases": [],
+   "sha256": "4ca715155cad00ec12effb920b9666b6233df4c18ae5eb905fcfa415b55bf345",
+   "chars": 12298,
+   "snapshot": "4ca715155cad00ec12effb920b9666b6233df4c18ae5eb905fcfa415b55bf345.txt",
+   "retrieved_at": "2026-11-14T13:21:04+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S27"
+  },
+  {
+   "source_id": "S28",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html",
+   "aliases": [],
+   "sha256": "5408a0996b1636ea2192391c80f714dcd87f7c07081762aff8435352a7fde145",
+   "chars": 25000,
+   "snapshot": "5408a0996b1636ea2192391c80f714dcd87f7c07081762aff8435352a7fde145.txt",
+   "retrieved_at": "2026-11-14T13:21:04+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S28"
+  },
+  {
+   "source_id": "S29",
+   "url": "https://en.wikipedia.org/wiki/List_of_GameCube_games",
+   "aliases": [],
+   "sha256": "228c86cd27aebc4b62f9d4ce8a1881b0f0f4f21fd4ea09d3ac9810c2fbec3f13",
+   "chars": 25000,
+   "snapshot": "228c86cd27aebc4b62f9d4ce8a1881b0f0f4f21fd4ea09d3ac9810c2fbec3f13.txt",
+   "retrieved_at": "2026-11-14T13:22:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S29"
+  },
+  {
+   "source_id": "S30",
+   "url": "https://en.wikipedia.org/wiki/List_of_Wii_games",
+   "aliases": [],
+   "sha256": "2f4d1257e344e7dfad2d3139ea4b449096bac4c5761bb010ab17d3b821b1da5d",
+   "chars": 25000,
+   "snapshot": "2f4d1257e344e7dfad2d3139ea4b449096bac4c5761bb010ab17d3b821b1da5d.txt",
+   "retrieved_at": "2026-11-14T13:22:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S30"
+  },
+  {
+   "source_id": "S31",
+   "url": "https://www.gametdb.com/Wii",
+   "aliases": [],
+   "sha256": "38eb6b64f247419f06b0a05cd09b326b0b1aaddd99d262f6a47c9768ed39ef3c",
+   "chars": 13636,
+   "snapshot": "38eb6b64f247419f06b0a05cd09b326b0b1aaddd99d262f6a47c9768ed39ef3c.txt",
+   "retrieved_at": "2026-11-14T13:22:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S31"
+  },
+  {
+   "source_id": "S32",
+   "url": "https://www.tiktok.com/@fuzzypixels/video/7646349303031532822",
+   "aliases": [],
+   "sha256": "9a1dadd3120566415a8c41a77faa7a55a36f58f0ca26f422ed920b296d9a66c3",
+   "chars": 22,
+   "snapshot": "9a1dadd3120566415a8c41a77faa7a55a36f58f0ca26f422ed920b296d9a66c3.txt",
+   "retrieved_at": "2026-11-14T13:22:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S32"
+  },
+  {
+   "source_id": "S33",
+   "url": "https://github.com/orgs/doldecomp/repositories",
+   "aliases": [],
+   "sha256": "4da9797599faaa29f10cc4dfe7418d5c0bf42ad568598465b75f50d17cc36894",
+   "chars": 6944,
+   "snapshot": "4da9797599faaa29f10cc4dfe7418d5c0bf42ad568598465b75f50d17cc36894.txt",
+   "retrieved_at": "2026-11-14T13:22:49+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S33"
+  },
+  {
+   "source_id": "S34",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/gamecube-wii/",
+   "aliases": [],
+   "sha256": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f",
+   "chars": 22525,
+   "snapshot": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f.txt",
+   "retrieved_at": "2026-11-14T13:22:49+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S34"
+  },
+  {
+   "source_id": "S35",
+   "url": "https://encounter.github.io/",
+   "aliases": [],
+   "sha256": "4f578cff429797d165b13b457c2962ba5b746b3420cd18fe9c56d007572669b6",
+   "chars": 5386,
+   "snapshot": "4f578cff429797d165b13b457c2962ba5b746b3420cd18fe9c56d007572669b6.txt",
+   "retrieved_at": "2026-11-14T13:22:49+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S35"
+  },
+  {
+   "source_id": "S36",
+   "url": "https://www.cl.cam.ac.uk/teaching//2021/OptComp/slides/lecture15.pdf",
+   "aliases": [],
+   "sha256": "760e9203936c3251a2d30f65c2b11fd448cf52273d323eb2febd24ebe4feb020",
+   "chars": 25000,
+   "snapshot": "760e9203936c3251a2d30f65c2b11fd448cf52273d323eb2febd24ebe4feb020.txt",
+   "retrieved_at": "2026-11-14T13:23:18+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S36"
+  },
+  {
+   "source_id": "S37",
+   "url": "https://en.wikipedia.org/wiki/Register_allocation",
+   "aliases": [],
+   "sha256": "a29750e6412bf8afd08807248f997c6545da1484cce459cc1ad5484a64268d18",
+   "chars": 25000,
+   "snapshot": "a29750e6412bf8afd08807248f997c6545da1484cce459cc1ad5484a64268d18.txt",
+   "retrieved_at": "2026-11-14T13:23:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S37"
+  },
+  {
+   "source_id": "S38",
+   "url": "https://browncs1260.github.io/notes/22",
+   "aliases": [],
+   "sha256": "30526f386cfd031d826b68e9f32262cdeb10972b4fe4f04d3d3e33726617162f",
+   "chars": 6357,
+   "snapshot": "30526f386cfd031d826b68e9f32262cdeb10972b4fe4f04d3d3e33726617162f.txt",
+   "retrieved_at": "2026-11-14T13:23:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S38"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S3",
+   "start": 7601,
+   "end": 7710,
+   "text": "Do not guess flags blindly. A flag mismatch makes every function unmatchable and looks like a source problem.",
+   "sha256": "bae8bfa363ce25c2103481a3e71f3e0cdc484d066b6f29711a4e9c317251352f"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S3",
+   "start": 7021,
+   "end": 7117,
+   "text": "Sometimes per-file flag overrides. Large projects override flags for specific translation units.",
+   "sha256": "81f43eb7f3ebb95965bc5380841a7e81a38fad39b57cc78fa7ddd24764280780"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S2",
+   "start": 2905,
+   "end": 3023,
+   "text": "Then, each object can be replaced by a decompiled version as matching code is written. If the linker still generates a",
+   "sha256": "f8bce18f3f5e9a1da2cdd991fc5685fcdb65d3a0a0df4560bf5987e5c7b7fa09"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S3",
+   "start": 3047,
+   "end": 3144,
+   "text": "Every function and every piece of data in a file match, and the whole ROM rebuilds byte for byte.",
+   "sha256": "52fd781927ed9b6b0144344b7ea8e68a1bc696101041bbeb4f23270e4066db2b"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S3",
+   "start": 3264,
+   "end": 3415,
+   "text": "A project can sit at 90 percent function coverage and still fail to link the final ROM because of data layout, literal pools, or one stubborn function.",
+   "sha256": "4fcb2dd115f31b71ec9b22dd4861c4a1030d8f5bb57943a7de15da50ca94090c"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S5",
+   "start": 207,
+   "end": 328,
+   "text": "Compilation can involve up to four stages: preprocessing, compilation\nproper, assembly and linking, always in that order.",
+   "sha256": "98e1f5bda9eca6106f25bd8c8f4cfe2cf6e22faba7af9b8b6e1aab992616bb0c"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S6",
+   "start": 166,
+   "end": 287,
+   "text": "Compilation can involve up to four stages: preprocessing, compilation\nproper, assembly and linking, always in that order.",
+   "sha256": "98e1f5bda9eca6106f25bd8c8f4cfe2cf6e22faba7af9b8b6e1aab992616bb0c"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S5",
+   "start": 4719,
+   "end": 4877,
+   "text": "Stop after the stage of compilation proper; do not assemble.  The output\nis in the form of an assembler code file for each non-assembler input\nfile specified.",
+   "sha256": "e295c49e2834ac64f674ce5ec40ce9552e11512c131004c1043947c28c12e432"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S5",
+   "start": 4340,
+   "end": 4509,
+   "text": "Compile or assemble the source files, but do not link.  The linking\nstage simply is not done.  The ultimate output is in the form of an\nobject file for each source file.",
+   "sha256": "2f89acb7d293590f9c119fc77bc5edf98cb6579bdcbb4c832c91991254e3e50a"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S5",
+   "start": 22921,
+   "end": 22996,
+   "text": "This can be used to make reproducible\nbuilds that are location independent.",
+   "sha256": "d89846a36ce3c273307f75d95597fd69145ea1c5c0ff5343a925e66036f33c3e"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S10",
+   "start": 19129,
+   "end": 19259,
+   "text": "Matching each function does not establish that the rebuilt file supplies the correct data or links into the final image correctly.",
+   "sha256": "65c50c2c907dda677d2db8a1b5033c534d807a3d8f0d360c1289e8a1941a9fe7"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S10",
+   "start": 19812,
+   "end": 19877,
+   "text": "Do not infer a complete rebuild from a function similarity score.",
+   "sha256": "a3016b488092735f919a4bfc926a5ad8a8ff7c537a1fb14a22c199ccb361d66d"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S10",
+   "start": 21795,
+   "end": 21884,
+   "text": "A useful checker must reject incorrect reconstructions as well as recognise correct ones.",
+   "sha256": "342fb6c8787296fa6b1470d0fc2477a2e61bcec15c4d19d20df847201d337182"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S10",
+   "start": 22664,
+   "end": 22816,
+   "text": "If it still reports a complete match, inspect whether the check covers only instructions, masks relocations, omits referenced data or used an old build.",
+   "sha256": "c434bd9727a3d96e233cd86f168de5f2b106d09dcd3e2b7f42c37242fc9704ac"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S10",
+   "start": 20065,
+   "end": 20208,
+   "text": "Treat a proposed split as a hypothesis: assign the associated data, rebuild, and check that existing matches and the final image remain intact.",
+   "sha256": "caf11f81f9e4de7e7b52a944057855f940c8e88a725f59a78d1c942a38ecc015"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S10",
+   "start": 18104,
+   "end": 18214,
+   "text": "Before changing compiler settings, check the project’s known configuration and neighbouring matched functions.",
+   "sha256": "0ab6d66e145772f369142afb5ad00620f784f7a71d5cc728e3145191420bcefc"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S11",
+   "start": 15116,
+   "end": 15193,
+   "text": "MWCC emits a literal at its first use and pools equal literals within a unit.",
+   "sha256": "8070d5c71c924345deaea815b4c83542ef2fc120eceb2d8c65ce744b0c971ff3"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S11",
+   "start": 13306,
+   "end": 13357,
+   "text": "Statics are allocated in reverse declaration order.",
+   "sha256": "dc4fda82194bec8fc5a126b3d6368da84cdba18cd8954e14db1b967435090ef1"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S11",
+   "start": 13410,
+   "end": 13466,
+   "text": "Use the .bss addresses to recover the declaration order.",
+   "sha256": "1e2e93d144e399b8cb100a721564307cf8011e4c73432e421a086e5031256e71"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S11",
+   "start": 7938,
+   "end": 7988,
+   "text": "The auto-inline limit counts statements, not size.",
+   "sha256": "5c9f584b06debf38071252033cabf0f1f4a8e558f4445f27e7a8687ba58d187c"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S11",
+   "start": 8175,
+   "end": 8234,
+   "text": "At nesting level 1 the limit is 10, and at level 2 it is 7.",
+   "sha256": "006f880b680d33db4d7249b4dee7e97f09249ce84fdd9704e6e58d2b8b78692a"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S10",
+   "start": 19129,
+   "end": 19259,
+   "text": "Matching each function does not establish that the rebuilt file supplies the correct data or links into the final image correctly.",
+   "sha256": "65c50c2c907dda677d2db8a1b5033c534d807a3d8f0d360c1289e8a1941a9fe7"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S10",
+   "start": 19453,
+   "end": 19508,
+   "text": "Function order and literal use can affect their layout.",
+   "sha256": "b86628b5770db9424532253fcaf1fc60e0b5441c65522b9bd0e94fec0494e08b"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S10",
+   "start": 18962,
+   "end": 19081,
+   "text": "Record the compiler, flags and resulting diff rather than treating a register-allocation heuristic as a universal rule.",
+   "sha256": "23a8162aada5902837e54e3c8d9e40407c0fe55f4bbab855dceecb84235d2bd5"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S10",
+   "start": 18104,
+   "end": 18214,
+   "text": "Before changing compiler settings, check the project’s known configuration and neighbouring matched functions.",
+   "sha256": "0ab6d66e145772f369142afb5ad00620f784f7a71d5cc728e3145191420bcefc"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S16",
+   "start": 5006,
+   "end": 5133,
+   "text": "That setting is only a guideline, not a hard rule. Delta makes a best effort but won’t force all files to match the exact size.",
+   "sha256": "41b0954385ba3ab797f0341b471766f75f14b3e6e823084952e4ef0375c4fb82"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S13",
+   "start": 7040,
+   "end": 7167,
+   "text": "When set, all data layout optimization operations make a best-effort attempt to generate files of the specified size, including",
+   "sha256": "9000b85a6c70f946340547724a0e5fc34da59d7d334d33c36d8333329f019d6b"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S13",
+   "start": 8570,
+   "end": 8806,
+   "text": "For tables smaller than 2.56 TB, the autotuned target file size is 256 MB. For tables with a size between 2.56 TB and 10 TB, the target size grows linearly from 256 MB to 1 GB. For tables larger than 10 TB, the target file size is 1 GB.",
+   "sha256": "cd287346d86b38e8b9d4fbf9800fd7504cfb5b96a2773b21ef90b592533b80e0"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S14",
+   "start": 14584,
+   "end": 14620,
+   "text": "Smallest file size after compaction.",
+   "sha256": "7b81dfb2e0da32218b4940a720382e9f59791948713f127739126e6772906639"
+  },
+  {
+   "span_id": "E30",
+   "source_id": "S13",
+   "start": 8812,
+   "end": 8917,
+   "text": "When the target file size for a table grows, existing files are not re-optimized into larger files by the",
+   "sha256": "7bc742faba423d3b4385d78a93c122ef39adfcab68098afa9f615d02d53276fd"
+  },
+  {
+   "span_id": "E31",
+   "source_id": "S22",
+   "start": 6911,
+   "end": 6993,
+   "text": "The higher this threshold, the more false negatives and the fewer false positives.",
+   "sha256": "c68439719f935f3a277b0099480670a46ad1f9504b4a4e840c4e8c62cf9bb03a"
+  },
+  {
+   "span_id": "E32",
+   "source_id": "S22",
+   "start": 5209,
+   "end": 5318,
+   "text": "Because of the ambiguity of notation in this field, it is essential to look at the definition in every paper.",
+   "sha256": "f8cce3b8429eb4cc98f0b913c0679fb0d79c85f5537cf8d4b20436f26c2565a0"
+  },
+  {
+   "span_id": "E33",
+   "source_id": "S27",
+   "start": 8462,
+   "end": 8624,
+   "text": "If behavior changes, investigate undefined behavior before selecting a faster flag. Optimization often reveals an existing source defect rather than creating one.",
+   "sha256": "46dbb37b823e307aa49f3b15d649a43cf45f4cf8138ca6126da46d9188f9243e"
+  },
+  {
+   "span_id": "E34",
+   "source_id": "S27",
+   "start": 8748,
+   "end": 8816,
+   "text": "The actual issue was an uninitialized value exposed by optimization.",
+   "sha256": "cadae4e31517c5784bdb41bdf116221ab53fd20ecd0d23a1ed7efb116fa2e6fd"
+  },
+  {
+   "span_id": "E35",
+   "source_id": "S28",
+   "start": 1450,
+   "end": 1599,
+   "text": "Depending on the target and how GCC was configured, a slightly different\nset of optimizations may be enabled at each\n-O\nlevel than\nthose listed here.",
+   "sha256": "6d625775ef844e026a4cd872b533e832ee522fb550c637b760f06497c5afb98c"
+  },
+  {
+   "span_id": "E36",
+   "source_id": "S27",
+   "start": 5375,
+   "end": 5477,
+   "text": "This approach separates actual source defects from new warnings introduced by a different GCC release.",
+   "sha256": "0e239317ea79899f4c656f182b5768385fb6fd264a26177b8db6e4517dea55bd"
+  },
+  {
+   "span_id": "E37",
+   "source_id": "S26",
+   "start": 11327,
+   "end": 11404,
+   "text": "We also\nsee that as compilers develop their diagnostic abilities may improve.",
+   "sha256": "7a9344cf3ce827341b5723bdacd01e8edacb57f5abcc1addd03d36f536dbb7f6"
+  },
+  {
+   "span_id": "E38",
+   "source_id": "S27",
+   "start": 1541,
+   "end": 1592,
+   "text": "The commit, archive, or source version being tested",
+   "sha256": "fbd5bda2bef5d229fd36863a33065767b904a17452f2a46981238a49d7746341"
+  },
+  {
+   "span_id": "E39",
+   "source_id": "S27",
+   "start": 167,
+   "end": 284,
+   "text": "Check the compiler version, inspect available options, change one flag at a time, and test on the real target system.",
+   "sha256": "c3fcb79268065bf20f3df7c5145aa8c3f3de92ec9e80885eecafd8b8688b0789"
+  },
+  {
+   "span_id": "E40",
+   "source_id": "S34",
+   "start": 15861,
+   "end": 15969,
+   "text": "The key is giving the agent the exact compiler version and flags. CodeWarrior's codegen is version-specific.",
+   "sha256": "0f5b9be4e7873661503f395751ee699ce62e42b73c45298071821b4a86c14939"
+  },
+  {
+   "span_id": "E41",
+   "source_id": "S34",
+   "start": 5398,
+   "end": 5532,
+   "text": "The SDK is a static library linked into every game. Different games may use different SDK versions, but the core functions are stable.",
+   "sha256": "8b744c98ce6bb5054be5404bcc3d36f5b6370938e8e287f2930e94850eb58bcc"
+  },
+  {
+   "span_id": "E42",
+   "source_id": "S33",
+   "start": 3567,
+   "end": 3637,
+   "text": "A decompilation of the 5-23-2001 version of the Dolphin SDK Libraries.",
+   "sha256": "9b5e8162448623b12aa9faed55dd43417f68364841a1b8cfee449471f60dd6a0"
+  },
+  {
+   "span_id": "E43",
+   "source_id": "S33",
+   "start": 4634,
+   "end": 4704,
+   "text": "A decompilation of the 4-20-2004 version of the Dolphin SDK Libraries.",
+   "sha256": "9b8c2663d5a765b8f0fea6a878f1d2d497c3d9518452eff019401bc2cc4351c3"
+  },
+  {
+   "span_id": "E44",
+   "source_id": "S37",
+   "start": 17038,
+   "end": 17167,
+   "text": "The heuristics used for ordering\nof RN reduction, and modification of cost have a significant effect on the\nresulting allocation.",
+   "sha256": "15316f4c9880205043235255cb38285316ccd79cd3a4503bfdb2e5ec75b20614"
+  },
+  {
+   "span_id": "E45",
+   "source_id": "S37",
+   "start": 5291,
+   "end": 5372,
+   "text": "Chaitin et al. showed that optimal register allocation is an\nNP-complete\nproblem.",
+   "sha256": "e34da47b1810608c91f1cf0f91d11222b6c00667d5624781be29e803d8b0dc45"
+  },
+  {
+   "span_id": "E46",
+   "source_id": "S37",
+   "start": 21182,
+   "end": 21252,
+   "text": "The\nHotspot server compiler\nuses graph coloring for its superior code.",
+   "sha256": "b07247eedcee78b42fd510533e371b57756e040a1560b926a351bc4730a0df3b"
+  },
+  {
+   "span_id": "E47",
+   "source_id": "S37",
+   "start": 20664,
+   "end": 20807,
+   "text": "The motivation for this approach is speed; not in terms of execution time of the generated code, but in terms of time spent in code generation.",
+   "sha256": "d00cc3294b0777b2f9375d9146e53a3593a98bbff0d5d265d3f0548e3950a15c"
+  },
+  {
+   "span_id": "E48",
+   "source_id": "S38",
+   "start": 4163,
+   "end": 4227,
+   "text": "A basic block program is agnostic about where values get stored.",
+   "sha256": "2e9dd9e3134522f62c55d2a8fc5b8ca9a4f97587ec9489b94397dc03980ba7ca"
+  },
+  {
+   "span_id": "E49",
+   "source_id": "S38",
+   "start": 6055,
+   "end": 6152,
+   "text": "We won't always be able to do this with registers alone,\nforcing us to spill over into the stack.",
+   "sha256": "67b4b55c0902bae7d4a1d22f5b5e4ab45d0011d716c928d3f218793693de9518"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "The contents state that a flag mismatch makes every function unmatchable and looks like a source problem, and that large projects sometimes override flags for specific translation units. The practical consequence is that teams should test candidate flags against one known-matched function before spending effort rewriting code. Note that none of the sources publish per-translation-unit measurements of which flag differences changed instructions, data layout or section placement, so this is general guidance only.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measurements have decomp projects actually published showing which compiler flag differences between translation units in the same GameCube or Wii game produced a different instruction sequence, data layout or section placement, and how were those differences confirmed against the original binary?",
+    "capability": "You can stop assuming a compiler-flag mismatch is a code problem, and instead check flags first when a whole batch of functions fails to match."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "GameCube/Wii projects split the original binary into per-file objects, swap in decompiled versions one at a time, and relink with the original linker. If the output is still byte-for-byte identical, that confirms not just the instructions but the data layout and section placement for that file. This is the confirmation method the field uses, though the contents give no worked example of a specific flag difference caught this way.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S2",
+    "S3"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measurements have decomp projects actually published showing which compiler flag differences between translation units in the same GameCube or Wii game produced a different instruction sequence, data layout or section placement, and how were those differences confirmed against the original binary?",
+    "capability": "You can treat a rebuilt binary that is byte-identical to the original after relinking as the accepted proof that per-file build settings are right, rather than relying on instruction-level comparison alone."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "A project can sit at 90 percent function coverage and still fail to link the final binary because of data layout, literal pools, or one stubborn function. So function-level progress figures overstate how close a decomp is to a verified result, and data and section placement need their own tracking.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What measurements have decomp projects actually published showing which compiler flag differences between translation units in the same GameCube or Wii game produced a different instruction sequence, data layout or section placement, and how were those differences confirmed against the original binary?",
+    "capability": "You can stop equating a high function-match percentage with a finished project, and budget separately for data layout and final linking work."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "The compiler toolchain runs four distinct stages in fixed order: preprocessing, compilation proper, assembly, and linking. Each source file is compiled to its own object file, and only the final linking step combines all object files into the executable, so a per-file option change takes effect in that file's object output before the linker merges everything.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6",
+    "E7"
+   ],
+   "source_ids": [
+    "S5",
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does changing a single compiler option for one source file shift the order of data, constants and string literals in the output, and what chain of compiler decisions causes the final binary's layout to differ from the original?",
+    "capability": "You can stop assuming that a build is a single opaque step and instead ask engineers which stage (preprocessing, compilation, assembly, or linking) a suspected change affects, narrowing where a layout difference could have originated."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "The compiler can be told to stop after any stage and hand back that stage's output: preprocessed source, assembler code, or an unlinked object file per source file. Comparing these for the single changed file, before and after the option change, isolates whether the data, constants and string literal ordering shifted at compile time or only later at link time.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8",
+    "E9"
+   ],
+   "source_ids": [
+    "S5"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does changing a single compiler option for one source file shift the order of data, constants and string literals in the output, and what chain of compiler decisions causes the final binary's layout to differ from the original?",
+    "capability": "You can request an inspectable intermediate artifact (assembly or preprocessed output) for the one file whose option changed, so a layout dispute is settled by comparing evidence rather than by debate."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "The compiler offers path-remapping options so that references to the build directory recorded in output are rewritten as if the files lived elsewhere, and the manual explicitly names this as the way to make location-independent reproducible builds. Build location is therefore one input that can change what gets embedded in the binary, and it can be neutralized.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10"
+   ],
+   "source_ids": [
+    "S5"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S5",
+     "quote": "When compiling files residing in directory old, record any references to them in the result of the compilation as if the files resided in directory new instead.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does changing a single compiler option for one source file shift the order of data, constants and string literals in the output, and what chain of compiler decisions causes the final binary's layout to differ from the original?",
+    "capability": "You can require reproducible-build settings when you need the same source to yield the same binary, rather than accepting layout and embedded-path differences as unavoidable noise."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "Matching every function in a file does not show the rebuilt file supplies the right data or links into the final image correctly. The guidance is to check literal pools, section placement and data ownership after functions match, and to run a full binary comparison rather than inferring a complete rebuild from a function similarity score. This is where a coincidental function match under wrong per-file settings can hide until data or layout is compared.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11",
+    "E12"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens when a decompilation team guesses per-file compiler flags and gets a function or data section that matches the original bytes by coincidence, and how do they discover later that the guess was wrong?",
+    "capability": "You can stop treating a high function-level match score as proof that a rebuilt file or its guessed compiler settings are correct, and require data and layout checks before counting progress as real."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "The decomp.wtf data tests change a string, a floating-point constant or a pointer-table entry and expect the checker to reject each; if it still reports a complete match, the check may cover only instructions, mask relocations, omit referenced data or use a stale build. Results should also be labelled by scope: isolated function, referenced data, linked object or complete image.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13",
+    "E14"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens when a decompilation team guesses per-file compiler flags and gets a function or data section that matches the original bytes by coincidence, and how do they discover later that the guess was wrong?",
+    "capability": "You can audit whether your match-verification process would catch a false match by deliberately feeding it known-wrong candidates, instead of trusting its green results."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Proposed source-file splits, grouped by shared constants or strings and related methods, are only hypotheses. They should be validated by assigning the associated data, rebuilding, and confirming existing matches and the final image survive, and settings should be checked against the project's known configuration and neighbouring matched functions before being changed.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15",
+    "E16"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a decompilation team guesses per-file compiler flags and gets a function or data section that matches the original bytes by coincidence, and how do they discover later that the guess was wrong?",
+    "capability": "You can treat an inferred file boundary or compiler setting as a provisional hypothesis and require a rebuild that leaves existing matches and the final image intact before committing to it."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "The compiler places each literal where it is first used and merges identical ones within a single unit. Functions the linker later discards still leave their literals behind, in the order the functions were defined. Literal order and duplication in the data therefore reveal unit boundaries and the ghosts of dead code. This was observed on the x86 host compiler; the PPC output probably follows the same front-end logic, but that is unconfirmed.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the Metrowerks compiler place float constants, string literals and small data in particular sections and orders, duplicating or merging them per translation unit, and how do the small-data size threshold, the optimize-for-size pragma, the scheduling pragma and the inlining settings change that layout and the instruction order in a way a person could use to work backward from the binary?",
+    "capability": "You can treat leftover text strings and constants in a compiled binary as a way to locate where one original code unit ends and the next begins, and to date functions that were removed from the final program."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "Statics are laid out in reverse declaration order, so their addresses run backward through the source. When function order does not explain the layout, the original declared those statics at file scope. This gives a cheap, objective check on a reconstruction before anyone spends time on instruction-level matching. It was observed on one compiler version and host.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18",
+    "E19"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the Metrowerks compiler place float constants, string literals and small data in particular sections and orders, duplicating or merging them per translation unit, and how do the small-data size threshold, the optimize-for-size pragma, the scheduling pragma and the inlining settings change that layout and the instruction order in a way a person could use to work backward from the binary?",
+    "capability": "You can read the order in which the original programmers declared their static variables directly from the memory addresses in the binary, instead of guessing at it."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "With automatic inlining, a function not marked inline is absorbed into its callers only if it stays under a counted-statement limit, not a size limit. The limit tightens with nesting: the guide gives 10 at nesting level 1 and 7 at level 2. One extra statement can flip a function between inlined and standalone, which changes both code order and which data stays in the unit. The 15-statement top-level figure is for the reference compiler, and the guide says the 2.6 compiler's own limit differs.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E20",
+    "E21"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the Metrowerks compiler place float constants, string literals and small data in particular sections and orders, duplicating or merging them per translation unit, and how do the small-data size threshold, the optimize-for-size pragma, the scheduling pragma and the inlining settings change that layout and the instruction order in a way a person could use to work backward from the binary?",
+    "capability": "You can stop reading a missing or extra function call in the binary as a difference in what the code does, and test first whether the compiler's statement-count limit for automatic inlining explains it."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "Matching each function does not prove the rebuilt file has the right constants, strings or storage placement, because function order and literal use change how constant pools are laid out, and read-only versus writable and file-scope versus function-local placement matter. A compiler-settings guess validated only on instructions can therefore look right while the data layout is wrong, which is the kind of gap that separates an x86-derived guess from the PowerPC result.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E22",
+    "E23"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a decompilation project that guesses compiler settings from the output of an x86 build of the same compiler family sometimes get the wrong answer on the PowerPC target, and what differences in how the two targets place constants, small data and alignment cause it?",
+    "capability": "You can stop trusting a pass/fail match on function code alone and require a check of the rebuilt file's data, relocations and section placement before declaring a module done or a compiler guess correct."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "The source stresses that matching experiments are compiler- and version-dependent and that the exact compiler, flags and resulting diff should be recorded with each candidate rather than generalized. Settings inferred from a different target's output are therefore only a hypothesis until confirmed against the real target's own toolchain and known project configuration.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E24",
+    "E25"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a decompilation project that guesses compiler settings from the output of an x86 build of the same compiler family sometimes get the wrong answer on the PowerPC target, and what differences in how the two targets place constants, small data and alignment cause it?",
+    "capability": "You can stop assuming that compiler settings inferred on one architecture carry over to another, and instead budget for re-deriving and recording the configuration per target."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "A target file size is only a best-effort guideline: after a run with a 100MB target, a table still held files of 5KB to 3MB because small partitions, recent or streaming files, and partition-filtered runs are skipped. A leftover cluster of tiny files therefore does not prove the setting was wrong, and a clean result does not prove it was right.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26",
+    "E27"
+   ],
+   "source_ids": [
+    "S13",
+    "S16"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a file is rebuilt with the wrong small-data size limit or the wrong optimize-for-size and scheduling settings, and how do the resulting data placement and instruction order differ from the original in a way someone could detect?",
+    "capability": "You can stop expecting a single file-size setting to produce uniformly sized storage, and judge table health by the spread of file sizes after maintenance rather than by whether the target was hit."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "Databricks autotunes target size by table size: 256 MB below 2.56 TB, rising linearly to 1 GB at 10 TB, with roughly 4,096 files expected at 1 TB and about 24,437 at 10 TB. A table with a manually pinned size stops being autotuned, and a wrong value leaves a measurable mismatch in file counts and sizes. Fabric also records the size distribution (minimum, median, maximum) after each compaction in table history, so a bad setting can be seen without reading the data.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E28",
+    "E29"
+   ],
+   "source_ids": [
+    "S13",
+    "S14"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a file is rebuilt with the wrong small-data size limit or the wrong optimize-for-size and scheduling settings, and how do the resulting data placement and instruction order differ from the original in a way someone could detect?",
+    "capability": "You can audit whether a table was tuned with the wrong size setting by comparing its actual file sizes and file counts against the documented automatic norms, and ask your team for that evidence instead of taking assurances."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Raising a table's target size does not re-optimize files already written, so a large table keeps some undersized files, and changing clustering keys leaves old files in their previous layout unless a full table-wide recluster is run. That full pass can rewrite most or all of a large table and is substantially more expensive than routine maintenance, so a wrong setting is cheap to make and costly to undo.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E30"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S14",
+     "quote": "Because",
+     "reason": "shorter than 20 chars"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a file is rebuilt with the wrong small-data size limit or the wrong optimize-for-size and scheduling settings, and how do the resulting data placement and instruction order differ from the original in a way someone could detect?",
+    "capability": "You can budget for the real cost of changing a size or layout setting, since it does not retroactively fix existing data and a forced rewrite is expensive."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "The retrieved material contains no study of compilation-unit boundary recovery in stripped binaries, so nothing here supplies the measured rates or the effect of identical-function merging or shared string data. What it does establish is that false-positive and false-negative rates trade off against each other via the detection threshold, and that 'false positive rate' is defined inconsistently across fields, so any quoted figure must be read with its definition and threshold in hand.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E31",
+    "E32"
+   ],
+   "source_ids": [
+    "S22"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured false-positive and false-negative rates do studies report when tools try to recover where one compiled source file ends and the next begins in a stripped binary, and what happens to those rates when the linker has merged identical functions or shared string data?",
+    "capability": "You can stop treating a single headline error figure from a binary-analysis tool as meaningful and instead ask vendors or researchers which error-rate definition and which threshold they used before trusting it."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "When a program behaves differently at different optimization levels, the manual-style guidance is to investigate undefined behavior in the source rather than keep hunting for a faster or safer flag. One reported case was a 'hardware-sensitive' project that crashed only in release builds; the real cause was an uninitialized value exposed by optimization, found with warning flags and a debug baseline, not by flag tuning.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E33",
+    "E34"
+   ],
+   "source_ids": [
+    "S27"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what point does tuning compiler flags to match a target binary stop converging, and what does the failure look like when the real cause is different source code or a different compiler version rather than a wrong option?",
+    "capability": "You can stop assuming that a crash or behavior difference between builds is a wrong-flag problem and instead trigger a source-defect investigation when changing optimization levels changes program behavior."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "Compiler behavior, available options, and default optimization sets vary by release, target and how the compiler was configured, so the same flags can yield different binaries or new diagnostics on a different version. The practical consequence is that matching a target binary requires first pinning the exact compiler version and full command, because flag tuning on the wrong version cannot converge.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E35",
+    "E36",
+    "E37"
+   ],
+   "source_ids": [
+    "S26",
+    "S27",
+    "S28"
+   ],
+   "independent_lineages": 3,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "At what point does tuning compiler flags to match a target binary stop converging, and what does the failure look like when the real cause is different source code or a different compiler version rather than a wrong option?",
+    "capability": "You can treat a new compiler release as a separate suspect from the flags, and so avoid wasting engineering time re-tuning options when warnings or output differ only because the compiler version changed."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "The recommended safe practice is to record the compiler version, operating system and target architecture, exact compile and link commands, and the source commit or archive being tested before experimenting. Without that record, a mismatch cannot be attributed to flags, source, or compiler, and one-flag-at-a-time experiments have no fixed baseline to converge against.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E38",
+    "E39"
+   ],
+   "source_ids": [
+    "S27"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what point does tuning compiler flags to match a target binary stop converging, and what does the failure look like when the real cause is different source code or a different compiler version rather than a wrong option?",
+    "capability": "You can require a recorded build provenance (compiler version, exact command, source commit) before approving any effort to reproduce a binary, rather than funding open-ended trial and error on flags."
+   }
+  },
+  {
+   "claim_id": "C22",
+   "text": "The contents state that CodeWarrior codegen is version-specific and that versions across titles range from 1.0 through 1.7, so a wrong version or flag set makes functions unmatchable. This implies that a small set of files (SDK or middleware) built with a different version can look like unmatchable code. The contents do not report any specific project, reporter, or discovery story.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E40",
+    "E41"
+   ],
+   "source_ids": [
+    "S34"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which decompilation projects for GameCube or Wii games found that a few files, such as SDK or middleware code, only matched with a different compiler version than the rest of the game, and who reported it and how did they notice?",
+    "capability": "You can stop assuming one compiler version fits an entire game and budget time for per-file compiler testing when a stubborn function will not match."
+   }
+  },
+  {
+   "claim_id": "C23",
+   "text": "Separate decompilations exist for specific SDK builds (the 5-23-2001 and 4-20-2004 Dolphin SDK libraries), which shows that SDK code differs by version and is tracked as its own project. Reusing matched SDK functions speeds up new games, but the existence of version-pinned SDK projects suggests the match may not carry over between builds.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E42",
+    "E43"
+   ],
+   "source_ids": [
+    "S33"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which decompilation projects for GameCube or Wii games found that a few files, such as SDK or middleware code, only matched with a different compiler version than the rest of the game, and who reported it and how did they notice?",
+    "capability": "You can reuse an already-matched SDK library across games, but should verify its version against each new game before trusting it."
+   }
+  },
+  {
+   "claim_id": "C24",
+   "text": "Register allocation is an NP-complete problem in general, so compilers rely on heuristics (spill-cost ordering, coalescing criteria, tie-breaking among candidates), and the sources note that the heuristics used for ordering and cost modification have a significant effect on the resulting allocation. A new release that tunes any of these will legitimately assign different registers or spill different variables for identical source and options.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E44",
+    "E45"
+   ],
+   "source_ids": [
+    "S37"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a different release of the same compiler produce different instruction ordering, register allocation, or data and string placement for identical source code and identical options?",
+    "capability": "You can stop expecting a compiler upgrade to preserve the exact machine code of unchanged source and settings, and plan re-verification of anything that depends on byte-level output."
+   }
+  },
+  {
+   "claim_id": "C25",
+   "text": "Compilers pick among allocation strategies that trade code quality against compile time: linear scan is greedy and fast (used in V8, the Android Runtime and the HotSpot client compiler), while graph coloring gives better code at quadratic cost (used by the HotSpot server compiler). Changing which strategy, or which refinement of it, a release uses changes the output for the same input.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E46",
+    "E47"
+   ],
+   "source_ids": [
+    "S37"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a different release of the same compiler produce different instruction ordering, register allocation, or data and string placement for identical source code and identical options?",
+    "capability": "You can judge how much run-to-run and version-to-version variation to expect from a toolchain by asking which allocation strategy it uses, and budget more validation for fast, greedy compilers."
+   }
+  },
+  {
+   "claim_id": "C26",
+   "text": "Allocation runs on an intermediate representation, not the source: the representation itself is agnostic about where values are stored, and the allocator decides locations, spilling to the stack when registers run out. Because this layer is internal to each compiler, a release that changes it or its passes can change placement without any source or option change.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E48",
+    "E49"
+   ],
+   "source_ids": [
+    "S38"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a different release of the same compiler produce different instruction ordering, register allocation, or data and string placement for identical source code and identical options?",
+    "capability": "You can treat instruction order and register choice as a product of the compiler's internal representation and passes, not of your source code, so a new release's internal changes should be assumed to alter output."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 38,
+  "lineages": 37,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 2,
+  "claims": 26,
+  "claims_with_verified_span": 26,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 51,
+  "quotes_rejected": 2,
+  "ledger_capped": 0,
+  "quotes_reattributed": 0,
+  "claims_persisted": 8,
+  "persisted_with_verified_span": 8,
+  "persisted_verified_span_rate": 1.0
+ }
+}

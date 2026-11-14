@@ -1,0 +1,1475 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-14_142440_when-a-function-in-a-wii-gamecube-dol-or-rel-has-n",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://www.retroreversing.com/decompilers",
+   "aliases": [],
+   "sha256": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b",
+   "chars": 25000,
+   "snapshot": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b.txt",
+   "retrieved_at": "2026-11-14T13:25:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://en.wikipedia.org/wiki/Decompiler",
+   "aliases": [],
+   "sha256": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d",
+   "chars": 15862,
+   "snapshot": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d.txt",
+   "retrieved_at": "2026-11-14T13:25:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://wal.sh/research/code-decomp/",
+   "aliases": [],
+   "sha256": "f7cef6250a02616de0e9071c86d6fa25ba4d1a0d515d157fdcb3070713b52866",
+   "chars": 4044,
+   "snapshot": "f7cef6250a02616de0e9071c86d6fa25ba4d1a0d515d157fdcb3070713b52866.txt",
+   "retrieved_at": "2026-11-14T13:25:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://www.denis-iakimenko.com/blog/reverse-engineering-decompilation-ports",
+   "aliases": [],
+   "sha256": "a5d94b6732c3d0044d6f32a0cf33b97472d734f47540ffefecfba074d81c8982",
+   "chars": 25000,
+   "snapshot": "a5d94b6732c3d0044d6f32a0cf33b97472d734f47540ffefecfba074d81c8982.txt",
+   "retrieved_at": "2026-11-14T13:25:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://kenji.blog/en/p/decompilation-reverse-engineering-control-flow-recovery-type-inference/",
+   "aliases": [],
+   "sha256": "a86866acddea0759b572567f870185ec6d1155a0696b47d580383de786ed103c",
+   "chars": 22361,
+   "snapshot": "a86866acddea0759b572567f870185ec6d1155a0696b47d580383de786ed103c.txt",
+   "retrieved_at": "2026-11-14T13:25:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://arxiv.org/pdf/2609.18706",
+   "aliases": [],
+   "sha256": "56928487e12fe0dfbcc1bee2fef2b68b052ac4c4ee647a9b825dfe291943113b",
+   "chars": 25000,
+   "snapshot": "56928487e12fe0dfbcc1bee2fef2b68b052ac4c4ee647a9b825dfe291943113b.txt",
+   "retrieved_at": "2026-11-14T13:25:59+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://arxiv.org/html/2609.05370v1",
+   "aliases": [],
+   "sha256": "0882d1352e41f0d99ec35a84918db481cdfdee02b3d42055cb0297a3e86672c2",
+   "chars": 25000,
+   "snapshot": "0882d1352e41f0d99ec35a84918db481cdfdee02b3d42055cb0297a3e86672c2.txt",
+   "retrieved_at": "2026-11-14T13:25:59+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://phpdecompile.com/blog/ioncube-decoded-code-quality",
+   "aliases": [],
+   "sha256": "569bb935e29d2620514a1e3c77e959b73441ddfc059b4afcf59e8d520b7593d9",
+   "chars": 4647,
+   "snapshot": "569bb935e29d2620514a1e3c77e959b73441ddfc059b4afcf59e8d520b7593d9.txt",
+   "retrieved_at": "2026-11-14T13:25:59+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://www.computer.org/csdl/proceedings-article/sp/2021/893400a091/1mbmHtHLPAA",
+   "aliases": [],
+   "sha256": "340c07c26c3efe3701e6f600c4688665aa1d12f3362b2232355690462c05309e",
+   "chars": 28,
+   "snapshot": "340c07c26c3efe3701e6f600c4688665aa1d12f3362b2232355690462c05309e.txt",
+   "retrieved_at": "2026-11-14T13:25:59+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://github.com/dotnet/fsharp/issues/9283",
+   "aliases": [],
+   "sha256": "ff5c17a5f0117209c2383c26bc0b11120aff878a8c969797fc71e4e2158d8b93",
+   "chars": 18198,
+   "snapshot": "ff5c17a5f0117209c2383c26bc0b11120aff878a8c969797fc71e4e2158d8b93.txt",
+   "retrieved_at": "2026-11-14T13:27:01+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://docs.zephyrproject.org/latest/kernel/code-relocation.html",
+   "aliases": [],
+   "sha256": "79c5c429b5c26a6a527f6c50718be1e636f9cea7f3fba3942922ed53cc494424",
+   "chars": 6542,
+   "snapshot": "79c5c429b5c26a6a527f6c50718be1e636f9cea7f3fba3942922ed53cc494424.txt",
+   "retrieved_at": "2026-11-14T13:27:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://accounts.google.com/v3/signin/identifier?continue=https://classroom.google.com/?hl%3Den-GB&emr=1&followup=https://classroom.google.com/?hl%3Den-GB&hl=en-GB&passive=1209600&service=classroom&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-467582832:1794662805399691",
+   "aliases": [],
+   "sha256": "6adaf7d63ed5806afb8663f91822ea84cd44d44a3259854ccb4d853727495b08",
+   "chars": 239,
+   "snapshot": "6adaf7d63ed5806afb8663f91822ea84cd44d44a3259854ccb4d853727495b08.txt",
+   "retrieved_at": "2026-11-14T13:27:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://pantech.ai/linker-script-explained-a-beginner-to-advanced-guide-for-embedded-systems",
+   "aliases": [],
+   "sha256": "ea24d5640000c5527604e013bba613f444f0e98c43c2f5dc779f4528459d5f15",
+   "chars": 5544,
+   "snapshot": "ea24d5640000c5527604e013bba613f444f0e98c43c2f5dc779f4528459d5f15.txt",
+   "retrieved_at": "2026-11-14T13:27:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://www.facebook.com/WatchWhatHappensLive/videos/did-daisy-toye-do-martha-stewarts-halloween-makeup-wwhl-rhony/2170506317214739/",
+   "aliases": [],
+   "sha256": "cdd93c05953bec73e7a046248842dc42085d40e96af7a32754ab9b4e1839034f",
+   "chars": 91,
+   "snapshot": "cdd93c05953bec73e7a046248842dc42085d40e96af7a32754ab9b4e1839034f.txt",
+   "retrieved_at": "2026-11-14T13:27:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://docs.nxp.com/bundle/GUID-9FAC1C79-3809-474F-B8DF-82BEB5B88419/page/GUID-25B710D5-3B80-45E6-8BC0-30EF5FCE89F9.html",
+   "aliases": [],
+   "sha256": "d3c7302bea7eb4269b20f26ab743d43b81a4ba1db10baf8df5a7a08c006e9ea8",
+   "chars": 232,
+   "snapshot": "d3c7302bea7eb4269b20f26ab743d43b81a4ba1db10baf8df5a7a08c006e9ea8.txt",
+   "retrieved_at": "2026-11-14T13:28:05+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://www.emergentmind.com/topics/decompile-bench-dataset",
+   "aliases": [],
+   "sha256": "0db2497fb5527be45ccfb4915d553c10536c9c7c726d91796b1dcf580e1e8b7b",
+   "chars": 11369,
+   "snapshot": "0db2497fb5527be45ccfb4915d553c10536c9c7c726d91796b1dcf580e1e8b7b.txt",
+   "retrieved_at": "2026-11-14T13:28:56+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://arxiv.org/pdf/2608.24955",
+   "aliases": [],
+   "sha256": "5e69d1aea2048d095c4d47699d545a9e47e7e844fe422f1d4cd91c7f93d61ca3",
+   "chars": 25000,
+   "snapshot": "5e69d1aea2048d095c4d47699d545a9e47e7e844fe422f1d4cd91c7f93d61ca3.txt",
+   "retrieved_at": "2026-11-14T13:28:56+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://arxiv.org/abs/2608.24955",
+   "aliases": [],
+   "sha256": "032bdd67f93eaa559e8dbd596de7376e11502056a9317587f70fdedfc6a5c2c0",
+   "chars": 3953,
+   "snapshot": "032bdd67f93eaa559e8dbd596de7376e11502056a9317587f70fdedfc6a5c2c0.txt",
+   "retrieved_at": "2026-11-14T13:28:56+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://github.com/albertan017/LLM4Decompile",
+   "aliases": [],
+   "sha256": "ace1a0c64b441171bd10ae5775f9d9a57206978ed55936759ea3aa078866ad62",
+   "chars": 11061,
+   "snapshot": "ace1a0c64b441171bd10ae5775f9d9a57206978ed55936759ea3aa078866ad62.txt",
+   "retrieved_at": "2026-11-14T13:28:56+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://decomphub.com/guides/understanding-decompilation-progress",
+   "aliases": [],
+   "sha256": "00ca7529fd9db6946189c733bce9dd8282da0826d4f562f5e63d34359d542ed9",
+   "chars": 4476,
+   "snapshot": "00ca7529fd9db6946189c733bce9dd8282da0826d4f562f5e63d34359d542ed9.txt",
+   "retrieved_at": "2026-11-14T13:28:56+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://aiengineeringfromscratch.com/learn/tools-and-protocols/linking-loading-and-stripped-binaries",
+   "aliases": [],
+   "sha256": "e17134eecac40b20ce8599c43a531164247b93a0889d4885cc762b27cb1b3596",
+   "chars": 25000,
+   "snapshot": "e17134eecac40b20ce8599c43a531164247b93a0889d4885cc762b27cb1b3596.txt",
+   "retrieved_at": "2026-11-14T13:29:30+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://blog.trailofbits.com/2019/09/02/rewriting-functions-in-compiled-binaries/",
+   "aliases": [],
+   "sha256": "ed1feb1493af0a611e6911e531533c1df9f812166c5a3412dbd1bb1567b68026",
+   "chars": 12156,
+   "snapshot": "ed1feb1493af0a611e6911e531533c1df9f812166c5a3412dbd1bb1567b68026.txt",
+   "retrieved_at": "2026-11-14T13:29:30+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://nhimg.org/faq/what-are-the-signs-that-a-binary-contains-more-reused-code-than-unique-malicious/",
+   "aliases": [],
+   "sha256": "1f300d1724214a9fb8848be4d17bf01b222b8d4809bb1194a39b2efbb36ba2e4",
+   "chars": 6380,
+   "snapshot": "1f300d1724214a9fb8848be4d17bf01b222b8d4809bb1194a39b2efbb36ba2e4.txt",
+   "retrieved_at": "2026-11-14T13:29:30+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://aiengineeringfromscratch.com/learn/tools-and-protocols/rebuild-and-prove-equal",
+   "aliases": [],
+   "sha256": "94f343c84b4e5fdb3a1d1285558915cea14436d9bef0a7b6923a81deb10a35bf",
+   "chars": 25000,
+   "snapshot": "94f343c84b4e5fdb3a1d1285558915cea14436d9bef0a7b6923a81deb10a35bf.txt",
+   "retrieved_at": "2026-11-14T13:30:05+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S24"
+  },
+  {
+   "source_id": "S25",
+   "url": "https://github.com/morluto/rea/issues/8556",
+   "aliases": [],
+   "sha256": "da7acca9130e4929fc8d77c228121459ae289480838d68feb86199e1cce2f324",
+   "chars": 11047,
+   "snapshot": "da7acca9130e4929fc8d77c228121459ae289480838d68feb86199e1cce2f324.txt",
+   "retrieved_at": "2026-11-14T13:30:05+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S25"
+  },
+  {
+   "source_id": "S26",
+   "url": "https://www.javacodegeeks.com/2026/09/the-bytecode-verifiers-hidden-contract.html",
+   "aliases": [],
+   "sha256": "724ef0bfb9d113e917e138f1f3d4f0331e017895e67fc7690f6dabfcb05f7b7a",
+   "chars": 12041,
+   "snapshot": "724ef0bfb9d113e917e138f1f3d4f0331e017895e67fc7690f6dabfcb05f7b7a.txt",
+   "retrieved_at": "2026-11-14T13:30:06+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S26"
+  },
+  {
+   "source_id": "S27",
+   "url": "https://aiengineeringfromscratch.com/learn/tools-and-protocols/binary-diffing-and-symbolic-execution",
+   "aliases": [],
+   "sha256": "1593eda1b590b0e9405615952ecf12516edd18ed8027ab950f6c7e3e862ed32f",
+   "chars": 25000,
+   "snapshot": "1593eda1b590b0e9405615952ecf12516edd18ed8027ab950f6c7e3e862ed32f.txt",
+   "retrieved_at": "2026-11-14T13:30:06+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S27"
+  },
+  {
+   "source_id": "S28",
+   "url": "https://github.com/sbergeron42/ssbu-decomp",
+   "aliases": [],
+   "sha256": "e2d793d6b3ce01647d8bcd551b35b9fb34260c418f8a2340d8ec3e399681449a",
+   "chars": 13635,
+   "snapshot": "e2d793d6b3ce01647d8bcd551b35b9fb34260c418f8a2340d8ec3e399681449a.txt",
+   "retrieved_at": "2026-11-14T13:30:56+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S28"
+  },
+  {
+   "source_id": "S29",
+   "url": "https://heldgames.com/guides/retro-decompilation-recompilation-explained",
+   "aliases": [],
+   "sha256": "64e420cb9e96a8d20946ccb7bebcdbef4a92ea5e12f77b6266b67324e49a6ea4",
+   "chars": 17577,
+   "snapshot": "64e420cb9e96a8d20946ccb7bebcdbef4a92ea5e12f77b6266b67324e49a6ea4.txt",
+   "retrieved_at": "2026-11-14T13:30:56+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S29"
+  },
+  {
+   "source_id": "S30",
+   "url": "https://mahaloz.re/dec-history-pt2",
+   "aliases": [],
+   "sha256": "b42fbd53d3a45c4d25f9ca2a0c4f3a3620197498d99297e882bf82facc1915bd",
+   "chars": 15996,
+   "snapshot": "b42fbd53d3a45c4d25f9ca2a0c4f3a3620197498d99297e882bf82facc1915bd.txt",
+   "retrieved_at": "2026-11-14T13:30:56+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S30"
+  },
+  {
+   "source_id": "S31",
+   "url": "https://decomphub.com/",
+   "aliases": [],
+   "sha256": "7a2bff951ea0e1ee515ece71a9959a4e68af5f00c1c1e0717fae434c5775f917",
+   "chars": 2509,
+   "snapshot": "7a2bff951ea0e1ee515ece71a9959a4e68af5f00c1c1e0717fae434c5775f917.txt",
+   "retrieved_at": "2026-11-14T13:30:56+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S31"
+  },
+  {
+   "source_id": "S32",
+   "url": "https://github.com/zeldaret/tww/blob/main/docs/decompiling.md",
+   "aliases": [],
+   "sha256": "4e824f9d7b051b5a52b873117407a59c09d37523005610090cae8cb20397c92a",
+   "chars": 25000,
+   "snapshot": "4e824f9d7b051b5a52b873117407a59c09d37523005610090cae8cb20397c92a.txt",
+   "retrieved_at": "2026-11-14T13:31:45+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S32"
+  },
+  {
+   "source_id": "S33",
+   "url": "https://www.reddit.com/r/learnprogramming/comments/fhaykb/does_decompiling_files_restore_the_original_code/",
+   "aliases": [],
+   "sha256": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf",
+   "chars": 6,
+   "snapshot": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf.txt",
+   "retrieved_at": "2026-11-14T13:31:45+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S33"
+  },
+  {
+   "source_id": "S34",
+   "url": "https://heios.github.io/research/2026-07-08/ai-commit-attribution/",
+   "aliases": [],
+   "sha256": "882c0e837d2030683fbff152d07aea41aab3bc76550e4f9389a15b781b46dc52",
+   "chars": 15005,
+   "snapshot": "882c0e837d2030683fbff152d07aea41aab3bc76550e4f9389a15b781b46dc52.txt",
+   "retrieved_at": "2026-11-14T13:32:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S34"
+  },
+  {
+   "source_id": "S35",
+   "url": "https://aitechmodel.com/source-attribution-for-ai-generated-code-what-changed-and-why-it-matters-now/",
+   "aliases": [],
+   "sha256": "ebc3503b8c58e84dc529175109be513dd346cd4ff9b02e08c98a0d8fd0904d2f",
+   "chars": 4939,
+   "snapshot": "ebc3503b8c58e84dc529175109be513dd346cd4ff9b02e08c98a0d8fd0904d2f.txt",
+   "retrieved_at": "2026-11-14T13:32:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S35"
+  },
+  {
+   "source_id": "S36",
+   "url": "https://www.taylorwessing.com/en/insights-and-events/insights/2026/06/ai-and-assisted-programming-in-open-source",
+   "aliases": [],
+   "sha256": "628f61d7d228713ab1e5ff7589f3a123d2539b30150ddd5b2c92b6084ff6ef1e",
+   "chars": 14007,
+   "snapshot": "628f61d7d228713ab1e5ff7589f3a123d2539b30150ddd5b2c92b6084ff6ef1e.txt",
+   "retrieved_at": "2026-11-14T13:32:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S36"
+  },
+  {
+   "source_id": "S37",
+   "url": "https://aclanthology.org/2025.ijcnlp-tutorials.1.pdf",
+   "aliases": [],
+   "sha256": "75df4e96350adb85b047c057c09b00b1bf349ecf7fd7f640d4453ab03dfacff3",
+   "chars": 25000,
+   "snapshot": "75df4e96350adb85b047c057c09b00b1bf349ecf7fd7f640d4453ab03dfacff3.txt",
+   "retrieved_at": "2026-11-14T13:32:28+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S37"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S3",
+   "start": 3119,
+   "end": 3166,
+   "text": "The byte-identical target is the gold standard.",
+   "sha256": "a1b2bf38e3091dfb0655021e62db5424bad11d270683c44e2e9f5f2d97a662fd"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S4",
+   "start": 15591,
+   "end": 15791,
+   "text": "It’s obsessive, and in return you get proof: a matching function has the same logic as the original, so nobody slipped in an off-by-one, changed float precision, or quietly removed undefined behavior.",
+   "sha256": "c940421cda214d99046e2e3e16e6e1078a44c0907648ba97155fd091fa47d489"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S1",
+   "start": 19812,
+   "end": 19877,
+   "text": "Do not infer a complete rebuild from a function similarity score.",
+   "sha256": "a3016b488092735f919a4bfc926a5ad8a8ff7c537a1fb14a22c199ccb361d66d"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S1",
+   "start": 21795,
+   "end": 21884,
+   "text": "A useful checker must reject incorrect reconstructions as well as recognise correct ones.",
+   "sha256": "342fb6c8787296fa6b1470d0fc2477a2e61bcec15c4d19d20df847201d337182"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S1",
+   "start": 20065,
+   "end": 20208,
+   "text": "Treat a proposed split as a hypothesis: assign the associated data, rebuild, and check that existing matches and the final image remain intact.",
+   "sha256": "caf11f81f9e4de7e7b52a944057855f940c8e88a725f59a78d1c942a38ecc015"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S1",
+   "start": 12594,
+   "end": 12763,
+   "text": "The game’s loader and relocation records establish which bytes and addresses belong together. A plausible decompilation at the wrong address is still the wrong function.",
+   "sha256": "0442890f234ac75ef81825b0b728bc467d44212bc98be1b86bcf85af239e2608"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S7",
+   "start": 1406,
+   "end": 1638,
+   "text": "Across eight systems in nine configurations on established LLM decompilation corpora, candidates that pass every shipped test still diverge from the original on our input corpus: 4.9% overall, and as many as 13% for a single system.",
+   "sha256": "10217542f666ed81e22ffe4e52f5f08dd13ac0f2630d5e3e4f12df7e19d68d82"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S7",
+   "start": 16145,
+   "end": 16331,
+   "text": "The same pattern recurs elsewhere: replaying every candidate shows that the shipped suites released by the three corpora fail to capture 3% to 45% of the divergence in function behavior.",
+   "sha256": "866193482c61392e59f90225912077625277c93f8abf4a9b47f673f86d14763b"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S7",
+   "start": 1765,
+   "end": 1965,
+   "text": "the strongest refinement LLM lifts Ghidra’s build rate from 75% to 90%, while its Matched rate falls from 74% to 62%; on disclosed vulnerabilities, up to one tenth exhibit Crash Absence in its output.",
+   "sha256": "84f79a639288ccb97fb92ff57dbb94731019b12d244eec249ec17552e968ff94"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S7",
+   "start": 18617,
+   "end": 18722,
+   "text": "The reference execution thus supplies the expected behavior without hand-written input/output assertions.",
+   "sha256": "8ad20b94a1096ca535c113d454ec1bb0a6e628c04a7a1bb3e61b19822ade82c0"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S8",
+   "start": 2335,
+   "end": 2459,
+   "text": "Passing syntax does not establish correct calculations, authorization decisions, callback behavior, or transaction handling.",
+   "sha256": "c83f75113f73f1ce32bce8faca615151e73caaf5695e8e68e775589ec98b7c8b"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S10",
+   "start": 1183,
+   "end": 1252,
+   "text": "Run the projects in Debug: name of the first project will be returned",
+   "sha256": "6ccecb06a70f7e0117fb1ccee0f3b04010feaa572f8b296d2d72add213424d12"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S10",
+   "start": 1253,
+   "end": 1358,
+   "text": "Run the projects in Release: the call will be inlined, so the name of the second project will be returned",
+   "sha256": "0b21ac557feab5b9db7ef162d29e8418306e85daca82ea6ae6a1b928f376cae5"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S10",
+   "start": 15618,
+   "end": 15900,
+   "text": "To address this a developer can add [<MethodImpl(MethodImplOptions.NoInlining)>], there's no reliable attribute for us to detect, and lists of well-known APIs are always difficult to reason about and maintain, and the developer can also suppress cross-assembly inlining when needed.",
+   "sha256": "18096cba33cef30e2086de5e9545836cfed08129cc6148a6e11aa44a4c5cad42"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S11",
+   "start": 487,
+   "end": 596,
+   "text": "This script provides a robust way to re-order the memory contents without\nactually having to modify the code.",
+   "sha256": "7218f6ec6e6639318293d57ea520bba652686c3901440c47bb28781b73ae8f7d"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S11",
+   "start": 5849,
+   "end": 5980,
+   "text": "Take care if relocating kernel/arch files, some contain early initialization\ncode that executes before code relocation takes place.",
+   "sha256": "c6dc3114b9c237864c206e5827444d0d0b37a6c038697ae79c48944ed49ce23b"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S20",
+   "start": 1490,
+   "end": 1682,
+   "text": "Consider a\nhypothetical\nproject with 900 of 1,000 functions matched. That is 90% by function count. If the remaining functions contain half of the program’s code bytes, it is not 90% by bytes.",
+   "sha256": "6e459f60bf2285e20bb5e39bc7e28cff9066f451a23e9517da94643edfb59e89"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S20",
+   "start": 3754,
+   "end": 3981,
+   "text": "Unknown can mean the project has no compatible report, a source was unavailable, the parser could not establish the scope, or collection has not reached a usable source yet. It does not establish that upstream has done no work.",
+   "sha256": "f4fa7a934f4ed577d58ebc445f25948c0ea51e640cdfaf3f8fa302aee559e01e"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S16",
+   "start": 3858,
+   "end": 4005,
+   "text": "This yields a final dataset of 2 million high-quality, project-rooted function pairs—retaining only approximately 2% of the initial function pool (",
+   "sha256": "b0367ff23cbd852b9ecae0fd24cf2e54586ad7ca8aa7895cb94743ee86d42efc"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S21",
+   "start": 2467,
+   "end": 2515,
+   "text": "The stripped file lost its symbol table and kept",
+   "sha256": "02804eaa1299595bdecf2f4f7fd2445a2293add7a7fe155692d6cfd1589a14ca"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S21",
+   "start": 2192,
+   "end": 2253,
+   "text": "Both answers read the file as if it were the running process.",
+   "sha256": "252b898cbf4b30f526f6a1d7ece11aabcd7302e90e2ac635781971c26a730208"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S23",
+   "start": 3060,
+   "end": 3152,
+   "text": "The goal is to collapse the familiar parts quickly so attention stays on the novel behavior.",
+   "sha256": "63c22f467399bff5178b9558140d619b5db439433518731903c763e99ba27ca7"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S27",
+   "start": 18665,
+   "end": 18724,
+   "text": "A function differ that stops at bytes says nothing changed.",
+   "sha256": "2284c069e23d69dc2bca462a33d5a817ea220c2ffd62edbc6a89a08985025ddb"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S27",
+   "start": 10570,
+   "end": 10658,
+   "text": "One byte of 46 differs, the Levenshtein ratio is 0.978, and the exact-bytes stage fails.",
+   "sha256": "191adfb4eb336f3dbfcef825ea2ddba2bcaec38fbc654992bb28fb9cc356e346"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S24",
+   "start": 11296,
+   "end": 11370,
+   "text": "Assembly is opaque provider text; relocation normalization is unavailable.",
+   "sha256": "5bf37d5022a2d77ed0d2ccc6f3b179df4ea1d82fb6c74caf9fde624f5ef72bf0"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S25",
+   "start": 9963,
+   "end": 10083,
+   "text": "It shows that identical loaded bytes do not imply identical file bytes and makes the missing source basis consequential.",
+   "sha256": "8a4c99ba7e33f831948e7852642cad5f4f1f889b24852dc608b4e0ee626ae795"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S27",
+   "start": 8769,
+   "end": 8889,
+   "text": "The false match also consumes\ngrade_label\non the right, so the real\npercent_change\nand\ngrade_label\npairs stay unmatched.",
+   "sha256": "cbc37d8c91dd47af334eb15e8647ee90d3e29af2e5d1b2f8643db21009354a70"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S28",
+   "start": 2589,
+   "end": 2691,
+   "text": "Progress skews toward small functions: avg matched function is 46 bytes vs\navg undecompiled 986 bytes.",
+   "sha256": "5ee6334c0fb0c228b55a338c4d98dd85aedf9b40df1d0628ceebc56b14878abd"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S28",
+   "start": 5815,
+   "end": 6038,
+   "text": "Compiling zstd v1.3.7 (confirmed same version as in-binary) with upstream Clang 8.0.0 produces functions with identical sizes but 0% instruction match — different register allocation, instruction selection, and code layout.",
+   "sha256": "01626e0782a027fd139913c569671e2a2012db810a6ae152b29a22980c3f6f53"
+  },
+  {
+   "span_id": "E30",
+   "source_id": "S28",
+   "start": 6671,
+   "end": 6733,
+   "text": "Some will never match due to irreducible compiler differences.",
+   "sha256": "6e56c189be6474e8f9edf49692d5badb779844037dff1615f0048d50f2e566b2"
+  },
+  {
+   "span_id": "E31",
+   "source_id": "S28",
+   "start": 5394,
+   "end": 5483,
+   "text": "Fields tagged\n[inferred: ...]\nare usage-pattern guesses — verify before building on them.",
+   "sha256": "0a13817ff2743e28d3d31ff9bfa566edad76447fed604435cf117d6c1aa8bcec"
+  },
+  {
+   "span_id": "E32",
+   "source_id": "S28",
+   "start": 3193,
+   "end": 3339,
+   "text": "Function boundaries are Ghidra's best estimate — some may be over-sized (trailing alignment padding) or split (one function misidentified as two).",
+   "sha256": "e41bb16aa3d9855de0c40857a0ec0001e361478a3514bbac7fbcab8dd7519da2"
+  },
+  {
+   "span_id": "E33",
+   "source_id": "S1",
+   "start": 18907,
+   "end": 18961,
+   "text": "These are compiler- and version-dependent experiments.",
+   "sha256": "77b4c02c4c0ba57c8e53179753ba342d58c16d2b63312f4e5cafcdb333192ab4"
+  },
+  {
+   "span_id": "E34",
+   "source_id": "S1",
+   "start": 21620,
+   "end": 21728,
+   "text": "After changing shared types or prototypes, rebuild affected code and verify previously matched functions too",
+   "sha256": "936f0638782e2baa73afda98472b07c9c8bb9c87c50f96df75fb8d14b774cd3a"
+  },
+  {
+   "span_id": "E35",
+   "source_id": "S1",
+   "start": 19812,
+   "end": 19877,
+   "text": "Do not infer a complete rebuild from a function similarity score.",
+   "sha256": "a3016b488092735f919a4bfc926a5ad8a8ff7c537a1fb14a22c199ccb361d66d"
+  },
+  {
+   "span_id": "E36",
+   "source_id": "S1",
+   "start": 21795,
+   "end": 21884,
+   "text": "A useful checker must reject incorrect reconstructions as well as recognise correct ones.",
+   "sha256": "342fb6c8787296fa6b1470d0fc2477a2e61bcec15c4d19d20df847201d337182"
+  },
+  {
+   "span_id": "E37",
+   "source_id": "S32",
+   "start": 12278,
+   "end": 12369,
+   "text": "Some examples of small issues in the assembly that may be caused by incorrect inline usage:",
+   "sha256": "fb9d20897c1b48c13623b44616b2bfbba1c66d395694e9b2a0eeb4e41f9b0a09"
+  },
+  {
+   "span_id": "E38",
+   "source_id": "S32",
+   "start": 16532,
+   "end": 16638,
+   "text": "However, there's an important caveat to keep in mind when reading the debug maps: Each inline only appears",
+   "sha256": "1dd7edcf218701fac4f70dbfa76fb5b684ebf20d5bd590068aaa81d89cbe35f6"
+  },
+  {
+   "span_id": "E39",
+   "source_id": "S35",
+   "start": 2230,
+   "end": 2397,
+   "text": "The reference system has important gaps. It does not check altered Copilot suggestions or code written by the user, and matches appear in fewer than 1% of suggestions.",
+   "sha256": "c8c8852ec5aa55e0782b15b63727e72ed4c3a09380a86bb7062c985efc8e6834"
+  },
+  {
+   "span_id": "E40",
+   "source_id": "S35",
+   "start": 2570,
+   "end": 2704,
+   "text": "The index is refreshed every few months. It can therefore miss newly published code or point to files that have moved or been deleted.",
+   "sha256": "4adc5733cec00960833c0f1f8c5d0abde18826be82aa1750a70cd41c27937418"
+  },
+  {
+   "span_id": "E41",
+   "source_id": "S36",
+   "start": 1602,
+   "end": 1700,
+   "text": "According to JPlag analysis, the structural similarity to the previous version was less than 1.3%.",
+   "sha256": "3e126610027c5ac204a8e685861331adcfdfffa9e984ccc2fd8085cbd1c16bd9"
+  },
+  {
+   "span_id": "E42",
+   "source_id": "S36",
+   "start": 1701,
+   "end": 1895,
+   "text": "The original author disagrees: This is not a “clean room” implementation, as the maintainer had years of access to the LGPL code and the LLM demonstrably accessed metadata from the LGPL version.",
+   "sha256": "72f9d6ce27f73dfb41de20df0b12845cea018993ea1863c23c436d4c4b8aa07f"
+  },
+  {
+   "span_id": "E43",
+   "source_id": "S36",
+   "start": 3650,
+   "end": 3947,
+   "text": "AI tools produce not only code but also “legal” accompanying statements (e.g., “this is MIT,” “this is freely usable,” “no copyleft”). This leads to false compliance: developers rely on unsubstantiated statements rather than verifiable license information (repository, LICENSE file, header, SPDX).",
+   "sha256": "d3d02c6b719ac6ca9cfb5af50b20bbb232d4613510aefb0f28f03df2f89ad988"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Matching projects treat a function as done only when compiling candidate C with the original toolchain (e.g., SGI IDO 5.3 for Mario 64) reproduces the original bytes instruction for instruction. This is stronger than behavioural equivalence: it rules out off-by-one errors, changed float precision or silently removed undefined behaviour, so a matching function is evidence the range and logic really belong together.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S3",
+    "S4"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "How do decompilation projects recover the exact original bytes and boundaries of a function that was removed, merged or never split out of the game's executable, and what evidence do they accept that the recovered range really belongs to the function they think it does?",
+    "capability": "You can demand byte-identical rebuild as the acceptance test for any claimed function recovery, instead of accepting a plausible-looking reconstruction or similarity score as proof."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "A function-level match does not establish that the rebuilt file has the right literal pools, section placement or data ownership, and a checker can be fooled if it ignores referenced data or reads a stale build. Projects test their checkers with deliberately wrong candidates (changed strings, float constants, swapped pointer-table entries) and then run the full binary comparison before claiming a recovered range is correct.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "How do decompilation projects recover the exact original bytes and boundaries of a function that was removed, merged or never split out of the game's executable, and what evidence do they accept that the recovered range really belongs to the function they think it does?",
+    "capability": "You can stop accepting a per-function match percentage or a green checker result as proof of a correct recovery, and require that referenced data, relocations and the full linked image also match."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "Clues such as shared constants or strings, related class methods and module entry points only suggest original file boundaries. A split is accepted only if, after assigning data and rebuilding, existing matches and the final image stay intact. For overlay-based games, loader and relocation records decide which bytes belong to which function, because a plausible decompilation at the wrong address is still the wrong function.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "How do decompilation projects recover the exact original bytes and boundaries of a function that was removed, merged or never split out of the game's executable, and what evidence do they accept that the recovered range really belongs to the function they think it does?",
+    "capability": "You can treat any proposed source-file or function boundary as a hypothesis to be tested by rebuilding, and not as a recovered fact, and you can budget for loader and overlay evidence when the same address holds different code."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "In a study of eight LLM decompilation systems, candidates that passed every shipped test still diverged from the original on a broader fuzzed input set 4.9% of the time overall and up to 13% for a single system. The shipped test suites missed 3% to 45% of the divergence, because their inputs sat in a narrow range and never reached edge paths like a final-band branch or integer overflow.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7",
+    "E8"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a recovered function that matches the original bytes sometimes still turn out to be the wrong function, for example when identical library routines or code loaded from different overlays share the same instructions, and what extra evidence do projects need to tell them apart?",
+    "capability": "You can stop treating 'it compiles and passes the supplied tests' as proof that recovered code is the right code, and require a wider behavioral check before accepting it."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Cleaner-looking output can be less faithful: the strongest refinement LLM raised Ghidra's build rate from 75% to 90% while its behavioral Matched rate fell from 74% to 62%. The study attributes this to the model inventing fields, types, callees and guards where traditional tools leave visible unknowns, so errors become silent instead of obvious.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a recovered function that matches the original bytes sometimes still turn out to be the wrong function, for example when identical library routines or code loaded from different overlays share the same instructions, and what extra evidence do projects need to tell them apart?",
+    "capability": "You can stop using build success rate as a proxy for recovery quality, and track behavioral agreement separately before paying for or trusting a 'cleaner' recovery tool."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "The distinguishing evidence is the original's actual behavior on many generated inputs, compared on return values, written bytes and global state, with divergences counted only if they reproduce across repeated runs. A separate source stresses that syntax checks only show the code parses, not that calculations or decisions are right, so project-specific tests are needed. Note the sources do not address identical library routines or overlays directly; applying this to those cases is an inference.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10",
+    "E11"
+   ],
+   "source_ids": [
+    "S7",
+    "S8"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a recovered function that matches the original bytes sometimes still turn out to be the wrong function, for example when identical library routines or code loaded from different overlays share the same instructions, and what extra evidence do projects need to tell them apart?",
+    "capability": "You can demand a reference-based differential check, run on the same many inputs against the original, as the evidence that separates a look-alike function from the true one, rather than relying on byte or syntax matching."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "In a documented F# compiler case (dotnet/fsharp issue #9283), a function in one library that asked 'which assembly am I running in' returned the library's own name in Debug builds but the calling application's name in Release builds, because the compiler silently copied the function's body into the caller across the library boundary. The original function boundary effectively ceased to exist in the shipped binary, and the maintainers closed the issue in 2023 without changing the behavior, so this class of silent divergence persists.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to the recovery of function boundaries when the original linker or compiler inlined, merged or reordered code, and in which real projects did the recovered split points turn out to be wrong or unverifiable?",
+    "capability": "You can stop assuming that a debug build and a release build of the same software behave identically, and require release-build testing before trusting anything that depends on knowing which module or function is running."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "The F# case shows boundary loss happened even though the called framework method was explicitly marked as not-inlinable, because the compiler did not honor that marking and the relevant security attribute was absent from the reference assemblies it compiled against. The maintainers' stated position was that there is no reliable attribute to detect such cases and that a maintained list of special APIs is hard to keep correct, so the only protection is the developer manually marking their own functions.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to the recovery of function boundaries when the original linker or compiler inlined, merged or reordered code, and in which real projects did the recovered split points turn out to be wrong or unverifiable?",
+    "capability": "You can treat the compiler's own inlining as an unmarked, undocumented change to where function boundaries sit, and require reverse-engineering or audit work on compiled binaries to assume boundaries cannot be trusted from source or declared attributes."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Zephyr's relocation feature lets a project move code and data for whole files or libraries into different memory regions without touching the source, and it keeps relocated items from being discarded even if unused unless told otherwise. The documentation warns that relocating kernel or architecture files can break because some contain early initialization that runs before relocation takes place, so placement changes can silently alter behavior of boundary-sensitive code.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15",
+    "E16"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to the recovery of function boundaries when the original linker or compiler inlined, merged or reordered code, and in which real projects did the recovered split points turn out to be wrong or unverifiable?",
+    "capability": "You can budget for the risk that code placement is rearranged at build time by project configuration rather than by the programmers, so layout-dependent assumptions (such as which code runs before setup completes) need explicit review whenever relocation features are switched on."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "A decompilation percentage is only meaningful with its unit (functions, bytes, files, symbols, assets), its scope (whole executable, one library, a region) and the build version measured. A project with 900 of 1,000 functions matched is 90% by function count but not 90% by bytes if the remaining functions hold half the code, so the same bar can hide very different amounts of remaining work.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured counts exist from decompilation projects on how many functions in a CodeWarrior-built binary have no counterpart in the per-object output after linking, and how did those projects discover and categorize the missing ones?",
+    "capability": "You can stop accepting a single headline completion percentage from a decompilation or reverse-engineering effort and demand to know what is being counted before trusting it."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "An unknown progress value can mean no compatible report exists, a source was unavailable, or scope could not be established, so it does not show that no work was done. Values above 100%, shifting denominators, or conflicting badges point to a report error or differing scopes and should not be silently clamped. Code-matching and asset-identification bars should not be averaged into one completion score.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured counts exist from decompilation projects on how many functions in a CodeWarrior-built binary have no counterpart in the per-object output after linking, and how did those projects discover and categorize the missing ones?",
+    "capability": "You can treat missing or odd progress figures as a reporting question to investigate rather than as zero progress or a clean number to average."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "In the Decompile-Bench pipeline, roughly 100 million raw binary functions from about 85,000 binaries were reduced to 2 million matched pairs, about 2% retained. Losses came from discarding code not defined in the project repo (system and dependency headers, trivial getters/setters), keeping only one binary function per source function (such as template instantiations), and removing near-duplicates across binaries. This is a GCC/Clang DWARF-based pipeline, not a CodeWarrior one, so it indicates the order of magnitude and the categories of unmatched code rather than a CodeWarrior count.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 100, 85000",
+   "spans": [
+    "E19"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured counts exist from decompilation projects on how many functions in a CodeWarrior-built binary have no counterpart in the per-object output after linking, and how did those projects discover and categorize the missing ones?",
+    "capability": "You can expect that the large majority of raw binary functions will have no usable source counterpart, and budget for heavy filtering when matching compiled output to source."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "Stripping removes the symbol table but leaves other structures that still enumerate functions. On the Mach-O build, a stripped file listed only one name yet a function-start list still held all five function starts in nine bytes. On Windows 64-bit images, exception-unwind entries still mark the start and end of every function that uses stack or calls another, though leaf functions are missing. A reviewer who trusts the name count will undercount badly, and the recovery methods can be scored against an unstripped twin build.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E20"
+   ],
+   "source_ids": [
+    "S21"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When a CodeWarrior-linked binary contains duplicate inline or template function copies, what happens when the rebuilt copy differs in bytes, symbol name or position from the original, and how do projects detect and recover from the resulting mismatches?",
+    "capability": "You can stop treating a stripped binary's empty name table as proof that its function inventory is unknowable, and budget analysis time on recovering function boundaries instead of assuming the work cannot be scoped."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "In the worked example, an agent read a pointer slot's raw bytes and reported a call into kernel space. The word was a placeholder that the loader replaces with the real library function address before the program starts. Reading a file as if it were the running process produces confident but wrong answers, and each format (ELF, PE, Mach-O) has its own placeholder mechanism.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E21"
+   ],
+   "source_ids": [
+    "S21"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When a CodeWarrior-linked binary contains duplicate inline or template function copies, what happens when the rebuilt copy differs in bytes, symbol name or position from the original, and how do projects detect and recover from the resulting mismatches?",
+    "capability": "You can stop trusting what a reverse-engineering agent or analyst reports from raw file bytes alone, and require that call targets be checked against how the loader actually fills in addresses at run time."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "Recycled routines such as initialization, encoding and networking wrappers make a binary look larger and more complex than its unique logic. Collapsing familiar code and comparing the remaining delta across samples makes the distinctive part visible. This is general guidance, and the sources do not address what happens when a rebuilt copy of a CodeWarrior inline or template function differs from the original.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E22"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When a CodeWarrior-linked binary contains duplicate inline or template function copies, what happens when the rebuilt copy differs in bytes, symbol name or position from the original, and how do projects detect and recover from the resulting mismatches?",
+    "capability": "You can set a triage rule that analysts spend first-pass time on the few functions that differ from known library or compiler code, so duplicate or reused code copies stop inflating effort estimates."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "A rebuilt function can have 46 code bytes identical to the original and an identical relocation record, yet differ in the lookup table it points at (1,2,3,4,3 versus 1,2,3,4,4). A byte comparison alone reports no change; only reading the pointed-to data catches it. This is the same failure the TH08 project documented, where source 0.0 looked exact against target 128.0 and the fix audited 1,548 literal references and corrected twelve more.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E23"
+   ],
+   "source_ids": [
+    "S27"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S24",
+     "quote": "Its 46 code bytes equal the original, its relocation record has the same shape, and its table is `1, 2, 3, 4, 3`.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When does the usual approach of proving a function matches byte for byte fail or become misleading for code with no separate reference object, for instance because of relocations that differ between builds, merged or reordered functions, or tables that move, and what do these failures look like to the person checking?",
+    "capability": "You can stop accepting a 'bytes are identical' result as proof that two functions are the same, and require a check of the constants the code points at before signing off on a rebuild or patch review."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Two builds of the same function (46 bytes, identical in the object files) were flagged different because the loaded images place the data section 0x70 bytes apart, changing one displacement byte (0x7a versus 0xea). Ghidra's byte correlator missed that function while its instruction correlator caught it, and rea's compare tool states it cannot normalize relocations. Teams chasing such a 'change' waste effort explaining something that does not exist.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E24",
+    "E25"
+   ],
+   "source_ids": [
+    "S24",
+    "S27"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When does the usual approach of proving a function matches byte for byte fail or become misleading for code with no separate reference object, for instance because of relocations that differ between builds, merged or reordered functions, or tables that move, and what do these failures look like to the person checking?",
+    "capability": "You can stop treating a 'modified' flag from a binary differ as a real code change when the only difference is address-dependent operands, and instead ask whether relocations were masked before the comparison."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "In rea's matching tool, two functions whose file bytes differed in the relocation slot (48b80000... versus 48b8ab00...) were still reported as an identical-bytes match, because the loader rewrote both to the same value. The warning about loader fixups lived only in the source records and did not appear in the match report. Separately, a structural-shape match paired the wrong functions (percent_change with grade_label) until name matching contradicted it.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26",
+    "E27"
+   ],
+   "source_ids": [
+    "S25",
+    "S27"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": null,
+   "meta": {
+    "query": "When does the usual approach of proving a function matches byte for byte fail or become misleading for code with no separate reference object, for instance because of relocations that differ between builds, merged or reordered functions, or tables that move, and what do these failures look like to the person checking?",
+    "capability": "You can distrust an automated 'identical-bytes' match whose bytes came from a loaded image, and demand to know whether the compared bytes are file bytes or loader-patched memory."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "The SSBU decomp reports 35.72% of functions compiled but only 7.00% of .text bytes compiled and 1.78% byte-matched, because matched functions average 46 bytes versus 986 for the undecompiled ones. Function counts therefore overstate real progress by a large factor, and the project itself calls byte-weighted progress the more accurate measure.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 1.78%, 35.72%, 7.00%",
+   "spans": [
+    "E28"
+   ],
+   "source_ids": [
+    "S28"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which decompilation projects have decided that a function without a reference object cannot be matched or attributed with confidence, or have found their attribution to a unit was wrong after the fact, and what evidence made them reverse or abandon the attempt?",
+    "capability": "You can stop reading a decompilation project's headline percentage as a measure of recovered source, and instead ask for the byte-weighted and verified figures before judging progress or committing resources."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "SSBU decomp found that compiling zstd v1.3.7, confirmed as the same version in the binary, with upstream Clang 8.0.0 gave identical function sizes but 0% instruction match, since Nintendo's NX Clang fork differs in its backend. Roughly 6-15MB of library code (jemalloc, zstd, Lua, curl, SDK) was therefore classed as identifiable but non-matching, and some game logic is expected never to match. The reference compiler, not the source, is what decides whether a unit can be attributed with confidence.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 15",
+   "spans": [
+    "E29",
+    "E30"
+   ],
+   "source_ids": [
+    "S28"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which decompilation projects have decided that a function without a reference object cannot be matched or attributed with confidence, or have found their attribution to a unit was wrong after the fact, and what evidence made them reverse or abandon the attempt?",
+    "capability": "You can stop assuming that a correct toolchain version lets a team match library code, and treat code with no matching compiler as permanently 'identified but unmatched' rather than budgeting effort to match it."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "SSBU decomp splits its naming into ground truth (4,888 exported symbols) versus about 10,191 community labels with no formal provenance, and tags guesses as inferred and flags them as 'verify before building on'. It also admits function boundaries from Ghidra may be over-sized or wrongly split. The practical consequence is that confidence in an attribution tracks its evidence tier, and a large share of labels sit in the weakest tier. Source material does not describe any specific reversal, so this is inferred from the project's own caveats.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E31",
+    "E32"
+   ],
+   "source_ids": [
+    "S28"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which decompilation projects have decided that a function without a reference object cannot be matched or attributed with confidence, or have found their attribution to a unit was wrong after the fact, and what evidence made them reverse or abandon the attempt?",
+    "capability": "You can require a provenance label on every recovered name or boundary and treat unlabeled inferences as unreliable, so wrong attributions are caught before others build on them."
+   }
+  },
+  {
+   "claim_id": "C22",
+   "text": "Matching decompilation depends on the exact compiler, flags and source context, so a match is only valid under the configuration it was checked against. The guidance is to rebuild affected code and re-verify previously matched functions after shared types or prototypes change, and to record compiler, flags and resulting diff with each result. A late discovery that the compiler or flags were wrong therefore invalidates matches, not just the functions still open.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E33",
+    "E34"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens when a decompilation project discovers, months after declaring a function matched, that the original compiler version or optimization flags were different from what it assumed, and how much already-finished work has to be redone?",
+    "capability": "You can stop treating a 'matched' function as finished work and instead budget re-verification whenever shared headers, inlines or build settings change."
+   }
+  },
+  {
+   "claim_id": "C23",
+   "text": "A function can show 100% while the rebuilt file still has wrong literal pools, section placement or data ownership, so completion claims based on per-function scores can hide latent mismatches. Teams should test their checker with deliberately wrong candidates (changed strings, constants, pointer-table entries) to confirm it rejects them, and run the full binary comparison. This reduces the chance that a hidden wrong assumption surfaces months later.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E35",
+    "E36"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens when a decompilation project discovers, months after declaring a function matched, that the original compiler version or optimization flags were different from what it assumed, and how much already-finished work has to be redone?",
+    "capability": "You can stop trusting a function-level match score as proof of completion and require checks on data, relocations and the final linked image before declaring work done."
+   }
+  },
+  {
+   "claim_id": "C24",
+   "text": "In the Zelda: Wind Waker decomp, small residual diffs such as register swaps, out-of-order instructions or duplicated instructions can come from missing the original developers' inline functions, and debug maps from a prerelease kiosk demo are used to recover those inlines. Since inline usage changes generated code in non-obvious ways, a function forced to match with the wrong structure may be fragile, and the guide itself notes the maps only partly show inline use. This is a place where assumptions that later need revisiting accumulate.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E37",
+    "E38"
+   ],
+   "source_ids": [
+    "S32"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a decompilation project discovers, months after declaring a function matched, that the original compiler version or optimization flags were different from what it assumed, and how much already-finished work has to be redone?",
+    "capability": "You can treat a persistent, unexplained mismatch (swapped registers, reordered instructions, extra or missing instructions) as an early warning of a wrong inline or build-setting assumption, rather than a cosmetic nit to be forced through."
+   }
+  },
+  {
+   "claim_id": "C25",
+   "text": "GitHub's Copilot matcher compares a suggestion plus roughly 150 surrounding characters against an index of public GitHub repositories only, skips edited suggestions and user-written code, and flags fewer than 1% of suggestions. The index is refreshed only every few months, so it misses new code and can point to moved or deleted files. A wrong or empty answer therefore looks clean while the real source sits outside the index or was altered after the match.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E39",
+    "E40"
+   ],
+   "source_ids": [
+    "S35"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do automated or assisted attribution methods (symbol-matching, signature matching, similarity scoring, language-model suggestions) assign a function to the wrong source file or library version while still looking plausible?",
+    "capability": "You can stop reading 'no match found' from an automated origin-matching tool as proof that code is original, and record it as an unresolved provenance question instead."
+   }
+  },
+  {
+   "claim_id": "C26",
+   "text": "In the March 2026 chardet case, JPlag measured structural similarity to the prior LGPL version at under 1.3%, yet the original author disputes that the rewrite is independent because the maintainer had years of access to the LGPL code and the LLM reportedly accessed metadata from that version. A near-zero similarity score can coexist with a derivative relationship, so scoring-based attribution can make a wrong 'unrelated' call look rigorous.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E41",
+    "E42"
+   ],
+   "source_ids": [
+    "S36"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why do automated or assisted attribution methods (symbol-matching, signature matching, similarity scoring, language-model suggestions) assign a function to the wrong source file or library version while still looking plausible?",
+    "capability": "You can stop accepting a low similarity score as evidence that a rewrite or reattributed function is independent of the original, and ask for process evidence such as who had access to what."
+   }
+  },
+  {
+   "claim_id": "C27",
+   "text": "Language-model tools produce confident provenance and license statements ('this is MIT', 'no copyleft') that are unsubstantiated. They are fluent enough to pass a casual review, so a wrong source or license attribution reads as plausible. The law-firm source recommends treating every non-trivial AI snippet as external third-party content to be scanned and checked.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E43"
+   ],
+   "source_ids": [
+    "S36"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why do automated or assisted attribution methods (symbol-matching, signature matching, similarity scoring, language-model suggestions) assign a function to the wrong source file or library version while still looking plausible?",
+    "capability": "You can stop trusting an AI assistant's own statement about where code or a license came from, and require it to be checked against the actual repository, LICENSE file, header or SPDX identifier before it enters a record."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 37,
+  "lineages": 37,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 1,
+  "claims": 27,
+  "claims_with_verified_span": 27,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 44,
+  "quotes_rejected": 1,
+  "ledger_capped": 3,
+  "quotes_reattributed": 0,
+  "claims_persisted": 8,
+  "persisted_with_verified_span": 8,
+  "persisted_verified_span_rate": 1.0
+ }
+}

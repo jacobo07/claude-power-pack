@@ -1,0 +1,12 @@
+{
+ "q": "Q9",
+ "gap": "B-NOTARGET",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 558.8,
+ "artifacts": [
+  "2026-11-14_143358_when-a-function-in-a-wii-gamecube-dol-or-rel-has-n.ledger.json",
+  "2026-11-14_143358_when-a-function-in-a-wii-gamecube-dol-or-rel-has-n.md",
+  "when-a-function-in-a-wii-gamecube-dol-or-rel-has-n.raw.jsonl"
+ ]
+}

@@ -1,0 +1,12 @@
+{
+ "q": "Q11",
+ "gap": "B-LINK",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 514.2,
+ "artifacts": [
+  "2026-11-14_144846_how-do-gamecube-wii-projects-go-from-many-individu.ledger.json",
+  "2026-11-14_144846_how-do-gamecube-wii-projects-go-from-many-individu.md",
+  "how-do-gamecube-wii-projects-go-from-many-individu.raw.jsonl"
+ ]
+}

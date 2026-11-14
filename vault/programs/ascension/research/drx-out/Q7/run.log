@@ -1,0 +1,57 @@
+deep_research 0.4.1: prompt='How do decompilation projects run automated source-variant s...' depth=2 breadth=4
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+deep_research: trafilatura failed (ModuleNotFoundError("No module named 'trafilatura'")); fallback
+deep_research: readability failed (ModuleNotFoundError("No module named 'readability'")); fallback
+
+deep_research: OK
+  report:   C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research\drx-out\Q7\2026-11-14_141358_how-do-decompilation-projects-run-automated-source.md
+  index:    C:\Users\User\.claude\skills\claude-power-pack\vault\research\index.json
+  raw:      C:\Users\User\.claude\skills\claude-power-pack\vault\programs\ascension\research\drx-out\Q7\how-do-decompilation-projects-run-automated-source.raw.jsonl
+  learnings: 2
+  sources:   8
+  duration:  995.4 s

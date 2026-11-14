@@ -1,0 +1,12 @@
+{
+ "q": "Q7",
+ "gap": "B-CNM",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 996.4,
+ "artifacts": [
+  "2026-11-14_141358_how-do-decompilation-projects-run-automated-source.ledger.json",
+  "2026-11-14_141358_how-do-decompilation-projects-run-automated-source.md",
+  "how-do-decompilation-projects-run-automated-source.raw.jsonl"
+ ]
+}

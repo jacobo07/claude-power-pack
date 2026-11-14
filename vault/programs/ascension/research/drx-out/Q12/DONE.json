@@ -1,0 +1,12 @@
+{
+ "q": "Q12",
+ "gap": "B-COMPILER",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 515.4,
+ "artifacts": [
+  "2026-11-14_145721_do-commercial-wii-games-link-libraries-built-with-.ledger.json",
+  "2026-11-14_145721_do-commercial-wii-games-link-libraries-built-with-.md",
+  "do-commercial-wii-games-link-libraries-built-with-.raw.jsonl"
+ ]
+}

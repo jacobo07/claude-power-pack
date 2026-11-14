@@ -1,0 +1,1385 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-14_143359_what-blocks-matching-large-c-functions-under-mwcc-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://github.com/encounter/decomp-toolkit",
+   "aliases": [],
+   "sha256": "f644a1fdb1678e68d23889147b841e8d983669f77be91a8d6664a5dda9d5e22d",
+   "chars": 14946,
+   "snapshot": "f644a1fdb1678e68d23889147b841e8d983669f77be91a8d6664a5dda9d5e22d.txt",
+   "retrieved_at": "2026-11-14T13:34:16+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://github.com/doldecomp",
+   "aliases": [],
+   "sha256": "a4081e95edd2b01743dd042a90d2527ceae719fd3c033866176304fa14198928",
+   "chars": 3432,
+   "snapshot": "a4081e95edd2b01743dd042a90d2527ceae719fd3c033866176304fa14198928.txt",
+   "retrieved_at": "2026-11-14T13:34:16+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://recompsoftware.com/platforms/wii/",
+   "aliases": [],
+   "sha256": "7388c1a8c2a8500e3f190bc891036202420207012823ce80773fbd0eee182835",
+   "chars": 6456,
+   "snapshot": "7388c1a8c2a8500e3f190bc891036202420207012823ce80773fbd0eee182835.txt",
+   "retrieved_at": "2026-11-14T13:34:16+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/gamecube-wii/",
+   "aliases": [],
+   "sha256": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f",
+   "chars": 22525,
+   "snapshot": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f.txt",
+   "retrieved_at": "2026-11-14T13:34:16+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://nsmbw-community.github.io/NSMBW-Decomp/docs/",
+   "aliases": [],
+   "sha256": "c0602d004c9d8c89631b65b56dd8f40c6e1f78581770b2187aa450d66a2d8b61",
+   "chars": 3688,
+   "snapshot": "c0602d004c9d8c89631b65b56dd8f40c6e1f78581770b2187aa450d66a2d8b61.txt",
+   "retrieved_at": "2026-11-14T13:34:16+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://en.wikipedia.org/wiki/Inline_(C_and_C%2B%2B)",
+   "aliases": [],
+   "sha256": "6d7956d3808a1fb2e7a4a8eafc091db6ba98eaebb966be34265fa04315987571",
+   "chars": 20781,
+   "snapshot": "6d7956d3808a1fb2e7a4a8eafc091db6ba98eaebb966be34265fa04315987571.txt",
+   "retrieved_at": "2026-11-14T13:34:58+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://en.wikipedia.org/wiki/Inline_expansion",
+   "aliases": [],
+   "sha256": "c13e54ab9d5861713d5235302452845ae6047cb51a46a175f11d6f493915e170",
+   "chars": 25000,
+   "snapshot": "c13e54ab9d5861713d5235302452845ae6047cb51a46a175f11d6f493915e170.txt",
+   "retrieved_at": "2026-11-14T13:34:58+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://learn.microsoft.com/en-us/cpp/cpp/inline-functions-cpp?view=msvc-170",
+   "aliases": [],
+   "sha256": "a9974e1d55777f47fc12fc792f8470c4bd395a26485ad557d0c947df52ea8108",
+   "chars": 15592,
+   "snapshot": "a9974e1d55777f47fc12fc792f8470c4bd395a26485ad557d0c947df52ea8108.txt",
+   "retrieved_at": "2026-11-14T13:34:58+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://learn.microsoft.com/en-us/cpp/c-language/inline-functions?view=msvc-170",
+   "aliases": [],
+   "sha256": "3b4d8ac25a86fa834b4973d6208857798c1a991f89eca7bd6afabe3ccaf0635f",
+   "chars": 2832,
+   "snapshot": "3b4d8ac25a86fa834b4973d6208857798c1a991f89eca7bd6afabe3ccaf0635f.txt",
+   "retrieved_at": "2026-11-14T13:34:58+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://arxiv.org/pdf/2306.06884",
+   "aliases": [],
+   "sha256": "78e6facf57ad3d0a3259ee52da79362a763376c237ccfcd32048732dd870435d",
+   "chars": 25000,
+   "snapshot": "78e6facf57ad3d0a3259ee52da79362a763376c237ccfcd32048732dd870435d.txt",
+   "retrieved_at": "2026-11-14T13:35:24+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://unseel.com/cs/compilation-pipeline",
+   "aliases": [],
+   "sha256": "c1382d21b753d7b6e1a66da8bb3cc3c99b61fd5ebeac999b42567ca57a360bca",
+   "chars": 10383,
+   "snapshot": "c1382d21b753d7b6e1a66da8bb3cc3c99b61fd5ebeac999b42567ca57a360bca.txt",
+   "retrieved_at": "2026-11-14T13:35:24+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://www.geeksforgeeks.org/dsa/complexity-metrics/",
+   "aliases": [],
+   "sha256": "e3e236dd5dd2dff6392d47050685ecb2bcd9865ca70da277f9903ed72370b0ed",
+   "chars": 8712,
+   "snapshot": "e3e236dd5dd2dff6392d47050685ecb2bcd9865ca70da277f9903ed72370b0ed.txt",
+   "retrieved_at": "2026-11-14T13:35:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://coleshill.warwickshire.sch.uk/files/2022/04/L1-Program-compiling.pdf",
+   "aliases": [],
+   "sha256": "cb1b15502772feaddc0f882287330b5fe5b35ed34684e87f889a1076950ad98d",
+   "chars": 25000,
+   "snapshot": "cb1b15502772feaddc0f882287330b5fe5b35ed34684e87f889a1076950ad98d.txt",
+   "retrieved_at": "2026-11-14T13:35:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://gcc.gnu.org/onlinedocs/gccint/",
+   "aliases": [],
+   "sha256": "99386597ab0840ecf2619a3710f46e863439b6a7ff3944fb6dabe310253cae4b",
+   "chars": 21479,
+   "snapshot": "99386597ab0840ecf2619a3710f46e863439b6a7ff3944fb6dabe310253cae4b.txt",
+   "retrieved_at": "2026-11-14T13:35:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://www.cs.odu.edu/~zeil/cs260/latest/Public/big3/index.html",
+   "aliases": [],
+   "sha256": "3367098487bdd7367faf2f5eaf3d0dfa591fe16d72b861ceda712a45fa0e32fc",
+   "chars": 25000,
+   "snapshot": "3367098487bdd7367faf2f5eaf3d0dfa591fe16d72b861ceda712a45fa0e32fc.txt",
+   "retrieved_at": "2026-11-14T13:35:55+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://gist.github.com/MangaD/4332c566fa74906bb1ef29390f414fbf",
+   "aliases": [],
+   "sha256": "1292352064688b4891e6347f820e152c102893b50c2755f944da61edd4dc311e",
+   "chars": 19037,
+   "snapshot": "1292352064688b4891e6347f820e152c102893b50c2755f944da61edd4dc311e.txt",
+   "retrieved_at": "2026-11-14T13:35:55+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://0xghost.dev/blog/template-parameter-deduction/",
+   "aliases": [],
+   "sha256": "82f9b117478de2fea4be7acb7363a214e6402953b7f06e7788abc446a0a778f8",
+   "chars": 25000,
+   "snapshot": "82f9b117478de2fea4be7acb7363a214e6402953b7f06e7788abc446a0a778f8.txt",
+   "retrieved_at": "2026-11-14T13:35:55+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://learn.microsoft.com/en-us/cpp/cpp/overload-resolution-of-function-template-calls?view=msvc-170",
+   "aliases": [],
+   "sha256": "e4efa35fdead93f5d6273edd7790ba99c8bad5e3067fd35aef462c72949ab6f0",
+   "chars": 2865,
+   "snapshot": "e4efa35fdead93f5d6273edd7790ba99c8bad5e3067fd35aef462c72949ab6f0.txt",
+   "retrieved_at": "2026-11-14T13:35:55+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://www.martincid.com/technology-sv/decomp-dev-ai-game-decompilation-shuts-index/",
+   "aliases": [],
+   "sha256": "f9b7b9a2953e8f8ae9184bd2c593b9f434d2fc7ea56759529329aa916b632d08",
+   "chars": 4854,
+   "snapshot": "f9b7b9a2953e8f8ae9184bd2c593b9f434d2fc7ea56759529329aa916b632d08.txt",
+   "retrieved_at": "2026-11-14T13:36:40+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://xenospectrum.com/en/decompilation-match-rate-melee/",
+   "aliases": [],
+   "sha256": "117bb15254c1ab54e1ed6445c54b3748c81157c029b9164be55f7d9fc2e75d27",
+   "chars": 23747,
+   "snapshot": "117bb15254c1ab54e1ed6445c54b3748c81157c029b9164be55f7d9fc2e75d27.txt",
+   "retrieved_at": "2026-11-14T13:36:40+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://www.tomshardware.com/tech-industry/artificial-intelligence/dev-used-ai-agents-and-more-than-500-billion-tokens-to-rebuild-call-of-duty-modern-warfare-2s-source-code-83-percent-of-the-2009-shooters-functions-now-match-the-original-byte-for-byte",
+   "aliases": [],
+   "sha256": "2c0ebd38586af9c20ef327ee4cc9c1e5b11783a37bc8fbee5f571c71bdfbd314",
+   "chars": 13665,
+   "snapshot": "2c0ebd38586af9c20ef327ee4cc9c1e5b11783a37bc8fbee5f571c71bdfbd314.txt",
+   "retrieved_at": "2026-11-14T13:36:40+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "role-reassignment"
+   ],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://www.youtube.com/watch?v=Pl7ThC4PiVA",
+   "aliases": [],
+   "sha256": "80326d956dd0291ca1da9e51672534e2f9fb6e1a0091a80d9a19b76b4f743561",
+   "chars": 288,
+   "snapshot": "80326d956dd0291ca1da9e51672534e2f9fb6e1a0091a80d9a19b76b4f743561.txt",
+   "retrieved_at": "2026-11-14T13:36:40+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://dev.to/sachin_tolay_052a7e539e57/instruction-reordering-your-code-doesnt-always-run-in-the-order-you-wrote-it-bb8",
+   "aliases": [],
+   "sha256": "4e2927f1636be5235e4069a8b9e8d5e09f13c27b892425df839cd5335ad5d847",
+   "chars": 7306,
+   "snapshot": "4e2927f1636be5235e4069a8b9e8d5e09f13c27b892425df839cd5335ad5d847.txt",
+   "retrieved_at": "2026-11-14T13:37:06+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://sachintolay.substack.com/p/instruction-reordering-your-code",
+   "aliases": [],
+   "sha256": "b57ae999c16d3c13c5715ae349bfaa9830fa146dc1cfbe8baf3dba5d99a0eea5",
+   "chars": 7527,
+   "snapshot": "b57ae999c16d3c13c5715ae349bfaa9830fa146dc1cfbe8baf3dba5d99a0eea5.txt",
+   "retrieved_at": "2026-11-14T13:37:06+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S25",
+   "url": "https://www.codermusings.com/register-allocation-compiler-guide/",
+   "aliases": [],
+   "sha256": "da4a18c19058463edaf986291a8943b75664e1f32b8d1f240399676d52701031",
+   "chars": 17013,
+   "snapshot": "da4a18c19058463edaf986291a8943b75664e1f32b8d1f240399676d52701031.txt",
+   "retrieved_at": "2026-11-14T13:37:06+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S25"
+  },
+  {
+   "source_id": "S26",
+   "url": "https://en.wikipedia.org/wiki/X86_calling_conventions",
+   "aliases": [],
+   "sha256": "8dcc36ac8f12556e7f92666eaf999f8c485f3ecd68107cb4d45354ab7f54ca12",
+   "chars": 25000,
+   "snapshot": "8dcc36ac8f12556e7f92666eaf999f8c485f3ecd68107cb4d45354ab7f54ca12.txt",
+   "retrieved_at": "2026-11-14T13:37:06+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S26"
+  },
+  {
+   "source_id": "S27",
+   "url": "https://arxiv.org/abs/2306.06884",
+   "aliases": [],
+   "sha256": "333e7166db7d9ac3ea1aa5e2acaf8ba66d0b9bea974fe987703588788245ed02",
+   "chars": 4431,
+   "snapshot": "333e7166db7d9ac3ea1aa5e2acaf8ba66d0b9bea974fe987703588788245ed02.txt",
+   "retrieved_at": "2026-11-14T13:37:32+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S27"
+  },
+  {
+   "source_id": "S28",
+   "url": "https://github.com/Dryxio/samp-source",
+   "aliases": [],
+   "sha256": "a845fdecc506867838790e0d1c4d14501dc2ce38ccbcdda8b0669024f353792b",
+   "chars": 4549,
+   "snapshot": "a845fdecc506867838790e0d1c4d14501dc2ce38ccbcdda8b0669024f353792b.txt",
+   "retrieved_at": "2026-11-14T13:37:32+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S28"
+  },
+  {
+   "source_id": "S29",
+   "url": "https://www.tomshardware.com/software/operating-systems/45-years-later-earliest-dos-source-code-transcribed-from-a-stack-of-old-printouts-found-in-a-garage-code-was-open-sourced-to-mark-86-dos-1-00s-anniversary",
+   "aliases": [],
+   "sha256": "97c5bd38fd66c84a8fc9681a14627a29163f4d82c5999f8322f5b99b87d3840f",
+   "chars": 7553,
+   "snapshot": "97c5bd38fd66c84a8fc9681a14627a29163f4d82c5999f8322f5b99b87d3840f.txt",
+   "retrieved_at": "2026-11-14T13:37:32+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "role-reassignment"
+   ],
+   "lineage": "S29"
+  },
+  {
+   "source_id": "S30",
+   "url": "https://devblogs.microsoft.com/oldnewthing/20050322-00/?p=36113/",
+   "aliases": [],
+   "sha256": "2ab2ba8715a2c9b8125cee5d9fc4909e703bfe681d50bda665180afbd68ff14f",
+   "chars": 5090,
+   "snapshot": "2ab2ba8715a2c9b8125cee5d9fc4909e703bfe681d50bda665180afbd68ff14f.txt",
+   "retrieved_at": "2026-11-14T13:38:21+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S30"
+  },
+  {
+   "source_id": "S31",
+   "url": "https://www.brainkart.com/article/The-Principal-Sources-of-Optimization_8191/",
+   "aliases": [],
+   "sha256": "5cfc479e6b43652da91484b10370490b1a425a51568fef11d1bc093abdce2426",
+   "chars": 18540,
+   "snapshot": "5cfc479e6b43652da91484b10370490b1a425a51568fef11d1bc093abdce2426.txt",
+   "retrieved_at": "2026-11-14T13:38:21+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S31"
+  },
+  {
+   "source_id": "S32",
+   "url": "https://en.wikipedia.org/wiki/Code_generation_%28compiler%29",
+   "aliases": [],
+   "sha256": "ef4f77276d9cdf511e6c19b98339bd514c3e33fccf2fd9bd06e6bdc5541b76ed",
+   "chars": 6835,
+   "snapshot": "ef4f77276d9cdf511e6c19b98339bd514c3e33fccf2fd9bd06e6bdc5541b76ed.txt",
+   "retrieved_at": "2026-11-14T13:38:21+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S32"
+  },
+  {
+   "source_id": "S33",
+   "url": "https://www.reddit.com/r/Compilers/comments/1b9flo/why_do_compilers_compile_the_same_code_in/",
+   "aliases": [],
+   "sha256": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf",
+   "chars": 6,
+   "snapshot": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf.txt",
+   "retrieved_at": "2026-11-14T13:38:21+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S33"
+  },
+  {
+   "source_id": "S34",
+   "url": "https://dev.to/yeauxdejuan/reverse-engineering-in-the-gaming-industry-k7o",
+   "aliases": [],
+   "sha256": "cd002d3d17fd75c9ac0f55a324cd65d370feb5c8e587db87ee8647915749efe8",
+   "chars": 7637,
+   "snapshot": "cd002d3d17fd75c9ac0f55a324cd65d370feb5c8e587db87ee8647915749efe8.txt",
+   "retrieved_at": "2026-11-14T13:38:52+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S34"
+  },
+  {
+   "source_id": "S35",
+   "url": "https://github.com/kovidomi/game-reversing",
+   "aliases": [],
+   "sha256": "2084f2f72d952782a8c20959f112e079c39d3a3d7c141d93210164ef75c3afce",
+   "chars": 9168,
+   "snapshot": "2084f2f72d952782a8c20959f112e079c39d3a3d7c141d93210164ef75c3afce.txt",
+   "retrieved_at": "2026-11-14T13:38:52+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S35"
+  },
+  {
+   "source_id": "S36",
+   "url": "https://www.gamemeca.com/en/view.php?gid=1781785",
+   "aliases": [],
+   "sha256": "7c09c0c98ec626b44d264314d310a0cb3325d1837f1a921be0e69812cfd6a052",
+   "chars": 15729,
+   "snapshot": "7c09c0c98ec626b44d264314d310a0cb3325d1837f1a921be0e69812cfd6a052.txt",
+   "retrieved_at": "2026-11-14T13:38:52+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S36"
+  },
+  {
+   "source_id": "S37",
+   "url": "https://www.theverge.com/games/1004869/reverse-engineered-games-all-the-news-on-video-game-decomps-recomps-vr-and-web-and-3d-ports",
+   "aliases": [],
+   "sha256": "39bcb9ace1a93df134646b81339ab351228471e5ce429a8b6ca38490fa941bd3",
+   "chars": 13457,
+   "snapshot": "39bcb9ace1a93df134646b81339ab351228471e5ce429a8b6ca38490fa941bd3.txt",
+   "retrieved_at": "2026-11-14T13:38:52+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "system-prompt-reference"
+   ],
+   "lineage": "S37"
+  },
+  {
+   "source_id": "S38",
+   "url": "https://kindatechnical.com/reverse-engineering/lesson-46-case-study-2-reverse-engineering-a-game.html",
+   "aliases": [],
+   "sha256": "fb3efba9c417dd4cb60a261a53c3c1197f1e799a5dd3598afde40343a5256c4a",
+   "chars": 3941,
+   "snapshot": "fb3efba9c417dd4cb60a261a53c3c1197f1e799a5dd3598afde40343a5256c4a.txt",
+   "retrieved_at": "2026-11-14T13:38:52+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S38"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S4",
+   "start": 4676,
+   "end": 4793,
+   "text": "Matching C for CodeWarrior is harder than for GCC because the compiler's optimization decisions are less predictable.",
+   "sha256": "207ead6bbccbbb7cffe00a02c57bacf8f7c1afeae3217980a0da8a0a2df04048"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S3",
+   "start": 2231,
+   "end": 2298,
+   "text": "Wii Sports decompilation\nWii Sports\n2006\nwip 35.03%\nHuman-led\n—\n187",
+   "sha256": "73d8e1aa4d780a12762e34e5a90e824a170f72cbb3828b26ccbaef468cb560e4"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S4",
+   "start": 3965,
+   "end": 4054,
+   "text": "The versions used across titles range from 1.0 through 1.7, per decomp.wtf documentation.",
+   "sha256": "d77f4d7f0627046efda483fcf173e4f3da61183eb0a06f991e2d3b0873099fb3"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S1",
+   "start": 7502,
+   "end": 7639,
+   "text": "Simple diff tool for issues in a linked ELF. (Yes, not DOL. It's misnamed.)\nTries to find the most obvious difference causing a mismatch.",
+   "sha256": "edf5f9971a6fb1269fd5534261d5f1843048c3366fde8bdef46e00698b18be46"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S7",
+   "start": 6229,
+   "end": 6293,
+   "text": "Register allocation\ncan be done across the larger function body.",
+   "sha256": "f0c6ad51e0e9575f7bedfe9c9644b519fd27211d52305f11aceda9c3abcd5a02"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S7",
+   "start": 4042,
+   "end": 4251,
+   "text": "However, the main benefit of inline expansion is to allow further optimizations and improved scheduling, due to increasing the size of the function body, as better optimization is possible on larger functions.",
+   "sha256": "ef266b35b2a85c87a6e01ffbd6c608576edfca43007edf961523d047d6011062"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S6",
+   "start": 11055,
+   "end": 11246,
+   "text": "In C++, a function defined\ninline\nwill, if required, emit a function shared among translation units, typically by putting it into the common section of the\nobject file\nfor which it is needed.",
+   "sha256": "4c89df49377ce5722166b2cc09d2ca720e18fb97064f4a0a00860ecb9f004556"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S8",
+   "start": 6963,
+   "end": 7217,
+   "text": "Rather than expand an inline function defined in a header file, the compiler may create it as a callable function in more than one translation unit. The compiler marks the generated function for the linker to prevent one-definition-rule (ODR) violations.",
+   "sha256": "86162d14bb6260e0bf4416a6655a1cb2c56d94f2f39124c31465638aa8bc6ba5"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S9",
+   "start": 580,
+   "end": 752,
+   "text": "Inline code substitution occurs only at the compiler's discretion. For example, the compiler won't inline a function if its address is taken or if it's too large to inline.",
+   "sha256": "e58e1e3b5337122ec20958fad775b64488e6970f10112d43b7639fd03ed43684"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S8",
+   "start": 8205,
+   "end": 8292,
+   "text": "The function or its caller is compiled with\n/Ob0\n(the default option for debug builds).",
+   "sha256": "e5ad3f6219a1fa829f20e830f101d0ea5dd3d2c611cca7eabc187a62ca002648"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S7",
+   "start": 20399,
+   "end": 20445,
+   "text": "In debug mode, the compiler will never inline.",
+   "sha256": "358bcd92b24053aa5083d4c94dcc78aed0e24880989cc48c97002651a676c18b"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S8",
+   "start": 5962,
+   "end": 6092,
+   "text": "The compiler treats the inline expansion options and keywords as suggestions. There's no guarantee that functions will be inlined.",
+   "sha256": "ecb54fcaa8396d6fd81f2fe35a479d0732b2ff3d28a0efd6008005cf13e4eedb"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S11",
+   "start": 5788,
+   "end": 5921,
+   "text": "Aggressive optimization can be slower in cache-pressured workloads (more inlining → larger code → more I-cache misses). Profile both.",
+   "sha256": "85adb7e2ab2b64ee3298be443e2312c8d2fff006f9c8931da7b8bedfddcdf0d2"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S15",
+   "start": 11877,
+   "end": 11980,
+   "text": "The compiler often generates implicit calls to this constructor in places where we might not expect it.",
+   "sha256": "c8edf9a08c52483c22da5f108922151538983b8e8e1d389722eb736093e09b34"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S20",
+   "start": 14972,
+   "end": 15059,
+   "text": "Processing functions from easiest to hardest has the problem that it eventually stalls.",
+   "sha256": "2e0aeff54eb88c9f2b7179423f949c452caf98f2c56fc0cc7331b93f8d16fcdc"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S20",
+   "start": 15369,
+   "end": 15476,
+   "text": "Community members reportedly played a major role in the last 10 functions, which were especially difficult.",
+   "sha256": "b312ad3cdf6ff1361d46d1dec26e2884afbd86af075f2c7305330d4c3f1795db"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S20",
+   "start": 16063,
+   "end": 16169,
+   "text": "About\n4.8%\nof commits related to matching work (about 41 commits) reportedly involved expert intervention.",
+   "sha256": "ec8a502c25f4cb0d9c900c36938a202a7f57f537e44c97cab656bbed3da1a430"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S20",
+   "start": 8718,
+   "end": 8815,
+   "text": "The remaining functions would not match byte for byte no matter how many times they were revised.",
+   "sha256": "f6c6ea42ba9762b0a2431e1d015590dc7382f1b34a029c64b1a259cb70932c58"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S21",
+   "start": 9146,
+   "end": 9266,
+   "text": "Heumann believes the 16% lacking a byte match are still semantically correct, but diminishing returns were getting real.",
+   "sha256": "6313c1c47a8cee8e1d384205abace6f85e1242d78c4dd310e4a65877ba031c63"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S25",
+   "start": 14508,
+   "end": 14652,
+   "text": "With 8 function parameters, x86-64’s System V ABI passes the first 6 in registers (RDI through R9) and pushes parameters 7 and 8 onto the stack.",
+   "sha256": "9585902d23cbceecafa9c8f15c5af876ca3ad42cc4c44059ecbe7438057fadef"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S26",
+   "start": 22583,
+   "end": 22834,
+   "text": "In the Microsoft x64 calling convention, it is the caller's responsibility to allocate 32 bytes of \"shadow space\" on the stack right before calling the function (regardless of the actual number of parameters used), and to pop the stack after the call.",
+   "sha256": "c8728fc91fe81b09a8d32646f084f2754284bf52bbbec01b590ca446092d2ff4"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S23",
+   "start": 5900,
+   "end": 6086,
+   "text": "Because CPUs and compilers apply many different optimizations based on context, hardware, and surrounding code, the specific ordering of operations can vary in ways you might not expect.",
+   "sha256": "0b2750a3d15f1aeafa9823a2cb803031523880cabec4f496804811194e77efd1"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S26",
+   "start": 8236,
+   "end": 8375,
+   "text": "Conventions named\nfastcall\nor\nregister\nhave not been standardized, and have been implemented differently, depending on the compiler vendor.",
+   "sha256": "97a601398a5a7d2dacfd98b0c1129930162649ad2b5ee31254c971238a0d2a60"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S20",
+   "start": 5646,
+   "end": 5740,
+   "text": "The\n83%\nHeumann reported, by contrast, is the share of all functions that match byte for byte.",
+   "sha256": "f1dfc4843456dd84a89af916d26e77234ed7cd5ce93164fcd9bd20bac0654216"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S20",
+   "start": 11226,
+   "end": 11313,
+   "text": "The problem is that no definition is given for what the\n99.5%\nin the README represents.",
+   "sha256": "ea9375560ab69813bfcc11b46b221930e3d3d5b368f30ad596fe6ee13ab1e927"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S20",
+   "start": 10251,
+   "end": 10356,
+   "text": "However, including the\n83%\nbyte-match rate, there is no way for third parties to verify it independently.",
+   "sha256": "5b191f3dd8c4f724cf5cf19be4b25b1b7f8c92e4f0db7158c0dec36577efd3c3"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S20",
+   "start": 16063,
+   "end": 16169,
+   "text": "About\n4.8%\nof commits related to matching work (about 41 commits) reportedly involved expert intervention.",
+   "sha256": "ec8a502c25f4cb0d9c900c36938a202a7f57f537e44c97cab656bbed3da1a430"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S20",
+   "start": 8718,
+   "end": 8815,
+   "text": "The remaining functions would not match byte for byte no matter how many times they were revised.",
+   "sha256": "f6c6ea42ba9762b0a2431e1d015590dc7382f1b34a029c64b1a259cb70932c58"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S30",
+   "start": 2018,
+   "end": 2192,
+   "text": "(Note that whether two functions are identical at the object code level\nis highly dependent on which version of what compiler you’re using,\nand with which optimization flags.",
+   "sha256": "4cdc71440868e32d48fd2c1e820c4d530d2336a3d702fe1e3d887b5ba8f1946f"
+  },
+  {
+   "span_id": "E30",
+   "source_id": "S30",
+   "start": 2805,
+   "end": 2944,
+   "text": "Therefore, when the debugger sees that you’ve jumped to\n0x010010d6\n,\nit doesn’t know which of the names it should use, so it just picks on.",
+   "sha256": "0694f75066ef09ae996cbf1b4cb1363148c80bd0c400389d41afaf7730e61614"
+  },
+  {
+   "span_id": "E31",
+   "source_id": "S31",
+   "start": 8081,
+   "end": 8223,
+   "text": "Hence, a[tl] may not have the same value on reaching B6 as  it did on leaving B1, and it is not safe to treat a[tl] as a common subexpression.",
+   "sha256": "174c63bc55d2d82aeeee2d81eafdaee79c58d947b3eca9a6e70edb383b802ccd"
+  },
+  {
+   "span_id": "E32",
+   "source_id": "S32",
+   "start": 873,
+   "end": 1097,
+   "text": "This multi-stage process is used because many\nalgorithms\nfor\ncode optimization\nare easier to apply one at a time, or because the input to one optimization relies on the completed processing performed by another optimization.",
+   "sha256": "bc0d19a1eb2bf41aecf5282ea80e518123b4f841ef29c75b8f9e95cb673d345e"
+  },
+  {
+   "span_id": "E33",
+   "source_id": "S36",
+   "start": 2012,
+   "end": 2195,
+   "text": "With a bit of help from AI, the process of rebuilding this code to suit other operating systems or current-gen hardware can be compressed from months down to a mere few hours or days.",
+   "sha256": "140a2cb2fba1cdda04d41669051e7eb4f3b22027d18c21bbd275d5bfd55a71c7"
+  },
+  {
+   "span_id": "E34",
+   "source_id": "S37",
+   "start": 7793,
+   "end": 7980,
+   "text": "Today, that same idea has warped decompilation into a hollow numbers game, exacerbated by folks who just want to burn tokens to make number go up or “port game to PC”, all else be damned.",
+   "sha256": "a6d5e6792add0ece74a67cb9ceeb2e6b5ba34f198863d4454eec1dce68d72776"
+  },
+  {
+   "span_id": "E35",
+   "source_id": "S37",
+   "start": 7077,
+   "end": 7194,
+   "text": "With launch still months away, sharing a build with tens of thousands of players felt like too big a risk for ReVamp.",
+   "sha256": "17323a5bfc6d065d3a4f457be181bfb4a1536993173dbff6711b8f1ed601c1e4"
+  },
+  {
+   "span_id": "E36",
+   "source_id": "S36",
+   "start": 8023,
+   "end": 8204,
+   "text": "The aforementioned web browser-based GTA 5 port was summarily shut down almost immediately after launch following DMCA takedown notices from Rockstar Games and Take-Two Interactive.",
+   "sha256": "a4d6c42b4f581057b36430e187ce4d922c4cf49f0af501c11833ee748bc409ee"
+  },
+  {
+   "span_id": "E37",
+   "source_id": "S37",
+   "start": 8728,
+   "end": 8915,
+   "text": "Microsoft is putting together a new\nXbox Labs group\nto explore the rapid emergence of these mods, many of which use AI models to help modders remix games in ways we’ve rarely seen before.",
+   "sha256": "66a18dbb8460c9a96eda514adf519c04197edfe25d12dc2bbb436dd479b2ab35"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "None of the retrieved material reports a measured frequency of large functions failing to match due to inlining choices, per project or per compiler version. The sources give project lists, completion percentages and general statements that CodeWarrior's optimization decisions are hard to predict, but no failure-rate data. Any estimate for effort on large functions would have to come from sampling a project directly.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measurements have decompilation projects for Wii games actually recorded on how often large functions fail to match because of inlining choices, and which projects and compiler versions did they measure on?",
+    "capability": "You can stop expecting to find a published inlining-failure rate for Wii decomp projects and plan on gathering your own measurement, rather than budgeting around a benchmark that does not exist in these sources."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "The Wii decomp tracker lists projects at very different maturity: Petari (Super Mario Galaxy) and Mario Strikers Charged are complete at 100%, while Wii Sports is at 35.03%, Xenoblade at 10.77% and Brawl at 1.73%. Completed or high-progress projects are the ones where hard, inlining-sensitive large functions have already been resolved or left as known blockers, so they are the best candidates for mining commit history and issue trackers for measurements. The compiler range cited is CodeWarrior 1.0 through 1.7 across titles, but no per-project version mapping is given.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 1.73%, 10.77%, 100%",
+   "spans": [
+    "E2",
+    "E3"
+   ],
+   "source_ids": [
+    "S3",
+    "S4"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measurements have decompilation projects for Wii games actually recorded on how often large functions fail to match because of inlining choices, and which projects and compiler versions did they measure on?",
+    "capability": "You can scope which Wii projects and compiler versions are worth sampling first, using the tracker's progress figures, instead of surveying all 30+ projects blindly."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The toolchain exposes a diff tool that finds the most obvious cause of a mismatch in a linked ELF, and a map command that surfaces deduplicated weak functions, which are a known signature of inlining and template instantiation. This means a per-project inlining-failure count would have to be assembled from these outputs, not read from documentation.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What measurements have decompilation projects for Wii games actually recorded on how often large functions fail to match because of inlining choices, and which projects and compiler versions did they measure on?",
+    "capability": "You can treat the project's own mismatch tooling and linked-map data as the place to get inlining evidence, rather than expecting it from summary pages."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Inlining copies a helper's body into every call site, so the large caller no longer contains a call at all. Optimization then runs on the enlarged body, with constants propagated, branches eliminated and registers allocated across the combined code. The instruction order and register choices in the large function therefore depend on whether the helper was inlined, and they differ from the not-inlined case, where arguments are passed and a call is made.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the compiler produce different code for a large function when a small helper is inlined, not inlined, or emitted as a separate deduplicated copy, and how does that change the instruction order and register choices a decompiler has to reproduce?",
+    "capability": "You can stop assuming a decompiler or reverse-engineering effort will see the same function structure the source author wrote, and budget for the fact that the compiler merges, duplicates, or discards helper functions depending on build settings."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "The same helper can end up inlined at some call sites while an out-of-line copy still exists, for example when its address is taken or the compiler judges it too large. In C++, an unexpanded helper is emitted as a shared copy that the linker merges across translation units. In C, a static helper instead gets a separate copy per translation unit. So the deduplicated-copy case is a linkage outcome, not just an optimizer choice.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7",
+    "E8",
+    "E9"
+   ],
+   "source_ids": [
+    "S6",
+    "S8",
+    "S9"
+   ],
+   "independent_lineages": 3,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the compiler produce different code for a large function when a small helper is inlined, not inlined, or emitted as a separate deduplicated copy, and how does that change the instruction order and register choices a decompiler has to reproduce?",
+    "capability": "You can predict which helpers will have survived as separate callable code in a binary, and stop expecting a single outcome (inlined, not inlined, or one shared copy) for a given helper."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Inline markings do not force inlining. Debug builds with MSVC's default setting disable it entirely, and even forced inlining is refused for recursion, varargs, or mismatched exception handling. Rust never inlines in debug mode. The same source therefore compiles to structurally different code per build mode, and the original build flags matter as much as the source.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10",
+    "E11",
+    "E12"
+   ],
+   "source_ids": [
+    "S7",
+    "S8"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the compiler produce different code for a large function when a small helper is inlined, not inlined, or emitted as a separate deduplicated copy, and how does that change the instruction order and register choices a decompiler has to reproduce?",
+    "capability": "You can treat the build configuration, such as debug versus optimized builds, as a first-order input when assessing whether recovered code can match the original, instead of assuming the source's inline markings decide the outcome."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "Heavier inlining makes the compiled program larger, which can cause more instruction-cache misses and slow the program down in workloads under cache pressure. So the most aggressive optimization level is not always the fastest, and the claim has to be checked by profiling both builds.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "At what function size or complexity do attempts to reproduce the original compiled bytes stop converging, and what do the stuck attempts look like when the cause is inlining rather than constructors, destructors or exception handling?",
+    "capability": "You can stop assuming that more aggressive compiler optimization is automatically better for your software's speed, and ask engineering to measure both settings before committing."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "The retrieved material is about C++ language mechanics, not matching-decompilation practice, so it cannot say how people prove a difference is unreachable. It does show that compilers insert copy-constructor calls, and extra moves from pass-by-value parameters, that the author never wrote. Output differences can therefore come from compiler-generated behavior that no rewrite of the visible source controls, which suggests setting a stopping rule for repeated rewrites.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S15"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a large function with templates, member-pointer calls, copy constructors, or deeply nested inline calls is rewritten many times and still does not match, and how do people tell that the remaining difference is unreachable from source code?",
+    "capability": "You can stop assuming that every remaining difference in compiled output is a flaw in the source code, and cap the engineering time spent on rewrites that keep failing to match."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "Snowboard Kids 2 stalled twice after the first AI-driven jumps (about 25% to 58%, then to about 75%), yet reached 100% on May 17, 2026, 596 days after the first commit. The last 10 especially hard functions were largely closed by community members, and the maintainer says the community mattered more than any model. Stalls reflect the ordering strategy (easiest first, give up after 10 failed attempts) rather than true impossibility.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15",
+    "E16"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which functions in matching-decompilation projects were declared impossible to match and later turned out to match after all, and what did the people who finally matched them change that the earlier attempts missed?",
+    "capability": "You can stop accepting 'this function is impossible to match' as a final verdict and instead treat stalled work as a sign that the easy-first method has run out, not that the code can't be done."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "On Snowboard Kids, about 4.8% of matching commits (roughly 41) involved experts familiar with SGI's IDO compiler. The maintainer estimates that without them the match rate might have plateaued at around 89-90%. The estimate is the maintainer's own and is not a measured value.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S20",
+     "quote": "According to Lewis, without the knowledge of experts familiar with the IDO compiler developed by SGI, the match rate might have plateaued at around 89 to 90%, however smoothly things went.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which functions in matching-decompilation projects were declared impossible to match and later turned out to match after all, and what did the people who finally matched them change that the earlier attempts missed?",
+    "capability": "You can decide to pay for scarce specialist knowledge of the exact original toolchain on the last stretch of a project, rather than expecting more AI spend to break a plateau."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "In the MW2 rebuild, the remaining roughly 17% of functions would not match byte for byte however often they were revised. The developer attributes this to nondeterministic behavior and to the inability to reproduce identical COMDAT folding in the linker, and he stopped there as diminishing returns. He thinks Opus 5.5 agents might still raise the figure, so this ceiling is not proven final.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18",
+    "E19"
+   ],
+   "source_ids": [
+    "S20",
+    "S21"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which functions in matching-decompilation projects were declared impossible to match and later turned out to match after all, and what did the people who finally matched them change that the earlier attempts missed?",
+    "capability": "You can tell apart functions that are truly unmatchable from those that merely need a better setup, and stop spending on the former, by checking whether the blocker is in the toolchain or the code."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "Register assignment and spilling are decided by the compiler backend from live-range overlap, spill weights and the target's calling rules, so hand-reusing variables or restructuring code does not help and can hurt. Spilled values are what enlarge the stack frame, so frame size is an allocator outcome, not a source property. The advice is to profile first and trust the allocator unless hot-loop spilling is shown.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S25",
+     "quote": "Manually “optimizing” C code by reusing variables (e.g., temp = a; ... temp = b;) does not help — it actually hurts.",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S25",
+     "quote": "Spilled registers are precisely the reason those stack frames expand — every spill slot adds 8 bytes (on a 64-bit architecture) to the frame size, which the prologue must reserve via sub rsp, N or sub",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the same source code produce different register assignments, stack frame sizes and instruction ordering when a compiler is built or run slightly differently, and which of these differences can source rewriting never fix?",
+    "capability": "You can stop spending engineering time rewriting source code to shrink stack frames or change register use, and instead direct that effort to profiling and to compiler settings and target choice."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "The same source yields different register and stack outcomes across platforms because the calling convention and register file are fixed by the target, not the code. In the one worked example, a function with 8 parameters had its last two passed on the stack on x86-64 System V (first 6 in registers), whereas ARM64 passed all 8 in registers with no stack access. Windows x64 differs again, passing 4 in registers and requiring 32 bytes of caller-allocated shadow space, so no rewrite can equalise these.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E20",
+    "E21"
+   ],
+   "source_ids": [
+    "S25",
+    "S26"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the same source code produce different register assignments, stack frame sizes and instruction ordering when a compiler is built or run slightly differently, and which of these differences can source rewriting never fix?",
+    "capability": "You can expect different binaries, frame sizes and register use when you change target CPU, operating system or compiler vendor, and budget for that instead of treating it as a bug in your code."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "Compilers and CPUs reorder independent instructions freely, and the result varies with context, hardware and surrounding code. Only data dependencies are preserved, which is safe for single-threaded programs but can break multithreaded code that lacks locks, atomics or barriers. Vendors also implement named conventions like fastcall differently, so mixing compilers can break interoperability.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E22",
+    "E23"
+   ],
+   "source_ids": [
+    "S23",
+    "S26"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the same source code produce different register assignments, stack frame sizes and instruction ordering when a compiler is built or run slightly differently, and which of these differences can source rewriting never fix?",
+    "capability": "You can stop expecting two compiler builds to agree on instruction order or on 'fastcall'-style conventions, and plan to verify behaviour, such as concurrency correctness, rather than machine-code equality."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "Reported match figures use different units: decomp.dev's code match rate counts matched code bytes, Heumann's 83% for Modern Warfare 2 counts matched functions out of all functions, and his 99% counts functions with any reconstructed source. A Halo fork's README claims 99.5% byte matching while the original repository on decomp.dev shows 23.25% (2,511 of 11,047 functions), with no definition given for the README figure, so a headline number can mean something very different from what it appears to.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 11047, 23.25%, 2511, 99%",
+   "spans": [
+    "E24",
+    "E25"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which documented source patterns that are said to reproduce original compiler output byte for byte were later found to fail on other functions, other game libraries, or other compiler builds, and who reported the failure?",
+    "capability": "You can stop treating a reported 'byte for byte' percentage as comparable across projects and ask what the denominator is (bytes, functions, or functions with source) and who measured it before relying on it."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "The Modern Warfare 2 83% byte-match figure comes only from the developer's own report, the reconstructed code is unpublished, and third parties cannot verify it. By contrast, Melee, Snowboard Kids and Snowboard Kids 2 reaching 100% can be traced in decomp.dev's public records. None of the contents identifies an independent party reporting a failure of a specific source pattern on other functions, libraries or compiler builds, so the question's premise is not confirmed here.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which documented source patterns that are said to reproduce original compiler output byte for byte were later found to fail on other functions, other game libraries, or other compiler builds, and who reported the failure?",
+    "capability": "You can discount self-reported or unpublished 'exact match' claims and give more weight to results that an external tracker or public code lets third parties re-check."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Some functions stayed unmatched however many times they were revised: Heumann cites nondeterministic behavior and inability to reproduce identical COMDAT folding in the linker, so MW2 stopped at 83%. On Snowboard Kids, Lewis estimates roughly 4.8% of matching commits (about 41) involved experts familiar with SGI's IDO compiler, and without them matching might have plateaued around 89 to 90%, though this is his own estimate.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 83%, 89, 90%",
+   "spans": [
+    "E27",
+    "E28"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which documented source patterns that are said to reproduce original compiler output byte for byte were later found to fail on other functions, other game libraries, or other compiler builds, and who reported the failure?",
+    "capability": "You can budget for a hard ceiling on automated byte-matching and plan for specialist human help on the last stretch instead of assuming more AI runs will close the gap."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "The linker can merge functions whose generated machine code is byte-identical, so one piece of code ends up with two names and a debugger arbitrarily shows the wrong one. Whether two different functions end up identical depends on the compiler version and optimization settings, and is very frequent with templates, so the same pattern can be merged in one build and not in another.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E29"
+   ],
+   "source_ids": [
+    "S30"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a piece of source code that produces identical machine code on one function under an old compiler fail to do so on other functions, and what causes the same code pattern to compile differently depending on context or compiler build?",
+    "capability": "You can stop trusting that two functions identical in source or behavior will stay distinct in the shipped program, and expect the debugging and analysis tools to report one for the other."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "Because merging happens at link time and depends on the build, a developer or support team can be sent to a function that was never actually called, with no change in the source. This is a tooling artifact that can be switched off with a linker setting, so it should be ruled out before spending engineering time chasing a phantom bug.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E30"
+   ],
+   "source_ids": [
+    "S30"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a piece of source code that produces identical machine code on one function under an old compiler fail to do so on other functions, and what causes the same code pattern to compile differently depending on context or compiler build?",
+    "capability": "You can treat a compiler upgrade as something that changes how the same code behaves in diagnostics, and plan for confusing crash reports or stepping behavior after a toolchain change rather than blaming the code."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "Compilers apply only low-level, semantics-preserving transformations, and each one is conditional on context. For example, a repeated array read is reused only if no write to the array can occur on any path in between, so the same expression is optimized in one block and left alone in another. Optimizations also chain, so one pass exposes or removes work for the next, which makes the outcome sensitive to what surrounds the code.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E31",
+    "E32"
+   ],
+   "source_ids": [
+    "S31",
+    "S32"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a piece of source code that produces identical machine code on one function under an old compiler fail to do so on other functions, and what causes the same code pattern to compile differently depending on context or compiler build?",
+    "capability": "You can stop expecting the compiler to produce uniform results for a repeated pattern, since optimizations only fire when local facts about the surrounding code permit them."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "AI coding agents have compressed decompile-and-rebuild work for new hardware from months to hours or days, and the technique has carried across very different targets: a 2003 PC RTS to iOS, Halo and GTA V into web browsers, PS4's Bloodborne to native PC, and even a Switch 2 jailbreak. The reported limit is that classic games have relatively low code complexity, so the compression is best demonstrated on older titles, not modern large codebases.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E33"
+   ],
+   "source_ids": [
+    "S36"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S37",
+     "quote": "A group spent years decompiling the original Animal Crossing on the GameCube, for instance.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a reverse-engineering team applies a matching technique that worked in one game or compiler version to a different compiler build, a different console generation, or a different language such as C++ with templates, and where did it stop working?",
+    "capability": "You can stop assuming that a decompilation or porting effort needs years of specialist labor, and plan for rivals or fans to rebuild a finished game for new platforms within hours or days."
+   }
+  },
+  {
+   "claim_id": "C22",
+   "text": "The decompilation progress index decomp.dev is shutting down because AI use turned its percentage leaderboard into a hollow numbers game, and indie studio Digital Sun kept its ReVamp playtest private for fear of reverse-engineered clones appearing before launch. The matching metric that motivated humans stopped meaning real understanding once tokens could be burned to raise it.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E34",
+    "E35"
+   ],
+   "source_ids": [
+    "S37"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a reverse-engineering team applies a matching technique that worked in one game or compiler version to a different compiler build, a different console generation, or a different language such as C++ with templates, and where did it stop working?",
+    "capability": "You can stop relying on public progress leaderboards and open playtests as safe ways to show unreleased work, because speed-driven cloning has made them a risk and has broken community tooling."
+   }
+  },
+  {
+   "claim_id": "C23",
+   "text": "Technical ports have succeeded broadly, but the browser GTA V port was shut down almost immediately by DMCA notices from Rockstar and Take-Two, and analysts expect Nintendo and Sony to stay strict. Microsoft is taking the opposite stance by creating Xbox Labs to experiment openly, so response varies sharply by rights holder. Anthropic has also altered Claude Code to steer away from direct game clones.",
+   "epistemic_in": "VERIFIED",
+   "epistemic": "VERIFIED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E36",
+    "E37"
+   ],
+   "source_ids": [
+    "S36",
+    "S37"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a reverse-engineering team applies a matching technique that worked in one game or compiler version to a different compiler build, a different console generation, or a different language such as C++ with templates, and where did it stop working?",
+    "capability": "You can budget for legal and platform-holder pushback as the real point where this technique stops working commercially, rather than treating technical success as the finish line."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 38,
+  "lineages": 37,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 9,
+  "claims": 23,
+  "claims_with_verified_span": 22,
+  "verified_span_rate": 0.957,
+  "quotes_offered": 41,
+  "quotes_rejected": 4,
+  "ledger_capped": 4,
+  "quotes_reattributed": 0,
+  "claims_persisted": 8,
+  "persisted_with_verified_span": 8,
+  "persisted_verified_span_rate": 1.0
+ }
+}

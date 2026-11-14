@@ -1,0 +1,12 @@
+{
+ "q": "Q10",
+ "gap": "B-CXX",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 373.6,
+ "artifacts": [
+  "2026-11-14_144011_what-blocks-matching-large-c-functions-under-mwcc-.ledger.json",
+  "2026-11-14_144011_what-blocks-matching-large-c-functions-under-mwcc-.md",
+  "what-blocks-matching-large-c-functions-under-mwcc-.raw.jsonl"
+ ]
+}

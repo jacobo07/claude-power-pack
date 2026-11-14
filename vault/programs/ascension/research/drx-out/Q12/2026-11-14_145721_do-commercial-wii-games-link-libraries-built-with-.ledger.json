@@ -1,0 +1,1623 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-14_144846_do-commercial-wii-games-link-libraries-built-with-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://github.com/SMGCommunity/Petari/wiki/CodeWarrior",
+   "aliases": [],
+   "sha256": "37640edecc098401dc39b2cb8d8fcaf4dae0a8ee0a218f8f109ca1236a2b9e3f",
+   "chars": 1547,
+   "snapshot": "37640edecc098401dc39b2cb8d8fcaf4dae0a8ee0a218f8f109ca1236a2b9e3f.txt",
+   "retrieved_at": "2026-11-14T13:49:04+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://github.com/encounter/decomp-toolkit",
+   "aliases": [],
+   "sha256": "f644a1fdb1678e68d23889147b841e8d983669f77be91a8d6664a5dda9d5e22d",
+   "chars": 14946,
+   "snapshot": "f644a1fdb1678e68d23889147b841e8d983669f77be91a8d6664a5dda9d5e22d.txt",
+   "retrieved_at": "2026-11-14T13:49:04+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/gamecube-wii/",
+   "aliases": [],
+   "sha256": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f",
+   "chars": 22525,
+   "snapshot": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f.txt",
+   "retrieved_at": "2026-11-14T13:49:04+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://celestialamber.github.io/GC-Wii-Decomp-Splitting-Guide/",
+   "aliases": [],
+   "sha256": "fd31ff0921d78817d25f80029f5ebd995d33e684bd7e7d3090ca8d917ae645cf",
+   "chars": 5207,
+   "snapshot": "fd31ff0921d78817d25f80029f5ebd995d33e684bd7e7d3090ca8d917ae645cf.txt",
+   "retrieved_at": "2026-11-14T13:49:04+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://docs.unity3d.com/540/Documentation/Manual/PlatformDependentCompilation.html",
+   "aliases": [],
+   "sha256": "4bbffcb8e7c24abf0b6ec46e390d6e887205ff710cfddc8e9f926a455db4e6ed",
+   "chars": 9216,
+   "snapshot": "4bbffcb8e7c24abf0b6ec46e390d6e887205ff710cfddc8e9f926a455db4e6ed.txt",
+   "retrieved_at": "2026-11-14T13:49:46+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://docs.unity3d.com/420/Documentation/Manual/PlatformDependentCompilation.html",
+   "aliases": [],
+   "sha256": "8f712ebfd29f412fe6eb2e04f1aed0c35c30e54a6db2adc8a8a692b88d2dd6cf",
+   "chars": 7580,
+   "snapshot": "8f712ebfd29f412fe6eb2e04f1aed0c35c30e54a6db2adc8a8a692b88d2dd6cf.txt",
+   "retrieved_at": "2026-11-14T13:49:46+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.cubix.co/blog/game-porting/",
+   "aliases": [],
+   "sha256": "e8df696a71b357dd7459f25e392b3ae89f754aa3f61b9711d6d4be0631f7aa38",
+   "chars": 25000,
+   "snapshot": "e8df696a71b357dd7459f25e392b3ae89f754aa3f61b9711d6d4be0631f7aa38.txt",
+   "retrieved_at": "2026-11-14T13:49:46+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://github.com/FuturesLab/Bin2Wrong",
+   "aliases": [],
+   "sha256": "4639465585266607a5c6ce81499576fa395a134b5b2d6363344e4e390882845a",
+   "chars": 6704,
+   "snapshot": "4639465585266607a5c6ce81499576fa395a134b5b2d6363344e4e390882845a.txt",
+   "retrieved_at": "2026-11-14T13:50:09+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://github.com/KakarottoCake/decomp-triage",
+   "aliases": [],
+   "sha256": "dd2fb1bb4730f5f561d08ba267b7d80fae02b540ddd7e7cc4e7b2d0829b3eb45",
+   "chars": 17486,
+   "snapshot": "dd2fb1bb4730f5f561d08ba267b7d80fae02b540ddd7e7cc4e7b2d0829b3eb45.txt",
+   "retrieved_at": "2026-11-14T13:50:09+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://en.wikipedia.org/wiki/Decompiler",
+   "aliases": [],
+   "sha256": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d",
+   "chars": 15862,
+   "snapshot": "3c7d9b943ffda1e8d4f79bcebb34833a332cf4dd9c1a5966a49e2b2bff64838d.txt",
+   "retrieved_at": "2026-11-14T13:50:09+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://docs.hex-rays.com/ida-9.2/user-guide/decompiler/failures",
+   "aliases": [],
+   "sha256": "36f06c4f580ac33c8d5d41975d49550390ad2c58b8430ea243f6a1f01fcfe1e0",
+   "chars": 16724,
+   "snapshot": "36f06c4f580ac33c8d5d41975d49550390ad2c58b8430ea243f6a1f01fcfe1e0.txt",
+   "retrieved_at": "2026-11-14T13:50:09+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://www.reddit.com/r/learnprogramming/comments/vff0n5/why_different_machine_code_is_generated_by/",
+   "aliases": [
+    "https://www.reddit.com/r/learnprogramming/comments/fhaykb/does_decompiling_files_restore_the_original_code/",
+    "https://www.reddit.com/r/Compilers/comments/1b9flo/why_do_compilers_compile_the_same_code_in/"
+   ],
+   "sha256": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf",
+   "chars": 6,
+   "snapshot": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf.txt",
+   "retrieved_at": "2026-11-14T13:50:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://docs.nxp.com/bundle/GUID-9FAC1C79-3809-474F-B8DF-82BEB5B88419/page/GUID-25B710D5-3B80-45E6-8BC0-30EF5FCE89F9.html",
+   "aliases": [],
+   "sha256": "d3c7302bea7eb4269b20f26ab743d43b81a4ba1db10baf8df5a7a08c006e9ea8",
+   "chars": 232,
+   "snapshot": "d3c7302bea7eb4269b20f26ab743d43b81a4ba1db10baf8df5a7a08c006e9ea8.txt",
+   "retrieved_at": "2026-11-14T13:50:37+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://www.retroreversing.com/decompilers",
+   "aliases": [],
+   "sha256": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b",
+   "chars": 25000,
+   "snapshot": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b.txt",
+   "retrieved_at": "2026-11-14T13:51:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://www.bohrium.com/en/sciencepedia/feynman/compiler_principles_undergraduate-decompilation_techniques",
+   "aliases": [],
+   "sha256": "56ce2860d6505710c6bd2a576bb36fc748605a59d9e3c8c5fc34deced16922a6",
+   "chars": 25000,
+   "snapshot": "56ce2860d6505710c6bd2a576bb36fc748605a59d9e3c8c5fc34deced16922a6.txt",
+   "retrieved_at": "2026-11-14T13:51:18+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://devblogs.microsoft.com/visualstudio/disassembly-improvements-for-optimized-debugging/",
+   "aliases": [],
+   "sha256": "f7365964ed9272242b606a9edf216caa1a4a9147f2389e98ab759b1e52337cc5",
+   "chars": 7026,
+   "snapshot": "f7365964ed9272242b606a9edf216caa1a4a9147f2389e98ab759b1e52337cc5.txt",
+   "retrieved_at": "2026-11-14T13:51:58+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://hex-rays.com/blog/igors-tip-of-the-week-40-decompiler-basics",
+   "aliases": [],
+   "sha256": "8e7e009670bc6d2713be1ad9fdc9f5ee8840199355769341050b878730424124",
+   "chars": 3177,
+   "snapshot": "8e7e009670bc6d2713be1ad9fdc9f5ee8840199355769341050b878730424124.txt",
+   "retrieved_at": "2026-11-14T13:51:58+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://kingy.ai/blog/ai-video-game-decompilation-legality/",
+   "aliases": [],
+   "sha256": "9a9a14902db28c8d89c7a9ef099510a462bdcfd23906bd68df17ade1676719b0",
+   "chars": 21699,
+   "snapshot": "9a9a14902db28c8d89c7a9ef099510a462bdcfd23906bd68df17ade1676719b0.txt",
+   "retrieved_at": "2026-11-14T13:51:58+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://github.com/NationalSecurityAgency/ghidra/issues/9693",
+   "aliases": [],
+   "sha256": "73bd61313b2ebfb3fc147939023bc75187f2bb69f55fcfb0adb2392eb41a4296",
+   "chars": 5898,
+   "snapshot": "73bd61313b2ebfb3fc147939023bc75187f2bb69f55fcfb0adb2392eb41a4296.txt",
+   "retrieved_at": "2026-11-14T13:52:22+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://github.com/HectorBailey/byte-tactics",
+   "aliases": [],
+   "sha256": "ce7671c90db77adde4365dc0c6a07d0d60020aca0d47902a131de2780a540920",
+   "chars": 11800,
+   "snapshot": "ce7671c90db77adde4365dc0c6a07d0d60020aca0d47902a131de2780a540920.txt",
+   "retrieved_at": "2026-11-14T13:52:22+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://devblogs.microsoft.com/oldnewthing/20050322-00/?p=36113/",
+   "aliases": [],
+   "sha256": "2ab2ba8715a2c9b8125cee5d9fc4909e703bfe681d50bda665180afbd68ff14f",
+   "chars": 5090,
+   "snapshot": "2ab2ba8715a2c9b8125cee5d9fc4909e703bfe681d50bda665180afbd68ff14f.txt",
+   "retrieved_at": "2026-11-14T13:52:22+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://www.emergentmind.com/papers/2505.12668",
+   "aliases": [],
+   "sha256": "0eab4143e3cbc96d95886dabaf3ded22a2bfda7682800075246343577fee0bc3",
+   "chars": 11222,
+   "snapshot": "0eab4143e3cbc96d95886dabaf3ded22a2bfda7682800075246343577fee0bc3.txt",
+   "retrieved_at": "2026-11-14T13:53:20+00:00",
+   "family": "A_MEASURED",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://arxiv.org/abs/2505.12668",
+   "aliases": [],
+   "sha256": "cae3e0cb35655f1e331e94c69456044b493849f3b1ae5a40439212c1e0199896",
+   "chars": 5001,
+   "snapshot": "cae3e0cb35655f1e331e94c69456044b493849f3b1ae5a40439212c1e0199896.txt",
+   "retrieved_at": "2026-11-14T13:53:20+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://arxiv.org/pdf/2505.12668v1",
+   "aliases": [],
+   "sha256": "12e0483cf9960b095ddb980702103df3089e340869bda0ecccfbcf063d6af5ae",
+   "chars": 25000,
+   "snapshot": "12e0483cf9960b095ddb980702103df3089e340869bda0ecccfbcf063d6af5ae.txt",
+   "retrieved_at": "2026-11-14T13:53:20+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S24"
+  },
+  {
+   "source_id": "S25",
+   "url": "https://fnvdecomp.com/",
+   "aliases": [],
+   "sha256": "2285b84a98ad87c93e1f65685d37bfdaadc71bb5a3b6173505e06eafbbc909f3",
+   "chars": 1191,
+   "snapshot": "2285b84a98ad87c93e1f65685d37bfdaadc71bb5a3b6173505e06eafbbc909f3.txt",
+   "retrieved_at": "2026-11-14T13:53:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S25"
+  },
+  {
+   "source_id": "S26",
+   "url": "https://www.cl.cam.ac.uk/teaching//2425/CompConstr/lecture-15-slides.pdf",
+   "aliases": [],
+   "sha256": "11ae9034ebdc79bfc6d39aa71bf4c6aab419a7bcc2ec370717661f55fc85862c",
+   "chars": 25000,
+   "snapshot": "11ae9034ebdc79bfc6d39aa71bf4c6aab419a7bcc2ec370717661f55fc85862c.txt",
+   "retrieved_at": "2026-11-14T13:54:22+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S26"
+  },
+  {
+   "source_id": "S27",
+   "url": "https://www.geeksforgeeks.org/compiler-design/storage-allocation-strategies-in-compiler-design/",
+   "aliases": [],
+   "sha256": "24af625aed5b2d4b6aa2bb6d80d5164d047e6f814bbd84cd9b1b0a3beca9f892",
+   "chars": 5102,
+   "snapshot": "24af625aed5b2d4b6aa2bb6d80d5164d047e6f814bbd84cd9b1b0a3beca9f892.txt",
+   "retrieved_at": "2026-11-14T13:54:22+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S27"
+  },
+  {
+   "source_id": "S28",
+   "url": "https://browncs1260.github.io/notes/22",
+   "aliases": [],
+   "sha256": "30526f386cfd031d826b68e9f32262cdeb10972b4fe4f04d3d3e33726617162f",
+   "chars": 6357,
+   "snapshot": "30526f386cfd031d826b68e9f32262cdeb10972b4fe4f04d3d3e33726617162f.txt",
+   "retrieved_at": "2026-11-14T13:54:22+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S28"
+  },
+  {
+   "source_id": "S29",
+   "url": "https://www.codermusings.com/register-allocation-compiler-guide/",
+   "aliases": [],
+   "sha256": "da4a18c19058463edaf986291a8943b75664e1f32b8d1f240399676d52701031",
+   "chars": 17013,
+   "snapshot": "da4a18c19058463edaf986291a8943b75664e1f32b8d1f240399676d52701031.txt",
+   "retrieved_at": "2026-11-14T13:54:22+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S29"
+  },
+  {
+   "source_id": "S30",
+   "url": "https://github.com/ExpansionPak/ModernGekko-Template",
+   "aliases": [],
+   "sha256": "05af346d87771e076691d599a5200a8097dc2b739e9db3b872ebbebfc7134f53",
+   "chars": 9380,
+   "snapshot": "05af346d87771e076691d599a5200a8097dc2b739e9db3b872ebbebfc7134f53.txt",
+   "retrieved_at": "2026-11-14T13:54:49+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S30"
+  },
+  {
+   "source_id": "S31",
+   "url": "https://github.com/encounter/aurora",
+   "aliases": [],
+   "sha256": "38209e181bde88a1de388442054cfed7585f16c4801d5bcc069971ffa1dadd88",
+   "chars": 2815,
+   "snapshot": "38209e181bde88a1de388442054cfed7585f16c4801d5bcc069971ffa1dadd88.txt",
+   "retrieved_at": "2026-11-14T13:54:49+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S31"
+  },
+  {
+   "source_id": "S32",
+   "url": "https://recompsoftware.com/platforms/gamecube/",
+   "aliases": [],
+   "sha256": "6a7b7846869ffffa96422c755e185a2b14a35b6f220eaa334eb536231664df25",
+   "chars": 9310,
+   "snapshot": "6a7b7846869ffffa96422c755e185a2b14a35b6f220eaa334eb536231664df25.txt",
+   "retrieved_at": "2026-11-14T13:54:49+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S32"
+  },
+  {
+   "source_id": "S33",
+   "url": "https://www.retroreversing.com/gamecube",
+   "aliases": [],
+   "sha256": "3d07f16be628e277a1a74a6b223edd2c760e68be7ff2e31ca3053dfe33fa1a9a",
+   "chars": 17281,
+   "snapshot": "3d07f16be628e277a1a74a6b223edd2c760e68be7ff2e31ca3053dfe33fa1a9a.txt",
+   "retrieved_at": "2026-11-14T13:54:49+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S33"
+  },
+  {
+   "source_id": "S34",
+   "url": "https://learn.microsoft.com/en-us/cpp/error-messages/compiler-errors-1/fatal-error-c1047?view=msvc-170",
+   "aliases": [],
+   "sha256": "1b7edcccba15099acd1afb9ae536139368e7981c492448e6589ba5a43965a883",
+   "chars": 1586,
+   "snapshot": "1b7edcccba15099acd1afb9ae536139368e7981c492448e6589ba5a43965a883.txt",
+   "retrieved_at": "2026-11-14T13:55:30+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S34"
+  },
+  {
+   "source_id": "S35",
+   "url": "https://learn.microsoft.com/en-us/cpp/build/working-with-project-properties?view=msvc-170",
+   "aliases": [],
+   "sha256": "dd2eafe18faf16389d4fa84aa261d83c42a6f45b69aa241eee9dff107e60c4ca",
+   "chars": 12589,
+   "snapshot": "dd2eafe18faf16389d4fa84aa261d83c42a6f45b69aa241eee9dff107e60c4ca.txt",
+   "retrieved_at": "2026-11-14T13:55:30+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S35"
+  },
+  {
+   "source_id": "S36",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/matching-decomp/",
+   "aliases": [],
+   "sha256": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250",
+   "chars": 25000,
+   "snapshot": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250.txt",
+   "retrieved_at": "2026-11-14T13:55:53+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S36"
+  },
+  {
+   "source_id": "S37",
+   "url": "https://grokipedia.com/page/Matching_Decompilation",
+   "aliases": [],
+   "sha256": "3faa696dae98b783fcb2ec52b6fab2809202d195610adbf1706188378cddc16e",
+   "chars": 25000,
+   "snapshot": "3faa696dae98b783fcb2ec52b6fab2809202d195610adbf1706188378cddc16e.txt",
+   "retrieved_at": "2026-11-14T13:55:53+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S37"
+  },
+  {
+   "source_id": "S38",
+   "url": "https://tanepiper.github.io/game-frame/consoles/matching-decomp",
+   "aliases": [],
+   "sha256": "a7ba4dd49cd6380fa1b2c7dff87a5f7f6550a7feeaa50ea117a37203d9a5ca26",
+   "chars": 3724,
+   "snapshot": "a7ba4dd49cd6380fa1b2c7dff87a5f7f6550a7feeaa50ea117a37203d9a5ca26.txt",
+   "retrieved_at": "2026-11-14T13:55:53+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S38"
+  },
+  {
+   "source_id": "S39",
+   "url": "https://www.youtube.com/watch?v=Pl7ThC4PiVA",
+   "aliases": [],
+   "sha256": "80326d956dd0291ca1da9e51672534e2f9fb6e1a0091a80d9a19b76b4f743561",
+   "chars": 288,
+   "snapshot": "80326d956dd0291ca1da9e51672534e2f9fb6e1a0091a80d9a19b76b4f743561.txt",
+   "retrieved_at": "2026-11-14T13:55:53+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S39"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 1170,
+   "end": 1346,
+   "text": "For\nSuper Mario Galaxy 1\n, a lot of testing has gone into finding the correct compiler for every library and also having the correct compiler arguments to match code perfectly.",
+   "sha256": "20ce792856869e577364900c0ce8622ed4c06a8961b653a2e0ba4a94d21efbf9"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S1",
+   "start": 1044,
+   "end": 1169,
+   "text": "For the SDK libraries such as NW4R and RLV_SDK, the initialization functions for some libraries print out the compiler build.",
+   "sha256": "8722cd53f8302b66d2a2b1eec89dc51f7878454f2a74980bb3c7189029a7fd29"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S1",
+   "start": 961,
+   "end": 1043,
+   "text": "Trial and error shows what compilers\ncould\nwork and what compilers\ncould not\nwork.",
+   "sha256": "55917f86aeb76154961e2e29a13df075cf8222e18da447077d930aa13e35573f"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S3",
+   "start": 3965,
+   "end": 4054,
+   "text": "The versions used across titles range from 1.0 through 1.7, per decomp.wtf documentation.",
+   "sha256": "d77f4d7f0627046efda483fcf173e4f3da61183eb0a06f991e2d3b0873099fb3"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S7",
+   "start": 5179,
+   "end": 5270,
+   "text": "The audit helps uncover compatibility issues before they cause schedule or budget overruns.",
+   "sha256": "eccd46f51601d0cebef28b4e017fcffe32aa7693113d6664370d12b362ec0bd4"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S7",
+   "start": 4924,
+   "end": 4991,
+   "text": "Third-party plugins and middleware that may not support the target.",
+   "sha256": "ca38d830164b70dacaf3f3d60367dda5a236ee212071614caf0badd56787b2ae"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S7",
+   "start": 12075,
+   "end": 12276,
+   "text": "After launch, track platform-specific bugs, test new content and patches, and update dependencies when necessary. Automated builds and regression tests can catch update-related failures before release.",
+   "sha256": "892a3bbfac2dfef2cf8346239ae3051a52a784a080eb3b9c2f702940d30f1bca"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S5",
+   "start": 8135,
+   "end": 8289,
+   "text": "If you choose the\n.rsp\nfiles instead, you need to provide one file for every compiler Unity uses, and you won’t know when one or another compiler is used.",
+   "sha256": "f302ce11b07557339bc68e28ce87a9cc5e12308ea42f4e415ff2be8f8495b127"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S9",
+   "start": 2895,
+   "end": 2951,
+   "text": "Frame-only functions are the\nhardest\n, not the cheapest.",
+   "sha256": "493a90eb3e932163d4968c8156cd285c95cc26ddcbda05568b881bf60df61747"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S9",
+   "start": 5331,
+   "end": 5409,
+   "text": "A function whose leftovers are entirely\nregperm\nand\nslot\nhas no code work left",
+   "sha256": "9fcd5b9f5abe0148360e3c4afdd1e82951ca40bc3d891893b07b7242d3270f15"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S9",
+   "start": 8677,
+   "end": 8847,
+   "text": "On the project it was built against,\n204 symbols across 185 sections were on the\nwrong side of that line — 5.1% of every \"the target does not have this\" it used to print.",
+   "sha256": "fad8d93ea7a46f28dfc4fcaf32e1e254560060f2cbaf54803f31621b00f0d7ee"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S9",
+   "start": 7612,
+   "end": 7798,
+   "text": "Retail's\n.data\nsimply began with 40 bytes of constants the compiler generated and\nthen optimised the uses of — the footprint of a\nprecompiled header\nthe original build\nused and we don't.",
+   "sha256": "ed27285db3f9f17cccb047eb6a18eb634663a9677cc264a78206cb91348a55a0"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S9",
+   "start": 15909,
+   "end": 15974,
+   "text": "A lever proven on one compiler is only a hypothesis on the other.",
+   "sha256": "f453a9355798ecd9816bf775d4f33ba250b27b9d08c4819a7bc3a19228c42559"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S9",
+   "start": 16109,
+   "end": 16197,
+   "text": "mwccarm reclaims dead\nslots and needs\nvolatile\nto pin one; GC/1.x never reclaims at all.",
+   "sha256": "10017f1b5f2a0b7b2c4ed437509ac0e4f81f8ddda654cd5e0b68aa29a6f43403"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S1",
+   "start": 1044,
+   "end": 1169,
+   "text": "For the SDK libraries such as NW4R and RLV_SDK, the initialization functions for some libraries print out the compiler build.",
+   "sha256": "8722cd53f8302b66d2a2b1eec89dc51f7878454f2a74980bb3c7189029a7fd29"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S1",
+   "start": 961,
+   "end": 1043,
+   "text": "Trial and error shows what compilers\ncould\nwork and what compilers\ncould not\nwork.",
+   "sha256": "55917f86aeb76154961e2e29a13df075cf8222e18da447077d930aa13e35573f"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S14",
+   "start": 18907,
+   "end": 19081,
+   "text": "These are compiler- and version-dependent experiments.\nRecord the compiler, flags and resulting diff rather than treating a register-allocation heuristic as a universal rule.",
+   "sha256": "ca90ae88a5380043bd5e0e12eba1020e18087af5769c5a7eddf75e603fbfe2db"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S14",
+   "start": 17391,
+   "end": 17448,
+   "text": "These symptoms suggest experiments, not unique diagnoses:",
+   "sha256": "429aa1bd3b105a598bb2d2b9b02c4d38b9aa98fa28015143f3480365b53c9f02"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S14",
+   "start": 18104,
+   "end": 18214,
+   "text": "Before changing compiler settings, check the project’s known configuration and neighbouring matched functions.",
+   "sha256": "0ab6d66e145772f369142afb5ad00620f784f7a71d5cc728e3145191420bcefc"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S14",
+   "start": 17296,
+   "end": 17390,
+   "text": "Use the actual disassembly alongside the score; a percentage alone does not explain the cause.",
+   "sha256": "a247da4e62a7552b5cf1fc36342000c82ea23d1154791964bf494365bafee37f"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S14",
+   "start": 19812,
+   "end": 19877,
+   "text": "Do not infer a complete rebuild from a function similarity score.",
+   "sha256": "a3016b488092735f919a4bfc926a5ad8a8ff7c537a1fb14a22c199ccb361d66d"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S18",
+   "start": 204,
+   "end": 358,
+   "text": "An AI-assisted Super Mario 64 DS reconstruction reports 99.9% of its functions matched. Its counter for source converted into readable form sits at 30.5%.",
+   "sha256": "0558a5189a74a817ee52d2e821b326d387983b4ec580d02386536f13c194f751"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S18",
+   "start": 4046,
+   "end": 4184,
+   "text": "Preparing that loop requires expertise: the right executable revision, compiler, build options, function boundaries, and comparison rules.",
+   "sha256": "37f0c96d050595280a6db82daef4fa9b7c1769829431176eb5585a891646a71d"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S20",
+   "start": 8869,
+   "end": 8920,
+   "text": "Linker 5.10; runtime library matches SP3, not RTM (",
+   "sha256": "ad0b00b55e7aaf09187a3994080664d8a316e3bf85d01278ce9a607f53e55fcb"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S20",
+   "start": 2512,
+   "end": 2626,
+   "text": "The linker kept each part of the engine roughly together, so each 64 KB of the\nexecutable is mostly one subsystem.",
+   "sha256": "30203351e79fe538031f56e3ace9832ac7612f67f038303126643c1fd08c01b9"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S21",
+   "start": 1424,
+   "end": 1535,
+   "text": "What happened is that the Microsoft linker combined functions that\nare identical\nat the code generation level\n.",
+   "sha256": "65854bb4bc380e9672c5047b2fea21dc8401c92561a881f7e51980d22bd3119d"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S22",
+   "start": 4400,
+   "end": 4595,
+   "text": "They forked the Clang compiler to enforce consistent optimization levels (-O0 to -O3) and include DWARF debug information (-g), addressing issues where projects ignore standard environment flags.",
+   "sha256": "f6904f34271f3bd72d003dab11dce0d0d0718c17c88c030f7e6651595f77880a"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S22",
+   "start": 5820,
+   "end": 5936,
+   "text": "This filtering process is shown to be critical, reducing the raw 100 million pairs to two million high-quality ones.",
+   "sha256": "9258973f8fd9be9c326adf7ba7f11b89289bb002a9922fa196587d6884c99652"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S25",
+   "start": 258,
+   "end": 300,
+   "text": "★ 100% · byte for byte · source released ★",
+   "sha256": "737f71ab4c592efe50d98eb4578a41689e4d8a3d86deee2ad6d7b25c9250d1af"
+  },
+  {
+   "span_id": "E30",
+   "source_id": "S29",
+   "start": 13462,
+   "end": 13574,
+   "text": "Every operation involves a round-trip to memory. The stack frame for this simple function balloons to 60+ bytes.",
+   "sha256": "bf2e4d8246c3fcf930b1f3666155c52aa7b2d1a0aedaf5daf48b71720b69b4be"
+  },
+  {
+   "span_id": "E31",
+   "source_id": "S29",
+   "start": 2993,
+   "end": 3091,
+   "text": "ARM64’s nearly double-sized register file gives the compiler significantly more room to work with.",
+   "sha256": "75a660140ebd9915043af3b321ed2f3db7ecf4cc82ae51ee5adfc56be3837d5c"
+  },
+  {
+   "span_id": "E32",
+   "source_id": "S29",
+   "start": 9409,
+   "end": 9513,
+   "text": "The\n-regalloc=fast\nallocator is used for\n-O0\ndebug builds — it is extremely fast but produces poor code.",
+   "sha256": "d89d5560762348199ed9f62629d5e5524daa36bf6ffb4ea36c94100889c3455c"
+  },
+  {
+   "span_id": "E33",
+   "source_id": "S28",
+   "start": 4163,
+   "end": 4227,
+   "text": "A basic block program is agnostic about where values get stored.",
+   "sha256": "2e9dd9e3134522f62c55d2a8fc5b8ca9a4f97587ec9489b94397dc03980ba7ca"
+  },
+  {
+   "span_id": "E34",
+   "source_id": "S29",
+   "start": 15818,
+   "end": 15913,
+   "text": "The compiler works best with SSA-style code where each variable has a single, clear definition.",
+   "sha256": "c34a9091429e7d12b51969b8690157d3c92cce6dbbeaaecf6ba9c5b76476a107"
+  },
+  {
+   "span_id": "E35",
+   "source_id": "S28",
+   "start": 2036,
+   "end": 2079,
+   "text": "each temporary is assigned to exactly once.",
+   "sha256": "cf8cf28662bdc741a7d11cd404bec03f160575e33f39955a2e35ad9f7ff701cf"
+  },
+  {
+   "span_id": "E36",
+   "source_id": "S33",
+   "start": 8749,
+   "end": 8835,
+   "text": "Preserve operand order and check the compiler’s floating-point settings when matching.",
+   "sha256": "c46b2d0d71c329f69a7f6c591ef1ed6524c6a9f271a1c4c53458bd68c2118d93"
+  },
+  {
+   "span_id": "E37",
+   "source_id": "S21",
+   "start": 1424,
+   "end": 1535,
+   "text": "What happened is that the Microsoft linker combined functions that\nare identical\nat the code generation level\n.",
+   "sha256": "65854bb4bc380e9672c5047b2fea21dc8401c92561a881f7e51980d22bd3119d"
+  },
+  {
+   "span_id": "E38",
+   "source_id": "S21",
+   "start": 2193,
+   "end": 2299,
+   "text": "Identical code generation for different functions occurs with very\nhigh frequency when you use templates.)",
+   "sha256": "67328cb7230deb4a63eea1703f6f1671d59ea7b6d7feda6dd875ee1e4a030bd5"
+  },
+  {
+   "span_id": "E39",
+   "source_id": "S34",
+   "start": 867,
+   "end": 1132,
+   "text": "For example, you can't link a\n/LTCG\nlibrary built by using Visual Studio 2019 version 16.7 to an app built by using Visual Studio 2019 version 16.8. Both the major and minor update numbers of the toolset used to compile the objects and libraries must match exactly.",
+   "sha256": "5ccec83b77ff68021ea2c11f72a4e5521bf47f8451d70e1f5c5779bbfc9442b9"
+  },
+  {
+   "span_id": "E40",
+   "source_id": "S35",
+   "start": 2052,
+   "end": 2206,
+   "text": "For example, the\nOptimization\nproperty, by default, is set to\nMaximize Speed (/O2)\nin a Release configuration, but is disabled in the Debug configuration.",
+   "sha256": "642ed98ecf9d14df3fdf8a07a740f6aef2aa3aa29766d86a260be6946e23fed9"
+  },
+  {
+   "span_id": "E41",
+   "source_id": "S36",
+   "start": 7601,
+   "end": 7710,
+   "text": "Do not guess flags blindly. A flag mismatch makes every function unmatchable and looks like a source problem.",
+   "sha256": "bae8bfa363ce25c2103481a3e71f3e0cdc484d066b6f29711a4e9c317251352f"
+  },
+  {
+   "span_id": "E42",
+   "source_id": "S36",
+   "start": 7497,
+   "end": 7600,
+   "text": "Experiment: compile one known-matched function with candidate flags and see which reproduces its bytes.",
+   "sha256": "1fa9856760aba7caf77d24d7bddb34ad631d57dff769b547c1fe9517d4e3739b"
+  },
+  {
+   "span_id": "E43",
+   "source_id": "S37",
+   "start": 12847,
+   "end": 12989,
+   "text": "Decompedia notes that one game can mix compilers and that, before the late 2000s, the right version is often recovered from old install discs.",
+   "sha256": "4ad6de6f059829e9ce0e41084b17cde67ee3ba706aae592c4b1a0334be51a613"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Super Mario Galaxy 1's Petari wiki documents a per-library split: game code matched with GC 3.0a3, while RVL_SDK, NW4R, JSystem and MSL matched with GC 3.0, and MetroTRK with GC 2.5. A single-compiler assumption would make some library code unmatchable, so effort estimates and tooling setup must be per-component.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What do the build configurations and commit histories of Wii decompilation projects show about which CodeWarrior versions were used for SDK, NW4R, MSL and game code within a single shipped game, and who documented those differences?",
+    "capability": "You can stop assuming one compiler version covers a whole shipped Wii game and instead budget matching effort per library, since the game code and its supporting libraries were built with different compiler builds."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "The SMG community pinned versions using three signals: the game's build date, codegen differences that rule compilers in or out through trial and error, and SDK libraries like NW4R whose initialization functions print the compiler build. That means the answer is recoverable from the shipped binary, but it takes experimentation time per library.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E2",
+    "E3"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What do the build configurations and commit histories of Wii decompilation projects show about which CodeWarrior versions were used for SDK, NW4R, MSL and game code within a single shipped game, and who documented those differences?",
+    "capability": "You can scope the cost of identifying a project's compiler versions realistically, knowing it is found by build-date clues, library self-reports and trial and error rather than looked up in a record."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "A general wiki gives CodeWarrior versions 1.0 through 1.7 across titles and suggests a single version per project in its prompt template, while the SMG documentation shows GC 3.0-series and 2.5 builds mixed within one game. Generic guidance therefore understates version variation, and an automated or outsourced workflow told only one version will fail on libraries built differently.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S1",
+     "quote": "GC 3.0a3",
+     "reason": "shorter than 20 chars"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What do the build configurations and commit histories of Wii decompilation projects show about which CodeWarrior versions were used for SDK, NW4R, MSL and game code within a single shipped game, and who documented those differences?",
+    "capability": "You can treat broad claims that one compiler version applies to a whole platform or project as unreliable, and require per-project documentation before relying on them."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "The porting guidance says unsupported middleware, third-party plugins, outdated dependencies and undocumented build steps are what cause schedule and budget overruns, and that they should be found in an up-front audit. A studio whose game, platform SDK and middleware are built with different compiler versions is showing exactly this unaudited-dependency risk, so the audit is where the mismatch should surface before a release date is promised.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5",
+    "E6"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why would a studio shipping one Wii game end up compiling its own code, the platform SDK and the middleware with different compiler builds, and what in the release schedule or toolchain update process causes the mismatch?",
+    "capability": "You can require a dependency and toolchain audit before committing budget or a date to a platform release, instead of discovering compiler or middleware incompatibilities mid-production."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Engine and tool versions change over time (Unity's documentation lists version-specific build flags from 2.6 through 5.x, and compiler-specific response files tied to each compiler it invokes). Each upgrade can change which compiler builds which part of the code. The porting guidance says updated dependencies and patches cause regressions, and recommends automated builds and regression tests to catch them before release.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7",
+    "E8"
+   ],
+   "source_ids": [
+    "S5",
+    "S7"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why would a studio shipping one Wii game end up compiling its own code, the platform SDK and the middleware with different compiler builds, and what in the release schedule or toolchain update process causes the mismatch?",
+    "capability": "You can treat a mid-project engine or toolchain upgrade as a scheduled, costed event with its own regression testing, rather than a free routine update."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "In a 10,115-function Super Mario Sunshine decompilation, roughly 600 failures were frame-only (every instruction right, only the stack frame wrong) and about 1,150 had both frame and code wrong, so four in five remaining failures involve a wrong frame. Frame-only functions are the hardest, not the cheapest, because the diff tool shows no progress and the automated permuter has nothing to optimise toward; the structural bucket (~350 functions) is where matches actually come from. A scan that cancels the frame delta separates functions one fix away from those needing real work, saving days of manual discovery.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9",
+    "E10"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens when a decompilation team picks the wrong compiler version or flags for a library, and how long do they typically keep working on functions that never match before they notice?",
+    "capability": "You can stop assigning people to functions whose only remaining mismatch is stack frame size or register choice, and redirect them to functions with genuine code differences."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "A compiler/library-version mismatch can be hidden because the original build dead-stripped symbols that are absent from extracted objects yet listed in the link map. On the Sunshine project 204 symbols across 185 sections were misclassified (5.1% of 'target lacks this' reports), and acting on that output cost 4,416 bytes of matched data in one commit that had to be reverted. Similarly, 40 bytes of unexplained constants at the start of .data turned out to be the footprint of a precompiled header the original build used, which looked like a wrong struct but was a flag/setup mismatch.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 4416",
+   "spans": [
+    "E11",
+    "E12"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens when a decompilation team picks the wrong compiler version or flags for a library, and how long do they typically keep working on functions that never match before they notice?",
+    "capability": "You can stop trusting a diff that says 'we emit a symbol the original didn't' and check it against the original link map before deleting anything, because wrong deletions cost matched work."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Catalogues of compiler behaviours are only 'proven' when a byte-match was reproduced, and a lever proven on one compiler is only a hypothesis on another. Metrowerks GC/1.x never reclaims dead stack slots while the ARM variant does, so opposite mechanisms produce similar symptoms, and a lever for by-value class parameters from the DS project failed when tested against every frame-only function here. Teams that import folklore across versions will chase functions that can never match.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13",
+    "E14"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens when a decompilation team picks the wrong compiler version or flags for a library, and how long do they typically keep working on functions that never match before they notice?",
+    "capability": "You can stop assuming a compiler lesson learned on one toolchain transfers to a sibling version, and treat each compiler's quirks as unproven until reproduced on yours."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "In the Super Mario Galaxy 1 decompilation effort, different components required different CodeWarrior releases to reproduce the original instruction sequences: the game itself matched GC 3.0a3, the SDK, NW4R, JSystem and MSL matched GC 3.0, and MetroTRK matched GC 2.5. A one-compiler-fits-all approach would therefore produce mismatches, and version identification is a per-component effort that consumed substantial testing.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S1",
+     "quote": "For Super Mario Galaxy 1, a lot of testing has gone into finding the correct compiler for every library and also having the correct compiler arguments to match code perfectly.",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S1",
+     "quote": "The code generation (often shortened to codegen) can change slightly between versions.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why would two builds of the same C or C++ source from different CodeWarrior releases produce different instruction sequences, and which specific code generation behaviors (register allocation, scheduling, inlining, string or constant pooling, section ordering) change between versions?",
+    "capability": "You can stop assuming a single compiler version fits an entire codebase and instead budget for matching each library or component to its own compiler release when reproducing or auditing older binaries."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Practitioners narrow compiler candidates by the build date of the shipped game, picking the most recent compiler build near that date, and by reading the compiler build that some SDK libraries print in their initialization functions. Trial and error on code generation then eliminates the remaining candidates, so the expensive step is applied to a short list rather than every release.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15",
+    "E16"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why would two builds of the same C or C++ source from different CodeWarrior releases produce different instruction sequences, and which specific code generation behaviors (register allocation, scheduling, inlining, string or constant pooling, section ordering) change between versions?",
+    "capability": "You can use cheap evidence, such as build dates and compiler build strings that libraries print at startup, to narrow down which compiler release produced a binary before spending effort on trial-and-error matching."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "The source treats register, ordering and stack-frame differences as symptoms that suggest experiments, not unique diagnoses, and says these experiments depend on the compiler and its version. Without a record of compiler, flags and resulting diff for every attempt, a wrong compiler release looks identical to a wrong rewrite, and engineers can burn weeks rewriting correct code.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17",
+    "E18"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to a decompilation team's progress when a compiler release they believed was correct produces the right instructions in some functions but consistently wrong register choices, stack frames or instruction order in others, and how do they discover the version was the cause?",
+    "capability": "You can stop treating a function that won't match as proof the team's rewrite is wrong, and instead log the exact compiler version and settings so a toolchain mismatch can be ruled in or out early."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "The source tells teams to check the project's known configuration and neighbouring matched functions before changing compiler settings, and to re-verify earlier matches after shared changes. If the same register or stack-frame pattern recurs across many unmatched functions while others match, that points to a systematic cause such as the compiler build. This is a reasoned extension of the guide, not something it states.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E19"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to a decompilation team's progress when a compiler release they believed was correct produces the right instructions in some functions but consistently wrong register choices, stack frames or instruction order in others, and how do they discover the version was the cause?",
+    "capability": "You can use the split between functions that match and functions that stubbornly don't as a diagnostic, and require the team to check the baseline toolchain before any more rewriting."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "A similarity score does not explain why a function differs, and a function-level match does not show the whole rebuilt image is correct. The source advises deliberately feeding the checker wrong candidates to confirm it rejects them, so a progress figure built on a mismatched toolchain or a lenient checker doesn't mislead management.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E20",
+    "E21"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to a decompilation team's progress when a compiler release they believed was correct produces the right instructions in some functions but consistently wrong register choices, stack frames or instruction order in others, and how do they discover the version was the cause?",
+    "capability": "You can stop reporting a match percentage as project progress and require evidence that the checker is sound and that the cause of each gap is understood."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "The Super Mario 64 DS reconstruction reports 99.9% of functions matched yet only 30.5% converted into readable source, in the same README, and its matching figure includes a disclosed set of assembly primitives. A single progress number can therefore hide large amounts of unreadable or unrecovered work.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E22"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which functions or objects in published console decompilation projects matched only after changing a compiler flag, optimisation setting or pragma rather than changing the compiler version, and what did the maintainers say made the difference?",
+    "capability": "You can stop reading a headline 'percent matched' figure as proof that a decompilation is finished, and ask what is counted before funding or crediting the work."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "The article says matching workflows depend on choosing the right executable revision, compiler, build options and comparison rules, and that an agent inherits those decisions rather than eliminating their cost. This implies compiler settings are a human-prepared precondition for matching, though the contents name no specific function that matched only after a flag or pragma change.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E23"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which functions or objects in published console decompilation projects matched only after changing a compiler flag, optimisation setting or pragma rather than changing the compiler version, and what did the maintainers say made the difference?",
+    "capability": "You can budget for the toolchain-setup work (exact compiler, build options, function boundaries) as a separate, human-expertise cost rather than assuming an AI agent removes it."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "None of the supplied contents list a specific function or object that matched only after an optimisation flag or pragma change, nor maintainer explanations of why. The material is general (decompiler overviews, a debugger blog, an AI-decompilation survey), so the question needs primary sources such as project issue trackers and Discord or commit logs.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which functions or objects in published console decompilation projects matched only after changing a compiler flag, optimisation setting or pragma rather than changing the compiler version, and what did the maintainers say made the difference?",
+    "capability": "You can treat this search as unanswered on flag-versus-version matching cases and redirect effort to project repositories and maintainer discussions instead of general articles."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "The Total Annihilation matching decompilation shows what a true non-baseline compiler match looks like: the compiler was pinned to Visual C++ 5.0 SP3 (not the RTM release) because the runtime library matched SP3, with 568 LIBCMT code sections found byte-for-byte and linker 5.10. All 3,267 functions (850,853 bytes) match and the full exe rebuilds to the shipped MD5, which a coincidental single-function match could never achieve.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E24"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When a function matches byte for byte only under a non-baseline compiler version, what happens when that match turns out to be a coincidence, and what additional evidence (neighboring functions, linker section layout, debug or symbol info, library version strings) separates a true match from an accidental one?",
+    "capability": "You can treat a project's claim of a compiler-version match as credible only when the whole-binary evidence chain (runtime library, linker, flags) agrees, rather than trusting a single function's byte match."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "In the TA project, the linker kept each subsystem roughly together, so each 64 KB of the executable is mostly one subsystem. Neighbouring functions therefore cluster by area, and leftover FPO debug records and source-path strings in the binary give exact function starts, sizes and argument counts. A candidate match that sits in the wrong region or contradicts those records is likely accidental.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E25"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When a function matches byte for byte only under a non-baseline compiler version, what happens when that match turns out to be a coincidence, and what additional evidence (neighboring functions, linker section layout, debug or symbol info, library version strings) separates a true match from an accidental one?",
+    "capability": "You can use linker section layout and embedded debug records as independent corroboration of a match, and stop relying on function bytes alone."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "The Microsoft linker's identical COMDAT folding merges functions that compile to identical code, so two unrelated functions (a getter in one class and a virtual getter in another) end up at one address under two names. Short accessor-like functions and template instantiations collide often, so a byte match on them is weak evidence, and symbol names at that address are ambiguous.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26"
+   ],
+   "source_ids": [
+    "S21"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When a function matches byte for byte only under a non-baseline compiler version, what happens when that match turns out to be a coincidence, and what additional evidence (neighboring functions, linker section layout, debug or symbol info, library version strings) separates a true match from an accidental one?",
+    "capability": "You can stop reading a byte-identical short function as proof it is the same source function, because identical code generation across unrelated functions is common and linkers merge them."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "The Decompile-Bench team found that real projects often ignore standard build settings, so they had to fork the compiler to force consistent optimization levels and debug information. The consequence is that the toolchain has to be controlled and recorded deliberately, because a match alone does not reveal how the code was built. The contents do not say how often tiny functions match under several compiler versions, so that part of the question stays unanswered.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E27"
+   ],
+   "source_ids": [
+    "S22"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a decompilation project when a function matches byte for byte under the wrong compiler version, and how often do tiny functions match under several different compiler versions so that the match proves nothing about the toolchain?",
+    "capability": "You can stop reading a byte-identical match as evidence that the project is using the right toolchain, and require independent proof of the build environment before counting progress."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "Decompile-Bench condensed 100 million raw binary-source function pairs into two million usable ones, and training on the unfiltered data made results worse. A large pile of matches therefore overstates real, trustworthy progress, and a project's quality gate matters more than its headline count.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E28"
+   ],
+   "source_ids": [
+    "S22"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a decompilation project when a function matches byte for byte under the wrong compiler version, and how often do tiny functions match under several different compiler versions so that the match proves nothing about the toolchain?",
+    "capability": "You can stop treating raw volume of matched or paired functions as a measure of progress and put effort into filtering out duplicates and weak pairs."
+   }
+  },
+  {
+   "claim_id": "C22",
+   "text": "The fnvdecomp project reports 70,611 functions totaling 11,537,067 bytes, an average of roughly 163 bytes per function, and defines success as machine code identical to the shipped executable. With functions that small, some matches are plausibly ambiguous across compiler versions, but the page gives no breakdown of function sizes or of toolchain verification. Treat the 100% figure as proof of matching, not of a correct toolchain.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E29"
+   ],
+   "source_ids": [
+    "S25"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to a decompilation project when a function matches byte for byte under the wrong compiler version, and how often do tiny functions match under several different compiler versions so that the match proves nothing about the toolchain?",
+    "capability": "You can question a 100% completion claim built only on byte-identical matches, and ask how many of the small functions were checked against the exact compiler version."
+   }
+  },
+  {
+   "claim_id": "C23",
+   "text": "Stack-frame growth and register spills are driven largely by optimization level and by the CPU's register file and calling convention, not only by the compiler's identity. At -O0 every variable gets a stack slot and frames balloon past 60 bytes for a simple 8-parameter function, while at -O2 the same source uses registers with zero spills. x86-64 has 16 general-purpose registers against ARM64's 31, so the same source spills less on ARM64. Attributing a frame layout to a specific compiler build without controlling for flags and target will therefore mislead.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E30",
+    "E31"
+   ],
+   "source_ids": [
+    "S29"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do different builds of the same compiler family produce different instruction ordering, register allocation, stack frame layout and data placement, and which of those differences are reliable indicators of the compiler build rather than of the source code written?",
+    "capability": "You can stop treating a binary's stack-frame size and spill pattern as a fingerprint of the compiler vendor or build, and read them first as signals of optimization level and target architecture."
+   }
+  },
+  {
+   "claim_id": "C24",
+   "text": "Register choice is made by the backend allocator after the source has been reduced to an IR with unlimited virtual registers, so it reflects allocator strategy and not source structure. LLVM uses a fast allocator for debug builds and a greedy allocator with priority queues, spill weights, live-range splitting and eviction for optimized builds. Different allocators or versions will therefore assign different registers and place spills differently for identical source.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E32",
+    "E33"
+   ],
+   "source_ids": [
+    "S28",
+    "S29"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do different builds of the same compiler family produce different instruction ordering, register allocation, stack frame layout and data placement, and which of those differences are reliable indicators of the compiler build rather than of the source code written?",
+    "capability": "You can judge register-allocation differences as evidence of which allocator strategy produced a binary, and discount them as evidence of what the developer wrote."
+   }
+  },
+  {
+   "claim_id": "C25",
+   "text": "Manually reusing variables does not help the allocator and can hurt, because optimizers work best on SSA-style code with one definition per variable. Since the source-level form is normalized away in the IR, low-level layout differences between builds are weak evidence about how the code was written and stronger evidence about the toolchain and flags.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E34",
+    "E35"
+   ],
+   "source_ids": [
+    "S28",
+    "S29"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do different builds of the same compiler family produce different instruction ordering, register allocation, stack frame layout and data placement, and which of those differences are reliable indicators of the compiler build rather than of the source code written?",
+    "capability": "You can stop assuming that how developers structure their variables controls the generated code, and rely instead on the compiler's own decisions when comparing builds."
+   }
+  },
+  {
+   "claim_id": "C26",
+   "text": "The only relevant guidance in these sources is that a match depends on the compiler's floating-point settings and operand order, and that one instruction pattern does not prove a particular source construct. Single-rounding versus separate multiply and add, or a rounding instruction, can look like a version difference when it is really a settings difference. The sources do not name any project that was matched under one compiler version, or any per-object override that was later reverted, so treat the settings-first explanation as a lead, not a finding.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E36"
+   ],
+   "source_ids": [
+    "S33"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Are there Wii or GameCube projects where every object matched under one single compiler version despite apparent differences, or where per-object version overrides were later reverted, and what did the maintainers find was the real cause?",
+    "capability": "You can stop assuming that an object that won't match needs a different compiler version, and have your team rule out flags and floating-point settings first."
+   }
+  },
+  {
+   "claim_id": "C27",
+   "text": "The linker can fold functions with identical generated code into one copy, so the debugger shows a different function name at the same address. Whether two functions end up identical depends heavily on compiler version and optimization flags, and happens very often with templates. An apparent function mismatch can therefore be a linker artifact rather than evidence of a different toolchain.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E37",
+    "E38"
+   ],
+   "source_ids": [
+    "S21"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a function that looks like it was built with a different compiler release sometimes turn out to be the same compiler with different optimization settings, pragmas, or inlining behavior, and how do engineers tell the two causes apart?",
+    "capability": "You can stop assuming that two identical-looking functions prove two different compiler versions, and first rule out the linker having merged them, before escalating a build-provenance investigation."
+   }
+  },
+  {
+   "claim_id": "C28",
+   "text": "When whole-program optimization or link-time code generation is used, the toolchain refuses to link objects from different compiler versions, and requires both major and minor update numbers to match exactly. So in such builds a mixed-compiler binary cannot silently exist, and a version difference shows up as a hard build error that the fix (rebuild everything with one toolset) resolves.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E39"
+   ],
+   "source_ids": [
+    "S34"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a function that looks like it was built with a different compiler release sometimes turn out to be the same compiler with different optimization settings, pragmas, or inlining behavior, and how do engineers tell the two causes apart?",
+    "capability": "You can treat a mixed-toolchain build as a cheap, checkable question by asking whether the linker itself rejects mismatched compiler versions, rather than commissioning forensic analysis of binaries."
+   }
+  },
+  {
+   "claim_id": "C29",
+   "text": "Most compiler settings are configuration- and platform-dependent, so the same compiler produces very different code depending on which configuration was active. Optimization defaults to Maximize Speed in Release and is disabled in Debug, meaning the same compiler can yield visibly different functions across builds.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E40"
+   ],
+   "source_ids": [
+    "S35"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a function that looks like it was built with a different compiler release sometimes turn out to be the same compiler with different optimization settings, pragmas, or inlining behavior, and how do engineers tell the two causes apart?",
+    "capability": "You can attribute code differences between two builds to build configuration (Debug versus Release, per-platform settings) before blaming a compiler upgrade, and require build configuration to be recorded with each release."
+   }
+  },
+  {
+   "claim_id": "C30",
+   "text": "The contents say a flag mismatch makes every function unmatchable and looks like a source problem, and that old compilers such as IDO and CodeWarrior change output for casts, inline, const and even whitespace. So a different compiler version can appear necessary when corrected flags or rewritten source would have produced the same bytes, and the cheap checks should come before a toolchain change.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E41"
+   ],
+   "source_ids": [
+    "S36"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S37",
+     "quote": "Decompedia says Metrowerks CodeWarrior, used on GameCube and Wii, changes its output for casts, for inline (which can resize the stack), and for const, while IDO can change output over whitespace alon",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which reverse-engineering or matching-decompilation projects first assigned a different compiler version to individual files, later found that one version with corrected flags or rewritten source produced the same bytes, and what did their maintainers say about the mistake?",
+    "capability": "You can stop treating a stubborn unmatched file as proof that the wrong compiler version was assigned, and first check flags and source phrasing before reopening the toolchain decision."
+   }
+  },
+  {
+   "claim_id": "C31",
+   "text": "The recommended way to verify flags is to compile one already-matched function with candidate flags and see which reproduces its bytes, and to cross-check against a sibling project on the same platform. This catches a wrong version or flag assignment early, before many functions are attempted under it.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E42"
+   ],
+   "source_ids": [
+    "S36"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which reverse-engineering or matching-decompilation projects first assigned a different compiler version to individual files, later found that one version with corrected flags or rewritten source produced the same bytes, and what did their maintainers say about the mistake?",
+    "capability": "You can use a known-matched function as a cheap test to confirm a compiler and flag assignment before committing people to a file's toolchain choice."
+   }
+  },
+  {
+   "claim_id": "C32",
+   "text": "Decompedia, as summarized, says one game can mix compilers and that the right version is often recovered from old install discs. Per-file version assignment is therefore normal practice, but the contents give no case of a project reversing one or a maintainer admitting a mistake.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E43"
+   ],
+   "source_ids": [
+    "S37"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which reverse-engineering or matching-decompilation projects first assigned a different compiler version to individual files, later found that one version with corrected flags or rewritten source produced the same bytes, and what did their maintainers say about the mistake?",
+    "capability": "You can plan around the fact that one title may legitimately mix compiler versions, so a per-file assignment is not automatically an error."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 39,
+  "lineages": 39,
+  "duplicate_url_aliases": 2,
+  "sources_with_injection_flags": 3,
+  "claims": 32,
+  "claims_with_verified_span": 30,
+  "verified_span_rate": 0.938,
+  "quotes_offered": 47,
+  "quotes_rejected": 4,
+  "ledger_capped": 3,
+  "quotes_reattributed": 0,
+  "claims_persisted": 16,
+  "persisted_with_verified_span": 15,
+  "persisted_verified_span_rate": 0.938
+ }
+}

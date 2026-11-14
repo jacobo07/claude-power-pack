@@ -1,0 +1,12 @@
+{
+ "q": "Q8",
+ "gap": "B-FLAGS",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 640.6,
+ "artifacts": [
+  "2026-11-14_142439_how-do-gamecube-wii-projects-recover-per-translati.ledger.json",
+  "2026-11-14_142439_how-do-gamecube-wii-projects-recover-per-translati.md",
+  "how-do-gamecube-wii-projects-recover-per-translati.raw.jsonl"
+ ]
+}

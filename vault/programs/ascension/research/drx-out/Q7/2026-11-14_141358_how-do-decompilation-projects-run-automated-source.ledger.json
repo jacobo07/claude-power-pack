@@ -1,0 +1,977 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-14_135723_how-do-decompilation-projects-run-automated-source",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://github.com/puiji/decompilation-eval",
+   "aliases": [],
+   "sha256": "ff09527135b7d555153f39718cdbe62d45d6432726e1c63282ca57761368ec00",
+   "chars": 2494,
+   "snapshot": "ff09527135b7d555153f39718cdbe62d45d6432726e1c63282ca57761368ec00.txt",
+   "retrieved_at": "2026-11-14T12:58:00+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/gamecube-wii/",
+   "aliases": [],
+   "sha256": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f",
+   "chars": 22525,
+   "snapshot": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f.txt",
+   "retrieved_at": "2026-11-14T12:58:00+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://kingy.ai/blog/ai-video-game-decompilation-legality/",
+   "aliases": [],
+   "sha256": "9a9a14902db28c8d89c7a9ef099510a462bdcfd23906bd68df17ade1676719b0",
+   "chars": 21699,
+   "snapshot": "9a9a14902db28c8d89c7a9ef099510a462bdcfd23906bd68df17ade1676719b0.txt",
+   "retrieved_at": "2026-11-14T12:58:00+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://www.tomshardware.com/video-games/retro-gaming/game-decompilation-tracker-decomp-dev-shuts-its-public-leaderboard-saying-ai-has-broken-the-community-its-creator-blames-forks-that-use-ai-to-finish-other-teams-projects-and-races-to-ship-rough-pc-ports",
+   "aliases": [],
+   "sha256": "a768eaa1b74647e59eec64423300fcd238e7cf1a63529293660510ceed7d1fd2",
+   "chars": 11430,
+   "snapshot": "a768eaa1b74647e59eec64423300fcd238e7cf1a63529293660510ceed7d1fd2.txt",
+   "retrieved_at": "2026-11-14T12:58:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "role-reassignment"
+   ],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://mir.cs.illinois.edu/marinov/publications/HaririETAL19SourceVsIRMutation.pdf",
+   "aliases": [],
+   "sha256": "1c8db2bd5b4858066acd1b1412ad6d8283a81124fd6fe0c70c080b7987097090",
+   "chars": 25000,
+   "snapshot": "1c8db2bd5b4858066acd1b1412ad6d8283a81124fd6fe0c70c080b7987097090.txt",
+   "retrieved_at": "2026-11-14T13:02:02+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.emergentmind.com/topics/source-code-mutation",
+   "aliases": [],
+   "sha256": "560dd826e0d23aaacc9bfeabae54dc5efebe04d1a3d213a45757984e714822c4",
+   "chars": 13130,
+   "snapshot": "560dd826e0d23aaacc9bfeabae54dc5efebe04d1a3d213a45757984e714822c4.txt",
+   "retrieved_at": "2026-11-14T13:02:02+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.geeksforgeeks.org/compiler-design/target-code-generation-in-compiler-design/",
+   "aliases": [],
+   "sha256": "a921b53e3879bcb4ab2a55c54ea551d2cfe9a1302c0c56ae6dbed145e251fa46",
+   "chars": 4337,
+   "snapshot": "a921b53e3879bcb4ab2a55c54ea551d2cfe9a1302c0c56ae6dbed145e251fa46.txt",
+   "retrieved_at": "2026-11-14T13:02:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://cmu-program-analysis.github.io/2025/lecture-slides/17-fuzzing.pdf",
+   "aliases": [],
+   "sha256": "f53d20f1c6d57f3a2766aeb432a0fd02b7cae25b9b8f7a8711325a9b1fb1c7cf",
+   "chars": 25000,
+   "snapshot": "f53d20f1c6d57f3a2766aeb432a0fd02b7cae25b9b8f7a8711325a9b1fb1c7cf.txt",
+   "retrieved_at": "2026-11-14T13:02:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://compcert.org/doc/html/compcert.powerpc.Conventions1.html",
+   "aliases": [],
+   "sha256": "9b80ed6282184392941917c75bba3e7312afc24ef776d32b0739accfcfed3ff0",
+   "chars": 13582,
+   "snapshot": "9b80ed6282184392941917c75bba3e7312afc24ef776d32b0739accfcfed3ff0.txt",
+   "retrieved_at": "2026-11-14T13:04:36+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://github.com/dmadevice/verifier",
+   "aliases": [],
+   "sha256": "aee45b8d119f704d134c74a43708fcdae66fbefcc30d02d8d2690128e169f0aa",
+   "chars": 22609,
+   "snapshot": "aee45b8d119f704d134c74a43708fcdae66fbefcc30d02d8d2690128e169f0aa.txt",
+   "retrieved_at": "2026-11-14T13:05:39+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://docs.oracle.com/cd/E26505_01/html/E26506/chapter2-90421.html",
+   "aliases": [],
+   "sha256": "63065cf4ab5277420fc9853029f601ca69b853bae35cbe351fb5397f156cfcd5",
+   "chars": 25000,
+   "snapshot": "63065cf4ab5277420fc9853029f601ca69b853bae35cbe351fb5397f156cfcd5.txt",
+   "retrieved_at": "2026-11-14T13:05:39+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://link.springer.com/chapter/10.1007/979-8-8688-2154-7_6",
+   "aliases": [],
+   "sha256": "06654090dba376263b029c653b95444a99222a2033fea4f6ce984c0772e67fa8",
+   "chars": 238,
+   "snapshot": "06654090dba376263b029c653b95444a99222a2033fea4f6ce984c0772e67fa8.txt",
+   "retrieved_at": "2026-11-14T13:05:39+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://arxiv.org/abs/2401.04514",
+   "aliases": [],
+   "sha256": "b8ff4fd34cc14ec5597af066ef49ab923c38be374b27a4938f59a69476be8757",
+   "chars": 4841,
+   "snapshot": "b8ff4fd34cc14ec5597af066ef49ab923c38be374b27a4938f59a69476be8757.txt",
+   "retrieved_at": "2026-11-14T13:09:00+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://arxiv.org/pdf/2305.03843",
+   "aliases": [],
+   "sha256": "cf29cbda4ef38367bedf6b341b398a2dacb9b39edd377ff5e84c1f068a27b95b",
+   "chars": 25000,
+   "snapshot": "cf29cbda4ef38367bedf6b341b398a2dacb9b39edd377ff5e84c1f068a27b95b.txt",
+   "retrieved_at": "2026-11-14T13:09:10+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://aclanthology.org/2024.acl-long.75/",
+   "aliases": [],
+   "sha256": "0bfd0a451975adbe1c35ea5e20cc63a1111de643f3c66dc93708daecd91ad9f6",
+   "chars": 12557,
+   "snapshot": "0bfd0a451975adbe1c35ea5e20cc63a1111de643f3c66dc93708daecd91ad9f6.txt",
+   "retrieved_at": "2026-11-14T13:09:13+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://diff.wikimedia.org/2026/04/14/introducing-mediawiki-code2code-search-semantic-search-to-find-code-by-under-the-surface-similarity/",
+   "aliases": [],
+   "sha256": "2971b040b13b488b8544ad6c77d8e27b1c7930da302f9dae41db34e7fc26476a",
+   "chars": 8486,
+   "snapshot": "2971b040b13b488b8544ad6c77d8e27b1c7930da302f9dae41db34e7fc26476a.txt",
+   "retrieved_at": "2026-11-14T13:09:13+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://aclanthology.org/2024.acl-long.75.pdf",
+   "aliases": [],
+   "sha256": "3198ac97fac4c146a2d80ee3c0a065a42e74e16e88ee16ce3e8346b854e31315",
+   "chars": 25000,
+   "snapshot": "3198ac97fac4c146a2d80ee3c0a065a42e74e16e88ee16ce3e8346b854e31315.txt",
+   "retrieved_at": "2026-11-14T13:09:15+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://gambiconf.substack.com/p/can-llms-really-do-matching-decompilation",
+   "aliases": [],
+   "sha256": "9dffdd122a0e3212741d3da28e1e778b1fea431e259fbff3574c6aea51bb283a",
+   "chars": 24624,
+   "snapshot": "9dffdd122a0e3212741d3da28e1e778b1fea431e259fbff3574c6aea51bb283a.txt",
+   "retrieved_at": "2026-11-14T13:12:10+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [
+    "system-prompt-reference",
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://capitalandcompute.net/blog/which-games-has-ai-decompiled/",
+   "aliases": [],
+   "sha256": "935749b3c2e001a73868864c37888f9f80c8443c853dd5a0c561fdb33b4acc4f",
+   "chars": 16943,
+   "snapshot": "935749b3c2e001a73868864c37888f9f80c8443c853dd5a0c561fdb33b4acc4f.txt",
+   "retrieved_at": "2026-11-14T13:12:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://reversedwithai.com/ai-game-decompilation",
+   "aliases": [],
+   "sha256": "5cf3d0ac1ea9ddd5708aa90a0a43d96c9616507ac3a981db705c5dd8902694ff",
+   "chars": 25000,
+   "snapshot": "5cf3d0ac1ea9ddd5708aa90a0a43d96c9616507ac3a981db705c5dd8902694ff.txt",
+   "retrieved_at": "2026-11-14T13:12:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://recompsoftware.com/progress/",
+   "aliases": [],
+   "sha256": "88a9a3152c8140b3b0e4c31b494d55242c1717cfe0b6d2244de76f07c9baa3bd",
+   "chars": 19430,
+   "snapshot": "88a9a3152c8140b3b0e4c31b494d55242c1717cfe0b6d2244de76f07c9baa3bd.txt",
+   "retrieved_at": "2026-11-14T13:12:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://web.eecs.umich.edu/~mahlke/courses/583f25/lectures/Dec1/group20_slides.pdf",
+   "aliases": [],
+   "sha256": "23249e011cfc73551667d7a0bd6215b02e4a17220118cc3e638722326794508d",
+   "chars": 25000,
+   "snapshot": "23249e011cfc73551667d7a0bd6215b02e4a17220118cc3e638722326794508d.txt",
+   "retrieved_at": "2026-11-14T13:12:45+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://www.geeksforgeeks.org/computer-organization-architecture/register-allocations-in-code-generation/",
+   "aliases": [],
+   "sha256": "2541d2fb5fdb84ad6944d156a7e169cdde0b29a5934227935214eb37470caffd",
+   "chars": 9530,
+   "snapshot": "2541d2fb5fdb84ad6944d156a7e169cdde0b29a5934227935214eb37470caffd.txt",
+   "retrieved_at": "2026-11-14T13:12:45+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S23"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 1573,
+   "end": 1791,
+   "text": "Ten of the 14 agent-assisted projects match at 99–100% on stock tools. Four fall below 99%, using patched compilers or per-file settings for part of their code; Pokémon Colosseum has the most, with 71.4% stock matches.",
+   "sha256": "7aeddcfcc1eb1715d60ffb3e8ff2bc602f824e36f3e71fb342e664ecbf794a9d"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S1",
+   "start": 1792,
+   "end": 1909,
+   "text": "Both human-built projects (Melee, The Wind Waker) match at 100%, counting community-shared compiler patches as stock.",
+   "sha256": "14729a001f706e4beb7c95e0d268b98bf883413fdc7f1556ce770573bd9c6d27"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S1",
+   "start": 1910,
+   "end": 2055,
+   "text": "You can't tell these functions apart by reading the source; neither a static scanner nor an LLM\nclassifier could. The rebuild is what finds them.",
+   "sha256": "c282108bfbba8cee36fc31d3c3a890f3e1c8336c976a721a1eec2b77202dbf44"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S4",
+   "start": 8357,
+   "end": 8438,
+   "text": "However, no new projects may join, and nobody may rebuild the site from its code.",
+   "sha256": "95a8aa6ed45cc4be43c253d97aadc92e36366dd99255b8704f610f10f64d4d3c"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S4",
+   "start": 4641,
+   "end": 4710,
+   "text": "AI has made the progress percentages on decomp.dev easier to push up.",
+   "sha256": "f4a895900c33e83c7e11f15a3b000b802f127791fdad82388157c2b8f0663f64"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S7",
+   "start": 831,
+   "end": 972,
+   "text": "Each line in optimized code may map to one  or more lines in machine (or) assembly code, hence there is a  1:N mapping associated with them .",
+   "sha256": "c48e7536ba1930a972ac6d534dc62fe77a801488b301309d6404d9c50e5c6083"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S7",
+   "start": 1584,
+   "end": 1726,
+   "text": "Register allocation is the process of assigning program variables to  registers and  reducing the number of swaps in and out of the registers.",
+   "sha256": "7df22d1fc18e567d578a16843b478732dee48ba62e0d6064073d7495b4c6cce9"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S6",
+   "start": 2050,
+   "end": 2095,
+   "text": "Full equivalence is undecidable; in practice,",
+   "sha256": "06ab32010b7f930f5fbe54f95ded875e9c9d00ec1d8a214dd802db120963bf97"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S6",
+   "start": 3634,
+   "end": 3943,
+   "text": "Recent research stresses the insufficiency of fixed operator sets: deletion of arbitrary method calls and identifier renaming are among the most frequent real-bug transformations, while classical increment/decrement, removal of conditionals, or constructor mutations are rarely effective for real-world bugs (",
+   "sha256": "1502bf37851bdd008e314e8ec8e66a111013e6b8af659144399e56d5d1a1994d"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S9",
+   "start": 3139,
+   "end": 3252,
+   "text": "We favor the use of caller-save registers, using callee-save registers\n    only when no caller-save is available.",
+   "sha256": "f7b5d95969c856b74d383370fc34922b699678e3afb5f66573c16c7161683116"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S9",
+   "start": 7062,
+   "end": 7127,
+   "text": "The first 8 integer arguments are passed in registers\nR3\nto\nR10\n.",
+   "sha256": "e4fbfcbb083e5331ac8c4e1e8f266b6f45a223094453e39276f7b45ebb2774c5"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S10",
+   "start": 1667,
+   "end": 1711,
+   "text": "A function matches only when all of it does.",
+   "sha256": "76c9544280625fd988cdfed6328581a3fd9456480334a5d087eccd92c7d0b0c4"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S10",
+   "start": 1517,
+   "end": 1666,
+   "text": "The data and metadata the code\ndepends on (constants, string literals, tables, vtables, RTTI, unwind and exception-handling tables) are\ncompared too.",
+   "sha256": "49ad19a2dedca097517bf135654214fba5e7ec53649100b1cfd7e4e15a899b6f"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S10",
+   "start": 7365,
+   "end": 7546,
+   "text": "Without it, a data\nobject is compared only up to the rebuilt object's last nonzero byte, so a table whose last entries the rebuild\nleaves zero, or a string cut short, still matches.",
+   "sha256": "2c7d99f63e1a5441d1ee78d3d103b74c2937819a8692afa50f18df3baf15720f"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S10",
+   "start": 21629,
+   "end": 21712,
+   "text": "A function that uses it is reported\nas a DIFF whose handler data is not verifiable.",
+   "sha256": "e82330a50bdaddb106fc415b0f071fa26f760c9510bf91fc07011c3d537f7498"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S10",
+   "start": 2371,
+   "end": 2551,
+   "text": "Once functions match, keep them matching with a regression list: add\n--matched matched.txt --update\nto record\nthe current matches, and run with\n--matched matched.txt --check\nin CI.",
+   "sha256": "16f59d257662f683f7f20e49ddc925f3c8771d795e17834667ee35714b653a15"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S13",
+   "start": 1533,
+   "end": 1758,
+   "text": "Experimental results demonstrate that ReCo significantly boosts retrieval accuracy across sparse (up to 35.7%), zero-shot dense (up to 27.6%), and fine-tuned dense (up to 23.6%) retrieval settings in diverse search scenarios.",
+   "sha256": "550d1dc7273a5f0d8b81d827622ce64447ed9add3891d0a5af300e8b936f7117"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S13",
+   "start": 1137,
+   "end": 1346,
+   "text": "This limitation could potentially be ascribed to the fact that the generated codes, albeit functionally accurate, frequently display a pronounced stylistic deviation from the ground truth code in the codebase.",
+   "sha256": "37690b7560f514176d0504ef31dd2858c3337e3bb098ee324e9b6d7b1a8718fe"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S16",
+   "start": 6174,
+   "end": 6277,
+   "text": "Currently supported languages are Python, C++, C, PHP, JavaScript, TypeScript, Lua, Go, Java, and Rust.",
+   "sha256": "28b63e9da8aa2455b69d4428848522440c08f970e9c2d78f74fa3a954c707010"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S16",
+   "start": 741,
+   "end": 968,
+   "text": "You paste a piece of code that captures some behaviour, and the tool attempts to find similar code across MediaWiki extensions and the core, even if the programming language, coding style, variable names or exact syntax differ.",
+   "sha256": "c1d53a4c4922a0988b90db49702169cc02288a762d72ad811ffb503f57e1d3ed"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S18",
+   "start": 2806,
+   "end": 2945,
+   "text": "Across 60 functions from two real decomp projects, the pipeline matches 74% functions, and 88% of them produce the same outcome every time!",
+   "sha256": "d9ba0e31e837aa21160439b7643e7a1fd85d60436c3787a67006c4f88e55e93f"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S18",
+   "start": 16804,
+   "end": 16878,
+   "text": "53 of the 60 functions (88%) had identical outcomes across all three runs.",
+   "sha256": "968eb06fcaa01721f872fb768d609adba4caca90624faa0867b0d44991219872"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S18",
+   "start": 13788,
+   "end": 13893,
+   "text": "Permuter likely worked better on AF because it was initially designed for IDO (the compiler used for AF).",
+   "sha256": "704dfdcb4fa232e9abf365852ce5f3988867a47d849d906b001ebe1cb849d1a7"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S19",
+   "start": 4477,
+   "end": 4626,
+   "text": "In a sample of 900 commits from June to October 2026, 116 carry AI co-author lines, most often Claude Fable 5, followed by Codex and Claude Opus 5.5.",
+   "sha256": "2455465c33c5bd1d69718f851b0f6cf95190b34beedf9749844d8be14d138cbc"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S19",
+   "start": 5635,
+   "end": 5719,
+   "text": "Without that expertise, he estimates the project “would have stalled around 89–90%.”",
+   "sha256": "d3a08a93710a9fa4eeea4b3494ed7557c1816c05c3c31777dcc2664eadbbadc5"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S23",
+   "start": 627,
+   "end": 724,
+   "text": "Therefore a good register allocator computes an effective approximate solution to a hard problem.",
+   "sha256": "890ba3a5161dd546a2bb8c4a160078749fab3b3714d6dd27360b96bc65ee8523"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S23",
+   "start": 7485,
+   "end": 7551,
+   "text": "Top-Down uses priority ranking to order all the constrained nodes.",
+   "sha256": "00977707ffefe3f4d46beb53e5162b63309fde6c216a301b979efbe302648e58"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S23",
+   "start": 6142,
+   "end": 6238,
+   "text": "Live ranges having k or more neighbors are called constrained nodes and are difficult to handle.",
+   "sha256": "5274e28d298afcbaeb8a5f85fca2f52b5c296245f1d38a61a9f6ba598ae20464"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S23",
+   "start": 4695,
+   "end": 4828,
+   "text": "Essential for taking a spill decision which includes - address computation, memory operation cost, and estimated execution frequency.",
+   "sha256": "cfac7695eb2be0d273d6969894ab914a0e39cdc33e976bb5717bd3a6410fd0b6"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "A rebuild of every matched function in 16 public decompilations on the released compiler with default settings found 10 of 14 agent-assisted projects hold at 99–100%, while four fall below 99% because they rely on patched compilers or per-file settings. Pokémon Colosseum, a GameCube title, is the worst at 71.4% stock matches, and both human-built references (Melee, The Wind Waker) hit 100%. Headline match numbers therefore overstate genuine source recovery in a minority of agent projects.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 10, 16",
+   "spans": [
+    "E1",
+    "E2"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured match rates do decompilation projects report when they run automated source-variant search on GameCube and Wii functions that already compile close to the original but do not match, and who measured them?",
+    "capability": "You can stop reading a high 'matched' percentage on an AI-built decompilation as proof the code is genuine recovered source, and instead demand a stock-compiler rebuild before trusting or funding it."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "The evaluator reports that functions depending on patched compilers or per-file settings cannot be distinguished by reading the source: neither a static scanner nor an LLM classifier could find them. Only rebuilding on the stock compiler exposes them, so verification cost is a compute-and-build cost, not a reviewer-time cost.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured match rates do decompilation projects report when they run automated source-variant search on GameCube and Wii functions that already compile close to the original but do not match, and who measured them?",
+    "capability": "You can stop relying on code review or automated classifiers to spot compiler-workaround functions, and budget for actual rebuilds as the only reliable check."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "The decomp.dev leaderboard, the main central tracker of matching progress, is closing to new projects, with its maintainer saying AI made percentages easy to inflate. Existing projects such as Melee keep reporting, but new AI-assisted projects will have no shared independent number, which makes the single-author stock-compiler audit more significant. The searched question (match rates from automated source-variant search on near-miss functions) is not answered by any of these sources.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4",
+    "E5"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured match rates do decompilation projects report when they run automated source-variant search on GameCube and Wii functions that already compile close to the original but do not match, and who measured them?",
+    "capability": "You can stop expecting a public, comparable scoreboard of match rates for GameCube and Wii projects and plan for self-run verification instead."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "Final code generation takes optimized intermediate code and assigns variables to a small, fixed set of registers, with each intermediate line expanding into one or more machine instructions. Because register assignment and instruction expansion happen at this last stage, a source tweak that leaves the intermediate form unchanged will leave the output unchanged, while one that alters it can reshuffle registers and instruction order.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6",
+    "E7"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a source-level random mutation change the machine code that the Metrowerks compiler emits for some constructs (register allocation order, instruction scheduling, stack slot layout, loop shape) and leave it unchanged for others, and why can a permuter score of zero still fail to be byte-identical?",
+    "capability": "You can stop expecting a source-level change to map one-to-one onto machine-code change, and plan any byte-matching or equivalence work around the fact that compilation is a many-line-per-statement translation."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Mutation research defines equivalent mutants as variants with identical outputs on all inputs, and notes full equivalence is undecidable and in practice only checked on a finite test suite. Equivalence in behavior says nothing about identical instruction bytes, and that gap is one reason a zero-difference score can still fall short of a byte-exact match.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a source-level random mutation change the machine code that the Metrowerks compiler emits for some constructs (register allocation order, instruction scheduling, stack slot layout, loop shape) and leave it unchanged for others, and why can a permuter score of zero still fail to be byte-identical?",
+    "capability": "You can stop treating a behaviorally equivalent source variant as proof of identical compiled output, and budget effort accordingly when hunting for a variant that reproduces exact bytes."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Classical mutation operators were designed to mimic programmer faults, and research notes fixed operator sets are insufficient even for real bugs. Operators like replacing a loop with a single iteration change behavior, so they do not target the output-preserving rewrites needed to nudge compiler output, which means random edits need guidance toward constructs the compiler is sensitive to.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a source-level random mutation change the machine code that the Metrowerks compiler emits for some constructs (register allocation order, instruction scheduling, stack slot layout, loop shape) and leave it unchanged for others, and why can a permuter score of zero still fail to be byte-identical?",
+    "capability": "You can stop assuming the mutation operators used for testing are the right search space for changing compiler output, and avoid relying on the idea that many random edits will eventually find the right one."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "The documented PowerPC/EABI allocation policy favors caller-save registers and only falls back to callee-save registers when no caller-save is free. So a small source change that adds one more live value, or a call that forces values to survive across it, can push a variable from a caller-save register into a callee-save one, and the compiler then also has to save and restore that register in the prologue and epilogue. This is a general allocator rule, not a Metrowerks-specific finding, so how it applies to Metrowerks is an inference.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a small change in how a C function is written cause the Metrowerks PowerPC compiler to assign registers or lay out stack slots differently, even when the resulting instruction sequence looks the same?",
+    "capability": "You can stop expecting a PowerPC compiler's register choices to follow only from how the source reads, and plan for the compiler's built-in preference order deciding which values survive in which registers."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Under the PowerPC EABI, where each argument lives depends on its type and its position in the list: the first 8 integer arguments go in R3 to R10, the first 8 float arguments in F1 to F8, and long integers take aligned register pairs. Extra arguments spill to consecutive stack slots, with floats taking 2 words and aligned. Changing one parameter's type or order can therefore shift every later argument into a different register or stack slot.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does a small change in how a C function is written cause the Metrowerks PowerPC compiler to assign registers or lay out stack slots differently, even when the resulting instruction sequence looks the same?",
+    "capability": "You can stop assuming that changing a function's parameter or return types is cosmetic, and treat it as something that can reshuffle registers and stack slots for every caller and callee."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "The verifier project defines a match as requiring four things at once: identical code bytes apart from address fields, references that resolve to the same original targets, matching table contents, and identical unwind and exception-handling metadata. A function that looks identical instruction by instruction can still be reported as different because a referenced constant, vtable, or exception table differs, so 'perfect instruction match' is not the same as 'done'.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12",
+    "E13"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a decompiled function scores as a perfect match by instruction, relocation and symbol comparison but the final linked bytes still differ from the original binary, and how often has this been reported?",
+    "capability": "You can stop treating a function-level match as proof the rebuilt program is the original, and instead insist on checking data, tables and exception metadata as well before declaring a function done."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "The verifier tolerates certain gaps: without an exported data-item list, a data object is compared only up to the rebuilt object's last nonzero byte, so a table with trailing zero entries or a truncated string still matches. Functions using the newer compressed exception-handling format cannot be verified and are reported as differences, and 32-bit or non-MSVC builds are unsupported. A reported match count can therefore be either overstated or understated depending on setup.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14",
+    "E15"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens when a decompiled function scores as a perfect match by instruction, relocation and symbol comparison but the final linked bytes still differ from the original binary, and how often has this been reported?",
+    "capability": "You can trust a progress dashboard's match counts only to the extent you know which gaps the checker silently tolerates, and budget review time for those blind spots."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "The tool keeps a regression list of matched functions and, in check mode, fails the build when any listed function stops matching or when library code is wrongly counted as decompiled. This turns matching progress into a ratchet that can run in continuous integration, rather than a number someone re-measures by hand.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E16"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens when a decompiled function scores as a perfect match by instruction, relocation and symbol comparison but the final linked bytes still differ from the original binary, and how often has this been reported?",
+    "capability": "You can lock in gains by gating every build on a committed list of already-matched functions, so a regression is caught the moment it happens rather than discovered at final link."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "The ReCo paper (ACL 2024) reports that having an LLM rewrite the codebase itself to normalize style, in addition to generating example code for the query, boosts retrieval accuracy by up to 35.7% for sparse retrieval, 27.6% for zero-shot dense and 23.6% for fine-tuned dense. The gain comes from closing the stylistic gap between generated and real code. Nothing in the material tests this on mwcc or on older console toolchains, so whether it transfers to compiler-specific matching is unproven.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 2024",
+   "spans": [
+    "E17",
+    "E18"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Do approaches that rewrite code symbolically or use language models to search for matching source work on mwcc in the same way they work for other compilers and platforms, and what has been reported when they were applied to older console toolchains with different optimizer behavior?",
+    "capability": "You can stop assuming that rewriting code into a normalized style is only a cosmetic step, and treat it as a measurable lever for finding matching code, while recognizing the evidence comes from generic code search rather than compiler-matching work."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "The Code2Code tool indexes 1,100,000+ snippets across 2,400+ repositories but supports only Python, C++, C, PHP, JavaScript, TypeScript, Lua, Go, Java and Rust. It finds code similar in meaning regardless of style, which differs from the exact byte or instruction matching that compiler-specific work needs. It says nothing about mwcc output or optimizer quirks, so it should not be counted on for that use.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E19",
+    "E20"
+   ],
+   "source_ids": [
+    "S16"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Do approaches that rewrite code symbolically or use language models to search for matching source work on mwcc in the same way they work for other compilers and platforms, and what has been reported when they were applied to older console toolchains with different optimizer behavior?",
+    "capability": "You can stop expecting generic semantic code-search tools to cover the older console toolchain case, and plan to build or commission something specific to it instead."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "Macabeus's benchmark of 60 functions from two real projects (Sonic Advance 3 on GBA and Animal Forest on N64, both non-Metrowerks) matched 74% on average across 6 runs using m2c, decomp-permuter and Claude Sonnet 4.6, with 88% of functions giving the same outcome every run. 12 functions always failed, so the ceiling is a stable set of hard functions, not luck. No GameCube/Wii Metrowerks-specific rate was reported in these sources, so applying 74% to Metrowerks code is an extrapolation.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 12, 4.6",
+   "spans": [
+    "E21",
+    "E22"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What match rates have GameCube and Wii decompilation projects actually reported when they used language models or automated permutation tools on functions compiled with the Metrowerks compiler, and who measured them?",
+    "capability": "You can set a realistic expectation for an LLM-plus-permutation pipeline: roughly three in four functions matched on cheap, capped budgets, with the remainder needing human expertise."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "In the benchmark, nearly half of AI-phase matches came on the first attempt, and a function unmatched by attempt 3 had only about a one-quarter chance of eventually matching. The permuter mattered most on the IDO-compiled N64 game (matching 3-4 functions per run) and matched none on the ARM/GBA game, so permutation value depends on how well the tool supports the compiler. Metrowerks support was not measured in these sources.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: spans carry no figure",
+   "spans": [
+    "E23"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S18",
+     "quote": "When the function still wasn’t matched in the Programmatic Phase, nearly half of the matches happened on the first attempt of the AI-Powered Phase. If a function isn’t matched by the 3rd attempt, the ",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What match rates have GameCube and Wii decompilation projects actually reported when they used language models or automated permutation tools on functions compiled with the Metrowerks compiler, and who measured them?",
+    "capability": "You can decide how much attempt budget and permutation tooling to fund per function, and stop spending on functions that have not matched early."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "None of the sources report a function-level match rate for Metrowerks-compiled code. They give project outcomes instead: Melee at 100% of 19,828 functions with 116 of 900 sampled commits carrying AI co-author lines, and Lewis estimating that without expert intervention (about 4.8% of commits) his Snowboard Kids project would have stalled around 89-90%. The wiki page that discusses CodeWarrior sets a 25-build cap as a standard but cites no measured rate. Judge any GameCube/Wii AI claim by who measured it and whether it counts functions or commits.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E24",
+    "E25"
+   ],
+   "source_ids": [
+    "S19"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What match rates have GameCube and Wii decompilation projects actually reported when they used language models or automated permutation tools on functions compiled with the Metrowerks compiler, and who measured them?",
+    "capability": "You can stop expecting published per-function Metrowerks match rates to exist, and treat completion counts as the only available evidence of AI effectiveness on GameCube/Wii."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Register allocation is an NP-complete problem that compilers solve only approximately, typically via graph coloring with heuristics for spilling and splitting. Because the result depends on heuristic ordering and priority rankings, tiny source changes can flip which values get which registers, so the match is a search over heuristic behavior rather than a deterministic translation.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26",
+    "E27"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do register allocation, instruction scheduling and inlining decisions in the Metrowerks compiler make some functions nearly impossible to match by rewriting source, and how does this differ from GCC-era compilers?",
+    "capability": "You can stop assuming that a hard-to-match function is a matter of finding the right source rewrite, and recognise that register assignment is an approximation the compiler may resolve differently after small source changes."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "Values with long live ranges and many interfering neighbors (constrained nodes) are the hard cases, forcing spill or split decisions that depend on estimated execution frequency and spill cost. Functions heavy in such values are where small differences in the allocator's cost estimates produce visibly different register assignments and spill code.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E28",
+    "E29"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do register allocation, instruction scheduling and inlining decisions in the Metrowerks compiler make some functions nearly impossible to match by rewriting source, and how does this differ from GCC-era compilers?",
+    "capability": "You can budget extra time for functions with heavy register pressure or long live ranges, expecting them to be the ones where source rewrites fail to reproduce the target's register choices."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 23,
+  "lineages": 23,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 2,
+  "claims": 18,
+  "claims_with_verified_span": 18,
+  "verified_span_rate": 1.0,
+  "quotes_offered": 30,
+  "quotes_rejected": 1,
+  "ledger_capped": 4,
+  "quotes_reattributed": 0,
+  "claims_persisted": 2,
+  "persisted_with_verified_span": 2,
+  "persisted_verified_span_rate": 1.0
+ }
+}
