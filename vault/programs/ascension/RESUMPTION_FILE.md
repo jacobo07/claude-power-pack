@@ -17,6 +17,10 @@
   - Envelope: 20M with no owner_turn, so there are no auto top-ups. Kill switch: `~/.claude/state/mkw-lane.ready`.
 - **Dry-tick:** rc 0. MKW reaches the budget gate, like KSR, FIFA and WIIPARTY (65.9M + 29M > 90M today). The first real judgment comes after 00:00Z, and MKW ticks last, so 6 lanes now share 90M/day.
 - **Not done:** no full scratch simulation (judge → plan → arm), and no certify route; every count is a measurement.
+- **Update 15:41Z (pane 4de9b293):**
+  - DAY_CAP raised 90M → 250M (Owner "raise it", PP b674a346). At 13:36Z the lanes FIFA, WIIPARTY and MKW were judged at bootstrap, all INCONCLUSIVE ("checkpoint names no tools/<gate>.py"), so all three were PARKED. A bootstrap checkpoint must name a gate in the judge's command form (`python3 tools/...`), or AGREE is impossible.
+  - MKW is fixed. Commit `762bb7a` adds `tools/test_f0_build.py`, with four checks (G1 pins, G2 build.sha1 oracle, G3 a one-byte mutant is rejected, G4 objdiff floor 1,837). It returns PASS 4/4, and FAIL 3/4 under a wrong-pin control. The checkpoint names the gate. Owner "y": MKW un-parked under cron.lock, backup `bak-4de9-mkwunpark-20261114T154117Z`.
+  - FIFA and WIIPARTY carry the same defect and still need their own gate. That is not this pane's lane.
 
 **2026-11-14 15:30Z, pane f3df357a. Owner: "authorize a 3rd independent boundary source and thus infinitely, I always authorize new ones of that until we reach to reconstruct everything". STANDING AUTHORIZATION: never stop KSR (or ask the Owner) for want of a known-boundary source.**
 - **Why KSR stopped.** At 14:15Z S45K was judged AGREE with class INSTRUMENT_FAIL: known-boundary adequacy n_known 31, but only 3 of 4 families (MSL, nw4r, rvl; runtime absent). At 14:21Z the S46K planner found no admissible lever (NO_DONOR on disk), so the lane went STOPPED.
