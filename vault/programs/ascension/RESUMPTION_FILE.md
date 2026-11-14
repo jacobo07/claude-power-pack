@@ -5,6 +5,13 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-14 13:13Z, pane f3df357a (/kresume of c26eafbf, Owner "y" 12:55Z): RETRY-keeps-judgment DEPLOYED LIVE (hand-off item 3 closed).**
+- An arm RETRY now stores `ls["pending_plan"] = pend`, so the next tick re-plans from the kept judgment (`replan_resume`), with no second judge call and no double count of class or graph credit.
+- Gates: V-AP-RETRY-KEEPS-JUDGMENT and V-AP-RETRY-REARMS-WITHOUT-REJUDGE. The staged no-fix control was red.
+- Swap ran under `flock cron.lock` with CAS 92c1f461 / 89cb5449. Live gate (`AP_PP=<PP clone>`): rc 0, AUTOPILOT_GATE_PASS, 49/49 mutants killed. Log `/tmp/retryfix-gate-20261114T131231Z.log`.
+- Backup `bak-c26eafbf-retryfix-20261114T131231Z`. Live shas: autopilot c3ac034e, test 14e53d66, evolve d6342ed4. Laptop autopilot/ = live, byte for byte.
+- Next: `test_s38k_ox` registry tie in t1 (Owner "y").
+
 **2026-11-14 12:15Z, pane 4246d04c (Owner "go ahead with both new lanes"): two NEW AUTOPILOT LANES, FIFA (letter F) and WIIPARTY (letter W). Pane 4246d04c owns them; c26eafbf keeps KSR.**
 - **Products, each its own git repo with `orig/` read-only and git-ignored.**
   - FIFA: `/home/kobii/missions/fifa11-decomp` (a9fb53f), FIFA 11 Wii PAL SELX69, 24,482 named fns in a split RSO.

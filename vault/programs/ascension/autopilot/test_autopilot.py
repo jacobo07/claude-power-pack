@@ -451,6 +451,18 @@ def run_all(ap):
     ap.lane_tick(st, lanes[0], False)
     check("V-AP-DIRTY-NO-MISSION-ACT", not calls and st["lanes"]["L"]["status"] != "PARKED"
           and st["lanes"]["L"]["arm_fails"] == 1)
+    # 2026-11-14 (Owner 'y', pane c26eafbf): a RETRY keeps the judgment; the next tick re-plans from it and does
+    # not call the judge again, so the checkpoint's class and graph credit are counted once
+    check("V-AP-RETRY-KEEPS-JUDGMENT", (st["lanes"]["L"].get("pending_plan") or {}).get("for", "").endswith(":100"))
+    _jr, _kj = {"n": 0}, ap.judge
+    ap.judge = lambda *a: (_jr.__setitem__("n", _jr["n"] + 1), _kj(*a))[1]
+    sh_out["dirty"] = ""
+    calls.clear()
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-RETRY-REARMS-WITHOUT-REJUDGE", _jr["n"] == 0 and any(c[0] == "arm" for c in calls)
+          and len([r for r in ledger() if r["kind"] == "judge"]) == 1
+          and len([r for r in ledger() if r["kind"] == "replan_resume"]) == 1)
+    ap.judge = _kj
     st = fresh(101)
     fail_on.add("authority")
     ap.lane_tick(st, lanes[0], False)

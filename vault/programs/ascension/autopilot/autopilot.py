@@ -979,6 +979,9 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
     elif res == "RETRY":
         ls["arm_fails"] = ls.get("arm_fails", 0) + 1
         ls["judged_for"] = None
+        # 2026-11-14 (Owner 'y', pane c26eafbf): nothing irreversible happened, but the judgment and EVO already
+        # counted this checkpoint; the next tick re-plans from it (resumable_plan) instead of re-judging it
+        ls["pending_plan"] = pend
         if ls["arm_fails"] >= MAX_ARM_FAILS:
             ls["status"] = "PARKED"
             owner_queue(lane["name"], f"arming {name} failed {MAX_ARM_FAILS} times before any mission act; see autopilot.log")
