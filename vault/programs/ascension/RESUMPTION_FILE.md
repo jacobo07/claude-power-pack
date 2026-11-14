@@ -5,6 +5,19 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-14 13:23Z, pane 4de9b293 (Owner route "a" = build on the public decomp, then "y"; envelope 20M, DAY_CAP left at 90M): NEW AUTOPILOT LANE MKW (letter M), Mario Kart Wii PAL RMCP01. Pane 4de9b293 owns it.**
+- **Product:** `/home/kobii/missions/mkw-decomp`, branch `lane/mkw`. Its base is the public decomp `snailspeed3/mkw` 78572c9 (riidefi/mkw redirects there), licence CC0-1.0 per the GitHub API and LICENSE. F0 commit `304914c` is metadata only.
+  - The laptop clone is `Wii Projects\MKW-Decomp`, with `F0_REPORT.md` there. The image is `Downloads\mkw-RMCP01-image\` (WBFS from the No-Intro 7z), and it is hard-linked as `orig/RMCP01/RMCP01.wbfs`.
+- **Image verified:** the DolphinTool header reads RMCP01, PAL, rev 0. The extracted `main.dol` sha1 is ac7d7244 and `StaticR.rel` sha1 is 887bcc07, both equal to upstream `config/RMCP01/build.sha1`. On GEX44, `orig/RMCP01/{sys/main.dol, files/rel/StaticR.rel}` are read-only, with sha256 80d18895 / 16d9d146, pinned under `protected`.
+- **Smoke (HR-2):** a clean `configure.py && ninja` on the laptop AND on GEX44 ends with `main.dol: OK`, `StaticR.rel: OK`. Upstream progress at base: 1,837 / 26,639 fns (5.74% of code bytes); StaticR.rel holds 61% of the code bytes, at 687 / 17,232 fns. The lane counts only what it moves, against a frozen list.
+- **Live config:** CAS 2d7a8f0c / 17006db7 / 6b69005a → lanes 3bd1d305, levers 38636884, brief 47e90ca0, state 1f65d7d9, written under `cron.lock`. Backup: `bak-4de9-mkw-20261114T132303Z`.
+  - Levers: `mkw_dol_game_match` (DOL_SOURCE_MATCH) and `mkw_rel_match` (REL_SOURCE_MATCH). Both are research, with blocker UNMATCHED_FUNCTIONS and requires `evidence/f0/checkpoint_f0.md`. `policy_check` returns [] as a phase and as a fact; a push control is refused.
+  - TRAP: even a negated "nothing is pushed" trips `forbidden act: push`, so the lever text and the brief avoid the word.
+  - State: seeded with `owner_resume=research:mkw_dol_game_match`. `evolve.owner_lever` resolves it; an unknown id resolves to None.
+  - Envelope: 20M with no owner_turn, so there are no auto top-ups. Kill switch: `~/.claude/state/mkw-lane.ready`.
+- **Dry-tick:** rc 0. MKW reaches the budget gate, like KSR, FIFA and WIIPARTY (65.9M + 29M > 90M today). The first real judgment comes after 00:00Z, and MKW ticks last, so 6 lanes now share 90M/day.
+- **Not done:** no full scratch simulation (judge → plan → arm), and no certify route; every count is a measurement.
+
 **2026-11-14 13:13Z, pane f3df357a (/kresume of c26eafbf, Owner "y" 12:55Z): RETRY-keeps-judgment DEPLOYED LIVE (hand-off item 3 closed).**
 - An arm RETRY now stores `ls["pending_plan"] = pend`, so the next tick re-plans from the kept judgment (`replan_resume`), with no second judge call and no double count of class or graph credit.
 - Gates: V-AP-RETRY-KEEPS-JUDGMENT and V-AP-RETRY-REARMS-WITHOUT-REJUDGE. The staged no-fix control was red.
