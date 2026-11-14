@@ -1,47 +1,240 @@
 {
  "_doc": "EVO lever registry (Owner y 2026-11-12, EVO-PLAN.md). One entry per method lever. family = mechanism family (a research transition must change it). kind = exploit | research | repair (repair levers only repair an instrument). requires = product-relative files that must exist. status open|retired; retired levers name the negative row and its reopen condition. The autopilot adds history-based retirements in state.json, never here.",
  "KSR": [
-  {"id": "fwidth_heldout_cert", "family": "OPERATOR_CERT", "kind": "exploit", "blockers": ["FLOAT_WIDTH"], "cost": 8, "status": "open",
-   "requires": ["evidence/ascension/s28k/receipts.jsonl"],
-   "what": "fwidth operator on frozen held-out CNM cohorts, then certification through the unchanged certify.decide (S28K certified 15; S30K 16 exact all refused TARGET_UNPROVEN)."},
-  {"id": "oracle_coverage_a2", "family": "TARGET_ORACLE", "kind": "research", "blockers": ["TARGET_UNPROVEN", "A2_POPULATION_EMPTY"], "cost": 6, "status": "open",
-   "requires": ["evidence/ascension/s32k/a2/result.json", "evidence/ascension/s30k/receipts.jsonl"],
-   "what": "The 16 S30K held-out exacts were refused TARGET_UNPROVEN (ids absent from the ksr-v5r-s25stage target oracle) and A2_POPULATION_EMPTY (partner pool built from the wrong set; S32K H-A2 SUPPORTED, control 15/15). Extend target-oracle coverage for exactly these ids from ORIGINAL DOL bytes with an independent reader (the S26C C1 method: own DOL and ELF readers, positive and shift negative controls), build the A2 partner pool from the main-capsule hash and size, then certify through the UNCHANGED certify.decide of profile ksr-v5r-s25stage into a separate receipts file. If that profile cannot read the extended oracle unchanged, stop and report INSTRUMENT_FAIL: a profile change is an Owner act. Rival hypotheses: (a) the 16 certify once covered; (b) they fail the oracle or a control (a target mismatch the refusal was hiding)."},
-  {"id": "q_fallback_cert", "family": "CERT_CONVERSION", "kind": "research", "blockers": ["NO_COMPILE_QTYPE", "A2_POPULATION_EMPTY"], "cost": 6, "status": "open",
-   "requires": ["evidence/ascension/s26c/fallback_fix/summary.json"],
-   "what": "45 BINARY_EXACT from the fixed S26C '?' fallback (t1 8057ec26): exclude ids certified in any receipts file, then certify through the unchanged certify.decide of profile ksr-v5r-s25stage with the S26D controls (pre/post, A2 negatives from a pool that contains the claims, historical receipts byte-identical) into a separate receipts file. Rival hypotheses: (a) most certify; (b) the fallback source changes bytes of partners (A2 violations)."},
-  {"id": "cnm_operator_coverage", "family": "OPERATOR_COVERAGE", "kind": "research", "blockers": ["NO_OPERATOR_FOR_CLASS"], "cost": 9, "status": "open",
-   "requires": ["evidence/ascension/s36k/pivot2/residual.md"],
-   "what": "Owner 2026-11-13 ('y, presupuesto 300M', lane envelope 300M): operator coverage for the 3,653 NO_OPERATOR_FOR_CLASS ids of the S36K sweep. New route code in a new generation (existing route tools stay frozen); a frozen pilot committed before the draw; an independent oracle on the original DOL; a gate with planted mutants; certification only through the unchanged certify.decide. Its certificates land in an additive profile proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Its receipts file gets a receipt_registry.json entry. Rival hypotheses: (a) a bounded operator set makes a measurable share of the 3,653 compile to BINARY_EXACT; (b) the class gaps are type/context gaps an operator cannot close (pilot BINARY_EXACT stays 0)."},
-  {"id": "tu_boundary_sbss", "family": "TU_SEGMENTATION", "kind": "research", "blockers": ["FLAGS_SPLIT_ARM"], "cost": 8, "status": "open",
-   "requires": ["evidence/ascension/s32k/ukdl_candidates.md"],
-   "what": "A second independent TU-boundary signal from sbss/bss reference ownership (S32K UKDL candidate c), pre-registered with a positive control on real TU boundaries (not consecutive objects), before any arm field is read. Diagnostic only; no certificate."},
-  {"id": "tu_boundary_repair", "family": "INSTRUMENT_REPAIR", "kind": "repair", "blockers": ["TU_BOUNDARY_CONTROL"], "cost": 5, "status": "open",
-   "requires": ["evidence/ascension/s32k/tu2/calibration.json"],
-   "what": "Repair the S32K TU-boundary calibration: the control set must be real TU boundaries (S32K recall 0.613 on consecutive-object pairs; AMD-1 n=0 because carved single-fn objects sit between auto_03 pairs). Build the calibration set from boundaries that are independently known, demonstrate its size at freeze, keep the 0.80 bar."},
-  {"id": "compiler_swap_selected", "family": "TOOLCHAIN", "kind": "research", "blockers": ["CNM_CODEGEN"], "cost": 10, "status": "open",
-   "requires": ["evidence/ascension/s26e/e2/cmpswap_full/results.jsonl"],
-   "what": "The broad compiler swap matched 0.38 pct of CNM (negative row; reopen if a fingerprint-chosen subset predicts >= 5 pct). S26F W3 found a size<=32 selector with 7.4x held-out enrichment: pre-register that subset prediction on a fresh frozen cohort. Diagnostic only, no certificate: a profile change is an Owner act."},
-  {"id": "type_context_v0", "family": "TYPE_MODEL", "kind": "research", "blockers": ["NO_COMPILE_TYPES"], "cost": 10, "status": "retired",
-   "requires": [], "retired_by": "S30T-P1-TYPE-CONTEXT-V0", "reopen": "a type source that beats the shuffled-type control by >= 5pp with 0 certified regressions",
-   "what": "Global type context from lifted signatures (S30T REFUTED: gain came from having prototypes, not true types; 33 certified regressions)."}
+  {
+   "id": "fwidth_heldout_cert",
+   "family": "OPERATOR_CERT",
+   "kind": "exploit",
+   "blockers": [
+    "FLOAT_WIDTH"
+   ],
+   "cost": 8,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s28k/receipts.jsonl"
+   ],
+   "what": "fwidth operator on frozen held-out CNM cohorts, then certification through the unchanged certify.decide (S28K certified 15; S30K 16 exact all refused TARGET_UNPROVEN)."
+  },
+  {
+   "id": "oracle_coverage_a2",
+   "family": "TARGET_ORACLE",
+   "kind": "research",
+   "blockers": [
+    "TARGET_UNPROVEN",
+    "A2_POPULATION_EMPTY"
+   ],
+   "cost": 6,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s32k/a2/result.json",
+    "evidence/ascension/s30k/receipts.jsonl"
+   ],
+   "what": "The 16 S30K held-out exacts were refused TARGET_UNPROVEN (ids absent from the ksr-v5r-s25stage target oracle) and A2_POPULATION_EMPTY (partner pool built from the wrong set; S32K H-A2 SUPPORTED, control 15/15). Extend target-oracle coverage for exactly these ids from ORIGINAL DOL bytes with an independent reader (the S26C C1 method: own DOL and ELF readers, positive and shift negative controls), build the A2 partner pool from the main-capsule hash and size, then certify through the UNCHANGED certify.decide of profile ksr-v5r-s25stage into a separate receipts file. If that profile cannot read the extended oracle unchanged, stop and report INSTRUMENT_FAIL: a profile change is an Owner act. Rival hypotheses: (a) the 16 certify once covered; (b) they fail the oracle or a control (a target mismatch the refusal was hiding)."
+  },
+  {
+   "id": "q_fallback_cert",
+   "family": "CERT_CONVERSION",
+   "kind": "research",
+   "blockers": [
+    "NO_COMPILE_QTYPE",
+    "A2_POPULATION_EMPTY"
+   ],
+   "cost": 6,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s26c/fallback_fix/summary.json"
+   ],
+   "what": "45 BINARY_EXACT from the fixed S26C '?' fallback (t1 8057ec26): exclude ids certified in any receipts file, then certify through the unchanged certify.decide of profile ksr-v5r-s25stage with the S26D controls (pre/post, A2 negatives from a pool that contains the claims, historical receipts byte-identical) into a separate receipts file. Rival hypotheses: (a) most certify; (b) the fallback source changes bytes of partners (A2 violations)."
+  },
+  {
+   "id": "cnm_operator_coverage",
+   "family": "OPERATOR_COVERAGE",
+   "kind": "research",
+   "blockers": [
+    "NO_OPERATOR_FOR_CLASS"
+   ],
+   "cost": 9,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s36k/pivot2/residual.md"
+   ],
+   "what": "Owner 2026-11-13 ('y, presupuesto 300M', lane envelope 300M): operator coverage for the 3,653 NO_OPERATOR_FOR_CLASS ids of the S36K sweep. New route code in a new generation (existing route tools stay frozen); a frozen pilot committed before the draw; an independent oracle on the original DOL; a gate with planted mutants; certification only through the unchanged certify.decide. Its certificates land in an additive profile proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Its receipts file gets a receipt_registry.json entry. Rival hypotheses: (a) a bounded operator set makes a measurable share of the 3,653 compile to BINARY_EXACT; (b) the class gaps are type/context gaps an operator cannot close (pilot BINARY_EXACT stays 0)."
+  },
+  {
+   "id": "tu_boundary_sbss",
+   "family": "TU_SEGMENTATION",
+   "kind": "research",
+   "blockers": [
+    "FLAGS_SPLIT_ARM"
+   ],
+   "cost": 8,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s32k/ukdl_candidates.md"
+   ],
+   "what": "A second independent TU-boundary signal from sbss/bss reference ownership (S32K UKDL candidate c), pre-registered with a positive control on real TU boundaries (not consecutive objects), before any arm field is read. Diagnostic only; no certificate."
+  },
+  {
+   "id": "tu_boundary_repair",
+   "family": "INSTRUMENT_REPAIR",
+   "kind": "repair",
+   "blockers": [
+    "TU_BOUNDARY_CONTROL"
+   ],
+   "cost": 5,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s32k/tu2/calibration.json"
+   ],
+   "what": "Repair the S32K TU-boundary calibration: the control set must be real TU boundaries (S32K recall 0.613 on consecutive-object pairs; AMD-1 n=0 because carved single-fn objects sit between auto_03 pairs). Build the calibration set from boundaries that are independently known, demonstrate its size at freeze, keep the 0.80 bar."
+  },
+  {
+   "id": "compiler_swap_selected",
+   "family": "TOOLCHAIN",
+   "kind": "research",
+   "blockers": [
+    "CNM_CODEGEN"
+   ],
+   "cost": 10,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s26e/e2/cmpswap_full/results.jsonl"
+   ],
+   "what": "The broad compiler swap matched 0.38 pct of CNM (negative row; reopen if a fingerprint-chosen subset predicts >= 5 pct). S26F W3 found a size<=32 selector with 7.4x held-out enrichment: pre-register that subset prediction on a fresh frozen cohort. Diagnostic only, no certificate: a profile change is an Owner act."
+  },
+  {
+   "id": "type_context_v0",
+   "family": "TYPE_MODEL",
+   "kind": "research",
+   "blockers": [
+    "NO_COMPILE_TYPES"
+   ],
+   "cost": 10,
+   "status": "retired",
+   "requires": [],
+   "retired_by": "S30T-P1-TYPE-CONTEXT-V0",
+   "reopen": "a type source that beats the shuffled-type control by >= 5pp with 0 certified regressions",
+   "what": "Global type context from lifted signatures (S30T REFUTED: gain came from having prototypes, not true types; 33 certified regressions)."
+  },
+  {
+   "id": "cnm_variant_search",
+   "family": "SOURCE_SEARCH",
+   "kind": "research",
+   "blockers": [
+    "NO_OPERATOR_FOR_CLASS",
+    "CNM_CODEGEN"
+   ],
+   "cost": 7,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s41k/pivot_residual_s41k.md"
+   ],
+   "what": "Owner 2026-11-14 ('crea las capacidades directamente'): a deterministic source-variant search over codegen-equivalent C rewrites (operand order, temporaries, loop form, cast placement, declaration order) for the 3,177 S41K 'other' COMPILES_NO_EXACT ids, extending the existing search.run/search_ops of S17 W1; each candidate is judged by objdiff 100 plus reloc_oracle CONSISTENT plus object sha, never by a permuter score. New route code in a new generation (existing route tools stay frozen); a frozen pilot committed before the draw; an independent oracle on the original DOL; a gate with planted mutants; certification only through the unchanged certify.decide. Its certificates land in an additive profile proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Its receipts file gets a receipt_registry.json entry. Rival hypotheses: (a) a bounded variant search makes a measurable share of the residual BINARY_EXACT; (b) the residual differences are register-allocation or scheduling effects no source variant reaches (pilot BINARY_EXACT stays 0)."
+  },
+  {
+   "id": "tu_boundary_floatdup",
+   "family": "TU_SEGMENTATION_V2",
+   "kind": "research",
+   "blockers": [
+    "FLAGS_SPLIT_ARM",
+    "TU_BOUNDARY_CONTROL"
+   ],
+   "cost": 8,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s41k/pivot_residual_s41k.md"
+   ],
+   "what": "Owner 2026-11-14: the second independent TU-boundary signal that is the registered reopen condition of FLAGS_SPLIT per-unit flags and of H-S41PX: duplicated float/double constants in .sdata2/.rodata mark a TU boundary (research row Q6), combined with the existing sbss signal only after each is validated alone on units of known boundaries (own positive control). New route code in a new generation (existing route tools stay frozen); a frozen pilot committed before the draw; an independent oracle on the original DOL; a gate with planted mutants; certification only through the unchanged certify.decide. Its certificates land in an additive profile proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Its receipts file gets a receipt_registry.json entry. Rival hypotheses: (a) the inferred units predict per-unit flags or pragmas that make FLAGS_SPLIT ids BINARY_EXACT; (b) float-constant duplication does not track TU boundaries in KSR (the control on known units fails)."
+  },
+  {
+   "id": "whole_program_type_model",
+   "family": "TYPE_MODEL_V2",
+   "kind": "research",
+   "blockers": [
+    "NO_COMPILE_TYPES"
+   ],
+   "cost": 10,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s41k/pivot_residual_s41k.md"
+   ],
+   "what": "Owner 2026-11-14: a whole-program KSR type model, not a per-function repair: callee prototypes by majority over EVERY call site of the program, struct layouts unioned per global symbol across all functions, iterated to a fixpoint, emitted as per-function source declarations only (no canonical ctx/header write). Known evidence against: on Tennis P1, P1c, P1d and P1e (call-graph propagation) were REFUTED and type repair gave compile without match; so the pre-registered outcome is BINARY_EXACT, never compile. New route code in a new generation (existing route tools stay frozen); a frozen pilot committed before the draw; an independent oracle on the original DOL; a gate with planted mutants; certification only through the unchanged certify.decide. Its certificates land in an additive profile proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Its receipts file gets a receipt_registry.json entry. Rival hypotheses: (a) whole-program consistency makes a measurable share of NO_COMPILE ids BINARY_EXACT; (b) it moves them to COMPILES_NO_EXACT only (pilot BINARY_EXACT stays 0)."
+  }
  ],
  "TENNIS": [
-  {"id": "q_fallback_cert", "family": "CERT_CONVERSION", "kind": "research", "blockers": ["NO_COMPILE_QTYPE", "A2_POPULATION_EMPTY"], "cost": 6, "status": "open",
-   "requires": ["evidence/ascension/s33t/checkpoint_s33t.md"],
-   "what": "Owner 2026-11-13 ('y', TENNIS envelope 50M): transfer of the KSR q_fallback route (S26C '?' fallback fix, t1 8057ec26; 31 KSR certificates in S35K) to Tennis. Import the frozen route tool read-only from /home/kobii/missions/t1-campaign at a pinned commit (never edit it) and run it over the uncertified Tennis main functions (Tennis 1,198 / 1,797 certified). Certification only through the unchanged certify.decide under an existing Tennis profile. An additive profile, if one is needed, is proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Rival hypotheses: (a) the fallback converts Tennis question-mark-type compile failures as it did on KSR; (b) the Tennis failures are of another class (pilot BINARY_EXACT stays 0)."},
-  {"id": "cnm_operator_coverage", "family": "OPERATOR_COVERAGE", "kind": "research", "blockers": ["NO_OPERATOR_FOR_CLASS"], "cost": 9, "status": "open",
-   "requires": ["evidence/ascension/s33t/checkpoint_s33t.md"],
-   "what": "Owner 2026-11-13 ('y', TENNIS envelope 50M): transfer of the KSR S37K operator route to Tennis (s37-callee: 16/40 held-out then 40/117 on KSR CALL_CRCLR; save-area operators were 0/260 and are not transferred). Import the frozen operators and driver read-only from /home/kobii/missions/t1-campaign at a pinned commit (never edit them), census the Tennis COMPILES_NO_MATCH by class, pilot on a frozen held-out draw. Certification only through the unchanged certify.decide under an existing Tennis profile. An additive profile, if one is needed, is proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Rival hypotheses: (a) the call-shape operator converts a measurable share of the Tennis call-shape class as on KSR; (b) the Tennis gaps are type/context gaps (pilot BINARY_EXACT stays 0)."},
-  {"id": "fwidth_tennis_b1t", "family": "OPERATOR_SCAN", "kind": "exploit", "blockers": ["FLOAT_WIDTH"], "cost": 5, "status": "retired",
-   "requires": ["evidence/ascension/s31t/b1t/criteria.json"],
+  {
+   "id": "q_fallback_cert",
+   "family": "CERT_CONVERSION",
+   "kind": "research",
+   "blockers": [
+    "NO_COMPILE_QTYPE",
+    "A2_POPULATION_EMPTY"
+   ],
+   "cost": 6,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s33t/checkpoint_s33t.md"
+   ],
+   "what": "Owner 2026-11-13 ('y', TENNIS envelope 50M): transfer of the KSR q_fallback route (S26C '?' fallback fix, t1 8057ec26; 31 KSR certificates in S35K) to Tennis. Import the frozen route tool read-only from /home/kobii/missions/t1-campaign at a pinned commit (never edit it) and run it over the uncertified Tennis main functions (Tennis 1,198 / 1,797 certified). Certification only through the unchanged certify.decide under an existing Tennis profile. An additive profile, if one is needed, is proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Rival hypotheses: (a) the fallback converts Tennis question-mark-type compile failures as it did on KSR; (b) the Tennis failures are of another class (pilot BINARY_EXACT stays 0)."
+  },
+  {
+   "id": "cnm_operator_coverage",
+   "family": "OPERATOR_COVERAGE",
+   "kind": "research",
+   "blockers": [
+    "NO_OPERATOR_FOR_CLASS"
+   ],
+   "cost": 9,
+   "status": "open",
+   "requires": [
+    "evidence/ascension/s33t/checkpoint_s33t.md"
+   ],
+   "what": "Owner 2026-11-13 ('y', TENNIS envelope 50M): transfer of the KSR S37K operator route to Tennis (s37-callee: 16/40 held-out then 40/117 on KSR CALL_CRCLR; save-area operators were 0/260 and are not transferred). Import the frozen operators and driver read-only from /home/kobii/missions/t1-campaign at a pinned commit (never edit them), census the Tennis COMPILES_NO_MATCH by class, pilot on a frozen held-out draw. Certification only through the unchanged certify.decide under an existing Tennis profile. An additive profile, if one is needed, is proposed in ONE phase line that states: an independent target oracle on the original DOL bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts byte-identical; separate counters. Rival hypotheses: (a) the call-shape operator converts a measurable share of the Tennis call-shape class as on KSR; (b) the Tennis gaps are type/context gaps (pilot BINARY_EXACT stays 0)."
+  },
+  {
+   "id": "fwidth_tennis_b1t",
+   "family": "OPERATOR_SCAN",
+   "kind": "exploit",
+   "blockers": [
+    "FLOAT_WIDTH"
+   ],
+   "cost": 5,
+   "status": "retired",
+   "requires": [
+    "evidence/ascension/s31t/b1t/criteria.json"
+   ],
    "retired_by": "S33T-P1-CONTROL-POOL-N12 (worktree-s33t e103a62f: widened pool n=12 < 22; S31T frozen rule n=2): the B1-T planted-positive control cannot be built",
    "reopen": "a planted-positive control pool proven >= 22 at freeze: a synthetic-control rule (plant f32 into non-certified fns whose objdiff shows no float) approved as a new pre-registration, or a larger certified plantable population",
-   "what": "B1-T: deterministic float-evidence scan of the Tennis COMPILES_NO_MATCH set; held-out fwidth pilot under the existing Tennis profile only if applicability >= 10 pct."},
-  {"id": "tennis_control_pool_widened", "family": "INSTRUMENT_REPAIR", "kind": "repair", "blockers": ["CONTROL_POOL"], "cost": 5, "status": "retired",
-   "requires": ["evidence/ascension/s31t/checkpoint_s31t.md"],
+   "what": "B1-T: deterministic float-evidence scan of the Tennis COMPILES_NO_MATCH set; held-out fwidth pilot under the existing Tennis profile only if applicability >= 10 pct."
+  },
+  {
+   "id": "tennis_control_pool_widened",
+   "family": "INSTRUMENT_REPAIR",
+   "kind": "repair",
+   "blockers": [
+    "CONTROL_POOL"
+   ],
+   "cost": 5,
+   "status": "retired",
+   "requires": [
+    "evidence/ascension/s31t/checkpoint_s31t.md"
+   ],
    "retired_by": "S33T-P1-CONTROL-POOL-N12 (worktree-s33t e103a62f): the widened any-lane rule yields n=12 < 22 at freeze; 2nd INSTRUMENT_FAIL of H-T1a (EVO-PLAN E4 stop rule: park Tennis)",
    "reopen": "same as fwidth_tennis_b1t: a control-pool rule proven >= 22 at freeze, pre-registered and Owner-approved",
-   "what": "S31T proposal: draw the planted-positive controls from certified Tennis fns of ANY lane whose base_body holds a plantable f32, compiled at that lane's own flags, requiring planted != exact and unplanted == exact at that same arm; demonstrate the frozen pool is >= 22 at freeze time; keep the 22/22, 0/22 and 2 pct thresholds unchanged; then re-run B1-T (H-T1a) unchanged."}
+   "what": "S31T proposal: draw the planted-positive controls from certified Tennis fns of ANY lane whose base_body holds a plantable f32, compiled at that lane's own flags, requiring planted != exact and unplanted == exact at that same arm; demonstrate the frozen pool is >= 22 at freeze time; keep the 22/22, 0/22 and 2 pct thresholds unchanged; then re-run B1-T (H-T1a) unchanged."
+  },
+  {
+   "id": "cnm_variant_search",
+   "family": "SOURCE_SEARCH",
+   "kind": "research",
+   "blockers": [
+    "NO_OPERATOR_FOR_CLASS",
+    "CNM_CODEGEN"
+   ],
+   "cost": 7,
+   "status": "open",
+   "requires": [],
+   "what": "Owner 2026-11-14 ('crea las capacidades directamente'): the KSR deterministic source-variant search applied to the 164 Tennis COMPILES_NO_MATCH ids (attacked 1-4 times, 0 certified); tools read-only from t1; each candidate is judged by objdiff 100 plus object sha, never by a permuter score; certification only through the unchanged Tennis certifier, no new profile. Rival hypotheses: (a) a bounded variant search makes a measurable share BINARY_EXACT; (b) the differences are register allocation no source variant reaches (pilot BINARY_EXACT stays 0)."
+  }
  ]
 }
