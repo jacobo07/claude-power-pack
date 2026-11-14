@@ -65,6 +65,35 @@ QUESTIONS = {
            "section splits (.text/.data/.rodata/.sdata/.sdata2/.bss/ctors/extab), and how do projects correct wrong auto splits "
            "(splits.txt, symbols.txt), detect that one auto object merges functions from different compilation units (string pool "
            "boundaries, padding, alignment, sdata usage, static function clustering), and recover the original file order?"),
+    # Q7-Q12: capability bottlenecks still open on 2026-11-14 (Owner "haz DRX de mas cuellos de botella que tengamos de
+    # capacidades", session 423c9c50). Measured context: KSR 9,678/30,388 certified; CNM 9,941, NO_COMPILE 5,453,
+    # FLAGS_SPLIT 3,447, NO_TARGET 2,276; Tennis type routes P1-P1e refuted (compile without match).
+    "Q7": ("B-CNM", "How do decompilation projects run automated source-variant search at scale for Metrowerks mwcc (GameCube/Wii): "
+           "decomp-permuter's mwcc support and its known limits, PERM macros, randomization passes that actually change mwcc "
+           "output, scoring functions and why a permuter score of 0 can still differ from byte identity, parallel/distributed "
+           "runs, and any other tool (decomp.me scratch automation, AI-assisted search, symbolic rewriting) with published "
+           "success rates on functions that already compile but do not match?"),
+    "Q8": ("B-FLAGS", "How do GameCube/Wii projects recover per-translation-unit compiler flags and #pragmas when one game mixes "
+           "objects built with different flags (e.g. -O4,p vs -O4,s, -inline, -sdata thresholds, optimize_for_size, scheduling "
+           "off): which binary signals (literal pools, .sdata2 float constant duplication, string pool layout, alignment padding, "
+           "sbss/sdata split, function ordering) predict a unit boundary or a flag change, and how is a flag hypothesis validated "
+           "on units whose boundaries are already known?"),
+    "Q9": ("B-NOTARGET", "When a function in a Wii/GameCube DOL or REL has no reference object to diff against (dead-stripped, inline "
+           "or weak copies, template instantiations, functions merged by the linker, objects missing from the split), how do "
+           "decompilation projects obtain the target bytes, attribute the function to a unit, and still prove a byte-identical "
+           "match (dtk extraction, REL relocation handling, symbol maps, ctor/dtor and extab tables)?"),
+    "Q10": ("B-CXX", "What blocks matching large C++ functions under mwcc for Wii (NW4R/EGG-style code): inlining decisions "
+            "(-inline auto/deferred, inline depth), constructors/destructors, virtual tables and RTTI, exception tables "
+            "(extab/extabindex), templates, member-pointer and copy-constructor code, and which documented source patterns make "
+            "mwcc reproduce them byte for byte?"),
+    "Q11": ("B-LINK", "How do GameCube/Wii projects go from many individually matching functions to a byte-identical whole DOL/REL: "
+            "link order recovery, mwld vs GNU ld differences (relocation forms such as SDA21 addends), .data/.rodata/.sdata/.bss "
+            "matching, alignment and padding, string and float pools, and how is 'fully matching' verified and reported (objdiff "
+            "report, sha1 of the linked DOL, progress categories)?"),
+    "Q12": ("B-COMPILER", "Do commercial Wii games link libraries built with different CodeWarrior versions (SDK, NW4R, MSL, game code), "
+            "how do projects detect each object's compiler version and set it per object (configure.py mw_version per unit, "
+            "compiler wrappers), and what evidence decides that a function matching only under a non-baseline compiler is a true "
+            "match rather than a coincidence?"),
 }
 
 
