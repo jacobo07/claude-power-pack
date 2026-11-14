@@ -15,7 +15,7 @@
 - **`ratchet.promote_with_evidence` wrote `vault/tower/baselines/binary_reconstruction/B2.json`**: 4 entries, status `auto`, evidence recorded. Results: RATCHET_EVIDENCE_PASS 11/11 with 4/4 mutants; family_baseline review gives chain OK [0,1,2]; all 4 origins pass `verify_origin` as VERIFIED.
 - **Premise gap.** The E6 done-gate named `gate_ukdl_candidates` does not exist in the repo. `verify_origin` = VERIFIED on each cited line was used in its place.
 - **Commit isolation.** The UKDL working tree carries about 4.8k lines of other writers' hunks (S26 section, CEPS hook lines). The commit staged only HEAD's UKDL plus the E6 section, appended at its end, so the line numbers cited in B2 are working-tree lines. The quotes are exact.
-- **Open.** The 4 `auto` entries are waiting for Owner review. No GEX44 CPP deploy happened (that is an Owner gate). The next obligation is UKDL: trap re-judge double count and the trap policy trigger wording.
+- **Open.** The 4 `auto` entries are waiting for Owner review. No GEX44 CPP deploy happened (that is an Owner gate). The UKDL traps (re-judge double count, policy trigger in a conditional phrase) were committed in b9210f85. The next obligation is the autopilot change: re-plan after a refusal without re-judging, keeping the AGREE verdict. It is a live GEX44 autopilot deploy, so it needs an Owner "y".
 
 **2026-11-13 ~11:35 UTC (pane c84eb8e1). Owner: "y to both, y presupuesto 300M".**
 - **(1) Fix for the judge being called on an empty checkpoint.** Pane c26eafbf deployed it first at 11:27Z, with the Owner's "y". `hold_checkpoint` takes the hold's `evidence`, falling back to its `residual`, and parks without a judge when both are empty.
