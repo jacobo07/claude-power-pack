@@ -250,6 +250,33 @@ def main() -> int:
     check("V-AMRX-ARGV-ORDER", all(a_ok.index(f) < i for f in ("--allowedTools", "--disallowedTools")),
           "variadic flags stay before the non-variadic separator")
 
+    # B3 (GEX44 m-26ea4de62c50, 2026-11-14): the worker parked itself with `requires HEAD4 --path
+    # inputs/OWNER-DECISION-HEAD4.md`, ended its turn on that question, and the runtime answered it
+    # RESOLVE_BY_DEFAULT. The requirement survived the answer, so the sweep parked the successor on a file
+    # nobody would write (17:00Z -> 19:50Z). The answer settles the obligation the question named; a sibling
+    # obligation on another path is untouched (control).
+    q = ("create inputs/OWNER-DECISION-HEAD4.md choosing (a) Pixal3D multi-view head with jaw rig and simple blink "
+         "(agent's pick), (b) hand-sculpt face on GNM mesh, or (c) canonical stills only")
+    wd_d = make_repo("self-park", None)
+    (wd_d / "inputs").mkdir()
+    (wd_d / "inputs" / "gpu.lock").write_text("x", encoding="utf-8")   # sibling obligation MET: admissible
+    blocked_mission("m-bbb0000000d1", wd_d, needs=q)
+    gm.set_requires("m-bbb0000000d1", "HEAD4", [("path_exists", str(wd_d / "inputs" / "OWNER-DECISION-HEAD4.md"))])
+    gm.set_requires("m-bbb0000000d1", "GPU", [("path_exists", str(wd_d / "inputs" / "gpu.lock"))])
+    ARGVS.clear()
+    gm._supervise_core(now=NOW + 60, sessions=host_rows("m-bbb0000000d1"), gsd_status=GSD_OK, runner=host,
+                       stop_runner=stop_ok, pid_alive=lambda p: False)
+    sd = gm.load("m-bbb0000000d1")
+    evd = gm.lr.ledger_events("m-bbb0000000d1")
+    names = [e.get("event") for e in evd]
+    obls = sorted({r.get("obligation") for r in sd.get("requires") or []})
+    rec_row = next((e for e in evd if e.get("event") == "decision_recovered" and e.get("gate")), {})
+    check("V-AMRX-B3-RECOVERED", "decision_recovered" in names and rec_row.get("gate", "").startswith("RESOLVE_BY"),
+          f"gate={rec_row.get('gate')}")
+    check("V-AMRX-B3-ANSWER-CLEARS-ITS-REQUIRES", "HEAD4" not in obls and "requires_cleared_by_decision" in names,
+          f"obligations left={obls} events={names[-6:]}")
+    check("V-AMRX-B3-CTRL-SIBLING-KEPT", "GPU" in obls, f"obligations left={obls}")
+
     print(f"AMRX_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

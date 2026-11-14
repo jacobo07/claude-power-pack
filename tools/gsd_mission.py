@@ -2999,6 +2999,25 @@ def _blocking_hold(rec: dict) -> bool:
     return bool(hold) and hold.get("kind") != "resource"
 
 
+def requires_answered_by(rec: dict, question: str) -> tuple[list, list]:
+    """(kept, answered): the requirements a runtime answer to `question` settles. Pure.
+
+    B3 (m-26ea4de62c50, 2026-11-14): the worker parked itself on `path_exists inputs/OWNER-DECISION-HEAD4.md`,
+    ended its turn asking for that file, and the sweep answered the question RESOLVE_BY_DEFAULT. The requirement
+    outlived the answer, so the successor was parked 17:00Z->19:50Z on a file nobody would write. A path_exists
+    requirement whose file the question names (by basename, >= 6 chars) is answered, and its whole obligation goes
+    with it; every other requirement is kept."""
+    q = question or ""
+    hit = set()
+    for r in rec.get("requires") or []:
+        arg = str(r.get("arg") or "").rstrip("/\\")
+        base = re.split(r"[\\/]", arg)[-1] if arg else ""
+        if r.get("kind") == "path_exists" and len(base) >= 6 and base in q:
+            hit.add(r.get("obligation"))
+    reqs = list(rec.get("requires") or [])
+    return [r for r in reqs if r.get("obligation") not in hit], [r for r in reqs if r.get("obligation") in hit]
+
+
 def set_requires(mission_id: str, obligation: str, specs: list[tuple[str, object]] | None = None,
                  clear: bool = False, now: float | None = None) -> dict:
     """Set/replace the requirements of ONE obligation (siblings kept), or clear them."""
@@ -6992,11 +7011,20 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                             fp_now = mission_fingerprint(rec, mb.execution_root(rec))   # S9 A2: same Workset as the check
                         except Exception:  # noqa: BLE001 -- unmeasured: the next cap check keeps the cap
                             fp_now = None
+                        kept_req, answered_req = requires_answered_by(rec, d["why"])
                         rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                          event="decision_recovered", now=now, pending_decision=answer,
                                          decision_recoveries=1 if moved else int(rec.get("decision_recoveries") or 0) + 1,
                                          decision_recovery_fp=fp_now,
+                                         **({"requires": kept_req} if answered_req else {}),
                                          ledger_extra={"gate": d["gate"]["result"], "question": d["why"][:200]})
+                        if answered_req:
+                            lr.ledger_append(mid, "requires_cleared_by_decision", mission_id=mid, epoch=rec["epoch"],
+                                             gate=d["gate"]["result"],
+                                             obligations=sorted({r.get("obligation") for r in answered_req}),
+                                             paths=[r.get("arg") for r in answered_req if r.get("kind") == "path_exists"])
+                            row["requires_cleared"] = sorted({r.get("obligation") for r in answered_req})
+                        row["decision_recovery"] = d["gate"]["result"]
                     row["note_chars"] = len(note)
                 if (v2 and rec.get("capsule_key") and act in ("relay", "replace", "launch")
                         and not _capsule_arm(rec, row)):
