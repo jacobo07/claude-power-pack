@@ -990,6 +990,22 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
     save_state(st)
 
 
+def git_ident_ok(cwd: str) -> bool:
+    """A commit needs a configured identity. Without one git refuses the commit, and the arm would leave a staged tree
+    that holds the next worker launch ("behind_dirty"; MKW 2026-11-14, 3.5 h idle). Read-only: checked before any change."""
+    rc, _ = sh(["git", "-C", cwd, "var", "GIT_COMMITTER_IDENT"])
+    return rc == 0
+
+
+def arm_commit(cwd: str, paths: list, msg: str, dry: bool) -> str:
+    """git add + commit of exactly `paths` (only paths that exist). '' on success, else the failing step and its output."""
+    rc, out = sh(["git", "-C", cwd, "add", "-A", "--", *paths], dry=dry)
+    if rc != 0:
+        return f"git add failed: {out[-300:]}"
+    rc, out = sh(["git", "-C", cwd, "commit", "-q", "-m", msg], dry=dry)
+    return "" if rc == 0 else f"git commit failed: {out[-300:]}"
+
+
 def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
     """OK | RETRY (nothing irreversible happened) | PARK (a mission act happened and the next step failed).
     Order: every local precondition, then close old, reserve, arm, hold at once, authority, release."""
@@ -1011,6 +1027,10 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
     if (rc != 0 or dirty.strip()) and not dry:
         log(f"{ln}: .planning dirty or unreadable in {cwd} (rc={rc}); not arming")
         return "RETRY"
+    if not dry and not git_ident_ok(cwd):
+        log(f"{ln}: no git identity in {cwd} (git var GIT_COMMITTER_IDENT failed); set user.name/user.email there; "
+            "not arming")
+        return "RETRY"
     if lane.get("ff_from") and not ls.get("ff_done"):
         rc, out = sh(["git", "-C", cwd, "merge", "--ff-only", lane["ff_from"]], dry=dry)
         if rc != 0:
@@ -1029,11 +1049,12 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
             return "RETRY"
     packet = write_packet(lane, name, text) if not dry else Path(cwd) / lane["packet_dir"] / f"{name}-PHASES.md"
     cmd = command_text(lane, name, packet, notes)
-    rc, out = sh(["git", "-C", cwd, "add", "-A", "--", arch, str(packet)], dry=dry)
-    if rc != 0:
-        log(f"{ln}: git add failed: {out[-300:]}")
+    # the archive dir exists only when there was a .planning to move (a new lane has none: MKW 2026-11-14)
+    why = arm_commit(cwd, ([arch] if present else []) + [str(packet)],
+                     f"{name}: autopilot packet + archive previous milestone", dry)
+    if why:
+        log(f"{ln}: {why}")
         return "RETRY"
-    sh(["git", "-C", cwd, "commit", "-q", "-m", f"{name}: autopilot packet + archive previous milestone"], dry=dry)
     # ---- mission acts from here on: a failure parks the lane with its exact step
     if old and (mission(old) or {}).get("state") not in TERMINAL:
         step("close_old")

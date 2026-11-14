@@ -463,6 +463,36 @@ def run_all(ap):
           and len([r for r in ledger() if r["kind"] == "judge"]) == 1
           and len([r for r in ledger() if r["kind"] == "replan_resume"]) == 1)
     ap.judge = _kj
+    # 2026-11-14 (Owner 'y', pane 4de9b293): MKW's first arm failed twice on `git add` of an archive dir never created
+    # (a new lane has no .planning); then its commit failed unseen for lack of a git identity, and the staged tree it
+    # left held the worker's relaunch for 3.5 h
+    shc, base_sh = {"rc": {}, "log": []}, ap.sh
+
+    def rec_sh(cmd, **k):
+        shc["log"].append([str(c) for c in cmd])
+        for key, rc in shc["rc"].items():
+            if key in cmd:
+                return (rc, f"{key} refused")
+        return base_sh(cmd, **k)
+    ap.sh = rec_sh
+    st = fresh(106)
+    shc["log"] = []
+    ap.lane_tick(st, lanes[0], False)
+    adds = [c for c in shc["log"] if "add" in c and "-A" in c]  # the arm's own add (a later step adds .planning)
+    check("V-AP-ARM-NO-PLANNING-ADDS-PACKET-ONLY", not (Path(lanes[0]["cwd"]) / ".planning/STATE.md").exists()
+          and len(adds) == 1 and not any("archived" in a for a in adds[0])
+          and any(a.endswith(".md") for a in adds[0]) and any(c[0] == "arm" for c in calls))
+    st = fresh(107)
+    shc["rc"], shc["log"] = {"var": 128}, []
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-ARM-NO-GIT-IDENT-NO-MUTATION", not calls and st["lanes"]["L"]["arm_fails"] == 1
+          and not any(x in c for c in shc["log"] for x in ("mv", "add", "commit")))
+    st = fresh(108)
+    shc["rc"], shc["log"] = {"commit": 1}, []
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-ARM-COMMIT-FAIL-NO-MISSION-ACT", not calls and st["lanes"]["L"]["arm_fails"] == 1
+          and "git commit failed" in (tmp / "home" / "autopilot.log").read_text())
+    ap.sh = base_sh
     st = fresh(101)
     fail_on.add("authority")
     ap.lane_tick(st, lanes[0], False)
@@ -911,7 +941,13 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_pivot_rule_bypassed": _evo_mut(_pivot=lambda *a, **k: {"action": "pivot", "streak": 1, "why": "bypass"}),
          "evo_budget_resume_always": _evo_mut(budget_resume=lambda ls, why: ls.get("status") == "PARKED"),
          "evo_budget_never_resumes": _evo_mut(budget_resume=lambda ls, why: False),
-         "evo_unsafe_merge": _evo_mut(_git=_wrap(_git_unsafe))}
+         "evo_unsafe_merge": _evo_mut(_git=_wrap(_git_unsafe)),
+         "arm_no_git_ident_check": lambda m: setattr(m, "git_ident_ok", lambda cwd: True),
+         "arm_commit_rc_ignored": lambda m: setattr(m, "arm_commit", (lambda real: lambda *a, **k: (
+             real(*a, **k), "")[1])(m.arm_commit)),
+         "arm_adds_missing_archive": lambda m: setattr(m, "arm_commit", (lambda real: lambda cwd, paths, msg, dry: real(
+             cwd, [".planning/milestones/x-archived-0"] + [p for p in paths if "archived" not in p], msg, dry))(
+             m.arm_commit))}
 survivors = []
 for name, mut in drill.items():
     m = load()
