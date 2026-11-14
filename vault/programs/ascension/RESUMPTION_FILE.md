@@ -26,6 +26,12 @@
   - Fixed by setting a repo-local git identity (kobii-gex44-mission) and landing the arm commit 6b9acbc on s47m/work, then fast-forwarding lane/mkw. Backups: a stash plus `bak-4de9-mkw-armcommit-20261114T195122Z.patch`.
   - The worker was relaunched (epoch 2) at 19:55Z.
   - OPEN (Owner "y" needed): autopilot.py 1032 (git add of a missing archive) and 1036 (commit rc unchecked) bite every new lane.
+- **Update 20:39Z (pane 4de9b293):**
+  - Owner "y": the arm fix is live. Autopilot cba73c0a / test 7a2c7bdb (PP c6a48d67): it refuses to arm without a git identity, adds only an archive that exists, and checks the commit rc. Gate 52/52 mutants; the old code fails the 3 new tests.
+  - Owner "gi ahead": FIFA and WIIPARTY were un-parked. Each got `tools/test_f0_census.py` (FIFA 519c3d9, WIIPARTY 60168e6), PASS 4/4, with wrong-pin controls at FAIL 3/4, and both repos got the mission git identity. Backup `bak-4de9-fwunpark-20261114T203909Z`.
+  - FINDINGS:
+    - FIFA's committed census files carry CRLF line endings; the content reproduces exactly.
+    - Wii Party F0's section sizes are dtk's. The raw header sections are 4–8 B larger (padding), and the raw bss is 0xC6E88, not dtk's .bss 0xC3AB8. The gate checks the raw header and does not claim the dtk .bss.
 
 **2026-11-14 15:30Z, pane f3df357a. Owner: "authorize a 3rd independent boundary source and thus infinitely, I always authorize new ones of that until we reach to reconstruct everything". STANDING AUTHORIZATION: never stop KSR (or ask the Owner) for want of a known-boundary source.**
 - **Why KSR stopped.** At 14:15Z S45K was judged AGREE with class INSTRUMENT_FAIL: known-boundary adequacy n_known 31, but only 3 of 4 families (MSL, nw4r, rvl; runtime absent). At 14:21Z the S46K planner found no admissible lever (NO_DONOR on disk), so the lane went STOPPED.
