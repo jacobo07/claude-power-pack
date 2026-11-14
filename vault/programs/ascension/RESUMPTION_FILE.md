@@ -5,7 +5,15 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**NEWEST — 2026-11-14 11:35Z (pane 4246d04c, Owner "y" to fixing test_s38k_ox and re-judging S41K). Another pane got there first; I changed nothing.**
+**HANDOFF 2026-11-14 ~11:40Z — Owner: "asigna a ese pane todo lo pendiente; aquí reconstruimos otro juego (FIFA 11)". Pane 4246d04c leaves Ascension. Everything below now belongs to c26eafbf, the KSR lane coordinator (and to 423c9c50 for its own capabilities):**
+1. Read the KSR S41K re-judge (tick 11:35Z, after t1 a942bfc2) and the TENNIS S42T `m-ecc36eefeb77` judgment when it comes.
+2. Review the 4 `auto` entries in `vault/tower/baselines/binary_reconstruction/B2.json` (EVO E6, evidence recorded). They are waiting on the Owner, and `family_baseline.py review binary_reconstruction` lists them.
+3. Fix the arm RETRY double count: `res == "RETRY"` clears judged_for and re-judges without restoring the counters. It needs the same treatment as pending_plan, or `ls.update(snap)`. A live autopilot deploy needs an Owner "y".
+4. Optional: tie the `_OWN` exclusion in `test_s38k_ox` to `receipt_registry.json`, using its exact sha256. The patch is in /tmp/ox_new_4246.py on GEX44 (26/26 on c5e97624).
+5. Debt: E6's done-gate `gate_ukdl_candidates` doesn't exist. Either define it or strike it from EVO-PLAN.
+- Live state at hand-off: GEX44 autopilot 508aa9a7 / test 79a2ee26 / evolve d6342ed4; PP cea9bafb.
+
+**2026-11-14 11:35Z (pane 4246d04c, Owner "y" to fixing test_s38k_ox and re-judging S41K). Another pane got there first; I changed nothing.**
 - **The defect.** KSR S41K certified 1 (main:803DA500, from the S38K pool). The judge ruled INCONCLUSIVE at 10:06Z and again at 11:16Z because `test_s38k_ox` M4 raised POOL_ID_IN_RECEIPTS.
 - **Another pane fixed it first.** t1 `a942bfc2` (11:33Z) adds `s41k/px/receipts.jsonl` to `_OWN`, following the S39K precedent 7b03d10a. The gate is GREEN, 23/23. The same pane un-parked KSR (WAITING, judged_for None), so the 11:35Z tick re-judges S41K.
   - Just before it, c26eafbf's `48a52185` pinned the headline at **9,916 / 30,388**.
