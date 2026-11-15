@@ -5,6 +5,11 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-15 23:56Z, pane f3df357a (Owner "a"): research cap 100M, KSR S68K armed.**
+- Live `evolve.py` e4192a94 `RESEARCH_LANE_CAP` 100M (gate 54/54, backup `bak-f3df-rcap100-*`, mirror a3769022). Applies to all lanes, so WIIPARTY is no longer blocked by it.
+- KSR S68K `m-37cdc89e27e6` (9.5M, `whole_program_type_model`, RESEARCH) from the kept S67K judgment, no re-judge. Plan 1 was refused at 22.5M > the 10M research generation cap (an Owner ceiling, NOT raised). The directive was amended so S68K does pre-registration + build + shadow + dev pilot only; the new held-out run goes in the next generation. research_spent ≈ 69.3M/100M.
+- NEXT: read the S68K checkpoint. Pane 4de9 owns the stall-fix spec (52b39f02) and is editing the autopilot mirror; do not touch it.
+
 **2026-11-15 23:05Z, pane f3df357a (Owner "y"): EVO repair-lever matching live.**
 - Live `evolve.py` d40f10fb / `test_autopilot.py` 84d3744a: on INSTRUMENT_FAIL a repair lever is picked only if it declares the failed lever (`repairs` id or shared blocker); otherwise the lane repairs on its own lever in REPAIR mode (`repair_in_place`); none open → park. Gate 54/54 AUTOPILOT_GATE_PASS (3 new V-EVO-REPAIR-* + 2 mutants). Backup `bak-f3df-repairmatch-20261115T230429Z`. Cause: KSR S50K/S62K both stopped on `tu_boundary_repair`.
 - KSR: S66K REFUTED lever (1/200, instrument validated 24/24); S67K REFUTED (0/200 SAVEAREA). STOPPED at research_spent 59.8M of the 60M cap; route named by S67K = TU-wide type model (`whole_program_type_model`), needs a new held-out + capital → Owner question.
