@@ -5,6 +5,11 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-15 23:05Z, pane f3df357a (Owner "y"): EVO repair-lever matching live.**
+- Live `evolve.py` d40f10fb / `test_autopilot.py` 84d3744a: on INSTRUMENT_FAIL a repair lever is picked only if it declares the failed lever (`repairs` id or shared blocker); otherwise the lane repairs on its own lever in REPAIR mode (`repair_in_place`); none open → park. Gate 54/54 AUTOPILOT_GATE_PASS (3 new V-EVO-REPAIR-* + 2 mutants). Backup `bak-f3df-repairmatch-20261115T230429Z`. Cause: KSR S50K/S62K both stopped on `tu_boundary_repair`.
+- KSR: S66K REFUTED lever (1/200, instrument validated 24/24); S67K REFUTED (0/200 SAVEAREA). STOPPED at research_spent 59.8M of the 60M cap; route named by S67K = TU-wide type model (`whole_program_type_model`), needs a new held-out + capital → Owner question.
+- FIFA, TENNIS, WIIPARTY PARKED again (FIFA judge INCONCLUSIVE unmerged worktree; TENNIS HALTED no hold; WIIPARTY packet refused, research cap). MKW RUNNING.
+
 **2026-11-14 21:24Z, pane f3df357a (Owner "y" twice): KSR S49K FMADD rule + research cap 60M.**
 - The Owner approved the S49K CERTIFICATION_RULE: new additive profile `ksr-v5r-s25stage-s49fm`, `-fp_contract on` for FMADD, all S26C conditions, and a redefined control. The brief section was written by pane 423c9c50.
 - Live `evolve.py` `RESEARCH_LANE_CAP` 40M -> 60M (gate 52/52 AUTOPILOT_GATE_PASS, backup `bak-f3df-rcap60-*`); mirrored here.

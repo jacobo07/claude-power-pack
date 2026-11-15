@@ -624,7 +624,8 @@ def run_all(ap):
     LB = {"id": "lev_b", "family": "F2", "blockers": ["B1"], "requires": [], "cost": 5, "status": "open", "what": "b"}
     LC = {"id": "lev_c", "family": "F1", "blockers": ["B1"], "requires": [], "cost": 0, "status": "open", "what": "c"}
     LX = {"id": "lev_x", "family": "F3", "blockers": ["B1"], "requires": ["missing/x.json"], "cost": 0, "status": "open"}
-    LR = {"id": "lev_r", "family": "REPAIR", "kind": "repair", "blockers": ["CTL"], "requires": [], "cost": 1, "status": "open"}
+    LR = {"id": "lev_r", "family": "REPAIR", "kind": "repair", "blockers": ["CTL"], "repairs": ["lev_a"], "requires": [],
+          "cost": 1, "status": "open"}
     RES = {"title": "r", "facts": [], "phases": [
         "Phase 1: X1 lev_b discriminating test (cap 3M): rival hypotheses A and B, positive control, decision rule frozen "
         "in a commit before any run; gate tools/test_x1.py with planted mutants",
@@ -714,6 +715,20 @@ def run_all(ap):
                                                                      "H-X1 negative row (INSTRUMENT_FAIL)": 1}}, (REP,)),
                     ["NONE"], ["H-X1 control pool (n=12<22)"])
     check("V-EVO-REPAIR-LEGACY-KEYS-FOLD", ls.get("repair") == {"H-X1": 2})
+    # 2026-11-15 (KSR S50K, S62K): a repair lever repairs only the instrument it declares (by id or shared blocker); with
+    # none for the failed lever, the repair stays on that lever in REPAIR mode, not on a repair lever with no work
+    LRZ = dict(LR, id="lev_rz", repairs=["lev_z"])
+    LRB = dict(LR, id="lev_rb", repairs=[], blockers=["B1"])
+    REPA = dict(REP, phases=[p.replace("lev_r", "lev_a") for p in REP["phases"]])
+    REPB = dict(REP, phases=[p.replace("lev_r", "lev_rb") for p in REP["phases"]])
+    ls, q = evo_run(evo_fresh([LA, LRZ], {"lever": "lev_a"}, (REPA,)), ["NONE"], ["ctl"])
+    check("V-EVO-REPAIR-LEVER-MATCHES-INSTRUMENT", ls["status"] == "RUNNING" and ls.get("mode") == "REPAIR"
+          and ls.get("lever") == "lev_a")
+    ls, q = evo_run(evo_fresh([LA, LRZ, LRB], {"lever": "lev_a"}, (REPB,)), ["NONE"], ["ctl"])
+    check("V-EVO-REPAIR-LEVER-BY-SHARED-BLOCKER", ls["status"] == "RUNNING" and ls.get("mode") == "REPAIR"
+          and ls.get("lever") == "lev_rb")
+    ls, q = evo_run(evo_fresh([dict(LA, status="retired"), LRZ], {"lever": "lev_a"}, (REPA,)), ["NONE"], ["ctl"])
+    check("V-EVO-REPAIR-NO-LEVER-PARKS", ls["status"] == "PARKED" and "no repair lever" in q)
     # Owner-directed method transition (2026-11-13, TENNIS parked on H-T1a x2): with owner_resume=research the lane
     # leaves the closed instrument for a lever of another family instead of parking on the repair cap; one-shot.
     ls, q = evo_run(evo_fresh([LA, LB, LR], {"lever": "lev_a", "repair": {"ctl": 2}, "owner_resume": "research"},
@@ -863,8 +878,8 @@ def _git_unsafe(e):
     return g
 
 
-def _evo_copy_select(e, levers, lane, ls, product, graph, family_not=None, kind=None):
-    return _SEL_ORIG(e)(levers, lane, ls, product, graph, None, kind)
+def _evo_copy_select(e, levers, lane, ls, product, graph, family_not=None, kind=None, repairs_for=None):
+    return _SEL_ORIG(e)(levers, lane, ls, product, graph, None, kind, repairs_for)
 
 
 def _SEL_ORIG(e):
@@ -935,6 +950,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
          "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),
+         "evo_repair_any_instrument": _evo_mut(repair_admits=lambda x, f: True),
+         "evo_repair_no_in_place": _evo_mut(repair_in_place=lambda *a, **k: None),
          "evo_selection_evidence_blank": _evo_mut(selection_evidence=lambda lv, g: {"prior": 0.0, "edges": []} if lv else None),
          "evo_selection_evidence_claims_edge": _evo_mut(selection_evidence=lambda lv, g: (
              {"prior": 1.0, "edges": [[b, lv["id"], 1.0] for b in lv.get("blockers", [])]} if lv else None)),

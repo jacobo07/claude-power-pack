@@ -117,7 +117,7 @@ def _requires_met(lever: dict, product: str) -> bool:
     return all(os.path.exists(os.path.join(product, r)) for r in lever.get("requires", []))
 
 
-def select(levers: dict, lane: str, ls: dict, product: str, graph, family_not=None, kind=None):
+def select(levers: dict, lane: str, ls: dict, product: str, graph, family_not=None, kind=None, repairs_for=None):
     """A lever that is open (not retired by levers.json or by this lane's history), whose preconditions exist in the
     product, whose mechanism family differs from `family_not` (materially different), and of `kind` when given
     ('repair' for an instrument repair). Ranked by the MethodGraph prior on its blocker classes, then cost, then id."""
@@ -130,10 +130,30 @@ def select(levers: dict, lane: str, ls: dict, product: str, graph, family_not=No
             continue
         if (x.get("kind") == "repair") != (kind == "repair"):  # repair levers only repair; research never picks one
             continue
+        if kind == "repair" and not repair_admits(x, repairs_for):  # a repair lever repairs only what it declares
+            continue
         pri = max([graph.prior(b).get(x["id"], 0.0) for b in x.get("blockers", [])] or [0.0])
         cands.append((-pri, float(x.get("cost", 99)), x["id"], x))
     cands.sort(key=lambda t: t[:3])
     return cands[0][3] if cands else None
+
+
+def repair_admits(x: dict, failed: dict | None) -> bool:
+    """Whether repair lever `x` repairs the instrument of `failed` (the lever whose positive control failed): the failed
+    lever's id is in x's `repairs`, or the two share a blocker class. 2026-11-15 (KSR S50K, S62K): every KSR
+    INSTRUMENT_FAIL went to tu_boundary_repair, whose work was done, and the planner stopped the lane twice."""
+    if not failed:
+        return False
+    return (failed.get("id") in (x.get("repairs") or [])
+            or bool(set(x.get("blockers") or []) & set(failed.get("blockers") or [])))
+
+
+def repair_in_place(levers: dict, lane: str, ls: dict, product: str) -> dict | None:
+    """The lane's own lever, to repair its failed instrument when no repair lever declares it: open, not retired by
+    this lane, preconditions met. None parks."""
+    retired = set(ls.get("retired") or [])
+    return next((x for x in levers.get(lane, []) if x.get("id") == ls.get("lever") and x.get("status") == "open"
+                 and x["id"] not in retired and _requires_met(x, product)), None)
 
 
 def owner_lever(levers: dict, lane: str, ls: dict, product: str, want: str, family) -> dict | None:
@@ -257,9 +277,13 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
         return {"action": "continue", "why": "certificates: exploit"}
     if cls == "INSTRUMENT_FAIL":
         name = instruments[0]
-        lever = select(levers, lane, ls, product, graph, kind="repair") if lane else None
+        failed = next((x for x in levers.get(lane, []) if x.get("id") == ls.get("lever")), None) if lane else None
+        lever = select(levers, lane, ls, product, graph, kind="repair", repairs_for=failed) if lane else None
+        if lever is None and lane:
+            lever = repair_in_place(levers, lane, ls, product)
         if lever is None:
-            return {"action": "park", "why": f"instrument {name} failed and no repair lever is registered for {lane}"}
+            return {"action": "park", "why": f"instrument {name} failed and no repair lever for {ls.get('lever')} is "
+                                             f"open in {lane}"}
         ls.update(mode="REPAIR", repair_instrument=name)
         return {"action": "repair", "lever": lever, "why": f"instrument {name} failed: repair, not a negative result",
                 "directive": directive(lever, "REPAIR", name)}
