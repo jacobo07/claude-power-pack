@@ -40,7 +40,7 @@ CLAUDE = os.environ.get("AP_CLAUDE", "/usr/local/bin/claude")
 OWNER_TURN = "d957c937-f56d-4447-9386-5d8002fe0b90:" + os.environ.get("AP_OWNER_TS", "")
 # Owner 2026-11-12 (laptop pane ddf4990e, uuid of "1. 120M"): release a 120M tranche. 285,261,779 + 120M =
 # 405,261,779 unlocked; the total moves 400M -> 405,261,779 so the full 120M is usable (nothing left frozen).
-TOTAL_CAP = 2_100_000_000  # Owner 2026-11-14 '600M each' for lanes FIFA + WIIPARTY (pane 4246d04c): +1.2B; was 900M (Owner 2026-11-12, c26eafbf)
+TOTAL_CAP = 3_700_000_000  # Owner 2026-11-15 'desatascalo todo y subele 600M a cada uno' (pane 4de9b293): 5 lane envelopes of 600M from 09:24Z on 659M booked; was 2.1B (Owner 2026-11-14 '600M each' FIFA+WIIPARTY, 4246d04c)
 DAY_CAP = 250_000_000  # Owner 2026-11-14 "raise it" (pane 4de9b293): 6 lanes share it; was 90M (Owner 2026-11-12, c26eafbf)
 GEN_CAP = 25_000_000
 FRESH_GEN_CAP = 1_000_000
@@ -52,7 +52,7 @@ PRIOR_AUTHORITY = (("m-10566700b1fe", "S27", 200_000_000),)
 # and integration on top of what was booked at approval: 225,261,779 = PRIOR 200M + ledger 25,261,779 (judge/planner
 # 4,761,779 + S28K's 20.5M). Everything between UNLOCKED_CAP and TOTAL_CAP is FROZEN behind value gates: the autopilot
 # can only ask for it (owner_queue), never release it.
-UNLOCKED_CAP = 2_100_000_000  # Owner 2026-11-14 '600M each' (FIFA, WIIPARTY), pane 4246d04c: +1.2B; was 900M (2026-11-12)
+UNLOCKED_CAP = 3_700_000_000  # Owner 2026-11-15 '600M a cada uno' (5 lanes), pane 4de9b293; was 2.1B (2026-11-14, 4246d04c)
 WALL = dt.datetime(2026, 11, 30, 23, 59, tzinfo=dt.timezone.utc)
 BLANK_STOP = 3          # consecutive NONE generations (no verified progress of any class) stop the lane
 INFO_PARK = 2           # consecutive INFORMATION generations without CERT/CAPABILITY park the lane for an Owner look

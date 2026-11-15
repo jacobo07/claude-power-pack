@@ -172,7 +172,7 @@ def run_all(ap):
     _fit = ap.UNLOCKED_CAP - 200_000_000 - 25_000_000  # the 200M prior counts: exactly this much earlier spend still fits
     check("V-AP-BUDGET-PRIOR-S27-COUNTS-IN-TOTAL", ap.budget_admits(early(_fit), now, 25_000_000) is None
           and ap.budget_admits(early(_fit + 1), now, 25_000_000) is not None)
-    check("V-AP-BUDGET-OWNER-2100M", ap.UNLOCKED_CAP == 2_100_000_000 and ap.TOTAL_CAP == 2_100_000_000)  # Owner 2026-11-14 '600M each' (+1.2B over 900M)
+    check("V-AP-BUDGET-OWNER-3700M", ap.UNLOCKED_CAP == 3_700_000_000 and ap.TOTAL_CAP == 3_700_000_000)  # Owner 2026-11-15 '600M a cada uno' (5 lanes from 659M booked; was 2.1B)
     _keep_u = ap.UNLOCKED_CAP; ap.UNLOCKED_CAP = 285_261_779  # the FROZEN mechanism itself still works
     check("V-AP-BUDGET-FROZEN-MECHANISM", str(ap.budget_admits(early(61_000_000), now, 25_000_000)).startswith("FROZEN"))
     check("V-AP-BUDGET-PRIOR-NOT-IN-DAY", ap.spend_totals([], now) == (200_000_000, 0))
