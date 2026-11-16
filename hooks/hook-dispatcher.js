@@ -592,6 +592,11 @@ const CHAIN_MAP = {
     // 10 KB, so a SAFE_TO_FORGET rollover (3a2bfcf4 -> b2567fc8, 2026-09-29) never resumed.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_start_hub.js', timeoutMs: 10000 },
     { exe: NODE_EXE, script: './learning-sentinel.js', timeoutMs: 3000 },
+    // Backlog-ledger refresh GATE (campaign 1 obligation 3, spec vault/specs/backlog-ledger-refresh.md). A build
+    // measured 148 s, so the gate never builds: <100 ms of checks, then at most one detached worker per tree per
+    // 24 h, only for a cwd inside the PP tree, never under 3 GB free. Announces the previous refresh once.
+    // Kill switch: CPP_BACKLOG_REFRESH=off. Pinned by V-BLR-WIRED.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/backlog_ledger_refresh.js', timeoutMs: 3000 },
   ],
   // UserPromptSubmit standalone fold (hub-fold 2026-06-04). The EVENT_MAP
   // 'UserPromptSubmit-default' bundle (power-pack-reminder + baseline-
@@ -718,9 +723,9 @@ const CHAIN_MAP = {
 // fire far more often, so they stay narrower to keep peak spawn count low.
 const CHAIN_CONCURRENCY = {
   'Stop-chain': 8,
-  // 3 members, so 3 slots: the pool is never the constraint here, the spawns are.
-  // The critical member runs ahead of the pool regardless, so this governs the
-  // two advisory ones only.
+  // 4 members; the critical floor runs ahead of the pool (in-process by default),
+  // so 3 slots cover the three advisory ones (hub, learning-sentinel, backlog-
+  // ledger gate): the pool is never the constraint here, the spawns are.
   'SessionStart-chain': 3,
   // UserPromptSubmit-chain had NO entry, so it fell to DEFAULT_CONCURRENCY = 1 and
   // cost SUM. See CHAIN_DEADLINE_MS directly below for the measurement that forced
