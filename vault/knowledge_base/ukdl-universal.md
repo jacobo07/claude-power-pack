@@ -233,6 +233,94 @@ noindex/Disallow. Tested in both directions: three refusals, a confirmed-fixture
 and a mutation (unfiltered render must go red). Promote to PROCESS only after a second
 local-business site reuses it unchanged. Reference implementation: El Pavo Real
 `src/lib/hechos.ts`, `scripts/test-gate.mjs` (`677d695`).
+Evidence n=2 (2026-11-16, Despacho Sánchez-Barriga, legal): independently re-derived, NOT
+reused unchanged, so the promotion condition is still unmet. Ledger `content/firm.ts`
+(`declarado-web` / `pendiente-cliente` / `revision-letrado` + source + read date), chips at
+render, `/demo/` checklist, noindex + Disallow. It lacks El Pavo Real's "public build
+throws" half (demo-only scope). Two independent derivations of the same shape are the
+signal to extract one shared primitive, not to promote either copy. (`ec328ad`, `19ebeef`)
+
+### T-NEXT16-STATIC-EXPORT-PREFETCH-NAME-MISMATCH-001 #CROSS-PROJECT
+
+Next.js 16.4.6 `output: "export"` writes per-segment prefetch payloads as nested folders
+(`contacto/__next.contacto/__PAGE__.txt`). The client router requests the dot-joined name
+(`contacto/__next.contacto.__PAGE__.txt`). On any static host every prefetch 404s and the
+console logs errors, while `next build`, tsc, lint and a link-integrity test over `out/` all
+stay green, because none of them issue the router's requests. Found only in the browser
+network log. Fix: a postbuild step writes the dot-joined twin (idempotent), plus a test that
+every nested payload has its twin (proven red by deleting one). Detector class: Production
+Reality must include a 4xx sweep of the network log during CLIENT navigation, not only page
+loads. Evidence: Despacho Sánchez-Barriga `06bd091`, `scripts/flatten-segment-prefetch.mjs`.
+CLASE 2.
+
+### T-MODULE-CLASS-TIES-GLOBAL-UTILITY-ON-LOAD-ORDER-001 #CROSS-PROJECT
+
+A CSS-module rule (`.call { display: none }` inside a media query) on an element that also
+carries a global utility class (`.btn { display: inline-flex }`) has EQUAL specificity. The
+winner is decided by bundle order, which the author does not control and which differed from
+expectation in the production build: the phone button stayed visible on mobile, covering the
+logo. Overflow checks passed because nothing left the viewport. Rule: when a module rule must
+override a global class on the same element, raise specificity explicitly (`.bar .call`);
+never rely on order. Detector: an overlap sweep of visible interactive elements at every
+width (pairwise rect intersection, excluding ancestor/descendant pairs). It catches the
+defect where overflow and screenshot-at-one-width do not. Evidence: Despacho Sánchez-Barriga
+`38b1e0c`. CLASE 2.
+
+### T-SEARCHPARAMS-EVICTS-COPY-FROM-STATIC-HTML-001 #CROSS-PROJECT
+
+In a Next static export, a client component calling `useSearchParams()` (wrapped in Suspense
+as the docs require) is rendered client-only: its whole subtree, including copy that MUST
+exist before hydration (the form's "demo, sends nothing" disclosure), is absent from
+`out/*.html`. Caught only because the evidence gate asserted the disclosure against the
+exported HTML. Fix: read the query string through `useSyncExternalStore` (server snapshot
+"") and re-key the dependent control, so the subtree stays static. Rule: copy with a legal
+or honesty function is asserted in the built artifact, not in the component source.
+Evidence: Despacho Sánchez-Barriga `25644ce`. CLASE 2.
+
+### PR-RESPONSIVE-GRID-MINMAX-ZERO-001 (CANDIDATE, n=1, scope WEB)
+
+A responsive collapse to `grid-template-columns: 1fr` is `minmax(auto, 1fr)`. A child with a
+long min-content (an unbreakable chip, a URL) widens the track past the viewport: 8 px of
+horizontal scroll at 320 px on one page, invisible at 375. Use `minmax(0, 1fr)` for every
+collapsed track and let inline content wrap (`overflow-wrap: anywhere` on chips). Detector:
+page `scrollWidth > innerWidth` plus elements past the viewport edge, at 320 px.
+Evidence: Despacho Sánchez-Barriga `38b1e0c`.
+
+### T-INVISIBLE-IFRAME-PAINT-METRICS-READ-ZERO-001
+
+Loading pages in an `opacity:0` iframe is a good harness for layout sweeps and a broken one
+for paint metrics. LCP read 0 ms on every route (invisible content is never an LCP
+candidate), and `transferSize` read near zero from cache. The numbers were plausible-looking
+and wrong. Recorded as INCONCLUSIVE and replaced by Lighthouse (pinned `lighthouse@12.6.1`,
+headless). This is an instance of `instrument-before-claim`: a 0 from a paint observer is the
+other answer you must first prove it can return. Evidence: Despacho Sánchez-Barriga session
+2026-11-16 (HANDOFF defect #10). CLASE 2.
+
+### PR-CLAIM-GATE-QUOTED-VS-ASSERTED-001 (CANDIDATE, n=1, scope GENERATED CONTENT)
+
+An evidence gate over rendered copy must distinguish ASSERTING a refused phrase ("máxima
+indemnización", "gran invalidez") from QUOTING it to audit the old site or explain a legal
+rename. Without the distinction, either the audit page cannot exist or the gate is disabled
+for it. Mechanism: a match is admitted only inside «…». Tests carry both a refusal control and
+an admission control on the same phrase. Concrete instance of
+`rules/generated-content-needs-an-evidence-gate.md`. Evidence: Despacho Sánchez-Barriga
+`tests/evidence.test.mjs` (`19ebeef`).
+
+### PR-WEB-LAYOUT-SWEEP-BASELINE-001 (BASELINE CANDIDATE, WEB EXPERIENCE)
+
+Before a web surface is called done, run one real-browser sweep over routes × widths
+{320, 375, 768, 1024, 1366}:
+- page overflow;
+- interactive targets under 24 px;
+- pairwise overlap of interactive elements;
+- computed text contrast against the composited background, with the meter validated by a
+  control (#999 on white = 2.85).
+
+In one session it found 4 defects that build, types, lint, 13 tests and Lighthouse 100 a11y
+did not. Reference implementation (paste into a console or a browser-automation JS tool):
+Despacho Sánchez-Barriga `tests/browser/sweep.js` (`95918f8`). Not valid for paint metrics
+(see the invisible-iframe trap above). Promote to a shipped PP tool after a second web
+project runs it unchanged.
 
 ### T-STALE-BYTECODE-ACCUSES-A-CORRECT-SUBJECT-001
 
