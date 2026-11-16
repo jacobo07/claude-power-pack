@@ -1,0 +1,15 @@
+[
+ {
+  "id": "web_surface-taste-hard-bans",
+  "requirement": "A landing, marketing or portfolio page ships with zero critical anti-slop findings from the taste lint (em-dash separators, window scroll listeners, h-screen heroes, motion without prefers-reduced-motion, a hint used as a field label, scroll cues, 'trusted by' headers, stand-in identities, eyebrow excess, duplicate CTA intent); a finding is waived only by a reasoned line in DESIGN.md, and a surface outside the archetype declares NO APLICA with its reason.",
+  "why": "Taste Skill absorption (bb4db9f4): the skill was installed but name-only, so no builder saw its bans; modules/cdio/taste.py makes the critical half executable and the family baseline is the only channel that reaches a fresh builder unasked.",
+  "check": "taste:index.html",
+  "origin": {
+   "file": "modules/cdio/taste.py",
+   "line": 49,
+   "quote": "\"TASTE-EMDASH\":            (\"9.G\", \"critical\", \"zero em-dash / en-dash separators in visible text\"),"
+  },
+  "applies_to_all_members": true,
+  "floor": false
+ }
+]

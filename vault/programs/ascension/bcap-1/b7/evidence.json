@@ -1,0 +1,40 @@
+{
+ "improvement": {
+  "run": "check taste:index.html over a fixture page with vs without critical anti-slop findings",
+  "measure": "modules.tower.checks verdict",
+  "before": "FAIL",
+  "after": "PASS"
+ },
+ "negative_controls": [
+  {
+   "name": "fixture with an em-dash, a 'quietly in use at' header and stand-in names judged by candidate B7",
+   "rc": 1,
+   "detail": "VIOLATED taste blocking: TASTE-EMDASH, TASTE-QUIETLY, TASTE-JANE-DOE"
+  },
+  {
+   "name": "treated agent surface plus a planted em-dash judged by candidate B7",
+   "rc": 1,
+   "detail": "VIOLATED taste blocking: TASTE-EMDASH"
+  },
+  {
+   "name": "treated agent surface plus a planted window scroll listener judged by candidate B7",
+   "rc": 1,
+   "detail": "VIOLATED taste blocking: TASTE-SCROLL-LISTENER"
+  }
+ ],
+ "positive_control": {
+  "name": "treated agent surface judged by candidate B7",
+  "rc": 0,
+  "detail": "APPLIED_VERIFIED taste: no blocking finding"
+ },
+ "control_agent": {
+  "name": "control agent surface (no baseline) judged by candidate B7",
+  "rc": 0,
+  "detail": "APPLIED_VERIFIED taste: no blocking finding"
+ },
+ "discriminated": false,
+ "reuse": {
+  "run": "fresh `claude -p` treated agent, task 'saas' never names a taste ban (b7/inherit/treated)",
+  "pointer": "inheritance_run.json runs.treated.files=['DESIGN.md', 'index.html', 'privacy.html', 'styles.css', 'terms.html'] vs runs.control.files=['index.html', 'script.js', 'styles.css']; candidate web_surface/B7 sha256 5ebfb0689fe7"
+ }
+}

@@ -77,7 +77,7 @@
     {"match": "12", "dest": "COVERED_BY", "owners": ["modules/cdio/componentry_catalog.py"], "note": "CPP's component catalog is the block library; a second skills/taste-skill/blocks tree is refused"},
     {"match": "12.*", "dest": "COVERED_BY", "owners": ["modules/cdio/componentry_catalog.py"]},
     {"match": "13", "dest": "OUT_OF_SCOPE", "note": "dashboards, data tables, wizards, editors, native, realtime collab: declare `NO APLICA: web_surface-taste-hard-bans` with the reason"},
-    {"match": "14", "dest": "ENFORCED", "checks": ["TASTE-EMDASH"], "note": "the Pre-Flight list is mapped item by item below; its static half is web_surface B7 `taste:index.html` (pending)"},
+    {"match": "14", "dest": "ENFORCED", "checks": ["TASTE-EMDASH"], "note": "the Pre-Flight list is mapped item by item below; its static half is web_surface B7 `taste:index.html` (entry web_surface-taste-hard-bans, promoted 2026-11-16)"},
     {"match": "Appendix A", "dest": "GUIDANCE"},
     {"match": "Appendix B", "dest": "GUIDANCE"},
     {"match": "Appendix B/*", "dest": "GUIDANCE"},
