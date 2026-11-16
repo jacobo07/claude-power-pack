@@ -39,7 +39,10 @@ MAX_OFFERS = 3
 
 
 def _tower_dir() -> Path:
-    d = Path.home() / ".claude" / "state" / "tower"
+    # Honours CPP_TOWER_STATE_DIR like its reader tools/family_donegate_stop.py: a writer and reader that disagree on
+    # the directory let a test write the live ledger while asserting on a private one (review of bb4db9f4, L1).
+    import os
+    d = Path(os.environ.get("CPP_TOWER_STATE_DIR") or (Path.home() / ".claude" / "state" / "tower"))
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -156,9 +159,16 @@ def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
                              "as KNOWLEDGE UNMET." % (fb.as_posix(), fid, ", ".join(str(e.get("id")) for e in s.deferred)))
             if skills_of.get(fid):
                 # A family's skills are named here so the prompt that needs them gets them unasked (2026-11-16).
+                # The enforcement claim is computed, never asserted: until an ACTIVE entry carries a `taste:` check
+                # (web_surface B6, not yet promoted) the done-gate does not lint, and saying it does told the model a
+                # gate existed that never ran (review of bb4db9f4, M1).
+                gated = any(str(e.get("check") or "").startswith("taste:") for e in active)
                 lines.append("Skills for a %s -- load BEFORE building (Skill tool): %s. For a web page that means: state "
-                             "the one-line Design Read first, then build to the skill's Pre-Flight; its static half is "
-                             "judged by the done-gate (`taste:` checks)." % (fid, ", ".join("`%s`" % k for k in skills_of[fid])))
+                             "the one-line Design Read first, then build to the skill's Pre-Flight; %s"
+                             % (fid, ", ".join("`%s`" % k for k in skills_of[fid]),
+                                "its static half is judged by the done-gate (`taste:` checks)." if gated else
+                                "its static half is NOT in this generation's done-gate yet -- run `python -m "
+                                "modules.cdio.taste <page>` yourself and fix every critical before calling it done."))
             lines.append("At turn end the Stop hook runs this done-gate on the session's repo and BLOCKS the turn on any "
                          "VIOLATED entry; to declare one inapplicable write `NO APLICA: <entry-id>: <reason>` in your reply.")
             blocks.append("\n".join(lines))

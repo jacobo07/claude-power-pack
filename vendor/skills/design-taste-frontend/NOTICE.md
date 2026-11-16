@@ -14,8 +14,11 @@
 ## How it is consumed (autonomously)
 1. A prompt that builds a `web_surface` gets the family block, which names this skill and asks for its Design Read
    (`vault/tower/families/web_surface.json` `skills`, rendered by `modules/gsd_x/cli.py::family_block`).
-2. `~/.claude/settings.json` no longer lists the skill as `name-only`, so its description (the trigger) reaches the
-   model in every session.
-3. The family done-gate runs `taste:index.html` (web_surface B6). The Stop hook `hooks/family_donegate_stop.js` runs
-   that gate at turn end in any session that received a family block, and blocks a turn whose page has a non-waived
-   critical Taste finding.
+2. PENDING (campaign 1, obligation 5): `~/.claude/settings.json` still lists the skill as `name-only`; dropping that
+   is a live-settings change made only after this branch is fast-forwarded into the live tree.
+3. PENDING (web_surface B6, not promoted): the done-gate HAS the `taste:<page>` check kind
+   (`modules/tower/checks.py`), but no active baseline generation carries a `taste:` entry yet, so nothing lints the
+   page autonomously. Until B6 lands, the family block says so and tells the builder to run
+   `python -m modules.cdio.taste <page>` itself. The Stop hook `tools/family_donegate_stop.py` (Stop-chain in
+   `hooks/hook-dispatcher.js`) already runs the family done-gate at turn end in a session that received a family block
+   and stands in a member repo; once B6 is active it blocks a page with a non-waived critical Taste finding.

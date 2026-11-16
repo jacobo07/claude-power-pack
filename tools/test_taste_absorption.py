@@ -243,13 +243,60 @@ def test_kind() -> None:
     ok("V-TASTE-KIND-STATIC", "taste" in ck.STATIC_KINDS)
 
 
+def test_external_assets() -> None:
+    """M3/L2 (review of bb4db9f4): assets and DESIGN.md outside the page's folder, both poles."""
+    from modules.tower import checks as ck
+    r = tempfile.mkdtemp(dir=_TMP)
+    for sub in ("public", "assets", "css", "site", "site2"):
+        os.makedirs(os.path.join(r, sub))
+    rm = "@media (prefers-reduced-motion: reduce){a{transition:none}}"
+    for rel in ("assets/site.css", "css/site.css", "site2/m.css"):
+        Path(r, rel).write_text(rm, encoding="utf-8")
+    moving = "a{transition: transform .3s}"
+    root_rel = _page(os.path.join(r, "public"), moving, '<link href="/assets/site.css" rel="stylesheet">', "")
+    up_rel = _page(os.path.join(r, "public"), moving, '<link href="../css/site.css" rel="stylesheet">', "",
+                   name="up.html")
+    sib = _page(os.path.join(r, "site"), moving, '<link href="../site2/m.css" rel="stylesheet">', "")
+    st = lambda p, root=None: next(v.status for v in taste.lint(p, site_root=root).verdicts  # noqa: E731
+                                   if v.criterion == "TASTE-REDUCED-MOTION")
+    ok("V-TASTE-ASSET-ROOT-RELATIVE", st(root_rel, r) == "pass" and st(root_rel) == "fail",
+       "with root=%s without=%s" % (st(root_rel, r), st(root_rel)))
+    ok("V-TASTE-ASSET-PARENT", st(up_rel, r) == "pass")
+    ok("V-TASTE-ASSET-SIBLING-PREFIX", st(sib, os.path.join(r, "site")) == "fail",
+       "site2/ must not count as inside site/")
+    ok("V-TASTE-KIND-ROOT-ASSET", ck.evaluate({"id": "x", "check": "taste:public/index.html"}, r).outcome == ck.PASS)
+    w = tempfile.mkdtemp(dir=_TMP)
+    os.makedirs(os.path.join(w, "public"))
+    _page(os.path.join(w, "public"), "", "<h1>Fast — calm</h1>", "")
+    before = ck.evaluate({"id": "x", "check": "taste:public/index.html"}, w).outcome
+    Path(w, "DESIGN.md").write_text("---\ntaste_overrides:\n  - TASTE-EMDASH: brand tagline mandates it\n---\n",
+                                    encoding="utf-8")
+    after = ck.evaluate({"id": "x", "check": "taste:public/index.html"}, w)
+    ok("V-TASTE-ROOT-DESIGN-WAIVER", before == ck.FAIL and after.outcome == ck.PASS and "TASTE-EMDASH" in after.detail,
+       "before=%s after=%s %s" % (before, after.outcome, after.detail))
+
+
+WEB_PROMPT = "Hazme una landing page para una academia de yoga con formulario de contacto"
+
+
 def test_family_block() -> None:
     from modules.gsd_x import cli
-    web = cli.family_block("Hazme una landing page para una academia de yoga con formulario de contacto", {})
+    from modules.tower import baselines as bl
+    web = cli.family_block(WEB_PROMPT, {"session_id": "S-WEB"})
     other = cli.family_block("Refactoriza el parser de logs del servidor", {})
     ok("V-TASTE-BLOCK", "design-taste-frontend" in web and "NO APLICA: <entry-id>: <reason>" in web
        and "Design Read" in web, web[-400:])
     ok("V-TASTE-BLOCK-SILENT-ELSEWHERE", "design-taste-frontend" not in other)
+    # M1: the block may claim the done-gate lints the page only when an ACTIVE entry carries a taste: check.
+    gated = any(str(e.get("check") or "").startswith("taste:") for e in bl.active_entries("web_surface", None))
+    claims = "judged by the done-gate (`taste:` checks)" in web
+    ok("V-TASTE-BLOCK-CLAIM-HONEST", claims == gated and (gated or "python -m modules.cdio.taste" in web),
+       "gated=%s claims=%s" % (gated, claims))
+    # L1: the writer honours CPP_TOWER_STATE_DIR, so this run's row lands in the private dir, not the live ledger.
+    led = Path(os.environ["CPP_TOWER_STATE_DIR"]) / "consumption.jsonl"
+    rows = [json.loads(x) for x in led.read_text(encoding="utf-8").splitlines() if x.strip()] if led.exists() else []
+    ok("V-TASTE-BLOCK-PRIVATE-LEDGER", any(r.get("sid") == "S-WEB" and r.get("family") == "web_surface"
+                                           and r.get("kind") == "family" for r in rows), "rows=%d" % len(rows))
 
 
 def _load_stop():
@@ -259,35 +306,61 @@ def _load_stop():
     return mod
 
 
+def _site(member: bool = True) -> str:
+    d = tempfile.mkdtemp(dir=_TMP)
+    _page(d, *CLEAN, name="index.html")                     # no privacy / terms page -> B5 regex entries VIOLATED
+    if member:
+        Path(d, "vercel.json").write_text("{}", encoding="utf-8")   # a web_surface repo marker
+    return d
+
+
+def _transcript(text: str) -> str:
+    tr = tempfile.mktemp(suffix=".jsonl", dir=_TMP)
+    Path(tr).write_text(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": text}]}})
+                        + "\n", encoding="utf-8")
+    return tr
+
+
+def _stop_rows(sid: str) -> list:
+    led = Path(os.environ["CPP_TOWER_STATE_DIR"]) / "donegate_stop.jsonl"
+    rows = [json.loads(x) for x in led.read_text(encoding="utf-8").splitlines() if x.strip()] if led.exists() else []
+    return [r for r in rows if r.get("sid") == sid]
+
+
 def test_stop_hook() -> None:
+    from modules.gsd_x import cli
     stop = _load_stop()
     state = Path(os.environ["CPP_TOWER_STATE_DIR"])
-    state.mkdir(parents=True, exist_ok=True)
-    with open(state / "consumption.jsonl", "a", encoding="utf-8") as fh:
-        fh.write(json.dumps({"sid": "S-WEB", "kind": "family", "family": "web_surface"}) + "\n")
-    site = tempfile.mkdtemp(dir=_TMP)
-    _page(site, *CLEAN, name="index.html")                  # no privacy / terms page -> B5 regex entries VIOLATED
-    tr = os.path.join(_TMP, "t.jsonl")
-    Path(tr).write_text(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": "done"}]}})
-                        + "\n", encoding="utf-8")
-    base = {"session_id": "S-WEB", "cwd": site, "transcript_path": tr}
+    # L1: the rows come from the real writer (test_family_block wrote S-WEB), never hand-shaped.
+    ok("V-TASTE-STOP-READS-WRITER", stop.families_shown("S-WEB") == ["web_surface"], str(stop.families_shown("S-WEB")))
+    base = {"session_id": "S-WEB", "cwd": _site(), "transcript_path": _transcript("done")}
     first = stop.decide(dict(base))
     ok("V-TASTE-STOP-BLOCKS", bool(first) and first.get("decision") == "block"
        and "web_surface-privacy-page-linked" in first.get("reason", ""), str(first)[:300])
     ok("V-TASTE-STOP-NO-LOOP", stop.decide(dict(base)) is None)
     ok("V-TASTE-STOP-ACTIVE", stop.decide(dict(base, stop_hook_active=True)) is None)
     ok("V-TASTE-STOP-UNRELATED", stop.decide(dict(base, session_id="S-OTHER")) is None)
-    site2 = tempfile.mkdtemp(dir=_TMP)
-    _page(site2, *CLEAN, name="index.html")
-    with open(state / "consumption.jsonl", "a", encoding="utf-8") as fh:
-        fh.write(json.dumps({"sid": "S-NA", "kind": "family", "family": "web_surface"}) + "\n")
+    # M2: a repo PROVEN outside the family is skipped (and ledgered); the same page in a member repo blocks.
+    cli.family_block(WEB_PROMPT, {"session_id": "S-OUT"})
+    out = stop.decide({"session_id": "S-OUT", "cwd": _site(member=False), "transcript_path": _transcript("done")})
+    ok("V-TASTE-STOP-NON-MEMBER-SKIPPED", out is None and any(r.get("decision") == "skipped" for r in _stop_rows("S-OUT")),
+       "out=%s rows=%s" % (str(out)[:120], _stop_rows("S-OUT")))
+    # M4: the waiver is proven by the ledger verdict, and the same repo without the NO APLICA lines blocks.
     na_text = ("NO APLICA: web_surface-privacy-page-linked: internal staff tool, no public visitors\n"
                "NO APLICA: web_surface-terms-page-linked: internal staff tool, no public visitors")
-    Path(tr).write_text(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": na_text}]}})
-                        + "\n", encoding="utf-8")
-    second = stop.decide({"session_id": "S-NA", "cwd": site2, "transcript_path": tr})
+    site2 = _site()
+    for sid in ("S-NA", "S-NA-CTRL"):
+        cli.family_block(WEB_PROMPT, {"session_id": sid})
+    second = stop.decide({"session_id": "S-NA", "cwd": site2, "transcript_path": _transcript(na_text)})
+    verdicts = next((r.get("verdicts") or {} for r in _stop_rows("S-NA") if r.get("family") == "web_surface"
+                     and "verdicts" in r), {})
     reason = (second or {}).get("reason", "")
-    ok("V-TASTE-STOP-NA", "privacy-page-linked" not in reason and "terms-page-linked" not in reason, reason[:300])
+    ok("V-TASTE-STOP-NA", verdicts.get("web_surface-privacy-page-linked") == "NOT_APPLICABLE"
+       and verdicts.get("web_surface-terms-page-linked") == "NOT_APPLICABLE"
+       and "privacy-page-linked" not in reason and "terms-page-linked" not in reason,
+       "verdicts=%s reason=%s" % ({k: v for k, v in verdicts.items() if "page-linked" in k}, reason[:200]))
+    ctrl = stop.decide({"session_id": "S-NA-CTRL", "cwd": site2, "transcript_path": _transcript("done")})
+    ok("V-TASTE-STOP-NA-CONTROL", bool(ctrl) and "privacy-page-linked" in ctrl.get("reason", ""), str(ctrl)[:200])
     led = state / "donegate_stop.jsonl"
     ledger = led.read_text(encoding="utf-8") if led.exists() else ""
     ok("V-TASTE-STOP-LEDGER", '"decision": "block"' in ledger and '"sid": "S-WEB"' in ledger)
@@ -307,7 +380,8 @@ def test_lens_and_wiring() -> None:
 
 def main() -> int:
     try:
-        for t in (test_map, test_checks, test_slop_and_waiver, test_kind, test_family_block, test_stop_hook,
+        for t in (test_map, test_checks, test_slop_and_waiver, test_kind, test_external_assets, test_family_block,
+                  test_stop_hook,
                   test_lens_and_wiring):
             try:
                 t()

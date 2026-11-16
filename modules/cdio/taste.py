@@ -102,12 +102,23 @@ _SRC_JS = re.compile(r"""<script\b[^>]*\bsrc\s*=\s*["']([^"']+\.m?js)["']""", re
 _ATTR_ALT = re.compile(r"""\b(?:alt|aria-label|title)\s*=\s*(["'])(.*?)\1""", re.S | re.I)
 
 
-def _local(base: str, ref: str) -> str | None:
+def _local(base: str, ref: str, site_root: str | None = None) -> str | None:
+    """The local file a page's `href`/`src` names, or None. Confined to `site_root` (the repo root the done-gate
+    judges; default the page's own folder). `/x` resolves against site_root, `../x` may climb to it, never past it.
+    Before 2026-11-16 both `/assets/site.css` and `../css/site.css` were dropped -- a false critical when the
+    reduced-motion block lived there, a false pass when the motion did -- and the prefix test let `site2/` pass as
+    inside `site/` (review of bb4db9f4, M3)."""
     if re.match(r"^[a-z]+:|^//", ref, re.I):
         return None
-    p = os.path.normpath(os.path.join(os.path.dirname(base), ref.split("?")[0].split("#")[0]))
-    root = os.path.dirname(os.path.abspath(base))
-    if not os.path.abspath(p).startswith(root):
+    ref = ref.split("?")[0].split("#")[0]
+    page_dir = os.path.dirname(os.path.realpath(base))
+    root = os.path.realpath(site_root or page_dir)
+    p = os.path.realpath(os.path.join(root, ref.lstrip("/\\")) if ref.startswith(("/", "\\"))
+                         else os.path.join(page_dir, ref))
+    try:
+        if os.path.commonpath([root, p]) != root:
+            return None
+    except ValueError:                                   # another drive: outside by definition
         return None
     return p if os.path.isfile(p) else None
 
@@ -117,17 +128,17 @@ def _read(p: str) -> str:
         return fh.read()
 
 
-def load(path: str) -> Page:
+def load(path: str, site_root: str | None = None) -> Page:
     raw = _read(path)
     body = _COMMENT.sub(" ", raw)
     css_parts = _STYLE.findall(body) + [m.group(2) for m in _STYLE_ATTR.finditer(body)]
     js_parts = [m.group(2) for m in _SCRIPT.finditer(body)]
     for ref in _LINK_CSS.findall(body):
-        lp = _local(path, ref)
+        lp = _local(path, ref, site_root)
         if lp:
             css_parts.append(_read(lp))
     for ref in _SRC_JS.findall(body):
-        lp = _local(path, ref)
+        lp = _local(path, ref, site_root)
         if lp:
             js_parts.append(_read(lp))
     visible = _STYLE.sub(" ", _SCRIPT.sub(" ", body))
@@ -434,11 +445,16 @@ class TasteReport:
                 "refused_waivers": self.refused_waivers}
 
 
-def lint(path: str, design_md: str | None = None) -> TasteReport:
-    page = load(path)
+def lint(path: str, design_md: str | None = None, site_root: str | None = None) -> TasteReport:
+    page = load(path, site_root)
     if design_md is None:
-        cand = os.path.join(os.path.dirname(os.path.abspath(path)), "DESIGN.md")
-        design_md = cand if os.path.isfile(cand) else None
+        # Beside the page first, then the site root: the experience contract keeps DESIGN.md at the repo root, and a
+        # waiver written there with a reason was ignored by the done-gate (review of bb4db9f4, L2).
+        for d in (os.path.dirname(os.path.abspath(path)), site_root):
+            cand = os.path.join(d, "DESIGN.md") if d else ""
+            if cand and os.path.isfile(cand):
+                design_md = cand
+                break
     ov = overrides(design_md)
     verdicts = []
     for fn in ALL:

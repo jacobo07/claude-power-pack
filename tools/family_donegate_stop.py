@@ -111,9 +111,19 @@ def decide(payload: dict) -> dict | None:
     fams = families_shown(sid)
     if not fams:
         return None
+    # A family is attached by classifying the PROMPT, so the session may be standing in a repo that is no member of
+    # it; judging there blocks on entries that cannot apply (review of bb4db9f4, M2). Skip only a repo PROVEN out:
+    # UNJUDGED (no marker route, cut walk, failed delegate) is not OUT, and is still judged.
+    from modules.tower import families as fm
+    membership = fm.repo_family_report(cwd, [f for f in fm.load_families() if f.id in fams])
+    member = set(membership["in"]) | set(membership["unjudged"])
     na = not_applicable(last_assistant_text(str(payload.get("transcript_path") or "")))
     problems = []
     for fam in fams:
+        if fam not in member:
+            _ledger({"sid": sid, "family": fam, "repo": cwd, "decision": "skipped",
+                     "why": "repo proven outside the family (no repo marker)"})
+            continue
         rep = dg.judge(fam, cwd, not_applicable=na)
         violated = [x for x in rep.get("entries", []) if x["verdict"] == dg.VIOLATED]
         _ledger({"sid": sid, "family": fam, "repo": cwd, "judged_under": rep.get("judged_under"),

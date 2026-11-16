@@ -144,7 +144,7 @@ def _evaluate(kind: str, arg: str, root: str, registry: str | None) -> tuple:
         if not os.path.isfile(full):
             return (UNREADABLE, "subject unreadable: %s does not exist" % arg)
         from modules.cdio import taste as _taste
-        rep = _taste.lint(full)
+        rep = _taste.lint(full, site_root=root)          # root: `/x` assets and a repo-root DESIGN.md resolve here
         if rep.blocking:
             return (FAIL, "taste blocking: %s" % ", ".join(rep.blocking))
         waived = sorted(rep.waived)
