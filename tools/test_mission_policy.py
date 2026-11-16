@@ -246,6 +246,31 @@ def main() -> int:
     gb = mp.classify_blocked({"state": "blocked", "needs": gd_inc}, pv)
     check("V-MPOL-BLOCKED-GUARD-DISABLE-OWNER", gb["class"] == "QUESTION_OWNER", str(gb["class"]))
 
+    # Parked-relaunch incident (backlog bada2258afa1, GEX44 m-26ea4de62c50 2026-11-14 20:50Z-21:38Z): the worker parked
+    # on an Owner decision file and ended its turn asking for it; each question was answered RESOLVE_BY_DEFAULT and a
+    # worker was relaunched 5 times (epochs 11-15, "reconcile, still parked") until MAX_DECISION_RECOVERIES. Texts are
+    # the ledger's own `launch_cause` lines. An Owner decision is never the runtime's to answer.
+    od_inc = ["write /home/kobii/missions/cw-icp-series/inputs/OWNER-DECISION-F1.md (gsd_mission requires)",
+              "review deliver/look3-test/head6/ and write /home/kobii/missions/cw-icp-series/inputs/OWNER-DECISION-F1.md",
+              "Review deliver/look3-test/head7/ and write F1B-REVIEW to /home/kobii/missions/cw-icp-series/inputs/"
+              "OWNER-DECISION-F1B.md to resume",
+              "write the independent head7 verdict in /home/kobii/missions/cw-icp-series/inputs/OWNER-DECISION-F1B.md",
+              "write verdict at /home/kobii/missions/cw-icp-series/inputs/OWNER-DECISION-F1B.md"]
+    od_syn = ["Waiting for the Owner's decision on the look before continuing", "Needs Owner approval of Gate C",
+              "OWNER DECISION NEEDED: pick Meshy or the artist", "Espero la decisión del Owner sobre la cabeza",
+              "falta la aprobación del Owner del look", "write inputs/owner_decision_head4.md"]
+    odbad = [s for s in od_inc + od_syn if mp.gate_question(s, pv).get("owner_class") != "OWNER_DECISION"]
+    od_neg = ["Should I write the decision log before the render?", "Record the decision in STATE.md and continue?",
+              "The owner of the lock file is pid 4170; wait for it?", "Write the review notes to deliver/REVIEW.md?",
+              "Which approval test runs first, unit or smoke?", "write inputs/DECISIONS.md summary first?"]
+    odbadn = [s for s in od_neg if mp.gate_question(s, pv)["result"] != "RESOLVE_BY_DEFAULT"]
+    check("V-MPOL-GATE-OWNER-DECISION", not odbad and not odbadn,
+          f"{len(od_inc + od_syn) - len(odbad)}/{len(od_inc + od_syn)} Owner-decision asks -> OWNER_DECISION "
+          f"(missed={odbad}); {len(od_neg) - len(odbadn)}/{len(od_neg)} ordinary stay default (escalated={odbadn})")
+    odb = [mp.classify_blocked({"state": "blocked", "needs": s}, pv)["class"] for s in od_inc]
+    check("V-MPOL-BLOCKED-OWNER-DECISION-NO-RELAUNCH", all(c == "QUESTION_OWNER" for c in odb),
+          f"incident needs -> {odb} (QUESTION_RESOLVABLE would relaunch a worker)")
+
     # 14-01 W2a: done-gate / overrun / deviation Owner class (addendum section 3), kill switch CPP_MISSION_OWNER_GATES.
     saved_ks = os.environ.pop(KILL_SWITCH, None)
     try:

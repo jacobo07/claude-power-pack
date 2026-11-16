@@ -255,13 +255,20 @@ def main() -> int:
     # RESOLVE_BY_DEFAULT. The requirement survived the answer, so the sweep parked the successor on a file
     # nobody would write (17:00Z -> 19:50Z). The answer settles the obligation the question named; a sibling
     # obligation on another path is untouched (control).
-    q = ("create inputs/OWNER-DECISION-HEAD4.md choosing (a) Pixal3D multi-view head with jaw rig and simple blink "
+    # bada2258afa1 (2026-11-16): the incident file was an OWNER-DECISION file; that ask is now Owner-class (checked
+    # below, V-AMRX-B3-OWNER-FILE-PARKS). The mechanics are kept on a neutral file the runtime may answer.
+    q = ("create inputs/HEAD4-CHOICE.md choosing (a) Pixal3D multi-view head with jaw rig and simple blink "
          "(agent's pick), (b) hand-sculpt face on GNM mesh, or (c) canonical stills only")
     wd_d = make_repo("self-park", None)
     (wd_d / "inputs").mkdir()
     (wd_d / "inputs" / "gpu.lock").write_text("x", encoding="utf-8")   # sibling obligation MET: admissible
+    q_own = "write the independent head7 verdict in " + str(wd_d / "inputs" / "OWNER-DECISION-F1B.md")
+    r_own = blocked_mission("m-bbb0000000d2", wd_d, needs=q_own)
+    p_own = gm.plan_next(r_own, NOW, host_rows("m-bbb0000000d2"), pid_alive=lambda p: False)
+    check("V-AMRX-B3-OWNER-FILE-PARKS", p_own["action"] == "surface_blocked" and "OWNER_BOUNDARY" in p_own["reason"],
+          f"Owner decision file ask -> {p_own['action']}: {p_own['reason'][:100]}")
     blocked_mission("m-bbb0000000d1", wd_d, needs=q)
-    gm.set_requires("m-bbb0000000d1", "HEAD4", [("path_exists", str(wd_d / "inputs" / "OWNER-DECISION-HEAD4.md"))])
+    gm.set_requires("m-bbb0000000d1", "HEAD4", [("path_exists", str(wd_d / "inputs" / "HEAD4-CHOICE.md"))])
     gm.set_requires("m-bbb0000000d1", "GPU", [("path_exists", str(wd_d / "inputs" / "gpu.lock"))])
     ARGVS.clear()
     gm._supervise_core(now=NOW + 60, sessions=host_rows("m-bbb0000000d1"), gsd_status=GSD_OK, runner=host,

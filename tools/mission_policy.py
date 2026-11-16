@@ -235,6 +235,12 @@ OWNER_CLASSES = (
     ("AUTHORITY", re.compile(r"budget (is )?exhausted|authority|more tokens|raise the (cap|envelope)", re.I)),
     ("TRUTH_CONTRACT", TRUTH_CONTRACT_RX),
     ("DONE_GATE_OR_DEVIATION", DONE_GATE_RX),
+    # Parked-relaunch incident (backlog bada2258afa1, GEX44 m-26ea4de62c50 2026-11-14): "write .../inputs/OWNER-DECISION-
+    # F1B.md" matched no class, was answered RESOLVE_BY_DEFAULT and relaunched a worker 5 times while the mission waited
+    # for the Owner. An ask for the Owner's decision/approval (or its decision file) is the Owner's, never the runtime's.
+    ("OWNER_DECISION", re.compile(
+        r"\bOWNER[-_ ]DECISION|\bowner(?:'s)?\s+(?:decision|approval|sign[- ]?off|verdict)\b|"
+        r"\b(?:decisi[oó]n|aprobaci[oó]n|veredicto)\s+del\s+owner\b", re.I)),
 )
 # Questions the runtime answers itself, with the policy key that answers them.
 POLICY_RESOLVABLE = (
