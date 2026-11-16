@@ -5,6 +5,12 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-16 09:30Z, pane f3df357a: KSR PARKED, S68K unjudged (Owner question open).**
+- S68K committed checkpoint 2da670ff (H-S68TM REFUTED 19/30 < 20, control 24/24, 0 certs, held-out 200 reserved unopened), then CAPITAL_EXHAUSTED → mission HALTED (terminal) → lane parked 00:20Z.
+- Cost→checkpoint conversion failed (`set_checkpoint`: HALTED takes no hold); the cost hold was released by it (terminal mission, harmless).
+- F4 `continue_halted` cannot see KSR work: mission `binding` null → `gen_head` None → 0 commits. KSR commits straight to `t1/campaign`. ls.planned_from is now set (S67K verdict + S68K checkpoint).
+- Owner options: (a) call `plan_and_arm` once by hand with key `continue:m-37cdc89e27e6`; (b) 4de9 fixes F4 to fall back to the product HEAD when the binding is null.
+
 **2026-11-15 23:56Z, pane f3df357a (Owner "a"): research cap 100M, KSR S68K armed.**
 - Live `evolve.py` e4192a94 `RESEARCH_LANE_CAP` 100M (gate 54/54, backup `bak-f3df-rcap100-*`, mirror a3769022). Applies to all lanes, so WIIPARTY is no longer blocked by it.
 - KSR S68K `m-37cdc89e27e6` (9.5M, `whole_program_type_model`, RESEARCH) from the kept S67K judgment, no re-judge. Plan 1 was refused at 22.5M > the 10M research generation cap (an Owner ceiling, NOT raised). The directive was amended so S68K does pre-registration + build + shadow + dev pilot only; the new held-out run goes in the next generation. research_spent ≈ 69.3M/100M.
