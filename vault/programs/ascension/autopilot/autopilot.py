@@ -791,15 +791,21 @@ def continue_halted(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bo
         log(f"{lane['name']}: continuation of {mid} waits: {why}")
         return True
     br = (rec.get("binding") or {}).get("branch") or "the generation branch"
+    ok, note = evolve.ff_to(lane["product"], head, dry)  # F4b: the next packet lands on a product holding the branch
+    if not ok:
+        owner_queue(lane["name"], f"continuation of {mid} not armed: {note} ({n} commits on {br}); lane parked")
+        return False
+    log(f"{lane['name']}: continuation of {mid}: {note}")
     ledger_add(lane=lane["name"], kind="halt_continue", tokens=0, mission=mid, gen=ls.get("gen"), commits=n, head=head)
     log(f"{lane['name']}: {mid} ended {rec.get('state')} without a checkpoint with {n} commits on {br}; continuing once")
     digest(lane["name"], f"CONTINUE {ls.get('gen')} ({mid} {rec.get('state')}: {str(rec.get('reason'))[:200]}): "
                          f"{n} commits on {br} at {str(head)[:12]}")
     directive = (f"CONTINUATION of {ls.get('gen')} ({mid} ended {rec.get('state')} with no checkpoint: "
-                 f"{str(rec.get('reason'))[:160]}). Its work is {n} commits on branch {br} at {str(head)[:12]} "
-                 f"(work tree {(rec.get('binding') or {}).get('root')}). Plan to continue that branch: read its budget.md "
-                 "and evidence first, commit anything left uncommitted before new work, do not redo what it proved, "
-                 "and commit the checkpoint before 75% of the caps is processed.")
+                 f"{str(rec.get('reason'))[:160]}). Its work is {n} commits on branch {br} at {str(head)[:12]}; the "
+                 f"product {lane['product']} has been fast-forwarded to that commit, so work from the product like any "
+                 f"generation and never commit in the old work tree {(rec.get('binding') or {}).get('root')}: copy any "
+                 "file it left uncommitted into the product and commit it there first. Read its budget.md and evidence "
+                 "first, do not redo what it proved, and commit the checkpoint before 75% of the caps is processed.")
     pend = ls.get("pending_plan") or {}
     if pend.get("for") == f"continue:{mid}" and pend.get("bad"):  # un-parked after a refusal: the planner is told why
         directive += "\n\n" + replan_feedback(pend["bad"], pend.get("offenders"))
@@ -809,6 +815,52 @@ def continue_halted(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bo
         ls["continued_from"] = mid
         save_state(st)
     return True
+
+
+HELD_NOTICE_S = 1800  # F6: a RUNNING mission whose launch has been held this long is told to the Owner once
+AGE_DEFER_SPENT = 0.75  # F2b: at or past this share of its authority a cost hold is near; the top-up extends instead
+
+
+def running_watch(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool) -> None:
+    """A live mission with no hold. F6 (2026-11-16, S71F/S69T): RUNNING with every relaunch held ('launch held: cwd not
+    aligned') sat 8 h unseen after both workers finished; it is now told to the Owner once per mission and reason.
+    F2b (2026-11-16, S65M): a mission with work on its branch halted on age at 07:45 because the wall was only
+    extended alongside a cost top-up; below AGE_MIN_H it is extended once, inside the lane envelope. gsd_mission lets
+    one Owner turn authorise one act per mission, so after a top-up the extension is refused and the Owner is told
+    BEFORE the wall, not after."""
+    now, ln = _now(), lane["name"]
+    reason = str(rec.get("reason") or "")
+    held_s = now - float(rec.get("updated_at") or now)
+    if reason.startswith("launch held") and held_s >= HELD_NOTICE_S and ls.get("held_notice") != f"{mid}:{reason[:120]}":
+        ls["held_notice"] = f"{mid}:{reason[:120]}"
+        save_state(st)
+        owner_queue(ln, f"{mid} is RUNNING with no worker for {int(held_s / 60)} min: {reason[:300]}")
+        digest(ln, f"HELD {mid} for {int(held_s / 60)} min with no worker: {reason[:400]}")
+    left = hours_left(rec, now)
+    if left >= AGE_MIN_H or ls.get("age_ext_for") == mid:
+        return
+    auth, spent = float(rec.get("authority_tokens") or 0), float((rec.get("cost_mark") or {}).get("tokens") or 0)
+    if auth and spent >= AGE_DEFER_SPENT * auth:
+        return  # review 2026-11-16 (MEDIUM): a cost hold is near; cost_topup extends the wall in that same one act
+    if branch_commits(lane["product"], ls.get("base"), gen_head(rec)) < 1:
+        return
+    ls["age_ext_for"] = mid
+    save_state(st)
+    env = lane.get("envelope") or {}
+    ext = round(min(AGE_EXTEND_H, (WALL - dt.datetime.fromtimestamp(now, dt.timezone.utc)).total_seconds() / 3600), 1)
+    if not env.get("owner_turn") or ext < 0.5:
+        why = "the lane has no Owner envelope turn" if not env.get("owner_turn") else "the programme wall is too close"
+        owner_queue(ln, f"{mid} reaches its age wall in {left:.1f} h with work on its branch and is not extended: {why}")
+        return
+    rc, out = gm("authority", "--mission", mid, "--extend-hours", f"{ext:g}", "--owner-turn", env["owner_turn"],
+                 "--reason", f"Autopilot age extension +{ext:g} h inside the {ln} envelope ({env.get('note', '')}); "
+                             f"{left:.1f} h left with work on the generation branch", dry=dry)
+    if rc != 0:
+        owner_queue(ln, f"{mid} reaches its age wall in {left:.1f} h with work on its branch; +{ext:g} h refused by "
+                        f"gsd_mission (a new Owner turn is needed): {out[-300:]}")
+        return
+    ledger_add(lane=ln, kind="age_extend", gen=ls.get("gen"), mission=mid, tokens=0, extend_hours=ext)
+    log(f"{ln}: {mid} wall +{ext:g} h ({left:.1f} h left, work on its branch)")
 
 
 def owner_closed(rec: dict) -> bool:
@@ -893,6 +945,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             if ls.get("status") == "RUNNING" and continue_halted(st, lane, ls, mid, rec, dry):
                 return
             return _park(st, ls, lane["name"], f"mission {mid} ended {rec['state']} without a checkpoint hold; lane parked")
+        if not hold and ls.get("status") == "RUNNING":
+            return running_watch(st, lane, ls, mid, rec, dry)
         if hold.get("kind") == "cost" and ls.get("status") == "RUNNING":
             return cost_topup(st, lane, ls, mid, rec, hold, dry)
         if hold.get("kind") != "checkpoint":

@@ -389,6 +389,9 @@ def run_all(ap):
     for k in ("cost_mark", "created_at", "max_hours"):
         rec.pop(k, None)
     hdirs = []
+    ffc = {"r": (True, "fast-forwarded the product"), "heads": []}
+    keep_ff = ap.evolve.ff_to  # real git is driven in the EVO block below; here only the decision is under test
+    ap.evolve.ff_to = lambda p, h, d=False: ffc["heads"].append(h) or ffc["r"]
 
     def halt_run(set_at, commits="5", ls_extra=None, reason="owner dead and budget: older than 16.0 h", dirty=""):
         st = fresh(set_at)
@@ -425,9 +428,77 @@ def run_all(ap):
                                                   "bad": ["EVO RESEARCH: caps 13,000,000 > research generation cap"]}})
     check("V-AP-HALT-REPLAN-TOLD-WHY", any(c[0] == "arm" for c in calls) and "AUTOPILOT POLICY REFUSED" in hdirs[-1]
           and "caps 13,000,000" in hdirs[-1] and "CONTINUATION" in hdirs[-1])
+    # F4b (2026-11-16): the product is fast-forwarded to the halted head BEFORE the arm; refused -> park, told why
+    ffc["heads"].clear()
+    halt_run(103)
+    check("V-AP-HALT-FF-BEFORE-ARM", ffc["heads"] == ["d" * 40] and any(c[0] == "arm" for c in calls)
+          and "fast-forwarded to that commit" in hdirs[-1] and "never commit in the old work tree" in hdirs[-1])
+    ffc["r"] = (False, "the branch head dddd is not a fast-forward of the product HEAD eeee")
+    L1 = halt_run(104)
+    check("V-AP-HALT-FF-REFUSED-PARKS", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls)
+          and "not a fast-forward" in q_text() and "continued_from" not in L1)
+    ap.evolve.ff_to = keep_ff
+    # F6 + F2b (2026-11-16): a RUNNING mission with no hold. Launch held >= 30 min -> one Owner line per mission and
+    # reason (S71F/S69T sat 8 h unseen). < 1.5 h of wall with work on the branch -> one extension inside the envelope,
+    # no token change (S65M halted on age at 07:45 with 3 commits); refused by gsd_mission -> the Owner is told first.
+    def watch_run(reason="launch held: cwd not aligned with work_dir (diverged): x", held_s=3600, age_h=2.0,
+                  commits="2", st=None, fail=(), env=envt, spent=1_000_000, wall=None):
+        if st is None:
+            rec["owner_hold"] = {"set_at": 0}
+            st = fresh(0)
+            st["lanes"] = {"L": {"status": "RUNNING", "gen": "S91L", "base": "b0", "blank": 0, "arm_fails": 0,
+                                 "mission": "m-aaaaaaaaaaaa"}}
+        calls.clear()
+        fail_on.update(fail)
+        pc["n"] = commits
+        now = __import__("time").time()
+        rec.update(state="RUNNING", owner_hold=None, reason=reason, updated_at=now - held_s,
+                   created_at=now - age_h * 3600, max_hours=16.0, authority_tokens=10_000_000,
+                   cost_mark={"tokens": spent, "at": now},
+                   binding={"root": str(tmp / "no-tree"), "head": "e" * 40, "branch": "s91/work"})
+        recp.write_text(json.dumps(rec))
+        keep_wall = ap.WALL
+        ap.WALL = wall or __import__("datetime").datetime.fromtimestamp(now + 30 * 86400, __import__("datetime").timezone.utc)
+        try:
+            ap.lane_tick(st, dict(lanes[0], envelope=env) if env else dict(lanes[0]), False)
+        finally:
+            ap.WALL = keep_wall
+        return st
+    W = watch_run()
+    check("V-AP-HELD-RUNNING-NOTICE", q_text().count("RUNNING with no worker") == 1 and not auth_calls()
+          and W["lanes"]["L"]["status"] == "RUNNING")
+    watch_run(st=W)
+    check("V-AP-HELD-NOTICE-ONCE", q_text().count("RUNNING with no worker") == 1)
+    watch_run(held_s=600)
+    check("V-AP-HELD-NOTICE-WAITS", "RUNNING with no worker" not in q_text())
+    W = watch_run(reason="running", age_h=15.0)
+    a = auth_calls()
+    check("V-AP-AGE-EXTEND-PROGRESS", len(a) == 1 and "--tokens" not in a[0] and "--extend-hours" in a[0]
+          and a[0][a[0].index("--extend-hours") + 1] == "4" and a[0][a[0].index("--owner-turn") + 1] == envt["owner_turn"]
+          and [r.get("extend_hours") for r in ledger() if r["kind"] == "age_extend"] == [4.0])
+    watch_run(reason="running", age_h=15.0, st=W)
+    check("V-AP-AGE-EXTEND-ONCE", not auth_calls())
+    watch_run(reason="running", age_h=15.0, commits="0")
+    check("V-AP-AGE-EXTEND-NEEDS-WORK", not auth_calls() and "age wall" not in q_text())
+    watch_run(reason="running", age_h=10.0)
+    check("V-AP-AGE-EXTEND-NOT-EARLY", not auth_calls())
+    watch_run(reason="running", age_h=15.0, fail=("authority",))
+    check("V-AP-AGE-EXTEND-REFUSED-TOLD", len(auth_calls()) == 1 and "new Owner turn" in q_text()
+          and not [r for r in ledger() if r["kind"] == "age_extend"])
+    fail_on.clear()
+    # review 2026-11-16: MEDIUM near its cap the extension waits for cost_topup's one act; LOW the two unextendable poles
+    watch_run(reason="running", age_h=15.0, spent=8_000_000)
+    check("V-AP-AGE-EXTEND-DEFERS-NEAR-CAP", not auth_calls() and "age wall" not in q_text())
+    watch_run(reason="running", age_h=15.0, env=None)
+    check("V-AP-AGE-EXTEND-NO-ENVELOPE-TOLD", not auth_calls() and "no Owner envelope turn" in q_text())
+    watch_run(reason="running", age_h=15.0,
+              wall=__import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+              + __import__("datetime").timedelta(minutes=10))
+    check("V-AP-AGE-EXTEND-WALL-CLOSE-TOLD", not auth_calls() and "programme wall is too close" in q_text())
     rec["state"] = "RUNNING"
-    for k in ("reason", "binding"):
+    for k in ("reason", "binding", "updated_at", "created_at", "max_hours", "cost_mark"):
         rec.pop(k, None)
+    rec["owner_hold"] = dict(keep_hold)
     check("V-AP-HOLD-SHA", ap.hold_checkpoint({"evidence": "8afbd99bb2a8f512cdc67cc7433a153ae7ca78bd", "residual": "r.md"})
           == "r.md" and ap.hold_checkpoint({"evidence": "None", "residual": "r.md"}) == "r.md")
     check("V-AP-HOLD-PATH-KEPT", ap.hold_checkpoint({"evidence": "e/ck.md", "residual": "r.md"}) == "e/ck.md")
@@ -924,6 +995,29 @@ def run_all(ap):
     check("V-AP-CKPT-WORKTREE-REL", (E.worktree_rel(str(pr4), str(wt4 / "ev" / "ck.md")) or ("", ""))[1]
           == os.path.join("ev", "ck.md") and E.worktree_rel(str(pr4), str(pr4 / "ev" / "ck.md")) is None
           and E.worktree_rel(str(pr4), "ev/ck.md") is None)
+    # F4b (2026-11-16, S71F/S69T): a continuation fast-forwards the product to the halted branch head before arming;
+    # diverged or dirty -> refused and the product untouched (real git, both poles)
+    pr5 = mkrepo("evo_prod5")
+    wt5 = tmp / "evo_wt5"
+    git(pr5, "worktree", "add", "-q", "-b", "s9/work", str(wt5))
+    (wt5 / "w.txt").write_text("w\n"); git(wt5, "add", "-A"); git(wt5, "commit", "-q", "-m", "work")
+    h5 = git(wt5, "rev-parse", "HEAD")
+    ok5, n5 = E.ff_to(str(pr5), h5)
+    check("V-EVO-FF-TO-BRANCH", ok5 and git(pr5, "rev-parse", "HEAD") == h5 and (pr5 / "w.txt").exists())
+    check("V-EVO-FF-TO-SAME-OK", E.ff_to(str(pr5), h5)[0] and not E.ff_to(str(pr5), None)[0])
+    (wt5 / "x.txt").write_text("x\n"); git(wt5, "add", "-A"); git(wt5, "commit", "-q", "-m", "more")
+    (pr5 / "p.txt").write_text("p\n"); git(pr5, "add", "-A"); git(pr5, "commit", "-q", "-m", "packet")
+    hp5 = git(pr5, "rev-parse", "HEAD")
+    ok6, n6 = E.ff_to(str(pr5), git(wt5, "rev-parse", "HEAD"))
+    check("V-EVO-FF-TO-DIVERGED-REFUSED", not ok6 and "not a fast-forward" in n6 and git(pr5, "rev-parse", "HEAD") == hp5)
+    pr6 = mkrepo("evo_prod6")
+    wt6 = tmp / "evo_wt6"
+    git(pr6, "worktree", "add", "-q", "-b", "s8/work", str(wt6))
+    (wt6 / "w.txt").write_text("w\n"); git(wt6, "add", "-A"); git(wt6, "commit", "-q", "-m", "work")
+    (pr6 / "a.txt").write_text("dirty\n")
+    hp6 = git(pr6, "rev-parse", "HEAD")
+    ok7, n7 = E.ff_to(str(pr6), git(wt6, "rev-parse", "HEAD"))
+    check("V-EVO-FF-TO-DIRTY-REFUSED", not ok7 and "tracked changes" in n7 and git(pr6, "rev-parse", "HEAD") == hp6)
     return [n for n, ok in results if not ok]
 
 
@@ -1070,6 +1164,14 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "hold_sha_path_ignored": lambda m: setattr(m, "SHA_PATH_RE", __import__("re").compile(r"(?!x)x")),
          "halt_once_spent_before_arm": lambda m: setattr(m, "continue_halted", (lambda real: lambda st, lane, ls, mid, *a: (
              real(st, lane, ls, mid, *a), ls.__setitem__("continued_from", mid))[0])(m.continue_halted)),
+         "evo_ff_to_always_ok": _evo_mut(ff_to=lambda p, h, d=False: (True, "x")),
+         "held_notice_never": lambda m: setattr(m, "HELD_NOTICE_S", 10 ** 9),
+         "held_notice_immediate": lambda m: setattr(m, "HELD_NOTICE_S", 0),
+         "running_watch_off": lambda m: setattr(m, "running_watch", lambda *a: None),
+         "running_watch_repeats": lambda m: setattr(m, "running_watch", (lambda real: lambda st, lane, ls, *a: (
+             ls.pop("age_ext_for", None), ls.pop("held_notice", None), real(st, lane, ls, *a))[2])(m.running_watch)),
+         "age_defer_off": lambda m: setattr(m, "AGE_DEFER_SPENT", 99.0),
+         "age_defer_always": lambda m: setattr(m, "AGE_DEFER_SPENT", 0.0),
          "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),
          "evo_repair_any_instrument": _evo_mut(repair_admits=lambda x, f: True),
          "evo_repair_no_in_place": _evo_mut(repair_in_place=lambda *a, **k: None),

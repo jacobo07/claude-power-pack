@@ -348,6 +348,30 @@ def worktree_rel(product: str, checkpoint: str):
     return (base + tree, rel) if tree and rel else None
 
 
+def ff_to(product: str, head, dry: bool = False) -> tuple[bool, str]:
+    """Fast-forward the product to `head` (a commit on a generation branch) before a continuation is armed. Only a
+    fast-forward, only from a clean product. 2026-11-16 (S71F, S69T): the continuation's packet was committed on a
+    product that lacked the branch, the two lines diverged, and gsd_mission held the relaunch for 8 h after both
+    workers had finished."""
+    if not head:
+        return False, "the halted generation's branch head is unknown"
+    rc, cur = _git(product, "rev-parse", "HEAD")
+    if rc != 0:
+        return False, f"product HEAD unreadable: {cur[-200:]}"
+    if cur == head:
+        return True, f"product already at {head[:12]}"
+    if _git(product, "merge-base", "--is-ancestor", "HEAD", head)[0] != 0:
+        return False, f"the branch head {head[:12]} is not a fast-forward of the product HEAD {cur[:12]}"
+    if _git(product, "status", "--porcelain", "--untracked-files=no")[1]:
+        return False, "the product has tracked changes"
+    if dry:
+        return True, f"dry: would fast-forward the product to {head[:12]}"
+    rc, out = _git(product, "merge", "--ff-only", head)
+    if rc != 0:
+        return False, f"fast-forward failed: {out[-200:]}"
+    return True, f"fast-forwarded the product to {head[:12]}"
+
+
 def discover_checkpoint(product: str, checkpoint: str, dry: bool = False) -> tuple[str, str]:
     """-> (OK|FF|PARK, note). OK: the checkpoint is in the product. FF: exactly one worktree branch holds it COMMITTED,
     the product HEAD is its ancestor and the product has no tracked changes -> `merge --ff-only` was run. Otherwise PARK.
