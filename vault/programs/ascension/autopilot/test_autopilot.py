@@ -327,14 +327,14 @@ def run_all(ap):
     ap.sh = lambda cmd, **k: (prog["rc"], "") if "diff" in cmd else (0, sh_out["dirty"] if "status" in cmd else "")
     envt = {"tokens": 300_000_000, "since": 0, "note": "t", "owner_turn": "s:2026-11-13T11:17"}
 
-    def cost_run(set_at, lane_env=envt, topups=0, rc=1):
+    def cost_run(set_at, lane_env=envt, topups=0, rc=1, ls_extra=None):
         st = fresh(set_at)
         prog["rc"] = rc
         rec["owner_hold"] = {"kind": "cost", "set_at": set_at, "reason": "cost breaker"}
         rec["authority_tokens"] = 23_500_000
         recp.write_text(json.dumps(rec))
-        st["lanes"] = {"L": {"status": "RUNNING", "gen": "S37K", "base": "b0", "topups": topups, "blank": 0,
-                             "arm_fails": 0, "mission": "m-aaaaaaaaaaaa"}}
+        st["lanes"] = {"L": dict({"status": "RUNNING", "gen": "S37K", "base": "b0", "topups": topups, "blank": 0,
+                                  "arm_fails": 0, "mission": "m-aaaaaaaaaaaa"}, **(ls_extra or {}))}
         ln = dict(lanes[0], envelope=lane_env) if lane_env else lanes[0]
         ap.lane_tick(st, ln, False)
         return st, ln
@@ -356,6 +356,82 @@ def run_all(ap):
     check("V-AP-TOPUP-ENVELOPE-FULL", not auth_calls() and "envelope" in q_text())
     cost_run(74, lane_env=None)
     check("V-AP-TOPUP-NEEDS-OWNER-ENVELOPE", not auth_calls() and "no Owner envelope" in q_text())
+    # Spec ascension-autopilot-stall-fixes (Owner "y" 2026-11-16). F1: no certificate, but >= 1 new commit on the
+    # generation branch AND a cost_mark after the last top-up -> one top-up booked basis=progress. F2: < 1.5 h of wall
+    # left -> the same authority act extends the wall. F4: a halt with commits and no checkpoint is continued once.
+    pc = {"n": "0"}
+    ap.sh = lambda cmd, **k: ((prog["rc"], "") if "diff" in cmd else (0, pc["n"]) if "rev-list" in cmd
+                              else (0, sh_out["dirty"] if "status" in cmd else ""))
+
+    def prog_run(set_at, commits="2", mark_at=500.0, created=None, **kw):
+        pc["n"] = commits
+        rec.update(binding={"root": str(tmp / "no-tree"), "head": "c" * 40, "branch": "s1/work"}, cost_mark={"at": mark_at},
+                   created_at=created if created is not None else __import__("time").time(), max_hours=16.0)
+        return cost_run(set_at, rc=0, **kw)
+    st, ln = prog_run(90)
+    a = auth_calls()
+    tops = [r for r in ledger() if r["kind"] == "auto_topup"]
+    check("V-AP-TOPUP-PROGRESS", len(a) == 1 and "--extend-hours" not in a[0] and len(tops) == 1
+          and tops[0].get("basis", "").startswith("proven progress") and st["lanes"]["L"].get("topup_head") == "c" * 40
+          and any(c[0] == "release" for c in calls))
+    prog_run(91, commits="0")
+    check("V-AP-TOPUP-NOPROGRESS", not auth_calls() and "no proven progress" in q_text())
+    prog_run(92, mark_at=0)
+    check("V-AP-TOPUP-FP-ONLY", not auth_calls())
+    prog_run(93, ls_extra={"topup_at": 1000.0})
+    check("V-AP-TOPUP-PROGRESS-SINCE-LAST", not auth_calls())
+    prog_run(94, lane_env=dict(envt, tokens=1))
+    check("V-AP-TOPUP-PROGRESS-ENVELOPE", not auth_calls() and "envelope" in q_text())
+    prog_run(95, created=__import__("time").time() - 15 * 3600)
+    a = auth_calls()
+    check("V-AP-TOPUP-AGE", len(a) == 1 and "--extend-hours" in a[0] and a[0][a[0].index("--extend-hours") + 1] == "4"
+          and [r.get("extend_hours") for r in ledger() if r["kind"] == "auto_topup"] == [4.0])
+    for k in ("cost_mark", "created_at", "max_hours"):
+        rec.pop(k, None)
+    hdirs = []
+
+    def halt_run(set_at, commits="5", ls_extra=None, reason="owner dead and budget: older than 16.0 h", dirty=""):
+        st = fresh(set_at)
+        pc["n"] = commits
+        sh_out["dirty"] = dirty
+        ap.plan = lambda *a: hdirs.append(a[5]) or good_plan()
+        rec.update(state="HALTED", reason=reason,
+                   binding={"root": str(tmp / "no-tree"), "head": "d" * 40, "branch": "s9/work"})
+        recp.write_text(json.dumps(rec))
+        st["lanes"] = {"L": dict({"status": "RUNNING", "gen": "S90L", "base": "b0", "blank": 0, "arm_fails": 0,
+                                  "mission": "m-aaaaaaaaaaaa", "planned_from": {
+                                      "checkpoint": str(tmp / "ck.md"), "verdict": {"verdict": "AGREE", "notes": "k"}}},
+                                 **(ls_extra or {}))}
+        ap.lane_tick(st, lanes[0], False)
+        return st["lanes"]["L"]
+    L1 = halt_run(96)
+    check("V-AP-HALT-CONTINUE", any(c[0] == "arm" for c in calls) and L1.get("continued_from") == "m-aaaaaaaaaaaa"
+          and L1["status"] == "RUNNING" and any(r["kind"] == "halt_continue" for r in ledger())
+          and "CONTINUATION" in hdirs[-1] and "s9/work" in hdirs[-1]
+          and (L1.get("planned_from") or {}).get("checkpoint") == str(tmp / "ck.md"))
+    L1 = halt_run(97, ls_extra={"continued_from": "m-older"})
+    check("V-AP-HALT-CONTINUE-ONCE", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls))
+    L1 = halt_run(98, commits="0")
+    check("V-AP-HALT-NOCOMMIT", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls))
+    L1 = halt_run(99, ls_extra={"planned_from": None})
+    check("V-AP-HALT-NO-JUDGMENT-PARKS", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls))
+    # review 2026-11-16: M1 an explicit close is the Owner's stop; M2 the one continuation survives a failed arm
+    L1 = halt_run(100, reason="owner close (HALTED): Owner stops this lane")
+    check("V-AP-HALT-OWNER-CLOSE-PARKS", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls))
+    L1 = halt_run(101, dirty=" M .planning/STATE.md")
+    check("V-AP-HALT-RETRY-KEEPS-ONCE", not any(c[0] == "arm" for c in calls) and "continued_from" not in L1
+          and L1["status"] == "RUNNING" and L1.get("arm_fails") == 1)
+    L1 = halt_run(102, ls_extra={"pending_plan": {"for": "continue:m-aaaaaaaaaaaa", "verdict": {"verdict": "AGREE"},
+                                                  "bad": ["EVO RESEARCH: caps 13,000,000 > research generation cap"]}})
+    check("V-AP-HALT-REPLAN-TOLD-WHY", any(c[0] == "arm" for c in calls) and "AUTOPILOT POLICY REFUSED" in hdirs[-1]
+          and "caps 13,000,000" in hdirs[-1] and "CONTINUATION" in hdirs[-1])
+    rec["state"] = "RUNNING"
+    for k in ("reason", "binding"):
+        rec.pop(k, None)
+    check("V-AP-HOLD-SHA", ap.hold_checkpoint({"evidence": "8afbd99bb2a8f512cdc67cc7433a153ae7ca78bd", "residual": "r.md"})
+          == "r.md" and ap.hold_checkpoint({"evidence": "None", "residual": "r.md"}) == "r.md")
+    check("V-AP-HOLD-PATH-KEPT", ap.hold_checkpoint({"evidence": "e/ck.md", "residual": "r.md"}) == "e/ck.md")
+    check("V-AP-HOLD-SHA-NONE", ap.hold_checkpoint({"evidence": "8afbd99"}) == "")
     ap.sh, rec["owner_hold"], rec["authority_tokens"] = keep_sh2, keep_hold, keep_auth
     if keep_auth is None:
         rec.pop("authority_tokens")
@@ -598,6 +674,11 @@ def run_all(ap):
     def git(d, *a):
         return _sp.run(["git", "-C", str(d), *a], capture_output=True, text=True).stdout.strip()
 
+    # 2026-11-16 (stall fixes): every run_all after the first used to die here on FileExistsError, so EVERY mutant was
+    # "killed" by a crash, never by its own test. Each run now starts from clean scratch repos and work trees.
+    for old in tmp.glob("evo_*"):
+        __import__("shutil").rmtree(old, ignore_errors=True)
+
     def mkrepo(name):
         d = tmp / name
         d.mkdir()
@@ -771,7 +852,11 @@ def run_all(ap):
     rec["owner_hold"]["set_at"] = 7901; recp.write_text(json.dumps(rec))
     ap.lane_tick(st, lanes[0], False)
     ap.UNLOCKED_CAP = _keep_u
-    check("V-EVO-BUDGET-PARK-HOLDS-WITHOUT-RELEASE", st["lanes"]["L"]["status"] == "PARKED" and not judged)
+    # the resume itself must not happen (a resumed lane re-parks at the next gate, so status alone cannot see it;
+    # evo_budget_resume_always survived on that until 2026-11-16, hidden while every mutant crashed in mkrepo)
+    aplog = (tmp / "home" / "autopilot.log").read_text() if (tmp / "home" / "autopilot.log").exists() else ""
+    check("V-EVO-BUDGET-PARK-HOLDS-WITHOUT-RELEASE", st["lanes"]["L"]["status"] == "PARKED" and not judged
+          and "budget admits again" not in aplog)
     st = evo_fresh([LA], {"status": "PARKED", "park_kind": "evo", "lever": "lev_a"})
     rec["owner_hold"]["set_at"] = 7902; recp.write_text(json.dumps(rec))
     ap.lane_tick(st, lanes[0], False)
@@ -822,6 +907,21 @@ def run_all(ap):
     check("V-EVO-CHECKPOINT-DIRTY-PARKS", how == "PARK" and git(pr3, "rev-parse", "HEAD") == head3)
     check("V-EVO-CHECKPOINT-ABSENT-PARKS", E.discover_checkpoint(str(pr3), "none.md")[0] == "PARK")
     check("V-EVO-CHECKPOINT-OUTSIDE-PRODUCT-UNTOUCHED", E.discover_checkpoint(str(pr3), str(tmp / "elsewhere.md"))[0] == "OK")
+    # F3 (stall fixes, S63F 2026-11-15): an absolute path inside <product>/.claude/worktrees/<w>/ is not "in the product";
+    # committed there it follows the branch rule (ff), uncommitted it parks without a judge call
+    pr4 = mkrepo("evo_prod4")
+    wt4 = pr4 / ".claude" / "worktrees" / "g4"
+    git(pr4, "worktree", "add", "-q", "-b", "g4", str(wt4))
+    (wt4 / "ev").mkdir()
+    (wt4 / "ev" / "ck.md").write_text("checkpoint\n"); git(wt4, "add", "ev/ck.md"); git(wt4, "commit", "-q", "-m", "ck")
+    (wt4 / "ev" / "loose.md").write_text("x\n")
+    how, note = E.discover_checkpoint(str(pr4), str(wt4 / "ev" / "loose.md"))
+    check("V-AP-CKPT-UNCOMMITTED", how == "PARK" and "CHECKPOINT_UNCOMMITTED" in note and not (pr4 / "ev").exists())
+    how, note = E.discover_checkpoint(str(pr4), str(wt4 / "ev" / "ck.md"))
+    check("V-AP-CKPT-WORKTREE", how == "FF" and (pr4 / "ev" / "ck.md").exists())
+    check("V-AP-CKPT-WORKTREE-REL", (E.worktree_rel(str(pr4), str(wt4 / "ev" / "ck.md")) or ("", ""))[1]
+          == os.path.join("ev", "ck.md") and E.worktree_rel(str(pr4), str(pr4 / "ev" / "ck.md")) is None
+          and E.worktree_rel(str(pr4), "ev/ck.md") is None)
     return [n for n, ok in results if not ok]
 
 
@@ -916,6 +1016,21 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "topup_ignores_certificates": lambda m: setattr(m, "certified_since", lambda p, b: True),
          "topup_unbounded": lambda m: setattr(m, "MAX_TOPUPS", 99),
          "topup_never": lambda m: setattr(m, "cost_topup", lambda *a, **k: None),
+         "topup_progress_ignored": lambda m: setattr(m, "progressed_since", lambda *a: None),
+         "topup_progress_any": lambda m: setattr(m, "progressed_since", lambda *a: "x"),
+         "topup_fingerprint_unchecked": lambda m: setattr(m, "progressed_since", lambda p, ls, rec: (
+             "x" if m.branch_commits(p, ls.get("topup_head") or ls.get("base"), m.gen_head(rec)) else None)),
+         "topup_progress_not_reset": lambda m: setattr(m, "progressed_since", lambda p, ls, rec: (
+             "x" if m.branch_commits(p, ls.get("base"), m.gen_head(rec))
+             and float((rec.get("cost_mark") or {}).get("at") or 0) > 0 else None)),
+         "branch_commits_always": lambda m: setattr(m, "branch_commits", lambda *a: 1),
+         "age_ignored": lambda m: setattr(m, "AGE_MIN_H", -1.0),
+         "age_always": lambda m: setattr(m, "AGE_MIN_H", 99.0),
+         "hold_sha_as_path": lambda m: setattr(m, "hold_checkpoint", lambda h: h.get("evidence") or h.get("residual") or ""),
+         "halt_never_continues": lambda m: setattr(m, "continue_halted", lambda *a: False),
+         "halt_continues_forever": lambda m: setattr(m, "continue_halted", (lambda real: lambda st, lane, ls, *a: (
+             ls.pop("continued_from", None), real(st, lane, ls, *a))[1])(m.continue_halted)),
+         "evo_worktree_path_trusted": _evo_mut(worktree_rel=lambda p, c: None),
          "replan_off": lambda m: setattr(m, "POLICY_REPLANS", 0),
          "replan_blind": lambda m: setattr(m, "replan_feedback", lambda bad, off=None: ""),
          "unpark_rejudges": lambda m: setattr(m, "resumable_plan", lambda ls, key: None),
@@ -949,6 +1064,9 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
          "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
+         "halt_continues_owner_close": lambda m: setattr(m, "owner_closed", lambda rec: False),
+         "halt_once_spent_before_arm": lambda m: setattr(m, "continue_halted", (lambda real: lambda st, lane, ls, mid, *a: (
+             real(st, lane, ls, mid, *a), ls.__setitem__("continued_from", mid))[0])(m.continue_halted)),
          "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),
          "evo_repair_any_instrument": _evo_mut(repair_admits=lambda x, f: True),
          "evo_repair_no_in_place": _evo_mut(repair_in_place=lambda *a, **k: None),
@@ -965,13 +1083,17 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "arm_adds_missing_archive": lambda m: setattr(m, "arm_commit", (lambda real: lambda cwd, paths, msg, dry: real(
              cwd, [".planning/milestones/x-archived-0"] + [p for p in paths if "archived" not in p], msg, dry))(
              m.arm_commit))}
-survivors = []
+survivors, crashed = [], []
 for name, mut in drill.items():
     m = load()
     mut(m)
-    if not guarded(m):
+    red = guarded(m)
+    if not red:
         survivors.append(name)
+    elif red[0].startswith("EXC"):
+        crashed.append(f"{name}: {red[0][:120]}")  # killed by a crash, not by an assertion: reported, never hidden
 print("MUTANTS SURVIVED:", survivors or "none", f"({len(drill) - len(survivors)}/{len(drill)} killed)")
+print("KILLED BY CRASH (not by a check):", crashed or "none")
 ok = not fails and not survivors
 print("AUTOPILOT_GATE_PASS" if ok else "AUTOPILOT_GATE_FAIL")
 sys.exit(0 if ok else 1)

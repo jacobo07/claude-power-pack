@@ -635,7 +635,10 @@ def command_text(lane: dict, name: str, packet: Path, notes: str) -> str:
             f"Then run /gsd-autonomous on the {name} milestone in .planning. {notes} "
             "Freeze in a commit before anything judged on it; gates with planted mutants; micro-commit owned files only and "
             "never stage pre-existing dirty residue; keep a budget.md with measured spend per phase (gsd_mission.py topology "
-            "--mission <this mission>); stop a phase at its cap; no push, no paid API. At the end: gsd_mission.py checkpoint "
+            "--mission <this mission>); stop a phase at its cap; no push, no paid API. Each tool call costs ~120k processed "
+            "tokens (the resident context is re-read): commit evidence as you go, never leave results uncommitted, and "
+            "commit the checkpoint (or a pivot residual) before 75% of the authority is processed. At the end: "
+            "gsd_mission.py checkpoint "
             f"CHECKPOINT_COMPLETE with an evidence checkpoint file for {name} that states new canonical certificates (per "
             "profile, by function identity) and validated capabilities.")
 
@@ -668,44 +671,150 @@ def certified_since(product: str, base) -> bool:
     return bool(base) and _git(product, "diff", "--quiet", str(base), "HEAD", "--", PROGRESS_FILE)[0] == 1
 
 
+# Spec ascension-autopilot-stall-fixes (Owner "y" 2026-11-16, pane 4de9b293). Measured 2026-11-15: 93-97% of what a
+# generation "processes" is cache reads (~120k per tool call), so a 10M generation is cut off before its certification
+# phase and a certificate-only top-up can never fund that phase.
+AGE_MIN_H = 1.5     # F2: a top-up on a mission with less wall than this also extends the wall (one Owner act)
+AGE_EXTEND_H = 4.0
+
+
+def gen_head(rec: dict) -> str | None:
+    """HEAD of the generation's work tree (gsd_mission binding), else the binding's recorded head."""
+    b = rec.get("binding") or {}
+    root = b.get("root")
+    h = _sha(root, "HEAD") if root and Path(root).exists() else None
+    return h or (b.get("head") if SHA_RE.match(str(b.get("head") or "")) else None)
+
+
+def branch_commits(product: str, since, head) -> int:
+    """Commits in since..head (0 when unknown: unknown is never progress)."""
+    if not since or not head or since == head:
+        return 0
+    rc, out = _git(product, "rev-list", "--count", f"{since}..{head}")
+    out = out.strip()
+    return int(out) if rc == 0 and out.isdigit() else 0
+
+
+def progressed_since(product: str, ls: dict, rec: dict) -> str | None:
+    """F1: proven progress since the generation began or the last top-up: >= 1 new commit on the generation branch AND
+    a gsd_mission cost_mark (progress fingerprint moved) after the last top-up. Returns the range text, else None."""
+    since, head = ls.get("topup_head") or ls.get("base"), gen_head(rec)
+    n = branch_commits(product, since, head)
+    if n < 1:
+        return None
+    if float((rec.get("cost_mark") or {}).get("at") or 0) <= float(ls.get("topup_at") or 0):
+        return None
+    return f"{str(since)[:12]}..{str(head)[:12]} ({n} commits)"
+
+
+def hours_left(rec: dict, now: float) -> float:
+    """Wall left before gsd_mission halts the mission on age (its rule: now - created_at - waited_s > max_hours)."""
+    mh = float(rec.get("max_hours") or 24.0)  # gsd_long_run.DEFAULT_MAX_HOURS when the record carries none (review L1)
+    used = now - float(rec.get("created_at") or now) - int(rec.get("waited_s") or 0)
+    return mh - used / 3600
+
+
 def cost_topup(st: dict, lane: dict, ls: dict, mid: str, rec: dict, hold: dict, dry: bool) -> None:
     key = f"{mid}:{hold.get('set_at')}"
     if ls.get("topup_for") == key:
         return
     env, n, ln = lane.get("envelope") or {}, int(ls.get("topups") or 0), lane["name"]
-    rows = ledger_rows()
+    rows, now, basis = ledger_rows(), _now(), None
     if not env.get("owner_turn"):
         why = "the lane has no Owner envelope naming its Owner turn"
     elif n >= MAX_TOPUPS:
         why = f"{n} top-ups already in this generation (max {MAX_TOPUPS})"
-    elif not certified_since(lane["product"], ls.get("base")):
-        why = f"no certificate registered since the generation began ({PROGRESS_FILE} unchanged)"
     else:
-        why = envelope_admits(lane, rows, TOPUP)
-        if not why:
-            why = budget_admits(rows, _now(), TOPUP)
-            if why and not why.startswith(PARK_REASONS):  # the day cap is a wait: decide again on a later tick
-                log(f"{ln}: cost hold on {mid}: top-up waits: {why}")
-                return
+        if certified_since(lane["product"], ls.get("base")):
+            basis = "certificates registered this generation"
+        else:
+            prog = progressed_since(lane["product"], ls, rec)
+            basis = f"proven progress {prog}" if prog else None
+        if not basis:
+            why = (f"no certificate registered since the generation began ({PROGRESS_FILE} unchanged) and no proven "
+                   "progress (a new commit on the generation branch with a moved progress fingerprint)")
+        else:
+            why = envelope_admits(lane, rows, TOPUP)
+            if not why:
+                why = budget_admits(rows, now, TOPUP)
+                if why and not why.startswith(PARK_REASONS):  # the day cap is a wait: decide again on a later tick
+                    log(f"{ln}: cost hold on {mid}: top-up waits: {why}")
+                    return
+    ext = 0.0
+    if not why and hours_left(rec, now) < AGE_MIN_H:  # F2: never spend a top-up on a mission minutes from its wall
+        ext = round(min(AGE_EXTEND_H, (WALL - dt.datetime.fromtimestamp(now, dt.timezone.utc)).total_seconds() / 3600), 1)
+        if ext < 0.5:
+            why = f"mission wall {hours_left(rec, now):.1f} h left and the programme wall is too close to extend it"
+            ledger_add(lane=ln, kind="topup_skipped_age", gen=ls.get("gen"), mission=mid, tokens=0)
     ls["topup_for"] = key
     if why:
         save_state(st)
         owner_queue(ln, f"cost hold on {mid} not topped up: {why}. Hold: {str(hold.get('reason'))[:200]}")
         return
     auth = int(rec.get("authority_tokens") or 0) + TOPUP
-    rc, out = gm("authority", "--mission", mid, "--tokens", str(auth), "--owner-turn", env["owner_turn"], "--reason",
+    args = ["authority", "--mission", mid, "--tokens", str(auth)] + (["--extend-hours", f"{ext:g}"] if ext else [])
+    rc, out = gm(*args, "--owner-turn", env["owner_turn"], "--reason",
                  f"Autopilot top-up {n + 1}/{MAX_TOPUPS}: +{TOPUP:,} inside the {ln} envelope ({env.get('note', '')}); "
-                 "certificates registered this generation", dry=dry)
+                 f"{basis}" + (f"; wall +{ext:g} h ({hours_left(rec, now):.1f} h left)" if ext else ""), dry=dry)
     if rc != 0:
         save_state(st)
         owner_queue(ln, f"top-up of {mid} refused by gsd_mission: {out[-300:]}")
         return
-    ledger_add(lane=ln, kind="auto_topup", gen=ls.get("gen"), mission=mid, tokens=TOPUP, authority=auth)
-    ls.update(topups=n + 1, authority=auth)
+    ledger_add(lane=ln, kind="auto_topup", gen=ls.get("gen"), mission=mid, tokens=TOPUP, authority=auth,
+               basis=basis[:160], extend_hours=ext or None)
+    ls.update(topups=n + 1, authority=auth, topup_at=now, topup_head=gen_head(rec) or ls.get("topup_head"))
     save_state(st)
     rc, out = gm("release", "--mission", mid, dry=dry)
-    log(f"{ln}: cost hold on {mid}: authority -> {auth:,} (top-up {n + 1}/{MAX_TOPUPS}); release rc={rc}")
-    digest(ln, f"TOP-UP {mid}: +{TOPUP:,} -> {auth:,} inside the lane envelope (certificates registered this generation)")
+    log(f"{ln}: cost hold on {mid}: authority -> {auth:,} (top-up {n + 1}/{MAX_TOPUPS}, {basis[:80]})"
+        + (f", wall +{ext:g} h" if ext else "") + f"; release rc={rc}")
+    digest(ln, f"TOP-UP {mid}: +{TOPUP:,} -> {auth:,} inside the lane envelope ({basis})")
+
+
+def continue_halted(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool) -> bool:
+    """F4: a generation that halted without a checkpoint but committed work on its branch is continued ONCE from the
+    judgment it was planned from (2026-11-15: S57F, S56T and S65M left commits that the lane park threw away).
+    False = not continued (the caller parks as before). True = handled: armed, waiting on the day cap, or retrying.
+    Review 2026-11-16 (M1): a mission someone closed on purpose ("owner close ...") is never continued. (M2): the one
+    continuation is spent only when a new generation was actually armed; a transient arm failure or a day-cap wait keeps
+    it, and plan_and_arm's own arm_fails bound still parks a lane that cannot arm."""
+    pf = ls.get("planned_from") or {}
+    if ls.get("continued_from") or not isinstance(pf.get("verdict"), dict) or not pf.get("checkpoint") or owner_closed(rec):
+        return False
+    head = gen_head(rec)
+    n = branch_commits(lane["product"], ls.get("base"), head)
+    if n < 1:
+        return False
+    why = budget_admits(ledger_rows(), _now(), GEN_CAP + 2 * CALL_RESERVE)
+    if why:
+        if why.startswith(PARK_REASONS):
+            return False
+        log(f"{lane['name']}: continuation of {mid} waits: {why}")
+        return True
+    br = (rec.get("binding") or {}).get("branch") or "the generation branch"
+    ledger_add(lane=lane["name"], kind="halt_continue", tokens=0, mission=mid, gen=ls.get("gen"), commits=n, head=head)
+    log(f"{lane['name']}: {mid} ended {rec.get('state')} without a checkpoint with {n} commits on {br}; continuing once")
+    digest(lane["name"], f"CONTINUE {ls.get('gen')} ({mid} {rec.get('state')}: {str(rec.get('reason'))[:200]}): "
+                         f"{n} commits on {br} at {str(head)[:12]}")
+    directive = (f"CONTINUATION of {ls.get('gen')} ({mid} ended {rec.get('state')} with no checkpoint: "
+                 f"{str(rec.get('reason'))[:160]}). Its work is {n} commits on branch {br} at {str(head)[:12]} "
+                 f"(work tree {(rec.get('binding') or {}).get('root')}). Plan to continue that branch: read its budget.md "
+                 "and evidence first, commit anything left uncommitted before new work, do not redo what it proved, "
+                 "and commit the checkpoint before 75% of the caps is processed.")
+    pend = ls.get("pending_plan") or {}
+    if pend.get("for") == f"continue:{mid}" and pend.get("bad"):  # un-parked after a refusal: the planner is told why
+        directive += "\n\n" + replan_feedback(pend["bad"], pend.get("offenders"))
+    plan_and_arm(st, lane, ls, f"continue:{mid}", pf["checkpoint"], lane["product"], dict(pf["verdict"]), directive,
+                 {}, dry)
+    if ls.get("mission") != mid:  # a new generation was armed: the one continuation is spent
+        ls["continued_from"] = mid
+        save_state(st)
+    return True
+
+
+def owner_closed(rec: dict) -> bool:
+    """A mission closed by an explicit close act (gsd_mission close: reason 'owner close (...)'), not one halted by a
+    budget, age, iteration or cost mechanism. Those stops are the Owner's and are never continued."""
+    return str(rec.get("reason") or "").startswith("owner close")
 
 
 def _park(st: dict, ls: dict, lane: str, queue: str, dig: str | None = None, kind: str | None = None) -> None:
@@ -719,8 +828,13 @@ def _park(st: dict, ls: dict, lane: str, queue: str, dig: str | None = None, kin
 
 def hold_checkpoint(hold: dict) -> str:
     """The path a checkpoint hold names: `evidence`, or `residual` for a pivot hold (gsd_mission leaves evidence null
-    there). Owner 2026-11-13 (pane c26eafbf): S36K's METHOD_PIVOT_REQUIRED hold was judged with an empty path."""
-    return hold.get("evidence") or hold.get("residual") or ""
+    there). Owner 2026-11-13 (pane c26eafbf): S36K's METHOD_PIVOT_REQUIRED hold was judged with an empty path.
+    A commit sha (or the string "None") in `evidence` is not a path: 2026-11-15 S58W's hold carried 8afbd99 there and
+    the lane parked CHECKPOINT_ON_BRANCH with its residual unread (spec ascension-autopilot-stall-fixes F3)."""
+    ev = str(hold.get("evidence") or "")
+    if ev == "None" or SHA_RE.match(ev):
+        ev = ""
+    return ev or hold.get("residual") or ""
 
 
 def resumable_plan(ls: dict, key: str) -> dict | None:
@@ -768,6 +882,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             return
         hold = rec.get("owner_hold") or {}
         if rec["state"] in TERMINAL:
+            if ls.get("status") == "RUNNING" and continue_halted(st, lane, ls, mid, rec, dry):
+                return
             return _park(st, ls, lane["name"], f"mission {mid} ended {rec['state']} without a checkpoint hold; lane parked")
         if hold.get("kind") == "cost" and ls.get("status") == "RUNNING":
             return cost_topup(st, lane, ls, mid, rec, hold, dry)
@@ -786,6 +902,10 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
                 return _park(st, ls, lane["name"], note, f"PARKED: {note}", kind="branch")
             if how == "FF":
                 log(f"{lane['name']}: {note}")
+            wr = evolve.worktree_rel(product, checkpoint)
+            if wr:  # F3: judged where its gates run, the product (now holding the branch), not the worker's tree
+                checkpoint = os.path.join(product, wr[1])
+        ls.pop("continued_from", None)  # a checkpoint was reached: a later halt may be continued again
         ls["judged_for"] = key = f"{mid}:{hold.get('set_at')}"
     else:
         pat, product = lane["bootstrap_checkpoint"], lane.get("bootstrap_product", lane["product"])
@@ -968,8 +1088,11 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
     res = arm_generation(st, lane, ls, name, text, notes, phases, caps, dry)
     if res == "OK":
         st["next_gen"] += 1
-        ls.update(status="RUNNING", gen=name, arm_fails=0, topups=0)
-        ls.pop("pending_plan", None)
+        ls.update(status="RUNNING", gen=name, arm_fails=0, topups=0,
+                  planned_from={"checkpoint": checkpoint, "verdict": {k: (str(x)[:1500] if isinstance(x, str) else x)
+                                                                      for k, x in v.items() if k != "_tokens"}})
+        for k in ("pending_plan", "topup_at", "topup_head"):
+            ls.pop(k, None)
         if evo:
             ls["lever"] = ls.pop("next_lever", None) or ls.get("lever")
             if ls.get("mode") == "RESEARCH":

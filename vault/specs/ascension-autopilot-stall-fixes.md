@@ -63,7 +63,8 @@ Before any top-up, the autopilot computes `left_h = max_hours - age`.
 
 ### F3. Checkpoint discovery for worktree paths and sha evidence
 **`hold_checkpoint`:**
-- If `evidence` matches `^[0-9a-f]{7,40}$` or is not an existing path under product or worktree, use `residual`.
+- If `evidence` matches `^[0-9a-f]{7,40}$` or is the string "None", use `residual`. As built, there is no
+  existence check: a path that does not exist still reaches discover_checkpoint, which parks it.
 - If both are unusable, return "", which keeps the existing "names no evidence" park.
 
 **`discover_checkpoint`:** an absolute path under `<product>/.claude/worktrees/<w>/` is rewritten to its path relative
@@ -83,6 +84,17 @@ planner.
   before anything new; checkpoint before 75% of authority."
 
 A second halt without a checkpoint parks as today. A halt with 0 commits also parks as today.
+
+Amendment 2026-11-16, after the pp-code-reviewer pass and field use:
+- A mission closed by an explicit close (`reason` begins "owner close (") is never continued (review M1).
+- The one continuation is spent only when a new generation is actually armed (review M2). A day-cap wait is logged
+  and retried, not parked. A transient arm failure retries under the existing `arm_fails` bound.
+- A continuation un-parked after a policy refusal re-plans with the refusal reasons (`replan_feedback`). Field case:
+  S70F, refused for EVO caps of 13M against a 10M limit.
+- `hours_left` defaults to 24 h, the gsd_long_run default, when a record has no `max_hours` (review L1).
+- The gate's mkrepo now cleans its scratch repos. Before this, every mutant after the first run crashed on
+  FileExistsError, so the earlier "52/52 killed" measured nothing in the EVO section. A real survivor,
+  `evo_budget_resume_always`, was hidden that way. The drill now reports crash-kills separately.
 
 ### F5. The planner and worker prompts price a tool call
 `planner_prompt.md` and the S-phase template state the measured cost: about 120k processed tokens per tool call at the

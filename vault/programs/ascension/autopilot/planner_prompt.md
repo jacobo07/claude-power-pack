@@ -37,6 +37,10 @@ blockers, the ranked structural opportunities, their discriminating experiments 
   condition does not count).
 - Budget: phase caps must sum to <= 25M processed (include ~1.5M closeout in the last phase); fresh model tokens 0 unless a
   pre-registered experiment needs them (<= 1M total, stated as "fresh 0.5M" in that phase).
+- Cost of work (measured 2026-11-15 over 5 generations): 93-97% of processed tokens are cache reads, about 120k per tool
+  call, so 1M of cap buys about 8 tool calls. Size each cap in tool calls, not hopes. Put the checkpoint where it is
+  reached: the generation commits its checkpoint (or a pivot residual) before 75% of the summed caps is processed, and a
+  phase that produces a result commits that result file in the same phase.
 - 2 to 8 phases. Each line: "Phase N: <ID> <title> (cap <X>M): <what, cohort freeze, decision rule, gate tools/test_<name>.py
   with planted mutants>". The last phase re-runs all gates, writes the checkpoint file stating new canonical certificates
   per profile by function identity and validated capabilities, then gsd_mission.py checkpoint CHECKPOINT_COMPLETE.

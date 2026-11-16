@@ -334,9 +334,29 @@ def _git(cwd: str, *args) -> tuple[int, str]:
     return p.returncode, (p.stdout + p.stderr).strip()
 
 
+def worktree_rel(product: str, checkpoint: str):
+    """(tree dir, path inside it) when `checkpoint` is an absolute path under <product>/.claude/worktrees/<w>/, else None.
+    2026-11-15 S63F: such a path sat inside the product dir, so it read as 'in the product' (OK) while the product lacked
+    the branch; the judge found its gates absent (rc=2) and said INCONCLUSIVE."""
+    if not os.path.isabs(checkpoint):
+        return None
+    base = os.path.join(os.path.realpath(product), ".claude", "worktrees") + os.sep
+    p = os.path.realpath(checkpoint)
+    if not p.startswith(base):
+        return None
+    tree, _, rel = p[len(base):].partition(os.sep)
+    return (base + tree, rel) if tree and rel else None
+
+
 def discover_checkpoint(product: str, checkpoint: str, dry: bool = False) -> tuple[str, str]:
     """-> (OK|FF|PARK, note). OK: the checkpoint is in the product. FF: exactly one worktree branch holds it COMMITTED,
-    the product HEAD is its ancestor and the product has no tracked changes -> `merge --ff-only` was run. Otherwise PARK."""
+    the product HEAD is its ancestor and the product has no tracked changes -> `merge --ff-only` was run. Otherwise PARK.
+    A path inside a worktree (worktree_rel) must be committed there, then follows the same branch rule by its rel path."""
+    wr = worktree_rel(product, checkpoint)
+    if wr:
+        if _git(wr[0], "cat-file", "-e", f"HEAD:{wr[1].replace(os.sep, '/')}")[0] != 0:
+            return "PARK", f"CHECKPOINT_UNCOMMITTED: {wr[1]} is in worktree {os.path.basename(wr[0])} but not committed there"
+        checkpoint = wr[1]
     rel = os.path.relpath(checkpoint, product) if os.path.isabs(checkpoint) else checkpoint
     if rel.startswith("..") or os.path.exists(os.path.join(product, rel)):
         return "OK", checkpoint  # in the product, or outside it (no branch to discover): the judge reads it as before
