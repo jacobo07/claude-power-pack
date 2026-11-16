@@ -57,3 +57,21 @@ The live hook path reads the live `~/.claude/skills/claude-power-pack` tree, whi
      empty root); its invariant is now "none reads PASS".
    - measured: family_baselines, family_injection, baseline_generations, tower_ratchet, tower_checks 23/23,
      tower_select, asc_baseline 32/32, taste_absorption: all rc 0.
+
+## 5. Live merge + live wiring (DONE 2026-11-16, pane 58263a19, Owner "y")
+- UKDL split: branch commit 99ccba19 restores `ukdl-universal.md` to 9a55747d bytes; the campaign section waits in
+  `vault/knowledge_base/ukdl_pending/ascension-campaign1-2026-11-16.md` until the other pane's uncommitted edit to
+  that file lands. Overlap with the live dirty set after the split: 0 of 74 files (2823 dirty paths incl. untracked).
+- Live `feature/knowledge-acquisition` fast-forwarded 9a55747d -> 99ccba19 (rc 0); the dirty ukdl file untouched.
+- `~/.claude/hooks/hook-dispatcher.js`: Stop-chain + family_donegate_stop.py, SessionStart-chain +
+  backlog_ledger_refresh.js (backup `~/.claude/backups/bcap-live-20261116/`). `node --check` rc 0.
+- `~/.claude/settings.json`: `design-taste-frontend` name-only override removed (133 overrides left, JSON parses).
+- Observed through the LIVE dispatcher, private state dirs:
+  - SessionStart-chain rc 0 in 1.4 s; the gate spawned a worker (free 4823 MB) -> gate row + lock.
+  - Stop-chain rc 0 in 9.3 s; donegate ledger row `skipped` for a cwd outside web_surface (reach proven).
+  - test_hook_registration_integrity 15/15 on the live install.
+- ! The worker on the LIVE tree was still building after ~13 min (CPU 39 s, below-normal priority), against 118 s
+  in the worktree. Within its 1 h lock; result unobserved at the time of writing.
+- Still open: item 4 (web_surface B7 Taste promotion pair on GEX44). The `web_surface-taste-hard-bans` delta does
+  not exist as data yet (only named in NOTICE.md / taste-absorption.json); `tools/asc_inherit_run.py` is hard-wired
+  to the phase-5 deltas and output dir.
