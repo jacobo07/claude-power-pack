@@ -830,11 +830,19 @@ def hold_checkpoint(hold: dict) -> str:
     """The path a checkpoint hold names: `evidence`, or `residual` for a pivot hold (gsd_mission leaves evidence null
     there). Owner 2026-11-13 (pane c26eafbf): S36K's METHOD_PIVOT_REQUIRED hold was judged with an empty path.
     A commit sha (or the string "None") in `evidence` is not a path: 2026-11-15 S58W's hold carried 8afbd99 there and
-    the lane parked CHECKPOINT_ON_BRANCH with its residual unread (spec ascension-autopilot-stall-fixes F3)."""
+    the lane parked CHECKPOINT_ON_BRANCH with its residual unread (spec ascension-autopilot-stall-fixes F3).
+    "<sha>:<path>" names the path at a commit (2026-11-16 S70W: c235442:evidence/ascension/s70w/checkpoint_s70w.md
+    parked as a path that exists nowhere): the path part is the checkpoint, found on its branch by discovery."""
     ev = str(hold.get("evidence") or "")
+    m = SHA_PATH_RE.match(ev)
+    if m:
+        ev = m.group(1)
     if ev == "None" or SHA_RE.match(ev):
         ev = ""
     return ev or hold.get("residual") or ""
+
+
+SHA_PATH_RE = re.compile(r"^[0-9a-f]{7,40}:(\S.*)$")
 
 
 def resumable_plan(ls: dict, key: str) -> dict | None:

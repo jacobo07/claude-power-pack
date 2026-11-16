@@ -432,6 +432,8 @@ def run_all(ap):
           == "r.md" and ap.hold_checkpoint({"evidence": "None", "residual": "r.md"}) == "r.md")
     check("V-AP-HOLD-PATH-KEPT", ap.hold_checkpoint({"evidence": "e/ck.md", "residual": "r.md"}) == "e/ck.md")
     check("V-AP-HOLD-SHA-NONE", ap.hold_checkpoint({"evidence": "8afbd99"}) == "")
+    check("V-AP-HOLD-SHA-PATH", ap.hold_checkpoint({"evidence": "c235442:evidence/s70w/ck.md", "residual": "r.md"})
+          == "evidence/s70w/ck.md")
     ap.sh, rec["owner_hold"], rec["authority_tokens"] = keep_sh2, keep_hold, keep_auth
     if keep_auth is None:
         rec.pop("authority_tokens")
@@ -1065,6 +1067,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
          "halt_continues_owner_close": lambda m: setattr(m, "owner_closed", lambda rec: False),
+         "hold_sha_path_ignored": lambda m: setattr(m, "SHA_PATH_RE", __import__("re").compile(r"(?!x)x")),
          "halt_once_spent_before_arm": lambda m: setattr(m, "continue_halted", (lambda real: lambda st, lane, ls, mid, *a: (
              real(st, lane, ls, mid, *a), ls.__setitem__("continued_from", mid))[0])(m.continue_halted)),
          "evo_repair_key_free_text": _evo_mut(instrument_key=lambda n: n),
