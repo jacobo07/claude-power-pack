@@ -16,9 +16,9 @@
    (`vault/tower/families/web_surface.json` `skills`, rendered by `modules/gsd_x/cli.py::family_block`).
 2. PENDING (campaign 1, obligation 5): `~/.claude/settings.json` still lists the skill as `name-only`; dropping that
    is a live-settings change made only after this branch is fast-forwarded into the live tree.
-3. PENDING (web_surface B6, not promoted): the done-gate HAS the `taste:<page>` check kind
-   (`modules/tower/checks.py`), but no active baseline generation carries a `taste:` entry yet, so nothing lints the
-   page autonomously. Until B6 lands, the family block says so and tells the builder to run
+3. PENDING (web_surface B7, not promoted; B6 is the 2026-11-16 re-citation generation): the done-gate HAS the
+   `taste:<page>` check kind (`modules/tower/checks.py`), but no active baseline generation carries a `taste:` entry
+   yet, so nothing lints the page autonomously. Until B7 lands, the family block says so and tells the builder to run
    `python -m modules.cdio.taste <page>` itself. The Stop hook `tools/family_donegate_stop.py` (Stop-chain in
    `hooks/hook-dispatcher.js`) already runs the family done-gate at turn end in a session that received a family block
    and stands in a member repo; once B6 is active it blocks a page with a non-waived critical Taste finding.

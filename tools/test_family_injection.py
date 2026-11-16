@@ -83,8 +83,11 @@ def main() -> int:
     try:
         check("V-FINJ-HERMETIC-HOME", Path.home() == Path(home), Path.home())
         fams = sorted(f.id for f in fm.load_families())
-        check("V-FINJ-POPULATION", fams == sorted(PROMPTS) and all(bl.active_entries(f) for f in fams),
-              "4 families, each with an active generation: %s" % fams)
+        # Predeclared subset of the registry: a family registered later is gated by its own suite, not by
+        # absence here (Owner, 2026-11-16; equality failed as soon as a 5th family existed).
+        check("V-FINJ-POPULATION", set(PROMPTS) <= set(fams) and all(bl.active_entries(f) for f in PROMPTS),
+              "the %d predeclared families are registered, each with an active generation: %s"
+              % (len(PROMPTS), fams))
 
         # -- every family, both poles, and the text is the compiler's choice --------
         for fid, (inside, outside) in PROMPTS.items():

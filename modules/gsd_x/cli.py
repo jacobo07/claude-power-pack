@@ -160,7 +160,7 @@ def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
             if skills_of.get(fid):
                 # A family's skills are named here so the prompt that needs them gets them unasked (2026-11-16).
                 # The enforcement claim is computed, never asserted: until an ACTIVE entry carries a `taste:` check
-                # (web_surface B6, not yet promoted) the done-gate does not lint, and saying it does told the model a
+                # (web_surface B7, not yet promoted) the done-gate does not lint, and saying it does told the model a
                 # gate existed that never ran (review of bb4db9f4, M1).
                 gated = any(str(e.get("check") or "").startswith("taste:") for e in active)
                 lines.append("Skills for a %s -- load BEFORE building (Skill tool): %s. For a web page that means: state "

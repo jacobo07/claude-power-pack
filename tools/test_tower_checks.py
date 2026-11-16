@@ -170,10 +170,12 @@ def main() -> int:
             real.extend(bl.active_entries(fam))
         rs = ck.summarize(ck.run_checks(real, root, None))
         print("  real B0 population: %s" % rs)
+        # Since web_surface B5 (campaign 1 phase 5) two entries carry evaluable regex checks; against this empty
+        # root their subject is absent, so they read UNREADABLE -- never PASS. The invariant is the PASS pole.
         _check("V-TCHK-REAL-POPULATION",
-               rs["population"] >= 60 and rs["PASS"] == 0
-               and rs["UNRUNNABLE_PROSE"] + rs["EMPTY"] == rs["population"],
-               "every stored check today is prose or empty; none reads as PASS",
+               rs["population"] >= 60 and rs["PASS"] == 0 and rs["FAIL"] == 0
+               and rs["UNRUNNABLE_PROSE"] + rs["EMPTY"] + rs["UNREADABLE"] == rs["population"],
+               "no stored check reads as PASS against an empty root (prose, empty, or subject absent)",
                rs)
 
         print()

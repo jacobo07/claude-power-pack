@@ -47,3 +47,13 @@ The live hook path reads the live `~/.claude/skills/claude-power-pack` tree, whi
    rules moved to `~/.claude/skills/<rule>/SKILL.md` in the 2026-09-29..10-31 context diet (checked:
    destructive-state-authorization rules/ False, skills/ True). The branch only adds web_surface/B5.json, so this is
    pre-existing. `test_asc_baseline.py` 32/32 on the laptop.
+   RESOLVED 2026-11-16 (pane 58263a19, Owner chose "New generations" and "predeclared subset of registry"):
+   - re-cite generations written through `baselines.write_generation`: persistent_state B1 (14), wii_homebrew B1 (1),
+     web_surface B6 (1). Only origin file/line moved; every quote was re-located verbatim; `verify_chain` ok, 0
+     tampered, 0 regressions; each re-citation recorded in `changes` with reason and authority.
+   - the planned Taste promotion is now **web_surface B7** (B6 is the re-citation).
+   - V-FAMB / V-FINJ-POPULATION: INVALID only when a predeclared family is missing; later families are named as
+     out of scope. V-TCHK-REAL-POPULATION was also stale since B5 (two evaluable regex checks read UNREADABLE on an
+     empty root); its invariant is now "none reads PASS".
+   - measured: family_baselines, family_injection, baseline_generations, tower_ratchet, tower_checks 23/23,
+     tower_select, asc_baseline 32/32, taste_absorption: all rc 0.

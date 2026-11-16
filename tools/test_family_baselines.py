@@ -58,9 +58,16 @@ def main() -> int:
     fams = fm.load_families()
     ids = sorted(f.id for f in fams)
     print("V-FAMB gates -- families loaded: %s" % ids)
-    if ids != sorted(PROMPTS):
-        print("  INVALID: registry %s != predeclared %s" % (ids, sorted(PROMPTS)))
+    # INVALID means a predeclared SUBJECT cannot be visited. A family registered after the predeclaration
+    # (binary_reconstruction, game_mod_fidelity) is not a missing subject: it is named here as out of this file's
+    # scope, and gated by its own suite. Equality made every later family turn this gate INVALID (Owner, 2026-11-16).
+    missing = sorted(set(PROMPTS) - set(ids))
+    if missing:
+        print("  INVALID: predeclared %s missing from registry %s" % (missing, ids))
         return 3
+    later = sorted(set(ids) - set(PROMPTS))
+    if later:
+        print("  not gated by this file (registered after the predeclaration): %s" % later)
 
     for fid, (inside, outside) in PROMPTS.items():
         got_in = dict(fm.classify_prompt(inside, fams))
