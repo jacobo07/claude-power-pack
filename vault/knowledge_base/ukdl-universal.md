@@ -200,6 +200,40 @@ supervisor. Fix: read the predecessor's last reply before any relay; a quota
 refusal holds until its stated reset (or one hour), spending no epoch. CPP `30ccdeb`,
 mutation-drilled. #CROSS-PROJECT
 
+### T-WIN-PS51-GETCONTENT-RAW-READS-ANSI-001
+
+PowerShell 5.1 `Get-Content -Raw` reads BOM-less UTF-8 as the ANSI codepage (cp1252).
+Writing the string back (`Set-Content -Encoding utf8`) double-encodes every accent and
+adds a BOM: "Miércoles" ships as "MiÃ©rcoles". It happened in a save/patch/restore
+mutation test, and the build, 12 gate checks and 16 E2E tests all stayed green: none of
+them read rendered text for mojibake. The existing Woz hint warns about the BOM on
+write, not the ANSI decode on read, which is the destructive half. Fix: never round-trip
+source through Get-Content/Set-Content on 5.1. Use node or python with explicit utf8,
+or restore mutations with `git checkout -- <file>` after committing first. Detect with a
+byte scan for a BOM or U+00C3/U+00C2 followed by U+0080-U+00BF, plus a rendered-text
+assertion. Evidence: El Pavo Real `1754859`, `8c8c9dc`. CLASE 4. #CROSS-PROJECT
+
+### T-TOOL-PAYLOAD-UNICODE-ESCAPES-ARE-DECODED-001
+
+`\uXXXX` sequences typed inside Write/Edit tool payloads reached the file as the literal
+characters. A mojibake detector written as `/\u00C3[\u0080-\u00BF]/ (escapes shown literally here)` then contained the
+bytes it searches for and flagged itself: two identical failures before a byte-level
+look. Fix: when source must stay byte-clean, build such characters at runtime
+(`String.fromCharCode(0xC3)`, `chr(0xC3)`) and verify with a byte scan, not by reading
+the source back in an editor view. Evidence: El Pavo Real `8c8c9dc`. CLASE 2. #CROSS-PROJECT
+
+### PR-LOCALWEB-FACT-LEDGER-GATES-PUBLICATION-001 (CANDIDATE, n=1, scope WEB/HOSPITALITY)
+
+A concrete primitive implementing `rules/generated-content-needs-an-evidence-gate.md` for
+small-business sites. Every business fact lives in one ledger with `estado` + `fuente`.
+The public build throws unless name/address/geo/phone/hours are owner-confirmed and a
+domain is set. Optional unconfirmed facts are omitted with a logged reason. The demo
+renders them with a visible "pendiente" marker plus an owner checklist, and is
+noindex/Disallow. Tested in both directions: three refusals, a confirmed-fixture control
+and a mutation (unfiltered render must go red). Promote to PROCESS only after a second
+local-business site reuses it unchanged. Reference implementation: El Pavo Real
+`src/lib/hechos.ts`, `scripts/test-gate.mjs` (`677d695`).
+
 ### T-STALE-BYTECODE-ACCUSES-A-CORRECT-SUBJECT-001
 
 A mutation whose replacement is the SAME BYTE LENGTH, restored inside the same
