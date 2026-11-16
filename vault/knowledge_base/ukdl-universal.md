@@ -22752,3 +22752,27 @@ Evidence: KSR policy refusals S33K (2026-11-12T09:29:59Z, most likely copied fro
 - TRAP T-BLENDER-ORG-403-001: PROVEN. blender.org/download returns 403 (HTML saved as .zip) to automated clients; download.blender.org/demo/... serves the same asset bundles. Read the licence from the .blend asset metadata, not the docs-site footer (CC-BY-SA there is the website text).
 - TRAP T-TMP-DIS-SHADOWS-STDLIB-001: PROVEN. GEX44 /tmp/dis.py shadows the stdlib; python3 run with cwd=/tmp fails on `import cv2`. Run from ~.
 - HARD (visual domain) confirmed again 2026-11-15: an independent reviewer judged both optimised heads WORSE than the untouched CC0 base in eyes, nose, mouth and profile (lips ahead of the nose tip) while train fell 64%/52% and the held-out metric improved. A row-wise profile distance does not encode ordering (nose tip must be the most forward point). A metric PASS is never an identity claim; the non-builder sheet review is the gate.
+
+- [tooling/powershell:cmd] `ceps_4585b058c19d04ec` -- Tool failure in powershell:cmd: fatal: ambiguous. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:g] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:g: fatal: could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_db07972defb0397a` -- Tool failure in powershell:s: Error 404: Not Found. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:s] `ceps_8a29451f3f55c7b2` -- Tool failure in powershell:s: fatal: detected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:foreach($f] `ceps_ab77c69c44a2937f` -- Tool failure in powershell:foreach($f: Error: Bad GLB: file size doesn't match. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Add-Content] `ceps_48a05e6fc62a1529` -- Tool failure in powershell:Add-Content: Error: "No se puede hacer coincidir el nombre de. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:foreach($t] `ceps_5d28a90f4498a814` -- Before touching powershell:foreach($t, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+## UKDL PROMOTIONS -- Noa generative identity recovery + parked relaunch fix (2026-11-16; mission repo efbbb0e, PP 321ac7e7/4e54aaa7, GEX44 PP 9d929904)
+- HARD-candidate T-OWNER-DECISION-ASK-AUTO-ANSWERED-001: PROVEN + ENFORCED. A worker parked on inputs/OWNER-DECISION-*.md ended its turn asking for it; gate_question had no Owner class for "the Owner's decision", answered RESOLVE_BY_DEFAULT and decision recovery relaunched a worker 5 times (GEX44 m-26ea4de62c50 epochs 11-15) while the mission waited for the Owner. Fix: OWNER_CLASSES gets OWNER_DECISION; regression tools/test_owner_decision_gate.py replays the ledger's launch_cause texts (6/22 before, 22/22 after, mutant 6/22). Rule: a question classifier must treat an explicit ask for the Owner's decision/approval as Owner-class; an answer-by-default may never stand in for the Owner.
+- PROCESS PR-EVALUATE-EXISTING-CANDIDATE-BEFORE-GENERATING-001: OBSERVED (1 case). Before paying for a new generator, push the best artifact you already have through the same gate: the Pixal3D mv3 head (made 2 days earlier, never judged alone) became the best Noa candidate at 0 credits (blind N1 4/4, N2 partial improvement), and the facts in hand (two failed wraps onto that same mesh) decided the next method without any new generation.
+- TRAP T-TIERED-JUDGE-NO-SAVINGS-SUBAGENT-OVERHEAD-001: MEASURED. A "cheap" N1 filter run as a Sonnet subagent cost 88.9k tokens and N2 102.7k (vs ~95k for the old single review): subagent fixed overhead (~85k) dominates image size. A tier saves only when it can KILL before the expensive tier; for a likely pass, go straight to N2. Make N1 deterministic or in-context when a candidate is plausible.
+- TRAP T-README-MIN-VRAM-IS-A-GATE-001: OBSERVED. TRELLIS.2 README states >=24 GB VRAM (A100/H100 verified) and CUDA 12.4; on a 20 GB RTX 4000 + nvcc 12.0 + 38 GB free disk it is ENVIRONMENT BLOCKED before install; its export path also uses nvdiffrast (LIC1: evaluation only). Read the stated minimum before spending an install.
+- TRAP T-PS51-REDIRECT-WRITES-UTF16-PATCH-001: OBSERVED. `git format-patch --stdout > f.patch` in Windows PowerShell 5.1 writes UTF-16; use `git format-patch -o DIR` and scp the file.
+- TRAP T-DIVERGED-HOST-TREES-PATCH-TESTS-001: OBSERVED. The PP trees on the laptop and GEX44 have diverged test files; a laptop patch applied code cleanly but not tests. Ship a PORTABLE regression test that depends only on the module under fix.
