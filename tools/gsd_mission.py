@@ -8699,7 +8699,8 @@ def _cli(argv=None) -> int:
     sessions = host_sessions()
     for m in missions:
         v_, why = liveness(m.get("owner"), sessions)
-        rows.append({"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
+        rows.append({"mission_id": m["mission_id"], "state": m["state"], "display_state": display_state(m),
+                     "epoch": m["epoch"],
                      "iterations": m.get("iterations"), "owner": (m.get("owner") or {}).get("session_id"),
                      "liveness": v_, "evidence": why, "pending": m.get("pending"),
                      "plan": plan_next(m, time.time(), sessions)})
@@ -8734,6 +8735,18 @@ def _cli(argv=None) -> int:
     except Exception as exc:  # noqa: BLE001 -- an unreadable incident store is itself reported
         print(f"ECONOMIC INCIDENTS UNREADABLE: {type(exc).__name__}: {exc}", file=sys.stderr)
     return 0
+
+
+def display_state(rec: dict) -> str:
+    """The label an Owner should read. `state` stays the raw record state (consumers key on it); a non-terminal
+    mission that holds an owner_hold is PARKED, not running (ASC-02: 46 parked holds read `state: RUNNING`)."""
+    st = rec.get("state")
+    if st in TERMINAL or st == "UNREADABLE":
+        return st
+    hold = rec.get("owner_hold")
+    if hold:
+        return f"PARKED:{hold.get('kind') or 'owner'}-hold"
+    return st
 
 
 SWEEP_STALE_S = 900   # 3 missed 5-minute passes
