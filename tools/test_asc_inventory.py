@@ -5,6 +5,7 @@ Run from repo root: python3 tools/test_asc_inventory.py   (exit 0 == PASS)
 from __future__ import annotations
 
 import copy
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -78,6 +79,19 @@ with tempfile.TemporaryDirectory() as t:
     check("seed referenced outside inventory is REFERENCED_ELSEWHERE",
           inv.build(d)["seeds"]["design-index"]["status"] == "REFERENCED_ELSEWHERE")
     (d / "notes.md").unlink()
+    # a nested checkout (worktree: `.git` is a FILE) is another tree; a plain subdirectory is still this one
+    wt = d / ".claude/worktrees/other"
+    wt.mkdir(parents=True)
+    (wt / ".git").write_text("gitdir: /elsewhere\n")
+    (wt / "notes.md").write_text("we should look at design index someday\n")
+    check("seed mentioned only inside a nested checkout stays NOT_OBSERVED",
+          inv.build(d)["seeds"]["design-index"]["status"] == "NOT_OBSERVED")
+    (d / "docs").mkdir(exist_ok=True)
+    (d / "docs/notes.md").write_text("we should look at design index someday\n")
+    check("seed in a plain subdirectory is still REFERENCED_ELSEWHERE",
+          inv.build(d)["seeds"]["design-index"]["status"] == "REFERENCED_ELSEWHERE")
+    (d / "docs/notes.md").unlink()
+    shutil.rmtree(d / ".claude")
 
     # unreadable source is explicit and fails verify
     p = d / "vault/backlog/2026-10-13_bad.md"

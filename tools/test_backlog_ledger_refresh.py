@@ -91,7 +91,7 @@ def test_gate() -> None:
     ok("V-BLR-GATE-LOWMEM", low["action"] == "skip" and low["why"] == "low memory" and gl.exists()
        and '"low memory"' in gl.read_text(encoding="utf-8"), low)
     lock = Path(st, "%s.lock" % d["slug"])
-    lock.write_text("1", encoding="utf-8")
+    lock.write_text("%d %f\n" % (os.getpid(), time.time()), encoding="utf-8")   # a LIVE holder (this process)
     ok("V-BLR-GATE-LOCKED", gate(inside, root, st)["why"] == "worker running")
     old = time.time() - 7200
     os.utime(lock, (old, old))
@@ -117,6 +117,41 @@ def test_gate() -> None:
     failed = gate(inside, root, st)
     ok("V-BLR-ANNOUNCE-FAILURE", "FAILED" in failed["context"] and "boom" in failed["context"]
        and failed["why"] == "fresh", failed)
+
+
+def dead_pid() -> int:
+    p = subprocess.Popen([sys.executable, "-c", "pass"])
+    p.wait()
+    return p.pid
+
+
+def test_reap() -> None:
+    """A worker killed from outside leaves a lock and no row; the gate must turn that into a visible FAILED row."""
+    root = synthetic_root()
+    st = tempfile.mkdtemp(dir=_TMP)
+    inside = {"cwd": os.path.join(root, "sub")}
+    slug = gate(inside, root, st)["slug"]
+    lock, hist = Path(st, "%s.lock" % slug), Path(st, "%s.history.jsonl" % slug)
+    pid = dead_pid()
+    lock.write_text("%d %f\n" % (pid, time.time() - 600), encoding="utf-8")
+    d = gate(inside, root, st)
+    r = rows(st, slug)
+    ok("V-BLR-REAP-ROW", len(r) == 1 and r[0].get("killed") is True and r[0].get("pid") == pid and "error" in r[0], r)
+    ok("V-BLR-REAP-LOCK-GONE", not lock.exists())
+    ok("V-BLR-REAP-ANNOUNCED", "FAILED" in d["context"] and "killed from outside" in d["context"], d["context"])
+    ok("V-BLR-REAP-RATE-LIMITED", d["action"] == "skip" and d["why"] == "fresh", d)   # no respawn loop
+    gl = Path(st, "%s.gate.jsonl" % slug).read_text(encoding="utf-8")
+    ok("V-BLR-REAP-GATE-ROW", '"reaped"' in gl, gl[-300:])
+    # an old dead lock: reaped AND (interval passed) respawned in the same start
+    lock.write_text("%d %f\n" % (pid, time.time() - 90000), encoding="utf-8")
+    hist.unlink()
+    d2 = gate(inside, root, st)
+    ok("V-BLR-REAP-OLD-RESPAWNS", d2["action"] == "spawn" and d2["why"] == "stale" and not lock.exists(), d2)
+    # a live holder is never reaped, whatever its age below the stale bound
+    lock.write_text("%d %f\n" % (os.getpid(), time.time()), encoding="utf-8")
+    n = len(rows(st, slug))
+    ok("V-BLR-REAP-LIVE-UNTOUCHED", gate(inside, root, st)["why"] == "worker running" and lock.exists()
+       and len(rows(st, slug)) == n)
 
 
 def test_worker() -> None:
@@ -147,7 +182,7 @@ def test_wired() -> None:
 
 def main() -> int:
     try:
-        for t in (test_gate, test_worker, test_wired):
+        for t in (test_gate, test_reap, test_worker, test_wired):
             try:
                 t()
             except Exception as exc:  # noqa: BLE001 -- a crashed section is a FAIL, never a skip

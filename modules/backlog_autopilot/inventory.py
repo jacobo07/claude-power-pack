@@ -204,11 +204,22 @@ _SELF = ("vault/programs/ascension/", ".planning/workstreams/ascension/",
          "tools/test_asc_inventory.py")
 
 
-def _grep_refs(root: Path, needles: tuple[str, ...], limit: int = 6) -> list[str]:
+def _grep_refs_multi(root: Path, wanted: dict[str, tuple[str, ...]], limit: int = 6) -> dict[str, list[str]]:
+    """ONE walk answers every seed: name -> first `limit` files (walk order) mentioning any of its needles.
+
+    Measured 2026-11-16 on the live laptop tree: a walk covers ~42k text files (153 MB) and the old code walked once
+    PER unresolved seed, so a refresh was still here after 9 min. The per-seed results are unchanged: each seed still
+    gets its first `limit` hits in the same (now sorted, hence deterministic) walk order."""
     import os
-    hits: list[str] = []
+    hits: dict[str, list[str]] = {k: [] for k in wanted}
+    open_ = {k for k in wanted}
+    if not open_:
+        return hits
     for dp, dn, fn in os.walk(root):
-        dn[:] = [d for d in dn if d not in _SKIP_DIRS]
+        # A subdirectory with its own `.git` (dir or worktree FILE) is another checkout, not this tree: the live PP
+        # tree holds 24 of them under .claude/worktrees, so walking them read ~25 repo copies and let another
+        # branch's copy answer REFERENCED_ELSEWHERE.
+        dn[:] = sorted(d for d in dn if d not in _SKIP_DIRS and not os.path.lexists(os.path.join(dp, d, ".git")))
         for n in sorted(fn):
             p = Path(dp, n)
             r = p.relative_to(root).as_posix()
@@ -220,11 +231,18 @@ def _grep_refs(root: Path, needles: tuple[str, ...], limit: int = 6) -> list[str
                 low = p.read_text(encoding="utf-8", errors="ignore").lower()
             except OSError:
                 continue
-            if any(x in low for x in needles):
-                hits.append(r)
-                if len(hits) >= limit:
-                    return hits
+            for k in list(open_):
+                if any(x in low for x in wanted[k]):
+                    hits[k].append(r)
+                    if len(hits[k]) >= limit:
+                        open_.discard(k)
+            if not open_:
+                return hits
     return hits
+
+
+def _grep_refs(root: Path, needles: tuple[str, ...], limit: int = 6) -> list[str]:
+    return _grep_refs_multi(root, {"_": needles}, limit)["_"]
 
 
 def resolve_seeds(recs: list[dict], root: Path) -> dict[str, dict]:
@@ -232,15 +250,19 @@ def resolve_seeds(recs: list[dict], root: Path) -> dict[str, dict]:
     NOT_OBSERVED means 'not seen by this instrument on this plane', never ABSENT."""
     hay = [(r, (r["title"] + " " + r["source"]).lower()) for r in recs]
     res = {}
+    unresolved = {}
     for name, needles in SEEDS.items():
         hits = sorted({r["source"] for r, h in hay if any(n in h for n in needles)})
         if hits:
             res[name] = {"status": "IN_INVENTORY", "sources": hits[:12], "n_sources": len(hits)}
-            continue
-        refs = _grep_refs(Path(root), needles)
+        else:
+            unresolved[name] = needles
+    refs_of = _grep_refs_multi(Path(root), unresolved)
+    for name in unresolved:
+        refs = refs_of[name]
         res[name] = {"status": "REFERENCED_ELSEWHERE" if refs else "NOT_OBSERVED",
                      "sources": refs, "n_sources": len(refs)}
-    return res
+    return {k: res[k] for k in SEEDS}
 
 
 def build(root: Path) -> dict:

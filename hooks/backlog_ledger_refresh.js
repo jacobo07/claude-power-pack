@@ -72,6 +72,35 @@ function gateRow(dir, slug, row) {
   try { fs.appendFileSync(path.join(dir, `${slug}.gate.jsonl`), JSON.stringify(row) + '\n'); } catch (_) { /* noop */ }
 }
 
+function pidAlive(pid) {
+  try { process.kill(pid, 0); return true; } catch (e) { return !!(e && e.code === 'EPERM'); }
+}
+
+/**
+ * A worker killed from outside (TerminateProcess, OOM, a reaped process tree) runs neither its except nor its
+ * finally: no history row, lock left behind. Observed 2026-11-16 (live tree, pid 33948: lock from 19:12, no row).
+ * Without this, the next start reads "worker running" for an hour and then "never refreshed", and the failure is
+ * invisible. A lock whose pid is gone becomes a FAILED row dated at the lock, so it is announced and rate-limited.
+ */
+function reapDeadWorker(dir, slug, hist, alive) {
+  const lock = path.join(dir, `${slug}.lock`);
+  let text;
+  try { text = fs.readFileSync(lock, 'utf8'); } catch (_) { return false; }
+  const [pidS, tsS] = text.trim().split(/\s+/);
+  const pid = Number(pidS);
+  if (!Number.isInteger(pid) || pid <= 0 || alive(pid)) return false;
+  let ts = Number(tsS);
+  if (!Number.isFinite(ts) || ts <= 0) { try { ts = fs.statSync(lock).mtimeMs / 1000; } catch (_) { ts = Date.now() / 1000; } }
+  const row = { ts, slug, head: null, killed: true, pid,
+    error: `worker pid ${pid} died without a result (no history row, lock left): killed from outside` };
+  try {
+    fs.appendFileSync(hist, JSON.stringify(row) + '\n');
+    fs.unlinkSync(lock);
+  } catch (_) { return false; }
+  gateRow(dir, slug, { ts: Date.now() / 1000, decision: 'reaped', pid, started: ts });
+  return true;
+}
+
 /** The whole decision, pure enough to test: {action: 'spawn'|'skip', why, context, slug, dir}. */
 function decide(payload, opts = {}) {
   const env = opts.env || process.env;
@@ -90,7 +119,9 @@ function decide(payload, opts = {}) {
   const slug = slugOf(root);
   Object.assign(out, { slug, dir });
 
-  const rows = readRows(path.join(dir, `${slug}.history.jsonl`));
+  const hist = path.join(dir, `${slug}.history.jsonl`);
+  reapDeadWorker(dir, slug, hist, opts.alive || pidAlive);
+  const rows = readRows(hist);
   const marker = path.join(dir, `${slug}.announced`);
   const last = rows[rows.length - 1];
   if (last) {

@@ -61,6 +61,26 @@ presence, not reconciliation.
 - Neighbours: test_hook_registration_integrity 15/15, test_floor_regression_gate 70/70. test_kresume_autotype 30/35
   fails identically on the committed control d3840f07 without this change (pre-existing, not caused here).
 
+## Live-tree incident and fix (2026-11-16, same pane)
+- Observed: the first LIVE-tree worker (pid 33948) was still building after 30 min, then vanished with no history row
+  and its lock left behind. A kill from outside runs neither `except` nor `finally`, so the failure was invisible: the
+  gate would have said "worker running" for an hour, then "never refreshed".
+- Cause of the slowness (faulthandler stack dumps every 60 s, two probes > 540 s): `inventory._grep_refs`, once per
+  unresolved seed, walked the WHOLE root, including 24 nested PP worktrees under `.claude/worktrees` (each with its own
+  `.git`), so roughly 25 repo copies, read in full, per seed. It also let another branch's copy answer
+  REFERENCED_ELSEWHERE.
+- Fix 1 (`modules/backlog_autopilot/inventory.py`): a subdirectory holding `.git` is another checkout and is skipped;
+  every unresolved seed is answered in ONE sorted walk (`_grep_refs_multi`). Old vs new on the worktree: identical
+  statuses and sources, 80.4 s -> 3.7 s. LIVE tree, full build: 318 s (inventory 277, ledger 41), VERIFY PASS,
+  RECONCILIATION 400/542 (the live tree holds more obligation files than the worktree's 472).
+  V-ASC-INV: nested checkout stays NOT_OBSERVED (fails against the unfixed module), plain subdir still found.
+- Fix 2 (gate): a lock whose pid is no longer alive becomes a history row `{killed: true, error: ...}` dated at the
+  lock, the lock is removed and a `reaped` gate row written; the next start announces it as FAILED and the interval
+  rate-limits it (no respawn loop). Replayed on the real incident state: announced "worker pid 33948 died without a
+  result ... killed from outside", no spawn. V-BLR 25/25 (7 new REAP checks, including a live holder left untouched).
+- Not established: WHAT killed pid 33948 (no OS evidence collected). The fix makes the next one visible; it does not
+  name the killer.
+
 ## Rollback
 `CPP_BACKLOG_REFRESH=off` (per process), or delete the one SessionStart-chain line. State lives only under
 `~/.claude/state/backlog_ledger/`; deleting that directory loses nothing that the tracked ledger does not hold.
