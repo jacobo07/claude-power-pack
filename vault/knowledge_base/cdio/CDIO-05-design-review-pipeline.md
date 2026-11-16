@@ -289,3 +289,47 @@ located, measured, and reproducible — and whether every clean pass is honestly
 clean pass. This is the discipline that lets the rest of the Power Pack trust a
 CDIO verdict the way it trusts a test result: as evidence, not as an opinion with
 a number attached.
+
+## Taste pre-flight lens (render) — absorbed design-taste-frontend, 2026-11-16
+
+Applies to landing pages, portfolios and redesigns (the skill's own scope; dashboards, data tables, wizards,
+editors, native and realtime collab are out of scope). Source: `vendor/skills/design-taste-frontend/SKILL.md` (MIT,
+Leonxlnx). Every item of that skill has a destination in `vault/knowledge_base/cdio/taste-absorption.json`; the
+STATIC half is code (`modules/cdio/taste.py`, done-gate kind `taste:<file>`), and is NOT re-judged here. This lens is
+the half that needs the rendered page: open it at desktop (1280+) and phone (390) widths, in light AND dark scheme,
+and judge each item below as a finding with an observed value (a screenshot region, a measured line count, a
+contrast ratio). A failing item is a `major` finding; a contrast failure is `critical` (an accessibility floor).
+
+| Pre-Flight item (skill §14) | What to observe on the render |
+|---|---|
+| Page Theme Lock | one theme across all sections; no section flips light/dark mid-page |
+| Color Consistency Lock | one accent colour, identical in every section |
+| Shape Consistency Lock | one corner-radius system, or a documented per-component rule followed everywhere |
+| Button Contrast Check | every CTA label ≥ 4.5:1 (≥ 3:1 at 18px+) against its own background, both schemes |
+| CTA Button Wrap | no CTA label wraps to 2+ lines at desktop |
+| Form Contrast Check | inputs, hint text, focus rings, labels, errors ≥ AA against the section |
+| Italic descender clearance | italic display words with y g j p q are not clipped (leading ≥ 1.1 plus reserve) |
+| Hero fits the viewport | headline ≤ 2 lines, subtext ≤ 20 words and ≤ 4 lines, CTA visible without scroll |
+| Hero top padding | hero content does not float halfway down the viewport (≤ ~6rem top padding) |
+| Hero stack discipline | ≤ 4 text elements; no tagline under CTAs, no trust micro-strip inside the hero |
+| Split-Header Ban | no "big headline left + small explainer right" section headers |
+| Zigzag Alternation Cap | no 3+ consecutive image/text split sections |
+| Logo wall = logo only | no category labels under logos (and the logos are REAL customers: CONFLICT rule) |
+| Bento Background Diversity | ≥ 2-3 cells carry real visual variation |
+| Navigation on ONE line | desktop nav on one line, height ≤ 80px |
+| Section-Layout-Repetition | no layout family used twice; ≥ 4 families over 8 sections |
+| Bento has rhythm AND exact cell count | N items → N cells, no empty cell |
+| Long lists use the right UI component | no > 5-item default bullet / divide-y list |
+| No pills/labels overlaid on images | no tags printed over photos |
+| No photo-credit captions as decoration | credits only for real photographers |
+| No micro-meta-sentences | no clutter sentence under section eyebrows |
+| No decoration text strip at hero bottom | no `BRAND. MOTION. SPATIAL.`-style strip |
+| No floating top-right sub-text | no orphan corner paragraph in section headers |
+| No scoring/progress bars with filled background tracks | no dashboard-style comparison bars on a landing |
+| No locale / city-name / time / weather strips | unless the brief is genuinely place/time-zone driven |
+| No decorative dots | coloured dots only for real semantic state |
+| No `border-t` + `border-b` on every row | long lists/spec tables are not hairlined on every row |
+| Quotes ≤ 3 lines | quote bodies ≤ 3 lines with name + role attribution |
+| Mobile collapse | every multi-column layout collapses explicitly under 768px |
+| Cards omitted | cards only where elevation carries hierarchy |
+| Core Web Vitals | LCP < 2.5s, INP < 200ms, CLS < 0.1 measured (Lighthouse), not assumed |

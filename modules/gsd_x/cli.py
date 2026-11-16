@@ -114,7 +114,9 @@ def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
         from modules.tower import baselines as bl, families as fm, select as sel
         sid = str(payload.get("session_id") or payload.get("sessionId") or "")
         blocks = []
-        for fid, hits in fm.classify_prompt(prompt, families):
+        fams = families if families is not None else fm.load_families()
+        skills_of = {f.id: list(getattr(f, "skills", []) or []) for f in fams}
+        for fid, hits in fm.classify_prompt(prompt, fams):
             gens = bl.generations(fid, root)
             active = bl.active_entries(fid, root)
             if not gens or not active:
@@ -152,6 +154,13 @@ def family_block(prompt: str, payload: dict, families=None, root=None) -> str:
                 lines.append("Not shown (prompt ceiling), judged anyway -- READ them before building: "
                              "`python \"%s\" rule %s --deferred` (ids: %s). Until read, the done-gate reports each "
                              "as KNOWLEDGE UNMET." % (fb.as_posix(), fid, ", ".join(str(e.get("id")) for e in s.deferred)))
+            if skills_of.get(fid):
+                # A family's skills are named here so the prompt that needs them gets them unasked (2026-11-16).
+                lines.append("Skills for a %s -- load BEFORE building (Skill tool): %s. For a web page that means: state "
+                             "the one-line Design Read first, then build to the skill's Pre-Flight; its static half is "
+                             "judged by the done-gate (`taste:` checks)." % (fid, ", ".join("`%s`" % k for k in skills_of[fid])))
+            lines.append("At turn end the Stop hook runs this done-gate on the session's repo and BLOCKS the turn on any "
+                         "VIOLATED entry; to declare one inapplicable write `NO APLICA: <entry-id>: <reason>` in your reply.")
             blocks.append("\n".join(lines))
         return "\n\n".join(blocks)
     except Exception:                                   # noqa: BLE001
@@ -189,6 +198,9 @@ def main() -> int:
     prompt = ""
     payload: dict = {}
     try:
+        # A UTF-8 BOM (PowerShell 5.1 pipes add one) made json.loads fail and the run record NO_PROMPT with empty
+        # stdout -- indistinguishable from "nothing to say" (measured 2026-11-16, campaign 1 laptop step 3).
+        raw = raw.lstrip("﻿")
         payload = json.loads(raw) if raw.strip() else {}
         # The harness spells it `prompt`; accept the two other spellings seen
         # across hosts rather than returning silence on a rename.

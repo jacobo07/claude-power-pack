@@ -296,6 +296,12 @@ const CHAIN_MAP = {
     // Wired 2026-07-20 (PP audit). Was built + documented as enforcing
     // HR-OUTPUT-001 but registered nowhere. Advisory only, block:false.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/output_contract_stop.js', timeoutMs: 8000 },
+    // Family done-gate at turn end (2026-11-16, Owner "go ahead, corrige todo"). The family block told the builder
+    // to run /family-done-gate and nothing ran it. Acts ONLY in a session that was shown a family block, blocks
+    // ONLY on a VIOLATED (evaluable) entry, once per violated set, never under stop_hook_active; NO APLICA lines in
+    // the reply are honoured; every judgement ledgered to state/tower/donegate_stop.jsonl. Fail-open on error.
+    // Kill switch: CPP_FAMILY_DONEGATE=off. Gate: tools/test_taste_absorption.py (V-TASTE-STOP-*).
+    { exe: PY_EXE, script: '../skills/claude-power-pack/tools/family_donegate_stop.py', timeoutMs: 8000 },
     // ADS auto-documentation (BL-ADS-001). Reads cwd from the Stop JSON,
     // diffs the working tree, writes docs/{prd,arch,constitution,changelog}
     // for CREATED/UPDATED modules. NEVER stages/commits; fail-open (always

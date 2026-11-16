@@ -14,6 +14,9 @@ Grammar (`<kind>:<argument>`, kind is a bare lowercase word):
     regex:<relpath>::<pattern>   the pattern occurs in the file
     registry:<verifier-id>       a verifier with that id is registered
     test:<relpath>               the test file exists
+    taste:<relpath>              modules.cdio.taste lints the page (and the local CSS/JS it
+                                 references): PASS when no non-waived critical finding exists.
+                                 Static and read-only like regex -- it parses, never executes.
 
 Two families of answer, deliberately never merged:
 
@@ -50,7 +53,7 @@ ERROR = "ERROR"
 
 OUTCOMES = (PASS, FAIL, DELEGATED, UNRUNNABLE_PROSE, EMPTY, MALFORMED,
             UNREADABLE, REFUSED_PATH, ERROR)
-STATIC_KINDS = ("file", "glob", "regex")
+STATIC_KINDS = ("file", "glob", "regex", "taste")
 DELEGATED_KINDS = ("registry", "test")
 _KIND = re.compile(r"^([a-z]+):(.*)$", re.S)
 
@@ -134,6 +137,18 @@ def _evaluate(kind: str, arg: str, root: str, registry: str | None) -> tuple:
         except OSError as exc:
             return (UNREADABLE, "subject unreadable: %s" % type(exc).__name__)
         return (PASS, "pattern found") if rx.search(text) else (FAIL, "pattern absent")
+    if kind == "taste":
+        full = _inside(root, arg)
+        if full is None:
+            return (REFUSED_PATH, "path leaves the repo root: %s" % arg)
+        if not os.path.isfile(full):
+            return (UNREADABLE, "subject unreadable: %s does not exist" % arg)
+        from modules.cdio import taste as _taste
+        rep = _taste.lint(full)
+        if rep.blocking:
+            return (FAIL, "taste blocking: %s" % ", ".join(rep.blocking))
+        waived = sorted(rep.waived)
+        return (PASS, "taste: no blocking finding" + (" (waived: %s)" % ", ".join(waived) if waived else ""))
     if kind == "glob":
         if _inside(root, arg.replace("*", "x").replace("?", "x")) is None:
             return (REFUSED_PATH, "pattern leaves the repo root: %s" % arg)

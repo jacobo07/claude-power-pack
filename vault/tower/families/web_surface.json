@@ -6,6 +6,7 @@
                "next.js", "nextjs", "astro", "dominio",
                "shopify", "tienda online", "storefront", "ficha de producto"],
   "anti_triggers": ["wii", "libogc", "servidor de minecraft", "plugin de paper"],
+  "skills": ["design-taste-frontend"],
   "repo_markers": [
     {"file": "next.config.js"}, {"file": "next.config.mjs"}, {"file": "next.config.ts"},
     {"file": "astro.config.mjs"}, {"file": "vercel.json"}

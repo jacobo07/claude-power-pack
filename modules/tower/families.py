@@ -52,6 +52,10 @@ class Family:
     # optionally with "contains": [substrings, any of which must appear].
     repo_markers: list = field(default_factory=list)
     delegate: str = ""          # e.g. "family_scan" for persistent_state
+    # Skills a builder of this family loads BEFORE building (names under ~/.claude/skills, vendored under
+    # vendor/skills). The family block names them, so a skill reaches the prompt that needs it without anyone
+    # remembering to ask (2026-11-16, Taste Skill absorption).
+    skills: list = field(default_factory=list)
 
 
 def _fold(s: str) -> str:
@@ -76,7 +80,8 @@ def load_families(directory: str | None = None) -> list:
                           triggers=list(raw.get("triggers") or []),
                           anti_triggers=list(raw.get("anti_triggers") or []),
                           repo_markers=list(raw.get("repo_markers") or []),
-                          delegate=str(raw.get("delegate") or "")))
+                          delegate=str(raw.get("delegate") or ""),
+                          skills=[str(s) for s in (raw.get("skills") or []) if str(s).strip()]))
     return out
 
 
