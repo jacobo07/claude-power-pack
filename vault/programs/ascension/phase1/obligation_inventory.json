@@ -11,12 +11,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccr-v2-enforcement-2026-10-11.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCR v2 \u2014 from shadow to engine-level enforcement (Master Plan, 2026-10-11)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCR v2 \u2014 from shadow to engine-level enforcement (Master Plan, 2026-10-11)"
   },
@@ -71,12 +71,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/gap-discovery-2026-07-30.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Empirical Gap Register (targeted pass)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Empirical Gap Register (targeted pass)"
   },
@@ -451,12 +451,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/e-passes-audit-2026-07-29.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "E1-E5 \u2014 the boundary audit the charter never ran"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "E1-E5 \u2014 the boundary audit the charter never ran"
   },
@@ -531,12 +531,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/cpp-evc-master-plan-2026-10-15.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CPP global execution optimization (EVC) \u2014 master plan"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CPP global execution optimization (EVC) \u2014 master plan"
   },
@@ -631,12 +631,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/kclaude-new-session-speed-2026-07-01.md",
-     "state": "UNKNOWN",
+     "state": "RESOLVED",
      "title": "kClaude: New Session on Launch + Startup < 3s -- 2026-07-01"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "RESOLVED"
    ],
    "title": "kClaude: New Session on Launch + Startup < 3s -- 2026-07-01"
   },
@@ -771,12 +771,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/cognitive-control-plane-2026-10-02.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Cognitive Control Plane \u2014 ULTRA-PLAN (2026-10-02)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Cognitive Control Plane \u2014 ULTRA-PLAN (2026-10-02)"
   },
@@ -951,12 +951,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/pane-map-versioning-2026-07-06.md",
-     "state": "UNKNOWN",
+     "state": "RESOLVED",
      "title": "Pane Map Versioning + Workspace Session Registry -- Plan (backup)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "RESOLVED"
    ],
    "title": "Pane Map Versioning + Workspace Session Registry -- Plan (backup)"
   },
@@ -1211,12 +1211,12 @@
      "kind": "audit",
      "ref": "",
      "source": "vault/audits/ram-regression-investigation-2026-06-08.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "RAM Regression Investigation \u2014 FASE -1 Evidence"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "RAM Regression Investigation \u2014 FASE -1 Evidence"
   },
@@ -1231,12 +1231,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ce-a4-estate-rearm-2026-10-08.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CE Amendment A4 -- estate rearm: stop the bleeding, migrate, self-deflate"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CE Amendment A4 -- estate rearm: stop the bleeding, migrate, self-deflate"
   },
@@ -1291,12 +1291,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/mission-econ-repair-20261017.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Mission economics repair + ORCA DWS rows 70/65 self-host canary (2026-10-17)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Mission economics repair + ORCA DWS rows 70/65 self-host canary (2026-10-17)"
   },
@@ -1391,12 +1391,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/self-governing-mission-runtime-plan-2026-10-18.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Self-governing mission runtime: plan from the TB-FULL stress test"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Self-governing mission runtime: plan from the TB-FULL stress test"
   },
@@ -1451,12 +1451,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/uceimr-corpus-2026-08-04.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "UCEIMR \u2014 Mechanism-Level Corpus Boundary Audit"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "UCEIMR \u2014 Mechanism-Level Corpus Boundary Audit"
   },
@@ -1511,12 +1511,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/egcc-corpus-2026-08-06.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "EGCC \u2014 Phase 0 Ownership Audit"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "EGCC \u2014 Phase 0 Ownership Audit"
   },
@@ -1551,12 +1551,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/r2-failure-recompile-2026-10-16.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "R2 failure causality, capital deflation and chain recompile (tennis-rf)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "R2 failure causality, capital deflation and chain recompile (tennis-rf)"
   },
@@ -1731,12 +1731,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccr-v3-long-horizon-text-2026-10-12.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCR v3: long-horizon textual rent, one-read admission, non-convergence (2026-10-12)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCR v3: long-horizon textual rent, one-read admission, non-convergence (2026-10-12)"
   },
@@ -1931,12 +1931,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccr-v4-boundary-cost-2026-10-12.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCR v4: Cognitive Boundary Compiler, so every model boundary has a cost contract (2026-10-12)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCR v4: Cognitive Boundary Compiler, so every model boundary has a cost contract (2026-10-12)"
   },
@@ -2031,12 +2031,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/dataset-first-protocol-2026-07-12.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Dataset First Protocol (DFP) \u2014 DISCOVERY REPORT + STOP #1"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Dataset First Protocol (DFP) \u2014 DISCOVERY REPORT + STOP #1"
   },
@@ -2191,12 +2191,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/recon-factory-locality-routing-2026-10-15.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Reconstruction Factory: locality routing + tennis-rf continuation (Stage A then B)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Reconstruction Factory: locality routing + tennis-rf continuation (Stage A then B)"
   },
@@ -2471,12 +2471,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/session-safety-global-2026-05-22.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Session Safety Global + Bulletproof"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Session Safety Global + Bulletproof"
   },
@@ -2511,12 +2511,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/meta-systems-runtime-2026-07-10.md",
-     "state": "UNKNOWN",
+     "state": "RESOLVED",
      "title": "Universal Meta-Systems Runtime \u2014 Architecture Decision (STOP #1 backup)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "RESOLVED"
    ],
    "title": "Universal Meta-Systems Runtime \u2014 Architecture Decision (STOP #1 backup)"
   },
@@ -2551,12 +2551,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/amcr-mission-continuity-20261015.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "AMCR \u2014 Autonomous Mission Continuity & Recovery (master plan)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "AMCR \u2014 Autonomous Mission Continuity & Recovery (master plan)"
   },
@@ -2591,12 +2591,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ce-presence-contract-2026-10-07.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CE Presence Contract: absent configuration resolves to the certified baseline, never to the host maximum"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CE Presence Contract: absent configuration resolves to the certified baseline, never to the host maximum"
   },
@@ -2731,12 +2731,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/re-baseline-compendium-2026-07-26.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "RE Baseline Compendium \u2014 Source Map, Evidence Ledger, Overlap Audit, Revised Plan"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "RE Baseline Compendium \u2014 Source Map, Evidence Ledger, Overlap Audit, Revised Plan"
   },
@@ -2771,12 +2771,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccn-concurrency-neutrality-2026-10-24.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCN: Cognitive Concurrency Neutrality. Master Plan (Reality Delta 2026-10-24)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCN: Cognitive Concurrency Neutrality. Master Plan (Reality Delta 2026-10-24)"
   },
@@ -2891,12 +2891,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/predictive-governance-2026-08-10.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Phase 0 \u2014 corpus mining"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Phase 0 \u2014 corpus mining"
   },
@@ -2991,12 +2991,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/d12b-progress-2026-10-14.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "D12b progress (2026-10-14) -- stopped by SESSION BUDGET BREAKER after read-only orientation, no edits made"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "D12b progress (2026-10-14) -- stopped by SESSION BUDGET BREAKER after read-only orientation, no edits made"
   },
@@ -3071,12 +3071,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/kclaude-cursor-profile-2026-07-01.md",
-     "state": "UNKNOWN",
+     "state": "RESOLVED",
      "title": "kClaude Cursor Profile + \"Last session\" Routing -- 2026-07-01"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "RESOLVED"
    ],
    "title": "kClaude Cursor Profile + \"Last session\" Routing -- 2026-07-01"
   },
@@ -3231,12 +3231,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccr-v2-addendum-2026-10-11.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCR v2 \u2014 addendum (2026-10-11 22:20)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCR v2 \u2014 addendum (2026-10-11 22:20)"
   },
@@ -3451,12 +3451,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/context-rent-observatory-t3-2026-10-26.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Context Rent Observatory, tranche 3: the top-level boot floor"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Context Rent Observatory, tranche 3: the top-level boot floor"
   },
@@ -3511,12 +3511,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/build-session-resilience-2026-06-27.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Build Session Resilience OS (G1\u2013G5) \u2014 IMPLEMENTATION READINESS REPORT + STOP #1"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Build Session Resilience OS (G1\u2013G5) \u2014 IMPLEMENTATION READINESS REPORT + STOP #1"
   },
@@ -3651,12 +3651,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ucr-cif-compendium-2026-08-25.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "UCR-CIF Compendium \u2014 Ultra-Plan"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "UCR-CIF Compendium \u2014 Ultra-Plan"
   },
@@ -3691,12 +3691,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccp-s16-longitudinal-economics-2026-10-03.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCP \u00a716: longitudinal economics -- replay the existing rollover policy on measured costs (pane da)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCP \u00a716: longitudinal economics -- replay the existing rollover policy on measured costs (pane da)"
   },
@@ -3971,12 +3971,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/memory-audit-2026-08-09.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Phase 0 \u2014 Reality scan"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Phase 0 \u2014 Reality scan"
   },
@@ -4111,12 +4111,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/global-prefix-floor-2026-11-02.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Global Prefix Floor (GPF): plan (recovery copy; the inline chat plan is authoritative)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Global Prefix Floor (GPF): plan (recovery copy; the inline chat plan is authoritative)"
   },
@@ -4211,12 +4211,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/uceimr-expansion-2026-08-04.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "UCEIMR Sprint 2 \u2014 expansion attempt and gap discovery"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "UCEIMR Sprint 2 \u2014 expansion attempt and gap discovery"
   },
@@ -4251,12 +4251,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/graphify-kernel-datasets-2026-07-03.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Graphify Intelligence Kernel \u2014 Knowledge Navigation Kernel \u2014 PLAN OF RECORD (REVISED)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Graphify Intelligence Kernel \u2014 Knowledge Navigation Kernel \u2014 PLAN OF RECORD (REVISED)"
   },
@@ -4411,12 +4411,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccp-s14-identity-horizon-displacement-2026-10-02.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCP \u00a714 \u2014 identity sweep, rollback horizon, displacement (pane claude-power-pack-da)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCP \u00a714 \u2014 identity sweep, rollback horizon, displacement (pane claude-power-pack-da)"
   },
@@ -4491,12 +4491,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/egcc-expansion-2026-08-07.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "EGCC Expansion \u2014 Sprint 1"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "EGCC Expansion \u2014 Sprint 1"
   },
@@ -4551,12 +4551,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ukr-runtime-2026-07-30.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CPP-UKR Runtime Residue \u2014 Overlap Matrix (candidates A\u2013R)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CPP-UKR Runtime Residue \u2014 Overlap Matrix (candidates A\u2013R)"
   },
@@ -5151,12 +5151,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/kclaude-startup-restart-fix-2026-07-01.md",
-     "state": "UNKNOWN",
+     "state": "RESOLVED",
      "title": "kClaude Startup + /restart Fix -- 2026-07-01"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "RESOLVED"
    ],
    "title": "kClaude Startup + /restart Fix -- 2026-07-01"
   },
@@ -5251,12 +5251,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/mission-authority-econ-programme-2026-10-15.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Mission authority + economic governance programme (2026-10-15)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Mission authority + economic governance programme (2026-10-15)"
   },
@@ -5271,12 +5271,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/kclaude-terminal-profile-2026-07-01.md",
-     "state": "UNKNOWN",
+     "state": "RESOLVED",
      "title": "kClaude Cursor Terminal Profile \u2014 2026-07-01"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "RESOLVED"
    ],
    "title": "kClaude Cursor Terminal Profile \u2014 2026-07-01"
   },
@@ -5491,12 +5491,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/duplicate-to-advantage-2026-07-10.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Duplicate-to-Advantage Engine -- ULTRA-PLAN + Reality Scan (FASE 0)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Duplicate-to-Advantage Engine -- ULTRA-PLAN + Reality Scan (FASE 0)"
   },
@@ -5691,12 +5691,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/incremental-kernel-residual-2026-10-23.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Incremental Kernel brief: residual plan (2026-10-23)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Incremental Kernel brief: residual plan (2026-10-23)"
   },
@@ -5891,12 +5891,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/seip-sprint2-2026-08-06.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "SEIP Sprint 2 \u2014 STOP #1"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "SEIP Sprint 2 \u2014 STOP #1"
   },
@@ -6071,12 +6071,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/programmatic-budget-layer-2026-05-19.md",
-     "state": "UNKNOWN",
+     "state": "RESOLVED",
      "title": "Programmatic Budget Layer \u2014 Execution Record"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "RESOLVED"
    ],
    "title": "Programmatic Budget Layer \u2014 Execution Record"
   },
@@ -6091,12 +6091,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/tennis-rf-compounding-MASTER-PLAN-2026-10-12.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Tennis RF -- Compounding Extension + 7-Day Frontier (TRF-C) -- Master Plan, 2026-10-12 (rev 2)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Tennis RF -- Compounding Extension + 7-Day Frontier (TRF-C) -- Master Plan, 2026-10-12 (rev 2)"
   },
@@ -6151,12 +6151,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/cdicf-corpus-2026-08-06.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CDICF \u2014 STOP #1 Plan"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CDICF \u2014 STOP #1 Plan"
   },
@@ -6291,12 +6291,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/deep-research-agent-2026-05-23.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Deep Research Agent \u2014 Execution Plan"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Deep Research Agent \u2014 Execution Plan"
   },
@@ -6351,12 +6351,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/econ-succession-2026-10-11-A1-same-pane-capital.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "A1 to econ-succession: same-pane capital for every goal, automatic release, control-plane isolation"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "A1 to econ-succession: same-pane capital for every goal, automatic release, control-plane isolation"
   },
@@ -6851,12 +6851,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/cr4-closure-and-failure-classes-2026-10-07.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Planner packet: context-runtime-4 closure and failure-class fixes"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Planner packet: context-runtime-4 closure and failure-class fixes"
   },
@@ -6951,12 +6951,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccr-v4-stage3-2026-10-13.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCR v4 Stage 3 -- Master Continuation Plan (2026-10-13)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCR v4 Stage 3 -- Master Continuation Plan (2026-10-13)"
   },
@@ -7031,12 +7031,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/crpf-overlap-audit-2026-07-27.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CRPF overlap audit \u2014 the charter's boundary omits the actual owner"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CRPF overlap audit \u2014 the charter's boundary omits the actual owner"
   },
@@ -7071,12 +7071,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/cep-gen3-reforecast-stages-4-10-2026-10-07.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "cep-gen3 reforecast: stages 4-10"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "cep-gen3 reforecast: stages 4-10"
   },
@@ -7091,12 +7091,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccp-s15-harness-validity-2026-10-03.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCP \u00a715: verification-harness validity + s14 close-out (pane claude-power-pack-da)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCP \u00a715: verification-harness validity + s14 close-out (pane claude-power-pack-da)"
   },
@@ -7151,12 +7151,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/efaif-expansion-2026-08-06.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "EFAIF Sprint 1 \u2014 expansion attempt"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "EFAIF Sprint 1 \u2014 expansion attempt"
   },
@@ -7291,12 +7291,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/claude-md-compaction-2026-07-26.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CLAUDE.md auto-compaction"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CLAUDE.md auto-compaction"
   },
@@ -7431,12 +7431,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/two-builders-to-25dec-2026.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Two Builders: whole mod by 25 Dec 2026 (estimate + dated checkpoints)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Two Builders: whole mod by 25 Dec 2026 (estimate + dated checkpoints)"
   },
@@ -7631,12 +7631,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/icc-state-centric-2026-11-05.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "ICC -- state-centric cognitive runtime, continuation of GPF / Cognitive Economy / CCR"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "ICC -- state-centric cognitive runtime, continuation of GPF / Cognitive Economy / CCR"
   },
@@ -7831,12 +7831,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/t1-incident-compiled-certification-20261023.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "T1 incident \u2192 compiled certification (master plan)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "T1 incident \u2192 compiled certification (master plan)"
   },
@@ -7911,12 +7911,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/usirc-corpus-2026-07-31.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "USIRC \u2014 Phase \u22121 Ownership and Overlap Audit"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "USIRC \u2014 Phase \u22121 Ownership and Overlap Audit"
   },
@@ -8171,12 +8171,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/owner-control-plane-2026-10-19.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Owner Control Plane -- Master Plan (SDD tier T3)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Owner Control Plane -- Master Plan (SDD tier T3)"
   },
@@ -8451,12 +8451,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ram-optimization-2026-06-04.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "RAM Optimization Sprint \u2014 Revised Plan (post-forensics)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "RAM Optimization Sprint \u2014 Revised Plan (post-forensics)"
   },
@@ -8911,12 +8911,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/context-rent-observatory-2026-10-25.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Context Rent Observatory, tranche 1, plus the truthful closure of ctx-rent-a2"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Context Rent Observatory, tranche 1, plus the truthful closure of ctx-rent-a2"
   },
@@ -8971,12 +8971,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/seip-corpus-2026-08-04.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "SEIP / USSC \u2014 Mechanism-Level Corpus Boundary Audit"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "SEIP / USSC \u2014 Mechanism-Level Corpus Boundary Audit"
   },
@@ -9051,12 +9051,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ccfl-pdpf-corpus-2026-07-31.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CCFL-PDPF \u2014 plan backup"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CCFL-PDPF \u2014 plan backup"
   },
@@ -9071,12 +9071,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/parallel-mesh-datasets-2026-07-01.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Parallel Cognitive Mesh \u2014 Dataset Family \u2014 REALITY SCAN REPORT"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Parallel Cognitive Mesh \u2014 Dataset Family \u2014 REALITY SCAN REPORT"
   },
@@ -9091,12 +9091,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/igef-2026-07-29.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "IGEF \u2014 Admission Audit"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "IGEF \u2014 Admission Audit"
   },
@@ -9251,12 +9251,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/auto-testing-skill-2026-05-23.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Auto-Testing Skill \u2014 Execution Plan"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Auto-Testing Skill \u2014 Execution Plan"
   },
@@ -9271,12 +9271,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ttb-pc-character-contracts.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "TTB PC edition: character feature contracts (Jacobo, Madzia)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "TTB PC edition: character feature contracts (Jacobo, Madzia)"
   },
@@ -9291,12 +9291,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/durable-goal-lease-2026-10-09.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Durable Goal / Disposable Lease -- Reality Delta + Master Plan (2026-10-09)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Durable Goal / Disposable Lease -- Reality Delta + Master Plan (2026-10-09)"
   },
@@ -9371,12 +9371,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/sdd-os-evolution-2026-10-01.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Plan \u2014 SDD-OS evolution (ultra phase 1)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Plan \u2014 SDD-OS evolution (ultra phase 1)"
   },
@@ -9571,12 +9571,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/iig-compendium-2026-07-30.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "IIG Compendium \u2014 Phase 0 Mechanism-Level Overlap Audit"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "IIG Compendium \u2014 Phase 0 Mechanism-Level Overlap Audit"
   },
@@ -9631,12 +9631,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/gsdx-steward-recovery-plan.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "gsdx-factory: steward, A-G1 recovery, recompiled program"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "gsdx-factory: steward, A-G1 recovery, recompiled program"
   },
@@ -9891,12 +9891,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/econ-containment-2026-10-10.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Economic Failure Containment: Master Plan (2026-10-10)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Economic Failure Containment: Master Plan (2026-10-10)"
   },
@@ -9991,12 +9991,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/gsdx-cme-20261108.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "GSDX-CME \u2014 Cognitive Method Evolution (plan, 2026-11-08)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "GSDX-CME \u2014 Cognitive Method Evolution (plan, 2026-11-08)"
   },
@@ -10391,12 +10391,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ctx-rent-x-2026-10-31.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "ctx-rent-x: make Context Rent a measured, enforced runtime property"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "ctx-rent-x: make Context Rent a measured, enforced runtime property"
   },
@@ -11011,12 +11011,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ttb-wii-sdk-master-plan.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "TTB Wii breakthrough: master plan (backup of the inline plan)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "TTB Wii breakthrough: master plan (backup of the inline plan)"
   },
@@ -11051,12 +11051,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/cpx-control-plane-extinction-cp50-2026-10-11.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CPX: control-plane extinction + CP50-C2 continuation, 2026-10-11 (fresh pane)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CPX: control-plane extinction + CP50-C2 continuation, 2026-10-11 (fresh pane)"
   },
@@ -11071,12 +11071,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/context-rent-observatory-t2-2026-10-25.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Context Rent Observatory, tranche 2"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Context Rent Observatory, tranche 2"
   },
@@ -11331,12 +11331,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/sdd-os-activation-2026-07-26.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "SDD-OS Automatic Activation"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "SDD-OS Automatic Activation"
   },
@@ -11491,12 +11491,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ttb-h4-collapse-packet.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "H4 packet: collapse the largest Negotiations_a draws (one Dolphin run)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "H4 packet: collapse the largest Negotiations_a draws (one Dolphin run)"
   },
@@ -11811,12 +11811,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/autonomy-convergence-MASTER-PLAN-2026-10-10.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Autonomy Convergence \u2014 Master Plan (Stage A optimization + Stage B Live QA recompile), 2026-10-10"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Autonomy Convergence \u2014 Master Plan (Stage A optimization + Stage B Live QA recompile), 2026-10-10"
   },
@@ -11851,12 +11851,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/gsdx-fabric-master-plan-2026-10-14.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "GSD X Reconstruction Fabric -- Master Continuation Plan (gsdx-factory Part C)"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "GSD X Reconstruction Fabric -- Master Continuation Plan (gsdx-factory Part C)"
   },
@@ -11991,12 +11991,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/decision-plane-master-plan-2026-10-17.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Decision Plane + Decision B self-hosting: Master Plan"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Decision Plane + Decision B self-hosting: Master Plan"
   },
@@ -12011,12 +12011,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/session-resilience-datasets-2026-06-27.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Session Resilience Dataset Family \u2014 REALITY SCAN REPORT + STOP #1"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Session Resilience Dataset Family \u2014 REALITY SCAN REPORT + STOP #1"
   },
@@ -12031,12 +12031,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/econ-succession-2026-10-11.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Econ succession: from a safe manual deadlock to automatic succession"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Econ succession: from a safe manual deadlock to automatic succession"
   },
@@ -12231,12 +12231,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/tennis-rf-optimization-MASTER-PLAN-2026-10-11.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "Tennis Reconstruction Optimization + Reforecast (TRF) -- Master Plan, 2026-10-11"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "Tennis Reconstruction Optimization + Reforecast (TRF) -- Master Plan, 2026-10-11"
   },
@@ -12251,12 +12251,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/ce-a5-dws-genesis-2026-10-09.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CE Amendment A5 \u2014 DWS as genesis benchmark for global cognitive deflation"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CE Amendment A5 \u2014 DWS as genesis benchmark for global cognitive deflation"
   },
@@ -12351,12 +12351,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/upac-corpus-2026-08-18.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "UPAC \u2014 STOP #1"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "UPAC \u2014 STOP #1"
   },
@@ -12391,12 +12391,12 @@
      "kind": "plan",
      "ref": "",
      "source": "vault/plans/crpf-2026-07-27.md",
-     "state": "UNKNOWN",
+     "state": "OPEN",
      "title": "CRPF \u2014 Scope Brief, Criterion Extraction, and Overlap Audit"
     }
    ],
    "states": [
-    "UNKNOWN"
+    "OPEN"
    ],
    "title": "CRPF \u2014 Scope Brief, Criterion Extraction, and Overlap Audit"
   }

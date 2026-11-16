@@ -62,10 +62,17 @@ def _first_heading(text: str, fallback: str) -> str:
 
 
 def _state_of(text: str) -> str:
-    head = text[:1500]
-    if re.search(r"\[RESOLVED[^\]]*\]|\bStatus:\s*(DONE|COMPLETE|RESOLVED|CLOSED)", head, re.I):
+    """State exactly as the source's own first `Status:` line (or a [RESOLVED] tag) says."""
+    head = text[:2500]
+    if re.search(r"\[RESOLVED[^\]]*\]", head, re.I):
         return "RESOLVED"
-    if re.search(r"\bStatus:\s*(PENDING|OPEN|APPROVED|PLANNED|BLOCKED|PARTIAL)", head, re.I):
+    m = re.search(r"^[>\s*_-]*status\**\s*:\**\s*([^\n]{0,80})", head, re.I | re.M)
+    if not m:
+        return "UNKNOWN"
+    v = m.group(1).strip().upper().lstrip("*_` ")
+    if re.match(r"(DONE|COMPLETE|SHIPPED|SEALED|RESOLVED|CLOSED|VERIFIED)", v):
+        return "RESOLVED"
+    if re.match(r"(PROPOSED|AWAITING|STOP|APPROVED|ACCEPTED|PENDING|OPEN|PARTIAL|BLOCKED|PLANNED|EXECUTING|DRAFT|IN.PROGRESS)", v):
         return "OPEN"
     return "UNKNOWN"
 
