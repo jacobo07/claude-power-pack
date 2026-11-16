@@ -203,6 +203,56 @@ def main() -> int:
     s2 = mt.suggest(str(Path(TMP) / "nowhere"))
     check("V-TOPUP-SUGGEST-NO-ROADMAP", s2["phases"] == 3 and "assumed" in s2["basis"], s2["basis"])
 
+    # addendum 2026-11-16: ceiling 2x by default, commits-gated
+    def bare(name, auth=None):
+        repo = new_repo(name)
+        mid = f"m-{name}"
+        gm.create(repo, "/gsd-autonomous", mission_id=mid, now=NOW)
+        if auth:
+            gm.set_authority(mid, tokens=auth, now=NOW, reason="test")
+        return mid, repo
+
+    m5, _ = bare("derived")
+    p5 = mt.budget(m5, "100M", None, "40M", reason="test", now=NOW)
+    check("V-TOPUP-CEILING-DERIVED", p5["ceiling"] == 200_000_000 and p5["max_topups"] == 3
+          and p5["step"] == 40_000_000, f"ceiling={p5['ceiling']} topups={p5['max_topups']}")
+
+    m6, repo6 = bare("clip")
+    mt.budget(m6, "100M", 5, "40M", reason="test", now=NOW, ceiling="150M")
+    commit(repo6, "src/c1.ts", "1")
+    trip(m6)
+    mt.sweep_one(m6, now=NOW + 1200, decide_fn=decide, sender=sender)
+    commit(repo6, "src/c2.ts", "2")
+    trip(m6)
+    r = mt.sweep_one(m6, now=NOW + 1300, decide_fn=decide, sender=sender)
+    check("V-TOPUP-CEILING-CLIP", r["action"] == "grant" and gm.load(m6).get("authority_tokens") == 150_000_000,
+          f"{r['action']} auth={gm.load(m6).get('authority_tokens')}")
+    commit(repo6, "src/c3.ts", "3")
+    trip(m6)
+    r = mt.sweep_one(m6, now=NOW + 1400, decide_fn=decide, sender=sender)
+    check("V-TOPUP-CEILING-REFUSE", r["action"] == "refuse" and "ceiling" in r["why"]
+          and gm.load(m6).get("authority_tokens") == 150_000_000 and gm.load(m6).get("owner_hold"), r["why"])
+
+    m7, repo7 = bare("adopt", auth=50_000_000)
+    gm.bind_mission(m7, repo7, now=NOW)   # what arm/AMCR records: the root and its head at that moment
+    commit(repo7, "src/w.ts", "work since arm")
+    trip(m7)
+    res = mt.sweep(now=NOW + 1500, decide_fn=decide, sender=sender)
+    p7 = mt.load_policy(m7) or {}
+    check("V-TOPUP-DEFAULT-ADOPT", p7.get("default") and p7.get("ceiling") == 100_000_000
+          and gm.load(m7).get("authority_tokens") == 90_000_000 and not gm.load(m7).get("owner_hold"),
+          f"policy={ {k: p7.get(k) for k in ('ceiling', 'step', 'max_topups', 'last_head')} } "
+          f"res={[x for x in res if x.get('mission') == m7]}")
+
+    m8, repo8 = bare("adopt-off", auth=50_000_000)
+    commit(repo8, "src/w.ts", "work")
+    trip(m8)
+    os.environ["CPP_MISSION_TOPUP_DEFAULT"] = "off"
+    mt.sweep(now=NOW + 1600, decide_fn=decide, sender=sender)
+    os.environ.pop("CPP_MISSION_TOPUP_DEFAULT")
+    check("V-TOPUP-DEFAULT-OFF", mt.load_policy(m8) is None and gm.load(m8).get("owner_hold")
+          and gm.load(m8).get("authority_tokens") == 50_000_000, "kill switch kept it parked, no policy")
+
     print(f"TOPUP_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

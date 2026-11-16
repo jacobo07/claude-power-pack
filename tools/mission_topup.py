@@ -32,10 +32,31 @@ SCHEMA = "mission-topup/1"
 AUTHORITY_TRIP = "cost breaker (mission authority)"
 DEFAULT_PHASE_TOKENS = 40_000_000   # measured: 154M / 4 phases, Credit Score Engine, 2026-10-15
 BOOKKEEPING_PREFIX = ".planning/"
+DEFAULT_CEILING_X = 2.0             # Owner 2026-11-16: a mission may grow itself to 2x its authority, commits-gated
 
 
 def enabled() -> bool:
     return (os.environ.get("CPP_MISSION_AUTO_TOPUP") or "").strip().lower() != "off"
+
+
+def default_enabled() -> bool:
+    return (os.environ.get("CPP_MISSION_TOPUP_DEFAULT") or "").strip().lower() != "off"
+
+
+def ceiling_x() -> float:
+    try:
+        x = float(os.environ.get("CPP_MISSION_TOPUP_CEILING_X") or DEFAULT_CEILING_X)
+    except ValueError:
+        x = DEFAULT_CEILING_X
+    return max(1.0, x)
+
+
+def default_terms(authority: int, step: int | None = None) -> dict:
+    """{ceiling, step, max_topups} for the 2x default: the steps that fit between authority and ceiling."""
+    ceiling = int(authority * ceiling_x())
+    room = max(0, ceiling - authority)
+    stp = min(step or DEFAULT_PHASE_TOKENS, room) if room else (step or DEFAULT_PHASE_TOKENS)
+    return {"ceiling": ceiling, "step": stp, "max_topups": (-(-room // stp)) if room else 0}
 
 
 def policy_path(mission_id: str) -> Path:
@@ -117,6 +138,8 @@ def judge(rec: dict | None, pol: dict, prog: dict) -> dict:
         return {"action": "resume", "why": "grant already written for this hold"}
     if len(grants) >= int(pol["max_topups"]):
         return {"action": "refuse", "why": f"top-ups exhausted ({len(grants)}/{pol['max_topups']})"}
+    if pol.get("ceiling") and int(rec.get("authority_tokens") or 0) >= int(pol["ceiling"]):
+        return {"action": "refuse", "why": f"ceiling reached ({int(pol['ceiling']):,}); beyond it is the Owner's"}
     if not prog.get("measured"):
         return {"action": "refuse", "why": f"progress unmeasured: {prog.get('why')}"}
     if not prog.get("progress"):
@@ -203,8 +226,11 @@ def sweep_one(mid: str, *, now: float | None = None, decide_fn=None, sender=None
         return out
     if verdict["action"] == "grant":
         cur = int(rec.get("authority_tokens") or 0)
+        to = cur + int(pol["step"])
+        if pol.get("ceiling"):
+            to = min(to, int(pol["ceiling"]))   # the last step is clipped: never above the ceiling
         grant = {"n": len(pol.get("grants") or []) + 1, "at": now, "hold_set_at": hold_at, "from": cur,
-                 "to": cur + int(pol["step"]), "head": prog["head"], "spent": _spent(rec), "why": verdict["why"]}
+                 "to": to, "head": prog["head"], "spent": _spent(rec), "why": verdict["why"]}
         # Written BEFORE the effect: a pass that dies after this line is completed (never re-granted) next pass.
         pol.setdefault("grants", []).append(grant)
         pol["last_head"] = prog["head"]
@@ -215,10 +241,42 @@ def sweep_one(mid: str, *, now: float | None = None, decide_fn=None, sender=None
     return out
 
 
+def adopt_defaults(now: float | None = None) -> list[str]:
+    """Give the 2x default policy to every live mission parked on its authority trip that has no policy (addendum
+    2026-11-16). Base = the head its binding recorded at arm, so only work done since arm counts as progress."""
+    if not default_enabled():
+        return []
+    now = time.time() if now is None else now
+    adopted = []
+    for rec in gm.all_missions():
+        mid = rec.get("mission_id")
+        auth = int(rec.get("authority_tokens") or 0)
+        if (not mid or rec.get("state") in gm.TERMINAL or not is_authority_trip(rec) or auth <= 0
+                or policy_path(mid).exists()):
+            continue
+        terms = default_terms(auth)
+        base = (rec.get("binding") or {}).get("head")
+        if not base and rec.get("created_at"):   # never bound: the root's last commit at arm time
+            out = _git(mb.execution_root(rec), "rev-list", "-1", f"--before=@{int(rec['created_at'])}", "HEAD")
+            base = out.strip() if out else None
+        pol = {"schema": SCHEMA, "mission_id": mid, "grants": [], "authority": auth, "set_at": now,
+               "reason": f"default policy (Owner 2026-11-16): ceiling {ceiling_x():g}x authority, commits-gated",
+               "last_head": base, "default": True, **terms}
+        save_policy(pol)
+        gm.lr.ledger_append(mid, "authority_topup_policy", mission_id=mid, authority=auth, default=True, **terms)
+        adopted.append(mid)
+    return adopted
+
+
 def sweep(*, now: float | None = None, decide_fn=None, sender=None, dry_run: bool = False) -> list[dict]:
     if not enabled():
         return [{"action": "none", "why": "CPP_MISSION_AUTO_TOPUP=off"}]
     res = []
+    if not dry_run:
+        try:
+            adopt_defaults(now)
+        except Exception as exc:  # noqa: BLE001 -- adoption failure must not stop the explicit policies
+            res.append({"action": "error", "why": f"adopt_defaults: {type(exc).__name__}: {exc}"[:300]})
     for p in sorted(Path(gm.lr.state_dir()).glob("mission-topup-m-*.json")):
         mid = p.stem[len("mission-topup-"):]
         try:
@@ -230,18 +288,33 @@ def sweep(*, now: float | None = None, decide_fn=None, sender=None, dry_run: boo
     return res
 
 
-def budget(mid: str, authority, topups: int, step, reason: str = "", now: float | None = None) -> dict:
+def budget(mid: str, authority, topups: int | None, step, reason: str = "", now: float | None = None,
+           ceiling=None) -> dict:
+    """topups=None derives them from the ceiling (default 2x authority); an explicit topups keeps the old
+    behaviour, bounded only by an explicit ceiling."""
     now = time.time() if now is None else now
     rec = gm.load(mid)
     if rec is None:
         raise gm.MissionError(f"no mission {mid}")
-    if topups < 0:
+    if topups is not None and topups < 0:
         raise ValueError("--topups must be >= 0")
     auth, stp = parse_tokens(authority), parse_tokens(step)
+    ceil_tokens = parse_tokens(ceiling) if ceiling is not None else None
+    if ceil_tokens is not None and ceil_tokens < auth:
+        raise ValueError("--ceiling must be >= --authority")
+    if topups is None:
+        terms = default_terms(auth, stp)
+        if ceil_tokens is not None:
+            room = ceil_tokens - auth
+            terms = {"ceiling": ceil_tokens, "step": min(stp, room) if room else stp,
+                     "max_topups": (-(-room // min(stp, room))) if room else 0}
+    else:
+        terms = {"ceiling": ceil_tokens, "step": stp, "max_topups": int(topups)}
     gm.set_authority(mid, tokens=auth, now=now, reason=reason or "Owner budget at arm (mission-auto-topup)")
     pol = load_policy(mid) or {"schema": SCHEMA, "mission_id": mid, "grants": []}
-    pol.update({"authority": auth, "max_topups": int(topups), "step": stp, "set_at": now, "reason": reason,
-                "last_head": head_of(mb.execution_root(rec))})
+    topups, stp = terms["max_topups"], terms["step"]
+    pol.update({"authority": auth, "max_topups": int(topups), "step": stp, "ceiling": terms["ceiling"],
+                "set_at": now, "reason": reason, "last_head": head_of(mb.execution_root(rec))})
     save_policy(pol)
     gm.lr.ledger_append(mid, "authority_topup_policy", mission_id=mid, authority=auth, max_topups=topups, step=stp)
     return pol
@@ -272,7 +345,9 @@ def main(argv=None) -> int:
     b = sub.add_parser("budget")
     b.add_argument("--mission", required=True)
     b.add_argument("--authority", required=True)
-    b.add_argument("--topups", type=int, default=3)
+    b.add_argument("--topups", type=int, default=None,
+                   help="explicit count; omitted = derived from the ceiling (default 2x authority)")
+    b.add_argument("--ceiling", default=None, help="hard authority ceiling for auto top-ups, e.g. 240M")
     b.add_argument("--step", default="40M")
     b.add_argument("--reason", default="")
     s = sub.add_parser("suggest")
@@ -284,14 +359,15 @@ def main(argv=None) -> int:
     t.add_argument("--mission", required=True)
     a = ap.parse_args(argv)
     if a.cmd == "budget":
-        pol = budget(a.mission, a.authority, a.topups, a.step, a.reason)
+        pol = budget(a.mission, a.authority, a.topups, a.step, a.reason, ceiling=a.ceiling)
+        ceil = f"{pol['ceiling']:,}" if pol.get("ceiling") else "none"
         print(f"BUDGET SET mission={a.mission} authority={pol['authority']:,} topups={pol['max_topups']} "
-              f"step={pol['step']:,} base_head={str(pol['last_head'])[:8]}")
+              f"step={pol['step']:,} ceiling={ceil} base_head={str(pol['last_head'])[:8]}")
     elif a.cmd == "suggest":
         r = suggest(a.cwd, a.phases)
         print(f"SUGGEST phases={r['phases']} ({r['basis']}) x {r['rate']:,} = authority {r['authority']:,}; "
               f"run: mission_topup.py budget --mission <id> --authority {r['authority'] // 1_000_000}M "
-              f"--topups {r['topups']} --step {r['step'] // 1_000_000}M")
+              f"--step {r['step'] // 1_000_000}M  (top-ups derived: ceiling {ceiling_x():g}x)")
     elif a.cmd == "sweep":
         for r in sweep(dry_run=a.dry_run):
             if r.get("action") not in ("none",):

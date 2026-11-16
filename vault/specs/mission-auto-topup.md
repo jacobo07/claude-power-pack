@@ -52,3 +52,22 @@ The previous mission on the same repo cost 154M for 4 phases. Three causes: `arm
 `python tools/test_mission_topup.py` exit 0: grant with progress; refusal without progress (paired control);
 refusal for bookkeeping-only commits; exhaustion after N; non-authority holds untouched; kill switch; no double
 grant on a re-run; suggest arithmetic.
+
+## Addendum 2026-11-16: default ceiling 2x, commits-gated (Owner "go ahead")
+
+Measured 2026-11-16: m-ae675a5ac357 (GEX44) used up its 2 top-ups and parked at 200.7M for about 2 h. No channel
+reached the Owner. The Owner's answer was that missions should make their own exceptions up to a fixed limit.
+
+- **Ceiling.** Every policy has a `ceiling`, by default `CPP_MISSION_TOPUP_CEILING_X` (2.0) x its authority. A grant
+  never raises authority above the ceiling (the last step is clipped). A trip at the ceiling is refused with
+  `ceiling reached`. That refusal is the one budget case that still needs the Owner.
+- **Derived top-ups.** `budget` without `--topups` derives `max_topups = ceil((ceiling - authority) / step)`. An
+  explicit `--topups` keeps today's behaviour, with no ceiling unless `--ceiling` is given.
+- **Default policy.** A live mission parked on its mission-authority trip with NO policy file gets a default one at
+  the next sweep: authority = its current authority, ceiling = 2x, step = min(40M, ceiling - authority), and base =
+  the head its binding recorded at arm. Progress is still required for every grant. Kill switch:
+  `CPP_MISSION_TOPUP_DEFAULT=off`.
+- **Unchanged.** Over-ceiling spend, HR-04 / live writes, and every non-authority hold stay with the Owner.
+
+Gates: V-TOPUP-CEILING-DERIVED, V-TOPUP-CEILING-CLIP, V-TOPUP-CEILING-REFUSE, V-TOPUP-DEFAULT-ADOPT,
+V-TOPUP-DEFAULT-OFF.
