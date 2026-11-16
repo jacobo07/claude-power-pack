@@ -5,7 +5,11 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
-**2026-11-16 09:30Z, pane f3df357a: KSR PARKED, S68K unjudged (Owner question open).**
+**2026-11-16 10:02Z, pane f3df357a (Owner "a"): KSR S78K armed by hand-run F4.**
+- `plan_and_arm(..., "continue:m-37cdc89e27e6", ...)` called under cron.lock + ap._lock with the cron env. Ledger `halt_continue` (manual, 8 commits 0109f334..2da670ff). S78K `m-46b741e531d3` (10M, whole_program_type_model): re-fit on a balanced set, fresh dev, held-out only on dev SUPPORTED. `continued_from` set. Backup `state.json.bak-f3df-s69karm-*`.
+- F4 gap still open in autopilot.py 0aadcef4: `gen_head` returns None for a mission with null binding (KSR commits on t1/campaign) → continue_halted counts 0. Pane 4de9 owns the fix.
+
+**2026-11-16 09:30Z, pane f3df357a: KSR PARKED, S68K unjudged.**
 - S68K committed checkpoint 2da670ff (H-S68TM REFUTED 19/30 < 20, control 24/24, 0 certs, held-out 200 reserved unopened), then CAPITAL_EXHAUSTED → mission HALTED (terminal) → lane parked 00:20Z.
 - Cost→checkpoint conversion failed (`set_checkpoint`: HALTED takes no hold); the cost hold was released by it (terminal mission, harmless).
 - F4 `continue_halted` cannot see KSR work: mission `binding` null → `gen_head` None → 0 commits. KSR commits straight to `t1/campaign`. ls.planned_from is now set (S67K verdict + S68K checkpoint).
