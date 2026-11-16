@@ -83,8 +83,83 @@ def load_levers(home) -> dict:
     return json.loads(p.read_text()) if p.exists() else {}
 
 
+def save_levers(home, levers: dict) -> None:
+    tmp = home / "levers.json.tmp"
+    tmp.write_text(json.dumps(levers, indent=2))
+    tmp.replace(home / "levers.json")
+
+
 def lever_by_id(levers: dict, lane: str, lid):
     return next((x for x in levers.get(lane, []) if x["id"] == lid), None)
+
+
+# ---------------------------------------------------------------- autonomous lever design
+# Owner 2026-11-16 (pane 08cba76c, after WIIPARTY waited on him for a new lever): "deberia haberse hecho de forma
+# autonoma". Standing authorization (pane f3df357a, 2026-11-14): new routes are always authorized until everything is
+# reconstructed. So where the lane used to park for "no admissible lever", the autopilot designs one from the residual
+# (a model call, `designer`), admits it deterministically, appends it to levers.json (origin "autopilot") and researches
+# with it. Budgets stay the Owner's: the research caps, the lane envelope and the day cap still bind. Bounded: SYNTH_MAX
+# designed levers in a row without a verified CAPABILITY or CERT park the lane for an Owner look.
+SYNTH_MAX = 3
+SYNTH_MIN_WHAT = 200
+_SYNTH_ID = re.compile(r"[a-z0-9_]{4,48}")
+
+
+def synth_problems(lv, levers: dict, lane: str, product: str, family, residual) -> list[str]:
+    """Deterministic admission of a designed lever. Empty list = admitted."""
+    if not isinstance(lv, dict) or lv.get("none"):
+        return [f"designer proposed no lever: {str((lv or {}).get('none') if isinstance(lv, dict) else lv)[:200]}"]
+    bad = []
+    lid = str(lv.get("id") or "")
+    if not _SYNTH_ID.fullmatch(lid):
+        bad.append("id must be 4-48 chars of [a-z0-9_]")
+    if any(x.get("id") == lid for xs in levers.values() if isinstance(xs, list) for x in xs if isinstance(x, dict)):
+        bad.append(f"id {lid} already exists")
+    if not lv.get("family") or lv.get("family") == family:
+        bad.append(f"family must be set and differ from {family}")
+    if lv.get("kind") not in (None, "research"):
+        bad.append("kind must be research")
+    if not lv.get("blockers"):
+        bad.append("no blockers named")
+    what = str(lv.get("what") or "")
+    if len(what) < SYNTH_MIN_WHAT:
+        bad.append(f"what shorter than {SYNTH_MIN_WHAT} chars")
+    if residual and os.path.basename(str(residual)) not in what:
+        bad.append(f"what does not cite the residual it answers ({os.path.basename(str(residual))})")
+    for r in lv.get("requires") or []:
+        if not os.path.exists(os.path.join(product, r)):
+            bad.append(f"requires {r} does not exist in the product")
+    return bad
+
+
+def synthesize(levers: dict, lane: str, ls: dict, product: str, family, designer, residual):
+    """-> (lever, None) when a designed lever is admitted (and appended to `levers`), else (None, why)."""
+    if designer is None:
+        return None, "no lever designer"
+    streak = int(ls.get("synth_streak") or 0)
+    if streak >= SYNTH_MAX:
+        return None, f"{SYNTH_MAX} autopilot-designed levers in a row without a verified CAPABILITY or CERT"
+    lv = designer(family)
+    if not isinstance(lv, dict) or lv.get("none"):  # structural, before admission: nothing to admit or persist
+        return None, f"designer proposed no lever: {str((lv or {}).get('none') if isinstance(lv, dict) else lv)[:200]}"
+    bad = synth_problems(lv, levers, lane, product, family, residual)
+    if bad:
+        return None, "designed lever refused: " + "; ".join(bad)[:400]
+    lv = dict(lv, kind="research", status="open", origin="autopilot", requires=list(lv.get("requires") or []),
+              cost=lv.get("cost", 1))
+    levers.setdefault(lane, []).append(lv)
+    ls["synth_streak"] = streak + 1
+    return lv, None
+
+
+def _synth_or_park(ls, levers, lane, product, family, designer, residual, why: str, src: str) -> dict:
+    lever, swhy = synthesize(levers, lane, ls, product, family, designer, residual)
+    if lever is None:
+        return {"action": "park", "why": f"{why} ({swhy})" if designer is not None else why}
+    ls.update(mode="RESEARCH", info_streak=0, no_conversion=0, research_fail=0, repair={})
+    return {"action": "research", "lever": lever, "designed": True,
+            "why": f"{src}: autopilot-designed lever {lever['id']} ({lever.get('family')})",
+            "directive": directive(lever, "RESEARCH")}
 
 
 # ---------------------------------------------------------------- outcome taxonomy
@@ -222,12 +297,18 @@ def _pivot(ls: dict, family: str, evidence_delta: bool, failure_class: str, resi
 
 
 def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lane: str, product: str, graph,
-                   triggers: tuple[int, int, int]) -> dict:
-    """-> {"action": continue|stop|park|research|repair, "why", "lever"?, "directive"?}. Mutates the lane counters.
-    triggers = (BLANK_STOP, INFO_PARK, NO_CONVERSION_PARK) of the autopilot."""
+                   triggers: tuple[int, int, int], designer=None, residual=None) -> dict:
+    """-> {"action": continue|stop|park|research|repair, "why", "lever"?, "directive"?, "designed"?}. Mutates the lane
+    counters. triggers = (BLANK_STOP, INFO_PARK, NO_CONVERSION_PARK) of the autopilot. `designer(family) -> dict` designs
+    a lever from `residual` where the lane would otherwise park for want of one (see synthesize)."""
     blank_stop, info_park, noconv_park = triggers
     cur = lever_by_id(levers, lane, ls.get("lever"))
     family = (cur or {}).get("family") or "UNREGISTERED"
+    if cls in ("CERT", "CAPABILITY"):
+        ls["synth_streak"] = 0
+
+    def synth_or_park(why: str, src: str) -> dict:
+        return _synth_or_park(ls, levers, lane, product, family, designer, residual, why, src)
     # learning: a verified conversion teaches the graph; repeated zero evidence on a lever retires it
     if cur:
         if cls in ("CERT", "CAPABILITY"):
@@ -255,7 +336,7 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
                                               "or lacks its preconditions" if want else
                                               f"Owner resume: no open lever of another family than {family} with its "
                                               "preconditions met")}
-        ls.update(mode="RESEARCH", blank=0, info_streak=0, no_conversion=0, research_fail=0)
+        ls.update(mode="RESEARCH", blank=0, info_streak=0, no_conversion=0, research_fail=0, synth_streak=0)
         return {"action": "research", "lever": lever, "why": f"Owner-directed method transition from {family}: "
                                                              f"research with {lever['id']} ({lever.get('family')})",
                 "directive": directive(lever, "RESEARCH")}
@@ -270,8 +351,8 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
     for key in dict.fromkeys(instrument_key(n) for n in instruments):
         rep[key] = rep.get(key, 0) + 1
         if rep[key] > MAX_REPAIR:
-            return {"action": "park", "why": f"instrument {key} failed its positive control {rep[key]} times "
-                                             f"(repair cap {MAX_REPAIR}); a new instrument needs a new idea"}
+            return synth_or_park(f"instrument {key} failed its positive control {rep[key]} times "
+                                 f"(repair cap {MAX_REPAIR}); a new instrument needs a new idea", "repair cap")
     if cls == "CERT":
         ls.update(mode="EXPLOIT", blank=0, info_streak=0, no_conversion=0, research_fail=0, pivot_streak=0)
         return {"action": "continue", "why": "certificates: exploit"}
@@ -282,8 +363,8 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
         if lever is None and lane:
             lever = repair_in_place(levers, lane, ls, product)
         if lever is None:
-            return {"action": "park", "why": f"instrument {name} failed and no repair lever for {ls.get('lever')} is "
-                                             f"open in {lane}"}
+            return synth_or_park(f"instrument {name} failed and no repair lever for {ls.get('lever')} is open in {lane}",
+                                 "no repair lever")
         ls.update(mode="REPAIR", repair_instrument=name)
         return {"action": "repair", "lever": lever, "why": f"instrument {name} failed: repair, not a negative result",
                 "directive": directive(lever, "REPAIR", name)}
@@ -294,26 +375,32 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
     if ls.get("mode") == "RESEARCH":
         ls["research_fail"] = 0 if cls in ("INFORMATION", "CAPABILITY") else int(ls.get("research_fail") or 0) + 1
         if ls["research_fail"] >= RESEARCH_FAIL_STOP:
-            return {"action": "park", "why": f"{RESEARCH_FAIL_STOP} research generations without verified "
-                                             "INFORMATION or CAPABILITY: research stop rule"}
+            return synth_or_park(f"{RESEARCH_FAIL_STOP} research generations without verified "
+                                 "INFORMATION or CAPABILITY: research stop rule", "research stop rule")
     if ls["blank"] >= blank_stop:
         return {"action": "stop", "why": f"{blank_stop} consecutive generations with no verified progress of any class"}
     if ls["info_streak"] >= info_park or ls["no_conversion"] >= noconv_park:
-        return plateau(ls, levers, lane, product, graph, family, cls in ("INFORMATION", "CAPABILITY"))
+        return plateau(ls, levers, lane, product, graph, family, cls in ("INFORMATION", "CAPABILITY"), designer, residual)
     if ls.get("mode") == "REPAIR":
         ls["mode"] = "EXPLOIT"
     return {"action": "continue", "why": f"{cls}: continue in {ls.get('mode') or 'EXPLOIT'}"}
 
 
-def plateau(ls: dict, levers: dict, lane: str, product: str, graph, family: str, evidence_delta: bool) -> dict:
-    """The protection rule fired. Ask the Mission Runtime pivot rule; on 'pivot' enter RESEARCH with a lever of another family."""
+def plateau(ls: dict, levers: dict, lane: str, product: str, graph, family: str, evidence_delta: bool,
+            designer=None, residual=None) -> dict:
+    """The protection rule fired. Ask the Mission Runtime pivot rule; on 'pivot' enter RESEARCH with a lever of another
+    family: an open one from levers.json, else one the autopilot designs from the residual (synthesize)."""
     d = _pivot(ls, family, evidence_delta, "METHOD_PLATEAU", f"lane {lane} plateau on {family}")
     if d.get("action") != "pivot":
         return {"action": "park", "why": f"pivot rule: {d.get('why')}"}
     lever = select(levers, lane, ls, product, graph, family_not=family)
     if lever is None:
-        return {"action": "park", "why": f"plateau on {family} and no open lever of another family with its "
-                                         "preconditions met"}
+        r = _synth_or_park(ls, levers, lane, product, family, designer, residual,
+                           f"plateau on {family} and no open lever of another family with its preconditions met",
+                           f"plateau on {family}")
+        if r["action"] != "research":
+            return r
+        lever = r["lever"]
     hist = list(ls.get("pivot_history") or [])
     hist.append({"method_class": family, "evidence_delta": bool(evidence_delta)})
     ls.update(mode="RESEARCH", pivot_streak=d.get("streak", 1), pivot_history=hist[-20:], info_streak=0, no_conversion=0,

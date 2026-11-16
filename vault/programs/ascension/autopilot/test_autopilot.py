@@ -22,6 +22,7 @@ def load():
     spec = importlib.util.spec_from_file_location("ap", HERE / "autopilot.py")
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
+    m.design_lever = lambda *a, **k: None  # never a real model call from the gate; the SYNTH checks stub their own
     return m
 
 
@@ -862,6 +863,45 @@ def run_all(ap):
     check("V-EVO-RESEARCH-PACKET-NEEDS-DISCRIMINATING-TEST", ls["status"] == "PARKED" and "no 'rival'" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, (RES,)), ["NONE", "NONE"])
     check("V-EVO-RESEARCH-STOP-RULE", ls["status"] == "PARKED" and "research stop rule" in q)
+    # Owner 2026-11-16 (pane 08cba76c, "deberia haberse hecho de forma autonoma"): where a lane would park for want of a
+    # lever, the autopilot designs one from the residual, admits it deterministically, persists it and researches.
+    SYN = {"id": "lev_syn", "family": "F9", "blockers": ["B1"], "requires": [], "cost": 1,
+           "what": "Designed from ck.md: " + "build the instrument, rival A vs B, positive control on known ids, frozen "
+                   "decision rule, fresh held-out draw. " * 3}
+    RES_S = dict(RES, phases=[x.replace("lev_b", "lev_syn") for x in RES["phases"]])
+    designed = []
+
+    def with_designer(lever):
+        ap.design_lever = lambda lane, ck, prod, fam: designed.append((ck, fam)) or (dict(lever) if lever else None)
+
+    def lever_file():
+        return json.loads((tmp / "home" / "levers.json").read_text()).get("L", [])
+    with_designer(SYN)
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a"}, (RES_S,)), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-SYNTH-PLATEAU", ls["status"] == "RUNNING" and ls.get("mode") == "RESEARCH" and ls.get("lever") == "lev_syn"
+          and designed and designed[-1][1] == "F1" and ls.get("synth_streak") == 1)
+    check("V-EVO-SYNTH-PERSISTED", any(x.get("id") == "lev_syn" and x.get("origin") == "autopilot" for x in lever_file())
+          and "NOTICE" in q)
+    with_designer(dict(SYN, family="F1"))
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a"}, (RES_S,)), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-SYNTH-SAME-FAMILY-REFUSED", ls["status"] == "PARKED" and "designed lever refused" in q
+          and not any(x.get("id") == "lev_syn" for x in lever_file()))
+    with_designer(dict(SYN, what="no residual named here; " * 20))
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a"}, (RES_S,)), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-SYNTH-MUST-CITE-RESIDUAL", ls["status"] == "PARKED" and "does not cite" in q)
+    with_designer(SYN)
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a", "synth_streak": 3}, (RES_S,)), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-SYNTH-BOUNDED", ls["status"] == "PARKED" and "in a row" in q)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, (RES, RES_S)), ["NONE", "NONE"])
+    check("V-EVO-SYNTH-RESEARCH-STOP", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn")
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, ({"stop": "no route"}, RES_S)),
+                    ["INFORMATION"])
+    check("V-EVO-SYNTH-PLANNER-STOP", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn")
+    with_designer(None)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, ({"stop": "no route"},)), ["INFORMATION"])
+    check("V-EVO-SYNTH-NONE-STOPS-AS-BEFORE", ls["status"] == "STOPPED" and "designer proposed no lever" in
+          (tmp / "home" / "ledger.jsonl").read_text())
+    ap.design_lever = lambda *a, **k: None
     ls, q = evo_run(evo_fresh([LA, LR], {"lever": "lev_a"}, (REP,)), ["NONE", "NONE"], ["ctl_pool"])
     check("V-EVO-INSTRUMENT-FAIL-NOT-NEGATIVE", ls["status"] == "RUNNING" and ls.get("mode") == "REPAIR"
           and ls.get("blank") == 0 and ls.get("no_conversion", 0) == 0 and ls.get("repair") == {"ctl_pool": 2})
@@ -1172,6 +1212,13 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
          "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
+         "evo_synth_off": _evo_mut(synthesize=lambda *a, **k: (None, "off")),
+         "evo_synth_admits_anything": _evo_mut(synth_problems=lambda *a, **k: []),
+         "evo_synth_unbounded": _evo_mut(SYNTH_MAX=99),
+         "evo_synth_residual_unchecked": _evo_mut(synthesize=_wrap(lambda e: (lambda real: (
+             lambda levers, lane, ls, product, family, designer, residual: real(
+                 levers, lane, ls, product, family, designer, None)))(e.synthesize))),
+         "synth_not_persisted": lambda m: setattr(m, "persist_designed", lambda *a, **k: None),
          "halt_continues_owner_close": lambda m: setattr(m, "owner_closed", lambda rec: False),
          "hold_sha_path_ignored": lambda m: setattr(m, "SHA_PATH_RE", __import__("re").compile(r"(?!x)x")),
          "halt_once_spent_before_arm": lambda m: setattr(m, "continue_halted", (lambda real: lambda st, lane, ls, mid, *a: (

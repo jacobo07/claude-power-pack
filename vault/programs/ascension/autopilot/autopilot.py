@@ -580,6 +580,40 @@ def plan(lane: dict, name: str, checkpoint: str, product: str, verdict: dict, ev
     return p
 
 
+def design_lever(lane: dict, checkpoint: str, product: str, family) -> dict | None:
+    """One read-only model call that designs the next lever from the residual (evolve.synthesize admits it). Owner
+    2026-11-16 (pane 08cba76c): a lane that has no admissible lever designs one instead of waiting on the Owner."""
+    levers = evolve.load_levers(HOME).get(lane["name"], [])
+    prompt = ((HOME / "lever_designer_prompt.md").read_text().replace("{LANE}", lane["name"])
+              .replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product).replace("{FAMILY}", str(family))
+              .replace("{LEVERS}", json.dumps(levers)[:12000]).replace("{BRIEF}", str(HOME / "brief.md"))
+              .replace("{DIGEST}", str(OUT / "digest.md")))
+    r = run_claude(prompt, cwd=product, tools=["Read", "Grep", "Glob", "Bash(git log:*)", "Bash(ls:*)"],
+                   add_dirs=[lane["cwd"], "/home/kobii/missions/gen3-pp", "/home/kobii/missions/recon-general", str(HOME),
+                             "/home/kobii/wsr-decomp", "/home/kobii/missions/mkw-lib", "/home/kobii/missions/mkw-decomp"],
+                   max_turns=40, timeout=2400)
+    tok, measured = call_tokens(r.get("tokens"))
+    ledger_add(lane=lane["name"], kind="lever_design", tokens=tok, measured=measured)
+    return last_json(r.get("result", ""))
+
+
+def lever_designer(lane: dict, checkpoint: str, product: str):
+    """The designer callable evolve.synthesize takes; looked up at call time so the gate can stub design_lever."""
+    return lambda family: design_lever(lane, checkpoint, product, family)
+
+
+def persist_designed(lane: dict, d: dict, levers: dict, dry: bool) -> None:
+    """A lever the autopilot designed goes into levers.json (origin "autopilot") and the Owner queue (a notice, not a
+    gate: the lane does not wait)."""
+    lv = d.get("lever") or {}
+    if lv.get("origin") != "autopilot" or dry:
+        return
+    evolve.save_levers(HOME, levers)
+    ledger_add(lane=lane["name"], kind="lever_designed", tokens=0, lever=lv["id"], family=lv.get("family"))
+    owner_queue(lane["name"], f"NOTICE (no action needed): autopilot designed lever {lv['id']} ({lv.get('family')}) and "
+                              f"researches with it: {str(lv.get('what'))[:300]}")
+
+
 HEADER = """# {name}: {title} (Ascension Autopilot, lane {lane}; Owner typed authorization 2026-11-11, laptop pane d957c937)
 
 Mission terms: open-ended reconstruction, method evolution, independent certification, constitutive baseline ratchet.
@@ -1032,7 +1066,9 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         cls = evolve.classify(cls, instruments)
         graph, levers = evolve.load_graph(HOME), evolve.load_levers(HOME)
         d = evolve.after_judgment(ls, cls, instruments, levers, lane["name"], product, graph,
-                                  (BLANK_STOP, INFO_PARK, NO_CONVERSION_PARK))
+                                  (BLANK_STOP, INFO_PARK, NO_CONVERSION_PARK),
+                                  designer=None if dry else lever_designer(lane, checkpoint, product), residual=checkpoint)
+        persist_designed(lane, d, levers, dry)
         if not dry:
             evolve.save_graph(HOME, graph)
         ls["last_progress"] = cls
@@ -1088,11 +1124,17 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
          if dry else plan(lane, name, checkpoint, product, v, pdir))
     tok, measured = call_tokens(p.get("_tokens"))
     ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
-    if p.get("stop") and evo and ls.get("mode") not in ("RESEARCH", "REPAIR"):
-        cur = evolve.lever_by_id(evolve.load_levers(HOME), lane["name"], ls.get("lever"))
-        pgraph = evolve.load_graph(HOME)
-        d = evolve.plateau(ls, evolve.load_levers(HOME), lane["name"], product, pgraph,
-                           (cur or {}).get("family") or "UNREGISTERED", False)
+    if p.get("stop") and evo:
+        plevers, pgraph = evolve.load_levers(HOME), evolve.load_graph(HOME)
+        cur = evolve.lever_by_id(plevers, lane["name"], ls.get("lever"))
+        fam = (cur or {}).get("family") or "UNREGISTERED"
+        des = None if dry else lever_designer(lane, checkpoint, product)
+        if ls.get("mode") not in ("RESEARCH", "REPAIR"):
+            d = evolve.plateau(ls, plevers, lane["name"], product, pgraph, fam, False, des, checkpoint)
+        else:  # 2026-11-16 (WIIPARTY S98W): a research lane whose planner found no route designs one instead of stopping
+            d = evolve._synth_or_park(ls, plevers, lane["name"], product, fam, des, checkpoint,
+                                      f"planner stop in {ls.get('mode')}: {str(p.get('stop'))[:200]}", "planner stop")
+        persist_designed(lane, d, plevers, dry)
         ledger_add(lane=lane["name"], kind="evo_decision", tokens=0, cls="PLANNER_STOP", instruments=[],
                    action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"),
                    selection=evolve.selection_evidence(d.get("lever"), pgraph))
