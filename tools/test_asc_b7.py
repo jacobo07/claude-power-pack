@@ -33,8 +33,17 @@ def test_delta() -> None:
     from modules.backlog_autopilot import promotion as P
     from modules.tower import baselines as bl
     ds = P.load_deltas(str(B7 / "deltas.json"))
-    v = P.classify(ds[0], bl.active_entries("web_surface"))
-    ok("V-ASC-B7-DELTA-PROMOTABLE", len(ds) == 1 and v.promotable and not P.check_problem(ds[0]), v.as_dict())
+    active = {e.get("id"): e for e in bl.active_entries("web_surface")}
+    if ds[0].id in active:
+        # Promoted (Owner 'go ahead' 2026-11-16): the live entry must carry exactly the recorded evidence, including
+        # discriminated=false -- the residual travels with the rule instead of staying in a side file.
+        ev = json.loads((B7 / "evidence.json").read_text(encoding="utf-8"))
+        got = active[ds[0].id].get("evidence")
+        ok("V-ASC-B7-PROMOTED-WITH-EVIDENCE", got == ev and got.get("discriminated") is False
+           and active[ds[0].id].get("check") == ds[0].check, got and got.get("discriminated"))
+    else:
+        v = P.classify(ds[0], list(active.values()))
+        ok("V-ASC-B7-DELTA-PROMOTABLE", len(ds) == 1 and v.promotable and not P.check_problem(ds[0]), v.as_dict())
     o = ds[0].origin
     ok("V-ASC-B7-ORIGIN-REAL", linecache.getline(str(ROOT / o["file"]), o["line"]).strip() == o["quote"], o)
 
@@ -47,7 +56,9 @@ def test_block() -> None:
     os.environ["CPP_TOWER_STATE_DIR"] = tempfile.mkdtemp(prefix="v-b7-state-")
     block = cli.family_block(R.TASKS["saas"], {"session_id": "v-b7"}, root=cand)
     n = bl.generations("web_surface", cand)[-1]
-    ok("V-ASC-B7-CANDIDATE-NEXT-GEN", n == bl.generations("web_surface")[-1] + 1, n)
+    live = bl.generations("web_surface")[-1]
+    promoted = "web_surface-taste-hard-bans" in {e.get("id") for e in bl.active_entries("web_surface")}
+    ok("V-ASC-B7-CANDIDATE-GEN", n == (live if promoted else live + 1), "cand B%d live B%d promoted=%s" % (n, live, promoted))
     ok("V-ASC-B7-BLOCK-CARRIES-TASTE", "web_surface/B%d" % n in block and "[web_surface-taste-hard-bans]" in block,
        block[:300])
     ok("V-ASC-B7-TASK-NAMES-NO-BAN", not any(w in R.TASKS["saas"].lower() for w in ("dash", "taste", "slop", "scroll")))

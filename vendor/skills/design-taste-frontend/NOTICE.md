@@ -14,11 +14,11 @@
 ## How it is consumed (autonomously)
 1. A prompt that builds a `web_surface` gets the family block, which names this skill and asks for its Design Read
    (`vault/tower/families/web_surface.json` `skills`, rendered by `modules/gsd_x/cli.py::family_block`).
-2. PENDING (campaign 1, obligation 5): `~/.claude/settings.json` still lists the skill as `name-only`; dropping that
-   is a live-settings change made only after this branch is fast-forwarded into the live tree.
-3. PENDING (web_surface B7, not promoted; B6 is the 2026-11-16 re-citation generation): the done-gate HAS the
-   `taste:<page>` check kind (`modules/tower/checks.py`), but no active baseline generation carries a `taste:` entry
-   yet, so nothing lints the page autonomously. Until B7 lands, the family block says so and tells the builder to run
-   `python -m modules.cdio.taste <page>` itself. The Stop hook `tools/family_donegate_stop.py` (Stop-chain in
-   `hooks/hook-dispatcher.js`) already runs the family done-gate at turn end in a session that received a family block
-   and stands in a member repo; once B6 is active it blocks a page with a non-waived critical Taste finding.
+2. DONE 2026-11-16 (campaign 1, obligation 5): the `name-only` override for this skill was removed from
+   `~/.claude/settings.json`, so its description reaches the model.
+3. DONE 2026-11-16: web_surface **B7** carries `web_surface-taste-hard-bans` (check `taste:index.html`), promoted
+   through the tower ratchet with the evidence in `vault/programs/ascension/bcap-1/b7/evidence.json`. The Stop hook
+   `tools/family_donegate_stop.py` (Stop-chain in the dispatcher) runs the family done-gate at turn end in a session
+   that received a family block and stands in a member repo, and blocks a page with a non-waived critical Taste
+   finding. Residual, recorded in the entry itself: the GEX44 pair (106ea304) had `discriminated: false`, since the
+   control agent also passed the lint, so whether the block CHANGES what a fresh builder writes is not measured (N=1).

@@ -75,3 +75,15 @@ The live hook path reads the live `~/.claude/skills/claude-power-pack` tree, whi
 - Still open: item 4 (web_surface B7 Taste promotion pair on GEX44). The `web_surface-taste-hard-bans` delta does
   not exist as data yet (only named in NOTICE.md / taste-absorption.json); `tools/asc_inherit_run.py` is hard-wired
   to the phase-5 deltas and output dir.
+
+## 4. web_surface B7 Taste promotion (DONE 2026-11-16, pane 58263a19, Owner "go ahead")
+- Pair on GEX44 (clone ~/missions/bcap-b7, data commit 106ea304): control ~290k / treated ~450k tokens (mostly cache
+  read), both rc 0, under 2 min each. Evidence (`bcap-1/b7/evidence.json`): fixture FAIL -> PASS; 3 negative controls
+  VIOLATED (em-dash+quietly+stand-in names, planted em-dash, planted scroll listener); treated APPLIED_VERIFIED.
+- `discriminated: false`: the control agent ALSO passed the taste lint. The treated agent visibly inherited (Design
+  Read in DESIGN.md, explicit "no scroll listeners/cues", legal pages) but the static check did not separate the two.
+  Promoted on the done-gate value; the inheritance effect stays an open residual (N=1, not measured).
+- `python -m modules.backlog_autopilot.promotion web_surface ...` wrote `vault/tower/baselines/web_surface/B7.json`;
+  `ratchet.verify_chain` generations 0-7, 0 regressions / tampered / unanchored. V-ASC-B7 14/14, V-ASC-BASE 32/32,
+  family_baselines 20/20, family_injection 23/23, baseline_generations 16/16, tower_ratchet 22/22, tower_checks 23/23,
+  tower_select 15/15, V-TASTE 59/59.
