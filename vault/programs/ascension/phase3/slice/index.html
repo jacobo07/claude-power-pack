@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Fernlight field notes</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;font:18px/1.55 Georgia,serif;color:#191817;background:#f4f3ee}
+main{max-width:34rem;margin:0 auto;padding:2rem 1.25rem}
+h1{font-size:2.25rem;line-height:1.1;font-weight:400}
+button{min-height:48px;min-width:48px;padding:0 1.5rem;font:inherit;color:#fffdf9;background:#a8452a;border:0;border-radius:6px}
+#status{min-height:1.6em;margin-top:1rem}
+footer{margin-top:3rem;font-size:1rem;color:#6b665f}
+button{transition:background-color .15s}
+@media (prefers-reduced-motion:reduce){button{transition:none;animation:none}}
+</style></head>
+<body><main>
+<h1>Notes from the field, once a month</h1>
+<p>One short letter about ferns, light and slow walking. No tracking, no noise.</p>
+<button id="subscribe" data-primary data-click-target="#status" data-click-expect="You are on the list.">Join the list</button>
+<p id="status" role="status"></p>
+<footer><a href="privacy.html">Privacy</a> &middot; <a href="terms-of-use.html">Terms of use</a></footer>
+</main>
+<script>
+document.getElementById('subscribe').addEventListener('click', function () {
+  document.querySelector('#status').textContent = 'You are on the list.';
+});
+</script>
+</body></html>

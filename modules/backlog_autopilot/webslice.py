@@ -477,7 +477,7 @@ footer{{margin-top:3rem;font-size:1rem;color:#6b665f}}
 <p>One short letter about ferns, light and slow walking. No tracking, no noise.</p>
 <button id="subscribe" data-primary data-click-target="#status" data-click-expect="You are on the list.">Join the list</button>
 <p id="status" role="status"></p>
-<footer><a href="privacy.html">Privacy</a></footer>
+<footer><a href="privacy.html">Privacy</a> &middot; <a href="terms-of-use.html">Terms of use</a></footer>
 </main>
 <script>
 document.getElementById('subscribe').addEventListener('click', function () {{
@@ -492,6 +492,13 @@ document.getElementById('subscribe').addEventListener('click', function () {{
 <p>This page collects no personal data and sets no cookies. Joining the list is a placeholder
 action in this fixture and stores nothing.</p><p><a href="index.html">Back</a></p></main></body></html>
 """
+    terms = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Terms of use</title></head>
+<body><main><h1>Terms of use</h1>
+<p>This page is a fixture. It makes no offer and creates no account; joining the list stores
+nothing.</p><p><a href="index.html">Back</a></p></main></body></html>
+"""
+    (out / "terms-of-use.html").write_text(terms, encoding="utf-8")
     (out / "index.html").write_text(index, encoding="utf-8")
     (out / "privacy.html").write_text(privacy, encoding="utf-8")
     dm = ensure_design_md(out, DESIGN_TEMPLATE.format(expr=expressiveness, budget=budget))
@@ -538,7 +545,7 @@ def production_reality(site: str | Path, surface: dict) -> dict:
     shot = (surface.get("render") or {}).get("shot")
     inter = surface.get("interactions") or []
     checks = {
-        "artifacts_present": all((site / f).exists() for f in ("index.html", "privacy.html", "DESIGN.md")),
+        "artifacts_present": all((site / f).exists() for f in ("index.html", "privacy.html", "terms-of-use.html", "DESIGN.md")),
         "screenshot_valid_png": bool(shot) and png_ok(shot),
         "rendered_h1_nonempty": bool(str(sc.get("h1", "")).strip()),
         "interaction_declared_and_works": bool(inter) and all(i["ok"] for i in inter),

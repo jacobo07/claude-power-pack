@@ -1,0 +1,219 @@
+{
+ "build": {
+  "design_md": {
+   "action": "CREATED",
+   "sha": "60e43de78fe75dd433a999b22c1290dfb4eca757a93e5a3b1fab57437104c954"
+  },
+  "site": "vault/programs/ascension/phase3/slice",
+  "variant": "good"
+ },
+ "legal": {
+  "pages": {
+   "privacy": [
+    "privacy.html"
+   ],
+   "terms": [
+    "terms-of-use.html"
+   ]
+  },
+  "required": [
+   "privacy",
+   "terms"
+  ],
+  "verdict": "APPROVE"
+ },
+ "reality": {
+  "checks": {
+   "artifacts_present": true,
+   "cdio_gate_done": true,
+   "interaction_declared_and_works": true,
+   "no_page_errors": true,
+   "rendered_h1_nonempty": true,
+   "screenshot_valid_png": true
+  },
+  "verdict": "REAL"
+ },
+ "surface": {
+  "declared": {
+   "celebration_policy": "never",
+   "character_policy": "none",
+   "error_posture": "explain_and_recover",
+   "expressiveness": "restrained",
+   "feedback_latency_ms": 100,
+   "motion_budget": "low",
+   "progress_language": "none",
+   "progress_threshold_ms": 1000,
+   "reduced_motion": "equivalent",
+   "success_posture": "confirm",
+   "trust_posture": "standard",
+   "waiting": "none"
+  },
+  "errors": [],
+  "gate": {
+   "hard_filters": [
+    {
+     "criterion": "experience-contract",
+     "detail": {
+      "declared": {
+       "celebration_policy": "never",
+       "character_policy": "none",
+       "error_posture": "explain_and_recover",
+       "expressiveness": "restrained",
+       "feedback_latency_ms": 100,
+       "motion_budget": "low",
+       "progress_language": "none",
+       "progress_threshold_ms": 1000,
+       "reduced_motion": "equivalent",
+       "success_posture": "confirm",
+       "trust_posture": "standard",
+       "waiting": "none"
+      },
+      "observed": {
+       "motion_budget": "low",
+       "motion_present": true,
+       "reduced_motion_equivalent": true
+      }
+     },
+     "observed": "observed behaviour conforms to the declared contract (12 field(s) declared)",
+     "passed": true,
+     "recommendation": "",
+     "severity": "",
+     "state": "conforming"
+    }
+   ],
+   "is_done": true,
+   "reached_score": true,
+   "reason": "score 100 >= 80 and zero critical",
+   "score": 100,
+   "score_result": {
+    "critical": [],
+    "dropped": [],
+    "is_done": true,
+    "major": [],
+    "minor": [],
+    "passed": [
+     {
+      "criterion": "contrast-body",
+      "dimension": "visual",
+      "observed": "15.96:1 >= 4.5:1",
+      "recommendation": "",
+      "severity": "",
+      "status": "pass"
+     },
+     {
+      "criterion": "tap-target-size",
+      "dimension": "ux",
+      "observed": "48px >= 44px",
+      "recommendation": "",
+      "severity": "",
+      "status": "pass"
+     },
+     {
+      "criterion": "mobile-body-font",
+      "dimension": "visual",
+      "observed": "18px >= 16px",
+      "recommendation": "",
+      "severity": "",
+      "status": "pass"
+     },
+     {
+      "criterion": "single-primary-cta",
+      "dimension": "conversion",
+      "observed": "exactly 1 primary CTA",
+      "recommendation": "",
+      "severity": "",
+      "status": "pass"
+     },
+     {
+      "criterion": "design-md-present",
+      "dimension": "visual",
+      "observed": "DESIGN.md present at vault/programs/ascension/phase3/slice/DESIGN.md",
+      "recommendation": "",
+      "severity": "",
+      "status": "pass"
+     },
+     {
+      "criterion": "reduced-motion-equivalence",
+      "dimension": "experience",
+      "observed": "motion present with a declared reduced-motion equivalent",
+      "recommendation": "",
+      "severity": "",
+      "status": "pass"
+     }
+    ],
+    "reason": "score 100 >= 80 and zero critical",
+    "score": 100,
+    "verdict": "APPROVE"
+   },
+   "verdict": "APPROVE"
+  },
+  "interactions": [
+   {
+    "expect": "You are on the list.",
+    "got": "You are on the list.",
+    "id": "subscribe",
+    "ok": true
+   }
+  ],
+  "measured": true,
+  "observed": {
+   "motion_budget": "low",
+   "motion_present": true,
+   "reduced_motion_equivalent": true
+  },
+  "render": {
+   "exit": 0,
+   "ok": true,
+   "reduced_motion": false,
+   "selfcheck": {
+    "bg": "#f4f3ee",
+    "body_font_px": 18,
+    "ctas": 1,
+    "errors": [],
+    "fg": "#191817",
+    "h1": "Notes from the field, once a month",
+    "interactions": [
+     {
+      "expect": "You are on the list.",
+      "got": "You are on the list.",
+      "id": "subscribe",
+      "ok": true
+     }
+    ],
+    "motion_present": true,
+    "tap_sizes": [
+     48
+    ],
+    "title": "Fernlight field notes"
+   },
+   "shot": "vault/programs/ascension/phase3/slice/render.png",
+   "shot_exit": 0
+  },
+  "render_reduced": {
+   "exit": 0,
+   "ok": true,
+   "reduced_motion": true,
+   "selfcheck": {
+    "bg": "#f4f3ee",
+    "body_font_px": 18,
+    "ctas": 1,
+    "errors": [],
+    "fg": "#191817",
+    "h1": "Notes from the field, once a month",
+    "interactions": [
+     {
+      "expect": "You are on the list.",
+      "got": "You are on the list.",
+      "id": "subscribe",
+      "ok": true
+     }
+    ],
+    "motion_present": false,
+    "tap_sizes": [
+     48
+    ],
+    "title": "Fernlight field notes"
+   }
+  }
+ }
+}

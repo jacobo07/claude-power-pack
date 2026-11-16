@@ -11,8 +11,8 @@
  },
  "operational": {
   "denominator": 373,
-  "numerator": 0,
-  "ratio": 0.0
+  "numerator": 3,
+  "ratio": 0.008
  },
  "reconciliation": {
   "denominator": 471,
@@ -245,13 +245,13 @@
    "close_condition": "claim cites existing code + gate",
    "consumers": [
     "hooks/hook-dispatcher.js",
+    "modules/backlog_autopilot/webslice.py",
     "modules/gsd_x/__init__.py",
     "modules/gsd_x/tier.py",
     "modules/setup_os/graph.py",
     "modules/tower/families.py",
     "tools/jit_skill_loader.py",
-    "tools/prg_assess.py",
-    "tools/skill_opportunity_signals.py"
+    "tools/prg_assess.py"
    ],
    "entrypoint": "hooks/doctrine_cards.js",
    "execution_evidence": null,
@@ -3919,7 +3919,11 @@
     "modules/capability_runtime/retirement.py"
    ],
    "entrypoint": "modules/decision_review/proactive_scanner.py",
-   "execution_evidence": null,
+   "execution_evidence": {
+    "cmd": "/usr/bin/python3 tools/test_cdio.py",
+    "exit": 0,
+    "stdout_sha256": "bddd5ea5bd0f2307"
+   },
    "id": "OBL-41284263fa",
    "implementation": [
     "modules/cdio/scorer.py",
@@ -4892,14 +4896,18 @@
     "hooks/capsule_mutation_guard.js",
     "hooks/mission_wall.js",
     "hooks/session_cards.js",
+    "modules/backlog_autopilot/webslice.py",
     "modules/cognitive_os/co_12_telemetry.py",
     "modules/external_assimilation/node_bridge.py",
     "modules/gsd_x/__init__.py",
-    "modules/gsd_x/goal/providers/long_run.py",
-    "modules/gsd_x/tier.py"
+    "modules/gsd_x/goal/providers/long_run.py"
    ],
    "entrypoint": "modules/capability_runtime/applicability.py",
-   "execution_evidence": null,
+   "execution_evidence": {
+    "cmd": "/usr/bin/python3 tools/test_capability_runtime.py",
+    "exit": 0,
+    "stdout_sha256": "2ad57477c533b709"
+   },
    "id": "OBL-532dd7a65f",
    "implementation": [
     "modules/capability_runtime/applicability.py",
@@ -8255,12 +8263,12 @@
    "tests": [
     "tools/test_asc_inventory.py",
     "tools/test_asc_ledger.py",
+    "tools/test_asc_webslice.py",
     "tools/test_build_everything.py",
     "tools/test_dataset_build.py",
     "tools/test_dataset_enricher_escalation.py",
     "tools/test_dataset_first_protocol.py",
-    "tools/test_decision_review.py",
-    "tools/test_duplicate_to_advantage.py"
+    "tools/test_decision_review.py"
    ],
    "title": "Gap re-verification, 2026-08-03"
   },
@@ -8602,14 +8610,18 @@
     "hooks/cdio_visual_advisory.js",
     "hooks/d2a_gate.js",
     "hooks/hook-dispatcher.js",
+    "modules/backlog_autopilot/webslice.py",
     "modules/cdicf/installer.js",
     "modules/cdicf/selector.js",
     "modules/cdio/motion_patterns.py",
-    "modules/cdio/scorer.py",
-    "modules/harness/intent_lock.js"
+    "modules/cdio/scorer.py"
    ],
    "entrypoint": "commands/cpp-design.md",
-   "execution_evidence": null,
+   "execution_evidence": {
+    "cmd": "/usr/bin/python3 tools/test_design_gate.py",
+    "exit": 0,
+    "stdout_sha256": "8e4b5b227e97937d"
+   },
    "id": "OBL-86cc10ae44",
    "implementation": [
     "commands/cpp-design.md",
@@ -15419,12 +15431,12 @@
    "consumers": [
     "hooks/cdio_visual_advisory.js",
     "hooks/hook-dispatcher.js",
+    "modules/backlog_autopilot/webslice.py",
     "modules/cdicf/installer.js",
     "modules/cdicf/selector.js",
     "modules/cdio/motion_patterns.py",
     "modules/cdio/scorer.py",
-    "modules/liveness/callable_reach.py",
-    "tools/design_gate.py"
+    "modules/liveness/callable_reach.py"
    ],
    "entrypoint": "tools/design_gate.py",
    "execution_evidence": null,
