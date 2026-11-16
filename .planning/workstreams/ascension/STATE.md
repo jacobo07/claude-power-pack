@@ -1,7 +1,7 @@
 # STATE: ascension
 
 status: ARMED 2026-11-16 on GEX44 (Owner "hazlo en la GEX44")
-current_phase: 5 (built, awaiting commit-verified; next 6)
+current_phase: 6 (done; campaign 1 PARTIALLY PROVEN)
 authority: 120M processed tokens + 3 x 40M auto top-ups (granted only with commits outside .planning/ since the last grant)
 spend: laptop planning pane 72497d57 before arm: UNMEASURED
 RAM at arm: laptop 726 MB free / 32,061 MB; GEX44 39 GB available
@@ -44,3 +44,11 @@ base: 2f9386f6 (laptop feature/knowledge-acquisition, committed state only)
 - Gate: `python3 tools/test_asc_baseline.py` exit 0 (V-ASC-BASE, 32 checks, never calls a model). tower ratchet/donegate and V-ASC-LED still exit 0.
 - RESIDUALS: (a) the LIVE hook path on GEX44/laptop reads the live ~/.claude/skills tree, which does not have B5 until the branch is merged and synced; delivery was proven through the same `family_block` function with the worktree root, not through the live hook (BLOCKED-ON-LAPTOP/coordinator: after merge, rerun V-ASC-BASE section 4). (b) N=1 agent pair: shows the mechanism, not a rate. (c) Pre-existing failures NOT caused by this phase (identical with B5 removed): `tools/test_family_baselines.py` rc 3 and `tools/test_baseline_generations.py` V-BGEN-REAL-B0-CITATIONS-HOLD (Windows-path citations FILE_MISSING on Linux). (d) Delta attributes (applies_to_all_members, floor) are declared by the proposer; only objective facts are checked. (e) The candidate B5 the agent saw has sha 8bcdaf0f0144; the final B5 adds an evidence field to each entry, entry text identical.
 - Meta: (1) wrong assumption: my first test treated an appended system prompt as visible in the stream and "bcap-1" paths as reads; both were instrument faults, fixed by checking behaviour (ran family tools) and excluding writes. (2) The gate did not flag my own "duplicate" render rule by vocabulary; I declared enforced_elsewhere instead, a declared fact. (3) Determinism gained: promotion is refused without evidence. (4) UNKNOWN: live-hook delivery, rate of inheritance. (5) Next: Phase 6.
+
+### Phase 6: Immunity, liveness, closeout -- DONE (GEX44, 2026-11-16, epoch 5)
+- Liveness: `commands/backlog-to-capability.md` wires inventory/ledger/webslice/promotion (all four were ORPHAN); `tools/test_asc_liveness.py` (V-ASC-LIVE, 15 checks, seeded-orphan negative pole) exit 0. Repo offenders 61 -> 56 (pre-existing, not mine).
+- UKDL: section appended to ukdl-universal.md (1 PROVEN TRAP, rest OBSERVED, no HR).
+- Found and fixed: V-ASC-BASE was non-hermetic (offer counters in real ~/.claude/state/tower; red on run 4). HOME now throwaway; 4 greens.
+- Closeout: `vault/programs/ascension/bcap-1/done_gate.py --campaign 1` -> 7/7 PASS, verdict PARTIALLY_PROVEN with 4 named UNPROVEN items. HANDOFF at bcap-1/HANDOFF.md (the interim one, created by this campaign, was moved there). LAPTOP_STEPS 3-4 added.
+- Decision: verdict stays PARTIALLY_PROVEN, not COMPLETE: live-hook delivery and laptop-plane seeds cannot be observed here (reason: law 3, UNKNOWN never becomes PASS).
+- Name-collision directive: all new files are BCAP-safe (bcap-1/ or created by this campaign); no KSR file edited.

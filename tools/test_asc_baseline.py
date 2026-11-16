@@ -103,7 +103,11 @@ check("real: refused deltas are absent", not any(i in real for i in cls if i not
 check("real: B4 unchanged by the promotion", len(bl.active_entries(FAM, tmp_root(4))) == 24)
 
 # ---- 4. delivery: a later equivalent build receives it, an unrelated one and the pre-promotion baseline do not ---
+# gsd_x.cli keeps its per-session offer counters under Path.home()/.claude/state/tower (it ignores any
+# tower-dir env var), so a fixed session id exhausts MAX_OFFERS across runs and the gate goes red on the
+# fourth run. Hermetic: point HOME at a throwaway dir for this section.
 os.environ["CPP_TOWER_STATE_DIR"] = tempfile.mkdtemp(prefix="vasc-state-")
+os.environ["HOME"] = tempfile.mkdtemp(prefix="vasc-home-")
 PROMPT = "Build a small landing page for a harbour newsletter that sends a monthly tide-table digest"
 blk = cli.family_block(PROMPT, {"session_id": "v-base-1"})
 check("delivery: equivalent web prompt receives both new rules", all("[%s]" % i in blk for i in NEW), "%d chars" % len(blk))
