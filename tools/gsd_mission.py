@@ -4825,6 +4825,43 @@ def _worktree_carries_workstream(worktree: str, base_cwd: str, workstream: str) 
 CWD_ALIGN_BLOCKING = ("behind_dirty", "diverged", "unreadable")
 
 
+def _recreate_vanished_worktree(cwd: str, work_dir: str) -> str | None:
+    """Recreate `<cwd>/.claude/worktrees/<name>` when it is gone; None = nothing done.
+
+    Claude Code removes a `--worktree` checkout (and its branch) when the session exits with no
+    changes. The mission still names it as its work_dir, so every later launch was held as
+    "unreadable" for good. Measured 2026-11-16 (MKWLIB m-c97edc551ce7): held from 19:39Z on.
+    A surviving `worktree-<name>` branch is reused (its commits are the work); without one the
+    checkout had nothing to lose and is branched from the cwd HEAD. Only that exact path shape is
+    touched, never an existing path. Kill switch: CPP_MISSION_SELF_HEAL=off."""
+    import subprocess
+    import mission_remedies as mr
+    if not mr.enabled():
+        return None
+    wd = Path(work_dir)
+    if wd.exists():
+        return None
+    try:
+        rel = wd.resolve().relative_to((Path(cwd) / ".claude" / "worktrees").resolve())
+    except ValueError:
+        return None
+    if len(rel.parts) != 1 or not _git_toplevel_and_common(cwd):
+        return None
+    g = resolve_exe("git") or "git"
+
+    def git(*args):
+        return subprocess.run([g, "-C", str(cwd), *args], capture_output=True, text=True, timeout=60)
+
+    branch = f"worktree-{rel.parts[0]}"
+    git("worktree", "prune")
+    kept = git("rev-parse", "--verify", "--quiet", f"refs/heads/{branch}").returncode == 0
+    r = git("worktree", "add", str(wd), branch) if kept else git("worktree", "add", "-b", branch, str(wd), "HEAD")
+    if r.returncode != 0 or not wd.exists():
+        return None
+    return (f"work_dir {wd} was gone; recreated from "
+            + (f"surviving branch {branch}" if kept else f"cwd HEAD as new branch {branch}"))
+
+
 def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = None) -> dict:
     """Make the mission cwd carry the work before a worker is launched in it.
 
@@ -4847,6 +4884,9 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
     import subprocess
     if not work_dir or os.path.normcase(str(Path(work_dir).resolve())) == os.path.normcase(str(Path(cwd).resolve())):
         return {"status": "same", "detail": ""}
+    healed = _recreate_vanished_worktree(cwd, work_dir)
+    if healed:
+        return {**align_cwd(cwd, work_dir, proven_workstream), "recreated": healed}
     here, there = _git_toplevel_and_common(cwd), _git_toplevel_and_common(work_dir)
     if not here or not there:
         return {"status": "unreadable", "detail": f"git could not read cwd={cwd} or work_dir={work_dir}"}
@@ -6951,6 +6991,9 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                 # carry the work first (align_cwd; measured Brand #001 2026-09-30).
                 aligned = align_cwd(rec["cwd"], work_dir or rec.get("work_dir"), proven_workstream=proven_ws)
                 row["cwd_align"] = aligned["status"]
+                if aligned.get("recreated"):
+                    lr.ledger_append(mid, "worktree_recreated", mission_id=mid, epoch=rec["epoch"],
+                                     detail=aligned["recreated"])
                 if aligned["status"] == "fast_forwarded":
                     lr.ledger_append(mid, "cwd_fast_forwarded", mission_id=mid, epoch=rec["epoch"],
                                      detail=aligned["detail"])

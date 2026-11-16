@@ -205,6 +205,40 @@ def main() -> int:
         check("V-MCA-BEHIND-DIRTY-UNPROVEN", r["status"] == "behind_dirty",
               f"no proof of the worktree -> still blocking: {r['status']}")
 
+        # 19-22 a Claude `--worktree` checkout removed on a no-change exit (measured 2026-11-16, MKWLIB
+        # m-c97edc551ce7 held as "unreadable" from 19:39Z on): recreate exactly that path shape, nothing else.
+        cwd, _ = repo(t / "c19")
+        gone = cwd / ".claude" / "worktrees" / "s100l"
+        r = gm.align_cwd(str(cwd), str(gone))
+        check("V-MCA-WT-RECREATED-FRESH", r["status"] == "aligned" and r.get("recreated") and gone.is_dir()
+              and head(gone) == head(cwd), f"status={r['status']} recreated={r.get('recreated')}")
+
+        cwd, _ = repo(t / "c20")
+        kept = cwd / ".claude" / "worktrees" / "s8"
+        git(cwd, "worktree", "add", "-q", "-b", "worktree-s8", str(kept))
+        w = commit(kept, "work.txt", "a worker's commit")
+        git(cwd, "worktree", "remove", "--force", str(kept))
+        r = gm.align_cwd(str(cwd), str(kept))
+        check("V-MCA-WT-RECREATED-BRANCH", r.get("recreated") and kept.is_dir() and head(kept) == w
+              and r["status"] == "fast_forwarded" and head(cwd) == w,
+              f"status={r['status']} worktree head kept={kept.is_dir() and head(kept) == w}")
+
+        cwd, _ = repo(t / "c21")
+        outside = t / "c21" / "elsewhere"
+        r = gm.align_cwd(str(cwd), str(outside))
+        check("V-MCA-WT-OUTSIDE-UNTOUCHED", r["status"] == "unreadable" and not r.get("recreated")
+              and not outside.exists(), f"status={r['status']} created={outside.exists()}")
+
+        cwd, _ = repo(t / "c22")
+        gone = cwd / ".claude" / "worktrees" / "s22"
+        os.environ["CPP_MISSION_SELF_HEAL"] = "off"
+        try:
+            r = gm.align_cwd(str(cwd), str(gone))
+        finally:
+            os.environ.pop("CPP_MISSION_SELF_HEAL", None)
+        check("V-MCA-WT-KILL-SWITCH", r["status"] == "unreadable" and not gone.exists(),
+              f"self-heal off -> held as before: {r['status']}")
+
     # 9 structural: supervise aligns the cwd BEFORE it launches a worker
     src = Path(gm.__file__).read_text(encoding="utf-8")
     # supervise() became a thin wrapper over _supervise_core(), where the pass body (align, then launch) now lives;
@@ -265,7 +299,7 @@ def main() -> int:
     finally:
         gm.effective_workdir, gm.align_cwd = real_ew, real_align
 
-    print(f"MCA_PASS={passes}/{passes + fails}  threshold=16/16")
+    print(f"MCA_PASS={passes}/{passes + fails}  threshold=20/20")
     return 0 if fails == 0 else 1
 
 
