@@ -1,0 +1,197 @@
+{
+ "task": "Build a small landing page for a harbour newsletter that sends a monthly tide-table digest. Static HTML and CSS only, no frameworks, no build step. One page, one signup button, plain and quiet. Write the files in the current directory, then reply with one line listing the files.",
+ "candidate_generation": "web_surface/B5",
+ "candidate_sha256": "8bcdaf0f0144df3d71b18fdc266f3931c35950cb099adf2837eb6cdc021a173b",
+ "block_chars": 3035,
+ "block_head": "Family baseline web_surface/B5 (sha256 8bcdaf0f0144) -- this prompt builds a web_surface (matched: landing, landing page). Implement each rule WITHOUT being asked, or state `NO APLICA: <reason>` for it. Before calling it done, run `/family-done-gate` (python tools/family_baseline.py judge web_surfac",
+ "runs": {
+  "control": {
+   "label": "control",
+   "rc": 0,
+   "seconds": 21.9,
+   "files": [
+    "index.html",
+    "styles.css"
+   ],
+   "tool_calls": [
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "ls -la",
+      "description": "List current directory"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/ascension/.claude/worktrees/ascension/vault/programs/ascension/bcap-1/phase5/inherit/control/index."
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/ascension/.claude/worktrees/ascension/vault/programs/ascension/bcap-1/phase5/inherit/control/styles"
+     }
+    }
+   ],
+   "usage": {
+    "input_tokens": 6,
+    "cache_creation_input_tokens": 39580,
+    "cache_read_input_tokens": 105857,
+    "output_tokens": 2270,
+    "output_tokens_details": {
+     "thinking_tokens": 404
+    },
+    "server_tool_use": {
+     "web_search_requests": 0,
+     "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 39580,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+     {
+      "input_tokens": 2,
+      "output_tokens": 62,
+      "cache_read_input_tokens": 49018,
+      "cache_creation_input_tokens": 1944,
+      "cache_creation": {
+       "ephemeral_5m_input_tokens": 0,
+       "ephemeral_1h_input_tokens": 1944
+      },
+      "type": "message"
+     }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+   },
+   "result": "`index.html`, `styles.css` \u2014 the Sign up button opens an email to the placeholder `subscribe@harbour-tides.example`, so it won't work until you replace that with your real address.",
+   "stderr_tail": ""
+  },
+  "treated": {
+   "label": "treated",
+   "rc": 0,
+   "seconds": 49.9,
+   "files": [
+    "DESIGN.md",
+    "index.html",
+    "privacy.html",
+    "styles.css",
+    "terms.html"
+   ],
+   "tool_calls": [
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "ls -la; python \"/home/kobii/missions/ascension/.claude/worktrees/ascension/tools/family_baseline.py\" rule web_surface --",
+      "description": "List directory and read deferred web rules"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "python \"/home/kobii/missions/ascension/.claude/worktrees/ascension/tools/family_baseline.py\" rule web_surface --deferred",
+      "description": "Read deferred web surface rules"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "ls -la",
+      "description": "List current directory"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "grep -n \"deferred\\|RULES_PATH\\|\\.json\\|\\.yaml\\|\\.md\" /home/kobii/missions/ascension/.claude/worktrees/ascension/tools/fa",
+      "description": "Find where family baseline rules are stored"
+     }
+    },
+    {
+     "tool": "Read",
+     "input": {
+      "file_path": "/home/kobii/missions/ascension/.claude/worktrees/ascension/tools/family_baseline.py",
+      "limit": "80"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/ascension/.claude/worktrees/ascension/vault/programs/ascension/bcap-1/phase5/inherit/treated/DESIGN"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/ascension/.claude/worktrees/ascension/vault/programs/ascension/bcap-1/phase5/inherit/treated/styles"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/ascension/.claude/worktrees/ascension/vault/programs/ascension/bcap-1/phase5/inherit/treated/index."
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/ascension/.claude/worktrees/ascension/vault/programs/ascension/bcap-1/phase5/inherit/treated/privac"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/ascension/.claude/worktrees/ascension/vault/programs/ascension/bcap-1/phase5/inherit/treated/terms."
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "python /home/kobii/missions/ascension/.claude/worktrees/ascension/tools/family_baseline.py judge web_surface --repo .",
+      "description": "Run the web surface done-gate"
+     }
+    }
+   ],
+   "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 45398,
+    "cache_read_input_tokens": 370296,
+    "output_tokens": 5036,
+    "output_tokens_details": {
+     "thinking_tokens": 1007
+    },
+    "server_tool_use": {
+     "web_search_requests": 0,
+     "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 45398,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+     {
+      "input_tokens": 2,
+      "output_tokens": 182,
+      "cache_read_input_tokens": 56626,
+      "cache_creation_input_tokens": 163,
+      "cache_creation": {
+       "ephemeral_5m_input_tokens": 0,
+       "ephemeral_1h_input_tokens": 163
+      },
+      "type": "message"
+     }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+   },
+   "result": "Files written: `index.html`, `styles.css`, `privacy.html`, `terms.html`, `DESIGN.md`. Before going live, swap the placeholder sign-up address `tides@example.org` in `index.html` for a real one. I haven't checked the page in a browser or run the done-gate, because the gate and rules commands needed a",
+   "stderr_tail": ""
+  }
+ }
+}

@@ -1,0 +1,30 @@
+{
+ "improvement": {
+  "run": "legal_surface.check over the Phase 3 fixture (webslice.build_site) without vs with terms-of-use",
+  "measure": "CDIO legal_surface verdict",
+  "before": "BLOCK",
+  "after": "APPROVE"
+ },
+ "negative_controls": [
+  {
+   "name": "fixture without terms page judged by candidate B5",
+   "rc": 1
+  },
+  {
+   "name": "control agent surface (no baseline) judged by candidate B5",
+   "rc": 1
+  },
+  {
+   "name": "treated agent surface minus terms page judged by candidate B5",
+   "rc": 1
+  }
+ ],
+ "positive_control": {
+  "name": "treated agent surface judged by candidate B5",
+  "rc": 0
+ },
+ "reuse": {
+  "run": "fresh `claude -p` treated agent, task never mentions legal pages (inherit/treated)",
+  "pointer": "inheritance_run.json runs.treated.files=['DESIGN.md', 'index.html', 'privacy.html', 'styles.css', 'terms.html'] vs runs.control.files=['index.html', 'styles.css']; candidate web_surface/B5 sha256 8bcdaf0f0144"
+ }
+}

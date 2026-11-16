@@ -1,0 +1,57 @@
+{
+ "verdicts": [
+  {
+   "id": "web_surface-privacy-page-linked",
+   "class": "CONSTITUTIVE",
+   "reason": "applies to every member of the family; its absence breaches a floor",
+   "duplicate_of": "",
+   "promotable": true
+  },
+  {
+   "id": "web_surface-terms-page-linked",
+   "class": "CONSTITUTIVE",
+   "reason": "applies to every member of the family; its absence breaches a floor",
+   "duplicate_of": "",
+   "promotable": true
+  },
+  {
+   "id": "web_surface-render-artifact-real",
+   "class": "INCIDENTAL",
+   "reason": "already enforced by web_surface-ui-verified-on-production-build (B4: the page must be rendered in a real browser), at the time and place it applies",
+   "duplicate_of": "",
+   "promotable": false
+  },
+  {
+   "id": "web_surface-harness-click-attributes",
+   "class": "PRODUCT_SPECIFIC",
+   "reason": "tied to one product/harness: webslice, harness, data-click-target",
+   "duplicate_of": "",
+   "promotable": false
+  },
+  {
+   "id": "web_surface-selected-resource-licence-clean",
+   "class": "INCIDENTAL",
+   "reason": "already enforced by modules.backlog_autopilot.webslice.select (selection time), at the time and place it applies",
+   "duplicate_of": "",
+   "promotable": false
+  },
+  {
+   "id": "web_surface-newsletter-copy-tone",
+   "class": "PRODUCT_SPECIFIC",
+   "reason": "not every member of the family needs it",
+   "duplicate_of": "",
+   "promotable": false
+  }
+ ],
+ "refused": {
+  "web_surface-render-artifact-real": "INCIDENTAL: already enforced by web_surface-ui-verified-on-production-build (B4: the page must be rendered in a real browser), at the time and place it applies",
+  "web_surface-harness-click-attributes": "PRODUCT_SPECIFIC: tied to one product/harness: webslice, harness, data-click-target",
+  "web_surface-selected-resource-licence-clean": "INCIDENTAL: already enforced by modules.backlog_autopilot.webslice.select (selection time), at the time and place it applies",
+  "web_surface-newsletter-copy-tone": "PRODUCT_SPECIFIC: not every member of the family needs it"
+ },
+ "promoted": [
+  "web_surface-privacy-page-linked",
+  "web_surface-terms-page-linked"
+ ],
+ "generation": "/home/kobii/missions/ascension/.claude/worktrees/ascension/vault/tower/baselines/web_surface/B5.json"
+}

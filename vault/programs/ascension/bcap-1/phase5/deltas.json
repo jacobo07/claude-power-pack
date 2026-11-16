@@ -1,0 +1,78 @@
+[
+ {
+  "id": "web_surface-privacy-page-linked",
+  "requirement": "A public web surface ships a privacy page and links it from the entry page (index.html); the CDIO legal_surface gate BLOCKS a surface without one, so a build that omits it is not done.",
+  "why": "Phase 3 slice (campaign 1): the first fixture build had no legal pages and legal_surface returned BLOCK; the family baseline carried no rule telling a builder to add them unasked.",
+  "check": "regex:index.html::href=\"[^\"]*privacy",
+  "origin": {
+   "file": "modules/cdio/legal_surface.py",
+   "line": 50,
+   "quote": "\"privacy\": (\"privacy\", \"privacy-policy\""
+  },
+  "floor": true
+ },
+ {
+  "id": "web_surface-terms-page-linked",
+  "requirement": "A public web surface ships a terms-of-use page and links it from the entry page (index.html); the CDIO legal_surface gate BLOCKS a surface without one, so a build that omits it is not done.",
+  "why": "Phase 3 slice (campaign 1): the fixture's first build lacked terms-of-use.html and legal_surface returned BLOCK (measured again in Phase 5: BLOCK without, APPROVE with).",
+  "check": "regex:index.html::href=\"[^\"]*terms",
+  "origin": {
+   "file": "modules/cdio/legal_surface.py",
+   "line": 54,
+   "quote": "\"terms\": (\"terms\", \"terms-of-use\""
+  },
+  "floor": true
+ },
+ {
+  "id": "web_surface-render-artifact-real",
+  "requirement": "A web surface build proves its render artifact is a real, non-trivial PNG produced by a headless render of the built page, not an announced path.",
+  "why": "Phase 3 case 10: a tool reported success without its artifact.",
+  "check": "glob:render*.png",
+  "origin": {
+   "file": "modules/backlog_autopilot/webslice.py",
+   "line": 129,
+   "quote": "def png_ok("
+  },
+  "enforced_elsewhere": "web_surface-ui-verified-on-production-build (B4: the page must be rendered in a real browser)"
+ },
+ {
+  "id": "web_surface-harness-click-attributes",
+  "requirement": "Every primary control carries data-click-target and data-click-expect attributes for the webslice self-check harness.",
+  "why": "Phase 3 slice harness convention.",
+  "check": "regex:index.html::data-click-target",
+  "origin": {
+   "file": "modules/backlog_autopilot/webslice.py",
+   "line": 1,
+   "quote": "x"
+  },
+  "product_tokens": [
+   "webslice",
+   "harness",
+   "data-click-target"
+  ]
+ },
+ {
+  "id": "web_surface-selected-resource-licence-clean",
+  "requirement": "A resource adopted into a surface has a licence that permits it; AGPL and UNKNOWN licences are refused at selection.",
+  "why": "Phase 3 cases 5-6.",
+  "check": "",
+  "origin": {
+   "file": "modules/backlog_autopilot/webslice.py",
+   "line": 292,
+   "quote": "def license_verdict("
+  },
+  "enforced_elsewhere": "modules.backlog_autopilot.webslice.select (selection time)"
+ },
+ {
+  "id": "web_surface-newsletter-copy-tone",
+  "requirement": "The newsletter signup copy is a warm editorial letter about ferns.",
+  "why": "Fernlight fixture copy.",
+  "check": "regex:index.html::ferns",
+  "origin": {
+   "file": "modules/backlog_autopilot/webslice.py",
+   "line": 1,
+   "quote": "x"
+  },
+  "applies_to_all_members": false
+ }
+]
