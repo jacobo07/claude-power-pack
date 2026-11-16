@@ -1,0 +1,240 @@
+{
+ "task": "Build the marketing landing page for a small SaaS product that turns meeting recordings into action items. Hero with a headline and a call to action, a short features section, two customer testimonials, and a pricing section with two plans. Static HTML and CSS only (plain JS allowed), no frameworks, no build step, entry file index.html. Write the files in the current directory, then reply with one line listing the files.",
+ "task_key": "saas",
+ "deltas": "vault/programs/ascension/bcap-1/b7/deltas.json",
+ "candidate_generation": "web_surface/B7",
+ "candidate_sha256": "5ebfb0689fe778cc48f5708fbe405cd58bb07ce4fdeb86e2711c95daf0c36f92",
+ "block_chars": 3546,
+ "block_head": "Family baseline web_surface/B7 (sha256 5ebfb0689fe7) -- this prompt builds a web_surface (matched: landing, landing page, hero). Implement each rule WITHOUT being asked, or state `NO APLICA: <reason>` for it. Before calling it done, run `/family-done-gate` (python tools/family_baseline.py judge web_",
+ "runs": {
+  "control": {
+   "label": "control",
+   "rc": 0,
+   "seconds": 77.4,
+   "files": [
+    "index.html",
+    "script.js",
+    "styles.css"
+   ],
+   "tool_calls": [
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "ls -la",
+      "description": "List current directory"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/control/index.html"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/control/styles.css"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/control/script.js"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "node --check script.js && echo JS_OK",
+      "description": "Check the script for syntax errors"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "node --check /home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/control/script.js",
+      "description": "Check the script for syntax errors"
+     }
+    }
+   ],
+   "usage": {
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 46586,
+    "cache_read_input_tokens": 220555,
+    "output_tokens": 9386,
+    "output_tokens_details": {
+     "thinking_tokens": 326
+    },
+    "server_tool_use": {
+     "web_search_requests": 0,
+     "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 46586,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+     {
+      "input_tokens": 2,
+      "output_tokens": 78,
+      "cache_read_input_tokens": 57827,
+      "cache_creation_input_tokens": 141,
+      "cache_creation": {
+       "ephemeral_5m_input_tokens": 0,
+       "ephemeral_1h_input_tokens": 141
+      },
+      "type": "message"
+     }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+   },
+   "result": "I wrote `index.html`, `styles.css` and `script.js` (the JS syntax check was blocked by permissions, and the page hasn't been opened in a browser; the product name \"Recapline\", the testimonials and the prices are invented).",
+   "stderr_tail": ""
+  },
+  "treated": {
+   "label": "treated",
+   "rc": 0,
+   "seconds": 102.0,
+   "files": [
+    "DESIGN.md",
+    "index.html",
+    "privacy.html",
+    "styles.css",
+    "terms.html"
+   ],
+   "tool_calls": [
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "pwd; ls -la; python \"/home/kobii/missions/bcap-b7/tools/family_baseline.py\" rule web_surface --deferred 2>&1 | head -150",
+      "description": "List directory and read deferred web_surface rules"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "python \"/home/kobii/missions/bcap-b7/tools/family_baseline.py\" rule web_surface --deferred 2>&1 | head -200",
+      "description": "Read deferred web_surface baseline rules"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "ls -la",
+      "description": "List current directory"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "grep -n \"deferred\\|web_surface-\" /home/kobii/missions/bcap-b7/tools/family_baseline.py | head -40",
+      "description": "Locate where deferred rules are defined"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/treated/index.html"
+     }
+    },
+    {
+     "tool": "Edit",
+     "input": {
+      "replace_all": "False",
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/treated/index.html",
+      "old_string": "              <span class=\"item-meta\">Priya \u00b7 Thu</span>",
+      "new_string": "              <span class=\"item-meta\">Design lead \u00b7 Thu</span>"
+     }
+    },
+    {
+     "tool": "Edit",
+     "input": {
+      "replace_all": "False",
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/treated/index.html",
+      "old_string": "              <span class=\"item-meta\">Marco \u00b7 Fri</span>",
+      "new_string": "              <span class=\"item-meta\">Support lead \u00b7 Fri</span>"
+     }
+    },
+    {
+     "tool": "Edit",
+     "input": {
+      "replace_all": "False",
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/treated/index.html",
+      "old_string": "Illustrative output. Names are examples.",
+      "new_string": "Illustrative output, not from a real meeting."
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/treated/styles.css"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/treated/privacy.html"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/treated/terms.html"
+     }
+    },
+    {
+     "tool": "Write",
+     "input": {
+      "file_path": "/home/kobii/missions/bcap-b7/vault/programs/ascension/bcap-1/b7/inherit/treated/DESIGN.md"
+     }
+    },
+    {
+     "tool": "Bash",
+     "input": {
+      "command": "grep -n \"\u2014\\|\u2013\" *.html *.css *.md || echo \"no dashes\"",
+      "description": "Check files for em or en dashes"
+     }
+    }
+   ],
+   "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 49768,
+    "cache_read_input_tokens": 381884,
+    "output_tokens": 10909,
+    "output_tokens_details": {
+     "thinking_tokens": 1430
+    },
+    "server_tool_use": {
+     "web_search_requests": 0,
+     "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 49768,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+     {
+      "input_tokens": 2,
+      "output_tokens": 464,
+      "cache_read_input_tokens": 61024,
+      "cache_creation_input_tokens": 135,
+      "cache_creation": {
+       "ephemeral_5m_input_tokens": 0,
+       "ephemeral_1h_input_tokens": 135
+      },
+      "type": "message"
+     }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+   },
+   "result": "Files: `index.html`, `styles.css`, `privacy.html`, `terms.html`, `DESIGN.md`\n\n- **Not checked:** I couldn't run the done-gate (`tools/family_baseline.py`) or read its deferred rules, because running Python was blocked pending approval. I also haven't opened the page in a browser. The only automated ",
+   "stderr_tail": ""
+  }
+ }
+}

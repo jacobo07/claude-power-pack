@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minutehand: meeting recordings in, action items out</title>
+  <meta name="description" content="Minutehand listens to your meeting recordings and returns a short list of action items, each with an owner and a due date.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="index.html" aria-label="Minutehand home">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 12 L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 12 L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Minutehand
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <h1 id="hero-title">Your meeting ended. Your to-do list is already written.</h1>
+          <p class="lede">Upload a recording and Minutehand returns the decisions and action items from it, each with an owner and a due date, usually before you are back at your desk.</p>
+          <a class="button" href="#pricing">Compare plans</a>
+        </div>
+
+        <figure class="sample" aria-label="Example of the action items Minutehand produces">
+          <figcaption class="sample-head">
+            <span>Weekly product sync</span>
+            <span class="muted">42 min recording</span>
+          </figcaption>
+          <ol class="items">
+            <li>
+              <span class="item-text">Send the revised onboarding copy to legal for review</span>
+              <span class="item-meta">Design lead · Thu</span>
+            </li>
+            <li>
+              <span class="item-text">Book two customer calls about the export bug</span>
+              <span class="item-meta">Support lead · Fri</span>
+            </li>
+            <li>
+              <span class="item-text">Decide whether the beta ships with dark mode</span>
+              <span class="item-meta">Team · next sync</span>
+            </li>
+          </ol>
+          <p class="sample-foot muted">Illustrative output, not from a real meeting.</p>
+        </figure>
+      </div>
+    </section>
+
+    <section id="features" class="section" aria-labelledby="features-title">
+      <div class="wrap">
+        <h2 id="features-title">Less note-taking, fewer dropped tasks</h2>
+        <div class="features">
+          <article class="feature">
+            <h3>Owners, not just bullet points</h3>
+            <p>Every action item names who said they would do it, taken from the conversation itself, so nobody has to guess whose job it is.</p>
+          </article>
+          <article class="feature">
+            <h3>Dates people actually said</h3>
+            <p>"By Friday" becomes a real date. When nobody committed to one, the item is marked as open instead of getting an invented deadline.</p>
+          </article>
+          <article class="feature">
+            <h3>Jump back to the moment</h3>
+            <p>Each item links to the timestamp in the recording where it was agreed, so you can check the exact wording in seconds.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" aria-labelledby="quotes-title">
+      <div class="wrap">
+        <h2 id="quotes-title">What early teams tell us</h2>
+        <p class="note">Preview copy: these two quotes are written examples, not real customers yet. They will be replaced with attributed quotes before launch.</p>
+        <div class="quotes">
+          <figure class="quote">
+            <blockquote>
+              <p>We stopped assigning someone to take notes. The list arrives, we skim it, and the follow-ups go out the same afternoon.</p>
+            </blockquote>
+            <figcaption>Example quote · Engineering manager, 30-person software team</figcaption>
+          </figure>
+          <figure class="quote">
+            <blockquote>
+              <p>The timestamps are what sold me. When someone says "I never agreed to that", I send them the exact twelve seconds.</p>
+            </blockquote>
+            <figcaption>Example quote · Operations lead, design agency</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="section" aria-labelledby="pricing-title">
+      <div class="wrap">
+        <h2 id="pricing-title">Two plans, no seat math</h2>
+        <p class="section-lede">Signups open at launch. Prices are in US dollars and billed monthly.</p>
+        <div class="plans">
+          <article class="plan" aria-labelledby="plan-solo">
+            <h3 id="plan-solo">Solo</h3>
+            <p class="price"><span class="amount">$12</span> <span class="per">per month</span></p>
+            <p class="plan-for">For one person who runs a lot of meetings.</p>
+            <ul class="plan-list">
+              <li>10 hours of recordings a month</li>
+              <li>Action items with owners and dates</li>
+              <li>Timestamp links into each recording</li>
+              <li>Export to Markdown or email</li>
+            </ul>
+          </article>
+          <article class="plan plan-featured" aria-labelledby="plan-team">
+            <h3 id="plan-team">Team</h3>
+            <p class="price"><span class="amount">$49</span> <span class="per">per month</span></p>
+            <p class="plan-for">For a team of up to 15 people sharing one workspace.</p>
+            <ul class="plan-list">
+              <li>60 hours of recordings a month</li>
+              <li>Everything in Solo</li>
+              <li>Shared workspace and item history</li>
+              <li>Weekly digest of open items per person</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-row">
+      <p class="muted">© 2026 Minutehand</p>
+      <ul class="footer-links">
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="terms.html">Terms of use</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>
