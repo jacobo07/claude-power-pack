@@ -679,11 +679,17 @@ AGE_EXTEND_H = 4.0
 
 
 def gen_head(rec: dict) -> str | None:
-    """HEAD of the generation's work tree (gsd_mission binding), else the binding's recorded head."""
+    """HEAD of the generation's work tree (gsd_mission binding), else the binding's recorded head. A mission with no
+    binding works in its work_dir (or cwd) itself: that HEAD. 2026-11-16 S77M: unbound, 6 commits in the product
+    (35/40 held-out at 100) read as 0 commits and its cost-hold top-up was refused as 'no proven progress'."""
     b = rec.get("binding") or {}
     root = b.get("root")
     h = _sha(root, "HEAD") if root and Path(root).exists() else None
-    return h or (b.get("head") if SHA_RE.match(str(b.get("head") or "")) else None)
+    h = h or (b.get("head") if SHA_RE.match(str(b.get("head") or "")) else None)
+    if h or b:
+        return h
+    wd = rec.get("work_dir") or rec.get("cwd")
+    return _sha(wd, "HEAD") if wd and Path(wd).exists() else None
 
 
 def branch_commits(product: str, since, head) -> int:

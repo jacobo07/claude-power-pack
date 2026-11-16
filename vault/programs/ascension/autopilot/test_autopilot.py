@@ -386,7 +386,18 @@ def run_all(ap):
     a = auth_calls()
     check("V-AP-TOPUP-AGE", len(a) == 1 and "--extend-hours" in a[0] and a[0][a[0].index("--extend-hours") + 1] == "4"
           and [r.get("extend_hours") for r in ledger() if r["kind"] == "auto_topup"] == [4.0])
-    for k in ("cost_mark", "created_at", "max_hours"):
+    # 2026-11-16 S77M: an unbound mission (no worktree binding) works in its work_dir; that HEAD is the generation head
+    keep_sh3 = ap.sh
+    ap.sh = lambda cmd, **k: (0, "f" * 40) if "rev-parse" in cmd else keep_sh3(cmd, **k)
+    pc["n"] = "6"
+    rec.pop("binding", None)
+    rec.update(cost_mark={"at": 500.0}, created_at=__import__("time").time(), max_hours=16.0, work_dir=str(tmp))
+    st, ln = cost_run(88, rc=0)
+    tops = [r for r in ledger() if r["kind"] == "auto_topup"]
+    check("V-AP-TOPUP-PROGRESS-UNBOUND", len(auth_calls()) == 1 and len(tops) == 1
+          and tops[0].get("basis", "").startswith("proven progress") and st["lanes"]["L"].get("topup_head") == "f" * 40)
+    ap.sh = keep_sh3
+    for k in ("cost_mark", "created_at", "max_hours", "work_dir"):
         rec.pop(k, None)
     hdirs = []
     ffc = {"r": (True, "fast-forwarded the product"), "heads": []}
@@ -1181,6 +1192,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_pivot_rule_bypassed": _evo_mut(_pivot=lambda *a, **k: {"action": "pivot", "streak": 1, "why": "bypass"}),
          "evo_budget_resume_always": _evo_mut(budget_resume=lambda ls, why: ls.get("status") == "PARKED"),
          "evo_budget_never_resumes": _evo_mut(budget_resume=lambda ls, why: False),
+         "gen_head_unbound_none": lambda m: setattr(m, "gen_head", (lambda real: lambda rec: (
+             real(rec) if rec.get("binding") else None))(m.gen_head)),
          "evo_unsafe_merge": _evo_mut(_git=_wrap(_git_unsafe)),
          "arm_no_git_ident_check": lambda m: setattr(m, "git_ident_ok", lambda cwd: True),
          "arm_commit_rc_ignored": lambda m: setattr(m, "arm_commit", (lambda real: lambda *a, **k: (
