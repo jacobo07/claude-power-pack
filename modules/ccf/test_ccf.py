@@ -105,6 +105,20 @@ def test_config_schema_invalid_config_fails_descriptively() -> None:
 
 # --- Prompt Compiler ------------------------------------------------------
 
+import base64 as _b64, struct as _st, zlib as _z
+
+
+def _mk_png() -> bytes:
+    def ch(t, d):
+        return _st.pack(">I", len(d)) + t + d + _st.pack(">I", _z.crc32(t + d) & 0xFFFFFFFF)
+    raw = b"".join(b"\x00" + b"\x10\x80\x40" * 8 for _ in range(8))
+    return (b"\x89PNG\r\n\x1a\n" + ch(b"IHDR", _st.pack(">IIBBBBB", 8, 8, 8, 2, 0, 0, 0))
+            + ch(b"IDAT", _z.compress(raw)) + ch(b"IEND", b""))
+
+
+# ASC-04: status "OK" is only a claim; the artifact must carry a complete PNG as evidence.
+_B64_PNG = _b64.b64encode(_mk_png())
+
 _SPEC = contract_engine.CreativeSpecification(
     brand_name="Aperture Coffee", industry="coffee", audience="pros", values=["craft"]
 )
@@ -185,7 +199,7 @@ def test_artifact_compiler_builds_valid_pdf_when_image_present() -> None:
     # Arrange
     artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
                                                model_id="gpt-image-2", format="png",
-                                               resolution="1536x1024")
+                                               resolution="1536x1024", bytes_=_B64_PNG)
 
     # Act
     bundle = artifact_compiler.compile_artifacts(
@@ -223,7 +237,7 @@ def test_evaluation_engine_valid_artifact_passes() -> None:
     # Arrange
     artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
                                                model_id="gpt-image-2", format="png",
-                                               resolution="1536x1024")
+                                               resolution="1536x1024", bytes_=_B64_PNG)
     bundle = artifact_compiler.compile_artifacts(
         [_CONCEPT_CLEAN], {"spark": artifact_ok}, mode="showcase"
     )
@@ -254,7 +268,7 @@ def test_release_manager_blocks_without_human_selection() -> None:
     # Arrange
     artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
                                                model_id="gpt-image-2", format="png",
-                                               resolution="1536x1024")
+                                               resolution="1536x1024", bytes_=_B64_PNG)
     bundle = artifact_compiler.compile_artifacts(
         [_CONCEPT_CLEAN], {"spark": artifact_ok}, mode="brandkit"
     )
@@ -282,7 +296,7 @@ def test_release_manager_seals_when_all_gates_pass() -> None:
     # Arrange
     artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
                                                model_id="gpt-image-2", format="png",
-                                               resolution="1536x1024")
+                                               resolution="1536x1024", bytes_=_B64_PNG)
     bundle = artifact_compiler.compile_artifacts(
         [_CONCEPT_CLEAN], {"spark": artifact_ok}, mode="brandkit"
     )

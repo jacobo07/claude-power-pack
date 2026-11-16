@@ -45,6 +45,8 @@ def _paths(project: str) -> dict:
         "human_acks": os.path.join(ccf_dir, "human_acks.json"),
         "evaluation_report": os.path.join(ccf_dir, "evaluation_report.json"),
         "releases_dir": os.path.join(ccf_dir, "releases"),
+        "images_dir": os.path.join(ccf_dir, "images"),
+        "manifest": os.path.join(ccf_dir, "manifest.json"),
         "showcase_html": os.path.join(project, "showcase.html"),
         "showcase_pdf": os.path.join(project, "showcase.pdf"),
         "brandkit_html": os.path.join(project, "brandkit.html"),
@@ -79,14 +81,56 @@ def _artifact_to_record(artifact) -> dict:
 
 
 class _ArtifactRecordView:
-    """Lightweight re-hydration of a persisted artifact record so
-    artifact_compiler (which only reads `.status`) can consume it without
-    the CLI depending on the raw ImageArtifact dataclass across a JSON
-    round-trip.
-    """
+    """Re-hydration of a persisted artifact record for artifact_compiler. `image_bytes`
+    is set only when the bytes on disk were re-verified against the manifest; a record that
+    says OK without verified bytes carries none and the compiler will not include it."""
 
-    def __init__(self, record: dict):
+    def __init__(self, record: dict, image_bytes: bytes = None):
         self.status = record.get("status")
+        self.image_bytes = image_bytes
+
+
+def _load_manifest(paths: dict) -> dict:
+    return _load_json(paths["manifest"], {"schema": 1, "artifacts": {}}) or {"schema": 1, "artifacts": {}}
+
+
+def _drop_artifact(paths: dict, concept_id: str, manifest: dict) -> None:
+    """A concept that is no longer backed by a good generation must not keep stale evidence."""
+    manifest.setdefault("artifacts", {}).pop(concept_id, None)
+    stale = os.path.join(paths["images_dir"], f"{concept_id}.png")
+    if os.path.exists(stale):
+        os.remove(stale)
+
+
+def _keep_artifact(paths: dict, concept_id: str, png: bytes, manifest: dict) -> dict:
+    os.makedirs(paths["images_dir"], exist_ok=True)
+    rel = os.path.join(".ccf", "images", f"{concept_id}.png")
+    with open(os.path.join(paths["root"], rel), "wb") as handle:
+        handle.write(png)
+    entry = {"path": rel, "sha256": artifact_compiler.sha256_hex(png), "size": len(png)}
+    manifest.setdefault("artifacts", {})[concept_id] = entry
+    return entry
+
+
+def _verified_views(paths: dict, records: dict) -> dict:
+    """Re-read every kept image from disk and compare with the manifest hash. Only a file that
+    exists, is a complete PNG and matches its recorded sha256 yields bytes (ASC-04 D5)."""
+    manifest = _load_manifest(paths).get("artifacts", {})
+    views = {}
+    for cid, rec in records.items():
+        ent = manifest.get(cid)
+        png = None
+        if rec.get("status") == "OK" and ent:
+            try:
+                with open(os.path.join(paths["root"], ent["path"]), "rb") as handle:
+                    data = handle.read()
+            except OSError:
+                data = b""
+            if artifact_compiler.sha256_hex(data) == ent.get("sha256") and \
+                    artifact_compiler.png_evidence(type("B", (), {"image_bytes": data})()) is not None:
+                png = data
+        views[cid] = _ArtifactRecordView(rec, png)
+    return views
 
 
 def cmd_init(args) -> int:
@@ -171,6 +215,7 @@ def cmd_generate(args) -> int:
     artifact_records = _load_json(paths["image_artifacts"], {})
     any_block, any_provider_error = False, False
     adapter = model_adapter.GPTImage2Adapter()
+    manifest = _load_manifest(paths)
 
     for concept in concepts:
         record = prompt_compiler.compile_prompt(concept, spec, global_fields)
@@ -199,8 +244,27 @@ def cmd_generate(args) -> int:
             print(f"[dry-run] {concept['id']}: {record['prompt']}")
             continue
 
+        if verdict["verdict"] == "BLOCK":
+            # ASC-04 D4: a trademark BLOCK is decided BEFORE the provider is invoked.
+            artifact_records[concept["id"]] = {"status": "SKIPPED_BLOCKED", "provider": None,
+                                               "error_detail": "trademark BLOCK; provider not invoked"}
+            _drop_artifact(paths, concept["id"], manifest)
+            print(f"skipped provider call for {concept['id']}: trademark BLOCK")
+            continue
+
         artifact = adapter.generate(record["prompt"], {})
-        artifact_records[concept["id"]] = _artifact_to_record(artifact)
+        if artifact.status == "OK" and artifact_compiler.png_evidence(artifact) is None:
+            # ASC-04 D1/D5: the provider said OK but returned no decodable image. Not a success.
+            artifact = model_adapter.ImageArtifact(
+                status="FAILED", provider=artifact.provider, model_id=artifact.model_id,
+                latency_ms=artifact.latency_ms, request_id=artifact.request_id,
+                error_detail="artifact_invalid: provider returned OK without a complete PNG")
+        record_out = _artifact_to_record(artifact)
+        if artifact.status == "OK":
+            record_out.update(_keep_artifact(paths, concept["id"], artifact_compiler.png_evidence(artifact), manifest))
+        else:
+            _drop_artifact(paths, concept["id"], manifest)
+        artifact_records[concept["id"]] = record_out
         knowledge_feed.log_provider_benchmark(
             provider=artifact.provider, model_id=artifact.model_id,
             resolution=artifact.resolution, quality="high",
@@ -224,10 +288,9 @@ def cmd_generate(args) -> int:
     _save_json(paths["prompts"], prompts)
     _save_json(paths["scan_report"], scan_report)
     _save_json(paths["image_artifacts"], artifact_records)
+    _save_json(paths["manifest"], manifest)
 
-    image_artifact_views = {
-        cid: _ArtifactRecordView(rec) for cid, rec in artifact_records.items()
-    }
+    image_artifact_views = _verified_views(paths, artifact_records)
     bundle = artifact_compiler.compile_artifacts(concepts, image_artifact_views, mode="showcase")
     if bundle["built"]:
         with open(paths["showcase_html"], "w", encoding="utf-8") as handle:
@@ -303,9 +366,7 @@ def cmd_package(args) -> int:
         print(f"error: selected concept {selected_id!r} not found in config")
         return EXIT_VALIDATION_ERROR
 
-    image_artifact_views = {
-        cid: _ArtifactRecordView(rec) for cid, rec in artifact_records.items()
-    }
+    image_artifact_views = _verified_views(paths, artifact_records)
     bundle = artifact_compiler.compile_artifacts([selected_concept], image_artifact_views, mode="brandkit")
     evaluation = evaluation_engine.evaluate_bundle(bundle)
 

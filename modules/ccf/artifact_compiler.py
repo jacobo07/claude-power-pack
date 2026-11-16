@@ -7,8 +7,8 @@ browser) rather than the reference repo's headless-Chrome print-to-pdf --
 a deliberate, documented scope reduction for environment portability (a
 guaranteed Chrome install cannot be assumed everywhere this runs). It renders
 one page per included concept (id, wordmark, icon description, provider
-metadata) as text -- embedding the actual generated PNG bytes as a real PDF
-image XObject is a tracked follow-on, not claimed here.
+metadata) as text -- the PDF carries the logo's sha256 (embedding the PNG as a PDF image
+XObject is a tracked follow-on); the HTML kit embeds the generated PNG itself (ASC-04 D3).
 
 Mandatory fix for CCF-F02 (empty-shell PDF footgun): before building anything,
 every concept without a successful ImageArtifact is skipped with a structured
@@ -17,7 +17,34 @@ never a near-empty shell.
 """
 from __future__ import annotations
 
+import base64
+import hashlib
 import html as html_lib
+
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+
+def png_evidence(artifact):
+    """Raw PNG bytes if (and only if) `artifact` carries a complete, decodable PNG, else None.
+
+    `status == "OK"` is a claim; these bytes are the evidence (ASC-04 D5). Accepts decoded
+    `image_bytes` or the adapter's base64 `bytes_`. Checks the signature and the terminating
+    IEND chunk, so an empty, garbage or truncated payload is not evidence."""
+    raw = getattr(artifact, "image_bytes", None)
+    if raw is None:
+        b64 = getattr(artifact, "bytes_", None)
+        if b64:
+            try:
+                raw = base64.b64decode(b64, validate=True)
+            except (ValueError, TypeError):
+                return None
+    if not raw or raw[:8] != PNG_MAGIC or len(raw) < 33 or raw[-8:-4] != b"IEND":
+        return None
+    return bytes(raw)
+
+
+def sha256_hex(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
 
 def _escape_pdf_text(text: str) -> str:
@@ -95,7 +122,7 @@ def _build_minimal_pdf(pages_lines: list) -> bytes:
     return bytes(out)
 
 
-def build_html(included_concepts: list, mode: str) -> str:
+def build_html(included_concepts: list, mode: str, images: dict = None) -> str:
     """Assemble the intermediate HTML the reference repo's build-html.mjs
     would produce -- A4/grid for showcase mode, one-concept-per-section for
     brandkit mode. Real, renderable HTML (openable in any browser), not a
@@ -103,10 +130,16 @@ def build_html(included_concepts: list, mode: str) -> str:
     """
     title = "Showcase" if mode == "showcase" else "Brand Kit"
     rows = []
+    images = images or {}
     for concept in included_concepts:
+        png = images.get(concept["id"])
+        logo = (
+            "<img class='logo' alt='generated logo' src='data:image/png;base64,"
+            + base64.b64encode(png).decode("ascii") + "'>"
+        ) if png else ""
         rows.append(
             "<section class='concept'>"
-            f"<h2>{html_lib.escape(concept['id'])}</h2>"
+            f"<h2>{html_lib.escape(concept['id'])}</h2>{logo}"
             f"<p class='wordmark'>{html_lib.escape(concept['wordmark'])}</p>"
             f"<p class='icon'>{html_lib.escape(concept['icon'])}</p>"
             "</section>"
@@ -130,6 +163,7 @@ def compile_artifacts(concept_configs: list, image_artifacts: dict, mode: str = 
     """
     included = []
     skipped = []
+    images = {}
     for concept in concept_configs:
         concept_id = concept["id"]
         artifact = image_artifacts.get(concept_id)
@@ -140,6 +174,16 @@ def compile_artifacts(concept_configs: list, image_artifacts: dict, mode: str = 
                 "skipped": True,
             })
             continue
+        png = png_evidence(artifact)
+        if png is None:
+            # status says OK but there is no decodable image: a claim without evidence.
+            skipped.append({
+                "entry_id": concept_id,
+                "reason": "no_verified_image_bytes",
+                "skipped": True,
+            })
+            continue
+        images[concept_id] = png
         included.append(concept)
 
     if not included:
@@ -149,13 +193,16 @@ def compile_artifacts(concept_configs: list, image_artifacts: dict, mode: str = 
             "html": None,
             "pdf_bytes": None,
             "included_ids": [],
+            "artifact_hashes": {},
             "skipped": skipped,
             "built": False,
         }
 
-    html_doc = build_html(included, mode)
+    hashes = {cid: sha256_hex(b) for cid, b in images.items()}
+    html_doc = build_html(included, mode, images)
     pages = [
-        [c["id"], f"Wordmark: {c['wordmark']}", f"Icon: {c['icon']}"]
+        [c["id"], f"Wordmark: {c['wordmark']}", f"Icon: {c['icon']}",
+         f"Logo sha256: {hashes[c['id']]}"]
         for c in included
     ]
     pdf_bytes = _build_minimal_pdf(pages)
@@ -164,6 +211,7 @@ def compile_artifacts(concept_configs: list, image_artifacts: dict, mode: str = 
         "html": html_doc,
         "pdf_bytes": pdf_bytes,
         "included_ids": [c["id"] for c in included],
+        "artifact_hashes": hashes,
         "skipped": skipped,
         "built": True,
     }

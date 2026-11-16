@@ -46,6 +46,13 @@ def release(
             "reason": f"selected concept '{selected_id}' has no compiled artifact",
         }
 
+    artifact_hash = (artifact_bundle.get("artifact_hashes") or {}).get(selected_id)
+    if not artifact_hash:
+        return {
+            "status": "BLOCKED",
+            "reason": f"selected concept '{selected_id}' has no positive artifact evidence (verified image hash)",
+        }
+
     package = {
         "selected_concept_id": selected_id,
         "selection": selection,
@@ -53,6 +60,7 @@ def release(
         "scan_verdicts": scan_verdicts,
         "evaluation": evaluation_result,
         "artifact_included_ids": artifact_bundle["included_ids"],
+        "artifact_hashes": {selected_id: artifact_hash},
         "artifact_skipped": artifact_bundle.get("skipped", []),
     }
     return {"status": "SEALED", "package": package}
