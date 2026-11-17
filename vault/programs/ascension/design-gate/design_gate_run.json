@@ -1,0 +1,1024 @@
+{
+ "claude": [
+  "/home/kobii/.local/claude-lf1/node_modules/.bin/claude"
+ ],
+ "tasks": {
+  "clinic": {
+   "task": "Build a single-page admin dashboard for a small physiotherapy clinic: today's appointments, a weekly room utilisation summary, and a list of patients awaiting a follow-up call, with sample data inline. Static HTML and CSS only (plain JS allowed), no frameworks, no build step, entry file index.html. Write the files in the current directory, then reply with one line listing the files.",
+   "control": {
+    "label": "control",
+    "calls": [
+     {
+      "rc": 0,
+      "seconds": 68.8,
+      "session_id": "7e0d794d-70ce-48f3-a4f8-962e45919d47",
+      "usage": {
+       "input_tokens": 8,
+       "cache_creation_input_tokens": 45571,
+       "cache_read_input_tokens": 170953,
+       "output_tokens": 8557,
+       "output_tokens_details": {
+        "thinking_tokens": 93
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 45571,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 74,
+         "cache_read_input_tokens": 58369,
+         "cache_creation_input_tokens": 147,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 147
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Glob",
+       "Write",
+       "Write",
+       "Write",
+       "Bash"
+      ],
+      "skills": [],
+      "stderr_tail": ""
+     }
+    ],
+    "files": [
+     "app.js",
+     "index.html",
+     "styles.css"
+    ]
+   },
+   "treated": {
+    "label": "treated",
+    "calls": [
+     {
+      "rc": 0,
+      "seconds": 388.5,
+      "session_id": "68943c74-3738-4bc1-8c3b-2c8269acb10d",
+      "usage": {
+       "input_tokens": 10,
+       "cache_creation_input_tokens": 3760,
+       "cache_read_input_tokens": 620036,
+       "output_tokens": 1626,
+       "output_tokens_details": {
+        "thinking_tokens": 122
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 3760,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 594,
+         "cache_read_input_tokens": 156171,
+         "cache_creation_input_tokens": 844,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 844
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Skill",
+       "Skill",
+       "Skill",
+       "Skill",
+       "Bash",
+       "Read",
+       "Write",
+       "Write",
+       "Write",
+       "Bash",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Read",
+       "Agent",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Grep",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Read",
+       "SendMessage",
+       "Read",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash"
+      ],
+      "skills": [
+       "design-md",
+       "design-taste-frontend",
+       "frontend-design",
+       "dataviz"
+      ],
+      "stderr_tail": ""
+     }
+    ],
+    "kit": [
+     "design-md",
+     "design-taste-frontend",
+     "frontend-design",
+     "ui-ux-pro-max",
+     "agent:cdio-reviewer"
+    ],
+    "kinds": [
+     "app_ui"
+    ],
+    "stop_round": {
+     "blocked": false,
+     "reason": ""
+    },
+    "reviews": [
+     {
+      "files": {
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/clinic/treated/index.html": "df9b8528f70b306744d8a0cc1506e99b14d4e83f48ad73ecb7fca18aef0e08d8",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/clinic/treated/styles.css": "c23e5ed7afb7e60265f17da198035978ad61c10f9464f8119f8fc70e5c67d8b6",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/clinic/treated/app.js": "ac5d41115b7f9ea319812acb43144f3bf9ac93c5761749157fd559f5ca5c5811"
+      },
+      "verdict": "APPROVE",
+      "score": 90,
+      "reason": "score 90 >= 80 and zero critical",
+      "is_done": false,
+      "refused": [
+       "styles.css: no --screenshot PNG newer than the file",
+       "app.js: no --screenshot PNG newer than the file"
+      ],
+      "experience": "unassessed",
+      "reviewer_verdicts": 22,
+      "folded_taste": 27,
+      "critical": [],
+      "ts": 1794940561.075435
+     },
+     {
+      "files": {
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/clinic/treated/index.html": "df9b8528f70b306744d8a0cc1506e99b14d4e83f48ad73ecb7fca18aef0e08d8",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/clinic/treated/styles.css": "c23e5ed7afb7e60265f17da198035978ad61c10f9464f8119f8fc70e5c67d8b6",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/clinic/treated/app.js": "ac5d41115b7f9ea319812acb43144f3bf9ac93c5761749157fd559f5ca5c5811"
+      },
+      "verdict": "APPROVE",
+      "score": 90,
+      "reason": "score 90 >= 80 and zero critical",
+      "is_done": true,
+      "refused": [],
+      "experience": "unassessed",
+      "reviewer_verdicts": 22,
+      "folded_taste": 27,
+      "critical": [],
+      "ts": 1794940570.1781218
+     }
+    ],
+    "files": [
+     "app.js",
+     "index.html",
+     "styles.css"
+    ]
+   },
+   "taste": {
+    "control": {
+     "critical": 1,
+     "major": 2,
+     "minor": 0,
+     "ids": [
+      "TASTE-EMDASH",
+      "TASTE-PURE-BLACK-WHITE",
+      "TASTE-DARK-MODE"
+     ]
+    },
+    "treated": {
+     "critical": 0,
+     "major": 0,
+     "minor": 0,
+     "ids": []
+    }
+   },
+   "judge": {
+    "votes": [
+     {
+      "order": [
+       "control",
+       "treated"
+      ],
+      "winner": "treated",
+      "slop_markers": {
+       "control": 1,
+       "treated": 0
+      },
+      "reasons": [
+       "B's sample data reads like a real clinic: patient notes ('Post-op, week 6', 'Pregnancy-related'), follow-up reasons that name the next step, a no-show that also appears in the call list, and a Saturday that has fewer bookable slots",
+       "B shows utilisation as a room-by-day heatmap with a sequential ramp, hatched cells for days still filling up, 'Closed' cells and a clinic total row, which is more useful than A's five progress bars",
+       "B's KPIs carry context lines ('Next: Imogen Hale at 12:00', 'Most free capacity: Room 3') and sit in a single divided strip instead of four separate cards",
+       "B covers more of the real workflow: a 'Now' line in the schedule, a 'Hide finished' filter, tel: links, undo for calls already marked, a dark mode with its own heat ramp, 44px tap targets and a mobile column collapse",
+       "B's only motion is a 200ms exit on a call row, and it is turned off under reduced motion"
+      ]
+     },
+     {
+      "order": [
+       "treated",
+       "control"
+      ],
+      "winner": "treated",
+      "slop_markers": {
+       "treated": 1,
+       "control": 3
+      },
+      "reasons": [
+       "A's sample data is very specific to the clinic: notes like post-op week counts, follow-up reasons that read like real desk tasks, an insurer report request, and a 'Now 11:20' marker line in the timetable",
+       "A shows room use as a heatmap with a sequential ramp, a legend, hatching for days only partly booked so far, a closed-room state and a clinic-wide total row, so it gives more information than B's plain bars",
+       "A has a dark mode it actually designed (its own heat ramp), 44px touch targets, an undo for marked calls, a clickable tel: link, a mobile layout that folds columns away, and a skip link",
+       "A's KPI strip is set as plain figures separated by rules rather than as cards, and each figure has a useful note (next arrival, room with the most free capacity)",
+       "B is clean and usable but generic: the KPI tiles are cards with no context, it uses uppercase table headers, and the room bars carry little information"
+      ]
+     }
+    ],
+    "consistent_winner": "treated"
+   }
+  },
+  "saas": {
+   "task": "Build the marketing landing page for a small SaaS product that turns meeting recordings into action items. Hero with a headline and a call to action, a short features section, two customer testimonials, and a pricing section with two plans. Static HTML and CSS only (plain JS allowed), no frameworks, no build step, entry file index.html. Write the files in the current directory, then reply with one line listing the files.",
+   "control": {
+    "label": "control",
+    "calls": [
+     {
+      "rc": 0,
+      "seconds": 70.6,
+      "session_id": "74bea69d-14a1-4267-a199-2537ba1bfe07",
+      "usage": {
+       "input_tokens": 8,
+       "cache_creation_input_tokens": 45856,
+       "cache_read_input_tokens": 163542,
+       "output_tokens": 8697,
+       "output_tokens_details": {
+        "thinking_tokens": 261
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 45856,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 53,
+         "cache_read_input_tokens": 53751,
+         "cache_creation_input_tokens": 5049,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 5049
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Bash",
+       "Write",
+       "Write",
+       "Write"
+      ],
+      "skills": [],
+      "stderr_tail": ""
+     }
+    ],
+    "files": [
+     "index.html",
+     "script.js",
+     "styles.css"
+    ]
+   },
+   "treated": {
+    "label": "treated",
+    "calls": [
+     {
+      "rc": 0,
+      "seconds": 315.7,
+      "session_id": "a58634b4-5dfa-454d-94cb-2b464d0297a8",
+      "usage": {
+       "input_tokens": 42,
+       "cache_creation_input_tokens": 121260,
+       "cache_read_input_tokens": 1850231,
+       "output_tokens": 24525,
+       "output_tokens_details": {
+        "thinking_tokens": 6135
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 121260,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 975,
+         "cache_read_input_tokens": 131187,
+         "cache_creation_input_tokens": 3026,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 3026
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Skill",
+       "Skill",
+       "Skill",
+       "Bash",
+       "Write",
+       "Write",
+       "Write",
+       "Bash",
+       "Bash",
+       "Read",
+       "Read",
+       "Edit",
+       "Bash",
+       "Read",
+       "Read",
+       "Edit",
+       "Agent",
+       "Bash",
+       "Read",
+       "Read",
+       "Read",
+       "Grep",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Read",
+       "Read",
+       "Agent",
+       "Bash",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Bash"
+      ],
+      "skills": [
+       "design-md",
+       "design-taste-frontend",
+       "frontend-design"
+      ],
+      "stderr_tail": ""
+     },
+     {
+      "rc": 0,
+      "seconds": 15.6,
+      "session_id": "a58634b4-5dfa-454d-94cb-2b464d0297a8",
+      "usage": {
+       "input_tokens": 4,
+       "cache_creation_input_tokens": 5663,
+       "cache_read_input_tokens": 271169,
+       "output_tokens": 1215,
+       "output_tokens_details": {
+        "thinking_tokens": 469
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 5663,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 487,
+         "cache_read_input_tokens": 136956,
+         "cache_creation_input_tokens": 2920,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 2920
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Bash"
+      ],
+      "skills": [],
+      "stderr_tail": ""
+     }
+    ],
+    "kit": [
+     "design-md",
+     "design-taste-frontend",
+     "frontend-design",
+     "ui-ux-pro-max",
+     "agent:cdio-reviewer"
+    ],
+    "kinds": [
+     "web"
+    ],
+    "stop_round": {
+     "blocked": true,
+     "reason": "Design done-gate (kind web): visual work in /home/kobii/missions/design-gate/vault/programs/ascension/design-gate/saas/treated is not done yet.\ndesign-review -> dispatch the cdio-reviewer agent on the rendered surface; it renders and records with tools/design_review_record.py, and only an APPROVE of these exact bytes counts:\n  - index.html: no recorded cdio-reviewer APPROVE for these bytes (sha 8593249c2fa8)\n  - styles.css: no recorded cdio-reviewer APPROVE for these bytes (sha 634864e404a1)\nA check that genuinely does not apply: `NO APLICA: <check>: <reason>` in the final message."
+    },
+    "after_round": {
+     "problems_left": [
+      [
+       "design-review",
+       "",
+       "index.html"
+      ],
+      [
+       "design-review",
+       "",
+       "styles.css"
+      ]
+     ]
+    },
+    "reviews": [
+     {
+      "files": {
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/saas/treated/index.html": "8593249c2fa8cd1e6d747cc8e41d745dc82d10e37aa026c394f429a738686501",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/saas/treated/styles.css": "634864e404a1e95c375eef3fa08d972dfc42c1a79009409ca863135d3fee7d1a",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/saas/treated/script.js": "71d85d1cb0b0d4a95d32c96214aed2917fc11436137bbda9156b8f71568c1b8e"
+      },
+      "verdict": "BLOCK",
+      "score": 11,
+      "reason": "3 critical issue(s) -- floor not tradeable (CDIO-00 sec.4)",
+      "is_done": false,
+      "refused": [
+       "styles.css: no --screenshot PNG newer than the file",
+       "script.js: no --screenshot PNG newer than the file"
+      ],
+      "experience": "unassessed",
+      "reviewer_verdicts": 15,
+      "folded_taste": 27,
+      "critical": [
+       "cta-endpoint-dead-end",
+       "legal-page-present",
+       "claims-have-source"
+      ],
+      "ts": 1794940989.7574046
+     }
+    ],
+    "files": [
+     ".review/verdicts.json",
+     "index.html",
+     "script.js",
+     "styles.css"
+    ]
+   },
+   "taste": {
+    "control": {
+     "critical": 0,
+     "major": 2,
+     "minor": 0,
+     "ids": [
+      "TASTE-PURE-BLACK-WHITE",
+      "TASTE-DARK-MODE"
+     ]
+    },
+    "treated": {
+     "critical": 0,
+     "major": 0,
+     "minor": 0,
+     "ids": []
+    }
+   },
+   "judge": {
+    "votes": [
+     {
+      "order": [
+       "treated",
+       "control"
+      ],
+      "winner": "treated",
+      "slop_markers": {
+       "treated": 2,
+       "control": 6
+      },
+      "reasons": [
+       "B is the stock SaaS template: an uppercase eyebrow, a gradient-tinted hero, three icon cards in a row, a 'Most popular' badge, avatar-initial testimonials, a brand-colour CTA band and a billing toggle",
+       "A's hero sample shows the actual mechanism: transcript lines with highlighted commitments become owned, dated tasks, with timestamps and a working checkbox counter",
+       "A's features grid is asymmetric, with a lead card that shows a concrete parse example ('by Thursday' to 'Due Thu 20 Nov'), instead of three interchangeable cards",
+       "A's copy is more specific and less generic ('the summary nobody reads', 'when the team agreed to drop the annual plan'), while B's 'Automatically.' tagline and 'Catches every commitment' wording read as filler",
+       "A has a deliberate token system: one restrained accent, a documented radius rule, a mono type role, a dark mode and 44px touch targets"
+      ]
+     },
+     {
+      "order": [
+       "control",
+       "treated"
+      ],
+      "winner": "treated",
+      "slop_markers": {
+       "control": 5,
+       "treated": 2
+      },
+      "reasons": [
+       "A uses the stock template layout: an eyebrow above the hero, a gradient hero, a row of three icon cards, centered section titles and a CTA band. B's features sit in a bento grid with a sticky intro, a lead card that shows a parsed example, and a wide card.",
+       "B's hero sample shows highlighted transcript lines with timestamps that map to tasks with real dates, so it demonstrates the product mechanism. A's demo card is solid but more generic.",
+       "B's copy is more specific: a feature on turning 'by Thursday' into a date, a searchable decision log, the 'notes are easy, follow-through is hard' framing, and a named client (Halvorsen) in the example.",
+       "B has a clearer design system: zinc neutrals with one orange accent, a documented radius rule, a mono font for metadata and a dark mode. A uses the default system-font stack with a stock blue brand color.",
+       "B's testimonials are laid out editorially with offset quotes and an accent rule. A uses initials-avatar cards, a common template pattern. Both sets of quotes feel invented, and both use the same 'I run N client calls a week' line."
+      ]
+     }
+    ],
+    "consistent_winner": "treated"
+   }
+  },
+  "yoga": {
+   "task": "Haz la landing page de un estudio de yoga pequeño en Valencia: clases, horarios, precios de los bonos y un formulario para reservar la primera clase gratis. Todo el texto en español. Static HTML and CSS only (plain JS allowed), no frameworks, no build step, entry file index.html. Write the files in the current directory, then reply with one line listing the files.",
+   "control": {
+    "label": "control",
+    "calls": [
+     {
+      "rc": 0,
+      "seconds": 109.5,
+      "session_id": "92971081-fa30-4af4-833f-b694d679cc52",
+      "usage": {
+       "input_tokens": 10,
+       "cache_creation_input_tokens": 50772,
+       "cache_read_input_tokens": 228963,
+       "output_tokens": 13646,
+       "output_tokens_details": {
+        "thinking_tokens": 543
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 50772,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 148,
+         "cache_read_input_tokens": 63554,
+         "cache_creation_input_tokens": 162,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 162
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Bash",
+       "Write",
+       "Edit",
+       "Write",
+       "Write",
+       "Bash"
+      ],
+      "skills": [],
+      "stderr_tail": ""
+     }
+    ],
+    "files": [
+     "index.html",
+     "script.js",
+     "styles.css"
+    ]
+   },
+   "treated": {
+    "label": "treated",
+    "calls": [
+     {
+      "rc": 0,
+      "seconds": 526.6,
+      "session_id": "25ae7124-6820-476f-8c18-03eb38d30c11",
+      "usage": {
+       "input_tokens": 82,
+       "cache_creation_input_tokens": 153583,
+       "cache_read_input_tokens": 4576786,
+       "output_tokens": 41301,
+       "output_tokens_details": {
+        "thinking_tokens": 7340
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 153583,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 330,
+         "cache_read_input_tokens": 166430,
+         "cache_creation_input_tokens": 2335,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 2335
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Skill",
+       "Skill",
+       "Skill",
+       "Bash",
+       "Read",
+       "Bash",
+       "Write",
+       "Write",
+       "Write",
+       "Edit",
+       "Bash",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Read",
+       "Bash",
+       "Read",
+       "Bash",
+       "Agent",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Write",
+       "Write",
+       "Write",
+       "Bash",
+       "Grep",
+       "Bash",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Agent",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Grep",
+       "Bash",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Read",
+       "Bash",
+       "Read",
+       "Agent",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash"
+      ],
+      "skills": [
+       "design-taste-frontend",
+       "frontend-design",
+       "design-md"
+      ],
+      "stderr_tail": ""
+     }
+    ],
+    "kit": [
+     "design-md",
+     "design-taste-frontend",
+     "frontend-design",
+     "ui-ux-pro-max",
+     "agent:cdio-reviewer"
+    ],
+    "kinds": [
+     "web"
+    ],
+    "stop_round": {
+     "blocked": false,
+     "reason": ""
+    },
+    "reviews": [
+     {
+      "files": {
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/index.html": "267c05990e2a649cb532133b71af93786c9cb65aee8540408cc55cca109b5a0b",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/styles.css": "8db04df776ea6b735fd68de9b406f5789139be7d053a3cd70dface5efa06965a",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/script.js": "ebf8ac99ec5d372e3ef379034b3d4b71197d3736fefb27c4fdeaf50a238ab4ac"
+      },
+      "verdict": "BLOCK",
+      "score": 59,
+      "reason": "1 critical issue(s) -- floor not tradeable (CDIO-00 sec.4)",
+      "is_done": false,
+      "refused": [
+       "styles.css: no --screenshot PNG newer than the file",
+       "script.js: no --screenshot PNG newer than the file"
+      ],
+      "experience": "unassessed",
+      "reviewer_verdicts": 19,
+      "folded_taste": 27,
+      "critical": [
+       "legal-page-present"
+      ],
+      "ts": 1794941400.379667
+     },
+     {
+      "files": {
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/index.html": "267c05990e2a649cb532133b71af93786c9cb65aee8540408cc55cca109b5a0b",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/styles.css": "8db04df776ea6b735fd68de9b406f5789139be7d053a3cd70dface5efa06965a",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/script.js": "ebf8ac99ec5d372e3ef379034b3d4b71197d3736fefb27c4fdeaf50a238ab4ac"
+      },
+      "verdict": "BLOCK",
+      "score": 59,
+      "reason": "1 critical issue(s) -- floor not tradeable (CDIO-00 sec.4)",
+      "is_done": false,
+      "refused": [],
+      "experience": "unassessed",
+      "reviewer_verdicts": 19,
+      "folded_taste": 27,
+      "critical": [
+       "legal-page-present"
+      ],
+      "ts": 1794941402.2588081
+     },
+     {
+      "files": {
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/index.html": "e7ec92751a2f092441a580776c3fadac3bbfaa3d186eafd3533dc5c0fb4c4f9c",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/styles.css": "cda223bcb5c2ff718a05b9c46e580e1acad6bfa325073ff6bd8838b8190e3483",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/script.js": "ebf8ac99ec5d372e3ef379034b3d4b71197d3736fefb27c4fdeaf50a238ab4ac",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/aviso-legal.html": "7c5e35c691c6d2f767df0f2812b852e8bd7effb3c4ea8051e5c56b97f04c91e0",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/politica-de-privacidad.html": "b0e8bc9a86387b80ac1ceeec8be560d4973c64ef9ae9b32b7e394d942065b71d",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/condiciones-de-uso.html": "420d197f1a8f488e3a7ede437464ffcf797775fff3b10714f7929618a6e95580"
+      },
+      "verdict": "BLOCK",
+      "score": 19,
+      "reason": "3 critical issue(s) -- floor not tradeable (CDIO-00 sec.4)",
+      "is_done": false,
+      "refused": [],
+      "experience": "unassessed",
+      "reviewer_verdicts": 16,
+      "folded_taste": 108,
+      "critical": [
+       "tap-target-size",
+       "tap-target-size",
+       "tap-target-size"
+      ],
+      "ts": 1794941563.5604389
+     },
+     {
+      "files": {
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/index.html": "e7ec92751a2f092441a580776c3fadac3bbfaa3d186eafd3533dc5c0fb4c4f9c",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/styles.css": "ba4bf7e31d441be1b57be869d51120f14449258aded89a29ca60eebe57d70600",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/script.js": "ebf8ac99ec5d372e3ef379034b3d4b71197d3736fefb27c4fdeaf50a238ab4ac",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/aviso-legal.html": "7c5e35c691c6d2f767df0f2812b852e8bd7effb3c4ea8051e5c56b97f04c91e0",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/politica-de-privacidad.html": "b0e8bc9a86387b80ac1ceeec8be560d4973c64ef9ae9b32b7e394d942065b71d",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate/yoga/treated/condiciones-de-uso.html": "420d197f1a8f488e3a7ede437464ffcf797775fff3b10714f7929618a6e95580"
+      },
+      "verdict": "APPROVE",
+      "score": 100,
+      "reason": "score 100 >= 80 and zero critical",
+      "is_done": true,
+      "refused": [],
+      "experience": "unassessed",
+      "reviewer_verdicts": 12,
+      "folded_taste": 108,
+      "critical": [],
+      "ts": 1794941635.0922945
+     }
+    ],
+    "files": [
+     ".review/verdicts.json",
+     "aviso-legal.html",
+     "condiciones-de-uso.html",
+     "index.html",
+     "politica-de-privacidad.html",
+     "script.js",
+     "styles.css"
+    ]
+   },
+   "taste": {
+    "control": {
+     "critical": 1,
+     "major": 1,
+     "minor": 0,
+     "ids": [
+      "TASTE-EMDASH",
+      "TASTE-DARK-MODE"
+     ]
+    },
+    "treated": {
+     "critical": 0,
+     "major": 0,
+     "minor": 0,
+     "ids": []
+    }
+   },
+   "judge": {
+    "votes": [
+     {
+      "order": [
+       "treated",
+       "control"
+      ],
+      "winner": "treated",
+      "slop_markers": {
+       "treated": 2,
+       "control": 5
+      },
+      "reasons": [
+       "A's schedule is a day-tabbed list that opens on today, and the booking form only offers classes that actually run on the chosen date. That is a considered, usable flow; B's form lets you pick any class on any date.",
+       "A names the teachers for each class and shows the per-class cost of each bono. The copy is specific ('Se suda, y se sale con la cabeza despejada'), with no filler verbs and no emoji.",
+       "B leans on template patterns: a hero stat row ('21 clases a la semana'), a decorative CSS sun-and-arch in place of real imagery, a four-up card grid with colored tags, ✓ checkmarks and a 'El más elegido' badge on a pricing card.",
+       "B's schedule grid is mostly '—' cells, which is visually noisy, and it needs a 720px horizontal scroll on mobile.",
+       "A's weak points: picsum placeholder photos of a lake and a waterfall with no link to yoga or Valencia, although they are flagged in comments as provisional, plus a staggered fade-in on the hero."
+      ]
+     },
+     {
+      "order": [
+       "control",
+       "treated"
+      ],
+      "winner": "treated",
+      "slop_markers": {
+       "control": 3,
+       "treated": 4
+      },
+      "reasons": [
+       "B's booking form fills the class select from the schedule in the page, so visitors can only pick a real session for the chosen day. A uses a generic class dropdown plus a date field.",
+       "B names the teachers on each class and schedule slot (Lucía, Marta, Andreu) and explains why the phone is needed, which makes the copy less interchangeable.",
+       "B lays out prices as a list with a dark featured row, and classes as a definition list beside an image. That avoids A's familiar four-card grids for both classes and prices.",
+       "B costs itself points with random picsum nature photos (a lake and a waterfall) whose alt text has nothing to do with yoga, and with links to legal pages that may not exist.",
+       "B adds a staggered fade-in on the hero. It respects reduced-motion settings but is still decorative."
+      ]
+     }
+    ],
+    "consistent_winner": "treated"
+   }
+  }
+ },
+ "started": 1794940120.491597,
+ "summary": {
+  "clinic": {
+   "taste": {
+    "control": {
+     "critical": 1,
+     "major": 2,
+     "minor": 0,
+     "ids": [
+      "TASTE-EMDASH",
+      "TASTE-PURE-BLACK-WHITE",
+      "TASTE-DARK-MODE"
+     ]
+    },
+    "treated": {
+     "critical": 0,
+     "major": 0,
+     "minor": 0,
+     "ids": []
+    }
+   },
+   "winner": "treated",
+   "treated_blocked": false,
+   "treated_review_done": true
+  },
+  "saas": {
+   "taste": {
+    "control": {
+     "critical": 0,
+     "major": 2,
+     "minor": 0,
+     "ids": [
+      "TASTE-PURE-BLACK-WHITE",
+      "TASTE-DARK-MODE"
+     ]
+    },
+    "treated": {
+     "critical": 0,
+     "major": 0,
+     "minor": 0,
+     "ids": []
+    }
+   },
+   "winner": "treated",
+   "treated_blocked": true,
+   "treated_review_done": false
+  },
+  "yoga": {
+   "taste": {
+    "control": {
+     "critical": 1,
+     "major": 1,
+     "minor": 0,
+     "ids": [
+      "TASTE-EMDASH",
+      "TASTE-DARK-MODE"
+     ]
+    },
+    "treated": {
+     "critical": 0,
+     "major": 0,
+     "minor": 0,
+     "ids": []
+    }
+   },
+   "winner": "treated",
+   "treated_blocked": false,
+   "treated_review_done": true
+  }
+ }
+}

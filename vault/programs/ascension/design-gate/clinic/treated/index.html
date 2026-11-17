@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Front desk | Harbourside Physiotherapy</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#appointments">Skip to today's appointments</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">H</span>
+      <div>
+        <p class="brand-name">Harbourside Physiotherapy</p>
+        <p class="brand-sub">Front desk dashboard</p>
+      </div>
+    </div>
+    <div class="today">
+      <p class="today-date"><time datetime="2026-11-17">Tuesday 17 November 2026</time></p>
+      <p class="today-sub">Sample data, shown as of <time datetime="2026-11-17T11:20">11:20</time></p>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="kpis" aria-label="Today at a glance">
+      <div class="kpi">
+        <p class="kpi-label">Appointments today</p>
+        <p class="kpi-value" id="kpi-appts">0</p>
+        <p class="kpi-note" id="kpi-appts-note"></p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Still to arrive</p>
+        <p class="kpi-value" id="kpi-remaining">0</p>
+        <p class="kpi-note" id="kpi-next"></p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Room utilisation this week</p>
+        <p class="kpi-value" id="kpi-util">0%</p>
+        <p class="kpi-note" id="kpi-util-note"></p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-label">Follow-up calls due</p>
+        <p class="kpi-value" id="kpi-calls">0</p>
+        <p class="kpi-note" id="kpi-calls-note"></p>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="panel panel-appts" id="appointments" aria-labelledby="appts-title">
+        <div class="panel-head">
+          <div>
+            <h1 id="appts-title">Today's appointments</h1>
+            <p class="panel-sub" id="appts-count" aria-live="polite"></p>
+          </div>
+          <div class="filters">
+            <div class="field">
+              <label for="filter-physio">Physio</label>
+              <select id="filter-physio">
+                <option value="all">All physios</option>
+              </select>
+            </div>
+            <div class="field field-check">
+              <input type="checkbox" id="filter-remaining">
+              <label for="filter-remaining">Hide finished</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="appts">
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Patient</th>
+                <th scope="col">Session</th>
+                <th scope="col">Physio</th>
+                <th scope="col">Room</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="appts-body"></tbody>
+          </table>
+          <p class="empty" id="appts-empty" hidden>No appointments match these filters. Choose "All physios" or untick "Hide finished".</p>
+        </div>
+      </section>
+
+      <section class="panel panel-calls" aria-labelledby="calls-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="calls-title">Awaiting a follow-up call</h2>
+            <p class="panel-sub" id="calls-count" aria-live="polite"></p>
+          </div>
+        </div>
+        <ol class="calls" id="calls-list"></ol>
+        <div class="empty empty-calls" id="calls-empty" hidden>
+          <p class="empty-title">Every follow-up call is done.</p>
+          <p>New ones appear here when a physio flags a patient after a session.</p>
+        </div>
+        <details class="called" id="called-wrap" hidden>
+          <summary id="called-summary">Called today</summary>
+          <ol class="called-list" id="called-list"></ol>
+        </details>
+      </section>
+
+      <section class="panel panel-util" aria-labelledby="util-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="util-title">Room utilisation, week of 16 November</h2>
+            <p class="panel-sub">Share of bookable 30-minute slots that are booked. Wednesday onwards shows bookings made so far.</p>
+          </div>
+          <div class="legend" aria-hidden="true">
+            <span class="legend-label">Less booked</span>
+            <span class="legend-steps" id="legend-steps"></span>
+            <span class="legend-label">Fully booked</span>
+          </div>
+        </div>
+        <p class="swipe-note">Swipe the table sideways for Friday, Saturday and week totals.</p>
+        <div class="table-wrap">
+          <table class="heat" id="heat">
+            <caption class="sr-only">Room utilisation by day, percent of slots booked</caption>
+            <thead id="heat-head"></thead>
+            <tbody id="heat-body"></tbody>
+          </table>
+        </div>
+        <div class="tooltip" id="tooltip" role="status" hidden></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

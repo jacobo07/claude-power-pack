@@ -1,0 +1,122 @@
+[
+ {
+  "criterion": "first-impression-3s",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "H1 'Every meeting ends with a to-do list.' + sub + CTA + transcript-to-action-items sample visible in first 900px desktop and first phone screen (render viewed)",
+  "recommendation": ""
+ },
+ {
+  "criterion": "visual-hierarchy-single-dominant",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "H1 clamp 40-64px dominant; h1/h2/h3/body levels; single accent #c2410c; primary vs ghost distinct",
+  "recommendation": ""
+ },
+ {
+  "criterion": "contrast-text",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "check_contrast: #52525b on #fdfdfc 7.59:1, on #ececea 6.53:1; #fdfdfc on #c2410c 5.09:1; #c2410c on #f6f6f4 4.79:1; #b42318 on #fbe6da 5.46:1; dark #a1a1aa on #232327 6.11:1 (dark not rendered)",
+  "recommendation": ""
+ },
+ {
+  "criterion": "mobile-body-font",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "body 17px >= 16px; no horizontal overflow in 390px render; nav wraps and Features/Customers/Pricing/Sign in all visible on phone (previous hidden-nav defect FIXED)",
+  "recommendation": ""
+ },
+ {
+  "criterion": "tap-target-size",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "btn--sm min-height 44px (was 40, FIXED); nav links min-height 44px; checkbox label min-height 44px (was 28, FIXED); buttons 48px; email input 48px",
+  "recommendation": ""
+ },
+ {
+  "criterion": "reduced-motion-equivalent",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "All animation inside prefers-reduced-motion: no-preference; transform-only, content never hidden; smooth scroll off under reduce",
+  "recommendation": ""
+ },
+ {
+  "criterion": "single-primary-cta",
+  "dimension": "conversion",
+  "status": "pass",
+  "severity": "",
+  "observed": "One conversion action (Start free trial) repeated in nav/hero/Team/form; Solo is ghost; no competing primary",
+  "recommendation": ""
+ },
+ {
+  "criterion": "cta-anchor-target",
+  "dimension": "conversion",
+  "status": "pass",
+  "severity": "",
+  "observed": "#pricing, #features, #signup (section id=signup now exists, was dead) all resolve in index.html",
+  "recommendation": ""
+ },
+ {
+  "criterion": "cta-endpoint-dead-end",
+  "dimension": "conversion",
+  "status": "fail",
+  "severity": "critical",
+  "observed": "Final conversion step: form action='/signup' method=post and nav 'Sign in' href='/login'. Static site, entry index.html only, no /signup or /login exists: submit and sign-in resolve to 404. A visitor who enters an email lands on a dead end; no success state is reachable",
+  "recommendation": "Wire a real signup endpoint/provider and login URL, or state the gap and remove the form and Sign in until a backend exists."
+ },
+ {
+  "criterion": "legal-page-present",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "critical",
+  "observed": "modules.cdio.legal_surface check --jurisdiction us --saas: BLOCK score 25; no privacy, terms or dpa page. Footer now has only '(c) 2026 Afterword' (dead legal anchors removed, not replaced). Page collects work email and sells a product that ingests meeting recordings. Missing legal pages are critical regardless of the brief lacking entity facts; they cannot be authored by inventing them",
+  "recommendation": "Obtain legal entity, address and processor list from the Owner, build privacy/terms/DPA from legal-templates, link in footer; page cannot ship until then."
+ },
+ {
+  "criterion": "claims-have-source",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "critical",
+  "observed": "Two testimonials attribute quotes to named people at named companies (Ifeoma Adeyemi, Larkspur Freight; Joaquin Ferreira, Bramble & Co.) with no provenance, photo, link or marking; no source was supplied in the brief. Presented as real customers on a product page = fabricated trust signal. Related unsourced claims: Linear/Jira/Asana sync, SSO, prices $14/$11, 14-day no-card trial",
+  "recommendation": "Replace with real, permissioned testimonials or clearly marked placeholders that block publish; confirm integrations and prices with the Owner."
+ },
+ {
+  "criterion": "above-fold-trust-signal",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "major",
+  "observed": "No trust signal in first viewport (desktop 0-900px, phone first screen): no customer logo, count, rating or security note; testimonials start ~y=2030 of 3206 desktop and ~y=3050 of 4940 phone",
+  "recommendation": "Add one verifiable proof element near hero CTA."
+ },
+ {
+  "criterion": "tap-target-incidental",
+  "dimension": "ux",
+  "status": "fail",
+  "severity": "minor",
+  "observed": "Footer and nav brand links (inline-flex, 22-28px mark, ~26px high) < 44px; no min-height set",
+  "recommendation": "Give .brand min-height 44px."
+ },
+ {
+  "criterion": "third-party-font-request",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "minor",
+  "observed": "styles load from fonts.bunny.net (external request on every visit, IP disclosed to a third party) with no privacy page disclosing it",
+  "recommendation": "Self-host fonts or disclose in privacy policy."
+ },
+ {
+  "criterion": "pricing-mental-model",
+  "dimension": "conversion",
+  "status": "fail",
+  "severity": "minor",
+  "observed": "Team $11 per seat vs Solo $14 per month: the multi-seat plan reads cheaper than the single-user plan with unlimited usage; unexplained",
+  "recommendation": "Explain Solo/Team minimums or revise pricing with Owner."
+ }
+]

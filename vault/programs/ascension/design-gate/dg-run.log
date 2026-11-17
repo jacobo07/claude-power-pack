@@ -1,0 +1,70 @@
+{
+ "clinic": {
+  "taste": {
+   "control": {
+    "critical": 1,
+    "major": 2,
+    "minor": 0,
+    "ids": [
+     "TASTE-EMDASH",
+     "TASTE-PURE-BLACK-WHITE",
+     "TASTE-DARK-MODE"
+    ]
+   },
+   "treated": {
+    "critical": 0,
+    "major": 0,
+    "minor": 0,
+    "ids": []
+   }
+  },
+  "winner": "treated",
+  "treated_blocked": false,
+  "treated_review_done": true
+ },
+ "saas": {
+  "taste": {
+   "control": {
+    "critical": 0,
+    "major": 2,
+    "minor": 0,
+    "ids": [
+     "TASTE-PURE-BLACK-WHITE",
+     "TASTE-DARK-MODE"
+    ]
+   },
+   "treated": {
+    "critical": 0,
+    "major": 0,
+    "minor": 0,
+    "ids": []
+   }
+  },
+  "winner": "treated",
+  "treated_blocked": true,
+  "treated_review_done": false
+ },
+ "yoga": {
+  "taste": {
+   "control": {
+    "critical": 1,
+    "major": 1,
+    "minor": 0,
+    "ids": [
+     "TASTE-EMDASH",
+     "TASTE-DARK-MODE"
+    ]
+   },
+   "treated": {
+    "critical": 0,
+    "major": 0,
+    "minor": 0,
+    "ids": []
+   }
+  },
+  "winner": "treated",
+  "treated_blocked": false,
+  "treated_review_done": true
+ }
+}
+run_rc=0
