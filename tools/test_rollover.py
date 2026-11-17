@@ -333,6 +333,17 @@ def main() -> int:
         check("V-ROLLOVER-GATE-CERTIFIED", gc["verdict"] == "REFUSED"
               and any("certified" in r for r in gc["reasons"]), gc["reasons"])
 
+        # A re-seal is a new generation: the previous crossing's sidecars must not outlive it.
+        # Measured 2026-11-17 (1e354abb): a stale .certified made every later seal read as retired,
+        # so /clear was never dispatched. The check above is the control (the sidecar was live).
+        ro.capsule_path(gsid, state).with_suffix(".claim").write_text("x", encoding="utf-8")
+        ro.seal(gcap, state)
+        gr = ro.gate(gsid, state)
+        check("V-ROLLOVER-RESEAL-DROPS-SIDECARS",
+              not ro.capsule_path(gsid, state).with_suffix(".certified").exists()
+              and not ro.capsule_path(gsid, state).with_suffix(".claim").exists()
+              and not any("certified" in r for r in gr["reasons"]), gr["reasons"])
+
         bsid = "hhhhhhhh-0008"                      # the seal itself refused; the gate must say so
         bcap = json.loads(json.dumps(gcap))
         bcap["session_id"] = bcap["handoff"]["session"] = bsid
