@@ -1,0 +1,28 @@
+{
+ "saas": {
+  "taste": {
+   "control": {
+    "critical": 1,
+    "major": 2,
+    "minor": 0,
+    "ids": [
+     "TASTE-EMDASH",
+     "TASTE-PURE-BLACK-WHITE",
+     "TASTE-DARK-MODE"
+    ]
+   },
+   "treated": {
+    "critical": 0,
+    "major": 0,
+    "minor": 1,
+    "ids": [
+     "TASTE-GOOGLE-FONTS-LINK"
+    ]
+   }
+  },
+  "winner": "treated",
+  "treated_blocked": true,
+  "treated_review_done": false
+ }
+}
+run_rc=0

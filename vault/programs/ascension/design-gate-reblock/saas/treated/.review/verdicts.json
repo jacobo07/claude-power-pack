@@ -1,0 +1,226 @@
+[
+ {
+  "criterion": "contrast-body-light",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "16.15:1 >= 4.5:1",
+  "recommendation": ""
+ },
+ {
+  "criterion": "contrast-secondary-light",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "7.25:1 >= 4.5:1",
+  "recommendation": ""
+ },
+ {
+  "criterion": "contrast-primary-cta-light",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "5.38:1 >= 4.5:1",
+  "recommendation": ""
+ },
+ {
+  "criterion": "contrast-accent-on-tint-light",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "4.56:1 >= 4.5:1",
+  "recommendation": ""
+ },
+ {
+  "criterion": "contrast-primary-cta-dark",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "7.61:1 >= 4.5:1",
+  "recommendation": ""
+ },
+ {
+  "criterion": "contrast-secondary-dark",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "8.31:1 >= 4.5:1",
+  "recommendation": ""
+ },
+ {
+  "criterion": "mobile-body-font",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "17px >= 16px",
+  "recommendation": ""
+ },
+ {
+  "criterion": "single-primary-cta",
+  "dimension": "conversion",
+  "status": "pass",
+  "severity": "",
+  "observed": "exactly 1 primary CTA (nav and hero both point to #pricing; Business plan CTA is the only other filled button)",
+  "recommendation": ""
+ },
+ {
+  "criterion": "reduced-motion-equivalence",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "motion present with a declared reduced-motion equivalent; .load and .reveal animations are inside no-preference or disabled by animation:none under reduce; transform-only, no content hidden",
+  "recommendation": ""
+ },
+ {
+  "criterion": "tap-target-billing-toggle",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": ".billing__opt min-height 44px: 44px >= 44px",
+  "recommendation": ""
+ },
+ {
+  "criterion": "tap-target-footer-links",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": ".footer__links a inline-flex min-height 44px: 44px >= 44px (390px render: links on own row)",
+  "recommendation": ""
+ },
+ {
+  "criterion": "type-levels",
+  "dimension": "visual",
+  "status": "fail",
+  "severity": "major",
+  "observed": "distinct tiers now: h1 64px, h2 44px / price 48px, h3+large quote 24px, hero sub 19 / body 17px, small 14px => 5 competing type levels > 3",
+  "recommendation": "Fold price into the h2 size and hero sub into body size to reach 3-4 tiers."
+ },
+ {
+  "criterion": "spacing-system",
+  "dimension": "visual",
+  "status": "fail",
+  "severity": "minor",
+  "observed": "off-system: [4, 12, 20, 28] (base 8px)",
+  "recommendation": "Snap 4/12/20/28 to the 8px grid (e.g. .75rem, 1.25rem, 1.75rem paddings)."
+ },
+ {
+  "criterion": "line-measure",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "body copy capped 36-46ch via max-width",
+  "recommendation": ""
+ },
+ {
+  "criterion": "legal-page-present",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "critical",
+  "observed": "modules.cdio.legal_surface check --jurisdiction us --saas: no privacy page exists in the site root (index.html, styles.css, script.js). Footer Privacy/Terms/Security now link to /privacy /terms /security, which are not in the bundle either. Absence is recorded as the criterion defines it; not softened",
+  "recommendation": "Build privacy page from legal-templates/templates/privacy-policy-us/template.md and link the footer to it."
+ },
+ {
+  "criterion": "legal-page-present",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "critical",
+  "observed": "modules.cdio.legal_surface check --jurisdiction us --saas: no terms page exists in the site root (index.html, styles.css, script.js). Footer Privacy/Terms/Security now link to /privacy /terms /security, which are not in the bundle either. Absence is recorded as the criterion defines it; not softened",
+  "recommendation": "Build terms page from legal-templates/templates/terms-of-use/template.md and link the footer to it."
+ },
+ {
+  "criterion": "legal-page-present",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "critical",
+  "observed": "modules.cdio.legal_surface check --jurisdiction us --saas: no dpa page exists in the site root (index.html, styles.css, script.js). Footer Privacy/Terms/Security now link to /privacy /terms /security, which are not in the bundle either. Absence is recorded as the criterion defines it; not softened",
+  "recommendation": "Build dpa page from legal-templates/templates/dpa-us/template.md and link the footer to it."
+ },
+ {
+  "criterion": "cta-target-resolves",
+  "dimension": "conversion",
+  "status": "fail",
+  "severity": "major",
+  "observed": "CTAs now href=/signup, /signup?plan=team, /login, /contact-sales; none exists in the delivered bundle (index.html, styles.css, script.js), so from this artifact alone the conversion terminus 404s. Correct if the deployment supplies these routes, but that is not observable here and I did not drive it",
+  "recommendation": "Ship or stub the signup/contact-sales routes with the page, or record the deployment that owns them."
+ },
+ {
+  "criterion": "proof-above-fold",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "minor",
+  "observed": "Hero viewport (1440x900 and 390x844) shows headline, CTA and a product mock but no customer logo, count or quote; first testimonial begins ~y=1700px desktop",
+  "recommendation": "Add one specific proof line (customer count or logo row) under the hero CTAs, only with a real source."
+ },
+ {
+  "criterion": "testimonial-provenance",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "minor",
+  "observed": "Two testimonials with name/title/company but only initials avatars, no source link or logo; prices flagged in source comment as \"sample values\"",
+  "recommendation": "Replace with attributable, consented quotes and real prices before publish."
+ },
+ {
+  "criterion": "pricing-billing-clarity",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "Each plan shows Billed annually/Billed monthly, synced by toggle (script.js data-billed)",
+  "recommendation": ""
+ },
+ {
+  "criterion": "bento-balance",
+  "dimension": "visual",
+  "status": "fail",
+  "severity": "minor",
+  "observed": "Desktop lead cell now pins transcript to bottom, leaving ~100px gap between paragraph and transcript; testimonials top-aligned and balanced",
+  "recommendation": "Optional: reduce gap or add content."
+ },
+ {
+  "criterion": "external-font-dependency",
+  "dimension": "trust",
+  "status": "fail",
+  "severity": "minor",
+  "observed": "Google Fonts <link> to fonts.googleapis.com (Taste lint minor); third-party request leaks visitor IP, relevant for EU use",
+  "recommendation": "Self-host Geist or accept with documented disclosure."
+ },
+ {
+  "criterion": "first-impression-3s",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "Render read: H1 \"Every meeting ends with a to-do list.\", sub states function, CTA \"Start free trial\" plus product mock; what/why/next-step clear",
+  "recommendation": ""
+ },
+ {
+  "criterion": "mobile-no-horizontal-scroll",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "390px render single column, 4295px tall, no overflow visible; hero CTA visible in first viewport (y~195 of 844)",
+  "recommendation": ""
+ },
+ {
+  "criterion": "hierarchy-one-dominant",
+  "dimension": "visual",
+  "status": "pass",
+  "severity": "",
+  "observed": "H1 at clamp 2.5-4rem dominates; one filled CTA per view; section rhythm consistent",
+  "recommendation": ""
+ },
+ {
+  "criterion": "keyboard-focus-skip",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "skip link present, :focus-visible 2px accent outline, native checkbox/label and buttons; billing buttons use aria-pressed",
+  "recommendation": ""
+ },
+ {
+  "criterion": "experience-contract",
+  "dimension": "ux",
+  "status": "pass",
+  "severity": "",
+  "observed": "No DESIGN.md experience block: unassessed per CDIO-07, not scored. Not driven in a browser: JS toggle/checkbox behaviour not assessed beyond reading script.js",
+  "recommendation": ""
+ }
+]
