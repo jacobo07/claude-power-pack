@@ -482,6 +482,16 @@ def seal(capsule: dict, state_dir: Optional[Path] = None, shadow: bool = False) 
         return {"sealed": False, "reason": f"write failed: {exc.__class__.__name__}", "path": str(path)}
     if got != want:
         return {"sealed": False, "reason": "read-back hash differs", "path": str(path)}
+    if not shadow:
+        # A new seal is a new generation. The previous generation's claim/certify sidecars must not
+        # outlive it. Measured 2026-11-17 (1e354abb): the 11-16 crossing left `.certified`. Every
+        # 11-17 re-seal was then read as "already certified and retired", so the watchdog never
+        # dispatched /clear, the gate refused, and /kresume found nothing.
+        for ext in (".certified", ".claim", ".claimlock"):
+            try:
+                path.with_suffix(ext).unlink()
+            except OSError:
+                pass
     return {"sealed": True, "path": str(path), "sha256": want, "bytes": len(data)}
 
 
