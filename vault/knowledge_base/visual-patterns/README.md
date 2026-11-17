@@ -67,6 +67,7 @@ uniforme sobre las letras.
 | VP-016 | [[device-demo-state-carousel]] — Device Demo State Carousel | B4 movimiento | local (REF-MOTION-001) |
 | VP-017 | [[progressive-state-build]] — Intra-State Progressive Build | B5 movimiento | local (REF-MOTION-001) |
 | VP-018 | [[shared-element-continuity]] — Shared-Element Continuity | B6 movimiento | hypothesis (REF-MOTION-001) |
+| VP-019 | [[cinematic-brand-lit-hero]] — Cinematic Brand-Lit Hero | E1 escena fotográfica/3D + luz de marca | investigación (REF-BRAND-LIGHT-001; no render ni tests de producción) |
 
 "Investigacion" = patron verificado con fuentes reales, sin implementacion
 propia todavia en un proyecto del Owner. Actualizar el campo Evidence de la
@@ -101,6 +102,10 @@ OBSERVED / INFERRED / HYPOTHESIZED / UNKNOWN per claim, then either raise an
 existing entry's `evidence_level` (a second independent reference) or add an
 entry at `local`. Open-source libraries are principle sources only unless
 `research/motion-oss-reference-classes.md` marks them SAFE-TO-DEPEND.
+
+## Cinematic image-backed heroes (2026-11-17)
+
+VP-019 documents brand-colour propagation into plausible scene illumination (landscape, refractive object and emissive architecture). It is NOT a motion pattern and is not auto-enrolled by the CDIO-07 motion resolver. Its related study is `evidence/REF-BRAND-LIGHT-001/OBSERVATION.md`; no reference image/video is redistributed in the repo. Retrieval through `/cpp-design` requires the existing opt-in `--refresh` until an independently tested automatic activation is added.
 
 ## Discoverable via /cpp-design
 
