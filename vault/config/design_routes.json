@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "spec": "vault/specs/design-surface-router.md",
+  "reviewer": "cdio-reviewer",
+  "visual_ext": [".html", ".htm", ".css", ".scss", ".sass", ".tsx", ".jsx", ".vue", ".svelte"],
+  "default_kind": "web",
+  "surfaces": {
+    "web": {
+      "prompt": "\\b(landing|home ?page|homepage|p[aá]gina web|sitio web|web ?site|website|web page|webpage|hero section|secci[oó]n hero|pricing page|p[aá]gina de precios|frontend|front-end|maquetar|redise[ñn]a(r)? (la|el|una|un) (web|p[aá]gina|sitio))\\b",
+      "required": ["design-md", "design-taste-frontend", "frontend-design"],
+      "recommended": ["web-design-guidelines", "ui-ux-pro-max"],
+      "taste": true,
+      "review": true
+    },
+    "app_ui": {
+      "prompt": "\\b(dashboard|panel de (control|admin)|admin panel|componente(s)? (de )?ui|ui component|interfaz|user interface|pantalla(s)? de (la )?app|app screen|onboarding|checkout|navbar|sidebar|formulario|signup form|settings page)\\b",
+      "required": ["design-md", "design-taste-frontend", "frontend-design"],
+      "recommended": ["ui-ux-pro-max", "web-design-guidelines", "dataviz"],
+      "taste": true,
+      "review": true
+    },
+    "mobile": {
+      "prompt": "\\b(app (m[oó]vil|movil|mobile)|mobile app|ios app|android app|pantalla m[oó]vil|mobile (ui|screen)|tab bar|bottom sheet)\\b",
+      "required": ["mobile-app-ui-design", "design-md"],
+      "recommended": ["ui-ux-pro-max"],
+      "taste": true,
+      "review": true
+    },
+    "calco": {
+      "prompt": "\\b(id[eé]ntic[oa]|identical|pixel[- ]perfect|calco|calca(r)?|exactamente (igual|como)|exactly (like|as)|match (this|the) (mockup|screenshot|image)|r[eé]plica (de )?(esta|este|la|el) (imagen|captura|mockup))\\b",
+      "required": ["image-calco"],
+      "recommended": ["anydesign"],
+      "taste": false,
+      "review": false,
+      "overrides": ["web", "app_ui"]
+    },
+    "motion": {
+      "prompt": "\\b(promo|trailer|teaser|sizzle|launch film|product video|v[ií]deo (promocional|de producto|de lanzamiento)|anuncio animado|animated ad)\\b",
+      "required": ["motion-promo"],
+      "recommended": [],
+      "taste": false,
+      "review": false,
+      "overrides": ["web", "app_ui"]
+    },
+    "dataviz": {
+      "prompt": "\\b(chart|gr[aá]fic[oa]s?|plot|visuali[sz]a(tion|ci[oó]n)|kpi tile|sparkline|heatmap)\\b",
+      "required": [],
+      "recommended": ["dataviz"],
+      "taste": false,
+      "review": false
+    },
+    "brand": {
+      "prompt": "\\b(logo|logotipo|brand kit|identidad visual|visual identity|paleta de colores|color palette|wordmark|brand mark)\\b",
+      "required": [],
+      "recommended": ["canvas-design"],
+      "advice": "Brand work runs through CCF: python -m modules.ccf.cli init <project> --brief <brief.txt>, then generate / select / package.",
+      "taste": false,
+      "review": false
+    }
+  }
+}

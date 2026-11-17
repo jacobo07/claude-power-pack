@@ -134,6 +134,30 @@ more feedback, you have recorded a preference, not a review.
 DONE is APPROVE **and** conformance. `GateResult.is_done` enforces both, so a
 surface that cleared its quality bar while breaching its own contract is not done.
 
+## Render first, record last (mandatory — the Stop design done-gate reads only this)
+
+A chat report is not evidence the Stop gate can read. Since 2026-11-17
+(`vault/specs/design-surface-router.md`) a session that wrote visual files is not
+done until a review of the CURRENT bytes is recorded as done. So every review:
+
+1. **Render** what you judge, then look at every PNG with Read before any verdict:
+   `python tools/design_review_record.py render <page.html>...` (desktop 1440x900 +
+   phone 390x844). An app surface (tsx/vue/css) cannot be rendered from the file:
+   screenshot the running app and pass it with `--screenshot` at step 3.
+2. Write your verdicts to a JSON list (`criterion, dimension, status, severity,
+   observed, recommendation`): at least 6, over at least 2 dimensions. The
+   recorder refuses a thinner review.
+3. **Record**: `python tools/design_review_record.py record --verdicts v.json
+   --files <every visual file you judged> [--screenshot shot.png]
+   [--experience exp.json]` (`exp.json` = `{"declared": ..., "observed": ...}`
+   when a CDIO-07 contract exists). It folds the Taste lint in, computes the
+   verdict with `review_gate`, and binds it to each file's sha256. Exit 0 = done.
+   Any later edit to a file voids the record for that file: review again.
+
+Run both from the Power Pack root
+(`C:\Users\User\.claude\skills\claude-power-pack`). Quote the recorder's printed
+row in your report.
+
 ## Your output (the report shape — CDIO-05 §6)
 
 Return, in order: (1) the Design Quality Score integer; (2) the verdict with its
