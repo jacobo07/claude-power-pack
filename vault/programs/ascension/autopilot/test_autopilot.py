@@ -937,7 +937,14 @@ def run_all(ap):
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, ({"stop": "no route"}, RES_S)),
                     ["INFORMATION"])
     check("V-EVO-SYNTH-PLANNER-STOP", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn")
+    # 2026-11-17 (Owner "arreglalo", KSR S143K): a planner stop on a POLICY RE-PLAN designs a lever too, then plans it
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, (GOODP, {"stop": "no route"}, RES_S)),
+                    ["INFORMATION"])
+    check("V-EVO-SYNTH-REPLAN-STOP", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn")
     with_designer(None)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, (GOODP, {"stop": "no route"}, RES_S)),
+                    ["INFORMATION"])
+    check("V-EVO-REPLAN-STOP-NO-DESIGN-PARKS", ls["status"] == "PARKED" and "re-plan stopped" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, ({"stop": "no route"},)), ["INFORMATION"])
     check("V-EVO-SYNTH-NONE-STOPS-AS-BEFORE", ls["status"] == "STOPPED" and "designer proposed no lever" in
           (tmp / "home" / "ledger.jsonl").read_text())

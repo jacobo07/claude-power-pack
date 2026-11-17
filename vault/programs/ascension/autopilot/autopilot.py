@@ -1175,7 +1175,16 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
          if dry else plan(lane, name, checkpoint, product, v, pdir))
     tok, measured = call_tokens(p.get("_tokens"))
     ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
-    if p.get("stop") and evo:
+    designed = []
+
+    def design_after_stop(p: dict) -> dict:
+        """EVO: a planner that stops is answered with a lever (an open one of another family, else a designed one), then
+        planned again. Once per plan_and_arm call. 2026-11-17 (Owner "arreglalo", pane 08cba76c): the stop of a POLICY
+        RE-PLAN parked without this (KSR S143K at 19:02Z, lever retired) and waited for the Owner to invent a route."""
+        nonlocal pdir
+        if not (p.get("stop") and evo) or designed:
+            return p
+        designed.append(1)
         plevers, pgraph = evolve.load_levers(HOME), evolve.load_graph(HOME)
         cur = evolve.lever_by_id(plevers, lane["name"], ls.get("lever"))
         fam = (cur or {}).get("family") or "UNREGISTERED"
@@ -1196,6 +1205,8 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
             p = plan(lane, name, checkpoint, product, v, pdir)
             tok, measured = call_tokens(p.get("_tokens"))
             ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
+        return p
+    p = design_after_stop(p)
     if p.get("stop"):
         ls["status"] = "STOPPED"
         owner_queue(lane["name"], f"planner found no admissible next lever: {str(p.get('stop'))[:300]}")
@@ -1223,6 +1234,7 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         p = plan(lane, name, checkpoint, product, v, (pdir + "\n\n" + replan_feedback(why, p.get("_offenders"))).strip())
         tok, measured = call_tokens(p.get("_tokens"))
         ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name, replan=attempt + 1)
+        p = design_after_stop(p)
         if p.get("stop"):
             return _refused(st, ls, lane["name"], dict(pend, bad=why, offenders=p.get("_offenders")),
                             f"policy refused {name}; the re-plan stopped: {str(p.get('stop'))[:300]}",
