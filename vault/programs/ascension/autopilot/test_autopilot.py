@@ -1005,7 +1005,15 @@ def run_all(ap):
     with_designer(dict(SYN, family="F1"))
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "owner_resume": "design"}, (RES_S,)), ["NONE"])
     check("V-EVO-OWNER-RESUME-DESIGN-REFUSED-PARKS", ls["status"] == "PARKED" and "designed lever refused" in q)
+    # 2026-11-17 (Owner "deberia haber sido autonomo", MKW STOPPED at 17:30Z): the no-progress rule designs a lever;
+    # with none admitted it parks for a look and never STOPS the lane
+    with_designer(SYN)
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a", "blank": 2}, (RES_S,)), ["NONE"])
+    check("V-EVO-BLANK-RULE-DESIGNS", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn"
+          and ls.get("mode") == "RESEARCH" and ls.get("blank") == 0)
     ap.design_lever = lambda *a, **k: None
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a", "blank": 2}, (RES_S,)), ["NONE"])
+    check("V-EVO-BLANK-RULE-PARKS-NOT-STOPS", ls["status"] == "PARKED" and "no verified progress" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH", "info_streak": 1}), ["CERT"])
     check("V-EVO-CERT-RETURNS-TO-EXPLOIT", ls["status"] == "RUNNING" and ls.get("mode") == "EXPLOIT")
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,

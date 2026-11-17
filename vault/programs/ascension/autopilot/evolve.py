@@ -394,7 +394,14 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
             return synth_or_park(f"{RESEARCH_FAIL_STOP} research generations without verified "
                                  "INFORMATION or CAPABILITY: research stop rule", "research stop rule")
     if ls["blank"] >= blank_stop:
-        return {"action": "stop", "why": f"{blank_stop} consecutive generations with no verified progress of any class"}
+        # 2026-11-17 (Owner "deberia haber sido autonomo": MKW STOPPED at 17:30Z on this rule and waited for him): the
+        # no-progress rule designs a lever of another family like every other rule that runs out of levers; with none
+        # admitted it parks for a look (never STOPPED). SYNTH_MAX still bounds designed levers without a conversion.
+        r = synth_or_park(f"{blank_stop} consecutive generations with no verified progress of any class",
+                          "no-progress rule")
+        if r["action"] == "research":
+            ls["blank"] = 0
+        return r
     if ls["info_streak"] >= info_park or ls["no_conversion"] >= noconv_park:
         return plateau(ls, levers, lane, product, graph, family, cls in ("INFORMATION", "CAPABILITY"), designer, residual)
     if ls.get("mode") == "REPAIR":
