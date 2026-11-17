@@ -129,6 +129,16 @@ V-DSR-STOP-NO-REBLOCK-WITHOUT-RECORD (an unreviewed page still blocks once).
 - Found by the run and fixed (558ec18f): 3/3 first records were refused for the css/js the rendered page itself links.
 - Open: SaaS shows the one-round Stop is not enough when the review BLOCKs (the resume ended without re-reviewing);
   an APPROVE 100 means every recorded verdict passed, which is the reviewer's claim, not an independent check.
+- SaaS rerun with the re-block (GEX44, e403cdcb, data f75143b1, vault/programs/ascension/design-gate-reblock): Taste
+  control 1 crit + 2 major -> treated 0 crit 0 major; blind judge treated in both orders again. Stop blocked 3 times
+  then went silent, as specified; the three resumes used NO tool (13.5 s, 6.1 s, 5.1 s). Cause, from the agent's own
+  answers: the recorded review was BLOCK 0, driven by three CDIO-10 `legal-page-present` criticals (no privacy, terms,
+  DPA page). The agent declined to write legal text for an invented company and declined `NO APLICA` because the
+  review does apply, and asked the Owner. That refusal is right; the re-block cannot help a review whose criticals are
+  outside the brief. It also left two fixable majors open (5 text sizes vs 3; CTAs to routes that do not exist).
+  So the previous SaaS BLOCK 11 was most likely the same legal floor, not a lazy resume.
+  Open (Owner): whether CDIO-10 legal pages are a critical for a single landing page built to a brief that names no
+  site, and whether the block reason should list the recorded review's failed criteria (today it says only "BLOCK 0").
 
 ## Rollback
 `CPP_DESIGN_DONEGATE=off` / `CPP_DESIGN_ROUTE=off`, or delete the two dispatcher lines. State lives only under
