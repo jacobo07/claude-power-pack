@@ -217,7 +217,9 @@ def replan_feedback(bad: list[str], offenders: list[str] | None = None) -> str:
             "profile must carry, in that same line and not negated: an independent target oracle on the original DOL "
             "bytes; a frozen pilot committed before the draw; pre/post controls; A2 negatives; historical receipts "
             "byte-identical; separate counters. Otherwise refer to the profile only by its name (e.g. 'the S38K "
-            "profile'), never as a new one. Planted mutants are described by the check that catches them.")
+            "profile'), never as a new one. Planted mutants are described by the check that catches them. "
+            "An EVO research/repair packet names its selected lever in a phase line, carries every word the refusal "
+            "says is missing, and keeps the sum of its phase caps inside the cap the refusal states.")
 
 
 # ---------------------------------------------------------------- budget ledger
@@ -876,6 +878,19 @@ def running_watch(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool
         save_state(st)
         owner_queue(ln, f"{mid} is RUNNING with no worker for {int(held_s / 60)} min: {reason[:300]}")
         digest(ln, f"HELD {mid} for {int(held_s / 60)} min with no worker: {reason[:400]}")
+    # 2026-11-17 (S108W): BLOCKED on a host permission prompt ('rm config/config; git commit ...') with no hold sat
+    # ~10 h unseen; the lane still read RUNNING. Told once per mission and blocker. Not parked: when the prompt is
+    # answered the mission resumes and this lane must still see its checkpoint.
+    blk = rec.get("blocker") if isinstance(rec.get("blocker"), dict) else {}
+    b_s = now - float(blk.get("at") or rec.get("updated_at") or now)
+    bkey = f"{mid}:BLOCKED:{blk.get('at')}"
+    if rec.get("state") == "BLOCKED" and b_s >= HELD_NOTICE_S and ls.get("held_notice") != bkey:
+        uc = blk.get("unblock_condition") or {}
+        ls["held_notice"] = bkey
+        save_state(st)
+        owner_queue(ln, f"{mid} is BLOCKED for {int(b_s / 60)} min on {blk.get('class', '?')} ({uc.get('gate', '')}): "
+                        f"the worker waits for a human; needs: {str(uc.get('needs') or reason)[:300]}")
+        digest(ln, f"BLOCKED {mid} for {int(b_s / 60)} min: {str(uc.get('needs') or reason)[:400]}")
     left = hours_left(rec, now)
     if left >= AGE_MIN_H or ls.get("age_ext_for") == mid:
         return
@@ -931,10 +946,32 @@ def hold_checkpoint(hold: dict) -> str:
         ev = m.group(1)
     if ev == "None" or SHA_RE.match(ev):
         ev = ""
+    if re.search(r"\s", ev):
+        # 2026-11-17 (S113R): "branch worktree-s113r commit ac2201a: evidence/ascension/s113r/checkpoint.md" was taken
+        # whole as a path and parked CHECKPOINT_ON_BRANCH; prose names its file, the last one named is the checkpoint
+        found = PATH_IN_TEXT_RE.findall(ev)
+        ev = found[-1] if found else ""
     return ev or hold.get("residual") or ""
 
 
 SHA_PATH_RE = re.compile(r"^[0-9a-f]{7,40}:(\S.*)$")
+PATH_IN_TEXT_RE = re.compile(r"(?<![\w./-])(/?(?:[\w.-]+/)+[\w.-]+\.(?:md|json))\b")
+CKPT_NAME_RE = re.compile(r"(?:^|/)[^/]*(?:checkpoint|residual)[^/]*\.md$", re.I)
+
+
+def checkpoint_from_branch(product: str, base, head) -> str:
+    """The checkpoint a hold forgot to name: the most recently committed checkpoint*/residual* .md file between the
+    generation base and its branch head, present at the head. '' when there is none. 2026-11-17 (S111C): a
+    CHECKPOINT_COMPLETE hold with evidence null parked FIFATC with 'F17 SUPPORTED, held-out 11/40' unread, while
+    evidence/f17/checkpoint_s111c.md was the branch's last commit."""
+    h, b = _sha(product, head), _sha(product, base)
+    if not (h and b) or b == h:
+        return ""  # no window: an older generation's checkpoint must never be judged as this hold's
+    rc, out = _git(product, "log", "--format=", "--name-only", "--diff-filter=AM", f"{b}..{h}")
+    for path in (l.strip() for l in out.splitlines() if rc == 0):
+        if path and CKPT_NAME_RE.search(path) and _git(product, "cat-file", "-e", f"{h}:{path}")[0] == 0:
+            return path
+    return ""
 
 
 def resumable_plan(ls: dict, key: str) -> dict | None:
@@ -994,6 +1031,10 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         checkpoint = hold_checkpoint(hold)
         if ls.get("judged_for") == f"{mid}:{hold.get('set_at')}":
             return
+        if not checkpoint:  # 2026-11-17 (S111C): look on the generation branch before parking
+            checkpoint = checkpoint_from_branch(product, ls.get("base"), gen_head(rec))
+            if checkpoint:
+                log(f"{lane['name']}: hold of {mid} names no path; found {checkpoint} on the generation branch")
         if not checkpoint:  # a judge with no path can only say INCONCLUSIVE: park instead of paying for it
             ls["judged_for"] = f"{mid}:{hold.get('set_at')}"
             return _park(st, ls, lane["name"], f"checkpoint hold of {mid} names no evidence or residual path; "
@@ -1151,32 +1192,40 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         digest(lane["name"], f"STOPPED by planner: {str(p.get('stop'))[:400]}")
         save_state(st)
         return
-    phases, notes, title, facts, bad, text = plan_checks(lane, name, p)
+    def checked(p: dict):
+        """The policy checks, then (only on a policy-clean plan, whose every phase has a cap) the EVO packet checks."""
+        phases, notes, title, facts, bad, text = plan_checks(lane, name, p)
+        caps = 0 if bad else int(sum(float(CAP_RE.findall(l)[0]) for l in phases) * 1_000_000)
+        ebad = evolve.packet_problems(ls.get("mode") or "EXPLOIT", ls.get("next_lever"), phases, caps, ls) \
+            if evo and not bad else []
+        return phases, notes, text, bad, ebad, caps
+    phases, notes, text, bad, ebad, caps = checked(p)
     for attempt in range(POLICY_REPLANS if not dry else 0):
         # 2026-11-14 (S35K, S37K, S38K, S40K, S40T, S41K refused; each parked a lane for hours): bounded re-plans, each
         # told why. The policy is unchanged: every plan meets the same checks, and the last refusal parks as before.
-        if not bad:
+        # 2026-11-17 (Owner "b", pane 08cba76c): an EVO packet refusal is re-planned the same way. S112T (no 'rival')
+        # and S114M (caps 10.5M > 10M) parked on their first plan and sat ~10 h with 417M of the day unused.
+        if not (bad or ebad):
             break
-        log(f"{lane['name']}: policy refused {name} (plan {attempt + 1}): {'; '.join(bad)[:300]}; re-plan with the reasons")
-        p = plan(lane, name, checkpoint, product, v, (pdir + "\n\n" + replan_feedback(bad, p.get("_offenders"))).strip())
+        why = bad or ebad
+        log(f"{lane['name']}: {'policy' if bad else 'EVO policy'} refused {name} (plan {attempt + 1}): "
+            f"{'; '.join(why)[:300]}; re-plan with the reasons")
+        p = plan(lane, name, checkpoint, product, v, (pdir + "\n\n" + replan_feedback(why, p.get("_offenders"))).strip())
         tok, measured = call_tokens(p.get("_tokens"))
         ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name, replan=attempt + 1)
         if p.get("stop"):
-            return _refused(st, ls, lane["name"], dict(pend, bad=bad, offenders=p.get("_offenders")),
+            return _refused(st, ls, lane["name"], dict(pend, bad=why, offenders=p.get("_offenders")),
                             f"policy refused {name}; the re-plan stopped: {str(p.get('stop'))[:300]}",
                             f"POLICY REFUSED {name}; re-plan stopped")
-        phases, notes, title, facts, bad, text = plan_checks(lane, name, p)
+        phases, notes, text, bad, ebad, caps = checked(p)
     if bad:
         off = "; ".join(l[:200] for l in (p.get("_offenders") or [])[:2])
         return _refused(st, ls, lane["name"], dict(pend, bad=bad, offenders=p.get("_offenders")),
                         f"policy refused {name}: {'; '.join(bad)[:400]}" + (f" | line: {off}" if off else ""),
                         f"POLICY REFUSED {name}: {'; '.join(bad)[:400]}")
-    caps = int(sum(float(CAP_RE.findall(l)[0]) for l in phases) * 1_000_000)
-    if evo:
-        ebad = evolve.packet_problems(ls.get("mode") or "EXPLOIT", ls.get("next_lever"), phases, caps, ls)
-        if ebad:
-            return _refused(st, ls, lane["name"], dict(pend, bad=ebad), f"EVO policy refused {name}: {'; '.join(ebad)[:400]}",
-                            f"EVO POLICY REFUSED {name}: {'; '.join(ebad)[:400]}", kind="evo")
+    if ebad:
+        return _refused(st, ls, lane["name"], dict(pend, bad=ebad), f"EVO policy refused {name}: {'; '.join(ebad)[:400]}",
+                        f"EVO POLICY REFUSED {name}: {'; '.join(ebad)[:400]}", kind="evo")
     ew = envelope_admits(lane, ledger_rows(), caps)
     if ew:
         ls["judged_for"] = None

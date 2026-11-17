@@ -455,7 +455,7 @@ def run_all(ap):
     # reason (S71F/S69T sat 8 h unseen). < 1.5 h of wall with work on the branch -> one extension inside the envelope,
     # no token change (S65M halted on age at 07:45 with 3 commits); refused by gsd_mission -> the Owner is told first.
     def watch_run(reason="launch held: cwd not aligned with work_dir (diverged): x", held_s=3600, age_h=2.0,
-                  commits="2", st=None, fail=(), env=envt, spent=1_000_000, wall=None):
+                  commits="2", st=None, fail=(), env=envt, spent=1_000_000, wall=None, state="RUNNING", blocker=None):
         if st is None:
             rec["owner_hold"] = {"set_at": 0}
             st = fresh(0)
@@ -465,7 +465,10 @@ def run_all(ap):
         fail_on.update(fail)
         pc["n"] = commits
         now = __import__("time").time()
-        rec.update(state="RUNNING", owner_hold=None, reason=reason, updated_at=now - held_s,
+        rec.pop("blocker", None)
+        if blocker is not None:
+            rec["blocker"] = dict({"at": now - held_s}, **blocker)  # a given `at` is the same blocker again
+        rec.update(state=state, owner_hold=None, reason=reason, updated_at=now - held_s,
                    created_at=now - age_h * 3600, max_hours=16.0, authority_tokens=10_000_000,
                    cost_mark={"tokens": spent, "at": now},
                    binding={"root": str(tmp / "no-tree"), "head": "e" * 40, "branch": "s91/work"})
@@ -484,6 +487,16 @@ def run_all(ap):
     check("V-AP-HELD-NOTICE-ONCE", q_text().count("RUNNING with no worker") == 1)
     watch_run(held_s=600)
     check("V-AP-HELD-NOTICE-WAITS", "RUNNING with no worker" not in q_text())
+    # 2026-11-17 (S108W, Owner "b"): BLOCKED on a host permission prompt is told once, the lane stays RUNNING
+    BLK = {"class": "HOST_GATE", "unblock_condition": {"gate": "permission prompt", "needs": "approve Bash: rm cfg"}}
+    W = watch_run(reason="progress moved", state="BLOCKED", blocker=BLK)
+    check("V-AP-BLOCKED-NOTICE", q_text().count("is BLOCKED for") == 1 and "approve Bash: rm cfg" in q_text()
+          and W["lanes"]["L"]["status"] == "RUNNING")
+    watch_run(st=W, reason="progress moved", state="BLOCKED", blocker=dict(BLK, at=rec["blocker"]["at"]))
+    check("V-AP-BLOCKED-NOTICE-ONCE", q_text().count("is BLOCKED for") == 1)
+    watch_run(reason="progress moved", state="BLOCKED", blocker=BLK, held_s=600)
+    check("V-AP-BLOCKED-NOTICE-WAITS", "is BLOCKED for" not in q_text())
+    rec.pop("blocker", None)
     W = watch_run(reason="running", age_h=15.0)
     a = auth_calls()
     check("V-AP-AGE-EXTEND-PROGRESS", len(a) == 1 and "--tokens" not in a[0] and "--extend-hours" in a[0]
@@ -516,6 +529,12 @@ def run_all(ap):
           == "r.md" and ap.hold_checkpoint({"evidence": "None", "residual": "r.md"}) == "r.md")
     check("V-AP-HOLD-PATH-KEPT", ap.hold_checkpoint({"evidence": "e/ck.md", "residual": "r.md"}) == "e/ck.md")
     check("V-AP-HOLD-SHA-NONE", ap.hold_checkpoint({"evidence": "8afbd99"}) == "")
+    # 2026-11-17 (S113R): prose naming the file -> the file; prose naming none -> the residual
+    check("V-AP-HOLD-FREEFORM", ap.hold_checkpoint(
+        {"evidence": "branch worktree-s113r commit ac2201a: evidence/ascension/s113r/checkpoint.md"})
+          == "evidence/ascension/s113r/checkpoint.md"
+          and ap.hold_checkpoint({"evidence": "see the run log", "residual": "r.md"}) == "r.md"
+          and ap.hold_checkpoint({"evidence": "/abs/dir/ck.md"}) == "/abs/dir/ck.md")
     check("V-AP-HOLD-SHA-PATH", ap.hold_checkpoint({"evidence": "c235442:evidence/s70w/ck.md", "residual": "r.md"})
           == "evidence/s70w/ck.md")
     ap.sh, rec["owner_hold"], rec["authority_tokens"] = keep_sh2, keep_hold, keep_auth
@@ -861,6 +880,11 @@ def run_all(ap):
     check("V-EVO-PRECONDITION-REQUIRED", ls["status"] == "PARKED" and "another family" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
     check("V-EVO-RESEARCH-PACKET-NEEDS-DISCRIMINATING-TEST", ls["status"] == "PARKED" and "no 'rival'" in q)
+    # 2026-11-17 (S112T, S114M, Owner "b"): an EVO packet refusal is re-planned with its reasons, not parked at once
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a"}, (GOODP, GOODP, RES)), ["INFORMATION", "INFORMATION"])
+    rp = [r for r in ledger() if r["kind"] == "plan" and r.get("replan")]
+    check("V-EVO-REFUSAL-REPLANNED", ls["status"] == "RUNNING" and ls.get("mode") == "RESEARCH"
+          and ls.get("lever") == "lev_b" and len(rp) == 1)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH"}, (RES,)), ["NONE", "NONE"])
     check("V-EVO-RESEARCH-STOP-RULE", ls["status"] == "PARKED" and "research stop rule" in q)
     # Owner 2026-11-16 (pane 08cba76c, "deberia haberse hecho de forma autonoma"): where a lane would park for want of a
@@ -1002,6 +1026,16 @@ def run_all(ap):
     rec["owner_hold"].update(set_at=7904, evidence=None, residual=None); recp.write_text(json.dumps(rec))
     ap.lane_tick(st, lanes[0], False)
     check("V-AP-EMPTY-HOLD-PARKS-UNJUDGED", not judged and st["lanes"]["L"]["status"] == "PARKED")
+    # 2026-11-17 (S111C, Owner "b"): an empty hold whose generation branch committed a checkpoint is judged on it
+    st = evo_fresh([LA], {"lever": "lev_a"})
+    ap.judge = lambda lane, ck, prod: judged.append(ck) or dict(full, _tokens=1)
+    judged.clear()
+    keep_cfb = ap.checkpoint_from_branch
+    ap.checkpoint_from_branch = lambda p, b, h: str(tmp / "ck.md")
+    rec["owner_hold"].update(set_at=7905, evidence=None, residual=None); recp.write_text(json.dumps(rec))
+    ap.lane_tick(st, lanes[0], False)
+    ap.checkpoint_from_branch = keep_cfb
+    check("V-AP-EMPTY-HOLD-FINDS-BRANCH-CHECKPOINT", judged == [str(tmp / "ck.md")])
     rec["owner_hold"].update(evidence=str(tmp / "ck.md")); rec["owner_hold"].pop("residual", None)
     recp.write_text(json.dumps(rec))
     ap.classify_progress = orig_cls
@@ -1047,6 +1081,40 @@ def run_all(ap):
     check("V-AP-CKPT-WORKTREE-REL", (E.worktree_rel(str(pr4), str(wt4 / "ev" / "ck.md")) or ("", ""))[1]
           == os.path.join("ev", "ck.md") and E.worktree_rel(str(pr4), str(pr4 / "ev" / "ck.md")) is None
           and E.worktree_rel(str(pr4), "ev/ck.md") is None)
+    # 2026-11-17 (Owner "b"): the worktree Claude removed on exit keeps its branch; the branch tip still counts
+    prv = mkrepo("evo_prod_vanish")
+    wtv = tmp / "evo_wt_vanish"
+    git(prv, "worktree", "add", "-q", "-b", "gone", str(wtv))
+    (wtv / "ck.md").write_text("checkpoint\n"); git(wtv, "add", "-A"); git(wtv, "commit", "-q", "-m", "ck")
+    hv = git(wtv, "rev-parse", "HEAD")
+    git(prv, "worktree", "remove", "--force", str(wtv))
+    how, note = E.discover_checkpoint(str(prv), "ck.md")
+    check("V-EVO-CHECKPOINT-VANISHED-WORKTREE", how == "FF" and git(prv, "rev-parse", "HEAD") == hv)
+    # two unrelated tips holding the same path stay ambiguous: parked, product untouched
+    pr7 = mkrepo("evo_prod_tips")
+    base7 = git(pr7, "rev-parse", "HEAD")
+    for br in ("x1", "x2"):
+        git(pr7, "checkout", "-q", "-b", br, base7)
+        (pr7 / "ck.md").write_text(f"{br}\n"); git(pr7, "add", "-A"); git(pr7, "commit", "-q", "-m", br)
+    git(pr7, "checkout", "-q", "--detach", base7)
+    check("V-EVO-CHECKPOINT-TWO-TIPS-PARKS", E.discover_checkpoint(str(pr7), "ck.md")[0] == "PARK"
+          and git(pr7, "rev-parse", "HEAD") == base7)
+    # 2026-11-17 (S111C): the checkpoint a hold forgot to name, found inside the generation's window only
+    pr8 = mkrepo("evo_prod_nopath")
+    b8 = git(pr8, "rev-parse", "HEAD")
+    (pr8 / "ev").mkdir()
+    (pr8 / "ev" / "checkpoint_s1.md").write_text("ck\n"); git(pr8, "add", "-A"); git(pr8, "commit", "-q", "-m", "ck")
+    (pr8 / "ev" / "budget.md").write_text("b\n"); git(pr8, "add", "-A"); git(pr8, "commit", "-q", "-m", "budget")
+    h8 = git(pr8, "rev-parse", "HEAD")
+    keep_sh8, ap.sh = ap.sh, load().sh  # real git here: ap.sh is a recorder in this part of the gate
+    try:
+        check("V-AP-NOPATH-FOUND-ON-BRANCH", ap.checkpoint_from_branch(str(pr8), b8, h8) == "ev/checkpoint_s1.md")
+        check("V-AP-NOPATH-WINDOW-ONLY", ap.checkpoint_from_branch(str(pr8), h8, h8) == ""
+              and ap.checkpoint_from_branch(str(pr8), None, h8) == "")
+        (pr8 / "ev" / "notes.md").write_text("n\n"); git(pr8, "add", "-A"); git(pr8, "commit", "-q", "-m", "n")
+        check("V-AP-NOPATH-NONE-NAMED", ap.checkpoint_from_branch(str(pr8), h8, git(pr8, "rev-parse", "HEAD")) == "")
+    finally:
+        ap.sh = keep_sh8
     # F4b (2026-11-16, S71F/S69T): a continuation fast-forwards the product to the halted branch head before arming;
     # diverged or dirty -> refused and the product untouched (real git, both poles)
     pr5 = mkrepo("evo_prod5")
@@ -1224,6 +1292,12 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "halt_once_spent_before_arm": lambda m: setattr(m, "continue_halted", (lambda real: lambda st, lane, ls, mid, *a: (
              real(st, lane, ls, mid, *a), ls.__setitem__("continued_from", mid))[0])(m.continue_halted)),
          "evo_ff_to_always_ok": _evo_mut(ff_to=lambda p, h, d=False: (True, "x")),
+         "hold_freeform_ignored": lambda m: setattr(m, "PATH_IN_TEXT_RE", __import__("re").compile(r"(?!x)x")),
+         "nopath_never_found": lambda m: setattr(m, "checkpoint_from_branch", lambda p, b, h: ""),
+         "nopath_any_window": lambda m: setattr(m, "checkpoint_from_branch", (lambda real: lambda p, b, h: (
+             real(p, b, h) or (real(p, m._git(p, "rev-list", "--max-parents=0", str(h))[1].strip()[:40], h)
+                               if h else "")))(m.checkpoint_from_branch)),
+         "evo_branches_ignored": _evo_mut(_branch_heads=lambda p: []),
          "held_notice_never": lambda m: setattr(m, "HELD_NOTICE_S", 10 ** 9),
          "held_notice_immediate": lambda m: setattr(m, "HELD_NOTICE_S", 0),
          "running_watch_off": lambda m: setattr(m, "running_watch", lambda *a: None),

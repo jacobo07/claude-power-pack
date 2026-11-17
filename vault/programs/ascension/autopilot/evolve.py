@@ -459,6 +459,12 @@ def ff_to(product: str, head, dry: bool = False) -> tuple[bool, str]:
     return True, f"fast-forwarded the product to {head[:12]}"
 
 
+def _branch_heads(product: str) -> list[tuple[str, str]]:
+    """(branch, tip sha) for every local branch of the product's repository."""
+    rc, out = _git(product, "for-each-ref", "--format=%(refname:short) %(objectname)", "refs/heads")
+    return [tuple(l.rsplit(" ", 1)) for l in out.splitlines() if rc == 0 and " " in l]
+
+
 def discover_checkpoint(product: str, checkpoint: str, dry: bool = False) -> tuple[str, str]:
     """-> (OK|FF|PARK, note). OK: the checkpoint is in the product. FF: exactly one worktree branch holds it COMMITTED,
     the product HEAD is its ancestor and the product has no tracked changes -> `merge --ff-only` was run. Otherwise PARK.
@@ -481,8 +487,17 @@ def discover_checkpoint(product: str, checkpoint: str, dry: bool = False) -> tup
         elif " " in line:
             k, val = line.split(" ", 1)
             cur[k] = val
-    hits = [t for t in trees if os.path.realpath(t["worktree"]) != os.path.realpath(product) and t.get("HEAD")
-            and _git(t["worktree"], "cat-file", "-e", f"HEAD:{rel}")[0] == 0]
+    cands = [t for t in trees if os.path.realpath(t["worktree"]) != os.path.realpath(product) and t.get("HEAD")]
+    # 2026-11-17 (Owner "b"): a --worktree checkout Claude removed on exit leaves its branch; the branch tip still
+    # holds the checkpoint (MKWLIB s100l, 2026-11-16). Local branch tips count; one commit counts once.
+    cands += [{"HEAD": h, "branch": b} for b, h in _branch_heads(product)]
+    by_sha = {}
+    for t in cands:
+        if t["HEAD"] not in by_sha and _git(product, "cat-file", "-e", f"{t['HEAD']}:{rel}")[0] == 0:
+            by_sha[t["HEAD"]] = t
+    # a tip that is an ancestor of another holder is the same line of work, not a second candidate
+    hits = [t for s, t in by_sha.items()
+            if not any(o != s and _git(product, "merge-base", "--is-ancestor", s, o)[0] == 0 for o in by_sha)]
     if len(hits) != 1:
         return "PARK", f"CHECKPOINT_ON_BRANCH: {rel} is not in the product and is committed on {len(hits)} worktree branches"
     t = hits[0]
