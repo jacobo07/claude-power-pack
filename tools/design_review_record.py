@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -91,6 +92,33 @@ def _is_png(p: str) -> bool:
     return w >= MIN_SHOT_PX and h >= MIN_SHOT_PX
 
 
+_REF = re.compile(r"""(?:href|src)\s*=\s*["']([^"':#?]+\.(?:css|js|mjs))["']""", re.I)
+
+
+def _covered_by_render(files: list) -> set:
+    """Stylesheets/scripts that a page IN THIS RECORD links, when that page was rendered for its current bytes AFTER
+    the asset last changed: the page's render already shows them. Measured 2026-11-17 (GEX44 clinic run): the reviewer
+    was refused for styles.css and app.js, the two files its own rendered index.html loads."""
+    renders = {}
+    for r in dr.read_rows("renders.jsonl"):
+        if r.get("file") and r.get("sha") and r.get("pngs"):
+            k = (r["file"], r["sha"])
+            renders[k] = max(renders.get(k, 0), float(r.get("ts") or 0))
+    out = set()
+    for page in files:
+        if not page.endswith(dr.HTML_EXT) or not os.path.isfile(page):
+            continue
+        when = renders.get((page, dr.sha256(page)))
+        if not when:
+            continue
+        html = Path(page).read_text(encoding="utf-8", errors="replace")
+        for ref in _REF.findall(html):
+            asset = dr.canon(os.path.join(os.path.dirname(page), ref))
+            if asset in files and os.path.isfile(asset) and os.path.getmtime(asset) <= when:
+                out.add(asset)
+    return out
+
+
 def record(verdicts_path: str, files: list, screenshot: str | None = None, experience: str | None = None) -> dict:
     from modules.cdio import scorer, taste
     raw = json.loads(Path(verdicts_path).read_text(encoding="utf-8"))
@@ -108,14 +136,19 @@ def record(verdicts_path: str, files: list, screenshot: str | None = None, exper
     for f in files:
         if not os.path.isfile(f):
             raise SystemExit("not a file: %s" % f)
+    covered = _covered_by_render([dr.canon(f) for f in files])
+    for f in files:
         c, h = dr.canon(f), dr.sha256(f)
         hashes[c] = h
         if c.endswith(dr.HTML_EXT):
             folded += taste.lint(c).verdicts
             if h not in seen.get(c, set()):
                 refusals.append("%s: never rendered for these bytes (run `render` first)" % os.path.basename(c))
+        elif c in covered:
+            continue
         elif not (screenshot and _is_png(screenshot) and os.path.getmtime(screenshot) >= os.path.getmtime(c)):
-            refusals.append("%s: no --screenshot PNG newer than the file" % os.path.basename(c))
+            refusals.append("%s: no --screenshot PNG newer than the file, and no rendered page in this record links "
+                            "it" % os.path.basename(c))
     exp = json.loads(Path(experience).read_text(encoding="utf-8")) if experience else {}
     g = scorer.review_gate(folded, declared_experience=exp.get("declared"), observed_experience=exp.get("observed"))
     row = {"files": hashes, "verdict": g.verdict, "score": g.score, "reason": g.reason,
