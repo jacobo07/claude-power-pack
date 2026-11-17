@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Turia Yoga | Estudio de yoga en Ruzafa, Valencia</title>
+  <meta name="description" content="Estudio de yoga pequeño en Ruzafa, Valencia. Hatha, Vinyasa, Yin e iniciación en grupos de 12 personas. Tu primera clase es gratis.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+
+  <header class="site-header">
+    <nav class="nav wrap" aria-label="Principal">
+      <a class="brand" href="#inicio" aria-label="Turia Yoga, inicio">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Turia Yoga</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#clases">Clases</a></li>
+        <li><a href="#horarios">Horarios</a></li>
+        <li><a href="#precios">Precios</a></li>
+      </ul>
+      <a class="btn btn-primary btn-small" href="#reservar">Reserva tu clase gratis</a>
+    </nav>
+  </header>
+
+  <main id="contenido">
+    <section class="hero wrap" id="inicio" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="hero-tag">Estudio de yoga en Ruzafa, Valencia</p>
+        <h1 id="hero-title">Yoga sin prisa, en grupos donde te llamamos por tu nombre.</h1>
+        <p class="hero-sub">Doce esterillas por clase, profesoras que corrigen postura a postura y tu primera clase gratis.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#reservar">Reserva tu clase gratis</a>
+          <a class="btn btn-ghost" href="#horarios">Ver horarios</a>
+        </div>
+      </div>
+      <figure class="hero-media">
+        <!-- Foto provisional: sustituir por foto real de la sala del estudio (1000x1200) y actualizar el alt -->
+        <img src="https://picsum.photos/seed/valencia-luz-sala/1000/1200" width="1000" height="1200"
+             alt="Lago en calma con montañas al fondo" fetchpriority="high">
+      </figure>
+    </section>
+
+    <section class="classes" id="clases" aria-labelledby="clases-title">
+      <div class="wrap classes-grid">
+        <figure class="classes-media">
+          <!-- Foto provisional: sustituir por foto real de una clase en grupo (900x1100) y actualizar el alt -->
+          <img src="https://picsum.photos/seed/calma-verde/900/1100" width="900" height="1100"
+               alt="Cascada entre un bosque verde">
+        </figure>
+        <div class="classes-copy">
+          <h2 id="clases-title">Qué practicamos</h2>
+          <p class="lead">Cuatro tipos de clase. Si no sabes cuál elegir, empieza por Iniciación o escríbenos y te orientamos.</p>
+          <dl class="class-list">
+            <div class="class-item">
+              <dt>Iniciación</dt>
+              <dd>
+                <p>Posturas básicas, respiración y cómo usar bloques y cinturones. Para quien nunca ha pisado una esterilla.</p>
+                <p class="meta">60 min. Nivel suave. Con Lucía Ferrer</p>
+              </dd>
+            </div>
+            <div class="class-item">
+              <dt>Hatha</dt>
+              <dd>
+                <p>Posturas sostenidas y con calma, trabajando alineación, fuerza y flexibilidad por igual.</p>
+                <p class="meta">75 min. Todos los niveles. Con Marta Soler</p>
+              </dd>
+            </div>
+            <div class="class-item">
+              <dt>Vinyasa</dt>
+              <dd>
+                <p>Secuencias en movimiento unidas a la respiración. Se suda, y se sale con la cabeza despejada.</p>
+                <p class="meta">60 min. Nivel medio. Con Andreu Pastor</p>
+              </dd>
+            </div>
+            <div class="class-item">
+              <dt>Yin</dt>
+              <dd>
+                <p>Pocas posturas, mantenidas varios minutos en el suelo. Ideal al final del día o después de correr.</p>
+                <p class="meta">75 min. Todos los niveles. Con Marta Soler</p>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="schedule wrap" id="horarios" aria-labelledby="horarios-title">
+      <h2 id="horarios-title">Horario semanal</h2>
+      <p class="lead">De lunes a sábado. Los domingos el estudio está cerrado.</p>
+
+      <div class="tabs" role="tablist" aria-label="Día de la semana" hidden>
+        <button type="button" role="tab" id="tab-1" aria-controls="dia-1" data-day="1">Lun</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="dia-2" data-day="2">Mar</button>
+        <button type="button" role="tab" id="tab-3" aria-controls="dia-3" data-day="3">Mié</button>
+        <button type="button" role="tab" id="tab-4" aria-controls="dia-4" data-day="4">Jue</button>
+        <button type="button" role="tab" id="tab-5" aria-controls="dia-5" data-day="5">Vie</button>
+        <button type="button" role="tab" id="tab-6" aria-controls="dia-6" data-day="6">Sáb</button>
+      </div>
+
+      <div class="days">
+        <div class="day" id="dia-1" role="tabpanel" aria-labelledby="tab-1" data-day="1" data-name="Lunes">
+          <h3 class="day-name">Lunes</h3>
+          <ul class="sessions">
+            <li data-time="07:30" data-class="Hatha"><span class="time">07:30</span><span class="sname">Hatha</span><span class="who">Marta</span></li>
+            <li data-time="10:00" data-class="Iniciación"><span class="time">10:00</span><span class="sname">Iniciación</span><span class="who">Lucía</span></li>
+            <li data-time="18:30" data-class="Vinyasa"><span class="time">18:30</span><span class="sname">Vinyasa</span><span class="who">Andreu</span></li>
+            <li data-time="20:00" data-class="Yin"><span class="time">20:00</span><span class="sname">Yin</span><span class="who">Marta</span></li>
+          </ul>
+        </div>
+        <div class="day" id="dia-2" role="tabpanel" aria-labelledby="tab-2" data-day="2" data-name="Martes">
+          <h3 class="day-name">Martes</h3>
+          <ul class="sessions">
+            <li data-time="09:30" data-class="Hatha"><span class="time">09:30</span><span class="sname">Hatha</span><span class="who">Marta</span></li>
+            <li data-time="14:15" data-class="Vinyasa"><span class="time">14:15</span><span class="sname">Vinyasa</span><span class="who">Andreu</span></li>
+            <li data-time="19:00" data-class="Iniciación"><span class="time">19:00</span><span class="sname">Iniciación</span><span class="who">Lucía</span></li>
+          </ul>
+        </div>
+        <div class="day" id="dia-3" role="tabpanel" aria-labelledby="tab-3" data-day="3" data-name="Miércoles">
+          <h3 class="day-name">Miércoles</h3>
+          <ul class="sessions">
+            <li data-time="07:30" data-class="Vinyasa"><span class="time">07:30</span><span class="sname">Vinyasa</span><span class="who">Andreu</span></li>
+            <li data-time="10:00" data-class="Hatha"><span class="time">10:00</span><span class="sname">Hatha</span><span class="who">Marta</span></li>
+            <li data-time="18:30" data-class="Hatha"><span class="time">18:30</span><span class="sname">Hatha</span><span class="who">Lucía</span></li>
+            <li data-time="20:00" data-class="Yin"><span class="time">20:00</span><span class="sname">Yin</span><span class="who">Marta</span></li>
+          </ul>
+        </div>
+        <div class="day" id="dia-4" role="tabpanel" aria-labelledby="tab-4" data-day="4" data-name="Jueves">
+          <h3 class="day-name">Jueves</h3>
+          <ul class="sessions">
+            <li data-time="09:30" data-class="Iniciación"><span class="time">09:30</span><span class="sname">Iniciación</span><span class="who">Lucía</span></li>
+            <li data-time="14:15" data-class="Hatha"><span class="time">14:15</span><span class="sname">Hatha</span><span class="who">Marta</span></li>
+            <li data-time="19:00" data-class="Vinyasa"><span class="time">19:00</span><span class="sname">Vinyasa</span><span class="who">Andreu</span></li>
+          </ul>
+        </div>
+        <div class="day" id="dia-5" role="tabpanel" aria-labelledby="tab-5" data-day="5" data-name="Viernes">
+          <h3 class="day-name">Viernes</h3>
+          <ul class="sessions">
+            <li data-time="07:30" data-class="Hatha"><span class="time">07:30</span><span class="sname">Hatha</span><span class="who">Marta</span></li>
+            <li data-time="10:00" data-class="Yin"><span class="time">10:00</span><span class="sname">Yin</span><span class="who">Marta</span></li>
+            <li data-time="18:30" data-class="Vinyasa"><span class="time">18:30</span><span class="sname">Vinyasa</span><span class="who">Andreu</span></li>
+          </ul>
+        </div>
+        <div class="day" id="dia-6" role="tabpanel" aria-labelledby="tab-6" data-day="6" data-name="Sábado">
+          <h3 class="day-name">Sábado</h3>
+          <ul class="sessions">
+            <li data-time="10:00" data-class="Vinyasa"><span class="time">10:00</span><span class="sname">Vinyasa</span><span class="who">Andreu</span></li>
+            <li data-time="11:45" data-class="Iniciación"><span class="time">11:45</span><span class="sname">Iniciación</span><span class="who">Lucía</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="pricing" id="precios" aria-labelledby="precios-title">
+      <div class="wrap">
+        <h2 id="precios-title">Bonos y precios</h2>
+        <p class="lead">Todos los bonos valen para cualquier clase del horario. Se pagan en el estudio con tarjeta, efectivo o Bizum.</p>
+
+        <ul class="price-list">
+          <li class="price-row">
+            <div class="price-name"><h3>Clase suelta</h3><p>Para venir cuando te cuadre.</p></div>
+            <p class="price"><span class="amount">14</span> €</p>
+          </li>
+          <li class="price-row">
+            <div class="price-name"><h3>Bono 5 clases</h3><p>Válido 2 meses. Sale a 12,40 € la clase.</p></div>
+            <p class="price"><span class="amount">62</span> €</p>
+          </li>
+          <li class="price-row price-row-featured">
+            <div class="price-name"><h3>Bono 10 clases</h3><p>Válido 4 meses. Sale a 11,50 € la clase. El que más se elige.</p></div>
+            <p class="price"><span class="amount">115</span> €</p>
+          </li>
+          <li class="price-row">
+            <div class="price-name"><h3>Mensual ilimitado</h3><p>Todas las clases que quieras durante 30 días.</p></div>
+            <p class="price"><span class="amount">79</span> €</p>
+          </li>
+        </ul>
+        <p class="price-note">Estudiantes y mayores de 65: 10 % de descuento en bonos. Esterillas, bloques y mantas incluidos.</p>
+      </div>
+    </section>
+
+    <section class="booking wrap" id="reservar" aria-labelledby="reservar-title">
+      <div class="booking-copy">
+        <h2 id="reservar-title">Tu primera clase, gratis</h2>
+        <p class="lead">Elige día y clase. Te confirmamos la plaza por correo en menos de 24 horas.</p>
+        <ul class="tips">
+          <li>Ven con ropa cómoda y llega 10 minutos antes.</li>
+          <li>No hace falta traer esterilla: tenemos para todo el grupo.</li>
+          <li>Si tienes alguna lesión, cuéntanosla en el mensaje.</li>
+        </ul>
+      </div>
+
+      <div class="booking-panel">
+        <form class="form" id="booking-form" novalidate>
+          <div class="field">
+            <label for="nombre">Nombre</label>
+            <input id="nombre" name="nombre" type="text" autocomplete="name" required aria-describedby="nombre-error">
+            <p class="error" id="nombre-error" hidden></p>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="email">Correo electrónico</label>
+              <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-error">
+              <p class="error" id="email-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="telefono">Teléfono <span class="optional">(opcional)</span></label>
+              <input id="telefono" name="telefono" type="tel" autocomplete="tel" inputmode="tel" aria-describedby="telefono-help telefono-error">
+              <p class="help" id="telefono-help">Solo lo usamos si hay un cambio de última hora.</p>
+              <p class="error" id="telefono-error" hidden></p>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="fecha">Día</label>
+              <input id="fecha" name="fecha" type="date" required aria-describedby="fecha-error">
+              <p class="error" id="fecha-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="clase">Clase y hora</label>
+              <select id="clase" name="clase" required aria-describedby="clase-help clase-error">
+                <option value="">Elige primero el día</option>
+              </select>
+              <p class="help" id="clase-help">Se muestran las clases de ese día.</p>
+              <p class="error" id="clase-error" hidden></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="mensaje">Algo que debamos saber <span class="optional">(opcional)</span></label>
+            <textarea id="mensaje" name="mensaje" rows="3"></textarea>
+          </div>
+
+          <div class="field field-check">
+            <input id="privacidad" name="privacidad" type="checkbox" required aria-describedby="privacidad-error">
+            <label for="privacidad">He leído la <a href="politica-de-privacidad.html">política de privacidad</a> y acepto que Turia Yoga use mis datos solo para gestionar esta reserva.</label>
+            <p class="error" id="privacidad-error" hidden></p>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit">Enviar reserva</button>
+          <p class="help form-privacy">Responsable: Turia Yoga. Finalidad: gestionar tu reserva. No cedemos tus datos. Puedes acceder a ellos, corregirlos o borrarlos escribiendo a hola@turiayoga.es.</p>
+        </form>
+
+        <div class="success" id="booking-success" hidden tabindex="-1">
+          <h3>Ya casi está</h3>
+          <p id="success-summary"></p>
+          <p>Hemos abierto tu programa de correo con la reserva escrita. Envía ese correo y te confirmamos la plaza en menos de 24 horas.</p>
+          <p>Si no se ha abierto, escríbenos a <a href="mailto:hola@turiayoga.es">hola@turiayoga.es</a> o llámanos al <a href="tel:+34963417258">963 41 72 58</a>.</p>
+          <button class="btn btn-ghost" type="button" id="booking-reset">Hacer otra reserva</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Dirección, teléfono y correo son datos de ejemplo: sustituir por los reales del estudio. -->
+  <footer class="site-footer">
+    <div class="wrap footer-grid">
+      <div>
+        <p class="brand footer-brand"><span class="brand-mark" aria-hidden="true"></span><span>Turia Yoga</span></p>
+        <p>Carrer de Sueca 41, bajo<br>46006 Valencia (Ruzafa)</p>
+      </div>
+      <div>
+        <p><a href="tel:+34963417258">963 41 72 58</a><br><a href="mailto:hola@turiayoga.es">hola@turiayoga.es</a></p>
+        <p>La recepción abre 15 minutos antes de cada clase.</p>
+      </div>
+      <div class="footer-cta">
+        <a class="btn btn-primary" href="#reservar">Reserva tu clase gratis</a>
+      </div>
+    </div>
+    <nav class="wrap legal-links" aria-label="Información legal">
+      <a href="aviso-legal.html">Aviso legal</a>
+      <a href="politica-de-privacidad.html">Política de privacidad</a>
+      <a href="condiciones-de-uso.html">Condiciones de uso</a>
+    </nav>
+    <p class="wrap legal">© 2026 Turia Yoga</p>
+  </footer>
+</body>
+</html>
