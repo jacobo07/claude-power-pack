@@ -42,6 +42,7 @@ RESEARCH_GEN_CAP = 10_000_000
 RESEARCH_LANE_CAP = 100_000_000
 RESEARCH_WORDS = ("rival", "positive control", "decision rule")
 OWNER_RESUME = "owner_resume"  # lane-state key the Owner sets to "research" for a one-shot method transition
+OWNER_DESIGN = "design"  # owner_resume value: the autopilot DESIGNS a lever of another family (not select an open one)
 REPAIR_WORDS = ("positive control", "thresholds unchanged")
 RECON = os.environ.get("AP_RECON", "/home/kobii/missions/recon-general")
 
@@ -335,6 +336,12 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
     # 2026-11-14 (Owner "crea las capacidades directamente y pegalas a las misiones", session 423c9c50): the value may
     # name the lever, "research:<id>"; a new lever has no MethodGraph prior, so select alone would never reach it.
     ro = ls.pop(OWNER_RESUME, None)
+    if ro == OWNER_DESIGN:  # 2026-11-17 (Owner "que diseñe otra palanca", pane 08cba76c, WSR parked on the pivot rule)
+        ls["synth_streak"] = 0  # the Owner's look is what the SYNTH_MAX bound waits for
+        r = synth_or_park(f"Owner resume: design a lever of another family than {family}", "Owner-directed design")
+        if r["action"] == "research":
+            ls["blank"] = 0
+        return r
     if ro == "research" or (isinstance(ro, str) and ro.startswith("research:")):
         ls["repair"] = {}
         want = ro.split(":", 1)[1] if ":" in ro else None

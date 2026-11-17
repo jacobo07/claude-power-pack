@@ -995,6 +995,17 @@ def run_all(ap):
     check("V-EVO-OWNER-RESUME-NAMED-SAME-FAMILY-PARKS", ls["status"] == "PARKED" and "lev_c" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "owner_resume": "research:nope"}, (RES,)), ["NONE"])
     check("V-EVO-OWNER-RESUME-NAMED-UNKNOWN-PARKS", ls["status"] == "PARKED" and "nope" in q)
+    # owner_resume="design" (Owner 2026-11-17 "que diseñe otra palanca", WSR parked on the pivot rule): the designer is
+    # called even with an open lever of another family (lev_b), and the Owner's look clears the SYNTH_MAX streak
+    with_designer(SYN)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "owner_resume": "design", "synth_streak": 3}, (RES_S,)),
+                    ["NONE"])
+    check("V-EVO-OWNER-RESUME-DESIGN", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn"
+          and ls.get("mode") == "RESEARCH" and ls.get("synth_streak") == 1 and "owner_resume" not in ls)
+    with_designer(dict(SYN, family="F1"))
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "owner_resume": "design"}, (RES_S,)), ["NONE"])
+    check("V-EVO-OWNER-RESUME-DESIGN-REFUSED-PARKS", ls["status"] == "PARKED" and "designed lever refused" in q)
+    ap.design_lever = lambda *a, **k: None
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH", "info_streak": 1}), ["CERT"])
     check("V-EVO-CERT-RETURNS-TO-EXPLOIT", ls["status"] == "RUNNING" and ls.get("mode") == "EXPLOIT")
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,
@@ -1299,6 +1310,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_research_never_stops": _evo_mut(RESEARCH_FAIL_STOP=99),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
          "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
+         "evo_owner_design_ignored": _evo_mut(OWNER_DESIGN="zzz_never_set"),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
          "evo_synth_off": _evo_mut(synthesize=lambda *a, **k: (None, "off")),
          "evo_synth_admits_anything": _evo_mut(synth_problems=lambda *a, **k: []),
