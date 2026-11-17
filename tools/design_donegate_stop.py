@@ -3,7 +3,8 @@
 APPROVE of the current bytes all hold (spec vault/specs/design-surface-router.md).
 
 Contract shared with tools/family_donegate_stop.py: judges only a session that wrote a visual file inside its cwd;
-blocks at most once per (session, problem set) and never when stop_hook_active; `NO APLICA: design-<check>: <reason>`
+blocks at most once per (session, problem set) and never when stop_hook_active, except that a set whose review was
+RECORDED and refused blocks up to MAX_RECORDED_BLOCKS times, stop_hook_active or not; `NO APLICA: design-<check>: <reason>`
 in the final message waives that check; every judgement is a row in donegate.jsonl.
 Fail-open: any error prints nothing (ledgered). Kill switch: CPP_DESIGN_DONEGATE=off.
 """
@@ -18,6 +19,8 @@ from pathlib import Path
 _PP_ROOT = Path(__file__).resolve().parents[1]
 if str(_PP_ROOT) not in sys.path:
     sys.path.insert(0, str(_PP_ROOT))
+
+MAX_RECORDED_BLOCKS = 3  # first block + 2 re-blocks while a recorded review of the file is not done
 
 FIX = {
     "design-taste": "fix the page (python -m modules.cdio.taste <page> lists each hit)",
@@ -50,9 +53,16 @@ def decide(payload: dict) -> dict | None:
     key = hashlib.sha256(json.dumps(sorted([p["check"], p["file"], p.get("key", "")]
                                            for p in res["problems"])).encode()).hexdigest()[:16]
     blocked = st.setdefault("blocked", [])
-    if payload.get("stop_hook_active") or key in blocked:
-        dr.append_row("donegate.jsonl", dict(row, decision="not_blocked", key=key,
-                                             why="stop_hook_active" if payload.get("stop_hook_active") else "already blocked once"))
+    # A review that was recorded and refused may block again (spec: Re-block on a recorded non-APPROVE review): GEX44
+    # SaaS run, BLOCK 11 recorded, one block, the resume ended without re-reviewing. In a live session the Stop after a
+    # block always has stop_hook_active, so these re-blocks ignore it; MAX_RECORDED_BLOCKS is the loop bound.
+    recorded = any(p.get("recorded") for p in res["problems"])
+    limit = MAX_RECORDED_BLOCKS if recorded else 1
+    times = blocked.count(key)
+    why = ("stop_hook_active" if payload.get("stop_hook_active") and not recorded
+           else "already blocked %d time(s)" % times if times >= limit else "")
+    if why:
+        dr.append_row("donegate.jsonl", dict(row, decision="not_blocked", key=key, why=why))
         return None
     blocked.append(key)
     dr.save_session(sid, st)

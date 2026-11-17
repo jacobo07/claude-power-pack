@@ -274,6 +274,15 @@ def approved() -> dict:
     return out
 
 
+def latest_review(path: str) -> dict | None:
+    """The last reviews.jsonl row naming this file, whatever bytes it judged (None if never reviewed)."""
+    last = None
+    for r in read_rows("reviews.jsonl"):
+        if path in (r.get("files") or {}):
+            last = r
+    return last
+
+
 def rendered() -> dict:
     """canonical path -> set of sha256 that were rendered to PNG by the recorder."""
     out: dict = {}
@@ -313,8 +322,15 @@ def judge(st: dict, cwd: str, routes: dict, na: dict | None = None) -> dict:
             ok = approved() if ok is None else ok
             h = sha256(f)
             if h not in ok.get(f, set()):
-                problems.append({"check": "design-review", "file": f, "key": "",
-                                 "detail": "no recorded cdio-reviewer APPROVE for these bytes (sha %s)" % h[:12]})
+                p = {"check": "design-review", "file": f, "key": "",
+                     "detail": "no recorded cdio-reviewer APPROVE for these bytes (sha %s)" % h[:12]}
+                last = latest_review(f)
+                if last is not None and not last.get("is_done"):
+                    p["recorded"] = True
+                    p["detail"] += "; the last recorded review of this file is %s %s%s: fix what it names, then " \
+                                   "review again" % (last.get("verdict"), last.get("score"),
+                                                     " (refused: %s)" % "; ".join(last["refused"]) if last.get("refused") else "")
+                problems.append(p)
     used = {skill_key(s) for s in st.get("skills", [])}
     missing = [s for s in required if skill_key(s) not in used]
     if missing:

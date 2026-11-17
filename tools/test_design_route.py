@@ -182,6 +182,24 @@ def test_stop() -> None:
         fh.write("<!-- unrelated edit -->\n")
     again = stop("s12", d2, transcript(writes=[page2], skills=REQ_WEB))
     ok("V-DSR-STOP-NO-REBLOCK-ON-EDIT", (first or {}).get("decision") == "block" and again is None, again)
+    # a recorded, refused review re-blocks up to 3 times in total, through stop_hook_active (GEX44 SaaS run)
+    d3, page3 = project(CLEAN.replace("Tidewell", "Tidewell three"))
+    dr.append_row("renders.jsonl", {"file": dr.canon(page3), "sha": dr.sha256(page3), "pngs": ["fake.png"]})
+    thin = os.path.join(_TMP, "thin3.json")
+    Path(thin).write_text(json.dumps(GOOD_VERDICTS[:2]), encoding="utf-8")
+    sys.path.insert(0, str(ROOT / "tools"))
+    import design_review_record as rec
+    rec.record(thin, [page3])
+    t3 = transcript(writes=[page3], skills=REQ_WEB)
+    outs = [stop("s13", d3, t3, **({"stop_hook_active": True} if i else {})) for i in range(4)]
+    seq = [(o or {}).get("decision") for o in outs]
+    ok("V-DSR-STOP-REBLOCKS-RECORDED-BLOCK", seq == ["block", "block", "block", None]
+       and "last recorded review" in (outs[1] or {}).get("reason", "") and "thin review" in (outs[1] or {}).get("reason", ""),
+       seq)
+    d4, page4 = project(CLEAN.replace("Tidewell", "Tidewell four"))
+    t4 = transcript(writes=[page4], skills=REQ_WEB)
+    seq = [(stop("s14", d4, t4, **({"stop_hook_active": True} if i else {})) or {}).get("decision") for i in range(2)]
+    ok("V-DSR-STOP-NO-REBLOCK-WITHOUT-RECORD", seq == ["block", None], seq)
 
 
 def test_record() -> None:
