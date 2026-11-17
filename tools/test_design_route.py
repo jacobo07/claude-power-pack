@@ -196,6 +196,19 @@ def test_stop() -> None:
     ok("V-DSR-STOP-REBLOCKS-RECORDED-BLOCK", seq == ["block", "block", "block", None]
        and "last recorded review" in (outs[1] or {}).get("reason", "") and "thin review" in (outs[1] or {}).get("reason", ""),
        seq)
+    # the re-block names what the recorded review failed, so the agent can fix what is in its reach (GEX44 SaaS rerun)
+    d5, page5 = project(CLEAN.replace("Tidewell", "Tidewell five"))
+    dr.append_row("renders.jsonl", {"file": dr.canon(page5), "sha": dr.sha256(page5), "pngs": ["fake.png"]})
+    bad = os.path.join(_TMP, "bad5.json")
+    Path(bad).write_text(json.dumps(GOOD_VERDICTS + [
+        {"criterion": "type-levels", "dimension": "visual", "status": "fail", "severity": "major",
+         "observed": "5 text sizes, limit 3"},
+        {"criterion": "cta-target-resolves", "dimension": "conversion", "status": "fail", "severity": "critical",
+         "observed": "/signup does not exist"}]), encoding="utf-8")
+    rec.record(bad, [page5])
+    r5 = (stop("s15", d5, transcript(writes=[page5], skills=REQ_WEB)) or {}).get("reason", "")
+    ok("V-DSR-STOP-NAMES-FAILED-CRITERIA", "cta-target-resolves [critical]" in r5 and "type-levels [major]: 5 text sizes" in r5
+       and r5.index("cta-target-resolves") < r5.index("type-levels [major]"), r5)
     d4, page4 = project(CLEAN.replace("Tidewell", "Tidewell four"))
     t4 = transcript(writes=[page4], skills=REQ_WEB)
     seq = [(stop("s14", d4, t4, **({"stop_hook_active": True} if i else {})) or {}).get("decision") for i in range(2)]

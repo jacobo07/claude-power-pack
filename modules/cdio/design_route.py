@@ -330,6 +330,14 @@ def judge(st: dict, cwd: str, routes: dict, na: dict | None = None) -> dict:
                     p["detail"] += "; the last recorded review of this file is %s %s%s: fix what it names, then " \
                                    "review again" % (last.get("verdict"), last.get("score"),
                                                      " (refused: %s)" % "; ".join(last["refused"]) if last.get("refused") else "")
+                    failed = last.get("failed") or [[c, "critical", ""] for c in last.get("critical") or []]
+                    order = {"critical": 0, "major": 1, "minor": 2}
+                    failed = sorted(failed, key=lambda x: order.get(x[1], 3))
+                    if failed:
+                        p["detail"] += "; failed: " + "; ".join(
+                            "%s [%s]%s" % (c, sev, ": " + obs if obs else "") for c, sev, obs in failed[:8])
+                        if len(failed) > 8:
+                            p["detail"] += "; +%d more" % (len(failed) - 8)
                 problems.append(p)
     used = {skill_key(s) for s in st.get("skills", [])}
     missing = [s for s in required if skill_key(s) not in used]

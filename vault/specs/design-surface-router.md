@@ -137,8 +137,12 @@ V-DSR-STOP-NO-REBLOCK-WITHOUT-RECORD (an unreviewed page still blocks once).
   review does apply, and asked the Owner. That refusal is right; the re-block cannot help a review whose criticals are
   outside the brief. It also left two fixable majors open (5 text sizes vs 3; CTAs to routes that do not exist).
   So the previous SaaS BLOCK 11 was most likely the same legal floor, not a lazy resume.
-  Open (Owner): whether CDIO-10 legal pages are a critical for a single landing page built to a brief that names no
-  site, and whether the block reason should list the recorded review's failed criteria (today it says only "BLOCK 0").
+  Fixed (Owner 2026-11-18 'y'): the recorder stores `failed` [[criterion, severity, observed]] and the re-block detail
+  lists them, criticals first, at most 8 (V-DSR-STOP-NAMES-FAILED-CRITERIA).
+  Not changed: CDIO-10 legal pages stay critical in the design review. Checked first, as agreed: spec CDIO-10 records
+  the Owner's own scope answer "blocks done" (2026-10-08), and `legal_surface` has no publish-time caller (only
+  cdio-reviewer, backlog_autopilot/webslice, asc_baseline_evidence), so demoting it here would remove the only guard.
+  Open (Owner): add CDIO-10 to the deploy gate first, then demote it to major in the design review of a single page.
 
 ## Rollback
 `CPP_DESIGN_DONEGATE=off` / `CPP_DESIGN_ROUTE=off`, or delete the two dispatcher lines. State lives only under

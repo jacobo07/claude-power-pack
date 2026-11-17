@@ -155,7 +155,10 @@ def record(verdicts_path: str, files: list, screenshot: str | None = None, exper
            "is_done": bool(g.is_done and not refusals), "refused": refusals,
            "experience": "assessed" if exp else "unassessed",
            "reviewer_verdicts": len(mine), "folded_taste": len(folded) - len(mine),
-           "critical": [v.criterion for v in folded if v.status == "fail" and v.severity == "critical"]}
+           "critical": [v.criterion for v in folded if v.status == "fail" and v.severity == "critical"],
+           # what failed, so the Stop gate can tell the agent what to fix (GEX44 SaaS rerun: "BLOCK 0" alone left two
+           # fixable majors open through three re-blocks)
+           "failed": [[v.criterion, v.severity, str(v.observed)[:140]] for v in folded if v.status == "fail"]}
     dr.append_row("reviews.jsonl", row)
     return row
 
