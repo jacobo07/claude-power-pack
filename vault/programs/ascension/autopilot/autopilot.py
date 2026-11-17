@@ -541,12 +541,62 @@ def verify_information(v: dict, product: str, base):
     return True
 
 
-def classify_progress(v: dict, product: str, base=None) -> tuple[str, str]:
-    """CERT > CAPABILITY > INFORMATION > NONE; the first class whose evidence verifies inside base..HEAD.
-    No base recorded = nothing can be anchored = NONE. Notes say why claims failed."""
+def match_at100(lane: dict, product: str):
+    """-> (set of 'unit::function' at 100% in the lane's objdiff report, None), or (None, why). The autopilot builds the
+    report itself in the product at HEAD (SPEC-match-exploit.md); (None, None) when the lane has no match_report."""
+    mr = (lane or {}).get("match_report") or {}
+    cmd, path = mr.get("cmd"), mr.get("path")
+    if not (isinstance(cmd, list) and cmd and isinstance(path, str) and path):
+        return None, None
+    rc, out = sh([str(c) for c in cmd], cwd=product, timeout=1800)
+    if rc != 0:
+        return None, f"report command rc={rc}: {str(out)[-200:]}"
+    try:
+        r = json.loads(Path(product, path).read_text())
+    except Exception as e:  # noqa: BLE001 -- an unreadable report is a refusal with its reason, never a match
+        return None, f"report {path} unreadable: {e}"
+    return {f"{u.get('name')}::{f.get('name')}" for u in r.get("units") or [] if isinstance(u, dict)
+            for f in u.get("functions") or [] if isinstance(f, dict) and f.get("fuzzy_match_percent") == 100}, None
+
+
+def match_lost(old: set, cur: set) -> list:
+    """Functions the snapshot had at 100% that HEAD no longer has: any one refuses the MATCH."""
+    return sorted(old - cur)
+
+
+def verify_match(lane, product: str, notes: list):
+    """None = not configured or nothing new; True = MATCH (snapshot advanced); str = refused. Owner 2026-11-17: MKW
+    S112M/S116M put 113 functions at 100% and were classified INFORMATION, because only KSR receipts could convert."""
+    if not lane or not lane.get("match_report"):
+        return None
+    cur, why = match_at100(lane, product)
+    if cur is None:
+        return why
+    snap = OUT / "match" / f"{lane['name']}.json"
+    if not snap.exists():
+        snap.parent.mkdir(parents=True, exist_ok=True)
+        snap.write_text(json.dumps(sorted(cur)))
+        return f"no MATCH snapshot yet: seeded from HEAD ({len(cur)} at 100%), nothing claimed"
+    old = set(json.loads(snap.read_text()))
+    lost, new = match_lost(old, cur), sorted(cur - old)
+    if lost:
+        return f"{len(lost)} functions dropped from 100%: {', '.join(lost[:5])}"
+    if not new:
+        return None
+    snap.write_text(json.dumps(sorted(cur)))
+    notes.append(f"MATCH: +{len(new)} functions at 100% ({len(cur)} total): {', '.join(new[:5])}")
+    return True
+
+
+def classify_progress(v: dict, product: str, base=None, lane=None) -> tuple[str, str]:
+    """CERT > MATCH > CAPABILITY > INFORMATION > NONE; the first class whose evidence verifies inside base..HEAD.
+    No base recorded = nothing can be anchored = NONE. Notes say why claims failed. MATCH is measured by the autopilot
+    (objdiff report built at HEAD, lanes with match_report) before CERT, so its snapshot advances either way."""
     notes = [] if base else ["no generation base recorded: no pointer can be anchored"]
-    for cls, fn in (("CERT", verify_cert), ("CAPABILITY", verify_capability), ("INFORMATION", verify_information)):
-        r = fn(v, product, base)
+    m = verify_match(lane, product, notes)
+    for cls, fn in (("CERT", verify_cert), ("MATCH", None), ("CAPABILITY", verify_capability),
+                    ("INFORMATION", verify_information)):
+        r = m if fn is None else fn(v, product, base)
         if r is True:
             return cls, "; ".join(notes)
         if isinstance(r, str):
@@ -1109,7 +1159,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if v.get("verdict") != "AGREE":
         return _park(st, ls, lane["name"], f"judge {v.get('verdict')} on {checkpoint}: {str(v.get('notes', ''))[:300]}")
     snap = {k: ls.get(k, 0) for k in ("blank", "info_streak", "no_conversion")}  # restored if this judgment is redone
-    cls, cnotes = classify_progress(v, product, ls.get("base"))
+    cls, cnotes = classify_progress(v, product, ls.get("base"), None if dry else lane)
     evo_dir = ""
     if evo:
         helpers = types.SimpleNamespace(in_window=in_window, _changed=_changed, DATA=DATA, _git=_git, _sha=_sha)
@@ -1138,7 +1188,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         if d.get("lever"):
             ls["next_lever"] = d["lever"]["id"]
         evo_dir = d.get("directive", "")
-    conv = cls in ("CERT", "CAPABILITY")
+    conv = cls in evolve.CONVERSIONS
     if not evo:
         ls["blank"] = ls.get("blank", 0) + 1 if cls == "NONE" else 0
         ls["info_streak"] = ls.get("info_streak", 0) + 1 if cls == "INFORMATION" else 0

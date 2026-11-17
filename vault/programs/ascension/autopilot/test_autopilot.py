@@ -275,6 +275,29 @@ def run_all(ap):
     finally:
         gpath.write_bytes(keep_gate)
     check("V-AP-PROGRESS-NOTHING-CLAIMED", ap.classify_progress({}, prod, P["c0"]) == ("NONE", ""))
+    # ---- MATCH (SPEC-match-exploit.md, Owner 2026-11-17): objdiff progress measured by the autopilot itself
+    mrep = tmp / "mrep"
+    mrep.mkdir(exist_ok=True)
+
+    def write_rep(at100):
+        (mrep / "report.json").write_text(json.dumps({"units": [{"name": "u1", "functions": [
+            {"name": n, "fuzzy_match_percent": 100.0 if n in at100 else 50.0} for n in ("a", "b", "c")]}]}))
+    mlane = {"name": "MLANE", "match_report": {"cmd": ["true"], "path": "report.json"}}
+    msnap = ap.OUT / "match" / "MLANE.json"
+    msnap.unlink(missing_ok=True)
+    write_rep({"a"})
+    c, n = ap.classify_progress({}, str(mrep), P["c0"], mlane)
+    check("V-MATCH-SEEDS-WITHOUT-CLAIM", c == "NONE" and "seeded" in n and json.loads(msnap.read_text()) == ["u1::a"])
+    write_rep({"a", "b"})
+    c, n = ap.classify_progress({}, str(mrep), P["c0"], mlane)
+    check("V-MATCH-CREDITED", c == "MATCH" and "+1" in n and json.loads(msnap.read_text()) == ["u1::a", "u1::b"])
+    write_rep({"b", "c"})
+    c, n = ap.classify_progress({}, str(mrep), P["c0"], mlane)
+    check("V-MATCH-REGRESSION-REFUSED", c == "NONE" and "u1::a" in n
+          and json.loads(msnap.read_text()) == ["u1::a", "u1::b"])
+    c, n = ap.classify_progress({}, str(mrep), P["c0"], dict(mlane, match_report={"cmd": ["false"], "path": "report.json"}))
+    check("V-MATCH-BUILD-FAIL-NO-CLAIM", c == "NONE" and "rc=" in n)
+    check("V-MATCH-NOT-CONFIGURED", ap.classify_progress({}, str(mrep), P["c0"], {"name": "MLANE"}) == ("NONE", ""))
 
     # ---- lane transitions with stubs
     lanes = [dict(lane0, mission="m-aaaaaaaaaaaa")]
@@ -716,7 +739,7 @@ def run_all(ap):
             ls = st.setdefault("lanes", {}).setdefault("L", {})
             if ls.get("status") in ("PARKED", "STOPPED"):
                 break
-            ap.classify_progress = (lambda c: (lambda v, p, b=None: (c, "")))(c)
+            ap.classify_progress = (lambda c: (lambda v, p, b=None, lane=None: (c, "")))(c)
             ls.update(judged_for=None, status="WAITING", mission="m-aaaaaaaaaaaa")
             (tmp / "home" / "ledger.jsonl").unlink(missing_ok=True)  # the day cap is tested elsewhere
             rec["owner_hold"]["set_at"] = base * 100 + k
@@ -735,7 +758,7 @@ def run_all(ap):
     # 30M of day headroom whatever the cap (was a literal 50M, tuned to the 80M cap; DAY_CAP 90M left it never waiting)
     (tmp / "home" / "ledger.jsonl").write_text(json.dumps({"ts": _t.time(), "tokens": ap.DAY_CAP - 30_000_000}) + "\n")
     ap.judge = lambda *a: dict(full, _tokens=20_000_000)
-    ap.classify_progress = lambda v, p, b=None: ("INFORMATION", "")
+    ap.classify_progress = lambda v, p, b=None, lane=None: ("INFORMATION", "")
     ap.lane_tick(st, lanes[0], False)
     ap.classify_progress = orig_cls
     lsd = st["lanes"]["L"]
@@ -851,7 +874,7 @@ def run_all(ap):
             if ls.get("status") in ("PARKED", "STOPPED"):
                 break
             ctr[0] += 1
-            ap.classify_progress = (lambda c: (lambda v, p, b=None: (c, "")))(c)
+            ap.classify_progress = (lambda c: (lambda v, p, b=None, lane=None: (c, "")))(c)
             ls.update(judged_for=None, status="WAITING", mission="m-aaaaaaaaaaaa")
             (tmp / "home" / "ledger.jsonl").unlink(missing_ok=True)
             rec["owner_hold"]["set_at"] = 7000 + ctr[0]
@@ -1023,6 +1046,18 @@ def run_all(ap):
     check("V-EVO-BLANK-RULE-PARKS-NOT-STOPS", ls["status"] == "PARKED" and "no verified progress" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH", "info_streak": 1}), ["CERT"])
     check("V-EVO-CERT-RETURNS-TO-EXPLOIT", ls["status"] == "RUNNING" and ls.get("mode") == "EXPLOIT")
+    # SPEC-match-exploit B: an objdiff MATCH is a conversion, exploited on the same lever with an exploit directive
+    seen_dir = []
+    keep_plan = ap.plan
+    st_m = evo_fresh([LA, LB], {"lever": "lev_b", "mode": "RESEARCH", "no_conversion": 2, "synth_streak": 2,
+                                "pivot_streak": 2})
+    inner = ap.plan
+    ap.plan = lambda lane, name, ck, prod, v, d="": seen_dir.append(d) or inner(lane, name, ck, prod, v, d)
+    ls, q = evo_run(st_m, ["MATCH"])
+    ap.plan = keep_plan
+    check("V-EVO-MATCH-EXPLOITS", ls["status"] == "RUNNING" and ls.get("mode") == "EXPLOIT" and ls.get("lever") == "lev_b"
+          and ls.get("no_conversion") == 0 and ls.get("synth_streak") == 0 and ls.get("pivot_streak") == 0
+          and any("EVO MODE EXPLOIT" in d and "lev_b" in d for d in seen_dir))
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,
                                          "pivot_history": [{"method_class": "F1", "evidence_delta": False}]}), ["NONE"])
     check("V-EVO-PIVOT-RULE-REUSED", ls["status"] == "PARKED" and "zero evidence delta twice" in q)
@@ -1031,7 +1066,7 @@ def run_all(ap):
           and ls.get("mode") == "RESEARCH")
     # budget park: resumes when the ledger admits (an Owner release), holds otherwise; other parks never self-resume
     st = evo_fresh([LA], {"status": "PARKED", "park_kind": "budget", "lever": "lev_a"})
-    ap.classify_progress = lambda v, p, b=None: ("INFORMATION", "")
+    ap.classify_progress = lambda v, p, b=None, lane=None: ("INFORMATION", "")
     rec["owner_hold"]["set_at"] = 7900; recp.write_text(json.dumps(rec))
     ap.lane_tick(st, lanes[0], False)
     check("V-EVO-BUDGET-PARK-RESUMES", st["lanes"]["L"]["status"] == "RUNNING")
@@ -1307,16 +1342,16 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "no_conversion_park_off": lambda m: setattr(m, "NO_CONVERSION_PARK", 99),
          "data_allowlist_off": lambda m: setattr(m, "DATA", __import__("re").compile(r".")),
          "window_off": lambda m: setattr(m, "in_window", lambda p, b, c: bool(m._sha(p, c))),
-         "cert_whole_file": lambda m: setattr(m, "verify_cert", lambda v, p, b=None: (
+         "cert_whole_file": lambda m: setattr(m, "verify_cert", lambda v, p, b=None, lane=None: (
              True if (v.get("new_canonical_certs") or 0) > 0 and v.get("cert_receipts") and sum(
                  m._git(p, "show", f"{r['commit']}:{r['path']}")[1].count("CERTIFIED") for r in v["cert_receipts"])
              >= v["new_canonical_certs"] else None)),
          "worktree_gate_unchecked": _worktree_unchecked,
-         "ancestry_trusted": lambda m: setattr(m, "verify_information", lambda v, p, b=None: (
+         "ancestry_trusted": lambda m: setattr(m, "verify_information", lambda v, p, b=None, lane=None: (
              True if isinstance(v.get("information"), dict) else None)),
-         "cert_count_trusted": lambda m: setattr(m, "verify_cert", lambda v, p, b=None: (
+         "cert_count_trusted": lambda m: setattr(m, "verify_cert", lambda v, p, b=None, lane=None: (
              True if (v.get("new_canonical_certs") or 0) > 0 else None)),
-         "capability_trusted": lambda m: setattr(m, "verify_capability", lambda v, p, b=None: (
+         "capability_trusted": lambda m: setattr(m, "verify_capability", lambda v, p, b=None, lane=None: (
              True if v.get("validated_capability") is True else None)),
          "evo_instrument_fail_as_none": _evo_mut(classify=lambda cls, instr: cls),
          "evo_same_family_allowed": _evo_mut(select=_wrap(lambda e: (lambda *a, **k: _evo_copy_select(e, *a, **k)))),
@@ -1326,6 +1361,9 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
          "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
          "evo_owner_design_ignored": _evo_mut(OWNER_DESIGN="zzz_never_set"),
+         "evo_match_not_conversion": _evo_mut(CONVERSIONS=("CERT", "CAPABILITY")),
+         "match_off": lambda m: setattr(m, "verify_match", lambda lane, product, notes: None),
+         "match_ignores_regressions": lambda m: setattr(m, "match_lost", lambda old, cur: []),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
          "evo_synth_off": _evo_mut(synthesize=lambda *a, **k: (None, "off")),
          "evo_synth_admits_anything": _evo_mut(synth_problems=lambda *a, **k: []),

@@ -252,6 +252,18 @@ def selection_evidence(lever, graph) -> dict | None:
     return {"prior": max([e[2] for e in edges] or [0.0]), "edges": edges}
 
 
+CONVERSIONS = ("CERT", "MATCH", "CAPABILITY")  # MATCH: objdiff progress verified by the autopilot (SPEC-match-exploit.md)
+
+
+def exploit_directive(lever_id, cls: str) -> str:
+    """Owner 2026-11-17 (SPEC-match-exploit B): a lever that converted is applied at scale, not re-researched."""
+    return (f"EVO MODE EXPLOIT (the previous generation converted: {cls}, verified by the autopilot). Stay on lever "
+            f"{lever_id or 'the current one'} and apply the SAME method to the rest of the functions it serves, at scale: "
+            "no new hypothesis, no new held-out draw, no method change. Each phase states the functions it targets and "
+            "ends with the build and the objdiff report re-generated; the autopilot counts functions newly at 100% and "
+            "refuses a generation that drops any function from 100%.")
+
+
 def directive(lever: dict, mode: str, instrument: str | None = None) -> str:
     if mode == "REPAIR":
         return (f"EVO MODE REPAIR (instrument {instrument}, attempt counted by the autopilot). The previous generation's "
@@ -314,14 +326,14 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
     blank_stop, info_park, noconv_park = triggers
     cur = lever_by_id(levers, lane, ls.get("lever"))
     family = (cur or {}).get("family") or "UNREGISTERED"
-    if cls in ("CERT", "CAPABILITY"):
+    if cls in CONVERSIONS:
         ls["synth_streak"] = 0
 
     def synth_or_park(why: str, src: str) -> dict:
         return _synth_or_park(ls, levers, lane, product, family, designer, residual, why, src)
     # learning: a verified conversion teaches the graph; repeated zero evidence on a lever retires it
     if cur:
-        if cls in ("CERT", "CAPABILITY"):
+        if cls in CONVERSIONS:
             for b in cur.get("blockers", []):
                 graph.learn(b, [cur["id"]], solved=True)
         hist = ls.setdefault("lever_history", [])
@@ -369,9 +381,10 @@ def after_judgment(ls: dict, cls: str, instruments: list[str], levers: dict, lan
         if rep[key] > MAX_REPAIR:
             return synth_or_park(f"instrument {key} failed its positive control {rep[key]} times "
                                  f"(repair cap {MAX_REPAIR}); a new instrument needs a new idea", "repair cap")
-    if cls == "CERT":
+    if cls in ("CERT", "MATCH"):  # SPEC-match-exploit B: a conversion is exploited at scale on the same lever
         ls.update(mode="EXPLOIT", blank=0, info_streak=0, no_conversion=0, research_fail=0, pivot_streak=0)
-        return {"action": "continue", "why": "certificates: exploit"}
+        return {"action": "continue", "why": f"{'certificates' if cls == 'CERT' else 'objdiff matches'}: exploit",
+                "directive": exploit_directive(ls.get("lever"), cls)}
     if cls == "INSTRUMENT_FAIL":
         name = instruments[0]
         failed = next((x for x in levers.get(lane, []) if x.get("id") == ls.get("lever")), None) if lane else None
