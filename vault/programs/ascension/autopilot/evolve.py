@@ -280,14 +280,23 @@ def packet_problems(mode: str, lever_id, phases: list[str], caps: int, ls: dict)
     if mode == "RESEARCH":
         if caps > RESEARCH_GEN_CAP:
             bad.append(f"EVO RESEARCH: caps {caps:,} > research generation cap {RESEARCH_GEN_CAP:,}")
-        if int(ls.get("research_spent") or 0) + caps > RESEARCH_LANE_CAP:
-            bad.append(f"EVO RESEARCH: lane research budget {RESEARCH_LANE_CAP:,} would be exceeded")
+        if int(ls.get("research_spent") or 0) + caps > lane_research_cap(ls):
+            bad.append(f"EVO RESEARCH: lane research budget {lane_research_cap(ls):,} would be exceeded")
     return bad
+
+
+def lane_research_cap(ls: dict) -> int:
+    """The lane's research allowance: an Owner-set `research_cap` in its state, else RESEARCH_LANE_CAP.
+    2026-11-17 (Owner 'y', pane 08cba76c): KSR/MKW/TENNIS/WIIPARTY reached 100M; the Owner raised them per lane."""
+    try:
+        return int(ls.get("research_cap") or RESEARCH_LANE_CAP)
+    except (TypeError, ValueError):
+        return RESEARCH_LANE_CAP
 
 
 # ---------------------------------------------------------------- the decision after a judged generation
 def _pivot(ls: dict, family: str, evidence_delta: bool, failure_class: str, residual: str) -> dict:
-    left = max(0, RESEARCH_LANE_CAP - int(ls.get("research_spent") or 0))
+    left = max(0, lane_research_cap(ls) - int(ls.get("research_spent") or 0))
     rec = {"pivot_streak": int(ls.get("pivot_streak") or 0), "pivot_history": list(ls.get("pivot_history") or []),
            "authority_tokens": left, "cost_mark": {"tokens": 0}}
     hold = {"checkpoint": "METHOD_PIVOT_REQUIRED", "reason": f"method plateau on {family}", "residual": residual,

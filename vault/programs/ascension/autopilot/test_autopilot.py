@@ -880,6 +880,13 @@ def run_all(ap):
     check("V-EVO-PRECONDITION-REQUIRED", ls["status"] == "PARKED" and "another family" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
     check("V-EVO-RESEARCH-PACKET-NEEDS-DISCRIMINATING-TEST", ls["status"] == "PARKED" and "no 'rival'" in q)
+    # 2026-11-17 (Owner 'y', pane 08cba76c): an Owner-set per-lane research_cap replaces the 100M default, both ways
+    ph = ["P1 lev_a " + " ".join(E.RESEARCH_WORDS)]
+    spent = {"research_spent": E.RESEARCH_LANE_CAP - 1_000_000}
+    over = E.packet_problems("RESEARCH", "lev_a", ph, 2_000_000, dict(spent))
+    raised = E.packet_problems("RESEARCH", "lev_a", ph, 2_000_000, dict(spent, research_cap=E.RESEARCH_LANE_CAP + 50_000_000))
+    check("V-EVO-LANE-RESEARCH-CAP-RAISED", any("research budget" in b for b in over) and raised == []
+          and E.lane_research_cap({"research_cap": "junk"}) == E.RESEARCH_LANE_CAP)
     # 2026-11-17 (S112T, S114M, Owner "b"): an EVO packet refusal is re-planned with its reasons, not parked at once
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a"}, (GOODP, GOODP, RES)), ["INFORMATION", "INFORMATION"])
     rp = [r for r in ledger() if r["kind"] == "plan" and r.get("replan")]
@@ -1276,6 +1283,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_instrument_fail_as_none": _evo_mut(classify=lambda cls, instr: cls),
          "evo_same_family_allowed": _evo_mut(select=_wrap(lambda e: (lambda *a, **k: _evo_copy_select(e, *a, **k)))),
          "evo_no_packet_check": _evo_mut(packet_problems=lambda *a, **k: []),
+         "evo_lane_cap_ignored": _evo_mut(lane_research_cap=lambda ls: 100_000_000),
          "evo_research_never_stops": _evo_mut(RESEARCH_FAIL_STOP=99),
          "evo_repair_unbounded": _evo_mut(MAX_REPAIR=99),
          "evo_owner_resume_ignored": _evo_mut(OWNER_RESUME="zzz_never_set"),
