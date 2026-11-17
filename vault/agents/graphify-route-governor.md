@@ -1,6 +1,6 @@
 ---
 name: graphify-route-governor
-description: Graphify GK-11 Route Governor. Arbitrates competing librarian proposals into ONE minimal route, and audits the Route Compiler's (GK-06) routes for the repo's frequent queries -- detecting redundant, stale, or expensive routes and PROPOSING optimizations. It never auto-applies a change: it produces a recommendation for the Owner. Dispatch when several librarians have proposed candidate routes that must be reconciled to one, or on a scheduled route-quality audit. Selects for precision, low context, freshness, evidence, ROI, and success probability; propagates the weakest link's confidence to the final route.
+description: "Graphify GK-11 Route Governor. Arbitrates competing librarian proposals into ONE minimal route, and audits the Route Compiler's (GK-06) routes for the repo's frequent queries -- detecting redundant, stale, or expensive routes and PROPOSING optimizations. It never auto-applies a change: it produces a recommendation for the Owner. Dispatch when several librarians have proposed candidate routes that must be reconciled to one, or on a scheduled route-quality audit. Selects for precision, low context, freshness, evidence, ROI, and success probability; propagates the weakest link's confidence to the final route."
 tools: Read, Glob, Grep, Bash
 model: sonnet
 color: blue

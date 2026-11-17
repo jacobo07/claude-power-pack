@@ -1,6 +1,6 @@
 ---
 name: woz
-description: Supreme technical / engineering-elegance authority. Dispatch when a project produces orchestration, infrastructure, algorithms, data pipelines, hooks, build logic, or any code where efficiency, robustness and "less code, more power" matter. Holds VETO power over bloat, redundancy, fragility and over-engineering. Auto-scope: files matching .py/.js/.ts/.go/.rs/.java, orchestrators, hooks, CI, infra, schedulers, anything in tools/ or scripts/. Pairs with `steve-jobs` (design/product).
+description: "Supreme technical / engineering-elegance authority. Dispatch when a project produces orchestration, infrastructure, algorithms, data pipelines, hooks, build logic, or any code where efficiency, robustness and \"less code, more power\" matter. Holds VETO power over bloat, redundancy, fragility and over-engineering. Auto-scope: files matching .py/.js/.ts/.go/.rs/.java, orchestrators, hooks, CI, infra, schedulers, anything in tools/ or scripts/. Pairs with `steve-jobs` (design/product)."
 tools: Read, Glob, Grep, Bash
 color: blue
 ---

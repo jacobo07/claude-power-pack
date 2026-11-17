@@ -15,10 +15,17 @@
  *   1. Project HAS a DESIGN.md  -> it has adopted the design system, so slop against
  *      its own declared system is refusable. Run tools/design_gate.py; on BLOCK,
  *      DENY the write with the concrete criticals (criterion + observed value).
- *   2. Project has NO DESIGN.md -> it never adopted the system. ADVISE (never deny).
- *      Forcing a design system onto a repo that never opted in would block legitimate
- *      work, and a gate whose false-positive blocks real work gets disabled, which is
- *      how you end up with no gate at all.
+ *   2. Project has NO design system -> DENY (since 2026-11-17), unless the repo carries
+ *      a DESIGN.optout with a stated reason. It used to ADVISE here, throttled to once
+ *      per 15 minutes, on the theory that forcing a system on a repo that never opted
+ *      in blocks legitimate work. MEASURED cost of that theory: CVP Properties shipped
+ *      a whole Next.js product UI, a filmed demo and two motion videos with no
+ *      DESIGN.md, no /cpp-design lookup and no cdio-reviewer pass, and a mentor's first
+ *      verdict was "looks vibecoded". An advisory that is read once and then silenced
+ *      is the same as no gate. "Opting in" is now the default for any surface inside a
+ *      git repository; opting OUT is the explicit, written act.
+ *      Still advisory: surfaces outside any git repository (scratch files, artifacts),
+ *      test files and build/vendor output -- none of them is a product surface.
  *
  * The escape hatch exists by construction: DESIGN.md is not a visual-surface path, so
  * editing it is never blocked. A denied write is always fixable by fixing the system
@@ -263,6 +270,60 @@ function denyReason(surface, out) {
     + `Verify with: python tools/design_gate.py "${out.design_md}"`;
 }
 
+/** Directory segments / file shapes that are never a product surface. */
+const NON_PRODUCT_DIR = /[\\/](node_modules|\.next|dist|build|out|coverage|_vendor|vendor|__tests__|e2e|tests?|fixtures?)[\\/]/i;
+const NON_PRODUCT_FILE = /\.(test|spec)\.[a-z]+$/i;
+const OPTOUT_NAME = 'DESIGN.optout';
+
+/** Nearest directory at or above the surface that holds a .git, or ''. */
+function repoRoot(surfacePath) {
+  try {
+    let dir = path.dirname(path.resolve(surfacePath));
+    for (let i = 0; i < 32; i += 1) {
+      if (fs.existsSync(path.join(dir, '.git'))) return dir;
+      const parent = path.dirname(dir);
+      if (parent === dir) return '';
+      dir = parent;
+    }
+  } catch (_) { /* fail-open: treated as "not in a repo" -> advisory only */ }
+  return '';
+}
+
+/** The opt-out's stated reason, or '' when there is no (non-empty) opt-out. Checked at
+ *  the repo root and, for a nested repo, at the enclosing one. An EMPTY file is not an
+ *  opt-out: the point of the file is the written reason. */
+function optOutReason(root) {
+  for (const dir of [root, enclosingRepoRoot(root)]) {
+    if (!dir) continue;
+    try {
+      const p = path.join(dir, OPTOUT_NAME);
+      if (fs.existsSync(p)) {
+        const reason = fs.readFileSync(p, 'utf8').trim();
+        if (reason) return reason;
+      }
+    } catch (_) { /* unreadable -> not an opt-out */ }
+  }
+  return '';
+}
+
+function denyNoSystem(surface, root) {
+  const gate = GATE_SCRIPT;
+  const tpl = path.join(PP_ROOT, 'modules', 'design-md', 'DESIGN.md.template');
+  return `CDIO design gate: BLOCK. \`${path.basename(surface)}\` is a product visual surface `
+    + `in ${root}, and this project has no design system. UI built without one is what `
+    + `reads as "vibecoded" (origin: CVP Properties, 2026-11-17).\n\n`
+    + `Do this first (editing DESIGN.md is never blocked):\n`
+    + `  1. Create ${path.join(root, 'DESIGN.md')} from ${tpl} (/design-md init). Declare `
+    + `the aesthetic family with the CDIO-06 three-question picker. Take brand tokens from `
+    + `the brand's RENDERED pixels (HR-VISUAL-01), never invent them.\n`
+    + `  2. python "${gate}" "${path.join(root, 'DESIGN.md')}" must not BLOCK.\n`
+    + `  3. /cpp-design <pattern> before building each component (modal, card, form, ...).\n`
+    + `  4. Before calling it done: dispatch the cdio-reviewer agent on screenshots of the `
+    + `RENDERED surface (score >= 80, zero critical).\n\n`
+    + `Not a designed product (internal tool, fixture, generated report)? Write `
+    + `${path.join(root, OPTOUT_NAME)} containing one line that says why.`;
+}
+
 function adviseNoSystem(surface) {
   return `CDIO advisory: \`${path.basename(surface)}\` is a visual surface, and this `
     + `project has no DESIGN.md — so no aesthetic family is declared and the anti-slop `
@@ -304,9 +365,25 @@ function run(input) {
 
     const designMd = findDesignMd(surface);
 
-    // Tier 2 — no design system found: the project never adopted one. Advise,
-    // throttled.
+    // Tier 2 — no design system found. Inside a git repo, on a product surface, with
+    // no written opt-out: DENY, never throttled. Anything else: advise, throttled.
     if (!designMd) {
+      const root = repoRoot(surface);
+      // Judge the path INSIDE the repo only: a repo that itself lives under a folder
+      // named build/ or tests/ is still a product.
+      const inside = root ? path.sep + path.relative(root, path.resolve(surface)) : '';
+      const product = Boolean(root) && !NON_PRODUCT_DIR.test(inside)
+        && !NON_PRODUCT_FILE.test(surface);
+      if (product && !optOutReason(root)) {
+        return {
+          hookSpecificOutput: {
+            hookEventName: 'PreToolUse',
+            permissionDecision: 'deny',
+            permissionDecisionReason: denyNoSystem(surface, root),
+          },
+        };
+      }
+      if (product) return {};   // opted out in writing: stay quiet
       const familyKey = path.dirname(surface) + ':nosystem';
       if (throttled(sessionId, familyKey)) return {};
       return {

@@ -109,15 +109,59 @@ function main() {
     }
   }
 
-  // --- V-HOOK-NO-SYSTEM-ADVISES: never force the system on a repo that never opted in
+  // --- V-HOOK-NO-SYSTEM-DENIES: a product UI in a repo with no design system is refused
+  // (was advise-only until 2026-11-17; CVP Properties shipped a "vibecoded" UI under it)
+  const isDeny = o => (o.hookSpecificOutput || {}).permissionDecision === 'deny';
+  const reasonOf = o => (o.hookSpecificOutput || {}).permissionDecisionReason || '';
   {
     const dir = project('nosystem', null);
-    const out = hook.run(evt(path.join(dir, 'src', 'dashboard.tsx'), 'Write', 's3'));
-    const hso = out.hookSpecificOutput || {};
-    if (!hso.permissionDecision && /no DESIGN\.md/.test(hso.additionalContext || '')) {
-      ok('V-HOOK-NO-SYSTEM-ADVISES', 'no DESIGN.md -> advisory, never a deny');
+    const surface = path.join(dir, 'src', 'dashboard.tsx');
+    const out = hook.run(evt(surface, 'Write', 's3'));
+    if (isDeny(out) && /no design system/.test(reasonOf(out))
+        && /cdio-reviewer/.test(reasonOf(out)) && /DESIGN\.optout/.test(reasonOf(out))) {
+      ok('V-HOOK-NO-SYSTEM-DENIES', 'no DESIGN.md in a repo -> deny naming the 4 steps + opt-out');
     } else {
-      bad('V-HOOK-NO-SYSTEM-ADVISES', `expected advisory, got ${JSON.stringify(out).slice(0, 160)}`);
+      bad('V-HOOK-NO-SYSTEM-DENIES', `expected deny, got ${JSON.stringify(out).slice(0, 160)}`);
+    }
+    if (isDeny(hook.run(evt(surface, 'Edit', 's3')))) {
+      ok('V-HOOK-NO-SYSTEM-NOT-THROTTLED', 'second write still denied');
+    } else {
+      bad('V-HOOK-NO-SYSTEM-NOT-THROTTLED', 'the throttle swallowed the no-system deny');
+    }
+    if (!isDeny(hook.run(evt(path.join(dir, 'DESIGN.md'), 'Write', 's3')))) {
+      ok('V-HOOK-NO-SYSTEM-ESCAPE', 'creating DESIGN.md is never denied');
+    } else {
+      bad('V-HOOK-NO-SYSTEM-ESCAPE', 'DEADLOCK: the fix for the deny is itself denied');
+    }
+    const css = path.join(dir, 'src', 'globals.css');
+    fs.writeFileSync(path.join(dir, 'DESIGN.optout'), '   \n', 'utf8');
+    const emptyOpt = hook.run(evt(css, 'Write', 's3'));
+    fs.writeFileSync(path.join(dir, 'DESIGN.optout'), 'internal log viewer, no end users\n', 'utf8');
+    const realOpt = hook.run(evt(css, 'Write', 's3'));
+    if (isDeny(emptyOpt) && Object.keys(realOpt).length === 0) {
+      ok('V-HOOK-OPTOUT', 'empty DESIGN.optout still denied; a stated reason -> silent');
+    } else {
+      bad('V-HOOK-OPTOUT', `empty=${JSON.stringify(emptyOpt).slice(0, 80)} real=${JSON.stringify(realOpt).slice(0, 80)}`);
+    }
+  }
+
+  // --- V-HOOK-NON-PRODUCT: tests, build output and non-repo files are never denied
+  {
+    const dir = project('nonproduct', null);
+    const spec = hook.run(evt(path.join(dir, 'src', 'card.test.tsx'), 'Write', 's6'));
+    const e2e = hook.run(evt(path.join(dir, 'e2e', 'flow.tsx'), 'Write', 's6'));
+    const dist = hook.run(evt(path.join(dir, 'dist', 'index.html'), 'Write', 's6'));
+    const loose = fs.mkdtempSync(path.join(os.tmpdir(), 'ppdesign-norepo-'));
+    const scratch = hook.run(evt(path.join(loose, 'page.html'), 'Write', 's6'));
+    const buildParent = fs.mkdtempSync(path.join(os.tmpdir(), 'ppdesign-build-'));
+    const nestedRepo = path.join(buildParent, 'build', 'app');
+    fs.mkdirSync(path.join(nestedRepo, '.git'), { recursive: true });
+    const underBuild = hook.run(evt(path.join(nestedRepo, 'page.tsx'), 'Write', 's6'));
+    if (![spec, e2e, dist, scratch].some(isDeny) && isDeny(underBuild)) {
+      ok('V-HOOK-NON-PRODUCT', 'test/e2e/dist/non-repo exempt; a repo under build/ is still a product');
+    } else {
+      bad('V-HOOK-NON-PRODUCT', `spec=${isDeny(spec)} e2e=${isDeny(e2e)} dist=${isDeny(dist)} `
+          + `scratch=${isDeny(scratch)} underBuild=${isDeny(underBuild)}`);
     }
   }
 
@@ -128,11 +172,13 @@ function main() {
     fs.mkdirSync(path.join(inner, 'src'), { recursive: true });
     fs.mkdirSync(path.join(inner, '.git'));       // inner is its own project, no DESIGN.md
     const out = hook.run(evt(path.join(inner, 'src', 'hero.tsx'), 'Write', 's4'));
-    const hso = out.hookSpecificOutput || {};
-    if (!hso.permissionDecision) {
-      ok('V-HOOK-BOUNDARY', 'inner project not judged against the outer project\'s DESIGN.md');
+    // The nested repo promotes once to the enclosing repo, so it IS governed by the outer
+    // DESIGN.md (monorepo rule). What must never happen is a project with NO enclosing
+    // repo being judged by a stranger's file -- covered by V-HOOK-NON-PRODUCT's scratch.
+    if (!/no design system/.test(reasonOf(out))) {
+      ok('V-HOOK-BOUNDARY', 'nested repo sees the enclosing repo\'s design system, not "none"');
     } else {
-      bad('V-HOOK-BOUNDARY', 'a surface was denied against a DESIGN.md across a .git boundary');
+      bad('V-HOOK-BOUNDARY', 'a nested repo was told it has no design system although its parent declares one');
     }
   }
 
