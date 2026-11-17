@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recapline — Turn meeting recordings into action items</title>
+  <meta name="description" content="Recapline listens to your meeting recordings and hands back a clean list of action items, owners and due dates.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#" aria-label="Recapline home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        Recapline
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#testimonials">Customers</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+        </ul>
+      </nav>
+      <a class="btn btn-small" href="#pricing">Start free</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1>Every meeting ends with a to-do list. Now someone actually writes it.</h1>
+          <p class="lede">Upload a recording or connect your calendar. Recapline pulls out who agreed to do what, and by when, so nothing said in the room gets lost after it.</p>
+          <div class="hero-actions">
+            <a class="btn" href="#pricing">Try it free for 14 days</a>
+            <a class="btn btn-ghost" href="#features">See how it works</a>
+          </div>
+          <p class="fine">No credit card needed. Works with Zoom, Google Meet and Teams recordings.</p>
+        </div>
+
+        <figure class="hero-card" aria-label="Example output from a recorded meeting">
+          <div class="card-head">
+            <span class="card-title">Weekly product sync</span>
+            <span class="card-meta">42 min · 5 people</span>
+          </div>
+          <ul class="task-list">
+            <li>
+              <input type="checkbox" id="t1" checked>
+              <label for="t1"><strong>Send revised onboarding copy to legal</strong>
+                <span>Priya · Thu, Nov 20</span></label>
+            </li>
+            <li>
+              <input type="checkbox" id="t2">
+              <label for="t2"><strong>Book user interviews for the export flow</strong>
+                <span>Marcus · Mon, Nov 24</span></label>
+            </li>
+            <li>
+              <input type="checkbox" id="t3">
+              <label for="t3"><strong>Decide on the Q1 pricing test</strong>
+                <span>Dana · Fri, Nov 28</span></label>
+            </li>
+          </ul>
+          <figcaption>Pulled from 00:14:32, 00:27:05 and 00:38:51 of the recording.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="container">
+        <h2>What Recapline does</h2>
+        <p class="section-intro">Three things, done well, so your follow-up email writes itself.</p>
+        <div class="features">
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">1</div>
+            <h3>Finds the commitments</h3>
+            <p>It listens for the moments people agree to take something on, and skips the small talk.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">2</div>
+            <h3>Assigns owners and dates</h3>
+            <p>Each item gets a name and a deadline from what was said. Anything unclear is flagged for you to confirm.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">3</div>
+            <h3>Sends them where you work</h3>
+            <p>Push items to Slack, Asana, Linear or email. Every item links back to the exact second it came from.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="testimonials" class="section section-alt">
+      <div class="container">
+        <h2>Teams that stopped losing follow-ups</h2>
+        <div class="testimonials">
+          <figure class="testimonial">
+            <blockquote>
+              <p>“We used to spend the first ten minutes of every standup asking who was supposed to do what. Now the list is in Slack before we've left the call.”</p>
+            </blockquote>
+            <figcaption>
+              <span class="avatar" aria-hidden="true">LH</span>
+              <span><strong>Lena Hoffmann</strong><br>Engineering Manager, Brightfold</span>
+            </figcaption>
+          </figure>
+          <figure class="testimonial">
+            <blockquote>
+              <p>“I run eight client calls a day. Recapline catches the promises I make on them, which matters more than I'd like to admit.”</p>
+            </blockquote>
+            <figcaption>
+              <span class="avatar" aria-hidden="true">JO</span>
+              <span><strong>James Okafor</strong><br>Account Director, Northpine Studio</span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="section">
+      <div class="container">
+        <h2>Simple pricing</h2>
+        <p class="section-intro">Start free for 14 days. Cancel whenever you like.</p>
+
+        <div class="billing-toggle" role="group" aria-label="Billing period">
+          <button type="button" class="toggle-btn is-active" data-period="monthly" aria-pressed="true">Monthly</button>
+          <button type="button" class="toggle-btn" data-period="yearly" aria-pressed="false">Yearly <span class="save">save 20%</span></button>
+        </div>
+
+        <div class="plans">
+          <article class="plan">
+            <h3>Solo</h3>
+            <p class="plan-desc">For one person who runs a lot of meetings.</p>
+            <p class="price">
+              <span class="amount" data-monthly="12" data-yearly="10">$12</span>
+              <span class="per">/ month</span>
+            </p>
+            <p class="billed" data-monthly="Billed monthly" data-yearly="Billed $120 yearly">Billed monthly</p>
+            <ul class="plan-features">
+              <li>20 hours of recordings a month</li>
+              <li>Action items with owners and dates</li>
+              <li>Export to email and Slack</li>
+            </ul>
+            <a class="btn btn-ghost btn-block" href="#">Start free trial</a>
+          </article>
+
+          <article class="plan plan-featured">
+            <p class="badge">Most popular</p>
+            <h3>Team</h3>
+            <p class="plan-desc">For teams that share meetings and the work after them.</p>
+            <p class="price">
+              <span class="amount" data-monthly="29" data-yearly="23">$29</span>
+              <span class="per">/ user / month</span>
+            </p>
+            <p class="billed" data-monthly="Billed monthly" data-yearly="Billed $276 per user yearly">Billed monthly</p>
+            <ul class="plan-features">
+              <li>Unlimited recordings</li>
+              <li>Shared workspace and calendar sync</li>
+              <li>Asana, Linear and Jira integrations</li>
+              <li>Priority support</li>
+            </ul>
+            <a class="btn btn-block" href="#">Start free trial</a>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year">2026</span> Recapline</p>
+      <ul class="footer-links">
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="mailto:hello@example.com">Contact</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

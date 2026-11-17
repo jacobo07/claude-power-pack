@@ -1,0 +1,454 @@
+{
+ "claude": [
+  "/home/kobii/.local/claude-lf1/node_modules/.bin/claude"
+ ],
+ "tasks": {
+  "saas": {
+   "task": "Build the marketing landing page for a small SaaS product that turns meeting recordings into action items. Hero with a headline and a call to action, a short features section, two customer testimonials, and a pricing section with two plans. Static HTML and CSS only (plain JS allowed), no frameworks, no build step, entry file index.html. Write the files in the current directory, then reply with one line listing the files.",
+   "control": {
+    "label": "control",
+    "calls": [
+     {
+      "rc": 0,
+      "seconds": 65.6,
+      "session_id": "676369ae-94e2-4c22-a847-26ad0531d64b",
+      "usage": {
+       "input_tokens": 6,
+       "cache_creation_input_tokens": 45432,
+       "cache_read_input_tokens": 112975,
+       "output_tokens": 8162,
+       "output_tokens_details": {
+        "thinking_tokens": 162
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 45432,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 60,
+         "cache_read_input_tokens": 50109,
+         "cache_creation_input_tokens": 8268,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 8268
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Bash",
+       "Write",
+       "Write",
+       "Write"
+      ],
+      "skills": [],
+      "stderr_tail": ""
+     }
+    ],
+    "files": [
+     "index.html",
+     "script.js",
+     "styles.css"
+    ]
+   },
+   "treated": {
+    "label": "treated",
+    "calls": [
+     {
+      "rc": 0,
+      "seconds": 362.7,
+      "session_id": "97f71e32-68cf-4c11-8c62-3f028e374077",
+      "usage": {
+       "input_tokens": 6,
+       "cache_creation_input_tokens": 2201,
+       "cache_read_input_tokens": 271972,
+       "output_tokens": 899,
+       "output_tokens_details": {
+        "thinking_tokens": 244
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 2201,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 496,
+         "cache_read_input_tokens": 136864,
+         "cache_creation_input_tokens": 445,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 445
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [
+       "Skill",
+       "Skill",
+       "Skill",
+       "Bash",
+       "Write",
+       "Write",
+       "Write",
+       "Bash",
+       "Bash",
+       "Read",
+       "Read",
+       "Grep",
+       "Edit",
+       "Write",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Read",
+       "Read",
+       "Edit",
+       "Bash",
+       "Agent",
+       "Read",
+       "Read",
+       "Read",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Bash",
+       "Read",
+       "SendMessage",
+       "Bash",
+       "Read",
+       "Read",
+       "Bash",
+       "Bash",
+       "Bash"
+      ],
+      "skills": [
+       "design-md",
+       "design-taste-frontend",
+       "frontend-design"
+      ],
+      "stderr_tail": ""
+     },
+     {
+      "rc": 0,
+      "seconds": 13.5,
+      "session_id": "97f71e32-68cf-4c11-8c62-3f028e374077",
+      "usage": {
+       "input_tokens": 2,
+       "cache_creation_input_tokens": 1335,
+       "cache_read_input_tokens": 137309,
+       "output_tokens": 840,
+       "output_tokens_details": {
+        "thinking_tokens": 377
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 1335,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 840,
+         "cache_read_input_tokens": 137309,
+         "cache_creation_input_tokens": 1335,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1335
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [],
+      "skills": [],
+      "stderr_tail": ""
+     },
+     {
+      "rc": 0,
+      "seconds": 6.1,
+      "session_id": "97f71e32-68cf-4c11-8c62-3f028e374077",
+      "usage": {
+       "input_tokens": 2,
+       "cache_creation_input_tokens": 2123,
+       "cache_read_input_tokens": 138644,
+       "output_tokens": 339,
+       "output_tokens_details": {
+        "thinking_tokens": 74
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 2123,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 339,
+         "cache_read_input_tokens": 138644,
+         "cache_creation_input_tokens": 2123,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 2123
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [],
+      "skills": [],
+      "stderr_tail": ""
+     },
+     {
+      "rc": 0,
+      "seconds": 5.1,
+      "session_id": "97f71e32-68cf-4c11-8c62-3f028e374077",
+      "usage": {
+       "input_tokens": 2,
+       "cache_creation_input_tokens": 1178,
+       "cache_read_input_tokens": 140767,
+       "output_tokens": 248,
+       "output_tokens_details": {
+        "thinking_tokens": 66
+       },
+       "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+       },
+       "service_tier": "standard",
+       "cache_creation": {
+        "ephemeral_1h_input_tokens": 1178,
+        "ephemeral_5m_input_tokens": 0
+       },
+       "inference_geo": "global",
+       "iterations": [
+        {
+         "input_tokens": 2,
+         "output_tokens": 248,
+         "cache_read_input_tokens": 140767,
+         "cache_creation_input_tokens": 1178,
+         "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1178
+         },
+         "type": "message"
+        }
+       ],
+       "speed": "standard",
+       "fallback_credit": null
+      },
+      "tools": [],
+      "skills": [],
+      "stderr_tail": ""
+     }
+    ],
+    "kit": [
+     "design-md",
+     "design-taste-frontend",
+     "frontend-design",
+     "ui-ux-pro-max",
+     "agent:cdio-reviewer"
+    ],
+    "kinds": [
+     "web"
+    ],
+    "stop_round": {
+     "blocked": true,
+     "reason": "Design done-gate (kind web): visual work in vault/programs/ascension/design-gate-reblock/saas/treated is not done yet.\ndesign-review -> dispatch the cdio-reviewer agent on the rendered surface; it renders and records with tools/design_review_record.py, and only an APPROVE of these exact bytes counts:\n  - index.html: no recorded cdio-reviewer APPROVE for these bytes (sha 407144b72039); the last recorded review of this file is BLOCK 0: fix what it names, then review again\n  - styles.css: no recorded cdio-reviewer APPROVE for these bytes (sha 2d8563605338); the last recorded review of this file is BLOCK 0: fix what it names, then review again\nA check that genuinely does not apply: `NO APLICA: <check>: <reason>` in the final message."
+    },
+    "stop_rounds": [
+     {
+      "blocked": true,
+      "reason": "Design done-gate (kind web): visual work in vault/programs/ascension/design-gate-reblock/saas/treated is not done yet.\ndesign-review -> dispatch the cdio-reviewer agent on the rendered surface; it renders and records with tools/design_review_record.py, and only an APPROVE of these exact bytes counts:\n  - index.html: no recorded cdio-reviewer APPROVE for these bytes (sha 407144b72039); the last recorded review of this file is BLOCK 0: fix what it names, then review again\n  - styles.css: no recorded cdio-reviewer APPROVE for these bytes (sha 2d8563605338); the last recorded review of this file is BLOCK 0: fix what it names, then review again\nA check that genuinely does not apply: `NO APLICA: <check>: <reason>` in the final message."
+     },
+     {
+      "blocked": true,
+      "reason": "Design done-gate (kind web): visual work in vault/programs/ascension/design-gate-reblock/saas/treated is not done yet.\ndesign-review -> dispatch the cdio-reviewer agent on the rendered surface; it renders and records with tools/design_review_record.py, and only an APPROVE of these exact bytes counts:\n  - index.html: no recorded cdio-reviewer APPROVE for these bytes (sha 407144b72039); the last recorded review of this file is BLOCK 0: fix what it names, then review again\n  - styles.css: no recorded cdio-reviewer APPROVE for these bytes (sha 2d8563605338); the last recorded review of this file is BLOCK 0: fix what it names, then review again\nA check that genuinely does not apply: `NO APLICA: <check>: <reason>` in the final message."
+     },
+     {
+      "blocked": true,
+      "reason": "Design done-gate (kind web): visual work in vault/programs/ascension/design-gate-reblock/saas/treated is not done yet.\ndesign-review -> dispatch the cdio-reviewer agent on the rendered surface; it renders and records with tools/design_review_record.py, and only an APPROVE of these exact bytes counts:\n  - index.html: no recorded cdio-reviewer APPROVE for these bytes (sha 407144b72039); the last recorded review of this file is BLOCK 0: fix what it names, then review again\n  - styles.css: no recorded cdio-reviewer APPROVE for these bytes (sha 2d8563605338); the last recorded review of this file is BLOCK 0: fix what it names, then review again\nA check that genuinely does not apply: `NO APLICA: <check>: <reason>` in the final message."
+     },
+     {
+      "blocked": false,
+      "reason": ""
+     }
+    ],
+    "after_round": {
+     "problems_left": [
+      [
+       "design-review",
+       "",
+       "index.html"
+      ],
+      [
+       "design-review",
+       "",
+       "styles.css"
+      ]
+     ]
+    },
+    "reviews": [
+     {
+      "files": {
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate-reblock/saas/treated/index.html": "407144b72039f9eb0b929ead684b6e17d285877de3810267ba5593420d7e43c9",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate-reblock/saas/treated/styles.css": "2d8563605338462f4c649945fc5c3fe724ac9ffebb6edcdc078032447839a7e4",
+       "/home/kobii/missions/design-gate/vault/programs/ascension/design-gate-reblock/saas/treated/script.js": "963781328131e4299e90bf5cb85b501a13b5f42f6526377b5e647b8e64d5e05b"
+      },
+      "verdict": "BLOCK",
+      "score": 0,
+      "reason": "3 critical issue(s) -- floor not tradeable (CDIO-00 sec.4)",
+      "is_done": false,
+      "refused": [],
+      "experience": "unassessed",
+      "reviewer_verdicts": 28,
+      "folded_taste": 27,
+      "critical": [
+       "legal-page-present",
+       "legal-page-present",
+       "legal-page-present"
+      ],
+      "ts": 1794956239.8039877
+     }
+    ],
+    "files": [
+     ".review/verdicts.json",
+     "index.html",
+     "script.js",
+     "styles.css"
+    ]
+   },
+   "taste": {
+    "control": {
+     "critical": 1,
+     "major": 2,
+     "minor": 0,
+     "ids": [
+      "TASTE-EMDASH",
+      "TASTE-PURE-BLACK-WHITE",
+      "TASTE-DARK-MODE"
+     ]
+    },
+    "treated": {
+     "critical": 0,
+     "major": 0,
+     "minor": 1,
+     "ids": [
+      "TASTE-GOOGLE-FONTS-LINK"
+     ]
+    }
+   },
+   "judge": {
+    "votes": [
+     {
+      "order": [
+       "control",
+       "treated"
+      ],
+      "winner": "treated",
+      "slop_markers": {
+       "control": 4,
+       "treated": 2
+      },
+      "reasons": [
+       "A uses the stock layout: a tinted gradient hero, three identical numbered cards, centered section heads and a 'Most popular' badge",
+       "B's features section shows the product working: a transcript line with the commitment highlighted becomes a task, plus an integrations cell and a data-retention promise, laid out as a bento instead of interchangeable cards",
+       "B's hero visual pairs a quoted recording line with the task extracted from it, and the open-task count updates as boxes are checked, which makes the product concrete",
+       "B's pricing is the more realistic SaaS split (Team, then Business with SSO, audit log and retention), with the intro and billing toggle in a side column",
+       "B makes more deliberate choices: a single terracotta accent, dark mode, 44px touch targets, monospace metadata, one large and one compact testimonial, and motion that never hides content"
+      ]
+     },
+     {
+      "order": [
+       "treated",
+       "control"
+      ],
+      "winner": "treated",
+      "slop_markers": {
+       "treated": 2,
+       "control": 5
+      },
+      "reasons": [
+       "A's features are an asymmetric bento with a real transcript-to-task demo (highlighted quote becomes an action item), not three numbered icon cards",
+       "B uses the stock template formula: gradient-tint hero, centered section headings, three equal feature cards, and a 'Most popular' badge",
+       "B has an em dash in the title and filler intro copy ('Three things, done well'); A's copy is plain and specific ('Our weekly ops call used to end with three people writing three different lists')",
+       "A's testimonials are laid out unevenly (one large, one compact with a rule between them); B's are two identical cards",
+       "A has a deliberate palette (slate with one terracotta accent), dark mode, and a mono type for metadata; B uses system fonts and a stock blue with a light-only theme"
+      ]
+     }
+    ],
+    "consistent_winner": "treated"
+   }
+  }
+ },
+ "started": 1794955818.5601473,
+ "summary": {
+  "saas": {
+   "taste": {
+    "control": {
+     "critical": 1,
+     "major": 2,
+     "minor": 0,
+     "ids": [
+      "TASTE-EMDASH",
+      "TASTE-PURE-BLACK-WHITE",
+      "TASTE-DARK-MODE"
+     ]
+    },
+    "treated": {
+     "critical": 0,
+     "major": 0,
+     "minor": 1,
+     "ids": [
+      "TASTE-GOOGLE-FONTS-LINK"
+     ]
+    }
+   },
+   "winner": "treated",
+   "treated_blocked": true,
+   "treated_review_done": false
+  }
+ }
+}

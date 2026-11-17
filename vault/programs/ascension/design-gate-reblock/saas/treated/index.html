@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Afterword | Action items from every meeting recording</title>
+  <meta name="description" content="Afterword reads your meeting recordings and writes down who agreed to do what, and by when.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="#top" aria-label="Afterword home">
+        <span class="brand__mark" aria-hidden="true">A</span>
+        Afterword
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav__links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#customers">Customers</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+        </ul>
+      </nav>
+      <div class="nav__actions">
+        <a class="link-quiet" href="/login">Sign in</a>
+        <a class="btn btn--primary btn--sm" href="/signup">Start free trial</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero" id="top">
+      <div class="wrap hero__grid">
+        <div class="hero__copy">
+          <h1 class="hero__title load" style="--i:0">Every meeting ends with a to&#8209;do list.</h1>
+          <p class="hero__sub load" style="--i:1">Afterword reads your recorded calls and writes down who agreed to do what, and by when.</p>
+          <div class="hero__ctas load" style="--i:2">
+            <a class="btn btn--primary" href="/signup">Start free trial</a>
+            <a class="btn btn--ghost" href="#features">See how it works</a>
+          </div>
+        </div>
+
+        <div class="hero__visual load" style="--i:3">
+          <figure class="hero__line">
+            <span class="speaker">Recording &middot; 42 min</span>
+            <p>&ldquo;Hana, can you book the vendor call about SSO pricing? Friday works.&rdquo;</p>
+          </figure>
+          <div class="tasks" aria-label="Action items from Tuesday planning">
+            <p class="tasks__title">Tuesday planning <span class="tasks__count" id="task-count">3 open</span></p>
+            <ul class="tasks__list">
+              <li>
+                <label class="task">
+                  <input type="checkbox">
+                  <span class="task__body">
+                    <span class="task__text">Send revised onboarding deck to Priya</span>
+                    <span class="task__meta">Marcus &middot; Thu</span>
+                  </span>
+                </label>
+              </li>
+              <li>
+                <label class="task">
+                  <input type="checkbox">
+                  <span class="task__body">
+                    <span class="task__text">Book the vendor call about SSO pricing</span>
+                    <span class="task__meta">Hana &middot; Fri</span>
+                  </span>
+                </label>
+              </li>
+              <li>
+                <label class="task">
+                  <input type="checkbox">
+                  <span class="task__body">
+                    <span class="task__text">Draft Q3 hiring plan for review</span>
+                    <span class="task__meta">Ollie &middot; next Mon</span>
+                  </span>
+                </label>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features" aria-labelledby="features-title">
+      <div class="wrap">
+        <h2 class="section-title reveal" id="features-title">Less note-taking. Fewer dropped tasks.</h2>
+
+        <div class="bento">
+          <article class="bento__cell bento__cell--lead reveal">
+            <h3>It catches the commitment, not just the words.</h3>
+            <p>When someone says they will do something, Afterword records the task, the person, and the date they gave.</p>
+            <figure class="transcript">
+              <blockquote>
+                <p><span class="speaker">Marcus</span> Yeah, I can take that. <mark>I&rsquo;ll send Priya the revised deck by Thursday.</mark></p>
+              </blockquote>
+              <figcaption class="transcript__result">
+                <span class="transcript__arrow" aria-hidden="true">&rarr;</span>
+                Send revised deck to Priya
+                <span class="task__meta">Marcus &middot; Thu</span>
+              </figcaption>
+            </figure>
+          </article>
+
+          <article class="bento__cell bento__cell--tint reveal">
+            <h3>Tasks go where your team already works.</h3>
+            <p>Push action items to your tracker in one click, with the transcript line attached.</p>
+            <ul class="tools" aria-label="Integrations">
+              <li>Linear</li>
+              <li>Jira</li>
+              <li>Asana</li>
+              <li>Trello</li>
+            </ul>
+          </article>
+
+          <article class="bento__cell bento__cell--ink reveal">
+            <h3>Your recordings stay yours.</h3>
+            <p>You choose how long audio is kept. Transcripts are never used to train models.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="quotes" id="customers" aria-labelledby="quotes-title">
+      <div class="wrap">
+        <h2 class="section-title reveal" id="quotes-title">Teams that stopped losing follow-ups</h2>
+        <div class="quotes__grid">
+          <figure class="quote quote--large reveal">
+            <blockquote>
+              <p>&ldquo;Our weekly ops call used to end with three people writing three different lists. Now there is one list, and it is right.&rdquo;</p>
+            </blockquote>
+            <figcaption>
+              <span class="avatar" aria-hidden="true">IA</span>
+              <span><strong>Ifeoma Adeyemi</strong>Head of Operations, Larkspur Freight</span>
+            </figcaption>
+          </figure>
+          <figure class="quote reveal">
+            <blockquote>
+              <p>&ldquo;I stopped taking notes in one-on-ones. I actually listen now, and nothing slips.&rdquo;</p>
+            </blockquote>
+            <figcaption>
+              <span class="avatar" aria-hidden="true">TF</span>
+              <span><strong>Tomás Ferreira</strong>Engineering Manager, Quillmate</span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing" id="pricing" aria-labelledby="pricing-title">
+      <div class="wrap pricing__grid">
+        <div class="pricing__intro reveal">
+          <h2 class="section-title" id="pricing-title">Simple pricing, per person.</h2>
+          <p>Every plan starts with a 14-day free trial. No card needed.</p>
+          <div class="billing" role="group" aria-label="Billing period">
+            <button type="button" class="billing__opt" data-period="monthly" aria-pressed="false">Monthly</button>
+            <button type="button" class="billing__opt" data-period="annual" aria-pressed="true">Annual <span class="billing__save">2 months free</span></button>
+          </div>
+        </div>
+
+        <div class="plans">
+          <!-- Prices are sample values for this landing page. -->
+          <article class="plan reveal">
+            <h3 class="plan__name">Team</h3>
+            <p class="plan__desc">For small teams that meet a lot.</p>
+            <p class="plan__price"><span class="plan__amount" data-monthly="12" data-annual="10">$10</span><span class="plan__unit">per user / month</span></p>
+            <p class="plan__billed" data-billed>Billed annually</p>
+            <ul class="plan__list">
+              <li>Unlimited recordings</li>
+              <li>Action items with owners and dates</li>
+              <li>Linear, Jira, Asana and Trello sync</li>
+            </ul>
+            <a class="btn btn--ghost btn--block" href="/signup?plan=team">Start free trial</a>
+          </article>
+
+          <article class="plan plan--featured reveal">
+            <h3 class="plan__name">Business</h3>
+            <p class="plan__desc">For companies with security reviews.</p>
+            <p class="plan__price"><span class="plan__amount" data-monthly="24" data-annual="20">$20</span><span class="plan__unit">per user / month</span></p>
+            <p class="plan__billed" data-billed>Billed annually</p>
+            <ul class="plan__list">
+              <li>Everything in Team</li>
+              <li>SAML single sign-on and audit log</li>
+              <li>Custom retention rules per workspace</li>
+            </ul>
+            <a class="btn btn--primary btn--block" href="/contact-sales">Talk to sales</a>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <a class="brand" href="#top" aria-label="Afterword home">
+        <span class="brand__mark" aria-hidden="true">A</span>
+        Afterword
+      </a>
+      <ul class="footer__links">
+        <li><a href="/privacy">Privacy</a></li>
+        <li><a href="/terms">Terms</a></li>
+        <li><a href="/security">Security</a></li>
+      </ul>
+      <p class="footer__copy">&copy; 2026 Afterword</p>
+    </div>
+  </footer>
+</body>
+</html>
