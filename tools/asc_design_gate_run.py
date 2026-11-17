@@ -164,9 +164,16 @@ def run_arm(task_key: str, label: str, out: Path) -> dict:
         verdict = stop.decide({"session_id": first["session_id"] or "arm", "cwd": str(d),
                                "transcript_path": str(stream)})
         rec["stop_round"] = {"blocked": bool(verdict), "reason": (verdict or {}).get("reason", "")}
-        if verdict and first["session_id"]:
+        # As live: every Stop after a block carries stop_hook_active, and the gate decides whether to block again
+        # (re-block on a recorded non-APPROVE review, at most MAX_RECORDED_BLOCKS). Bounded by that limit + 1.
+        rec["stop_rounds"] = [rec["stop_round"]]
+        while verdict and first["session_id"] and len(rec["stop_rounds"]) <= stop.MAX_RECORDED_BLOCKS:
             rec["calls"].append(call(claude_cmd("Stop hook feedback:\n" + verdict["reason"], None, first["session_id"],
                                                 True), d, stream, env))
+            verdict = stop.decide({"session_id": first["session_id"], "cwd": str(d), "transcript_path": str(stream),
+                                   "stop_hook_active": True})
+            rec["stop_rounds"].append({"blocked": bool(verdict), "reason": (verdict or {}).get("reason", "")})
+        verdict = rec["stop_round"]["blocked"]
         from modules.cdio import design_route as dr
         if verdict and first["session_id"]:
             # judge() directly, not decide(): decide() is silent on a problem set it already blocked once, which would
