@@ -100,7 +100,22 @@ surface kind, chosen by a table, and the choice is checked, not trusted.
 - Non-HTML surfaces (tsx/vue/css inside an app) need the app running; the recorder takes a screenshot path for them and
   cannot render them itself.
 - Skills are proven LOADED, not followed.
-- Whether this lowers slop is not measured here; that needs paired runs (as B7 did) and is a separate step.
+- Measured once, N=3 (below): the bundle helped on every task, but the effect is the WHOLE bundle (block + skills +
+  reviewer + one Stop round + more tools), not separable per piece, and the judge is one model family.
+
+## Measurement (GEX44, 2026-11-17; tools/asc_design_gate_run.py, data vault/programs/ascension/design-gate, c39ec274)
+| task | Taste fails control -> treated | blind judge (both orders) | slop markers per vote, control/treated | treated review |
+|---|---|---|---|---|
+| clinic dashboard | 1 crit + 2 major -> 0 | treated, treated | 1/0, 3/1 | APPROVE 90 (2nd record) |
+| SaaS landing | 0 crit + 2 major -> 0 | treated, treated | 6/2, 5/2 | BLOCK 11; Stop blocked once, the 15 s resume did not re-review |
+| yoga landing (es) | 1 crit + 1 major -> 0 | treated, treated | 5/2, 3/4 | BLOCK 59 -> 19 -> APPROVE 100 (iterated) |
+- Treated arms loaded the 3 required skills in 3/3 and dispatched cdio-reviewer in 3/3; control never could.
+- Judge reasons name the anti-slop axis directly: control SaaS = "stock SaaS template: eyebrow, gradient hero, three
+  icon cards, Most popular badge"; treated = specific sample data, mechanism shown, heatmap instead of bars.
+- Cost: treated 316-527 s vs control 69-110 s per task (5-8x wall). Output tokens counted only for the main agent.
+- Found by the run and fixed (558ec18f): 3/3 first records were refused for the css/js the rendered page itself links.
+- Open: SaaS shows the one-round Stop is not enough when the review BLOCKs (the resume ended without re-reviewing);
+  an APPROVE 100 means every recorded verdict passed, which is the reviewer's claim, not an independent check.
 
 ## Rollback
 `CPP_DESIGN_DONEGATE=off` / `CPP_DESIGN_ROUTE=off`, or delete the two dispatcher lines. State lives only under
