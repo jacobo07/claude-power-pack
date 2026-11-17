@@ -212,6 +212,20 @@ def test_record() -> None:
     Path(css).write_text("body{margin:0}\n", encoding="utf-8")
     row = rec.record(full, [css])
     ok("V-DSR-RECORD-NONHTML-NEEDS-SHOT", not row["is_done"] and any("--screenshot" in r for r in row["refused"]), row)
+    # a stylesheet the rendered page links is covered by that render (GEX44 clinic run, 2026-11-17) ...
+    d4, page4 = project(CLEAN.replace("</head>", '<link rel="stylesheet" href="site.css"></head>'))
+    css4 = os.path.join(d4, "site.css")
+    Path(css4).write_text("body{margin:0;color:#1a1a1a;background:#fafaf7}\n", encoding="utf-8")
+    old = time.time() - 60
+    os.utime(css4, (old, old))
+    dr.append_row("renders.jsonl", {"file": dr.canon(page4), "sha": dr.sha256(page4), "pngs": ["fake.png"]})
+    row = rec.record(full, [page4, css4])
+    ok("V-DSR-RECORD-LINKED-CSS-COVERED", row["is_done"] and not row["refused"], row)
+    # ... but not when it changed after that render: the screenshot no longer shows its bytes
+    later = time.time() + 60
+    os.utime(css4, (later, later))
+    row = rec.record(full, [page4, css4])
+    ok("V-DSR-RECORD-LINKED-CSS-STALE", not row["is_done"] and any("site.css" in r for r in row["refused"]), row)
 
 
 def test_render() -> None:

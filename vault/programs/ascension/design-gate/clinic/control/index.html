@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clinic Admin · Riverside Physiotherapy</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <div>
+        <p class="brand-name">Riverside Physiotherapy</p>
+        <p class="brand-sub">Front desk</p>
+      </div>
+    </div>
+    <p class="today" id="today-label"></p>
+  </header>
+
+  <main class="layout">
+    <section class="stats" aria-label="Today at a glance">
+      <div class="stat">
+        <p class="stat-label">Appointments today</p>
+        <p class="stat-value" id="stat-total">–</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Checked in</p>
+        <p class="stat-value" id="stat-checked">–</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Room use this week</p>
+        <p class="stat-value" id="stat-util">–</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Calls to make</p>
+        <p class="stat-value" id="stat-calls">–</p>
+      </div>
+    </section>
+
+    <section class="panel panel-appointments" aria-labelledby="appt-heading">
+      <div class="panel-head">
+        <h2 id="appt-heading">Today's appointments</h2>
+        <label class="filter">
+          <span class="visually-hidden">Filter by practitioner</span>
+          <select id="practitioner-filter">
+            <option value="all">All practitioners</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Patient</th>
+              <th scope="col">Treatment</th>
+              <th scope="col">Practitioner</th>
+              <th scope="col">Room</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody id="appt-body"></tbody>
+        </table>
+        <p class="empty" id="appt-empty" hidden>No appointments for this practitioner today.</p>
+      </div>
+    </section>
+
+    <section class="panel panel-rooms" aria-labelledby="rooms-heading">
+      <div class="panel-head">
+        <h2 id="rooms-heading">Room utilisation</h2>
+        <p class="panel-note" id="week-label"></p>
+      </div>
+      <p class="panel-note">Booked hours as a share of open hours (Mon–Fri, 08:00–18:00).</p>
+      <ul class="rooms" id="rooms-list"></ul>
+    </section>
+
+    <section class="panel panel-followups" aria-labelledby="fu-heading">
+      <div class="panel-head">
+        <h2 id="fu-heading">Awaiting follow-up call</h2>
+        <p class="panel-note" id="fu-count"></p>
+      </div>
+      <ul class="followups" id="fu-list"></ul>
+      <p class="empty" id="fu-empty" hidden>Everyone has been called. Nice work.</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

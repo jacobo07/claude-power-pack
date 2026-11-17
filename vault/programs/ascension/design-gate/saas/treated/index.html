@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Afterword: meeting recordings in, action items out</title>
+  <meta name="description" content="Afterword turns meeting recordings into action items with owners and due dates, ready to send before the call ends.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link rel="stylesheet" href="https://fonts.bunny.net/css?family=schibsted-grotesk:400,500,600,700|ibm-plex-mono:400,500&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="#top" aria-label="Afterword home">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M9 11h14M9 16h10M9 21h6"/></svg>
+        <span>Afterword</span>
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav__links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#customers">Customers</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+        </ul>
+      </nav>
+      <div class="nav__actions">
+        <a class="link-quiet" href="/login">Sign in</a>
+        <a class="btn btn--primary btn--sm" href="#pricing">Start free trial</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="wrap hero__grid">
+        <div class="hero__copy">
+          <h1 id="hero-title" class="enter" style="--i:0">Every meeting ends with a to-do list.</h1>
+          <p class="hero__sub enter" style="--i:1">Upload a recording. Afterword returns who owns what and by when, ready to send before your next call starts.</p>
+          <div class="hero__ctas enter" style="--i:2">
+            <a class="btn btn--primary" href="#pricing">Start free trial</a>
+            <a class="btn btn--ghost" href="#features">See how it works</a>
+          </div>
+        </div>
+
+        <figure class="sample enter" style="--i:3" aria-labelledby="sample-cap">
+          <figcaption id="sample-cap" class="sample__head">
+            <span class="sample__title">Product sync</span>
+            <span class="sample__meta">32 min recording</span>
+          </figcaption>
+
+          <ol class="transcript" aria-label="Transcript excerpt">
+            <li><time>12:04</time><p><b>Priya:</b> <mark>I'll rewrite the onboarding email</mark> before the launch.</p></li>
+            <li><time>18:41</time><p><b>Daniel:</b> Can you <mark>send the pricing deck to Halvorsen by Thursday</mark>?</p></li>
+            <li><time>27:15</time><p><b>Mei:</b> <mark>I'll book the user interviews</mark> for next week.</p></li>
+          </ol>
+
+          <div class="tasks" aria-live="polite">
+            <p class="tasks__label">Action items <span class="tasks__count" data-count>0 of 3 done</span></p>
+            <ul>
+              <li class="task" style="--k:0">
+                <label><input type="checkbox"><span class="task__text">Rewrite onboarding email</span></label>
+                <span class="task__who">Priya</span><span class="task__due">Mon 24 Nov</span>
+              </li>
+              <li class="task" style="--k:1">
+                <label><input type="checkbox"><span class="task__text">Send pricing deck to Halvorsen</span></label>
+                <span class="task__who">Daniel</span><span class="task__due">Thu 20 Nov</span>
+              </li>
+              <li class="task" style="--k:2">
+                <label><input type="checkbox"><span class="task__text">Book user interviews</span></label>
+                <span class="task__who">Mei</span><span class="task__due">Fri 28 Nov</span>
+              </li>
+            </ul>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="features" id="features" aria-labelledby="features-title">
+      <div class="wrap features__grid">
+        <div class="features__intro reveal">
+          <h2 id="features-title">Notes are easy. Follow-through is the hard part.</h2>
+          <p>Afterword skips the summary nobody reads and goes straight to the commitments people made out loud.</p>
+        </div>
+
+        <article class="feature feature--lead reveal">
+          <h3>Deadlines from plain speech</h3>
+          <p>“By Thursday” and “end of next week” become real dates on the calendar, based on when the meeting took place.</p>
+          <div class="parse" aria-label="Example">
+            <span class="parse__in">“…to Halvorsen by Thursday?”</span>
+            <span class="parse__arrow" aria-hidden="true">→</span>
+            <span class="parse__out">Due Thu 20 Nov</span>
+          </div>
+        </article>
+
+        <article class="feature reveal">
+          <h3>An owner on every item</h3>
+          <p>Speaker detection ties each task to the person who agreed to it, not to whoever happened to take notes.</p>
+        </article>
+
+        <article class="feature reveal">
+          <h3>Sent where work already lives</h3>
+          <p>Push items to Linear, Jira, Asana or a Slack thread with one click. Nothing to copy and paste.</p>
+        </article>
+
+        <article class="feature feature--wide reveal">
+          <h3>A searchable record of decisions</h3>
+          <p>Find out when the team agreed to drop the annual plan, and who was on the call, without scrubbing through audio.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="quotes" id="customers" aria-labelledby="quotes-title">
+      <div class="wrap">
+        <h2 id="quotes-title" class="quotes__title reveal">Teams that stopped losing tasks between calls</h2>
+        <div class="quotes__grid">
+          <figure class="quote reveal">
+            <blockquote>
+              <p>“Our Monday stand-up used to end with ‘who was doing that again?’ Now the list is in Linear before anyone leaves the room.”</p>
+            </blockquote>
+            <figcaption><span class="quote__name">Ifeoma Adeyemi</span><span class="quote__role">Head of Operations, Larkspur Freight</span></figcaption>
+          </figure>
+          <figure class="quote quote--offset reveal">
+            <blockquote>
+              <p>“I run eleven client calls a week. Afterword is the reason none of the follow-ups slip anymore.”</p>
+            </blockquote>
+            <figcaption><span class="quote__name">Joaquín Ferreira</span><span class="quote__role">Account Director, Bramble &amp; Co.</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="pricing" id="pricing" aria-labelledby="pricing-title">
+      <div class="wrap">
+        <div class="pricing__head reveal">
+          <h2 id="pricing-title">Simple pricing</h2>
+          <p>Billed monthly. Cancel any time from your account settings.</p>
+        </div>
+
+        <div class="plans">
+          <article class="plan reveal" aria-labelledby="plan-solo">
+            <h3 id="plan-solo">Solo</h3>
+            <p class="plan__for">For one person running their own meetings.</p>
+            <p class="plan__price"><span class="plan__amount">$14</span><span class="plan__per">per month</span></p>
+            <ul class="plan__list">
+              <li>20 hours of recordings a month</li>
+              <li>Action items with owners and dates</li>
+              <li>Export to Slack and email</li>
+            </ul>
+            <a class="btn btn--ghost btn--block" href="#signup" data-plan="solo">Start free trial</a>
+          </article>
+
+          <article class="plan plan--team reveal" aria-labelledby="plan-team">
+            <h3 id="plan-team">Team</h3>
+            <p class="plan__for">For teams that share meetings and owners.</p>
+            <p class="plan__price"><span class="plan__amount">$11</span><span class="plan__per">per seat, per month</span></p>
+            <ul class="plan__list">
+              <li>Unlimited recordings</li>
+              <li>Linear, Jira and Asana sync</li>
+              <li>Shared decision log with search</li>
+              <li>SSO and admin controls</li>
+            </ul>
+            <a class="btn btn--primary btn--block" href="#signup" data-plan="team">Start free trial</a>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="signup" id="signup" aria-labelledby="signup-title">
+      <div class="wrap signup__inner reveal">
+        <div class="signup__copy">
+          <h2 id="signup-title">Try it on your next meeting</h2>
+          <p>14 days free on either plan. No card needed.</p>
+        </div>
+        <form class="signup__form" action="/signup" method="post" novalidate>
+          <input type="hidden" name="plan" value="team" data-plan-field>
+          <div class="field">
+            <label for="email">Work email</label>
+            <div class="field__row">
+              <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-help email-error">
+              <button class="btn btn--primary" type="submit">Start free trial</button>
+            </div>
+            <p id="email-help" class="field__help">Trial plan: <span data-plan-label>Team</span>. You can switch plans later.</p>
+            <p id="email-error" class="field__error" hidden>Enter a work email like name@company.com.</p>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      <a class="brand brand--small" href="#top" aria-label="Afterword home">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M9 11h14M9 16h10M9 21h6"/></svg>
+        <span>Afterword</span>
+      </a>
+      <p class="footer__copy">© 2026 Afterword</p>
+    </div>
+  </footer>
+</body>
+</html>
