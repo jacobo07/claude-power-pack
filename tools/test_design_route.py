@@ -106,10 +106,20 @@ def test_routes() -> None:
     ok("V-DSR-CLASSIFY-MOBILE", "mobile" in c("diseña la app móvil de reservas"), c("app móvil"))
     calco = c("rebuild this landing pixel-perfect from the screenshot")
     ok("V-DSR-CLASSIFY-CALCO-OVERRIDES", calco == ["calco"], calco)
-    ok("V-DSR-CLASSIFY-MOTION", c("make a 30 s promo for the launch") == ["motion"], c("promo"))
+    ok("V-DSR-CLASSIFY-MOTION", c("make a 30 s promo video for the launch") == ["motion"], c("promo video"))
     ok("V-DSR-CLASSIFY-NONE", c("fix the postgres migration and the retry loop") == [], c("postgres"))
+    # ordinary wording that used to classify (review of a9db1d43, F1/F2): each must stay non-visual
+    stray = {p: c(p) for p in ("refactor this so it behaves exactly as before", "el resultado debe ser idéntico al anterior",
+                               "add a promo code field to the checkout form", "bump the helm chart version",
+                               "git checkout main and fix the build", "la interfaz de la API REST",
+                               "the frontend calls /api/users, fix the 500", "plot the latency numbers in the log")}
+    ok("V-DSR-CLASSIFY-STRAY-WORDS", all(v == [] for v in stray.values()), {k: v for k, v in stray.items() if v})
     pol = dr.policy(dr.effective_kinds([], routes), routes)
     ok("V-DSR-DEFAULT-WEB", pol["kinds"] == ["web"] and pol["review"] and pol["taste"], pol)
+    pol = dr.policy(dr.effective_kinds(["dataviz"], routes), routes)
+    ok("V-DSR-NONGATING-KEEPS-WEB", "web" in pol["kinds"] and pol["review"] and pol["taste"], pol)
+    ok("V-DSR-APP-SOURCE-NEEDS-VISUAL-PROMPT", dr.kinds_for("Foo.tsx", [], routes) is None
+       and dr.kinds_for("Foo.tsx", ["app_ui"], routes) == ["app_ui"], dr.kinds_for("Foo.tsx", [], routes))
 
 
 def test_prompt() -> None:
@@ -157,6 +167,22 @@ def test_stop() -> None:
     dr.save_session("s9", st)
     ok("V-DSR-STOP-CALCO-NO-TASTE-NO-REVIEW", stop("s9", d, calco_t) is None)
 
+    # the latest visual prompt decides: a calco prompt followed by a landing prompt is judged as web again
+    run_hook(PROMPT, {"session_id": "s10", "prompt": "clone this design from the figma screenshot"})
+    run_hook(PROMPT, {"session_id": "s10", "prompt": "now build the yoga landing page"})
+    ok("V-DSR-LATEST-PROMPT-DECIDES", dr.load_session("s10")["kinds"] == ["web"], dr.load_session("s10"))
+    # a logic edit to app source in a session that named no visual surface is not judged
+    tsx = os.path.join(d, "Foo.tsx")
+    Path(tsx).write_text("export const x = 1;\n", encoding="utf-8")
+    ok("V-DSR-STOP-TSX-LOGIC-SILENT", stop("s11", d, transcript(writes=[tsx])) is None)
+    # an edit after a block does not re-block the same problem (key is the problem, not the bytes)
+    d2, page2 = project(SLOP)
+    first = stop("s12", d2, transcript(writes=[page2], skills=REQ_WEB))
+    with open(page2, "a", encoding="utf-8") as fh:
+        fh.write("<!-- unrelated edit -->\n")
+    again = stop("s12", d2, transcript(writes=[page2], skills=REQ_WEB))
+    ok("V-DSR-STOP-NO-REBLOCK-ON-EDIT", (first or {}).get("decision") == "block" and again is None, again)
+
 
 def test_record() -> None:
     sys.path.insert(0, str(ROOT / "tools"))
@@ -176,6 +202,12 @@ def test_record() -> None:
     dr.append_row("renders.jsonl", {"file": dr.canon(page3), "sha": dr.sha256(page3), "pngs": ["fake.png"]})
     row = rec.record(full, [page3])
     ok("V-DSR-RECORD-FOLDS-TASTE", not row["is_done"] and row["verdict"] != "APPROVE" and row["critical"], row)
+    css2 = os.path.join(d3, "site.css")
+    Path(css2).write_text("body{margin:0}\n", encoding="utf-8")
+    stub = os.path.join(d3, "stub.png")                     # PNG signature only: the old check accepted it
+    Path(stub).write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 16)
+    row = rec.record(full, [css2], screenshot=stub)
+    ok("V-DSR-RECORD-REFUSES-STUB-PNG", not row["is_done"] and any("--screenshot" in r for r in row["refused"]), row)
     css = os.path.join(d, "app.css")
     Path(css).write_text("body{margin:0}\n", encoding="utf-8")
     row = rec.record(full, [css])

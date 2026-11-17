@@ -1,19 +1,19 @@
 {
-  "version": 1,
+  "version": 2,
   "spec": "vault/specs/design-surface-router.md",
   "reviewer": "cdio-reviewer",
   "visual_ext": [".html", ".htm", ".css", ".scss", ".sass", ".tsx", ".jsx", ".vue", ".svelte"],
   "default_kind": "web",
   "surfaces": {
     "web": {
-      "prompt": "\\b(landing|home ?page|homepage|p[aá]gina web|sitio web|web ?site|website|web page|webpage|hero section|secci[oó]n hero|pricing page|p[aá]gina de precios|frontend|front-end|maquetar|redise[ñn]a(r)? (la|el|una|un) (web|p[aá]gina|sitio))\\b",
+      "prompt": "\\b(landing|home ?page|homepage|p[aá]gina web|sitio web|web ?site|website|web page|webpage|hero section|secci[oó]n hero|pricing page|p[aá]gina de precios|maquetar|redise[ñn]a(r)? (la|el|una|un) (web|p[aá]gina|sitio))\\b",
       "required": ["design-md", "design-taste-frontend", "frontend-design"],
       "recommended": ["web-design-guidelines", "ui-ux-pro-max"],
       "taste": true,
       "review": true
     },
     "app_ui": {
-      "prompt": "\\b(dashboard|panel de (control|admin)|admin panel|componente(s)? (de )?ui|ui component|interfaz|user interface|pantalla(s)? de (la )?app|app screen|onboarding|checkout|navbar|sidebar|formulario|signup form|settings page)\\b",
+      "prompt": "\\b(dashboard|panel de (control|admin)|admin panel|componente(s)? (de )?ui|ui component|interfaz (de usuario|gr[aá]fica)|user interface|pantalla(s)? de (la )?app|app screen|onboarding (flow|screen|pantalla)|pantalla de onboarding|checkout (page|flow|screen)|p[aá]gina de pago|navbar|sidebar|signup form|formulario de (registro|contacto|alta)|settings page)\\b",
       "required": ["design-md", "design-taste-frontend", "frontend-design"],
       "recommended": ["ui-ux-pro-max", "web-design-guidelines", "dataviz"],
       "taste": true,
@@ -27,7 +27,7 @@
       "review": true
     },
     "calco": {
-      "prompt": "\\b(id[eé]ntic[oa]|identical|pixel[- ]perfect|calco|calca(r)?|exactamente (igual|como)|exactly (like|as)|match (this|the) (mockup|screenshot|image)|r[eé]plica (de )?(esta|este|la|el) (imagen|captura|mockup))\\b",
+      "prompt": "(\\b(pixel[- ]perfect|calco|calcar)\\b|\\b(id[eé]ntic[oa]|identical|exactamente (igual|como)|exactly (like|as)|match(ing)?|r[eé]plica|replicate|clone)\\b.{0,40}\\b(mockup|screenshot|captura|imagen|image|dise[ñn]o|design|figma|reference|referencia)\\b)",
       "required": ["image-calco"],
       "recommended": ["anydesign"],
       "taste": false,
@@ -35,7 +35,7 @@
       "overrides": ["web", "app_ui"]
     },
     "motion": {
-      "prompt": "\\b(promo|trailer|teaser|sizzle|launch film|product video|v[ií]deo (promocional|de producto|de lanzamiento)|anuncio animado|animated ad)\\b",
+      "prompt": "\\b(promo (video|film|clip|reel)|v[ií]deo (promo(cional)?|de producto|de lanzamiento)|trailer|teaser|sizzle( reel)?|launch film|product video|anuncio animado|animated ad)\\b",
       "required": ["motion-promo"],
       "recommended": [],
       "taste": false,
@@ -43,7 +43,7 @@
       "overrides": ["web", "app_ui"]
     },
     "dataviz": {
-      "prompt": "\\b(chart|gr[aá]fic[oa]s?|plot|visuali[sz]a(tion|ci[oó]n)|kpi tile|sparkline|heatmap)\\b",
+      "prompt": "\\b((bar|line|pie|area|scatter|donut) (chart|graph)|gr[aá]fic[oa]s? de (barras|l[ií]neas|tarta|datos)|data ?vi[sz](ualization)?|visuali[sz]aci[oó]n de datos|kpi tiles?|sparklines?|heatmap)\\b",
       "required": [],
       "recommended": ["dataviz"],
       "taste": false,

@@ -45,7 +45,9 @@ def decide(payload: dict) -> dict | None:
     if not res["problems"]:
         dr.append_row("donegate.jsonl", dict(row, decision="pass"))
         return None
-    key = hashlib.sha256(json.dumps(sorted([p["check"], p["file"], p.get("sha", ""), p["detail"]]
+    # The key names WHAT is wrong (check, file, criterion), never the bytes: keyed on the sha, every turn that edited
+    # the file again blocked again until the agent wrote NO APLICA (review of a9db1d43, F2). One chance per problem.
+    key = hashlib.sha256(json.dumps(sorted([p["check"], p["file"], p.get("key", "")]
                                            for p in res["problems"])).encode()).hexdigest()[:16]
     blocked = st.setdefault("blocked", [])
     if payload.get("stop_hook_active") or key in blocked:

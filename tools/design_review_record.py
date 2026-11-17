@@ -74,12 +74,21 @@ def render(files: list) -> int:
     return rc
 
 
+MIN_SHOT_PX = 300
+
+
 def _is_png(p: str) -> bool:
+    """A real screenshot: PNG signature AND an IHDR of at least MIN_SHOT_PX on both sides (8 magic bytes alone were
+    satisfiable by any stub file; review of a9db1d43, F3)."""
     try:
         with open(p, "rb") as fh:
-            return fh.read(8) == PNG_MAGIC
+            head = fh.read(24)
     except OSError:
         return False
+    if len(head) < 24 or head[:8] != PNG_MAGIC or head[12:16] != b"IHDR":
+        return False
+    w, h = int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")
+    return w >= MIN_SHOT_PX and h >= MIN_SHOT_PX
 
 
 def record(verdicts_path: str, files: list, screenshot: str | None = None, experience: str | None = None) -> dict:

@@ -52,7 +52,9 @@ def run(payload: dict) -> dict | None:
     sid = str(payload.get("session_id") or payload.get("sessionId") or "")
     if sid:
         st = dr.load_session(sid)
-        st["kinds"] = st["kinds"] + [k for k in kinds if k not in st["kinds"]]
+        # The LATEST visual prompt decides, never the union of the session: one stray match early on must not decide
+        # the gate for every later page (review of a9db1d43, F1).
+        st["kinds"] = kinds
         dr.save_session(sid, st)
     dr.append_row("prompts.jsonl", {"sid": sid, "kinds": kinds})
     return {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",

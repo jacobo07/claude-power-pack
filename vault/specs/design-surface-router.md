@@ -55,6 +55,16 @@ surface kind, chosen by a table, and the choice is checked, not trusted.
 6. `vault/agents/cdio-reviewer.md` + its live copy: the review ends with `render` then `record`; the chat report alone
    no longer counts.
 
+## Rules fixed after review of a9db1d43 (pp-code-reviewer: WARNING, 1 HIGH)
+- F1 HIGH: ordinary words ("exactly as before", "promo code", "helm chart") classified as calco / motion / dataviz,
+  and because kinds were a session UNION and any kind replaced the default, Taste and the review switched off for the
+  rest of the session. Now: regexes need a visual object (calco), a film word (motion), a data word (dataviz); the
+  LATEST visual prompt's kinds replace the session's; a non-gating kind never replaces web for an HTML page.
+- F2 MEDIUM: an HTML page is always judged; app source (tsx/jsx/vue/css) only when the latest visual prompt named a
+  gating surface (web/app_ui/mobile), so a logic fix in a component is not a design task. The once-per-set key names
+  the problem (check, file, criterion), not the bytes, so re-editing a file does not re-block it.
+- F3 LOW: `--screenshot` must be a PNG with an IHDR of at least 300x300.
+
 ## Acceptance (V-DSR-*, `tools/test_design_route.py`, hermetic state dir, both poles)
 - ROUTES-RESOLVE: every required skill in the table resolves to an installed SKILL.md or command (a table naming a
   skill nobody can load is a documented capability nobody can execute).

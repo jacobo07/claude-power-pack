@@ -46,10 +46,30 @@ def classify(prompt: str, routes: dict) -> list:
     return _apply_overrides(kinds, routes)
 
 
+def kinds_for(path: str, session_kinds: list, routes: dict) -> list | None:
+    """The kinds that judge ONE written file, or None when that file is not judged.
+
+    An HTML page is always judged: as web, unless the session's latest visual prompt made it a copy (calco) or a
+    film (motion), whose own gates judge it. A non-gating kind (dataviz, brand) never replaces web for a page: it
+    used to, and "plot"/"chart" in an unrelated prompt then switched Taste and the review off for the session
+    (review of a9db1d43, F1). App source (tsx, jsx, vue, css) is judged only when the work was named as a visual
+    surface: a logic fix in a component is not a design task (F2).
+    """
+    s = routes["surfaces"]
+    kinds = [k for k in session_kinds if k in s]
+    gating = [k for k in kinds if s[k].get("review")]
+    overriding = any(s[k].get("overrides") for k in kinds)
+    if (path or "").lower().endswith(HTML_EXT):
+        if not gating and not overriding:
+            kinds = kinds + [routes["default_kind"]]
+    elif not gating:
+        return None
+    return _apply_overrides(kinds, routes)
+
+
 def effective_kinds(session_kinds: list, routes: dict) -> list:
-    """The kinds that judge a written visual file. A file written with no visual words in any prompt is web."""
-    kinds = [k for k in session_kinds if k in routes["surfaces"]]
-    return _apply_overrides(kinds or [routes["default_kind"]], routes)
+    """The kinds that judge an HTML page written in a session with these prompt kinds."""
+    return kinds_for("page.html", session_kinds, routes)
 
 
 def policy(kinds: list, routes: dict) -> dict:
@@ -270,32 +290,36 @@ def judge(st: dict, cwd: str, routes: dict, na: dict | None = None) -> dict:
     for w in st.get("writes", []):
         if w and is_visual(w, routes) and os.path.isfile(w) and inside(w, cwd) and canon(w) not in files:
             files.append(canon(w))
-    res = {"files": files, "kinds": [], "problems": [], "waived": {}}
-    if not files:
+    res = {"files": [], "kinds": [], "problems": [], "waived": {}}
+    judged = [(f, kinds_for(f, st.get("kinds", []), routes)) for f in files]
+    judged = [(f, k) for f, k in judged if k is not None]
+    res["files"] = [f for f, _ in judged]
+    if not judged:
         return res
-    pol = policy(effective_kinds(st.get("kinds", []), routes), routes)
-    res["kinds"] = pol["kinds"]
-    problems = []
-    if pol["taste"]:
-        from modules.cdio import taste
-        for f in files:
-            if f.endswith(HTML_EXT):
-                rep = taste.lint(f, site_root=cwd)
-                for v in rep.verdicts:
-                    if v.criterion in rep.blocking:
-                        problems.append({"check": "design-taste", "file": f, "detail": "%s: %s" % (v.criterion, v.observed)})
-    used = {skill_key(s) for s in st.get("skills", [])}
-    missing = [s for s in pol["required"] if skill_key(s) not in used]
-    if missing:
-        problems.append({"check": "design-skills", "file": "", "detail": "not loaded this session: " + ", ".join(missing)})
-    if pol["review"]:
-        ok = approved()
-        for f in files:
+    for _, k in judged:
+        res["kinds"] += [x for x in k if x not in res["kinds"]]
+    problems, required, ok = [], [], None
+    for f, k in judged:
+        pol = policy(k, routes)
+        required += [x for x in pol["required"] if x not in required]
+        if pol["taste"] and f.endswith(HTML_EXT):
+            from modules.cdio import taste
+            rep = taste.lint(f, site_root=cwd)
+            for v in rep.verdicts:
+                if v.criterion in rep.blocking:
+                    problems.append({"check": "design-taste", "file": f, "key": v.criterion,
+                                     "detail": "%s: %s" % (v.criterion, v.observed)})
+        if pol["review"]:
+            ok = approved() if ok is None else ok
             h = sha256(f)
             if h not in ok.get(f, set()):
-                problems.append({"check": "design-review", "file": f,
-                                 "detail": "no recorded cdio-reviewer APPROVE for these bytes (sha %s)" % h[:12],
-                                 "sha": h})
+                problems.append({"check": "design-review", "file": f, "key": "",
+                                 "detail": "no recorded cdio-reviewer APPROVE for these bytes (sha %s)" % h[:12]})
+    used = {skill_key(s) for s in st.get("skills", [])}
+    missing = [s for s in required if skill_key(s) not in used]
+    if missing:
+        problems.append({"check": "design-skills", "file": "", "key": ",".join(missing),
+                         "detail": "not loaded this session: " + ", ".join(missing)})
     res["waived"] = {k: v for k, v in na.items() if k in CHECKS}
     res["problems"] = [p for p in problems if p["check"] not in res["waived"]]
     return res
