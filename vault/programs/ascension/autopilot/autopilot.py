@@ -106,7 +106,15 @@ TRIGGER_NEGATED = re.compile(r"\b(no|not|never|without|nor|neither|excludes?|exc
                              r"\s+(\w+\s+){0,5}profiles?$", re.I)
 PHASE_RE = re.compile(r"^Phase (\d+): (.+)$")
 CAP_RE = re.compile(r"\bcap\s+(\d+(?:\.\d+)?)\s*M\b", re.I)
-FRESH_RE = re.compile(r"\bfresh\b[^.;]{0,30}?(\d[\d,]*(?:\.\d+)?)\s*([MmKk]\b)?")
+# 2026-11-17 (Owner 'y', pane 08cba76c): a number glued to an identifier ("F17", "S137R") is not an amount, and a bare
+# number followed by a noun that is not a budget word ("fresh 131 functions") is a count. Both refused FIFA S140F/S142F,
+# TENNIS S119T/S137T, MKW S122M and WSR S139R today. A unit, a budget word or nothing after the number still reads as tokens.
+FRESH_RE = re.compile(r"\bfresh\b[^.;]{0,30}?(?<![\w.])(\d[\d,]*(?:\.\d+)?)(?:\s*([MmKk])\b|(?!\w))\s*([A-Za-z][\w-]*)?")
+FRESH_BUDGET_WORDS = frozenset({"tokens", "token", "tok", "budget", "authority", "capital", "allowance", "million",
+                                "millions", "thousand",
+                                # function words say nothing about what the number counts: still read as an amount
+                                "for", "to", "of", "in", "on", "at", "and", "or", "more", "extra", "new", "additional",
+                                "is", "are", "as", "per", "with", "from", "by", "the", "a", "an", "if", "then", "so"})
 
 
 def normalize(text: str) -> tuple[str, list[str]]:
@@ -153,7 +161,9 @@ def policy_check(phase_lines: list[str], command: str, extra: list[str] | tuple 
         bad.append(f"phase caps sum {total}M > generation cap {GEN_CAP/1e6:.0f}M")
     text, nbad = normalize("\n".join(phase_lines) + "\n" + (command or "") + "\n" + "\n".join(str(x) for x in extra))
     bad += nbad
-    for num, unit in FRESH_RE.findall(text):
+    for num, unit, word in FRESH_RE.findall(text):
+        if not unit and word and word.lower() not in FRESH_BUDGET_WORDS:
+            continue  # "fresh 131 functions": a count, not an amount
         if _fresh_tokens(num, unit) > FRESH_GEN_CAP:
             bad.append(f"asks fresh {num}{unit or ''} > {FRESH_GEN_CAP/1e6:.0f}M")
     for pat, label in FORBIDDEN:

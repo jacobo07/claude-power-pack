@@ -129,6 +129,15 @@ def run_all(ap):
     check("V-AP-POLICY-REFUSES-ONE-PHASE", refuses(ap, ["Phase 1: a (cap 1M): x"], "need 2-8"))
     check("V-AP-POLICY-REFUSES-FRESH-OVER-1M", refuses(
         ap, ["Phase 1: a (cap 3M): fresh 2M model pilot", "Phase 2: b (cap 1M): y"], "fresh"))
+    # 2026-11-17 (Owner 'y', pane 08cba76c): identifiers and counts after "fresh" are not amounts (FIFA S142F, TENNIS
+    # S137T, MKW S122M, WSR S139R); a unit, a budget word or a bare number still is
+    for label, line in [("id", "F17 leaf route on a fresh held-out for F17"), ("gen", "fresh draw unlike S137R"),
+                        ("count", "fresh 131 functions from the pool"), ("ids", "a fresh held-out of 40 ids")]:
+        check(f"V-AP-POLICY-FRESH-ADMITS-{label.upper()}",
+              ap.policy_check(GOOD[:2] + [GOOD[2] + "; " + line], "") == [])
+    for label, line in [("bare", "fresh 2 for the pilot"), ("word", "fresh 3 budget for it"),
+                        ("tokens", "fresh 5 tokens"), ("million", "fresh 4 million")]:
+        check(f"V-AP-POLICY-FRESH-STILL-REFUSES-{label.upper()}", refuses(ap, GOOD[:2] + [GOOD[2] + "; " + line], "fresh"))
     # ---- profile conditions: each missing one refused; negation and other-line placement do not satisfy
     for cond, repl in [("oracle", ("oracle", "zzz")), ("DOL", ("DOL", "zzz")), ("frozen pilot", ("frozen pilot", "pilot")),
                        ("controls", ("controls", "zzz")), ("A2 negatives", ("A2 negatives", "zzz")),
@@ -1227,6 +1236,9 @@ def _worktree_unchecked(m):
 drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "policy_ignores_facts": _ignore_extra,
          "budget_off": lambda m: setattr(m, "budget_admits", lambda *a, **k: None),
+         "fresh_any_word_is_count": lambda m: setattr(m, "FRESH_BUDGET_WORDS", frozenset()),
+         "fresh_old_regex": lambda m: setattr(m, "FRESH_RE", __import__("re").compile(
+             r"\bfresh\b[^.;]{0,30}?(\d[\d,]*(?:\.\d+)?)\s*([MmKk]\b)?()")),
          "blank_off": lambda m: setattr(m, "BLANK_STOP", 99),
          "profile_off": lambda m: setattr(m, "PROFILE_CONDITIONS", {}),
          "negation_off": lambda m: setattr(m, "NEGATION", __import__("re").compile(r"(?!x)x")),
