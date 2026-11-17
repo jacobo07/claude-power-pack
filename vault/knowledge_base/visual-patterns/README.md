@@ -107,6 +107,12 @@ entry at `local`. Open-source libraries are principle sources only unless
 
 VP-019 documents brand-colour propagation into plausible scene illumination (landscape, refractive object and emissive architecture). It is NOT a motion pattern and is not auto-enrolled by the CDIO-07 motion resolver. Its related study is `evidence/REF-BRAND-LIGHT-001/OBSERVATION.md`; no reference image/video is redistributed in the repo. Retrieval through `/cpp-design` requires the existing opt-in `--refresh` until an independently tested automatic activation is added.
 
+## Brand-lit combinations dataset and experiment ledger (2026-11-17)
+
+- [160 cinematic scene/lighting/palette hypotheses](datasets/VP019_BRAND_LIT_COMBINATIONS.md) — 20 context families × 8 individually specified designs. These are original *design candidates*, not observed user-video frames and not 160 production-ready image assets.
+- [VP-019 evaluation ledger](ledgers/VP019_COMBINATION_LEDGER.jsonl) — 160 aligned identifiers, all `HYPOTHESIS_UNTESTED`, with blank proof/asset/rights/review/baseline fields; no promotion without actual tests.
+- The canonical design technique and existing selector point remain [[cinematic-brand-lit-hero]] (VP-019). The dataset is a subordinate enumerated candidate corpus, not 160 separate VP pattern IDs. Static web realization, asset licenses and accessibility remain to be verified.
+
 ## Discoverable via /cpp-design
 
 Registrado como `manual_entries` en
