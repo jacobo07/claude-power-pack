@@ -56,3 +56,7 @@ The methods are reusable **grammars**, not copies of Mossgrove/Tidewell/Blackrid
 - Knowledge Vault and UKDL candidates only for transferable **proven** faults; avoid promoting one reference into a constitutive baseline.
 
 **State at backlog creation:** VP-019 and observational evidence are documented; no new hero renderer, source art, website, browser verification or activation baseline is claimed.
+
+## Expansion 2026-11-17 — 160 candidates in shared creative dataset
+
+The owner requested many more background, light and palette combinations. The [catalog of 160 candidates](../knowledge_base/visual-patterns/datasets/VP019_BRAND_LIT_COMBINATIONS.md) now covers 20 thematic families with eight concrete scene recipes each, original creative concepts rather than claims about the source video. The [state/evidence ledger](../knowledge_base/visual-patterns/ledgers/VP019_COMBINATION_LEDGER.jsonl) contains one unverified row per candidate. This is a **source-denominator extension**, not 160 automatically authorized build tasks or a claim of execution. Extend VPL-10's frozen benchmark by a representative, contrastive stratified sample (different scene/material/light routes; include refusal cases) and only promote patterns after actual representative tests. Do not make candidate count the reward target; an unbuilt candidate is legitimate research value but not a production feature.
