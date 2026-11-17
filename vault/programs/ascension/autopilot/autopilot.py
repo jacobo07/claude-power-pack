@@ -64,7 +64,9 @@ TERMINAL = {"COMPLETED", "HALTED", "ORPHANED"}
 
 # ---------------------------------------------------------------- policy (deterministic, no model)
 _W = r"(?!via\b|through\b|with\b|using\b|by\b|under\b)[\w/.-]+"  # an object word; instrumental prepositions end it
-_TARGET = (r"(certifier|certify\.py|certify\.decide|cert_cxx\w*|ksr_lane\w*|canonical\s+(ctx|context|headers?)|"
+# 2026-11-18 (Owner ruling OR-3, pane 08cba76c): canonical HEADERS may change under OR-3 (full build passes, no function
+# leaves 100%); the canonical ctx stays protected, it is the certificate identity of the KSR/Tennis profiles.
+_TARGET = (r"(certifier|certify\.py|certify\.decide|cert_cxx\w*|ksr_lane\w*|canonical\s+(ctx|context)|"
            r"pinned\s+stages?|(historical|existing|old|pinned|cert1[\w-]*)\s+receipts?)")
 _DESTRUCTIVE = r"(modif|chang|edit|patch|rewrit|relax|weaken|replac|overwrit|delet|remov|alter|amend|truncat|regenerat)"
 _WRITE = _DESTRUCTIVE[:-1] + r"|updat|add|append|writ|extend)"
@@ -304,6 +306,27 @@ def log(msg: str) -> None:
 def owner_queue(lane: str, text: str) -> None:
     with open(OUT / "owner_queue.md", "a") as f:
         f.write(f"- [{dt.datetime.now(dt.timezone.utc).strftime('%FT%TZ')}] {lane}: {text}\n")
+
+
+OWNER_Q = re.compile(r"OWNER\s+(DECISION\s+NEEDED|QUESTION)", re.I)
+
+
+def surface_owner_questions(lane: str, checkpoint: str, product: str) -> int:
+    """Copy a checkpoint's 'OWNER DECISION NEEDED / OWNER QUESTION' lines (at most 3, verbatim, 300 chars) to
+    owner_queue.md as QUESTION lines, once each. 2026-11-18 (Owner 'y', pane 08cba76c): 77 such lines in ~50 checkpoints
+    since 11-14 never reached the Owner, and the work routed around them. The text is the worker's: data, not orders."""
+    p = Path(checkpoint) if os.path.isabs(checkpoint) else Path(product, checkpoint)
+    try:
+        lines = [l.strip()[:300] for l in p.read_text(errors="replace").splitlines() if OWNER_Q.search(l)][:3]
+        seen = (OUT / "owner_queue.md").read_text(errors="replace") if (OUT / "owner_queue.md").exists() else ""
+    except OSError:
+        return 0
+    n = 0
+    for q in lines:
+        if q[:160] not in seen:
+            owner_queue(lane, f"QUESTION (from {p.name}): {q}")
+            n += 1
+    return n
 
 
 def digest(lane: str, text: str) -> None:
@@ -682,13 +705,17 @@ Mission terms: open-ended reconstruction, method evolution, independent certific
 
 Authority: this generation's own mission record, <= {cap}M processed (sum of the phase caps; closeout included), fresh <= 1M only
 where a phase names it, USD 0, no push. Per-phase caps in each phase line, measured from the record spend at phase start.
-NOT authorised: writes to pinned stages (ksrmb-20261001-101754, ksrmb-s25-20261111-140212) or any receipts file
+Owner standing rulings OR-1..OR-6 in the brief apply; a residual's next route is never an Owner question (OR-4).
+NOT authorised: writes to pinned stages (ksrmb-20261001-101754, ksrmb-s25-20261111-140212) or any EXISTING receipts file
 (cert1-ksr 8,687, cert1-ksr-s25stage, Tennis receipts); KSR/Tennis frontier files; certify.py / cert_cxx.py / ksr_lane rules
-and existing profiles; canonical ctx and headers; H2; R2; merging counters into any headline; revoking any certificate
+and existing profiles; the canonical ctx; canonical headers, splits.txt and symbols.txt except under OR-3 (full build
+passes and no function leaves 100% in the objdiff report); H2; R2; merging counters into any headline; revoking any certificate
 (contradictions go to the Owner queue); push; paid or cloud usage; any budget change. A NEW additive profile is allowed only
 with ALL S26C conditions: independent target oracle on original DOL bytes, frozen pilot committed before the draw, pre/post
 controls, A2 negatives, historical receipts byte-identical, separate counters. UNKNOWN and INSTRUMENT_FAIL are never zero;
-BINARY_EXACT is never CERTIFIED. Every gate has planted mutants that must turn it red. Freeze before you judge.
+BINARY_EXACT becomes CERTIFIED only under OR-1: the exact match is confirmed by an independent oracle on the original
+bytes, and its receipts go in this generation's own receipts file, registered in receipt_registry.json. Every gate has
+planted mutants that must turn it red. Freeze before you judge.
 
 Facts (from the planner; re-derive, do not trust):
 {facts}
@@ -1156,6 +1183,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         v["notes"] = f"autopilot protected check: {pbad}"
     digest(lane["name"], f"JUDGE {v.get('verdict')} on {checkpoint}: new certs {v.get('new_canonical_certs')}, "
                          f"capability {v.get('validated_capability')}. {str(v.get('notes', ''))[:600]}")
+    if not dry:
+        surface_owner_questions(lane["name"], checkpoint, product)
     if v.get("verdict") != "AGREE":
         return _park(st, ls, lane["name"], f"judge {v.get('verdict')} on {checkpoint}: {str(v.get('notes', ''))[:300]}")
     snap = {k: ls.get(k, 0) for k in ("blank", "info_streak", "no_conversion")}  # restored if this judgment is redone

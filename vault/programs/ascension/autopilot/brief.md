@@ -50,7 +50,7 @@ Progress class expected: INFORMATION (criteria file frozen in a commit before th
   refuted hypothesis as a json result and a negative row. Nothing else is planned for Tennis.
 
 ## Boundaries (unchanged)
-Existing profiles and certify.decide untouched; receipts and canonical context untouched; additive profiles only under all
+Existing profiles and certify.decide untouched; historical receipts and the canonical ctx untouched (headers: OR-3); additive profiles only under all
 six S26C conditions; the autopilot's unlocked ceiling is fixed by the Owner and is not a planner topic.
 
 ## Owner decisions 2026-11-12 (laptop pane ddf4990e; Owner "1. 120M 2. rec 3. hazlo todo y rec")
@@ -110,14 +110,14 @@ with owner_resume=research:cnm_variant_search; the other two KSR levers are sele
 ## New lanes FIFA and WIIPARTY (Owner 2026-11-14 "go ahead with both new lanes", pane 4246d04c)
 - FIFA: FIFA 11 Wii PAL (SELX69), product /home/kobii/missions/fifa11-decomp. Target: byte-exact reconstruction of the 24,482 named functions of fifaf.code.rso (6.46 MB .text) and of main.dol. The source image is CONTAMINATED-BUT-VALUABLE (three injected data files; the code files are untouched), so every match reads "matches this image" until the Owner's re-dump hashes equal (U-001).
 - WIIPARTY: Wii Party PAL (SUPP01), product /home/kobii/missions/wiiparty-decomp. Target: byte-exact reconstruction of main.dol (1.93 MB .text, no symbols).
-- Both lanes start with instruments, not certificates: compiler identification and the byte oracle or split (levers fifa_compiler_matrix, fifa_rso_target_oracle, wp_dtk_split, wp_compiler_matrix). Certification needs a later Owner-approved certify route per lane; until then every count is a measurement in its own file, never a headline.
+- Both lanes start with instruments, not certificates: compiler identification and the byte oracle or split (levers fifa_compiler_matrix, fifa_rso_target_oracle, wp_dtk_split, wp_compiler_matrix). Certification goes through the standing rulings OR-1 and OR-5 below; objdiff progress counts as MATCH. A count that is neither stays a measurement in its own file, never a headline.
 - Game bytes, decompiled source and assets stay on GEX44 and the laptop. orig/ is read-only and pinned by sha256 in lanes.json. /home/kobii/wsr-decomp is read-only. These lanes never touch the KSR or Tennis repositories, receipts or gates.
 - Envelopes: 20M tokens each (starter); the shared day cap applies, and these lanes tick after KSR and TENNIS.
 
 ## New lane MKW (Owner 2026-11-14 route "a" + "y", pane 4de9b293)
 - MKW: Mario Kart Wii PAL (RMCP01), product /home/kobii/missions/mkw-decomp, branch lane/mkw. Its base is the public CC0-1.0 decomp github.com/snailspeed3/mkw at commit 78572c9. Target: byte-exact reconstruction of main.dol and StaticR.rel. At base, upstream matches 1,837 of 26,639 functions. This lane counts only the functions it moves from unmatched to matched, against a target list frozen in a commit before the work.
 - The oracle is the decomp's own build: ninja must keep ending with build/RMCP01/main.dol: OK and build/RMCP01/StaticR/StaticR.rel: OK (config/RMCP01/build.sha1), and build/RMCP01/report.json from objdiff decides each function.
-- The lane starts with measurements (levers mkw_dol_game_match, mkw_rel_match). Certification needs a later Owner-approved certify route for this lane; until then every count is a measurement in its own file, never a headline.
+- The lane started with measurements (levers mkw_dol_game_match, mkw_rel_match). Functions it moves to 100% in report.json count as MATCH (verified by the autopilot); certification goes through OR-1 below.
 - The repository stays local to GEX44. Game bytes, build outputs and assets stay on GEX44 and the laptop. orig/ is read-only and pinned by sha256 in lanes.json. This lane never touches the KSR, Tennis, FIFA or Wii Party repositories, receipts or gates.
 - Envelope: 20M tokens (starter). The shared day cap applies, and this lane ticks after the others.
 
@@ -128,3 +128,48 @@ with owner_resume=research:cnm_variant_search; the other two KSR levers are sele
 - Admission works as ogws did in S45K. Only library TUs whose configure.py status is Matching count. Each is compiled from the donor's source with the compiler and flags its configure.py declares, and the output goes to scratch outside every repo. A TU that does not compile is FAILED or ABSENT and contributes nothing. Each source is pinned and asserted clean before and after. A source whose DOL sha1 equals the KSR main.dol sha1 is excluded as non-independent.
 - These stay unchanged and are not arbitrable: n_min 30, at least 4 distinct families of rvl nw4r MSL runtime, recall bar 0.80, and the agreement rule (a pair is KNOWN only if every admitted source that matched both fns agrees). mask_fn and match come from tools/s44k_known.py, read-only. Sources are pre-registered in criteria committed before any count of the new generation, and the matching rule is never loosened after seeing n.
 - Donor code stays on GEX44. Nothing from it enters the public PP repo, a receipts file or the canonical context.
+
+## Third known-boundary source authorised (2026-11-14T15:39:05Z)
+
+Owner 2026-11-14 'y' (session 423c9c50, S45K pending question): a THIRD independent known-boundary source is AUTHORISED for the KSR TU-boundary calibration set: one more public matching decomp (not wsr, not Tennis auto split, not FIFA, not Wii Party: those stay excluded), pinned to a commit before any count, covering runtime/MSL neighbours, joined to mkw+ogws under the UNCHANGED S45K agreement rule (masked-byte match, same compiler/flags its configure.py declares, 0 disagreements kept), and the UNCHANGED adequacy rule (n_known >= 30 AND >= 4 families). Adequacy is judged at freeze, before any segmentation is read. If no donor reaches the runtime family, report INSTRUMENT_FAIL again; never loosen the matching rule after seeing n. No signal under test (floatdup, sbss, statics_strpool) may be used as a known-boundary source.
+
+## FMADD -fp_contract profile authorised (2026-11-14T19:53:24Z)
+
+Owner 2026-11-14 'y' (session 423c9c50, S49K OWNER QUESTION CERTIFICATION_RULE): AUTHORISED a NEW ADDITIVE profile ksr-v5r-s25stage-s49fm that runs the lane with -fp_contract on for the FMADD class only, under ALL S26C conditions. Control redefined: negative pole = the 40+ certified non-float exact functions must stay byte-identical (any move = profile rejected); positive = every dev exact re-verified by the independent oracle on ORIGINAL DOL bytes (not by certified fma fixtures, which cannot exist). Existing profiles and certificates untouched. Criteria and the dev/held-out split stay as frozen in S49K; held-out 50 is opened once, only after the profile and controls are frozen and committed. No re-cut of the held-out after seeing results; INSTRUMENT_FAIL stays a valid outcome.
+
+
+## Owner levers 2026-11-16 (pane 08cba76c, Owner 'y')
+- FIFA: fifa_anchorfree_entry (STRUCTURAL_ENTRY). the S84F residual route (evidence/f9/pivot_residual_f9.md). 377 of 391 F5-only tails have no internal-relocation referent, so every anchor-dependent entry route is blind to them. Decide entry-ness of those tails by ANCHOR-FREE structural evidence: prologue/epilogue shape plus inbound-reference classification from the reader cohort only. Reuse tools/rso_target.py (24,408-function oracle, gate 15/15
+- MKWLIB: mkwl_band_17_64 (SOURCE_BAND). option (a) of evidence/ascension/s87l/pivot_residual.md (S87L2). SCOPE lib/nw4r and the RVL SDK only. First, in its own commit before any freeze: gate v2, which repairs what the judge DISAGREEd on for S87L (tools/test_mkwl_match.py rc=1, 3 silent functions, mutants not isolated, selftest red); the v2 selftest must be green and each mutant red in isolation. Then the S77M/S87L hand-written-source me
+- TENNIS: tennis_handsource_cohort (SOURCE_BAND). transfer the MKWLIB hand-written-source smallest-cohort route (S77M, then S87L: 24/24 held-out at 100 on the 48 smallest lib functions) to Tennis. The CNM operator population (158 fns) is consumed and tennis_callee_type_model is refuted (S81T: 0 of 60 held-out exact). Cohort: the smallest non-certified Tennis functions, disjoint from the S69T 144 and S81T 60 cohorts, frozen by size then address, 5
+- WIIPARTY: wp_laypair_shield (LAYOUT_PAIR). the reopen condition of S82W (evidence/ascension/s82w/checkpoint_s82w.md). S82W could not test H-LAYPAIR because every pre-registered second build (RZDP01, RZDJ01, RZDE01_02) is labelled GC/3.0a3p1, so there is no W label. Re-register the paired build set as tp GZ2E01 versus Shield, the release build that declares Wii/1.0 (166 switch pairs, counts only). Do not use ShieldD: it is a debug build and
+- TENNIS bootstrap moved from t1-campaign/s27 to tennis-all-match/s81t (the lane re-plans from its own product).
+- WIIPARTY: wp_lib_donor (DONOR_TRANSFER), Owner 'rec' 2026-11-16 (pane 08cba76c): SDK/NW4R library functions located by masked bytes against the ogws and mkw-lib donors.
+
+## Standing Owner rulings OR-1..OR-6 (Owner 2026-11-18 "y", pane 08cba76c)
+Source: 77 "Owner question / NOT authorised / Owner-gated" lines in about 50 checkpoints since 2026-11-14, none of which
+reached the Owner. These rulings answer them once. Budget, capital and authority stay the Owner's.
+- OR-1 (certification rule): a function whose compiled object matches the original bytes exactly (BINARY_EXACT from the
+  unchanged certify.decide, or objdiff 100% confirmed by an independent oracle on the original DOL or REL bytes) may be
+  certified in the generation that found it. Its receipts go in that generation's own receipts file, registered in
+  receipt_registry.json; historical receipts and counters stay byte-identical. Compiler-local pool symbols (@N, sda21)
+  count as equal to the target's named symbol when the bytes and the relocation type are equal.
+- OR-2 (held-out contract): a generation draws a fresh held-out set without asking when the set is disjoint from every
+  earlier cohort and control, seeded and frozen in a commit before any compile, size-stratified to match the population
+  under test, and at least the lane's floor. A burned held-out set is never reused. A floor or threshold change still
+  goes to the Owner.
+- OR-3 (product scope): canonical headers, splits.txt and symbols.txt may change when, after the generation's last
+  commit, the full build passes, no function leaves 100% in the objdiff report (the autopilot's MATCH check), and every
+  certified function still verifies. A header change toward a donor's layout cites the donor. The canonical ctx of the
+  KSR and Tennis profiles stays as it is: it is the certificate identity.
+- OR-4 (successor generations): a residual's next route is the planner's input, never an Owner question. Only capital,
+  a truth-contract change or an irreversible act goes to the Owner.
+- OR-5 (additive profiles): a lane may add a new additive certification profile when its profile line states all six
+  S26C conditions, its first certificate is checked by an independent oracle on the original bytes, and no existing
+  profile changes.
+- OR-6 (housekeeping): re-pinning a frozen tool after an Owner-authorised amendment, and fast-forwarding a lane's main
+  to its own generation branch (no push), need no question.
+- A checkpoint line "OWNER DECISION NEEDED" or "OWNER QUESTION" that these rulings do not answer is copied by the
+  autopilot to the Owner queue; write it only for capital, a truth-contract change or an irreversible act.
+- Progress classes: MATCH (functions newly at 100% in the objdiff report built by the autopilot, none lost) is a
+  conversion like CERT. After a CERT or a MATCH the lane exploits the same lever at scale.

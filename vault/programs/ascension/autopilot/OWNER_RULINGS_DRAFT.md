@@ -1,4 +1,8 @@
-# Owner standing rulings: DRAFT for approval (2026-11-18, pane 08cba76c)
+# Owner standing rulings: APPROVED (Owner "y" 2026-11-18, pane 08cba76c)
+
+Installed in brief.md as OR-1..OR-6. They were renamed from R1..R6 because "R2" is a policy-forbidden token: a plan
+quoting "R2" is refused. One narrowing was made at install: OR-3 admits canonical headers, splits and symbols, but the
+canonical ctx of the KSR and Tennis profiles stays protected, because it is their certificate identity.
 
 Source: 77 "Owner question / NOT authorised / Owner-gated" lines in about 50 checkpoints and residuals since
 2026-11-14 (KSR+TENNIS 17, FIFA 8, FIFATC 5, WIIPARTY 8, MKW 4, MKWLIB 8, WSR several). None of them reached

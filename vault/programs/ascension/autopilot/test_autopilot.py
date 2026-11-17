@@ -119,6 +119,21 @@ def run_all(ap):
             ("fresh-raw", "fresh 2,000,000 tokens for a pilot", "fresh"), ("fresh-k", "fresh 1500k tokens", "fresh")]:
         bad = GOOD[:2] + [GOOD[2] + "; " + line]
         check(f"V-AP-POLICY-REFUSES-{label.upper()}", refuses(ap, bad, want))
+    # 2026-11-18 Owner rulings OR-1/OR-3 (pane 08cba76c): canonical headers are admitted (gated by the build and MATCH);
+    # the canonical ctx (V-AP-POLICY-REFUSES-CANON above) stays refused; the packet names the rulings
+    check("V-AP-POLICY-OR3-HEADERS-ADMITTED",
+          ap.policy_check(GOOD[:2] + [GOOD[2] + "; edit canonical headers toward the donor layout"], "") == [])
+    check("V-AP-PACKET-NAMES-OWNER-RULINGS", "OR-1" in ap.HEADER and "OR-3" in ap.HEADER
+          and "never CERTIFIED" not in ap.HEADER)
+    oqf = tmp / "oq_ck.md"
+    oqf.write_text("# ck\nOWNER DECISION NEEDED: authorise route 1\nplain line\nOwner question: may cert1 normalise @N?\n")
+    ap.OUT.mkdir(parents=True, exist_ok=True)
+    (ap.OUT / "owner_queue.md").unlink(missing_ok=True)
+    n1, n2 = ap.surface_owner_questions("L", str(oqf), str(tmp)), ap.surface_owner_questions("L", str(oqf), str(tmp))
+    oq = (ap.OUT / "owner_queue.md").read_text() if (ap.OUT / "owner_queue.md").exists() else ""
+    check("V-AP-OWNER-QUESTIONS-SURFACED-ONCE", (n1, n2) == (2, 0) and oq.count("QUESTION (from oq_ck.md)") == 2
+          and "plain line" not in oq)
+    (ap.OUT / "owner_queue.md").unlink(missing_ok=True)
     check("V-AP-POLICY-REFUSES-IN-FACTS", refuses(ap, GOOD, "push", extra=["Phase 4: push the branch to origin"]))
     check("V-AP-POLICY-REFUSES-IN-TITLE", refuses(ap, GOOD, "revocation", extra=["revoke the bad ones"]))
     check("V-AP-POLICY-REFUSES-COMMAND-PUSH", refuses(ap, GOOD, "push", command="and push when done"))
@@ -1364,6 +1379,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "evo_match_not_conversion": _evo_mut(CONVERSIONS=("CERT", "CAPABILITY")),
          "match_off": lambda m: setattr(m, "verify_match", lambda lane, product, notes: None),
          "match_ignores_regressions": lambda m: setattr(m, "match_lost", lambda old, cur: []),
+         "owner_questions_dropped": lambda m: setattr(m, "OWNER_Q", __import__("re").compile("zzz_never_matches")),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
          "evo_synth_off": _evo_mut(synthesize=lambda *a, **k: (None, "off")),
          "evo_synth_admits_anything": _evo_mut(synth_problems=lambda *a, **k: []),
