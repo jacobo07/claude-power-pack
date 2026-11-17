@@ -82,6 +82,17 @@ surface kind, chosen by a table, and the choice is checked, not trusted.
   a skip is reported, never counted as a pass).
 - WIRED: the repo dispatcher lists both members.
 
+## Evidence (laptop, 2026-11-17)
+- Review: pp-code-reviewer on a9db1d43 = WARNING (1 HIGH, 1 MEDIUM, 1 LOW), all fixed in 5f97f1fb; V-DSR 39/39.
+- Live: merged as 7f7529ba; `~/.claude/hooks/hook-dispatcher.js` carries both members (backup
+  `~/.claude/backups/design-router-live-20261117/`); `~/.claude/agents/cdio-reviewer.md` installed from vault/agents.
+- Live drill through the real dispatcher (`node hook-dispatcher.js --event=...`, private design state dir):
+  UserPromptSubmit-chain with "hazme una landing page para un estudio de yoga" injected the route block (session kinds
+  `['web']`); Stop-chain for a session that wrote an index.html with an em-dash and a scroll listener BLOCKED with
+  TASTE-EMDASH + TASTE-SCROLL-LISTENER, the three missing skills and the missing review; one ledger row, no errors.
+  Whole-chain wall times were 4.95 s (UPS) and 20.9 s (Stop, all 11 members); this member alone measured 254-402 ms
+  on an 8.9 MB real transcript.
+
 ## Honest limits
 - The reviewer's verdicts are still an LLM's judgement; the recorder stops an EMPTY or UNRENDERED approval, not a
   dishonest one. The deterministic floor is the Taste lint folded into the score.
