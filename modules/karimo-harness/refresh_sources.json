@@ -156,6 +156,15 @@
       "use_case": "replace a flat brand gradient with a subtly textured one without photography, at lower performance cost than the animated variant; never on small surfaces (buttons/badges) or mixed with an animated version in the same view",
       "pattern_snippet": "solid brand gradient (linear/radial) plus a static SVG feTurbulence noise layer blended via mix-blend-mode, no animation",
       "source_url": "vault/knowledge_base/visual-patterns/grainy-gradient-background.md"
+    },
+    {
+      "name": "Cinematic Brand-Lit Hero — Power Pack",
+      "system": "Power Pack",
+      "category": "Cinematic Brand-Lit Hero",
+      "tags": "hero cinematic background photographic ambient lighting brand colour color accent environment reflection refraction glow architectural edge sunset image composition art direction visual",
+      "use_case": "premium service, landscape, architecture or product hero with a licensed photo/render where an accent hue should plausibly illuminate parts of the scene; not for dashboards, checkout, unknown image rights, crowded text, static-only devices requiring heavy WebGL or inaccurate product color",
+      "pattern_snippet": "Preserve scene composition and real HTML text; use an authorized original image or 3D render, local masks/depth to place brand-color ambient light where physically plausible (dusk horizon/steps, refractive object reflections/floor, emissive roof edge), render static responsive variants first, test image contrast, crop geometry, production CTAs and asset cost. Not a global duotone or a claim that the original video used CSS/3D. Research-only until tested.",
+      "source_url": "vault/knowledge_base/visual-patterns/cinematic-brand-lit-hero.md"
     }
   ]
 }
