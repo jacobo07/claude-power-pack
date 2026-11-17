@@ -65,6 +65,19 @@ surface kind, chosen by a table, and the choice is checked, not trusted.
   the problem (check, file, criterion), not the bytes, so re-editing a file does not re-block it.
 - F3 LOW: `--screenshot` must be a PNG with an IHDR of at least 300x300.
 
+## Re-block on a recorded non-APPROVE review (Owner 2026-11-17 'y', after the SaaS run)
+Measured: the SaaS treated arm recorded BLOCK 11, Stop blocked once, the 15 s resume ended without re-reviewing, and
+the once-per-set rule then let the page through with a recorded BLOCK on it. Rule now:
+- `judge` marks a design-review problem `recorded` when the LATEST reviews.jsonl row naming that file (any bytes) is
+  not done; its detail names that verdict, score and refusals, so the agent reads why it was refused.
+- A problem set containing a `recorded` review may block up to 3 times in total (the first block + 2 re-blocks,
+  `MAX_RECORDED_BLOCKS`), and these re-blocks ignore `stop_hook_active`: in a live session the Stop after a block
+  always carries it, so honouring it would make the re-block unreachable. The count is the loop bound.
+- Any other set keeps the old contract: once, never when `stop_hook_active`.
+- Escape unchanged: `NO APLICA: design-review: <reason>`.
+Acceptance: V-DSR-STOP-REBLOCKS-RECORDED-BLOCK (3 blocks, the 4th silent, with stop_hook_active true on 2-4) and
+V-DSR-STOP-NO-REBLOCK-WITHOUT-RECORD (an unreviewed page still blocks once).
+
 ## Acceptance (V-DSR-*, `tools/test_design_route.py`, hermetic state dir, both poles)
 - ROUTES-RESOLVE: every required skill in the table resolves to an installed SKILL.md or command (a table naming a
   skill nobody can load is a documented capability nobody can execute).
