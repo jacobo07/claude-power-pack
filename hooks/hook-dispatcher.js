@@ -302,6 +302,11 @@ const CHAIN_MAP = {
     // the reply are honoured; every judgement ledgered to state/tower/donegate_stop.jsonl. Fail-open on error.
     // Kill switch: CPP_FAMILY_DONEGATE=off. Gate: tools/test_taste_absorption.py (V-TASTE-STOP-*).
     { exe: PY_EXE, script: '../skills/claude-power-pack/tools/family_donegate_stop.py', timeoutMs: 8000 },
+    // Design done-gate (2026-11-17, Owner 'go ahead'; spec vault/specs/design-surface-router.md). A session that wrote
+    // visual files inside its cwd is not done until Taste has no critical, the routed design skills were loaded, and a
+    // cdio-reviewer APPROVE is recorded for the current bytes. Same once-per-set / NO APLICA / fail-open contract as
+    // the family gate above. Kill switch: CPP_DESIGN_DONEGATE=off. Gate: tools/test_design_route.py (V-DSR-*).
+    { exe: PY_EXE, script: '../skills/claude-power-pack/tools/design_donegate_stop.py', timeoutMs: 8000 },
     // ADS auto-documentation (BL-ADS-001). Reads cwd from the Stop JSON,
     // diffs the working tree, writes docs/{prd,arch,constitution,changelog}
     // for CREATED/UPDATED modules. NEVER stages/commits; fail-open (always
@@ -646,6 +651,10 @@ const CHAIN_MAP = {
     // builds. Silent on novel proposals and on use/extend/fix. Fail-open absolute.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/d2a_gate.js', timeoutMs: 12000 },
     { exe: PY_EXE, script: '../skills/claude-power-pack/tools/jit_skill_loader.py', timeoutMs: 12000 },
+    // Design Surface Router (2026-11-17; spec vault/specs/design-surface-router.md): a prompt naming a visual surface
+    // gets ONE block naming the design skills its kind needs and what the Stop design done-gate will check. Silent
+    // otherwise. Fail-open. Kill switch: CPP_DESIGN_ROUTE=off. Gate: tools/test_design_route.py (V-DSR-*).
+    { exe: PY_EXE, script: '../skills/claude-power-pack/tools/design_route_prompt.py', timeoutMs: 6000 },
   ],
   // CHAIN DEADLINE DRILL (2026-09-15). Registered in NO settings.json event, so it
   // is inert in production and can only be driven by
