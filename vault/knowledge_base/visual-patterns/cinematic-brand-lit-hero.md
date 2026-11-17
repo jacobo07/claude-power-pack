@@ -111,3 +111,7 @@ MDN source documentation:
 - https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/background-blend-mode
 - https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/mask-image
 - https://docs.blender.org/manual/en/latest/render/layers/passes.html
+
+## Creative combination bank and ledger (2026-11-17)
+
+A subordinate **160-recipe ideation catalog** complements the three directly observed video examples. It is [stored as a dataset](datasets/VP019_BRAND_LIT_COMBINATIONS.md) grouped by 20 sectors and material/illumination scenarios. [Its aligned JSONL evidence ledger](ledgers/VP019_COMBINATION_LEDGER.jsonl) contains one `HYPOTHESIS_UNTESTED` record per candidate with explicit missing build/render/rights/QA/baseline receipts. Nothing in that catalog upgrades VP-019's evidence rank; none of its invented scenes can be attributed to the source video. The patterns' access remains through VP-019 and existing design-index workflows until a new, tested discovery adapter exists.
