@@ -30,13 +30,19 @@ Do this:
      that froze it, the result DATA file (json/jsonl) and the commit that wrote it, the verdict (SUPPORTED, REFUTED or
      UNDETERMINED) and whether its positive control was seen.
 
-Verdict rules: AGREE only if every claimed gate re-ran rc=0, protected identities are unchanged and the certificate count
+SUPERSEDED GATES: a gate that existed before this generation, pins a pool, count or id list, and fails ONLY because this
+generation's new canonical certificates left that pool (its failure line shows the old count minus exactly the number of
+certificates you counted, and nothing else is wrong) is superseded, not failed. Report it with its real rc and
+"superseded_by_certs": <that number>, and say why in notes. Never mark a gate superseded for any other failure, and never
+one this generation wrote. At least one other gate must re-run rc=0.
+
+Verdict rules: AGREE only if every claimed gate re-ran rc=0 (or is superseded as above), protected identities are unchanged and the certificate count
 you measured matches the claim (or no certificates are claimed). DISAGREE if any of those is contradicted. INCONCLUSIVE if
 you could not observe enough to decide.
 
 End your reply with exactly one JSON object and nothing after it (omit a pointer object you could not verify):
 {"verdict": "AGREE|DISAGREE|INCONCLUSIVE", "new_canonical_certs": <int you counted>, "validated_capability": true|false,
- "gates": [{"cmd": "...", "rc": <int or null>, "last": "..."}], "protected_ok": true|false, "notes": "<= 600 chars",
+ "gates": [{"cmd": "...", "rc": <int or null>, "last": "...", "superseded_by_certs": <int, only for a superseded gate>}], "protected_ok": true|false, "notes": "<= 600 chars",
  "cert_receipts": [{"path": "<repo-relative>", "commit": "<sha>"}],
  "capability": {"gate": "tools/test_x.py", "commit": "<sha>", "mutant_rc": <int>, "heldout_before": <num>,
                 "heldout_after": <num>},

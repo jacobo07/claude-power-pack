@@ -228,6 +228,14 @@ def run_all(ap):
     check("V-AP-AGREE-NEEDS-PROTECTED", not ap.agree_supported(dict(full, protected_ok=False)))
     check("V-AP-AGREE-NEEDS-GATES-RC0", not ap.agree_supported(dict(full, gates=[{"cmd": "x", "rc": 1}]))
           and not ap.agree_supported(dict(full, gates=[])) and not ap.agree_supported(dict(full, gates=[{"rc": None}])))
+    sg = [{"cmd": "timeout 600 python3 tools/test_new.py", "rc": 0},
+          {"cmd": "timeout 600 python3 tools/test_old.py", "rc": 1, "superseded_by_certs": 2}]
+    sup = dict(full, new_canonical_certs=2, gates=sg)
+    check("V-AP-AGREE-SUPERSEDED-ADMITTED", ap.agree_supported(sup))
+    check("V-AP-AGREE-SUPERSEDED-COUNT-MUST-MATCH", not ap.agree_supported(dict(sup, new_canonical_certs=3))
+          and not ap.agree_supported(dict(sup, new_canonical_certs=0))
+          and not ap.agree_supported(dict(sup, gates=[sg[0], dict(sg[1], superseded_by_certs=None)])))
+    check("V-AP-AGREE-SUPERSEDED-NEEDS-AN-RC0", not ap.agree_supported(dict(sup, gates=[sg[1]])))
     check("V-AP-JUDGE-TOOLS-NO-BARE-PREFIX", not any(t in ap.JUDGE_TOOLS for t in ("Bash(python3:*)", "Bash(timeout:*)")))
     # ---- protected identities read by the autopilot itself
     pf = tmp / "receipts.jsonl"
@@ -331,6 +339,31 @@ def run_all(ap):
     cur, why = ap.match_at100(glane, str(gdir))
     check("V-MATCH-BUILD-LEAVES-TREE-CLEAN", cur == set() and why is None
           and (gdir / "splits.txt").read_text() == "a\n" and (gdir / "mine.txt").read_text() == "worker edit\n")
+    # 2026-11-18 (KSR S168K): a superseded gate stands only if it predates the generation and the certificates verify
+    sdir = Path(tempfile.mkdtemp(prefix="sgit-", dir=tmp))
+
+    def sgit(*a):
+        return subprocess.run(["git", "-C", str(sdir), *a], check=True, capture_output=True, text=True).stdout.strip()
+    for a in (["init", "-q"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+        sgit(*a)
+    (sdir / "tools").mkdir()
+    (sdir / "tools" / "test_old.py").write_text("print(1)\n")
+    sgit("add", ".")
+    sgit("commit", "-qm", "base")
+    s0 = sgit("rev-parse", "HEAD")
+    (sdir / "tools" / "test_new.py").write_text("print(2)\n")
+    (sdir / "receipts.jsonl").write_text('{"id": "f1", "verdict": "CERTIFIED"}\n{"id": "f2", "verdict": "CERTIFIED"}\n')
+    sgit("add", ".")
+    sgit("commit", "-qm", "gen")
+    s1 = sgit("rev-parse", "HEAD")
+    sv = dict(sup, cert_receipts=[{"path": "receipts.jsonl", "commit": s1}])
+    check("V-AP-SUPERSEDED-OK-PROVEN", ap.superseded_ok(sv, str(sdir), s0) is None)
+    check("V-AP-SUPERSEDED-NOT-THIS-GENERATIONS-GATE", isinstance(ap.superseded_ok(dict(sv, gates=[
+        sg[1], dict(sg[0], rc=1, superseded_by_certs=2)]), str(sdir), s0), str))
+    check("V-AP-SUPERSEDED-NEEDS-VERIFIED-CERTS", isinstance(ap.superseded_ok(dict(
+        sv, new_canonical_certs=3, gates=[sg[0], dict(sg[1], superseded_by_certs=3)]), str(sdir), s0), str)
+          and isinstance(ap.superseded_ok(dict(sv, cert_receipts=[]), str(sdir), s0), str))
+    check("V-AP-SUPERSEDED-ABSENT-NO-CHECK", ap.superseded_ok(dict(full, new_canonical_certs=2), str(sdir), None) is None)
 
     # ---- lane transitions with stubs
     lanes = [dict(lane0, mission="m-aaaaaaaaaaaa")]
@@ -375,6 +408,15 @@ def run_all(ap):
     ap.judge = lambda *a: {"verdict": "AGREE", "new_canonical_certs": 3, "_tokens": 5}  # no gates, no protected_ok
     ap.lane_tick(st, lanes[0], False)
     check("V-AP-UNSUPPORTED-AGREE-PARKS", st["lanes"]["L"]["status"] == "PARKED" and not calls)
+    # 2026-11-18 (KSR S168K): a superseded gate reaches the autopilot's own git check on the real judge path; with no
+    # generation base it cannot be proven older than the generation, so the AGREE does not stand
+    st = fresh(4)
+    ap.judge = lambda *a: dict(full, new_canonical_certs=3, _tokens=5, gates=[
+        {"cmd": "timeout 600 python3 tools/test_new.py", "rc": 0},
+        {"cmd": "timeout 600 python3 tools/test_old.py", "rc": 1, "superseded_by_certs": 3}])
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-SUPERSEDED-CHECKED-ON-JUDGE-PATH", st["lanes"]["L"]["status"] == "PARKED" and not calls
+          and "superseded" in (tmp / "home" / "digest.md").read_text())
     # Owner envelope on one lane (2026-11-13, 300M for KSR): what the ledger booked for the lane since it opened + the
     # next caps must fit; other lanes and earlier rows do not count; no envelope = no limit; an exhausted one parks.
     envl = dict(lanes[0], envelope={"tokens": 300_000_000, "since": 1000, "note": "t"})
@@ -506,6 +548,14 @@ def run_all(ap):
                                                   "bad": ["EVO RESEARCH: caps 13,000,000 > research generation cap"]}})
     check("V-AP-HALT-REPLAN-TOLD-WHY", any(c[0] == "arm" for c in calls) and "AUTOPILOT POLICY REFUSED" in hdirs[-1]
           and "caps 13,000,000" in hdirs[-1] and "CONTINUATION" in hdirs[-1])
+    # 2026-11-18 (FIFA S146F): un-parked to WAITING after a refused continuation, the lane re-parked at once in silence,
+    # because only a RUNNING lane was continued; the kept continuation plan now resumes, and nothing else does
+    L1 = halt_run(105, ls_extra={"status": "WAITING", "pending_plan": {
+        "for": "continue:m-aaaaaaaaaaaa", "verdict": {"verdict": "AGREE"}, "bad": ["lane research budget exceeded"]}})
+    check("V-AP-HALT-UNPARKED-CONTINUATION-RESUMES", any(c[0] == "arm" for c in calls) and L1["status"] == "RUNNING"
+          and "lane research budget exceeded" in hdirs[-1])
+    L1 = halt_run(106, ls_extra={"status": "WAITING"})
+    check("V-AP-HALT-WAITING-WITHOUT-PLAN-PARKS", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls))
     # F4b (2026-11-16): the product is fast-forwarded to the halted head BEFORE the arm; refused -> park, told why
     ffc["heads"].clear()
     halt_run(103)
@@ -1420,6 +1470,14 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "owner_questions_dropped": lambda m: setattr(m, "OWNER_Q", __import__("re").compile("zzz_never_matches")),
          "owner_question_negations_kept": lambda m: setattr(m, "OWNER_Q_NOT", __import__("re").compile("zzz_never")),
          "match_build_dirt_kept": lambda m: setattr(m, "_tracked_dirty", lambda product: None),
+         "superseded_never_admitted": lambda m: setattr(m, "_superseded", lambda g, n: False),
+         "superseded_any_count": lambda m: setattr(m, "_superseded", lambda g, n: (
+             type(g.get("rc")) is int and g["rc"] != 0 and g.get("superseded_by_certs") is not None)),
+         "superseded_unchecked": lambda m: setattr(m, "superseded_ok", lambda v, p, b: None),
+         "halt_waiting_not_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: ls.get("status") == "RUNNING"),
+         "halt_any_waiting_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: (
+             ls.get("status") in ("RUNNING", "WAITING"))),
+         "superseded_any_gate_age": lambda m: setattr(m, "GATE_PATH", __import__("re").compile(r"(?!x)x|^")),
          "policy_refusal_parks_at_once": lambda m: setattr(m, "POLICY_RETRY_TICKS", 0),
          "policy_retry_forever": lambda m: setattr(m, "POLICY_RETRY_TICKS", 99),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),

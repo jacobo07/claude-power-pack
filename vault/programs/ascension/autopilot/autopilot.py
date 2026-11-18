@@ -650,11 +650,39 @@ def classify_progress(v: dict, product: str, base=None, lane=None) -> tuple[str,
     return "NONE", "; ".join(notes)
 
 
+def _superseded(g, n) -> bool:
+    """A red gate the judge says only fails because this generation's n new certificates left the pool it pins."""
+    s = g.get("superseded_by_certs") if isinstance(g, dict) else None
+    return (type(g.get("rc")) is int and g["rc"] != 0 and type(s) is int and type(n) is int and n > 0 and s == n)
+
+
 def agree_supported(v: dict) -> bool:
-    """AGREE counts only with its own evidence: protected_ok true and every listed gate rc == 0 (at least one)."""
-    gates = v.get("gates")
+    """AGREE counts only with its own evidence: protected_ok true and every listed gate rc == 0 (at least one rc 0).
+    2026-11-18 (Owner 'y', pane 08cba76c): KSR S168K certified 9 functions and two older gates that pin the pool count
+    went red (POOL_COUNT 2265 != 2274), so success parked the lane. A red gate whose superseded_by_certs equals the
+    judge's own certificate count is admitted here; superseded_ok then proves it in git before the verdict stands."""
+    gates, n = v.get("gates"), v.get("new_canonical_certs")
     return (v.get("verdict") == "AGREE" and v.get("protected_ok") is True and isinstance(gates, list) and bool(gates)
-            and all(isinstance(g, dict) and type(g.get("rc")) is int and g["rc"] == 0 for g in gates))
+            and all(isinstance(g, dict) and type(g.get("rc")) is int and (g["rc"] == 0 or _superseded(g, n))
+                    for g in gates)
+            and any(g["rc"] == 0 for g in gates))
+
+
+GATE_PATH = re.compile(r"\btools/[\w./-]+\.py\b")
+
+
+def superseded_ok(v: dict, product: str, base) -> str | None:
+    """None when no gate is superseded or every superseded gate holds; else why the AGREE cannot stand. A superseded
+    gate must be older than the generation (its script exists at the base) and the certificates must verify in git."""
+    sup = [g for g in v.get("gates") or [] if _superseded(g, v.get("new_canonical_certs"))]
+    if not sup:
+        return None
+    for g in sup:
+        m = GATE_PATH.search(str(g.get("cmd") or ""))
+        if not m or not base or _git(product, "cat-file", "-e", f"{_sha(product, base)}:{m.group(0)}")[0] != 0:
+            return f"superseded gate {g.get('cmd')} is not a gate that existed before this generation"
+    c = verify_cert(v, product, base)
+    return None if c is True else f"superseded gates need verified certificates: {c or 'none claimed'}"
 
 
 JUDGE_TOOLS = ["Read", "Grep", "Glob", "Bash(timeout 600 python3 tools/:*)", "Bash(python3 tools/:*)",
@@ -934,6 +962,14 @@ def cost_topup(st: dict, lane: dict, ls: dict, mid: str, rec: dict, hold: dict, 
     digest(ln, f"TOP-UP {mid}: +{TOPUP:,} -> {auth:,} inside the lane envelope ({basis})")
 
 
+def halt_resumable(ls: dict, mid: str) -> bool:
+    """A halted mission may be continued by a RUNNING lane, or by one un-parked (WAITING) that keeps the refused
+    continuation plan of this very mission. 2026-11-18 (FIFA S146F, Owner 'y'): the un-park set WAITING and the lane
+    re-parked at the next tick with 'ended HALTED without a checkpoint hold', its continuation plan never re-planned."""
+    return (ls.get("status") == "RUNNING"
+            or (ls.get("status") == "WAITING" and (ls.get("pending_plan") or {}).get("for") == f"continue:{mid}"))
+
+
 def continue_halted(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool) -> bool:
     """F4: a generation that halted without a checkpoint but committed work on its branch is continued ONCE from the
     judgment it was planned from (2026-11-15: S57F, S56T and S65M left commits that the lane park threw away).
@@ -1158,7 +1194,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             return
         hold = rec.get("owner_hold") or {}
         if rec["state"] in TERMINAL:
-            if ls.get("status") == "RUNNING" and continue_halted(st, lane, ls, mid, rec, dry):
+            if halt_resumable(ls, mid) and continue_halted(st, lane, ls, mid, rec, dry):
                 return
             return _park(st, ls, lane["name"], f"mission {mid} ended {rec['state']} without a checkpoint hold; lane parked")
         if not hold and ls.get("status") == "RUNNING":
@@ -1229,6 +1265,10 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if v.get("verdict") == "AGREE" and not agree_supported(v):
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"AGREE without its own evidence (protected_ok/gates rc): {str(v.get('notes', ''))[:400]}"
+    sbad = None if dry or v.get("verdict") != "AGREE" else superseded_ok(v, product, ls.get("base"))
+    if sbad:
+        v["verdict"] = "INCONCLUSIVE"
+        v["notes"] = f"autopilot superseded-gate check: {sbad}; {str(v.get('notes', ''))[:300]}"
     pbad = protected_check(lane)
     if v.get("verdict") == "AGREE" and pbad:
         v["verdict"] = "DISAGREE"
