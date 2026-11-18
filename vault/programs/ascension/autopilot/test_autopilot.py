@@ -232,7 +232,8 @@ def run_all(ap):
           {"cmd": "timeout 600 python3 tools/test_old.py", "rc": 1, "superseded_by_certs": 2}]
     sup = dict(full, new_canonical_certs=2, gates=sg)
     check("V-AP-AGREE-SUPERSEDED-ADMITTED", ap.agree_supported(sup))
-    check("V-AP-AGREE-SUPERSEDED-COUNT-MUST-MATCH", not ap.agree_supported(dict(sup, new_canonical_certs=3))
+    check("V-AP-AGREE-SUPERSEDED-COUNT-BOUNDED", not ap.agree_supported(dict(sup, new_canonical_certs=1))
+          and ap.agree_supported(dict(sup, new_canonical_certs=3))
           and not ap.agree_supported(dict(sup, new_canonical_certs=0))
           and not ap.agree_supported(dict(sup, gates=[sg[0], dict(sg[1], superseded_by_certs=None)])))
     check("V-AP-AGREE-SUPERSEDED-NEEDS-AN-RC0", not ap.agree_supported(dict(sup, gates=[sg[1]])))
@@ -240,8 +241,12 @@ def run_all(ap):
     cum = dict(full, new_canonical_certs=43, gates=[sg[0], dict(sg[1], superseded_by_certs=52)])
     pri = {"tools/test_old.py": 9}
     check("V-AP-SUPERSEDED-CUMULATIVE", ap.agree_supported(cum, pri) and not ap.agree_supported(cum)
-          and not ap.agree_supported(dict(cum, gates=[sg[0], dict(sg[1], superseded_by_certs=43)]), pri)
+          and not ap.agree_supported(dict(cum, gates=[sg[0], dict(sg[1], superseded_by_certs=9)]), pri)
+          and not ap.agree_supported(dict(cum, gates=[sg[0], dict(sg[1], superseded_by_certs=53)]), pri)
           and not ap.agree_supported(cum, {"tools/test_other.py": 9}))
+    # (KSR S171K): 38 new certificates, 10 of them from the pinned pool: 62 = 52 + 10
+    check("V-AP-SUPERSEDED-PARTIAL-POOL", ap.agree_supported(dict(full, new_canonical_certs=38, gates=[
+        sg[0], dict(sg[1], superseded_by_certs=62)]), {"tools/test_old.py": 52}))
     check("V-AP-SUPERSEDED-RECORDED", ap.superseded_record(cum, pri) == {"tools/test_old.py": 52}
           and ap.superseded_record(sup) == {"tools/test_old.py": 2} and ap.superseded_record(full, pri) == pri)
     check("V-AP-JUDGE-TOOLS-NO-BARE-PREFIX", not any(t in ap.JUDGE_TOOLS for t in ("Bash(python3:*)", "Bash(timeout:*)")))
@@ -372,6 +377,15 @@ def run_all(ap):
         sv, new_canonical_certs=3, gates=[sg[0], dict(sg[1], superseded_by_certs=3)]), str(sdir), s0), str)
           and isinstance(ap.superseded_ok(dict(sv, cert_receipts=[]), str(sdir), s0), str))
     check("V-AP-SUPERSEDED-ABSENT-NO-CHECK", ap.superseded_ok(dict(full, new_canonical_certs=2), str(sdir), None) is None)
+    # 2026-11-18 (FIFA S170F): a gate the judge excludes must predate the generation and be unchanged by it
+    xo = {"cmd": "timeout 600 python3 tools/test_old.py", "why": "needs arguments"}
+    check("V-AP-EXCLUDED-OLD-UNCHANGED-OK", ap.excluded_ok(dict(full, excluded_gates=[xo]), str(sdir), s0) is None
+          and ap.excluded_ok(full, str(sdir), s0) is None)
+    check("V-AP-EXCLUDED-REFUSED", all(isinstance(ap.excluded_ok(dict(full, excluded_gates=x), str(sdir), b), str) for x, b in (
+        ([dict(xo, cmd="timeout 600 python3 tools/test_new.py")], s0), (["tools/test_old.py"], s0), ([xo], None))))
+    (sdir / "tools" / "test_old.py").write_text("print(3)\n")
+    sgit("commit", "-qam", "gen edits the old gate")
+    check("V-AP-EXCLUDED-CHANGED-REFUSED", isinstance(ap.excluded_ok(dict(full, excluded_gates=[xo]), str(sdir), s0), str))
 
     # ---- lane transitions with stubs
     lanes = [dict(lane0, mission="m-aaaaaaaaaaaa")]
@@ -564,6 +578,44 @@ def run_all(ap):
           and "lane research budget exceeded" in hdirs[-1])
     L1 = halt_run(106, ls_extra={"status": "WAITING"})
     check("V-AP-HALT-WAITING-WITHOUT-PLAN-PARKS", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls))
+    # 2026-11-18 (MKW S151M): INCONCLUSIVE on a checkpoint its worker marked not final is continued once, then parks
+    udirs = []
+
+    hold_now = rec["owner_hold"]  # a cost hold here (the top-up block restores the checkpoint hold later)
+
+    def unfinished_run(set_at, final=False, ls_extra=None):
+        rec["owner_hold"] = dict(keep_hold)
+        st = fresh(set_at)
+        rec.update(state="RUNNING", reason="")
+        recp.write_text(json.dumps(rec))
+        udirs.clear()
+        ap.judge = lambda *a: {"verdict": "INCONCLUSIVE", "checkpoint_final": final, "notes": "own gate red, interim",
+                               "_tokens": 5}
+        ap.plan = lambda *a: udirs.append(a[5]) or good_plan()
+        st["lanes"] = {"L": dict({"status": "RUNNING", "gen": "S90L", "base": "b0", "blank": 0, "arm_fails": 0,
+                                  "mission": "m-aaaaaaaaaaaa", "planned_from": {
+                                      "checkpoint": str(tmp / "ck.md"), "verdict": {"verdict": "AGREE", "notes": "k"}}},
+                                 **(ls_extra or {}))}
+        ap.lane_tick(st, lanes[0], False)
+        return st["lanes"]["L"]
+    L1 = unfinished_run(107)
+    check("V-AP-UNFINISHED-CONTINUES", any(c[0] == "arm" for c in calls) and L1["status"] == "RUNNING"
+          and L1.get("unfinished_streak") == 1 and udirs and "not final" in udirs[-1] and "own gate red" in udirs[-1]
+          and any(r["kind"] == "unfinished_continue" for r in ledger()))
+    L1 = unfinished_run(108, ls_extra={"unfinished_streak": 1})
+    check("V-AP-UNFINISHED-ONCE-THEN-PARKS", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls))
+    L1 = unfinished_run(109, final=True)
+    check("V-AP-UNFINISHED-FINAL-PARKS", L1["status"] == "PARKED" and not any(c[0] == "arm" for c in calls))
+    rec["owner_hold"] = hold_now
+    recp.write_text(json.dumps(rec))
+    # 2026-11-18 (FIFA S170F, MKW S151M): a mission settled HALTED (authority spent) with its checkpoint committed on
+    # the branch is judged from that checkpoint when the lane is un-parked, instead of parking at once
+    keep_cfb = ap.checkpoint_from_branch
+    ap.checkpoint_from_branch = lambda p, b, h: str(tmp / "ck.md")
+    L1 = halt_run(110, ls_extra={"status": "WAITING"})
+    check("V-AP-TERMINAL-CHECKPOINT-JUDGED", any(c[0] == "arm" for c in calls) and L1["status"] == "RUNNING"
+          and any(r["kind"] == "judge" for r in ledger()))
+    ap.checkpoint_from_branch = keep_cfb
     # F4b (2026-11-16): the product is fast-forwarded to the halted head BEFORE the arm; refused -> park, told why
     ffc["heads"].clear()
     halt_run(103)
@@ -1485,7 +1537,17 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "halt_waiting_not_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: ls.get("status") == "RUNNING"),
          "halt_any_waiting_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: (
              ls.get("status") in ("RUNNING", "WAITING"))),
+         "terminal_checkpoint_ignored": lambda m: setattr(m, "terminal_checkpoint", lambda ls, p, rec: ""),
+         "superseded_must_be_all_certs": lambda m: setattr(m, "_superseded", lambda g, n, prior=None: (
+             type(g.get("rc")) is int and g["rc"] != 0 and type(g.get("superseded_by_certs")) is int and type(n) is int
+             and n > 0 and g["superseded_by_certs"] == n + int((prior or {}).get(m._gate_path(g)) or 0))),
          "superseded_any_gate_age": lambda m: setattr(m, "GATE_PATH", __import__("re").compile(r"(?!x)x|^")),
+         "excluded_unchecked": lambda m: setattr(m, "excluded_ok", lambda v, p, b: None),
+         "unfinished_never_continued": lambda m: setattr(m, "UNFINISHED_MAX", 0),
+         "unfinished_unbounded": lambda m: setattr(m, "UNFINISHED_MAX", 99),
+         "unfinished_any_inconclusive": lambda m: setattr(m, "continue_unfinished", (lambda real: (
+             lambda st, lane, ls, key, ck, prod, v, dry: real(st, lane, ls, key, ck, prod, dict(v, checkpoint_final=False),
+                                                              dry)))(m.continue_unfinished)),
          "superseded_prior_ignored": lambda m: setattr(m, "_superseded", (lambda real: lambda g, n, prior=None: real(
              g, n, None))(m._superseded)),
          "superseded_not_recorded": lambda m: setattr(m, "superseded_record", lambda v, prior=None: dict(prior or {})),

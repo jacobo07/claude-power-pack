@@ -657,12 +657,13 @@ def _gate_path(g) -> str:
 
 def _superseded(g, n, prior=None) -> bool:
     """A red gate the judge says only fails because certificates left the pool it pins: its whole delta from the pin
-    must equal this generation's n new certificates plus those already accepted against that gate (prior, by path).
-    2026-11-18 (KSR S169K): S168K's 9 then S169K's 43 made the delta 52, and an equality to 43 alone parked 43 certs."""
+    is the delta already accepted against that gate (prior, by path) plus this generation's part, which is at least 1 and
+    at most its n new certificates. 2026-11-18 (KSR S169K): S168K's 9 then S169K's 43 made the delta 52, and an equality
+    to 43 alone parked 43 certs. (KSR S171K): 38 new certificates, only 10 of them from the pinned pool (62 = 52 + 10)."""
     s = g.get("superseded_by_certs") if isinstance(g, dict) else None
     p = int((prior or {}).get(_gate_path(g)) or 0)
     return (type(g.get("rc")) is int and g["rc"] != 0 and type(s) is int and type(n) is int and n > 0
-            and s == n + p)
+            and 0 < s - p <= n)
 
 
 def agree_supported(v: dict, prior=None) -> bool:
@@ -701,6 +702,50 @@ def superseded_ok(v: dict, product: str, base, prior=None) -> str | None:
             return f"superseded gate {g.get('cmd')} is not a gate that existed before this generation"
     c = verify_cert(v, product, base)
     return None if c is True else f"superseded gates need verified certificates: {c or 'none claimed'}"
+
+
+def excluded_ok(v: dict, product: str, base) -> str | None:
+    """None when every gate the judge excluded is older than the generation and unchanged by it; else why the AGREE
+    cannot stand. 2026-11-18 (FIFA S170F, Owner 'y'): 33/34 gates green and F27 SUPPORTED 195/200, INCONCLUSIVE only
+    because the pre-existing test_f20_leafentry needs arguments and exits 2 in the bare form the judge must use."""
+    for g in v.get("excluded_gates") or []:
+        p = _gate_path(g)
+        if not p or not base:
+            return f"excluded gate {str(g)[:120]} names no tools/ script, or the generation has no base"
+        b = _sha(product, base)
+        if _git(product, "cat-file", "-e", f"{b}:{p}")[0] != 0:
+            return f"excluded gate {p} did not exist before this generation"
+        if _git(product, "diff", "--quiet", b, "HEAD", "--", p)[0] != 0:
+            return f"excluded gate {p} was changed by this generation"
+    return None
+
+
+UNFINISHED_MAX = 1  # consecutive continuations of checkpoints their worker marked not final
+
+
+def continue_unfinished(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, product: str, v: dict,
+                        dry: bool) -> bool:
+    """2026-11-18 (MKW S151M, Owner 'y'): the worker committed a checkpoint it marked NOT final with its own gate red;
+    the judge said INCONCLUSIVE and the lane parked. Such a generation is continued from the judgment it was planned
+    from, told the judge's notes, UNFINISHED_MAX times in a row (an AGREE resets it); otherwise False and the caller parks."""
+    pf = ls.get("planned_from") or {}
+    n = int(ls.get("unfinished_streak") or 0)
+    if (v.get("verdict") != "INCONCLUSIVE" or v.get("checkpoint_final") is not False or n >= UNFINISHED_MAX
+            or not isinstance(pf.get("verdict"), dict) or not pf.get("checkpoint")):
+        return False
+    ls["unfinished_streak"] = n + 1
+    mid = ls.get("mission")
+    log(f"{lane['name']}: {checkpoint} is marked not final and judged INCONCLUSIVE; continuing {ls.get('gen')} once")
+    ledger_add(lane=lane["name"], kind="unfinished_continue", tokens=0, mission=mid, gen=ls.get("gen"),
+               checkpoint=checkpoint)
+    digest(lane["name"], f"CONTINUE {ls.get('gen')}: checkpoint not final, judge INCONCLUSIVE: "
+                         f"{str(v.get('notes') or '')[:300]}")
+    directive = (f"CONTINUATION of {ls.get('gen')} ({mid}): its checkpoint {checkpoint} says it is not final, and the "
+                 f"judge could not agree: {str(v.get('notes') or '')[:400]}. The product holds its branch: work from "
+                 "it, read that checkpoint and its evidence first, do not redo what it proved, finish what it left "
+                 "open, and commit a final checkpoint before 75% of the caps is processed.")
+    plan_and_arm(st, lane, ls, key, pf["checkpoint"], product, dict(pf["verdict"]), directive, {}, dry)
+    return True
 
 
 JUDGE_TOOLS = ["Read", "Grep", "Glob", "Bash(timeout 600 python3 tools/:*)", "Bash(python3 tools/:*)",
@@ -988,6 +1033,13 @@ def halt_resumable(ls: dict, mid: str) -> bool:
             or (ls.get("status") == "WAITING" and (ls.get("pending_plan") or {}).get("for") == f"continue:{mid}"))
 
 
+def terminal_checkpoint(ls: dict, product: str, rec: dict) -> str:
+    """The checkpoint a mission that ended without a checkpoint hold committed on its branch, '' when none. 2026-11-18
+    (FIFA S170F, MKW S151M): both wrote their checkpoint, were judged, then spent their authority (CAPITAL_EXHAUSTED) and
+    were settled HALTED with a cost hold; the Owner's un-park for a re-judge parked them at once."""
+    return checkpoint_from_branch(product, ls.get("base"), gen_head(rec))
+
+
 def continue_halted(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool) -> bool:
     """F4: a generation that halted without a checkpoint but committed work on its branch is continued ONCE from the
     judgment it was planned from (2026-11-15: S57F, S56T and S65M left commits that the lane park threw away).
@@ -1214,7 +1266,12 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         if rec["state"] in TERMINAL:
             if halt_resumable(ls, mid) and continue_halted(st, lane, ls, mid, rec, dry):
                 return
-            return _park(st, ls, lane["name"], f"mission {mid} ended {rec['state']} without a checkpoint hold; lane parked")
+            tck = terminal_checkpoint(ls, product, rec)
+            if not tck:
+                return _park(st, ls, lane["name"], f"mission {mid} ended {rec['state']} without a checkpoint hold; lane parked")
+            if ls.get("judged_for") != f"{mid}:terminal":
+                log(f"{lane['name']}: {mid} ended {rec['state']} with {tck} committed on its branch; judged as its checkpoint")
+            hold = {"kind": "checkpoint", "set_at": "terminal", "evidence": tck}
         if not hold and ls.get("status") == "RUNNING":
             return running_watch(st, lane, ls, mid, rec, dry)
         if hold.get("kind") == "cost" and ls.get("status") == "RUNNING":
@@ -1288,17 +1345,24 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if sbad:
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"autopilot superseded-gate check: {sbad}; {str(v.get('notes', ''))[:300]}"
+    ebad = None if dry or v.get("verdict") != "AGREE" else excluded_ok(v, product, ls.get("base"))
+    if ebad:
+        v["verdict"] = "INCONCLUSIVE"
+        v["notes"] = f"autopilot excluded-gate check: {ebad}; {str(v.get('notes', ''))[:300]}"
     pbad = protected_check(lane)
     if v.get("verdict") == "AGREE" and pbad:
         v["verdict"] = "DISAGREE"
         v["notes"] = f"autopilot protected check: {pbad}"
     if v.get("verdict") == "AGREE":
         ls["superseded"] = superseded_record(v, prior)
+        ls.pop("unfinished_streak", None)
     digest(lane["name"], f"JUDGE {v.get('verdict')} on {checkpoint}: new certs {v.get('new_canonical_certs')}, "
                          f"capability {v.get('validated_capability')}. {str(v.get('notes', ''))[:600]}")
     if not dry:
         surface_owner_questions(lane["name"], checkpoint, product)
     if v.get("verdict") != "AGREE":
+        if key != "bootstrap" and continue_unfinished(st, lane, ls, key, checkpoint, product, v, dry):
+            return
         return _park(st, ls, lane["name"], f"judge {v.get('verdict')} on {checkpoint}: {str(v.get('notes', ''))[:300]}")
     snap = {k: ls.get(k, 0) for k in ("blank", "info_streak", "no_conversion")}  # restored if this judgment is redone
     cls, cnotes = classify_progress(v, product, ls.get("base"), None if dry else lane)
@@ -1561,7 +1625,7 @@ def arm_generation(st, lane, ls, name, text, notes, phases, caps, dry) -> str:
         prior_auth = ls.get("authority")  # None = a generation armed before the autopilot (outside its ledger)
         over = max(0, spent - prior_auth) if (spent is not None and prior_auth) else 0
         rc, out = gm("close", "--mission", old, "--outcome", "COMPLETED", "--owner-turn", OWNER_TURN, "--reason",
-                     f"Autopilot: checkpoint judged AGREE; next generation {name}", dry=dry)
+                     f"Autopilot: checkpoint judged; next generation {name}", dry=dry)
         if rc != 0:
             ls.pop("pending_arm", None)
             log(f"{ln}: close {old} failed (nothing armed): {out[-300:]}")

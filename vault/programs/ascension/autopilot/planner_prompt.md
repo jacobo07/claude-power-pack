@@ -44,6 +44,8 @@ blockers, the ranked structural opportunities, their discriminating experiments 
 - 2 to 8 phases. Each line: "Phase N: <ID> <title> (cap <X>M): <what, cohort freeze, decision rule, gate tools/test_<name>.py
   with planted mutants>". The last phase re-runs all gates, writes the checkpoint file stating new canonical certificates
   per profile by function identity and validated capabilities, then gsd_mission.py checkpoint CHECKPOINT_COMPLETE.
+  The checkpoint names only gates the judge can run bare, `timeout 600 python3 tools/<gate>.py` with no arguments (a gate
+  that needs arguments gets a bare-runnable wrapper first); it says plainly whether it is final.
 
 Method evolution (EVO, decided by the autopilot's deterministic policy before you were called; it binds):
 {EVOLUTION}
