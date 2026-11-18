@@ -257,6 +257,20 @@ def test_record() -> None:
     os.utime(css4, (later, later))
     row = rec.record(full, [page4, css4])
     ok("V-DSR-RECORD-LINKED-CSS-STALE", not row["is_done"] and any("site.css" in r for r in row["refused"]), row)
+    # CDIO-10 legal floor: a single page records it as major (the publish gate holds it); a site keeps it critical
+    legal = os.path.join(_TMP, "legal.json")
+    Path(legal).write_text(json.dumps(GOOD_VERDICTS + [
+        {"criterion": "legal-page-present", "dimension": "trust", "status": "fail", "severity": "critical",
+         "observed": "no %s page" % k} for k in ("privacy", "terms", "dpa")]), encoding="utf-8")
+    d6, page6 = project(CLEAN.replace("Tidewell", "Tidewell six"))
+    dr.append_row("renders.jsonl", {"file": dr.canon(page6), "sha": dr.sha256(page6), "pngs": ["fake.png"]})
+    row = rec.record(legal, [page6])
+    ok("V-DSR-RECORD-LEGAL-DEMOTED-SINGLE-PAGE", row["verdict"] != "BLOCK" and not row["critical"]
+       and row["legal_demoted"] == ["legal-page-present"] * 3, row)
+    Path(d6, "about.html").write_text(CLEAN.replace("Tidewell", "About"), encoding="utf-8")
+    row = rec.record(legal, [page6])
+    ok("V-DSR-RECORD-LEGAL-KEPT-FOR-SITE", row["verdict"] == "BLOCK" and row["critical"].count("legal-page-present") == 3
+       and not row["legal_demoted"], row)
 
 
 def test_render() -> None:

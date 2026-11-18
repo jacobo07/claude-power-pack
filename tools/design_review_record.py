@@ -119,6 +119,28 @@ def _covered_by_render(files: list) -> set:
     return out
 
 
+LEGAL_FLOOR = ("legal-page-present", "legal-fields-filled", "legal-page-linked")
+_TREE_SKIP = {".git", ".claude", ".review", "node_modules", "__pycache__"}
+
+
+def is_single_page(files: list) -> bool:
+    """Every file sits in one directory tree that holds exactly one html page and no package.json: a page, not a site.
+    Its legal floor is held by the publish gate (spec cdio-10-publish-gate.md), not by the design review."""
+    try:
+        root = os.path.commonpath([os.path.dirname(dr.canon(f)) for f in files])
+    except ValueError:
+        return False
+    html = 0
+    for dirpath, dirnames, names in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in _TREE_SKIP]
+        if "package.json" in names:
+            return False
+        html += sum(1 for n in names if n.lower().endswith(dr.HTML_EXT))
+        if html > 1:
+            return False
+    return html == 1
+
+
 def record(verdicts_path: str, files: list, screenshot: str | None = None, experience: str | None = None) -> dict:
     from modules.cdio import scorer, taste
     raw = json.loads(Path(verdicts_path).read_text(encoding="utf-8"))
@@ -126,6 +148,12 @@ def record(verdicts_path: str, files: list, screenshot: str | None = None, exper
         raise SystemExit("verdicts must be a JSON list of verdict objects")
     fields = ("criterion", "dimension", "status", "severity", "observed", "recommendation")
     mine = [scorer.Verdict(**{k: str(d.get(k, "")) for k in fields}) for d in raw if isinstance(d, dict)]
+    demoted = []
+    floor = lambda v: v.criterion in LEGAL_FLOOR and v.status == "fail" and v.severity == "critical"  # noqa: E731
+    if files and any(floor(v) for v in mine) and is_single_page(files):
+        import dataclasses
+        demoted = [v.criterion for v in mine if floor(v)]
+        mine = [dataclasses.replace(v, severity="major") if floor(v) else v for v in mine]
     refusals = []
     dims = {v.dimension for v in mine if v.is_valid()}
     if sum(1 for v in mine if v.is_valid()) < MIN_VERDICTS or len(dims) < MIN_DIMENSIONS:
@@ -158,7 +186,9 @@ def record(verdicts_path: str, files: list, screenshot: str | None = None, exper
            "critical": [v.criterion for v in folded if v.status == "fail" and v.severity == "critical"],
            # what failed, so the Stop gate can tell the agent what to fix (GEX44 SaaS rerun: "BLOCK 0" alone left two
            # fixable majors open through three re-blocks)
-           "failed": [[v.criterion, v.severity, str(v.observed)[:140]] for v in folded if v.status == "fail"]}
+           "failed": [[v.criterion, v.severity, str(v.observed)[:140]] for v in folded if v.status == "fail"],
+           # single page: CDIO-10 legal criticals recorded as major; tools/legal_deploy_gate.py holds them at publish
+           "legal_demoted": demoted}
     dr.append_row("reviews.jsonl", row)
     return row
 

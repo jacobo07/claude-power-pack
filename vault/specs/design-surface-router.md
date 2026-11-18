@@ -142,7 +142,9 @@ V-DSR-STOP-NO-REBLOCK-WITHOUT-RECORD (an unreviewed page still blocks once).
   Not changed: CDIO-10 legal pages stay critical in the design review. Checked first, as agreed: spec CDIO-10 records
   the Owner's own scope answer "blocks done" (2026-10-08), and `legal_surface` has no publish-time caller (only
   cdio-reviewer, backlog_autopilot/webslice, asc_baseline_evidence), so demoting it here would remove the only guard.
-  Open (Owner): add CDIO-10 to the deploy gate first, then demote it to major in the design review of a single page.
+  Done (Owner 2026-11-18 'y', spec cdio-10-publish-gate.md): CDIO-10 now gates production web publishes
+  (`hooks/legal_deploy_gate.js`, V-LDG 11/11, live drill denied `npx vercel --prod` and `netlify deploy --prod`,
+  passed `git status`), and only then did the recorder start recording the legal criticals of a single page as major.
 
 ## Rollback
 `CPP_DESIGN_DONEGATE=off` / `CPP_DESIGN_ROUTE=off`, or delete the two dispatcher lines. State lives only under

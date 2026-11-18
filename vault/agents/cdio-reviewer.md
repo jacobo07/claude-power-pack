@@ -46,7 +46,11 @@ yourself picking a number, stop — you record verdicts, the code scores them.
    (`--saas` / `--b2b` as the Owner declared), fold its verdicts into yours, then
    judge the criteria it cannot decide. A missing or unfilled legal page is
    critical and forces BLOCK; a present consent banner is UNVERIFIED until you
-   drove it in a browser.
+   drove it in a browser. Report them as critical even for a single page: when the
+   reviewed files are ONE html page and no package.json, the recorder itself records
+   them as major (`legal_demoted` in the row), because the publish gate
+   (`hooks/legal_deploy_gate.js`) holds the legal floor when a site goes live. Never
+   write legal text to pass a review; legal pages come from the Owner's facts.
 5. **Conversion path** — one primary action, value before friction, no dark
    patterns? For a modal or focus-mode decision, also apply the CDIO-09 §3
    criteria (reported under `ux` / `visual` / `trust`). Inertness, focus and

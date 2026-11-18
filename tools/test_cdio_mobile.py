@@ -67,8 +67,10 @@ def _read(path):
 
 
 def _sha(path):
+    # Line endings are not content: the repo copy is CRLF in a Windows checkout, and the live ~/.claude/agents copy must
+    # be LF (a CRLF agent file was not loaded at all; measured 2026-11-17, cdio-reviewer vanished from the agent list).
     with open(path, "rb") as fh:
-        return hashlib.sha256(fh.read()).hexdigest()
+        return hashlib.sha256(fh.read().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def _section(text, number):

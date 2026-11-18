@@ -478,6 +478,11 @@ const CHAIN_MAP = {
     // which is never what such a gate intends.
     // Two-way proof: hooks/_tests/test-cascade-deny-and-heredoc.js (8/8).
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/cascade_check_bash.js', timeoutMs: 5000 },
+    // CDIO-10 publish gate (Owner 2026-11-18 'y', spec vault/specs/cdio-10-publish-gate.md): a production web publish
+    // (vercel --prod, netlify deploy --prod, firebase hosting, wrangler pages, gh-pages, surge) is denied until the
+    // site declares its jurisdiction and has filled, linked legal pages. Pure-node prefilter; python only on a match.
+    // Proof: tools/test_legal_deploy_gate.py (V-LDG-*).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/legal_deploy_gate.js', timeoutMs: 16000 },
     // destructive-state-authorization left the always-loaded prefix on 2026-09-29 (P3 ablation) and
     // lives as a PP skill. Moved rules were auto-invoked 0/8 times, so this one reaches the moment of
     // use by EVENT: the first destructive shell command of each session is denied once with the
