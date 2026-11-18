@@ -1234,8 +1234,9 @@ def hold_checkpoint(hold: dict) -> str:
     "<sha>:<path>" names the path at a commit (2026-11-16 S70W: c235442:evidence/ascension/s70w/checkpoint_s70w.md
     parked as a path that exists nowhere): the path part is the checkpoint, found on its branch by discovery."""
     ev = str(hold.get("evidence") or "")
-    m = SHA_PATH_RE.match(ev)
+    m = SHA_PATH_RE.match(ev) or PATH_AT_SHA_RE.match(ev)
     if m:
+        # 2026-11-18 (S177M): "evidence/ascension/s177m/checkpoint_s177m_r1b.md@74cbfef" parked CHECKPOINT_ON_BRANCH
         ev = m.group(1)
     if ev == "None" or SHA_RE.match(ev):
         ev = ""
@@ -1248,6 +1249,7 @@ def hold_checkpoint(hold: dict) -> str:
 
 
 SHA_PATH_RE = re.compile(r"^[0-9a-f]{7,40}:(\S.*)$")
+PATH_AT_SHA_RE = re.compile(r"^(\S+?)@[0-9a-f]{7,40}$")
 PATH_IN_TEXT_RE = re.compile(r"(?<![\w./-])(/?(?:[\w.-]+/)+[\w.-]+\.(?:md|json))\b")
 CKPT_NAME_RE = re.compile(r"(?:^|/)[^/]*(?:checkpoint|residual)[^/]*\.md$", re.I)
 
