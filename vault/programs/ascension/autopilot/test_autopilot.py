@@ -236,6 +236,14 @@ def run_all(ap):
           and not ap.agree_supported(dict(sup, new_canonical_certs=0))
           and not ap.agree_supported(dict(sup, gates=[sg[0], dict(sg[1], superseded_by_certs=None)])))
     check("V-AP-AGREE-SUPERSEDED-NEEDS-AN-RC0", not ap.agree_supported(dict(sup, gates=[sg[1]])))
+    # 2026-11-18 (KSR S169K): the pinned gate's delta accumulates over generations: 9 accepted, then 43 more = 52
+    cum = dict(full, new_canonical_certs=43, gates=[sg[0], dict(sg[1], superseded_by_certs=52)])
+    pri = {"tools/test_old.py": 9}
+    check("V-AP-SUPERSEDED-CUMULATIVE", ap.agree_supported(cum, pri) and not ap.agree_supported(cum)
+          and not ap.agree_supported(dict(cum, gates=[sg[0], dict(sg[1], superseded_by_certs=43)]), pri)
+          and not ap.agree_supported(cum, {"tools/test_other.py": 9}))
+    check("V-AP-SUPERSEDED-RECORDED", ap.superseded_record(cum, pri) == {"tools/test_old.py": 52}
+          and ap.superseded_record(sup) == {"tools/test_old.py": 2} and ap.superseded_record(full, pri) == pri)
     check("V-AP-JUDGE-TOOLS-NO-BARE-PREFIX", not any(t in ap.JUDGE_TOOLS for t in ("Bash(python3:*)", "Bash(timeout:*)")))
     # ---- protected identities read by the autopilot itself
     pf = tmp / "receipts.jsonl"
@@ -1410,7 +1418,7 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "hold_residual_ignored": lambda m: setattr(m, "hold_checkpoint", lambda h: h.get("evidence") or ""),
          "trigger_negation_all": lambda m: setattr(m, "TRIGGER_NEGATED", __import__("re").compile(r"")),
          "drift_off": lambda m: setattr(m, "packet_phase_drift", lambda *a: None),
-         "agree_unchecked": lambda m: setattr(m, "agree_supported", lambda v: True),
+         "agree_unchecked": lambda m: setattr(m, "agree_supported", lambda v, prior=None: True),
          "protected_off": lambda m: setattr(m, "protected_check", lambda lane: None),
          "topup_ignores_certificates": lambda m: setattr(m, "certified_since", lambda p, b: True),
          "topup_unbounded": lambda m: setattr(m, "MAX_TOPUPS", 99),
@@ -1470,14 +1478,17 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "owner_questions_dropped": lambda m: setattr(m, "OWNER_Q", __import__("re").compile("zzz_never_matches")),
          "owner_question_negations_kept": lambda m: setattr(m, "OWNER_Q_NOT", __import__("re").compile("zzz_never")),
          "match_build_dirt_kept": lambda m: setattr(m, "_tracked_dirty", lambda product: None),
-         "superseded_never_admitted": lambda m: setattr(m, "_superseded", lambda g, n: False),
-         "superseded_any_count": lambda m: setattr(m, "_superseded", lambda g, n: (
+         "superseded_never_admitted": lambda m: setattr(m, "_superseded", lambda g, n, prior=None: False),
+         "superseded_any_count": lambda m: setattr(m, "_superseded", lambda g, n, prior=None: (
              type(g.get("rc")) is int and g["rc"] != 0 and g.get("superseded_by_certs") is not None)),
-         "superseded_unchecked": lambda m: setattr(m, "superseded_ok", lambda v, p, b: None),
+         "superseded_unchecked": lambda m: setattr(m, "superseded_ok", lambda v, p, b, prior=None: None),
          "halt_waiting_not_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: ls.get("status") == "RUNNING"),
          "halt_any_waiting_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: (
              ls.get("status") in ("RUNNING", "WAITING"))),
          "superseded_any_gate_age": lambda m: setattr(m, "GATE_PATH", __import__("re").compile(r"(?!x)x|^")),
+         "superseded_prior_ignored": lambda m: setattr(m, "_superseded", (lambda real: lambda g, n, prior=None: real(
+             g, n, None))(m._superseded)),
+         "superseded_not_recorded": lambda m: setattr(m, "superseded_record", lambda v, prior=None: dict(prior or {})),
          "policy_refusal_parks_at_once": lambda m: setattr(m, "POLICY_RETRY_TICKS", 0),
          "policy_retry_forever": lambda m: setattr(m, "POLICY_RETRY_TICKS", 99),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),

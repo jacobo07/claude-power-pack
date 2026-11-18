@@ -31,9 +31,10 @@ Do this:
      UNDETERMINED) and whether its positive control was seen.
 
 SUPERSEDED GATES: a gate that existed before this generation, pins a pool, count or id list, and fails ONLY because this
-generation's new canonical certificates left that pool (its failure line shows the old count minus exactly the number of
-certificates you counted, and nothing else is wrong) is superseded, not failed. Report it with its real rc and
-"superseded_by_certs": <that number>, and say why in notes. Never mark a gate superseded for any other failure, and never
+generation's new canonical certificates (and those of earlier accepted generations) left that pool, and nothing else is
+wrong, is superseded, not failed. Report it with its real rc and "superseded_by_certs": <the WHOLE delta its failure
+line shows, pinned count minus current count>, and say in notes how much of it is this generation's; the autopilot checks
+that delta against the certificates you counted plus those it already accepted against that gate. Never mark a gate superseded for any other failure, and never
 one this generation wrote. At least one other gate must re-run rc=0.
 
 Verdict rules: AGREE only if every claimed gate re-ran rc=0 (or is superseded as above), protected identities are unchanged and the certificate count

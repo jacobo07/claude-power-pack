@@ -650,20 +650,29 @@ def classify_progress(v: dict, product: str, base=None, lane=None) -> tuple[str,
     return "NONE", "; ".join(notes)
 
 
-def _superseded(g, n) -> bool:
-    """A red gate the judge says only fails because this generation's n new certificates left the pool it pins."""
+def _gate_path(g) -> str:
+    m = GATE_PATH.search(str(g.get("cmd") or "")) if isinstance(g, dict) else None
+    return m.group(0) if m else ""
+
+
+def _superseded(g, n, prior=None) -> bool:
+    """A red gate the judge says only fails because certificates left the pool it pins: its whole delta from the pin
+    must equal this generation's n new certificates plus those already accepted against that gate (prior, by path).
+    2026-11-18 (KSR S169K): S168K's 9 then S169K's 43 made the delta 52, and an equality to 43 alone parked 43 certs."""
     s = g.get("superseded_by_certs") if isinstance(g, dict) else None
-    return (type(g.get("rc")) is int and g["rc"] != 0 and type(s) is int and type(n) is int and n > 0 and s == n)
+    p = int((prior or {}).get(_gate_path(g)) or 0)
+    return (type(g.get("rc")) is int and g["rc"] != 0 and type(s) is int and type(n) is int and n > 0
+            and s == n + p)
 
 
-def agree_supported(v: dict) -> bool:
+def agree_supported(v: dict, prior=None) -> bool:
     """AGREE counts only with its own evidence: protected_ok true and every listed gate rc == 0 (at least one rc 0).
     2026-11-18 (Owner 'y', pane 08cba76c): KSR S168K certified 9 functions and two older gates that pin the pool count
-    went red (POOL_COUNT 2265 != 2274), so success parked the lane. A red gate whose superseded_by_certs equals the
-    judge's own certificate count is admitted here; superseded_ok then proves it in git before the verdict stands."""
+    went red (POOL_COUNT 2265 != 2274), so success parked the lane. A red gate superseded by certificates (_superseded)
+    is admitted here; superseded_ok then proves it in git before the verdict stands."""
     gates, n = v.get("gates"), v.get("new_canonical_certs")
     return (v.get("verdict") == "AGREE" and v.get("protected_ok") is True and isinstance(gates, list) and bool(gates)
-            and all(isinstance(g, dict) and type(g.get("rc")) is int and (g["rc"] == 0 or _superseded(g, n))
+            and all(isinstance(g, dict) and type(g.get("rc")) is int and (g["rc"] == 0 or _superseded(g, n, prior))
                     for g in gates)
             and any(g["rc"] == 0 for g in gates))
 
@@ -671,10 +680,19 @@ def agree_supported(v: dict) -> bool:
 GATE_PATH = re.compile(r"\btools/[\w./-]+\.py\b")
 
 
-def superseded_ok(v: dict, product: str, base) -> str | None:
+def superseded_record(v: dict, prior=None) -> dict:
+    """The lane's accepted pool deltas by gate path after this AGREE (the next generation adds its certs to them)."""
+    out = dict(prior or {})
+    for g in v.get("gates") or []:
+        if _superseded(g, v.get("new_canonical_certs"), prior):
+            out[_gate_path(g)] = g["superseded_by_certs"]
+    return out
+
+
+def superseded_ok(v: dict, product: str, base, prior=None) -> str | None:
     """None when no gate is superseded or every superseded gate holds; else why the AGREE cannot stand. A superseded
     gate must be older than the generation (its script exists at the base) and the certificates must verify in git."""
-    sup = [g for g in v.get("gates") or [] if _superseded(g, v.get("new_canonical_certs"))]
+    sup = [g for g in v.get("gates") or [] if _superseded(g, v.get("new_canonical_certs"), prior)]
     if not sup:
         return None
     for g in sup:
@@ -1262,10 +1280,11 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
           "gates": [{"cmd": "dry", "rc": 0}], "_tokens": 0} if dry else judge(lane, checkpoint, product))
     tok, measured = call_tokens(v.get("_tokens"))
     ledger_add(lane=lane["name"], kind="judge", tokens=tok, measured=measured, verdict=v.get("verdict"), checkpoint=checkpoint)
-    if v.get("verdict") == "AGREE" and not agree_supported(v):
+    prior = ls.get("superseded") or {}
+    if v.get("verdict") == "AGREE" and not agree_supported(v, prior):
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"AGREE without its own evidence (protected_ok/gates rc): {str(v.get('notes', ''))[:400]}"
-    sbad = None if dry or v.get("verdict") != "AGREE" else superseded_ok(v, product, ls.get("base"))
+    sbad = None if dry or v.get("verdict") != "AGREE" else superseded_ok(v, product, ls.get("base"), prior)
     if sbad:
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"autopilot superseded-gate check: {sbad}; {str(v.get('notes', ''))[:300]}"
@@ -1273,6 +1292,8 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if v.get("verdict") == "AGREE" and pbad:
         v["verdict"] = "DISAGREE"
         v["notes"] = f"autopilot protected check: {pbad}"
+    if v.get("verdict") == "AGREE":
+        ls["superseded"] = superseded_record(v, prior)
     digest(lane["name"], f"JUDGE {v.get('verdict')} on {checkpoint}: new certs {v.get('new_canonical_certs')}, "
                          f"capability {v.get('validated_capability')}. {str(v.get('notes', ''))[:600]}")
     if not dry:
