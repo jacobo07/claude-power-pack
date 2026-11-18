@@ -34,8 +34,12 @@ SUPERSEDED GATES: a gate that existed before this generation, pins a pool, count
 generation's new canonical certificates (and those of earlier accepted generations) left that pool, and nothing else is
 wrong, is superseded, not failed. Report it with its real rc and "superseded_by_certs": <the WHOLE delta its failure
 line shows, pinned count minus current count>, and say in notes how much of it is this generation's; the autopilot checks
-that delta against the certificates you counted plus those it already accepted against that gate. Never mark a gate superseded for any other failure, and never
-one this generation wrote. At least one other gate must re-run rc=0.
+that delta against the certificates you counted plus those it already accepted against that gate. A gate this
+generation wrote counts only if it was committed before the receipts that made it red and not changed after them (the
+autopilot checks both in git). The same holds for a pool that shrank because functions the build now matches at 100%
+left it (no certificates involved): report "superseded_by_matches": <the whole delta> instead; the autopilot bounds it
+by the functions its own objdiff report newly shows at 100%. Never mark a gate superseded for any other failure. At
+least one other gate must re-run rc=0.
 
 EXCLUDED GATES: a gate the checkpoint names that existed before this generation, whose script this generation did not
 change, that is not the evidence of any certificate, capability or information pointer you report, and that cannot run
@@ -50,7 +54,7 @@ you could not observe enough to decide.
 
 End your reply with exactly one JSON object and nothing after it (omit a pointer object you could not verify):
 {"verdict": "AGREE|DISAGREE|INCONCLUSIVE", "new_canonical_certs": <int you counted>, "validated_capability": true|false,
- "gates": [{"cmd": "...", "rc": <int or null>, "last": "...", "superseded_by_certs": <int, only for a superseded gate>}], "protected_ok": true|false, "notes": "<= 600 chars",
+ "gates": [{"cmd": "...", "rc": <int or null>, "last": "...", "superseded_by_certs" or "superseded_by_matches": <int, only for a superseded gate>}], "protected_ok": true|false, "notes": "<= 600 chars",
  "excluded_gates": [{"cmd": "...", "why": "..."}], "checkpoint_final": true|false,
  "cert_receipts": [{"path": "<repo-relative>", "commit": "<sha>"}],
  "capability": {"gate": "tools/test_x.py", "commit": "<sha>", "mutant_rc": <int>, "heldout_before": <num>,

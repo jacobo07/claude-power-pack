@@ -666,6 +666,16 @@ def _superseded(g, n, prior=None) -> bool:
             and 0 < s - p <= n)
 
 
+def _superseded_m(g, prior=None) -> bool:
+    """A red gate the judge says only fails because functions the build now matches at 100% left the pool it pins.
+    2026-11-18 (MKW S151M, Owner 'haz ambos'): test_decl_synth drifted 73 rows on in-tree build matches, 0 certificates,
+    so it could not be superseded and the judge said DISAGREE. Its part of the delta must be positive here; superseded_ok
+    bounds it by the functions the autopilot's own objdiff report newly shows at 100%."""
+    s = g.get("superseded_by_matches") if isinstance(g, dict) else None
+    p = int((prior or {}).get("m:" + _gate_path(g)) or 0)
+    return type(g.get("rc")) is int and g["rc"] != 0 and type(s) is int and s - p > 0
+
+
 def agree_supported(v: dict, prior=None) -> bool:
     """AGREE counts only with its own evidence: protected_ok true and every listed gate rc == 0 (at least one rc 0).
     2026-11-18 (Owner 'y', pane 08cba76c): KSR S168K certified 9 functions and two older gates that pin the pool count
@@ -673,8 +683,8 @@ def agree_supported(v: dict, prior=None) -> bool:
     is admitted here; superseded_ok then proves it in git before the verdict stands."""
     gates, n = v.get("gates"), v.get("new_canonical_certs")
     return (v.get("verdict") == "AGREE" and v.get("protected_ok") is True and isinstance(gates, list) and bool(gates)
-            and all(isinstance(g, dict) and type(g.get("rc")) is int and (g["rc"] == 0 or _superseded(g, n, prior))
-                    for g in gates)
+            and all(isinstance(g, dict) and type(g.get("rc")) is int
+                    and (g["rc"] == 0 or _superseded(g, n, prior) or _superseded_m(g, prior)) for g in gates)
             and any(g["rc"] == 0 for g in gates))
 
 
@@ -682,26 +692,78 @@ GATE_PATH = re.compile(r"\btools/[\w./-]+\.py\b")
 
 
 def superseded_record(v: dict, prior=None) -> dict:
-    """The lane's accepted pool deltas by gate path after this AGREE (the next generation adds its certs to them)."""
+    """The lane's accepted pool deltas by gate path after this AGREE (the next generation adds its own to them);
+    match-superseded gates are kept under 'm:<path>'."""
     out = dict(prior or {})
     for g in v.get("gates") or []:
         if _superseded(g, v.get("new_canonical_certs"), prior):
             out[_gate_path(g)] = g["superseded_by_certs"]
+        elif _superseded_m(g, prior):
+            out["m:" + _gate_path(g)] = g["superseded_by_matches"]
     return out
 
 
-def superseded_ok(v: dict, product: str, base, prior=None) -> str | None:
+def _gate_age_ok(g, product: str, base, receipts=None) -> bool:
+    """The gate existed at the generation base; or (certificate gates, 2026-11-18 KSR S173K, Owner 'haz ambos': the
+    generation's own test_s171k_exp.py pinned the pool at its 38-cert stage and its next 480 certs turned it red) this
+    generation's last change to it is a strict ancestor of a commit that wrote its receipts, so it pinned the pool before
+    those certificates and was not touched after them."""
+    p = _gate_path(g)
+    if not p or not base:
+        return False
+    b = _sha(product, base)
+    if _git(product, "cat-file", "-e", f"{b}:{p}")[0] == 0:
+        return True
+    rc, last = _git(product, "log", "-1", "--format=%H", f"{b}..HEAD", "--", p)
+    last = str(last).strip() if rc == 0 else ""
+    for r in receipts or []:
+        c = _sha(product, str(r.get("commit") or "")) if isinstance(r, dict) else None
+        if last and c and last != c and _git(product, "merge-base", "--is-ancestor", last, c)[0] == 0:
+            return True
+    return False
+
+
+def match_new(lane, product: str) -> tuple[int, str | None]:
+    """Functions the lane's objdiff report shows at 100% beyond its MATCH snapshot, built by the autopilot at HEAD."""
+    if not lane or not lane.get("match_report"):
+        return 0, "the lane has no match_report"
+    cur, why = match_at100(lane, product)
+    if cur is None:
+        return 0, why
+    snap = OUT / "match" / f"{lane['name']}.json"
+    if not snap.exists():
+        return 0, "no MATCH snapshot"
+    return len(cur - set(json.loads(snap.read_text()))), None
+
+
+def superseded_ok(v: dict, product: str, base, prior=None, lane=None) -> str | None:
     """None when no gate is superseded or every superseded gate holds; else why the AGREE cannot stand. A superseded
-    gate must be older than the generation (its script exists at the base) and the certificates must verify in git."""
-    sup = [g for g in v.get("gates") or [] if _superseded(g, v.get("new_canonical_certs"), prior)]
-    if not sup:
+    gate must pass _gate_age_ok; certificates must verify in git; a match-superseded gate's part of the delta must not
+    exceed the functions the autopilot's objdiff report newly shows at 100%."""
+    n = v.get("new_canonical_certs")
+    sup = [g for g in v.get("gates") or [] if _superseded(g, n, prior)]
+    supm = [g for g in v.get("gates") or [] if g not in sup and _superseded_m(g, prior)]
+    if not sup and not supm:
         return None
     for g in sup:
-        m = GATE_PATH.search(str(g.get("cmd") or ""))
-        if not m or not base or _git(product, "cat-file", "-e", f"{_sha(product, base)}:{m.group(0)}")[0] != 0:
-            return f"superseded gate {g.get('cmd')} is not a gate that existed before this generation"
-    c = verify_cert(v, product, base)
-    return None if c is True else f"superseded gates need verified certificates: {c or 'none claimed'}"
+        if not _gate_age_ok(g, product, base, v.get("cert_receipts")):
+            return (f"superseded gate {g.get('cmd')} neither existed before this generation nor was written by it "
+                    "before the receipts that made it red and left unchanged after them")
+    for g in supm:
+        if not _gate_age_ok(g, product, base):
+            return f"match-superseded gate {g.get('cmd')} is not a gate that existed before this generation"
+    if sup:
+        c = verify_cert(v, product, base)
+        if c is not True:
+            return f"superseded gates need verified certificates: {c or 'none claimed'}"
+    if supm:
+        new, why = match_new(lane, product)
+        for g in supm:
+            d = g["superseded_by_matches"] - int((prior or {}).get("m:" + _gate_path(g)) or 0)
+            if d > new:
+                return f"match-superseded gate {_gate_path(g)} drops {d} > {new} functions newly at 100%" + (
+                    f" ({why})" if why else "")
+    return None
 
 
 def excluded_ok(v: dict, product: str, base) -> str | None:
@@ -1341,7 +1403,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if v.get("verdict") == "AGREE" and not agree_supported(v, prior):
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"AGREE without its own evidence (protected_ok/gates rc): {str(v.get('notes', ''))[:400]}"
-    sbad = None if dry or v.get("verdict") != "AGREE" else superseded_ok(v, product, ls.get("base"), prior)
+    sbad = None if dry or v.get("verdict") != "AGREE" else superseded_ok(v, product, ls.get("base"), prior, lane)
     if sbad:
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"autopilot superseded-gate check: {sbad}; {str(v.get('notes', ''))[:300]}"

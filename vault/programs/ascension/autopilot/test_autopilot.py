@@ -335,6 +335,9 @@ def run_all(ap):
     c, n = ap.classify_progress({}, str(mrep), P["c0"], mlane)
     check("V-MATCH-REGRESSION-REFUSED", c == "NONE" and "u1::a" in n
           and json.loads(msnap.read_text()) == ["u1::a", "u1::b"])
+    write_rep({"a", "b", "c"})  # 2026-11-18 (MKW S151M): new matches counted against the snapshot, which is not moved
+    check("V-MATCH-NEW-COUNTED", ap.match_new(mlane, str(mrep)) == (1, None)
+          and json.loads(msnap.read_text()) == ["u1::a", "u1::b"] and ap.match_new({"name": "X"}, str(mrep))[0] == 0)
     c, n = ap.classify_progress({}, str(mrep), P["c0"], dict(mlane, match_report={"cmd": ["false"], "path": "report.json"}))
     check("V-MATCH-BUILD-FAIL-NO-CLAIM", c == "NONE" and "rc=" in n)
     check("V-MATCH-NOT-CONFIGURED", ap.classify_progress({}, str(mrep), P["c0"], {"name": "MLANE"}) == ("NONE", ""))
@@ -377,6 +380,36 @@ def run_all(ap):
         sv, new_canonical_certs=3, gates=[sg[0], dict(sg[1], superseded_by_certs=3)]), str(sdir), s0), str)
           and isinstance(ap.superseded_ok(dict(sv, cert_receipts=[]), str(sdir), s0), str))
     check("V-AP-SUPERSEDED-ABSENT-NO-CHECK", ap.superseded_ok(dict(full, new_canonical_certs=2), str(sdir), None) is None)
+    # 2026-11-18 (MKW S151M): a pool that shrank on build matches; bounded by the functions newly at 100%
+    mg = {"cmd": "timeout 600 python3 tools/test_old.py", "rc": 1, "superseded_by_matches": 3}
+    vmt = dict(full, new_canonical_certs=0, gates=[sg[0], mg])
+    check("V-AP-AGREE-MATCH-SUPERSEDED-ADMITTED", ap.agree_supported(vmt)
+          and not ap.agree_supported(dict(vmt, gates=[sg[0], dict(mg, superseded_by_matches=0)]))
+          and not ap.agree_supported(dict(vmt, gates=[sg[0], dict(mg, superseded_by_matches=3)]), {"m:tools/test_old.py": 3}))
+    keep_mn = ap.match_new
+    ap.match_new = lambda lane, p: (5, None)
+    check("V-AP-MATCH-SUPERSEDED-BOUNDED", ap.superseded_ok(vmt, str(sdir), s0) is None
+          and isinstance(ap.superseded_ok(dict(vmt, gates=[sg[0], dict(mg, superseded_by_matches=6)]), str(sdir), s0), str)
+          and ap.superseded_ok(dict(vmt, gates=[sg[0], dict(mg, superseded_by_matches=6)]), str(sdir), s0,
+                               {"m:tools/test_old.py": 4}) is None)
+    ap.match_new = lambda lane, p: (0, "no report")
+    check("V-AP-MATCH-SUPERSEDED-NEEDS-MATCHES", isinstance(ap.superseded_ok(vmt, str(sdir), s0), str))
+    ap.match_new = keep_mn
+    check("V-AP-MATCH-SUPERSEDED-RECORDED", ap.superseded_record(vmt) == {"m:tools/test_old.py": 3})
+    # 2026-11-18 (KSR S173K): this generation's own gate, written before the receipts that turned it red
+    (sdir / "tools" / "test_mid.py").write_text("print(4)\n")
+    sgit("add", ".")
+    sgit("commit", "-qm", "gen gate pins the pool")
+    with open(sdir / "receipts.jsonl", "a") as fh:
+        fh.write('{"id": "f3", "verdict": "CERTIFIED"}\n')
+    sgit("commit", "-qam", "more certs")
+    s3 = sgit("rev-parse", "HEAD")
+    vown = dict(full, new_canonical_certs=3, cert_receipts=[{"path": "receipts.jsonl", "commit": s3}],
+                gates=[sg[0], {"cmd": "timeout 600 python3 tools/test_mid.py", "rc": 1, "superseded_by_certs": 1}])
+    check("V-AP-SUPERSEDED-OWN-GATE-BEFORE-RECEIPTS", ap.superseded_ok(vown, str(sdir), s0) is None)
+    (sdir / "tools" / "test_mid.py").write_text("print(5)\n")
+    sgit("commit", "-qam", "gate edited after the receipts")
+    check("V-AP-SUPERSEDED-OWN-GATE-TOUCHED-AFTER-REFUSED", isinstance(ap.superseded_ok(vown, str(sdir), s0), str))
     # 2026-11-18 (FIFA S170F): a gate the judge excludes must predate the generation and be unchanged by it
     xo = {"cmd": "timeout 600 python3 tools/test_old.py", "why": "needs arguments"}
     check("V-AP-EXCLUDED-OLD-UNCHANGED-OK", ap.excluded_ok(dict(full, excluded_gates=[xo]), str(sdir), s0) is None
@@ -1533,11 +1566,18 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "superseded_never_admitted": lambda m: setattr(m, "_superseded", lambda g, n, prior=None: False),
          "superseded_any_count": lambda m: setattr(m, "_superseded", lambda g, n, prior=None: (
              type(g.get("rc")) is int and g["rc"] != 0 and g.get("superseded_by_certs") is not None)),
-         "superseded_unchecked": lambda m: setattr(m, "superseded_ok", lambda v, p, b, prior=None: None),
+         "superseded_unchecked": lambda m: setattr(m, "superseded_ok", lambda v, p, b, prior=None, lane=None: None),
          "halt_waiting_not_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: ls.get("status") == "RUNNING"),
          "halt_any_waiting_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: (
              ls.get("status") in ("RUNNING", "WAITING"))),
          "terminal_checkpoint_ignored": lambda m: setattr(m, "terminal_checkpoint", lambda ls, p, rec: ""),
+         "own_gate_never_admitted": lambda m: setattr(m, "_gate_age_ok", (lambda real: lambda g, p, b, receipts=None: real(
+             g, p, b, None))(m._gate_age_ok)),
+         "own_gate_any_age": lambda m: setattr(m, "_gate_age_ok", lambda g, p, b, receipts=None: bool(m._gate_path(g))),
+         "match_supersede_off": lambda m: setattr(m, "_superseded_m", lambda g, prior=None: False),
+         "match_supersede_prior_ignored": lambda m: setattr(m, "_superseded_m", (lambda real: lambda g, prior=None: real(
+             g, None))(m._superseded_m)),
+         "match_new_moves_nothing": lambda m: setattr(m, "match_new", lambda lane, p: (0, None)),
          "superseded_must_be_all_certs": lambda m: setattr(m, "_superseded", lambda g, n, prior=None: (
              type(g.get("rc")) is int and g["rc"] != 0 and type(g.get("superseded_by_certs")) is int and type(n) is int
              and n > 0 and g["superseded_by_certs"] == n + int((prior or {}).get(m._gate_path(g)) or 0))),
