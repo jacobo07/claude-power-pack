@@ -410,6 +410,13 @@ def run_all(ap):
     (sdir / "tools" / "test_mid.py").write_text("print(5)\n")
     sgit("commit", "-qam", "gate edited after the receipts")
     check("V-AP-SUPERSEDED-OWN-GATE-TOUCHED-AFTER-REFUSED", isinstance(ap.superseded_ok(vown, str(sdir), s0), str))
+    # 2026-11-18 (KSR S171K): the mission's head is a control-repo commit the product lacks -> the product's HEAD
+    (sdir / "evidence").mkdir()
+    (sdir / "evidence" / "checkpoint_x.md").write_text("x\n")
+    sgit("add", ".")
+    sgit("commit", "-qm", "checkpoint")
+    check("V-AP-TERMINAL-CHECKPOINT-PRODUCT-HEAD", ap.terminal_checkpoint(
+        {"base": s0}, str(sdir), {"binding": {"head": "f" * 40}}) == "evidence/checkpoint_x.md")
     # 2026-11-18 (FIFA S170F): a gate the judge excludes must predate the generation and be unchanged by it
     xo = {"cmd": "timeout 600 python3 tools/test_old.py", "why": "needs arguments"}
     check("V-AP-EXCLUDED-OLD-UNCHANGED-OK", ap.excluded_ok(dict(full, excluded_gates=[xo]), str(sdir), s0) is None
@@ -1571,6 +1578,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "halt_any_waiting_resumed": lambda m: setattr(m, "halt_resumable", lambda ls, mid: (
              ls.get("status") in ("RUNNING", "WAITING"))),
          "terminal_checkpoint_ignored": lambda m: setattr(m, "terminal_checkpoint", lambda ls, p, rec: ""),
+         "terminal_gen_head_only": lambda m: setattr(m, "terminal_checkpoint", lambda ls, p, rec: m.checkpoint_from_branch(
+             p, ls.get("base"), m.gen_head(rec))),
          "own_gate_never_admitted": lambda m: setattr(m, "_gate_age_ok", (lambda real: lambda g, p, b, receipts=None: real(
              g, p, b, None))(m._gate_age_ok)),
          "own_gate_any_age": lambda m: setattr(m, "_gate_age_ok", lambda g, p, b, receipts=None: bool(m._gate_path(g))),

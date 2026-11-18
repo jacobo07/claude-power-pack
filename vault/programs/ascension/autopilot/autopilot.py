@@ -1098,8 +1098,11 @@ def halt_resumable(ls: dict, mid: str) -> bool:
 def terminal_checkpoint(ls: dict, product: str, rec: dict) -> str:
     """The checkpoint a mission that ended without a checkpoint hold committed on its branch, '' when none. 2026-11-18
     (FIFA S170F, MKW S151M): both wrote their checkpoint, were judged, then spent their authority (CAPITAL_EXHAUSTED) and
-    were settled HALTED with a cost hold; the Owner's un-park for a re-judge parked them at once."""
-    return checkpoint_from_branch(product, ls.get("base"), gen_head(rec))
+    were settled HALTED with a cost hold; the Owner's un-park for a re-judge parked them at once. (KSR S171K): the
+    mission works from the control repo gen3-pp and commits in the product t1-campaign, so gen_head named a gen3-pp
+    commit the product does not have; then the product's own HEAD is the generation's head."""
+    h = gen_head(rec)
+    return checkpoint_from_branch(product, ls.get("base"), h if h and _sha(product, h) else "HEAD")
 
 
 def continue_halted(st: dict, lane: dict, ls: dict, mid: str, rec: dict, dry: bool) -> bool:
