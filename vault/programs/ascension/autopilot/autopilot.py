@@ -203,6 +203,8 @@ def packet_phase_drift(packet: str, phases: list[str]) -> str | None:
 
 _NEUTRAL = ["Phase 1: a (cap 1M): x", "Phase 2: b (cap 1M): y"]
 POLICY_REPLANS = 2  # re-plans after a policy refusal, each told why (S41K: the 1st re-plan fixed the profile line, not a cap)
+POLICY_RETRY_TICKS = 2  # ticks that re-plan a planner-fixable refusal before it parks (_refused)
+OWNER_REFUSAL = re.compile(r"budget|envelope|day cap|authority", re.I)  # refusals only the Owner lifts: they park
 
 
 def plan_checks(lane: dict, name: str, p: dict):
@@ -309,6 +311,10 @@ def owner_queue(lane: str, text: str) -> None:
 
 
 OWNER_Q = re.compile(r"OWNER\s+(DECISION\s+NEEDED|QUESTION)", re.I)
+# 2026-11-18 (Owner 'y', pane 08cba76c): 4 of the first QUESTION lines were "## Next route (OR-4, not an Owner question)".
+# A line that negates the question, or cites a standing ruling that answers it, is not one.
+OWNER_Q_NOT = re.compile(r"\bnot\s+(an?\s+)?owner\s+(question|decision)|\bno\s+owner\s+(question|decision)|\bOR-[1-6]\b",
+                         re.I)
 
 
 def surface_owner_questions(lane: str, checkpoint: str, product: str) -> int:
@@ -317,7 +323,8 @@ def surface_owner_questions(lane: str, checkpoint: str, product: str) -> int:
     since 11-14 never reached the Owner, and the work routed around them. The text is the worker's: data, not orders."""
     p = Path(checkpoint) if os.path.isabs(checkpoint) else Path(product, checkpoint)
     try:
-        lines = [l.strip()[:300] for l in p.read_text(errors="replace").splitlines() if OWNER_Q.search(l)][:3]
+        lines = [l.strip()[:300] for l in p.read_text(errors="replace").splitlines()
+                 if OWNER_Q.search(l) and not OWNER_Q_NOT.search(l)][:3]
         seen = (OUT / "owner_queue.md").read_text(errors="replace") if (OUT / "owner_queue.md").exists() else ""
     except OSError:
         return 0
@@ -564,6 +571,12 @@ def verify_information(v: dict, product: str, base):
     return True
 
 
+def _tracked_dirty(product: str) -> set | None:
+    """Tracked paths that differ from HEAD; None outside a git work tree."""
+    rc, out = _git(product, "diff", "--name-only", "HEAD")
+    return {l.strip() for l in str(out).splitlines() if l.strip()} if rc == 0 else None
+
+
 def match_at100(lane: dict, product: str):
     """-> (set of 'unit::function' at 100% in the lane's objdiff report, None), or (None, why). The autopilot builds the
     report itself in the product at HEAD (SPEC-match-exploit.md); (None, None) when the lane has no match_report."""
@@ -571,7 +584,17 @@ def match_at100(lane: dict, product: str):
     cmd, path = mr.get("cmd"), mr.get("path")
     if not (isinstance(cmd, list) and cmd and isinstance(path, str) and path):
         return None, None
-    rc, out = sh([str(c) for c in cmd], cwd=product, timeout=1800)
+    before = _tracked_dirty(product)
+    try:
+        rc, out = sh([str(c) for c in cmd], cwd=product, timeout=1800)
+    finally:
+        # 2026-11-18 (Owner 'y', pane 08cba76c): the MKW report build rewrote config/RMCP01/module/splits.txt at 01:11Z;
+        # the dirty control repo held S151M's launch for 6.7 h (behind_dirty). The autopilot measures, never edits: a
+        # tracked file its build dirtied is restored; one that was already dirty is left as it was.
+        after = _tracked_dirty(product) if before is not None else None
+        for f in sorted((after or set()) - (before or set())):
+            _git(product, "checkout", "--", f)
+            log(f"{lane.get('name')}: MATCH build dirtied tracked {f}; restored")
     if rc != 0:
         return None, f"report command rc={rc}: {str(out)[-200:]}"
     try:
@@ -665,14 +688,23 @@ def plan(lane: dict, name: str, checkpoint: str, product: str, verdict: dict, ev
     return p
 
 
-def design_lever(lane: dict, checkpoint: str, product: str, family) -> dict | None:
+def design_lever(lane: dict, checkpoint: str, product: str, family, refused=None) -> dict | None:
     """One read-only model call that designs the next lever from the residual (evolve.synthesize admits it). Owner
-    2026-11-16 (pane 08cba76c): a lane that has no admissible lever designs one instead of waiting on the Owner."""
-    levers = evolve.load_levers(HOME).get(lane["name"], [])
+    2026-11-16 (pane 08cba76c): a lane that has no admissible lever designs one instead of waiting on the Owner.
+    2026-11-18 (Owner 'y', pane 08cba76c): KSR's design reused the id ksr_handsource_regalloc, which sat past the 12,000-
+    char cut of {LEVERS}, and the lane parked. Every existing id is now listed whole, and `refused` (the admission's
+    reasons) asks for a second design."""
+    all_levers = evolve.load_levers(HOME)
+    levers = all_levers.get(lane["name"], [])
+    ids = sorted({str(x.get("id")) for xs in all_levers.values() if isinstance(xs, list) for x in xs if isinstance(x, dict)})
     prompt = ((HOME / "lever_designer_prompt.md").read_text().replace("{LANE}", lane["name"])
               .replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product).replace("{FAMILY}", str(family))
               .replace("{LEVERS}", json.dumps(levers)[:12000]).replace("{BRIEF}", str(HOME / "brief.md"))
               .replace("{DIGEST}", str(OUT / "digest.md")))
+    prompt += f"\n\nExisting lever ids (every lane; never reuse one): {', '.join(ids)}\n"
+    if refused:
+        prompt += ("\nYOUR PREVIOUS DESIGN WAS REFUSED by the deterministic admission: " + "; ".join(refused)[:1200] +
+                   "\nDesign again so that every refusal is answered: a new id, the residual cited in 'what'.\n")
     r = run_claude(prompt, cwd=product, tools=["Read", "Grep", "Glob", "Bash(git log:*)", "Bash(ls:*)"],
                    add_dirs=[lane["cwd"], "/home/kobii/missions/gen3-pp", "/home/kobii/missions/recon-general", str(HOME),
                              "/home/kobii/wsr-decomp", "/home/kobii/missions/mkw-lib", "/home/kobii/missions/mkw-decomp"],
@@ -684,7 +716,10 @@ def design_lever(lane: dict, checkpoint: str, product: str, family) -> dict | No
 
 def lever_designer(lane: dict, checkpoint: str, product: str):
     """The designer callable evolve.synthesize takes; looked up at call time so the gate can stub design_lever."""
-    return lambda family: design_lever(lane, checkpoint, product, family)
+    def des(family):
+        return design_lever(lane, checkpoint, product, family)
+    des.retry = lambda family, refused: design_lever(lane, checkpoint, product, family, refused=refused)
+    return des
 
 
 def persist_designed(lane: dict, d: dict, levers: dict, dry: bool) -> None:
@@ -1069,9 +1104,26 @@ def resumable_plan(ls: dict, key: str) -> dict | None:
     return pp if isinstance(pp, dict) and key and pp.get("for") == key and isinstance(pp.get("verdict"), dict) else None
 
 
-def _refused(st: dict, ls: dict, lane: str, pend: dict, queue: str, dig: str, kind: str | None = None) -> None:
-    """Park on a policy refusal, keeping the judgment for the re-plan after the Owner's look."""
+def _refused(st: dict, ls: dict, lane: str, pend: dict, queue: str, dig: str, kind: str | None = None,
+             retry: bool = True) -> None:
+    """Park on a policy refusal, keeping the judgment for the re-plan after the Owner's look. 2026-11-18 (Owner 'y', pane
+    08cba76c; MKWLIB S150L parked on 'no rival'/'no decision rule'/'no positive control', each re-plan fixing one and
+    dropping another): a refusal the planner can fix (no budget reason in it) is re-planned at the next tick instead,
+    POLICY_RETRY_TICKS times, from the kept judgment and told EVERY refusal so far. Budget refusals still park, and so
+    does a re-plan whose planner stopped with no designed lever (retry=False): it has said it has no route."""
+    old = ls.get("pending_plan") or {}
+    if old.get("for") == pend.get("for"):
+        pend = dict(pend, bad=list(dict.fromkeys([*(old.get("bad") or []), *(pend.get("bad") or [])])))
     ls["pending_plan"] = pend
+    n = int(ls.get("policy_retry") or 0)
+    if (retry and n < POLICY_RETRY_TICKS and pend.get("bad")
+            and not any(OWNER_REFUSAL.search(str(b)) for b in pend["bad"])):
+        ls.update(policy_retry=n + 1, judged_for=None)
+        log(f"{lane}: {queue[:300]}; planner-fixable: re-plan at the next tick ({n + 1}/{POLICY_RETRY_TICKS})")
+        digest(lane, f"{dig[:300]}; re-plan at the next tick from the kept judgment")
+        save_state(st)
+        return None
+    ls["policy_retry"] = 0
     return _park(st, ls, lane, queue, dig, kind=kind)
 
 
@@ -1300,6 +1352,7 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
             if evo and not bad else []
         return phases, notes, text, bad, ebad, caps
     phases, notes, text, bad, ebad, caps = checked(p)
+    seen_bad: list = []  # every refusal of this call, told to each re-plan (S150L fixed one and dropped another)
     for attempt in range(POLICY_REPLANS if not dry else 0):
         # 2026-11-14 (S35K, S37K, S38K, S40K, S40T, S41K refused; each parked a lane for hours): bounded re-plans, each
         # told why. The policy is unchanged: every plan meets the same checks, and the last refusal parks as before.
@@ -1308,16 +1361,18 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         if not (bad or ebad):
             break
         why = bad or ebad
+        seen_bad[:] = list(dict.fromkeys([*seen_bad, *why]))
         log(f"{lane['name']}: {'policy' if bad else 'EVO policy'} refused {name} (plan {attempt + 1}): "
             f"{'; '.join(why)[:300]}; re-plan with the reasons")
-        p = plan(lane, name, checkpoint, product, v, (pdir + "\n\n" + replan_feedback(why, p.get("_offenders"))).strip())
+        p = plan(lane, name, checkpoint, product, v,
+                 (pdir + "\n\n" + replan_feedback(seen_bad, p.get("_offenders"))).strip())
         tok, measured = call_tokens(p.get("_tokens"))
         ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name, replan=attempt + 1)
         p = design_after_stop(p)
         if p.get("stop"):
             return _refused(st, ls, lane["name"], dict(pend, bad=why, offenders=p.get("_offenders")),
                             f"policy refused {name}; the re-plan stopped: {str(p.get('stop'))[:300]}",
-                            f"POLICY REFUSED {name}; re-plan stopped")
+                            f"POLICY REFUSED {name}; re-plan stopped", retry=False)
         phases, notes, text, bad, ebad, caps = checked(p)
     if bad:
         off = "; ".join(l[:200] for l in (p.get("_offenders") or [])[:2])
@@ -1351,7 +1406,7 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         ls.update(status="RUNNING", gen=name, arm_fails=0, topups=0,
                   planned_from={"checkpoint": checkpoint, "verdict": {k: (str(x)[:1500] if isinstance(x, str) else x)
                                                                       for k, x in v.items() if k != "_tokens"}})
-        for k in ("pending_plan", "topup_at", "topup_head"):
+        for k in ("pending_plan", "topup_at", "topup_head", "policy_retry"):
             ls.pop(k, None)
         if evo:
             ls["lever"] = ls.pop("next_lever", None) or ls.get("lever")

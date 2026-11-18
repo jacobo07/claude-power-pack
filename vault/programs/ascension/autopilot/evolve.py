@@ -144,6 +144,13 @@ def synthesize(levers: dict, lane: str, ls: dict, product: str, family, designer
     if not isinstance(lv, dict) or lv.get("none"):  # structural, before admission: nothing to admit or persist
         return None, f"designer proposed no lever: {str((lv or {}).get('none') if isinstance(lv, dict) else lv)[:200]}"
     bad = synth_problems(lv, levers, lane, product, family, residual)
+    retry = getattr(designer, "retry", None)
+    if bad and callable(retry):
+        # 2026-11-18 (Owner 'y', pane 08cba76c): KSR parked on "id ksr_handsource_regalloc already exists". One second
+        # design, told the refusals; it meets the same admission.
+        lv2 = retry(family, bad)
+        if isinstance(lv2, dict) and not lv2.get("none"):
+            lv, bad = lv2, synth_problems(lv2, levers, lane, product, family, residual)
     if bad:
         return None, "designed lever refused: " + "; ".join(bad)[:400]
     lv = dict(lv, kind="research", status="open", origin="autopilot", requires=list(lv.get("requires") or []),

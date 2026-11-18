@@ -5,6 +5,7 @@ Every refusal asserts its specific label; every guard has an admitting twin so a
 import importlib.util
 import json
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -126,7 +127,10 @@ def run_all(ap):
     check("V-AP-PACKET-NAMES-OWNER-RULINGS", "OR-1" in ap.HEADER and "OR-3" in ap.HEADER
           and "never CERTIFIED" not in ap.HEADER)
     oqf = tmp / "oq_ck.md"
-    oqf.write_text("# ck\nOWNER DECISION NEEDED: authorise route 1\nplain line\nOwner question: may cert1 normalise @N?\n")
+    # 2026-11-18: negated lines ("not an Owner question") and lines that cite a standing ruling are not questions
+    oqf.write_text("# ck\nOWNER DECISION NEEDED: authorise route 1\nplain line\nOwner question: may cert1 normalise @N?\n"
+                   "## Next route (OR-4, not an Owner question)\n## Next route (not an Owner question)\n"
+                   "re-pin under OR-6, no Owner decision needed\n")
     ap.OUT.mkdir(parents=True, exist_ok=True)
     (ap.OUT / "owner_queue.md").unlink(missing_ok=True)
     n1, n2 = ap.surface_owner_questions("L", str(oqf), str(tmp)), ap.surface_owner_questions("L", str(oqf), str(tmp))
@@ -313,6 +317,20 @@ def run_all(ap):
     c, n = ap.classify_progress({}, str(mrep), P["c0"], dict(mlane, match_report={"cmd": ["false"], "path": "report.json"}))
     check("V-MATCH-BUILD-FAIL-NO-CLAIM", c == "NONE" and "rc=" in n)
     check("V-MATCH-NOT-CONFIGURED", ap.classify_progress({}, str(mrep), P["c0"], {"name": "MLANE"}) == ("NONE", ""))
+    # 2026-11-18 (MKW S151M held 6.7 h): a tracked file the report build dirties is restored; a dirty one stays
+    gdir = Path(tempfile.mkdtemp(prefix="mgit-", dir=tmp))  # fresh per run: the mutation drill re-runs this body
+    for a in (["init", "-q"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+        subprocess.run(["git", "-C", str(gdir), *a], check=True)
+    (gdir / "splits.txt").write_text("a\n")
+    (gdir / "mine.txt").write_text("m\n")
+    subprocess.run(["git", "-C", str(gdir), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(gdir), "commit", "-qm", "c"], check=True)
+    (gdir / "mine.txt").write_text("worker edit\n")
+    (gdir / "report.json").write_text(json.dumps({"units": []}))
+    glane = {"name": "MGIT", "match_report": {"cmd": ["sh", "-c", "echo b >> splits.txt"], "path": "report.json"}}
+    cur, why = ap.match_at100(glane, str(gdir))
+    check("V-MATCH-BUILD-LEAVES-TREE-CLEAN", cur == set() and why is None
+          and (gdir / "splits.txt").read_text() == "a\n" and (gdir / "mine.txt").read_text() == "worker edit\n")
 
     # ---- lane transitions with stubs
     lanes = [dict(lane0, mission="m-aaaaaaaaaaaa")]
@@ -604,10 +622,17 @@ def run_all(ap):
           and "AUTOPILOT POLICY REFUSED" in dirs[-1] and "define a new profile P9" in dirs[-1])
     dirs.clear()
     st = fresh(81)
-    ap.plan = seq_plan(BADP, BADP, BADP, BADP)
+    per_tick, retry_ticks = 1 + ap.POLICY_REPLANS, 2  # the bound is pinned here, not read back from the module
+    ap.plan = seq_plan(*[BADP] * (per_tick * (1 + retry_ticks) + 1))
     ap.lane_tick(st, lanes[0], False)
+    # 2026-11-18 (Owner 'y', MKWLIB S150L): a planner-fixable refusal re-plans at the next tick, not a park
+    check("V-AP-POLICY-REFUSAL-RETRIES-NEXT-TICK", st["lanes"]["L"]["status"] != "PARKED"
+          and st["lanes"]["L"].get("policy_retry") == 1 and (st["lanes"]["L"].get("pending_plan") or {}).get("bad"))
+    for _ in range(retry_ticks):
+        ap.lane_tick(st, lanes[0], False)
     check("V-AP-REPLAN-BOUNDED-THEN-PARKS", st["lanes"]["L"]["status"] == "PARKED" and not any(c[0] == "arm" for c in calls)
-          and len([r for r in ledger() if r["kind"] == "plan"]) == 1 + ap.POLICY_REPLANS and "| line:" in q_text())
+          and len([r for r in ledger() if r["kind"] == "plan"]) == per_tick * (1 + retry_ticks)
+          and "| line:" in q_text() and len([r for r in ledger() if r["kind"] == "judge"]) <= 1)
     # S41K: the 1st re-plan fixed the profile line but left a phase without a cap; that phase is named to the planner
     NOCAP = {"title": "t", "facts": [], "phases": [GOOD[0], "Phase 2: K2 closeout: re-run gates and write the checkpoint"]}
     dirs.clear()
@@ -627,7 +652,9 @@ def run_all(ap):
         return keep_judge(*a)
     ap.judge = count_judge
     ap.plan = seq_plan(*[BADP] * (1 + ap.POLICY_REPLANS))
+    keep_rt, ap.POLICY_RETRY_TICKS = ap.POLICY_RETRY_TICKS, 0  # the park path itself (the retries are pinned above)
     ap.lane_tick(st, lanes[0], False)
+    ap.POLICY_RETRY_TICKS = keep_rt
     kept = st["lanes"]["L"].get("pending_plan") or {}
     check("V-AP-REFUSAL-KEEPS-JUDGMENT", st["lanes"]["L"]["status"] == "PARKED" and kept.get("for", "").endswith(":84")
           and kept.get("verdict", {}).get("verdict") == "AGREE" and "_tokens" not in kept.get("verdict", {}))
@@ -741,7 +768,8 @@ def run_all(ap):
     st = fresh(104)
     ap.plan = lambda *a: {"title": "t", "facts": ["then push the branch to origin"], "phases": GOOD, "_tokens": 7}
     ap.lane_tick(st, lanes[0], False)
-    check("V-AP-POLICY-BLOCKS-ARM-VIA-FACTS", st["lanes"]["L"]["status"] == "PARKED" and not calls)
+    check("V-AP-POLICY-BLOCKS-ARM-VIA-FACTS", st["lanes"]["L"]["status"] != "RUNNING" and not calls
+          and "push" in json.dumps(st["lanes"]["L"].get("pending_plan") or {}))
     st = fresh(105)
     ap.lane_tick(st, dict(lanes[0], protected=[{"path": str(pf), "sha256_prefix": "00000000"}]), False)
     check("V-AP-PROTECTED-OVERRULES-AGREE", st["lanes"]["L"]["status"] == "PARKED" and not calls)
@@ -926,7 +954,8 @@ def run_all(ap):
     ls, q = evo_run(evo_fresh([LA, LX], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
     check("V-EVO-PRECONDITION-REQUIRED", ls["status"] == "PARKED" and "another family" in q)
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a"}), ["INFORMATION", "INFORMATION"])
-    check("V-EVO-RESEARCH-PACKET-NEEDS-DISCRIMINATING-TEST", ls["status"] == "PARKED" and "no 'rival'" in q)
+    check("V-EVO-RESEARCH-PACKET-NEEDS-DISCRIMINATING-TEST", ls["status"] != "RUNNING"
+          and "no 'rival'" in json.dumps(ls.get("pending_plan") or {}))
     # 2026-11-17 (Owner 'y', pane 08cba76c): an Owner-set per-lane research_cap replaces the 100M default, both ways
     ph = ["P1 lev_a " + " ".join(E.RESEARCH_WORDS)]
     spent = {"research_spent": E.RESEARCH_LANE_CAP - 1_000_000}
@@ -950,7 +979,8 @@ def run_all(ap):
     designed = []
 
     def with_designer(lever):
-        ap.design_lever = lambda lane, ck, prod, fam: designed.append((ck, fam)) or (dict(lever) if lever else None)
+        ap.design_lever = lambda lane, ck, prod, fam, refused=None: designed.append((ck, fam)) or (
+            dict(lever) if lever else None)
 
     def lever_file():
         return json.loads((tmp / "home" / "levers.json").read_text()).get("L", [])
@@ -967,6 +997,14 @@ def run_all(ap):
     with_designer(dict(SYN, what="no residual named here; " * 20))
     ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a"}, (RES_S,)), ["INFORMATION", "INFORMATION"])
     check("V-EVO-SYNTH-MUST-CITE-RESIDUAL", ls["status"] == "PARKED" and "does not cite" in q)
+    # 2026-11-18 (Owner 'y', KSR parked on "id ksr_handsource_regalloc already exists"): one second design, told why
+    retold = []
+    ap.design_lever = lambda lane, ck, prod, fam, refused=None: retold.append(refused) or (
+        dict(SYN, id="lev_syn2") if refused else dict(SYN, id="lev_a"))
+    RES_S2 = dict(RES, phases=[x.replace("lev_b", "lev_syn2") for x in RES["phases"]])
+    ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a"}, (RES_S2,)), ["INFORMATION", "INFORMATION"])
+    check("V-EVO-SYNTH-REDESIGN-ON-REFUSAL", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn2"
+          and len(retold) == 2 and "already exists" in "; ".join(retold[1] or []))
     with_designer(SYN)
     ls, q = evo_run(evo_fresh([LA, LC], {"lever": "lev_a", "synth_streak": 3}, (RES_S,)), ["INFORMATION", "INFORMATION"])
     check("V-EVO-SYNTH-BOUNDED", ls["status"] == "PARKED" and "in a row" in q)
@@ -1380,6 +1418,10 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "match_off": lambda m: setattr(m, "verify_match", lambda lane, product, notes: None),
          "match_ignores_regressions": lambda m: setattr(m, "match_lost", lambda old, cur: []),
          "owner_questions_dropped": lambda m: setattr(m, "OWNER_Q", __import__("re").compile("zzz_never_matches")),
+         "owner_question_negations_kept": lambda m: setattr(m, "OWNER_Q_NOT", __import__("re").compile("zzz_never")),
+         "match_build_dirt_kept": lambda m: setattr(m, "_tracked_dirty", lambda product: None),
+         "policy_refusal_parks_at_once": lambda m: setattr(m, "POLICY_RETRY_TICKS", 0),
+         "policy_retry_forever": lambda m: setattr(m, "POLICY_RETRY_TICKS", 99),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),
          "evo_synth_off": _evo_mut(synthesize=lambda *a, **k: (None, "off")),
          "evo_synth_admits_anything": _evo_mut(synth_problems=lambda *a, **k: []),
@@ -1393,6 +1435,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "halt_once_spent_before_arm": lambda m: setattr(m, "continue_halted", (lambda real: lambda st, lane, ls, mid, *a: (
              real(st, lane, ls, mid, *a), ls.__setitem__("continued_from", mid))[0])(m.continue_halted)),
          "evo_ff_to_always_ok": _evo_mut(ff_to=lambda p, h, d=False: (True, "x")),
+         "designer_no_redesign": lambda m: setattr(m, "lever_designer", lambda lane, ck, prod: (
+             lambda fam: m.design_lever(lane, ck, prod, fam))),
          "hold_freeform_ignored": lambda m: setattr(m, "PATH_IN_TEXT_RE", __import__("re").compile(r"(?!x)x")),
          "nopath_never_found": lambda m: setattr(m, "checkpoint_from_branch", lambda p, b, h: ""),
          "nopath_any_window": lambda m: setattr(m, "checkpoint_from_branch", (lambda real: lambda p, b, h: (
