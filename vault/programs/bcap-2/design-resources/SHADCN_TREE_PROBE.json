@@ -1,0 +1,5 @@
+{"repo":"shadcn-ui/ui","commit":"f50887ae68d0fdcbfbe86b57be08af94a4c88a68","tree_truncated":false,"paths":7121,
+ "root_licence_files":["LICENSE.md"],
+ "other_licence_files":["packages/registry/test/fixtures/frameworks/remix-indie-stack/LICENSE.md (a test fixture, third-party)"],
+ "registry_dirs":{"apps/v4/registry":1532,"packages/registry/src":174},
+ "note":"Tree listing only; no per-component content read, no per-file header scan. Fixture carries its own licence, so vendored third-party material exists in the tree. D02 registry feature semantics NOT assessed."}

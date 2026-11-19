@@ -187,3 +187,6 @@ Read-only git tree of magicuidesign/magicui at b0b2e497 (1026 paths, not truncat
 
 ### Epoch 7 (D21-D04 partial): Magic UI registry scan
 Registry located at apps/www/registry/magicui (80 files) at b0b2e497. All 80 fetched read-only; 0 carry a per-file licence marker (one regex hit was a false positive), so they inherit the repo MIT LICENSE.md. Evidence: vault/programs/bcap-2/design-resources/MAGICUI_REGISTRY_SCAN.json. Absence of a header is not a grant for the paid Pro site; rights_status and live_verified unchanged. Next: shadcn registry features (D02), then remaining Phase 8 E-H. Spend not re-measured.
+
+### Epoch 4b (D21-D02 partial): shadcn tree probe
+Read-only tree of shadcn-ui/ui at f50887ae (7121 paths): one root LICENSE.md, plus a third-party test-fixture LICENSE.md (vendored material exists). Registry at apps/v4/registry (1532 files) and packages/registry/src. Evidence: design-resources/SHADCN_TREE_PROBE.json. Listing only: no header scan, no registry feature semantics, rights unchanged. Next: header scan of apps/v4/registry, read registry schema docs (D02). Spend not re-measured.
