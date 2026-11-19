@@ -13,7 +13,7 @@ ITEMS = [  # id, backlog, gate script (None = no code gate: scan-only phase), ve
     ("BCAP2-07", "Brand identity", "tools/test_bcap2_brand.py"), ("BCAP2-08", "21 design resources", "tools/test_bcap2_d21.py"),
     ("BCAP2-08b", "21 resources B/C slice", "tools/test_bcap2_d21_bc.py"),
     ("BCAP2-09", "CPP-RUFLO-001", "tools/test_bcap2_ruflo.py")]
-NEW_MODULES = ("ruflo_gate", "cdicf/source_intake", "cdicf/reference_intel", "ccf/asset_validator", "ccf/kit_readiness", "ccf/territories", "ccf/critique", "ccf/visual_dna", "ccf/brand_truth", "cdio/ux_contracts")
+NEW_MODULES = ("ruflo_gate", "cdicf/source_intake", "cdicf/reference_intel", "ccf/asset_validator", "ccf/kit_readiness", "ccf/territories", "ccf/critique", "ccf/provider_policy", "ccf/visual_dna", "ccf/brand_truth", "cdio/ux_contracts")
 
 
 def run(cmd, env=None):

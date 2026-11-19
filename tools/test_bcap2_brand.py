@@ -360,6 +360,21 @@ with tempfile.TemporaryDirectory() as t:
     check("BI-12 pole: DNA cannot fork a project-pinned token (SSOT wins)", not forked)
     check("BI-12 control: an identical project pin is accepted", VD.tokens_for(dna, {"color.primary": "#112233"})["color.primary"] == "#112233")
 
+    # ---- BI-13: creative provider policy
+    from modules.ccf import provider_policy as PP
+    check("BI-13 pole: image model only with deterministic=False AND a stated need",
+          PP.route({"deterministic_possible": False, "needs": ["photoreal texture"]})["route"] == "IMAGE_MODEL")
+    check("BI-13 pole: deterministic-possible stays vector", PP.route({"deterministic_possible": True, "needs": ["x"]})["route"] == "DETERMINISTIC_VECTOR")
+    um = PP.route({"deterministic_possible": None})
+    check("BI-13 pole: unmeasured never buys an image call and is flagged", um["route"] == "DETERMINISTIC_VECTOR" and um.get("flag") == "UNMEASURED")
+    check("BI-13 pole: False without a stated need is not enough", PP.route({"deterministic_possible": False, "needs": []})["route"] == "DETERMINISTIC_VECTOR")
+    check("BI-13 pole: missing or same-model fallback is refused", not PP.plan_call("m1", None, 1)["ok"] and not PP.plan_call("m1", "m1", 1)["ok"])
+    check("BI-13 pole: tool-call bound and refused imports are refused",
+          not PP.plan_call("m1", "m2", 9)["ok"] and not PP.plan_call("m1", "m2", 1, ["parallel_orchestration"])["ok"])
+    ok = PP.plan_call("m1", "m2", 2)
+    check("BI-13 control: a bounded call with fallback is ok; cost fields start None, not 0",
+          ok["ok"] and all(v is None for v in ok["tracking"].values()) and set(ok["tracking"]) == set(PP.TRACKED))
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-12, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-12, BI-13, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

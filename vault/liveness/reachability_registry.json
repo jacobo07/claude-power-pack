@@ -179,6 +179,10 @@
       "class": "LIBRARY",
       "note": "pure BI-12 Visual DNA contract validator and token derivation, driven from both poles by tools/test_bcap2_brand.py; not yet compiled into DESIGN.md by the CLI (a later BI-12 step), so a library, not activated"
     },
+    "ccf/provider_policy": {
+      "class": "LIBRARY",
+      "note": "pure BI-13 provider routing/bounds policy, driven from both poles by tools/test_bcap2_brand.py; not yet consulted by cli.py generate / model_adapter (a later BI-13 step; no provider is called by it), so a library, not activated"
+    },
     "ccf/kit_readiness": {
       "class": "LIBRARY",
       "note": "imported directly by ccf/cli.py (`python -m modules.ccf.cli`, CLAUDE.md CCF Activation Criteria) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines; also driven through the CLI by tools/test_bcap2_brand.py (BR-09/12/13) -- verified, not a wiring gap"
