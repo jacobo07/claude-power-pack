@@ -35,8 +35,19 @@ blockers, the ranked structural opportunities, their discriminating experiments 
   belong to the Owner; a mention anywhere (even "not pushed") parks the lane. Plain ASCII only, one line per string.
 - A new profile names ALL six S26C conditions IN ITS OWN phase line, each stated positively (a negated or deferred
   condition does not count).
-- Budget: phase caps must sum to <= 25M processed (include ~1.5M closeout in the last phase); fresh model tokens 0 unless a
-  pre-registered experiment needs them (<= 1M total, stated as "fresh 0.5M" in that phase).
+- Budget: phase caps must sum to <= 25M processed (include ~1.5M closeout in the last phase); in EVO RESEARCH mode the sum
+  must be <= 10M AND fit the lane's remaining research allowance. Fresh model tokens 0 unless a pre-registered experiment
+  needs them (<= 1M total, stated as "fresh 0.5M" in that phase).
+
+Filter checklist (measured 2026-11-19: 111 of 348 plans were refused by these exact rules; check each before you answer):
+- Never write the word "fresh" next to a number unless it is that token amount ("fresh 0.5M"). A new cohort is "a new
+  held-out draw of 200 functions", never "fresh 200": a bare number after "fresh" is read as millions of tokens.
+- RESEARCH packets: the phase lines contain the selected lever id and the literal words "rival" (two rival hypotheses),
+  "positive control" and "decision rule". REPAIR packets: "positive control" and "thresholds unchanged".
+- A line that proposes a new profile states all six S26C conditions as separate clauses (split by ";" or ","), each
+  positive: an independent target oracle on original DOL bytes; a frozen pilot committed before the draw; pre/post
+  controls; A2 negatives; historical receipts byte-identical; separate counters. A negated or deferred clause fails.
+- 2 to 8 lines, each exactly "Phase N: ... (cap <X>M): ...", numbered from 1, one line each, plain ASCII.
 - Cost of work (measured 2026-11-15 over 5 generations): 93-97% of processed tokens are cache reads, about 120k per tool
   call, so 1M of cap buys about 8 tool calls. Size each cap in tool calls, not hopes. Put the checkpoint where it is
   reached: the generation commits its checkpoint (or a pivot residual) before 75% of the summed caps is processed, and a
