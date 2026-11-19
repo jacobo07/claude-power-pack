@@ -65,3 +65,7 @@ decisions: new patterns set min moderate/medium because restrained dashboard mus
 residuals: videos not on GEX44 (INFERRED claims) and browser-real checks -> LAPTOP_STEPS.md; UX-14..18 UNVERIFIED/HEURISTIC only; no UKDL/HR promotion.
 pre-existing failures NOT caused by this work (verified identical at 5f60f05a): `test_cdio_componentry` V-CMP-WIRING (suite pins EXPECTED_DATASETS = 12; live-mirror) ; `test_bcap2_tdd` V-TDD-MUT-REAL (system python lacks pytest/coverage; set BCAP2_TDD_PYTHON).
 owed: Phase 1/2 upstream-fetch residuals; backlog Status lines for Phases 3/4 (deferred-backlog rows for 3/4 not yet updated).
+
+### Phase 6 CDIO SaaS styles: SCAN ONLY (PARTIALLY_PROVEN, no new code)
+Scan: vault/programs/bcap-2/saas-styles/REUSE_LEDGER.md. Style 1 open rules need real-browser measurement of third-party sites (laptop plane); style 2 blocked by 403 access; style 3 needs the Owner pick below.
+OWNER DECISION NEEDED: style 3 "enterprise systematic": (a) new aesthetic family F11 (changes scorer KNOWN_FAMILIES + font sanction + f10 boundary test), or (b) a structural experience axis in the CDIO-09 style with no scorer change. Evidence (7-brand bench) favours (b): identity is structural, palette is near F1. My pick if forced: (b), reversible and internal. Not implemented.
