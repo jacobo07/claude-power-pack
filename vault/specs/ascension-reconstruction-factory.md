@@ -111,6 +111,21 @@ config/SUPP01/symbols.txt (684 data-string size refinements); restored to keep t
 factory/wp-lane-symbols-dtk-20261119T231339Z.patch) -- commit it in a window or every build re-dirties the lane.
 WIIPARTY has no `match_report` in lanes.json, so the autopilot's MATCH class cannot see this progress (Owner decision).
 
+## Leverage census 2026-11-20 (pane 8949bcc6, measured, 0 tokens; `factory/pareto/pareto.py`, `pareto2.py`)
+Per function of each game's dtk TARGET objects: size and a reloc-masked body hash (a word touched by a relocation
+keeps only its opcode). Matched = the game's own report (WSR, MKW, WIIPARTY) or a pilot matched.tsv (TENNIS, FIFA).
+- Size Pareto (all 5 games alike): top 10% of functions = 50-61% of code bytes; functions >=256 B = 68-80% of bytes
+  and match 0-7%; matches live in <128 B. The one-shot factory is structurally a small-function machine.
+- Shared library code: identical masked bodies (>=16 B) present in another game cover WSR 21%, MKW 12%, WIIPARTY 70%,
+  TENNIS 44%, FIFA main.dol 91% of bytes (~6,000 groups; 4,785 in >=3 games, 1,599 in all 5). Names where known:
+  TRK, NWC24, NHTTP, RFL, Bluetooth (bta/btm), GX, MSL (`__kernel_rem_pio2`), i.e. the RVL SDK and its libraries,
+  linked identically into every game. Solve once, apply to every game holding the body.
+- Transfer-ready now (unmatched body == a MATCHED body in another game): WSR 776, MKW 373, WIIPARTY 240, TENNIS 1,676,
+  FIFA 476 = 3,541 functions (port_ksr verified 535/645 = 83% for the same-binary case; cross-game unmeasured).
+- Never attempted: TARGET_AMBIGUOUS (target_index keys by name) WSR 5,249 + MKW StaticR 1,550.
+- Compile lever on MKW (pilot 400, main): compiles 99 -> 241, 100% 47 -> 76, >=90% 16 -> 52 (vs2 vs base).
+- Near misses already measured (>=90%, not 100): WSR 2,463, MKW 1,299+451, MKWLIB 1,431+451, WIIPARTY 594.
+
 ## F4: cross-lane index (OPEN)
 One certified-source pool per binary (KSR+WSR, MKW+MKWLIB, FIFA+FIFATC) and a masked-byte index across binaries
 (SDK/NW4R/EGG), consulted by the planner before any generation; the model works only on the residual (LF1 near misses).
