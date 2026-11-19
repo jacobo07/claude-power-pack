@@ -375,6 +375,24 @@ with tempfile.TemporaryDirectory() as t:
     check("BI-13 control: a bounded call with fallback is ok; cost fields start None, not 0",
           ok["ok"] and all(v is None for v in ok["tracking"].values()) and set(ok["tracking"]) == set(PP.TRACKED))
 
+    # ---- BI-11: cohesive identity set
+    from modules.ccf import identity_set as IS
+    base = {"comparison_axes": ["warm vs cool", "geometric vs organic"], "rationale": "honeycomb = shared work",
+            "category_default_challenge": "category default is blue; we chose amber because ...",
+            "palette": {"text": "#111111", "surface": "#FFFFFF"}, "typography_test": {"observed": "16px legible"},
+            "logo": "L1", "font": "Poppins"}
+    check("BI-11 control: a complete NEW set validates", IS.validate_set(base) == [], str(IS.validate_set(base)))
+    check("BI-11 pole: contrast is computed (black/white = 21, grey on white fails)",
+          IS.contrast("#000000", "#FFFFFF") == 21.0 and any("contrast" in x for x in IS.validate_set(dict(base, palette={"text": "#AAAAAA", "surface": "#FFFFFF"}))))
+    check("BI-11 pole: 1 or 5 axes refused", any("axes" in x for x in IS.validate_set(dict(base, comparison_axes=["a"]))) and any("axes" in x for x in IS.validate_set(dict(base, comparison_axes=list("abcde")))))
+    check("BI-11 pole: missing rationale, challenge and typography observation all named",
+          len(IS.validate_set(dict(base, rationale="", category_default_challenge="", typography_test={}))) == 3)
+    orig = {"logo": "L0", "font": "Poppins", "palette": {"text": "#111111", "surface": "#FFFFFF"}}
+    check("BI-11 pole: KEEP refuses a changed logo", any("logo" in x for x in IS.validate_set(base, "KEEP", orig)))
+    check("BI-11 control: REFRESH may change the palette but not the logo/font",
+          IS.validate_set(dict(base, logo="L0", palette={"text": "#222222", "surface": "#FAFAFA"}), "REFRESH", orig) == [])
+    check("BI-11 pole: KEEP without the original is refused", any("requires" in x for x in IS.validate_set(base, "KEEP")))
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-12, BI-13, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-11, BI-12, BI-13, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

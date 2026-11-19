@@ -145,3 +145,6 @@ modules/ccf/visual_dna.py (pure): versioned 1.0 contract, validate() lists probl
 
 ### Epoch 14: BI-13 provider policy
 modules/ccf/provider_policy.py (pure, no provider call): route() = vector unless deterministic_possible is False AND a need is stated (unmeasured flagged, never buys an image call); plan_call() needs distinct fallback, tool bound 4, refuses parallel_orchestration/agent_memories/unverified_claims imports; cost/token/latency fields start None not 0. 7 checks, LIBRARY, in NEW_MODULES; not consulted by generate yet (PARTIALLY_PROVEN). Note: SDD-OS hook reported NOT_READY (front-matter missing) for the binding plan file; that file is the Owner-approved plan, left unedited. Remaining: BI-10, BI-11, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-11 identity set
+modules/ccf/identity_set.py (pure): 2-4 axes, rationale, category-default challenge, WCAG contrast computed (>=4.5), typography observation; KEEP preserves logo/font/palette, REFRESH preserves logo/font. 7 checks, LIBRARY, in NEW_MODULES; not called by CLI (PARTIALLY_PROVEN). Remaining: BI-10 (needs pinned fetch), Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
