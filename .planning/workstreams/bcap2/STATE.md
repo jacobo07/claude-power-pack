@@ -120,3 +120,7 @@ DBG +2 codes (NO-SEAM-UNRECORDED, MUTATION-NOT-LANDED), TDD tautology detector; 
 
 ### Epoch 12 Phase 8 pin wiring
 SOURCES.json now carries `license_pin` (pinned sha, licence sha256, spdx) for the 9 GitHub-backed sources, copied from LICENSE_PINS.json; gate +5 checks (V-D21-05, both poles incl. seeded mutant): the rights gate admits exactly the 7 licensed repos, refuses motion-primitives (no LICENSE file) and kinetics (none). `live_verified` stays false everywhere (page content unread). Gate 33 checks, exit 0; done_gate consistent. Spend not re-measured. Remaining unchanged: Phase 8 B-H, Phase 7 BI-08..35, laptop steps.
+
+### Epoch 13 Phase 8 Workstreams B/C slice
+built: modules/cdicf/reference_intel.py (rank with licence filter + diversity guard + ABSTAIN, design-decision brief validator, OBSERVED/INFERRED/UNKNOWN tokens, project-contract-wins merge, motion NONE abstain). gate: `python3 tools/test_bcap2_d21_bc.py` exit 0 (D21-B05/B06, V-D21-12/13/18, both poles + drill). Not yet in done_gate. Liveness offenders 56->56. Phase 8 stays PARTIALLY_PROVEN: B01-B04/B07 corpus, C01-C05/C07/C08, D-H not started; V-D21-11 drift reconciliation undone.
+decision: ranking floor 0.34 and weights 0.5/0.3/0.2 are provisional (unmeasured vs keyword baseline; Gate B baseline comparison still owed). Spend not re-measured.
