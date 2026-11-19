@@ -123,5 +123,26 @@ _m = _prec(_rank)
 RI.rank = _old
 check("D21-B07 drill: a ranker that ignores purpose scores lower (the precision check is live)", _m < _prec(_rank), f"{_m:.2f}")
 
+# D21-B01..B04 record contracts
+from modules.cdicf import reference_records as RR  # noqa: E402
+_g = {f: "x" for f in RR.GALLERY_FIELDS}
+check("D21-B01 control: complete gallery record passes", RR.validate_gallery_record(_g)[0])
+check("D21-B01 pole: missing axis fails", not RR.validate_gallery_record({k: v for k, v in _g.items() if k != "era"})[0])
+check("D21-B01 pole: cloning intent refused", not RR.validate_gallery_record(dict(_g, clone_intent=True))[0])
+check("D21-B01 pole: all-UNKNOWN record carries no observation", not RR.validate_gallery_record({f: "UNKNOWN" for f in RR.GALLERY_FIELDS})[0])
+check("D21-B01 control: UNKNOWN on one axis is allowed", RR.validate_gallery_record(dict(_g, era="UNKNOWN"))[0])
+_t = {"reference_id": "r", "brief_id": "b", "render_evaluation": "e", "render_evaluation_observed": True, "stop_conditions": list(RR.STOP_CONDITIONS)}
+check("D21-B02 control: full trace passes", RR.validate_transform_trace(_t)[0])
+check("D21-B02 pole: missing stop condition fails", not RR.validate_transform_trace(dict(_t, stop_conditions=["exact_copy"]))[0])
+check("D21-B02 pole: unobserved render evaluation fails", not RR.validate_transform_trace(dict(_t, render_evaluation_observed=False))[0])
+_m = {f: "x" for f in RR.MOBILE_FIELDS}; _m.update(access_verified=True, licence_verified=True, feeds="CDIO-08")
+check("D21-B03 control: verified mobile pattern passes", RR.validate_mobile_pattern(_m)[0])
+check("D21-B03 pole: unverified licence fails", not RR.validate_mobile_pattern(dict(_m, licence_verified=False))[0])
+check("D21-B03 pole: desktop feed target fails", not RR.validate_mobile_pattern(dict(_m, feeds="CDIO-05"))[0])
+_c2 = {f: "x" for f in RR.COMPONENT_JOBS}
+check("D21-B04 control: component entry passes", RR.validate_component_entry(_c2)[0])
+check("D21-B04 pole: official-standard claim fails", not RR.validate_component_entry(dict(_c2, claims_official_standard=True))[0])
+check("D21-B04 pole: missing states fails", not RR.validate_component_entry({k: v for k, v in _c2.items() if k != "states"})[0])
+
 print(f"{'PASS' if not FAILS else 'FAIL'}: {len(FAILS)} failures")
 sys.exit(1 if FAILS else 0)
