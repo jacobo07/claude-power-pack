@@ -5907,6 +5907,12 @@ MANDATORY ORDER OF OPERATIONS for any ownership verdict:
 4. DISCOVER the denominator — rank candidates by mechanism-vocabulary hit density
    across the whole corpus. The named owner is a hypothesis, not the search scope.
 
+INSTANCE (2026-11-19, Fresco Marina site, outside corpus audits): an absence about a
+restaurant was concluded from a one-page summary of its website. Sweeping robots.txt →
+sitemap index → every page corrected it. The same step 4 applies to websites: enumerate
+the source set first, then claim the absence. Lesson:
+`knowledge_vault/lessons/small-business-site-evidence-gated-release.md` (T5).
+
 EVIDENCE THE CORRECTION IS NOT ITSELF A BIAS: of the first five verdicts re-checked,
 four moved to EXTEND and **one survived as ABSORB at 90%**, with the verifier
 reporting zero findings and explicitly declining to manufacture one. A re-audit in
