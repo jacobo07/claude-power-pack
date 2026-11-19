@@ -1,0 +1,184 @@
+{
+ "pin": {
+  "repo": "ruvnet/ruflo",
+  "tag": "v3.78.0",
+  "commit": "337c8981e6196f74ea72abc990f0b76a686764d0",
+  "fetched": "2026-11-19",
+  "licence": "MIT"
+ },
+ "holds": [
+  {
+   "id": "GHSA-5pxg-x8g8-fw4j",
+   "severity": "critical",
+   "summary": "browser_open caller-supplied Chromium flags",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "modules/ruflo_gate/gate.py tool_call_error+browser_args_error",
+   "gate_case": "GHSA-5pxg",
+   "note": "source at 3.78.0 has an allowlist (browser-argv.ts + 2 tests); published bytes unverified"
+  },
+  {
+   "id": "GHSA-vqpp-qh58-2p7h",
+   "severity": "high",
+   "summary": "memory_export/import arbitrary paths",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.path_error (realpath containment)",
+   "gate_case": "GHSA-vqpp",
+   "note": "source has path-containment test at 3.78.0"
+  },
+  {
+   "id": "GHSA-6rwv-52g2-vx7j",
+   "severity": "high",
+   "summary": "prototype pollution via __proto__ ids",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.keys_error + json_text_error",
+   "gate_case": "GHSA-6rwv",
+   "note": ""
+  },
+  {
+   "id": "GHSA-8jjw-xqg5-7pvx",
+   "severity": "high",
+   "summary": "ruvocal mcp-bridge loopback without token, CORS *, DNS rebinding",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.loopback_request_error",
+   "gate_case": "GHSA-8jjw",
+   "note": "ruvocal bridge is not to be started at all in the sandbox"
+  },
+  {
+   "id": "GHSA-hgp6-gm2j-hx55",
+   "severity": "high",
+   "summary": "ruvocal SSRF through user MCP URLs",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.ssrf_error (fail closed on unresolved names)",
+   "gate_case": "GHSA-hgp6",
+   "note": ""
+  },
+  {
+   "id": "GHSA-rx87-v2fr-76xf",
+   "severity": "moderate",
+   "summary": "repo files injected as user memory",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.memory_origin_error",
+   "gate_case": "GHSA-rx87",
+   "note": ""
+  },
+  {
+   "id": "GHSA-hmmg-9p82-2m6q",
+   "severity": "moderate",
+   "summary": "X-Forwarded-For bypasses IP limits",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.client_ip (XFF only via trusted proxy)",
+   "gate_case": "client_ip",
+   "note": ""
+  },
+  {
+   "id": "GHSA-jwwq-crgq-c4c7",
+   "severity": "moderate",
+   "summary": "federation peer forges envelope origin",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.envelope_error; federation plugin stays disabled",
+   "gate_case": "GHSA-jwwq",
+   "note": ""
+  },
+  {
+   "id": "GHSA-c4hm-4h84-2cf3",
+   "severity": "critical (historical)",
+   "summary": "unauthenticated RCE in mcp-bridge docker-compose",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "never start the bridge/compose; loopback_request_error if ever exposed",
+   "gate_case": "GHSA-8jjw",
+   "note": "maintainer fix claim unverified (#4775)"
+  },
+  {
+   "id": "#3294",
+   "severity": "security",
+   "summary": "MCP session shared across clients (principal aliasing)",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.PrincipalBinding: session bound to opening principal, no ambient principal",
+   "gate_case": "cross-principal session reuse",
+   "note": "CPP wraps the runtime; upstream defect itself still open (kept optional behind the gateway)"
+  },
+  {
+   "id": "#4750",
+   "severity": "security",
+   "summary": "unsigned pattern downloads",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.pattern_error (sha256 hash-pinned allowlist, size cap)",
+   "gate_case": "#4750",
+   "note": "pattern marketplace stays disabled; transfer-store.ts has no digest check at 3.78.0 (grep-level)"
+  },
+  {
+   "id": "#3157",
+   "severity": "deps",
+   "summary": "transitive dependency vulnerabilities",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.audit_error (absent audit = UNMEASURED, high/critical needs waiver)",
+   "gate_case": "#3157",
+   "note": "fresh npm audit result to be recorded by the install step"
+  },
+  {
+   "id": "unsandboxed-plugins",
+   "severity": "design",
+   "summary": "plugins run unsandboxed",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.plugin_error (hash allowlist, default deny); no plugin enabled",
+   "gate_case": "plugins default deny",
+   "note": "CPP does not sandbox plugin code; it enables none"
+  },
+  {
+   "id": "mcp-policy-opt-in",
+   "severity": "design",
+   "summary": "MCP policy is opt-in",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.mcp_tool_error (no policy = deny)",
+   "gate_case": "MCP policy default deny",
+   "note": ""
+  },
+  {
+   "id": "postinstall-global-install",
+   "severity": "supply-chain",
+   "summary": "@claude-flow/browser postinstall runs 'npm install -g agent-browser'; cli has postinstall.cjs",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.lifecycle_findings + install_plan_error (ignore_scripts, no -g)",
+   "gate_case": "install: lifecycle scripts enabled",
+   "note": "observed at the pinned commit; gate flags the real manifest"
+  },
+  {
+   "id": "sandbox-envelope",
+   "severity": "supply-chain",
+   "summary": "install must not touch real ~/.claude or inherit secrets",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.install_plan_error + scrub_env",
+   "gate_case": "install: sandbox inside real",
+   "note": "unshare -rn unavailable on this host: network egress is NOT blocked, only env-scrubbed (see RESIDUALS)"
+  },
+  {
+   "id": "#3306/swarm-not-republished",
+   "severity": "supply-chain",
+   "summary": "wrapper version can diverge from executing parts; @claude-flow/swarm not republished in 3.78.0",
+   "status": "CPP_CORRECTED",
+   "cpp_control": "gate.version_coherence_error",
+   "gate_case": "#3306 swarm",
+   "note": "detects, cannot republish a package"
+  },
+  {
+   "id": "no-npm-provenance",
+   "severity": "supply-chain",
+   "summary": "no npm provenance attestation",
+   "status": "RESIDUAL",
+   "cpp_control": "integrity hash pin + exact version (gate.install_plan_error) is the compensating control",
+   "gate_case": "",
+   "note": "a missing attestation cannot be created by CPP; source-to-tarball identity of dist/ is UNMEASURED (dist is not in git)",
+   "residual_reason": "a missing attestation cannot be created by CPP; source-to-tarball identity of dist/ is UNMEASURED (dist is not in git)"
+  },
+  {
+   "id": "advisory-fix-claims",
+   "severity": "supply-chain",
+   "summary": "maintainer claims all 8 advisories fixed in 3.71.4/3.72.0 (#4775), not independently verified",
+   "status": "RESIDUAL",
+   "cpp_control": "CPP gateway controls hold regardless of the claim",
+   "gate_case": "",
+   "note": "no independent runtime verification performed: would need executing upstream with attack fixtures (laptop/isolated plane)",
+   "residual_reason": "no independent runtime verification performed: would need executing upstream with attack fixtures (laptop/isolated plane)"
+  }
+ ]
+}

@@ -1613,7 +1613,7 @@ acting on one, read the file and check its state against the repo.
 **Engineering absorption (imported from `origin/main` 2026-10-31, see D41):**
 - `2026-10-11_addyosmani-agent-skills-selective-absorption.md` -- **BCAP-2 Phase 3: PARTIALLY_PROVEN 2026-11-19 (constraint non-weakening slice, gate tools/test_bcap2_agsk.py; dispositions in vault/programs/bcap-2/agsk/)** CPP-AGSK-001: universal agent skills absorption & engineering baseline elevation.
 - `2026-10-11_diagnosing-bugs-causal-proof-ratchet.md` -- CPP-DBG-001: evidence-driven bug diagnosis & causal proof ratchet. **PARTIALLY_PROVEN 2026-11-19 (BCAP-2 P1; gate tools/test_bcap2_dbg.py 37/0; residuals in vault/programs/bcap-2/dbg/REUSE_LEDGER.md)**
-- `2026-10-11_ruflo-security-absorption-sovereign-updates.md` -- CPP-RUFLO-001: secure Ruflo absorption, hardening & sovereign upstream updates.
+- `2026-10-11_ruflo-security-absorption-sovereign-updates.md` -- CPP-RUFLO-001: secure Ruflo absorption, hardening & sovereign upstream updates. **BCAP-2 Phase 9: PARTIALLY_PROVEN (2026-11-19)** -- CPP-owned HOLD controls + inert sandbox install; activation refused; ledger vault/programs/bcap-2/ruflo/REUSE_LEDGER.md.
 - `2026-10-11_tdd-evidence-first-vertical-slice-ratchet.md` -- CPP-TDD-001: evidence-first TDD & behavioral verification ratchet. **PARTIALLY_PROVEN 2026-11-19 (BCAP-2 P2; gate tools/test_bcap2_tdd.py 65/0 with BCAP2_TDD_PYTHON; residuals in vault/programs/bcap-2/tdd/REUSE_LEDGER.md)**
 
 **Orca relay (all 452 ChatGPT captures, collected and acked 2026-10-31, see D41):**

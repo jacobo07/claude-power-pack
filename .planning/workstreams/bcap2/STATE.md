@@ -84,3 +84,11 @@ built: modules/cdicf/source_intake.py, vault/programs/bcap-2/design-resources/{S
 residuals: no network (all 21 live_verified=false), capability denominators UNKNOWN, 23/36 scenarios undriven, Workstreams B-H not started.
 decision: UNKNOWN-rights sources may admit an item that carries its own licence evidence (backlog: component-level licence is authoritative); REFERENCE_ONLY/RESTRICTED/UNKNOWN_ACCESS never admit code.
 next: Phase 9 Ruflo (independent); one batched read-only upstream fetch step for owed Phase 1/2/7/8 residuals.
+
+### Phase 9 Ruflo CPP-RUFLO-001: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_ruflo.py` exit 0 (attack/benign poles for 27 cases + permissive-mutant drill + real manifest + ledger binding). Liveness: ruflo_gate declared LIBRARY, no new orphans.
+built: modules/ruflo_gate/gate.py (controls for 8 GHSA, #3294, #4750, #3157, plugin/MCP default-deny, lifecycle scan, install envelope, version coherence); vault/programs/bcap-2/ruflo/{HOLDS.json (19: 17 corrected, 2 residual), REUSE_LEDGER.md, install_sandbox.py}.
+install: inert pinned v3.78.0 in /home/kobii/ruflo-sandbox-bcap2/run (--ignore-scripts, scrubbed env, nothing started, smoke `ruflo v3.78.0`). Real finding: @claude-flow/browser postinstall does `npm install -g`.
+decision: law 6 uncorrectable holds (no provenance attestation, unverified maintainer fix claim) => no activation/trust, inert study copy only. Reversible (rm -rf the sandbox).
+residuals: see ledger (runtime advisory verification, dist identity, netns blocked on host, npm audit unrecorded). Laptop step logged.
+next: Phase 10 closeout.

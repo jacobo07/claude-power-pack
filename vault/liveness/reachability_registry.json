@@ -151,6 +151,14 @@
       "class": "PLANNED",
       "note": "cascade_prevention/__init__.py's public API (blocker/engine/surfaces/types) does not export pre_mortem -- built extension to the now-LIVE cascade gate (Workstream A), not yet exposed"
     },
+    "ruflo_gate/__init__": {
+      "class": "LIBRARY",
+      "note": "empty package marker for ruflo_gate/gate (see that entry)"
+    },
+    "ruflo_gate/gate": {
+      "class": "LIBRARY",
+      "note": "CPP-owned Ruflo HOLD controls (BCAP-2 Phase 9). Imported by vault/programs/bcap-2/ruflo/install_sandbox.py (the only sanctioned Ruflo install path) and driven by tools/test_bcap2_ruflo.py; it is a gateway a future Ruflo capability must pass through, not a hook. Not wired into a live hook: nothing of Ruflo is activated, so there is nothing to intercept yet"
+    },
     "ccf/asset_validator": {
       "class": "LIBRARY",
       "note": "imported directly by ccf/cli.py (`python -m modules.ccf.cli`, CLAUDE.md CCF Activation Criteria) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines; also driven through the CLI by tools/test_bcap2_brand.py (BR-09/12/13) -- verified, not a wiring gap"
