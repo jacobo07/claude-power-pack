@@ -1,0 +1,78 @@
+{
+ "checked": "2026-11-19T18:09:54.764263+00:00",
+ "method": "GitHub REST repo metadata, unauthenticated, read-only; licence is the API detector field, not a reading of the LICENSE text",
+ "rows": [
+  {
+   "id": "D21-05",
+   "repo": "google-labs-code/design.md",
+   "license_spdx": "Apache-2.0",
+   "default_branch": "main",
+   "pushed_at": "2026-11-18T02:55:33Z",
+   "archived": false
+  },
+  {
+   "id": "D21-10",
+   "repo": "shadcn-ui/ui",
+   "license_spdx": "MIT",
+   "default_branch": "main",
+   "pushed_at": "2026-11-19T16:44:27Z",
+   "archived": false
+  },
+  {
+   "id": "D21-12",
+   "repo": "magicuidesign/magicui",
+   "license_spdx": "MIT",
+   "default_branch": "main",
+   "pushed_at": "2026-11-17T12:47:26Z",
+   "archived": false
+  },
+  {
+   "id": "D21-14",
+   "repo": "ibelick/motion-primitives",
+   "license_spdx": "MIT",
+   "default_branch": "main",
+   "pushed_at": "2026-09-28T13:32:11Z",
+   "archived": false
+  },
+  {
+   "id": "D21-15",
+   "repo": "ckissi/kinetics",
+   "license_spdx": null,
+   "default_branch": "main",
+   "pushed_at": "2026-11-19T12:30:00Z",
+   "archived": false
+  },
+  {
+   "id": "D21-16",
+   "repo": "henriquegpb/microkit",
+   "license_spdx": "MIT",
+   "default_branch": "main",
+   "pushed_at": "2026-11-14T20:08:31Z",
+   "archived": false
+  },
+  {
+   "id": "D21-17",
+   "repo": "AnmolSaini16/mapcn",
+   "license_spdx": "MIT",
+   "default_branch": "main",
+   "pushed_at": "2026-11-15T14:48:41Z",
+   "archived": false
+  },
+  {
+   "id": "D21-18",
+   "repo": "uiverse-io/galaxy",
+   "license_spdx": "MIT",
+   "default_branch": "main",
+   "pushed_at": "2024-09-02T14:32:05Z",
+   "archived": false
+  },
+  {
+   "id": "D21-19",
+   "repo": "samasante/liquid-glass",
+   "license_spdx": "MIT",
+   "default_branch": "main",
+   "pushed_at": "2026-06-23T00:37:45Z",
+   "archived": false
+  }
+ ]
+}
