@@ -32,7 +32,18 @@ Totals 2026-11-19: 12,686 new PROVISIONAL_MATCH (MKW 4,100 vs its report's 3,922
 Largest loss: L1 -> compile (8,222 -> 2,719 on MKW). Next yield lever = compile repair (types/headers, C++ this-calls),
 not more search.
 
-## F2: materialize into the product tree (OPEN)
+## F2: materialize into the product tree (MKW DONE 2026-11-19; WSR in scratch)
+Route used: `factory/carve.py` = one unit per function for matches in dtk `auto_*` objects (the MKW lane's own
+`auto_tu` shape), `Object(NonMatching, "factory/<sym>.c", cflags=[chosen arm])`, split = the function's exact .text
+range. `factory/materialize.py` (greedy multi-function unit with per-step byte check) stays for named units (not run).
+MKW result (lane/mkw 8234f1c, fast-forwarded while the lane was PARKED, rebuilt in the lane): report.json matched
+3,922 -> 7,723 (+3,801; 1,044 main + 2,739 StaticR carved), matched code 7.36% -> 9.43%, 0 functions lost by
+unit::name, main.dol OK, StaticR.rel OK, no split unit removed or changed (255 -> 1,319 and 2,034 -> 4,773 units).
+total_functions 26,639 -> 27,057: carving auto objects changes objdiff's enumeration; use matched code % for trend.
+Autopilot MATCH snapshot match/MKW.json advanced 3,904 -> 7,723 under cron.lock (ledger kind `factory_match`, 0
+tokens), so no generation is credited for factory work; side effect: S204M's 18 pending functions are in it too.
+
+### Original F2 plan
 Goal: each PROVISIONAL_MATCH counted by the lane's own `ninja build/<GAME>/report.json` (the autopilot MATCH class).
 - Per target object with >=1 match: one source file holding its matched functions (prelude + transformed lift), compiled
   with that object's chosen arm; unit declared in configure.py as `Object(NonMatching, ...)` with those cflags and the
