@@ -27,3 +27,6 @@ meta-analysis:
 3. The mutator was reused unchanged; running it for real needed pytest+pytest-cov, absent on GEX44, so the gate fails loudly without BCAP2_TDD_PYTHON instead of skipping.
 4. Nothing emits records live (R1) and done_gate/intent-verify do not consume them (R2): the card is a pointer; same weakness as Phase 1.
 5. Next: Phase 3 AGSK (no dependency). Owed read-only upstream fetches (DBG R1, TDD R3) batch into one network step.
+
+### Phase 3 CPP-AGSK-001: IN PROGRESS (scan only)
+Upstream pinned 8c99fa36 (MIT); scan notes and next steps in vault/programs/bcap-2/agsk/REUSE_LEDGER.md. No implementation yet. Spend this session before the wall: ~179k resident context (second session of epoch 2).
