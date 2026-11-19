@@ -4553,6 +4553,21 @@ def _declare_worker_envelope(rec: dict, sid: str | None) -> None:
     """The admitted envelope becomes the worker's SESSION envelope, enforced call by call by
     hooks/session_budget_guard.js. Recorded either way, never silent."""
     adm = rec.get("admission") or {}
+    if sid and not rec.get("wu_packet") and rec.get("authority_tokens"):
+        # W0 2026-11-19 slim worker for ordinary missions: no admitted packet, so the Owner's authority is the session envelope.
+        mid = rec["mission_id"]
+        try:
+            import mission_spend as ms
+            stop = int(rec["authority_tokens"]) - int(ms.closeout_reserve(rec))
+            if stop <= 0:
+                raise ValueError(f"authority {rec['authority_tokens']} leaves no room above the closeout reserve")
+            ms.declare(sid, int(stop * 0.8), int(stop * 0.9), stop)
+            lr.ledger_append(mid, "worker_envelope_declared", mission_id=mid, worker=sid, target=int(stop * 0.8),
+                             stop=stop, source="authority")
+        except Exception as exc:  # noqa: BLE001 -- recorded, never silent
+            lr.ledger_append(mid, "worker_envelope_failed", mission_id=mid, worker=sid,
+                             error=f"{type(exc).__name__}: {exc}"[:300])
+        return
     if not sid or not rec.get("wu_packet") or adm.get("verdict") not in LAUNCHABLE_VERDICTS:
         return
     env = adm.get("envelope") or {}
@@ -8517,6 +8532,7 @@ def _cli(argv=None) -> int:
     en.add_argument("--estimate-basis", help="why an estimate below half the lineage's measured cost is right "
                                              "(spec mission-cost-hold-stops-worker)")
     en.add_argument("--model", help="worker model: sonnet, opus, haiku, fable or a claude- model id")
+    en.add_argument("--worker-profile", choices=["slim-t1", "slim-t2", "none"], help="slim = `claude -p` worker, no GSD re-orientation (W0 2026-11-19 slim worker for ordinary missions)")
     en.add_argument("--autocompact", help="worker autocompact window, e.g. 300k")
     en.add_argument("--wu-packet", help="compiled work-unit file sent instead of the resume command")
     en.add_argument("--continue-max-tokens",
@@ -8719,6 +8735,20 @@ def _cli(argv=None) -> int:
               f"state={rec['state']} epoch={rec['epoch']}")
         return 0
     if args.cmd == "envelope":
+        if getattr(args, "worker_profile", None):
+            # W0 2026-11-19: the profile is set on its own, so `--worker-profile` alone is a valid call.
+            cur = load(args.mission)
+            if cur is None:
+                raise MissionError(f"no mission {args.mission}")
+            prof = None if args.worker_profile == "none" else args.worker_profile
+            rec = transition(args.mission, expect_epoch=cur["epoch"], expect_state=cur["state"],
+                             event="worker_profile_set", worker_profile=prof,
+                             worker_profile_src="owner" if prof else None, reason=f"worker profile {prof}")
+            print(f"WORKER PROFILE SET mission={rec['mission_id']} profile={prof}")
+            if all(v is None for v in (args.token_estimate, args.model, args.autocompact, args.wu_packet,
+                                       args.continue_max_tokens, args.worker_mcp, args.ccr_class,
+                                       args.phase_lease)):
+                return 0
         rec = set_envelope(args.mission, token_estimate=args.token_estimate, model=args.model,
                            autocompact=args.autocompact, wu_packet=args.wu_packet,
                            continue_max_tokens=args.continue_max_tokens, worker_mcp=args.worker_mcp,
