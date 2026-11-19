@@ -139,3 +139,6 @@ modules/ccf/critique.py (pure): evidence needs an instrument else demoted to jud
 
 ### Epoch 14: BI-08 brand truth
 modules/ccf/brand_truth.py (pure intake): observed needs source+retrieved_at else rejected; empty/unknown-field/bad-origin rejected; missing fields listed unknown; clearance always NOT_ASSESSED. 5 checks, LIBRARY, in NEW_MODULES; not fed by `cli init --brief` or CrawlOS yet (PARTIALLY_PROVEN). Remaining: BI-10..13, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-12 Visual DNA
+modules/ccf/visual_dna.py (pure): versioned 1.0 contract, validate() lists problems never repairs, tokens_for() derives colour tokens and refuses to fork a project-pinned token (SSOT wins). 7 checks, LIBRARY, in NEW_MODULES; not yet compiled into DESIGN.md by the CLI (PARTIALLY_PROVEN). Remaining: BI-10, BI-11, BI-13, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.

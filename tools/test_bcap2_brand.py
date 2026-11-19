@@ -336,6 +336,30 @@ with tempfile.TemporaryDirectory() as t:
     check("BI-08 pole: unknown field, empty value and bad origin are all rejected", not r3["facts"] and len(r3["rejected"]) == 3)
     check("BI-08 control: trademark clearance is never claimed", r["clearance"] == "NOT_ASSESSED")
 
+    # ---- BI-12: typed Visual DNA contract
+    from modules.ccf import visual_dna as VD
+    dna = {"schema_version": "1.0", "brand_id": "b", "approved_brief_ref": "brief#1", "territory": "t1",
+           "symbol_strategy": "negative space", "geometric_constraints": ["8px grid"], "shape_language": "rounded",
+           "relative_proportion": {"mark_to_wordmark": 1.2}, "palette_roles": {"primary": "#112233", "surface": "#FFFFFF"},
+           "typography": {"family": "Poppins", "source": "google-fonts"}, "spacing": {"unit": 8}, "variants": ["mono"],
+           "forbidden_patterns": ["swoosh"], "avatar_rules": "mark only", "small_size_rules": "min 16px",
+           "applications": ["favicon"], "selection_evidence": {"selected_by": "human", "critique_ref": "c#1"}}
+    check("BI-12 control: a complete DNA validates", VD.validate(dna) == [], str(VD.validate(dna)))
+    bad = {k: v for k, v in dna.items() if k != "forbidden_patterns"}
+    check("BI-12 pole: a missing required section is named", VD.validate(bad) == ["missing forbidden_patterns"])
+    check("BI-12 pole: wrong version, bad colour and font without source are all reported",
+          len(VD.validate(dict(dna, schema_version="0.9", palette_roles={"primary": "blue"}, typography={"family": "X"}))) == 3)
+    check("BI-12 pole: selection without a critique reference is invalid",
+          any("selection_evidence" in x for x in VD.validate(dict(dna, selection_evidence={"selected_by": "human"}))))
+    check("BI-12 control: tokens derive from the DNA", VD.tokens_for(dna, {})["color.primary"] == "#112233")
+    try:
+        VD.tokens_for(dna, {"color.primary": "#FF0000"})
+        forked = True
+    except ValueError:
+        forked = False
+    check("BI-12 pole: DNA cannot fork a project-pinned token (SSOT wins)", not forked)
+    check("BI-12 control: an identical project pin is accepted", VD.tokens_for(dna, {"color.primary": "#112233"})["color.primary"] == "#112233")
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-12, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)
