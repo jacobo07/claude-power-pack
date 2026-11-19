@@ -793,6 +793,34 @@ def run_all(ap):
           "0 new; see evidence/ascension/s202k/checkpoint_s202k.md"}) == "evidence/ascension/s202k/checkpoint_s202k.md"
           and ap.hold_checkpoint({"reason": "wrote evidence/x/held_result.json"}) == ""
           and ap.hold_checkpoint({"reason": "see e/ck.md", "residual": "r.md"}) == "r.md")
+    # 2026-11-19 (Owner: "extiende tennis y dale capacidad de autoextenderse 30 veces"): an Owner grant lets a lane lift
+    # its own research-allowance, designed-lever and planner stops, each once per extension, never beyond `max`
+    E = ap.evolve
+    xls = {"auto_extend": {"max": 2, "used": 0, "tranche": 50_000_000, "owner_turn": "t:1"}}
+    check("V-AP-AUTOEXT-BOUNDED", [E.consume_extension(xls, "a"), E.consume_extension(xls, "b"),
+                                   E.consume_extension(xls, "c")] == [1, 2, 0] and xls["auto_extend"]["used"] == 2
+          and E.consume_extension({}, "x") == 0)
+    n0 = len([r for r in ledger() if r["kind"] == "auto_extend"])
+    rls = {"research_spent": 199_500_000, "research_cap": 200_000_000,
+           "auto_extend": {"max": 30, "used": 0, "tranche": 50_000_000, "owner_turn": "t:2"}}
+    ax_room = {"research_spent": 10_000_000, "research_cap": 200_000_000, "auto_extend": dict(rls["auto_extend"])}
+    check("V-AP-AUTOEXT-RESEARCH-ALLOWANCE", ap.extend_research_if_spent("XL", rls) and rls["research_cap"] == 250_000_000
+          and rls["auto_extend"]["used"] == 1 and not ap.extend_research_if_spent("XL", ax_room)
+          and ax_room["auto_extend"]["used"] == 0
+          and len([r for r in ledger() if r["kind"] == "auto_extend"]) == n0 + 1 and "auto-extension 1/30" in q_text()
+          and not ap.extend_research_if_spent("XL", {"research_spent": 199_500_000, "research_cap": 200_000_000}))
+    sls = {"synth_streak": 3, "auto_extend": {"max": 30, "used": 0}}
+    lv, why = E.synthesize({}, "XL", sls, str(tmp), "FAM", lambda fam: {"none": "nothing"}, None)
+    lv2, why2 = E.synthesize({}, "XL", {"synth_streak": 3}, str(tmp), "FAM", lambda fam: {"none": "nothing"}, None)
+    check("V-AP-AUTOEXT-SYNTH-MAX", lv is None and "designer proposed no lever" in why and sls["synth_streak"] == 0
+          and sls["auto_extend"]["used"] == 1 and lv2 is None and "in a row" in why2)
+    pls = {"status": "RUNNING", "judged_for": "m-x:1", "auto_extend": {"max": 1, "used": 0}}
+    pend = {"for": "m-x:1", "verdict": {"verdict": "AGREE"}, "directive": "old"}
+    ok1 = ap.extend_after_stop("XL", pls, pend, "lever exhausted: 0/97")
+    ok2 = ap.extend_after_stop("XL", dict(pls, status="RUNNING"), pend, "again")
+    check("V-AP-AUTOEXT-PLANNER-STOP-REPLANS", ok1 and not ok2 and pls["status"] == "WAITING" and pls["judged_for"] is None
+          and pls["pending_plan"]["for"] == "m-x:1" and "lever exhausted: 0/97" in pls["pending_plan"]["directive"]
+          and ap.resumable_plan(pls, "m-x:1") is not None)
     ap.sh, rec["owner_hold"], rec["authority_tokens"] = keep_sh2, keep_hold, keep_auth
     if keep_auth is None:
         rec.pop("authority_tokens")
@@ -1567,7 +1595,13 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "age_ignored": lambda m: setattr(m, "AGE_MIN_H", -1.0),
          "age_always": lambda m: setattr(m, "AGE_MIN_H", 99.0),
          "hold_sha_as_path": lambda m: setattr(m, "hold_checkpoint", lambda h: h.get("evidence") or h.get("residual") or ""),
-         "hold_reason_ignored": lambda m: setattr(m, "CKPT_NAME_RE", m.re.compile(r"(?!x)x")),
+         "autoext_unbounded": lambda m: setattr(m.evolve, "consume_extension", (lambda f: lambda ls, why, now=None: (
+             ls.get("auto_extend", {}).update(max=10 ** 6) or f(ls, why, now)) if isinstance(ls.get("auto_extend"), dict)
+             else 0)(m.evolve.consume_extension)),
+         "autoext_research_no_raise": lambda m: setattr(m, "AUTO_EXT_TRANCHE", 0) or setattr(
+             m, "extend_research_if_spent", (lambda f: lambda n, ls: f(n, dict(ls)) and False)(m.extend_research_if_spent)),
+         "autoext_stop_still_stops": lambda m: setattr(m, "extend_after_stop", lambda *a: False),
+         "hold_reason_ignored":lambda m: setattr(m, "CKPT_NAME_RE", m.re.compile(r"(?!x)x")),
          "kept_checkpoint_ignored":lambda m: setattr(m, "resumable_plan", (lambda f: lambda ls, key: (
              lambda p: dict(p, checkpoint=None) if p else p)(f(ls, key)))(m.resumable_plan)),
          "hold_at_sha_as_path":lambda m: setattr(m, "PATH_AT_SHA_RE", m.re.compile(r"(?!x)x")),

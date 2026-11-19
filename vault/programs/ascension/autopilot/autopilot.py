@@ -1468,6 +1468,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
                                   (BLANK_STOP, INFO_PARK, NO_CONVERSION_PARK),
                                   designer=None if dry else lever_designer(lane, checkpoint, product), residual=checkpoint)
         persist_designed(lane, d, levers, dry)
+        note_extensions(lane["name"], ls)
         if not dry:
             evolve.save_graph(HOME, graph)
         ls["last_progress"] = cls
@@ -1509,6 +1510,56 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     return plan_and_arm(st, lane, ls, key, checkpoint, product, v, evo_dir, snap, dry)
 
 
+AUTO_EXT_TRANCHE = 50_000_000  # one auto-extension of a research allowance (the Owner's own raises were +50M)
+
+
+def note_extensions(lane_name: str, ls: dict) -> None:
+    """Every auto-extension the lane consumed (evolve.consume_extension) is booked once: ledger row, digest, and an
+    Owner-queue notice naming its number and the Owner turn of the grant."""
+    ax = ls.get("auto_extend")
+    if not isinstance(ax, dict):
+        return
+    noted = int(ax.get("noted") or 0)
+    for e in ax.get("log") or []:
+        if int(e.get("n") or 0) <= noted:
+            continue
+        ledger_add(lane=lane_name, kind="auto_extend", tokens=0, n=e["n"], max=ax.get("max"), why=e.get("why"))
+        owner_queue(lane_name, f"NOTICE (no action needed): auto-extension {e['n']}/{ax.get('max')} under the Owner grant "
+                               f"{ax.get('owner_turn')}: {e.get('why')}")
+        digest(lane_name, f"AUTO-EXTENSION {e['n']}/{ax.get('max')}: {e.get('why')}")
+        noted = int(e["n"])
+    ax["noted"] = noted
+
+
+def extend_research_if_spent(lane_name: str, ls: dict) -> bool:
+    """An auto-extending lane whose research allowance cannot hold one more generation gets one tranche more."""
+    left = evolve.lane_research_cap(ls) - int(ls.get("research_spent") or 0)
+    if left >= evolve.RESEARCH_GEN_CAP:
+        return False
+    tr = int((ls.get("auto_extend") or {}).get("tranche") or AUTO_EXT_TRANCHE)
+    if not evolve.consume_extension(ls, f"research allowance {left:,} left < one generation "
+                                        f"({evolve.RESEARCH_GEN_CAP:,}): +{tr:,} -> "
+                                        f"{evolve.lane_research_cap(ls) + tr:,}", _now()):
+        return False
+    ls["research_cap"] = evolve.lane_research_cap(ls) + tr
+    note_extensions(lane_name, ls)
+    return True
+
+
+def extend_after_stop(lane_name: str, ls: dict, pend: dict, stop) -> bool:
+    """An auto-extending lane whose planner stopped (after the designer had its turn) is re-planned on the next tick
+    from the same judgment, told why, instead of STOPPED; each such re-plan consumes one extension."""
+    if not evolve.consume_extension(ls, f"planner stop: {str(stop)[:200]}", _now()):
+        return False
+    note_extensions(lane_name, ls)
+    pend = dict(pend, bad=[], directive=(
+        "AUTO-EXTENSION (Owner 2026-11-19: 'hasta que termine todas sus funciones'): the previous plan stopped with: "
+        f"{str(stop)[:700]}\nDo not stop. Name a route of a family not refuted in this lane's negative rows that "
+        "targets functions not yet at 100%, cite the residual it answers, and plan it inside the research caps."))
+    ls.update(pending_plan=pend, status="WAITING", judged_for=None)
+    return True
+
+
 def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, product: str, v: dict, evo_dir: str,
                  snap: dict, dry: bool) -> None:
     """Plan the next generation from an AGREE judgment, apply the policy, arm. A policy refusal keeps the judgment
@@ -1519,6 +1570,8 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
     pdir = evo_dir
     pend = {"for": key, "gen": name, "verdict": {k: x for k, x in v.items() if k != "_tokens"}, "snap": snap,
             "directive": evo_dir, "next_lever": ls.get("next_lever")}
+    if evo and not dry:
+        extend_research_if_spent(lane["name"], ls)
     p = ({"title": "dry", "facts": ["dry"], "phases": ["Phase 1: x (cap 1M)", "Phase 2: y (cap 1M)"], "_tokens": 0}
          if dry else plan(lane, name, checkpoint, product, v, pdir))
     tok, measured = call_tokens(p.get("_tokens"))
@@ -1543,6 +1596,7 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
             d = evolve._synth_or_park(ls, plevers, lane["name"], product, fam, des, checkpoint,
                                       f"planner stop in {ls.get('mode')}: {str(p.get('stop'))[:200]}", "planner stop")
         persist_designed(lane, d, plevers, dry)
+        note_extensions(lane["name"], ls)
         ledger_add(lane=lane["name"], kind="evo_decision", tokens=0, cls="PLANNER_STOP", instruments=[],
                    action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"),
                    selection=evolve.selection_evidence(d.get("lever"), pgraph))
@@ -1555,6 +1609,10 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
             ledger_add(lane=lane["name"], kind="plan", tokens=tok, measured=measured, gen=name)
         return p
     p = design_after_stop(p)
+    if p.get("stop") and evo and not dry and extend_after_stop(lane["name"], ls, pend, p.get("stop")):
+        log(f"{lane['name']}: planner stop on {name}; auto-extension: re-plan on the next tick")
+        save_state(st)
+        return
     if p.get("stop"):
         ls["status"] = "STOPPED"
         owner_queue(lane["name"], f"planner found no admissible next lever: {str(p.get('stop'))[:300]}")

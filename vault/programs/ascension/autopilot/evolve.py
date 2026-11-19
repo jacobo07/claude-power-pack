@@ -19,6 +19,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 MAX_REPAIR = 2               # attempts per instrument; the next failure parks the lane with the instrument named
 _HYP_ID = re.compile(r"^(H-[A-Za-z0-9]+)\b")
@@ -133,11 +134,30 @@ def synth_problems(lv, levers: dict, lane: str, product: str, family, residual) 
     return bad
 
 
+def consume_extension(ls: dict, why: str, now: float | None = None) -> int:
+    """Owner 2026-11-19 (pane 08cba76c): "extiende tennis y dale capacidad de autoextenderse 30 veces ... hasta que
+    termine todas sus funciones". A lane whose state carries an Owner grant `auto_extend` {max, used, tranche,
+    owner_turn} may lift one of its own stops (research allowance spent, SYNTH_MAX designed levers, a planner stop)
+    instead of waiting for the Owner, at most `max` times. -> the extension's number (1..max), or 0 when none is left.
+    The day cap and the unlocked total still bind: an extension never touches them."""
+    ax = ls.get("auto_extend")
+    if not isinstance(ax, dict):
+        return 0
+    used, mx = int(ax.get("used") or 0), int(ax.get("max") or 0)
+    if used >= mx:
+        return 0
+    ax["used"] = used + 1
+    ax["log"] = (list(ax.get("log") or []) + [{"n": used + 1, "at": now or time.time(), "why": str(why)[:240]}])[-40:]
+    return used + 1
+
+
 def synthesize(levers: dict, lane: str, ls: dict, product: str, family, designer, residual):
     """-> (lever, None) when a designed lever is admitted (and appended to `levers`), else (None, why)."""
     if designer is None:
         return None, "no lever designer"
     streak = int(ls.get("synth_streak") or 0)
+    if streak >= SYNTH_MAX and consume_extension(ls, f"{SYNTH_MAX} designed levers in a row without a conversion"):
+        streak = ls["synth_streak"] = 0
     if streak >= SYNTH_MAX:
         return None, f"{SYNTH_MAX} autopilot-designed levers in a row without a verified CAPABILITY or CERT"
     lv = designer(family)
