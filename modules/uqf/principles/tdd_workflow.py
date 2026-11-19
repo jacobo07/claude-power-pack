@@ -165,6 +165,36 @@ def _applicability(rec: dict) -> tuple[str, str]:
     return "UNRESOLVED", f"unclassified kind {kind!r}"
 
 
+def tautological_asserts(src: str) -> list[int]:
+    """Line numbers of `assert call(...) == expected` where expected is recomputed, not stated.
+
+    Refused: both sides structurally identical, or the non-call side contains no literal and is itself a
+    computation (BinOp/Call) over names -- `assert add(a, b) == a + b`. Accepted: any literal on the expected
+    side (`== 5`, `== [1, 2]`). Static heuristic; an unparseable source returns [] (absent is not clean:
+    callers treat the oracle declaration as the authority then).
+    """
+    import ast
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return []
+    hits: list[int] = []
+    for n in ast.walk(tree):
+        if not (isinstance(n, ast.Assert) and isinstance(n.test, ast.Compare)
+                and len(n.test.ops) == 1 and isinstance(n.test.ops[0], ast.Eq)):
+            continue
+        l, r = n.test.left, n.test.comparators[0]
+        if ast.dump(l) == ast.dump(r):
+            hits.append(n.lineno)
+            continue
+        for call, exp in ((l, r), (r, l)):
+            if isinstance(call, ast.Call) and isinstance(exp, (ast.BinOp, ast.Call)) \
+                    and not any(isinstance(x, ast.Constant) for x in ast.walk(exp)):
+                hits.append(n.lineno)
+                break
+    return hits
+
+
 def _slice_facts(sl: dict, rec: dict, codes: list[str]) -> dict:
     ac = sl.get("acceptance_id")
     red = sl.get("red") or {}
@@ -191,6 +221,9 @@ def _slice_facts(sl: dict, rec: dict, codes: list[str]) -> dict:
         oracle_ok = False
         codes.append(("ORACLE_NOT_INDEPENDENT:" if oracle == "copied_from_impl"
                       else "ORACLE_UNRESOLVED:") + str(ac))
+    if sl.get("test_source") and tautological_asserts(sl["test_source"]):
+        oracle_ok = False
+        codes.append(f"TAUTOLOGICAL_ASSERTION:{ac}")
     red_ok = red_ok and oracle_ok  # a self-fulfilling RED never credits
     green_ok = bool(red_ok and green.get("observed") and green.get("targeted_passed"))
     if red_ok and not green_ok:

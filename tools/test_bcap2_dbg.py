@@ -127,6 +127,17 @@ def test_honest_states():
     v4 = assess(mut(lambda r: r["fix"].pop("mutation_detects")))
     (ok if v4.status == "VERIFIED" and v4.unmeasured else bad)(
         "V-DBG-UNMEASURED-IS-REPORTED", f"{v4.status} unmeasured={v4.unmeasured}")
+    # mattpocock/skills read (epoch 11): no-correct-seam is a finding; mutation must be proven landed.
+    for name, fn, code, want_ok in (
+        ("NO-SEAM-UNRECORDED", lambda r: r["fix"].update(regression_seam="none"), "DBG-C06-NO-SEAM-UNRECORDED", False),
+        ("NO-SEAM-RECORDED", lambda r: r["fix"].update(regression_seam="none", seam_finding="no public seam"),
+         "DBG-C06-NO-SEAM-UNRECORDED", True),
+        ("MUTATION-NOT-LANDED", lambda r: r["fix"].update(mutation_landed=False), "DBG-C06-MUTATION-NOT-LANDED", False),
+        ("MUTATION-LANDED", lambda r: r["fix"].update(mutation_landed=True), "DBG-C06-MUTATION-NOT-LANDED", True),
+    ):
+        vv = assess(mut(fn))
+        good = (code not in vv.rejections) if want_ok else (code in vv.rejections)
+        (ok if good else bad)(f"V-DBG-{name}", f"{vv.status} {vv.rejections}")
     v5 = assess(mut(lambda r: r.update(tier="LIGHT", hypotheses=[])))
     (ok if v5.status == "VERIFIED" else bad)("V-DBG-LIGHT-NO-RITUAL-HYPOTHESES", f"{v5.status} {v5.rejections}")
 

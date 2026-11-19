@@ -171,6 +171,10 @@ def assess(rec: dict) -> Verdict:
             rej.append("DBG-C06-SHALLOW-SEAM")
         if fix.get("original_path_rerun") != "green":
             rej.append("DBG-C06-ORIGINAL-PATH-NOT-GREEN")
+        if fix.get("regression_seam") == "none" and not fix.get("seam_finding"):
+            rej.append("DBG-C06-NO-SEAM-UNRECORDED")       # no correct seam must itself be reported as a finding
+        if fix.get("mutation_landed") is False:
+            rej.append("DBG-C06-MUTATION-NOT-LANDED")      # a forced mutation that never changed the code proves nothing
         mut = fix.get("mutation_detects")
         if mut is False:
             rej.append("DBG-C06-BLIND-REGRESSION-GATE")

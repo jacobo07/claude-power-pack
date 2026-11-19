@@ -96,6 +96,13 @@ def test_fixtures():
     check("V-TDD-F04-VALID-RED", r["slices"][0]["red_ok"] and r["certifies_tdd"], f"status={r['status']}")
     run("V-TDD-F05-ORACLE-COPIED", mut(lambda r: sl(r).update(oracle={"kind": "copied_from_impl"})), "ORACLE_NOT_INDEPENDENT")
     run("V-TDD-F05b-ORACLE-UNRESOLVED", mut(lambda r: sl(r).update(oracle={"kind": "inferred"})), "ORACLE_UNRESOLVED")
+    run("V-TDD-F05d-TAUTOLOGY", mut(lambda r: sl(r).update(test_source="def test_a():\n    assert add(a, b) == a + b\n")),
+        "TAUTOLOGICAL_ASSERTION")
+    run("V-TDD-F05e-TAUTOLOGY-SELF", mut(lambda r: sl(r).update(test_source="def test_a():\n    assert f(x) == f(x)\n")),
+        "TAUTOLOGICAL_ASSERTION")
+    rl = classify_slice(mut(lambda r: sl(r).update(test_source="def test_a():\n    assert add(2, 3) == 5\n")))
+    check("V-TDD-F05f-LITERAL-EXPECTED-ACCEPTED", rl["certifies_tdd"] and not any(c.startswith("TAUTOLOGICAL") for c in rl["codes"]),
+          f"status={rl['status']} codes={rl['codes']}")
     run("V-TDD-F05c-ORACLE-NO-SOURCE", mut(lambda r: sl(r).update(oracle={"kind": "independent"})), "ORACLE_UNRESOLVED")
     # 6: pure refactor with a passing baseline is a scoped exemption, without it it is not
     r6 = classify_slice({"kind": "pure_refactor", "prior_passing_baseline": True, "sources": ["a.py"], "tests": []})

@@ -13,3 +13,7 @@ Upstream: behaviour-through-public-seams tests; seams agreed before any test; an
 - CANDIDATE GAPS: tautological-assertion detector (poles: expect(add(a,b))==a+b refused, literal accepted); horizontal-slicing signal (many new tests, zero implementation per cycle).
 - DECLINE: confirm seams with the user (unattended); refactor-excluded rule (conflicts with CPP mutation/gate flow, unevaluated).
 R3 is closed for pin + licence + reading; implementation delta above is open.
+
+## Epoch 11 gap check (implemented, both poles)
+Checked against test_bcap2_dbg FX01-20 and test_bcap2_tdd. Already owned: tagged-log cleanup (FX15), redaction (FX14), >=2 competing hypotheses (C04; upstream 3-5 count NOT adopted, stricter count is preference), perf baseline (FX9).
+Added: DBG-C06-NO-SEAM-UNRECORDED (no correct seam must be recorded as a finding), DBG-C06-MUTATION-NOT-LANDED (forced mutation proven landed), TDD tautological_asserts (AST: recomputed/identical expected refused, literal accepted). Gates: dbg 41/0, tdd 68/0 (BCAP2_TDD_PYTHON=/home/kobii/w4-gate/venv/bin/python3), done_gate PASS. Not adopted: horizontal-slicing signal (no per-cycle test/impl counts in the record; would need a new record field, deferred).

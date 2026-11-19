@@ -114,3 +114,6 @@ vault/programs/bcap-2/agsk/UPSTREAM_PINS.json: addyosmani/agent-skills @ 8c99fa3
 
 ### Epoch 10 mattpocock read
 Both skills read at pin abeeaf95; dispositions in vault/programs/bcap-2/dbg/MATTPOCOCK_READ.md. DBG R1 and TDD R3 reading closed; candidate gaps listed there are NOT yet checked against fixtures or implemented (next: verify each against test_bcap2_dbg 20 fixtures / test_bcap2_tdd, add missing ones with both poles).
+
+### Epoch 11 mattpocock gaps
+DBG +2 codes (NO-SEAM-UNRECORDED, MUTATION-NOT-LANDED), TDD tautology detector; poles in both gates; details in vault/programs/bcap-2/dbg/MATTPOCOCK_READ.md. Horizontal-slicing deferred. Spend not re-measured. Remaining: Phase 8 B-H + live_verified, Phase 7 BI-08..35, Owner style-3 pick (I chose (b)), laptop steps.
