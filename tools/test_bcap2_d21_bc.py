@@ -238,5 +238,28 @@ check("D21-E07 pole: claimed pass without evidence fails", not MS.check_runtime_
 check("D21-E07 pole: failed case fails", not MS.check_runtime_report({"results": dict(_rep["results"], interrupted={"observed": True, "evidence": "t", "pass": False})})[0])
 check("D21-E07 pole: 12 runtime cases pinned", len(MS.RUNTIME_CASES) == 12)
 
+# D21-H01/H02/F06 routing, selection, material arbitration
+from modules.cdicf import source_route as SR  # noqa: E402
+_ev = {"spdx": "MIT", "version": "1.0", "license_sha256": "ab"}
+_idx = [{"id": "z-anim", "layer": "motion", "sources": ["s"]}, {"id": "a-anim", "layer": "motion", "sources": ["s"]}, {"id": "ungrounded", "layer": "motion"}]
+check("D21-H01 control: motion goal routes to grounded motion rows only, sorted", [r["id"] for r in SR.route("add a spring animation", _idx)["rows"]] == ["a-anim", "z-anim"])
+check("D21-H01 pole: goal with no layer ABSTAINs", SR.route("make it nicer", _idx)["verdict"] == "ABSTAIN")
+check("D21-H01 pole: layer with no grounded entry ABSTAINs", SR.route("show a map with markers", _idx)["verdict"] == "ABSTAIN")
+_cs = [{"id": "b", "rights_status": "OPEN", "evidence": _ev, "frameworks": ["react"], "bundle_bytes": 900, "popularity": 1},
+       {"id": "a", "rights_status": "OPEN", "evidence": _ev, "frameworks": ["react"], "bundle_bytes": 500, "popularity": 0},
+       {"id": "r", "rights_status": "RESTRICTED", "evidence": _ev, "frameworks": ["react"], "bundle_bytes": 1, "popularity": 999}]
+_s = SR.select(_cs, {"framework": "react"})
+check("D21-H02 control: cheapest eligible first, popularity ignored", [o["id"] for o in _s["ranked"]] == ["a", "b"])
+check("D21-H02 pole: restricted source refused despite top popularity", [o["id"] for o in _s["refused"]] == ["r"])
+check("D21-H02 pole: deterministic for equal input under reordering", SR.select(list(reversed(_cs)), {"framework": "react"}) == _s)
+check("D21-H02 pole: wrong framework refused", not SR.select(_cs, {"framework": "vue"})["ranked"])
+check("D21-H02 pole: unmeasured cost sorts last and is flagged, not zero", SR.select([dict(_cs[0], id="u", bundle_bytes=None), _cs[0]], {"framework": "react"})["unmeasured_cost"] == ["u"])
+_mat = {"material": "gradient", "benefits": ["hierarchy"], "baseline_opaque_compared": True, "fallback": "flat fill", "trust_posture": "standard"}
+check("D21-F06 control: justified material with fallback passes", SR.arbitrate_material(_mat)[0])
+check("D21-F06 pole: no benefit fails", not SR.arbitrate_material(dict(_mat, benefits=["trendy"]))[0])
+check("D21-F06 pole: no opaque baseline comparison fails", not SR.arbitrate_material(dict(_mat, baseline_opaque_compared=None))[0])
+check("D21-F06 pole: no fallback fails", not SR.arbitrate_material(dict(_mat, fallback=""))[0])
+check("D21-F06 pole: glass on trust-critical surface fails", not SR.arbitrate_material(dict(_mat, material="glass", trust_posture="critical"))[0])
+
 print(f"{'PASS' if not FAILS else 'FAIL'}: {len(FAILS)} failures")
 sys.exit(1 if FAILS else 0)
