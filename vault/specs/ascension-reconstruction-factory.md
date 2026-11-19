@@ -72,6 +72,31 @@ FIFA/FIFATC (b8637681, RSO, 24,482 named fns), WIIPARTY (f8f46694, monolithic DO
 (SportsPackEP.dol) have no dtk-template build. Each needs a dtk split (config.yml + symbols/splits; Ghidra bounds via
 ExportL1.java where no symbols exist) before F1 runs. MKWLIB = MKW binary: share MKW's run, do not run twice.
 
+**2026-11-19 (pane 8949bcc6), measured.** Scratch repos of symlinks under /home/kobii/agora/factory/ (no lane repo
+written): WIIPARTY `wp-repo` reuses the S51W dtk split (build/s51w/supp01, relinked main.dol sha1 93b41984 = orig,
+7,416 fns, 284 objects); TENNIS `tn-repo` = new `dtk dol split` of fabric-tools/in/SportsPackEP.dol WITH its
+SportsPackEP.map (14,885 fns, 560 map-derived objects; 10 data/bss sections not in the map, no relink checked yet);
+FIFA `fifa-repo` = main.dol only (4,194 fns, 46 objects): the game is the 7.5 MB split RSO and dtk 1.8.3 cannot read
+it (`rso info`: "failed to fill whole buffer"; rso has only info/make) -> needs an RSO->ELF converter. Pilots, 400
+fns, seed 20261119, factory.py as is: WIIPARTY 106 (26.5%), TENNIS 95 (23.8%), FIFA main.dol 68 (17%); compiler
+version barely moves it (Wii/1.0, 1.1, 0x4201_127 within 1). Full base sweeps queued (wp-main-full, tn-main-full).
+
+**Compile-failure lever (typegen/, measured).** Funnel per 400: m2c L1 ~90% -> compiles 51-61% -> 100% 17-27%.
+mwcc errors of the non-compiling lifts (errclass.py): untyped member access (10149), `?` declarations (10121),
+void*/int conversions (10209/10377/10499). Variant `typegen/factory_vs2.py` = m2c `--valid-syntax` + m2c_macros.h +
+`#pragma gcc_extensions on` in the prelude (front-end only; certification flag arms unchanged):
+
+| pilot 400 | compiles | 100% any arm | union with base | >=90% not 100 |
+|---|---|---|---|---|
+| WIIPARTY base -> vs2 | 205 -> 301 | 106 -> 121 | 123 (+16%) | 26 -> 59 |
+| TENNIS base -> vs2 | 243 -> 328 | 95 -> 108 | 111 (+17%) | 53 -> 84 |
+
+Compiling is no longer the bottleneck (84-92% of lifts compile); the bottleneck is now codegen identity: of the
+compiled, ~37% are byte-identical, and the >=90% band (15-21% of the sample) is the next lever (permuter / model on
+near misses). Second cost: the one-arm-per-object rule over dtk auto objects drops a FLAGS_SPLIT object whole
+(WIIPARTY vs2 121 -> 91 counted, TENNIS 108 -> 99); with carve.py's one-unit-per-function product layout the rule's
+premise (one TU, one flag set) may not hold -- an Owner certification question, not changed here.
+
 ## F4: cross-lane index (OPEN)
 One certified-source pool per binary (KSR+WSR, MKW+MKWLIB, FIFA+FIFATC) and a masked-byte index across binaries
 (SDK/NW4R/EGG), consulted by the planner before any generation; the model works only on the residual (LF1 near misses).
