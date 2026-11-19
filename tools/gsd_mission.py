@@ -2974,13 +2974,28 @@ def topology(mission_id: str) -> dict:
     }
 
 
-def release_owner_hold(mission_id: str, now: float | None = None) -> dict:
+def release_owner_hold(mission_id: str, now: float | None = None, allow_overrun: bool = False) -> dict:
     """Return a held mission to normal supervision. The budget clock is not reset."""
     rec = load(mission_id)
     if rec is None:
         raise MissionError(f"no mission {mission_id}")
     if not rec.get("owner_hold"):
         raise MissionError(f"{mission_id} has no owner hold")
+    # W0 2026-11-19: a cost hold is not lifted under a ceiling already crossed (C5 m-a8f0221b1acc ran after a refused
+    # raise). Same measure and reserve as set_authority's I3 check; unmeasurable spend does not refuse.
+    if is_cost_hold(rec.get("owner_hold")) and rec.get("authority_tokens") and not allow_overrun:
+        import mission_spend as ms
+        try:
+            spent = ms.processed_tokens(rec)
+        except Exception:  # noqa: BLE001 -- unmeasured is not zero, and not a refusal either
+            spent = None
+        auth = int(rec["authority_tokens"])
+        reserve = ms.closeout_reserve(rec)
+        if spent is not None and auth - reserve <= spent:
+            raise MissionError(
+                f"refused: {mission_id} is cost-held and authority {auth:,} minus closeout reserve {reserve:,} "
+                f"is not above live spend {spent:,}; raise authority first (budget/authority), or pass "
+                "--allow-overrun to release a worker that will trip again at the next sweep")
     if rec["owner_hold"].get("kind") == CLOSED_HOLD_KIND:
         # spec mission-close: a closed mission is reopened only by arming a new one.
         raise MissionError(f"{mission_id} was closed by the Owner ({rec['state']}); arm a new mission instead")
@@ -8433,6 +8448,7 @@ def _cli(argv=None) -> int:
                     help="also stop the live background worker through the host (claude stop + wait); "
                          "never kill the pid by hand: the daemon resumes a killed session")
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
+    orl.add_argument("--allow-overrun", action="store_true", help="release a cost hold even though authority is not above live spend (W0 2026-11-19)")
     orl.add_argument("--mission", required=True)
     rq = sub.add_parser("requires", help="M2: typed resource requirements for ONE obligation; the sweep parks the "
                                          "mission as WAIT_RESOURCE until they are met (no model call)")
@@ -8694,7 +8710,7 @@ def _cli(argv=None) -> int:
         print(json.dumps(topology(args.mission), indent=1, default=str))
         return 0
     if args.cmd == "release":
-        rec = release_owner_hold(args.mission)
+        rec = release_owner_hold(args.mission, allow_overrun=bool(getattr(args, "allow_overrun", False)))
         print(f"OWNER HOLD RELEASED mission={rec['mission_id']} state={rec['state']} epoch={rec['epoch']}")
         return 0
     if args.cmd == "protocol":
