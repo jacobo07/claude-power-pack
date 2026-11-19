@@ -817,7 +817,20 @@ JUDGE_TOOLS = ["Read", "Grep", "Glob", "Bash(timeout 600 python3 tools/:*)", "Ba
 
 def judge(lane: dict, checkpoint: str, product: str) -> dict:
     prompt = (HOME / "judge_prompt.md").read_text().replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product)
-    r = run_claude(prompt, cwd=product, tools=JUDGE_TOOLS, add_dirs=[lane["cwd"]], max_turns=60, timeout=3600)
+    # 2026-11-19 (pane 08cba76c): the judge's bare gate runs rewrote tracked evidence (MKW s184m/seq_gate_run.json,
+    # FIFA f3x/gate_mutants.json); the dirty product held S191M's and S196F's launch ~6 h (behind_dirty). The judge
+    # measures, never edits: a tracked file its run dirtied is restored; one that was already dirty is left as it was.
+    repos = list(dict.fromkeys([product, lane["cwd"]]))
+    before = {p: _tracked_dirty(p) for p in repos}
+    try:
+        r = run_claude(prompt, cwd=product, tools=JUDGE_TOOLS, add_dirs=[lane["cwd"]], max_turns=60, timeout=3600)
+    finally:
+        for p in repos:
+            if before[p] is None:
+                continue
+            for f in sorted((_tracked_dirty(p) or set()) - before[p]):
+                _git(p, "checkout", "--", f)
+                log(f"{lane.get('name')}: judge run dirtied tracked {f}; restored")
     v = last_json(r.get("result", "")) or {}
     v["_tokens"] = r.get("tokens")
     v["_session"] = r.get("session")

@@ -355,6 +355,25 @@ def run_all(ap):
     cur, why = ap.match_at100(glane, str(gdir))
     check("V-MATCH-BUILD-LEAVES-TREE-CLEAN", cur == set() and why is None
           and (gdir / "splits.txt").read_text() == "a\n" and (gdir / "mine.txt").read_text() == "worker edit\n")
+    # 2026-11-19 (MKW S191M, FIFA S196F held ~6 h): a tracked file the judge's gate runs dirty is restored too
+    keep_rc = ap.run_claude
+
+    def judge_dirties(*a, **k):
+        (gdir / "splits.txt").write_text("gate rewrote me\n")
+        return {"ok": True, "result": '{"verdict": "AGREE"}', "tokens": 1}
+    ap.run_claude = judge_dirties
+    jp = Path(ap.HOME) / "judge_prompt.md"
+    made_jp = not jp.exists()
+    if made_jp:
+        jp.write_text("judge {CHECKPOINT} in {PRODUCT}")
+    try:
+        jv = ap.judge({"name": "MGIT", "cwd": str(gdir)}, "ck.md", str(gdir))
+    finally:
+        ap.run_claude = keep_rc
+        if made_jp:
+            jp.unlink()
+    check("V-AP-JUDGE-LEAVES-TREE-CLEAN", jv.get("verdict") == "AGREE"
+          and (gdir / "splits.txt").read_text() == "a\n" and (gdir / "mine.txt").read_text() == "worker edit\n")
     # 2026-11-18 (KSR S168K): a superseded gate stands only if it predates the generation and the certificates verify
     sdir = Path(tempfile.mkdtemp(prefix="sgit-", dir=tmp))
 
