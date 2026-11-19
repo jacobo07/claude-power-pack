@@ -130,3 +130,6 @@ modules/design-md/README.md licence line now records DRIFT (old "Proprietary" ke
 
 ### Epoch 13c D21-C07
 reference_intel.fidelity_claims: a 1:1/pixel-perfect claim needs observed text/states/responsive/fonts/a11y evidence; absent = unobserved. +6 checks in test_bcap2_d21_bc. Done gate PASS.
+
+### Epoch 14: BI-09 territories
+modules/ccf/territories.py (pure check_territories: >=3 distinct mechanism+brand_fact, recolour/missing not counted, reasoned narrow-brief exception is its own verdict). 7 checks in test_bcap2_brand, LIBRARY-declared, in done_gate NEW_MODULES; not yet wired into `cli generate` (stays PARTIALLY_PROVEN). Remaining: BI-08, BI-10..14, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.

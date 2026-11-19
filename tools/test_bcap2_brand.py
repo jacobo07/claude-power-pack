@@ -288,6 +288,27 @@ with tempfile.TemporaryDirectory() as t:
     check("BR-16 pole: select --by llm cannot override a BLOCK (even with --ack)",
           run(["select", P, "--concept", "wing", "--by", "llm", "--ack"]) == 3)
 
+    # ---- BI-09: multi-territory check, both poles
+    from modules.ccf import territories as TR
+    def _c(i, m, f, ic):
+        return {"id": i, "mechanism": m, "brand_fact": f, "icon": ic}
+    good = [_c("a", "negative space", "founded in a port city", "hex cells"),
+            _c("b", "letterform mutation", "serves night-shift nurses", "bent O"),
+            _c("c", "monogram", "family name since 1952", "")]
+    check("BI-09 pole: three distinct mechanisms+facts PASS", TR.check_territories(good)["verdict"] == "PASS")
+    recol = [_c("a", "negative space", "port city", "hex cells"), _c("b", "negative space", "nurses", "hex cells"),
+             _c("c", "gestalt", "family", "x")]
+    check("BI-09 pole: recoloured same mechanism is not a territory", TR.check_territories(recol)["verdict"] == "FAIL")
+    check("BI-09 pole: shared brand_fact does not count twice",
+          TR.check_territories([_c("a", "m1", "same", "i1"), _c("b", "m2", "same", "i2"), _c("c", "m3", "other", "i3")])["verdict"] == "FAIL")
+    check("BI-09 pole: missing mechanism is unmeasured, not counted",
+          TR.check_territories([{"id": "a", "brand_fact": "x"}] + good[:2])["verdict"] == "FAIL")
+    check("BI-09 pole: two territories without exception FAIL", TR.check_territories(good[:2])["verdict"] == "FAIL")
+    check("BI-09 control: reasoned narrow-brief exception is its own verdict, not PASS",
+          TR.check_territories(good[:2], {"reason": "client mandates the existing wordmark"})["verdict"] == "NARROW_BRIEF_EXCEPTION")
+    check("BI-09 pole: bare True / blank-reason exception refused",
+          TR.check_territories(good[:2], True)["verdict"] == "FAIL" and TR.check_territories(good[:2], {"reason": "  "})["verdict"] == "FAIL")
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-09) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)
