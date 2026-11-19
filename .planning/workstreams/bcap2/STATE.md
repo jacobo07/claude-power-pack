@@ -190,3 +190,6 @@ Registry located at apps/www/registry/magicui (80 files) at b0b2e497. All 80 fet
 
 ### Epoch 4b (D21-D02 partial): shadcn tree probe
 Read-only tree of shadcn-ui/ui at f50887ae (7121 paths): one root LICENSE.md, plus a third-party test-fixture LICENSE.md (vendored material exists). Registry at apps/v4/registry (1532 files) and packages/registry/src. Evidence: design-resources/SHADCN_TREE_PROBE.json. Listing only: no header scan, no registry feature semantics, rights unchanged. Next: header scan of apps/v4/registry, read registry schema docs (D02). Spend not re-measured.
+
+### Epoch 4c: shadcn header sample
+80 of 1532 apps/v4/registry ui .tsx files read at f50887ae: no licence/attribution marker (sample only, recorded in SHADCN_TREE_PROBE.json). Not a clean bill for the rest; rights unchanged. Per PR-NO-RUNNABLE-UNIT-STOPS-THE-EPOCH-001 the remaining Phase 8 units (D02 schema semantics, C01/C02, E01-E04, F-H) need page-level reads or browser measurement; further header probing adds little. OWNER NOTE: the cheap read-only probes are exhausted; next value is laptop-plane measurement (LAPTOP_STEPS.md) and the style-3 Owner pick (recorded (b)). Spend not re-measured.
