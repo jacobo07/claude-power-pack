@@ -111,3 +111,6 @@ vault/programs/bcap-2/brand/UPSTREAM_PINS.json: all 10 brand backlog pins resolv
 
 ### Epoch 10 Phase 3 + mattpocock locate pass
 vault/programs/bcap-2/agsk/UPSTREAM_PINS.json: addyosmani/agent-skills @ 8c99fa36 re-resolved, MIT LICENSE sha256 recorded (agrees with the ledger; Phase 3 had no residual here). mattpocock/skills subpaths located at tree abeeaf95: skills/engineering/diagnosing-bugs/SKILL.md and skills/engineering/tdd/SKILL.md (MIT repo). Content NOT yet read: DBG R1 / TDD R3 now reduce to "read those two files at a pinned SHA and disposition them", no longer "find them". HEAD was unpinned at fetch time; the commit SHA still has to be recorded when they are read.
+
+### Epoch 10 mattpocock read
+Both skills read at pin abeeaf95; dispositions in vault/programs/bcap-2/dbg/MATTPOCOCK_READ.md. DBG R1 and TDD R3 reading closed; candidate gaps listed there are NOT yet checked against fixtures or implemented (next: verify each against test_bcap2_dbg 20 fixtures / test_bcap2_tdd, add missing ones with both poles).
