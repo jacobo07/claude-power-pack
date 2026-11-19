@@ -97,6 +97,20 @@ near misses). Second cost: the one-arm-per-object rule over dtk auto objects dro
 (WIIPARTY vs2 121 -> 91 counted, TENNIS 108 -> 99); with carve.py's one-unit-per-function product layout the rule's
 premise (one TU, one flag set) may not hold -- an Owner certification question, not changed here.
 
+**Owner ruling 2026-11-19 ("y", pane 8949bcc6): a one-function unit certifies with the flag arm it matched.** The
+one-arm-per-object rule stays for multi-function units (materialize.py, real TUs); carve.py units take the arm per
+row of matched.tsv (it already did). Full WIIPARTY base sweep (wp-main-full, 7,404 fns, 39 min): L1 6,578, compile
+3,703, 100% any arm 1,644, object-consistent 1,205 (2 FLAGS_SPLIT objects cost 439), >=90% 594.
+**WIIPARTY F2 DONE.** New dtk-template project (configure.py + tools/ from wsr-decomp, config.libs empty, orig at
+orig/SUPP01/sys/main.dol, build.sha1 93b41984; baseline main.dol OK, report 0 fns). Run dir wp-main-full-perfn
+(matched.tsv = 1,644 rows, one per function, `dol` arm first). carve.py -> 1,644 units; scratch wp-f2 faf7699; lane
+wiiparty-decomp fast-forwarded 370ec95 -> faf7699 while S163W sat on its cost-breaker hold (no worker alive, lane
+clean, HEAD guard), lane rebuild main.dol OK, report **0 -> 1,642 at 100 of 8,751 (code 2.71%)**, same set as
+scratch, 0 lost. 2 carved functions do not reach 100 in the project build (open). DEBT: a lane build makes dtk rewrite
+config/SUPP01/symbols.txt (684 data-string size refinements); restored to keep the lane clean (patch
+factory/wp-lane-symbols-dtk-20261119T231339Z.patch) -- commit it in a window or every build re-dirties the lane.
+WIIPARTY has no `match_report` in lanes.json, so the autopilot's MATCH class cannot see this progress (Owner decision).
+
 ## F4: cross-lane index (OPEN)
 One certified-source pool per binary (KSR+WSR, MKW+MKWLIB, FIFA+FIFATC) and a masked-byte index across binaries
 (SDK/NW4R/EGG), consulted by the planner before any generation; the model works only on the residual (LF1 near misses).
