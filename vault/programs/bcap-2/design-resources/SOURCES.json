@@ -1,0 +1,334 @@
+{
+ "schema": 1,
+ "backlog": "vault/backlog/2026-10-30_cdio-21-design-resources-universal-absorption.md",
+ "denominator_sources": 21,
+ "live_access": "none this phase (no network used)",
+ "sources": [
+  {
+   "id": "D21-01",
+   "name": "Minimal Gallery",
+   "group": 1,
+   "urls": [
+    "https://minimal.gallery/"
+   ],
+   "screenshot_claim": "Hand-picked sites and visual taste",
+   "initial_disposition": "REFERENCE_ONLY → CDIO-06 and design-index",
+   "rights_status": "REFERENCE_ONLY",
+   "rights_note": "gallery of other brands' designs: inspiration only",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-02",
+   "name": "Kage",
+   "group": 1,
+   "urls": [
+    "https://kage.design/"
+   ],
+   "screenshot_claim": "Pick a design and copy it as a prompt",
+   "initial_disposition": "REFERENCE_ONLY → design-md / prompt compiler; not a license to clone",
+   "rights_status": "REFERENCE_ONLY",
+   "rights_note": "gallery-derived prompts of third-party designs",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-03",
+   "name": "AppShot Gallery",
+   "group": 1,
+   "urls": [
+    "https://appshot.gallery/"
+   ],
+   "screenshot_claim": "\"821 hand-picked real apps\"",
+   "initial_disposition": "UNVERIFIED_LIVE_ACCESS → CDIO-08; source URL corroborated by independent 21-site guide but site access was not confirmed in this session",
+   "rights_status": "UNKNOWN_ACCESS",
+   "rights_note": "direct access not established in the backlog session; do not synthesize terms",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-04",
+   "name": "The Component Gallery",
+   "group": 1,
+   "urls": [
+    "https://component.gallery/"
+   ],
+   "screenshot_claim": "\"60 components, 95 design systems, 2,671 examples\"",
+   "initial_disposition": "REFERENCE_ONLY/EXTEND → CDICF registry + design_index + CDIO-02",
+   "rights_status": "REFERENCE_ONLY",
+   "rights_note": "taxonomy reference; examples belong to their design systems",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-05",
+   "name": "DESIGN.md library",
+   "group": 2,
+   "urls": [
+    "https://designmd.ai/",
+    "https://github.com/google-labs-code/design.md"
+   ],
+   "screenshot_claim": "\"2,000+ ready-made DESIGN.md\"",
+   "initial_disposition": "**ALREADY OWNED** via modules/design-md and DESIGN.md; only augment validated catalog intake",
+   "rights_status": "MIXED",
+   "rights_note": "format upstream LICENSE Apache-2.0 vs CPP modules/design-md/README says Proprietary: drift, reconcile",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-06",
+   "name": "Refero Styles",
+   "group": 2,
+   "urls": [
+    "https://styles.refero.design/"
+   ],
+   "screenshot_claim": "2,000+ real site styles as files",
+   "initial_disposition": "EXTEND EXISTING design-md brand-to-design-md",
+   "rights_status": "REFERENCE_ONLY",
+   "rights_note": "derived from observed third-party sites",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-07",
+   "name": "Jiro",
+   "group": 2,
+   "urls": [
+    "https://jiro.build/"
+   ],
+   "screenshot_claim": "Browse a design, copy the prompt",
+   "initial_disposition": "REFERENCE_ONLY/EXTEND prompt compiler",
+   "rights_status": "UNKNOWN",
+   "rights_note": "terms not inspected",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-08",
+   "name": "VibePrompt",
+   "group": 2,
+   "urls": [
+    "https://vibeprompts.dev/"
+   ],
+   "screenshot_claim": "Ready prompts for pricing, heroes, dashboards",
+   "initial_disposition": "UNVERIFIED_LIVE_ACCESS; URL corroborated by 21-site guide but page not fetched; verify exact brand and legal terms before copying",
+   "rights_status": "UNKNOWN_ACCESS",
+   "rights_note": "direct access not established; do not synthesize terms",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-09",
+   "name": "21st.dev",
+   "group": 3,
+   "urls": [
+    "https://21st.dev/",
+    "https://github.com/21st-dev"
+   ],
+   "screenshot_claim": "12,000+ hero sections and buttons",
+   "initial_disposition": "EXTEND CDICF registry/selector; NEVER bulk-copy by default",
+   "rights_status": "UNKNOWN",
+   "rights_note": "component-level licence authoritative; community items unknown",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-10",
+   "name": "shadcn/ui",
+   "group": 3,
+   "urls": [
+    "https://ui.shadcn.com/",
+    "https://github.com/shadcn-ui/ui"
+   ],
+   "screenshot_claim": "Clean source-owned components",
+   "initial_disposition": "**ALREADY OWNED in CDICF**; audit deltas, do not create a second shadcn distribution",
+   "rights_status": "UNKNOWN",
+   "rights_note": "repo licence not re-read this phase; verify per item/version",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-11",
+   "name": "Aceternity UI",
+   "group": 3,
+   "urls": [
+    "https://ui.aceternity.com/",
+    "https://ui.aceternity.com/licence"
+   ],
+   "screenshot_claim": "200+ animated landing parts",
+   "initial_disposition": "REFERENCE_ONLY / LICENSE-GATED gateway; Pro license forbids redistribution of source/items and certain templates",
+   "rights_status": "RESTRICTED",
+   "rights_note": "Pro licence forbids redistributing source as stock; free terms need separate inspection",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-12",
+   "name": "Magic UI",
+   "group": 3,
+   "urls": [
+    "https://magicui.design/",
+    "https://github.com/magicuidesign/magicui"
+   ],
+   "screenshot_claim": "150+ animated components",
+   "initial_disposition": "CANDIDATE_ADAPT_WITH_TESTS for MIT main repo; Pro/premium separate",
+   "rights_status": "UNKNOWN",
+   "rights_note": "licence not re-read; verify",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-13",
+   "name": "Anime.js",
+   "group": 4,
+   "urls": [
+    "https://animejs.com/"
+   ],
+   "screenshot_claim": "One lightweight animation library",
+   "initial_disposition": "**ALREADY BACKLOGGED** on 2026-10-10; reference, do not reimplement",
+   "rights_status": "UNKNOWN",
+   "rights_note": "covered by Phase 4: juliangarnier/anime MIT at 01b81be1 (other D21 items still unverified)",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-14",
+   "name": "Motion Primitives",
+   "group": 4,
+   "urls": [
+    "https://motion-primitives.com/",
+    "https://github.com/ibelick/motion-primitives"
+   ],
+   "screenshot_claim": "Copy-paste animated parts",
+   "initial_disposition": "PATTERN or licensed component through existing CDIO-07 / CDICF",
+   "rights_status": "UNKNOWN",
+   "rights_note": "licence not re-read; verify",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-15",
+   "name": "Kinetics",
+   "group": 4,
+   "urls": [
+    "https://kinetics.colorion.co/",
+    "https://github.com/ckissi/kinetics"
+   ],
+   "screenshot_claim": "153 spring effects (screenshot)",
+   "initial_disposition": "**REFERENCE_ONLY UNTIL LICENSE VERIFIED**. No LICENSE found in GitHub root at audit; README counts 162 while a cached site index says 144. Do not silently copy effect code or freeze a single count",
+   "rights_status": "UNKNOWN",
+   "rights_note": "GitHub root licence could not be verified; no LICENSE is not permissive; count drift",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-16",
+   "name": "MicroKit UI",
+   "group": 4,
+   "urls": [
+    "https://microkit.co/",
+    "https://github.com/henriquegpb/microkit"
+   ],
+   "screenshot_claim": "49 microinteractions (screenshot)",
+   "initial_disposition": "MIT candidate through CDICF; official site currently says **54**, so source census must be live and versioned",
+   "rights_status": "UNKNOWN",
+   "rights_note": "count drift 49; licence not re-read",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-17",
+   "name": "mapcn",
+   "group": 5,
+   "urls": [
+    "https://mapcn.dev/",
+    "https://github.com/AnmolSaini16/mapcn"
+   ],
+   "screenshot_claim": "Maps with markers and routes",
+   "initial_disposition": "MIT component candidate; **map basemap/tile commercial terms separate**: repository README warns CARTO basemaps require a commercial arrangement for commercial usage",
+   "rights_status": "MIXED",
+   "rights_note": "component licence and basemap/tile terms (CARTO commercial conditions) are independent",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-18",
+   "name": "Uiverse",
+   "group": 5,
+   "urls": [
+    "https://uiverse.io/",
+    "https://github.com/uiverse-io/galaxy"
+   ],
+   "screenshot_claim": "Community-made UI elements",
+   "initial_disposition": "Community and per-item provenance/licensing required; code registry as candidates, not wholesale mirror",
+   "rights_status": "UNKNOWN",
+   "rights_note": "community items: origin/permission per snippet",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-19",
+   "name": "Liquid Glass by samasante",
+   "group": 5,
+   "urls": [
+    "https://glass.samasante.com/",
+    "https://github.com/samasante/liquid-glass"
+   ],
+   "screenshot_claim": "Apple-style liquid glass on web",
+   "initial_disposition": "Reference + sandboxed candidate; MIT claim by project docs, verify exact code/asset versions. **Not** liquidglass.dev/websiteglass.com; screenshot's named source is samasante",
+   "rights_status": "UNKNOWN",
+   "rights_note": "verify package licence and transitive deps",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-20",
+   "name": "Kitbitz",
+   "group": 6,
+   "urls": [
+    "https://kitbitz.art/"
+   ],
+   "screenshot_claim": "2,000+ hand-drawn illustrations, SVG/PNG, Figma and MCP",
+   "initial_disposition": "Site claims CC0 for illustrated kits; **validate per-asset and third-party rights** before local ingestion/redistribution. Keep art ≠ original logo",
+   "rights_status": "MIXED",
+   "rights_note": "claims CC0 for kits; asset provenance/third-party marks unchecked",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  },
+  {
+   "id": "D21-21",
+   "name": "3dicons",
+   "group": 6,
+   "urls": [
+    "https://3dicons.co/"
+   ],
+   "screenshot_claim": "1,440+ 3D icons",
+   "initial_disposition": "Site says initial V1 CC0; current collection mixes **open-source and premium** content. Import only explicitly licensed items and log version/asset scope",
+   "rights_status": "MIXED",
+   "rights_note": "V1 CC0 is not blanket rights for premium/current items",
+   "live_verified": false,
+   "last_checked": null,
+   "capability_denominator": "UNKNOWN (not derived)"
+  }
+ ]
+}

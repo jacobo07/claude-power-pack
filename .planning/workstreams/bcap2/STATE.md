@@ -77,3 +77,10 @@ ledger: vault/programs/bcap-2/brand/REUSE_LEDGER.md (10 repos all HYPOTHESIS, no
 residuals: no real render/resvg, no mono-variant check, no font-file parse; scanner is first-pass only (3/5 clean descriptions WARN); BI-08..35 mostly not started; upstream unfetched.
 meta-analysis: 1. Two real defects found by driving the CLI, not unit helpers (BR-05, BR-08). 2. Fixture words "ring"/"curve" trip scanner WARNs: fixtures avoid them. 3. Backlog files for Phases 3/4/6 have no Status line; deferred-backlog index rows now updated for 3, 4, 6, 7. 4. Next: Phase 8.
 pre-existing failures unchanged: V-CMP-WIRING, V-TDD-MUT-REAL. Spend not re-measured this epoch (supervisor last: 26.2M of 120M).
+
+### Phase 8 21 design resources: PARTIALLY_PROVEN (Workstream A slice only)
+gate: `python3 tools/test_bcap2_d21.py` exit 0 (V-D21-01/02/03/04/05/06/07/09/10/24/25/31/36 + A06). Brand gate 71 PASS unchanged. Liveness offenders 56->56.
+built: modules/cdicf/source_intake.py, vault/programs/bcap-2/design-resources/{SOURCES.json,REUSE_LEDGER.md}. Fail-closed rights gate; item-level evidence wins over source posture; denominator pinned in code.
+residuals: no network (all 21 live_verified=false), capability denominators UNKNOWN, 23/36 scenarios undriven, Workstreams B-H not started.
+decision: UNKNOWN-rights sources may admit an item that carries its own licence evidence (backlog: component-level licence is authoritative); REFERENCE_ONLY/RESTRICTED/UNKNOWN_ACCESS never admit code.
+next: Phase 9 Ruflo (independent); one batched read-only upstream fetch step for owed Phase 1/2/7/8 residuals.
