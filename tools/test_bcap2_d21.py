@@ -85,5 +85,25 @@ check("D21-A06 pole: known conflicts recorded (Kinetics no licence, mapcn tiles,
       "licen" in by["D21-15"]["rights_note"].lower() and "CARTO" in by["D21-17"]["rights_note"]
       and "premium" in by["D21-21"]["rights_note"] and "Proprietary" in by["D21-05"]["rights_note"])
 
+# V-D21-05 (A05 pinned-commit + licence evidence): the pin is data the rights gate consumes, not decoration
+pinned = {s["id"]: s for s in R["sources"] if "license_pin" in s}
+check("V-D21-05 control: 9 repos carry a pinned 40-hex sha, 7 with a licence hash",
+      len(pinned) == 9 and all(len(p["license_pin"]["pinned_sha"]) == 40 for p in pinned.values())
+      and sum(1 for p in pinned.values() if p["license_pin"]["license_sha256"]) == 7)
+
+
+def _ev(s):
+    p = s["license_pin"]
+    return {"spdx": p["spdx"], "version": p["pinned_sha"], "license_sha256": p["license_sha256"]}
+
+
+ok_ids = [i for i, s in pinned.items() if SI.admit_code(s, _ev(s))[0]]
+check("V-D21-05 pole: pin-derived evidence admits exactly the 7 licensed repos", sorted(ok_ids) == sorted(i for i, s in pinned.items() if s["license_pin"]["license_sha256"]), str(ok_ids))
+check("V-D21-05 pole: no-licence repos (motion-primitives, kinetics) stay refused even with a pinned sha",
+      not SI.admit_code(by["D21-14"], _ev(by["D21-14"]))[0] and not SI.admit_code(by["D21-15"], _ev(by["D21-15"]))[0])
+mut = copy.deepcopy(by["D21-10"]); mut["license_pin"]["license_sha256"] = None
+check("V-D21-05 pole: seeded mutant (licence hash dropped) is refused", not SI.admit_code(mut, _ev(mut))[0])
+check("V-D21-05 control: pinning a licence did not flip live_verified (page content still unread)", not any(s["live_verified"] for s in R["sources"]))
+
 print(f"\n{'V-BCAP2-D21 PASS' if not FAILS else 'V-BCAP2-D21 FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

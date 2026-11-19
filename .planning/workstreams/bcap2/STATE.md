@@ -117,3 +117,6 @@ Both skills read at pin abeeaf95; dispositions in vault/programs/bcap-2/dbg/MATT
 
 ### Epoch 11 mattpocock gaps
 DBG +2 codes (NO-SEAM-UNRECORDED, MUTATION-NOT-LANDED), TDD tautology detector; poles in both gates; details in vault/programs/bcap-2/dbg/MATTPOCOCK_READ.md. Horizontal-slicing deferred. Spend not re-measured. Remaining: Phase 8 B-H + live_verified, Phase 7 BI-08..35, Owner style-3 pick (I chose (b)), laptop steps.
+
+### Epoch 12 Phase 8 pin wiring
+SOURCES.json now carries `license_pin` (pinned sha, licence sha256, spdx) for the 9 GitHub-backed sources, copied from LICENSE_PINS.json; gate +5 checks (V-D21-05, both poles incl. seeded mutant): the rights gate admits exactly the 7 licensed repos, refuses motion-primitives (no LICENSE file) and kinetics (none). `live_verified` stays false everywhere (page content unread). Gate 33 checks, exit 0; done_gate consistent. Spend not re-measured. Remaining unchanged: Phase 8 B-H, Phase 7 BI-08..35, laptop steps.

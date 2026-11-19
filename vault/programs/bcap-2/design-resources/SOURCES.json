@@ -78,7 +78,15 @@
    "rights_note": "format upstream LICENSE Apache-2.0 vs CPP modules/design-md/README says Proprietary: drift, reconcile",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "google-labs-code/design.md",
+    "pinned_sha": "db977b3c1d1f309269f43d5d17ae828d54bd6ae3",
+    "license_file": "LICENSE",
+    "license_sha256": "1bdd03995456d191707e379eb06ceac20cf30d520bec90c97c2b6d220906c66e",
+    "spdx": "Apache-2.0",
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-06",
@@ -155,7 +163,15 @@
    "rights_note": "repo licence not re-read this phase; verify per item/version",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "shadcn-ui/ui",
+    "pinned_sha": "f50887ae68d0fdcbfbe86b57be08af94a4c88a68",
+    "license_file": "LICENSE.md",
+    "license_sha256": "1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f",
+    "spdx": "MIT",
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-11",
@@ -187,7 +203,15 @@
    "rights_note": "licence not re-read; verify",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "magicuidesign/magicui",
+    "pinned_sha": "b0b2e4974b1b68cd5278277c6837a27736e20c3a",
+    "license_file": "LICENSE.md",
+    "license_sha256": "0147b84235ed916b8b4e89c1f80655351c5afe7d211b629be61f553a227b34ba",
+    "spdx": "MIT",
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-13",
@@ -218,7 +242,15 @@
    "rights_note": "licence not re-read; verify",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "ibelick/motion-primitives",
+    "pinned_sha": "120f64f6ca60348e251f929e9c81f11ccbe45eda",
+    "license_file": null,
+    "license_sha256": null,
+    "spdx": null,
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-15",
@@ -234,7 +266,15 @@
    "rights_note": "GitHub root licence could not be verified; no LICENSE is not permissive; count drift",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "ckissi/kinetics",
+    "pinned_sha": "1f36aa88d613358a38995be0f115bc428d1e2cb1",
+    "license_file": null,
+    "license_sha256": null,
+    "spdx": null,
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-16",
@@ -250,7 +290,15 @@
    "rights_note": "count drift 49; licence not re-read",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "henriquegpb/microkit",
+    "pinned_sha": "0afe639b2d9bb2c16220964e8a9f865f1a81111b",
+    "license_file": "LICENSE",
+    "license_sha256": "788f172717e164de5e458fae02e22d91de84b796976023157ebd4780b317f939",
+    "spdx": "MIT",
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-17",
@@ -266,7 +314,15 @@
    "rights_note": "component licence and basemap/tile terms (CARTO commercial conditions) are independent",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "AnmolSaini16/mapcn",
+    "pinned_sha": "fd8ce8f7581a80376d7a9426364edeed17c99f35",
+    "license_file": "LICENSE",
+    "license_sha256": "73020a10c41b48b72fbcc0f8bc38fbc24ff13df874a3142ab48094162490bb29",
+    "spdx": "MIT",
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-18",
@@ -282,7 +338,15 @@
    "rights_note": "community items: origin/permission per snippet",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "uiverse-io/galaxy",
+    "pinned_sha": "adbd2adde0a299a3956ea288fb444ec01891ca41",
+    "license_file": "LICENSE",
+    "license_sha256": "7feadcd7a611d37a4546c99f63a162bdf65656137828ebcba92e57dccfa368a4",
+    "spdx": "MIT",
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-19",
@@ -298,7 +362,15 @@
    "rights_note": "verify package licence and transitive deps",
    "live_verified": false,
    "last_checked": null,
-   "capability_denominator": "UNKNOWN (not derived)"
+   "capability_denominator": "UNKNOWN (not derived)",
+   "license_pin": {
+    "repo": "samasante/liquid-glass",
+    "pinned_sha": "4e7b769e1df7e5a7d3669fef22417fe3d2f79ade",
+    "license_file": "LICENSE",
+    "license_sha256": "11bc33eaf33639755f5531e5fd059ff4ae85db6a2730588b72ff2eea6fd47614",
+    "spdx": "MIT",
+    "source": "LICENSE_PINS.json 2026-11-19 (head text only, not legal analysis)"
+   }
   },
   {
    "id": "D21-20",
