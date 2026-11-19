@@ -13366,3 +13366,65 @@ then extend `PROMPTS`. A promoted entry that cites a repo-relative file verifies
 - H-2 Connector probes should always target the data endpoint, not the auth endpoint. Evidence: one connector.
 - H-3 The Founder baseline (`business_round`) reducing rediscovery cost is unmeasured; there is no historical baseline for
   the cost of this class of problem, so no X versus X-prime comparison is claimed.
+
+## SOLE Studio web (2026-11-19) — #CROSS-PROJECT
+
+### T-WEB-FONT-DIACRITIC-RENDER-001
+
+A font package that ships the right subset (`latin-ext`, correct `unicode-range`) can still draw a language's
+diacritics wrong. The static `@fontsource/jost` build drew Polish Ś ś Ź Ć Ń as a base letter plus an offset mark
+("S'RODA"); build, link and Lighthouse gates were all green. Fix: before choosing a face for a non-English site, render
+a strip of that language's diacritics in every shipped face and look at it; prefer the variable build when they differ.
+Evidence: SOLE Studio commit 6aed31c, found only in a 2x render of the mobile hero.
+
+### PR-WEB-FONT-SWAP-CLS-MEASURE-001
+
+Each web-font face is a potential layout shift. Measure CLS per page in a lab run after typography is set; when a page
+shifts, preload the faces that render above the fold and drop weights that are barely used. Evidence: SOLE Studio
+/uslugi CLS 0.22 → 0 by preloading 5 faces and removing Cormorant 400/400-italic (commit 0fceb47).
+
+### T-TOOL-HEADLESS-WINDOW-IS-NOT-A-VIEWPORT-001
+
+`chrome --headless --window-size=375,...` does not emulate a 375px viewport; the page lays out wider and the
+screenshot shows a false "overflow". `Start-Process -ArgumentList` additionally does not quote a path with spaces, so
+`--screenshot=<path with spaces>` fails with no file and no error. Fix: use device emulation (Playwright `viewport`) and
+measure `scrollWidth - clientWidth` instead of judging overflow from a picture. Evidence: SOLE Studio QA, 2026-11-19.
+
+### T-WEB-NOINDEX-HIDDEN-BY-ROBOTS-001 (TRAP)
+
+A staging or demo host that sends `noindex` AND robots `Disallow: /` is not protected twice: the Disallow stops
+crawlers from fetching the page, so they never read the noindex, and a URL that is linked from anywhere can still be
+indexed URL-only. Fix: on a non-production host allow crawling and say noindex in each page (meta + header). Keep the
+site's address and its permission to be indexed in two separate settings, and make the build refuse an indexable build
+on a non-production host. Ratchet: web_surface B4 `web_surface-indexing-is-an-explicit-environment-permission`.
+Evidence: SOLE Studio commit 1da4ce9 (mutation: indexable + prototype host -> build exit 1).
+
+### PR-WEB-MARKUP-CLAIMS-VISIBLE-001 (PROCESS)
+
+Structured data is a claim about the world. Gate every built page so that each fact its JSON-LD asserts (address,
+hours, names, headlines, service names, phone) appears in that page's visible text, and red-test the gate with an
+injected fact before trusting its green. Schema validators cannot do this: a well-formed false claim passes them.
+First run on SOLE Studio found a catalog name the page never showed and a 78-character title. Sibling of the global rule
+`generated-content-needs-an-evidence-gate`. Ratchet: web_surface B4 `web_surface-markup-claims-are-visible`.
+Evidence: SOLE Studio commit 3dd4835 (`scripts/check-seo.mjs`, `scripts/test-check-seo.mjs` 4/4).
+
+### T-LINKCHECK-OWN-ORIGIN-FETCHED-LIVE-001 (TRAP)
+
+A link checker that treats every absolute `https://` href as external fetches the site's own canonical and og:url
+links from the LIVE domain. Before a deploy that reports new pages as 404 (false red); after it, it checks yesterday's
+live site instead of the artifact (false green). Fix: resolve absolute URLs on the build's own origin against the built
+files. Evidence: SOLE Studio, 3 false 404s for unpublished landings, 2026-11-19.
+
+### T-CSV-BOM-FIRST-COLUMN-001 (TRAP)
+
+Excel and PowerShell 5.1 (`-Encoding utf8`) save UTF-8 CSV with a byte-order mark (U+FEFF), so a parser that splits
+the header reads the first column as U+FEFF + `date`, and a valid file is rejected as "missing date". The column looks
+present in every viewer. Fix: strip a leading U+FEFF before parsing any human-edited CSV, and test the parser with a
+BOM file. The same character also breaks tooling that embeds the text in a command line. Evidence: SOLE Studio
+`scripts/geo-metrics.mjs`, 2026-11-19.
+
+### Instance of PR-COVERAGE-BY-CONSTRUCTION-001 (no new rule)
+
+Browser QA iterated a hand-kept page list: 7 of 13 built pages, four guides never tested, new landings would have
+shipped untested while QA stayed green. Now derived from `dist/`. Ratchet: web_surface B4
+`web_surface-gate-pages-derived-from-build`.
