@@ -127,3 +127,6 @@ decision: ranking floor 0.34 and weights 0.5/0.3/0.2 are provisional (unmeasured
 
 ### Epoch 13b V-D21-11 drift reconciled
 modules/design-md/README.md licence line now records DRIFT (old "Proprietary" kept visible, upstream repo LICENSE Apache-2.0 at pinned db977b3c); npm package licence field still UNVERIFIED (not read). test_bcap2_d21 +4 checks. Remaining Phase 8: B corpus, C, D-H; Phase 7 BI-08..35.
+
+### Epoch 13c D21-C07
+reference_intel.fidelity_claims: a 1:1/pixel-perfect claim needs observed text/states/responsive/fonts/a11y evidence; absent = unobserved. +6 checks in test_bcap2_d21_bc. Done gate PASS.

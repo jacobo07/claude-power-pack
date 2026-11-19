@@ -80,6 +80,15 @@ check("V-D21-18 pole: motion budget NONE with a motion ask ABSTAINs, nothing pro
 check("V-D21-18 control: budget NONE without a motion ask still ranks normally",
       RI.rank({"purpose": "pricing", "platform": "mobile", "motion_budget": "NONE"}, CAT)["verdict"] == "RANKED")
 
+# D21-C07: no unobserved fidelity claims
+full = {c: True for c in RI.RENDER_CHECKS}
+check("D21-C07 control: no fidelity claim needs no evidence", RI.fidelity_claims("Adapted hero with our own proof strip", {})[0])
+check("D21-C07 pole: '1:1' claim with no evidence is refused", not RI.fidelity_claims("Delivers a 1:1 match of the reference", {})[0])
+check("D21-C07 pole: absent check is unobserved, not passed", not RI.fidelity_claims("pixel-perfect", {**full, "fonts": None})[0])
+check("D21-C07 pole: a failed check refuses and names it", any("a11y: failed" in r for r in RI.fidelity_claims("pixel-perfect", {**full, "a11y": False})[1]))
+check("D21-C07 control: claim with all five checks observed true passes", RI.fidelity_claims("pixel-perfect clone of layout", full)[0])
+check("D21-C07 pole: None claim text is not a claim", RI.fidelity_claims(None, None)[0])
+
 # mutant drill: a permissive merge would overwrite the project; prove the check can fail
 bad = {k: (v["value"] if v["value"] else None) for k, v in t.items()}
 check("drill: a naive overwrite-merge would differ from the project value (the V-D21-13 check is live)", bad["color"] != proj["color"])

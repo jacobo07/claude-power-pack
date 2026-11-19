@@ -95,3 +95,19 @@ def rank(query: dict, catalog: list, k: int = 3, floor: float = 0.34):
     if not picks:
         return {"verdict": "ABSTAIN", "picks": [], "reason": "no reference matched purpose/platform/licence above the floor"}
     return {"verdict": "RANKED", "picks": picks, "reason": ""}
+
+
+FIDELITY_WORDS = ("1:1", "pixel-perfect", "pixel perfect", "identical to", "exact replica", "exactly matches", "perfect clone")
+RENDER_CHECKS = ("text", "states", "responsive", "fonts", "a11y")
+
+
+def fidelity_claims(claim_text: str, render_evidence: dict):
+    """D21-C07: a fidelity claim ('1:1', 'pixel-perfect') needs observed render evidence for every check in RENDER_CHECKS.
+    render_evidence = {check: True|False|None}; None/absent is unobserved, not passed. Returns (ok, reasons)."""
+    low = (claim_text or "").lower()
+    claimed = [w for w in FIDELITY_WORDS if w in low]
+    if not claimed:
+        return True, []
+    ev = render_evidence or {}
+    why = [f"{c}: unobserved" if ev.get(c) is None else f"{c}: failed" for c in RENDER_CHECKS if ev.get(c) is not True]
+    return (not why), ([f"claim {claimed[0]!r} without full render evidence"] + why if why else [])
