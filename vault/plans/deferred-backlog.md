@@ -1606,7 +1606,7 @@ acting on one, read the file and check its state against the repo.
 - `2026-07-01_parallel-mesh-deferred.md` -- Parallel Mesh deferred systems.
 - `2026-10-21_cdio-brand-identity-logo-absorption.md` -- CDIO Brand Identity & Logos: evidence-gated GitHub absorption. Imported from `origin/main` 2026-10-31 (blob-identical). See D41.
 - `2026-10-30_cdio-21-design-resources-universal-absorption.md` -- CDIO Backlog: universal absorption of the 21 design resources (six screenshots), 36 falsification gates. Imported from `origin/main` 2026-10-31. See D41.
-- `2026-10-13_synsation-ux-patterns-absorption.md` -- absorb Synsation UX interaction patterns into PP Design. Imported from `origin/main` 2026-10-31. See D41.
+- `2026-10-13_synsation-ux-patterns-absorption.md` -- absorb Synsation UX interaction patterns into PP Design. **BCAP-2 Phase 5: PARTIALLY_PROVEN 2026-11-19** (UX-01..20 dispositioned; waiting/disabled/hit-target checkers; browser-real LAPTOP). Imported from `origin/main` 2026-10-31. See D41.
 - `2026-10-31_orca-relay-design-captures.md` -- 65 design/UX/visual captures from other projects in the Orca relay (QuickLease Quickie's World, CostaLuz Legal Academy, KobiiCraft/CW Ops visual realism, KSR, Rail demo). None names CDIO literally. See D41.
 - `2026-10-31_github-issues-design-cdio.md` -- GitHub issues verbatim: TUA-X #4-#10 (CDIO named in #4, #6, #8, #10) + claude-power-pack #5. See D41.
 

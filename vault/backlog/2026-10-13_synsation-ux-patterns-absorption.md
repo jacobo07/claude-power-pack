@@ -1,5 +1,7 @@
 # Backlog — Absorb Synsation UX interaction patterns into Claude Power Pack Design
 
+**Status (BCAP-2 Phase 5, 2026-11-19): PARTIALLY_PROVEN** — dispositions `vault/programs/bcap-2/synsation/DISPOSITIONS.md`; executable `modules/cdio/ux_contracts.py`; gate `tools/test_bcap2_synsation.py`. Browser-real + video re-inspection remain (LAPTOP_STEPS.md).
+
 **Created:** 2026-10-13  
 **Priority:** P0/P1 — high leverage for every interactive frontend  
 **Source basis:** four owner-supplied Synsation videos inspected as frame sequences from the uploaded files in the 2026-10-13 session.  

@@ -57,3 +57,11 @@ meta-analysis:
 3. Regression caught by running the neighbouring gate: a new CDIO-13 file broke the pinned 13-dataset count; doctrine moved to visual-patterns, no dataset added.
 4. Routing was blind to "animate this hero"; fixed with narrow strong phrases, negatives checked.
 5. Next: Phase 5 Synsation (same owners, reuse the VP corpus mechanics).
+
+### Phase 5 Synsation UX: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_synsation.py` exit 0, 35 PASS / 0 FAIL (poles, 8 seeded-red source mutants, ledger UX-01..20, corpus, design_route wiring). Also green: test_cdio 8/8, test_motion_grammar 46/46, animejs 35/0, agsk 55/0, dbg 37/0, design_route 46/0. Liveness offenders 56->56.
+built: `modules/cdio/ux_contracts.py` (waiting_pattern, check_disabled_control, check_hit_targets; wired via `design_route.ux_findings`), patterns VP-SYN-001/002 (hypothesis).
+decisions: new patterns set min moderate/medium because restrained dashboard must keep resolving to VP-018 only (pinned by test_motion_grammar); no CDIO-13 file.
+residuals: videos not on GEX44 (INFERRED claims) and browser-real checks -> LAPTOP_STEPS.md; UX-14..18 UNVERIFIED/HEURISTIC only; no UKDL/HR promotion.
+pre-existing failures NOT caused by this work (verified identical at 5f60f05a): `test_cdio_componentry` V-CMP-WIRING (suite pins EXPECTED_DATASETS = 12; live-mirror) ; `test_bcap2_tdd` V-TDD-MUT-REAL (system python lacks pytest/coverage; set BCAP2_TDD_PYTHON).
+owed: Phase 1/2 upstream-fetch residuals; backlog Status lines for Phases 3/4 (deferred-backlog rows for 3/4 not yet updated).
