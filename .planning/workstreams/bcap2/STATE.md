@@ -196,3 +196,6 @@ Read-only tree of shadcn-ui/ui at f50887ae (7121 paths): one root LICENSE.md, pl
 
 ### Epoch 5b: Phase 6 style 3 landed as option (b)
 Owner decision RESOLVED_BY_DEFAULT (recommended option (b), reversible, internal). Doctrine `vault/knowledge_base/visual-patterns/enterprise-systematic-structural-axis.md` (provisional, research), bench data `vault/programs/bcap-2/saas-styles/ENTERPRISE_BENCH.json`, gate `python3 tools/test_bcap2_saas.py` 19 PASS / 0 FAIL (figures recomputed from data, 3 seeded mutants caught, scorer pinned F1..F10). Wired in done_gate (BCAP2-06). test_cdio 8/8, motion_grammar 46/46, f10 8/8. Styles 1 and 2 unresolved (browser/403 plane) so BCAP2-06 stays PARTIALLY_PROVEN. Spend not re-measured. LAPTOP_STEPS remain BLOCKED-ON-LAPTOP (cannot run on this plane).
+
+### Epoch 6: reconcile only
+Repo clean at 552b9952 (untracked .pp-capabilities, vault/knowledge_base/ccf/ are not mine). done_gate re-run: BCAP2_DONE_GATE PASS, all nine items PARTIALLY_PROVEN, none ACTIVATED. Runnable GEX44-plane probes are exhausted (see Epoch 4c); the remaining units (Phase 4/5 real-browser, Phase 5 videos, Phase 8 live-source reads, Phase 9 sandbox drive) are BLOCKED-ON-LAPTOP in LAPTOP_STEPS.md. Owner decision needed: none new. No spend measured this epoch.
