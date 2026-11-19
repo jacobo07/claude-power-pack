@@ -95,3 +95,7 @@ next: Phase 10 closeout.
 
 ### Phase 10 Closeout: DONE (the gate and the report; items stay PARTIALLY_PROVEN)
 `python3 vault/programs/bcap-2/done_gate.py` exit 0 (8 item gates, liveness, ledgers). HANDOFF: vault/programs/bcap-2/HANDOFF.md. No item is ACTIVATED. Next work = fetch pass, Phase 8 B-H, Phase 7 BI-08..35, laptop steps, Owner style-3 decision.
+
+### Epoch 10 reachability pass (Phase 8)
+Status-only GET of all 21 sources: 30 URLs, 27x HTTP 200, 3x 403 (designmd.ai, vibeprompts.dev, uiverse.io site; its github galaxy repo is 200). Evidence: vault/programs/bcap-2/design-resources/LIVE_CHECK.json. Reachability only: no content read, `live_verified` left false, rights and capability denominators unchanged. D21-08 vibeprompts stays UNKNOWN_ACCESS.
+Still owed: per-repo licence + pinned-commit fetch (Phases 1, 2, 3, 7, 8), Phase 8 B-H, Phase 7 BI-08..35, Owner style-3 decision. Spend not re-measured this epoch.

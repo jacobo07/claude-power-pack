@@ -1,0 +1,166 @@
+{
+ "checked": "2026-11-19T18:04:44.457114Z",
+ "method": "curl GET follow-redirects, status only; no content read; does not set live_verified",
+ "rows": [
+  {
+   "id": "D21-01",
+   "url": "https://minimal.gallery/",
+   "result": "200 https://minimal.gallery/"
+  },
+  {
+   "id": "D21-02",
+   "url": "https://kage.design/",
+   "result": "200 https://kage.design/"
+  },
+  {
+   "id": "D21-03",
+   "url": "https://appshot.gallery/",
+   "result": "200 https://www.appshot.gallery/"
+  },
+  {
+   "id": "D21-04",
+   "url": "https://component.gallery/",
+   "result": "200 https://component.gallery/"
+  },
+  {
+   "id": "D21-05",
+   "url": "https://designmd.ai/",
+   "result": "403 https://designmd.ai/"
+  },
+  {
+   "id": "D21-05",
+   "url": "https://github.com/google-labs-code/design.md",
+   "result": "200 https://github.com/google-labs-code/design.md"
+  },
+  {
+   "id": "D21-06",
+   "url": "https://styles.refero.design/",
+   "result": "200 https://styles.refero.design/"
+  },
+  {
+   "id": "D21-07",
+   "url": "https://jiro.build/",
+   "result": "200 https://jiro.build/"
+  },
+  {
+   "id": "D21-08",
+   "url": "https://vibeprompts.dev/",
+   "result": "403 https://vibeprompts.dev/"
+  },
+  {
+   "id": "D21-09",
+   "url": "https://21st.dev/",
+   "result": "200 https://21st.dev/"
+  },
+  {
+   "id": "D21-09",
+   "url": "https://github.com/21st-dev",
+   "result": "200 https://github.com/21st-dev"
+  },
+  {
+   "id": "D21-10",
+   "url": "https://ui.shadcn.com/",
+   "result": "200 https://ui.shadcn.com/"
+  },
+  {
+   "id": "D21-10",
+   "url": "https://github.com/shadcn-ui/ui",
+   "result": "200 https://github.com/shadcn-ui/ui"
+  },
+  {
+   "id": "D21-11",
+   "url": "https://ui.aceternity.com/",
+   "result": "200 https://ui.aceternity.com/"
+  },
+  {
+   "id": "D21-11",
+   "url": "https://ui.aceternity.com/licence",
+   "result": "200 https://ui.aceternity.com/licence"
+  },
+  {
+   "id": "D21-12",
+   "url": "https://magicui.design/",
+   "result": "200 https://magicui.design/"
+  },
+  {
+   "id": "D21-12",
+   "url": "https://github.com/magicuidesign/magicui",
+   "result": "200 https://github.com/magicuidesign/magicui"
+  },
+  {
+   "id": "D21-13",
+   "url": "https://animejs.com/",
+   "result": "200 https://animejs.com/"
+  },
+  {
+   "id": "D21-14",
+   "url": "https://motion-primitives.com/",
+   "result": "200 https://motion-primitives.com/"
+  },
+  {
+   "id": "D21-14",
+   "url": "https://github.com/ibelick/motion-primitives",
+   "result": "200 https://github.com/ibelick/motion-primitives"
+  },
+  {
+   "id": "D21-15",
+   "url": "https://kinetics.colorion.co/",
+   "result": "200 https://kinetics.colorion.co/"
+  },
+  {
+   "id": "D21-15",
+   "url": "https://github.com/ckissi/kinetics",
+   "result": "200 https://github.com/ckissi/kinetics"
+  },
+  {
+   "id": "D21-16",
+   "url": "https://microkit.co/",
+   "result": "200 https://microkit.co/"
+  },
+  {
+   "id": "D21-16",
+   "url": "https://github.com/henriquegpb/microkit",
+   "result": "200 https://github.com/henriquegpb/microkit"
+  },
+  {
+   "id": "D21-17",
+   "url": "https://mapcn.dev/",
+   "result": "200 https://www.mapcn.dev/"
+  },
+  {
+   "id": "D21-17",
+   "url": "https://github.com/AnmolSaini16/mapcn",
+   "result": "200 https://github.com/AnmolSaini16/mapcn"
+  },
+  {
+   "id": "D21-18",
+   "url": "https://uiverse.io/",
+   "result": "403 https://uiverse.io/"
+  },
+  {
+   "id": "D21-18",
+   "url": "https://github.com/uiverse-io/galaxy",
+   "result": "200 https://github.com/uiverse-io/galaxy"
+  },
+  {
+   "id": "D21-19",
+   "url": "https://glass.samasante.com/",
+   "result": "200 https://glass.samasante.com/"
+  },
+  {
+   "id": "D21-19",
+   "url": "https://github.com/samasante/liquid-glass",
+   "result": "200 https://github.com/samasante/liquid-glass"
+  },
+  {
+   "id": "D21-20",
+   "url": "https://kitbitz.art/",
+   "result": "200 https://kitbitz.art/"
+  },
+  {
+   "id": "D21-21",
+   "url": "https://3dicons.co/",
+   "result": "200 https://3dicons.co/"
+  }
+ ]
+}
