@@ -39,6 +39,10 @@ INTENT_SIGNALS: dict[str, dict[str, tuple[str, ...]]] = {
             "make it look", "web page", "html page", "dashboard",
             "artifact", "frontend", "wireframe", "mockup",
             "design system", "hero section", "style the page",
+            # motion work (CPP-ANIME-001): route without naming a library
+            "animate this", "animate the", "scroll-driven", "scroll driven",
+            "draw this svg", "svg path", "draggable", "stagger", "choreograph",
+            "scroll animation", "motion responsive",
             # ES
             "página de aterrizaje", "componente react", "haz una web",
             "diseña una", "interfaz de usuario",

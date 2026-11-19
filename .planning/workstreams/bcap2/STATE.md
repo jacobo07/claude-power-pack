@@ -1,7 +1,7 @@
 # STATE: bcap2
 
 status: ARMING 2026-11-19 on GEX44 (Owner "continua esa mision de absorcion hasta terminarlo todo"; vehicle BCAP-2 GEX44)
-current_phase: 3 (phases 1-2 PARTIALLY_PROVEN)
+current_phase: 5 (phases 1-4 PARTIALLY_PROVEN)
 authority: 120M processed tokens + 3 x 40M top-ups (only with commits outside .planning/ since the last grant)
 base: laptop feature/knowledge-acquisition committed HEAD at arm (the commit that adds this file)
 
@@ -46,3 +46,14 @@ Upstream pinned 8c99fa36 (MIT); scan notes and next steps in vault/programs/bcap
 > permission prompt for `Write tools/test_bcap2_agsk.py` (auto-mode classifier reads the seeded test-weakening
 > fixtures as test tampering). The coordinator placed the worker's exact attempted content (11,350 chars) at that path.
 > Do NOT re-create it with Write; change it with small Edit calls. Keep seeded-weakening fixtures in this file only.
+
+### Phase 4 Anime.js into PP Design: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_animejs.py` exit 0, 35 PASS / 0 FAIL (corpus, resolver poles, 5 seeded-red parser mutants, ledger, routing, no-dependency). Also green: test_cdio 8/8, test_motion_grammar 46/46, Phases 1-3 gates. Liveness offenders 56->56.
+upstream: juliangarnier/anime @ 01b81be1 v4.5.0 MIT (NOTICE in vault/programs/bcap-2/animejs/). 21 capability rows each with one disposition; 3 new registered patterns VP-AJS-001..003 + selection/lifecycle doctrine `visual-patterns/motion-library-selection.md`; frontend routing now wakes on motion prompts without naming a library.
+residuals: no real-browser verification (reduced-motion exercised, timeline cancel, unmount cleanup, bundle size) -> LAPTOP/browser plane; 26 upstream examples not individually read; Animatable, motion-path UNVERIFIED; baseline-ratchet promotion not evaluated; evidence_level stays `research`.
+meta-analysis:
+1. Upstream src has zero reduced-motion handling: the floor must stay a CPP property, now written into doctrine.
+2. Most of the surface (scroll, draw, text, layout) was already owned by visual-patterns: 4 ALREADY OWNED rows, 3 new patterns only.
+3. Regression caught by running the neighbouring gate: a new CDIO-13 file broke the pinned 13-dataset count; doctrine moved to visual-patterns, no dataset added.
+4. Routing was blind to "animate this hero"; fixed with narrow strong phrases, negatives checked.
+5. Next: Phase 5 Synsation (same owners, reuse the VP corpus mechanics).
