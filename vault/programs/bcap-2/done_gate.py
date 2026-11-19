@@ -9,7 +9,7 @@ CANDIDATES = ["/home/kobii/w4-gate/venv/bin/python3", "/home/kobii/costaluz-pgte
 ITEMS = [  # id, backlog, gate script (None = no code gate: scan-only phase), verdict
     ("BCAP2-01", "CPP-DBG-001", "tools/test_bcap2_dbg.py"), ("BCAP2-02", "CPP-TDD-001", "tools/test_bcap2_tdd.py"),
     ("BCAP2-03", "CPP-AGSK-001", "tools/test_bcap2_agsk.py"), ("BCAP2-04", "Anime.js", "tools/test_bcap2_animejs.py"),
-    ("BCAP2-05", "Synsation", "tools/test_bcap2_synsation.py"), ("BCAP2-06", "SaaS styles", None),
+    ("BCAP2-05", "Synsation", "tools/test_bcap2_synsation.py"), ("BCAP2-06", "SaaS styles", "tools/test_bcap2_saas.py"),
     ("BCAP2-07", "Brand identity", "tools/test_bcap2_brand.py"), ("BCAP2-08", "21 design resources", "tools/test_bcap2_d21.py"),
     ("BCAP2-08b", "21 resources B/C slice", "tools/test_bcap2_d21_bc.py"),
     ("BCAP2-09", "CPP-RUFLO-001", "tools/test_bcap2_ruflo.py")]

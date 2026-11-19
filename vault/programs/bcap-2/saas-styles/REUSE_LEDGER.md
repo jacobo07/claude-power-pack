@@ -9,3 +9,6 @@ Spec: vault/backlog/2026-10-02_cdio-modern-saas-styles.md. Ceiling 8M. Roadmap g
 | 3 | enterprise systematic | bench of 7 systems measured (2026-10-03); identity is STRUCTURAL not aesthetic, so a new F11 family is probably wrong | Owner decision pending in the spec itself: F11 aesthetic family (touches scorer.py KNOWN_FAMILIES F1..F10 at :341, font sanction at :342, test_cdio_f10 boundary) vs a CDIO-09-style structural axis | OWNER DECISION NEEDED (see STATE.md) |
 
 Unrunnable parts do not block other phases. Next exact step if resumed: with an Owner pick for #3, extend an existing dataset in place (no new CDIO file) and add `tools/test_bcap2_saas.py`; otherwise record PARTIALLY_PROVEN (no change) and move to Phase 7.
+
+## Update (epoch 5b): style 3 = option (b) EXTEND, landed
+Doctrine in visual-patterns (no new CDIO file, no F11, scorer untouched); gate tools/test_bcap2_saas.py exit 0, 19/0. Styles 1, 2 unchanged.
