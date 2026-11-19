@@ -92,3 +92,6 @@ install: inert pinned v3.78.0 in /home/kobii/ruflo-sandbox-bcap2/run (--ignore-s
 decision: law 6 uncorrectable holds (no provenance attestation, unverified maintainer fix claim) => no activation/trust, inert study copy only. Reversible (rm -rf the sandbox).
 residuals: see ledger (runtime advisory verification, dist identity, netns blocked on host, npm audit unrecorded). Laptop step logged.
 next: Phase 10 closeout.
+
+### Phase 10 Closeout: DONE (the gate and the report; items stay PARTIALLY_PROVEN)
+`python3 vault/programs/bcap-2/done_gate.py` exit 0 (8 item gates, liveness, ledgers). HANDOFF: vault/programs/bcap-2/HANDOFF.md. No item is ACTIVATED. Next work = fetch pass, Phase 8 B-H, Phase 7 BI-08..35, laptop steps, Owner style-3 decision.

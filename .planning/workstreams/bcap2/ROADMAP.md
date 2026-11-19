@@ -51,7 +51,7 @@ If a phase hits its ceiling: commit what is proven, mark the item PARTIALLY_PROV
   install the hardened version in an isolated sandbox per plan law 6, and run its smoke there; (d) laptop activation =
   LAPTOP_STEPS entry with the exact commands. A HOLD that cannot be corrected keeps the install refused.
   INPUT (Owner 'si', 2026-11-19): read `vault/programs/bcap-2/ruflo-research/informe_carencias_ruflo.md` first (notes beside it). It updates the spec's HOLD list: v3.78.0 (2026-11-19); 8 GitHub advisories of 2026-11-05 (1 critical browser_open flag injection, 4 high, 3 moderate) + open #3294 (MCP session cross-client), #4750 (unsigned pattern downloads), #3157 (deps), unsandboxed plugins, opt-in MCP policy, no npm provenance attestation, @claude-flow/swarm not republished in 3.78.0. Each is a HOLD for step (b). Its 8 prioritized gaps (verification oracle, task-level A/B eval, review-queue/batch control, deploy safety, intent escalation, file-ownership partition, supply-chain defense, token budget) are what the CPP overlay must add; map each to Phases 1-2 owners where they already exist instead of rebuilding. Ceiling 16M.
-- [ ] **Phase 10: Closeout.** `vault/programs/bcap-2/done_gate.py` (aggregates the nine gates + liveness + ledger),
+- [x] **Phase 10: Closeout.** `vault/programs/bcap-2/done_gate.py` (aggregates the nine gates + liveness + ledger),
   UKDL/vault deltas scoped honestly, HANDOFF.md with per-item verdict. Ceiling 6M.
 
 ## Phase Details
