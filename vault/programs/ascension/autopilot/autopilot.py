@@ -1258,6 +1258,12 @@ def hold_checkpoint(hold: dict) -> str:
         # whole as a path and parked CHECKPOINT_ON_BRANCH; prose names its file, the last one named is the checkpoint
         found = PATH_IN_TEXT_RE.findall(ev)
         ev = found[-1] if found else ""
+    if not ev and not hold.get("residual"):
+        # 2026-11-19 (KSR S202K): evidence null, the path only in the reason prose ("...; see evidence/ascension/s202k/
+        # checkpoint_s202k.md"); the control-repo head hid the branch fallback and the lane parked unjudged. A checkpoint
+        # or residual file the reason names is the checkpoint.
+        found = [p for p in PATH_IN_TEXT_RE.findall(str(hold.get("reason") or "")) if CKPT_NAME_RE.search(p)]
+        ev = found[-1] if found else ""
     return ev or hold.get("residual") or ""
 
 

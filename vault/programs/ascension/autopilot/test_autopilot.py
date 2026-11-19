@@ -789,6 +789,10 @@ def run_all(ap):
           == "evidence/s70w/ck.md")
     check("V-AP-HOLD-PATH-AT-SHA", ap.hold_checkpoint({"evidence": "evidence/s177m/ck_r1b.md@74cbfef", "residual": "r.md"})
           == "evidence/s177m/ck_r1b.md" and ap.hold_checkpoint({"evidence": "e/a@b.md"}) == "e/a@b.md")
+    check("V-AP-HOLD-PATH-IN-REASON", ap.hold_checkpoint({"evidence": None, "reason": "CHECKPOINT_COMPLETE: S202K final: "
+          "0 new; see evidence/ascension/s202k/checkpoint_s202k.md"}) == "evidence/ascension/s202k/checkpoint_s202k.md"
+          and ap.hold_checkpoint({"reason": "wrote evidence/x/held_result.json"}) == ""
+          and ap.hold_checkpoint({"reason": "see e/ck.md", "residual": "r.md"}) == "r.md")
     ap.sh, rec["owner_hold"], rec["authority_tokens"] = keep_sh2, keep_hold, keep_auth
     if keep_auth is None:
         rec.pop("authority_tokens")
@@ -1563,7 +1567,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "age_ignored": lambda m: setattr(m, "AGE_MIN_H", -1.0),
          "age_always": lambda m: setattr(m, "AGE_MIN_H", 99.0),
          "hold_sha_as_path": lambda m: setattr(m, "hold_checkpoint", lambda h: h.get("evidence") or h.get("residual") or ""),
-         "kept_checkpoint_ignored": lambda m: setattr(m, "resumable_plan", (lambda f: lambda ls, key: (
+         "hold_reason_ignored": lambda m: setattr(m, "CKPT_NAME_RE", m.re.compile(r"(?!x)x")),
+         "kept_checkpoint_ignored":lambda m: setattr(m, "resumable_plan", (lambda f: lambda ls, key: (
              lambda p: dict(p, checkpoint=None) if p else p)(f(ls, key)))(m.resumable_plan)),
          "hold_at_sha_as_path":lambda m: setattr(m, "PATH_AT_SHA_RE", m.re.compile(r"(?!x)x")),
          "halt_never_continues": lambda m: setattr(m, "continue_halted", lambda *a: False),
