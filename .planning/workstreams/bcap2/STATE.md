@@ -181,3 +181,6 @@ vault/programs/bcap-2/design-resources/LICENCE_PROBE.json: GitHub REST (unauthen
 
 ### Epoch 5: repo discovery by search
 vault/programs/bcap-2/design-resources/REPO_DISCOVERY.md: GitHub search for the 7 unprobed sources. Only 3dicons has a plausible lead (realvjy/3dicons CC0-1.0, identity unverified); mapcn, Kinetics, MicroKit, Uiverse galaxy, samasante, Kitbitz not found. Search names are leads, not identity: SOURCES.json has no URLs. Nothing in rights_status changed. Next runnable unit needs each source's own site link, which this host reads only where not 403 (page-level fetch). Spend not re-measured.
+
+### Epoch 6: Magic UI tree probe (D21-D04 partial)
+Read-only git tree of magicuidesign/magicui at b0b2e497 (1026 paths, not truncated): one LICENSE.md (MIT, matches LICENCE_PROBE hash), no path containing a pro/notice/second licence; README states MIT. No `registry/magicui/` path exists at that commit, so the component registry location is unknown and per-component licences/Pro separation are NOT assessed. This shows only that the free repo carries no second licence file; it says nothing about the paid Pro site. rights_status unchanged. Next: locate the registry dir (tree listing) and read per-component headers; then shadcn registry features (D02). Spend not re-measured.
