@@ -144,5 +144,24 @@ check("D21-B04 control: component entry passes", RR.validate_component_entry(_c2
 check("D21-B04 pole: official-standard claim fails", not RR.validate_component_entry(dict(_c2, claims_official_standard=True))[0])
 check("D21-B04 pole: missing states fails", not RR.validate_component_entry({k: v for k, v in _c2.items() if k != "states"})[0])
 
+# D21-C03/C04/C05
+from modules.cdicf import prompt_schema as PS  # noqa: E402
+_p = {f: ["a"] if f == "acceptance_criteria" else "x" for f in PS.PROMPT_FIELDS}
+check("D21-C03 control: complete prompt record passes", PS.classify_prompt(_p)[0])
+check("D21-C03 pole: missing acceptance criteria fails", not PS.classify_prompt(dict(_p, acceptance_criteria=[]))[0])
+check("D21-C03 pole: verbatim prompt text refused", not PS.classify_prompt(dict(_p, verbatim_text="..."))[0])
+check("D21-C03 pole: blank criterion fails", not PS.classify_prompt(dict(_p, acceptance_criteria=[" "]))[0])
+_v = {"identity_verified": True, "content_rights": "AUTHORIZED", "categories": ["hero", "pricing"]}
+check("D21-C04 control: verified authorized source passes", PS.vibeprompt_import_allowed(_v)[0])
+check("D21-C04 pole: unknown access refuses import", not PS.vibeprompt_import_allowed(dict(_v, content_rights="UNKNOWN_ACCESS"))[0])
+check("D21-C04 pole: unverified identity refuses import", not PS.vibeprompt_import_allowed(dict(_v, identity_verified=False))[0])
+check("D21-C04 pole: incompatible category refused", not PS.vibeprompt_import_allowed(dict(_v, categories=["meme"]))[0])
+_mx = {s: {"maps_to_canonical": True, "reversible": True} for s in PS.SOURCES}
+check("D21-C05 control: full matrix passes", PS.validate_matrix(_mx)[0])
+check("D21-C05 pole: missing source fails", not PS.validate_matrix({k: v for k, v in _mx.items() if k != "jiro"})[0])
+check("D21-C05 pole: second canonical truth fails", not PS.validate_matrix(dict(_mx, refero={"canonical": True}))[0])
+check("D21-C05 pole: irreversible mapping without lossy fields fails", not PS.validate_matrix(dict(_mx, jiro={"reversible": False}))[0])
+check("D21-C05 control: irreversible mapping naming lossy fields passes", PS.validate_matrix(dict(_mx, jiro={"reversible": False, "lossy_fields": ["prompt_text"]}))[0])
+
 print(f"{'PASS' if not FAILS else 'FAIL'}: {len(FAILS)} failures")
 sys.exit(1 if FAILS else 0)

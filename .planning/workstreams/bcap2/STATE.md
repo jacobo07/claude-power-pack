@@ -157,3 +157,6 @@ vault/programs/bcap-2/design-resources/TEST_CORPUS.json: 24 CPP-authored descrip
 
 ### Epoch 2 (new worker): D21-B01..B04 record contracts
 modules/cdicf/reference_records.py (pure validators): gallery record (11 axes, UNKNOWN allowed, cloning refused), transform trace (stop conditions + observed render evaluation), mobile pattern (access+licence verified, feeds CDIO-08), component entry (not an official standard). +15 poles in test_bcap2_d21_bc (56 PASS), in done_gate NEW_MODULES, gate PASS. These are schemas only: no catalogue content ingested (sources unread / 403), so B01-B04 stay PARTIALLY_PROVEN. Remaining Phase 8: C01-C05, C08, D-H; Phase 7 BI-15..35; CLI wiring BI-08..14. Spend not re-measured.
+
+### Epoch 2b: D21-C03/C04/C05 schemas
+modules/cdicf/prompt_schema.py (pure): classify_prompt (7 fields, verbatim text refused, no blank criteria), vibeprompt_import_allowed (identity verified + content_rights AUTHORIZED + compatible categories; UNKNOWN_ACCESS refuses), validate_matrix (6 sources, one canonical Google DESIGN.md truth, irreversible mappings must name lossy fields). +13 poles in test_bcap2_d21_bc, in done_gate NEW_MODULES, gate PASS. Schemas only: no real source mapped, so PARTIALLY_PROVEN. Remaining Phase 8: C01/C02 audit against live sources, C08 measurement, D-H.
