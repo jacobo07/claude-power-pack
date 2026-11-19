@@ -131,6 +131,27 @@ INTENT_SIGNALS: dict[str, dict[str, tuple[str, ...]]] = {
             "regression", "flaky",
         ),
     },
+    "constraints": {
+        # Quality-bar weakening language (CPP-AGSK-001 AGSK-C). Wakes a pointer to the
+        # diff-scoped floor guard; ordinary test/lint work and failures stay quiet.
+        "strong": (
+            "skip the test", "skip the failing test", "skip this test",
+            "disable the lint", "disable the check", "silence the warning",
+            "silence the lint", "suppress the warning", "suppress the error",
+            "add noqa", "add a noqa", "ts-ignore", "lower the threshold",
+            "lower the coverage", "relax the threshold", "make the build green",
+            "get the build green", "get it green", "weaken", "quality bar",
+            # ES
+            "saltar el test", "silenciar el lint", "bajar el umbral",
+            "bajar la cobertura", "desactivar el lint",
+        ),
+        "medium": (),
+        "negative": (
+            "typo", "readme", "documentation", "landing page", "root cause",
+            "keeps failing", "is broken", "regression", "flaky", "from scratch",
+            "build a complete", "write a prd",
+        ),
+    },
 }
 
 

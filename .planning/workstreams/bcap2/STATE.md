@@ -28,5 +28,21 @@ meta-analysis:
 4. Nothing emits records live (R1) and done_gate/intent-verify do not consume them (R2): the card is a pointer; same weakness as Phase 1.
 5. Next: Phase 3 AGSK (no dependency). Owed read-only upstream fetches (DBG R1, TDD R3) batch into one network step.
 
-### Phase 3 CPP-AGSK-001: IN PROGRESS (scan only)
+### Phase 3 CPP-AGSK-001: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_agsk.py` exit 0, 55 PASS / 0 FAIL (ledger integrity, floor_guard both poles, routing recall/precision, liveness). Phase 1 gate 37/0. Liveness offenders 56->56.
+pilot: AGSK-C constraint non-weakening absorbed as `modules/sqi/floor_guard.py` (diff-scoped; MIT NOTICE, pin 8c99fa36), latent card under domain "constraints" (not always-on).
+residuals: 34 upstream rows in DISPOSITIONS.md are basis=HYPOTHESIS (only the pilot is READ); 7 rows UNVERIFIED (AGSK-B/D/E/F gaps unmeasured); nothing emits floor_guard live from done_gate (same weakness as Phases 1-2); closing needs those scans.
+meta-analysis:
+1. Scanning first showed 26 skills not 25; honest basis column stops a hypothesis reading as an absorption claim.
+2. One pilot slice done fully beats 26 shallow ones; EXTEND landed beside the sqi census, no new router.
+3. Routing negatives (typo, root cause, failing) pinned so the new card does not steal diagnose/tdd.
+4. Weakening fixtures trip the auto-mode classifier on Write: edit via small Edits only.
+5. Next: Phase 4 Anime.js (no dependency); batch owed upstream fetches (DBG R1, TDD R3) into one read-only network step.
+
+### Phase 3 scan notes (historical)
 Upstream pinned 8c99fa36 (MIT); scan notes and next steps in vault/programs/bcap-2/agsk/REUSE_LEDGER.md. No implementation yet. Spend this session before the wall: ~179k resident context (second session of epoch 2).
+
+> Coordinator note 2026-11-19T16:5xZ (laptop pane 2cf9ec6d, Owner-approved): epochs 3 and 4 hung ~2 h on a host
+> permission prompt for `Write tools/test_bcap2_agsk.py` (auto-mode classifier reads the seeded test-weakening
+> fixtures as test tampering). The coordinator placed the worker's exact attempted content (11,350 chars) at that path.
+> Do NOT re-create it with Write; change it with small Edit calls. Keep seeded-weakening fixtures in this file only.

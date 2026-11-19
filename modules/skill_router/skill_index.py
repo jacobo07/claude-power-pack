@@ -155,6 +155,24 @@ SYNTHETIC_TDD_SKILLS: list["SkillEntry"] = [
     ),
 ]
 
+# CPP-AGSK-001 (AGSK-C): diff-scoped quality-floor non-weakening guard, surfaced under "constraints".
+SYNTHETIC_CONSTRAINTS_SKILLS: list["SkillEntry"] = [
+    SkillEntry(
+        name="quality floor non-weakening guard",
+        path=str(PP_ROOT / "modules" / "sqi" / "floor_guard.py"),
+        description=(
+            "Use before declaring green when a check, test or threshold was "
+            "touched: run the diff-scoped floor guard to catch new "
+            "suppressions, stubs, skipped or stripped tests and loosened "
+            "thresholds; an exception needs an owner, reason and expiry."
+        ),
+        domain="constraints",
+        keywords=["suppress", "skip", "threshold", "noqa", "green", "weaken"],
+        token_weight=80,
+        invoke="python3 -m modules.sqi.floor_guard --base <ref>",
+    ),
+]
+
 _FM_RE = re.compile(r"^---\s*\n(.*?\n)---\s*\n", re.S)
 
 
@@ -292,7 +310,7 @@ def build_index(force: bool = False) -> list[SkillEntry]:
     # Append synthetic spec-driven CLI cards whose target file exists on
     # disk (a broken/absent tool gets no dangling pointer).
     entries.extend(s for s in SYNTHETIC_SPEC_SKILLS + SYNTHETIC_DIAGNOSE_SKILLS
-                   + SYNTHETIC_TDD_SKILLS
+                   + SYNTHETIC_TDD_SKILLS + SYNTHETIC_CONSTRAINTS_SKILLS
                    if Path(s.path).is_file())
     _write_cache(entries)
     return entries
