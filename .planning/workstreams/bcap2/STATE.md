@@ -102,3 +102,6 @@ Still owed: per-repo licence + pinned-commit fetch (Phases 1, 2, 3, 7, 8), Phase
 
 ### Epoch 10 repo-metadata pass (Phase 8)
 GitHub REST metadata for the 9 listed repos: vault/programs/bcap-2/design-resources/REPO_META.json. 8 with an SPDX licence (MIT x6, Apache-2.0 x1 design.md, uiverse galaxy MIT but last push 2024-09); ckissi/kinetics (D21-15) has NO detected licence -> must not admit code (fail-closed rights gate stands). Detector field only, LICENSE text not read, no commit pinned, `live_verified` unchanged; SOURCES.json untouched. Next: read LICENSE text at a pinned SHA per repo, then flip live_verified with the gate.
+
+### Epoch 10 licence-pin pass (Phase 8)
+vault/programs/bcap-2/design-resources/LICENSE_PINS.json: HEAD sha + sha256 of raw LICENSE bytes for the 9 repos. 7 LICENSE files read and head matches the detector (MIT x6, Apache-2.0 design.md). Two gaps: ibelick/motion-primitives (D21-14) detector says MIT but no LICENSE file under the 4 names tried -> treat as UNVERIFIED, not admitted; ckissi/kinetics (D21-15) no licence at all -> stays refused. Head text only, not legal analysis. `live_verified` and SOURCES.json still unchanged (page-level content and capability denominators not read).

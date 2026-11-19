@@ -1,0 +1,78 @@
+{
+ "checked": "2026-11-19T18:15:28.290568+00:00",
+ "method": "default-branch HEAD sha at fetch time + raw LICENSE bytes hashed; text head recorded, not legally analysed",
+ "rows": [
+  {
+   "id": "D21-05",
+   "repo": "google-labs-code/design.md",
+   "pinned_sha": "db977b3c1d1f309269f43d5d17ae828d54bd6ae3",
+   "license_file": "LICENSE",
+   "license_sha256": "1bdd03995456d191707e379eb06ceac20cf30d520bec90c97c2b6d220906c66e",
+   "license_head": "Apache License Version 2.0, January 2004 http://www.apache.org/licenses/ TERMS AND CONDITI"
+  },
+  {
+   "id": "D21-10",
+   "repo": "shadcn-ui/ui",
+   "pinned_sha": "f50887ae68d0fdcbfbe86b57be08af94a4c88a68",
+   "license_file": "LICENSE.md",
+   "license_sha256": "1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f",
+   "license_head": "MIT License Copyright (c) 2023 shadcn Permission is hereby granted, free of charge, to any"
+  },
+  {
+   "id": "D21-12",
+   "repo": "magicuidesign/magicui",
+   "pinned_sha": "b0b2e4974b1b68cd5278277c6837a27736e20c3a",
+   "license_file": "LICENSE.md",
+   "license_sha256": "0147b84235ed916b8b4e89c1f80655351c5afe7d211b629be61f553a227b34ba",
+   "license_head": "MIT License Copyright (c) Magic UI Permission is hereby granted, free of charge, to any pe"
+  },
+  {
+   "id": "D21-14",
+   "repo": "ibelick/motion-primitives",
+   "pinned_sha": "120f64f6ca60348e251f929e9c81f11ccbe45eda",
+   "license_file": null,
+   "license_sha256": null,
+   "license_head": null
+  },
+  {
+   "id": "D21-15",
+   "repo": "ckissi/kinetics",
+   "pinned_sha": "1f36aa88d613358a38995be0f115bc428d1e2cb1",
+   "license_file": null,
+   "license_sha256": null,
+   "license_head": null
+  },
+  {
+   "id": "D21-16",
+   "repo": "henriquegpb/microkit",
+   "pinned_sha": "0afe639b2d9bb2c16220964e8a9f865f1a81111b",
+   "license_file": "LICENSE",
+   "license_sha256": "788f172717e164de5e458fae02e22d91de84b796976023157ebd4780b317f939",
+   "license_head": "MIT License Copyright (c) 2026 Henrique Barone Permission is hereby granted, free of charg"
+  },
+  {
+   "id": "D21-17",
+   "repo": "AnmolSaini16/mapcn",
+   "pinned_sha": "fd8ce8f7581a80376d7a9426364edeed17c99f35",
+   "license_file": "LICENSE",
+   "license_sha256": "73020a10c41b48b72fbcc0f8bc38fbc24ff13df874a3142ab48094162490bb29",
+   "license_head": "MIT License Copyright (c) 2025 Anmoldeep Singh Permission is hereby granted, free of charg"
+  },
+  {
+   "id": "D21-18",
+   "repo": "uiverse-io/galaxy",
+   "pinned_sha": "adbd2adde0a299a3956ea288fb444ec01891ca41",
+   "license_file": "LICENSE",
+   "license_sha256": "7feadcd7a611d37a4546c99f63a162bdf65656137828ebcba92e57dccfa368a4",
+   "license_head": "MIT License Copyright (c) 2023 Uiverse.io Permission is hereby granted, free of charge, to"
+  },
+  {
+   "id": "D21-19",
+   "repo": "samasante/liquid-glass",
+   "pinned_sha": "4e7b769e1df7e5a7d3669fef22417fe3d2f79ade",
+   "license_file": "LICENSE",
+   "license_sha256": "11bc33eaf33639755f5531e5fd059ff4ae85db6a2730588b72ff2eea6fd47614",
+   "license_head": "MIT License Copyright (c) 2026 Sam Asante Permission is hereby granted, free of charge, to"
+  }
+ ]
+}
