@@ -309,6 +309,20 @@ with tempfile.TemporaryDirectory() as t:
     check("BI-09 pole: bare True / blank-reason exception refused",
           TR.check_territories(good[:2], True)["verdict"] == "FAIL" and TR.check_territories(good[:2], {"reason": "  "})["verdict"] == "FAIL")
 
+    # ---- BI-14: critique separates evidence from judgment, cannot self-approve
+    from modules.ccf import critique as CR
+    full = lambda cid, v=True: CR.build_critique(cid, [{"criterion": c, "kind": "evidence", "value": v, "instrument": "probe"} for c in CR.CRITERIA])
+    a, b, c3 = full("a"), full("b"), full("c", False)
+    check("BI-14 pole: evidence without instrument is demoted to judgment",
+          "spelling" in CR.build_critique("x", [{"criterion": "spelling", "kind": "evidence", "value": True}])["judgment"])
+    check("BI-14 pole: unassessed criteria stay UNASSESSED and block qualification",
+          CR.build_critique("x", [])["unassessed"] == list(CR.CRITERIA) and not CR.qualifies(CR.build_critique("x", [])))
+    check("BI-14 pole: an LLM actor cannot approve", not CR.approve([a, b], "a", "llm")["approved"])
+    check("BI-14 pole: fewer than two qualifying directions blocks approval", not CR.approve([a, c3], "a", "human")["approved"])
+    check("BI-14 pole: a failing-evidence concept cannot be selected", not CR.approve([a, b, c3], "c", "human")["approved"])
+    check("BI-14 control: human selects among two qualifying directions", CR.approve([a, b, c3], "b", "human")["approved"])
+    check("BI-14 control: a critique itself is never pre-approved", a["approval"] == "NOT_APPROVED")
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-09) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-09, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

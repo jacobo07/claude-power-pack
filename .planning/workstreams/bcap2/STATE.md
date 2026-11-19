@@ -133,3 +133,6 @@ reference_intel.fidelity_claims: a 1:1/pixel-perfect claim needs observed text/s
 
 ### Epoch 14: BI-09 territories
 modules/ccf/territories.py (pure check_territories: >=3 distinct mechanism+brand_fact, recolour/missing not counted, reasoned narrow-brief exception is its own verdict). 7 checks in test_bcap2_brand, LIBRARY-declared, in done_gate NEW_MODULES; not yet wired into `cli generate` (stays PARTIALLY_PROVEN). Remaining: BI-08, BI-10..14, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-14 critique
+modules/ccf/critique.py (pure): evidence needs an instrument else demoted to judgment; unassessed criteria never pass; approve() only by human among >=2 qualifying directions. 7 checks, LIBRARY, in NEW_MODULES; not wired into `cli select` (PARTIALLY_PROVEN). Remaining: BI-08, BI-10..13, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
