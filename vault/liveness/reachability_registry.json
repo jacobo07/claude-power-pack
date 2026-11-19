@@ -151,6 +151,14 @@
       "class": "PLANNED",
       "note": "cascade_prevention/__init__.py's public API (blocker/engine/surfaces/types) does not export pre_mortem -- built extension to the now-LIVE cascade gate (Workstream A), not yet exposed"
     },
+    "ccf/asset_validator": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (`python -m modules.ccf.cli`, CLAUDE.md CCF Activation Criteria) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines; also driven through the CLI by tools/test_bcap2_brand.py (BR-09/12/13) -- verified, not a wiring gap"
+    },
+    "ccf/kit_readiness": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (`python -m modules.ccf.cli`, CLAUDE.md CCF Activation Criteria) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines; also driven through the CLI by tools/test_bcap2_brand.py (BR-09/12/13) -- verified, not a wiring gap"
+    },
     "ccf/artifact_compiler": {
       "class": "LIBRARY",
       "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"

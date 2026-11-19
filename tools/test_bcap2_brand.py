@@ -225,6 +225,69 @@ with tempfile.TemporaryDirectory() as t:
     check("BR-10 pole: registered font without license rejected", not AV.check_font("Poppins", "Orbit", {"Poppins": {"glyphs": "Orbit"}})[0])
     check("BR-10 control: registered, licensed, covering font accepted", AV.check_font("Poppins", "Orbit", REG)[0])
 
-# NOTE (epoch 7 wall): BR-11..BR-16 poles are NOT yet in this gate (see STATE.md Phase 7). Gate is PARTIAL until added.
-print(f"\n{'V-BCAP2-BRAND (BR-01..10) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+    # ---- BR-11: determinism (same inputs -> same bytes and verdicts)
+    d1, d2 = bundle_for(C, _Art("OK", MARK)), bundle_for(C, _Art("OK", MARK))
+    check("BR-11 pole: two compiles of identical inputs yield identical PDF bytes", sha(d1["pdf_bytes"]) == sha(d2["pdf_bytes"]))
+    check("BR-11 pole: scanner verdict is stable across runs",
+          TS.scan("a", "three offset vertical bars", []) == TS.scan("a", "three offset vertical bars", []))
+    check("BR-11 control: a different mark changes the PDF (the hash is not constant)",
+          sha(bundle_for(C, _Art("OK", MARK2))["pdf_bytes"]) != sha(d1["pdf_bytes"]))
+
+    # ---- BR-12: a blob logo must not reach BRAND_KIT_READY through the CLI
+    MODE["bytes"] = "blob"
+    P12 = project(t, "br12", C)
+    run(["generate", P12]); run(["select", P12, "--concept", "ring", "--by", "gate"])
+    rc12 = run(["package", P12])
+    rel12 = sorted(Path(P12, ".ccf", "releases").glob("*.json")) if Path(P12, ".ccf", "releases").exists() else []
+    state12 = json.loads(rel12[-1].read_text())["readiness"]["state"] if rel12 else "NOT_SEALED"
+    check("BR-12 pole: blob logo is not BRAND_KIT_READY via CLI", state12 != "BRAND_KIT_READY", f"rc={rc12} state={state12}")
+    MODE["bytes"] = "good"
+
+    # ---- BR-13: config edited after generate -> package refuses (provenance)
+    P13 = project(t, "br13", C)
+    run(["generate", P13]); run(["select", P13, "--concept", "ring", "--by", "gate"])
+    edited = cfg()
+    edited["concepts"][0]["icon"] = "a completely different hexagonal lattice"
+    Path(P13, "config.json").write_text(json.dumps(edited), encoding="utf-8")
+    check("BR-13 pole: package exits 3 after the concept was edited post-generate", run(["package", P13]) == 3)
+    Path(P13, "config.json").write_text(json.dumps(C), encoding="utf-8")
+    check("BR-13 control: restoring the config lets package pass", run(["package", P13]) == 0)
+
+    # ---- BR-14: license conflict poles
+    MIT_L = "Permission is hereby granted, free of charge, to any person obtaining a copy"
+    GPL_L = "GNU General Public License version 3"
+    check("BR-14 pole: README MIT but LICENSE GPL -> blocked", AV.license_conflict("Licensed under MIT", GPL_L)[0])
+    check("BR-14 pole: unrecognised LICENSE text -> blocked", AV.license_conflict("MIT", "all rights reserved")[0])
+    check("BR-14 pole: README with no license claim -> blocked", AV.license_conflict("a logo tool", MIT_L)[0])
+    check("BR-14 control: README and LICENSE agree -> not blocked", not AV.license_conflict("License: MIT", MIT_L)[0])
+
+    # ---- BR-15: provider failure on the second concept leaves partial state
+    MODE["fail_on"] = "three offset vertical bars"
+    P15 = project(t, "br15", C)
+    rc15 = run(["generate", P15])
+    MODE["fail_on"] = None
+    check("BR-15 pole: generate reports a provider error (exit 2)", rc15 == 2, str(rc15))
+    check("BR-15 pole: first concept kept, failed concept has no asset",
+          Path(P15, ".ccf", "images", "ring.png").exists() and not Path(P15, ".ccf", "images", "bars.png").exists())
+    run(["select", P15, "--concept", "bars", "--by", "gate"])
+    check("BR-15 pole: package on the failed concept exits 3", run(["package", P15]) == 3)
+    run(["select", P15, "--concept", "ring", "--by", "gate"])
+    check("BR-15 control: package on the surviving concept passes", run(["package", P15]) == 0)
+
+    # ---- BR-16: scanner recall on a frozen paraphrase set, clean-set false blocks, BLOCK not overridable
+    FROZEN_POS = ["a sweeping tick-shaped swish", "an apple with a bitten edge and a leaf",
+                  "a single-line monoline loop with a heart pin", "golden double arches",
+                  "concentric red circles bullseye", "three-pointed star inside a circle",
+                  "three diagonal stripes forming a mountain", "a small songbird perched flying blue"]
+    FROZEN_NEG = ["hexagonal honeycomb of amber cells", "three offset vertical bars", "a folded paper crane in teal",
+                  "interlocking square tiles in a grid", "a compass needle over a dotted grid"]
+    hits = sum(TS.scan("p", d, [])["verdict"] == "BLOCK" for d in FROZEN_POS)
+    check("BR-16 pole: recall 8/8 BLOCK on the frozen known-mark paraphrases", hits == len(FROZEN_POS), f"{hits}/{len(FROZEN_POS)}")
+    check("BR-16 control: no frozen clean description is falsely BLOCKed", all(TS.scan("n", d, [])["verdict"] != "BLOCK" for d in FROZEN_NEG))
+    check("BR-16 control: at least two clean descriptions are plain PASS", sum(TS.scan("n", d, [])["verdict"] == "PASS" for d in FROZEN_NEG) >= 2)
+    check("BR-16 pole: select --by llm cannot override a BLOCK (even with --ack)",
+          run(["select", P, "--concept", "wing", "--by", "llm", "--ack"]) == 3)
+
+# Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
+print(f"\n{'V-BCAP2-BRAND (BR-01..16) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)
