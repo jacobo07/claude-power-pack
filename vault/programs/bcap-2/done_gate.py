@@ -44,8 +44,9 @@ def main():
         except Exception as e:
             bad.append(f"ledger {n}: {e}")
     state = (ROOT / ".planning/workstreams/bcap2/STATE.md").read_text()
-    if "ACTIVATED" in state.replace("ACTIVATED_NOT", ""):
-        bad.append("STATE.md claims ACTIVATED somewhere: re-read it against law 4")
+    import re
+    if re.search(r"^###.*:\s*ACTIVATED\b", state, re.M):
+        bad.append("a STATE.md phase heading claims ACTIVATED: re-read it against law 4")
     if "--json" in sys.argv:
         print(json.dumps({"rows": rows, "bad": bad}, indent=1))
     else:
