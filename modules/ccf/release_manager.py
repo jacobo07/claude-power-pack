@@ -7,6 +7,8 @@ vault/plans/CCF_ARCHITECTURE.md §8 / CCF_QUALITY_GATES.md's release gate.
 """
 from __future__ import annotations
 
+from modules.ccf import trademark_scanner
+
 
 def release(
     prompt_records: dict,
@@ -22,8 +24,18 @@ def release(
         return {"status": "BLOCKED", "reason": "no human concept selection recorded"}
 
     selected_id = selection["concept_id"]
-    verdict_record = scan_verdicts.get(selected_id, {})
+    verdict_record = scan_verdicts.get(selected_id) or {}
     verdict = verdict_record.get("verdict")
+
+    # BI-04/BR-05: a missing, malformed or stale scan is UNASSESSED, never an implied PASS.
+    if verdict not in ("PASS", "WARN", "BLOCK"):
+        return {"status": "BLOCKED", "readiness": "UNASSESSED",
+                "reason": f"selected concept '{selected_id}' has no valid trademark scan verdict (UNASSESSED)"}
+    if verdict_record.get("corpus_version") != trademark_scanner.CORPUS_VERSION:
+        return {"status": "BLOCKED", "readiness": "UNASSESSED",
+                "reason": f"selected concept '{selected_id}' scan used corpus "
+                          f"{verdict_record.get('corpus_version')!r}, current is "
+                          f"{trademark_scanner.CORPUS_VERSION!r}: re-scan (UNASSESSED)"}
 
     if verdict == "BLOCK":
         return {

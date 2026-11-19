@@ -1,0 +1,230 @@
+"""V-BCAP2-BRAND gate: the 16 falsification scenarios BR-01..BR-16 of
+vault/backlog/2026-10-21_cdio-brand-identity-logo-absorption.md, driven on real bytes and (where a CLI path exists)
+through the real `modules.ccf.cli`, each from BOTH poles (bad case refused, clean control accepted).
+No network, no API key, no paid call: the provider is a counting fake. python3 tools/test_bcap2_brand.py (exit 0 == PASS)
+
+Scope honesty: validators are pure-Python structural parsers (no resvg/fontTools render); font glyph coverage is checked
+against a declared registry, not a real font file; the trademark scanner is a first-pass filter, recall measured on a small
+frozen set below, NOT legal clearance. Real-render visual inspection and a live provider run are laptop/paid plane.
+"""
+from __future__ import annotations
+
+import base64
+import contextlib
+import hashlib
+import io
+import json
+import struct
+import sys
+import tempfile
+import zlib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+from modules.ccf import artifact_compiler as AC  # noqa: E402
+from modules.ccf import asset_validator as AV  # noqa: E402
+from modules.ccf import cli, kit_readiness as KR, knowledge_feed, model_adapter, release_manager  # noqa: E402
+from modules.ccf import trademark_scanner as TS  # noqa: E402
+
+FAILS = []
+
+
+def check(n, c, d=""):
+    print(("PASS " if c else "FAIL ") + n + (f" -- {d}" if d and not c else ""))
+    if not c:
+        FAILS.append(n)
+
+
+def _chunk(t, d):
+    c = struct.pack(">I", len(d)) + t + d
+    return c + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+
+
+def png(pixel, w=64, h=64):
+    """pixel(x, y) -> (r, g, b); a real RGB PNG."""
+    raw = b"".join(b"\x00" + b"".join(bytes(pixel(x, y)) for x in range(w)) for y in range(h))
+    return (b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+            + _chunk(b"IDAT", zlib.compress(raw)) + _chunk(b"IEND", b""))
+
+
+# a mark with structure at 16px (two-tone ring) vs a uniform blob
+def _ring(x, y):
+    d = ((x - 32) ** 2 + (y - 32) ** 2) ** 0.5
+    return (20, 20, 20) if 12 <= d <= 24 else (240, 240, 240)
+
+
+MARK = png(_ring)
+BLOB = png(lambda x, y: (200, 90, 40))
+MARK2 = png(lambda x, y: (10, 10, 10) if (x // 8 + y // 8) % 2 else (250, 250, 250))
+CALLS: list = []
+MODE = {"bytes": "good", "fail_on": None}
+
+
+class FakeAdapter:
+    def generate(self, prompt, params=None):
+        CALLS.append(prompt)
+        if MODE["fail_on"] and MODE["fail_on"] in prompt:
+            return model_adapter.ImageArtifact(status="FAILED", provider="fake", model_id="f", error_detail="provider down")
+        payload = {"good": MARK, "blob": BLOB}.get(MODE["bytes"], MARK)
+        return model_adapter.ImageArtifact(status="OK", provider="fake", model_id="fake-1",
+                                           bytes_=base64.b64encode(payload), format="png",
+                                           resolution="64x64", latency_ms=1.0, request_id="r1")
+
+
+def cfg(ids=("ring", "bars"), icons=None):
+    icons = icons or {"ring": "hexagonal honeycomb of amber cells", "bars": "three offset vertical bars"}
+    return {"schema_version": "1.0", "theme": "modern", "accent": "#112233", "headFont": "Poppins", "labels": [],
+            "concepts": [{"id": i, "font": "Poppins", "colours": ["#112233"], "bg": "#FFFFFF", "wordmark": "Orbit",
+                          "avoid": [], "icon": icons[i]} for i in ids]}
+
+
+def project(tmp, name, config):
+    p = tmp / name
+    (p / ".ccf").mkdir(parents=True)
+    (p / "config.json").write_text(json.dumps(config), encoding="utf-8")
+    (p / "spec.json").write_text(json.dumps({"brand_name": "Orbit", "industry": "tools", "audience": "devs",
+                                              "values": ["craft"]}), encoding="utf-8")
+    return str(p)
+
+
+def run(argv):
+    with contextlib.redirect_stdout(io.StringIO()):
+        return cli.main(argv)
+
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+class _Art:
+    def __init__(self, status="OK", image_bytes=None):
+        self.status, self.image_bytes = status, image_bytes
+
+
+def bundle_for(concept_cfg, art):
+    return AC.compile_artifacts(concept_cfg["concepts"][:1], {concept_cfg["concepts"][0]["id"]: art}, "brandkit")
+
+
+def rel(bundle, scans, sel="ring", acks=None):
+    return release_manager.release({}, scans, bundle, {"passed": bool(bundle.get("built"))},
+                                   {"concept_id": sel}, acks or {})
+
+
+GOOD_SCAN = {"ring": {"verdict": "PASS", "corpus_version": TS.CORPUS_VERSION}}
+
+with tempfile.TemporaryDirectory() as t:
+    t = Path(t)
+    knowledge_feed.FEED_DIR = t / "feed"
+    for n in ("CREATIVE_FAILURES_PATH", "PROVIDER_BENCHMARKS_PATH", "TRADEMARK_RISK_PATH"):
+        setattr(knowledge_feed, n, knowledge_feed.FEED_DIR / getattr(knowledge_feed, n).name)
+    cli.model_adapter.GPTImage2Adapter = FakeAdapter
+    C = cfg()
+
+    # ---- BR-01: status OK but zero bytes / no source file -> no BRAND_KIT, no SEALED
+    b = bundle_for(C, _Art("OK", None))
+    check("BR-01 pole: OK status with no bytes builds nothing", b["built"] is False)
+    check("BR-01 pole: release over it is BLOCKED, not SEALED", rel(b, GOOD_SCAN)["status"] == "BLOCKED")
+    good = bundle_for(C, _Art("OK", MARK))
+    check("BR-01 control: real bytes build and SEAL", good["built"] and rel(good, GOOD_SCAN)["status"] == "SEALED")
+
+    # ---- BR-02: corrupt / truncated / false-format raster -> explicit validation failure
+    corrupt = bytearray(MARK)
+    corrupt[40] ^= 0xFF
+    for label, data in (("truncated", MARK[:-20]), ("bit-flipped (CRC)", bytes(corrupt)),
+                        ("jpeg magic", b"\xff\xd8\xff\xe0" + b"0" * 200), ("empty", b"")):
+        ok, why = AV.validate_png(data)
+        check(f"BR-02 pole: {label} PNG rejected", not ok, why)
+    check("BR-02 control: intact PNG accepted", AV.validate_png(MARK)[0])
+
+    # ---- BR-03: text-only kit PDF is a CONCEPT_REPORT, never a BRAND_KIT
+    text_only = AC._build_minimal_pdf([["ring", "Wordmark: Orbit", f"Logo sha256: {sha(MARK)}"]])
+    ok_t, _ = AV.validate_kit_pdf(text_only, MARK)
+    check("BR-03 pole: valid text-only PDF does not depict the mark", not ok_t)
+    ok_k, why_k = AV.validate_kit_pdf(good["pdf_bytes"], MARK)
+    check("BR-03 control: compiled kit PDF embeds the selected mark (Image XObject == PNG pixel stream)", ok_k, why_k)
+    check("BR-03 pole: a PDF embedding a DIFFERENT mark is refused", not AV.validate_kit_pdf(good["pdf_bytes"], MARK2)[0])
+    assess_bad = KR.assess(MARK, text_only, C["concepts"][0], {"concept_sha": KR.concept_sha(C["concepts"][0])})
+    check("BR-03 pole: readiness BLOCKED for a text-only PDF kit", assess_bad["state"] == "BLOCKED", str(assess_bad))
+    check("BR-03: the text-only draft itself is still producible (CONCEPT_REPORT lane)", text_only.startswith(b"%PDF-"))
+
+    # ---- BR-04: scanner BLOCK before generate -> zero provider calls
+    CB = cfg(("ring", "wing"), {"ring": "hexagonal honeycomb of amber cells", "wing": "a checkmark-shaped swoosh curve"})
+    P = project(t, "br04", CB)
+    CALLS.clear()
+    rc = run(["generate", P])
+    check("BR-04 pole: BLOCKed concept never reaches the provider", len(CALLS) == 1 and all("swoosh" not in c for c in CALLS), str(len(CALLS)))
+    check("BR-04: generate reports gate_blocked", rc == 3, str(rc))
+    check("BR-04 pole: no asset written for the BLOCKed concept", not Path(P, ".ccf", "images", "wing.png").exists())
+    CALLS.clear()
+    run(["generate", project(t, "br04c", C)])
+    check("BR-04 control: clean config calls the provider once per concept", len(CALLS) == 2, str(len(CALLS)))
+
+    # ---- BR-05: missing / UNKNOWN / stale scan -> UNASSESSED, never an implied PASS
+    for label, scans in (("missing report", {}), ("UNKNOWN verdict", {"ring": {"verdict": "UNKNOWN", "corpus_version": TS.CORPUS_VERSION}}),
+                         ("stale corpus", {"ring": {"verdict": "PASS", "corpus_version": "0.9"}})):
+        r = rel(good, scans)
+        check(f"BR-05 pole: {label} -> BLOCKED/UNASSESSED", r["status"] == "BLOCKED" and r.get("readiness") == "UNASSESSED", str(r))
+    check("BR-05 control: fresh PASS scan seals", rel(good, GOOD_SCAN)["status"] == "SEALED")
+
+    # ---- BR-06: WARN needs accountable human acknowledgment
+    warn = {"ring": {"verdict": "WARN", "corpus_version": TS.CORPUS_VERSION}}
+    check("BR-06 pole: WARN without ack is BLOCKED", rel(good, warn)["status"] == "BLOCKED")
+    check("BR-06 pole: a falsy ack is not an acknowledgment", rel(good, warn, acks={"ring": False})["status"] == "BLOCKED")
+    check("BR-06 control: WARN with recorded ack seals", rel(good, warn, acks={"ring": True})["status"] == "SEALED")
+    check("BR-06: a trademark BLOCK is not overridable by an ack", rel(good, {"ring": {"verdict": "BLOCK", "corpus_version": TS.CORPUS_VERSION}}, acks={"ring": True})["status"] == "BLOCKED")
+
+    # ---- BR-07: untrusted SVG
+    SVG_OK = b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><g><path d="M0 0L10 10"/><circle cx="5" cy="5" r="2"/></g></svg>'
+    bad_svgs = {
+        "script": b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+        "onload": b'<svg xmlns="http://www.w3.org/2000/svg" onload="x()"><path d="M0 0"/></svg>',
+        "foreignObject": b'<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><div/></foreignObject></svg>',
+        "external href": b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><use xlink:href="http://evil/x.svg#a"/></svg>',
+        "external url()": b'<svg xmlns="http://www.w3.org/2000/svg"><rect fill="url(http://evil/p)"/></svg>',
+        "image tag": b'<svg xmlns="http://www.w3.org/2000/svg"><image href="http://evil/a.png"/></svg>',
+        "entity bomb": b'<!DOCTYPE svg [<!ENTITY a "x">]><svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>',
+        "not xml": b"<svg><path",
+    }
+    for label, data in bad_svgs.items():
+        check(f"BR-07 pole: svg with {label} rejected", not AV.validate_svg(data)[0], AV.validate_svg(data)[1])
+    check("BR-07 control: clean svg accepted", AV.validate_svg(SVG_OK)[0])
+    check("BR-07 control: internal #fragment reference accepted",
+          AV.validate_svg(b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="a" d="M0 0"/></defs><use xlink:href="#a"/></svg>')[0])
+
+    # ---- BR-08: hostile id / path -> no shell, no write outside the project
+    for hostile in ("../../escaped", "a;touch pwned", "$(id)", "a/b", "", "x" * 80):
+        bad = cfg()
+        bad["concepts"][0]["id"] = hostile
+        pr = project(t, "br08-" + hashlib.md5(hostile.encode()).hexdigest()[:6], bad)
+        CALLS.clear()
+        rc8 = run(["generate", pr])
+        check(f"BR-08 pole: id {hostile[:20]!r} rejected before any provider call", rc8 == 1 and CALLS == [], f"rc={rc8} calls={len(CALLS)}")
+    check("BR-08 pole: nothing escaped the tmp tree", not (t.parent / "escaped.png").exists() and not any(t.rglob("pwned")))
+    check("BR-08 control: safe ids accepted", AV.safe_concept_id("ring-2_a") and not AV.safe_concept_id("a b"))
+
+    # ---- BR-09: PNG bytes named .ico
+    entry = MARK
+    ico = struct.pack("<HHH", 0, 1, 1) + struct.pack("<BBBBHHII", 64, 64, 0, 0, 1, 32, len(entry), 22) + entry
+    check("BR-09 pole: PNG bytes as favicon.ico fail the parser", not AV.validate_ico(MARK)[0])
+    check("BR-09 pole: truncated ICO fails", not AV.validate_ico(ico[:30])[0])
+    check("BR-09 pole: ICO entry pointing outside the file fails", not AV.validate_ico(ico[:-100])[0])
+    check("BR-09 control: a real ICO container parses", AV.validate_ico(ico)[0], AV.validate_ico(ico)[1])
+    P9 = project(t, "br09", C)
+    run(["generate", P9]); run(["select", P9, "--concept", "ring", "--by", "gate"])
+    Path(P9, ".ccf", "assets").mkdir()
+    Path(P9, ".ccf", "assets", "favicon.ico").write_bytes(MARK)
+    check("BR-09 via CLI: package BLOCKED when favicon.ico is renamed PNG", run(["package", P9]) == 3)
+    Path(P9, ".ccf", "assets", "favicon.ico").write_bytes(ico)
+    check("BR-09 via CLI control: package passes with a real ICO", run(["package", P9]) == 0)
+
+    # ---- BR-10: font policy, no silent substitution
+    REG = {"Poppins": {"license": "OFL-1.1", "glyphs": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"}}
+    check("BR-10 pole: unregistered font rejected", not AV.check_font("Comic Sans MS", "Orbit", REG)[0])
+    check("BR-10 pole: wordmark glyphs outside the font rejected", not AV.check_font("Poppins", "OrbitÑş", REG)[0])
+    check("BR-10 pole: registered font without license rejected", not AV.check_font("Poppins", "Orbit", {"Poppins": {"glyphs": "Orbit"}})[0])
+    check("BR-10 control: registered, licensed, covering font accepted", AV.check_font("Poppins", "Orbit", REG)[0])
+
+# NOTE (epoch 7 wall): BR-11..BR-16 poles are NOT yet in this gate (see STATE.md Phase 7). Gate is PARTIAL until added.
+print(f"\n{'V-BCAP2-BRAND (BR-01..10) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+sys.exit(1 if FAILS else 0)

@@ -7,8 +7,7 @@ browser) rather than the reference repo's headless-Chrome print-to-pdf --
 a deliberate, documented scope reduction for environment portability (a
 guaranteed Chrome install cannot be assumed everywhere this runs). It renders
 one page per included concept (id, wordmark, icon description, provider
-metadata) as text -- the PDF carries the logo's sha256 (embedding the PNG as a PDF image
-XObject is a tracked follow-on); the HTML kit embeds the generated PNG itself (ASC-04 D3).
+metadata) as text -- the PDF also embeds the logo as an Image XObject (gray/RGB 8-bit PNG; BCAP2-07); the HTML kit embeds the generated PNG itself (ASC-04 D3).
 
 Mandatory fix for CCF-F02 (empty-shell PDF footgun): before building anything,
 every concept without a successful ImageArtifact is skipped with a structured
@@ -20,6 +19,8 @@ from __future__ import annotations
 import base64
 import hashlib
 import html as html_lib
+
+from modules.ccf.asset_validator import png_info  # noqa: E402
 
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
@@ -51,7 +52,7 @@ def _escape_pdf_text(text: str) -> str:
     return text.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
 
 
-def _build_minimal_pdf(pages_lines: list) -> bytes:
+def _build_minimal_pdf(pages_lines: list, page_images: list = None) -> bytes:
     """Hand-rolled, valid, minimal single-font text PDF. `pages_lines` is a
     list of pages, each a list of plain-text lines. Returns real PDF bytes
     with a correct xref table -- not a stub, a genuinely valid file.
@@ -72,9 +73,17 @@ def _build_minimal_pdf(pages_lines: list) -> bytes:
 
     page_obj_nums = []
     content_obj_nums = []
+    image_obj_of_page = {}
     next_num = font_obj_num + 1
-    for lines in pages_lines:
-        content_lines = ["BT", "/F1 11 Tf", "72 740 Td", "14 TL"]
+    page_images = page_images or []
+    for pi, lines in enumerate(pages_lines):
+        info = page_images[pi] if pi < len(page_images) else None
+        content_lines = []
+        if info:
+            # the mark itself (BI-02): an Image XObject fed the PNG's own IDAT stream through the PNG predictor
+            scale = min(300.0 / info["w"], 300.0 / info["h"])
+            content_lines += ["q", f"{info['w'] * scale:.2f} 0 0 {info['h'] * scale:.2f} 72 380 cm", "/Im1 Do", "Q"]
+        content_lines += ["BT", "/F1 11 Tf", "72 740 Td", "14 TL"]
         for line in lines:
             content_lines.append(f"({_escape_pdf_text(line)}) Tj")
             content_lines.append("T*")
@@ -88,11 +97,22 @@ def _build_minimal_pdf(pages_lines: list) -> bytes:
         objects.append(content_obj)
         content_obj_nums.append(next_num)
         next_num += 1
+        if info:
+            colors = 3 if info["ctype"] == 2 else 1
+            cs = "/DeviceRGB" if colors == 3 else "/DeviceGray"
+            head = (f"<< /Type /XObject /Subtype /Image /Width {info['w']} /Height {info['h']} "
+                    f"/ColorSpace {cs} /BitsPerComponent 8 /Filter /FlateDecode "
+                    f"/DecodeParms << /Predictor 15 /Colors {colors} /Columns {info['w']} /BitsPerComponent 8 >> "
+                    f"/Length {len(info['idat'])} >>\nstream\n").encode("latin-1")
+            objects.append(head + info["idat"] + b"\nendstream")
+            image_obj_of_page[pi] = next_num
+            next_num += 1
 
-    for content_num in content_obj_nums:
+    for pi, content_num in enumerate(content_obj_nums):
+        xo = f" /XObject << /Im1 {image_obj_of_page[pi]} 0 R >>" if pi in image_obj_of_page else ""
         page_obj = (
             f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-            f"/Resources << /Font << /F1 {font_obj_num} 0 R >> >> "
+            f"/Resources << /Font << /F1 {font_obj_num} 0 R >>{xo} >> "
             f"/Contents {content_num} 0 R >>"
         ).encode("latin-1")
         objects.append(page_obj)
@@ -205,7 +225,12 @@ def compile_artifacts(concept_configs: list, image_artifacts: dict, mode: str = 
          f"Logo sha256: {hashes[c['id']]}"]
         for c in included
     ]
-    pdf_bytes = _build_minimal_pdf(pages)
+    page_images = []
+    for c in included:
+        info = png_info(images[c["id"]])
+        usable = info and info["depth"] == 8 and not info["interlace"] and info["ctype"] in (0, 2)
+        page_images.append(info if usable else None)
+    pdf_bytes = _build_minimal_pdf(pages, page_images)
 
     return {
         "html": html_doc,
