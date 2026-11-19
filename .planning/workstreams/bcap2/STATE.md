@@ -160,3 +160,6 @@ modules/cdicf/reference_records.py (pure validators): gallery record (11 axes, U
 
 ### Epoch 2b: D21-C03/C04/C05 schemas
 modules/cdicf/prompt_schema.py (pure): classify_prompt (7 fields, verbatim text refused, no blank criteria), vibeprompt_import_allowed (identity verified + content_rights AUTHORIZED + compatible categories; UNKNOWN_ACCESS refuses), validate_matrix (6 sources, one canonical Google DESIGN.md truth, irreversible mappings must name lossy fields). +13 poles in test_bcap2_d21_bc, in done_gate NEW_MODULES, gate PASS. Schemas only: no real source mapped, so PARTIALLY_PROVEN. Remaining Phase 8: C01/C02 audit against live sources, C08 measurement, D-H.
+
+### Epoch 2c: D21-C08 cost half
+vault/programs/bcap-2/design-resources/C08_COST.md: retrieval loads mean 492 B per query vs 6291 B whole 24-item corpus and 20637 B existing design-md prompts (bytes, proxy for tokens). Effectiveness half unmeasured (needs render comparison). Remaining Phase 8: C01/C02 (live-source reads), D-H.
