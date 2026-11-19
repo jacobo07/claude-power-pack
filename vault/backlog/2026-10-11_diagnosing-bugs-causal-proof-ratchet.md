@@ -1,6 +1,6 @@
 # Backlog — CPP-DBG-001: Evidence-Driven Bug Diagnosis & Causal Proof Ratchet
 
-**Created:** 2026-10-11 · **Status:** BACKLOG / NOT STARTED · **Priority:** P1 (Owner requested; schedule against the observed critical path)  
+**Created:** 2026-10-11 · **Status:** PARTIALLY_PROVEN (BCAP-2 phase 1, mission/bcap-2-run; residuals R1-R5 in vault/programs/bcap-2/dbg/REUSE_LEDGER.md) · **Priority:** P1 (Owner requested; schedule against the observed critical path)  
 **Upstream inspiration:** https://www.skills.sh/mattpocock/skills/diagnosing-bugs (Matt Pocock)  
 **Related backlog:** [CPP-TDD-001 — Evidence-First TDD & Behavioral Verification Ratchet](2026-10-11_tdd-evidence-first-vertical-slice-ratchet.md)  
 **Owner intent:** absorb the useful diagnostic discipline into Claude Power Pack as an automatic, observable and reusable engineering capability, not a new independent debugging OS.

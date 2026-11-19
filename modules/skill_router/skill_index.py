@@ -119,6 +119,24 @@ SYNTHETIC_SPEC_SKILLS: list["SkillEntry"] = [
     ),
 ]
 
+# CPP-DBG-001: the causal-proof verifier, surfaced under the "diagnose" domain.
+SYNTHETIC_DIAGNOSE_SKILLS: list["SkillEntry"] = [
+    SkillEntry(
+        name="causal diagnosis verifier",
+        path=str(PP_ROOT / "modules" / "craif" / "diagnosis.py"),
+        description=(
+            "Use when something is broken, failing, flaky, slow or regressed: "
+            "build a red-capable loop first, rank falsifiable hypotheses, and "
+            "judge the investigation record before claiming a cause or a fix."
+        ),
+        domain="diagnose",
+        keywords=["broken", "failing", "regression", "flaky", "slow",
+                  "root cause", "crash", "intermittent"],
+        token_weight=80,
+        invoke="python3 -m modules.craif.diagnosis <record.json>",
+    ),
+]
+
 
 _FM_RE = re.compile(r"^---\s*\n(.*?\n)---\s*\n", re.S)
 
@@ -256,7 +274,7 @@ def build_index(force: bool = False) -> list[SkillEntry]:
                 continue
     # Append synthetic spec-driven CLI cards whose target file exists on
     # disk (a broken/absent tool gets no dangling pointer).
-    entries.extend(s for s in SYNTHETIC_SPEC_SKILLS
+    entries.extend(s for s in SYNTHETIC_SPEC_SKILLS + SYNTHETIC_DIAGNOSE_SKILLS
                    if Path(s.path).is_file())
     _write_cache(entries)
     return entries

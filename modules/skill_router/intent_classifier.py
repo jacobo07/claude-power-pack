@@ -90,6 +90,27 @@ INTENT_SIGNALS: dict[str, dict[str, tuple[str, ...]]] = {
             "small change", "quick fix", "one line",
         ),
     },
+    "diagnose": {
+        # Observed-failure language (CPP-DBG-001). Routes to the causal-proof
+        # verifier card; never names a skill the Owner must remember.
+        "strong": (
+            "root cause", "stopped working", "keeps failing", "keeps crashing",
+            "is broken", "are broken", "doesn't work", "does not work",
+            "regression", "flaky", "intermittent", "why is it slow",
+            "got slower", "regressed", "slower than", "fails with", "is failing", "diagnose",
+            # ES
+            "no funciona", "dejo de funcionar", "se rompio", "se rompió",
+            "falla intermitente", "causa raiz", "causa raíz",
+        ),
+        "medium": (
+            "broken", "fails", "failing", "slow", "crash", "crashes",
+            "error", "bug", "hangs", "stuck", "falla", "lento",
+        ),
+        "negative": (
+            "typo", "lint", "rename", "format", "comment", "add a test",
+            "write a prd", "from scratch", "landing page",
+        ),
+    },
 }
 
 

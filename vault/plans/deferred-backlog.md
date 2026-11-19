@@ -1612,7 +1612,7 @@ acting on one, read the file and check its state against the repo.
 
 **Engineering absorption (imported from `origin/main` 2026-10-31, see D41):**
 - `2026-10-11_addyosmani-agent-skills-selective-absorption.md` -- CPP-AGSK-001: universal agent skills absorption & engineering baseline elevation.
-- `2026-10-11_diagnosing-bugs-causal-proof-ratchet.md` -- CPP-DBG-001: evidence-driven bug diagnosis & causal proof ratchet.
+- `2026-10-11_diagnosing-bugs-causal-proof-ratchet.md` -- CPP-DBG-001: evidence-driven bug diagnosis & causal proof ratchet. **PARTIALLY_PROVEN 2026-11-19 (BCAP-2 P1; gate tools/test_bcap2_dbg.py 37/0; residuals in vault/programs/bcap-2/dbg/REUSE_LEDGER.md)**
 - `2026-10-11_ruflo-security-absorption-sovereign-updates.md` -- CPP-RUFLO-001: secure Ruflo absorption, hardening & sovereign upstream updates.
 - `2026-10-11_tdd-evidence-first-vertical-slice-ratchet.md` -- CPP-TDD-001: evidence-first TDD & behavioral verification ratchet.
 
