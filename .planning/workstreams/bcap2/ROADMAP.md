@@ -54,5 +54,43 @@ If a phase hits its ceiling: commit what is proven, mark the item PARTIALLY_PROV
   UKDL/vault deltas scoped honestly, HANDOFF.md with per-item verdict. Ceiling 6M.
 
 ## Phase Details
-Phases 1-9 are independent of each other except: Phase 2 reuses Phase 1's regression seam; Phase 6 and 8 reuse Phase 4-5
-CDIO additions when present. Phase 10 depends on 1-9. Requirements BCAP2-01..10 map one-to-one to phases.
+
+### Phase 1: CPP-DBG-001 causal bug diagnosis
+**Goal**: close BCAP2-01 per plan law 4.
+**Depends on**: nothing. Requirement BCAP2-01.
+
+### Phase 2: CPP-TDD-001 evidence-first TDD
+**Goal**: close BCAP2-02 per plan law 4.
+**Depends on**: Phase 1 (shares its regression seam). Requirement BCAP2-02.
+
+### Phase 3: CPP-AGSK-001 Addy Osmani agent skills, selective
+**Goal**: close BCAP2-03 per plan law 4.
+**Depends on**: nothing. Requirement BCAP2-03.
+
+### Phase 4: Anime.js into PP Design
+**Goal**: close BCAP2-04 per plan law 4.
+**Depends on**: nothing. Requirement BCAP2-04.
+
+### Phase 5: Synsation UX interaction patterns
+**Goal**: close BCAP2-05 per plan law 4.
+**Depends on**: nothing. Requirement BCAP2-05.
+
+### Phase 6: CDIO modern SaaS styles
+**Goal**: close BCAP2-06 per plan law 4.
+**Depends on**: Phases 4-5 when present. Requirement BCAP2-06.
+
+### Phase 7: Brand Identity & Logos
+**Goal**: close BCAP2-07 per plan law 4.
+**Depends on**: nothing. Requirement BCAP2-07.
+
+### Phase 8: 21 design resources, universal absorption
+**Goal**: close BCAP2-08 per plan law 4.
+**Depends on**: Phases 4-5 when present. Requirement BCAP2-08.
+
+### Phase 9: CPP-RUFLO-001 secure absorption + hardened install
+**Goal**: close BCAP2-09 per plan law 4.
+**Depends on**: nothing. Requirement BCAP2-09.
+
+### Phase 10: Closeout
+**Goal**: close BCAP2-10 per plan law 4.
+**Depends on**: Phases 1-9. Requirement BCAP2-10.
