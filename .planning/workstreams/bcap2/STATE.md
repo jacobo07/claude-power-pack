@@ -136,3 +136,6 @@ modules/ccf/territories.py (pure check_territories: >=3 distinct mechanism+brand
 
 ### Epoch 14: BI-14 critique
 modules/ccf/critique.py (pure): evidence needs an instrument else demoted to judgment; unassessed criteria never pass; approve() only by human among >=2 qualifying directions. 7 checks, LIBRARY, in NEW_MODULES; not wired into `cli select` (PARTIALLY_PROVEN). Remaining: BI-08, BI-10..13, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-08 brand truth
+modules/ccf/brand_truth.py (pure intake): observed needs source+retrieved_at else rejected; empty/unknown-field/bad-origin rejected; missing fields listed unknown; clearance always NOT_ASSESSED. 5 checks, LIBRARY, in NEW_MODULES; not fed by `cli init --brief` or CrawlOS yet (PARTIALLY_PROVEN). Remaining: BI-10..13, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.

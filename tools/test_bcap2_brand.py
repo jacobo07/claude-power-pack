@@ -323,6 +323,19 @@ with tempfile.TemporaryDirectory() as t:
     check("BI-14 control: human selects among two qualifying directions", CR.approve([a, b, c3], "b", "human")["approved"])
     check("BI-14 control: a critique itself is never pre-approved", a["approval"] == "NOT_APPROVED")
 
+    # ---- BI-08: brand truth intake never fabricates
+    from modules.ccf import brand_truth as BT
+    r = BT.intake("b", [{"field": "audience", "value": "night nurses", "origin": "stated"},
+                        {"field": "sector", "value": "health", "origin": "observed", "source": "https://x.example/about", "retrieved_at": "2026-11-19"}])
+    check("BI-08 pole: sourced observed and stated facts are kept", set(r["facts"]) == {"audience", "sector"})
+    check("BI-08 pole: unfilled fields are listed unknown, not invented", "purpose" in r["unknown"] and "audience" not in r["unknown"])
+    r2 = BT.intake("b", [{"field": "sector", "value": "health", "origin": "observed"}])
+    check("BI-08 pole: observed without source/retrieved_at is rejected, not kept", not r2["facts"] and len(r2["rejected"]) == 1)
+    r3 = BT.intake("b", [{"field": "mood", "value": "x", "origin": "stated"}, {"field": "purpose", "value": "", "origin": "stated"},
+                         {"field": "purpose", "value": "x", "origin": "llm"}])
+    check("BI-08 pole: unknown field, empty value and bad origin are all rejected", not r3["facts"] and len(r3["rejected"]) == 3)
+    check("BI-08 control: trademark clearance is never claimed", r["clearance"] == "NOT_ASSESSED")
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-09, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

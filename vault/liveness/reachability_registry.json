@@ -171,6 +171,10 @@
       "class": "LIBRARY",
       "note": "pure BI-14 evidence/judgment critique and human-only approval gate, driven from both poles by tools/test_bcap2_brand.py; not yet called by cli.py select (wiring is a later BI-14 step), so a library, not activated"
     },
+    "ccf/brand_truth": {
+      "class": "LIBRARY",
+      "note": "pure BI-08 brand-truth intake, driven from both poles by tools/test_bcap2_brand.py; not yet fed by `cli init --brief` or a CrawlOS reader (a later BI-08 step), so a library, not activated"
+    },
     "ccf/kit_readiness": {
       "class": "LIBRARY",
       "note": "imported directly by ccf/cli.py (`python -m modules.ccf.cli`, CLAUDE.md CCF Activation Criteria) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines; also driven through the CLI by tools/test_bcap2_brand.py (BR-09/12/13) -- verified, not a wiring gap"
