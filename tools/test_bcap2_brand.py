@@ -393,6 +393,20 @@ with tempfile.TemporaryDirectory() as t:
           IS.validate_set(dict(base, logo="L0", palette={"text": "#222222", "surface": "#FAFAFA"}), "REFRESH", orig) == [])
     check("BI-11 pole: KEEP without the original is refused", any("requires" in x for x in IS.validate_set(base, "KEEP")))
 
+    # ---- BI-10: technique taxonomy as typed hypotheses
+    from modules.ccf import techniques as TQ
+    good_h = {"id": "h1", "technique": "negative_space_letterform", "brand_observation": "the name Pip has two parallel stems",
+              "recipe": ["align the two stems 40 units apart", "subtract a triangle between them"], "self_rating": 9}
+    check("BI-10 control: a complete hypothesis has no problems", TQ.check_hypothesis(good_h) == [], str(TQ.check_hypothesis(good_h)))
+    check("BI-10 pole: exactly the 12 pinned technique names", len(TQ.TECHNIQUES) == 12 and "monogram_construction" in TQ.TECHNIQUES)
+    check("BI-10 pole: unknown technique refused", any("taxonomy" in x for x in TQ.check_hypothesis(dict(good_h, technique="vibes"))))
+    check("BI-10 pole: generic observation refused", any("brand_observation" in x for x in TQ.check_hypothesis(dict(good_h, brand_observation="looks modern"))))
+    check("BI-10 pole: missing recipe and non-geometric step refused",
+          any("recipe missing" in x for x in TQ.check_hypothesis(dict(good_h, recipe=[]))) and any("step 1" in x for x in TQ.check_hypothesis(dict(good_h, recipe=["make it pop"]))))
+    sm = TQ.summarize([good_h])
+    check("BI-10 pole: self-rating is UNVERIFIED and measured originality stays None",
+          sm["rows"][0]["self_rating_status"] == "UNVERIFIED" and sm["rows"][0]["measured_originality"] is None and sm["pin"]["sha"].startswith("d14340c3"))
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-11, BI-12, BI-13, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

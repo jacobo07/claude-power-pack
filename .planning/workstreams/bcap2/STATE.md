@@ -148,3 +148,6 @@ modules/ccf/provider_policy.py (pure, no provider call): route() = vector unless
 
 ### Epoch 14: BI-11 identity set
 modules/ccf/identity_set.py (pure): 2-4 axes, rationale, category-default challenge, WCAG contrast computed (>=4.5), typography observation; KEEP preserves logo/font/palette, REFRESH preserves logo/font. 7 checks, LIBRARY, in NEW_MODULES; not called by CLI (PARTIALLY_PROVEN). Remaining: BI-10 (needs pinned fetch), Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 15: BI-10 technique taxonomy
+Pinned fetch of Marker-AI d14340c3 references/techniques.md (read-only): the 12 technique names are verified. modules/ccf/techniques.py (pure, method only, own wording because the licence conflict stands): check_hypothesis needs a registered technique, a >=4-word brand observation and a recipe whose steps each name a geometric operation; self_rating echoed UNVERIFIED, measured_originality always None. 6 checks in test_bcap2_brand, LIBRARY, in NEW_MODULES; not consulted by `cli generate` (PARTIALLY_PROVEN). Done gate PASS. Remaining: Phase 8 B01-B04/B07 + C rest, D-H; BI-08..14 CLI wiring; BI-15..35. Spend not re-measured.
