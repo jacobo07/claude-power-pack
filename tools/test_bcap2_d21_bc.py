@@ -163,5 +163,28 @@ check("D21-C05 pole: second canonical truth fails", not PS.validate_matrix(dict(
 check("D21-C05 pole: irreversible mapping without lossy fields fails", not PS.validate_matrix(dict(_mx, jiro={"reversible": False}))[0])
 check("D21-C05 control: irreversible mapping naming lossy fields passes", PS.validate_matrix(dict(_mx, jiro={"reversible": False, "lossy_fields": ["prompt_text"]}))[0])
 
+# D21-D03/D07/D09 selection before install
+from modules.cdicf import component_install as CI  # noqa: E402
+_ev = {"spdx": "MIT", "version": "1.2.0", "license_sha256": "ab"}
+_it = {"name": "hero", "registry": "reg-a", "source_rights": "MIXED", "licence_evidence": _ev, "peers": ["react"],
+       "latest_version": "1.2.0", "snapshot_version": "1.2.0", "supply_chain_ok": True, "states": ["empty", "error"],
+       "cost": 0, "identity_fit": True, "rollback": "git revert"}
+_pj = {"has_peers": ["react"], "accepted_registries": ["reg-a"], "required_states": ["empty"], "budget": 10}
+check("D21-D07 control: fully qualified item is ALLOW", CI.plan_install(_it, _pj)["verdict"] == "ALLOW")
+for _n, _mut in (("malicious registry", {"registry": "evil"}), ("missing peer", {"peers": ["react", "vue"]}),
+                 ("stale snapshot", {"snapshot_version": "1.1.0"}), ("licence drift", {"licence_evidence": {"spdx": "GPL-3.0", "version": "1", "license_sha256": "x"}}),
+                 ("no licence evidence", {"licence_evidence": None}), ("missing states", {"states": []}),
+                 ("unmeasured cost", {"cost": None}), ("no rollback", {"rollback": ""}), ("pro asset", {"source_rights": "RESTRICTED"})):
+    check(f"D21-D09 pole: {_n} is REFUSE", CI.plan_install(dict(_it, **_mut), _pj)["verdict"] == "REFUSE")
+check("D21-D09 pole: same name from two registries refused", CI.plan_install(_it, _pj, {"hero": "reg-b"})["verdict"] == "REFUSE")
+_log = []
+def _boom(): raise RuntimeError("x")
+_r = CI.run_install(CI.plan_install(_it, _pj), [lambda: _log.append(1), _boom], lambda d: _log.append(("rb", len(d))))
+check("D21-D09 pole: failure partway rolls back what landed", _r["status"] == "FAILED_ROLLED_BACK" and ("rb", 1) in _log)
+check("D21-D09 pole: REFUSE plan runs nothing", CI.run_install(CI.plan_install(dict(_it, registry="evil"), _pj), [lambda: _log.append(9)], None)["status"] == "NOT_RUN" and 9 not in _log)
+check("D21-D09 control: clean run installs", CI.run_install(CI.plan_install(_it, _pj), [lambda: None], None)["status"] == "INSTALLED")
+check("D21-D03 pole: restricted entry stays REFERENCE_ONLY", CI.reference_only_catalog({"rights_status": "RESTRICTED"})["mode"] == "REFERENCE_ONLY")
+check("D21-D03 control: separately licensed item may be SOURCE_COPY", CI.reference_only_catalog({"rights_status": "MIXED", "licence_evidence": _ev})["mode"] == "SOURCE_COPY")
+
 print(f"{'PASS' if not FAILS else 'FAIL'}: {len(FAILS)} failures")
 sys.exit(1 if FAILS else 0)

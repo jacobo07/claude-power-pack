@@ -163,3 +163,6 @@ modules/cdicf/prompt_schema.py (pure): classify_prompt (7 fields, verbatim text 
 
 ### Epoch 2c: D21-C08 cost half
 vault/programs/bcap-2/design-resources/C08_COST.md: retrieval loads mean 492 B per query vs 6291 B whole 24-item corpus and 20637 B existing design-md prompts (bytes, proxy for tokens). Effectiveness half unmeasured (needs render comparison). Remaining Phase 8: C01/C02 (live-source reads), D-H.
+
+### Epoch 2d: D21-D03/D07/D09 install gate
+modules/cdicf/component_install.py (pure; reuses source_intake.admit_code): plan_install refuses on licence/evidence, unaccepted registry, missing peer, stale snapshot, same name from two registries, missing states, unmeasured cost (not zero), no rollback; run_install runs only ALLOW plans and rolls back a partial failure; reference_only_catalog keeps RESTRICTED as pointer. +17 poles in test_bcap2_d21_bc, in done_gate NEW_MODULES, gate PASS. No real registry touched, nothing installed: PARTIALLY_PROVEN. Remaining Phase 8: C01/C02 (live reads), D01/D02/D04 (registry reads), D05/D06/D08, E-H.
