@@ -1369,7 +1369,13 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
             ls["judged_for"] = f"{mid}:{hold.get('set_at')}"
             return _park(st, ls, lane["name"], f"checkpoint hold of {mid} names no evidence or residual path; "
                                                "not judged")
-        if evo and checkpoint:
+        kept = resumable_plan(ls, f"{mid}:{hold.get('set_at')}")
+        if kept and kept.get("checkpoint"):
+            # 2026-11-19 (FIFATC S118C, pane 08cba76c): the halted worker sat on a stale side branch, so discovery parked
+            # on its old checkpoint forever. A kept judgment that names its own checkpoint is planned from that one;
+            # the branch checkpoint is neither discovered, fast-forwarded nor judged.
+            checkpoint = kept["checkpoint"]
+        elif evo and checkpoint:
             how, note = evolve.discover_checkpoint(product, checkpoint, dry)
             if how == "PARK":
                 return _park(st, ls, lane["name"], note, f"PARKED: {note}", kind="branch")

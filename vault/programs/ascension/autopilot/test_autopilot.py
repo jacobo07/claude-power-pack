@@ -674,6 +674,22 @@ def run_all(ap):
     L1 = halt_run(110, ls_extra={"status": "WAITING"})
     check("V-AP-TERMINAL-CHECKPOINT-JUDGED", any(c[0] == "arm" for c in calls) and L1["status"] == "RUNNING"
           and any(r["kind"] == "judge" for r in ledger()))
+    # 2026-11-19 (FIFATC S118C): a halted worker on a stale side branch; discovery parks on its old checkpoint, but a
+    # kept judgment that names its own checkpoint is planned from that one, never discovered nor judged
+    keep_disc, keep_en = ap.evolve.discover_checkpoint, ap.evolve.enabled
+    ap.evolve.discover_checkpoint = lambda *a, **k: ("PARK", "not a fast-forward of the product HEAD")
+    ap.evolve.enabled = lambda home: True  # discovery runs only under EVO
+    L1 = halt_run(111, ls_extra={"status": "WAITING", "pending_plan": {
+        "for": "m-aaaaaaaaaaaa:terminal", "checkpoint": str(tmp / "redo.md"), "verdict": {"verdict": "AGREE"},
+        "directive": "REDO from main"}})
+    check("V-AP-KEPT-JUDGMENT-NAMES-ITS-CHECKPOINT", any(c[0] == "arm" for c in calls) and L1["status"] == "RUNNING"
+          and (L1.get("planned_from") or {}).get("checkpoint") == str(tmp / "redo.md") and "REDO from main" in hdirs[-1]
+          and not any(r["kind"] == "judge" for r in ledger()))
+    L1 = halt_run(112, ls_extra={"status": "WAITING", "pending_plan": {
+        "for": "m-aaaaaaaaaaaa:terminal", "verdict": {"verdict": "AGREE"}, "directive": "no checkpoint named"}})
+    check("V-AP-KEPT-JUDGMENT-WITHOUT-CHECKPOINT-STILL-DISCOVERS", L1["status"] == "PARKED"
+          and not any(c[0] == "arm" for c in calls))
+    ap.evolve.discover_checkpoint, ap.evolve.enabled = keep_disc, keep_en
     ap.checkpoint_from_branch = keep_cfb
     # F4b (2026-11-16): the product is fast-forwarded to the halted head BEFORE the arm; refused -> park, told why
     ffc["heads"].clear()
@@ -1547,7 +1563,9 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "age_ignored": lambda m: setattr(m, "AGE_MIN_H", -1.0),
          "age_always": lambda m: setattr(m, "AGE_MIN_H", 99.0),
          "hold_sha_as_path": lambda m: setattr(m, "hold_checkpoint", lambda h: h.get("evidence") or h.get("residual") or ""),
-         "hold_at_sha_as_path": lambda m: setattr(m, "PATH_AT_SHA_RE", m.re.compile(r"(?!x)x")),
+         "kept_checkpoint_ignored": lambda m: setattr(m, "resumable_plan", (lambda f: lambda ls, key: (
+             lambda p: dict(p, checkpoint=None) if p else p)(f(ls, key)))(m.resumable_plan)),
+         "hold_at_sha_as_path":lambda m: setattr(m, "PATH_AT_SHA_RE", m.re.compile(r"(?!x)x")),
          "halt_never_continues": lambda m: setattr(m, "continue_halted", lambda *a: False),
          "halt_continues_forever": lambda m: setattr(m, "continue_halted", (lambda real: lambda st, lane, ls, *a: (
              ls.pop("continued_from", None), real(st, lane, ls, *a))[1])(m.continue_halted)),
