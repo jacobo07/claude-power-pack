@@ -178,3 +178,6 @@ modules/cdicf/source_route.py (pure): route() infers layers from explicit goal w
 
 ### Epoch 4: first pinned read-only licence probe
 vault/programs/bcap-2/design-resources/LICENCE_PROBE.json: GitHub REST (unauthenticated, read-only) repo-level SPDX + HEAD sha + licence-file sha256 for shadcn-ui/ui, magicuidesign/magicui, ibelick/motion-primitives, juliangarnier/anime: all MIT, none archived. Repo-level only: per-component licences, Magic UI Pro separation and 21st.dev contributions NOT assessed, so rights_status in SOURCES.json is unchanged and live_verified stays false. Next fetch units: per-component licence reads (D01/D02/D04), mapcn/Kinetics/MicroKit repo discovery (names unverified), Uiverse galaxy repo. Spend not re-measured.
+
+### Epoch 5: repo discovery by search
+vault/programs/bcap-2/design-resources/REPO_DISCOVERY.md: GitHub search for the 7 unprobed sources. Only 3dicons has a plausible lead (realvjy/3dicons CC0-1.0, identity unverified); mapcn, Kinetics, MicroKit, Uiverse galaxy, samasante, Kitbitz not found. Search names are leads, not identity: SOURCES.json has no URLs. Nothing in rights_status changed. Next runnable unit needs each source's own site link, which this host reads only where not 403 (page-level fetch). Spend not re-measured.
