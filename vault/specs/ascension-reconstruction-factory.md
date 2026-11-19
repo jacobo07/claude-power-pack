@@ -32,7 +32,7 @@ Totals 2026-11-19: 12,686 new PROVISIONAL_MATCH (MKW 4,100 vs its report's 3,922
 Largest loss: L1 -> compile (8,222 -> 2,719 on MKW). Next yield lever = compile repair (types/headers, C++ this-calls),
 not more search.
 
-## F2: materialize into the product tree (MKW DONE 2026-11-19; WSR in scratch)
+## F2: materialize into the product tree (MKW, MKWLIB, WSR DONE 2026-11-19)
 Route used: `factory/carve.py` = one unit per function for matches in dtk `auto_*` objects (the MKW lane's own
 `auto_tu` shape), `Object(NonMatching, "factory/<sym>.c", cflags=[chosen arm])`, split = the function's exact .text
 range. `factory/materialize.py` (greedy multi-function unit with per-step byte check) stays for named units (not run).
@@ -42,6 +42,20 @@ unit::name, main.dol OK, StaticR.rel OK, no split unit removed or changed (255 -
 total_functions 26,639 -> 27,057: carving auto objects changes objdiff's enumeration; use matched code % for trend.
 Autopilot MATCH snapshot match/MKW.json advanced 3,904 -> 7,723 under cron.lock (ledger kind `factory_match`, 0
 tokens), so no generation is credited for factory work; side effect: S204M's 18 pending functions are in it too.
+MKWLIB (mkw-lib cb3faf0, same binary as MKW): report 2,043 -> 7,408 (5.96% -> 8.96%), 0 lost, main.dol OK, StaticR.rel
+OK; snapshot match/MKWLIB.json 2,019 -> 7,408. WSR (wsr-decomp 1f4f821): report 136 -> 8,722 (code 3.64%), 0 lost,
+main.dol OK; snapshot match/WSR.json -> 8,722.
+
+### Lane merge KSR -> WSR (DONE 2026-11-19, `factory/port_ksr.py`)
+KSR (t1-campaign) and WSR target the same main.dol (sha1 7752caae). port_ksr.py takes each KSR certificate WSR lacks,
+recompiles it against WSR's own target object and admits it only at objdiff 100%: 645 candidates -> 535 MATCH, 96
+NO_COMPILE, 14 NO_MATCH (those 110 stay counted in KSR only). Scratch first (8,722 -> 9,257, code 3.88%, 0 lost,
+main.dol OK), then lane commit 483a94f, lane rebuild main.dol OK, report 9,257, snapshot match/WSR.json 8,722 -> 9,257
+(backup `WSR.json.bak-81dc-port-20261119T192111Z`; checked: snapshot == lane report set, 0 lost vs backup).
+Autopilot lanes 8 -> 5 (Owner "go ahead to both", 2026-11-19): KSR, MKWLIB, FIFATC set `status PARKED,
+park_kind merged, merged_into WSR/MKW/FIFA` under cron.lock (state.json CAS e6bc2729, backup
+`state.json.bak-8949-merge-20261119T220016Z`, ledger kind `owner_park`). No worker was alive in any of the three; their
+missions were left as they were. `park_kind merged` is never auto-lifted (only `budget` is). Undo = restore the backup.
 
 ### Original F2 plan
 Goal: each PROVISIONAL_MATCH counted by the lane's own `ninja build/<GAME>/report.json` (the autopilot MATCH class).
