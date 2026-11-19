@@ -184,3 +184,6 @@ vault/programs/bcap-2/design-resources/REPO_DISCOVERY.md: GitHub search for the 
 
 ### Epoch 6: Magic UI tree probe (D21-D04 partial)
 Read-only git tree of magicuidesign/magicui at b0b2e497 (1026 paths, not truncated): one LICENSE.md (MIT, matches LICENCE_PROBE hash), no path containing a pro/notice/second licence; README states MIT. No `registry/magicui/` path exists at that commit, so the component registry location is unknown and per-component licences/Pro separation are NOT assessed. This shows only that the free repo carries no second licence file; it says nothing about the paid Pro site. rights_status unchanged. Next: locate the registry dir (tree listing) and read per-component headers; then shadcn registry features (D02). Spend not re-measured.
+
+### Epoch 7 (D21-D04 partial): Magic UI registry scan
+Registry located at apps/www/registry/magicui (80 files) at b0b2e497. All 80 fetched read-only; 0 carry a per-file licence marker (one regex hit was a false positive), so they inherit the repo MIT LICENSE.md. Evidence: vault/programs/bcap-2/design-resources/MAGICUI_REGISTRY_SCAN.json. Absence of a header is not a grant for the paid Pro site; rights_status and live_verified unchanged. Next: shadcn registry features (D02), then remaining Phase 8 E-H. Spend not re-measured.
