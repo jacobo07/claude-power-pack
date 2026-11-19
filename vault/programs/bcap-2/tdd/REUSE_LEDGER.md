@@ -15,3 +15,19 @@
 3. Route applicable coding prompts to a latent card (extend `diagnose`-style synthetic card in `modules/skill_router/skill_index.py`).
 4. One real slice red->green via git archive, as in `tools/test_bcap2_dbg.py::test_real_bug`.
 5. Liveness check, backlog Status + `deferred-backlog.md` row, STATE.md spend + 5-line analysis, commit.
+
+## Phase 2 outcome (PARTIALLY_PROVEN) — 2026-11-19
+
+Built: `classify_slice` + `mutation_outcome` in `modules/uqf/principles/tdd_workflow.py` (P07 heuristic kept, now labelled `HEURISTIC_ONLY`);
+stage facts map to `strength_ladder` keys (`assertions_observed`, `failure_branch_driven`, `regression_case_pinned`, `integration_boundary_exercised`);
+TDD evidence alone caps at ADVERSARIALLY-VERIFIED (it supplies no production facts). Mutation = existing `tools/test_gaps.py`, driven for real (KILLED / SURVIVED / base-red UNMEASURABLE).
+Routing: `tdd` intent domain + one latent card (`python3 -m modules.uqf.principles.tdd_workflow <record.json>`, also the first real caller of P07 and a verdict-coded CLI).
+Gate: `BCAP2_TDD_PYTHON=<py with pytest,pytest-cov,coverage> python3 tools/test_bcap2_tdd.py` -> 65 PASS / 0 FAIL (14 backlog fixtures + variants, routing both poles, real slice 96b6f09a through git archive). Without that env the mutation poles fail loudly (55/1), never silently pass. Negative-control drill: disabling the post-hoc check turned F02 and CLI red; file restored byte-identical. Phase 1 gate still 37/0. Liveness offenders 56 -> 56.
+
+Residuals (why not PROVEN):
+- R1 Nothing emits `classify_slice` records live: no hook/executor captures RED runs; the card is a pointer, so C2 provenance is only as good as the record's author (done-gate items 3, 10 not proven live).
+- R2 Not wired into `intent-verify` / done_gate callers (item 5, 10); ladder mapping is a library call.
+- R3 Upstream mattpocock/skills/tdd never fetched (no pin/licence) — read-only fetch still owed. `verification-loop`, `auto-test`, `intent-verify` scanned only by name.
+- R4 Mutation is Python/pytest only; other languages are an explicit ceiling (`MUTATION_UNSUPPORTED_LANGUAGE`).
+- R5 No A/B benchmark, no runtime-cost measurement, no UKDL promotion (items 9, 11, 12).
+- R6 `/usr/bin/python3` on GEX44 lacks pytest; the gate needs a venv (made in the job tmp dir, not committed).

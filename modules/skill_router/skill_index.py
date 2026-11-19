@@ -137,6 +137,23 @@ SYNTHETIC_DIAGNOSE_SKILLS: list["SkillEntry"] = [
     ),
 ]
 
+# CPP-TDD-001: evidence-aware TDD slice classifier, surfaced under "tdd".
+SYNTHETIC_TDD_SKILLS: list["SkillEntry"] = [
+    SkillEntry(
+        name="evidence-first tdd slice",
+        path=str(PP_ROOT / "modules" / "uqf" / "principles" / "tdd_workflow.py"),
+        description=(
+            "Use when adding or changing behavior: one vertical slice at a "
+            "time, a RED observed for the intended missing behavior before "
+            "the implementation, an independent oracle, minimum GREEN, safe "
+            "refactor; judge the evidence record before claiming test-first."
+        ),
+        domain="tdd",
+        keywords=["implement", "feature", "behavior", "endpoint", "support"],
+        token_weight=80,
+        invoke="python3 -m modules.uqf.principles.tdd_workflow <record.json>",
+    ),
+]
 
 _FM_RE = re.compile(r"^---\s*\n(.*?\n)---\s*\n", re.S)
 
@@ -275,6 +292,7 @@ def build_index(force: bool = False) -> list[SkillEntry]:
     # Append synthetic spec-driven CLI cards whose target file exists on
     # disk (a broken/absent tool gets no dangling pointer).
     entries.extend(s for s in SYNTHETIC_SPEC_SKILLS + SYNTHETIC_DIAGNOSE_SKILLS
+                   + SYNTHETIC_TDD_SKILLS
                    if Path(s.path).is_file())
     _write_cache(entries)
     return entries

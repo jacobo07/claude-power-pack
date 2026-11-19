@@ -1594,6 +1594,7 @@ def _skill_router_inject(fn):
                     lines.append(f"  - {s.name}: invoke via the Skill tool")
             label = {"spec": "Spec-driven (L/XL) build intent",
                      "diagnose": "Bug-diagnosis intent (build a red-capable loop before any fix)",
+                     "tdd": "Behavior-change intent (observe a valid RED for one slice before implementing)",
                      }.get(res.domain, "Frontend/design intent")
             card = (
                 f"[sleepy-skill] {label} detected (confidence "

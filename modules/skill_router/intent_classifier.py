@@ -111,6 +111,26 @@ INTENT_SIGNALS: dict[str, dict[str, tuple[str, ...]]] = {
             "write a prd", "from scratch", "landing page",
         ),
     },
+    "tdd": {
+        # Behavior-change language (CPP-TDD-001). Wakes a pointer to the
+        # evidence-aware slice classifier; docs/refactor/format stay quiet.
+        "strong": (
+            "implement", "add a feature", "new feature", "add support for",
+            "add an endpoint", "add a function", "add a command",
+            "make it so that", "should now", "new behavior", "new behaviour",
+            # ES
+            "implementa", "agrega la funcion", "agrega la función",
+            "nueva funcionalidad", "añade soporte",
+        ),
+        "medium": (),
+        "negative": (
+            "typo", "readme", "docs only", "documentation", "rename",
+            "lint", "format", "comment", "refactor", "landing page",
+            "root cause", "keeps failing", "is broken", "from scratch",
+            "build a complete", "build a full", "write a prd", "design the architecture",
+            "regression", "flaky",
+        ),
+    },
 }
 
 
