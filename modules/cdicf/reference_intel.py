@@ -71,6 +71,8 @@ def rank(query: dict, catalog: list, k: int = 3, floor: float = 0.34):
     for it in catalog:
         if it.get("platform") != query.get("platform"):
             continue
+        if it.get("purpose") != query.get("purpose"):
+            continue  # B07 corpus finding: platform+sector alone (0.5) cleared the floor and returned off-purpose picks
         ok, _ = admit_code({"rights_status": it.get("source_rights")}, it.get("license_evidence")) if query.get("need_code") \
             else (True, "")
         if not ok:

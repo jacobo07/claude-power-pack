@@ -1,0 +1,427 @@
+{
+ "kind": "D21-B07 reference test corpus",
+ "authorship": "CPP-authored descriptions only; no third-party screenshots, URLs or harvested content",
+ "limits": "24 items / 8 queries, self-authored: a regression and ordering check, not evidence of precision on real catalogs. 'relevant' = same purpose (platform-matched) judged by the author.",
+ "items": [
+  {
+   "id": "c01",
+   "purpose": "pricing",
+   "platform": "mobile",
+   "sector": "fintech",
+   "era": "2024",
+   "description": "three-tier pricing cards, one highlighted, thumb-reach CTA",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c02",
+   "purpose": "pricing",
+   "platform": "mobile",
+   "sector": "fintech",
+   "era": "2024",
+   "description": "monthly/annual toggle above stacked plan cards",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c03",
+   "purpose": "pricing",
+   "platform": "mobile",
+   "sector": "health",
+   "era": "2023",
+   "description": "single plan with benefit checklist and trial note",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c04",
+   "purpose": "pricing",
+   "platform": "desktop",
+   "sector": "fintech",
+   "era": "2024",
+   "description": "comparison table with sticky header",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c05",
+   "purpose": "pricing",
+   "platform": "desktop",
+   "sector": "retail",
+   "era": "2022",
+   "description": "bundle calculator with sliders",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c06",
+   "purpose": "pricing",
+   "platform": "mobile",
+   "sector": "retail",
+   "era": "2022",
+   "description": "scarcity banner pricing (third-party, restricted)",
+   "source_rights": "RESTRICTED"
+  },
+  {
+   "id": "c07",
+   "purpose": "onboarding",
+   "platform": "mobile",
+   "sector": "health",
+   "era": "2024",
+   "description": "three-step intake with progress dots",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c08",
+   "purpose": "onboarding",
+   "platform": "mobile",
+   "sector": "fintech",
+   "era": "2023",
+   "description": "identity check with camera permission rationale",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c09",
+   "purpose": "onboarding",
+   "platform": "mobile",
+   "sector": "education",
+   "era": "2024",
+   "description": "goal picker then first lesson",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c10",
+   "purpose": "onboarding",
+   "platform": "desktop",
+   "sector": "fintech",
+   "era": "2023",
+   "description": "workspace setup checklist",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c11",
+   "purpose": "hero",
+   "platform": "desktop",
+   "sector": "saas",
+   "era": "2024",
+   "description": "headline, proof strip, product screenshot right",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c12",
+   "purpose": "hero",
+   "platform": "desktop",
+   "sector": "saas",
+   "era": "2023",
+   "description": "centred headline with logo cloud",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c13",
+   "purpose": "hero",
+   "platform": "desktop",
+   "sector": "retail",
+   "era": "2022",
+   "description": "full-bleed photography with offer overlay",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c14",
+   "purpose": "hero",
+   "platform": "mobile",
+   "sector": "saas",
+   "era": "2024",
+   "description": "stacked headline, single CTA, screenshot below",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c15",
+   "purpose": "dashboard",
+   "platform": "desktop",
+   "sector": "fintech",
+   "era": "2024",
+   "description": "KPI row, trend chart, transactions table",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c16",
+   "purpose": "dashboard",
+   "platform": "desktop",
+   "sector": "health",
+   "era": "2023",
+   "description": "patient list with status chips",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c17",
+   "purpose": "dashboard",
+   "platform": "mobile",
+   "sector": "fintech",
+   "era": "2024",
+   "description": "balance card with quick actions",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c18",
+   "purpose": "navigation",
+   "platform": "mobile",
+   "sector": "retail",
+   "era": "2024",
+   "description": "bottom tab bar with badge counts",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c19",
+   "purpose": "navigation",
+   "platform": "mobile",
+   "sector": "education",
+   "era": "2023",
+   "description": "segmented top tabs inside lessons",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c20",
+   "purpose": "navigation",
+   "platform": "desktop",
+   "sector": "saas",
+   "era": "2024",
+   "description": "collapsible sidebar with command palette",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c21",
+   "purpose": "empty_state",
+   "platform": "mobile",
+   "sector": "fintech",
+   "era": "2024",
+   "description": "no transactions yet with a first-action button",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c22",
+   "purpose": "empty_state",
+   "platform": "desktop",
+   "sector": "saas",
+   "era": "2023",
+   "description": "empty project list with template picker",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c23",
+   "purpose": "settings",
+   "platform": "mobile",
+   "sector": "health",
+   "era": "2024",
+   "description": "grouped toggles with destructive action last",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  },
+  {
+   "id": "c24",
+   "purpose": "settings",
+   "platform": "desktop",
+   "sector": "saas",
+   "era": "2022",
+   "description": "two-pane settings with search",
+   "source_rights": "OPEN_PERMISSIVE",
+   "license_evidence": {
+    "spdx": "MIT",
+    "version": "1",
+    "license_sha256": "h"
+   }
+  }
+ ],
+ "queries": [
+  {
+   "q": {
+    "purpose": "pricing",
+    "platform": "mobile",
+    "sector": "fintech"
+   },
+   "relevant": [
+    "c01",
+    "c02",
+    "c03"
+   ]
+  },
+  {
+   "q": {
+    "purpose": "onboarding",
+    "platform": "mobile",
+    "sector": "health"
+   },
+   "relevant": [
+    "c07",
+    "c08",
+    "c09"
+   ]
+  },
+  {
+   "q": {
+    "purpose": "hero",
+    "platform": "desktop",
+    "sector": "saas"
+   },
+   "relevant": [
+    "c11",
+    "c12",
+    "c13"
+   ]
+  },
+  {
+   "q": {
+    "purpose": "dashboard",
+    "platform": "desktop",
+    "sector": "fintech"
+   },
+   "relevant": [
+    "c15",
+    "c16"
+   ]
+  },
+  {
+   "q": {
+    "purpose": "navigation",
+    "platform": "mobile",
+    "sector": "retail"
+   },
+   "relevant": [
+    "c18",
+    "c19"
+   ]
+  },
+  {
+   "q": {
+    "purpose": "empty_state",
+    "platform": "mobile",
+    "sector": "fintech"
+   },
+   "relevant": [
+    "c21"
+   ]
+  },
+  {
+   "q": {
+    "purpose": "settings",
+    "platform": "mobile",
+    "sector": "health"
+   },
+   "relevant": [
+    "c23"
+   ]
+  },
+  {
+   "q": {
+    "purpose": "checkout",
+    "platform": "mobile",
+    "sector": "retail"
+   },
+   "relevant": [],
+   "expect": "ABSTAIN"
+  }
+ ]
+}

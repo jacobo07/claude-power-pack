@@ -93,5 +93,35 @@ check("D21-C07 pole: None claim text is not a claim", RI.fidelity_claims(None, N
 bad = {k: (v["value"] if v["value"] else None) for k, v in t.items()}
 check("drill: a naive overwrite-merge would differ from the project value (the V-D21-13 check is live)", bad["color"] != proj["color"])
 
+# D21-B07 corpus: author-created, no third-party content; measures ranking against a purpose-keyword baseline
+import json as _json, os as _os
+_c = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "vault", "programs", "bcap-2", "design-resources", "TEST_CORPUS.json")))
+check("D21-B07 control: corpus declares CPP authorship and its limits",
+      "no third-party" in _c["authorship"] and "not evidence" in _c["limits"] and len(_c["items"]) >= 20)
+check("D21-B07 pole: no corpus item carries a URL or screenshot field",
+      all(not ({"url", "screenshot", "image"} & set(i)) and "http" not in i["description"] for i in _c["items"]))
+def _prec(fn):
+    out = []
+    for x in _c["queries"]:
+        got, rel = fn(x["q"]), set(x["relevant"])
+        out.append(1.0 if not got and not rel else (sum(g in rel for g in got) / len(got) if got else 0.0))
+    return sum(out) / len(out)
+_rank = lambda q: [p["id"] for p in RI.rank(dict(q, need_code=True), _c["items"])["picks"]]
+_base = lambda q: [i["id"] for i in _c["items"] if i["purpose"] == q["purpose"]][:3]
+check("D21-B07 pole: rank precision@3 >= keyword baseline on the corpus", _prec(_rank) >= _prec(_base), f"{_prec(_rank):.2f} vs {_prec(_base):.2f}")
+check("D21-B07 pole: unknown purpose ABSTAINs (no off-purpose pick)",
+      RI.rank({"purpose": "checkout", "platform": "mobile", "sector": "retail", "need_code": True}, _c["items"])["verdict"] == "ABSTAIN")
+check("D21-B07 pole: restricted item never appears when code is needed",
+      all("c06" not in _rank(x["q"]) for x in _c["queries"]))
+check("D21-B07 pole: diversity, no two picks share (sector, era)",
+      all(len({(i["sector"], i["era"]) for i in _c["items"] if i["id"] in _rank(x["q"])}) == len(_rank(x["q"])) for x in _c["queries"]))
+_old = RI.rank
+def _mutant(q, cat, **kw):  # the pre-fix behaviour: purpose not required
+    return _old(q, [dict(i, purpose=q["purpose"]) for i in cat], **kw)
+RI.rank = _mutant
+_m = _prec(_rank)
+RI.rank = _old
+check("D21-B07 drill: a ranker that ignores purpose scores lower (the precision check is live)", _m < _prec(_rank), f"{_m:.2f}")
+
 print(f"{'PASS' if not FAILS else 'FAIL'}: {len(FAILS)} failures")
 sys.exit(1 if FAILS else 0)
