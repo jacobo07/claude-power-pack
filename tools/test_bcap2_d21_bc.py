@@ -209,5 +209,34 @@ check("D21-D08 pole: mixed spacing scale", not CM.composition_qa([_a, dict(_b, s
 check("D21-D08 pole: second DESIGN.md truth", not CM.composition_qa([_a, dict(_b, project_design_md="other")])[0])
 check("D21-D08 pole: card soup", not CM.composition_qa([dict(_a, card=True, z_index=i, button_variants=[f"v{i}"]) for i in range(5)])[0])
 
+# D21-E05/E06/E07 motion selection, semantics, runtime report
+from modules.cdicf import motion_select as MS  # noqa: E402
+_d = {"choice": "css_transition", "criteria": {c: "x" for c in MS.CRITERIA}, "baseline_no_motion_compared": True}
+check("D21-E05 control: CSS choice with criteria and baseline passes", MS.check_motion_decision(_d)[0])
+check("D21-E05 pole: library without CSS/WAAPI insufficiency reason fails", not MS.check_motion_decision(dict(_d, choice="anime_js"))[0])
+check("D21-E05 control: library with insufficiency reason passes", MS.check_motion_decision(dict(_d, choice="anime_js", css_waapi_insufficient="timeline sequencing"))[0])
+check("D21-E05 pole: popularity as reason fails", not MS.check_motion_decision(dict(_d, reasons=["trending"]))[0])
+check("D21-E05 pole: missing no-motion baseline fails", not MS.check_motion_decision(dict(_d, baseline_no_motion_compared=False))[0])
+check("D21-E05 pole: missing criterion fails", not MS.check_motion_decision(dict(_d, criteria={}))[0])
+check("D21-E05 control: no_animation with reason is valid", MS.check_motion_decision({"choice": "no_animation", "purpose_absent_reason": "static ledger"})[0])
+check("D21-E05 pole: no_animation without reason fails", not MS.check_motion_decision({"choice": "no_animation"})[0])
+check("D21-E05 pole: bespoke JS without cleanup plan fails", not MS.check_motion_decision(dict(_d, choice="bespoke_js", css_waapi_insufficient="x"))[0])
+_c = {"expressiveness": "restrained", "motion_budget": "low"}
+_an = {"level": "low", "reduced_motion_equivalent": True, "fake_loading": False, "progress_illusion": False, "nondeterministic_state": False}
+check("D21-E06 control: within budget with equivalents passes", MS.check_motion_semantics(_c, _an)[0])
+check("D21-E06 pole: over budget fails", not MS.check_motion_semantics(_c, dict(_an, level="high"))[0])
+check("D21-E06 pole: expressiveness none permits no animation", not MS.check_motion_semantics({"expressiveness": "none", "motion_budget": "none"}, _an)[0])
+check("D21-E06 control: expressiveness none with level none passes", MS.check_motion_semantics({"expressiveness": "none", "motion_budget": "none"}, dict(_an, level="none"))[0])
+check("D21-E06 pole: fake loading fails", not MS.check_motion_semantics(_c, dict(_an, fake_loading=True))[0])
+check("D21-E06 pole: unmeasured progress illusion is not a pass", not MS.check_motion_semantics(_c, {k: v for k, v in _an.items() if k != "progress_illusion"})[0])
+check("D21-E06 pole: no reduced-motion equivalent fails", not MS.check_motion_semantics(_c, dict(_an, reduced_motion_equivalent=None))[0])
+check("D21-E06 pole: incoherent contract refused", not MS.check_motion_semantics({"expressiveness": "none", "motion_budget": "high"}, _an)[0])
+_rep = {"results": {k: {"observed": True, "evidence": "trace", "pass": True} for k in MS.RUNTIME_CASES}}
+check("D21-E07 control: full observed report passes", MS.check_runtime_report(_rep)[0])
+check("D21-E07 pole: absent case is unobserved", not MS.check_runtime_report({"results": {k: v for k, v in _rep["results"].items() if k != "touch"}})[0])
+check("D21-E07 pole: claimed pass without evidence fails", not MS.check_runtime_report({"results": dict(_rep["results"], keyboard={"observed": True, "pass": True})})[0])
+check("D21-E07 pole: failed case fails", not MS.check_runtime_report({"results": dict(_rep["results"], interrupted={"observed": True, "evidence": "t", "pass": False})})[0])
+check("D21-E07 pole: 12 runtime cases pinned", len(MS.RUNTIME_CASES) == 12)
+
 print(f"{'PASS' if not FAILS else 'FAIL'}: {len(FAILS)} failures")
 sys.exit(1 if FAILS else 0)
