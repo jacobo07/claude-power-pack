@@ -186,5 +186,28 @@ check("D21-D09 control: clean run installs", CI.run_install(CI.plan_install(_it,
 check("D21-D03 pole: restricted entry stays REFERENCE_ONLY", CI.reference_only_catalog({"rights_status": "RESTRICTED"})["mode"] == "REFERENCE_ONLY")
 check("D21-D03 control: separately licensed item may be SOURCE_COPY", CI.reference_only_catalog({"rights_status": "MIXED", "licence_evidence": _ev})["mode"] == "SOURCE_COPY")
 
+# D21-D05/D06/D08 metadata, stack, composition
+from modules.cdicf import component_meta as CM  # noqa: E402
+_m = {"kind": "hero", "frameworks": ["react"], "tailwind": "3.4", "ssr_safe": True, "semantic_html": True,
+      "keyboard_focus": True, "aria": True, "responsive": True, "rtl": True, "theme_modes": ["dark"], "reduced_motion": True}
+_pr = {"framework": "react", "tailwind": "3.3", "ssr": True, "rtl": True}
+check("D21-D05 control: normalized meta passes", CM.validate_meta(_m)[0])
+check("D21-D05 pole: kind outside the 18 normalized kinds fails", not CM.validate_meta(dict(_m, kind="carousel"))[0])
+check("D21-D05 pole: 18 kinds pinned", len(CM.KINDS) == 18)
+check("D21-D06 control: matching stack passes", CM.resolve_stack(_m, _pr)[0])
+check("D21-D06 pole: wrong framework fails", not CM.resolve_stack(_m, dict(_pr, framework="vue"))[0])
+check("D21-D06 pole: tailwind major mismatch fails", not CM.resolve_stack(_m, dict(_pr, tailwind="4.0"))[0])
+check("D21-D06 pole: UNKNOWN a11y is not a pass", not CM.resolve_stack(dict(_m, aria="UNKNOWN"), _pr)[0])
+check("D21-D06 pole: unconfirmed SSR fails under SSR project", not CM.resolve_stack(dict(_m, ssr_safe=None), _pr)[0])
+_a = {"name": "a", "source": "x", "spacing_scale": "4", "type_scale": "t", "palette": "p", "z_index": 10, "button_variants": ["primary"], "deps": {"react": "18"}, "project_design_md": "d"}
+_b = dict(_a, name="b", source="y", z_index=20, button_variants=["ghost"])
+check("D21-D08 control: coherent parts pass", CM.composition_qa([_a, _b])[0])
+check("D21-D08 pole: z-index collision", not CM.composition_qa([_a, dict(_b, z_index=10)])[0])
+check("D21-D08 pole: duplicate button variant", not CM.composition_qa([_a, dict(_b, button_variants=["primary"])])[0])
+check("D21-D08 pole: dependency version conflict", not CM.composition_qa([_a, dict(_b, deps={"react": "19"})])[0])
+check("D21-D08 pole: mixed spacing scale", not CM.composition_qa([_a, dict(_b, spacing_scale="8")])[0])
+check("D21-D08 pole: second DESIGN.md truth", not CM.composition_qa([_a, dict(_b, project_design_md="other")])[0])
+check("D21-D08 pole: card soup", not CM.composition_qa([dict(_a, card=True, z_index=i, button_variants=[f"v{i}"]) for i in range(5)])[0])
+
 print(f"{'PASS' if not FAILS else 'FAIL'}: {len(FAILS)} failures")
 sys.exit(1 if FAILS else 0)

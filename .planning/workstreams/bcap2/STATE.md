@@ -166,3 +166,6 @@ vault/programs/bcap-2/design-resources/C08_COST.md: retrieval loads mean 492 B p
 
 ### Epoch 2d: D21-D03/D07/D09 install gate
 modules/cdicf/component_install.py (pure; reuses source_intake.admit_code): plan_install refuses on licence/evidence, unaccepted registry, missing peer, stale snapshot, same name from two registries, missing states, unmeasured cost (not zero), no rollback; run_install runs only ALLOW plans and rolls back a partial failure; reference_only_catalog keeps RESTRICTED as pointer. +17 poles in test_bcap2_d21_bc, in done_gate NEW_MODULES, gate PASS. No real registry touched, nothing installed: PARTIALLY_PROVEN. Remaining Phase 8: C01/C02 (live reads), D01/D02/D04 (registry reads), D05/D06/D08, E-H.
+
+### Epoch 2e: D21-D05/D06/D08
+modules/cdicf/component_meta.py (pure): 18 normalized kinds, validate_meta, resolve_stack (framework, tailwind major, SSR, a11y, RTL; UNKNOWN never passes), composition_qa (shared tokens, z-index, duplicate button variants, dep conflicts, card soup, one DESIGN.md). +15 poles, in NEW_MODULES, gate PASS. Schemas only, no real components assessed: PARTIALLY_PROVEN. Remaining Phase 8: C01/C02, D01/D02/D04 (live reads), E-H.
