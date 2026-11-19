@@ -41,6 +41,16 @@ check("V-D21-03 pole: Kinetics 153 vs 144 is DRIFT, 153 vs 162 is DRIFT", SI.cou
 check("V-D21-02 pole: no observation is UNKNOWN, not MATCH", SI.count_drift(49, None)[0] == "UNKNOWN")
 check("V-D21-03 control: an equal observed count is MATCH", SI.count_drift(49, 49)[0] == "MATCH")
 
+# V-D21-11: the stale "Proprietary" claim is reconciled explicitly, not silently overwritten and not left standing
+import json as _json
+_pin = next(r for r in _json.load(open(ROOT / "vault/programs/bcap-2/design-resources/LICENSE_PINS.json"))["rows"] if r["id"] == "D21-05")
+_readme = (ROOT / "modules/design-md/README.md").read_text(encoding="utf-8")
+_line = next(l for l in _readme.splitlines() if l.startswith("- license:"))
+check("V-D21-11 control: pin evidence for design.md is Apache-2.0", "Apache License" in (_pin["license_head"] or ""))
+check("V-D21-11 pole: README licence line is not a bare 'Proprietary' claim", not _line.startswith("- license: Proprietary"))
+check("V-D21-11 pole: README records DRIFT and keeps the old claim visible", "DRIFT" in _line and "Proprietary" in _line)
+check("V-D21-11 pole: README cites the pinned sha and leaves the npm licence UNVERIFIED", _pin["pinned_sha"][:8] in _line and "UNVERIFIED" in _line)
+
 # V-D21-04: inaccessible sources carry no invented terms
 for sid in ("D21-03", "D21-08"):
     check(f"V-D21-04 pole: {sid} is UNKNOWN_ACCESS and admits no code", by[sid]["rights_status"] == "UNKNOWN_ACCESS" and not SI.admit_code(by[sid])[0])

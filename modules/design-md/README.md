@@ -45,4 +45,4 @@ All commands accept file paths or stdin (`-`).
 
 - npm: https://www.npmjs.com/package/@google/design.md
 - repo: https://github.com/google-labs-code/design.md
-- license: Proprietary (Google Labs Code) — see upstream for terms. Power Pack vendors only the package reference in `package.json`; the package itself is fetched from npm at install time.
+- license: DRIFT (BCAP-2 V-D21-11, 2026-11-19). This README previously said "Proprietary (Google Labs Code)"; the upstream repo LICENSE at pinned `db977b3c` is Apache-2.0 (sha256 `1bdd0399...c66e`, see `vault/programs/bcap-2/design-resources/LICENSE_PINS.json`). The npm package's own `license` field was NOT read, so treat the package licence as UNVERIFIED until `npm view @google/design.md license` is recorded. Power Pack vendors only the package reference in `package.json`; the package itself is fetched from npm at install time.

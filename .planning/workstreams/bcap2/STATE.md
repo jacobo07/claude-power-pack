@@ -124,3 +124,6 @@ SOURCES.json now carries `license_pin` (pinned sha, licence sha256, spdx) for th
 ### Epoch 13 Phase 8 Workstreams B/C slice
 built: modules/cdicf/reference_intel.py (rank with licence filter + diversity guard + ABSTAIN, design-decision brief validator, OBSERVED/INFERRED/UNKNOWN tokens, project-contract-wins merge, motion NONE abstain). gate: `python3 tools/test_bcap2_d21_bc.py` exit 0 (D21-B05/B06, V-D21-12/13/18, both poles + drill). Not yet in done_gate. Liveness offenders 56->56. Phase 8 stays PARTIALLY_PROVEN: B01-B04/B07 corpus, C01-C05/C07/C08, D-H not started; V-D21-11 drift reconciliation undone.
 decision: ranking floor 0.34 and weights 0.5/0.3/0.2 are provisional (unmeasured vs keyword baseline; Gate B baseline comparison still owed). Spend not re-measured.
+
+### Epoch 13b V-D21-11 drift reconciled
+modules/design-md/README.md licence line now records DRIFT (old "Proprietary" kept visible, upstream repo LICENSE Apache-2.0 at pinned db977b3c); npm package licence field still UNVERIFIED (not read). test_bcap2_d21 +4 checks. Remaining Phase 8: B corpus, C, D-H; Phase 7 BI-08..35.
