@@ -22,8 +22,19 @@
   "tests": "tests/ 14 files incl. engines.test.ts, brain.test.ts",
   "determinism": "scripts/check-determinism.mjs + scripts/determinism.manifest.json pins SHA-256 of outputs per (engine,palette,font,container,seed) case",
   "typefaces": "README: type is compiled from geometric skeletons, 468 pregenerated glyph outlines, not licensed fonts; ASCII/non-ASCII coverage NOT yet audited",
-  "bi16_status": "INVENTORY_ONLY: byte-identical output across processes/platforms NOT run here (node/pnpm install = sandbox work, not done); no CCF adapter built",
-  "caveat": "upstream's own manifest is the upstream's claim, not our measurement"
+  "bi16_status": "SAME_HOST_CROSS_PROCESS_MEASURED; cross-platform and CCF adapter still open",
+  "caveat": "upstream's own manifest is the upstream's claim, not our measurement",
+  "bi16_measured": {
+   "date": "2026-11-20",
+   "plane": "GEX44 linux, node v18.19.1 (upstream needs >=22), pnpm 9.15.9, --frozen-lockfile --ignore-scripts, scratch dir outside repo",
+   "command": "node scripts/check-determinism.mjs, two separate processes",
+   "result": "11 cases, combined hash 84c031a31fbb in both runs, exit 0 (script also compares to upstream manifest)",
+   "caveats": [
+    "Node 18 lacks Array.prototype.toSorted: ran with a --import shim defining toSorted/toReversed (semantics identical), upstream source unmodified",
+    "same host only: cross-platform (Windows/mac) byte identity NOT measured",
+    "no CCF adapter built"
+   ]
+  }
  },
  "branding_mcp": {
   "repo": "Forge-Space/branding-mcp",

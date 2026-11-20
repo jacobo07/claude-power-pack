@@ -220,3 +220,6 @@ vault/programs/bcap-2/brand/IMPECCABLE_AUDIT.md: Impeccable b49177d3 (Apache-2.0
 
 ### Epoch 11: BI-27 inventory probe
 vault/programs/bcap-2/brand/DESIGNHUB_PROBE.md: DesignHub 148e8c3f (MIT, 907 paths) tree inventoried only; no source read, nothing ported, BI-27 stays open. Reached the end of cheap read-only probes again; remaining units need sandbox/browser. Spend not re-measured.
+
+### Epoch 12 (new worker): BI-16 same-host determinism measured
+Predecessor's sandbox question resolved by default: pnpm exists, so sigilgen c3f605b7 was installed (--ignore-scripts, scratch dir outside the repo), built, and `scripts/check-determinism.mjs` run in two separate processes: 11 cases, identical combined hash 84c031a31fbb, exit 0. Caveats in UPSTREAM_BRAND_PROBE.json: Node 18 (upstream wants >=22) needed a toSorted shim via --import, upstream source untouched; cross-platform identity and the CCF adapter remain open, so BI-16 stays PARTIALLY_PROVEN. BI-18 (VTracer) and BI-24 (PDF render) still need tooling not checked here. Spend not re-measured.
