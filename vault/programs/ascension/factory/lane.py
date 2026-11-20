@@ -4,9 +4,14 @@
 Deterministic, 0 tokens. Per configured lane, per tick:
   PREPARE  scratch clone reset to the lane HEAD; base report built once per lane HEAD; perfn + carve every run
   GATE     scratch build: every binary OK; report lost == 0 vs base AND vs the MATCH snapshot; gained > 0; commit scratch
-  APPLY    under the autopilot's cron.lock, only in a window (autopilot status != RUNNING), lane HEAD == base, lane clean:
+  APPLY    under the autopilot's cron.lock, only in a window (window_ok: lane not RUNNING, or RUNNING with its mission
+           held and no process in the repo), lane HEAD == base, lane clean:
            ff, lane build, binaries OK, lost == 0 vs snapshot (else reset the lane to base), snapshot + ledger + NOTICE
 Standing authorization (brief.md, 2026-11-20): applications of this kind need no Owner turn; anything else does.
+Owner 2026-11-20 (pane aa9f2e25): the factory runs whenever it can, never instead of the LLM lanes.
+
+`tick` with no --lane runs one child per lane, each under its own lock (lane-<NAME>.lock), so one long build no
+longer skips every other lane's tick. Each child merges only its own key into lane_state.json (under a state lock).
 
 usage: lane.py tick [--lane NAME] [--prepare-only] | lane.py selftest
 """
@@ -14,11 +19,13 @@ import argparse, fcntl, json, os, shutil, subprocess, sys, time
 
 F = "/home/kobii/agora/factory"
 H = "/home/kobii/agora/ascension-autopilot"
+MISSIONS = os.path.expanduser("~/.claude/state")
 READY = os.path.expanduser("~/.claude/state/factory-lane.ready")
 CFG = F + "/lanes_factory.json"
 STATE = F + "/lane_state.json"
 GIT_ID = ["-c", "user.name=kobii-gex44-mission", "-c", "user.email=mission@gex44.local"]
 PATHS = ["src", "configure.py", "config"]
+JOBS = "8"  # lanes now build in parallel on a 20-thread host
 
 
 def ts():
@@ -94,7 +101,7 @@ def build(repo, ln, tag):
         stamp = check_stamp(repo, ln)
         if os.path.lexists(stamp):
             os.remove(stamp)
-        rc, t = sh(["nice", "-n", "10", "ninja", "-j", "12"], cwd=repo, out=f"{repo}/.fl_{tag}_ninja.log", timeout=3600)
+        rc, t = sh(["nice", "-n", "10", "ninja", "-j", JOBS], cwd=repo, out=f"{repo}/.fl_{tag}_ninja.log", timeout=3600)
         if rc != 0:
             return False, f"ninja rc={rc}: {t[-300:]}", None
         for b in ln["binaries"]:
@@ -120,9 +127,56 @@ def ledger(row):
         w.write(json.dumps({"ts": time.time(), "tokens": 0, **row}) + "\n")
 
 
-def autopilot_status(lane):
+def autopilot_lane(lane):
     s = json.load(open(H + "/state.json"))
-    return (s.get("lanes", s).get(lane) or {}).get("status")
+    return s.get("lanes", s).get(lane) or {}
+
+
+def autopilot_status(lane):
+    return autopilot_lane(lane).get("status")
+
+
+def mission_hold(mid):
+    """The gsd mission's owner_hold (dict) or None. A held mission launches no worker until an Owner/autopilot act."""
+    if not mid:
+        return None
+    try:
+        h = json.load(open(os.path.join(MISSIONS, f"gsd-mission-{mid}.json"))).get("owner_hold")
+    except (OSError, ValueError):
+        return None
+    return h if isinstance(h, dict) and h else None
+
+
+def procs_in(repo):
+    """PIDs whose cwd is the lane repo or inside it (worktrees included): the process proof that someone works there."""
+    root, out = os.path.realpath(repo), []
+    for d in os.listdir("/proc"):
+        if d.isdigit():
+            try:
+                c = os.path.realpath(os.readlink(f"/proc/{d}/cwd"))
+            except OSError:
+                continue
+            if c == root or c.startswith(root + os.sep):
+                out.append(int(d))
+    return out
+
+
+def window_ok(status, hold, live):
+    """A window is a lane the autopilot is not running, or one RUNNING whose mission is held (no worker launches)
+    and has no process in its repo. Pure, so selftest drives it from both poles. -> (ok, label)."""
+    if status != "RUNNING":
+        return True, str(status)
+    if hold and not live:
+        return True, f"RUNNING on a {hold.get('kind') or 'owner'} hold, no process in the repo"
+    if hold:
+        return False, f"RUNNING on hold but {len(live)} process(es) in the repo"
+    return False, "autopilot RUNNING"
+
+
+def window(ln):
+    a = autopilot_lane(ln["lane"])
+    hold = mission_hold(a.get("mission")) if a.get("status") == "RUNNING" else None
+    return window_ok(a.get("status"), hold, procs_in(ln["repo"]) if hold else [])
 
 
 def runs_sig(ln):
@@ -237,18 +291,18 @@ def lock_cron(timeout=900):
 
 def apply(ln, st, pend):
     L, S, name = ln["repo"], ln["scratch"], ln["lane"]
-    status = autopilot_status(name)
-    if status == "RUNNING":
-        log(f"{name}: gated {pend['commit'][:7]} waits for a window (autopilot RUNNING)")
+    ok, status = window(ln)
+    if not ok:
+        log(f"{name}: gated {pend['commit'][:7]} waits for a window ({status})")
         return
     fd = lock_cron()
     if fd is None:
         log(f"{name}: cron.lock busy, retry next tick")
         return
     try:
-        status = autopilot_status(name)
-        if status == "RUNNING":
-            log(f"{name}: lane went RUNNING before the lock; waiting")
+        ok, status = window(ln)  # re-read under cron.lock: the autopilot arms and releases holds only under this lock
+        if not ok:
+            log(f"{name}: window closed before the lock ({status}); waiting")
             return
         if head(L) != pend["base"]:
             log(f"{name}: lane moved ({head(L)[:7]} != {pend['base'][:7]}); re-prepare next tick")
@@ -291,17 +345,72 @@ def apply(ln, st, pend):
         new = len(cur - old)
         ledger({"lane": name, "kind": "factory_match", "new": new, "total": len(cur), "base": pend["base"],
                 "commit": pend["commit"], "note": "factory lane F5 (standing authorization 2026-11-20); not a generation's MATCH"})
-        notice(name, f"applied {pend['commit'][:7]} in a {status} window: +{new} at 100% (snapshot {len(old)} -> {len(cur)}, "
+        notice(name, f"applied {pend['commit'][:7]} in a window ({status}): +{new} at 100% (snapshot {len(old)} -> {len(cur)}, "
                      f"0 lost, binaries OK); backup {os.path.basename(bak)}; rollback = git reset --hard {pend['base'][:7]}")
-        log(f"{name}: APPLIED {pend['commit'][:7]}: snapshot {len(old)} -> {len(cur)}")
+        log(f"{name}: APPLIED {pend['commit'][:7]} ({status}): snapshot {len(old)} -> {len(cur)}")
         st["done"] = [head(L), pend["sig"]]
         st.pop("pending", None)
     finally:
         fd.close()
 
 
+def lock_file(path):
+    """Non-blocking exclusive lock, or None when another holder has it."""
+    fd = open(path, "w")
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return fd
+    except BlockingIOError:
+        fd.close()
+        return None
+
+
+def load_lane_state(name):
+    fd = open(STATE + ".lock", "w")
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    try:
+        s = json.load(open(STATE)) if os.path.exists(STATE) else {}
+        return s.get(name, {})
+    finally:
+        fd.close()
+
+
+def save_lane_state(name, st):
+    """Merge only this lane's key: lanes run as parallel children and must not overwrite each other's state."""
+    fd = open(STATE + ".lock", "w")
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    try:
+        s = json.load(open(STATE)) if os.path.exists(STATE) else {}
+        s[name] = st
+        with open(STATE + ".tmp", "w") as w:
+            json.dump(s, w, indent=1)
+        os.replace(STATE + ".tmp", STATE)
+    finally:
+        fd.close()
+
+
+def tick_lane(ln, prepare_only):
+    name = ln["lane"]
+    fd = lock_file(f"{F}/lane-{name}.lock")
+    if fd is None:
+        log(f"{name}: previous tick still running, skipped")
+        return
+    try:
+        st = load_lane_state(name)
+        try:
+            pend = prepare(ln, st)
+            if pend and not prepare_only:
+                apply(ln, st, pend)
+        except Exception as e:  # noqa: BLE001 -- one lane's failure must not stop the others; logged with its reason
+            log(f"{name}: ERROR {type(e).__name__}: {e}")
+        finally:
+            save_lane_state(name, st)
+    finally:
+        fd.close()
+
+
 def selftest():
-    """The gate arithmetic from both poles; exit 1 on any surprise."""
+    """The gate arithmetic and the window rule from both poles; exit 1 on any surprise."""
     ok = True
     def chk(name, got, want):
         nonlocal ok
@@ -312,6 +421,10 @@ def selftest():
     chk("lost vs snapshot only -> refuse", verdict({"a"}, {"a", "b"}, {"a", "z"})[0], False)
     chk("no gain -> refuse", verdict({"a"}, {"a"}, {"a"})[0], False)
     chk("check stamp is build/<GAME>/ok", check_stamp("/r", {"game": "RMCP01"}), "/r/build/RMCP01/ok")
+    chk("PARKED lane -> window", window_ok("PARKED", None, [])[0], True)
+    chk("RUNNING, no hold -> no window", window_ok("RUNNING", None, [])[0], False)
+    chk("RUNNING on cost hold, repo idle -> window", window_ok("RUNNING", {"kind": "cost"}, [])[0], True)
+    chk("RUNNING on hold, process in repo -> no window", window_ok("RUNNING", {"kind": "cost"}, [123])[0], False)
     sys.exit(0 if ok else 1)
 
 
@@ -327,21 +440,17 @@ def main():
         log("kill switch absent (~/.claude/state/factory-lane.ready): no-op")
         return
     lanes = json.load(open(CFG))
-    state = json.load(open(STATE)) if os.path.exists(STATE) else {}
-    for ln in lanes:
-        if a.lane and ln["lane"] != a.lane:
-            continue
-        st = state.setdefault(ln["lane"], {})
-        try:
-            pend = prepare(ln, st)
-            if pend and not a.prepare_only:
-                apply(ln, st, pend)
-        except Exception as e:  # noqa: BLE001 -- one lane's failure must not stop the others; logged with its reason
-            log(f"{ln['lane']}: ERROR {type(e).__name__}: {e}")
-        finally:
-            with open(STATE + ".tmp", "w") as w:
-                json.dump(state, w, indent=1)
-            os.replace(STATE + ".tmp", STATE)
+    if a.lane:
+        for ln in lanes:
+            if ln["lane"] == a.lane:
+                tick_lane(ln, a.prepare_only)
+        return
+    kids = []
+    for ln in lanes:  # one child per lane: a long build in one lane no longer skips the others' ticks
+        cmd = [sys.executable, "-I", os.path.abspath(__file__), "tick", "--lane", ln["lane"]]
+        kids.append(subprocess.Popen(cmd + (["--prepare-only"] if a.prepare_only else []), stdin=subprocess.DEVNULL))
+    for k in kids:
+        k.wait()
 
 
 if __name__ == "__main__":
