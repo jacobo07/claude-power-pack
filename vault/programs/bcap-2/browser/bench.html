@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BCAP-2 browser bench</title>
+<!-- BCAP-2 laptop-plane bench for Phases 4 (Anime.js) and 5 (Synsation UX).
+     Each section has a GOOD implementation and a BAD pole, so the measurement can return either answer.
+     Driven by tools/bcap2_browser_bench.py; anime.js 4.5.0 UMD is injected by the runner (global `anime`). -->
+<style>
+  body { font: 16px/1.4 system-ui, sans-serif; margin: 0; padding: 16px; width: 760px; }
+  section { border: 1px solid #ccc; margin: 0 0 24px; padding: 12px; position: relative; }
+  /* 1. hit targets */
+  .icon-btn { position: relative; width: 20px; height: 20px; padding: 0; border: 0; background: #e33; }
+  .icon-btn.good::before { content: ""; position: absolute; inset: -12px; }      /* invisible 44x44 hit area */
+  .chk-row { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; cursor: pointer; }
+  .card { display: block; width: 300px; height: 120px; background: #eef; margin-top: 12px; position: relative; }
+  .card button { position: absolute; right: 8px; bottom: 8px; width: 88px; height: 44px; }
+  /* 2. forms */
+  .field { display: block; margin: 0 0 12px; }
+  .field input { display: block; width: 300px; height: 36px; }
+  .spacer { height: 900px; }
+  [aria-invalid="true"] { outline: 2px solid #c00; }
+  /* 3. skeleton */
+  .slot { width: 600px; }
+  .sk { height: 160px; background: #ddd; }
+  .content { height: 160px; background: #9c9; }
+  .after { height: 40px; background: #fc9; }
+  /* 5/6 motion */
+  .box { width: 40px; height: 40px; background: #36c; }
+</style>
+</head>
+<body>
+
+<section id="s-hit">
+  <h2>1 Hit targets</h2>
+  <button id="heart-good" class="icon-btn good" aria-label="Like (expanded)"></button>
+  <span style="display:inline-block;width:60px"></span>
+  <button id="heart-bad" class="icon-btn" aria-label="Like (bare)"></button>
+  <div style="margin-top:24px"><label id="chk-label" class="chk-row"><input id="chk" type="checkbox"> Remember me</label></div>
+  <div id="card-good" class="card" tabindex="0" role="link">Card (good)<button id="card-good-btn" type="button">Delete</button></div>
+  <div id="card-bad" class="card" tabindex="0" role="link">Card (bad)<button id="card-bad-btn" type="button">Delete</button></div>
+</section>
+
+<section id="s-form">
+  <h2>2 Disabled controls and invalid fields</h2>
+  <form id="form-good" novalidate>
+    <div id="err-summary" role="alert" hidden></div>
+    <label class="field">Name <input id="g-name" required value="Ada"></label>
+    <div class="spacer"></div>
+    <label class="field">Work address <input id="g-work" required aria-describedby="g-work-err"></label>
+    <span id="g-work-err" hidden>Work address is required</span>
+    <button id="g-submit" type="submit">Submit</button>
+  </form>
+  <form id="form-bad" novalidate>
+    <label class="field">Name <input id="b-name" required value="Ada"></label>
+    <label class="field">Work address <input id="b-work" required></label>
+    <button id="b-submit" type="submit" disabled>Submit</button>
+  </form>
+</section>
+
+<section id="s-skel">
+  <h2>3 Skeleton versus spinner (CLS)</h2>
+  <div class="slot" id="slot-good"><div class="sk" id="sk"></div></div>
+  <div class="after" id="after-good">below good</div>
+  <div class="slot" id="slot-bad"><div id="spin">loading...</div></div>
+  <div class="after" id="after-bad">below bad</div>
+</section>
+
+<section id="s-opt">
+  <h2>4 Optimistic update with rollback</h2>
+  <button id="like-good" type="button">Like <span id="like-good-n">10</span></button>
+  <span id="like-good-err" role="status"></span>
+  <button id="like-bad" type="button">Like <span id="like-bad-n">10</span></button>
+  <span id="like-bad-err" role="status"></span>
+</section>
+
+<section id="s-rm">
+  <h2>5 Reduced motion</h2>
+  <div class="box" id="rm-good"></div>
+  <div class="box" id="rm-bad"></div>
+</section>
+
+<section id="s-tl">
+  <h2>6 Timeline cancel on unmount</h2>
+  <div id="tl-host-good"><div class="box" id="tl-good"></div></div>
+  <div id="tl-host-bad"><div class="box" id="tl-bad"></div></div>
+</section>
+
+<script>
+window.bench = { cardActivations: { good: 0, bad: 0 }, deleteActivations: { good: 0, bad: 0 }, heart: { good: 0, bad: 0 },
+                 disabledClicks: 0, tl: { good: 0, bad: 0 } };
+document.getElementById('heart-good').addEventListener('click', () => bench.heart.good++);
+document.getElementById('heart-bad').addEventListener('click', () => bench.heart.bad++);
+for (const k of ['good', 'bad']) {
+  document.getElementById('card-' + k).addEventListener('click', () => bench.cardActivations[k]++);
+  document.getElementById('card-' + k + '-btn').addEventListener('click', (e) => {
+    bench.deleteActivations[k]++;
+    if (k === 'good') e.stopPropagation();          // BAD pole lets the tap reach the card too
+  });
+}
+
+// 2 forms: GOOD keeps submit enabled and routes to the first invalid field; BAD disables submit with no reason
+document.getElementById('form-good').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const bad = [...e.target.querySelectorAll('input[required]')].filter(i => !i.value.trim());
+  bad.forEach(i => { i.setAttribute('aria-invalid', 'true'); document.getElementById(i.getAttribute('aria-describedby')).hidden = false; });
+  const s = document.getElementById('err-summary');
+  if (bad.length) { s.hidden = false; s.textContent = bad.length + ' field(s) need attention'; bad[0].focus(); bad[0].scrollIntoView({ block: 'center' }); }
+});
+document.getElementById('b-submit').addEventListener('click', () => bench.disabledClicks++);
+const bw = document.getElementById('b-work');
+bw.addEventListener('input', () => { document.getElementById('b-submit').disabled = !bw.value.trim(); });
+
+// 3 skeleton: GOOD swaps the skeleton for content of the same geometry; BAD replaces a 1-line spinner with taller content
+window.loadSkeletons = () => new Promise(res => setTimeout(() => {
+  document.getElementById('slot-good').innerHTML = '<div class="content">loaded</div>';
+  document.getElementById('slot-bad').innerHTML = '<div class="content">loaded</div>';
+  res();
+}, 600));
+
+// 4 optimistic like: request fails; GOOD rolls back and says so; BAD keeps the false count
+async function like(k) {
+  const n = document.getElementById('like-' + k + '-n'), err = document.getElementById('like-' + k + '-err');
+  const before = +n.textContent; n.textContent = before + 1; err.textContent = '';
+  try { const r = await fetch('/api/like', { method: 'POST' }); if (!r.ok) throw new Error('HTTP ' + r.status); }
+  catch (x) { if (k === 'good') { n.textContent = before; err.textContent = 'Could not save your like. Try again.'; } }
+}
+document.getElementById('like-good').addEventListener('click', () => like('good'));
+document.getElementById('like-bad').addEventListener('click', () => like('bad'));
+
+// 5 reduced motion: GOOD honours prefers-reduced-motion with an equivalent final state; BAD ignores it
+window.runReducedMotion = () => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  anime.animate('#rm-good', { translateX: 200, duration: reduce ? 0 : 1000, ease: 'linear' });
+  anime.animate('#rm-bad', { translateX: 200, duration: 1000, ease: 'linear' });
+};
+
+// 6 timeline lifecycle: GOOD reverts its scope on unmount; BAD only removes the node
+window.mountTimelines = () => {
+  window.scopeGood = anime.createScope({ root: '#tl-host-good' }).add(() => {
+    anime.createTimeline({ loop: true, onUpdate: () => bench.tl.good++ }).add('#tl-good', { translateX: 100, duration: 200 });
+  });
+  window.tlBad = anime.createTimeline({ loop: true, onUpdate: () => bench.tl.bad++ }).add('#tl-bad', { translateX: 100, duration: 200 });
+};
+window.unmountTimelines = () => {
+  window.scopeGood.revert();
+  document.getElementById('tl-good').remove();
+  document.getElementById('tl-bad').remove();
+};
+</script>
+</body>
+</html>

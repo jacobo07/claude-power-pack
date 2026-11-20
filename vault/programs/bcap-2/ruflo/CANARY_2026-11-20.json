@@ -1,0 +1,38 @@
+{
+ "drill": "BCAP-2 Phase 9 Ruflo canary (LAPTOP_STEPS.md), coordinator pane adcdff7b, 2026-11-20",
+ "sandbox": "GEX44 /home/kobii/ruflo-sandbox-bcap2/run (ruflo 3.78.0, --ignore-scripts install by the Phase 9 worker)",
+ "lockfile_sha256": "acff5e4bd32b5f3f1ba4d05733070f4176fff8587a418a24ce5dc8373b0bcba5",
+ "supply_chain": {
+  "npm_audit": {
+   "ran": true,
+   "rc": 0,
+   "vulnerabilities": {"info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0, "total": 0},
+   "evidence": "GEX44 run/npm_audit.json sha256 110f557d45163f10b6cad7ded20b4f02b26e7fd58b738354b960b82ea00a028f",
+   "gate": "modules/ruflo_gate audit_error -> None (0 high/critical)"
+  },
+  "npm_audit_signatures": {
+   "ran": true,
+   "rc": 1,
+   "verdict": "UNMEASURED",
+   "why": "EEXPIREDSIGNATUREKEY on json-schema-to-ts@3.1.1: GEX44's npm (node 18.19.1) predates the registry key rotation of 2025-01-29, so the instrument failed before judging. Not a signature failure. Re-run with npm >= 10 (node >= 20).",
+   "evidence": "GEX44 run/npm_audit_signatures.txt sha256 c18765b11077a4dcb903b883e41af890b81c9b5f8d69ba5634cfaa90fb16b21d"
+  }
+ },
+ "runtime_fixture_drive": {
+  "ran": false,
+  "verdict": "NOT RUN: no isolated plane exists",
+  "measured_blockers": [
+   "GEX44 bwrap 0.9.0 --unshare-net: 'loopback: Failed RTM_NEWADDR: Operation not permitted' (unprivileged user namespaces restricted); unshare -rn: uid_map write not permitted",
+   "GEX44 docker: permission denied on /var/run/docker.sock for user kobii",
+   "GEX44 node 18.19.1 < ruflo engines.node >=20.0.0",
+   "laptop npm broken ('Class extends value undefined is not a constructor or null'); Windows has no network namespace for node"
+  ],
+  "why_not_run_anyway": "driving the GHSA/#3294 fixtures means executing Ruflo's MCP server; without network isolation that is third-party code with live egress next to GEX44's live ~/.claude, which plan law 6 forbids",
+  "unblock_options": [
+   "GEX44: sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0 (or an AppArmor profile for bwrap) + node 20 in the sandbox, then bwrap --unshare-net",
+   "GEX44: add kobii to the docker group, then docker run --network none node:20 with the sandbox install mounted read-only",
+   "laptop: Windows Sandbox (.wsb with <Networking>Disable</Networking>) with portable node 20 and the install copied in"
+  ]
+ },
+ "readiness": "still REFUSED (not READY_FOR_CANARY): the advisory-fix-claims RESIDUAL stays open until the fixture drive runs on an isolated plane"
+}
