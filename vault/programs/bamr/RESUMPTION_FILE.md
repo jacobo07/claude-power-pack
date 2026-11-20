@@ -19,10 +19,8 @@ Owner caps: session <= 40 $ API-eq (soft 25 $). Autonomous model spend 0 — not
 8.45 $ at the census point (`ccn_bench.transcript_cost` on its own transcript) plus one Sonnet review (~72 k tokens).
 
 ## 4. Next executable obligation
-1. UKDL: append `scratchpad ukdl-bamr.md` entries (text is in the spec's UKDL section if the scratchpad is gone);
-   `vault/knowledge_base/ukdl-universal.md` carries another pane's uncommitted lines -> stage ONLY the BAMR hunk
-   (`git apply --cached` of a patch built against HEAD).
-2. P5 hold: BURN_OPTIMIZATION_REQUIRED in gsd_mission fed by `tools/burn_census.py` (supersede-after-spend first).
+1. DONE `17c6717a`: the 5 UKDL entries (verified 2026-11-20 by session 3da1f022: all 5 ids in the commit).
+2. P5 hold (design awaits Owner: trigger / scope / release; see spec "P5 design question"): BURN_OPTIMIZATION_REQUIRED in gsd_mission fed by `tools/burn_census.py` (supersede-after-spend first).
 3. P4 gaps (breaker 4 vs Regla 12 = 2; tool-failure signal; external-effect reconciliation).
 4. Owner: correct `~/.claude/state/account-governor.json` reset_at (official reset Wed 17:00 UTC) and calibration
    (`python tools/account_governor.py status --json` -> `implied_calibration_api_eq_per_100pct`).

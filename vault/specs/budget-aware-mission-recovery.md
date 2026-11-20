@@ -110,7 +110,12 @@ No second classifier was built: every class below already has an owner. Read 202
   asc_design_gate_run.py:108, asc_inherit_run.py:68, agent_carrier_run.py:128, compound_unattended.py:216,
   ccn_bench.py:87, exp_successor_packet.py:165, agent_discovery_curve.py:64.
 
-## UKDL entries to land (text kept here so it survives the session scratchpad)
+## UKDL entries (LANDED 17c6717a)
 T-QUOTA-ESTIMATE-IS-NOT-QUOTA-001, PR-ADMISSION-AT-EVERY-LAUNCH-PATH-001, T-HOST-NAME-DEFAULT-DOUBLE-COUNT-001,
-T-ADMISSION-CHECK-THAT-SCANS-001, T-SUPERSEDE-AFTER-SPEND-IS-THE-LARGEST-BURN-001 -- see `vault/knowledge_base/ukdl-universal.md`
-once landed; until then each is summarised in the Problem section above.
+T-ADMISSION-CHECK-THAT-SCANS-001, T-SUPERSEDE-AFTER-SPEND-IS-THE-LARGEST-BURN-001 -- in `vault/knowledge_base/ukdl-universal.md`.
+
+## P5 design question (open, Owner)
+The hold is named but undefined. It would be a new `set_owner_hold` kind (`tools/gsd_mission.py:1952`), not a new
+mechanism. Undecided: (a) trigger -- per mission at supersede/replace time when it spent >= N tokens with no tree
+change, vs at `arm` when the census class of the same repo already burned without change; (b) threshold N;
+(c) release -- Owner `release_owner_hold` only, or automatic once an optimisation record cites the census class.
