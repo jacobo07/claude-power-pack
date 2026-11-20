@@ -1703,3 +1703,12 @@ premises (HR-PREMISE-001) before acting on any. The other projects triage their 
 
 **Activation criterion:** any CDIO / design work starts, or a project named in the relay files opens its backlog,
 whichever comes first.
+
+## D43 -- Ascension self-certifying loop: per-function ledger + method ladder + agent-written methods (Owner 2026-11-20: "yes, fine, add to the backlog, but research even deeper")
+Origin: pane 5a77ca0e, answer to "most important systems for autonomy ... until everything's certified". Certification is a machine oracle (objdiff 100% / byte identity), so the loop needs a record of what was tried per function, not a planner inventing levers. Measured basis: LLM generations ~2 certs/1M tokens; 354M/week plan+judge overhead; 81 lane-hours/week day-cap parking; factory 8,687 fns in 12 min at 0 tokens (`vault/programs/ascension/factory/AUTONOMY-CAPABILITIES-2026-11-20.md`).
+1. **Per-function ledger** (first; no behaviour change): every function of the 5 binaries; state UNLIFTED / LIFT_FAIL / NO_COMPILE(class) / NEAR(pct) / MATCH / CERT / ASM_KEPT; methods tried + result; size; masked body hash. Bytes-remaining report daily.
+2. **Method ladder**, cheapest first, same oracle: cross-game/donor body transfer -> factory base/vs2 -> compile repair by error class -> flag arms -> permuter (>=90%) -> model worker on the residual with the function's history. 0-token steps apply via the F5 factory lane.
+3. **Agent-written methods**: cluster residual by failure class; a cluster with no working method -> the agent writes a transform/tool, tested on a held-out sample; gain with 0 lost -> joins the ladder for every game; else the negative goes into the ledger.
+4. **Yield-based budget**: tokens to the method with the highest certs per token now; stop a cluster on sustained zero yield; replaces day caps and most judging.
+Limits: hand-written asm ends as ASM_KEPT (verified identical); functions >=256 B (68-80% of bytes) match 0-7% today, so no completion is promised.
+Deep research (Owner same turn): `vault/programs/ascension/research/` (per-function failure atlas on GEX44 + external state of the art). Status: QUEUED.
