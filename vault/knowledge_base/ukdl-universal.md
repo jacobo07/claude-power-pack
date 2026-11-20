@@ -233,6 +233,30 @@ resumed. The rule already existed as a COMMENT in the same file ("a rearm below
 ~28 would never be reached after a compaction"); a comment is not a constraint.
 `2803576`; REARM_FLOOR_PCT=28, 8/8 with three negative controls, 3/3 mutations.
 
+### PR-SINGLE-USE-REFRESH-SUCCESSOR-001
+
+ABSORBED (realiti4/claude-swap `ee79e70`, MIT; `skills/claude-swap/references/architecture.md`, "Token refresh").
+An OAuth refresh token works once: after it is posted, only its successor is valid. Any code that
+refreshes a stored credential must (a) serialize refreshes per credential through ONE gate, (b) re-read
+the freshest copy immediately before posting, and (c) persist or stash the successor whatever else fails
+afterwards. If the successor is dropped, the login is destroyed, with no error at the moment it happens.
+Applies to any PP tool that refreshes a token held in a file, a vault or a keychain.
+
+### PR-CREDENTIAL-SLOT-OWNERSHIP-001
+
+ABSORBED (same source, "Rules that hold everywhere"). A live credential goes into a stored slot only
+when it is known to belong to that slot's identity. Writing account B's token into A's slot overwrites
+A's only refresh token. Decide ownership from the identity of the credential itself (a profile lookup
+done before any lock is taken), never from "which slot was active last".
+
+### PR-FOREIGN-LOCK-ORDER-NO-NETWORK-001
+
+ABSORBED (same source, `claude_locks.py` + "A switch"). A tool that mutates another program's files
+must take that program's own advisory locks, in that program's order, plus its own lock, in one fixed
+global order. It does only local I/O under them, with no network call. The one exception is documented
+and deliberate: refreshing the active credential inside the owner's own refresh lock, so the owner
+adopts the result instead of colliding with it.
+
 ### T-CANDIDATE-FACING-READS-AS-CANNOT-EVALUATE-001
 
 PROVEN. A foreign mesh imported for judging can arrive turned around, and the judge then reports CANNOT_EVALUATE ("forehead not
