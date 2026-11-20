@@ -1,0 +1,436 @@
+{
+  "bench": "vault/programs/bcap-2/browser/bench.html",
+  "bench_sha256": "43fa2e84e09cee3e9d96d04f8897f11b23cd971cbede94b1ccb40a67c60b1c73",
+  "anime": {
+    "package": "animejs",
+    "version": "4.5.0",
+    "file": "dist/bundles/anime.umd.min.js",
+    "source": "https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.umd.min.js",
+    "license": "MIT",
+    "sha256": "8d5b3a58a1f64023a04a4cedeef135a2263b18da04b35177ac13438a0bad033b"
+  },
+  "viewport": {
+    "width": 800,
+    "height": 700
+  },
+  "checks": [
+    {
+      "id": "UX-04 expanded",
+      "claim": "invisible hit area expands a 20px glyph to >=44px",
+      "measured": {
+        "x": 17,
+        "y": 90,
+        "w": 44,
+        "h": 45
+      },
+      "expected": [],
+      "got": [],
+      "ok": true
+    },
+    {
+      "id": "UX-04 bare",
+      "claim": "a bare 20px glyph is caught as undersized",
+      "measured": {
+        "x": 117,
+        "y": 102,
+        "w": 21,
+        "h": 21
+      },
+      "expected": [
+        "undersized-hit-target"
+      ],
+      "got": [
+        "undersized-hit-target"
+      ],
+      "ok": true
+    },
+    {
+      "id": "UX-04 click-outside",
+      "claim": "a tap 8px outside the glyph lands only on the expanded target",
+      "measured": {
+        "good": 1,
+        "bad": 0
+      },
+      "expected": {
+        "good": 1,
+        "bad": 0
+      },
+      "got": {
+        "good": 1,
+        "bad": 0
+      },
+      "ok": true
+    },
+    {
+      "id": "UX-05 label",
+      "claim": "the whole label row is the checkbox target",
+      "measured": {
+        "rect": {
+          "x": 29,
+          "y": 151,
+          "w": 148,
+          "h": 45
+        },
+        "checked_by_edge_click": true
+      },
+      "expected": [
+        true,
+        []
+      ],
+      "got": [
+        true,
+        []
+      ],
+      "ok": true
+    },
+    {
+      "id": "UX-06 nested good",
+      "claim": "nested Delete stops propagation (card not activated)",
+      "measured": {
+        "good": 0,
+        "bad": 1
+      },
+      "expected": [],
+      "got": [],
+      "ok": true
+    },
+    {
+      "id": "UX-06 nested bad",
+      "claim": "nested Delete that lets the tap reach the card is caught",
+      "measured": {
+        "good": 0,
+        "bad": 1
+      },
+      "expected": [
+        "nested-interactive-steals-tap"
+      ],
+      "got": [
+        "nested-interactive-steals-tap"
+      ],
+      "ok": true
+    },
+    {
+      "id": "UX-02 first-invalid",
+      "claim": "enabled submit moves focus to the first invalid field, scrolls it into view, shows why",
+      "measured": {
+        "id": "g-work",
+        "in_view": true,
+        "aria_invalid": "true",
+        "summary": true,
+        "msg_visible": true
+      },
+      "expected": {
+        "id": "g-work",
+        "in_view": true,
+        "aria_invalid": "true",
+        "summary": true,
+        "msg_visible": true
+      },
+      "got": {
+        "id": "g-work",
+        "in_view": true,
+        "aria_invalid": "true",
+        "summary": true,
+        "msg_visible": true
+      },
+      "ok": true
+    },
+    {
+      "id": "UX-01 good",
+      "claim": "submit that stays enabled and explains is not a disabled-control defect",
+      "measured": {
+        "disabled": false,
+        "inert_when_clicked": false
+      },
+      "expected": [],
+      "got": [],
+      "ok": true
+    },
+    {
+      "id": "UX-01 bad",
+      "claim": "disabled submit with no visible reason and no error path is caught",
+      "measured": {
+        "disabled": true,
+        "reason_visible": false,
+        "click_handler_fires": false,
+        "enabled_when_valid": true,
+        "blocked_by_validation": true,
+        "has_error_path": false
+      },
+      "expected": [
+        "opaque-disabled-action",
+        "validation-block-with-no-error-path"
+      ],
+      "got": [
+        "opaque-disabled-action",
+        "validation-block-with-no-error-path"
+      ],
+      "ok": true
+    },
+    {
+      "id": "UX-08 skeleton",
+      "claim": "skeleton reserving final geometry causes zero shift below it",
+      "measured": {
+        "good_px": 0.0,
+        "bad_px": 137.61,
+        "cls_total": 0
+      },
+      "expected": 0,
+      "got": 0.0,
+      "ok": true
+    },
+    {
+      "id": "UX-08 spinner",
+      "claim": "a 1-line spinner replaced by taller content shifts what is below",
+      "measured": {
+        "good_px": 0.0,
+        "bad_px": 137.61,
+        "cls_total": 0
+      },
+      "expected": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "id": "UX-07 route",
+      "claim": "waiting_pattern picks skeleton for a 600ms section with known geometry",
+      "measured": null,
+      "expected": "skeleton",
+      "got": "skeleton",
+      "ok": true
+    },
+    {
+      "id": "UX-11 good",
+      "claim": "optimistic count shows at once, rolls back on HTTP 500 and says so",
+      "measured": {
+        "good_immediate": "11",
+        "good_settled": "10",
+        "good_message": "Could not save your like. Try again.",
+        "bad_immediate": "11",
+        "bad_settled": "11",
+        "bad_message": ""
+      },
+      "expected": [
+        "11",
+        "10",
+        true
+      ],
+      "got": [
+        "11",
+        "10",
+        true
+      ],
+      "ok": true
+    },
+    {
+      "id": "UX-11 bad",
+      "claim": "an optimistic update with no rollback keeps a false count (caught)",
+      "measured": {
+        "good_immediate": "11",
+        "good_settled": "10",
+        "good_message": "Could not save your like. Try again.",
+        "bad_immediate": "11",
+        "bad_settled": "11",
+        "bad_message": ""
+      },
+      "expected": [
+        "11",
+        "11",
+        false
+      ],
+      "got": [
+        "11",
+        "11",
+        false
+      ],
+      "ok": true
+    },
+    {
+      "id": "UX-11 route",
+      "claim": "waiting_pattern picks optimistic for a reversible likely-success control",
+      "measured": null,
+      "expected": "optimistic",
+      "got": "optimistic",
+      "ok": true
+    },
+    {
+      "id": "AJS lifecycle good",
+      "claim": "scope.revert() on unmount stops the looping timeline",
+      "measured": {
+        "running": {
+          "good": 21,
+          "bad": 21
+        },
+        "at_unmount": {
+          "good": 21,
+          "bad": 25
+        },
+        "after_500ms": {
+          "good": 21,
+          "bad": 56
+        }
+      },
+      "expected": [
+        true,
+        0
+      ],
+      "got": [
+        true,
+        0
+      ],
+      "ok": true
+    },
+    {
+      "id": "AJS lifecycle bad",
+      "claim": "removing the node without cancel leaves the timeline ticking (caught)",
+      "measured": {
+        "running": {
+          "good": 21,
+          "bad": 21
+        },
+        "at_unmount": {
+          "good": 21,
+          "bad": 25
+        },
+        "after_500ms": {
+          "good": 21,
+          "bad": 56
+        }
+      },
+      "expected": [
+        true,
+        true
+      ],
+      "got": [
+        true,
+        true
+      ],
+      "ok": true
+    },
+    {
+      "id": "RM good",
+      "claim": "under reduce the honouring element is at its final state with no in-between",
+      "measured": {
+        "reduce": {
+          "t120ms": {
+            "good": 200,
+            "bad": 29.8
+          },
+          "t1320ms": {
+            "good": 200,
+            "bad": 200
+          }
+        },
+        "no-preference": {
+          "t120ms": {
+            "good": 28.4,
+            "bad": 28.4
+          },
+          "t1320ms": {
+            "good": 200,
+            "bad": 200
+          }
+        }
+      },
+      "expected": [
+        200,
+        200
+      ],
+      "got": [
+        200,
+        200
+      ],
+      "ok": true
+    },
+    {
+      "id": "RM bad",
+      "claim": "the element that ignores reduce is still mid-animation at 120ms (caught)",
+      "measured": {
+        "reduce": {
+          "t120ms": {
+            "good": 200,
+            "bad": 29.8
+          },
+          "t1320ms": {
+            "good": 200,
+            "bad": 200
+          }
+        },
+        "no-preference": {
+          "t120ms": {
+            "good": 28.4,
+            "bad": 28.4
+          },
+          "t1320ms": {
+            "good": 200,
+            "bad": 200
+          }
+        }
+      },
+      "expected": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "id": "RM equivalence",
+      "claim": "final states are equal with and without reduce",
+      "measured": {
+        "reduce": {
+          "t120ms": {
+            "good": 200,
+            "bad": 29.8
+          },
+          "t1320ms": {
+            "good": 200,
+            "bad": 200
+          }
+        },
+        "no-preference": {
+          "t120ms": {
+            "good": 28.4,
+            "bad": 28.4
+          },
+          "t1320ms": {
+            "good": 200,
+            "bad": 200
+          }
+        }
+      },
+      "expected": true,
+      "got": true,
+      "ok": true
+    },
+    {
+      "id": "RM motion still runs",
+      "claim": "without reduce the honouring element animates (not just disabled)",
+      "measured": {
+        "reduce": {
+          "t120ms": {
+            "good": 200,
+            "bad": 29.8
+          },
+          "t1320ms": {
+            "good": 200,
+            "bad": 200
+          }
+        },
+        "no-preference": {
+          "t120ms": {
+            "good": 28.4,
+            "bad": 28.4
+          },
+          "t1320ms": {
+            "good": 200,
+            "bad": 200
+          }
+        }
+      },
+      "expected": true,
+      "got": true,
+      "ok": true
+    }
+  ],
+  "chromium": "148.0.7778.96",
+  "passed": 21,
+  "failed": 0
+}

@@ -28,5 +28,36 @@ HEURISTIC, REJECT, UNVERIFIED. Machine-checked by `tools/test_bcap2_synsation.py
 | UX-19 | readiness/evidence/review/certification distinct | ALREADY OWNED | vault/knowledge_base/cdio/CDIO-03-trust-premium-intelligence.md | CDIO-03 trust-claim honesty; no legal taxonomy invented |
 | UX-20 | trust removes blockers, promises no demand | ALREADY OWNED | vault/knowledge_base/cdio/CDIO-04-conversion-intelligence-engine.md | CDIO-04 conversion honesty |
 
+## Audio re-inspection 2026-11-20 (laptop pane adcdff7b)
+
+The four videos were supplied in the laptop's Downloads; all four sha256 match the backlog table. Audio extracted with
+the vendored ffmpeg, transcribed offline by the video-analyzer bundled whisper.cpp (tiny q4_0, every run TRANSCRIPT_OK)
+on GEX44. Transcripts: `synsation/transcripts/<id>.txt` (machine transcription: names garbled, e.g. "Scalance" =
+skeleton, "sock-to" = SOC 2, "hip-hop" = HIPAA). Verdict per wording-dependent claim:
+
+| id | audio verdict | quote (timestamp) |
+|---|---|---|
+| UX-07 | CONFIRMED (scope); latency thresholds NOT in source (CPP heuristic) | skeleton "entire page or a large section"; progress "when you know how long"; inline spinner "small contained actions" (7de80ae3 0:11-0:42) |
+| UX-08 | CONFIRMED | "the layout is here, the data is coming" (7de80ae3 0:16) |
+| UX-09 | CONFIRMED | "a button you just clicked or one part of the page that's refreshing" (0:37) |
+| UX-10 | NOT IN SOURCE (CPP-derived from CDIO-07) | the source's spinner warning is different: "a spinner on a file upload people might assume that it's stuck" (0:34) |
+| UX-11 | CONFIRMED incl. rollback | "doesn't wait for the server ... Later it fails it rolls back" (0:52-0:55) |
+| UX-12 | CPP-DERIVED: the source praises "it feels instant"; truth-first is CPP's constraint | (0:55) |
+| UX-13 | CONFIRMED as a 4-way choice; numbers are CPP heuristics | "skeleton screen, a spinner, a progress bar or no loader at all" (0:01) |
+| UX-14 | CONFIRMED, SPONSORED | "depending on your product your data your customers your location" (86392f83 0:13); "I'm partnering with Vanta for this video" (1:22) |
+| UX-15 | PARTIAL: framework choice is the vendor's feature; the general compiler is CPP's generalisation | "you choose the framework you're working towards" (0:53) |
+| UX-16 | CONFIRMED | "what is up to standard and what still needs to be fixed" (0:53) |
+| UX-17 | CONFIRMED (vendor claim) | "connect ... to the systems that your company already uses ... organize the evidence" (0:48-1:04) |
+| UX-18 | CONFIRMED | "this work doesn't really end after the first audit" (1:04) |
+| UX-19 | CONFIRMED (evidence vs independent review) | "the evidence an independent auditor will eventually need to review" (1:00) |
+| UX-20 | CONFIRMED | "compliance will not automatically [win] customers ... but being prepared can stop it from becoming the reason that you lose them" (1:18) |
+
+Also confirmed by audio, UX-01..06: fe97b0a1 ("take them directly to those so they don't have to scroll", 0:33; keyboard
+and screen-reader discoverability, 0:38) and 14a28c4c (Fitts's law, invisible padding, clickable label/card, scroll-vs-tap
+on whole-card targets, 0:14-0:55). NEW from audio: disabled is correct "when you click a button and you're waiting
+... prevent duplicate submissions" (fe97b0a1 0:49). `check_disabled_control` flagged that case as opaque; it now exempts
+`pending_submission` only when `pending_visible` (poles + seeded mutant in test_bcap2_synsation). Evidence grade for
+UX-14..18: one sponsored source, so it is a vendor workflow, not independent UX evidence; dispositions above unchanged.
+
 Cross-cutting state-space ontology and negative corpus: NOT built; the executable checkers' defect vocabularies are the seed. Browser-real
 scenarios remain BLOCKED-ON-LAPTOP.

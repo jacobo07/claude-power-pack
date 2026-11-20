@@ -56,6 +56,8 @@ def poles(m):
         "latency-absent": wp("page", None)["pattern"] is None,
         "opaque": "opaque-disabled-action" in cd({"disabled": True}),
         "obvious-passes": cd({"disabled": True, "reason_visible": True}) == [],
+        "pending-visible-passes": cd({"disabled": True, "pending_submission": True, "pending_visible": True}) == [],
+        "pending-unseen-opaque": "opaque-disabled-action" in cd({"disabled": True, "pending_submission": True}),
         "clickable": "disabled-but-clickable" in cd({"disabled": True, "reason_visible": True, "click_handler_fires": True}),
         "val-block": "validation-block-with-no-error-path" in cd(
             {"disabled": True, "reason_visible": True, "blocked_by_validation": True}),
@@ -91,6 +93,8 @@ def test_mutants():
         ("absent-rect-passes", 'out.append({"id": t.get("id"), "defect": "undersized-hit-target", "detail": "no hit rect declared"})',
          "pass", "absent-rect"),
         ("opaque-ignored", 'out.append("opaque-disabled-action")', "pass", "opaque"),
+        ("pending-unseen-exempt", 'rec.get("pending_submission") and rec.get("pending_visible")',
+         'rec.get("pending_submission")', "pending-unseen-opaque"),
         ("nested-ignored", 'byid[p].get("interactive") and not t.get("stops_propagation")', "False", "nested"),
         ("overlap-blind", "if _overlap(rects[a], rects[b]):", "if False:", "overlap"),
     ]

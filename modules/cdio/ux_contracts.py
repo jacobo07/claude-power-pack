@@ -57,6 +57,10 @@ def check_disabled_control(rec):
         return out
     if rec.get("click_handler_fires"):
         out.append("disabled-but-clickable")
+    if rec.get("pending_submission") and rec.get("pending_visible"):
+        # UX-01 (source audio, fe97b0a1 0:49): disabled while a just-clicked action runs prevents duplicate
+        # submissions; the reason is the visible pending state itself. An unseen wait stays opaque.
+        return out
     if rec.get("enabled_when_valid") is False:
         out.append("stale-disabled-state")
     if not rec.get("reason_visible") and not rec.get("reason_text"):
