@@ -501,6 +501,20 @@ with tempfile.TemporaryDirectory() as t:
     check("BI-35 pole: self-review, no refusal proof, missing revert, bad status all named",
           len(BV.review_independent(dict(rv, reviewer="i", refusal_cases_proven=False, revert_path="", status="maybe"))) == 4)
 
+    # ---- BI-18 trace lane: real VTracer 0.6.15 output (fixture), measured, never accepted raw
+    from modules.ccf import trace_lane as TL
+    import re as _re
+    raw = (ROOT / "vault/programs/bcap-2/brand/fixtures_trace_ring.svg").read_bytes()
+    mt = TL.measure_trace(raw)
+    check("BI-18 measure: real trace has >=1 path and long raw decimals", mt["paths"] >= 1 and mt["max_decimals"] > 3, str(mt))
+    check("BI-18 pole: raw trace is refused as unrepaired even with an inspect decision",
+          any("precision" in x for x in TL.check_trace(raw, "inspect")))
+    repaired = _re.sub(r"(-?\d+\.\d{2})\d+", r"\1", raw.decode()).encode()
+    check("BI-18 control: the same trace rounded (repair) and decided passes", TL.check_trace(repaired, "repair") == [], str(TL.check_trace(repaired, "repair")))
+    check("BI-18 pole: no decision, reject, and empty SVG are each named",
+          any("decision" in x for x in TL.check_trace(repaired, None)) and any("reject" in x for x in TL.check_trace(repaired, "reject"))
+          and any("nothing traced" in x for x in TL.check_trace(b"<svg/>", "inspect")))
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-17, BI-19, BI-28, BI-29, BI-31, BI-34, BI-35) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-17, BI-18, BI-19, BI-28, BI-29, BI-31, BI-34, BI-35) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

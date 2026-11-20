@@ -698,6 +698,10 @@
     "ccf/brand_review": {
       "class": "LIBRARY",
       "note": "pure BI-17/19/28/31/35 typed SVG parts, multilingual glyph coverage, logo lens, benchmark and independent-review validators, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
+    },
+    "ccf/trace_lane": {
+      "class": "LIBRARY",
+      "note": "pure BI-18 traced-SVG measurement and inspect/repair/reject check, driven from both poles by tools/test_bcap2_brand.py against a real VTracer 0.6.15 output; not called by the CLI, so a library, not activated"
     }
   }
 }
