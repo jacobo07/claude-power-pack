@@ -13,7 +13,8 @@
   "links": ["orig/RMCP01", "build/compilers", "build/tools"],
   "runs": [
    {"run": "mkw-main-full", "producer": "factory", "lib": "FactoryF5", "compiler": "Wii/0x4201_127"},
-   {"run": "mkw-staticr-full", "producer": "factory", "lib": "FactoryF5", "compiler": "Wii/0x4201_127"}
+   {"run": "mkw-staticr-full", "producer": "factory", "lib": "FactoryF5", "compiler": "Wii/0x4201_127"},
+   {"run": "typegen/mkw-vs2-main-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/0x4201_127"}
   ]},
  {"lane": "MKWLIB", "binary": "RMCP01", "repo": "/home/kobii/missions/mkw-lib", "scratch": "/home/kobii/agora/factory/mkwlib-f2",
   "game": "RMCP01", "binaries": ["build/RMCP01/main.dol", "build/RMCP01/StaticR/StaticR.rel"], "report": "build/RMCP01/report.json",
@@ -26,6 +27,7 @@
   "game": "RZTP01", "binaries": ["build/RZTP01/main.dol"], "report": "build/RZTP01/report.json",
   "links": ["orig/RZTP01", "build/compilers", "build/tools"],
   "runs": [
-   {"run": "wsr-main-full", "producer": "factory", "lib": "FactoryF5", "compiler": "Wii/1.0"}
+   {"run": "wsr-main-full", "producer": "factory", "lib": "FactoryF5", "compiler": "Wii/1.0"},
+   {"run": "typegen/wsr-vs2-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/1.0"}
   ]}
 ]
