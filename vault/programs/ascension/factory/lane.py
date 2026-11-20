@@ -315,6 +315,15 @@ def apply(ln, st, pend):
         if d is None or d:  # review F2: a failed git diff is not "clean"
             log(f"{name}: lane tracked-dirty or unreadable {sorted(d or [])[:3]}; waiting")
             return
+        # Owner 2026-11-20 ("yes, all for autonomy"): hold only this lane's apply lock for the lane build. It is taken
+        # under cron.lock, and the autopilot skips a lane whose lock is held (autopilot.factory_applying), so cron.lock
+        # is released here instead of being held ~25-50 min while every other lane and the autopilot waited.
+        afd = lock_file(f"{H}/factory-apply-{name}.lock")
+        if afd is None:
+            log(f"{name}: factory-apply lock held by another process; retry next tick")
+            return
+        fd.close()
+        fd = afd  # the finally below releases the apply lock
         git(L, "fetch", "-q", S, pend["commit"])
         rc, t = git(L, "merge", "-q", "--ff-only", pend["commit"])
         if rc != 0:

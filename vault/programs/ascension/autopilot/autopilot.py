@@ -1842,6 +1842,25 @@ def _lock():
     return f
 
 
+def factory_applying(name: str) -> bool:
+    """Owner 2026-11-20 ("yes, all for autonomy", pane aa9f2e25): the 0-token factory lane (agora/factory/lane.py)
+    applies a gated commit holding HOME/factory-apply-<LANE>.lock instead of cron.lock for a whole lane build (a WSR
+    apply held cron.lock ~50 min and every lane's tick waited). It takes that lock under cron.lock, so a lane whose
+    lock is held is mid-apply: this tick leaves that lane alone and runs the others. True = held (skip the lane)."""
+    try:
+        import fcntl
+    except ImportError:  # Windows test host: no factory lane there
+        return False
+    f = open(HOME / f"factory-apply-{name}.lock", "w")
+    try:
+        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return True
+    finally:
+        f.close()
+    return False
+
+
 def main(argv: list[str]) -> int:
     global OUT
     cmd = argv[1] if len(argv) > 1 else "status"
@@ -1871,6 +1890,9 @@ def main(argv: list[str]) -> int:
     lanes = json.loads((HOME / "lanes.json").read_text())
     st = load_state()
     for lane in lanes:
+        if factory_applying(lane["name"]):
+            log(f"{lane['name']}: factory lane mid-apply (factory-apply-{lane['name']}.lock held); lane skipped this tick")
+            continue
         try:
             lane_tick(st, lane, dry)
         except Exception as exc:  # noqa: BLE001 -- one lane's failure never stops the other; it is logged and parked

@@ -1487,6 +1487,38 @@ def run_all(ap):
     hp6 = git(pr6, "rev-parse", "HEAD")
     ok7, n7 = E.ff_to(str(pr6), git(wt6, "rev-parse", "HEAD"))
     check("V-EVO-FF-TO-DIRTY-REFUSED", not ok7 and "tracked changes" in n7 and git(pr6, "rev-parse", "HEAD") == hp6)
+    # 2026-11-20 (Owner "yes, all for autonomy", pane aa9f2e25): a lane mid factory-apply is skipped, from both poles
+    try:
+        import fcntl
+    except ImportError:
+        fcntl = None
+    if fcntl is not None:
+        lf = open(ap.HOME / "factory-apply-ZZT.lock", "w")
+        check("V-AP-FACTORY-APPLY-FREE-ADMITS", ap.factory_applying("ZZT") is False)
+        fcntl.flock(lf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        check("V-AP-FACTORY-APPLY-HELD-SKIPS", ap.factory_applying("ZZT") is True)
+        lf.close()
+        check("V-AP-FACTORY-APPLY-RELEASED-ADMITS", ap.factory_applying("ZZT") is False)
+        # review aa9f (MEDIUM): pin the skip in main() itself, not only the helper -- a held lane is not ticked, the
+        # other lane is (a main() that ignores the helper, or skips everything, turns this red)
+        lj, had = ap.HOME / "lanes.json", (ap.HOME / "lanes.json").exists()
+        saved = lj.read_text() if had else None
+        real_tick, real_turn, ticked = ap.lane_tick, ap.OWNER_TURN, []
+        try:
+            lj.write_text(json.dumps([{"name": "ZZT"}, {"name": "ZZU"}]))
+            ap.lane_tick = lambda st, lane, dry: ticked.append(lane["name"])
+            ap.OWNER_TURN = "test:2026-11-20T00:00:00.000Z"
+            lf = open(ap.HOME / "factory-apply-ZZT.lock", "w")
+            fcntl.flock(lf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            ap.main(["autopilot.py", "tick"])
+            lf.close()
+            check("V-AP-FACTORY-APPLY-MAIN-SKIPS-HELD-LANE", ticked == ["ZZU"])
+        finally:
+            ap.lane_tick, ap.OWNER_TURN = real_tick, real_turn
+            if had:
+                lj.write_text(saved)
+            else:
+                lj.unlink()
     return [n for n, ok in results if not ok]
 
 
@@ -1727,6 +1759,12 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "arm_adds_missing_archive": lambda m: setattr(m, "arm_commit", (lambda real: lambda cwd, paths, msg, dry: real(
              cwd, [".planning/milestones/x-archived-0"] + [p for p in paths if "archived" not in p], msg, dry))(
              m.arm_commit))}
+try:  # review aa9f (MEDIUM): the factory-apply checks need fcntl; without it this mutant would survive by design
+    import fcntl as _fcntl  # noqa: F401
+    drill["factory_apply_ignored"] = lambda m: setattr(m, "factory_applying", lambda name: False)
+    drill["factory_apply_skips_all"] = lambda m: setattr(m, "factory_applying", lambda name: True)
+except ImportError:
+    pass
 survivors, crashed = [], []
 for name, mut in drill.items():
     m = load()
