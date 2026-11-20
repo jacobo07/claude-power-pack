@@ -60,6 +60,12 @@ Distilled from the Owner's ABSW2-Wii programme (`C:\Users\User\Desktop\Cursor Pr
 **Shipping status is asymmetric and must stay so**: `boot.dol` for the Homebrew Channel / USB Loader is the proven path; the DOL->ISO->WBFS wrap is documented and **UNPROVEN** — no ISO or WBFS has been produced and none has run on hardware.
 DONE for this absorption = `python tools/test_mobile_game_wii_port.py` exit 0 (V-MGWP-* gates, run from the repo root). Every detector is driven from both poles on real byte shapes, and `UNKNOWN` is asserted as reachable rather than only as a default.
 
+## claude-swap Activation Criteria (added 2026-11-20)
+Invoke the `claude-swap` skill (`skills/claude-swap/`, mirrored at `~/.claude/skills/claude-swap/`) when the Owner asks to add, switch, list or run in parallel more than one Claude Code account, asks about an account's 5h/7d/per-model usage or reset, or names cswap / claude-swap. Do not wait to be named.
+Upstream realiti4/claude-swap (MIT) is installed as a pinned tool (`uv tool install claude-swap==1.1.0`), not vendored. Account 1 has been registered since 2026-11-20.
+**Never run a global `cswap switch` under live panes.** The Windows credential is a file, so every running session changes account on its next message. For parallel work use `cswap run N` (session mode). `switch`, `auto`, `import`, `remove` and `purge` need the Owner's yes each time, and `auto` is never started unprompted.
+DONE for this absorption = `python tools/test_claude_swap.py` exit 0 (V-CSWAP-* gates).
+
 ## Experience Contract — baseline for any interactive surface (CDIO-07, added 2026-08-24)
 A surface is judged at rest by CDIO-01..06. How it BEHAVES — on touch, and while it waits —
 is declared, not settled by whoever writes the last component. Baseline, inherited by every
