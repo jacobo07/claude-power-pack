@@ -50,11 +50,38 @@ below 90% structure dominates (OPC+INSDEL 75-83%).
 our compile + objdiff 100.0)
 - Run 1 (compile cwd = /tmp): invalid instrument (23-62 iterations per budget). Run 2 (TMPDIR clean, compile.sh cwd =
   same growing dir): invalid (throughput fell as the dir filled). Run 3 (private dir per compile): valid.
-- Run 3 interim at 9/50: 1 MATCH (fn_8000FFF0, 98.57 -> 100.0 verified), 1 IMPROVED (98.03 -> 99.55), 7 NONE (several
-  stuck at score 5-10 = one register swap). Final result: see `research/perm_pilot.jsonl` on GEX44 and the update line
-  below.
+- **Run 3 final (50/50): 5 MATCH (10%), 19 IMPROVED, 26 NONE**, every MATCH re-verified by our compile + objdiff 100.0.
+  REGALLOC_ONLY 4/30 MATCH (sizes 16, 28, 76, 148 B) + 4 improved; INSDEL 1/20 MATCH (284 B) + 15/20 improved. 300 s
+  per function, 8,938-16,701 iterations. Reading: the permuter is a real 0-token operator at >=95% (about 1 in 10 per
+  5 minutes of 2 cores), and improvements are worth keeping as the next starting source (the ledger records them).
+
+## 7. After the Owner's "rec" (measured, 2026-11-20 ~13:00-13:50Z)
+- **/tmp cleanup:** `research/tmpclean.py` (dry run first; per item re-stat of owner + mtime > 2 days + no live cwd/fd
+  inside, immediately before its own deletion). DELETED 486,087 (= manifest `research/tmp_cleanup_manifest.txt` lines);
+  kept 35,617 recent, 76 in use, 1 gone. /tmp 737,395 -> 251,877 entries, and growing again (~+320 in minutes: the
+  leaking suites still run).
+- **Mechanism, corrected by a 2x2:** the cost is the compile's *working directory* being the crowded dir (mwcc via wibo
+  with cwd = /tmp: 25 s at 737k entries, 3.75 s at 251k); TMPDIR, an absolute input path in /tmp, or a sparse subdir of
+  /tmp cost nothing (0.013-0.023 s, rc 0, object written). Rule: **every compile runs in its own empty working dir.**
+  (An intermediate 6.9 s reading came from a stale copy of the run-1 compile.sh; discarded.)
+- **Ledger built** (`factory/ledger.py`, spec `vault/specs/ascension-function-ledger.md`): 21 runs discovered, 0
+  unmapped, 86,925 functions, 6,315 target objects hashed, build 15 s. AC (a) per-run counts == census.json for all four
+  atlas runs; (b) states sum per binary; (c) two builds -> identical report; (d) selftest both poles PASS. Bytes by state:
+  RMCP01 CERT 9.7% / NO_COMPILE 60.7% / LIFT_FAIL 18.6%; RZTP01 CERT 3.9% / LIFT_FAIL 29.6% / NO_COMPILE 26.8% /
+  TARGET_AMBIGUOUS 16.6%; SUPP01 CERT 2.7% (+1.3% MATCH gated) / NO_COMPILE 36.3%; TENNIS MATCH 5.1% (no lane carve yet,
+  D4) / COMPILES 31.1%; FIFA main.dol only, 90.4% UNATTEMPTED (the fifaf module split is not swept yet).
+- **Target drift is massive on MKW and WSR:** 15,457 (RMCP01) and 14,787 (RZTP01) functions have sweep attempts whose
+  target object no longer holds that symbol; their stored % describes rebuilt objects, so the ledger caps them at
+  COMPILES. The MKW/WSR sweeps must be re-run against pinned objects before their near misses can be worked.
+  80 MKW/MKWLIB snapshot names do not map to an address (34 + 44 unmapped, 2 ambiguous): counted, not dropped.
+- **Still open from the rulings:** the leaking suites (orca-prepare-gate, au-cli/au-mut-*, chkpat, lca-c-led, generic
+  mkdtemp) are not fixed; /tmp refills. PADDED detection is not built (column exists, NULL = not assessed).
 
 ## 6. Owner decisions
+**Owner 2026-11-20: "rec" (all three as recommended).** (1) Clean GEX44 /tmp of the leaked temp dirs (kobii-owned, idle
+> 2 days, known leaked prefixes; a name manifest is kept) and queue the leaking suites for a fix. (2) PADDED: a
+byte-identical match that needed stack padding counts as certified, tagged `PADDED`, reported separately. (3) Build the
+D43 ledger (step 1).
 1. Clean GEX44 `/tmp` (leaked test dirs of other systems) and fix the leaking suites? It taxes any compile run there.
 2. Does a byte-identical match that needed stack padding count as certified? (SMS rejects such matches as fake; our
    oracle is bytes, so it would count unless tagged.) Recommendation: count it, tag it `PADDED`, report it separately.
