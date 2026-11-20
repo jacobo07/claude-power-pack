@@ -16,6 +16,7 @@ from modules.ccf import (
     artifact_compiler,
     config_schema,
     contract_engine,
+    creative_checks,
     evaluation_engine,
     kit_readiness,
     knowledge_feed,
@@ -48,6 +49,7 @@ def _paths(project: str) -> dict:
         "releases_dir": os.path.join(ccf_dir, "releases"),
         "images_dir": os.path.join(ccf_dir, "images"),
         "manifest": os.path.join(ccf_dir, "manifest.json"),
+        "creative_checks": os.path.join(ccf_dir, "creative_checks.json"),
         "showcase_html": os.path.join(project, "showcase.html"),
         "showcase_pdf": os.path.join(project, "showcase.pdf"),
         "brandkit_html": os.path.join(project, "brandkit.html"),
@@ -193,6 +195,30 @@ def cmd_compile(args) -> int:
     return EXIT_OK
 
 
+def _creative_gate(paths, stage, config, dry_run, **ctx):
+    """BCAP-2 activation (vault/specs/bcap2-activation.md): run the stage's creative checks, report them, and
+    return an exit code when the stage must stop (config error, or an enforced check not passing), else None.
+    Report mode never changes the exit code; nothing is persisted on a dry run."""
+    report = creative_checks.run(stage, config, **ctx)
+    if report["errors"]:
+        for error in report["errors"]:
+            print(f"error: {error}")
+        return EXIT_VALIDATION_ERROR
+    print(creative_checks.summary(report))
+    if dry_run:
+        if report["blocking"]:
+            print(f"[dry-run] would block at {stage}: {', '.join(report['blocking'])}")
+        return None
+    record = _load_json(paths["creative_checks"], {})
+    record[stage] = dict(report, at=datetime.datetime.now(datetime.timezone.utc).isoformat())
+    _save_json(paths["creative_checks"], record)
+    if report["blocking"]:
+        print(f"error: enforced creative check(s) not passing at {stage}: {', '.join(report['blocking'])}"
+              + ("; no provider was called" if stage == "generate" else ""))
+        return EXIT_GATE_BLOCKED
+    return None
+
+
 def cmd_generate(args) -> int:
     paths = _paths(args.project)
     config, errors = config_schema.load_config(paths["config"])
@@ -209,6 +235,11 @@ def cmd_generate(args) -> int:
         if not concepts:
             print(f"error: no concept with id {args.only!r}")
             return EXIT_VALIDATION_ERROR
+
+    # Creative checks judge the whole concept set (territories need every concept), BEFORE any provider call.
+    stop = _creative_gate(paths, "generate", config, args.dry_run)
+    if stop is not None:
+        return stop
 
     # Load existing state so a --only run updates just its own concepts
     # rather than wiping out every other concept's prior results -- an
@@ -329,6 +360,13 @@ def cmd_select(args) -> int:
             f"({verdict_record['justification']}); re-run with --ack to acknowledge"
         )
         return EXIT_HUMAN_REQUIRED
+
+    # Critique (BI-14): a critique only suggests; under enforce, approval needs a human among >=2 qualifying
+    # directions. Decided BEFORE the WARN ack or the selection is persisted.
+    raw_config = _load_json(paths["config"], {}) or {}
+    stop = _creative_gate(paths, "select", raw_config, False, selected=args.concept, actor=args.by)
+    if stop is not None:
+        return stop
 
     human_acks = _load_json(paths["human_acks"], {})
     if verdict == "WARN" and args.ack:
