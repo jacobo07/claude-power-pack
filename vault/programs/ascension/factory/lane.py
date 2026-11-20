@@ -193,7 +193,10 @@ def prepare(ln, st):
     L, S, name = ln["repo"], ln["scratch"], ln["lane"]
     base, sig = head(L), runs_sig(ln)
     pend = st.get("pending")
-    if pend and pend["base"] == base and pend["sig"] == sig and head(S) == pend["commit"]:
+    # A gated commit stays valid while the lane is still at its base: the gate judged that commit, not the run set.
+    # Requiring an unchanged run set starved WIIPARTY (re-gated 13:01/13:55/14:22Z, never applied) because the
+    # permuter stage appends at :05/:35; new runs are carved next round, from the applied HEAD (done keeps pend sig).
+    if pend and pend["base"] == base and head(S) == pend["commit"]:
         return pend
     if st.get("done") == [base, sig]:
         log(f"{name}: runs already applied at {base[:7]}, nothing to do")
