@@ -119,6 +119,59 @@ SYNTHETIC_SPEC_SKILLS: list["SkillEntry"] = [
     ),
 ]
 
+# CPP-DBG-001: the causal-proof verifier, surfaced under the "diagnose" domain.
+SYNTHETIC_DIAGNOSE_SKILLS: list["SkillEntry"] = [
+    SkillEntry(
+        name="causal diagnosis verifier",
+        path=str(PP_ROOT / "modules" / "craif" / "diagnosis.py"),
+        description=(
+            "Use when something is broken, failing, flaky, slow or regressed: "
+            "build a red-capable loop first, rank falsifiable hypotheses, and "
+            "judge the investigation record before claiming a cause or a fix."
+        ),
+        domain="diagnose",
+        keywords=["broken", "failing", "regression", "flaky", "slow",
+                  "root cause", "crash", "intermittent"],
+        token_weight=80,
+        invoke="python3 -m modules.craif.diagnosis <record.json>",
+    ),
+]
+
+# CPP-TDD-001: evidence-aware TDD slice classifier, surfaced under "tdd".
+SYNTHETIC_TDD_SKILLS: list["SkillEntry"] = [
+    SkillEntry(
+        name="evidence-first tdd slice",
+        path=str(PP_ROOT / "modules" / "uqf" / "principles" / "tdd_workflow.py"),
+        description=(
+            "Use when adding or changing behavior: one vertical slice at a "
+            "time, a RED observed for the intended missing behavior before "
+            "the implementation, an independent oracle, minimum GREEN, safe "
+            "refactor; judge the evidence record before claiming test-first."
+        ),
+        domain="tdd",
+        keywords=["implement", "feature", "behavior", "endpoint", "support"],
+        token_weight=80,
+        invoke="python3 -m modules.uqf.principles.tdd_workflow <record.json>",
+    ),
+]
+
+# CPP-AGSK-001 (AGSK-C): diff-scoped quality-floor non-weakening guard, surfaced under "constraints".
+SYNTHETIC_CONSTRAINTS_SKILLS: list["SkillEntry"] = [
+    SkillEntry(
+        name="quality floor non-weakening guard",
+        path=str(PP_ROOT / "modules" / "sqi" / "floor_guard.py"),
+        description=(
+            "Use before declaring green when a check, test or threshold was "
+            "touched: run the diff-scoped floor guard to catch new "
+            "suppressions, stubs, skipped or stripped tests and loosened "
+            "thresholds; an exception needs an owner, reason and expiry."
+        ),
+        domain="constraints",
+        keywords=["suppress", "skip", "threshold", "noqa", "green", "weaken"],
+        token_weight=80,
+        invoke="python3 -m modules.sqi.floor_guard --base <ref>",
+    ),
+]
 
 _FM_RE = re.compile(r"^---\s*\n(.*?\n)---\s*\n", re.S)
 
@@ -256,7 +309,8 @@ def build_index(force: bool = False) -> list[SkillEntry]:
                 continue
     # Append synthetic spec-driven CLI cards whose target file exists on
     # disk (a broken/absent tool gets no dangling pointer).
-    entries.extend(s for s in SYNTHETIC_SPEC_SKILLS
+    entries.extend(s for s in SYNTHETIC_SPEC_SKILLS + SYNTHETIC_DIAGNOSE_SKILLS
+                   + SYNTHETIC_TDD_SKILLS + SYNTHETIC_CONSTRAINTS_SKILLS
                    if Path(s.path).is_file())
     _write_cache(entries)
     return entries

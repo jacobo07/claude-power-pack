@@ -1592,8 +1592,11 @@ def _skill_router_inject(fn):
                     lines.append(f"  - {s.name}: run `{s.invoke}`")
                 else:
                     lines.append(f"  - {s.name}: invoke via the Skill tool")
-            label = ("Spec-driven (L/XL) build intent"
-                     if res.domain == "spec" else "Frontend/design intent")
+            label = {"spec": "Spec-driven (L/XL) build intent",
+                     "diagnose": "Bug-diagnosis intent (build a red-capable loop before any fix)",
+                     "tdd": "Behavior-change intent (observe a valid RED for one slice before implementing)",
+                     "constraints": "Quality-bar weakening intent (run the diff-scoped floor guard before declaring green)",
+                     }.get(res.domain, "Frontend/design intent")
             card = (
                 f"[sleepy-skill] {label} detected (confidence "
                 f"{res.confidence:.2f}). Pointer only — consider:\n"

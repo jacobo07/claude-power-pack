@@ -17,6 +17,7 @@ from modules.ccf import (
     config_schema,
     contract_engine,
     evaluation_engine,
+    kit_readiness,
     knowledge_feed,
     model_adapter,
     prompt_compiler,
@@ -102,12 +103,14 @@ def _drop_artifact(paths: dict, concept_id: str, manifest: dict) -> None:
         os.remove(stale)
 
 
-def _keep_artifact(paths: dict, concept_id: str, png: bytes, manifest: dict) -> dict:
+def _keep_artifact(paths: dict, concept_id: str, png: bytes, manifest: dict, concept: dict = None) -> dict:
     os.makedirs(paths["images_dir"], exist_ok=True)
     rel = os.path.join(".ccf", "images", f"{concept_id}.png")
     with open(os.path.join(paths["root"], rel), "wb") as handle:
         handle.write(png)
     entry = {"path": rel, "sha256": artifact_compiler.sha256_hex(png), "size": len(png)}
+    if concept is not None:
+        entry["concept_sha"] = kit_readiness.concept_sha(concept)
     manifest.setdefault("artifacts", {})[concept_id] = entry
     return entry
 
@@ -261,7 +264,7 @@ def cmd_generate(args) -> int:
                 error_detail="artifact_invalid: provider returned OK without a complete PNG")
         record_out = _artifact_to_record(artifact)
         if artifact.status == "OK":
-            record_out.update(_keep_artifact(paths, concept["id"], artifact_compiler.png_evidence(artifact), manifest))
+            record_out.update(_keep_artifact(paths, concept["id"], artifact_compiler.png_evidence(artifact), manifest, concept))
         else:
             _drop_artifact(paths, concept["id"], manifest)
         artifact_records[concept["id"]] = record_out
@@ -376,6 +379,23 @@ def cmd_package(args) -> int:
         with open(paths["brandkit_pdf"], "wb") as handle:
             handle.write(bundle["pdf_bytes"])
 
+    readiness = None
+    if bundle["built"]:
+        view = image_artifact_views.get(selected_id)
+        asset_dir = os.path.join(paths["ccf_dir"], "assets")
+        extras = {}
+        if os.path.isdir(asset_dir):
+            for name in sorted(os.listdir(asset_dir)):
+                with open(os.path.join(asset_dir, name), "rb") as handle:
+                    extras[name] = handle.read()
+        manifest_entry = _load_manifest(paths).get("artifacts", {}).get(selected_id)
+        readiness = kit_readiness.assess(getattr(view, "image_bytes", None) or b"", bundle["pdf_bytes"],
+                                         selected_concept, manifest_entry, extras)
+        if readiness["state"] == "BLOCKED":
+            print("BLOCKED: kit readiness: " + "; ".join(readiness["reasons"]))
+            print("brand package written for inspection but is NOT release-eligible")
+            return EXIT_GATE_BLOCKED
+
     result = release_manager.release(
         prompt_records=prompts,
         scan_verdicts=scan_report,
@@ -396,10 +416,11 @@ def cmd_package(args) -> int:
     existing = [int(name.split(".")[0]) for name in os.listdir(releases_dir) if name.endswith(".json")]
     version = (max(existing) + 1) if existing else 1
     package_record = dict(result["package"])
+    package_record["readiness"] = readiness
     package_record["config_snapshot"] = config
     package_record["spec_snapshot"] = _load_json(paths["spec"], {})
     _save_json(os.path.join(releases_dir, f"{version}.json"), package_record)
-    print(f"SEALED: brand package released as version {version}")
+    print(f"SEALED: brand package released as version {version} (readiness {readiness['state'] if readiness else 'n/a'})")
     return EXIT_OK
 
 

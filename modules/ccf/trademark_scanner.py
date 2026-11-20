@@ -18,10 +18,11 @@ update can retroactively re-flag it (`cpp creative audit`).
 from __future__ import annotations
 
 import difflib
+import re
 
 BLOCK_THRESHOLD = 0.60
 WARN_THRESHOLD = 0.35
-CORPUS_VERSION = "1.0"
+CORPUS_VERSION = "1.1"
 
 # Seed entries. Airbnb is mandatory -- it is the founding failure case
 # (CCF-F01) this component exists to catch. Additional entries are common
@@ -44,6 +45,33 @@ KNOWN_MARKS = {
         "phrases": ["an apple silhouette with a bite taken out and a leaf"],
     },
 }
+
+
+# BCAP2-07 (BR-16): paraphrase recall. Phrase similarity alone scored a literal "check-shaped swoosh"
+# PASS. Each known mark lists independent signature GROUPS of whole-word tokens; two distinct groups matched
+# is a BLOCK-level signal (one group alone is too common to act on). Still a first-pass filter, not clearance.
+SIGNATURES = {
+    "Nike": [{"swoosh", "swish", "tick", "checkmark", "check"}, {"curved", "curve", "wing", "sweeping"}],
+    "Apple": [{"apple"}, {"bite", "bitten", "leaf"}],
+    "Airbnb": [{"loop", "looping", "ring"}, {"continuous", "single-line", "monoline"}, {"pin", "heart", "belo"}],
+    "McDonalds": [{"arches", "arch"}, {"golden", "double-arch"}],
+    "Target": [{"bullseye", "concentric"}, {"red", "circles", "rings"}],
+    "Mercedes": [{"three-pointed", "tri-pointed"}, {"star", "circle", "ring"}],
+    "Adidas": [{"stripes", "three-stripe"}, {"diagonal", "mountain", "triangle"}],
+    "Twitter": [{"bird", "songbird"}, {"blue", "flying", "perched"}],
+}
+SIGNATURE_BLOCK = 0.65
+
+
+def _signature_score(icon_description: str):
+    words = set(re.findall(r"[a-z][a-z-]*", (icon_description or "").lower()))
+    best, best_mark = 0.0, None
+    for mark, groups in SIGNATURES.items():
+        hit = sum(1 for g in groups if words & g)
+        score = SIGNATURE_BLOCK if hit >= 2 else 0.0
+        if score > best:
+            best, best_mark = score, mark
+    return best, best_mark
 
 
 def _phrase_similarity(icon_description: str, phrases: list) -> float:
@@ -73,6 +101,10 @@ def scan(concept_id: str, icon_description: str, semantic_avoid: list = None) ->
         if score > best_score:
             best_score = score
             best_mark = mark
+
+    sig_score, sig_mark = _signature_score(icon_description)
+    if sig_score > best_score:
+        best_score, best_mark = sig_score, sig_mark
 
     if best_score >= BLOCK_THRESHOLD:
         verdict = "BLOCK"

@@ -347,3 +347,16 @@ def judge(st: dict, cwd: str, routes: dict, na: dict | None = None) -> dict:
     res["waived"] = {k: v for k, v in na.items() if k in CHECKS}
     res["problems"] = [p for p in problems if p["check"] not in res["waived"]]
     return res
+
+
+def ux_findings(waiting=None, disabled=None, targets=None) -> dict:
+    """Declared-record UX contract findings (BCAP2-05, modules/cdio/ux_contracts.py). Absent input -> absent key, never a pass."""
+    from modules.cdio import ux_contracts as ux
+    res = {}
+    if waiting is not None:
+        res["waiting"] = ux.waiting_pattern(**waiting)
+    if disabled is not None:
+        res["disabled"] = ux.check_disabled_control(disabled)
+    if targets is not None:
+        res["targets"] = ux.check_hit_targets(targets)
+    return res

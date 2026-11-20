@@ -1,0 +1,127 @@
+{
+ "checked": "2026-11-19T18:21:14.491649+00:00",
+ "method": "backlog pin resolved via GitHub API; LICENSE bytes hashed at that SHA; mattpocock/skills at default HEAD (no pin existed)",
+ "rows": [
+  {
+   "repo": "fatihaydost/brand-identity-skill",
+   "backlog_pin": "532742d7",
+   "pin_resolves": true,
+   "sha": "532742d7477dba3b744433adf92845642953dc28",
+   "spdx_detector": "MIT",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "e5752c117331230800416425ef6ac33d214747e6509a2241d93d76ab9d8b8d6e",
+   "license_head": "MIT License Copyright (c) 2026 Fatih Aydost Permission is hereby granted, free o"
+  },
+  {
+   "repo": "moayadMoatamed/Marker-AI",
+   "backlog_pin": "d14340c3",
+   "pin_resolves": true,
+   "sha": "d14340c372730899950419dd9c0dd34b31116d6c",
+   "spdx_detector": "NOASSERTION",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "7d4cd23d7abf5c1323daaca6849e79f304775fb33a9bf634579203da7c69bd0a",
+   "license_head": "Apache License Version 2.0, January 2004 http://www.apache.org/licenses/ TERMS A"
+  },
+  {
+   "repo": "velinussage/brand-gen",
+   "backlog_pin": "3fff970a",
+   "pin_resolves": true,
+   "sha": "3fff970ac7e44fb2609b0f4047438a2a59346509",
+   "spdx_detector": "MIT",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "97e12a0eb29d53b25ce40796fc6de6c595342ef91f045c76286d1177d755fb62",
+   "license_head": "MIT License Copyright (c) 2026 brand-gen contributors Permission is hereby grant"
+  },
+  {
+   "repo": "xianshi3/sigilgen",
+   "backlog_pin": "c3f605b7",
+   "pin_resolves": true,
+   "sha": "c3f605b7864b41a3319fc25dacca6174b0aa897b",
+   "spdx_detector": "MIT",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "7f8b44aea9bd9774ddcb4d45cb287282333f9954980ab200bef3fd2fc22a746a",
+   "license_head": "MIT License Copyright (c) 2026 Sigilgen contributors Permission is hereby grante"
+  },
+  {
+   "repo": "Leonxlnx/imagegen-skills",
+   "backlog_pin": "beb16b0d",
+   "pin_resolves": true,
+   "sha": "beb16b0d0f4dae9a6f5cb04ea41e97b93a54ab8e",
+   "spdx_detector": "MIT",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "4575a543ab88dad12ccea7d97e563d0bce5b448b06072e65d3264497dad326df",
+   "license_head": "MIT License Copyright (c) 2026 Leonxlnx Permission is hereby granted, free of ch"
+  },
+  {
+   "repo": "mcpware/logoloom",
+   "backlog_pin": "9e5de3e9",
+   "pin_resolves": true,
+   "sha": "9e5de3e95d24fd86ea9af3cbe77749df088ad176",
+   "spdx_detector": "MIT",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "d71432da6f09c4a67d73db7febb4ed53ef32ab508f2ea0fbe59acbb89cdc923e",
+   "license_head": "MIT License Copyright (c) 2026 mcpware Permission is hereby granted, free of cha"
+  },
+  {
+   "repo": "yakew7/DesignHub",
+   "backlog_pin": "148e8c3f",
+   "pin_resolves": true,
+   "sha": "148e8c3ffa8ea82801b3cfb16ef91b4ca515d285",
+   "spdx_detector": "MIT",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "6ef0af778836f6238885e8dbd7d06075316eb7fc424a12e41912f14eecc2c04e",
+   "license_head": "MIT License Copyright (c) 2026 DesignHub contributors Permission is hereby grant"
+  },
+  {
+   "repo": "Forge-Space/branding-mcp",
+   "backlog_pin": "5128f2ea",
+   "pin_resolves": true,
+   "sha": "5128f2ea59d19976e6670c791fea2b72bba336e5",
+   "spdx_detector": "MIT",
+   "archived": true,
+   "license_file": "LICENSE",
+   "license_sha256": "2850d25ec12cc2709151d9a32d23e26c209d2e3a5f7dede9dcc8db901bf058da",
+   "license_head": "MIT License Copyright (c) 2026 Siza Permission is hereby granted, free of charge"
+  },
+  {
+   "repo": "pbakaus/impeccable",
+   "backlog_pin": "dad8dbb3",
+   "pin_resolves": true,
+   "sha": "dad8dbb3aac21ad1fa236c110315ef4abece23e8",
+   "spdx_detector": "Apache-2.0",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "02bb8c3b4e70190e3986c0404ad2fd8d639b4f534252d82379cc1b502b6d1812",
+   "license_head": "Apache License Version 2.0, January 2004 http://www.apache.org/licenses/ TERMS A"
+  },
+  {
+   "repo": "op7418/logo-generator-skill",
+   "backlog_pin": "bf4e9ac4",
+   "pin_resolves": true,
+   "sha": "bf4e9ac4d4428bda261afcfe981871ceb92d94e6",
+   "spdx_detector": null,
+   "archived": false,
+   "license_file": null,
+   "license_sha256": null,
+   "license_head": null
+  },
+  {
+   "repo": "mattpocock/skills",
+   "backlog_pin": null,
+   "pin_resolves": true,
+   "sha": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+   "spdx_detector": "MIT",
+   "archived": false,
+   "license_file": "LICENSE",
+   "license_sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5",
+   "license_head": "MIT License Copyright (c) 2026 Matt Pocock Permission is hereby granted, free of"
+  }
+ ]
+}

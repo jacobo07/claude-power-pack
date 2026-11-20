@@ -151,6 +151,50 @@
       "class": "PLANNED",
       "note": "cascade_prevention/__init__.py's public API (blocker/engine/surfaces/types) does not export pre_mortem -- built extension to the now-LIVE cascade gate (Workstream A), not yet exposed"
     },
+    "ruflo_gate/__init__": {
+      "class": "LIBRARY",
+      "note": "empty package marker for ruflo_gate/gate (see that entry)"
+    },
+    "ruflo_gate/gate": {
+      "class": "LIBRARY",
+      "note": "CPP-owned Ruflo HOLD controls (BCAP-2 Phase 9). Imported by vault/programs/bcap-2/ruflo/install_sandbox.py (the only sanctioned Ruflo install path) and driven by tools/test_bcap2_ruflo.py; it is a gateway a future Ruflo capability must pass through, not a hook. Not wired into a live hook: nothing of Ruflo is activated, so there is nothing to intercept yet"
+    },
+    "ccf/asset_validator": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (`python -m modules.ccf.cli`, CLAUDE.md CCF Activation Criteria) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines; also driven through the CLI by tools/test_bcap2_brand.py (BR-09/12/13) -- verified, not a wiring gap"
+    },
+    "ccf/techniques": {
+      "class": "LIBRARY",
+      "note": "pure BI-10 technique-taxonomy hypothesis check (12 names verified against pinned Marker-AI d14340c3, method only, own wording), driven from both poles by tools/test_bcap2_brand.py; not yet consulted by cli.py generate, so a library, not activated"
+    },
+    "ccf/territories": {
+      "class": "LIBRARY",
+      "note": "pure BI-09 multi-territory check, driven from both poles by tools/test_bcap2_brand.py; not yet called by cli.py generate (wiring into generate is a later BI-09 step), so it is a library, not activated"
+    },
+    "ccf/critique": {
+      "class": "LIBRARY",
+      "note": "pure BI-14 evidence/judgment critique and human-only approval gate, driven from both poles by tools/test_bcap2_brand.py; not yet called by cli.py select (wiring is a later BI-14 step), so a library, not activated"
+    },
+    "ccf/brand_truth": {
+      "class": "LIBRARY",
+      "note": "pure BI-08 brand-truth intake, driven from both poles by tools/test_bcap2_brand.py; not yet fed by `cli init --brief` or a CrawlOS reader (a later BI-08 step), so a library, not activated"
+    },
+    "ccf/visual_dna": {
+      "class": "LIBRARY",
+      "note": "pure BI-12 Visual DNA contract validator and token derivation, driven from both poles by tools/test_bcap2_brand.py; not yet compiled into DESIGN.md by the CLI (a later BI-12 step), so a library, not activated"
+    },
+    "ccf/provider_policy": {
+      "class": "LIBRARY",
+      "note": "pure BI-13 provider routing/bounds policy, driven from both poles by tools/test_bcap2_brand.py; not yet consulted by cli.py generate / model_adapter (a later BI-13 step; no provider is called by it), so a library, not activated"
+    },
+    "ccf/identity_set": {
+      "class": "LIBRARY",
+      "note": "pure BI-11 identity-set validator with computed WCAG contrast and KEEP/REFRESH preservation, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI (a later BI-11 step), so a library, not activated"
+    },
+    "ccf/kit_readiness": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (`python -m modules.ccf.cli`, CLAUDE.md CCF Activation Criteria) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines; also driven through the CLI by tools/test_bcap2_brand.py (BR-09/12/13) -- verified, not a wiring gap"
+    },
     "ccf/artifact_compiler": {
       "class": "LIBRARY",
       "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
@@ -642,6 +686,22 @@
     "wrapper/verify_before_emit": {
       "class": "LIBRARY",
       "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    "ccf/brand_color": {
+      "class": "LIBRARY",
+      "note": "pure BI-20 contrast/deltaE palette checker, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
+    },
+    "ccf/brand_release": {
+      "class": "LIBRARY",
+      "note": "pure BI-15/22/23/25/26/29/34 derivative, DTCG, manifest, preview, similarity and applicability validators, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
+    },
+    "ccf/brand_review": {
+      "class": "LIBRARY",
+      "note": "pure BI-17/19/28/31/35 typed SVG parts, multilingual glyph coverage, logo lens, benchmark and independent-review validators, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
+    },
+    "ccf/trace_lane": {
+      "class": "LIBRARY",
+      "note": "pure BI-18 traced-SVG measurement and inspect/repair/reject check, driven from both poles by tools/test_bcap2_brand.py against a real VTracer 0.6.15 output; not called by the CLI, so a library, not activated"
     }
   }
 }

@@ -1,6 +1,6 @@
 # Backlog — CPP-TDD-001: Evidence-First TDD & Behavioral Verification Ratchet
 
-**Created:** 2026-10-11 · **Status:** BACKLOG / NOT STARTED · **Priority:** P1 (candidate; reprioritize against observed work) · **Source:** https://www.skills.sh/mattpocock/skills/tdd · **Owner intent:** absorb the useful test-first discipline into Claude Power Pack (CPP) so its existing engineering verification is stronger, more economical and provably executed.
+**Created:** 2026-10-11 · **Status:** PARTIALLY_PROVEN (BCAP-2 phase 2, mission/bcap-2-run; residuals in vault/programs/bcap-2/tdd/REUSE_LEDGER.md) · **Priority:** P1 (candidate; reprioritize against observed work) · **Source:** https://www.skills.sh/mattpocock/skills/tdd · **Owner intent:** absorb the useful test-first discipline into Claude Power Pack (CPP) so its existing engineering verification is stronger, more economical and provably executed.
 
 ## Mission and non-goals
 

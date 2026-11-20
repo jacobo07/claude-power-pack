@@ -1,0 +1,16 @@
+{
+ "agsk": {
+  "repo": "addyosmani/agent-skills",
+  "sha": "8c99fa36d90068c82d547f7c12a9d67a3e95f4ee",
+  "license_sha256": "6f202f8bd568cd730dbb2b0d1f8e243bc74c2fa1f64dbce9b2c7ea08bd5c9fd7",
+  "license_head": "MIT License Copyright (c) 2025 Addy Osmani Permission is hereby granted, free of"
+ },
+ "mattpocock": {
+  "tree_sha": "abeeaf95660ba9e8b7c753eb38f441ca707a8823",
+  "skill_paths": [
+   "skills/engineering/diagnosing-bugs/SKILL.md",
+   "skills/engineering/tdd/SKILL.md"
+  ]
+ },
+ "checked": "2026-11-19T18:26:23.561693+00:00"
+}

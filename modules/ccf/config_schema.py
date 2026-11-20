@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 
+from modules.ccf.asset_validator import safe_concept_id
+
 SCHEMA_VERSION = "1.0"
 
 CONCEPT_REQUIRED_FIELDS = ("id", "font", "colours", "bg", "wordmark", "avoid", "icon")
@@ -63,6 +65,9 @@ def validate_config(config: dict) -> tuple:
                 concept_id = concept.get("id", f"#{index}")
                 errors.append(f"{label} (id={concept_id!r}) is missing required field '{req_field}'")
         concept_id = concept.get("id")
+        if concept_id is not None and not safe_concept_id(concept_id):
+            # BR-08: the id becomes a file name and a manifest key; never a path or a shell word
+            errors.append(f"{label} id {concept_id!r} is unsafe: use letters, digits, '_' or '-' (max 64)")
         if concept_id is not None:
             if concept_id in seen_ids:
                 errors.append(f"{label} has duplicate id {concept_id!r}")

@@ -1,0 +1,39 @@
+{
+ "retrieved_at": "2026-11-19T21:05:37.404036Z",
+ "method": "GitHub REST API read-only, unauthenticated",
+ "note": "repo-level licence only; per-component licence NOT assessed (D21-D01/D02/D04 need it); rights_status unchanged",
+ "rows": [
+  {
+   "repo": "shadcn-ui/ui",
+   "spdx": "MIT",
+   "head": "f50887ae68d0fdcbfbe86b57be08af94a4c88a68",
+   "license_sha256": "1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f",
+   "archived": false,
+   "pushed_at": "2026-11-19T16:44:27Z"
+  },
+  {
+   "repo": "magicuidesign/magicui",
+   "spdx": "MIT",
+   "head": "b0b2e4974b1b68cd5278277c6837a27736e20c3a",
+   "license_sha256": "0147b84235ed916b8b4e89c1f80655351c5afe7d211b629be61f553a227b34ba",
+   "archived": false,
+   "pushed_at": "2026-11-17T12:47:26Z"
+  },
+  {
+   "repo": "ibelick/motion-primitives",
+   "spdx": "MIT",
+   "head": "120f64f6ca60348e251f929e9c81f11ccbe45eda",
+   "license_sha256": "f668f5ef3635eb906f10b1eea9a32e449eb6e1a183ab6879ef6d56c0980dd2f3",
+   "archived": false,
+   "pushed_at": "2026-09-28T13:32:11Z"
+  },
+  {
+   "repo": "juliangarnier/anime",
+   "spdx": "MIT",
+   "head": "01b81be1df6843ccfe0a71c0699a746bf740dd77",
+   "license_sha256": "3f3e835a9952cfc2a6ca836fb95b3257c981f24fa3ef51249055acb09931897b",
+   "archived": false,
+   "pushed_at": "2026-11-02T22:25:55Z"
+  }
+ ]
+}

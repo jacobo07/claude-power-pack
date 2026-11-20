@@ -39,6 +39,10 @@ INTENT_SIGNALS: dict[str, dict[str, tuple[str, ...]]] = {
             "make it look", "web page", "html page", "dashboard",
             "artifact", "frontend", "wireframe", "mockup",
             "design system", "hero section", "style the page",
+            # motion work (CPP-ANIME-001): route without naming a library
+            "animate this", "animate the", "scroll-driven", "scroll driven",
+            "draw this svg", "svg path", "draggable", "stagger", "choreograph",
+            "scroll animation", "motion responsive",
             # ES
             "página de aterrizaje", "componente react", "haz una web",
             "diseña una", "interfaz de usuario",
@@ -88,6 +92,68 @@ INTENT_SIGNALS: dict[str, dict[str, tuple[str, ...]]] = {
             "fix a bug", "fix this", "fix the", "add a test",
             "format", "rename", "comment", "lint", "typo",
             "small change", "quick fix", "one line",
+        ),
+    },
+    "diagnose": {
+        # Observed-failure language (CPP-DBG-001). Routes to the causal-proof
+        # verifier card; never names a skill the Owner must remember.
+        "strong": (
+            "root cause", "stopped working", "keeps failing", "keeps crashing",
+            "is broken", "are broken", "doesn't work", "does not work",
+            "regression", "flaky", "intermittent", "why is it slow",
+            "got slower", "regressed", "slower than", "fails with", "is failing", "diagnose",
+            # ES
+            "no funciona", "dejo de funcionar", "se rompio", "se rompió",
+            "falla intermitente", "causa raiz", "causa raíz",
+        ),
+        "medium": (
+            "broken", "fails", "failing", "slow", "crash", "crashes",
+            "error", "bug", "hangs", "stuck", "falla", "lento",
+        ),
+        "negative": (
+            "typo", "lint", "rename", "format", "comment", "add a test",
+            "write a prd", "from scratch", "landing page",
+        ),
+    },
+    "tdd": {
+        # Behavior-change language (CPP-TDD-001). Wakes a pointer to the
+        # evidence-aware slice classifier; docs/refactor/format stay quiet.
+        "strong": (
+            "implement", "add a feature", "new feature", "add support for",
+            "add an endpoint", "add a function", "add a command",
+            "make it so that", "should now", "new behavior", "new behaviour",
+            # ES
+            "implementa", "agrega la funcion", "agrega la función",
+            "nueva funcionalidad", "añade soporte",
+        ),
+        "medium": (),
+        "negative": (
+            "typo", "readme", "docs only", "documentation", "rename",
+            "lint", "format", "comment", "refactor", "landing page",
+            "root cause", "keeps failing", "is broken", "from scratch",
+            "build a complete", "build a full", "write a prd", "design the architecture",
+            "regression", "flaky",
+        ),
+    },
+    "constraints": {
+        # Quality-bar weakening language (CPP-AGSK-001 AGSK-C). Wakes a pointer to the
+        # diff-scoped floor guard; ordinary test/lint work and failures stay quiet.
+        "strong": (
+            "skip the test", "skip the failing test", "skip this test",
+            "disable the lint", "disable the check", "silence the warning",
+            "silence the lint", "suppress the warning", "suppress the error",
+            "add noqa", "add a noqa", "ts-ignore", "lower the threshold",
+            "lower the coverage", "relax the threshold", "make the build green",
+            "get the build green", "get it green", "weaken", "quality bar",
+            # ES
+            "saltar el test", "silenciar el lint", "bajar el umbral",
+            "bajar la cobertura", "desactivar el lint",
+        ),
+        "medium": (),
+        "negative": (
+            "typo", "readme", "documentation", "landing page", "root cause",
+            "keeps failing", "is broken", "regression", "flaky", "from scratch",
+            "build a complete", "write a prd",
         ),
     },
 }

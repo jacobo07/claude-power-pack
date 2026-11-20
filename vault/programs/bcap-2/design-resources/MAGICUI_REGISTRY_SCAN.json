@@ -1,0 +1,12 @@
+{
+ "repo": "magicuidesign/magicui",
+ "commit_prefix": "b0b2e497",
+ "files": 80,
+ "with_marker": [
+  "apps/www/registry/magicui/floating-3d-particles.tsx"
+ ],
+ "fetched": 80,
+ "failed": [],
+ "note": "Regex hit on floating-3d-particles.tsx is a false positive ('(c) => c + c', line 79). Effective: 0 of 80 files carry a per-file licence/copyright marker; they inherit the repo MIT LICENSE.md. Free repo only; paid Pro site not assessed.",
+ "effective_markers": []
+}

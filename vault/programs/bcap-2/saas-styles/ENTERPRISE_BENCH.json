@@ -1,0 +1,77 @@
+{
+ "source": "vault/backlog/2026-10-02_cdio-modern-saas-styles.md 'Banco enterprise medido' (2026-10-03, GEX44 Chromium headless 1440x900 light theme)",
+ "substitute": "public demo component of each system, not the product; None = not measured (never 'absent')",
+ "background": "7/7 white or near-white (#fff-#f5f6f7), recorded in the source table prose",
+ "systems": {
+  "Carbon": {
+   "row_px": 48,
+   "header_px": 48,
+   "text_px": 14,
+   "ink_contrast": 7.1,
+   "header_weight": 600,
+   "header_tint": 1.32,
+   "zebra": false,
+   "divider_contrast": 1.55
+  },
+  "Lightning": {
+   "row_px": 36.5,
+   "header_px": null,
+   "text_px": 13,
+   "ink_contrast": 6.69,
+   "header_weight": null,
+   "header_tint": null,
+   "zebra": false,
+   "divider_contrast": null
+  },
+  "Atlassian": {
+   "row_px": 45,
+   "header_px": 34,
+   "text_px": 14,
+   "ink_contrast": 14.34,
+   "header_weight": 653,
+   "header_tint": 1.0,
+   "zebra": true,
+   "divider_contrast": null
+  },
+  "Fluent 2": {
+   "row_px": 45,
+   "header_px": 32.5,
+   "text_px": 14,
+   "ink_contrast": 14.87,
+   "header_weight": 400,
+   "header_tint": 1.0,
+   "zebra": false,
+   "divider_contrast": 1.26
+  },
+  "Primer": {
+   "row_px": 37,
+   "header_px": 38,
+   "text_px": 12,
+   "ink_contrast": 15.8,
+   "header_weight": 600,
+   "header_tint": 1.06,
+   "zebra": false,
+   "divider_contrast": 1.43
+  },
+  "UI5": {
+   "row_px": 32,
+   "header_px": 34,
+   "text_px": 14,
+   "ink_contrast": 16.86,
+   "header_weight": 400,
+   "header_tint": 1.08,
+   "zebra": true,
+   "divider_contrast": 2.15
+  },
+  "Ant": {
+   "row_px": 55,
+   "header_px": 55,
+   "text_px": 14,
+   "ink_contrast": 16.48,
+   "header_weight": 600,
+   "header_tint": 1.04,
+   "zebra": false,
+   "divider_contrast": 1.14
+  }
+ }
+}

@@ -1,9 +1,231 @@
 # STATE: bcap2
 
 status: ARMING 2026-11-19 on GEX44 (Owner "continua esa mision de absorcion hasta terminarlo todo"; vehicle BCAP-2 GEX44)
-current_phase: 1 (not started)
+current_phase: 5 (phases 1-4 PARTIALLY_PROVEN)
 authority: 120M processed tokens + 3 x 40M top-ups (only with commits outside .planning/ since the last grant)
 base: laptop feature/knowledge-acquisition committed HEAD at arm (the commit that adds this file)
 
 ## Phase log
 (empty — the worker appends one section per phase: gate, measured numbers, spend, 5-line meta-analysis)
+
+### Phase 1 CPP-DBG-001: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_dbg.py` exit 0, 37 PASS / 0 FAIL (20 adversarial fixtures + real bug 96b6f09a red->green). Liveness offenders 56->56.
+spend: ~3.4M processed tokens (`mission_spend session-tree`, transcript ea6857df, incl. context re-reads); ceiling 14M.
+meta-analysis:
+1. The backlog assumed a CRAIF causal engine; the code says diagnosis is not CRAIF's role. Scanning first avoided building on a false premise.
+2. Built a record verifier (extend CRAIF), not an engine; honest cost: nothing yet emits records live (R2).
+3. Upstream skill was never fetched (R1); do it read-only before closing.
+4. Hook-blocked `git stash drop` taught: use a WIP commit, not stash, for baselines in this shared repo.
+5. Next: Phase 2 TDD shares fix.* fields with this verifier; wire done_gate there (R4).
+
+### Phase 2 CPP-TDD-001: PARTIALLY_PROVEN
+gate: `BCAP2_TDD_PYTHON=<venv py> python3 tools/test_bcap2_tdd.py` exit 0, 65 PASS / 0 FAIL (14 backlog fixtures + variants, real test_gaps mutation poles, routing, real slice 96b6f09a, CLI). Phase 1 gate 37/0. Liveness offenders 56->56.
+spend: ~2.4M processed tokens this session (`mission_spend session-tree`, def2ee92, main only); ceiling 12M.
+meta-analysis:
+1. P07's file-presence check was the whole premise gap; keeping it as HEURISTIC_ONLY beside an evidence classifier avoided replacing a live registry entry.
+2. No new verdict enum: stage facts map to strength_ladder keys, and the honest ceiling is ADVERSARIALLY-VERIFIED because TDD evidence supplies no production facts.
+3. The mutator was reused unchanged; running it for real needed pytest+pytest-cov, absent on GEX44, so the gate fails loudly without BCAP2_TDD_PYTHON instead of skipping.
+4. Nothing emits records live (R1) and done_gate/intent-verify do not consume them (R2): the card is a pointer; same weakness as Phase 1.
+5. Next: Phase 3 AGSK (no dependency). Owed read-only upstream fetches (DBG R1, TDD R3) batch into one network step.
+
+### Phase 3 CPP-AGSK-001: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_agsk.py` exit 0, 55 PASS / 0 FAIL (ledger integrity, floor_guard both poles, routing recall/precision, liveness). Phase 1 gate 37/0. Liveness offenders 56->56.
+pilot: AGSK-C constraint non-weakening absorbed as `modules/sqi/floor_guard.py` (diff-scoped; MIT NOTICE, pin 8c99fa36), latent card under domain "constraints" (not always-on).
+residuals: 34 upstream rows in DISPOSITIONS.md are basis=HYPOTHESIS (only the pilot is READ); 7 rows UNVERIFIED (AGSK-B/D/E/F gaps unmeasured); nothing emits floor_guard live from done_gate (same weakness as Phases 1-2); closing needs those scans.
+meta-analysis:
+1. Scanning first showed 26 skills not 25; honest basis column stops a hypothesis reading as an absorption claim.
+2. One pilot slice done fully beats 26 shallow ones; EXTEND landed beside the sqi census, no new router.
+3. Routing negatives (typo, root cause, failing) pinned so the new card does not steal diagnose/tdd.
+4. Weakening fixtures trip the auto-mode classifier on Write: edit via small Edits only.
+5. Next: Phase 4 Anime.js (no dependency); batch owed upstream fetches (DBG R1, TDD R3) into one read-only network step.
+
+### Phase 3 scan notes (historical)
+Upstream pinned 8c99fa36 (MIT); scan notes and next steps in vault/programs/bcap-2/agsk/REUSE_LEDGER.md. No implementation yet. Spend this session before the wall: ~179k resident context (second session of epoch 2).
+
+> Coordinator note 2026-11-19T16:5xZ (laptop pane 2cf9ec6d, Owner-approved): epochs 3 and 4 hung ~2 h on a host
+> permission prompt for `Write tools/test_bcap2_agsk.py` (auto-mode classifier reads the seeded test-weakening
+> fixtures as test tampering). The coordinator placed the worker's exact attempted content (11,350 chars) at that path.
+> Do NOT re-create it with Write; change it with small Edit calls. Keep seeded-weakening fixtures in this file only.
+
+### Phase 4 Anime.js into PP Design: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_animejs.py` exit 0, 35 PASS / 0 FAIL (corpus, resolver poles, 5 seeded-red parser mutants, ledger, routing, no-dependency). Also green: test_cdio 8/8, test_motion_grammar 46/46, Phases 1-3 gates. Liveness offenders 56->56.
+upstream: juliangarnier/anime @ 01b81be1 v4.5.0 MIT (NOTICE in vault/programs/bcap-2/animejs/). 21 capability rows each with one disposition; 3 new registered patterns VP-AJS-001..003 + selection/lifecycle doctrine `visual-patterns/motion-library-selection.md`; frontend routing now wakes on motion prompts without naming a library.
+residuals: no real-browser verification (reduced-motion exercised, timeline cancel, unmount cleanup, bundle size) -> LAPTOP/browser plane; 26 upstream examples not individually read; Animatable, motion-path UNVERIFIED; baseline-ratchet promotion not evaluated; evidence_level stays `research`.
+meta-analysis:
+1. Upstream src has zero reduced-motion handling: the floor must stay a CPP property, now written into doctrine.
+2. Most of the surface (scroll, draw, text, layout) was already owned by visual-patterns: 4 ALREADY OWNED rows, 3 new patterns only.
+3. Regression caught by running the neighbouring gate: a new CDIO-13 file broke the pinned 13-dataset count; doctrine moved to visual-patterns, no dataset added.
+4. Routing was blind to "animate this hero"; fixed with narrow strong phrases, negatives checked.
+5. Next: Phase 5 Synsation (same owners, reuse the VP corpus mechanics).
+
+### Phase 5 Synsation UX: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_synsation.py` exit 0, 35 PASS / 0 FAIL (poles, 8 seeded-red source mutants, ledger UX-01..20, corpus, design_route wiring). Also green: test_cdio 8/8, test_motion_grammar 46/46, animejs 35/0, agsk 55/0, dbg 37/0, design_route 46/0. Liveness offenders 56->56.
+built: `modules/cdio/ux_contracts.py` (waiting_pattern, check_disabled_control, check_hit_targets; wired via `design_route.ux_findings`), patterns VP-SYN-001/002 (hypothesis).
+decisions: new patterns set min moderate/medium because restrained dashboard must keep resolving to VP-018 only (pinned by test_motion_grammar); no CDIO-13 file.
+residuals: videos not on GEX44 (INFERRED claims) and browser-real checks -> LAPTOP_STEPS.md; UX-14..18 UNVERIFIED/HEURISTIC only; no UKDL/HR promotion.
+pre-existing failures NOT caused by this work (verified identical at 5f60f05a): `test_cdio_componentry` V-CMP-WIRING (suite pins EXPECTED_DATASETS = 12; live-mirror) ; `test_bcap2_tdd` V-TDD-MUT-REAL (system python lacks pytest/coverage; set BCAP2_TDD_PYTHON).
+owed: Phase 1/2 upstream-fetch residuals; backlog Status lines for Phases 3/4 (deferred-backlog rows for 3/4 not yet updated).
+
+### Phase 6 CDIO SaaS styles: SCAN ONLY (PARTIALLY_PROVEN, no new code)
+Scan: vault/programs/bcap-2/saas-styles/REUSE_LEDGER.md. Style 1 open rules need real-browser measurement of third-party sites (laptop plane); style 2 blocked by 403 access; style 3 needs the Owner pick below.
+OWNER DECISION NEEDED: style 3 "enterprise systematic": (a) new aesthetic family F11 (changes scorer KNOWN_FAMILIES + font sanction + f10 boundary test), or (b) a structural experience axis in the CDIO-09 style with no scorer change. Evidence (7-brand bench) favours (b): identity is structural, palette is near F1. My pick if forced: (b), reversible and internal. Not implemented.
+
+### Phase 7 Brand Identity: PARTIALLY_PROVEN (BR-01..16 complete)
+built (CCF owner extended, no new owner): modules/ccf/asset_validator.py, kit_readiness.py, PDF embeds the logo, unsafe concept ids rejected (BR-08 real path-traversal defect), release refuses missing/stale scan (BR-05 real defect), scanner signature recall (corpus 1.1).
+gate: `python3 tools/test_bcap2_brand.py` exit 0, 71 PASS / 0 FAIL (BR-01..16, both poles; BR-11 determinism, BR-12 blob via CLI, BR-13 edit-after-generate, BR-14 licence poles, BR-15 partial provider failure, BR-16 frozen recall 8/8 + no false BLOCK + `--by llm` cannot override BLOCK). Also green: modules/ccf/test_ccf.py 16, test_asc_ccf. Liveness offenders 56->58->56 (asset_validator/kit_readiness declared LIBRARY in the registry, same multi-line-import precedent as the other ccf modules).
+ledger: vault/programs/bcap-2/brand/REUSE_LEDGER.md (10 repos all HYPOTHESIS, none fetched; Marker-AI LICENSE_CONFLICT; LogoLoom unsafe behaviours pinned as negatives).
+residuals: no real render/resvg, no mono-variant check, no font-file parse; scanner is first-pass only (3/5 clean descriptions WARN); BI-08..35 mostly not started; upstream unfetched.
+meta-analysis: 1. Two real defects found by driving the CLI, not unit helpers (BR-05, BR-08). 2. Fixture words "ring"/"curve" trip scanner WARNs: fixtures avoid them. 3. Backlog files for Phases 3/4/6 have no Status line; deferred-backlog index rows now updated for 3, 4, 6, 7. 4. Next: Phase 8.
+pre-existing failures unchanged: V-CMP-WIRING, V-TDD-MUT-REAL. Spend not re-measured this epoch (supervisor last: 26.2M of 120M).
+
+### Phase 8 21 design resources: PARTIALLY_PROVEN (Workstream A slice only)
+gate: `python3 tools/test_bcap2_d21.py` exit 0 (V-D21-01/02/03/04/05/06/07/09/10/24/25/31/36 + A06). Brand gate 71 PASS unchanged. Liveness offenders 56->56.
+built: modules/cdicf/source_intake.py, vault/programs/bcap-2/design-resources/{SOURCES.json,REUSE_LEDGER.md}. Fail-closed rights gate; item-level evidence wins over source posture; denominator pinned in code.
+residuals: no network (all 21 live_verified=false), capability denominators UNKNOWN, 23/36 scenarios undriven, Workstreams B-H not started.
+decision: UNKNOWN-rights sources may admit an item that carries its own licence evidence (backlog: component-level licence is authoritative); REFERENCE_ONLY/RESTRICTED/UNKNOWN_ACCESS never admit code.
+next: Phase 9 Ruflo (independent); one batched read-only upstream fetch step for owed Phase 1/2/7/8 residuals.
+
+### Phase 9 Ruflo CPP-RUFLO-001: PARTIALLY_PROVEN
+gate: `python3 tools/test_bcap2_ruflo.py` exit 0 (attack/benign poles for 27 cases + permissive-mutant drill + real manifest + ledger binding). Liveness: ruflo_gate declared LIBRARY, no new orphans.
+built: modules/ruflo_gate/gate.py (controls for 8 GHSA, #3294, #4750, #3157, plugin/MCP default-deny, lifecycle scan, install envelope, version coherence); vault/programs/bcap-2/ruflo/{HOLDS.json (19: 17 corrected, 2 residual), REUSE_LEDGER.md, install_sandbox.py}.
+install: inert pinned v3.78.0 in /home/kobii/ruflo-sandbox-bcap2/run (--ignore-scripts, scrubbed env, nothing started, smoke `ruflo v3.78.0`). Real finding: @claude-flow/browser postinstall does `npm install -g`.
+decision: law 6 uncorrectable holds (no provenance attestation, unverified maintainer fix claim) => no activation/trust, inert study copy only. Reversible (rm -rf the sandbox).
+residuals: see ledger (runtime advisory verification, dist identity, netns blocked on host, npm audit unrecorded). Laptop step logged.
+next: Phase 10 closeout.
+
+### Phase 10 Closeout: DONE (the gate and the report; items stay PARTIALLY_PROVEN)
+`python3 vault/programs/bcap-2/done_gate.py` exit 0 (8 item gates, liveness, ledgers). HANDOFF: vault/programs/bcap-2/HANDOFF.md. No item is ACTIVATED. Next work = fetch pass, Phase 8 B-H, Phase 7 BI-08..35, laptop steps, Owner style-3 decision.
+
+### Epoch 10 reachability pass (Phase 8)
+Status-only GET of all 21 sources: 30 URLs, 27x HTTP 200, 3x 403 (designmd.ai, vibeprompts.dev, uiverse.io site; its github galaxy repo is 200). Evidence: vault/programs/bcap-2/design-resources/LIVE_CHECK.json. Reachability only: no content read, `live_verified` left false, rights and capability denominators unchanged. D21-08 vibeprompts stays UNKNOWN_ACCESS.
+Still owed: per-repo licence + pinned-commit fetch (Phases 1, 2, 3, 7, 8), Phase 8 B-H, Phase 7 BI-08..35, Owner style-3 decision. Spend not re-measured this epoch.
+
+### Epoch 10 repo-metadata pass (Phase 8)
+GitHub REST metadata for the 9 listed repos: vault/programs/bcap-2/design-resources/REPO_META.json. 8 with an SPDX licence (MIT x6, Apache-2.0 x1 design.md, uiverse galaxy MIT but last push 2024-09); ckissi/kinetics (D21-15) has NO detected licence -> must not admit code (fail-closed rights gate stands). Detector field only, LICENSE text not read, no commit pinned, `live_verified` unchanged; SOURCES.json untouched. Next: read LICENSE text at a pinned SHA per repo, then flip live_verified with the gate.
+
+### Epoch 10 licence-pin pass (Phase 8)
+vault/programs/bcap-2/design-resources/LICENSE_PINS.json: HEAD sha + sha256 of raw LICENSE bytes for the 9 repos. 7 LICENSE files read and head matches the detector (MIT x6, Apache-2.0 design.md). Two gaps: ibelick/motion-primitives (D21-14) detector says MIT but no LICENSE file under the 4 names tried -> treat as UNVERIFIED, not admitted; ckissi/kinetics (D21-15) no licence at all -> stays refused. Head text only, not legal analysis. `live_verified` and SOURCES.json still unchanged (page-level content and capability denominators not read).
+
+### Epoch 10 upstream-pin pass (Phase 7 brand + Phases 1/2 mattpocock)
+vault/programs/bcap-2/brand/UPSTREAM_PINS.json: all 10 brand backlog pins resolve via the GitHub API; LICENSE bytes hashed at each pinned SHA. Confirms ledger claims: Marker-AI LICENSE file is Apache-2.0 while detector says NOASSERTION (LICENSE_CONFLICT stands, README MIT claim not re-read); Forge-Space/branding-mcp archived. NEW: op7418/logo-generator-skill has NO licence -> reference only, never adapt. mattpocock/skills (Phase 1 diagnosing-bugs, Phase 2 tdd) LICENSE MIT at default HEAD; the per-skill subpath was not located/read, so DBG R1 and TDD R3 stay open (pin + licence of the repo known, skill content unread). Ledger rows still read HYPOTHESIS: not edited (gates pin them); evidence level unchanged.
+
+### Epoch 10 Phase 3 + mattpocock locate pass
+vault/programs/bcap-2/agsk/UPSTREAM_PINS.json: addyosmani/agent-skills @ 8c99fa36 re-resolved, MIT LICENSE sha256 recorded (agrees with the ledger; Phase 3 had no residual here). mattpocock/skills subpaths located at tree abeeaf95: skills/engineering/diagnosing-bugs/SKILL.md and skills/engineering/tdd/SKILL.md (MIT repo). Content NOT yet read: DBG R1 / TDD R3 now reduce to "read those two files at a pinned SHA and disposition them", no longer "find them". HEAD was unpinned at fetch time; the commit SHA still has to be recorded when they are read.
+
+### Epoch 10 mattpocock read
+Both skills read at pin abeeaf95; dispositions in vault/programs/bcap-2/dbg/MATTPOCOCK_READ.md. DBG R1 and TDD R3 reading closed; candidate gaps listed there are NOT yet checked against fixtures or implemented (next: verify each against test_bcap2_dbg 20 fixtures / test_bcap2_tdd, add missing ones with both poles).
+
+### Epoch 11 mattpocock gaps
+DBG +2 codes (NO-SEAM-UNRECORDED, MUTATION-NOT-LANDED), TDD tautology detector; poles in both gates; details in vault/programs/bcap-2/dbg/MATTPOCOCK_READ.md. Horizontal-slicing deferred. Spend not re-measured. Remaining: Phase 8 B-H + live_verified, Phase 7 BI-08..35, Owner style-3 pick (I chose (b)), laptop steps.
+
+### Epoch 12 Phase 8 pin wiring
+SOURCES.json now carries `license_pin` (pinned sha, licence sha256, spdx) for the 9 GitHub-backed sources, copied from LICENSE_PINS.json; gate +5 checks (V-D21-05, both poles incl. seeded mutant): the rights gate admits exactly the 7 licensed repos, refuses motion-primitives (no LICENSE file) and kinetics (none). `live_verified` stays false everywhere (page content unread). Gate 33 checks, exit 0; done_gate consistent. Spend not re-measured. Remaining unchanged: Phase 8 B-H, Phase 7 BI-08..35, laptop steps.
+
+### Epoch 13 Phase 8 Workstreams B/C slice
+built: modules/cdicf/reference_intel.py (rank with licence filter + diversity guard + ABSTAIN, design-decision brief validator, OBSERVED/INFERRED/UNKNOWN tokens, project-contract-wins merge, motion NONE abstain). gate: `python3 tools/test_bcap2_d21_bc.py` exit 0 (D21-B05/B06, V-D21-12/13/18, both poles + drill). Not yet in done_gate. Liveness offenders 56->56. Phase 8 stays PARTIALLY_PROVEN: B01-B04/B07 corpus, C01-C05/C07/C08, D-H not started; V-D21-11 drift reconciliation undone.
+decision: ranking floor 0.34 and weights 0.5/0.3/0.2 are provisional (unmeasured vs keyword baseline; Gate B baseline comparison still owed). Spend not re-measured.
+
+### Epoch 13b V-D21-11 drift reconciled
+modules/design-md/README.md licence line now records DRIFT (old "Proprietary" kept visible, upstream repo LICENSE Apache-2.0 at pinned db977b3c); npm package licence field still UNVERIFIED (not read). test_bcap2_d21 +4 checks. Remaining Phase 8: B corpus, C, D-H; Phase 7 BI-08..35.
+
+### Epoch 13c D21-C07
+reference_intel.fidelity_claims: a 1:1/pixel-perfect claim needs observed text/states/responsive/fonts/a11y evidence; absent = unobserved. +6 checks in test_bcap2_d21_bc. Done gate PASS.
+
+### Epoch 14: BI-09 territories
+modules/ccf/territories.py (pure check_territories: >=3 distinct mechanism+brand_fact, recolour/missing not counted, reasoned narrow-brief exception is its own verdict). 7 checks in test_bcap2_brand, LIBRARY-declared, in done_gate NEW_MODULES; not yet wired into `cli generate` (stays PARTIALLY_PROVEN). Remaining: BI-08, BI-10..14, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-14 critique
+modules/ccf/critique.py (pure): evidence needs an instrument else demoted to judgment; unassessed criteria never pass; approve() only by human among >=2 qualifying directions. 7 checks, LIBRARY, in NEW_MODULES; not wired into `cli select` (PARTIALLY_PROVEN). Remaining: BI-08, BI-10..13, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-08 brand truth
+modules/ccf/brand_truth.py (pure intake): observed needs source+retrieved_at else rejected; empty/unknown-field/bad-origin rejected; missing fields listed unknown; clearance always NOT_ASSESSED. 5 checks, LIBRARY, in NEW_MODULES; not fed by `cli init --brief` or CrawlOS yet (PARTIALLY_PROVEN). Remaining: BI-10..13, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-12 Visual DNA
+modules/ccf/visual_dna.py (pure): versioned 1.0 contract, validate() lists problems never repairs, tokens_for() derives colour tokens and refuses to fork a project-pinned token (SSOT wins). 7 checks, LIBRARY, in NEW_MODULES; not yet compiled into DESIGN.md by the CLI (PARTIALLY_PROVEN). Remaining: BI-10, BI-11, BI-13, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-13 provider policy
+modules/ccf/provider_policy.py (pure, no provider call): route() = vector unless deterministic_possible is False AND a need is stated (unmeasured flagged, never buys an image call); plan_call() needs distinct fallback, tool bound 4, refuses parallel_orchestration/agent_memories/unverified_claims imports; cost/token/latency fields start None not 0. 7 checks, LIBRARY, in NEW_MODULES; not consulted by generate yet (PARTIALLY_PROVEN). Note: SDD-OS hook reported NOT_READY (front-matter missing) for the binding plan file; that file is the Owner-approved plan, left unedited. Remaining: BI-10, BI-11, Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 14: BI-11 identity set
+modules/ccf/identity_set.py (pure): 2-4 axes, rationale, category-default challenge, WCAG contrast computed (>=4.5), typography observation; KEEP preserves logo/font/palette, REFRESH preserves logo/font. 7 checks, LIBRARY, in NEW_MODULES; not called by CLI (PARTIALLY_PROVEN). Remaining: BI-10 (needs pinned fetch), Phase 8 B01-B04/B07 + C rest, D-H. Spend not re-measured.
+
+### Epoch 15: BI-10 technique taxonomy
+Pinned fetch of Marker-AI d14340c3 references/techniques.md (read-only): the 12 technique names are verified. modules/ccf/techniques.py (pure, method only, own wording because the licence conflict stands): check_hypothesis needs a registered technique, a >=4-word brand observation and a recipe whose steps each name a geometric operation; self_rating echoed UNVERIFIED, measured_originality always None. 6 checks in test_bcap2_brand, LIBRARY, in NEW_MODULES; not consulted by `cli generate` (PARTIALLY_PROVEN). Done gate PASS. Remaining: Phase 8 B01-B04/B07 + C rest, D-H; BI-08..14 CLI wiring; BI-15..35. Spend not re-measured.
+
+### Epoch 15b: D21-B07 corpus + ranker defect fixed
+vault/programs/bcap-2/design-resources/TEST_CORPUS.json: 24 CPP-authored descriptions, 8 queries, no third-party content (self-authored, so a regression/ordering check, not evidence of real-catalog precision). First measurement exposed a real defect in reference_intel.rank: platform+sector alone scored 0.5 > floor 0.34, so off-purpose items were returned (P@3 0.67 vs keyword baseline 0.79; unknown purpose did not ABSTAIN). Fixed: purpose is now a hard filter; P@3 now >= baseline, unknown purpose ABSTAINs. +7 checks in test_bcap2_d21_bc incl. a mutant drill. Weights 0.5/0.3/0.2 and floor remain provisional. D21-B07 closed; remaining Phase 8: B01-B04, C01-C05/C08, D-H.
+
+### Epoch 2 (new worker): D21-B01..B04 record contracts
+modules/cdicf/reference_records.py (pure validators): gallery record (11 axes, UNKNOWN allowed, cloning refused), transform trace (stop conditions + observed render evaluation), mobile pattern (access+licence verified, feeds CDIO-08), component entry (not an official standard). +15 poles in test_bcap2_d21_bc (56 PASS), in done_gate NEW_MODULES, gate PASS. These are schemas only: no catalogue content ingested (sources unread / 403), so B01-B04 stay PARTIALLY_PROVEN. Remaining Phase 8: C01-C05, C08, D-H; Phase 7 BI-15..35; CLI wiring BI-08..14. Spend not re-measured.
+
+### Epoch 2b: D21-C03/C04/C05 schemas
+modules/cdicf/prompt_schema.py (pure): classify_prompt (7 fields, verbatim text refused, no blank criteria), vibeprompt_import_allowed (identity verified + content_rights AUTHORIZED + compatible categories; UNKNOWN_ACCESS refuses), validate_matrix (6 sources, one canonical Google DESIGN.md truth, irreversible mappings must name lossy fields). +13 poles in test_bcap2_d21_bc, in done_gate NEW_MODULES, gate PASS. Schemas only: no real source mapped, so PARTIALLY_PROVEN. Remaining Phase 8: C01/C02 audit against live sources, C08 measurement, D-H.
+
+### Epoch 2c: D21-C08 cost half
+vault/programs/bcap-2/design-resources/C08_COST.md: retrieval loads mean 492 B per query vs 6291 B whole 24-item corpus and 20637 B existing design-md prompts (bytes, proxy for tokens). Effectiveness half unmeasured (needs render comparison). Remaining Phase 8: C01/C02 (live-source reads), D-H.
+
+### Epoch 2d: D21-D03/D07/D09 install gate
+modules/cdicf/component_install.py (pure; reuses source_intake.admit_code): plan_install refuses on licence/evidence, unaccepted registry, missing peer, stale snapshot, same name from two registries, missing states, unmeasured cost (not zero), no rollback; run_install runs only ALLOW plans and rolls back a partial failure; reference_only_catalog keeps RESTRICTED as pointer. +17 poles in test_bcap2_d21_bc, in done_gate NEW_MODULES, gate PASS. No real registry touched, nothing installed: PARTIALLY_PROVEN. Remaining Phase 8: C01/C02 (live reads), D01/D02/D04 (registry reads), D05/D06/D08, E-H.
+
+### Epoch 2e: D21-D05/D06/D08
+modules/cdicf/component_meta.py (pure): 18 normalized kinds, validate_meta, resolve_stack (framework, tailwind major, SSR, a11y, RTL; UNKNOWN never passes), composition_qa (shared tokens, z-index, duplicate button variants, dep conflicts, card soup, one DESIGN.md). +15 poles, in NEW_MODULES, gate PASS. Schemas only, no real components assessed: PARTIALLY_PROVEN. Remaining Phase 8: C01/C02, D01/D02/D04 (live reads), E-H.
+
+### Epoch 3: D21-E05/E06/E07/E08 motion
+modules/cdicf/motion_select.py (pure): check_motion_decision (6 options, no_animation valid, library needs a CSS/WAAPI-insufficiency reason, popularity refused, no-motion baseline required), check_motion_semantics (CDIO-07 budget vs expressiveness, none permits no animation, fake loading/progress illusion/non-determinism must be ruled out, unmeasured is not a pass), check_runtime_report (12 runtime cases, absent = unobserved). +22 poles in test_bcap2_d21_bc, in NEW_MODULES. E08: vault/knowledge_base/visual-patterns/motion-negative-examples.md (7 CPP-authored counterexamples, no observed evidence yet). Done gate PASS, VPK 7/7. Schemas only, nothing measured against a real build: PARTIALLY_PROVEN. E01-E04 need live reads. Remaining Phase 8: C01/C02, D01/D02/D04, E01-E04, F, G, H. Spend not re-measured.
+
+### Epoch 3b: D21-H01/H02/F06
+modules/cdicf/source_route.py (pure): route() infers layers from explicit goal words only and ABSTAINs with no layer or no grounded index entry; select() is licensing-first (reuses admit_code), then framework, then measured cost, popularity never read, deterministic under reordering, unmeasured cost flagged not zero; arbitrate_material() needs a stated benefit, opaque-baseline comparison, fallback, and refuses glass/micro-motion on trust-critical. +12 poles, in NEW_MODULES, gate PASS. Not wired into CLI/CDIO advisory (H09 open): PARTIALLY_PROVEN. Remaining Phase 8: C01/C02, D01/D02/D04, E01-E04, F01-F05, G, H03-H09 (live reads or measurement). Spend not re-measured.
+
+### Epoch 4: first pinned read-only licence probe
+vault/programs/bcap-2/design-resources/LICENCE_PROBE.json: GitHub REST (unauthenticated, read-only) repo-level SPDX + HEAD sha + licence-file sha256 for shadcn-ui/ui, magicuidesign/magicui, ibelick/motion-primitives, juliangarnier/anime: all MIT, none archived. Repo-level only: per-component licences, Magic UI Pro separation and 21st.dev contributions NOT assessed, so rights_status in SOURCES.json is unchanged and live_verified stays false. Next fetch units: per-component licence reads (D01/D02/D04), mapcn/Kinetics/MicroKit repo discovery (names unverified), Uiverse galaxy repo. Spend not re-measured.
+
+### Epoch 5: repo discovery by search
+vault/programs/bcap-2/design-resources/REPO_DISCOVERY.md: GitHub search for the 7 unprobed sources. Only 3dicons has a plausible lead (realvjy/3dicons CC0-1.0, identity unverified); mapcn, Kinetics, MicroKit, Uiverse galaxy, samasante, Kitbitz not found. Search names are leads, not identity: SOURCES.json has no URLs. Nothing in rights_status changed. Next runnable unit needs each source's own site link, which this host reads only where not 403 (page-level fetch). Spend not re-measured.
+
+### Epoch 6: Magic UI tree probe (D21-D04 partial)
+Read-only git tree of magicuidesign/magicui at b0b2e497 (1026 paths, not truncated): one LICENSE.md (MIT, matches LICENCE_PROBE hash), no path containing a pro/notice/second licence; README states MIT. No `registry/magicui/` path exists at that commit, so the component registry location is unknown and per-component licences/Pro separation are NOT assessed. This shows only that the free repo carries no second licence file; it says nothing about the paid Pro site. rights_status unchanged. Next: locate the registry dir (tree listing) and read per-component headers; then shadcn registry features (D02). Spend not re-measured.
+
+### Epoch 7 (D21-D04 partial): Magic UI registry scan
+Registry located at apps/www/registry/magicui (80 files) at b0b2e497. All 80 fetched read-only; 0 carry a per-file licence marker (one regex hit was a false positive), so they inherit the repo MIT LICENSE.md. Evidence: vault/programs/bcap-2/design-resources/MAGICUI_REGISTRY_SCAN.json. Absence of a header is not a grant for the paid Pro site; rights_status and live_verified unchanged. Next: shadcn registry features (D02), then remaining Phase 8 E-H. Spend not re-measured.
+
+### Epoch 4b (D21-D02 partial): shadcn tree probe
+Read-only tree of shadcn-ui/ui at f50887ae (7121 paths): one root LICENSE.md, plus a third-party test-fixture LICENSE.md (vendored material exists). Registry at apps/v4/registry (1532 files) and packages/registry/src. Evidence: design-resources/SHADCN_TREE_PROBE.json. Listing only: no header scan, no registry feature semantics, rights unchanged. Next: header scan of apps/v4/registry, read registry schema docs (D02). Spend not re-measured.
+
+### Epoch 4c: shadcn header sample
+80 of 1532 apps/v4/registry ui .tsx files read at f50887ae: no licence/attribution marker (sample only, recorded in SHADCN_TREE_PROBE.json). Not a clean bill for the rest; rights unchanged. Per PR-NO-RUNNABLE-UNIT-STOPS-THE-EPOCH-001 the remaining Phase 8 units (D02 schema semantics, C01/C02, E01-E04, F-H) need page-level reads or browser measurement; further header probing adds little. OWNER NOTE: the cheap read-only probes are exhausted; next value is laptop-plane measurement (LAPTOP_STEPS.md) and the style-3 Owner pick (recorded (b)). Spend not re-measured.
+
+### Epoch 5b: Phase 6 style 3 landed as option (b)
+Owner decision RESOLVED_BY_DEFAULT (recommended option (b), reversible, internal). Doctrine `vault/knowledge_base/visual-patterns/enterprise-systematic-structural-axis.md` (provisional, research), bench data `vault/programs/bcap-2/saas-styles/ENTERPRISE_BENCH.json`, gate `python3 tools/test_bcap2_saas.py` 19 PASS / 0 FAIL (figures recomputed from data, 3 seeded mutants caught, scorer pinned F1..F10). Wired in done_gate (BCAP2-06). test_cdio 8/8, motion_grammar 46/46, f10 8/8. Styles 1 and 2 unresolved (browser/403 plane) so BCAP2-06 stays PARTIALLY_PROVEN. Spend not re-measured. LAPTOP_STEPS remain BLOCKED-ON-LAPTOP (cannot run on this plane).
+
+### Epoch 6: reconcile only
+Repo clean at 552b9952 (untracked .pp-capabilities, vault/knowledge_base/ccf/ are not mine). done_gate re-run: BCAP2_DONE_GATE PASS, all nine items PARTIALLY_PROVEN, none ACTIVATED. Runnable GEX44-plane probes are exhausted (see Epoch 4c); the remaining units (Phase 4/5 real-browser, Phase 5 videos, Phase 8 live-source reads, Phase 9 sandbox drive) are BLOCKED-ON-LAPTOP in LAPTOP_STEPS.md. Owner decision needed: none new. No spend measured this epoch.
+
+### Epoch 8: Owner decisions RESOLVED (2026-11-20)
+D-LAPTOP-SPLIT: laptop steps are run by laptop pane adcdff7b (branch bcap2/laptop-steps ffd419c9, not merged here, not redone); style 3 = option (b) CONFIRMED, keep 552b9952. D-LIMIT-CLEARED: weekly limit not in effect. Both resolved, nothing waits on the Owner. GEX44 work this epoch: Phase 7 BI-15..35 pure modules, then runnable Phase 8 units.
+
+### Epoch 8: BI-15/20/22/23/25/26/29/34 pure validators
+modules/ccf/brand_color.py (computed WCAG contrast per context, undeclared context UNASSESSED, CIE76 deltaE, bare association claims refused) and modules/ccf/brand_release.py (export profile: one source, no PNG-as-ICO/shell/silent font/rerun; DTCG check + CSS derive; immutable hash manifest refusing without approval, tamper/contaminant named; 9-context preview on one Visual DNA, mock marked; similarity report never says clearance; automatic-applicability trigger with budget abstain). +15 checks (test_bcap2_brand 132 total), LIBRARY-declared, in NEW_MODULES, done gate PASS. Not wired to the CLI, no real render/font/trace: PARTIALLY_PROVEN. Remaining Phase 7: BI-16 (Sigilgen pin), 17, 18, 19, 21, 24, 27, 28, 30-33, 35 (need fetch/render/benchmark); Phase 8 B-H live reads. Spend not re-measured.
+
+### Epoch 9: BI-16 / BI-21 pinned upstream probe (read-only)
+vault/programs/bcap-2/UPSTREAM_BRAND_PROBE.json: sigilgen c3f605b7 (MIT, 171 paths, 5 engines, brain, upstream determinism manifest) inventoried only; byte-identical cross-process/platform output NOT run (needs node/pnpm sandbox) and no CCF adapter built, so BI-16 stays open. branding-mcp 5128f2ea archived -> HISTORICAL_REFERENCE. logo-generator-skill bf4e9ac4 has no LICENSE file -> reference only, no code. +2 checks in test_bcap2_brand. Remaining Phase 7: BI-16 run, 17, 18, 19, 24, 27, 28, 30-33, 35; Phase 8 B-H live reads. Spend not re-measured.
+
+### Epoch 10: BI-17/19/28/31/35 pure validators
+modules/ccf/brand_review.py: typed SVG parts via data-part (reuses the allowlist parser; unsafe/unknown/duplicate/untyped refused), per-language diacritic coverage with no silent font fallback, 12-criterion logo lens (instrument-less = UNASSESSED, no UI score, human signoff required), >=12-brief frozen benchmark set validator (denominators only; nothing measured), independent-review record validator. +10 checks in test_bcap2_brand, LIBRARY, in NEW_MODULES, done gate PASS. No real font file, render, benchmark run or review performed: PARTIALLY_PROVEN. Remaining Phase 7: BI-16 run, 18 (trace lane), 24 (illustrated PDF), 27, 30, 32 (live-CLI poles), 33; Phase 8 B-H live reads. Spend not re-measured.
+
+### Epoch 9 (new worker): reconcile, BI-32 status
+Repo clean at 3665449a, done_gate PASS (all PARTIALLY_PROVEN, none ACTIVATED). BI-32: BR-01..BR-16 are already executable in tools/test_bcap2_brand.py via cli.main (live CLI path, real bytes, pole + control each), 144 PASS / 0 FAIL, so BI-32 is satisfied on this plane except BR-14 and BR-16 which exercise validators, not a real upstream or human review. BI-33 (writeback) is deliberately NOT done: CLAUDE.md forbids hand-writing vault/knowledge_base/ccf/ entries (only the CLI call path may), and there are no real generate/provider runs to feed. BI-27/BI-30 need page-level reads of DesignHub/Impeccable (not fetched this epoch); BI-16 run needs node/pnpm sandbox; BI-18/24 need VTracer/render. Decision: stop here rather than loop on exhausted probes (PR-NO-RUNNABLE-UNIT-STOPS-THE-EPOCH-001). Spend not re-measured.
+
+### Epoch 10 (new worker): BI-30 partial audit
+vault/programs/bcap-2/brand/IMPECCABLE_AUDIT.md: Impeccable b49177d3 (Apache-2.0) critique-rubric and critique.md read read-only and hashed; the rubric is UX heuristics, anti-generic idea is the "design specificity verdict" (deterministic scan + separate LLM judgement), already mirrored by CDIO-05/06 and VQ-6. Detector unread, nothing ported, BI-30 stays open. BI-27 (DesignHub) not fetched. Remaining runnable-here units are thin; Phase 8 live-source reads and BI-16/18/24 still need sandbox/render. Spend not re-measured.
+
+### Epoch 11: BI-27 inventory probe
+vault/programs/bcap-2/brand/DESIGNHUB_PROBE.md: DesignHub 148e8c3f (MIT, 907 paths) tree inventoried only; no source read, nothing ported, BI-27 stays open. Reached the end of cheap read-only probes again; remaining units need sandbox/browser. Spend not re-measured.
+
+### Epoch 12 (new worker): BI-16 same-host determinism measured
+Predecessor's sandbox question resolved by default: pnpm exists, so sigilgen c3f605b7 was installed (--ignore-scripts, scratch dir outside the repo), built, and `scripts/check-determinism.mjs` run in two separate processes: 11 cases, identical combined hash 84c031a31fbb, exit 0. Caveats in UPSTREAM_BRAND_PROBE.json: Node 18 (upstream wants >=22) needed a toSorted shim via --import, upstream source untouched; cross-platform identity and the CCF adapter remain open, so BI-16 stays PARTIALLY_PROVEN. BI-18 (VTracer) and BI-24 (PDF render) still need tooling not checked here. Spend not re-measured.
+
+### Epoch 12b: BI-18 trace lane
+VTracer 0.6.15 installed via pip in a scratch venv (outside the repo); a synthetic ring PNG traced twice gave byte-identical SVG (same-host). Real output kept as fixture vault/programs/bcap-2/brand/fixtures_trace_ring.svg. modules/ccf/trace_lane.py (pure): measure_trace + check_trace (needs inspect/repair/reject decision, path/command caps, raw-decimal precision means unrepaired trace is refused). 4 checks in test_bcap2_brand, LIBRARY, in NEW_MODULES, done gate PASS. Not wired to CLI; no print-legibility/negative-space/render-diff measures (no resvg here), no image-model raster lane: BI-18 PARTIALLY_PROVEN. BI-24 needs a PDF/render toolchain (reportlab absent in system python; not checked in a venv). Spend not re-measured.
+
+### Epoch 12c: stop note (PR-NO-RUNNABLE-UNIT-STOPS-THE-EPOCH-001)
+Runnable GEX44-plane units are done for this epoch (BI-16 same-host, BI-18 trace lane). BI-24 (illustrated brand book PDF) is a product build needing a render toolchain plus the existing kit PDF path; not started, no Owner decision involved. Remaining: BI-24, BI-27/BI-30 page-level reads (Impeccable detector, DesignHub source), Phase 8 C/E/F/G/H live reads (non-403 sources), BI-16 cross-platform + CCF adapter. No Owner decision pending. Spend not re-measured.
