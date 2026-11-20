@@ -92,6 +92,189 @@ def main() -> int:
     h = pb.decide("m", "w4", NOW, workers=["w1", "w2", "w3", "w4"], cleared_at=at - 1, outcome=outcomes(four))
     gate("V-BREAKER-STALE-CLEAR", h and h["quarantine"], "clear OLDER than the evidence -> still quarantined")
 
+    # Regla 12: the same NON-transient failure twice quarantines at 2; a known transient keeps 4.
+    nr = {"class": pb.NO_REPLY, "text": "worker produced no assistant reply", "at": at}
+    unk = {"class": pb.TRANSIENT, "text": "Error: tool schema rejected (req 4f9a2c1b7e)", "at": at}
+
+    def two(a, b):
+        return pb.decide("m", "w2", NOW, workers=["w0", "w1", "w2"], cleared_at=0,
+                         outcome=outcomes({"w0": ok, "w1": a, "w2": b}))
+
+    h = two(nr, nr)
+    gate("V-BREAKER-IDENTICAL-NO-REPLY-2", h and h["quarantine"] and h["streak"] == 2 and "Regla 12" in h["reason"],
+         h and h["reason"][:80])
+    h = two(unk, unk)
+    gate("V-BREAKER-IDENTICAL-HOST-TEXT-2", h and h["quarantine"], h and h["reason"][:80])
+    h = two({**unk, "text": "Error: tool schema rejected (req 99aa00bbcc)"}, unk)
+    gate("V-BREAKER-IDENTICAL-IDS-COLLAPSED", h and h["quarantine"], "request ids differ -> still identical")
+    h = two(tr, tr)
+    gate("V-BREAKER-KNOWN-TRANSIENT-2-BACKS-OFF", h and not h["quarantine"] and h["until"] == at + 600,
+         f"q={h and h['quarantine']} wait={h and h['until'] and h['until'] - at}")
+    h = two(nr, unk)
+    gate("V-BREAKER-DIFFERENT-FAILURES-2-BACKS-OFF", h and not h["quarantine"], f"q={h and h['quarantine']}")
+    h = two(ok, nr)
+    gate("V-BREAKER-SINGLE-NO-REPLY-BACKS-OFF", h and not h["quarantine"] and h["streak"] == 1,
+         f"q={h and h['quarantine']} streak={h and h['streak']}")
+    h = pb.decide("m", "w2", NOW, workers=["w0", "w1", "w2"], cleared_at=at + 1,
+                  outcome=outcomes({"w0": ok, "w1": nr, "w2": nr}))
+    gate("V-BREAKER-IDENTICAL-OPERATOR-CLEAR", h is None, "clear newer than the evidence -> released")
+    os.environ["CPP_BREAKER_IDENTICAL"] = "off"
+    try:
+        h = two(nr, nr)
+    finally:
+        os.environ.pop("CPP_BREAKER_IDENTICAL", None)
+    gate("V-BREAKER-IDENTICAL-KILL-SWITCH", h and not h["quarantine"], "CPP_BREAKER_IDENTICAL=off -> backoff")
+
+    # P4 tool-failure signal: read from the worker's own rows; a model turn after N identical tool errors.
+    def tool_rows(results, end_text="BLOCKED: cannot proceed"):
+        rows = []
+        for i, (name, text, err) in enumerate(results):
+            rows.append({"type": "assistant", "message": {"model": "claude-opus-5-5", "content": [
+                {"type": "tool_use", "id": f"t{i}", "name": name, "input": {}}]}})
+            rows.append({"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": f"t{i}", "is_error": err, "content": text}]}})
+        rows.append({"type": "assistant", "message": {"model": "claude-opus-5-5",
+                                                      "content": [{"type": "text", "text": end_text}]}})
+        return rows
+
+    miss = ("Bash", "Exit code 1: no such file tools/x_17.py", True)
+    tf = pb.tool_failure(tool_rows([miss, ("Bash", "Exit code 1: no such file tools/x_18.py", True)]))
+    gate("V-BREAKER-TOOLFAIL-DETECTED", tf and tf["class"] == pb.TOOL_FAILURE and tf["text"].startswith("Bash:"), tf)
+    gate("V-BREAKER-TOOLFAIL-SUCCESS-AFTER-NOT", pb.tool_failure(tool_rows([miss, miss, ("Bash", "ok", False)])) is None,
+         "errors then a success -> not stuck")
+    gate("V-BREAKER-TOOLFAIL-DIFFERENT-ERRORS-NOT",
+         pb.tool_failure(tool_rows([miss, ("Bash", "Permission denied", True)])) is None, "two different errors")
+    gate("V-BREAKER-TOOLFAIL-OTHER-TOOL-NOT",
+         pb.tool_failure(tool_rows([miss, ("Read", miss[1], True)])) is None, "same text, different tool")
+    gate("V-BREAKER-TOOLFAIL-ONE-ERROR-NOT", pb.tool_failure(tool_rows([("Read", "ok", False), miss])) is None,
+         "one error is not a streak")
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "wt.jsonl"
+        p.write_text("\n".join(json.dumps(r) for r in tool_rows([miss, miss])) + "\n", encoding="utf-8")
+        o = pb.worker_outcome("wt", find=lambda sid: p)
+    gate("V-BREAKER-TOOLFAIL-THROUGH-WORKER-OUTCOME", o.get("class") == pb.TOOL_FAILURE and o.get("at"), o)
+
+    tfo = {"class": pb.TOOL_FAILURE, "text": "Bash: Exit code 1: no such file tools/x_17.py", "at": at}
+    h = two(ok, tfo)
+    gate("V-BREAKER-TOOLFAIL-ONE-WORKER-NO-HOLD", h is None, f"one stuck worker -> {h}")
+    h = two({**tfo, "text": "Bash: Exit code 1: no such file tools/x_99.py"}, tfo)
+    gate("V-BREAKER-TOOLFAIL-TWO-WORKERS-QUARANTINE", h and h["quarantine"] and h["class"] == pb.TOOL_FAILURE
+         and "Regla 12" in h["reason"], h and h["reason"][:90])
+    h = two({**tfo, "text": "Edit: old_string not found"}, tfo)
+    gate("V-BREAKER-TOOLFAIL-DIFFERENT-WORKERS-NO-HOLD", h is None, f"different failures -> {h}")
+    tmo = {**tfo, "text": "Bash: Command timed out after 2m"}
+    h = two(tmo, tmo)
+    gate("V-BREAKER-TOOLFAIL-TIMEOUT-STILL-COUNTS", h and h["quarantine"],
+         "a tool timing out identically twice is not a provider transient")
+    os.environ["CPP_BREAKER_TOOL_FAILURE"] = "off"
+    try:
+        off = pb.tool_failure(tool_rows([miss, miss]))
+    finally:
+        os.environ.pop("CPP_BREAKER_TOOL_FAILURE", None)
+    gate("V-BREAKER-TOOLFAIL-KILL-SWITCH", off is None, "CPP_BREAKER_TOOL_FAILURE=off -> no signal")
+
+    # P4 external effect: the LAST tool call is an effect whose outcome is not on the record.
+    marker = "PROBE" + "MARK" + "0" * 6          # assembled at runtime: no credential-shaped literal in the file
+    hdr = "X-Probe: " + marker
+
+    def effect_rows(name, inp, result=None):
+        rows = [{"type": "assistant", "timestamp": "2026-11-20T10:00:00Z", "message": {
+            "model": "claude-opus-5-5", "content": [{"type": "tool_use", "id": "e1", "name": name, "input": inp}]}}]
+        if result is not None:
+            rows.append({"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": "e1", "is_error": result[0], "content": result[1]}]}})
+        return rows
+
+    e = pb.effect_unconfirmed(effect_rows("Bash", {"command": "git push origin main"}))
+    gate("V-BREAKER-EFFECT-NO-RESULT", e and e["class"] == pb.EFFECT_UNCONFIRMED and "git push" in e["text"]
+         and e.get("at"), e)
+    e = pb.effect_unconfirmed(effect_rows("Bash", {"command": "git push origin main"}, (False, "Everything up-to-date")))
+    gate("V-BREAKER-EFFECT-RETURNED-CONTROL", e is None, "the push returned: outcome on the record")
+    e = pb.effect_unconfirmed(effect_rows("PowerShell", {"command": "git push"},
+                                          (True, "[Request interrupted by user for tool use]")))
+    gate("V-BREAKER-EFFECT-INTERRUPTED", e and "interrupted" in e["text"], e)
+    e = pb.effect_unconfirmed(effect_rows("Bash", {"command": "git push"}, (True, "rejected: non-fast-forward")))
+    gate("V-BREAKER-EFFECT-FAILED-IS-KNOWN", e is None, "an error result is a known outcome, not an unknown one")
+    e = pb.effect_unconfirmed(effect_rows("Bash", {"command": "pytest -q"}))
+    gate("V-BREAKER-EFFECT-LOCAL-CONTROL", e is None, "a local command with no result is not an external effect")
+    e = pb.effect_unconfirmed(effect_rows("Bash", {"command": f"curl -H '{hdr}' -X POST https://api.example/x"}))
+    gate("V-BREAKER-EFFECT-HTTP-WRITE-REDACTED", e and "http write" in e["text"] and marker not in str(e), e)
+    e = pb.effect_unconfirmed(effect_rows("mcp__claude_ai_Gmail__send_message", {"to": "x"}))
+    gate("V-BREAKER-EFFECT-MCP-SEND", e and e["text"].endswith("send_message (no result)"), e)
+    e = pb.effect_unconfirmed(effect_rows("mcp__claude_ai_Gmail__search_threads", {"q": "x"}))
+    gate("V-BREAKER-EFFECT-MCP-READ-CONTROL", e is None, "an MCP read is not an effect")
+    later = effect_rows("Bash", {"command": "git push"}) + [{"type": "assistant", "message": {
+        "model": "claude-opus-5-5", "content": [{"type": "tool_use", "id": "e2", "name": "Read", "input": {}}]}},
+        {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "e2", "content": "x"}]}}]
+    gate("V-BREAKER-EFFECT-ONLY-LAST-CALL", pb.effect_unconfirmed(later) is None, "a later call returned")
+
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / "we.jsonl"
+        p.write_text("\n".join(json.dumps(r) for r in effect_rows("Bash", {"command": "vercel --prod"})) + "\n",
+                     encoding="utf-8")
+        o = pb.worker_outcome("we", find=lambda sid: p)
+    gate("V-BREAKER-EFFECT-THROUGH-WORKER-OUTCOME", o.get("class") == pb.EFFECT_UNCONFIRMED, o)
+    eo = {"class": pb.EFFECT_UNCONFIRMED, "text": "Bash: git push (no result)", "at": at}
+    h = two(ok, eo)
+    gate("V-BREAKER-EFFECT-QUARANTINES-AT-ONCE", h and h["quarantine"] and h["until"] is None
+         and "never confirmed" in h["reason"], h and h["reason"][:90])
+    h = pb.decide("m", "w2", NOW, workers=["w0", "w1", "w2"], cleared_at=at + 1,
+                  outcome=outcomes({"w0": ok, "w1": ok, "w2": eo}))
+    gate("V-BREAKER-EFFECT-CLEAR-RECONCILES", h is None, "operator clear after the evidence -> released")
+    os.environ["CPP_BREAKER_EFFECT"] = "off"
+    try:
+        off = pb.effect_unconfirmed(effect_rows("Bash", {"command": "git push"}))
+    finally:
+        os.environ.pop("CPP_BREAKER_EFFECT", None)
+    gate("V-BREAKER-EFFECT-KILL-SWITCH", off is None, "CPP_BREAKER_EFFECT=off -> no park")
+
+    # Review fixes (pp-code-reviewer 2026-11-21).
+    # F1: a tool_result is untrusted; only the tool and a digest leave tool_failure.
+    leak = ("Bash", f"Exit code 22: curl failed, sent {hdr}", True)
+    tf = pb.tool_failure(tool_rows([leak, leak]))
+    gate("V-BREAKER-TOOLFAIL-RESULT-REDACTED", tf and marker not in str(tf) and tf["text"].startswith("Bash: repeated"), tf)
+    other = ("Bash", "Exit code 1: permission denied on /srv/x", True)
+    ta, tb = pb.tool_failure(tool_rows([miss, miss])), pb.tool_failure(tool_rows([other, other]))
+    gate("V-BREAKER-TOOLFAIL-DIGEST-DISTINGUISHES", ta and tb and ta["text"] != tb["text"],
+         f"{ta and ta['text']} vs {tb and tb['text']}")
+    h = two({**ta, "at": at}, {**tb, "at": at})
+    gate("V-BREAKER-TOOLFAIL-DIGESTS-DIFFER-NO-HOLD", h is None, f"different errors through the digest -> {h}")
+    h = two({**ta, "at": at}, {**pb.tool_failure(tool_rows([("Bash", miss[1].replace("17", "91"), True)] * 2)), "at": at})
+    gate("V-BREAKER-TOOLFAIL-DIGESTS-SAME-QUARANTINE", h and h["quarantine"], "numbers collapse before the digest")
+    # F2: provider transients the regex missed back off, never quarantine at 2.
+    conn = {"class": pb.TRANSIENT, "text": "API Error: Connection error.", "at": at}
+    h = two(conn, conn)
+    gate("V-BREAKER-CONNECTION-ERROR-BACKS-OFF", h and not h["quarantine"], f"q={h and h['quarantine']}")
+    missed = [t for t in ("fetch failed", "connect ECONNREFUSED 1.2.3.4", "getaddrinfo ENOTFOUND api", "EAI_AGAIN",
+                          "Unable to connect to API", "Internal server error", "no capacity available")
+              if not pb.KNOWN_TRANSIENT_RE.search(t)]
+    gate("V-BREAKER-TRANSIENT-ALTERNATIVES", not missed, f"unmatched: {missed}")
+    # F3: tool failures never feed the provider streak.
+    stuck = {f"w{i}": {"class": pb.TOOL_FAILURE, "text": f"Bash: repeated error {c * 12}", "at": at}
+             for i, c in zip(range(1, 5), "ghij")}
+    h = pb.decide("m", "w4", NOW, workers=["w1", "w2", "w3", "w4"], cleared_at=0, outcome=outcomes(stuck))
+    gate("V-BREAKER-TOOLFAIL-FOUR-DIFFERENT-NO-HOLD", h is None, f"4 different stuck workers -> {h}")
+    # F4: a bare exit code and a hook/user refusal are not a stuck tool; a real error is (DETECTED above).
+    gate("V-BREAKER-TOOLFAIL-BARE-EXIT-CODE-NOT",
+         pb.tool_failure(tool_rows([("Bash", "Exit code 1", True), ("Bash", "Exit code 2", True)])) is None,
+         "grep with no match twice")
+    hook = ("Bash", "PreToolUse:Bash hook error: Blocked by a PreToolUse gate (exit 2)", True)
+    gate("V-BREAKER-TOOLFAIL-HOOK-BLOCK-NOT", pb.tool_failure(tool_rows([hook, hook])) is None, "policy, not a tool")
+    # F5: only the host's interrupt marker is an unknown outcome.
+    kb = pb.effect_unconfirmed(effect_rows("Bash", {"command": "ssh host 'python x.py'"},
+                                           (True, "Traceback ... KeyboardInterrupt")))
+    gate("V-BREAKER-EFFECT-REMOTE-KEYBOARDINTERRUPT-KNOWN", kb is None, kb)
+    rj = pb.effect_unconfirmed(effect_rows("Bash", {"command": "git push"}, (True, "The user doesn't want to proceed "
+                                                                            "with this tool use. The tool use was rejected")))
+    gate("V-BREAKER-EFFECT-USER-REJECTED-KNOWN", rj is None, "a rejected push never ran")
+    # F6: coverage either side.
+    for gname, cmd in (("V-BREAKER-EFFECT-GIT-C-PUSH", "& 'C:\\Program Files\\Git\\cmd\\git.exe' -C repo push origin x"),
+                       ("V-BREAKER-EFFECT-GH-API-POST", "gh api repos/o/r/issues -X POST -f title=t")):
+        e = pb.effect_unconfirmed(effect_rows("PowerShell", {"command": cmd}))
+        gate(gname, e and e["class"] == pb.EFFECT_UNCONFIRMED, e)
+    gate("V-BREAKER-EFFECT-MCP-PREFIX-WORD-CONTROL",
+         pb.effect_unconfirmed(effect_rows("mcp__x__sendgrid_lookup", {})) is None, "'sendgrid' is not 'send'")
+
     # Transcript reading: only HOST-written replies count. A model that quotes the refusal is a model.
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)

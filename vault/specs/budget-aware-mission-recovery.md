@@ -71,12 +71,12 @@ No second classifier was built: every class below already has an owner. Read 202
 | compaction not confirmed | n/a: Ralph rotates instead of compacting; native autocompact is a safety net only | -- | not applicable |
 | worker died | host listing + pid (`liveness`) | host restarts a busy crash; mission replaces a stopped one (CAS) | none |
 | transient provider failure | `provider_breaker` TRANSIENT | backoff 300 s x 2^n, cap 1 h; quarantine at 4 | unknown host text is read as TRANSIENT (bounded, not blind) |
-| permanent error / repeated equivalent failure | breaker streak (QUARANTINE_AFTER=4); `loop_budget` CONSECUTIVE_FAIL_LIMIT=2 | quarantine / kill | breaker allows 4, Regla 12 says 2: unreconciled |
-| tool failure | worker-level; no mission class | -- | GAP (no mission-level signal) |
+| permanent error / repeated equivalent failure | breaker: 2 IDENTICAL non-transient failures (Regla 12, `identical_run`), else streak QUARANTINE_AFTER=4; `loop_budget` CONSECUTIVE_FAIL_LIMIT=2 | quarantine / kill | RECONCILED (Owner 2026-11-20): identical = same class + same host text, ids/numbers collapsed; a known transient (overload/5xx/429/timeout/network) keeps 4; kill switch `CPP_BREAKER_IDENTICAL=off`; gate `tools/test_provider_breaker.py` |
+| tool failure | `provider_breaker.tool_failure`: the worker's newest 2 tool results are one tool failing with one error (ids/numbers collapsed), no success after | one stuck worker holds nothing; 2 workers in a row with the same failure -> QUARANTINE class `tool_failure` (Regla 12 across workers), released by `provider_breaker.py clear` | LANDED 2026-11-21; read from the transcript tail the breaker already reads (supervisor path, never admission); only `<tool>: repeated error <digest>` leaves it (a tool result is untrusted and may echo a token); a bare `Exit code N` and hook/user refusals are not a stuck tool; never feeds the provider streak; a tool timeout is NOT a provider transient here; kill switch `CPP_BREAKER_TOOL_FAILURE=off`; gate `tools/test_provider_breaker.py` 64/64 |
 | stall / no verifiable progress | `no_progress` (3 epochs, no tree change) | HALTED, never renewed | none |
 | Owner cancel / pause | mission state + `owner_hold` | terminal / parked | none |
 | permission prompt | BLOCKED | surfaced, never replaced | none |
-| ambiguous remote effect | none generic | -- | GAP (no reconciliation owner for external effects) |
+| ambiguous remote effect | `provider_breaker.effect_unconfirmed`: the ended worker's LAST tool call is an external effect (git push, gh write, npm publish, deploy, kubectl/helm/terraform write, ssh/scp, HTTP write, vercel, MCP send/create/post/publish/reply/forward/delete/merge/push/update) with no result or the host's `[Request interrupted by user` marker | QUARANTINE class `effect_unconfirmed` at once; never retried; the owner checks the remote side, then `provider_breaker.py clear` is the reconciliation | LANDED 2026-11-21; an error result, a user rejection and a remote traceback are KNOWN outcomes (not parked); only a fixed label is reported, never the command (a header can carry a credential); pattern list is bounded, an unlisted effect is not detected; kill switch `CPP_BREAKER_EFFECT=off`; gate `tools/test_provider_breaker.py` 50/50 |
 | corrupt state | `load` + `history.missing` in status | record judged with seq gaps | partial |
 | host memory | `resource_admission` (RAM floor) | refuse launch | none |
 | unknown cause | breaker -> TRANSIENT; governor -> UNKNOWN | bounded backoff / refuse | none |
@@ -95,10 +95,14 @@ No second classifier was built: every class below already has an owner. Read 202
 ## Pre-existing failures seen (not BAMR; identical at baseline 5dccbb62 in a detached worktree)
 - `tools/test_a5_u7.py`: JSONDecodeError in `guard_denies` (empty stdout).
 - `tools/test_gsd_mission_capsule_v2.py`: `V-MV2-L1-WITHIN-BACKOFF-HELD-SILENT` 78/79.
+- NOT baseline-verified, reasoned only (P4 session 3da1f022): `tools/test_persistent_failure_park.py` 26/28,
+  `V-PFP-137-FALLBACK-PARKS` (runs with the breaker unimportable) and `V-PFP-SUP-NO-RELOGIN-PARKS` (AUTH, untouched by
+  P4) both see the hold announced 3 times where GGMC C5 expects once. The 4 other failures were BAMR P2 test debt
+  (the suite never set `CPP_MISSION_ACCOUNT_ADMISSION=off`), fixed with P4.
 
 ## Open obligations (next executable first)
-1. P4 gaps above: reconcile breaker QUARANTINE_AFTER=4 with Regla 12 (2); a mission-level tool-failure signal; an
-   external-effect reconciliation owner. The StopFailure recorder lands only with a consumer (Liveness Standard).
+1. P4 DONE 2026-11-21 (breaker vs Regla 12, `tool_failure`, `effect_unconfirmed`; table above). The StopFailure
+   recorder still lands only with a consumer (Liveness Standard).
 2. P5 BURN_OPTIMIZATION_REQUIRED hold in gsd_mission fed by burn_census signals (supersede-after-spend first).
 3. P6 single-authority audit: Lazarus (`session_resilience/epoch.py`) vs mission supervisor vs host restart.
 4. Owner: correct `account-governor.json` reset_at / calibration (implied calibration is reported by `status`).

@@ -27,6 +27,7 @@ TMP = tempfile.mkdtemp(prefix="pfp-test-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
 import provider_breaker as pb  # noqa: E402

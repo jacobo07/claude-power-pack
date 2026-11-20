@@ -22,7 +22,11 @@ Owner caps: session <= 40 $ API-eq (soft 25 $). Autonomous model spend 0 — not
 1. DONE `17c6717a`: the 5 UKDL entries (verified 2026-11-20 by session 3da1f022: all 5 ids in the commit).
 2. DONE (session 3da1f022): P5 burn-optimisation hold at supersede, N=50M, released by `burn-cite`
    (spec "P5 burn-optimisation hold"; gate `tools/test_mission_burn_hold.py` 27/27; review's 4 findings fixed).
-3. NEXT: P4 gaps (breaker 4 vs Regla 12 = 2; tool-failure signal; external-effect reconciliation).
+3. P4 DONE (2026-11-21, `provider_breaker.py`): Regla 12 (2 identical non-transient -> quarantine; known
+   transient keeps 4), `tool_failure` class (2 workers stuck on one tool error), `effect_unconfirmed` park (last
+   effect call with no result; `clear` reconciles). Gate `tools/test_provider_breaker.py` 64/64; review's
+   6 findings fixed (tool text redacted to a digest, transient regex widened, tool failures out of the streak).
+   NEXT: obligation 5 (7 ungated `claude -p` tools); P6 guard belongs to another owner.
 4. Owner: correct `~/.claude/state/account-governor.json` reset_at (official reset Wed 17:00 UTC) and calibration
    (`python tools/account_governor.py status --json` -> `implied_calibration_api_eq_per_100pct`).
 5. Debt named by the review: 7 `claude -p` tools spend ungated (list in the spec); closeout-on-quota decision.

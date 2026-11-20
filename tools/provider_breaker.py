@@ -17,7 +17,10 @@ produced no assistant row at all. Classes:
   no_reply     worker produced nothing  -> same backoff as transient
 Streak = consecutive most-recent workers of the mission that ended in a breaker class. At
 QUARANTINE_AFTER the mission is quarantined whatever the class: four fresh sessions that each
-paid the bootstrap and did nothing is not a transient.
+paid the bootstrap and did nothing is not a transient. Regla 12 (Owner 2026-11-20): IDENTICAL_AFTER (2)
+consecutive workers ending in the SAME non-transient failure (same class, same host text with ids and
+numbers collapsed) quarantine at once; a known transient (KNOWN_TRANSIENT_RE: overload, 5xx, 429,
+timeout, network) keeps the backoff and the 4-worker limit. Kill switch CPP_BREAKER_IDENTICAL=off.
 
 Clearing: `python tools/provider_breaker.py clear --mission <id>` writes a `provider_cleared`
 ledger row; a quarantine whose evidence is OLDER than the latest clear is not enforced.
@@ -53,6 +56,166 @@ STREAK_WINDOW = 8
 MAX_LINEAGE_HOPS = 4
 AUTH_RE = re.compile(r"invalid api key|please run /login|not logged in|oauth token (?:has )?expired|"
                      r"authentication[_ ](?:error|failed)|\b401\b|unauthori[sz]ed|credit balance is too low", re.I)
+# Regla 12 (Owner 2026-11-20): the same failure twice is not a transient -- quarantine at 2, not 4.
+# A KNOWN transient (overload, 5xx, 429, timeout, network) keeps the backoff and the 4-worker limit:
+# it repeats identically by nature and the provider recovers without a change on our side.
+IDENTICAL_AFTER = 2
+KNOWN_TRANSIENT_RE = re.compile(r"overloaded|\b(?:5\d\d|429)\b|rate[ _-]?limit|timed? ?out|timeout|econnreset|"
+                                r"etimedout|socket hang up|network|temporarily unavailable|service unavailable|"
+                                r"bad gateway|connection (?:error|refused|reset)|fetch failed|econnrefused|"
+                                r"enotfound|eai_again|unable to connect|internal server error|capacity", re.I)
+
+
+def _failure_key(o: dict) -> tuple[str, str]:
+    """(class, text with ids/numbers collapsed): two workers fail identically when their keys match."""
+    text = re.sub(r"[0-9a-f]{8,}|\d+", "#", " ".join((o.get("text") or "").lower().split()))
+    return (o.get("class") or "", text)
+
+
+def identical_run(run: list[dict]) -> int:
+    """How many of the newest breaker outcomes (newest first) are the same NON-transient failure.
+    0 when switched off (CPP_BREAKER_IDENTICAL=off) or when the newest is a known transient."""
+    if os.environ.get("CPP_BREAKER_IDENTICAL", "").lower() == "off" or not run:
+        return 0
+    head = run[0]
+    if head.get("class") not in (TRANSIENT, NO_REPLY, TOOL_FAILURE):
+        return 0
+    if head.get("class") != TOOL_FAILURE and KNOWN_TRANSIENT_RE.search(head.get("text") or ""):
+        return 0  # a provider transient recovers on its own; a tool that fails the same way twice does not
+    key = _failure_key(head)
+    n = 0
+    for o in run:
+        if _failure_key(o) != key:
+            break
+        n += 1
+    return n
+
+
+# P4 tool-failure signal (Owner 2026-11-20). A worker whose model DID answer, but whose newest
+# TOOL_FAIL_STREAK tool results were the same tool failing with the same error, ended stuck. One such
+# worker holds nothing (the next one may pivot); two in a row with the same failure are Regla 12 across
+# workers and quarantine via identical_run. Kill switch CPP_BREAKER_TOOL_FAILURE=off.
+TOOL_FAILURE = "tool_failure"
+TOOL_FAIL_STREAK = 2
+# Matched against the NORMALISED error (lowercase, digits and long hex collapsed to '#').
+TRIVIAL_TOOL_ERROR_RE = re.compile(r"^(?:error:? )?exit code #\.?$")
+POLICY_REFUSAL_RE = re.compile(r"hook|blocked by|doesn't want to proceed|tool use was rejected|permission to use")
+_DIGEST_ALPHABET = str.maketrans("0123456789abcdef", "ghijklmnopqrstuv")  # never collapsed by _failure_key
+
+
+def _digest(norm: str) -> str:
+    import hashlib
+    return hashlib.sha256(norm.encode()).hexdigest()[:12].translate(_DIGEST_ALPHABET)
+
+
+def _block_text(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return " ".join(b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text")
+    return ""
+
+
+def tool_failure(rows: list[dict]) -> dict | None:
+    """{"class": TOOL_FAILURE, "text": "<tool>: <error>"} when the newest TOOL_FAIL_STREAK tool results in
+    `rows` are errors of one tool with one (normalised) error and no success came after them; else None."""
+    if os.environ.get("CPP_BREAKER_TOOL_FAILURE", "").lower() == "off":
+        return None
+    names: dict[str, str] = {}
+    results: list[tuple[str, str, bool]] = []
+    for row in rows:
+        msg = row.get("message") if isinstance(row.get("message"), dict) else {}
+        content = msg.get("content")
+        if not isinstance(content, list):
+            continue
+        for b in content:
+            if not isinstance(b, dict):
+                continue
+            if b.get("type") == "tool_use" and b.get("id"):
+                names[b["id"]] = str(b.get("name") or "?")
+            elif b.get("type") == "tool_result":
+                text = " ".join(_block_text(b.get("content")).split())[:300]
+                results.append((names.get(b.get("tool_use_id"), "?"), text, b.get("is_error") is True))
+    tail = results[-TOOL_FAIL_STREAK:]
+    if len(tail) < TOOL_FAIL_STREAK or not all(err for _, _, err in tail):
+        return None
+    keys = {_failure_key({"class": name, "text": text}) for name, text, _ in tail}
+    if len(keys) != 1:
+        return None
+    norm = next(iter(keys))[1]
+    if TRIVIAL_TOOL_ERROR_RE.search(norm) or POLICY_REFUSAL_RE.search(norm):
+        return None  # a bare exit code (grep with no match) or a hook/user refusal is not a stuck tool
+    name = tail[-1][0]
+    # The raw result is untrusted and may echo a header or token: only the tool and a digest of the
+    # normalised error leave this function. The digest keeps identical_run's comparison exact.
+    return {"class": TOOL_FAILURE, "text": f"{name}: repeated error {_digest(norm)}"}
+
+
+# P4 external-effect reconciliation (Owner 2026-11-20). The breaker is asked only when a worker's turn is
+# over (relay/replace), so a final effect call with NO result, or one the host interrupted, is an effect whose
+# outcome nobody knows: a successor would repeat it blind. Quarantine at once; `provider_breaker.py clear`
+# (after the operator checks the remote side) is the reconciliation. Never retried here. Only the matched
+# verb is reported, never the command (it can carry a credential). Kill switch CPP_BREAKER_EFFECT=off.
+EFFECT_UNCONFIRMED = "effect_unconfirmed"
+# (fixed label, pattern): the label is what gets reported, so no captured text can leak a header or token.
+EFFECTS = [(label, re.compile(p, re.I)) for label, p in (
+    ("git push", r"\bgit(?:\.exe)?['\"]?(?:\s+-[Cc]\s+\S+)*\s+push\b"),
+    ("gh write", r"\bgh\s+(?:pr|release|issue|repo)\s+(?:create|merge|edit|delete|close)\b|"
+                 r"\bgh\s+api\b[^|;]*-X\s*(?:POST|PUT|PATCH|DELETE)\b"),
+    ("npm publish", r"\bnpm\s+publish\b"),
+    ("deploy", r"\bdeploy\b"),
+    ("kubectl write", r"\bkubectl\s+(?:apply|delete)\b"),
+    ("helm write", r"\bhelm\s+(?:install|upgrade)\b"),
+    ("terraform apply", r"\bterraform\s+apply\b"),
+    ("ssh", r"\bssh\s"),
+    ("scp", r"\bscp\s"),
+    ("http write", r"\bcurl\b[^|;]*-X\s*(?:POST|PUT|PATCH|DELETE)\b|-Method\s+(?:Post|Put|Patch|Delete)\b"),
+    ("vercel", r"\bvercel\b"),
+)]
+EFFECT_MCP_RE = re.compile(r"^mcp__.+__(?:send|create|post|publish|reply|forward|delete|merge|push|update)(?:_|$)",
+                           re.I)
+# Only the HOST's interrupt marker: the effect may have run. A user rejection ("doesn't want to proceed")
+# means it did not run, and a KeyboardInterrupt inside a remote traceback is a returned, known outcome.
+INTERRUPTED_RE = re.compile(r"\[request interrupted by user", re.I)
+
+
+def effect_unconfirmed(rows: list[dict]) -> dict | None:
+    """{"class": EFFECT_UNCONFIRMED, "text": "<tool>: <verb>", "at"} when the worker's LAST tool call is an
+    external effect with no result, or with a host-interrupted result; else None."""
+    if os.environ.get("CPP_BREAKER_EFFECT", "").lower() == "off":
+        return None
+    last = None
+    results: dict[str, tuple[bool, str]] = {}
+    for row in rows:
+        msg = row.get("message") if isinstance(row.get("message"), dict) else {}
+        content = msg.get("content")
+        if not isinstance(content, list):
+            continue
+        for b in content:
+            if not isinstance(b, dict):
+                continue
+            if b.get("type") == "tool_use" and b.get("id"):
+                last = (b, row)
+            elif b.get("type") == "tool_result" and b.get("tool_use_id"):
+                results[b["tool_use_id"]] = (b.get("is_error") is True, _block_text(b.get("content")))
+    if not last:
+        return None
+    use, row = last
+    res = results.get(use["id"])
+    if res is not None and not (res[0] and INTERRUPTED_RE.search(res[1] or "")):
+        return None  # the call returned: its outcome is on the record
+    name = str(use.get("name") or "?")
+    if EFFECT_MCP_RE.search(name):
+        verb = name.split("__")[-1]
+    else:
+        inp = use.get("input") if isinstance(use.get("input"), dict) else {}
+        cmd = str(inp.get("command") or "")
+        verb = next((label for label, rx in EFFECTS if rx.search(cmd)), None)
+        if verb is None:
+            return None
+    state = "no result" if res is None else "interrupted"
+    return {"class": EFFECT_UNCONFIRMED, "text": f"{name}: {verb} ({state})",
+            "at": lr._parse_iso(row.get("timestamp"))}
 
 
 def enabled() -> bool:
@@ -89,6 +252,9 @@ def worker_outcome(session_id: str, find=None) -> dict:
         at = os.path.getmtime(path)
     except Exception as exc:  # noqa: BLE001
         return {"class": None, "unknown": f"unreadable: {exc.__class__.__name__}"}
+    eff = effect_unconfirmed(rows)
+    if eff:
+        return {**eff, "at": eff.get("at") or at}  # an unknown remote outcome outranks how the turn ended
     for row in reversed(rows):
         if row.get("type") != "assistant":
             continue
@@ -100,7 +266,8 @@ def worker_outcome(session_id: str, find=None) -> dict:
         text = "".join(b.get("text", "") for b in (msg.get("content") or []) if isinstance(b, dict))
         if msg.get("model") == "<synthetic>":
             return {"class": classify(text), "text": " ".join(text.split())[:200], "at": row_at}
-        return {"class": None, "at": row_at}
+        tf = tool_failure(rows)
+        return {**tf, "at": row_at} if tf else {"class": None, "at": row_at}
     # No assistant row in the tail. Only call it no_reply if the transcript is small enough that
     # the tail IS the whole file; otherwise the evidence is out of our aperture.
     if path.stat().st_size <= lr.TAIL_BYTES:
@@ -220,13 +387,19 @@ def decide(mission_id: str, owner_sid: str, now: float, *, workers=None, outcome
     if owner_sid in ws:
         ws = ws[: ws.index(owner_sid) + 1]
     streak = 0
+    run: list[dict] = []
     for sid in reversed(ws[-STREAK_WINDOW:]):
         o = first if sid == owner_sid else outcome(sid)
         if o.get("class") in (AUTH, TRANSIENT, NO_REPLY, QUOTA):
             streak += 1
+            run.append(o)
+        elif o.get("class") == TOOL_FAILURE:
+            run.append(o)  # Regla 12 evidence only: a stuck tool is not a provider failure, so no streak
         else:
             break
     streak = max(streak, 1)
+    if not run:
+        run = [first]
     clear = cleared_at if cleared_at is not None else last_clear(mission_id)
     evidence_at = float(first.get("at") or now)
     if clear and clear >= evidence_at:
@@ -238,10 +411,20 @@ def decide(mission_id: str, owner_sid: str, now: float, *, workers=None, outcome
                 trace["released"] = released
             return None  # a re-login after the refusal: the qualifying precondition change
     reason = f"{cls}: {first.get('text', '')}"[:220]
-    if cls == AUTH or streak >= QUARANTINE_AFTER:
-        why = "credentials" if cls == AUTH else f"{streak} consecutive workers ended in provider failure"
+    identical = identical_run(run)
+    if cls in (AUTH, EFFECT_UNCONFIRMED) or streak >= QUARANTINE_AFTER or identical >= IDENTICAL_AFTER:
+        if cls == AUTH:
+            why = "credentials"
+        elif cls == EFFECT_UNCONFIRMED:
+            why = "an external effect was started and never confirmed; check the remote side, then clear"
+        elif streak >= QUARANTINE_AFTER:
+            why = f"{streak} consecutive workers ended in provider failure"
+        else:
+            why = f"{identical} identical non-transient failures in a row (Regla 12)"
         return {"until": None, "reason": f"QUARANTINE ({why}) -- {reason}", "class": cls, "streak": streak,
                 "quarantine": True}
+    if cls == TOOL_FAILURE:
+        return None  # the provider is fine: one stuck worker earns no backoff; the next may pivot
     wait = min(BACKOFF_CAP_S, BACKOFF_BASE_S * 2 ** (streak - 1))
     until = evidence_at + wait
     if now >= until:
