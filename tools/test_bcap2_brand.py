@@ -455,6 +455,14 @@ with tempfile.TemporaryDirectory() as t:
           BRL.applicable("make a logo for my bakery")["route"] == "CCF" and BRL.applicable("fix the login bug")["route"] == "NONE"
           and BRL.applicable("new brand identity", budget_ok=False)["route"] == "ABSTAIN")
 
+    # ---- BI-16 / BI-21: upstream probe evidence is recorded and honest about what was NOT run
+    up = json.loads((ROOT / "vault/programs/bcap-2/UPSTREAM_BRAND_PROBE.json").read_text())
+    check("BI-16 evidence: sigilgen pinned to a full sha, 5 engines inventoried, byte-identity NOT claimed",
+          len(up["sigilgen"]["pinned_sha"]) == 40 and len(up["sigilgen"]["engines"]) == 5 and up["sigilgen"]["bi16_status"].startswith("INVENTORY_ONLY"))
+    check("BI-21 evidence: archived branding-mcp is historical, licence-less logo-generator-skill admits no code",
+          up["branding_mcp"]["archived"] is True and up["branding_mcp"]["verdict"] == "HISTORICAL_REFERENCE"
+          and up["logo_generator_skill"]["licence_file"] is False and "no code" in up["logo_generator_skill"]["verdict"])
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
 print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-29, BI-34) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)
