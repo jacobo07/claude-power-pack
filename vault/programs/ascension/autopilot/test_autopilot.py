@@ -1487,6 +1487,35 @@ def run_all(ap):
     hp6 = git(pr6, "rev-parse", "HEAD")
     ok7, n7 = E.ff_to(str(pr6), git(wt6, "rev-parse", "HEAD"))
     check("V-EVO-FF-TO-DIRTY-REFUSED", not ok7 and "tracked changes" in n7 and git(pr6, "rev-parse", "HEAD") == hp6)
+    # 2026-11-20 (Owner "go ahead", pane aa9f2e25): a divergence made only of factory-lane commits on other files is
+    # merged; overlapping files or any non-factory commit is still refused, product untouched (real git, both poles)
+    pr9 = mkrepo("evo_prod9")
+    wt9 = tmp / "evo_wt9"
+    git(pr9, "worktree", "add", "-q", "-b", "s10/work", str(wt9))
+    (wt9 / "g.txt").write_text("g\n"); git(wt9, "add", "-A"); git(wt9, "commit", "-q", "-m", "gen work")
+    (pr9 / "f.txt").write_text("f\n"); git(pr9, "add", "-A"); git(pr9, "commit", "-q", "-m", "factory F5: carve 3 x")
+    h9, hp9 = git(wt9, "rev-parse", "HEAD"), git(pr9, "rev-parse", "HEAD")
+    ok9, n9 = E.ff_to(str(pr9), h9)
+    par9 = git(pr9, "log", "-1", "--format=%P").split()
+    check("V-EVO-FF-TO-FACTORY-DIVERGED-MERGED", ok9 and "merged" in n9 and par9 == [hp9, h9]
+          and (pr9 / "g.txt").exists() and (pr9 / "f.txt").exists())
+    pr10 = mkrepo("evo_prod10")
+    wt10 = tmp / "evo_wt10"
+    git(pr10, "worktree", "add", "-q", "-b", "s11/work", str(wt10))
+    (wt10 / "s.txt").write_text("gen\n"); git(wt10, "add", "-A"); git(wt10, "commit", "-q", "-m", "gen")
+    (pr10 / "s.txt").write_text("fac\n"); git(pr10, "add", "-A"); git(pr10, "commit", "-q", "-m", "factory F5: carve 1")
+    hp10 = git(pr10, "rev-parse", "HEAD")
+    ok10, n10 = E.ff_to(str(pr10), git(wt10, "rev-parse", "HEAD"))
+    check("V-EVO-FF-TO-FACTORY-OVERLAP-REFUSED", not ok10 and "same files" in n10 and git(pr10, "rev-parse", "HEAD") == hp10)
+    check("V-EVO-FF-TO-NONFACTORY-STILL-REFUSED", not ok6 and "other than factory" in n6)
+    pr11 = mkrepo("evo_prod11")
+    wt11 = tmp / "evo_wt11"
+    git(pr11, "worktree", "add", "-q", "-b", "s12/work", str(wt11))
+    (wt11 / "ev").mkdir(); (wt11 / "ev" / "cp.md").write_text("checkpoint\n")
+    git(wt11, "add", "-A"); git(wt11, "commit", "-q", "-m", "gen checkpoint")
+    (pr11 / "f2.txt").write_text("f\n"); git(pr11, "add", "-A"); git(pr11, "commit", "-q", "-m", "factory F5: carve 2 y")
+    how11, note11 = E.discover_checkpoint(str(pr11), "ev/cp.md")
+    check("V-EVO-DISCOVER-MERGES-OVER-FACTORY", how11 == "FF" and (pr11 / "ev" / "cp.md").exists() and "merged" in note11)
     # 2026-11-20 (Owner "yes, all for autonomy", pane aa9f2e25): a lane mid factory-apply is skipped, from both poles
     try:
         import fcntl
@@ -1765,6 +1794,10 @@ try:  # review aa9f (MEDIUM): the factory-apply checks need fcntl; without it th
     drill["factory_apply_skips_all"] = lambda m: setattr(m, "factory_applying", lambda name: True)
 except ImportError:
     pass
+# Owner 2026-11-20 ("go ahead", pane aa9f2e25): merge over factory-only divergence, each guard has its mutant
+drill["ff_merge_any_divergence"] = _evo_mut(_factory_only=lambda product, base: True)
+drill["ff_merge_never"] = _evo_mut(_factory_only=lambda product, base: False)
+drill["ff_merge_ignores_overlap"] = _evo_mut(_overlap=lambda product, base, head: [])
 survivors, crashed = [], []
 for name, mut in drill.items():
     m = load()

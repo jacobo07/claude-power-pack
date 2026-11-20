@@ -511,7 +511,7 @@ def ff_to(product: str, head, dry: bool = False) -> tuple[bool, str]:
     if cur == head:
         return True, f"product already at {head[:12]}"
     if _git(product, "merge-base", "--is-ancestor", "HEAD", head)[0] != 0:
-        return False, f"the branch head {head[:12]} is not a fast-forward of the product HEAD {cur[:12]}"
+        return _merge_over_factory(product, cur, head, dry)
     if _git(product, "status", "--porcelain", "--untracked-files=no")[1]:
         return False, "the product has tracked changes"
     if dry:
@@ -520,6 +520,52 @@ def ff_to(product: str, head, dry: bool = False) -> tuple[bool, str]:
     if rc != 0:
         return False, f"fast-forward failed: {out[-200:]}"
     return True, f"fast-forwarded the product to {head[:12]}"
+
+
+# Owner 2026-11-20 ("go ahead", pane aa9f2e25): the 0-token factory lane (agora/factory/lane.py) applies to a product
+# while a generation works on its own branch (windows = a held RUNNING lane), so the branch stops being a
+# fast-forward and the generation could never land (WIIPARTY S163W parked "branch", merged by hand as 94daae0).
+# The only divergence admitted is factory commits that touch no file the branch touches; anything else is refused.
+FACTORY_SUBJECT = "factory F5: "
+
+
+def _factory_only(product: str, base: str) -> bool:
+    """True when every commit on the product since `base` is a factory-lane commit (subject FACTORY_SUBJECT)."""
+    rc, out = _git(product, "log", "--format=%s", f"{base}..HEAD")
+    subjects = [s for s in out.splitlines() if s.strip()]
+    return rc == 0 and bool(subjects) and all(s.startswith(FACTORY_SUBJECT) for s in subjects)
+
+
+def _overlap(product: str, base: str, head: str) -> list[str]:
+    """Paths changed both by the product since `base` and by the branch since `base` (any = refuse)."""
+    rc1, a = _git(product, "diff", "--name-only", base, "HEAD")
+    rc2, b = _git(product, "diff", "--name-only", base, head)
+    if rc1 != 0 or rc2 != 0:
+        return ["<git diff failed>"]
+    return sorted(set(a.split()) & set(b.split()))
+
+
+def _merge_over_factory(product: str, cur: str, head: str, dry: bool) -> tuple[bool, str]:
+    refuse = f"the branch head {head[:12]} is not a fast-forward of the product HEAD {cur[:12]}"
+    rc, base = _git(product, "merge-base", "HEAD", head)
+    if rc != 0 or not base:
+        return False, f"{refuse} (no merge base)"
+    if not _factory_only(product, base):
+        return False, f"{refuse} (the product holds commits other than factory-lane ones)"
+    both = _overlap(product, base, head)
+    if both:
+        return False, f"{refuse} (factory commits and the branch touch the same files: {both[:3]})"
+    if _git(product, "status", "--porcelain", "--untracked-files=no")[1]:
+        return False, "the product has tracked changes"
+    if dry:
+        return True, f"dry: would merge {head[:12]} over factory-only commits"
+    rc, out = _git(product, "-c", "user.name=kobii-gex44-mission", "-c", "user.email=mission@gex44.local", "merge",
+                   "--no-ff", "-m", f"merge generation branch {head[:12]} over factory-lane commits (no shared files)",
+                   head)
+    if rc != 0:
+        _git(product, "merge", "--abort")
+        return False, f"merge over factory commits failed: {out[-200:]}"
+    return True, f"merged the generation branch {head[:12]} over factory-only commits"
 
 
 def _branch_heads(product: str) -> list[tuple[str, str]]:
@@ -564,13 +610,11 @@ def discover_checkpoint(product: str, checkpoint: str, dry: bool = False) -> tup
     if len(hits) != 1:
         return "PARK", f"CHECKPOINT_ON_BRANCH: {rel} is not in the product and is committed on {len(hits)} worktree branches"
     t = hits[0]
-    if _git(product, "merge-base", "--is-ancestor", "HEAD", t["HEAD"])[0] != 0:
-        return "PARK", f"CHECKPOINT_ON_BRANCH {t.get('branch', t['HEAD'])}: not a fast-forward of the product HEAD"
-    if _git(product, "status", "--porcelain", "--untracked-files=no")[1]:
-        return "PARK", f"CHECKPOINT_ON_BRANCH {t.get('branch', t['HEAD'])}: the product has tracked changes"
-    if dry:
-        return "FF", f"dry: would fast-forward to {t['HEAD'][:12]}"
-    rc, out = _git(product, "merge", "--ff-only", t["HEAD"])
-    if rc != 0 or not os.path.exists(os.path.join(product, rel)):
-        return "PARK", f"CHECKPOINT_ON_BRANCH {t.get('branch')}: fast-forward failed: {out[-200:]}"
-    return "FF", f"fast-forwarded product to {t.get('branch', '')} {t['HEAD'][:12]}"
+    # Owner 2026-11-20 ("go ahead", pane aa9f2e25): one integration rule, ff_to (fast-forward, or a merge over
+    # factory-only commits on other files). This copy refused WIIPARTY S163W ("branch") after factory applies.
+    ok, note = ff_to(product, t["HEAD"], dry)
+    if not ok:
+        return "PARK", f"CHECKPOINT_ON_BRANCH {t.get('branch', t['HEAD'])}: {note}"
+    if not dry and not os.path.exists(os.path.join(product, rel)):
+        return "PARK", f"CHECKPOINT_ON_BRANCH {t.get('branch')}: integration did not bring {rel}"
+    return "FF", f"{note} ({t.get('branch', '')})"
