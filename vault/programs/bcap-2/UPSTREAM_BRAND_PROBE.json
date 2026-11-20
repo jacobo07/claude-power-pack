@@ -22,7 +22,7 @@
   "tests": "tests/ 14 files incl. engines.test.ts, brain.test.ts",
   "determinism": "scripts/check-determinism.mjs + scripts/determinism.manifest.json pins SHA-256 of outputs per (engine,palette,font,container,seed) case",
   "typefaces": "README: type is compiled from geometric skeletons, 468 pregenerated glyph outlines, not licensed fonts; ASCII/non-ASCII coverage NOT yet audited",
-  "bi16_status": "SAME_HOST_CROSS_PROCESS_MEASURED; cross-platform and CCF adapter still open",
+  "bi16_status": "CROSS_PLATFORM_MEASURED (linux + windows, same combined hash); macOS and CCF adapter still open",
   "caveat": "upstream's own manifest is the upstream's claim, not our measurement",
   "bi16_measured": {
    "date": "2026-11-20",
@@ -31,7 +31,18 @@
    "result": "11 cases, combined hash 84c031a31fbb in both runs, exit 0 (script also compares to upstream manifest)",
    "caveats": [
     "Node 18 lacks Array.prototype.toSorted: ran with a --import shim defining toSorted/toReversed (semantics identical), upstream source unmodified",
-    "same host only: cross-platform (Windows/mac) byte identity NOT measured",
+    "same host only: cross-platform (Windows/mac) byte identity NOT measured (closed for Windows by bi16_cross_platform)",
+    "no CCF adapter built"
+   ]
+  },
+  "bi16_cross_platform": {
+   "date": "2026-11-20",
+   "plane": "laptop Windows 11 Pro 10.0.26200, node v24.15.0 (no shim needed), pnpm 9.15.9, --frozen-lockfile --ignore-scripts, pnpm build (tsup), scratch dir outside repo, coordinator pane adcdff7b",
+   "command": "node scripts/check-determinism.mjs, two separate processes",
+   "result": "11 cases, combined hash 84c031a31fbb in both runs, exit 0: identical to the GEX44 linux measurement",
+   "also_shows": "the node-18 toSorted/toReversed shim used on GEX44 did not change the output",
+   "caveats": [
+    "macOS byte identity NOT measured",
     "no CCF adapter built"
    ]
   }
