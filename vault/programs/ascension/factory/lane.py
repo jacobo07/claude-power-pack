@@ -75,6 +75,13 @@ def verdict(base, after, snap):
     return True, f"gained {len(gained)}, lost 0", gained
 
 
+def check_stamp(repo, ln):
+    """dtk-template's sha1 `check` edge writes build/<GAME>/ok. While it is newer than its inputs an incremental
+    ninja skips the check and prints no '<bin>: OK' line, so the gate below read a no-op build as a failed one
+    (13:01Z 2026-11-20, MKW/MKWLIB scratches already built at the same HEAD). Removing it forces the check to run."""
+    return os.path.join(repo, "build", ln["game"], "ok")
+
+
 def build(repo, ln, tag):
     """configure + ninja + report in repo; tracked files the build dirtied are restored (D5). -> (ok, why, report)."""
     before = tracked_dirty(repo)
@@ -84,6 +91,9 @@ def build(repo, ln, tag):
         rc, t = sh(["nice", "-n", "10", "python3", "configure.py"], cwd=repo, out=f"{repo}/.fl_{tag}_configure.log")
         if rc != 0:
             return False, f"configure rc={rc}: {t[-300:]}", None
+        stamp = check_stamp(repo, ln)
+        if os.path.lexists(stamp):
+            os.remove(stamp)
         rc, t = sh(["nice", "-n", "10", "ninja", "-j", "12"], cwd=repo, out=f"{repo}/.fl_{tag}_ninja.log", timeout=3600)
         if rc != 0:
             return False, f"ninja rc={rc}: {t[-300:]}", None
@@ -301,6 +311,7 @@ def selftest():
     chk("lost vs base -> refuse", verdict({"a", "c"}, {"a", "b"}, {"a"})[0], False)
     chk("lost vs snapshot only -> refuse", verdict({"a"}, {"a", "b"}, {"a", "z"})[0], False)
     chk("no gain -> refuse", verdict({"a"}, {"a"}, {"a"})[0], False)
+    chk("check stamp is build/<GAME>/ok", check_stamp("/r", {"game": "RMCP01"}), "/r/build/RMCP01/ok")
     sys.exit(0 if ok else 1)
 
 
