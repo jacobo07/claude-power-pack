@@ -1,0 +1,9 @@
+[
+ {"lane": "WIIPARTY", "repo": "/home/kobii/missions/wiiparty-decomp", "scratch": "/home/kobii/agora/factory/wp-f2",
+  "game": "SUPP01", "binaries": ["build/SUPP01/main.dol"], "report": "build/SUPP01/report.json",
+  "links": ["orig/SUPP01", "build/compilers", "build/tools"],
+  "runs": [
+   {"run": "wp-main-full", "producer": "factory", "lib": "Factory", "compiler": "Wii/1.1"},
+   {"run": "typegen/wp-vs2-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/1.1"}
+  ]}
+]

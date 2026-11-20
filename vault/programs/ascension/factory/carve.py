@@ -18,7 +18,14 @@ import argparse, json, os, re, sys
 
 sys.path.insert(0, "/home/kobii/missions/t1-campaign")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import factory as F  # noqa: E402
+import importlib  # noqa: E402
+# --producer selects the run's producer module (prelude + transform + ARMS): factory (base) or factory_vs2
+# (typegen/, m2c --valid-syntax + macros); a run must be carved with the producer that swept it.
+_pp = argparse.ArgumentParser(add_help=False)
+_pp.add_argument("--producer", default="factory")
+_PROD = _pp.parse_known_args()[0].producer  # review F4: also accepts --producer=X
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "typegen"))
+F = importlib.import_module(_PROD)  # noqa: E402
 
 SAFE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -40,6 +47,8 @@ def main():
     ap.add_argument("--game", required=True)
     ap.add_argument("--compiler", default="Wii/0x4201_127")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--producer", default="factory")
+    ap.add_argument("--lib", default="Factory")
     a = ap.parse_args()
     rows = {json.loads(l)["id"]: json.loads(l) for l in open(os.path.join(a.run, "sweep.jsonl"))}
     corp = {json.loads(l)["id"]: json.loads(l) for l in open(os.path.join(a.run, "corpus.jsonl"))}
@@ -66,6 +75,7 @@ def main():
         unit = "factory/%s.c" % c["name"]
         if unit in have:
             continue
+        have.add(unit)  # review F3: two picks with one name in a batch must not emit the unit twice
         src = F.transform(open(os.path.join(a.run, "m2c", "c", rid.replace(":", "_") + ".c"), encoding="utf-8", errors="replace").read())
         dst = os.path.join(a.repo, "src", unit)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -80,9 +90,9 @@ def main():
     open(splits_p, "a", encoding="utf-8", newline="\n").write("\n" + "\n".join(splits))
     body = "\n".join("            %s," % d for d in decls)
     if module == "main":
-        lib = ('    {\n        "lib": "Factory",\n        "mw_version": "%s",\n        "cflags": cflags_base,\n'
+        lib = ('    {\n        "lib": "%s",\n        "mw_version": "%s",\n        "cflags": cflags_base,\n'
                '        "progress_category": "game",\n        "src_dir": "src",\n        "objects": [\n%s\n        ],\n    },\n'
-               % (a.compiler, body))
+               % (a.lib, a.compiler, body))
         assert "config.libs = [\n" in cfg
         cfg = cfg.replace("config.libs = [\n", "config.libs = [\n" + lib, 1)
     else:

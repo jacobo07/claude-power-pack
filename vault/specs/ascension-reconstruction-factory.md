@@ -126,6 +126,46 @@ keeps only its opcode). Matched = the game's own report (WSR, MKW, WIIPARTY) or 
 - Compile lever on MKW (pilot 400, main): compiles 99 -> 241, 100% 47 -> 76, >=90% 16 -> 52 (vs2 vs base).
 - Near misses already measured (>=90%, not 100): WSR 2,463, MKW 1,299+451, MKWLIB 1,431+451, WIIPARTY 594.
 
+## F5: factory lane (Owner ruling 2026-11-20, pane 5a77ca0e: lane + standing authorization)
+covers: [factory-lane, standing-authorization, carve-vs2, perfn]
+**PRD.** Every factory step so far needed an agent session (stall classes 2, 7, 8, 12 in
+`vault/programs/ascension/factory/AUTONOMY-CAPABILITIES-2026-11-20.md`). F5 runs the deterministic share alone: a cron
+job on GEX44, 0 tokens, that applies already-measured factory matches to a lane in a window and advances the MATCH
+snapshot, with no Owner turn per application (standing authorization, brief.md section of the same date).
+**Arch.** `/home/kobii/agora/factory/lane.py tick` (cron hourly, `flock -n factory.lock`, nice 10, kill switch
+`~/.claude/state/factory-lane.ready`). Config `factory/lanes_factory.json`: per lane {lane, repo, game, scratch, report,
+binaries (ninja "X: OK" names), runs: [{run, producer, lib, compiler}]}. Per lane per tick:
+1. PREPARE (no lock): scratch = shared clone at lane HEAD; for each run: `perfn.py` (any-arm per function, dol first;
+   reproduces the F2 list byte for byte) -> `carve.py --producer --lib` (skips units already present, so a vs2 run adds
+   only its new functions). Nothing carved -> done.
+2. GATE (scratch): configure + ninja: every binary line `OK`; report: lost == 0 vs the lane's report at the same HEAD,
+   gained > 0; tracked files the build dirtied (symbols.txt, D5) restored. Commit in scratch (src/factory*,
+   configure.py, splits). Fail -> owner_queue NOTICE with the log, scratch left for inspection, no retry until the run
+   set or the lane HEAD changes.
+3. APPLY (under the autopilot's `cron.lock`, so no tick can arm during it): lane HEAD == scratch base, lane tracked-clean,
+   autopilot state status != RUNNING (a park/wait/stop window). ff the lane to the scratch commit; lane configure +
+   ninja + report; binaries OK; lost == 0 vs match/<LANE>.json (else `git reset --hard <base>` of the lane, NOTICE);
+   snapshot advanced (backup `.bak-factory-<ts>`), ledger `factory_match` (tokens 0), owner_queue NOTICE.
+**Standing authorization scope.** Only 0-token deterministic applications under exactly these gates. Out of scope (stay
+the Owner's): anything spending tokens, a ruling, a gate or certification-rule change, a lane config change, dtk version
+changes, producer changes not already measured.
+**AC.** (a) perfn reproduces wp-main-full-perfn (DONE 2026-11-20: dol-first identical, ksr-first differs 1,357);
+(b) carve vs2 union on WIIPARTY carves 2,100 - 1,644 = 456 (DONE, 456); (c) a dry tick on a lane with nothing new
+carves 0 and touches nothing; (d) a RUNNING lane is never applied; (e) a forced lost != 0 is refused (negative control).
+**Status 2026-11-20 11:30Z (pane 5a77ca0e).** LIVE: cron `*/10` (`flock -n factory.lock`, `python3 -I lane.py tick`, log
+`factory/lane.log`), ready file present, config = WIIPARTY only (base + vs2 runs). Tick 1 GATED scratch `eb9e76f` on
+faf7699 (carved 456, report 1,642 -> 2,097 at 100, code 2.71 -> 3.99%, 0 lost, main.dol OK) and waits: WIIPARTY RUNNING
+S163W (AC d observed at 11:15, 11:20, 11:29). AC (e): `lane.py selftest` 4/4 (verdict arithmetic from both poles); the
+live apply-refusal path is not yet exercised. AC (c) not yet observed (needs a post-apply tick). pp-code-reviewer: APPROVE
+with notes; MEDIUM F1 (exception after ff -> reset + NOTICE + re-raise) and F2 (failed git diff is not clean), LOW F3
+(duplicate unit name in one batch), F4 (`--producer=X`) fixed and redeployed (backups `*.bak-5a77-review`). Open
+note: carve/perfn failures now NOTICE once; the `links` symlinks share the lane's build/tools and build/compilers.
+Brief section "Factory lane: standing Owner authorization" live (brief.md f3c695ce -> dc99cea2, policy_check [] as phase
+and as fact, negative control caught). Laptop mirrors: `vault/programs/ascension/factory/{lane,perfn,carve}.py`,
+`lanes_factory.json`, `autopilot/brief.md`.
+**Rollback.** Remove the cron line; delete the ready file; each application is one ff commit (`git reset --hard` to the
+`base` in its ledger row) + the snapshot backup.
+
 ## F4: cross-lane index (OPEN)
 One certified-source pool per binary (KSR+WSR, MKW+MKWLIB, FIFA+FIFATC) and a masked-byte index across binaries
 (SDK/NW4R/EGG), consulted by the planner before any generation; the model works only on the residual (LF1 near misses).

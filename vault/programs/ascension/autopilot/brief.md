@@ -173,3 +173,9 @@ reached the Owner. These rulings answer them once. Budget, capital and authority
   autopilot to the Owner queue; write it only for capital, a truth-contract change or an irreversible act.
 - Progress classes: MATCH (functions newly at 100% in the objdiff report built by the autopilot, none lost) is a
   conversion like CERT. After a CERT or a MATCH the lane exploits the same lever at scale.
+
+## Factory lane: standing Owner authorization (Owner 2026-11-20, pane 5a77ca0e)
+- The factory lane (`/home/kobii/agora/factory/lane.py`, cron, 0 tokens) applies deterministic factory matches to a lane without an Owner turn, only under its gates: every binary OK, 0 functions lost against the lane's base report and its MATCH snapshot, at least 1 gained, lane HEAD unchanged and tracked-clean, autopilot status not RUNNING, the whole application under cron.lock.
+- Its snapshot advance is not a generation's MATCH: no generation is credited for a factory application (ledger kind `factory_match`, tokens 0).
+- Still the Owner's: anything that spends tokens, a ruling, a gate or certification-rule change, a lane config change, a dtk version change.
+- Spec: PP `vault/specs/ascension-reconstruction-factory.md` F5. Kill switch: `~/.claude/state/factory-lane.ready`.
