@@ -264,3 +264,66 @@ Do NOT declare "software morphogenesis" ready from a document or static code sca
 - decision on pattern's institutional applicability and any overdue retirement.
 
 A valid no-op (architecture sufficient now) or deferred migration with justified evidence may count as a **successful decision**, not as a shipped new system.
+
+
+## M18. Earlier source numbered-section traceability: S-A (4), S-B (14), S-C (23)
+
+Explicit section-level accounting across ALL four source reports. Prior concepts may map to same canonical owner; avoid independent duplicate implementations. S-D (55 sections) is enumerated in M15 above.
+
+### S-A — Strategic Audit (4/4)
+
+| Section | Source subject | Captured in |
+| --- | --- | --- |
+| A1 | Seven bottlenecks; 58/126 historic suites, 73 PLANNED, 0 pp_eval bank historic, no versioned main CI, built→wired→effective chain | Master §2; R/V/E items |
+| A2 | Eight GitHub recommendations: OpenInference/Phoenix, Hypothesis/Schemathesis, ast-grep/Pyright, Promptfoo, Harbor/Inspect AI, uv/Devcontainers, DBOS, Scorecard; avoid generic duplicate orchestration | GitHub Intake |
+| A3 | Measurement→reliability→context efficiency→transfer→autonomy rollout | Tranches T0–T5 |
+| A4 | Effective coverage, first pass, regression escapes, cognitive cost, reuse, recovery, knowledge→behavior; current evidence ceiling | Contracts C11; Tranches §7 |
+
+### S-B — Beyond the Agent Framework (14/14)
+
+| Section | Source subject | Captured in |
+| --- | --- | --- |
+| B01 | Institutional complexity diagnosis; UCR-CIF 470/540 UNJUDGED, false wakes, stale README and structural gap | Master §2; R/K |
+| B02 | Flusher HTTP/Bearer conditional risk and >8MiB first-file synchronous parse | Contracts C12; Tranches A2 |
+| B03 | Goal compiler: intent→reality→obligations→deterministic/cognitive→judge→capitalization; six contracts | Contracts C01–C07 |
+| B04 | Minimum Necessary Cognition 0–4, cost-sensitive Hyperplan | Contracts C11; I02/I03 |
+| B05 | Six GitHub groups: observability, generative proof, code intelligence, evaluations, durable runtime, policy/reproducibility | GitHub Intake |
+| B06 | Experience to executable capability; Work Class compile and applicability | M11; K08/I02 |
+| B07 | PASS/FAIL/UNJUDGED/NOT_RUN/N/A/BLOCKED/STALE/CONTRADICTED and falsification | Contracts C03/C07 |
+| B08 | Experiments A–H with controlled A/A, task quality and holdouts | Contracts C09 |
+| B09 | Total verified cost incl human/maint; recurrence economics | Contracts C11; I01/I05 |
+| B10 | Zero-resident model goals, fencing, effect ambiguity and crash recovery | Contracts C05; E01–E08 |
+| B11 | Portfolio allocation by frequency/transfer/risk/maintenance; safe retirement | M10/M12; I07/I08 |
+| B12 | T0–T5 phases with actual acceptance gates | Tranches |
+| B13 | Recommended/conditional/rejected repository classes | GitHub Intake |
+| B14 | Terminal question: verifiable future task gains and bounded active context | Contracts C10/C11; T5 |
+
+### S-C — Atomic Engineering Ascension (23/23)
+
+| Section | Source subject | Captured in |
+| --- | --- | --- |
+| C01 | Existing GSD X/UWCP primitives and no duplicate owners | Master §3 |
+| C02 | Atomic Verified Transition, ten fields, formal composition | Contracts C01/C04 |
+| C03 | Nine types: Observation, Claim, Hypothesis, Obligation, Decision, Transition, Effect, Proof, Capability | Contracts C02 |
+| C04 | Five epistemic axes and ten propagation laws | Contracts C03 |
+| C05 | Repository/goal/epoch/artifact/toolchain/evidence identity | Contracts C04/C06 |
+| C06 | Ten protected effect phases and ambiguity of lost acknowledgement | Contracts C05 |
+| C07 | Pure decision/act/verify; writer owner, reconcile, stale fence and versions | Contracts C05/C06 |
+| C08 | Actorless goals and eight dormancy/continuity invariants | Contracts C05; E08 |
+| C09 | Context paging L0–L5, cognitive packet, context bloat vs knowledge miss | Contracts C04/C11; K05/K06 |
+| C10 | Proof V0–V5, stateful property-based, linearizability and judge | Contracts C07/C08 |
+| C11 | Symbol/contract/behavior graph and conservative impact closure | C01–C08, GitHub X15–X18 |
+| C12 | Principal/action/resource access and source/trace security | Contracts C05/C12 |
+| C13 | Capability lifecycle, no false global laws, safe deopt | M11/M12; K01–K08 |
+| C14 | Complete total cost and future reusable value | Contracts C11 |
+| C15 | ALL 48 IDs across six groups | [48 obligations](2026-11-20_cpp-atomic-48-obligations.md) |
+| C16 | T0–T5 ordering and dependencies | Tranches |
+| C17 | Trace pilot: offline, huge file, auth, ACK, duplicate, privacy | Contracts C08/C12; A2 |
+| C18 | ALL 24 adversarial incidents without another Chaos OS | Contracts C08 |
+| C19 | Hypothesis, ast-grep, OpenInference, Porcupine, OpenLineage, Inspect, Schemathesis, Pact, Toxiproxy, Syft, Cedar, Temporal, Restate, Apalache | GitHub Intake |
+| C20 | ICE, verified outcomes, cost, false wake, proof maintenance | Contracts C11 |
+| C21 | Four-exposure positive/negative transfer with causal comparisons | Contracts C10 |
+| C22 | First real slice: reality baseline, defect fix, cross-project proof | Tranches §4 |
+| C23 | Terminal compounding institution and honest limits | Master; Tranches |
+
+**Coverage:** S-A=4/4, S-B=14/14, S-C=23/23, S-D=55/55 = **96/96 top-level sections indexed**. Subsections are captured in C01–C13 contracts and M01–M17; all 48 atomics enumerated separately; no source topic has been declared implemented through intake. Count is traceability, NOT integration completeness.
