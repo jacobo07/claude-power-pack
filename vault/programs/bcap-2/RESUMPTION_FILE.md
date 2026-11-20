@@ -40,5 +40,14 @@ the docker group, Owner-approved): 0 vulns, 586/586 signatures, no provenance, g
 still refused. Account: cswap not needed. GEX44 sonnet/opus answer OK, account-1 7d 16%; mission woken (D-LIMIT-CLEARED),
 RUNNING epoch 7. BROWSER_RESULTS.json re-run diff is uncommitted in the worktree.
 
-**Next.** Watch m-4470f5f20e18 (Phase 7 BI-10/15..35, Phase 8 B-H). Then closeout: merge mission/bcap-2-run + bcap2/laptop-steps, review; grant top-ups by the rule above; at closeout fetch `mission/bcap-2-run`,
+**State 2026-11-20 ~13:30Z (merge).** Merged into feature/knowledge-acquisition and PUSHED to GitHub (public repo):
+origin = bf809c3a (105 commits). Mission up to 43ac2393 (BI-18) + laptop steps. Synsation transcripts dropped from
+unpushed history (Owner): kept only at laptop ~/.claude/private/bcap2-synsation-transcripts/. That rewrite changed
+one other pane's commit SHA: f8bd797e (ascension lane.py fix) is now 082e06aa, same content. BCAP-2 hunks for
+session_lessons.md and deferred-backlog.md are held in vault/programs/bcap-2/SHARED_FILE_HUNKS.patch (another pane
+has those files dirty). Gates over the merge: done_gate PASS (GEX44), cdio 8/8, motion 46/46, synsation 38/0, bench 21/0.
+Branches bcap2/laptop-steps + bcap2/integrate deleted (laptop + GEX44 clone).
+
+**Next.** Watch m-4470f5f20e18; merge its later commits (after 43ac2393) the same way; apply SHARED_FILE_HUNKS.patch
+once the other pane commits. Then closeout: merge mission/bcap-2-run + bcap2/laptop-steps, review; grant top-ups by the rule above; at closeout fetch `mission/bcap-2-run`,
 review, merge (Owner-gated), then run LAPTOP_STEPS (incl. Ruflo laptop activation).
