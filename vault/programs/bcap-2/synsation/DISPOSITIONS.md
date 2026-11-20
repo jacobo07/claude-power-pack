@@ -32,7 +32,8 @@ HEURISTIC, REJECT, UNVERIFIED. Machine-checked by `tools/test_bcap2_synsation.py
 
 The four videos were supplied in the laptop's Downloads; all four sha256 match the backlog table. Audio extracted with
 the vendored ffmpeg, transcribed offline by the video-analyzer bundled whisper.cpp (tiny q4_0, every run TRANSCRIPT_OK)
-on GEX44. Transcripts: `synsation/transcripts/<id>.txt` (machine transcription: names garbled, e.g. "Scalance" =
+on GEX44. Full transcripts are third-party content and stay OFF the public repo (Owner 2026-11-20): laptop
+`~/.claude/private/bcap2-synsation-transcripts/<id>.txt` (machine transcription: names garbled, e.g. "Scalance" =
 skeleton, "sock-to" = SOC 2, "hip-hop" = HIPAA). Verdict per wording-dependent claim:
 
 | id | audio verdict | quote (timestamp) |

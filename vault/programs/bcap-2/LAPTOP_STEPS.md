@@ -25,7 +25,8 @@ and touch input unmeasured.
 
 ## DONE — Phase 5 (Synsation) video re-inspection with audio
 The Owner put the four videos in Downloads; all four sha256 match the backlog. Offline transcripts (video-analyzer
-whisper.cpp, TRANSCRIPT_OK x4) in `synsation/transcripts/`; per-claim verdicts in `synsation/DISPOSITIONS.md`
+whisper.cpp, TRANSCRIPT_OK x4) kept OFF the public repo (third-party content; Owner 2026-11-20) at laptop
+`~/.claude/private/bcap2-synsation-transcripts/`; per-claim verdicts with short quotes in `synsation/DISPOSITIONS.md`
 ("Audio re-inspection"). UX-07..09, 11, 13, 14, 16..20 CONFIRMED by wording; UX-10 and UX-12 are CPP-derived, not in
 the source; UX-15 partial; video 4 is SPONSORED (Vanta), so UX-14..18 rest on one vendor source. New from audio: a
 control disabled while a just-clicked action runs is correct; `check_disabled_control` now exempts `pending_submission`
