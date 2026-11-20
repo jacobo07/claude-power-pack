@@ -1,6 +1,6 @@
 ---
 covers: [bamr, account-governor, quota, mission-recovery, burn-optimization, statusline-quota-tap]
-status: PARTIALLY PROVEN (P1-P2 afb43d63, P3 bf315ce6, P5 census + this spec landed; P5 hold, P4 gaps, UKDL, ratchet open)
+status: PARTIALLY PROVEN (P1-P2 afb43d63, P3 bf315ce6, P5 census + this spec, UKDL 17c6717a, P5 hold landed; P4 gaps, ratchet open)
 owner_decisions: 2026-11-20 (session 05242a26)
 ---
 # Budget-Aware Mission Recovery (BAMR)
@@ -31,8 +31,10 @@ owner_decisions: 2026-11-20 (session 05242a26)
 | Quota decision | `tools/account_governor.py` | official > estimate > UNKNOWN(refuse); `deterministic` always allowed; configured hosts only; check never scans |
 | Launch admission | `gsd_mission.launch_worker` + `gsd_epoch.continue_worker` | both call `gsd_mission.account_refusal` before any claim; deterministic/done-gate closes run before it |
 | Burn evidence | `tools/burn_census.py` | new, read-only census of mission records |
+| Burn hold (P5) | `gsd_mission.arm` (`burn_supersede_refusal`) + `burn-cite` | a 50M no-change attempt is held, not superseded, until a fix is cited |
 
-Kill switches: `CPP_QUOTA_TAP=off`, `CPP_GOVERNOR_UNKNOWN=allow`, `CPP_MISSION_ACCOUNT_ADMISSION=off`.
+Kill switches: `CPP_QUOTA_TAP=off`, `CPP_GOVERNOR_UNKNOWN=allow`, `CPP_MISSION_ACCOUNT_ADMISSION=off`,
+`CPP_MISSION_BURN_HOLD=off`.
 Rollback: revert the BAMR commits; restore `~/.claude/backups/settings.json.bamr-p1-20261120.bak` for the statusline.
 
 ## Gates (exact commands, from the repo root)
@@ -40,6 +42,7 @@ Rollback: revert the BAMR commits; restore `~/.claude/backups/settings.json.bamr
 - `python tools/test_statusline_quota_tap.py` (V-QTAP-*)
 - `python tools/test_mission_account_admission.py` (V-BAMR-ADMIT-*)
 - `python tools/test_burn_census.py` (V-BURN-*)
+- `python tools/test_mission_burn_hold.py` (V-BURN-HOLD-*, V-BURN-CITE-*; P5)
 - Live: `python tools/account_governor.py check --action relaunch` -> ALLOW+OFFICIAL while a session renders.
 
 ## Known limits (evidence, not opinion)
@@ -114,8 +117,20 @@ No second classifier was built: every class below already has an owner. Read 202
 T-QUOTA-ESTIMATE-IS-NOT-QUOTA-001, PR-ADMISSION-AT-EVERY-LAUNCH-PATH-001, T-HOST-NAME-DEFAULT-DOUBLE-COUNT-001,
 T-ADMISSION-CHECK-THAT-SCANS-001, T-SUPERSEDE-AFTER-SPEND-IS-THE-LARGEST-BURN-001 -- in `vault/knowledge_base/ukdl-universal.md`.
 
-## P5 design question (open, Owner)
-The hold is named but undefined. It would be a new `set_owner_hold` kind (`tools/gsd_mission.py:1952`), not a new
-mechanism. Undecided: (a) trigger -- per mission at supersede/replace time when it spent >= N tokens with no tree
-change, vs at `arm` when the census class of the same repo already burned without change; (b) threshold N;
-(c) release -- Owner `release_owner_hold` only, or automatic once an optimisation record cites the census class.
+## P5 burn-optimisation hold (Owner 2026-11-20: trigger at supersede, N = 50M, release by cited fix)
+- `arm --supersedes X`: when X spent >= `BURN_HOLD_TOKENS` (50M) with no tree change, the supersede is refused and X
+  gets a `burn_hold` field {reason, set_at, burn}. An UNHELD X also gets `owner_hold.kind = burn_optimization` (parks
+  supervision, refuses a plain arm of the goal); a hold X already carries (cost, owner_stop, resource) is never
+  overwritten -- it already refuses a plain arm.
+- Spend = max(`spend_stamp.tokens`, `cost_mark.tokens`), recorded fields only (no transcript scan). Tree change =
+  recorded `progress.fp` vs `progress_origin`; a recorded "unchanged" is re-checked live on `mb.execution_root`
+  (the bound AMCR root, as every other progress check). Unknown spend or tree -> ledger `burn_check_unknown`, no hold.
+- Release: `gsd_mission.py burn-cite --mission X --fix "<what>" --commit <sha>` appends to
+  `~/.claude/state/burn-optimizations.jsonl`; the commit must be a 7-40 hex sha that exists in X's repo and does not
+  predate the burn hold (ref names such as HEAD are refused). The next `arm --supersedes X` re-validates it and clears
+  `burn_hold` (and a burn-kind `owner_hold`) inside the same `mission_superseded` transition, after `create`, so a
+  failed create leaves the hold standing. A plain Owner `release` lifts the park but not `burn_hold`: only a citation
+  or the kill switch `CPP_MISSION_BURN_HOLD=off` lets the supersede through.
+- Known limit: the hold parks supervision (plan_next) but does not stop a worker already running its epoch.
+- Review (pp-code-reviewer, sonnet, 2026-11-20): APPROVE, 0 critical/high; MEDIUM-1 (wrong root), MEDIUM-2 (foreign
+  hold overwritten), LOW-3 (unvalidated sha), LOW-4 (release before create) all fixed and pinned by gates.

@@ -7436,6 +7436,158 @@ def batch_foreseeable_decisions(rec: dict, cwd: str, workstream: str | None) -> 
         return None
 
 
+# --------------------------------------------------------------------------- BAMR P5: burn-optimisation hold
+# Burn census 2026-11-20 (tools/burn_census.py): the largest class of spend without progress was missions
+# SUPERSEDED after spending with no tree change (~528M tokens in 4). Owner 2026-11-20: hold at supersede time,
+# N = 50M, released automatically by a cited fix. Kill switch CPP_MISSION_BURN_HOLD=off.
+BURN_HOLD_KIND = "burn_optimization"
+BURN_HOLD_TOKENS = 50_000_000
+BURN_CITATIONS = "burn-optimizations.jsonl"
+
+
+def burn_hold_on() -> bool:
+    return (os.environ.get("CPP_MISSION_BURN_HOLD") or "").strip().lower() != "off"
+
+
+def burn_facts(rec: dict, fp_fn=None) -> dict:
+    """What a mission spent and whether its tree changed, from RECORDED fields (never a transcript scan --
+    T-ADMISSION-CHECK-THAT-SCANS-001). tokens/changed are None when the record cannot say; absent is not zero.
+    Tree change: the recorded progress fingerprint against the origin (the census's instrument); a recorded
+    "unchanged" is re-checked against a live fingerprint, so a change the last relay did not record still counts."""
+    seen = [int(v) for v in ((rec.get("spend_stamp") or {}).get("tokens"), (rec.get("cost_mark") or {}).get("tokens"))
+            if isinstance(v, (int, float)) and not isinstance(v, bool) and v >= 0]
+    tokens = max(seen) if seen else None
+    origin, prog = rec.get("progress_origin"), rec.get("progress") or {}
+    changed = None
+    if origin and prog.get("measured") and prog.get("fp"):
+        changed = prog["fp"] != origin
+        if not changed:
+            # Review MEDIUM-1: the same root every other progress check measures (AMCR binding first); an
+            # unresolvable root skips the re-check rather than fingerprinting the process cwd.
+            root = mb.execution_root(rec)
+            try:
+                live = mission_fingerprint(rec, root, fp_fn) if root else None
+            except Exception:  # noqa: BLE001 -- an unreadable live tree leaves the recorded verdict standing
+                live = None
+            if live is not None and live != origin:
+                changed = True
+    return {"tokens": tokens, "changed": changed}
+
+
+def _citations_path() -> Path:
+    return Path(lr.state_dir()) / BURN_CITATIONS
+
+
+_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
+
+
+def _commit_time(repo: str, sha: str) -> float | None:
+    """Committer time of `sha` in `repo`, or None when it is not a commit there. Review LOW-3: only a hex sha
+    (no option injection, no HEAD/branch that any later commit satisfies) in a repo directory that exists."""
+    import subprocess
+    if not _SHA_RE.match(sha or "") or not repo or not Path(repo).is_dir():
+        return None
+    g = resolve_exe("git") or "git"
+    try:
+        out = subprocess.run([g, "-C", repo, "show", "-s", "--format=%ct", f"{sha}^{{commit}}", "--"],
+                             capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    t = (out.stdout or "").strip()
+    return float(t) if out.returncode == 0 and t.isdigit() else None
+
+
+def _citation_refusal(rec: dict, commit: str) -> str | None:
+    """A citation cites a fix only if the commit exists in the mission's repo and is not older than the burn
+    hold: a fix that predates the burn it answers is not a fix for it."""
+    set_at = float((rec.get("burn_hold") or {}).get("set_at") or 0)
+    repo = mb.execution_root(rec) or rec.get("cwd") or ""
+    t = _commit_time(repo, commit)
+    if t is None:
+        return f"{commit} is not a commit sha in {repo or '<no repo>'} (a 7-40 char hex sha is required)"
+    if t < math.floor(set_at):
+        return f"{commit} predates the burn hold on {rec['mission_id']} (committed before the hold was set)"
+    return None
+
+
+def burn_cite(mission_id: str, fix: str, commit: str, now: float | None = None) -> dict:
+    """Record the optimisation that answers a burn hold. Validated now and again when the supersede consumes it."""
+    fix, commit = (fix or "").strip(), (commit or "").strip().lower()
+    if not fix or not commit:
+        raise MissionError("burn-cite needs --fix (what changed) and --commit (where)")
+    rec = load(mission_id)
+    if rec is None:
+        raise MissionError(f"no mission {mission_id}")
+    if not rec.get("burn_hold"):
+        raise MissionError(f"{mission_id} has no burn-optimisation hold to cite")
+    why = _citation_refusal(rec, commit)
+    if why:
+        raise MissionError(f"citation refused: {why}")
+    row = {"mission_id": mission_id, "fix": fix[:1000], "commit": commit, "at": time.time() if now is None else now,
+           "hold_set_at": rec["burn_hold"].get("set_at")}
+    p = _citations_path()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row) + "\n")
+    lr.ledger_append(mission_id, "burn_cited", mission_id=mission_id, commit=commit, fix=fix[:300])
+    return row
+
+
+def burn_citation(rec: dict) -> dict | None:
+    """The newest citation for this mission's CURRENT burn hold that still validates, or None."""
+    p = _citations_path()
+    if not p.exists():
+        return None
+    set_at = (rec.get("burn_hold") or {}).get("set_at")
+    if set_at is None:
+        return None
+    rows = []
+    for line in p.read_text(encoding="utf-8").splitlines():
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(r, dict) and r.get("mission_id") == rec["mission_id"] and r.get("hold_set_at") == set_at:
+            rows.append(r)
+    for r in reversed(rows):
+        if _citation_refusal(rec, str(r.get("commit") or "")) is None:
+            return r
+    return None
+
+
+def burn_supersede_refusal(old: dict, new_mission_hint: str, now: float | None = None, fp_fn=None) -> str | None:
+    """Before `arm --supersedes` replaces `old`: a burn-held attempt is replaced only with a valid citation; an
+    attempt that spent >= BURN_HOLD_TOKENS with an unchanged tree is held instead of replaced. Unknown spend or
+    tree change is recorded and does not hold (absent is not zero, and not evidence of burn either)."""
+    if not burn_hold_on():
+        return None
+    mid = old["mission_id"]
+    bh = old.get("burn_hold") or {}
+    if bh:
+        if burn_citation(old):
+            return None
+        return (f"{mid} is under a burn-optimisation hold: {bh.get('reason')}. Cite the fix first: "
+                f"gsd_mission.py burn-cite --mission {mid} --fix \"<what changed>\" --commit <sha>")
+    f = burn_facts(old, fp_fn)
+    if f["tokens"] is None or f["changed"] is None:
+        lr.ledger_append(mid, "burn_check_unknown", mission_id=mid, tokens=f["tokens"], changed=f["changed"],
+                         by=new_mission_hint[:200])
+        return None
+    if f["changed"] or f["tokens"] < BURN_HOLD_TOKENS:
+        return None
+    reason = (f"BURN_OPTIMIZATION_REQUIRED: {f['tokens']:,} tokens spent with no tree change "
+              f"(>= {BURN_HOLD_TOKENS:,}); supersede refused until an optimisation is cited")
+    # Review MEDIUM-2: the burn marker is its own field, so a hold this feature does not own (cost, owner_stop,
+    # resource) is never overwritten; an existing hold already refuses a plain arm of the goal. Only an unheld
+    # attempt gets an owner hold of kind burn_optimization, which parks supervision the same way.
+    t = time.time() if now is None else now
+    transition(mid, expect_epoch=old["epoch"], expect_state=old["state"], event="burn_hold_set", now=t,
+               burn_hold={"reason": reason, "set_at": t, "burn": f})
+    if not old.get("owner_hold"):
+        set_owner_hold(mid, reason, now=t, kind=BURN_HOLD_KIND, extra={"burn": f})
+    return f"{mid}: {reason}. Cite it: gsd_mission.py burn-cite --mission {mid} --fix \"<what changed>\" --commit <sha>"
+
+
 def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str | None = None,
         authority: str | None = None, parallel_unit: str | None = None, goal: str | None = None,
         milestone_from: str | None = None, preflighted: bool = False, pivot: bool = True, **kw) -> dict:
@@ -7474,6 +7626,10 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
             raise MissionError(f"{supersedes} is not a live attempt to supersede")
         if key is None or goal_key(old.get("cwd") or "", old.get("workstream")) != key:
             raise MissionError(f"{supersedes} is not an attempt of this goal")
+        burn_why = burn_supersede_refusal(old, f"arm --supersedes ({authority.strip()[:150]})")
+        if burn_why:
+            lr.ledger_append(supersedes, "burn_supersede_refused", mission_id=supersedes, why=burn_why[:300])
+            raise MissionError(burn_why[:600])
         conflicts = [c for c in conflicts if c["mission_id"] != supersedes]
     why = goal_refusal(conflicts, parallel_unit)
     if why:
@@ -7508,9 +7664,19 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         rec = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=PREPARED,
                          event="goal_bound", **extra)
     if old is not None:
+        burn = {}
+        if old.get("burn_hold"):
+            # BAMR P5: reached only with a valid citation (burn_supersede_refusal above). The burn hold is
+            # consumed in the SAME transition that supersedes (review LOW-4: never released before create).
+            cite = burn_citation(old) or {}
+            burn = {"burn_hold": None, "burn_cited": {"commit": cite.get("commit"), "fix": cite.get("fix")}}
+            if (old.get("owner_hold") or {}).get("kind") == BURN_HOLD_KIND:
+                burn["owner_hold"] = None
+            lr.ledger_append(supersedes, "burn_hold_released_by_citation", mission_id=supersedes,
+                             commit=cite.get("commit"))
         transition(supersedes, expect_epoch=old["epoch"], expect_state=old["state"],
                    event="mission_superseded", state=HALTED, pending=None,
-                   reason=f"superseded by {rec['mission_id']}: {authority.strip()[:300]}")
+                   reason=f"superseded by {rec['mission_id']}: {authority.strip()[:300]}", **burn)
     if pivot and pivot_autonomy_on():
         # spec mission-checkpoint-autonomy C3: on before the first launch, so the first worker's card teaches the
         # typed checkpoint. `--no-pivot` keeps the park-for-Owner behaviour (S30T parked 10.8 h without it).
@@ -8489,6 +8655,11 @@ def _cli(argv=None) -> int:
     oh.add_argument("--stop", action="store_true",
                     help="also stop the live background worker through the host (claude stop + wait); "
                          "never kill the pid by hand: the daemon resumes a killed session")
+    bc = sub.add_parser("burn-cite", help="BAMR P5: cite the optimisation that answers a burn-optimisation hold; "
+                                          "the next arm --supersedes releases it")
+    bc.add_argument("--mission", required=True)
+    bc.add_argument("--fix", required=True, help="what changed so the next attempt does not burn the same way")
+    bc.add_argument("--commit", required=True, help="the commit in the mission's repo that carries the fix")
     orl = sub.add_parser("release", help="lift an owner hold; the budget clock is not reset")
     orl.add_argument("--allow-overrun", action="store_true", help="release a cost hold even though authority is not above live spend (W0 2026-11-19)")
     orl.add_argument("--mission", required=True)
@@ -8751,6 +8922,10 @@ def _cli(argv=None) -> int:
         return 0
     if args.cmd == "topology":
         print(json.dumps(topology(args.mission), indent=1, default=str))
+        return 0
+    if args.cmd == "burn-cite":
+        row = burn_cite(args.mission, args.fix, args.commit)
+        print(f"BURN CITED mission={row['mission_id']} commit={row['commit']} (the next arm --supersedes releases it)")
         return 0
     if args.cmd == "release":
         rec = release_owner_hold(args.mission, allow_overrun=bool(getattr(args, "allow_overrun", False)))

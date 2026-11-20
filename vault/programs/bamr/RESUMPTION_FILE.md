@@ -20,8 +20,9 @@ Owner caps: session <= 40 $ API-eq (soft 25 $). Autonomous model spend 0 — not
 
 ## 4. Next executable obligation
 1. DONE `17c6717a`: the 5 UKDL entries (verified 2026-11-20 by session 3da1f022: all 5 ids in the commit).
-2. P5 hold (design awaits Owner: trigger / scope / release; see spec "P5 design question"): BURN_OPTIMIZATION_REQUIRED in gsd_mission fed by `tools/burn_census.py` (supersede-after-spend first).
-3. P4 gaps (breaker 4 vs Regla 12 = 2; tool-failure signal; external-effect reconciliation).
+2. DONE (session 3da1f022): P5 burn-optimisation hold at supersede, N=50M, released by `burn-cite`
+   (spec "P5 burn-optimisation hold"; gate `tools/test_mission_burn_hold.py` 27/27; review's 4 findings fixed).
+3. NEXT: P4 gaps (breaker 4 vs Regla 12 = 2; tool-failure signal; external-effect reconciliation).
 4. Owner: correct `~/.claude/state/account-governor.json` reset_at (official reset Wed 17:00 UTC) and calibration
    (`python tools/account_governor.py status --json` -> `implied_calibration_api_eq_per_100pct`).
 5. Debt named by the review: 7 `claude -p` tools spend ungated (list in the spec); closeout-on-quota decision.
