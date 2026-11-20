@@ -33,15 +33,18 @@ def jdump(path, obj):
         json.dump(obj, f)
 
 
-def env(tmp, spend, cfg_extra=None, hosts=("gex44",), calib=CALIB, reset=NOW - 3 * 86400):
+def env(tmp, spend, cfg_extra=None, hosts=None, calib=CALIB, reset=NOW - 3 * 86400):
+    """Default: both configured hosts report (FULL coverage), all spend on gex44, 0 on laptop.
+    Explicit `hosts`: each listed host reports `spend`."""
     sd = tempfile.mkdtemp(dir=tmp)
     cfg = {"reset_at": reset}
     if calib is not None:
         cfg["calibration_api_eq_per_100pct"] = calib
     cfg.update(cfg_extra or {})
     jdump(os.path.join(sd, "account-governor.json"), cfg)
-    for h in hosts:
-        jdump(os.path.join(sd, "account-governor-hosts", h + ".json"), {"api_eq_usd": spend, "reset_at": reset, "host": h})
+    rows = [("gex44", spend), ("laptop", 0.0)] if hosts is None else [(h, spend) for h in hosts]
+    for h, v in rows:
+        jdump(os.path.join(sd, "account-governor-hosts", h + ".json"), {"api_eq_usd": v, "reset_at": reset, "host": h, "measured_at": NOW - 60})
     return sd
 
 
@@ -86,8 +89,11 @@ with tempfile.TemporaryDirectory() as tmp:
     code, verdict = run(sd)
     gate("V-CCN-GOV-ESTIMATE-WARN", code == 0 and verdict == "ALLOW+WARN" and st["pct_estimate"] == 92.0 and st["pct_lower_bound"] == 70.0,
          "lower 70%%, reported 92%% -> %s (estimate never refuses)" % verdict)
-    gate("V-CCN-GOV-COVERAGE-PARTIAL", st["coverage"] == "PARTIAL" and st["missing_hosts"] == ["laptop"] and "LOWER BOUND ONLY" in st["confidence"],
-         "coverage=%s missing=%s confidence=%s" % (st["coverage"], st["missing_hosts"], st["confidence"]))
+    sd = env(tmp, 70 * CALIB / 100.0, hosts=("gex44",))
+    st = g.status(sd, NOW, [])
+    gate("V-CCN-GOV-COVERAGE-PARTIAL", st["coverage"] == "PARTIAL" and st["missing_hosts"] == ["laptop"] and "LOWER BOUND ONLY" in st["confidence"]
+         and run(sd) == (3, "REFUSE+UNKNOWN"),
+         "laptop missing: coverage=%s, missing spend is unknown not zero -> refused (BAMR)" % st["coverage"])
     sd = env(tmp, 40 * CALIB / 100.0, {"reported_pct": 95, "reported_at": NOW - 5 * 86400})
     st = g.status(sd, NOW, [])
     gate("V-CCN-GOV-REPORT-STALE", st["pct_estimate"] == 40.0, "a reading from before the reset is ignored: estimate=%s" % st["pct_estimate"])
@@ -98,15 +104,15 @@ with tempfile.TemporaryDirectory() as tmp:
          "two hosts at 50%% each: FULL, 100%%, refused (merge sums hosts): %s" % st["per_host_api_eq_usd"])
     sd = env(tmp, 10.0, hosts=())
     st = g.status(sd, NOW, [])
-    gate("V-CCN-GOV-COVERAGE-NONE", st["coverage"] == "NONE" and st["pct_lower_bound"] is None and run(sd) == (0, "ALLOW+UNKNOWN"),
-         "no host reported -> NONE, UNKNOWN, allowed: coverage=%s" % st["coverage"])
+    gate("V-CCN-GOV-COVERAGE-NONE", st["coverage"] == "NONE" and st["pct_lower_bound"] is None and run(sd) == (3, "REFUSE+UNKNOWN"),
+         "no host reported -> NONE, UNKNOWN, refused (BAMR): coverage=%s" % st["coverage"])
 
     # a reset observed two weeks ago rolls forward to this week's: last week's measurement is stale, not summed
     old_reset = NOW - 15 * 86400
-    sd = env(tmp, 99 * CALIB / 100.0, reset=old_reset)
+    sd = env(tmp, 99 * CALIB / 100.0, reset=old_reset, hosts=("gex44",))
     st = g.status(sd, NOW, [])
-    gate("V-CCN-GOV-WEEKLY-ROLL", st["reset_at"] == old_reset + 14 * 86400 and st["stale_hosts"] == ["gex44"] and run(sd)[0] == 0,
-         "reset %+.0f d rolled to %+.0f d; host measured on the old window excluded, not refused" % ((old_reset - NOW) / 86400, (st["reset_at"] - NOW) / 86400))
+    gate("V-CCN-GOV-WEEKLY-ROLL", st["reset_at"] == old_reset + 14 * 86400 and st["stale_hosts"] == ["gex44"] and run(sd) == (3, "REFUSE+UNKNOWN"),
+         "reset %+.0f d rolled to %+.0f d; old-window host excluded -> nothing known this window -> REFUSE+UNKNOWN (BAMR)" % ((old_reset - NOW) / 86400, (st["reset_at"] - NOW) / 86400))
 
     # window mismatch: a host measured against another reset is not summed
     sd = env(tmp, 99 * CALIB / 100.0)
@@ -114,14 +120,64 @@ with tempfile.TemporaryDirectory() as tmp:
     st = g.status(sd, NOW, [])
     gate("V-CCN-GOV-STALE-HOST", st["stale_hosts"] == ["laptop"] and st["lower_bound_usd"] == 990.0, "laptop measured on another window is excluded: %s" % st["stale_hosts"])
 
-    # unknown telemetry
+    # unknown telemetry (BAMR, Owner decision 2026-11-20: unknown or stale blocks autonomous model spend)
     sd = env(tmp, 99 * CALIB / 100.0, calib=None)
-    gate("V-CCN-GOV-UNKNOWN-NOCALIB", run(sd) == (0, "ALLOW+UNKNOWN"), "no calibration -> ALLOW+UNKNOWN, not a refusal")
+    gate("V-CCN-GOV-UNKNOWN-NOCALIB", run(sd) == (3, "REFUSE+UNKNOWN"), "no calibration, no official reading -> REFUSE+UNKNOWN")
+    gate("V-BAMR-DETERMINISTIC", run(sd, "deterministic") == (0, "ALLOW+DETERMINISTIC"), "unknown quota never blocks work that spends no model quota")
     sd = tempfile.mkdtemp(dir=tmp)
     open(os.path.join(sd, "account-governor.json"), "w").write("{not json")
-    gate("V-CCN-GOV-UNKNOWN-CORRUPT", run(sd) == (0, "ALLOW+UNKNOWN"), "corrupt config -> ALLOW+UNKNOWN")
+    gate("V-CCN-GOV-UNKNOWN-CORRUPT", run(sd) == (3, "REFUSE+UNKNOWN"), "corrupt config -> REFUSE+UNKNOWN")
     rows = [json.loads(x) for x in open(os.path.join(sd, "account-governor-ledger.jsonl"))]
-    gate("V-CCN-GOV-LEDGER", rows and rows[-1]["verdict"] == "ALLOW+UNKNOWN" and rows[-1]["action"] == "arm", "every decision appends a ledger row: %s" % rows[-1])
+    gate("V-CCN-GOV-LEDGER", rows and rows[-1]["verdict"] == "REFUSE+UNKNOWN" and rows[-1]["action"] == "arm", "every decision appends a ledger row: %s" % rows[-1])
+    jdump(os.path.join(sd, "account-governor-override.json"), {"until": NOW + 3600, "reason": "Owner: run blind"})
+    gate("V-BAMR-UNKNOWN-OVERRIDE", run(sd) == (0, "ALLOW+OVERRIDE"), "a valid Owner override still lifts an UNKNOWN refusal")
+
+    # BAMR P1: a stray host file (a name not in the configured hosts) is never summed
+    sd = env(tmp, 40 * CALIB / 100.0, hosts=("gex44", "laptop", "DESKTOP-X"))
+    st = g.status(sd, NOW, [])
+    gate("V-BAMR-UNEXPECTED-HOST", st["pct_lower_bound"] == 80.0 and st["unexpected_hosts"] == ["DESKTOP-X"],
+         "laptop measured twice under two names is counted once: %s%% extra=%s" % (st["pct_lower_bound"], st["unexpected_hosts"]))
+    p = subprocess.run([sys.executable, os.path.join(HERE, "account_governor.py"), "--state-dir", sd, "measure", "--host", "NOT-CONFIGURED", "--root", tmp],
+                       capture_output=True, text=True)
+    gate("V-BAMR-MEASURE-HOST", p.returncode == 2 and not os.path.exists(os.path.join(sd, "account-governor-hosts", "NOT-CONFIGURED.json")),
+         "measure refuses a host name outside the configured set: exit %d" % p.returncode)
+    # a host measurement older than host_fresh_s makes coverage PARTIAL -> unknown -> refused
+    sd = env(tmp, 30 * CALIB / 100.0, hosts=("gex44", "laptop"))
+    jdump(os.path.join(sd, "account-governor-hosts", "gex44.json"), {"api_eq_usd": 300.0, "reset_at": NOW - 3 * 86400, "measured_at": NOW - 4 * 3600})
+    st = g.status(sd, NOW, [])
+    gate("V-BAMR-HOST-OLD", st["coverage"] == "PARTIAL" and st["old_hosts"] == ["gex44"] and run(sd) == (3, "REFUSE+UNKNOWN"),
+         "gex44 last measured 4 h ago (GEX44 down): %s old=%s" % (st["coverage"], st["old_hosts"]))
+
+    # BAMR P1: the harness's official reading (statusline rate_limits) outranks the API-eq estimate
+    def official(sd, captured, seven=None, five=None, source="harness_statusline"):
+        rl = {}
+        if seven is not None:
+            rl["seven_day"] = {"used_percentage": seven, "resets_at": NOW + 2 * 86400}
+        if five is not None:
+            rl["five_hour"] = {"used_percentage": five, "resets_at": NOW + 3600}
+        jdump(os.path.join(sd, "quota-reading.json"), {"captured_at": captured, "source": source, "rate_limits": rl or None})
+    sd = env(tmp, 90 * CALIB / 100.0, hosts=("gex44", "laptop"))       # estimate says 180%
+    official(sd, NOW - 60, seven=18)
+    gate("V-BAMR-OFFICIAL-WINS", run(sd) == (0, "ALLOW+OFFICIAL"), "fresh official 18%% beats a miscalibrated 180%% estimate")
+    official(sd, NOW - 60, seven=85)
+    gate("V-BAMR-OFFICIAL-WEEKLY", run(sd)[0] == 3, "official 7d 85%% -> refused (15%% Owner reserve)")
+    official(sd, NOW - 60, seven=10, five=80)
+    gate("V-BAMR-5H-RESERVE", run(sd)[0] == 3, "official 5h 80%% -> refused (20%% Owner reserve, decision 3)")
+    official(sd, NOW - 60, seven=10, five=79)
+    gate("V-BAMR-5H-UNDER", run(sd) == (0, "ALLOW+OFFICIAL"), "official 5h 79%% -> allowed")
+    sd2 = env(tmp, 10.0, hosts=("gex44", "laptop"), calib=None)        # no estimate possible
+    official(sd2, NOW - 3600, seven=5)
+    gate("V-BAMR-OFFICIAL-STALE", run(sd2) == (3, "REFUSE+UNKNOWN"), "an hour-old official reading is stale, not current")
+    official(sd2, NOW - 60, five=5)
+    gate("V-BAMR-OFFICIAL-NO7D", run(sd2) == (3, "REFUSE+UNKNOWN"), "a reading without the weekly window is not a quota picture")
+    official(sd2, NOW - 60, source="absent")
+    gate("V-BAMR-OFFICIAL-ABSENT", run(sd2) == (3, "REFUSE+UNKNOWN"), "harness sent no rate_limits -> unknown")
+    jdump(os.path.join(sd2, "quota-reading.json"), {"captured_at": NOW - 60, "source": "harness_statusline",
+                                                     "rate_limits": {"seven_day": {"used_percentage": 5, "resets_at": NOW - 10}}})
+    gate("V-BAMR-OFFICIAL-ROLLED", run(sd2) == (3, "REFUSE+UNKNOWN"), "a reading whose window has since reset says nothing about the new one")
+    st = g.status(sd, NOW, [])
+    gate("V-BAMR-IMPLIED-CALIB", st["official"]["state"] == "FRESH" and st.get("implied_calibration_api_eq_per_100pct") == round(1800.0 / 0.10, 2),
+         "status reports the calibration the official reading implies: %s" % st.get("implied_calibration_api_eq_per_100pct"))
 
     # reset inference from transcripts: a 3 h gap, spend only after it
     proj = os.path.join(tmp, "proj", "-p")
