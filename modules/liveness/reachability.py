@@ -213,9 +213,13 @@ def registration_sites(root: Path) -> dict[str, list[str]]:
 # Hyphens included: auto-testing, arch-decision and code-review cannot be plain-imported.
 _PATH_RE = re.compile(r"modules[./\\]((?:[A-Za-z0-9_\-]+[./\\])*[A-Za-z0-9_\-]+)")
 # `from modules.pkg.sub import a, b as c` -- the path regex alone stops at the package.
-_FROM_RE = re.compile(r"from\s+modules\.([A-Za-z0-9_.]+)\s+import\s+([^\n#]+)")
+# The clause is EITHER a parenthesised block (which may span lines) OR the rest of the
+# line. Line-only was blind to `from modules.ccf import (\n  a,\n  b,\n)`: every name
+# after the first line read as unreached, and 11 ccf modules carried a LIBRARY note
+# explaining the instrument's blindness instead of the instrument seeing (2026-11-20).
+_FROM_RE = re.compile(r"from\s+modules\.([A-Za-z0-9_.]+)\s+import\s+(\([^)]*\)|[^\n#]+)")
 # `from . import models` / `from .acceptance import X` -- resolved against the package.
-_REL_RE = re.compile(r"from\s+\.([A-Za-z0-9_]*)\s+import\s+([^\n#]+)")
+_REL_RE = re.compile(r"from\s+\.([A-Za-z0-9_]*)\s+import\s+(\([^)]*\)|[^\n#]+)")
 _TOOL_RE = re.compile(r"tools[./\\]([A-Za-z0-9_\-]+)\.py")
 # The hooks' dominant idiom builds the path in SEGMENTS -- path.join(PP_PATH, 'tools',
 # 'recovery_epoch_gate.py') -- so the contiguous form above never matches them, and every
@@ -258,6 +262,7 @@ def _read(path: Path) -> str | None:
 def _names(blob: str) -> list[str]:
     """Split an import clause into bare names: 'a, b as c, (d)' -> [a, b, d]."""
     out = []
+    blob = re.sub(r"#[^\n]*", "", blob)  # a comment inside a parenthesised block names nothing
     for chunk in blob.replace("(", " ").replace(")", " ").split(","):
         name = chunk.strip().split(" as ")[0].strip()
         if name and name != "*":

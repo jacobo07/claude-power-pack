@@ -59,6 +59,16 @@ def _mk_repo(td: Path) -> Path:
     )
     (td / "modules" / "wired" / "helper.py").write_text("", encoding="utf-8")
 
+    # A parenthesised multi-line import with a trailing comment, reached from a live
+    # module (the shape of modules/ccf/cli.py). `multi/c` is in the same package but
+    # named by nobody: the negative pole.
+    (td / "modules" / "multi").mkdir(parents=True)
+    for n in ("__init__", "a", "b", "c"):
+        (td / "modules" / "multi" / f"{n}.py").write_text("", encoding="utf-8")
+    (td / "modules" / "wired" / "helper.py").write_text(
+        "from modules.multi import (\n    a,  # first\n    b,\n)\n", encoding="utf-8"
+    )
+
     # A corpse: importable, tested, imported by NOTHING live.
     (td / "modules" / "dead" / "__init__.py").write_text("", encoding="utf-8")
     (td / "modules" / "dead" / "arbiter.py").write_text("", encoding="utf-8")
@@ -121,6 +131,14 @@ def main() -> int:
             _ok("V-REACH-TRANSITIVE", "wired/helper REACHABLE via wired/entry")
         else:
             _fail("V-REACH-TRANSITIVE", "relative import did not carry reachability")
+
+        # V-REACH-MULTILINE: every name in a parenthesised multi-line import is reached,
+        # through a trailing comment; a sibling the block does not name stays ORPHAN.
+        st = {u: rows.get(f"multi/{u}", {}).get("status") for u in ("a", "b", "c")}
+        if st == {"a": R.REACHABLE, "b": R.REACHABLE, "c": R.ORPHAN}:
+            _ok("V-REACH-MULTILINE", "multi/a + multi/b REACHABLE across lines; multi/c ORPHAN")
+        else:
+            _fail("V-REACH-MULTILINE", f"statuses {st}")
 
         # V-REACH-REFUSES: the negative pole. Without this the gate proves nothing.
         if rows.get("dead/arbiter", {}).get("status") == R.ORPHAN:
