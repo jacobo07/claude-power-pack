@@ -228,7 +228,40 @@ def selftest():
     sys.exit(0 if ok else 1)
 
 
+def progress():
+    """Append one sample per lane (certified fns/bytes from the MATCH snapshots, provisional matches, permuter-stage
+    counters) to ledger/progress.jsonl and print the rate since the previous sample: the speed instrument."""
+    c = sqlite3.connect(DB)
+    size = dict(c.execute("SELECT fid, size FROM function"))
+    sample = {"ts": __import__("time").time(), "lanes": {}}
+    for lane, b in LANE2BIN.items():
+        fids = [r[0] for r in c.execute("SELECT fid FROM cert WHERE lane=?", (lane,))]
+        if not fids and not os.path.exists(f"{H}/match/{lane}.json"):
+            continue
+        tot, totb = c.execute("SELECT count(*), sum(size) FROM function WHERE binary=?", (b,)).fetchone()
+        sample["lanes"][lane] = {"cert": len(fids), "cert_bytes": sum(size.get(f, 0) for f in fids), "fns": tot, "bytes": totb}
+    tp = F + "/stages/perm_tried.jsonl"
+    if os.path.exists(tp):
+        rs = [json.loads(l) for l in open(tp)]
+        sample["perm"] = {"tried": len(rs), "match": sum(r.get("res") == "MATCH" for r in rs),
+                          "improved": sum(r.get("res") == "IMPROVED" for r in rs)}
+    pp = F + "/ledger/progress.jsonl"
+    prev = None
+    if os.path.exists(pp):
+        lines = open(pp).read().splitlines()
+        prev = json.loads(lines[-1]) if lines else None
+    with open(pp, "a") as w:
+        w.write(json.dumps(sample) + "\n")
+    hrs = (sample["ts"] - prev["ts"]) / 3600 if prev else None
+    for lane, d in sample["lanes"].items():
+        p = (prev or {}).get("lanes", {}).get(lane, {})
+        rate = f", +{d['cert'] - p.get('cert', 0)} in {hrs:.2f} h" if hrs else ""
+        print(f"{lane}: {d['cert']}/{d['fns']} fns ({100 * d['cert'] / d['fns']:.1f}%), "
+              f"{100 * d['cert_bytes'] / d['bytes']:.2f}% bytes{rate}")
+    print("perm:", sample.get("perm"))
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "report"
     {"build": build, "report": lambda: report("--json" in sys.argv), "fn": lambda: fn(sys.argv[2]),
-     "selftest": selftest}[cmd]()
+     "selftest": selftest, "progress": progress}[cmd]()
