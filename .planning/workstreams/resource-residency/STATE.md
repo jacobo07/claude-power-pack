@@ -31,7 +31,16 @@ commit 64.71 GB (was 86.3/87.1 at 21:38), pagefile alloc 49.3 GB (peak 57.6), fr
 
 | when | session | tokens | note |
 |---|---|---:|---|
+| 2026-11-20 23:50 | e5ca940c (Phase 1, `session-tree --transcript`) | 6,241,691 | 42 turns, avg ctx 148k: 4.2x the 1.5M line, 2.8x the 3M acceptance ceiling. Mostly re-read of the ~148k startup context per turn, not work volume |
+
+## Phase status
+- Phase 1: DONE on evidence (`vault/programs/resource-residency/P0-P1-GATE-EVIDENCE.md`): `tools/resource_census.py` +
+  22 V-CENSUS gates (mutation drill red), snapshots committed, open P1 gate PASS on both halves. SPEND BREACH, see Owner notes.
 
 ## Owner notes
-
-(none)
+- 2026-11-20 (Phase 1 spend): Phase 1 cost 6.24M processed tokens against a 1.5M line (1.5x = 2.25M) and the 3M acceptance
+  ceiling, so per ROADMAP the run stops here. The overrun is per-turn context (~148k re-read x 42 turns), which a fresh
+  background session per phase would not carry. Decision for you: continue with Phase 2 from a fresh session
+  (`/gsd-autonomous --ws resource-residency --from 2`), or re-baseline the per-phase lines to the real turn cost.
+- BLOCKED-ON-OWNER (RR-03, not automated): the remaining rea x32 (16 sessions) and google-ads x42 (14 sessions) processes sit in
+  sessions born before P1 and leave when those sessions end; nothing here stops a claude.exe or a server with recorded use.
