@@ -684,7 +684,8 @@ def agree_supported(v: dict, prior=None) -> bool:
     gates, n = v.get("gates"), v.get("new_canonical_certs")
     return (v.get("verdict") == "AGREE" and v.get("protected_ok") is True and isinstance(gates, list) and bool(gates)
             and all(isinstance(g, dict) and type(g.get("rc")) is int
-                    and (g["rc"] == 0 or _superseded(g, n, prior) or _superseded_m(g, prior)) for g in gates)
+                    and (g["rc"] == 0 or _superseded(g, n, prior) or _superseded_m(g, prior) or _pre_red(g))
+                    for g in gates)
             and any(g["rc"] == 0 for g in gates))
 
 
@@ -780,6 +781,128 @@ def excluded_ok(v: dict, product: str, base) -> str | None:
         if _git(product, "diff", "--quiet", b, "HEAD", "--", p)[0] != 0:
             return f"excluded gate {p} was changed by this generation"
     return None
+
+
+# 2026-11-20 (Owner "Rojo en la base", pane 34385bd2): WIIPARTY S216W claimed 40 certificates and the judge said
+# DISAGREE because 7 of 28 OLDER gates failed on rerun; S216W had not touched them. A red gate the judge marks
+# "pre_existing_red" counts as not broken by this generation only when the autopilot itself observes it red, with the same
+# rc, at the generation base AND at HEAD (scratch worktrees carrying copies of the product's untracked inputs), and never on
+# a timeout, which observes nothing. The reruns hold cron.lock: bounded by PRE_RED_MAX gates and PRE_RED_WALL_S in total.
+# LIMIT (review MEDIUM-2): git cannot show the IGNORED inputs (build/, orig/) as they were at the base, so the base run uses
+# today's copies; a gate red only because this generation corrupted ignored data would read red at both. This proves the
+# tracked tree, not ignored state.
+PRE_RED_MAX = 8
+PRE_RED_WALL_S = 3600
+PRE_RED_TIMEOUT_S = 1200          # per run; replaces the judge's inner `timeout N`
+TIMEOUT_RCS = (124, 137)           # coreutils timeout / SIGKILL: nothing was observed
+PRE_RED_CMD = re.compile(r"(?:timeout \d+ )?python3 (tools/[\w./-]+\.py)")
+
+
+def _pre_red(g) -> bool:
+    return (isinstance(g, dict) and g.get("pre_existing_red") is True and type(g.get("rc")) is int
+            and g["rc"] != 0)
+
+
+def _untracked_inputs(product: str) -> list[str] | None:
+    """Top-level ignored entries of the product (orig/, build/ ...): a scratch worktree without them fails for want of
+    them, which would read as a red gate. None when git cannot say (review MEDIUM-1: never run without them)."""
+    rc, out = _git(product, "status", "--ignored", "--porcelain")
+    if rc != 0:
+        return None
+    names = {ln[3:].strip().strip('"').rstrip("/").split("/")[0] for ln in out.splitlines() if ln.startswith("!! ")}
+    return sorted(n for n in names if n and n not in (".claude", "__pycache__", ".git"))
+
+
+def gate_rc_at(product: str, ref: str, script: str, timeout: int, inputs=None) -> tuple[int | None, str]:
+    """Run `python3 <script>` in a detached scratch worktree of `ref` with copies of the product's untracked inputs.
+    (rc, tail), or (None, why) when nothing could be observed. The worktree and its directory are always removed."""
+    if inputs is None:
+        inputs = _untracked_inputs(product)
+    if inputs is None:
+        return None, "git status --ignored failed: the product's untracked inputs are unknown"
+    scratch = Path(tempfile.mkdtemp(prefix="prered-", dir=str(OUT)))
+    wt = scratch / "wt"
+    try:
+        rc, out = _git(product, "worktree", "add", "--detach", str(wt), ref)
+        if rc != 0:
+            return None, f"worktree add {ref[:12]} failed: {out[-200:]}"
+        try:
+            for n in inputs:
+                src, dst = Path(product, n), wt / n
+                if dst.exists() or dst.is_symlink():
+                    continue  # a tracked directory holding an ignored path (tools/__pycache__): the checkout has it
+                if src.is_symlink():
+                    os.symlink(os.readlink(src), dst)
+                elif src.is_dir():
+                    shutil.copytree(src, dst, symlinks=True)
+                elif src.exists():
+                    shutil.copy2(src, dst)
+        except OSError as e:
+            return None, f"copying the untracked inputs failed: {e}"
+        try:
+            r = subprocess.run(["python3", script], cwd=str(wt), capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return None, f"timed out after {timeout}s"
+        return r.returncode, (r.stdout + r.stderr).strip()[-200:]
+    finally:
+        _git(product, "worktree", "remove", "--force", str(wt))
+        shutil.rmtree(scratch, ignore_errors=True)
+        _git(product, "worktree", "prune")
+
+
+def pre_existing_ok(v: dict, product: str, base, runner=None) -> str | None:
+    """None when no gate is marked pre_existing_red or every marked gate is proven red before this generation; else why
+    the AGREE cannot stand."""
+    gates = [g for g in v.get("gates") or [] if _pre_red(g)]
+    if not gates:
+        return None
+    b = _sha(product, base) if base else None
+    if not b:
+        return "pre-existing-red gates need a recorded generation base"
+    if len(gates) > PRE_RED_MAX:
+        return f"{len(gates)} pre-existing-red gates > {PRE_RED_MAX}: too many to re-run under cron.lock"
+    if runner is None:
+        inputs = _untracked_inputs(product)  # once per judgment (review LOW-1)
+        if inputs is None:
+            return "git status --ignored failed: the product's untracked inputs are unknown"
+        run = lambda prod, ref, script, t: gate_rc_at(prod, ref, script, t, inputs)  # noqa: E731
+    else:
+        run = runner
+    deadline = time.monotonic() + PRE_RED_WALL_S
+    for g in gates:
+        cmd = str(g.get("cmd") or "").strip()
+        m = PRE_RED_CMD.fullmatch(cmd)
+        if not m:
+            return f"pre-existing-red gate {cmd[:120]} is not a bare `python3 tools/...` gate"
+        p = m.group(1)
+        if _git(product, "cat-file", "-e", f"{b}:{p}")[0] != 0:
+            return f"pre-existing-red gate {p} did not exist before this generation"
+        if _git(product, "diff", "--quiet", b, "HEAD", "--", p)[0] != 0:
+            return f"pre-existing-red gate {p} was changed by this generation"
+        rcs = []
+        for ref in (b, "HEAD"):
+            left = int(deadline - time.monotonic())
+            if left < 60:
+                return f"pre-existing-red reruns exceeded {PRE_RED_WALL_S}s before {p} at {ref[:12]}"
+            rc, tail = run(product, ref, p, min(PRE_RED_TIMEOUT_S, left))
+            if rc is None or rc in TIMEOUT_RCS:
+                return f"pre-existing-red gate {p} at {ref[:12]} observed nothing: {tail or rc}"
+            rcs.append((rc, tail))
+        (rb, tb), (rh, th) = rcs
+        if rb == 0:
+            return f"pre-existing-red gate {p} is GREEN at the generation base {b[:12]}: this generation turned it red"
+        if rh == 0:
+            return f"pre-existing-red gate {p} is green at HEAD when re-run by the autopilot: it is not red"
+        if not _rc_consistent(rb, rh, g["rc"]):
+            return f"pre-existing-red gate {p}: rc base {rb} / HEAD {rh} / judge {g['rc']} differ"
+        log(f"pre-existing red proven: {p} rc {rb} at base {b[:12]} and HEAD ({tb[-80:]!r})")
+    return None
+
+
+def _rc_consistent(rb: int, rh: int, judge_rc: int) -> bool:
+    """Red for the SAME reason before and after: base rc == HEAD rc, and == the judge's unless the judge timed out. A red
+    at the base for one reason and at HEAD for a new one (rc 1 -> 3) is this generation's failure (review MEDIUM-3)."""
+    return rb == rh and (judge_rc in TIMEOUT_RCS or judge_rc == rh)
 
 
 UNFINISHED_MAX = 1  # consecutive continuations of checkpoints their worker marked not final
@@ -1441,6 +1564,10 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if ebad:
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"autopilot excluded-gate check: {ebad}; {str(v.get('notes', ''))[:300]}"
+    rbad = None if dry or v.get("verdict") != "AGREE" else pre_existing_ok(v, product, ls.get("base"))
+    if rbad:
+        v["verdict"] = "INCONCLUSIVE"
+        v["notes"] = f"autopilot pre-existing-red check: {rbad}; {str(v.get('notes', ''))[:300]}"
     pbad = protected_check(lane)
     if v.get("verdict") == "AGREE" and pbad:
         v["verdict"] = "DISAGREE"

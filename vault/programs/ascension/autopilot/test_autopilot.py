@@ -445,6 +445,65 @@ def run_all(ap):
     (sdir / "tools" / "test_old.py").write_text("print(3)\n")
     sgit("commit", "-qam", "gen edits the old gate")
     check("V-AP-EXCLUDED-CHANGED-REFUSED", isinstance(ap.excluded_ok(dict(full, excluded_gates=[xo]), str(sdir), s0), str))
+    # 2026-11-20 (WIIPARTY S216W, Owner "Rojo en la base"): an older gate already red at the generation base, re-run by the
+    # autopilot at base and HEAD with the product's untracked inputs, is not this generation's failure
+    rdir = Path(tempfile.mkdtemp(prefix="rgit-", dir=tmp))
+
+    def rgit(*a):
+        return subprocess.run(["git", "-C", str(rdir), *a], check=True, capture_output=True, text=True).stdout.strip()
+    for a in (["init", "-q"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+        rgit(*a)
+    (rdir / "tools").mkdir()
+    (rdir / ".gitignore").write_text("orig/\n__pycache__/\n")
+    (rdir / "orig").mkdir()
+    (rdir / "orig" / "x").write_text("1\n")
+    (rdir / "tools" / "__pycache__").mkdir()  # review HIGH-1: an ignored path inside a TRACKED dir (`!! tools/__pycache__/`)
+    (rdir / "tools" / "__pycache__" / "m.pyc").write_bytes(b"\0")
+    (rdir / "tools" / "test_census.py").write_text(  # red (1) with its inputs, 3 without them
+        "import pathlib, sys\nsys.exit(1 if pathlib.Path('orig/x').exists() else 3)\n")
+    (rdir / "tools" / "test_data.py").write_text("import sys\nsys.exit(0 if open('data.txt').read() == 'ok' else 1)\n")
+    (rdir / "tools" / "test_ok.py").write_text("print(0)\n")
+    (rdir / "data.txt").write_text("ok")
+    rgit("add", ".")
+    rgit("commit", "-qm", "base")
+    r0 = rgit("rev-parse", "HEAD")
+    (rdir / "data.txt").write_text("changed by the generation")
+    rgit("commit", "-qam", "gen")
+    g_ok = {"cmd": "timeout 600 python3 tools/test_ok.py", "rc": 0}
+    g_red = {"cmd": "timeout 600 python3 tools/test_census.py", "rc": 1, "pre_existing_red": True}
+    rv = dict(full, gates=[g_ok, g_red])
+    check("V-AP-PRERED-AGREE-ADMITTED", ap.agree_supported(rv)
+          and not ap.agree_supported(dict(rv, gates=[g_ok, dict(g_red, pre_existing_red=False)]))
+          and not ap.agree_supported(dict(rv, gates=[dict(g_red)])))
+    check("V-AP-PRERED-PROVEN", ap.pre_existing_ok(rv, str(rdir), r0) is None
+          and ap.pre_existing_ok(full, str(rdir), r0) is None)
+    check("V-AP-PRERED-GREEN-AT-BASE-REFUSED", "GREEN at the generation base" in str(ap.pre_existing_ok(dict(rv, gates=[
+        g_ok, {"cmd": "python3 tools/test_data.py", "rc": 1, "pre_existing_red": True}]), str(rdir), r0)))
+    check("V-AP-PRERED-TIMEOUT-REFUSED", isinstance(ap.pre_existing_ok(dict(rv, gates=[g_ok, dict(g_red, rc=124)]),
+                                                                       str(rdir), r0, runner=lambda p, ref, s, t: (124, "")), str)
+          and isinstance(ap.pre_existing_ok(rv, str(rdir), r0, runner=lambda p, ref, s, t: (None, "timed out")), str))
+    check("V-AP-PRERED-RC-MISMATCH-REFUSED", isinstance(ap.pre_existing_ok(dict(rv, gates=[g_ok, dict(g_red, rc=2)]),
+                                                                           str(rdir), r0), str))
+    check("V-AP-PRERED-SHAPE-AGE-REFUSED", all(isinstance(ap.pre_existing_ok(dict(rv, gates=[g_ok, dict(g_red, cmd=c)]),
+                                                                             str(rdir), b), str) for c, b in (
+        ("python3 tools/test_census.py; true", r0), ("bash -c 'python3 tools/test_census.py'", r0),
+        ("python3 tools/test_absent.py", r0), ("python3 tools/../../x.py", r0), ("python3 tools/test_census.py", None))))
+    check("V-AP-PRERED-BASE-HEAD-RC-DIFFER-REFUSED", isinstance(ap.pre_existing_ok(
+        dict(rv, gates=[g_ok, dict(g_red, rc=3)]), str(rdir), r0,
+        runner=lambda p, ref, s, t: (3, "") if ref == "HEAD" else (1, "")), str))
+    keep_ui = ap._untracked_inputs
+    ap._untracked_inputs = lambda p: None
+    try:
+        unknown = ap.pre_existing_ok(rv, str(rdir), r0)
+    finally:
+        ap._untracked_inputs = keep_ui
+    check("V-AP-PRERED-INPUTS-UNKNOWN-REFUSED", "inputs are unknown" in str(unknown))
+    wts = rgit("worktree", "list").splitlines()
+    check("V-AP-PRERED-SCRATCH-REMOVED", len(wts) == 1 and not list(Path(ap.OUT).glob("prered-*")))
+    (rdir / "tools" / "test_census.py").write_text(
+        "import pathlib, sys\n# edited\nsys.exit(1 if pathlib.Path('orig/x').exists() else 3)\n")
+    rgit("commit", "-qam", "gen edits the old gate")
+    check("V-AP-PRERED-CHANGED-REFUSED", "changed by this generation" in str(ap.pre_existing_ok(rv, str(rdir), r0)))
 
     # ---- lane transitions with stubs
     lanes = [dict(lane0, mission="m-aaaaaaaaaaaa")]
@@ -1732,6 +1791,11 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
              and n > 0 and g["superseded_by_certs"] == n + int((prior or {}).get(m._gate_path(g)) or 0))),
          "superseded_any_gate_age": lambda m: setattr(m, "GATE_PATH", __import__("re").compile(r"(?!x)x|^")),
          "excluded_unchecked": lambda m: setattr(m, "excluded_ok", lambda v, p, b: None),
+         "prered_unchecked": lambda m: setattr(m, "pre_existing_ok", lambda v, p, b, runner=None: None),
+         "prered_never_admitted": lambda m: setattr(m, "_pre_red", lambda g: False),
+         "prered_inputs_not_copied": lambda m: setattr(m, "_untracked_inputs", lambda p: []),
+         "prered_timeout_counts": lambda m: setattr(m, "TIMEOUT_RCS", ()),
+         "prered_base_rc_ignored": lambda m: setattr(m, "_rc_consistent", lambda rb, rh, j: j in m.TIMEOUT_RCS or j == rh),
          "unfinished_never_continued": lambda m: setattr(m, "UNFINISHED_MAX", 0),
          "unfinished_unbounded": lambda m: setattr(m, "UNFINISHED_MAX", 99),
          "unfinished_any_inconclusive": lambda m: setattr(m, "continue_unfinished", (lambda real: (
