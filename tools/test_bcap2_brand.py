@@ -407,6 +407,54 @@ with tempfile.TemporaryDirectory() as t:
     check("BI-10 pole: self-rating is UNVERIFIED and measured originality stays None",
           sm["rows"][0]["self_rating_status"] == "UNVERIFIED" and sm["rows"][0]["measured_originality"] is None and sm["pin"]["sha"].startswith("d14340c3"))
 
+    # ---- BI-20 / 15 / 22-23 / 25 / 26 / 29 / 34 (pure; epoch 8)
+    from modules.ccf import brand_color as BC, brand_release as BRL
+    pal = {"ink": "#111111", "paper": "#FFFFFF", "mid": "#AAAAAA"}
+    ok = BC.check_palette(pal, [{"fg": "ink", "bg": "paper", "context": "body"}])
+    check("BI-20 control: ink/paper body passes with computed ratio", ok["problems"] == [] and ok["rows"][0]["ratio"] > 15, str(ok))
+    check("BI-20 pole: grey on white fails body, passes nothing silently",
+          BC.check_palette(pal, [{"fg": "mid", "bg": "paper", "context": "body"}])["problems"] != [])
+    check("BI-20 pole: undeclared context is UNASSESSED, bad hex and unknown role refused",
+          BC.check_palette(pal, [{"fg": "ink", "bg": "paper", "context": "vibes"}])["rows"][0]["status"] == "UNASSESSED"
+          and BC.check_palette({"x": "red"}, [])["problems"] and BC.check_palette(pal, [{"fg": "nope", "bg": "paper", "context": "body"}])["problems"])
+    check("BI-20 pole: delta E is 0 for equal and 100 for black/white; bare conversion claim refused",
+          BC.delta_e76("#336699", "#336699") == 0 and BC.delta_e76("#000000", "#FFFFFF") == 100.0
+          and not BC.association_claim_ok({"evidence_source": "folk"}) and BC.association_claim_ok({"evidence_source": "ab-test-7", "measured": True}))
+    prof = {"source_sha256": "a" * 64, "derivatives": [{"format": "svg"}, {"format": "png", "size": 512}, {"format": "ico", "sizes": [16, 32], "container": "ico"}]}
+    check("BI-22 control: a complete export profile has no problems", BRL.check_export_profile(prof) == [], str(BRL.check_export_profile(prof)))
+    bad = {"derivatives": [{"format": "ico", "sizes": [17], "container": "png"}, {"format": "png", "generated_independently": True, "shell_command": "x"}, {"format": "bmp"}, {"format": "pdf", "size": 1, "font_fallback": "silent"}]}
+    pb = BRL.check_export_profile(bad)
+    check("BI-22/23 pole: no source, PNG-as-ICO, bad ICO size, rerun, shell, unknown format, silent font, missing size all refused", len(pb) >= 8, str(pb))
+    tok = {"color": {"ink": {"$value": "#111111", "$type": "color"}, "text": {"$value": "{color.ink}", "$type": "color"}}}
+    check("BI-25 control: DTCG tokens valid and CSS derived from them", BRL.check_dtcg(tok) == [] and "--color-text: var(--color-ink);" in BRL.to_css(tok))
+    check("BI-25 pole: missing $type and dangling alias refused",
+          len(BRL.check_dtcg({"a": {"$value": "{b.c}"}})) == 2)
+    files = {"logo.svg": b"<svg/>", "logo.png": b"png"}
+    meta = {k: "x" for k in ("owner_approval", "generator_ref", "license_notice", "brief_ref", "visual_dna_ref")}
+    m = BRL.build_manifest("1.0.0", files, meta)
+    check("BI-26 control: manifest verifies against its own files", BRL.verify_manifest(m, files) == [])
+    check("BI-26 pole: tamper, missing and contaminant files all named",
+          len(BRL.verify_manifest(m, {"logo.svg": b"<svg x/>", "extra.bin": b"?"})) == 3)
+    try:
+        BRL.build_manifest("1.0.0", files, dict(meta, owner_approval=""))
+        refused = False
+    except ValueError:
+        refused = True
+    check("BI-26 pole: no owner approval -> no manifest at all", refused)
+    pv = {"contexts": [{"context": c, "visual_dna": "d1", "is_mock": True} for c in BRL.CONTEXTS]}
+    check("BI-15 control: all 9 contexts on one Visual DNA, marked mock, pass", BRL.check_preview(pv, "d1") == [])
+    pv2 = {"contexts": [dict(c) for c in pv["contexts"][:-1]]}
+    pv2["contexts"][0]["visual_dna"] = "other"; pv2["contexts"][1]["is_mock"] = False
+    check("BI-15 pole: missing context, reinvented identity, unmarked mock all named", len(BRL.check_preview(pv2, "d1")) == 3)
+    check("BI-29 pole: no corpus abstains; PASS never means clearance",
+          BRL.similarity_report({"size": 0}, [])["verdict"] == "ABSTAIN"
+          and BRL.similarity_report({"size": 50, "provenance_logged": True}, [])["clearance"] == "NOT_ASSESSED"
+          and BRL.similarity_report({"size": 50, "provenance_logged": True}, [{"score": 0.9}])["verdict"] == "REVIEW"
+          and BRL.similarity_report({"size": 50, "provenance_logged": False}, [])["verdict"] == "ABSTAIN")
+    check("BI-34 pole: logo/brand wording routes to CCF with human approval; unrelated text does not; budget abstains",
+          BRL.applicable("make a logo for my bakery")["route"] == "CCF" and BRL.applicable("fix the login bug")["route"] == "NONE"
+          and BRL.applicable("new brand identity", budget_ok=False)["route"] == "ABSTAIN")
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-29, BI-34) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

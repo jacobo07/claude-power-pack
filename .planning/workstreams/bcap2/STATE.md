@@ -199,3 +199,9 @@ Owner decision RESOLVED_BY_DEFAULT (recommended option (b), reversible, internal
 
 ### Epoch 6: reconcile only
 Repo clean at 552b9952 (untracked .pp-capabilities, vault/knowledge_base/ccf/ are not mine). done_gate re-run: BCAP2_DONE_GATE PASS, all nine items PARTIALLY_PROVEN, none ACTIVATED. Runnable GEX44-plane probes are exhausted (see Epoch 4c); the remaining units (Phase 4/5 real-browser, Phase 5 videos, Phase 8 live-source reads, Phase 9 sandbox drive) are BLOCKED-ON-LAPTOP in LAPTOP_STEPS.md. Owner decision needed: none new. No spend measured this epoch.
+
+### Epoch 8: Owner decisions RESOLVED (2026-11-20)
+D-LAPTOP-SPLIT: laptop steps are run by laptop pane adcdff7b (branch bcap2/laptop-steps ffd419c9, not merged here, not redone); style 3 = option (b) CONFIRMED, keep 552b9952. D-LIMIT-CLEARED: weekly limit not in effect. Both resolved, nothing waits on the Owner. GEX44 work this epoch: Phase 7 BI-15..35 pure modules, then runnable Phase 8 units.
+
+### Epoch 8: BI-15/20/22/23/25/26/29/34 pure validators
+modules/ccf/brand_color.py (computed WCAG contrast per context, undeclared context UNASSESSED, CIE76 deltaE, bare association claims refused) and modules/ccf/brand_release.py (export profile: one source, no PNG-as-ICO/shell/silent font/rerun; DTCG check + CSS derive; immutable hash manifest refusing without approval, tamper/contaminant named; 9-context preview on one Visual DNA, mock marked; similarity report never says clearance; automatic-applicability trigger with budget abstain). +15 checks (test_bcap2_brand 132 total), LIBRARY-declared, in NEW_MODULES, done gate PASS. Not wired to the CLI, no real render/font/trace: PARTIALLY_PROVEN. Remaining Phase 7: BI-16 (Sigilgen pin), 17, 18, 19, 21, 24, 27, 28, 30-33, 35 (need fetch/render/benchmark); Phase 8 B-H live reads. Spend not re-measured.
