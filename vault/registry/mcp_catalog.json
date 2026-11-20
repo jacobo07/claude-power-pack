@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "servers": {
+    "coplay-mcp": {
+      "homes": [],
+      "transport": "stdio",
+      "scope": "catalog",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 0,
+        "window_days": 90
+      }
+    },
+    "linkedin": {
+      "homes": [],
+      "transport": "stdio",
+      "scope": "catalog",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 0,
+        "window_days": 90
+      }
+    },
+    "linkedin-post": {
+      "homes": [],
+      "transport": "stdio",
+      "scope": "catalog",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 0,
+        "window_days": 90
+      }
+    },
+    "carla-meta": {
+      "homes": [],
+      "transport": "stdio",
+      "scope": "catalog",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 0,
+        "window_days": 90
+      }
+    },
+    "notion": {
+      "homes": [],
+      "transport": "stdio",
+      "scope": "catalog",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 0,
+        "window_days": 90
+      }
+    },
+    "skool": {
+      "homes": [],
+      "transport": "stdio",
+      "scope": "catalog",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 0,
+        "window_days": 90
+      }
+    },
+    "magic-ui": {
+      "homes": [],
+      "transport": "stdio",
+      "scope": "catalog",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 0,
+        "window_days": 90
+      }
+    },
+    "playwright": {
+      "homes": [],
+      "transport": "stdio",
+      "scope": "catalog",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 0,
+        "window_days": 90
+      }
+    },
+    "google-ads": {
+      "homes": [
+        "C:/Users/User/Desktop/Cursor Projects/GEO-audit"
+      ],
+      "transport": "stdio",
+      "scope": "project",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 21,
+        "window_days": 90
+      }
+    },
+    "rea": {
+      "homes": [
+        "C:/Users/User/Desktop/Cursor Projects/Capy RE",
+        "C:/Users/User/Desktop/Cursor Projects/Credit Score Engine"
+      ],
+      "transport": "stdio",
+      "scope": "project",
+      "demoted": "2026-11-20",
+      "usage": {
+        "calls": 3,
+        "window_days": 90
+      }
+    }
+  }
+}
