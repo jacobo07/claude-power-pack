@@ -222,7 +222,9 @@ def test_real_slice():
     ev = "evidence/ascension/s177m/checkpoint_s177m_r1b.md@74cbfef"
     want = "evidence/ascension/s177m/checkpoint_s177m_r1b.md"
     got = {}
-    for label, rev in (("parent", "96b6f09a^"), ("fix", "96b6f09a")):
+    # "~1", never "^": shell=True runs cmd.exe on Windows, where ^ is the escape char and "96b6f09a^ " silently
+    # became "96b6f09a " -- the "parent" archive was the fix, so the bug never reproduced (2026-11-20).
+    for label, rev in (("parent", "96b6f09a~1"), ("fix", "96b6f09a")):
         with tempfile.TemporaryDirectory(prefix="tdd-real-") as d:
             ar = subprocess.run(f"git -C {ROOT} archive {rev} -- vault/programs/ascension/autopilot | tar -x -C {d}",
                                 shell=True, capture_output=True, text=True)

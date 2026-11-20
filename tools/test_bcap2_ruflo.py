@@ -26,7 +26,15 @@ PIN = __import__("hashlib").sha256(b"good-pattern").hexdigest()
 TMP = tempfile.mkdtemp(prefix="ruflo_gate_")
 ROOTD = Path(TMP, "export"); ROOTD.mkdir()
 Path(TMP, "outside.txt").write_text("x")
-os.symlink(TMP, ROOTD / "link")
+try:
+    os.symlink(TMP, ROOTD / "link")
+except OSError:
+    # Windows without SeCreateSymbolicLinkPrivilege (WinError 1314). A directory junction escapes the root the same
+    # way and realpath follows it, so the symlink-escape pole is still driven for real -- not skipped.
+    if os.name != "nt":
+        raise
+    import _winapi
+    _winapi.CreateJunction(TMP, str(ROOTD / "link"))
 REAL_HOME = str(Path(TMP, "realhome")); Path(REAL_HOME, ".claude").mkdir(parents=True)
 SB = str(Path(TMP, "sandbox")); Path(SB).mkdir()
 GOODPLAN = dict(version="3.78.0", integrity=SHA, ignore_scripts=True, global_=False, lockfile=True, sandbox_dir=SB,
