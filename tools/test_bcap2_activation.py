@@ -288,6 +288,66 @@ with tempfile.TemporaryDirectory() as t:
         check(f"AC6 mutant {mname}: pole {pole} turns red", applied and got.get(pole) is False,
               f"applied={applied} got={got if applied else None}")
 
+# --- Slice B: floor_guard in the done path, REPORT ONLY -------------------------------------------------
+import importlib
+import subprocess
+
+floor_guard = importlib.import_module("modules.sqi.floor_guard")
+SUPPRESS = "# no" + "qa"  # built, so this gate's own diff never reads as a new suppression
+
+
+def _git(repo, *a):
+    subprocess.run(["git", *a], cwd=repo, check=True, capture_output=True)
+
+
+with tempfile.TemporaryDirectory() as td:
+    repo = Path(td) / "r"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.email", "t@t")
+    _git(repo, "config", "user.name", "t")
+    (repo / "m.py").write_text("x = 1  # café\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "base")
+    clean = floor_guard.report(repo)
+    check("SB clean diff -> CLEAN", clean["status"] == floor_guard.CLEAN, json.dumps(clean))
+    # A UTF-8 line beside the weakening: the cp1252 decoder used to turn every such diff into UNASSESSED.
+    # Cyrillic A is bytes D0 90, and 0x90 is undefined in cp1252: without it this pole cannot go red.
+    (repo / "m.py").write_text(f"x = 1  # café А\ny = 2  {SUPPRESS}\n", encoding="utf-8")
+    dirty = floor_guard.report(repo)
+    check("SB weakening diff (UTF-8 bytes) -> VIOLATIONS silenced-checker",
+          dirty["status"] == floor_guard.VIOLATIONS
+          and [v["rule"] for v in dirty["violations"]] == ["silenced-checker"], json.dumps(dirty))
+    line = floor_guard.report_line(dirty)
+    check("SB report line names status and rule", "VIOLATIONS 1 violation(s)" in line
+          and "silenced-checker" in line, line)
+    none = floor_guard.report(Path(td) / "not-a-repo-" / ".." / "nowhere")
+    check("SB no repo -> UNASSESSED with reason, never CLEAN",
+          none["status"] == floor_guard.UNASSESSED and none["error"], json.dumps(none))
+    real_run = floor_guard.run
+    floor_guard.run = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom"))
+    try:
+        crashed = floor_guard.report(repo)
+    finally:
+        floor_guard.run = real_run
+    check("SB crashed guard -> UNASSESSED, does not raise",
+          crashed["status"] == floor_guard.UNASSESSED and "boom" in crashed["error"], json.dumps(crashed))
+
+# Both consumers call the report and neither lets it reach its exit code (report only, Owner pick (a)).
+dg = (ROOT / "vault/programs/bcap-2/done_gate.py").read_text(encoding="utf-8")
+sq = (ROOT / "tools/run_sqi.py").read_text(encoding="utf-8")
+check("SB done_gate calls floor_guard.report and prints it",
+      "floor_guard.report(ROOT" in dg and "floor_guard.report_line(fg)" in dg)
+check("SB done_gate never adds floor_guard to bad", "bad.append" not in dg.split("floor_guard.report(ROOT")[1])
+check("SB run_sqi calls floor_guard.report behind --floor-guard, prints and persists it",
+      'if "--floor-guard" in argv:\n        fg = floor_guard.report(target)' in sq
+      and '"floor_guard": fg' in sq and "SQI_FLOOR_GUARD" in sq)
+nr = floor_guard.report_line({"status": "NOT_RUN", "base": "HEAD", "error": "opt-in: pass --floor-guard",
+                              "violations": [], "waived": 0})
+check("SB NOT_RUN prints its reason and no counts", "NOT_RUN -- opt-in" in nr and "violation" not in nr, nr)
+check("SB run_sqi exit code ignores floor_guard",
+      "fg" not in sq.split("if verdict.failing or weak.failing:")[1].split("if __name__")[0])
+
 if FAILS:
     print(f"V-BCAP2-ACT FAIL ({len(FAILS)}): {FAILS}")
     sys.exit(1)

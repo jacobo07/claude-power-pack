@@ -40,6 +40,7 @@ from modules.sqi import baseline_guardian as guardian
 from modules.sqi import ratchet as sqi_ratchet
 from modules.sqi import weakening_baseline as weakness
 from modules.sqi import weakening_detectors as WEAK
+from modules.sqi import floor_guard
 
 HERMETIC_RUNS = 3  # the estate's own standard: three runs from a clean state, same result
 
@@ -485,6 +486,18 @@ def main(argv: list[str]) -> int:
             error=traceback.format_exc(limit=3),
         )
 
+    # Layer 5b -- the diff-scoped floor guard (bcap2-activation slice B). Layer 5 reads a census
+    # and cannot see a suppression comment, a stub, a skip or a loosened threshold in the CHANGE.
+    # REPORT ONLY: it is printed and written to the sidecar, and never touches the exit code.
+    # Opt-in (--floor-guard), like the mutation probe: on the shared tree it read 43 MB of diff in
+    # ~90 s (2,955 untracked files, measured 2026-11-20) and timed out test_sqi's 600 s run.
+    # Absent the flag it is NOT_RUN -- the absence of a reading, never a clean diff.
+    if "--floor-guard" in argv:
+        fg = floor_guard.report(target)
+    else:
+        fg = {"status": "NOT_RUN", "base": "HEAD", "error": "opt-in: pass --floor-guard",
+              "violations": [], "waived": 0}
+
     # §15.8 -- the tautological assertion, which no count reveals and only a probe can. Opt-in:
     # it mutates source and executes tests, and a measurement that alters what it measures as a
     # side effect of measuring it is not a measurement. Absent the flag it is NOT RUN, which is
@@ -520,6 +533,7 @@ def main(argv: list[str]) -> int:
                 "guardian": verdict.to_dict(),
                 "ratchet": ratchet_verdict.to_dict(),
                 "weakening": weak.to_dict(),
+                "floor_guard": fg,
                 "mutation_probe": mutation.to_dict() if mutation else {
                     "status": "NOT_RUN",
                     "note": "the mutation probe is opt-in (--mutation-probe): it mutates source "
@@ -598,6 +612,7 @@ def main(argv: list[str]) -> int:
         print(f"  [ESCALATE] {_c.axis}: {_c.observed} -> {_c.proposed}  "
               f"({_c.instrument})")
     print(f"SQI_WEAKENING: {weak.summary}")
+    print(f"SQI_FLOOR_GUARD: {floor_guard.report_line(fg)}")
 
     if not quiet and weak.weakenings:
         print()

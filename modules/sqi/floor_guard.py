@@ -264,7 +264,11 @@ def apply_approvals(findings: list, approvals: list, today: _dt.date | None = No
 
 def _git(args: list, cwd: Path, diff_exit: bool = False):
     try:
-        r = subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True, timeout=60)
+        # Explicit UTF-8: bare text=True decodes with the ANSI code page on Windows, and the
+        # first non-cp1252 byte in a diff killed the reader -> "could not diff" on every real
+        # repo (measured 2026-11-20, byte 0x90). An undecodable byte is replaced, never fatal.
+        r = subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=60)
     except (OSError, subprocess.SubprocessError):
         return None
     if r.returncode == 0 or (diff_exit and r.returncode == 1):
@@ -290,11 +294,28 @@ def collect_diff(repo: Path, base: str = "HEAD"):
         return None, "could not list untracked files"
     parts = [tracked]
     for f in filter(None, untracked.split("\n")):
-        d = _git(["diff", "--no-index", "--unified=0", "/dev/null", f], root, diff_exit=True)
+        d = _untracked_as_diff(root, f)
         if d is None:
-            return None, f"could not diff untracked file {f}"
+            return None, f"could not read untracked file {f}"
         parts.append(d)
     return "\n".join(parts), None
+
+
+def _untracked_as_diff(root: Path, rel: str):
+    """The `git diff --no-index /dev/null <f>` text for a new file, built in-process. One git
+    process per untracked file cost >600 s on a 2,955-file tree (measured 2026-11-20) and timed
+    out run_sqi. A binary file (NUL in its first 8 KiB, git's own test) contributes no lines."""
+    try:
+        data = (root / rel).read_bytes()
+    except OSError:
+        return None
+    head = f"diff --git a/{rel} b/{rel}\nnew file mode 100644\n--- /dev/null\n+++ b/{rel}"
+    if b"\0" in data[:8192]:
+        return head + f"\nBinary files /dev/null and b/{rel} differ"
+    lines = data.decode("utf-8", errors="replace").splitlines()
+    if not lines:
+        return head
+    return head + f"\n@@ -0,0 +1,{len(lines)} @@\n" + "\n".join("+" + ln for ln in lines)
 
 
 def run(repo: Path, base: str = "HEAD", approvals: list | None = None):
@@ -304,6 +325,35 @@ def run(repo: Path, base: str = "HEAD", approvals: list | None = None):
         return 2, [], err
     findings = apply_approvals(analyze(diff or ""), approvals or [])
     return (1 if any(f.waived_by is None for f in findings) else 0), findings, None
+
+
+CLEAN, VIOLATIONS, UNASSESSED = "CLEAN", "VIOLATIONS", "UNASSESSED"
+
+
+def report(repo: Path, base: str = "HEAD", approvals: list | None = None) -> dict:
+    """REPORT-ONLY view for done paths (bcap2-activation slice B). Never raises and never decides
+    an exit code: the caller prints it beside its verdict. A guard that could not run is
+    UNASSESSED with its reason -- never CLEAN, because absence of a reading is not a clean diff."""
+    try:
+        code, findings, err = run(Path(repo), base, approvals)
+    except Exception as e:  # noqa: BLE001 -- a crashed guard is UNASSESSED, reported, never silent
+        return {"status": UNASSESSED, "base": base, "error": f"{type(e).__name__}: {e}",
+                "violations": [], "waived": 0}
+    if err:
+        return {"status": UNASSESSED, "base": base, "error": err, "violations": [], "waived": 0}
+    open_ = [dict(f.to_dict(), text=_redact(f.text)) for f in findings if f.waived_by is None]
+    return {"status": VIOLATIONS if open_ else CLEAN, "base": base, "error": None,
+            "violations": open_, "waived": len(findings) - len(open_)}
+
+
+def report_line(r: dict) -> str:
+    """One line, same shape for every consumer."""
+    if r["status"] not in (CLEAN, VIOLATIONS):  # UNASSESSED / NOT_RUN: no reading, so no counts
+        return f"floor-guard (report only, base {r['base']}): {r['status']} -- {r['error']}"
+    rules = sorted({v["rule"] for v in r["violations"]})
+    return (f"floor-guard (report only, base {r['base']}): {r['status']} "
+            f"{len(r['violations'])} violation(s), {r['waived']} waived"
+            + (f" [{', '.join(rules)}]" if rules else ""))
 
 
 def _redact(s: str) -> str:

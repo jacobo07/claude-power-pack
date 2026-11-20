@@ -48,12 +48,18 @@ def main():
     import re
     if re.search(r"^###.*:\s*ACTIVATED\b", state, re.M):
         bad.append("a STATE.md phase heading claims ACTIVATED: re-read it against law 4")
+    # Slice B (vault/specs/bcap2-activation.md, Owner pick (a)): the diff-scoped floor guard judges the
+    # branch against main. REPORT ONLY: it is printed beside the verdict and never enters `bad`.
+    sys.path.insert(0, str(ROOT))
+    from modules.sqi import floor_guard
+    fg = floor_guard.report(ROOT, base="main")
     if "--json" in sys.argv:
-        print(json.dumps({"rows": rows, "bad": bad}, indent=1))
+        print(json.dumps({"rows": rows, "bad": bad, "floor_guard": fg}, indent=1))
     else:
         for r in rows:
             print(" | ".join(r))
         print("liveness: no BCAP-2 module is an undeclared orphan" if not orphans else "liveness: RED")
+        print(floor_guard.report_line(fg))
     print("BCAP2_DONE_GATE", "FAIL " + str(bad) if bad else "PASS (consistent; no item is ACTIVATED)")
     return 1 if bad else 0
 
