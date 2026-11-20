@@ -21,6 +21,7 @@ from pathlib import Path
 
 TMP = tempfile.mkdtemp(prefix="s9-redteam-test-")
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["PP_OWNER_QUEUE_STATE_DIR"] = str(Path(TMP) / "owner-queue")
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"

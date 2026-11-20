@@ -18,6 +18,7 @@ os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
 os.environ.pop("CPP_RESOURCE_ADMISSION", None)
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 os.environ.pop("CPP_MISSION_RENEW", None)
 TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))

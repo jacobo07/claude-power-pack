@@ -169,15 +169,19 @@ def official_reading(state_dir, now, fresh_s=OFFICIAL_FRESH_S):
     return {"state": "FRESH", "age_s": round(age), "windows": windows, "rolled": rolled}
 
 
-def status(state_dir, now=None, roots=None):
-    """Merged weekly picture. Never raises on missing telemetry: it reports what it could not know."""
+def status(state_dir, now=None, roots=None, infer=True):
+    """Merged weekly picture. Never raises on missing telemetry: it reports what it could not know.
+
+    `infer=False` (every admission `check`) never scans transcripts: without a configured reset the estimate is
+    UNKNOWN. Measured 2026-11-20: inference walks every transcript under ~/.claude/projects, >180 s per call,
+    and the mission sweep would have paid that on every launch decision."""
     now = time.time() if now is None else now
     cfg = config(state_dir)
     calib = cfg.get("calibration_api_eq_per_100pct")
     if not isinstance(calib, (int, float)) or isinstance(calib, bool) or calib <= 0:
         calib = None
     reset, reset_src = current_window(parse_when(cfg.get("reset_at")), now), "config"
-    if reset is None:
+    if reset is None and infer:
         reset, reset_src = infer_reset(roots or ccn_census.default_roots(), now), "inferred (>=2h zero-call gap)"
     hosts_expected = tuple(cfg.get("hosts") or EXPECTED_HOSTS)
     host_fresh_s = cfg_num(cfg, "host_fresh_s", HOST_FRESH_S)
@@ -285,7 +289,7 @@ def append_ledger(state_dir, row):
 
 def check(state_dir, action, now=None, roots=None):
     now = time.time() if now is None else now
-    st = status(state_dir, now, roots)
+    st = status(state_dir, now, roots, infer=bool(roots))   # admission never scans the real transcript store
     five_refuse = 100.0 - cfg_num(config(state_dir), "five_hour_reserve_pct", FIVE_HOUR_RESERVE_PCT)
     code, verdict, why = decide(st, read_override(state_dir, now), action, five_refuse)
     off = st.get("official") or {}

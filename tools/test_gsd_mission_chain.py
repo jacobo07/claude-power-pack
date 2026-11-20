@@ -23,6 +23,7 @@ os.environ.pop("CPP_MISSION_RENEW", None)
 os.environ.pop("CPP_ROUTE_ADMISSION", None)
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"   # the host's free RAM is not what these gates measure
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 if os.environ.get("GSD_MISSION_DRILL_DIR"):
     sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])

@@ -605,6 +605,15 @@ def continue_worker(mission_id: str, rec: dict, *, prompt: str, decision: dict, 
     wd = work_dir or gm.effective_workdir(sid, rec["cwd"], rec.get("workstream"))
     if wd and wd != rec.get("work_dir"):
         extra["work_dir"] = wd
+    # BAMR P3 (2026-11-20): the same-session wake is the second model-spending launch path (launch_worker is
+    # the first); it passes the same account governor, BEFORE the claim, so a refusal changes no state. The
+    # idle owner was already stopped by the caller (as for continue_refused_admission); the next pass sees it
+    # dead and replaces it through launch_worker, which refuses again until the quota admits it.
+    awhy = gm.account_refusal(rec, "resume")
+    if awhy:
+        lr.ledger_append(mission_id, "continue_refused_account", mission_id=mission_id,
+                         epoch=rec.get("epoch"), worker=sid, why=awhy[:300])
+        return {"ok": False, "mechanism": RESUME, "session": sid, "why": awhy, "account_refused": True}
     claimed = gm.transition(
         mission_id, expect_epoch=rec["epoch"], expect_state=rec["state"], event="turn_continued",
         now=now, state=gm.LAUNCHING, worker=sid, reason=decision.get("reason"),

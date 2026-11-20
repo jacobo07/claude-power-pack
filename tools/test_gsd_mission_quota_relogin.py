@@ -22,6 +22,7 @@ from pathlib import Path
 
 TMP = tempfile.mkdtemp(prefix="gsd-mqr-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
 ACCOUNT_FILE = Path(TMP) / "claude.json"

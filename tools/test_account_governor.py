@@ -178,6 +178,17 @@ with tempfile.TemporaryDirectory() as tmp:
     st = g.status(sd, NOW, [])
     gate("V-BAMR-IMPLIED-CALIB", st["official"]["state"] == "FRESH" and st.get("implied_calibration_api_eq_per_100pct") == round(1800.0 / 0.10, 2),
          "status reports the calibration the official reading implies: %s" % st.get("implied_calibration_api_eq_per_100pct"))
+    # admission never scans the real transcript store (measured: > 180 s per launch decision before the fix)
+    sd3 = tempfile.mkdtemp(dir=tmp)
+    jdump(os.path.join(sd3, "account-governor.json"), {"calibration_api_eq_per_100pct": CALIB})   # no reset_at
+    scanned, real_infer = [], g.infer_reset
+    g.infer_reset = lambda roots, now, **k: scanned.append(roots) or None
+    try:
+        res = g.check(sd3, "arm", now=NOW)          # the production call shape: no roots
+    finally:
+        g.infer_reset = real_infer
+    gate("V-BAMR-CHECK-NO-SCAN", not scanned and res[:2] == (3, "REFUSE+UNKNOWN"),
+         "check without reset_at: %d transcript scans, verdict %s" % (len(scanned), res[1]))
 
     # reset inference from transcripts: a 3 h gap, spend only after it
     proj = os.path.join(tmp, "proj", "-p")

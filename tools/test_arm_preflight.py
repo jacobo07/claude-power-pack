@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 os.environ["GSD_LONG_RUN_STATE_DIR"] = tempfile.mkdtemp(prefix="arm-preflight-")
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
 

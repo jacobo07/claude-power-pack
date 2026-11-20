@@ -1348,6 +1348,23 @@ def _write_launcher_binding(rec: dict, sid: str) -> None:
         pass
 
 
+def account_refusal(rec: dict, action: str) -> str | None:
+    """None when the account governor admits a model-spending launch; else the reason, ledgered by the caller.
+
+    The governor reads the same state directory as the mission (`lr.state_dir()`), so a suite's isolated
+    state is judged on its own (empty) quota picture -- suites that are not about quota set
+    CPP_MISSION_ACCOUNT_ADMISSION=off, exactly as they set CPP_RESOURCE_ADMISSION=off for the RAM floor.
+    A governor fault is UNKNOWN, and unknown refuses (BAMR, Owner decision 2026-11-20)."""
+    if str(os.environ.get("CPP_MISSION_ACCOUNT_ADMISSION") or "").strip().lower() in ("0", "off", "false"):
+        return None
+    try:
+        import account_governor as _ag
+        code, verdict, why, _ = _ag.check(str(lr.state_dir()), action)
+    except Exception as exc:  # noqa: BLE001 -- a broken governor is an unknown quota, never an allowance
+        return f"account governor fault ({type(exc).__name__}: {exc}) -- quota unknown, launch refused"[:300]
+    return None if code == 0 else f"{verdict}: {why}"
+
+
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
                   stop_runner=None, work_dir: str | None = None,
@@ -1419,6 +1436,17 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     gate = None if prompt_override else try_done_gate_close(rec, now, run=det_runner)   # ICC-05: no model turn
     if gate:
         return gate
+    # BAMR P3 (2026-11-20): every model-spending launch -- arm, relay, rotation, quota wake, top-up wake,
+    # orphan replacement, closeout -- passes the account governor HERE, after the deterministic and done-gate
+    # closes (they spend no quota) and before the claim (a refused launch spends no epoch). Before this, only
+    # `arm` asked; a mission released from a quota hold relaunched straight into the freshly reset window.
+    # Unknown quota or a governor fault refuses (Owner decision 2026-11-20). Kill switch:
+    # CPP_MISSION_ACCOUNT_ADMISSION=off.
+    awhy = account_refusal(rec, "arm" if expect_epoch == 0 else "relaunch")
+    if awhy:
+        lr.ledger_append(mission_id, "launch_refused_account", mission_id=mission_id,
+                         epoch=rec.get("epoch"), reason=reason, why=awhy[:300])
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": awhy, "detail": "", "account_refused": True}
     resolved = resolve_baseline(rec)
     baseline_on = resolved is not rec
     legacy_why = baseline_legacy_verdict(resolved) if baseline_mode() != "off" else None
@@ -7452,13 +7480,12 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
         if key is not None:
             lr.ledger_append(f"goal-{key[1]}", "goal_arm_refused", workstream=key[1], why=why[:300])
         raise MissionError(why)
-    try:   # CCN-3 weekly account ceiling (Owner Q2 = enforce 85%); covers arm_chain, which calls arm
-        import account_governor as _ag
-        _code, _verdict, _why, _ = _ag.check(_ag.DEFAULT_STATE, "arm")
-    except Exception as exc:  # noqa: BLE001 -- the governor fails open; a fault here must not stop every mission
-        _code, _why = 0, ""
-        lr.ledger_append("arm-guard", "account_governor_error", why=f"{type(exc).__name__}: {exc}"[:300])
-    if _code == 3:
+    # CCN-3 account ceiling, covers arm_chain (which calls arm). BAMR 2026-11-20: one policy with launch_worker --
+    # same state dir (lr.state_dir()), official reading first, and a governor fault or unknown quota refuses
+    # (it used to fail open here and read DEFAULT_STATE, so the two checks could disagree). Kill switch:
+    # CPP_MISSION_ACCOUNT_ADMISSION=off.
+    _why = account_refusal({}, "arm")
+    if _why:
         lr.ledger_append("arm-guard", "account_arm_refused", why=_why[:300])
         raise MissionError(_why)
     rec = create(cwd, resume_command, **kw)

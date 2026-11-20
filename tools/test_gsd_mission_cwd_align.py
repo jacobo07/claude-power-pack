@@ -22,6 +22,7 @@ sys.path.insert(0, str(HERE))
 # Hermetic for the supervise gates (14-16): mission state and markers in a temp dir BEFORE import.
 STATE = tempfile.mkdtemp(prefix="gsd-mca-state-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = STATE
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(STATE) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = STATE
 

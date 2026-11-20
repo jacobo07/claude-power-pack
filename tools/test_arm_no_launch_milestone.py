@@ -23,6 +23,7 @@ os.environ["CPP_CLAUDE_JOBS_DIR"] = str(TMP / "jobs")
 os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(TMP / "projects")
 os.environ["CPP_MISSION_RECOVERY"] = "off"
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"   # host RAM is not what these gates measure
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 os.environ.pop("CPP_GSD_X_AUTOSCAFFOLD", None)
 os.environ.pop("CPP_GSD_X_OPTOUT", None)
 (TMP / "state" / "sessions").mkdir(parents=True)

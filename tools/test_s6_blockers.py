@@ -31,6 +31,7 @@ os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 os.environ["PP_OWNER_QUEUE_STATE_DIR"] = str(Path(TMP) / "owner-queue")
 os.environ["CPP_CLAUDE_EXE"] = "__no_such_claude_in_tests__"
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 os.environ["CLAUDE_CONFIG_DIR"] = str(Path(TMP) / "cc")
 os.environ.pop("CPP_BLOCKER_COMPILE", None)
 os.environ.pop("CPP_FORESEEABLE_DECISIONS", None)

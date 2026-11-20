@@ -24,6 +24,7 @@ os.environ.pop("CPP_ROTATION_INVARIANT", None)
 # Host RAM is not under test here (resource_admission has its own gates): under the 3000 MB floor
 # every launch below was refused and the suite failed on a busy laptop (2026-10-24, 2,728 MB free).
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 if os.environ.get("GSD_MISSION_DRILL_DIR"):
     sys.path.insert(0, os.environ["GSD_MISSION_DRILL_DIR"])

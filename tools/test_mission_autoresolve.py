@@ -21,6 +21,7 @@ os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "projects")
 for k in ("CPP_ROUTE_ADMISSION", "CPP_CCR_ADMISSION", "CPP_CE_GOAL"):
     os.environ.pop(k, None)
 os.environ["CPP_RESOURCE_ADMISSION"] = "off"
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"  # account quota: covered by test_mission_account_admission
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import gsd_mission as gm  # noqa: E402
