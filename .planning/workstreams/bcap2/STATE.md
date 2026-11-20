@@ -217,3 +217,6 @@ Repo clean at 3665449a, done_gate PASS (all PARTIALLY_PROVEN, none ACTIVATED). B
 
 ### Epoch 10 (new worker): BI-30 partial audit
 vault/programs/bcap-2/brand/IMPECCABLE_AUDIT.md: Impeccable b49177d3 (Apache-2.0) critique-rubric and critique.md read read-only and hashed; the rubric is UX heuristics, anti-generic idea is the "design specificity verdict" (deterministic scan + separate LLM judgement), already mirrored by CDIO-05/06 and VQ-6. Detector unread, nothing ported, BI-30 stays open. BI-27 (DesignHub) not fetched. Remaining runnable-here units are thin; Phase 8 live-source reads and BI-16/18/24 still need sandbox/render. Spend not re-measured.
+
+### Epoch 11: BI-27 inventory probe
+vault/programs/bcap-2/brand/DESIGNHUB_PROBE.md: DesignHub 148e8c3f (MIT, 907 paths) tree inventoried only; no source read, nothing ported, BI-27 stays open. Reached the end of cheap read-only probes again; remaining units need sandbox/browser. Spend not re-measured.
