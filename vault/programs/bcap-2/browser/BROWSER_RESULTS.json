@@ -258,15 +258,15 @@
       "claim": "scope.revert() on unmount stops the looping timeline",
       "measured": {
         "running": {
-          "good": 20,
-          "bad": 20
+          "good": 21,
+          "bad": 21
         },
         "at_unmount": {
-          "good": 20,
+          "good": 21,
           "bad": 25
         },
         "after_500ms": {
-          "good": 20,
+          "good": 21,
           "bad": 56
         }
       },
@@ -285,15 +285,15 @@
       "claim": "removing the node without cancel leaves the timeline ticking (caught)",
       "measured": {
         "running": {
-          "good": 20,
-          "bad": 20
+          "good": 21,
+          "bad": 21
         },
         "at_unmount": {
-          "good": 20,
+          "good": 21,
           "bad": 25
         },
         "after_500ms": {
-          "good": 20,
+          "good": 21,
           "bad": 56
         }
       },
@@ -314,7 +314,7 @@
         "reduce": {
           "t120ms": {
             "good": 200,
-            "bad": 30
+            "bad": 29.8
           },
           "t1320ms": {
             "good": 200,
@@ -323,8 +323,8 @@
         },
         "no-preference": {
           "t120ms": {
-            "good": 30.6,
-            "bad": 30.6
+            "good": 28.4,
+            "bad": 28.4
           },
           "t1320ms": {
             "good": 200,
@@ -349,7 +349,7 @@
         "reduce": {
           "t120ms": {
             "good": 200,
-            "bad": 30
+            "bad": 29.8
           },
           "t1320ms": {
             "good": 200,
@@ -358,8 +358,8 @@
         },
         "no-preference": {
           "t120ms": {
-            "good": 30.6,
-            "bad": 30.6
+            "good": 28.4,
+            "bad": 28.4
           },
           "t1320ms": {
             "good": 200,
@@ -378,7 +378,7 @@
         "reduce": {
           "t120ms": {
             "good": 200,
-            "bad": 30
+            "bad": 29.8
           },
           "t1320ms": {
             "good": 200,
@@ -387,8 +387,8 @@
         },
         "no-preference": {
           "t120ms": {
-            "good": 30.6,
-            "bad": 30.6
+            "good": 28.4,
+            "bad": 28.4
           },
           "t1320ms": {
             "good": 200,
@@ -407,7 +407,7 @@
         "reduce": {
           "t120ms": {
             "good": 200,
-            "bad": 30
+            "bad": 29.8
           },
           "t1320ms": {
             "good": 200,
@@ -416,8 +416,8 @@
         },
         "no-preference": {
           "t120ms": {
-            "good": 30.6,
-            "bad": 30.6
+            "good": 28.4,
+            "bad": 28.4
           },
           "t1320ms": {
             "good": 200,
