@@ -694,6 +694,10 @@
     "ccf/brand_release": {
       "class": "LIBRARY",
       "note": "pure BI-15/22/23/25/26/29/34 derivative, DTCG, manifest, preview, similarity and applicability validators, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
+    },
+    "ccf/brand_review": {
+      "class": "LIBRARY",
+      "note": "pure BI-17/19/28/31/35 typed SVG parts, multilingual glyph coverage, logo lens, benchmark and independent-review validators, driven from both poles by tools/test_bcap2_brand.py; not yet called by the CLI, so a library, not activated"
     }
   }
 }

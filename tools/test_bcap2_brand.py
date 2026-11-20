@@ -463,6 +463,41 @@ with tempfile.TemporaryDirectory() as t:
           up["branding_mcp"]["archived"] is True and up["branding_mcp"]["verdict"] == "HISTORICAL_REFERENCE"
           and up["logo_generator_skill"]["licence_file"] is False and "no code" in up["logo_generator_skill"]["verdict"])
 
+    # ---- BI-17 / 19 / 28 / 31 / 35 (pure; epoch 10)
+    from modules.ccf import brand_review as BV
+    svg = b'<svg xmlns="http://www.w3.org/2000/svg"><g data-part="icon"><circle r="4"/></g><g data-part="wordmark"><rect width="9" height="3"/></g></svg>'
+    sp = BV.split_parts(svg)
+    check("BI-17 control: typed icon and wordmark parts split without regex", sp["ok"] and set(sp["parts"]) == {"icon", "wordmark"}, str(sp))
+    check("BI-17 pole: script svg, unknown part, duplicate part and untyped svg all refused",
+          not BV.split_parts(b'<svg xmlns="http://www.w3.org/2000/svg"><script>x</script></svg>')["ok"]
+          and not BV.split_parts(svg.replace(b"wordmark", b"badge"))["ok"]
+          and not BV.split_parts(svg.replace(b"wordmark", b"icon"))["ok"]
+          and not BV.split_parts(b'<svg xmlns="http://www.w3.org/2000/svg"><g/></svg>')["ok"])
+    reg = {"F1": {"license": "OFL", "glyphs": "".join(set("".join(BV.LANGS.values()))) + "abc"},
+           "F2": {"license": "OFL", "glyphs": "abc"}}
+    check("BI-19 control: a font with the full diacritic set covers ES/PT/FR/DE", BV.language_coverage("F1", reg)["ok"])
+    lc = BV.language_coverage("F2", reg)
+    check("BI-19 pole: ascii-only font names the missing diacritics per language; unknown font refused (no Inter fallback)",
+          not lc["ok"] and "ES" in lc["missing"] and "DE" in lc["missing"] and not BV.language_coverage("Inter", reg)["ok"])
+    ev = {k: {"observed": True, "instrument": "probe"} for k in BV.LENS}
+    check("BI-28 control: all 12 criteria observed -> approve pending human, no UI score", BV.logo_lens(ev)["verdict"] == "APPROVE_PENDING_HUMAN" and BV.logo_lens(ev)["ui_score"] is None)
+    check("BI-28 pole: one fail blocks; a missing criterion or instrument-less claim is UNASSESSED not pass; no human signoff stays incomplete",
+          BV.logo_lens(dict(ev, small_size={"observed": False, "instrument": "p"}))["verdict"] == "BLOCK"
+          and BV.logo_lens({k: v for k, v in ev.items() if k != "silhouette"})["verdict"] == "INCOMPLETE"
+          and BV.logo_lens(dict(ev, spelling={"observed": True}))["rows"]["spelling"] == "UNASSESSED"
+          and BV.logo_lens(dict(ev, human_signoff={"observed": False, "instrument": "p"}))["verdict"] == "BLOCK")
+    cats = list(BV.CATEGORIES)
+    briefs = [{"id": f"b{i}", "categories": [cats[i % len(cats)]], "frozen_sha256": "a" * 64} for i in range(12)]
+    briefs[11]["categories"] = cats[11 % len(cats):] + cats
+    check("BI-31 control: 12 frozen briefs covering all categories pass", BV.check_benchmark(briefs) == [], str(BV.check_benchmark(briefs)))
+    check("BI-31 pole: 11 briefs, unfrozen brief, duplicate id and a dropped category are all named",
+          len(BV.check_benchmark(briefs[:11])) >= 1 and any("frozen" in x for x in BV.check_benchmark([dict(b, frozen_sha256="") for b in briefs]))
+          and any("duplicate" in x for x in BV.check_benchmark(briefs[:11] + [briefs[0]])))
+    rv = {"reviewer": "r", "implementer": "i", "refusal_cases_proven": True, "commit_refs": ["x"], "test_counts": {"p": 1}, "revert_path": "git revert x", "status": "NOT_DONE"}
+    check("BI-35 control: a distinct, evidenced review is valid", BV.review_independent(rv) == [])
+    check("BI-35 pole: self-review, no refusal proof, missing revert, bad status all named",
+          len(BV.review_independent(dict(rv, reviewer="i", refusal_cases_proven=False, revert_path="", status="maybe"))) == 4)
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-29, BI-34) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-17, BI-19, BI-28, BI-29, BI-31, BI-34, BI-35) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)
