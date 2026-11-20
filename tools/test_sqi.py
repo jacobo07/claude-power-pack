@@ -478,7 +478,8 @@ def check_guardian(rep) -> None:
         env["PYTHONIOENCODING"] = "utf-8"
         proc = subprocess.run(
             [sys.executable, str(REPO / "tools" / "run_sqi.py"), "--quiet"],
-            cwd=str(REPO), capture_output=True, text=True, timeout=600,
+            # 1200 s: run_sqi --quiet measured 882 s on this checkout (2026-11-20); 600 s timed out.
+            cwd=str(REPO), capture_output=True, text=True, timeout=1200,
             env=env, errors="replace",
         )
         out = (proc.stdout or "") + (proc.stderr or "")
