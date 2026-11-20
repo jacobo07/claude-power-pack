@@ -23,24 +23,28 @@ click's own task, which shows the bench can return the other answer.
 Limits: one engine (Chromium), one viewport (800x700), synthetic bench page, not a CPP product surface; WebKit/Firefox
 and touch input unmeasured.
 
-## OPEN — Phase 5 (Synsation) video re-inspection
-The four source videos (backlog `2026-10-13_synsation-ux-patterns-absorption.md`, sha256s listed there) are not on
-this laptop as far as measured: none in Downloads/Desktop/Videos/Documents/Temp/Claude app data; a whole-profile
-search by name and by each video id had matched only the backlog notes when this was written (still running). They
-were uploaded into the 2026-10-13 session, so they likely never lived on disk. UX-07..20 stay INFERRED until the
-Owner supplies the files (then: `video-analyzer` with audio transcript, verify sha256 first).
+## DONE — Phase 5 (Synsation) video re-inspection with audio
+The Owner put the four videos in Downloads; all four sha256 match the backlog. Offline transcripts (video-analyzer
+whisper.cpp, TRANSCRIPT_OK x4) in `synsation/transcripts/`; per-claim verdicts in `synsation/DISPOSITIONS.md`
+("Audio re-inspection"). UX-07..09, 11, 13, 14, 16..20 CONFIRMED by wording; UX-10 and UX-12 are CPP-derived, not in
+the source; UX-15 partial; video 4 is SPONSORED (Vanta), so UX-14..18 rest on one vendor source. New from audio: a
+control disabled while a just-clicked action runs is correct; `check_disabled_control` now exempts `pending_submission`
+only with `pending_visible` (test_bcap2_synsation 35 -> 38, seeded mutant flips).
 
-## PARTIAL — Phase 9 (Ruflo) canary
-Evidence: `vault/programs/bcap-2/ruflo/CANARY_2026-11-20.json`.
-- `npm audit --json` on the sandbox lockfile: **0 vulnerabilities** (all severities) -> `audit_error` passes.
-- `npm audit signatures`: UNMEASURED (GEX44 npm on node 18 predates the 2025-01-29 registry key rotation:
-  EEXPIREDSIGNATUREKEY). Re-run with npm >= 10.
-- Fixture drive against the real MCP transport: NOT RUN. No isolated plane exists (GEX44: bwrap/unshare cannot create a
-  net namespace, no docker access, node 18 < engines >=20; laptop: npm broken). Running it without isolation would be
-  third-party code with live egress next to GEX44's live ~/.claude. Unblock options are listed in the JSON; each needs an
-  Owner-approved host change. Activation stays REFUSED. Nothing has left the sandbox.
+## DONE (activation still refused) — Phase 9 (Ruflo) canary
+Evidence: `ruflo/CANARY_2026-11-20.json`, raw `ruflo/canary/{adv,retry}.out.jsonl`, harness
+`ruflo/canary/{run_canary.sh,driver.cjs,steps_*.json}`. Owner chose Docker on GEX44; `kobii` added to the docker group.
+- isolation: `docker run --network none --read-only --cap-drop ALL`, proved per run (NET_FAIL inside, 200 outside).
+- `npm audit`: 0 vulnerabilities. `npm audit signatures` (npm 11.19.1): 586/586 registry signatures verified,
+  0 invalid/missing; ruflo and @claude-flow/* carry NO provenance attestation (residual confirmed by measurement).
+- real `ruflo mcp start` (393 tools) driven with advisory fixtures: GHSA-vqpp fix OBSERVED (no escaped file on disk);
+  `file://` refused (half of 5pxg); `__proto__` key ACCEPTED by memory_store; hgp6, rx87, jwwq, #4750 unreached
+  (degraded / admin-gated / offline); session_export fixture defect; bridge and #3294 not driven by design.
+- the CPP gateway refuses all 12 attack fixtures and accepts the benign poles.
+- NEW: Ruflo attempted unsolicited egress to IPFS gateways (cloudflare-ipfs.com, w3s.link); blocked by isolation.
+Nothing left the sandbox.
 
 ## Platform note
 On Windows, `test_bcap2_dbg` (Linux-path real-bug replay), `test_bcap2_tdd` (needs the pytest+coverage interpreter) and
-`test_bcap2_ruflo` (symlink privilege, WinError 1314) fail for platform reasons; `test_bcap2_synsation` 35/0 and
+`test_bcap2_ruflo` (symlink privilege, WinError 1314) fail for platform reasons; `test_bcap2_synsation` 38/0 and
 `test_bcap2_animejs` 35/0 pass. done_gate is a GEX44-plane gate.

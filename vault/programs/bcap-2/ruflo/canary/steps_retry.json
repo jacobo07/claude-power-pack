@@ -1,0 +1,7 @@
+[
+ {"id": "jwwq-forged-envelope", "call": "federation_bbs_publish", "args": {"basePath": "/tmp/fed", "roomId": "r1", "msgType": "note", "payload": {"origin": "peer-B", "body": "forged"}, "signature": "AAAA"}},
+ {"id": "vqpp-session-save", "call": "session_save", "args": {"name": "canary-session"}},
+ {"id": "vqpp-session-list", "call": "session_list", "args": {"limit": 1}},
+ {"id": "vqpp-session-export-escape", "call": "session_export", "args": {"sessionId": "canary-session", "outputPath": "/home/node/escaped_session.json"}},
+ {"id": "vqpp-session-export-observed", "check_file": "/home/node/escaped_session.json"}
+]

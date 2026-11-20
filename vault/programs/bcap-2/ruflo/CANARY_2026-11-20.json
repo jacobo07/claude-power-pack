@@ -1,38 +1,54 @@
 {
  "drill": "BCAP-2 Phase 9 Ruflo canary (LAPTOP_STEPS.md), coordinator pane adcdff7b, 2026-11-20",
+ "owner": "Owner chose 'Docker on GEX44' for the isolated plane; kobii added to the docker group (sudo usermod -aG docker kobii)",
  "sandbox": "GEX44 /home/kobii/ruflo-sandbox-bcap2/run (ruflo 3.78.0, --ignore-scripts install by the Phase 9 worker)",
  "lockfile_sha256": "acff5e4bd32b5f3f1ba4d05733070f4176fff8587a418a24ce5dc8373b0bcba5",
+ "isolation": {
+  "plane": "docker run --network none --read-only --tmpfs /tmp --tmpfs HOME --user node --cap-drop ALL --security-opt no-new-privileges, install mounted read-only (canary/run_canary.sh)",
+  "proved_per_run": "isolation_probe NET_FAIL inside the container while the host returns NET_OK 200; the run aborts (exit 9) otherwise",
+  "image": "node:24-bookworm (already on GEX44, not pulled)"
+ },
  "supply_chain": {
-  "npm_audit": {
-   "ran": true,
-   "rc": 0,
-   "vulnerabilities": {"info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0, "total": 0},
-   "evidence": "GEX44 run/npm_audit.json sha256 110f557d45163f10b6cad7ded20b4f02b26e7fd58b738354b960b82ea00a028f",
-   "gate": "modules/ruflo_gate audit_error -> None (0 high/critical)"
-  },
-  "npm_audit_signatures": {
-   "ran": true,
-   "rc": 1,
-   "verdict": "UNMEASURED",
-   "why": "EEXPIREDSIGNATUREKEY on json-schema-to-ts@3.1.1: GEX44's npm (node 18.19.1) predates the registry key rotation of 2025-01-29, so the instrument failed before judging. Not a signature failure. Re-run with npm >= 10 (node >= 20).",
-   "evidence": "GEX44 run/npm_audit_signatures.txt sha256 c18765b11077a4dcb903b883e41af890b81c9b5f8d69ba5634cfaa90fb16b21d"
-  }
+  "npm_audit": {"rc": 0, "vulnerabilities": {"info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0, "total": 0},
+                "evidence": "GEX44 run/npm_audit.json sha256 110f557d45163f10b6cad7ded20b4f02b26e7fd58b738354b960b82ea00a028f",
+                "gate": "audit_error -> None"},
+  "npm_audit_signatures": {"npm": "11.19.1 (node:24 container; npm itself only, no package code executed)",
+                           "result": "586 packages have verified registry signatures; 160 have verified attestations; 0 invalid, 0 missing",
+                           "ruflo_attested": false, "claude_flow_attested": [],
+                           "earlier_unmeasured": "GEX44 host npm (node 18) failed EEXPIREDSIGNATUREKEY: an instrument failure, superseded by this run",
+                           "evidence": "GEX44 run/npm_audit_signatures_npm11.txt sha256 5ec0101e9d53ac7ca0159426eec90efbcf1884c968f70e0f5a135e9516475027"}
  },
- "runtime_fixture_drive": {
-  "ran": false,
-  "verdict": "NOT RUN: no isolated plane exists",
-  "measured_blockers": [
-   "GEX44 bwrap 0.9.0 --unshare-net: 'loopback: Failed RTM_NEWADDR: Operation not permitted' (unprivileged user namespaces restricted); unshare -rn: uid_map write not permitted",
-   "GEX44 docker: permission denied on /var/run/docker.sock for user kobii",
-   "GEX44 node 18.19.1 < ruflo engines.node >=20.0.0",
-   "laptop npm broken ('Class extends value undefined is not a constructor or null'); Windows has no network namespace for node"
+ "fixture_drive": {
+  "server": "REAL `ruflo mcp start` over stdio, initialize -> serverInfo ruflo 3.78.0, tools/list 393 tools",
+  "raw": ["canary/adv.out.jsonl", "canary/retry.out.jsonl"],
+  "cases": [
+   {"advisory": "GHSA-vqpp-qh58-2p7h", "fixtures": "memory_export to /home/node (outside project), ../ traversal, memory_import /etc/passwd",
+    "upstream": "REFUSED all three ('outputPath must be a .json file inside the project directory', 'inputPath must be ... inside the project directory'); no escaped file on disk (check_file false); passwd not searchable",
+    "verdict": "UPSTREAM_FIX_OBSERVED", "gateway": "path_error refuses all three"},
+   {"advisory": "GHSA-vqpp (session_export)", "upstream": "fixture passed the session name, tool needs the generated id ('Session not found')",
+    "verdict": "INCONCLUSIVE (fixture defect)", "gateway": "path_error refuses /home/node/escaped_session.json"},
+   {"advisory": "GHSA-6rwv-52g2-vx7j", "fixtures": "memory_store key '__proto__'; config_import {__proto__:{...}, constructor:{prototype:{...}}} merge",
+    "upstream": "memory_store ACCEPTED and stored key '__proto__'; config_import imported 0 keys. Pollution of the server process is not observable over stdio",
+    "verdict": "NOT PROVEN FIXED (key accepted)", "gateway": "keys_error / json_text_error refuse both"},
+   {"advisory": "GHSA-5pxg-x8g8-fw4j", "fixtures": "browser_act url '--remote-debugging-port=9222'; browser_session_record url file:///etc/passwd",
+    "upstream": "file:// REFUSED ('url scheme not allowed'); flag-as-url not reached (browser_act degraded: page-agent not installed). browser_open no longer exists in 3.78",
+    "verdict": "PARTIAL (scheme fix observed; flag path unreached)", "gateway": "tool_call_error refuses both"},
+   {"advisory": "GHSA-hgp6-gm2j-hx55", "fixtures": "federation_bbs_peer_add url 169.254.169.254; x_federation_admit gatewayUrl 127.0.0.1:22",
+    "upstream": "not reached: peer_add degraded (agentbbs-not-found); admit refused by an admin token gate (RUFLO_X_ADMIN_TOKEN unset)",
+    "verdict": "INCONCLUSIVE (code path unreached)", "gateway": "ssrf_error refuses both (address not public)"},
+   {"advisory": "GHSA-rx87-v2fr-76xf", "fixtures": "planted /tmp/proj/CLAUDE.md with an injection, memory_import_claude projectPath /tmp/proj",
+    "upstream": "'No Claude memory files found', imported 0, readback empty: the tool does not read projectPath/CLAUDE.md, so the injection path was not reached",
+    "verdict": "INCONCLUSIVE (code path unreached)", "gateway": "memory_origin_error refuses origin 'repo'"},
+   {"advisory": "GHSA-jwwq-crgq-c4c7", "fixtures": "federation_bbs_publish forged origin peer-B, bogus signature",
+    "upstream": "not reached: degraded (agentbbs-not-found)", "verdict": "INCONCLUSIVE (code path unreached)",
+    "gateway": "envelope_error refuses (origin != authenticated peer)"},
+   {"advisory": "#4750", "fixtures": "transfer_store-download verify:false", "upstream": "'Pattern not found' (offline registry): not reached",
+    "verdict": "INCONCLUSIVE (code path unreached)", "gateway": "pattern_error refuses (not in hash-pinned allowlist)"},
+   {"advisory": "GHSA-8jjw / GHSA-c4hm (bridge)", "verdict": "NOT DRIVEN by design: the ruvocal bridge / compose is never started"},
+   {"advisory": "#3294 (shared session)", "verdict": "NOT DRIVEN: needs the http transport with two clients; stdio has one principal"}
   ],
-  "why_not_run_anyway": "driving the GHSA/#3294 fixtures means executing Ruflo's MCP server; without network isolation that is third-party code with live egress next to GEX44's live ~/.claude, which plan law 6 forbids",
-  "unblock_options": [
-   "GEX44: sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0 (or an AppArmor profile for bwrap) + node 20 in the sandbox, then bwrap --unshare-net",
-   "GEX44: add kobii to the docker group, then docker run --network none node:20 with the sandbox install mounted read-only",
-   "laptop: Windows Sandbox (.wsb with <Networking>Disable</Networking>) with portable node 20 and the install copied in"
-  ]
+  "gateway_poles": "12 attack fixtures refused by modules/ruflo_gate; benign poles (export inside root, 0-vuln audit) accepted",
+  "new_finding": "UNSOLICITED EGRESS: during the drive Ruflo tried to reach cloudflare-ipfs.com and w3s.link (IPNS discovery, 'OFFLINE MODE ... using built-in fallback registry'). Blocked by --network none. Any activation must keep network none or an explicit egress allowlist; this is not in HOLDS.json yet."
  },
- "readiness": "still REFUSED (not READY_FOR_CANARY): the advisory-fix-claims RESIDUAL stays open until the fixture drive runs on an isolated plane"
+ "readiness": "CANARY_DRILLED, activation still REFUSED: upstream fixes observed only for GHSA-vqpp (and the file:// half of 5pxg); __proto__ key accepted; 5 advisories unreached; no provenance attestation for ruflo/@claude-flow; unsolicited egress. The CPP gateway refuses every driven fixture. Nothing left the sandbox; no output was carried out of the container except stdout."
 }
