@@ -22808,3 +22808,44 @@ Evidence: KSR policy refusals S33K (2026-11-12T09:29:59Z, most likely copied fro
 - TRAP T-HANDOFF-VERDICT-NOT-REPRODUCED-001: OBSERVED (1 case). A predecessor note quoted trademark-scanner verdicts (PASS for hexagon cells, BLOCK for Nike-like) that did not reproduce; the scanner is feature-based and a literal Nike-tick description scored PASS. Gates assert only observed outputs; scanner recall is an open residual, not a passed control.
 - PROCESS PR-PROMOTE-ONLY-WITH-INHERITANCE-PROOF-001: OBSERVED (1 case, N=1 pair, mechanism not rate). A baseline delta is promoted only through `tower.ratchet.promote_with_evidence`; a fresh `claude -p` given the baseline block wrote privacy and terms pages the same task never asked for, the control did not.
 - Not promoted to HR: every item above has fewer than the transfer evidence HR status needs (only the first has 2 subsystems, and it is already enforced by tests).
+
+### T-QUOTA-ESTIMATE-IS-NOT-QUOTA-001
+
+PROVEN. A spend estimate over a calibration is not the subscription's utilisation. The account governor read the week at
+83.58 % (API-eq 3 819 $ / ESTIMATE calibration 4 570 $) while the harness's own statusline `rate_limits.seven_day` said
+18 % at the same minute (CC 2.1.329, 2026-11-20) -- 1.4 points from refusing every arm and top-up on the estate, and its
+configured reset (Sun 00:00 UTC) was not the provider's (Wed 17:00 UTC). Read the provider's figure first, at zero model
+cost, from where the harness already hands it (statusline stdin -> `hooks/statusline_quota_tap.js`); keep the estimate as a
+labelled fallback and report the calibration the official reading implies instead of trusting a fitted one. PP `afb43d63`.
+
+### PR-ADMISSION-AT-EVERY-LAUNCH-PATH-001
+
+PROVEN. A budget or quota check is only as strong as the launch path that skips it. Only `arm` asked the governor; relay,
+rotation, replacement, quota-hold wake, top-up wake and the same-session `--resume` continuation (a SECOND spawn site, in
+`gsd_epoch.continue_worker`, not in `launch_worker`) launched unchecked -- so a mission released at a quota reset spent the
+fresh window with no question asked. Enumerate every spawn site by grep (`--bg`, `--resume`, `worker_argv(`), gate each one
+BEFORE its claim and AFTER any deterministic close, and pin the set with a static gate that fails when a new site appears
+(`V-BAMR-ADMIT-SINGLE-GATE`). A reset is evidence, never authority; unknown quota refuses model spend, never deterministic
+work (Owner decision 2026-11-20). HR candidate for autonomous-execution features; not promoted. PP `bf315ce6`.
+
+### T-HOST-NAME-DEFAULT-DOUBLE-COUNT-001
+
+PROVEN. A per-host ledger keyed by a free name double-counts the moment a host reports under a second name. `measure`
+defaulted `--host` to `socket.gethostname()` (DESKTOP-PMT5BS8) while the scheduled job writes `laptop`; one manual run made
+two files for one machine and the merged lower bound jumped 83.58 % -> 126.06 %. Sum only the configured hosts, report any
+other file as `unexpected_hosts`, and refuse to write an unconfigured name. Caused and reverted in-session 2026-11-20,
+PP `afb43d63` (`V-BAMR-UNEXPECTED-HOST`, `V-BAMR-MEASURE-HOST`).
+
+### T-ADMISSION-CHECK-THAT-SCANS-001
+
+PROVEN. An admission check that can fall into a measurement is a scan on the hot path. With no `reset_at` in its config the
+governor's `check` inferred the reset by walking every transcript under ~/.claude/projects: > 180 s per launch decision
+(measured: a hermetic 11-gate suite took > 180 s; 4 s after the fix). Admission reads state files only; inference belongs
+to `measure`/`status`. Pinned by `V-BAMR-CHECK-NO-SCAN` (an instrumented `infer_reset` must see zero calls). PP `bf315ce6`.
+
+### T-SUPERSEDE-AFTER-SPEND-IS-THE-LARGEST-BURN-001
+
+MEASURED (one census, proxy-limited). Of 9 024.7 M tokens measured across 669 missions, 1 406.1 M went to missions whose
+work tree never changed; the largest single class was missions superseded after spending (~528 M in 4 missions). Before
+superseding a mission that has spent, read what its predecessor left (`python tools/burn_census.py`). "No tree change" is a
+proxy: read-only slim workers and worktree work read as no change. 2026-11-20, PP `2ea01b2d`.
