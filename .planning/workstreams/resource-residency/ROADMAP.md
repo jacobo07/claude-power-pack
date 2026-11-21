@@ -15,17 +15,24 @@ measured before/after with its command; deltas you cannot attribute are UNATTRIB
 Never stop a claude.exe session, never stop an MCP process of a server with recorded use, never touch the pagefile
 setting: those are Owner actions, written as numbered steps in STATE.md (BLOCKED-ON-OWNER) while you continue elsewhere.
 Two consecutive phases without a measured physical delta -> write BREAKER in STATE.md and stop.
+**Never `git push`** (no remote write was authorised; the 2026-11-20 push of this branch is recorded as debt). Commit only.
+
+**Owner decision D-2026-11-21 (re-baseline + scope cut).** Phase 1 measured the real turn cost: ~148k startup context
+re-read per turn, 6.24M for a 1.5M line. Lines below are re-baselined to that rate; the per-phase stop is now 1.5x the NEW
+line. Scope cut to the two largest remaining rents: Phase 2 (lazy MCP) and Phase 5 (session liveness, shadow only), then a
+short close. Phases 3, 4, 6, 7 are DEFERRED (not done): do not start them; Phase 8 shrinks to the close below.
+Keep turns few and large: plan a phase in one turn, batch edits, avoid re-reading files already summarised in STATE.md.
 
 ## Phases
 
-- [ ] **Phase 1: P0 resource census + the open P1 gate**
-- [ ] **Phase 2: P2 lazy materialization shim (experiment)**
-- [ ] **Phase 3: P3 lease + idle teardown**
-- [ ] **Phase 4: P4 shareability classification**
-- [ ] **Phase 5: P5 session liveness classifier + hibernation (shadow)**
-- [ ] **Phase 6: P6 commit-pressure governor (shadow -> advisory)**
-- [ ] **Phase 7: P7 resource-budget CI for new user-scope MCP**
-- [ ] **Phase 8: P8 steady-state benchmark, pagefile recommendation, close**
+- [x] **Phase 1: P0 resource census + the open P1 gate** (b74fe8d74, evidence `vault/programs/resource-residency/P0-P1-GATE-EVIDENCE.md`)
+- [ ] **Phase 2: P2 lazy materialization shim (experiment)** -- line 12M, stop at 18M
+- [ ] **Phase 5: P5 session liveness classifier (shadow report only)** -- line 12M, stop at 18M
+- [ ] **Phase 8: close** -- line 3M: 2-snapshot census delta (not the 24 h benchmark), pagefile recommendation as an
+  Owner step, UKDL entry, plan status, master gate judged item by item with NO APLICA for the deferred phases
+
+Deferred (Owner D-2026-11-21, kept for a later mission): Phase 3 P3 lease + idle teardown; Phase 4 P4 shareability;
+Phase 6 P6 commit governor; Phase 7 P7 resource-budget CI. Their details below stay as the design record.
 
 ## Phase Details
 
