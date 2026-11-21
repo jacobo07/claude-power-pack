@@ -32,9 +32,22 @@ knows what it was *about*, so only a human closes it.
 
 ```
 python tools/ceps.py drafts                                 # what is pending
-python tools/ceps.py confirm <draft-id> [category] [subsystem]
+python tools/ceps.py confirm <draft-id> [category] [subsystem] [--root-cause <diagnosis...>]
 python tools/ceps.py dismiss <draft-id> [reason...]
 ```
+
+**Confirming is not diagnosing (SI-00, 2026-11-21).** `confirm` proves one thing:
+the Owner corrected the agent. Without `--root-cause` the event is filed
+`root_cause_status=UNDIAGNOSED`, `confidence=low`, and its `root_cause` field holds
+the symptom (the Owner's redacted words). Pass `--root-cause "<why the agent was
+wrong>"` only when the cause is known: it is then `OWNER_DIAGNOSED`/`high`.
+`VERIFIED` is reserved for a cause reproduced and fixed. Until 2026-11-21 every
+confirmation was stored as a high-confidence root cause.
+
+The detector (`ceps.correction_cue`) fires on a correction that LEADS the turn
+(*"no, …"*, *"eso no"*, *"no deberías…"*) or criticises a past act in second person
+(*"por qué no has…"*, *"you ignored…"*). Every draft is a HEURISTIC signal and
+carries the cue that fired. Retrospective view across sessions: `/analyze-transcripts`.
 
 `category` defaults to `spec-violation` and must be one of: `regression`,
 `security`, `drift`, `scaffold`, `incomplete-shell`, `integration`,
@@ -54,5 +67,5 @@ It does not judge the correction for you, and it does not auto-confirm. An
 auto-promoted correction would inject the agent's own guess about why the Owner
 objected into every future project — worse than the silence it replaces.
 
-Gate: `python tools/test_ceps_corrections.py` (V-CEPS-CORRECTION-*, 9/9),
-registered in `verify_spp` as `ceps-corrections`.
+Gate: `python tools/test_ceps_corrections.py` (V-CEPS-CORRECTION-*, V-CEPS-CONFIRM-*,
+15/15 on 2026-11-21), registered in `verify_spp` as `ceps-corrections`.
