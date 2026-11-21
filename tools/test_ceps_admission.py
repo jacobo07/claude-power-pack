@@ -125,6 +125,22 @@ def _admission_gates() -> None:
                 _ok("V-CEPS-ADMIT-RECORD-REJECTS",
                     "record_error -> None + attributable rejection")
 
+        # Snapshot BEFORE the write. The event id is deterministic (it is the
+        # signature of "3 failed"), and the live UKDL already holds it from
+        # runs that predate the redirect above -- 74 copies on 2026-11-21. A
+        # presence check therefore failed forever on history and could never
+        # return PASS: the instrument measured the past, not this run. The
+        # gate now counts occurrences before and after the call.
+        live_ukdl = Path(old[4])
+        live_lessons = Path(old[3])
+        kept_id = "ceps_" + ceps.pattern_signature("3 failed")
+
+        def _live_counts():
+            return {p.name: (p.read_text(encoding="utf-8-sig", errors="replace")
+                             .count(kept_id) if p.exists() else 0)
+                    for p in (live_ukdl, live_lessons)}
+
+        before_counts = _live_counts()
         kept = ceps.record_error("regression", "bash:pytest", "3 failed")
         if kept is None:
             _fail("V-CEPS-ADMIT-RECORD-BOOKEND",
@@ -136,17 +152,19 @@ def _admission_gates() -> None:
         # Hermeticity, asserted rather than assumed. If a future write
         # target is added to distribute() and not redirected here, this
         # fails instead of quietly editing the knowledge base again.
-        live_ukdl = Path(old[4])
-        live_lessons = Path(old[3])
-        leaked = [p.name for p in (live_ukdl, live_lessons)
-                  if p.exists() and kept and kept["id"] in
-                  p.read_text(encoding="utf-8-sig", errors="replace")]
-        if leaked:
+        after_counts = _live_counts()
+        leaked = [n for n in after_counts if after_counts[n] > before_counts[n]]
+        if kept and kept["id"] != kept_id:
+            _fail("V-CEPS-ADMIT-HERMETIC",
+                  f"probe id {kept_id} != recorded id {kept['id']}: "
+                  "the delta below would measure nothing")
+        elif leaked:
             _fail("V-CEPS-ADMIT-HERMETIC",
                   f"this suite wrote into the LIVE {leaked}")
         else:
             _ok("V-CEPS-ADMIT-HERMETIC",
-                "no synthetic event reached the live corpora")
+                f"no synthetic event reached the live corpora (delta 0; "
+                f"legacy copies {before_counts})")
     finally:
         (ceps.EVENTS_PATH, ceps.REJECTIONS_PATH, ceps.DB_PATH,
          ceps.LESSONS_PATH, ceps.UKDL_PATH) = old
