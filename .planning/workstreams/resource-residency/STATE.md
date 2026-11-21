@@ -38,6 +38,9 @@ commit 64.71 GB (was 86.3/87.1 at 21:38), pagefile alloc 49.3 GB (peak 57.6), fr
   22 V-CENSUS gates (mutation drill red), snapshots committed, open P1 gate PASS on both halves. SPEND BREACH, see Owner notes.
 
 ## Owner notes
+- RESOLVED by OWNER DECISION D-2026-11-21 (binding): re-baseline + scope cut. Phase 1 done. Run Phase 2 (line 12M, stop 18M), then
+  Phase 5 shadow only (12M / 18M), then the short Phase 8 close (3M). Phases 3, 4, 6, 7 DEFERRED: do not start. Never git push.
+  The "Decision for you" in the Phase 1 spend note below is settled by this; do not wait for the Owner on it again.
 - 2026-11-20 (Phase 1 spend): Phase 1 cost 6.24M processed tokens against a 1.5M line (1.5x = 2.25M) and the 3M acceptance
   ceiling, so per ROADMAP the run stops here. The overrun is per-turn context (~148k re-read x 42 turns), which a fresh
   background session per phase would not carry. Decision for you: continue with Phase 2 from a fresh session
