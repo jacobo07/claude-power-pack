@@ -143,6 +143,18 @@ UPSTREAM_SKILLS = 26
 UPSTREAM_COMMANDS = 10
 
 
+def read_row_problems(rows, tsv):
+    """A READ row needs a tsv row for the same name whose evidence cites upstream file:line."""
+    out = []
+    for r in rows:
+        if r[4] != "READ" or (r[0], r[1]) in {("skill", "constraint-driven-development"), ("command", "constraints")}:
+            continue
+        c = tsv.get((r[0], r[1]))
+        if c is None or len(c) < 5 or not re.search(r"SKILL\.md:\d+|\.toml:\d+|\.md:\d+|:\d+", c[4]) or "upstream-read-b/AGSK_" not in r[5]:
+            out.append(r[1])
+    return out
+
+
 def test_ledger():
     p = ROOT / "vault/programs/bcap-2/agsk/DISPOSITIONS.md"
     text = p.read_text(encoding="utf-8")
@@ -157,8 +169,18 @@ def test_ledger():
     miss = [r[3] for r in rows if not (ROOT / r[3]).exists()]
     check("V-AGSK-LEDGER-OWNERS-EXIST", not miss, f"missing={miss}")
     check("V-AGSK-LEDGER-BASIS-HONEST", all(r[4] in ("READ", "HYPOTHESIS") for r in rows), "READ|HYPOTHESIS only")
-    read = [r[1] for r in rows if r[4] == "READ"]
-    check("V-AGSK-LEDGER-ONLY-PILOT-READ", set(read) == {"constraint-driven-development", "constraints"}, f"READ={read}")
+    tsv = {}
+    for f in "AB":
+        for ln in (ROOT / f"vault/programs/bcap-2/upstream-read-b/AGSK_{f}_rows.tsv").read_text(encoding="utf-8").splitlines():
+            c = ln.split("\t")
+            tsv[(c[0], c[1])] = c
+    probs = read_row_problems(rows, tsv)
+    check("V-AGSK-LEDGER-READ-HAS-EVIDENCE", not probs, f"problems={probs}")
+    check("V-AGSK-LEDGER-NO-HYPOTHESIS-LEFT", not [r[1] for r in rows if r[4] != "READ"], "all rows READ")
+    bad = [{"rows": [["skill", "x", "EXTEND", "modules/sqi", "READ", "gap: none [evidence: nowhere]"]], "tsv": {}},
+           {"rows": [["skill", "x", "EXTEND", "modules/sqi", "READ", "gap: g [evidence: upstream-read-b/AGSK_A_rows.tsv]"]],
+            "tsv": {("skill", "x"): ["skill", "x", "EXTEND", "o", "no line refs here", "g", "n"]}}]
+    check("V-AGSK-LEDGER-READ-WITHOUT-EVIDENCE-REJECTED", all(read_row_problems(b["rows"], b["tsv"]) for b in bad), "pole: both bad shapes caught")
     check("V-AGSK-PIN-MATCH", PIN in text and PIN in (ROOT / "vault/programs/bcap-2/agsk/NOTICE.md").read_text(), "ledger and NOTICE carry the pin")
     notice = (ROOT / "vault/programs/bcap-2/agsk/NOTICE.md").read_text()
     check("V-AGSK-LICENCE-ATTRIBUTION", "MIT" in notice and "Addy Osmani" in notice, "MIT + author in NOTICE")
