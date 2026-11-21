@@ -20,8 +20,17 @@
     once when a window opens.
   - CAS e1cc1c3f -> 53e1f77e, backup `lane.py.bak-b904-nowindow-20261121T155836Z`, PP 9f33b477.
   - Selftest 13/13. A stubbed tick_lane skips prepare only in that case; the old code ran it (control red).
-NEXT: the S241M result; WSR 566 applies at the next park/hold window; Owner items (MKWLIB DISAGREE park, FIFATC
-profile, TENNIS fresh-token, WIIPARTY sizes, retro-credit S216W 40 + 144).
+- **16:44:54Z, Owner "on all rec", applied under cron.lock + factory-apply-MKWLIB.lock** (backups `*.bak-b904-*-20261121T164454Z`).
+  - brief.md: CAS dc99cea2 -> b3b2630c, new section "Owner rulings 2026-11-21"; PP mirror synced.
+  - FIFA/FIFATC additive profile = option (a), authorised under OR-5. Receipts, counters and registry must land in ONE
+    commit.
+  - TENNIS: a fresh-token source-generation generation, inside the existing caps.
+  - WIIPARTY: sizes 20/24 = yes.
+  - MKWLIB un-parked to WAITING for a bootstrap re-judge (s207l/pivot_residual.md); sealed S192L files are off-limits.
+  - Retro-credit by `verify_cert`, read-only: S216W 40 True -> ledger `retro_cert`.
+  - S147W/S156W (counters without decide.CERTIFIED) and S157W-S159W (registry in a later commit) are refused and stay
+    uncredited (rule change = Owner).
+NEXT: MKWLIB re-judge (expect a designed lever); S241M result; WSR 566 at the next window.
 
 **2026-11-21 ~15:10Z (pane 0ba4909a, /kresume of 3581ade8). DESIGN BEFORE EVERY PARK DEPLOYED 15:07:17Z** under
 cron.lock + all 8 factory-apply locks. CAS autopilot 96536c9e -> 01769437, evolve 67daa875 -> 5b8db480, test b2d4437b ->

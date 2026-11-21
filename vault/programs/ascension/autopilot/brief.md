@@ -179,3 +179,25 @@ reached the Owner. These rulings answer them once. Budget, capital and authority
 - Its snapshot advance is not a generation's MATCH: no generation is credited for a factory application (ledger kind `factory_match`, tokens 0).
 - Still the Owner's: anything that spends tokens, a ruling, a gate or certification-rule change, a lane config change, a dtk version change.
 - Spec: PP `vault/specs/ascension-reconstruction-factory.md` F5. Kill switch: `~/.claude/state/factory-lane.ready`.
+
+## Owner rulings 2026-11-21 (pane b9040a8e, Owner "on all rec": the recommended option of each open question)
+- FIFA (pivot_residual_s234f_auto.md) and FIFATC (checkpoint_s212c_pivot1.md): option (a), AUTHORISED. A generation may
+  add an additive FIFA / FIFATC certify profile under OR-5 (all six S26C conditions on its profile line, frozen pilot
+  committed before the draw, pre/post controls, A2 negatives, separate counters, historical receipts byte-identical, no
+  existing profile changes, first certificate checked by an independent oracle on the original bytes). The profile file,
+  its own receipts file, its counters file and its receipt_registry.json entries are inside that generation's write
+  scope. For the autopilot to count verdict-less rows, the receipts, the counters (decide.CERTIFIED == certified_total ==
+  rows added) and both registry entries (sha256 of the committed bytes) must land in ONE commit; a registry entry added
+  in a later commit does not count (S157W-S159W lost 57 certificates that way).
+- TENNIS (pivot_residual_n2.md): AUTHORISED, a fresh-model-token source-generation generation (S209T reopen) on a new
+  held-out set drawn under OR-2. Capital is the existing research_cap and the 2026-11-19 auto-extend grant; the 10M
+  research generation cap is unchanged. Not a new budget.
+- WIIPARTY (residual_pivot1.md): YES, extend wp_game_handsource_smallest to sizes 20 and 24: new frozen targets file,
+  new generation, same truth contract and profile. The 2-revision cap is unchanged.
+- MKWLIB (judge DISAGREE 2026-11-21T14:48Z on s207l/pivot_residual.md): re-judged under design-before-park instead of
+  staying parked. A successor must not edit the S192L-sealed files lib/rvl/ax/rvlAxAlloc.c and rvlAxVpb.c: revert
+  d249f5b's edits to them, or put new work in new files.
+- Retro-credit (S216W + S147W-S159W wp-dol-link-v1): measured with autopilot.verify_cert, read-only. S216W verifies (40,
+  receipts d275e45) and is ledgered as kind `retro_cert`. The 144 rows of S147W/S156W (counters without decide.CERTIFIED)
+  and S157W/S158W/S159W (registry in a later commit than the receipts) do not verify under the current rule and stay
+  uncredited; crediting them would be a certification-rule change (Owner).
