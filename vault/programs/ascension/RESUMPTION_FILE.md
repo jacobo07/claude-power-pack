@@ -5,6 +5,25 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-21 ~12:28Z (pane 3581ade8, Owner "y to both").**
+(1) COUNTERS RULE DEPLOYED 12:13:42Z under cron.lock (PP 4323be37), CAS ac87b3c3/0f0bfbf7 -> autopilot dd7ccb1d / test
+7143e285, backups `*.bak-3581-counters-20261121T121342Z`, ledger `owner_rule`.
+- verify_cert counts verdict-less receipt rows when: exactly one `counters*.json` beside them was changed by the
+  receipts commit with decide.CERTIFIED == certified_total == distinct rows added, AND a receipt_registry.json lists
+  both files (one profile, sha256 of the committed bytes) with entries absent at the base.
+- Gate /tmp/apgate-3581a AUTOPILOT_GATE_PASS, mutants 137/137 (new: counters_trusted, counters_base_registry_ignored).
+  Control (live ac87b3c3) red on V-AP-CERT-COUNTERS-ADMITS.
+- On the real S216W judgment: CERT 40, and 41 is refused.
+- NOT retroactive: S216W was already consumed as CAPABILITY. Crediting its 40 (and S147W-S159W's 144) needs a re-judge
+  or a ledger act = OWNER QUESTION.
+(2) twin.py (PP 74406a65, live `factory/twin.py`, measure only).
+- Smoke WSR --limit 30 = 30 MATCH (one 60-byte group, MKW donor fn_8018CC28).
+- Controls: recompile MATCH; wrong target, other donor and crossed rename all NO_MATCH.
+- FULL PILOT RUNNING detached since 12:22:59Z: `factory/twin/pilot/run.sh` (WSR, MKW, WIIPARTY), log
+  `twin/pilot/pilot.log` (ends PILOT_DONE), output `twin/pilot/twin_<L>.{jsonl,summary.json}`.
+NEXT: read the pilot; carve the MATCH rows into a scratch clone and run the F5 gate; Owner y on the numbers before the
+first apply / lanes_factory change.
+
 **2026-11-21 ~12:00Z (pane 3581ade8, /kresume of 34385bd2; Owner "y" + "investiga en paralelo con DRX en github").**
 S216W re-judged: judge AGREE (ledger row 1779, 1.12M tokens), lib_donor2 excluded once (`owner_exclusion_used`, state
 popped). The autopilot proved all 6 pre-existing reds rc 1 at base 315db911 AND HEAD (cron.out 11:45-11:51Z: dtk_split
