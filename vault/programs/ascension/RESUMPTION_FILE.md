@@ -5,6 +5,24 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-21 ~16:30Z (pane b9040a8e, /kresume of 0ba4909a).**
+- **DESIGN-BEFORE-PARK PROVEN LIVE on MKW.** The judge ran 15:46-16:18Z (0.81M tokens, DISAGREE on s204m).
+  - lever_design 1.40M tokens -> `mkw_m2c_nocompile_repair` (family M2C_NOCOMPILE_REPAIR).
+  - evo_decision cls=JUDGE_DISAGREE action=research.
+  - The planner (0.21M) armed S241M m-574a78d6a05c (8.5M) at 16:22:04Z, mode RESEARCH. No park.
+- **Twin F5.**
+  - MKW applied a33c725 at 14:58Z, 9,320 -> 9,354 (+34; 226 of 260 were already in its report).
+  - WSR gated f50ecdc (+566) and WIIPARTY gated +2 each tick. Neither ever applied: the lanes were RUNNING, the
+    workers commit on the main checkout, and each re-gate went stale (WSR ~50 min per re-gate).
+  - Every APPLIED line in lane.log had a PARKED lane.
+- **FACTORY RULE DEPLOYED 15:58:36Z** (Owner AskUserQuestion: "No rebuild without window").
+  - lane.defer_regate: keep the pending gate, no re-gate while the lane moved past its base and no window; re-gate
+    once when a window opens.
+  - CAS e1cc1c3f -> 53e1f77e, backup `lane.py.bak-b904-nowindow-20261121T155836Z`, PP 9f33b477.
+  - Selftest 13/13. A stubbed tick_lane skips prepare only in that case; the old code ran it (control red).
+NEXT: the S241M result; WSR 566 applies at the next park/hold window; Owner items (MKWLIB DISAGREE park, FIFATC
+profile, TENNIS fresh-token, WIIPARTY sizes, retro-credit S216W 40 + 144).
+
 **2026-11-21 ~15:10Z (pane 0ba4909a, /kresume of 3581ade8). DESIGN BEFORE EVERY PARK DEPLOYED 15:07:17Z** under
 cron.lock + all 8 factory-apply locks. CAS autopilot 96536c9e -> 01769437, evolve 67daa875 -> 5b8db480, test b2d4437b ->
 da1f824f, backups `*.bak-0ba4-design-20261121T150717Z`.
