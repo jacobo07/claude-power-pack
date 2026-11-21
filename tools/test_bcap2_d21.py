@@ -110,8 +110,34 @@ check("V-D21-36 pole: 21 URLs and zero vetted entries is NOT done", not d["ok"] 
 check("V-D21-36 control: full coverage plus a vetted entry passes the source-gate arithmetic", SI.done_check(R, 1)["ok"])
 
 # honest scope + provenance of the registry itself
-check("D21 scope: no source is marked live-verified or has a derived capability denominator (Workstream A03 is NOT done)",
-      all(s["capability_denominator"].startswith("UNKNOWN") for s in R["sources"]))
+import re as _re
+
+
+def denom_problems(sources, live):
+    """OBSERVED only when every number in the denominator equals a labeled count recorded in that source's LIVE_READ row;
+    UNKNOWN must carry a reason ('not derived' placeholder refused)."""
+    out = []
+    for s in sources:
+        d = s["capability_denominator"]
+        if d.startswith("UNKNOWN"):
+            if "not derived" in d or "(" not in d:
+                out.append(s["id"])
+            continue
+        rec = {v for r in live.values() if r["id"] == s["id"] for v in r.get("labeled_counts", {}).get("counts", {}).values()}
+        claimed = {_re.sub(r"[+,]", "", n) for n in _re.findall(r"\d[\d,]*\+?", d.split("page", 1)[-1].split(":", 1)[-1].split("(")[0])}
+        if not d.startswith("OBSERVED") or not claimed or not claimed <= rec:
+            out.append(s["id"])
+    return out
+
+
+check("D21-A03 capability denominators: 8 OBSERVED from page text, 13 UNKNOWN with a reason, none 'not derived'",
+      sum(s["capability_denominator"].startswith("OBSERVED") for s in R["sources"]) == 8
+      and sum(s["capability_denominator"].startswith("UNKNOWN") for s in R["sources"]) == 13)
+check("D21-A03 gate: every OBSERVED denominator is backed by a labeled LIVE_READ count", not denom_problems(R["sources"], LIVE), str(denom_problems(R["sources"], LIVE)))
+_d = copy.deepcopy(R); _d["sources"][1]["capability_denominator"] = "OBSERVED 2026-11-21 page text: 9,999 designs"
+check("D21-A03 pole: an invented number is caught", "D21-02" in denom_problems(_d["sources"], LIVE))
+_d = copy.deepcopy(R); _d["sources"][0]["capability_denominator"] = "UNKNOWN (not derived)"
+check("D21-A03 pole: the old 'UNKNOWN (not derived)' placeholder is refused", "D21-01" in denom_problems(_d["sources"], LIVE))
 check("D21-A06 pole: known conflicts recorded (Kinetics no licence, mapcn tiles, 3dicons split, DESIGN.md drift)",
       "licen" in by["D21-15"]["rights_note"].lower() and "CARTO" in by["D21-17"]["rights_note"]
       and "premium" in by["D21-21"]["rights_note"] and "Proprietary" in by["D21-05"]["rights_note"])

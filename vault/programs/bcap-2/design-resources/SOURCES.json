@@ -17,7 +17,7 @@
    "rights_note": "gallery of other brands' designs: inspiration only",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -34,7 +34,7 @@
    "rights_note": "gallery-derived prompts of third-party designs",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "OBSERVED 2026-11-21 page text: 637 designs, 3,379 components, 353 products (marketing counts, not a gate denominator)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -51,7 +51,7 @@
    "rights_note": "direct access not established in the backlog session; do not synthesize terms",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "OBSERVED 2026-11-21 page text: 820 handpicked apps (the 2026 on the page is a year, not a count)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -68,7 +68,7 @@
    "rights_note": "taxonomy reference; examples belong to their design systems",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "OBSERVED 2026-11-21 page text: 60 components, 95 design systems, 2,671 examples",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -86,7 +86,7 @@
    "rights_note": "format upstream LICENSE Apache-2.0 vs CPP modules/design-md/README says Proprietary: drift, reconcile",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page returns 403 to a generic UA from GEX44; earlier read numbers were unlabeled; needs laptop browser)",
    "license_pin": {
     "repo": "google-labs-code/design.md",
     "pinned_sha": "db977b3c1d1f309269f43d5d17ae828d54bd6ae3",
@@ -111,7 +111,7 @@
    "rights_note": "derived from observed third-party sites",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -128,7 +128,7 @@
    "rights_note": "terms not inspected",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -145,7 +145,7 @@
    "rights_note": "direct access not established; do not synthesize terms",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page returns 403 to a generic UA from GEX44; earlier read numbers were unlabeled; needs laptop browser)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -163,7 +163,7 @@
    "rights_note": "component-level licence authoritative; community items unknown",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "OBSERVED 2026-11-21 page text: 138 apps, 29,000 icons, 411 templates (other classes shown without counts)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -181,7 +181,7 @@
    "rights_note": "repo licence not re-read this phase; verify per item/version",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "license_pin": {
     "repo": "shadcn-ui/ui",
     "pinned_sha": "f50887ae68d0fdcbfbe86b57be08af94a4c88a68",
@@ -207,7 +207,7 @@
    "rights_note": "Pro licence forbids redistributing source as stock; free terms need separate inspection",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "OBSERVED 2026-11-21 page text: 118+ components, 183+ blocks, 17 templates; landing headline says 100+ components: DRIFT inside one site",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -225,7 +225,7 @@
    "rights_note": "licence not re-read; verify",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "OBSERVED 2026-11-21 page text: 150+ components and effects (a lower bound, not exact)",
    "license_pin": {
     "repo": "magicuidesign/magicui",
     "pinned_sha": "b0b2e4974b1b68cd5278277c6837a27736e20c3a",
@@ -250,7 +250,7 @@
    "rights_note": "covered by Phase 4: juliangarnier/anime MIT at 01b81be1 (other D21 items still unverified)",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -268,7 +268,7 @@
    "rights_note": "licence not re-read; verify",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "license_pin": {
     "repo": "ibelick/motion-primitives",
     "pinned_sha": "120f64f6ca60348e251f929e9c81f11ccbe45eda",
@@ -294,7 +294,7 @@
    "rights_note": "GitHub root licence could not be verified; no LICENSE is not permissive; count drift",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "license_pin": {
     "repo": "ckissi/kinetics",
     "pinned_sha": "1f36aa88d613358a38995be0f115bc428d1e2cb1",
@@ -320,7 +320,7 @@
    "rights_note": "count drift 49; licence not re-read",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "license_pin": {
     "repo": "henriquegpb/microkit",
     "pinned_sha": "0afe639b2d9bb2c16220964e8a9f865f1a81111b",
@@ -346,7 +346,7 @@
    "rights_note": "component licence and basemap/tile terms (CARTO commercial conditions) are independent",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "license_pin": {
     "repo": "AnmolSaini16/mapcn",
     "pinned_sha": "fd8ce8f7581a80376d7a9426364edeed17c99f35",
@@ -372,7 +372,7 @@
    "rights_note": "community items: origin/permission per snippet",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page returns 403 to a generic UA from GEX44; earlier read numbers were unlabeled; needs laptop browser)",
    "license_pin": {
     "repo": "uiverse-io/galaxy",
     "pinned_sha": "adbd2adde0a299a3956ea288fb444ec01891ca41",
@@ -398,7 +398,7 @@
    "rights_note": "verify package licence and transitive deps",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "UNKNOWN (page states no catalogue count at the read of 2026-11-21; needs a tree or registry read)",
    "license_pin": {
     "repo": "samasante/liquid-glass",
     "pinned_sha": "4e7b769e1df7e5a7d3669fef22417fe3d2f79ade",
@@ -423,7 +423,7 @@
    "rights_note": "claims CC0 for kits; asset provenance/third-party marks unchecked",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "OBSERVED 2026-11-21 page title: 2,000+ illustrations (a lower bound, not exact)",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   },
@@ -440,7 +440,7 @@
    "rights_note": "V1 CC0 is not blanket rights for premium/current items",
    "live_verified": true,
    "last_checked": "2026-11-21",
-   "capability_denominator": "UNKNOWN (not derived)",
+   "capability_denominator": "OBSERVED 2026-11-21 page text: 1400+ renders, 200 icons; headline says 1500+: DRIFT inside one site",
    "live_read_ref": "LIVE_READ.json",
    "repo_meta": false
   }
