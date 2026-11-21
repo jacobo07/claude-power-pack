@@ -73,14 +73,40 @@ def result(i, tid, text, err=False):
         {"type": "tool_result", "tool_use_id": tid, "content": text, "is_error": err}]}}
 
 
-def hook(i, name, timed_out=False, ms=100):
+def hook(i, name, timed_out=False, ms=100, command=None, ts=None):
     att = {"type": "hook_cancelled" if timed_out else "hook_success", "hookEvent": name.split(":")[0],
            "hookName": name, "durationMs": ms}
+    if command:
+        att["command"] = command
     if timed_out:
         att.update(timedOut=True, timeoutMs=ms)
     else:
         att.update(exitCode=0)
-    return {"type": "attachment", "timestamp": _ts(i), "attachment": att}
+    return {"type": "attachment", "timestamp": ts or _ts(i), "attachment": att}
+
+
+NODE = "C:/Program Files/nodejs/node.exe "
+
+
+def stalled_sessions():
+    """Three sessions whose hooks time out at the SAME instants: a host-wide stall."""
+    out = {}
+    for n, sid in enumerate(("st1", "st2", "st3")):
+        out[sid] = [owner("go", 0)] + [
+            hook(0, "PreToolUse:Write", timed_out=True, ms=5000,
+                 command=NODE + f"C:/Users/U/.claude/hooks/{'gsd-read-guard.js' if n else 'livesnap.js'}",
+                 ts=f"2026-11-20T{10 + k:02d}:00:0{n}Z") for k in range(3)]
+    return out
+
+
+def isolated_sessions():
+    """Two sessions, timeouts hours apart: one slow hook, not the host."""
+    a = [owner("go", 0)] + [hook(0, "PreToolUse:Edit", timed_out=True, ms=5000,
+                                 command=NODE + "C:/h/slow-guard.js", ts=f"2026-11-20T0{k}:00:00Z")
+                            for k in range(3)]
+    b = [owner("go", 0), hook(0, "PreToolUse:Edit", timed_out=True, ms=5000,
+                              command=NODE + "C:/h/slow-guard.js", ts="2026-11-20T08:30:00Z")]
+    return {"is1": a, "is2": b}
 
 
 def write(base: Path, sid: str, recs, extra_lines=(), proj="proj"):
@@ -237,6 +263,45 @@ def main() -> int:
         check("V-AT-HOOK-ABSENCE-NOT-A-CLAIM", "no hook telemetry in scope" in rn
               and "not proof it never ran" in rn and "hook-timeout" not in rn,
               "no telemetry -> 'no hook telemetry', limitation stated", "absence turned into a claim")
+
+        # hook timeouts: which COMMAND, and host-wide stall vs one slow hook (both poles)
+        lbl = te.hook_command_label
+        check("V-AT-HOOK-COMMAND-LABEL",
+              lbl(NODE + "C:/Users/U/.claude/hooks/gsd-read-guard.js") == "gsd-read-guard.js"
+              and lbl("node C:\\h\\hook-dispatcher.js --event=Stop-chain") == "hook-dispatcher.js"
+              and lbl("Session-file guard (BL-1)") == "Session-file guard (BL-1)" and lbl(None) == "",
+              "script basename from 'exe path' / backslashes / flags; a bare label kept; None -> ''",
+              f"labels: {lbl(NODE + 'C:/a/b.js')!r} {lbl('node C:/h/d.js --event=x')!r}")
+        for sid, recs in stalled_sessions().items():
+            write(base, sid, recs, proj="p_stall")
+        for sid, recs in isolated_sessions().items():
+            write(base, sid, recs, proj="p_iso")
+        rst, ris = run(base, project="p_stall"), run(base, project="p_iso")
+        kst = [c["kind"] for c in rst["candidates"]]
+        kis = [c for c in ris["candidates"] if c["kind"] == "hook-timeout"]
+        check("V-AT-HOST-STALL", rst["hook_stall"]["host_wide"] and kst.count("host-stall") == 1
+              and "hook-timeout" not in kst
+              and any("gsd-read-guard.js x6" in c["change"] for c in rst["candidates"]
+                      if c["kind"] == "host-stall"),
+              f"3 sessions timing out together -> one host-stall candidate naming the victims "
+              f"(share {rst['hook_stall']['share']} vs chance {rst['hook_stall']['chance_share']})",
+              f"stall={rst['hook_stall']} kinds={kst}")
+        check("V-AT-ISOLATED-NOT-STALL", not ris["hook_stall"]["host_wide"]
+              and "host-stall" not in [c["kind"] for c in ris["candidates"]]
+              and len(kis) == 1 and "slow-guard.js x4" in kis[0]["title"],
+              "timeouts hours apart -> no stall; the hook-timeout candidate names its command",
+              f"stall={ris['hook_stall']} cands={[c['title'] for c in ris['candidates']]}")
+        # the real 2026-11-21 shape: one project 30% vs 4% (below the share bar, far above chance)
+        sub = dict(ris, hook_stall={**ris["hook_stall"], "share": 0.30, "chance_share": 0.04})
+        check("V-AT-NARROW-APERTURE-SAID", "judge with --all-projects" in at.render(sub)
+              and "judge with --all-projects" not in at.render(ris),
+              "sub-threshold clustering in a one-project scope -> report says the scope is too narrow; "
+              "no clustering -> silent", "aperture note missing, or shown with nothing clustered")
+        rep_st = at.render(rst)
+        check("V-AT-RUNS-NOT-A-RATE", "is NOT a timeout rate" in rep_st and "HOST-WIDE STALL" in rep_st
+              and "`livesnap.js` x3" in rep_st,
+              "report names the timed-out commands and says recorded runs undercount",
+              "report still implies timeouts/runs is a rate, or hides the commands")
 
         # no transcripts / missing session / missing project
         (base / "p_empty").mkdir()

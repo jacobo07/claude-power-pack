@@ -140,6 +140,17 @@ def parse_ts(s) -> Optional[datetime]:
     return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
 
 
+def hook_command_label(cmd) -> str:
+    """Short, redacted name of a hook command: the script file it runs (the last path-like
+    token, so `node.exe C:/.../gsd-read-guard.js` -> `gsd-read-guard.js`), else its label."""
+    if not isinstance(cmd, str) or not cmd.strip():
+        return ""
+    toks = [t.strip("\"'") for t in cmd.replace("\\", "/").split()]
+    paths = [t for t in toks if "/" in t and t.rsplit("/", 1)[-1]]
+    name = paths[-1].rsplit("/", 1)[-1] if paths else cmd.strip()
+    return redact(name, 60)
+
+
 def _blocks(content) -> list:
     return [b for b in content if isinstance(b, dict)] if isinstance(content, list) else []
 
@@ -286,6 +297,9 @@ def _normalise(rec: dict, sid: str, n: int, ts) -> Event:
                 "timed_out": bool(att.get("timedOut")),
                 "timeout_ms": att.get("timeoutMs"),
                 "blocking": bool(att.get("blockingError")),
+                # Which registered command ran: one event (PreToolUse:Write) fans out to
+                # several commands, so the event alone cannot name the slow one.
+                "command": hook_command_label(att.get("command")),
             }
         elif atype == "invoked_skills":
             skills = att.get("skills")

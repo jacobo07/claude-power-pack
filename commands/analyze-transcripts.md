@@ -40,6 +40,13 @@ its message.
   (knowledge). Then re-run this command over a comparable window and compare the
   cited count. This command never edits skills, hooks, rules, settings or UKDL,
   and it never schedules anything.
+- **Hook timeouts: victim or culprit.** A timeout is attributed to the command
+  that timed out, not just its event. When timeouts co-occur across sessions far
+  above chance, the candidate is `host-stall` (owner: host load), not one hook:
+  raising that hook's timeout would only hide the stall. A one-project scope
+  cannot see other projects' sessions; when it says so, re-run `--all-projects`.
+  "Recorded runs" undercount (a silent success leaves no record): never read
+  timeouts / runs as a rate.
 - **Privacy.** The engine redacts with the Secret Firewall (plus home path and
   e-mail) and bounds every excerpt. Regex redaction is partial, so the report
   stays local. Never paste transcript excerpts into a subagent prompt or an

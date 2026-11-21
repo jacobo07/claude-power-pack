@@ -56,6 +56,43 @@ HOOK_SLOW_P95_MS = 2_000
 HOOK_SLOW_MIN_RUNS = 20
 RETRY_STREAK = 3            # Regla 12: the THIRD identical failing shape is the defect
 FAIL_SIG_MIN = 2
+# Host-wide stall test (2026-11-21 triage): 62% of 1,861 timeouts in 7 days had a timeout in
+# ANOTHER session within 15 s, against 8% for the same count at random times. A timeout that
+# co-occurs across sessions is the host stalling, not that hook being slow.
+STALL_WINDOW_S = 15
+STALL_MIN_SHARE = 0.40      # share of timeouts with another session's timeout in the window
+STALL_MIN_LIFT = 3.0        # ... and at least this many times the chance share
+
+
+def _co_share(events, window) -> float:
+    """Share of events with an event of a DIFFERENT session within +-window seconds."""
+    import bisect
+    ts = [t for t, _ in events]
+    co = 0
+    for t, sid in events:
+        i, j = bisect.bisect_left(ts, t - window), bisect.bisect_right(ts, t + window)
+        co += any(events[k][1] != sid for k in range(i, j))
+    return co / len(events) if events else 0.0
+
+
+def timeout_clustering(events, window=STALL_WINDOW_S) -> dict:
+    """Do hook timeouts co-occur across sessions more than chance? The chance baseline puts
+    the same events (same session labels) at uniform random times over the same span, with
+    a fixed seed so a repeated run gives the same verdict."""
+    import random
+    ev = sorted(events)
+    sessions = len({s for _, s in ev})
+    out = {"timeouts": len(ev), "sessions": sessions, "window_s": window,
+           "share": None, "chance_share": None, "host_wide": False}
+    if len(ev) < HOOK_TIMEOUT_MIN or sessions < 2:
+        return out
+    rnd = random.Random(0)
+    lo, hi = ev[0][0], ev[-1][0]
+    shuffled = sorted((rnd.uniform(lo, hi), s) for _, s in ev)
+    share, chance = _co_share(ev, window), _co_share(shuffled, window)
+    out.update(share=round(share, 3), chance_share=round(chance, 3),
+               host_wide=share >= STALL_MIN_SHARE and share >= STALL_MIN_LIFT * max(chance, 0.01))
+    return out
 
 _DONE_RX = re.compile(r"\b(?:done|complete[d]?|shipped|all\s+(?:tests|gates)\s+pass|"
                       r"listo|terminad[oa]|completad[oa]|hecho)\b", re.I)
@@ -191,7 +228,9 @@ def analyze(proj_base=None, project: str | None = "", since=None, until=None,
     skill_refs: dict = defaultdict(list)
     corrections, claims = [], []
     hooks = defaultdict(lambda: {"runs": 0, "timeouts": 0, "blocking": 0,
-                                 "nonzero": 0, "dur": [], "refs": [], "slowest": (0, "")})
+                                 "nonzero": 0, "dur": [], "refs": [], "slowest": (0, ""),
+                                 "cmds": Counter()})
+    timeout_events = []  # (epoch s, session id) of every timed-out hook run, for stall clustering
     failures = defaultdict(lambda: {"n": 0, "sessions": set(), "refs": [], "tool": ""})
     hook_blocks = defaultdict(lambda: {"n": 0, "sessions": set(), "refs": [], "tool": ""})
     retries, rereads, big_results, not_invoked = [], [], [], []
@@ -289,6 +328,9 @@ def analyze(proj_base=None, project: str | None = "", since=None, until=None,
                 r["runs"] += 1
                 if h["timed_out"]:
                     r["timeouts"] += 1
+                    r["cmds"][h.get("command") or "?"] += 1
+                    if ev.ts is not None:
+                        timeout_events.append((ev.ts.timestamp(), s.sid))
                     if len(r["refs"]) < 3:
                         r["refs"].append(ev.ref)
                 if h["blocking"] or h["kind"] == "hook_blocking_error":
@@ -327,8 +369,10 @@ def analyze(proj_base=None, project: str | None = "", since=None, until=None,
                           "blocking": r["blocking"], "nonzero_exit": r["nonzero"],
                           "p50_ms": _pct(r["dur"], .5), "p95_ms": _pct(r["dur"], .95),
                           "max_ms": max(r["dur"]) if r["dur"] else None,
-                          "refs": r["refs"] or ([r["slowest"][1]] if r["slowest"][1] else [])})
+                          "refs": r["refs"] or ([r["slowest"][1]] if r["slowest"][1] else []),
+                          "timed_out_commands": dict(r["cmds"].most_common(5))})
     hook_rows.sort(key=lambda x: (-x["timeouts"], -(x["p95_ms"] or 0)))
+    stall = timeout_clustering(timeout_events)
 
     def _rows(table):
         return sorted(({"signature": k, "count": v["n"], "sessions": len(v["sessions"]),
@@ -346,7 +390,7 @@ def analyze(proj_base=None, project: str | None = "", since=None, until=None,
         "skills": {"invoked": dict(skills.most_common()), "slash": dict(slash.most_common()),
                    "refs": dict(skill_refs), "mentioned_not_invoked": not_invoked},
         "corrections": corrections, "claim_then_correction": claims,
-        "hooks": hook_rows, "failures": fail_rows, "hook_blocks": block_rows,
+        "hooks": hook_rows, "hook_stall": stall, "failures": fail_rows, "hook_blocks": block_rows,
         "retries": retries,
         "tokens": {**dict(tokens), "max_fed_context": max_fed, "max_fed_session": max_fed_ref,
                    "source": "message.usage, one copy per (message.id, requestId)"},
@@ -387,12 +431,34 @@ def _candidates(r: dict) -> list:
                 "the false-positive share of a sampled set falls after the change",
                 "narrowing a gate to remove friction can let the real case through -- keep a "
                 "positive control", f"{b['count']} refused calls (friction or protection: unjudged)")
+    stall = r.get("hook_stall") or {}
+    if stall.get("host_wide"):
+        # The hooks are the victims: tuning any one of them treats a symptom.
+        victims = Counter()
+        for h in r["hooks"]:
+            victims.update(h.get("timed_out_commands") or {})
+        refs = [ref for h in r["hooks"] for ref in h["refs"] if h["timeouts"]]
+        add("host-stall", f"Hook timeouts are host-wide stalls: {round(stall['share'] * 100)}% of "
+            f"{stall['timeouts']} co-occur with another session's within {stall['window_s']} s "
+            f"(chance: {round(stall['chance_share'] * 100)}%)", 20 * stall["timeouts"], refs,
+            "host load: parallel sessions / RAM (not the hooks named here)",
+            "reduce concurrent load before touching any hook timeout; then check whether the "
+            "co-occurrence share falls. Hooks that time out most (victims): "
+            + ", ".join(f"{k} x{v}" for k, v in victims.most_common(4)),
+            "re-run: co-occurrence share near the chance share, and fewer timeouts per session",
+            "raising one hook's timeout hides the stall and lengthens every frozen turn",
+            f"{stall['timeouts']} cancelled hook runs in {stall['sessions']} sessions (fail-open)")
     for h in r["hooks"]:
+        if h["timeouts"] >= HOOK_TIMEOUT_MIN and stall.get("host_wide"):
+            continue
         if h["timeouts"] >= HOOK_TIMEOUT_MIN:
-            add("hook-timeout", f"Hook {h['hook']} timed out {h['timeouts']}x of {h['runs']} runs",
-                20 * h["timeouts"], h["refs"], "hooks/hook-dispatcher.js (chain timeouts) / settings.json",
-                "find which child exceeds the chain budget; move it off the hot path or give it a "
-                "bounded budget", "re-run this analysis after the change: timeouts for this hook = 0 "
+            cmds = ", ".join(f"{k} x{v}" for k, v in (h.get("timed_out_commands") or {}).items())
+            add("hook-timeout", f"Hook {h['hook']} timed out {h['timeouts']}x"
+                + (f" ({cmds})" if cmds else ""),
+                20 * h["timeouts"], h["refs"], "the timed-out command's registration "
+                "(settings.json timeout, or its hook-dispatcher.js chain)",
+                "profile the named command; move it off the hot path or give it a bounded budget",
+                "re-run this analysis after the change: timeouts for this command = 0 "
                 "over a comparable window, p95 below its timeout",
                 "a cancelled hook is fail-open: whatever it guards did not run on those turns",
                 f"{h['timeouts']} cancelled runs observed (p95 {h['p95_ms']} ms)")
@@ -518,8 +584,26 @@ def render(r: dict, top: int = 5, focus: str = "all") -> str:
             w(f"- {len(r['hooks'])} hooks observed; none timed out, blocked or exceeded p95 "
               f"{HOOK_SLOW_P95_MS} ms")
         for h in rows:
-            w(f"- `{h['hook']}`: {h['runs']} runs, {h['timeouts']} timeouts, {h['blocking']} blocking, "
-              f"p50 {h['p50_ms']} / p95 {h['p95_ms']} / max {h['max_ms']} ms")
+            cmds = h.get("timed_out_commands") or {}
+            w(f"- `{h['hook']}`: {h['runs']} recorded runs, {h['timeouts']} timeouts, {h['blocking']} "
+              f"blocking, p50 {h['p50_ms']} / p95 {h['p95_ms']} / max {h['max_ms']} ms"
+              + (" | timed out: " + ", ".join(f"`{k}` x{v}" for k, v in cmds.items()) if cmds else ""))
+        if any(h["timeouts"] for h in rows):
+            w("- recorded runs undercount: a hook that succeeds silently leaves no record, so "
+              "timeouts / recorded runs is NOT a timeout rate")
+        st = r.get("hook_stall") or {}
+        if st.get("share") is not None:
+            w(f"- cross-session co-occurrence of timeouts (+-{st['window_s']} s): "
+              f"{round(st['share'] * 100)}% vs {round(st['chance_share'] * 100)}% by chance over "
+              f"{st['timeouts']} timeouts in {st['sessions']} sessions -> "
+              + ("HOST-WIDE STALL (the hooks are victims)" if st["host_wide"] else "not host-wide"))
+            narrow = r.get("scope", {}).get("project", "ALL") != "ALL"
+            if not st["host_wide"] and narrow and \
+                    st["share"] >= STALL_MIN_LIFT * max(st["chance_share"], 0.01):
+                # Measured 2026-11-21: one project 30% vs 4%, all projects 47-62% -- the same
+                # stall, seen through an aperture that cannot see the other projects' sessions.
+                w("- ... but clustered well above chance, and this scope sees ONE project's sessions: "
+                  "a stall shared with other projects is invisible here -- judge with --all-projects")
         for b in r.get("hook_blocks", [])[:5]:
             w(f"- gate refused a call {b['count']}x in {b['sessions']} sessions: `{b['signature']}` "
               f"({', '.join(b['refs'][:2])}) -- true catch or false positive: UNJUDGED")
