@@ -15,7 +15,15 @@ measured before/after with its command; deltas you cannot attribute are UNATTRIB
 Never stop a claude.exe session, never stop an MCP process of a server with recorded use, never touch the pagefile
 setting: those are Owner actions, written as numbered steps in STATE.md (BLOCKED-ON-OWNER) while you continue elsewhere.
 Two consecutive phases without a measured physical delta -> write BREAKER in STATE.md and stop.
-**Never `git push`** (no remote write was authorised; the 2026-11-20 push of this branch is recorded as debt). Commit only.
+**Commit only; no push authority.** Since 699ddb9a this is machinery, not prose: the pre-push hook and ovo-push-gate
+refuse any push from a session listed in a mission record without a grant (`tools/push_authority.py`). A refusal is
+expected behaviour, not a blocker: do not retry, work around or ask; record nothing about it.
+
+**Owner "go tranche" (2026-11-21, plan `vault/plans/resource-residency-fabric-20261120.md` Addendum A).** Corrected
+measurement: a fresh worker's FIRST call is ~97K (not 148K); ~150K is the MEAN per call of a session that grows to the
+175K wall. Per-turn rent is what to cut: few large turns, no re-reads of what STATE.md already summarises.
+Close status is "TRANCHE COMPLETE" -- never "RESOURCE RESIDENCY COMPLETE" -- with the next frontier ranked by measured
+rent. Record per epoch in STATE.md: first-call context, mean context, calls to first Edit (dogfood).
 
 **Owner decision D-2026-11-21 (re-baseline + scope cut).** Phase 1 measured the real turn cost: ~148k startup context
 re-read per turn, 6.24M for a 1.5M line. Lines below are re-baselined to that rate; the per-phase stop is now 1.5x the NEW
@@ -27,7 +35,8 @@ Keep turns few and large: plan a phase in one turn, batch edits, avoid re-readin
 
 - [x] **Phase 1: P0 resource census + the open P1 gate** (b74fe8d74, evidence `vault/programs/resource-residency/P0-P1-GATE-EVIDENCE.md`)
 - [ ] **Phase 2: P2 lazy materialization shim (experiment)** -- line 12M, stop at 18M
-- [ ] **Phase 5: P5 session liveness classifier (shadow report only)** -- line 12M, stop at 18M
+- [ ] **Phase 5: P5 session liveness classifier (shadow report only)** -- line 8M, stop at 12M. States derived from
+  multi-signal evidence (never transcript age alone, never one CPU sample); UNKNOWN protected; nothing is stopped
 - [ ] **Phase 8: close** -- line 3M: 2-snapshot census delta (not the 24 h benchmark), pagefile recommendation as an
   Owner step, UKDL entry, plan status, master gate judged item by item with NO APLICA for the deferred phases
 
