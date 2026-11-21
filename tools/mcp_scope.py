@@ -27,6 +27,10 @@ DEFAULT_CONFIG = os.path.join(HOME, ".claude.json")
 DEFAULT_PRIVATE = os.path.join(HOME, ".claude", "state", "mcp_catalog_private.json")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_CATALOG = os.path.join(REPO, "vault", "registry", "mcp_catalog.json")
+SHIM_MARK = "mcp_lazy_shim"             # a config whose args name the shim is a pointer, never the real server config
+DEFAULT_LAZY_CACHE = os.path.join(HOME, ".claude", "state", "mcp_lazy_cache")
+# The host executes the shim from a stable copy, so a deleted worktree / moved checkout can never break a live session.
+STABLE_SHIM = os.path.join(HOME, ".claude", "state", "mcp_lazy", "mcp_lazy_shim.py")
 
 
 def norm_project(path: str) -> str:
@@ -76,9 +80,52 @@ class Scope:
         raise RuntimeError("config kept changing under 5 attempts; nothing written")
 
     def _remember(self, name: str, cfg: dict) -> None:
+        if SHIM_MARK in json.dumps(cfg.get("args", [])):
+            return                       # a lazy shim entry is a pointer, never the real config: keep the stored original
         store = _load(self.private, {})
         store[name] = cfg
         _atomic_write(self.private, store)
+
+    def lazy(self, name: str, project: str, shim: str, cache_dir: str) -> dict:
+        """Replace a project-scope entry with the P2 shim (real config stays in the private store; schema is recorded first)."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("mcp_lazy_shim", shim)
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        home = norm_project(project)
+        rec = mod.record(name, self.private, cache_dir)           # raises if the real server cannot be reached: nothing changes
+        entry = {"type": "stdio", "command": sys.executable,
+                 "args": [os.path.abspath(shim), "--store", self.private, "--cache", cache_dir, "run", name], "env": {}}
+
+        def fn(d):
+            ms = d.get("projects", {}).get(home, {}).get("mcpServers", {})
+            if name not in ms:
+                raise KeyError(f"{name} is not enabled in {home}")
+            if SHIM_MARK not in json.dumps(ms[name].get("args", [])):
+                self._remember(name, ms[name])                    # keep the real config before replacing it
+            ms[name] = entry
+            return {"server": name, "lazy_in": home, "tools_cached": rec["tools"]}
+
+        res = self.mutate(fn)
+        self._catalog_note(name, lazy_in=sorted(set(_load(self.catalog, {"servers": {}})["servers"].get(name, {}).get("lazy_in", [])) | {home}))
+        return res
+
+    def unlazy(self, name: str, project: str) -> dict:
+        store = _load(self.private, {})
+        if name not in store:
+            raise KeyError(f"{name} is not in the private store")
+        home = norm_project(project)
+
+        def fn(d):
+            ms = d.get("projects", {}).get(home, {}).get("mcpServers", {})
+            if name not in ms:
+                raise KeyError(f"{name} is not enabled in {home}")
+            ms[name] = store[name]
+            return {"server": name, "unlazy_in": home}
+
+        res = self.mutate(fn)
+        cur = _load(self.catalog, {"servers": {}})["servers"].get(name, {}).get("lazy_in", [])
+        self._catalog_note(name, lazy_in=[h for h in cur if h != home])
+        return res
 
     def _catalog_note(self, name: str, **fields) -> None:
         cat = _load(self.catalog, {"schema": 1, "servers": {}})
@@ -174,13 +221,21 @@ def main(argv=None) -> int:
     for c in ("enable", "disable"):
         p = sub.add_parser(c); p.add_argument("server"); p.add_argument("--project", required=True)
     p = sub.add_parser("restore-user"); p.add_argument("server")
+    for c in ("lazy", "unlazy"):
+        p = sub.add_parser(c); p.add_argument("server"); p.add_argument("--project", required=True)
     sub.add_parser("status")
     a = ap.parse_args(argv)
     sc = Scope(a.config, a.private, a.catalog)
-    if a.cmd in ("demote", "enable") and os.environ.get("CPP_MCP_SCOPE", "").lower() == "off":
+    if a.cmd in ("demote", "enable", "lazy") and os.environ.get("CPP_MCP_SCOPE", "").lower() == "off":
         print(json.dumps({"refused": "CPP_MCP_SCOPE=off"})); return 2
     try:
-        if a.cmd == "demote":
+        if a.cmd == "lazy":
+            os.makedirs(os.path.dirname(STABLE_SHIM), exist_ok=True)
+            shutil.copy2(os.path.join(REPO, "tools", "mcp_lazy_shim.py"), STABLE_SHIM)
+            out = sc.lazy(a.server, a.project, STABLE_SHIM, DEFAULT_LAZY_CACHE)
+        elif a.cmd == "unlazy":
+            out = sc.unlazy(a.server, a.project)
+        elif a.cmd == "demote":
             usage = {"calls": a.calls, "window_days": a.window_days} if a.calls is not None else None
             out = sc.demote(a.server, a.project, usage)
         elif a.cmd == "enable":
