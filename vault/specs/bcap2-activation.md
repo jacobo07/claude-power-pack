@@ -2,7 +2,7 @@
 covers: [bcap2-activation, ccf-creative-checks, brand-truth, territories, visual-dna, provider-policy, identity-set, critique, techniques, floor-guard]
 tier: T2
 owner_decision: "Owner 2026-11-20 'rec' (pane adcdff7b): write the activation spec for BI-08..14 + floor_guard"
-status: SPEC (no code yet)
+status: "PROVEN 2026-11-21 -- slice A 37ee0072 (AC1-AC6), AC7 04d510df+fe7c84ab, slice B (a) e15f415d report-only. Measured: test_ccf 16 passed, test_asc_ccf PASS, test_bcap2_brand PASS, test_bcap2_activation V-BCAP2-ACT PASS, done_gate BCAP2_DONE_GATE PASS; reachability shows creative_checks + the 7 modules REACHABLE (its exit 1 is 57 non-BCAP-2 offenders owned by other panes)"
 ---
 # BCAP-2 activation: make the absorbed checks run on the real path
 
