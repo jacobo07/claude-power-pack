@@ -22907,9 +22907,16 @@ PROVEN. A JSONDecodeError guard does not protect `.get` on what json.loads retur
 transcript readers, and `null` crashed the JS correction hook (`rec.type` on null). Guard the TYPE, not only the parse.
 Live corpus held 0 such lines -- cheap robustness, pinned by V-READER-* / V-EVENTS-JS-PARITY. PP `9f90e227`, `ec74ce4e`.
 
-### T-MIRROR-SYNC-DROPS-LIVE-ONLY-LINES-001
+### T-WHOLE-FILE-MIRROR-SYNC-SHIPS-EVERY-PENDING-CHANGE-001
 
-PROVEN. The inverse of [[T-HOOK-DISPATCHER-DRIFT-001]]: a whole-file "copy canonical -> live" also deletes what only live
-holds. On 2026-11-21 the only non-comment drift between the two dispatchers was a live-only `corpus-reuse-sentinel.js`
-registration; the habitual copy would have unregistered it. Diff non-comment lines first, and hand the Owner a one-line
-insertion when the two have drifted. PP `584ba206`.
+PROVEN. Companion of [[T-HOOK-DISPATCHER-DRIFT-001]]: a whole-file "copy canonical -> live" ships EVERY change canonical
+holds and live does not, not just the one you approved. On 2026-11-21 the only non-comment drift between the two
+dispatchers was a canonical-only `corpus-reuse-sentinel.js` registration; copying to activate one hook would have
+activated a second, unapproved. Hand the Owner a one-line insertion when the two have drifted. PP `584ba206`, corrected.
+
+### T-DIFF-SIDE-READ-BACKWARDS-001
+
+PROVEN. `Compare-Object $canonical $live` marks REFERENCE-only lines `<=`; the first draft of the entry above read `<=`
+as "live only" and published the drift in the wrong direction (in a code comment, a commit message, this file and the
+mission record) until a test of the Owner's insertion command on a scratch copy showed the line was not in live. Name
+a drift's direction from a direct search of EACH side, never from a diff indicator.
