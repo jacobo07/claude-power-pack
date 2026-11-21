@@ -29,6 +29,7 @@ Kill nothing, write nothing: this module only reads.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass, field
@@ -186,13 +187,21 @@ def _tool_use_entries(blocks: list) -> list:
         if b.get("type") != "tool_use":
             continue
         inp = b.get("input") if isinstance(b.get("input"), dict) else {}
+        try:  # identity of the WHOLE call: two Agent calls with different prompts differ
+            shape = hashlib.sha1(json.dumps(inp, sort_keys=True, default=str)
+                                 .encode("utf-8", "replace")).hexdigest()[:12]
+        except (TypeError, ValueError):
+            shape = ""
+        desc = next((inp[k] for k in ("description", "pattern", "url", "query", "prompt")
+                     if isinstance(inp.get(k), str)), "")
         out.append({
-            "id": b.get("id"), "name": b.get("name") or "",
+            "id": b.get("id"), "name": b.get("name") or "", "shape": shape,
             "skill": inp.get("skill") if isinstance(inp.get("skill"), str) else "",
             "file_path": redact(inp["file_path"], 300)
             if isinstance(inp.get("file_path"), str) else "",
             "command": redact(inp["command"], 300)
             if isinstance(inp.get("command"), str) else "",
+            "desc": redact(desc, 120),
         })
     return out
 
@@ -291,11 +300,18 @@ def select_files(proj_base: Path, project: Optional[str], since: Optional[dateti
                  session: Optional[str] = None) -> list[Path]:
     """Transcript files that CAN hold an event in the window (mtime pre-filter).
 
-    project=None means every project dir; subagent transcripts are excluded
-    (their traffic is already present in the parent as SIDECHAIN)."""
+    project=None means every project store, each ONCE by resolved path: a
+    directory junction aliases the PP store (projects/...-mcp-video-analyzer),
+    and walking it as listed read 152 transcripts twice (2026-10-02). Store
+    identity is owned by tools/tis_observed.store_dirs -- reused, not re-derived.
+    Subagent transcripts are excluded (their traffic is in the parent)."""
     base = Path(proj_base)
-    dirs = [base / project] if project else [d for d in base.iterdir() if d.is_dir()] \
-        if base.is_dir() else []
+    if project:
+        dirs = [base / project]
+    elif base.is_dir():
+        dirs = _tis().store_dirs(base)
+    else:
+        dirs = []
     out = []
     floor = since.timestamp() if since else None
     for d in dirs:
@@ -313,6 +329,28 @@ def select_files(proj_base: Path, project: Optional[str], since: Optional[dateti
     return sorted(out, key=lambda p: p.stat().st_mtime if p.exists() else 0)
 
 
+def _tis():
+    """tools/tis_observed.py -- owner of store identity and the cwd->dir key.
+
+    Registered in sys.modules BEFORE exec: tis_observed defines a @dataclass,
+    and dataclasses resolves its module through sys.modules (a bare
+    spec_from_file_location load raised AttributeError on NoneType.__dict__)."""
+    import importlib.util  # noqa: PLC0415
+    import sys as _s  # noqa: PLC0415
+    if "tis_observed" in _s.modules:
+        return _s.modules["tis_observed"]
+    spec = importlib.util.spec_from_file_location(
+        "tis_observed", Path(__file__).resolve().parent / "tis_observed.py")
+    mod = importlib.util.module_from_spec(spec)
+    _s.modules["tis_observed"] = mod
+    try:
+        spec.loader.exec_module(mod)
+    except Exception:
+        _s.modules.pop("tis_observed", None)
+        raise
+    return mod
+
+
 def project_dir_name(cwd: str | Path) -> str:
-    """Claude Code's encoding of a cwd into a projects/ dir name."""
-    return re.sub(r"[^A-Za-z0-9]", "-", str(Path(cwd).resolve()))
+    """Claude Code's encoding of a cwd into a projects/ dir name (tis_observed.project_key)."""
+    return _tis().project_key(Path(cwd).resolve())
