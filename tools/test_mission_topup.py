@@ -190,8 +190,28 @@ def main() -> int:
     check("V-TOPUP-KILL-SWITCH-CONTROL", any(x.get("mission") == m4 and x["action"] == "grant" for x in res),
           str([x.get("action") for x in res]))
 
-    # no channel: refusal says so instead of pretending
+    # no channel: refusal says so instead of pretending (a test run never toasts: the state dir is redirected)
     check("V-TOPUP-NO-CHANNEL", mt.notify("x") == "no channel configured")
+    # spec mission-unattended-continuity B: no Telegram -> the Windows toast; switch off -> no channel again
+    shown = []
+    got = mt.notify("hola", toaster=lambda t: shown.append(t) or "toast shown")
+    check("V-TOPUP-TOAST-FALLBACK", got == "toast shown" and shown == ["hola"], f"{got} {shown}")
+    saved_sd = os.environ.pop("GSD_LONG_RUN_STATE_DIR")
+    try:
+        os.environ["CPP_MISSION_NOTIFY_TOAST"] = "off"
+        off = mt.toast_enabled()
+        os.environ.pop("CPP_MISSION_NOTIFY_TOAST")
+        on = mt.toast_enabled()
+    finally:
+        os.environ["GSD_LONG_RUN_STATE_DIR"] = saved_sd
+    check("V-TOPUP-TOAST-SWITCH", off is False and on is (os.name == "nt") and mt.toast_enabled() is False,
+          f"off={off} live={on} test-run={mt.toast_enabled()}")
+    os.environ["TELEGRAM_BOT_TOKEN"], os.environ["TELEGRAM_CHAT_ID"] = "t", "c"
+    try:
+        tel = mt.notify("x", sender=lambda t: "telegram 200", toaster=lambda t: "toast shown")
+    finally:
+        os.environ.pop("TELEGRAM_BOT_TOKEN"), os.environ.pop("TELEGRAM_CHAT_ID")
+    check("V-TOPUP-TELEGRAM-FIRST", tel == "telegram 200", tel)
 
     # suggest: open phases x rate
     sr = Path(TMP) / "sugg"
@@ -204,7 +224,7 @@ def main() -> int:
     s2 = mt.suggest(str(Path(TMP) / "nowhere"))
     check("V-TOPUP-SUGGEST-NO-ROADMAP", s2["phases"] == 3 and "assumed" in s2["basis"], s2["basis"])
 
-    # addendum 2026-11-16: ceiling 2x by default, commits-gated
+    # addendum 2026-11-16: ceiling by default, commits-gated; 3x since Owner 2026-11-21 "x3" (was 2x)
     def bare(name, auth=None):
         repo = new_repo(name)
         mid = f"m-{name}"
@@ -215,8 +235,10 @@ def main() -> int:
 
     m5, _ = bare("derived")
     p5 = mt.budget(m5, "100M", None, "40M", reason="test", now=NOW)
-    check("V-TOPUP-CEILING-DERIVED", p5["ceiling"] == 200_000_000 and p5["max_topups"] == 3
+    check("V-TOPUP-CEILING-DERIVED", p5["ceiling"] == 300_000_000 and p5["max_topups"] == 5
           and p5["step"] == 40_000_000, f"ceiling={p5['ceiling']} topups={p5['max_topups']}")
+    t10 = mt.default_terms(10_000_000)
+    check("V-TOPUP-CEILING-3X", t10["ceiling"] == 30_000_000, str(t10))
 
     m6, repo6 = bare("clip")
     mt.budget(m6, "100M", 5, "40M", reason="test", now=NOW, ceiling="150M")
@@ -240,7 +262,7 @@ def main() -> int:
     trip(m7)
     res = mt.sweep(now=NOW + 1500, decide_fn=decide, sender=sender)
     p7 = mt.load_policy(m7) or {}
-    check("V-TOPUP-DEFAULT-ADOPT", p7.get("default") and p7.get("ceiling") == 100_000_000
+    check("V-TOPUP-DEFAULT-ADOPT", p7.get("default") and p7.get("ceiling") == 150_000_000
           and gm.load(m7).get("authority_tokens") == 90_000_000 and not gm.load(m7).get("owner_hold"),
           f"policy={ {k: p7.get(k) for k in ('ceiling', 'step', 'max_topups', 'last_head')} } "
           f"res={[x for x in res if x.get('mission') == m7]}")

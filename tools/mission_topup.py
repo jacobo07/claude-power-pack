@@ -32,7 +32,7 @@ SCHEMA = "mission-topup/1"
 AUTHORITY_TRIP = "cost breaker (mission authority)"
 DEFAULT_PHASE_TOKENS = 40_000_000   # measured: 154M / 4 phases, Credit Score Engine, 2026-10-15
 BOOKKEEPING_PREFIX = ".planning/"
-DEFAULT_CEILING_X = 2.0             # Owner 2026-11-16: a mission may grow itself to 2x its authority, commits-gated
+DEFAULT_CEILING_X = 3.0             # Owner 2026-11-21 "x3" (was 2x, 2026-11-16): grow to 3x authority, commits-gated
 
 
 def enabled() -> bool:
@@ -157,13 +157,53 @@ def _spent(rec: dict) -> int | None:
         return None
 
 
-def notify(text: str, sender=None) -> str:
-    """Telegram when configured; returns what happened, never raises."""
+def toast_enabled() -> bool:
+    """On by default on Windows. A redirected state dir (GSD_LONG_RUN_STATE_DIR: every suite, never the live sweep)
+    is a test run, which must not toast the Owner's desktop unless it asks with CPP_MISSION_NOTIFY_TOAST=on."""
+    v = (os.environ.get("CPP_MISSION_NOTIFY_TOAST") or "").strip().lower()
+    if os.name != "nt" or v in ("off", "0", "false"):
+        return False
+    return v == "on" or not os.environ.get("GSD_LONG_RUN_STATE_DIR")
+
+
+_TOAST_PS = (
+    "$ErrorActionPreference='Stop';"
+    "[void][Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime];"
+    "[void][Windows.Data.Xml.Dom.XmlDocument,Windows.Data.Xml.Dom.XmlDocument,ContentType=WindowsRuntime];"
+    "$t=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($env:CPP_TOAST_TEXT));"
+    "$x=New-Object Windows.Data.Xml.Dom.XmlDocument;"
+    "$x.LoadXml('<toast duration=\"long\"><visual><binding template=\"ToastGeneric\"><text>Misiones PP</text>"
+    "<text></text></binding></visual></toast>');"
+    "$x.GetElementsByTagName('text').Item(1).InnerText=$t;"
+    "$n=[Windows.UI.Notifications.ToastNotification]::new($x);"
+    "[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("
+    "'{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe').Show($n)")
+
+
+def toast(text: str) -> str:
+    """Windows toast (spec mission-unattended-continuity B): stays in the Action Center while the Owner is away.
+    CREATE_NO_WINDOW: a sweep must never flash a console (console-popup rule). The text travels in an env var as
+    base64, never inside the command line. Returns 'toast shown' or a failure string; never raises."""
+    import base64
+    try:
+        env = {**os.environ, "CPP_TOAST_TEXT": base64.b64encode(text[:600].encode("utf-8")).decode("ascii")}
+        r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", _TOAST_PS],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, env=env,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except Exception as exc:  # noqa: BLE001 -- recorded by the caller as not delivered
+        return f"toast failed: {type(exc).__name__}"
+    return "toast shown" if r.returncode == 0 else f"toast failed: rc {r.returncode} {(r.stderr or '').strip()[:80]}"
+
+
+def notify(text: str, sender=None, toaster=None) -> str:
+    """Telegram when configured, else a Windows toast; returns what happened, never raises."""
     if sender is not None:
         return sender(text)
     token, chat = os.environ.get("TELEGRAM_BOT_TOKEN"), os.environ.get("TELEGRAM_CHAT_ID")
     if not token or not chat:
-        return "no channel configured"
+        if toaster is not None:
+            return toaster(text)
+        return toast(text) if toast_enabled() else "no channel configured"
     try:
         import urllib.parse
         import urllib.request

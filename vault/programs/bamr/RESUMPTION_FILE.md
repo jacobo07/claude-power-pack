@@ -37,6 +37,13 @@ Owner caps: session <= 40 $ API-eq (soft 25 $). Autonomous model spend 0 — not
    reserve band up to 97 % (unknown still refuses), and a closeout refused before its claim (quota / RAM) is
    CLOSEOUT_DEFERRED and retried every pass instead of FAILED forever. Spec INFO-1 "DECIDED 2026-11-21".
 
+7. (2026-11-21, Owner "que las misiones no se estanquen durante horas") Measured: recent multi-hour stalls were
+   Owner-class questions + `incident_notify_failed: no channel configured`, not quota/budget. Spec
+   `vault/specs/mission-unattended-continuity.md`: A1 bare `token` is not a credential; A3 an Owner question parks
+   only itself when ROADMAP shows independent work; B Windows toast when no Telegram; C top-up ceiling 3x.
+   Old Oct missions NOT re-armed: survivalsmp-spawn has another writer (commits 11-16, 16 dirty); CavEX
+   skins-carousel 11 dirty files (would hit the behind-dirty hold) -- Owner call.
+
 ## 5. Rejected / do-not-redo
 - Do not run `account_governor.py measure` without `--host laptop` (it now refuses; it once made 126 %).
 - Do not glob `Desktop/Cursor Projects/**` for tasks.json (minutes); use mission cwds.

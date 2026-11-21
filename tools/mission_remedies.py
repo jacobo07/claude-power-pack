@@ -20,7 +20,7 @@ import gsd_long_run as lr  # noqa: E402  (state_dir, ledger)
 
 NOTIFY_MAX_ATTEMPTS = 3        # failed channel attempts per incident key before we stop retrying
 WRITE_MAX_ATTEMPTS = 3         # re-reads when ~/.claude.json moved under us between read and replace
-_NOT_DELIVERED = ("no channel", "telegram failed", "notify failed")
+_NOT_DELIVERED = ("no channel", "telegram failed", "notify failed", "toast failed")
 
 
 def enabled() -> bool:

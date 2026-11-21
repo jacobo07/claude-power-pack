@@ -224,8 +224,20 @@ GUARD_DISABLE_RX = re.compile(
 OWNER_CLASSES = (
     ("DEPLOY_OR_LIVE_WRITE", re.compile(r"\bHR-0?4\b|\bdeploy|\bpush\b|producci[oó]n|\bprod(uction)?\b|live (server|write)|"
                                         r"servidor (vivo|en vivo)", re.I)),
-    ("SECURITY_OR_CREDENTIAL", re.compile(r"credential|secret|password|contraseñ|api[ _-]?key|\btoken\b|login required|"
-                                          r"sign[ -]?in|oauth", re.I)),
+    # `token` alone is spend vocabulary here ("per-phase token lines", "tokens processed"): measured 2026-11-21,
+    # m-e78bdb938339 parked 14 h as a credential question on "re-baseline the per-phase token lines" (spec
+    # mission-unattended-continuity A1). Only a credential-shaped token is the Owner's.
+    ("SECURITY_OR_CREDENTIAL", re.compile(r"credential|secret|password|contraseñ|api[ _-]?key|login required|"
+                                          r"sign[ -]?in|oauth|"
+                                          r"\b(?:api|access|auth(?:entication|orization)?|bearer|bot|github|gh|gitlab|npm|"
+                                          r"pypi|oauth|refresh|personal(?:[ _-]access)?|deploy|telegram|slack|discord)"
+                                          r"[ _-]?tokens?\b|(?-i:\b[A-Z][A-Z0-9_]*_TOKEN\b|\bPAT\b)|"
+                                          # review M2: an unlisted vendor's token asked for by verb or state
+                                          r"\b(?:provide|paste|supply|enter|rotate|revoke|regenerate|renew)\s+"
+                                          r"(?:(?!more\b|extra\b|additional\b)\w+\s+){0,3}tokens?\b|"
+                                          r"\btokens?\s+(?:has\s+|is\s+)?(?:expired|revoked|invalid)\b|"
+                                          r"\b(?:new|valid|expired|invalid|revoked)\s+tokens?\b|"
+                                          r"\btokens?\s+de\s+(?:acceso|api|autenticaci)|\bghp_[A-Za-z0-9]", re.I)),
     ("EXTERNAL_PROPERTY", re.compile(r"\bGA4\b|property|propiedad|vercel|dns|registrar|billing|factur|purchase|pago", re.I)),
     ("IRREVERSIBLE", re.compile(r"irreversib|permanently|force[- ]push|drop (table|database)|delete (the )?(remote|production)", re.I)),
     # Spec capsule-seal-on-question-end D2 (m-81b9650c6ff2, 2026-11-03 15:47Z): "set CPP_SEM_BREAKER=off (or clear the

@@ -751,6 +751,11 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
                     "reason": f"decision recovery ({b['gate']['result']}): the worker ended on a question the "
                               f"runtime answers: {b['why'][:160]}"}
         if cls == "QUESTION_OWNER":
+            cont = owner_question_continuation(rec, b)
+            if cont is not None:
+                return {"action": "replace", "decision": b, "owner_question": cont,
+                        "reason": f"owner question parked ({b['gate'].get('owner_class')}), independent work "
+                                  f"continues: {cont['independent_reason'][:120]}; asked: {b['why'][:120]}"}
             return {"action": "surface_blocked",
                     "reason": f"OWNER_BOUNDARY ({b['gate'].get('owner_class')}): {b['why'][:200]}"}
         if cls == "STOPPED":
@@ -973,6 +978,40 @@ def decision_progress_since(rec: dict) -> bool:
     except Exception:  # noqa: BLE001 -- unmeasured keeps the cap
         return False
     return now_fp is not None and now_fp != then
+
+
+OWNER_INPUT_CLASSES = frozenset({"SECURITY_OR_CREDENTIAL", "EXTERNAL_PROPERTY", "OWNER_DECISION", "PRODUCT_SCOPE"})
+
+
+def owner_question_continuation(rec: dict, b: dict) -> dict | None:
+    """Spec mission-unattended-continuity A3. An Owner-class question parks only ITSELF when the typed blocker has
+    POSITIVE evidence of independent work: the successor records `OWNER DECISION NEEDED:`, leaves that part alone and
+    continues the rest. Measured: m-144eafe0ff5f idle 9.1 h, m-e78bdb938339 idle 14 h on one question each, while
+    nobody was told. None = surface as before (no evidence, mission-wide class, authority hold, switch off, or the
+    decision-recovery cap spent with an unchanged tree). Kill switch CPP_MISSION_OWNER_PENDING_CONTINUE=off."""
+    if (os.environ.get("CPP_MISSION_OWNER_PENDING_CONTINUE") or "").strip().lower() in ("off", "0", "false"):
+        return None
+    if _decision_recovery_off():
+        return None
+    if int(rec.get("decision_recoveries") or 0) >= MAX_DECISION_RECOVERIES and not decision_progress_since(rec):
+        return None
+    # Review M1: only classes whose answer is an INPUT the Owner supplies may park while other work goes on. A deploy,
+    # an irreversible act, a guard switch-off, more authority, a truth contract or a done-gate stays a full stop:
+    # positional ROADMAP evidence cannot prove the next unit is unrelated to it.
+    if (b.get("gate") or {}).get("owner_class") not in OWNER_INPUT_CLASSES:
+        return None
+    why = str(b.get("why") or "")
+    try:   # the same shape the BLOCKED write compiles (surface_blocked): typed intent + "host needs:" text
+        import blocked_intent as bint
+        intent = bint.intent(why)
+    except Exception:  # noqa: BLE001 -- untyped intent: the compiler decides on the text alone
+        intent = None
+    blk = _compile_blocker(rec, f"OWNER_BOUNDARY ({(b.get('gate') or {}).get('owner_class')}): {why}; "
+                                f"host needs: {why}", intent=intent)
+    if not blk or not blk.get("independent_work"):
+        return None
+    return {"owner_class": (b.get("gate") or {}).get("owner_class"), "question": str(b.get("why") or "")[:400],
+            "independent_reason": str(blk.get("independent_reason") or ""), "blocker_class": blk.get("class")}
 
 
 def _decision_recovery_off() -> bool:
@@ -7144,11 +7183,34 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                         # AMR-X: the predecessor's open question is answered here, by the runtime, with the
                         # gate's provenance -- the successor must not ask it again.
                         d = plan["decision"]
-                        answer = (f"RUNTIME ANSWER to the predecessor's question ({d['gate']['result']}): "
-                                  f"{d['gate']['resolution']}\nThe question was: {d['why']}\n"
-                                  f"Do not end a turn on a question the repo policy or your own recommended option "
-                                  f"answers; Owner-only classes: deploy/push/live write, credentials, external "
-                                  f"properties, irreversible actions, product scope, authority.")
+                        oq = plan.get("owner_question")
+                        if oq:
+                            # Spec mission-unattended-continuity A3: the question stays the Owner's; only the
+                            # independent work goes on. Recorded and notified so it does not wait unseen.
+                            answer = (f"RUNTIME ANSWER to the predecessor's question (OWNER_REQUIRED, class "
+                                      f"{oq['owner_class']}): this part is the Owner's. Do NOT do it, do not work "
+                                      f"around it and do not ask it again. Write one `OWNER DECISION NEEDED:` line "
+                                      f"for it in the mission STATE, then continue the work that does not depend on "
+                                      f"it ({oq['independent_reason']}). If nothing else is runnable, stop.\n"
+                                      f"The question was: {d['why']}")
+                            lr.ledger_append(mid, "owner_question_parked", mission_id=mid, epoch=rec["epoch"],
+                                             owner_class=oq["owner_class"], question=oq["question"][:300],
+                                             independent=oq["independent_reason"][:200])
+                            try:
+                                import mission_remedies as _mr
+                                _mr.notify_incident(mid, f"owner-question:{oq['question'][:80]}",   # one notice per question
+                                                    f"question for you ({oq['owner_class']}), the mission continues "
+                                                    f"other work meanwhile: {oq['question'][:300]}")
+                            except Exception as exc:  # noqa: BLE001 -- a failed notice never stops the relaunch
+                                lr.ledger_append(mid, "incident_notify_failed", mission_id=mid,
+                                                 key="owner-question", channel=f"{type(exc).__name__}"[:120])
+                            row["owner_question"] = oq["owner_class"]
+                        else:
+                            answer = (f"RUNTIME ANSWER to the predecessor's question ({d['gate']['result']}): "
+                                      f"{d['gate']['resolution']}\nThe question was: {d['why']}\n"
+                                      f"Do not end a turn on a question the repo policy or your own recommended "
+                                      f"option answers; Owner-only classes: deploy/push/live write, credentials, "
+                                      f"external properties, irreversible actions, product scope, authority.")
                         note = f"{answer}\n\n{note}"
                         # Persisted with the counter (review F2): the predecessor's job file is overwritten by its
                         # stop, so a launch that fails after this point would otherwise lose the answer for good.
@@ -7158,11 +7220,15 @@ def _supervise_core(now: float | None = None, dry_run: bool = False, sessions=No
                             fp_now = mission_fingerprint(rec, mb.execution_root(rec))   # S9 A2: same Workset as the check
                         except Exception:  # noqa: BLE001 -- unmeasured: the next cap check keeps the cap
                             fp_now = None
-                        kept_req, answered_req = requires_answered_by(rec, d["why"])
+                        # An Owner question answers no requirement: nothing is cleared by parking it.
+                        kept_req, answered_req = (rec.get("requires"), []) if oq else requires_answered_by(rec, d["why"])
+                        oq_field = ({"owner_questions": ([*(rec.get("owner_questions") or []),
+                                                          {**oq, "at": now, "epoch": rec["epoch"]}])[-20:]}
+                                    if oq else {})
                         rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                          event="decision_recovered", now=now, pending_decision=answer,
                                          decision_recoveries=1 if moved else int(rec.get("decision_recoveries") or 0) + 1,
-                                         decision_recovery_fp=fp_now,
+                                         decision_recovery_fp=fp_now, **oq_field,
                                          **({"requires": kept_req} if answered_req else {}),
                                          ledger_extra={"gate": d["gate"]["result"], "question": d["why"][:200]})
                         if answered_req:

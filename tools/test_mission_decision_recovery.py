@@ -28,6 +28,9 @@ os.environ["GSD_LONG_RUN_PROJECTS_DIR"] = str(Path(TMP) / "cc" / "projects")  # 
 for k in ("CPP_MISSION_RECOVERY", "CPP_MISSION_DECISION_RECOVERY", "CPP_ROUTE_ADMISSION", "CPP_CCR_ADMISSION",
           "CPP_COG_ADMISSION"):
     os.environ.pop(k, None)
+# Hermetic: no quota reading exists in the temp state dir, so BAMR account admission (bf315ce6) refuses every launch
+# as UNKNOWN. That refusal is test_mission_account_admission's subject, not this suite's.
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import gsd_mission as gm  # noqa: E402
@@ -283,6 +286,53 @@ def main() -> int:
     check("V-AMRX-B3-ANSWER-CLEARS-ITS-REQUIRES", "HEAD4" not in obls and "requires_cleared_by_decision" in names,
           f"obligations left={obls} events={names[-6:]}")
     check("V-AMRX-B3-CTRL-SIBLING-KEPT", "GPU" in obls, f"obligations left={obls}")
+
+    # Spec mission-unattended-continuity A3 (m-144eafe0ff5f 9.1 h, m-e78bdb938339 14 h): an Owner question parks only
+    # itself when ROADMAP/STATE show another runnable unit; the successor is told not to touch the Owner's part.
+    wd_i = make_repo("indep", None)
+    (wd_i / ".planning" / "ROADMAP.md").write_text("- [ ] **Phase 1: Keys**\n- [ ] **Phase 2: Docs**\n", encoding="utf-8")
+    subprocess.run([GIT, "-C", str(wd_i), "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qam", "roadmap"],
+                   capture_output=True, text=True, check=True)
+    q_key = "provide MIOSA_API_KEY and approve spend"
+    r_i = blocked_mission("m-bbb0000000e1", wd_i, needs=q_key)
+    p_i = gm.plan_next(r_i, NOW, host_rows("m-bbb0000000e1"), pid_alive=lambda p: False)
+    check("V-AMRX-OWNERQ-CONTINUES", p_i["action"] == "replace" and (p_i.get("owner_question") or {}).get(
+        "owner_class") == "SECURITY_OR_CREDENTIAL", f"{p_i['action']}: {p_i['reason'][:140]}")
+    os.environ["CPP_MISSION_OWNER_PENDING_CONTINUE"] = "off"
+    p_o = gm.plan_next(r_i, NOW, host_rows("m-bbb0000000e1"), pid_alive=lambda p: False)
+    os.environ.pop("CPP_MISSION_OWNER_PENDING_CONTINUE")
+    check("V-AMRX-OWNERQ-KILL-SWITCH", p_o["action"] == "surface_blocked", p_o["action"])
+    # The real pass runs before the controls below exist: they would compete for the pass's launch slot.
+    ARGVS.clear()
+    gm._supervise_core(now=NOW + 60, sessions=host_rows("m-bbb0000000e1"), gsd_status=GSD_OK, runner=host,
+                       stop_runner=stop_ok, pid_alive=lambda p: False)
+    se = gm.load("m-bbb0000000e1")
+    eve = [e.get("event") for e in gm.lr.ledger_events("m-bbb0000000e1")]
+    mine_e = [a for a in ARGVS if "m-bbb0000000e1" in a[a.index("-n") + 1]]
+    note_e = se.get("note") or ""
+    check("V-AMRX-OWNERQ-SUCCESSOR", len(mine_e) == 1 and "owner_question_parked" in eve
+          and "Do NOT do it" in note_e and "OWNER DECISION NEEDED" in note_e,
+          f"launches={len(mine_e)} parked={'owner_question_parked' in eve} note={len(note_e)}")
+    oqs = se.get("owner_questions") or []
+    check("V-AMRX-OWNERQ-RECORDED", len(oqs) == 1 and "MIOSA_API_KEY" in oqs[0].get("question", "")
+          and ("incident_notified" in eve or "incident_notify_failed" in eve), f"owner_questions={len(oqs)}")
+    r_n = blocked_mission("m-bbb0000000e2", wd, needs=q_key)   # wd: one phase only -> no independent unit
+    p_n = gm.plan_next(r_n, NOW, host_rows("m-bbb0000000e2"), pid_alive=lambda p: False)
+    check("V-AMRX-OWNERQ-NO-EVIDENCE-SURFACES", p_n["action"] == "surface_blocked" and "OWNER_BOUNDARY" in p_n["reason"],
+          f"{p_n['action']}: {p_n['reason'][:100]}")
+    r_c = blocked_mission("m-bbb0000000e3", wd_i, needs=q_key, recoveries=gm.MAX_DECISION_RECOVERIES, fp="fp-fixture")
+    p_c = gm.plan_next(r_c, NOW, host_rows("m-bbb0000000e3"), pid_alive=lambda p: False)
+    check("V-AMRX-OWNERQ-CAP", p_c["action"] == "surface_blocked", f"cap spent, tree unchanged: {p_c['action']}")
+    # Review M1: with the SAME independent evidence, a stop-class question still stops the whole mission.
+    stops = {"AUTHORITY": "budget exhausted: raise the cap?", "GUARD_DISABLE": "should I disable the breaker?",
+             "DEPLOY_OR_LIVE_WRITE": "OK to deploy to production?", "IRREVERSIBLE": "force-push the branch?"}
+    leaked = {}
+    for i, (cls_, qq) in enumerate(stops.items()):
+        mid_s = f"m-bbb0000000f{i}"
+        p_s = gm.plan_next(blocked_mission(mid_s, wd_i, needs=qq), NOW, host_rows(mid_s), pid_alive=lambda p: False)
+        if p_s["action"] != "surface_blocked":
+            leaked[cls_] = p_s["action"]
+    check("V-AMRX-OWNERQ-STOP-CLASSES-SURFACE", not leaked, f"stop classes that continued: {leaked}")
 
     print(f"AMRX_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1

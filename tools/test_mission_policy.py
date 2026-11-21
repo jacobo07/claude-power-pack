@@ -322,6 +322,19 @@ def main() -> int:
         if saved_ks is not None:
             os.environ[KILL_SWITCH] = saved_ks
 
+    # Spec mission-unattended-continuity A1 (m-e78bdb938339, 14 h idle 2026-11-21): `token` alone is spend vocabulary.
+    spend = ["choose: continue Phase 2 from a fresh session (`/gsd-autonomous --ws resource-residency --from 2`) or "
+             "re-baseline the per-phase token lines", "the token budget per phase is 5M", "tokens processed 9M, go on?"]
+    cred = ["provide the GitHub token", "set TELEGRAM_BOT_TOKEN in the env", "paste the access token",
+            "we need a PAT to clone it", "provide MIOSA_API_KEY and approve spend", "the bearer token expired",
+            "provide your Stripe token", "need a new token", "the token expired, supply one", "falta el token de acceso"]
+    spend_bad = [s for s in spend if mp.gate_question(s, pv)["result"] != "RESOLVE_BY_DEFAULT"]
+    cred_bad = [s for s in cred if mp.gate_question(s, pv).get("owner_class") != "SECURITY_OR_CREDENTIAL"]
+    check("V-MPOL-TOKEN-SPEND-NOT-CREDENTIAL", not spend_bad, f"spend phrasing escalated: {spend_bad}")
+    check("V-MPOL-TOKEN-CREDENTIAL-STILL-OWNER", not cred_bad, f"credential phrasing not credential: {cred_bad}")
+    auth = mp.gate_question("need more tokens to finish the phase", pv).get("owner_class")
+    check("V-MPOL-TOKEN-AUTHORITY-STILL-OWNER", auth == "AUTHORITY", f"more tokens -> {auth}")
+
     # Blocked typing.
     b = mp.classify_blocked(INCIDENT_JOB, pv)
     check("V-MPOL-BLOCKED-INCIDENT", b["class"] == "QUESTION_RESOLVABLE", str(b["class"]))
@@ -405,9 +418,13 @@ DRILLS = (
     ("M8 lifecycle words read as questions",
      'if str(job.get("state") or "").lower() in LIFECYCLE_WORDS or needs.strip().lower() in LIFECYCLE_WORDS:',
      "if False:", "V-MPOL-BLOCKED-LIFECYCLE-NOT-QUESTION"),
-    ("M6 descriptive-scope neutraliser bypassed", "t_scope = _DESCRIPTIVE_SCOPE_RX.sub(\" \", t)", "t_scope = t",
+    ("M6 descriptive-scope neutraliser bypassed", "t_scope = _DESCRIPTIVE_SCOPE_RX.sub(\" \", t_eval)", "t_scope = t_eval",
      "V-MPOL-GATE-SCOPE-DESCRIPTIVE"),
     ("M9 guard-disable class removed", '    ("GUARD_DISABLE", GUARD_DISABLE_RX),\n', "", "V-MPOL-GATE-GUARD-DISABLE"),
+    ("M10 bare token back in the credential class", 'r"sign[ -]?in|oauth|"', 'r"sign[ -]?in|oauth|\\btoken\\b|"',
+     "V-MPOL-TOKEN-SPEND-NOT-CREDENTIAL"),
+    ("M11 UPPER_CASE *_TOKEN names dropped", r"|(?-i:\b[A-Z][A-Z0-9_]*_TOKEN\b|\bPAT\b)", "",
+     "V-MPOL-TOKEN-CREDENTIAL-STILL-OWNER"),
 )
 
 

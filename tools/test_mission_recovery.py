@@ -20,6 +20,9 @@ TMP = tempfile.mkdtemp(prefix="amr-test-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
 os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP
+# Hermetic: no quota reading exists in the temp state dir, so BAMR account admission (bf315ce6) refuses every launch
+# as UNKNOWN. That refusal is test_mission_account_admission's subject, not this suite's.
+os.environ["CPP_MISSION_ACCOUNT_ADMISSION"] = "off"
 os.environ["CPP_CLAUDE_JOBS_DIR"] = str(Path(TMP) / "jobs")
 os.environ["CLAUDE_CONFIG_DIR"] = str(Path(TMP) / "cc")
 for k in ("CPP_MISSION_RECOVERY", "CPP_ROUTE_ADMISSION", "CPP_CCR_ADMISSION", "CPP_COG_ADMISSION"):
