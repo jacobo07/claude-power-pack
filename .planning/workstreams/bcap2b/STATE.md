@@ -23,3 +23,10 @@ Epoch 2 closed the rest of Phase 1 (each step committed, gate re-run, done_gate 
 - DECISION: nothing in Phase 1 needed the Owner (no outward action, no spend beyond reads).
 Spend: UNMEASURED this epoch (supervisor measured 7.96M processed at start of epoch 2).
 Meta: (1) a gate that pinned "live_verified false" and "only pilot READ" had to be inverted into evidence-backed predicates, not just edited; each now has a seeded-bad pole. (2) Ledger owner cells held multi-path prose, so a primary verified path was extracted and the full list kept in the tsv. (3) GitHub API unauthenticated was enough for licence+sha. (4) Phase 1 ended without a clone for the 8 libs: licence+pin only is a DECLINE, not a READ. (5) Next: Phase 2 (D21 remaining workstreams), then Phase 3.
+
+### Phase 2 (epoch 3, PARTIAL: laptop/page-read residuals named)
+done: D21-A03 capability denominators (8 OBSERVED from page text with labeled counts + quotes in LIVE_READ.json; 13 UNKNOWN with a reason; gate + 2 poles). 36/36 V-D21 scenarios now named in a driving test (22 added: existing owners driven, new `modules/cdicf/scenario_guards.py` for 19-23/26/27/30/34; mutant drill turned V-D21-23 red). done_gate already carried d21_bc (roadmap line was stale); scenario_guards added to NEW_MODULES. Backlog Status + deferred-backlog row updated.
+open (need registry/page reads or a real browser, none cheap on GEX44): C01/C02 live prompt-source audit, D01/D02/D04 registry semantics, E01-E04, F01-F05, G, H03-H09. Phase 8 stays PARTIALLY_PROVEN.
+DECISION: stop probing here (diminishing return; cheap probes exhausted in campaign A); Phase 3 next. Safe: internal.
+Spend: UNMEASURED (supervisor 13.8M at epoch start).
+Meta: (1) the "UNKNOWN (not derived)" pin had to become an evidence-backed predicate, again. (2) LIVE_READ numbers were unlabeled, so a count needed a re-read for context before it could be a denominator. (3) Many scenarios were already enforced by owners but untagged: naming is not driving, so each got a pole. (4) Tests with an unmeasured input must supply it or the unmeasured branch fires first (glass_plan). (5) Next: Phase 3 DesignHub + Impeccable reads.
