@@ -89,6 +89,84 @@ def _scratch_repo() -> dict:
 REPO = _scratch_repo()
 
 
+def _counters_repo() -> dict:
+    """2026-11-21 counters rule (wp-dol-link-v1 shape). b0 = base; its registry already lists a file the base does not
+    hold yet (pre-registered sha). g1 = good generation commit: verdict-less receipts + counters + registry entries;
+    g2 = counters disagree (2 vs 3 rows); g3 = registry sha wrong; g4 = rows carry a verdict; g5 = two counters files;
+    g6 = only pre-registered in the base registry (registry not changed by the generation)."""
+    import hashlib
+    import subprocess
+    d = tmp / "cprod"
+    d.mkdir(parents=True)
+    git = os.environ.get("CPP_GIT_EXE") or "git"
+
+    def g(*a):
+        r = subprocess.run([git, "-C", str(d), *a], capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+        return r.stdout.strip()
+
+    def commit(msg):
+        g("add", "-A")
+        g("commit", "-qm", msg)
+        return g("rev-parse", "HEAD")
+
+    def rows(k, verdict=None, prof="p-v1"):
+        out = []
+        for i in range(k):
+            r = {"addr": f"0x8000{i:04X}", "profile": prof, "size": 8}
+            if verdict:
+                r["verdict"] = verdict
+            out.append(json.dumps(r))
+        return ("\n".join(out) + "\n").encode()
+
+    def counters(k, total=None):
+        return json.dumps({"certified_total": k if total is None else total, "decide": {"CERTIFIED": k}}).encode()
+
+    sha = lambda b: hashlib.sha256(b).hexdigest()  # noqa: E731
+    reg_entries = []
+
+    def write_reg():
+        (d / "ev").mkdir(exist_ok=True)
+        (d / "ev" / "receipt_registry.json").write_text(json.dumps({"entries": reg_entries}, indent=1))
+
+    for x in ("g", "g2", "g3", "g4", "g5", "g6"):
+        (d / "ev" / x).mkdir(parents=True, exist_ok=True)
+    g("init", "-q")
+    g("config", "user.email", "t@example.invalid")
+    g("config", "user.name", "t")
+    g("config", "commit.gpgsign", "false")
+    pre_r, pre_c = rows(3), counters(3)
+    reg_entries += [{"profile": "p-v1", "path": "ev/g6/receipts.jsonl", "sha256": sha(pre_r)},
+                    {"profile": "p-v1", "path": "ev/g6/counters_g6.json", "sha256": sha(pre_c)}]
+    write_reg()
+    (d / "ev" / "keep").write_text("base\n")
+    b0 = commit("base")
+    out = {"dir": d, "b0": b0}
+
+    def gen(key, folder, rbytes, cbytes, reg_ok=True, extra_counters=False, register=True):
+        (d / "ev" / folder / "receipts.jsonl").write_bytes(rbytes)
+        (d / "ev" / folder / f"counters_{folder}.json").write_bytes(cbytes)
+        if extra_counters:
+            (d / "ev" / folder / "counters_extra.json").write_bytes(cbytes)
+        if register:
+            reg_entries.extend([
+                {"profile": "p-v1", "path": f"ev/{folder}/receipts.jsonl", "sha256": sha(rbytes) if reg_ok else "0" * 64},
+                {"profile": "p-v1", "path": f"ev/{folder}/counters_{folder}.json", "sha256": sha(cbytes)}])
+            write_reg()
+        out[key] = commit(key)
+
+    gen("g1", "g", rows(3), counters(3))
+    gen("g2", "g2", rows(3), counters(2))
+    gen("g3", "g3", rows(3), counters(3), reg_ok=False)
+    gen("g4", "g4", rows(3, verdict="BINARY_EXACT"), counters(3))
+    gen("g5", "g5", rows(3), counters(3), extra_counters=True)
+    gen("g6", "g6", pre_r, pre_c, register=False)
+    return out
+
+
+CREPO = _counters_repo()
+
+
 def check(name, cond):
     results.append((name, bool(cond)))
 
@@ -295,6 +373,23 @@ def run_all(ap):
     check("V-AP-PROGRESS-CERT-STALE-WINDOW", cls(certv(3), base=P["c2"]) == "NONE")
     check("V-AP-PROGRESS-CERT-NO-RECEIPTS", cls({"new_canonical_certs": 3}) == "NONE")
     check("V-AP-PROGRESS-CERT-PROSE-RECEIPTS", cls(certv(1, [{"path": "notes.md", "commit": P["c3"]}])) == "NONE")
+    # ---- 2026-11-21 counters rule (Owner "y", pane 3581ade8): verdict-less rows certified by counters + registry
+    cp, cb = str(CREPO["dir"]), CREPO["b0"]
+    cv = lambda n, key, folder: {"new_canonical_certs": n, "cert_receipts": [  # noqa: E731
+        {"path": f"ev/{folder}/receipts.jsonl", "commit": CREPO[key]}]}
+    vc = lambda v, base=cb: ap.verify_cert(v, cp, base)  # noqa: E731
+    check("V-AP-CERT-COUNTERS-ADMITS", vc(cv(3, "g1", "g")) is True
+          and ap.classify_progress(cv(3, "g1", "g"), cp, cb)[0] == "CERT")
+    check("V-AP-CERT-COUNTERS-OVERCLAIM-REFUSED", isinstance(vc(cv(4, "g1", "g")), str))
+    check("V-AP-CERT-COUNTERS-MISMATCH-REFUSED", isinstance(vc(cv(3, "g2", "g2")), str)
+          and "counters" in vc(cv(3, "g2", "g2")))
+    check("V-AP-CERT-COUNTERS-REGISTRY-SHA-REFUSED", isinstance(vc(cv(3, "g3", "g3")), str))
+    check("V-AP-CERT-COUNTERS-VERDICT-ROWS-NOT-COUNTED", isinstance(vc(cv(1, "g4", "g4")), str))
+    check("V-AP-CERT-COUNTERS-TWO-COUNTERS-REFUSED", isinstance(vc(cv(3, "g5", "g5")), str))
+    check("V-AP-CERT-COUNTERS-PREREGISTERED-REFUSED", isinstance(vc(cv(3, "g6", "g6")), str))
+    check("V-AP-CERT-COUNTERS-STALE-WINDOW", isinstance(vc(cv(3, "g1", "g"), base=CREPO["g1"]), str))
+    check("V-AP-CERT-COUNTERS-DUP-POINTER-NOT-DOUBLED", isinstance(ap.verify_cert(
+        {"new_canonical_certs": 6, "cert_receipts": cv(3, "g1", "g")["cert_receipts"] * 2}, cp, cb), str))
     cap = {"gate": "tools/test_g.py", "commit": P["c2"], "heldout_file": "heldout.json", "mutant_rc": 1,
            "heldout_before": 10, "heldout_after": 12}
     capv = lambda **k: {"validated_capability": True, "capability": dict(cap, **k)}  # noqa: E731
@@ -1779,6 +1874,9 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
              True if isinstance(v.get("information"), dict) else None)),
          "cert_count_trusted": lambda m: setattr(m, "verify_cert", lambda v, p, b=None, lane=None: (
              True if (v.get("new_canonical_certs") or 0) > 0 else None)),
+         "counters_trusted": lambda m: setattr(m, "counters_ok", lambda *a: None),
+         "counters_base_registry_ignored": lambda m: setattr(m, "_json_at", (lambda real: lambda p, ref, path: (
+             None if str(ref) == CREPO["b0"] else real(p, ref, path)))(m._json_at)),
          "capability_trusted": lambda m: setattr(m, "verify_capability", lambda v, p, b=None, lane=None: (
              True if v.get("validated_capability") is True else None)),
          "evo_instrument_fail_as_none": _evo_mut(classify=lambda cls, instr: cls),

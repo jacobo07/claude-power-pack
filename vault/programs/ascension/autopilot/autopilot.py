@@ -490,6 +490,74 @@ def _num(x) -> bool:
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
+# 2026-11-21 (Owner "y", pane 3581ade8): a receipts profile (WIIPARTY wp-dol-link-v1, 184 rows over 7 generations, none
+# ever counted) writes rows with NO verdict field and keeps CERTIFIED in a sibling counters file. Such rows count only
+# when, at the receipts commit: one `counters*.json` in the same directory was changed by that commit; its
+# decide.CERTIFIED == certified_total == the distinct verdict-less rows this generation added to the receipts file; and a
+# `receipt_registry.json` at that commit lists BOTH files under the rows' one profile with the sha256 of the exact
+# committed bytes, entries absent from the registry at the base (this generation registered them; a pre-registered hash
+# does not count). A row that carries any "verdict" key is judged by the CERTIFIED-string rule alone.
+COUNTERS_RE = re.compile(r"^counters[\w.-]*\.json$")
+
+
+def _blob_bytes(product: str, commit: str, path: str) -> bytes | None:
+    try:
+        r = subprocess.run([GIT, "-C", product, "show", f"{commit}:{path}"], capture_output=True, timeout=120)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout if r.returncode == 0 else None
+
+
+def _json_at(product: str, commit: str, path: str):
+    b = _blob_bytes(product, commit, path)
+    try:
+        return None if b is None else json.loads(b.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return None
+
+
+def counters_ok(product: str, base, commit: str, path: str, rows: dict) -> str | None:
+    """None when the verdict-less rows `rows` {id: row} added to receipts `path` are certified by their sibling counters
+    file and the receipt registry (rule above); else why not."""
+    import hashlib
+    c = _sha(product, commit)
+    if not c:
+        return f"commit {commit} unknown"
+    changed = _changed(product, c)
+    folder = path.rsplit("/", 1)[0] if "/" in path else ""
+    cands = [f for f in changed if (f.rsplit("/", 1)[0] if "/" in f else "") == folder
+             and COUNTERS_RE.match(f.rsplit("/", 1)[-1])]
+    if len(cands) != 1:
+        return f"{len(cands)} counters*.json beside {path} changed by {c[:12]} (need exactly 1)"
+    cpath = cands[0]
+    cnt = _json_at(product, c, cpath)
+    dec = cnt.get("decide") if isinstance(cnt, dict) else None
+    k = dec.get("CERTIFIED") if isinstance(dec, dict) else None
+    if type(k) is not int or k != cnt.get("certified_total") or k != len(rows):
+        return (f"counters {cpath}: decide.CERTIFIED {k!r} / certified_total {cnt.get('certified_total') if isinstance(cnt, dict) else None!r}"
+                f" != {len(rows)} verdict-less rows added")
+    profiles = {r.get("profile") for r in rows.values()}
+    if len(profiles) != 1 or not isinstance(next(iter(profiles)), str):
+        return f"receipt rows of {path} do not share one profile: {sorted(map(str, profiles))[:4]}"
+    prof = next(iter(profiles))
+    b = _sha(product, base)
+    rc, tree = _git(product, "ls-tree", "-r", "--name-only", c)
+    regs = [f for f in tree.splitlines() if f.rsplit("/", 1)[-1] == "receipt_registry.json"] if rc == 0 else []
+    need = {p: hashlib.sha256(_blob_bytes(product, c, p) or b"").hexdigest() for p in (path, cpath)}
+
+    def entries(ref, reg):
+        doc = _json_at(product, ref, reg) if ref else None
+        ents = doc.get("entries") if isinstance(doc, dict) else doc
+        return {(e.get("path"), e.get("sha256"), e.get("profile")) for e in ents if isinstance(e, dict)} \
+            if isinstance(ents, list) else set()
+    want = {(p, need[p], prof) for p in need}
+    for reg in regs:
+        # listed at the receipts commit, and NOT already at the base: this generation registered them
+        if want <= entries(c, reg) and not (want & entries(b, reg)):
+            return None
+    return f"no receipt_registry.json lists {path} and {cpath} ({prof}) with their sha256, added by this generation"
+
+
 def verify_cert(v: dict, product: str, base):
     """None = not claimed; True = verified; str = claimed but refused."""
     n = v.get("new_canonical_certs")
@@ -499,11 +567,13 @@ def verify_cert(v: dict, product: str, base):
     if not isinstance(recs, list) or not recs:
         return "certificates claimed without cert_receipts [{path, commit}]"
     ids: set[str] = set()
+    why = ""
     for r in recs:
         path, commit = (str(r.get("path") or ""), str(r.get("commit") or "")) if isinstance(r, dict) else ("", "")
         if not DATA.search(path) or not in_window(product, base, commit) or path not in _changed(product, commit):
             return f"receipts {path}@{commit} is not a data file changed by a commit of this generation"
         rc, diff = _git(product, "diff", "-U0", _sha(product, base), _sha(product, commit), "--", path)
+        bare: dict[str, dict] = {}
         for line in diff.splitlines() if rc == 0 else []:
             if not line.startswith("+") or line.startswith("+++"):
                 continue
@@ -511,9 +581,19 @@ def verify_cert(v: dict, product: str, base):
                 row = json.loads(line[1:])
             except Exception:  # noqa: BLE001 -- a non-JSON added line is not a receipt
                 continue
-            if isinstance(row, dict) and "CERTIFIED" in [x for x in row.values() if isinstance(x, str)]:
+            if not isinstance(row, dict):
+                continue
+            if "CERTIFIED" in [x for x in row.values() if isinstance(x, str)]:
                 ids.add(str(row.get("id") or line[1:]))
-    return True if len(ids) >= n else f"{len(ids)} distinct CERTIFIED rows added since the base < claimed {n}"
+            elif "verdict" not in row:
+                bare[str(row.get("id") or row.get("addr") or row.get("symbol") or line[1:])] = row
+        if bare:
+            bad = counters_ok(product, base, commit, path, bare)
+            if bad is None:
+                ids.update(f"{path}::{i}" for i in bare)
+            else:
+                why = f"; counters rule: {bad}"
+    return True if len(ids) >= n else f"{len(ids)} distinct CERTIFIED rows added since the base < claimed {n}{why}"
 
 
 def verify_capability(v: dict, product: str, base):
