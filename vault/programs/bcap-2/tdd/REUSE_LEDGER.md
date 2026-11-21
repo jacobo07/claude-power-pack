@@ -27,7 +27,7 @@ Gate: `BCAP2_TDD_PYTHON=<py with pytest,pytest-cov,coverage> python3 tools/test_
 Residuals (why not PROVEN):
 - R1 Nothing emits `classify_slice` records live: no hook/executor captures RED runs; the card is a pointer, so C2 provenance is only as good as the record's author (done-gate items 3, 10 not proven live).
 - R2 Not wired into `intent-verify` / done_gate callers (item 5, 10); ladder mapping is a library call.
-- R3 Upstream mattpocock/skills/tdd never fetched (no pin/licence) — read-only fetch still owed. `verification-loop`, `auto-test`, `intent-verify` scanned only by name.
+- R3 CLOSED for the upstream read: pin + licence + read recorded in `dbg/MATTPOCOCK_READ.md` (mattpocock/skills @ abeeaf95, MIT). `verification-loop`, `auto-test`, `intent-verify` scanned only by name.
 - R4 Mutation is Python/pytest only; other languages are an explicit ceiling (`MUTATION_UNSUPPORTED_LANGUAGE`).
 - R5 No A/B benchmark, no runtime-cost measurement, no UKDL promotion (items 9, 11, 12).
 - R6 `/usr/bin/python3` on GEX44 lacks pytest; the gate needs a venv (made in the job tmp dir, not committed).

@@ -20,7 +20,7 @@ Reality Scan at 73c7f32c (2026-11-19, GEX44). Verdict: **PARTIALLY_PROVEN** (not
 - Liveness: 504→505 modules, REACHABLE 336→337, gate offenders 56→56 (standing debt, no new orphan).
 
 ## Residuals (why not CLOSED, plan law 4)
-- R1 upstream pin + licence not recorded (read-only fetch not yet done).
+- R1 CLOSED: pin + licence + read recorded in `dbg/MATTPOCOCK_READ.md` (mattpocock/skills @ abeeaf95, MIT); campaign B Phase 1 confirmed no further upstream row is open.
 - R2 verifier judges a record; nothing yet *produces* records during a live debug. No hook writes one; criteria 5, 6, 8, 11 are enforced on records, not observed in a live investigation.
 - R3 criterion 12 (matched benchmark vs baseline) and 14 (fresh session diagnoses unaided) unmeasured; need paid/live model runs.
 - R4 not wired into `done_gate` / CEPS promotion (Phase 2 seam); fixture 19 only refuses at the record level.

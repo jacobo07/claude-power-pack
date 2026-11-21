@@ -112,6 +112,7 @@ def test_ledger():
     ids = [r[0] for r in rows]
     check("V-SYN-LEDGER-COMPLETE", ids == ["UX-%02d" % i for i in range(1, 21)], f"{len(ids)} rows")
     check("V-SYN-LEDGER-VOCAB", all(r[1] in VOCAB for r in rows), str(sorted({r[1] for r in rows} - VOCAB)))
+    check("V-SYN-LEDGER-NO-UNVERIFIED-LEFT", not [r[0] for r in rows if r[1] == "UNVERIFIED"], "every UX row has a final disposition")
     missing = [r[2] for r in rows if not (ROOT / r[2]).exists()]
     check("V-SYN-LEDGER-OWNERS-EXIST", not missing, str(missing))
 
