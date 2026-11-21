@@ -205,6 +205,46 @@ def main() -> int:
         check("V-MCA-BEHIND-DIRTY-UNPROVEN", r["status"] == "behind_dirty",
               f"no proof of the worktree -> still blocking: {r['status']}")
 
+        # 19-21 untracked files the fast-forward would overwrite (measured 2026-11-21, Lola's m-d71f5191ed2f: the
+        # arm scaffold wrote .planning/ into the cwd, the worker committed the same bytes in its worktree, and the
+        # mission slept 70 min). Identical -> set aside and fast-forward; any difference -> block, move nothing.
+        def scaffolded(root, cwd_texts):
+            c, w = repo(root)
+            (w / ".planning").mkdir()
+            for name in ("ROADMAP.md", "STATE.md"):
+                (w / ".planning" / name).write_text(f"{name} v1", encoding="utf-8")
+                git(w, "add", f".planning/{name}")
+            git(w, "commit", "-q", "-m", "plan")
+            (c / ".planning").mkdir()
+            for name, text in cwd_texts.items():
+                (c / ".planning" / name).write_text(text, encoding="utf-8")
+            return c, w
+
+        cwd, wt = scaffolded(t / "c19", {"ROADMAP.md": "ROADMAP.md v1", "STATE.md": "STATE.md v1"})
+        r = gm.align_cwd(str(cwd), str(wt))
+        kept = Path(r.get("set_aside_dir") or "")
+        check("V-MCA-FF-IDENTICAL-UNTRACKED", r["status"] == "fast_forwarded" and head(cwd) == head(wt)
+              and sorted(r.get("set_aside") or []) == [".planning/ROADMAP.md", ".planning/STATE.md"]
+              and (cwd / ".planning" / "ROADMAP.md").read_text(encoding="utf-8") == "ROADMAP.md v1"
+              and (kept / ".planning" / "STATE.md").read_text(encoding="utf-8") == "STATE.md v1",
+              f"status={r['status']} set_aside={r.get('set_aside')} detail={r.get('detail')}")
+
+        cwd, wt = scaffolded(t / "c20", {"ROADMAP.md": "a local roadmap nobody committed"})
+        before = head(cwd)
+        r = gm.align_cwd(str(cwd), str(wt))
+        check("V-MCA-FF-DIFFERING-UNTRACKED-BLOCKS", r["status"] == "behind_dirty" and head(cwd) == before
+              and (cwd / ".planning" / "ROADMAP.md").read_text(encoding="utf-8") == "a local roadmap nobody committed"
+              and "differ" in r.get("detail", ""),
+              f"status={r['status']} detail={r.get('detail')}")
+
+        cwd, wt = scaffolded(t / "c21", {"ROADMAP.md": "ROADMAP.md v1", "STATE.md": "edited locally"})
+        before = head(cwd)
+        r = gm.align_cwd(str(cwd), str(wt))
+        check("V-MCA-FF-MIXED-MOVES-NOTHING", r["status"] == "behind_dirty" and head(cwd) == before
+              and (cwd / ".planning" / "ROADMAP.md").read_text(encoding="utf-8") == "ROADMAP.md v1"
+              and (cwd / ".planning" / "STATE.md").read_text(encoding="utf-8") == "edited locally",
+              f"status={r['status']} detail={r.get('detail')}")
+
     # 9 structural: supervise aligns the cwd BEFORE it launches a worker
     src = Path(gm.__file__).read_text(encoding="utf-8")
     # supervise() became a thin wrapper over _supervise_core(), where the pass body (align, then launch) now lives;
@@ -265,7 +305,7 @@ def main() -> int:
     finally:
         gm.effective_workdir, gm.align_cwd = real_ew, real_align
 
-    print(f"MCA_PASS={passes}/{passes + fails}  threshold=16/16")
+    print(f"MCA_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
 
