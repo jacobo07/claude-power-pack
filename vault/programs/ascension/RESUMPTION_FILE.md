@@ -8,6 +8,8 @@
 **2026-11-21 ~15:10Z (pane 0ba4909a, /kresume of 3581ade8). DESIGN BEFORE EVERY PARK DEPLOYED 15:07:17Z** under
 cron.lock + all 8 factory-apply locks. CAS autopilot 96536c9e -> 01769437, evolve 67daa875 -> 5b8db480, test b2d4437b ->
 da1f824f, backups `*.bak-0ba4-design-20261121T150717Z`.
+- 15:2xZ: evolve.py re-swapped to LF 451321a6, the same content minus CR. `git apply` under autocrlf had written a CRLF
+  working copy; backup `evolve.py.bak-0ba4-crlf`. Live == mirror d5c7bad9 by bytes.
 - (a) evolve.plateau: a pivot-rule refusal designs a lever (_synth_or_park) before it parks.
 - (b) autopilot.design_before_park: a judge DISAGREE/INCONCLUSIVE designs a lever of another family from the checkpoint
   and plans told the judgment, crediting nothing. It still parks on a protected failure (protected_check, or
