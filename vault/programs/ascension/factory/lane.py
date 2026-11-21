@@ -182,7 +182,8 @@ def window(ln):
 def runs_sig(ln):
     sig = []
     for r in ln["runs"]:
-        p = os.path.join(F, r["run"], "sweep.jsonl")
+        # a twin run names its measured rows file directly (twin/pilot/twin_<L>.jsonl); every other run a sweep dir
+        p = os.path.join(F, r["run"]) if r["producer"] == "twin" else os.path.join(F, r["run"], "sweep.jsonl")
         st = os.stat(p)
         sig.append([r["run"], r["producer"], st.st_size, int(st.st_mtime)])
     return sig
@@ -235,14 +236,18 @@ def prepare(ln, st):
         shutil.copy(rp, bp)
     carved = 0
     for r in ln["runs"]:
-        pf = os.path.join(F, "perfn", name, r["run"].replace("/", "_"))
-        shutil.rmtree(pf, ignore_errors=True)
-        rc, t = sh(["python3", F + "/perfn.py", os.path.join(F, r["run"]), pf])
-        if rc != 0:
-            log(f"{name}: perfn failed {t[-300:]}")
-            return None
-        rc, t = sh(["python3", F + "/carve.py", "--run", pf, "--repo", S, "--game", ln["game"], "--compiler", r["compiler"],
-                    "--producer", r["producer"], "--lib", r["lib"]])
+        if r["producer"] == "twin":  # F6 (Owner "y" 2026-11-21, pane 3581ade8): measured twin rows, no perfn step
+            rc, t = sh(["python3", "-I", F + "/twin.py", "carve", "--lane", name, "--repo", S,
+                        "--rows", os.path.join(F, r["run"]), "--lib", r["lib"]])
+        else:
+            pf = os.path.join(F, "perfn", name, r["run"].replace("/", "_"))
+            shutil.rmtree(pf, ignore_errors=True)
+            rc, t = sh(["python3", F + "/perfn.py", os.path.join(F, r["run"]), pf])
+            if rc != 0:
+                log(f"{name}: perfn failed {t[-300:]}")
+                return None
+            rc, t = sh(["python3", F + "/carve.py", "--run", pf, "--repo", S, "--game", ln["game"], "--compiler",
+                        r["compiler"], "--producer", r["producer"], "--lib", r["lib"]])
         if rc != 0:  # review note: a producer failure is told once, then waits for a change like a gate failure
             log(f"{name}: carve failed {t[-300:]}")
             st["failed"] = [base, sig]

@@ -219,8 +219,92 @@ def main():
     m.add_argument("--lane", required=True, choices=sorted(LANES))
     m.add_argument("--limit", type=int, default=0)
     m.add_argument("--out", default=os.path.join(FACTORY, "twin"))
+    c = sp.add_parser("carve")
+    c.add_argument("--lane", required=True, choices=sorted(LANES))
+    c.add_argument("--repo", required=True, help="a scratch clone (lane.py prepare), never the lane itself")
+    c.add_argument("--rows", required=True, help="twin_<L>.jsonl from measure")
+    c.add_argument("--lib", default="FactoryTwin")
     a = ap.parse_args()
-    measure(a)
+    measure(a) if a.cmd == "measure" else carve(a)
+
+
+SAFE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def carve(a):
+    """MATCH rows of `measure` -> one-function units in the scratch repo, the same shape as carve.py: main module only,
+    target object an `auto_*` split, address outside every existing .text split. The source is rebuilt exactly as it
+    was measured (same donor unit, same relocation rename); the F5 gate (lane.py) then builds and judges the scratch."""
+    repo_l, game, own_ver = LANES[a.lane]
+    if os.path.realpath(a.repo) == os.path.realpath(repo_l):
+        sys.exit("twin carve: --repo is the lane itself; carve only into a scratch clone")
+    units = {k: donor_units(v[0]) for k, v in LANES.items() if k != a.lane}
+    tix = {k: F.target_index(v[0], v[1]) for k, v in LANES.items() if k != a.lane}
+    syms = {}
+    for l in open(os.path.join(a.repo, "config", game, "symbols.txt"), encoding="utf-8"):
+        m = re.match(r"\s*(\S+)\s*=\s*\.text:0x([0-9A-Fa-f]+);.*type:function.*size:0x([0-9A-Fa-f]+)", l)
+        if m:
+            syms[m.group(1)] = (int(m.group(2), 16), int(m.group(3), 16))
+    splits_p = os.path.join(a.repo, "config", game, "splits.txt")
+    stext = open(splits_p, encoding="utf-8").read()
+    have = set(re.findall(r"^(\S+):\s*$", stext, re.M))
+    rng = [(int(s, 16), int(e, 16)) for s, e in re.findall(r"\.text\s+start:0x([0-9A-Fa-f]+)\s+end:0x([0-9A-Fa-f]+)", stext)]
+    states, splits, decls, out = collections.Counter(), [], [], []
+    for line in open(a.rows, encoding="utf-8"):
+        r = json.loads(line)
+        if r.get("state") != "MATCH":
+            continue
+        f, g, d = r["fn"], r["donor_game"], r["donor"]
+        unit = f"factory_twin/{f}.c"
+        why = (None if SAFE.match(f) else "UNSAFE_NAME") or (None if os.path.basename(r["target"]).startswith("auto_")
+                                                           else "IN_NAMED_UNIT") or (None if f in syms else "NOT_MAIN")
+        if not why and unit in have:
+            why = "ALREADY_CARVED"
+        if not why:
+            s0, sz = syms[f]
+            if any(s <= s0 < e for s, e in rng):
+                why = "IN_EXISTING_SPLIT"
+        mp = None
+        if not why:
+            for dt in [t for t in tix[g].get(d) or [] if relocs(t, d) is not None]:
+                mp, w2 = rename_map(relocs(dt, d), relocs(r["target"], f), d, f)
+                if not w2:
+                    break
+                mp = None
+            why = None if mp is not None else "RENAME_NOT_REPRODUCED"
+        if why:
+            states[why] += 1
+            continue
+        path, cflags, _ = units[g][d]
+        src = apply_rename(open(path, encoding="utf-8", errors="replace").read(), mp)
+        dst = os.path.join(a.repo, "src", unit)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        open(dst, "w", encoding="utf-8", newline="\n").write(
+            f"/* F6 twin transfer: source of {g} {d} (masked body equal), {len(mp)} symbols renamed; objdiff 100% vs "
+            f"{a.lane}'s own target measured by factory/twin.py */\n" + src)
+        s0, sz = syms[f]
+        have.add(unit)
+        rng.append((s0, s0 + sz))
+        splits.append("%s:\n\t.text       start:0x%08X end:0x%08X\n" % (unit, s0, s0 + sz))
+        ver = r["mw_version"]
+        decls.append('Object(NonMatching, "%s", cflags=[%s]%s)' % (
+            unit, ", ".join(json.dumps(x) for x in cflags), "" if ver == own_ver else f', mw_version="{ver}"'))
+        out.append({"fn": f, "unit": unit, "donor_game": g, "donor": d, "size": sz, "mw_version": ver})
+        states["CARVED"] += 1
+    if out:
+        open(splits_p, "a", encoding="utf-8", newline="\n").write("\n" + "\n".join(splits))
+        cfg_p = os.path.join(a.repo, "configure.py")
+        cfg = open(cfg_p, encoding="utf-8").read()
+        body = "\n".join("            %s," % x for x in decls)
+        lib = ('    {\n        "lib": "%s",\n        "mw_version": "%s",\n        "cflags": cflags_base,\n'
+               '        "progress_category": "game",\n        "src_dir": "src",\n        "objects": [\n%s\n        ],\n    },\n'
+               % (a.lib, own_ver, body))
+        assert "config.libs = [\n" in cfg, "configure.py has no config.libs list"
+        open(cfg_p, "w", encoding="utf-8", newline="\n").write(cfg.replace("config.libs = [\n", "config.libs = [\n" + lib, 1))
+        with open(os.path.join(FACTORY, "twin", f"carved_{a.lane}.jsonl"), "w", newline="\n") as w:
+            for x in out:
+                w.write(json.dumps(x) + "\n")
+    print(json.dumps({"carved": len(out), "bytes": sum(x["size"] for x in out), "states": dict(states)}))
 
 
 if __name__ == "__main__":

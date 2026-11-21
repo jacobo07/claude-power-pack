@@ -6,7 +6,8 @@
    {"run": "wp-main-full", "producer": "factory", "lib": "Factory", "compiler": "Wii/1.1"},
    {"run": "typegen/wp-vs2-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/1.1"},
    {"run": "stages/perm-SUPP01-main", "producer": "factory_perm", "lib": "FactoryPerm", "compiler": "Wii/1.1",
-    "compiler_path": "/home/kobii/agora/factory/wp-repo/build/compilers/Wii/1.1/mwcceppc.exe"}
+    "compiler_path": "/home/kobii/agora/factory/wp-repo/build/compilers/Wii/1.1/mwcceppc.exe"},
+   {"run": "twin/pilot/twin_WIIPARTY.jsonl", "producer": "twin", "lib": "FactoryTwin", "compiler": "Wii/1.1"}
   ]},
  {"lane": "MKW", "binary": "RMCP01", "repo": "/home/kobii/missions/mkw-decomp", "scratch": "/home/kobii/agora/factory/mkw-f2",
   "game": "RMCP01", "binaries": ["build/RMCP01/main.dol", "build/RMCP01/StaticR/StaticR.rel"], "report": "build/RMCP01/report.json",
@@ -15,7 +16,8 @@
    {"run": "mkw-main-full", "producer": "factory", "lib": "FactoryF5", "compiler": "Wii/0x4201_127"},
    {"run": "mkw-staticr-full", "producer": "factory", "lib": "FactoryF5", "compiler": "Wii/0x4201_127"},
    {"run": "typegen/mkw-vs2-main-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/0x4201_127"},
-   {"run": "typegen/mkw-vs2-staticr-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/0x4201_127"}
+   {"run": "typegen/mkw-vs2-staticr-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/0x4201_127"},
+   {"run": "twin/pilot/twin_MKW.jsonl", "producer": "twin", "lib": "FactoryTwin", "compiler": "Wii/0x4201_127"}
   ]},
  {"lane": "MKWLIB", "binary": "RMCP01", "repo": "/home/kobii/missions/mkw-lib", "scratch": "/home/kobii/agora/factory/mkwlib-f2",
   "game": "RMCP01", "binaries": ["build/RMCP01/main.dol", "build/RMCP01/StaticR/StaticR.rel"], "report": "build/RMCP01/report.json",
@@ -29,6 +31,7 @@
   "links": ["orig/RZTP01", "build/compilers", "build/tools"],
   "runs": [
    {"run": "wsr-main-full", "producer": "factory", "lib": "FactoryF5", "compiler": "Wii/1.0"},
-   {"run": "typegen/wsr-vs2-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/1.0"}
+   {"run": "typegen/wsr-vs2-full", "producer": "factory_vs2", "lib": "FactoryVs2", "compiler": "Wii/1.0"},
+   {"run": "twin/pilot/twin_WSR.jsonl", "producer": "twin", "lib": "FactoryTwin", "compiler": "Wii/1.0"}
   ]}
 ]
