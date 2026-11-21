@@ -62,8 +62,15 @@ dispatched `ceps.py from-stop` (turns=1, tool_result excluded); CLI path produce
 
 ## Debt / frontier (named)
 
-- Top real finding: PreToolUse Write/Edit/PowerShell hooks time out ~4-5% of runs (123/2407, 108/1880, 97/2771 in 7d),
-  i.e. their guards fail open. Confounder: host RAM (child session started at 4.9% free). Owner: hook-dispatcher.js.
+- TRIAGED (`02d83b9e`): the PreToolUse Write/Edit/PowerShell timeouts are HOST-WIDE STALLS, not slow hooks.
+  62% of 1,861 timeouts (7d, all projects) had another session's timeout within 15 s vs 8% at random times;
+  RAM near each (dispatcher log, <=120 s): p50 3.8% free, 90% under 10%. The victims (gsd-read-guard.js,
+  lazarus-livesnap.js, session-file-guard.js, cdio_visual_advisory.js) cost ~170-190 ms on a calm host (measured
+  5x each), 25x under their 5 s cap. "~4-5% of runs" was wrong: recorded runs omit silent successes, so it is not
+  a rate. Owner: host load (26 claude processes at measurement vs the Owner's own cap of 2). Not raising any hook
+  timeout. Limit: no RAM base-rate sampler exists, so "low RAM causes it" is strongly suggested, not proven.
+  Separate, in the dispatcher log: Stop-chain `mark-live-session.js` hits its 8 s ETIMEDOUT 1,724x/7d and
+  `capsule_mutation_guard.js` (block+critical) 483x -- a blocking guard timing out is a fail-open question.
 - Ripgrep timeouts on Glob/Grep: 11 failures across 10 sessions (7d).
 - `test_ceps_admission` takes 129 s > verify_spp's 60 s cap: its verify_spp row has never produced a verdict.
 - Dispatcher drift: `corpus-reuse-sentinel.js` is registered in CANONICAL only (live: 0). Whether to activate it is
