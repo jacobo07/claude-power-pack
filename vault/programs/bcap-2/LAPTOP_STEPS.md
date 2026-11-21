@@ -58,6 +58,12 @@ B2. BI-16 cross-platform determinism (sigilgen c3f605b7): GEX44 measured same-ho
     identity PASS; a different hash is the finding, recorded as-is. A CCF adapter for the vector lane is NOT built (needs that
     result and Owner direction on shipping a Node dependency); BI-16 stays PARTIALLY_PROVEN.
 
+B3. SaaS style 1 (dark monochrome) CDIO-06 sec.10 rules 5 and 6 are still open: rule 5 needs a real Tab-key focus-ring
+    measurement and rule 6 a reference with a dark modal, both against live third-party sites. On the laptop, in a real
+    browser, record for Linear, Vercel and Raycast: the focus-ring colour/width after one Tab press, and the modal background
+    vs page background (computed styles). Commit the numbers under `vault/programs/bcap-2/saas-styles/` as data; the rules stay
+    PROVISIONAL until then.
+
 ## Platform note
 On Windows, `test_bcap2_dbg` (Linux-path real-bug replay), `test_bcap2_tdd` (needs the pytest+coverage interpreter) and
 `test_bcap2_ruflo` (symlink privilege, WinError 1314) fail for platform reasons; `test_bcap2_synsation` 38/0 and

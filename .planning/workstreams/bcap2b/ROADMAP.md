@@ -47,7 +47,7 @@ push, deploy or activate anything; Ruflo stays HOLD (activation is the Owner's).
   UNASSESSED never FAIL, report by default, enforce opt-in per check via `config["creative_checks"]`; extend
   creative_checks.run, do not add a second runner. Includes BI-16 cross-platform + CCF adapter. AC1 of that spec must stay
   true (existing CCF suites byte-for-byte). Ceiling 30M.
-- [ ] **Phase 6: CDIO SaaS style 3.** Spec `2026-10-02_cdio-modern-saas-styles.md`; the Owner confirmed option (b) for
+- [x] **Phase 6: CDIO SaaS style 3.** Spec `2026-10-02_cdio-modern-saas-styles.md`; the Owner confirmed option (b) for
   style 3 (session_lessons 2026-11-20 "style-3 (b) confirmed"). All three styles selectable and scored. Ceiling 15M.
 - [ ] **Phase 7: Ruflo residuals runnable on GEX44.** Inside the existing sandbox `/home/kobii/ruflo-sandbox-bcap2` only:
   runtime advisory verification, dist identity, `npm audit` recorded in the ledger. Activation stays refused. Ceiling 15M.
