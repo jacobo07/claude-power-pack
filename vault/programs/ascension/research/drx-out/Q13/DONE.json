@@ -1,0 +1,14 @@
+{
+ "q": "Q13",
+ "gap": "M-TOOLS",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 436.1,
+ "artifacts": [
+  "2026-11-21_121841_which-public-github-repositories-automate-matching.ledger.json",
+  "2026-11-21_121841_which-public-github-repositories-automate-matching.md",
+  "2026-11-21_125122_which-public-github-repositories-automate-matching.ledger.json",
+  "2026-11-21_125122_which-public-github-repositories-automate-matching.md",
+  "which-public-github-repositories-automate-matching.raw.jsonl"
+ ]
+}

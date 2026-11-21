@@ -5,6 +5,30 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-21 ~12:00Z (pane 3581ade8, /kresume of 34385bd2; Owner "y" + "investiga en paralelo con DRX en github").**
+S216W re-judged: judge AGREE (ledger row 1779, 1.12M tokens), lib_donor2 excluded once (`owner_exclusion_used`, state
+popped). The autopilot proved all 6 pre-existing reds rc 1 at base 315db911 AND HEAD (cron.out 11:45-11:51Z: dtk_split
+900 s internal link timeout, lay, lib_donor3, pd, pd5, tu_split). Class credited = **CAPABILITY** (hs216 held-out 0->24),
+**NOT CERT**: `verify_certs` (autopilot.py:514) counts rows holding the string "CERTIFIED". The wp-dol-link-v1 receipts carry
+no verdict field (CERTIFIED lives in `counters_<gen>.json` decide.CERTIFIED). 0 of 184 rows across S147W 82 / S156W 4 /
+S157W 40 / S158W 13 / S159W 5 / S216W 40 count. OWNER QUESTION (certification-rule change): let verify_certs accept rows of
+a receipts file registered in receipt_registry.json when its same-commit counters file says decide.CERTIFIED == the
+distinct added rows. The alternative, rewriting the receipts, breaks "historical receipts byte-identical". WIIPARTY then
+armed S226W m-2d590c4f18dd (10M, wp_game_handsource_smallest) 11:52:57Z.
+F6 twin transfer spec'd (PP eab87a14, 5c37737e, ee0af460):
+- Census: phase 1 = 867 one-function-donor twins (WSR 600, MKW 263, WIIPARTY 4); phase 2 = 551 TU donors.
+- Prior art verified at source: Ketbome/decomp-skills `dk twins` (MIT, MIPS/splat), to port to PPC.
+- twin.py NOT built: awaits the Owner's y.
+DRX Q13-Q16 (`research/drx-out/`, synthesis `research/GITHUB-RESOURCES-2026-11-21.md`):
+- The reports are thin and self-declared unanswered. Q13 needed a rerun (`CLAUDEPP_RESEARCH_LLM_TIMEOUT_S=240`; the
+  decompose call hit 120 s).
+- gh-verified: galaxymaster2007/mwcceppc-linux (MIT; relinks mwcceppc.exe into a native ELF with wibo wrappers). Tested
+  only on sha1 46cc62c8 = our GC/3.0a3.2 and 310620c3 = our Wii/1.3; NOT on our lane compilers Wii/1.0 0c3f0b23,
+  Wii/1.1 c3e44c90, Wii/1.7 cc38fa03, 0x4201_127 d72ee390. A throughput lever to test.
+- Also seen: RootCubed/mwcceppc-decomp (Wii 1.1, no licence); Raikaru/mwccps2-debugger (MIT, PS2 only).
+DEBT: GitHub MCP token 401 (use `gh`).
+NEXT: Owner on the verify_certs counters rule; twin.py WSR pilot; mwcceppc-linux bench on a tested hash.
+
 **2026-11-21 ~10:55Z (pane 34385bd2, Owner "Excepcion puntual").** lib_donor2 at HEAD: rc 124 at 3600 s (relinks main.dol per mutant over the factory's ~2,000 units; 114 s pre-factory). Owner ruled a one-off exclusion of tools/test_wp_lib_donor2.py for S216W only. DEPLOYED 10:53Z under cron.lock + factory-apply-WIIPARTY.lock (PP 70bbe7bc): lane state `owner_excluded` is appended to the judge prompt for that checkpoint once (owner_exclusion_text), then popped + ledger `owner_exclusion_used`; excluded_ok still proves age. Gate /tmp/apgate-34385d 323/323, mutants 135/135, control red. autopilot 0b0ca3f2 -> ac87b3c3, test 0ae4b305 -> 0f0bfbf7; WIIPARTY lanes.json bootstrap_checkpoint = evidence/ascension/s216w/checkpoint_s216w.md, state mission None / WAITING / base 315db91 kept; backups `*.bak-34385-owner-20261121T105335Z`, ledger `owner_exclusion`. NEXT: read WIIPARTY's next-tick judgment in cron.out/owner_queue (pre-existing-red reruns of 6 gates ~35 min under cron.lock); AGREE -> 40 S216W certs; then S2 twin transfer, MKWLIB vs2, TENNIS D4, FIFA lane.
 
 **2026-11-20 ~23:10Z (pane 34385bd2, Owner "Rojo en la base").** PRE-EXISTING RED deployed 23:05Z under cron.lock (PP 4b338bf6): judge marks `pre_existing_red: true`; autopilot.pre_existing_ok re-runs the gate at the generation base AND HEAD in scratch worktrees (ignored inputs copied), needs same-rc red at both, never a timeout (124/137 = observed nothing), gate at base + unchanged, cmd `[timeout N] python3 tools/<x>.py`; caps PRE_RED_MAX 8, PRE_RED_WALL_S 3600, PRE_RED_TIMEOUT_S 1200 (holds cron.lock). Gate /tmp/apgate-34385b 321/321, mutants 134/134, control red; review WARNING fixed (HIGH-1 nested ignored path, MEDIUM-1, MEDIUM-3; MEDIUM-2 = ignored inputs are today's copies, documented). CAS autopilot 1bb4b76c -> 0b0ca3f2, test 71568e99 -> 0ae4b305, judge_prompt 7dcb4806 -> a842fc99, backups `*.bak-34385-prered-20261120T230546Z`. WIIPARTY evidence (`agora/wpgate-34385/results.tsv`, worktrees pre=370ec95 = faf7699^, head=c0d8661): lay/pd/pd5 red BEFORE the factory (census differs), dtk_split rc 1 both (internal TimeoutExpired in wsr-decomp wibo, ~960 s), lib_donor3 + tu_split GREEN pre-factory -> red at HEAD, lib_donor2 red 114 s pre-factory but TIMEOUT at 1200 s at HEAD -> would block S216W; 1-hour run at HEAD launched (`head_.ld2_long.log`). WIIPARTY NOT re-judged yet (lane PARKED, S216W HALTED capital). NEXT: read ld2_long; finishes red -> re-judge S216W (bootstrap from the s216w checkpoint); else Owner question on factory-slowed gates. DEBT: dry_writes_real mutant killed by crash (stub mkdtemp lacks dir=).
