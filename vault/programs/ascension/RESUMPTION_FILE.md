@@ -30,7 +30,10 @@
   - Retro-credit by `verify_cert`, read-only: S216W 40 True -> ledger `retro_cert`.
   - S147W/S156W (counters without decide.CERTIFIED) and S157W-S159W (registry in a later commit) are refused and stay
     uncredited (rule change = Owner).
-NEXT: MKWLIB re-judge (expect a designed lever); S241M result; WSR 566 at the next window.
+- 16:51-16:56Z MKWLIB re-judge: DISAGREE (0.38M tokens).
+  - lever_design 0.75M -> `mkwl_bte_carve_base` (OBJDIFF_BASE_CARVE); evo_decision cls=JUDGE_DISAGREE action=research.
+  - Armed S247L m-ca761d2d241d (10M). No park: design-before-park is now proven on 2 lanes.
+NEXT: S241M (MKW) and S247L (MKWLIB) results; WSR 566 at the next window.
 
 **2026-11-21 ~15:10Z (pane 0ba4909a, /kresume of 3581ade8). DESIGN BEFORE EVERY PARK DEPLOYED 15:07:17Z** under
 cron.lock + all 8 factory-apply locks. CAS autopilot 96536c9e -> 01769437, evolve 67daa875 -> 5b8db480, test b2d4437b ->
