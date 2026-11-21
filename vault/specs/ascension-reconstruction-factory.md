@@ -203,6 +203,13 @@ the Owner's "y" on the pilot numbers.
 for a donor with a different masked hash.
 (d) Same-binary control: KSR donors -> WSR reproduce >= the 535 port_ksr matched (ported units excluded from candidates).
 (e) Scratch gate: binaries OK, 0 lost, gained == carved MATCH count.
+**AC (a) MEASURED 2026-11-21 (pane 3581ade8, read-only `twin_census.py` over shared_bodies.json, which is built from the
+Nov 20 reports, and the LIVE reports: WSR 10,653 / MKW 9,320 / WIIPARTY 2,134 at 100).** Unmatched receivers:
+WSR: 600 with a one-function donor (40,944 B), 318 whose donor is matched only inside a TU, 360 with no matched twin.
+MKW: 263 (18,172 B), 30 TU-only, 290 none. WIIPARTY: 4 (252 B), 203 TU-only, 133 none.
+So phase 1 = **867** functions. Phase 2 (TU donors) = 551. A further WSR 4,338 / MKW 2,826 / WIIPARTY 3,719 have twins
+only in TENNIS/FIFA, which have no lane repo. Their match state was not read, so this is NOT a transfer count. The
+census's 3,541 shrank because the factory has matched many of them since.
 **Rollback.** twin.py writes only in a scratch clone. Each lane apply is one ff commit (`git reset --hard <base>`) plus
 the snapshot backup.
 
