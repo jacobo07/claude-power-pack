@@ -18,3 +18,17 @@ read. Scratch clones live outside the repo and are not kept. READ = file:line ci
 | op7418/logo-generator-skill @ bf4e9ac4 | **none** (`git ls-files | grep -i licen` = empty) | SKILL.md:1-20 (phase 1 information gathering), 13 files | No licence of any kind: all rights reserved. Workflow = collect product facts, then SVG + showcase HTML. | REFERENCE only, never adapt code or assets. |
 
 Residual honesty: the two Phase-3 rows are the only brand rows not yet READ; everything above is source-read at the pinned SHA.
+
+## Specialist libraries: pin + licence pass (campaign B Phase 1)
+Machine record: `SPECIALIST_PINS.json` (sha, LICENSE file + sha256). Disposition for all eight: **DECLINED for adoption in this campaign**, not 'unevaluated'. Reason: CCF's validators are pure-Python structural parsers and no BI gate depends on a Node/Rust/C++ tool; adopting one means a subprocess dependency on a binary absent from GEX44's gate path. Their page-level content was NOT read (licence + pin only), so no capability claim is made about any of them. If Phase 5 needs one it re-opens with a content read first.
+
+| repo @ sha | licence | role | rule |
+|---|---|---|---|
+| svg/svgo @ 31194fb4 | LICENSE sha256 d2b5640808ae | SVG optimiser (Node) | adaptable with NOTICE if ever adopted |
+| visioncortex/vtracer @ ea2e5368 | LICENSE sha256 81ee739f3557 | raster to SVG tracer (Rust CLI; logoloom shells out to it, see HR finding above) | adaptable with NOTICE if ever adopted |
+| color-js/color.js @ 9a8c0fe0 | LICENSE sha256 feee8a4ec164 | colour science library (JS) | adaptable with NOTICE if ever adopted |
+| style-dictionary/style-dictionary @ 795233d9 | LICENSE sha256 46ae5f0dc2e0 | design-token build tool (Node) | adaptable with NOTICE if ever adopted |
+| design-tokens/community-group @ 882ebd67 | LICENSE.md sha256 bf4cbbb7857e | DTCG token specification (spec text, not code) | licence = W3C-style Community Group terms (GitHub reports NOASSERTION): SPEC TEXT, principles only, never copy |
+| itgalaxy/favicons @ 30ec2042 | LICENSE sha256 ac8fe040a853 | favicon/app-icon generator (Node + sharp) | adaptable with NOTICE if ever adopted |
+| facebookresearch/faiss @ c11a75cb | LICENSE sha256 52412d7bc7ce | vector similarity search (C++/Python) | adaptable with NOTICE if ever adopted |
+| simple-icons/simple-icons @ 32e03008 | LICENSE.md sha256 9046848b63a5 | brand icon SVG set | CC0-1.0 code/metadata, but icons are third-party trademarks: never use as brand assets |

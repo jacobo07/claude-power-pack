@@ -23,7 +23,7 @@ Rows below marked `READ` were read there; rows marked `HYPOTHESIS` are the two w
 |---|---|---|
 | resvg | would give deterministic multi-size render | NOT USED: validators are pure-Python structural parsers; real render is laptop/paid plane |
 | fontTools | glyph coverage from a real font file | NOT USED: `check_font` consults a declared registry, not a font file |
-| SVGO, VTracer, color.js, Style Dictionary, DTCG, favicons, FAISS, Simple Icons | per backlog | UNVERIFIED, not evaluated |
+| SVGO, VTracer, color.js, Style Dictionary, DTCG, favicons, FAISS, Simple Icons | per backlog | DECLINE (campaign B Phase 1): sha + licence pinned in `SPECIALIST_PINS.json`; content not read; no BI gate needs a Node/Rust/C++ dependency; DTCG = spec text (principles only), Simple Icons = trademarks (never as brand assets) |
 
 ## Built in-repo (verified by the gate)
 BI-01/02 persisted real bytes + CONCEPT_REPORT vs BRAND_KIT split (PDF embeds the mark: BR-01/03); BI-03 BLOCK before provider (BR-04);

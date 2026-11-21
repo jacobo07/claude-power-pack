@@ -518,6 +518,24 @@ with tempfile.TemporaryDirectory() as t:
           any("decision" in x for x in TL.check_trace(repaired, None)) and any("reject" in x for x in TL.check_trace(repaired, "reject"))
           and any("nothing traced" in x for x in TL.check_trace(b"<svg/>", "inspect")))
 
+import re as _re2
+
+
+def pin_problems(rows):
+    return [r.get("repo", "?") for r in rows
+            if not _re2.fullmatch(r"[0-9a-f]{40}", r.get("pinned_sha") or "") or not _re2.fullmatch(r"[0-9a-f]{64}", r.get("license_sha256") or "")
+            or not r.get("license_file")]
+
+
+_sp = json.loads((ROOT / "vault/programs/bcap-2/brand/SPECIALIST_PINS.json").read_text(encoding="utf-8"))["rows"]
+check("BR-PIN specialist libs: 8 rows, each a 40-hex sha and a licence file + sha256", len(_sp) == 8 and not pin_problems(_sp), str(pin_problems(_sp)))
+check("BR-PIN pole: a short sha, a missing licence hash or a missing licence file is each named",
+      pin_problems([{"repo": "a", "pinned_sha": "abc", "license_sha256": "0" * 64, "license_file": "L"},
+                    {"repo": "b", "pinned_sha": "0" * 40, "license_sha256": None, "license_file": "L"},
+                    {"repo": "c", "pinned_sha": "0" * 40, "license_sha256": "0" * 64, "license_file": None}]) == ["a", "b", "c"])
+check("BR-PIN rule: DTCG is principles-only and Simple Icons is never a brand asset",
+      all(r["rule"].startswith(("licence = W3C", "CC0")) for r in _sp if r["repo"] in ("design-tokens/community-group", "simple-icons/simple-icons")))
+
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
 print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-17, BI-18, BI-19, BI-28, BI-29, BI-31, BI-34, BI-35) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

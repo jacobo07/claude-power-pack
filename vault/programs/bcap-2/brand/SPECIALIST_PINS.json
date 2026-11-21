@@ -1,0 +1,86 @@
+{
+ "checked": "2026-11-21",
+ "method": "git ls-remote + raw LICENSE bytes sha256 at the pinned sha; GitHub API licence field",
+ "rows": [
+  {
+   "repo": "svg/svgo",
+   "branch": "main",
+   "pinned_sha": "31194fb4b3b592d7a65956f8f3b343b9fd6b80a6",
+   "license_file": "LICENSE",
+   "license_sha256": "d2b5640808aeec9c243152ae733cf9cca3a86189ad7817bf50335290dbb31012",
+   "license_head": "MIT License Copyright (c) Kir Belevich Permission is hereby granted, free of charge, to an",
+   "role": "SVG optimiser (Node)",
+   "rule": "MIT/Apache: adaptable with NOTICE"
+  },
+  {
+   "repo": "visioncortex/vtracer",
+   "branch": "master",
+   "pinned_sha": "ea2e5368db83eb7b14905676fcb7cd7b00fb9db7",
+   "license_file": "LICENSE",
+   "license_sha256": "81ee739f355765c110fc89feff14ffffce829901f96ba811fd0b65a41a8636c7",
+   "license_head": "Copyright (c) 2024 TSANG, Hao Fung Permission is hereby granted, free of charge, to any pe",
+   "role": "raster to SVG tracer (Rust CLI; logoloom shells out to it, see HR finding above)",
+   "rule": "MIT/Apache: adaptable with NOTICE"
+  },
+  {
+   "repo": "color-js/color.js",
+   "branch": "main",
+   "pinned_sha": "9a8c0fe0229a010f9a3e37ac263098f2b0b7f717",
+   "license_file": "LICENSE",
+   "license_sha256": "feee8a4ec1649b385f3ec9ac73174501cbfc9d5a75171a056d94cb452d3f3ec3",
+   "license_head": "MIT License Copyright (c) 2021 Lea Verou, Chris Lilley Permission is hereby granted, free ",
+   "role": "colour science library (JS)",
+   "rule": "MIT/Apache: adaptable with NOTICE"
+  },
+  {
+   "repo": "style-dictionary/style-dictionary",
+   "branch": "main",
+   "pinned_sha": "795233d9bee6a7b5787d685d75d626df3399d24d",
+   "license_file": "LICENSE",
+   "license_sha256": "46ae5f0dc2e06a18cde8b06bdb45abea0b6e28d169e6eff2069536780304cf6e",
+   "license_head": "Apache License Version 2.0, January 2004 http://www.apache.org/licenses/ TERMS AND CONDITI",
+   "role": "design-token build tool (Node)",
+   "rule": "MIT/Apache: adaptable with NOTICE"
+  },
+  {
+   "repo": "design-tokens/community-group",
+   "branch": "main",
+   "pinned_sha": "882ebd6716abef9a46d8ef5fb12e82009d6cee2e",
+   "license_file": "LICENSE.md",
+   "license_sha256": "bf4cbbb7857eed7a71daf931386435bddf72a261610faa6a50c2e8016a8a028d",
+   "license_head": "All Reports in this Repository are licensed by Contributors under the [W3C Software and Do",
+   "role": "DTCG token specification (spec text, not code)",
+   "rule": "licence = W3C-style Community Group terms (GitHub reports NOASSERTION): SPEC TEXT, principles only, never copy"
+  },
+  {
+   "repo": "itgalaxy/favicons",
+   "branch": "master",
+   "pinned_sha": "30ec2042097bd749af174da047681080390810ba",
+   "license_file": "LICENSE",
+   "license_sha256": "ac8fe040a853c1dba2336f1647f97779c78d3f558e597b592cbfde5aeeb9e404",
+   "license_head": "MIT License Copyright (c) 2016-present time Permission is hereby granted, free of charge, ",
+   "role": "favicon/app-icon generator (Node + sharp)",
+   "rule": "MIT/Apache: adaptable with NOTICE"
+  },
+  {
+   "repo": "facebookresearch/faiss",
+   "branch": "main",
+   "pinned_sha": "c11a75cb6c75e3b0505a1de3460d882f3d1c3b87",
+   "license_file": "LICENSE",
+   "license_sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+   "license_head": "MIT License Copyright (c) Facebook, Inc. and its affiliates. Permission is hereby granted,",
+   "role": "vector similarity search (C++/Python)",
+   "rule": "MIT/Apache: adaptable with NOTICE"
+  },
+  {
+   "repo": "simple-icons/simple-icons",
+   "branch": "develop",
+   "pinned_sha": "32e030086fdc605196391aab28519b14dc4295b4",
+   "license_file": "LICENSE.md",
+   "license_sha256": "9046848b63a5c92bff14e4accca80bd987e0623b74adf9226ce5198d312b79d5",
+   "license_head": "# CC0 1.0 Universal ## Statement of Purpose The laws of most jurisdictions throughout the ",
+   "role": "brand icon SVG set",
+   "rule": "CC0-1.0 code/metadata, but icons are third-party trademarks: never use as brand assets"
+  }
+ ]
+}
