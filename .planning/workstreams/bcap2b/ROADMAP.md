@@ -43,7 +43,7 @@ push, deploy or activate anything; Ruflo stays HOLD (activation is the Owner's).
 - [x] **Phase 4: BI-24 illustrated brand book PDF.** Extend the existing kit PDF path in modules/ccf (residual: the PDF
   embeds a hash, not the image). Render toolchain installed in a scratch venv outside the repo; real PDF bytes checked
   (page count, embedded image present), both poles. Ceiling 25M.
-- [ ] **Phase 5: BI-15..35 on the CLI path.** Same rule as slice A (`vault/specs/bcap2-activation.md`): absent is
+- [x] **Phase 5: BI-15..35 on the CLI path.** Same rule as slice A (`vault/specs/bcap2-activation.md`): absent is
   UNASSESSED never FAIL, report by default, enforce opt-in per check via `config["creative_checks"]`; extend
   creative_checks.run, do not add a second runner. Includes BI-16 cross-platform + CCF adapter. AC1 of that spec must stay
   true (existing CCF suites byte-for-byte). Ceiling 30M.

@@ -44,3 +44,9 @@ Limits stated: base-14 fonts only (brand fonts are named, not rendered); typogra
 DECISION: no scratch-venv toolchain in the product path (only used to verify). Safe: internal. Next: Phase 5.
 
 Epoch 4 end: GSD phase dirs 01-04 written (PLAN/SUMMARY/VERIFICATION), roadmap boxes 1-4 ticked. Next: Phase 5 (BI-15..35 on the CLI path).
+
+### Phase 5 (epoch 5, CLOSED as scoped: BCAP2B-05; BI items stay PARTIALLY_PROVEN)
+done: `package` stage in `modules/ccf/creative_checks.py` (12 checks: BI-15,17,18,19,20,22/23,25,26,28,29,31,35), called from `cli.cmd_package` before any file is written, same report/enforce/UNASSESSED rule as slice A; file inputs project-relative only (traversal and missing files are FAIL). Gate `tools/test_bcap2_cli15.py` in done_gate (56+ checks, each check driven pass/fail/absent through the real CLI, 2 mutants). AC1 held: test_ccf 16, test_asc_ccf, test_bcap2_brand, test_bcap2_activation all PASS. Registry LIBRARY entries for brand_color/brand_release/brand_review/trace_lane removed (now reachable).
+open: BI-16 CCF adapter + cross-platform hash (LAPTOP_STEPS B2); BI-34 `applicable` is an agent-prompt router, not a project-config check, left LIBRARY-style; no real font/render/benchmark run exists, so every check reports on declared inputs only. Nothing is ACTIVATED (law 4 needs execution evidence on a real project, none exists).
+DECISION: no adapter for sigilgen without the cross-platform result and a Node dependency decision. Safe: internal, reversible.
+Spend: UNMEASURED. Meta: (1) a stage with many checks needs the check name threaded through the test runner, not parsed from the project dir name. (2) Declared-path inputs need a traversal refusal from day one. (3) Wiring let four registry LIBRARY notes go stale; removed. (4) Pole matrix per check (pass/fail/absent) was cheap once data-driven. (5) Next: Phase 6 SaaS style 3.

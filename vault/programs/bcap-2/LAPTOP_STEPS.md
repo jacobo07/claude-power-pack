@@ -52,6 +52,12 @@ B1. SaaS style 3 reference bank (conversational AI surface): ChatGPT, Perplexity
     `vault/programs/bcap-2/saas-styles/refs/` and commit them. Owner confirmed option (b) for style 3, so Phase 6 builds it from
     the dataset's own rules and records this bank as the missing external corroboration, never as a PASS.
 
+B2. BI-16 cross-platform determinism (sigilgen c3f605b7): GEX44 measured same-host, two processes, 11 cases, one combined hash
+    (`UPSTREAM_BRAND_PROBE.json`). On the laptop (Windows, Node >= 22): clone sigilgen at c3f605b7, `pnpm install --ignore-scripts`,
+    build, run `scripts/check-determinism.mjs`, and commit the combined hash beside the GEX44 one. Same hash = cross-platform
+    identity PASS; a different hash is the finding, recorded as-is. A CCF adapter for the vector lane is NOT built (needs that
+    result and Owner direction on shipping a Node dependency); BI-16 stays PARTIALLY_PROVEN.
+
 ## Platform note
 On Windows, `test_bcap2_dbg` (Linux-path real-bug replay), `test_bcap2_tdd` (needs the pytest+coverage interpreter) and
 `test_bcap2_ruflo` (symlink privilege, WinError 1314) fail for platform reasons; `test_bcap2_synsation` 38/0 and

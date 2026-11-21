@@ -83,7 +83,16 @@ def _tp_f(c, p): _w(p, "logo.svg", b'<svg xmlns="http://www.w3.org/2000/svg"><re
 def _tr_p(c, p): _w(p, "t.svg", SVG_TRACE_OK); c["trace"] = {"svg_path": "t.svg", "decision": "inspect"}
 def _tr_f(c, p): _w(p, "t.svg", SVG_TRACE_BAD); c["trace"] = {"svg_path": "t.svg", "decision": "inspect"}
 
-POLES = {"brand_color": (_col_p, _col_f), "export_profile": (_ex_p, _ex_f), "design_tokens": (_tk_p, _tk_f),
+import hashlib
+def _man(p, tamper=False):
+    data = b"logo-bytes"
+    _w(p, "mark.svg", b"tampered" if tamper else data)
+    return {"manifest": {"version": "1", "files": {"mark.svg": {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}}},
+            "files": ["mark.svg"]}
+def _rm_p(c, p): c["release_manifest"] = _man(p)
+def _rm_f(c, p): c["release_manifest"] = _man(p, True)
+
+POLES = {"release_manifest": (_rm_p, _rm_f), "brand_color": (_col_p, _col_f), "export_profile": (_ex_p, _ex_f), "design_tokens": (_tk_p, _tk_f),
          "application_preview": (_pv_p, _pv_f), "language_coverage": (_lc_p, _lc_f), "logo_lens": (_ll_p, _ll_f),
          "similarity": (_sm_p, _sm_f), "benchmark": (_bm_p, _bm_f), "independent_review": (_ir_p, _ir_f),
          "typed_parts": (_tp_p, _tp_f), "trace": (_tr_p, _tr_f)}
@@ -135,7 +144,7 @@ def main():
         p = project(t, "empty", base_cfg())
         code, out = package(p)
         names = creative_checks.STAGES["package"]
-        check("11 package checks registered (BI-15,17,19,20,22/23,25,28,29,31,35,18)", len(names) == 11, str(names))
+        check("12 package checks registered (BI-15,17,18,19,20,22/23,25,26,28,29,31,35)", len(names) == 12, str(names))
         check("empty config: every package check UNASSESSED (absent is not FAIL)",
               all(rec(p, n)["status"] == "UNASSESSED" and rec(p, n)["mode"] == "report" for n in names),
               str({n: (rec(p, n) or {}).get("status") for n in names}))

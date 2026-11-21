@@ -19,7 +19,8 @@ STAGES = {
     "select": ("critique",),
     # BI-15..35 (BCAP2B phase 5): the package stage, every input declared in config, absent = UNASSESSED.
     "package": ("brand_color", "export_profile", "design_tokens", "application_preview", "language_coverage",
-                "logo_lens", "similarity", "benchmark", "independent_review", "typed_parts", "trace"),
+                "logo_lens", "similarity", "benchmark", "independent_review", "typed_parts", "trace",
+                "release_manifest"),
 }
 MODES = ("report", "enforce")
 PASSING = ("PASS", "NARROW_BRIEF_EXCEPTION")
@@ -235,13 +236,30 @@ def _trace(config, concepts, project_dir=None, **_):
                      "traced SVG acceptable", measured=trace_lane.measure_trace(svg))
 
 
+def _release_manifest(config, concepts, project_dir=None, **_):
+    """BI-26: a declared immutable manifest is verified against the files it names (relative, inside the project)."""
+    spec = _declared(config, "release_manifest")
+    if not spec:
+        return _unassessed("config.release_manifest")
+    manifest, names = spec.get("manifest"), spec.get("files")
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("files"), dict) or not isinstance(names, list):
+        return _rec("FAIL", "release_manifest needs {manifest: {files: {...}}, files: [relative paths]}")
+    files = {}
+    for rel in names:
+        data, why = _read_svg(project_dir, rel)
+        if data is None:
+            return _rec("FAIL", why.replace("svg_path", "file"))
+        files[rel] = data
+    return _problems(brand_release.verify_manifest(manifest, files), f"{len(files)} file(s) match the manifest")
+
+
 CHECKS = {"brand_truth": _brand_truth, "territories": _territories, "techniques": _techniques,
           "identity_set": _identity_set, "visual_dna": _visual_dna, "provider_policy": _provider_policy,
           "critique": _critique, "brand_color": _brand_color, "export_profile": _export_profile,
           "design_tokens": _design_tokens, "application_preview": _application_preview,
           "language_coverage": _language_coverage, "logo_lens": _logo_lens, "similarity": _similarity,
           "benchmark": _benchmark, "independent_review": _independent_review, "typed_parts": _typed_parts,
-          "trace": _trace}
+          "trace": _trace, "release_manifest": _release_manifest}
 
 
 def modes(config) -> tuple:
