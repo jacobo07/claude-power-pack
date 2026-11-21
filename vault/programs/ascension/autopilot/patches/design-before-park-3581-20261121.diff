@@ -1,0 +1,17 @@
+diff --git a/vault/programs/ascension/autopilot/evolve.py b/vault/programs/ascension/autopilot/evolve.py
+index 1f6edee8..4686e47b 100644
+--- a/vault/programs/ascension/autopilot/evolve.py
++++ b/vault/programs/ascension/autopilot/evolve.py
+@@ -455,7 +455,11 @@ def plateau(ls: dict, levers: dict, lane: str, product: str, graph, family: str,
+     family: an open one from levers.json, else one the autopilot designs from the residual (synthesize)."""
+     d = _pivot(ls, family, evidence_delta, "METHOD_PLATEAU", f"lane {lane} plateau on {family}")
+     if d.get("action") != "pivot":
+-        return {"action": "park", "why": f"pivot rule: {d.get('why')}"}
++        # 2026-11-21 (Owner "y", pane 3581ade8: "figure out ways before parking themselves"): FIFA parked on the Gen2
++        # hard cap (5 pivots) and waited. The pivot rule's refusal now designs a lever of another family first; with none
++        # admitted it parks as before, and SYNTH_MAX still bounds designed levers that convert nothing.
++        return _synth_or_park(ls, levers, lane, product, family, designer, residual, f"pivot rule: {d.get('why')}",
++                              "pivot rule (design before park)")
+     lever = select(levers, lane, ls, product, graph, family_not=family)
+     if lever is None:
+         r = _synth_or_park(ls, levers, lane, product, family, designer, residual,
