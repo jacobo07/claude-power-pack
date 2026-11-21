@@ -12,6 +12,7 @@ ITEMS = [  # id, backlog, gate script (None = no code gate: scan-only phase), ve
     ("BCAP2-05", "Synsation", "tools/test_bcap2_synsation.py"), ("BCAP2-06", "SaaS styles", "tools/test_bcap2_saas.py"),
     ("BCAP2-07", "Brand identity", "tools/test_bcap2_brand.py"), ("BCAP2-08", "21 design resources", "tools/test_bcap2_d21.py"),
     ("BCAP2-08b", "21 resources B/C slice", "tools/test_bcap2_d21_bc.py"),
+    ("BCAP2B-05", "BI-15..35 package stage on the CLI path", "tools/test_bcap2_cli15.py"),
     ("BCAP2-09", "CPP-RUFLO-001", "tools/test_bcap2_ruflo.py")]
 NEW_MODULES = ("ruflo_gate", "cdicf/source_intake", "cdicf/reference_intel", "cdicf/reference_records", "cdicf/prompt_schema", "cdicf/component_install", "cdicf/component_meta", "cdicf/motion_select", "cdicf/source_route", "cdicf/scenario_guards", "ccf/asset_validator", "ccf/kit_readiness", "ccf/territories", "ccf/techniques", "ccf/critique", "ccf/identity_set", "ccf/provider_policy", "ccf/visual_dna", "ccf/brand_truth", "ccf/brand_color", "ccf/brand_release", "ccf/brand_review", "ccf/trace_lane", "ccf/brand_book", "cdio/ux_contracts")
 

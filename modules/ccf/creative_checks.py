@@ -9,12 +9,17 @@ No provider call, no repair of input, no network. Statuses: PASS | FAIL | NARROW
 """
 from __future__ import annotations
 
-from modules.ccf import (brand_truth, critique, identity_set, provider_policy, techniques, territories,
-                         visual_dna)
+import os
+
+from modules.ccf import (brand_color, brand_release, brand_review, brand_truth, critique, identity_set,
+                         provider_policy, techniques, territories, trace_lane, visual_dna)
 
 STAGES = {
     "generate": ("brand_truth", "territories", "techniques", "identity_set", "visual_dna", "provider_policy"),
     "select": ("critique",),
+    # BI-15..35 (BCAP2B phase 5): the package stage, every input declared in config, absent = UNASSESSED.
+    "package": ("brand_color", "export_profile", "design_tokens", "application_preview", "language_coverage",
+                "logo_lens", "similarity", "benchmark", "independent_review", "typed_parts", "trace"),
 }
 MODES = ("report", "enforce")
 PASSING = ("PASS", "NARROW_BRIEF_EXCEPTION")
@@ -110,9 +115,133 @@ def _critique(config, concepts, selected=None, actor=None, **_):
                 result=r, qualifying=[c["concept"] for c in crits if critique.qualifies(c)])
 
 
+def _declared(config, key, what=None):
+    v = config.get(key)
+    return v if isinstance(v, dict) and v else None
+
+
+def _problems(problems, ok_detail, **extra):
+    return _rec("FAIL" if problems else "PASS", "; ".join(problems) or ok_detail, problems=problems, **extra)
+
+
+def _read_svg(project_dir, rel):
+    """-> (bytes|None, why). A declared path that cannot be read is a FAIL input, never silently absent."""
+    if not project_dir or not isinstance(rel, str) or os.path.isabs(rel) or ".." in rel.replace("\\", "/").split("/"):
+        return None, f"svg_path {rel!r} must be relative inside the project"
+    try:
+        with open(os.path.join(project_dir, rel), "rb") as handle:
+            return handle.read(), None
+    except OSError as exc:
+        return None, f"svg_path {rel!r} unreadable ({exc.__class__.__name__})"
+
+
+def _brand_color(config, concepts, **_):
+    palette, pairs = _declared(config, "palette"), config.get("contrast_pairs")
+    if not palette:
+        return _unassessed("config.palette")
+    r = brand_color.check_palette(palette, pairs if isinstance(pairs, list) else [])
+    un = [row for row in r["rows"] if row["status"] == "UNASSESSED"]
+    detail = f"{len(r['rows'])} pair(s) measured" + (f", {len(un)} UNASSESSED" if un else "")
+    if not pairs:
+        detail += "; no contrast_pairs declared"
+    return _rec("FAIL" if r["problems"] else "PASS", "; ".join(r["problems"]) or detail, result=r)
+
+
+def _export_profile(config, concepts, **_):
+    prof = _declared(config, "export_profile")
+    if not prof:
+        return _unassessed("config.export_profile")
+    return _problems(brand_release.check_export_profile(prof), "export profile valid")
+
+
+def _design_tokens(config, concepts, **_):
+    toks = _declared(config, "design_tokens")
+    if not toks:
+        return _unassessed("config.design_tokens")
+    return _problems(brand_release.check_dtcg(toks), "DTCG tokens valid")
+
+
+def _application_preview(config, concepts, **_):
+    prev = _declared(config, "application_preview")
+    if not prev:
+        return _unassessed("config.application_preview")
+    dna = config.get("visual_dna") if isinstance(config.get("visual_dna"), dict) else {}
+    if not dna.get("id"):
+        return _rec("UNASSESSED", "application_preview declared but config.visual_dna.id is not")
+    return _problems(brand_release.check_preview(prev, dna["id"]), "all 9 contexts tested on one Visual DNA")
+
+
+def _language_coverage(config, concepts, selected=None, **_):
+    spec = _declared(config, "language_coverage")
+    if not spec:
+        return _unassessed("config.language_coverage")
+    r = brand_review.language_coverage(spec.get("font"), spec.get("registry") or {},
+                                       tuple(spec.get("langs") or ("ES", "EN", "PT", "FR", "DE")))
+    return _rec("PASS" if r["ok"] else "FAIL", r["why"], result=r)
+
+
+def _logo_lens(config, concepts, **_):
+    ev = _declared(config, "logo_review")
+    if not ev:
+        return _unassessed("config.logo_review")
+    r = brand_review.logo_lens(ev)
+    status = "FAIL" if r["verdict"] == "BLOCK" else ("PASS" if r["verdict"] == "APPROVE_PENDING_HUMAN" else "UNASSESSED")
+    return _rec(status, f"lens verdict {r['verdict']}", result=r)
+
+
+def _similarity(config, concepts, **_):
+    spec = _declared(config, "similarity")
+    if not spec:
+        return _unassessed("config.similarity")
+    r = brand_release.similarity_report(spec.get("corpus") or {}, spec.get("nearest") or [],
+                                        bool(spec.get("human_review")))
+    status = {"REVIEW": "FAIL", "SCREEN_NO_NEAR_MATCH": "PASS"}.get(r["verdict"], "UNASSESSED")
+    return _rec(status, f"{r['verdict']} (screening only; clearance {r['clearance']})", result=r)
+
+
+def _benchmark(config, concepts, **_):
+    briefs = config.get("benchmark_briefs")
+    if not isinstance(briefs, list) or not briefs:
+        return _unassessed("config.benchmark_briefs")
+    return _problems(brand_review.check_benchmark(briefs), "frozen benchmark set valid (denominators only)")
+
+
+def _independent_review(config, concepts, **_):
+    rev = _declared(config, "independent_review")
+    if not rev:
+        return _unassessed("config.independent_review")
+    return _problems(brand_review.review_independent(rev), "independent review record valid")
+
+
+def _typed_parts(config, concepts, project_dir=None, **_):
+    spec = _declared(config, "typed_parts")
+    if not spec:
+        return _unassessed("config.typed_parts")
+    svg, why = _read_svg(project_dir, spec.get("svg_path"))
+    if svg is None:
+        return _rec("FAIL", why)
+    r = brand_review.split_parts(svg)
+    return _rec("PASS" if r["ok"] else "FAIL", r["why"] if not r["ok"] else f"parts: {sorted(r['parts'])}")
+
+
+def _trace(config, concepts, project_dir=None, **_):
+    spec = _declared(config, "trace")
+    if not spec:
+        return _unassessed("config.trace")
+    svg, why = _read_svg(project_dir, spec.get("svg_path"))
+    if svg is None:
+        return _rec("FAIL", why)
+    return _problems(trace_lane.check_trace(svg, spec.get("decision"), spec.get("limits")),
+                     "traced SVG acceptable", measured=trace_lane.measure_trace(svg))
+
+
 CHECKS = {"brand_truth": _brand_truth, "territories": _territories, "techniques": _techniques,
           "identity_set": _identity_set, "visual_dna": _visual_dna, "provider_policy": _provider_policy,
-          "critique": _critique}
+          "critique": _critique, "brand_color": _brand_color, "export_profile": _export_profile,
+          "design_tokens": _design_tokens, "application_preview": _application_preview,
+          "language_coverage": _language_coverage, "logo_lens": _logo_lens, "similarity": _similarity,
+          "benchmark": _benchmark, "independent_review": _independent_review, "typed_parts": _typed_parts,
+          "trace": _trace}
 
 
 def modes(config) -> tuple:

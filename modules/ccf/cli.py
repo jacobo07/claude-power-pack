@@ -429,6 +429,12 @@ def cmd_package(args) -> int:
         print(f"error: selected concept {selected_id!r} not found in config")
         return EXIT_VALIDATION_ERROR
 
+    # BI-15..35 (BCAP2B phase 5): report-first creative checks; an enforced one stops before anything is written.
+    stop = _creative_gate(paths, "package", _load_json(paths["config"], {}) or {}, False,
+                          selected=selected_id, project_dir=args.project)
+    if stop is not None:
+        return stop
+
     image_artifact_views = _verified_views(paths, artifact_records)
     bundle = artifact_compiler.compile_artifacts([selected_concept], image_artifact_views, mode="brandkit")
     evaluation = evaluation_engine.evaluate_bundle(bundle)
