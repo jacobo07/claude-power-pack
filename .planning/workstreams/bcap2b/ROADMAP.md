@@ -51,7 +51,7 @@ push, deploy or activate anything; Ruflo stays HOLD (activation is the Owner's).
   style 3 (session_lessons 2026-11-20 "style-3 (b) confirmed"). All three styles selectable and scored. Ceiling 15M.
 - [x] **Phase 7: Ruflo residuals runnable on GEX44.** Inside the existing sandbox `/home/kobii/ruflo-sandbox-bcap2` only:
   runtime advisory verification, dist identity, `npm audit` recorded in the ledger. Activation stays refused. Ceiling 15M.
-- [ ] **Phase 8: Closeout.** done_gate aggregates every gate incl. the new ones; per-item verdict by plan law 4 (ACTIVATED
+- [x] **Phase 8: Closeout.** done_gate aggregates every gate incl. the new ones; per-item verdict by plan law 4 (ACTIVATED
   only with execution evidence on the real path); `vault/programs/bcap-2/HANDOFF-B.md` with per-item verdict and the
   laptop-only residuals listed. Ceiling 10M.
 

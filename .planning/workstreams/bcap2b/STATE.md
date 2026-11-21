@@ -57,3 +57,6 @@ DECISION: do not invent a scorer path for style 3 (would reverse a confirmed Own
 
 ### Phase 7 (epoch 6, CLOSED as scoped: BCAP2B-07)
 Audit + runtime drive were already measured by campaign A; ledger lines refreshed. New measurement dist_identity.py: all 525 src modules have dist js, bin/assets identical, but source checkout vs tarball diverge (mcp 3.1.6/3.1.8, security 3.0.7/3.0.8) -> DIST_BYTES_UNPROVEN. Gate test_bcap2_ruflo +5 checks PASS. Residuals to LAPTOP_STEPS B4. DECISION: no rebuild of dist on GEX44 (would run upstream build scripts). Safe: internal, no change. Spend: UNMEASURED. Next: Phase 8 closeout (HANDOFF-B.md).
+
+### Phase 8 (epoch 6, CLOSED: BCAP2B-08)
+done_gate PASS; HANDOFF-B.md written; all items PARTIALLY_PROVEN, none ACTIVATED. Milestone work complete; laptop B1-B4 remain. Spend: UNMEASURED.
