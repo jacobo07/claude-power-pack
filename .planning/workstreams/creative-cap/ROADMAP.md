@@ -71,3 +71,32 @@ Owner budget: ~220k net tokens guidance (orientative). Stop and name it in one l
   existing UKDL file (search equivalents first); BASELINE_CANDIDATES.json entry if earned; fresh-agent proof (one
   subagent given only a brief, observe it retrieve and select); HANDOFF.md in vault/programs/creative-cap/ with the
   Owner's two-layer handoff; plan file status updated.
+
+## Phase Details
+
+### Phase 1: M1 discovery benchmark first
+**Goal**: CC-03 baseline measured — tools/test_design_discovery.py runs 10 frozen scenarios A-J against today's index.
+
+### Phase 2: M2 Magic UI capability catalog
+**Goal**: CC-01 — catalog/magicui.json generated from the pinned upstream registry, count equals upstream.
+
+### Phase 3: M3 index repair
+**Goal**: CC-02 — every visual-patterns file and catalog record indexed; duplicate generic rows consolidated.
+
+### Phase 4: M4 need-aware ranking + eligibility + abstention
+**Goal**: CC-03/CC-04 — benchmark target mode beats the Phase-1 baseline on recall@5 and precision@5; D/H abstain; J refuses.
+
+### Phase 5: M5 automatic activation
+**Goal**: CC-05 — design route hook injects candidates or abstain on visual prompts only, proven through the real hook entry.
+
+### Phase 6: M6 Magic UI vertical proof
+**Goal**: CC-06 — one selected Magic UI capability rendered and verified in real Chromium with persisted evidence.
+
+### Phase 7: M7 best-of-each libraries
+**Goal**: CC-07 — every listed library dispositioned with a pinned licence read; SPECIALTY_MATRIX.md.
+
+### Phase 8: M8 composition intelligence
+**Goal**: CC-08 — composition budget in the candidate path; A, B, C, E get different pinned selections.
+
+### Phase 9: M9 hardening + ascension + handoff
+**Goal**: CC-09 — mutation drills caught, tools/test_creative_capability.py exit 0, UKDL, fresh-agent proof, HANDOFF.md.
