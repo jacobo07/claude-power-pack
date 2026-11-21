@@ -1133,6 +1133,26 @@ def run_all(ap):
           and len([r for r in ledger() if r["kind"] == "judge"]) == 1
           and len([r for r in ledger() if r["kind"] == "replan_resume"]) == 1)
     ap.judge = _kj
+    # 2026-11-21 (Owner "y", pane b9040a8e): a day-cap wait before arming keeps the judgment; a resumed wait makes no
+    # model call until the caps fit; then it re-plans once and arms without a re-judge
+    st = fresh(101)
+    _bw, _kb, _kp = {"judge": 0, "plan": 0, "short": True}, ap.budget_admits, ap.plan
+    ap.budget_admits = lambda rows, now, ask=ap.GEN_CAP: (
+        "today 1 + 2 > 3 (waits for the next UTC day)" if _bw["short"] and ask < ap.GEN_CAP else None)
+    ap.judge = lambda *a: (_bw.__setitem__("judge", _bw["judge"] + 1), _kj(*a))[1]
+    ap.plan = lambda *a: (_bw.__setitem__("plan", _bw["plan"] + 1),
+                          {"title": "t", "facts": [], "phases": GOOD, "_tokens": 5})[1]
+    calls.clear()
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-BUDGET-WAIT-KEEPS-JUDGMENT", _bw["judge"] == 1 and not any(c[0] == "arm" for c in calls)
+          and (st["lanes"]["L"].get("pending_plan") or {}).get("wait_caps") == 15_000_000)
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-BUDGET-WAIT-NO-CALL", _bw["judge"] == 1 and _bw["plan"] == 1 and not any(c[0] == "arm" for c in calls))
+    _bw["short"] = False
+    ap.lane_tick(st, lanes[0], False)
+    check("V-AP-BUDGET-WAIT-ARMS-WITHOUT-REJUDGE", _bw["judge"] == 1 and _bw["plan"] == 2
+          and any(c[0] == "arm" for c in calls) and "pending_plan" not in st["lanes"]["L"])
+    ap.budget_admits, ap.plan, ap.judge = _kb, _kp, _kj
     # 2026-11-14 (Owner 'y', pane 4de9b293): MKW's first arm failed twice on `git add` of an archive dir never created
     # (a new lane has no .planning); then its commit failed unseen for lack of a git identity, and the staged tree it
     # left held the worker's relaunch for 3.5 h
@@ -1220,8 +1240,11 @@ def run_all(ap):
     ap.lane_tick(st, lanes[0], False)
     ap.classify_progress = orig_cls
     lsd = st["lanes"]["L"]
+    # 2026-11-21 (Owner "y", pane b9040a8e): the wait now KEEPS the judgment (pending_plan + wait_caps) and the checkpoint
+    # is not judged again (V-AP-BUDGET-WAIT-ARMS-WITHOUT-REJUDGE), so its class is counted once and stays counted
     check("V-AP-DAY-WAIT-DOES-NOT-DOUBLE-COUNT", lsd.get("status") != "PARKED" and lsd.get("judged_for") is None
-          and lsd.get("info_streak", 0) == 0 and not any(c[0] == "arm" for c in calls))
+          and lsd.get("info_streak", 0) == 1 and (lsd.get("pending_plan") or {}).get("wait_caps", 0) > 0
+          and not any(c[0] == "arm" for c in calls))
     ls, q = seq(["INFORMATION", "NONE", "INFORMATION"], 201)
     check("V-AP-NO-CONVERSION-PARKS", ls["status"] == "PARKED" and "without a certificate or capability" in q)
     ls, q = seq(["NONE", "NONE", "CERT", "NONE", "NONE"], 202)
@@ -2025,6 +2048,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "superseded_prior_ignored": lambda m: setattr(m, "_superseded", (lambda real: lambda g, n, prior=None: real(
              g, n, None))(m._superseded)),
          "superseded_not_recorded": lambda m: setattr(m, "superseded_record", lambda v, prior=None: dict(prior or {})),
+         "budget_wait_drops_judgment": lambda m: setattr(m, "BUDGET_WAIT_KEEPS_JUDGMENT", False),
+         "budget_wait_resume_calls": lambda m: setattr(m, "resume_wait", lambda pend: None),
          "policy_refusal_parks_at_once": lambda m: setattr(m, "POLICY_RETRY_TICKS", 0),
          "policy_retry_forever": lambda m: setattr(m, "POLICY_RETRY_TICKS", 99),
          "evo_owner_lever_ignored": _evo_mut(owner_lever=lambda *a, **k: None),

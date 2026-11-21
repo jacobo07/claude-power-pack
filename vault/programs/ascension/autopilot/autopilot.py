@@ -1597,6 +1597,23 @@ def checkpoint_from_branch(product: str, base, head) -> str:
     return ""
 
 
+# 2026-11-21 (Owner "y", pane b9040a8e): a day-cap WAIT before arming dropped the judgment (judged_for None, pending_plan
+# popped, snap restored), so every later tick re-judged, re-designed and re-planned the same checkpoint (~1-3M tokens)
+# until the caps fitted. Measured before the fix: 0 such waits in cron.out since 11-11 (the judge step reserves GEN_CAP
+# + 2 reserves first); reachable when other lanes spend during a ~30 min judgment near the day cap. The wait now keeps
+# the judgment like a RETRY, with the caps it waits for, and a resumed wait makes no model call until they fit.
+BUDGET_WAIT_KEEPS_JUDGMENT = True
+
+
+def resume_wait(pend: dict) -> str | None:
+    """The budget reason a kept budget-wait plan still waits for (a day-cap wait only), else None."""
+    caps = pend.get("wait_caps")
+    if type(caps) is not int or caps <= 0:
+        return None
+    why = budget_admits(ledger_rows(), _now(), caps)
+    return why if why and not why.startswith(PARK_REASONS) else None
+
+
 def resumable_plan(ls: dict, key: str) -> dict | None:
     """The judgment a policy refusal parked with, when the lane is un-parked on the SAME checkpoint hold: the re-plan
     starts from it and the judge is not called again. 2026-11-14 (S39K, Owner "y"): every un-park after a refusal
@@ -1721,6 +1738,12 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
         return
     pend = resumable_plan(ls, key)
     if pend:
+        wwhy = resume_wait(pend)
+        if wwhy:
+            ls["judged_for"] = None
+            save_state(st)
+            log(f"{lane['name']}: budget wait before arming {pend.get('gen')} (judgment kept, no call): {wwhy}")
+            return
         ledger_add(lane=lane["name"], kind="replan_resume", tokens=0, checkpoint=checkpoint,
                    verdict=pend["verdict"].get("verdict"), gen=pend.get("gen"))
         log(f"{lane['name']}: un-parked after a policy refusal on {key}: re-plan from the kept judgment, no re-judge")
@@ -1993,6 +2016,13 @@ def plan_and_arm(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, prod
         return _park(st, ls, lane["name"], f"lane envelope before arming {name}: {ew}",
                      f"PARKED at the lane envelope before arming {name}: {ew}", kind="envelope")
     why = budget_admits(ledger_rows(), _now(), caps)
+    if why and BUDGET_WAIT_KEEPS_JUDGMENT and not why.startswith(PARK_REASONS):
+        # a day-cap wait: keep the judgment, the design and the directive (counted once, like a RETRY)
+        ls["judged_for"] = None
+        ls["pending_plan"] = dict(pend, directive=pdir, next_lever=ls.get("next_lever"), wait_caps=caps, bad=[])
+        save_state(st)
+        log(f"{lane['name']}: budget wait before arming {name} (judgment kept): {why}")
+        return
     if why:
         ls["judged_for"] = None
         ls.pop("pending_plan", None)

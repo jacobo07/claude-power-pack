@@ -33,6 +33,17 @@
 - 16:51-16:56Z MKWLIB re-judge: DISAGREE (0.38M tokens).
   - lever_design 0.75M -> `mkwl_bte_carve_base` (OBJDIFF_BASE_CARVE); evo_decision cls=JUDGE_DISAGREE action=research.
   - Armed S247L m-ca761d2d241d (10M). No park: design-before-park is now proven on 2 lanes.
+- **BUDGET WAIT KEEPS THE JUDGMENT, deployed 18:17:59Z** (Owner "y") under cron.lock + all 8 apply locks.
+  - Before the fix: 0 arm-time budget waits in cron.out since 11-11; the 1,065 judge-step waits make no model call.
+    So it was a latent risk near the day cap, not a measured spend.
+  - Change: a day-cap wait before arming keeps pending_plan (judgment, design, directive, wait_caps). A resumed wait
+    makes no call until its caps fit, then re-plans once and arms with no re-judge. FROZEN/total/wall still park.
+  - Results:
+    - Gate /tmp/apgate-b904: PASS 348, mutants 147/147 (new: budget_wait_drops_judgment, budget_wait_resume_calls).
+    - Control (live 01769437 + new test): red on exactly V-AP-BUDGET-WAIT-{KEEPS-JUDGMENT,NO-CALL,
+      ARMS-WITHOUT-REJUDGE} + V-AP-DAY-WAIT-DOES-NOT-DOUBLE-COUNT. That last test was updated: the class is now
+      counted once and kept.
+  - CAS: autopilot 01769437 -> 257629d2, test da1f824f -> 989024a6, backups `*.bak-b904-budgetwait-20261121T181759Z`.
 NEXT: S241M (MKW) and S247L (MKWLIB) results; WSR 566 at the next window.
 
 **2026-11-21 ~15:10Z (pane 0ba4909a, /kresume of 3581ade8). DESIGN BEFORE EVERY PARK DEPLOYED 15:07:17Z** under
