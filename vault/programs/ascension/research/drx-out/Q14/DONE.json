@@ -1,0 +1,12 @@
+{
+ "q": "Q14",
+ "gap": "M-DONORS",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 630.6,
+ "artifacts": [
+  "2026-11-21_122930_which-public-github-decompilation-projects-for-gam.ledger.json",
+  "2026-11-21_122930_which-public-github-decompilation-projects-for-gam.md",
+  "which-public-github-decompilation-projects-for-gam.raw.jsonl"
+ ]
+}

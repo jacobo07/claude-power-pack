@@ -1,0 +1,1377 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-21_123629_how-do-large-decompilation-projects-or-tools-speed",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://arxiv.org/html/2505.11340v1",
+   "aliases": [],
+   "sha256": "423ceaf6f35840ca2a7e297c39789cd52057c45121a5760c85230d6c93136f83",
+   "chars": 25000,
+   "snapshot": "423ceaf6f35840ca2a7e297c39789cd52057c45121a5760c85230d6c93136f83.txt",
+   "retrieved_at": "2026-11-21T11:36:46+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://decompilation.wiki/",
+   "aliases": [],
+   "sha256": "83b707acea2d2e33659301a83296c8702e468cbdfb9aa4269e0a2f3d478171c0",
+   "chars": 3135,
+   "snapshot": "83b707acea2d2e33659301a83296c8702e468cbdfb9aa4269e0a2f3d478171c0.txt",
+   "retrieved_at": "2026-11-21T11:36:46+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://arxiv.org/abs/2608.24955",
+   "aliases": [],
+   "sha256": "032bdd67f93eaa559e8dbd596de7376e11502056a9317587f70fdedfc6a5c2c0",
+   "chars": 3953,
+   "snapshot": "032bdd67f93eaa559e8dbd596de7376e11502056a9317587f70fdedfc6a5c2c0.txt",
+   "retrieved_at": "2026-11-21T11:36:46+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://github.com/PackProject/compiler",
+   "aliases": [],
+   "sha256": "d50615a38d9dcfd42fefd221603254415233eea30d113022d05b3ac230a17f08",
+   "chars": 11398,
+   "snapshot": "d50615a38d9dcfd42fefd221603254415233eea30d113022d05b3ac230a17f08.txt",
+   "retrieved_at": "2026-11-21T11:37:24+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://github.com/zcanann/mwcc-rs",
+   "aliases": [],
+   "sha256": "b07eb267e8c1f97d418cf494bdaace2f80adaad8489acaca88f80dff137300ca",
+   "chars": 17924,
+   "snapshot": "b07eb267e8c1f97d418cf494bdaace2f80adaad8489acaca88f80dff137300ca.txt",
+   "retrieved_at": "2026-11-21T11:37:24+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://en.wikipedia.org/wiki/Metrowerks",
+   "aliases": [],
+   "sha256": "664356f193a490128f766170ff8567f8cfc7f1a53b18d7a82852e30c632d0d85",
+   "chars": 11232,
+   "snapshot": "664356f193a490128f766170ff8567f8cfc7f1a53b18d7a82852e30c632d0d85.txt",
+   "retrieved_at": "2026-11-21T11:37:24+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://arcanenibble.com/notes-on-wine-architecture-and-process-startup.html",
+   "aliases": [],
+   "sha256": "26ef26cc1e64f604abbb63613ffa7ac013bb36db8a23b7c677c60a78e8b09812",
+   "chars": 9073,
+   "snapshot": "26ef26cc1e64f604abbb63613ffa7ac013bb36db8a23b7c677c60a78e8b09812.txt",
+   "retrieved_at": "2026-11-21T11:37:38+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://www.howtogeek.com/your-wsl2-projects-are-running-much-slower-because-you-put-them-on-the-windows-filesystem/",
+   "aliases": [],
+   "sha256": "9bd77cd5ec135972e11951aa868ebbb06ea16af0ba9b52101bf6e328bff5ddc1",
+   "chars": 7832,
+   "snapshot": "9bd77cd5ec135972e11951aa868ebbb06ea16af0ba9b52101bf6e328bff5ddc1.txt",
+   "retrieved_at": "2026-11-21T11:37:38+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://en.wikipedia.org/wiki/Compatibility_layer",
+   "aliases": [],
+   "sha256": "49ac9054c2378db3a4c443206acc8f68d1b4b318e6add06da46c90cafbb2c07d",
+   "chars": 10786,
+   "snapshot": "49ac9054c2378db3a4c443206acc8f68d1b4b318e6add06da46c90cafbb2c07d.txt",
+   "retrieved_at": "2026-11-21T11:38:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://learn.microsoft.com/en-us/windows/win32/winprog64/process-interoperability",
+   "aliases": [],
+   "sha256": "1e512bc053bd2c788a4061f2b40692e2bc0070bee45eaa6f32995302d2147ec5",
+   "chars": 2137,
+   "snapshot": "1e512bc053bd2c788a4061f2b40692e2bc0070bee45eaa6f32995302d2147ec5.txt",
+   "retrieved_at": "2026-11-21T11:38:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://en.wikipedia.org/wiki/WoW64",
+   "aliases": [],
+   "sha256": "929f8f4d8ae4177ae4a3e4931e39871ce5478d7cf3160e67362ba479032971ad",
+   "chars": 16211,
+   "snapshot": "929f8f4d8ae4177ae4a3e4931e39871ce5478d7cf3160e67362ba479032971ad.txt",
+   "retrieved_at": "2026-11-21T11:38:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://baike.baidu.com/en/item/Wine/1460278",
+   "aliases": [],
+   "sha256": "37dc34f202c6190f2273353f9a39f9294ba38d5fdc1359002f7c805ff3165e3f",
+   "chars": 18483,
+   "snapshot": "37dc34f202c6190f2273353f9a39f9294ba38d5fdc1359002f7c805ff3165e3f.txt",
+   "retrieved_at": "2026-11-21T11:38:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://grokipedia.com/page/Compatibility_layer",
+   "aliases": [],
+   "sha256": "c9f8a27f66f1c4a764b4291729a807207caf7dd85b7f03d5968ab71a9e7aa5b8",
+   "chars": 25000,
+   "snapshot": "c9f8a27f66f1c4a764b4291729a807207caf7dd85b7f03d5968ab71a9e7aa5b8.txt",
+   "retrieved_at": "2026-11-21T11:38:02+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://devblogs.microsoft.com/oldnewthing/20260615-00/?p=112419/",
+   "aliases": [],
+   "sha256": "2f242f85bbcf2a644638324eea62260b8097d51f8df789ba88aa1628bd11c4ef",
+   "chars": 5864,
+   "snapshot": "2f242f85bbcf2a644638324eea62260b8097d51f8df789ba88aa1628bd11c4ef.txt",
+   "retrieved_at": "2026-11-21T11:38:50+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://www.technobezz.com/news/microsoft-admits-windows-11-still-relies-on-1990s-win32-code-nobody-expected-to-survive",
+   "aliases": [],
+   "sha256": "8ba240c2dd692f11b6f00bc37982727aaba74ee92dbab25b5cbbb1d931d45511",
+   "chars": 5121,
+   "snapshot": "8ba240c2dd692f11b6f00bc37982727aaba74ee92dbab25b5cbbb1d931d45511.txt",
+   "retrieved_at": "2026-11-21T11:38:50+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://en.wikipedia.org/wiki/History_of_compiler_construction",
+   "aliases": [],
+   "sha256": "40c881f9b7acc02d8794943abae0e62da39d09948e6bfdf3fefd40a2a3f99fef",
+   "chars": 25000,
+   "snapshot": "40c881f9b7acc02d8794943abae0e62da39d09948e6bfdf3fefd40a2a3f99fef.txt",
+   "retrieved_at": "2026-11-21T11:38:50+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://en.wikipedia.org/wiki/Incremental_compiler",
+   "aliases": [],
+   "sha256": "ea0d0dd9ab71108c9ee56e84cefbdba5125210449f335c8eaac16885bf46eb24",
+   "chars": 6462,
+   "snapshot": "ea0d0dd9ab71108c9ee56e84cefbdba5125210449f335c8eaac16885bf46eb24.txt",
+   "retrieved_at": "2026-11-21T11:39:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://alexanderobregon.substack.com/p/how-jit-compilation-uses-code-caching",
+   "aliases": [],
+   "sha256": "409b9e3aaea8482c8d1f8c10630f674d1f8a94146956c0590d92cd151ef3d273",
+   "chars": 2199,
+   "snapshot": "409b9e3aaea8482c8d1f8c10630f674d1f8a94146956c0590d92cd151ef3d273.txt",
+   "retrieved_at": "2026-11-21T11:39:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://www.geeksforgeeks.org/java/just-in-time-compiler/",
+   "aliases": [],
+   "sha256": "78f7de8494c82f8b10c9b75efd6ff149f953234cd3c7f9c3c2ea9294acfcd074",
+   "chars": 4669,
+   "snapshot": "78f7de8494c82f8b10c9b75efd6ff149f953234cd3c7f9c3c2ea9294acfcd074.txt",
+   "retrieved_at": "2026-11-21T11:39:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://janvitek.org/pubs/oopsla23.pdf",
+   "aliases": [],
+   "sha256": "1f2c8da64d8d00f477a7fa761369f5ae126af11a8fb092d0f5a8cb8e81cfba7c",
+   "chars": 25000,
+   "snapshot": "1f2c8da64d8d00f477a7fa761369f5ae126af11a8fb092d0f5a8cb8e81cfba7c.txt",
+   "retrieved_at": "2026-11-21T11:39:01+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://www.usenix.org/system/files/atc22-curtsinger.pdf",
+   "aliases": [],
+   "sha256": "3d115fffcffad0d5f71c959af469f13baa0f1f2be83a00b4ad660bc2191c8f3d",
+   "chars": 25000,
+   "snapshot": "3d115fffcffad0d5f71c959af469f13baa0f1f2be83a00b4ad660bc2191c8f3d.txt",
+   "retrieved_at": "2026-11-21T11:39:26+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://ubos.tech/news/understanding-compiler-determinism-key-insights-and-practices/",
+   "aliases": [],
+   "sha256": "dcd6038a8df8bf8ff680c31d7f3617bfa51a61deb838d13a5948c52865fccac7",
+   "chars": 10079,
+   "snapshot": "dcd6038a8df8bf8ff680c31d7f3617bfa51a61deb838d13a5948c52865fccac7.txt",
+   "retrieved_at": "2026-11-21T11:39:26+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://docs.gradle.org/current/userguide/gradle_optimizations.html",
+   "aliases": [],
+   "sha256": "e5692fb61146e999c3bdb8be112c227382a3e3ec5a760404b9959e5efca14100",
+   "chars": 4957,
+   "snapshot": "e5692fb61146e999c3bdb8be112c227382a3e3ec5a760404b9959e5efca14100.txt",
+   "retrieved_at": "2026-11-21T11:39:26+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://docs.gradle.org/current/userguide/incremental_build.html",
+   "aliases": [],
+   "sha256": "78b58cf6379e7ed5c15183240f6d4fe8bea5fc6fcac20d590a678f1f8e73ef6a",
+   "chars": 25000,
+   "snapshot": "78b58cf6379e7ed5c15183240f6d4fe8bea5fc6fcac20d590a678f1f8e73ef6a.txt",
+   "retrieved_at": "2026-11-21T11:39:26+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S24"
+  },
+  {
+   "source_id": "S25",
+   "url": "https://docs.docker.com/learn/content/how-image-layers-and-the-build-cache-work/",
+   "aliases": [],
+   "sha256": "ffd4c7541a7f3cf016a3aa7687ae04a4d270ce1c030d4bad0cd9eeca72308951",
+   "chars": 22266,
+   "snapshot": "ffd4c7541a7f3cf016a3aa7687ae04a4d270ce1c030d4bad0cd9eeca72308951.txt",
+   "retrieved_at": "2026-11-21T11:40:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S25"
+  },
+  {
+   "source_id": "S26",
+   "url": "https://jonesrussell.github.io/blog/docker-build-performance/",
+   "aliases": [],
+   "sha256": "5b53198e456e3f37c777ee7787764e1c7819e8bf39f6b675b7acefbb7837e938",
+   "chars": 7634,
+   "snapshot": "5b53198e456e3f37c777ee7787764e1c7819e8bf39f6b675b7acefbb7837e938.txt",
+   "retrieved_at": "2026-11-21T11:40:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S26"
+  },
+  {
+   "source_id": "S27",
+   "url": "https://docs.docker.com/build/cache/optimize/",
+   "aliases": [],
+   "sha256": "ff5414dd0302f110548b011223b2686a4936a567282c86e221c78ba7054631c6",
+   "chars": 12659,
+   "snapshot": "ff5414dd0302f110548b011223b2686a4936a567282c86e221c78ba7054631c6.txt",
+   "retrieved_at": "2026-11-21T11:40:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S27"
+  },
+  {
+   "source_id": "S28",
+   "url": "https://www.k4nul.com/en/devops/docker-build-cache-and-invalidation/",
+   "aliases": [],
+   "sha256": "a054b67cd456a99df8d652f2a033eda5c5347a2fc4355cb5ed474efaac2339fd",
+   "chars": 7131,
+   "snapshot": "a054b67cd456a99df8d652f2a033eda5c5347a2fc4355cb5ed474efaac2339fd.txt",
+   "retrieved_at": "2026-11-21T11:40:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S28"
+  },
+  {
+   "source_id": "S29",
+   "url": "https://priodemy.com/blog/how-docker-images-are-built",
+   "aliases": [],
+   "sha256": "3f6e5294a8041c3c42d192f09410525bed01e35e9d8e674305748cd6a1216dda",
+   "chars": 12517,
+   "snapshot": "3f6e5294a8041c3c42d192f09410525bed01e35e9d8e674305748cd6a1216dda.txt",
+   "retrieved_at": "2026-11-21T11:40:10+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S29"
+  },
+  {
+   "source_id": "S30",
+   "url": "https://forums.unrealengine.com/t/compiling-the-same-code-twice-different-results/147796",
+   "aliases": [],
+   "sha256": "d24fe3b188d7e4fc111faf26d425828af85fcb477db9d888a4082ee8298ec1f8",
+   "chars": 89,
+   "snapshot": "d24fe3b188d7e4fc111faf26d425828af85fcb477db9d888a4082ee8298ec1f8.txt",
+   "retrieved_at": "2026-11-21T11:40:33+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S30"
+  },
+  {
+   "source_id": "S31",
+   "url": "https://khimananda.com/blog/incremental-and-parallel-builds-explained",
+   "aliases": [],
+   "sha256": "441201f8bd51e13bb3c06f57d356d3641678358c579b44a638c7235462961a2f",
+   "chars": 16511,
+   "snapshot": "441201f8bd51e13bb3c06f57d356d3641678358c579b44a638c7235462961a2f.txt",
+   "retrieved_at": "2026-11-21T11:40:45+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S31"
+  },
+  {
+   "source_id": "S32",
+   "url": "https://xenospectrum.com/en/decompilation-match-rate-melee/",
+   "aliases": [],
+   "sha256": "117bb15254c1ab54e1ed6445c54b3748c81157c029b9164be55f7d9fc2e75d27",
+   "chars": 23747,
+   "snapshot": "117bb15254c1ab54e1ed6445c54b3748c81157c029b9164be55f7d9fc2e75d27.txt",
+   "retrieved_at": "2026-11-21T11:40:46+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S32"
+  },
+  {
+   "source_id": "S33",
+   "url": "https://devblogs.microsoft.com/cppblog/faster-c-iterative-builds-with-github-copilot/",
+   "aliases": [],
+   "sha256": "c618e6d3a9c38855db51f426728d8e18352950f329f6c47d4764dae24b136506",
+   "chars": 6517,
+   "snapshot": "c618e6d3a9c38855db51f426728d8e18352950f329f6c47d4764dae24b136506.txt",
+   "retrieved_at": "2026-11-21T11:40:46+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S33"
+  },
+  {
+   "source_id": "S34",
+   "url": "https://arxiv.org/abs/2505.12668",
+   "aliases": [],
+   "sha256": "cae3e0cb35655f1e331e94c69456044b493849f3b1ae5a40439212c1e0199896",
+   "chars": 5001,
+   "snapshot": "cae3e0cb35655f1e331e94c69456044b493849f3b1ae5a40439212c1e0199896.txt",
+   "retrieved_at": "2026-11-21T11:41:34+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S34"
+  },
+  {
+   "source_id": "S35",
+   "url": "https://aclanthology.org/2025.findings-acl.1194/",
+   "aliases": [],
+   "sha256": "2f3fc2a4acc9bdfadfda33c4dda7f54cea9e98761de24c62b845b82a01ddff5a",
+   "chars": 13673,
+   "snapshot": "2f3fc2a4acc9bdfadfda33c4dda7f54cea9e98761de24c62b845b82a01ddff5a.txt",
+   "retrieved_at": "2026-11-21T11:41:34+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S35"
+  },
+  {
+   "source_id": "S36",
+   "url": "https://aclanthology.org/2025.findings-acl.1194.pdf",
+   "aliases": [],
+   "sha256": "4ef3147b740c76e511e473082252c84d6261b72cd6351c498fc2d4d03f25e987",
+   "chars": 25000,
+   "snapshot": "4ef3147b740c76e511e473082252c84d6261b72cd6351c498fc2d4d03f25e987.txt",
+   "retrieved_at": "2026-11-21T11:41:34+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S36"
+  },
+  {
+   "source_id": "S37",
+   "url": "https://zhangyuqun.github.io/publications/nips2025.pdf",
+   "aliases": [],
+   "sha256": "49a8feb238efd6fe35087670cf02597982ac458fa1c570290366dd181ac7ac3a",
+   "chars": 25000,
+   "snapshot": "49a8feb238efd6fe35087670cf02597982ac458fa1c570290366dd181ac7ac3a.txt",
+   "retrieved_at": "2026-11-21T11:41:34+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S37"
+  },
+  {
+   "source_id": "S38",
+   "url": "https://heldgames.com/guides/games-100-percent-decompiled-what-next",
+   "aliases": [],
+   "sha256": "a03579170e8b79c1fff139666308733958ec62c76a966d46aaf6d67971e69e1b",
+   "chars": 19344,
+   "snapshot": "a03579170e8b79c1fff139666308733958ec62c76a966d46aaf6d67971e69e1b.txt",
+   "retrieved_at": "2026-11-21T11:41:56+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S38"
+  },
+  {
+   "source_id": "S39",
+   "url": "https://f4decomp.com/",
+   "aliases": [],
+   "sha256": "70248c68030684ba5613316785808d0527e2932d982fb03d4be3ee857f30cf91",
+   "chars": 876,
+   "snapshot": "70248c68030684ba5613316785808d0527e2932d982fb03d4be3ee857f30cf91.txt",
+   "retrieved_at": "2026-11-21T11:41:56+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S39"
+  },
+  {
+   "source_id": "S40",
+   "url": "https://aisignal.day/en/ai-game-decompile-howto-2026/",
+   "aliases": [],
+   "sha256": "f6e3dbeaa147b68b7a3c929cdf2858ee9e4b2979bd9c6182d9f39c90c33e0588",
+   "chars": 18540,
+   "snapshot": "f6e3dbeaa147b68b7a3c929cdf2858ee9e4b2979bd9c6182d9f39c90c33e0588.txt",
+   "retrieved_at": "2026-11-21T11:41:56+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S40"
+  },
+  {
+   "source_id": "S41",
+   "url": "https://heldgames.com/guides/retro-decompilation-recompilation-explained",
+   "aliases": [],
+   "sha256": "c1872e376bfd6b0eaff420db52376c1fd094562b08b1370bda50864615082e95",
+   "chars": 17545,
+   "snapshot": "c1872e376bfd6b0eaff420db52376c1fd094562b08b1370bda50864615082e95.txt",
+   "retrieved_at": "2026-11-21T11:41:56+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S41"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S1",
+   "start": 23648,
+   "end": 23773,
+   "text": "Hex-Rays is recognized as the leading traditional decompiler, achieving the highest single optimization-level RSR of 0.706 at",
+   "sha256": "deb281b4e38b6cbb820097b5538aa115db6887afb5d71e6483db45a2b1333782"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S3",
+   "start": 1146,
+   "end": 1300,
+   "text": "Our review reveals key challenges, such as the lack of reliable ground truth and the absence of standardized benchmarks, which hinder rigorous comparison.",
+   "sha256": "0c41e91d27a6423cb97c1d98f9e662bc1de74c705bd0e5ec0e9072aeec277744"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S8",
+   "start": 2625,
+   "end": 2715,
+   "text": "Sometimes it is 2x slower, sometimes it is 10x slower, and in some cases, it can be worse.",
+   "sha256": "dd09106d7423734ba3dfa44085c54aed0ee71b02a9c281c86f7533a3229d46ae"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S8",
+   "start": 7533,
+   "end": 7619,
+   "text": "A change in location alters performance more than most configuration tuning ever will.",
+   "sha256": "7d846c822bb2f27d282ac5515a4614ae06b74003ad9837c0488cfacee762208e"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S7",
+   "start": 4789,
+   "end": 5035,
+   "text": "The\nstart_main_thread\nfunction starts setting up data structures that would be found in a Windows process such as the Process Environment Block (PEB) and the Thread Environment Block (TEB). It also launches and connects to the\nwineserver\nprocess.",
+   "sha256": "f8543e244db713af35cdcd43421ed987a7b450ac6af3279ae987df6b57148df9"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S11",
+   "start": 2541,
+   "end": 2638,
+   "text": "This is computationally cheap, as x86-64 machines have a native mode for running 32-bit x86 code.",
+   "sha256": "0b2b9bb8c1acd48bbbecc0743a7c384479aad1128a6e40adfb319f16b6f84e88"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S11",
+   "start": 8225,
+   "end": 8382,
+   "text": "According to Microsoft, 32-bit software running under WOW64 (x64) has similar performance to executing under 32-bit Windows, but with fewer threads possible.",
+   "sha256": "1f1fa43af78527facffe11b4829b963e1c09e26bfb3941102a7757e4f525c92d"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S12",
+   "start": 3712,
+   "end": 3826,
+   "text": "Users can also use the configuration tool to choose between using Wine's built-in DLLs or local Windows DLL files.",
+   "sha256": "5d5168785fac502e0e0182f0f1e917c8ccba89c5ed1f1d4c617d182c73856783"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S13",
+   "start": 24299,
+   "end": 24572,
+   "text": "For instance, benchmarks of Windows applications running under Wine on\nLinux\ncan reveal frame rate reductions of 0-20% for graphics-intensive tasks compared to native execution, depending on the application, hardware, and optimizations like those in recent Proton versions.",
+   "sha256": "e69b06ab058fcc0b8a1e1376aff8fce654b673c7ca91a5c8d7bd0d8f814e34bd"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S17",
+   "start": 2069,
+   "end": 2237,
+   "text": "One downside to this type of incremental compiler is that it cannot easily\noptimize\nthe code that it compiles, due to locality and the limited scope of what is changed.",
+   "sha256": "c7fccca16264fa0815cfc4c21082acd2d4f1230e3817bf6379f9e82905d7748e"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S18",
+   "start": 1294,
+   "end": 1410,
+   "text": "Instead of recompiling that native code over and over again, it holds onto it using something called the code cache.",
+   "sha256": "f635bce75d6cfacce9fc3202a6bbed5f07e427e72ad31db0febe129bbdf3d90f"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S19",
+   "start": 3350,
+   "end": 3561,
+   "text": "When the java virtual machine first starts up, thousands of methods are invoked. Compiling all these methods can significantly affect startup time, even if the end result is a very good performance optimization.",
+   "sha256": "493c3d6b5cd273e55028e3c91464ade245ca17d0ea2abe88792de4188231933f"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S24",
+   "start": 3299,
+   "end": 3437,
+   "text": "If a task property affects the output, be sure to register it as an input, otherwise the task will be considered up to date when it’s not.",
+   "sha256": "bc93df7e1f40eb8b3fdc02fa0cf55a66de6e7ba2b2a7630a9780be294877c89a"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S22",
+   "start": 3418,
+   "end": 3561,
+   "text": "Even minor differences in the C library, linker, or assembler version can alter register allocation, instruction scheduling, or section layout.",
+   "sha256": "d32d654c4a313c9055b95d9951f8fafa9ab6b94d2af85e2074f53a98a55b7dc2"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S24",
+   "start": 3588,
+   "end": 3784,
+   "text": "Also be careful of non-deterministic tasks that may generate different output for exactly the same inputs: these should not be configured for incremental build as the up-to-date checks won’t work.",
+   "sha256": "c9d02735904707290a819bd3200474d6bd1f652e8cc2124e66e43aa4f41f3e2c"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S25",
+   "start": 19236,
+   "end": 19315,
+   "text": "The same edit\nthat cost 41 seconds before now builds in a fraction of a second.",
+   "sha256": "e929a1e2ef4cc4457425ea1212f8dea85e98c653648fff8f077a76d9b48d8788"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S25",
+   "start": 20183,
+   "end": 20253,
+   "text": "Docker compares\nthe command text, not what the command would download.",
+   "sha256": "97bfcaed9da38671f8d5d5ad1137bd6a2d56c6c41eb5f47f5c83cff97b5ef933"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S28",
+   "start": 5609,
+   "end": 5767,
+   "text": "This is not a benchmark post with measured timings from repeated builds across real projects. It does not claim that one structure is always “N times faster.”",
+   "sha256": "f226cb25c8bf66c38a3f49bcfd103cdac944df948f9b5b04ea8031879fd36258"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S32",
+   "start": 7003,
+   "end": 7105,
+   "text": "The turning point was switching the judgment of correctness from AI review to byte-by-byte comparison.",
+   "sha256": "701de828f7da8c242065dea9390e18f8ba6fcb13de43880a50749557d1d29c67"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S32",
+   "start": 7379,
+   "end": 7587,
+   "text": "With clear pass/fail judgments, even low-cost models such as Haiku and Luna, which had not produced enough results before, could now carry the work forward, and he explained that this cut costs substantially.",
+   "sha256": "4621cfe2f7389ef9962c5f199249d11f71df02e5740a84ee727b8aef97ae65b1"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S32",
+   "start": 15637,
+   "end": 15785,
+   "text": "Lewis stresses that not only model performance but also human cooperation was important, stating, \"the community was more important than any model.\"",
+   "sha256": "6b2eb61292cdebd5282ea998f5f3f1af855d4e41583f635060eff02e97037284"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S35",
+   "start": 1245,
+   "end": 1495,
+   "text": "Through a systematic comparison between six industrial-strength decompilers and six recent LLM-powered approaches, we demonstrate that LLM-based methods surpass commercial tools in code understandability despite 52.2% lower functionality correctness.",
+   "sha256": "a496cc25a205953bfed05f4138d865f23e24b6a0d07b1cbdf1e528f76ea3aa95"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S34",
+   "start": 1587,
+   "end": 1828,
+   "text": "we introduce Decompile-Bench, the first open-source dataset comprising two million binary-source function pairs condensed from 100 million collected function pairs, i.e., 450GB of binaries compiled from permissively licensed GitHub projects.",
+   "sha256": "734f711290b2003773681acaa725781a7ae0583683ff88a024d2c7a41fd6e80f"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S32",
+   "start": 8718,
+   "end": 9012,
+   "text": "The remaining functions would not match byte for byte no matter how many times they were revised. Heumann cites nondeterministic behavior and an inability to reproduce a linker process called \"identical COMDAT folding,\" which merges functions with identical content into one, among the reasons.",
+   "sha256": "7d8dde834d5421852f06f470a6251dc200166afa5d91038cb1ad8b8470f34af3"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S40",
+   "start": 10296,
+   "end": 10444,
+   "text": "About 4.8% of matching commits involved expert intervention, and Lewis says the project would have stalled around 89–90% without that IDO expertise.",
+   "sha256": "ce9ef7e801d09b78d262a02317101d55e43b5ec259b3c045507ff6202f6c06a2"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S32",
+   "start": 5563,
+   "end": 5740,
+   "text": "decomp.dev's code match rate is the share of the total code bytes that is matched. The\n83%\nHeumann reported, by contrast, is the share of all functions that match byte for byte.",
+   "sha256": "d3f0d6c1bd84812e8e7ed805b52bb4f333b45e662963306fd75d98388f6a7f81"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S38",
+   "start": 9538,
+   "end": 9757,
+   "text": "That is not a completion percentage. It refers to an optional build that compiles with the original Xbox SDK compiler and compares the output against the retail binary, which is a verification mode rather than progress.",
+   "sha256": "2a4a83c43ce3262da7a653d7dc73686b685e97adf24311d8432f3e45125e4c23"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "The retrieved sources are decompiler-evaluation work and a community wiki. None report how long a Metrowerks compiler run takes, or how many runs per hour a matching-decompilation project achieves. Anyone budgeting build-farm time or compute for brute-force compiler-matching work therefore has no benchmark here and should plan to measure it directly or find project-level reports elsewhere.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What per-invocation time and throughput do decompilation projects actually measure when they run the old Metrowerks compiler many thousands of times, and where do they publish those numbers?",
+    "capability": "You can stop expecting published per-invocation timing or throughput figures for the old Metrowerks compiler from general decompilation research, and look in decompilation-project communities instead."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "DecompileBench scores 12 decompilers on three things: recompile success, runtime coverage equivalence, and LLM-judged readability. It reports no per-function time or throughput. Hex-Rays leads on average with 0.583 recompile success and 0.418 coverage equivalence across 23,400 functions. A cost or speed comparison between approaches would need separate measurement.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S1"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What per-invocation time and throughput do decompilation projects actually measure when they run the old Metrowerks compiler many thousands of times, and where do they publish those numbers?",
+    "capability": "You can treat the current decompiler benchmarks as measuring output quality, not compute cost, when deciding which decompilation approach to fund."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "A 2026 literature review states that the field lacks reliable ground truth and standardized benchmarks, which hinders rigorous comparison. Any timing or throughput numbers a decompilation project does publish are likely measured differently from other projects' numbers, so they cannot safely be compared directly.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E2"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What per-invocation time and throughput do decompilation projects actually measure when they run the old Metrowerks compiler many thousands of times, and where do they publish those numbers?",
+    "capability": "You can expect to compare approaches without a standard yardstick, and should not trust cross-project comparisons of speed or quality as like-for-like."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "When file-heavy tools run across a translation boundary (Linux tools reading Windows drives through WSL2), the slowdown comes from the boundary, not the tool, and ranges from roughly 2x to 10x or worse. Moving the project onto the native filesystem changes performance more than configuration tuning, so a compile-heavy loop like a permuter's would likely gain more from file placement than from faster machines.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3",
+    "E4"
+   ],
+   "source_ids": [
+    "S8"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does process startup and filesystem translation make the same Windows compiler binary run so differently across Wine, a lightweight loader and native Windows, and how much of a permuter's time goes to compiling versus scoring the resulting object against the target?",
+    "capability": "You can stop attributing slow, file-heavy build or compile workloads to the compute layer itself and instead decide where the work's files live before buying hardware or blaming the tooling."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "Wine startup passes through the host dynamic loader, a Unix-side ntdll, creation of Windows process structures, connection to a separate server process, and mapping of a Windows-side ntdll before the program runs. Each compile launched by an automated search loop pays this setup, so per-invocation overhead, not just compile speed, plausibly explains Wine's gap versus native Windows.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E5"
+   ],
+   "source_ids": [
+    "S7"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does process startup and filesystem translation make the same Windows compiler binary run so differently across Wine, a lightweight loader and native Windows, and how much of a permuter's time goes to compiling versus scoring the resulting object against the target?",
+    "capability": "You can treat a Windows program under Wine as a multi-stage startup (host loader, Unix-side library, server process, Windows-style environment) and so expect fixed per-launch overhead that matters most when a tool is launched thousands of times."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "Neither source gives timings for compiling versus scoring objects against a target, nor any head-to-head figures for Wine, a lightweight loader and native Windows. The split must be measured directly before spending on faster compilation or a different runtime.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does process startup and filesystem translation make the same Windows compiler binary run so differently across Wine, a lightweight loader and native Windows, and how much of a permuter's time goes to compiling versus scoring the resulting object against the target?",
+    "capability": "You can hold off on any investment decision about how permuter time splits between compiling and scoring, because these sources do not measure it."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "On ordinary 64-bit Intel/AMD Windows, the 32-bit compatibility subsystem switches the processor between modes rather than emulating instructions, which is computationally cheap, and Microsoft says performance is similar to native 32-bit Windows. So the per-call cost of a 32-bit compiler there is mostly not instruction translation, and the large overhead appears when software emulation is involved (non-x64 hosts) or comes from the surrounding work each launch does.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6",
+    "E7"
+   ],
+   "source_ids": [
+    "S11"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does launching a 32-bit Windows compiler under a compatibility layer cost so much per call, and which parts of that cost (process startup, loader, file system, licence checks, temporary files) can be removed without changing the generated machine code?",
+    "capability": "You can stop assuming a 32-bit compiler on 64-bit Windows pays a large CPU-translation tax per call, and look for the cost in process startup, file access and licensing instead."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "Compatibility layers add work on every launch beyond code execution: redirecting system-folder and registry access for 32-bit programs, loading Wine-style DLL sets, and for Wine the choice between built-in and native DLLs. These costs sit in the loader and file/registry paths, so they can in principle be reduced by caching, keeping the process resident or trimming what loads, without touching the machine code the compiler emits. The sources describe these mechanisms but give no per-call timings, so how much each contributes is unknown.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S11",
+     "quote": "When executing 32-bit applications, WoW64 transparently redirects access to \"system32\" (e.g. DLL loads) to %SystemRoot%\\SysWoW64, which contains 32-bit libraries and executables.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does launching a 32-bit Windows compiler under a compatibility layer cost so much per call, and which parts of that cost (process startup, loader, file system, licence checks, temporary files) can be removed without changing the generated machine code?",
+    "capability": "You can separate the cost of translating instructions from the cost of translating the environment, and decide whether a fix targets the compiler's output (unchanged) or its launch path."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "None of the retrieved sources quantify startup, licence-check or temporary-file cost for a compiler under a compatibility layer, and they only offer generic overhead figures, such as 0-20% frame-rate loss for Wine graphics workloads and 1.5-5x degradation for translation methods. Those numbers describe long-running programs, not the fixed cost of launching a short process thousands of times, so they should not be used to estimate build-time savings.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does launching a 32-bit Windows compiler under a compatibility layer cost so much per call, and which parts of that cost (process startup, loader, file system, licence checks, temporary files) can be removed without changing the generated machine code?",
+    "capability": "You can stop expecting these general sources to settle the licence-check and temporary-file question, and commission a direct measurement of one compiler launch instead."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "Incremental compilers reuse earlier output and recompile only changed pieces, which limits how much optimization they can apply because they see only a narrow slice of the program. The common practice is therefore to use incremental builds during development and a standard full batch compiler for release, so what you ship is not shaped by leftover state from earlier compilations.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10"
+   ],
+   "source_ids": [
+    "S17"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S17",
+     "quote": "This is usually not a problem, because for optimization is usually only carried out on release, an incremental compiler would be used throughout development, and a standard batch compiler would be use",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When a compiler is kept alive and reused across many compilations instead of being restarted each time, what leftover state from earlier compilations can change the code it produces, and how would anyone notice?",
+    "capability": "You can stop assuming that fast, rolling incremental builds are safe to ship, and instead require a full clean rebuild for release artifacts."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "A long-lived Java runtime compiles code on the fly based on what it observes the program doing, and keeps the results in memory so later calls skip the slow path. As a result, what gets compiled and how fast it runs depends on the workload history so far, and thousands of methods compiled at startup measurably affect startup time. Measurements taken early or on a differently exercised process will not match steady-state behavior.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E11",
+    "E12"
+   ],
+   "source_ids": [
+    "S18",
+    "S19"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "When a compiler is kept alive and reused across many compilations instead of being restarted each time, what leftover state from earlier compilations can change the code it produces, and how would anyone notice?",
+    "capability": "You can expect performance to drift during a long-running system's warm-up and plan benchmarks and capacity around that, rather than treating early slowness as a defect."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "Gradle's documentation states that if a task setting affects the output but is not registered as an input, the task will be treated as up to date when it is not, so stale results are served silently. Conversely, registering irrelevant settings causes needless rebuilds. The speedup therefore does not guarantee correctness; it depends on someone having declared every relevant input.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13"
+   ],
+   "source_ids": [
+    "S24"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to the correctness of cached or incrementally rebuilt compile results when compiler version, flags, include files, pragmas or environment differ slightly, and when have projects seen a speedup produce object files that differ from the original toolchain or a wrong match?",
+    "capability": "You can decide that a build-speed cache is only as trustworthy as the list of things it was told to watch, and make completeness of that list a precondition for adopting or expanding caching."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "One source lists what quietly breaks identical output even with the compiler version locked: embedded build timestamps, locale and timezone, file ordering, parallel builds changing archive order, absolute paths in debug info, minor linker/assembler/C-library differences, and compiler internals that depend on memory layout. Any of these can make a cached result differ from a fresh build, so a cache hit and a rebuild may not be interchangeable. The source is a vendor blog with no incident data, so treat it as a checklist, not evidence of frequency.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S22"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to the correctness of cached or incrementally rebuilt compile results when compiler version, flags, include files, pragmas or environment differ slightly, and when have projects seen a speedup produce object files that differ from the original toolchain or a wrong match?",
+    "capability": "You can stop assuming that the same code, compiler version and settings yield identical files, and decide whether provable identical output is worth paying for before using it as a basis for caching, audits or compliance."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "Gradle's guidance warns that tasks that can produce different output for exactly the same inputs should not be configured for incremental builds, because the up-to-date checks will not work for them. Tasks with validation problems are also run with all optimizations disabled: never up-to-date, never cached, never parallel. That means a trustworthy build system deliberately gives up speed when it cannot vouch for correctness.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15"
+   ],
+   "source_ids": [
+    "S24"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What happens to the correctness of cached or incrementally rebuilt compile results when compiler version, flags, include files, pragmas or environment differ slightly, and when have projects seen a speedup produce object files that differ from the original toolchain or a wrong match?",
+    "capability": "You can require engineering teams to keep unpredictable build steps out of the caching system, avoiding a speedup that quietly serves wrong results."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "In Docker's own worked example, a one-line code edit reran the dependency install for about 41 seconds total (37.4s for the install step) because source and dependency list were copied together. After reordering so dependencies are copied first, the same edit rebuilt in 0.1 seconds with the install served from cache. This measures speed gained from cache reuse, not whether the result differs from a clean build.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E16"
+   ],
+   "source_ids": [
+    "S25"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured evidence exists on how often a build that reuses cached or previously compiled results produces a different binary than a build done from scratch, and how much faster was it when it did?",
+    "capability": "You can judge a slow-build complaint by build structure rather than hardware spend, because a one-line source edit can trigger a full ~40-second dependency reinstall that a reordered build avoids in under a second."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "Cached build steps compare the command text, not what the command would fetch, so a step that pulls 'latest' packages keeps returning old results until something earlier changes or the cache is forced clean. A cached build can therefore ship a different package state than a from-scratch build would. None of the sources measure how often this happens.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E17"
+   ],
+   "source_ids": [
+    "S25"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured evidence exists on how often a build that reuses cached or previously compiled results produces a different binary than a build done from scratch, and how much faster was it when it did?",
+    "capability": "You can stop assuming a cached build is automatically equivalent to a clean one and ask your team to check for stale-result risk wherever builds depend on things outside the code, such as downloaded packages."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "Across these sources, none measures the rate at which a cached build yields a different artifact than a clean one. The one that explicitly addresses benchmarking disclaims it, saying it has no timings from real projects and makes no quantitative speedup claims. The only hard speed numbers are from one small demo app.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18"
+   ],
+   "source_ids": [
+    "S28"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured evidence exists on how often a build that reuses cached or previously compiled results produces a different binary than a build done from scratch, and how much faster was it when it did?",
+    "capability": "You can stop expecting published numbers on how often cached builds differ from clean builds, and treat any such figure as something your own team must measure."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "The Modern Warfare 2 rebuild jumped from an error-ridden ~80% (fabricated or deleted logic, needing a dedicated reviewer agent) to 83% byte-exact once correctness was judged by byte-for-byte comparison with the original compiler. That made the review agent unnecessary and let cheap models (Haiku, Luna) carry the work, cutting cost substantially. What made a simple setup sufficient was the codebase having a checkable answer key, not extra machinery.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 80%, 83%",
+   "spans": [
+    "E19",
+    "E20"
+   ],
+   "source_ids": [
+    "S32"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which projects ignored the elaborate speedup machinery and still reached high match rates with plain sequential builds or a single machine, and what about their codebase or workflow made that sufficient?",
+    "capability": "You can stop buying more compute or elaborate parallel tooling for AI-driven rebuild projects and instead invest in a mechanical pass/fail check against the original, which is what made cheap, single-pipeline work sufficient."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "On Snowboard Kids (2,145 functions, 100% in about 83 days), roughly 4.8% of matching commits (about 41) involved expert intervention. The developer estimates that without experts on the IDO compiler, matching would have stalled around 89-90%. Snowboard Kids 2 stalled twice (25% to 58%, then ~75%) and needed community members for its last 10 functions, taking 596 days overall.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 10, 100%, 2145, 25%, 4.8%, 41, 58%, 596, 75%, 83, 89, 90%",
+   "spans": [
+    "E21"
+   ],
+   "source_ids": [
+    "S32"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S32",
+     "quote": "According to Lewis, without the knowledge of experts familiar with the IDO compiler developed by SGI, the match rate might have plateaued at around 89 to 90%, however smoothly things went.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Which projects ignored the elaborate speedup machinery and still reached high match rates with plain sequential builds or a single machine, and what about their codebase or workflow made that sufficient?",
+    "capability": "You can plan for a plateau near 89-90% on automated, easiest-first work and budget for specialist humans and community help for the last stretch, rather than expecting more automation to finish it."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "The same word 'match rate' meant different things across projects: Melee's 100% is matched bytes of total code, MW2's 83% is functions matched of all functions, and a Halo fork's README claims 99.5% while the public tracker shows 23.25% (2,511 of 11,047 functions). Only three projects (Melee, Snowboard Kids, Snowboard Kids 2) had 100% confirmable externally, so self-reported headline numbers can't be compared or trusted without definitions.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [
+    {
+     "source_id": "S32",
+     "quote": "But when you check the repository it was forked from on decomp.dev, the code match rate as of October 11, 2026, is 23.25%, and only 2,511 of 11,047 functions are matched.",
+     "reason": "not found verbatim in snapshot"
+    },
+    {
+     "source_id": "S32",
+     "quote": "Furthermore, MW2's 83% is the share of matched functions out of all functions, whereas Melee's 100% is the share of matched bytes out of the total code bytes.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Which projects ignored the elaborate speedup machinery and still reached high match rates with plain sequential builds or a single machine, and what about their codebase or workflow made that sufficient?",
+    "capability": "You can require that any reported progress percentage state its denominator and come from an external tracker before you rely on it for go/no-go or funding decisions."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "A benchmark of 23,400 functions from 130 real-world programs found LLM-based decompilers beat commercial tools on code understandability but had 52.2% lower functionality correctness. Buying LLM decompilation for work that needs behavior-accurate output (not just human-readable output) carries a large correctness penalty.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 130, 23400",
+   "spans": [
+    "E22"
+   ],
+   "source_ids": [
+    "S35"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What do decompilation contributors report about how much time and compute they actually spent on automated permutation of a function before a human rewrite of the code got it to match, and who measured it?",
+    "capability": "You can stop assuming LLM-based decompilation tools are a drop-in replacement for traditional decompilers, and instead decide per task whether readability or functional correctness matters more before spending money."
+   }
+  },
+  {
+   "claim_id": "C22",
+   "text": "Decompile-Bench's builders argue that earlier benchmarks relied on contest-style or synthetic binary-source mappings that diverge from the real world, so they built a set of two million function pairs (condensed from 100 million) plus an evaluation set of repositories released after 2025 to limit data leakage. Fine-tuning on it improved re-executability by 20% over previous benchmarks, which suggests earlier headline numbers may not transfer to real projects.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 20%, 2025",
+   "spans": [
+    "E23"
+   ],
+   "source_ids": [
+    "S34"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What do decompilation contributors report about how much time and compute they actually spent on automated permutation of a function before a human rewrite of the code got it to match, and who measured it?",
+    "capability": "You can judge claims about LLM decompiler quality by asking whether they were tested on realistic, post-training-cutoff code rather than contest-style or synthetic samples, and weight vendor claims accordingly."
+   }
+  },
+  {
+   "claim_id": "C23",
+   "text": "None of the retrieved sources report time or compute spent on automated permutation before a manual rewrite achieved a match, nor who measured it. They cover LLM decompilation benchmarks and correctness metrics, not match-decompilation workflow costs, so the question remains unanswered here.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What do decompilation contributors report about how much time and compute they actually spent on automated permutation of a function before a human rewrite of the code got it to match, and who measured it?",
+    "capability": "You can stop expecting published research to answer how much time or compute automated permutation consumed before a human rewrite matched, and plan to measure that yourself or ask the community directly."
+   }
+  },
+  {
+   "claim_id": "C24",
+   "text": "In the Modern Warfare 2 rebuild, the leftover functions would not match byte for byte however often they were revised, because of nondeterministic compiler behavior and an inability to reproduce the linker step that merges identical functions into one. The developer stopped at 83% of all functions matched, with source existing for 99%, judging that further matching would only consume tokens without real improvement, after spending an estimated 600 to 700 billion tokens.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E24"
+   ],
+   "source_ids": [
+    "S32"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to the final few percent of a game rebuild when the original compiler's output depends on build order, hidden state, or merged identical code, and how do teams recognise that a function can never match?",
+    "capability": "You can declare a rebuild project finished at a high-but-not-perfect match rate once the remaining items are shown to be structurally unmatchable, instead of continuing to fund effort that only burns tokens."
+   }
+  },
+  {
+   "claim_id": "C25",
+   "text": "On Snowboard Kids, roughly 4.8% of matching commits (about 41) involved experts familiar with the original SGI IDO compiler, and the lead estimates the match rate might have plateaued around 89 to 90% without them. Easiest-first automated processing stalls, as seen when Snowboard Kids 2 jumped from about 25% to 58%, rose to about 75%, then stalled again and needed community help on its last 10 functions.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E25"
+   ],
+   "source_ids": [
+    "S40"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S32",
+     "quote": "According to Lewis, without the knowledge of experts familiar with the IDO compiler developed by SGI, the match rate might have plateaued at around 89 to 90%, however smooth things went.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to the final few percent of a game rebuild when the original compiler's output depends on build order, hidden state, or merged identical code, and how do teams recognise that a function can never match?",
+    "capability": "You can budget for the last stretch as a scarce-expertise problem, planning for specialist knowledge of the original toolchain rather than assuming more automated effort will close it."
+   }
+  },
+  {
+   "claim_id": "C26",
+   "text": "Three different units circulate: matched bytes of total code (Melee, 100%), matched functions of all functions (MW2, 83%), and functions with any source regardless of match (MW2, 99%). The Halo project shows 99.5% in one README versus 23.25% on a public tracker, so a headline number can mean a verification mode, a different metric, or a stale fork rather than progress.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26",
+    "E27"
+   ],
+   "source_ids": [
+    "S32",
+    "S38"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to the final few percent of a game rebuild when the original compiler's output depends on build order, hidden state, or merged identical code, and how do teams recognise that a function can never match?",
+    "capability": "You can treat any quoted completion percentage as unusable until its denominator and verifier are stated, and stop comparing figures across projects."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 41,
+  "lineages": 41,
+  "duplicate_url_aliases": 0,
+  "sources_with_injection_flags": 1,
+  "claims": 26,
+  "claims_with_verified_span": 22,
+  "verified_span_rate": 0.846,
+  "quotes_offered": 33,
+  "quotes_rejected": 6,
+  "ledger_capped": 8,
+  "quotes_reattributed": 0,
+  "claims_persisted": 7,
+  "persisted_with_verified_span": 7,
+  "persisted_verified_span_rate": 1.0
+ }
+}

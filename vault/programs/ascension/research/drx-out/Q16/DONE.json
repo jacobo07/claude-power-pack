@@ -1,0 +1,12 @@
+{
+ "q": "Q16",
+ "gap": "M-THROUGHPUT",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 402.0,
+ "artifacts": [
+  "2026-11-21_124310_how-do-large-decompilation-projects-or-tools-speed.ledger.json",
+  "2026-11-21_124310_how-do-large-decompilation-projects-or-tools-speed.md",
+  "how-do-large-decompilation-projects-or-tools-speed.raw.jsonl"
+ ]
+}

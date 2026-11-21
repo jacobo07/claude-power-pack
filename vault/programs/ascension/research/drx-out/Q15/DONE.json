@@ -1,0 +1,12 @@
+{
+ "q": "Q15",
+ "gap": "M-SIGS",
+ "rc": 0,
+ "model": "claude-sonnet-5-5",
+ "wall_s": 417.8,
+ "artifacts": [
+  "2026-11-21_123628_what-public-tools-or-databases-identify-functions-.ledger.json",
+  "2026-11-21_123628_what-public-tools-or-databases-identify-functions-.md",
+  "what-public-tools-or-databases-identify-functions-.raw.jsonl"
+ ]
+}

@@ -1,0 +1,1474 @@
+{
+ "schema": "drx-evidence-ledger/1",
+ "module_version": "1.0.0",
+ "run_id": "2026-11-21_122931_what-public-tools-or-databases-identify-functions-",
+ "snapshot_dir": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\research\\snapshots",
+ "sources": [
+  {
+   "source_id": "S1",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/matching-decomp/",
+   "aliases": [],
+   "sha256": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250",
+   "chars": 25000,
+   "snapshot": "5d51cc3b5e723cb255288b9b743eaaf048958f4de8e588dfd55e114c8fc35250.txt",
+   "retrieved_at": "2026-11-21T11:29:46+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S1"
+  },
+  {
+   "source_id": "S2",
+   "url": "https://initialrise.github.io/REWiki/04-recomp/gamecube-wii/",
+   "aliases": [],
+   "sha256": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f",
+   "chars": 22525,
+   "snapshot": "f52befede8ea1e1cbcff5dedb2477632df9e0e149812b1c2acdc9f8a9552af9f.txt",
+   "retrieved_at": "2026-11-21T11:29:46+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S2"
+  },
+  {
+   "source_id": "S3",
+   "url": "https://kingy.ai/blog/ai-video-game-decompilation-legality/",
+   "aliases": [],
+   "sha256": "9a9a14902db28c8d89c7a9ef099510a462bdcfd23906bd68df17ade1676719b0",
+   "chars": 21699,
+   "snapshot": "9a9a14902db28c8d89c7a9ef099510a462bdcfd23906bd68df17ade1676719b0.txt",
+   "retrieved_at": "2026-11-21T11:29:46+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S3"
+  },
+  {
+   "source_id": "S4",
+   "url": "https://grokipedia.com/page/Matching_Decompilation",
+   "aliases": [],
+   "sha256": "3faa696dae98b783fcb2ec52b6fab2809202d195610adbf1706188378cddc16e",
+   "chars": 25000,
+   "snapshot": "3faa696dae98b783fcb2ec52b6fab2809202d195610adbf1706188378cddc16e.txt",
+   "retrieved_at": "2026-11-21T11:29:46+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S4"
+  },
+  {
+   "source_id": "S5",
+   "url": "https://www.youtube.com/watch?v=EeHOM7bvt_g",
+   "aliases": [],
+   "sha256": "147cea9770b0c1cc315ed8eb645c90b780324f44c2f787a5016f4048b8ef9dd5",
+   "chars": 280,
+   "snapshot": "147cea9770b0c1cc315ed8eb645c90b780324f44c2f787a5016f4048b8ef9dd5.txt",
+   "retrieved_at": "2026-11-21T11:29:46+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S5"
+  },
+  {
+   "source_id": "S6",
+   "url": "https://www.retroreversing.com/byte-matching-decompilation-accuracy",
+   "aliases": [],
+   "sha256": "c5f93773627158f4766408a8a8a5f5a0e34e1dbc0d9d7693fdf0352444e4e7c0",
+   "chars": 16003,
+   "snapshot": "c5f93773627158f4766408a8a8a5f5a0e34e1dbc0d9d7693fdf0352444e4e7c0.txt",
+   "retrieved_at": "2026-11-21T11:30:26+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S6"
+  },
+  {
+   "source_id": "S7",
+   "url": "https://www.recompiled.games/guides/decompilation",
+   "aliases": [],
+   "sha256": "34166b5498e3a80c8c880d619a305301432b2db03cb07322ca9b4c33c064e595",
+   "chars": 5618,
+   "snapshot": "34166b5498e3a80c8c880d619a305301432b2db03cb07322ca9b4c33c064e595.txt",
+   "retrieved_at": "2026-11-21T11:30:26+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S7"
+  },
+  {
+   "source_id": "S8",
+   "url": "https://www.retroreversing.com/decompilers",
+   "aliases": [],
+   "sha256": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b",
+   "chars": 25000,
+   "snapshot": "24ac8aaa9cee70881628ee61f0136db813350113fa783c8c54b1f41f9431375b.txt",
+   "retrieved_at": "2026-11-21T11:30:26+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S8"
+  },
+  {
+   "source_id": "S9",
+   "url": "https://www.denis-iakimenko.com/blog/reverse-engineering-decompilation-ports",
+   "aliases": [],
+   "sha256": "a5d94b6732c3d0044d6f32a0cf33b97472d734f47540ffefecfba074d81c8982",
+   "chars": 25000,
+   "snapshot": "a5d94b6732c3d0044d6f32a0cf33b97472d734f47540ffefecfba074d81c8982.txt",
+   "retrieved_at": "2026-11-21T11:30:26+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S9"
+  },
+  {
+   "source_id": "S10",
+   "url": "https://trtc.io/learning/navigating-library-conflicts-in-software-development",
+   "aliases": [],
+   "sha256": "5d12c780bf7f6494df7e4e94997d2040f1616f422389ea7ecd6981ed581cd17c",
+   "chars": 5409,
+   "snapshot": "5d12c780bf7f6494df7e4e94997d2040f1616f422389ea7ecd6981ed581cd17c.txt",
+   "retrieved_at": "2026-11-21T11:30:54+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S10"
+  },
+  {
+   "source_id": "S11",
+   "url": "https://www.reddit.com/r/cpp_questions/comments/1dk5e3k/how_to_encapsulate_identical_function_names_from/",
+   "aliases": [
+    "https://www.reddit.com/r/explainlikeimfive/comments/178szb1/eli5_how_the_same_video_game_is_coded_for/"
+   ],
+   "sha256": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf",
+   "chars": 6,
+   "snapshot": "eb0050f72303bcdbbdc071e2a3bf810c903be8d05cdf09f7c3106f2b6f9878bf.txt",
+   "retrieved_at": "2026-11-21T11:30:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S11"
+  },
+  {
+   "source_id": "S12",
+   "url": "https://link.springer.com/content/pdf/10.1007/978-1-4302-6668-6_9.pdf",
+   "aliases": [
+    "https://link.springer.com/chapter/10.1007/979-8-8688-2154-7_6"
+   ],
+   "sha256": "06654090dba376263b029c653b95444a99222a2033fea4f6ce984c0772e67fa8",
+   "chars": 238,
+   "snapshot": "06654090dba376263b029c653b95444a99222a2033fea4f6ce984c0772e67fa8.txt",
+   "retrieved_at": "2026-11-21T11:30:54+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S12"
+  },
+  {
+   "source_id": "S13",
+   "url": "https://pld.cs.luc.edu/courses/264/spr19/notes/linking.html",
+   "aliases": [],
+   "sha256": "0935d8bff8f95d9acba0c4e28672328645f0cd8e5b73c03e2855614fc5c63ee2",
+   "chars": 15399,
+   "snapshot": "0935d8bff8f95d9acba0c4e28672328645f0cd8e5b73c03e2855614fc5c63ee2.txt",
+   "retrieved_at": "2026-11-21T11:31:13+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S13"
+  },
+  {
+   "source_id": "S14",
+   "url": "https://web.mit.edu/macdev/Development/Documentation/www/devdoc/MW_profiler.html",
+   "aliases": [],
+   "sha256": "a750e8075f404745d19e607c9926052da80cca2a3bf313cbd96247220fd5c281",
+   "chars": 8029,
+   "snapshot": "a750e8075f404745d19e607c9926052da80cca2a3bf313cbd96247220fd5c281.txt",
+   "retrieved_at": "2026-11-21T11:32:03+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S14"
+  },
+  {
+   "source_id": "S15",
+   "url": "https://seniord.ece.iastate.edu/projects/archive/dec0104/Support_Web/reference/CodeWarrior/C_Compilers_Reference.pdf",
+   "aliases": [],
+   "sha256": "b9bd85b3590b941166b9dc2b7f1ad26f4760cf59bc3a24a3f672b1356dd1f908",
+   "chars": 25000,
+   "snapshot": "b9bd85b3590b941166b9dc2b7f1ad26f4760cf59bc3a24a3f672b1356dd1f908.txt",
+   "retrieved_at": "2026-11-21T11:32:03+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S15"
+  },
+  {
+   "source_id": "S16",
+   "url": "https://web.mit.edu/macdev/mit/doc/www/portPPC.html",
+   "aliases": [],
+   "sha256": "222997dcbf9d851105919287a73718fc69082462bffc9ba39450d6c781726fc0",
+   "chars": 25000,
+   "snapshot": "222997dcbf9d851105919287a73718fc69082462bffc9ba39450d6c781726fc0.txt",
+   "retrieved_at": "2026-11-21T11:32:03+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S16"
+  },
+  {
+   "source_id": "S17",
+   "url": "https://en.wikipedia.org/wiki/CodeWarrior",
+   "aliases": [],
+   "sha256": "87ec2fe2b28695d080ca823d43ddea6debaf12f9db9a276c25b6f9835055bc79",
+   "chars": 24206,
+   "snapshot": "87ec2fe2b28695d080ca823d43ddea6debaf12f9db9a276c25b6f9835055bc79.txt",
+   "retrieved_at": "2026-11-21T11:32:03+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S17"
+  },
+  {
+   "source_id": "S18",
+   "url": "https://github.com/zcanann/mwcc-rs",
+   "aliases": [],
+   "sha256": "b07eb267e8c1f97d418cf494bdaace2f80adaad8489acaca88f80dff137300ca",
+   "chars": 17924,
+   "snapshot": "b07eb267e8c1f97d418cf494bdaace2f80adaad8489acaca88f80dff137300ca.txt",
+   "retrieved_at": "2026-11-21T11:32:41+00:00",
+   "family": "C_PRACTITIONER",
+   "quality": "MEDIUM",
+   "injection_flags": [],
+   "lineage": "S18"
+  },
+  {
+   "source_id": "S19",
+   "url": "https://maskray.me/blog/long-branches-in-compilers-assemblers-and-linkers",
+   "aliases": [],
+   "sha256": "e31482fa578d5e6ecc5689e5954169f96494645b5b7cd8c6777b06c3e0be2bb2",
+   "chars": 25000,
+   "snapshot": "e31482fa578d5e6ecc5689e5954169f96494645b5b7cd8c6777b06c3e0be2bb2.txt",
+   "retrieved_at": "2026-11-21T11:32:41+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S19"
+  },
+  {
+   "source_id": "S20",
+   "url": "https://en.wikipedia.org/wiki/Relocation_%28computing%29",
+   "aliases": [],
+   "sha256": "575dd3b25796ba640d7acef91296660c55297aeb3e6fd1bb2a47ee7c76d57c40",
+   "chars": 19652,
+   "snapshot": "575dd3b25796ba640d7acef91296660c55297aeb3e6fd1bb2a47ee7c76d57c40.txt",
+   "retrieved_at": "2026-11-21T11:32:41+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S20"
+  },
+  {
+   "source_id": "S21",
+   "url": "https://www.philipzucker.com/notes/Programming/linkers/",
+   "aliases": [],
+   "sha256": "0b063a233360aecf22894bd596b08b576007f7f3bcff6dec2e9213beab35411d",
+   "chars": 23588,
+   "snapshot": "0b063a233360aecf22894bd596b08b576007f7f3bcff6dec2e9213beab35411d.txt",
+   "retrieved_at": "2026-11-21T11:32:41+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S21"
+  },
+  {
+   "source_id": "S22",
+   "url": "https://runebook.dev/en/docs/gcc/compatibility",
+   "aliases": [],
+   "sha256": "a0eb726c19eef29afb503234bb0be29732939ace76c19d0703735851af8c7f06",
+   "chars": 6399,
+   "snapshot": "a0eb726c19eef29afb503234bb0be29732939ace76c19d0703735851af8c7f06.txt",
+   "retrieved_at": "2026-11-21T11:33:06+00:00",
+   "family": "D_VENDOR",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S22"
+  },
+  {
+   "source_id": "S23",
+   "url": "https://devblogs.microsoft.com/oldnewthing/20260506-00/?p=112303/",
+   "aliases": [],
+   "sha256": "a3aa5dc58d57511376329ff291ab9a58513e8d120ff18553de311a88fcb76092",
+   "chars": 15624,
+   "snapshot": "a3aa5dc58d57511376329ff291ab9a58513e8d120ff18553de311a88fcb76092.txt",
+   "retrieved_at": "2026-11-21T11:33:06+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S23"
+  },
+  {
+   "source_id": "S24",
+   "url": "https://howtech.substack.com/p/mastering-symbol-versioning-for-backward",
+   "aliases": [],
+   "sha256": "a86a23760d2e5900debe2def707ac781a5039a72ae2bb6de8908c6d7a9505470",
+   "chars": 15766,
+   "snapshot": "a86a23760d2e5900debe2def707ac781a5039a72ae2bb6de8908c6d7a9505470.txt",
+   "retrieved_at": "2026-11-21T11:33:06+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S24"
+  },
+  {
+   "source_id": "S25",
+   "url": "https://en.wikipedia.org/wiki/Inline_expansion",
+   "aliases": [],
+   "sha256": "c13e54ab9d5861713d5235302452845ae6047cb51a46a175f11d6f493915e170",
+   "chars": 25000,
+   "snapshot": "c13e54ab9d5861713d5235302452845ae6047cb51a46a175f11d6f493915e170.txt",
+   "retrieved_at": "2026-11-21T11:33:51+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S25"
+  },
+  {
+   "source_id": "S26",
+   "url": "https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Inline.html",
+   "aliases": [],
+   "sha256": "9b4a1ca715e609225bf3d76b2dff3cc1f44ee4ad2cd0a620ad33b19e10faf92e",
+   "chars": 4573,
+   "snapshot": "9b4a1ca715e609225bf3d76b2dff3cc1f44ee4ad2cd0a620ad33b19e10faf92e.txt",
+   "retrieved_at": "2026-11-21T11:33:51+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S26"
+  },
+  {
+   "source_id": "S27",
+   "url": "https://en.wikipedia.org/wiki/Inline_(C_and_C%2B%2B)",
+   "aliases": [],
+   "sha256": "6d7956d3808a1fb2e7a4a8eafc091db6ba98eaebb966be34265fa04315987571",
+   "chars": 20781,
+   "snapshot": "6d7956d3808a1fb2e7a4a8eafc091db6ba98eaebb966be34265fa04315987571.txt",
+   "retrieved_at": "2026-11-21T11:33:51+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "tool-or-exfil-request"
+   ],
+   "lineage": "S27"
+  },
+  {
+   "source_id": "S28",
+   "url": "https://ethz.ch/content/dam/ethz/special-interest/infk/ast-dam/documents/Theodoridis-ASPLOS22-Inlining-Paper.pdf",
+   "aliases": [],
+   "sha256": "ee9805bb0d3ebc41fbdc8a356ae2eef6713c1bb071cd89d8a6d12aa13247c6cd",
+   "chars": 25000,
+   "snapshot": "ee9805bb0d3ebc41fbdc8a356ae2eef6713c1bb071cd89d8a6d12aa13247c6cd.txt",
+   "retrieved_at": "2026-11-21T11:33:51+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S28"
+  },
+  {
+   "source_id": "S29",
+   "url": "https://www.theverge.com/games/1004869/reverse-engineered-games-all-the-news-on-video-game-decomps-recomps-vr-and-web-and-3d-ports",
+   "aliases": [],
+   "sha256": "2ba42345dab23d85c3137e40683426c9eb055b2f63e22de5aa46f8b89c22378e",
+   "chars": 13937,
+   "snapshot": "2ba42345dab23d85c3137e40683426c9eb055b2f63e22de5aa46f8b89c22378e.txt",
+   "retrieved_at": "2026-11-21T11:34:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [
+    "system-prompt-reference"
+   ],
+   "lineage": "S29"
+  },
+  {
+   "source_id": "S30",
+   "url": "https://www.thegamer.com/original-silent-hills-lost-code-recomp/",
+   "aliases": [],
+   "sha256": "796d042a76f1e21fbecb633fedf9ece7f110dfee8fd92010c0131f43846f0f0a",
+   "chars": 4304,
+   "snapshot": "796d042a76f1e21fbecb633fedf9ece7f110dfee8fd92010c0131f43846f0f0a.txt",
+   "retrieved_at": "2026-11-21T11:34:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S30"
+  },
+  {
+   "source_id": "S31",
+   "url": "https://www.ign.com/articles/a-massive-decompilation-community-is-shutting-down-thanks-to-the-deluge-of-ai-decomps-and-ports",
+   "aliases": [],
+   "sha256": "50eb8b667f63cdc3961d0e7454864888c09500184e6a21c2e5294dc3d2c4fc1b",
+   "chars": 3960,
+   "snapshot": "50eb8b667f63cdc3961d0e7454864888c09500184e6a21c2e5294dc3d2c4fc1b.txt",
+   "retrieved_at": "2026-11-21T11:34:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S31"
+  },
+  {
+   "source_id": "S32",
+   "url": "https://wal.sh/research/code-decomp/",
+   "aliases": [],
+   "sha256": "f7cef6250a02616de0e9071c86d6fa25ba4d1a0d515d157fdcb3070713b52866",
+   "chars": 4044,
+   "snapshot": "f7cef6250a02616de0e9071c86d6fa25ba4d1a0d515d157fdcb3070713b52866.txt",
+   "retrieved_at": "2026-11-21T11:34:20+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S32"
+  },
+  {
+   "source_id": "S33",
+   "url": "https://arxiv.org/abs/2606.28058v1",
+   "aliases": [],
+   "sha256": "9878f7077956f7a445419be61be05c014df1721ad14beb73f70727e1668b3530",
+   "chars": 4783,
+   "snapshot": "9878f7077956f7a445419be61be05c014df1721ad14beb73f70727e1668b3530.txt",
+   "retrieved_at": "2026-11-21T11:35:15+00:00",
+   "family": "B_ACADEMIC",
+   "quality": "HIGH",
+   "injection_flags": [],
+   "lineage": "S33"
+  },
+  {
+   "source_id": "S34",
+   "url": "https://www.emergentmind.com/topics/sbridge",
+   "aliases": [],
+   "sha256": "78eaf761d4d57db7e42f8632b8cb8628abf111546a39e433677ce5e0cefad99c",
+   "chars": 17956,
+   "snapshot": "78eaf761d4d57db7e42f8632b8cb8628abf111546a39e433677ce5e0cefad99c.txt",
+   "retrieved_at": "2026-11-21T11:35:15+00:00",
+   "family": "UNKNOWN",
+   "quality": "LOW",
+   "injection_flags": [],
+   "lineage": "S34"
+  }
+ ],
+ "spans": [
+  {
+   "span_id": "E1",
+   "source_id": "S3",
+   "start": 204,
+   "end": 358,
+   "text": "An AI-assisted Super Mario 64 DS reconstruction reports 99.9% of its functions matched. Its counter for source converted into readable form sits at 30.5%.",
+   "sha256": "0558a5189a74a817ee52d2e821b326d387983b4ec580d02386536f13c194f751"
+  },
+  {
+   "span_id": "E2",
+   "source_id": "S4",
+   "start": 3502,
+   "end": 3567,
+   "text": "A match certifies generated code, not a unique historical source.",
+   "sha256": "cb03225e04c9ceeab5f94c4b8d8ce06a645ba4cce45c6060760b01075c9f9b75"
+  },
+  {
+   "span_id": "E3",
+   "source_id": "S4",
+   "start": 16532,
+   "end": 16674,
+   "text": "A hash of the whole image is a stricter claim than a match of one function. decomp.me scores a single function and never sees the other bytes.",
+   "sha256": "50c2fc69e38618e5cb17d0da6d214662c5e9b6813dc7a64964b5a13412b883ba"
+  },
+  {
+   "span_id": "E4",
+   "source_id": "S6",
+   "start": 668,
+   "end": 713,
+   "text": "Identical bytes prove less than they seem to.",
+   "sha256": "5db623ebf403326e7c9ff9de81c425e26874b59e312d8a04292bb8587d18e9e7"
+  },
+  {
+   "span_id": "E5",
+   "source_id": "S6",
+   "start": 7645,
+   "end": 7787,
+   "text": "Each function involved matched byte for byte with KMC GCC 2.7.2, and each one behaved differently once compiled with clang for another target:",
+   "sha256": "c593497c6aee05429a1edef8b345c81ace51f74f912b92c5a3d8140b4428250d"
+  },
+  {
+   "span_id": "E6",
+   "source_id": "S6",
+   "start": 13532,
+   "end": 13576,
+   "text": "Every bug on this page came from doing that.",
+   "sha256": "7840dab1a74aaf046de6975833e8f74b29e7fb58e40a2a42a164ab66ca635092"
+  },
+  {
+   "span_id": "E7",
+   "source_id": "S4",
+   "start": 1104,
+   "end": 1270,
+   "text": "Their Decomperson study recorded more than 35,000 submissions from over 150 participants, including more than 300 successful perfect decompilations of small programs.",
+   "sha256": "90c8a6211da68173562fbbcb528310543aae88c17d0f9c1dfb15db81d39cb5ab"
+  },
+  {
+   "span_id": "E8",
+   "source_id": "S10",
+   "start": 2008,
+   "end": 2117,
+   "text": "Using multiple static libraries with duplicated code can significantly increase the size of your application.",
+   "sha256": "3d62fa87b6194ef34d0b36fa50ffc9693d84ea5463e9276bb61f7fa7ab38d3a0"
+  },
+  {
+   "span_id": "E9",
+   "source_id": "S10",
+   "start": 1790,
+   "end": 1861,
+   "text": "Different versions of the same file leading to inconsistent definitions",
+   "sha256": "e072836cf56a0cbacf48444cbd07801abf1980c92b60811e1f2fb43b74d17396"
+  },
+  {
+   "span_id": "E10",
+   "source_id": "S13",
+   "start": 2088,
+   "end": 2194,
+   "text": ".rel.text:   list of unresolved addresses in the .text\n        section (data and jumps to other sections).",
+   "sha256": "081b4a239245fcc7390b8d0d0cd72126cd26e7cbf146dc40594da630a740317a"
+  },
+  {
+   "span_id": "E11",
+   "source_id": "S13",
+   "start": 901,
+   "end": 998,
+   "text": "calls to other procedures: address has to be worked out, entered into\n        code before running",
+   "sha256": "40fb9ed8887c3d2a5dc908e5fcbbece8b0105e8b05401564662c345fc5fd2cae"
+  },
+  {
+   "span_id": "E12",
+   "source_id": "S13",
+   "start": 12935,
+   "end": 13067,
+   "text": "This looks like a normal function call. But let's look at the ode for\n      ml_util_func@plt (which is\ndifferent\nfrom ml_util_func):",
+   "sha256": "754d998c14967cf29086b7cc6ba5aa8c396b1541aef15fa69a56138601b8e1ac"
+  },
+  {
+   "span_id": "E13",
+   "source_id": "S12",
+   "start": 17,
+   "end": 60,
+   "text": "A required part of this site couldn’t load.",
+   "sha256": "0b8a682a77154e6f1bb0a370225a00664f3cd0ba26f3b5664e494a33eac83569"
+  },
+  {
+   "span_id": "E14",
+   "source_id": "S14",
+   "start": 5502,
+   "end": 5715,
+   "text": "Since profiler code is generated by the compiler and inserted at the entry- and exit-point of every profiled routine, you will have to step through some additional assembly code when you are tracing your porgrams.",
+   "sha256": "b91d4bb5c512fdeb409db6f7e2a5bcea8d70304868769c5d786fd4341f72048c"
+  },
+  {
+   "span_id": "E15",
+   "source_id": "S17",
+   "start": 10612,
+   "end": 10758,
+   "text": "During its heyday, the product was known for its rapid release cycle, with multiple revisions every year, and for its quirky advertising campaign.",
+   "sha256": "6f92ce86aaddb45f5a40b86836d0fd1e81cc424fae03f5bbf8ecaf9e4764550b"
+  },
+  {
+   "span_id": "E16",
+   "source_id": "S19",
+   "start": 15249,
+   "end": 15350,
+   "text": "At this point, the instruction encoding is fixed, so the linker cannot simply change the instruction.",
+   "sha256": "b94ca6b1b6c521b592d9b672536516044a0cd1dd0dc057aa6b44b06c58ddb17c"
+  },
+  {
+   "span_id": "E17",
+   "source_id": "S19",
+   "start": 15573,
+   "end": 15662,
+   "text": "The original branch is redirected to the thunk, which then jumps to the real destination.",
+   "sha256": "9314a7fb81ccf4856b07548820eb422b491f5289609f6b544c642819a1b8680a"
+  },
+  {
+   "span_id": "E18",
+   "source_id": "S18",
+   "start": 980,
+   "end": 1126,
+   "text": "for every configured translation unit in\nreference_projects/*\n,\nmwcc-rs\nmust emit the same relocatable object as the\nreal compiler, byte for byte.",
+   "sha256": "587268995aa9713114adc892305e86e8cfe403fcc36c5f125cf2e5edc03cfd4d"
+  },
+  {
+   "span_id": "E19",
+   "source_id": "S20",
+   "start": 4495,
+   "end": 4634,
+   "text": "Referring to the\nrelocation table\nto modify symbol references in data and object code so that they point to the assigned run-time addresses",
+   "sha256": "fccc1a74847be15822c999053c14a336f19d83027db2c67ae35205b476fae2e4"
+  },
+  {
+   "span_id": "E20",
+   "source_id": "S22",
+   "start": 443,
+   "end": 556,
+   "text": "GCC updates can sometimes introduce changes to the ABI. When this happens, a new compiler might arrange data in a",
+   "sha256": "6583113c479d934056ce86192fe9fa522387ab1b8091046346152c20d44d9eff"
+  },
+  {
+   "span_id": "E21",
+   "source_id": "S22",
+   "start": 849,
+   "end": 1008,
+   "text": "If the vtable (virtual function table) layout changes between GCC versions, code that expects the old layout will crash when trying to call a virtual function.",
+   "sha256": "52f7ebfd52096e2d8189a8dba7e530e83edd0a320b32a60e3907753c2cf9be13"
+  },
+  {
+   "span_id": "E22",
+   "source_id": "S23",
+   "start": 2250,
+   "end": 2382,
+   "text": "Also, what if a program is linked with one version of the SDK, but a DLL that it uses is linked with a different version of the SDK?",
+   "sha256": "f788ab80d9cb58d86136214c3056640e74eb7e6e5c7603e82ea7939de9d6e1a2"
+  },
+  {
+   "span_id": "E23",
+   "source_id": "S23",
+   "start": 5811,
+   "end": 5904,
+   "text": "Changing behavior based on the SDK version you link to works only if programs are monolithic.",
+   "sha256": "45ecacec00b54916e8dab413153b40fac07a3d77ac3c1a75fbc1370e7fa6a4a6"
+  },
+  {
+   "span_id": "E24",
+   "source_id": "S24",
+   "start": 700,
+   "end": 830,
+   "text": "When glibc ships a faster memcpy implementation, old binaries keep using memcpy@GLIBC_2.2.5 while new ones get memcpy@@GLIBC_2.14.",
+   "sha256": "1074db778ef5480b5e56d5f71760b55ef6b392a8c331f590923be8ae6a2eaaa3"
+  },
+  {
+   "span_id": "E25",
+   "source_id": "S25",
+   "start": 1307,
+   "end": 1431,
+   "text": "Inline expansion is similar to macro expansion as the compiler places a new copy of the function in each place it is called.",
+   "sha256": "839c149c9955c218d4d642d1e0bbe3ddd0f0f3067d2c827a15eb1439d31147e6"
+  },
+  {
+   "span_id": "E26",
+   "source_id": "S25",
+   "start": 1573,
+   "end": 1671,
+   "text": "If a function is inlined 10 times, there will be 10 copies of the function inserted into the code.",
+   "sha256": "de9445dce6d4f7065c8b4d3908390b12404fa9bb9f7f05307849fa04cae8a702"
+  },
+  {
+   "span_id": "E27",
+   "source_id": "S27",
+   "start": 2345,
+   "end": 2422,
+   "text": "Different compilers vary in how complex a function they can manage to inline.",
+   "sha256": "f9b3ca147e80531f25696cc0d395019de64bb21b24ba63da616752e1074fcdc3"
+  },
+  {
+   "span_id": "E28",
+   "source_id": "S9",
+   "start": 19218,
+   "end": 19335,
+   "text": "Static recompilation trades understanding for speed. You get a native port, and nobody knows what\nfunc_80024A10\ndoes.",
+   "sha256": "fe1c925d34024adc61385db38d5c885cd902b32c1464619c5b7dde5868230ba9"
+  },
+  {
+   "span_id": "E29",
+   "source_id": "S9",
+   "start": 5576,
+   "end": 5728,
+   "text": "Known libraries. Statically linked zlib, Lua, or a C runtime can be fingerprinted and auto-named. Ghidra and IDA both ship signature databases for this.",
+   "sha256": "63014457f7aa428d310970da55bfce5c9dfff2f807db4ca81112e05423c24698"
+  },
+  {
+   "span_id": "E30",
+   "source_id": "S9",
+   "start": 16824,
+   "end": 17003,
+   "text": "Diablo\nwas rebuilt in 2018 as Devilution, using a symbols file accidentally left on the Japanese PlayStation disc plus a debug build hidden inside the PC game’s own data archives.",
+   "sha256": "70dffa301a46cf03b44283396664dcbb4706f3e250f283eaef542f1b813508e6"
+  },
+  {
+   "span_id": "E31",
+   "source_id": "S30",
+   "start": 2670,
+   "end": 2766,
+   "text": "One of the toughest obstacles was a vibration function buried inside an internal Konami library.",
+   "sha256": "53e6a6636e335f8d93f928677200acc7aa7da017953f8871a94b7f90570fb98c"
+  },
+  {
+   "span_id": "E32",
+   "source_id": "S30",
+   "start": 1767,
+   "end": 2017,
+   "text": "That version relied heavily on generative models to guess at missing logic, which led to frequent crashes, inconsistent flashlight behavior, and a cycle where players reported bugs and the developer fed those issues into AI to generate quick patches.",
+   "sha256": "b4f06fecbcbf804fdc58e5f934ceb9f1bfee3ba04836a5b5c51fe09cce64b545"
+  },
+  {
+   "span_id": "E33",
+   "source_id": "S9",
+   "start": 23928,
+   "end": 24030,
+   "text": "Matching decompilation exists to prove equivalence, and code that merely “looks right” proves nothing.",
+   "sha256": "2bcad229ca205f543100b940a517e5e4f2090bab483529a974cee6344871f44b"
+  },
+  {
+   "span_id": "E34",
+   "source_id": "S34",
+   "start": 12411,
+   "end": 12444,
+   "text": "Optimization has a larger effect:",
+   "sha256": "c13e295686495c4087bccbfa8e9d779a4fdf3d1185d748206f9ad9a00a9b02b4"
+  },
+  {
+   "span_id": "E35",
+   "source_id": "S34",
+   "start": 12326,
+   "end": 12410,
+   "text": "Across compilers, results are 0.7537 / 0.8097 for GCC and 0.7490 / 0.8099 for Clang.",
+   "sha256": "5eb8a873b431903386176e28dcd1160272b6b746c2c33aaffedf2c2b842508b7"
+  },
+  {
+   "span_id": "E36",
+   "source_id": "S34",
+   "start": 14059,
+   "end": 14166,
+   "text": "In the adapted inlined-function setting, the paper reports that BinaryAI achieved less than 0.01 Recall@1 (",
+   "sha256": "73388a179a8e28afc550dd657131ab27ed320f4aa97018a3d8451a3900f6c6d3"
+  },
+  {
+   "span_id": "E37",
+   "source_id": "S34",
+   "start": 15343,
+   "end": 15391,
+   "text": "Decompilation quality directly affects accuracy.",
+   "sha256": "35e5b59926f5e160ffa871f640daec14b891cdf3fe510f8aeb090f2353f8daf2"
+  },
+  {
+   "span_id": "E38",
+   "source_id": "S34",
+   "start": 15514,
+   "end": 15612,
+   "text": "Exceptionally long decompiled functions can produce incorrect mappings even with length filtering.",
+   "sha256": "3abb184ca468b58007a9b4353361bebf92838467543873b5b01850c28c0acf94"
+  }
+ ],
+ "claims": [
+  {
+   "claim_id": "C1",
+   "text": "Reported progress numbers measure different things: one AI-assisted Super Mario 64 DS project reports 99.9% of functions matched while its readable-source conversion counter sits at 30.5%. Likewise, decomp.dev separates a 'decompiled' percentage from a 'fully linked' one, so a single completion figure can overstate real, shippable status.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "OBSERVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E1"
+   ],
+   "source_ids": [
+    "S3"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured results exist on how often content-based function matching between GameCube and Wii decompilation projects returns the wrong name or the wrong source file, and who reported those mismatches?",
+    "capability": "You can stop treating a headline 'percent matched' figure as proof of a finished or trustworthy decompilation and instead ask which kind of progress it measures before funding or relying on a project."
+   }
+  },
+  {
+   "claim_id": "C2",
+   "text": "None of the retrieved material reports a measured rate of wrong-name or wrong-source-file results from content-based matching between GameCube and Wii decomp projects, nor who reported such mismatches. The nearest evidence is that matching is judged per function by byte comparison, that the shared Dolphin SDK is reused across games, and that a function-level match does not certify unique historical source. The question is therefore unanswered by public evidence here.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E2"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured results exist on how often content-based function matching between GameCube and Wii decompilation projects returns the wrong name or the wrong source file, and who reported those mismatches?",
+    "capability": "You can stop expecting published error rates for GameCube/Wii name or source-file mismatches and plan to measure them yourself before relying on any cross-project function matching."
+   }
+  },
+  {
+   "claim_id": "C3",
+   "text": "Matching is scored per function and the site never sees the other bytes, while a project-level hash is a stricter claim. A function can match while the surrounding image does not, so a name or file attribution inferred from a matching function carries uncertainty that the match score itself does not remove.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E3"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured results exist on how often content-based function matching between GameCube and Wii decompilation projects returns the wrong name or the wrong source file, and who reported those mismatches?",
+    "capability": "You can treat a byte-identical function match as strong evidence for the function's code, but not as evidence that its name or home file is right, and budget separate verification for attribution."
+   }
+  },
+  {
+   "claim_id": "C4",
+   "text": "A matching decompilation only proves one specific compiler turns the C into the original bytes, not that the C means the same thing to another compiler or ABI. In the V-Rally port, a set of matched functions each behaved wrongly once built for another target, including cars starting backwards, textures loading at 0 by 0 pixels and sign errors turning 255 into -1. Any name or semantics inferred from a match should be treated as unverified until run under a different build.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E4",
+    "E5"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When a decompilation project imports function names from another game's finished work by matching compiled code, how often does the imported name turn out to be wrong, and who has counted those errors?",
+    "capability": "You can stop treating a byte-for-byte match as proof that a function's imported name or behavior is correct, and budget separate behavioral checks before trusting matched code."
+   }
+  },
+  {
+   "claim_id": "C5",
+   "text": "The sources point to cheap behavior checks that surface errors a match hides: building under a second modern compiler, building a port, and comparing memory against the running original. Super Mario 64 already runs a host GCC syntax check alongside the IDO build, and every bug on the V-Rally page was found by building a port. A progress percentage from a match checker is not a correctness measure.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E6"
+   ],
+   "source_ids": [
+    "S6"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S6",
+     "quote": "The project also checks every file with the host’s GCC (-fsyntax-only -Wall -Wextra, with AVOID_UB defined) alongside the IDO build, so many of these gaps are at least visible to the developers",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When a decompilation project imports function names from another game's finished work by matching compiled code, how often does the imported name turn out to be wrong, and who has counted those errors?",
+    "capability": "You can decide to fund a second-compiler or port build as a cheap error detector instead of relying on match percentage as the quality measure."
+   }
+  },
+  {
+   "claim_id": "C6",
+   "text": "None of the supplied sources quantify how often names imported by matching code across games turn out wrong, or name anyone who has counted. The nearest evidence is anecdotal bug lists in one port and the Decomperson study's 300 successful perfect decompilations out of 35,000 submissions, which measures human matching success, not name accuracy. Any decision relying on a rate would rest on an assumption.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E7"
+   ],
+   "source_ids": [
+    "S4"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "When a decompilation project imports function names from another game's finished work by matching compiled code, how often does the imported name turn out to be wrong, and who has counted those errors?",
+    "capability": "You can stop expecting a published error rate for imported function names and plan to measure it yourself, since none of these sources count it."
+   }
+  },
+  {
+   "claim_id": "C7",
+   "text": "When several static libraries bundled into one product carry duplicated code, the application gets materially larger, and the same duplication is what produces naming collisions and unpredictable crashes. Duplicate copies of the same library are therefore a recurring, avoidable cost, not just a technical curiosity.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E8"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do two different functions, or two copies of the same library function, end up with identical or near-identical machine code, and how does that cause a matching tool to assign the wrong name or the wrong source file?",
+    "capability": "You can stop assuming that duplicated library code in a shipped product is harmless bloat and start treating it as a cost and risk line to be negotiated with vendors or engineering."
+   }
+  },
+  {
+   "claim_id": "C8",
+   "text": "The source lists different versions of the same library referenced within one project as a distinct conflict type, producing inconsistent definitions of the same file or function. This implies that identical-looking or near-identical code from different versions can be mislabeled, so any name-based identification of the code should be treated as provisional until versions are reconciled.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E9"
+   ],
+   "source_ids": [
+    "S10"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do two different functions, or two copies of the same library function, end up with identical or near-identical machine code, and how does that cause a matching tool to assign the wrong name or the wrong source file?",
+    "capability": "You can ask your engineering team or vendors about version consistency of bundled libraries before trusting any tool that identifies code by name, since mixed versions of one library are a known source of inconsistent definitions."
+   }
+  },
+  {
+   "claim_id": "C9",
+   "text": "In an unlinked object file, references to other functions and to global data are left as unresolved placeholders listed in a relocation table, and the linker computes the real addresses only afterward. So two identical functions can differ in bytes at exactly those reference sites depending on where the linker places things, which means a comparison must account for relocation entries rather than raw bytes alone.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E10",
+    "E11"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do two copies of the same function compiled by the Metrowerks compiler end up with different bytes, and how do relocations, register allocation, inlining and linker-generated stubs change what a matcher sees?",
+    "capability": "You can stop treating byte differences between two compiled copies of the same function as proof the source differs, and expect address-dependent bytes to be placeholders the linker fills in later."
+   }
+  },
+  {
+   "claim_id": "C10",
+   "text": "A call to a function in another module is compiled as a call to a small jump stub, which loads the real target through a table that is resolved lazily. The stub and table are generated at link time, so the code inside the function looks ordinary while the stub it lands on differs by link layout.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E12"
+   ],
+   "source_ids": [
+    "S13"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do two copies of the same function compiled by the Metrowerks compiler end up with different bytes, and how do relocations, register allocation, inlining and linker-generated stubs change what a matcher sees?",
+    "capability": "You can expect calls to external functions to appear as calls to linker-generated stubs, so a mismatch at a call site may come from the stub layer rather than from the function being compared."
+   }
+  },
+  {
+   "claim_id": "C11",
+   "text": "The retrieved material covers only generic linking and relocation on GCC and x86-64 ELF. It says nothing about Metrowerks, register allocation, or inlining, and the second source failed to load, so those parts of the query remain unanswered and need targeted sources on that compiler.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E13"
+   ],
+   "source_ids": [
+    "S12"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do two copies of the same function compiled by the Metrowerks compiler end up with different bytes, and how do relocations, register allocation, inlining and linker-generated stubs change what a matcher sees?",
+    "capability": "You can treat the search results as unable to answer the Metrowerks-specific questions on register allocation and inlining, and stop relying on them for those decisions."
+   }
+  },
+  {
+   "claim_id": "C12",
+   "text": "None of the retrieved contents contain any measured rate of PowerPC instruction differences across CodeWarrior versions or flag settings, nor any decompilation project that recorded such differences. They cover only the product's history, a profiler manual, and an MPW-to-CodeWarrior porting guide, so the research question remains unanswered by this batch.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": true,
+   "ledger_reason": "no quote verified in any snapshot",
+   "spans": [],
+   "source_ids": [],
+   "independent_lineages": 0,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured data exists on how often the same C source compiled with different Metrowerks CodeWarrior versions or flag settings produces different PowerPC instructions, and who in decompilation projects has recorded those differences?",
+    "capability": "You can stop expecting the source material to answer how often different CodeWarrior versions or settings change generated PowerPC code, and redirect effort to decompilation-project repositories and measuring it yourself."
+   }
+  },
+  {
+   "claim_id": "C13",
+   "text": "CodeWarrior exposes many code-generation controls: the pragma list in the reference includes scheduling, peephole, register_coloring, optimization_level, optimize_for_size, and PPC loop-unrolling limits. The profiler option additionally inserts compiler-generated code at the entry and exit of every profiled routine. Each of these can alter emitted instructions independently of the compiler version, so any comparison needs to fix them.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E14"
+   ],
+   "source_ids": [
+    "S14"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": null,
+   "meta": {
+    "query": "What measured data exists on how often the same C source compiled with different Metrowerks CodeWarrior versions or flag settings produces different PowerPC instructions, and who in decompilation projects has recorded those differences?",
+    "capability": "You can scope a version-matching study by knowing that code generation is a variable even within one version, since flags and pragmas change what the compiler emits, so version and flag matrices must be tested together."
+   }
+  },
+  {
+   "claim_id": "C14",
+   "text": "CodeWarrior shipped about eleven numbered releases from December 1993 to December 1996, plus later Pro releases, so many compiler builds exist to match against. Its PPC code generator was written from scratch around Chaitin-style register allocation, and the later pragma list shows additional PPC unrolling controls. This suggests version-to-version differences in register allocation and scheduling are plausible, though no content measures them.",
+   "epistemic_in": "HYPOTHESIS",
+   "epistemic": "HYPOTHESIS",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E15"
+   ],
+   "source_ids": [
+    "S17"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "What measured data exists on how often the same C source compiled with different Metrowerks CodeWarrior versions or flag settings produces different PowerPC instructions, and who in decompilation projects has recorded those differences?",
+    "capability": "You can judge how many compiler versions a decompilation matching effort must cover, because the PPC compiler's release cadence was fast and its design changed in ways that plausibly alter output."
+   }
+  },
+  {
+   "claim_id": "C15",
+   "text": "When a branch target is out of range, the instruction encoding is already fixed at link time, so the linker cannot change it. Instead it generates a thunk (also called a veneer, branch stub, or trampoline) and redirects the original branch to it. The linked binary therefore contains extra linker-made code that never existed in the compiler's output, and the call site now points at the thunk rather than the real callee. A matching tool comparing linked bytes against compiled objects will see mismatches that are not compiler differences.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E16",
+    "E17"
+   ],
+   "source_ids": [
+    "S19"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the Metrowerks linker sometimes insert branch stubs or veneers or rewrite relocated addresses, and what happens to the bytes a matching tool compares when it does?",
+    "capability": "You can stop assuming a linked binary's bytes mirror the compiled object, and treat any byte-level match against a compiler's raw output as valid only before linking, since the linker can add code or rewrite call targets afterward."
+   }
+  },
+  {
+   "claim_id": "C16",
+   "text": "The mwcc-rs project defines parity as emitting the same relocatable object as the real Metrowerks compiler, byte for byte, and treats an exact .text section alone as useful evidence but not parity. It also keys on section ordering, symbol order, alignment, and relocations such as R_PPC_EMB_SDA21. Comparing at the object stage, before addresses are assigned, avoids layout-dependent changes made at link time.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E18"
+   ],
+   "source_ids": [
+    "S18"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does the Metrowerks linker sometimes insert branch stubs or veneers or rewrite relocated addresses, and what happens to the bytes a matching tool compares when it does?",
+    "capability": "You can decide to run byte-exact verification on relocatable object files, where the compiler's output is authoritative, instead of on final linked images, which cuts out linker-induced noise."
+   }
+  },
+  {
+   "claim_id": "C17",
+   "text": "A relocation table lists addresses in the object code that must be changed once final locations are assigned, and the linker modifies symbol references in code and data to point at the assigned run-time addresses. Bytes at those positions differ between the object and the linked image by design. A comparison tool therefore has to treat these fields as relocations, not as literal bytes.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E19"
+   ],
+   "source_ids": [
+    "S20"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why does the Metrowerks linker sometimes insert branch stubs or veneers or rewrite relocated addresses, and what happens to the bytes a matching tool compares when it does?",
+    "capability": "You can expect that, for a given target, relocation-bearing instructions in an object hold placeholder values the linker overwrites, so a matching tool must mask or compare them by relocation entry rather than by raw bytes."
+   }
+  },
+  {
+   "claim_id": "C18",
+   "text": "Compiler version changes can alter struct layout, calling conventions and virtual table layout, and the standard library's own layout (e.g. std::string after C++11) differs between versions. Code compiled by different toolchain versions therefore has different machine-level shape, so a signature database built from one toolchain will see the same source function as different bytes and may miss it or misattribute it.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E20",
+    "E21"
+   ],
+   "source_ids": [
+    "S22"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": null,
+   "meta": {
+    "query": "What happens to function matching when the same library code was built with a different SDK version, compiler build, or optimization level, and at what point does a signature database stop recognizing it or start naming the wrong function?",
+    "capability": "You can stop assuming that a library built with a different compiler version still has the same internal layout, and budget for signature mismatches whenever a vendor's toolchain version differs from your reference build."
+   }
+  },
+  {
+   "claim_id": "C19",
+   "text": "Behavior of a library function can legitimately differ depending on which SDK version the calling code was built against, and a single program can mix modules built against different SDK versions, including static libraries. A matched function name therefore does not guarantee the same behavior or body as the reference, which raises the risk of a confident but wrong identification.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E22",
+    "E23"
+   ],
+   "source_ids": [
+    "S23"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to function matching when the same library code was built with a different SDK version, compiler build, or optimization level, and at what point does a signature database stop recognizing it or start naming the wrong function?",
+    "capability": "You can stop trusting a library-name or version match as proof that the same code is inside a binary, and require evidence on the specific function before acting on an identification."
+   }
+  },
+  {
+   "claim_id": "C20",
+   "text": "Shared libraries such as glibc keep multiple versioned implementations of the same function, for example memcpy@GLIBC_2.2.5 alongside memcpy@@GLIBC_2.14, and binaries built years apart bind to different ones. Matching must therefore cover every retained variant, and a database that stores only the newest will miss or mislabel older builds.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E24"
+   ],
+   "source_ids": [
+    "S24"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "What happens to function matching when the same library code was built with a different SDK version, compiler build, or optimization level, and at what point does a signature database stop recognizing it or start naming the wrong function?",
+    "capability": "You can expect that the same function appears as several coexisting variants within one library, so a database holding only one variant will under-recognize binaries built against older versions."
+   }
+  },
+  {
+   "claim_id": "C21",
+   "text": "When every call to a function is inlined and its address is never taken, the compiler emits no standalone copy of that function at all, so a signature built from the standalone version has nothing to match. A 'not found' result can therefore mean the code is present but dissolved into its callers, not that the library was never used.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E25"
+   ],
+   "source_ids": [
+    "S25"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S26",
+     "quote": "When a function is both inline and static, if all calls to the function are integrated into the caller, and the function's own assembler code is never referenced.  In this case, GCC does not actually ",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a compiler that inlines a small function, or merges and reorders code, leave a binary where a signature built from the standalone library function can no longer find it, and what does the wrong or missing result look like to the analyst?",
+    "capability": "You can stop expecting a standalone library function to appear as a separate, findable routine in a shipped binary, and treat a missing match as a possible sign of inlining rather than proof the library is absent."
+   }
+  },
+  {
+   "claim_id": "C22",
+   "text": "Inlining puts a separate copy of the function body at each call site, and then optimizes each copy in its caller's context. Constants passed in can fold away branches, so no two copies need look alike or look like the standalone function. A signature may match some copies, none, or fire inconsistently, and an inlined function called 10 times yields 10 differing copies instead of one.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E26"
+   ],
+   "source_ids": [
+    "S25"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S25",
+     "quote": "That is, once the compiler expands a function body in the context of its call site—often with arguments that may be fixed constants—it may be able to do a variety of transformations that were not poss",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a compiler that inlines a small function, or merges and reorders code, leave a binary where a signature built from the standalone library function can no longer find it, and what does the wrong or missing result look like to the analyst?",
+    "capability": "You can expect a library function to match differently from one location to the next in the same binary, and plan analysis around partial or inconsistent hits rather than a single clean match."
+   }
+  },
+  {
+   "claim_id": "C23",
+   "text": "Inlining is largely an optimizing-build behavior: GCC inlines nothing without optimization unless forced, so debug-style builds keep standalone functions that signatures can find, while optimized release builds may erase them. Compilers also differ in what they can inline, so results vary across toolchains.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E27"
+   ],
+   "source_ids": [
+    "S27"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S26",
+     "quote": "GCC does not inline any functions when not optimizing unless you specify the `always_inline' attribute for the function, like this:",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Why does a compiler that inlines a small function, or merges and reorders code, leave a binary where a signature built from the standalone library function can no longer find it, and what does the wrong or missing result look like to the analyst?",
+    "capability": "You can judge how much to trust a 'library absent' or 'library present' finding by asking about build settings, since the same source can yield very different binaries depending on optimization level and compiler."
+   }
+  },
+  {
+   "claim_id": "C24",
+   "text": "None of the contents describe a project that shared function names across games through a shared-name database or comparable mechanism; the real trade-off documented is between matching decompilation (years per game, human-readable, byte-exact proof of equivalence) and static recompilation (weeks to months, unreadable machine-translated C, but a fast native port). Recompilation gives speed but not understanding, so teams return to a decompilation when behavior must be changed.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E28"
+   ],
+   "source_ids": [
+    "S9"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [
+    {
+     "source_id": "S9",
+     "quote": "Matching decompilation takes years per game. In May 2024 a developer named Mr-Wiseguy released N64Recomp, which skips that.",
+     "reason": "not found verbatim in snapshot"
+    }
+   ],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Are there decompilation projects that skipped signature databases and shared function names across games by other means, and did they get better or worse results than the signature-based approach?",
+    "capability": "You can pick between three reverse-engineering routes for a legacy game or binary (readable byte-exact rebuild, readable behavior-equivalent rebuild, or machine-translated port) based on whether you need proof of correctness, moddability, or speed."
+   }
+  },
+  {
+   "claim_id": "C25",
+   "text": "Signature databases only auto-name statically linked standard libraries such as zlib, Lua, or the C runtime. Game-specific naming came from strings, imports, and accidental debug leftovers: Devilution used a symbols file left on the Japanese PlayStation disc plus a debug build hidden in the PC data archives, and Silent Hill's team had to reverse-engineer an undocumented internal Konami vibration library by hand. Signature fingerprinting therefore does not reach proprietary engine code.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E29",
+    "E30",
+    "E31"
+   ],
+   "source_ids": [
+    "S9",
+    "S30"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Are there decompilation projects that skipped signature databases and shared function names across games by other means, and did they get better or worse results than the signature-based approach?",
+    "capability": "You can stop assuming that signature databases are the main way decompilers name functions, and plan for the human-labor and leftover-debug-artifact routes that actually carry most projects."
+   }
+  },
+  {
+   "claim_id": "C26",
+   "text": "The AI-assisted Silent Hill port relied on generative models to guess missing logic and produced frequent crashes and inconsistent flashlight behavior, while the 45-contributor human team spent over two years reaching a readable, accurate decompilation. AI has also sharply cut timelines elsewhere, but the community's byte-for-byte compile-and-diff check is what separates proven equivalence from code that merely looks right.",
+   "epistemic_in": "DERIVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": false,
+   "ledger_reason": "",
+   "spans": [
+    "E32",
+    "E33"
+   ],
+   "source_ids": [
+    "S9",
+    "S30"
+   ],
+   "independent_lineages": 2,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": true,
+   "meta": {
+    "query": "Are there decompilation projects that skipped signature databases and shared function names across games by other means, and did they get better or worse results than the signature-based approach?",
+    "capability": "You can treat AI-generated reconstruction as fast but unreliable, and insist on a byte-for-byte check or human review before trusting or investing in a port built that way."
+   }
+  },
+  {
+   "claim_id": "C27",
+   "text": "In SBridge's evaluation, optimization level was the largest single driver of match reliability: top-1 recall was 84.96% at -O0 versus 65.31% at -O2, while architecture (about 71-78%) and compiler (GCC 75.4% vs Clang 74.9%) barely moved it. Binaries built with heavy optimization should therefore be treated as lower-confidence matches regardless of platform or compiler.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 65.31%, 71, 74.9%, 75.4%, 78%, 84.96%",
+   "spans": [
+    "E34",
+    "E35"
+   ],
+   "source_ids": [
+    "S34"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [
+    {
+     "cited": "S33",
+     "found": "S34",
+     "quote": "Optimization has a larger effect:"
+    }
+   ],
+   "persisted": false,
+   "meta": {
+    "query": "Why do automated function-matching tools that compare control-flow structure, constants and call relationships succeed on some binaries and fail on others, and what in the compiled code decides whether a match is reliable?",
+    "capability": "You can set expectations for how well binary-matching tools will work on a given software estate by checking how aggressively it was compiled, rather than assuming one accuracy figure applies everywhere."
+   }
+  },
+  {
+   "claim_id": "C28",
+   "text": "Function inlining collapses several source functions into one binary function, which breaks matchers that compare whole-function structure. About 40% of binary functions in the test set were inlined; the prior tool BinaryAI scored under 0.01 Recall@1 on inlined functions, while the inlining-aware block approach reached 75.13% overall.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 40%, 75.13%",
+   "spans": [
+    "E36"
+   ],
+   "source_ids": [
+    "S34"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do automated function-matching tools that compare control-flow structure, constants and call relationships succeed on some binaries and fail on others, and what in the compiled code decides whether a match is reliable?",
+    "capability": "You can stop trusting whole-function matching tools on code where the compiler merges functions together, and demand block-level or inlining-aware tools for those cases."
+   }
+  },
+  {
+   "claim_id": "C29",
+   "text": "Stripping symbols lowers top-1 recall from 79.09% to 71.19%, and the authors concede that decompiler quality, very long decompiled functions and the lack of data-flow analysis cause wrong mappings. In the vulnerability-detection use, the tool had only 59.49% precision and 42.18% recall, so a flagged match still needs human verification.",
+   "epistemic_in": "OBSERVED",
+   "epistemic": "DERIVED",
+   "ledger_capped": true,
+   "ledger_reason": "OBSERVED number(s) absent from verified spans: 42.18%, 59.49%, 71.19%, 79.09%",
+   "spans": [
+    "E37",
+    "E38"
+   ],
+   "source_ids": [
+    "S34"
+   ],
+   "independent_lineages": 1,
+   "rejected_quotes": [],
+   "reattributed_quotes": [],
+   "persisted": false,
+   "meta": {
+    "query": "Why do automated function-matching tools that compare control-flow structure, constants and call relationships succeed on some binaries and fail on others, and what in the compiled code decides whether a match is reliable?",
+    "capability": "You can discount match results on stripped or very large functions and plan for a ceiling on accuracy instead of expecting automated matching to be fully trustworthy."
+   }
+  }
+ ],
+ "summary": {
+  "sources": 34,
+  "lineages": 34,
+  "duplicate_url_aliases": 2,
+  "sources_with_injection_flags": 7,
+  "claims": 29,
+  "claims_with_verified_span": 28,
+  "verified_span_rate": 0.966,
+  "quotes_offered": 43,
+  "quotes_rejected": 5,
+  "ledger_capped": 4,
+  "quotes_reattributed": 1,
+  "claims_persisted": 12,
+  "persisted_with_verified_span": 12,
+  "persisted_verified_span_rate": 1.0
+ }
+}

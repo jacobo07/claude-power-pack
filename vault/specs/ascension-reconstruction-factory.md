@@ -194,6 +194,13 @@ are NOT one-function sources.
    `factory-apply-<L>.lock`, snapshot + ledger `factory_match`).
 **Phase 2 (only if phase 1 MATCH rate warrants it).** Donors without a one-function unit: re-lift d with D's producer
 (matched.tsv arm) or extract the function + its context from the TU. Measured separately.
+Prior art to adapt (verified 2026-11-21; see `research/GITHUB-RESOURCES-2026-11-21.md` §1b):
+- Ketbome/decomp-skills `dk.py cmd_twins` (MIT) does both steps 3 and phase 2 for MIPS/splat projects:
+  - ordered symbol signature, zip rename map with a consistency refusal;
+  - TU body extraction, transitive copy of declarations and types, prototype rebinding by cast;
+  - `__asm__` aliasing, revert on no match.
+- F6 ports its logic to PPC dtk relocations, with the MIT notice. Our gate stays objdiff 100% vs the lane's own target
+  plus the F5 binary gate.
 **Authority.** The F5 standing authorization covers applying under its gates only producers "already measured". twin.py is
 a new producer, so the first apply per lane and adding a `twin` run to lanes_factory.json (a lane config change) need
 the Owner's "y" on the pilot numbers.
