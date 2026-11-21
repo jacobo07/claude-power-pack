@@ -1,0 +1,330 @@
+{
+ "checked": "2026-11-21T15:25:14.024497+00:00",
+ "method": "GET, generic UA, body read (<=2MB), text extracted; page text kept outside repo",
+ "rows": [
+  {
+   "id": "D21-01",
+   "url": "https://minimal.gallery/",
+   "status": 200,
+   "final_url": "https://minimal.gallery/",
+   "bytes": 112700,
+   "sha256": "d26580380184587e",
+   "title": "Minimal Gallery \u2013 Hand-picked web design inspiration, premium templates, tools and more",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " Minimal Gallery \u2013 Hand-picked web design inspiration, premium templates, tools and more Websites Templates Tools Minimal Gallery Search About Submit Bookmarks Submit Websites Templates Tools Subscribe Site About Submit to gallery Sponsor C"
+  },
+  {
+   "id": "D21-02",
+   "url": "https://kage.design/",
+   "status": 200,
+   "final_url": "https://kage.design/",
+   "bytes": 203981,
+   "sha256": "00dd04a9278d11b3",
+   "title": "Design inspiration, ready to build\n     \u00b7 Kage",
+   "numbers": [
+    "3,379",
+    "637"
+   ],
+   "licence_words": [],
+   "snippet": " Design inspiration, ready to build \u00b7 Kage kage Search designs \u2318K Sponsor Submit a site Submit Submit a site We capture it, analyse the design and add it to the library after a quick review. Website https:// Just the address, we add the res"
+  },
+  {
+   "id": "D21-03",
+   "url": "https://appshot.gallery/",
+   "status": 200,
+   "final_url": "https://www.appshot.gallery/",
+   "bytes": 87489,
+   "sha256": "f43ff4357d47f8bd",
+   "title": "App Store Screenshot Inspiration | Appshot Gallery",
+   "numbers": [
+    "2026",
+    "820"
+   ],
+   "licence_words": [],
+   "snippet": " App Store Screenshot Inspiration | Appshot Gallery appshot.gallery Screenshots App icons Resources Preview Genre Tone of voice Style Color Font style 820 handpicked apps Grok Bot Productivity 4.9 Free Airbnb Travel 4.8 Free Robinhood: Trad"
+  },
+  {
+   "id": "D21-04",
+   "url": "https://component.gallery/",
+   "status": 200,
+   "final_url": "https://component.gallery/",
+   "bytes": 100837,
+   "sha256": "0c86adb05c1cafe3",
+   "title": "The Component Gallery",
+   "numbers": [
+    "2,671",
+    "60",
+    "95"
+   ],
+   "licence_words": [],
+   "snippet": " The Component Gallery The Component Gallery Search ^ \u2318 K Esc System Light Dark Components Design systems About 60 components, 95 design systems, 2,671 examples. The Component Gallery is an up-to-date repository of interface components base"
+  },
+  {
+   "id": "D21-05",
+   "url": "https://designmd.ai/",
+   "status": 200,
+   "final_url": "https://designmd.ai/",
+   "bytes": 135065,
+   "sha256": "ef43d9ff21f84e8b",
+   "title": "DESIGN.md - Design Systems for AI Coding",
+   "numbers": [
+    "1",
+    "34"
+   ],
+   "licence_words": [],
+   "snippet": " DESIGN.md - Design Systems for AI Coding Explore Design Systems MCP CLI DESIGN.md Format Search... Ctrl+ K Upload Sign In Explore Design Systems Upload MCP CLI DESIGN.md Format The design system community for AI builders 100s of free desig"
+  },
+  {
+   "id": "D21-06",
+   "url": "https://styles.refero.design/",
+   "status": 200,
+   "final_url": "https://styles.refero.design/",
+   "bytes": 121992,
+   "sha256": "1f1dc8a0bc155956",
+   "title": "Website Styles & DESIGN.md Library | Refero Styles",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " Website Styles & DESIGN.md Library | Refero Styles / Styles Beta New styles added every week Your favorite sites, in DESIGN.md Your favorite sites, in DESIGN.md Start with a design you love A DESIGN.md your AI can follow Bring that style i"
+  },
+  {
+   "id": "D21-07",
+   "url": "https://jiro.build/",
+   "status": 200,
+   "final_url": "https://jiro.build/",
+   "bytes": 1779715,
+   "sha256": "046c1aa91b66f1be",
+   "title": "Jiro \u2014 The Design Prompt Library to Vibe Code Better Websites",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " Jiro \u2014 The Design Prompt Library to Vibe Code Better Websites Jiro Build Library Jiro Builder New MCP Pricing Affiliate Contact Black Friday \u00b7 Our biggest deal of the year B l a c k F r i d a y 50 % off 50 50 % OFF All premium templates. A"
+  },
+  {
+   "id": "D21-08",
+   "url": "https://vibeprompts.dev/",
+   "status": 200,
+   "final_url": "https://vibeprompts.dev/",
+   "bytes": 245771,
+   "sha256": "6de4b6451e2dedd0",
+   "title": "VibePrompt \u2014 UI Prompt Library & Tailwind CSS Snippets",
+   "numbers": [
+    "286"
+   ],
+   "licence_words": [
+    "licence"
+   ],
+   "snippet": " VibePrompt \u2014 UI Prompt Library & Tailwind CSS Snippets Prompt Library \u2039 / All 286 Auth Forms 19 Pricing 19 Features / Bento 19 Hero Sections 19 CTA Banners 18 Stats Bars 18 Nav Bars 18 Testimonials 19 Footer 18 FAQ 18 Dashboards 18 Onboard"
+  },
+  {
+   "id": "D21-09",
+   "url": "https://21st.dev/",
+   "status": 200,
+   "final_url": "https://21st.dev/",
+   "bytes": 404101,
+   "sha256": "09174efa391edee4",
+   "title": "React Components, Templates & Themes \u2014 12,000+ Crafted UI | 21st",
+   "numbers": [
+    "138",
+    "29,000",
+    "411"
+   ],
+   "licence_words": [],
+   "snippet": " React Components, Templates & Themes \u2014 12,000+ Crafted UI | 21st Library Product Pricing Search \u2318K Log in Get 21st free Just copy-paste real designs. Find components, copy prompts, and ship polished UI with your AI agent. Get 21st free Bro"
+  },
+  {
+   "id": "D21-10",
+   "url": "https://ui.shadcn.com/",
+   "status": 200,
+   "final_url": "https://ui.shadcn.com/",
+   "bytes": 719507,
+   "sha256": "7062d0a7a3a17492",
+   "title": "shadcn/ui - The Foundation for your Design System",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " shadcn/ui - The Foundation for your Design System Toggle Menu Menu Home Docs Components Blocks Charts Directory Typeset Create Search documentation... Search... 129k Toggle theme New Trace, Code Block and AI Elements The Foundation for you"
+  },
+  {
+   "id": "D21-11",
+   "url": "https://ui.aceternity.com/",
+   "status": 200,
+   "final_url": "https://ui.aceternity.com/",
+   "bytes": 376813,
+   "sha256": "792191751b4686d6",
+   "title": "Aceternity UI \u2014 React & Tailwind CSS Component Library",
+   "numbers": [
+    "100+",
+    "118+",
+    "17"
+   ],
+   "licence_words": [
+    "commercial",
+    "licence"
+   ],
+   "snippet": " Aceternity UI \u2014 React & Tailwind CSS Component Library Aceternity UI Components Blocks Pages Interactions New Templates Resources Pricing Toggle theme Search \u2318 K Login Get All-Access Aceternity UI Toggle theme Changelog Preview Slider & 10"
+  },
+  {
+   "id": "D21-11",
+   "url": "https://ui.aceternity.com/licence",
+   "status": 200,
+   "final_url": "https://ui.aceternity.com/licence",
+   "bytes": 73460,
+   "sha256": "98796b0bff785488",
+   "title": "Licence | Aceternity UI Pro",
+   "numbers": [
+    "100+"
+   ],
+   "licence_words": [
+    "commercial",
+    "licence",
+    "license",
+    "licensed",
+    "licenses"
+   ],
+   "snippet": " Licence | Aceternity UI Pro Aceternity UI Components Blocks Pages Interactions New Templates Resources Pricing Toggle theme Search \u2318 K Login Get All-Access Aceternity UI Toggle theme Licensing Please go through the licensing agreenment bel"
+  },
+  {
+   "id": "D21-12",
+   "url": "https://magicui.design/",
+   "status": 200,
+   "final_url": "https://magicui.design/",
+   "bytes": 1106161,
+   "sha256": "395c4acdee3908dc",
+   "title": "Magic UI",
+   "numbers": [
+    "150+"
+   ],
+   "licence_words": [],
+   "snippet": " Magic UI \u2728 Introducing Magic UI Pro - 50+ blocks and templates to build beautiful landing pages in minutes Toggle Menu Magic UI Components Templates Showcase Search documentation... Search... \u2318 K Command Palette Search for a command to run"
+  },
+  {
+   "id": "D21-13",
+   "url": "https://animejs.com/",
+   "status": 200,
+   "final_url": "https://animejs.com/",
+   "bytes": 45925,
+   "sha256": "33347970c72aed36",
+   "title": "Anime.js | JavaScript Animation Engine",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " Anime.js | JavaScript Animation Engine Anime.js | JavaScript Animation Engine 4.0.0 3.2.2 2.1.0 Docs Easings Learn Examples GitHub Discord --> Sponsor All-in-one animation engine . A fast and flexible JavaScript library to animate the web "
+  },
+  {
+   "id": "D21-14",
+   "url": "https://motion-primitives.com/",
+   "status": 200,
+   "final_url": "https://motion-primitives.com/",
+   "bytes": 70879,
+   "sha256": "036ef1767d8b4b38",
+   "title": "Motion-Primitives - UI kit to make beautiful, animated interfaces, faster.",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " Motion-Primitives - UI kit to make beautiful, animated interfaces, faster. motion-primitives beta AI Advanced Build with Mesurer Components X GitHub Toggle theme UI kit to make beautiful, animated interfaces, faster. Beautifully designed m"
+  },
+  {
+   "id": "D21-15",
+   "url": "https://kinetics.colorion.co/",
+   "status": 200,
+   "final_url": "https://kinetics.colorion.co/",
+   "bytes": 427360,
+   "sha256": "051f9e179176f563",
+   "title": "Kinetics \u2014 CSS & React Spring Animation Examples",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " Kinetics \u2014 CSS & React Spring Animation Examples Skip to content K Kinetics Colorion Tools \u2039 Iconbar for Mac Ad Text effects Colorion 2 Color Combinations Color Palettes Palette Generator Material Colors Mobile Palette Gradients Gradient B"
+  },
+  {
+   "id": "D21-16",
+   "url": "https://microkit.co/",
+   "status": 200,
+   "final_url": "https://microkit.co/",
+   "bytes": 156582,
+   "sha256": "e617ba74f3952b42",
+   "title": "MicroKit UI - Copy-paste React & CSS microinteractions",
+   "numbers": [],
+   "licence_words": [
+    "attribution",
+    "commercial",
+    "licensed",
+    "mit"
+   ],
+   "snippet": " MicroKit UI - Copy-paste React & CSS microinteractions Submit \u2318 K Star on GitHub MicroKit UI All components 57 Other libraries 2 Favorites 0 Details Matter! MicroKit UI is a component library for developers who care about the experience be"
+  },
+  {
+   "id": "D21-17",
+   "url": "https://mapcn.dev/",
+   "status": 200,
+   "final_url": "https://www.mapcn.dev/",
+   "bytes": 211566,
+   "sha256": "86358f4af711e810",
+   "title": "mapcn - Beautiful maps made simple",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " mapcn - Beautiful maps made simple mapcn Docs Components Blocks Sponsors Search... \u2318K Search... Jump to pages, components, and docs 12.4k Agent skill for mapcn Beautiful maps, made simple Ready to use, customizable map components for React"
+  },
+  {
+   "id": "D21-18",
+   "url": "https://uiverse.io/",
+   "status": 200,
+   "final_url": "https://uiverse.io/",
+   "bytes": 290961,
+   "sha256": "7463d8b9b0acf126",
+   "title": "Uiverse | The Largest Library of Open-Source UI elements",
+   "numbers": [
+    "10"
+   ],
+   "licence_words": [
+    "commercial",
+    "license",
+    "mit"
+   ],
+   "snippet": " Uiverse | The Largest Library of Open-Source UI elements Elements Challenges Blog AI Design Systems New Create Join the Community The Largest Library of Open-Source UI Community-built library of UI elements. Copy as HTML/CSS, Tailwind, Rea"
+  },
+  {
+   "id": "D21-19",
+   "url": "https://glass.samasante.com/",
+   "status": 200,
+   "final_url": "https://glass.samasante.com/",
+   "bytes": 3664,
+   "sha256": "776e9f0cceb24486",
+   "title": "liquid-glass \u2014 refract the live DOM, in every browser",
+   "numbers": [],
+   "licence_words": [],
+   "snippet": " liquid-glass \u2014 refract the live DOM, in every browser "
+  },
+  {
+   "id": "D21-20",
+   "url": "https://kitbitz.art/",
+   "status": 200,
+   "final_url": "https://kitbitz.art/",
+   "bytes": 7039,
+   "sha256": "672dbda3e8c528ab",
+   "title": "Kitbitz \u2014 2,000+ free hand-drawn illustrations",
+   "numbers": [
+    "2,000+"
+   ],
+   "licence_words": [],
+   "snippet": " Kitbitz \u2014 2,000+ free hand-drawn illustrations "
+  },
+  {
+   "id": "D21-21",
+   "url": "https://3dicons.co/",
+   "status": 200,
+   "final_url": "https://3dicons.co/",
+   "bytes": 204985,
+   "sha256": "80ad186423434c67",
+   "title": "3dicons - Open Source & Free Premium 3D Icon Library",
+   "numbers": [
+    "1500+",
+    "200"
+   ],
+   "licence_words": [
+    "attribution",
+    "cc0",
+    "commercial",
+    "license",
+    "licenses"
+   ],
+   "snippet": " 3dicons - Open Source & Free Premium 3D Icon Library editor explore figma pro Download V1 Create Design System Variables and Styles Fast. Beautifully Crafted open source & premium 3D Icons More than 1500+ hand made Open Source, Free & Prem"
+  }
+ ]
+}
