@@ -107,3 +107,44 @@ Max cycles 14, max hours 30. Per-wave ceiling = 1.5x its line. Arm: authority 40
 ## Order of execution (self-dogfood)
 P1 runs INLINE in the arming session before `arm`, so the background worker is born without the dead MCP estate
 (host is at 86.3/87.1 GB commit: one more eager session costs ~1.9 GB).
+
+## Addendum 2026-11-21 -- control plane (Owner mid-flight prompt; PROPOSED, awaiting "go tranche")
+Reality scan 14:33-14:50 (session 54c0ea73), the addendum's premises checked against evidence:
+- Mission m-e78bdb938339: state LAUNCHING, worker null since the wall at 14:06 (last write of transcript e5ca940c
+  14:06:46); no sweep action logged for it after 12:02Z. P2 NOT started (worker's last turn: "I did no Phase 2 work:
+  the context wall was hit"). P5 not started. Worktree HEAD 3728e9c06, 9 untracked doc stubs. Mission meter 7.89M / 40M.
+- Startup context: first call of the P0 worker = 97,128 tokens (all cache creation), NOT 148K. 148-151K is the MEAN per
+  call of a 95-call session growing to the 175K advisory wall (max 196,953). Sum of per-call context over the session
+  14.41M; the mission meter counts 7.89M (two instruments, both labelled). First Edit at call 27.
+- Unauthorized push, root cause: the worker called git through a variable from the PowerShell tool at 23:53:24 (reflog
+  "update by push"; transcript e5ca940c line 697). ovo-push-gate.js IS registered in the dispatcher's Bash|PowerShell
+  chain and `.powerpack` exists, but BLOCK_REGEX requires the literal word pair at a command boundary: the real command
+  (git via `$g`) does not match. Inverse defect observed the same day: the gate blocked a PowerShell call of this
+  session whose here-string only QUOTED the word pair after a backtick (no push ran). The host's own Woz advisory tells
+  agents to call git by full path or variable, i.e. the shape that evades the gate. The gate is a quality-verdict gate,
+  not an authority gate; laptop missions carry no push-authority field (only CPP_MISSION_PUSH for policy phrasing).
+- Exposure: origin is PUBLIC (github.com/jacobo07/claude-power-pack). Only b74fe8d74 is not on another remote branch;
+  no secret values in its files; mcp_catalog.json names 3 project folders (Capy RE, Credit Score Engine, GEO-audit).
+- Host 14:33: commit 69.6/80.5 GB, pagefile 49.2 GB, free RAM 1.8/31.3 GB, free C: 24.4 GB, 627 processes, 25 claude.exe.
+
+### A. Current tranche completion (inside the approved 40M; no new authority)
+- W0 push immunity, BEFORE any worker relaunch: (a) the repo's pre-push git hook (the strongest controllable layer:
+  every shell and invocation shape reaches it) refuses when the pushing process descends from a mission worker whose
+  record has no push authority; (b) ovo-push-gate matches git by path / variable / `-C`, and stops matching quoted text;
+  (c) historical regression = the exact 23:53 command shape, both poles, plus the false-positive shape of 2026-11-21;
+  (d) mission record field `push_authority`, default none. Line 1.5M.
+- Diagnose and fix the stuck relay (LAUNCHING, worker null) once W0 is live; relaunch once.
+- P2 lazy MCP (line 12M, stop 18M); P5 liveness shadow (line 8M, stop 12M; extends
+  modules/cognitive_os/process_governor.py); close 3M. Close status "TRANCHE COMPLETE", never "RESOURCE RESIDENCY
+  COMPLETE"; next frontier ranked by measured rent.
+- Dogfood: per epoch record first-call context, mean context, calls to first edit (scratch instrument promoted to a tool).
+Budget remaining: lower 12M, P50 22M, P80 30M, P95 38M; authority 40M (7.89M spent) + 2 x 15M top-ups already granted;
+reserve 5M; cycles <= 10; hours <= 24; per-wave ceiling 1.5x its line.
+
+### B. Next control-plane tranche (ESTIMATE ONLY; separate approval after A closes)
+Order derived at close from measured rent. Default candidates: lease + idle reclaim inside the P2 shim; session
+hibernation canary (Owner-run) + zero-process wait for missions parked BLOCKED; admission (refuse optional MCP birth
+under pressure); resource explain (why is pid X alive / who owns it). Lower 18M, P50 30M, P80 42M, P95 55M. Rotation
+wall 175K -> ~120K (card-carried) only if tranche A's epoch data shows mean-context savings exceed the extra 97K starts.
+Deferred items (P3 lease/idle, P4 shareability, P6 governor, P7 resource CI, cross-node, pools) carry owner / trigger /
+reopen condition here, not in deferred-backlog.md (foreign dirty state there).
