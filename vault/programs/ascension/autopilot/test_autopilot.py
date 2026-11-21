@@ -374,6 +374,32 @@ def run_all(ap):
             jp.unlink()
     check("V-AP-JUDGE-LEAVES-TREE-CLEAN", jv.get("verdict") == "AGREE"
           and (gdir / "splits.txt").read_text() == "a\n" and (gdir / "mine.txt").read_text() == "worker edit\n")
+    # 2026-11-21 (WIIPARTY S216W, Owner "Excepcion puntual"): a one-off Owner exclusion is told to the judge, for its
+    # checkpoint only, and names only tools/ gate paths
+    oe = {"owner_excluded": {"checkpoint": "s216w/checkpoint_s216w.md", "gates": ["tools/test_wp_lib_donor2.py"],
+                             "why": "relink no longer finishes"}}
+    ck216 = "/p/evidence/ascension/s216w/checkpoint_s216w.md"
+    otxt = ap.owner_exclusion_text(oe, ck216)
+    check("V-AP-OWNER-EXCLUSION-TEXT", "tools/test_wp_lib_donor2.py" in otxt and "OWNER RULING" in otxt
+          and ap.owner_exclusion_text(oe, "/p/evidence/ascension/s217w/checkpoint_s217w.md") == ""
+          and ap.owner_exclusion_text({"owner_excluded": dict(oe["owner_excluded"], gates=["rm -rf x"])}, ck216) == ""
+          and ap.owner_exclusion_text({}, ck216) == "")
+    seen = {}
+
+    def judge_sees(*a, **k):
+        seen["prompt"] = a[0] if a else k.get("prompt")
+        return {"ok": True, "result": '{"verdict": "AGREE"}', "tokens": 1}
+    ap.run_claude = judge_sees
+    made_jp = not jp.exists()
+    if made_jp:
+        jp.write_text("judge {CHECKPOINT} in {PRODUCT}")
+    try:
+        ap.judge({"name": "MGIT", "cwd": str(gdir)}, ck216, str(gdir), otxt)
+    finally:
+        ap.run_claude = keep_rc
+        if made_jp:
+            jp.unlink()
+    check("V-AP-OWNER-EXCLUSION-REACHES-JUDGE", otxt and str(seen.get("prompt", "")).endswith(otxt))
     # 2026-11-18 (KSR S168K): a superseded gate stands only if it predates the generation and the certificates verify
     sdir = Path(tempfile.mkdtemp(prefix="sgit-", dir=tmp))
 
@@ -1424,19 +1450,19 @@ def run_all(ap):
           and ap.hold_checkpoint({"evidence": None, "residual": "/r"}) == "/r" and ap.hold_checkpoint({}) == "")
     judged = []
     st = evo_fresh([LA], {"lever": "lev_a"})  # evo_fresh resets ap.judge: install the recorder after it
-    ap.judge = lambda lane, ck, prod: judged.append(ck) or dict(full, _tokens=1)
+    ap.judge = lambda lane, ck, prod, *ruling: judged.append(ck) or dict(full, _tokens=1)
     rec["owner_hold"].update(set_at=7903, evidence=None, residual=str(tmp / "ck.md")); recp.write_text(json.dumps(rec))
     ap.lane_tick(st, lanes[0], False)
     check("V-AP-PIVOT-HOLD-JUDGES-RESIDUAL", judged == [str(tmp / "ck.md")])
     st = evo_fresh([LA], {"lever": "lev_a"})
-    ap.judge = lambda lane, ck, prod: judged.append(ck) or dict(full, _tokens=1)
+    ap.judge = lambda lane, ck, prod, *ruling: judged.append(ck) or dict(full, _tokens=1)
     judged.clear()
     rec["owner_hold"].update(set_at=7904, evidence=None, residual=None); recp.write_text(json.dumps(rec))
     ap.lane_tick(st, lanes[0], False)
     check("V-AP-EMPTY-HOLD-PARKS-UNJUDGED", not judged and st["lanes"]["L"]["status"] == "PARKED")
     # 2026-11-17 (S111C, Owner "b"): an empty hold whose generation branch committed a checkpoint is judged on it
     st = evo_fresh([LA], {"lever": "lev_a"})
-    ap.judge = lambda lane, ck, prod: judged.append(ck) or dict(full, _tokens=1)
+    ap.judge = lambda lane, ck, prod, *ruling: judged.append(ck) or dict(full, _tokens=1)
     judged.clear()
     keep_cfb = ap.checkpoint_from_branch
     ap.checkpoint_from_branch = lambda p, b, h: str(tmp / "ck.md")
@@ -1795,6 +1821,8 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "prered_never_admitted": lambda m: setattr(m, "_pre_red", lambda g: False),
          "prered_inputs_not_copied": lambda m: setattr(m, "_untracked_inputs", lambda p: []),
          "prered_timeout_counts": lambda m: setattr(m, "TIMEOUT_RCS", ()),
+         "owner_exclusion_any_checkpoint": lambda m: setattr(m, "owner_exclusion_text", (lambda real: lambda ls, ck: real(
+             ls, str((ls.get("owner_excluded") or {}).get("checkpoint") or "")))(m.owner_exclusion_text)),
          "prered_base_rc_ignored": lambda m: setattr(m, "_rc_consistent", lambda rb, rh, j: j in m.TIMEOUT_RCS or j == rh),
          "unfinished_never_continued": lambda m: setattr(m, "UNFINISHED_MAX", 0),
          "unfinished_unbounded": lambda m: setattr(m, "UNFINISHED_MAX", 99),

@@ -938,8 +938,25 @@ JUDGE_TOOLS = ["Read", "Grep", "Glob", "Bash(timeout 600 python3 tools/:*)", "Ba
                "Bash(ls:*)"]
 
 
-def judge(lane: dict, checkpoint: str, product: str) -> dict:
+def owner_exclusion_text(ls: dict, checkpoint: str) -> str:
+    """2026-11-21 (Owner "Excepción puntual", pane 34385bd2): WIIPARTY S216W's old gate tools/test_wp_lib_donor2.py
+    relinks main.dol per mutant and no longer finishes in 1 h since the factory's ~2,000 units (114 s before), and no S216W
+    certificate depends on it. The Owner excluded it for that checkpoint only: lane state `owner_excluded` {checkpoint
+    (a path suffix), gates [tools/...py], why} is told to the judge once, and excluded_ok still proves each gate predates
+    the generation and is unchanged by it. Empty when nothing matches."""
+    oe = ls.get("owner_excluded") or {}
+    ck = str(oe.get("checkpoint") or "")
+    gates = [str(g) for g in oe.get("gates") or [] if GATE_PATH.fullmatch(str(g))]
+    if not ck or not gates or not str(checkpoint).endswith(ck):
+        return ""
+    return ("\n\nOWNER RULING (recorded by the autopilot from the Owner, not by the checkpoint): for THIS checkpoint only, "
+            f"the Owner excluded {', '.join(gates)} ({str(oe.get('why') or '')[:300]}). Do not run it; list it under "
+            "\"excluded_gates\" with why \"Owner ruling\". Every other rule above still applies to every other gate.\n")
+
+
+def judge(lane: dict, checkpoint: str, product: str, ruling: str = "") -> dict:
     prompt = (HOME / "judge_prompt.md").read_text().replace("{CHECKPOINT}", checkpoint).replace("{PRODUCT}", product)
+    prompt += ruling
     # 2026-11-19 (pane 08cba76c): the judge's bare gate runs rewrote tracked evidence (MKW s184m/seq_gate_run.json,
     # FIFA f3x/gate_mutants.json); the dirty product held S191M's and S196F's launch ~6 h (behind_dirty). The judge
     # measures, never edits: a tracked file its run dirtied is restored; one that was already dirty is left as it was.
@@ -1548,10 +1565,14 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
                             pend.get("snap") or {}, dry)
     ls.pop("pending_plan", None)  # a new hold: whatever an older refusal kept no longer describes this checkpoint
     log(f"{lane['name']}: checkpoint {checkpoint} -> judge")
+    ruling = owner_exclusion_text(ls, checkpoint)
     v = ({"verdict": "AGREE", "new_canonical_certs": 0, "validated_capability": False, "protected_ok": True,
-          "gates": [{"cmd": "dry", "rc": 0}], "_tokens": 0} if dry else judge(lane, checkpoint, product))
+          "gates": [{"cmd": "dry", "rc": 0}], "_tokens": 0} if dry else judge(lane, checkpoint, product, ruling))
     tok, measured = call_tokens(v.get("_tokens"))
     ledger_add(lane=lane["name"], kind="judge", tokens=tok, measured=measured, verdict=v.get("verdict"), checkpoint=checkpoint)
+    if ruling and not dry:  # one judgment only: the ruling named this checkpoint, not the lane's future
+        ledger_add(lane=lane["name"], kind="owner_exclusion_used", tokens=0, checkpoint=checkpoint,
+                   gates=(ls.pop("owner_excluded", None) or {}).get("gates"))
     prior = ls.get("superseded") or {}
     if v.get("verdict") == "AGREE" and not agree_supported(v, prior):
         v["verdict"] = "INCONCLUSIVE"
