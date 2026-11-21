@@ -13,6 +13,7 @@ writes only to a temp dir, and the last gate proves no live agent_run row carrie
 from __future__ import annotations
 
 import json
+import os
 import random
 import subprocess
 import sys
@@ -22,6 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
+os.environ["CPP_MODEL_SPEND_ADMISSION"] = "off"   # replayed streams spend nothing; the check has test_model_spend_gate
 import agent_carrier_run as RUN  # noqa: E402
 from modules.capability_runtime import agent_spec as A  # noqa: E402
 from modules.capability_runtime import agent_telemetry as T  # noqa: E402

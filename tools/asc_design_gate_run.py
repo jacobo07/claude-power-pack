@@ -115,6 +115,8 @@ def claude_cmd(prompt: str, system: str | None, resume: str | None, treated: boo
 
 
 def call(cmd: list, cwd: Path, stream: Path, env: dict) -> dict:
+    import model_spend_gate
+    model_spend_gate.require("asc_design_gate_run")   # BAMR obligation 5: refused -> the run aborts, nothing spawned
     t0 = time.time()
     p = subprocess.run(cmd, cwd=cwd, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=TIMEOUT, env=env)
     with open(stream, "a", encoding="utf-8") as fh:
@@ -221,6 +223,8 @@ def blind_judge(task_key: str, out: Path, seed: int) -> dict:
     votes = []
     for o in (order, order[::-1]):
         prompt = JUDGE.format(brief=TASKS[task_key], a=srcs[o[0]][:60000], b=srcs[o[1]][:60000])
+        import model_spend_gate
+        model_spend_gate.require("asc_design_gate_run")   # BAMR obligation 5: the judge spends too
         p = subprocess.run([*CLAUDE, "-p", prompt, "--setting-sources", "project", "--output-format", "json"],
                            cwd=tempfile.mkdtemp(prefix="dsr-judge-"), stdin=subprocess.DEVNULL, capture_output=True,
                            text=True, timeout=TIMEOUT)

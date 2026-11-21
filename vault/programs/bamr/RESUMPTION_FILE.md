@@ -26,10 +26,12 @@ Owner caps: session <= 40 $ API-eq (soft 25 $). Autonomous model spend 0 — not
    transient keeps 4), `tool_failure` class (2 workers stuck on one tool error), `effect_unconfirmed` park (last
    effect call with no result; `clear` reconciles). Gate `tools/test_provider_breaker.py` 64/64; review's
    6 findings fixed (tool text redacted to a digest, transient regex widened, tool failures out of the streak).
-   NEXT: obligation 5 (7 ungated `claude -p` tools); P6 guard belongs to another owner.
+   P6 guard belongs to another owner.
 4. Owner: correct `~/.claude/state/account-governor.json` reset_at (official reset Wed 17:00 UTC) and calibration
    (`python tools/account_governor.py status --json` -> `implied_calibration_api_eq_per_100pct`).
-5. Debt named by the review: 7 `claude -p` tools spend ungated (list in the spec); closeout-on-quota decision.
+5. DONE (2026-11-21): the 7 `claude -p` tools ask the governor before spawning (`tools/model_spend_gate.py`,
+   gate `tools/test_model_spend_gate.py` 24/24). OPEN, Owner: should the closeout reserve launch run on the
+   last quota or stay refused like every other launch (today: refused)?
 
 ## 5. Rejected / do-not-redo
 - Do not run `account_governor.py measure` without `--host laptop` (it now refuses; it once made 126 %).

@@ -87,6 +87,10 @@ def run_one(q, mode, repeat, nonce, wt):
     cmd = ["claude", "-p", "--model", "sonnet", "--session-id", sid, "--allowedTools", "Read", "Grep", "Glob",
            "--max-budget-usd", "1.50", "--output-format", "json", "--append-system-prompt",
            "Benchmark cell " + nonce + ". Answer from the repository files only; be brief.", q["prompt"]]
+    import model_spend_gate
+    refused = model_spend_gate.refusal("ccn_bench")   # BAMR obligation 5: never a cell result (cmd_run drops it)
+    if refused:
+        return {"qid": q["id"], "mode": mode, "repeat": repeat, "refused": refused}
     t0 = time.time()
     try:
         p = subprocess.run(cmd, cwd=wt, capture_output=True, text=True, timeout=RUN_TIMEOUT_S)
@@ -141,10 +145,17 @@ def cmd_run(a):
                 wave = qs[i:i + width]
                 with cf.ThreadPoolExecutor(max_workers=len(wave)) as ex:
                     rows = list(ex.map(lambda q: run_one(q, mode, rep, cell, a.worktree), wave))
+                # A refusal is not a cell: drop it, but persist the cells of the same wave that did spend, so the
+                # budget tally and a resume see them (else a resume spends them again).
+                refused = [r["refused"] for r in rows if r.get("refused")]
+                rows = [r for r in rows if not r.get("refused")]
                 with open(runs_path, "a", encoding="utf-8") as f:
                     for r in rows:
                         f.write(json.dumps(r) + "\n")
                         spent += r.get("cost_usd", 0)
+                if refused:
+                    import model_spend_gate
+                    raise model_spend_gate.SpendRefused(refused[0])
                 print("wave r%d %s %s: %s spent=$%.2f" % (rep, mode, [r["qid"] for r in rows],
                       [(r["rc"], r.get("cost_usd"), r["passed"]) for r in rows], spent), flush=True)
     json.dump(skipped, open(os.path.join(out, "skipped.json"), "w"))

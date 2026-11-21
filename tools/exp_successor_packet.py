@@ -157,6 +157,8 @@ def prepare() -> dict:
 # ---------------------------------------------------------------- runs
 def _run_one(prompt: str) -> dict:
     exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+    import model_spend_gate
+    model_spend_gate.require("exp_successor_packet")   # BAMR obligation 5: a refused run is no arm result
     t0 = time.time()
     try:
         # Identical flags for both arms. The packet dir is readable (as it is for a real worker) and

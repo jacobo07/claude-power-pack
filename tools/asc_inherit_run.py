@@ -69,6 +69,8 @@ def run(label: str, system: str | None, out: Path = OUT, task: str = TASK) -> di
            "--allowedTools", "Write", "Edit", "Read", "--output-format", "stream-json", "--verbose"]
     if system:
         cmd += ["--append-system-prompt", system]
+    import model_spend_gate
+    model_spend_gate.require("asc_inherit_run")   # BAMR obligation 5: refused -> the run aborts, nothing spawned
     t0 = time.time()
     p = subprocess.run(cmd, cwd=d, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=900)
     calls, usage, result = [], {}, ""

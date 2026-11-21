@@ -56,6 +56,12 @@ def build(project: Path, n: int, desc_bytes: int, catalog_only: bool):
 
 
 def measure(project: Path, model: str, timeout: int) -> dict:
+    if str(ROOT / "tools") not in sys.path:
+        sys.path.insert(0, str(ROOT / "tools"))
+    import model_spend_gate
+    refused = model_spend_gate.refusal("agent_discovery_curve")   # BAMR obligation 5
+    if refused:
+        return {"status": "UNMEASURED", "reason": refused, "account_refused": True}
     exe = shutil.which("claude")
     if not exe:
         return {"status": "UNMEASURED", "reason": "claude CLI not on PATH"}

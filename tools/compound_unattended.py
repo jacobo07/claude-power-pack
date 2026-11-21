@@ -162,6 +162,10 @@ def run_one(repo: str, timeout_s: int, dry_run: bool) -> dict:
            "--allowed-tools", _ALLOWED_TOOLS]
     if dry_run:
         return {"repo": repo, "dry_run": True, "cmd": " ".join(cmd[:5]) + " ..."}
+    import model_spend_gate
+    refused = model_spend_gate.refusal("compound_unattended")   # BAMR obligation 5: unattended spend asks first
+    if refused:
+        return {"repo": repo, "verdict": "REFUSED_ACCOUNT", "why": refused}
     t0 = time.time()
     try:
         res = subprocess.run(cmd, cwd=repo, capture_output=True, text=True,

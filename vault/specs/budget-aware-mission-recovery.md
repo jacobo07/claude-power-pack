@@ -116,6 +116,16 @@ No second classifier was built: every class below already has an owner. Read 202
 - Out of scope, named gap: `claude -p` spend outside the mission machinery is ungated --
   asc_design_gate_run.py:108, asc_inherit_run.py:68, agent_carrier_run.py:128, compound_unattended.py:216,
   ccn_bench.py:87, exp_successor_packet.py:165, agent_discovery_curve.py:64.
+  CLOSED 2026-11-21 (obligation 5): `tools/model_spend_gate.py` asks the governor (action `arm`, unknown and
+  governor fault refuse) immediately before each of those 8 spawns (asc_design_gate_run has two: the arm and the
+  judge). Measurement runs (asc_*, exp_successor_packet) RAISE `SpendRefused`, so a refused call is never
+  recorded as a result or a failed arm; ccn_bench's run_one returns a `refused` row that cmd_run drops, after
+  persisting the same wave's spent cells, then raises (review MEDIUM: else a resume re-spends them); agent_carrier_run and agent_discovery_curve return UNMEASURED
+  (agent_carrier before `started`, so no agent_run signal); compound_unattended returns `REFUSED_ACCOUNT` after
+  its dry-run branch. Kill switch CPP_MODEL_SPEND_ADMISSION=off; CPP_MODEL_SPEND_STATE_DIR isolates suites.
+  Gate `tools/test_model_spend_gate.py`: each tool refused with zero spawns on an empty (unknown) state, and each
+  control with the switch off spawns, so the spy can return either answer. The governor ledger row carries the
+  action only, not the tool name (account_governor.py untouched).
 
 ## UKDL entries (LANDED 17c6717a)
 T-QUOTA-ESTIMATE-IS-NOT-QUOTA-001, PR-ADMISSION-AT-EVERY-LAUNCH-PATH-001, T-HOST-NAME-DEFAULT-DOUBLE-COUNT-001,

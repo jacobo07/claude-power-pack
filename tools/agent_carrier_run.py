@@ -232,6 +232,10 @@ def _run_body(spec_id: str, mission: str, mode: str, model: str | None, parent_m
     exe = shutil.which("claude")
     if not exe:
         return {"status": "UNMEASURED", "reason": "claude CLI not on PATH"}
+    import model_spend_gate
+    refused = model_spend_gate.refusal("agent_carrier_run")   # BAMR obligation 5: before the start, so no spend
+    if refused:
+        return {"status": "UNMEASURED", "reason": refused, "account_refused": True}
     parent_prompt = (
         f"Call the Agent tool exactly once with subagent_type `{d['subagent_type']}`, "
         f"model `{carrier_model}`, description `run {spec_id}`, and this prompt, verbatim, between the markers:\n"

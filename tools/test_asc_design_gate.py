@@ -29,7 +29,8 @@ def ok(name: str, cond: bool, detail: str = "") -> None:
 def main() -> int:
     out = tempfile.mkdtemp(prefix="v-asc-dg-")
     try:
-        env = dict(os.environ, PYTHONIOENCODING="utf-8",
+        # The stand-in spends nothing; the account check (BAMR obligation 5) has its own suite, test_model_spend_gate.
+        env = dict(os.environ, PYTHONIOENCODING="utf-8", CPP_MODEL_SPEND_ADMISSION="off",
                    CPP_CLAUDE_EXE=json.dumps([sys.executable, str(ROOT / "tools" / "fixtures" / "fake_claude.py")]))
         r = subprocess.run([sys.executable, str(ROOT / "tools" / "asc_design_gate_run.py"), "--out", out,
                             "--tasks", "saas"], capture_output=True, text=True, env=env, timeout=600, encoding="utf-8")
