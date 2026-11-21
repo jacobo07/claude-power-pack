@@ -32,7 +32,8 @@ DEFAULT_STORE = os.path.join(HOME, ".claude", "state", "mcp_catalog_private.json
 DEFAULT_CACHE = os.path.join(HOME, ".claude", "state", "mcp_lazy_cache")
 SHIM_MARK = "mcp_lazy_shim"          # mcp_scope uses this to recognise a shim entry and never store it as a real config
 PROTOCOL = "2025-06-18"
-SERVE_FROM_CACHE = True             # the lazy point; the mutation drill flips it and the lazy gates must go red
+SPAWN_PREFIXES = ("tools/call", "resources/", "prompts/", "completion/", "logging/")  # only these need the real server
+SERVE_FROM_CACHE = True            # the lazy point; the mutation drill flips it and the lazy gates must go red
 INIT_ID = "__cpp_lazy_init__"
 
 
@@ -111,23 +112,41 @@ def record(name: str, store: str, cache_dir: str) -> dict:
     try:
         init = handshake(proc, {"protocolVersion": PROTOCOL, "capabilities": {},
                                 "clientInfo": {"name": "cpp-lazy-record", "version": "1"}})
-        tools, cursor, n = [], None, 0
-        while True:
-            n += 1
-            _send(proc, {"jsonrpc": "2.0", "id": f"__tl{n}__", "method": "tools/list",
-                         "params": ({"cursor": cursor} if cursor else {})})
-            r = _read_until(proc, f"__tl{n}__", 30.0)
-            if "error" in r:
-                raise RuntimeError(f"tools/list failed: {r['error']}")
-            tools += r["result"].get("tools", [])
-            cursor = r["result"].get("nextCursor")
-            if not cursor:
-                break
+        n = 0
+
+        def list_all(method: str, key: str, strict: bool) -> list:
+            nonlocal n
+            items, cursor = [], None
+            while True:
+                n += 1
+                _send(proc, {"jsonrpc": "2.0", "id": f"__tl{n}__", "method": method,
+                             "params": ({"cursor": cursor} if cursor else {})})
+                r = _read_until(proc, f"__tl{n}__", 30.0)
+                if "error" in r:
+                    if strict:
+                        raise RuntimeError(f"{method} failed: {r['error']}")
+                    return items
+                items += r["result"].get(key, [])
+                cursor = r["result"].get("nextCursor")
+                if not cursor:
+                    return items
+
+        tools = list_all("tools/list", "tools", True)
+        caps = init.get("capabilities", {})
+        # The host enumerates these at connect time; without a cached answer the shim would have to wake the
+        # real server just to be told "nothing here" (measured: prompts/list spawned it on a read-only -p call).
+        lists = {}
+        if "prompts" in caps:
+            lists["prompts/list"] = {"prompts": list_all("prompts/list", "prompts", False)}
+        if "resources" in caps:
+            lists["resources/list"] = {"resources": list_all("resources/list", "resources", False)}
+            lists["resources/templates/list"] = {"resourceTemplates": list_all(
+                "resources/templates/list", "resourceTemplates", False)}
     finally:
         proc.terminate()
     os.makedirs(cache_dir, exist_ok=True)
     data = {"server": name, "sig": cfg_sig(cfg), "recorded": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "initialize": init, "tools": tools}
+            "initialize": init, "tools": tools, "lists": lists}
     with open(os.path.join(cache_dir, f"{name}.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, indent=1, ensure_ascii=False)
     _event(cache_dir, name, "recorded", tools=len(tools))
@@ -215,7 +234,17 @@ def run(name: str, store: str, cache_dir: str) -> int:
             if method == "ping":
                 out.write({"jsonrpc": "2.0", "id": mid, "result": {}})
                 continue
+            if method in (cache.get("lists") or {}):
+                _event(cache_dir, name, "served", method=method)
+                out.write({"jsonrpc": "2.0", "id": mid, "result": cache["lists"][method]})
+                continue
             if mid is None:              # any other notification before the real server exists: nothing to tell it
+                continue
+            if not (method or "").startswith(SPAWN_PREFIXES):
+                # Host-side probes (e.g. `server/discover` at connect time) are not a use of the server. Answer the
+                # standard "method not found" instead of paying a process for them.
+                _event(cache_dir, name, "served", method=method, error="method-not-found")
+                out.write({"jsonrpc": "2.0", "id": mid, "error": {"code": -32601, "message": f"Method not found: {method}"}})
                 continue
             try:
                 ensure_spawned(method or "?")
