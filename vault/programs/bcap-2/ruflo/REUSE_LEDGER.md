@@ -36,9 +36,9 @@ not READY_FOR_CANARY) until a laptop/isolated run drives the upstream advisory f
 dependency_sovereignty | 8 token budget -> TCO/gsd_mission budget (existing). None rebuilt.
 
 ## RESIDUALS
-- no npm provenance attestation; source-to-tarball identity of `dist/` UNMEASURED (dist not in git).
+- no npm provenance attestation (CONFIRMED by measurement, CANARY_2026-11-20.json). `dist/` identity (campaign B, 2026-11-21, `dist_identity.py`, `DIST_IDENTITY_2026-11-21.json`): every one of 525 source .ts has a dist .js; shipped bin/ and assets/ byte-identical to source; BUT the source checkout (337c8981, grafted) and the 3.78.0 tarball DIVERGE (package.json pins @claude-flow/mcp 3.1.6 vs 3.1.8, @claude-flow/security 3.0.7 vs 3.0.8; plugins/ dist-only files). dist bytes stay UNPROVEN: rebuilding would run upstream build scripts.
 - advisory fixes unverified at runtime (needs executing upstream with attack fixtures: laptop/isolated plane).
 - network egress during smoke blocked only by an in-process preload (bwrap/unshare netns refused on this host); install itself needed the registry.
-- fresh `npm audit` result not recorded (#3157 UNMEASURED) ; #3294 remains open upstream (CPP wraps, does not fix their code).
+- fresh `npm audit` MEASURED 2026-11-20: 0 vulnerabilities (CANARY json, lockfile sha acff5e4b...), 586/586 signatures verified;  #3294 remains open upstream (CPP wraps, does not fix their code).
 - 5 of the 8 GHSA classes (SSRF, loopback bridge, XFF, federation envelope, memory origin) are generic controls proven on fixtures, not yet bound
   to a running Ruflo MCP transport (nothing is running).

@@ -68,3 +68,5 @@ B3. SaaS style 1 (dark monochrome) CDIO-06 sec.10 rules 5 and 6 are still open: 
 On Windows, `test_bcap2_dbg` (Linux-path real-bug replay), `test_bcap2_tdd` (needs the pytest+coverage interpreter) and
 `test_bcap2_ruflo` (symlink privilege, WinError 1314) fail for platform reasons; `test_bcap2_synsation` 38/0 and
 `test_bcap2_animejs` 35/0 pass. done_gate is a GEX44-plane gate.
+
+B4. Ruflo (campaign B Phase 7): the GEX44 residuals are measured (audit 0 vulns, dist structure). Still needs a clean-room plane: build `v3/@claude-flow/cli` from tag v3.78.0 in an isolated VM with scripts reviewed, then byte-compare against the tarball dist (GEX44 refuses to run upstream build scripts); and drive hgp6/rx87/jwwq/#4750 with a networked, throwaway ruflo. Activation stays refused.

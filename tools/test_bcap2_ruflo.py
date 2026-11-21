@@ -116,6 +116,31 @@ check("RUFLO XFF pole: untrusted peer cannot choose its rate-limit identity", G.
 check("RUFLO XFF control: trusted proxy yields the right-most untrusted hop", G.client_ip("10.0.0.1", "9.9.9.9, 1.2.3.4", ("10.0.0.1",)) == "1.2.3.4")
 check("RUFLO session pole: unknown session and missing principal refused", G.PrincipalBinding().check("nope", "a") and G.PrincipalBinding().check("s", None))
 
+# BCAP-2B Phase 7: dist identity measurement (offline, read-only) driven from both poles on synthetic trees, plus the recorded real result
+import importlib.util as _iu
+_sp = _iu.spec_from_file_location("dist_identity", ROOT / "vault/programs/bcap-2/ruflo/dist_identity.py")
+DI = _iu.module_from_spec(_sp); _sp.loader.exec_module(DI)
+
+def _pkg(root, dep, body="a", with_js=True):
+    (root / "src").mkdir(parents=True, exist_ok=True); (root / "bin").mkdir(exist_ok=True)
+    (root / "src/x.ts").write_text("export {}"); (root / "bin/c.js").write_text(body)
+    (root / "package.json").write_text(json.dumps({"version": "1", "dependencies": {"d": dep}}))
+    if with_js:
+        (root / "dist").mkdir(exist_ok=True); (root / "dist/x.js").write_text("")
+
+_a, _b = Path(tempfile.mkdtemp(dir=TMP)), Path(tempfile.mkdtemp(dir=TMP))
+_pkg(_a, "1.0"); _pkg(_b, "1.0")
+check("RUFLO dist control: matching trees are structurally consistent", DI.measure(str(_a), str(_b))["verdict"].startswith("STRUCTURALLY_CONSISTENT"))
+_pkg(_b, "2.0")
+check("RUFLO dist pole: dependency drift is reported", "dependencies:d" in DI.measure(str(_a), str(_b))["package_json"]["dep_drift"])
+_pkg(_b, "1.0", body="EVIL")
+check("RUFLO dist pole: a shipped bin that differs from source is reported", DI.measure(str(_a), str(_b))["shipped_vs_source"]["bin"]["differ"] == ["bin/c.js"])
+(_b / "dist/x.js").unlink()
+check("RUFLO dist pole: a source module with no dist js is reported", DI.measure(str(_a), str(_b))["dist_coverage"]["src_without_js_count"] == 1)
+_rec = ROOT / "vault/programs/bcap-2/ruflo/DIST_IDENTITY_2026-11-21.json"
+_r = json.loads(_rec.read_text()) if _rec.is_file() else {}
+check("RUFLO dist recorded: real measurement says bytes unproven (dist not in git), never 'identical'", _r.get("verdict", "").startswith("DIST_BYTES_UNPROVEN") and _r["dist_coverage"]["src_without_js_count"] == 0, str(_r.get("verdict")))
+
 # V-RUFLO-LEDGER: every GHSA/issue in the HOLD register has a control that this gate drives
 HOLDS = ROOT / "vault/programs/bcap-2/ruflo/HOLDS.json"
 if HOLDS.is_file():

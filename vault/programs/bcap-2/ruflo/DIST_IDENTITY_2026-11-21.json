@@ -1,0 +1,126 @@
+{
+ "dist_coverage": {
+  "dist_js": 1050,
+  "dist_js_without_src_count": 525,
+  "src_ts": 525,
+  "src_without_js": [],
+  "src_without_js_count": 0
+ },
+ "package_json": {
+  "dep_drift": {
+   "dependencies:@claude-flow/mcp": [
+    "3.1.6",
+    "3.1.8"
+   ],
+   "dependencies:@claude-flow/security": [
+    "3.0.7",
+    "3.0.8"
+   ]
+  },
+  "version": [
+   "3.78.0",
+   "3.78.0"
+  ]
+ },
+ "shipped_vs_source": {
+  "assets": {
+   "differ": [],
+   "identical": 10,
+   "shipped_only": [],
+   "source_only": 3
+  },
+  "bin": {
+   "differ": [],
+   "identical": 3,
+   "shipped_only": [],
+   "source_only": 0
+  },
+  "plugins": {
+   "differ": [],
+   "identical": 0,
+   "shipped_only": [
+    "plugins/ruflo-console/dist/tui.mjs",
+    "plugins/ruflo-metaharness/.claude-plugin/plugin.json",
+    "plugins/ruflo-metaharness/CHANGELOG.md",
+    "plugins/ruflo-metaharness/README.md",
+    "plugins/ruflo-metaharness/agents/metaharness-architect.md",
+    "plugins/ruflo-metaharness/commands/ruflo-metaharness.md",
+    "plugins/ruflo-metaharness/hooks/guard.ts",
+    "plugins/ruflo-metaharness/hooks/hooks.json",
+    "plugins/ruflo-metaharness/hooks/options.ts",
+    "plugins/ruflo-metaharness/hooks/register.ts",
+    "plugins/ruflo-metaharness/hooks/screen.ts",
+    "plugins/ruflo-metaharness/scripts/_cli-args.mjs",
+    "plugins/ruflo-metaharness/scripts/_darwin.mjs",
+    "plugins/ruflo-metaharness/scripts/_harness.mjs",
+    "plugins/ruflo-metaharness/scripts/_invoke.mjs",
+    "plugins/ruflo-metaharness/scripts/_redblue.mjs",
+    "plugins/ruflo-metaharness/scripts/_secret-env.cjs",
+    "plugins/ruflo-metaharness/scripts/_secret.mjs",
+    "plugins/ruflo-metaharness/scripts/_similarity.mjs",
+    "plugins/ruflo-metaharness/scripts/_spike-similarity.mjs",
+    "plugins/ruflo-metaharness/scripts/audit-list.mjs",
+    "plugins/ruflo-metaharness/scripts/audit-trend.mjs",
+    "plugins/ruflo-metaharness/scripts/bench-parse-mcp-scan.mjs",
+    "plugins/ruflo-metaharness/scripts/bench-recordpair-overhead.mjs",
+    "plugins/ruflo-metaharness/scripts/bench-similarity.mjs",
+    "plugins/ruflo-metaharness/scripts/bench.mjs",
+    "plugins/ruflo-metaharness/scripts/drift-from-history.mjs",
+    "plugins/ruflo-metaharness/scripts/evolve.mjs",
+    "plugins/ruflo-metaharness/scripts/genome.mjs",
+    "plugins/ruflo-metaharness/scripts/gepa.mjs",
+    "plugins/ruflo-metaharness/scripts/learn.mjs",
+    "plugins/ruflo-metaharness/scripts/mcp-scan.mjs",
+    "plugins/ruflo-metaharness/scripts/mint.mjs",
+    "plugins/ruflo-metaharness/scripts/oia-audit.mjs",
+    "plugins/ruflo-metaharness/scripts/redblue.mjs",
+    "plugins/ruflo-metaharness/scripts/router-parallel-analyze.mjs",
+    "plugins/ruflo-metaharness/scripts/score.mjs",
+    "plugins/ruflo-metaharness/scripts/security-bench.mjs",
+    "plugins/ruflo-metaharness/scripts/similarity.mjs",
+    "plugins/ruflo-metaharness/scripts/smoke.sh",
+    "plugins/ruflo-metaharness/scripts/test-cli-help.mjs",
+    "plugins/ruflo-metaharness/scripts/test-cli-resolution-3558.mjs",
+    "plugins/ruflo-metaharness/scripts/test-graceful-degradation.mjs",
+    "plugins/ruflo-metaharness/scripts/test-mcp-tools.mjs",
+    "plugins/ruflo-metaharness/scripts/test-no-tool-time-npx.mjs",
+    "plugins/ruflo-metaharness/scripts/test-parallel-pipeline.mjs",
+    "plugins/ruflo-metaharness/scripts/test-pin-alignment.mjs",
+    "plugins/ruflo-metaharness/scripts/test-pipeline-roundtrip.mjs",
+    "plugins/ruflo-metaharness/scripts/test-similarity.mjs",
+    "plugins/ruflo-metaharness/scripts/test-with-openrouter.mjs",
+    "plugins/ruflo-metaharness/scripts/threat-model.mjs",
+    "plugins/ruflo-metaharness/skills/harness-bench/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-drift-from-history/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-evolve/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-genome/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-gepa/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-learn/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-mcp-scan/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-mint/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-oia-audit/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-score/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-security-bench/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-similarity/SKILL.md",
+    "plugins/ruflo-metaharness/skills/harness-threat-model/SKILL.md",
+    "plugins/ruflo-metaharness/tests/register.test.ts",
+    "plugins/ruflo-metaharness/tests/textsof.test.ts",
+    "plugins/ruflo-metaharness/tsconfig.json"
+   ],
+   "source_only": 0
+  },
+  "scripts": {
+   "differ": [],
+   "identical": 1,
+   "shipped_only": [],
+   "source_only": 38
+  },
+  "templates": {
+   "differ": [],
+   "identical": 13,
+   "shipped_only": [],
+   "source_only": 0
+  }
+ },
+ "verdict": "DIST_BYTES_UNPROVEN: dist not in git; source/tarball diverge"
+}
