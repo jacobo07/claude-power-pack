@@ -41,6 +41,9 @@ def boom(*a, **k):
 
 S, T = "5e5e5e5e-aaaa-bbbb-cccc-000000000001", "7a7a7a7a-aaaa-bbbb-cccc-000000000002"
 WORK = tempfile.mkdtemp(prefix="arm-guard-work-")
+# The guard is keyed by session, not by repo. The worker records live in WORK, so the arms under test target
+# their own repo: a second root-roadmap mission in WORK would be refused singleflight before the guard is judged.
+ARM_WORK = tempfile.mkdtemp(prefix="arm-guard-target-")
 
 
 def worker_record(sid, state):
@@ -70,7 +73,9 @@ def sentinel_reached():
     real = gm.create
     gm.create = boom
     try:
-        return isinstance(raises(lambda: gm.arm(WORK, "echo x", launch=True)), Sentinel)
+        # A fresh repo per probe: the no-launch arm above left a live root-roadmap attempt in ARM_WORK.
+        target = tempfile.mkdtemp(prefix="arm-guard-probe-")
+        return isinstance(raises(lambda: gm.arm(target, "echo x", launch=True)), Sentinel)
     finally:
         gm.create = real
 
@@ -78,10 +83,10 @@ def sentinel_reached():
 w = worker_record(S, gm.RUNNING)
 n0 = len(gm.all_missions())
 set_env(S)
-e = raises(lambda: gm.arm(WORK, "echo x", launch=True))
+e = raises(lambda: gm.arm(ARM_WORK, "echo x", launch=True))
 check("V-ARM-WORKER-RED", isinstance(e, gm.MissionError) and w["mission_id"] in str(e)
       and len(gm.all_missions()) == n0, str(e)[:90])
-r = raises(lambda: gm.arm(WORK, "echo x", launch=False))
+r = raises(lambda: gm.arm(ARM_WORK, "echo x", launch=False))
 check("V-ARM-WORKER-NO-LAUNCH-GREEN", r is None and len(gm.all_missions()) == n0 + 1)
 set_env(T)
 check("V-ARM-WORKER-OTHER-SID-PASSES", sentinel_reached())
@@ -94,7 +99,7 @@ d = worker_record(U, gm.RUNNING)
 d = gm.transition(d["mission_id"], expect_epoch=d["epoch"], expect_state=gm.RUNNING,
                   event="test_done", state=gm.COMPLETED)
 set_env(U)
-e = raises(lambda: gm.arm(WORK, "echo x", launch=True))
+e = raises(lambda: gm.arm(ARM_WORK, "echo x", launch=True))
 check("V-ARM-WORKER-TERMINAL-WORKER-RED", isinstance(e, gm.MissionError) and d["mission_id"] in str(e),
       str(e)[:90])
 print(f"ARM_WORKER_PASS={PASS}/{PASS + FAIL}")

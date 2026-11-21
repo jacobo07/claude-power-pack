@@ -145,6 +145,32 @@ def main() -> int:
     check("V-GGMC-RENEWAL-CONTROL-LONE-GOAL",
           gm._renewal_why_not(lone, BUDGET_HALT, {"outcome": "OK"}, TMP, fingerprint=lambda w: None) is None)
 
+    # Root roadmap: a mission with no workstream drives .planning/ROADMAP.md, and that is a Goal too
+    # (2026-11-21: goal_key answered None here, so two root missions could share one ROADMAP.md).
+    root_repo = Path(TMP) / "root-repo"
+    root_repo.mkdir()
+
+    def arm_root(**kw):
+        return gm.arm(str(root_repo), "/gsd-autonomous", launch=False, now=NOW, **kw)["mission"]
+
+    r1 = arm_root()
+    check("V-GGMC-ROOT-GOAL-BOUND", (r1.get("goal") or {}).get("workstream") == "", str(r1.get("goal")))
+    check("V-GGMC-ROOT-SINGLEFLIGHT-REFUSED", refused(arm_root, "root roadmap"))
+    check("V-GGMC-ROOT-REFUSAL-NAMES-WORKSTREAM", refused(arm_root, "--workstream"))
+    check("V-GGMC-ROOT-CONTROL-OWN-WORKSTREAM",
+          gm.arm(str(root_repo), "/gsd-autonomous --ws ws-side", launch=False, now=NOW)["mission"]["state"]
+          == gm.PREPARED)
+    other_root = Path(TMP) / "other-root-repo"
+    other_root.mkdir()
+    check("V-GGMC-ROOT-CONTROL-OTHER-REPO",
+          gm.arm(str(other_root), "/gsd-autonomous", launch=False, now=NOW)["mission"]["state"] == gm.PREPARED)
+    r2 = arm_root(supersedes=r1["mission_id"], authority="Owner 2026-11-21, rearm")
+    check("V-GGMC-ROOT-SUPERSEDE-WITH-AUTHORITY", gm.load(r1["mission_id"])["state"] == gm.HALTED
+          and r2.get("supersedes") == r1["mission_id"])
+    check("V-GGMC-ROOT-SUPERSEDE-WORKSTREAM-REFUSED",
+          refused(lambda: gm.arm(str(root_repo), "/gsd-autonomous --ws ws-x", launch=False, now=NOW,
+                                 supersedes=r2["mission_id"], authority="Owner"), "not an attempt of this goal"))
+
     print(f"GOAL_CONTROL_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 
