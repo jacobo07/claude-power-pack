@@ -22849,3 +22849,67 @@ MEASURED (one census, proxy-limited). Of 9 024.7 M tokens measured across 669 mi
 work tree never changed; the largest single class was missions superseded after spending (~528 M in 4 missions). Before
 superseding a mission that has spent, read what its predecessor left (`python tools/burn_census.py`). "No tree change" is a
 proxy: read-only slim workers and worktree work read as no change. 2026-11-20, PP `2ea01b2d`.
+
+## Self-Improve x CPP atomic assimilation (2026-11-21)
+
+Source: `/analyze-transcripts` campaign (tools/analyze_transcripts.py, tools/transcript_events.py). Every entry below
+was reproduced and fixed this session; none is promoted to HR (no entry has the cross-subsystem transfer evidence HR
+status needs).
+
+### T-CONFIRMATION-IS-NOT-DIAGNOSIS-001
+
+PROVEN. A human confirming that a correction happened proves the correction, not its cause. `ceps.confirm_draft` stored
+the Owner's words as `root_cause` at confidence=high, i.e. every confirmation was filed as a demonstrated cause. Keep the
+states apart: UNDIAGNOSED (symptom) -> OWNER_DIAGNOSED (asserted) -> VERIFIED (reproduced + fixed), and never fill a
+cause field to satisfy a schema. History check before re-classifying: 0 of 6,427 events were affected because the
+producer had never run. PP `3bd09a42`.
+
+### T-PRESENCE-CHECK-ON-A-DETERMINISTIC-ID-001
+
+PROVEN. A hermeticity gate that asks "is this id in the live append-only corpus?" fails forever once history holds the id:
+`V-CEPS-ADMIT-HERMETIC` sat at 19/20 for its life while the suite wrote nothing (74 legacy copies; counts and bytes
+unchanged across a measured run). Count before vs after the call, and drill both poles (pre-polluted + intact -> PASS,
+redirect broken -> FAIL). PP `0bad59dd`.
+
+### T-CHARACTER-WINDOW-REGEX-IS-LINE-ENDING-SENSITIVE-001
+
+PROVEN. A source-reading gate with a `[\s\S]{0,N}` character window reads different answers for the same code under CRLF
+and LF: `test-dispatcher-session-of` read 1/2 on every Windows checkout and on the live mirror, 2/2 on the same bytes as LF.
+Normalise `\r\n` before matching. PP `4762b093`.
+
+### PR-FAILURE-IDENTITY-IS-THE-INFORMATIVE-LINE-001
+
+PROVEN. A failure signature taken from the first line merges unrelated failures: 159 PowerShell failures across 22
+sessions collapsed into `Exit code #`, and 99 different gate refusals into `Blocked by a PreToolUse gate (exit #)`, so the
+top-ranked "fix" fixed nothing. Skip lines that only say THAT it failed or are only data once masked, prefer a traceback's
+exception line, and keep gate refusals (a hook's decision: true catch vs false positive) apart from tool failures.
+PP `8dd71ec8`.
+
+### PR-A-NEGATIVE-GATE-NEEDS-A-PROBE-ON-THE-SURFACE-IT-READS-001
+
+PROVEN. "X is absent from the output" proves nothing if the probe never reaches a path the output shows. Three
+`/analyze-transcripts` gates passed vacuously in their first draft: a secret canary in a turn the report never displays,
+a spoof that was not correction-shaped and so could not surface even when misclassified, and a skill gate that fell back
+to True because the name was not installed on the host. Put the probe on the displayed path, inject host-dependent
+populations, and keep a mutation drill per negative gate that turns it red (V-AT-DRILL-SPOOF, V-AT-DRILL-REDACT).
+PP `8dd71ec8`.
+
+### T-A-CORRECTION-LEADS-THE-TURN-001
+
+PROVEN (E1: one labeller). Any negation anywhere is not an Owner correction. On 1,296 real non-pasted Owner turns (30 days)
+the old cue drew 15 hits, all a mid-sentence `que no` (precision ~7-20%), and missed every turn-initial `no, ...`. Lead-of-
+turn plus second-person past-act cues: 7/7 in-sample, 2/2 held-out (KobiiCraft); recall UNKNOWN. `ceps.correction_cue`.
+PP `8af361d1`.
+
+### T-VALID-JSON-IS-NOT-A-RECORD-001
+
+PROVEN. A JSONDecodeError guard does not protect `.get` on what json.loads returned: `[1,2]` crashed three Python
+transcript readers, and `null` crashed the JS correction hook (`rec.type` on null). Guard the TYPE, not only the parse.
+Live corpus held 0 such lines -- cheap robustness, pinned by V-READER-* / V-EVENTS-JS-PARITY. PP `9f90e227`, `ec74ce4e`.
+
+### T-MIRROR-SYNC-DROPS-LIVE-ONLY-LINES-001
+
+PROVEN. The inverse of [[T-HOOK-DISPATCHER-DRIFT-001]]: a whole-file "copy canonical -> live" also deletes what only live
+holds. On 2026-11-21 the only non-comment drift between the two dispatchers was a live-only `corpus-reuse-sentinel.js`
+registration; the habitual copy would have unregistered it. Diff non-comment lines first, and hand the Owner a one-line
+insertion when the two have drifted. PP `584ba206`.
