@@ -1,14 +1,25 @@
 # Roadmap: creative-cap (Creative Capability Assimilation & Magic UI Coverage)
 
 Authority: `vault/plans/creative-capability-assimilation-2026-11-21.md` (Owner-approved 2026-11-21, "Approve as written").
-Read it first: its Reality Scan is the measured baseline. The Owner's full mission text is summarised there; the done-gates
-G1..G18 below are the Owner's.
+Read it first: its Reality Scan is the measured baseline.
+Owner done-gates (each needs an executable check with an observed exit code; unrun = not PASS): G1 Magic UI reality
+reconciled + causes named + measured discovery gain; G2 traceable inventories, uninvestigated = pending; G3 licence
+compliance per resource and distribution mode; G4 discovery without library names; G5 selector differs by context and
+abstains; G6 real implementation; G7 render quality + identity kept; G8 perf + a11y; G9 negative tests; G10 seeded
+mutations caught; G11 evidence from the real path; G12 UKDL/Knowledge Vault; G13 constitutive baseline wired to consumers;
+G14 fresh-agent test; G15 microcommits; G16 honest spend; G17 no false completion; G18 recoverable handoff.
+Principle: absorption != availability != discoverability != selection != implementation != verified quality != inheritance.
+NO FORCED EFFECTS: the absence of an effect must be able to win.
 
-PLANE: **LAPTOP** (Windows). You run in place in `C:\Users\User\.claude\skills\claude-power-pack`, branch
-`feature/knowledge-acquisition`, a SHARED tree: other sessions have uncommitted files. Commit ONLY your own paths with
-`git commit -- <paths>` (pathspec), never `git add -A`, never reset/stash/checkout others' files. Do NOT push.
-Use the PowerShell tool; git is `& 'C:\Program Files\Git\cmd\git.exe'`; python is
-`C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe`.
+PLANE: **GEX44** (Linux; laptop refused the arm at 1.6 GB free RAM, Owner "do it on GEX44"). You run in the mission clone
+`~/missions/creative-cap` (or its `.claude/worktrees/<name>` on your own `mission/creative-cap-run` branch). Never call
+EnterWorktree. Commit with the repo-local identity, one causal delta per commit, pathspec commits only. Do NOT push
+(the laptop fetches your branch). Use Bash and python3. **Never touch GEX44's live `~/.claude` or
+`~/.claude/skills/claude-power-pack`** (agora-mission-sweep runs that tree). Gates that read `~/.claude/` settings or live
+hooks judge GEX44's install, not the laptop's: prove hook behaviour by driving the repo's hook script directly
+(stdin JSON -> stdout). If real Chromium is unavailable here (check `python3 -c "import playwright"` and a headless
+launch), Phase 6 render steps go to `vault/programs/creative-cap/LAPTOP_STEPS.md`, numbered, copy-pasteable,
+BLOCKED-ON-LAPTOP; then continue.
 
 EXECUTION mode. Plan each phase inline. Do NOT dispatch gsd-planner or gsd-phase-researcher. At most 2 bounded subagents.
 REUSE, never rebuild: `tools/design_index.py` (retrieval), `modules/cdicf/{source_intake,source_route,reference_intel,
