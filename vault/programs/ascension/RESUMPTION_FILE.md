@@ -5,6 +5,24 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-21 ~15:10Z (pane 0ba4909a, /kresume of 3581ade8). DESIGN BEFORE EVERY PARK DEPLOYED 15:07:17Z** under
+cron.lock + all 8 factory-apply locks. CAS autopilot 96536c9e -> 01769437, evolve 67daa875 -> 5b8db480, test b2d4437b ->
+da1f824f, backups `*.bak-0ba4-design-20261121T150717Z`.
+- (a) evolve.plateau: a pivot-rule refusal designs a lever (_synth_or_park) before it parks.
+- (b) autopilot.design_before_park: a judge DISAGREE/INCONCLUSIVE designs a lever of another family from the checkpoint
+  and plans told the judgment, crediting nothing. It still parks on a protected failure (protected_check, or
+  protected_ok False), a failed judge call (`_judge_failed`), or no admitted design. SYNTH_MAX=3 bounds it, and
+  auto_extend grants can lift that bound.
+- Review (pp-code-reviewer) APPROVE w/ notes, all fixed:
+  - MEDIUM-1: an envelope/budget park restores design_snap.
+  - MEDIUM-2: `not_agreed_base` means pre-existing red is proven at the base before the not-agreed generation; it is
+    popped on AGREE.
+  - LOW: a protected failure is never continue_unfinished.
+- Gate /tmp/apgate-0ba4 PASS 345/345, mutants 145/145. Control: live code + new test red on 5.
+- DEBT: a budget WAIT (not park) re-judges and re-designs each tick until the caps fit (pre-existing shape on the AGREE
+  path too).
+NEXT: watch the first `evo_decision cls=JUDGE_*` rows in ledger.jsonl / cron.out; twin F5 apply; Owner on retro-credit.
+
 **2026-11-21 ~13:45Z (pane 3581ade8, Owner "unpark all of them and apply the thing that makes them figure out ways
 before parking themselves" + AskUserQuestion "Standing exclusion").**
 - **Twin pilot DONE 12:32Z** (`factory/twin/pilot/`): WSR 588/600, MKW 260/263, WIIPARTY 1/4 = **849 MATCH**, measure

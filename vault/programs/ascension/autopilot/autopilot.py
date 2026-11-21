@@ -1013,6 +1013,61 @@ def continue_unfinished(st: dict, lane: dict, ls: dict, key: str, checkpoint: st
     return True
 
 
+def design_before_park(st: dict, lane: dict, ls: dict, key: str, checkpoint: str, product: str, v: dict, pbad,
+                       why: str, dry: bool) -> str | None:
+    """2026-11-21 (Owner "apply the thing that makes them figure out ways before parking themselves", pane 3581ade8):
+    a judge DISAGREE / INCONCLUSIVE parked the lane and it waited for the Owner to name a route. EVO now designs a lever of
+    another family from the judged checkpoint first (evolve._synth_or_park: deterministic admission, SYNTH_MAX in a row
+    without a conversion) and plans the next generation told the judgment, crediting nothing from it.
+    Never for a protected-identity failure (the autopilot's own read or the judge's protected_ok False) and never for a
+    judge call that failed: those park as before. -> None when handled (planned and armed, or a policy refusal kept in
+    pending_plan); else the park reason (the design's refusal appended when there was one)."""
+    if pbad or v.get("protected_ok") is False or v.get("_judge_failed"):
+        return why
+    levers, graph = evolve.load_levers(HOME), evolve.load_graph(HOME)
+    cur = evolve.lever_by_id(levers, lane["name"], ls.get("lever"))
+    fam = (cur or {}).get("family") or "UNREGISTERED"
+    snap = design_snap(ls)  # review 0ba4 MEDIUM-1: an envelope/budget park before the arm restores what the design moved
+    d = evolve._synth_or_park(ls, levers, lane["name"], product, fam, None if dry else lever_designer(lane, checkpoint, product),
+                              checkpoint, why, f"judge {v.get('verdict')} (design before park)")
+    persist_designed(lane, d, levers, dry)
+    note_extensions(lane["name"], ls)
+    ledger_add(lane=lane["name"], kind="evo_decision", tokens=0, cls=f"JUDGE_{v.get('verdict')}", instruments=[],
+               action=d["action"], why=d["why"][:300], lever=(d.get("lever") or {}).get("id"), mode=ls.get("mode"),
+               selection=evolve.selection_evidence(d.get("lever"), graph))
+    digest(lane["name"], f"EVO after judge {v.get('verdict')}: {d['action']}: {d['why'][:300]}")
+    if d["action"] != "research":
+        return d["why"]
+    ls["next_lever"] = d["lever"]["id"]
+    owner_queue(lane["name"], f"NOTICE (no action needed): {why[:300]}; instead of parking, the next generation researches "
+                              f"designed lever {d['lever']['id']} and is told the judgment")
+    pre = (f"PREVIOUS GENERATION NOT AGREED: the independent judge said {v.get('verdict')} on {checkpoint}: "
+           f"{str(v.get('notes') or '')[:500]}. Nothing it claimed is credited (no certificate, capability or "
+           "information counts from it). Read the judge's reasons first, build on nothing it left unverified, and answer "
+           "them where the new lever touches them.")
+    # review 0ba4 MEDIUM-2: the next generation's base holds this not-agreed generation's commits, so a gate it left red
+    # would read as red "at base". Until an AGREE stands, pre-existing red is proven at the last base before it.
+    ls.setdefault("not_agreed_base", ls.get("base"))
+    plan_and_arm(st, lane, ls, key, checkpoint, product, v, (pre + "\n\n" + d.get("directive", "")).strip(), snap, dry)
+    return None
+
+
+DESIGN_SNAP_KEYS = ("mode", "next_lever", "synth_streak", "research_fail", "repair")
+
+
+def design_snap(ls: dict) -> dict:
+    """What design_before_park moves (evolve._synth_or_park + next_lever), as plan_and_arm's `snap`: restored when the
+    plan parks at the envelope or a budget gate before arming, so the re-judge does not count a design that never ran."""
+    s = {k: ls.get(k, 0) for k in ("blank", "info_streak", "no_conversion")}
+    s.update({k: ls.get(k) for k in DESIGN_SNAP_KEYS})
+    return s
+
+
+def prered_base(ls: dict):
+    """The base pre_existing_ok proves a red gate at: the last base before a not-agreed generation, else the lane's."""
+    return ls.get("not_agreed_base") or ls.get("base")
+
+
 JUDGE_TOOLS = ["Read", "Grep", "Glob", "Bash(timeout 600 python3 tools/:*)", "Bash(python3 tools/:*)",
                "Bash(sha256sum:*)", "Bash(wc:*)", "Bash(git log:*)", "Bash(git status:*)", "Bash(git show:*)",
                "Bash(ls:*)"]
@@ -1090,6 +1145,7 @@ def judge(lane: dict, checkpoint: str, product: str, ruling: str = "") -> dict:
     if not r.get("ok") or v.get("verdict") not in ("AGREE", "DISAGREE", "INCONCLUSIVE"):
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = r.get("error") or "judge reply did not end with a verdict JSON"
+        v["_judge_failed"] = True  # the instrument failed, not the generation: never answered with a designed lever
     return v
 
 
@@ -1701,7 +1757,7 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if ebad:
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"autopilot excluded-gate check: {ebad}; {str(v.get('notes', ''))[:300]}"
-    rbad = None if dry or v.get("verdict") != "AGREE" else pre_existing_ok(v, product, ls.get("base"))
+    rbad = None if dry or v.get("verdict") != "AGREE" else pre_existing_ok(v, product, prered_base(ls))
     if rbad:
         v["verdict"] = "INCONCLUSIVE"
         v["notes"] = f"autopilot pre-existing-red check: {rbad}; {str(v.get('notes', ''))[:300]}"
@@ -1712,14 +1768,22 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
     if v.get("verdict") == "AGREE":
         ls["superseded"] = superseded_record(v, prior)
         ls.pop("unfinished_streak", None)
+        ls.pop("not_agreed_base", None)
     digest(lane["name"], f"JUDGE {v.get('verdict')} on {checkpoint}: new certs {v.get('new_canonical_certs')}, "
                          f"capability {v.get('validated_capability')}. {str(v.get('notes', ''))[:600]}")
     if not dry:
         surface_owner_questions(lane["name"], checkpoint, product)
     if v.get("verdict") != "AGREE":
-        if key != "bootstrap" and continue_unfinished(st, lane, ls, key, checkpoint, product, v, dry):
+        protected = bool(pbad) or v.get("protected_ok") is False  # review 0ba4 LOW: never continued, never designed
+        if (key != "bootstrap" and not protected
+                and continue_unfinished(st, lane, ls, key, checkpoint, product, v, dry)):
             return
-        return _park(st, ls, lane["name"], f"judge {v.get('verdict')} on {checkpoint}: {str(v.get('notes', ''))[:300]}")
+        why = f"judge {v.get('verdict')} on {checkpoint}: {str(v.get('notes', ''))[:300]}"
+        if evo:
+            why = design_before_park(st, lane, ls, key, checkpoint, product, v, pbad, why, dry)
+            if why is None:
+                return
+        return _park(st, ls, lane["name"], why)
     snap = {k: ls.get(k, 0) for k in ("blank", "info_streak", "no_conversion")}  # restored if this judgment is redone
     cls, cnotes = classify_progress(v, product, ls.get("base"), None if dry else lane)
     evo_dir = ""

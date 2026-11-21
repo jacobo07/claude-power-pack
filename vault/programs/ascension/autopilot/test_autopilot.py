@@ -1529,6 +1529,82 @@ def run_all(ap):
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,
                                          "pivot_history": [{"method_class": "F1", "evidence_delta": False}]}), ["NONE"])
     check("V-EVO-PIVOT-RULE-REUSED", ls["status"] == "PARKED" and "zero evidence delta twice" in q)
+    # 2026-11-21 (Owner "figure out ways before parking themselves", pane 3581ade8), part (a): the pivot rule's refusal
+    # designs a lever of another family before it parks; the refusal reason stays in the why
+    with_designer(SYN)
+    ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a", "no_conversion": 2, "pivot_streak": 1,
+                                         "pivot_history": [{"method_class": "F1", "evidence_delta": False}]}, (RES_S,)),
+                    ["NONE"])
+    check("V-EVO-PIVOT-REFUSAL-DESIGNS", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn"
+          and ls.get("mode") == "RESEARCH" and ls.get("synth_streak") == 1)
+    # part (b): a judge DISAGREE / INCONCLUSIVE designs a lever and plans told the judgment, crediting nothing from it;
+    # a protected-identity failure (judge's or the autopilot's own read) and a failed judge call park as before
+    def judged_not_agree(v, lane_state=None, plans=(RES_S,)):
+        st_d = evo_fresh([LA, LC], dict({"lever": "lev_a"}, **(lane_state or {})), plans)
+        ap.judge = lambda *a: dict(v, _tokens=1)
+        seen_d, inner_d = [], ap.plan
+        ap.plan = lambda lane, name, ck, prod, vv, d="": seen_d.append((vv.get("verdict"), d)) or inner_d(
+            lane, name, ck, prod, vv, d)
+        n0 = len(designed)
+        r = evo_run(st_d, ["NONE"])
+        return r[0], r[1], seen_d, len(designed) - n0
+    with_designer(SYN)
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "claimed 3 certs with no receipts file"})
+    check("V-EVO-DISAGREE-DESIGNS", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn" and nd == 1
+          and ls.get("mode") == "RESEARCH" and "NOTICE" in q and "instead of parking" in q
+          and any(v0 == "DISAGREE" and "NOT AGREED" in d and "no receipts file" in d and "lev_syn" in d
+                  for v0, d in seen_d))
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "INCONCLUSIVE", "notes": "own gate red", "checkpoint_final": True})
+    check("V-EVO-INCONCLUSIVE-DESIGNS", ls["status"] == "RUNNING" and ls.get("lever") == "lev_syn" and nd == 1)
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "sealed file edited", "protected_ok": False})
+    check("V-EVO-DISAGREE-PROTECTED-PARKS", ls["status"] == "PARKED" and nd == 0 and not seen_d
+          and "sealed file edited" in q)
+    keep_pc = ap.protected_check
+    ap.protected_check = lambda lane: "protected file changed (sha256): /x"
+    try:
+        ls, q, seen_d, nd = judged_not_agree(dict(full))
+    finally:
+        ap.protected_check = keep_pc
+    check("V-EVO-AUTOPILOT-PROTECTED-PARKS", ls["status"] == "PARKED" and nd == 0 and not seen_d
+          and "protected file changed" in q)
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "INCONCLUSIVE", "notes": "judge timeout", "_judge_failed": True})
+    check("V-EVO-JUDGE-FAILED-PARKS", ls["status"] == "PARKED" and nd == 0 and not seen_d and "judge timeout" in q)
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "x"}, {"synth_streak": 3})
+    check("V-EVO-DISAGREE-DESIGN-BOUNDED", ls["status"] == "PARKED" and "in a row" in q and not seen_d)
+    with_designer(None)
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "x"})
+    check("V-EVO-DISAGREE-NO-DESIGN-PARKS", ls["status"] == "PARKED" and "designer proposed no lever" in q and not seen_d)
+    # review 0ba4 MEDIUM-1: an envelope park after the design restores what the design moved (the re-judge re-decides)
+    with_designer(SYN)
+    keep_env = ap.envelope_admits
+    ap.envelope_admits = lambda *a: "envelope spent"
+    try:
+        ls, q, seen_d, nd = judged_not_agree({"verdict": "DISAGREE", "notes": "x"}, {"synth_streak": 1})
+    finally:
+        ap.envelope_admits = keep_env
+    check("V-EVO-DISAGREE-ENVELOPE-RESTORES", ls["status"] == "PARKED" and nd == 1 and seen_d
+          and "lane envelope before arming" in q and ls.get("synth_streak") == 1 and ls.get("mode") != "RESEARCH"
+          and not ls.get("next_lever"))
+    # review 0ba4 MEDIUM-2: after a not-agreed generation, pre-existing red is proven at the base before it, until an AGREE
+    st_b = evo_fresh([LA, LC], {"lever": "lev_a", "base": "b0"}, (RES_S,))
+    ap.judge = lambda *a: {"verdict": "DISAGREE", "notes": "own gate red", "_tokens": 1}
+    ls_b, _ = evo_run(st_b, ["NONE"])
+    kept_b = (ls_b.get("status"), ls_b.get("not_agreed_base"), ls_b.get("base"))
+    seen_b, keep_pre = [], ap.pre_existing_ok
+    ap.pre_existing_ok = lambda v, p, b, runner=None: seen_b.append(b) or None
+    ap.judge = lambda *a: dict(full, _tokens=1)
+    try:
+        ls_b, _ = evo_run(st_b, ["INFORMATION"])
+    finally:
+        ap.pre_existing_ok = keep_pre
+    check("V-EVO-NOT-AGREED-BASE-PROVES-PRERED", kept_b[0] == "RUNNING" and kept_b[1] == "b0" and kept_b[2] != "b0"
+          and seen_b == ["b0"] and "not_agreed_base" not in ls_b)
+    # review 0ba4 LOW: a protected failure is never continued as an unfinished checkpoint either
+    ls, q, seen_d, nd = judged_not_agree({"verdict": "INCONCLUSIVE", "checkpoint_final": False, "protected_ok": False,
+                                          "notes": "sealed file edited"},
+                                         {"planned_from": {"checkpoint": "x.md", "verdict": {"verdict": "AGREE"}}})
+    check("V-EVO-PROTECTED-UNFINISHED-NOT-CONTINUED", ls["status"] == "PARKED" and not seen_d and nd == 0)
+    ap.design_lever = lambda *a, **k: None
     ls, q = evo_run(evo_fresh([LA, LB], {"lever": "lev_a"}, ({"stop": "nothing admissible"}, RES)), ["INFORMATION"])
     check("V-EVO-PLANNER-STOP-BECOMES-RESEARCH", ls["status"] == "RUNNING" and ls.get("lever") == "lev_b"
           and ls.get("mode") == "RESEARCH")
@@ -2007,6 +2083,23 @@ except ImportError:
 drill["ff_merge_any_divergence"] = _evo_mut(_factory_only=lambda product, base: True)
 drill["ff_merge_never"] = _evo_mut(_factory_only=lambda product, base: False)
 drill["ff_merge_ignores_overlap"] = _evo_mut(_overlap=lambda product, base, head: [])
+# Owner 2026-11-21 ("figure out ways before parking themselves", pane 3581ade8): design before every park, each guard
+drill["evo_pivot_refusal_parks"] = _evo_mut(plateau=_wrap(lambda e: (lambda real: (
+    lambda ls, levers, lane, product, graph, family, ed, designer=None, residual=None: (
+        {"action": "park", "why": "pivot rule: refused"}
+        if e._pivot(ls, family, ed, "METHOD_PLATEAU", "x").get("action") != "pivot"
+        else real(ls, levers, lane, product, graph, family, ed, designer, residual))))(e.plateau)))
+drill["judge_park_never_designs"] = lambda m: setattr(m, "design_before_park", lambda *a: a[8])
+drill["judge_design_protected_ignored"] = lambda m: setattr(m, "design_before_park", (lambda real: (
+    lambda st, lane, ls, key, ck, prod, v, pbad, why, dry: real(
+        st, lane, ls, key, ck, prod, {k: x for k, x in v.items() if k != "protected_ok"}, None, why, dry)))(
+    m.design_before_park))
+drill["design_snap_empty"] = lambda m: setattr(m, "design_snap", lambda ls: {})
+drill["prered_base_is_lane_base"] = lambda m: setattr(m, "prered_base", lambda ls: ls.get("base"))
+drill["judge_design_on_failed_call"] = lambda m: setattr(m, "design_before_park", (lambda real: (
+    lambda st, lane, ls, key, ck, prod, v, pbad, why, dry: real(
+        st, lane, ls, key, ck, prod, {k: x for k, x in v.items() if k != "_judge_failed"}, pbad, why, dry)))(
+    m.design_before_park))
 survivors, crashed = [], []
 for name, mut in drill.items():
     m = load()
