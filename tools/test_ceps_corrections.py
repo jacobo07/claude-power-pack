@@ -121,6 +121,54 @@ def main() -> int:
             _fail("V-CEPS-CORRECTION-CONFIRMS",
                   f"confirm_draft returned {event!r}")
 
+        # ---- V-CEPS-CONFIRM-IS-NOT-DIAGNOSIS (SI-00) ----------------------
+        # A confirmation proves the Owner corrected the agent, nothing more.
+        # Before SI-00 this event read confidence="high" with the Owner's
+        # words as root_cause -- a confirmation filed as a demonstrated cause.
+        if event and event.get("root_cause_status") == "UNDIAGNOSED" \
+                and event.get("confidence") == "low" \
+                and event.get("evidence_class") == "owner_confirmed_correction":
+            _ok("V-CEPS-CONFIRM-IS-NOT-DIAGNOSIS",
+                "confirm without diagnosis -> UNDIAGNOSED / low")
+        else:
+            _fail("V-CEPS-CONFIRM-IS-NOT-DIAGNOSIS",
+                  f"status={event and event.get('root_cause_status')} "
+                  f"confidence={event and event.get('confidence')}")
+
+        # ---- V-CEPS-CONFIRM-EVIDENCE-RESOLVES ----------------------------
+        # evidence_path used to name the PRE-move file, deleted by the move.
+        ep = Path(event.get("evidence_path") or "") if event else Path("")
+        if event and ep.is_file():
+            _ok("V-CEPS-CONFIRM-EVIDENCE-RESOLVES", f"evidence at {ep.parent.name}/")
+        else:
+            _fail("V-CEPS-CONFIRM-EVIDENCE-RESOLVES", f"dangling evidence_path {ep}")
+
+        # ---- V-CEPS-CONFIRM-DIAGNOSED (positive control) -----------------
+        ceps.from_stop_hook(["eso no es asi, revert that change"])
+        pend_d = ceps.list_drafts()
+        ev_d = ceps.confirm_draft(
+            pend_d[0]["draft_id"] if pend_d else "missing",
+            "spec-violation", "owner-correction",
+            root_cause="agent edited the mirror instead of the canonical file")
+        if ev_d and ev_d.get("root_cause_status") == "OWNER_DIAGNOSED" \
+                and ev_d.get("confidence") == "high" \
+                and ev_d.get("root_cause", "").startswith("agent edited the mirror"):
+            _ok("V-CEPS-CONFIRM-DIAGNOSED",
+                "an Owner-stated cause -> OWNER_DIAGNOSED / high, cause as root_cause")
+        else:
+            _fail("V-CEPS-CONFIRM-DIAGNOSED", f"got {ev_d!r}")
+
+        # ---- V-CEPS-STATUS-VALIDATED + V-CEPS-LEGACY-ROW-UNCHANGED -------
+        bad = ceps.record_error("spec-violation", "x", "some real failure text",
+                                root_cause_status="PROBABLY")
+        legacy = ceps.record_error("spec-violation", "x", "another failure text")
+        if bad is None and legacy and "root_cause_status" not in legacy \
+                and "evidence_class" not in legacy:
+            _ok("V-CEPS-STATUS-VALIDATED",
+                "unknown status refused; a caller passing neither field gets the legacy row shape")
+        else:
+            _fail("V-CEPS-STATUS-VALIDATED", f"bad={bad!r} legacy_keys={legacy and sorted(legacy)}")
+
         # ---- V-CEPS-CORRECTION-LEAVES-PENDING ----------------------------
         if ceps.list_drafts() == []:
             _ok("V-CEPS-CORRECTION-LEAVES-PENDING",
@@ -156,7 +204,8 @@ def main() -> int:
             p for p in conf
             if _json.loads(p.read_text(encoding="utf-8")).get("confirmed_event_id")
         ]
-        if len(conf) == 1 and len(dism) == 1 and len(linked) == 1:
+        # 2 confirmed: the undiagnosed one and the SI-00 diagnosed control.
+        if len(conf) == 2 and len(dism) == 1 and len(linked) == 2:
             _ok("V-CEPS-CORRECTION-PROVENANCE",
                 "both resolved drafts retained; confirmed one links its event")
         else:

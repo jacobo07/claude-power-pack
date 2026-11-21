@@ -330,6 +330,13 @@ def _project_id_hash(project_root: Optional[str] = None) -> str:
 # an older generation and due for re-judgement".
 ADMISSION_REV = 1
 
+# What a row's `root_cause` text is (SI-00). A confirmed correction proves the
+# Owner corrected the agent; it does not prove WHY the agent was wrong.
+#   UNDIAGNOSED     -- the text is the symptom / the Owner's words; no cause shown
+#   OWNER_DIAGNOSED -- the Owner stated a cause; asserted, not yet demonstrated
+#   VERIFIED        -- the cause was reproduced and a fix proven against it
+ROOT_CAUSE_STATUSES = ("UNDIAGNOSED", "OWNER_DIAGNOSED", "VERIFIED")
+
 _VACUOUS_CLAIM = re.compile(
     r"""^\W*(?:
           (?<!\d)0+\s*(?:failed|failures?|errors?|warnings?)
@@ -367,8 +374,16 @@ def record_error(
     confidence_score: Optional[float] = None,
     scope: str = "project",
     project_id: Optional[str] = None,
+    evidence_class: Optional[str] = None,
+    root_cause_status: Optional[str] = None,
 ) -> Optional[dict]:
     """Validate, classify, compute signature, persist, and distribute.
+
+    `evidence_class` / `root_cause_status` (SI-00, 2026-11-21) say WHAT the
+    row proves. They are written only when supplied: a legacy row without them
+    makes no claim either way, which is not the same as claiming a diagnosis.
+    root_cause_status is one of ROOT_CAUSE_STATUSES; UNDIAGNOSED means the
+    `root_cause` text is the observed symptom, not a demonstrated cause.
 
     Returns the event dict on success, None on validation failure or any
     internal exception (fail-open per Ley 24).
@@ -394,6 +409,11 @@ def record_error(
             0.0 <= confidence_score <= 1.0
         ):
             _record_rejection("confidence_score out of range", **ctx)
+            return None
+        if root_cause_status is not None and \
+                root_cause_status not in ROOT_CAUSE_STATUSES:
+            _record_rejection(
+                f"invalid root_cause_status={root_cause_status}", **ctx)
             return None
         if not root_cause or len(root_cause) > 600:
             _record_rejection("root_cause empty or too long", **ctx)
@@ -441,6 +461,10 @@ def record_error(
                           else _project_id_hash(),
             "auto_test_eligible": category in AUTO_TEST_CATEGORIES,
         }
+        if evidence_class is not None:
+            event["evidence_class"] = str(evidence_class)
+        if root_cause_status is not None:
+            event["root_cause_status"] = root_cause_status
 
         # Append to events.jsonl (atomic line append)
         EVENTS_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -871,11 +895,22 @@ def _move_draft(draft_id: str, dest_dir: Path, **stamp) -> Optional[dict]:
 
 
 def confirm_draft(draft_id: str, category: str = "spec-violation",
-                  subsystem: str = "owner-correction") -> Optional[dict]:
+                  subsystem: str = "owner-correction",
+                  root_cause: Optional[str] = None) -> Optional[dict]:
     """Promote a correction draft into a real CEPS event.
 
     The Owner supplies the category, because only they know what the
     correction was ABOUT; the draft only knows that one happened.
+
+    SI-00 (2026-11-21): confirming proves exactly one thing -- that the Owner
+    corrected the agent. Until then this stamped the Owner's words as the
+    event's `root_cause` at confidence="high", i.e. a confirmation was filed
+    as a diagnosis. Now:
+      * no `root_cause` given -> the snippet is kept as the symptom,
+        root_cause_status=UNDIAGNOSED, confidence="low";
+      * `root_cause` given    -> that text is the cause, OWNER_DIAGNOSED,
+        confidence="high" (asserted by a human; VERIFIED needs a proven fix).
+    The draft file (kept under confirmed/) still holds the verbatim snippet.
     """
     src = DRAFTS_DIR / f"{draft_id}.json"
     if not src.exists():
@@ -884,12 +919,17 @@ def confirm_draft(draft_id: str, category: str = "spec-violation",
         draft = json.loads(src.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, ValueError):
         return None
+    diagnosed = (root_cause or "").strip()
     event = record_error(
         category=category,
         subsystem=subsystem,
-        root_cause=str(draft.get("snippet", ""))[:600],
-        confidence="high",           # a human confirmed it; that IS the evidence
-        evidence_path=str(src),
+        root_cause=(diagnosed or str(draft.get("snippet", "")))[:600],
+        confidence="high" if diagnosed else "low",
+        # Where the draft WILL live: it is moved below, so the pre-move path
+        # was dangling the moment the move succeeded.
+        evidence_path=str(_confirmed_dir() / f"{draft_id}.json"),
+        evidence_class="owner_confirmed_correction",
+        root_cause_status="OWNER_DIAGNOSED" if diagnosed else "UNDIAGNOSED",
     )
     if not event:
         return None                  # rejection already went to the ledger
@@ -920,8 +960,8 @@ def _main(argv: list) -> int:
               file=sys.stderr)
         print("       ceps.py promote", file=sys.stderr)
         print("       ceps.py drafts", file=sys.stderr)
-        print("       ceps.py confirm <draft-id> [category] [subsystem]",
-              file=sys.stderr)
+        print("       ceps.py confirm <draft-id> [category] [subsystem] "
+              "[--root-cause <diagnosis...>]", file=sys.stderr)
         print("       ceps.py dismiss <draft-id> [reason...]", file=sys.stderr)
         return 2
     if argv[0] == "drafts":
@@ -933,7 +973,18 @@ def _main(argv: list) -> int:
         if len(argv) < 2:
             print("confirm requires a draft-id", file=sys.stderr)
             return 2
-        ev = confirm_draft(*argv[1:4])
+        pos, diagnosis = argv[1:], None
+        if "--root-cause" in pos:
+            i = pos.index("--root-cause")
+            diagnosis = " ".join(pos[i + 1:]).strip()
+            pos = pos[:i]
+            if not diagnosis:
+                print("--root-cause requires the diagnosis text", file=sys.stderr)
+                return 2
+        if not pos:
+            print("confirm requires a draft-id", file=sys.stderr)
+            return 2
+        ev = confirm_draft(*pos[:3], root_cause=diagnosis)
         if not ev:
             print(f"confirm failed for {argv[1]} "
                   f"(unknown draft, or rejected -- see vault/ceps/rejections.jsonl)",
