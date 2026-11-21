@@ -50,6 +50,11 @@ commit 64.71 GB (was 86.3/87.1 at 21:38), pagefile alloc 49.3 GB (peak 57.6), fr
     commit before/after first use not captured, so no "freed N MB" claim. First-call latency: not isolated (-p wall 135 s is
     dominated by SessionEnd hooks); spawn event 30 s after the list calls = model think time, not spawn cost.
   - Scope: only GEO-audit/google-ads is lazy. Other projects/servers unchanged (rea, others not converted).
+- Phase 5 (shadow only): DONE to scope, dbb49a53. `tools/session_liveness.py` + 15 V-LIVE gates (mutation drill red). Live: ACTIVE 21 /
+  IDLE 0 / UNKNOWN 7 of 28; threshold likely too sensitive on this host, not tuned. Nothing stopped. Canary hibernate/resume = Owner step.
+- Phase 8 (close): DONE, `vault/programs/resource-residency/P8-CLOSE.md` (master gate per phase, NO APLICA for 3/4/6/7, census delta
+  with its confounds, Owner steps incl. pagefile recommendation). No "freed N GB" claim: host commit rose 2.73 GB.
+- MISSION SCOPE COMPLETE per D-2026-11-21. Phases 3, 4, 6, 7 remain deferred.
 - Spend: supervisor-measured 12,969,713 processed at 15:22Z (before this epoch's live gate). `mission_spend session-tree` needs
   a --transcript path not available to this worker; this epoch's own spend not separately measured.
 

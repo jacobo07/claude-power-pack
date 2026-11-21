@@ -22849,3 +22849,8 @@ MEASURED (one census, proxy-limited). Of 9 024.7 M tokens measured across 669 mi
 work tree never changed; the largest single class was missions superseded after spending (~528 M in 4 missions). Before
 superseding a mission that has spent, read what its predecessor left (`python tools/burn_census.py`). "No tree change" is a
 proxy: read-only slim workers and worktree work read as no change. 2026-11-20, PP `2ea01b2d`.
+
+### T-LAZY-SHIM-SYNTHETIC-GREEN-001 -- a lazy MCP shim's synthetic gates passed while the real host still woke the server
+TRIGGER: building or reviewing a lazy-spawn/proxy layer in front of an MCP server.
+EVIDENCE: 2026-11-21, 14/14 V-LAZY gates green, yet live `claude mcp list` spawned the real server on host probe `server/discover`, and a read-only `claude -p` spawned it on `prompts/list` (server advertised prompts/resources). Fixed in 87a5572c: spawn allowlist, -32601 for unknown methods, cached prompts/resources lists.
+RULE: the done-gate for a lazy layer is the live host's own event log (spawn only on tools/call), not the synthetic suite. Origin: resource-residency P2.
