@@ -199,6 +199,8 @@ def parse_conversation(fp: Path) -> dict | None:
             entry = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if not isinstance(entry, dict):  # SI-01: valid JSON, not a record
+            continue
         msg = entry.get("message")
         if not isinstance(msg, dict):
             continue

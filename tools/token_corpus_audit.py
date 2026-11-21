@@ -102,6 +102,8 @@ def parse_turns(fp: Path) -> dict | None:
             entry = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if not isinstance(entry, dict):  # SI-01: valid JSON, not a record
+            continue
         msg = entry.get("message")
         # content-signal harvest (both user + assistant carry content)
         text_chars = 0
