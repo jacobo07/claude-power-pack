@@ -367,7 +367,9 @@ def halt_section() -> None:
     # --- busy-owner bound: clock on the first spent pass, forced RECOVERY past the grace --------------
     wipe()
     mission("m-bb", **SPENT)
-    mission("m-bl", v2=False, **SPENT)
+    # The legacy control runs on its own workstream: two live root-roadmap attempts of REPO are singleflight, and
+    # m-bb's forced recovery renewal would be refused beside it.
+    mission("m-bl", v2=False, workstream="ws-legacy-control", **SPENT)
     busy = host("m-bb", name="m-bb-e1", status="busy") + host("m-bl", name="m-bl-e1", status="busy")
     n_s = len(stops)
     halt_run(busy)
@@ -602,7 +604,8 @@ def main() -> int:
     _scaffold = os.environ.get("CPP_GSD_X_AUTOSCAFFOLD")
     os.environ["CPP_GSD_X_AUTOSCAFFOLD"] = "off"
     try:
-        rc = gm._cli(["arm", "--cwd", str(REPO), "--command", "/gsd-autonomous", "--no-launch",
+        # Its own repo: m-armv2/m-armleg are live root-roadmap attempts of REPO, and a second one there is singleflight.
+        rc = gm._cli(["arm", "--cwd", tempfile.mkdtemp(prefix="mv2-cli-arm-"), "--command", "/gsd-autonomous", "--no-launch",
                       "--rollover-protocol", gm.CAPSULE_V2])
     finally:
         if _scaffold is None:

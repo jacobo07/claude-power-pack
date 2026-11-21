@@ -6953,29 +6953,36 @@ def _steward_rows(missions, now, sessions, pid_alive, dry_run) -> list[dict]:
 # mission is a disposable attempt at it. Measured 2026-10-06: create() refused only a live record with
 # the SAME id, so a fresh `arm` on a workstream whose attempt sits under an Owner hold (KSR recon-factory,
 # InfinityOps odr-device-trust) would have started a second attempt beside the hold.
+# A mission with no workstream drives the repository's ROOT roadmap (.planning/ROADMAP.md). That roadmap is a Goal
+# too: until 2026-11-21 goal_key answered None for it, so two root missions armed on one repo both ran /gsd-autonomous
+# against the same ROADMAP.md with no singleflight, hold or supersede check between them.
+ROOT_GOAL = ""
+
+
 def goal_key(cwd: str, workstream: str | None) -> tuple[str, str] | None:
-    """(repository identity, workstream), or None for a mission without a workstream (no Goal to guard).
+    """(repository identity, workstream), with ROOT_GOAL for the root roadmap; None only without a cwd.
     The repository is the git common dir, so a worktree and its main checkout are one Goal."""
-    if not workstream or not cwd:
+    if not cwd:
         return None
     tc = _git_toplevel_and_common(cwd)
     repo = tc[1] if tc else os.path.normcase(str(Path(cwd).resolve()))
-    return repo, workstream
+    return repo, workstream or ROOT_GOAL
 
 
 def goal_conflicts(key: tuple[str, str] | None, *, exclude: str | None = None,
                    records: list[dict] | None = None) -> list[dict]:
-    """Non-terminal attempts of the Goal `key` other than `exclude`, each {mission_id, held, unit}."""
+    """Non-terminal attempts of the Goal `key` other than `exclude`, each {mission_id, held, unit, root}."""
     if key is None:
         return []
     out = []
     for r in (records if records is not None else all_missions()):
-        if r["mission_id"] == exclude or r.get("state") in TERMINAL or r.get("workstream") != key[1]:
+        if (r["mission_id"] == exclude or r.get("state") in TERMINAL
+                or (r.get("workstream") or ROOT_GOAL) != key[1]):
             continue
         if goal_key(r.get("cwd") or "", r.get("workstream")) != key:
             continue
         out.append({"mission_id": r["mission_id"], "held": bool(r.get("owner_hold")),
-                    "unit": (r.get("goal") or {}).get("unit")})
+                    "unit": (r.get("goal") or {}).get("unit"), "root": key[1] == ROOT_GOAL})
     return out
 
 
@@ -6989,8 +6996,10 @@ def goal_refusal(conflicts: list[dict], unit: str | None = None) -> str | None:
     for c in conflicts:
         if not unit or not c["unit"] or c["unit"] == unit:
             return (f"singleflight: {c['mission_id']} is a live attempt of this goal"
+                    + (" (the repository's root roadmap, .planning/ROADMAP.md)" if c.get("root") else "")
                     + (f" (unit {c['unit']})" if c["unit"] else "")
-                    + "; supersede it with authority, or name a distinct --parallel-unit on both")
+                    + "; supersede it with authority, or name a distinct --parallel-unit on both"
+                    + (", or arm the new work on its own --workstream" if c.get("root") else ""))
     return None
 
 
@@ -7225,7 +7234,7 @@ def arm(cwd: str, resume_command: str, *, launch: bool = True, supersedes: str |
     why = goal_refusal(conflicts, parallel_unit)
     if why:
         if key is not None:
-            lr.ledger_append(f"goal-{key[1]}", "goal_arm_refused", workstream=key[1], why=why[:300])
+            lr.ledger_append(f"goal-{key[1] or 'root'}", "goal_arm_refused", workstream=key[1] or None, why=why[:300])
         raise MissionError(why)
     try:   # CCN-3 weekly account ceiling (Owner Q2 = enforce 85%); covers arm_chain, which calls arm
         import account_governor as _ag
