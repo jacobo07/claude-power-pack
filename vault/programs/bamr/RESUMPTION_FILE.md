@@ -27,8 +27,10 @@ Owner caps: session <= 40 $ API-eq (soft 25 $). Autonomous model spend 0 — not
    effect call with no result; `clear` reconciles). Gate `tools/test_provider_breaker.py` 64/64; review's
    6 findings fixed (tool text redacted to a digest, transient regex widened, tool failures out of the streak).
    P6 guard belongs to another owner.
-4. Owner: correct `~/.claude/state/account-governor.json` reset_at (official reset Wed 17:00 UTC) and calibration
-   (`python tools/account_governor.py status --json` -> `implied_calibration_api_eq_per_100pct`).
+4. DONE: `~/.claude/state/account-governor.json` reset_at = Wed 17:00 UTC (pane aa9f2e25, 2026-11-20); calibration
+   4570 -> 5956 (Owner "si, cambialo" 2026-11-21; implied by official weekly 36.0 %; estimate now reads 36.0 % =
+   official; backup `~/.claude/backups/account-governor.json.calib-20261121.bak`). Re-derive with
+   `python tools/account_governor.py status --json` -> `implied_calibration_api_eq_per_100pct` if they drift apart.
 5. DONE (2026-11-21): the 7 `claude -p` tools ask the governor before spawning (`tools/model_spend_gate.py`,
    gate `tools/test_model_spend_gate.py` 27/27, commit c5334896).
 6. DONE (2026-11-21, Owner: "autonomia responsable, que no queden paradas las misiones"): a closeout spends the
