@@ -166,6 +166,46 @@ and as fact, negative control caught). Laptop mirrors: `vault/programs/ascension
 **Rollback.** Remove the cron line; delete the ready file; each application is one ff commit (`git reset --hard` to the
 `base` in its ledger row) + the snapshot backup.
 
+## F6: twin transfer (S2; Owner "y" 2026-11-21, pane 3581ade8)
+covers: [twin-transfer, s2, speed-s2]
+**PRD.** The census found 3,541 unmatched functions whose reloc-masked body equals a function MATCHED in another game
+(WSR 776, MKW 373, WIIPARTY 240, TENNIS 1,676, FIFA 476). Solving one body once and copying its source should cost one
+compile + one objdiff per function, 0 tokens. port_ksr did this for the SAME binary (535/645 = 83%); cross-game is
+unmeasured, and F6 measures it before any lane depends on it.
+**Premises (verified 2026-11-21 11:18Z).** `factory/pareto/shared_bodies.json` (1.0 MB, Nov 20) maps masked hash ->
+[[game, name, size], ...] (`pareto2.py` reads it). A matched.tsv row is `<obj>:<ADDR>\t<arm>`: it names the arm, not
+the source file. Carved donor sources exist as one-function units `src/factory/<sym>.c` with their cflags and
+mw_version in the lane's configure.py (carve.py, port_ksr.py). Hand-written multi-function TUs (the MKW public decomp)
+are NOT one-function sources.
+**Arch.** New `factory/twin.py --lane L --repo SCRATCH [--limit N]`, built on port_ksr's verify-then-carve shape:
+1. CANDIDATES: f unmatched in L's report; its masked group has a member d MATCHED in game D != L.
+2. DONOR SOURCE: d's one-function unit in D's lane repo (`src/factory/<d>.c` + cflags + mw_version). A donor that is
+   only a matched.tsv row or a multi-function TU -> state `NO_DONOR_SRC` (counted; phase 2 below).
+3. RENAME: masking hides relocation TARGETS, and D's source names D's symbols. Walk the relocations of d (D's target
+   object) and f (L's target object) at the same offsets. Each pair gives a map D-symbol -> L-symbol, and the source's
+   identifiers are rewritten by that map, including d -> f itself. A target pair that disagrees across sites, or a
+   symbol with no pair -> `RENAME_UNRESOLVED`.
+4. VERIFY: compile in a private empty cwd (wibo cost scales with cwd entries) with D's flags under L's compiler first,
+   then L's lane arms. MATCH only on objdiff 100% vs L's OWN target object (port_ksr.compile_pct). Address outside every
+   existing split.
+5. CARVE: same unit shape as port_ksr (`src/factory/<f>.c`, header naming donor game + symbol + hash, Object(NonMatching,
+   cflags, mw_version)). Writes only in SCRATCH, plus `<repo>/factory_twin.jsonl` with one row per candidate and its state.
+6. GATE + APPLY: exactly F5 steps 2-3 (binaries OK, lost == 0, gained > 0, apply in a window under cron.lock +
+   `factory-apply-<L>.lock`, snapshot + ledger `factory_match`).
+**Phase 2 (only if phase 1 MATCH rate warrants it).** Donors without a one-function unit: re-lift d with D's producer
+(matched.tsv arm) or extract the function + its context from the TU. Measured separately.
+**Authority.** The F5 standing authorization covers applying under its gates only producers "already measured". twin.py is
+a new producer, so the first apply per lane and adding a `twin` run to lanes_factory.json (a lane config change) need
+the Owner's "y" on the pilot numbers.
+**AC.** (a) Census: per lane, how many of the 3,541 have a one-function donor (states before any compile).
+(b) Pilot WIIPARTY (240) + WSR (776): counts per state. MATCH rows recompiled in a second fresh cwd give the same bytes.
+(c) Negative control: one deliberately crossed rename (two callees swapped) must not reach 100 and must be refused. Same
+for a donor with a different masked hash.
+(d) Same-binary control: KSR donors -> WSR reproduce >= the 535 port_ksr matched (ported units excluded from candidates).
+(e) Scratch gate: binaries OK, 0 lost, gained == carved MATCH count.
+**Rollback.** twin.py writes only in a scratch clone. Each lane apply is one ff commit (`git reset --hard <base>`) plus
+the snapshot backup.
+
 ## F4: cross-lane index (OPEN)
 One certified-source pool per binary (KSR+WSR, MKW+MKWLIB, FIFA+FIFATC) and a masked-byte index across binaries
 (SDK/NW4R/EGG), consulted by the planner before any generation; the model works only on the residual (LF1 near misses).

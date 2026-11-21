@@ -94,6 +94,32 @@ QUESTIONS = {
             "how do projects detect each object's compiler version and set it per object (configure.py mw_version per unit, "
             "compiler wrappers), and what evidence decides that a function matching only under a non-baseline compiler is a true "
             "match rather than a coincidence?"),
+    # Q13-Q16: GitHub resources to fork, adapt or use for MASS function matching (Owner 2026-11-21, pane 3581ade8: "investiga
+    # en paralelo con DRX en github recursos que nos falten que podamos o forkear o adaptar o incluso simplemente usar para
+    # conseguir mas funciones en masa"). Measured context: factory (Ghidra bounds -> m2c -> mwcc arm sweep -> objdiff 100%,
+    # 0 tokens) at MKW 9,286 / WSR 10,653 / MKWLIB 7,400 / WIIPARTY 2,134 certified; permuter 111/702 MATCH; S2 twin transfer
+    # (masked-body equality to an already matched function) ~3,541 ready. Q7-Q12 yield was thin: ask for repos, not methods.
+    "Q13": ("M-TOOLS", "Which public GitHub repositories automate matching decompilation IN BULK for Metrowerks mwcc (GameCube/Wii) "
+            "or comparable compilers (IDO, GCC/KMC for N64, agbcc): batch m2c + compile + objdiff drivers, decomp.me API "
+            "clients that run many scratches, decomp-permuter forks with mwcc or distributed support, LLM/agent decompilers "
+            "(for example LLM4Decompile, decomp agents that loop compile -> diff) with any published count of functions "
+            "matched? For each give the repo URL, licence, last commit year, what it automates, and what we would fork, "
+            "adapt or call as-is."),
+    "Q14": ("M-DONORS", "Which public GitHub decompilation projects for GameCube/Wii games (for example ogws, mkw, petari, "
+            "spm-decomp, tww, tp, melee, pikmin2, sms, bfbb, mp4 and others) already contain byte-matching source for shared "
+            "libraries (RVL SDK OS/GX/VI/PAD/WPAD/KPAD/DVD/NAND/AX/SC, NW4R g3d/lyt/snd/ut/math/ef, EGG, MSL_C, Runtime.PPCEABI, "
+            "MetroTRK, HomeButtonMenu, JSystem) that another game linking the same library version could reuse function by "
+            "function? Give repo URL, licence, which libraries and versions are matched, and how each project tells a "
+            "library version apart inside a DOL."),
+    "Q15": ("M-SIGS", "What public tools or databases identify functions in a PowerPC GameCube/Wii DOL/REL by content and map "
+            "them to known names or sources across games: dtk signatures, Ghidra BSim or Function ID databases, IDA FLIRT/"
+            "Lumina-style PowerPC signatures, Dolphin symbol maps (.map/.dsy) and signature generators, masked-byte or "
+            "relocation-aware hashing used to transfer matched functions between decomps? Give repo URLs, licences, how they "
+            "mask relocations and how they report false matches."),
+    "Q16": ("M-THROUGHPUT", "How do large decompilation projects or tools speed up mass compile-and-diff loops for mwcc: "
+            "running mwcceppc natively or under wibo/wine with lower per-invocation cost, compile result caches, objdiff CLI "
+            "in batch or as a library, parallel/distributed permuter farms, incremental ninja builds? Give repo URLs, "
+            "licences and any measured invocation cost or throughput."),
 }
 
 
