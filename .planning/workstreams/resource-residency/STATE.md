@@ -37,6 +37,22 @@ commit 64.71 GB (was 86.3/87.1 at 21:38), pagefile alloc 49.3 GB (peak 57.6), fr
 - Phase 1: DONE on evidence (`vault/programs/resource-residency/P0-P1-GATE-EVIDENCE.md`): `tools/resource_census.py` +
   22 V-CENSUS gates (mutation drill red), snapshots committed, open P1 gate PASS on both halves. SPEND BREACH, see Owner notes.
 
+- Phase 2: DONE on live evidence (worktree `rr-phase2`, branch worktree-rr-phase2, unpushed; commits 57e4a1a7 + 87a5572c).
+  Lazy MCP shim (`tools/mcp_lazy_shim.py`, `mcp_scope.py lazy|unlazy`), 14/14 V-LAZY gates incl. mutation drill.
+  Live on GEO-audit/google-ads (backup `~/.claude.json.mcp-scope-20261121-162646.bak` family; rollback `mcp_scope.py unlazy`).
+  - Gate A PASS: `claude mcp list` Connected; events.jsonl shows only `served` (initialize, tools/list, prompts/list, resources/list).
+  - Gate B PASS: read-only `claude -p` list_google_ads_accounts returned 2 accounts; `spawn` only with trigger `tools/call`.
+  - Two defects found by the LIVE gate that the 14 synthetic gates missed (fixed in 87a5572c): the host probes `server/discover`
+    at connect (the shim spawned on any unknown request) and enumerates `prompts/list`/`resources/list` (server advertises both,
+    so the shim spawned on them). Fix: spawn allowlist (tools/call, resources/, prompts/, completion/, logging/); unknown
+    methods get -32601; recorder caches prompts/resources/templates lists. No V-LAZY gate yet pins these two (debt, small).
+  - Measure: idle shim private 10.5 MB. Real google-ads server private MB NOT measured (child probe hit a launcher stub);
+    commit before/after first use not captured, so no "freed N MB" claim. First-call latency: not isolated (-p wall 135 s is
+    dominated by SessionEnd hooks); spawn event 30 s after the list calls = model think time, not spawn cost.
+  - Scope: only GEO-audit/google-ads is lazy. Other projects/servers unchanged (rea, others not converted).
+- Spend: supervisor-measured 12,969,713 processed at 15:22Z (before this epoch's live gate). `mission_spend session-tree` needs
+  a --transcript path not available to this worker; this epoch's own spend not separately measured.
+
 ## Owner notes
 - RESOLVED by OWNER DECISION D-2026-11-21 (binding): re-baseline + scope cut. Phase 1 done. Run Phase 2 (line 12M, stop 18M), then
   Phase 5 shadow only (12M / 18M), then the short Phase 8 close (3M). Phases 3, 4, 6, 7 DEFERRED: do not start. Never git push.
