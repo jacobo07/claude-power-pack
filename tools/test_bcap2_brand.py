@@ -54,6 +54,18 @@ def _ring(x, y):
     return (20, 20, 20) if 12 <= d <= 24 else (240, 240, 240)
 
 
+def _rgba(w=8, h=8):
+    raw = b"".join(b"\x00" + b"\x10\x20\x30\xff" * w for _ in range(h))
+    return (b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0))
+            + _chunk(b"IDAT", zlib.compress(raw)) + _chunk(b"IEND", b""))
+
+
+def _break_link(pdf):
+    """Point the first link annotation at object 1 (the catalog), which is not a page."""
+    import re
+    return re.sub(rb"(/Subtype /Link[^>]*?/Dest \[)\d+ 0 R", rb"\g<1>1 0 R", pdf, count=1)
+
+
 MARK = png(_ring)
 BLOB = png(lambda x, y: (200, 90, 40))
 MARK2 = png(lambda x, y: (10, 10, 10) if (x // 8 + y // 8) % 2 else (250, 250, 250))
@@ -217,6 +229,32 @@ with tempfile.TemporaryDirectory() as t:
     check("BR-09 via CLI: package BLOCKED when favicon.ico is renamed PNG", run(["package", P9]) == 3)
     Path(P9, ".ccf", "assets", "favicon.ico").write_bytes(ico)
     check("BR-09 via CLI control: package passes with a real ICO", run(["package", P9]) == 0)
+
+    # ---- BI-24: illustrated brand book (real objects, driven through the real `package` CLI)
+    from modules.ccf import brand_book as BB
+    bk = Path(P9, "brandbook.pdf")
+    check("BI-24 via CLI: package wrote brandbook.pdf", bk.exists())
+    bkb = bk.read_bytes() if bk.exists() else b""
+    ok_b, why_b = BB.validate_brand_book(bkb, MARK)
+    check("BI-24 control: the CLI book validates (pages, mark pixels, bookmarks, links)", ok_b, why_b)
+    check("BI-24 control: the same book is also a valid kit depiction of the mark", AV.validate_kit_pdf(bkb, MARK)[0])
+    check("BI-24 pole: a different mark is refused", not BB.validate_brand_book(bkb, MARK2)[0])
+    check("BI-24 pole: the one-page kit PDF is not a book", not BB.validate_brand_book(good["pdf_bytes"], MARK)[0])
+    check("BI-24 pole: truncated book refused", not BB.validate_brand_book(bkb[:-40], MARK)[0])
+    check("BI-24 pole: outline stripped -> refused", not BB.validate_brand_book(bkb.replace(b"/Type /Outlines", b"/Type /Outlinex"), MARK)[0])
+    check("BI-24 pole: a link pointing at a non-page object -> refused", _break_link(bkb) != bkb and not BB.validate_brand_book(_break_link(bkb), MARK)[0])
+    check("BI-24 pole: mark never drawn on enough pages -> refused", not BB.validate_brand_book(bkb.replace(b"/Im1 Do", b"/Im9 Do"), MARK)[0])
+    pal = {"Ink": "#141414", "Signal": "#D0021B"}
+    for label, args in (("broken PNG", (MARK[:-12], pal, [("a", "b")])), ("RGBA PNG", (_rgba(), pal, [("a", "b")])),
+                        ("non-hex colour", (MARK, {"Ink": "blue"}, [("a", "b")])), ("no fonts", (MARK, pal, [])),
+                        ("empty palette", (MARK, {}, [("a", "b")]))):
+        try:
+            BB.build_brand_book("Orbit", *args); refused = False
+        except ValueError:
+            refused = True
+        check(f"BI-24 pole: {label} refused, no partial book", refused)
+    check("BI-24 control: concept with named colours only yields no inputs (absent, not guessed)",
+          BB.inputs_from_concept({"colours": ["forest green"], "font": "Poppins"}) is None)
 
     # ---- BR-10: font policy, no silent substitution
     REG = {"Poppins": {"license": "OFL-1.1", "glyphs": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"}}
@@ -537,5 +575,5 @@ check("BR-PIN rule: DTCG is principles-only and Simple Icons is never a brand as
       all(r["rule"].startswith(("licence = W3C", "CC0")) for r in _sp if r["repo"] in ("design-tokens/community-group", "simple-icons/simple-icons")))
 
 # Residual (recorded, not hidden): the scanner is a first-pass filter; WARN rate on the clean set is high by design.
-print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-17, BI-18, BI-19, BI-28, BI-29, BI-31, BI-34, BI-35) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
+print(f"\n{'V-BCAP2-BRAND (BR-01..16, BI-08, BI-09, BI-10, BI-11, BI-12, BI-13, BI-14, BI-15, BI-20, BI-22..26, BI-24, BI-17, BI-18, BI-19, BI-28, BI-29, BI-31, BI-34, BI-35) PASS' if not FAILS else 'V-BCAP2-BRAND FAIL: ' + ', '.join(FAILS)}")
 sys.exit(1 if FAILS else 0)

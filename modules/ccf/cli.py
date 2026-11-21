@@ -54,6 +54,7 @@ def _paths(project: str) -> dict:
         "showcase_pdf": os.path.join(project, "showcase.pdf"),
         "brandkit_html": os.path.join(project, "brandkit.html"),
         "brandkit_pdf": os.path.join(project, "brandkit.pdf"),
+        "brandbook_pdf": os.path.join(project, "brandbook.pdf"),
     }
 
 
@@ -383,6 +384,27 @@ def cmd_select(args) -> int:
     return EXIT_OK
 
 
+def _write_brand_book(paths, concept, mark) -> None:
+    """BI-24: the illustrated book is additive to the kit. Absent inputs are reported, never defaulted."""
+    from modules.ccf import brand_book
+    given = brand_book.inputs_from_concept(concept)
+    if given is None:
+        print("brand book: skipped (concept declares no #RRGGBB colour or no font)")
+        return
+    try:
+        pdf = brand_book.build_brand_book(concept["wordmark"], mark or b"", given[0], given[1])
+    except ValueError as exc:
+        print(f"brand book: not built ({exc})")
+        return
+    ok, why = brand_book.validate_brand_book(pdf, mark)
+    if not ok:
+        print(f"brand book: built but failed its own validation ({why}); not written")
+        return
+    with open(paths["brandbook_pdf"], "wb") as handle:
+        handle.write(pdf)
+    print(f"brand book: written ({why})")
+
+
 def cmd_package(args) -> int:
     paths = _paths(args.project)
     config, errors = config_schema.load_config(paths["config"])
@@ -416,6 +438,7 @@ def cmd_package(args) -> int:
             handle.write(bundle["html"])
         with open(paths["brandkit_pdf"], "wb") as handle:
             handle.write(bundle["pdf_bytes"])
+        _write_brand_book(paths, selected_concept, getattr(image_artifact_views.get(selected_id), "image_bytes", None))
 
     readiness = None
     if bundle["built"]:
