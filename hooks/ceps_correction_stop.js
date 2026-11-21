@@ -96,9 +96,15 @@ function ownerTurns(transcriptPath) {
     if (!line) continue;
     let rec;
     try { rec = JSON.parse(line); } catch { continue; }
+    // SI-01: `null` is valid JSON and threw TypeError on rec.type, killing the
+    // whole scan (found by V-EVENTS-JS-PARITY, 2026-11-21). Arrays/scalars too.
+    if (!rec || typeof rec !== 'object' || Array.isArray(rec)) continue;
     if (rec.type !== 'user') continue;
-    // Meta/compact records are bookkeeping, never Owner prose.
+    // Meta/compact records are bookkeeping, never Owner prose. Sidechain records
+    // are a subagent's traffic: a parent's prompt to a subagent is not the Owner
+    // (V-EVENTS-JS-PARITY, 2026-11-21 -- "subagent prompt: revert it" forged one).
     if (rec.isMeta || rec.isCompactSummary || rec.isVisibleInTranscript === false) continue;
+    if (rec.isSidechain) continue;
 
     const content = rec.message && rec.message.content;
     let text = '';
