@@ -31,6 +31,71 @@ const path = require('path');
 // `echo 'git push' | node hook.js` must NOT trigger the gate.
 const BLOCK_REGEX = /(?:^|[;|&\n(`])\s*(?:git\s+(?:push|deploy)|npm\s+publish|gh\s+release\s+create)\b/;
 const TTL_MS = 10 * 60 * 1000;
+
+// Push AUTHORITY (Resource Residency W0, 2026-11-21). The 2026-11-20 23:53 push ran `& $g push -u origin <branch>`
+// from the PowerShell tool: git called through a variable, which BLOCK_REGEX cannot see -- and the host's own Woz
+// advisory tells agents to call git by full path. The same day BLOCK_REGEX blocked a command that only QUOTED the
+// word pair inside a here-string. Detection therefore (1) blanks here-string bodies and quoted strings to Q first,
+// (2) accepts git by name, path, variable or quoted path, with any flags (-C <dir>) before `push`.
+const GIT_PUSH_REGEX = /(?:^|[;|\n(`{]|&&|\|\|)\s*(?:&\s*)?(?:[^\s;|&]*git(?:\.exe)?|\$[\w:]+|Q)(?:\s+(?!push\b)[^\s;|&]+)*\s+push\b/i;
+const OTHER_PUBLISH_REGEX = /(?:^|[;|\n(`{]|&&|\|\|)\s*(?:npm\s+publish|gh\s+release\s+create)\b/i;
+
+function blankQuoted(cmd) {
+  return String(cmd)
+    .replace(/@'[\s\S]*?'@/g, 'Q').replace(/@"[\s\S]*?"@/g, 'Q')      // PowerShell here-strings
+    .replace(/<<-?\s*['"]?(\w+)['"]?[\s\S]*?\n\1\b/g, 'Q')             // shell heredocs
+    .replace(/'[^'\n]*'/g, 'Q').replace(/"(?:[^"\\\n]|\\.)*"/g, 'Q');
+}
+
+function isPushShaped(cmd) {
+  const b = blankQuoted(cmd);
+  return GIT_PUSH_REGEX.test(b) || OTHER_PUBLISH_REGEX.test(b);
+}
+
+function pushAuthority(sessionId) {
+  // Same semantics as tools/push_authority.py decide() (the owner of grant/revoke and of the pre-push layer),
+  // evaluated IN-PROCESS: spawning python measured 19.4 s cold at 1.8 GB free RAM (2026-11-21), past this step's
+  // 5 s dispatcher timeout, and a timed-out step fails open. Node scans the 670 records in 160-240 ms.
+  // Parity is pinned by tools/test_push_authority.py, which drives both layers on the same fixtures.
+  // An unreadable record is UNKNOWN (it could be this worker's): with no match elsewhere it refuses.
+  const sid = String(sessionId || '').trim();
+  if (sid.length < 8) return { allow: true };
+  const dir = process.env.GSD_LONG_RUN_STATE_DIR || path.join(require('os').homedir(), '.claude', 'state');
+  const missions = [];
+  const unreadable = [];
+  let names;
+  try {
+    names = fs.readdirSync(dir).filter((f) => /^gsd-mission-m-.*\.json$/.test(f));
+  } catch (e) {
+    return { allow: false, reason: `push authority UNKNOWN (state dir unreadable: ${e.code || e.message}); refusing` };
+  }
+  for (const f of names) {
+    let text;
+    try {
+      text = fs.readFileSync(path.join(dir, f), 'utf8');
+    } catch (e) {
+      unreadable.push(`${f}:${e.code || 'ERR'}`);
+      continue;
+    }
+    if (text.includes(sid)) missions.push(f.slice('gsd-mission-'.length, -'.json'.length));
+  }
+  if (!missions.length && unreadable.length) {
+    return { allow: false, reason: `push authority UNKNOWN (unreadable mission records: ${unreadable.slice(0, 3).join(', ')}); refusing` };
+  }
+  if (!missions.length) return { allow: true };
+  const gpath = path.join(dir, 'push-authority.json');
+  let grants = {};
+  if (fs.existsSync(gpath)) {
+    try {
+      grants = JSON.parse(fs.readFileSync(gpath, 'utf8'));
+    } catch (e) {
+      return { allow: false, reason: `push authority UNKNOWN (grants file unreadable: ${e.message}); refusing` };
+    }
+  }
+  if (missions.some((m) => grants[m])) return { allow: true };
+  return { allow: false, reason: `session ${sid.slice(0, 8)} is a worker of ${missions.join(', ')} and no push authority `
+    + 'was granted. Commit only; the Owner grants with `python tools/push_authority.py grant --mission <id> --reason ...`.' };
+}
 const VALID_VERDICTS = new Set(['A+', 'A']);
 
 function findGitRoot(startDir) {
@@ -66,7 +131,11 @@ function main() {
   }
 
   const cmd = (input.tool_input && input.tool_input.command) || input.command || '';
-  if (!BLOCK_REGEX.test(cmd)) return emit(0);
+  if (!isPushShaped(cmd)) return emit(0);
+
+  // Authority first, in EVERY repo (not only .powerpack ones), and not bypassable by OVO_BYPASS.
+  const auth = pushAuthority(input.session_id || process.env.CLAUDE_CODE_SESSION_ID || '');
+  if (!auth.allow) return emit(2, `BLOCK (push authority): ${auth.reason}`);
 
   const startDir = input.cwd || process.cwd();
   const root = findGitRoot(startDir);

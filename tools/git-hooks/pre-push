@@ -1,0 +1,59 @@
+#!/bin/sh
+# Tracked source of .git/hooks/pre-push (install: copy over .git/hooks/pre-push; worktrees share it).
+#
+# Check 0 -- push AUTHORITY (Resource Residency W0, 2026-11-21). Mission m-e78bdb938339's worker pushed its branch to
+# this PUBLIC repo at 2026-11-20 23:53:24 by calling git through a PowerShell variable, past a regex-only PreToolUse
+# gate. This hook is the strongest controllable layer: every shell and every invocation shape of git reaches it.
+# Claude Code exports CLAUDE_CODE_SESSION_ID to the commands it runs; tools/push_authority.py (in the MAIN checkout, so
+# a worktree branch that predates the tool is still covered) refuses a session that is a mission worker without an
+# explicit grant. A decider that cannot run refuses too (fail closed) -- but only for Claude sessions.
+#
+# Checks 1-2 (2026-10-15): refuse pushing disc-derived reconstruction work to GitHub. A bulk "push every branch with
+# unpushed commits" published gsdx-factory/fabric (Tennis disassembly fixtures) for ~24 h.
+#   1. branch name: refs/heads/gsdx-factory/fabric or refs/heads/mission/*
+#   2. content: any commit being sent touches modules/recon_fabric/fixtures/ (catches a renamed branch)
+# Pushes to non-GitHub remotes (GEX44 bare repo) and branch deletions pass checks 1-2.
+remote="$1"
+url="$2"
+
+if [ -n "$CLAUDE_CODE_SESSION_ID" ]; then
+  common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+  tool="$common/../tools/push_authority.py"
+  py="${CPP_PYTHON:-/c/Users/User/AppData/Local/Programs/Python/Python312/python.exe}"
+  [ -f "$py" ] || py=python
+  out=$("$py" "$tool" check --session "$CLAUDE_CODE_SESSION_ID" 2>&1)
+  rc=$?
+  if [ "$rc" -eq 3 ]; then
+    echo "pre-push: REFUSED (push authority): $out" >&2
+    exit 1
+  elif [ "$rc" -ne 0 ]; then
+    echo "pre-push: REFUSED (push authority UNKNOWN, decider rc=$rc): $out" >&2
+    exit 1
+  fi
+fi
+
+case "$url" in
+  *github.com*) ;;
+  *) exit 0 ;;
+esac
+zero=0000000000000000000000000000000000000000
+refuse=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  case "$local_ref $remote_ref" in
+    *refs/heads/gsdx-factory/fabric*|*refs/heads/mission/*)
+      echo "pre-push: REFUSED $local_ref -> $remote_ref on $remote: private reconstruction branch, never to GitHub" >&2
+      refuse=1; continue ;;
+  esac
+  if [ "$remote_sha" = "$zero" ]; then
+    range="$local_sha --not --remotes=$remote"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+  hit=$(git rev-list $range -- modules/recon_fabric/fixtures 2>/dev/null | head -1)
+  if [ -n "$hit" ]; then
+    echo "pre-push: REFUSED $local_ref -> $remote_ref on $remote: commit $hit touches modules/recon_fabric/fixtures (disc-derived)" >&2
+    refuse=1
+  fi
+done
+exit $refuse
