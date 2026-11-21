@@ -36,7 +36,11 @@ if (typeof sessionOf === 'function') {
 }
 // Wiring: both abandonment sites carry it. A source read, so it is named as one: the runtime proof is the next real
 // abandoned SessionStart whose log line carries session=<id> (evidence/K-prg-*.md).
-const src = fs.readFileSync(target, 'utf8');
+// Line endings normalised: the 400-char window below is a CHARACTER budget, and a CRLF
+// checkout (every Windows working copy here) spends one extra char per line, pushing one
+// site out of the window. Measured 2026-11-21: the same bytes read 1/2 as CRLF, 2/2 as LF
+// -- a red gate on an unchanged dispatcher, on the working copy AND on the live file.
+const src = fs.readFileSync(target, 'utf8').replace(/\r\n/g, '\n');
 const sites = (src.match(/CHAIN-DEADLINE-ABANDONED[\s\S]{0,400}?session=' \+ sessionOf\(rawStdin\)/g) || []).length;
 check('both deadline-abandonment log sites append session=<id> (source)', sites === 2, `${sites} of 2`);
 
