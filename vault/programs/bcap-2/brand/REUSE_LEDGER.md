@@ -2,7 +2,7 @@
 
 Owner of the work: `modules/ccf` (EXTEND, no new owner). Gate: `python3 tools/test_bcap2_brand.py` (BR-01..BR-16, 71 PASS).
 **Campaign A fetched no upstream; campaign B Phase 1 did (2026-11-21): see `UPSTREAM_READ.md`** (source read at the pinned SHA, file:line per row).
-Rows below marked `READ` were read there; rows marked `HYPOTHESIS` are the two whose page-level content is Phase 3 (DesignHub, Impeccable).
+Rows below marked `READ` were read there or in the named probe file (DesignHub and Impeccable were read in campaign B Phase 3).
 
 ## Upstream repos (10)
 | Repo | Pin (from backlog) | Disposition | Evidence status | Note |
@@ -13,9 +13,9 @@ Rows below marked `READ` were read there; rows marked `HYPOTHESIS` are the two w
 | xianshi3/sigilgen | c3f605b7 | PILOT ADAPTER (P2) | READ (UPSTREAM_READ.md) | not started; typeface outline rights unaudited |
 | Leonxlnx/imagegen-skills | beb16b0d | EXTRACT_METHOD | READ (UPSTREAM_READ.md) | not started |
 | mcpware/logoloom | 9e5de3e9 | OUTPUT SPEC ONLY, never install | READ (UPSTREAM_READ.md) | Backlog flags shell-interpolated path, PNG-as-.ico, regex SVG, silent Inter fallback. CPP pins the *negatives*: BR-08 (hostile id), BR-09 (PNG named .ico), BR-07 (SVG), BR-10 (no silent font substitution) |
-| yakew7/DesignHub | 148e8c3f | COMPARE & BENCHMARK | HYPOTHESIS | not started |
+| yakew7/DesignHub | 148e8c3f | COMPARE & BENCHMARK | READ (DESIGNHUB_PROBE.md) | registries read at pin; principles only; COMPARE done, BENCHMARK not run |
 | Forge-Space/branding-mcp | 5128f2ea | ARCHIVED REFERENCE | READ (UPSTREAM_READ.md) | archived at inspection |
-| pbakaus/impeccable | dad8dbb3 | REVIEW-GATE REFERENCE | HYPOTHESIS | not a logo generator |
+| pbakaus/impeccable | dad8dbb3 | REVIEW-GATE REFERENCE | READ (IMPECCABLE_AUDIT.md) | rule list read at b49177d3; principles only, no port (Rust); not a logo generator |
 | op7418/logo-generator-skill | bf4e9ac4 | REFERENCE | READ (UPSTREAM_READ.md) | not started |
 
 ## Specialist libraries
