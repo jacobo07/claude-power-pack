@@ -173,6 +173,14 @@ def window_ok(status, hold, live):
     return False, "autopilot RUNNING"
 
 
+def defer_regate(pend, base, window_open):
+    """Owner 2026-11-21 ("No rebuild without window"): a gated commit whose base the lane has since moved past is
+    kept, not rebuilt, while no window is open. A RUNNING worker commits on the main checkout every few minutes, so a
+    re-gate made outside a window (WSR ~50 min) was stale before it finished and never applied. It is rebuilt once,
+    when a window opens. Pure, so selftest drives it from both poles."""
+    return bool(pend) and pend.get("base") != base and not window_open
+
+
 def window(ln):
     a = autopilot_lane(ln["lane"])
     hold = mission_hold(a.get("mission")) if a.get("status") == "RUNNING" else None
@@ -415,6 +423,13 @@ def tick_lane(ln, prepare_only):
     try:
         st = load_lane_state(name)
         try:
+            old = st.get("pending")
+            if old and not prepare_only:
+                w_ok, w_status = window(ln)
+                if defer_regate(old, head(ln["repo"]), w_ok):
+                    log(f"{name}: gated {old['commit'][:7]} kept (lane moved past {old['base'][:7]}); "
+                        f"no re-gate until a window ({w_status})")
+                    return
             pend = prepare(ln, st)
             if pend and not prepare_only:
                 apply(ln, st, pend)
@@ -442,6 +457,11 @@ def selftest():
     chk("RUNNING, no hold -> no window", window_ok("RUNNING", None, [])[0], False)
     chk("RUNNING on cost hold, repo idle -> window", window_ok("RUNNING", {"kind": "cost"}, [])[0], True)
     chk("RUNNING on hold, process in repo -> no window", window_ok("RUNNING", {"kind": "cost"}, [123])[0], False)
+    p = {"base": "b1", "commit": "c1"}
+    chk("moved base, no window -> keep, no re-gate", defer_regate(p, "b2", False), True)
+    chk("moved base, window open -> re-gate", defer_regate(p, "b2", True), False)
+    chk("same base, no window -> prepare (reuses gate)", defer_regate(p, "b1", False), False)
+    chk("no pending, no window -> first gate runs", defer_regate(None, "b2", False), False)
     sys.exit(0 if ok else 1)
 
 
