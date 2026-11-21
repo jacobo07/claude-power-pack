@@ -1600,21 +1600,21 @@ acting on one, read the file and check its state against the repo.
 - `2026-10-31_ce-a3b-r-v2-milestone-blocked.md` -- ce-a3b-r v2 milestone, blocked on a spent goal (9,533,534 of 8,600,000). Also: the overwritten worktree RESUMPTION_FILE (old body at `8fb014fe`), the `/cpp-compound` 7+8 blocker, cap overshoot, budget-hook ETIMEDOUT, blind-overwrite allow-list. See D40.
 
 **Design and absorption:**
-- `2026-10-10_animejs-design-absorption.md` -- absorb Anime.js into PP Design.
-- `2026-10-02_cdio-modern-saas-styles.md` -- CDIO: three modern SaaS styles.
+- `2026-10-10_animejs-design-absorption.md` -- **BCAP-2 Phase 4: PARTIALLY_PROVEN 2026-11-19 (21 capability rows, VP-AJS-001..003; browser-real LAPTOP)** absorb Anime.js into PP Design.
+- `2026-10-02_cdio-modern-saas-styles.md` -- **BCAP-2 Phase 6: SCAN ONLY 2026-11-19 (no implementation; style 3 awaits an Owner decision, see bcap2 STATE.md)** CDIO: three modern SaaS styles.
 - `2026-07-06_cognitive-os-vdepth-expansion.md` -- Cognitive OS V-DEPTH expansion to 2500 words/Part.
 - `2026-07-01_parallel-mesh-deferred.md` -- Parallel Mesh deferred systems.
-- `2026-10-21_cdio-brand-identity-logo-absorption.md` -- CDIO Brand Identity & Logos: evidence-gated GitHub absorption. Imported from `origin/main` 2026-10-31 (blob-identical). See D41.
-- `2026-10-30_cdio-21-design-resources-universal-absorption.md` -- CDIO Backlog: universal absorption of the 21 design resources (six screenshots), 36 falsification gates. Imported from `origin/main` 2026-10-31. See D41.
-- `2026-10-13_synsation-ux-patterns-absorption.md` -- absorb Synsation UX interaction patterns into PP Design. Imported from `origin/main` 2026-10-31. See D41.
+- `2026-10-21_cdio-brand-identity-logo-absorption.md` -- **BCAP-2 Phase 7: PARTIALLY_PROVEN 2026-11-19 (ccf asset/readiness gate BR-01..16, 71 PASS; upstream repos unfetched, see vault/programs/bcap-2/brand/REUSE_LEDGER.md)** CDIO Brand Identity & Logos: evidence-gated GitHub absorption. Imported from `origin/main` 2026-10-31 (blob-identical). See D41.
+- `2026-10-30_cdio-21-design-resources-universal-absorption.md` -- **BCAP-2 Phase 8: PARTIALLY_PROVEN 2026-11-19 (Workstream A source-intake slice: 21/21 registered, rights gate, 13 of 36 V-D21 scenarios driven; no network, B-H not started)** CDIO Backlog: universal absorption of the 21 design resources (six screenshots), 36 falsification gates. Imported from `origin/main` 2026-10-31. See D41.
+- `2026-10-13_synsation-ux-patterns-absorption.md` -- absorb Synsation UX interaction patterns into PP Design. **BCAP-2 Phase 5: PARTIALLY_PROVEN 2026-11-19** (UX-01..20 dispositioned; waiting/disabled/hit-target checkers; browser-real LAPTOP). Imported from `origin/main` 2026-10-31. See D41.
 - `2026-10-31_orca-relay-design-captures.md` -- 65 design/UX/visual captures from other projects in the Orca relay (QuickLease Quickie's World, CostaLuz Legal Academy, KobiiCraft/CW Ops visual realism, KSR, Rail demo). None names CDIO literally. See D41.
 - `2026-10-31_github-issues-design-cdio.md` -- GitHub issues verbatim: TUA-X #4-#10 (CDIO named in #4, #6, #8, #10) + claude-power-pack #5. See D41.
 
 **Engineering absorption (imported from `origin/main` 2026-10-31, see D41):**
-- `2026-10-11_addyosmani-agent-skills-selective-absorption.md` -- CPP-AGSK-001: universal agent skills absorption & engineering baseline elevation.
-- `2026-10-11_diagnosing-bugs-causal-proof-ratchet.md` -- CPP-DBG-001: evidence-driven bug diagnosis & causal proof ratchet.
-- `2026-10-11_ruflo-security-absorption-sovereign-updates.md` -- CPP-RUFLO-001: secure Ruflo absorption, hardening & sovereign upstream updates.
-- `2026-10-11_tdd-evidence-first-vertical-slice-ratchet.md` -- CPP-TDD-001: evidence-first TDD & behavioral verification ratchet.
+- `2026-10-11_addyosmani-agent-skills-selective-absorption.md` -- **BCAP-2 Phase 3: PARTIALLY_PROVEN 2026-11-19 (constraint non-weakening slice, gate tools/test_bcap2_agsk.py; dispositions in vault/programs/bcap-2/agsk/)** CPP-AGSK-001: universal agent skills absorption & engineering baseline elevation.
+- `2026-10-11_diagnosing-bugs-causal-proof-ratchet.md` -- CPP-DBG-001: evidence-driven bug diagnosis & causal proof ratchet. **PARTIALLY_PROVEN 2026-11-19 (BCAP-2 P1; gate tools/test_bcap2_dbg.py 37/0; residuals in vault/programs/bcap-2/dbg/REUSE_LEDGER.md)**
+- `2026-10-11_ruflo-security-absorption-sovereign-updates.md` -- CPP-RUFLO-001: secure Ruflo absorption, hardening & sovereign upstream updates. **BCAP-2 Phase 9: PARTIALLY_PROVEN (2026-11-19)** -- CPP-owned HOLD controls + inert sandbox install; activation refused; ledger vault/programs/bcap-2/ruflo/REUSE_LEDGER.md.
+- `2026-10-11_tdd-evidence-first-vertical-slice-ratchet.md` -- CPP-TDD-001: evidence-first TDD & behavioral verification ratchet. **PARTIALLY_PROVEN 2026-11-19 (BCAP-2 P2; gate tools/test_bcap2_tdd.py 65/0 with BCAP2_TDD_PYTHON; residuals in vault/programs/bcap-2/tdd/REUSE_LEDGER.md)**
 
 **Orca relay (all 452 ChatGPT captures, collected and acked 2026-10-31, see D41):**
 - `2026-10-31_orca-relay-other-captures.md` -- 166 captures of other projects (Orca X, Rail, KobiiCraft, QuickLease, KSR, CW Ops, CostaLuz); durable copy, route to their own backlogs.

@@ -1353,3 +1353,10 @@ A corpus spec's candidate list is a hypothesis about gaps, not a build order. Ap
 
 ---
 
+## 2026-11-20 — BCAP-2 coordinator: style-3 (b) confirmed; laptop steps done on branch bcap2/lap
+
+**Session:** `adcdff7b-9abb-425f-9006-fe0b50ed50a0`
+
+A script that greps a mission id from an arm command's output can pick the id named in a refusal; check the exit status before acting on the id.
+
+---
