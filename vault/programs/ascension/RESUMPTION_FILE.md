@@ -5,6 +5,33 @@
 - Code: `/home/kobii/missions/t1-campaign` (branch `t1/campaign`).
 - Reach GEX44 with an LF, no-BOM temp script: `cmd /c "ssh -o BatchMode=yes gex44 bash -s < file"`. Export the sweep env (`CPP_CLAUDE_EXE=/home/kobii/.local/bin/claude`, `PATH=/home/kobii/.local/bin:...`) and run the PP tools from `~/.claude/skills/claude-power-pack`.
 
+**2026-11-21 ~13:45Z (pane 3581ade8, Owner "unpark all of them and apply the thing that makes them figure out ways
+before parking themselves" + AskUserQuestion "Standing exclusion").**
+- **Twin pilot DONE 12:32Z** (`factory/twin/pilot/`): WSR 588/600, MKW 260/263, WIIPARTY 1/4 = **849 MATCH**, measure
+  only, not carved.
+- **STANDING EXCLUSION deployed 13:43:49Z** under cron.lock + all apply locks (PP this commit). CAS dd7ccb1d/7143e285
+  -> autopilot 96536c9e / test b2d4437b, backups `*.bak-3581-standing-*`.
+  - Lane key `owner_excluded_standing` {gates, why} is told to the judge on every checkpoint and never consumed.
+  - `apply_standing_exclusion` moves such a gate from gates to excluded_gates (never rerun as pre-existing red);
+    excluded_ok still proves its age.
+  - The one-off owner_excluded is now consumed only when its checkpoint matches.
+  - Gate /tmp/apgate-3581b PASS 139/139.
+  - WIIPARTY carries it for tools/test_wp_lib_donor2.py.
+  - Cause: the S226W judgment (12:15-13:35Z) reran lib_donor2 ~1 h under cron.lock.
+- **ALL 8 LANES UNPARKED 13:43-13:44Z.** Backups `state.json/lanes.json.bak-3581-unpark-20261121T134349Z` +
+  `state.json.bak-3581-wpunpark-20261121T134450Z`, ledger `owner_resume` x8.
+  - pivot_streak 0 on all lanes.
+  - owner_resume=design (no-progress lanes: a new lever of another family): FIFA (f48 pivot1), FIFATC (f20 pivot1),
+    TENNIS (s209t), MKWLIB (s207l pivot_residual), WSR (cost hold -> checkpoint hold s218r/checkpoint.md).
+  - Continue on their own lever (progress lanes): KSR (s214k_rs, CERT), MKW (s204m, MATCH; re-judged under the
+    pre-existing-red rule), WIIPARTY.
+  - WIIPARTY: releasing its cost hold made m-2d590c4f18dd HALTED. It is judged from its branch checkpoint
+    (worktree-s226w 7b083a7, route B, 32 in-row CERTIFIED receipts).
+  - KSR/MKWLIB/FIFATC were `merged` (same binaries as WSR/MKW/FIFA): they now spend again on those binaries.
+- NOT BUILT: a standing "design before every park". The lever designer already runs at a park for want of a lever and
+  at a planner stop; the pivot cap, a judge DISAGREE and the INFO/NO_CONVERSION parks still park without designing.
+NEXT: watch the judgments; twin carve+gate; Owner on retro-credit.
+
 **2026-11-21 ~12:28Z (pane 3581ade8, Owner "y to both").**
 (1) COUNTERS RULE DEPLOYED 12:13:42Z under cron.lock (PP 4323be37), CAS ac87b3c3/0f0bfbf7 -> autopilot dd7ccb1d / test
 7143e285, backups `*.bak-3581-counters-20261121T121342Z`, ledger `owner_rule`.

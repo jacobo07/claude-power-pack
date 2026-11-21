@@ -479,6 +479,22 @@ def run_all(ap):
           and ap.owner_exclusion_text(oe, "/p/evidence/ascension/s217w/checkpoint_s217w.md") == ""
           and ap.owner_exclusion_text({"owner_excluded": dict(oe["owner_excluded"], gates=["rm -rf x"])}, ck216) == ""
           and ap.owner_exclusion_text({}, ck216) == "")
+    # 2026-11-21 (Owner "Standing exclusion", pane 3581ade8): told on EVERY checkpoint, never consumed, gate paths only
+    so = {"owner_excluded_standing": {"gates": ["tools/test_wp_lib_donor2.py"], "why": "relink > 1 h at HEAD"}}
+    ck226 = "/p/evidence/ascension/s226w/checkpoint_s226w.md"
+    stxt = ap.owner_exclusion_text(so, ck226)
+    check("V-AP-STANDING-EXCLUSION-TEXT", "STANDING OWNER RULING" in stxt and "tools/test_wp_lib_donor2.py" in stxt
+          and "never mark it pre_existing_red" in stxt and ap.owner_exclusion_text(so, ck216) == stxt
+          and ap.owner_exclusion_text({"owner_excluded_standing": {"gates": ["rm -rf x"]}}, ck226) == ""
+          and ap.owner_exclusion_text(dict(so, **oe), ck216).count("tools/test_wp_lib_donor2.py") == 1)
+    vj = {"gates": [{"cmd": "timeout 600 python3 tools/test_wp_lib_donor2.py", "rc": 124, "pre_existing_red": True},
+                    {"cmd": "timeout 600 python3 tools/test_g.py", "rc": 0}], "excluded_gates": []}
+    moved = ap.apply_standing_exclusion(vj, so)
+    check("V-AP-STANDING-EXCLUSION-MOVES-GATE", moved == ["tools/test_wp_lib_donor2.py"]
+          and [g["cmd"] for g in vj["gates"]] == ["timeout 600 python3 tools/test_g.py"]
+          and vj["excluded_gates"] == [{"cmd": "python3 tools/test_wp_lib_donor2.py", "why": "Owner ruling (standing)"}]
+          and ap.apply_standing_exclusion({"gates": [{"cmd": "python3 tools/test_g.py", "rc": 1}]}, so) == []
+          and ap.apply_standing_exclusion(dict(vj), {}) == [])
     seen = {}
 
     def judge_sees(*a, **k):
@@ -1922,6 +1938,9 @@ drill = {"policy_off": lambda m: setattr(m, "policy_check", lambda *a, **k: []),
          "owner_exclusion_any_checkpoint": lambda m: setattr(m, "owner_exclusion_text", (lambda real: lambda ls, ck: real(
              ls, str((ls.get("owner_excluded") or {}).get("checkpoint") or "")))(m.owner_exclusion_text)),
          "prered_base_rc_ignored": lambda m: setattr(m, "_rc_consistent", lambda rb, rh, j: j in m.TIMEOUT_RCS or j == rh),
+         "standing_exclusion_untold": lambda m: setattr(m, "owner_exclusion_text", (lambda real: lambda ls, ck: real(
+             {k: v for k, v in ls.items() if k != "owner_excluded_standing"}, ck))(m.owner_exclusion_text)),
+         "standing_exclusion_not_moved": lambda m: setattr(m, "apply_standing_exclusion", lambda v, ls: []),
          "unfinished_never_continued": lambda m: setattr(m, "UNFINISHED_MAX", 0),
          "unfinished_unbounded": lambda m: setattr(m, "UNFINISHED_MAX", 99),
          "unfinished_any_inconclusive": lambda m: setattr(m, "continue_unfinished", (lambda real: (

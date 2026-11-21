@@ -1027,11 +1027,44 @@ def owner_exclusion_text(ls: dict, checkpoint: str) -> str:
     oe = ls.get("owner_excluded") or {}
     ck = str(oe.get("checkpoint") or "")
     gates = [str(g) for g in oe.get("gates") or [] if GATE_PATH.fullmatch(str(g))]
-    if not ck or not gates or not str(checkpoint).endswith(ck):
-        return ""
-    return ("\n\nOWNER RULING (recorded by the autopilot from the Owner, not by the checkpoint): for THIS checkpoint only, "
-            f"the Owner excluded {', '.join(gates)} ({str(oe.get('why') or '')[:300]}). Do not run it; list it under "
-            "\"excluded_gates\" with why \"Owner ruling\". Every other rule above still applies to every other gate.\n")
+    out = ""
+    if ck and gates and str(checkpoint).endswith(ck):
+        out += ("\n\nOWNER RULING (recorded by the autopilot from the Owner, not by the checkpoint): for THIS checkpoint only, "
+                f"the Owner excluded {', '.join(gates)} ({str(oe.get('why') or '')[:300]}). Do not run it; list it under "
+                "\"excluded_gates\" with why \"Owner ruling\". Every other rule above still applies to every other gate.\n")
+    # 2026-11-21 (Owner "Standing exclusion", pane 3581ade8): the one-off above recurred on the very next WIIPARTY
+    # judgment (S226W reran lib_donor2 as pre-existing red for ~1 h under cron.lock). `owner_excluded_standing`
+    # {gates, why} applies to EVERY checkpoint of the lane and is never consumed; excluded_ok still proves each gate
+    # predates the generation and is unchanged by it, and it is never the evidence of a pointer.
+    so = ls.get("owner_excluded_standing") or {}
+    sg = [str(g) for g in so.get("gates") or [] if GATE_PATH.fullmatch(str(g)) and str(g) not in gates]
+    if sg:
+        out += ("\n\nSTANDING OWNER RULING (recorded by the autopilot from the Owner, not by the checkpoint): for every "
+                f"checkpoint of this lane the Owner excluded {', '.join(sg)} ({str(so.get('why') or '')[:300]}). Do not run "
+                "it and never mark it pre_existing_red; list it under \"excluded_gates\" with why \"Owner ruling\". Every "
+                "other rule above still applies to every other gate.\n")
+    return out
+
+
+def apply_standing_exclusion(v: dict, ls: dict) -> list[str]:
+    """A gate under the lane's standing Owner exclusion that the judge still listed (red, pre_existing_red or not) moves
+    to excluded_gates (why "Owner ruling (standing)"), so it is never re-run at base and HEAD under cron.lock. excluded_ok
+    then proves it predates the generation and is unchanged by it. Returns the moved gate paths."""
+    so = {str(g) for g in (ls.get("owner_excluded_standing") or {}).get("gates") or [] if GATE_PATH.fullmatch(str(g))}
+    if not so or not isinstance(v.get("gates"), list):
+        return []
+    keep, moved = [], []
+    for g in v["gates"]:
+        m = PRE_RED_CMD.fullmatch(str(g.get("cmd") or "").strip()) if isinstance(g, dict) else None
+        if m and m.group(1) in so:
+            moved.append(m.group(1))
+        else:
+            keep.append(g)
+    if moved:
+        v["gates"] = keep
+        v["excluded_gates"] = list(v.get("excluded_gates") or []) + [
+            {"cmd": f"python3 {p}", "why": "Owner ruling (standing)"} for p in moved]
+    return moved
 
 
 def judge(lane: dict, checkpoint: str, product: str, ruling: str = "") -> dict:
@@ -1650,9 +1683,12 @@ def lane_tick(st: dict, lane: dict, dry: bool) -> None:
           "gates": [{"cmd": "dry", "rc": 0}], "_tokens": 0} if dry else judge(lane, checkpoint, product, ruling))
     tok, measured = call_tokens(v.get("_tokens"))
     ledger_add(lane=lane["name"], kind="judge", tokens=tok, measured=measured, verdict=v.get("verdict"), checkpoint=checkpoint)
-    if ruling and not dry:  # one judgment only: the ruling named this checkpoint, not the lane's future
+    oe = ls.get("owner_excluded") or {}
+    if (not dry and oe.get("checkpoint") and str(checkpoint).endswith(str(oe["checkpoint"]))):
+        # one judgment only: the one-off ruling named this checkpoint, not the lane's future
         ledger_add(lane=lane["name"], kind="owner_exclusion_used", tokens=0, checkpoint=checkpoint,
                    gates=(ls.pop("owner_excluded", None) or {}).get("gates"))
+    apply_standing_exclusion(v, ls)
     prior = ls.get("superseded") or {}
     if v.get("verdict") == "AGREE" and not agree_supported(v, prior):
         v["verdict"] = "INCONCLUSIVE"
