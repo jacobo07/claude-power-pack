@@ -4812,11 +4812,62 @@ def align_cwd(cwd: str, work_dir: str | None, proven_workstream: str | None = No
                     " but has uncommitted tracked changes; not fast-forwarding over them", **facts}
         ff = git(cwd, "merge", "--ff-only", hw)
         if ff.returncode != 0:
-            return {"status": "behind_dirty", "detail": "fast-forward refused: "
-                    + ((ff.stderr or ff.stdout).strip()[-200:]), **facts}
+            refusal = (ff.stderr or ff.stdout).strip()[-200:]
+            aside = _set_aside_identical_untracked(git, here[0], hc, hw)
+            if aside["moved"]:
+                ff = git(cwd, "merge", "--ff-only", hw)
+                if ff.returncode == 0:
+                    return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}; set aside"
+                            f" {len(aside['moved'])} untracked file(s) identical to the work_dir's in {aside['backup']}",
+                            "set_aside": aside["moved"], "set_aside_dir": aside["backup"], **facts}
+                _restore_set_aside(here[0], aside)
+                refusal = (ff.stderr or ff.stdout).strip()[-200:]
+            if aside["differ"]:
+                refusal += f"; untracked file(s) differ from the work_dir's copy: {aside['differ'][:5]}"
+            return {"status": "behind_dirty", "detail": "fast-forward refused: " + refusal, **facts}
         return {"status": "fast_forwarded", "detail": f"cwd {hc[:12]} -> {hw[:12]}", **facts}
     except Exception as exc:  # never launch on an unanswered question
         return {"status": "unreadable", "detail": f"{type(exc).__name__}: {exc}"}
+
+
+def _set_aside_identical_untracked(git, top: str, hc: str, hw: str) -> dict:
+    """Move out of the way the untracked files a fast-forward to `hw` would overwrite, ONLY when every one of them is
+    byte-identical (after the repo's clean filters) to the version `hw` brings, so the fast-forward writes the same
+    bytes back and nothing is lost. Any differing file moves nothing and is reported. Measured 2026-11-21 (Lola's,
+    m-d71f5191ed2f): the arm-time milestone scaffold wrote .planning/ into the cwd, the worker committed the same files
+    in its worktree, and the mission slept 70 min on "untracked working tree files would be overwritten"."""
+    import shutil
+    import tempfile
+    changed = {p for p in git(top, "diff", "--name-only", "-z", hc, hw).stdout.split("\0") if p}
+    untracked = {p for p in git(top, "ls-files", "--others", "--exclude-standard", "-z").stdout.split("\0") if p}
+    hits = sorted(changed & untracked)
+    if not hits:
+        return {"moved": [], "differ": [], "backup": None}
+    differ = [p for p in hits
+              if (git(top, "rev-parse", "--verify", "-q", f"{hw}:{p}").stdout.strip() or "?")
+              != (git(top, "hash-object", "--", p).stdout.strip() or "!")]
+    if differ:
+        return {"moved": [], "differ": differ, "backup": None}
+    base = Path(lr.state_dir()) / "cwd-align-set-aside"
+    base.mkdir(parents=True, exist_ok=True)
+    backup = tempfile.mkdtemp(prefix=time.strftime("%Y%m%dT%H%M%S-"), dir=str(base))
+    moved = []
+    for p in hits:
+        dst = Path(backup) / p
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(Path(top) / p), str(dst))
+        moved.append(p)
+    return {"moved": moved, "differ": [], "backup": backup}
+
+
+def _restore_set_aside(top: str, aside: dict) -> None:
+    """Put back what _set_aside_identical_untracked moved when the retried fast-forward still failed."""
+    import shutil
+    for p in aside["moved"]:
+        src, dst = Path(aside["backup"]) / p, Path(top) / p
+        if src.exists() and not dst.exists():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src), str(dst))
 
 
 def effective_workdir(session_id: str, base_cwd: str, workstream: str | None = None) -> str | None:
