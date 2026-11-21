@@ -326,6 +326,17 @@ const CHAIN_MAP = {
     // with a current baseline. Reads ~68 KB, writes 4 records; safe to run
     // always, which is what "SIEMPRE" requires. Fail-open, never blocks Stop.
     { exe: PY_EXE, script: '../skills/claude-power-pack/tools/ceps_promote_stop.py', timeoutMs: 8000 },
+    // Owner-correction capture (SI-08, Self-Improve assimilation 2026-11-21, Owner
+    // approved "canonical only"). The producer shipped 2026-09-04 with no caller, so
+    // vault/ceps/drafts/ never existed and 0 of 6,427 CEPS events were Owner
+    // corrections. Reads a bounded 512 KB transcript tail, keeps only genuine Owner
+    // turns (no tool_result / wrappers / meta / sidechain), and spawns ceps.py
+    // from-stop DETACHED + unref -- returns in ms. Writes LOW drafts only; a human
+    // resolves them with /ceps confirm|dismiss. Fail-open, never blocks Stop.
+    // Live only after the ONE-LINE insertion into ~/.claude/hooks/hook-dispatcher.js
+    // (NOT a whole-file copy: live carries corpus-reuse-sentinel.js that canonical
+    // lacks, and a copy would unregister it). T-HOOK-DISPATCHER-DRIFT-001.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/ceps_correction_stop.js', timeoutMs: 3000 },
     // FD-07 Fable Learning Flywheel (SCS C82 EXECUTION-mode): at a FRONTIER
     // session's close (kclaude exports PP_FRONTIER_SESSION=1) read this session's
     // captured deltas from the PM-03 bus, classify/triage/writeback each
