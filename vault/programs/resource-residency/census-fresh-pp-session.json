@@ -1,0 +1,785 @@
+{
+  "schema": 1,
+  "taken_at": 1795214888.6982899,
+  "host": {
+    "commit_total": 75808575488,
+    "commit_limit": 86543892480,
+    "ram_free": 1749647360,
+    "ram_total": 33617924096,
+    "pagefile_total": 52925968384,
+    "source": "GetPerformanceInfo (CommitTotal/CommitLimit x PageSize); psutil.swap_memory"
+  },
+  "counters": {
+    "ws": "psutil rss (working set)",
+    "private": "psutil memory_info.private (PrivateUsage)",
+    "commit": "psutil memory_info.pagefile (pagefile-charged)"
+  },
+  "process_count": 636,
+  "claude_sessions": 26,
+  "sessions": [
+    {
+      "claude_pid": 6084,
+      "create": 1795029908.6656291,
+      "session_id": "db0e9c64-1859-4e40-8caf-7ce0091ac667",
+      "ws": 428249088,
+      "private": 1217748992,
+      "commit": 1217748992,
+      "mcp": {
+        "ghost": {
+          "procs": 2,
+          "ws": 13508608,
+          "private": 5398528,
+          "commit": 5398528
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 6984,
+      "create": 1795029908.4067907,
+      "session_id": "9181c266-c237-4830-80ac-e67c27ee6640",
+      "ws": 460431360,
+      "private": 1430003712,
+      "commit": 1430003712,
+      "mcp": {},
+      "unattributed_descendants": 2
+    },
+    {
+      "claude_pid": 8988,
+      "create": 1795187630.6111274,
+      "session_id": null,
+      "ws": 454266880,
+      "private": 1060519936,
+      "commit": 1060519936,
+      "mcp": {
+        "rea": {
+          "procs": 2,
+          "ws": 15376384,
+          "private": 268410880,
+          "commit": 268410880
+        },
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 18030592,
+          "private": 4927488,
+          "commit": 4927488
+        },
+        "google-ads": {
+          "procs": 3,
+          "ws": 16834560,
+          "private": 78950400,
+          "commit": 78950400
+        }
+      },
+      "unattributed_descendants": 4
+    },
+    {
+      "claude_pid": 10600,
+      "create": 1795213436.2826965,
+      "session_id": "e5ca940c-89d9-4ed5-9410-5bdcde03e068",
+      "ws": 415703040,
+      "private": 953610240,
+      "commit": 953610240,
+      "mcp": {
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 17735680,
+          "private": 4337664,
+          "commit": 4337664
+        },
+        "github": {
+          "procs": 2,
+          "ws": 22712320,
+          "private": 19615744,
+          "commit": 19615744
+        }
+      },
+      "unattributed_descendants": 4
+    },
+    {
+      "claude_pid": 16884,
+      "create": 1795031235.0002973,
+      "session_id": null,
+      "ws": 606126080,
+      "private": 1580777472,
+      "commit": 1580777472,
+      "mcp": {
+        "github": {
+          "procs": 2,
+          "ws": 7659520,
+          "private": 19460096,
+          "commit": 19460096
+        },
+        "google-ads": {
+          "procs": 3,
+          "ws": 3289088,
+          "private": 78532608,
+          "commit": 78532608
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 2891776,
+          "private": 259629056,
+          "commit": 259629056
+        },
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 18034688,
+          "private": 5181440,
+          "commit": 5181440
+        }
+      },
+      "unattributed_descendants": 10
+    },
+    {
+      "claude_pid": 17488,
+      "create": 1795214398.5247848,
+      "session_id": null,
+      "ws": 122683392,
+      "private": 348971008,
+      "commit": 348971008,
+      "mcp": {},
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 18256,
+      "create": 1795016735.0528216,
+      "session_id": "9f8d44df-d531-464b-b2db-7601a1ce4c03",
+      "ws": 332967936,
+      "private": 972328960,
+      "commit": 972328960,
+      "mcp": {
+        "rea": {
+          "procs": 2,
+          "ws": 2371584,
+          "private": 270360576,
+          "commit": 270360576
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 19700,
+      "create": 1795050049.682392,
+      "session_id": null,
+      "ws": 391991296,
+      "private": 1207881728,
+      "commit": 1207881728,
+      "mcp": {
+        "rea": {
+          "procs": 2,
+          "ws": 3260416,
+          "private": 271257600,
+          "commit": 271257600
+        },
+        "google-ads": {
+          "procs": 3,
+          "ws": 4530176,
+          "private": 78983168,
+          "commit": 78983168
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 25792,
+      "create": 1795016730.5355897,
+      "session_id": "b5643d4b-9ffe-4b02-ae4f-0a83b1d1a12a",
+      "ws": 419573760,
+      "private": 1243107328,
+      "commit": 1243107328,
+      "mcp": {
+        "rea": {
+          "procs": 2,
+          "ws": 2363392,
+          "private": 268107776,
+          "commit": 268107776
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 26280,
+      "create": 1795105440.2350614,
+      "session_id": null,
+      "ws": 455860224,
+      "private": 1124962304,
+      "commit": 1124962304,
+      "mcp": {
+        "google-ads": {
+          "procs": 3,
+          "ws": 3649536,
+          "private": 78467072,
+          "commit": 78467072
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 3391488,
+          "private": 268001280,
+          "commit": 268001280
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 28000,
+      "create": 1795029908.7221491,
+      "session_id": "e9103031-409a-444c-92c3-44b918e21d19",
+      "ws": 465620992,
+      "private": 1301127168,
+      "commit": 1301127168,
+      "mcp": {
+        "mcp-search": {
+          "procs": 2,
+          "ws": 2150400,
+          "private": 35303424,
+          "commit": 35303424
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 29840,
+      "create": 1795031320.0155215,
+      "session_id": null,
+      "ws": 526647296,
+      "private": 1314021376,
+      "commit": 1314021376,
+      "mcp": {
+        "rea": {
+          "procs": 2,
+          "ws": 2580480,
+          "private": 267300864,
+          "commit": 267300864
+        },
+        "google-ads": {
+          "procs": 3,
+          "ws": 4116480,
+          "private": 78934016,
+          "commit": 78934016
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 30452,
+      "create": 1795205383.7611203,
+      "session_id": null,
+      "ws": 513658880,
+      "private": 1218826240,
+      "commit": 1218826240,
+      "mcp": {
+        "google-ads": {
+          "procs": 3,
+          "ws": 13832192,
+          "private": 78790656,
+          "commit": 78790656
+        },
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 16596992,
+          "private": 4886528,
+          "commit": 4886528
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 8544256,
+          "private": 268832768,
+          "commit": 268832768
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 33968,
+      "create": 1795092299.1465387,
+      "session_id": null,
+      "ws": 465244160,
+      "private": 1282408448,
+      "commit": 1282408448,
+      "mcp": {
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 16863232,
+          "private": 4837376,
+          "commit": 4837376
+        },
+        "github": {
+          "procs": 2,
+          "ws": 7024640,
+          "private": 19427328,
+          "commit": 19427328
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 2490368,
+          "private": 258732032,
+          "commit": 258732032
+        },
+        "google-ads": {
+          "procs": 3,
+          "ws": 4173824,
+          "private": 78635008,
+          "commit": 78635008
+        }
+      },
+      "unattributed_descendants": 6
+    },
+    {
+      "claude_pid": 34372,
+      "create": 1795081236.300854,
+      "session_id": null,
+      "ws": 333451264,
+      "private": 938250240,
+      "commit": 938250240,
+      "mcp": {
+        "google-ads": {
+          "procs": 3,
+          "ws": 3932160,
+          "private": 78430208,
+          "commit": 78430208
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 2998272,
+          "private": 269209600,
+          "commit": 269209600
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 35940,
+      "create": 1795030531.49401,
+      "session_id": null,
+      "ws": 621678592,
+      "private": 1621835776,
+      "commit": 1621835776,
+      "mcp": {
+        "rea": {
+          "procs": 2,
+          "ws": 2301952,
+          "private": 268611584,
+          "commit": 268611584
+        },
+        "google-ads": {
+          "procs": 3,
+          "ws": 3665920,
+          "private": 78540800,
+          "commit": 78540800
+        },
+        "ghost": {
+          "procs": 2,
+          "ws": 13594624,
+          "private": 5984256,
+          "commit": 5984256
+        },
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 8712192,
+          "private": 4673536,
+          "commit": 4673536
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 42876,
+      "create": 1795213890.073866,
+      "session_id": null,
+      "ws": 336773120,
+      "private": 828751872,
+      "commit": 828751872,
+      "mcp": {
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 18231296,
+          "private": 4349952,
+          "commit": 4349952
+        },
+        "ghost": {
+          "procs": 2,
+          "ws": 28872704,
+          "private": 4964352,
+          "commit": 4964352
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 44772,
+      "create": 1795103018.9503417,
+      "session_id": "69977268-ee1c-4c1f-a2eb-82aa29cf8e1c",
+      "ws": 436768768,
+      "private": 1350500352,
+      "commit": 1350500352,
+      "mcp": {
+        "google-ads": {
+          "procs": 3,
+          "ws": 3448832,
+          "private": 78925824,
+          "commit": 78925824
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 3035136,
+          "private": 269606912,
+          "commit": 269606912
+        },
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 18018304,
+          "private": 4956160,
+          "commit": 4956160
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 44924,
+      "create": 1795029909.9962645,
+      "session_id": "1e2afe53-bd48-4037-acd8-78cddc94ec8a",
+      "ws": 408727552,
+      "private": 1117265920,
+      "commit": 1117265920,
+      "mcp": {
+        "github": {
+          "procs": 2,
+          "ws": 7303168,
+          "private": 19292160,
+          "commit": 19292160
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 45040,
+      "create": 1795212865.3626635,
+      "session_id": null,
+      "ws": 36089856,
+      "private": 87564288,
+      "commit": 87564288,
+      "mcp": {},
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 47184,
+      "create": 1795103036.9379249,
+      "session_id": "007f8588-3d76-42da-9875-cba5f6f05ae1",
+      "ws": 336191488,
+      "private": 988459008,
+      "commit": 988459008,
+      "mcp": {
+        "google-ads": {
+          "procs": 3,
+          "ws": 3158016,
+          "private": 78639104,
+          "commit": 78639104
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 3284992,
+          "private": 268169216,
+          "commit": 268169216
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 52112,
+      "create": 1795177284.32913,
+      "session_id": null,
+      "ws": 475832320,
+      "private": 1142517760,
+      "commit": 1142517760,
+      "mcp": {
+        "rea": {
+          "procs": 2,
+          "ws": 15327232,
+          "private": 268304384,
+          "commit": 268304384
+        },
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 18010112,
+          "private": 4628480,
+          "commit": 4628480
+        },
+        "google-ads": {
+          "procs": 3,
+          "ws": 23461888,
+          "private": 79134720,
+          "commit": 79134720
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 52236,
+      "create": 1795214818.1368313,
+      "session_id": null,
+      "ws": 351592448,
+      "private": 680742912,
+      "commit": 680742912,
+      "mcp": {
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 20336640,
+          "private": 4599808,
+          "commit": 4599808
+        },
+        "github": {
+          "procs": 2,
+          "ws": 27226112,
+          "private": 22151168,
+          "commit": 22151168
+        }
+      },
+      "unattributed_descendants": 1
+    },
+    {
+      "claude_pid": 52756,
+      "create": 1795180734.0385363,
+      "session_id": null,
+      "ws": 513241088,
+      "private": 1202528256,
+      "commit": 1202528256,
+      "mcp": {
+        "google-ads": {
+          "procs": 3,
+          "ws": 18214912,
+          "private": 78872576,
+          "commit": 78872576
+        },
+        "github": {
+          "procs": 2,
+          "ws": 22253568,
+          "private": 20152320,
+          "commit": 20152320
+        },
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 17997824,
+          "private": 5165056,
+          "commit": 5165056
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 17338368,
+          "private": 258588672,
+          "commit": 258588672
+        }
+      },
+      "unattributed_descendants": 10
+    },
+    {
+      "claude_pid": 52988,
+      "create": 1795205287.8361804,
+      "session_id": null,
+      "ws": 320978944,
+      "private": 899346432,
+      "commit": 899346432,
+      "mcp": {
+        "google-ads": {
+          "procs": 3,
+          "ws": 9822208,
+          "private": 78958592,
+          "commit": 78958592
+        },
+        "rea": {
+          "procs": 2,
+          "ws": 9334784,
+          "private": 259485696,
+          "commit": 259485696
+        },
+        "gex44-browser": {
+          "procs": 2,
+          "ws": 7557120,
+          "private": 4399104,
+          "commit": 4399104
+        }
+      },
+      "unattributed_descendants": 0
+    },
+    {
+      "claude_pid": 60540,
+      "create": 1795213435.7149596,
+      "session_id": "e5ca940c-89d9-4ed5-9410-5bdcde03e068",
+      "ws": 49221632,
+      "private": 136683520,
+      "commit": 136683520,
+      "mcp": {},
+      "unattributed_descendants": 1
+    }
+  ],
+  "servers": {
+    "gex44-browser": {
+      "procs": 24,
+      "ws": 196124672,
+      "private": 56942592,
+      "commit": 56942592,
+      "live_sessions": 12
+    },
+    "google-ads": {
+      "procs": 42,
+      "ws": 116129792,
+      "private": 1102794752,
+      "commit": 1102794752,
+      "live_sessions": 14
+    },
+    "rea": {
+      "procs": 32,
+      "ws": 96890880,
+      "private": 4262608896,
+      "commit": 4262608896,
+      "live_sessions": 16
+    },
+    "github": {
+      "procs": 12,
+      "ws": 94179328,
+      "private": 120098816,
+      "commit": 120098816,
+      "live_sessions": 6
+    },
+    "ghost": {
+      "procs": 6,
+      "ws": 55975936,
+      "private": 16347136,
+      "commit": 16347136,
+      "live_sessions": 3
+    },
+    "mcp-search": {
+      "procs": 2,
+      "ws": 2150400,
+      "private": 35303424,
+      "commit": 35303424,
+      "live_sessions": 1
+    }
+  },
+  "signatures_refused_unknown": [
+    "discord",
+    "fakechat",
+    "imessage",
+    "telegram"
+  ],
+  "identities": [
+    "10496@1795205400",
+    "10912@1795030581",
+    "10956@1795105454",
+    "12064@1795030637",
+    "14404@1795030026",
+    "14504@1795030039",
+    "15428@1795031328",
+    "15876@1795177299",
+    "16104@1795081259",
+    "16368@1795180764",
+    "16508@1795031330",
+    "16604@1795031261",
+    "17028@1795029924",
+    "17976@1795186521",
+    "18152@1795031248",
+    "1964@1795213941",
+    "19744@1795180794",
+    "19784@1795092322",
+    "20436@1795205325",
+    "20620@1795016811",
+    "20944@1795092311",
+    "20980@1795213452",
+    "21472@1795016844",
+    "21560@1795081259",
+    "21756@1795205398",
+    "22148@1795092322",
+    "22736@1795103085",
+    "23256@1795213958",
+    "24544@1795092311",
+    "25096@1795031248",
+    "26144@1795092312",
+    "26656@1795187667",
+    "27212@1795029924",
+    "27356@1795105454",
+    "28112@1795081254",
+    "2904@1795103086",
+    "29144@1795031247",
+    "31112@1795103033",
+    "31952@1795030026",
+    "31988@1795205322",
+    "32064@1795030581",
+    "32452@1795105453",
+    "33452@1795205325",
+    "3384@1795103056",
+    "34248@1795214826",
+    "34288@1795050063",
+    "35208@1795179702",
+    "35480@1795031331",
+    "35584@1795180756",
+    "36196@1795031328",
+    "36872@1795105453",
+    "37320@1795081259",
+    "37440@1795050063",
+    "38352@1795050063",
+    "38756@1795081254",
+    "38772@1795092312",
+    "39108@1795050063",
+    "3928@1795016810",
+    "39568@1795103069",
+    "39872@1795031248",
+    "39900@1795050063",
+    "40784@1795176461",
+    "41148@1795031247",
+    "41424@1795092312",
+    "41520@1795213941",
+    "41600@1795180794",
+    "41940@1795213452",
+    "42136@1795031330",
+    "42168@1795105454",
+    "42404@1795205398",
+    "42416@1795179702",
+    "44312@1795213452",
+    "4452@1795205330",
+    "44704@1795205400",
+    "45376@1795103055",
+    "46740@1795103069",
+    "47148@1795187665",
+    "47944@1795030637",
+    "47984@1795187673",
+    "48020@1795031261",
+    "48796@1795180761",
+    "49536@1795186522",
+    "51108@1795187673",
+    "51312@1795180756",
+    "51444@1795187665",
+    "51840@1795214826",
+    "5188@1795030568",
+    "52832@1795205400",
+    "52984@1795175577",
+    "53260@1795205322",
+    "53264@1795205400",
+    "53804@1795175577",
+    "54444@1795180760",
+    "54528@1795180765",
+    "54664@1795213452",
+    "56272@1795214826",
+    "56412@1795187673",
+    "56660@1795214826",
+    "56932@1795177296",
+    "57428@1795177307",
+    "57892@1795205330",
+    "58432@1795180764",
+    "59120@1795177297",
+    "59140@1795213958",
+    "59176@1795205400",
+    "59440@1795205329",
+    "5952@1795030039",
+    "60060@1795177307",
+    "60132@1795177299",
+    "60652@1795176461",
+    "60676@1795187667",
+    "60916@1795177307",
+    "6212@1795030569",
+    "7700@1795103033",
+    "7732@1795103086",
+    "7800@1795103055",
+    "9180@1795016844",
+    "9324@1795030581"
+  ]
+}
