@@ -227,6 +227,20 @@ def _short(text: str, n: int = 80) -> str:
     return text if len(text) <= n else text[: n - 1] + "..."
 
 
+def _redact(text: str) -> str:
+    """Secret Firewall redaction for text that may reach UKDL. The firewall is
+    the owner of credential patterns; if it cannot be imported the text is
+    replaced, not passed through (fail-closed: a draft without its snippet is
+    still resolvable, a leaked key in UKDL is not undoable)."""
+    try:
+        if str(PP_ROOT) not in sys.path:
+            sys.path.insert(0, str(PP_ROOT))
+        from modules.secret_firewall.redactor import redact  # noqa: PLC0415
+        return redact(text or "")
+    except Exception:  # noqa: BLE001
+        return "[REDACTION-UNAVAILABLE: snippet withheld]"
+
+
 # ---------------------------------------------------------------------------
 # FTS5 pattern DB (M10 substrate)
 # ---------------------------------------------------------------------------
@@ -665,10 +679,37 @@ def from_verify_fail(verify_stdout: str) -> list:
     return out
 
 
+# SI-06 (2026-11-21), measured on 1,296 real non-pasted Owner turns (30 days):
+# the old single pattern drew 15 hits, ALL on a bare mid-sentence `que no`
+# ("por que no certifica", "que no se bloqueen") -- precision ~7-20% -- and
+# missed every turn-initial correction ("no, haz la mision, no lo otro",
+# "no, un plugin para chatgpt"). A correction LEADS the turn, or criticises a
+# past agent action in second person; it is not any negation anywhere.
+_CORRECTION_LEAD_RX = re.compile(
+    r"^\W*(?:no\s*[,.!;:]|nope\b|que\s+no\s*[,.!;]|eso\s+no\b|"
+    r"no\s+(?:deber[ií]as?\b|era\s+eso|es\s+(?:eso|as[ií])|me\s+refer[ií]a|hagas|toques)|"
+    r"wrong\b|wait,?\s+no\b|stop\b)", re.I)
 _CORRECTION_RX = re.compile(
-    r"\b(?:no,?\s+actually|that'?s\s+wrong|wait,?\s+(?:no|stop)|"
-    r"revert|undo|nope|incorrect|bad\s+take|que\s+no|"
-    r"no\s+es\s+(?:asi|así)|stop\s+(?:doing|that))\b", re.I)
+    r"\b(?:no,?\s+actually|that'?s\s+(?:wrong|not\s+what\s+i)|wait,?\s+(?:no|stop)|"
+    r"revert|undo|incorrect|bad\s+take|stop\s+(?:doing|that)|"
+    r"you\s+(?:broke|missed|forgot|ignored)|i\s+told\s+you|"
+    r"por\s+qu[eé]\s+no\s+has|no\s+deber[ií]as|te\s+(?:equivocas|has\s+equivocado)|"
+    r"ya\s+te\s+(?:dije|he\s+dicho)|te\s+dije\s+que|"
+    r"no\s+es\s+(?:as[ií]|eso|lo\s+que\s+(?:te\s+)?ped[ií])|deshaz\w*|revierte\w*|"
+    r"no\s+te\s+ped[ií])\b", re.I)
+
+
+def correction_cue(text: str) -> Optional[str]:
+    """The matched correction cue in an Owner turn, or None.
+
+    A HEURISTIC SIGNAL, never a confirmed correction: the draft it produces
+    still needs `/ceps confirm|dismiss`. Callers must pass genuine Owner text
+    (tools/transcript_events.py authority OWNER), not tool output or wrappers.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return None
+    m = _CORRECTION_LEAD_RX.match(text) or _CORRECTION_RX.search(text)
+    return m.group(0).strip() if m else None
 
 
 def from_stop_hook(last_turns: list) -> list:
@@ -681,14 +722,19 @@ def from_stop_hook(last_turns: list) -> list:
         DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
         for turn in last_turns[-5:]:
             text = turn if isinstance(turn, str) else turn.get("text", "")
-            if _CORRECTION_RX.search(text):
+            cue = correction_cue(text)
+            if cue:
                 draft_id = hashlib.sha1(
                     (text + str(time.time())).encode("utf-8")
                 ).hexdigest()[:12]
                 draft = {
                     "draft_id": draft_id,
                     "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    "snippet": _short(text, 200),
+                    # Redacted: on confirm this text can become a root_cause
+                    # that distribute() appends to UKDL (SI-09).
+                    "snippet": _short(_redact(text), 200),
+                    "cue": _redact(cue),
+                    "signal": "HEURISTIC",
                     "confidence": "low",
                     "needs_confirmation": True,
                 }

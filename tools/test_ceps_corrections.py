@@ -241,6 +241,50 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             _fail("V-CEPS-CORRECTION-NO-DIR", f"raised instead of degrading: {exc}")
 
+    # ---- V-CEPS-CORRECTION-ES-EN (SI-06) ---------------------------------
+    # Shapes taken from a hand-labelled 30-day sample (1,296 real Owner turns,
+    # paraphrased). Before SI-06 every positive below was MISSED and every
+    # negative was a HIT (bare mid-sentence `que no`).
+    positives = [
+        "no, haz la mision, no lo otro",
+        "no, a un repo publico nuevo no, va al de power pack",
+        "no, un plugin para chatgpt",
+        "pero por que no has hecho lo que te pedi hasta el 1:1?",
+        "no deberias seguir con los gates que quedan?",
+        "no, actually that's wrong -- revert it",
+        "wait, no -- stop that",
+        "you ignored the instruction about the mirror",
+        "ya te dije que no tocaras el hook",
+    ]
+    negatives = [
+        "cual es el cuello de botella y por que no certifica mas funciones?",
+        "todo lo que promueva que no se bloqueen las misiones",
+        "que mas hay en los datasets que no hayamos leido?",
+        "no tarda demasiado la planificacion siempre?",
+        "perfect, ship it",
+        "no puedes investigar mas causas de esto?",
+        "el color de piel creo que no le ha puesto el mismo",  # output feedback, not a correction of the agent's act
+    ]
+    missed = [t for t in positives if not ceps.correction_cue(t)]
+    false = [t for t in negatives if ceps.correction_cue(t)]
+    if not missed and not false:
+        _ok("V-CEPS-CORRECTION-ES-EN",
+            f"{len(positives)} ES/EN corrections caught, {len(negatives)} look-alikes refused")
+    else:
+        _fail("V-CEPS-CORRECTION-ES-EN", f"missed={missed} false={false}")
+
+    # ---- V-CEPS-DRAFT-REDACTED (SI-09) ------------------------------------
+    canary = "sk-ant-api03-" + "Z" * 93 + "AA"   # key-shaped, not a real key
+    with tempfile.TemporaryDirectory() as td3:
+        _isolate(Path(td3))
+        made = ceps.from_stop_hook([f"no, revert it, my key {canary} is in there"])
+        snip = made[0]["snippet"] if made else ""
+        if made and canary not in snip and "REDACTED" in snip \
+                and made[0].get("signal") == "HEURISTIC" and made[0].get("cue"):
+            _ok("V-CEPS-DRAFT-REDACTED", "draft snippet redacted; cue + HEURISTIC label kept")
+        else:
+            _fail("V-CEPS-DRAFT-REDACTED", f"draft={made!r:.200}")
+
     total = _passes + _fails
     print(f"CEPS_CORRECTION_PASS={_passes}/{total}  threshold={total}/{total}")
     return 0 if _fails == 0 else 1
