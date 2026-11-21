@@ -45,6 +45,13 @@ Evidence: `ruflo/CANARY_2026-11-20.json`, raw `ruflo/canary/{adv,retry}.out.json
 - NEW: Ruflo attempted unsolicited egress to IPFS gateways (cloudflare-ipfs.com, w3s.link); blocked by isolation.
 Nothing left the sandbox.
 
+## BLOCKED-ON-LAPTOP (campaign B) - Phase 1 / Phase 6 inputs
+B1. SaaS style 3 reference bank (conversational AI surface): ChatGPT, Perplexity, Claude.ai and Mistral return 403 to GEX44, so
+    no reference could be read here (`saas-styles/REUSE_LEDGER.md` row 2). On the laptop, in a real browser, save one screenshot
+    plus the visible text of each of the four chat surfaces (logged out landing/composer view) under
+    `vault/programs/bcap-2/saas-styles/refs/` and commit them. Owner confirmed option (b) for style 3, so Phase 6 builds it from
+    the dataset's own rules and records this bank as the missing external corroboration, never as a PASS.
+
 ## Platform note
 On Windows, `test_bcap2_dbg` (Linux-path real-bug replay), `test_bcap2_tdd` (needs the pytest+coverage interpreter) and
 `test_bcap2_ruflo` (symlink privilege, WinError 1314) fail for platform reasons; `test_bcap2_synsation` 38/0 and
