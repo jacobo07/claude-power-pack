@@ -128,6 +128,35 @@ def context_tokens(session_id: str) -> int | None:
     return None
 
 
+def startup_tokens(session_id: str) -> int | None:
+    """Tokens resident at the worker's FIRST real model call: the startup floor every fresh worker
+    pays before it does any work (system prompt, rules, skills, card). None when unmeasured."""
+    path = _transcript(session_id)
+    if not path:
+        return None
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if '"usage"' not in line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except ValueError:
+                    continue
+                msg = row.get("message") if isinstance(row, dict) and row.get("type") == "assistant" else None
+                if not isinstance(msg, dict) or msg.get("model") == "<synthetic>":
+                    continue
+                u = msg.get("usage")
+                if isinstance(u, dict):
+                    n = int(u.get("input_tokens") or 0) + int(u.get("cache_creation_input_tokens") or 0) \
+                        + int(u.get("cache_read_input_tokens") or 0)
+                    if n > 0:
+                        return n
+    except (OSError, TypeError, ValueError):
+        return None
+    return None
+
+
 def last_compaction(session_id: str) -> dict | None:
     """The host's own record of the worker's last compaction (`compact_boundary` metadata):
     trigger, tokens before and after, duration. None when the transcript does not show one."""

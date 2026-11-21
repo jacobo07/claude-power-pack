@@ -76,11 +76,46 @@ def main() -> int:
     res, argv = launch("m-abs")
     rec = gm.load("m-abs")
     check("V-BASE-ABSENT-MODEL", bool(argv) and arg(argv, "--model") == "sonnet", str(argv))
-    # Policy v2: the ceiling sits under the compaction line (0.70 x 250k) and the mid-turn token wall is
-    # derived at the same limit (tools/test_rotation_invariant.py). v1 had 250k = the line: unreachable.
-    check("V-BASE-ABSENT-CEILINGS", arg(argv, "--autocompact") == "250k" and rec.get("continue_max_tokens") == 175_000
-          and (rec.get("wall") or {}).get("advisory_tokens") == 175_000,
+    # Policy v2: the ceiling sits under the compaction line (0.70 x line) and the mid-turn token wall is
+    # derived at the same limit. v1 had 250k = the line: unreachable. Work floor (2026-11-21): the policy's
+    # 250k line gave a 175k wall, under a measured 119k startup floor + any real work, so an unmeasured
+    # mission is raised to 375k (0.70 x 375k = 262.5k >= 150k default floor + 100k work).
+    check("V-BASE-ABSENT-CEILINGS", arg(argv, "--autocompact") == "375k" and rec.get("continue_max_tokens") == 262_500
+          and (rec.get("wall") or {}).get("advisory_tokens") == 262_500,
           f"{arg(argv, '--autocompact')} {rec.get('continue_max_tokens')} {rec.get('wall')}")
+
+    # V-BASE-FLOOR-*: the wall leaves MIN_WORK_TOKENS above the startup floor (m-a13cc30b0852 regression).
+    incident = {"autocompact": "250k", "continue_max_tokens": 175_000, "startup_floor": 119_465,
+                "wall": {"snapshot": 35.0, "advisory": 40.0, "rearm": 30.0, "advisory_tokens": 175_000}}
+    fixed = gm.apply_rotation_invariant(incident)
+    fw = fixed["wall"]["advisory_tokens"]
+    check("V-BASE-FLOOR-INCIDENT-REPAIRED", fw - 119_465 >= gm.MIN_WORK_TOKENS
+          and fixed["continue_max_tokens"] - 119_465 >= gm.MIN_WORK_TOKENS
+          and fw <= int(gm._tokens_of(fixed["autocompact"]) * 0.70)
+          and "autocompact" in fixed["rotation_invariant"]["repaired"], str(fixed))
+    check("V-BASE-FLOOR-MEASURED-LINE", fixed["autocompact"] == "325k" and fw == 227_500, str(fixed))
+    roomy = gm.apply_rotation_invariant({"autocompact": "400k", "startup_floor": 119_465})
+    check("V-BASE-FLOOR-CONTROL-UNCHANGED", roomy["autocompact"] == "400k"
+          and "autocompact" not in (roomy.get("rotation_invariant") or {}).get("repaired", {}), str(roomy))
+    # The floor is MEASURED from the last worker's first model call, and only ever rises.
+    sid = "f100f100-0000-0000-0000-000000000000"
+    pdir = Path(os.environ["GSD_LONG_RUN_PROJECTS_DIR"]) / "proj"
+    pdir.mkdir(parents=True, exist_ok=True)
+    (pdir / f"{sid}.jsonl").write_text(
+        '{"type":"assistant","message":{"model":"<synthetic>","usage":{"input_tokens":0}}}\n'
+        '{"type":"assistant","message":{"model":"sonnet","usage":{"input_tokens":3,'
+        '"cache_creation_input_tokens":19462,"cache_read_input_tokens":100000}}}\n'
+        '{"type":"assistant","message":{"model":"sonnet","usage":{"input_tokens":190000}}}\n', encoding="utf-8")
+    check("V-BASE-FLOOR-MEASURE-FIRST-CALL", gm._measured_startup_floor({"owner": {"session_id": sid}}) == 119_465)
+    check("V-BASE-FLOOR-NEVER-LOWERS", gm._measured_startup_floor(
+        {"owner": {"session_id": sid}, "startup_floor": 186_856}) == 186_856)
+    check("V-BASE-FLOOR-UNMEASURED-NONE", gm._measured_startup_floor({"owner": {"session_id": "nope"}}) is None)
+    mission("m-floor", owner={"session_id": sid})
+    _, argv = launch("m-floor")
+    rf = gm.load("m-floor")
+    check("V-BASE-FLOOR-LAUNCH-RECORDS", rf.get("startup_floor") == 119_465 and arg(argv, "--autocompact") == "325k"
+          and (rf.get("wall") or {}).get("advisory_tokens") == 227_500,
+          f"{rf.get('startup_floor')} {arg(argv, '--autocompact')} {rf.get('wall')}")
     b = rec.get("baseline") or {}
     check("V-BASE-RECORD", b.get("version") == "2" and b.get("tier") == "BASIC" and b.get("work_class") == "GSD_RESUME"
           and set((b.get("src") or {}).values()) == {"policy@2"}, str(b))
@@ -88,10 +123,10 @@ def main() -> int:
     check("V-BASE-GSD-RESUME-NEVER-SLIM", not gm.slim_profile(rec) and argv[1] == "--bg", str(argv[:3]))
 
     # V-BASE-EXPLICIT: an explicit value is kept, source explicit.
-    mission("m-exp", model="claude-opus-5-5", autocompact="300k")
+    mission("m-exp", model="claude-opus-5-5", autocompact="400k")
     _, argv = launch("m-exp")
     b = gm.load("m-exp")["baseline"]
-    check("V-BASE-EXPLICIT-KEPT", arg(argv, "--model") == "claude-opus-5-5" and arg(argv, "--autocompact") == "300k"
+    check("V-BASE-EXPLICIT-KEPT", arg(argv, "--model") == "claude-opus-5-5" and arg(argv, "--autocompact") == "400k"
           and b["src"]["model"] == "explicit" and b["src"]["autocompact"] == "explicit"
           and b["src"]["continue_max_tokens"] == "policy@2", str(b))
 

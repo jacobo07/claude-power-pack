@@ -3,6 +3,8 @@
   "min_headroom_tokens": 1000000,
   "baseline_version": "2",
   "rotation_fraction": 0.70,
+  "startup_floor_tokens": 150000,
+  "min_work_tokens": 100000,
   "baseline_classes": {
     "COMPILED_UNIT": {
       "model": "sonnet",

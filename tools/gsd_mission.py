@@ -1252,35 +1252,89 @@ def _rotation_fraction() -> float:
         return ROTATION_FRACTION
 
 
+# A wall must leave room to work ABOVE the startup floor. Measured 2026-11-21 (m-a13cc30b0852): every
+# fresh worker started at 119,465 tokens resident and the 175k wall (0.70 x 250k) left ~56k, so each
+# epoch re-read its inputs, hit the wall, handed off and committed nothing -- 4 epochs, ~10M tokens
+# processed, HALTED no_progress. An earlier probe measured a 186,856-token floor (tools/gsd_epoch.py).
+STARTUP_FLOOR_TOKENS = 150_000   # used until a worker of the mission has been measured
+MIN_WORK_TOKENS = 100_000        # guaranteed working room above the floor (policy: min_work_tokens)
+_AUTOCOMPACT_STEP = 25_000
+
+
+def _policy_int(key: str, default: int) -> int:
+    try:
+        v = int(json.loads(_BUDGET_DEFAULTS.read_text(encoding="utf-8-sig")).get(key, default))
+        return v if v > 0 else default
+    except Exception:  # noqa: BLE001 -- unreadable policy answers with the measured constant
+        return default
+
+
+def _measured_startup_floor(rec: dict) -> int | None:
+    """The highest startup floor seen for this mission: the recorded one, raised by the last worker's
+    first model call. None when nothing was ever measured (the policy default then applies)."""
+    known = int(rec.get("startup_floor") or 0)
+    sid = ((rec.get("owner") or {}).get("session_id")
+           or (rec.get("previous_owner") or {}).get("session_id"))
+    seen = 0
+    if sid:
+        try:
+            import gsd_epoch as ge
+            seen = int(ge.startup_tokens(sid) or 0)
+        except Exception:  # noqa: BLE001 -- an unreadable transcript is unmeasured, never zero
+            seen = 0
+    best = max(known, seen)
+    return best or None
+
+
+def _work_floor_line(rec: dict, line: int, frac: float) -> tuple[int, int]:
+    """(floor, compaction line) such that line*frac - floor >= MIN_WORK_TOKENS."""
+    floor = int(rec.get("startup_floor") or 0) or _policy_int("startup_floor_tokens", STARTUP_FLOOR_TOKENS)
+    need = floor + _policy_int("min_work_tokens", MIN_WORK_TOKENS)
+    if int(line * frac) >= need:
+        return floor, line
+    raised = -(-int(need / frac) // _AUTOCOMPACT_STEP) * _AUTOCOMPACT_STEP
+    while int(raised * frac) < need:
+        raised += _AUTOCOMPACT_STEP
+    return floor, raised
+
+
 def apply_rotation_invariant(rec: dict) -> dict:
-    """Bound the turn-end ceiling and the mid-turn token wall under the compaction line.
+    """Bound the turn-end ceiling and the mid-turn token wall under the compaction line, and keep the
+    compaction line high enough that the wall leaves MIN_WORK_TOKENS above the startup floor.
 
     Applies to explicit values too: a rotation predicate above the compaction line is unreachable
-    whoever set it. Returns a NEW record; `rotation_invariant` names what was repaired (absent when
-    nothing was)."""
+    whoever set it, and a wall under floor+work can never let a worker commit anything. Returns a NEW
+    record; `rotation_invariant` names what was repaired (absent when nothing was)."""
     line = _tokens_of(rec.get("autocompact"))
     if not line or not rotation_invariant_enabled():
         return rec
     import gsd_epoch as ge
     frac = _rotation_fraction()
-    limit = int(line * frac)
     out, repaired, derived = dict(rec), {}, {}
+    floor, raised = _work_floor_line(rec, line, frac)
+    if raised != line:
+        out["autocompact"] = f"{raised // 1000}k"
+        repaired["autocompact"] = [rec.get("autocompact"), out["autocompact"]]
+        line = raised
+    limit = int(line * frac)
+    work_min = floor + _policy_int("min_work_tokens", MIN_WORK_TOKENS)
     ceiling = int(rec.get("continue_max_tokens") or ge.CONTINUE_MAX_TOKENS)
-    if ceiling > limit:
+    if ceiling > limit or ceiling < work_min:
         out["continue_max_tokens"] = limit
         repaired["continue_max_tokens"] = [ceiling, limit]
     wall = dict(rec.get("wall") or DEFAULT_WALL)
     adv = int(wall.get("advisory_tokens") or 0)
-    if adv > limit:
+    if adv > limit or 0 < adv < work_min:
         repaired["wall.advisory_tokens"] = [adv, limit]
     elif adv <= 0:
         derived["wall.advisory_tokens"] = limit     # absent: the first launch derives it, once
-    if not 0 < adv <= limit:
+    if not work_min <= adv <= limit:
         wall["advisory_tokens"] = limit
     out["wall"] = wall
     out.pop("rotation_invariant", None)
     if repaired or derived:
         out["rotation_invariant"] = {"compaction_line": line, "fraction": frac, "limit": limit,
+                                     "startup_floor": floor, "work_min": work_min,
                                      "repaired": repaired, "derived": derived}
     return out
 
@@ -1315,9 +1369,11 @@ def resolve_baseline(rec: dict) -> dict:
             src[f] = f"policy@{pol['version']}" if origin == "policy" else "builtin"
     out = apply_rotation_invariant(out)
     inv = out.get("rotation_invariant")
-    if inv and inv["repaired"].get("continue_max_tokens") and rec.get("continue_max_tokens") == out["continue_max_tokens"]:
+    if inv:
         # Re-resolved from policy and bounded again to what the record already held: not a new repair.
-        inv["repaired"].pop("continue_max_tokens")
+        for f in ("continue_max_tokens", "autocompact"):
+            if inv["repaired"].get(f) and rec.get(f) == out[f]:
+                inv["repaired"].pop(f)
         if not inv["repaired"] and not inv["derived"]:
             out.pop("rotation_invariant")
     values = {f: out.get(f) for f in _BASELINE_FIELDS}
@@ -1419,8 +1475,13 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     gate = None if prompt_override else try_done_gate_close(rec, now, run=det_runner)   # ICC-05: no model turn
     if gate:
         return gate
+    floor_seen = _measured_startup_floor(rec)
+    if floor_seen:
+        rec = dict(rec, startup_floor=floor_seen)
     resolved = resolve_baseline(rec)
     baseline_on = resolved is not rec
+    if floor_seen and baseline_on:
+        resolved["startup_floor"] = floor_seen
     legacy_why = baseline_legacy_verdict(resolved) if baseline_mode() != "off" else None
     if legacy_why and baseline_mode() == "enforce":
         lr.ledger_append(mission_id, "launch_refused_baseline", mission_id=mission_id,
@@ -1429,6 +1490,8 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
+    if floor_seen:
+        extra["startup_floor"] = floor_seen
     if baseline_on:
         extra.update({k: resolved[k] for k in (*_BASELINE_FIELDS, "baseline")})
         if "wall" in resolved:
