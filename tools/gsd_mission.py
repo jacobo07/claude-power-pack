@@ -623,9 +623,13 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         # (EDD m-4bb8952b2903, m-79f84cdd34dc): a cost-breaker hold set on a worker that then finished
         # left the record RUNNING with its owner gone, and goal singleflight refused every later unit
         # until the Owner closed it by hand. Only positive DEAD evidence settles; UNKNOWN stays parked.
-        if (rec.get("closeout_lease") or {}).get("state") in (CL_AUTHORIZED, CL_LAUNCHED):
+        if (rec.get("closeout_lease") or {}).get("state") in (CL_AUTHORIZED, CL_LAUNCHED, CL_DEFERRED):
             # spec mission-closeout-reserve-launch: closeout_gate owns this record until the lease ends; no recovery,
-            # settle or relay may act on the closeout worker meanwhile.
+            # settle or relay may act on the closeout worker meanwhile. A DEFERRED closeout (launch refused by the
+            # account or the RAM floor, nothing spent) is retried by closeout_gate every pass.
+            if (rec.get("closeout_lease") or {}).get("state") == CL_DEFERRED:
+                return {"action": "none", "reason": "closeout deferred (closeout_gate retries it): "
+                        + str((rec.get("closeout_lease") or {}).get("why") or "")[:200]}
             return {"action": "none", "reason": "closeout running on the reserve (closeout_gate follows it)"}
         if state in (RUNNING, BLOCKED) and is_cost_hold(hold):
             # AMR: a cost hold stops the executor, not the goal. Recovery runs until it launches a
@@ -1419,7 +1423,7 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                 f"profile={rref['profile']}")
         lr.ledger_append(mission_id, "launch_refused_resources", mission_id=mission_id,
                          epoch=rec.get("epoch"), reading=rref, why=rwhy[:300])
-        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": rwhy, "detail": ""}
+        return {"ok": False, "epoch": rec.get("epoch"), "bg_id": None, "why": rwhy, "detail": "", "resources_refused": True}
     if rec.get("wu_packet") and _admission_switch_off():
         lr.ledger_append(mission_id, "admission_bypassed", mission_id=mission_id, epoch=rec.get("epoch"),
                          verdict=(rec.get("admission") or {}).get("verdict"))
@@ -1442,7 +1446,8 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     # `arm` asked; a mission released from a quota hold relaunched straight into the freshly reset window.
     # Unknown quota or a governor fault refuses (Owner decision 2026-11-20). Kill switch:
     # CPP_MISSION_ACCOUNT_ADMISSION=off.
-    awhy = account_refusal(rec, "arm" if expect_epoch == 0 else "relaunch")
+    # Owner 2026-11-21: a closeout asks as `closeout` (it may spend the reserve band up to 97 %, never unknown quota).
+    awhy = account_refusal(rec, "closeout" if prompt_override else ("arm" if expect_epoch == 0 else "relaunch"))
     if awhy:
         lr.ledger_append(mission_id, "launch_refused_account", mission_id=mission_id,
                          epoch=rec.get("epoch"), reason=reason, why=awhy[:300])
@@ -2487,6 +2492,10 @@ CLOSEOUT_SWITCH = "CPP_MISSION_CLOSEOUT_LAUNCH"
 CLOSEOUT_MIN_TOKENS = 100_000
 CL_AUTHORIZED, CL_LAUNCHED = "CLOSEOUT_AUTHORIZED", "CLOSEOUT_LAUNCHED"
 CL_DONE, CL_FAILED = "CLOSEOUT_COMPLETED", "CLOSEOUT_FAILED"
+# Owner 2026-11-21 ("que no se bloqueen ni queden paradas las misiones"): a closeout launch refused BEFORE its claim
+# (account quota, RAM floor) spent nothing, so it is not a failed closeout. It waits as DEFERRED and closeout_gate
+# re-authorizes it on every pass until the refusal lifts. Only a launch that was tried and failed is CLOSEOUT_FAILED.
+CL_DEFERRED = "CLOSEOUT_DEFERRED"
 
 
 def closeout_launch_on() -> bool:
@@ -2508,7 +2517,7 @@ def closeout_prompt(rec: dict, tokens: int) -> str:
 
 
 def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, runner=None, stop_runner=None,
-                  measure=None, launcher=None) -> dict:
+                  measure=None, launcher=None, precheck=None) -> dict:
     """Sweep step. An authority hold whose implementation worker is stopped or dead gets ONE closeout worker on a lease of
     min(reserve, authority - spent); a launched lease is followed to CLOSEOUT_COMPLETED (its checkpoint) or
     CLOSEOUT_FAILED (ended without one, never acked, launch refused). Never a second lease for the same trip."""
@@ -2516,8 +2525,19 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
         return rec
     hold = rec.get("owner_hold") or {}
     lease = rec.get("closeout_lease")
-    if lease and not _closeout_lease_is_history(rec, lease):
+    if lease and lease.get("state") != CL_DEFERRED and not _closeout_lease_is_history(rec, lease):
         return _closeout_follow(rec, lease, now, sessions, pid_alive, stop_runner)
+    if lease and lease.get("state") == CL_DEFERRED and not is_authority_hold(hold) \
+            and rec.get("state") in (RUNNING, BLOCKED):
+        # review LOW-2: the hold changed under a waiting closeout; the closeout belonged to the authority trip.
+        why = "deferred closeout retired: the hold is no longer an authority hold"
+        lr.ledger_append(rec["mission_id"], "closeout_failed", mission_id=rec["mission_id"], why=why)
+        try:
+            return transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=rec["state"], now=now,
+                              expect_seq=rec.get("seq"), event="closeout_deferred_retired",
+                              closeout_lease={**lease, "state": CL_FAILED, "why": why, "at": now})
+        except CasConflict:
+            return load(rec["mission_id"]) or rec
     if not is_authority_hold(hold) or rec.get("state") not in (RUNNING, BLOCKED):
         return rec
     owner = rec.get("owner")
@@ -2558,10 +2578,17 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
         return transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_unfunded",
                           now=now, closeout_lease={"state": CL_FAILED, "why": why, "at": now, "tokens": max(0, tokens),
                                                    "base_spend": int(spent), "reserve": reserve})
+    prev = rec.get("closeout_lease") or {}
+    if prev.get("state") == CL_DEFERRED and int(prev.get("authority") or 0) == auth:
+        # review MEDIUM-1: re-ask the two pre-claim refusals read-only first; still refused -> nothing is written.
+        if (precheck or _closeout_still_refused)(rec):
+            return rec
     lease = {"state": CL_AUTHORIZED, "granted_at": now, "tokens": tokens, "base_spend": int(spent), "reserve": reserve,
              "claim_epoch": int(rec["epoch"]), "authority": auth, "hold_set_at": hold.get("set_at")}
     if rec.get("closeout_lease"):
         lease["previous"] = {k: rec["closeout_lease"].get(k) for k in ("state", "authority", "why", "at")}
+        if rec["closeout_lease"].get("state") == CL_DEFERRED and int(rec["closeout_lease"].get("authority") or 0) == auth:
+            lease["deferrals"] = int(rec["closeout_lease"].get("deferrals") or 0)   # same trip: carried, not reset
     try:
         # expect_seq (review M1): two sweeps that both read "no lease" cannot both authorize; the loser launches nothing.
         rec = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"], event="closeout_authorized",
@@ -2580,6 +2607,11 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
         new = {**lease, "state": CL_LAUNCHED, "epoch": res.get("epoch"), "bg_id": res.get("bg_id"), "launched_at": now}
         lr.ledger_append(mid, "closeout_launched", mission_id=mid, epoch=res.get("epoch"), bg_id=res.get("bg_id"),
                          tokens=tokens)
+    elif res.get("account_refused") or res.get("resources_refused"):
+        n = int(lease.get("deferrals") or 0) + 1
+        new = {**lease, "state": CL_DEFERRED, "why": f"deferred: {str(res.get('why'))[:200]}", "at": now,
+               "deferrals": n}
+        lr.ledger_append(mid, "closeout_deferred", mission_id=mid, why=new["why"], deferrals=n)
     else:
         new = {**lease, "state": CL_FAILED, "why": f"launch: {str(res.get('why'))[:200]}", "at": now}
         lr.ledger_append(mid, "closeout_failed", mission_id=mid, why=new["why"])
@@ -2590,10 +2622,24 @@ def closeout_gate(rec: dict, now: float, sessions, pid_alive=lr._pid_alive, *, r
         cur = load(mid) or rec
         try:
             return transition(mid, expect_epoch=cur["epoch"], expect_state=cur["state"], now=now, closeout_lease=new,
-                              event="closeout_launched" if res.get("ok") else "closeout_launch_failed")
+                              event="closeout_launched" if res.get("ok") else (
+                                  "closeout_deferred" if new["state"] == CL_DEFERRED else "closeout_launch_failed"))
         except CasConflict:
             continue
     return load(mid) or rec
+
+
+def _closeout_still_refused(rec: dict) -> str | None:
+    """The two pre-claim refusals a DEFERRED closeout waits on, asked again before any write. The RAM floor is read
+    first (no ledger); the account check appends one governor-ledger row, as every mission admission does."""
+    try:
+        import resource_admission as rsa
+        rref = rsa.refusal(slim_profile(rec) or "top-level-worker")
+    except Exception as exc:  # noqa: BLE001 -- an unreadable floor keeps it deferred, never launches blind
+        return f"resource admission fault: {type(exc).__name__}"
+    if rref:
+        return f"{rref.get('verdict')}: available_mb={rref.get('available_mb')}"
+    return account_refusal(rec, "closeout")
 
 
 def _closeout_lease_is_history(rec: dict, lease: dict) -> bool:

@@ -113,6 +113,23 @@ No second classifier was built: every class below already has an owner. Read 202
 - LOW-1 arm-guard fail-open + DEFAULT_STATE: fixed in `bf315ce6` (same `account_refusal` policy).
 - LOW-2 a refused mission adds one governor ledger row per sweep tick (bounded by missions x ticks; accepted).
 - INFO-1 the closeout reserve launch is gated too: Owner decision needed if a closeout must run on the last quota.
+  DECIDED 2026-11-21, Owner: "todo lo que promueva la autonomia responsable y que no se bloqueen ni queden paradas
+  las misiones". Two changes:
+  (a) a closeout asks the governor as action `closeout` (`launch_worker` with `prompt_override`). It may spend the Owner
+      reserve band and refuses only at >= 97 % (`CLOSEOUT_REFUSE_PCT`, weekly and 5h, official reading and lower
+      bound alike). Unknown quota still refuses it (decision 2026-11-20 stands). Every other launch keeps 85 % / 80 %.
+  (b) a closeout launch refused BEFORE its claim (account `account_refused`, RAM floor `resources_refused`) spent
+      nothing, so it is `CLOSEOUT_DEFERRED`, not `CLOSEOUT_FAILED`. Each pass first re-asks the two refusals
+      read-only (`_closeout_still_refused`: RAM floor, then the governor as `closeout`); while either still refuses,
+      nothing is written to the record or the mission ledger (review MEDIUM-1: one retry cycle wrote 3 rows). When
+      they lift, closeout_gate re-authorizes and launches. Recovery and settle leave a deferred record alone. A launch
+      that was tried and failed is still FAILED (one lease per trip). A deferred closeout whose hold stops being an
+      authority hold is retired as FAILED (review LOW-2), and a new Owner authority restarts the deferral count
+      (LOW-3). Residual: the governor ledger still gets one `closeout` row per pass while deferred (as LOW-2 above).
+  Gates: test_account_governor V-BAMR-CLOSEOUT-* (42/42); test_gsd_mission_cost_hold V-COST-CLOSEOUT-{ACCOUNT,
+  RESOURCES}-*, -DEFERRED-RETIRED-ON-HOLD-CHANGE, -NEW-AUTHORITY-RESETS-DEFERRALS, -CONTROL-TRIED-LAUNCH-FAILS,
+  -ASKS-CLOSEOUT-ACTION (74/74). Mutation drill (copy via GSD_MISSION_DRILL_DIR): removing the precheck, the deferral
+  branch or the retire each fails the suite (68, 64, 73 of 74).
 - Out of scope, named gap: `claude -p` spend outside the mission machinery is ungated --
   asc_design_gate_run.py:108, asc_inherit_run.py:68, agent_carrier_run.py:128, compound_unattended.py:216,
   ccn_bench.py:87, exp_successor_packet.py:165, agent_discovery_curve.py:64.

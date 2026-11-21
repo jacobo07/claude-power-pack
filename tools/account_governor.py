@@ -50,7 +50,11 @@ OFFICIAL_FILE = "quota-reading.json"      # written by hooks/statusline_quota_ta
 OFFICIAL_FRESH_S = 900                    # a reading older than this is STALE (config: official_fresh_s)
 HOST_FRESH_S = 3 * 3600                   # a host measurement older than this makes coverage PARTIAL (config: host_fresh_s)
 FIVE_HOUR_RESERVE_PCT = 20.0              # Owner decision 3 (2026-11-20); config: five_hour_reserve_pct
-SPEND_ACTIONS = ("arm", "topup", "resume", "relaunch")
+# Owner 2026-11-21 ("todo lo que promueva la autonomia responsable y que no se bloqueen ni queden paradas las
+# misiones"): a mission CLOSEOUT -- one bounded worker that only writes the handoff a held mission needs to move
+# again -- may spend the Owner reserve band, never the last 3 %. Unknown quota still refuses it.
+CLOSEOUT_REFUSE_PCT = 97.0
+SPEND_ACTIONS = ("arm", "topup", "resume", "relaunch", "closeout")
 ACTIONS = SPEND_ACTIONS + ("deterministic",)
 
 
@@ -248,11 +252,14 @@ def decide(st, override, action, five_hour_refuse_pct=100.0 - FIVE_HOUR_RESERVE_
     if action == "deterministic":
         return 0, "ALLOW+DETERMINISTIC", "deterministic work spends no model quota"
     off = st.get("official") or {"state": "UNKNOWN", "why": "no official reading"}
+    weekly_refuse = CLOSEOUT_REFUSE_PCT if action == "closeout" else REFUSE_PCT
+    if action == "closeout":
+        five_hour_refuse_pct = max(five_hour_refuse_pct, CLOSEOUT_REFUSE_PCT)
     if off["state"] == "FRESH":
         w7, w5 = off["windows"]["seven_day"], off["windows"].get("five_hour")
         breaches = []
-        if w7["pct"] >= REFUSE_PCT:
-            breaches.append("official weekly %.1f%% >= %.0f%%" % (w7["pct"], REFUSE_PCT))
+        if w7["pct"] >= weekly_refuse:
+            breaches.append("official weekly %.1f%% >= %.0f%%" % (w7["pct"], weekly_refuse))
         if w5 is not None and w5["pct"] >= five_hour_refuse_pct:
             breaches.append("official 5h %.1f%% >= %.0f%% (Owner 5h reserve)" % (w5["pct"], five_hour_refuse_pct))
         if breaches:
@@ -271,13 +278,13 @@ def decide(st, override, action, five_hour_refuse_pct=100.0 - FIVE_HOUR_RESERVE_
         if os.environ.get("CPP_GOVERNOR_UNKNOWN", "").lower() == "allow":
             return 0, "ALLOW+UNKNOWN", "quota unknown -- %s -- kill switch CPP_GOVERNOR_UNKNOWN=allow" % why
         return 3, "REFUSE+UNKNOWN", "%s refused: quota unknown -- %s (Owner decision 2026-11-20: unknown is never zero)" % (action, why)
-    if lo >= REFUSE_PCT:
+    if lo >= weekly_refuse:
         if override[0]:
-            return 0, "ALLOW+OVERRIDE", "lower bound %.1f%% >= %.0f%% but Owner override active: %s" % (lo, REFUSE_PCT, override[1])
+            return 0, "ALLOW+OVERRIDE", "lower bound %.1f%% >= %.0f%% but Owner override active: %s" % (lo, weekly_refuse, override[1])
         return 3, "REFUSE", "%s refused: weekly lower bound %.1f%% >= %.0f%% (Owner Q2); override file absent or invalid (%s)" % (
-            action, lo, REFUSE_PCT, override[1])
-    if est is not None and est >= REFUSE_PCT:
-        return 0, "ALLOW+WARN", "estimate %.1f%% >= %.0f%% but the measured lower bound is %.1f%%" % (est, REFUSE_PCT, lo)
+            action, lo, weekly_refuse, override[1])
+    if est is not None and est >= weekly_refuse:
+        return 0, "ALLOW+WARN", "estimate %.1f%% >= %.0f%% but the measured lower bound is %.1f%%" % (est, weekly_refuse, lo)
     return 0, "ALLOW", "lower bound %.1f%%, estimate %.1f%%" % (lo, est)
 
 

@@ -55,9 +55,9 @@ def run(sd, action="arm"):
 
 def mutant_module():
     src = open(os.path.join(HERE, "account_governor.py"), encoding="utf-8").read()
-    old = "    if lo >= REFUSE_PCT:"
+    old = "    if lo >= weekly_refuse:"
     assert src.count(old) == 1
-    src = src.replace(old, "    if (est if est is not None else lo) >= REFUSE_PCT:")
+    src = src.replace(old, "    if (est if est is not None else lo) >= weekly_refuse:")
     mod = types.ModuleType("gov_mutant")
     mod.__file__ = os.path.join(HERE, "account_governor.py")
     exec(compile(src, "<mutant>", "exec"), mod.__dict__)
@@ -165,9 +165,19 @@ with tempfile.TemporaryDirectory() as tmp:
     gate("V-BAMR-5H-RESERVE", run(sd)[0] == 3, "official 5h 80%% -> refused (20%% Owner reserve, decision 3)")
     official(sd, NOW - 60, seven=10, five=79)
     gate("V-BAMR-5H-UNDER", run(sd) == (0, "ALLOW+OFFICIAL"), "official 5h 79%% -> allowed")
+    # Owner 2026-11-21: a mission closeout may spend the reserve band (refuses at >= 97 %), every other spend may not.
+    official(sd, NOW - 60, seven=91, five=90)
+    gate("V-BAMR-CLOSEOUT-RESERVE-BAND", run(sd, "closeout") == (0, "ALLOW+OFFICIAL") and run(sd, "arm")[0] == 3,
+         "official 7d 91%% / 5h 90%%: closeout allowed, arm refused")
+    official(sd, NOW - 60, seven=97)
+    gate("V-BAMR-CLOSEOUT-LAST-3PCT", run(sd, "closeout")[0] == 3, "official 7d 97%% -> closeout refused (last 3%% kept)")
+    official(sd, NOW - 60, seven=10, five=97)
+    gate("V-BAMR-CLOSEOUT-5H-LAST-3PCT", run(sd, "closeout")[0] == 3, "official 5h 97%% -> closeout refused")
     sd2 = env(tmp, 10.0, hosts=("gex44", "laptop"), calib=None)        # no estimate possible
     official(sd2, NOW - 3600, seven=5)
     gate("V-BAMR-OFFICIAL-STALE", run(sd2) == (3, "REFUSE+UNKNOWN"), "an hour-old official reading is stale, not current")
+    gate("V-BAMR-CLOSEOUT-UNKNOWN-REFUSES", run(sd2, "closeout") == (3, "REFUSE+UNKNOWN"),
+         "unknown quota refuses a closeout too (Owner decision 2026-11-20)")
     official(sd2, NOW - 60, five=5)
     gate("V-BAMR-OFFICIAL-NO7D", run(sd2) == (3, "REFUSE+UNKNOWN"), "a reading without the weekly window is not a quota picture")
     official(sd2, NOW - 60, source="absent")

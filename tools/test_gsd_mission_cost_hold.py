@@ -311,6 +311,67 @@ def main() -> int:
     check("V-COST-CLOSEOUT-UNFUNDED-FAILS-NO-LAUNCH", len(launches) == n0
           and (r.get("closeout_lease") or {}).get("state") == gm.CL_FAILED, str(r.get("closeout_lease"))[:160])
 
+    # Owner 2026-11-21 ("que no se bloqueen ni queden paradas las misiones"): a closeout refused BEFORE its claim
+    # (account quota / RAM floor) spent nothing -> DEFERRED and retried every pass, never a terminal CLOSEOUT_FAILED.
+    for label, flag in (("ACCOUNT", "account_refused"), ("RESOURCES", "resources_refused")):
+        mid = "m-c10d" + label[:2].lower()
+        refused = lambda m, **kw: {"ok": False, "why": "REFUSE: test", flag: True}  # noqa: E731
+        n0 = len(launches)
+        still, lifted = (lambda r: "REFUSE: still"), (lambda r: None)  # noqa: E731
+        r = gm.closeout_gate(held(mid), NOW + 60, [], gone, measure=m29, launcher=refused, precheck=still)
+        seq0 = r.get("seq")
+        r = gm.closeout_gate(gm.load(mid), NOW + 90, [], gone, measure=m29, launcher=refused, precheck=still)
+        check(f"V-COST-CLOSEOUT-{label}-STILL-REFUSED-WRITES-NOTHING", r.get("seq") == seq0
+              and (r.get("closeout_lease") or {}).get("deferrals") == 1, f"seq {seq0}->{r.get('seq')}")
+        r = gm.closeout_gate(gm.load(mid), NOW + 120, [], gone, measure=m29, launcher=refused, precheck=lifted)
+        lz = r.get("closeout_lease") or {}
+        check(f"V-COST-CLOSEOUT-{label}-REFUSAL-DEFERS", lz.get("state") == gm.CL_DEFERRED and lz.get("deferrals") == 2,
+              str(lz)[:160])
+        p = gm.plan_next(gm.load(mid), NOW + 130, [], pid_alive=gone)
+        check(f"V-COST-CLOSEOUT-{label}-DEFERRED-NOT-SETTLED", p["action"] == "none" and "deferred" in p["reason"], str(p))
+        r = gm.closeout_gate(gm.load(mid), NOW + 180, [], gone, measure=m29, launcher=fake_launch, precheck=lifted)
+        lz = r.get("closeout_lease") or {}
+        check(f"V-COST-CLOSEOUT-{label}-DEFERRED-LAUNCHES-WHEN-LIFTED", len(launches) == n0 + 1
+              and lz.get("state") == gm.CL_LAUNCHED and lz.get("deferrals") == 2, str(lz)[:160])
+    # review LOW-2: a deferred closeout whose hold stops being an authority hold is retired, not left blocking recovery.
+    refused = lambda m, **kw: {"ok": False, "why": "REFUSE: test", "account_refused": True}  # noqa: E731
+    r = gm.closeout_gate(held("m-c10drt"), NOW + 60, [], gone, measure=m29, launcher=refused, precheck=lambda r: None)
+    cur = gm.load("m-c10drt")
+    gm.transition("m-c10drt", expect_epoch=cur["epoch"], expect_state=cur["state"], event="t_hold", now=NOW + 70,
+                  owner_hold={**(cur.get("owner_hold") or {}), "reason": TRIP})
+    r = gm.closeout_gate(gm.load("m-c10drt"), NOW + 90, [], gone, measure=m29, launcher=fake_launch)
+    check("V-COST-CLOSEOUT-DEFERRED-RETIRED-ON-HOLD-CHANGE", (r.get("closeout_lease") or {}).get("state") == gm.CL_FAILED
+          and "no longer an authority hold" in str((r.get("closeout_lease") or {}).get("why")), str(r.get("closeout_lease"))[:160])
+    # review LOW-3: a new Owner authority opens a new trip; its deferral count starts again.
+    r = gm.closeout_gate(held("m-c10dna"), NOW + 60, [], gone, measure=m29, launcher=refused, precheck=lambda r: None)
+    cur = gm.load("m-c10dna")
+    gm.transition("m-c10dna", expect_epoch=cur["epoch"], expect_state=cur["state"], event="t_auth2", now=NOW + 70,
+                  authority_tokens=40_000_000)
+    r = gm.closeout_gate(gm.load("m-c10dna"), NOW + 90, [], gone, measure=m29, launcher=refused,
+                         precheck=lambda r: "REFUSE: still")
+    lz = r.get("closeout_lease") or {}
+    check("V-COST-CLOSEOUT-NEW-AUTHORITY-RESETS-DEFERRALS", lz.get("state") == gm.CL_DEFERRED and lz.get("deferrals") == 1
+          and lz.get("authority") == 40_000_000, str(lz)[:160])
+    failed_launch = lambda m, **kw: {"ok": False, "why": "spawn error"}  # noqa: E731
+    r = gm.closeout_gate(held("m-c10dfl"), NOW + 60, [], gone, measure=m29, launcher=failed_launch)
+    check("V-COST-CLOSEOUT-CONTROL-TRIED-LAUNCH-FAILS", (r.get("closeout_lease") or {}).get("state") == gm.CL_FAILED,
+          str(r.get("closeout_lease"))[:160])
+    # the closeout asks the governor as `closeout` (reserve band); an ordinary relaunch still asks `relaunch`.
+    asked, real_ar = [], gm.account_refusal
+    gm.account_refusal = lambda rec, action: asked.append(action) or "REFUSE: test"
+    try:
+        held("m-c10dak")
+        for override in ("CLOSEOUT ONLY test", None):
+            cur = gm.load("m-c10dak")
+            gm.launch_worker("m-c10dak", expect_epoch=cur["epoch"], expect_state=cur["state"], reason="t", now=NOW,
+                             prompt_override=override, mem_reader=lambda: 10 ** 6)
+    except Exception as exc:  # noqa: BLE001 -- surfaced by the check below
+        asked.append(f"raised {type(exc).__name__}: {exc}")
+    finally:
+        gm.account_refusal = real_ar
+    check("V-COST-CLOSEOUT-ASKS-CLOSEOUT-ACTION", asked[:1] == ["closeout"], str(asked))
+    check("V-COST-CLOSEOUT-CONTROL-RELAUNCH-ACTION", asked[1:2] == ["relaunch"], str(asked))
+
     # the launched worker acks (epoch 2) -> its checkpoint completes the lease; the authority hold stays.
     def acked(mid, sid):
         r = gm.load(mid)

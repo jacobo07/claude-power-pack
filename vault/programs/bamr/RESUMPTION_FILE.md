@@ -30,8 +30,10 @@ Owner caps: session <= 40 $ API-eq (soft 25 $). Autonomous model spend 0 — not
 4. Owner: correct `~/.claude/state/account-governor.json` reset_at (official reset Wed 17:00 UTC) and calibration
    (`python tools/account_governor.py status --json` -> `implied_calibration_api_eq_per_100pct`).
 5. DONE (2026-11-21): the 7 `claude -p` tools ask the governor before spawning (`tools/model_spend_gate.py`,
-   gate `tools/test_model_spend_gate.py` 24/24). OPEN, Owner: should the closeout reserve launch run on the
-   last quota or stay refused like every other launch (today: refused)?
+   gate `tools/test_model_spend_gate.py` 27/27, commit c5334896).
+6. DONE (2026-11-21, Owner: "autonomia responsable, que no queden paradas las misiones"): a closeout spends the
+   reserve band up to 97 % (unknown still refuses), and a closeout refused before its claim (quota / RAM) is
+   CLOSEOUT_DEFERRED and retried every pass instead of FAILED forever. Spec INFO-1 "DECIDED 2026-11-21".
 
 ## 5. Rejected / do-not-redo
 - Do not run `account_governor.py measure` without `--host laptop` (it now refuses; it once made 126 %).
