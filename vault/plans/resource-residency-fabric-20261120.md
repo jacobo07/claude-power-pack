@@ -148,3 +148,10 @@ under pressure); resource explain (why is pid X alive / who owns it). Lower 18M,
 wall 175K -> ~120K (card-carried) only if tranche A's epoch data shows mean-context savings exceed the extra 97K starts.
 Deferred items (P3 lease/idle, P4 shareability, P6 governor, P7 resource CI, cross-node, pools) carry owner / trigger /
 reopen condition here, not in deferred-backlog.md (foreign dirty state there).
+
+**APPROVED 2026-11-21 (Owner "Solo tramo B", after A closed: m-e78bdb938339 COMPLETED, integrated ba190506; no push).**
+Order from measured rent at ~19:00 (claude.exe x23 30.5 GB private >> rea 2.73 GB >> powershell x40 2.76 GB owner
+unknown >> other MCP < 0.2 GB): workstream `.planning/workstreams/resource-residency-b/` -- P1 explain + A debt 3M,
+P2 liveness v2 6M, P3 rea lazy + idle reclaim 7M, P4 zero-process wait 7M (measure first, NO APLICA if negligible),
+P5 admission shadow 4M, P6 close 3M = 30M (P50). Authority 40M + 1 x 15M top-up (P95 55M). Rotation wall unchanged
+(tranche A recorded no per-epoch mean-context data to justify 120K).
