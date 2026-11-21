@@ -22920,3 +22920,8 @@ PROVEN. `Compare-Object $canonical $live` marks REFERENCE-only lines `<=`; the f
 as "live only" and published the drift in the wrong direction (in a code comment, a commit message, this file and the
 mission record) until a test of the Owner's insertion command on a scratch copy showed the line was not in live. Name
 a drift's direction from a direct search of EACH side, never from a diff indicator.
+
+### T-LAZY-SHIM-SYNTHETIC-GREEN-001 -- a lazy MCP shim's synthetic gates passed while the real host still woke the server
+TRIGGER: building or reviewing a lazy-spawn/proxy layer in front of an MCP server.
+EVIDENCE: 2026-11-21, 14/14 V-LAZY gates green, yet live `claude mcp list` spawned the real server on host probe `server/discover`, and a read-only `claude -p` spawned it on `prompts/list` (server advertised prompts/resources). Fixed in 87a5572c: spawn allowlist, -32601 for unknown methods, cached prompts/resources lists.
+RULE: the done-gate for a lazy layer is the live host's own event log (spawn only on tools/call), not the synthetic suite. Origin: resource-residency P2.

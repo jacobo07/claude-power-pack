@@ -34,10 +34,10 @@ Keep turns few and large: plan a phase in one turn, batch edits, avoid re-readin
 ## Phases
 
 - [x] **Phase 1: P0 resource census + the open P1 gate** (b74fe8d74, evidence `vault/programs/resource-residency/P0-P1-GATE-EVIDENCE.md`)
-- [ ] **Phase 2: P2 lazy materialization shim (experiment)** -- line 12M, stop at 18M
-- [ ] **Phase 5: P5 session liveness classifier (shadow report only)** -- line 8M, stop at 12M. States derived from
+- [x] **Phase 2: P2 lazy materialization shim (experiment)** -- line 12M, stop at 18M
+- [x] **Phase 5: P5 session liveness classifier (shadow report only)** -- line 8M, stop at 12M. States derived from
   multi-signal evidence (never transcript age alone, never one CPU sample); UNKNOWN protected; nothing is stopped
-- [ ] **Phase 8: close** -- line 3M: 2-snapshot census delta (not the 24 h benchmark), pagefile recommendation as an
+- [x] **Phase 8: close** -- line 3M: 2-snapshot census delta (not the 24 h benchmark), pagefile recommendation as an
   Owner step, UKDL entry, plan status, master gate judged item by item with NO APLICA for the deferred phases
 
 Deferred (Owner D-2026-11-21, kept for a later mission): Phase 3 P3 lease + idle teardown; Phase 4 P4 shareability;
